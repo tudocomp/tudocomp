@@ -10,6 +10,7 @@ add_compile_options(-g -Wall -std=c++11)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
 find_package(Boost REQUIRED)
 find_package(Glog REQUIRED)
+include(sdsl)
 
 # TuDoComp library and implementors
 add_subdirectory(src)
@@ -29,4 +30,5 @@ ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 COMMENT "Generating API documentation with Doxygen" VERBATIM
 )
+add_dependencies(docs sdsl_external)
 endif(DOXYGEN_FOUND)

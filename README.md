@@ -1,4 +1,4 @@
-The TuDoComp compression framework                      {#mainpage}
+The TuDoComp compression framework
 ==================================
 
 This repository contains the TuDoComp compression framework.
@@ -20,13 +20,12 @@ being installed in the system:
   - doxygen (optional, for documentation)
 - C++ libraries
   - glog
-  - sdsl-lite
 
 Additionally, the makefile requires a internet connection because some of
 the dependencies are downloaded directly, including:
 
-- Some C++ libraries like gtest
-- The text test corpus (big, but optional)
+- C++ libraries like gtest, docopt, sdsl-lite
+- The text test corpus (optional, ca 10GB)
 
 # Compiling and running unit tests
 
