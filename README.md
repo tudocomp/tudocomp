@@ -19,7 +19,8 @@ being installed in the system:
   - bzip, 7zip (optional, for comparisions)
   - doxygen (optional, for documentation)
 - C++ libraries
-  - glog
+  - glog (aka google log)
+  - boost
 
 Additionally, the makefile requires a internet connection because some of
 the dependencies are downloaded directly, including:
