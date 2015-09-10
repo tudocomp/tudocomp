@@ -8,6 +8,11 @@
 - Experiment with making the tudomp library be usable as a streaming interface
 - Generate nice massif visualized graphs
 - Optimize DecodeBuffer
+- bitvector einbinden
+- 64 bits "rawphrase" auf N bits erweitern
+- benchmark: % compression, zeit, speicher, dauer
+- LZW: Lempel Ziv Welch
+
 
 # Waiting on more clarification
 

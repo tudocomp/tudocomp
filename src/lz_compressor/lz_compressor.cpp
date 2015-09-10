@@ -8,6 +8,7 @@
 #include "sdsl/int_vector.hpp"
 
 #include "lz_compressor.h"
+#include "rules.h"
 
 namespace lz_compressor {
 

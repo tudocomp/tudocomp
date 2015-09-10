@@ -1,27 +1,33 @@
 # Custom test target to run the googletest tests
 add_custom_target(check)
-macro(only_run_test test_target)
-  add_custom_target(${test_target}_runtest
-      COMMAND ${test_target} #cmake 2.6 required
-      DEPENDS ${test_target}
-      WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
-  add_dependencies(check ${test_target}_runtest)
-endmacro()
+add_custom_command(
+    TARGET check
+    POST_BUILD
+    COMMENT "All tests were successfull!" VERBATIM
+)
 
 # will compile and run ${test_target}.cpp
 # and add all further arguments as dependencies
 macro(run_test test_target)
-    add_executable(${test_target}_testrunner
+    add_executable(${test_target}
         test_driver.cpp
         ${test_target}.cpp
     )
-    target_link_libraries(${test_target}_testrunner
+    target_link_libraries(${test_target}
         libgtest
         #libgtest_main
         ${ARGN}
         ${GLOG_LIBRARIES}
     )
-    only_run_test(${test_target}_testrunner)
+    add_custom_command(
+        TARGET ${test_target}
+        POST_BUILD
+        COMMAND ${test_target} #cmake 2.6 required
+        DEPENDS ${test_target}
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+        COMMENT "Running Unit tests" VERBATIM
+    )
+    add_dependencies(check ${test_target})
 endmacro()
 
 # We need thread support
