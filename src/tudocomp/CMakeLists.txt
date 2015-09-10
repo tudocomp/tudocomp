@@ -4,7 +4,14 @@ add_library(
     tudocomp.cpp
     rule.cpp
 )
+target_link_libraries(
+    tudocomp
 
+    sdsl
+    divsufsort
+    divsufsort64
+    ${GLOG_LIBRARIES}
+)
 target_include_directories(
     tudocomp
 

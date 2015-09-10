@@ -36,6 +36,7 @@ Rules LZCompressor::compress(SdslVec sa, SdslVec lcp, size_t threshold) {
     //}
 
     Rules rules;
+    GrowableIntVector other_rules;
 
     /**
         * Process ESA and compute LZ factorization.
@@ -77,7 +78,9 @@ Rules LZCompressor::compress(SdslVec sa, SdslVec lcp, size_t threshold) {
         ssize_t p = std::max(p1, p2);
         if (p >= ssize_t(threshold)) {
             //introduce rule
-            rules.push_back({i, sa[p == p1 ? h1 : h2], size_t(p)});
+            auto rule = Rule {i, sa[p == p1 ? h1 : h2], size_t(p)};
+            rules.push_back(rule);
+            other_rules.push_back(rule.target);
             i += p;
         } else {
             //next symbol
@@ -85,7 +88,20 @@ Rules LZCompressor::compress(SdslVec sa, SdslVec lcp, size_t threshold) {
         }
     }
 
-    std::sort(rules.begin(), rules.end(), rule_compare {});
+    {
+        CHECK(rules.size() == other_rules.size());
+        for (size_t i = 0; i < rules.size(); i++) {
+            DLOG(INFO) << "rules[i].target = " << rules[i].target;
+            DLOG(INFO) << "other_rules[i] = " << other_rules[i];
+            CHECK_EQ(rules[i].target, other_rules[i]);
+            if (i > 0) {
+                CHECK(rules[i].target > rules[i - 1].target);
+            }
+        }
+    }
+
+    // target positions are already generated in order
+    //std::sort(rules.begin(), rules.end(), rule_compare {});
     return std::move(rules);
 }
 
