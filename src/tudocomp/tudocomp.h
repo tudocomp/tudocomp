@@ -126,25 +126,6 @@ std::vector<uint8_t> ostream_to_bytes(Lambda f) {
     return std::vector<uint8_t>(s.begin(), s.end());
 }
 
-/*
- Ziel ist es, ein Kompressionsframework zu erschaffen, das modular aufgebaut ist.
-Module sollen sein:
-  * Regelwerk
-    - LZ77, LZ78, ESAComp, Tunstall, ESP
-  * Codierer
-    - Dictionary, Grammar, InPlace (ESAComp)
-  * Decodierer
-
-Eingaben:
-  * Texte
-  * Bit-Sequenzen
-
-Die komprimierten Bit-Sequenzen sollen dann mit der SDSL Bibliothek bedienbar sein
-(z.B. einen Wavelet-Tree auf einer komprimierten Bit-Sequenz;
-Der Code dafür ist in hocbits bereits vorhanden)
-
-*/
-
 /// Convert a vector-like type into a string showing the element values.
 ///
 /// Useful for logging output.
