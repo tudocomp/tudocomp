@@ -1,7 +1,7 @@
 # Outstanding
 
 - Optimize Rulelists
-- Change sdsl dependency to be automatically dowloaded
+- Automatically choose threshold
 - Add some kind of coverage support
 - Add comparision tool
 - Include esacomp java impl in that comparison tool
@@ -13,7 +13,6 @@
 - benchmark: % compression, zeit, speicher, dauer
 - LZW: Lempel Ziv Welch
 
-
 # Waiting on more clarification
 
 - Support for new BAs
@@ -23,3 +22,4 @@
 
 - Add and maintain docs on actual source files
 - Automatically generate html docs
+- Change sdsl dependency to be automatically dowloaded
