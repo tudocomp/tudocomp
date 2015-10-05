@@ -17,7 +17,17 @@ struct Rule {
 };
 
 std::ostream& operator<< (std::ostream& stream, const Rule& rule);
-bool operator== (const Rule& left, const Rule& right);
+inline bool operator== (const Rule& left, const Rule& right) {
+    return left.target == right.target
+        && left.source == right.source
+        && left.num == right.num;
+}
+
+inline bool operator!= (const Rule& left, const Rule& right) {
+    return left.target != right.target
+        || left.source != right.source
+        || left.num != right.num;
+}
 
 }
 

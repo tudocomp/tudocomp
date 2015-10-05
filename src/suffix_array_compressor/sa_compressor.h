@@ -14,14 +14,6 @@ using namespace tudocomp;
 
 namespace sa_compressor {
 
-/// Callable object, acts as a comparator of Rules, to order them
-/// acording to target position.
-struct rule_compare {
-    bool operator() (const Rule& lhs, const Rule& rhs) const {
-        return lhs.target < rhs.target;
-    }
-};
-
 /// A Sdsl vector used fo suffix and lcp arrays.
 using SdslVec = sdsl::int_vector<0>;
 

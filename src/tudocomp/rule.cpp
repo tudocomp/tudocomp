@@ -10,10 +10,4 @@ std::ostream& operator<< (std::ostream& stream, const Rule& rule) {
            << rule.num << ")";
 }
 
-bool operator== (const Rule& left, const Rule& right) {
-    return left.target == right.target
-        && left.source == right.source
-        && left.num == right.num;
-}
-
 }

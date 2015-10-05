@@ -20,9 +20,14 @@ void test_roundtrip(const std::string input_string) {
     Comp compressor;
     Rules rules = compressor.compress(input, 2);
 
+    DLOG(INFO) << "ROUNDTRIP PRE RULES";
+
     for (Rule rule : rules) {
+        //DLOG(INFO) << "ROUNDTRIP PRE RULE";
         DLOG(INFO) << "ROUNDTRIP RULE: " << rule;
     }
+
+    DLOG(INFO) << "ROUNDTRIP POST RULES";
 
     // Encode input with rules
     Cod coder;

@@ -16,8 +16,8 @@
 #include "glog/logging.h"
 
 #include "rule.h"
+// #include "rules.h"
 
-// TODO: Add namespace
 namespace tudocomp {
 
 /// Type of the input data to be compressed
@@ -317,6 +317,14 @@ void read_bytes_to_vec(std::istream& inp, T& vec, size_t bytes) {
         vec.push_back((unsigned char)c);
     }
 }
+
+/// Callable object, acts as a comparator of Rules, to order them
+/// acording to target position.
+struct rule_compare {
+    inline bool operator() (const Rule& lhs, const Rule& rhs) const {
+        return lhs.target < rhs.target;
+    }
+};
 
 }
 

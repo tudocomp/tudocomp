@@ -8,11 +8,20 @@
 #include "sdsl/int_vector.hpp"
 
 #include "lz_compressor.h"
-#include "rules.h"
 
 namespace lz_compressor {
 
 Rules LZCompressor::compress(SdslVec sa, SdslVec lcp, size_t threshold) {
+
+    DLOG(INFO) << "lz compress start";
+
+    std::vector<uint64_t> v { 1, 2, 3, 4 };
+
+    CHECK_EQ(*v.begin(), 1);
+    CHECK_EQ(*(v.end() - 1), 4);
+    //CHECK_EQ(*v.end(), 4);
+
+    DLOG(INFO) << "lz compress ok";
 
     size_t n = sa.size();
     CHECK_EQ(sa.size(), n);
@@ -36,7 +45,6 @@ Rules LZCompressor::compress(SdslVec sa, SdslVec lcp, size_t threshold) {
     //}
 
     Rules rules;
-    GrowableIntVector other_rules;
 
     /**
         * Process ESA and compute LZ factorization.
@@ -80,7 +88,6 @@ Rules LZCompressor::compress(SdslVec sa, SdslVec lcp, size_t threshold) {
             //introduce rule
             auto rule = Rule {i, sa[p == p1 ? h1 : h2], size_t(p)};
             rules.push_back(rule);
-            other_rules.push_back(rule.target);
             i += p;
         } else {
             //next symbol
@@ -88,17 +95,7 @@ Rules LZCompressor::compress(SdslVec sa, SdslVec lcp, size_t threshold) {
         }
     }
 
-    {
-        CHECK(rules.size() == other_rules.size());
-        for (size_t i = 0; i < rules.size(); i++) {
-            DLOG(INFO) << "rules[i].target = " << rules[i].target;
-            DLOG(INFO) << "other_rules[i] = " << other_rules[i];
-            CHECK_EQ(rules[i].target, other_rules[i]);
-            if (i > 0) {
-                CHECK(rules[i].target > rules[i - 1].target);
-            }
-        }
-    }
+    DLOG(INFO) << "lz exit";
 
     // target positions are already generated in order
     //std::sort(rules.begin(), rules.end(), rule_compare {});

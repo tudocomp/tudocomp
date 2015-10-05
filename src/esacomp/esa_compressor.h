@@ -75,7 +75,9 @@ public:
             // TODO
         }*/
 
+        DLOG(INFO) << "sort start!";
         std::sort(rules.begin(), rules.end(), rule_compare {});
+        DLOG(INFO) << "sorted!";
         return std::move(rules);
     }
 
