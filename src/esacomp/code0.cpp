@@ -21,7 +21,7 @@ inline void write_and_escape_raw(Input& input, size_t& p, std::ostream& out, siz
     out.write((const char*)&input[last_i], target - last_i);
 }
 
-void Code0Coder::code(Rules rules, Input input, size_t threshold, std::ostream& out) {
+void Code0Coder::code(Rules rules, Input input, std::ostream& out) {
     out << input.size() << ":";
     size_t p = 0;
     // TODO: Rule sort dependecy

@@ -109,19 +109,29 @@ static void code2Length(BitOstream& out, size_t n, size_t maxBits) {
     }
 }
 
-void Code2Coder::code(Rules rules, Input input, size_t threshold, std::ostream& out_) {
+void Code2Coder::code(Rules rules, Input input, std::ostream& out_) {
     ////////////////////////////
     // original Java Code constructor
 
     ssize_t longestSubstitution = 0;
     ssize_t largestRefAbs = 0;
+
+    // Threshold, aka minimum rule size.
+    // Used such that the actual minimum rule size
+    // can be offset to start at 0.
+    size_t threshold = SIZE_MAX;
     {
         size_t rawSymbolsLeft = input.size();
 
         for (Rule rule: rules) {
             longestSubstitution = std::max(longestSubstitution, ssize_t(rule.num));
             largestRefAbs = std::max(largestRefAbs, ssize_t(rule.source));
+            threshold = std::min(threshold, rule.num);
             rawSymbolsLeft -= rule.num;
+        }
+
+        if (threshold == SIZE_MAX) {
+            threshold = 0;
         }
     }
 

@@ -4,7 +4,7 @@
 // in order to not pollute the global one
 namespace dummy {
 
-void DummyCoder::code(Rules rules, Input input, size_t threshold, std::ostream& out) {
+void DummyCoder::code(Rules rules, Input input, std::ostream& out) {
     out.write((const char*) input.data(), input.size());
 }
 

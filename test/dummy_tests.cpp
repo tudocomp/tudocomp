@@ -39,7 +39,7 @@ TEST(Dummy, encoder) {
 
     DummyCoder coder;
     auto coded = ostream_to_string([&] (std::ostream& out) {
-        coder.code(rules, input, 2, out);
+        coder.code(rules, input, out);
     });
     ASSERT_EQ(should_be, coded);
 

@@ -11,7 +11,7 @@ using namespace tudocomp;
 
 class DummyCoder: public Coder {
 public:
-    virtual void code(Rules, Input input, size_t threshold, std::ostream&) override final;
+    virtual void code(Rules, Input input, std::ostream&) override final;
     virtual void decode(std::istream& inp, std::ostream& out) override final;
 };
 

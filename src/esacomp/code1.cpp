@@ -46,9 +46,9 @@ static void code1WriteInt(std::ostream& out, T x, size_t bytes = sizeof(T)) {
     out.write(((const char*) &x) + sizeof(T) - bytes, bytes);
 }
 
-void Code1Coder::code(Rules rules, Input input, size_t threshold, std::ostream& out) {
+void Code1Coder::code(Rules rules, Input input, std::ostream& out) {
     ////////////////////////////
-    // original Java Codee constructor
+    // original Java Code constructor
 
     ssize_t longestSubstitution = 0;
     ssize_t largestRefAbs = 0;

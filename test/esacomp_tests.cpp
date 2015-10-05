@@ -54,7 +54,7 @@ TEST(Code0Coder, basic) {
 
         Code0Coder coder;
         auto coded = ostream_to_string([&] (std::ostream& out) {
-            coder.code(rules, input, 2, out);
+            coder.code(rules, input, out);
         });
         ASSERT_EQ(should_be, coded);
     }
@@ -64,7 +64,7 @@ TEST(Code0Coder, basic) {
 
         Code0Coder coder;
         auto coded = ostream_to_string([&] (std::ostream& out) {
-            coder.code(rules, input, 2, out);
+            coder.code(rules, input, out);
         });
         ASSERT_EQ(should_be, coded);
     }
@@ -77,7 +77,7 @@ TEST(Code0Coder, emptyRules) {
 
     Code0Coder coder;
     auto coded = ostream_to_string([&] (std::ostream& out) {
-        coder.code(rules, input, 2, out);
+        coder.code(rules, input, out);
     });
     ASSERT_EQ(should_be, coded);
 }
@@ -89,7 +89,7 @@ TEST(Code0Coder, emptyInput) {
 
     Code0Coder coder;
     auto coded = ostream_to_string([&] (std::ostream& out) {
-        coder.code(rules, input, 2, out);
+        coder.code(rules, input, out);
     });
     ASSERT_EQ(should_be, coded);
 }
@@ -106,7 +106,7 @@ TEST(Code1Coder, basic) {
 
         Code1Coder coder;
         auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, 2, out);
+            coder.code(rules, input, out);
         });
         ASSERT_EQ(should_be, coded);
     }
@@ -120,7 +120,7 @@ TEST(Code1Coder, basic) {
 
         Code1Coder coder;
         auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, 2, out);
+            coder.code(rules, input, out);
         });
         ASSERT_EQ(should_be, coded);
     }
@@ -138,7 +138,7 @@ TEST(Code1Coder, emptyRules) {
 
         Code1Coder coder;
         auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, 2, out);
+            coder.code(rules, input, out);
         });
         ASSERT_EQ(should_be, coded);
     }
@@ -155,7 +155,7 @@ TEST(Code1Coder, emptyInput) {
 
         Code1Coder coder;
         auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, 2, out);
+            coder.code(rules, input, out);
         });
         ASSERT_EQ(should_be, coded);
     }
@@ -190,7 +190,7 @@ TEST(Code2Coder, basic) {
 
         Code2Coder coder;
         auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, 2, out);
+            coder.code(rules, input, out);
         });
         ASSERT_EQ(should_be, coded);
     }
@@ -198,7 +198,7 @@ TEST(Code2Coder, basic) {
         Rules rules { {5, 1, 4}, {9, 0, 3} };
         std::vector<uint8_t> should_be {
             0, 0, 0, 0, 0, 0, 0, 12,
-            0, 0, 0, 2,
+            0, 0, 0, 3,
             3,
             2,
             1,
@@ -213,12 +213,13 @@ TEST(Code2Coder, basic) {
             0, 2,
             97, 98, 99,
             98, 99, 100,
-            0b01010011, 0b01001100, 0b01010000, 0b01000000
+            0b01010011, 0b01001100, 0b00110000, 0b00000000
+            //0b01010011, 0b01001100, 0b01010000, 0b01000000 with threshold 2
         };
 
         Code2Coder coder;
         auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, 2, out);
+            coder.code(rules, input, out);
         });
 
         ASSERT_EQ(should_be, coded);
@@ -231,7 +232,7 @@ TEST(Code2Coder, emptyRules) {
         Rules rules { };
         std::vector<uint8_t> should_be {
             0, 0, 0, 0, 0, 0, 0, 12,
-            0, 0, 0, 2,
+            0, 0, 0, 0,
             4,
             1,
             1,
@@ -263,7 +264,7 @@ TEST(Code2Coder, emptyRules) {
 
         Code2Coder coder;
         auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, 2, out);
+            coder.code(rules, input, out);
         });
         ASSERT_EQ(should_be, coded);
     }
@@ -275,7 +276,7 @@ TEST(Code2Coder, emptyInput) {
         Rules rules { };
         std::vector<uint8_t> should_be {
             0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 2,
+            0, 0, 0, 0,
             1,
             1,
             1,
@@ -285,7 +286,7 @@ TEST(Code2Coder, emptyInput) {
 
         Code2Coder coder;
         auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, 2, out);
+            coder.code(rules, input, out);
         });
         ASSERT_EQ(should_be, coded);
     }

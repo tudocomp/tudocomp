@@ -29,8 +29,8 @@ using Rules = std::vector<Rule>;
 /// Interface for a compressor.
 ///
 /// A (rule-based) compressor works by receiving the Input text, and
-/// generating a list of substituition rules.
-/// The rules in combination with the input parts not coverred by them
+/// generating a list of substitution rules.
+/// The rules in combination with the input parts not covered by them
 /// can regenerate the full input.
 class Compressor {
 public:
@@ -58,21 +58,13 @@ public:
     ///
     /// \param rules The list of substitution rules
     /// \param input The input text
-    /// \param threshold The threshold in bytes that limits how small an area a
-    ///                  substitution rule may maximally
-    ///                  cover. For example, a threshold of 3 means no
-    ///                  rules for substitutions of length 2 will be generated.
-    ///                  This needs to be the same threshold value as for
-    ///                  the compressor.
-    ///                  Note: This will likely change.
     /// \param out `ostream` where the encoded output will be written to.
-    virtual void code(Rules rules, Input input, size_t threshold,
-                      std::ostream& out) = 0;
+    virtual void code(Rules rules, Input input, std::ostream& out) = 0;
 
     /// Decode and decompress `inp` into `out`.
     ///
     /// This method expects `inp` to be encoded with the same encoding
-    /// that the `code()` method emitts.
+    /// that the `code()` method emits.
     ///
     /// \param inp The input stream.
     /// \param out The output stream.

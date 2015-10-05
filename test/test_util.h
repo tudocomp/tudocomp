@@ -32,7 +32,7 @@ void test_roundtrip(const std::string input_string) {
     // Encode input with rules
     Cod coder;
     std::string coded_string = ostream_to_string([&] (std::ostream& out) {
-        coder.code(rules, input, 2, out);
+        coder.code(rules, input, out);
     });
 
     DLOG(INFO) << "ROUNDTRIP CODED: " << vec_to_debug_string(coded_string);
