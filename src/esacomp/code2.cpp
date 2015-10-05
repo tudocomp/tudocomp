@@ -121,13 +121,10 @@ void Code2Coder::code(Rules rules, Input input, std::ostream& out_) {
     // can be offset to start at 0.
     size_t threshold = SIZE_MAX;
     {
-        size_t rawSymbolsLeft = input.size();
-
         for (Rule rule: rules) {
             longestSubstitution = std::max(longestSubstitution, ssize_t(rule.num));
             largestRefAbs = std::max(largestRefAbs, ssize_t(rule.source));
             threshold = std::min(threshold, rule.num);
-            rawSymbolsLeft -= rule.num;
         }
 
         if (threshold == SIZE_MAX) {
@@ -185,7 +182,7 @@ void Code2Coder::code(Rules rules, Input input, std::ostream& out_) {
     /*ELSE*/ {
         auto numItems = alphabet.getNumItems();
 
-        // TODO: Ensure correct beavior for numitems == 0 or numitems == 1
+        // TODO: Ensure correct behavior for numitems == 0 or numitems == 1
         size_t bits = bitsFor(numItems);
         size_t addBits = (size_t(1 << bits) == numItems) ? 1 : 2;
 
@@ -258,15 +255,14 @@ void Code2Coder::code(Rules rules, Input input, std::ostream& out_) {
 
     p = 0;
     boost::string_ref phrase;
-    // TODO: Enforce need for sorted Rules somehow
-    for (Rule rule : rules) {
-        // encode all chars until start of rule
-        for (; p < rule.target; p++) {
+
+    auto encode_raw_until = [&] (size_t up_to) {
+        for (; p < up_to; p++) {
             out.writeBit(0);
             size_t c;
             phrase = text.substr(p, kgram);
             if (kgram > 1
-                && p + kgram < rule.target
+                && p + kgram < up_to
                 && phraseRanking.count(phrase) > 0)
             {
                 size_t tmp = PHRASE_ID + phraseRanking[phrase];
@@ -277,6 +273,12 @@ void Code2Coder::code(Rules rules, Input input, std::ostream& out_) {
             }
             code2Raw(out, c, bitsPerSymbol);
         }
+    };
+
+    // TODO: Enforce need for sorted Rules somehow
+    for (Rule rule : rules) {
+        // encode all chars until start of rule
+        encode_raw_until(rule.target);
         p = rule.target + rule.num;
 
         // encode rule
@@ -284,21 +286,7 @@ void Code2Coder::code(Rules rules, Input input, std::ostream& out_) {
         code2Ref(out, rule.source, bitsPerRef); //absolute reference
         code2Length(out, rule.num - threshold, bitsPerSubLen);
     }
-
-    for (; p < text.size(); p++) {
-        out.writeBit(0);
-
-        if (kgram > 1 && p + kgram < text.size() &&
-                phraseRanking.count(phrase = text.substr(p, kgram)) > 0) {
-            code2Raw(out,
-                alphabetRanking[AlphabetSize(PHRASE_ID + phraseRanking[phrase])],
-                bitsPerSymbol);
-            p += kgram - 1;
-        } else {
-            size_t c = alphabetRanking[(unsigned char)text[p]];
-            code2Raw(out, c, bitsPerSymbol);
-        }
-    }
+    encode_raw_until(text.size());
 
     out.flush();
 }
@@ -451,6 +439,11 @@ void Code2Coder::decode(std::istream& inp, std::ostream& out) {
     }
 
     buffer.write_to(out);
+}
+
+size_t Code2Coder::min_encoded_rule_length(size_t input_size) {
+    // TODO: Think about whether this is right
+    return 2;
 }
 
 }

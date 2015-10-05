@@ -15,4 +15,8 @@ void DummyCoder::decode(std::istream& inp, std::ostream& out) {
     }
 }
 
+size_t DummyCoder::min_encoded_rule_length(size_t input_size) {
+    return 0;
+}
+
 }

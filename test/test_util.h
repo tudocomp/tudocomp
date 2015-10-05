@@ -12,13 +12,16 @@ using namespace tudocomp;
 
 template<class Comp, class Cod>
 void test_roundtrip(const std::string input_string) {
+    Comp compressor;
+    Cod coder;
+
     const Input input = input_from_string(input_string);
 
     DLOG(INFO) << "ROUNDTRIP TEXT: " << input_string;
 
     // Compress to rules
-    Comp compressor;
-    Rules rules = compressor.compress(input, 2);
+    Rules rules = compressor.compress(input,
+                                      coder.min_encoded_rule_length(input.size()));
 
     DLOG(INFO) << "ROUNDTRIP PRE RULES";
 
@@ -30,7 +33,6 @@ void test_roundtrip(const std::string input_string) {
     DLOG(INFO) << "ROUNDTRIP POST RULES";
 
     // Encode input with rules
-    Cod coder;
     std::string coded_string = ostream_to_string([&] (std::ostream& out) {
         coder.code(rules, input, out);
     });

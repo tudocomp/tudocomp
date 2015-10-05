@@ -53,12 +53,9 @@ void Code1Coder::code(Rules rules, Input input, std::ostream& out) {
     ssize_t longestSubstitution = 0;
     ssize_t largestRefAbs = 0;
     {
-        size_t rawSymbolsLeft = input.size();
-
         for (Rule rule: rules) {
             longestSubstitution = std::max(longestSubstitution, ssize_t(rule.num));
             largestRefAbs = std::max(largestRefAbs, ssize_t(rule.source));
-            rawSymbolsLeft -= rule.num;
         }
     }
 
@@ -68,6 +65,13 @@ void Code1Coder::code(Rules rules, Input input, std::ostream& out) {
     const uint8_t bytesPerRef = bytesFor(bitsFor(largestRefAbs));
     const uint8_t bytesPerLen = bytesFor(bitsFor(longestSubstitution));
 
+    // define a predicate for filtering out rules
+    // that end up taking more space encoded as raw.
+    auto is_below_threshold = [&] (Rule& rule) -> bool {
+        size_t threshold = 1 + bytesPerRef + bytesPerLen;
+        return rule.num <= threshold;
+    };
+
     // Write length
     code1WriteInt<OutputSize>(out, input.size());
 
@@ -75,11 +79,19 @@ void Code1Coder::code(Rules rules, Input input, std::ostream& out) {
     out.put((bytesPerRef << 4) | bytesPerLen);
 
     size_t p = 0;
-    for (Rule rule : rules) {
+    auto encode_raw_until = [&] (size_t up_to) {
         // TODO: Make it copy a slice
-        for (; p < rule.target; p++) {
+        for (; p <  up_to; p++) {
             out.put(input[p]);
         }
+    };
+
+    for (Rule rule : rules) {
+        if (is_below_threshold(rule)) {
+            continue;
+        }
+
+        encode_raw_until(rule.target);
         out.put(CODE1_RULE_ID);
 
         code1WriteInt<OutputSize>(out, rule.source, bytesPerRef);
@@ -88,19 +100,7 @@ void Code1Coder::code(Rules rules, Input input, std::ostream& out) {
 
         p = rule.target + rule.num;
     }
-    // TODO: Make it copy a slice
-    for (; p < input.size(); p++) {
-        out.put(input[p]);
-    }
-
-    /* Size of returned bytes
-    const uint8_t bytesPerRule = 1 + bytesPerRef + bytesPerLen;
-    const uint8_t bytesPerSymbol = 1;
-    return sizeof(size_t) // text len
-        + sizeof(uint8_t) // bytes per ref and bytes per len
-        + (input.size() - totalSubstituted) * bytesPerSymbol
-        + rules.size() + bytesPerRule;
-    */
+    encode_raw_until(input.size());
 }
 
 void Code1Coder::decode(std::istream& inp, std::ostream& out) {
@@ -135,6 +135,10 @@ void Code1Coder::decode(std::istream& inp, std::ostream& out) {
 
     // Then, finish decoding and write it out
     buffer.write_to(out);
+}
+
+size_t Code1Coder::min_encoded_rule_length(size_t input_size) {
+    return 3; // rho + min_abs_ref + min_subs_len
 }
 
 }

@@ -40,8 +40,7 @@ public:
     /// \param threshold The threshold in bytes that limits how small an area a
     ///                  substitution rule may maximally
     ///                  cover. For example, a threshold of 3 means no
-    ///                  rules for substitutions of length 2 will be generated.
-    ///                  Note: This will likely change.
+    ///                  rules for substitutions of length 2 should be generated.
     /// \return The list of rules.
     virtual Rules compress(const Input& input, size_t threshold) = 0;
 };
@@ -69,6 +68,15 @@ public:
     /// \param inp The input stream.
     /// \param out The output stream.
     virtual void decode(std::istream& inp, std::ostream& out) = 0;
+
+    /// Return the expected minimum encoded
+    /// length in bytes of a single rule if encoded with this encoder.
+    ///
+    /// This can be used by compressors to directly filter
+    /// out rules that would not be beneficial in the encoded output.
+    ///
+    /// \param input_size The length of the input in bytes
+    virtual size_t min_encoded_rule_length(size_t input_size) = 0;
 };
 
 /// Create a `Input` value containing `s`.

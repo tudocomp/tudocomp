@@ -101,7 +101,7 @@ TEST(Code1Coder, basic) {
         std::vector<uint8_t> should_be {
             0, 0, 0, 0, 0, 0, 0, 12,
             17,
-            'a', 1, 5, 4, 1, 10, 2, 'd', 'e', 'a', 'b', 'c'
+            'a', 1, 5, 4, 'b', 'c', 'd', 'e', 'a', 'b', 'c'
         };
 
         Code1Coder coder;
@@ -115,7 +115,7 @@ TEST(Code1Coder, basic) {
         std::vector<uint8_t> should_be {
             0, 0, 0, 0, 0, 0, 0, 12,
             17,
-            'a', 'b', 'c', 'd', 'e', 1, 1, 4, 1, 0, 3
+            'a', 'b', 'c', 'd', 'e', 1, 1, 4, 'a', 'b', 'c'
         };
 
         Code1Coder coder;

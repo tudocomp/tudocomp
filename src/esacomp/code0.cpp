@@ -87,4 +87,8 @@ void Code0Coder::decode(std::istream& inp, std::ostream& out) {
     buffer.write_to(out);
 }
 
+size_t Code0Coder::min_encoded_rule_length(size_t input_size) {
+    return boost::string_ref("{0,0}").size();
+}
+
 }

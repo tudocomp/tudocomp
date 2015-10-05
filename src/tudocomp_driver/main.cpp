@@ -207,6 +207,7 @@ int main(int argc, const char** argv)
 
     /////////////////////////////////////////////////////////////////////////
     // Select where the output goes to
+
     std::string ofile;
     bool use_stdout = use_stdin;
     bool use_explict_output(args["--output"]);
@@ -278,11 +279,13 @@ int main(int argc, const char** argv)
 
             setup_time = clk::now();
 
-            auto rules = comp.compressor->compress(inp_vec, 2);
+            auto threshold = enc.coder->min_encoded_rule_length(inp_vec.size());
+
+            auto rules = comp.compressor->compress(inp_vec, threshold);
 
             comp_time = clk::now();
 
-            enc.coder->code(rules, std::move(inp_vec), 2, *out);
+            enc.coder->code(rules, std::move(inp_vec), *out);
 
             enc_time = clk::now();
         } else {
