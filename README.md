@@ -42,7 +42,7 @@ run its unit tests, follow these steps in a terminal:
 1. Make sure all dependencies listed above are met.
 2. If not already done, clone this git repository into a local directory.
 3. `cd` into that directory.
-4. `mkdir ./build` to create a seperate subdirectory for the build files.
+4. `mkdir ./build` to create a separate subdirectory for the build files.
   (This can be deleted at any point to remove the build artifacts)
 5. `cd ./build`
 6. `cmake ..` to prepare the build files in the build directory based on
@@ -77,7 +77,7 @@ Per default, the instructions given above will compile code in debug mode,
 which will result in slower but better debuggable binaries
 (They will include optional asserts, debugging log output, etc).
 
-This is fine except to get usable results from benchamrks. For those, you
+This is fine except to get usable results from benchmarks. For those, you
 need to initalize the build directory with
 `cmake -DCMAKE_BUILD_TYPE=Release ..` instead to make it explicit build in
 optimized release mode.
@@ -96,8 +96,8 @@ optimized release mode.
 
 Unit tests are compiled and executed with `make check`.
 They are using the "gtest" library and will output to the
-terminal for each test wether it succeeded or not,
-as well as any additional error infomation.
+terminal for each test whether it succeeded or not,
+as well as any additional error information.
 
 ## Extending tudocomp with new compressor or encoder implementations
 

@@ -3,7 +3,7 @@
 - Optimize Rulelists
 - Automatically choose threshold
 - Add some kind of coverage support
-- Add comparision tool
+- Add comparison tool
 - Include esacomp java impl in that comparison tool
 - Experiment with making the tudomp library be usable as a streaming interface
 - Generate nice massif visualized graphs
@@ -22,4 +22,4 @@
 
 - Add and maintain docs on actual source files
 - Automatically generate html docs
-- Change sdsl dependency to be automatically dowloaded
+- Change sdsl dependency to be automatically downloaded
