@@ -6,9 +6,9 @@
 #include "gtest/gtest.h"
 #include "tudocomp.h"
 #include "rule.h"
-#include "rules.h"
 
 using namespace tudocomp;
+using std::swap;
 
 TEST(Rule, ostream) {
     std::stringstream s;
