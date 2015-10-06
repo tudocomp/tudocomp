@@ -31,8 +31,8 @@ Options:
     --version               Show version.
     -c --compressor <name>  Use compressor <name> for generating the Ruleset.
     -e --encoder <name>     Use encoder <name> for generating the Output.
+    -k --compress           Compress input instead of compressing it.
     -d --decompress         Decompress input instead of compressing it.
-    -k --compress           Decompress input instead of compressing it.
     -o --output <file>      Choose output filename instead the the default of
                             <input file>.<compressor name>.<encoder name>.tdc
                             or stdout if reading from stdin.
@@ -187,22 +187,22 @@ int main(int argc, const char** argv)
         return 1;
     }
 
-    if (enc.coder == 0) {
-        std::cerr << "Unknown coder " << enc.shortname << std::endl;
+    if (enc.coder == nullptr) {
+        std::cerr << "Unknown encoder '" << enc.shortname << "'.\n";
+        std::cerr << "Use --list for a list of all implemented algorithms.\n";
         return 1;
     }
 
     CompressionAlgorithm comp;
     if (do_compress) {
         comp = getCompressionByShortname(args["--compressor"].asString());
-        if (comp.compressor == 0) {
-            std::cerr << "Unknown compressor "
-                << args["--compressor"].asString()
-                << std::endl;
+        if (comp.compressor == nullptr) {
+            std::cerr << "Unknown compressor '" << comp.shortname << "'.\n";
+            std::cerr << "Use --list for a list of all implemented algorithms.\n";
             return 1;
         }
     } else {
-        comp = { "-", "", 0 };
+        comp = { "", "", nullptr };
     }
 
     /////////////////////////////////////////////////////////////////////////

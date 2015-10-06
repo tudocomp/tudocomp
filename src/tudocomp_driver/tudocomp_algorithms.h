@@ -8,11 +8,11 @@
 
 namespace tudocomp_driver {
 
-/// Struct for holding all neccessary data to register a compression algorithm
+/// Struct for holding all necessary data to register a compression algorithm
 struct CompressionAlgorithm {
     /// Human readable name
     std::string name;
-    /// Used as id string for comand line and output filenames
+    /// Used as id string for command line and output filenames
     std::string shortname;
     /// Description text
     std::string description;
@@ -27,10 +27,10 @@ inline CompressionAlgorithm getCompressionByShortname(std::string s) {
             return x;
         }
     }
-    return { "", s, 0 };
+    return { "", s, "", nullptr };
 }
 
-/// Struct for holding all neccessary data to register a encoding algorithm
+/// Struct for holding all necessary data to register a encoding algorithm
 struct CodingAlgorithm {
     /// Human readable name
     std::string name;
@@ -49,7 +49,7 @@ inline CodingAlgorithm getCodingByShortname(std::string s) {
             return x;
         }
     }
-    return { "", s, 0 };
+    return { "", s, "", nullptr };
 }
 
 }
