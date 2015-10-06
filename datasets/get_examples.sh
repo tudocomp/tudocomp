@@ -9,9 +9,13 @@ artificial_files=(\
 )
 real_files=(\
 'http://pizzachili.dcc.uchile.cl/texts/code/sources.200MB.gz' \
+'http://pizzachili.dcc.uchile.cl/texts/code/sources.50MB.gz' \
+'http://pizzachili.dcc.uchile.cl/texts/xml/dblp.xml.50MB.gz' \
 'http://pizzachili.dcc.uchile.cl/texts/music/pitches.50MB.gz' \
 'http://pizzachili.dcc.uchile.cl/texts/protein/proteins.200MB.gz' \
+'http://pizzachili.dcc.uchile.cl/texts/protein/proteins.50MB.gz' \
 'http://pizzachili.dcc.uchile.cl/texts/dna/dna.200MB.gz' \
+'http://pizzachili.dcc.uchile.cl/texts/dna/dna.50MB.gz' \
 'http://pizzachili.dcc.uchile.cl/texts/nlang/english.1024MB.gz' \
 'http://pizzachili.dcc.uchile.cl/texts/xml/dblp.xml.200MB.gz' \
 'http://pizzachili.dcc.uchile.cl/texts/nlang/english.50MB.gz' \
@@ -39,7 +43,7 @@ pseudoreal_files=(\
 'http://pizzachili.dcc.uchile.cl/repcorpus/pseudo-real/dblp.xml.00001.1.gz' \
 )
 xml_files=(\
-'http://dblp.uni-trier.de/xml/dblp.xml.gz'
+'http://dblp.uni-trier.de/xml/dblp.xml.gz' \
 )
 
 function download {

@@ -12,6 +12,7 @@
 - benchmark: % compression, zeit, speicher, dauer
 - LZW: Lempel Ziv Welch
 - factor out common code between code{0,1,2}.cpp
+- Add testsuite for driver
 
 # Revisit at later point
 

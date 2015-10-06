@@ -102,6 +102,28 @@ static FileNameComponents extract_from_file(const std::string& file) {
     return { false, "", "" };
 }
 
+uint8_t count_alphabet_size(Input& input) {
+    uint64_t table[256] = {};
+
+    for (auto& e : table) {
+        CHECK(e == 0);
+    }
+
+    uint8_t counter = 0;
+
+    for (uint8_t byte : input) {
+        table[byte]++;
+    }
+
+    for (uint64_t count : table) {
+        if (count > 0) {
+            counter++;
+        }
+    }
+
+    return counter;
+}
+
 } // namespace tudocomp_driver
 
 int main(int argc, const char** argv)
@@ -160,10 +182,13 @@ int main(int argc, const char** argv)
     }
 
     bool print_stats = args["--stats"].asBool();
+    int alphabet_size = 0;
+
     bool do_compress = !args["--decompress"].asBool();
 
     /////////////////////////////////////////////////////////////////////////
     // Select where the input comes from
+
     std::string file = args["<file>"].asString();
     bool use_stdin = !args["--"].asBool()
         && (file == "-" || args["-"].asBool());
@@ -183,7 +208,7 @@ int main(int argc, const char** argv)
     } else if (!use_stdin && decode_meta_from_file.found) {
         enc = getCodingByShortname(decode_meta_from_file.enc_shortname);
     } else {
-        std::cerr << "Need to either specify a encoder or have it endcoded in filename\n";
+        std::cerr << "Need to either specify a encoder or have it encoded in filename\n";
         return 1;
     }
 
@@ -269,12 +294,17 @@ int main(int argc, const char** argv)
             std::vector<uint8_t> inp_vec;
 
             if (!use_stdin) {
+                // TODO: Repair?
                 //inp_vec.reserve(fsize(file));
                 // HACK to get exact file size
             }
 
             while (inp->get(c)) {
                 inp_vec.push_back(c);
+            }
+
+            if (print_stats) {
+                alphabet_size = count_alphabet_size(inp_vec);
             }
 
             setup_time = clk::now();
@@ -321,6 +351,8 @@ int main(int argc, const char** argv)
             std::cout << "input: "<<file<<"\n";
             std::cout << "input size: "<<inp_size<<" B\n";
         }
+        std::cout << "alphabet size: " << alphabet_size << "\n";
+
         auto out_size = 0;
         if (use_stdout) {
             std::cout << "output: <stdout>\n";
