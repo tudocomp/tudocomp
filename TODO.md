@@ -1,9 +1,9 @@
 # Outstanding
 
-- Evaluate whether compressed Rule vector is improvement
-- Add some kind of coverage support
 - Add comparison tool
 - Include esacomp java impl in that comparison tool
+- Add some kind of coverage support
+- Evaluate whether compressed Rule vector is improvement
 - Experiment with making the tudomp library be usable as a streaming interface
 - Generate nice massif visualized graphs
 - Optimize DecodeBuffer
