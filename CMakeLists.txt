@@ -11,6 +11,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
 find_package(Boost REQUIRED)
 find_package(Glog REQUIRED)
 include(sdsl)
+include(rust)
 
 # TuDoComp library and implementors
 add_subdirectory(src)
@@ -18,7 +19,7 @@ add_subdirectory(src)
 # Unit tests for everything in src
 add_subdirectory(test)
 
-# Huge optional corpus of text files for comparisions
+# Huge optional corpus of text files for comparisons
 add_subdirectory(datasets)
 
 # add a target to generate API documentation with Doxygen
