@@ -1,0 +1,1 @@
+add_cargo_executable(compress_compare)
