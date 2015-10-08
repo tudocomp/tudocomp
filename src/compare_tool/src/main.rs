@@ -6,7 +6,7 @@ use std::env;
 use std::fs;
 use std::path::Path;
 use std::thread;
-use std::io::Read;
+use std::io::{Read, Write};
 
 mod config;
 
@@ -57,6 +57,22 @@ fn print_sep(padding: LinePad) {
 
 // let mem_cmd = r##"valgrind --tool=massif --pages-as-heap=yes --massif-out-file=${mofile} ${cmd}; grep mem_heap_B ${mofile} | sed -e 's/mem_heap_B=\(.*\)/\1/' | sort -g | tail -n 1"##;
 
+fn bash_expand(s: &str) -> String {
+    let mut cmd = Command::new("bash");
+    cmd.stdin(Stdio::piped());
+    cmd.stdout(Stdio::piped());
+    let mut handles = cmd.spawn().unwrap();
+
+    let mut stdin = handles.stdin.take().unwrap();
+    stdin.write_all("echo ".as_bytes()).unwrap();
+    stdin.write_all(s.as_bytes()).unwrap();
+    drop(stdin);
+
+    let out = handles.wait_with_output().unwrap();
+    assert!(out.status.success());
+    String::from_utf8(out.stdout).unwrap().trim().to_owned()
+}
+
 fn alphabet_size(file: &str) -> usize {
     let mut bytes = [0u64; 256];
     let file = fs::File::open(file).unwrap();
@@ -80,7 +96,7 @@ fn main() {
     let profile = &config.profiles[profile_name];
 
     let inputs = profile.inputs.iter().map(|input| {
-        (input, fs::metadata(input).ok().expect("input file does not exist").len())
+        (input, fs::metadata(input).ok().expect(&format!("input file '{}' does not exist", input)).len())
     }).collect::<Vec<_>>();
 
     let input = inputs[0].0;

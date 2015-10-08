@@ -17,4 +17,4 @@ add_subdirectory(esacomp)
 add_subdirectory(lz_compressor)
 
 # CLI tool for comparing different compression tools
-add_subdirectory(compress_compare)
+add_subdirectory(compare_tool)

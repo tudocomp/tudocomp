@@ -33,3 +33,5 @@ COMMENT "Generating API documentation with Doxygen" VERBATIM
 )
 add_dependencies(docs sdsl_external)
 endif(DOXYGEN_FOUND)
+
+include(compare_workspace)

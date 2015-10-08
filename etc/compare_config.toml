@@ -1,0 +1,26 @@
+[foo]
+compare_commands = true
+with_mem = false
+inputs = [
+    "$DATASETS/alice_markov.1MB",
+    "../../datasets/download/real/dna.50MB",
+    "../../datasets/download/real/english.50MB",
+]
+commands = [
+#   [  <shown command and args>          <hidden args>    <out file ending> ],
+    ["tudocomp_driver -c dummy -e dummy",     "${1} -o ${2}",   "dummy.dummy.tdc"],
+    ["tudocomp_driver -c dummy -e esa_code0", "${1} -o ${2}",   "dummy.code0.tdc"],
+    ["tudocomp_driver -c dummy -e esa_code1", "${1} -o ${2}",   "dummy.code1.tdc"],
+    ["tudocomp_driver -c dummy -e esa_code2", "${1} -o ${2}",   "dummy.code2.tdc"],
+    ["tudocomp_driver -c lz -e esa_code2",    "${1} -o ${2}",   "lz.code2.tdc"   ],
+    ["tudocomp_driver -c esa -e esa_code2",   "${1} -o ${2}",   "esa.code2.tdc"  ],
+    ["gzip -9",                          "-c ${1} > ${2}", "gz"             ],
+    ["bzip2 -9",                         "-c ${1} > ${2}", "bz2"            ],
+    ["7z",                               "a ${2} ${1}",    "7z"             ],
+    ["tudocomp_driver -c lz -e esa_code1",    "${1} -o ${2}",   "lz.code1.tdc"   ],
+    ["tudocomp_driver -c esa -e esa_code1",   "${1} -o ${2}",   "esa.code1.tdc"  ],
+]
+
+[foo_mem]
+inherit_from = "foo"
+with_mem = true

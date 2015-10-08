@@ -1,5 +1,5 @@
 [package]
-name = "compress_compare"
+name = "compare_tool"
 version = "0.1.0"
 authors = ["Marvin Löbel <loebel.marvin@gmail.com>"]
 
