@@ -5,9 +5,11 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
-    INSTALL_COMMAND cat <SOURCE_DIR>/rustup.sh | sh -s -- --channel=nightly --prefix=<INSTALL_DIR> --disable-sudo --disable-ldconfig --yes
+    INSTALL_COMMAND cat <SOURCE_DIR>/rustup.sh | sh -s -- --prefix=<INSTALL_DIR> --disable-sudo --disable-ldconfig --yes
     EXCLUDE_FROM_ALL 1
 )
+
+# --channel=nightly
 
 # TODO
 # add_cargo_executable

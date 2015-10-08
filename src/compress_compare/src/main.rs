@@ -10,7 +10,6 @@ use std::io::Read;
 
 mod config;
 
-
 fn nice_size(size: u64) -> String {
     if size >= 1024 * 1024 {
         format!("{:6.2} MiB", (size as f64) / 1024.0 / 1024.0)
@@ -24,6 +23,7 @@ fn nice_size(size: u64) -> String {
 fn load_config(arg: &str) -> config::Config {
     let mut toml = String::new();
     fs::File::open(&arg)
+        .ok()
         .expect("config file not found")
         .read_to_string(&mut toml)
         .unwrap();
@@ -31,7 +31,9 @@ fn load_config(arg: &str) -> config::Config {
         .parse()
         .expect("config file not in valid TOML format");
 
-    config::parse_config(toml).expect("Invalid config file")
+    config::parse_config(toml)
+        .ok()
+        .expect("Invalid config file")
 }
 
 // type, value, time, size, compsize, compratio
@@ -78,7 +80,7 @@ fn main() {
     let profile = &config.profiles[profile_name];
 
     let inputs = profile.inputs.iter().map(|input| {
-        (input, fs::metadata(input).expect("input file does not exist").len())
+        (input, fs::metadata(input).ok().expect("input file does not exist").len())
     }).collect::<Vec<_>>();
 
     let input = inputs[0].0;
@@ -113,7 +115,7 @@ fn main() {
         let mut cmd = Command::new("bash");
         cmd.arg("-c").arg(run);
         let time_start = time::precise_time_ns();
-        cmd.output().expect("command not successful");
+        cmd.output().ok().expect("command not successful");
         let time_end = time::precise_time_ns();
         let time_span = ((time_end - time_start) as f64)
             / 1000.0
