@@ -5,7 +5,6 @@ use std::process::*;
 use std::env;
 use std::fs;
 use std::path::Path;
-use std::thread;
 use std::io::{Read, Write};
 
 mod config;
@@ -57,18 +56,24 @@ fn print_sep(padding: LinePad) {
 
 // let mem_cmd = r##"valgrind --tool=massif --pages-as-heap=yes --massif-out-file=${mofile} ${cmd}; grep mem_heap_B ${mofile} | sed -e 's/mem_heap_B=\(.*\)/\1/' | sort -g | tail -n 1"##;
 
-fn bash_expand(s: &str) -> String {
-    let mut cmd = Command::new("bash");
+/// Run the argument as a bash script
+fn bash_run(command_line: &str) -> Output {
+    let mut cmd = Command::new("sh");
     cmd.stdin(Stdio::piped());
     cmd.stdout(Stdio::piped());
+    cmd.stderr(Stdio::piped());
     let mut handles = cmd.spawn().unwrap();
 
     let mut stdin = handles.stdin.take().unwrap();
-    stdin.write_all("echo ".as_bytes()).unwrap();
-    stdin.write_all(s.as_bytes()).unwrap();
+    stdin.write_all(command_line.as_bytes()).unwrap();
     drop(stdin);
 
-    let out = handles.wait_with_output().unwrap();
+    handles.wait_with_output().unwrap()
+}
+
+/// Expand the argument through bash, substituting environment variables.
+fn bash_expand(s: &str) -> String {
+    let out = bash_run(&format!("echo {}", s));
     assert!(out.status.success());
     String::from_utf8(out.stdout).unwrap().trim().to_owned()
 }
@@ -88,6 +93,30 @@ fn alphabet_size(file: &str) -> usize {
     counter
 }
 
+/// Data that describes a single input file
+struct InputData {
+    unexpanded: String,
+    expanded: String,
+    size: u64,
+}
+
+/// Data that describes a single command
+struct CommandData {
+    unexpanded_visible: String,
+    unexpanded_hidden: String,
+    output_extension: String,
+}
+
+fn bash_in_out_script(input: &str, output: &str, command: &str) -> String {
+    format!("IN={}
+             OUT={}
+             {}", input, output, command)
+}
+
+fn file_name(file: &str) -> &str {
+    Path::new(file).file_name().unwrap().to_str().unwrap()
+}
+
 fn main() {
     let arg = &env::args().nth(1).expect("need to be given a filename");
     let profile_name = &env::args().nth(2).expect("need to be given a profile");
@@ -96,25 +125,31 @@ fn main() {
     let profile = &config.profiles[profile_name];
 
     let inputs = profile.inputs.iter().map(|input| {
-        (input, fs::metadata(input).ok().expect(&format!("input file '{}' does not exist", input)).len())
+        let input_expanded = bash_expand(&input);
+        let input_size = fs::metadata(&input_expanded)
+            .ok()
+            .expect(&format!("input file '{}' does not exist", input_expanded))
+            .len();
+        InputData {
+            unexpanded: input.clone(),
+            expanded: input_expanded,
+            size: input_size,
+        }
     }).collect::<Vec<_>>();
 
-    let input = inputs[0].0;
-    let input_size = inputs[0].1;
 
-    let commands = &profile.commands;
-    let commands: Vec<_> = commands.iter().map(|&(ref cmd, ref cargs, ref ending)| {
-        let command_output = format!("{}.{}",
-            Path::new(input).file_name().unwrap().to_str().unwrap()
-            , ending);
-        let c = format!("{} {}", cmd, cargs);
-        let command = c.replace("${1}", input)
-                       .replace("${2}", &command_output);
-        (command, command_output, &cmd[..])
-    }).collect();
+    let commands: Vec<_> = profile.commands.iter().map(
+        |&(ref cmd, ref cargs, ref ending)|{
+            CommandData {
+                unexpanded_visible: cmd.clone(),
+                unexpanded_hidden: cargs.clone(),
+                output_extension: ending.clone(),
+            }
+        }
+    ).collect();
 
-    let headers = inputs.iter().map(|x| &x.0);
-    let rows = commands.iter().map(|x| &x.2);
+    let headers = inputs.iter().map(|x| &x.unexpanded);
+    let rows = commands.iter().map(|x| &x.unexpanded_visible);
 
     let padding = headers.map(|s| s.len())
                          .chain(rows.map(|s| s.len()))
@@ -122,43 +157,64 @@ fn main() {
                          .unwrap_or(0);
     let padding = (padding,);
 
-    let run_row = |kind: &str, command: &str, file: &str, value: &str| {
-        let mut cmd = Command::new("bash");
-        cmd.arg("-c").arg(&format!("rm {}", file));
-        cmd.output().unwrap();
+    let run_row = |kind: &str, label: &str, command: &CommandData, input: &InputData| {
+        let output = &(
+            file_name(&input.expanded).to_owned()
+            + "."
+            + &command.output_extension
+        );
 
-        let run = command;
-        let mut cmd = Command::new("bash");
-        cmd.arg("-c").arg(run);
+        bash_run(&format!("rm {}", output));
+
+        let script = &bash_in_out_script(&input.expanded, output,
+            &format!("{} {}", command.unexpanded_visible,
+                              command.unexpanded_hidden)
+        );
+
         let time_start = time::precise_time_ns();
-        cmd.output().ok().expect("command not successful");
+        let out = bash_run(script);
+        assert!(out.status.success());
         let time_end = time::precise_time_ns();
+
         let time_span = ((time_end - time_start) as f64)
             / 1000.0
             / 1000.0
             / 1000.0;
 
-        let out_size = fs::metadata(file).unwrap().len();
-        let cmd = value;
+        let out_size = fs::metadata(output).unwrap().len();
         let comp_size = &nice_size(out_size);
-        let inp_size = &nice_size(input_size);
-        let ratio = (out_size as f64) / (input_size as f64) * 100.0;
+        let inp_size = &nice_size(input.size);
+        let ratio = (out_size as f64) / (input.size as f64) * 100.0;
         print_line(
-            (kind, cmd, time_span, inp_size, comp_size, ratio),
+            (kind, label, time_span, inp_size, comp_size, ratio),
             padding
         );
     };
 
+    println!("");
+    println!("Profile: {}", profile_name);
+    println!("");
+
     if profile.compare_commands {
-
+        for input in &inputs {
+            print_header("file", &input.unexpanded, padding);
+            print_sep(padding);
+            for command in &commands {
+                run_row("cmd", &command.unexpanded_visible, &command, &input);
+            }
+            print_sep(padding);
+        }
     } else {
-
+        for command in &commands {
+            print_header("cmd", &command.unexpanded_visible, padding);
+            print_sep(padding);
+            for input in &inputs {
+                run_row("file", &input.unexpanded, &command, &input);
+            }
+            print_sep(padding);
+        }
     }
 
-    print_header("file", &input, padding);
-    print_sep(padding);
-    for command in &commands {
-        run_row("cmd", &command.0, &command.1, &command.2);
-    }
+
 
 }

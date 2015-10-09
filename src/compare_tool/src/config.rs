@@ -51,8 +51,6 @@ fn parse_profile(name: &str, toml: &toml::Table) -> Result<Profile, TomlErr> {
         for input in inputs {
             let input = try!(input.as_str().ok_or(TomlErr)).to_owned();
 
-            let input = ::bash_expand(&input);
-
             profile.inputs.push(input);
         }
     }
