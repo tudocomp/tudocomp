@@ -3,7 +3,7 @@ project (tudocomp VERSION 0.1)
 
 include(ExternalProject)
 
-# Using C++11, more wanrnings and debug info
+# Using C++11, more warnings and debug info
 add_compile_options(-g -Wall -std=c++11) #-fdump-tree-all)
 
 # Global dependencies
