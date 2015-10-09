@@ -54,15 +54,18 @@ of the following commands in the build dir at any point
 during the development process:
 
 - `make` to just compile everything that changed, and see possible compiler
-   errors.
+  errors.
 - `make check` to also run the unit tests in addition to `make`.
 - `make docs` to generate html and latex documentation.
 - `make datasets` to download (large) amounts of test text files.
+  To avoid issues with accidentally deleting or re-downloading them,
+  they will be placed directly at `datasets/download`
+  in the source directory instead of in the build directory.
+- `make compare_workspace` to create a workspace directory in which
+  different algorithms and/or input tetxfiles from datasets can be
+  compared.
 - `make clean` to remove every build artifact without removing the
   makefile itself, allowing a clean start.
-  > WARNING: This also removes the downloaded datasets if present.
-  > You can also `cd` down into the build directory of the subproject itself
-  > and do a `make clean` there to only clean it, and not everything else.
 
 Builds will be placed in a subdirectory of `build` corresponding to the source
 directory. For example, if you are in `./src/build` and do a `make`, then
