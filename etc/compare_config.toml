@@ -1,3 +1,5 @@
+# Fast running example config that compares a bunch of
+# compression commands on a simple 1MB pseudo-english textfile.
 [example_fast]
 compare_commands = true
 with_mem = false
@@ -19,11 +21,13 @@ commands = [
     ["tudocomp_driver -c esa -e esa_code1",   "$IN -o $OUT",   "esa.code1.tdc"  ],
 ]
 
+# Same as example_fast, but also measuring memory usage
 [example_fast_mem]
 inherit_from = "example_fast"
 with_mem = true
 
-[example_compare_inputs]
+# Compare a number of different text files with the same algorithms
+[example_compare_texts]
 compare_commands = false
 inputs = [
     "$DATASETS/download/real/english.50MB",

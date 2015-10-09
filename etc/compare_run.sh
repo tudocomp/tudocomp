@@ -1,5 +1,6 @@
-#!/bin/sh
-
+#!/bin/bash
+# abort on non-zero exit of command
+set -e
 pushd ..
 make tudocomp_driver
 make compare_tool
