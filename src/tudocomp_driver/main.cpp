@@ -132,6 +132,16 @@ int main(int argc, const char** argv)
 
     google::InitGoogleLogging(argv[0]);
 
+    std::vector<std::string> debug_args;
+
+    for (int i = 0; i < argc; i++) {
+        debug_args.push_back(argv[i]);
+    }
+
+    for (auto& elem : debug_args) {
+        std::cout << vec_as_lossy_string(elem) << std::endl;
+    }
+
     std::map<std::string, docopt::value> args
         = docopt::docopt(USAGE,
                          { argv + 1, argv + argc },

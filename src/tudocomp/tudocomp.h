@@ -171,7 +171,7 @@ std::string vec_as_lossy_string(const T& s, size_t start = 0,
     return ss.str();
 }
 
-// TODO: Exisitng implementation is probably very imperformant
+// TODO: Existing implementation is probably very inmperformant
 /// Common helper class for decoders.
 ///
 /// This type represents a buffer of partially decoded input.

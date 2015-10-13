@@ -4,7 +4,8 @@ ExternalProject_Add(
     docopt
     GIT_REPOSITORY https://github.com/docopt/docopt.cpp.git
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-    UPDATE_COMMAND ""
+    GIT_TAG "origin/master"
+    #UPDATE_COMMAND ""
 )
 add_library(libdocopt IMPORTED STATIC GLOBAL)
 add_dependencies(libdocopt docopt)
