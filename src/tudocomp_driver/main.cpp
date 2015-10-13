@@ -143,10 +143,9 @@ int main(int argc, const char** argv)
     }
 
     std::map<std::string, docopt::value> args
-        = docopt::docopt(USAGE,
-                         { argv + 1, argv + argc },
-                         true,                // show help if requested
-                         "TuDoComp 0.1.0");  // version string
+        = docopt::docopt_parse(USAGE, { argv + 1, argv + argc }, true);
+        //= docopt::docopt(USAGE, { argv + 1, argv + argc }, true, "TuDoComp 0.1.0");
+
 
     if (args["--list"].asBool()) {
         std::cout << "This build supports the following algorithms:\n";
