@@ -4,8 +4,7 @@ ExternalProject_Add(
     docopt
     GIT_REPOSITORY https://github.com/docopt/docopt.cpp.git
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-    GIT_TAG "origin/master"
-    #UPDATE_COMMAND ""
+    UPDATE_COMMAND ""
 )
 add_library(libdocopt IMPORTED STATIC GLOBAL)
 add_dependencies(libdocopt docopt)
@@ -30,6 +29,7 @@ target_link_libraries(
     tudocomp_driver
 
     libdocopt
+    ${Boost_LIBRARIES}
     glog
     tudocomp
 

@@ -8,7 +8,7 @@ add_compile_options(-g -Wall -std=c++11) #-fdump-tree-all)
 
 # Global dependencies
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED program_options)
 find_package(Glog REQUIRED)
 include(sdsl)
 include(rust)

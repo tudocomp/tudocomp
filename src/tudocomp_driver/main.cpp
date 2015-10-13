@@ -5,9 +5,11 @@
 #include <iomanip>
 #include <fstream>
 #include <chrono>
+#include <stdexcept>
 
 #include "glog/logging.h"
 #include "docopt/docopt.h"
+#include <boost/program_options.hpp>
 #include "tudocomp.h"
 
 #include "tudocomp_algorithms.h"
@@ -15,6 +17,7 @@
 namespace tudocomp_driver {
 
 using namespace tudocomp;
+namespace po = boost::program_options;
 
 const std::string COMPRESSED_FILE_ENDING = "tdc";
 
@@ -22,25 +25,29 @@ static const std::string USAGE =
 R"(TuDo Comp.
 
 Usage:
-    tudocomp [-fs] [-k] -c <name>  -e <name>  [-o <file>] [--] ( <file> | - )
-    tudocomp [-fs]  -d            [-e <name>] [-o <file>] [--] ( <file> | - )
+    tudocomp [-fs] [-k] -c <name>  -e <name>  [-o <output>] [--] ( <input> | - )
+    tudocomp [-fs]  -d            [-e <name>] [-o <output>] [--] ( <input> | - )
     tudocomp --list
+    tudocomp --help
 
 Options:
     -h --help               Show this screen.
-    --version               Show version.
     -c --compressor <name>  Use compressor <name> for generating the Ruleset.
     -e --encoder <name>     Use encoder <name> for generating the Output.
     -k --compress           Compress input instead of compressing it.
     -d --decompress         Decompress input instead of compressing it.
-    -o --output <file>      Choose output filename instead the the default of
-                            <input file>.<compressor name>.<encoder name>.tdc
+    -o --output <output>    Choose output filename instead the the default of
+                            <input>.<compressor name>.<encoder name>.tdc
                             or stdout if reading from stdin.
     -s --stats              Print statistics to stdout.
     -f --force              Overwrite output even if it exists.
     -l --list               List all Compression and Encoding algorithms
                             supported by this tool.
 )";
+
+static void exit(std::string msg) {
+    throw std::runtime_error(msg);
+}
 
 static bool fexists(std::string filename)
 {
@@ -132,22 +139,62 @@ int main(int argc, const char** argv)
 
     google::InitGoogleLogging(argv[0]);
 
-    std::vector<std::string> debug_args;
+    po::options_description desc("Options");
+    desc.add_options()
+        ("help,h", "produce help message")
+        ("compressor,c", po::value<std::string>(), "Use compressor <name> for generating the Ruleset.")
+        ("encoder,e", po::value<std::string>(), "")
+        ("compress,k", "")
+        ("decompress,d", "")
+        ("output,o", po::value<std::string>(), "")
+        ("stats,s", "")
+        ("force,f", "")
+        ("list,l", "")
+        ("input", po::value<std::string>(), "")
+    ;
+    po::positional_options_description pos_desc;
+    pos_desc.add("input", 1);
 
-    for (int i = 0; i < argc; i++) {
-        debug_args.push_back(argv[i]);
+    po::variables_map args;
+    po::store(po::command_line_parser(argc, argv)
+            .positional(pos_desc)
+            .options(desc)
+            .run(),
+        args);
+    po::notify(args);
+
+    auto arg2boost = [](std::string s) -> std::string {
+        if (s.size() > 1 && s[0] == '-' && s[1] == '-') {
+            return s.substr(2);
+        } else if (s.size() > 0 && s[0] == '-') {
+            return s;
+        } else if (s.size() > 0 && s[0] == '<') {
+            return s.substr(1, s.size() - 2);
+        } else {
+            std::cout << "error";
+            return "";
+        }
+    };
+
+    auto value_arg_exists = [&](std::string s) {
+        return args.count(arg2boost(s)) > 0;
+    };
+    auto arg_exists = [&](std::string s) {
+        return args.count(arg2boost(s)) > 0;
+    };
+    auto string_arg = [&](std::string s) {
+        if (!value_arg_exists(s)) {
+            exit("Argument not given: '" + s + "'");
+        }
+        return args[arg2boost(s)].as<std::string>();
+    };
+
+    if (arg_exists("--help")) {
+        std::cout << USAGE << std::endl;
+        return 0;
     }
 
-    for (auto& elem : debug_args) {
-        std::cout << vec_as_lossy_string(elem) << std::endl;
-    }
-
-    std::map<std::string, docopt::value> args
-        = docopt::docopt_parse(USAGE, { argv + 1, argv + argc }, true);
-        //= docopt::docopt(USAGE, { argv + 1, argv + argc }, true, "TuDoComp 0.1.0");
-
-
-    if (args["--list"].asBool()) {
+    if (arg_exists("--list")) {
         std::cout << "This build supports the following algorithms:\n";
         std::cout << std::endl;
 
@@ -190,17 +237,17 @@ int main(int argc, const char** argv)
         return 0;
     }
 
-    bool print_stats = args["--stats"].asBool();
+    bool print_stats = arg_exists("--stats");
     int alphabet_size = 0;
 
-    bool do_compress = !args["--decompress"].asBool();
+    bool do_compress = !arg_exists("--decompress");
 
     /////////////////////////////////////////////////////////////////////////
     // Select where the input comes from
 
-    std::string file = args["<file>"].asString();
-    bool use_stdin = !args["--"].asBool()
-        && (file == "-" || args["-"].asBool());
+    std::string file = string_arg("<input>");
+    bool use_stdin = !arg_exists("--")
+        && (file == "-" || arg_exists("-"));
 
     if (!use_stdin && !fexists(file)) {
         std::cerr << "input " << file << " does not exist\n";
@@ -209,11 +256,11 @@ int main(int argc, const char** argv)
 
     // Handle selection of encoder
     CodingAlgorithm enc;
-    bool use_explict_encoder(args["--encoder"]);
+    bool use_explict_encoder(value_arg_exists("--encoder"));
     auto decode_meta_from_file = extract_from_file(file);
 
     if (use_explict_encoder) {
-        enc = getCodingByShortname(args["--encoder"].asString());
+        enc = getCodingByShortname(string_arg("--encoder"));
     } else if (!use_stdin && decode_meta_from_file.found) {
         enc = getCodingByShortname(decode_meta_from_file.enc_shortname);
     } else {
@@ -229,7 +276,7 @@ int main(int argc, const char** argv)
 
     CompressionAlgorithm comp;
     if (do_compress) {
-        comp = getCompressionByShortname(args["--compressor"].asString());
+        comp = getCompressionByShortname(string_arg("--compressor"));
         if (comp.compressor == nullptr) {
             std::cerr << "Unknown compressor '" << comp.shortname << "'.\n";
             std::cerr << "Use --list for a list of all implemented algorithms.\n";
@@ -244,11 +291,11 @@ int main(int argc, const char** argv)
 
     std::string ofile;
     bool use_stdout = use_stdin;
-    bool use_explict_output(args["--output"]);
+    bool use_explict_output(value_arg_exists("--output"));
 
     if (use_explict_output) {
         // Output to manually specifed file
-        ofile = args["--output"].asString();
+        ofile = string_arg("--output");
     } else if (!use_stdin && do_compress) {
         // Output to a automatically determined file
         ofile = file + "." + comp.shortname + "." + enc.shortname + "." + COMPRESSED_FILE_ENDING;
@@ -288,7 +335,7 @@ int main(int argc, const char** argv)
             out = &std::cout;
         } else {
             // Output to specified file
-            if (!open_output(out, ofile, bool(args["--force"]))) {
+            if (!open_output(out, ofile, bool(value_arg_exists("--force")))) {
                 return 1;
             }
         }
