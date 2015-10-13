@@ -291,7 +291,7 @@ int main(int argc, const char** argv)
                 return 1;
             }
         } else {
-            comp = { "", "", nullptr };
+            comp = { "", "", "", nullptr };
         }
 
         /////////////////////////////////////////////////////////////////////////
