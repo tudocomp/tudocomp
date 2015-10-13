@@ -1,10 +1,10 @@
 # Fast running example config that compares a bunch of
-# compression commands on a simple 1MB pseudo-english textfile.
+# compression commands on a source file in the repo
 [example_fast]
 compare_commands = true
 with_mem = false
 inputs = [
-    "$DATASETS/alice_markov.1MB",
+    "$DATASETS/../src/tudocomp_driver/main.cpp",
 ]
 commands = [
 #      <shown command and args>               <hidden args>    <out file ending>
