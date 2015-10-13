@@ -78,7 +78,7 @@ fn bash_expand(s: &str) -> String {
     String::from_utf8(out.stdout).unwrap().trim().to_owned()
 }
 
-fn alphabet_size(file: &str) -> usize {
+fn _alphabet_size(file: &str) -> usize {
     let mut bytes = [0u64; 256];
     let file = fs::File::open(file).unwrap();
     for b in file.bytes() {
@@ -148,13 +148,10 @@ fn main() {
         }
     ).collect();
 
-    let headers = inputs.iter().map(|x| &x.unexpanded);
-    let rows = commands.iter().map(|x| &x.unexpanded_visible);
+    let headers = inputs.iter().map(|x| x.unexpanded.len());
+    let rows = commands.iter().map(|x| x.unexpanded_visible.len());
 
-    let padding = headers.map(|s| s.len())
-                         .chain(rows.map(|s| s.len()))
-                         .max()
-                         .unwrap_or(0);
+    let padding = headers.chain(rows).max().unwrap_or(0);
     let padding = (padding,);
 
     let run_row = |kind: &str, label: &str, command: &CommandData, input: &InputData| {
@@ -214,7 +211,5 @@ fn main() {
             print_sep(padding);
         }
     }
-
-
 
 }
