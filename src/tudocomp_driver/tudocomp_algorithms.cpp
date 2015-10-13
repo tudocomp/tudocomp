@@ -43,7 +43,7 @@ std::vector<CompressionAlgorithm> COMPRESSION_ALGORITHM = {
     {
         "ESA",
         "esa",
-        "Esacomp.",
+        "Esacomp (defaults to list).",
         new ESACompressor<>()
     },
     {

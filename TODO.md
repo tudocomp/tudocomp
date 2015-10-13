@@ -1,5 +1,6 @@
 # Outstanding
 
+- make threshold settable
 - Add comparison tool
 - Include esacomp java impl in that comparison tool
 - Add some kind of coverage support
