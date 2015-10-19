@@ -34,6 +34,14 @@ using Rules = std::vector<Rule>;
 /// can regenerate the full input.
 class Compressor {
 public:
+    const Env& env;
+
+    /// Class needs to be constructed with an `Env&` argument.
+    inline Compressor() = delete;
+
+    /// Construct the class with an environment.
+    inline Compressor(Env& env_): env(env_) {}
+
     /// Compress the input.
     ///
     /// \param input The input to be compressed.
@@ -53,6 +61,14 @@ public:
 /// decoded and decompressed original text.
 class Coder {
 public:
+    const Env& env;
+
+    /// Class needs to be constructed with an `Env&` argument.
+    inline Coder() = delete;
+
+    /// Construct the class with an environment.
+    inline Coder(Env& env_): env(env_) {}
+
     /// Encode a list or Rules and the input text.
     ///
     /// \param rules The list of substitution rules
@@ -79,53 +95,6 @@ public:
     virtual size_t min_encoded_rule_length(size_t input_size) = 0;
 };
 
-/// Create a `Input` value containing `s`.
-///
-/// This is useful for testing the implementations of
-/// Compressor::Compress() and Coder::code() with small hardcoded strings.
-Input input_from_string(std::string s);
-
-/// A `streambuf` that can be used as a `istream` that points into the
-/// contents of another string.
-///
-/// This is useful for testing the implementation of Coder::decode()
-/// with small hardcoded strings.
-struct StringRefStream: std::streambuf
-{
-    inline StringRefStream(const boost::string_ref vec) {
-        this->setg((char*)vec.data(), (char*)vec.data(), (char*)vec.data() + vec.size());
-    }
-};
-
-/// Temporary provides a `ostream` to write into, and returns it as a string.
-///
-/// This is useful for testing Coder::code() and Coder::decode().
-///
-/// \param f A callable type (like for example a C++ lambda expression)
-///          that receives an std::ostream& as an argument so that its
-///          body can write into it.
-template<class Lambda>
-std::string ostream_to_string(Lambda f) {
-    std::stringstream ss;
-    std::ostream& os = ss;
-    f(os);
-    return ss.str();
-}
-
-/// Temporary provides a `ostream` to write into, and returns it as a
-/// byte vector.
-///
-/// This is useful for testing Coder::code() and Coder::decode().
-///
-/// \param f A callable type (like for example a C++ lambda expression)
-///          that receives an std::ostream& as an argument so that its
-///          body can write into it.
-template<class Lambda>
-std::vector<uint8_t> ostream_to_bytes(Lambda f) {
-    auto s = ostream_to_string(f);
-    return std::vector<uint8_t>(s.begin(), s.end());
-}
-
 /// Convert a vector-like type into a string showing the element values.
 ///
 /// Useful for logging output.
@@ -149,7 +118,7 @@ std::string vec_to_debug_string(const T& s) {
     return ss.str();
 }
 
-/// Convert a vector-like type into a string by inpterpreting printable ASCII
+/// Convert a vector-like type into a string by interpreting printable ASCII
 /// bytes as chars, and substituting others.
 ///
 /// Useful for logging output.
@@ -171,7 +140,7 @@ std::string vec_as_lossy_string(const T& s, size_t start = 0,
     return ss.str();
 }
 
-// TODO: Existing implementation is probably very inmperformant
+// TODO: Existing implementation is probably very inperformant
 /// Common helper class for decoders.
 ///
 /// This type represents a buffer of partially decoded input.

@@ -17,44 +17,26 @@ using namespace dummy;
 // and other gtest macros to test the code.
 // For more details. see the gtest docs.
 TEST(Dummy, compressor) {
-    const Input input = input_from_string("abcdebcdeabc");
-    DummyCompressor compressor;
-    Rules rules = compressor.compress(input, 2);
-
-    // The dummy compressor does not produce any rules
-    Rules should_be { };
-
-    ASSERT_EQ(rules.size(), should_be.size());
-    for (size_t i = 0; i < rules.size(); i++)
-        ASSERT_EQ(rules[i], should_be[i]);
+    CompressorTest<DummyCompressor>()
+        .input("abcdebcdeabc")
+        .threshold(2)             // Threshold value is irrelevant here
+        .expected_rules(Rules {}) // The dummy compressor does not produce any rules
+        .run();
 }
 
 TEST(Dummy, encoder) {
-    const Input input = input_from_string("abcdebcdeabc");
-
-    Rules rules { {1, 5, 4}, {5, 10, 2} };
-
-    // The dummy encoder just outputs the input data unchanged
-    std::string should_be("abcdebcdeabc");
-
-    DummyCoder coder;
-    auto coded = ostream_to_string([&] (std::ostream& out) {
-        coder.code(rules, input, out);
-    });
-    ASSERT_EQ(should_be, coded);
-
+    CoderTest<DummyCoder>()
+        .input("abcdebcdeabc")
+        .rules(Rules { {1, 5, 4}, {5, 10, 2} })
+        .expected_output("abcdebcdeabc")
+        .run();
 }
 
 TEST(Dummy, decoder) {
-    const std::string should_be("abcdebcdeabc");
-
-    std::istringstream inp("abcdebcdeabc");
-
-    DummyCoder decoder;
-    auto decoded = ostream_to_string([&] (std::ostream& out) {
-        decoder.decode(inp, out);
-    });
-    ASSERT_EQ(should_be, decoded);
+    DecoderTest<DummyCoder>()
+        .input("abcdebcdeabc")
+        .expected_output("abcdebcdeabc")
+        .run();
 }
 
 TEST(Dummy, Roundrip) {

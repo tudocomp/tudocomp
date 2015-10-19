@@ -21,69 +21,78 @@ using namespace lz_compressor;
 // line interface.
 //
 // The format of the initializers is a tuple of three things:
-// - Display name: Used in the UI for dispalying the name of a algorthm
-// - ID string: Used in the command line interface and the output filename
+// - Display name: Used in the UI for displaying the name of a algorithm
+// - ID string: Used in the command line interface and the output file name
 //   for identifying an algorithm
 // - Description: Text describing what kind of algorithm this is.
-// - Algorithm: A pointer to the base class of an Compressor or Encoder.
+// - Algorithm: A function pointer that constructs the base class of a
+//   Compressor or Encoder.
+
+template<class T> Compressor* compressor(Env& env) {
+    return new T(env);
+}
 
 std::vector<CompressionAlgorithm> COMPRESSION_ALGORITHM = {
     {
         "Dummy",
         "dummy",
         "Dummy compressor that does not produce any rules.",
-        new DummyCompressor()
+        &compressor<DummyCompressor>
     },
     {
         "LZ",
         "lz",
         "LZ impl included in esacomp.",
-        new LZCompressor()
+        &compressor<LZCompressor>,
     },
     {
         "ESA",
         "esa",
-        "Esacomp (defaults to list).",
-        new ESACompressor<>()
+        "Esacomp (defaults to using a suffix list internally).",
+        &compressor<ESACompressor<>>,
     },
     {
         "ESA (Sorted Suffix List)",
         "esa_list",
         "Esacomp using a suffix list internally.",
-        new ESACompressor<MaxLCPSortedSuffixList>()
+        &compressor<ESACompressor<MaxLCPSortedSuffixList>>,
     },
     {
         "ESA (Heap)",
         "esa_heap",
         "Esacomp using a heap internally.",
-        new ESACompressor<MaxLCPHeap>()
+        &compressor<ESACompressor<MaxLCPHeap>>,
     },
 };
+
+template<class T> Coder* coder(Env& env) {
+    return new T(env);
+}
 
 std::vector<CodingAlgorithm> CODING_ALGORITHM = {
     {
         "Dummy",
         "dummy",
         "Dummy encoding, outputs input text unchanged.",
-        new DummyCoder()
+        &coder<DummyCoder>,
     },
     {
         "Code0",
         "esa_code0",
         "Human readable output of text and rules.",
-        new Code0Coder()
+        &coder<Code0Coder>,
     },
     {
         "Code1",
         "esa_code1",
         "Byte based encoding.",
-        new Code1Coder()
+        &coder<Code1Coder>,
     },
     {
         "Code2",
         "esa_code2",
         "Bit based encoding.",
-        new Code2Coder()
+        &coder<Code2Coder>,
     },
 };
 

@@ -5,11 +5,6 @@
 
 namespace tudocomp {
 
-Input input_from_string(std::string s) {
-    Input v(s.begin(), s.end());
-    return v;
-}
-
 void DecodeBuffer::decodeCallback(size_t source) {
     if (pointers.count(source) > 0) {
         std::vector<size_t> list = pointers[source];

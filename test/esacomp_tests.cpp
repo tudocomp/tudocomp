@@ -14,158 +14,112 @@
 using namespace esacomp;
 
 TEST(ESACompressor, compress) {
-    const Input input = input_from_string("abcdebcdeabc");
-    ESACompressor<> compressor;
-    Rules rules = compressor.compress(input, 2);
-    Rules x { {1, 5, 4}, {5, 10, 2} };
-
-    ASSERT_EQ(rules.size(), x.size());
-    for (size_t i = 0; i < rules.size(); i++)
-        ASSERT_EQ(rules[i], x[i]);
+    CompressorTest<ESACompressor<>>()
+        .input("abcdebcdeabc")
+        .threshold(2)
+        .expected_rules(Rules { {1, 5, 4}, {5, 10, 2} })
+        .run();
 }
 
 TEST(ESACompressor, compress_max_lcp_heap) {
-    const Input input = input_from_string("abcdebcdeabc");
-    ESACompressor<MaxLCPHeap> compressor;
-    Rules rules = compressor.compress(input, 2);
-    Rules x { {1, 5, 4}, {5, 10, 2} };
-
-    ASSERT_EQ(rules.size(), x.size());
-    for (size_t i = 0; i < rules.size(); i++)
-        ASSERT_EQ(rules[i], x[i]);
+    CompressorTest<ESACompressor<MaxLCPHeap>>()
+        .input("abcdebcdeabc")
+        .threshold(2)
+        .expected_rules(Rules { {1, 5, 4}, {5, 10, 2} })
+        .run();
 }
 
 TEST(ESACompressor, compress_max_lcp_ssl) {
-    const Input input = input_from_string("abcdebcdeabc");
-    ESACompressor<MaxLCPSortedSuffixList> compressor;
-    Rules rules = compressor.compress(input, 2);
-    Rules x { {1, 5, 4}, {5, 10, 2} };
-
-    ASSERT_EQ(rules.size(), x.size());
-    for (size_t i = 0; i < rules.size(); i++)
-        ASSERT_EQ(rules[i], x[i]);
+    CompressorTest<ESACompressor<MaxLCPSortedSuffixList>>()
+        .input("abcdebcdeabc")
+        .threshold(2)
+        .expected_rules(Rules { {1, 5, 4}, {5, 10, 2} })
+        .run();
 }
 
 TEST(Code0Coder, basic) {
-    const Input input = input_from_string("abcdebcdeabc");
-    {
-        Rules rules { {1, 5, 4}, {5, 10, 2} };
-        std::string should_be("12:a{6,4}{11,2}deabc");
+    auto test = CoderTest<Code0Coder>()
+        .input("abcdebcdeabc");
 
-        Code0Coder coder;
-        auto coded = ostream_to_string([&] (std::ostream& out) {
-            coder.code(rules, input, out);
-        });
-        ASSERT_EQ(should_be, coded);
-    }
-    {
-        Rules rules { {5, 1, 4}, {9, 0, 3} };
-        std::string should_be("12:abcde{2,4}{1,3}");
+    test.rules(Rules { {1, 5, 4}, {5, 10, 2} })
+        .expected_output("12:a{6,4}{11,2}deabc")
+        .run();
 
-        Code0Coder coder;
-        auto coded = ostream_to_string([&] (std::ostream& out) {
-            coder.code(rules, input, out);
-        });
-        ASSERT_EQ(should_be, coded);
-    }
+    test.rules(Rules { {5, 1, 4}, {9, 0, 3} })
+        .expected_output("12:abcde{2,4}{1,3}")
+        .run();
 }
 
 TEST(Code0Coder, emptyRules) {
-    const Input input = input_from_string("abcdebcdeabc");
-    Rules rules {  };
-    std::string should_be("12:abcdebcdeabc");
-
-    Code0Coder coder;
-    auto coded = ostream_to_string([&] (std::ostream& out) {
-        coder.code(rules, input, out);
-    });
-    ASSERT_EQ(should_be, coded);
+    CoderTest<Code0Coder>()
+        .input("abcdebcdeabc")
+        .rules(Rules {})
+        .expected_output("12:abcdebcdeabc")
+        .run();
 }
 
 TEST(Code0Coder, emptyInput) {
-    const Input input = input_from_string("");
-    Rules rules {  };
-    std::string should_be("0:");
-
-    Code0Coder coder;
-    auto coded = ostream_to_string([&] (std::ostream& out) {
-        coder.code(rules, input, out);
-    });
-    ASSERT_EQ(should_be, coded);
+    CoderTest<Code0Coder>()
+        .input("")
+        .rules(Rules {})
+        .expected_output("0:")
+        .run();
 }
 
 TEST(Code1Coder, basic) {
-    const Input input = input_from_string("abcdebcdeabc");
-    {
-        Rules rules { {1, 5, 4}, {5, 10, 2} };
-        std::vector<uint8_t> should_be {
+    auto test = CoderTest<Code1Coder>()
+        .input("abcdebcdeabc");
+
+    test.rules(Rules { {1, 5, 4}, {5, 10, 2} })
+        .expected_output(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 12,
             17,
             'a', 1, 5, 4, 'b', 'c', 'd', 'e', 'a', 'b', 'c'
-        };
+        })
+        .run();
 
-        Code1Coder coder;
-        auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, out);
-        });
-        ASSERT_EQ(should_be, coded);
-    }
-    {
-        Rules rules { {5, 1, 4}, {9, 0, 3} };
-        std::vector<uint8_t> should_be {
+    test.rules(Rules { {5, 1, 4}, {9, 0, 3} })
+        .expected_output(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 12,
             17,
             'a', 'b', 'c', 'd', 'e', 1, 1, 4, 'a', 'b', 'c'
-        };
-
-        Code1Coder coder;
-        auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, out);
-        });
-        ASSERT_EQ(should_be, coded);
-    }
+        })
+        .run();
 }
 
 TEST(Code1Coder, emptyRules) {
-    const Input input = input_from_string("abcdebcdeabc");
-    {
-        Rules rules { };
-        std::vector<uint8_t> should_be {
+    auto test = CoderTest<Code1Coder>()
+        .input("abcdebcdeabc");
+
+    test.rules(Rules { })
+        .expected_output(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 12,
             17,
             'a', 'b', 'c', 'd', 'e', 'b', 'c', 'd', 'e', 'a', 'b', 'c'
-        };
-
-        Code1Coder coder;
-        auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, out);
-        });
-        ASSERT_EQ(should_be, coded);
-    }
+        })
+        .run();
 }
 
 TEST(Code1Coder, emptyInput) {
-    const Input input = input_from_string("");
-    {
-        Rules rules { };
-        std::vector<uint8_t> should_be {
+    auto test = CoderTest<Code1Coder>()
+        .input("");
+
+    test.rules(Rules { })
+        .expected_output(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 0,
             17,
-        };
-
-        Code1Coder coder;
-        auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, out);
-        });
-        ASSERT_EQ(should_be, coded);
-    }
+        })
+        .run();
 }
 
 TEST(Code2Coder, basic) {
-    const Input input = input_from_string("abcdebcdeabc");
-    {
-        Rules rules { {1, 5, 4}, {5, 10, 2} };
-        std::vector<uint8_t> should_be {
+    auto test = CoderTest<Code2Coder>()
+        .input("abcdebcdeabc");
+
+    test.rules(Rules {
+            {1, 5, 4}, {5, 10, 2}
+        })
+        .expected_output(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 12, // length
             0, 0, 0, 2, // threshold
             3, // bits per symbol
@@ -186,17 +140,13 @@ TEST(Code2Coder, basic) {
             'e', 'a', 'b',
             // encoded text
             0b00001010, 0b10001011, 0b01000000, 0b01010001, 0b00100000
-        };
+        })
+        .run();
 
-        Code2Coder coder;
-        auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, out);
-        });
-        ASSERT_EQ(should_be, coded);
-    }
-    {
-        Rules rules { {5, 1, 4}, {9, 0, 3} };
-        std::vector<uint8_t> should_be {
+    test.rules(Rules {
+            {5, 1, 4}, {9, 0, 3}
+        })
+        .expected_output(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 12,
             0, 0, 0, 3,
             3,
@@ -215,22 +165,16 @@ TEST(Code2Coder, basic) {
             98, 99, 100,
             0b01010011, 0b01001100, 0b00110000, 0b00000000
             //0b01010011, 0b01001100, 0b01010000, 0b01000000 with threshold 2
-        };
-
-        Code2Coder coder;
-        auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, out);
-        });
-
-        ASSERT_EQ(should_be, coded);
-    }
+        })
+        .run();
 }
 
 TEST(Code2Coder, emptyRules) {
-    const Input input = input_from_string("abcdebcdeabc");
-    {
-        Rules rules { };
-        std::vector<uint8_t> should_be {
+    auto test = CoderTest<Code2Coder>()
+        .input("abcdebcdeabc");
+
+    test.rules(Rules {})
+        .expected_output(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 12,
             0, 0, 0, 0,
             4,
@@ -259,22 +203,16 @@ TEST(Code2Coder, emptyRules) {
             'e', 'b', 'c',
             0b00011100, 0b10010001, 0b10011001, 0b00010100
             // 0 00111 0 01001 0 00110 0 110 0 100 0 101 00
-
-        };
-
-        Code2Coder coder;
-        auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, out);
-        });
-        ASSERT_EQ(should_be, coded);
-    }
+        })
+        .run();
 }
 
 TEST(Code2Coder, emptyInput) {
-    const Input input = input_from_string("");
-    {
-        Rules rules { };
-        std::vector<uint8_t> should_be {
+    auto test = CoderTest<Code2Coder>()
+        .input("");
+
+    test.rules(Rules {})
+        .expected_output(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0,
             1,
@@ -282,98 +220,53 @@ TEST(Code2Coder, emptyInput) {
             1,
             0, 0,
             0, 0,
-        };
-
-        Code2Coder coder;
-        auto coded = ostream_to_bytes([&] (std::ostream& out) {
-            coder.code(rules, input, out);
-        });
-        ASSERT_EQ(should_be, coded);
-    }
+        })
+        .run();
 }
 
 TEST(Code0Decoder, basic) {
-    const std::string should_be("abcdebcdeabc");
+    auto test = DecoderTest<Code0Coder>()
+        .expected_output("abcdebcdeabc");
 
-    {
-        std::istringstream inp("12:a{6,4}{11,2}deabc");
+    test.input("12:a{6,4}{11,2}deabc")
+        .run();
 
-        Code0Coder decoder;
-        auto decoded = ostream_to_string([&] (std::ostream& out) {
-            decoder.decode(inp, out);
-        });
-        ASSERT_EQ(should_be, decoded);
-    }
-    {
-        std::istringstream inp("12:abcde{2,4}{1,3}");
+    test.input("12:abcde{2,4}{1,3}")
+        .run();
 
-        Code0Coder decoder;
-        auto decoded = ostream_to_string([&] (std::ostream& out) {
-            decoder.decode(inp, out);
-        });
-        ASSERT_EQ(should_be, decoded);
-    }
-    {
-        std::istringstream inp("12:abcde{2,2}dea{6,2}");
+    test.input("12:abcde{2,2}dea{6,2}")
+        .run();
 
-        Code0Coder decoder;
-        auto decoded = ostream_to_string([&] (std::ostream& out) {
-            decoder.decode(inp, out);
-        });
-        ASSERT_EQ(should_be, decoded);
-    }
-    {
-        const std::string should_be("abcdefabcdefcd");
-        std::istringstream inp("14:{7,3}{10,3}abcdef{3,2}");
-
-        Code0Coder decoder;
-        auto decoded = ostream_to_string([&] (std::ostream& out) {
-            decoder.decode(inp, out);
-        });
-        ASSERT_EQ(should_be, decoded);
-    }
+    DecoderTest<Code0Coder>()
+        .input("14:{7,3}{10,3}abcdef{3,2}")
+        .expected_output("abcdefabcdefcd")
+        .run();
 }
 
 TEST(Code1Decoder, basic) {
-    const std::string should_be("abcdebcdeabc");
+    auto test = DecoderTest<Code1Coder>()
+        .expected_output("abcdebcdeabc");
 
-    {
-        std::vector<uint8_t> inp_bytes {
+    test.input(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 12,
             17,
             'a', 1, 5, 4, 1, 10, 2, 'd', 'e', 'a', 'b', 'c'
-        };
+        })
+        .run();
 
-        std::string inp_str(inp_bytes.begin(), inp_bytes.end());
-        std::istringstream inp(inp_str);
-        Code1Coder decoder;
-        auto decoded = ostream_to_string([&] (std::ostream& out) {
-            decoder.decode(inp, out);
-        });
-        ASSERT_EQ(should_be, decoded);
-    }
-    {
-        std::vector<uint8_t> inp_bytes {
+    test.input(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 12,
             17,
             'a', 'b', 'c', 'd', 'e', 1, 1, 4, 1, 0, 3
-        };
-
-        std::string inp_str(inp_bytes.begin(), inp_bytes.end());
-        std::istringstream inp(inp_str);
-        Code1Coder decoder;
-        auto decoded = ostream_to_string([&] (std::ostream& out) {
-            decoder.decode(inp, out);
-        });
-        ASSERT_EQ(should_be, decoded);
-    }
+        })
+        .run();
 }
 
 TEST(Code2Decoder, basic) {
-    const std::string should_be("abcdebcdeabc");
+    auto test = DecoderTest<Code2Coder>()
+        .expected_output("abcdebcdeabc");
 
-    {
-        std::vector<uint8_t> inp_bytes {
+    test.input(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 12, // length
             0, 0, 0, 2, // threshold
             3, // bits per symbol
@@ -394,18 +287,10 @@ TEST(Code2Decoder, basic) {
             'e', 'a', 'b',
             // encoded text
             0b00001010, 0b10001011, 0b01000000, 0b01010001, 0b00100000
-        };
+        })
+        .run();
 
-        std::string inp_str(inp_bytes.begin(), inp_bytes.end());
-        std::istringstream inp(inp_str);
-        Code2Coder decoder;
-        auto decoded = ostream_to_string([&] (std::ostream& out) {
-            decoder.decode(inp, out);
-        });
-        ASSERT_EQ(should_be, decoded);
-    }
-    {
-        std::vector<uint8_t> inp_bytes {
+    test.input(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 12,
             0, 0, 0, 2,
             3,
@@ -423,16 +308,8 @@ TEST(Code2Decoder, basic) {
             97, 98, 99,
             98, 99, 100,
             0b01010011, 0b01001100, 0b01010000, 0b01000000
-        };
-
-        std::string inp_str(inp_bytes.begin(), inp_bytes.end());
-        std::istringstream inp(inp_str);
-        Code2Coder decoder;
-        auto decoded = ostream_to_string([&] (std::ostream& out) {
-            decoder.decode(inp, out);
-        });
-        ASSERT_EQ(should_be, decoded);
-    }
+        })
+        .run();
 }
 
 TEST(Roundtrip, ESACompressorMaxLCPSortedSuffixListCode0Coder) {

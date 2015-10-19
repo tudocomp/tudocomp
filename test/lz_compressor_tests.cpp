@@ -13,14 +13,11 @@ using namespace lz_compressor;
 using namespace esacomp;
 
 TEST(LZCompressor, compress) {
-    const Input input = input_from_string("abcdebcdeabc");
-    LZCompressor compressor;
-    Rules rules = compressor.compress(input, 2);
-    Rules x { {5, 1, 4}, {9, 0, 3} };
-
-    ASSERT_EQ(rules.size(), x.size());
-    for (size_t i = 0; i < rules.size(); i++)
-        ASSERT_EQ(rules[i], x[i]);
+    CompressorTest<LZCompressor>()
+        .input("abcdebcdeabc")
+        .threshold(2)
+        .expected_rules(Rules { {5, 1, 4}, {9, 0, 3} })
+        .run();
 }
 
 TEST(Roundtrip, LZCompressorCode0Coder) {

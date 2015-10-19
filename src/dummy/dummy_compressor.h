@@ -11,6 +11,8 @@ using namespace tudocomp;
 
 class DummyCompressor: public Compressor {
 public:
+    inline DummyCompressor(Env& env): Compressor(env) {}
+
     virtual Rules compress(const Input& input, size_t threshold) final override;
 };
 

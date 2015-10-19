@@ -5,6 +5,7 @@
 
 #include "tudocomp.h"
 #include "sa_compressor.h"
+#include "test_util.h"
 
 using namespace sa_compressor;
 

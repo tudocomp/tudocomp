@@ -141,6 +141,9 @@ int main(int argc, const char** argv)
 
     google::InitGoogleLogging(argv[0]);
 
+    // Set up environment for algorithms.
+    Env algorithm_env;
+
     po::options_description desc("Options");
     desc.add_options()
         ("help,h", "")
@@ -282,7 +285,10 @@ int main(int argc, const char** argv)
             return 1;
         }
 
+        Coder* enc_instance = enc.coder(algorithm_env);
+
         CompressionAlgorithm comp;
+        Compressor* comp_instance;
         if (do_compress) {
             comp = getCompressionByShortname(string_arg("--compressor"));
             if (comp.compressor == nullptr) {
@@ -290,6 +296,7 @@ int main(int argc, const char** argv)
                 std::cerr << "Use --list for a list of all implemented algorithms.\n";
                 return 1;
             }
+            comp_instance = comp.compressor(algorithm_env);
         } else {
             comp = { "", "", "", nullptr };
         }
@@ -373,13 +380,14 @@ int main(int argc, const char** argv)
 
                 setup_time = clk::now();
 
-                auto threshold = enc.coder->min_encoded_rule_length(inp_vec.size());
+                auto threshold = enc_instance->min_encoded_rule_length(
+                    inp_vec.size());
 
-                auto rules = comp.compressor->compress(inp_vec, threshold);
+                auto rules = comp_instance->compress(inp_vec, threshold);
 
                 comp_time = clk::now();
 
-                enc.coder->code(rules, std::move(inp_vec), *out);
+                enc_instance->code(rules, std::move(inp_vec), *out);
 
                 enc_time = clk::now();
             } else {
@@ -387,7 +395,7 @@ int main(int argc, const char** argv)
                 comp_time = clk::now();
 
                 // TODO: Optionally read encoding from file or header
-                enc.coder->decode(*inp, *out);
+                enc_instance->decode(*inp, *out);
 
                 enc_time = clk::now();
             }

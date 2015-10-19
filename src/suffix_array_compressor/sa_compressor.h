@@ -27,6 +27,8 @@ struct SuffixData {
 /// receiving a suffix and lcp array directly.
 class SACompressor: public Compressor {
 public:
+    inline SACompressor(Env& env): Compressor(env) {}
+
     virtual Rules compress(const Input& input, size_t threshold) final override;
 
     // TODO: visibility controll better, eg protected

@@ -13,6 +13,8 @@ namespace esacomp {
 template<class Strategy = MaxLCPSortedSuffixList>
 class ESACompressor: public SACompressor {
 public:
+    inline ESACompressor(Env& env): SACompressor(env) {}
+
     virtual Rules compress(SdslVec sa, SdslVec lcp, size_t threshold) override final
     {
         using namespace std;
