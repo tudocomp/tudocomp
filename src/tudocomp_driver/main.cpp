@@ -267,6 +267,7 @@ int main(int argc, const char** argv)
 
         // Handle selection of encoder
         CodingAlgorithm enc;
+
         bool use_explict_encoder(value_arg_exists("--encoder"));
         auto decode_meta_from_file = extract_from_file(file);
 
