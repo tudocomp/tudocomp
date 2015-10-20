@@ -10,6 +10,40 @@
 
 using namespace tudocomp;
 
+// TODO: Actually specialize the 3 kinds
+
+/// Error diagnostic optimized for string data
+template<class T, class U>
+void assert_eq_strings(const T& expected_, const U& actual_) {
+    std::string expected(expected_.begin(), expected_.end());
+    std::string actual(actual_.begin(), actual_.end());
+
+    ASSERT_EQ(expected, actual);
+}
+
+/// Error diagnostic optimized for binary data
+template<class T, class U>
+void assert_eq_integers(const T& expected_, const U& actual_) {
+    std::vector<uint64_t> expected(expected_.begin(), expected_.end());
+    std::vector<uint64_t> actual(actual_.begin(), actual_.end());
+
+    ASSERT_EQ(expected, actual);
+}
+
+/// Error diagnostic optimized for mixed binary/ascii data
+template<class T, class U>
+void assert_eq_hybrid_strings(const T& expected, const U& actual) {
+    ASSERT_EQ(expected, actual);
+}
+
+/// Error diagnostic optimized for arbitrary data
+template<class T, class U>
+void assert_eq_sequence(const T& expected, const U& actual) {
+    ASSERT_EQ(expected.size(), actual.size());
+    for (size_t i = 0; i < expected.size(); i++)
+        ASSERT_EQ(expected[i], actual[i]);
+}
+
 /// Create a `Input` value containing `s`.
 ///
 /// This is useful for testing the implementations of
@@ -90,9 +124,7 @@ struct CompressorTest {
     inline void run() {
         Rules rules = compressor.compress(m_input, m_threshold);
 
-        ASSERT_EQ(rules.size(), m_expected_rules.size());
-        for (size_t i = 0; i < rules.size(); i++)
-            ASSERT_EQ(rules[i], m_expected_rules[i]);
+        assert_eq_sequence(rules, m_expected_rules);
     }
 };
 
@@ -137,12 +169,12 @@ struct CoderTest {
             auto actual_output = ostream_to_string([&] (std::ostream& out) {
                 coder.code(m_rules, m_input, out);
             });
-            ASSERT_EQ(m_expected_output, actual_output);
+            assert_eq_strings(m_expected_output, actual_output);
         } else {
             auto actual_output = ostream_to_bytes([&] (std::ostream& out) {
                 coder.code(m_rules, m_input, out);
             });
-            ASSERT_EQ(std::vector<uint8_t>(
+            assert_eq_hybrid_strings(std::vector<uint8_t>(
                         m_expected_output.begin(),
                         m_expected_output.end()),
                       actual_output);
@@ -182,7 +214,7 @@ struct DecoderTest {
         auto actual_output = ostream_to_string([&] (std::ostream& out) {
             decoder.decode(input_stream, out);
         });
-        ASSERT_EQ(m_expected_output, actual_output);
+        assert_eq_strings(m_expected_output, actual_output);
     }
 };
 
@@ -225,7 +257,7 @@ void test_roundtrip(const std::string input_string) {
 
     DLOG(INFO) << "ROUNDTRIP DECODED: " << decoded_string;
 
-    ASSERT_EQ(input_string, decoded_string);
+    assert_eq_strings(input_string, decoded_string);
 }
 
 template<class T, class U>

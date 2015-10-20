@@ -130,7 +130,7 @@ public:
         }
     }
 
-    inline const size_type size() {
+    inline const size_type size() const {
         return targets.size();
     }
 
@@ -142,6 +142,7 @@ public:
     inline const iterator begin();
     inline const iterator end();
     inline reference operator[](const size_type& i);
+    inline const_reference operator[](const size_type& i) const;
 };
 
 /// A reference to an element in a Rules container
@@ -185,6 +186,10 @@ public:
         return value_type(*this) != value_type(x);
     }
 };
+
+inline std::ostream& operator<<(std::ostream& os, const RulesReference rule) {
+    return os << Rule(rule);
+}
 
 /// A Rules iterator
 class RulesIterator: public std::iterator<
@@ -326,6 +331,10 @@ inline const Rules::iterator Rules::end() {
 
 inline Rules::reference Rules::operator[](const Rules::size_type& i) {
     return RulesReference(i, this);
+}
+
+inline Rules::const_reference Rules::operator[](const Rules::size_type& i) const {
+    return RulesReference(i, const_cast<Rules*>(this));
 }
 
 }
