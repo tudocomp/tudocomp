@@ -31,7 +31,7 @@ public:
 
     virtual Rules compress(const Input& input, size_t threshold) final override;
 
-    // TODO: visibility controll better, eg protected
+    // TODO: visibility control better, eg protected
 
     virtual Rules compress(SdslVec sa, SdslVec lcp, size_t threshold) = 0;
 

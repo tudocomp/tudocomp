@@ -367,7 +367,7 @@ int main(int argc, const char** argv)
 
                 if (!use_stdin) {
                     // TODO: Repair?
-                    //inp_vec.reserve(fsize(file));
+                    inp_vec.reserve(fsize(file));
                     // HACK to get exact file size
                 }
 

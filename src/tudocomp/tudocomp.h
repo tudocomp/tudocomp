@@ -16,15 +16,16 @@
 #include "glog/logging.h"
 
 #include "rule.h"
-// #include "rules.h"
+#include "rules.h"
+#include "tudocomp_env.h"
 
 namespace tudocomp {
 
 /// Type of the input data to be compressed
 using Input = std::vector<uint8_t>;
 
-/// Type of the list of Rules the compression step produces
-using Rules = std::vector<Rule>;
+// /// Type of the list of Rules the compression step produces
+// using Rules = std::vector<Rule>;
 
 /// Interface for a compressor.
 ///
