@@ -12,28 +12,19 @@
 namespace lz_compressor {
 
 Rules LZCompressor::compress(SdslVec sa, SdslVec lcp, size_t threshold) {
-
-    DLOG(INFO) << "lz compress start";
-
-    std::vector<uint64_t> v { 1, 2, 3, 4 };
-
-    CHECK_EQ(*v.begin(), 1);
-    CHECK_EQ(*(v.end() - 1), 4);
-    //CHECK_EQ(*v.end(), 4);
-
-    DLOG(INFO) << "lz compress ok";
-
     size_t n = sa.size();
     CHECK_EQ(sa.size(), n);
     CHECK_EQ(sa.size(), lcp.size());
+
+    size_t l = ceil(log2(n-1))+1;
 
     // Compute inverse SA.
     // TODO: Somehow pipe in the sdsl one
     // MAYBE COPY 7
     sdsl::int_vector<> saInv;
-    size_t l = ceil(log2(n-1))+1;
     saInv.width(l);
     saInv.resize(n);
+
     for (size_t i = 0; i < n; i++) {
         size_t tmp = sa[i];
         saInv[tmp] = i;
@@ -56,37 +47,41 @@ Rules LZCompressor::compress(SdslVec sa, SdslVec lcp, size_t threshold) {
 
         //search "upwards" in LCP array
         //include current, exclude last
-        ssize_t p1 = lcp[h];
+        size_t p1 = lcp[h];
         ssize_t h1 = h - 1;
         if (p1 > 0) {
             while (h1 >= 0 && sa[h1] > sa[h]) {
-                p1 = std::min(p1, ssize_t(lcp[h1--]));
+                p1 = std::min(p1, size_t(lcp[h1--]));
             }
         }
+        // ^
+        // calculates the minimum lcp across more than adjacent positions
+        // == longest common prefix among all string from h to h1
+        // != longest common prefix among h and h1
 
         //search "downwards" in LCP array
         //exclude current, include last
-        ssize_t p2 = 0;
-        ssize_t h2 = h + 1;
-        if (h2 < ssize_t(n)) {
+        size_t p2 = 0;
+        size_t h2 = h + 1;
+        if (h2 < n) {
             p2 = SSIZE_MAX;
             do {
-                p2 = std::min(p2, ssize_t(lcp[h2]));
+                p2 = std::min(p2, size_t(lcp[h2]));
                 if (sa[h2] < sa[h]) {
                     break;
                 }
-            } while (++h2 < ssize_t(n));
+            } while (++h2 < n);
 
-            if (h2 >= ssize_t(n)) {
+            if (h2 >= n) {
                 p2 = 0;
             }
         }
 
         //select maximum
-        ssize_t p = std::max(p1, p2);
-        if (p >= ssize_t(threshold)) {
+        size_t p = std::max(p1, p2);
+        if (p >= threshold) {
             //introduce rule
-            auto rule = Rule {i, sa[p == p1 ? h1 : h2], size_t(p)};
+            auto rule = Rule {i, sa[p == p1 ? h1 : h2], p};
             rules.push_back(rule);
             i += p;
         } else {
