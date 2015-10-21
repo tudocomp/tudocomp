@@ -9,9 +9,11 @@
 #include <stdexcept>
 #include <boost/program_options.hpp>
 #include <boost/exception/exception.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/program_options/parsers.hpp>
 
 #include "glog/logging.h"
-#include "docopt/docopt.h"
+//#include "docopt/docopt.h"
 #include "tudocomp.h"
 
 #include "tudocomp_algorithms.h"
@@ -22,13 +24,15 @@ using namespace tudocomp;
 namespace po = boost::program_options;
 
 const std::string COMPRESSED_FILE_ENDING = "tdc";
+const std::string THRESHOLD_OPTION = "compressor.threshold";
+const std::string THRESHOLD_LOG = "compressor.threshold";
 
 static const std::string USAGE =
 R"(TuDo Comp.
 
 Usage:
-    tudocomp [-fs] [-k] -c <name>  -e <name>  [-o <output>] [--] ( <input> | - )
-    tudocomp [-fs]  -d            [-e <name>] [-o <output>] [--] ( <input> | - )
+    tudocomp [options] [-k] -c <name>  -e <name>  [-o <output>] [--] ( <input> | - )
+    tudocomp [options]  -d            [-e <name>] [-o <output>] [--] ( <input> | - )
     tudocomp --list
     tudocomp --help
 
@@ -45,6 +49,7 @@ Options:
     -f --force              Overwrite output even if it exists.
     -l --list               List all Compression and Encoding algorithms
                             supported by this tool.
+    -O --option <option>    An additional option of the form key=value.
 )";
 
 static void exit(std::string msg) {
@@ -141,9 +146,6 @@ int main(int argc, const char** argv)
 
     google::InitGoogleLogging(argv[0]);
 
-    // Set up environment for algorithms.
-    Env algorithm_env;
-
     po::options_description desc("Options");
     desc.add_options()
         ("help,h", "")
@@ -155,6 +157,7 @@ int main(int argc, const char** argv)
         ("stats,s", "")
         ("force,f", "")
         ("list,l", "")
+        ("option,O", po::value<std::vector<std::string>>(), "")
         ("input", po::value<std::string>(), "")
     ;
     po::positional_options_description pos_desc;
@@ -167,6 +170,10 @@ int main(int argc, const char** argv)
     };
 
     try {
+        po::store(
+            boost::program_options::parse_environment(desc, "TUDOCOMP_"),
+            args);
+
         po::store(po::command_line_parser(argc, argv)
                 .positional(pos_desc)
                 .options(desc)
@@ -199,6 +206,29 @@ int main(int argc, const char** argv)
             }
             return args[arg2boost(s)].as<std::string>();
         };
+        auto string_args = [&](std::string s) {
+            if (value_arg_exists(s)) {
+                return args[arg2boost(s)].as<std::vector<std::string>>();
+            } else {
+                return std::vector<std::string>();
+            }
+        };
+
+        std::map<std::string, std::string> algorithm_options;
+
+        for (auto& os : string_args("--option")) {
+            std::vector<std::string> options;
+            boost::split(options, os, boost::is_any_of(","));
+            for (auto& o : options) {
+                std::vector<std::string> key_value;
+                boost::split(key_value, o, boost::is_any_of("="));
+                CHECK(key_value.size() == 2);
+                algorithm_options[key_value[0]] = key_value[1];
+            }
+        }
+
+        // Set up environment for algorithms.
+        Env algorithm_env(algorithm_options, {});
 
         if (arg_exists("--help")) {
             show_help();
@@ -381,8 +411,17 @@ int main(int argc, const char** argv)
 
                 setup_time = clk::now();
 
-                auto threshold = enc_instance->min_encoded_rule_length(
-                    inp_vec.size());
+                uint64_t threshold = 0;
+
+                if (algorithm_env.has_option(THRESHOLD_OPTION)) {
+                    threshold = algorithm_env.option_as<uint64_t>(
+                        THRESHOLD_OPTION);
+                } else {
+                    threshold = enc_instance->min_encoded_rule_length(
+                        inp_vec.size());
+                }
+
+                algorithm_env.log_stat(THRESHOLD_LOG, threshold);
 
                 auto rules = comp_instance->compress(inp_vec, threshold);
 
@@ -459,6 +498,19 @@ int main(int argc, const char** argv)
                     std::cout << s <<" time: "<< ct << " s\n";
                 }
             };
+
+            std::cout << "---------------\n";
+            std::cout << "Algorithm Options:\n";
+            for (auto& pair : algorithm_env.get_options()) {
+                std::cout << "  " << pair.first << " = " << pair.second << "\n";
+            }
+
+            std::cout << "---------------\n";
+            std::cout << "Algorithm Stats:\n";
+            for (auto& pair : algorithm_env.get_stats()) {
+                std::cout << "  " << pair.first << ": " << pair.second << "\n";
+            }
+
             std::cout << "---------------\n";
             print_time("startup", setup_duration);
             print_time("compression", comp_duration);

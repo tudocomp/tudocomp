@@ -16,7 +16,7 @@ commands = [
     ["tudocomp_driver -c esa -e esa_code2",   "$IN -o $OUT",   "esa.esa_code2.tdc"  ],
     ["gzip -9",                               "-c $IN > $OUT", "gz"                 ],
     ["bzip2 -9",                              "-c $IN > $OUT", "bz2"                ],
-    ["7z",                                    "a $OUT $IN",    "7z"                 ],
+    ["7z",                                    "a $OUT $IN > /dev/null", "7z"        ], # 7z prints to stdout per default
     ["tudocomp_driver -c lz -e esa_code1",    "$IN -o $OUT",   "lz.esa_code1.tdc"   ],
     ["tudocomp_driver -c esa -e esa_code1",   "$IN -o $OUT",   "esa.esa_code1.tdc"  ],
 ]

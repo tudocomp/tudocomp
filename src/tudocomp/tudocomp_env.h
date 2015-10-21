@@ -4,8 +4,10 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <sstream>
 
 #include <boost/utility/string_ref.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace tudocomp {
 
@@ -43,8 +45,11 @@ public:
     ///             the gathered values. For example:
     ///             `"my_compressor.phase1.alphabet_size"`.
     /// \param value The value of the statistic as a string.
-    inline void log_stat(std::string name, std::string value) {
-        stats[name] = value;
+    template<class T>
+    inline void log_stat(std::string name, T value) {
+        std::stringstream s;
+        s << value;
+        stats[name] = s.str();
     };
 
     /// Returns whether a option has been set.
@@ -85,7 +90,7 @@ public:
     template<class T>
     T option_as(std::string name, T default_value = T()) {
         if (has_option(name)) {
-            return T(options[name]);
+            return boost::lexical_cast<T>(options[name]);
         } else {
             return default_value;
         }

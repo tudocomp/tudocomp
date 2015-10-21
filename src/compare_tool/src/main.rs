@@ -170,22 +170,50 @@ fn main() {
 
         let time_start = time::precise_time_ns();
         let out = bash_run(script);
-        assert!(out.status.success());
+
+        let cmd_out: &str = &String::from_utf8_lossy(&out.stdout);
+        let cmd_err: &str = &String::from_utf8_lossy(&out.stderr);
+
         let time_end = time::precise_time_ns();
 
         let time_span = ((time_end - time_start) as f64)
             / 1000.0
             / 1000.0
             / 1000.0;
-
-        let out_size = fs::metadata(output).unwrap().len();
-        let comp_size = &nice_size(out_size);
         let inp_size = &nice_size(input.size);
-        let ratio = (out_size as f64) / (input.size as f64) * 100.0;
-        print_line(
-            (kind, label, time_span, inp_size, comp_size, ratio),
-            padding
-        );
+
+        if out.status.success() {
+            let out_size = fs::metadata(output).unwrap().len();
+            let comp_size = &nice_size(out_size);
+            let ratio = (out_size as f64) / (input.size as f64) * 100.0;
+            print_line(
+                (kind, label, time_span, inp_size, comp_size, ratio),
+                padding
+            );
+            if !cmd_out.is_empty() {
+                print_sep(padding);
+                print!("{}", cmd_out);
+                print_sep(padding);
+            }
+        } else {
+            print_line(
+                ("ERR", label, time_span, inp_size, "", 0.0/0.0),
+                padding
+            );
+            let a = !cmd_out.is_empty();
+            let b = !cmd_err.is_empty();
+            if a {
+                print_sep(padding);
+                print!("{}", cmd_out);
+            }
+            if a || b {
+                print_sep(padding);
+            }
+            if b {
+                print!("{}", cmd_err);
+                print_sep(padding);
+            }
+        }
     };
 
     println!("");
