@@ -1,5 +1,6 @@
 # Outstanding
 
+- lz77, lz78, lzw impl
 - make threshold settable
 - Add comparison tool
 - Include esacomp java impl in that comparison tool
