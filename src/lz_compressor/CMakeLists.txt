@@ -2,6 +2,7 @@ add_library(
     lz_compressor
 
     lz_compressor.cpp
+    lz78.cpp
 )
 
 target_link_libraries(
