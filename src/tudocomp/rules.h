@@ -36,10 +36,10 @@ public:
 
         size_type old_cap = vec.size();
 
-        DLOG(INFO) << "value = " << value;
-        DLOG(INFO) << "value_width = " << value_width;
-        DLOG(INFO) << "vec.width() = " << int(vec.width());
-        DLOG(INFO) << "vec.size() = " << int(vec.size());
+        //DLOG(INFO) << "value = " << value;
+        //DLOG(INFO) << "value_width = " << value_width;
+        //DLOG(INFO) << "vec.width() = " << int(vec.width());
+        //DLOG(INFO) << "vec.size() = " << int(vec.size());
 
         // grow width if neccessary
         if (value_width > vec.width()) {
@@ -85,17 +85,13 @@ public:
     }
 
     inline auto operator[](const size_type& idx) -> reference {
-        DLOG(INFO) << "["<<idx<<" / "<<size()<<"] +";
         reference tmp = vec[idx];
-        DLOG(INFO) << "["<<idx<<" / "<<size()<<"] -";
         return tmp;
     }
 
     inline auto operator[](const size_type& idx) const -> const_reference
     {
-        DLOG(INFO) << "const ["<<idx<<" / "<<size()<<"] +";
         const_reference tmp = vec[idx];
-        DLOG(INFO) << "const ["<<idx<<" / "<<size()<<"] -";
         return tmp;
     }
 };
