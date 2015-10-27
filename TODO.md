@@ -1,8 +1,6 @@
 # Outstanding
 
 - lz77, lz78, lzw impl
-- make threshold settable
-- Add comparison tool
 - Include esacomp java impl in that comparison tool
 - Add some kind of coverage support
 - Evaluate whether compressed Rule vector is improvement
@@ -15,6 +13,8 @@
 - LZW: Lempel Ziv Welch
 - factor out common code between code{0,1,2}.cpp
 - Add testsuite for driver
+- force make options to be registerable
+- mmap input file
 
 # Revisit at later point
 
@@ -28,9 +28,11 @@
 
 # Done
 
+- make threshold settable
 - Add and maintain docs on actual source files
 - Automatically generate html docs
 - Change sdsl dependency to be automatically downloaded
+- Add comparison tool
 
 # Motivation
 
