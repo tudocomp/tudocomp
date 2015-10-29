@@ -23,11 +23,11 @@ struct SuffixData {
     SdslVec lcp;
 };
 
-/// Allows implementing Compressor in terms of a compress method
+/// Allows implementing Lz77RuleCompressor in terms of a compress method
 /// receiving a suffix and lcp array directly.
-class SACompressor: public Compressor {
+class SACompressor: public Lz77RuleCompressor {
 public:
-    inline SACompressor(Env& env): Compressor(env) {}
+    inline SACompressor(Env& env): Lz77RuleCompressor(env) {}
 
     virtual Rules compress(const Input& input, size_t threshold) final override;
 

@@ -27,21 +27,21 @@ using Input = std::vector<uint8_t>;
 // /// Type of the list of Rules the compression step produces
 // using Rules = std::vector<Rule>;
 
-/// Interface for a compressor.
+/// Interface for a compressor into LZ77-like substitution rules.
 ///
 /// A (rule-based) compressor works by receiving the Input text, and
 /// generating a list of substitution rules.
 /// The rules in combination with the input parts not covered by them
 /// can regenerate the full input.
-class Compressor {
+class Lz77RuleCompressor {
 public:
     const Env& env;
 
     /// Class needs to be constructed with an `Env&` argument.
-    inline Compressor() = delete;
+    inline Lz77RuleCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline Compressor(Env& env_): env(env_) {}
+    inline Lz77RuleCompressor(Env& env_): env(env_) {}
 
     /// Compress the input.
     ///
@@ -54,21 +54,21 @@ public:
     virtual Rules compress(const Input& input, size_t threshold) = 0;
 };
 
-/// Interface for a coder.
+/// Interface for a coder from LZ77-like substitution rules.
 ///
 /// This takes a list of Rules and the input text, and outputs
 /// an encoded form of them to a `ostream`. Also provided is a decoder,
 /// that takes such an encoded stream and outputs the fully
 /// decoded and decompressed original text.
-class Coder {
+class Lz77RuleCoder {
 public:
     const Env& env;
 
     /// Class needs to be constructed with an `Env&` argument.
-    inline Coder() = delete;
+    inline Lz77RuleCoder() = delete;
 
     /// Construct the class with an environment.
-    inline Coder(Env& env_): env(env_) {}
+    inline Lz77RuleCoder(Env& env_): env(env_) {}
 
     /// Encode a list or Rules and the input text.
     ///

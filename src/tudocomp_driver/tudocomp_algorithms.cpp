@@ -28,7 +28,7 @@ using namespace lz_compressor;
 // - Algorithm: A function pointer that constructs the base class of a
 //   Compressor or Encoder.
 
-template<class T> Compressor* compressor(Env& env) {
+template<class T> Lz77RuleCompressor* compressor(Env& env) {
     return new T(env);
 }
 
@@ -65,7 +65,7 @@ std::vector<CompressionAlgorithm> COMPRESSION_ALGORITHM = {
     },
 };
 
-template<class T> Coder* coder(Env& env) {
+template<class T> Lz77RuleCoder* coder(Env& env) {
     return new T(env);
 }
 

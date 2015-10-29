@@ -10,9 +10,9 @@ using namespace tudocomp;
 
 namespace lz_compressor {
 
-class LZ78Compressor: public Compressor {
+class LZ78Compressor: public Lz77RuleCompressor {
 public:
-    inline LZ78Compressor(Env& env): Compressor(env) {}
+    inline LZ78Compressor(Env& env): Lz77RuleCompressor(env) {}
 
     virtual Rules compress(const Input& input, size_t threshold) final override;
 };

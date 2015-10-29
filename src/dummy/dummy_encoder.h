@@ -9,9 +9,9 @@ namespace dummy {
 
 using namespace tudocomp;
 
-class DummyCoder: public Coder {
+class DummyCoder: public Lz77RuleCoder {
 public:
-    inline DummyCoder(Env& env): Coder(env) {}
+    inline DummyCoder(Env& env): Lz77RuleCoder(env) {}
 
     virtual void code(Rules, Input input, std::ostream&) override final;
     virtual void decode(std::istream& inp, std::ostream& out) override final;

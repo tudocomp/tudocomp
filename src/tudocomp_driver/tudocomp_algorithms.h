@@ -25,7 +25,7 @@ struct CompressionAlgorithm {
     /// Description text
     std::string description;
     /// Algorithm
-    Constructor<tudocomp::Compressor> compressor;
+    Constructor<tudocomp::Lz77RuleCompressor> compressor;
 };
 extern std::vector<CompressionAlgorithm> COMPRESSION_ALGORITHM;
 
@@ -47,7 +47,7 @@ struct CodingAlgorithm {
     /// Description text
     std::string description;
     /// Algorithm
-    Constructor<tudocomp::Coder> coder;
+    Constructor<tudocomp::Lz77RuleCoder> coder;
 };
 extern std::vector<CodingAlgorithm> CODING_ALGORITHM;
 

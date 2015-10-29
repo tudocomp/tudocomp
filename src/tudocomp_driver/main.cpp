@@ -316,10 +316,10 @@ int main(int argc, const char** argv)
             return 1;
         }
 
-        Coder* enc_instance = enc.coder(algorithm_env);
+        Lz77RuleCoder* enc_instance = enc.coder(algorithm_env);
 
         CompressionAlgorithm comp;
-        Compressor* comp_instance;
+        Lz77RuleCompressor* comp_instance;
         if (do_compress) {
             comp = getCompressionByShortname(string_arg("--compressor"));
             if (comp.compressor == nullptr) {

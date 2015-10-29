@@ -7,9 +7,9 @@ namespace esacomp {
 
 using namespace tudocomp;
 
-class Code1Coder: public Coder {
+class Code1Coder: public Lz77RuleCoder {
 public:
-    inline Code1Coder(Env& env): Coder(env) {}
+    inline Code1Coder(Env& env): Lz77RuleCoder(env) {}
 
     virtual void code(Rules, Input input, std::ostream&) override final;
     virtual void decode(std::istream& inp, std::ostream& out) override final;
