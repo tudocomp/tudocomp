@@ -1,3 +1,7 @@
+# Refactor
+
+- somehow merge sa_compressor with concept of general/specific compressor
+
 # Outstanding
 
 - lz77, lz78, lzw impl
