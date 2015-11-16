@@ -74,3 +74,7 @@ TEST(Rules, iterator) {
     };
 
 }
+
+TEST(Registry, foo) {
+    ASSERT_EQ(TUDOCOMP_ALGOS.registry.size(), 1u);
+}

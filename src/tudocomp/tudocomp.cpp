@@ -5,6 +5,10 @@
 
 namespace tudocomp {
 
+DEFINE_ALGO_REGISTRY(TUDOCOMP_ALGOS, Compressor)
+REGISTER_ALGO(TUDOCOMP_ALGOS, Compressor,
+              SubCompressor, "asdf", "asdf", "asdf")
+
 void DecodeBuffer::decodeCallback(size_t source) {
     if (pointers.count(source) > 0) {
         std::vector<size_t> list = pointers[source];

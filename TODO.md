@@ -1,9 +1,11 @@
 # Refactor
 
 - somehow merge sa_compressor with concept of general/specific compressor
+- change driver options to -a for "algorithm", remove existing c and e options
 
 # Outstanding
 
+- show amount of rules on stat page
 - lz77, lz78, lzw impl
 - Include esacomp java impl in that comparison tool
 - Add some kind of coverage support

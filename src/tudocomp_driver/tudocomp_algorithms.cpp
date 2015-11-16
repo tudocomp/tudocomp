@@ -32,12 +32,14 @@ template<class T> Lz77RuleCompressor* compressor(Env& env) {
     return new T(env);
 }
 
+//REGISTER_ALGO(TUDOCOMP_ALGOS, DummyCompressor)
+
 std::vector<CompressionAlgorithm> COMPRESSION_ALGORITHM = {
     {
         "Dummy",
         "dummy",
         "Dummy compressor that does not produce any rules.",
-        &compressor<DummyCompressor>
+        &tudocomp::construct<Lz77RuleCompressor, DummyCompressor, Env&>
     },
     {
         "LZ",

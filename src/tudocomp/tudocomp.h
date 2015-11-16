@@ -18,6 +18,7 @@
 #include "rule.h"
 #include "rules.h"
 #include "tudocomp_env.h"
+#include "global_registry.h"
 
 namespace tudocomp {
 
@@ -26,6 +27,37 @@ using Input = std::vector<uint8_t>;
 
 // /// Type of the list of Rules the compression step produces
 // using Rules = std::vector<Rule>;
+
+/// Interface for a general compressor.
+struct Compressor {
+    const Env& env;
+
+    /// Class needs to be constructed with an `Env&` argument.
+    inline Compressor() = delete;
+
+    /// Construct the class with an environment.
+    inline Compressor(Env& env_): env(env_) {}
+
+    /// Compress `inp` into `out`.
+    ///
+    /// \param inp The input stream.
+    /// \param out The output stream.
+    virtual void compress(std::istream& inp, std::ostream& out) = 0;
+
+    /// Decompress `inp` into `out`.
+    ///
+    /// \param inp The input stream.
+    /// \param out The output stream.
+    virtual void decompress(std::istream& inp, std::ostream& out) = 0;
+};
+
+struct SubCompressor: public Compressor {
+    inline SubCompressor(Env& env): Compressor(env) {};
+    inline virtual void compress(std::istream& inp, std::ostream& out) {}
+    inline virtual void decompress(std::istream& inp, std::ostream& out) {}
+};
+
+DECLARE_ALGO_REGISTRY(TUDOCOMP_ALGOS, Compressor)
 
 /// Interface for a compressor into LZ77-like substitution rules.
 ///

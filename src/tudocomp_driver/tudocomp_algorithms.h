@@ -8,13 +8,7 @@
 
 namespace tudocomp_driver {
 
-template<class T>
-using Constructor = T* (*)(tudocomp::Env&);
-
-template<class Base, class T, class ... Args>
-Base* construct(Args ... args) {
-    return new T(args...);
-}
+using tudocomp::Constructor;
 
 /// Struct for holding all necessary data to register a compression algorithm
 struct CompressionAlgorithm {
