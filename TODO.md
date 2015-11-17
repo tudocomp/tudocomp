@@ -1,7 +1,9 @@
 # Refactor
 
+- make algo register a global function that recusively calls register methods
 - somehow merge sa_compressor with concept of general/specific compressor
 - change driver options to -a for "algorithm", remove existing c and e options
+-
 
 # Outstanding
 

@@ -62,6 +62,15 @@ public:
         std::cout << algo_loc->name << std::endl;
         return algo;
     }
+
+    inline Algorithm<T>* findByShortname(std::string s) {
+        for (auto& x: registry) {
+            if (x->shortname == s) {
+                return x;
+            }
+        }
+        return nullptr;
+    }
 };
 
 /// Declares a registry NAME for algorithms,
