@@ -28,74 +28,45 @@ using namespace lz_compressor;
 // - Algorithm: A function pointer that constructs the base class of a
 //   Compressor or Encoder.
 
-template<class T> Lz77RuleCompressor* compressor(Env& env) {
-    return new T(env);
-}
+REGISTER_ALGO(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor,
+              DummyCompressor, "Dummy", "dummy",
+              "Dummy compressor that does not produce any rules.")
 
-//REGISTER_ALGO(TUDOCOMP_ALGOS, DummyCompressor)
+REGISTER_ALGO(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor,
+              LZCompressor, "LZ", "lz",
+              "LZ impl included in esacomp.")
 
-std::vector<CompressionAlgorithm> COMPRESSION_ALGORITHM = {
-    {
-        "Dummy",
-        "dummy",
-        "Dummy compressor that does not produce any rules.",
-        &tudocomp::construct<Lz77RuleCompressor, DummyCompressor, Env&>
-    },
-    {
-        "LZ",
-        "lz",
-        "LZ impl included in esacomp.",
-        &compressor<LZCompressor>,
-    },
-    {
-        "ESA",
-        "esa",
-        "Esacomp (defaults to using a suffix list internally).",
-        &compressor<ESACompressor<>>,
-    },
-    {
-        "ESA (Sorted Suffix List)",
-        "esa_list",
-        "Esacomp using a suffix list internally.",
-        &compressor<ESACompressor<MaxLCPSortedSuffixList>>,
-    },
-    {
-        "ESA (Heap)",
-        "esa_heap",
-        "Esacomp using a heap internally.",
-        &compressor<ESACompressor<MaxLCPHeap>>,
-    },
-};
+using ESACompressorDefault = ESACompressor<>;
+REGISTER_ALGO(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor,
+              ESACompressorDefault, "ESA", "esa",
+              "Esacomp (defaults to using a suffix list internally).")
 
-template<class T> Lz77RuleCoder* coder(Env& env) {
-    return new T(env);
-}
+using ESACompressorList = ESACompressor<MaxLCPSortedSuffixList>;
+REGISTER_ALGO(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor,
+              ESACompressorList, "ESA (Sorted Suffix List)", "esa_list",
+              "Esacomp using a suffix list internally.")
 
-std::vector<CodingAlgorithm> CODING_ALGORITHM = {
-    {
-        "Dummy",
-        "dummy",
-        "Dummy encoding, outputs input text unchanged.",
-        &coder<DummyCoder>,
-    },
-    {
-        "Code0",
-        "esa_code0",
-        "Human readable output of text and rules.",
-        &coder<Code0Coder>,
-    },
-    {
-        "Code1",
-        "esa_code1",
-        "Byte based encoding.",
-        &coder<Code1Coder>,
-    },
-    {
-        "Code2",
-        "esa_code2",
-        "Bit based encoding.",
-        &coder<Code2Coder>,
-    },
-};
+using ESACompressorHeap = ESACompressor<MaxLCPHeap>;
+REGISTER_ALGO(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor,
+              ESACompressorHeap, "ESA (Heap)", "esa_heap",
+              "Esacomp using a heap internally.")
+
+/////////////////////////////////////////////////////////////////////////////
+
+REGISTER_ALGO(LZ77_RULE_CODE_ALGOS, Lz77RuleCoder,
+              DummyCoder, "Dummy", "dummy",
+              "Dummy encoding, outputs input text unchanged.")
+
+REGISTER_ALGO(LZ77_RULE_CODE_ALGOS, Lz77RuleCoder,
+              Code0Coder, "Code0", "esa_code0",
+              "Human readable output of text and rules.")
+
+REGISTER_ALGO(LZ77_RULE_CODE_ALGOS, Lz77RuleCoder,
+              Code1Coder, "Code1", "esa_code1",
+              "Byte based encoding.")
+
+REGISTER_ALGO(LZ77_RULE_CODE_ALGOS, Lz77RuleCoder,
+              Code2Coder, "Code2", "esa_code2",
+              "Bit based encoding.")
 
 }

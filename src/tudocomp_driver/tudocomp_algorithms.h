@@ -9,46 +9,26 @@
 namespace tudocomp_driver {
 
 using tudocomp::Constructor;
+using tudocomp::Algorithm;
+using tudocomp::Lz77RuleCompressor;
+using tudocomp::Lz77RuleCoder;
 
-/// Struct for holding all necessary data to register a compression algorithm
-struct CompressionAlgorithm {
-    /// Human readable name
-    std::string name;
-    /// Used as id string for command line and output filenames
-    std::string shortname;
-    /// Description text
-    std::string description;
-    /// Algorithm
-    Constructor<tudocomp::Lz77RuleCompressor> compressor;
-};
-extern std::vector<CompressionAlgorithm> COMPRESSION_ALGORITHM;
+using CompressionAlgorithm = Algorithm<Lz77RuleCompressor>;
+using CodingAlgorithm = Algorithm<Lz77RuleCoder>;
 
 inline CompressionAlgorithm getCompressionByShortname(std::string s) {
-    for (auto& x: COMPRESSION_ALGORITHM) {
-        if (x.shortname == s) {
-            return x;
+    for (auto& x: tudocomp::LZ77_RULE_COMP_ALGOS.registry) {
+        if (x->shortname == s) {
+            return *x;
         }
     }
     return { "", s, "", nullptr };
 }
 
-/// Struct for holding all necessary data to register a encoding algorithm
-struct CodingAlgorithm {
-    /// Human readable name
-    std::string name;
-    /// Used as id string for command line and output filenames
-    std::string shortname;
-    /// Description text
-    std::string description;
-    /// Algorithm
-    Constructor<tudocomp::Lz77RuleCoder> coder;
-};
-extern std::vector<CodingAlgorithm> CODING_ALGORITHM;
-
 inline CodingAlgorithm getCodingByShortname(std::string s) {
-    for (auto& x: CODING_ALGORITHM) {
-        if (x.shortname == s) {
-            return x;
+    for (auto& x: tudocomp::LZ77_RULE_CODE_ALGOS.registry) {
+        if (x->shortname == s) {
+            return *x;
         }
     }
     return { "", s, "", nullptr };

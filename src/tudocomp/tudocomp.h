@@ -128,6 +128,9 @@ public:
     virtual size_t min_encoded_rule_length(size_t input_size) = 0;
 };
 
+DECLARE_ALGO_REGISTRY(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor)
+DECLARE_ALGO_REGISTRY(LZ77_RULE_CODE_ALGOS, Lz77RuleCoder)
+
 /// Convert a vector-like type into a string showing the element values.
 ///
 /// Useful for logging output.

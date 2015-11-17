@@ -245,11 +245,13 @@ int main(int argc, const char** argv)
                 std::cout << "Compression:\n";
                 uint w = 0;
                 uint dw = 0;
-                for (auto algo : COMPRESSION_ALGORITHM) {
+                for (auto algo_ : LZ77_RULE_COMP_ALGOS.registry) {
+                    auto& algo = *algo_;
                     w = w < algo.shortname.size() ? algo.shortname.size() : w;
                     dw = dw < algo.name.size() ? algo.name.size() : dw;
                 }
-                for (auto algo : COMPRESSION_ALGORITHM) {
+                for (auto algo_ : LZ77_RULE_COMP_ALGOS.registry) {
+                    auto& algo = *algo_;
                     std::cout << "  "
                         << std::setw(w) << std::left << algo.shortname << sep
                         << std::setw(dw) << std::left << algo.name << sep
@@ -262,11 +264,13 @@ int main(int argc, const char** argv)
                 std::cout << "Encoding:\n";
                 uint w = 0;
                 uint dw = 0;
-                for (auto algo : CODING_ALGORITHM) {
+                for (auto algo_ : LZ77_RULE_CODE_ALGOS.registry) {
+                    auto& algo = *algo_;
                     w = w < algo.shortname.size() ? algo.shortname.size() : w;
                     dw = dw < algo.name.size() ? algo.name.size() : dw;
                 }
-                for (auto algo : CODING_ALGORITHM) {
+                for (auto algo_ : LZ77_RULE_CODE_ALGOS.registry) {
+                    auto& algo = *algo_;
                     std::cout << "  "
                         << std::setw(w) << std::left << algo.shortname << sep
                         << std::setw(dw) << std::left << algo.name << sep
@@ -310,24 +314,24 @@ int main(int argc, const char** argv)
             return 1;
         }
 
-        if (enc.coder == nullptr) {
+        if (enc.algorithm == nullptr) {
             std::cerr << "Unknown encoder '" << enc.shortname << "'.\n";
             std::cerr << "Use --list for a list of all implemented algorithms.\n";
             return 1;
         }
 
-        Lz77RuleCoder* enc_instance = enc.coder(algorithm_env);
+        Lz77RuleCoder* enc_instance = enc.algorithm(algorithm_env);
 
         CompressionAlgorithm comp;
         Lz77RuleCompressor* comp_instance;
         if (do_compress) {
             comp = getCompressionByShortname(string_arg("--compressor"));
-            if (comp.compressor == nullptr) {
+            if (comp.algorithm == nullptr) {
                 std::cerr << "Unknown compressor '" << comp.shortname << "'.\n";
                 std::cerr << "Use --list for a list of all implemented algorithms.\n";
                 return 1;
             }
-            comp_instance = comp.compressor(algorithm_env);
+            comp_instance = comp.algorithm(algorithm_env);
         } else {
             comp = { "", "", "", nullptr };
         }

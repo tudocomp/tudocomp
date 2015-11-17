@@ -38,13 +38,13 @@ struct Algorithm {
     /// Description text
     std::string description;
     /// Algorithm
-    Constructor<T> compressor;
+    Constructor<T> algorithm;
 };
 
 template<class T>
 class AlgorithmRegistry {
 public:
-    std::vector<Algorithm<T>*> registry;
+    std::vector<Algorithm<T>*> registry = {};
     template<class U>
     Algorithm<T> register_algo(Algorithm<T>* algo_loc,
                                   std::string name,
@@ -58,6 +58,8 @@ public:
             description,
             &construct<T, U, Env&>
         };
+        *algo_loc = algo;
+        std::cout << algo_loc->name << std::endl;
         return algo;
     }
 };
