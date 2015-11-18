@@ -38,35 +38,36 @@ struct Algorithm {
     /// Description text
     std::string description;
     /// Algorithm
-    Constructor<T> algorithm;
+    T* algorithm;
 };
 
 template<class T>
 class AlgorithmRegistry {
+    Env& m_env;
 public:
-    std::vector<Algorithm<T>*> registry = {};
+    inline AlgorithmRegistry(Env& env): m_env(env) { }
+
+    std::vector<Algorithm<T>> registry = {};
+
     template<class U>
-    Algorithm<T> register_algo(Algorithm<T>* algo_loc,
-                                  std::string name,
-                                  std::string shortname,
-                                  std::string description
-                                 ) {
-        registry.push_back(algo_loc);
+    U* register_algo(std::string name,
+                     std::string shortname,
+                     std::string description) {
+        U* a = new U(m_env);
         Algorithm<T> algo {
             name,
             shortname,
             description,
-            &construct<T, U, Env&>
+            a
         };
-        *algo_loc = algo;
-        std::cout << algo_loc->name << std::endl;
-        return algo;
+        registry.push_back(algo);
+        return a;
     }
 
-    inline Algorithm<T>* findByShortname(std::string s) {
+    inline Algorithm<T>* findByShortname(boost::string_ref s) {
         for (auto& x: registry) {
-            if (x->shortname == s) {
-                return x;
+            if (x.shortname == s) {
+                return &x;
             }
         }
         return nullptr;
@@ -75,22 +76,16 @@ public:
 
 /// Declares a registry NAME for algorithms,
 /// which need to inherit from Interface.
-#define DECLARE_ALGO_REGISTRY(NAME, Interface) \
-    extern AlgorithmRegistry<Interface> NAME;
+#define DECLARE_ALGO_REGISTRY(NAME, Interface)
 
 /// Defines a registry NAME for algorithms,
 /// which need to inherit from Interface.
-#define DEFINE_ALGO_REGISTRY(NAME, Interface) \
-    AlgorithmRegistry<Interface> NAME;
+#define DEFINE_ALGO_REGISTRY(NAME, Interface)
 
 /// Registers algorithm Type in registry NAME.
 /// Type needs to inherit from Interface, and the value will be paired
 /// with the metadata given by name, shortname and description.
-#define REGISTER_ALGO(NAME, Interface, Type, name, shortname, description) \
-    extern Algorithm<Interface> NAME##_##Type;                             \
-    Algorithm<Interface> NAME##_##Type =                                   \
-        NAME.register_algo<Type>(&NAME##_##Type,                           \
-            name, shortname, description);
+#define REGISTER_ALGO(NAME, Interface, Type, name, shortname, description)
 
 }
 

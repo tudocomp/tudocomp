@@ -57,6 +57,28 @@ struct SubCompressor: public Compressor {
     inline virtual void decompress(std::istream& inp, std::ostream& out) {}
 };
 
+class Lz77RuleCoder;
+class Lz77RuleCompressor;
+
+struct Lz77Rule: public Compressor {
+    AlgorithmRegistry<Lz77RuleCompressor> m_compressor_registry;
+    AlgorithmRegistry<Lz77RuleCoder> m_coder_registry;
+
+    inline AlgorithmRegistry<Lz77RuleCompressor>& compressor_registry() {
+        return m_compressor_registry;
+    }
+
+    inline AlgorithmRegistry<Lz77RuleCoder>& coder_registry() {
+        return m_coder_registry;
+    }
+
+    inline Lz77Rule(Env& env):
+        Compressor(env), m_compressor_registry(env), m_coder_registry(env) {};
+
+    inline virtual void compress(std::istream& inp, std::ostream& out) {}
+    inline virtual void decompress(std::istream& inp, std::ostream& out) {}
+};
+
 DECLARE_ALGO_REGISTRY(TUDOCOMP_ALGOS, Compressor)
 
 /// Interface for a compressor into LZ77-like substitution rules.

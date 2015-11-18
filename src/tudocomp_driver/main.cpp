@@ -227,13 +227,24 @@ int main(int argc, const char** argv)
             }
         }
 
-        // Set up environment for algorithms.
-        Env algorithm_env(algorithm_options, {});
-
         if (arg_exists("--help")) {
             show_help();
             return 0;
         }
+
+        std::string enc_shortname = string_arg("--encoder");
+        std::string comp_shortname = string_arg("--compressor");
+        std::string algorithm_id = "lz77rule." + comp_shortname + "." + enc_shortname;
+        Env algorithm_env(algorithm_options, {}, algorithm_id);
+
+        {
+            AlgorithmRegistry<Compressor> registry(algorithm_env);
+            register_algos(registry);
+            auto id = algorithm_env.pop_front_algorithm_id();
+            registry.findByShortname(id);
+
+        };
+
 
         if (arg_exists("--list")) {
             std::cout << "This build supports the following algorithms:\n";
@@ -305,7 +316,6 @@ int main(int argc, const char** argv)
         bool use_explict_encoder(value_arg_exists("--encoder"));
         auto decode_meta_from_file = extract_from_file(file);
 
-        std::string enc_shortname;
         if (use_explict_encoder) {
             enc_shortname = string_arg("--encoder");
             enc = LZ77_RULE_CODE_ALGOS.findByShortname(enc_shortname);
@@ -323,19 +333,19 @@ int main(int argc, const char** argv)
             return 1;
         }
 
-        Lz77RuleCoder* enc_instance = enc->algorithm(algorithm_env);
+        Lz77RuleCoder* enc_instance = enc->algorithm;
 
         CompressionAlgorithm* comp;
         Lz77RuleCompressor* comp_instance;
         if (do_compress) {
-            std::string comp_shortname = string_arg("--compressor");
+            comp_shortname = string_arg("--compressor");
             comp = LZ77_RULE_COMP_ALGOS.findByShortname(comp_shortname);
             if (comp == nullptr) {
                 std::cerr << "Unknown compressor '" << comp_shortname << "'.\n";
                 std::cerr << "Use --list for a list of all implemented algorithms.\n";
                 return 1;
             }
-            comp_instance = comp->algorithm(algorithm_env);
+            comp_instance = comp->algorithm;
         } else {
             comp = nullptr;
         }

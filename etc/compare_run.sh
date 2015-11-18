@@ -2,7 +2,7 @@
 # abort on non-zero exit of command
 set -e
 pushd ..
-make tudocomp_driver
+make tudocomp_driver -j4
 make compare_tool
 make compare_workspace
 popd > /dev/null

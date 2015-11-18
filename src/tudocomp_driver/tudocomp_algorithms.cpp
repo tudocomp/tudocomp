@@ -13,6 +13,7 @@
 
 namespace tudocomp_driver {
 
+using namespace tudocomp;
 using namespace esacomp;
 using namespace dummy;
 using namespace lz_compressor;
@@ -28,45 +29,51 @@ using namespace lz_compressor;
 // - Algorithm: A function pointer that constructs the base class of a
 //   Compressor or Encoder.
 
-REGISTER_ALGO(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor,
-              DummyCompressor, "Dummy", "dummy",
-              "Dummy compressor that does not produce any rules.")
+void register_algos(AlgorithmRegistry<Compressor>& registry) {
+    auto lz77rule = registry.register_algo<Lz77Rule>(
+        "LZ77 rule-like", "lz77rule",
+        "A Family of compression algorithms making use "
+        "of LZ77-like replacement rules.");
+    {
+        auto registry = lz77rule->compressor_registry();
+        registry.register_algo<DummyCompressor>(
+            "Dummy", "dummy",
+            "Dummy compressor that does not produce any rules.");
 
-REGISTER_ALGO(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor,
-              LZCompressor, "LZ", "lz",
-              "LZ impl included in esacomp.")
+        registry.register_algo<LZCompressor>(
+            "LZ", "lz",
+            "LZ impl included in esacomp.");
 
-using ESACompressorDefault = ESACompressor<>;
-REGISTER_ALGO(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor,
-              ESACompressorDefault, "ESA", "esa",
-              "Esacomp (defaults to using a suffix list internally).")
+        registry.register_algo<ESACompressor<>>(
+            "ESA", "esa",
+            "Esacomp (defaults to using a suffix list internally).");
 
-using ESACompressorList = ESACompressor<MaxLCPSortedSuffixList>;
-REGISTER_ALGO(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor,
-              ESACompressorList, "ESA (Sorted Suffix List)", "esa_list",
-              "Esacomp using a suffix list internally.")
+        registry.register_algo<ESACompressor<MaxLCPSortedSuffixList>>(
+            "ESA (Sorted Suffix List)", "esa_list",
+            "Esacomp using a suffix list internally.");
 
-using ESACompressorHeap = ESACompressor<MaxLCPHeap>;
-REGISTER_ALGO(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor,
-              ESACompressorHeap, "ESA (Heap)", "esa_heap",
-              "Esacomp using a heap internally.")
+        registry.register_algo<ESACompressor<MaxLCPHeap>>(
+            "ESA (Heap)", "esa_heap",
+            "Esacomp using a heap internally.");
+    };
+    {
+        auto registry = lz77rule->coder_registry();
+        registry.register_algo<DummyCoder>(
+            "Dummy", "dummy",
+            "Dummy encoding, outputs input text unchanged.");
 
-/////////////////////////////////////////////////////////////////////////////
+        registry.register_algo<Code0Coder>(
+            "Code0", "esa_code0",
+            "Human readable output of text and rules.");
 
-REGISTER_ALGO(LZ77_RULE_CODE_ALGOS, Lz77RuleCoder,
-              DummyCoder, "Dummy", "dummy",
-              "Dummy encoding, outputs input text unchanged.")
+        registry.register_algo<Code1Coder>(
+            "Code1", "esa_code1",
+            "Byte based encoding.");
 
-REGISTER_ALGO(LZ77_RULE_CODE_ALGOS, Lz77RuleCoder,
-              Code0Coder, "Code0", "esa_code0",
-              "Human readable output of text and rules.")
-
-REGISTER_ALGO(LZ77_RULE_CODE_ALGOS, Lz77RuleCoder,
-              Code1Coder, "Code1", "esa_code1",
-              "Byte based encoding.")
-
-REGISTER_ALGO(LZ77_RULE_CODE_ALGOS, Lz77RuleCoder,
-              Code2Coder, "Code2", "esa_code2",
-              "Bit based encoding.")
+        registry.register_algo<Code2Coder>(
+            "Code2", "esa_code2",
+            "Bit based encoding.");
+    };
+}
 
 }
