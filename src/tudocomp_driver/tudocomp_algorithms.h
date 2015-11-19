@@ -8,7 +8,6 @@
 
 namespace tudocomp_driver {
 
-using tudocomp::Constructor;
 using tudocomp::Algorithm;
 using tudocomp::Lz77RuleCompressor;
 using tudocomp::Lz77RuleCoder;

@@ -30,50 +30,49 @@ using namespace lz_compressor;
 //   Compressor or Encoder.
 
 void register_algos(AlgorithmRegistry<Compressor>& registry) {
-    auto lz77rule = registry.register_algo<Lz77Rule>(
+    registry.with_info<Lz77Rule>(
         "LZ77 rule-like", "lz77rule",
         "A Family of compression algorithms making use "
-        "of LZ77-like replacement rules.");
-    {
-        auto registry = lz77rule->compressor_registry();
-        registry.register_algo<DummyCompressor>(
+        "of LZ77-like replacement rules.")
+    .with_sub_algos<Lz77RuleCompressor>([](AlgorithmRegistry<Lz77RuleCompressor>& registry) {
+        registry.with_info<DummyCompressor>(
             "Dummy", "dummy",
-            "Dummy compressor that does not produce any rules.");
+            "Dummy compressor that does not produce any rules.").do_register();
 
-        registry.register_algo<LZCompressor>(
+        registry.with_info<LZCompressor>(
             "LZ", "lz",
-            "LZ impl included in esacomp.");
+            "LZ impl included in esacomp.").do_register();
 
-        registry.register_algo<ESACompressor<>>(
+        registry.with_info<ESACompressor<>>(
             "ESA", "esa",
-            "Esacomp (defaults to using a suffix list internally).");
+            "Esacomp (defaults to using a suffix list internally).").do_register();
 
-        registry.register_algo<ESACompressor<MaxLCPSortedSuffixList>>(
+        registry.with_info<ESACompressor<MaxLCPSortedSuffixList>>(
             "ESA (Sorted Suffix List)", "esa_list",
-            "Esacomp using a suffix list internally.");
+            "Esacomp using a suffix list internally.").do_register();
 
-        registry.register_algo<ESACompressor<MaxLCPHeap>>(
+        registry.with_info<ESACompressor<MaxLCPHeap>>(
             "ESA (Heap)", "esa_heap",
-            "Esacomp using a heap internally.");
-    };
-    {
-        auto registry = lz77rule->coder_registry();
-        registry.register_algo<DummyCoder>(
+            "Esacomp using a heap internally.").do_register();
+    })
+    .with_sub_algos<Lz77RuleCoder>([](AlgorithmRegistry<Lz77RuleCoder>& registry) {
+        registry.with_info<DummyCoder>(
             "Dummy", "dummy",
-            "Dummy encoding, outputs input text unchanged.");
+            "Dummy encoding, outputs input text unchanged.").do_register();
 
-        registry.register_algo<Code0Coder>(
+        registry.with_info<Code0Coder>(
             "Code0", "esa_code0",
-            "Human readable output of text and rules.");
+            "Human readable output of text and rules.").do_register();
 
-        registry.register_algo<Code1Coder>(
+        registry.with_info<Code1Coder>(
             "Code1", "esa_code1",
-            "Byte based encoding.");
+            "Byte based encoding.").do_register();
 
-        registry.register_algo<Code2Coder>(
+        registry.with_info<Code2Coder>(
             "Code2", "esa_code2",
-            "Bit based encoding.");
-    };
+            "Bit based encoding.").do_register();
+    })
+    .do_register();
 }
 
 }

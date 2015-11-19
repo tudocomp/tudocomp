@@ -72,7 +72,10 @@ struct Lz77Rule: public Compressor {
         return m_coder_registry;
     }
 
-    inline Lz77Rule(Env& env):
+    inline Lz77Rule(Env& env,
+                    AlgorithmRegistry<Lz77RuleCompressor> x,
+                    AlgorithmRegistry<Lz77RuleCoder> y
+                   ):
         Compressor(env), m_compressor_registry(env), m_coder_registry(env) {};
 
     inline virtual void compress(std::istream& inp, std::ostream& out) {}

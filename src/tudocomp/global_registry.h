@@ -10,9 +10,15 @@
 #include <sstream>
 #include <string>
 #include <map>
+#include <functional>
 #include <unordered_map>
+#include <tuple>
+#include <type_traits>
 
 #include "boost/utility/string_ref.hpp"
+#include <boost/fusion/functional/invocation/invoke.hpp>
+#include <boost/fusion/sequence.hpp>
+#include <boost/fusion/include/sequence.hpp>
 #include "glog/logging.h"
 
 #include "rule.h"
@@ -21,8 +27,37 @@
 
 namespace tudocomp {
 
-template<class T>
-using Constructor = T* (*)(tudocomp::Env&);
+// implementation details, users never invoke these directly
+namespace tuple_call
+{
+    template <typename F, typename Tuple, bool Done, int Total, int... N>
+    struct call_impl
+    {
+        static void call(F f, Tuple && t)
+        {
+            call_impl<F, Tuple, Total == 1 + sizeof...(N), Total, N..., sizeof...(N)>::call(f, std::forward<Tuple>(t));
+        }
+    };
+
+    template <typename F, typename Tuple, int Total, int... N>
+    struct call_impl<F, Tuple, true, Total, N...>
+    {
+        static void call(F f, Tuple && t)
+        {
+            f(std::get<N>(std::forward<Tuple>(t))...);
+        }
+    };
+}
+
+//typename std::result_of<F>::type
+
+// user invokes this
+template <typename F, typename Tuple>
+void call(F f, Tuple && t)
+{
+    typedef typename std::decay<Tuple>::type ttype;
+    tuple_call::call_impl<F, Tuple, 0 == std::tuple_size<ttype>::value, std::tuple_size<ttype>::value>::call(f, std::forward<Tuple>(t));
+}
 
 template<class Base, class T, class ... Args>
 Base* construct(Args ... args) {
@@ -38,8 +73,58 @@ struct Algorithm {
     /// Description text
     std::string description;
     /// Algorithm
-    T* algorithm;
+    std::function<T*(Env&)> algorithm;
 };
+
+template<class T>
+using Registry = std::vector<Algorithm<T>>;
+
+template<class T>
+class AlgorithmRegistry;
+
+template<class ... Args>
+using boost_tup = boost::fusion::vector<Args...>;
+
+template<class T, class SubT, class ... SubAlgos>
+struct AlgorithmBuilder {
+    Env& m_env;
+    Algorithm<T> info;
+    Registry<T>& registry;
+    std::tuple<AlgorithmRegistry<SubAlgos>...> sub_algos;
+
+    template<class U>
+    AlgorithmBuilder<T, SubT, SubAlgos..., U>
+    with_sub_algos(std::function<void (AlgorithmRegistry<U>&)> f);
+
+    inline void do_register() {
+        info.algorithm = [=](Env& env) -> T* {
+            std::tuple<AlgorithmRegistry<SubAlgos>...> tup(sub_algos);
+
+            SubT* r;
+
+            call(
+                [=, &env, &r](AlgorithmRegistry<SubAlgos> ... args) {
+                    r = new SubT(env, args...);
+                },
+                tup
+            );
+
+            return r;
+        };
+        registry.push_back(info);
+    }
+};
+
+//std::tuple<Env&, SubAlgos...> t_args
+//    = std::tuple_cat(std::tuple<Env&>{env}, sub_algos);
+
+/*return call(
+    [=](Env& env, SubAlgos ... args) -> T* {
+        return new SubT(env, args...);
+    },
+    std::tuple_cat(std::tuple<Env&>{env}, sub_algos)
+);*/
+
 
 template<class T>
 class AlgorithmRegistry {
@@ -50,18 +135,23 @@ public:
     std::vector<Algorithm<T>> registry = {};
 
     template<class U>
-    U* register_algo(std::string name,
-                     std::string shortname,
-                     std::string description) {
-        U* a = new U(m_env);
+    AlgorithmBuilder<T, U> with_info(std::string name,
+                                     std::string shortname,
+                                     std::string description) {
         Algorithm<T> algo {
             name,
             shortname,
             description,
-            a
+            nullptr
         };
-        registry.push_back(algo);
-        return a;
+        AlgorithmBuilder<T, U> builder {
+            m_env,
+            algo,
+            registry,
+            {}
+        };
+        //
+        return builder;
     }
 
     inline Algorithm<T>* findByShortname(boost::string_ref s) {
@@ -73,6 +163,20 @@ public:
         return nullptr;
     }
 };
+
+template<class T, class SubT, class ... SubAlgos>
+template<class U>
+AlgorithmBuilder<T, SubT, SubAlgos..., U> AlgorithmBuilder<T, SubT, SubAlgos...>
+        ::with_sub_algos(std::function<void(AlgorithmRegistry<U>&)> f) {
+    AlgorithmRegistry<U> reg(m_env);
+    f(reg);
+    return {
+        m_env,
+        info,
+        registry,
+        std::tuple_cat(sub_algos, std::tuple<AlgorithmRegistry<U>>{reg})
+    };
+}
 
 /// Declares a registry NAME for algorithms,
 /// which need to inherit from Interface.
