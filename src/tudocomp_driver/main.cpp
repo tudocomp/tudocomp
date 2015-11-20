@@ -24,8 +24,6 @@ using namespace tudocomp;
 namespace po = boost::program_options;
 
 const std::string COMPRESSED_FILE_ENDING = "tdc";
-const std::string THRESHOLD_OPTION = "compressor.threshold";
-const std::string THRESHOLD_LOG = "compressor.threshold";
 
 static const std::string USAGE =
 R"(TuDo Comp.
@@ -402,11 +400,9 @@ int main(int argc, const char** argv)
                 algorithm_env.log_stat(THRESHOLD_LOG, threshold);
 
                 auto rules = comp_instance->compress(inp_vec, threshold);
-
-                comp_time = clk::now();
-
                 enc_instance->code(rules, std::move(inp_vec), *out);
 
+                comp_time = clk::now();
                 enc_time = clk::now();
             } else {
                 setup_time = clk::now();

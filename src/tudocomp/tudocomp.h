@@ -29,7 +29,7 @@ using Input = std::vector<uint8_t>;
 
 /// Interface for a general compressor.
 struct Compressor {
-    const Env& env;
+    Env& env;
 
     /// Class needs to be constructed with an `Env&` argument.
     inline Compressor() = delete;
@@ -41,7 +41,7 @@ struct Compressor {
     ///
     /// \param inp The input stream.
     /// \param out The output stream.
-    virtual void compress(const Input& input, std::ostream& out) = 0;
+    virtual void compress(Input input, std::ostream& out) = 0;
 
     /// Decompress `inp` into `out`.
     ///
@@ -53,15 +53,25 @@ struct Compressor {
 class Lz77RuleCoder;
 class Lz77RuleCompressor;
 
-struct Lz77Rule: public Compressor {
-    inline Lz77Rule(Env& env,
-                    Lz77RuleCompressor* x,
-                    Lz77RuleCoder* y
-                   ):
-        Compressor(env) {};
+const std::string THRESHOLD_OPTION = "compressor.threshold";
+const std::string THRESHOLD_LOG = "compressor.threshold";
 
-    inline virtual void compress(const Input& input, std::ostream& out) {}
-    inline virtual void decompress(std::istream& inp, std::ostream& out) {}
+struct Lz77Rule: public Compressor {
+    Lz77RuleCompressor* m_compressor;
+    Lz77RuleCoder* m_encoder;
+
+    inline Lz77Rule(Env& env,
+                    Lz77RuleCompressor* compressor,
+                    Lz77RuleCoder* encoder):
+        Compressor(env),
+        m_compressor(compressor),
+        m_encoder(encoder) {};
+
+    inline virtual void compress(Input input, std::ostream& out) override final;
+
+    inline virtual void decompress(std::istream& inp, std::ostream& out) override final {
+
+    }
 };
 
 /// Interface for a compressor into LZ77-like substitution rules.
@@ -132,6 +142,21 @@ public:
     /// \param input_size The length of the input in bytes
     virtual size_t min_encoded_rule_length(size_t input_size) = 0;
 };
+
+inline void Lz77Rule::compress(Input input, std::ostream& out) {
+    uint64_t threshold = 0;
+
+    if (env.has_option(THRESHOLD_OPTION)) {
+        threshold = env.option_as<uint64_t>(THRESHOLD_OPTION);
+    } else {
+        threshold = m_encoder->min_encoded_rule_length(input.size());
+    }
+
+    env.log_stat(THRESHOLD_LOG, threshold);
+    auto rules = m_compressor->compress(input, threshold);
+    m_encoder->code(rules, std::move(input), out);
+}
+
 
 /// Convert a vector-like type into a string showing the element values.
 ///
