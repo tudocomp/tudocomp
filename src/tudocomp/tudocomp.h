@@ -61,22 +61,11 @@ class Lz77RuleCoder;
 class Lz77RuleCompressor;
 
 struct Lz77Rule: public Compressor {
-    AlgorithmRegistry<Lz77RuleCompressor> m_compressor_registry;
-    AlgorithmRegistry<Lz77RuleCoder> m_coder_registry;
-
-    inline AlgorithmRegistry<Lz77RuleCompressor>& compressor_registry() {
-        return m_compressor_registry;
-    }
-
-    inline AlgorithmRegistry<Lz77RuleCoder>& coder_registry() {
-        return m_coder_registry;
-    }
-
     inline Lz77Rule(Env& env,
-                    AlgorithmRegistry<Lz77RuleCompressor> x,
-                    AlgorithmRegistry<Lz77RuleCoder> y
+                    Lz77RuleCompressor* x,
+                    Lz77RuleCoder* y
                    ):
-        Compressor(env), m_compressor_registry(env), m_coder_registry(env) {};
+        Compressor(env) {};
 
     inline virtual void compress(std::istream& inp, std::ostream& out) {}
     inline virtual void decompress(std::istream& inp, std::ostream& out) {}

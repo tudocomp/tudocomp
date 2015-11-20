@@ -16,9 +16,6 @@
 #include <type_traits>
 
 #include "boost/utility/string_ref.hpp"
-#include <boost/fusion/functional/invocation/invoke.hpp>
-#include <boost/fusion/sequence.hpp>
-#include <boost/fusion/include/sequence.hpp>
 #include "glog/logging.h"
 
 #include "rule.h"
@@ -48,8 +45,6 @@ namespace tuple_call
         }
     };
 }
-
-//typename std::result_of<F>::type
 
 // user invokes this
 template <typename F, typename Tuple>
@@ -82,9 +77,6 @@ using Registry = std::vector<Algorithm<T>>;
 template<class T>
 class AlgorithmRegistry;
 
-template<class ... Args>
-using boost_tup = boost::fusion::vector<Args...>;
-
 template<class T, class SubT, class ... SubAlgos>
 struct AlgorithmBuilder {
     Env& m_env;
@@ -96,35 +88,8 @@ struct AlgorithmBuilder {
     AlgorithmBuilder<T, SubT, SubAlgos..., U>
     with_sub_algos(std::function<void (AlgorithmRegistry<U>&)> f);
 
-    inline void do_register() {
-        info.algorithm = [=](Env& env) -> T* {
-            std::tuple<AlgorithmRegistry<SubAlgos>...> tup(sub_algos);
-
-            SubT* r;
-
-            call(
-                [=, &env, &r](AlgorithmRegistry<SubAlgos> ... args) {
-                    r = new SubT(env, args...);
-                },
-                tup
-            );
-
-            return r;
-        };
-        registry.push_back(info);
-    }
+    inline void do_register();
 };
-
-//std::tuple<Env&, SubAlgos...> t_args
-//    = std::tuple_cat(std::tuple<Env&>{env}, sub_algos);
-
-/*return call(
-    [=](Env& env, SubAlgos ... args) -> T* {
-        return new SubT(env, args...);
-    },
-    std::tuple_cat(std::tuple<Env&>{env}, sub_algos)
-);*/
-
 
 template<class T>
 class AlgorithmRegistry {
@@ -177,6 +142,21 @@ AlgorithmBuilder<T, SubT, SubAlgos..., U> AlgorithmBuilder<T, SubT, SubAlgos...>
         std::tuple_cat(sub_algos, std::tuple<AlgorithmRegistry<U>>{reg})
     };
 }
+
+template<class T, class SubT, class ... SubAlgos>
+inline void AlgorithmBuilder<T, SubT, SubAlgos...>::do_register() {
+    info.algorithm = [=](Env& env) -> T* {
+        SubT* r;
+        call(
+            [=, &env, &r](AlgorithmRegistry<SubAlgos> ... args) {
+                r = new SubT(env, args.registry[0].algorithm(env)...);
+            },
+            sub_algos
+        );
+        return r;
+    };
+    registry.push_back(info);
+};
 
 /// Declares a registry NAME for algorithms,
 /// which need to inherit from Interface.
