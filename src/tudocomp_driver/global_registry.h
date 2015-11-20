@@ -70,7 +70,7 @@ struct Algorithm {
     /// Description text
     std::string description;
     /// Algorithm
-    std::function<T*(Env&)> algorithm;
+    std::function<T*(Env&, boost::string_ref&)> algorithm;
 };
 
 template<class T>
@@ -145,13 +145,36 @@ AlgorithmBuilder<T, SubT, SubAlgos..., U> AlgorithmBuilder<T, SubT, SubAlgos...>
     };
 }
 
+inline boost::string_ref pop_algorithm_id(boost::string_ref& algorithm_id) {
+    auto idx = algorithm_id.find('.');
+    boost::string_ref r = algorithm_id.substr(0, idx);
+    algorithm_id.remove_prefix(idx);
+    return r;
+}
+
+template<class T>
+inline T* select_algo_or_exit(AlgorithmRegistry<T>& reg,
+                              Env& env,
+                              boost::string_ref& a_id) {
+
+    auto this_id = pop_algorithm_id(a_id);
+    Algorithm<T>* r = reg.findByShortname(this_id);
+
+    if (r == nullptr) {
+        // TODO
+        throw std::runtime_error("unknown algo");
+    }
+
+    return r->algorithm(env, a_id);
+}
+
 template<class T, class SubT, class ... SubAlgos>
 inline void AlgorithmBuilder<T, SubT, SubAlgos...>::do_register() {
-    info.algorithm = [=](Env& env) -> T* {
+    info.algorithm = [=](Env& env, boost::string_ref& a_id) -> T* {
         SubT* r;
         call(
-            [=, &env, &r](AlgorithmRegistry<SubAlgos> ... args) {
-                r = new SubT(env, args.registry[0].algorithm(env)...);
+            [=, &env, &r, &a_id](AlgorithmRegistry<SubAlgos> ... args) {
+                r = new SubT(env, select_algo_or_exit(args, env, a_id)...);
             },
             sub_algos
         );
