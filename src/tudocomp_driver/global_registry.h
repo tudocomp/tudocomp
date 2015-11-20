@@ -22,7 +22,9 @@
 #include "rules.h"
 #include "tudocomp_env.h"
 
-namespace tudocomp {
+namespace tudocomp_driver {
+
+using namespace tudocomp;
 
 // implementation details, users never invoke these directly
 namespace tuple_call
@@ -157,19 +159,6 @@ inline void AlgorithmBuilder<T, SubT, SubAlgos...>::do_register() {
     };
     registry.push_back(info);
 };
-
-/// Declares a registry NAME for algorithms,
-/// which need to inherit from Interface.
-#define DECLARE_ALGO_REGISTRY(NAME, Interface)
-
-/// Defines a registry NAME for algorithms,
-/// which need to inherit from Interface.
-#define DEFINE_ALGO_REGISTRY(NAME, Interface)
-
-/// Registers algorithm Type in registry NAME.
-/// Type needs to inherit from Interface, and the value will be paired
-/// with the metadata given by name, shortname and description.
-#define REGISTER_ALGO(NAME, Interface, Type, name, shortname, description)
 
 }
 

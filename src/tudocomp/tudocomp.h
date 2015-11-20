@@ -18,7 +18,6 @@
 #include "rule.h"
 #include "rules.h"
 #include "tudocomp_env.h"
-#include "global_registry.h"
 
 namespace tudocomp {
 
@@ -70,8 +69,6 @@ struct Lz77Rule: public Compressor {
     inline virtual void compress(std::istream& inp, std::ostream& out) {}
     inline virtual void decompress(std::istream& inp, std::ostream& out) {}
 };
-
-DECLARE_ALGO_REGISTRY(TUDOCOMP_ALGOS, Compressor)
 
 /// Interface for a compressor into LZ77-like substitution rules.
 ///
@@ -141,9 +138,6 @@ public:
     /// \param input_size The length of the input in bytes
     virtual size_t min_encoded_rule_length(size_t input_size) = 0;
 };
-
-DECLARE_ALGO_REGISTRY(LZ77_RULE_COMP_ALGOS, Lz77RuleCompressor)
-DECLARE_ALGO_REGISTRY(LZ77_RULE_CODE_ALGOS, Lz77RuleCoder)
 
 /// Convert a vector-like type into a string showing the element values.
 ///
