@@ -237,57 +237,17 @@ int main(int argc, const char** argv)
         std::string algorithm_id = "lz77rule." + comp_shortname + "." + enc_shortname;
         Env algorithm_env(algorithm_options, {}, algorithm_id);
 
-        {
-            AlgorithmRegistry<Compressor> registry(algorithm_env);
-            register_algos(registry);
-            auto id = algorithm_env.pop_front_algorithm_id();
-            registry.findByShortname(id);
-
-        };
+        // Set up algorithms
+        AlgorithmRegistry<Compressor> registry(algorithm_env);
+        register_algos(registry);
 
 
         if (arg_exists("--list")) {
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
 
-            auto sep = "  |  ";
-
-            {
-                std::cout << "Compression:\n";
-                uint w = 0;
-                uint dw = 0;
-                for (auto algo_ : LZ77_RULE_COMP_ALGOS.registry) {
-                    auto& algo = *algo_;
-                    w = w < algo.shortname.size() ? algo.shortname.size() : w;
-                    dw = dw < algo.name.size() ? algo.name.size() : dw;
-                }
-                for (auto algo_ : LZ77_RULE_COMP_ALGOS.registry) {
-                    auto& algo = *algo_;
-                    std::cout << "  "
-                        << std::setw(w) << std::left << algo.shortname << sep
-                        << std::setw(dw) << std::left << algo.name << sep
-                        << algo.description << std::endl;
-                }
-                std::cout << std::endl;
-            }
-
-            {
-                std::cout << "Encoding:\n";
-                uint w = 0;
-                uint dw = 0;
-                for (auto algo_ : LZ77_RULE_CODE_ALGOS.registry) {
-                    auto& algo = *algo_;
-                    w = w < algo.shortname.size() ? algo.shortname.size() : w;
-                    dw = dw < algo.name.size() ? algo.name.size() : dw;
-                }
-                for (auto algo_ : LZ77_RULE_CODE_ALGOS.registry) {
-                    auto& algo = *algo_;
-                    std::cout << "  "
-                        << std::setw(w) << std::left << algo.shortname << sep
-                        << std::setw(dw) << std::left << algo.name << sep
-                        << algo.description << std::endl;
-                }
-                std::cout << std::endl;
+            for (auto& e: registry.get_sub_algos()) {
+                e.print_to(std::cout, 4);
             }
 
             return 0;

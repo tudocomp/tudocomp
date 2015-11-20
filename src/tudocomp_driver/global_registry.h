@@ -61,6 +61,8 @@ struct AlgorithmInfo;
 struct AlgorithmDb {
     std::string kind;
     std::vector<AlgorithmInfo> sub_algo_info;
+
+    inline void print_to(std::ostream& out, int indent);
 };
 
 struct AlgorithmInfo {
@@ -71,7 +73,25 @@ struct AlgorithmInfo {
     /// Description text
     std::string description;
     std::vector<AlgorithmDb> sub_algo_info;
+
+    inline void print_to(std::ostream& out, int indent);
 };
+
+inline void AlgorithmDb::print_to(std::ostream& out, int indent) {
+    out << std::setw(indent) << "" << kind << "\n";
+    for (auto& e : sub_algo_info) {
+        e.print_to(out, indent + 4);
+    }
+}
+
+inline void AlgorithmInfo::print_to(std::ostream& out, int indent) {
+    out << std::setw(indent) << "" << name << "\n";
+    out << std::setw(indent) << "" << shortname << "\n";
+    out << std::setw(indent) << "" << description << "\n";
+    for (auto& e : sub_algo_info) {
+        e.print_to(out, indent + 4);
+    }
+}
 
 template<class T>
 struct Algorithm {
@@ -124,7 +144,6 @@ public:
             registry,
             {}
         };
-        //
         return builder;
     }
 
@@ -160,9 +179,6 @@ AlgorithmBuilder<T, SubT, SubAlgos..., U> AlgorithmBuilder<T, SubT, SubAlgos...>
         ::with_sub_algos(std::function<void(AlgorithmRegistry<U>&)> f) {
     AlgorithmRegistry<U> reg(m_env);
     f(reg);
-
-    // here: take name of current subgestry
-    //       gather subnames
 
     info.sub_algo_info.push_back({
         reg.get_name(),

@@ -41,19 +41,13 @@ struct Compressor {
     ///
     /// \param inp The input stream.
     /// \param out The output stream.
-    virtual void compress(std::istream& inp, std::ostream& out) = 0;
+    virtual void compress(const Input& input, std::ostream& out) = 0;
 
     /// Decompress `inp` into `out`.
     ///
     /// \param inp The input stream.
     /// \param out The output stream.
     virtual void decompress(std::istream& inp, std::ostream& out) = 0;
-};
-
-struct SubCompressor: public Compressor {
-    inline SubCompressor(Env& env): Compressor(env) {};
-    inline virtual void compress(std::istream& inp, std::ostream& out) {}
-    inline virtual void decompress(std::istream& inp, std::ostream& out) {}
 };
 
 class Lz77RuleCoder;
@@ -66,7 +60,7 @@ struct Lz77Rule: public Compressor {
                    ):
         Compressor(env) {};
 
-    inline virtual void compress(std::istream& inp, std::ostream& out) {}
+    inline virtual void compress(const Input& input, std::ostream& out) {}
     inline virtual void decompress(std::istream& inp, std::ostream& out) {}
 };
 
