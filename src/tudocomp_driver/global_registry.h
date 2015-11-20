@@ -61,14 +61,18 @@ Base* construct(Args ... args) {
     return new T(args...);
 }
 
-template<class T>
-struct Algorithm {
+struct AlgorithmInfo {
     /// Human readable name
     std::string name;
     /// Used as id string for command line and output filenames
     std::string shortname;
     /// Description text
     std::string description;
+};
+
+template<class T>
+struct Algorithm {
+    AlgorithmInfo info;
     /// Algorithm
     std::function<T*(Env&, boost::string_ref&)> algorithm;
 };
@@ -82,7 +86,7 @@ class AlgorithmRegistry;
 template<class T, class SubT, class ... SubAlgos>
 struct AlgorithmBuilder {
     Env& m_env;
-    Algorithm<T> info;
+    AlgorithmInfo info;
     Registry<T>& registry;
     std::tuple<AlgorithmRegistry<SubAlgos>...> sub_algos;
 
@@ -106,15 +110,14 @@ public:
     AlgorithmBuilder<T, U> with_info(std::string name,
                                      std::string shortname,
                                      std::string description) {
-        Algorithm<T> algo {
+        AlgorithmInfo info {
             name,
             shortname,
             description,
-            nullptr
         };
         AlgorithmBuilder<T, U> builder {
             m_env,
-            algo,
+            info,
             registry,
             {}
         };
@@ -124,7 +127,7 @@ public:
 
     inline Algorithm<T>* findByShortname(boost::string_ref s) {
         for (auto& x: registry) {
-            if (x.shortname == s) {
+            if (x.info.shortname == s) {
                 return &x;
             }
         }
@@ -175,7 +178,7 @@ inline T* select_algo_or_exit(AlgorithmRegistry<T>& reg,
 
 template<class T, class SubT, class ... SubAlgos>
 inline void AlgorithmBuilder<T, SubT, SubAlgos...>::do_register() {
-    info.algorithm = [=](Env& env, boost::string_ref& a_id) -> T* {
+    auto f = [=](Env& env, boost::string_ref& a_id) -> T* {
         SubT* r;
         call(
             [=, &env, &r, &a_id](AlgorithmRegistry<SubAlgos> ... args) {
@@ -185,7 +188,7 @@ inline void AlgorithmBuilder<T, SubT, SubAlgos...>::do_register() {
         );
         return r;
     };
-    registry.push_back(info);
+    registry.push_back({info, f});
 };
 
 }
