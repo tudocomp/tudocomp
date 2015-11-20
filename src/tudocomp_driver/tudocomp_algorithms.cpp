@@ -35,6 +35,8 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
         "A Family of compression algorithms making use "
         "of LZ77-like replacement rules.")
     .with_sub_algos<Lz77RuleCompressor>([](AlgorithmRegistry<Lz77RuleCompressor>& registry) {
+        registry.set_name("Compressor");
+
         registry.with_info<DummyCompressor>(
             "Dummy", "dummy",
             "Dummy compressor that does not produce any rules.").do_register();
@@ -56,6 +58,8 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
             "Esacomp using a heap internally.").do_register();
     })
     .with_sub_algos<Lz77RuleCoder>([](AlgorithmRegistry<Lz77RuleCoder>& registry) {
+        registry.set_name("Coder");
+
         registry.with_info<DummyCoder>(
             "Dummy", "dummy",
             "Dummy encoding, outputs input text unchanged.").do_register();

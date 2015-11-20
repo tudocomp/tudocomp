@@ -96,6 +96,7 @@ struct AlgorithmBuilder {
 template<class T>
 class AlgorithmRegistry {
     Env& m_env;
+    std::string name = "?";
 public:
     inline AlgorithmRegistry(Env& env): m_env(env) { }
 
@@ -128,6 +129,10 @@ public:
             }
         }
         return nullptr;
+    }
+
+    inline void set_name(std::string n) {
+        name = n;
     }
 };
 
