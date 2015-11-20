@@ -18,13 +18,11 @@ namespace tudocomp {
 class Env {
     std::map<std::string, std::string> options;
     std::map<std::string, std::string> stats;
-    boost::string_ref algorithm_id;
 public:
     inline Env() {}
     inline Env(std::map<std::string, std::string> options_,
-               std::map<std::string, std::string> stats_,
-               boost::string_ref algorithm_id_):
-        options(options_), stats(stats_), algorithm_id(algorithm_id_) {}
+               std::map<std::string, std::string> stats_):
+        options(options_), stats(stats_) {}
 
     /// Returns a copy of the backing map.
     inline std::map<std::string, std::string> get_options() {
@@ -34,13 +32,6 @@ public:
     /// Returns a copy of the backing map.
     inline std::map<std::string, std::string> get_stats() {
         return stats;
-    }
-
-    inline boost::string_ref pop_front_algorithm_id() {
-        auto idx = algorithm_id.find('.');
-        boost::string_ref r = algorithm_id.substr(0, idx);
-        algorithm_id.remove_prefix(idx);
-        return r;
     }
 
     /// Log a statistic.

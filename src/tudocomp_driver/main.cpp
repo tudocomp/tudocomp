@@ -230,15 +230,11 @@ int main(int argc, const char** argv)
             return 0;
         }
 
-        std::string enc_shortname = string_arg("--encoder");
-        std::string comp_shortname = string_arg("--compressor");
-        std::string algorithm_id = "lz77rule." + comp_shortname + "." + enc_shortname;
-        Env algorithm_env(algorithm_options, {}, algorithm_id);
+        Env algorithm_env(algorithm_options, {});
 
         // Set up algorithms
         AlgorithmRegistry<Compressor> registry(algorithm_env);
         register_algos(registry);
-
 
         if (arg_exists("--list")) {
             std::cout << "This build supports the following algorithms:\n";
@@ -250,6 +246,16 @@ int main(int argc, const char** argv)
 
             return 0;
         }
+
+        std::string enc_shortname = string_arg("--encoder");
+        std::string comp_shortname = string_arg("--compressor");
+        std::string algorithm_id = "lz77rule." + comp_shortname + "." + enc_shortname;
+
+        boost::string_ref tmp_algo_id = algorithm_id;
+        Compressor* algo = select_algo_or_exit(registry,
+                                               algorithm_env,
+                                               tmp_algo_id);
+        CHECK(tmp_algo_id.size() == 0);
 
         bool print_stats = arg_exists("--stats");
         int alphabet_size = 0;
@@ -268,44 +274,16 @@ int main(int argc, const char** argv)
             return 1;
         }
 
-        // Handle selection of encoder
-        CodingAlgorithm* enc;
-
         bool use_explict_encoder(value_arg_exists("--encoder"));
         auto decode_meta_from_file = extract_from_file(file);
 
         if (use_explict_encoder) {
             enc_shortname = string_arg("--encoder");
-            enc = LZ77_RULE_CODE_ALGOS.findByShortname(enc_shortname);
         } else if (!use_stdin && decode_meta_from_file.found) {
             enc_shortname = decode_meta_from_file.enc_shortname;
-            enc = LZ77_RULE_CODE_ALGOS.findByShortname(enc_shortname);
         } else {
             std::cerr << "Need to either specify a encoder or have it encoded in filename\n";
             return 1;
-        }
-
-        if (enc == nullptr) {
-            std::cerr << "Unknown encoder '" << enc_shortname << "'.\n";
-            std::cerr << "Use --list for a list of all implemented algorithms.\n";
-            return 1;
-        }
-
-        Lz77RuleCoder* enc_instance = enc->algorithm;
-
-        CompressionAlgorithm* comp;
-        Lz77RuleCompressor* comp_instance;
-        if (do_compress) {
-            comp_shortname = string_arg("--compressor");
-            comp = LZ77_RULE_COMP_ALGOS.findByShortname(comp_shortname);
-            if (comp == nullptr) {
-                std::cerr << "Unknown compressor '" << comp_shortname << "'.\n";
-                std::cerr << "Use --list for a list of all implemented algorithms.\n";
-                return 1;
-            }
-            comp_instance = comp->algorithm;
-        } else {
-            comp = nullptr;
         }
 
         /////////////////////////////////////////////////////////////////////////
@@ -320,7 +298,7 @@ int main(int argc, const char** argv)
             ofile = string_arg("--output");
         } else if (!use_stdin && do_compress) {
             // Output to a automatically determined file
-            ofile = file + "." + comp->shortname + "." + enc->shortname + "." + COMPRESSED_FILE_ENDING;
+            ofile = file + "." + algorithm_id + "." + COMPRESSED_FILE_ENDING;
         } else if (!use_stdin && !do_compress) {
             if (decode_meta_from_file.found) {
                 ofile = decode_meta_from_file.base_name;
@@ -387,20 +365,7 @@ int main(int argc, const char** argv)
 
                 setup_time = clk::now();
 
-                uint64_t threshold = 0;
-
-                if (algorithm_env.has_option(THRESHOLD_OPTION)) {
-                    threshold = algorithm_env.option_as<uint64_t>(
-                        THRESHOLD_OPTION);
-                } else {
-                    threshold = enc_instance->min_encoded_rule_length(
-                        inp_vec.size());
-                }
-
-                algorithm_env.log_stat(THRESHOLD_LOG, threshold);
-
-                auto rules = comp_instance->compress(inp_vec, threshold);
-                enc_instance->code(rules, std::move(inp_vec), *out);
+                algo->compress(inp_vec, *out);
 
                 comp_time = clk::now();
                 enc_time = clk::now();
@@ -409,7 +374,7 @@ int main(int argc, const char** argv)
                 comp_time = clk::now();
 
                 // TODO: Optionally read encoding from file or header
-                enc_instance->decode(*inp, *out);
+                algo->decompress(*inp, *out);
 
                 enc_time = clk::now();
             }
@@ -425,8 +390,7 @@ int main(int argc, const char** argv)
             auto enc_duration = enc_time - comp_time;
             auto end_duration = end_time - enc_time;
             std::cout << "---------------\n";
-            std::cout << "Compressor: " << comp->name << std::endl;
-            std::cout << "Coder: " << enc->name << std::endl;
+            std::cout << "Config: " << algorithm_id << std::endl;
             std::cout << "---------------\n";
             auto inp_size = 0;
             if (use_stdin) {

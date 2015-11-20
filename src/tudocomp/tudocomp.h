@@ -69,9 +69,7 @@ struct Lz77Rule: public Compressor {
 
     inline virtual void compress(Input input, std::ostream& out) override final;
 
-    inline virtual void decompress(std::istream& inp, std::ostream& out) override final {
-
-    }
+    inline virtual void decompress(std::istream& inp, std::ostream& out) override final;
 };
 
 /// Interface for a compressor into LZ77-like substitution rules.
@@ -157,6 +155,9 @@ inline void Lz77Rule::compress(Input input, std::ostream& out) {
     m_encoder->code(rules, std::move(input), out);
 }
 
+inline void Lz77Rule::decompress(std::istream& inp, std::ostream& out) {
+    m_encoder->decode(inp, out);
+}
 
 /// Convert a vector-like type into a string showing the element values.
 ///

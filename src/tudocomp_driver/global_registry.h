@@ -78,16 +78,17 @@ struct AlgorithmInfo {
 };
 
 inline void AlgorithmDb::print_to(std::ostream& out, int indent) {
-    out << std::setw(indent) << "" << kind << "\n";
+    out << std::setw(indent) << "" << kind << ":\n";
     for (auto& e : sub_algo_info) {
         e.print_to(out, indent + 4);
     }
 }
 
 inline void AlgorithmInfo::print_to(std::ostream& out, int indent) {
-    out << std::setw(indent) << "" << name << "\n";
-    out << std::setw(indent) << "" << shortname << "\n";
-    out << std::setw(indent) << "" << description << "\n";
+    out << std::setw(indent) << ""
+        << "." << shortname << " \t | "
+        << name << ": "
+        << description << "\n";
     for (auto& e : sub_algo_info) {
         e.print_to(out, indent + 4);
     }
