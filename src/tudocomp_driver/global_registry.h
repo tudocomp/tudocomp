@@ -56,10 +56,12 @@ void call(F f, Tuple && t)
     tuple_call::call_impl<F, Tuple, 0 == std::tuple_size<ttype>::value, std::tuple_size<ttype>::value>::call(f, std::forward<Tuple>(t));
 }
 
-template<class Base, class T, class ... Args>
-Base* construct(Args ... args) {
-    return new T(args...);
-}
+struct AlgorithmInfo;
+
+struct AlgorithmDb {
+    std::string kind;
+    std::vector<AlgorithmInfo> sub_algo_info;
+};
 
 struct AlgorithmInfo {
     /// Human readable name
@@ -68,12 +70,12 @@ struct AlgorithmInfo {
     std::string shortname;
     /// Description text
     std::string description;
+    std::vector<AlgorithmDb> sub_algo_info;
 };
 
 template<class T>
 struct Algorithm {
     AlgorithmInfo info;
-    /// Algorithm
     std::function<T*(Env&, boost::string_ref&)> algorithm;
 };
 
@@ -104,7 +106,7 @@ class AlgorithmRegistry {
 public:
     inline AlgorithmRegistry(Env& env): m_env(env) { }
 
-    std::vector<Algorithm<T>> registry = {};
+    Registry<T> registry = {};
 
     template<class U>
     AlgorithmBuilder<T, U> with_info(std::string name,
@@ -114,6 +116,7 @@ public:
             name,
             shortname,
             description,
+            {},
         };
         AlgorithmBuilder<T, U> builder {
             m_env,
@@ -137,6 +140,18 @@ public:
     inline void set_name(std::string n) {
         name = n;
     }
+
+    inline std::string get_name() {
+        return name;
+    }
+
+    inline std::vector<AlgorithmInfo> get_sub_algos() {
+        std::vector<AlgorithmInfo> r;
+        for (auto& e : registry) {
+            r.push_back(e.info);
+        }
+        return r;
+    }
 };
 
 template<class T, class SubT, class ... SubAlgos>
@@ -145,6 +160,15 @@ AlgorithmBuilder<T, SubT, SubAlgos..., U> AlgorithmBuilder<T, SubT, SubAlgos...>
         ::with_sub_algos(std::function<void(AlgorithmRegistry<U>&)> f) {
     AlgorithmRegistry<U> reg(m_env);
     f(reg);
+
+    // here: take name of current subgestry
+    //       gather subnames
+
+    info.sub_algo_info.push_back({
+        reg.get_name(),
+        reg.get_sub_algos(),
+    });
+
     return {
         m_env,
         info,
@@ -178,6 +202,8 @@ inline T* select_algo_or_exit(AlgorithmRegistry<T>& reg,
 
 template<class T, class SubT, class ... SubAlgos>
 inline void AlgorithmBuilder<T, SubT, SubAlgos...>::do_register() {
+
+
     auto f = [=](Env& env, boost::string_ref& a_id) -> T* {
         SubT* r;
         call(
