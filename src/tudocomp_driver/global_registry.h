@@ -50,7 +50,7 @@ namespace tuple_call
 
 // user invokes this
 template <typename F, typename Tuple>
-void call(F f, Tuple && t)
+void call_with_tuple(F f, Tuple && t)
 {
     typedef typename std::decay<Tuple>::type ttype;
     tuple_call::call_impl<F, Tuple, 0 == std::tuple_size<ttype>::value, std::tuple_size<ttype>::value>::call(f, std::forward<Tuple>(t));
@@ -228,10 +228,14 @@ template<class T, class SubT, class ... SubAlgos>
 inline void AlgorithmBuilder<T, SubT, SubAlgos...>::do_register() {
     // Make this copy outside the closure,
     // or else face hours of obscure debugging...
+    // (hint: capturing a field in a lambda expression
+    //  captures the this pointer, which is invalid at the
+    //  point where the lambda is called)
     auto s = sub_algos;
+
     auto f = [=](Env& env, boost::string_ref& a_id) -> T* {
         SubT* r;
-        call(
+        call_with_tuple(
             [=, &env, &r, &a_id](AlgorithmRegistry<SubAlgos> ... args) {
                 r = new SubT(env, select_algo_or_exit(args, env, a_id)...);
             },
