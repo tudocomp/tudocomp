@@ -198,23 +198,13 @@ AlgorithmBuilder<T, SubT, SubAlgos..., U> AlgorithmBuilder<T, SubT, SubAlgos...>
 
 inline boost::string_ref pop_algorithm_id(boost::string_ref& algorithm_id) {
     auto idx = algorithm_id.find('.');
-
+    int dot_size = 1;
     if (idx == boost::string_ref::npos) {
         idx = algorithm_id.size();
+        dot_size = 0;
     }
-
-    std::cout << idx << '\n';
-
     boost::string_ref r = algorithm_id.substr(0, idx);
-
-    std::cout << r << '\n';
-
-    algorithm_id.remove_prefix(idx + 1);
-
-    std::cout << algorithm_id << '\n';
-    std::cout << "ok1\n";
-    std::cout << '\n';
-
+    algorithm_id.remove_prefix(idx + dot_size);
     return r;
 }
 
@@ -236,17 +226,16 @@ inline T* select_algo_or_exit(AlgorithmRegistry<T>& reg,
 
 template<class T, class SubT, class ... SubAlgos>
 inline void AlgorithmBuilder<T, SubT, SubAlgos...>::do_register() {
-    std::cout << "ok433\n\n";
+    // Make this copy outside the closure,
+    // or else face hours of obscure debugging...
     auto s = sub_algos;
-    std::cout << "ok466\n\n";
-
     auto f = [=](Env& env, boost::string_ref& a_id) -> T* {
         SubT* r;
         call(
             [=, &env, &r, &a_id](AlgorithmRegistry<SubAlgos> ... args) {
                 r = new SubT(env, select_algo_or_exit(args, env, a_id)...);
             },
-            (std::cout << "ok65\n\n", s)
+            s
         );
         return r;
     };
