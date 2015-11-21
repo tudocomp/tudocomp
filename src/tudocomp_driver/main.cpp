@@ -241,7 +241,7 @@ int main(int argc, const char** argv)
             std::cout << std::endl;
 
             for (auto& e: registry.get_sub_algos()) {
-                e.print_to(std::cout, 4);
+                e.print_to(std::cout, 0);
             }
 
             return 0;
@@ -459,7 +459,7 @@ int main(int argc, const char** argv)
     } catch (std::exception& e) {
         std::cout << "Error: " << e.what() << '\n';
         std::cout << '\n';
-        std::cout << "The tool is used like this:\n";
+        std::cout << "This tool is used like this:\n";
         show_help();
         return 1;
     }
