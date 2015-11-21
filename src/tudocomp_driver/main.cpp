@@ -233,7 +233,7 @@ int main(int argc, const char** argv)
         Env algorithm_env(algorithm_options, {});
 
         // Set up algorithms
-        AlgorithmRegistry<Compressor> registry(algorithm_env);
+        AlgorithmRegistry<Compressor> registry(&algorithm_env);
         register_algos(registry);
 
         if (arg_exists("--list")) {
@@ -255,6 +255,7 @@ int main(int argc, const char** argv)
         Compressor* algo = select_algo_or_exit(registry,
                                                algorithm_env,
                                                tmp_algo_id);
+        std::cout << tmp_algo_id << '\n';
         CHECK(tmp_algo_id.size() == 0);
 
         bool print_stats = arg_exists("--stats");

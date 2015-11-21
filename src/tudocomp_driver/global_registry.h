@@ -110,9 +110,9 @@ class AlgorithmRegistry;
 
 template<class T, class SubT, class ... SubAlgos>
 struct AlgorithmBuilder {
-    Env& m_env;
+    Env* m_env;
     AlgorithmInfo info;
-    Registry<T>& registry;
+    Registry<T>* registry;
     std::tuple<AlgorithmRegistry<SubAlgos>...> sub_algos;
 
     template<class U>
@@ -124,10 +124,10 @@ struct AlgorithmBuilder {
 
 template<class T>
 class AlgorithmRegistry {
-    Env& m_env;
+    Env* m_env;
     std::string name = "?";
 public:
-    inline AlgorithmRegistry(Env& env): m_env(env) { }
+    inline AlgorithmRegistry(Env* env): m_env(env) { }
 
     Registry<T> registry = {};
 
@@ -144,7 +144,7 @@ public:
         AlgorithmBuilder<T, U> builder {
             m_env,
             info,
-            registry,
+            &registry,
             {}
         };
         return builder;
@@ -163,11 +163,11 @@ public:
         name = n;
     }
 
-    inline std::string get_name() {
+    inline std::string get_name() const {
         return name;
     }
 
-    inline std::vector<AlgorithmInfo> get_sub_algos() {
+    inline std::vector<AlgorithmInfo> get_sub_algos() const {
         std::vector<AlgorithmInfo> r;
         for (auto& e : registry) {
             r.push_back(e.info);
@@ -198,8 +198,23 @@ AlgorithmBuilder<T, SubT, SubAlgos..., U> AlgorithmBuilder<T, SubT, SubAlgos...>
 
 inline boost::string_ref pop_algorithm_id(boost::string_ref& algorithm_id) {
     auto idx = algorithm_id.find('.');
+
+    if (idx == boost::string_ref::npos) {
+        idx = algorithm_id.size();
+    }
+
+    std::cout << idx << '\n';
+
     boost::string_ref r = algorithm_id.substr(0, idx);
-    algorithm_id.remove_prefix(idx);
+
+    std::cout << r << '\n';
+
+    algorithm_id.remove_prefix(idx + 1);
+
+    std::cout << algorithm_id << '\n';
+    std::cout << "ok1\n";
+    std::cout << '\n';
+
     return r;
 }
 
@@ -221,7 +236,9 @@ inline T* select_algo_or_exit(AlgorithmRegistry<T>& reg,
 
 template<class T, class SubT, class ... SubAlgos>
 inline void AlgorithmBuilder<T, SubT, SubAlgos...>::do_register() {
-
+    std::cout << "ok433\n\n";
+    auto s = sub_algos;
+    std::cout << "ok466\n\n";
 
     auto f = [=](Env& env, boost::string_ref& a_id) -> T* {
         SubT* r;
@@ -229,11 +246,11 @@ inline void AlgorithmBuilder<T, SubT, SubAlgos...>::do_register() {
             [=, &env, &r, &a_id](AlgorithmRegistry<SubAlgos> ... args) {
                 r = new SubT(env, select_algo_or_exit(args, env, a_id)...);
             },
-            sub_algos
+            (std::cout << "ok65\n\n", s)
         );
         return r;
     };
-    registry.push_back({info, f});
+    registry->push_back({info, f});
 };
 
 }
