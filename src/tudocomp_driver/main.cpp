@@ -267,7 +267,6 @@ int main(int argc, const char** argv)
         clk::time_point start_time = clk::now();
         clk::time_point setup_time;
         clk::time_point comp_time;
-        clk::time_point enc_time;
         clk::time_point end_time;
 
         {
@@ -319,15 +318,12 @@ int main(int argc, const char** argv)
                 algo->compress(inp_vec, *out);
 
                 comp_time = clk::now();
-                enc_time = clk::now();
             } else {
                 setup_time = clk::now();
                 comp_time = clk::now();
 
                 // TODO: Optionally read encoding from file or header
                 algo->decompress(*inp, *out);
-
-                enc_time = clk::now();
             }
 
             out->flush();
@@ -338,8 +334,7 @@ int main(int argc, const char** argv)
         if (print_stats) {
             auto setup_duration = setup_time - start_time;
             auto comp_duration = comp_time - setup_time;
-            auto enc_duration = enc_time - comp_time;
-            auto end_duration = end_time - enc_time;
+            auto end_duration = end_time - comp_time;
             std::cout << "---------------\n";
             std::cout << "Config: " << algorithm_id << std::endl;
             std::cout << "---------------\n";
@@ -403,7 +398,6 @@ int main(int argc, const char** argv)
             std::cout << "---------------\n";
             print_time("startup", setup_duration);
             print_time("compression", comp_duration);
-            print_time("encoding", enc_duration);
             print_time("teardown", end_duration);
             std::cout << "---------------\n";
         }

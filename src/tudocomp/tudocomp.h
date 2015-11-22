@@ -53,8 +53,9 @@ struct Compressor {
 class Lz77RuleCoder;
 class Lz77RuleCompressor;
 
-const std::string THRESHOLD_OPTION = "compressor.threshold";
-const std::string THRESHOLD_LOG = "compressor.threshold";
+const std::string THRESHOLD_OPTION = "lz77rule.threshold";
+const std::string THRESHOLD_LOG = "lz77rule.threshold";
+const std::string RULESET_SIZE_LOG = "lz77rule.rule_count";
 
 struct Lz77Rule: public Compressor {
     Lz77RuleCompressor* m_compressor;
@@ -152,6 +153,7 @@ inline void Lz77Rule::compress(Input input, std::ostream& out) {
 
     env.log_stat(THRESHOLD_LOG, threshold);
     auto rules = m_compressor->compress(input, threshold);
+    env.log_stat(RULESET_SIZE_LOG, rules.size());
     m_encoder->code(rules, std::move(input), out);
 }
 

@@ -1,17 +1,12 @@
 # Refactor
 
-- -c/-e => -a
 - move lz77rule impl to subproject
 - greate lz78rule impl
 - move lz78 rule impl
-- make algo register a global function that recusively calls register methods
 - somehow merge sa_compressor with concept of general/specific compressor
-- change driver options to -a for "algorithm", remove existing c and e options
--
 
 # Outstanding
 
-- show amount of rules on stat page
 - lz77, lz78, lzw impl
 - Include esacomp java impl in that comparison tool
 - Add some kind of coverage support
@@ -40,6 +35,9 @@
 
 # Done
 
+- make algo register a global function that recusively calls register methods
+- show amount of rules on stat page
+- change driver options to -a for "algorithm", remove existing c and e options
 - make threshold settable
 - Add and maintain docs on actual source files
 - Automatically generate html docs
