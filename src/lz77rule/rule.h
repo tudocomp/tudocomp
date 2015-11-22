@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <iostream>
 
-namespace tudocomp {
+namespace lz77rule {
 
 /// A substitution rule.
 struct Rule {
@@ -16,7 +16,13 @@ struct Rule {
     size_t num;
 };
 
-std::ostream& operator<< (std::ostream& stream, const Rule& rule);
+inline std::ostream& operator<< (std::ostream& stream, const Rule& rule) {
+    return stream << "("
+           << rule.target << ", "
+           << rule.source << ", "
+           << rule.num << ")";
+}
+
 inline bool operator== (const Rule& left, const Rule& right) {
     return left.target == right.target
         && left.source == right.source
@@ -28,6 +34,14 @@ inline bool operator!= (const Rule& left, const Rule& right) {
         || left.source != right.source
         || left.num != right.num;
 }
+
+/// Callable object, acts as a comparator of Rules, to order them
+/// acording to target position.
+struct rule_compare {
+    inline bool operator() (const Rule& lhs, const Rule& rhs) const {
+        return lhs.target < rhs.target;
+    }
+};
 
 }
 

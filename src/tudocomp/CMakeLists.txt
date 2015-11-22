@@ -2,7 +2,6 @@ add_library(
     tudocomp
 
     tudocomp.cpp
-    rule.cpp
 )
 target_link_libraries(
     tudocomp

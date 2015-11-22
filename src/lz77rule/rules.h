@@ -10,7 +10,7 @@
 #include "glog/logging.h"
 #include "rule.h"
 
-namespace tudocomp {
+namespace lz77rule {
 
 class GrowableIntVector {
 public:

@@ -9,8 +9,10 @@
 
 #include "rule.h"
 #include "tudocomp.h"
+#include "lz77rule.h"
 
 using namespace tudocomp;
+using namespace lz77rule;
 
 namespace sa_compressor {
 

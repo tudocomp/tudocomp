@@ -1,5 +1,5 @@
 #include "tudocomp_algorithms.h"
-
+#include "lz77rule.h"
 #include "lz_compressor.h"
 #include "esa_compressor.h"
 #include "max_lcp_sorted_suffix_list.h"
@@ -14,6 +14,7 @@
 namespace tudocomp_driver {
 
 using namespace tudocomp;
+using namespace lz77rule;
 using namespace esacomp;
 using namespace dummy;
 using namespace lz_compressor;

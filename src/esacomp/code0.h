@@ -2,9 +2,11 @@
 #define CODE0_H
 
 #include "tudocomp.h"
+#include "lz77rule.h"
 
 namespace esacomp {
 
+using namespace lz77rule;
 using namespace tudocomp;
 
 class Code0Coder: public Lz77RuleCoder {

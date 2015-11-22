@@ -6,11 +6,13 @@
 #include "test_util.h"
 
 #include "tudocomp.h"
+#include "lz77rule.h"
 #include "esa_compressor.h"
 #include "code0.h"
 #include "code1.h"
 #include "code2.h"
 
+using namespace lz77rule;
 using namespace esacomp;
 
 TEST(ESACompressor, compress) {

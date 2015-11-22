@@ -8,6 +8,7 @@ target_link_libraries(
     suffix_array_compressor
 
     tudocomp
+    lz77rule
     sdsl
     divsufsort
     divsufsort64

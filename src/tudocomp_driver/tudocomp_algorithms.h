@@ -9,12 +9,6 @@
 
 namespace tudocomp_driver {
 
-using tudocomp::Lz77RuleCompressor;
-using tudocomp::Lz77RuleCoder;
-
-using CompressionAlgorithm = Algorithm<Lz77RuleCompressor>;
-using CodingAlgorithm = Algorithm<Lz77RuleCoder>;
-
 void register_algos(AlgorithmRegistry<Compressor>& registry);
 
 }

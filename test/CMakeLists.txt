@@ -1,6 +1,7 @@
 include(test_driver.cmake)
 
 run_test(tudocomp_tests tudocomp)
+run_test(lz77rule_tests lz77rule)
 
 # Compile and run the "dummy_tests.cpp" file, which
 # has a dependency on the "dummy" subproject.

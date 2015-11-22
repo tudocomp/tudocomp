@@ -7,8 +7,10 @@
 #include "glog/logging.h"
 
 #include "tudocomp.h"
+#include "lz77rule.h"
 
 using namespace tudocomp;
+using namespace lz77rule;
 
 // TODO: Actually specialize the 3 kinds
 

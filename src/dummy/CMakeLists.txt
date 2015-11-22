@@ -9,6 +9,7 @@ target_link_libraries(
     dummy
 
     tudocomp
+    lz77rule
     ${GLOG_LIBRARIES}
 )
 

@@ -5,10 +5,12 @@
 
 #include "rule.h"
 #include "tudocomp.h"
-
-using namespace tudocomp;
+#include "lz77rule.h"
 
 namespace lz_compressor {
+
+using namespace tudocomp;
+using namespace lz77rule;
 
 class LZ78Compressor: public Lz77RuleCompressor {
 public:

@@ -2,6 +2,8 @@
 #define DUMMY_CODER_H
 
 #include "tudocomp.h"
+#include "lz77rule.h"
+using namespace lz77rule;
 
 // Put every C++ code in this project into a common namespace
 // in order to not pollute the global one

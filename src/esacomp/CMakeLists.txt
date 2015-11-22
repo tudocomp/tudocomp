@@ -12,6 +12,7 @@ target_link_libraries(
     esacomp
 
     tudocomp
+    lz77rule
     suffix_array_compressor
     ${GLOG_LIBRARIES}
 )

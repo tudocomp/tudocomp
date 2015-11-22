@@ -3,17 +3,21 @@
 add_subdirectory(tudocomp)
 add_subdirectory(tudocomp_driver)
 
-# Adapter library for compression algorithms working with suffix arrays
+# Compressor that uses lz77-like substitution rules
+# with separate compression and encoding steps
+add_subdirectory(lz77rule)
+
+# Adapter library for lz77rule compression algorithms working with suffix arrays
 add_subdirectory(suffix_array_compressor)
 
-# "Dummy" library. Does no-op compression and encoding, and is
-# used as example and for comparision
+# The lz77rule "Dummy" library. Does no-op compression and encoding, and is
+# used as example and for comparison.
 add_subdirectory(dummy)
 
-# Esacomp library.
+# The lz77rule Esacomp library.
 add_subdirectory(esacomp)
 
-# LZ implementations
+# The lz77rule LZ implementations
 add_subdirectory(lz_compressor)
 
 # CLI tool for comparing different compression tools
