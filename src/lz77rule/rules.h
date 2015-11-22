@@ -4,9 +4,6 @@
 #include <iterator>
 #include <initializer_list>
 
-#include "sdsl/int_vector.hpp"
-#include "sdsl/bits.hpp"
-#include "sdsl/util.hpp"
 #include "sdsl_extension.h"
 #include "glog/logging.h"
 #include "rule.h"

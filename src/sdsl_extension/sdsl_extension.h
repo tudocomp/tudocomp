@@ -1,6 +1,10 @@
 #ifndef TUDOCOMP_SDSL_EXTENSION_H
 #define TUDOCOMP_SDSL_EXTENSION_H
 
+#include "sdsl/int_vector.hpp"
+#include "sdsl/bits.hpp"
+#include "sdsl/util.hpp"
+
 namespace sdsl_extension {
 
 class GrowableIntVector {
