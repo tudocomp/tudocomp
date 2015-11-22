@@ -7,18 +7,21 @@ inputs = [
     "$DATASETS/../src/tudocomp_driver/main.cpp",
 ]
 commands = [
-#      <shown command and args>               <hidden args>    <out file ending>
-    ["tudocomp_driver -c dummy -e dummy",     "$IN -o $OUT",   "dummy.dummy.tdc"    ],
-    ["tudocomp_driver -c dummy -e esa_code0", "$IN -o $OUT",   "dummy.esa_code0.tdc"],
-    ["tudocomp_driver -c dummy -e esa_code1", "$IN -o $OUT",   "dummy.esa_code1.tdc"],
-    ["tudocomp_driver -c dummy -e esa_code2", "$IN -o $OUT",   "dummy.esa_code2.tdc"],
-    ["tudocomp_driver -c lz -e esa_code2",    "$IN -o $OUT",   "lz.esa_code2.tdc"   ],
-    ["tudocomp_driver -c esa -e esa_code2",   "$IN -o $OUT",   "esa.esa_code2.tdc"  ],
-    ["gzip -9",                               "-c $IN > $OUT", "gz"                 ],
-    ["bzip2 -9",                              "-c $IN > $OUT", "bz2"                ],
-    ["7z",                                    "a $OUT $IN > /dev/null", "7z"        ], # 7z prints to stdout per default
-    ["tudocomp_driver -c lz -e esa_code1",    "$IN -o $OUT",   "lz.esa_code1.tdc"   ],
-    ["tudocomp_driver -c esa -e esa_code1",   "$IN -o $OUT",   "esa.esa_code1.tdc"  ],
+#      <shown command and args>                     <hidden args>    <out file ending>
+    ["tudocomp_driver -a lz77rule.dummy.dummy",     "$IN -o $OUT",   "lz77rule.dummy.dummy.tdc"    ],
+    ["tudocomp_driver -a lz77rule.dummy.esa_code0", "$IN -o $OUT",   "lz77rule.dummy.esa_code0.tdc"],
+    ["tudocomp_driver -a lz77rule.dummy.esa_code1", "$IN -o $OUT",   "lz77rule.dummy.esa_code1.tdc"],
+    ["tudocomp_driver -a lz77rule.dummy.esa_code2", "$IN -o $OUT",   "lz77rule.dummy.esa_code2.tdc"],
+    ["tudocomp_driver -a lz77rule.lz.esa_code2",    "$IN -o $OUT",   "lz77rule.lz.esa_code2.tdc"   ],
+    ["tudocomp_driver -a lz77rule.esa.esa_code2",   "$IN -o $OUT",   "lz77rule.esa.esa_code2.tdc"  ],
+
+    ["gzip -9",                                     "-c $IN > $OUT", "gz"                          ],
+    ["bzip2 -9",                                    "-c $IN > $OUT", "bz2"                         ],
+    # 7z prints to stdout per default
+    ["7z",                                          "a $OUT $IN > /dev/null", "7z"                 ],
+
+    ["tudocomp_driver -a lz77rule.lz.esa_code1",    "$IN -o $OUT",   "lz77rule.lz.esa_code1.tdc"   ],
+    ["tudocomp_driver -a lz77rule.esa.esa_code1",   "$IN -o $OUT",   "lz77rule.esa.esa_code1.tdc"  ],
 ]
 
 # Same as example_fast, but also measuring memory usage
@@ -37,8 +40,8 @@ inputs = [
     "$DATASETS/download/real/dna.50MB",
 ]
 commands = [
-    ["tudocomp_driver -c esa -e esa_code2",   "$IN -o $OUT",   "esa.code2.tdc"  ],
-    ["gzip -9",                               "-c $IN > $OUT", "gz"             ],
-    ["bzip2 -9",                              "-c $IN > $OUT", "bz2"            ],
-    ["7z",                                    "a $OUT $IN",    "7z"             ],
+    ["tudocomp_driver -a lz77rule.esa.esa_code2", "$IN -o $OUT",   "lz77rule.esa.code2.tdc"],
+    ["gzip -9",                                   "-c $IN > $OUT", "gz"                    ],
+    ["bzip2 -9",                                  "-c $IN > $OUT", "bz2"                   ],
+    ["7z",                                        "a $OUT $IN",    "7z"                    ],
 ]

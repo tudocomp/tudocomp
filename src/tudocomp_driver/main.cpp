@@ -29,15 +29,18 @@ static const std::string USAGE =
 R"(TuDo Comp.
 
 Usage:
-    tudocomp [options] [-k] -c <name>  -e <name>  [-o <output>] [--] ( <input> | - )
-    tudocomp [options]  -d            [-e <name>] [-o <output>] [--] ( <input> | - )
+    tudocomp [options] [-k]  -a <alg>  [-o <output>] [--] ( <input> | - )
+    tudocomp [options]  -d  [-a <alg>] [-o <output>] [--] ( <input> | - )
     tudocomp --list
     tudocomp --help
 
 Options:
     -h --help               Show this screen.
-    -c --compressor <name>  Use compressor <name> for generating the Ruleset.
-    -e --encoder <name>     Use encoder <name> for generating the Output.
+    -a --algorithm <alg>    Use algorithm <alg> for (de)compression.
+                            <alg> can be a dot-separated chain of
+                            sub-algorithms. See --list for a complete list
+                            of them.
+                            Example: -a lz77rule.esa.esa_code0
     -k --compress           Compress input instead of compressing it.
     -d --decompress         Decompress input instead of compressing it.
     -o --output <output>    Choose output filename instead the the default of
@@ -45,8 +48,10 @@ Options:
                             or stdout if reading from stdin.
     -s --stats              Print statistics to stdout.
     -f --force              Overwrite output even if it exists.
-    -l --list               List all Compression and Encoding algorithms
-                            supported by this tool.
+    -l --list               List all Compression algorithms supported
+                            by this tool.
+                            Algorithms may consist out of sub-algorithms,
+                            which will be displayed in a hierarchical fashion.
     -O --option <option>    An additional option of the form key=value.
 )";
 
@@ -76,48 +81,10 @@ static bool open_output(std::ostream*& out, std::string& ofile, bool allow_overw
     return true;
 }
 
-struct FileNameComponents {
-    bool found;
-    std::string base_name;
-    std::string enc_shortname;
-};
-static FileNameComponents extract_from_file(const std::string& file) {
-    // TODO: Ugly way to get the last two dot seperated components
-    // of filename
-    size_t dot2 = 0;
-    size_t dot1 = 0;
-    size_t dot0 = 0;
-    size_t dots = 0;
-    for (size_t i_ = 0; i_ < file.size(); i_++) {
-        size_t i = file.size() - i_;
-        if (file[i] == '.' && dots == 0) {
-            dot2 = i;
-            dots++;
-        } else if (file[i] == '.' && dots == 1) {
-            dot1 = i;
-            dots++;
-        } else if (file[i] == '.' && dots == 2) {
-            dot0 = i;
-            dots++;
-            break;
-        }
-    }
-
-    if (dots == 3) {
-        auto ending = file.substr(dot2 + 1, file.size() - dot2 - 1);
-        auto shortname = file.substr(dot1 + 1, dot2 - dot1 - 1);
-
-        if (ending == COMPRESSED_FILE_ENDING) {
-            return { true, file.substr(0, dot0), shortname };
-        }
-    }
-    return { false, "", "" };
-}
-
 uint8_t count_alphabet_size(Input& input) {
     uint64_t table[256] = {};
 
-    for (auto& e : table) {
+    for (auto e : table) {
         CHECK(e == 0);
     }
 
@@ -147,8 +114,7 @@ int main(int argc, const char** argv)
     po::options_description desc("Options");
     desc.add_options()
         ("help,h", "")
-        ("compressor,c", po::value<std::string>(), "")
-        ("encoder,e", po::value<std::string>(), "")
+        ("algorithm,a", po::value<std::string>(), "")
         ("compress,k", "")
         ("decompress,d", "")
         ("output,o", po::value<std::string>(), "")
@@ -247,21 +213,21 @@ int main(int argc, const char** argv)
             return 0;
         }
 
-        std::string enc_shortname = string_arg("--encoder");
-        std::string comp_shortname = string_arg("--compressor");
-        std::string algorithm_id = "lz77rule." + comp_shortname + "." + enc_shortname;
+        bool print_stats = arg_exists("--stats");
+        int alphabet_size = 0;
 
+        bool do_compress = !arg_exists("--decompress");
+
+        /////////////////////////////////////////////////////////////////////////
+        // Select algorithm
+
+        std::string algorithm_id = string_arg("--algorithm");
         boost::string_ref tmp_algo_id = algorithm_id;
         Compressor* algo = select_algo_or_exit(registry,
                                                algorithm_env,
                                                tmp_algo_id);
         //std::cout << tmp_algo_id << '\n';
         CHECK(tmp_algo_id.size() == 0);
-
-        bool print_stats = arg_exists("--stats");
-        int alphabet_size = 0;
-
-        bool do_compress = !arg_exists("--decompress");
 
         /////////////////////////////////////////////////////////////////////////
         // Select where the input comes from
@@ -272,18 +238,6 @@ int main(int argc, const char** argv)
 
         if (!use_stdin && !fexists(file)) {
             std::cerr << "input " << file << " does not exist\n";
-            return 1;
-        }
-
-        bool use_explict_encoder(value_arg_exists("--encoder"));
-        auto decode_meta_from_file = extract_from_file(file);
-
-        if (use_explict_encoder) {
-            enc_shortname = string_arg("--encoder");
-        } else if (!use_stdin && decode_meta_from_file.found) {
-            enc_shortname = decode_meta_from_file.enc_shortname;
-        } else {
-            std::cerr << "Need to either specify a encoder or have it encoded in filename\n";
             return 1;
         }
 
@@ -301,12 +255,8 @@ int main(int argc, const char** argv)
             // Output to a automatically determined file
             ofile = file + "." + algorithm_id + "." + COMPRESSED_FILE_ENDING;
         } else if (!use_stdin && !do_compress) {
-            if (decode_meta_from_file.found) {
-                ofile = decode_meta_from_file.base_name;
-            } else {
-                std::cerr << "Need to either specify a output filename or have it endcoded in input filename\n";
-                return 1;
-            }
+            std::cerr << "Need to specify a output filename\n";
+            return 1;
         }
 
         /////////////////////////////////////////////////////////////////////////

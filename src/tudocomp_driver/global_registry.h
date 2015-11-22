@@ -218,7 +218,8 @@ inline T* select_algo_or_exit(AlgorithmRegistry<T>& reg,
 
     if (r == nullptr) {
         // TODO
-        throw std::runtime_error("unknown algo");
+        throw std::runtime_error("Unknown algorithm '"
+            + std::string(this_id) + "'");
     }
 
     return r->algorithm(env, a_id);
