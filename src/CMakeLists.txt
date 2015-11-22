@@ -7,6 +7,9 @@ add_subdirectory(tudocomp_driver)
 # with separate compression and encoding steps
 add_subdirectory(lz77rule)
 
+# sdsl extension features
+add_subdirectory(sdsl_extension)
+
 # Adapter library for lz77rule compression algorithms working with suffix arrays
 add_subdirectory(suffix_array_compressor)
 

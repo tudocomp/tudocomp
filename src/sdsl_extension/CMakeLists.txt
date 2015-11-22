@@ -1,15 +1,16 @@
 add_library(
-    lz77rule
+    sdsl_extension
     INTERFACE
 )
 target_link_libraries(
-    lz77rule
-    INTERFACE
-    tudocomp
     sdsl_extension
+    INTERFACE
+    sdsl
+    divsufsort
+    divsufsort64
     ${GLOG_LIBRARIES}
 )
 target_include_directories(
-    lz77rule
+    sdsl_extension
     INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
 )
