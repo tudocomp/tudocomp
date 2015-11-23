@@ -11,6 +11,8 @@
 #include "lz78.h"
 #include "code0.h"
 
+#include "lz78rule.h"
+
 using namespace lz77rule;
 using namespace lz_compressor;
 using namespace esacomp;

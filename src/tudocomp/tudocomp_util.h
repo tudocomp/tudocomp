@@ -28,6 +28,14 @@ std::string vec_to_debug_string(const T& s) {
     return ss.str();
 }
 
+inline std::ostream& byte_to_lossy_ascii_char(uint8_t byte, std::ostream& out) {
+    if (byte >= 32 && byte <= 127) {
+        return out << "'" << char(byte) << "'";
+    } else {
+        return out << uint(byte);
+    }
+}
+
 /// Convert a vector-like type into a string by interpreting printable ASCII
 /// bytes as chars, and substituting others.
 ///

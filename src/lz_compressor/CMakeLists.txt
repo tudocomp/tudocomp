@@ -10,6 +10,7 @@ target_link_libraries(
 
     tudocomp
     suffix_array_compressor
+    lz78rule
     ${GLOG_LIBRARIES}
 )
 
