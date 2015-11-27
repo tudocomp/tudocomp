@@ -51,12 +51,8 @@ public:
     /// Compress the input.
     ///
     /// \param input The input to be compressed.
-    /// \param threshold The threshold in bytes that limits how small an area a
-    ///                  substitution rule may maximally
-    ///                  cover. For example, a threshold of 3 means no
-    ///                  rules for substitutions of length 2 should be generated.
     /// \return The list of rules.
-    virtual Entries compress(const Input& input, size_t threshold) = 0;
+    virtual Entries compress(const Input& input) = 0;
 };
 
 /// Interface for a coder from LZ77-like substitution rules.
@@ -90,28 +86,10 @@ public:
     /// \param inp The input stream.
     /// \param out The output stream.
     virtual void decode(std::istream& inp, std::ostream& out) = 0;
-
-    /// Return the expected minimum encoded
-    /// length in bytes of a single rule if encoded with this encoder.
-    ///
-    /// This can be used by compressors to directly filter
-    /// out rules that would not be beneficial in the encoded output.
-    ///
-    /// \param input_size The length of the input in bytes
-    virtual size_t min_encoded_rule_length(size_t input_size) = 0;
 };
 
 inline void Lz78Rule::compress(Input input, std::ostream& out) {
-    uint64_t threshold = 0;
-
-    if (env.has_option(THRESHOLD_OPTION)) {
-        threshold = env.option_as<uint64_t>(THRESHOLD_OPTION);
-    } else {
-        threshold = m_encoder->min_encoded_rule_length(input.size());
-    }
-
-    env.log_stat(THRESHOLD_LOG, threshold);
-    auto rules = m_compressor->compress(input, threshold);
+    auto rules = m_compressor->compress(input);
     env.log_stat(RULESET_SIZE_LOG, rules.size());
     m_encoder->code(rules, std::move(input), out);
 }

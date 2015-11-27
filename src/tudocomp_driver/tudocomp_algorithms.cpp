@@ -1,6 +1,8 @@
 #include "tudocomp_algorithms.h"
 #include "lz77rule.h"
+#include "lz78rule.h"
 #include "lz_compressor.h"
+#include "lz78.h"
 #include "esa_compressor.h"
 #include "max_lcp_sorted_suffix_list.h"
 #include "max_lcp_heap.h"
@@ -14,10 +16,11 @@
 namespace tudocomp_driver {
 
 using namespace tudocomp;
-using namespace lz77rule;
 using namespace esacomp;
 using namespace dummy;
 using namespace lz_compressor;
+
+using lz78rule::Lz78Rule;
 
 // All compression and encoding algorithms exposed by the command
 // line interface.
@@ -76,6 +79,31 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
         registry.with_info<Code2Coder>(
             "Code2", "esa_code2",
             "Bit based encoding.").do_register();
+    })
+    .do_register();
+
+    registry.with_info<Lz78Rule>(
+        "LZ78 rule-like", "lz78rule",
+        "A Family of compression algorithms making use "
+        "of LZ78-like replacement rules.")
+    .with_sub_algos<Lz78RuleCompressor>([](AlgorithmRegistry<Lz78RuleCompressor>& registry) {
+        registry.set_name("Compressor");
+
+        registry.with_info<LZ78Compressor>(
+            "lz78", "lz78",
+            "Lz78 compressor that has a unlimited dictionary").do_register();
+    })
+    .with_sub_algos<Lz78RuleCoder>([](AlgorithmRegistry<Lz78RuleCoder>& registry) {
+        registry.set_name("Coder");
+
+        registry.with_info<LZ78DebugCode>(
+            "Debug", "debug",
+            "Debug encoding, each rule is emitted as a string of the form `(<idx>,<chr>)`").do_register();
+
+        registry.with_info<LZ78BitCode>(
+            "Bit", "bit",
+            "Bit encoding, each rule is emitted a bitstream of the "
+            "minimum amount of bits needed to encode the index and the char").do_register();
     })
     .do_register();
 }

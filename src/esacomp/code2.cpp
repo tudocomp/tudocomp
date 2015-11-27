@@ -203,7 +203,7 @@ void Code2Coder::code(Rules rules, Input input, std::ostream& out_) {
     // TODO: Verify that the use of bitsFor is correct here
     size_t bitsPerRef = bitsFor(largestRefAbs);
     size_t bitsPerSubLen = bitsFor(longestSubstitution);
-    size_t bitsPerSymbol = bitsFor(alphabetSize);
+    size_t bitsPerSymbol = bitsFor(alphabetSize - 1);
 
     DLOG(INFO) << "alphabet ranking [";
     for (auto pair : alphabetRanking) {
@@ -399,12 +399,13 @@ void Code2Coder::decode(std::istream& inp, std::ostream& out) {
         DLOG(INFO) << "phrase["<<i<<"]: " << x;
     }
 
+    bool done = false;
     // read bit encoded text;
-    BitIstream binp(inp);
+    BitIstream binp(inp, done);
     DecodeBuffer buffer(length);
     DLOG(INFO) << "building text:";
 
-     while (buffer.size() < length) {
+    while (buffer.size() < length && !done) {
         uint8_t bit = binp.readBit();
         if (bit == 0) {
             // read a extended char

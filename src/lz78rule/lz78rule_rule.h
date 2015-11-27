@@ -15,7 +15,7 @@ struct Entry {
 
 inline std::ostream& operator<< (std::ostream& stream, const Entry& rule) {
     stream << "(" << rule.index << ", ";
-    return tudocomp::byte_to_lossy_ascii_char(rule.chr, stream) << ")";
+    return stream << tudocomp::byte_to_nice_ascii_char(rule.chr) << ")";
 }
 
 inline bool operator== (const Entry& left, const Entry& right) {
