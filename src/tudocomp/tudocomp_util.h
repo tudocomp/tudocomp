@@ -28,12 +28,16 @@ std::string vec_to_debug_string(const T& s) {
     return ss.str();
 }
 
-inline std::ostream& byte_to_lossy_ascii_char(uint8_t byte, std::ostream& out) {
+inline std::string byte_to_nice_ascii_char(uint8_t byte) {
+    using namespace std;
+
+    stringstream out;
     if (byte >= 32 && byte <= 127) {
-        return out << "'" << char(byte) << "'";
+        out << "'" << char(byte) << "'";
     } else {
-        return out << uint(byte);
+        out << uint(byte);
     }
+    return out.str();
 }
 
 /// Convert a vector-like type into a string by interpreting printable ASCII
@@ -184,6 +188,48 @@ void read_bytes_to_vec(std::istream& inp, T& vec, size_t bytes) {
         }
         vec.push_back((unsigned char)c);
     }
+}
+
+inline size_t parse_number_until_other(std::istream& inp, char& last) {
+    size_t n = 0;
+    char c;
+    while (inp.get(c)) {
+        if (c >= '0' && c <= '9') {
+            n *= 10;
+            n += (c - '0');
+        } else {
+            last = c;
+            break;
+        }
+    }
+    return n;
+}
+
+/// Returns number of bits needed to store the integer value n
+///
+/// The returned value will always be greater than 0
+///
+/// Example:
+/// - `bitsFor(0b0) == 1`
+/// - `bitsFor(0b1) == 1`
+/// - `bitsFor(0b10) == 2`
+/// - `bitsFor(0b11) == 2`
+/// - `bitsFor(0b100) == 3`
+inline size_t bitsFor(size_t n) {
+    // TODO: Maybe use nice bit ops?
+    return size_t(ceil(log2(std::max(size_t(1), n) + 1)));
+}
+
+/// Returns number of bytes needed to store the amount of bits.
+///
+/// Example:
+/// - `bytesFor(0) == 0`
+/// - `bytesFor(1) == 1`
+/// - `bytesFor(8) == 1`
+/// - `bytesFor(9) == 2`
+inline size_t bytesFor(size_t bits) {
+    // TODO: Maybe use nice bit ops?
+    return (size_t) ceil(bits / 8.0);
 }
 
 }

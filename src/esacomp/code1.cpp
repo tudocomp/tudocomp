@@ -13,16 +13,6 @@ const uint8_t CODE1_RULE_ID = 0x01;
 
 using OutputSize = uint64_t;
 
-static size_t bitsFor(size_t n) {
-    // TODO: Maybe use nice bit ops?
-    return size_t(ceil(log2(std::max(size_t(2), n))));
-}
-
-static size_t bytesFor(size_t bits) {
-    // TODO: Maybe use nice bit ops?
-    return (size_t) ceil(bits / 8.0);
-}
-
 /// Only write the first `bytes` bytes of `x`.
 /// Defined such that for any integer type T` the output is the same
 /// independent from endianness.

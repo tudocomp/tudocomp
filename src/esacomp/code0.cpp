@@ -33,21 +33,6 @@ void Code0Coder::code(Rules rules, Input input, std::ostream& out) {
     write_and_escape_raw(input, p, out, input.size());
 }
 
-inline size_t parse_number_until_other(std::istream& inp, char& last) {
-    size_t n = 0;
-    char c;
-    while (inp.get(c)) {
-        if (c >= '0' && c <= '9') {
-            n *= 10;
-            n += (c - '0');
-        } else {
-            last = c;
-            break;
-        }
-    }
-    return n;
-}
-
 void Code0Coder::decode(std::istream& inp, std::ostream& out) {
     char c;
     size_t length = parse_number_until_other(inp, c);

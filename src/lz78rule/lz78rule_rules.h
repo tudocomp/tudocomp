@@ -1,5 +1,5 @@
-#ifndef RULES_H
-#define RULES_H
+#ifndef LZ78RULES_H
+#define LZ78RULES_H
 
 #include <iterator>
 #include <initializer_list>

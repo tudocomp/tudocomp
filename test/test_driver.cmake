@@ -10,6 +10,7 @@ add_custom_command(
 # and add all further arguments as dependencies
 macro(run_test test_target)
     add_executable(${test_target}
+        EXCLUDE_FROM_ALL
         test_driver.cpp
         ${test_target}.cpp
     )

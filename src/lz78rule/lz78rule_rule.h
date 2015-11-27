@@ -1,5 +1,5 @@
-#ifndef RULE_H
-#define RULE_H
+#ifndef LZ78RULE_H
+#define LZ78RULE_H
 
 #include <cstdint>
 #include <iostream>

@@ -35,11 +35,6 @@ using AlphabetSize = uint16_t;
 const uint16_t PHRASE_ID = 0xf800;
 const size_t KGRAM = 3;
 
-static size_t bitsFor(size_t n) {
-    // TODO: Maybe use nice bit ops?
-    return size_t(ceil(log2(std::max(size_t(2), n))));
-}
-
 static void code2Raw(BitOstream& out, size_t c, size_t maxBits) {
     if (maxBits > 6) {
         if (c < 4) {

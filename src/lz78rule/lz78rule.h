@@ -1,5 +1,5 @@
-#ifndef LZ77RULE_H
-#define LZ77RULE_H
+#ifndef LZ78RULE_RULE_H
+#define LZ78RULE_RULE_H
 
 #include "tudocomp.h"
 #include "lz78rule_rule.h"

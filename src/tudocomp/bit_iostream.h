@@ -73,7 +73,7 @@ public:
         }
     }
 
-    /// Of there where any bits written to the internal buffer, write
+    /// If there where any bits written to the internal buffer, write
     /// them out one byte at a time, filling the gap at the end with zeroes.
     inline void flush() {
         writeNext();
@@ -94,15 +94,16 @@ public:
 /// Read bytes are buffered on the inside until all bits of them had been read.
 class BitIstream {
     std::istream& inp;
-    uint8_t next;
+    uint8_t next = 0;
     int c;
+    bool& done;
 
     inline void readNext() {
         const int MSB = 7;
 
         char tmp;
         // TODO: Error reporting
-        inp.get(tmp);
+        done |= !inp.get(tmp);
         next = tmp;
 
         c = MSB;
@@ -112,7 +113,7 @@ public:
     /// Create a new BitIstream.
     ///
     /// \param inp_ The istream to read bits from.
-    inline BitIstream(std::istream& inp_): inp(inp_) {
+    inline BitIstream(std::istream& inp_, bool& done_): inp(inp_), done(done_) {
         c = -1;
     }
 
@@ -129,7 +130,7 @@ public:
     /// Read a number of bits, and accumulate them in the return value
     /// with the last bit read at least significant position of the integer.
     template<class T>
-    inline T readBits(size_t amount) {
+    T readBits(size_t amount = sizeof(T) * CHAR_BIT) {
         T value = 0;
         for(size_t i = 0; i < amount; i++) {
             value <<= 1;
