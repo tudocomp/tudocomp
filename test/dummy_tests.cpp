@@ -43,5 +43,5 @@ TEST(Dummy, Roundrip) {
     // This is a template function included from test_util.h that
     // tests the given compresser-coder-decoder chain
     // with a number of ASCII and unicode strings
-    test_roundtrip_batch<DummyCompressor, DummyCoder>();
+    test_roundtrip_batch(lz77roundtrip<DummyCompressor, DummyCoder>);
 }

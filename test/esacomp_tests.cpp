@@ -125,7 +125,7 @@ TEST(Code2Coder, basic) {
             0, 0, 0, 0, 0, 0, 0, 12, // length
             0, 0, 0, 2, // threshold
             3, // bits per symbol
-            2, // bits per sublen
+            3, // bits per sublen
             4, // bits per ref
             0, 7, // alphabet count
             // alphabet
@@ -152,7 +152,7 @@ TEST(Code2Coder, basic) {
             0, 0, 0, 0, 0, 0, 0, 12,
             0, 0, 0, 3,
             3,
-            2,
+            3,
             1,
             0, 7,
             0, 97,
@@ -217,7 +217,7 @@ TEST(Code2Coder, emptyInput) {
         .expected_output(std::vector<uint8_t> {
             0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0,
-            1,
+            0,
             1,
             1,
             0, 0,
@@ -315,25 +315,25 @@ TEST(Code2Decoder, basic) {
 }
 
 TEST(Roundtrip, ESACompressorMaxLCPSortedSuffixListCode0Coder) {
-    test_roundtrip_batch<ESACompressor<MaxLCPSortedSuffixList>, Code0Coder>();
+    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPSortedSuffixList>, Code0Coder>);
 }
 
 TEST(Roundtrip, ESACompressorMaxLCPSortedSuffixListCode1Coder) {
-    test_roundtrip_batch<ESACompressor<MaxLCPSortedSuffixList>, Code1Coder>();
+    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPSortedSuffixList>, Code1Coder>);
 }
 
 TEST(Roundtrip, ESACompressorMaxLCPSortedSuffixListCode2Coder) {
-    test_roundtrip_batch<ESACompressor<MaxLCPSortedSuffixList>, Code2Coder>();
+    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPSortedSuffixList>, Code2Coder>);
 }
 
 TEST(Roundtrip, ESACompressorMaxLCPHeapCode0Coder) {
-    test_roundtrip_batch<ESACompressor<MaxLCPHeap>, Code0Coder>();
+    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPHeap>, Code0Coder>);
 }
 
 TEST(Roundtrip, ESACompressorMaxLCPHeapCode1Coder) {
-    test_roundtrip_batch<ESACompressor<MaxLCPHeap>, Code1Coder>();
+    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPHeap>, Code1Coder>);
 }
 
 TEST(Roundtrip, ESACompressorMaxLCPHeapCode2Coder) {
-    test_roundtrip_batch<ESACompressor<MaxLCPHeap>, Code2Coder>();
+    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPHeap>, Code2Coder>);
 }

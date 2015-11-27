@@ -221,7 +221,9 @@ struct DecoderTest {
 };
 
 template<class Comp, class Cod>
-void test_roundtrip(const std::string input_string) {
+void lz77roundtrip(const std::string input_string) {
+    using R = Rules;
+
     Env env;
 
     Comp compressor { env };
@@ -232,14 +234,13 @@ void test_roundtrip(const std::string input_string) {
     DLOG(INFO) << "ROUNDTRIP TEXT: " << input_string;
 
     // Compress to rules
-    Rules rules = compressor.compress(input,
-                                      coder.min_encoded_rule_length(input.size()));
+    R rules = compressor.compress(input,
+                                coder.min_encoded_rule_length(input.size()));
 
     DLOG(INFO) << "ROUNDTRIP PRE RULES";
 
-    for (Rule rule : rules) {
-        //DLOG(INFO) << "ROUNDTRIP PRE RULE";
-        DLOG(INFO) << "ROUNDTRIP RULE: " << rule;
+    for (auto e : rules) {
+        DLOG(INFO) << "ROUNDTRIP RULE: " << e;
     }
 
     DLOG(INFO) << "ROUNDTRIP POST RULES";
@@ -262,42 +263,51 @@ void test_roundtrip(const std::string input_string) {
     assert_eq_strings(input_string, decoded_string);
 }
 
-template<class T, class U>
-void test_roundtrip_batch() {
-    test_roundtrip<T, U>("abcdebcdeabc");
-    test_roundtrip<T, U>("");
-    test_roundtrip<T, U>("abcdebcdeabcd");
-    test_roundtrip<T, U>("a");
-    test_roundtrip<T, U>("foobar");
-    test_roundtrip<T, U>("abcabcabcabc");
+template<class F>
+void test_roundtrip_batch(F f) {
+    f("abcdebcdeabc");
+    f("");
+    f("abcdebcdeabcd");
+    f("a");
+    f("foobar");
+    f("abcabcabcabc");
 
-    test_roundtrip<T, U>("asdfasctjkcbweasbebvtiwetwcnbwbbqnqxernqzezwuqwezuet"
-                         "qcrnzxbneqebwcbqwicbqcbtnqweqxcbwuexcbzqwezcqbwecqbw"
-                         "dassdasdfzdfgfsdfsdgfducezctzqwebctuiqwiiqcbnzcebzqc");
+    f(
+        "asdfasctjkcbweasbebvtiwetwcnbwbbqnqxernqzezwuqwezuet"
+        "qcrnzxbneqebwcbqwicbqcbtnqweqxcbwuexcbzqwezcqbwecqbw"
+        "dassdasdfzdfgfsdfsdgfducezctzqwebctuiqwiiqcbnzcebzqc");
 
-    test_roundtrip<T, U>("ประเทศไทย中华Việt Nam");
+    f("ประเทศไทย中华Việt Nam");
 
-    test_roundtrip<T, U>("Lorem ipsum dolor sit amet, sea ut etiam solet salut"
-                         "andi, sint complectitur et his, ad salutandi imperdi"
-                         "et gubergren per mei.");
+    f(
+        "Lorem ipsum dolor sit amet, sea ut etiam solet salut"
+        "andi, sint complectitur et his, ad salutandi imperdi"
+        "et gubergren per mei.");
 
-    test_roundtrip<T, U>("Лорэм атоморюм ут хаж, эа граэки емпыдит ёудёкабет "
-                         "мэль, декам дежпютатионй про ты. Нэ ёужто жэмпэр"
-                         " жкрибэнтур векж, незл коррюмпит.");
+    f(
+        "Лорэм атоморюм ут хаж, эа граэки емпыдит ёудёкабет "
+        "мэль, декам дежпютатионй про ты. Нэ ёужто жэмпэр"
+        " жкрибэнтур векж, незл коррюмпит.");
 
-    test_roundtrip<T, U>("報チ申猛あち涙境ワセ周兵いわ郵入せすをだ漏告されて話巡わッき"
-                         "や間紙あいきり諤止テヘエラ鳥提フ健2銀稿97傷エ映田ヒマ役請多"
-                         "暫械ゅにうて。関国ヘフヲオ場三をおか小都供セクヲ前俳著ゅ向深"
-                         "まも月10言スひす胆集ヌヱナ賀提63劇とやぽ生牟56詰ひめつそ総愛"
-                         "ス院攻せいまて報当アラノ日府ラのがし。");
+    f(
+        "報チ申猛あち涙境ワセ周兵いわ郵入せすをだ漏告されて話巡わッき"
+        "や間紙あいきり諤止テヘエラ鳥提フ健2銀稿97傷エ映田ヒマ役請多"
+        "暫械ゅにうて。関国ヘフヲオ場三をおか小都供セクヲ前俳著ゅ向深"
+        "まも月10言スひす胆集ヌヱナ賀提63劇とやぽ生牟56詰ひめつそ総愛"
+        "ス院攻せいまて報当アラノ日府ラのがし。");
 
-    test_roundtrip<T, U>("Εαμ ανσιλλαε περισυλα συαφιθαθε εξ, δυο ιδ ρεβυμ σομ"
-                         "μοδο. Φυγιθ ηομερω ιυς ατ, ει αυδιρε ινθελλεγαμ νες."
-                         " Ρεκυε ωμνιυμ μανδαμυς κυο εα. Αδμοδυμ σωνσεκυαθ υθ "
-                         "φιξ, εσθ ετ πρωβατυς συαφιθαθε ραθιονιβυς, ταντας αυ"
-                         "διαμ ινστρυσθιορ ει σεα.");
+    f(
+        "Εαμ ανσιλλαε περισυλα συαφιθαθε εξ, δυο ιδ ρεβυμ σομ"
+        "μοδο. Φυγιθ ηομερω ιυς ατ, ει αυδιρε ινθελλεγαμ νες."
+        " Ρεκυε ωμνιυμ μανδαμυς κυο εα. Αδμοδυμ σωνσεκυαθ υθ "
+        "φιξ, εσθ ετ πρωβατυς συαφιθαθε ραθιονιβυς, ταντας αυ"
+        "διαμ ινστρυσθιορ ει σεα.");
 
-    test_roundtrip<T, U>("struct Foo { uint8_t bar }");
+    f("struct Foo { uint8_t bar }");
+
+    f("ABBCBCABA");
+
+    f("abcabca");
 }
 
 #endif

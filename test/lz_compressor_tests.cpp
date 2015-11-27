@@ -28,11 +28,11 @@ TEST(LZCompressor, compress) {
 }
 
 TEST(Roundtrip, LZCompressorCode0Coder) {
-    test_roundtrip_batch<LZCompressor, Code0Coder>();
+    test_roundtrip_batch(lz77roundtrip<LZCompressor, Code0Coder>);
 }
 
 TEST(LZ78, compress) {
-    CompressorTest<LZ78Compressor>()
+    /*CompressorTest<LZ78Compressor>()
         .input("abaaabab")
         .threshold(0)
         .expected_rules(Rules {
@@ -54,9 +54,51 @@ TEST(LZ78, compress) {
             // (0,a)(0,n)(1,n)(1,s)
             {0, 0, 0}, {1, 0, 0}, {2, 0, 1}, {4, 0, 1}
         })
-        .run();
+        .run();*/
 }
 
-TEST(Roundtrip, LZ78CompressorCode0Coder) {
-    test_roundtrip_batch<LZ78Compressor, Code0Coder>();
+template<class Comp, class Cod>
+void lz78roundtrip(const std::string input_string) {
+    Env env;
+
+    Comp compressor { env };
+
+    const Input input = input_from_string(input_string);
+
+    DLOG(INFO) << "LZ78 ROUNDTRIP TEXT: " << input_string;
+
+    Entries entries = compressor.compress(input);
+
+    DLOG(INFO) << "LZ78 ROUNDTRIP PRE ENTRIES";
+
+    for (auto e : entries) {
+        DLOG(INFO) << "LZ78 ROUNDTRIP ENTRY: " << e;
+    }
+
+    Cod coder { env };
+
+    // Encode input with rules
+    std::string coded_string = ostream_to_string([&] (std::ostream& out) {
+        coder.code(entries, input, out);
+    });
+
+    DLOG(INFO) << "ROUNDTRIP CODED: " << vec_to_debug_string(coded_string);
+
+    //Decode again
+    std::istringstream coded_stream(coded_string);
+    std::string decoded_string = ostream_to_string([&] (std::ostream& out) {
+        coder.decode(coded_stream, out);
+    });
+
+    DLOG(INFO) << "ROUNDTRIP DECODED: " << decoded_string;
+
+    assert_eq_strings(input_string, decoded_string);
+}
+
+TEST(Roundtrip, LZ78CompressorDebugCode) {
+    test_roundtrip_batch(lz78roundtrip<LZ78Compressor, LZ78DebugCode>);
+}
+
+TEST(Roundtrip, LZ78CompressorBitCode) {
+    test_roundtrip_batch(lz78roundtrip<LZ78Compressor, LZ78BitCode>);
 }
