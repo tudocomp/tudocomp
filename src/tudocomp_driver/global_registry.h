@@ -80,7 +80,7 @@ struct AlgorithmInfo {
 const int ALGO_IDENT = 2;
 
 inline void AlgorithmDb::print_to(std::ostream& out, int indent) {
-    out << std::setw(indent) << "" << kind << ":\n";
+    out << std::setw(indent) << "" << "[" << kind << "]\n";
     for (auto& e : sub_algo_info) {
         e.print_to(out, indent + ALGO_IDENT);
     }
@@ -88,7 +88,7 @@ inline void AlgorithmDb::print_to(std::ostream& out, int indent) {
 
 inline void AlgorithmInfo::print_to(std::ostream& out, int indent) {
     out << std::setw(indent) << ""
-        << "." << shortname << " \t | "
+        << shortname << " \t | "
         << name << ": "
         << description << "\n";
     for (auto& e : sub_algo_info) {
