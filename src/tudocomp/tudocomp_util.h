@@ -232,6 +232,66 @@ inline size_t bytesFor(size_t bits) {
     return (size_t) ceil(bits / 8.0);
 }
 
+/// Read contents of a file to a T.
+/// T needs to behave like a vector of bytes,
+/// eg it should be either std::string, std::vector<char>
+/// or std::vector<uint8_t>
+template<class T>
+T read_file_to_stl_byte_container(std::string& filename) {
+    std::ifstream in(filename, std::ios::in | std::ios::binary);
+    if (in) {
+        T contents;
+        in.seekg(0, std::ios::end);
+        contents.resize(in.tellg());
+        in.seekg(0, std::ios::beg);
+        in.read((char*)&contents[0], contents.size());
+        in.close();
+        return(contents);
+    }
+    throw(errno);
+}
+
+/// Read contents of a stream S to a T.
+/// T needs to behave like a vector of bytes,
+/// eg it should be either std::string, std::vector<char>
+/// or std::vector<uint8_t>
+template<class T, class S>
+T read_stream_to_stl_byte_container(S& stream) {
+    T vector;
+    char c;
+    while (stream.get(c)) {
+        vector.push_back(typename T::value_type(c));
+    }
+    return(vector);
+}
+
+/// A wrapper around a istream that points reads from
+/// a existing memory buffer.
+class ViewStream {
+    struct membuf : std::streambuf {
+        membuf(char* begin, size_t size) {
+            this->setg(begin, begin, begin + size);
+        }
+    };
+
+    std::unique_ptr<membuf> mb;
+    std::unique_ptr<std::istream> m_stream;
+
+public:
+    ViewStream(char* begin, size_t size) {
+        mb = std::unique_ptr<ViewStream::membuf>(
+            new ViewStream::membuf { begin, size }
+        );
+        m_stream = std::unique_ptr<std::istream> {
+            new std::istream(&*mb)
+        };
+    }
+
+    std::istream& stream() {
+        return *m_stream;
+    }
+};
+
 }
 
 #endif

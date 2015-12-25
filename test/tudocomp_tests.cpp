@@ -32,3 +32,103 @@ TEST(Util, bytesFor) {
     ASSERT_EQ(bytesFor(25), 4u);
     ASSERT_EQ(bytesFor(32), 4u);
 }
+
+TEST(InputHandle, vector) {
+    using namespace input;
+    using Inp = input::Input;
+
+    std::vector<uint8_t> v { 97, 98, 99 };
+    Inp inp = Inp::from_memory(v);
+
+    {
+        auto guard = inp.as_view();
+        auto ref = *guard;
+
+        ASSERT_EQ(ref, "abc");
+    }
+
+    {
+        auto guard = inp.as_stream();
+        auto& stream = *guard;
+
+        std::string s;
+
+        stream >> s;
+
+        ASSERT_EQ(s, "abc");
+    }
+}
+
+TEST(InputHandle, file) {
+    using namespace input;
+    using Inp = input::Input;
+
+    {
+        // create a test file
+
+        std::ofstream myfile;
+        myfile.open ("short.txt");
+        myfile << "abc";
+        myfile.close();
+    }
+
+    Inp inp = Inp::from_path("short.txt");
+
+    {
+        auto guard = inp.as_view();
+        auto ref = *guard;
+
+        ASSERT_EQ(ref, "abc");
+    }
+
+    {
+        auto guard = inp.as_stream();
+        auto& stream = *guard;
+
+        std::string s;
+
+        stream >> s;
+
+        ASSERT_EQ(s, "abc");
+    }
+}
+
+TEST(InputHandle, stream_view) {
+    using namespace input;
+    using Inp = input::Input;
+
+    ViewStream stream { (char*) "abc", 3 };
+
+    Inp inp = Inp::from_stream(stream.stream());
+
+    {
+        auto guard = inp.as_stream();
+        auto& stream = *guard;
+
+        std::string s;
+
+        stream >> s;
+
+        ASSERT_EQ(s, "abc");
+    }
+}
+
+TEST(InputHandle, stream_stream) {
+    using namespace input;
+    using Inp = input::Input;
+
+    ViewStream stream { (char*) "abc", 3 };
+
+    Inp inp = Inp::from_stream(stream.stream());
+
+    {
+        auto guard = inp.as_stream();
+        auto& stream = *guard;
+
+        std::string s;
+
+        stream >> s;
+
+        ASSERT_EQ(s, "abc");
+    }
+}
