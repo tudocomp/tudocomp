@@ -17,6 +17,14 @@ LZSS (https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Sz
 - LZSS does not create a rule if it costs more than the original
 
 - rename lz77rule::Rules::nums into lengths or add a comment
+- test on debian stable
+  - test c++14 support on debian stable
+- template-generalize the rule buffers
+  - make growable bit vector use one allocation by distributing bits over N indices
+  - make bit-and-size grow more exact by manually expanding bits
+  - grow to absolute byte-count increments, rather than relative to last value
+- integrate second BA
+  => wait till it compiles
 - lz77, lz78, lzw impl
 - Include esacomp java impl in that comparison tool
 - Add some kind of coverage support
@@ -32,6 +40,9 @@ LZSS (https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Sz
 - Add testsuite for driver
 - force make options to be registerable
 - mmap input file
+- make compression algorithms chainable
+  - normalize input/output handles
+  - include notion of algorithm header
 
 # Revisit at later point
 
