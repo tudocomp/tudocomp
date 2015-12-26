@@ -33,7 +33,7 @@ TEST(Util, bytesFor) {
     ASSERT_EQ(bytesFor(32), 4u);
 }
 
-TEST(InputHandle, vector) {
+TEST(Input, vector) {
     using namespace input;
     using Inp = input::Input;
 
@@ -59,7 +59,7 @@ TEST(InputHandle, vector) {
     }
 }
 
-TEST(InputHandle, file) {
+TEST(Input, file) {
     using namespace input;
     using Inp = input::Input;
 
@@ -93,7 +93,7 @@ TEST(InputHandle, file) {
     }
 }
 
-TEST(InputHandle, stream_view) {
+TEST(Input, stream_view) {
     using namespace input;
     using Inp = input::Input;
 
@@ -113,7 +113,7 @@ TEST(InputHandle, stream_view) {
     }
 }
 
-TEST(InputHandle, stream_stream) {
+TEST(Input, stream_stream) {
     using namespace input;
     using Inp = input::Input;
 
@@ -131,4 +131,64 @@ TEST(InputHandle, stream_stream) {
 
         ASSERT_EQ(s, "abc");
     }
+}
+
+TEST(Output, memory) {
+    using namespace output;
+    using Out = output::Output;
+
+    std::vector<uint8_t> vec;
+
+    Out out = Out::from_memory(vec);
+
+    {
+        auto guard = out.as_stream();
+        auto& stream = *guard;
+
+        stream << "abc";
+    }
+
+    ASSERT_EQ(vec, (std::vector<uint8_t> { 97, 98, 99 }));
+}
+
+TEST(Output, file) {
+    using namespace output;
+    using Out = output::Output;
+
+    Out out = Out::from_path("test_out.txt");
+
+    {
+        auto guard = out.as_stream();
+        auto& stream = *guard;
+
+        stream << "abc";
+    }
+
+    {
+        std::string s;
+        std::ifstream myfile;
+        myfile.open ("test_out.txt");
+        myfile >> s;
+        myfile.close();
+
+        ASSERT_EQ(s, "abc");
+    }
+
+}
+
+TEST(Output, stream) {
+    using namespace output;
+    using Out = output::Output;
+
+    std::stringstream ss;
+    Out out = Out::from_stream(ss);
+
+    {
+        auto guard = out.as_stream();
+        auto& stream = *guard;
+
+        stream << "abc";
+    }
+
+    ASSERT_EQ(ss.str(), "abc");
 }

@@ -265,7 +265,7 @@ T read_stream_to_stl_byte_container(S& stream) {
     return(vector);
 }
 
-/// A wrapper around a istream that points reads from
+/// A wrapper around a istream that reads from
 /// a existing memory buffer.
 class ViewStream {
     struct membuf : std::streambuf {
@@ -291,6 +291,45 @@ public:
         return *m_stream;
     }
 };
+
+/// A ostream that writes bytes into a stl byte container.
+class BackInsertStream {
+    // NB: Very hacky implementation right now...
+
+    std::vector<uint8_t>* buffer;
+    std::unique_ptr<
+        boost::iostreams::stream_buffer<
+            boost::iostreams::back_insert_device<
+                std::vector<char>>>> outBuf;
+    std::unique_ptr<std::stringstream> ss;
+    std::ostream* o;
+
+public:
+    BackInsertStream(std::vector<uint8_t>& buf) {
+        buffer = &buf;
+        outBuf = std::unique_ptr<
+            boost::iostreams::stream_buffer<
+                boost::iostreams::back_insert_device<
+                    std::vector<char>>>> {
+            new boost::iostreams::stream_buffer<
+                    boost::iostreams::back_insert_device<
+                        std::vector<char>>> {
+                // TODO: Very iffy cast here...
+                *((std::vector<char>*) buffer)
+            }
+        };
+        ss = std::unique_ptr<std::stringstream> {
+            new std::stringstream()
+        };
+        o = &*ss;
+        o->rdbuf(&*outBuf);
+    }
+
+    std::ostream& stream() {
+        return *o;
+    }
+};
+
 
 }
 
