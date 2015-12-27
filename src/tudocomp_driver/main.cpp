@@ -65,23 +65,17 @@ static bool fexists(std::string filename)
   return bool(ifile);
 }
 
-static size_t fsize(std::string file) {
-    std::ifstream t(file);
-    t.seekg(0, std::ios::end);
-    return t.tellg();
-}
-
-static bool open_output(std::ostream*& out, std::string& ofile, bool allow_overwrite) {
+static bool check_for_file_already_exist(std::string& ofile,
+                                         bool allow_overwrite) {
     // Don't accidentially overwrite files
     if (!allow_overwrite && fexists(ofile)) {
         std::cerr << "Outputfile already exists\n";
         return false;
     }
-    out = new std::ofstream(ofile);
     return true;
 }
 
-uint8_t count_alphabet_size(Input& input) {
+/*uint8_t count_alphabet_size(Input& input) {
     uint64_t table[256] = {};
 
     for (auto e : table) {
@@ -101,7 +95,7 @@ uint8_t count_alphabet_size(Input& input) {
     }
 
     return counter;
-}
+}*/
 
 } // namespace tudocomp_driver
 
@@ -270,23 +264,27 @@ int main(int argc, const char** argv)
         clk::time_point end_time;
 
         {
-            std::istream* inp;
+            Input inp;
+
             if (use_stdin) {
                 // Input from stdin
-                inp = &std::cin;
+                inp = Input::from_stream(std::cin);
             } else {
                 // Input from specified file
-                inp = new std::ifstream(file);
+                inp = Input::from_path(file);
             }
 
-            std::ostream* out;
+            Output out;
             if (use_stdout) {
                 // Output to stdout
-                out = &std::cout;
+                out = Output::from_stream(std::cout);
             } else {
                 // Output to specified file
-                if (!open_output(out, ofile, bool(value_arg_exists("--force")))) {
+                bool force = bool(value_arg_exists("--force"));
+                if (!check_for_file_already_exist(ofile, force)) {
                     return 1;
+                } else {
+                    out = Output::from_path(ofile);
                 }
             }
 
@@ -294,39 +292,23 @@ int main(int argc, const char** argv)
             // call into actual library
 
             if (do_compress) {
-                // TODO: Solve better, eg by making compress take a istream
-                char c;
-                // COPY 0
-                std::vector<uint8_t> inp_vec;
-
-                if (!use_stdin) {
-                    // TODO: Repair?
-                    inp_vec.reserve(fsize(file));
-                    // HACK to get exact file size
-                }
-
-                while (inp->get(c)) {
-                    inp_vec.push_back(c);
-                }
-
                 if (print_stats) {
-                    alphabet_size = count_alphabet_size(inp_vec);
+                    alphabet_size = 0; // count_alphabet_size(inp_vec);
                 }
 
                 setup_time = clk::now();
 
-                algo->compress(inp_vec, *out);
+                algo->compress(inp, out);
 
                 comp_time = clk::now();
             } else {
                 setup_time = clk::now();
-                comp_time = clk::now();
 
                 // TODO: Optionally read encoding from file or header
-                algo->decompress(*inp, *out);
-            }
+                algo->decompress(inp, out);
 
-            out->flush();
+                comp_time = clk::now();
+            }
         }
 
         end_time = clk::now();
@@ -343,7 +325,7 @@ int main(int argc, const char** argv)
                 std::cout << "input: <stdin>\n";
                 std::cout << "input size: ? B\n";
             } else {
-                inp_size = fsize(file);
+                inp_size = read_file_size(file);
                 std::cout << "input: "<<file<<"\n";
                 std::cout << "input size: "<<inp_size<<" B\n";
             }
@@ -354,7 +336,7 @@ int main(int argc, const char** argv)
                 std::cout << "output: <stdout>\n";
                 std::cout << "output size: ? B\n";
             } else {
-                out_size = fsize(ofile);
+                out_size = read_file_size(ofile);
                 std::cout << "output: "<<ofile<<"\n";
                 std::cout << "output size: "<<out_size<<" B\n";
             }

@@ -4,14 +4,24 @@
 // in order to not pollute the global one
 namespace dummy {
 
-void DummyCoder::code(Rules rules, Input input, std::ostream& out) {
-    out.write((const char*) input.data(), input.size());
+void DummyCoder::code(Rules&& rules, Input& inp, Output& out) {
+    // TODO: stream-to-stream direct transfer?
+    auto i_guard = inp.as_view();
+    auto o_guard = out.as_stream();
+    auto input = *i_guard;
+    auto& output = *o_guard;
+
+    output.write((const char*) input.data(), input.size());
 }
 
-void DummyCoder::decode(std::istream& inp, std::ostream& out) {
+void DummyCoder::decode(Input& inp, Output& out) {
+    // TODO: stream-to-stream direct transfer?
+    auto i_guard = inp.as_stream();
+    auto o_guard = out.as_stream();
+
     char c;
-    while(inp.get(c)) {
-        out.put(c);
+    while((*i_guard).get(c)) {
+        (*o_guard).put(c);
     }
 }
 

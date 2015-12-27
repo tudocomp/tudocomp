@@ -29,8 +29,11 @@
 
 namespace tudocomp {
 
-/// Type of the input data to be compressed
-using Input = std::vector<uint8_t>;
+/// Handle of the input data stream.
+using Input = input::Input;
+
+/// Handle of the output data stream.
+using Output = output::Output;
 
 /// Interface for a general compressor.
 struct Compressor {
@@ -46,13 +49,13 @@ struct Compressor {
     ///
     /// \param inp The input stream.
     /// \param out The output stream.
-    virtual void compress(Input input, std::ostream& out) = 0;
+    virtual void compress(Input& input, Output& output) = 0;
 
     /// Decompress `inp` into `out`.
     ///
     /// \param inp The input stream.
     /// \param out The output stream.
-    virtual void decompress(std::istream& inp, std::ostream& out) = 0;
+    virtual void decompress(Input& input, Output& output) = 0;
 };
 
 }

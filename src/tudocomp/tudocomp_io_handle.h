@@ -47,7 +47,7 @@ namespace input {
     public:
         boost::variant<Memory, Stream, File> data;
 
-        static Input from_path(std::string&& path) {
+        static Input from_path(std::string& path) {
             return Input { File { path } };
         }
 
@@ -61,6 +61,9 @@ namespace input {
 
         inline SliceGuard as_view();
         inline StreamGuard as_stream();
+
+        inline bool has_size();
+        inline size_t size();
     };
 
     struct SliceGuard {
@@ -177,6 +180,36 @@ namespace input {
         return boost::apply_visitor(visitor(), data);
     };
 
+    inline bool Input::has_size() {
+        struct visitor: public boost::static_visitor<bool> {
+            bool operator()(Input::Memory& mem) const {
+                return true;
+            }
+            bool operator()(Input::File& f) const {
+                return true;
+            }
+            bool operator()(Input::Stream& strm) const {
+                return false;
+            }
+        };
+        return boost::apply_visitor(visitor(), data);
+    };
+
+    inline size_t Input::size() {
+        struct visitor: public boost::static_visitor<size_t> {
+            size_t operator()(Input::Memory& mem) const {
+                return mem.buffer->size();
+            }
+            size_t operator()(Input::File& f) const {
+                return read_file_size(f.path);
+            }
+            size_t operator()(Input::Stream& strm) const {
+                return SIZE_MAX;
+            }
+        };
+        return boost::apply_visitor(visitor(), data);
+    };
+
 }
 
 namespace output {
@@ -196,7 +229,7 @@ namespace output {
     public:
         boost::variant<Memory, Stream, File> data;
 
-        static Output from_path(std::string&& path) {
+        static Output from_path(std::string& path) {
             return Output { File { path } };
         }
 

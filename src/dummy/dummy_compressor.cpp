@@ -7,7 +7,7 @@
 // in order to not pollute the global one
 namespace dummy {
 
-Rules DummyCompressor::compress(const Input& input, size_t threshold) {
+Rules DummyCompressor::compress(Input& input, size_t threshold) {
     Rules rules = {};
 
     // You can use various macros from the glog library to assert

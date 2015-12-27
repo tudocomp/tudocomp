@@ -27,9 +27,9 @@ struct Lz78Rule: public Compressor {
         m_compressor(compressor),
         m_encoder(encoder) {};
 
-    inline virtual void compress(Input input, std::ostream& out) override final;
+    inline virtual void compress(Input& input, Output& output) override final;
 
-    inline virtual void decompress(std::istream& inp, std::ostream& out) override final;
+    inline virtual void decompress(Input& inp, Output& out) override final;
 };
 
 /// Interface for a compressor into LZ77-like substitution rules.
@@ -52,7 +52,7 @@ public:
     ///
     /// \param input The input to be compressed.
     /// \return The list of rules.
-    virtual Entries compress(const Input& input) = 0;
+    virtual Entries compress(Input& input) = 0;
 };
 
 /// Interface for a coder from LZ77-like substitution rules.
@@ -76,7 +76,7 @@ public:
     /// \param rules The list of substitution rules
     /// \param input The input text
     /// \param out `ostream` where the encoded output will be written to.
-    virtual void code(Entries rules, Input input, std::ostream& out) = 0;
+    virtual void code(Entries&& rules, Output& out) = 0;
 
     /// Decode and decompress `inp` into `out`.
     ///
@@ -85,16 +85,16 @@ public:
     ///
     /// \param inp The input stream.
     /// \param out The output stream.
-    virtual void decode(std::istream& inp, std::ostream& out) = 0;
+    virtual void decode(Input& inp, Output& out) = 0;
 };
 
-inline void Lz78Rule::compress(Input input, std::ostream& out) {
+inline void Lz78Rule::compress(Input& input, Output& out) {
     auto rules = m_compressor->compress(input);
     env.log_stat(RULESET_SIZE_LOG, rules.size());
-    m_encoder->code(rules, std::move(input), out);
+    m_encoder->code(std::move(rules), out);
 }
 
-inline void Lz78Rule::decompress(std::istream& inp, std::ostream& out) {
+inline void Lz78Rule::decompress(Input& inp, Output& out) {
     m_encoder->decode(inp, out);
 }
 

@@ -36,7 +36,12 @@ static void code1WriteInt(std::ostream& out, T x, size_t bytes = sizeof(T)) {
     out.write(((const char*) &x) + sizeof(T) - bytes, bytes);
 }
 
-void Code1Coder::code(Rules rules, Input input, std::ostream& out) {
+void Code1Coder::code(Rules&& rules, Input& inp, Output& output) {
+    auto i_guard = inp.as_view();
+    auto o_guard = output.as_stream();
+    auto input = *i_guard;
+    auto& out = *o_guard;
+
     ////////////////////////////
     // original Java Code constructor
 
@@ -93,7 +98,12 @@ void Code1Coder::code(Rules rules, Input input, std::ostream& out) {
     encode_raw_until(input.size());
 }
 
-void Code1Coder::decode(std::istream& inp, std::ostream& out) {
+void Code1Coder::decode(Input& input, Output& output) {
+    auto i_guard = input.as_stream();
+    auto o_guard = output.as_stream();
+    auto& inp = *i_guard;
+    auto& out = *o_guard;
+
     OutputSize length = read_bytes<OutputSize>(inp);
     DLOG(INFO) << "text length: " << length;
 

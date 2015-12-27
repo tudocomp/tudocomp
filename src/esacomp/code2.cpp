@@ -104,7 +104,12 @@ static void code2Length(BitOstream& out, size_t n, size_t maxBits) {
     }
 }
 
-void Code2Coder::code(Rules rules, Input input, std::ostream& out_) {
+void Code2Coder::code(Rules&& rules, Input& inp, Output& output) {
+    auto i_guard = inp.as_view();
+    auto o_guard = output.as_stream();
+    auto input = *i_guard;
+    auto& out_ = *o_guard;
+
     ////////////////////////////
     // original Java Code constructor
 
@@ -355,7 +360,12 @@ static size_t codeFromLength(BitIstream& inp, size_t maxBits) {
     }
 }
 
-void Code2Coder::decode(std::istream& inp, std::ostream& out) {
+void Code2Coder::decode(Input& input, Output& output) {
+    auto i_guard = input.as_stream();
+    auto o_guard = output.as_stream();
+    auto& inp = *i_guard;
+    auto& out = *o_guard;
+
     // read byte encoded header
 
     OutputSize length = read_bytes<OutputSize>(inp);

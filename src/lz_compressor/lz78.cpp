@@ -85,8 +85,10 @@ struct Trie {
     }
 };
 
-Entries compress_impl(const Env& env, const Input& input, bool lzw) {
-    boost::string_ref input_ref((const char*)(&input[0]), input.size());
+Entries compress_impl(const Env& env, Input& input, bool lzw) {
+    auto guard = input.as_view();
+    auto input_ref = *guard;
+
     Trie trie;
     Entries entries;
 
@@ -96,7 +98,7 @@ Entries compress_impl(const Env& env, const Input& input, bool lzw) {
         }
     }
 
-    for (size_t i = 0; i < input.size(); i++) {
+    for (size_t i = 0; i < input_ref.size(); i++) {
         auto s = input_ref.substr(i);
 
         Result phrase_and_size = trie.find_or_insert(s);
@@ -114,11 +116,11 @@ Entries compress_impl(const Env& env, const Input& input, bool lzw) {
     return entries;
 }
 
-Entries LZ78Compressor::compress(const Input& input) {
+Entries LZ78Compressor::compress(Input& input) {
     return compress_impl(env, input, false);
 }
 
-Entries LZWCompressor::compress(const Input& input) {
+Entries LZWCompressor::compress(Input& input) {
     return compress_impl(env, input, true);
 }
 
@@ -147,13 +149,21 @@ struct Lz78DecodeBuffer {
     }
 };
 
-void LZ78DebugCode::code(Entries entries, Input input, std::ostream& out) {
+void LZ78DebugCode::code(Entries&& entries, Output& out) {
+    auto guard = out.as_stream();
+
     for (Entry entry : entries) {
-        out << "(" << entry.index << "," << char(entry.chr) << ")";
+        *guard << "(" << entry.index << "," << char(entry.chr) << ")";
     }
 }
 
-void LZ78DebugCode::decode(std::istream& inp, std::ostream& out) {
+void LZ78DebugCode::decode(Input& in, Output& ou) {
+    auto i_guard = in.as_stream();
+    auto& inp = *i_guard;
+
+    auto o_guard = ou.as_stream();
+    auto& out = *o_guard;
+
     Lz78DecodeBuffer buf;
     char c;
 
@@ -170,7 +180,7 @@ void LZ78DebugCode::decode(std::istream& inp, std::ostream& out) {
     }
 }
 
-void LZ78BitCode::code(Entries entries, Input input, std::ostream& out_) {
+void LZ78BitCode::code(Entries&& entries, Output& out_) {
     // only store as many bits for a index and a chr as necessary.
     // - indices will always start around 0, so just limit the size for them
     // - chars might start and end in a narrow range, so use only that.
@@ -199,7 +209,9 @@ void LZ78BitCode::code(Entries entries, Input input, std::ostream& out_) {
     DLOG(INFO) << "index_bits " << index_bits;
     DLOG(INFO) << "chr_bits " << chr_bits;
 
-    BitOstream out(out_);
+    auto guard = out_.as_stream();
+
+    BitOstream out(*guard);
 
     out.write<uint64_t>(entries.size());
     out.write<uint8_t>(index_bits);
@@ -214,12 +226,16 @@ void LZ78BitCode::code(Entries entries, Input input, std::ostream& out_) {
     out.flush();
 }
 
-void LZ78BitCode::decode(std::istream& inp_, std::ostream& out) {
+void LZ78BitCode::decode(Input& inp_, Output& out_) {
     Lz78DecodeBuffer buf;
 
     bool done = false;
 
-    BitIstream inp(inp_, done);
+    auto i_guard = inp_.as_stream();
+    auto o_guard = out_.as_stream();
+    auto& out = *o_guard;
+
+    BitIstream inp(*i_guard, done);
 
     uint64_t size = inp.readBits<uint64_t>();
     uint8_t index_bits = inp.readBits<uint8_t>();

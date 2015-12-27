@@ -8,7 +8,7 @@
 
 namespace esacomp {
 
-inline void write_and_escape_raw(Input& input, size_t& p, std::ostream& out, size_t target) {
+inline void write_and_escape_raw(boost::string_ref input, size_t& p, std::ostream& out, size_t target) {
     size_t i = p;
     size_t last_i = p;
     for (; i < target - p; i++) {
@@ -21,7 +21,14 @@ inline void write_and_escape_raw(Input& input, size_t& p, std::ostream& out, siz
     out.write((const char*)&input[last_i], target - last_i);
 }
 
-void Code0Coder::code(Rules rules, Input input, std::ostream& out) {
+void Code0Coder::code(Rules&& rules, Input& inp, Output& output) {
+    // TODO: Somehow merge Rules and Input here so that input does not
+    // get consumed twice
+    auto i_guard = inp.as_view();
+    auto o_guard = output.as_stream();
+    auto input = *i_guard;
+    auto& out = *o_guard;
+
     out << input.size() << ":";
     size_t p = 0;
     // TODO: Rule sort dependecy
@@ -33,7 +40,12 @@ void Code0Coder::code(Rules rules, Input input, std::ostream& out) {
     write_and_escape_raw(input, p, out, input.size());
 }
 
-void Code0Coder::decode(std::istream& inp, std::ostream& out) {
+void Code0Coder::decode(Input& input, Output& output) {
+    auto i_guard = input.as_stream();
+    auto o_guard = output.as_stream();
+    auto& inp = *i_guard;
+    auto& out = *o_guard;
+
     char c;
     size_t length = parse_number_until_other(inp, c);
     CHECK_EQ(c, ':');

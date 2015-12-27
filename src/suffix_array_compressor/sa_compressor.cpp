@@ -15,15 +15,18 @@
 
 namespace sa_compressor {
 
-Rules SACompressor::compress(const Input& input, size_t threshold) {
+Rules SACompressor::compress(Input& input, size_t threshold) {
     SuffixData suffixData = computeESA(input);
     // TODO: Possible move location
     return this->compress(std::move(suffixData.sa), std::move(suffixData.lcp), threshold);
 }
 
-std::string esa_to_string(const Input& input, const SdslVec& sa, const SdslVec& lcp) {
+std::string esa_to_string(Input& inp, const SdslVec& sa, const SdslVec& lcp) {
     using namespace std;
     stringstream ss;
+
+    auto guard = inp.as_view();
+    auto input = *guard;
 
     size_t n = input.size();
 
@@ -59,9 +62,13 @@ std::string esa_to_string(const Input& input, const SdslVec& sa, const SdslVec& 
     return ss.str();
 }
 
-SuffixData SACompressor::computeESA(const Input& input) {
+SuffixData SACompressor::computeESA(Input& input_handle) {
     using namespace sdsl;
     using namespace std;
+
+    // TODO: Avoid copy if read from file
+    auto guard = input_handle.as_view();
+    auto input = *guard;
 
     // Check that the input data is valid
     // TODO: Automatically ensure this by encoding "0"

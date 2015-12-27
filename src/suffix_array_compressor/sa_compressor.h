@@ -31,13 +31,13 @@ class SACompressor: public Lz77RuleCompressor {
 public:
     inline SACompressor(Env& env): Lz77RuleCompressor(env) {}
 
-    virtual Rules compress(const Input& input, size_t threshold) final override;
+    virtual Rules compress(Input& input, size_t threshold) final override;
 
     // TODO: visibility control better, eg protected
 
     virtual Rules compress(SdslVec sa, SdslVec lcp, size_t threshold) = 0;
 
-    static SuffixData computeESA(const Input& input);
+    static SuffixData computeESA(Input& input);
 };
 
 }

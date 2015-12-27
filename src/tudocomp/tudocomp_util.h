@@ -330,6 +330,14 @@ public:
     }
 };
 
+inline size_t read_file_size(std::string& file) {
+    std::ifstream t(file);
+    if (t) {
+        t.seekg(0, std::ios::end);
+        return t.tellg();
+    }
+    throw(errno);
+}
 
 }
 

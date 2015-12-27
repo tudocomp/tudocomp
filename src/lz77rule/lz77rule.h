@@ -30,9 +30,9 @@ struct Lz77Rule: public Compressor {
         m_compressor(compressor),
         m_encoder(encoder) {};
 
-    inline virtual void compress(Input input, std::ostream& out) override final;
+    inline virtual void compress(Input& input, Output& output) override final;
 
-    inline virtual void decompress(std::istream& inp, std::ostream& out) override final;
+    inline virtual void decompress(Input& input, Output& output) override final;
 };
 
 /// Interface for a compressor into LZ77-like substitution rules.
@@ -59,7 +59,7 @@ public:
     ///                  cover. For example, a threshold of 3 means no
     ///                  rules for substitutions of length 2 should be generated.
     /// \return The list of rules.
-    virtual Rules compress(const Input& input, size_t threshold) = 0;
+    virtual Rules compress(Input& input, size_t threshold) = 0;
 };
 
 /// Interface for a coder from LZ77-like substitution rules.
@@ -83,7 +83,7 @@ public:
     /// \param rules The list of substitution rules
     /// \param input The input text
     /// \param out `ostream` where the encoded output will be written to.
-    virtual void code(Rules rules, Input input, std::ostream& out) = 0;
+    virtual void code(Rules&& rules, Input& input, Output& output) = 0;
 
     /// Decode and decompress `inp` into `out`.
     ///
@@ -92,7 +92,7 @@ public:
     ///
     /// \param inp The input stream.
     /// \param out The output stream.
-    virtual void decode(std::istream& inp, std::ostream& out) = 0;
+    virtual void decode(Input& inp, Output& out) = 0;
 
     /// Return the expected minimum encoded
     /// length in bytes of a single rule if encoded with this encoder.
@@ -101,25 +101,27 @@ public:
     /// out rules that would not be beneficial in the encoded output.
     ///
     /// \param input_size The length of the input in bytes
-    virtual size_t min_encoded_rule_length(size_t input_size) = 0;
+    virtual size_t min_encoded_rule_length(size_t input_size = SIZE_MAX) = 0;
 };
 
-inline void Lz77Rule::compress(Input input, std::ostream& out) {
+inline void Lz77Rule::compress(Input& input, Output& output) {
     uint64_t threshold = 0;
 
     if (env.has_option(THRESHOLD_OPTION)) {
         threshold = env.option_as<uint64_t>(THRESHOLD_OPTION);
-    } else {
+    } else if (input.has_size()) {
         threshold = m_encoder->min_encoded_rule_length(input.size());
+    } else {
+        threshold = m_encoder->min_encoded_rule_length();
     }
 
     env.log_stat(THRESHOLD_LOG, threshold);
     auto rules = m_compressor->compress(input, threshold);
     env.log_stat(RULESET_SIZE_LOG, rules.size());
-    m_encoder->code(rules, std::move(input), out);
+    m_encoder->code(std::move(rules), input, output);
 }
 
-inline void Lz77Rule::decompress(std::istream& inp, std::ostream& out) {
+inline void Lz77Rule::decompress(Input& inp, Output& out) {
     m_encoder->decode(inp, out);
 }
 
