@@ -46,20 +46,12 @@ void assert_eq_sequence(const T& expected, const U& actual) {
         ASSERT_EQ(expected[i], actual[i]);
 }
 
-/// Create a `Input` value containing `s`.
-///
-/// This is useful for testing the implementations of
-/// Compressor::Compress() and Coder::code() with small hardcoded strings.
-inline Input input_from_string(std::string s) {
-    Input v(s.begin(), s.end());
-    return v;
-}
-
 /// A `streambuf` that can be used as a `istream` that points into the
 /// contents of another string.
 ///
 /// This is useful for testing the implementation of Coder::decode()
 /// with small hardcoded strings.
+// DEPRECATED tudocomp offers ViewStream now
 struct StringRefStream: std::streambuf
 {
     inline StringRefStream(const boost::string_ref vec) {
@@ -101,13 +93,13 @@ template<class T>
 struct CompressorTest {
     Env env;
     T compressor { env };
-    Input m_input;
+    std::vector<uint8_t> m_input;
     Rules m_expected_rules;
     int m_threshold = 2;
 
     inline CompressorTest input(std::string inp) {
         CompressorTest copy = *this;
-        copy.m_input = input_from_string(inp);
+        copy.m_input = std::vector<uint8_t> { inp.begin(), inp.end() };
         return copy;
     }
 
@@ -124,7 +116,8 @@ struct CompressorTest {
     }
 
     inline void run() {
-        Rules rules = compressor.compress(m_input, m_threshold);
+        Input inp = Input::from_memory(m_input);
+        Rules rules = compressor.compress(inp, m_threshold);
 
         assert_eq_sequence(rules, m_expected_rules);
     }
@@ -135,14 +128,14 @@ template<class T>
 struct CoderTest {
     Env env;
     T coder { env };
-    Input m_input;
+    std::vector<uint8_t> m_input;
     Rules m_rules;
     std::string m_expected_output;
     bool output_is_string = true;
 
     inline CoderTest input(std::string inp) {
         CoderTest copy = *this;
-        copy.m_input = input_from_string(inp);
+        copy.m_input = std::vector<uint8_t> { inp.begin(), inp.end() };
         return copy;
     }
 
@@ -167,14 +160,17 @@ struct CoderTest {
     }
 
     inline void run() {
+        Input inp = Input::from_memory(m_input);
         if (output_is_string) {
-            auto actual_output = ostream_to_string([&] (std::ostream& out) {
-                coder.code(m_rules, m_input, out);
+            auto actual_output = ostream_to_string([&] (std::ostream& out_) {
+                Output out = Output::from_stream(out_);
+                coder.code(std::move(m_rules), inp, out);
             });
             assert_eq_strings(m_expected_output, actual_output);
         } else {
-            auto actual_output = ostream_to_bytes([&] (std::ostream& out) {
-                coder.code(m_rules, m_input, out);
+            auto actual_output = ostream_to_bytes([&] (std::ostream& out_) {
+                Output out = Output::from_stream(out_);
+                coder.code(std::move(m_rules), inp, out);
             });
             assert_eq_hybrid_strings(std::vector<uint8_t>(
                         m_expected_output.begin(),
@@ -189,18 +185,18 @@ template<class T>
 struct DecoderTest {
     Env env;
     T decoder { env };
-    std::string m_input;
+    std::vector<uint8_t> m_input;
     std::string m_expected_output;
 
     inline DecoderTest input(std::string inp) {
         DecoderTest copy = *this;
-        copy.m_input = inp;
+        copy.m_input = std::vector<uint8_t> { inp.begin(), inp.end() };
         return copy;
     }
 
     inline DecoderTest input(std::vector<uint8_t> inp) {
         DecoderTest copy = *this;
-        copy.m_input = std::string(inp.begin(), inp.end());
+        copy.m_input = inp;
         return copy;
     }
 
@@ -211,10 +207,10 @@ struct DecoderTest {
     }
 
     inline void run() {
-        std::istringstream input_stream(m_input);
-
-        auto actual_output = ostream_to_string([&] (std::ostream& out) {
-            decoder.decode(input_stream, out);
+        Input inp = Input::from_memory(m_input);
+        auto actual_output = ostream_to_string([&] (std::ostream& out_) {
+            Output out = Output::from_stream(out_);
+            decoder.decode(inp, out);
         });
         assert_eq_strings(m_expected_output, actual_output);
     }
@@ -229,7 +225,8 @@ void lz77roundtrip(const std::string input_string) {
     Comp compressor { env };
     Cod coder { env };
 
-    const Input input = input_from_string(input_string);
+    std::vector<uint8_t> inp_vec { input_string.begin(), input_string.end() };
+    Input input = Input::from_memory(inp_vec);
 
     DLOG(INFO) << "ROUNDTRIP TEXT: " << input_string;
 
@@ -246,16 +243,23 @@ void lz77roundtrip(const std::string input_string) {
     DLOG(INFO) << "ROUNDTRIP POST RULES";
 
     // Encode input with rules
-    std::string coded_string = ostream_to_string([&] (std::ostream& out) {
-        coder.code(rules, input, out);
+    std::string coded_string = ostream_to_string([&] (std::ostream& out_) {
+        Output out = Output::from_stream(out_);
+        coder.code(std::move(rules), input, out);
     });
 
     DLOG(INFO) << "ROUNDTRIP CODED: " << vec_to_debug_string(coded_string);
 
     //Decode again
-    std::istringstream coded_stream(coded_string);
-    std::string decoded_string = ostream_to_string([&] (std::ostream& out) {
-        coder.decode(coded_stream, out);
+    std::vector<uint8_t> coded_string_vec {
+        coded_string.begin(),
+        coded_string.end()
+    };
+    std::string decoded_string = ostream_to_string([&] (std::ostream& out_) {
+        Output out = Output::from_stream(out_);
+        Input coded_inp = Input::from_memory(coded_string_vec);
+
+        coder.decode(coded_inp, out);
     });
 
     DLOG(INFO) << "ROUNDTRIP DECODED: " << decoded_string;

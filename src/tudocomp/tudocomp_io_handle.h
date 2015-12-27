@@ -47,8 +47,8 @@ namespace input {
     public:
         boost::variant<Memory, Stream, File> data;
 
-        static Input from_path(std::string& path) {
-            return Input { File { path } };
+        static Input from_path(std::string path) {
+            return Input { File { std::move(path) } };
         }
 
         static Input from_memory(const std::vector<uint8_t>& buf) {
@@ -229,8 +229,8 @@ namespace output {
     public:
         boost::variant<Memory, Stream, File> data;
 
-        static Output from_path(std::string& path) {
-            return Output { File { path } };
+        static Output from_path(std::string path) {
+            return Output { File { std::move(path) } };
         }
 
         static Output from_memory(std::vector<uint8_t>& buf) {

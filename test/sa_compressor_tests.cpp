@@ -10,7 +10,9 @@
 using namespace sa_compressor;
 
 TEST(SACompressor, computeESA) {
-    Input input = input_from_string("abcdebcdeabc");
+    std::string input_string("abcdebcdeabc");
+    std::vector<uint8_t> input_vec(input_string.begin(), input_string.end());
+    Input input = Input::from_memory(input_vec);
     auto suffix = SACompressor::computeESA(input);
     decltype(suffix.sa) expected { 12, 9, 0, 10, 5, 1, 11, 6, 2, 7, 3, 8, 4 };
 

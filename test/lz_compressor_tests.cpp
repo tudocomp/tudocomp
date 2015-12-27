@@ -63,7 +63,8 @@ void lz78roundtrip(const std::string input_string) {
 
     Comp compressor { env };
 
-    const Input input = input_from_string(input_string);
+    std::vector<uint8_t> input_vec { input_string.begin(), input_string.end() };
+    Input input = Input::from_memory(input_vec);
 
     DLOG(INFO) << "LZ78 ROUNDTRIP TEXT: " << input_string;
 
@@ -78,16 +79,24 @@ void lz78roundtrip(const std::string input_string) {
     Cod coder { env };
 
     // Encode input with rules
-    std::string coded_string = ostream_to_string([&] (std::ostream& out) {
-        coder.code(entries, input, out);
+    // TODO: rewrite ostream_to_string to output_to_string
+    std::string coded_string = ostream_to_string([&] (std::ostream& out_) {
+        Output out = Output::from_stream(out_);
+        coder.code(std::move(entries), out);
     });
 
     DLOG(INFO) << "ROUNDTRIP CODED: " << vec_to_debug_string(coded_string);
 
     //Decode again
-    std::istringstream coded_stream(coded_string);
-    std::string decoded_string = ostream_to_string([&] (std::ostream& out) {
-        coder.decode(coded_stream, out);
+    std::vector<uint8_t> coded_string_vec {
+        coded_string.begin(),
+        coded_string.end()
+    };
+    std::string decoded_string = ostream_to_string([&] (std::ostream& out_) {
+        Output out = Output::from_stream(out_);
+        Input coded_inp = Input::from_memory(coded_string_vec);
+
+        coder.decode(coded_inp, out);
     });
 
     DLOG(INFO) << "ROUNDTRIP DECODED: " << decoded_string;
