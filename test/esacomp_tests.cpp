@@ -12,8 +12,11 @@
 #include "code1.h"
 #include "code2.h"
 
+#include "lz77rule_test_util.h"
+
 using namespace lz77rule;
 using namespace esacomp;
+using namespace lz77rule_test;
 
 TEST(ESACompressor, compress) {
     CompressorTest<ESACompressor<>>()

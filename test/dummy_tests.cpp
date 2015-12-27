@@ -10,7 +10,10 @@
 #include "dummy_encoder.h"
 #include "dummy_compressor.h"
 
+#include "lz77rule_test_util.h"
+
 using namespace dummy;
+using namespace lz77rule_test;
 
 // This is a gtest testcase definition.
 // The code inside will run and use `ASSERT`, `ASSERT_EQ`
