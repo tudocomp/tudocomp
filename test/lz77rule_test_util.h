@@ -133,57 +133,6 @@ struct DecoderTest {
     }
 };
 
-template<class Comp, class Cod>
-void lz77roundtrip(const std::string input_string) {
-    using R = Rules;
-
-    Env env;
-
-    Comp compressor { env };
-    Cod coder { env };
-
-    std::vector<uint8_t> inp_vec { input_string.begin(), input_string.end() };
-    Input input = Input::from_memory(inp_vec);
-
-    DLOG(INFO) << "ROUNDTRIP TEXT: " << input_string;
-
-    // Compress to rules
-    R rules = compressor.compress(input,
-                                coder.min_encoded_rule_length(input.size()));
-
-    DLOG(INFO) << "ROUNDTRIP PRE RULES";
-
-    for (auto e : rules) {
-        DLOG(INFO) << "ROUNDTRIP RULE: " << e;
-    }
-
-    DLOG(INFO) << "ROUNDTRIP POST RULES";
-
-    // Encode input with rules
-    std::string coded_string = ostream_to_string([&] (std::ostream& out_) {
-        Output out = Output::from_stream(out_);
-        coder.code(std::move(rules), input, out);
-    });
-
-    DLOG(INFO) << "ROUNDTRIP CODED: " << vec_to_debug_string(coded_string);
-
-    //Decode again
-    std::vector<uint8_t> coded_string_vec {
-        coded_string.begin(),
-        coded_string.end()
-    };
-    std::string decoded_string = ostream_to_string([&] (std::ostream& out_) {
-        Output out = Output::from_stream(out_);
-        Input coded_inp = Input::from_memory(coded_string_vec);
-
-        coder.decode(coded_inp, out);
-    });
-
-    DLOG(INFO) << "ROUNDTRIP DECODED: " << decoded_string;
-
-    assert_eq_strings(input_string, decoded_string);
-}
-
 }
 
 #endif

@@ -316,27 +316,3 @@ TEST(Code2Decoder, basic) {
         })
         .run();
 }
-
-TEST(Roundtrip, ESACompressorMaxLCPSortedSuffixListCode0Coder) {
-    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPSortedSuffixList>, Code0Coder>);
-}
-
-TEST(Roundtrip, ESACompressorMaxLCPSortedSuffixListCode1Coder) {
-    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPSortedSuffixList>, Code1Coder>);
-}
-
-TEST(Roundtrip, ESACompressorMaxLCPSortedSuffixListCode2Coder) {
-    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPSortedSuffixList>, Code2Coder>);
-}
-
-TEST(Roundtrip, ESACompressorMaxLCPHeapCode0Coder) {
-    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPHeap>, Code0Coder>);
-}
-
-TEST(Roundtrip, ESACompressorMaxLCPHeapCode1Coder) {
-    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPHeap>, Code1Coder>);
-}
-
-TEST(Roundtrip, ESACompressorMaxLCPHeapCode2Coder) {
-    test_roundtrip_batch(lz77roundtrip<ESACompressor<MaxLCPHeap>, Code2Coder>);
-}

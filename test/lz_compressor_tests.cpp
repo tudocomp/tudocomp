@@ -31,11 +31,6 @@ TEST(LZCompressor, compress) {
         .run();
 }
 
-TEST(Roundtrip, LZCompressorCode0Coder) {
-    using namespace lz77rule_test;
-    test_roundtrip_batch(lz77roundtrip<LZCompressor, Code0Coder>);
-}
-
 TEST(LZ78, compress) {
     // TODO:
     /*CompressorTest<LZ78Compressor>()
@@ -61,14 +56,4 @@ TEST(LZ78, compress) {
             {0, 0, 0}, {1, 0, 0}, {2, 0, 1}, {4, 0, 1}
         })
         .run();*/
-}
-
-TEST(Roundtrip, LZ78CompressorDebugCode) {
-    using namespace lz78rule_test;
-    test_roundtrip_batch(lz78roundtrip<LZ78Compressor, LZ78DebugCode>);
-}
-
-TEST(Roundtrip, LZ78CompressorBitCode) {
-    using namespace lz78rule_test;
-    test_roundtrip_batch(lz78roundtrip<LZ78Compressor, LZ78BitCode>);
 }
