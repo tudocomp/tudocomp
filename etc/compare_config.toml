@@ -24,6 +24,7 @@ commands = [
 
     ["tudocomp_driver -a lz77rule.lz.esa_code1",    "$IN -o $OUT",   "lz77rule.lz.esa_code1.tdc"   ],
     ["tudocomp_driver -a lz77rule.esa.esa_code1",   "$IN -o $OUT",   "lz77rule.esa.esa_code1.tdc"  ],
+    ["tudocomp_driver -a lz77rule.lz.dummy",        "$IN -o $OUT",   "lz77rule.lz.dummy.tdc"       ],
 ]
 
 # Same as example_fast, but also measuring memory usage

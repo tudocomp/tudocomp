@@ -115,6 +115,8 @@ inline void Lz77Rule::compress(Input& input, Output& output) {
         threshold = m_encoder->min_encoded_rule_length();
     }
 
+    CHECK(threshold > 0);
+
     env.log_stat(THRESHOLD_LOG, threshold);
     auto rules = m_compressor->compress(input, threshold);
     env.log_stat(RULESET_SIZE_LOG, rules.size());

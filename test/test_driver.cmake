@@ -19,6 +19,7 @@ macro(run_test test_target)
         #libgtest_main
         ${ARGN}
         ${GLOG_LIBRARIES}
+        ${Boost_LIBRARIES}
     )
     add_custom_command(
         TARGET ${test_target}

@@ -2,11 +2,29 @@
 #include <sstream>
 #include <utility>
 #include <algorithm>
+#include <stdexcept>
 
+#include <boost/filesystem.hpp>
+
+#include "test_util.h"
 #include "gtest/gtest.h"
 #include "tudocomp.h"
 
 using namespace tudocomp;
+
+TEST(Test, test_file) {
+    ASSERT_EQ(test_file_path("test.txt"), "test_files/test.txt");
+    write_test_file("test.txt", "foobar");
+    ASSERT_EQ(read_test_file("test.txt"), "foobar");
+
+    std::string err;
+    try {
+        read_test_file("not_test.txt");
+    } catch (std::runtime_error e) {
+        err = e.what();
+    }
+    ASSERT_EQ("Could not open test file \"test_files/not_test.txt\"", err);
+}
 
 TEST(Util, bitsFor) {
     ASSERT_EQ(bitsFor(0b0), 1u);
@@ -59,20 +77,16 @@ TEST(Input, vector) {
     }
 }
 
+std::string fn(std::string suffix) {
+    return "tudocomp_tests_" + suffix;
+}
+
 TEST(Input, file) {
     using namespace input;
     using Inp = input::Input;
 
-    {
-        // create a test file
-
-        std::ofstream myfile;
-        myfile.open ("short.txt");
-        myfile << "abc";
-        myfile.close();
-    }
-
-    Inp inp = Inp::from_path("short.txt");
+    write_test_file(fn("short.txt"), "abc");
+    Inp inp = Inp::from_path(test_file_path(fn("short.txt")));
 
     {
         auto guard = inp.as_view();
@@ -155,7 +169,7 @@ TEST(Output, file) {
     using namespace output;
     using Out = output::Output;
 
-    Out out = Out::from_path("test_out.txt");
+    Out out = Out::from_path(test_file_path(fn("short_out.txt")));
 
     {
         auto guard = out.as_stream();
@@ -164,16 +178,7 @@ TEST(Output, file) {
         stream << "abc";
     }
 
-    {
-        std::string s;
-        std::ifstream myfile;
-        myfile.open ("test_out.txt");
-        myfile >> s;
-        myfile.close();
-
-        ASSERT_EQ(s, "abc");
-    }
-
+    ASSERT_EQ(read_test_file(fn("short_out.txt")), "abc");
 }
 
 TEST(Output, stream) {

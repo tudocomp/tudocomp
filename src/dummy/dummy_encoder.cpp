@@ -26,7 +26,7 @@ void DummyCoder::decode(Input& inp, Output& out) {
 }
 
 size_t DummyCoder::min_encoded_rule_length(size_t input_size) {
-    return 0;
+    return 1;
 }
 
 }

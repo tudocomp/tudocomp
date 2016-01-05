@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <iostream>
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include "gtest/gtest.h"
 #include "glog/logging.h"
 
@@ -131,6 +133,58 @@ void test_roundtrip_batch(F f) {
     f("ABBCBCABA");
 
     f("abcabca");
+}
+
+const std::string TEST_FILE_PATH = "test_files";
+
+// TODO: Make Tudocomp use boost::filesystem::path,
+// and migrate from strings away here
+
+inline std::string test_file_path(std::string filename) {
+    return TEST_FILE_PATH + "/" + filename;
+}
+
+inline std::string read_test_file(std::string filename) {
+    using namespace boost::filesystem;
+    path file_path = test_file_path(filename);
+
+    std::stringbuf sb;
+    ifstream myfile;
+    myfile.open(file_path);
+    if (!bool(myfile)) {
+        std::stringstream ss;
+        ss << file_path;
+        throw std::runtime_error("Could not open test file " + ss.str());
+    }
+    myfile >> &sb;
+    myfile.close();
+    return sb.str();
+}
+
+inline void write_test_file(std::string filename, std::string text) {
+    using namespace boost::filesystem;
+
+    create_directory(path(TEST_FILE_PATH));
+    path file_path = test_file_path(filename);
+
+    ofstream myfile;
+    myfile.open(file_path);
+    if (!bool(myfile)) {
+        std::stringstream ss;
+        ss << file_path;
+        throw std::runtime_error("Could not open test file " + ss.str());
+    }
+    myfile << text;
+    myfile.close();
+}
+
+inline void remove_test_file(std::string filename) {
+    using namespace boost::filesystem;
+
+    create_directory(path(TEST_FILE_PATH));
+    path file_path = test_file_path(filename);
+
+    remove(file_path);
 }
 
 #endif
