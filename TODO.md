@@ -24,9 +24,9 @@ LZSS (https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Sz
   - make bit-and-size grow more exact by manually expanding bits
   - grow to absolute byte-count increments, rather than relative to last value
 - integrate second BA
-  => wait till it compiles
+  => wait until it compiles
 - lz77, lz78, lzw impl
-- Include esacomp java impl in that comparison tool
+- Include esacomp java impl in the comparison tool
 - Add some kind of coverage support
 - Evaluate whether compressed Rule vector is improvement
 - Experiment with making the tudomp library be usable as a streaming interface
@@ -41,8 +41,7 @@ LZSS (https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Sz
 - force make options to be registerable
 - mmap input file
 - make compression algorithms chainable
-  - normalize input/output handles
-  - include notion of algorithm header
+- include notion of algorithm header
 
 # Revisit at later point
 
@@ -56,6 +55,9 @@ LZSS (https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Sz
 
 # Done
 
+- Add general roundtrip tests for driver
+  - replace algo-specific ones
+- normalize input/output handles
 - make algo register a global function that recusively calls register methods
 - show amount of rules on stat page
 - change driver options to -a for "algorithm", remove existing c and e options
