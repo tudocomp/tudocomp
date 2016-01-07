@@ -1,12 +1,22 @@
 # Refactor
 
 - move lz77rule impl to subproject
-- greate lz78rule impl
+- create lz78rule impl
 - move lz78 rule impl
 - somehow merge sa_compressor with concept of general/specific compressor
 
 # Outstanding
 
+for lz77, there are sevaral types of rulesets and compression algorithms:
+
+LZ77 Original
+- uses rule (source,length,new-character) - the new-character is similar to LZ78
+
+LZSS (https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Szymanski)
+- uses rule (source,length)
+- LZSS does not create a rule if it costs more than the original
+
+- rename lz77rule::Rules::nums into lengths or add a comment
 - lz77, lz78, lzw impl
 - Include esacomp java impl in that comparison tool
 - Add some kind of coverage support
