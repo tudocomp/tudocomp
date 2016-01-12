@@ -45,6 +45,7 @@ LZSS (https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Sz
 
 # Revisit at later point
 
+- Separate lz77classic and lz77s
 - Optimize Rulelists
 - Automatically choose threshold
 
