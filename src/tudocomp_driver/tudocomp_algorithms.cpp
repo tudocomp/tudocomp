@@ -104,6 +104,31 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
             "minimum amount of bits needed to encode the index and the char").do_register();
     })
     .do_register();
+
+    registry.with_info<LzwRule>(
+        "LZW rule-like", "lzwrule",
+        "A Family of compression algorithms making use "
+        "of LZW-like replacement rules.")
+    .with_sub_algos<LzwRuleCompressor>([](AlgorithmRegistry<LzwRuleCompressor>& registry) {
+        registry.set_name("Compressor");
+
+        registry.with_info<LZWCompressor>(
+            "lzw", "lzw",
+            "Lzw compressor that has a unlimited dictionary").do_register();
+    })
+    .with_sub_algos<LzwRuleCoder>([](AlgorithmRegistry<LzwRuleCoder>& registry) {
+        registry.set_name("Coder");
+
+        registry.with_info<LZWDebugCode>(
+            "Debug", "debug",
+            "Debug encoding, each rule is emitted as a string of the form `<idx>,...` where <idx> is either a integer or a char literal").do_register();
+
+        registry.with_info<LZWBitCode>(
+            "Bit", "bit",
+            "Bit encoding, each rule is emitted a bitstream of the "
+            "minimum amount of bits needed to encode the index and the char").do_register();
+    })
+    .do_register();
 }
 
 }

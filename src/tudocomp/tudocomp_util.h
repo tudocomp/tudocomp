@@ -28,14 +28,14 @@ std::string vec_to_debug_string(const T& s) {
     return ss.str();
 }
 
-inline std::string byte_to_nice_ascii_char(uint8_t byte) {
+inline std::string byte_to_nice_ascii_char(uint64_t byte) {
     using namespace std;
 
     stringstream out;
     if (byte >= 32 && byte <= 127) {
         out << "'" << char(byte) << "'";
     } else {
-        out << uint(byte);
+        out << byte;
     }
     return out.str();
 }
@@ -190,10 +190,11 @@ void read_bytes_to_vec(std::istream& inp, T& vec, size_t bytes) {
     }
 }
 
-inline size_t parse_number_until_other(std::istream& inp, char& last) {
+inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out) {
     size_t n = 0;
     char c;
-    while (inp.get(c)) {
+    bool more = true;
+    while ((more = bool(inp.get(c)))) {
         if (c >= '0' && c <= '9') {
             n *= 10;
             n += (c - '0');
@@ -202,7 +203,8 @@ inline size_t parse_number_until_other(std::istream& inp, char& last) {
             break;
         }
     }
-    return n;
+    out = n;
+    return more;
 }
 
 /// Returns number of bits needed to store the integer value n

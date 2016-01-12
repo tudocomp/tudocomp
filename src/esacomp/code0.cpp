@@ -46,7 +46,8 @@ void Code0Coder::decode(Input& input, Output& output) {
     auto& out = *o_guard;
 
     char c;
-    size_t length = parse_number_until_other(inp, c);
+    size_t length;
+    parse_number_until_other(inp, c, length);
     CHECK_EQ(c, ':');
 
     DLOG(INFO) << "text len: " << length;
@@ -64,10 +65,13 @@ void Code0Coder::decode(Input& input, Output& output) {
                     buffer.push_decoded_byte('{');
                 } else {
                     inp.unget();
-                    size_t source = parse_number_until_other(inp, c) - 1;
+                    size_t source;
+                    parse_number_until_other(inp, c, source);
+                    source -= 1;
                     CHECK(source < length);
                     CHECK_EQ(c, ',');
-                    size_t num = parse_number_until_other(inp, c);
+                    size_t num;
+                    parse_number_until_other(inp, c, num);
                     CHECK_EQ(c, '}');
                     CHECK(num > 0);
 

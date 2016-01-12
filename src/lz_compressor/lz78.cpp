@@ -61,7 +61,10 @@ void LZ78DebugCode::decode(Input& in, Output& ou) {
 
     while (inp.get(c)) {
         DCHECK(c == '(');
-        size_t index = parse_number_until_other(inp, c);
+        size_t index;
+        if (!parse_number_until_other(inp, c, index)) {
+            break;
+        }
         DCHECK(c == ',');
         inp.get(c);
         char chr = c;
