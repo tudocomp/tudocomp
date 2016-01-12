@@ -8,17 +8,16 @@
 
 namespace esacomp {
 
-inline void write_and_escape_raw(boost::string_ref input, size_t& p, std::ostream& out, size_t target) {
-    size_t i = p;
-    size_t last_i = p;
-    for (; i < target - p; i++) {
+inline void write_and_escape_raw(boost::string_ref input, size_t abs_start, size_t abs_end, std::ostream& out) {
+    size_t last_i = abs_start;
+    for (size_t i = abs_start; i < abs_end; i++) {
         if (input[i] == '{') {
             out.write((const char*)&input[last_i], i - last_i);
             out.put('{');
             last_i = i;
         }
     }
-    out.write((const char*)&input[last_i], target - last_i);
+    out.write((const char*)&input[last_i], abs_end - last_i);
 }
 
 void Code0Coder::code(Rules&& rules, Input& inp, Output& output) {
@@ -30,14 +29,14 @@ void Code0Coder::code(Rules&& rules, Input& inp, Output& output) {
     auto& out = *o_guard;
 
     out << input.size() << ":";
-    size_t p = 0;
-    // TODO: Rule sort dependecy
+    size_t start = 0;
+    // TODO: Rule sort dependency
     for (Rule rule : rules) {
-        write_and_escape_raw(input, p, out, rule.target);
+        write_and_escape_raw(input, start, rule.target, out);
         out << "{" << (rule.source + 1) << "," << rule.num << "}";
-        p = rule.target + rule.num;
+        start = rule.target + rule.num;
     }
-    write_and_escape_raw(input, p, out, input.size());
+    write_and_escape_raw(input, start, input.size(), out);
 }
 
 void Code0Coder::decode(Input& input, Output& output) {
