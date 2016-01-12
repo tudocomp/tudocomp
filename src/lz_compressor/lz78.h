@@ -12,20 +12,6 @@ namespace lz_compressor {
 using namespace tudocomp;
 using namespace lz78rule;
 
-class LZ78Compressor: public Lz78RuleCompressor {
-public:
-    inline LZ78Compressor(Env& env): Lz78RuleCompressor(env) {}
-
-    virtual Entries compress(Input& input) final override;
-};
-
-class LZWCompressor: public Lz78RuleCompressor {
-public:
-    inline LZWCompressor(Env& env): Lz78RuleCompressor(env) {}
-
-    virtual Entries compress(Input& input) final override;
-};
-
 class LZ78DebugCode: public Lz78RuleCoder {
 public:
     inline LZ78DebugCode(Env& env): Lz78RuleCoder(env) {}

@@ -213,14 +213,10 @@ TEST(TudocompDriver, list) {
     }
     {
         auto& r1 = root.algos[1];
-        ASSERT_GE(r1.subalgos.size(), 2u);
+        ASSERT_GE(r1.subalgos.size(), 1u);
         {
             auto& r10 = r1.subalgos[0];
             ASSERT_GE(r10.algos.size(), 1u);
-        }
-        {
-            auto& r11 = r1.subalgos[1];
-            ASSERT_GE(r11.algos.size(), 2u);
         }
     }
 }

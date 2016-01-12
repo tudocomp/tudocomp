@@ -91,13 +91,6 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
         "LZ78 rule-like", "lz78rule",
         "A Family of compression algorithms making use "
         "of LZ78-like replacement rules.")
-    .with_sub_algos<Lz78RuleCompressor>([](AlgorithmRegistry<Lz78RuleCompressor>& registry) {
-        registry.set_name("Compressor");
-
-        registry.with_info<LZ78Compressor>(
-            "lz78", "lz78",
-            "Lz78 compressor that has a unlimited dictionary").do_register();
-    })
     .with_sub_algos<Lz78RuleCoder>([](AlgorithmRegistry<Lz78RuleCoder>& registry) {
         registry.set_name("Coder");
 
