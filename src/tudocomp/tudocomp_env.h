@@ -2,9 +2,11 @@
 #define TUDOCOMPENV_H
 
 #include <map>
+#include <set>
 #include <vector>
 #include <string>
 #include <sstream>
+#include <stdexcept>
 
 #include <boost/utility/string_ref.hpp>
 #include <boost/lexical_cast.hpp>
@@ -18,6 +20,7 @@ namespace tudocomp {
 class Env {
     std::map<std::string, std::string> options;
     std::map<std::string, std::string> stats;
+    std::set<std::string> known_options;
 public:
     inline Env() {}
     inline Env(std::map<std::string, std::string> options_,
@@ -32,6 +35,11 @@ public:
     /// Returns a copy of the backing map.
     inline std::map<std::string, std::string> get_stats() {
         return stats;
+    }
+
+    /// Returns the set of options that got actually asked for by the algorithms
+    inline std::set<std::string> get_known_options() {
+        return known_options;
     }
 
     /// Log a statistic.
@@ -54,6 +62,7 @@ public:
 
     /// Returns whether a option has been set.
     inline bool has_option(const std::string& name) {
+        known_options.insert(name);
         return options.count(name) > 0;
     };
 
@@ -64,11 +73,14 @@ public:
     ///             with `.`-separated segments to allow easier grouping.
     ///             For example:
     ///             `"my_compressor.xyz_threshold"`.
-    inline std::string option(std::string name) {
+    /// \param default_value The default value to use if the option is not set.
+    ///                      Defaults to the empty string.
+    inline std::string option(std::string name, std::string default_value = "") {
+        known_options.insert(name);
         if (has_option(name)) {
             return options[name];
         } else {
-            return "";
+            return default_value;
         }
     };
 
@@ -89,12 +101,18 @@ public:
     ///                      Defaults to the default-constructed value of `T`.
     template<class T>
     T option_as(std::string name, T default_value = T()) {
+        known_options.insert(name);
         if (has_option(name)) {
             return boost::lexical_cast<T>(options[name]);
         } else {
             return default_value;
         }
     };
+
+    /// Log an error and end the current operation
+    inline void error(const std::string& msg) {
+        throw std::runtime_error(msg);
+    }
 };
 
 }

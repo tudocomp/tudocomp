@@ -308,12 +308,16 @@ TEST(TudocompDriver, roundtrip_matrix) {
 
             write_test_file(in_file, text);
 
+            std::string comp_out;
+            std::string decomp_out;
+
             // Compress
             {
                 std::string in = test_file_path(in_file);
                 std::string out = test_file_path(comp_file);
                 std::string cmd = "-k -a " + algo + " -o " + out + " " + in;
-                driver(cmd);
+                comp_out = driver(cmd);
+                std::cout << comp_out;
             }
 
             // Decompress
@@ -321,13 +325,27 @@ TEST(TudocompDriver, roundtrip_matrix) {
                 std::string in = test_file_path(comp_file);
                 std::string out = test_file_path(decomp_file);
                 std::string cmd = "-d -a " + algo + " -o " + out + " " + in;
-                driver(cmd);
+                decomp_out = driver(cmd);
+                std::cout << decomp_out;
             }
 
             std::string read_text = read_test_file(decomp_file);
             if (read_text != text) {
                 abort = true;
+
                 assert_eq_strings(text, read_text);
+                std::string diff;
+                for(int i = 0; i < std::max(text.size(), read_text.size()); i++) {
+                    if (i < std::min(text.size(), read_text.size())
+                        && text[i] == read_text[i]
+                    ) {
+                        diff.push_back('-');
+                    } else {
+                        diff.push_back('#');
+                    }
+                }
+                std::cout << "Diff:     \"" << diff << "\"\n";
+
                 return;
             }
 

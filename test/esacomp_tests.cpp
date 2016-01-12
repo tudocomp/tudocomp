@@ -55,6 +55,29 @@ TEST(Code0Coder, basic) {
         .run();
 }
 
+TEST(Code0Coder, escaped_curlies) {
+    auto test = CoderTest<Code0Coder>()
+        .input("struct Foo { uint8_t bar }");
+
+    test.rules(Rules { })
+        .expected_output("26:struct Foo {{ uint8_t bar }")
+        .run();
+
+    test.rules(Rules {
+            {9, 8, 1},
+            {12, 6, 1},
+    })
+        .expected_output("26:struct Fo{9,1} {{{7,1}uint8_t bar }")
+        .run();
+}
+
+TEST(Code0Decoder, escaped_curlies) {
+    DecoderTest<Code0Coder>()
+        .input("26:struct Foo {{ uint8_t bar }")
+        .expected_output("struct Foo { uint8_t bar }")
+        .run();
+}
+
 TEST(Code0Coder, emptyRules) {
     CoderTest<Code0Coder>()
         .input("abcdebcdeabc")

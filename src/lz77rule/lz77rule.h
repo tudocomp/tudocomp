@@ -43,7 +43,7 @@ struct Lz77Rule: public Compressor {
 /// can regenerate the full input.
 class Lz77RuleCompressor {
 public:
-    const Env& env;
+    Env& env;
 
     /// Class needs to be constructed with an `Env&` argument.
     inline Lz77RuleCompressor() = delete;
@@ -70,7 +70,7 @@ public:
 /// decoded and decompressed original text.
 class Lz77RuleCoder {
 public:
-    const Env& env;
+    Env& env;
 
     /// Class needs to be constructed with an `Env&` argument.
     inline Lz77RuleCoder() = delete;

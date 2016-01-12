@@ -9,6 +9,7 @@
 #include "lz77rule.h"
 #include "lz_compressor.h"
 #include "lz78.h"
+#include "lz77.h"
 #include "code0.h"
 
 #include "lz78rule.h"
@@ -56,4 +57,15 @@ TEST(LZ78, compress) {
             {0, 0, 0}, {1, 0, 0}, {2, 0, 1}, {4, 0, 1}
         })
         .run();*/
+}
+
+TEST(LZ77Classic, test) {
+    using namespace lz77rule_test;
+    CompressorTest<LZ77ClassicCompressor>()
+        .input("aacaacabcabaaac")
+        .threshold(1)
+        .expected_rules(Rules {
+            {1, 0, 1}, {3, 0, 4}, {8, 5, 3}, {12, 0, 3}
+        })
+        .run();
 }

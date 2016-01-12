@@ -37,6 +37,7 @@ using Output = output::Output;
 
 /// Interface for a general compressor.
 struct Compressor {
+    // TODO: Maybe replace by pointer to make this class properly copyable?
     Env& env;
 
     /// Class needs to be constructed with an `Env&` argument.

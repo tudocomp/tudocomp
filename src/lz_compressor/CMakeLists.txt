@@ -3,6 +3,7 @@ add_library(
 
     lz_compressor.cpp
     lz78.cpp
+    lz77.cpp
 )
 
 target_link_libraries(
@@ -11,6 +12,7 @@ target_link_libraries(
     tudocomp
     suffix_array_compressor
     lz78rule
+    lz77rule
     ${GLOG_LIBRARIES}
 )
 

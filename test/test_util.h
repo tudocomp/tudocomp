@@ -88,6 +88,8 @@ std::vector<uint8_t> ostream_to_bytes(Lambda f) {
     return std::vector<uint8_t>(s.begin(), s.end());
 }
 
+/// Call the given function with a number
+/// of different strings testing common corner cases and unicode input.
 template<class F>
 void test_roundtrip_batch(F f) {
     f("abcdebcdeabc");
@@ -96,6 +98,8 @@ void test_roundtrip_batch(F f) {
     f("a");
     f("foobar");
     f("abcabcabcabc");
+
+    f("abc abc  abc");
 
     f(
         "asdfasctjkcbweasbebvtiwetwcnbwbbqnqxernqzezwuqwezuet"

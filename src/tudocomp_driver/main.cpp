@@ -366,7 +366,11 @@ int main(int argc, const char** argv)
             };
 
             std::cout << "---------------\n";
-            std::cout << "Algorithm Options:\n";
+            std::cout << "Algorithm Known Options:\n";
+            for (auto& pair : algorithm_env.get_known_options()) {
+                std::cout << "  " << pair << "\n";
+            }
+            std::cout << "Algorithm Given Options:\n";
             for (auto& pair : algorithm_env.get_options()) {
                 std::cout << "  " << pair.first << " = " << pair.second << "\n";
             }

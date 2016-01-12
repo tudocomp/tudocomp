@@ -3,6 +3,7 @@
 #include "lz78rule.h"
 #include "lz_compressor.h"
 #include "lz78.h"
+#include "lz77.h"
 #include "esa_compressor.h"
 #include "max_lcp_sorted_suffix_list.h"
 #include "max_lcp_heap.h"
@@ -35,6 +36,9 @@ using lz78rule::Lz78Rule;
 
 void register_algos(AlgorithmRegistry<Compressor>& registry) {
     registry.with_info<Lz77Rule>(
+        // TODO: Name right
+        // - lz77rule ~ LZSS rules with implicit escape bits
+        // - lz ~ unknown named variant of lz with suffix array
         "LZ77 rule-like", "lz77rule",
         "A Family of compression algorithms making use "
         "of LZ77-like replacement rules.")
@@ -46,8 +50,8 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
             "Dummy compressor that does not produce any rules.").do_register();
 
         registry.with_info<LZCompressor>(
-            "LZ", "lz",
-            "LZ impl included in esacomp.").do_register();
+            "LZ SA", "lz",
+            "LZ impl included in esacomp. Uses a suffix array to determine the LZ factorisation up-front").do_register();
 
         registry.with_info<ESACompressor<>>(
             "ESA", "esa",
@@ -57,9 +61,10 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
             "ESA (Sorted Suffix List)", "esa_list",
             "Esacomp using a suffix list internally.").do_register();
 
-        registry.with_info<ESACompressor<MaxLCPHeap>>(
-            "ESA (Heap)", "esa_heap",
-            "Esacomp using a heap internally.").do_register();
+        registry.with_info<LZ77ClassicCompressor>(
+            "LZ77 Classic", "lz77",
+            "LZ77, using a fixed sized dictionary and preview window").do_register();
+
     })
     .with_sub_algos<Lz77RuleCoder>([](AlgorithmRegistry<Lz77RuleCoder>& registry) {
         registry.set_name("Coder");
