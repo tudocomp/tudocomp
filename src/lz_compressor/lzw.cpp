@@ -22,10 +22,10 @@ void LZWDebugCode::code(LzwEntries&& entries, Output& _out) {
     auto& out = *guard;
 
     for (LzwEntry entry : entries) {
-        if (entry >= 32 && entry <= 127) {
-            out << "'" << char(entry) << "',";
+        if (entry >= 32u && entry <= 127u) {
+            out << "'" << char(uint8_t(entry)) << "',";
         } else {
-            out << size_t(entry) << ",";
+            out << uint64_t(entry) << ",";
         }
     }
 }

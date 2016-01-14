@@ -12,7 +12,6 @@
 
 #include "lz78rule.h"
 #include "lz78rule_rule.h"
-#include "lz78rule_rules.h"
 #include "bit_iostream.h"
 #include "tudocomp_util.h"
 

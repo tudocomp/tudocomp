@@ -77,24 +77,34 @@ inline LzwEntries _compress(Input& input) {
         Result phrase_and_size = trie.find_or_insert(s);
 
         DLOG(INFO) << "looking at " << input_ref.substr(0, i)
-            << "|" << s << " -> " << phrase_and_size.size;
+            << " | " << s << " -> " << phrase_and_size.size;
 
         if (phrase_and_size.size > 1) {
             i += phrase_and_size.size - 2;
+        } else if (phrase_and_size.size == 1) {
+            i += 1;
         }
 
-        entries.push_back(phrase_and_size.entry.index - 1);
+        LzwEntry e;
+        if (phrase_and_size.entry.index != 0) {
+            e = phrase_and_size.entry.index - 1;
+        } else {
+            e = phrase_and_size.entry.chr;
+        }
+
+        entries.push_back(e);
     }
 
     trie.root.print(0);
 
-    return entries;
+    return std::move(entries);
 }
 
 inline void LzwRule::compress(Input& input, Output& out) {
-    auto rules = _compress(input);
-    env.log_stat(RULESET_SIZE_LOG, rules.size());
-    m_encoder->code(std::move(rules), out);
+    auto entries = _compress(input);
+    DLOG(INFO) << "entries size: " << entries.size();
+    env.log_stat(RULESET_SIZE_LOG, entries.size());
+    m_encoder->code(std::move(entries), out);
 }
 
 inline void LzwRule::decompress(Input& inp, Output& out) {

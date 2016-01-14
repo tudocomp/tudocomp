@@ -71,12 +71,32 @@ TEST(LZ77Classic, test) {
         .run();
 }
 
-TEST(LZW, debug) {
+TEST(LZW, DebugCode_compress) {
     Env env;
     LZWDebugCode coder(env);
+    Input inp = Input::from_memory("LZWLZ78LZ77LZCLZMWLZAP");
+
     LzwRule compressor(env, &coder);
-    Input inp = Input::from_memory("abcdebcdeabc");
 
+    std::stringstream ss;
+    Output out = Output::from_stream(ss);
+    compressor.compress(inp, out);
 
-//LzwRuleCoder
+    ASSERT_EQ("'L','Z','W',256,'7','8',259,'7',256,'C',256,'M',258,'Z','A','P',",
+              ss.str());
+}
+
+TEST(LZW, DebugCode_decompress) {
+    Env env;
+    LZWDebugCode coder(env);
+    Input inp = Input::from_memory("'L','Z','W',256,'7','8',259,'7',256,'C',256,'M',258,'Z','A','P',");
+
+    LzwRule compressor(env, &coder);
+
+    std::stringstream ss;
+    Output out = Output::from_stream(ss);
+    compressor.decompress(inp, out);
+
+    ASSERT_EQ("LZWLZ78LZ77LZCLZMWLZAP",
+              ss.str());
 }
