@@ -9,7 +9,6 @@
 #include "sdsl/int_vector.hpp"
 
 #include "lzw.h"
-#include "rule.h"
 #include "bit_iostream.h"
 #include "tudocomp_util.h"
 #include "lz78_trie.h"
@@ -18,37 +17,10 @@ namespace lz_compressor {
 
 using namespace tudocomp;
 
-LzwEntries LZWCompressor::compress(const Input& input) {
-    LzwEntries entries;
+void LZWDebugCode::code(LzwEntries&& entries, Output& _out) {
+    auto guard = _out.as_stream();
+    auto& out = *guard;
 
-    boost::string_ref input_ref((const char*)(&input[0]), input.size());
-    Trie trie;
-
-    for (uint32_t i = 0; i <= 0xff; i++) {
-        trie.insert(i);
-    }
-
-    for (size_t i = 0; i < input.size(); i++) {
-        auto s = input_ref.substr(i);
-
-        Result phrase_and_size = trie.find_or_insert(s);
-
-        DLOG(INFO) << "looking at " << input_ref.substr(0, i)
-            << "|" << s << " -> " << phrase_and_size.size;
-
-        if (phrase_and_size.size > 1) {
-            i += phrase_and_size.size - 2;
-        }
-
-        entries.push_back(phrase_and_size.entry.index - 1);
-    }
-
-    trie.root.print(0);
-
-    return entries;
-}
-
-void LZWDebugCode::code(LzwEntries entries, Input input, std::ostream& out) {
     for (LzwEntry entry : entries) {
         if (entry >= 32 && entry <= 127) {
             out << "'" << char(entry) << "',";
@@ -137,7 +109,12 @@ void decode_(F ReadIndex, std::ostream& out) {
     }
 }
 
-void LZWDebugCode::decode(std::istream& inp, std::ostream& out) {
+void LZWDebugCode::decode(Input& _inp, Output& _out) {
+    auto iguard = _inp.as_stream();
+    auto oguard = _out.as_stream();
+    auto& inp = *iguard;
+    auto& out = *oguard;
+
     bool more = true;
     char c;
     decode_([&]() -> LzwEntry {
@@ -167,11 +144,11 @@ void LZWDebugCode::decode(std::istream& inp, std::ostream& out) {
     }, out);
 }
 
-void LZWBitCode::code(LzwEntries entries, Input input, std::ostream& out_) {
+void LZWBitCode::code(LzwEntries&& entries, Output& out) {
 
 }
 
-void LZWBitCode::decode(std::istream& inp_, std::ostream& out) {
+void LZWBitCode::decode(Input& inp, Output& out) {
 
 }
 

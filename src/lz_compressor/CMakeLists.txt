@@ -4,6 +4,7 @@ add_library(
     lz_compressor.cpp
     lz78.cpp
     lz77.cpp
+    lzw.cpp
 )
 
 target_link_libraries(
@@ -13,6 +14,7 @@ target_link_libraries(
     suffix_array_compressor
     lz78rule
     lz77rule
+    lzwrule
     ${GLOG_LIBRARIES}
 )
 

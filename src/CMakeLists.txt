@@ -13,7 +13,7 @@ add_subdirectory(lz78rule)
 
 # Compressor that uses lzw-like dictionaries
 # with separate compression and encoding steps
-#add_subdirectory(lzwrule)
+add_subdirectory(lzwrule)
 
 # sdsl extension features
 add_subdirectory(sdsl_extension)

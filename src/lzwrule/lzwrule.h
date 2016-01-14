@@ -4,6 +4,7 @@
 #include "tudocomp.h"
 #include "sdsl_extension.h"
 #include "glog/logging.h"
+#include "lz78rule.h"
 
 namespace lzwrule {
 
@@ -18,43 +19,21 @@ class LzwRuleCompressor;
 const std::string RULESET_SIZE_LOG = "lzwrule.rule_count";
 
 struct LzwRule: public Compressor {
-    LzwRuleCompressor* m_compressor;
     LzwRuleCoder* m_encoder;
 
     inline LzwRule(Env& env,
-                   LzwRuleCompressor* compressor,
                    LzwRuleCoder* encoder):
         Compressor(env),
-        m_compressor(compressor),
         m_encoder(encoder) {};
 
-    inline virtual void compress(Input input, std::ostream& out) override final;
-
-    inline virtual void decompress(std::istream& inp, std::ostream& out) override final;
-};
-
-/// Interface for a compressor into LZW-like dictionaries.
-class LzwRuleCompressor {
-public:
-    const Env& env;
-
-    /// Class needs to be constructed with an `Env&` argument.
-    inline LzwRuleCompressor() = delete;
-
-    /// Construct the class with an environment.
-    inline LzwRuleCompressor(Env& env_): env(env_) {}
-
-    /// Compress the input.
-    ///
-    /// \param input The input to be compressed.
-    /// \return The list of rules.
-    virtual LzwEntries compress(const Input& input) = 0;
+    inline virtual void compress(Input& input, Output& output) override final;
+    inline virtual void decompress(Input& inp, Output& out) override final;
 };
 
 /// Interface for a coder from LZW-like substitution rules.
 class LzwRuleCoder {
 public:
-    const Env& env;
+    Env& env;
 
     /// Class needs to be constructed with an `Env&` argument.
     inline LzwRuleCoder() = delete;
@@ -65,9 +44,8 @@ public:
     /// Encode a list or LzwEntries and the input text.
     ///
     /// \param rules The list of substitution rules
-    /// \param input The input text
     /// \param out `ostream` where the encoded output will be written to.
-    virtual void code(LzwEntries rules, Input input, std::ostream& out) = 0;
+    virtual void code(LzwEntries&& rules, Output& out) = 0;
 
     /// Decode and decompress `inp` into `out`.
     ///
@@ -76,16 +54,50 @@ public:
     ///
     /// \param inp The input stream.
     /// \param out The output stream.
-    virtual void decode(std::istream& inp, std::ostream& out) = 0;
+    virtual void decode(Input& inp, Output& out) = 0;
 };
 
-inline void LzwRule::compress(Input input, std::ostream& out) {
-    auto rules = m_compressor->compress(input);
-    env.log_stat(RULESET_SIZE_LOG, rules.size());
-    m_encoder->code(rules, std::move(input), out);
+inline LzwEntries _compress(Input& input) {
+    using namespace lz78rule;
+
+    LzwEntries entries;
+
+    auto guard = input.as_view();
+    boost::string_ref input_ref = *guard;
+
+    Trie trie;
+
+    for (uint32_t i = 0; i <= 0xff; i++) {
+        trie.insert(i);
+    }
+
+    for (size_t i = 0; i < input.size(); i++) {
+        auto s = input_ref.substr(i);
+
+        Result phrase_and_size = trie.find_or_insert(s);
+
+        DLOG(INFO) << "looking at " << input_ref.substr(0, i)
+            << "|" << s << " -> " << phrase_and_size.size;
+
+        if (phrase_and_size.size > 1) {
+            i += phrase_and_size.size - 2;
+        }
+
+        entries.push_back(phrase_and_size.entry.index - 1);
+    }
+
+    trie.root.print(0);
+
+    return entries;
 }
 
-inline void LzwRule::decompress(std::istream& inp, std::ostream& out) {
+inline void LzwRule::compress(Input& input, Output& out) {
+    auto rules = _compress(input);
+    env.log_stat(RULESET_SIZE_LOG, rules.size());
+    m_encoder->code(std::move(rules), out);
+}
+
+inline void LzwRule::decompress(Input& inp, Output& out) {
     m_encoder->decode(inp, out);
 }
 
