@@ -105,7 +105,7 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
     })
     .do_register();
 
-    registry.with_info<LzwRule>(
+    /*registry.with_info<LzwRule>(
         "LZW rule-like", "lzwrule",
         "A Family of compression algorithms making use "
         "of LZW-like replacement rules.")
@@ -128,7 +128,7 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
             "Bit encoding, each rule is emitted a bitstream of the "
             "minimum amount of bits needed to encode the index and the char").do_register();
     })
-    .do_register();
+    .do_register();*/
 }
 
 }

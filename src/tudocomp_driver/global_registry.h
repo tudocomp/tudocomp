@@ -1,25 +1,25 @@
 #ifndef TUDOCOMP_REGISTRY_H
 #define TUDOCOMP_REGISTRY_H
 
-#include <vector>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
+#include <fstream>
+#include <functional>
+#include <iomanip>
 #include <iostream>
 #include <istream>
-#include <streambuf>
-#include <sstream>
-#include <string>
 #include <map>
-#include <functional>
-#include <unordered_map>
+#include <sstream>
+#include <streambuf>
+#include <string>
 #include <tuple>
 #include <type_traits>
+#include <unordered_map>
+#include <vector>
 
 #include "boost/utility/string_ref.hpp"
 #include "glog/logging.h"
 
-#include "rule.h"
-#include "rules.h"
 #include "tudocomp_env.h"
 
 namespace tudocomp_driver {

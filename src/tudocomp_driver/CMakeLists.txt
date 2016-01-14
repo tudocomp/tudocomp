@@ -18,6 +18,9 @@ set_target_properties(libdocopt PROPERTIES
 )
 include_directories("${install_dir}/include")
 
+add_library(tudocomp_driver_registry INTERFACE)
+target_include_directories(tudocomp_driver_registry INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_executable(
     tudocomp_driver
 

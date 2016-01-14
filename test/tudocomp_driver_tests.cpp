@@ -6,7 +6,7 @@
 
 #include "test_util.h"
 #include "tudocomp.h"
-
+#include "tudocomp_algorithms.h"
 
 std::string driver(std::string args) {
     using namespace std;
@@ -296,7 +296,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
             //std::cout << "Roundtrip with\n";
             std::cout << in_file << " -> ";
             std::cout << comp_file << " -> ";
-            std::cout << decomp_file << "\n";
+            std::cout << decomp_file << "...";
 
             remove_test_file(in_file);
             remove_test_file(comp_file);
@@ -313,7 +313,6 @@ TEST(TudocompDriver, roundtrip_matrix) {
                 std::string out = test_file_path(comp_file);
                 std::string cmd = "-k -a " + algo + " -o " + out + " " + in;
                 comp_out = driver(cmd);
-                std::cout << comp_out;
             }
 
             // Decompress
@@ -322,11 +321,11 @@ TEST(TudocompDriver, roundtrip_matrix) {
                 std::string out = test_file_path(decomp_file);
                 std::string cmd = "-d -a " + algo + " -o " + out + " " + in;
                 decomp_out = driver(cmd);
-                std::cout << decomp_out;
             }
 
             std::string read_text = read_test_file(decomp_file);
             if (read_text != text) {
+                std::cout << "\n";
                 abort = true;
 
                 assert_eq_strings(text, read_text);
@@ -345,7 +344,9 @@ TEST(TudocompDriver, roundtrip_matrix) {
                 return;
             }
 
-            std::cout << "> OK\n";
+            std::cout << " OK\n";
+            std::cout << comp_out;
+            std::cout << decomp_out;
         });
         if (abort) {
             break;
