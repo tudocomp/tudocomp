@@ -64,7 +64,7 @@ public:
     }
 
     inline const iterator end() {
-        return vec.end();
+        return vec.end() - (vec.size() - m_size);
     }
 
     inline const const_iterator begin() const {
@@ -72,7 +72,7 @@ public:
     }
 
     inline const const_iterator end() const {
-        return vec.end();
+        return vec.end() - (vec.size() - m_size);
     }
 
     inline size_type size() const {
