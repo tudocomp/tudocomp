@@ -1,9 +1,11 @@
 #include "tudocomp_algorithms.h"
 #include "lz77rule.h"
 #include "lz78rule.h"
+#include "lzwrule.h"
 #include "lz_compressor.h"
 #include "lz78.h"
 #include "lz77.h"
+#include "lzw.h"
 #include "esa_compressor.h"
 #include "max_lcp_sorted_suffix_list.h"
 #include "max_lcp_heap.h"
@@ -105,17 +107,10 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
     })
     .do_register();
 
-    /*registry.with_info<LzwRule>(
+    registry.with_info<LzwRule>(
         "LZW rule-like", "lzwrule",
         "A Family of compression algorithms making use "
-        "of LZW-like replacement rules.")
-    .with_sub_algos<LzwRuleCompressor>([](AlgorithmRegistry<LzwRuleCompressor>& registry) {
-        registry.set_name("Compressor");
-
-        registry.with_info<LZWCompressor>(
-            "lzw", "lzw",
-            "Lzw compressor that has a unlimited dictionary").do_register();
-    })
+        "of LZW-like dictionary entries.")
     .with_sub_algos<LzwRuleCoder>([](AlgorithmRegistry<LzwRuleCoder>& registry) {
         registry.set_name("Coder");
 
@@ -128,7 +123,7 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
             "Bit encoding, each rule is emitted a bitstream of the "
             "minimum amount of bits needed to encode the index and the char").do_register();
     })
-    .do_register();*/
+    .do_register();
 }
 
 }

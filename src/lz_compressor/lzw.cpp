@@ -31,7 +31,7 @@ void LZWDebugCode::code(LzwEntries&& entries, Output& _out) {
 }
 
 template<class F>
-void decode_(F ReadIndex, std::ostream& out) {
+void _decode(F ReadIndex, std::ostream& out) {
     LzwEntries entries;
     std::vector<std::tuple<LzwEntry, uint8_t>> dict;
     for (size_t i = 0; i <= 0xff; i++) {
@@ -61,10 +61,13 @@ void decode_(F ReadIndex, std::ostream& out) {
     };
 
     LzwEntry C = ReadIndex();
+    if (C == LzwEntry(-1)) {
+        return;
+    }
     std::string W = GetString(C);
     out << W;
     //std::cout << W << "\n";
-    auto f = [&](uint C,
+    /*auto f = [&](uint C,
                  uint C_,
                  std::string W,
                  bool indict,
@@ -80,12 +83,9 @@ void decode_(F ReadIndex, std::ostream& out) {
             << " |\t" << W << "\n";
     };
 
-    //f(C, 0, W, false, 0);
+    f(C, 0, W, false, 0);*/
 
-    int counter = 10;
-
-    while (C != LzwEntry(-1) && counter > 0) {
-        counter--;
+    while (C != LzwEntry(-1)) {
         LzwEntry C_ = ReadIndex();
 
         if (C_ == LzwEntry(-1)) {
@@ -116,8 +116,8 @@ void LZWDebugCode::decode(Input& _inp, Output& _out) {
     auto& out = *oguard;
 
     bool more = true;
-    char c;
-    decode_([&]() -> LzwEntry {
+    char c = '?';
+    _decode([&]() -> LzwEntry {
         if (!more) {
             return LzwEntry(-1);
         }
@@ -125,15 +125,17 @@ void LZWDebugCode::decode(Input& _inp, Output& _out) {
         LzwEntry v;
         more &= parse_number_until_other(inp, c, v);
 
-        if (c == '\'') {
+        if (more && c == '\'') {
             more &= bool(inp.get(c));
             v = uint8_t(c);
             more &= bool(inp.get(c));
-            CHECK(c == '\'');
+            DCHECK(c == '\'');
             more &= bool(inp.get(c));
         }
 
-        CHECK(c == ',');
+        if (more) {
+            DCHECK(c == ',');
+        }
 
         if (!more) {
             return LzwEntry(-1);

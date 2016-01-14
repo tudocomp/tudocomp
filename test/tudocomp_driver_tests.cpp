@@ -295,8 +295,6 @@ TEST(TudocompDriver, roundtrip_matrix) {
 
             //std::cout << "Roundtrip with\n";
             std::cout << in_file << " -> ";
-            std::cout << comp_file << " -> ";
-            std::cout << decomp_file << " ... ";
             std::cout.flush();
 
             remove_test_file(in_file);
@@ -316,6 +314,9 @@ TEST(TudocompDriver, roundtrip_matrix) {
                 comp_out = driver(cmd);
             }
 
+            std::cout << comp_file << " -> ";
+            std::cout.flush();
+
             // Decompress
             {
                 std::string in = test_file_path(comp_file);
@@ -323,6 +324,9 @@ TEST(TudocompDriver, roundtrip_matrix) {
                 std::string cmd = "-d -a " + algo + " -o " + out + " " + in;
                 decomp_out = driver(cmd);
             }
+
+            std::cout << decomp_file << " ... ";
+            std::cout.flush();
 
             std::string read_text = read_test_file(decomp_file);
             if (read_text != text) {
