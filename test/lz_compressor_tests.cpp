@@ -10,6 +10,7 @@
 #include "lz_compressor.h"
 #include "lz78.h"
 #include "lz77.h"
+#include "lzw.h"
 #include "code0.h"
 
 #include "lz78rule.h"
@@ -68,4 +69,14 @@ TEST(LZ77Classic, test) {
             {1, 0, 1}, {3, 0, 4}, {8, 5, 3}, {12, 0, 3}
         })
         .run();
+}
+
+TEST(LZW, debug) {
+    Env env;
+    LZWDebugCode coder(env);
+    LzwRule compressor(env, &coder);
+    Input inp = Input::from_memory("abcdebcdeabc");
+
+
+//LzwRuleCoder
 }

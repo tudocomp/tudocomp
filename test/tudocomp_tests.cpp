@@ -77,6 +77,32 @@ TEST(Input, vector) {
     }
 }
 
+TEST(Input, string_ref) {
+    using namespace input;
+    using Inp = input::Input;
+
+    boost::string_ref v { "abc" };
+    Inp inp = Inp::from_memory(v);
+
+    {
+        auto guard = inp.as_view();
+        auto ref = *guard;
+
+        ASSERT_EQ(ref, "abc");
+    }
+
+    {
+        auto guard = inp.as_stream();
+        auto& stream = *guard;
+
+        std::string s;
+
+        stream >> s;
+
+        ASSERT_EQ(s, "abc");
+    }
+}
+
 std::string fn(std::string suffix) {
     return "tudocomp_tests_" + suffix;
 }
