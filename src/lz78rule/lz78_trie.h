@@ -10,13 +10,13 @@
 #include "glog/logging.h"
 #include "sdsl/int_vector.hpp"
 
-#include "lz78.h"
-#include "rule.h"
+#include "lz78rule.h"
+#include "lz78rule_rule.h"
+#include "lz78rule_rules.h"
 #include "bit_iostream.h"
 #include "tudocomp_util.h"
-#include "lz78_trie.h"
 
-namespace lz_compressor {
+namespace lz78rule {
 
 using namespace tudocomp;
 
@@ -30,7 +30,7 @@ struct EdgeNode {
     size_t index;
     uint8_t chr;
 
-    Entry insert(uint8_t chr, size_t* max_index) {
+    inline Entry insert(uint8_t chr, size_t* max_index) {
         size_t new_index = *max_index;
         (*max_index)++;
 
@@ -43,7 +43,7 @@ struct EdgeNode {
         return new_entry;
     }
 
-    Result find_or_insert(const boost::string_ref prefix,
+    inline Result find_or_insert(const boost::string_ref prefix,
                           size_t offset,
                           size_t* max_index,
                           size_t prev_index)
@@ -65,7 +65,7 @@ struct EdgeNode {
         }
     }
 
-    void print(int ident) {
+    inline void print(int ident) {
         DLOG(INFO) << std::setfill(' ') << std::setw(ident)
             << "[" << index << "] " << tudocomp::byte_to_nice_ascii_char(chr) << " [";
         for (auto& e: children) {
@@ -79,12 +79,12 @@ struct Trie {
     EdgeNode root = EdgeNode { {}, 0, 0 };
     size_t max_index = 1;
 
-    Result find_or_insert(const boost::string_ref prefix) {
+    inline Result find_or_insert(const boost::string_ref prefix) {
         Result r = root.find_or_insert(prefix, 0, &max_index, 0);
         return r;
     }
 
-    Entry insert(uint8_t chr) {
+    inline Entry insert(uint8_t chr) {
         return root.insert(chr, &max_index);
     }
 };
