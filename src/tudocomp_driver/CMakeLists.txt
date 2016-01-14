@@ -1,4 +1,4 @@
-
+#[[
 # This uses the C++ implementation of docopt for its command line interface
 ExternalProject_Add(
     docopt
@@ -17,21 +17,13 @@ set_target_properties(libdocopt PROPERTIES
     #"INTERFACE_INCLUDE_DIRECTORIES" "${source_dir}/include"
 )
 include_directories("${install_dir}/include")
+]]
 
-add_library(tudocomp_driver_registry INTERFACE)
-target_include_directories(tudocomp_driver_registry INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-
-add_executable(
-    tudocomp_driver
-
-    main.cpp
-    tudocomp_algorithms.cpp
-)
+add_library(tudocomp_algorithms tudocomp_algorithms.cpp)
 
 target_link_libraries(
-    tudocomp_driver
+    tudocomp_algorithms
 
-    libdocopt
     ${Boost_LIBRARIES}
     glog
     tudocomp
@@ -40,4 +32,22 @@ target_link_libraries(
     dummy
     esacomp
     lz_compressor
+)
+target_include_directories(tudocomp_algorithms PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_executable(
+    tudocomp_driver
+
+    main.cpp
+)
+
+target_link_libraries(
+    tudocomp_driver
+
+    tudocomp_algorithms
+
+    #libdocopt
+    ${Boost_LIBRARIES}
+    glog
+    tudocomp
 )

@@ -296,7 +296,8 @@ TEST(TudocompDriver, roundtrip_matrix) {
             //std::cout << "Roundtrip with\n";
             std::cout << in_file << " -> ";
             std::cout << comp_file << " -> ";
-            std::cout << decomp_file << "...";
+            std::cout << decomp_file << " ... ";
+            std::cout.flush();
 
             remove_test_file(in_file);
             remove_test_file(comp_file);
@@ -325,7 +326,12 @@ TEST(TudocompDriver, roundtrip_matrix) {
 
             std::string read_text = read_test_file(decomp_file);
             if (read_text != text) {
-                std::cout << "\n";
+                std::cout << "ERR\n";
+                std::cout << "---\n";
+                std::cout << comp_out;
+                std::cout << "---\n";
+                std::cout << decomp_out;
+                std::cout << "---\n";
                 abort = true;
 
                 assert_eq_strings(text, read_text);
@@ -342,11 +348,11 @@ TEST(TudocompDriver, roundtrip_matrix) {
                 std::cout << "Diff:     \"" << diff << "\"\n";
 
                 return;
+            } else {
+                std::cout << "OK\n";
+                std::cout << comp_out;
+                std::cout << decomp_out;
             }
-
-            std::cout << " OK\n";
-            std::cout << comp_out;
-            std::cout << decomp_out;
         });
         if (abort) {
             break;
