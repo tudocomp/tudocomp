@@ -37,6 +37,14 @@ TEST(Util, bitsFor) {
     ASSERT_EQ(bitsFor(0b1111), 4u);
     ASSERT_EQ(bitsFor(0b10000), 5u);
     ASSERT_EQ(bitsFor(0b11111), 5u);
+    ASSERT_EQ(bitsFor(0b100000), 6u);
+    ASSERT_EQ(bitsFor(0b111111), 6u);
+    ASSERT_EQ(bitsFor(0b1000000), 7u);
+    ASSERT_EQ(bitsFor(0b1111111), 7u);
+    ASSERT_EQ(bitsFor(0b10000000), 8u);
+    ASSERT_EQ(bitsFor(0b11111111), 8u);
+    ASSERT_EQ(bitsFor(0b100000000), 9u);
+    ASSERT_EQ(bitsFor(0b111111111), 9u);
 }
 
 TEST(Util, bytesFor) {
@@ -49,6 +57,49 @@ TEST(Util, bytesFor) {
     ASSERT_EQ(bytesFor(24), 3u);
     ASSERT_EQ(bytesFor(25), 4u);
     ASSERT_EQ(bytesFor(32), 4u);
+}
+
+TEST(Util, pack_integers) {
+    ASSERT_EQ(pack_integers({
+        0b1111, 4,
+        0b1001, 4,
+    }), (std::vector<uint8_t> {
+        0b11111001
+    }));
+    ASSERT_EQ(pack_integers({
+        0b1111, 2,
+    }), (std::vector<uint8_t> {
+        0b11000000
+    }));
+    ASSERT_EQ(pack_integers({
+        0b111, 3,
+        0b1101, 4,
+        0b11001, 5,
+        0b110001, 6,
+    }), (std::vector<uint8_t> {
+        0b11111011,
+        0b10011100,
+        0b01000000,
+    }));
+    ASSERT_EQ(pack_integers({
+        0b001000, 6,
+    }), (std::vector<uint8_t> {
+        0b00100000,
+    }));
+    ASSERT_EQ(pack_integers({
+        0b001000, 6,
+        0b001100001, 9,
+        0b001100010, 9
+    }), (std::vector<uint8_t> {
+        0b00100000,
+        0b11000010,
+        0b01100010,
+    }));
+    ASSERT_EQ(pack_integers({
+        9, 64,
+    }), (std::vector<uint8_t> {
+        0,0,0,0,0,0,0,9
+    }));
 }
 
 TEST(Input, vector) {

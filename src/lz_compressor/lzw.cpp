@@ -146,12 +146,52 @@ void LZWDebugCode::decode(Input& _inp, Output& _out) {
     }, out);
 }
 
-void LZWBitCode::code(LzwEntries&& entries, Output& out) {
+void LZWBitCode::code(LzwEntries&& entries, Output& _out) {
+    auto oguard = _out.as_stream();
+    auto& out = *oguard;
+
+    // 64 bit = 0-63 => 6 bit
+    size_t bit_size = 1;
+    for (auto e : entries) {
+        bit_size = std::max(bit_size, bitsFor(e));
+    }
+    DLOG(INFO) << "detected bit_size: " << bit_size;
+
+    BitOstream os(out);
+
+    os.write(entries.size(), 64);
+    os.write(bit_size - 1, 6);
+
+    for (auto e : entries) {
+        os.write(uint64_t(e), bit_size);
+    }
+
+    os.flush();
 
 }
 
-void LZWBitCode::decode(Input& inp, Output& out) {
+void LZWBitCode::decode(Input& _inp, Output& _out) {
+    auto iguard = _inp.as_stream();
+    auto oguard = _out.as_stream();
+    auto& inp = *iguard;
+    auto& out = *oguard;
 
+    bool done = false;
+    BitIstream is(inp, done);
+
+    uint64_t entries_size = is.readBits<uint64_t>(64);
+    uint8_t bit_size = is.readBits<uint64_t>(6) + 1;
+
+    uint64_t counter = 0;
+    _decode([&]() -> LzwEntry {
+        if (counter == entries_size || done) {
+            return LzwEntry(-1);
+        }
+
+        counter++;
+
+        return LzwEntry(is.readBits<uint64_t>(bit_size));
+    }, out);
 }
 
 }

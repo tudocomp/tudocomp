@@ -191,4 +191,30 @@ inline void remove_test_file(std::string filename) {
     remove(file_path);
 }
 
+inline std::vector<uint8_t> pack_integers(std::vector<uint64_t> ints) {
+    CHECK(ints.size() % 2 == 0);
+    std::vector<uint8_t> bits;
+
+    uint bit_pos = 8;
+    for (int i = 0; i < ints.size(); i += 2) {
+        uint64_t val = ints[i];
+        uint64_t val_bits = ints[i + 1];
+        for (uint64_t bit = 0; bit < val_bits; bit++) {
+            if (bit_pos == 8) {
+                bits.push_back(0);
+                bit_pos = 0;
+            }
+
+            uint8_t& b = bits[bits.size() - 1];
+            if (val & (uint64_t(1) << (val_bits - bit - 1))) {
+                b |= (1 << (7 - bit_pos));
+            }
+
+            bit_pos++;
+        }
+    }
+
+    return bits;
+}
+
 #endif

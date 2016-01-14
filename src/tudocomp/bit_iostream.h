@@ -96,14 +96,14 @@ class BitIstream {
     std::istream& inp;
     uint8_t next = 0;
     int c;
-    bool& done;
+    bool* done;
 
     inline void readNext() {
         const int MSB = 7;
 
         char tmp;
         // TODO: Error reporting
-        done |= !inp.get(tmp);
+        *done |= !inp.get(tmp);
         next = tmp;
 
         c = MSB;
@@ -113,7 +113,7 @@ public:
     /// Create a new BitIstream.
     ///
     /// \param inp_ The istream to read bits from.
-    inline BitIstream(std::istream& inp_, bool& done_): inp(inp_), done(done_) {
+    inline BitIstream(std::istream& inp_, bool& done_): inp(inp_), done(&done_) {
         c = -1;
     }
 
