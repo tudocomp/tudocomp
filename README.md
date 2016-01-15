@@ -1,9 +1,9 @@
 The TuDoComp compression framework
 ==================================
 
-This repository contains the TuDoComp compression framework.
+TU Dortmund lossless compression framework.
 
-# Dependecies
+# Dependencies
 
 This repository depends on the following tools and C++ libraries
 being installed in the system:
@@ -15,8 +15,8 @@ being installed in the system:
   - git
   - svn
   - wget (optional, for datasets)
-  - gzip (optional, for datasets and comparision)
-  - bzip, 7zip (optional, for comparisions)
+  - gzip (optional, for datasets and comparison)
+  - bzip, 7zip (optional, for comparisons)
   - doxygen (optional, for documentation)
 - C++ libraries
   - glog (aka google log)
