@@ -146,7 +146,9 @@ Rules LZ77ClassicCompressor::compress(Input& input, size_t threshold) {
             //std::cout << " => " << char(next) << "\n";
         } else {
             Rule r { absolute_pos, absolute_pos - offset, length };
-            rules.push_back(r);
+            if (r.num > threshold) {
+                rules.push_back(r);
+            }
             //std::cout << " => " << r;
             //if (absolute_pos + length != absolute_size) {
                 //std::cout << char(next);

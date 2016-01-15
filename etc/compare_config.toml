@@ -45,6 +45,9 @@ inputs = [
     "$DATASETS/download/real/dna.50MB",
 ]
 commands = [
+    ["tudocomp_driver -a lz77rule.lz77.esa_code0",        "$IN -o $OUT",   "lz77rule.lz77.code0.tdc"       ],
+    ["tudocomp_driver -a lz77rule.lz77.esa_code1",        "$IN -o $OUT",   "lz77rule.lz77.code1.tdc"       ],
+    ["tudocomp_driver -a lz77rule.lz77.esa_code2",        "$IN -o $OUT",   "lz77rule.lz77.code2.tdc"       ],
     ["tudocomp_driver -a lzwrule.bit",        "$IN -o $OUT",   "lz78rule.bit.tdc"       ],
     ["tudocomp_driver -a lz78rule.bit",        "$IN -o $OUT",   "lz78rule.bit.tdc"       ],
     ["tudocomp_driver -a lz77rule.esa.esa_code2", "$IN -o $OUT",   "lz77rule.esa.code2.tdc"],
