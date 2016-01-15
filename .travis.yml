@@ -1,8 +1,7 @@
 language: cpp
 script:
-- |
-  mkdir build &&
-  cd build &&
-  cmake .. &&
-  make -j4 &&
-  make check
+- mkdir build
+- cd build
+- cmake ..
+- make -j4
+- make check
