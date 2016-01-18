@@ -26,11 +26,11 @@ include_directories(include)
 # TuDoComp library and implementors
 add_subdirectory(src)
 
+# Unit tests for everything in src
+add_subdirectory(test)
+
 # Huge optional corpus of text files for comparisons
 add_subdirectory(datasets)
-
-# Testsuite
-add_subdirectory(test)
 
 # add a target to generate API documentation with Doxygen
 find_package(Doxygen)
