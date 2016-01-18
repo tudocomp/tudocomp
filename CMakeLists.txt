@@ -4,7 +4,7 @@ project (tudocomp VERSION 0.1)
 include(ExternalProject)
 
 # Using C++11, more warnings and debug info
-add_compile_options(-g -Wall -std=c++11 -fdiagnostics-color=auto) #-fdump-tree-all)
+add_compile_options(-g -Wall -std=c++11) #-fdiagnostics-color=auto -fdump-tree-all)
 
 # Global dependencies
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
