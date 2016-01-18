@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8)
-project (tudocomp)
+cmake_minimum_required(VERSION 3.2)
+project (tudocomp VERSION 0.1)
 
 include(ExternalProject)
 
