@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 git clone https://github.com/google/glog.git
 mkdir -p $GLOG_ROOT_INSTALL
