@@ -11,10 +11,10 @@ script:
   - (cd $BOOST_ROOT; ./b2 threading=multi --prefix=$BOOST_ROOT -d0 install)
   - git clone https://github.com/google/glog.git
   - export GLOG_ROOT="$TRAVIS_BUILD_DIR/../glog"
-  - export GLOG_ROOT_INSTALL = GLOG_ROOT"-install"
+  - export GLOG_ROOT_INSTALL = "$GLOG_ROOT-install"
   - mkdir -p $GLOG_ROOT_INSTALL
   - (cd %GLOG_ROOT; ./configure && make && make install --prefix=$GLOG_ROOT_INSTALL)
-  - export CMAKE_MODULE_PATH="$BOOST_ROOT $GLOG_ROOT"
+  - export CMAKE_MODULE_PATH="$BOOST_ROOT $GLOG_ROOT_INSTALL"
   - mkdir build
   - cd build
   - cmake ..
