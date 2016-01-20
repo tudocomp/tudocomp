@@ -327,6 +327,19 @@ class BackInsertStream {
     std::ostream* o;
 
 public:
+    BackInsertStream(const BackInsertStream& other): BackInsertStream(*other.buffer) {
+    }
+
+    BackInsertStream(BackInsertStream&& other) {
+        buffer = other.buffer;
+        outBuf = std::move(other.outBuf);
+        ss = std::move(other.ss);
+        o = other.o;
+
+        other.buffer = nullptr;
+        other.o = nullptr;
+    }
+
     BackInsertStream(std::vector<uint8_t>& buf) {
         buffer = &buf;
         outBuf = std::unique_ptr<
