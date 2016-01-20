@@ -136,6 +136,14 @@ namespace input {
         };
         struct File {
             std::unique_ptr<std::ifstream> stream;
+
+            File(std::unique_ptr<std::ifstream>&& s) {
+                stream = std::move(s);
+            }
+
+            File(File&& other) {
+                stream = std::move(other.stream);
+            }
         };
 
         boost::variant<Memory, Stream, File> data;
