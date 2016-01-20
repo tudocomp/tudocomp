@@ -260,7 +260,7 @@ namespace output {
             std::ostream* stream;
         };
         struct File {
-            std::ofstream stream;
+            std::unique_ptr<std::ofstream> stream;
         };
 
         boost::variant<Memory, Stream, File> data;
@@ -274,7 +274,7 @@ namespace output {
                     return *m.stream;
                 }
                 std::ostream& operator()(StreamGuard::File& m) const {
-                    return m.stream;
+                    return *m.stream;
                 }
             };
             return boost::apply_visitor(visitor(), data);
@@ -293,7 +293,9 @@ namespace output {
             StreamGuard operator()(Output::File& f) const {
                 return StreamGuard {
                     StreamGuard::File {
-                        std::ofstream(f.path, std::ios::out | std::ios::binary)
+                        std::unique_ptr<std::ostream> {
+                            new std::ofstream(f.path, std::ios::out | std::ios::binary)
+                        }
                     }
                 };
             }
