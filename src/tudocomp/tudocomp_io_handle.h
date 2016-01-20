@@ -135,7 +135,22 @@ namespace input {
             std::istream* stream;
         };
         struct File {
+            std::string m_path;
             std::unique_ptr<std::ifstream> stream;
+
+            File(const File& other) {
+                m_path = other.m_path;
+                stream = std::unique_ptr<std::ifstream> {
+                    new std::ifstream(other.m_path, std::ios::in | std::ios::binary)
+                };
+            }
+
+            File(std::string&& path) {
+                m_path = path;
+                stream = std::unique_ptr<std::ifstream> {
+                    new std::ifstream(m_path, std::ios::in | std::ios::binary)
+                };
+            }
 
             File(std::unique_ptr<std::ifstream>&& s) {
                 stream = std::move(s);
@@ -179,9 +194,7 @@ namespace input {
             StreamGuard operator()(Input::File& f) const {
                 return StreamGuard {
                     StreamGuard::File {
-                        std::unique_ptr<std::ifstream> {
-                            new std::ifstream(f.path, std::ios::in | std::ios::binary)
-                        }
+                        std::string(f.path)
                     }
                 };
             }
