@@ -14,10 +14,12 @@ script:
   - export GLOG_ROOT_INSTALL="$GLOG_ROOT-install"
   - mkdir -p $GLOG_ROOT_INSTALL
   - pushd $GLOG_ROOT
-  - ./configure --prefix=$GLOG_ROOT_INSTALL
-  - touch configure.ac aclocal.m4 configure Makefile.am Makefile.in
+  - mkdir build
+  - pushd build
+  - cmake -DCMAKE_INSTALL_PREFIX:PATH=%GLOG_ROOT_INSTALL ..
   - make
   - make install
+  - popd build
   - popd
   - export CMAKE_MODULE_PATH="$BOOST_ROOT $GLOG_ROOT_INSTALL"
   - mkdir build
