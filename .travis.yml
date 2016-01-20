@@ -13,7 +13,7 @@ script:
   - export GLOG_ROOT="$TRAVIS_BUILD_DIR/../glog"
   - export GLOG_ROOT_INSTALL="$GLOG_ROOT-install"
   - mkdir -p $GLOG_ROOT_INSTALL
-  - (cd %GLOG_ROOT; ./configure && make && make install --prefix=$GLOG_ROOT_INSTALL)
+  - (cd $GLOG_ROOT; ./configure && make && make install --prefix=$GLOG_ROOT_INSTALL)
   - export CMAKE_MODULE_PATH="$BOOST_ROOT $GLOG_ROOT_INSTALL"
   - mkdir build
   - cd build
