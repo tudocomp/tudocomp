@@ -9,18 +9,9 @@ script:
   - tar jxf boost-trunk.tar.bz2 --strip-components=1 -C $BOOST_ROOT
   - (cd $BOOST_ROOT; ./bootstrap.sh --with-libraries=filesystem,system,iostreams,program_options)
   - (cd $BOOST_ROOT; ./b2 threading=multi --prefix=$BOOST_ROOT -d0 install)
-  - git clone https://github.com/google/glog.git
   - export GLOG_ROOT="$TRAVIS_BUILD_DIR/../glog"
   - export GLOG_ROOT_INSTALL="$GLOG_ROOT-install"
-  - mkdir -p $GLOG_ROOT_INSTALL
-  - pushd $GLOG_ROOT
-  - mkdir build
-  - pushd build
-  - cmake -DCMAKE_INSTALL_PREFIX:PATH=%GLOG_ROOT_INSTALL ..
-  - make
-  - make install
-  - popd build
-  - popd
+  - ./travis-build-glog.sh
   - export CMAKE_MODULE_PATH="$BOOST_ROOT $GLOG_ROOT_INSTALL"
   - mkdir build
   - cd build
