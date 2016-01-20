@@ -289,6 +289,11 @@ public:
         };
     }
 
+    ViewStream(ViewStream&& other) {
+        mb = std::move(other.mb);
+        m_stream = std::move(other.m_stream);
+    }
+
     std::istream& stream() {
         return *m_stream;
     }
