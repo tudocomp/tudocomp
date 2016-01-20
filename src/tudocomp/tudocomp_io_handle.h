@@ -293,7 +293,7 @@ namespace output {
             StreamGuard operator()(Output::File& f) const {
                 return StreamGuard {
                     StreamGuard::File {
-                        std::unique_ptr<std::ostream> {
+                        std::unique_ptr<std::ofstream> {
                             new std::ofstream(f.path, std::ios::out | std::ios::binary)
                         }
                     }
