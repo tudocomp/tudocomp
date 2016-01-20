@@ -64,7 +64,7 @@ TEST(LZ77Classic, test) {
     using namespace lz77rule_test;
     CompressorTest<LZ77ClassicCompressor>()
         .input("aacaacabcabaaac")
-        .threshold(1)
+        .threshold(0)
         .expected_rules(Rules {
             {1, 0, 1}, {3, 0, 4}, {8, 5, 3}, {12, 0, 3}
         })

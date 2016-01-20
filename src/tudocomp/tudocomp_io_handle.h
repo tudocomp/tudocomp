@@ -135,7 +135,7 @@ namespace input {
             std::istream* stream;
         };
         struct File {
-            std::ifstream stream;
+            std::unique_ptr<std::ifstream> stream;
         };
 
         boost::variant<Memory, Stream, File> data;
@@ -149,7 +149,7 @@ namespace input {
                     return *m.stream;
                 }
                 std::istream& operator()(StreamGuard::File& m) const {
-                    return m.stream;
+                    return *m.stream;
                 }
             };
             return boost::apply_visitor(visitor(), data);
@@ -171,7 +171,9 @@ namespace input {
             StreamGuard operator()(Input::File& f) const {
                 return StreamGuard {
                     StreamGuard::File {
-                        std::ifstream(f.path, std::ios::in | std::ios::binary)
+                        std::unique_ptr<std::ifstream> {
+                            new std::ifstream(f.path, std::ios::in | std::ios::binary)
+                        }
                     }
                 };
             }

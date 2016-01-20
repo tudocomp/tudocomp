@@ -17,6 +17,7 @@ LZSS (https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Storer%E2%80%93Sz
 - LZSS does not create a rule if it costs more than the original
 
 - rename lz77rule::Rules::nums into lengths or add a comment
+
 - test on debian stable
   - test c++14 support on debian stable
 - template-generalize the rule buffers
