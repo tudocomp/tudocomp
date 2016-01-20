@@ -276,13 +276,28 @@ class ViewStream {
         }
     };
 
+    char* m_begin;
+    size_t m_size;
     std::unique_ptr<membuf> mb;
     std::unique_ptr<std::istream> m_stream;
 
 public:
     ViewStream(char* begin, size_t size) {
+        m_begin = begin;
+        m_size = size;
         mb = std::unique_ptr<ViewStream::membuf>(
             new ViewStream::membuf { begin, size }
+        );
+        m_stream = std::unique_ptr<std::istream> {
+            new std::istream(&*mb)
+        };
+    }
+
+    ViewStream(const ViewStream& other) {
+        m_begin = other.m_begin;
+        m_size = other.m_size;
+        mb = std::unique_ptr<ViewStream::membuf>(
+            new ViewStream::membuf { m_begin, m_size }
         );
         m_stream = std::unique_ptr<std::istream> {
             new std::istream(&*mb)
