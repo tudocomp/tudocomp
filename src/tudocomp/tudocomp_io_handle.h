@@ -138,11 +138,7 @@ namespace input {
             std::string m_path;
             std::unique_ptr<std::ifstream> stream;
 
-            File(const File& other) {
-                m_path = other.m_path;
-                stream = std::unique_ptr<std::ifstream> {
-                    new std::ifstream(other.m_path, std::ios::in | std::ios::binary)
-                };
+            File(const File& other): File(std::string(other.m_path)) {
             }
 
             File(std::string&& path) {
@@ -281,7 +277,26 @@ namespace output {
             std::ostream* stream;
         };
         struct File {
+            std::string m_path;
             std::unique_ptr<std::ofstream> stream;
+
+            File(const File& other): File(std::string(other.m_path)) {
+            }
+
+            File(std::string&& path) {
+                m_path = path;
+                stream = std::unique_ptr<std::ofstream> {
+                    new std::ofstream(m_path, std::ios::out | std::ios::binary)
+                };
+            }
+
+            File(std::unique_ptr<std::ofstream>&& s) {
+                stream = std::move(s);
+            }
+
+            File(File&& other) {
+                stream = std::move(other.stream);
+            }
         };
 
         boost::variant<Memory, Stream, File> data;
@@ -314,9 +329,7 @@ namespace output {
             StreamGuard operator()(Output::File& f) const {
                 return StreamGuard {
                     StreamGuard::File {
-                        std::unique_ptr<std::ofstream> {
-                            new std::ofstream(f.path, std::ios::out | std::ios::binary)
-                        }
+                        std::string(f.path)
                     }
                 };
             }
