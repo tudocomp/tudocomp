@@ -12,8 +12,8 @@ addons:
     - ubuntu-toolchain-r-test
     - george-edison55-precise-backports
     packages:
-    - gcc-4.9
-    - g++-4.9
+    - gcc-4.8
+    - g++-4.8
     - libboost1.55-all-dev
     - cmake
     - cmake-data
@@ -21,6 +21,9 @@ addons:
 compiler:
   - g++
   - clang
+
+install:
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
 
 script:
   - source .travis-build.sh
