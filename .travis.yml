@@ -14,7 +14,9 @@ addons:
     packages:
     - gcc-4.8
     - g++-4.8
-    - libboost1.55-all-dev
+    - libboost1.55-system-dev
+    - libboost1.55-filesystem-dev
+    - libboost1.55-program_options-dev
     - cmake
     - cmake-data
 
