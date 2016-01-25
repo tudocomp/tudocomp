@@ -1,13 +1,26 @@
+sudo: false
+
 language: cpp
+
+cache:
+  apt: true
+
 addons:
-    apt:
-      packages:
-        - cmake
-      sources:
-        - kalakris-cmake
-#before_install:
-#  - sudo apt-get -qq update
-#  - sudo apt-get install -y libboost-all-dev libgoogle-glog-dev
+  apt:
+    sources:
+    - boost-latest
+    - ubuntu-toolchain-r-test
+    - kalakris-cmake
+    packages:
+    - gcc-4.9
+    - g++-4.9
+    - libboost1.55-all-dev
+    - cmake
+
+compiler:
+  - g++
+  - clang
+
 script:
   - export GLOG_ROOT="$TRAVIS_BUILD_DIR/../glog"
   - export GLOG_ROOT_INSTALL="$GLOG_ROOT-install"
