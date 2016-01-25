@@ -3,15 +3,15 @@ language: cpp
 #  - sudo apt-get -qq update
 #  - sudo apt-get install -y libboost-all-dev libgoogle-glog-dev
 script:
+  - export GLOG_ROOT="$TRAVIS_BUILD_DIR/../glog"
+  - export GLOG_ROOT_INSTALL="$GLOG_ROOT-install"
+  - ./travis-build-glog.sh
   - wget --no-verbose --output-document=boost-trunk.tar.bz2 http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.bz2/download
   - export BOOST_ROOT="$TRAVIS_BUILD_DIR/../boost-trunk"
   - mkdir -p $BOOST_ROOT
   - tar jxf boost-trunk.tar.bz2 --strip-components=1 -C $BOOST_ROOT
   - (cd $BOOST_ROOT; ./bootstrap.sh --with-libraries=filesystem,system,iostreams,program_options)
   - (cd $BOOST_ROOT; ./b2 threading=multi --prefix=$BOOST_ROOT -d0 install)
-  - export GLOG_ROOT="$TRAVIS_BUILD_DIR/../glog"
-  - export GLOG_ROOT_INSTALL="$GLOG_ROOT-install"
-  - ./travis-build-glog.sh
   - export CMAKE_MODULE_PATH="$BOOST_ROOT $GLOG_ROOT_INSTALL"
   - mkdir build
   - cd build
