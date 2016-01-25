@@ -12,7 +12,7 @@ target_link_libraries(
     sdsl
     divsufsort
     divsufsort64
-    ${GLOG_LIBRARIES}
+    custom_glog
 )
 
 target_include_directories(suffix_array_compressor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

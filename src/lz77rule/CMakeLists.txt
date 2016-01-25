@@ -7,7 +7,7 @@ target_link_libraries(
     INTERFACE
     tudocomp
     sdsl_extension
-    ${GLOG_LIBRARIES}
+    custom_glog
 )
 target_include_directories(
     lz77rule

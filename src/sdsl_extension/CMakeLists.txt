@@ -8,7 +8,7 @@ target_link_libraries(
     sdsl
     divsufsort
     divsufsort64
-    ${GLOG_LIBRARIES}
+    custom_glog
 )
 target_include_directories(
     sdsl_extension

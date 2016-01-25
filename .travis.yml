@@ -23,12 +23,4 @@ compiler:
   - clang
 
 script:
-  - export GLOG_ROOT="$TRAVIS_BUILD_DIR/../glog"
-  - export GLOG_ROOT_INSTALL="$GLOG_ROOT-install"
-  - ./.travis-build-glog.sh
-  - export CMAKE_MODULE_PATH="$GLOG_ROOT_INSTALL"
-  - mkdir build
-  - cd build
-  - cmake ..
-  - make -j4
-  - make check
+  - source .travis-build.sh

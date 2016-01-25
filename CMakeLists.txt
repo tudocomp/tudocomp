@@ -12,6 +12,14 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemod
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost REQUIRED system program_options filesystem)
 find_package(Glog REQUIRED)
+
+add_library(custom_glog IMPORTED STATIC GLOBAL)
+set_target_properties(custom_glog PROPERTIES
+    "IMPORTED_LOCATION" "${GLOG_LIBRARIES}"
+    "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
+    "INTERFACE_INCLUDE_DIRECTORIES" "${GLOG_INCLUDE_DIRS}"
+)
+
 include(sdsl)
 include(rust)
 

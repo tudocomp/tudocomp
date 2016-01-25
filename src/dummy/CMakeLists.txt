@@ -10,7 +10,7 @@ target_link_libraries(
 
     tudocomp
     lz77rule
-    ${GLOG_LIBRARIES}
+    custom_glog
 )
 
 target_include_directories(dummy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

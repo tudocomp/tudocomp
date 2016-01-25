@@ -25,7 +25,7 @@ target_link_libraries(
     tudocomp_algorithms
 
     ${Boost_LIBRARIES}
-    glog
+    custom_glog
     tudocomp
 
     # Depend on all algorithms
@@ -48,6 +48,6 @@ target_link_libraries(
 
     #libdocopt
     ${Boost_LIBRARIES}
-    glog
+    custom_glog
     tudocomp
 )
