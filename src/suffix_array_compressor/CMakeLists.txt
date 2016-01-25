@@ -10,8 +10,6 @@ target_link_libraries(
     tudocomp
     lz77rule
     sdsl
-    divsufsort
-    divsufsort64
     custom_glog
 )
 

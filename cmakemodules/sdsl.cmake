@@ -24,12 +24,12 @@ set_target_properties(divsufsort64 PROPERTIES
     "INTERFACE_INCLUDE_DIRECTORIES" "${install_dir}/include"
 )
 
-add_library(sdsl IMPORTED STATIC GLOBAL)
-add_dependencies(sdsl sdsl_external divsufsort divsufsort64)
-set_target_properties(sdsl PROPERTIES
+add_library(sdsl_lib IMPORTED STATIC GLOBAL)
+add_dependencies(sdsl_lib sdsl_external divsufsort divsufsort64)
+set_target_properties(sdsl_lib PROPERTIES
     "IMPORTED_LOCATION" "${install_dir}/lib/libsdsl.a"
     "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
     "INTERFACE_INCLUDE_DIRECTORIES" "${install_dir}/include"
 )
-
-#include_directories("${install_dir}/include")
+add_library(sdsl INTERFACE)
+target_link_libraries(sdsl INTERFACE sdsl_lib divsufsort divsufsort64)

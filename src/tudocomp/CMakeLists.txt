@@ -7,8 +7,6 @@ target_link_libraries(
     tudocomp
 
     sdsl
-    divsufsort
-    divsufsort64
     custom_glog
 )
 target_include_directories(
