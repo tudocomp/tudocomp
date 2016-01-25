@@ -1,4 +1,10 @@
 language: cpp
+addons:
+    apt:
+      packages:
+        - cmake
+      sources:
+        - kalakris-cmake
 #before_install:
 #  - sudo apt-get -qq update
 #  - sudo apt-get install -y libboost-all-dev libgoogle-glog-dev
