@@ -8,7 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11")
 #add_compile_options(-g -Wall -std=c++11) #-fdiagnostics-color=auto -fdump-tree-all)
 
 # Global dependencies
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost REQUIRED system program_options filesystem)
 find_package(Glog REQUIRED)
