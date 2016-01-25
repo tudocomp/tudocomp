@@ -5,7 +5,7 @@ language: cpp
 script:
   - export GLOG_ROOT="$TRAVIS_BUILD_DIR/../glog"
   - export GLOG_ROOT_INSTALL="$GLOG_ROOT-install"
-  - ./travis-build-glog.sh
+  - ./.travis-build-glog.sh
   - wget --no-verbose --output-document=boost-trunk.tar.bz2 http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.tar.bz2/download
   - export BOOST_ROOT="$TRAVIS_BUILD_DIR/../boost-trunk"
   - mkdir -p $BOOST_ROOT
