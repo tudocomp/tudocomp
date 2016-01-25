@@ -46,6 +46,4 @@ find_package_handle_standard_args(Glog DEFAULT_MSG
 if(GLOG_FOUND)
     set(GLOG_INCLUDE_DIRS ${GLOG_INCLUDE_DIR})
     set(GLOG_LIBRARIES ${GLOG_LIBRARY})
-else()
-
 endif()
