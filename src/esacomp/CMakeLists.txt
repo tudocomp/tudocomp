@@ -14,7 +14,7 @@ target_link_libraries(
     tudocomp
     lz77rule
     suffix_array_compressor
-    custom_glog
+    glog
 )
 
 target_include_directories(esacomp PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

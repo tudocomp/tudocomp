@@ -15,7 +15,7 @@ target_link_libraries(
     lz78rule
     lz77rule
     lzwrule
-    custom_glog
+    glog
 )
 
 target_include_directories(lz_compressor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

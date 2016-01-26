@@ -10,7 +10,7 @@ target_link_libraries(
     tudocomp
     lz77rule
     sdsl
-    custom_glog
+    glog
 )
 
 target_include_directories(suffix_array_compressor PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

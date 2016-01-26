@@ -6,7 +6,7 @@ target_link_libraries(
     sdsl_extension
     INTERFACE
     sdsl
-    custom_glog
+    glog
 )
 target_include_directories(
     sdsl_extension

@@ -7,7 +7,7 @@ target_link_libraries(
     tudocomp
 
     sdsl
-    custom_glog
+    glog
 )
 target_include_directories(
     tudocomp

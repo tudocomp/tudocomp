@@ -1,5 +1,5 @@
 function(find_or_download_package package package_found_prefix target_name)
-    find_package(${package})
+    find_package(${package} ${ARGN})
 
     if(${package_found_prefix}_FOUND)
         message(STATUS "${package} found, no need to build locally")

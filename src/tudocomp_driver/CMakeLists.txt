@@ -24,8 +24,8 @@ add_library(tudocomp_algorithms tudocomp_algorithms.cpp)
 target_link_libraries(
     tudocomp_algorithms
 
-    ${Boost_LIBRARIES}
-    custom_glog
+    boost
+    glog
     tudocomp
 
     # Depend on all algorithms
@@ -47,7 +47,7 @@ target_link_libraries(
     tudocomp_algorithms
 
     #libdocopt
-    ${Boost_LIBRARIES}
-    custom_glog
+    boost
+    glog
     tudocomp
 )
