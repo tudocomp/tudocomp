@@ -10,13 +10,13 @@ addons:
     sources:
     - george-edison55-precise-backports
     - ubuntu-toolchain-r-test
-#    - boost-latest
+    - boost-latest
     packages:
     - gcc-4.8
     - g++-4.8
     - cmake
     - cmake-data
-#    - libboost1.55-all-dev
+    - libboost1.55-all-dev
 
 compiler:
   - g++
@@ -25,12 +25,12 @@ compiler:
 install:
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
   - if [ "$CC" = "gcc" ]; then export CXX="gcc-4.8"; fi
-  - mkdir my_path
-  - cd my_path
-  - ln -s /usr/bin/gcc-4-8 ./gcc
-  - ln -s /usr/bin/g++-4-8 ./g++
-  - export PATH=$PWD:$PATH
-  - cd ..
+#  - mkdir my_path
+#  - cd my_path
+#  - ln -s /usr/bin/gcc-4-8 ./gcc
+#  - ln -s /usr/bin/g++-4-8 ./g++
+#  - export PATH=$PWD:$PATH
+#  - cd ..
 
 script:
   - source .travis-build.sh
