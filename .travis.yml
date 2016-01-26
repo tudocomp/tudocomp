@@ -25,6 +25,12 @@ compiler:
 install:
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
   - if [ "$CC" = "gcc" ]; then export CXX="gcc-4.8"; fi
+  - mkdir my_path
+  - cd my_path
+  - ln -s /usr/bin/gcc-4-8 ./gcc
+  - ln -s /usr/bin/g++-4-8 ./g++
+  - export PATH=$PWD:$PATH
+  - cd ..
 
 script:
   - source .travis-build.sh
