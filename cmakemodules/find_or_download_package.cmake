@@ -2,9 +2,9 @@ function(find_or_download_package package package_found_prefix target_name)
     find_package(${package} ${ARGN})
 
     if(${package_found_prefix}_FOUND)
-        message(STATUS "${package} found, no need to build locally")
+        message(STATUS "${package} found")
     else()
-        message(STATUS "${package} not found, will download and build locally")
+        message(STATUS "${package} not found, will use locally downloaded and build one")
         include(Download${package})
     endif()
 
@@ -14,7 +14,7 @@ function(find_or_download_package package package_found_prefix target_name)
         get_filename_component(LIB_NAME ${sublib} NAME_WE)
         set(sublib_target ${package}_cmake_dep_${LIB_NAME})
 
-        message(STATUS ${sublib} "  " ${sublib_target})
+        #message(STATUS ${sublib} "  " ${sublib_target})
 
         # Detect wether this is a shared or a static library
         # NB: This might not work on windows
@@ -26,7 +26,7 @@ function(find_or_download_package package package_found_prefix target_name)
         endif()
 
         foreach(sublib_target_dep ${${package_found_prefix}_CMAKE_DEP})
-            message(STATUS "sublib target dep: " ${sublib_target_dep})
+            #message(STATUS "sublib target dep: " ${sublib_target_dep})
             add_dependencies(${sublib_target} ${sublib_target_dep})
         endforeach()
 
