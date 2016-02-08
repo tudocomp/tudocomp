@@ -7,12 +7,13 @@
 
 #include "sdsl/int_vector.hpp"
 
-#include "rule.h"
 #include "tudocomp.h"
-#include "lz77rule.h"
+#include "esacomp/rule.h"
+#include "esacomp/rules.h"
+#include "esacomp/esacomp_rule_compressor.h"
 
 using namespace tudocomp;
-using namespace lz77rule;
+using namespace esacomp;
 
 namespace sa_compressor {
 
@@ -25,11 +26,11 @@ struct SuffixData {
     SdslVec lcp;
 };
 
-/// Allows implementing Lz77RuleCompressor in terms of a compress method
+/// Allows implementing EsacompCompressStrategy in terms of a compress method
 /// receiving a suffix and lcp array directly.
-class SACompressor: public Lz77RuleCompressor {
+class SACompressor: public EsacompCompressStrategy {
 public:
-    inline SACompressor(Env& env): Lz77RuleCompressor(env) {}
+    using EsacompCompressStrategy::EsacompCompressStrategy;
 
     virtual Rules compress(Input& input, size_t threshold) final override;
 

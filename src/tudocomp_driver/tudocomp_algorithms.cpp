@@ -1,5 +1,6 @@
 #include "tudocomp_algorithms.h"
-#include "lz77rule.h"
+#include "lz77/lz77_rule_compressor.h"
+#include "esacomp/esacomp_rule_compressor.h"
 #include "lz78rule.h"
 #include "lzwrule.h"
 #include "lz_compressor.h"
@@ -19,11 +20,31 @@
 namespace tudocomp_driver {
 
 using namespace tudocomp;
-using namespace esacomp;
-using namespace dummy;
-using namespace lz_compressor;
+
+// Algorithm interfaces
+
+using esacomp::EsacompRuleCompressor;
 
 using lz78rule::Lz78Rule;
+using lz78rule::Lz78RuleCoder;
+
+using lzwrule::LzwRule;
+using lzwrule::LzwRuleCoder;
+
+// Algorithm implementations
+
+using lz_compressor::LZCompressor;
+using lz_compressor::LZ77ClassicCompressor;
+using lz_compressor::LZ78DebugCode;
+using lz_compressor::LZ78BitCode;
+using lz_compressor::LZWDebugCode;
+using lz_compressor::LZWBitCode;
+
+using dummy::DummyCompressor;
+using dummy::DummyCoder;
+
+using esacomp::EsacompCompressStrategy;
+using esacomp::EsacompEncodeStrategy;
 
 // All compression and encoding algorithms exposed by the command
 // line interface.
@@ -37,14 +58,14 @@ using lz78rule::Lz78Rule;
 //   Compressor or Encoder.
 
 void register_algos(AlgorithmRegistry<Compressor>& registry) {
-    registry.with_info<Lz77Rule>(
+    registry.with_info<EsacompRuleCompressor>(
         // TODO: Name right
         // - lz77rule ~ LZSS rules with implicit escape bits
         // - lz ~ unknown named variant of lz with suffix array
         "LZ77 rule-like", "lz77rule",
         "A Family of compression algorithms making use "
         "of LZ77-like replacement rules.")
-    .with_sub_algos<Lz77RuleCompressor>([](AlgorithmRegistry<Lz77RuleCompressor>& registry) {
+    .with_sub_algos<EsacompCompressStrategy>([](AlgorithmRegistry<EsacompCompressStrategy>& registry) {
         registry.set_name("Compressor");
 
         registry.with_info<DummyCompressor>(
@@ -68,7 +89,7 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
             "LZ77, using a fixed sized dictionary and preview window").do_register();
 
     })
-    .with_sub_algos<Lz77RuleCoder>([](AlgorithmRegistry<Lz77RuleCoder>& registry) {
+    .with_sub_algos<EsacompEncodeStrategy>([](AlgorithmRegistry<EsacompEncodeStrategy>& registry) {
         registry.set_name("Coder");
 
         registry.with_info<DummyCoder>(

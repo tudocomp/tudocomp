@@ -3,21 +3,21 @@
 
 #include <tuple>
 
-#include "lz77rule.h"
-#include "rule.h"
-#include "rules.h"
+#include "esacomp/esacomp_rule_compressor.h"
+#include "esacomp/rule.h"
+#include "esacomp/rules.h"
 #include "tudocomp.h"
 
 namespace lz_compressor {
 
 using namespace tudocomp;
-using namespace lz77rule;
+using namespace esacomp;
 
-class LZ77ClassicCompressor: public Lz77RuleCompressor {
+class LZ77ClassicCompressor: public EsacompCompressStrategy {
 public:
-    using Lz77RuleCompressor::Lz77RuleCompressor;
+    using EsacompCompressStrategy::EsacompCompressStrategy;
 
-    virtual Rules compress(Input& input, size_t threshold);
+    virtual Rules compress(Input& input, size_t threshold) final override;
 };
 
 }

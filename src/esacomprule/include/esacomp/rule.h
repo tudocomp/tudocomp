@@ -1,12 +1,14 @@
-#ifndef RULE_H
-#define RULE_H
+#ifndef ESACOMP_RULE_H
+#define ESACOMP_RULE_H
 
 #include <cstdint>
 #include <iostream>
 
-namespace lz77rule {
+namespace esacomp {
 
-/// A substitution rule.
+/// A esacomp compression rule.
+/// This is defined as a reference to a span of already-decoded text at an
+/// absolute position.
 struct Rule {
     /// Target location where that rule points to.
     size_t target;

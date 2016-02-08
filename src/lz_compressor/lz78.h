@@ -3,7 +3,6 @@
 
 #include <tuple>
 
-#include "rule.h"
 #include "tudocomp.h"
 #include "lz78rule.h"
 

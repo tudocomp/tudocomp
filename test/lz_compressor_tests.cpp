@@ -6,7 +6,6 @@
 #include "test_util.h"
 
 #include "tudocomp.h"
-#include "lz77rule.h"
 #include "lz_compressor.h"
 #include "lz78.h"
 #include "lz77.h"
@@ -18,7 +17,6 @@
 #include "lz77rule_test_util.h"
 #include "lz78rule_test_util.h"
 
-using namespace lz77rule;
 using namespace lz_compressor;
 using namespace esacomp;
 

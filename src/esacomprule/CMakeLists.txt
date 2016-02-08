@@ -1,15 +1,15 @@
 add_library(
-    lz77rule
+    esacomprule
     INTERFACE
 )
 target_link_libraries(
-    lz77rule
+    esacomprule
     INTERFACE
     tudocomp
     sdsl_extension
     glog
 )
 target_include_directories(
-    lz77rule
+    esacomprule
     INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include
 )

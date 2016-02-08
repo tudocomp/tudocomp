@@ -2,16 +2,15 @@
 #define ESACOMPRESSOR_H
 
 #include "tudocomp.h"
-#include "lz77rule.h"
-#include "rule.h"
+#include "esacomp/esacomp_rule_compressor.h"
+#include "esacomp/rule.h"
+#include "esacomp/rules.h"
 #include "sa_compressor.h"
 #include "max_lcp.h"
 #include "max_lcp_sorted_suffix_list.h"
 #include "max_lcp_heap.h"
 
 namespace esacomp {
-
-using namespace lz77rule;
 
 template<class Strategy = MaxLCPSortedSuffixList>
 class ESACompressor: public SACompressor {

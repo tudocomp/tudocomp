@@ -3,7 +3,7 @@
 #include "glog/logging.h"
 
 #include "code0.h"
-#include "rule.h"
+#include "esacomp/rule.h"
 #include "tudocomp.h"
 
 namespace esacomp {

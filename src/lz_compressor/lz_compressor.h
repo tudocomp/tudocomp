@@ -1,7 +1,7 @@
 #ifndef LZCOMPRESSOR_H
 #define LZCOMPRESSOR_H
 
-#include "rule.h"
+#include "esacomp/rule.h"
 #include "tudocomp.h"
 #include "sa_compressor.h"
 

@@ -2,8 +2,10 @@
 #define DUMMY_CODER_H
 
 #include "tudocomp.h"
-#include "lz77rule.h"
-using namespace lz77rule;
+#include "esacomp/esacomp_rule_compressor.h"
+#include "esacomp/rule.h"
+#include "esacomp/rules.h"
+using namespace esacomp;
 
 // Put every C++ code in this project into a common namespace
 // in order to not pollute the global one
@@ -11,9 +13,9 @@ namespace dummy {
 
 using namespace tudocomp;
 
-class DummyCoder: public Lz77RuleCoder {
+class DummyCoder: public EsacompEncodeStrategy {
 public:
-    inline DummyCoder(Env& env): Lz77RuleCoder(env) {}
+    using EsacompEncodeStrategy::EsacompEncodeStrategy;
 
     virtual void code(Rules&&, Input& input, Output&) override final;
     virtual void decode(Input& inp, Output& out) override final;

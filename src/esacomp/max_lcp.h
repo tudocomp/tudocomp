@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "rule.h"
+#include "esacomp/rule.h"
 #include "tudocomp.h"
 #include "sa_compressor.h"
 

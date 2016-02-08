@@ -5,11 +5,11 @@
 
 #include "gtest/gtest.h"
 #include "tudocomp.h"
-#include "lz77rule.h"
-#include "rule.h"
+#include "esacomp/esacomp_rule_compressor.h"
+#include "esacomp/rule.h"
 
 using namespace tudocomp;
-using namespace lz77rule;
+using namespace esacomp;
 
 using std::swap;
 

@@ -1,5 +1,5 @@
-#ifndef RULES_H
-#define RULES_H
+#ifndef ESACOMP_RULES_H
+#define ESACOMP_RULES_H
 
 #include <iterator>
 #include <initializer_list>
@@ -8,7 +8,7 @@
 #include "glog/logging.h"
 #include "rule.h"
 
-namespace lz77rule {
+namespace esacomp {
 
 using namespace sdsl_extension;
 

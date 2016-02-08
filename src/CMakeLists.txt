@@ -3,16 +3,17 @@
 add_subdirectory(tudocomp)
 add_subdirectory(tudocomp_driver)
 
-# Compressor that uses lz77-like substitution rules
+# Compressor that uses esacomp-like substitution rules
 # with separate compression and encoding steps
+add_subdirectory(esacomprule)
+
+# Compressor that uses lz77-like backreference rules
 add_subdirectory(lz77rule)
 
 # Compressor that uses lz78-like dictionaries
-# with separate compression and encoding steps
 add_subdirectory(lz78rule)
 
 # Compressor that uses lzw-like dictionaries
-# with separate compression and encoding steps
 add_subdirectory(lzwrule)
 
 # sdsl extension features

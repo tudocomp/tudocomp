@@ -2,16 +2,15 @@
 #define CODE2_H
 
 #include "tudocomp.h"
-#include "lz77rule.h"
+#include "esacomp/esacomp_rule_compressor.h"
 
 namespace esacomp {
 
-using namespace lz77rule;
 using namespace tudocomp;
 
-class Code2Coder: public Lz77RuleCoder {
+class Code2Coder: public EsacompEncodeStrategy {
 public:
-    inline Code2Coder(Env& env): Lz77RuleCoder(env) {}
+    inline Code2Coder(Env& env): EsacompEncodeStrategy(env) {}
 
     virtual void code(Rules&&, Input& input, Output&) override final;
     virtual void decode(Input& inp, Output& out) override final;

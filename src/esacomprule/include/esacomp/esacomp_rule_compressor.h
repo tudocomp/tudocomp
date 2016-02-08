@@ -1,31 +1,32 @@
-#ifndef LZ77RULE_H
-#define LZ77RULE_H
+#ifndef ESACOMP_RULE_COMPRESSOR_H
+#define ESACOMP_RULE_COMPRESSOR_H
 
 #include "tudocomp.h"
 #include "rule.h"
 #include "rules.h"
 
-namespace lz77rule {
+namespace esacomp {
 
 using namespace tudocomp;
 
 // /// Type of the list of Rules the compression step produces
 // using Rules = std::vector<Rule>;
 
-class Lz77RuleCoder;
-class Lz77RuleCompressor;
+class EsacompEncodeStrategy;
+class EsacompCompressStrategy;
 
-const std::string THRESHOLD_OPTION = "lz77rule.threshold";
-const std::string THRESHOLD_LOG = "lz77rule.threshold";
-const std::string RULESET_SIZE_LOG = "lz77rule.rule_count";
+const std::string THRESHOLD_OPTION = "esacomp.threshold";
+const std::string THRESHOLD_LOG = "esacomp.threshold";
+const std::string RULESET_SIZE_LOG = "esacomp.rule_count";
 
-struct Lz77Rule: public Compressor {
-    Lz77RuleCompressor* m_compressor;
-    Lz77RuleCoder* m_encoder;
+class EsacompRuleCompressor: public Compressor {
+    EsacompCompressStrategy* m_compressor;
+    EsacompEncodeStrategy* m_encoder;
 
-    inline Lz77Rule(Env& env,
-                    Lz77RuleCompressor* compressor,
-                    Lz77RuleCoder* encoder):
+public:
+    inline EsacompRuleCompressor(Env& env,
+                    EsacompCompressStrategy* compressor,
+                    EsacompEncodeStrategy* encoder):
         Compressor(env),
         m_compressor(compressor),
         m_encoder(encoder) {};
@@ -41,15 +42,15 @@ struct Lz77Rule: public Compressor {
 /// generating a list of substitution rules.
 /// The rules in combination with the input parts not covered by them
 /// can regenerate the full input.
-class Lz77RuleCompressor {
+class EsacompCompressStrategy {
 public:
     Env& env;
 
     /// Class needs to be constructed with an `Env&` argument.
-    inline Lz77RuleCompressor() = delete;
+    inline EsacompCompressStrategy() = delete;
 
     /// Construct the class with an environment.
-    inline Lz77RuleCompressor(Env& env_): env(env_) {}
+    inline EsacompCompressStrategy(Env& env_): env(env_) {}
 
     /// Compress the input.
     ///
@@ -68,15 +69,15 @@ public:
 /// an encoded form of them to a `ostream`. Also provided is a decoder,
 /// that takes such an encoded stream and outputs the fully
 /// decoded and decompressed original text.
-class Lz77RuleCoder {
+class EsacompEncodeStrategy {
 public:
     Env& env;
 
     /// Class needs to be constructed with an `Env&` argument.
-    inline Lz77RuleCoder() = delete;
+    inline EsacompEncodeStrategy() = delete;
 
     /// Construct the class with an environment.
-    inline Lz77RuleCoder(Env& env_): env(env_) {}
+    inline EsacompEncodeStrategy(Env& env_): env(env_) {}
 
     /// Encode a list or Rules and the input text.
     ///
@@ -104,7 +105,7 @@ public:
     virtual size_t min_encoded_rule_length(size_t input_size = SIZE_MAX) = 0;
 };
 
-inline void Lz77Rule::compress(Input& input, Output& output) {
+inline void EsacompRuleCompressor::compress(Input& input, Output& output) {
     uint64_t threshold = 0;
 
     if (env.has_option(THRESHOLD_OPTION)) {
@@ -123,7 +124,7 @@ inline void Lz77Rule::compress(Input& input, Output& output) {
     m_encoder->code(std::move(rules), input, output);
 }
 
-inline void Lz77Rule::decompress(Input& inp, Output& out) {
+inline void EsacompRuleCompressor::decompress(Input& inp, Output& out) {
     m_encoder->decode(inp, out);
 }
 

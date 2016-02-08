@@ -10,16 +10,16 @@
 #include "sdsl/int_vector.hpp"
 
 #include "lz77.h"
-#include "lz77rule.h"
-#include "rule.h"
-#include "rules.h"
+#include "esacomp/esacomp_rule_compressor.h"
+#include "esacomp/rule.h"
+#include "esacomp/rules.h"
 #include "bit_iostream.h"
 #include "tudocomp_util.h"
 
 namespace lz_compressor {
 
 using namespace tudocomp;
-using namespace lz77rule;
+using namespace esacomp;
 
 Rules LZ77ClassicCompressor::compress(Input& input, size_t threshold) {
     // TODO: Default to realistic values

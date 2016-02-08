@@ -2,8 +2,11 @@
 #define DUMMY_COMPRESSOR_H
 
 #include "tudocomp.h"
-#include "lz77rule.h"
-using namespace lz77rule;
+#include "esacomp/esacomp_rule_compressor.h"
+#include "esacomp/rule.h"
+#include "esacomp/rules.h"
+
+using namespace esacomp;
 
 // Put every C++ code in this project into a common namespace
 // in order to not pollute the global one
@@ -11,9 +14,9 @@ namespace dummy {
 
 using namespace tudocomp;
 
-class DummyCompressor: public Lz77RuleCompressor {
+class DummyCompressor: public EsacompCompressStrategy {
 public:
-    inline DummyCompressor(Env& env): Lz77RuleCompressor(env) {}
+    using EsacompCompressStrategy::EsacompCompressStrategy;
 
     virtual Rules compress(Input& input, size_t threshold) final override;
 };

@@ -8,7 +8,6 @@
 #include "sdsl/int_vector.hpp"
 
 #include "lz78.h"
-#include "rule.h"
 #include "bit_iostream.h"
 #include "tudocomp_util.h"
 

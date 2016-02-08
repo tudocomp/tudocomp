@@ -11,8 +11,8 @@ add_library(
 target_link_libraries(
     esacomp
 
+    esacomprule
     tudocomp
-    lz77rule
     suffix_array_compressor
     glog
 )
