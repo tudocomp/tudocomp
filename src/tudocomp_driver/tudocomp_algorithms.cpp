@@ -62,9 +62,9 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
         // TODO: Name right
         // - lz77rule ~ LZSS rules with implicit escape bits
         // - lz ~ unknown named variant of lz with suffix array
-        "LZ77 rule-like", "lz77rule",
+        "Esacomp rules", "esacomp",
         "A Family of compression algorithms making use "
-        "of LZ77-like replacement rules.")
+        "of esacomp-like replacement rules.")
     .with_sub_algos<EsacompCompressStrategy>([](AlgorithmRegistry<EsacompCompressStrategy>& registry) {
         registry.set_name("Compressor");
 
@@ -97,15 +97,15 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
             "Dummy encoding, outputs input text unchanged.").do_register();
 
         registry.with_info<Code0Coder>(
-            "Code0", "esa_code0",
+            "Code0", "debug",
             "Human readable output of text and rules.").do_register();
 
         registry.with_info<Code1Coder>(
-            "Code1", "esa_code1",
+            "Code1", "code1",
             "Byte based encoding.").do_register();
 
         registry.with_info<Code2Coder>(
-            "Code2", "esa_code2",
+            "Code2", "code2",
             "Bit based encoding.").do_register();
     })
     .do_register();
