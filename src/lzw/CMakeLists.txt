@@ -1,15 +1,15 @@
 add_library(
-    esacomp
+    lzw
     INTERFACE
 )
 target_link_libraries(
-    esacomp
+    lzw
     INTERFACE
     tudocomp
     sdsl_extension
     glog
 )
 target_include_directories(
-    esacomp
-    INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include
+    lzw
+    INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
 )

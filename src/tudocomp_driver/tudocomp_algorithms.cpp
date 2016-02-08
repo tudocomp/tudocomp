@@ -1,11 +1,9 @@
 #include "tudocomp_algorithms.h"
-#include "lz77/lz77_rule_compressor.h"
 #include "esacomp/esacomp_rule_compressor.h"
 #include "lz78rule.h"
 #include "lzwrule.h"
 #include "lz_compressor.h"
 #include "lz78.h"
-#include "lz77.h"
 #include "lzw.h"
 #include "esa_compressor.h"
 #include "max_lcp_sorted_suffix_list.h"
@@ -24,27 +22,26 @@ using namespace tudocomp;
 // Algorithm interfaces
 
 using esacomp::EsacompRuleCompressor;
+using esacomp::EsacompCompressStrategy;
+using esacomp::EsacompEncodeStrategy;
 
-using lz78rule::Lz78Rule;
-using lz78rule::Lz78RuleCoder;
+using lz78::Lz78Rule;
+using lz78::Lz78RuleCoder;
 
-using lzwrule::LzwRule;
-using lzwrule::LzwRuleCoder;
+using lzw::LzwRule;
+using lzw::LzwRuleCoder;
 
 // Algorithm implementations
 
-using lz_compressor::LZCompressor;
-using lz_compressor::LZ77ClassicCompressor;
-using lz_compressor::LZ78DebugCode;
-using lz_compressor::LZ78BitCode;
-using lz_compressor::LZWDebugCode;
-using lz_compressor::LZWBitCode;
+using lz78::LZ78DebugCode;
+using lz78::LZ78BitCode;
 
-using dummy::DummyCompressor;
-using dummy::DummyCoder;
+using lzw::LZWDebugCode;
+using lzw::LZWBitCode;
 
-using esacomp::EsacompCompressStrategy;
-using esacomp::EsacompEncodeStrategy;
+using esacomp::LZCompressor;
+using esacomp::DummyCompressor;
+using esacomp::DummyCoder;
 
 // All compression and encoding algorithms exposed by the command
 // line interface.
@@ -83,10 +80,6 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
         registry.with_info<ESACompressor<MaxLCPSortedSuffixList>>(
             "ESA (Sorted Suffix List)", "esa_list",
             "Esacomp using a suffix list internally.").do_register();
-
-        registry.with_info<LZ77ClassicCompressor>(
-            "LZ77 Classic", "lz77",
-            "LZ77, using a fixed sized dictionary and preview window").do_register();
 
     })
     .with_sub_algos<EsacompEncodeStrategy>([](AlgorithmRegistry<EsacompEncodeStrategy>& registry) {

@@ -1,36 +1,61 @@
+# Standalone command line tools
 
-# Main TuDoComp library and command line interface
-add_subdirectory(tudocomp)
-add_subdirectory(tudocomp_driver)
+    # TuDoComp command line interface
+    add_subdirectory(tudocomp_driver)
 
-# Compressor that uses esacomp-like substitution rules
-# with separate compression and encoding steps
-add_subdirectory(esacomprule)
+    # CLI tool for comparing different compression tools
+    add_subdirectory(compare_tool)
 
-# Compressor that uses lz77-like backreference rules
-add_subdirectory(lz77rule)
+# Standalone support libraries
 
-# Compressor that uses lz78-like dictionaries
-add_subdirectory(lz78rule)
+    # sdsl extension features
+    add_subdirectory(sdsl_extension)
 
-# Compressor that uses lzw-like dictionaries
-add_subdirectory(lzwrule)
+# TuDoComp framework
 
-# sdsl extension features
-add_subdirectory(sdsl_extension)
+    # Main TuDoComp library
+    add_subdirectory(tudocomp)
 
-# Adapter library for lz77rule compression algorithms working with suffix arrays
-add_subdirectory(suffix_array_compressor)
+    # Esacomp compressor.
+    # Based around substitution rules of the form
+    # (absolute_pos, absolute_target, len)
+    # interleaved in plain text.
+    add_subdirectory(esacomp)
 
-# The lz77rule "Dummy" library. Does no-op compression and encoding, and is
-# used as example and for comparison.
-add_subdirectory(dummy)
+        # Actual esacomp implementation from the original BA
+        add_subdirectory(esacomp_impl)
 
-# The lz77rule Esacomp library.
-add_subdirectory(esacomp)
+        # Replacement rules based on a lz factorization from a suffix array
+        add_subdirectory(esacomp_lz_factor)
 
-# The lz77rule LZ implementations
-add_subdirectory(lz_compressor)
+        # "Dummy" compressor and encoder that behave as no-ops
+        add_subdirectory(esacomp_dummy)
 
-# CLI tool for comparing different compression tools
-add_subdirectory(compare_tool)
+        # Adapter interface for preparing the input as a suffix array.
+        # Used by most esacomp_* impls.
+        add_subdirectory(esacomp_suffix_array_compressor)
+
+    # Lz77 classic.
+    # Based around a stream of encoding rules in the form of
+    # (back_relative_pos, len, next_char).
+    #add_subdirectory(lz77_classic)
+
+    # Lz77 ss.
+    # Based around substitution rules of the form
+    # (back_relative_pos, len)
+    # interleaved in plain text.
+    #add_subdirectory(lz77_ss)
+
+    # Lz78.
+    # Based around a stream of encoding rules in the form of
+    # (prev_dict_idx, next_char).
+    add_subdirectory(lz78)
+        # Basic debug and bit-compressed encoders.
+        add_subdirectory(lz78_impl)
+
+    # Lzw.
+    # Based around a stream of encoding rules in the form of
+    # (prev_dict_idx).
+    add_subdirectory(lzw)
+        # Basic debug and bit-compressed encoders.
+        add_subdirectory(lzw_impl)

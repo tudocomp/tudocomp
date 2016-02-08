@@ -204,7 +204,7 @@ TEST(TudocompDriver, list) {
         ASSERT_GE(r0.subalgos.size(), 2u);
         {
             auto& r00 = r0.subalgos[0];
-            ASSERT_GE(r00.algos.size(), 5u);
+            ASSERT_GE(r00.algos.size(), 4u);
         }
         {
             auto& r01 = r0.subalgos[1];

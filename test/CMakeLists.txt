@@ -1,15 +1,16 @@
 include(test_driver.cmake)
 
 run_test(tudocomp_tests tudocomp)
-run_test(esacomprule_tests esacomprule)
-run_test(lz78rule_tests lz78rule)
-
-# Compile and run the "dummy_tests.cpp" file, which
-# has a dependency on the "dummy" subproject.
-run_test(dummy_tests dummy)
-
-run_test(sa_compressor_tests suffix_array_compressor)
-run_test(esacomp_tests esacomp)
-run_test(lz_compressor_tests esacomp lz_compressor)
 run_test(tudocomp_driver_tests tudocomp tudocomp_algorithms)
-add_dependencies(tudocomp_driver_tests tudocomp_driver)
+    add_dependencies(tudocomp_driver_tests tudocomp_driver)
+
+run_test(esacomp_tests esacomp)
+run_test(esacomp_impl_tests esacomp_impl)
+run_test(esacomp_dummy_tests esacomp_dummy)
+run_test(esacomp_suffix_array_compressor_tests esacomp_suffix_array_compressor)
+run_test(esacomp_lz_factor_tests esacomp_lz_factor)
+
+run_test(lz78_tests lz78)
+run_test(lz78_impl_tests lz78_impl)
+
+run_test(lzw_impl_tests lzw_impl)
