@@ -4,7 +4,11 @@
 #include <unordered_map>
 #include <vector>
 
+#include <tudocomp/util/util.h>
+
 #include "glog/logging.h"
+
+namespace tudocomp {
 
 // TODO: Existing implementation is probably very inperformant
 /// Common helper class for decoders.
@@ -100,6 +104,8 @@ public:
         return text.size();
     }
 };
+
+}
 
 #endif
 

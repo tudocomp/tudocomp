@@ -1,7 +1,4 @@
-#include "tudocomp.h"
-#include <vector>
-#include <cstdint>
-#include <sstream>
+#include <tudocomp/util/io/decode_buffer.h>
 
 namespace tudocomp {
 
