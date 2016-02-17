@@ -6,11 +6,6 @@
     # CLI tool for comparing different compression tools
     add_subdirectory(compare_tool)
 
-# Standalone support libraries
-
-    # sdsl extension features
-    add_subdirectory(sdsl_extension)
-
 # TuDoComp framework
 
     # Main TuDoComp library

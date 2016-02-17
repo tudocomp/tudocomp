@@ -21,6 +21,7 @@
 #include "boost/variant.hpp"
 #include "boost/iostreams/stream_buffer.hpp"
 #include "boost/iostreams/device/back_inserter.hpp"
+
 #include "glog/logging.h"
 
 namespace tudocomp {

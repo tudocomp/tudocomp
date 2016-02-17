@@ -20,6 +20,9 @@ find_or_download_package(SDSL SDSL sdsl)
 #include(sdsl)
 include(rust)
 
+# Add include directory to include searches
+include_directories(include)
+
 # TuDoComp library and implementors
 add_subdirectory(src)
 

@@ -1,31 +1,9 @@
 #ifndef COMPRESSFRAMEWORK_H
 #define COMPRESSFRAMEWORK_H
 
-#include <algorithm>
-#include <cerrno>
-#include <cstddef>
-#include <cstdint>
-#include <fstream>
-#include <iostream>
-#include <istream>
-#include <iterator>
-#include <map>
-#include <sstream>
-#include <streambuf>
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include <memory>
-
-#include "boost/utility/string_ref.hpp"
-#include "boost/variant.hpp"
-#include "boost/iostreams/stream_buffer.hpp"
-#include "boost/iostreams/device/back_inserter.hpp"
-#include "glog/logging.h"
-
-#include "tudocomp_env.h"
-#include "tudocomp_util.h"
-#include "tudocomp_io_handle.h"
+#include <tudocomp/io.h>
+#include <tudocomp/util/env.h>
+#include <tudocomp/util/util.h>
 
 namespace tudocomp {
 
