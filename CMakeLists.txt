@@ -26,9 +26,6 @@ include_directories(include)
 # TuDoComp library and implementors
 add_subdirectory(src)
 
-# Unit tests for everything in src
-add_subdirectory(test)
-
 # Huge optional corpus of text files for comparisons
 add_subdirectory(datasets)
 
