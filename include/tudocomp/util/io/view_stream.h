@@ -5,6 +5,8 @@
 #include <memory>
 #include <utility>
 
+namespace tudocomp {
+
 /// A wrapper around a istream that reads from
 /// a existing memory buffer.
 class ViewStream {
@@ -51,6 +53,8 @@ public:
         return *m_stream;
     }
 };
+
+}
 
 #endif
 

@@ -9,6 +9,8 @@
 #include "boost/iostreams/stream_buffer.hpp"
 #include "boost/iostreams/device/back_inserter.hpp"
 
+namespace tudocomp {
+
 /// A ostream that writes bytes into a stl byte container.
 class BackInsertStream {
     // NB: Very hacky implementation right now...
@@ -59,6 +61,8 @@ public:
         return *o;
     }
 };
+
+}
 
 #endif
 
