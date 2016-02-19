@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <tudocomp/util/util.h>
+#include <tudocomp/util.h>
 
 #include "glog/logging.h"
 

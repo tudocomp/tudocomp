@@ -24,6 +24,12 @@
 
 #include "glog/logging.h"
 
+#include <tudocomp/util/io/ioutil.h>
+#include <tudocomp/util/io/back_insert_stream.h>
+#include <tudocomp/util/io/bit_iostream.h>
+#include <tudocomp/util/io/decode_buffer.h>
+#include <tudocomp/util/io/view_stream.h>
+
 namespace tudocomp {
 
 namespace input {

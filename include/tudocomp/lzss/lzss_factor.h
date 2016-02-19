@@ -1,5 +1,5 @@
-#ifndef RULE_H
-#define RULE_H
+#ifndef LZSS_FACTOR_H
+#define LZSS_FACTOR_H
 
 #include <cstdint>
 #include <iostream>

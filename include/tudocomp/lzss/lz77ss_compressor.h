@@ -1,9 +1,8 @@
 #ifndef LZ77RULE_H
 #define LZ77RULE_H
 
-#include "tudocomp.h"
-#include "rule.h"
-#include "rules.h"
+#include <tudocomp/compressor.h>
+#include <tudocomp/lzss/lzss_factors.h>
 
 namespace lz77rule {
 

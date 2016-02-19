@@ -1,12 +1,13 @@
-#ifndef RULES_H
-#define RULES_H
+#ifndef LZSS_FACTORS_H
+#define LZSS_FACTORS_H
 
 #include <iterator>
 #include <initializer_list>
 
-#include "sdsl_extension.h"
-#include "glog/logging.h"
-#include "rule.h"
+#include <glog/logging.h>
+
+#include <tudocomp/util/sdsl_extension.h>
+#include <tudocomp/lzss/lzss_factor.h>
 
 namespace lz77rule {
 
