@@ -17,10 +17,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "boost/utility/string_ref.hpp"
-#include "glog/logging.h"
+#include <boost/utility/string_ref.hpp>
+#include <glog/logging.h>
 
-#include "tudocomp_env.h"
+#include <tudocomp/env.h>
 
 namespace tudocomp_driver {
 

@@ -1,10 +1,17 @@
-#include "tudocomp_algorithms.h"
-#include "esacomp/esacomp_rule_compressor.h"
-#include "lz78rule.h"
-#include "lzwrule.h"
+#include <tudocomp/registry.h>
+
+#include <tudocomp/lz78/lz78_compressor.h>
+#include <tudocomp/lz78/dummy_coder.h>
+#include <tudocomp/lz78/bit_coder.h>
+
+#include <tudocomp/lzw/lzw_compressor.h>
+#include <tudocomp/lzw/dummy_coder.h>
+#include <tudocomp/lzw/bit_coder.h>
+
+//TODO: esacomp needs to be re-inserted!
+/*
 #include "lz_compressor.h"
-#include "lz78.h"
-#include "lzw.h"
+#include "esacomp/esacomp_rule_compressor.h"
 #include "esa_compressor.h"
 #include "max_lcp_sorted_suffix_list.h"
 #include "max_lcp_heap.h"
@@ -14,6 +21,7 @@
 #include "code1.h"
 #include "code2.h"
 #include "dummy_encoder.h"
+*/
 
 namespace tudocomp_driver {
 
@@ -21,9 +29,12 @@ using namespace tudocomp;
 
 // Algorithm interfaces
 
+//TODO: esacomp needs to be re-inserted!
+/*
 using esacomp::EsacompRuleCompressor;
 using esacomp::EsacompCompressStrategy;
 using esacomp::EsacompEncodeStrategy;
+*/
 
 using lz78::Lz78Rule;
 using lz78::Lz78RuleCoder;
@@ -39,9 +50,12 @@ using lz78::LZ78BitCode;
 using lzw::LZWDebugCode;
 using lzw::LZWBitCode;
 
+//TODO: esacomp needs to be re-inserted!
+/*
 using esacomp::LZCompressor;
 using esacomp::DummyCompressor;
 using esacomp::DummyCoder;
+*/
 
 // All compression and encoding algorithms exposed by the command
 // line interface.
@@ -55,6 +69,8 @@ using esacomp::DummyCoder;
 //   Compressor or Encoder.
 
 void register_algos(AlgorithmRegistry<Compressor>& registry) {
+    //TODO: esacomp needs to be re-inserted!
+    /*
     registry.with_info<EsacompRuleCompressor>(
         // TODO: Name right
         // - lz77rule ~ LZSS rules with implicit escape bits
@@ -101,7 +117,7 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
             "Code2", "code2",
             "Bit based encoding.").do_register();
     })
-    .do_register();
+    .do_register();*/
 
     registry.with_info<Lz78Rule>(
         "LZ78 rule-like", "lz78rule",

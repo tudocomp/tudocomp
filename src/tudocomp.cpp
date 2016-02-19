@@ -1,26 +1,30 @@
+#include <chrono>
 #include <cstdint>
+#include <exception>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <chrono>
-#include <exception>
-#include <stdexcept>
+
 #include <boost/program_options.hpp>
-#include <boost/exception/exception.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/exception/exception.hpp>
 #include <boost/program_options/parsers.hpp>
 
-#include "glog/logging.h"
-//#include "docopt/docopt.h"
-#include "tudocomp.h"
+#include <glog/logging.h>
 
-#include "tudocomp_algorithms.h"
+#include <tudocomp/compressor.h>
+#include <tudocomp/io.h>
+#include <tudocomp/registry.h>
 
 namespace tudocomp_driver {
 
 using namespace tudocomp;
+
+void register_algos(AlgorithmRegistry<Compressor>& registry);
+
 namespace po = boost::program_options;
 
 const std::string COMPRESSED_FILE_ENDING = "tdc";
