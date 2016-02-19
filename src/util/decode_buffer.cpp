@@ -1,4 +1,4 @@
-#include <tudocomp/util/io/decode_buffer.h>
+#include <tudocomp/io.h>
 
 namespace tudocomp {
 
