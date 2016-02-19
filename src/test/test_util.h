@@ -3,14 +3,13 @@
 
 #include <cstdint>
 #include <iostream>
+
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
-#include "gtest/gtest.h"
-#include "glog/logging.h"
+#include <boost/utility/string_ref.hpp>
 
-#include "tudocomp.h"
-
-using namespace tudocomp;
+#include <glog/logging.h>
+#include <gtest/gtest.h>
 
 // TODO: Actually specialize the 3 kinds
 

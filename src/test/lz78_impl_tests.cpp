@@ -1,12 +1,14 @@
 #include <cstdint>
 #include <iostream>
-#include "gtest/gtest.h"
-#include "glog/logging.h"
+
+#include <glog/logging.h>
+#include <gtest/gtest.h>
 
 #include "test_util.h"
 
-#include "tudocomp.h"
-#include "lz78.h"
+#include <tudocomp/lz78/lz78_compressor.h>
+#include <tudocomp/lz78/bit_coder.h>
+#include <tudocomp/lz78/dummy_coder.h>
 
 using namespace lz78;
 

@@ -1,14 +1,16 @@
+#include <algorithm>
 #include <iostream>
 #include <sstream>
-#include <utility>
-#include <algorithm>
 #include <stdexcept>
+#include <utility>
 
 #include <boost/filesystem.hpp>
+#include <gtest/gtest.h>
+
+#include <tudocomp/io.h>
+#include <tudocomp/util.h>
 
 #include "test_util.h"
-#include "gtest/gtest.h"
-#include "tudocomp.h"
 
 using namespace tudocomp;
 

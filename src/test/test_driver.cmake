@@ -16,10 +16,11 @@ macro(run_test test_target)
     )
     target_link_libraries(${test_target}
         libgtest
-        #libgtest_main
-        ${ARGN}
         glog
-        boost
+        sdsl
+        boost_filesystem
+        boost_system
+        tudocomp
     )
     add_custom_command(
         TARGET ${test_target}

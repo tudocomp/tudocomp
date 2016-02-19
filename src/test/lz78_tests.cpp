@@ -1,12 +1,11 @@
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <utility>
-#include <algorithm>
 
-#include "gtest/gtest.h"
-#include "tudocomp.h"
-#include "lz78rule.h"
-#include "lz78rule_rule.h"
+#include <gtest/gtest.h>
+
+#include <tudocomp/lz78/factors.h>
 
 using namespace tudocomp;
 using namespace lz78;

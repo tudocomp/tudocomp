@@ -1,14 +1,14 @@
 #include <cstdint>
 #include <iostream>
-#include "gtest/gtest.h"
-#include "glog/logging.h"
+
+#include <glog/logging.h>
+#include <gtest/gtest.h>
 
 #include "test_util.h"
 
-#include "tudocomp.h"
-#include "lzw.h"
-
-#include "lz78rule.h"
+#include <tudocomp/lzw/lzw_compressor.h>
+#include <tudocomp/lzw/bit_coder.h>
+#include <tudocomp/lzw/dummy_coder.h>
 
 using namespace lzw;
 
