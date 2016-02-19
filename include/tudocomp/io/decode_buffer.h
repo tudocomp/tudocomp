@@ -23,7 +23,21 @@ class DecodeBuffer {
     size_t text_pos;
     std::unordered_map<size_t, std::vector<size_t>> pointers;
 
-    void decodeCallback(size_t source);
+    void decodeCallback(size_t source) {
+        if (pointers.count(source) > 0) {
+            std::vector<size_t> list = pointers[source];
+            for (size_t target : list) {
+                // decode this char
+                text.at(target) = text.at(source);
+                byte_is_decoded.at(target) = true;
+
+                // decode all chars depending on this location
+                decodeCallback(target);
+            }
+
+            pointers.erase(source);
+        }
+    }
 
     inline void addPointer(size_t target, size_t source) {
         if (pointers.count(source) == 0) {

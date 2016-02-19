@@ -1,7 +1,7 @@
 add_executable(
     tudocomp
 
-    util/decode_buffer.cpp
+    #util/decode_buffer.cpp
     lz78_impl.cpp
     lzw_impl.cpp
     tudocomp_algorithms.cpp
