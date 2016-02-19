@@ -17,12 +17,12 @@
 #include <vector>
 #include <memory>
 
-#include "boost/utility/string_ref.hpp"
-#include "boost/variant.hpp"
-#include "boost/iostreams/stream_buffer.hpp"
-#include "boost/iostreams/device/back_inserter.hpp"
+#include <boost/utility/string_ref.hpp>
+#include <boost/variant.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
 
-#include "glog/logging.h"
+#include <glog/logging.h>
 
 #include <tudocomp/util/io/ioutil.h>
 #include <tudocomp/util/io/back_insert_stream.h>

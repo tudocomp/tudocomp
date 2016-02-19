@@ -1,13 +1,13 @@
 #ifndef COUNTER_H
 #define COUNTER_H
 
-#include "glog/logging.h"
-
-#include <unordered_map>
-#include <vector>
-#include <utility>
 #include <algorithm>
 #include <cstdint>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+#include <glog/logging.h>
 
 namespace tudocomp {
 

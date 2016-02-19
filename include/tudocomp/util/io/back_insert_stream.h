@@ -6,8 +6,8 @@
 #include <sstream>
 #include <utility>
 
-#include "boost/iostreams/stream_buffer.hpp"
-#include "boost/iostreams/device/back_inserter.hpp"
+#include <boost/iostreams/stream_buffer.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
 
 namespace tudocomp {
 

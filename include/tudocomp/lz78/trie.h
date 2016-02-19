@@ -1,11 +1,11 @@
 #ifndef LZ78_TRIE_H
 #define LZ78_TRIE_H
 
-#include <vector>
-#include <cmath>
-#include <climits>
-#include <iostream>
 #include <algorithm>
+#include <climits>
+#include <cmath>
+#include <iostream>
+#include <vector>
 
 #include <glog/logging.h>
 #include <sdsl/int_vector.hpp>

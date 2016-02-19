@@ -1,11 +1,11 @@
 #ifndef BIT_IOSTREAM_H
 #define BIT_IOSTREAM_H
 
-#include "glog/logging.h"
-
+#include <climits>
 #include <cstdint>
 #include <iostream>
-#include <climits>
+
+#include <glog/logging.h>
 
 namespace tudocomp {
 

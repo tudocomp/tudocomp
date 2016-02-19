@@ -4,9 +4,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include <tudocomp/util.h>
+#include <glog/logging.h>
 
-#include "glog/logging.h"
+#include <tudocomp/util.h>
 
 namespace tudocomp {
 
