@@ -3,6 +3,7 @@ add_executable(
 
     util/decode_buffer.cpp
     lz78_impl.cpp
+    lzw_impl.cpp
     dummy.cpp
 )
 

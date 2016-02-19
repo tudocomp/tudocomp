@@ -1,10 +1,12 @@
 #ifndef LZWRULE_RULE_H
 #define LZWRULE_RULE_H
 
-#include "tudocomp.h"
-#include "sdsl_extension.h"
-#include "glog/logging.h"
-#include "lz78rule.h"
+#include <glog/logging.h>
+
+#include <tudocomp/util/sdsl_extension.h>
+#include <tudocomp/compressor.h>
+
+#include <tudocomp/lz78/lz78_trie.h>
 
 namespace lzw {
 

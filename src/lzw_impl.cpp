@@ -1,17 +1,9 @@
-#include <vector>
-#include <cmath>
-#include <climits>
-#include <iostream>
-#include <sstream>
-#include <algorithm>
+#include <glog/logging.h>
+#include <sdsl/int_vector.hpp>
 
-#include "glog/logging.h"
-#include "sdsl/int_vector.hpp"
-
-#include "lzw.h"
-#include "bit_iostream.h"
-#include "tudocomp_util.h"
-#include "lz78_trie.h"
+#include <tudocomp/lzw/lzw_compressor.h>
+#include <tudocomp/lzw/lzw_dummy_coder.h>
+#include <tudocomp/lzw/lzw_bit_coder.h>
 
 namespace lzw {
 
@@ -92,14 +84,16 @@ void _decode(F ReadIndex, std::ostream& out) {
             break;
         }
 
-        LzwEntry new_dict;
+        //LzwEntry new_dict;
         bool isindict;
 
         if ((isindict = IsIndexInDict(C_))) {
             W = GetString(C_);
-            new_dict = AddDict(C, W[0]);
+            //new_dict = AddDict(C, W[0]);
+            AddDict(C, W[0]);
         } else {
-            new_dict = C_ = AddDict(C, W[0]);
+            //new_dict = C_ = AddDict(C, W[0]);
+            C_ = AddDict(C, W[0]);
             W = GetString(C_);
         }
         out << W;
