@@ -2,6 +2,7 @@ add_executable(
     tudocomp-dummy
 
     util/decode_buffer.cpp
+    lz78_impl.cpp
     dummy.cpp
 )
 

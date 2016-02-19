@@ -7,13 +7,11 @@
 #include <iostream>
 #include <algorithm>
 
-#include "glog/logging.h"
-#include "sdsl/int_vector.hpp"
+#include <glog/logging.h>
+#include <sdsl/int_vector.hpp>
 
-#include "lz78rule.h"
-#include "lz78rule_rule.h"
-#include "bit_iostream.h"
-#include "tudocomp_util.h"
+#include <tudocomp/io.h>
+#include <tudocomp/lz78/lz78_factor.h>
 
 namespace lz78 {
 

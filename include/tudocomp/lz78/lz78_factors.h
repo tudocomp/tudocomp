@@ -4,9 +4,10 @@
 #include <iterator>
 #include <initializer_list>
 
-#include "sdsl_extension.h"
-#include "glog/logging.h"
-#include "lz78rule_rule.h"
+#include <glog/logging.h>
+
+#include <tudocomp/util/sdsl_extension.h>
+#include <tudocomp/lz78/lz78_factor.h>
 
 namespace lz78 {
 

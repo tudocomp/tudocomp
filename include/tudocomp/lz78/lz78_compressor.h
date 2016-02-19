@@ -1,10 +1,10 @@
 #ifndef LZ78RULE_RULE_H
 #define LZ78RULE_RULE_H
 
-#include "tudocomp.h"
-#include "lz78_trie.h"
-#include "lz78rule_rule.h"
-#include "lz78rule_rules.h"
+#include <tudocomp/compressor.h>
+
+#include <tudocomp/lz78/lz78_trie.h>
+#include <tudocomp/lz78/lz78_factors.h>
 
 namespace lz78 {
 

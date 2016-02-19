@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <iostream>
-#include "tudocomp.h"
 
 namespace lz78 {
 

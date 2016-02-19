@@ -1,15 +1,12 @@
-#include <vector>
-#include <cmath>
-#include <climits>
-#include <iostream>
-#include <algorithm>
+#include <glog/logging.h>
+#include <sdsl/int_vector.hpp>
 
-#include "glog/logging.h"
-#include "sdsl/int_vector.hpp"
+#include <tudocomp/io.h>
+#include <tudocomp/util.h>
 
-#include "lz78.h"
-#include "bit_iostream.h"
-#include "tudocomp_util.h"
+#include <tudocomp/lz78/lz78_compressor.h>
+#include <tudocomp/lz78/lz78_dummy_coder.h>
+#include <tudocomp/lz78/lz78_bit_coder.h>
 
 namespace lz78 {
 
