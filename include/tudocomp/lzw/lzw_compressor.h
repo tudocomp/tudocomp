@@ -3,7 +3,6 @@
 
 #include <glog/logging.h>
 
-#include <tudocomp/util/sdsl_extension.h>
 #include <tudocomp/compressor.h>
 
 #include <tudocomp/lz78/trie.h>

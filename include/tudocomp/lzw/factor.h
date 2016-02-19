@@ -1,7 +1,7 @@
 #ifndef LZW_FACTOR_H
 #define LZW_FACTOR_H
 
-#include <tudocomp/util/sdsl_extension.h>
+#include <tudocomp/sdsl_ex.h>
 
 namespace lzw {
 

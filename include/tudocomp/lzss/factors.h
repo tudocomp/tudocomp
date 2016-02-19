@@ -6,7 +6,7 @@
 
 #include <glog/logging.h>
 
-#include <tudocomp/util/sdsl_extension.h>
+#include <tudocomp/sdsl_ex.h>
 #include <tudocomp/lzss/factor.h>
 
 namespace lz77rule {
