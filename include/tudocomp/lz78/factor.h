@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <iostream>
 
+#include <tudocomp/util.h>
+
 namespace lz78 {
 
 /// A lz78 dictonary entry
