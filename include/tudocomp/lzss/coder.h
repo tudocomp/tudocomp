@@ -1,8 +1,9 @@
 #ifndef LZSS_CODER_H
 #define LZSS_CODER_H
 
+#include <tudocomp/env.h>
 #include <tudocomp/io.h>
-#include <tudocomp/util/env.h>
+
 #include <tudocomp/lzss/factors.h>
 
 namespace lz77rule {

@@ -1,9 +1,9 @@
 #ifndef LZW_CODER_H
 #define LZW_CODER_H
 
+#include <tudocomp/env.h>
 #include <tudocomp/io.h>
-#include <tudocomp/util.h>
-#include <tudocomp/util/env.h>
+
 #include <tudocomp/lzw/factor.h>
 
 namespace lzw {

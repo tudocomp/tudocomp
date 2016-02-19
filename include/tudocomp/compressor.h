@@ -1,9 +1,8 @@
 #ifndef COMPRESSFRAMEWORK_H
 #define COMPRESSFRAMEWORK_H
 
+#include <tudocomp/env.h>
 #include <tudocomp/io.h>
-#include <tudocomp/util.h>
-#include <tudocomp/util/env.h>
 
 namespace tudocomp {
 
