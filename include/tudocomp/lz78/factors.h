@@ -7,7 +7,7 @@
 #include <glog/logging.h>
 
 #include <tudocomp/util/sdsl_extension.h>
-#include <tudocomp/lz78/lz78_factor.h>
+#include <tudocomp/lz78/factor.h>
 
 namespace lz78 {
 

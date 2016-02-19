@@ -6,17 +6,14 @@
 #include <tudocomp/util/sdsl_extension.h>
 #include <tudocomp/compressor.h>
 
-#include <tudocomp/lz78/lz78_trie.h>
+#include <tudocomp/lz78/trie.h>
+
+#include <tudocomp/lzw/factor.h>
+#include <tudocomp/lzw/coder.h>
 
 namespace lzw {
 
 using namespace tudocomp;
-
-using LzwEntries = sdsl_extension::GrowableIntVector;
-using LzwEntry = uint64_t;
-
-class LzwRuleCoder;
-class LzwRuleCompressor;
 
 const std::string RULESET_SIZE_LOG = "lzwrule.rule_count";
 
@@ -30,33 +27,6 @@ struct LzwRule: public Compressor {
 
     inline virtual void compress(Input& input, Output& output) override final;
     inline virtual void decompress(Input& inp, Output& out) override final;
-};
-
-/// Interface for a coder from LZW-like substitution rules.
-class LzwRuleCoder {
-public:
-    Env& env;
-
-    /// Class needs to be constructed with an `Env&` argument.
-    inline LzwRuleCoder() = delete;
-
-    /// Construct the class with an environment.
-    inline LzwRuleCoder(Env& env_): env(env_) {}
-
-    /// Encode a list or LzwEntries and the input text.
-    ///
-    /// \param rules The list of substitution rules
-    /// \param out `ostream` where the encoded output will be written to.
-    virtual void code(LzwEntries&& rules, Output& out) = 0;
-
-    /// Decode and decompress `inp` into `out`.
-    ///
-    /// This method expects `inp` to be encoded with the same encoding
-    /// that the `code()` method emits.
-    ///
-    /// \param inp The input stream.
-    /// \param out The output stream.
-    virtual void decode(Input& inp, Output& out) = 0;
 };
 
 inline LzwEntries _compress(Input& input) {

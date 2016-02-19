@@ -5,8 +5,8 @@
 #include <tudocomp/util.h>
 
 #include <tudocomp/lz78/lz78_compressor.h>
-#include <tudocomp/lz78/lz78_dummy_coder.h>
-#include <tudocomp/lz78/lz78_bit_coder.h>
+#include <tudocomp/lz78/dummy_coder.h>
+#include <tudocomp/lz78/bit_coder.h>
 
 namespace lz78 {
 

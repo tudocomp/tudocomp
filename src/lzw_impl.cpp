@@ -2,8 +2,8 @@
 #include <sdsl/int_vector.hpp>
 
 #include <tudocomp/lzw/lzw_compressor.h>
-#include <tudocomp/lzw/lzw_dummy_coder.h>
-#include <tudocomp/lzw/lzw_bit_coder.h>
+#include <tudocomp/lzw/dummy_coder.h>
+#include <tudocomp/lzw/bit_coder.h>
 
 namespace lzw {
 

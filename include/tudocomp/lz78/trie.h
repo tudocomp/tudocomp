@@ -11,7 +11,7 @@
 #include <sdsl/int_vector.hpp>
 
 #include <tudocomp/io.h>
-#include <tudocomp/lz78/lz78_factor.h>
+#include <tudocomp/lz78/factor.h>
 
 namespace lz78 {
 
