@@ -105,11 +105,8 @@ TEST(Util, pack_integers) {
 }
 
 TEST(Input, vector) {
-    using namespace input;
-    using Inp = input::Input;
-
     std::vector<uint8_t> v { 97, 98, 99 };
-    Inp inp = Inp::from_memory(v);
+    Input inp = Input::from_memory(v);
 
     {
         auto guard = inp.as_view();
@@ -131,11 +128,8 @@ TEST(Input, vector) {
 }
 
 TEST(Input, string_ref) {
-    using namespace input;
-    using Inp = input::Input;
-
     boost::string_ref v { "abc" };
-    Inp inp = Inp::from_memory(v);
+    Input inp = Input::from_memory(v);
 
     {
         auto guard = inp.as_view();
@@ -161,11 +155,8 @@ std::string fn(std::string suffix) {
 }
 
 TEST(Input, file) {
-    using namespace input;
-    using Inp = input::Input;
-
     write_test_file(fn("short.txt"), "abc");
-    Inp inp = Inp::from_path(test_file_path(fn("short.txt")));
+    Input inp = Input::from_path(test_file_path(fn("short.txt")));
 
     {
         auto guard = inp.as_view();
@@ -187,12 +178,9 @@ TEST(Input, file) {
 }
 
 TEST(Input, stream_view) {
-    using namespace input;
-    using Inp = input::Input;
-
     ViewStream stream { (char*) "abc", 3 };
 
-    Inp inp = Inp::from_stream(stream.stream());
+    Input inp = Input::from_stream(stream.stream());
 
     {
         auto guard = inp.as_stream();
@@ -207,12 +195,9 @@ TEST(Input, stream_view) {
 }
 
 TEST(Input, stream_stream) {
-    using namespace input;
-    using Inp = input::Input;
-
     ViewStream stream { (char*) "abc", 3 };
 
-    Inp inp = Inp::from_stream(stream.stream());
+    Input inp = Input::from_stream(stream.stream());
 
     {
         auto guard = inp.as_stream();
@@ -227,12 +212,9 @@ TEST(Input, stream_stream) {
 }
 
 TEST(Output, memory) {
-    using namespace output;
-    using Out = output::Output;
-
     std::vector<uint8_t> vec;
 
-    Out out = Out::from_memory(vec);
+    Output out = Output::from_memory(vec);
 
     {
         auto guard = out.as_stream();
@@ -245,10 +227,7 @@ TEST(Output, memory) {
 }
 
 TEST(Output, file) {
-    using namespace output;
-    using Out = output::Output;
-
-    Out out = Out::from_path(test_file_path(fn("short_out.txt")));
+    Output out = Output::from_path(test_file_path(fn("short_out.txt")));
 
     {
         auto guard = out.as_stream();
@@ -261,11 +240,8 @@ TEST(Output, file) {
 }
 
 TEST(Output, stream) {
-    using namespace output;
-    using Out = output::Output;
-
     std::stringstream ss;
-    Out out = Out::from_stream(ss);
+    Output out = Output::from_stream(ss);
 
     {
         auto guard = out.as_stream();

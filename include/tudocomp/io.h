@@ -352,6 +352,9 @@ namespace output {
     };
 }
 
+using Input = input::Input;
+using Output = output::Output;
+
 }
 
 #endif

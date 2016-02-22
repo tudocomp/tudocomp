@@ -6,12 +6,6 @@
 
 namespace tudocomp {
 
-/// Handle of the input data stream.
-using Input = input::Input;
-
-/// Handle of the output data stream.
-using Output = output::Output;
-
 /// Interface for a general compressor.
 struct Compressor {
     // TODO: Maybe replace by pointer to make this class properly copyable?
