@@ -11,8 +11,6 @@
 
 namespace lz78 {
 
-using namespace sdsl_extension;
-
 class EntriesIterator;
 class EntriesReference;
 
@@ -29,8 +27,8 @@ public:
     typedef sdsl::int_vector<0>::difference_type difference_type;
 
 private:
-    GrowableIntVector indices;
-    GrowableIntVector chrs;
+    sdsl_extension::GrowableIntVector indices;
+    sdsl_extension::GrowableIntVector chrs;
     friend EntriesReference;
 
 public:

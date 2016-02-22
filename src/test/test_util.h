@@ -148,11 +148,10 @@ inline std::string test_file_path(std::string filename) {
 }
 
 inline std::string read_test_file(std::string filename) {
-    using namespace boost::filesystem;
-    path file_path = test_file_path(filename);
+    boost::filesystem::path file_path = test_file_path(filename);
 
     std::stringbuf sb;
-    ifstream myfile;
+    boost::filesystem::ifstream myfile;
     myfile.open(file_path);
     if (!bool(myfile)) {
         std::stringstream ss;
@@ -165,12 +164,10 @@ inline std::string read_test_file(std::string filename) {
 }
 
 inline void write_test_file(std::string filename, std::string text) {
-    using namespace boost::filesystem;
+    boost::filesystem::create_directory(boost::filesystem::path(TEST_FILE_PATH));
+    boost::filesystem::path file_path = test_file_path(filename);
 
-    create_directory(path(TEST_FILE_PATH));
-    path file_path = test_file_path(filename);
-
-    ofstream myfile;
+    boost::filesystem::ofstream myfile;
     myfile.open(file_path);
     if (!bool(myfile)) {
         std::stringstream ss;
@@ -182,10 +179,8 @@ inline void write_test_file(std::string filename, std::string text) {
 }
 
 inline void remove_test_file(std::string filename) {
-    using namespace boost::filesystem;
-
-    create_directory(path(TEST_FILE_PATH));
-    path file_path = test_file_path(filename);
+    boost::filesystem::create_directory(boost::filesystem::path(TEST_FILE_PATH));
+    boost::filesystem::path file_path = test_file_path(filename);
 
     remove(file_path);
 }

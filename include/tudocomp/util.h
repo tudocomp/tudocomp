@@ -17,9 +17,7 @@ namespace tudocomp {
 /// Example: [1, 2, 3] -> "[1, 2, 3]"
 template<class T>
 std::string vec_to_debug_string(const T& s) {
-    using namespace std;
-
-    stringstream ss;
+    std::stringstream ss;
     ss << "[";
     if (s.size() > 0) {
         for (size_t i = 0; i < s.size() - 1; i++) {
@@ -34,9 +32,7 @@ std::string vec_to_debug_string(const T& s) {
 }
 
 inline std::string byte_to_nice_ascii_char(uint64_t byte) {
-    using namespace std;
-
-    stringstream out;
+    std::stringstream out;
     if (byte >= 32 && byte <= 127) {
         out << "'" << char(byte) << "'";
     } else {
@@ -54,9 +50,7 @@ inline std::string byte_to_nice_ascii_char(uint64_t byte) {
 template<class T>
 std::string vec_as_lossy_string(const T& s, size_t start = 0,
                                 char replacement = '?') {
-    using namespace std;
-
-    stringstream ss;
+    std::stringstream ss;
     for (size_t i = start; i < s.size(); i++) {
         if (s[i] < 32 || s[i] > 127) {
             ss << replacement;
