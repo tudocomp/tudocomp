@@ -27,7 +27,6 @@
 #include <tudocomp/io/ioutil.h>
 #include <tudocomp/io/back_insert_stream.h>
 #include <tudocomp/io/bit_iostream.h>
-#include <tudocomp/io/decode_buffer.h>
 #include <tudocomp/io/view_stream.h>
 
 namespace tudocomp {
