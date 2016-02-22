@@ -195,7 +195,7 @@ inline std::vector<uint8_t> pack_integers(std::vector<uint64_t> ints) {
     std::vector<uint8_t> bits;
 
     uint bit_pos = 8;
-    for (int i = 0; i < ints.size(); i += 2) {
+    for (size_t i = 0; i < ints.size(); i += 2) {
         uint64_t val = ints[i];
         uint64_t val_bits = ints[i + 1];
         for (uint64_t bit = 0; bit < val_bits; bit++) {
