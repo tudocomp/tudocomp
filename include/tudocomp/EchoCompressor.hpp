@@ -31,9 +31,9 @@ public:
     /// Passes the input into the output.
     void compress(Input& in, Output& out) {
         if(in.has_size()) {
-            m_coder.init(out, in.size());
+            m_coder.encode_init(out, in.size());
         } else {
-            m_coder.init(out);
+            m_coder.encode_init(out);
         }
         
         auto in_guard = in.as_stream();
@@ -45,7 +45,7 @@ public:
             m_coder.encode(out, pos++, char32_t(c));
         }
         
-        m_coder.finalize(out);
+        m_coder.encode_finalize(out);
     }
     
     //TODO decompress

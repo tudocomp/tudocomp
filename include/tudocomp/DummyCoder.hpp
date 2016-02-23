@@ -28,12 +28,12 @@ public:
     }
     
     /// Initiates the encoding with no total length information.
-    inline void init(Output& out) {
-        init(out, 0); //TODO throw exception!
+    inline void encode_init(Output& out) {
+        encode_init(out, 0); //TODO throw exception!
     }
 
     /// Initiates the encoding with total length information.
-    inline void init(Output& out, size_t len) {
+    inline void encode_init(Output& out, size_t len) {
         *(out.as_stream()) << len << init_sep;
     }
     
@@ -46,7 +46,7 @@ public:
     void encode(Output& out, size_t pos, const F& fact);
     
     /// Finalizes the encoding.
-    inline void finalize(Output& out) {
+    inline void encode_finalize(Output& out) {
         //
     }
     
