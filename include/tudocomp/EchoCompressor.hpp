@@ -1,7 +1,7 @@
 #ifndef _INCLUDED_ECHOCOMPRESSOR_HPP_
 #define _INCLUDED_ECHOCOMPRESSOR_HPP_
 
-#include <tudocomp/compressor.h>
+#include <tudocomp/Compressor.hpp>
 
 namespace tudocomp {
 
@@ -10,30 +10,27 @@ namespace tudocomp {
  * generating any factors whatsoever.
  */
 template <typename C>
-class EchoCompressor {
-
-protected:
-    C m_coder;
+class EchoCompressor : public Compressor<C> {
 
 public:
     EchoCompressor() = delete;
     
     /// Constructs the compressor from an environment.
-    EchoCompressor(Env& env) : m_coder(env) {
-        //
+    EchoCompressor(Env& env) : Compressor<C>(env) {
     }
     
     /// Destructs the compressor.
     ~EchoCompressor() {
-        //
     }
 
     /// Compresses the input.
-    void compress(Input& in, Output& out) {
+    inline virtual void compress(Input& in, Output& out) override {
+        C& coder = Compressor<C>::m_coder;
+        
         if(in.has_size()) {
-            m_coder.encode_init(out, in.size());
+            coder.encode_init(out, in.size());
         } else {
-            m_coder.encode_init(out);
+            coder.encode_init(out);
         }
         
         auto in_guard = in.as_stream();
@@ -41,15 +38,10 @@ public:
         
         char c;
         while(ins.get(c)) {
-            m_coder.encode_sym(out, char32_t(c));
+            coder.encode_sym(out, char32_t(c));
         }
         
-        m_coder.encode_finalize(out);
-    }
-    
-    /// Decompresses the input.
-    void decompress(Input& in, Output& out) {
-        m_coder.decode(in, out);
+        coder.encode_finalize(out);
     }
 
 };

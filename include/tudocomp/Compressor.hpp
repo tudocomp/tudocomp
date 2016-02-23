@@ -29,7 +29,7 @@ public:
     virtual void compress(Input& in, Output& out) = 0;
     
     /// Decompresses the input.
-    virtual void decompress(Input& in, Output& out) {
+    inline virtual void decompress(Input& in, Output& out) {
         m_coder.decode(in, out);
     }
 };

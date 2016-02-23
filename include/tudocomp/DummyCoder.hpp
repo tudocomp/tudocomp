@@ -1,8 +1,7 @@
 #ifndef _INCLUDED_DUMMYCODER_HPP_
 #define _INCLUDED_DUMMYCODER_HPP_
 
-#include <tudocomp/env.h>
-#include <tudocomp/io.h>
+#include <tudocomp/Coder.hpp>
 #include <tudocomp/util/decode_buffer.h>
 
 namespace tudocomp {
@@ -11,7 +10,7 @@ namespace tudocomp {
  * Encodes factors as simple strings.
  */
 template<typename F>
-class DummyCoder {
+class DummyCoder : public Coder<F> {
     
     const char init_sep = ':';
     
@@ -23,45 +22,42 @@ public:
     DummyCoder() = delete;
     
     /// Constructor for an environment.
-    DummyCoder(Env& env) {
-        //
+    DummyCoder(Env& env) : Coder<F>(env) {
     }
     
     /// Destructor
     ~DummyCoder() {
-        //
     }
     
     /// Initiates the encoding with no total length information.
-    inline void encode_init(Output& out) {
+    inline virtual void encode_init(Output& out) override {
         encode_init(out, 0); //TODO throw exception!
     }
 
     /// Initiates the encoding with total length information.
-    inline void encode_init(Output& out, size_t len) {
+    inline virtual void encode_init(Output& out, size_t len) override {
         *(out.as_stream()) << len << init_sep;
     }
     
     /// Encodes a raw symbol.
-    inline void encode_sym(Output& out, char32_t sym) {
+    inline virtual void encode_sym(Output& out, char32_t sym) override {
         *(out.as_stream()) << char(sym);
     }
     
     /// Encodes a factor of the supported type.
-    void encode_fact(Output& out, const F& fact);
+    virtual void encode_fact(Output& out, const F& fact) override;
     
     /// Finalizes the encoding.
-    inline void encode_finalize(Output& out) {
-        //
+    inline virtual void encode_finalize(Output& out) override {
     }
 
 private:
     /// Decodes and defactorizes a factor represented by a string.
-    inline void decode_fact(DecodeBuffer& decbuf, const std::string& str);
+    void decode_fact(DecodeBuffer& decbuf, const std::string& str);
 
 public:
     /// Decodes and defactorizes the input
-    inline void decode(Input& in, Output& out) {
+    inline virtual void decode(Input& in, Output& out) override {
         auto in_guard = in.as_stream();
         std::istream& ins = *in_guard;
         
