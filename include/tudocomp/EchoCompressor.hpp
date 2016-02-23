@@ -12,7 +12,7 @@ namespace tudocomp {
 template <typename C>
 class EchoCompressor {
 
-private:
+protected:
     C m_coder;
 
 public:
