@@ -28,7 +28,7 @@ public:
         //
     }
 
-    /// Passes the input into the output.
+    /// Compresses the input.
     void compress(Input& in, Output& out) {
         if(in.has_size()) {
             m_coder.encode_init(out, in.size());
@@ -40,15 +40,17 @@ public:
         std::istream& ins = *in_guard;
         
         char c;
-        size_t pos = 0;
         while(ins.get(c)) {
-            m_coder.encode(out, pos++, char32_t(c));
+            m_coder.encode_sym(out, char32_t(c));
         }
         
         m_coder.encode_finalize(out);
     }
     
-    //TODO decompress
+    /// Decompresses the input.
+    void decompress(Input& in, Output& out) {
+        m_coder.decode(in, out);
+    }
 
 };
 
