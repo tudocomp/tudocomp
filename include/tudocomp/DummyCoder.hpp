@@ -9,6 +9,7 @@ namespace tudocomp {
 template<typename F>
 class DummyCoder {
     
+    const char init_sep   = ':';
     const char fact_start = '(';
     const char fact_sep   = ',';
     const char fact_end   = ')';
@@ -25,7 +26,17 @@ public:
     ~DummyCoder() {
         //
     }
+    
+    /// Initiates the encoding with no total length information.
+    inline void init(Output& out) {
+        init(out, 0); //TODO throw exception!
+    }
 
+    /// Initiates the encoding with total length information.
+    inline void init(Output& out, size_t len) {
+        *(out.as_stream()) << len << init_sep;
+    }
+    
     /// Encodes the given symbol.
     inline void encode(Output& out, size_t pos, char32_t sym) {
         *(out.as_stream()) << char(sym);

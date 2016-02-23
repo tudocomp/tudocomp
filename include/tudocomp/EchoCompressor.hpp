@@ -30,6 +30,12 @@ public:
 
     /// Passes the input into the output.
     void compress(Input& in, Output& out) {
+        if(in.has_size()) {
+            m_coder.init(out, in.size());
+        } else {
+            m_coder.init(out);
+        }
+        
         auto in_guard = in.as_stream();
         std::istream& ins = *in_guard;
         
