@@ -1,6 +1,8 @@
 #ifndef _INCLUDED_DUMMYCODER_HPP_
 #define _INCLUDED_DUMMYCODER_HPP_
 
+#include <tudocomp/env.h>
+#include <tudocomp/io.h>
 #include <tudocomp/util/decode_buffer.h>
 
 namespace tudocomp {
@@ -11,15 +13,16 @@ namespace tudocomp {
 template<typename F>
 class DummyCoder {
     
-    const char init_sep   = ':';
+    const char init_sep = ':';
     
     static char fact_start;
     static char fact_end;
 
 public:
+    /// The default constructor is not supported.
     DummyCoder() = delete;
     
-    /// Constructor for the given output, accepting an environment.
+    /// Constructor for an environment.
     DummyCoder(Env& env) {
         //
     }
@@ -39,23 +42,25 @@ public:
         *(out.as_stream()) << len << init_sep;
     }
     
-    /// Encodes the given symbol.
+    /// Encodes a raw symbol.
     inline void encode_sym(Output& out, char32_t sym) {
         *(out.as_stream()) << char(sym);
     }
     
-    /// Encodes the given factor.
+    /// Encodes a factor of the supported type.
     void encode_fact(Output& out, const F& fact);
     
     /// Finalizes the encoding.
     inline void encode_finalize(Output& out) {
         //
     }
-    
+
+private:
     /// Decodes and defactorizes a factor represented by a string.
     inline void decode_fact(DecodeBuffer& decbuf, const std::string& str);
-    
-    /// Decodes the input
+
+public:
+    /// Decodes and defactorizes the input
     inline void decode(Input& in, Output& out) {
         auto in_guard = in.as_stream();
         std::istream& ins = *in_guard;
