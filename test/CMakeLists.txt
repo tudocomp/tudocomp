@@ -1,8 +1,8 @@
 include(test_driver.cmake)
 
 run_test(tudocomp_tests tudocomp)
-#run_test(tudocomp_driver_tests tudocomp tudocomp_algorithms)
-#    add_dependencies(tudocomp_driver_tests tudocomp_driver)
+run_test(tudocomp_driver_tests tudocomp_driver tudocomp_algorithms)
+    add_dependencies(tudocomp_driver_tests tudocomp_driver)
 
 #run_test(esacomp_tests esacomp)
 #run_test(esacomp_impl_tests esacomp_impl)

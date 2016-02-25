@@ -17,7 +17,7 @@
 
 #include <tudocomp/compressor.h>
 #include <tudocomp/io.h>
-#include <tudocomp/registry.h>
+#include <tudocomp_driver/registry.h>
 
 namespace tudocomp_driver {
 

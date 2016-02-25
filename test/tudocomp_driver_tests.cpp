@@ -5,8 +5,7 @@
 #include "glog/logging.h"
 
 #include "test_util.h"
-#include "tudocomp.h"
-#include "tudocomp_algorithms.h"
+#include "tudocomp_driver/registry.h"
 
 std::string driver(std::string args) {
     using namespace std;
