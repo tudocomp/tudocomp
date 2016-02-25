@@ -4,7 +4,7 @@
 compare_commands = true
 with_mem = false
 inputs = [
-    "$DATASETS/../src/tudocomp_driver/main.cpp",
+    "$DATASETS/../src/tudocomp_driver/tudocomp_driver.cpp",
 ]
 commands = [
 #      <shown command and args>                     <hidden args>    <out file ending>
