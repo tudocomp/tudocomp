@@ -5,10 +5,21 @@
 
 #include <gtest/gtest.h>
 
-#include <tudocomp/lz78/factors.h>
+#include "test_util.h"
 
-using namespace tudocomp;
-using namespace lz78;
+#include <tudocomp/lz78/factor.h>
+#include <tudocomp/lz78/factors.h>
+#include <tudocomp/Coder.hpp>
+#include <tudocomp/lz78/Lz78DebugCoder.hpp>
+#include <tudocomp/lz78/Lz78BitCoder.hpp>
+#include <tudocomp/lz78/Lz78Compressor.hpp>
+
+using lz78::Entry;
+using lz78::Entries;
+
+using tudocomp::Input;
+using tudocomp::Output;
+using tudocomp::Env;
 
 using std::swap;
 
@@ -77,5 +88,105 @@ TEST(Entries, iterator) {
             ASSERT_EQ(x, r);
         }
     };
+
+}
+
+TEST(TemplatePort, Lz78DebugCoder) {
+    using Coder = tudocomp::lz78::Lz78DebugCoder;
+
+    Env env;
+    std::vector<uint8_t> encoded_buffer;
+    Output encoded_out = Output::from_memory(encoded_buffer);
+
+    {
+        Coder coder(env, encoded_out);
+
+        coder.encode_fact(Entry {0, 'x'});
+        coder.encode_fact(Entry {0, 'y'});
+        coder.encode_fact(Entry {1, 'a'});
+        coder.encode_fact(Entry {2, 'b'});
+        coder.encode_fact(Entry {3, '!'});
+    }
+
+    auto encoded = std::string(encoded_buffer.begin(), encoded_buffer.end());
+    ASSERT_EQ(encoded, "(0,x)(0,y)(1,a)(2,b)(3,!)");
+
+    auto input = Input::from_memory(encoded);
+    std::vector<uint8_t> decoded_buffer;
+    auto decoded_out = Output::from_memory(decoded_buffer);
+
+    Coder::decode(input, decoded_out);
+    std::string decoded(decoded_buffer.begin(), decoded_buffer.end());
+
+    ASSERT_EQ(decoded, "xyxaybxa!");
+
+}
+
+TEST(TemplatePort, Lz78BitCoder) {
+    using Coder = tudocomp::lz78::Lz78BitCoder;
+
+    Env env;
+    std::vector<uint8_t> encoded_buffer;
+    Output encoded_out = Output::from_memory(encoded_buffer);
+
+    {
+        Coder coder(env, encoded_out);
+
+        coder.encode_fact(Entry {0, 'x'});
+        coder.encode_fact(Entry {0, 'y'});
+        coder.encode_fact(Entry {1, 'a'});
+        coder.encode_fact(Entry {2, 'b'});
+        coder.encode_fact(Entry {3, '!'});
+        coder.encode_fact(Entry {5, '?'});
+    }
+
+    auto encoded = pack_integers({
+        0, 1, 'x', 8,
+        0, 1, 'y', 8,
+        1, 2, 'a', 8,
+        2, 2, 'b', 8,
+        3, 3, '!', 8,
+        5, 3, '?', 8,
+    });
+    ASSERT_EQ(encoded_buffer, encoded);
+
+    auto input = Input::from_memory(encoded);
+    std::vector<uint8_t> decoded_buffer;
+    auto decoded_out = Output::from_memory(decoded_buffer);
+
+    Coder::decode(input, decoded_out);
+    std::string decoded(decoded_buffer.begin(), decoded_buffer.end());
+
+    ASSERT_EQ(decoded, "xyxaybxa!xa!?");
+
+}
+
+TEST(TemplatePort, Lz78Compressor) {
+    using Coder = tudocomp::lz78::Lz78DebugCoder;
+    using Compressor = tudocomp::lz78::Lz78Compressor<Coder>;
+
+    Env env;
+    boost::string_ref input_str = "xyxaybxa!xa!?";
+
+    std::vector<uint8_t> encoded_buffer;
+    std::vector<uint8_t> decoded_buffer;
+    Compressor compressor(env);
+
+    {
+        auto input = Input::from_memory(input_str);
+        auto out = Output::from_memory(encoded_buffer);
+        compressor.compress(input, out);
+    }
+
+    auto encoded = std::string(encoded_buffer.begin(), encoded_buffer.end());
+    ASSERT_EQ(encoded, "(0,x)(0,y)(1,a)(2,b)(3,!)(5,?)");
+
+    {
+        auto input = Input::from_memory(encoded_buffer);
+        auto out = Output::from_memory(decoded_buffer);
+        compressor.decompress(input, out);
+    }
+
+    ASSERT_EQ(decoded_buffer, std::vector<uint8_t>(input_str.begin(), input_str.end()));
 
 }

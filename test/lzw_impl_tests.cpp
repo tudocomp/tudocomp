@@ -10,6 +10,10 @@
 #include <tudocomp/lzw/bit_coder.h>
 #include <tudocomp/lzw/dummy_coder.h>
 
+#include <tudocomp/lzw/LzwCompressor.hpp>
+#include <tudocomp/lzw/LzwBitCoder.hpp>
+#include <tudocomp/lzw/LzwDebugCoder.hpp>
+
 using namespace lzw;
 
 TEST(LZW, DebugCode_compress) {
@@ -95,4 +99,117 @@ TEST(LZW, BitCode_decompress) {
 
     ASSERT_EQ("abcdebcdeabc",
               ss.str());
+}
+
+TEST(TemplatePort, LzwDebugCoder) {
+    using Coder = tudocomp::lzw::LzwDebugCoder;
+
+    Env env;
+    std::vector<uint8_t> encoded_buffer;
+    Output encoded_out = Output::from_memory(encoded_buffer);
+
+    {
+        Coder coder(env, encoded_out);
+
+        coder.encode_fact('x');
+        coder.encode_fact('y');
+        coder.encode_fact('x');
+        coder.encode_fact('a');
+        coder.encode_fact('y');
+        coder.encode_fact('b');
+        coder.encode_fact(258);
+        coder.encode_fact('!');
+        coder.encode_fact(262);
+        coder.encode_fact('?');
+    }
+
+    auto encoded = std::string(encoded_buffer.begin(), encoded_buffer.end());
+    ASSERT_EQ(encoded, "'x','y','x','a','y','b',258,'!',262,'?',");
+
+    auto input = Input::from_memory(encoded);
+    std::vector<uint8_t> decoded_buffer;
+    auto decoded_out = Output::from_memory(decoded_buffer);
+
+    Coder::decode(input, decoded_out);
+    std::string decoded(decoded_buffer.begin(), decoded_buffer.end());
+
+    ASSERT_EQ(decoded, "xyxaybxa!xa!?");
+
+}
+
+TEST(TemplatePort, LzwBitCoder) {
+    using Coder = tudocomp::lzw::LzwBitCoder;
+
+    Env env;
+    std::vector<uint8_t> encoded_buffer;
+    Output encoded_out = Output::from_memory(encoded_buffer);
+
+    {
+        Coder coder(env, encoded_out);
+
+        coder.encode_fact('x');
+        coder.encode_fact('y');
+        coder.encode_fact('x');
+        coder.encode_fact('a');
+        coder.encode_fact('y');
+        coder.encode_fact('b');
+        coder.encode_fact(258);
+        coder.encode_fact('!');
+        coder.encode_fact(262);
+        coder.encode_fact('?');
+    }
+
+    auto encoded = pack_integers({
+        'x',9,
+        'y',9,
+        'x',9,
+        'a',9,
+        'y',9,
+        'b',9,
+        258,9,
+        '!',9,
+        262,9,
+        '?',9,
+    });
+    ASSERT_EQ(encoded_buffer, encoded);
+
+    auto input = Input::from_memory(encoded);
+    std::vector<uint8_t> decoded_buffer;
+    auto decoded_out = Output::from_memory(decoded_buffer);
+
+    Coder::decode(input, decoded_out);
+    std::string decoded(decoded_buffer.begin(), decoded_buffer.end());
+
+    ASSERT_EQ(decoded, "xyxaybxa!xa!?");
+
+}
+
+TEST(TemplatePort, LzwCompressor) {
+    using Coder = tudocomp::lzw::LzwDebugCoder;
+    using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+
+    Env env;
+    boost::string_ref input_str = "xyxaybxa!xa!?";
+
+    std::vector<uint8_t> encoded_buffer;
+    std::vector<uint8_t> decoded_buffer;
+    Compressor compressor(env);
+
+    {
+        auto input = Input::from_memory(input_str);
+        auto out = Output::from_memory(encoded_buffer);
+        compressor.compress(input, out);
+    }
+
+    auto encoded = std::string(encoded_buffer.begin(), encoded_buffer.end());
+    ASSERT_EQ(encoded, "'x','y','x','a','y','b',258,'!',262,'?',");
+
+    {
+        auto input = Input::from_memory(encoded_buffer);
+        auto out = Output::from_memory(decoded_buffer);
+        compressor.decompress(input, out);
+    }
+
+    ASSERT_EQ(decoded_buffer, std::vector<uint8_t>(input_str.begin(), input_str.end()));
+
 }
