@@ -3,7 +3,7 @@
 
 #include <glog/logging.h>
 
-#include <tudocomp/compressor.h>
+#include <tudocomp/Compressor.hpp>
 
 #include <tudocomp/lz78/trie.h>
 
@@ -72,7 +72,7 @@ inline LzwEntries _compress(Input& input) {
 inline void LzwRule::compress(Input& input, Output& out) {
     auto entries = _compress(input);
     DLOG(INFO) << "entries size: " << entries.size();
-    env.log_stat(RULESET_SIZE_LOG, entries.size());
+    m_env->log_stat(RULESET_SIZE_LOG, entries.size());
     m_encoder->code(std::move(entries), out);
 }
 

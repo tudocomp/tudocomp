@@ -15,7 +15,7 @@
 
 #include <glog/logging.h>
 
-#include <tudocomp/compressor.h>
+#include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.h>
 #include <tudocomp_driver/registry.h>
 

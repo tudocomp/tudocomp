@@ -1,7 +1,7 @@
 #ifndef LZ78RULE_RULE_H
 #define LZ78RULE_RULE_H
 
-#include <tudocomp/compressor.h>
+#include <tudocomp/Compressor.hpp>
 
 #include <tudocomp/lz78/trie.h>
 #include <tudocomp/lz78/factors.h>
@@ -57,8 +57,8 @@ struct Lz78Rule: public Compressor {
 };
 
 inline void Lz78Rule::compress(Input& input, Output& out) {
-    auto entries = compress_impl(env, input);
-    env.log_stat(RULESET_SIZE_LOG, entries.size());
+    auto entries = compress_impl(*m_env, input);
+    m_env->log_stat(RULESET_SIZE_LOG, entries.size());
     m_encoder->code(std::move(entries), out);
 }
 
