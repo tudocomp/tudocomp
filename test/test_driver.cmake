@@ -16,6 +16,7 @@ macro(run_test test_target)
     )
     target_link_libraries(${test_target}
         libgtest
+        # boost and glog are both needed by the testrunner
         glog
         boost
         ${ARGN}
