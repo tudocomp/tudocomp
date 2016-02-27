@@ -170,6 +170,27 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
             "minimum amount of bits needed to encode the index and the char").do_register();
     })
     .do_register();
+
+    registry.with_info<Lz78Compressor<Lz78DebugCoder>>(
+        "lz78 debug coder", "t_lz78_debug",
+        "Template-based implementation of a lz78 coder with human readable"
+        "debug output")
+    .do_register();
+    registry.with_info<Lz78Compressor<Lz78BitCoder>>(
+        "lz78 bit coder", "t_lz78_bit",
+        "Template-based implementation of a lz78 coder with naive bit"
+        "compressed output")
+    .do_register();
+    registry.with_info<LzwCompressor<LzwDebugCoder>>(
+        "lzw debug coder", "t_lzw_debug",
+        "Template-based implementation of a lzw coder with human readable"
+        "debug output")
+    .do_register();
+    registry.with_info<LzwCompressor<LzwBitCoder>>(
+        "lzw bit coder", "t_lzw_bit",
+        "Template-based implementation of a lzw coder with naive bit"
+        "compressed output")
+    .do_register();
 }
 
 }
