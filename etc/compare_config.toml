@@ -52,3 +52,19 @@ commands = [
     ["bzip2 -9",                              "-c $IN > $OUT", "bz2"                   ],
     ["7z",                                    "a $OUT $IN",    "7z"                    ],
 ]
+
+# Comparision between buffering and template-based lz78 and lzw impls
+[lz_compare]
+inputs = [
+    "$DATASETS/download/real/english.50MB",
+]
+commands = [
+    ["tudocomp_driver -a lz78rule.bit",  "$IN -o $OUT", "lz78rule.bit.tdc"   ],
+    ["tudocomp_driver -a t_lz78_bit",    "$IN -o $OUT", "t_lz78_bit.tdc"     ],
+    ["tudocomp_driver -a lzwrule.bit",   "$IN -o $OUT", "lzwrule.bit.tdc"    ],
+    ["tudocomp_driver -a t_lzw_bit",     "$IN -o $OUT", "t_lzw_bit.tdc"      ],
+    ["tudocomp_driver -a lz78rule.debug","$IN -o $OUT", "lz78rule.debug.tdc" ],
+    ["tudocomp_driver -a t_lz78_debug",  "$IN -o $OUT", "t_lz78_debug.tdc"   ],
+    ["tudocomp_driver -a lzwrule.debug", "$IN -o $OUT", "lzwrule.debug.tdc"  ],
+    ["tudocomp_driver -a t_lzw_debug",   "$IN -o $OUT", "t_lzw_debug.tdc"    ],
+]
