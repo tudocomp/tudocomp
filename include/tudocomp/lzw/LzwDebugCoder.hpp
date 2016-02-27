@@ -7,6 +7,7 @@
 #include <tudocomp/lz78/Lz78DecodeBuffer.hpp>
 
 #include <tudocomp/lzw/factor.h>
+#include <tudocomp/lzw/decode.hpp>
 
 namespace tudocomp {
 
