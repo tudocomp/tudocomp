@@ -7,35 +7,13 @@
 #include <tudocomp/lz78/lz78_compressor.h>
 #include <tudocomp/lz78/dummy_coder.h>
 #include <tudocomp/lz78/bit_coder.h>
+#include <tudocomp/lz78/Lz78DecodeBuffer.hpp>
 
 namespace lz78 {
 
 using namespace tudocomp;
-
-struct Lz78DecodeBuffer {
-    Entries dict;
-    std::vector<uint8_t> dict_walk_buf;
-
-    void decode(Entry entry, std::ostream& out) {
-        dict.push_back(entry);
-
-        size_t index = entry.index;
-        uint8_t chr = entry.chr;
-
-        dict_walk_buf.clear();
-
-        while (index != 0) {
-            dict_walk_buf.push_back(chr);
-            chr = Entry(dict[index - 1]).chr;
-            index = Entry(dict[index - 1]).index;
-        }
-
-        out << chr;
-        for (size_t i = dict_walk_buf.size(); i > 0; i--) {
-            out << dict_walk_buf[i - 1];
-        }
-    }
-};
+// TODO: Fix namespace nesting
+using ::tudocomp::lz78::Lz78DecodeBuffer;
 
 void LZ78DebugCode::code(Entries&& entries, Output& out) {
     auto guard = out.as_stream();
