@@ -3,7 +3,7 @@ add_custom_target(check)
 add_custom_command(
     TARGET check
     POST_BUILD
-    COMMENT "All tests were successfull!" VERBATIM
+    COMMENT "All tests were successful!" VERBATIM
 )
 
 # will compile and run ${test_target}.cpp
@@ -17,10 +17,8 @@ macro(run_test test_target)
     target_link_libraries(${test_target}
         libgtest
         glog
-        sdsl
-        boost_filesystem
-        boost_system
-        tudocomp
+        boost
+        ${ARGN}
     )
     add_custom_command(
         TARGET ${test_target}
