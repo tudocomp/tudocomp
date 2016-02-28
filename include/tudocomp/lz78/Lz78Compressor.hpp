@@ -11,6 +11,7 @@ namespace lz78 {
 
 using ::lz78::Trie;
 using ::lz78::Result;
+using ::lz78::PrefixBuffer;
 using ::tudocomp::Compressor;
 
 const std::string THRESHOLD_OPTION = "lz78.threshold";
@@ -27,33 +28,27 @@ public:
     using Compressor::Compressor;
 
     virtual void compress(Input& input, Output& out) override {
-        auto guard = input.as_view();
-        auto input_ref = *guard;
+        auto guard = input.as_stream();
+        PrefixBuffer buf(*guard);
 
-        Trie trie;
+        Trie trie(Trie::Lz78);
         size_t factor_counter = 0;
         C coder(*m_env, out);
 
-        for (size_t i = 0; i < input_ref.size(); i++) {
-            auto s = input_ref.substr(i);
-
-            Result phrase_and_size = trie.find_or_insert(s);
-
-            DLOG(INFO) << "looking at " << input_ref.substr(0, i)
-                << "|" << s << " -> " << phrase_and_size.size;
-
-            i += phrase_and_size.size - 1;
+        while (!buf.is_empty()) {
+            Result phrase_and_size = trie.find_or_insert(buf);
 
             coder.encode_fact(phrase_and_size.entry);
 
+            factor_counter++;
         }
 
         m_env->log_stat(RULESET_SIZE_LOG, factor_counter);
 
-        trie.root.print(0);
+        trie.print(0);
     }
 
-    virtual void decompress(Input& in, Output& out) override {
+    virtual void decompress(Input& in, Output& out) override final {
         C::decode(in, out);
     }
 

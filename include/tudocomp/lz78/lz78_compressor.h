@@ -12,26 +12,19 @@ namespace lz78 {
 using namespace tudocomp;
 
 inline Entries compress_impl(const Env& env, Input& input) {
-    auto guard = input.as_view();
-    auto input_ref = *guard;
+    auto guard = input.as_stream();
+    PrefixBuffer buf(*guard);
 
-    Trie trie;
+    Trie trie(Trie::Lz78);
     Entries entries;
 
-    for (size_t i = 0; i < input_ref.size(); i++) {
-        auto s = input_ref.substr(i);
-
-        Result phrase_and_size = trie.find_or_insert(s);
-
-        DLOG(INFO) << "looking at " << input_ref.substr(0, i)
-            << "|" << s << " -> " << phrase_and_size.size;
-
-        i += phrase_and_size.size - 1;
+    while (!buf.is_empty()) {
+        Result phrase_and_size = trie.find_or_insert(buf);
 
         entries.push_back(phrase_and_size.entry);
     }
 
-    trie.root.print(0);
+    trie.print(0);
 
     return entries;
 }

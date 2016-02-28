@@ -92,9 +92,9 @@ std::vector<uint8_t> ostream_to_bytes(Lambda f) {
 template<class F>
 void test_roundtrip_batch(F f) {
     f("abcdebcdeabc");
+    f("a");
     f("");
     f("abcdebcdeabcd");
-    f("a");
     f("foobar");
     f("abcabcabcabc");
 

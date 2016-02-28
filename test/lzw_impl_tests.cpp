@@ -31,6 +31,20 @@ TEST(LZW, DebugCode_compress) {
               ss.str());
 }
 
+TEST(LZW, DebugCode_compress2) {
+    Env env;
+    LZWDebugCode coder(env);
+    Input inp = Input::from_memory("abcdebcdeabcd");
+
+    LzwRule compressor(env, &coder);
+
+    std::stringstream ss;
+    Output out = Output::from_stream(ss);
+    compressor.compress(inp, out);
+
+    ASSERT_EQ("'a','b','c','d','e',257,259,256,258,", ss.str());
+}
+
 TEST(LZW, DebugCode_decompress) {
     Env env;
     LZWDebugCode coder(env);
