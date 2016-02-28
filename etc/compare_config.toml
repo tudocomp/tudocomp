@@ -29,11 +29,6 @@ commands = [
     ["tudocomp_driver -a esacomp.lz.dummy",        "$IN -o $OUT",   "esacomp.lz.dummy.tdc"],
 ]
 
-# Same as example_fast, but also measuring memory usage
-[example_fast_mem]
-inherit_from = "example_fast"
-with_mem = true
-
 # Compare a number of different text files with the same algorithms
 [example_compare_texts]
 compare_commands = false
