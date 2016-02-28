@@ -1,5 +1,5 @@
-#ifndef TUDOCOMPENV_H
-#define TUDOCOMPENV_H
+#ifndef _INCLUDED_ENV_HPP
+#define _INCLUDED_ENV_HPP
 
 #include <map>
 #include <set>
@@ -18,27 +18,28 @@ namespace tudocomp {
 /// Gives access to a statistic logger, and to environment
 /// options that can be used to modify the default behavior of an algorithm.
 class Env {
-    std::map<std::string, std::string> options;
-    std::map<std::string, std::string> stats;
-    std::set<std::string> known_options;
+    std::map<std::string, const std::string> options;
+    std::map<std::string, const std::string> stats;
+    mutable std::set<std::string> known_options;
+    
 public:
     inline Env() {}
-    inline Env(std::map<std::string, std::string> options_,
-               std::map<std::string, std::string> stats_):
+    inline Env(std::map<std::string, const std::string> options_,
+               std::map<std::string, const std::string> stats_):
         options(options_), stats(stats_) {}
 
     /// Returns a copy of the backing map.
-    inline std::map<std::string, std::string> get_options() {
+    inline std::map<std::string, const std::string> get_options() const {
         return options;
     }
 
     /// Returns a copy of the backing map.
-    inline std::map<std::string, std::string> get_stats() {
+    inline std::map<std::string, const std::string> get_stats() const {
         return stats;
     }
 
     /// Returns the set of options that got actually asked for by the algorithms
-    inline std::set<std::string> get_known_options() {
+    inline std::set<std::string> get_known_options() const {
         return known_options;
     }
 
@@ -54,14 +55,14 @@ public:
     ///             `"my_compressor.phase1.alphabet_size"`.
     /// \param value The value of the statistic as a string.
     template<class T>
-    inline void log_stat(std::string name, T value) {
+    inline void log_stat(const std::string& name, const T value) {
         std::stringstream s;
         s << value;
-        stats[name] = s.str();
+        stats.emplace(name, s.str());
     };
 
     /// Returns whether a option has been set.
-    inline bool has_option(const std::string& name) {
+    inline bool has_option(const std::string& name) const {
         known_options.insert(name);
         return options.count(name) > 0;
     };
@@ -75,10 +76,10 @@ public:
     ///             `"my_compressor.xyz_threshold"`.
     /// \param default_value The default value to use if the option is not set.
     ///                      Defaults to the empty string.
-    inline std::string option(std::string name, std::string default_value = "") {
+    inline const std::string& option(const std::string& name, const std::string& default_value = "") const {
         known_options.insert(name);
         if (has_option(name)) {
-            return options[name];
+            return options.at(name);
         } else {
             return default_value;
         }
@@ -100,10 +101,10 @@ public:
     /// \param default_value The default value to use if the option is not set.
     ///                      Defaults to the default-constructed value of `T`.
     template<class T>
-    T option_as(std::string name, T default_value = T()) {
+    T option_as(const std::string& name, T default_value = T()) const {
         known_options.insert(name);
         if (has_option(name)) {
-            return boost::lexical_cast<T>(options[name]);
+            return boost::lexical_cast<T>(options.at(name));
         } else {
             return default_value;
         }

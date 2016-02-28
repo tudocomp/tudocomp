@@ -1,7 +1,7 @@
 #ifndef _INCLUDED_CODER_HPP_
 #define _INCLUDED_CODER_HPP_
 
-#include <tudocomp/env.h>
+#include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
 
 namespace tudocomp {

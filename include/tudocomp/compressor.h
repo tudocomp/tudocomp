@@ -1,12 +1,13 @@
 #ifndef COMPRESSFRAMEWORK_H
 #define COMPRESSFRAMEWORK_H
 
-#include <tudocomp/env.h>
+#include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
 
 namespace tudocomp {
 
 /// Interface for a general compressor.
+/// !! DEPRECATED !!
 struct Compressor {
     // TODO: Maybe replace by pointer to make this class properly copyable?
     Env& env;

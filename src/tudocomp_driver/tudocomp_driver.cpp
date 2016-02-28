@@ -176,7 +176,7 @@ int main(int argc, const char** argv)
             }
         };
 
-        std::map<std::string, std::string> algorithm_options;
+        std::map<std::string, const std::string> algorithm_options;
 
         for (auto& os : string_args("--option")) {
             std::vector<std::string> options;
@@ -185,7 +185,7 @@ int main(int argc, const char** argv)
                 std::vector<std::string> key_value;
                 boost::split(key_value, o, boost::is_any_of("="));
                 CHECK(key_value.size() == 2);
-                algorithm_options[key_value[0]] = key_value[1];
+                algorithm_options.emplace(key_value[0], key_value[1]);
             }
         }
 

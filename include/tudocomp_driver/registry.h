@@ -20,7 +20,7 @@
 #include <boost/utility/string_ref.hpp>
 #include <glog/logging.h>
 
-#include <tudocomp/env.h>
+#include <tudocomp/Env.hpp>
 
 namespace tudocomp_driver {
 

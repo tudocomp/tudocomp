@@ -1,7 +1,7 @@
 #ifndef LZ78_CODER_H
 #define LZ78_CODER_H
 
-#include <tudocomp/env.h>
+#include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
 
 #include <tudocomp/lz78/factors.h>

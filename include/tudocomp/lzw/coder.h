@@ -1,7 +1,7 @@
 #ifndef LZW_CODER_H
 #define LZW_CODER_H
 
-#include <tudocomp/env.h>
+#include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
 
 #include <tudocomp/lzw/factor.h>
