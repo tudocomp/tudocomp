@@ -225,9 +225,6 @@ TEST(TudocompDriver, list) {
         }
     }
     */
-=======
-    }*/
->>>>>>> restructure_alternative_api
 }
 
 std::vector<std::string> cross(std::vector<std::vector<std::string>>&& vs) {
