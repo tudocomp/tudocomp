@@ -151,7 +151,7 @@ void LZWBitCode::code(LzwEntries&& entries, Output& _out) {
     }
     DLOG(INFO) << "detected bit_size: " << bit_size;
 
-    BitOstream os(out);
+    BitOStream os(out);
 
     os.write(entries.size(), 64);
     os.write(bit_size - 1, 6);
@@ -171,7 +171,7 @@ void LZWBitCode::decode(Input& _inp, Output& _out) {
     auto& out = *oguard;
 
     bool done = false;
-    BitIstream is(inp, done);
+    BitIStream is(inp, done);
 
     uint64_t entries_size = is.readBits<uint64_t>(64);
     uint8_t bit_size = is.readBits<uint64_t>(6) + 1;

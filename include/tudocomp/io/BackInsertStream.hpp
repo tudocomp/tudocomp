@@ -1,5 +1,5 @@
-#ifndef TUDOCOMP_BACK_INSERT_STREAM_H
-#define TUDOCOMP_BACK_INSERT_STREAM_H
+#ifndef _INCLUDED_BACK_INSERT_STREAM_HPP
+#define _INCLUDED_BACK_INSERT_STREAM_HPP
 
 #include <iostream>
 #include <memory>
@@ -10,6 +10,7 @@
 #include <boost/iostreams/device/back_inserter.hpp>
 
 namespace tudocomp {
+namespace io {
 
 /// A ostream that writes bytes into a stl byte container.
 class BackInsertStream {
@@ -62,7 +63,7 @@ public:
     }
 };
 
-}
+}}
 
 #endif
 

@@ -102,7 +102,7 @@ void LZ78BitCode::code(Entries&& entries, Output& out_) {
 
     auto guard = out_.as_stream();
 
-    BitOstream out(*guard);
+    BitOStream out(*guard);
 
     out.write<uint64_t>(entries.size());
     out.write<uint8_t>(index_bits);
@@ -126,7 +126,7 @@ void LZ78BitCode::decode(Input& inp_, Output& out_) {
     auto o_guard = out_.as_stream();
     auto& out = *o_guard;
 
-    BitIstream inp(*i_guard, done);
+    BitIStream inp(*i_guard, done);
 
     uint64_t size = inp.readBits<uint64_t>();
     uint8_t index_bits = inp.readBits<uint8_t>();

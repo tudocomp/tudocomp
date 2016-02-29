@@ -1,18 +1,17 @@
-#ifndef BIT_IOSTREAM_H
-#define BIT_IOSTREAM_H
+#ifndef _INCLUDED_BIT_OSTREAM_HPP
+#define _INCLUDED_BIT_OSTREAM_HPP
 
 #include <climits>
 #include <cstdint>
 #include <iostream>
 
-#include <glog/logging.h>
-
 namespace tudocomp {
+namespace io {
 
 /// Wrapper over an ostream that can be used to write single bits.
 ///
 /// Bits are buffered in a byte until it is filled, or until flush() is called.
-class BitOstream {
+class BitOStream {
     std::ostream& out;
     bool dirty;
     uint8_t next;
@@ -37,7 +36,7 @@ public:
     /// Create a new BitOstream.
     ///
     /// \param out_ The ostream bits should be written to.
-    inline BitOstream(std::ostream& out_): out(out_) {
+    inline BitOStream(std::ostream& out_): out(out_) {
         reset();
     }
 
@@ -89,57 +88,7 @@ public:
     }
 };
 
-/// Wrapper over an istream that can be used to read single bits.
-///
-/// Read bytes are buffered on the inside until all bits of them had been read.
-class BitIstream {
-    std::istream& inp;
-    uint8_t next = 0;
-    int c;
-    bool* done;
-
-    inline void readNext() {
-        const int MSB = 7;
-
-        char tmp;
-        // TODO: Error reporting
-        *done |= !inp.get(tmp);
-        next = tmp;
-
-        c = MSB;
-    }
-
-public:
-    /// Create a new BitIstream.
-    ///
-    /// \param inp_ The istream to read bits from.
-    inline BitIstream(std::istream& inp_, bool& done_): inp(inp_), done(&done_) {
-        c = -1;
-    }
-
-    /// Read a single bit, and return it as a byte of either the value 0 or 1.
-    inline uint8_t readBit() {
-        if (c < 0) {
-            readNext();
-        }
-        uint8_t bit = (next >> c) & 0b1;
-        c--;
-        return bit;
-    }
-
-    /// Read a number of bits, and accumulate them in the return value
-    /// with the last bit read at least significant position of the integer.
-    template<class T>
-    T readBits(size_t amount = sizeof(T) * CHAR_BIT) {
-        T value = 0;
-        for(size_t i = 0; i < amount; i++) {
-            value <<= 1;
-            value |= readBit();
-        }
-        return value;
-    }
-};
-
-}
+}}
 
 #endif
+

@@ -24,10 +24,12 @@
 
 #include <glog/logging.h>
 
-#include <tudocomp/io/ioutil.h>
-#include <tudocomp/io/back_insert_stream.h>
-#include <tudocomp/io/bit_iostream.h>
-#include <tudocomp/io/view_stream.h>
+#include <tudocomp/io/IOUtil.hpp> //needs to be first here
+
+#include <tudocomp/io/BackInsertStream.hpp>
+#include <tudocomp/io/BitIStream.hpp>
+#include <tudocomp/io/BitOStream.hpp>
+#include <tudocomp/io/ViewStream.hpp>
 
 namespace tudocomp {
 
@@ -135,7 +137,7 @@ namespace input {
 
     struct StreamGuard {
         struct Memory {
-            ViewStream stream;
+            io::ViewStream stream;
         };
         struct Stream {
             std::istream* stream;
@@ -186,7 +188,7 @@ namespace input {
             StreamGuard operator()(Input::Memory& mem) const {
                 return StreamGuard {
                     StreamGuard::Memory {
-                        ViewStream {
+                        io::ViewStream {
                             (char*)mem.ptr,
                             mem.size
                         }
@@ -277,7 +279,7 @@ namespace output {
 
     struct StreamGuard {
         struct Memory {
-            BackInsertStream stream;
+            io::BackInsertStream stream;
         };
         struct Stream {
             std::ostream* stream;
@@ -328,7 +330,7 @@ namespace output {
             StreamGuard operator()(Output::Memory& mem) const {
                 return StreamGuard {
                     StreamGuard::Memory {
-                        BackInsertStream { *mem.buffer }
+                        io::BackInsertStream { *mem.buffer }
                     }
                 };
             }
@@ -350,6 +352,9 @@ namespace output {
         return boost::apply_visitor(visitor(), data);
     };
 }
+
+using BitIStream = io::BitIStream;
+using BitOStream = io::BitOStream;
 
 using Input = input::Input;
 using Output = output::Output;

@@ -1,11 +1,12 @@
-#ifndef TUDOCOMP_VIEW_STREAM_H
-#define TUDOCOMP_VIEW_STREAM_H
+#ifndef _INCLUDED_VIEW_STREAM_HPP
+#define _INCLUDED_VIEW_STREAM_HPP
 
 #include <iostream>
 #include <memory>
 #include <utility>
 
 namespace tudocomp {
+namespace io {
 
 /// A wrapper around a istream that reads from
 /// a existing memory buffer.
@@ -54,7 +55,7 @@ public:
     }
 };
 
-}
+}}
 
 #endif
 

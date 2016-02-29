@@ -1,5 +1,5 @@
-#ifndef IOUTIL_H
-#define IOUTIL_H
+#ifndef _INCLUDED_IOUTIL_HPP
+#define _INCLUDED_IOUTIL_HPP
 
 #include <fstream>
 #include <iostream>
