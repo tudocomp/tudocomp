@@ -339,7 +339,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
 
                 assert_eq_strings(text, read_text);
                 std::string diff;
-                for(int i = 0; i < std::max(text.size(), read_text.size()); i++) {
+                for(size_t i = 0; i < std::max(text.size(), read_text.size()); i++) {
                     if (i < std::min(text.size(), read_text.size())
                         && text[i] == read_text[i]
                     ) {
