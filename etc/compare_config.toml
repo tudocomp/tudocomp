@@ -52,8 +52,8 @@ commands = [
 [lz_compare]
 inputs = [
     #"$DATASETS/download/real/english.200MB",
+    "$DATASETS/../src/tudocomp_driver/tudocomp_driver.cpp",
     "$DATASETS/download/real/english.50MB",
-    #"$DATASETS/../src/tudocomp_driver/tudocomp_driver.cpp",
 ]
 commands = [
     ["tudocomp_driver -a lz78rule.bit",  "$IN -o $OUT", "lz78rule.bit.tdc"   ],
