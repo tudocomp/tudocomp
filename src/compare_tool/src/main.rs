@@ -36,22 +36,23 @@ fn load_config(arg: &str) -> config::Config {
 }
 
 // type, value, time, size, compsize, compratio
-type Line<'a> = (&'a str, &'a str, f64, &'a str, &'a str, f64);
+type Line<'a> = (&'a str, &'a str, f64, &'a str, &'a str, f64, Option<&'a str>);
 type LinePad = (usize,);
 
 fn print_header(kind: &str, value: &str, padding: LinePad) {
-    println!("{:4} | {:6$} | {:^9} | {:^12} | {:^12} | {:^8}",
-        kind, value, "time", "size", "comp. size", "ratio", padding.0);
+    println!("{:4} | {:7$} | {:^9} | {:^12} | {:^12} | {:^8} | {:^12}",
+        kind, value, "time", "size", "comp. size", "ratio", "mem", padding.0);
 }
 
 fn print_line(line: Line, padding: LinePad) {
-    println!("{:4} | {:6$} | {:7.3} s | {:>12} | {:>12} | {:6.2} %",
-        line.0, line.1, line.2, line.3, line.4, line.5, padding.0);
+    let mem = line.6.unwrap_or("-");
+    println!("{:4} | {:7$} | {:7.3} s | {:>12} | {:>12} | {:6.2} % | {:^12}",
+        line.0, line.1, line.2, line.3, line.4, line.5, mem, padding.0);
 }
 
 fn print_sep(padding: LinePad) {
-    println!("{:-^4}---{:-^6$}---{:-^7}-----{:-^12}---{:-^12}---{:-^6}--",
-        "", "", "", "", "", "", padding.0);
+    println!("{:-^4}---{:-^7$}---{:-^7}-----{:-^12}---{:-^12}---{:-^6}---{:-^12}--",
+        "", "", "", "", "", "", "", padding.0);
 }
 
 // let mem_cmd = r##"valgrind --tool=massif --pages-as-heap=yes --massif-out-file=${mofile} ${cmd}; grep mem_heap_B ${mofile} | sed -e 's/mem_heap_B=\(.*\)/\1/' | sort -g | tail -n 1"##;
@@ -119,9 +120,29 @@ fn file_name(file: &str) -> &str {
 
 fn main() {
     let arg = &env::args().nth(1).expect("need to be given a filename");
-    let profile_name = &env::args().nth(2).expect("need to be given a profile");
+    let args = &env::args().skip(2).collect::<Vec<String>>();
 
-    let config = load_config(&arg);
+    let mut config = load_config(&arg);
+
+    let profile_name = env::args().nth(2);
+    if profile_name.is_none()
+        || config.profiles.get(profile_name.as_ref().unwrap()).is_none()
+    {
+        let ps = config.profiles
+            .iter()
+            .map(|s| "- ".to_owned() + &s.0 + "\n")
+            .collect::<Vec<_>>();
+        let ps = ps.concat();
+        panic!("need to be given one of the following profiles:\n{}", ps);
+    };
+    let profile_name = &profile_name.unwrap();
+
+    {
+        let profile = config.profiles.get_mut(profile_name).unwrap();
+        if args.contains(&"--with_mem".into()) {
+            profile.with_mem = true;
+        }
+    }
     let profile = &config.profiles[profile_name];
 
     let inputs = profile.inputs.iter().map(|input| {
@@ -163,10 +184,45 @@ fn main() {
 
         bash_run(&format!("rm {}", output));
 
-        let script = &bash_in_out_script(&input.expanded, output,
-            &format!("{} {}", command.unexpanded_visible,
-                              command.unexpanded_hidden)
-        );
+        fn build_cmd(valgrind: bool, output: &str, command: &CommandData) -> String {
+            let measure_pages = false;
+            let max_detail = true;
+
+            let measure_pages_opt = if measure_pages {
+                " --pages-as-heap=yes "
+            } else {
+                ""
+            };
+
+            let max_details_opt = if max_detail {
+                " --detailed-freq=1 "
+            } else {
+                ""
+            };
+
+
+            let valgrind_cmd = if valgrind {
+                format!("valgrind -q --tool=massif --massif-out-file={} {}{}",
+                        output,
+                        measure_pages_opt,
+                        max_details_opt)
+            } else {
+                "".into()
+            };
+
+            format!("{}{} {}",
+                    valgrind_cmd,
+                    command.unexpanded_visible,
+                    command.unexpanded_hidden)
+        }
+
+        let output_massif = &(output.to_string() + ".massif");
+
+        let script = &bash_in_out_script(&input.expanded,
+                                         output,
+                                         &build_cmd(profile.with_mem,
+                                                    output_massif,
+                                                    command));
 
         let time_start = time::precise_time_ns();
         let out = bash_run(script);
@@ -186,8 +242,36 @@ fn main() {
             let out_size = fs::metadata(output).unwrap().len();
             let comp_size = &nice_size(out_size);
             let ratio = (out_size as f64) / (input.size as f64) * 100.0;
+
+            let mem_peak = if profile.with_mem {
+                use std::fs::File;
+                use std::io::BufReader;
+                use std::io::BufRead;
+
+                let report_file = File::open(output_massif).unwrap();
+                let report_file = BufReader::new(report_file);
+
+                let peak = report_file.lines().filter_map(|line| {
+                    let line = line.unwrap();
+                    let p = "mem_heap_B=";
+                    if line.starts_with(p) {
+                        Some(line[p.len()..].to_owned())
+                    } else {
+                        None
+                    }
+                })
+                .map(|size| size.parse::<u64>().unwrap())
+                .max().unwrap();
+
+                let peak = nice_size(peak);
+                Some(peak)
+            } else {
+                None
+            };
+            let mem_peak = mem_peak.as_ref().map(|s| &**s);
+
             print_line(
-                (kind, label, time_span, inp_size, comp_size, ratio),
+                (kind, label, time_span, inp_size, comp_size, ratio, mem_peak),
                 padding
             );
             if !cmd_out.is_empty() {
@@ -197,7 +281,7 @@ fn main() {
             }
         } else {
             print_line(
-                ("ERR", label, time_span, inp_size, "", 0.0/0.0),
+                ("ERR", label, time_span, inp_size, "", 0.0/0.0, None),
                 padding
             );
             let a = !cmd_out.is_empty();

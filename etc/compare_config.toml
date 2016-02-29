@@ -29,11 +29,6 @@ commands = [
     ["tudocomp_driver -a esacomp.lz.dummy",        "$IN -o $OUT",   "esacomp.lz.dummy.tdc"],
 ]
 
-# Same as example_fast, but also measuring memory usage
-[example_fast_mem]
-inherit_from = "example_fast"
-with_mem = true
-
 # Compare a number of different text files with the same algorithms
 [example_compare_texts]
 compare_commands = false
@@ -51,4 +46,22 @@ commands = [
     ["gzip -9",                               "-c $IN > $OUT", "gz"                    ],
     ["bzip2 -9",                              "-c $IN > $OUT", "bz2"                   ],
     ["7z",                                    "a $OUT $IN",    "7z"                    ],
+]
+
+# Comparision between buffering and template-based lz78 and lzw impls
+[lz_compare]
+inputs = [
+    #"$DATASETS/download/real/english.200MB",
+    "$DATASETS/download/real/english.50MB",
+    #"$DATASETS/../src/tudocomp_driver/tudocomp_driver.cpp",
+]
+commands = [
+    ["tudocomp_driver -a lz78rule.bit",  "$IN -o $OUT", "lz78rule.bit.tdc"   ],
+    ["tudocomp_driver -a t_lz78_bit",    "$IN -o $OUT", "t_lz78_bit.tdc"     ],
+    ["tudocomp_driver -a lzwrule.bit",   "$IN -o $OUT", "lzwrule.bit.tdc"    ],
+    ["tudocomp_driver -a t_lzw_bit",     "$IN -o $OUT", "t_lzw_bit.tdc"      ],
+    ["tudocomp_driver -a lz78rule.debug","$IN -o $OUT", "lz78rule.debug.tdc" ],
+    ["tudocomp_driver -a t_lz78_debug",  "$IN -o $OUT", "t_lz78_debug.tdc"   ],
+    ["tudocomp_driver -a lzwrule.debug", "$IN -o $OUT", "lzwrule.debug.tdc"  ],
+    ["tudocomp_driver -a t_lzw_debug",   "$IN -o $OUT", "t_lzw_debug.tdc"    ],
 ]

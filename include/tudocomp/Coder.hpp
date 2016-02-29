@@ -1,44 +1,42 @@
-#ifndef _INCLUDED_CODER_HPP_
-#define _INCLUDED_CODER_HPP_
+#ifndef _INCLUDED_EXAMPLE_CODER_HPP_
+#define _INCLUDED_EXAMPLE_CODER_HPP_
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
 
 namespace tudocomp {
 
-/// A coder for factors of type F.
+/// Example interface of a coder.
+///
+/// A Coder implementation needs to implement all listed
+/// methods and constructors.
 template<typename F>
-class Coder {
-
+class ExampleCoder {
 public:
-    /// The default constructor is not supported.
-    Coder() = delete;
-    
-    /// Constructor for an environment.
-    Coder(Env& env) {
+    /// Construct a Coder that writes to a given Output
+    ExampleCoder(Env& env, Output& out) {
     }
-    
-    /// Destructor
-    ~Coder() {
-    }
-    
-    /// Initiates the encoding with no information about the original length.
-    virtual void encode_init(Output& out) = 0;
 
-    /// Initiates the encoding with information about the original length.
-    virtual void encode_init(Output& out, size_t len) = 0;
-    
-    /// Encodes a raw symbol.
-    virtual void encode_sym(Output& out, char32_t sym) = 0;
-    
+    /// Construct a Coder that writes to a given Output and that will write
+    /// `len` bytes.
+    ExampleCoder(Env& env, Output& out, size_t len) {
+    }
+
+    /// Destructor, should finalize any work on the Output stream.
+    ~ExampleCoder() {
+    }
+
+    /// Encodes a raw symbol (ie, byte) of the input.
+    void encode_sym(uint8_t sym) {
+    }
+
     /// Encodes a factor of the supported type.
-    virtual void encode_fact(Output& out, const F& fact) = 0;
-    
-    /// Finalizes the encoding.
-    virtual void encode_finalize(Output& out) = 0;
-    
+    void encode_fact(const F& fact) {
+    }
+
     /// Decodes and defactorizes the input
-    virtual void decode(Input& in, Output& out) = 0;
+    static void decode(Input& in, Output& out) {
+    }
 };
 
 }

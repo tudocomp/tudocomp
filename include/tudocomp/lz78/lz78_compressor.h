@@ -1,7 +1,7 @@
 #ifndef LZ78RULE_RULE_H
 #define LZ78RULE_RULE_H
 
-#include <tudocomp/compressor.h>
+#include <tudocomp/Compressor.hpp>
 
 #include <tudocomp/lz78/trie.h>
 #include <tudocomp/lz78/factors.h>
@@ -12,26 +12,19 @@ namespace lz78 {
 using namespace tudocomp;
 
 inline Entries compress_impl(const Env& env, Input& input) {
-    auto guard = input.as_view();
-    auto input_ref = *guard;
+    auto guard = input.as_stream();
+    PrefixBuffer buf(*guard);
 
-    Trie trie;
+    Trie trie(Trie::Lz78);
     Entries entries;
 
-    for (size_t i = 0; i < input_ref.size(); i++) {
-        auto s = input_ref.substr(i);
-
-        Result phrase_and_size = trie.find_or_insert(s);
-
-        DLOG(INFO) << "looking at " << input_ref.substr(0, i)
-            << "|" << s << " -> " << phrase_and_size.size;
-
-        i += phrase_and_size.size - 1;
+    while (!buf.is_empty()) {
+        Result phrase_and_size = trie.find_or_insert(buf);
 
         entries.push_back(phrase_and_size.entry);
     }
 
-    trie.root.print(0);
+    trie.print(0);
 
     return entries;
 }
@@ -57,8 +50,8 @@ struct Lz78Rule: public Compressor {
 };
 
 inline void Lz78Rule::compress(Input& input, Output& out) {
-    auto entries = compress_impl(env, input);
-    env.log_stat(RULESET_SIZE_LOG, entries.size());
+    auto entries = compress_impl(*m_env, input);
+    m_env->log_stat(RULESET_SIZE_LOG, entries.size());
     m_encoder->code(std::move(entries), out);
 }
 

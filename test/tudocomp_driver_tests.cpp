@@ -203,6 +203,7 @@ TEST(TudocompDriver, list) {
     auto& root = list.root;
 
     ASSERT_GE(root.algos.size(), 2u);
+
     {
         auto& r0 = root.algos[0];
         ASSERT_GE(r0.subalgos.size(), 2u);
@@ -224,6 +225,9 @@ TEST(TudocompDriver, list) {
         }
     }
     */
+=======
+    }*/
+>>>>>>> restructure_alternative_api
 }
 
 std::vector<std::string> cross(std::vector<std::vector<std::string>>&& vs) {

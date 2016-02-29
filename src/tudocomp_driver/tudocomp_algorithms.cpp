@@ -8,6 +8,14 @@
 #include <tudocomp/lzw/dummy_coder.h>
 #include <tudocomp/lzw/bit_coder.h>
 
+#include <tudocomp/lz78/Lz78Compressor.hpp>
+#include <tudocomp/lz78/Lz78DebugCoder.hpp>
+#include <tudocomp/lz78/Lz78BitCoder.hpp>
+
+#include <tudocomp/lzw/LzwCompressor.hpp>
+#include <tudocomp/lzw/LzwDebugCoder.hpp>
+#include <tudocomp/lzw/LzwBitCoder.hpp>
+
 //TODO: esacomp needs to be re-inserted!
 /*
 #include "lz_compressor.h"
@@ -36,19 +44,27 @@ using esacomp::EsacompCompressStrategy;
 using esacomp::EsacompEncodeStrategy;
 */
 
-using lz78::Lz78Rule;
-using lz78::Lz78RuleCoder;
+using ::lz78::Lz78Rule;
+using ::lz78::Lz78RuleCoder;
 
-using lzw::LzwRule;
-using lzw::LzwRuleCoder;
+using ::lzw::LzwRule;
+using ::lzw::LzwRuleCoder;
 
 // Algorithm implementations
 
-using lz78::LZ78DebugCode;
-using lz78::LZ78BitCode;
+using ::lz78::LZ78DebugCode;
+using ::lz78::LZ78BitCode;
 
-using lzw::LZWDebugCode;
-using lzw::LZWBitCode;
+using ::lzw::LZWDebugCode;
+using ::lzw::LZWBitCode;
+
+using ::tudocomp::lzw::LzwCompressor;
+using ::tudocomp::lzw::LzwDebugCoder;
+using ::tudocomp::lzw::LzwBitCoder;
+
+using ::tudocomp::lz78::Lz78Compressor;
+using ::tudocomp::lz78::Lz78DebugCoder;
+using ::tudocomp::lz78::Lz78BitCoder;
 
 //TODO: esacomp needs to be re-inserted!
 /*
@@ -153,6 +169,27 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
             "Bit encoding, each rule is emitted a bitstream of the "
             "minimum amount of bits needed to encode the index and the char").do_register();
     })
+    .do_register();
+
+    registry.with_info<Lz78Compressor<Lz78DebugCoder>>(
+        "lz78 debug coder", "t_lz78_debug",
+        "Template-based implementation of a lz78 coder with human readable"
+        "debug output")
+    .do_register();
+    registry.with_info<Lz78Compressor<Lz78BitCoder>>(
+        "lz78 bit coder", "t_lz78_bit",
+        "Template-based implementation of a lz78 coder with naive bit"
+        "compressed output")
+    .do_register();
+    registry.with_info<LzwCompressor<LzwDebugCoder>>(
+        "lzw debug coder", "t_lzw_debug",
+        "Template-based implementation of a lzw coder with human readable"
+        "debug output")
+    .do_register();
+    registry.with_info<LzwCompressor<LzwBitCoder>>(
+        "lzw bit coder", "t_lzw_bit",
+        "Template-based implementation of a lzw coder with naive bit"
+        "compressed output")
     .do_register();
 }
 
