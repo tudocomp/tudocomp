@@ -14,3 +14,5 @@ run_test(lz78_tests tudocomp)
 run_test(lz78_impl_tests tudocomp)
 
 run_test(lzw_impl_tests tudocomp)
+
+run_test(coding_prototype_test tudocomp)
