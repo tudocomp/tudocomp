@@ -86,6 +86,10 @@ public:
         writeNext();
         out.write(bytes, len);
     }
+    
+    inline std::ostream& stream() {
+        return out;
+    }
 };
 
 }}
