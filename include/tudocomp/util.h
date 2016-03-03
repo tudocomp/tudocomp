@@ -8,6 +8,8 @@
 #include <sstream>
 #include <string>
 
+#include <sdsl/bits.hpp>
+
 namespace tudocomp {
 
 /// Convert a vector-like type into a string showing the element values.
@@ -89,8 +91,16 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
 /// - `bitsFor(0b11) == 2`
 /// - `bitsFor(0b100) == 3`
 inline size_t bitsFor(size_t n) {
-    // TODO: Maybe use nice bit ops?
-    return size_t(ceil(log2(std::max(size_t(1), n) + 1)));
+    if(n == 0) {
+        return 1U;
+    } else {
+        return sdsl::bits::hi(n) + 1;
+    }
+}
+
+/// integer division with rounding up
+inline size_t idiv_ceil(size_t a, size_t b) {
+    return (a / b) + ((a % b) > 0);
 }
 
 /// Returns number of bytes needed to store the amount of bits.
@@ -101,8 +111,7 @@ inline size_t bitsFor(size_t n) {
 /// - `bytesFor(8) == 1`
 /// - `bytesFor(9) == 2`
 inline size_t bytesFor(size_t bits) {
-    // TODO: Maybe use nice bit ops?
-    return (size_t) ceil(bits / 8.0);
+    return idiv_ceil(bits, 8U);
 }
 
 }
