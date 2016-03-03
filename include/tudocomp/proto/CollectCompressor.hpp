@@ -2,9 +2,7 @@
 #define _INCLUDED_COLLECTCOMPRESSOR_HPP
 
 #include <sdsl/int_vector.hpp>
-#include <sdsl/int_vector_buffer.hpp>
 #include <sdsl/rrr_vector.hpp>
-#include <sdsl/csa_alphabet_strategy.hpp>
 
 #include <tudocomp/Compressor.hpp>
 
@@ -17,11 +15,7 @@ template<typename A, typename C, typename F>
 class CollectCompressor : public Compressor {
 
 private:
-    using alphabet_type = sdsl::succinct_byte_alphabet<
-                            sdsl::rrr_vector<>,
-                            sdsl::rrr_vector<>::rank_1_type,
-                            sdsl::rrr_vector<>::select_1_type,
-                            size_t[]>;
+
 
 public:
     /// Class needs to be constructed with an `Env&` argument.
@@ -39,20 +33,17 @@ public:
     /// \param out The output stream.
     inline virtual void compress(Input& input, Output& output) override final {
         
-        //Use view
+        //Read input into SDSL int vector buffer
         size_t len = input.size();
-        
+
         auto in_guard = input.as_view();
-        boost::string_ref in = *in_guard;
+        boost::string_ref& in_buf = *in_guard;
         
-        //Initialize
+        //Factorize
         std::vector<F> factors;
         sdsl::bit_vector mark;
         
-        //TODO: alphabet_type alphabet(in);
-        //argh, SDSL ...
-        
-        factorize(in, &factors, &mark);
+        factorize(in_buf, factors, mark);
         
         //Sort factors (TODO: optional?)
         {
@@ -70,8 +61,8 @@ public:
         std::ostream& out_stream = *out_guard;
         BitOStream out_bits(*out_guard);
         
-        A alphabet_coder(*m_env, out_bits); //TODO init with alphabet for pre-analysis
-        C factor_coder(*m_env, out_bits); //TODO init with factors for pre-analysis
+        A alphabet_coder(*m_env, out_bits, in_buf);
+        C factor_coder(*m_env, out_bits, factors);
         
         //TODO: write magic (ID for A and C)
         
@@ -91,7 +82,7 @@ public:
         size_t p = 0;
         for(F f : factors) {
             for(; p < f.pos; p++) {
-                alphabet_coder.encode_sym(in[p]);
+                alphabet_coder.encode_sym(in_buf[p]);
             }
             
             factor_coder.encode_fact(f);
@@ -100,7 +91,7 @@ public:
         
         //Encode remainder
         while(p < len) {
-            alphabet_coder.encode_sym(in[p++]);
+            alphabet_coder.encode_sym(in_buf[p++]);
         }
         
         //Done
