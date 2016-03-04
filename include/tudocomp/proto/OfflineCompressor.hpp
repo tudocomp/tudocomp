@@ -1,5 +1,5 @@
-#ifndef _INCLUDED_COLLECTCOMPRESSOR_HPP
-#define _INCLUDED_COLLECTCOMPRESSOR_HPP
+#ifndef _INCLUDED_OFFLINE_COMPRESSOR_HPP
+#define _INCLUDED_OFFLINE_COMPRESSOR_HPP
 
 #include <sdsl/int_vector.hpp>
 #include <sdsl/rrr_vector.hpp>
@@ -12,17 +12,17 @@ namespace tudocomp {
 // C requires: encode_fact(F)
 // F requires: PosComparator, pos, num
 template<typename A, typename C, typename F>
-class CollectCompressor : public Compressor {
+class OfflineCompressor : public Compressor {
 
 private:
 
 
 public:
     /// Class needs to be constructed with an `Env&` argument.
-    inline CollectCompressor() = delete;
+    inline OfflineCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline CollectCompressor(Env& env): Compressor(&env) {}
+    inline OfflineCompressor(Env& env): Compressor(&env) {}
     
     /// Factorizes the input and marks the positions of generated factors
     virtual void factorize(const boost::string_ref& in, std::vector<F>& out_factors, sdsl::bit_vector& out_mark) = 0;
