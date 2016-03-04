@@ -81,9 +81,7 @@ public:
         //Encode body
         size_t p = 0;
         for(F f : factors) {
-            for(; p < f.pos; p++) {
-                alphabet_coder.encode_sym(in_buf[p]);
-            }
+            alphabet_coder.encode_syms(in_buf, p, f.pos - p);
             
             factor_coder.encode_fact(f);
             p += f.num;
@@ -91,7 +89,7 @@ public:
         
         //Encode remainder
         while(p < len) {
-            alphabet_coder.encode_sym(in_buf[p++]);
+            alphabet_coder.encode_syms(in_buf, p, len - p);
         }
         
         //Done

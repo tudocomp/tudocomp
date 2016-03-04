@@ -1,4 +1,4 @@
-#ifndef _INCLUDED_OFFLINE_ALPHABET_CODER_HPPgetSorted
+#ifndef _INCLUDED_OFFLINE_ALPHABET_CODER_HPP
 #define _INCLUDED_OFFLINE_ALPHABET_CODER_HPP
 
 #include <sdsl/int_vector.hpp>
@@ -47,8 +47,11 @@ public:
         }
     }
     
-    inline void encode_sym(uint8_t c) {
-        m_out->write((uint8_t)m_char2comp[c], bitsFor(m_sigma));
+    inline void encode_syms(const boost::string_ref& in, size_t start, size_t num) {
+        for(size_t p = start; p < start + num; p++) {
+            uint8_t c = in[p];
+            m_out->write((uint8_t)m_char2comp[c], bitsFor(m_sigma));
+        }
     }
 };
 
