@@ -2,6 +2,7 @@
 
 #include <tudocomp/io.h>
 #include <tudocomp/lzss/LZSSFactor.hpp>
+#include <tudocomp/lzss/OfflineLZSSCoder.hpp>
 #include <tudocomp/proto/OfflineAlphabetCoder.hpp>
 #include <tudocomp/proto/OfflineCompressor.hpp>
 

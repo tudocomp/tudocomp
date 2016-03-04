@@ -70,6 +70,7 @@ public:
         out_bits.write(len);
         
         //Write alphabet
+        factor_coder.encode_init();
         alphabet_coder.encode_alphabet();
         
         //Write rule markings
@@ -82,7 +83,6 @@ public:
         size_t p = 0;
         for(F f : factors) {
             alphabet_coder.encode_syms(in_buf, p, f.pos - p);
-            
             factor_coder.encode_fact(f);
             p += f.num;
         }
