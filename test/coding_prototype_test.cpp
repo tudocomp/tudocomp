@@ -14,7 +14,7 @@ TEST(CodingPrototype, offline) {
 
     Env env;
     
-    Input input = Input::from_memory("abaxaba");
+    Input input = Input::from_memory("abcXXabcYYabc");
     
     std::stringstream stm;
     Output output = Output::from_stream(stm);

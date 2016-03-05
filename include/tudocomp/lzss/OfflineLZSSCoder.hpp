@@ -45,9 +45,9 @@ public:
     }
     
     inline void encode_init() {
-        m_out->write(m_num_min);
-        m_out->write(m_num_bits);
-        m_out->write(m_src_bits);
+        m_out->write_compressed_int(m_num_min, 4);
+        m_out->write_compressed_int(m_num_bits, 5);
+        m_out->write_compressed_int(m_src_bits, 5);
     }
     
     inline void encode_fact(const LZSSFactor& f) {

@@ -54,7 +54,7 @@ public:
         //TODO: write magic (ID for A and C)
         
         //Write input text length
-        out_bits.write(len);
+        out_bits.write_compressed_int(len);
         
         //Write alphabet
         factor_coder.encode_init();

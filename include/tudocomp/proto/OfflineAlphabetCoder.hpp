@@ -47,7 +47,7 @@ public:
     }
     
     inline void encode_alphabet() {
-        m_out->write(m_sigma);
+        m_out->write_compressed_int(m_sigma);
         for(uint8_t c : m_comp2char) {
             m_out->write(c);
         }
@@ -61,7 +61,6 @@ public:
             
             uint8_t c = in[p];
             m_out->write(uint8_t(m_char2comp[c]), m_sigma_bits);
-            m_out->flush();
         }
     }
 };
