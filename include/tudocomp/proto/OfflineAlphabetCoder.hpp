@@ -16,6 +16,8 @@ private:
     BitOStream* m_out;
     
     size_t m_sigma;
+    size_t m_sigma_bits;
+    
     sdsl::int_vector<> m_comp2char;
     sdsl::int_vector<> m_char2comp;
 
@@ -30,27 +32,36 @@ public:
         auto ordered = counter.getSorted();
         
         m_sigma = ordered.size();
+        m_sigma_bits = bitsFor(m_sigma - 1);
+        
         m_comp2char = sdsl::int_vector<>(m_sigma, 0, 8);
-        m_char2comp = sdsl::int_vector<>(255, 0, bitsFor(m_sigma));
+        m_char2comp = sdsl::int_vector<>(255, 0, m_sigma_bits);
         
         for(size_t i = 0; i < m_sigma; i++) {
             uint8_t c = ordered[i].first;
             m_comp2char[i] = c;
             m_char2comp[c] = i;
         }
+        
+        DLOG(INFO) << "sigma = " << m_sigma << " (" << m_sigma_bits << " bits per symbol)";
     }
     
     inline void encode_alphabet() {
-        m_out->write(m_sigma, sizeof(m_sigma));
+        m_out->write(m_sigma);
         for(uint8_t c : m_comp2char) {
-            m_out->write(c, 8);
+            m_out->write(c);
         }
     }
     
     inline void encode_syms(const boost::string_ref& in, size_t start, size_t num) {
+        DLOG(INFO) << "encode_syms(" << start << "," << num << "):";
         for(size_t p = start; p < start + num; p++) {
+            DLOG(INFO) << "\t'" << in[p] << "'";
+            m_out->writeBit(0);
+            
             uint8_t c = in[p];
-            m_out->write((uint8_t)m_char2comp[c], bitsFor(m_sigma));
+            m_out->write(uint8_t(m_char2comp[c]), m_sigma_bits);
+            m_out->flush();
         }
     }
 };
