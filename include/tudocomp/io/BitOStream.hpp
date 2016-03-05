@@ -71,6 +71,29 @@ public:
             writeBit((value & T(T(1) << i)) != T(0));
         }
     }
+    
+    /// Write the given value as a compressed UINT.
+    ///
+    /// The input value is split into blocks. Each block is prepended
+    /// with a bit that tells if there is a following block or not.
+    /// This way, the integer is only stored in as many blocks as necessary.
+    ///
+    /// \param v The integer value to write.
+    /// \param b The block width in bits (default is 7 bits).
+    template<typename T>
+    inline void write_compressed_int(T v, size_t b = 7) {
+        assert(b > 0);
+        
+        uint64_t u = uint64_t(v);
+        uint64_t mask = (u << b) - 1;
+        while(v > 0) {
+            uint64_t current = v & mask;
+            v >>= b;
+            
+            writeBit(v > 0);
+            write(current, b);
+        }
+    }
 
     /// If there where any bits written to the internal buffer, write
     /// them out one byte at a time, filling the gap at the end with zeroes.
