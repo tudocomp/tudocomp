@@ -50,7 +50,9 @@ using CodeType = std::uint32_t;
 namespace globals {
 
 /// Dictionary Maximum Size (when reached, the dictionary will be reset)
-const CodeType dms {512 * 1024};
+//const CodeType dms {512 * 1024};
+const CodeType dms {std::numeric_limits<CodeType>::max()};
+const CodeType reserve_dms {0};
 
 } // namespace globals
 
@@ -101,7 +103,7 @@ public:
         for (long int c = minc; c <= maxc; ++c)
             initials[static_cast<unsigned char> (c)] = k++;
 
-        vn.reserve(globals::dms);
+        vn.reserve(globals::reserve_dms);
         reset();
     }
 
@@ -499,7 +501,7 @@ void decompress(std::istream &is, std::ostream &os)
     // "named" lambda function, used to reset the dictionary to its initial contents
     const auto reset_dictionary = [&dictionary] {
         dictionary.clear();
-        dictionary.reserve(globals::dms);
+        dictionary.reserve(globals::reserve_dms);
 
         const long int minc = std::numeric_limits<char>::min();
         const long int maxc = std::numeric_limits<char>::max();
@@ -517,7 +519,7 @@ void decompress(std::istream &is, std::ostream &os)
         s.clear();
 
         // the length of a string cannot exceed the dictionary's number of entries
-        s.reserve(globals::dms);
+        s.reserve(globals::reserve_dms);
 
         while (k != globals::dms)
         {

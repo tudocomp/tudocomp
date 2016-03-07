@@ -57,10 +57,10 @@ inputs = [
 ]
 commands = [
     ["tudocomp_driver -a t_lzw_jp",  "$IN -o $OUT", "t_lzw_jp.bit.tdc"   ],
+    ["tudocomp_driver -a t_lzw_bit",     "$IN -o $OUT", "t_lzw_bit.tdc"      ],
+    ["tudocomp_driver -a lzwrule.bit",   "$IN -o $OUT", "lzwrule.bit.tdc"    ],
     ["tudocomp_driver -a lz78rule.bit",  "$IN -o $OUT", "lz78rule.bit.tdc"   ],
     ["tudocomp_driver -a t_lz78_bit",    "$IN -o $OUT", "t_lz78_bit.tdc"     ],
-    ["tudocomp_driver -a lzwrule.bit",   "$IN -o $OUT", "lzwrule.bit.tdc"    ],
-    ["tudocomp_driver -a t_lzw_bit",     "$IN -o $OUT", "t_lzw_bit.tdc"      ],
     ["tudocomp_driver -a lz78rule.debug","$IN -o $OUT", "lz78rule.debug.tdc" ],
     ["tudocomp_driver -a t_lz78_debug",  "$IN -o $OUT", "t_lz78_debug.tdc"   ],
     ["tudocomp_driver -a lzwrule.debug", "$IN -o $OUT", "lzwrule.debug.tdc"  ],
