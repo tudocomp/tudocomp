@@ -1,3 +1,4 @@
 add_subdirectory(compare_tool)
 add_subdirectory(tudocomp)
 add_subdirectory(tudocomp_driver)
+add_subdirectory(lzw_julius_pettersson)
