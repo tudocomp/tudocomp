@@ -1,28 +1,21 @@
-#ifndef _INCLUDED_OFFLINE_COMPRESSOR_HPP
-#define _INCLUDED_OFFLINE_COMPRESSOR_HPP
-
-#include <sdsl/int_vector.hpp>
-#include <sdsl/rrr_vector.hpp>
+#ifndef _INCLUDED_ONLINE_COMPRESSOR_HPP
+#define _INCLUDED_ONLINE_COMPRESSOR_HPP
 
 #include <tudocomp/Compressor.hpp>
 
 namespace tudocomp {
 
-// A requires: encode_alphabet(), encode_sym(uint8_t)
-// C requires: encode_init, encode_fact(factor_type)
-// F requires: static factorize_offline
-// factor_type requires: pos
 template<typename F, typename A, typename C>
-class OfflineCompressor : public Compressor {
+class OnlineCompressor : public Compressor {
 
 private:
 
 public:
     /// Class needs to be constructed with an `Env&` argument.
-    inline OfflineCompressor() = delete;
+    inline OnlineCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline OfflineCompressor(Env& env): Compressor(env) {}
+    inline OnlineCompressor(Env& env): Compressor(env) {}
     
     /// Compress `inp` into `out`.
     ///
@@ -35,15 +28,11 @@ public:
         
         DLOG(INFO) << "Init (n = " << len << ")...";
 
-        auto in_guard = input.as_view();
+        auto in_guard = input.as_view(); //TODO use stream for online compression!
         const boost::string_ref& in_buf = *in_guard;
         
-        //Factorize
-        DLOG(INFO) << "Factorize...";
-        auto factors = F::factorize_offline(*m_env, in_buf, len);
-        
         //Encode
-        DLOG(INFO) << "Init encoding...";
+        DLOG(INFO) << "Init...";
         
         auto out_guard = output.as_stream();
         BitOStream out_bits(*out_guard);
@@ -52,25 +41,16 @@ public:
         //Write input text length
         out_bits.write_compressed_int(len);
         
-        A alphabet_coder(*m_env, out_bits, in_buf);
+        //Init coders
+        A alphabet_coder(*m_env, out_bits);
         alphabet_coder.encode_init();
         
-        C factor_coder(*m_env, out_bits, factors);
+        C factor_coder(*m_env, out_bits, len);
         factor_coder.encode_init();
-
-        //Encode body
-        size_t p = 0;
-        for(auto f : factors) {
-            alphabet_coder.encode_syms(in_buf, p, f.pos - p);
-            
-            factor_coder.encode_fact(f);
-            p = f.pos + f.num;
-        }
         
-        //Encode remainder
-        if(p < len) {
-            alphabet_coder.encode_syms(in_buf, p, len - p);
-        }
+        //Factorize and encode
+        DLOG(INFO) << "Factorize / encode...";
+        F::factorize(*m_env, in_buf, len, alphabet_coder, factor_coder);
         
         //Done
         out_bits.flush();
@@ -84,6 +64,7 @@ public:
     virtual void decompress(Input& input, Output& output) override final {
         // TODO
     }
+
 };
 
 }

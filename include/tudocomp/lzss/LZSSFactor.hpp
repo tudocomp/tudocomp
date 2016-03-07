@@ -7,6 +7,7 @@
 namespace tudocomp {
 namespace lzss {
 
+/// Represents a LZSS factor.
 class LZSSFactor {
     
 public:

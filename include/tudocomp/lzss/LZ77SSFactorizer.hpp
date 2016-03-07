@@ -2,6 +2,7 @@
 #define _INCLUDED_LZ77SS_FACTORIZER_HPP
 
 #include <algorithm>
+#include <functional>
 #include <vector>
 
 #include <sdsl/int_vector.hpp>
@@ -9,6 +10,9 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
+
+#include <tudocomp/proto/Collector.hpp>
+#include <tudocomp/proto/Discard.hpp>
 
 #include <tudocomp/lzss/LZSSFactor.hpp>
 
@@ -18,16 +22,17 @@ namespace lzss {
 class LZ77SSFactorizer {
 
 public:
-    inline static std::vector<LZSSFactor>
-    factorize(Env& env, const boost::string_ref& in, size_t len) {
-        std::vector<LZSSFactor> factors;
+    template<typename A, typename C>
+    inline static void factorize(
+        Env& env, const boost::string_ref& in, size_t len, A& consume_sym, C& consume_fact) {
         
         size_t fact_min = 3; //factor threshold
         size_t w = 16;       //window size
-        
-        LZSSFactor f;
+
         size_t p = 0;
         while(p < len) {
+            LZSSFactor f;
+            
             for(size_t k = (p > w ? p - w : 0); k + fact_min < p; k++) {
                 size_t j = 0;
                 while(p + j < len && in[k + j] == in[p + j]) {
@@ -42,21 +47,24 @@ public:
             }
             
             if(f.num > 0) {
-                factors.push_back(f);
-
                 DLOG(INFO) << "Factor: {" << f.pos << "," << f.src << "," << f.num << "}";
                 
+                consume_fact(f);
                 p += f.num;
-                f = LZSSFactor(); //reset
             } else {
+                consume_sym(in[p]);
                 ++p;
             }
         }
-        
-        //sorting is implicitly done already
-        //std::sort(factors.begin(), factors.end());
+    }
 
-        return factors;
+    inline static std::vector<LZSSFactor>
+    factorize_offline(Env& env, const boost::string_ref& in, size_t len) {
+        Discard<uint8_t> syms;
+        Collector<LZSSFactor> factors;
+        
+        factorize(env, in, len, syms, factors);
+        return factors.vector;
     }
 
 };

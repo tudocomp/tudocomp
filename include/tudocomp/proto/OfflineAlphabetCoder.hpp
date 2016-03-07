@@ -8,6 +8,7 @@
 #include <tudocomp/util.h>
 #include <tudocomp/util/counter.h>
 
+//TODO only supports 8-bit characters
 namespace tudocomp {
 
 class OfflineAlphabetCoder {
@@ -46,7 +47,7 @@ public:
         DLOG(INFO) << "sigma = " << m_sigma << " (" << m_sigma_bits << " bits per symbol)";
     }
     
-    inline void encode_alphabet() {
+    inline void encode_init() {
         m_out->write_compressed_int(m_sigma);
         for(uint8_t c : m_comp2char) {
             m_out->write(c);
