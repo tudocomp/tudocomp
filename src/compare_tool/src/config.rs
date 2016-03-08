@@ -36,6 +36,7 @@ fn parse_profile(name: &str, toml: &toml::Table) -> Result<Profile, TomlErr> {
 
     if let Some(commands) = toml_entry.get("commands") {
         let commands = try!(commands.as_slice().ok_or(TomlErr));
+        profile.commands.clear();
         for command in commands {
             let command = try!(command.as_slice().ok_or(TomlErr));
             let cmd0 = try!(command.get(0).and_then(|s| s.as_str()).ok_or(TomlErr)).to_owned();
@@ -48,6 +49,7 @@ fn parse_profile(name: &str, toml: &toml::Table) -> Result<Profile, TomlErr> {
 
     if let Some(inputs) = toml_entry.get("inputs") {
         let inputs = try!(inputs.as_slice().ok_or(TomlErr));
+        profile.inputs.clear();
         for input in inputs {
             let input = try!(input.as_str().ok_or(TomlErr)).to_owned();
 
