@@ -1,0 +1,58 @@
+#ifndef _INCLUDED_LZ78_CICS_COMPRESSOR_HPP_
+#define _INCLUDED_LZ78_CICS_COMPRESSOR_HPP_
+
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/lz78/lzcics/lz78.hpp>
+#include <tudocomp/lz78/lzcics/st.hpp>
+#include <tudocomp/lz78/lzcics/util.hpp>
+
+namespace tudocomp {
+namespace lz78 {
+namespace lzcics {
+
+template <typename C>
+class Lz78cicsCompressor: public Compressor {
+public:
+    using Compressor::Compressor;
+
+    inline virtual void compress(Input& in, Output& out) override final {
+        auto guard = in.as_view();
+        auto i_view = *guard;
+
+        C coder(*m_env, out);
+
+        std::string text(i_view);
+
+        //Build ST
+        cst_t cst;
+        ST st = suffix_tree(text, cst);
+
+        LZ78rule l78 = lz78(st);
+
+        CHECK(l78.ref.size() == l78.cha.size());
+
+        for (size_t i = 0; i < l78.ref.size(); i++) {
+            auto ref = l78.ref[i];
+
+            // want to have undef == 0
+            // and idx starting at 1
+            ref++;
+
+            coder.encode_fact(Entry {
+                ref,
+                l78.cha[i],
+            });
+        }
+    }
+
+    inline virtual void decompress(Input& in, Output& out) override final {
+        C::decode(in, out);
+    }
+
+};
+
+}
+}
+}
+
+#endif

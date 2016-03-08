@@ -13,6 +13,7 @@
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
 #include <tudocomp/lz78/Lz78BitCoder.hpp>
 #include <tudocomp/lz78/Lz78Compressor.hpp>
+#include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
 
 using lz78::Entry;
 using lz78::Entries;
