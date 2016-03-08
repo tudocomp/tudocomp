@@ -22,8 +22,5 @@ ST suffix_tree(const std::string& text, cst_t& cst) {
     return ST(cst);
 }
 
-//std::ostream& debug_out = std::cout;
-std::stringstream debug_out;
-
 #endif
 

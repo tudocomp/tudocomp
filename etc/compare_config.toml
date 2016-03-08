@@ -65,8 +65,21 @@ commands = [
     ["tudocomp_driver -a lzwrule.debug", "$IN -o $OUT", "lzwrule.debug.tdc"  ],
     ["tudocomp_driver -a t_lzw_debug",   "$IN -o $OUT", "t_lzw_debug.tdc"    ],
 ]
+
 [lz_compare_large]
 inherit_from = "lz_compare"
 inputs = [
     "$DATASETS/download/real/english.200MB",
+]
+
+[lz78]
+inputs = [
+    "$DATASETS/../src/tudocomp_driver/tudocomp_driver.cpp",
+    "$DATASETS/download/real/english.50MB",
+    "$DATASETS/download/real/english.200MB",
+]
+commands = [
+    ["tudocomp_driver -a lz78rule.bit",  "$IN -o $OUT", "lz78rule.bit.tdc"   ],
+    ["tudocomp_driver -a t_lz78_bit",    "$IN -o $OUT", "t_lz78_bit.tdc"     ],
+    ["tudocomp_driver -a t_lz78_cics_bit",    "$IN -o $OUT", "t_lz78_cics_bit.tdc"     ],
 ]

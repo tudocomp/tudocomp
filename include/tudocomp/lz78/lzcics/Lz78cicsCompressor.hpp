@@ -21,6 +21,16 @@ public:
 
         C coder(*m_env, out);
 
+        // TODO: Hack to make the cics compressor work
+        // with empty input
+        if (i_view == "") {
+            coder.encode_fact(Entry {
+                0,
+                '\0',
+            });
+            return;
+        }
+
         std::string text(i_view);
 
         //Build ST
@@ -46,7 +56,26 @@ public:
     }
 
     inline virtual void decompress(Input& in, Output& out) override final {
-        C::decode(in, out);
+        // NB: The encoder adds a trailing 0 byte,
+        // need to remove it when decoding.
+        //
+        // TODO: This does currently allocate a new buffer
+        // but could be a streaming adapter that
+        // remembers 1 or 2 chars.
+
+        std::vector<uint8_t> buf;
+
+        auto out_buf = Output::from_memory(buf);
+
+        C::decode(in, out_buf);
+
+        CHECK(buf[buf.size() - 1] == 0);
+
+        buf.pop_back();
+
+        auto o_guard = out.as_stream();
+
+        (*o_guard).write((const char*)&buf[0], buf.size());
     }
 
 };

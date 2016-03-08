@@ -19,11 +19,11 @@ std::string lz78decode(const std::vector<size_t>& ref, const std::vector<char>& 
     std::string t;
     for(size_t i = 0; i < ref.size(); ++i) {
         if(ref[i] == undef) {
-            debug_out << "Rule: char " << cha[i] << std::endl;
+            DLOG(INFO) << "Rule: char " << cha[i] << std::endl;
             t += cha[i];
             continue;
         }
-        debug_out << "Rule: ref " << ref[i] << ", cha: " << cha[i] << std::endl;
+        DLOG(INFO) << "Rule: ref " << ref[i] << ", cha: " << cha[i] << std::endl;
 
         std::string reff;
         size_t k = ref[i];
@@ -31,7 +31,7 @@ std::string lz78decode(const std::vector<size_t>& ref, const std::vector<char>& 
             reff = cha[k] + reff;
             k = ref[k];
         }
-        debug_out << "Expand ref to " << reff << std::endl;
+        DLOG(INFO) << "Expand ref to " << reff << std::endl;
         t += reff + cha[i];
     }
     t.pop_back();
@@ -62,7 +62,7 @@ struct ExplorationValues {
         : nodes(st.cst.bp.size()) //st.internal_nodes + st.cst.size()) // TODO: this value is too big
         , ne(new size_t[nodes])
     {
-        debug_out << "Nodes-Size: " << nodes << std::endl;
+        DLOG(INFO) << "Nodes-Size: " << nodes << std::endl;
         reset();
     }
     virtual ~ExplorationValues() {
@@ -74,7 +74,7 @@ struct ExplorationValues {
     }
     void incr(const cst_t::node_type& node) {
         assert(node < nodes);
-        debug_out << "ne incr " << node << std::endl;
+        DLOG(INFO) << "ne incr " << node << std::endl;
         ++ne[node];
     }
     void reset() {
@@ -100,7 +100,7 @@ LZ78rule lz78naiv(const std::string& text, const ST&) {
     for(size_t i = 0; i < text.length()+1; ++i) {
         bool hasref = false;
         std::string sub = text.substr(oldpos, i-oldpos+1);
-        debug_out << "examinging substr " << oldpos << " - " << (i-oldpos+1) << ":" << sub <<  std::endl;
+        DLOG(INFO) << "examinging substr " << oldpos << " - " << (i-oldpos+1) << ":" << sub <<  std::endl;
         for(size_t f = 0; f < factors.size(); ++f) {
             if(factors[f] == sub) {
                 refid = f;
@@ -116,17 +116,17 @@ LZ78rule lz78naiv(const std::string& text, const ST&) {
             refid = undef;
         }
     }
-        debug_out << "ref: ";
-        for(size_t i = 0; i < ref.size(); ++i) debug_out << " " << ref[i];
-        debug_out << std::endl;
+        DLOG(INFO) << "ref: ";
+        for(size_t i = 0; i < ref.size(); ++i) DLOG(INFO) << " " << ref[i];
+        DLOG(INFO) << std::endl;
 
-        debug_out << "cha: ";
-        for(size_t i = 0; i < cha.size(); ++i) debug_out << " " << cha[i];
-        debug_out << std::endl;
+        DLOG(INFO) << "cha: ";
+        for(size_t i = 0; i < cha.size(); ++i) DLOG(INFO) << " " << cha[i];
+        DLOG(INFO) << std::endl;
 
-        debug_out << "fac: ";
-        for(size_t i = 0; i < factors.size(); ++i) debug_out << " " << factors[i];
-        debug_out << std::endl;
+        DLOG(INFO) << "fac: ";
+        for(size_t i = 0; i < factors.size(); ++i) DLOG(INFO) << " " << factors[i];
+        DLOG(INFO) << std::endl;
 
     return LZ78rule { ref, cha };
 
@@ -140,7 +140,7 @@ LZ78rule lz78(const ST& st) {
     bit_vector bC(st.internal_nodes);
     bit_vector bW(st.internal_nodes);
     auto ell = st.smallest_leaf();
-    debug_out << "Selecting leaf " << ell << std::endl;
+    DLOG(INFO) << "Selecting leaf " << ell << std::endl;
     do {
         auto v = st.root;
         size_t d = 0;
@@ -150,9 +150,9 @@ LZ78rule lz78(const ST& st) {
         const auto u = st.parent(v);
         const size_t s = st.str_depth(u); //ev[u];
         if(v == ell) {
-            debug_out << "Leaf-Access: Omitting " << s << "+1 chars" << std::endl;
+            DLOG(INFO) << "Leaf-Access: Omitting " << s << "+1 chars" << std::endl;
             ell = st.next_mth_leaf(ell, s+1);
-            debug_out << "Selecting leaf " << ell << std::endl;
+            DLOG(INFO) << "Selecting leaf " << ell << std::endl;
             continue;
         }
         const auto vid = st.nid(v);
@@ -162,10 +162,10 @@ LZ78rule lz78(const ST& st) {
 //
 //         auto la = cst.leftmost_leaf(cst.select_child(v,st.child_rank(st.level_anc(ell,cst.node_depth(v)+1)) == 1 ? 0 : 1));
 //         const size_t m = ev[v];
-//         debug_out << "Omitting " << m << "+" << s << "+1 chars" << std::endl;
+//         DLOG(INFO) << "Omitting " << m << "+" << s << "+1 chars" << std::endl;
 //         ell = st.next_mth_leaf(ell, m+s+1);
 //         la = st.next_mth_leaf(la, m+s+1);
-//         debug_out << "Selecting leaf " << ell << std::endl;
+//         DLOG(INFO) << "Selecting leaf " << ell << std::endl;
 //         if(st.head(ell) != st.head(la)) {
 //             bV[vid] = 1;
 //         }
@@ -174,11 +174,11 @@ LZ78rule lz78(const ST& st) {
 //             auto la = cst.leftmost_leaf(cst.select_child(v, 1));
 //             auto lb = cst.leftmost_leaf(cst.select_child(v, 2));
 //
-//             debug_out << "Omitting " << m << "+" << s << "+1 chars" << std::endl;
+//             DLOG(INFO) << "Omitting " << m << "+" << s << "+1 chars" << std::endl;
 // //            ell = st.next_mth_leaf(ell, m+s+1);
 //             la = st.next_mth_leaf(la, m+s+1);
 //             lb = st.next_mth_leaf(lb, m+s+1);
-// //            debug_out << "Selecting leaf " << ell << std::endl;
+// //            DLOG(INFO) << "Selecting leaf " << ell << std::endl;
 //             return st.head(la) != st.head(lb);
 //         })());
 
@@ -188,20 +188,20 @@ LZ78rule lz78(const ST& st) {
         auto lb = cst.leftmost_leaf(cst.select_child(v, 2));
 
         const size_t m = ev[v];
-        debug_out << "Omitting " << m << "+" << s << "+1 chars" << std::endl;
+        DLOG(INFO) << "Omitting " << m << "+" << s << "+1 chars" << std::endl;
         ell = st.next_mth_leaf(ell, m+s+1);
         la = st.next_mth_leaf(la, m+s+1);
         lb = st.next_mth_leaf(lb, m+s+1);
-        debug_out << "Selecting leaf " << ell << std::endl;
+        DLOG(INFO) << "Selecting leaf " << ell << std::endl;
         if(st.head(la) != st.head(lb)) {
             bV[vid] = 1;
         }
         ev.incr(v);
     } while(ell != st.smallest_leaf());
-    debug_out << bV << std::endl;
-    debug_out << bW << std::endl;
-    debug_out << "Nodes:" << std::endl;
-    for(size_t i = 0; i < ev.nodes; ++i) debug_out << ev[i] << std::endl;
+    DLOG(INFO) << bV << std::endl;
+    DLOG(INFO) << bW << std::endl;
+    DLOG(INFO) << "Nodes:" << std::endl;
+    for(size_t i = 0; i < ev.nodes; ++i) DLOG(INFO) << ev[i] << std::endl;
 
     std::vector<size_t> pos;
     std::vector<size_t> len;
@@ -223,59 +223,59 @@ LZ78rule lz78(const ST& st) {
         do {
             v = st.level_anc(ell, ++d);
         } while(v != ell && bV[st.nid(v)] != 0);
-        debug_out << "v: " << v << std::endl;
+        DLOG(INFO) << "v: " << v << std::endl;
         const auto u = st.parent(v);
         const size_t s = st.str_depth(u); //ev[u];
         if(v == ell) {
-            debug_out << "Leaf-Access: Omitting " << s << "+1 chars" << std::endl;
+            DLOG(INFO) << "Leaf-Access: Omitting " << s << "+1 chars" << std::endl;
             ell = st.next_mth_leaf(ell, s);
-            debug_out << "cha: " << st.head(ell) << std::endl;
+            DLOG(INFO) << "cha: " << st.head(ell) << std::endl;
             cha.push_back(st.head(ell));
             ell = st.next_leaf(ell);
-            debug_out << "Selecting leaf " << ell << std::endl;
+            DLOG(INFO) << "Selecting leaf " << ell << std::endl;
             ++x;
             if(cst.node_depth(v) == 1) {
-                debug_out << "fresh factor" << std::endl;
+                DLOG(INFO) << "fresh factor" << std::endl;
                 ref.push_back(undef);
             } else {
                 const size_t z = W[rankW.rank(st.nid(st.parent(v)))];
-                debug_out << x << "-th factor refers to " << z << "-th factor" << std::endl;
+                DLOG(INFO) << x << "-th factor refers to " << z << "-th factor" << std::endl;
                 ref.push_back(z);
             }
             continue;
         }
         const auto vid = st.nid(v);
-        debug_out << "vid: " << vid << " witness: " << rankW.rank(vid) << std::endl;
+        DLOG(INFO) << "vid: " << vid << " witness: " << rankW.rank(vid) << std::endl;
         const auto y = W[rankW.rank(vid)];
-        debug_out << "y= " << y << std::endl;
+        DLOG(INFO) << "y= " << y << std::endl;
         if(y == undef) {
-        debug_out << "depth(v)= " << cst.node_depth(v) << std::endl;
+        DLOG(INFO) << "depth(v)= " << cst.node_depth(v) << std::endl;
             if(cst.node_depth(v) == 1) {
-                debug_out << "fresh factor" << std::endl;
+                DLOG(INFO) << "fresh factor" << std::endl;
                 ref.push_back(undef);
             } else {
                 const size_t z = W[rankW.rank(st.nid(st.parent(v)))];
-                debug_out << x << "-th factor refers to " << z << "-th factor" << std::endl;
+                DLOG(INFO) << x << "-th factor refers to " << z << "-th factor" << std::endl;
                 ref.push_back(z);
             }
         }
         else {
-            debug_out << x << "-th factor refers to " << y << "-th factor" << std::endl;
+            DLOG(INFO) << x << "-th factor refers to " << y << "-th factor" << std::endl;
             ref.push_back(y);
         }
 
         W[rankW.rank(vid)] = x;
-        debug_out << "W: ";
-        for(size_t i = 0; i < zw; ++i) debug_out << " " << W[i];
-        debug_out << std::endl;
+        DLOG(INFO) << "W: ";
+        for(size_t i = 0; i < zw; ++i) DLOG(INFO) << " " << W[i];
+        DLOG(INFO) << std::endl;
 
-        debug_out << "V: ";
-        for(size_t i = 0; i < bV.size(); ++i) debug_out << " " << bV[i];
-        debug_out << std::endl;
+        DLOG(INFO) << "V: ";
+        for(size_t i = 0; i < bV.size(); ++i) DLOG(INFO) << " " << bV[i];
+        DLOG(INFO) << std::endl;
 
-        debug_out << "N: ";
-        for(size_t i = 0; i < ev.nodes; ++i) debug_out << " " << ev[i];
-        debug_out << std::endl;
+        DLOG(INFO) << "N: ";
+        for(size_t i = 0; i < ev.nodes; ++i) DLOG(INFO) << " " << ev[i];
+        DLOG(INFO) << std::endl;
 
 
         // TODO: exchange la with l, use child-rank and level-anc to determine lb correctly
@@ -283,14 +283,14 @@ LZ78rule lz78(const ST& st) {
         auto lb = cst.leftmost_leaf(cst.select_child(v, 2));
 
         const size_t m = ev[v];
-        debug_out << "Omitting " << m << "+" << s << "+1 chars" << std::endl;
+        DLOG(INFO) << "Omitting " << m << "+" << s << "+1 chars" << std::endl;
         la = st.next_mth_leaf(la, m+s+1);
         lb = st.next_mth_leaf(lb, m+s+1);
         ell = st.next_mth_leaf(ell, m+s);
-        debug_out << "cha: " << st.head(ell) << std::endl;
+        DLOG(INFO) << "cha: " << st.head(ell) << std::endl;
         cha.push_back(st.head(ell));
         ell = st.next_leaf(ell);
-        debug_out << "Selecting leaf " << ell << std::endl;
+        DLOG(INFO) << "Selecting leaf " << ell << std::endl;
         if(st.head(la) != st.head(lb)) {
             bV[vid] = 1;
         }
@@ -298,13 +298,13 @@ LZ78rule lz78(const ST& st) {
         ++x;
     } while(ell != st.smallest_leaf());
 
-        debug_out << "ref: #" << ref.size() << " : ";
-        for(size_t i = 0; i < ref.size(); ++i) debug_out << " " << ref[i];
-        debug_out << std::endl;
+        DLOG(INFO) << "ref: #" << ref.size() << " : ";
+        for(size_t i = 0; i < ref.size(); ++i) DLOG(INFO) << " " << ref[i];
+        DLOG(INFO) << std::endl;
 
-        debug_out << "cha: " << cha.size() << " : ";
-        for(size_t i = 0; i < cha.size(); ++i) debug_out << " " << cha[i];
-        debug_out << std::endl;
+        DLOG(INFO) << "cha: " << cha.size() << " : ";
+        for(size_t i = 0; i < cha.size(); ++i) DLOG(INFO) << " " << cha[i];
+        DLOG(INFO) << std::endl;
 
     return LZ78rule { ref, cha };
 }
