@@ -5,6 +5,9 @@
 #include <sdsl/suffix_trees.hpp>
 
 #include "bp_support_sada.hpp"
+#include <sstream>
+
+extern std::stringstream debug_out;
 
 using namespace sdsl;
 
@@ -20,8 +23,8 @@ struct ST {
 	const cst_t::size_type alpha; //! the \alpha-th leaf in the suffix tree has label 1
 	const rank_support_v5<1> m_bp_rank1; //! rank the one bits in the BP
 	const size_t internal_nodes; //! number of internal nodes
-	
-	ST(const cst_t& _cst) 
+
+	ST(const cst_t& _cst)
 		: cst(_cst)
 		, root(cst.root())
 		, alpha(cst.csa.alpha())
@@ -34,12 +37,12 @@ struct ST {
 		return cst.parent(node);
 	}
 	/**
-	 * Returns the level ancestor of node. 
+	 * Returns the level ancestor of node.
 	 * In the sdsl-implementation, the 0-th ancestor is the node itself.
 	 * Here, we want that root is the 0-th ancestor.
 	 */
 	cst_t::node_type level_anc(const cst_t::node_type& node, size_t depth)const {
-		std::cout << "LevelAnc of node " << node << " on depth " << depth << " is " << cst.bp_support.level_anc(node, cst.node_depth(node)-depth) << std::endl;
+		debug_out << "LevelAnc of node " << node << " on depth " << depth << " is " << cst.bp_support.level_anc(node, cst.node_depth(node)-depth) << std::endl;
 		return cst.bp_support.level_anc(node, cst.node_depth(node)-depth);
 	}
 	/**
@@ -55,13 +58,13 @@ struct ST {
 	// cst_t::node_type child(const cst_t::node_type& node, const cst_t::size_type number)const {
 	// 	return cst.select_child(node, number);
 	// }
-	char head(const cst_t::node_type& node)const { 
+	char head(const cst_t::node_type& node)const {
 		//TODO: Test if this assert works!
-		std::cout << "child: " << root_child_rank(level_anc(node,1)) << std::endl;
-		std::cout << "Edge: " << (int) cst.csa.comp2char[root_child_rank(level_anc(node,1))]  << std::endl;
-		//assert( cst.edge(level_anc(node,1), 1) == 
+		debug_out << "child: " << root_child_rank(level_anc(node,1)) << std::endl;
+		debug_out << "Edge: " << (int) cst.csa.comp2char[root_child_rank(level_anc(node,1))]  << std::endl;
+		//assert( cst.edge(level_anc(node,1), 1) ==
 		//		cst.csa.comp2char[root_child_rank(level_anc(node,1))] );
-		return cst.csa.comp2char[root_child_rank(level_anc(node,1))]; 
+		return cst.csa.comp2char[root_child_rank(level_anc(node,1))];
 	}
 	/**
 	 * Return the leaf corresponding to the suffix starting at position 0, i.e., the leaf with the longest string-depth
@@ -73,7 +76,7 @@ struct ST {
 	 * Given a leaf node, we select the leaf whose label is the label of node plus one.
 	 */
 	cst_t::node_type next_leaf(const cst_t::node_type& node)const {
-		std::cout << "Next Leaf " << node << "-> " << cst.select_leaf(cst.csa.psi[leafrank(node)]+1) << std::endl;
+		debug_out << "Next Leaf " << node << "-> " << cst.select_leaf(cst.csa.psi[leafrank(node)]+1) << std::endl;
 		return cst.select_leaf(cst.csa.psi[leafrank(node)]+1);
 	}
 	/*
@@ -85,14 +88,14 @@ struct ST {
 			val = cst.csa.psi[val];
 			--m;
 		}
-		std::cout << "Next " << m << "-th Leaf " << node << "-> " << cst.select_leaf(m+1) << std::endl;
+		debug_out << "Next " << m << "-th Leaf " << node << "-> " << cst.select_leaf(m+1) << std::endl;
 		return cst.select_leaf(val+1);
 	}
 	/*
 	 * returns the number of preceding leaves of node
 	 */
 	cst_t::size_type leafrank(const cst_t::node_type& node)const{
-		std::cout << "Leafrank " << node << "-> " << cst.bp_rank_10.rank(node) << std::endl;
+		debug_out << "Leafrank " << node << "-> " << cst.bp_rank_10.rank(node) << std::endl;
 		return cst.bp_rank_10.rank(node);
 	}
 	/*
@@ -109,7 +112,7 @@ struct ST {
 			++m;
 		}
 		//assert(m == cst.depth(node));
-		std::cout << "Depth of " << node  << " is " << m << std::endl;
+		debug_out << "Depth of " << node  << " is " << m << std::endl;
 		return m;
 	}
 	/*
@@ -117,7 +120,7 @@ struct ST {
 	 */
 	cst_t::size_type nid(const cst_t::node_type& node)const{
 		assert(!cst.is_leaf(node));
-		std::cout << "NID of node " << node << " is " << m_bp_rank1.rank(node) - cst.bp_rank_10.rank(node) << std::endl;
+		debug_out << "NID of node " << node << " is " << m_bp_rank1.rank(node) - cst.bp_rank_10.rank(node) << std::endl;
 		return m_bp_rank1.rank(node)- cst.bp_rank_10.rank(node);
 	}
 

@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 #include <streambuf>
+#include <sstream>
 
 #include "st.hpp"
 
@@ -20,6 +21,9 @@ ST suffix_tree(const std::string& text, cst_t& cst) {
 	construct_im(cst, text, 1);
     return ST(cst);
 }
+
+//std::ostream& debug_out = std::cout;
+std::stringstream debug_out;
 
 #endif
 
