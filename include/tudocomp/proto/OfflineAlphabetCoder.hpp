@@ -15,6 +15,7 @@ class OfflineAlphabetCoder {
 
 private:
     BitOStream* m_out;
+    io::InputSliceGuard m_in;
     
     size_t m_sigma;
     size_t m_sigma_bits;
@@ -23,10 +24,10 @@ private:
     sdsl::int_vector<> m_char2comp;
 
 public:
-    inline OfflineAlphabetCoder(Env& env, BitOStream& out, const boost::string_ref& in) : m_out(&out) {
+    inline OfflineAlphabetCoder(Env& env, BitOStream& out, Input& input) : m_out(&out), m_in(input.as_view()) {
         Counter<uint8_t> counter;
-        
-        for(uint8_t c : in) {
+
+        for(uint8_t c : *m_in) {
             counter.increase(c);
         }
         
@@ -54,13 +55,13 @@ public:
         }
     }
     
-    inline void encode_syms(const boost::string_ref& in, size_t start, size_t num) {
+    inline void encode_syms(size_t start, size_t num) {
         DLOG(INFO) << "encode_syms(" << start << "," << num << "):";
         for(size_t p = start; p < start + num; p++) {
-            DLOG(INFO) << "\t'" << in[p] << "'";
+            DLOG(INFO) << "\t'" << (*m_in)[p] << "'";
             m_out->writeBit(0);
             
-            uint8_t c = in[p];
+            uint8_t c = (*m_in)[p];
             m_out->write(uint8_t(m_char2comp[c]), m_sigma_bits);
         }
     }

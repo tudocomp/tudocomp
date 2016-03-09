@@ -37,26 +37,34 @@ namespace io {
             std::string path;
         };
 
+        std::shared_ptr<InputSliceGuard> m_view;
+
     public:
         boost::variant<Memory, Stream, File> data;
 
         static Input from_path(std::string path) {
-            return Input { File { std::move(path) } };
+            return Input ( File { std::move(path) } );
         }
 
         static Input from_memory(const std::vector<uint8_t>& buf) {
-            return Input { Memory { &buf[0], buf.size() } };
+            return Input ( Memory { &buf[0], buf.size() } );
         }
 
         static Input from_memory(const boost::string_ref buf) {
-            return Input { Memory { (const uint8_t*) &buf[0], buf.size() } };
+            return Input ( Memory { (const uint8_t*) &buf[0], buf.size() } );
         }
 
         static Input from_stream(std::istream& stream) {
-            return Input { Stream { &stream } };
+            return Input ( Stream { &stream } );
         }
 
-        inline InputSliceGuard as_view();
+        inline Input() {
+        }
+
+        inline Input(boost::variant<Memory, Stream, File> _data) : data(_data) {
+        }
+
+        inline InputSliceGuard& as_view();
         inline InputStreamGuard as_stream();
 
         inline bool has_size();
@@ -92,31 +100,34 @@ namespace io {
         }
     };
 
-    inline InputSliceGuard Input::as_view() {
-        struct visitor: public boost::static_visitor<InputSliceGuard> {
-            InputSliceGuard operator()(Input::Memory& mem) const {
-                return InputSliceGuard {
-                    InputSliceGuard::Memory { mem.ptr, mem.size }
-                };
-            }
-            InputSliceGuard operator()(Input::File& mem) const {
-                return InputSliceGuard {
-                    InputSliceGuard::Stream {
-                        read_file_to_stl_byte_container<
-                            std::vector<uint8_t>>(mem.path)
-                    }
-                };
-            }
-            InputSliceGuard operator()(Input::Stream& strm) const {
-                return InputSliceGuard {
-                    InputSliceGuard::Stream {
-                        read_stream_to_stl_byte_container<
-                            std::vector<uint8_t>>(*strm.stream)
-                    }
-                };
-            }
-        };
-        return boost::apply_visitor(visitor(), data);
+    inline InputSliceGuard& Input::as_view() {
+        if(!m_view) {
+            struct visitor: public boost::static_visitor<InputSliceGuard*> {
+                InputSliceGuard* operator()(Input::Memory& mem) const {
+                    return new InputSliceGuard {
+                        InputSliceGuard::Memory { mem.ptr, mem.size }
+                    };
+                }
+                InputSliceGuard* operator()(Input::File& mem) const {
+                    return new InputSliceGuard {
+                        InputSliceGuard::Stream {
+                            read_file_to_stl_byte_container<
+                                std::vector<uint8_t>>(mem.path)
+                        }
+                    };
+                }
+                InputSliceGuard* operator()(Input::Stream& strm) const {
+                    return new InputSliceGuard {
+                        InputSliceGuard::Stream {
+                            read_stream_to_stl_byte_container<
+                                std::vector<uint8_t>>(*strm.stream)
+                        }
+                    };
+                }
+            };
+            m_view = std::shared_ptr<InputSliceGuard>(boost::apply_visitor(visitor(), data));
+        }
+        return *m_view;
     };
 
     struct InputStreamGuard {
@@ -168,33 +179,54 @@ namespace io {
     };
 
     inline InputStreamGuard Input::as_stream() {
-        struct visitor: public boost::static_visitor<InputStreamGuard> {
-            InputStreamGuard operator()(Input::Memory& mem) const {
-                return InputStreamGuard {
-                    InputStreamGuard::Memory {
-                        ViewStream {
-                            (char*)mem.ptr,
-                            mem.size
+        if(m_view) {
+            //input was already fully loaded, treat as memory
+            struct visitor: public boost::static_visitor<InputStreamGuard> {
+                InputStreamGuard operator()(InputSliceGuard::Memory& mem) const {
+                    return InputStreamGuard {
+                        InputStreamGuard::Memory {
+                            ViewStream { (char*)mem.ptr, mem.size }
                         }
-                    }
-                };
-            }
-            InputStreamGuard operator()(Input::File& f) const {
-                return InputStreamGuard {
-                    InputStreamGuard::File {
-                        std::string(f.path)
-                    }
-                };
-            }
-            InputStreamGuard operator()(Input::Stream& strm) const {
-                return InputStreamGuard {
-                    InputStreamGuard::Stream {
-                        strm.stream
-                    }
-                };
-            }
-        };
-        return boost::apply_visitor(visitor(), data);
+                    };
+                }
+                InputStreamGuard operator()(InputSliceGuard::Stream& mem) const {
+                    return InputStreamGuard {
+                        InputStreamGuard::Memory {
+                            ViewStream { (char*) mem.buffer.data(), mem.buffer.size() }
+                        }
+                    };
+                }
+            };
+            return boost::apply_visitor(visitor(), m_view->data);
+        } else {
+            struct visitor: public boost::static_visitor<InputStreamGuard> {
+                InputStreamGuard operator()(Input::Memory& mem) const {
+                    return InputStreamGuard {
+                        InputStreamGuard::Memory {
+                            ViewStream {
+                                (char*)mem.ptr,
+                                mem.size
+                            }
+                        }
+                    };
+                }
+                InputStreamGuard operator()(Input::File& f) const {
+                    return InputStreamGuard {
+                        InputStreamGuard::File {
+                            std::string(f.path)
+                        }
+                    };
+                }
+                InputStreamGuard operator()(Input::Stream& strm) const {
+                    return InputStreamGuard {
+                        InputStreamGuard::Stream {
+                            strm.stream
+                        }
+                    };
+                }
+            };
+            return boost::apply_visitor(visitor(), data);
+        }
     };
 
     inline bool Input::has_size() {

@@ -41,9 +41,6 @@ public:
         
         //Encode
         DLOG(INFO) << "Init encoding...";
-        
-        auto in_guard = input.as_view();
-        const boost::string_ref& in_buf = *in_guard;
 
         auto out_guard = output.as_stream();
         BitOStream out_bits(*out_guard);
@@ -52,7 +49,7 @@ public:
         //Write input text length
         out_bits.write_compressed_int(len);
         
-        A alphabet_coder(*m_env, out_bits, in_buf);
+        A alphabet_coder(*m_env, out_bits, input);
         alphabet_coder.encode_init();
         
         C factor_coder(*m_env, out_bits, factors);
@@ -61,7 +58,7 @@ public:
         //Encode body
         size_t p = 0;
         for(auto f : factors) {
-            alphabet_coder.encode_syms(in_buf, p, f.pos - p);
+            alphabet_coder.encode_syms(p, f.pos - p);
             
             factor_coder.encode_fact(f);
             p = f.pos + f.num;
@@ -69,7 +66,7 @@ public:
         
         //Encode remainder
         if(p < len) {
-            alphabet_coder.encode_syms(in_buf, p, len - p);
+            alphabet_coder.encode_syms(p, len - p);
         }
         
         //Done
