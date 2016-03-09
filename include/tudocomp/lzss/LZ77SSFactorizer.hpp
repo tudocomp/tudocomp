@@ -66,25 +66,31 @@ public:
             }
 
             //output longest factor or symbol
+            size_t advance;
+
             if(f.num > 0) {
                 DLOG(INFO) << "Factor: {" << f.pos << "," << f.src << "," << f.num << "}";
                 consume_fact(f);
+                advance = f.num;
             } else {
                 consume_sym(buf[ahead]);
+                advance = 1;
             }
 
             //advance buffer
-            if(ahead < w) {
-                //case 1: still reading the first w symbols from the stream
-                ++ahead;
-            } else if(ins.get(c)) {
-                //case 2: read a new symbol
-                buf.pop_front();
-                buf.push_back(uint8_t(c));
-                ++buf_off;
-            } else {
-                //case 3: EOF, read rest of buffer
-                ++ahead;
+            while(advance--) {
+                if(ahead < w) {
+                    //case 1: still reading the first w symbols from the stream
+                    ++ahead;
+                } else if(ins.get(c)) {
+                    //case 2: read a new symbol
+                    buf.pop_front();
+                    buf.push_back(uint8_t(c));
+                    ++buf_off;
+                } else {
+                    //case 3: EOF, read rest of buffer
+                    ++ahead;
+                }
             }
         }
     }
