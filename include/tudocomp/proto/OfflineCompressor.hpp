@@ -35,10 +35,6 @@ public:
         
         DLOG(INFO) << "Init (n = " << len << ")...";
         
-        //Factorize
-        DLOG(INFO) << "Factorize...";
-        auto factors = F::factorize_offline(*m_env, input);
-        
         //Encode
         DLOG(INFO) << "Init encoding...";
 
@@ -50,6 +46,10 @@ public:
         out_bits.write_compressed_int(len);
         
         {
+            //Factorize
+            DLOG(INFO) << "Factorize...";
+            auto factors = F::factorize_offline(*m_env, input);
+
             //Init coders
             A alphabet_coder(*m_env, out_bits, input);
             C factor_coder(*m_env, out_bits, factors);

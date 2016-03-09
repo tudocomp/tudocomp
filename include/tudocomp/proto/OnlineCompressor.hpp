@@ -29,7 +29,7 @@ public:
         DLOG(INFO) << "Init (n = " << len << ")...";
         
         //Encode
-        DLOG(INFO) << "Init...";
+        DLOG(INFO) << "Init encoding...";
         
         auto out_guard = output.as_stream();
         BitOStream out_bits(*out_guard);
