@@ -41,7 +41,8 @@ public:
     }
 
     template<typename A>
-    inline void encode(Input& input, A& encode_sym) {
+    inline void encode_offline(Input& input, A& encode_sym) {
+        throw("not implemented");
     }
 };
 

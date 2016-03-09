@@ -54,7 +54,7 @@ public:
     }
 
     template<typename A>
-    inline void encode(Input& input, A& encode_sym) {
+    inline void encode_offline(Input& input, A& encode_sym) {
         m_num_bits = bitsFor(m_num_max - m_num_min);
         m_src_bits = bitsFor(m_src_max);
 
