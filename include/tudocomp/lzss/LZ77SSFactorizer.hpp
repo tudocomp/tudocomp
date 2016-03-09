@@ -87,34 +87,6 @@ public:
                 ++ahead;
             }
         }
-        /*
-        while(pos < len) {
-            LZSSFactor f;
-            
-            for(size_t k = (p > w ? p - w : 0); k + fact_min < p; k++) {
-                size_t j = 0;
-                while(p + j < len && in[k + j] == in[p + j]) {
-                    ++j;
-                }
-                
-                if(j >= fact_min && j > f.num) {
-                    f.pos = p;
-                    f.src = k;
-                    f.num = j;
-                }
-            }
-            
-            if(f.num > 0) {
-                DLOG(INFO) << "Factor: {" << f.pos << "," << f.src << "," << f.num << "}";
-                
-                consume_fact(f);
-                p += f.num;
-            } else {
-                consume_sym(in[p]);
-                ++p;
-            }
-        }
-        */
     }
 
     inline static std::vector<LZSSFactor>
