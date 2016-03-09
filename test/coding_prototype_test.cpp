@@ -14,7 +14,7 @@
 
 #include <tudocomp/proto/Compressor.hpp>
 
-const std::string input_str = "abcXXabcYYabc";
+const std::string input_str = "aaaaaaaaaaaa";
 
 std::string hex_bytes_str(const std::string& str) {
     std::stringstream result;

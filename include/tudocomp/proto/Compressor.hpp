@@ -33,7 +33,7 @@ inline static void factor_compress(Env& env, Input& input, Output& output) {
             DLOG(INFO) << "Factorize first, then encode...";
             Discard<uint8_t> discard;
             F::factorize(env, input, discard, factor_coder);
-            //TODO encode
+            factor_coder.encode(input, alphabet_coder);
         } else {
             DLOG(INFO) << "Factorize and encode directly...";
             F::factorize(env, input, alphabet_coder, factor_coder);

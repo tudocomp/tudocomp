@@ -39,6 +39,10 @@ public:
         m_out->write(f.src, m_src_bits);
         m_out->write(f.num, m_num_bits);
     }
+
+    template<typename A>
+    inline void encode(Input& input, A& encode_sym) {
+    }
 };
 
 }}
