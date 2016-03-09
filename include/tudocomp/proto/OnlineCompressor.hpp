@@ -24,12 +24,9 @@ public:
     inline virtual void compress(Input& input, Output& output) override final {
         
         //Read input into SDSL int vector buffer
-        size_t len = input.size();
+        size_t len = input.size(); //TODO check has_size first
         
         DLOG(INFO) << "Init (n = " << len << ")...";
-
-        auto in_guard = input.as_view(); //TODO use stream for online compression!
-        const boost::string_ref& in_buf = *in_guard;
         
         //Encode
         DLOG(INFO) << "Init...";
@@ -50,7 +47,7 @@ public:
         
         //Factorize and encode
         DLOG(INFO) << "Factorize / encode...";
-        F::factorize(*m_env, in_buf, len, alphabet_coder, factor_coder);
+        F::factorize(*m_env, input, alphabet_coder, factor_coder);
         
         //Done
         out_bits.flush();

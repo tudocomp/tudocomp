@@ -31,20 +31,20 @@ public:
     inline virtual void compress(Input& input, Output& output) override final {
         
         //Read input into SDSL int vector buffer
-        size_t len = input.size();
+        size_t len = input.size(); //TODO check has_size first
         
         DLOG(INFO) << "Init (n = " << len << ")...";
-
-        auto in_guard = input.as_view();
-        const boost::string_ref& in_buf = *in_guard;
         
         //Factorize
         DLOG(INFO) << "Factorize...";
-        auto factors = F::factorize_offline(*m_env, in_buf, len);
+        auto factors = F::factorize_offline(*m_env, input);
         
         //Encode
         DLOG(INFO) << "Init encoding...";
         
+        auto in_guard = input.as_view();
+        const boost::string_ref& in_buf = *in_guard;
+
         auto out_guard = output.as_stream();
         BitOStream out_bits(*out_guard);
         

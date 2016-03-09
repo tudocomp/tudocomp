@@ -27,6 +27,8 @@ std::string hex_bytes_str(const std::string& str) {
 TEST(CodingPrototype, offline) {
     using namespace tudocomp;
 
+    DLOG(INFO) << "Input: " << input_str;
+
     Env env;
     Input input = Input::from_memory(input_str);
     
@@ -41,6 +43,8 @@ TEST(CodingPrototype, offline) {
 
 TEST(CodingPrototype, online) {
     using namespace tudocomp;
+
+    DLOG(INFO) << "Input: " << input_str;
 
     Env env;
     Input input = Input::from_memory(input_str);

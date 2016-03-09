@@ -5,6 +5,8 @@
 #include <functional>
 #include <vector>
 
+#include <boost/circular_buffer.hpp>
+
 #include <sdsl/int_vector.hpp>
 
 #include <tudocomp/Env.hpp>
@@ -24,13 +26,69 @@ class LZ77SSFactorizer {
 public:
     template<typename A, typename C>
     inline static void factorize(
-        Env& env, const boost::string_ref& in, size_t len, A& consume_sym, C& consume_fact) {
+        Env& env, Input& input, A& consume_sym, C& consume_fact) {
         
+        auto in_guard = input.as_stream();
+        std::istream& ins = *in_guard;
+
         size_t fact_min = 3; //factor threshold
         size_t w = 16;       //window size
 
-        size_t p = 0;
-        while(p < len) {
+        boost::circular_buffer<uint8_t> buf(2 * w);
+
+        size_t ahead = 0; //marks the index in the buffer at which the back buffer ends and the ahead buffer begins
+
+        char c;
+
+        //initially fill the buffer
+        size_t buf_off = 0;
+        while(buf.size() < w && ins.get(c)) {
+            buf.push_back(uint8_t(c));
+        }
+
+        while(ahead < buf.size()) {
+            LZSSFactor f;
+
+            //walk back buffer
+            for(size_t k = (ahead > w ? ahead - w : 0); k < ahead; k++) {
+                //compare string
+                size_t j = 0;
+                while(ahead + j < buf.size() && buf[k + j] == buf[ahead + j]) {
+                    ++j;
+                }
+
+                //factorize if longer than one already found
+                if(j >= fact_min && j > f.num) {
+                    f.pos = buf_off + ahead;
+                    f.src = buf_off + k;
+                    f.num = j;
+                }
+            }
+
+            //output longest factor or symbol
+            if(f.num > 0) {
+                DLOG(INFO) << "Factor: {" << f.pos << "," << f.src << "," << f.num << "}";
+                consume_fact(f);
+            } else {
+                consume_sym(buf[ahead]);
+            }
+
+            //advance buffer
+            if(ahead < w) {
+                //case 1: still reading the first w symbols from the stream
+                ++ahead;
+            } else if(ins.get(c)) {
+                //case 2: read a new symbol
+                buf.pop_front();
+                buf.push_back(uint8_t(c));
+                ++buf_off;
+            } else {
+                //case 3: EOF, read rest of buffer
+                ++ahead;
+            }
+        }
+        /*
+        while(pos < len) {
             LZSSFactor f;
             
             for(size_t k = (p > w ? p - w : 0); k + fact_min < p; k++) {
@@ -56,14 +114,15 @@ public:
                 ++p;
             }
         }
+        */
     }
 
     inline static std::vector<LZSSFactor>
-    factorize_offline(Env& env, const boost::string_ref& in, size_t len) {
+    factorize_offline(Env& env, Input& input) {
         Discard<uint8_t> syms;
         Collector<LZSSFactor> factors;
         
-        factorize(env, in, len, syms, factors);
+        factorize(env, input, syms, factors);
         return factors.vector;
     }
 
