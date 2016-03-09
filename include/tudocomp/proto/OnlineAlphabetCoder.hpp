@@ -19,10 +19,10 @@ private:
 public:
     inline OnlineAlphabetCoder(Env& env, BitOStream& out) : m_out(&out) {
     }
-    
-    inline void encode_init() {
-    }
-    
+
+    inline ~OnlineAlphabetCoder() {
+    }    
+
     inline void encode_sym(uint8_t sym) {
         DLOG(INFO) << "encode_sym('" << sym << "')";
         m_out->writeBit(0);

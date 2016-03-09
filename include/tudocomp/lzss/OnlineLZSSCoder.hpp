@@ -24,9 +24,6 @@ public:
         m_num_bits = bitsFor(input_len);
     }
     
-    inline void encode_init() {
-    }
-    
     inline void encode_fact(const LZSSFactor& f) {
         DLOG(INFO) << "encode_fact({" << f.pos << "," << f.src << "," << f.num << "})";
         m_out->writeBit(1);

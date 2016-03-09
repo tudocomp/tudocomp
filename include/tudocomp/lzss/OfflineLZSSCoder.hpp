@@ -42,12 +42,14 @@ public:
         
         m_num_bits = bitsFor(num_max - m_num_min);
         m_src_bits = bitsFor(src_max);
-    }
-    
-    inline void encode_init() {
+
+        //Encode init
         m_out->write_compressed_int(m_num_min, 4);
         m_out->write_compressed_int(m_num_bits, 5);
         m_out->write_compressed_int(m_src_bits, 5);
+    }
+    
+    inline ~OfflineLZSSCoder() {
     }
     
     inline void encode_fact(const LZSSFactor& f) {

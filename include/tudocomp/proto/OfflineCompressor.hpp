@@ -49,24 +49,24 @@ public:
         //Write input text length
         out_bits.write_compressed_int(len);
         
-        A alphabet_coder(*m_env, out_bits, input);
-        alphabet_coder.encode_init();
-        
-        C factor_coder(*m_env, out_bits, factors);
-        factor_coder.encode_init();
+        {
+            //Init coders
+            A alphabet_coder(*m_env, out_bits, input);
+            C factor_coder(*m_env, out_bits, factors);
 
-        //Encode body
-        size_t p = 0;
-        for(auto f : factors) {
-            alphabet_coder.encode_syms(p, f.pos - p);
+            //Encode body
+            size_t p = 0;
+            for(auto f : factors) {
+                alphabet_coder.encode_syms(p, f.pos - p);
+                
+                factor_coder.encode_fact(f);
+                p = f.pos + f.num;
+            }
             
-            factor_coder.encode_fact(f);
-            p = f.pos + f.num;
-        }
-        
-        //Encode remainder
-        if(p < len) {
-            alphabet_coder.encode_syms(p, len - p);
+            //Encode remainder
+            if(p < len) {
+                alphabet_coder.encode_syms(p, len - p);
+            }
         }
         
         //Done

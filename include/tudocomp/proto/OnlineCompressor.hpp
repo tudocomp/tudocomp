@@ -38,16 +38,15 @@ public:
         //Write input text length
         out_bits.write_compressed_int(len);
         
-        //Init coders
-        A alphabet_coder(*m_env, out_bits);
-        alphabet_coder.encode_init();
-        
-        C factor_coder(*m_env, out_bits, len);
-        factor_coder.encode_init();
-        
-        //Factorize and encode
-        DLOG(INFO) << "Factorize / encode...";
-        F::factorize(*m_env, input, alphabet_coder, factor_coder);
+        {
+            //Init coders
+            A alphabet_coder(*m_env, out_bits);
+            C factor_coder(*m_env, out_bits, len);
+            
+            //Factorize and encode
+            DLOG(INFO) << "Factorize / encode...";
+            F::factorize(*m_env, input, alphabet_coder, factor_coder);
+        }
         
         //Done
         out_bits.flush();

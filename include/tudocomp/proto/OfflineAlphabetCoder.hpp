@@ -46,13 +46,15 @@ public:
         }
         
         DLOG(INFO) << "sigma = " << m_sigma << " (" << m_sigma_bits << " bits per symbol)";
-    }
-    
-    inline void encode_init() {
+
+        //Encode alphabet
         m_out->write_compressed_int(m_sigma);
         for(uint8_t c : m_comp2char) {
             m_out->write(c);
         }
+    }
+
+    inline ~OfflineAlphabetCoder() {
     }
     
     inline void encode_syms(size_t start, size_t num) {
