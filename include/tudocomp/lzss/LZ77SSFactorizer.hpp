@@ -26,7 +26,7 @@ class LZ77SSFactorizer {
 public:
     template<typename A, typename C>
     inline static void factorize(
-        Env& env, Input& input, A& consume_sym, C& consume_fact) {
+        Env& env, Input& input, A& alphabet_coder, C& factor_coder) {
         
         auto in_guard = input.as_stream();
         std::istream& ins = *in_guard;
@@ -70,10 +70,10 @@ public:
 
             if(f.num > 0) {
                 DLOG(INFO) << "Factor: {" << f.pos << "," << f.src << "," << f.num << "}";
-                consume_fact(f);
+                factor_coder.encode_fact(f);
                 advance = f.num;
             } else {
-                consume_sym(buf[ahead]);
+                alphabet_coder.encode_sym(buf[ahead]);
                 advance = 1;
             }
 
@@ -93,15 +93,6 @@ public:
                 }
             }
         }
-    }
-
-    inline static std::vector<LZSSFactor>
-    factorize_offline(Env& env, Input& input) {
-        Discard<uint8_t> syms;
-        Collector<LZSSFactor> factors;
-        
-        factorize(env, input, syms, factors);
-        return factors.vector;
     }
 
 };

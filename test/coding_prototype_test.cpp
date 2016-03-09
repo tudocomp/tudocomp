@@ -3,16 +3,16 @@
 #include <glog/logging.h>
 
 #include <tudocomp/io.h>
+
 #include <tudocomp/lzss/LZSSFactor.hpp>
 #include <tudocomp/lzss/LZ77SSFactorizer.hpp>
-
 #include <tudocomp/lzss/OfflineLZSSCoder.hpp>
-#include <tudocomp/proto/OfflineAlphabetCoder.hpp>
-#include <tudocomp/proto/OfflineCompressor.hpp>
-
 #include <tudocomp/lzss/OnlineLZSSCoder.hpp>
+
+#include <tudocomp/proto/OfflineAlphabetCoder.hpp>
 #include <tudocomp/proto/OnlineAlphabetCoder.hpp>
-#include <tudocomp/proto/OnlineCompressor.hpp>
+
+#include <tudocomp/proto/Compressor.hpp>
 
 const std::string input_str = "abcXXabcYYabc";
 
@@ -24,7 +24,7 @@ std::string hex_bytes_str(const std::string& str) {
     return result.str();
 }
 
-TEST(CodingPrototype, offline) {
+TEST(CodingPrototype, lz77ss_Aonline_Fonline) {
     using namespace tudocomp;
 
     DLOG(INFO) << "Input: " << input_str;
@@ -35,13 +35,12 @@ TEST(CodingPrototype, offline) {
     std::stringstream stm;
     Output output = Output::from_stream(stm);
     
-    OfflineCompressor<lzss::LZ77SSFactorizer, OfflineAlphabetCoder, lzss::OfflineLZSSCoder> c(env);
-    c.compress(input, output);
+    factor_compress<lzss::LZ77SSFactorizer, OnlineAlphabetCoder, lzss::OnlineLZSSCoder>(env, input, output);
     
     DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
 }
 
-TEST(CodingPrototype, online) {
+TEST(CodingPrototype, lz77ss_Aoffline_Fonline) {
     using namespace tudocomp;
 
     DLOG(INFO) << "Input: " << input_str;
@@ -52,8 +51,8 @@ TEST(CodingPrototype, online) {
     std::stringstream stm;
     Output output = Output::from_stream(stm);
     
-    OnlineCompressor<lzss::LZ77SSFactorizer, OnlineAlphabetCoder, lzss::OnlineLZSSCoder> c(env);
-    c.compress(input, output);
+    factor_compress<lzss::LZ77SSFactorizer, OfflineAlphabetCoder, lzss::OnlineLZSSCoder>(env, input, output);
     
     DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
 }
+

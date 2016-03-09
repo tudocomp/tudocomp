@@ -30,10 +30,6 @@ public:
         m_out->write(f.src, m_src_bits);
         m_out->write(f.num, m_num_bits);
     }
-    
-    inline void operator()(const LZSSFactor& f) {
-        encode_fact(f);
-    }
 };
 
 }}

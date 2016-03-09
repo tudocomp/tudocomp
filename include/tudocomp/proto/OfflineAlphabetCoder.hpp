@@ -24,7 +24,7 @@ private:
     sdsl::int_vector<> m_char2comp;
 
 public:
-    inline OfflineAlphabetCoder(Env& env, BitOStream& out, Input& input) : m_out(&out), m_in(input.as_view()) {
+    inline OfflineAlphabetCoder(Env& env, Input& input, BitOStream& out) : m_out(&out), m_in(input.as_view()) {
         Counter<uint8_t> counter;
 
         for(uint8_t c : *m_in) {
