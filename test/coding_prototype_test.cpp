@@ -56,3 +56,35 @@ TEST(CodingPrototype, lz77ss_Aoffline_Fonline) {
     DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
 }
 
+TEST(CodingPrototype, lz77ss_Aonline_Foffline) {
+    using namespace tudocomp;
+
+    DLOG(INFO) << "Input: " << input_str;
+
+    Env env;
+    Input input = Input::from_memory(input_str);
+    
+    std::stringstream stm;
+    Output output = Output::from_stream(stm);
+    
+    factor_compress<lzss::LZ77SSFactorizer, OnlineAlphabetCoder, lzss::OfflineLZSSCoder>(env, input, output);
+    
+    DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
+}
+
+TEST(CodingPrototype, lz77ss_Aoffline_Foffline) {
+    using namespace tudocomp;
+
+    DLOG(INFO) << "Input: " << input_str;
+
+    Env env;
+    Input input = Input::from_memory(input_str);
+    
+    std::stringstream stm;
+    Output output = Output::from_stream(stm);
+    
+    factor_compress<lzss::LZ77SSFactorizer, OfflineAlphabetCoder, lzss::OfflineLZSSCoder>(env, input, output);
+    
+    DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
+}
+

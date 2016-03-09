@@ -23,7 +23,7 @@ public:
     inline ~OnlineAlphabetCoder() {
     }    
 
-    inline void encode_sym(uint8_t sym) {
+    inline void operator()(uint8_t sym) {
         DLOG(INFO) << "encode_sym('" << sym << "')";
         m_out->writeBit(0);
         m_out->write(sym);

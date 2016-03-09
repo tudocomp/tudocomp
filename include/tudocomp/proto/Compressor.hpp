@@ -1,7 +1,7 @@
 #ifndef _INCLUDED_COMPRESSOR_HPP
 #define _INCLUDED_COMPRESSOR_HPP
 
-#include <tudocomp/Compressor.hpp>
+#include <tudocomp/proto/Discard.hpp>
 
 namespace tudocomp {
 
@@ -27,10 +27,17 @@ inline static void factor_compress(Env& env, Input& input, Output& output) {
         //Init coders
         A alphabet_coder(env, input, out_bits);
         C factor_coder(env, out_bits, len);
-        
-        //Factorize and encode
-        DLOG(INFO) << "Factorize / encode...";
-        F::factorize(env, input, alphabet_coder, factor_coder);
+
+        //
+        if(factor_coder.is_offline()) {
+            DLOG(INFO) << "Factorize first, then encode...";
+            Discard<uint8_t> discard;
+            F::factorize(env, input, discard, factor_coder);
+            //TODO encode
+        } else {
+            DLOG(INFO) << "Factorize and encode directly...";
+            F::factorize(env, input, alphabet_coder, factor_coder);
+        }
     }
     
     //Done

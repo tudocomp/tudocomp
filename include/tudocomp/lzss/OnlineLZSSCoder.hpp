@@ -5,6 +5,8 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 
+#include <tudocomp/proto/Discard.hpp>
+
 #include <tudocomp/lzss/LZSSFactor.hpp>
 
 namespace tudocomp {
@@ -23,8 +25,15 @@ public:
         m_src_bits = bitsFor(input_len);
         m_num_bits = bitsFor(input_len);
     }
+
+    inline ~OnlineLZSSCoder() {
+    }
+
+    inline bool is_offline() {
+        return false;
+    }
     
-    inline void encode_fact(const LZSSFactor& f) {
+    inline void operator()(const LZSSFactor& f) {
         DLOG(INFO) << "encode_fact({" << f.pos << "," << f.src << "," << f.num << "})";
         m_out->writeBit(1);
         m_out->write(f.src, m_src_bits);
