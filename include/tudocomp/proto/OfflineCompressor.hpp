@@ -55,17 +55,21 @@ public:
             C factor_coder(*m_env, out_bits, factors);
 
             //Encode body
+            auto in_view = input.as_view();
+
             size_t p = 0;
             for(auto f : factors) {
-                alphabet_coder.encode_syms(p, f.pos - p);
+                while(p < f.pos) {
+                    alphabet_coder.encode_sym((*in_view)[p++]);
+                }
                 
                 factor_coder.encode_fact(f);
                 p = f.pos + f.num;
             }
             
             //Encode remainder
-            if(p < len) {
-                alphabet_coder.encode_syms(p, len - p);
+            while(p < len) {
+                alphabet_coder.encode_sym((*in_view)[p++]);
             }
         }
         

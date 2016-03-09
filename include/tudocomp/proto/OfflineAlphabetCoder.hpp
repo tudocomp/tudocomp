@@ -57,15 +57,10 @@ public:
     inline ~OfflineAlphabetCoder() {
     }
     
-    inline void encode_syms(size_t start, size_t num) {
-        DLOG(INFO) << "encode_syms(" << start << "," << num << "):";
-        for(size_t p = start; p < start + num; p++) {
-            DLOG(INFO) << "\t'" << (*m_in)[p] << "'";
-            m_out->writeBit(0);
-            
-            uint8_t c = (*m_in)[p];
-            m_out->write(uint8_t(m_char2comp[c]), m_sigma_bits);
-        }
+    inline void encode_sym(uint8_t sym) {
+        DLOG(INFO) << "encode_sym('" << sym << "')";
+        m_out->writeBit(0);
+        m_out->write(uint8_t(m_char2comp[sym]), m_sigma_bits);
     }
 };
 
