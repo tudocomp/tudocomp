@@ -12,7 +12,7 @@
 #include <tudocomp/proto/OfflineAlphabetCoder.hpp>
 #include <tudocomp/proto/OnlineAlphabetCoder.hpp>
 
-const std::string input_str = "aaaaaaaaaaaa";
+const std::string input_str = "wenn hinter fliegen fliegen fliegen, fliegen fliegen fliegen nach";
 
 std::string hex_bytes_str(const std::string& str) {
     std::stringstream result;

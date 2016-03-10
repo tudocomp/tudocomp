@@ -44,11 +44,12 @@ public:
 
         //initially fill the buffer
         size_t buf_off = 0;
-        while(buf.size() < w && ins.get(c)) {
+        while(buf.size() < 2 * w && ins.get(c)) {
             buf.push_back(uint8_t(c));
         }
 
-        while(ahead < buf.size()) {
+        bool eof = false;
+        while(!eof || ahead < buf.size()) {
             LZSSFactor f;
 
             //walk back buffer
@@ -84,14 +85,18 @@ public:
                 if(ahead < w) {
                     //case 1: still reading the first w symbols from the stream
                     ++ahead;
-                } else if(ins.get(c)) {
+                    DLOG(INFO) << "[1] initial window (ahead = " << ahead << ")";
+                } else if(!eof && ins.get(c)) {
                     //case 2: read a new symbol
                     buf.pop_front();
                     buf.push_back(uint8_t(c));
                     ++buf_off;
+                    DLOG(INFO) << "[2] read next symbol (ahead = " << ahead << ")";
                 } else {
                     //case 3: EOF, read rest of buffer
+                    eof = true;
                     ++ahead;
+                    DLOG(INFO) << "[3] final window (ahead = " << ahead << ")";
                 }
             }
         }
