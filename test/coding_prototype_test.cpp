@@ -9,8 +9,8 @@
 #include <tudocomp/lzss/OfflineLZSSCoder.hpp>
 #include <tudocomp/lzss/OnlineLZSSCoder.hpp>
 
-#include <tudocomp/proto/OfflineAlphabetCoder.hpp>
-#include <tudocomp/proto/OnlineAlphabetCoder.hpp>
+#include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
+#include <tudocomp/alphabet/OnlineAlphabetCoder.hpp>
 
 const std::string input_str = "wenn hinter fliegen fliegen fliegen, fliegen fliegen fliegen nach";
 
