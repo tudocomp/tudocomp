@@ -5,8 +5,6 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 
-#include <tudocomp/proto/Discard.hpp>
-
 #include <tudocomp/lzss/LZSSFactor.hpp>
 
 namespace tudocomp {
