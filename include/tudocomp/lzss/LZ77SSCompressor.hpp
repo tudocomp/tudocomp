@@ -1,5 +1,5 @@
-#ifndef _INCLUDED_LZ77SS_FACTORIZER_HPP
-#define _INCLUDED_LZ77SS_FACTORIZER_HPP
+#ifndef _INCLUDED_LZ77SS_COMPRESSOR_HPP
+#define _INCLUDED_LZ77SS_COMPRESSOR_HPP
 
 #include <algorithm>
 #include <functional>
@@ -13,21 +13,23 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 
-#include <tudocomp/proto/Collector.hpp>
-#include <tudocomp/proto/Discard.hpp>
-
 #include <tudocomp/lzss/LZSSFactor.hpp>
 
 namespace tudocomp {
 namespace lzss {
 
-class LZ77SSFactorizer {
+class LZ77SSCompressor {
 
 public:
-    template<typename A, typename C>
-    inline static void factorize(
-        Env& env, Input& input, A& consume_sym, C& consume_fact) {
+    template<typename C>
+    inline static void compress(
+        Env& env, Input& input, Output& output) {
         
+        auto out_guard = output.as_stream();
+        BitOStream out_bits(*out_guard);
+
+        C encode(env, input, out_bits);
+
         auto in_guard = input.as_stream();
         std::istream& ins = *in_guard;
 
@@ -70,10 +72,10 @@ public:
 
             if(f.num > 0) {
                 DLOG(INFO) << "Factor: {" << f.pos << "," << f.src << "," << f.num << "}";
-                consume_fact(f);
+                encode(f);
                 advance = f.num;
             } else {
-                consume_sym(buf[ahead]);
+                encode(buf[ahead]);
                 advance = 1;
             }
 

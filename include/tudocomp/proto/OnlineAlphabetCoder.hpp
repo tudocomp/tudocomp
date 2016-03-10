@@ -18,6 +18,7 @@ private:
 
 public:
     inline OnlineAlphabetCoder(Env& env, Input& input, BitOStream& out) : m_out(&out) {
+        //TODO write magic
     }
 
     inline ~OnlineAlphabetCoder() {

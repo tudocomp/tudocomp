@@ -48,6 +48,7 @@ public:
         DLOG(INFO) << "sigma = " << m_sigma << " (" << m_sigma_bits << " bits per symbol)";
 
         //Encode alphabet
+        //TODO write magic
         m_out->write_compressed_int(m_sigma);
         for(uint8_t c : m_comp2char) {
             m_out->write(c);

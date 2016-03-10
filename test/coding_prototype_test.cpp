@@ -5,14 +5,12 @@
 #include <tudocomp/io.h>
 
 #include <tudocomp/lzss/LZSSFactor.hpp>
-#include <tudocomp/lzss/LZ77SSFactorizer.hpp>
+#include <tudocomp/lzss/LZ77SSCompressor.hpp>
 #include <tudocomp/lzss/OfflineLZSSCoder.hpp>
 #include <tudocomp/lzss/OnlineLZSSCoder.hpp>
 
 #include <tudocomp/proto/OfflineAlphabetCoder.hpp>
 #include <tudocomp/proto/OnlineAlphabetCoder.hpp>
-
-#include <tudocomp/proto/Compressor.hpp>
 
 const std::string input_str = "aaaaaaaaaaaa";
 
@@ -35,7 +33,7 @@ TEST(CodingPrototype, lz77ss_Aonline_Fonline) {
     std::stringstream stm;
     Output output = Output::from_stream(stm);
     
-    factor_compress<lzss::LZ77SSFactorizer, OnlineAlphabetCoder, lzss::OnlineLZSSCoder>(env, input, output);
+    lzss::LZ77SSCompressor::compress<lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>(env, input, output);
     
     DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
 }
@@ -51,7 +49,7 @@ TEST(CodingPrototype, lz77ss_Aoffline_Fonline) {
     std::stringstream stm;
     Output output = Output::from_stream(stm);
     
-    factor_compress<lzss::LZ77SSFactorizer, OfflineAlphabetCoder, lzss::OnlineLZSSCoder>(env, input, output);
+    lzss::LZ77SSCompressor::compress<lzss::OnlineLZSSCoder<OfflineAlphabetCoder>>(env, input, output);
     
     DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
 }
@@ -67,7 +65,7 @@ TEST(CodingPrototype, lz77ss_Aonline_Foffline) {
     std::stringstream stm;
     Output output = Output::from_stream(stm);
     
-    factor_compress<lzss::LZ77SSFactorizer, OnlineAlphabetCoder, lzss::OfflineLZSSCoder>(env, input, output);
+    lzss::LZ77SSCompressor::compress<lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>(env, input, output);
     
     DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
 }
@@ -83,7 +81,7 @@ TEST(CodingPrototype, lz77ss_Aoffline_Foffline) {
     std::stringstream stm;
     Output output = Output::from_stream(stm);
     
-    factor_compress<lzss::LZ77SSFactorizer, OfflineAlphabetCoder, lzss::OfflineLZSSCoder>(env, input, output);
+    lzss::LZ77SSCompressor::compress<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>(env, input, output);
     
     DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
 }

@@ -12,25 +12,30 @@
 namespace tudocomp {
 namespace lzss {
 
+template<typename A>
 class OnlineLZSSCoder {
 
 private:
     BitOStream* m_out;
+    std::shared_ptr<A> m_alphabet_coder;
     
     size_t m_src_bits;
     size_t m_num_bits;
 
 public:
-    inline OnlineLZSSCoder(Env& env, BitOStream& out, size_t input_len) : m_out(&out) {
-        m_src_bits = bitsFor(input_len);
-        m_num_bits = bitsFor(input_len);
+    inline OnlineLZSSCoder(Env& env, Input& in, BitOStream& out)
+            : m_out(&out) {
+
+        size_t len = in.size();
+        m_src_bits = bitsFor(len);
+        m_num_bits = bitsFor(len);
+
+        //TODO write magic
+        out.write_compressed_int(len);
+        m_alphabet_coder = std::shared_ptr<A>(new A(env, in, out));
     }
 
     inline ~OnlineLZSSCoder() {
-    }
-
-    inline bool is_offline() {
-        return false;
     }
     
     inline void operator()(const LZSSFactor& f) {
@@ -40,7 +45,10 @@ public:
         m_out->write(f.num, m_num_bits);
     }
 
-    template<typename A>
+    inline void operator()(uint8_t sym) {
+        (*m_alphabet_coder)(sym);
+    }
+    
     inline void encode_offline(Input& input, A& encode_sym) {
         throw("not implemented");
     }
