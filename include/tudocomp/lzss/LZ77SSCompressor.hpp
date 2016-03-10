@@ -13,22 +13,32 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 
+#include <tudocomp/Compressor.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 
 namespace tudocomp {
 namespace lzss {
 
-class LZ77SSCompressor {
+template<typename C>
+class LZ77SSCompressor : public Compressor {
 
 public:
-    template<typename C>
-    inline static void compress(
-        Env& env, Input& input, Output& output) {
-        
+    inline LZ77SSCompressor() = delete;
+
+    /// Construct the class with an environment.
+    inline LZ77SSCompressor(Env& env) : Compressor(env) {
+    }
+    
+    /// Compress `inp` into `out`.
+    ///
+    /// \param inp The input stream.
+    /// \param out The output stream.
+    inline virtual void compress(Input& input, Output& output) {
+
         auto out_guard = output.as_stream();
         BitOStream out_bits(*out_guard);
 
-        C encode(env, input, out_bits);
+        C encode(*m_env, input, out_bits);
 
         auto in_guard = input.as_stream();
         std::istream& ins = *in_guard;
@@ -85,21 +95,26 @@ public:
                 if(ahead < w) {
                     //case 1: still reading the first w symbols from the stream
                     ++ahead;
-                    DLOG(INFO) << "[1] initial window (ahead = " << ahead << ")";
                 } else if(!eof && ins.get(c)) {
                     //case 2: read a new symbol
                     buf.pop_front();
-                    buf.push_back(uint8_t(c));
+                    buf.push_back(uint8_t(c)); //TODO is this how to use circular buffers? ...
                     ++buf_off;
-                    DLOG(INFO) << "[2] read next symbol (ahead = " << ahead << ")";
                 } else {
                     //case 3: EOF, read rest of buffer
                     eof = true;
                     ++ahead;
-                    DLOG(INFO) << "[3] final window (ahead = " << ahead << ")";
                 }
             }
         }
+    }
+
+    /// Decompress `inp` into `out`.
+    ///
+    /// \param inp The input stream.
+    /// \param out The output stream.
+    virtual void decompress(Input& input, Output& output) {
+        //TODO
     }
 
 };

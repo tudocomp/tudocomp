@@ -12,6 +12,8 @@
 #include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
 #include <tudocomp/alphabet/OnlineAlphabetCoder.hpp>
 
+using namespace tudocomp;
+
 const std::string input_str = "wenn hinter fliegen fliegen fliegen, fliegen fliegen fliegen nach";
 
 std::string hex_bytes_str(const std::string& str) {
@@ -22,9 +24,8 @@ std::string hex_bytes_str(const std::string& str) {
     return result.str();
 }
 
-TEST(CodingPrototype, lz77ss_Aonline_Fonline) {
-    using namespace tudocomp;
-
+template<typename C>
+void performTest() {
     DLOG(INFO) << "Input: " << input_str;
 
     Env env;
@@ -33,56 +34,25 @@ TEST(CodingPrototype, lz77ss_Aonline_Fonline) {
     std::stringstream stm;
     Output output = Output::from_stream(stm);
     
-    lzss::LZ77SSCompressor::compress<lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>(env, input, output);
+    C compressor(env);
+    compressor.compress(input, output);
     
     DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
+}
+
+TEST(CodingPrototype, lz77ss_Aonline_Fonline) {
+    performTest<lzss::LZ77SSCompressor<lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
 }
 
 TEST(CodingPrototype, lz77ss_Aoffline_Fonline) {
-    using namespace tudocomp;
-
-    DLOG(INFO) << "Input: " << input_str;
-
-    Env env;
-    Input input = Input::from_memory(input_str);
-    
-    std::stringstream stm;
-    Output output = Output::from_stream(stm);
-    
-    lzss::LZ77SSCompressor::compress<lzss::OnlineLZSSCoder<OfflineAlphabetCoder>>(env, input, output);
-    
-    DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
+    performTest<lzss::LZ77SSCompressor<lzss::OnlineLZSSCoder<OfflineAlphabetCoder>>>();
 }
 
 TEST(CodingPrototype, lz77ss_Aonline_Foffline) {
-    using namespace tudocomp;
-
-    DLOG(INFO) << "Input: " << input_str;
-
-    Env env;
-    Input input = Input::from_memory(input_str);
-    
-    std::stringstream stm;
-    Output output = Output::from_stream(stm);
-    
-    lzss::LZ77SSCompressor::compress<lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>(env, input, output);
-    
-    DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
+    performTest<lzss::LZ77SSCompressor<lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>>();
 }
 
 TEST(CodingPrototype, lz77ss_Aoffline_Foffline) {
-    using namespace tudocomp;
-
-    DLOG(INFO) << "Input: " << input_str;
-
-    Env env;
-    Input input = Input::from_memory(input_str);
-    
-    std::stringstream stm;
-    Output output = Output::from_stream(stm);
-    
-    lzss::LZ77SSCompressor::compress<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>(env, input, output);
-    
-    DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
+    performTest<lzss::LZ77SSCompressor<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
 }
 
