@@ -5,8 +5,9 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 
-#include <tudocomp/lzss/LZSSUtil.hpp>
+#include <tudocomp/lzss/LZSSCoderOpts.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
+#include <tudocomp/lzss/LZSSUtil.hpp>
 
 namespace tudocomp {
 namespace lzss {
@@ -21,8 +22,7 @@ private:
 
     std::vector<LZSSFactor> m_factors;
     
-    bool m_src_use_delta = false;
-    size_t m_encode_pos = 0;
+    bool m_src_use_delta;
 
     size_t m_num_min = SIZE_MAX;
     size_t m_num_max = 0;
@@ -31,13 +31,17 @@ private:
 
     size_t m_num_bits = 0;
     size_t m_src_bits = 0;
+    
+    size_t m_encode_pos = 0;
 
 public:
-    inline OfflineLZSSCoder(Env& env, Input& in, BitOStream& out)
-            : m_out(&out), m_in(&in) {
+    inline OfflineLZSSCoder(Env& env, Input& in, BitOStream& out, LZSSCoderOpts opts)
+            : m_out(&out), m_in(&in), m_src_use_delta(opts.use_src_delta) {
 
         //TODO write magic
         out.write_compressed_int(in.size());
+        out.writeBit(m_src_use_delta);
+        
         m_alphabet_coder = std::shared_ptr<A>(new A(env, in, out));
     }
     
@@ -54,14 +58,6 @@ public:
         encode_with_factors(*m_in, *this, *m_alphabet_coder, m_factors);
     }
     
-    inline void use_src_delta(bool b) {
-        m_src_use_delta = b;
-    }
-    
-    inline void use_src_bits(size_t bits) {
-        //ignore, we know better
-    }
-
     inline void encode_fact(const LZSSFactor& f) {
         m_factors.push_back(f);
 

@@ -5,6 +5,7 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 
+#include <tudocomp/lzss/LZSSCoderOpts.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 
 namespace tudocomp {
@@ -17,34 +18,29 @@ private:
     BitOStream* m_out;
     std::shared_ptr<A> m_alphabet_coder;
     
-    bool m_src_use_delta = false;
-    size_t m_encode_pos = 0;
-    
+    bool m_src_use_delta;
     size_t m_src_bits;
     size_t m_num_bits;
+    
+    size_t m_encode_pos = 0;
 
 public:
-    inline OnlineLZSSCoder(Env& env, Input& in, BitOStream& out)
+    inline OnlineLZSSCoder(Env& env, Input& in, BitOStream& out, LZSSCoderOpts opts)
             : m_out(&out) {
 
         size_t len = in.size();
-        m_src_bits = bitsFor(len);
+        m_src_bits = std::min(bitsFor(len), opts.src_bits);
         m_num_bits = bitsFor(len);
+        m_src_use_delta = opts.use_src_delta;
 
         //TODO write magic
         out.write_compressed_int(len);
+        out.writeBit(m_src_use_delta);
+        
         m_alphabet_coder = std::shared_ptr<A>(new A(env, in, out));
     }
 
     inline ~OnlineLZSSCoder() {
-    }
-    
-    inline void use_src_delta(bool b) {
-        m_src_use_delta = b;
-    }
-    
-    inline void use_src_bits(size_t bits) {
-        m_src_bits = bits;
     }
     
     inline void encode_fact(const LZSSFactor& f) {

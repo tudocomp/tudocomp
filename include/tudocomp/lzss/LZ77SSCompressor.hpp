@@ -14,6 +14,7 @@
 #include <tudocomp/util.h>
 
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/lzss/LZSSCoderOpts.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 
 namespace tudocomp {
@@ -41,9 +42,7 @@ public:
         size_t fact_min = 3; //factor threshold
         size_t w = 16;       //window size
         
-        C coder(*m_env, input, out_bits);
-        coder.use_src_delta(true);
-        coder.use_src_bits(bitsFor(w)); //source can refer to beginning of window at max
+        C coder(*m_env, input, out_bits, LZSSCoderOpts(true, bitsFor(w)));
 
         auto in_guard = input.as_stream();
         std::istream& ins = *in_guard;
