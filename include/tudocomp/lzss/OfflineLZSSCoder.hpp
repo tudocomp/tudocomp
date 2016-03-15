@@ -5,6 +5,7 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 
+#include <tudocomp/lzss/LZSSUtil.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 
 namespace tudocomp {
@@ -38,8 +39,6 @@ public:
     }
     
     inline ~OfflineLZSSCoder() {
-        size_t len = m_in->size();
-
         m_num_bits = bitsFor(m_num_max - m_num_min);
         m_src_bits = bitsFor(m_src_max);
 
@@ -48,40 +47,11 @@ public:
         m_out->write_compressed_int(m_num_bits, 5);
         m_out->write_compressed_int(m_src_bits, 5);
 
-        auto in_guard = m_in->as_stream();
-        std::istream& ins = *in_guard;
-
-        //Encode factors
-        size_t p = 0;
-        char c;
-        for(LZSSFactor f : m_factors) {
-            while(p < f.pos) {
-                if(ins.get(c)) {
-                    (*m_alphabet_coder)(uint8_t(c));
-                }
-                ++p;
-            }
-
-            encode_fact_offline(f);
-            p += f.num;
-
-            //skip
-            size_t num = f.num;
-            while(num--) {
-                ins.get(c);
-            }
-        }
-
-        //Encode remainder
-        while(p < len) {
-            if(ins.get(c)) {
-                (*m_alphabet_coder)(uint8_t(c));
-            }
-            ++p;
-        }
+        //Encode
+        encode_offline(*m_in, *this, *m_alphabet_coder, m_factors);
     }
 
-    inline void operator()(const LZSSFactor& f) {
+    inline void encode_fact(const LZSSFactor& f) {
         m_factors.push_back(f);
 
         if(f.num < m_num_min) {
@@ -97,7 +67,7 @@ public:
         }
     }
 
-    inline void operator()(uint8_t sym) {
+    inline void encode_sym(uint8_t sym) {
         //don't encode symbols on the fly
     }
 

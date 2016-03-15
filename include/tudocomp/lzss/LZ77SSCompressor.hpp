@@ -38,7 +38,7 @@ public:
         auto out_guard = output.as_stream();
         BitOStream out_bits(*out_guard);
 
-        C encode(*m_env, input, out_bits);
+        C coder(*m_env, input, out_bits);
 
         auto in_guard = input.as_stream();
         std::istream& ins = *in_guard;
@@ -83,10 +83,10 @@ public:
 
             if(f.num > 0) {
                 DLOG(INFO) << "Factor: {" << f.pos << "," << f.src << "," << f.num << "}";
-                encode(f);
+                coder.encode_fact(f);
                 advance = f.num;
             } else {
-                encode(buf[ahead]);
+                coder.encode_sym(buf[ahead]);
                 advance = 1;
             }
 

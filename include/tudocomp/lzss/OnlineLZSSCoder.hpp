@@ -36,19 +36,15 @@ public:
     inline ~OnlineLZSSCoder() {
     }
     
-    inline void operator()(const LZSSFactor& f) {
+    inline void encode_fact(const LZSSFactor& f) {
         DLOG(INFO) << "encode_fact({" << f.pos << "," << f.src << "," << f.num << "})";
         m_out->writeBit(1);
         m_out->write(f.src, m_src_bits);
         m_out->write(f.num, m_num_bits);
     }
 
-    inline void operator()(uint8_t sym) {
-        (*m_alphabet_coder)(sym);
-    }
-    
-    inline void encode_offline(Input& input, A& encode_sym) {
-        throw("not implemented");
+    inline void encode_sym(uint8_t sym) {
+        m_alphabet_coder->encode_sym(sym);
     }
 };
 
