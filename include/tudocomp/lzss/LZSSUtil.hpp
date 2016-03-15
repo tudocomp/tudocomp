@@ -2,12 +2,13 @@
 #define _INCLUDED_LZSS_UTIL_HPP
 
 #include <tudocomp/io.h>
+#include <tudocomp/util.h>
 
 namespace tudocomp {
 namespace lzss {
 
     template<typename C, typename A, typename F>
-    void encode_offline(Input& in, C& coder, A& alphabet_coder, const F& sorted_factors) {
+    void encode_with_factors(Input& in, C& coder, A& alphabet_coder, const F& sorted_factors) {
         //TODO byte alphabets only
         size_t len = in.size();
         
@@ -24,6 +25,8 @@ namespace lzss {
                 }
                 ++p;
             }
+            
+            alphabet_coder.encode_sym_flush();
 
             coder.encode_fact_offline(f);
             p += f.num;
@@ -42,6 +45,8 @@ namespace lzss {
             }
             ++p;
         }
+        
+        alphabet_coder.encode_sym_flush();
     }
    
 }

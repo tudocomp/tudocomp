@@ -29,6 +29,9 @@ public:
         m_out->writeBit(0);
         m_out->write(sym);
     }
+    
+    inline void encode_sym_flush() {
+    }
 };
 
 }

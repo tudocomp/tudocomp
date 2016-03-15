@@ -20,6 +20,9 @@ private:
     std::shared_ptr<A> m_alphabet_coder;
 
     std::vector<LZSSFactor> m_factors;
+    
+    bool m_src_use_delta = false;
+    size_t m_encode_pos = 0;
 
     size_t m_num_min = SIZE_MAX;
     size_t m_num_max = 0;
@@ -48,7 +51,15 @@ public:
         m_out->write_compressed_int(m_src_bits, 5);
 
         //Encode
-        encode_offline(*m_in, *this, *m_alphabet_coder, m_factors);
+        encode_with_factors(*m_in, *this, *m_alphabet_coder, m_factors);
+    }
+    
+    inline void use_src_delta(bool b) {
+        m_src_use_delta = b;
+    }
+    
+    inline void use_src_bits(size_t bits) {
+        //ignore, we know better
     }
 
     inline void encode_fact(const LZSSFactor& f) {
@@ -62,19 +73,23 @@ public:
             m_num_max = f.num;
         }
         
-        if(f.src > m_src_max) {
-            m_src_max = f.src;
+        size_t src = m_src_use_delta ? (m_encode_pos - f.src) : f.src;
+        if(src > m_src_max) {
+            m_src_max = src;
         }
+        
+        m_encode_pos += f.num;
     }
 
     inline void encode_sym(uint8_t sym) {
         //don't encode symbols on the fly
+        ++m_encode_pos;
     }
 
     inline void encode_fact_offline(const LZSSFactor& f) {
         DLOG(INFO) << "encode_fact_offline({" << f.pos << "," << f.src << "," << f.num << "})";
         m_out->writeBit(1);
-        m_out->write(f.src, m_src_bits);
+        m_out->write(m_src_use_delta ? (m_encode_pos - f.src) : f.src, m_src_bits);
         m_out->write(f.num - m_num_min, m_num_bits);
     }
 };

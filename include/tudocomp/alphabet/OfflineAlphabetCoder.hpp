@@ -63,6 +63,9 @@ public:
         m_out->writeBit(0);
         m_out->write(uint8_t(m_char2comp[sym]), m_sigma_bits);
     }
+    
+    inline void encode_sym_flush() {
+    }
 };
 
 }

@@ -38,13 +38,15 @@ public:
         auto out_guard = output.as_stream();
         BitOStream out_bits(*out_guard);
 
+        size_t fact_min = 3; //factor threshold
+        size_t w = 16;       //window size
+        
         C coder(*m_env, input, out_bits);
+        coder.use_src_delta(true);
+        coder.use_src_bits(bitsFor(w)); //source can refer to beginning of window at max
 
         auto in_guard = input.as_stream();
         std::istream& ins = *in_guard;
-
-        size_t fact_min = 3; //factor threshold
-        size_t w = 16;       //window size
 
         boost::circular_buffer<uint8_t> buf(2 * w);
 
