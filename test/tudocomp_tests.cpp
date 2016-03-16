@@ -253,3 +253,42 @@ TEST(Output, stream) {
 
     ASSERT_EQ(ss.str(), "abc");
 }
+
+TEST(IO, bits) {
+    std::stringstream ss_out;
+    BitOStream out(ss_out);
+    
+    out.writeBit(0);                   //0
+    out.writeBit(1);                   //1
+    out.write(-1, 2);                  //11
+    out.write(0b11010110, 4);          //0110
+    out.write_compressed_int(0x27, 3); //1 111 0 100
+    out.write_compressed_int(0x33);    //0 0110011
+    //output should contain 0111 0110 1111 0100 0011 0011 = 76 F4 33
+    
+    std::string result = ss_out.str();
+    ASSERT_EQ(result.length(), 3U); //24 bits = 3 bytes
+    
+    bool done; //???
+    
+    //basic input test
+    {
+        std::stringstream ss_in(result);
+        BitIStream in(ss_in, done);
+        
+        ASSERT_EQ(in.readBits<uint32_t>(24), 0x76F433U);
+    }
+    
+    //advanced input test
+    {
+        std::stringstream ss_in(result);
+        BitIStream in(ss_in, done);
+        
+        ASSERT_EQ(in.readBit(), 0);
+        ASSERT_EQ(in.readBit(), 1);
+        ASSERT_EQ(in.readBits<size_t>(2), 3U);
+        ASSERT_EQ(in.readBits<size_t>(4), 6U);
+        ASSERT_EQ(in.read_compressed_int<size_t>(3), 0x27U);
+        ASSERT_EQ(in.read_compressed_int<size_t>(), 0x33U);
+    }
+}

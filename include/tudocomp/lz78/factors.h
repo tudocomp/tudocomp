@@ -6,7 +6,7 @@
 
 #include <glog/logging.h>
 
-#include <tudocomp/sdsl_ex.h>
+#include <tudocomp/sdslex/GrowableIntVector.hpp>
 #include <tudocomp/lz78/factor.h>
 
 namespace lz78 {
@@ -27,8 +27,8 @@ public:
     typedef sdsl::int_vector<0>::difference_type difference_type;
 
 private:
-    sdsl_extension::GrowableIntVector indices;
-    sdsl_extension::GrowableIntVector chrs;
+    sdslex::GrowableIntVector indices;
+    sdslex::GrowableIntVector chrs;
     friend EntriesReference;
 
 public:

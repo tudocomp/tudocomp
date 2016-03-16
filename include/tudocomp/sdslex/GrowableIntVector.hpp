@@ -1,11 +1,11 @@
-#ifndef TUDOCOMP_SDSL_EXTENSION_H
-#define TUDOCOMP_SDSL_EXTENSION_H
+#ifndef _SDSLEX_GROWABLE_INT_VECTOR_HPP
+#define _SDSLEX_GROWABLE_INT_VECTOR_HPP
 
 #include <sdsl/int_vector.hpp>
 #include <sdsl/bits.hpp>
 #include <sdsl/util.hpp>
 
-namespace sdsl_extension {
+namespace sdslex {
 
 class GrowableIntVector {
 public:
