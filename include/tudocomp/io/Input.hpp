@@ -98,6 +98,30 @@ namespace io {
             };
             return boost::apply_visitor(visitor(), data);
         }
+        
+        const uint8_t* mem_ptr() {
+            struct visitor: public boost::static_visitor<const uint8_t*> {
+                const uint8_t* operator()(InputSliceGuard::Memory& mem) const {
+                    return mem.ptr;
+                }
+                const uint8_t* operator()(InputSliceGuard::Stream& mem) const {
+                    return mem.buffer.data();
+                }
+            };
+            return boost::apply_visitor(visitor(), data);
+        }
+
+        size_t size() {
+            struct visitor: public boost::static_visitor<size_t> {
+                size_t operator()(InputSliceGuard::Memory& mem) const {
+                    return mem.size;
+                }
+                size_t operator()(InputSliceGuard::Stream& mem) const {
+                    return mem.buffer.size();
+                }
+            };
+            return boost::apply_visitor(visitor(), data);
+        }
     };
 
     inline InputSliceGuard& Input::as_view() {
