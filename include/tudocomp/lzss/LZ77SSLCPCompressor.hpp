@@ -8,10 +8,10 @@
 #include <sdsl/int_vector.hpp>
 #include <sdsl/suffix_arrays.hpp>
 #include <sdsl/lcp.hpp>
+#include <tudocomp/sdslex/int_vector_wrapper.hpp>
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
-#include <tudocomp/sdsl_ex.h>
 #include <tudocomp/util.h>
 
 #include <tudocomp/Compressor.hpp>
@@ -40,7 +40,7 @@ public:
 
         size_t len = in.size();
         const uint8_t* in_ptr = in.mem_ptr();
-        sdsl_extension::int_vector_wrapper wrapper(in_ptr, len);
+        sdslex::int_vector_wrapper wrapper(in_ptr, len);
 
         //Construct SA
         sdsl::csa_bitcompressed<> sa;
