@@ -1,13 +1,11 @@
-#ifndef _INCLUDED_LZ77SS_COMPRESSOR_HPP
-#define _INCLUDED_LZ77SS_COMPRESSOR_HPP
+#ifndef _INCLUDED_LZ77SS_SLIDING_WINDOW_COMPRESSOR_HPP
+#define _INCLUDED_LZ77SS_SLIDING_WINDOW_COMPRESSOR_HPP
 
 #include <algorithm>
 #include <functional>
 #include <vector>
 
 #include <boost/circular_buffer.hpp>
-
-#include <sdsl/int_vector.hpp>
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
@@ -21,13 +19,13 @@ namespace tudocomp {
 namespace lzss {
 
 template<typename C>
-class LZ77SSCompressor : public Compressor {
+class LZ77SSSlidingWindowCompressor : public Compressor {
 
 public:
-    inline LZ77SSCompressor() = delete;
+    inline LZ77SSSlidingWindowCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZ77SSCompressor(Env& env) : Compressor(env) {
+    inline LZ77SSSlidingWindowCompressor(Env& env) : Compressor(env) {
     }
     
     /// Compress `inp` into `out`.
@@ -60,7 +58,7 @@ public:
         }
 
         bool eof = false;
-        while(!eof || ahead < buf.size()) {
+        while(!eof && ahead < buf.size()) {
             LZSSFactor f;
 
             //walk back buffer

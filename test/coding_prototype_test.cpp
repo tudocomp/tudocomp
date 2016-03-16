@@ -4,8 +4,9 @@
 
 #include <tudocomp/io.h>
 
-#include <tudocomp/lzss/LZSSFactor.hpp>
-#include <tudocomp/lzss/LZ77SSCompressor.hpp>
+#include <tudocomp/lzss/LZ77SSLCPCompressor.hpp>
+#include <tudocomp/lzss/LZ77SSSlidingWindowCompressor.hpp>
+
 #include <tudocomp/lzss/OfflineLZSSCoder.hpp>
 #include <tudocomp/lzss/OnlineLZSSCoder.hpp>
 
@@ -14,7 +15,7 @@
 
 using namespace tudocomp;
 
-const std::string input_str = "wenn hinter fliegen fliegen fliegen, fliegen fliegen fliegen nach";
+const std::string input_str = "banana";
 
 std::string hex_bytes_str(const std::string& str) {
     std::stringstream result;
@@ -40,19 +41,36 @@ void performTest() {
     DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
 }
 
-TEST(CodingPrototype, lz77ss_Aonline_Fonline) {
-    performTest<lzss::LZ77SSCompressor<lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
+
+TEST(CodingPrototype, lz77ss_sw_Aonline_Fonline) {
+    performTest<lzss::LZ77SSSlidingWindowCompressor<lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
 }
 
-TEST(CodingPrototype, lz77ss_Aoffline_Fonline) {
-    performTest<lzss::LZ77SSCompressor<lzss::OnlineLZSSCoder<OfflineAlphabetCoder>>>();
+TEST(CodingPrototype, lz77ss_sw_Aoffline_Fonline) {
+    performTest<lzss::LZ77SSSlidingWindowCompressor<lzss::OnlineLZSSCoder<OfflineAlphabetCoder>>>();
 }
 
-TEST(CodingPrototype, lz77ss_Aonline_Foffline) {
-    performTest<lzss::LZ77SSCompressor<lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>>();
+TEST(CodingPrototype, lz77ss_sw_Aonline_Foffline) {
+    performTest<lzss::LZ77SSSlidingWindowCompressor<lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>>();
 }
 
-TEST(CodingPrototype, lz77ss_Aoffline_Foffline) {
-    performTest<lzss::LZ77SSCompressor<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
+TEST(CodingPrototype, lz77ss_sw_Aoffline_Foffline) {
+    performTest<lzss::LZ77SSSlidingWindowCompressor<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lz77ss_lcp_Aonline_Fonline) {
+    performTest<lzss::LZ77SSLCPCompressor<lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lz77ss_lcp_Aoffline_Fonline) {
+    performTest<lzss::LZ77SSLCPCompressor<lzss::OnlineLZSSCoder<OfflineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lz77ss_lcp_Aonline_Foffline) {
+    performTest<lzss::LZ77SSLCPCompressor<lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lz77ss_lcp_Aoffline_Foffline) {
+    performTest<lzss::LZ77SSLCPCompressor<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
 }
 
