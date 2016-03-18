@@ -6,6 +6,8 @@
 #include <tudocomp/lz78/trie.h>
 #include <tudocomp/lzw/factor.h>
 
+#include <tudocomp/lz78/dictionary.hpp>
+
 namespace tudocomp {
 
 namespace lzw {
@@ -30,33 +32,51 @@ public:
     using Compressor::Compressor;
 
     virtual void compress(Input& input, Output& out) override {
+        using lz78_dictionary::CodeType;
+        using lz78_dictionary::EncoderDictionary;
+
+        const CodeType dms {std::numeric_limits<CodeType>::max()};
+        const CodeType reserve_dms {0};
+
         auto guard = input.as_stream();
-        PrefixBuffer buf(*guard);
+        auto& is = *guard;
 
-        lz78::Trie trie(lz78::Trie::Lzw);
-
-        for (uint32_t i = 0; i <= 0xff; i++) {
-            trie.insert(i);
-        }
-
+        EncoderDictionary ed(EncoderDictionary::Lzw, dms, reserve_dms);
         C coder(*m_env, out);
         uint64_t factor_count = 0;
 
-        while (!buf.is_empty()) {
-            lz78::Result phrase_and_size = trie.find_or_insert(buf);
+        CodeType i {dms}; // Index
+        char c;
+        bool rbwf {false}; // Reset Bit Width Flag
 
-            LzwEntry e;
-            if (phrase_and_size.entry.index != 0) {
-                e = phrase_and_size.entry.index - 1;
-            } else {
-                e = phrase_and_size.entry.chr;
+        while (is.get(c)) {
+            // dictionary's maximum size was reached
+            if (ed.size() == dms)
+            {
+                ed.reset();
+                rbwf = true;
             }
 
-            coder.encode_fact(e);
+            const CodeType temp {i};
+
+            if ((i = ed.search_and_insert(temp, c)) == dms)
+            {
+                coder.encode_fact(temp);
+                factor_count++;
+                i = ed.search_initials(c);
+            }
+
+            if (rbwf)
+            {
+                coder.dictionary_reset();
+                rbwf = false;
+            }
+        }
+        if (i != dms) {
+            coder.encode_fact(i);
             factor_count++;
         }
         m_env->log_stat(RULESET_SIZE_LOG, factor_count);
-        trie.print(0);
     }
 
     virtual void decompress(Input& in, Output& out) override final {

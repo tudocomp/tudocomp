@@ -84,13 +84,13 @@ class EncoderDictionary {
         /// @brief Default constructor.
         /// @param c    byte that the Node will contain
         ///
-        explicit Node(char c, CodeType dms):
+        explicit Node(uint8_t c, CodeType dms):
             first(dms), c(c), left(dms), right(dms)
         {
         }
 
         CodeType    first;  ///< Code of first child string.
-        char        c;      ///< Byte.
+        uint8_t        c;      ///< Byte.
         CodeType    left;   ///< Code of child node with byte < `c`.
         CodeType    right;  ///< Code of child node with byte > `c`.
     };
@@ -104,7 +104,7 @@ public:
     enum LzMode {
         Lz78,
         Lzw,
-    }
+    };
 
     ///
     /// @brief Default constructor.
@@ -113,13 +113,13 @@ public:
     EncoderDictionary(LzMode mode, CodeType dms, CodeType reserve_dms):
         m_dms(dms), m_reserve_dms(reserve_dms), m_lzw_mode(mode == Lzw)
     {
-        const long int minc = std::numeric_limits<char>::min();
-        const long int maxc = std::numeric_limits<char>::max();
+        const long int minc = std::numeric_limits<uint8_t>::min();
+        const long int maxc = std::numeric_limits<uint8_t>::max();
         CodeType k {0};
 
         if (m_lzw_mode) {
             for (long int c = minc; c <= maxc; ++c)
-                initials[static_cast<unsigned char> (c)] = k++;
+                initials[c] = k++;
         }
         vn.reserve(reserve_dms);
         reset();
@@ -133,16 +133,16 @@ public:
     {
         vn.clear();
 
-        const long int minc = std::numeric_limits<char>::min();
-        const long int maxc = std::numeric_limits<char>::max();
+        const long int minc = std::numeric_limits<uint8_t>::min();
+        const long int maxc = std::numeric_limits<uint8_t>::max();
 
         if (m_lzw_mode) {
             for (long int c = minc; c <= maxc; ++c)
-                vn.push_back(Node(c));
+                vn.push_back(Node(c, m_dms));
         }
 
         // add dummy nodes for the metacodes
-        vn.push_back(Node('\x00')); // MetaCode::Eof
+        vn.push_back(Node('\x00', m_dms)); // MetaCode::Eof
     }
 
     ///
@@ -152,7 +152,7 @@ public:
     /// @return The index of the pair, if it was found.
     /// @retval m_dms    if the pair wasn't found
     ///
-    CodeType search_and_insert(CodeType i, char c)
+    CodeType search_and_insert(CodeType i, uint8_t c)
     {
         if (m_lzw_mode) {
             if (i == m_dms)
@@ -192,7 +192,7 @@ public:
         else
             vn[i].first = vn_size;
 
-        vn.push_back(Node(c));
+        vn.push_back(Node(c, m_dms));
         return m_dms;
     }
 
@@ -201,9 +201,9 @@ public:
     /// @param c    byte to search for
     /// @return The code associated to the searched byte.
     ///
-    CodeType search_initials(char c) const
+    CodeType search_initials(uint8_t c) const
     {
-        return initials[static_cast<unsigned char> (c)];
+        return initials[c];
     }
 
     ///
@@ -225,51 +225,6 @@ private:
 
 // TODO: Existing lz78 Coders will not reset dictionary size halfway
 // TODO: Existing lz78 DeCoders will not reset dictionary size halfway
-
-///
-/// @brief Compresses the contents of `is` and writes the result to `os`.
-/// @param [in] is      input stream
-/// @param [out] os     output stream
-///
-template<class C>
-void compress(std::istream &is, std::ostream &os, CodeType dms, CodeType reserve_dms)
-{
-    EncoderDictionary ed;
-    CodeWriter cw(os);
-    CodeType i {dms}; // Index
-    char c;
-    bool rbwf {false}; // Reset Bit Width Flag
-
-    while (is.get(c))
-    {
-        // dictionary's maximum size was reached
-        if (ed.size() == dms)
-        {
-            ed.reset();
-            rbwf = true;
-        }
-
-        const CodeType temp {i};
-
-        if ((i = ed.search_and_insert(temp, c)) == dms)
-        {
-            cw.write(temp);
-            i = ed.search_initials(c);
-
-            if (required_bits(ed.size() - 1) > cw.get_bits())
-                cw.increase_bits();
-        }
-
-        if (rbwf)
-        {
-            cw.reset_bits();
-            rbwf = false;
-        }
-    }
-
-    if (i != dms)
-        cw.write(i);
-}
 
 
 }

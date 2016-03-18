@@ -55,6 +55,10 @@ public:
         m_factor_counter++;
     }
 
+    inline void dictionary_reset() {
+        m_factor_counter = 0;
+    }
+
     inline static void decode(Input& _inp, Output& _out) {
         auto iguard = _inp.as_stream();
         auto oguard = _out.as_stream();

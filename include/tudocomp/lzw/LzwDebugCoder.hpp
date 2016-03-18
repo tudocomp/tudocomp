@@ -47,6 +47,10 @@ public:
         }
     }
 
+    inline void dictionary_reset() {
+        // nothing to be done
+    }
+
     inline static void decode(Input& _inp, Output& _out) {
         auto iguard = _inp.as_stream();
         auto oguard = _out.as_stream();
