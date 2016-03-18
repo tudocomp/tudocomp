@@ -35,6 +35,9 @@ private:
     size_t m_encode_pos = 0;
 
 public:
+    static inline void require_offline() {
+    }
+
     inline OfflineLZSSCoder(Env& env, Input& in, BitOStream& out, LZSSCoderOpts opts)
             : m_out(&out), m_in(&in), m_src_use_delta(opts.use_src_delta) {
 
@@ -53,6 +56,11 @@ public:
         m_out->write_compressed_int(m_num_min, 4);
         m_out->write_compressed_int(m_num_bits, 5);
         m_out->write_compressed_int(m_src_bits, 5);
+        
+        //Sort factors if list is unordered
+        if(!m_src_use_delta) {
+            std::sort(m_factors.begin(), m_factors.end());
+        }
 
         //Encode
         encode_with_factors(*m_in, *this, *m_alphabet_coder, m_factors);

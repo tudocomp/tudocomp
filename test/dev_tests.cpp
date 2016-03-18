@@ -15,6 +15,7 @@
 
 #include <tudocomp/lzss/LZ77SSLCPCompressor.hpp>
 #include <tudocomp/lzss/LZ77SSSlidingWindowCompressor.hpp>
+#include <tudocomp/lzss/LZSSESACompressor.hpp>
 
 #include <tudocomp/lzss/OfflineLZSSCoder.hpp>
 #include <tudocomp/lzss/OnlineLZSSCoder.hpp>
@@ -24,7 +25,7 @@
 
 using namespace tudocomp;
 
-const std::string input_str = "banana";
+const std::string input_str = "abracadabra";
 
 std::string hex_bytes_str(const std::string& str) {
     std::stringstream result;
@@ -83,3 +84,10 @@ TEST(CodingPrototype, lz77ss_lcp_Aoffline_Foffline) {
     performTest<lzss::LZ77SSLCPCompressor<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
 }
 
+TEST(CodingPrototype, lzss_esacomp_Aonline_Foffline) {
+    performTest<lzss::LZSSESACompressor<lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_Aoffline_Foffline) {
+    performTest<lzss::LZSSESACompressor<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
+}
