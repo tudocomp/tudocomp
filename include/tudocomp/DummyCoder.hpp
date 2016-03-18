@@ -2,7 +2,7 @@
 #define _INCLUDED_DUMMYCODER_HPP_
 
 #include <tudocomp/Coder.hpp>
-#include <tudocomp/util/decode_buffer.h>
+#include <tudocomp/util/DecodeBuffer.hpp>
 
 namespace tudocomp {
 

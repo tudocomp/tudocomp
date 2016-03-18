@@ -1,5 +1,5 @@
-#ifndef TUDOCOMP_DECODE_BUFFER_H
-#define TUDOCOMP_DECODE_BUFFER_H
+#ifndef _INCLUDED_DECODE_BUFFER_HPP_
+#define _INCLUDED_DECODE_BUFFER_HPP_
 
 #include <unordered_map>
 #include <vector>
@@ -10,7 +10,6 @@
 
 namespace tudocomp {
 
-// TODO: Existing implementation is probably very inperformant
 /// Common helper class for decoders.
 ///
 /// This type represents a buffer of partially decoded input.
@@ -18,6 +17,7 @@ namespace tudocomp {
 /// or a decoded byte onto it, and automatically constructs the
 /// fully decoded text in the process.
 class DecodeBuffer {
+    
     std::vector<uint8_t> text;
     std::vector<bool> byte_is_decoded;
     size_t text_pos;
