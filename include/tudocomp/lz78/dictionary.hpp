@@ -53,23 +53,6 @@ namespace lz78_dictionary {
 /// Type used to store and retrieve codes.
 using CodeType = std::uint32_t;
 
-/*namespace globals {
-
-/// Dictionary Maximum Size (when reached, the dictionary will be reset)
-//const CodeType dms {512 * 1024};
-const CodeType dms {std::numeric_limits<CodeType>::max()};
-const CodeType reserve_dms {0};
-
-}*/ // namespace globals
-
-///
-/// @brief Special codes used by the encoder to control the decoder.
-/// @todo Metacodes should not be hardcoded to match their index.
-///
-enum class MetaCode: CodeType {
-    Eof = 1u << CHAR_BIT,   ///< End-of-file.
-};
-
 ///
 /// @brief Encoder's custom dictionary type.
 ///
@@ -90,7 +73,7 @@ class EncoderDictionary {
         }
 
         CodeType    first;  ///< Code of first child string.
-        uint8_t        c;      ///< Byte.
+        uint8_t     c;      ///< Byte.
         CodeType    left;   ///< Code of child node with byte < `c`.
         CodeType    right;  ///< Code of child node with byte > `c`.
     };
@@ -119,7 +102,6 @@ public:
 
     ///
     /// @brief Resets dictionary to its initial contents.
-    /// @note Adds dummy nodes to account for the metacodes.
     ///
     void reset()
     {
@@ -132,9 +114,6 @@ public:
             for (long int c = minc; c <= maxc; ++c)
                 vn.push_back(Node(c, m_dms));
         }
-
-        // add dummy nodes for the metacodes
-        vn.push_back(Node('\x00', m_dms)); // MetaCode::Eof
     }
 
     ///
@@ -152,7 +131,7 @@ public:
         }
 
         const CodeType vn_size = vn.size();
-        CodeType ci {vn[i].first}; // Current Index
+        CodeType ci {vn.at(i).first}; // Current Index
 
         if (ci != m_dms)
         {

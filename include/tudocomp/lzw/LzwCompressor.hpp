@@ -17,6 +17,8 @@ using ::lz78::Result;
 using ::lz78::PrefixBuffer;
 using ::tudocomp::Compressor;
 using ::lzw::LzwEntry;
+using lz78_dictionary::CodeType;
+using lz78_dictionary::EncoderDictionary;
 
 const std::string THRESHOLD_OPTION = "lzw.threshold";
 const std::string THRESHOLD_LOG = "lzw.threshold";
@@ -28,15 +30,16 @@ const std::string RULESET_SIZE_LOG = "lzw.factor_count";
  */
 template<typename C>
 class LzwCompressor: public Compressor {
+private:
+    /// Max dictionary size before reset
+    const CodeType dms {std::numeric_limits<CodeType>::max()};
+    //const CodeType dms {10};
+    /// Preallocated dictionary size
+    const CodeType reserve_dms {1024};
 public:
     using Compressor::Compressor;
 
     virtual void compress(Input& input, Output& out) override {
-        using lz78_dictionary::CodeType;
-        using lz78_dictionary::EncoderDictionary;
-
-        const CodeType dms {std::numeric_limits<CodeType>::max()};
-        const CodeType reserve_dms {0};
 
         auto guard = input.as_stream();
         auto& is = *guard;
@@ -50,6 +53,8 @@ public:
         bool rbwf {false}; // Reset Bit Width Flag
 
         while (is.get(c)) {
+            uint8_t b = c;
+
             // dictionary's maximum size was reached
             if (ed.size() == dms)
             {
@@ -59,11 +64,11 @@ public:
 
             const CodeType temp {i};
 
-            if ((i = ed.search_and_insert(temp, c)) == dms)
+            if ((i = ed.search_and_insert(temp, b)) == dms)
             {
                 coder.encode_fact(temp);
                 factor_count++;
-                i = c;
+                i = b;
             }
 
             if (rbwf)
