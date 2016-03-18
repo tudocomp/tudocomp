@@ -6,7 +6,7 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
-#include <tudocomp/util/counter.h>
+#include <tudocomp/util/Counter.hpp>
 
 //TODO only supports 8-bit characters
 namespace tudocomp {

@@ -6,7 +6,6 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
-#include <tudocomp/util/counter.h>
 
 namespace tudocomp {
 

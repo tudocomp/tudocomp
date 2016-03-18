@@ -1,5 +1,5 @@
-#ifndef COUNTER_H
-#define COUNTER_H
+#ifndef _INCLUDED_COUNTER_HPP_
+#define _INCLUDED_COUNTER_HPP_
 
 #include <algorithm>
 #include <cstdint>
@@ -14,7 +14,9 @@ namespace tudocomp {
 /// A data structure for counting occurences of values of a given type T.
 template<class T>
 class Counter {
+    
     std::unordered_map<T, size_t> map;
+    
 public:
     /// Increase the counter for the passed value by one, setting it to 1
     /// if it was not yet seen.
