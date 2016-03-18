@@ -113,14 +113,6 @@ public:
     EncoderDictionary(LzMode mode, CodeType dms, CodeType reserve_dms):
         m_dms(dms), m_reserve_dms(reserve_dms), m_lzw_mode(mode == Lzw)
     {
-        const long int minc = std::numeric_limits<uint8_t>::min();
-        const long int maxc = std::numeric_limits<uint8_t>::max();
-        CodeType k {0};
-
-        if (m_lzw_mode) {
-            for (long int c = minc; c <= maxc; ++c)
-                initials[c] = k++;
-        }
         vn.reserve(reserve_dms);
         reset();
     }
@@ -156,7 +148,7 @@ public:
     {
         if (m_lzw_mode) {
             if (i == m_dms)
-                return search_initials(c);
+                return c;
         }
 
         const CodeType vn_size = vn.size();
@@ -197,16 +189,6 @@ public:
     }
 
     ///
-    /// @brief Fakes a search for byte `c` in the one-byte area of the dictionary.
-    /// @param c    byte to search for
-    /// @return The code associated to the searched byte.
-    ///
-    CodeType search_initials(uint8_t c) const
-    {
-        return initials[c];
-    }
-
-    ///
     /// @brief Returns the number of dictionary entries.
     ///
     std::vector<Node>::size_type size() const
@@ -219,8 +201,6 @@ private:
     /// Vector of nodes on top of which the binary search tree is implemented.
     std::vector<Node> vn;
 
-    /// Cheat sheet for mapping one-byte strings to their codes.
-    std::array<CodeType, 1u << CHAR_BIT> initials;
 };
 
 // TODO: Existing lz78 Coders will not reset dictionary size halfway

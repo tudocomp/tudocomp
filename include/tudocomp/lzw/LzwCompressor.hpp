@@ -63,7 +63,7 @@ public:
             {
                 coder.encode_fact(temp);
                 factor_count++;
-                i = ed.search_initials(c);
+                i = c;
             }
 
             if (rbwf)
