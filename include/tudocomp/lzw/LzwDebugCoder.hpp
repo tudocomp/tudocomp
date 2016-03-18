@@ -14,6 +14,7 @@ namespace tudocomp {
 namespace lzw {
 
 using ::lzw::LzwEntry;
+using lz78_dictionary::CodeType;
 
 /**
  * Encodes factors as simple strings.
@@ -51,7 +52,8 @@ public:
         // nothing to be done
     }
 
-    inline static void decode(Input& _inp, Output& _out) {
+    inline static void decode(Input& _inp, Output& _out,
+                              CodeType dms, CodeType reserve_dms) {
         auto iguard = _inp.as_stream();
         auto oguard = _out.as_stream();
         auto& inp = *iguard;

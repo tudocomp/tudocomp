@@ -15,6 +15,7 @@
 #include <tudocomp/lzw/LzwDebugCoder.hpp>
 
 using namespace lzw;
+using lz78_dictionary::DMS_MAX;
 
 TEST(LZW, DebugCode_compress) {
     Env env;
@@ -144,7 +145,7 @@ TEST(TemplatePort, LzwDebugCoder) {
     std::vector<uint8_t> decoded_buffer;
     auto decoded_out = Output::from_memory(decoded_buffer);
 
-    Coder::decode(input, decoded_out);
+    Coder::decode(input, decoded_out, DMS_MAX, 0);
     std::string decoded(decoded_buffer.begin(), decoded_buffer.end());
 
     ASSERT_EQ(decoded, "xyxaybxa!xa!?");
@@ -191,7 +192,7 @@ TEST(TemplatePort, LzwBitCoder) {
     std::vector<uint8_t> decoded_buffer;
     auto decoded_out = Output::from_memory(decoded_buffer);
 
-    Coder::decode(input, decoded_out);
+    Coder::decode(input, decoded_out, DMS_MAX, 0);
     std::string decoded(decoded_buffer.begin(), decoded_buffer.end());
 
     ASSERT_EQ(decoded, "xyxaybxa!xa!?");

@@ -19,6 +19,7 @@ using ::tudocomp::Compressor;
 using ::lzw::LzwEntry;
 using lz78_dictionary::CodeType;
 using lz78_dictionary::EncoderDictionary;
+using lz78_dictionary::DMS_MAX;
 
 const std::string THRESHOLD_OPTION = "lzw.threshold";
 const std::string THRESHOLD_LOG = "lzw.threshold";
@@ -32,7 +33,7 @@ template<typename C>
 class LzwCompressor: public Compressor {
 private:
     /// Max dictionary size before reset
-    const CodeType dms {std::numeric_limits<CodeType>::max()};
+    const CodeType dms {DMS_MAX};
     //const CodeType dms {10};
     /// Preallocated dictionary size
     const CodeType reserve_dms {1024};
@@ -85,7 +86,7 @@ public:
     }
 
     virtual void decompress(Input& in, Output& out) override final {
-        C::decode(in, out);
+        C::decode(in, out, dms, reserve_dms);
     }
 
 };

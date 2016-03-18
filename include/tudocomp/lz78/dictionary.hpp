@@ -47,11 +47,15 @@
 
 namespace lz78_dictionary {
 
+
 // Safety macro; if not defined, some overkillish safety checks are avoided.
 //#define TAKE_NO_RISKS
 
 /// Type used to store and retrieve codes.
 using CodeType = std::uint32_t;
+
+/// Maximum legal dictionary size.
+const CodeType DMS_MAX = std::numeric_limits<CodeType>::max();
 
 ///
 /// @brief Encoder's custom dictionary type.
