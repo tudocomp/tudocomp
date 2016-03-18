@@ -1,3 +1,12 @@
+/*
+    These tests are merely to support development and
+    should not be seen as actual tests.
+    
+    However, they should likely be transformed into actual
+    tests at some point. See this as a staging area
+    for new features.
+*/
+
 #include <gtest/gtest.h>
 
 #include <glog/logging.h>
