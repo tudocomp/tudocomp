@@ -39,10 +39,6 @@ public:
         (*m_out).flush();
     }
 
-    inline void encode_sym(uint8_t sym) {
-        throw std::runtime_error("encoder does not support encoding raw symbols");
-    }
-
     inline void encode_fact(const LzwEntry& entry) {
         if (entry >= 32u && entry <= 127u) {
             (*m_out) << "'" << char(uint8_t(entry)) << "',";

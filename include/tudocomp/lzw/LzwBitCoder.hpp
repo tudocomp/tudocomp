@@ -42,10 +42,6 @@ public:
         (*m_out_guard).flush();
     }
 
-    inline void encode_sym(uint8_t sym) {
-        throw std::runtime_error("encoder does not support encoding raw symbols");
-    }
-
     inline void encode_fact(const LzwEntry& entry) {
         // output format: variable_number_backref_bits 8bit_char
 
