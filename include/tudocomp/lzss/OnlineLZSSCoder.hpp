@@ -46,7 +46,6 @@ public:
     inline void encode_fact(const LZSSFactor& f) {
         m_alphabet_coder->encode_sym_flush();
         
-        DLOG(INFO) << "encode_fact({" << f.pos << "," << f.src << "," << f.num << "})";
         m_out->writeBit(1);
         m_out->write(m_src_use_delta ? (m_encode_pos - f.src) : f.src, m_src_bits);
         m_out->write(f.num, m_num_bits);

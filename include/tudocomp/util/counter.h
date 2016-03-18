@@ -54,11 +54,13 @@ public:
             }
         });
 
+        /*
         DLOG(INFO) << "getSorted() [";
         for(auto e : v) {
             DLOG(INFO) << "  " << e.first << " " << e.second;
         }
         DLOG(INFO) << "]";
+        */
 
         return v;
     }

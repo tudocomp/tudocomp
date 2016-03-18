@@ -83,7 +83,6 @@ public:
     }
 
     inline void encode_fact_offline(const LZSSFactor& f) {
-        DLOG(INFO) << "encode_fact_offline({" << f.pos << "," << f.src << "," << f.num << "})";
         m_out->writeBit(1);
         m_out->write(m_src_use_delta ? (m_encode_pos - f.src) : f.src, m_src_bits);
         m_out->write(f.num - m_num_min, m_num_bits);

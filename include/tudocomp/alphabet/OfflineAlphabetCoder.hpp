@@ -44,8 +44,6 @@ public:
             m_comp2char[i] = c;
             m_char2comp[c] = i;
         }
-        
-        DLOG(INFO) << "sigma = " << m_sigma << " (" << m_sigma_bits << " bits per symbol)";
 
         //Encode alphabet
         //TODO write magic
@@ -59,7 +57,6 @@ public:
     }
     
     inline void encode_sym(uint8_t sym) {
-        DLOG(INFO) << "encode_sym('" << sym << "')";
         m_out->writeBit(0);
         m_out->write(uint8_t(m_char2comp[sym]), m_sigma_bits);
     }
