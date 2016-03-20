@@ -3,7 +3,6 @@
 
 #include <tudocomp/Compressor.hpp>
 
-#include <tudocomp/lz78/trie.h>
 #include <tudocomp/lzw/factor.h>
 
 #include <tudocomp/lz78/dictionary.hpp>
@@ -34,7 +33,7 @@ class LzwCompressor: public Compressor {
 private:
     /// Max dictionary size before reset
     const CodeType dms {DMS_MAX};
-    //const CodeType dms {10};
+    //const CodeType dms {256 + 10};
     /// Preallocated dictionary size
     const CodeType reserve_dms {1024};
 public:

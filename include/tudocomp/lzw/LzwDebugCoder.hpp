@@ -31,11 +31,6 @@ public:
     {
     }
 
-    inline LzwDebugCoder(Env& env, Output& out, size_t len)
-        : m_out(out.as_stream())
-    {
-    }
-
     inline ~LzwDebugCoder() {
         (*m_out).flush();
     }
@@ -53,7 +48,8 @@ public:
     }
 
     inline static void decode(Input& _inp, Output& _out,
-                              CodeType dms, CodeType reserve_dms) {
+                              CodeType dms,
+                              CodeType reserve_dms) {
         auto iguard = _inp.as_stream();
         auto oguard = _out.as_stream();
         auto& inp = *iguard;
@@ -61,9 +57,9 @@ public:
 
         bool more = true;
         char c = '?';
-        decode_step([&]() -> LzwEntry {
+        decode_step([&](CodeType& entry, bool reset, bool &file_corrupted) -> LzwEntry {
             if (!more) {
-                return LzwEntry(-1);
+                return false;
             }
 
             LzwEntry v;
@@ -82,12 +78,13 @@ public:
             }
 
             if (!more) {
-                return LzwEntry(-1);
+                return false;
             }
             //std::cout << byte_to_nice_ascii_char(v) << "\n";
-            return v;
+            entry = v;
+            return true;
 
-        }, out);
+        }, out, dms, reserve_dms);
     }
 };
 

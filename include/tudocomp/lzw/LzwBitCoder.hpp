@@ -33,11 +33,6 @@ public:
     {
     }
 
-    inline LzwBitCoder(Env& env, Output& out, size_t len)
-        : m_out_guard(out.as_stream()), m_out(*m_out_guard)
-    {
-    }
-
     inline ~LzwBitCoder() {
         m_out.flush();
         (*m_out_guard).flush();
@@ -61,7 +56,8 @@ public:
     }
 
     inline static void decode(Input& _inp, Output& _out,
-                              CodeType dms, CodeType reserve_dms) {
+                              CodeType dms,
+                              CodeType reserve_dms) {
         auto iguard = _inp.as_stream();
         auto oguard = _out.as_stream();
         auto& inp = *iguard;
@@ -71,17 +67,18 @@ public:
         BitIStream is(inp, done);
 
         uint64_t counter = 0;
-        decode_step([&]() -> LzwEntry {
+        decode_step([&](CodeType& entry, bool reset, bool &file_corrupted) -> LzwEntry {
             // Try to read next factor
             LzwEntry factor(is.readBits<uint64_t>(bitsFor(counter + 256)));
             if (done) {
                 // Could not read all bits -> done
                 // (this works because the encoded factors are always > 8 bit)
-                return LzwEntry(-1);
+                return false;
             }
             counter++;
-            return factor;
-        }, out);
+            entry = factor;
+            return true;
+        }, out, dms, reserve_dms);
     }
 };
 

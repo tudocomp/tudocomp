@@ -137,7 +137,7 @@ void test_roundtrip_batch(F f) {
 
     f("abcabca");
 
-    f("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    f("abbbbbbbbbbcbbbbbbbbbb");
 }
 
 const std::string TEST_FILE_PATH = "test_files";

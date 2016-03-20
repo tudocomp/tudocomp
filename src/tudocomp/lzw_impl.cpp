@@ -5,11 +5,15 @@
 #include <tudocomp/lzw/dummy_coder.h>
 #include <tudocomp/lzw/bit_coder.h>
 #include <tudocomp/lzw/decode.hpp>
+#include <tudocomp/lz78/dictionary.hpp>
 
 namespace lzw {
 
 using namespace tudocomp;
 using ::tudocomp::lzw::decode_step;
+using lz78_dictionary::CodeType;
+const CodeType dms = lz78_dictionary::DMS_MAX;
+const CodeType reserve_dms = 0;
 
 void LZWDebugCode::code(LzwEntries&& entries, Output& _out) {
     auto guard = _out.as_stream();
@@ -32,9 +36,9 @@ void LZWDebugCode::decode(Input& _inp, Output& _out) {
 
     bool more = true;
     char c = '?';
-    decode_step([&]() -> LzwEntry {
+    decode_step([&](CodeType& entry, bool reset, bool &file_corrupted) -> LzwEntry {
         if (!more) {
-            return LzwEntry(-1);
+            return false;
         }
 
         LzwEntry v;
@@ -53,12 +57,13 @@ void LZWDebugCode::decode(Input& _inp, Output& _out) {
         }
 
         if (!more) {
-            return LzwEntry(-1);
+            return false;
         }
         //std::cout << byte_to_nice_ascii_char(v) << "\n";
-        return v;
+        entry = v;
+        return true;
 
-    }, out);
+    }, out, dms, reserve_dms);
 }
 
 void LZWBitCode::code(LzwEntries&& entries, Output& _out) {
@@ -98,15 +103,16 @@ void LZWBitCode::decode(Input& _inp, Output& _out) {
     uint8_t bit_size = is.readBits<uint64_t>(6) + 1;
 
     uint64_t counter = 0;
-    decode_step([&]() -> LzwEntry {
+    decode_step([&](CodeType& entry, bool reset, bool &file_corrupted) -> LzwEntry {
         if (counter == entries_size || done) {
-            return LzwEntry(-1);
+            return false;
         }
 
         counter++;
 
-        return LzwEntry(is.readBits<uint64_t>(bit_size));
-    }, out);
+        entry = LzwEntry(is.readBits<uint64_t>(bit_size));
+        return true;
+    }, out, dms, reserve_dms);
 }
 
 }

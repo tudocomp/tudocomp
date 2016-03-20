@@ -2,91 +2,102 @@
 #define _INCLUDED_LZW_DECODE_HPP_
 
 #include <tudocomp/lzw/factor.h>
+#include <tudocomp/lz78/dictionary.hpp>
+#include <tudocomp/util.h>
 
 namespace tudocomp {
 
 namespace lzw {
 
-using ::lzw::LzwEntry;
+using lz78_dictionary::CodeType;
 
 template<class F>
-void decode_step(F ReadIndex, std::ostream& out) {
-    std::vector<std::tuple<LzwEntry, uint8_t>> dict;
-    for (size_t i = 0; i <= 0xff; i++) {
-        dict.push_back(std::tuple<LzwEntry, uint8_t> { 0, i });
-    }
+void decode_step(F next_code_callback,
+                 std::ostream& out,
+                 const CodeType dms,
+                 const CodeType reserve_dms) {
+    std::vector<std::pair<CodeType, uint8_t>> dictionary;
 
-    auto AddDict = [&](LzwEntry C, uint8_t x) -> LzwEntry {
-        dict.push_back(std::tuple<LzwEntry, uint8_t> { C, x });
-        return dict.size() - 1;
+    // "named" lambda function, used to reset the dictionary to its initial contents
+    const auto reset_dictionary = [&] {
+        dictionary.clear();
+        dictionary.reserve(reserve_dms);
+
+        const long int minc = std::numeric_limits<uint8_t>::min();
+        const long int maxc = std::numeric_limits<uint8_t>::max();
+
+        for (long int c = minc; c <= maxc; ++c)
+            dictionary.push_back({dms, static_cast<uint8_t> (c)});
     };
 
-    auto GetString = [&](LzwEntry C) -> std::string {
-        std::stringstream s;
-        while (true) {
-            s << std::get<1>(dict[C]);
-            C = std::get<0>(dict[C]);
-            if (C == 0) {
-                break;
-            }
+    const auto rebuild_string = [&](CodeType k) -> const std::vector<uint8_t> * {
+        static std::vector<uint8_t> s; // String
+
+        s.clear();
+
+        // the length of a string cannot exceed the dictionary's number of entries
+        s.reserve(reserve_dms);
+
+        while (k != dms)
+        {
+            s.push_back(dictionary[k].second);
+            k = dictionary[k].first;
         }
-        std::string r = s.str();
-        return std::string(r.rbegin(), r.rend());
+
+        std::reverse(s.begin(), s.end());
+        return &s;
     };
 
-    auto IsIndexInDict = [&](LzwEntry C) -> bool {
-        return C < dict.size();
-    };
+    reset_dictionary();
 
-    LzwEntry C = ReadIndex();
-    if (C == LzwEntry(-1)) {
-        return;
-    }
-    std::string W = GetString(C);
-    out << W;
-    //std::cout << W << "\n";
-    /*auto f = [&](uint C,
-                 uint C_,
-                 std::string W,
-                 bool indict,
-                 uint adddict) {
-        std::cout
-            << " |\t" << byte_to_nice_ascii_char(C)
-            << " |\t" << byte_to_nice_ascii_char(C_)
-            << " |\t" << W
-            << " |\t" << indict
-            << " |\t" << byte_to_nice_ascii_char(adddict)
-                << "(" << byte_to_nice_ascii_char(C) << ","
-                << W[0] << ")"
-            << " |\t" << W << "\n";
-    };
+    CodeType i {dms}; // Index
+    CodeType k; // Key
 
-    f(C, 0, W, false, 0);*/
+    bool corrupted = false;
 
-    while (C != LzwEntry(-1)) {
-        LzwEntry C_ = ReadIndex();
+    while (true)
+    {
+        bool dictionary_reset = false;
 
-        if (C_ == LzwEntry(-1)) {
+        // dictionary's maximum size was reached
+        if (dictionary.size() == dms)
+        {
+            reset_dictionary();
+            dictionary_reset = true;
+        }
+
+        if (!next_code_callback(k, dictionary_reset, corrupted))
             break;
+
+        //std::cout << byte_to_nice_ascii_char(k) << "\n";
+
+        if (k > dictionary.size()) {
+            std::stringstream s;
+            s << "invalid compressed code " << k;
+            throw std::runtime_error(s.str());
         }
 
-        //LzwEntry new_dict;
-        bool isindict;
+        const std::vector<uint8_t> *s; // String
 
-        if ((isindict = IsIndexInDict(C_))) {
-            W = GetString(C_);
-            //new_dict = AddDict(C, W[0]);
-            AddDict(C, W[0]);
-        } else {
-            //new_dict = C_ = AddDict(C, W[0]);
-            C_ = AddDict(C, W[0]);
-            W = GetString(C_);
+        if (k == dictionary.size())
+        {
+            dictionary.push_back({i, rebuild_string(i)->front()});
+            s = rebuild_string(k);
         }
-        out << W;
-        //f(C, C_, W, isindict, new_dict);
+        else
+        {
+            s = rebuild_string(k);
 
-        C = C_;
+            if (i != dms)
+                dictionary.push_back({i, s->front()});
+        }
+
+        out.write((char*) &s->front(), s->size());
+        i = k;
     }
+
+    if (corrupted)
+        throw std::runtime_error("corrupted compressed file");
 }
 
 }
