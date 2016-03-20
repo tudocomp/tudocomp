@@ -68,6 +68,10 @@ public:
 
         uint64_t counter = 0;
         decode_step([&](CodeType& entry, bool reset, bool &file_corrupted) -> LzwEntry {
+            if (reset) {
+                counter = 0;
+            }
+
             // Try to read next factor
             LzwEntry factor(is.readBits<uint64_t>(bitsFor(counter + 256)));
             if (done) {
