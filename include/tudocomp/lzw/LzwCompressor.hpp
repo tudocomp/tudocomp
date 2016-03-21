@@ -32,8 +32,8 @@ template<typename C>
 class LzwCompressor: public Compressor {
 private:
     /// Max dictionary size before reset
-    //const CodeType dms {DMS_MAX};
-    const CodeType dms {256 + 10};
+    const CodeType dms {DMS_MAX};
+    //const CodeType dms {256 + 10};
     /// Preallocated dictionary size
     const CodeType reserve_dms {1024};
 public:
