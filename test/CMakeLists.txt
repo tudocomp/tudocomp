@@ -11,8 +11,6 @@ run_test(tudocomp_driver_tests tudocomp_algorithms)
 #run_test(esacomp_lz_factor_tests esacomp_lz_factor)
 
 run_test(lz78_tests tudocomp)
-run_test(lz78_impl_tests tudocomp)
-
-run_test(lzw_impl_tests tudocomp)
+run_test(lzw_tests tudocomp)
 
 run_test(dev_tests tudocomp)

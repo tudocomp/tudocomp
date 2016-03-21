@@ -6,6 +6,7 @@
 #include <gtest/gtest.h>
 
 #include "test_util.h"
+#include "tudocomp_test_util.h"
 
 #include <tudocomp/lz78/factor.h>
 #include <tudocomp/lz78/factors.h>
@@ -92,7 +93,7 @@ TEST(Entries, iterator) {
 
 }
 
-TEST(TemplatePort, Lz78DebugCoder) {
+TEST(Lz78, Lz78DebugCoder) {
     using Coder = tudocomp::lz78::Lz78DebugCoder;
 
     Env env;
@@ -123,7 +124,7 @@ TEST(TemplatePort, Lz78DebugCoder) {
 
 }
 
-TEST(TemplatePort, Lz78BitCoder) {
+TEST(Lz78, Lz78BitCoder) {
     using Coder = tudocomp::lz78::Lz78BitCoder;
 
     Env env;
@@ -162,7 +163,7 @@ TEST(TemplatePort, Lz78BitCoder) {
 
 }
 
-TEST(TemplatePort, Lz78Compressor) {
+TEST(Lz78, Lz78Compressor) {
     using Coder = tudocomp::lz78::Lz78DebugCoder;
     using Compressor = tudocomp::lz78::Lz78Compressor<Coder>;
 
@@ -190,4 +191,25 @@ TEST(TemplatePort, Lz78Compressor) {
 
     ASSERT_EQ(decoded_buffer, std::vector<uint8_t>(input_str.begin(), input_str.end()));
 
+}
+
+TEST(Lz78, compress) {
+    using Coder = tudocomp::lz78::Lz78DebugCoder;
+    using Compressor = tudocomp::lz78::Lz78Compressor<Coder>;
+
+    {
+        auto encoded = test::compress<Compressor>("abaaabab");
+        ASSERT_EQ(encoded.str, "(0,a)(0,b)(1,a)(1,b)(1,b)");
+        encoded.assert_decompress();
+    }
+    {
+        auto encoded = test::compress<Compressor>("abcdebcdeabc");
+        ASSERT_EQ(encoded.str, "(0,a)(0,b)(0,c)(0,d)(0,e)(2,c)(4,e)(1,b)(0,c)");
+        encoded.assert_decompress();
+    }
+    {
+        auto encoded = test::compress<Compressor>("ananas");
+        ASSERT_EQ(encoded.str, "(0,a)(0,n)(1,n)(1,s)");
+        encoded.assert_decompress();
+    }
 }
