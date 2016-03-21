@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include "test_util.h"
+#include "tudocomp_test_util.h"
 
 #include <tudocomp/lzw/lzw_compressor.h>
 #include <tudocomp/lzw/bit_coder.h>
@@ -17,7 +18,34 @@
 using namespace lzw;
 using lz78_dictionary::DMS_MAX;
 
-TEST(LZW, DebugCode_compress) {
+TEST(Lzw, compress) {
+    using Coder = tudocomp::lzw::LzwDebugCoder;
+    using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+
+    {
+        auto encoded = test::compress<Compressor>("LZWLZ78LZ77LZCLZMWLZAP");
+        ASSERT_EQ(encoded.str,
+            "'L','Z','W',256,'7','8',259,'7',256,'C',256,'M',258,'Z','A','P',");
+        encoded.assert_decompress();
+    }
+    {
+        auto encoded = test::compress<Compressor>("abcdebcdeabcd");
+        ASSERT_EQ(encoded.str, "'a','b','c','d','e',257,259,256,258,");
+        encoded.assert_decompress();
+    }
+    {
+        auto encoded = test::compress<Compressor>("abcdebcdeabc");
+        ASSERT_EQ(encoded.str, "'a','b','c','d','e',257,259,256,'c',");
+        encoded.assert_decompress();
+    }
+    {
+        auto encoded = test::compress<Compressor>("xyxaybxa!xa!?");
+        ASSERT_EQ(encoded.str, "'x','y','x','a','y','b',258,'!',262,'?',");
+        encoded.assert_decompress();
+    }
+}
+
+TEST(OldLzw, DebugCode_compress) {
     Env env;
     LZWDebugCode coder(env);
     Input inp = Input::from_memory("LZWLZ78LZ77LZCLZMWLZAP");
@@ -32,7 +60,7 @@ TEST(LZW, DebugCode_compress) {
               ss.str());
 }
 
-TEST(LZW, DebugCode_compress2) {
+TEST(OldLzw, DebugCode_compress2) {
     Env env;
     LZWDebugCode coder(env);
     Input inp = Input::from_memory("abcdebcdeabcd");
@@ -46,7 +74,7 @@ TEST(LZW, DebugCode_compress2) {
     ASSERT_EQ("'a','b','c','d','e',257,259,256,258,", ss.str());
 }
 
-TEST(LZW, DebugCode_decompress) {
+TEST(OldLzw, DebugCode_decompress) {
     Env env;
     LZWDebugCode coder(env);
     Input inp = Input::from_memory("'L','Z','W',256,'7','8',259,'7',256,'C',256,'M',258,'Z','A','P',");
@@ -61,7 +89,7 @@ TEST(LZW, DebugCode_decompress) {
               ss.str());
 }
 
-TEST(LZW, BitCode_compress) {
+TEST(OldLzw, BitCode_compress) {
     Env env;
     LZWBitCode coder(env);
     Input inp = Input::from_memory("abcdebcdeabc");
@@ -87,7 +115,7 @@ TEST(LZW, BitCode_compress) {
     }), bits);
 }
 
-TEST(LZW, BitCode_decompress) {
+TEST(OldLzw, BitCode_decompress) {
     Env env;
     LZWBitCode coder(env);
     std::vector<uint8_t> bits = pack_integers({
@@ -116,7 +144,7 @@ TEST(LZW, BitCode_decompress) {
               ss.str());
 }
 
-TEST(TemplatePort, LzwDebugCoder) {
+TEST(Lzw, LzwDebugCoder) {
     using Coder = tudocomp::lzw::LzwDebugCoder;
 
     Env env;
@@ -152,7 +180,7 @@ TEST(TemplatePort, LzwDebugCoder) {
 
 }
 
-TEST(TemplatePort, LzwBitCoder) {
+TEST(Lzw, LzwBitCoder) {
     using Coder = tudocomp::lzw::LzwBitCoder;
 
     Env env;
@@ -199,7 +227,7 @@ TEST(TemplatePort, LzwBitCoder) {
 
 }
 
-TEST(TemplatePort, LzwCompressor) {
+TEST(Lzw, LzwCompressor) {
     using Coder = tudocomp::lzw::LzwDebugCoder;
     using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
 
