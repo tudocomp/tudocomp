@@ -176,12 +176,6 @@ public:
 
         auto n = Node(c, m_dms);
         vn.push_back(n);
-        if (!m_lzw_mode) {
-            std::cout << "Node(" << n.c << ") "
-                << n.first << " "
-                << n.left << " "
-                << n.right << "\n";
-        }
         return m_dms;
     }
 
