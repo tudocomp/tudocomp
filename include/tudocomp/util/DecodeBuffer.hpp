@@ -1,125 +1,135 @@
 #ifndef _INCLUDED_DECODE_BUFFER_HPP_
 #define _INCLUDED_DECODE_BUFFER_HPP_
 
-#include <unordered_map>
+#include <iostream>
 #include <vector>
 
-#include <glog/logging.h>
+#include <boost/variant.hpp>
+#include <sdsl/int_vector.hpp>
 
-#include <tudocomp/util.h>
+#include <tudocomp/util/DCBStrategyNone.hpp>
+#include <tudocomp/util/DCBStrategyMap.hpp>
+#include <tudocomp/util/DCBStrategyRetargetArray.hpp>
 
 namespace tudocomp {
 
-/// Common helper class for decoders.
-///
-/// This type represents a buffer of partially decoded input.
-/// The buffer gets filled by repeatedly either pushing a rule
-/// or a decoded byte onto it, and automatically constructs the
-/// fully decoded text in the process.
+using DecodeCallbackStrategy = boost::variant<DCBStrategyNone, DCBStrategyMap, DCBStrategyRetargetArray>;
+
 class DecodeBuffer {
     
-    std::vector<uint8_t> text;
-    std::vector<bool> byte_is_decoded;
-    size_t text_pos;
-    std::unordered_map<size_t, std::vector<size_t>> pointers;
-
-    void decodeCallback(size_t source) {
-        if (pointers.count(source) > 0) {
-            std::vector<size_t> list = pointers[source];
-            for (size_t target : list) {
-                // decode this char
-                text.at(target) = text.at(source);
-                byte_is_decoded.at(target) = true;
-
-                // decode all chars depending on this location
-                decodeCallback(target);
-            }
-
-            pointers.erase(source);
+private:
+    DecodeCallbackStrategy m_cb_strategy;
+    
+    size_t m_len;
+    sdsl::int_vector<8> m_text;
+    sdsl::bit_vector m_decoded;
+    
+    size_t m_pos;
+    
+    struct visitor_next_waiting_for : public boost::static_visitor<bool> {
+        size_t pos;
+        size_t* out_waiting;
+        
+        visitor_next_waiting_for(size_t _pos, size_t& _out_waiting)
+            : pos(_pos), out_waiting(&_out_waiting) {}
+        
+        inline bool operator()(DCBStrategyNone& cb) const {
+            return cb.next_waiting_for(pos, *out_waiting);
         }
-    }
-
-    inline void addPointer(size_t target, size_t source) {
-        if (pointers.count(source) == 0) {
-            std::vector<size_t> list;
-            pointers[source] = list;
+        
+        inline bool operator()(DCBStrategyMap& cb) const {
+            return false; //TODO implement
         }
-
-        pointers[source].push_back(target);
+        
+        inline bool operator()(DCBStrategyRetargetArray& cb) const {
+            return false; //TODO implement
+        }
+    };
+    
+    inline bool next_waiting_for(size_t pos, size_t& out_waiting) {
+        return boost::apply_visitor(visitor_next_waiting_for(pos, out_waiting), m_cb_strategy);
     }
+    
+    struct visitor_wait : public boost::static_visitor<void> {
+        size_t pos, src;
+        
+        visitor_wait(size_t _pos, size_t _src)
+            : pos(_pos), src(_src) {}
 
+        inline void operator()(DCBStrategyNone& cb) const {
+            return cb.wait(pos, src);
+        }
+        
+        inline void operator()(DCBStrategyMap& cb) const {
+            //TODO implement
+        }
+        
+        inline void operator()(DCBStrategyRetargetArray& cb) const {
+            //TODO implement
+        }
+    };
+    
+    inline void wait(size_t pos, size_t src) {
+        return boost::apply_visitor(visitor_wait(pos, src), m_cb_strategy);
+    }
+    
 public:
-    /// Create a new DecodeBuffer for a expected decoded text length of
-    /// `length` bytes.
-    ///
-    /// \param length The expect length of the decoded text.
-    inline DecodeBuffer(size_t length) {
-        text.reserve(length);
-        byte_is_decoded.reserve(length);
-        text_pos = 0;
+    DecodeBuffer(size_t len, DecodeCallbackStrategy cb_strategy)
+        : m_cb_strategy(cb_strategy), m_len(len), m_pos(0) {
+
+        m_text = sdsl::int_vector<8>(len, 0);
+        m_decoded = sdsl::bit_vector(len, 0);
     }
-
-    /// Push a decoded byte to the buffer.
-    ///
-    /// The byte will just be added to the internal buffer and
-    /// be marked as already decoded.
-    inline void push_decoded_byte(uint8_t byte) {
-        // add new byte to text
-        text.push_back(byte);
-        byte_is_decoded.push_back(true);
-
-        // decode all chars depending on this position
-        decodeCallback(text_pos);
-
-        // advance
-        text_pos++;
-        DLOG(INFO) << "text: " << vec_as_lossy_string(text);
-    }
-
-    /// Push a substitution rule to the buffer.
-    ///
-    /// The rule is described by the source position and substitution length,
-    /// and will be targeted at the current location in the decode buffer.
-    ///
-    /// \param source The source position of the Rule, referring to a index into
-    ///               the fully decoded text.
-    /// \param length The length of the rule.
-    inline void push_rule(size_t source, size_t length) {
-        for (size_t k = 0; k < length; k++) {
-            size_t source_k = source + k;
-
-            if (source_k < text_pos && byte_is_decoded.at(source_k)) {
-                // source already decoded, use it
-                uint8_t byte = text.at(source_k);
-
-                push_decoded_byte(byte);
-            } else {
-                // add pointer for source
-
-                // add placeholder byte
-                text.push_back(0);
-                byte_is_decoded.push_back(false);
-                addPointer(text_pos, source_k);
-
-                // advance
-                text_pos++;
-                DLOG(INFO) << "text: " << vec_as_lossy_string(text);
-            }
+    
+    inline void decode(size_t pos, uint8_t sym) {
+        assert(pos < m_len);
+        
+        m_text[pos] = sym;
+        m_decoded[pos] = 1;
+        
+        size_t waiting_pos;
+        while(next_waiting_for(pos, waiting_pos)) {
+            decode(waiting_pos, sym); //recursion!
         }
     }
-
+    
+    inline void decode(uint8_t sym) {
+        decode(m_pos, sym);
+        ++m_pos;
+    }
+    
+    inline void defact(size_t pos, size_t src, size_t num) {
+        assert(pos + num <= m_len);
+        
+        while(num) {
+            if(m_decoded[src]) {
+                decode(pos, m_text[src]);
+            } else {
+                wait(pos, src);
+            }
+            
+            ++pos;
+            ++src;
+            --num;
+        }
+    }
+    
+    inline void defact(size_t src, size_t num) {
+        defact(m_pos, src, num);
+        m_pos += num;
+    }
+    
     /// Write the current state of the decode buffer into an ostream.
-    inline void write_to(std::ostream& out) {
-        out.write((const char*)text.data(), text.size());
+    inline void write_to(std::ostream& out) const {
+        out.write((const char*)m_text.data(), m_text.size());
     }
 
     /// Return the expected size of the decoded text.
-    inline size_t size() {
-        return text.size();
+    inline size_t size() const {
+        return m_text.size();
     }
 };
 
 }
 
 #endif
-
