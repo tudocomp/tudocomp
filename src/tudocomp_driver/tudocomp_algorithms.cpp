@@ -16,7 +16,6 @@
 #include <tudocomp/lzw/LzwDebugCoder.hpp>
 #include <tudocomp/lzw/LzwBitCoder.hpp>
 
-#include <tudocomp/lzw/LzwJPCompressor.hpp>
 #include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
 
 //TODO: esacomp needs to be re-inserted!
@@ -69,7 +68,6 @@ using ::tudocomp::lz78::Lz78Compressor;
 using ::tudocomp::lz78::Lz78DebugCoder;
 using ::tudocomp::lz78::Lz78BitCoder;
 
-using ::tudocomp::lzw::LzwJpCompressor;
 using ::tudocomp::lz78::lzcics::Lz78cicsCompressor;
 
 //TODO: esacomp needs to be re-inserted!
@@ -196,11 +194,6 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
         "lzw bit coder", "t_lzw_bit",
         "Template-based implementation of a lzw coder with naive bit"
         "compressed output")
-    .do_register();
-    registry.with_info<LzwJpCompressor>(
-        "lzw jp", "t_lzw_jp",
-        "Somewhat optimized example implementation from"
-        " Julius Pettersson.")
     .do_register();
     registry.with_info<Lz78cicsCompressor<Lz78BitCoder>>(
         "lz78 cics bit", "t_lz78_cics_bit",

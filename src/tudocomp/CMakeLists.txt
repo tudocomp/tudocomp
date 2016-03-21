@@ -9,6 +9,5 @@ target_link_libraries(
     tudocomp
     glog
     sdsl
-    lzw_jp
 )
 
