@@ -173,6 +173,8 @@ TEST(TemplatePort, Lz78Compressor) {
     std::vector<uint8_t> decoded_buffer;
     Compressor compressor(env);
 
+    std::cout << "Pre-encode ok!\n";
+
     {
         auto input = Input::from_memory(input_str);
         auto out = Output::from_memory(encoded_buffer);
@@ -181,6 +183,7 @@ TEST(TemplatePort, Lz78Compressor) {
 
     auto encoded = std::string(encoded_buffer.begin(), encoded_buffer.end());
     ASSERT_EQ(encoded, "(0,x)(0,y)(1,a)(2,b)(3,!)(5,?)");
+    std::cout << "Encode ok!\n";
 
     {
         auto input = Input::from_memory(encoded_buffer);

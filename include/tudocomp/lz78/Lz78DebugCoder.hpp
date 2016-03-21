@@ -28,21 +28,16 @@ public:
     {
     }
 
-    inline Lz78DebugCoder(Env& env, Output& out, size_t len)
-        : m_out(out.as_stream())
-    {
-    }
-
     inline ~Lz78DebugCoder() {
         (*m_out).flush();
     }
 
-    inline void encode_sym(uint8_t sym) {
-        throw std::runtime_error("encoder does not support encoding raw symbols");
-    }
-
     inline void encode_fact(const Entry& fact) {
         *m_out << "(" << fact.index << "," << char(fact.chr) << ")";
+    }
+
+    inline void dictionary_reset() {
+        // nothing to be done
     }
 
     inline static void decode(Input& in, Output& ou) {

@@ -5,6 +5,10 @@
 
 #include <tudocomp/lz78/trie.h>
 
+#include <tudocomp/lz78/dictionary.hpp>
+
+#include <tudocomp/lz78/factor.h>
+
 namespace tudocomp {
 
 namespace lz78 {
@@ -12,7 +16,11 @@ namespace lz78 {
 using ::lz78::Trie;
 using ::lz78::Result;
 using ::lz78::PrefixBuffer;
+using ::lz78::Entry;
 using ::tudocomp::Compressor;
+using lz78_dictionary::CodeType;
+using lz78_dictionary::EncoderDictionary;
+using lz78_dictionary::DMS_MAX;
 
 const std::string THRESHOLD_OPTION = "lz78.threshold";
 const std::string THRESHOLD_LOG = "lz78.threshold";
@@ -24,28 +32,68 @@ const std::string RULESET_SIZE_LOG = "lz78.factor_count";
  */
 template <typename C>
 class Lz78Compressor: public Compressor {
+private:
+    /// Max dictionary size before reset
+    const CodeType dms {DMS_MAX};
+    //const CodeType dms {256 + 10};
+    /// Preallocated dictionary size
+    const CodeType reserve_dms {1024};
 public:
     using Compressor::Compressor;
 
     virtual void compress(Input& input, Output& out) override {
         auto guard = input.as_stream();
-        PrefixBuffer buf(*guard);
+        auto& is = *guard;
 
-        Trie trie(Trie::Lz78);
-        size_t factor_counter = 0;
+        EncoderDictionary ed(EncoderDictionary::Lz78, dms, reserve_dms);
         C coder(*m_env, out);
+        uint64_t factor_count = 0;
 
-        while (!buf.is_empty()) {
-            Result phrase_and_size = trie.find_or_insert(buf);
+        CodeType last_i {dms}; // needed for the end of the string
+        CodeType i {dms}; // Index
+        char c;
+        bool rbwf {false}; // Reset Bit Width Flag
 
-            coder.encode_fact(phrase_and_size.entry);
+        while (is.get(c)) {
+            uint8_t b = c;
 
-            factor_counter++;
+            // dictionary's maximum size was reached
+            if (ed.size() == dms)
+            {
+                ed.reset();
+                rbwf = true;
+            }
+
+            const CodeType temp {i};
+
+            last_i = i;
+            if ((i = ed.search_and_insert(temp, b)) == dms)
+            {
+                CodeType fact = temp;
+                if (fact == dms) {
+                    fact = 0;
+                }
+                coder.encode_fact(Entry { fact, b });
+                factor_count++;
+                i = dms;
+            }
+
+            if (rbwf)
+            {
+                coder.dictionary_reset();
+                rbwf = false;
+            }
         }
-
-        m_env->log_stat(RULESET_SIZE_LOG, factor_counter);
-
-        trie.print(0);
+        if (i != dms) {
+            CodeType fact = last_i;
+            uint8_t b = c;
+            if (fact == dms) {
+                fact = 0;
+            }
+            coder.encode_fact(Entry { fact, b });
+            factor_count++;
+        }
+        m_env->log_stat(RULESET_SIZE_LOG, factor_count);
     }
 
     virtual void decompress(Input& in, Output& out) override final {

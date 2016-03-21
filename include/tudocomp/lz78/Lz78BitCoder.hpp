@@ -30,18 +30,9 @@ public:
     {
     }
 
-    inline Lz78BitCoder(Env& env, Output& out, size_t len)
-        : m_out_guard(out.as_stream()), m_out(*m_out_guard)
-    {
-    }
-
     inline ~Lz78BitCoder() {
         m_out.flush();
         (*m_out_guard).flush();
-    }
-
-    inline void encode_sym(uint8_t sym) {
-        throw std::runtime_error("encoder does not support encoding raw symbols");
     }
 
     inline void encode_fact(const Entry& entry) {
@@ -56,6 +47,10 @@ public:
         m_out.write(entry.chr, 8);
 
         m_factor_counter++;
+    }
+
+    inline void dictionary_reset() {
+        m_factor_counter = 0;
     }
 
     inline static void decode(Input& inp_, Output& out_) {

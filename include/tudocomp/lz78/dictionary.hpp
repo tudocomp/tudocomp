@@ -117,6 +117,8 @@ public:
         if (m_lzw_mode) {
             for (long int c = minc; c <= maxc; ++c)
                 vn.push_back(Node(c, m_dms));
+        } else {
+            vn.push_back(Node('?', m_dms)); // dummy root node
         }
     }
 
@@ -129,17 +131,22 @@ public:
     ///
     CodeType search_and_insert(CodeType i, uint8_t c)
     {
-        if (m_lzw_mode) {
-            if (i == m_dms)
+        const CodeType vn_size = vn.size();
+
+        if (i == m_dms) {
+            if (m_lzw_mode) {
                 return c;
+            }
         }
 
-        const CodeType vn_size = vn.size();
-        CodeType ci {vn.at(i).first}; // Current Index
+        if ((!m_lzw_mode) && (i == m_dms)) {
+            i = 0;
+        }
 
-        if (ci != m_dms)
-        {
-            while (true)
+        CodeType ci = vn.at(i).first; // Current Index
+
+        if (ci != m_dms) {
+            while (true) {
                 if (c < vn[ci].c)
                 {
                     if (vn[ci].left == m_dms)
@@ -150,9 +157,7 @@ public:
                     else
                         ci = vn[ci].left;
                 }
-                else
-                if (c > vn[ci].c)
-                {
+                else if (c > vn[ci].c) {
                     if (vn[ci].right == m_dms)
                     {
                         vn[ci].right = vn_size;
@@ -161,13 +166,22 @@ public:
                     else
                         ci = vn[ci].right;
                 }
-                else // c == vn[ci].c
+                else /* c == vn[ci].c */ {
                     return ci;
-        }
-        else
+                }
+            }
+        } else {
             vn[i].first = vn_size;
+        }
 
-        vn.push_back(Node(c, m_dms));
+        auto n = Node(c, m_dms);
+        vn.push_back(n);
+        if (!m_lzw_mode) {
+            std::cout << "Node(" << n.c << ") "
+                << n.first << " "
+                << n.left << " "
+                << n.right << "\n";
+        }
         return m_dms;
     }
 
