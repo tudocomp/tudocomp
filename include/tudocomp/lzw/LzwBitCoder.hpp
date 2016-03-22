@@ -1,8 +1,6 @@
 #ifndef _INCLUDED_LZW_BIT_CODER_HPP_
 #define _INCLUDED_LZW_BIT_CODER_HPP_
 
-#include <tudocomp/Coder.hpp>
-
 #include <tudocomp/lz78/trie.h>
 #include <tudocomp/lz78/Lz78DecodeBuffer.hpp>
 

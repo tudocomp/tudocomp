@@ -1,8 +1,6 @@
 #ifndef _INCLUDED_LZ78_BIT_CODER_HPP_
 #define _INCLUDED_LZ78_BIT_CODER_HPP_
 
-#include <tudocomp/Coder.hpp>
-
 #include <tudocomp/lz78/trie.h>
 #include <tudocomp/lz78/factor.h>
 #include <tudocomp/lz78/factors.h>

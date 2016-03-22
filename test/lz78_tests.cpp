@@ -9,7 +9,6 @@
 
 #include <tudocomp/lz78/factor.h>
 #include <tudocomp/lz78/factors.h>
-#include <tudocomp/Coder.hpp>
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
 #include <tudocomp/lz78/Lz78BitCoder.hpp>
 #include <tudocomp/lz78/Lz78Compressor.hpp>
