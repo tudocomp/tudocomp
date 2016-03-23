@@ -7,141 +7,64 @@
 #include "test_util.h"
 #include "tudocomp_test_util.h"
 
-#include <tudocomp/lzw/lzw_compressor.h>
-#include <tudocomp/lzw/bit_coder.h>
-#include <tudocomp/lzw/dummy_coder.h>
-
 #include <tudocomp/lzw/LzwCompressor.hpp>
 #include <tudocomp/lzw/LzwBitCoder.hpp>
 #include <tudocomp/lzw/LzwDebugCoder.hpp>
 
-using namespace lzw;
 using lz78_dictionary::DMS_MAX;
 
 TEST(Lzw, compress) {
-    using Coder = tudocomp::lzw::LzwDebugCoder;
-    using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
-
     {
+        using Coder = tudocomp::lzw::LzwDebugCoder;
+        using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+
         auto encoded = test::compress<Compressor>("LZWLZ78LZ77LZCLZMWLZAP");
         ASSERT_EQ(encoded.str,
             "'L','Z','W',256,'7','8',259,'7',256,'C',256,'M',258,'Z','A','P',");
         encoded.assert_decompress();
     }
     {
+        using Coder = tudocomp::lzw::LzwDebugCoder;
+        using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+
         auto encoded = test::compress<Compressor>("abcdebcdeabcd");
         ASSERT_EQ(encoded.str, "'a','b','c','d','e',257,259,256,258,");
         encoded.assert_decompress();
     }
     {
+        using Coder = tudocomp::lzw::LzwDebugCoder;
+        using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+
         auto encoded = test::compress<Compressor>("abcdebcdeabc");
         ASSERT_EQ(encoded.str, "'a','b','c','d','e',257,259,256,'c',");
         encoded.assert_decompress();
     }
     {
+        using Coder = tudocomp::lzw::LzwDebugCoder;
+        using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+
         auto encoded = test::compress<Compressor>("xyxaybxa!xa!?");
         ASSERT_EQ(encoded.str, "'x','y','x','a','y','b',258,'!',262,'?',");
         encoded.assert_decompress();
     }
-}
+    {
+        using Coder = tudocomp::lzw::LzwBitCoder;
+        using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
 
-TEST(OldLzw, DebugCode_compress) {
-    Env env;
-    LZWDebugCode coder(env);
-    Input inp = Input::from_memory("LZWLZ78LZ77LZCLZMWLZAP");
-
-    LzwRule compressor(env, &coder);
-
-    std::stringstream ss;
-    Output out = Output::from_stream(ss);
-    compressor.compress(inp, out);
-
-    ASSERT_EQ("'L','Z','W',256,'7','8',259,'7',256,'C',256,'M',258,'Z','A','P',",
-              ss.str());
-}
-
-TEST(OldLzw, DebugCode_compress2) {
-    Env env;
-    LZWDebugCode coder(env);
-    Input inp = Input::from_memory("abcdebcdeabcd");
-
-    LzwRule compressor(env, &coder);
-
-    std::stringstream ss;
-    Output out = Output::from_stream(ss);
-    compressor.compress(inp, out);
-
-    ASSERT_EQ("'a','b','c','d','e',257,259,256,258,", ss.str());
-}
-
-TEST(OldLzw, DebugCode_decompress) {
-    Env env;
-    LZWDebugCode coder(env);
-    Input inp = Input::from_memory("'L','Z','W',256,'7','8',259,'7',256,'C',256,'M',258,'Z','A','P',");
-
-    LzwRule compressor(env, &coder);
-
-    std::stringstream ss;
-    Output out = Output::from_stream(ss);
-    compressor.decompress(inp, out);
-
-    ASSERT_EQ("LZWLZ78LZ77LZCLZMWLZAP",
-              ss.str());
-}
-
-TEST(OldLzw, BitCode_compress) {
-    Env env;
-    LZWBitCode coder(env);
-    Input inp = Input::from_memory("abcdebcdeabc");
-
-    LzwRule compressor(env, &coder);
-
-    std::vector<uint8_t> bits;
-    Output out = Output::from_memory(bits);
-    compressor.compress(inp, out);
-
-    ASSERT_EQ(pack_integers({
-        9, 64,
-        8, 6,
-        'a', 9,
-        'b', 9,
-        'c', 9,
-        'd', 9,
-        'e', 9,
-        257, 9,
-        259, 9,
-        256, 9,
-        'c', 9,
-    }), bits);
-}
-
-TEST(OldLzw, BitCode_decompress) {
-    Env env;
-    LZWBitCode coder(env);
-    std::vector<uint8_t> bits = pack_integers({
-        9, 64,
-        8, 6,
-        'a', 9,
-        'b', 9,
-        'c', 9,
-        'd', 9,
-        'e', 9,
-        257, 9,
-        259, 9,
-        256, 9,
-        'c', 9,
-    });
-
-    Input inp = Input::from_memory(bits);
-
-    LzwRule compressor(env, &coder);
-
-    std::stringstream ss;
-    Output out = Output::from_stream(ss);
-    compressor.decompress(inp, out);
-
-    ASSERT_EQ("abcdebcdeabc",
-              ss.str());
+        auto encoded = test::compress<Compressor>("abcdebcdeabc");
+        ASSERT_EQ(encoded.bytes, (pack_integers({
+            'a', 9,
+            'b', 9,
+            'c', 9,
+            'd', 9,
+            'e', 9,
+            257, 9,
+            259, 9,
+            256, 9,
+            'c', 9,
+        })));
+        encoded.assert_decompress();
+    }
 }
 
 TEST(Lzw, LzwDebugCoder) {

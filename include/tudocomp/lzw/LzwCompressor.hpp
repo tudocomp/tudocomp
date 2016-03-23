@@ -11,11 +11,7 @@ namespace tudocomp {
 
 namespace lzw {
 
-using ::lz78::Trie;
-using ::lz78::Result;
-using ::lz78::PrefixBuffer;
 using ::tudocomp::Compressor;
-using ::lzw::LzwEntry;
 using lz78_dictionary::CodeType;
 using lz78_dictionary::EncoderDictionary;
 using lz78_dictionary::DMS_MAX;

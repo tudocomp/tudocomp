@@ -1,13 +1,5 @@
 #include <tudocomp_driver/registry.h>
 
-#include <tudocomp/lz78/lz78_compressor.h>
-#include <tudocomp/lz78/dummy_coder.h>
-#include <tudocomp/lz78/bit_coder.h>
-
-#include <tudocomp/lzw/lzw_compressor.h>
-#include <tudocomp/lzw/dummy_coder.h>
-#include <tudocomp/lzw/bit_coder.h>
-
 #include <tudocomp/lz78/Lz78Compressor.hpp>
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
 #include <tudocomp/lz78/Lz78BitCoder.hpp>
@@ -37,7 +29,7 @@ namespace tudocomp_driver {
 
 using namespace tudocomp;
 
-// Algorithm interfaces
+// Algorithm implementations
 
 //TODO: esacomp needs to be re-inserted!
 /*
@@ -45,20 +37,6 @@ using esacomp::EsacompRuleCompressor;
 using esacomp::EsacompCompressStrategy;
 using esacomp::EsacompEncodeStrategy;
 */
-
-using ::lz78::Lz78Rule;
-using ::lz78::Lz78RuleCoder;
-
-using ::lzw::LzwRule;
-using ::lzw::LzwRuleCoder;
-
-// Algorithm implementations
-
-using ::lz78::LZ78DebugCode;
-using ::lz78::LZ78BitCode;
-
-using ::lzw::LZWDebugCode;
-using ::lzw::LZWBitCode;
 
 using ::tudocomp::lzw::LzwCompressor;
 using ::tudocomp::lzw::LzwDebugCoder;

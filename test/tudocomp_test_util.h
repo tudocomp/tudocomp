@@ -8,11 +8,11 @@
 #include <string>
 #include <memory>
 
-namespace test {
-    using tudocomp::Env;
-    using tudocomp::Input;
-    using tudocomp::Output;
+using tudocomp::Env;
+using tudocomp::Input;
+using tudocomp::Output;
 
+namespace test {
     template<class C>
     struct CompressResult {
         std::vector<uint8_t> bytes;
