@@ -23,8 +23,6 @@ namespace tudocomp_driver {
 
 using namespace tudocomp;
 
-void register_algos(AlgorithmRegistry<Compressor>& registry);
-
 namespace po = boost::program_options;
 
 const std::string COMPRESSED_FILE_ENDING = "tdc";
@@ -197,7 +195,8 @@ int main(int argc, const char** argv)
         Env algorithm_env(algorithm_options, {});
 
         // Set up algorithms
-        AlgorithmRegistry<Compressor> registry(&algorithm_env);
+        AlgorithmDb root;
+        Registry registry {&root};
         register_algos(registry);
 
         if (arg_exists("--list")) {
@@ -220,12 +219,9 @@ int main(int argc, const char** argv)
         // Select algorithm
 
         std::string algorithm_id = string_arg("--algorithm");
-        boost::string_ref tmp_algo_id = algorithm_id;
-        Compressor* algo = select_algo_or_exit(registry,
-                                               algorithm_env,
-                                               tmp_algo_id);
-        //std::cout << tmp_algo_id << '\n';
-        CHECK(tmp_algo_id.size() == 0);
+        std::unique_ptr<Compressor> algo = select_algo_or_exit(registry,
+                                                               algorithm_env,
+                                                               algorithm_id);
 
         /////////////////////////////////////////////////////////////////////////
         // Select where the input comes from

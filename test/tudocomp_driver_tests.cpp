@@ -272,6 +272,23 @@ std::vector<std::string> algo_cross_product(list::SubAlgo& subalgo) {
     return r;
 }
 
+TEST(TudocompDriver, all_compressors_defined) {
+    using namespace tudocomp_driver;
+
+    AlgorithmDb root;
+    Registry registry {&root};
+    register_algos(registry);
+    auto s = registry.check_for_undefined_compressors();
+    bool has_undefined_compressors = s.size() > 0;
+    if (has_undefined_compressors) {
+        std::stringstream ss;
+        for (auto& s2 : s) {
+            ss << "Undefined compressor: " << s2 << "\n";
+        }
+        EXPECT_FALSE(has_undefined_compressors) << ss.str();
+    }
+}
+
 TEST(TudocompDriver, roundtrip_matrix) {
     std::cout << "[ Parsing Algorithm list from executable ]\n";
     auto list = list::tudocomp_list().root;
@@ -334,34 +351,40 @@ TEST(TudocompDriver, roundtrip_matrix) {
             std::cout << decomp_file << " ... ";
             std::cout.flush();
 
-            std::string read_text = read_test_file(decomp_file);
-            if (read_text != text) {
+            bool decompressed_file_exists = test_file_exists(decomp_file);
+            if (!decompressed_file_exists) {
                 std::cout << "ERR\n";
-                std::cout << "---\n";
-                std::cout << comp_out;
-                std::cout << "---\n";
-                std::cout << decomp_out;
-                std::cout << "---\n";
-                abort = true;
-
-                assert_eq_strings(text, read_text);
-                std::string diff;
-                for(size_t i = 0; i < std::max(text.size(), read_text.size()); i++) {
-                    if (i < std::min(text.size(), read_text.size())
-                        && text[i] == read_text[i]
-                    ) {
-                        diff.push_back('-');
-                    } else {
-                        diff.push_back('#');
-                    }
-                }
-                std::cout << "Diff:     \"" << diff << "\"\n";
-
-                return;
+                EXPECT_TRUE(decompressed_file_exists);
             } else {
-                std::cout << "OK\n";
-                std::cout << comp_out;
-                std::cout << decomp_out;
+                std::string read_text = read_test_file(decomp_file);
+                if (read_text != text) {
+                    std::cout << "ERR\n";
+                    std::cout << "---\n";
+                    std::cout << comp_out;
+                    std::cout << "---\n";
+                    std::cout << decomp_out;
+                    std::cout << "---\n";
+                    abort = true;
+
+                    assert_eq_strings(text, read_text);
+                    std::string diff;
+                    for(size_t i = 0; i < std::max(text.size(), read_text.size()); i++) {
+                        if (i < std::min(text.size(), read_text.size())
+                            && text[i] == read_text[i]
+                        ) {
+                            diff.push_back('-');
+                        } else {
+                            diff.push_back('#');
+                        }
+                    }
+                    std::cout << "Diff:     \"" << diff << "\"\n";
+
+                    return;
+                } else {
+                    std::cout << "OK\n";
+                    std::cout << comp_out;
+                    std::cout << decomp_out;
+                }
             }
         });
         if (abort) {

@@ -21,40 +21,11 @@
 #include <glog/logging.h>
 
 #include <tudocomp/Env.hpp>
+#include <tudocomp/Compressor.hpp>
 
 namespace tudocomp_driver {
 
 using namespace tudocomp;
-
-// implementation details, users never invoke these directly
-namespace tuple_call
-{
-    template <typename F, typename Tuple, bool Done, int Total, int... N>
-    struct call_impl
-    {
-        static void call(F f, Tuple && t)
-        {
-            call_impl<F, Tuple, Total == 1 + sizeof...(N), Total, N..., sizeof...(N)>::call(f, std::forward<Tuple>(t));
-        }
-    };
-
-    template <typename F, typename Tuple, int Total, int... N>
-    struct call_impl<F, Tuple, true, Total, N...>
-    {
-        static void call(F f, Tuple && t)
-        {
-            f(std::get<N>(std::forward<Tuple>(t))...);
-        }
-    };
-}
-
-// user invokes this
-template <typename F, typename Tuple>
-void call_with_tuple(F f, Tuple && t)
-{
-    typedef typename std::decay<Tuple>::type ttype;
-    tuple_call::call_impl<F, Tuple, 0 == std::tuple_size<ttype>::value, std::tuple_size<ttype>::value>::call(f, std::forward<Tuple>(t));
-}
 
 struct AlgorithmInfo;
 
@@ -157,107 +128,6 @@ inline void AlgorithmInfo::print_to(std::ostream& out, int indent) {
     }
 }
 
-template<class T>
-struct Algorithm {
-    AlgorithmInfo info;
-    std::function<T*(Env&, boost::string_ref&)> algorithm;
-};
-
-template<class T>
-using Registry = std::vector<Algorithm<T>>;
-
-template<class T>
-class AlgorithmRegistry;
-
-template<class T, class SubT, class ... SubAlgos>
-struct AlgorithmBuilder {
-    Env* m_env;
-    AlgorithmInfo info;
-    Registry<T>* registry;
-    std::tuple<AlgorithmRegistry<SubAlgos>...> sub_algos;
-
-    template<class U>
-    AlgorithmBuilder<T, SubT, SubAlgos..., U>
-    with_sub_algos(std::function<void (AlgorithmRegistry<U>&)> f);
-
-    inline void do_register();
-};
-
-template<class T>
-class AlgorithmRegistry {
-    Env* m_env;
-    std::string name = "?";
-public:
-    inline AlgorithmRegistry(Env* env): m_env(env) { }
-
-    Registry<T> registry = {};
-
-    template<class U>
-    AlgorithmBuilder<T, U> with_info(std::string name,
-                                     std::string shortname,
-                                     std::string description) {
-        AlgorithmInfo info {
-            name,
-            shortname,
-            description,
-            {},
-        };
-        AlgorithmBuilder<T, U> builder {
-            m_env,
-            info,
-            &registry,
-            {}
-        };
-        return builder;
-    }
-
-    inline Algorithm<T>* findByShortname(boost::string_ref s) {
-        for (auto& x: registry) {
-            if (x.info.shortname == s) {
-                return &x;
-            }
-        }
-        return nullptr;
-    }
-
-    inline void set_name(std::string n) {
-        name = n;
-    }
-
-    inline std::string get_name() const {
-        return name;
-    }
-
-    /// important 1
-    inline std::vector<AlgorithmInfo> get_sub_algos() const {
-        std::vector<AlgorithmInfo> r;
-        for (auto& e : registry) {
-            r.push_back(e.info);
-        }
-        return r;
-    }
-};
-
-template<class T, class SubT, class ... SubAlgos>
-template<class U>
-AlgorithmBuilder<T, SubT, SubAlgos..., U> AlgorithmBuilder<T, SubT, SubAlgos...>
-        ::with_sub_algos(std::function<void(AlgorithmRegistry<U>&)> f) {
-    AlgorithmRegistry<U> reg(m_env);
-    f(reg);
-
-    info.sub_algo_info.push_back({
-        reg.get_name(),
-        reg.get_sub_algos(),
-    });
-
-    return {
-        m_env,
-        info,
-        registry,
-        std::tuple_cat(sub_algos, std::tuple<AlgorithmRegistry<U>>{reg})
-    };
-}
-
 inline boost::string_ref pop_algorithm_id(boost::string_ref& algorithm_id) {
     auto idx = algorithm_id.find('.');
     int dot_size = 1;
@@ -270,45 +140,82 @@ inline boost::string_ref pop_algorithm_id(boost::string_ref& algorithm_id) {
     return r;
 }
 
-/// important 2
-template<class T>
-inline T* select_algo_or_exit(AlgorithmRegistry<T>& reg,
-                              Env& env,
-                              boost::string_ref& a_id) {
+struct SubRegistry;
 
-    auto this_id = pop_algorithm_id(a_id);
-    Algorithm<T>* r = reg.findByShortname(this_id);
+struct Registry {
+    AlgorithmDb* m_algorithms;
 
-    if (r == nullptr) {
-        // TODO
-        throw std::runtime_error("Unknown algorithm '"
-            + std::string(this_id) + "'");
+    std::unordered_map<
+        std::string,
+        std::function<std::unique_ptr<Compressor>(Env&)>> m_compressors;
+
+    // AlgorithmInfo
+
+    template<class F>
+    void compressor(std::string id, F f) {
+        auto g = [=](Env& env) {
+            using C = decltype(f(env));
+
+            return std::unique_ptr<Compressor> {
+                new C(f(env))
+            };
+        };
+
+        m_compressors[id] = g;
     }
 
-    return r->algorithm(env, a_id);
+    inline SubRegistry algo(std::string id, std::string title, std::string desc);
+
+    std::vector<std::string> check_for_undefined_compressors() {
+        std::vector<std::string> r;
+        for (auto& s : m_algorithms->id_product()) {
+            if (m_compressors.count(s) == 0) {
+                r.push_back(s);
+            }
+        }
+        return r;
+    }
+
+    std::vector<AlgorithmInfo> get_sub_algos() {
+        return m_algorithms->sub_algo_info;
+    }
+};
+
+struct SubRegistry {
+    std::vector<AlgorithmInfo>* m_vector;
+    int m_index;
+
+    template<class G>
+    inline void sub_algo(std::string name, G g) {
+        auto& x = (*m_vector)[m_index].sub_algo_info;
+        x.push_back({name});
+        Registry y { &x[x.size() - 1ul] };
+        g(y);
+    }
+
+};
+
+inline SubRegistry Registry::algo(std::string id, std::string title, std::string desc) {
+    m_algorithms->sub_algo_info.push_back({title, id, desc});
+
+    return SubRegistry {
+        &m_algorithms->sub_algo_info,
+        m_algorithms->sub_algo_info.size() - 1ul
+    };
 }
 
-template<class T, class SubT, class ... SubAlgos>
-inline void AlgorithmBuilder<T, SubT, SubAlgos...>::do_register() {
-    // Make this copy outside the closure,
-    // or else face hours of obscure debugging...
-    // (hint: capturing a field in a lambda expression
-    //  captures the this pointer, which is invalid at the
-    //  point where the lambda is called)
-    auto s = sub_algos;
+inline std::unique_ptr<Compressor> select_algo_or_exit(Registry& reg,
+                                                       Env& env,
+                                                       std::string a_id) {
 
-    auto f = [=](Env& env, boost::string_ref& a_id) -> T* {
-        SubT* r;
-        call_with_tuple(
-            [=, &env, &r, &a_id](AlgorithmRegistry<SubAlgos> ... args) {
-                r = new SubT(env, select_algo_or_exit(args, env, a_id)...);
-            },
-            s
-        );
-        return r;
-    };
-    registry->push_back({info, f});
-};
+    if (reg.m_compressors.count(a_id) == 0) {
+        throw std::runtime_error("Unknown algorithm: " + a_id);
+    } else {
+        return reg.m_compressors[a_id](env);
+    }
+}
+
+void register_algos(Registry& registry);
 
 }
 

@@ -149,6 +149,14 @@ inline std::string test_file_path(std::string filename) {
     return TEST_FILE_PATH + "/" + filename;
 }
 
+inline bool test_file_exists(std::string filename) {
+    boost::filesystem::path file_path = test_file_path(filename);
+
+    std::stringbuf sb;
+    boost::filesystem::ifstream myfile;
+    myfile.open(file_path);
+    return bool(myfile);
+}
 inline std::string read_test_file(std::string filename) {
     boost::filesystem::path file_path = test_file_path(filename);
 

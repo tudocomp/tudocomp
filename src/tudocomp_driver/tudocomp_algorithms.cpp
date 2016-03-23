@@ -77,6 +77,12 @@ using esacomp::DummyCompressor;
 using esacomp::DummyCoder;
 */
 
+/// Small helper for getting a constructor function
+template<class C>
+C make(Env& env) {
+    return C(env);
+}
+
 // All compression and encoding algorithms exposed by the command
 // line interface.
 //
@@ -88,8 +94,7 @@ using esacomp::DummyCoder;
 // - Algorithm: A function pointer that constructs the base class of a
 //   Compressor or Encoder.
 
-void foo();
-void register_algos(AlgorithmRegistry<Compressor>& registry) {
+void register_algos(Registry& r) {
     //TODO: esacomp needs to be re-inserted!
     /*
     registry.with_info<EsacompRuleCompressor>(
@@ -140,169 +145,28 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
     })
     .do_register();*/
 
-    registry.with_info<Lz78Rule>(
-        "LZ78 rule-like", "lz78rule",
-        "A Family of compression algorithms making use "
-        "of LZ78-like replacement rules.")
-    .with_sub_algos<Lz78RuleCoder>([](AlgorithmRegistry<Lz78RuleCoder>& registry) {
-        registry.set_name("Coder");
-
-        registry.with_info<LZ78DebugCode>(
-            "Debug", "debug",
-            "Debug encoding, each rule is emitted as a string of the form `(<idx>,<chr>)`").do_register();
-
-        registry.with_info<LZ78BitCode>(
-            "Bit", "bit",
-            "Bit encoding, each rule is emitted a bitstream of the "
-            "minimum amount of bits needed to encode the index and the char").do_register();
-    })
-    .do_register();
-
-    registry.with_info<LzwRule>(
-        "LZW rule-like", "lzwrule",
-        "A Family of compression algorithms making use "
-        "of LZW-like dictionary entries.")
-    .with_sub_algos<LzwRuleCoder>([](AlgorithmRegistry<LzwRuleCoder>& registry) {
-        registry.set_name("Coder");
-
-        registry.with_info<LZWDebugCode>(
-            "Debug", "debug",
-            "Debug encoding, each rule is emitted as a string of the form `<idx>,...` where <idx> is either a integer or a char literal").do_register();
-
-        registry.with_info<LZWBitCode>(
-            "Bit", "bit",
-            "Bit encoding, each rule is emitted a bitstream of the "
-            "minimum amount of bits needed to encode the index and the char").do_register();
-    })
-    .do_register();
-
-    registry.with_info<Lz78Compressor<Lz78DebugCoder>>(
-        "lz78 debug coder", "t_lz78_debug",
-        "Template-based implementation of a lz78 coder with human readable"
-        "debug output")
-    .do_register();
-    registry.with_info<Lz78Compressor<Lz78BitCoder>>(
-        "lz78 bit coder", "t_lz78_bit",
-        "Template-based implementation of a lz78 coder with naive bit"
-        "compressed output")
-    .do_register();
-    registry.with_info<LzwCompressor<LzwDebugCoder>>(
-        "lzw debug coder", "t_lzw_debug",
-        "Template-based implementation of a lzw coder with human readable"
-        "debug output")
-    .do_register();
-    registry.with_info<LzwCompressor<LzwBitCoder>>(
-        "lzw bit coder", "t_lzw_bit",
-        "Template-based implementation of a lzw coder with naive bit"
-        "compressed output")
-    .do_register();
-    registry.with_info<Lz78cicsCompressor<Lz78BitCoder>>(
-        "lz78 cics bit", "t_lz78_cics_bit",
-        "")
-    .do_register();
-    registry.with_info<Lz78cicsCompressor<Lz78DebugCoder>>(
-        "lz78 cics debug", "t_lz78_cics_debug",
-        "")
-    .do_register();
-
-    foo();
-}
-
-template<class C>
-C make(Env& env) {
-    return C(env);
-}
-
-struct baz;
-
-struct bar {
-    AlgorithmDb* m_algorithms;
-
-    std::unordered_map<
-        std::string,
-        std::function<std::unique_ptr<Compressor>(Env&)>> compressors;
-
-    // AlgorithmInfo
-
-    template<class F>
-    void compressor(std::string id, F f) {
-        auto g = [=](Env& env) {
-            using C = decltype(f(env));
-
-            return std::unique_ptr<Compressor> {
-                new C(f(env))
-            };
-        };
-
-        compressors[id] = g;
-    }
-
-    baz algo(std::string id, std::string title, std::string desc);
-
-    std::vector<std::string> check_for_undefined_compressors() {
-        std::vector<std::string> r;
-        for (auto& s : m_algorithms->id_product()) {
-            if (compressors.count(s) == 0) {
-                r.push_back(s);
-            }
-        }
-        return r;
-    }
-};
-
-struct baz {
-    std::vector<AlgorithmInfo>* m_vector;
-    int m_index;
-
-    template<class G>
-    void sub_algo(std::string name, G g) {
-        auto& x = (*m_vector)[m_index].sub_algo_info;
-        x.push_back({name});
-        bar y { &x[x.size() - 1] };
-        g(y);
-    }
-
-};
-
-baz bar::algo(std::string id, std::string title, std::string desc) {
-    m_algorithms->sub_algo_info.push_back({title, id, desc});
-
-    return baz {
-        &m_algorithms->sub_algo_info,
-        m_algorithms->sub_algo_info.size() - 1
-    };
-}
-
-void foo() {
-    AlgorithmDb m_algorithms { "root" };
-    bar b {&m_algorithms};
-
-    //b.compressor("a.b.c", make<A<B, C>>);
-
-    b.algo("lzw", "Lempel-Ziv-Welch algorithm", "")
-        .sub_algo("Coder", [](bar& b) {
-            b.algo("bit", "Bit coder", "basic variable-bit-width encoding of the symbols");
-            b.algo("debug", "Debug coder", "human readable, comma separated stream of integers");
+    r.algo("lz78", "Lempel-Ziv 78 algorithm", "")
+        .sub_algo("Coder", [](Registry& r) {
+            r.algo("bit", "Bit coder", "basic variable-bit-width encoding of the symbols");
+            r.algo("debug", "Debug coder", "human readable, comma separated stream of (integer, char) tuples");
         });
-    b.algo("lz78", "Lempel-Ziv 78 algorithm", "")
-        .sub_algo("Coder", [](bar& b) {
-            b.algo("bit", "Bit coder", "basic variable-bit-width encoding of the symbols");
-            b.algo("debug", "Debug coder", "human readable, comma separated stream of (integer, char) tuples");
+    r.algo("lzw", "Lempel-Ziv-Welch algorithm", "")
+        .sub_algo("Coder", [](Registry& r) {
+            r.algo("bit", "Bit coder", "basic variable-bit-width encoding of the symbols");
+            r.algo("debug", "Debug coder", "human readable, comma separated stream of integers");
+        });
+    r.algo("lz78_cics", "Lempel-Ziv 78 algorithm", "")
+        .sub_algo("Coder", [](Registry& r) {
+            r.algo("bit", "Bit coder", "basic variable-bit-width encoding of the symbols");
+            r.algo("debug", "Debug coder", "human readable, comma separated stream of integers");
         });
 
-    b.compressor("lzw.debug", make<LzwCompressor<LzwDebugCoder>>);
-    b.compressor("lzw.bit", make<LzwCompressor<LzwBitCoder>>);
-
-    b.m_algorithms->print_to(std::cout, 0);
-    std::cout << "Undefined:\n";
-    for (auto& s: b.check_for_undefined_compressors()) {
-        std::cout << s << "\n";
-    }
-
-    //b.compressor("esa.esa.code0")
-    //b.compressor("esa.esa.code1")
-    //b.compressor("esa.lz.code0")
-    //b.compressor("esa.lz.code1")
+    r.compressor("lzw.debug", make<LzwCompressor<LzwDebugCoder>>);
+    r.compressor("lzw.bit", make<LzwCompressor<LzwBitCoder>>);
+    r.compressor("lz78.debug", make<Lz78Compressor<Lz78DebugCoder>>);
+    r.compressor("lz78.bit", make<Lz78Compressor<Lz78BitCoder>>);
+    r.compressor("lz78_cics.debug", make<Lz78cicsCompressor<Lz78DebugCoder>>);
+    r.compressor("lz78_cics.bit", make<Lz78cicsCompressor<Lz78BitCoder>>);
 
 }
 
