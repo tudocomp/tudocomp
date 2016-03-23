@@ -88,6 +88,7 @@ using esacomp::DummyCoder;
 // - Algorithm: A function pointer that constructs the base class of a
 //   Compressor or Encoder.
 
+void foo();
 void register_algos(AlgorithmRegistry<Compressor>& registry) {
     //TODO: esacomp needs to be re-inserted!
     /*
@@ -203,6 +204,106 @@ void register_algos(AlgorithmRegistry<Compressor>& registry) {
         "lz78 cics debug", "t_lz78_cics_debug",
         "")
     .do_register();
+
+    foo();
+}
+
+template<class C>
+C make(Env& env) {
+    return C(env);
+}
+
+struct baz;
+
+struct bar {
+    AlgorithmDb* m_algorithms;
+
+    std::unordered_map<
+        std::string,
+        std::function<std::unique_ptr<Compressor>(Env&)>> compressors;
+
+    // AlgorithmInfo
+
+    template<class F>
+    void compressor(std::string id, F f) {
+        auto g = [=](Env& env) {
+            using C = decltype(f(env));
+
+            return std::unique_ptr<Compressor> {
+                new C(f(env))
+            };
+        };
+
+        compressors[id] = g;
+    }
+
+    baz algo(std::string id, std::string title, std::string desc);
+
+    std::vector<std::string> check_for_undefined_compressors() {
+        std::vector<std::string> r;
+        for (auto& s : m_algorithms->id_product()) {
+            if (compressors.count(s) == 0) {
+                r.push_back(s);
+            }
+        }
+        return r;
+    }
+};
+
+struct baz {
+    std::vector<AlgorithmInfo>* m_vector;
+    int m_index;
+
+    template<class G>
+    void sub_algo(std::string name, G g) {
+        auto& x = (*m_vector)[m_index].sub_algo_info;
+        x.push_back({name});
+        bar y { &x[x.size() - 1] };
+        g(y);
+    }
+
+};
+
+baz bar::algo(std::string id, std::string title, std::string desc) {
+    m_algorithms->sub_algo_info.push_back({title, id, desc});
+
+    return baz {
+        &m_algorithms->sub_algo_info,
+        m_algorithms->sub_algo_info.size() - 1
+    };
+}
+
+void foo() {
+    AlgorithmDb m_algorithms { "root" };
+    bar b {&m_algorithms};
+
+    //b.compressor("a.b.c", make<A<B, C>>);
+
+    b.algo("lzw", "Lempel-Ziv-Welch algorithm", "")
+        .sub_algo("Coder", [](bar& b) {
+            b.algo("bit", "Bit coder", "basic variable-bit-width encoding of the symbols");
+            b.algo("debug", "Debug coder", "human readable, comma separated stream of integers");
+        });
+    b.algo("lz78", "Lempel-Ziv 78 algorithm", "")
+        .sub_algo("Coder", [](bar& b) {
+            b.algo("bit", "Bit coder", "basic variable-bit-width encoding of the symbols");
+            b.algo("debug", "Debug coder", "human readable, comma separated stream of (integer, char) tuples");
+        });
+
+    b.compressor("lzw.debug", make<LzwCompressor<LzwDebugCoder>>);
+    b.compressor("lzw.bit", make<LzwCompressor<LzwBitCoder>>);
+
+    b.m_algorithms->print_to(std::cout, 0);
+    std::cout << "Undefined:\n";
+    for (auto& s: b.check_for_undefined_compressors()) {
+        std::cout << s << "\n";
+    }
+
+    //b.compressor("esa.esa.code0")
+    //b.compressor("esa.esa.code1")
+    //b.compressor("esa.lz.code0")
+    //b.compressor("esa.lz.code1")
+
 }
 
 }

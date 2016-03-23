@@ -63,6 +63,8 @@ struct AlgorithmDb {
     std::vector<AlgorithmInfo> sub_algo_info;
 
     inline void print_to(std::ostream& out, int indent);
+
+    inline std::vector<std::string> id_product();
 };
 
 struct AlgorithmInfo {
@@ -75,20 +77,79 @@ struct AlgorithmInfo {
     std::vector<AlgorithmDb> sub_algo_info;
 
     inline void print_to(std::ostream& out, int indent);
+
 };
+
+inline std::vector<std::string> cross(std::vector<std::vector<std::string>>&& vs) {
+    auto remaining = vs;
+    if (remaining.size() == 0) {
+        return {};
+    }
+
+    std::vector<std::string> first = std::move(remaining[0]);
+    remaining.erase(remaining.begin());
+
+    auto next = cross(std::move(remaining));
+
+    if (next.size() == 0) {
+        return first;
+    } else {
+        std::vector<std::string> r;
+        for (auto& x : first) {
+            for (auto& y : next) {
+                r.push_back(x + "." + y);
+            }
+        }
+        return r;
+    }
+}
+
+inline std::vector<std::string> algo_cross_product(AlgorithmDb& subalgo) {
+    std::vector<std::string> r;
+    for (auto& algo : subalgo.sub_algo_info) {
+
+        auto& name = algo.shortname;
+        std::vector<std::vector<std::string>> subalgos;
+        for (auto& subalgo : algo.sub_algo_info) {
+            subalgos.push_back(algo_cross_product(subalgo));
+        }
+
+        if (subalgos.size() == 0) {
+            r.push_back(name);
+        } else {
+            for (auto x : cross(std::move(subalgos))) {
+                r.push_back(name + "." + x);
+            }
+        }
+    }
+    return r;
+}
+
+inline std::vector<std::string> AlgorithmDb::id_product() {
+    return algo_cross_product(*this);
+}
 
 const int ALGO_IDENT = 2;
 
+inline std::string kind_str(int indent, std::string kind) {
+    std::stringstream out;
+    out << std::setw(indent) << "" << "[" << kind << "]";
+    return out.str();
+}
 inline void AlgorithmDb::print_to(std::ostream& out, int indent) {
-    out << std::setw(indent) << "" << "[" << kind << "]\n";
+    out << kind_str(indent, kind) << "\n";
     for (auto& e : sub_algo_info) {
         e.print_to(out, indent + ALGO_IDENT);
     }
 }
 
+inline std::string shortname_str(int indent, std::string shortname) {
+    std::stringstream out;
+    out << std::setw(indent) << "" << shortname;
+    return out.str();
+}
 inline void AlgorithmInfo::print_to(std::ostream& out, int indent) {
-    out << std::setw(indent) << ""
-        << shortname << " \t | "
+    out << shortname_str(indent, shortname) << " \t | "
         << name << ": "
         << description << "\n";
     for (auto& e : sub_algo_info) {
@@ -167,6 +228,7 @@ public:
         return name;
     }
 
+    /// important 1
     inline std::vector<AlgorithmInfo> get_sub_algos() const {
         std::vector<AlgorithmInfo> r;
         for (auto& e : registry) {
@@ -208,6 +270,7 @@ inline boost::string_ref pop_algorithm_id(boost::string_ref& algorithm_id) {
     return r;
 }
 
+/// important 2
 template<class T>
 inline T* select_algo_or_exit(AlgorithmRegistry<T>& reg,
                               Env& env,
