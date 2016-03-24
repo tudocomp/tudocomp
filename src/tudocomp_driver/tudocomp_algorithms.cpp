@@ -38,15 +38,15 @@ using esacomp::EsacompCompressStrategy;
 using esacomp::EsacompEncodeStrategy;
 */
 
-using ::tudocomp::lzw::LzwCompressor;
-using ::tudocomp::lzw::LzwDebugCoder;
-using ::tudocomp::lzw::LzwBitCoder;
+using lzw::LzwCompressor;
+using lzw::LzwDebugCoder;
+using lzw::LzwBitCoder;
 
-using ::tudocomp::lz78::Lz78Compressor;
-using ::tudocomp::lz78::Lz78DebugCoder;
-using ::tudocomp::lz78::Lz78BitCoder;
+using lz78::Lz78Compressor;
+using lz78::Lz78DebugCoder;
+using lz78::Lz78BitCoder;
 
-using ::tudocomp::lz78::lzcics::Lz78cicsCompressor;
+using lz78::lzcics::Lz78cicsCompressor;
 
 //TODO: esacomp needs to be re-inserted!
 /*
