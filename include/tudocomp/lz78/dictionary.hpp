@@ -12,7 +12,7 @@
 /// This is the C++11 implementation of a Lempel-Ziv-Welch single-file command-line compressor.
 /// It was written with Doxygen comments.
 ///
-/// It has been changed such that the dictionary search can be used
+/// It has been heavily adapted such that the dictionary search can be used
 /// for both lz78 and lzw compressors
 ///
 /// @see http://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Welch
@@ -46,10 +46,6 @@
 #include <vector>
 
 namespace lz78_dictionary {
-
-
-// Safety macro; if not defined, some overkillish safety checks are avoided.
-//#define TAKE_NO_RISKS
 
 /// Type used to store and retrieve codes.
 using CodeType = std::uint32_t;
@@ -115,10 +111,17 @@ public:
         const long int maxc = std::numeric_limits<uint8_t>::max();
 
         if (m_lzw_mode) {
-            for (long int c = minc; c <= maxc; ++c)
+            // In lzw mode there are pre allocated
+            // dictionary entries for each possible byte value.
+            for (long int c = minc; c <= maxc; ++c) {
                 vn.push_back(Node(c, m_dms));
+            }
         } else {
-            vn.push_back(Node('?', m_dms)); // dummy root node
+            // In lz78 mode the dictionary would start out empty,
+            // but we need a root node for the intrinsic tree structure
+            // to be able to actually add dictionary entries, so
+            // add a dummy node.
+            vn.push_back(Node('-', m_dms)); // dummy root node
         }
     }
 
@@ -131,21 +134,37 @@ public:
     ///
     CodeType search_and_insert(CodeType i, uint8_t c)
     {
+        // If we add a new node, its index will be equal to the current size
+        // of the dictionary, so just keep it around beforehand.
         const CodeType vn_size = vn.size();
 
         if (i == m_dms) {
+            // i == dms indicates that we only search for a single byte,
+            // without any prefix.
             if (m_lzw_mode) {
+                // In lzw mode, this means just returning one of the first 256
+                // dictionary positions directly
                 return c;
+            } else {
+                // In lz78 mode, we need to search for the byte regularly
+                // under the root node.
+                // TODO: It might simplify the code somewhat to use 0
+                //       as special value in general, rather than dms.
+                i = 0;
             }
         }
 
-        if ((!m_lzw_mode) && (i == m_dms)) {
-            i = 0;
-        }
+        // Starting at the end of the prefix string indicated by i,
+        // walk the embedded linked list of child nodes
+        // until there either is a match, or a empty place to insert:
 
-        CodeType ci = vn.at(i).first; // Current Index
+        CodeType ci = vn[i].first;
 
         if (ci != m_dms) {
+            // if vn[i] had children already,
+            // walk the binary tree spanned up between them
+            // until the char has been found, or there is a
+            // empty place for it to be inserted in.
             while (true) {
                 if (c < vn[ci].c)
                 {
@@ -171,6 +190,7 @@ public:
                 }
             }
         } else {
+            // if the trie node vn[i] had no children yet, add the first one
             vn[i].first = vn_size;
         }
 
