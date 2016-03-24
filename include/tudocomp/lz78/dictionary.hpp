@@ -194,10 +194,6 @@ private:
 
 };
 
-// TODO: Existing lz78 Coders will not reset dictionary size halfway
-// TODO: Existing lz78 DeCoders will not reset dictionary size halfway
-
-
 }
 
 #endif

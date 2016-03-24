@@ -3,7 +3,7 @@
 
 #include <tudocomp/Compressor.hpp>
 
-#include <tudocomp/lzw/factor.h>
+#include <tudocomp/lzw/Factor.hpp>
 
 #include <tudocomp/lz78/dictionary.hpp>
 

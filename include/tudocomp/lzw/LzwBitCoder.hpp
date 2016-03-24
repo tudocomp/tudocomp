@@ -1,17 +1,16 @@
 #ifndef _INCLUDED_LZW_BIT_CODER_HPP_
 #define _INCLUDED_LZW_BIT_CODER_HPP_
 
-#include <tudocomp/lz78/trie.h>
 #include <tudocomp/lz78/Lz78DecodeBuffer.hpp>
 
-#include <tudocomp/lzw/factor.h>
+#include <tudocomp/lzw/Factor.hpp>
 #include <tudocomp/lzw/decode.hpp>
 
 namespace tudocomp {
 
 namespace lzw {
 
-using ::lzw::LzwEntry;
+using tudocomp::lzw::Factor;
 using lz78_dictionary::CodeType;
 
 /**
@@ -36,7 +35,7 @@ public:
         (*m_out_guard).flush();
     }
 
-    inline void encode_fact(const LzwEntry& entry) {
+    inline void encode_fact(const Factor& entry) {
         // output format: variable_number_backref_bits 8bit_char
 
         // slowly grow the number of bits needed together with the output
@@ -65,13 +64,13 @@ public:
         BitIStream is(inp, done);
 
         uint64_t counter = 0;
-        decode_step([&](CodeType& entry, bool reset, bool &file_corrupted) -> LzwEntry {
+        decode_step([&](CodeType& entry, bool reset, bool &file_corrupted) -> Factor {
             if (reset) {
                 counter = 0;
             }
 
             // Try to read next factor
-            LzwEntry factor(is.readBits<uint64_t>(bitsFor(counter + 256)));
+            Factor factor(is.readBits<uint64_t>(bitsFor(counter + 256)));
             if (done) {
                 // Could not read all bits -> done
                 // (this works because the encoded factors are always > 8 bit)

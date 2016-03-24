@@ -1,7 +1,7 @@
 #ifndef _INCLUDED_LZW_DECODE_HPP_
 #define _INCLUDED_LZW_DECODE_HPP_
 
-#include <tudocomp/lzw/factor.h>
+#include <tudocomp/lzw/Factor.hpp>
 #include <tudocomp/lz78/dictionary.hpp>
 #include <tudocomp/util.h>
 

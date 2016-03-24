@@ -1,11 +1,9 @@
 #ifndef _INCLUDED_LZ78_DEBUG_CODER_HPP_
 #define _INCLUDED_LZ78_DEBUG_CODER_HPP_
 
-#include <tudocomp/lz78/trie.h>
-#include <tudocomp/lz78/factor.h>
-#include <tudocomp/lz78/factors.h>
-#include <tudocomp/lz78/coder.h>
+#include <tudocomp/lz78/Factor.hpp>
 #include <tudocomp/lz78/Lz78DecodeBuffer.hpp>
+#include <glog/logging.h>
 
 namespace tudocomp {
 
@@ -30,7 +28,7 @@ public:
         (*m_out).flush();
     }
 
-    inline void encode_fact(const Entry& fact) {
+    inline void encode_fact(const Factor& fact) {
         *m_out << "(" << fact.index << "," << char(fact.chr) << ")";
     }
 
@@ -54,13 +52,14 @@ public:
             if (!parse_number_until_other(inp, c, index)) {
                 break;
             }
+            DCHECK(index <= std::numeric_limits<CodeType>::max());
             DCHECK(c == ',');
             inp.get(c);
             char chr = c;
             inp.get(c);
             DCHECK(c == ')');
 
-            buf.decode(Entry { index, uint8_t(chr) }, out);
+            buf.decode(Factor { CodeType(index), uint8_t(chr) }, out);
         }
     }
 };

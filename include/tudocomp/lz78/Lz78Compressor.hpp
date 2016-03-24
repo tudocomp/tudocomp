@@ -3,20 +3,15 @@
 
 #include <tudocomp/Compressor.hpp>
 
-#include <tudocomp/lz78/trie.h>
-
 #include <tudocomp/lz78/dictionary.hpp>
 
-#include <tudocomp/lz78/factor.h>
+#include <tudocomp/lz78/Factor.hpp>
 
 namespace tudocomp {
 
 namespace lz78 {
 
-using ::lz78::Trie;
-using ::lz78::Result;
-using ::lz78::PrefixBuffer;
-using ::lz78::Entry;
+using tudocomp::lz78::Factor;
 using ::tudocomp::Compressor;
 using lz78_dictionary::CodeType;
 using lz78_dictionary::EncoderDictionary;
@@ -73,7 +68,7 @@ public:
                 if (fact == dms) {
                     fact = 0;
                 }
-                coder.encode_fact(Entry { fact, b });
+                coder.encode_fact(Factor { fact, b });
                 factor_count++;
                 i = dms;
             }
@@ -90,7 +85,7 @@ public:
             if (fact == dms) {
                 fact = 0;
             }
-            coder.encode_fact(Entry { fact, b });
+            coder.encode_fact(Factor { fact, b });
             factor_count++;
         }
         m_env->log_stat(RULESET_SIZE_LOG, factor_count);

@@ -24,7 +24,7 @@ public:
         // TODO: Hack to make the cics compressor work
         // with empty input
         if (i_view == "") {
-            coder.encode_fact(Entry {
+            coder.encode_fact(Factor {
                 0,
                 '\0',
             });
@@ -48,7 +48,7 @@ public:
             // and idx starting at 1
             ref++;
 
-            coder.encode_fact(Entry {
+            coder.encode_fact(Factor {
                 ref,
                 l78.cha[i],
             });

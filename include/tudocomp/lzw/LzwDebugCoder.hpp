@@ -1,17 +1,16 @@
 #ifndef _INCLUDED_LZW_DEBUG_CODER_HPP_
 #define _INCLUDED_LZW_DEBUG_CODER_HPP_
 
-#include <tudocomp/lz78/trie.h>
 #include <tudocomp/lz78/Lz78DecodeBuffer.hpp>
 
-#include <tudocomp/lzw/factor.h>
+#include <tudocomp/lzw/Factor.hpp>
 #include <tudocomp/lzw/decode.hpp>
 
 namespace tudocomp {
 
 namespace lzw {
 
-using ::lzw::LzwEntry;
+using tudocomp::lzw::Factor;
 using lz78_dictionary::CodeType;
 
 /**
@@ -33,7 +32,7 @@ public:
         (*m_out).flush();
     }
 
-    inline void encode_fact(const LzwEntry& entry) {
+    inline void encode_fact(const Factor& entry) {
         if (entry >= 32u && entry <= 127u) {
             (*m_out) << "'" << char(uint8_t(entry)) << "',";
         } else {
@@ -55,13 +54,14 @@ public:
 
         bool more = true;
         char c = '?';
-        decode_step([&](CodeType& entry, bool reset, bool &file_corrupted) -> LzwEntry {
+        decode_step([&](CodeType& entry, bool reset, bool &file_corrupted) -> Factor {
             if (!more) {
                 return false;
             }
 
-            LzwEntry v;
+            size_t v;
             more &= parse_number_until_other(inp, c, v);
+            DCHECK(v <= std::numeric_limits<CodeType>::max());
 
             if (more && c == '\'') {
                 more &= bool(inp.get(c));

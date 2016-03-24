@@ -1,10 +1,7 @@
 #ifndef _INCLUDED_LZ78_BIT_CODER_HPP_
 #define _INCLUDED_LZ78_BIT_CODER_HPP_
 
-#include <tudocomp/lz78/trie.h>
-#include <tudocomp/lz78/factor.h>
-#include <tudocomp/lz78/factors.h>
-#include <tudocomp/lz78/coder.h>
+#include <tudocomp/lz78/Factor.hpp>
 #include <tudocomp/lz78/Lz78DecodeBuffer.hpp>
 
 namespace tudocomp {
@@ -33,7 +30,7 @@ public:
         (*m_out_guard).flush();
     }
 
-    inline void encode_fact(const Entry& entry) {
+    inline void encode_fact(const Factor& entry) {
         // output format: variable_number_backref_bits 8bit_char
 
         // slowly grow the number of bits needed together with the output
@@ -67,14 +64,14 @@ public:
         while (!done) {
             size_t back_ref_idx_bits = bitsFor(factor_counter);
 
-            uint64_t index = inp.readBits<uint64_t>(back_ref_idx_bits);
+            CodeType index = inp.readBits<CodeType>(back_ref_idx_bits);
             uint8_t chr = inp.readBits<uint8_t>(8);
 
             if (done) {
                 break;
             }
 
-            Entry entry { index, chr };
+            Factor entry { index, chr };
 
             buf.decode(entry, out);
             factor_counter++;
