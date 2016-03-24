@@ -8,34 +8,35 @@
 #include <sdsl/int_vector.hpp>
 #include <sdsl/suffix_arrays.hpp>
 #include <sdsl/lcp.hpp>
-#include <tudocomp/sdslex/int_vector_wrapper.hpp>
 
-#include <tudocomp/Env.hpp>
-#include <tudocomp/io.h>
+#include <tudocomp/sdslex/int_vector_wrapper.hpp>
 #include <tudocomp/util.h>
 
-#include <tudocomp/Compressor.hpp>
-#include <tudocomp/lzss/LZSSCoderOpts.hpp>
-#include <tudocomp/lzss/LZSSFactor.hpp>
+#include <tudocomp/lzss/LZSSCompressor.hpp>
 
 namespace tudocomp {
 namespace lzss {
 
 template<typename C>
-class LZ77SSLCPCompressor : public Compressor {
+class LZ77SSLCPCompressor : public LZSSCompressor<C> {
 
 public:
     inline LZ77SSLCPCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZ77SSLCPCompressor(Env& env) : Compressor(env) {
+    inline LZ77SSLCPCompressor(Env& env) : LZSSCompressor<C>(env) {
     }
     
-    /// Compress `inp` into `out`.
-    ///
-    /// \param inp The input stream.
-    /// \param out The output stream.
-    inline virtual void compress(Input& input, Output& output) {
+protected:
+    inline virtual bool pre_factorize(Input& input) override {
+        return false;
+    }
+    
+    inline virtual LZSSCoderOpts coder_opts(Input& input) override {
+        return LZSSCoderOpts(true, bitsFor(input.size()));
+    }
+    
+    inline virtual void factorize(Input& input) override {
         auto in = input.as_view();
 
         size_t len = in.size();
@@ -62,25 +63,10 @@ public:
 
         sdsl::util::bit_compress(isa);
         sdsl::util::bit_compress(lcp);
-        
-        //Debug output
-        /*
-        DLOG(INFO) << "SA (" << sa.size() << " entries):";
-        for(size_t i = 0; i < sa.size(); i++) DLOG(INFO) << "sa[" << i << "] = " << sa[i];
-
-        DLOG(INFO) << "LCP (" << lcp.size() << " entries):";
-        for(size_t i = 0; i < lcp.size(); i++) DLOG(INFO) << "lcp[" << i << "] = " << lcp[i];
-        */
-
-        //Instantiate coder
-        size_t fact_min = 3; //factor threshold
-        
-        auto out_guard = output.as_stream();
-        BitOStream out_bits(*out_guard);
-
-        C coder(*m_env, input, out_bits, LZSSCoderOpts(true, bitsFor(len)));
 
         //Factorize
+        size_t fact_min = 3; //factor threshold
+        
         for(size_t i = 0; i < len;) {
             //get SA position for suffix i
             size_t h = isa[i];
@@ -116,23 +102,14 @@ public:
             //select maximum
             size_t p = std::max(p1, p2);
             if (p >= fact_min) {
-                coder.encode_fact(LZSSFactor(i, sa[p == p1 ? h1 : h2], p));
+                LZSSCompressor<C>::handle_fact(LZSSFactor(i, sa[p == p1 ? h1 : h2], p));
                 i += p; //advance
             } else {
-                coder.encode_sym(in_ptr[i]);
+                LZSSCompressor<C>::handle_sym(in_ptr[i]);
                 ++i; //advance
             }
         }
     }
-    
-    /// Decompress `inp` into `out`.
-    ///
-    /// \param inp The input stream.
-    /// \param out The output stream.
-    virtual void decompress(Input& input, Output& output) {
-        //TODO
-    }
-    
 };
 
 }}

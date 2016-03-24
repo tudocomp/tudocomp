@@ -51,7 +51,6 @@ void performTest() {
     DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
 }
 
-
 TEST(CodingPrototype, lz77ss_sw_Aonline_Fonline) {
     performTest<lzss::LZ77SSSlidingWindowCompressor<lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
 }
@@ -83,6 +82,15 @@ TEST(CodingPrototype, lz77ss_lcp_Aonline_Foffline) {
 TEST(CodingPrototype, lz77ss_lcp_Aoffline_Foffline) {
     performTest<lzss::LZ77SSLCPCompressor<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
 }
+
+TEST(CodingPrototype, lzss_esacomp_Aonline_Fonline) {
+    performTest<lzss::LZSSESACompressor<lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_Aoffline_Fonline) {
+    performTest<lzss::LZSSESACompressor<lzss::OnlineLZSSCoder<OfflineAlphabetCoder>>>();
+}
+
 
 TEST(CodingPrototype, lzss_esacomp_Aonline_Foffline) {
     performTest<lzss::LZSSESACompressor<lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>>();

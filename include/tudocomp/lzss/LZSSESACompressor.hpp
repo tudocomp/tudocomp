@@ -4,37 +4,28 @@
 #include <sdsl/int_vector.hpp>
 #include <sdsl/suffix_arrays.hpp>
 #include <sdsl/lcp.hpp>
-#include <tudocomp/sdslex/int_vector_wrapper.hpp>
 
-#include <tudocomp/Env.hpp>
-#include <tudocomp/io.h>
+#include <tudocomp/sdslex/int_vector_wrapper.hpp>
 #include <tudocomp/util.h>
 #include <tudocomp/util/MaxLCPSuffixList.hpp>
 
-#include <tudocomp/Compressor.hpp>
-#include <tudocomp/lzss/LZSSCoderOpts.hpp>
-#include <tudocomp/lzss/LZSSFactor.hpp>
+#include <tudocomp/lzss/LZSSCompressor.hpp>
 
 namespace tudocomp {
 namespace lzss {
 
 
 template<typename C>
-class LZSSESACompressor : public Compressor {
+class LZSSESACompressor : public LZSSCompressor<C> {
 
 public:
     inline LZSSESACompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZSSESACompressor(Env& env) : Compressor(env) {
-        C::require_offline();
+    inline LZSSESACompressor(Env& env) : LZSSCompressor<C>(env) {
     }
     
-    /// Compress `inp` into `out`.
-    ///
-    /// \param inp The input stream.
-    /// \param out The output stream.
-    inline virtual void compress(Input& input, Output& output) {
+    inline virtual bool pre_factorize(Input& input) override {
         auto in = input.as_view();
 
         size_t len = in.size();
@@ -67,20 +58,16 @@ public:
         
         MaxLCPSuffixList<sdsl::csa_bitcompressed<>, sdsl::int_vector<>> list(sa, lcp, fact_min);
 
-        //Instantiate coder
-        auto out_guard = output.as_stream();
-        BitOStream out_bits(*out_guard);
-
-        C coder(*m_env, input, out_bits, LZSSCoderOpts(false, bitsFor(len)));
-
         //Factorize
+        std::vector<LZSSFactor>& factors = LZSSCompressor<C>::m_factors;
+        
         while(list.size() > 0) {
             //get suffix with longest LCP
             size_t m = list.first();
             
             //generate factor
             LZSSFactor fact(sa[m], sa[m-1], lcp[m]);
-            coder.encode_fact(fact);
+            factors.push_back(fact);
             DLOG(INFO) << "Factor: (" << fact.pos << ", " << fact.src << ", " << fact.num << ")";
             
             //remove overlapped entries
@@ -104,14 +91,16 @@ public:
                 }
             }
         }
+        
+        std::sort(factors.begin(), factors.end());
+        return true;
+    }
+
+    inline virtual LZSSCoderOpts coder_opts(Input& input) override {
+        return LZSSCoderOpts(false, bitsFor(input.size()));
     }
     
-    /// Decompress `inp` into `out`.
-    ///
-    /// \param inp The input stream.
-    /// \param out The output stream.
-    virtual void decompress(Input& input, Output& output) {
-        //TODO
+    inline virtual void factorize(Input& input) override {
     }
     
 };

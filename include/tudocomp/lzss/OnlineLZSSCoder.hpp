@@ -22,8 +22,6 @@ private:
     size_t m_src_bits;
     size_t m_num_bits;
     
-    size_t m_encode_pos = 0;
-
 public:
     inline OnlineLZSSCoder(Env& env, Input& in, BitOStream& out, LZSSCoderOpts opts)
             : m_out(&out) {
@@ -39,22 +37,35 @@ public:
         
         m_alphabet_coder = std::shared_ptr<A>(new A(env, in, out));
     }
-
-    inline ~OnlineLZSSCoder() {
+    
+    inline void encode_init() {
     }
     
     inline void encode_fact(const LZSSFactor& f) {
         m_alphabet_coder->encode_sym_flush();
         
         m_out->writeBit(1);
-        m_out->write(m_src_use_delta ? (m_encode_pos - f.src) : f.src, m_src_bits);
+        m_out->write(m_src_use_delta ? (f.pos - f.src) : f.src, m_src_bits);
         m_out->write(f.num, m_num_bits);
-        m_encode_pos += f.num;
     }
 
     inline void encode_sym(uint8_t sym) {
         m_alphabet_coder->encode_sym(sym);
-        ++m_encode_pos;
+    }
+    
+    inline void encode_sym_flush() {
+        m_alphabet_coder->encode_sym_flush();
+    }
+    
+    inline bool uses_buffer() {
+        return false;
+    }
+    
+    template<typename T>
+    inline void set_buffer(T& buffer) {
+    }
+    
+    inline void buffer_fact(const LZSSFactor& f) {
     }
 };
 
