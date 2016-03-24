@@ -1,6 +1,8 @@
-#include <tudocomp/lz78/Lz78Compressor.hpp>
-#include <tudocomp/lz78/Lz78DebugCoder.hpp>
-#include <tudocomp/lz78/Lz78BitCoder.hpp>
+#include <tudocomp/lzw/LzwCompressor.hpp>
+#include <tudocomp/lzw/LzwDebugCoder.hpp>
+#include <tudocomp/lzw/LzwBitCoder.hpp>
 
-//using namespace tudocomp;
-//extern template lz78::Lz78Compressor<lz78::Lz78DebugCoder>;
+using namespace tudocomp;
+
+template class lzw::LzwCompressor<lzw::LzwDebugCoder>;
+template class lzw::LzwCompressor<lzw::LzwBitCoder>;
