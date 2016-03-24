@@ -55,11 +55,12 @@ using esacomp::DummyCompressor;
 using esacomp::DummyCoder;
 */
 
-/// Small helper for getting a constructor function
+/// A small helper function for directly constructing a Compressor class.
 template<class C>
 C make(Env& env) {
     return C(env);
 }
+
 
 // All compression and encoding algorithms exposed by the command
 // line interface.
@@ -123,6 +124,8 @@ void register_algos(Registry& r) {
     })
     .do_register();*/
 
+    /// Define which algorithm combinations exist in the tool:
+
     r.algo("lz78", "Lempel-Ziv 78 algorithm", "")
         .sub_algo("Coder", [](Registry& r) {
             r.algo("bit", "Bit coder", "basic variable-bit-width encoding of the symbols");
@@ -139,12 +142,24 @@ void register_algos(Registry& r) {
             r.algo("debug", "Debug coder", "human readable, comma separated stream of integers");
         });
 
-    r.compressor("lzw.debug", make<LzwCompressor<LzwDebugCoder>>);
-    r.compressor("lzw.bit", make<LzwCompressor<LzwBitCoder>>);
-    r.compressor("lz78.debug", make<Lz78Compressor<Lz78DebugCoder>>);
-    r.compressor("lz78.bit", make<Lz78Compressor<Lz78BitCoder>>);
+    // Define which implementations to use for each combination:
+
+    // compressor() takes a function that constructs the right
+    // Compressor with an Env& argument. You could use a lambda like this:
+    //
+    //     r.compressor("lzw.debug", [](Env& env) {
+    //         return LzwCompressor<LzwDebugCoder>(env);
+    //     });
+    //
+    // But since most of the algorithms take no additional constructor
+    // arguments we use the make() helper function to make this less verbose.
+
+    r.compressor("lzw.debug",       make<LzwCompressor<LzwDebugCoder>>);
+    r.compressor("lzw.bit",         make<LzwCompressor<LzwBitCoder>>);
+    r.compressor("lz78.debug",      make<Lz78Compressor<Lz78DebugCoder>>);
+    r.compressor("lz78.bit",        make<Lz78Compressor<Lz78BitCoder>>);
     r.compressor("lz78_cics.debug", make<Lz78cicsCompressor<Lz78DebugCoder>>);
-    r.compressor("lz78_cics.bit", make<Lz78cicsCompressor<Lz78BitCoder>>);
+    r.compressor("lz78_cics.bit",   make<Lz78cicsCompressor<Lz78BitCoder>>);
 
 }
 
