@@ -10,7 +10,7 @@ public:
     }
 
     inline void wait(size_t pos, size_t src) {
-        //
+        //not supported
     }
     
     inline bool next_waiting_for(size_t pos, size_t& out_waiting) {

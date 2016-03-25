@@ -7,6 +7,8 @@
 #include <boost/variant.hpp>
 #include <sdsl/int_vector.hpp>
 
+#include <glog/logging.h>
+
 #include <tudocomp/util/DCBStrategyNone.hpp>
 #include <tudocomp/util/DCBStrategyMap.hpp>
 #include <tudocomp/util/DCBStrategyRetargetArray.hpp>
@@ -38,11 +40,11 @@ private:
         }
         
         inline bool operator()(DCBStrategyMap& cb) const {
-            return false; //TODO implement
+            return cb.next_waiting_for(pos, *out_waiting);
         }
         
         inline bool operator()(DCBStrategyRetargetArray& cb) const {
-            return false; //TODO implement
+            return cb.next_waiting_for(pos, *out_waiting);
         }
     };
     
@@ -61,11 +63,11 @@ private:
         }
         
         inline void operator()(DCBStrategyMap& cb) const {
-            //TODO implement
+            return cb.wait(pos, src);
         }
         
         inline void operator()(DCBStrategyRetargetArray& cb) const {
-            //TODO implement
+            return cb.wait(pos, src);
         }
     };
     
