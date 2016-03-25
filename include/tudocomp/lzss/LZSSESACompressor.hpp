@@ -14,17 +14,20 @@
 namespace tudocomp {
 namespace lzss {
 
-
+/// Factorizes the input by finding redundant phrases in a re-ordered version
+/// of the LCP table.
 template<typename C>
 class LZSSESACompressor : public LZSSCompressor<C> {
 
 public:
-    inline LZSSESACompressor() = delete;
+    /// Default constructor (not supported).
+    inline LZ77SSSlidingWindowCompressor() = delete;
 
     /// Construct the class with an environment.
     inline LZSSESACompressor(Env& env) : LZSSCompressor<C>(env) {
     }
-    
+
+    /// \copydoc
     inline virtual bool pre_factorize(Input& input) override {
         auto in = input.as_view();
 
@@ -96,10 +99,12 @@ public:
         return true;
     }
 
+    /// \copydoc
     inline virtual LZSSCoderOpts coder_opts(Input& input) override {
         return LZSSCoderOpts(false, bitsFor(input.size()));
     }
     
+    /// \copydoc
     inline virtual void factorize(Input& input) override {
     }
     

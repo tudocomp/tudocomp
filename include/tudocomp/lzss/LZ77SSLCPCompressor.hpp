@@ -17,25 +17,31 @@
 namespace tudocomp {
 namespace lzss {
 
+/// Computes the LZ77 factorization of the input using its suffix array and
+/// LCP table.
 template<typename C>
 class LZ77SSLCPCompressor : public LZSSCompressor<C> {
 
 public:
-    inline LZ77SSLCPCompressor() = delete;
+    /// Default constructor (not supported).
+    inline LZ77SSSlidingWindowCompressor() = delete;
 
     /// Construct the class with an environment.
     inline LZ77SSLCPCompressor(Env& env) : LZSSCompressor<C>(env) {
     }
     
 protected:
+    /// \copydoc
     inline virtual bool pre_factorize(Input& input) override {
         return false;
     }
     
+    /// \copydoc
     inline virtual LZSSCoderOpts coder_opts(Input& input) override {
         return LZSSCoderOpts(true, bitsFor(input.size()));
     }
     
+    /// \copydoc
     inline virtual void factorize(Input& input) override {
         auto in = input.as_view();
 

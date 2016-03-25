@@ -11,6 +11,13 @@
 namespace tudocomp {
 namespace lzss {
 
+/// Base for Lempel-Ziv-Storer-Szymanski-based compressors.
+///
+/// Compressors inheriting this class will factorize the text, achieving
+/// compression by replacing redundant phrases by references to their other
+/// occurences.
+///
+/// \tparam C the coder to use for encoding factors.
 template<typename C>
 class LZSSCompressor : public Compressor {
 
@@ -21,16 +28,16 @@ private:
     C* m_coder;
 
 public:
+    /// Default constructor (not supported).
     inline LZSSCompressor() = delete;
 
-    /// Construct the class with an environment.
+    /// Constructor.
+    ///
+    /// \param env The environment.
     inline LZSSCompressor(Env& env) : Compressor(env) {
     }
     
-    /// Compress `inp` into `out`.
-    ///
-    /// \param inp The input stream.
-    /// \param out The output stream.
+    /// \copydoc
     virtual void compress(Input& input, Output& output) override final {        
         //init factorization (possibly factorize offline to buffer)
         bool factorized = pre_factorize(input);
@@ -91,15 +98,16 @@ public:
         m_coder = nullptr;
     }
 
-    /// Decompress `inp` into `out`.
-    ///
-    /// \param inp The input stream.
-    /// \param out The output stream.
+    /// \copydoc
     virtual void decompress(Input& input, Output& output) override {
         //TODO
     }
     
 protected:
+    /// Handles a freshly generated factor during factorization.
+    ///
+    /// Depending on how the encoder works, it will be encoded directly or
+    /// buffered for later optimized encoding.
     void handle_fact(const LZSSFactor& f) {
         if(m_coder->uses_buffer()) {
             m_coder->buffer_fact(f);
@@ -109,6 +117,10 @@ protected:
         }
     }
     
+    /// Handles a raw symbol during factorization.
+    ///
+    /// In case the coder opts to buffer factors instead of encoding directly,
+    /// this will not do anything.
     void handle_sym(uint8_t sym) {
         if(!m_coder->uses_buffer()) {
             m_coder->encode_sym(sym);
@@ -123,10 +135,17 @@ private:
     }
 
 protected:
+    /// Allows the compressor to do work prior to the factorization stage.
+    ///
+    /// \return true if factorization has already been completed. The factors
+    ///         are expected to be located in the buffer and sorted (!).
     virtual bool pre_factorize(Input& input) = 0;
     
+    /// Determines the options passed to the encoder.
     virtual LZSSCoderOpts coder_opts(Input& input) = 0;
     
+    /// Factorizes the input and uses the handlers (handle_fact and handle_sym)
+    /// to pass them to the encoder.
     virtual void factorize(Input& input) = 0;
 };
 
