@@ -21,7 +21,7 @@ class LZSSESACompressor : public LZSSCompressor<C> {
 
 public:
     /// Default constructor (not supported).
-    inline LZ77SSSlidingWindowCompressor() = delete;
+    inline LZSSESACompressor() = delete;
 
     /// Construct the class with an environment.
     inline LZSSESACompressor(Env& env) : LZSSCompressor<C>(env) {
