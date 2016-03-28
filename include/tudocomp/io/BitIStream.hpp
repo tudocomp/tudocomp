@@ -61,7 +61,7 @@ public:
     /// Read a compressed integer from the input.
     ///
     /// \param b The block width in bits (default is 7 bits).
-    template<typename T>
+    template<typename T = size_t>
     inline T read_compressed_int(size_t b = 7) {
         assert(b > 0);
         
