@@ -38,17 +38,42 @@ std::string hex_bytes_str(const std::string& str) {
 template<typename C>
 void performTest() {
     DLOG(INFO) << "Input: " << input_str;
-
+    
     Env env;
-    Input input = Input::from_memory(input_str);
     
-    std::stringstream stm;
-    Output output = Output::from_stream(stm);
+    //compress
+    std::string comp_result;
+    {
+        Input input = Input::from_memory(input_str);
+        
+        std::stringstream stm;
+        Output output = Output::from_stream(stm);
+        
+        C compressor(env);
+        compressor.compress(input, output);
+        
+        comp_result = stm.str();
+    }
     
-    C compressor(env);
-    compressor.compress(input, output);
+    DLOG(INFO) << "Compression result: " << hex_bytes_str(comp_result);
     
-    DLOG(INFO) << "Result: " << hex_bytes_str(stm.str());
+    //decompress
+    std::string decomp_result;
+    {
+        Input input = Input::from_memory(comp_result);
+        
+        std::stringstream stm;
+        Output output = Output::from_stream(stm);
+        
+        C compressor(env);
+        compressor.decompress(input, output);
+        
+        decomp_result = stm.str();
+    }
+    
+    DLOG(INFO) << "Decompression result: " << decomp_result;
+    
+    ASSERT_EQ(input_str, decomp_result);
 }
 
 TEST(CodingPrototype, lz77ss_sw_Aonline_Fonline) {

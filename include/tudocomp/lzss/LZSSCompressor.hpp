@@ -51,6 +51,11 @@ public:
         //pass factor buffer (empty or filled)
         m_coder->set_buffer(m_factors);
         
+        if(!factorized && !m_coder->uses_buffer()) {
+            //init (online)
+            m_coder->encode_init();
+        }
+        
         //factorize
         if(!factorized) {
             factorize(input);
@@ -60,10 +65,12 @@ public:
         //encode
         if(factorized || m_coder->uses_buffer()) {
             
+            size_t len = input.size();
+            
             auto in_guard = input.as_stream();
             std::istream& in_stream = *in_guard;
             
-            //init
+            //init (offline)
             m_coder->encode_init();
             
             //factors must be sorted by insert position!
@@ -71,9 +78,10 @@ public:
             size_t p = 0;
             
             for(auto f : m_factors) {
-                while(p++ < f.pos) {
+                while(p < f.pos) {
                     in_stream.get(c);
                     m_coder->encode_sym(uint8_t(c));
+                    ++p;
                 }
                 
                 m_coder->encode_sym_flush();
@@ -84,10 +92,10 @@ public:
                 p += f.num;
             }
             
-            size_t len = input.size();
-            while(p++ < len) {
+            while(p < len) {
                 in_stream.get(c);
                 m_coder->encode_sym(uint8_t(c));
+                ++p;
             }
             
             m_coder->encode_sym_flush();
@@ -96,11 +104,35 @@ public:
         //clean up
         delete m_coder;
         m_coder = nullptr;
+        
+        //flush final byte
+        out_bits.flush();
     }
 
     /// \copydoc
     virtual void decompress(Input& input, Output& output) override {
-        //TODO
+        //Init
+        bool done; //GRRR
+        auto in_guard = input.as_stream();
+        BitIStream in_bits(*in_guard, done);
+        
+        //Decode
+        typename C::Decoder decoder(*m_env, in_bits, output);
+        
+        size_t len = decoder.length();
+        size_t p = 0;
+        while(p < len) {
+            if(in_bits.readBit()) {
+                //decode factor
+                p += decoder.decode_fact(p);
+            } else {
+                //decode raw symbol
+                p += decoder.decode_sym();
+            }
+        }
+        
+        //Write
+        decoder.flush();
     }
     
 protected:

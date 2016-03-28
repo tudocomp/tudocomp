@@ -6,6 +6,7 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
+#include <tudocomp/util/DecodeBuffer.hpp>
 
 namespace tudocomp {
 
@@ -21,7 +22,10 @@ public:
     }
 
     inline ~OnlineAlphabetCoder() {
-    }    
+    }
+    
+    inline void encode_init() {
+    }
 
     inline void encode_sym(uint8_t sym) {
         m_out->writeBit(0);
@@ -30,6 +34,22 @@ public:
     
     inline void encode_sym_flush() {
     }
+    
+    class Decoder {
+    private:
+        BitIStream* m_in;
+        DecodeBuffer* m_buf;
+        
+    public:
+        Decoder(Env& env, BitIStream& in, DecodeBuffer& buf) : m_in(&in), m_buf(&buf) {
+        }
+        
+        size_t decode_sym() {
+            uint8_t sym = m_in->readBits<uint8_t>();
+            m_buf->decode(sym);
+            return 1;
+        }
+    };
 };
 
 }

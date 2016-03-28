@@ -44,16 +44,17 @@ public:
             m_comp2char[i] = c;
             m_char2comp[c] = i;
         }
+    }
 
+    inline ~OfflineAlphabetCoder() {
+    }
+    
+    inline void encode_init() {
         //Encode alphabet
-        //TODO write magic
         m_out->write_compressed_int(m_sigma);
         for(uint8_t c : m_comp2char) {
             m_out->write(c);
         }
-    }
-
-    inline ~OfflineAlphabetCoder() {
     }
     
     inline void encode_sym(uint8_t sym) {
@@ -63,6 +64,36 @@ public:
     
     inline void encode_sym_flush() {
     }
+    
+    class Decoder {
+    private:
+        BitIStream* m_in;
+        DecodeBuffer* m_buf;
+        
+        size_t m_sigma_bits;
+        sdsl::int_vector<> m_comp2char;
+        
+    public:
+        Decoder(Env& env, BitIStream& in, DecodeBuffer& buf) : m_in(&in), m_buf(&buf) {
+            
+            size_t sigma = in.read_compressed_int();
+            
+            m_sigma_bits = bitsFor(sigma);
+            m_comp2char = sdsl::int_vector<>(sigma, 0, 8);
+            
+            //Decode alphabet
+            for(size_t i = 0; i < sigma; i++) {
+                uint8_t c = in.readBits<uint8_t>();
+                m_comp2char[i] = c;
+            }
+        }
+        
+        size_t decode_sym() {
+            uint8_t sym = m_comp2char[m_in->readBits<uint8_t>(m_sigma_bits)];
+            m_buf->decode(sym);
+            return 1;
+        }
+    };
 };
 
 }
