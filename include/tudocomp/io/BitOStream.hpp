@@ -86,13 +86,13 @@ public:
         
         uint64_t u = uint64_t(v);
         uint64_t mask = (u << b) - 1;
-        while(v > 0) {
+        do {
             uint64_t current = v & mask;
             v >>= b;
             
             writeBit(v > 0);
             write(current, b);
-        }
+        } while(v > 0);
     }
 
     /// If there where any bits written to the internal buffer, write
