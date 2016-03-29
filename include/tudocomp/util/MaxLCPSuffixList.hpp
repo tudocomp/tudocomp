@@ -19,9 +19,6 @@ private:
     const S* m_sa;
     const L* m_lcp;
     
-    //minimum LCP for a suffix to be included in the list
-    size_t m_min_lcp;
-    
     //undefined suffix
     size_t m_undef;
 
@@ -43,7 +40,7 @@ private:
     
     /// Lookup the LCP index.
     inline size_t lookup_lcp_index(size_t lcp) const {
-        DLOG(INFO) << "lookup_lcp_index(" << lcp << ")";
+        //DLOG(INFO) << "lookup_lcp_index(" << lcp << ")";
         assert(lcp <= m_lcp_index.size());
 
         size_t result = m_undef;
@@ -57,7 +54,7 @@ private:
 public:
     /// Constructor
     inline MaxLCPSuffixList(const S& sa, const L& lcp, size_t min_lcp)
-        : m_sa(&sa), m_lcp(&lcp), m_min_lcp(min_lcp) {
+        : m_sa(&sa), m_lcp(&lcp) {
             
         size_t n = sa.size();
         m_undef = n;
@@ -93,9 +90,7 @@ public:
     inline void insert(size_t i) {
         assert(i < m_undef && !m_suffix_contained[i]);
         
-        size_t lcp = (*m_lcp)[i];
-        assert(lcp >= m_min_lcp);
-        
+        size_t lcp = (*m_lcp)[i];        
         size_t pos = lookup_lcp_index(lcp);
         if(pos == m_undef) {
             //insert at end

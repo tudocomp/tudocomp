@@ -71,7 +71,7 @@ public:
             //generate factor
             LZSSFactor fact(sa[m], sa[m-1], lcp[m]);
             factors.push_back(fact);
-            DLOG(INFO) << "Factor: (" << fact.pos << ", " << fact.src << ", " << fact.num << ")";
+            //DLOG(INFO) << "Factor: (" << fact.pos << ", " << fact.src << ", " << fact.num << ")";
             
             //remove overlapped entries
             for(size_t k = 0; k < fact.num; k++) {
@@ -88,8 +88,12 @@ public:
                 if(list.contains(i)) {
                     if(s + lcp[i] > fact.pos) {
                         list.remove(i);
-                        lcp[i] = fact.pos - s;
-                        list.insert(i);
+                        
+                        size_t l = fact.pos - s;
+                        lcp[i] = l;
+                        if(l >= fact_min) {
+                            list.insert(i);
+                        }
                     }
                 }
             }
