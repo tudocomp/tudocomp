@@ -78,7 +78,7 @@ public:
             
             size_t sigma = in.read_compressed_int();
             
-            m_sigma_bits = bitsFor(sigma);
+            m_sigma_bits = bitsFor(sigma - 1);
             m_comp2char = sdsl::int_vector<>(sigma, 0, 8);
             
             //Decode alphabet
