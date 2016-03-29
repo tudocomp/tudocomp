@@ -28,6 +28,8 @@ private:
     std::shared_ptr<BitOStream> m_out;
     std::shared_ptr<A> m_alphabet_coder;
     
+    size_t m_len;
+    
     bool m_src_use_delta;
     size_t m_src_bits;
     size_t m_num_bits;
@@ -45,15 +47,10 @@ public:
         
         m_alphabet_coder = std::shared_ptr<A>(new A(env, in, *m_out));
 
-        size_t len = in.size();
-        m_src_bits = std::min(bitsFor(len), opts.src_bits);
-        m_num_bits = bitsFor(len);
+        m_len = in.size();
+        m_src_bits = std::min(bitsFor(m_len), opts.src_bits);
+        m_num_bits = bitsFor(m_len);
         m_src_use_delta = opts.use_src_delta;
-
-        //TODO write magic
-        m_out->write_compressed_int(len);
-        m_out->write_compressed_int(m_src_bits);
-        m_out->writeBit(m_src_use_delta);
     }
     
     /// Destructor
@@ -64,6 +61,11 @@ public:
     /// Initializes the encoding by writing information to the output that
     /// will be needed for decoding.
     inline void encode_init() {
+        //TODO write magic
+        m_out->write_compressed_int(m_len);
+        m_out->write_compressed_int(m_src_bits);
+        m_out->writeBit(m_src_use_delta);
+        
         m_alphabet_coder->encode_init();
     }
     

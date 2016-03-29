@@ -15,6 +15,7 @@ namespace lzss {
 class DebugLZSSCoder {
 
 private:
+    size_t m_len;
     io::OutputStreamGuard* m_out;
     
 public:
@@ -26,9 +27,8 @@ public:
     /// \param opts Coder options determined by the compressor.
     inline DebugLZSSCoder(Env& env, Input& in, io::OutputStreamGuard& out, LZSSCoderOpts opts)
         : m_out(&out) {
-        
-        size_t len = in.size();
-        **m_out << len << ':';
+
+        m_len = in.size();
     }
     
     /// Destructor
@@ -38,6 +38,7 @@ public:
     /// Initializes the encoding by writing information to the output that
     /// will be needed for decoding.
     inline void encode_init() {
+        **m_out << m_len << ':';
     }
     
     /// Encodes a LZSS factor to the output.
