@@ -25,7 +25,7 @@ class OnlineLZSSCoder {
 //TODO more unique name (there may be more online coders in the future...)
 
 private:
-    BitOStream* m_out;
+    std::shared_ptr<BitOStream> m_out;
     std::shared_ptr<A> m_alphabet_coder;
     
     bool m_src_use_delta;
@@ -39,10 +39,11 @@ public:
     /// \param in The input text.
     /// \param out The (bitwise) output stream.
     /// \param opts Coder options determined by the compressor.
-    inline OnlineLZSSCoder(Env& env, Input& in, BitOStream& out, LZSSCoderOpts opts)
-            : m_out(&out) {
-
-        m_alphabet_coder = std::shared_ptr<A>(new A(env, in, out));
+    inline OnlineLZSSCoder(Env& env, Input& in, io::OutputStreamGuard& out, LZSSCoderOpts opts)  {
+        
+        m_out = std::shared_ptr<BitOStream>(new BitOStream(*out));
+        
+        m_alphabet_coder = std::shared_ptr<A>(new A(env, in, *m_out));
 
         size_t len = in.size();
         m_src_bits = std::min(bitsFor(len), opts.src_bits);
@@ -50,9 +51,14 @@ public:
         m_src_use_delta = opts.use_src_delta;
 
         //TODO write magic
-        out.write_compressed_int(len);
-        out.write_compressed_int(m_src_bits);
-        out.writeBit(m_src_use_delta);
+        m_out->write_compressed_int(len);
+        m_out->write_compressed_int(m_src_bits);
+        m_out->writeBit(m_src_use_delta);
+    }
+    
+    /// Destructor
+    ~OnlineLZSSCoder() {
+        m_out->flush();
     }
     
     /// Initializes the encoding by writing information to the output that
@@ -106,11 +112,15 @@ public:
     inline void buffer_fact(const LZSSFactor& f) {
     }
     
-    static void decode(Env&, BitIStream&, Output&);
+    static void decode(Env&, Input&, Output&);
 };
 
 template<typename A>
-inline void OnlineLZSSCoder<A>::decode(Env& env, BitIStream& in, Output& out) {
+inline void OnlineLZSSCoder<A>::decode(Env& env, Input& input, Output& out) {
+    
+    bool done; //GRRR
+    auto in_guard = input.as_stream();
+    BitIStream in(*in_guard, done);
     
     //Init
     size_t len = in.read_compressed_int();

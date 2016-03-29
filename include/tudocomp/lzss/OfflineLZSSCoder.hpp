@@ -28,8 +28,8 @@ class OfflineLZSSCoder {
 //TODO more unique name (there may be more offline coders in the future...)
 
 private:
-    BitOStream* m_out;
     Input* m_in;
+    std::shared_ptr<BitOStream> m_out;
     std::shared_ptr<A> m_alphabet_coder;
 
     std::vector<LZSSFactor>* m_factors;
@@ -51,16 +51,23 @@ public:
     /// \param in The input text.
     /// \param out The (bitwise) output stream.
     /// \param opts Coder options determined by the compressor.
-    inline OfflineLZSSCoder(Env& env, Input& in, BitOStream& out, LZSSCoderOpts opts)
-            : m_out(&out), m_in(&in), m_src_use_delta(opts.use_src_delta) {
+    inline OfflineLZSSCoder(Env& env, Input& in, io::OutputStreamGuard& out, LZSSCoderOpts opts)
+            : m_in(&in), m_src_use_delta(opts.use_src_delta) {
 
-        m_alphabet_coder = std::shared_ptr<A>(new A(env, in, out));
+        m_out = std::shared_ptr<BitOStream>(new BitOStream(*out));
+        
+        m_alphabet_coder = std::shared_ptr<A>(new A(env, in, *m_out));
 
         //TODO write magic
-        out.write_compressed_int(in.size());
-        out.writeBit(m_src_use_delta);
+        m_out->write_compressed_int(in.size());
+        m_out->writeBit(m_src_use_delta);
     }
 
+    /// Destructor
+    ~OfflineLZSSCoder() {
+        m_out->flush();
+    }
+    
     /// Initializes the encoding by writing information to the output that
     /// will be needed for decoding.
     inline void encode_init() {
@@ -140,11 +147,15 @@ private:
     }
     
 public:
-    static void decode(Env&, BitIStream&, Output&);
+    static void decode(Env&, Input&, Output&);
 };
 
 template<typename A>
-inline void OfflineLZSSCoder<A>::decode(Env& env, BitIStream& in, Output& out) {
+inline void OfflineLZSSCoder<A>::decode(Env& env, Input& input, Output& out) {
+    
+    bool done; //GRRR
+    auto in_guard = input.as_stream();
+    BitIStream in(*in_guard, done);
     
     //Init
     size_t len = in.read_compressed_int();

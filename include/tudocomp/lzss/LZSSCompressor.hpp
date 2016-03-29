@@ -44,9 +44,7 @@ public:
         
         //instantiate coder
         auto out_guard = output.as_stream();
-        BitOStream out_bits(*out_guard);
-        
-        m_coder = new C(*m_env, input, out_bits, coder_opts(input));
+        m_coder = new C(*m_env, input, out_guard, coder_opts(input));
         
         //pass factor buffer (empty or filled)
         m_coder->set_buffer(m_factors);
@@ -104,20 +102,11 @@ public:
         //clean up
         delete m_coder;
         m_coder = nullptr;
-        
-        //flush final byte
-        out_bits.flush();
     }
 
     /// \copydoc
     virtual void decompress(Input& input, Output& output) override {
-        //Init
-        bool done; //GRRR
-        auto in_guard = input.as_stream();
-        BitIStream in_bits(*in_guard, done);
-        
-        //Decode
-        C::decode(*m_env, in_bits, output);
+        C::decode(*m_env, input, output);
     }
     
 protected:
