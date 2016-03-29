@@ -17,6 +17,7 @@
 #include <tudocomp/lzss/LZ77SSSlidingWindowCompressor.hpp>
 #include <tudocomp/lzss/LZSSESACompressor.hpp>
 
+#include <tudocomp/lzss/DebugLZSSCoder.hpp>
 #include <tudocomp/lzss/OfflineLZSSCoder.hpp>
 #include <tudocomp/lzss/OnlineLZSSCoder.hpp>
 
@@ -55,7 +56,8 @@ void performTest() {
         comp_result = stm.str();
     }
     
-    DLOG(INFO) << "Compression result: " << hex_bytes_str(comp_result);
+    char c = comp_result[0];
+    DLOG(INFO) << "Compression result: " << ((c >= '0' && c <= '9') ? comp_result : hex_bytes_str(comp_result));
     
     //decompress
     std::string decomp_result;
@@ -76,6 +78,10 @@ void performTest() {
     ASSERT_EQ(input_str, decomp_result);
 }
 
+TEST(CodingPrototype, lz77ss_sw_debug) {
+    performTest<lzss::LZ77SSSlidingWindowCompressor<lzss::DebugLZSSCoder>>();
+}
+
 TEST(CodingPrototype, lz77ss_sw_Aonline_Fonline) {
     performTest<lzss::LZ77SSSlidingWindowCompressor<lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
 }
@@ -92,6 +98,10 @@ TEST(CodingPrototype, lz77ss_sw_Aoffline_Foffline) {
     performTest<lzss::LZ77SSSlidingWindowCompressor<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
 }
 
+TEST(CodingPrototype, lz77ss_lcp_debug) {
+    performTest<lzss::LZ77SSLCPCompressor<lzss::DebugLZSSCoder>>();
+}
+
 TEST(CodingPrototype, lz77ss_lcp_Aonline_Fonline) {
     performTest<lzss::LZ77SSLCPCompressor<lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
 }
@@ -106,6 +116,10 @@ TEST(CodingPrototype, lz77ss_lcp_Aonline_Foffline) {
 
 TEST(CodingPrototype, lz77ss_lcp_Aoffline_Foffline) {
     performTest<lzss::LZ77SSLCPCompressor<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_debug) {
+    performTest<lzss::LZSSESACompressor<lzss::DebugLZSSCoder>>();
 }
 
 TEST(CodingPrototype, lzss_esacomp_Aonline_Fonline) {
