@@ -106,58 +106,49 @@ public:
     inline void buffer_fact(const LZSSFactor& f) {
     }
     
-    class Decoder {
-    private:
-        BitIStream* m_in;
-        Output* m_out;
-        
-        std::shared_ptr<DecodeBuffer> m_buffer;
-        std::shared_ptr<typename A::Decoder> m_alphabet_decoder;
-        
-        size_t m_len;
-        bool m_src_use_delta;
-        size_t m_src_bits;
-        size_t m_num_bits;
-        
-    public:
-        Decoder(Env& env, BitIStream& in, Output& out) : m_in(&in), m_out(&out) {
-            
-            m_len = in.read_compressed_int();
-            m_num_bits = bitsFor(m_len);
-            m_src_bits = in.read_compressed_int();
-            m_src_use_delta = in.readBit();
-            
-            if(m_src_use_delta) {
-                m_buffer = std::shared_ptr<DecodeBuffer>(new DecodeBuffer(m_len, DCBStrategyNone()));
-            } else {
-                m_buffer = std::shared_ptr<DecodeBuffer>(new DecodeBuffer(m_len, DCBStrategyRetargetArray(m_len)));
-            }
-            
-            m_alphabet_decoder = std::shared_ptr<typename A::Decoder>(new typename A::Decoder(env, in, *m_buffer));
-        }
-        
-        size_t length() const {
-            return m_len;
-        }
-        
-        size_t decode_fact(size_t pos) {
-            size_t src = m_in->readBits<size_t>(m_src_bits);
-            size_t num = m_in->readBits<size_t>(m_num_bits);
-
-            m_buffer->defact(m_src_use_delta ? (pos - src) : src, num);
-            return num;
-        }
-        
-        size_t decode_sym() {
-            return m_alphabet_decoder->decode_sym();
-        }
-        
-        void flush() {
-            auto out_guard = m_out->as_stream();
-            m_buffer->write_to(*out_guard);
-        }
-    };
+    static void decode(Env&, BitIStream&, Output&);
 };
+
+template<typename A>
+inline void OnlineLZSSCoder<A>::decode(Env& env, BitIStream& in, Output& out) {
+    
+    //Init
+    size_t len = in.read_compressed_int();
+    size_t num_bits = bitsFor(len);
+    size_t src_bits = in.read_compressed_int();
+    bool src_use_delta = in.readBit();
+
+    DecodeCallbackStrategy strategy;
+    if(src_use_delta) {
+        strategy = DCBStrategyNone();
+    } else {
+        strategy = DCBStrategyRetargetArray(len);
+    }
+    
+    DecodeBuffer buffer(len, strategy);
+    
+    auto alphabet_decoder = typename A::Decoder(env, in, buffer);
+    
+    //Decode
+    size_t pos = 0;
+    while(pos < len) {
+        if(in.readBit()) {
+            //decode factor
+            size_t src = in.readBits<size_t>(src_bits);
+            size_t num = in.readBits<size_t>(num_bits);
+
+            buffer.defact(src_use_delta ? (pos - src) : src, num);
+            pos += num;
+        } else {
+            //decode raw symbol
+            pos += alphabet_decoder.decode_sym();
+        }
+    }
+    
+    //Write
+    auto out_guard = out.as_stream();
+    buffer.write_to(*out_guard);
+}
 
 }}
 

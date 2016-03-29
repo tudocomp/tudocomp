@@ -117,22 +117,7 @@ public:
         BitIStream in_bits(*in_guard, done);
         
         //Decode
-        typename C::Decoder decoder(*m_env, in_bits, output);
-        
-        size_t len = decoder.length();
-        size_t p = 0;
-        while(p < len) {
-            if(in_bits.readBit()) {
-                //decode factor
-                p += decoder.decode_fact(p);
-            } else {
-                //decode raw symbol
-                p += decoder.decode_sym();
-            }
-        }
-        
-        //Write
-        decoder.flush();
+        C::decode(*m_env, in_bits, output);
     }
     
 protected:
