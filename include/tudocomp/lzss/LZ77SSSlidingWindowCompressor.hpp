@@ -63,8 +63,9 @@ protected:
         //factorize
         size_t fact_min = 3; //factor threshold
         
+        size_t pos = 0;
         bool eof = false;
-        while(!eof && ahead < buf.size()) {
+        while(ahead < buf.size()) {
             LZSSFactor f;
 
             //walk back buffer
@@ -87,7 +88,6 @@ protected:
             size_t advance;
 
             if(f.num > 0) {
-                DLOG(INFO) << "Factor: {" << f.pos << "," << f.src << "," << f.num << "}";
                 LZSSCompressor<C>::handle_fact(f);
                 advance = f.num;
             } else {
@@ -96,6 +96,7 @@ protected:
             }
 
             //advance buffer
+            pos += advance;
             while(advance--) {
                 if(ahead < m_window) {
                     //case 1: still reading the first w symbols from the stream
