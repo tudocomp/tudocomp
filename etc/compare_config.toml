@@ -79,7 +79,6 @@ inputs = [
     "$DATASETS/download/real/english.200MB",
 ]
 commands = [
-    ["tudocomp_driver -a lz78rule.bit",  "$IN -o $OUT", "lz78rule.bit.tdc"   ],
-    ["tudocomp_driver -a t_lz78_bit",    "$IN -o $OUT", "t_lz78_bit.tdc"     ],
-    ["tudocomp_driver -a t_lz78_cics_bit",    "$IN -o $OUT", "t_lz78_cics_bit.tdc"     ],
+    ["tudocomp_driver -a lz78.bit",   "$IN -o $OUT", "lz78.bit.tdc"   ],
+    ["tudocomp_driver -a lz78.debug", "$IN -o $OUT", "lz78_debug.tdc" ],
 ]
