@@ -58,7 +58,7 @@ Each test profile is defined as a TOML "table" of the following format:
         FILE, ...
     ]
     commands = [
-        COMMAND_AND_ARGS, HIDDEN_ARGS, FILE_ENDING
+        [COMMAND_AND_ARGS, HIDDEN_ARGS], ...
     ]
     compare_commands = BOOL
     with_mem = BOOL
@@ -76,8 +76,6 @@ Each test profile is defined as a TOML "table" of the following format:
   previous command that should not be shown.
   This is mainly used for unrelated "glue" arguments, like directing
   input/output files correctly, or enabling/disabling unrelated options.
-- `FILE_ENDING` defines what file ending to give to the output of this
-  command. Might be automatically choosen in the future.
 - `compare_commands` is a option that selects whether to
   compare commands or to compare input files.
   If it is set to `true`, the tool will iterate
