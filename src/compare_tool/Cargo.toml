@@ -6,3 +6,4 @@ authors = ["Marvin Löbel <loebel.marvin@gmail.com>"]
 [dependencies]
 time = "0.1"
 toml = "0.1"
+docopt = "0.6.78"

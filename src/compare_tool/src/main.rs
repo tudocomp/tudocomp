@@ -1,132 +1,44 @@
 extern crate time;
 extern crate toml;
+extern crate docopt;
 
 use std::process::*;
-use std::env;
 use std::fs;
 use std::path::Path;
 use std::io::{Read, Write};
 
+use docopt::Docopt;
+
 mod config;
 
-fn nice_size(size: u64) -> String {
-    if size >= 1024 * 1024 {
-        format!("{:6.2} MiB", (size as f64) / 1024.0 / 1024.0)
-    } else if size >= 1024 {
-        format!("{:6.2} KiB", (size as f64) / 1024.0)
-    } else {
-        format!("{:6.2} B  ", (size as f64))
-    }
-}
+const USAGE: &'static str = "
+Usage:
+    compare_tool [-m] <config_file> <profile>
+    compare_tool [--help]
+    compare_tool [--version]
 
-fn load_config(arg: &str) -> config::Config {
-    let mut toml = String::new();
-    fs::File::open(&arg)
-        .ok()
-        .expect("config file not found")
-        .read_to_string(&mut toml)
-        .unwrap();
-    let toml = toml::Parser::new(&toml)
-        .parse()
-        .expect("config file not in valid TOML format");
+Options:
+    -m, --with_mem    Also profile memory
+        --help        This screen
+        --version     Version of this tool
+";
 
-    config::parse_config(toml)
-        .ok()
-        .expect("Invalid config file")
-}
-
-// type, value, time, size, compsize, compratio
-type Line<'a> = (&'a str, &'a str, f64, &'a str, &'a str, f64, Option<&'a str>);
-type LinePad = (usize,);
-
-fn print_header(kind: &str, value: &str, padding: LinePad) {
-    println!("{:4} | {:7$} | {:^9} | {:^12} | {:^12} | {:^8} | {:^12}",
-        kind, value, "time", "size", "comp. size", "ratio", "mem", padding.0);
-}
-
-fn print_line(line: Line, padding: LinePad) {
-    let mem = line.6.unwrap_or("-");
-    println!("{:4} | {:7$} | {:7.3} s | {:>12} | {:>12} | {:6.2} % | {:^12}",
-        line.0, line.1, line.2, line.3, line.4, line.5, mem, padding.0);
-}
-
-fn print_sep(padding: LinePad) {
-    println!("{:-^4}---{:-^7$}---{:-^7}-----{:-^12}---{:-^12}---{:-^6}---{:-^12}--",
-        "", "", "", "", "", "", "", padding.0);
-}
-
-// let mem_cmd = r##"valgrind --tool=massif --pages-as-heap=yes --massif-out-file=${mofile} ${cmd}; grep mem_heap_B ${mofile} | sed -e 's/mem_heap_B=\(.*\)/\1/' | sort -g | tail -n 1"##;
-
-/// Run the argument as a bash script
-fn bash_run(command_line: &str) -> Output {
-    let mut cmd = Command::new("sh");
-    cmd.stdin(Stdio::piped());
-    cmd.stdout(Stdio::piped());
-    cmd.stderr(Stdio::piped());
-    let mut handles = cmd.spawn().unwrap();
-
-    let mut stdin = handles.stdin.take().unwrap();
-    stdin.write_all(command_line.as_bytes()).unwrap();
-    drop(stdin);
-
-    handles.wait_with_output().unwrap()
-}
-
-/// Expand the argument through bash, substituting environment variables.
-fn bash_expand(s: &str) -> String {
-    let out = bash_run(&format!("echo {}", s));
-    assert!(out.status.success());
-    String::from_utf8(out.stdout).unwrap().trim().to_owned()
-}
-
-fn _alphabet_size(file: &str) -> usize {
-    let mut bytes = [0u64; 256];
-    let file = fs::File::open(file).unwrap();
-    for b in file.bytes() {
-        bytes[b.unwrap() as usize] += 1;
-    }
-    let mut counter = 0;
-    for &count in &bytes[..] {
-        if count > 0 {
-            counter += 1;
-        }
-    }
-    counter
-}
-
-/// Data that describes a single input file
-struct InputData {
-    unexpanded: String,
-    expanded: String,
-    size: u64,
-}
-
-/// Data that describes a single command
-struct CommandData {
-    unexpanded_visible: String,
-    unexpanded_hidden: String,
-    output_extension: String,
-}
-
-fn bash_in_out_script(input: &str, output: &str, command: &str) -> String {
-    format!("IN={}
-             OUT={}
-             {}", input, output, command)
-}
-
-fn file_name(file: &str) -> &str {
-    Path::new(file).file_name().unwrap().to_str().unwrap()
-}
+const VERSION: &'static str = "v0.1";
 
 fn main() {
-    let arg = &env::args().nth(1).expect("need to be given a filename");
-    let args = &env::args().skip(2).collect::<Vec<String>>();
+    let arguments = Docopt::new(USAGE)
+        .and_then(|d| {
+            d.help(true)
+             .version(Some(VERSION.into()))
+             .parse()
+        })
+        .unwrap_or_else(|e| e.exit());
+
+    let arg = arguments.get_str("<config_file>");
+    let profile_name = arguments.get_str("<profile>");
 
     let mut config = load_config(&arg);
-
-    let profile_name = env::args().nth(2);
-    if profile_name.is_none()
-        || config.profiles.get(profile_name.as_ref().unwrap()).is_none()
+    if config.profiles.get(profile_name).is_none()
     {
         let ps = config.profiles
             .iter()
@@ -135,11 +47,10 @@ fn main() {
         let ps = ps.concat();
         panic!("need to be given one of the following profiles:\n{}", ps);
     };
-    let profile_name = &profile_name.unwrap();
 
     {
         let profile = config.profiles.get_mut(profile_name).unwrap();
-        if args.contains(&"--with_mem".into()) {
+        if arguments.get_bool("--with_mem") {
             profile.with_mem = true;
         }
     }
@@ -324,4 +235,113 @@ fn main() {
         }
     }
 
+}
+
+fn nice_size(size: u64) -> String {
+    if size >= 1024 * 1024 {
+        format!("{:6.2} MiB", (size as f64) / 1024.0 / 1024.0)
+    } else if size >= 1024 {
+        format!("{:6.2} KiB", (size as f64) / 1024.0)
+    } else {
+        format!("{:6.2} B  ", (size as f64))
+    }
+}
+
+fn load_config(arg: &str) -> config::Config {
+    let mut toml = String::new();
+    fs::File::open(&arg)
+        .ok()
+        .expect("config file not found")
+        .read_to_string(&mut toml)
+        .unwrap();
+    let toml = toml::Parser::new(&toml)
+        .parse()
+        .expect("config file not in valid TOML format");
+
+    config::parse_config(toml)
+        .ok()
+        .expect("Invalid config file")
+}
+
+// type, value, time, size, compsize, compratio
+type Line<'a> = (&'a str, &'a str, f64, &'a str, &'a str, f64, Option<&'a str>);
+type LinePad = (usize,);
+
+fn print_header(kind: &str, value: &str, padding: LinePad) {
+    println!("{:4} | {:7$} | {:^9} | {:^12} | {:^12} | {:^8} | {:^12}",
+        kind, value, "time", "size", "comp. size", "ratio", "mem", padding.0);
+}
+
+fn print_line(line: Line, padding: LinePad) {
+    let mem = line.6.unwrap_or("-");
+    println!("{:4} | {:7$} | {:7.3} s | {:>12} | {:>12} | {:6.2} % | {:^12}",
+        line.0, line.1, line.2, line.3, line.4, line.5, mem, padding.0);
+}
+
+fn print_sep(padding: LinePad) {
+    println!("{:-^4}---{:-^7$}---{:-^7}-----{:-^12}---{:-^12}---{:-^6}---{:-^12}--",
+        "", "", "", "", "", "", "", padding.0);
+}
+
+// let mem_cmd = r##"valgrind --tool=massif --pages-as-heap=yes --massif-out-file=${mofile} ${cmd}; grep mem_heap_B ${mofile} | sed -e 's/mem_heap_B=\(.*\)/\1/' | sort -g | tail -n 1"##;
+
+/// Run the argument as a bash script
+fn bash_run(command_line: &str) -> Output {
+    let mut cmd = Command::new("sh");
+    cmd.stdin(Stdio::piped());
+    cmd.stdout(Stdio::piped());
+    cmd.stderr(Stdio::piped());
+    let mut handles = cmd.spawn().unwrap();
+
+    let mut stdin = handles.stdin.take().unwrap();
+    stdin.write_all(command_line.as_bytes()).unwrap();
+    drop(stdin);
+
+    handles.wait_with_output().unwrap()
+}
+
+/// Expand the argument through bash, substituting environment variables.
+fn bash_expand(s: &str) -> String {
+    let out = bash_run(&format!("echo {}", s));
+    assert!(out.status.success());
+    String::from_utf8(out.stdout).unwrap().trim().to_owned()
+}
+
+fn _alphabet_size(file: &str) -> usize {
+    let mut bytes = [0u64; 256];
+    let file = fs::File::open(file).unwrap();
+    for b in file.bytes() {
+        bytes[b.unwrap() as usize] += 1;
+    }
+    let mut counter = 0;
+    for &count in &bytes[..] {
+        if count > 0 {
+            counter += 1;
+        }
+    }
+    counter
+}
+
+/// Data that describes a single input file
+struct InputData {
+    unexpanded: String,
+    expanded: String,
+    size: u64,
+}
+
+/// Data that describes a single command
+struct CommandData {
+    unexpanded_visible: String,
+    unexpanded_hidden: String,
+    output_extension: String,
+}
+
+fn bash_in_out_script(input: &str, output: &str, command: &str) -> String {
+    format!("IN={}
+             OUT={}
+             {}", input, output, command)
+}
+
+fn file_name(file: &str) -> &str {
+    Path::new(file).file_name().unwrap().to_str().unwrap()
 }
