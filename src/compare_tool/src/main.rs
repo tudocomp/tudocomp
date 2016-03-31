@@ -54,7 +54,14 @@ fn main() {
         if arguments.get_bool("--with_mem") {
             profile.with_mem = true;
         }
+        if let Some(s) = arguments.find("--iterations") {
+            profile.runtime_iterations
+                = Some(s.as_str()
+                        .parse()
+                        .expect("iterations needs to be an integer"));
+        }
     }
+
     let profile = &config.profiles[profile_name];
 
     let inputs = profile.inputs.iter().map(|input| {
@@ -94,8 +101,6 @@ fn main() {
             + &command.output_extension
         );
 
-        bash_run(&format!("rm {}", output));
-
         fn build_cmd(valgrind: bool, output: &str, command: &CommandData) -> String {
             let measure_pages = false;
             let max_detail = true;
@@ -128,87 +133,126 @@ fn main() {
                     command.unexpanded_hidden)
         }
 
-        let output_massif = &(output.to_string() + ".massif");
+        let mut iter_count = profile.runtime_iterations.unwrap_or(1);
+        let do_mem = profile.with_mem;
+        if do_mem {
+            iter_count += 1;
+        }
+        let mut with_mem = false;
 
-        let script = &bash_in_out_script(&input.expanded,
-                                         output,
-                                         &build_cmd(profile.with_mem,
-                                                    output_massif,
-                                                    command));
+        let mut runtimes = vec![];
+        for iter_i in 0..iter_count {
+            let is_last_iter = iter_i == iter_count - 1;
 
-        let time_start = time::precise_time_ns();
-        let out = bash_run(script);
+            if do_mem && is_last_iter {
+                with_mem = true;
+            }
 
-        let cmd_out: &str = &String::from_utf8_lossy(&out.stdout);
-        let cmd_err: &str = &String::from_utf8_lossy(&out.stderr);
+            bash_run(&format!("rm {}", output));
 
-        let time_end = time::precise_time_ns();
+            let output_massif = &(output.to_string() + ".massif");
 
-        let time_span = ((time_end - time_start) as f64)
-            / 1000.0
-            / 1000.0
-            / 1000.0;
-        let inp_size = &nice_size(input.size);
+            let script = &bash_in_out_script(&input.expanded,
+                                            output,
+                                            &build_cmd(with_mem,
+                                                        output_massif,
+                                                        command));
 
-        if out.status.success() {
-            let out_size = fs::metadata(output).unwrap().len();
-            let comp_size = &nice_size(out_size);
-            let ratio = (out_size as f64) / (input.size as f64) * 100.0;
+            let time_start = time::precise_time_ns();
+            let out = bash_run(script);
 
-            let mem_peak = if profile.with_mem {
-                use std::fs::File;
-                use std::io::BufReader;
-                use std::io::BufRead;
+            let cmd_out: &str = &String::from_utf8_lossy(&out.stdout);
+            let cmd_err: &str = &String::from_utf8_lossy(&out.stderr);
 
-                let report_file = File::open(output_massif).unwrap();
-                let report_file = BufReader::new(report_file);
+            let time_end = time::precise_time_ns();
 
-                let peak = report_file.lines().filter_map(|line| {
-                    let line = line.unwrap();
-                    let p = "mem_heap_B=";
-                    if line.starts_with(p) {
-                        Some(line[p.len()..].to_owned())
-                    } else {
-                        None
-                    }
-                })
-                .map(|size| size.parse::<u64>().unwrap())
-                .max().unwrap();
+            let mut time_span = ((time_end - time_start) as f64)
+                / 1000.0
+                / 1000.0
+                / 1000.0;
+            runtimes.push(time_span);
 
-                let peak = nice_size(peak);
-                Some(peak)
+            if is_last_iter {
+                if do_mem {
+                    runtimes.pop();
+                    time_span = -runtimes.iter().fold(0.0, |a, &b| a + b)
+                        / (iter_count - 1) as f64;
+                } else {
+                    time_span = -runtimes.iter().fold(0.0, |a, &b| a + b)
+                        / iter_count as f64;
+                }
+            }
+
+            let inp_size = &nice_size(input.size);
+
+            if out.status.success() {
+                let out_size = fs::metadata(output).unwrap().len();
+                let comp_size = &nice_size(out_size);
+                let ratio = (out_size as f64) / (input.size as f64) * 100.0;
+
+                let mem_peak = if with_mem {
+                    use std::fs::File;
+                    use std::io::BufReader;
+                    use std::io::BufRead;
+
+                    let report_file = File::open(output_massif).unwrap();
+                    let report_file = BufReader::new(report_file);
+
+                    let peak = report_file.lines().filter_map(|line| {
+                        let line = line.unwrap();
+                        let p = "mem_heap_B=";
+                        if line.starts_with(p) {
+                            Some(line[p.len()..].to_owned())
+                        } else {
+                            None
+                        }
+                    })
+                    .map(|size| size.parse::<u64>().unwrap())
+                    .max().unwrap();
+
+                    let peak = nice_size(peak);
+                    Some(peak)
+                } else {
+                    None
+                };
+                let mem_peak = mem_peak.as_ref().map(|s| &**s);
+
+                let label = &if iter_i == iter_count - 1 {
+                    format!("{}", label)
+                } else {
+                    format!("  {} {}", iter_i, label)
+                };
+
+                print_line(
+                    (kind, label, time_span, inp_size, comp_size, ratio, mem_peak),
+                    padding
+                );
+                if !cmd_out.is_empty() {
+                    print_sep(padding);
+                    print!("{}", cmd_out);
+                    print_sep(padding);
+                }
             } else {
-                None
-            };
-            let mem_peak = mem_peak.as_ref().map(|s| &**s);
+                print_line(
+                    ("ERR", label, time_span, inp_size, "", 0.0/0.0, None),
+                    padding
+                );
+                let a = !cmd_out.is_empty();
+                let b = !cmd_err.is_empty();
+                if a {
+                    print_sep(padding);
+                    print!("{}", cmd_out);
+                }
+                if a || b {
+                    print_sep(padding);
+                }
+                if b {
+                    print!("{}", cmd_err);
+                    print_sep(padding);
+                }
+            }
 
-            print_line(
-                (kind, label, time_span, inp_size, comp_size, ratio, mem_peak),
-                padding
-            );
-            if !cmd_out.is_empty() {
-                print_sep(padding);
-                print!("{}", cmd_out);
-                print_sep(padding);
-            }
-        } else {
-            print_line(
-                ("ERR", label, time_span, inp_size, "", 0.0/0.0, None),
-                padding
-            );
-            let a = !cmd_out.is_empty();
-            let b = !cmd_err.is_empty();
-            if a {
-                print_sep(padding);
-                print!("{}", cmd_out);
-            }
-            if a || b {
-                print_sep(padding);
-            }
-            if b {
-                print!("{}", cmd_err);
-                print_sep(padding);
-            }
+            with_mem = false;
         }
     };
 
@@ -275,8 +319,13 @@ fn print_header(kind: &str, value: &str, padding: LinePad) {
 
 fn print_line(line: Line, padding: LinePad) {
     let mem = line.6.unwrap_or("-");
-    println!("{:4} | {:7$} | {:7.3} s | {:>12} | {:>12} | {:6.2} % | {:^12}",
-        line.0, line.1, line.2, line.3, line.4, line.5, mem, padding.0);
+    if line.2 >= 0.0 {
+        println!("{:4} | {:7$} | {:7.3} s | {:>12} | {:>12} | {:6.2} % | {:^12}",
+            line.0, line.1, line.2, line.3, line.4, line.5, mem, padding.0);
+    } else {
+        println!("{:4} | {:7$} |~{:7.3} s | {:>12} | {:>12} | {:6.2} % | {:^12}",
+            line.0, line.1, -line.2, line.3, line.4, line.5, mem, padding.0);
+    }
 }
 
 fn print_sep(padding: LinePad) {
