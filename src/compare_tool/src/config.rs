@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 #[derive(Debug)]
 pub struct Profile {
     pub inputs: Vec<String>,
-    pub commands: Vec<(String, String, String)>,
+    pub commands: Vec<(String, String)>,
     pub compare_commands: bool,
     pub with_mem: bool,
     pub runtime_iterations: Option<i64>,
@@ -43,9 +43,8 @@ fn parse_profile(name: &str, toml: &toml::Table) -> Result<Profile, TomlErr> {
             let command = try!(command.as_slice().ok_or(TomlErr));
             let cmd0 = try!(command.get(0).and_then(|s| s.as_str()).ok_or(TomlErr)).to_owned();
             let cmd1 = try!(command.get(1).and_then(|s| s.as_str()).ok_or(TomlErr)).to_owned();
-            let cmd2 = try!(command.get(2).and_then(|s| s.as_str()).ok_or(TomlErr)).to_owned();
 
-            profile.commands.push((cmd0, cmd1, cmd2));
+            profile.commands.push((cmd0, cmd1));
         }
     }
 

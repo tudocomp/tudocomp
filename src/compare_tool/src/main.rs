@@ -79,11 +79,10 @@ fn main() {
 
 
     let commands: Vec<_> = profile.commands.iter().map(
-        |&(ref cmd, ref cargs, ref ending)|{
+        |&(ref cmd, ref cargs)|{
             CommandData {
                 unexpanded_visible: cmd.clone(),
                 unexpanded_hidden: cargs.clone(),
-                output_extension: ending.clone(),
             }
         }
     ).collect();
@@ -95,11 +94,17 @@ fn main() {
     let padding = (padding,);
 
     let run_row = |kind: &str, label: &str, command: &CommandData, input: &InputData| {
-        let output = &(
-            file_name(&input.expanded).to_owned()
-            + "."
-            + &command.output_extension
-        );
+        let auto_file_name = {
+            profile_name.to_string()
+            + "__"
+            + file_name(&input.expanded)
+            + "__"
+            + label
+            + "__.compressed"
+        };
+        let auto_file_name = auto_file_name.replace(" ", "_");
+        //println!("Auto file: {}", auto_file_name);
+        let output = &auto_file_name;
 
         fn build_cmd(valgrind: bool, output: &str, command: &CommandData) -> String {
             let measure_pages = false;
@@ -383,7 +388,6 @@ struct InputData {
 struct CommandData {
     unexpanded_visible: String,
     unexpanded_hidden: String,
-    output_extension: String,
 }
 
 fn bash_in_out_script(input: &str, output: &str, command: &str) -> String {

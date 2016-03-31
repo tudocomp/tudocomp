@@ -7,26 +7,26 @@ inputs = [
     "$DATASETS/../src/tudocomp_driver/tudocomp_driver.cpp",
 ]
 commands = [
-#      <shown command and args>                     <hidden args>    <out file ending>
-    ["tudocomp_driver -a lzwrule.debug",       "$IN -o $OUT",   "lzwrule.debug.tdc"       ],
-    ["tudocomp_driver -a lzwrule.bit",         "$IN -o $OUT",   "lzwrule.bit.tdc"         ],
-    ["tudocomp_driver -a lz78rule.debug",      "$IN -o $OUT",   "lz78rule.debug.tdc"      ],
-    ["tudocomp_driver -a lz78rule.bit",        "$IN -o $OUT",   "lz78rule.bit.tdc"        ],
-    ["tudocomp_driver -a esacomp.dummy.dummy", "$IN -o $OUT",   "esacomp.dummy.dummy.tdc" ],
-    ["tudocomp_driver -a esacomp.dummy.debug", "$IN -o $OUT",   "esacomp.dummy.debug.tdc" ],
-    ["tudocomp_driver -a esacomp.dummy.code1", "$IN -o $OUT",   "esacomp.dummy.code1.tdc" ],
-    ["tudocomp_driver -a esacomp.dummy.code2", "$IN -o $OUT",   "esacomp.dummy.code2.tdc" ],
-    ["tudocomp_driver -a esacomp.lz.code2",    "$IN -o $OUT",   "esacomp.lz.code2.tdc"    ],
-    ["tudocomp_driver -a esacomp.esa.code2",   "$IN -o $OUT",   "esacomp.esa.code2.tdc"   ],
+#      <shown command and args>                 <hidden args>
+    ["tudocomp_driver -a lzwrule.debug",       "$IN -o $OUT"],
+    ["tudocomp_driver -a lzwrule.bit",         "$IN -o $OUT"],
+    ["tudocomp_driver -a lz78rule.debug",      "$IN -o $OUT"],
+    ["tudocomp_driver -a lz78rule.bit",        "$IN -o $OUT"],
+    ["tudocomp_driver -a esacomp.dummy.dummy", "$IN -o $OUT"],
+    ["tudocomp_driver -a esacomp.dummy.debug", "$IN -o $OUT"],
+    ["tudocomp_driver -a esacomp.dummy.code1", "$IN -o $OUT"],
+    ["tudocomp_driver -a esacomp.dummy.code2", "$IN -o $OUT"],
+    ["tudocomp_driver -a esacomp.lz.code2",    "$IN -o $OUT"],
+    ["tudocomp_driver -a esacomp.esa.code2",   "$IN -o $OUT"],
 
-    ["gzip -9",                                     "-c $IN > $OUT", "gz"                 ],
-    ["bzip2 -9",                                    "-c $IN > $OUT", "bz2"                ],
+    ["gzip -9",                              "-c $IN > $OUT"],
+    ["bzip2 -9",                             "-c $IN > $OUT"],
     # 7z prints to stdout per default
-    ["7z",                                          "a $OUT $IN > /dev/null", "7z"        ],
+    ["7z",                          "a $OUT $IN > /dev/null"],
 
-    ["tudocomp_driver -a esacomp.lz.code1",    "$IN -o $OUT",   "esacomp.lz.code1.tdc"    ],
-    ["tudocomp_driver -a esacomp.esa.code1",   "$IN -o $OUT",   "esacomp.esa.code1.tdc"   ],
-    ["tudocomp_driver -a esacomp.lz.dummy",        "$IN -o $OUT",   "esacomp.lz.dummy.tdc"],
+    ["tudocomp_driver -a esacomp.lz.code1",    "$IN -o $OUT"],
+    ["tudocomp_driver -a esacomp.esa.code1",   "$IN -o $OUT"],
+    ["tudocomp_driver -a esacomp.lz.dummy",    "$IN -o $OUT"],
 ]
 
 # Compare a number of different text files with the same algorithms
@@ -40,36 +40,12 @@ inputs = [
     "$DATASETS/download/real/dna.50MB",
 ]
 commands = [
-    ["tudocomp_driver -a lzwrule.bit",        "$IN -o $OUT",   "lz78rule.bit.tdc"      ],
-    ["tudocomp_driver -a lz78rule.bit",       "$IN -o $OUT",   "lz78rule.bit.tdc"      ],
-    ["tudocomp_driver -a esacomp.esa.code2",  "$IN -o $OUT",   "esacomp.esa.code2.tdc" ],
-    ["gzip -9",                               "-c $IN > $OUT", "gz"                    ],
-    ["bzip2 -9",                              "-c $IN > $OUT", "bz2"                   ],
-    ["7z",                                    "a $OUT $IN",    "7z"                    ],
-]
-
-# Comparision between buffering and template-based lz78 and lzw impls
-[lz_compare]
-inputs = [
-    "$DATASETS/../src/tudocomp_driver/tudocomp_driver.cpp",
-    "$DATASETS/download/real/english.50MB",
-]
-commands = [
-    ["tudocomp_driver -a t_lzw_jp",  "$IN -o $OUT", "t_lzw_jp.bit.tdc"   ],
-    ["tudocomp_driver -a t_lzw_bit",     "$IN -o $OUT", "t_lzw_bit.tdc"      ],
-    ["tudocomp_driver -a lzwrule.bit",   "$IN -o $OUT", "lzwrule.bit.tdc"    ],
-    ["tudocomp_driver -a lz78rule.bit",  "$IN -o $OUT", "lz78rule.bit.tdc"   ],
-    ["tudocomp_driver -a t_lz78_bit",    "$IN -o $OUT", "t_lz78_bit.tdc"     ],
-    ["tudocomp_driver -a lz78rule.debug","$IN -o $OUT", "lz78rule.debug.tdc" ],
-    ["tudocomp_driver -a t_lz78_debug",  "$IN -o $OUT", "t_lz78_debug.tdc"   ],
-    ["tudocomp_driver -a lzwrule.debug", "$IN -o $OUT", "lzwrule.debug.tdc"  ],
-    ["tudocomp_driver -a t_lzw_debug",   "$IN -o $OUT", "t_lzw_debug.tdc"    ],
-]
-
-[lz_compare_large]
-inherit_from = "lz_compare"
-inputs = [
-    "$DATASETS/download/real/english.200MB",
+    ["tudocomp_driver -a lzwrule.bit",        "$IN -o $OUT"],
+    ["tudocomp_driver -a lz78rule.bit",       "$IN -o $OUT"],
+    ["tudocomp_driver -a esacomp.esa.code2",  "$IN -o $OUT"],
+    ["gzip -9",                               "-c $IN > $OUT"],
+    ["bzip2 -9",                              "-c $IN > $OUT"],
+    ["7z",                                    "a $OUT $IN"],
 ]
 
 [lz78]
@@ -79,6 +55,6 @@ inputs = [
     "$DATASETS/download/real/english.200MB",
 ]
 commands = [
-    ["tudocomp_driver -a lz78.bit",   "$IN -o $OUT", "lz78.bit.tdc"   ],
-    ["tudocomp_driver -a lz78.debug", "$IN -o $OUT", "lz78_debug.tdc" ],
+    ["tudocomp_driver -a lz78.bit",   "$IN -o $OUT"],
+    ["tudocomp_driver -a lz78.debug", "$IN -o $OUT"],
 ]
