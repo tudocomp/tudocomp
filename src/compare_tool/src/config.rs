@@ -7,6 +7,7 @@ pub struct Profile {
     pub commands: Vec<(String, String, String)>,
     pub compare_commands: bool,
     pub with_mem: bool,
+    pub runtime_iterations: Option<i64>,
 }
 
 #[derive(Debug)]
@@ -23,6 +24,7 @@ fn parse_profile(name: &str, toml: &toml::Table) -> Result<Profile, TomlErr> {
         inputs: vec![],
         compare_commands: true,
         with_mem: false,
+        runtime_iterations: None,
     };
 
     let toml_entry = try! {
@@ -67,6 +69,12 @@ fn parse_profile(name: &str, toml: &toml::Table) -> Result<Profile, TomlErr> {
         profile.with_mem = try! {
             with_mem.as_bool().ok_or(TomlErr)
         };
+    }
+
+    if let Some(runtime_iterations) = toml_entry.get("iterations") {
+        profile.runtime_iterations = Some(try! {
+            runtime_iterations.as_integer().ok_or(TomlErr)
+        });
     }
 
     Ok(profile)

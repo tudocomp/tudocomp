@@ -13,14 +13,15 @@ mod config;
 
 const USAGE: &'static str = "
 Usage:
-    compare_tool [-m] <config_file> <profile>
+    compare_tool [options] <config_file> <profile>
     compare_tool [--help]
     compare_tool [--version]
 
 Options:
-    -m, --with_mem    Also profile memory
-        --help        This screen
-        --version     Version of this tool
+    -m, --with_mem        Also profile memory
+    -i, --iterations=<n>  Number of iterations for measuring runtime.
+        --help            This screen
+        --version         Version of this tool
 ";
 
 const VERSION: &'static str = "v0.1";

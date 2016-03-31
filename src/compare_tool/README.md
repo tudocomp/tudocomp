@@ -63,6 +63,7 @@ Each test profile is defined as a TOML "table" of the following format:
     compare_commands = BOOL
     with_mem = BOOL
     inherits_from = PROFILE_NAME
+    iterations = NUMBER
 
 - `NAME` defines the name of the profile
 - `FILE, ...` define the input text files to compare.
@@ -89,6 +90,10 @@ Each test profile is defined as a TOML "table" of the following format:
   a detailed heap profile in massifs format. This file
   can be viewed with an external tool like `massif-visualizer`.
   Defaults to false.
+- `iterations`, if set to an integer, measures the runtime for a given
+  command-file combination more than once and averages the results.
+  If used in combination with `with_mem`, memory will be measured only once
+  in an additional run.
 
 Example file:
 
