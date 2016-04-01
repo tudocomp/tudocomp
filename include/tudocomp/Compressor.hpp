@@ -3,6 +3,8 @@
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
+#include <functional>
+#include <memory>
 
 namespace tudocomp {
 
@@ -30,6 +32,9 @@ public:
     /// \param out The output stream.
     virtual void decompress(Input& input, Output& output) = 0;
 };
+
+using CompressorConstructor = std::function<std::unique_ptr<Compressor>(Env&)>;
+
 
 }
 

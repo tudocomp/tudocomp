@@ -21,6 +21,8 @@
 #include <tudocomp/alphabet/OnlineAlphabetCoder.hpp>
 #include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
 
+#include <tudocomp/ChainCompressor.hpp>
+
 namespace tudocomp_driver {
 
 using namespace tudocomp;
@@ -46,8 +48,8 @@ using lzss::OfflineLZSSCoder;
 
 /// A small helper function for directly constructing a Compressor class.
 template<class C>
-C make(Env& env) {
-    return C(env);
+std::unique_ptr<Compressor> make(Env& env) {
+    return std::make_unique<C>(env);
 }
 
 
@@ -122,6 +124,7 @@ void register_algos(Registry& r) {
                     r.algo("offline", "Offline alphabet coder", "optimized symbol encoding using alphabet statistics");
             });
         });
+    r.algo("chain_test", "", "");
 
     // Define which implementations to use for each combination:
 
@@ -129,7 +132,7 @@ void register_algos(Registry& r) {
     // Compressor with an Env& argument. You could use a lambda like this:
     //
     //     r.compressor("lzw.debug", [](Env& env) {
-    //         return LzwCompressor<LzwDebugCoder>(env);
+    //         return std::make_unique<LzwCompressor<LzwDebugCoder>>(env);
     //     });
     //
     // But since most of the algorithms take no additional constructor
@@ -157,6 +160,14 @@ void register_algos(Registry& r) {
     r.compressor("esacomp.offline.online",  make<LZSSESACompressor<OfflineLZSSCoder<OnlineAlphabetCoder>>>);
     r.compressor("esacomp.offline.offline", make<LZSSESACompressor<OfflineLZSSCoder<OfflineAlphabetCoder>>>);
 
+    r.compressor("chain_test", [](Env& env) {
+        std::vector<CompressorConstructor> algorithms {
+            make<LzwCompressor<LzwDebugCoder>>,
+            make<LzwCompressor<LzwDebugCoder>>,
+            make<LzwCompressor<LzwDebugCoder>>,
+        };
+        return std::make_unique<ChainCompressor>(env, std::move(algorithms));
+    });
 }
 
 }

@@ -340,6 +340,17 @@ TEST(TudocompDriver, roundtrip_matrix) {
             std::cout << comp_file << " -> ";
             std::cout.flush();
 
+            bool compressed_file_exists = test_file_exists(comp_file);
+
+            if (!compressed_file_exists) {
+                std::cout << "ERR\n";
+                std::cout << "---\n";
+                std::cout << comp_out;
+                std::cout << "---\n";
+                EXPECT_TRUE(compressed_file_exists);
+                return;
+            }
+
             // Decompress
             {
                 std::string in = test_file_path(comp_file);
@@ -354,7 +365,13 @@ TEST(TudocompDriver, roundtrip_matrix) {
             bool decompressed_file_exists = test_file_exists(decomp_file);
             if (!decompressed_file_exists) {
                 std::cout << "ERR\n";
+                std::cout << "---\n";
+                std::cout << comp_out;
+                std::cout << "---\n";
+                std::cout << decomp_out;
+                std::cout << "---\n";
                 EXPECT_TRUE(decompressed_file_exists);
+                return;
             } else {
                 std::string read_text = read_test_file(decomp_file);
                 if (read_text != text) {

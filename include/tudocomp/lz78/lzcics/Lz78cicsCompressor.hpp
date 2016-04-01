@@ -49,8 +49,8 @@ public:
             ref++;
 
             coder.encode_fact(Factor {
-                ref,
-                l78.cha[i],
+                uint32_t(ref),
+                uint8_t(l78.cha[i]),
             });
         }
     }

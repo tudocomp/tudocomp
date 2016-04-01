@@ -77,28 +77,6 @@ static bool check_for_file_already_exist(std::string& ofile,
     return true;
 }
 
-/*uint8_t count_alphabet_size(Input& input) {
-    uint64_t table[256] = {};
-
-    for (auto e : table) {
-        CHECK(e == 0);
-    }
-
-    uint8_t counter = 0;
-
-    for (uint8_t byte : input) {
-        table[byte]++;
-    }
-
-    for (uint64_t count : table) {
-        if (count > 0) {
-            counter++;
-        }
-    }
-
-    return counter;
-}*/
-
 } // namespace tudocomp_driver
 
 int main(int argc, const char** argv)

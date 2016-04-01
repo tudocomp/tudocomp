@@ -16,12 +16,14 @@
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
+#include <memory>
 
 #include <boost/utility/string_ref.hpp>
 #include <glog/logging.h>
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/util.h>
 
 namespace tudocomp_driver {
 
@@ -145,23 +147,12 @@ struct SubRegistry;
 struct Registry {
     AlgorithmDb* m_algorithms;
 
-    std::unordered_map<
-        std::string,
-        std::function<std::unique_ptr<Compressor>(Env&)>> m_compressors;
+    std::unordered_map<std::string, CompressorConstructor> m_compressors;
 
     // AlgorithmInfo
 
-    template<class F>
-    void compressor(std::string id, F f) {
-        auto g = [=](Env& env) {
-            using C = decltype(f(env));
-
-            return std::unique_ptr<Compressor> {
-                new C(f(env))
-            };
-        };
-
-        m_compressors[id] = g;
+    void compressor(std::string id, CompressorConstructor f) {
+        m_compressors[id] = f;
     }
 
     inline SubRegistry algo(std::string id, std::string title, std::string desc);
@@ -183,13 +174,13 @@ struct Registry {
 
 struct SubRegistry {
     std::vector<AlgorithmInfo>* m_vector;
-    int m_index;
+    size_t m_index;
 
     template<class G>
     inline void sub_algo(std::string name, G g) {
         auto& x = (*m_vector)[m_index].sub_algo_info;
         x.push_back({name});
-        Registry y { &x[x.size() - 1ul] };
+        Registry y { &x[x.size() - 1] };
         g(y);
     }
 
@@ -200,7 +191,7 @@ inline SubRegistry Registry::algo(std::string id, std::string title, std::string
 
     return SubRegistry {
         &m_algorithms->sub_algo_info,
-        m_algorithms->sub_algo_info.size() - 1ul
+        m_algorithms->sub_algo_info.size() - 1
     };
 }
 
