@@ -14,8 +14,8 @@ mod config;
 const USAGE: &'static str = "
 Usage:
     compare_tool [options] <config_file> <profile>
-    compare_tool [--help]
-    compare_tool [--version]
+    compare_tool --help
+    compare_tool --version
 
 Options:
     -m, --with_mem        Also profile memory
