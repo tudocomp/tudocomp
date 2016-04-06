@@ -58,6 +58,7 @@ TEST(TudocompDriver, help) {
 "                            by this tool.\n"
 "                            Algorithms may consist out of sub-algorithms,\n"
 "                            which will be displayed in a hierarchical fashion.\n"
+"    -r --raw                Do not emit an header when compressing.\n"
 "    -O --option <option>    An additional option of the form key=value.\n"
 "\n"
     );

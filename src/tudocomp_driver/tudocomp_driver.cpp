@@ -55,8 +55,8 @@ Options:
                             by this tool.
                             Algorithms may consist out of sub-algorithms,
                             which will be displayed in a hierarchical fashion.
+    -r --raw                Do not emit an header when compressing.
     -O --option <option>    An additional option of the form key=value.
-    -r --raw                Do not emit an header when compressing
 )";
 
 static void exit(std::string msg) {
