@@ -15,11 +15,11 @@ class OfflineAlphabetCoder {
 
 private:
     BitOStream* m_out;
-    io::InputSliceGuard m_in;
-    
+    io::InputView m_in;
+
     size_t m_sigma;
     size_t m_sigma_bits;
-    
+
     sdsl::int_vector<> m_comp2char;
     sdsl::int_vector<> m_char2comp;
 
@@ -30,15 +30,15 @@ public:
         for(uint8_t c : *m_in) {
             counter.increase(c);
         }
-        
+
         auto ordered = counter.getSorted();
-        
+
         m_sigma = ordered.size();
         m_sigma_bits = bitsFor(m_sigma - 1);
-        
+
         m_comp2char = sdsl::int_vector<>(m_sigma, 0, 8);
         m_char2comp = sdsl::int_vector<>(255, 0, m_sigma_bits);
-        
+
         for(size_t i = 0; i < m_sigma; i++) {
             uint8_t c = ordered[i].first;
             m_comp2char[i] = c;
@@ -48,7 +48,7 @@ public:
 
     inline ~OfflineAlphabetCoder() {
     }
-    
+
     inline void encode_init() {
         //Encode alphabet
         m_out->write_compressed_int(m_sigma);
@@ -56,38 +56,38 @@ public:
             m_out->write(c);
         }
     }
-    
+
     inline void encode_sym(uint8_t sym) {
         m_out->writeBit(0);
         m_out->write(uint8_t(m_char2comp[sym]), m_sigma_bits);
     }
-    
+
     inline void encode_sym_flush() {
     }
-    
+
     class Decoder {
     private:
         BitIStream* m_in;
         DecodeBuffer* m_buf;
-        
+
         size_t m_sigma_bits;
         sdsl::int_vector<> m_comp2char;
-        
+
     public:
         Decoder(Env& env, BitIStream& in, DecodeBuffer& buf) : m_in(&in), m_buf(&buf) {
-            
+
             size_t sigma = in.read_compressed_int();
-            
+
             m_sigma_bits = bitsFor(sigma - 1);
             m_comp2char = sdsl::int_vector<>(sigma, 0, 8);
-            
+
             //Decode alphabet
             for(size_t i = 0; i < sigma; i++) {
                 uint8_t c = in.readBits<uint8_t>();
                 m_comp2char[i] = c;
             }
         }
-        
+
         size_t decode_sym() {
             uint8_t sym = m_comp2char[m_in->readBits<uint8_t>(m_sigma_bits)];
             m_buf->decode(sym);

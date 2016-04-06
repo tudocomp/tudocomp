@@ -37,13 +37,13 @@ public:
     inline LZ77SSSlidingWindowCompressor(Env& env) : LZSSCompressor<C>(env) {
         m_window = env.option_as<size_t>(WINDOW_OPTION, 16);
     }
-    
+
 protected:
     /// \copydoc
     inline virtual bool pre_factorize(Input& input) override {
         return false;
     }
-    
+
     /// \copydoc
     inline virtual LZSSCoderOpts coder_opts(Input& input) override {
         return LZSSCoderOpts(true, bitsFor(m_window));
@@ -55,7 +55,7 @@ protected:
         std::istream& ins = *in_guard;
 
         boost::circular_buffer<uint8_t> buf(2 * m_window);
-        
+
         size_t ahead = 0; //marks the index in the buffer at which the back buffer ends and the ahead buffer begins
         char c;
 
@@ -67,7 +67,7 @@ protected:
 
         //factorize
         size_t fact_min = 3; //factor threshold
-        
+
         size_t pos = 0;
         bool eof = false;
         while(ahead < buf.size()) {

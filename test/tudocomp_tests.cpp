@@ -108,9 +108,9 @@ TEST(Util, pack_integers) {
 
 TEST(Input, vector) {
     std::vector<uint8_t> v { 97, 98, 99 };
-    Input inp = Input::from_memory(v);
 
     {
+        Input inp = Input::from_memory(v);
         auto guard = inp.as_view();
         auto ref = *guard;
 
@@ -118,6 +118,7 @@ TEST(Input, vector) {
     }
 
     {
+        Input inp = Input::from_memory(v);
         auto guard = inp.as_stream();
         auto& stream = *guard;
 
@@ -131,9 +132,9 @@ TEST(Input, vector) {
 
 TEST(Input, string_ref) {
     boost::string_ref v { "abc" };
-    Input inp = Input::from_memory(v);
 
     {
+        Input inp = Input::from_memory(v);
         auto guard = inp.as_view();
         auto ref = *guard;
 
@@ -141,6 +142,7 @@ TEST(Input, string_ref) {
     }
 
     {
+        Input inp = Input::from_memory(v);
         auto guard = inp.as_stream();
         auto& stream = *guard;
 
@@ -158,9 +160,9 @@ std::string fn(std::string suffix) {
 
 TEST(Input, file) {
     write_test_file(fn("short.txt"), "abc");
-    Input inp = Input::from_path(test_file_path(fn("short.txt")));
 
     {
+        Input inp = Input::from_path(test_file_path(fn("short.txt")));
         auto guard = inp.as_view();
         auto ref = *guard;
 
@@ -168,6 +170,7 @@ TEST(Input, file) {
     }
 
     {
+        Input inp = Input::from_path(test_file_path(fn("short.txt")));
         auto guard = inp.as_stream();
         auto& stream = *guard;
 
@@ -258,7 +261,7 @@ TEST(Output, stream) {
 TEST(IO, bits) {
     std::stringstream ss_out;
     BitOStream out(ss_out);
-    
+
     out.writeBit(0);                   //0
     out.writeBit(1);                   //1
     out.write(-1, 2);                  //11
@@ -266,25 +269,25 @@ TEST(IO, bits) {
     out.write_compressed_int(0x27, 3); //1 111 0 100
     out.write_compressed_int(0x33);    //0 0110011
     //output should contain 0111 0110 1111 0100 0011 0011 = 76 F4 33
-    
+
     std::string result = ss_out.str();
     ASSERT_EQ(result.length(), 3U); //24 bits = 3 bytes
-    
+
     bool done; //???
-    
+
     //basic input test
     {
         std::stringstream ss_in(result);
         BitIStream in(ss_in, done);
-        
+
         ASSERT_EQ(in.readBits<uint32_t>(24), 0x76F433U);
     }
-    
+
     //advanced input test
     {
         std::stringstream ss_in(result);
         BitIStream in(ss_in, done);
-        
+
         ASSERT_EQ(in.readBit(), 0);
         ASSERT_EQ(in.readBit(), 1);
         ASSERT_EQ(in.readBits<size_t>(2), 3U);
@@ -295,7 +298,7 @@ TEST(IO, bits) {
 }
 
 TEST(DecodeBuffer, cbstrategy_none) {
-    
+
 
     DecodeBuffer buffer(12, DCBStrategyNone());
     buffer.decode('b');
@@ -303,42 +306,42 @@ TEST(DecodeBuffer, cbstrategy_none) {
     buffer.decode('n');
     buffer.defact(1, 3);
     buffer.defact(0, 6);
-    
+
     std::stringstream ss;
     buffer.write_to(ss);
-    
+
     ASSERT_EQ("bananabanana", ss.str());
-    
+
 }
 
 TEST(DecodeBuffer, cbstrategy_map) {
-    
+
     DecodeBuffer buffer(12, DCBStrategyMap());
     buffer.decode('b');
     buffer.defact(3, 3);
     buffer.decode('n');
     buffer.decode('a');
     buffer.defact(0, 6);
-    
+
     std::stringstream ss;
     buffer.write_to(ss);
-    
+
     ASSERT_EQ("bananabanana", ss.str());
-    
+
 }
 
 TEST(DecodeBuffer, cbstrategy_array) {
-    
+
     DecodeBuffer buffer(12, DCBStrategyRetargetArray(12));
     buffer.decode('b');
     buffer.defact(3, 3);
     buffer.decode('n');
     buffer.decode('a');
     buffer.defact(0, 6);
-    
+
     std::stringstream ss;
     buffer.write_to(ss);
-    
+
     ASSERT_EQ("bananabanana", ss.str());
-    
+
 }

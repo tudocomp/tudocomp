@@ -21,7 +21,7 @@ class Env {
     std::map<std::string, const std::string> options;
     std::map<std::string, const std::string> stats;
     mutable std::set<std::string> known_options;
-    
+
 public:
     inline Env() {}
     inline Env(std::map<std::string, const std::string> options_,

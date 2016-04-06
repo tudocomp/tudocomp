@@ -38,18 +38,30 @@ void read_bytes_to_vec(std::istream& inp, T& vec, size_t bytes) {
     }
 }
 
-/// Read contents of a file to a T.
+/// Read contents of a file to a T starting at a offset.
 /// T needs to behave like a vector of bytes,
 /// eg it should be either std::string, std::vector<char>
 /// or std::vector<uint8_t>
 template<class T>
-T read_file_to_stl_byte_container(std::string& filename) {
+T read_file_to_stl_byte_container(std::string& filename, size_t offset = 0) {
     std::ifstream in(filename, std::ios::in | std::ios::binary);
     if (in) {
         T contents;
+
+        // first, determine length from offset to end of file
+        in.seekg(offset, std::ios::beg);
+        auto start = in.tellg();
         in.seekg(0, std::ios::end);
-        contents.resize(in.tellg());
-        in.seekg(0, std::ios::beg);
+        auto end = in.tellg();
+        auto len = end - start;
+
+        // use length to allocate a single buffer for the file
+        contents.resize(len);
+
+        // set position back to the start position at offset
+        in.seekg(offset, std::ios::beg);
+
+        // read file into contents without reallocating
         in.read((char*)&contents[0], contents.size());
         in.close();
         return(contents);

@@ -48,6 +48,8 @@ public:
     ViewStream(ViewStream&& other) {
         mb = std::move(other.mb);
         m_stream = std::move(other.m_stream);
+        m_size = other.m_size;
+        m_begin = other.m_begin;
     }
 
     std::istream& stream() {

@@ -23,7 +23,7 @@ class LZSSCompressor : public Compressor {
 
 protected:
     std::vector<LZSSFactor> m_factors;
-    
+
 private:
     C* m_coder;
 
@@ -36,69 +36,69 @@ public:
     /// \param env The environment.
     inline LZSSCompressor(Env& env) : Compressor(env) {
     }
-    
+
     /// \copydoc
-    virtual void compress(Input& input, Output& output) override final {        
+    virtual void compress(Input& input, Output& output) override final {
         //init factorization (possibly factorize offline to buffer)
         bool factorized = pre_factorize(input);
-        
+
         //instantiate coder
         auto out_guard = output.as_stream();
         m_coder = new C(*m_env, input, out_guard, coder_opts(input));
-        
+
         //pass factor buffer (empty or filled)
         m_coder->set_buffer(m_factors);
-        
+
         if(!factorized && !m_coder->uses_buffer()) {
             //init (online)
             m_coder->encode_init();
         }
-        
+
         //factorize
         if(!factorized) {
             factorize(input);
             handle_eof();
         }
-        
+
         //encode
         if(factorized || m_coder->uses_buffer()) {
-            
+
             size_t len = input.size();
-            
+
             auto in_guard = input.as_stream();
             std::istream& in_stream = *in_guard;
-            
+
             //init (offline)
             m_coder->encode_init();
-            
+
             //factors must be sorted by insert position!
             char c;
             size_t p = 0;
-            
+
             for(auto f : m_factors) {
                 while(p < f.pos) {
                     in_stream.get(c);
                     m_coder->encode_sym(uint8_t(c));
                     ++p;
                 }
-                
+
                 m_coder->encode_sym_flush();
                 m_coder->encode_fact(f);
-                
+
                 size_t skip = f.num;
                 while(skip--) in_stream.get(c);
                 p += f.num;
             }
-            
+
             while(p < len) {
                 in_stream.get(c);
                 m_coder->encode_sym(uint8_t(c));
                 ++p;
             }
-            
+
             m_coder->encode_sym_flush();
         }
-        
+
         //clean up
         delete m_coder;
         m_coder = nullptr;
@@ -108,7 +108,7 @@ public:
     virtual void decompress(Input& input, Output& output) override {
         C::decode(*m_env, input, output);
     }
-    
+
 protected:
     /// Handles a freshly generated factor during factorization.
     ///
@@ -122,7 +122,7 @@ protected:
             m_coder->encode_fact(f);
         }
     }
-    
+
     /// Handles a raw symbol during factorization.
     ///
     /// In case the coder opts to buffer factors instead of encoding directly,
@@ -132,7 +132,7 @@ protected:
             m_coder->encode_sym(sym);
         }
     }
-    
+
 private:
     void handle_eof() {
         if(!m_coder->uses_buffer()) {
@@ -146,10 +146,10 @@ protected:
     /// \return true if factorization has already been completed. The factors
     ///         are expected to be located in the buffer and sorted (!).
     virtual bool pre_factorize(Input& input) = 0;
-    
+
     /// Determines the options passed to the encoder.
     virtual LZSSCoderOpts coder_opts(Input& input) = 0;
-    
+
     /// Factorizes the input and uses the handlers (handle_fact and handle_sym)
     /// to pass them to the encoder.
     virtual void factorize(Input& input) = 0;
