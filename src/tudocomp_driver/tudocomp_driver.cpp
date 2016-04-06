@@ -56,6 +56,7 @@ Options:
                             Algorithms may consist out of sub-algorithms,
                             which will be displayed in a hierarchical fashion.
     -O --option <option>    An additional option of the form key=value.
+    -r --raw                Do not emit an header when compressing
 )";
 
 static void exit(std::string msg) {
@@ -96,6 +97,7 @@ int main(int argc, const char** argv)
         ("stats,s", "")
         ("force,f", "")
         ("list,l", "")
+        ("raw,r", "")
         ("option,O", po::value<std::vector<std::string>>(), "")
         ("input", po::value<std::string>(), "")
     ;
@@ -197,10 +199,16 @@ int main(int argc, const char** argv)
         /////////////////////////////////////////////////////////////////////////
         // Select algorithm
 
-        std::string algorithm_id = string_arg("--algorithm");
-        std::unique_ptr<Compressor> algo = select_algo_or_exit(registry,
-                                                               algorithm_env,
-                                                               algorithm_id);
+        bool do_raw = arg_exists("--raw");
+        do_raw = true;
+
+        std::string algorithm_id;
+        std::unique_ptr<Compressor> algo;
+
+        if (do_raw || do_compress) {
+            algorithm_id = string_arg("--algorithm");
+            algo = select_algo_or_exit(registry, algorithm_env, algorithm_id);
+        }
 
         /////////////////////////////////////////////////////////////////////////
         // Select where the input comes from
@@ -279,15 +287,46 @@ int main(int argc, const char** argv)
                     alphabet_size = 0; // count_alphabet_size(inp_vec);
                 }
 
+                if (!do_raw) {
+                    CHECK(algorithm_id.find('%') == std::string::npos);
+
+                    auto o_stream = out.as_stream();
+                    (*o_stream) << algorithm_id << '%';
+                }
+
                 setup_time = clk::now();
 
                 algo->compress(inp, out);
 
                 comp_time = clk::now();
             } else {
+                if (!do_raw) {
+                    auto i_stream = inp.as_stream();
+                    std::string algorithm_header;
+
+                    char c;
+                    size_t sanity_size_check = 0;
+                    bool err = false;
+                    while ((*i_stream).get(c)) {
+                        if (sanity_size_check > 1023) {
+                            err = true;
+                            break;
+                        } else if (c == '%') {
+                            break;
+                        } else {
+                            algorithm_header.push_back(c);
+                        }
+                        sanity_size_check++;
+                    }
+                    if (err) {
+                        exit("Input did not have an algorithm header!");
+                    }
+                    algorithm_id = std::move(algorithm_header);
+                    algo = select_algo_or_exit(registry, algorithm_env, algorithm_id);
+                }
+
                 setup_time = clk::now();
 
-                // TODO: Optionally read encoding from file or header
                 algo->decompress(inp, out);
 
                 comp_time = clk::now();
