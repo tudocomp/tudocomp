@@ -1,3 +1,9 @@
+/*
+    This is a sample implementation for an online coder. In the future, this
+    will be replaced by a reference implementation of the original LZSS
+    algorithm.
+*/
+
 #ifndef _INCLUDED_LZ77SS_SLIDING_WINDOW_COMPRESSOR_HPP
 #define _INCLUDED_LZ77SS_SLIDING_WINDOW_COMPRESSOR_HPP
 
@@ -19,7 +25,6 @@ const std::string WINDOW_OPTION = "lzss.window";
 /// over it in which redundant phrases will be looked for.
 template<typename C>
 class LZ77SSSlidingWindowCompressor : public LZSSCompressor<C> {
-    //TODO: this should implement the original LZSS algorithm
 
 private:
     size_t m_window;
