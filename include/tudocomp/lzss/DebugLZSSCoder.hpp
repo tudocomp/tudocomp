@@ -16,8 +16,8 @@ class DebugLZSSCoder {
 
 private:
     size_t m_len;
-    io::OutputStreamGuard* m_out;
-    
+    io::OutputStream* m_out;
+
 public:
     /// Constructor.
     ///
@@ -25,22 +25,22 @@ public:
     /// \param in The input text.
     /// \param out The (bitwise) output stream.
     /// \param opts Coder options determined by the compressor.
-    inline DebugLZSSCoder(Env& env, Input& in, io::OutputStreamGuard& out, LZSSCoderOpts opts)
+    inline DebugLZSSCoder(Env& env, Input& in, io::OutputStream& out, LZSSCoderOpts opts)
         : m_out(&out) {
 
         m_len = in.size();
     }
-    
+
     /// Destructor
     ~DebugLZSSCoder() {
     }
-    
+
     /// Initializes the encoding by writing information to the output that
     /// will be needed for decoding.
     inline void encode_init() {
         **m_out << m_len << ':';
     }
-    
+
     /// Encodes a LZSS factor to the output.
     inline void encode_fact(const LZSSFactor& f) {
         **m_out << "{" << f.src << "," << f.num << "}";
@@ -51,27 +51,27 @@ public:
         if(sym == '{' || sym == '\\') {
             **m_out << '\\'; //escape
         }
-        
+
         **m_out << sym;
     }
-    
+
     /// Notifies the alphabet encoder that the current batch of raw symbols
     /// is finished.
-    /// 
+    ///
     /// This information can be used to encode reoccuring short phrases such
     /// as digrams.
     inline void encode_sym_flush() {
     }
-    
+
     /// Tells whether or not this coder buffers the incoming factors before
     /// encoding.
-    /// 
+    ///
     /// The compressor uses this information to schedule another pass for
     /// the actual encoding.
     inline bool uses_buffer() {
         return false;
     }
-    
+
     /// Sets the factor buffer, which may or may not already contain the
     /// factors coming from the compressor.
     ///
@@ -80,21 +80,21 @@ public:
     template<typename T>
     inline void set_buffer(T& buffer) {
     }
-    
+
     /// Buffers the given factor and allows the encoder to analyze it.
     inline void buffer_fact(const LZSSFactor& f) {
     }
-    
+
     static void decode(Env&, Input&, Output&);
 };
 
 inline void DebugLZSSCoder::decode(Env& env, Input& input, Output& out) {
-    
+
     auto in_guard = input.as_stream();
     std::istream& in = *in_guard;
 
     char c;
-    
+
     //Decode length
     size_t len;
     {
@@ -103,16 +103,16 @@ inline void DebugLZSSCoder::decode(Env& env, Input& input, Output& out) {
         while(in.get(c) && c != ':') {
             len_str << c;
         }
-        
+
         len_str >> len;
     }
-    
+
     DecodeBuffer buffer(len, DCBStrategyRetargetArray(len));
-    
+
     //Decode text
     size_t pos = 0;
     bool escape = false;
-    
+
     while(in.get(c) && pos < len) {
         if(c == '\\' && !escape) {
             escape = true;
@@ -121,19 +121,19 @@ inline void DebugLZSSCoder::decode(Env& env, Input& input, Output& out) {
                 size_t src, num;
                 {
                     std::stringstream src_str, num_str;
-                    
+
                     while(in.get(c) && c != ',') {
                         src_str << c;
                     }
-                    
+
                     while(in.get(c) && c != '}') {
                         num_str << c;
                     }
-                    
+
                     src_str >> src;
                     num_str >> num;
                 }
-                
+
                 buffer.defact(src, num);
                 pos += num;
             } else {
@@ -143,7 +143,7 @@ inline void DebugLZSSCoder::decode(Env& env, Input& input, Output& out) {
             escape = false;
         }
     }
-    
+
     //Write
     auto out_guard = out.as_stream();
     buffer.write_to(*out_guard);

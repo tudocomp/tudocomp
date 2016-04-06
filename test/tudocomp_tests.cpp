@@ -198,7 +198,7 @@ TEST(Output, memory) {
 }
 
 TEST(Output, file) {
-    Output out = Output::from_path(test_file_path(fn("short_out.txt")));
+    Output out = Output::from_path(test_file_path(fn("short_out.txt")), true);
 
     {
         auto guard = out.as_stream();

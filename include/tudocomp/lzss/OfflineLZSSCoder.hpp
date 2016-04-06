@@ -51,7 +51,7 @@ public:
     /// \param in The input text.
     /// \param out The (bitwise) output stream.
     /// \param opts Coder options determined by the compressor.
-    inline OfflineLZSSCoder(Env& env, Input& in, io::OutputStreamGuard& out, LZSSCoderOpts opts)
+    inline OfflineLZSSCoder(Env& env, Input& in, io::OutputStream& out, LZSSCoderOpts opts)
             : m_in_size(in.size()), m_src_use_delta(opts.use_src_delta) {
 
         m_out = std::shared_ptr<BitOStream>(new BitOStream(*out));

@@ -334,7 +334,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
             {
                 std::string in = test_file_path(in_file);
                 std::string out = test_file_path(comp_file);
-                std::string cmd = "-k -a " + algo + " -o " + out + " " + in;
+                std::string cmd = "-r -k -a " + algo + " -o " + out + " " + in;
                 comp_out = driver(cmd);
             }
 
@@ -356,7 +356,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
             {
                 std::string in = test_file_path(comp_file);
                 std::string out = test_file_path(decomp_file);
-                std::string cmd = "-d -a " + algo + " -o " + out + " " + in;
+                std::string cmd = "-r -d -a " + algo + " -o " + out + " " + in;
                 decomp_out = driver(cmd);
             }
 

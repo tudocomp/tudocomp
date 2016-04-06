@@ -22,7 +22,7 @@ class LzwDebugCoder {
 private:
     // TODO: Change encode_* methods to not take Output& since that inital setup
     // rather, have a single init location
-    tudocomp::io::OutputStreamGuard m_out;
+    tudocomp::io::OutputStream m_out;
 
 public:
     inline LzwDebugCoder(Env& env, Output& out)

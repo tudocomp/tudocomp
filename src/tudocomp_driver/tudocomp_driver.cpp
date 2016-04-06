@@ -200,7 +200,6 @@ int main(int argc, const char** argv)
         // Select algorithm
 
         bool do_raw = arg_exists("--raw");
-        do_raw = true;
 
         std::string algorithm_id;
         std::unique_ptr<Compressor> algo;
@@ -275,7 +274,7 @@ int main(int argc, const char** argv)
                 if (!check_for_file_already_exist(ofile, force)) {
                     return 1;
                 } else {
-                    out = Output::from_path(ofile);
+                    out = Output::from_path(ofile, true);
                 }
             }
 
@@ -308,6 +307,7 @@ int main(int argc, const char** argv)
                     size_t sanity_size_check = 0;
                     bool err = false;
                     while ((*i_stream).get(c)) {
+                        err = false;
                         if (sanity_size_check > 1023) {
                             err = true;
                             break;
@@ -317,6 +317,7 @@ int main(int argc, const char** argv)
                             algorithm_header.push_back(c);
                         }
                         sanity_size_check++;
+                        err = true;
                     }
                     if (err) {
                         exit("Input did not have an algorithm header!");

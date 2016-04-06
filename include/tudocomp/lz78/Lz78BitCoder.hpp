@@ -15,7 +15,7 @@ class Lz78BitCoder {
 private:
     // TODO: Change encode_* methods to not take Output& since that inital setup
     // rather, have a single init location
-    tudocomp::io::OutputStreamGuard m_out_guard;
+    tudocomp::io::OutputStream m_out_guard;
     tudocomp::BitOStream m_out;
     uint64_t m_factor_counter = 0;
 

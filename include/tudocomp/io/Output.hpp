@@ -16,7 +16,7 @@
 namespace tudocomp {
 namespace io {
 
-    class OutputStreamGuard;
+    class OutputStream;
 
     class Output {
         struct Memory {
@@ -24,6 +24,7 @@ namespace io {
         };
         struct File {
             std::string path;
+            bool m_overwrite;
         };
         struct Stream {
             std::ostream* stream;
@@ -32,8 +33,8 @@ namespace io {
     public:
         boost::variant<Memory, Stream, File> data;
 
-        static Output from_path(std::string path) {
-            return Output { File { std::move(path) } };
+        static Output from_path(std::string path, bool overwrite=false) {
+            return Output { File { std::move(path), overwrite } };
         }
 
         static Output from_memory(std::vector<uint8_t>& buf) {
@@ -44,10 +45,10 @@ namespace io {
             return Output { Stream { &stream } };
         }
 
-        inline OutputStreamGuard as_stream();
+        inline OutputStream as_stream();
     };
 
-    struct OutputStreamGuard {
+    struct OutputStream {
         struct Memory {
             BackInsertStream stream;
         };
@@ -61,11 +62,15 @@ namespace io {
             File(const File& other): File(std::string(other.m_path)) {
             }
 
-            File(std::string&& path) {
+            File(std::string&& path, bool overwrite = false) {
                 m_path = path;
-                stream = std::unique_ptr<std::ofstream> {
-                    new std::ofstream(m_path, std::ios::out | std::ios::binary)
-                };
+                if (overwrite) {
+                    stream = std::make_unique<std::ofstream>(m_path,
+                        std::ios::out | std::ios::binary);
+                } else {
+                    stream = std::make_unique<std::ofstream>(m_path,
+                        std::ios::out | std::ios::binary | std::ios::app);
+                }
             }
 
             File(std::unique_ptr<std::ofstream>&& s) {
@@ -81,13 +86,13 @@ namespace io {
 
         std::ostream& operator* () {
             struct visitor: public boost::static_visitor<std::ostream&> {
-                std::ostream& operator()(OutputStreamGuard::Memory& m) const {
+                std::ostream& operator()(OutputStream::Memory& m) const {
                     return m.stream.stream();
                 }
-                std::ostream& operator()(OutputStreamGuard::Stream& m) const {
+                std::ostream& operator()(OutputStream::Stream& m) const {
                     return *m.stream;
                 }
-                std::ostream& operator()(OutputStreamGuard::File& m) const {
+                std::ostream& operator()(OutputStream::File& m) const {
                     return *m.stream;
                 }
             };
@@ -95,25 +100,28 @@ namespace io {
         }
     };
 
-    inline OutputStreamGuard Output::as_stream() {
-        struct visitor: public boost::static_visitor<OutputStreamGuard> {
-            OutputStreamGuard operator()(Output::Memory& mem) const {
-                return OutputStreamGuard {
-                    OutputStreamGuard::Memory {
+    inline OutputStream Output::as_stream() {
+        struct visitor: public boost::static_visitor<OutputStream> {
+            OutputStream operator()(Output::Memory& mem) const {
+                return OutputStream {
+                    OutputStream::Memory {
                         BackInsertStream { *mem.buffer }
                     }
                 };
             }
-            OutputStreamGuard operator()(Output::File& f) const {
-                return OutputStreamGuard {
-                    OutputStreamGuard::File {
-                        std::string(f.path)
+            OutputStream operator()(Output::File& f) const {
+                auto overwrite = f.m_overwrite;
+                f.m_overwrite = false;
+                return OutputStream {
+                    OutputStream::File {
+                        std::string(f.path),
+                        overwrite,
                     }
                 };
             }
-            OutputStreamGuard operator()(Output::Stream& strm) const {
-                return OutputStreamGuard {
-                    OutputStreamGuard::Stream {
+            OutputStream operator()(Output::Stream& strm) const {
+                return OutputStream {
+                    OutputStream::Stream {
                         strm.stream
                     }
                 };
