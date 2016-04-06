@@ -302,7 +302,7 @@ namespace io {
                 return mem.size;
             }
             size_t operator()(Input::File& f) const {
-                return read_file_size(f.path);
+                return read_file_size(f.path) - f.offset;
             }
         };
         return boost::apply_visitor(visitor(), *m_data);

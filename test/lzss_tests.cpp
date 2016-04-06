@@ -1,7 +1,7 @@
 /*
     These tests are merely to support development and
     should not be seen as actual tests.
-    
+
     However, they should likely be transformed into actual
     tests at some point. See this as a staging area
     for new features.
@@ -39,42 +39,42 @@ std::string hex_bytes_str(const std::string& str) {
 template<typename C>
 void performTest() {
     DLOG(INFO) << "Input: " << input_str;
-    
+
     Env env;
-    
+
     //compress
     std::string comp_result;
     {
         Input input = Input::from_memory(input_str);
-        
+
         std::stringstream stm;
         Output output = Output::from_stream(stm);
-        
+
         C compressor(env);
         compressor.compress(input, output);
-        
+
         comp_result = stm.str();
     }
-    
+
     char c = comp_result[0];
     DLOG(INFO) << "Compression result: " << ((c >= '0' && c <= '9') ? comp_result : hex_bytes_str(comp_result));
-    
+
     //decompress
     std::string decomp_result;
     {
         Input input = Input::from_memory(comp_result);
-        
+
         std::stringstream stm;
         Output output = Output::from_stream(stm);
-        
+
         C compressor(env);
         compressor.decompress(input, output);
-        
+
         decomp_result = stm.str();
     }
-    
+
     DLOG(INFO) << "Decompression result: " << decomp_result;
-    
+
     ASSERT_EQ(input_str, decomp_result);
 }
 

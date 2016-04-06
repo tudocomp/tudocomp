@@ -182,40 +182,6 @@ TEST(Input, file) {
     }
 }
 
-TEST(Input, stream_view) {
-    ViewStream stream { (char*) "abc", 3 };
-
-    Input inp = Input::from_stream(stream.stream());
-
-    {
-        auto guard = inp.as_stream();
-        auto& stream = *guard;
-
-        std::string s;
-
-        stream >> s;
-
-        ASSERT_EQ(s, "abc");
-    }
-}
-
-TEST(Input, stream_stream) {
-    ViewStream stream { (char*) "abc", 3 };
-
-    Input inp = Input::from_stream(stream.stream());
-
-    {
-        auto guard = inp.as_stream();
-        auto& stream = *guard;
-
-        std::string s;
-
-        stream >> s;
-
-        ASSERT_EQ(s, "abc");
-    }
-}
-
 TEST(Output, memory) {
     std::vector<uint8_t> vec;
 

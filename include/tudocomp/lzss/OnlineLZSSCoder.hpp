@@ -27,13 +27,13 @@ class OnlineLZSSCoder {
 private:
     std::shared_ptr<BitOStream> m_out;
     std::shared_ptr<A> m_alphabet_coder;
-    
+
     size_t m_len;
-    
+
     bool m_src_use_delta;
     size_t m_src_bits;
     size_t m_num_bits;
-    
+
 public:
     /// Constructor.
     ///
@@ -42,22 +42,21 @@ public:
     /// \param out The (bitwise) output stream.
     /// \param opts Coder options determined by the compressor.
     inline OnlineLZSSCoder(Env& env, Input& in, io::OutputStreamGuard& out, LZSSCoderOpts opts)  {
-        
+
         m_out = std::shared_ptr<BitOStream>(new BitOStream(*out));
-        
+        m_len = in.size();
         m_alphabet_coder = std::shared_ptr<A>(new A(env, in, *m_out));
 
-        m_len = in.size();
         m_src_bits = std::min(bitsFor(m_len), opts.src_bits);
         m_num_bits = bitsFor(m_len);
         m_src_use_delta = opts.use_src_delta;
     }
-    
+
     /// Destructor
     ~OnlineLZSSCoder() {
         m_out->flush();
     }
-    
+
     /// Initializes the encoding by writing information to the output that
     /// will be needed for decoding.
     inline void encode_init() {
@@ -65,14 +64,14 @@ public:
         m_out->write_compressed_int(m_len);
         m_out->write_compressed_int(m_src_bits);
         m_out->writeBit(m_src_use_delta);
-        
+
         m_alphabet_coder->encode_init();
     }
-    
+
     /// Encodes a LZSS factor to the output.
     inline void encode_fact(const LZSSFactor& f) {
         m_alphabet_coder->encode_sym_flush();
-        
+
         m_out->writeBit(1);
         m_out->write(m_src_use_delta ? (f.pos - f.src) : f.src, m_src_bits);
         m_out->write(f.num, m_num_bits);
@@ -82,25 +81,25 @@ public:
     inline void encode_sym(uint8_t sym) {
         m_alphabet_coder->encode_sym(sym);
     }
-    
+
     /// Notifies the alphabet encoder that the current batch of raw symbols
     /// is finished.
-    /// 
+    ///
     /// This information can be used to encode reoccuring short phrases such
     /// as digrams.
     inline void encode_sym_flush() {
         m_alphabet_coder->encode_sym_flush();
     }
-    
+
     /// Tells whether or not this coder buffers the incoming factors before
     /// encoding.
-    /// 
+    ///
     /// The compressor uses this information to schedule another pass for
     /// the actual encoding.
     inline bool uses_buffer() {
         return false;
     }
-    
+
     /// Sets the factor buffer, which may or may not already contain the
     /// factors coming from the compressor.
     ///
@@ -109,21 +108,21 @@ public:
     template<typename T>
     inline void set_buffer(T& buffer) {
     }
-    
+
     /// Buffers the given factor and allows the encoder to analyze it.
     inline void buffer_fact(const LZSSFactor& f) {
     }
-    
+
     static void decode(Env&, Input&, Output&);
 };
 
 template<typename A>
 inline void OnlineLZSSCoder<A>::decode(Env& env, Input& input, Output& out) {
-    
+
     bool done; //GRRR
     auto in_guard = input.as_stream();
     BitIStream in(*in_guard, done);
-    
+
     //Init
     size_t len = in.read_compressed_int();
     size_t num_bits = bitsFor(len);
@@ -136,11 +135,11 @@ inline void OnlineLZSSCoder<A>::decode(Env& env, Input& input, Output& out) {
     } else {
         strategy = DCBStrategyRetargetArray(len);
     }
-    
+
     DecodeBuffer buffer(len, strategy);
-    
+
     auto alphabet_decoder = typename A::Decoder(env, in, buffer);
-    
+
     //Decode
     size_t pos = 0;
     while(pos < len) {
@@ -156,7 +155,7 @@ inline void OnlineLZSSCoder<A>::decode(Env& env, Input& input, Output& out) {
             pos += alphabet_decoder.decode_sym();
         }
     }
-    
+
     //Write
     auto out_guard = out.as_stream();
     buffer.write_to(*out_guard);
