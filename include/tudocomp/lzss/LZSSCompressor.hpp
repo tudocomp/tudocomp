@@ -38,13 +38,17 @@ public:
     }
 
     /// \copydoc
-    virtual void compress(Input& input, Output& output) override final {
+    virtual void compress(Input& main_input, Output& output) override final {
+
         //init factorization (possibly factorize offline to buffer)
-        bool factorized = pre_factorize(input);
+        Input input_copy_1(main_input);
+        bool factorized = pre_factorize(input_copy_1);
 
         //instantiate coder
+        Input input_copy_2(main_input);
+        Input input_copy_3(main_input);
         auto out_guard = output.as_stream();
-        m_coder = new C(*m_env, input, out_guard, coder_opts(input));
+        m_coder = new C(*m_env, input_copy_2, out_guard, coder_opts(input_copy_3));
 
         //pass factor buffer (empty or filled)
         m_coder->set_buffer(m_factors);
@@ -56,16 +60,17 @@ public:
 
         //factorize
         if(!factorized) {
-            factorize(input);
+            Input input_copy_4(main_input);
+            factorize(input_copy_4);
             handle_eof();
         }
 
         //encode
         if(factorized || m_coder->uses_buffer()) {
 
-            size_t len = input.size();
+            size_t len = main_input.size();
 
-            auto in_guard = input.as_stream();
+            auto in_guard = main_input.as_stream();
             std::istream& in_stream = *in_guard;
 
             //init (offline)
