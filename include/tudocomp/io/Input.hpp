@@ -50,8 +50,10 @@ namespace io {
         inline Input():
             m_data(std::make_unique<Variant>(Memory { nullptr, 0 })) {}
 
-        /// Input can not be copied
-        inline Input(const Input& other) = delete;
+        /// Create an copy of the Input, with internal cursors
+        /// set to the current position
+        inline Input(const Input& other):
+            m_data(std::make_unique<Variant>(*other.m_data)) {}
 
         /// Move constructor
         inline Input(Input&& other):
