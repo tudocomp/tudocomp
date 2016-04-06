@@ -32,9 +32,6 @@ namespace io {
             const uint8_t* ptr;
             size_t size;
         };
-        struct Stream {
-            std::istream* stream;
-        };
         struct File {
             std::string path;
             size_t offset;
@@ -43,7 +40,7 @@ namespace io {
         friend class InputStream;
         friend class InputView;
 
-        using Variant = boost::variant<Memory, Stream, File>;
+        using Variant = boost::variant<Memory, File>;
         std::unique_ptr<Variant> m_data;
 
     public:
@@ -73,10 +70,6 @@ namespace io {
             m_data(std::make_unique<Variant>(
                     Memory { (const uint8_t*) &buf[0], buf.size() })) {}
 
-        /// An Input referring to an input stream
-        Input(std::istream& stream):
-            m_data(std::make_unique<Variant>(Stream { &stream })) {}
-
         Input& operator=(Input&& other) {
             m_data = std::move(other.m_data);
             return *this;
@@ -97,15 +90,9 @@ namespace io {
             return Input(buf);
         }
 
-        /// DEPRECATED
-        static Input from_stream(std::istream& stream) {
-            return Input(stream);
-        }
-
         inline InputView as_view();
         inline InputStream as_stream();
 
-        inline bool has_size();
         inline size_t size();
     };
 
@@ -114,12 +101,11 @@ namespace io {
             const uint8_t* ptr;
             const size_t size;
         };
-
-        struct Stream {
+        struct File {
             std::vector<uint8_t> buffer;
         };
 
-        boost::variant<Memory, Stream> data;
+        boost::variant<Memory, File> data;
 
         boost::string_ref operator* () {
             struct visitor: public boost::static_visitor<boost::string_ref> {
@@ -128,7 +114,7 @@ namespace io {
                         (char*) mem.ptr, mem.size
                     };
                 }
-                boost::string_ref operator()(InputView::Stream& mem) const {
+                boost::string_ref operator()(InputView::File& mem) const {
                     return boost::string_ref {
                         (char*) mem.buffer.data(), mem.buffer.size()
                     };
@@ -142,7 +128,7 @@ namespace io {
                 const uint8_t* operator()(InputView::Memory& mem) const {
                     return mem.ptr;
                 }
-                const uint8_t* operator()(InputView::Stream& mem) const {
+                const uint8_t* operator()(InputView::File& mem) const {
                     return mem.buffer.data();
                 }
             };
@@ -154,7 +140,7 @@ namespace io {
                 size_t operator()(InputView::Memory& mem) const {
                     return mem.size;
                 }
-                size_t operator()(InputView::Stream& mem) const {
+                size_t operator()(InputView::File& mem) const {
                     return mem.buffer.size();
                 }
             };
@@ -165,7 +151,7 @@ namespace io {
         InputView() = delete;
 
         InputView(InputView::Memory&& mem): data(std::move(mem)) {}
-        InputView(InputView::Stream&& s): data(std::move(s)) {}
+        InputView(InputView::File&& s): data(std::move(s)) {}
 
     };
 
@@ -191,16 +177,8 @@ namespace io {
                 mem.offset += buf.size();
 
                 return InputView {
-                    InputView::Stream {
+                    InputView::File {
                         std::move(buf)
-                    }
-                };
-            }
-            InputView operator()(Input::Stream& strm) const {
-                return InputView {
-                    InputView::Stream {
-                        read_stream_to_stl_byte_container<
-                            std::vector<uint8_t>>(*strm.stream)
                     }
                 };
             }
@@ -229,9 +207,6 @@ namespace io {
                 m_offset_back_ref->ptr += len;
                 m_offset_back_ref->size -= len;
             }
-        };
-        struct Stream {
-            std::istream* stream;
         };
         class File {
             std::string m_path;
@@ -272,15 +247,12 @@ namespace io {
             }
         };
 
-        boost::variant<Memory, Stream, File> data;
+        boost::variant<Memory, File> data;
 
         std::istream& operator* () {
             struct visitor: public boost::static_visitor<std::istream&> {
                 std::istream& operator()(InputStream::Memory& m) const {
                     return m.m_stream.stream();
-                }
-                std::istream& operator()(InputStream::Stream& m) const {
-                    return *m.stream;
                 }
                 std::istream& operator()(InputStream::File& m) const {
                     return *m.stream;
@@ -293,7 +265,6 @@ namespace io {
         InputStream() = delete;
 
         InputStream(InputStream::Memory&& mem): data(std::move(mem)) {}
-        InputStream(InputStream::Stream&& s): data(std::move(s)) {}
         InputStream(InputStream::File&& f): data(std::move(f)) {}
     };
 
@@ -319,28 +290,6 @@ namespace io {
                     }
                 };
             }
-            InputStream operator()(Input::Stream& strm) const {
-                return InputStream {
-                    InputStream::Stream {
-                        strm.stream
-                    }
-                };
-            }
-        };
-        return boost::apply_visitor(visitor(), *m_data);
-    };
-
-    inline bool Input::has_size() {
-        struct visitor: public boost::static_visitor<bool> {
-            bool operator()(Input::Memory& mem) const {
-                return true;
-            }
-            bool operator()(Input::File& f) const {
-                return true;
-            }
-            bool operator()(Input::Stream& strm) const {
-                return false;
-            }
         };
         return boost::apply_visitor(visitor(), *m_data);
     };
@@ -352,9 +301,6 @@ namespace io {
             }
             size_t operator()(Input::File& f) const {
                 return read_file_size(f.path);
-            }
-            size_t operator()(Input::Stream& strm) const {
-                return SIZE_MAX;
             }
         };
         return boost::apply_visitor(visitor(), *m_data);

@@ -17,6 +17,7 @@
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.h>
+#include <tudocomp/io/IOUtil.hpp>
 #include <tudocomp_driver/registry.h>
 
 namespace tudocomp_driver {
@@ -242,11 +243,15 @@ int main(int argc, const char** argv)
         clk::time_point end_time;
 
         {
+            std::vector<uint8_t> stream_buffer;
             Input inp;
 
             if (use_stdin) {
                 // Input from stdin
-                inp = Input::from_stream(std::cin);
+                stream_buffer = read_stream_to_stl_byte_container<
+                    std::vector<uint8_t>
+                >(std::cin);
+                inp = Input::from_memory(stream_buffer);
             } else {
                 // Input from specified file
                 inp = Input::from_path(file);
