@@ -32,24 +32,35 @@ add_subdirectory(test)
 # Huge optional corpus of text files for comparisons
 add_subdirectory(datasets)
 
-# add a target to generate documentation with Doxygen and Pandoc
-find_package(Doxygen)
+# docs-main target
 find_package(Pandoc)
-
-if(DOXYGEN_FOUND AND PANDOC_FOUND)
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
-add_custom_target(docs #ALL
+if(PANDOC_FOUND)
+add_custom_target(docs-main
 # convert markdown doc to pdf via latex
 ${PANDOC_BIN} -f markdown -t latex -o ${CMAKE_CURRENT_BINARY_DIR}/docs/Index.pdf ${CMAKE_CURRENT_SOURCE_DIR}/docs/Index.md
-# invoke doxygen
-COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+COMMENT "Generating main documentation" VERBATIM
+)
+endif(PANDOC_FOUND)
+
+# docs-doxygen target
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+add_custom_target(docs-doxygen
+#invoke doxygen
+${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 # make doxygen PDF
 COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen/latex && make
 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-COMMENT "Generating documentation" VERBATIM
+COMMENT "Generating doxygen documentation"
 )
-add_dependencies(docs sdsl_external)
+endif(DOXYGEN_FOUND)
+
+# docs target (invokes docs-main and docs-doxygen)
+if(DOXYGEN_FOUND AND PANDOC_FOUND)
+add_custom_target(docs DEPENDS docs-main docs-doxygen)
 endif(DOXYGEN_FOUND AND PANDOC_FOUND)
 
 include(compare_workspace)
