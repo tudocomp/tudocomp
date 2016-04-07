@@ -37,7 +37,7 @@ find_package(Pandoc)
 if(PANDOC_FOUND)
 add_custom_target(docs-main
 # convert markdown doc to pdf via latex
-${PANDOC_BIN} -f markdown -t latex -o ${CMAKE_CURRENT_BINARY_DIR}/docs/Index.pdf ${CMAKE_CURRENT_SOURCE_DIR}/docs/Index.md
+${PANDOC_BIN} -f markdown -t latex -o ${CMAKE_CURRENT_BINARY_DIR}/docs/Index.pdf --toc --number-sections --listings ${CMAKE_CURRENT_SOURCE_DIR}/docs/Index.md
 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 COMMENT "Generating main documentation" VERBATIM
 )

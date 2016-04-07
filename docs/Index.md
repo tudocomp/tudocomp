@@ -1,4 +1,8 @@
-This is the documentation for the **TU DO**rtmund **COMP**ression framework.
+% TuDoComp Documentation
+% Patrick Dinklage
+% 2016
+
+This is the documentation for the **T**echnical **U**niversity of DO**rtmund **COMP**ression Framework.
 
 *tudocomp* is a compression utility that implements a range of data compression
 and encoding algorithms. These can be mixed and parameterized with the
