@@ -40,9 +40,13 @@ if(DOXYGEN_FOUND AND PANDOC_FOUND)
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
 add_custom_target(docs #ALL
-${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+# convert markdown doc to pdf via latex
+${PANDOC_BIN} -f markdown -t latex -o ${CMAKE_CURRENT_BINARY_DIR}/docs/Index.pdf ${CMAKE_CURRENT_SOURCE_DIR}/docs/Index.md
+# invoke doxygen
+COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+# make doxygen PDF
+COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}/docs/doxygen/latex && make
 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-COMMAND ${PANDOC_BIN} -f markdown -t latex -o ${CMAKE_CURRENT_BINARY_DIR}/docs/Index.pdf ${CMAKE_CURRENT_SOURCE_DIR}/docs/Index.md
 COMMENT "Generating documentation" VERBATIM
 )
 add_dependencies(docs sdsl_external)
