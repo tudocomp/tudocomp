@@ -32,16 +32,20 @@ add_subdirectory(test)
 # Huge optional corpus of text files for comparisons
 add_subdirectory(datasets)
 
-# add a target to generate API documentation with Doxygen
+# add a target to generate documentation with Doxygen and Pandoc
 find_package(Doxygen)
-if(DOXYGEN_FOUND)
+find_package(Pandoc)
+
+if(DOXYGEN_FOUND AND PANDOC_FOUND)
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/docs)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
 add_custom_target(docs #ALL
 ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-COMMENT "Generating API documentation with Doxygen" VERBATIM
+COMMAND ${PANDOC_BIN} -f markdown -t latex -o ${CMAKE_CURRENT_BINARY_DIR}/docs/Index.pdf ${CMAKE_CURRENT_SOURCE_DIR}/docs/Index.md
+COMMENT "Generating documentation" VERBATIM
 )
 add_dependencies(docs sdsl_external)
-endif(DOXYGEN_FOUND)
+endif(DOXYGEN_FOUND AND PANDOC_FOUND)
 
 include(compare_workspace)
