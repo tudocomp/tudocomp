@@ -189,50 +189,28 @@ $for(header-includes)$
 $header-includes$
 $endfor$
 
-$if(title)$
-\title{$title$$if(thanks)$\thanks{$thanks$}$endif$}
-$endif$
-$if(subtitle)$
-\providecommand{\subtitle}[1]{}
-\subtitle{$subtitle$}
-$endif$
-$if(author)$
+\title{$title$}
 \author{$for(author)$$author$$sep$ \and $endfor$}
-$endif$
-$if(institute)$
-\institute{$for(institute)$$institute$$sep$ \and $endfor$}
-$endif$
 \date{$date$}
 
 \begin{document}
-$if(title)$
+
+\begin{titlepage}
 \maketitle
-$endif$
-$if(abstract)$
-\begin{abstract}
-$abstract$
-\end{abstract}
-$endif$
+\end{titlepage}
 
 $for(include-before)$
 $include-before$
-
 $endfor$
-$if(toc)$
-{
-$if(colorlinks)$
+
 \hypersetup{linkcolor=$if(toccolor)$$toccolor$$else$black$endif$}
-$endif$
-\setcounter{tocdepth}{$toc-depth$}
+
+\pagenumbering{roman}
 \tableofcontents
-}
-$endif$
-$if(lot)$
-\listoftables
-$endif$
-$if(lof)$
-\listoffigures
-$endif$
+\cleardoublepage
+
+\pagenumbering{arabic}
+
 $body$
 
 $if(natbib)$
