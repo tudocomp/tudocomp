@@ -2,7 +2,9 @@
 % Patrick Dinklage
 % 2016
 
-This is the documentation for the **T**echnical **U**niversity of DO**rtmund **COMP**ression Framework.
+# Abstract
+
+This is the documentation for the **T**echnical **U**niversity of **DO**rtmund **COMP**ression Framework.
 
 *tudocomp* is a compression utility that implements a range of data compression
 and encoding algorithms. These can be mixed and parameterized with the
@@ -12,11 +14,24 @@ following uses in mind:
 * Benchmarking and comparison of compression and encoding algorithms.
 * Easy integration of new algorithm implementations.
 
-# Structure
+# Project Structure
 
 In this chapter, we will have a look at the framework's base structure. The
 structure is meant to offer a solid and extensible base for new implementations
 to be integrated.
+
+## Library and driver
+
+The project is made of two major components: the compression *library*
+(*tudocomp*) and the framework utility, called the *driver*. The library
+contains the core interfaces and provides implementations of various
+compressors; the driver provides the interface for the user in the form of an
+executable.
+
+The driver uses a *registry* of compressors, which acts as the link between the
+driver and the library. The library is meant to be a fully functional component
+on its own, however, so that third party applications can make use of the
+provided compressors.
 
 ## Compressor Families
 
@@ -66,15 +81,95 @@ this should create as little performance overhead as possible.
 
 # Usage
 
-> TODO
+## Framework utility
 
-## Inventory
+>TODO
 
-The following algorithms, categorized by compressor family and task, are
-currently implemented in *tudocomp*:
+## Library
 
-> TODO: include from a generated file?
+The library is meant to make the compressor implementations accessible by third
+party applications.
+
+All code is written in C++11.
+
+### Inventory
+
+>TODO
+
+### License
+
+>TODO
+
+### Linking
+
+The library comes as a set of C++ headers with no linked binaries in any form.
+Alas, in order to use a specific compressor implementation, including the
+respective headers suffices.
+
+Note the external dependencies listed below.
+
+### Dependencies
+
+The library has the following external dependencies required for compilation:
+
+* [`Boost`](http://www.boost.org/) (`system`, `program_options` and `filesystem`; 1.55 or later).
+* [`sdsl-lite`](https://github.com/simongog/sdsl-lite) (2.03 or later).
+* [`glog`](https://github.com/google/glog) (0.34 or later).
 
 # Coding Guideline
 
-> TODO
+This chapter describes how the code is structured on a file level and what
+steps are necessary to extend the framework by additional compressor. It also
+presents some techniques and standards that have been picked for a
+performance-neutral modularization of compressors.
+
+For detailled information on types and functions, please refer to the
+[Doxygen documentation](about:blank).
+
+## The Compressor interface
+
+The [`Compressor`](about:blank) class is the foundation for the compression and
+decompression cycle of the framework. It acts as a purely virtual interface for
+actual compressors to inherit from.
+
+It defines the two central methods for the compression cycle: `compress` and
+`decompress`. These are responsible for transforming any input to an output
+so that the following (pseudocode) statement is true for any input:
+
+    decompress(compress(input)) == input
+
+In other words, the transformation must be losslessly reversible by the same
+compressor class.
+
+When compressing, the framework will ensure that additional information will be
+stored in the output so that at a later point, it can detect what compressor
+needs to be used to decompress it. This is not the compressor's responsibility.
+
+## The Registry
+
+The [Registry](about:blank) keeps information about available compressor
+implementations and thus builds the link between the library and the driver.
+
+Registered compressors will be made available to the user in the utility
+(including the listing in the help output). The registry is also used to
+identify what compressor to use to decompress an encoded input.
+
+## Input and Output
+
+The framework comes with its own abstract [Input](about:blank) and
+[Output](about:blank) layer, which hides the actual source or destination of
+the data (e.g. a file or a place in memory) away from the implementation.
+
+>TODO: some words on the paradigm
+
+# Credits
+
+*tudocomp* was created with the help of ...
+
+| Name | Roles |
+| ---- | ----- |
+| Dinklage, Patrick | core development, research, documentation |
+| Köppl, Dominik    | initiation and supervision, advice, research |
+| Löbel, Marvin     | core development |
+
+>TODO: literature references? or rather put these in the inventory?
