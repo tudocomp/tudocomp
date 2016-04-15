@@ -183,21 +183,34 @@ using namespace tudocomp;
             };
         }
 
+        inline Result<std::vector<AlgorithmArg>> parse_args() {
+            Parser& p = *this;
+
+            return p.parse_char('(').and_then<std::vector<AlgorithmArg>>([&](uint8_t chr) {
+                // Parse arguments here
+
+                std::vector<AlgorithmArg> args;
+
+                /*p.parse_ident().and_then<AlgorithmArg>([&](boost::string_ref arg_ident) {
+
+                }).or_else<AlgorithmArg>([&](Err err) {
+
+                });*/
+
+                return p.parse_char(')').and_then<std::vector<AlgorithmArg>>([&](uint8_t chr) {
+                    return p.ok(args);
+                });
+            });
+        }
+
         inline Result<AlgorithmSpec> parse() {
             Parser& p = *this;
 
             return p.parse_ident().and_then<AlgorithmSpec>([&](boost::string_ref ident) {
-                return p.parse_char('(').and_then<AlgorithmSpec>([&](uint8_t chr) {
-                    // Parse arguments here
-
-                    auto arg_ident = p.parse_ident();
-
-
-                    return p.parse_char(')').and_then<AlgorithmSpec>([&](uint8_t chr) {
-                        return p.ok(AlgorithmSpec {
-                            std::string(ident),
-                            std::vector<AlgorithmArg> {}
-                        });
+                return p.parse_args().and_then<AlgorithmSpec>([&](std::vector<AlgorithmArg> args) {
+                    return p.ok(AlgorithmSpec {
+                        std::string(ident),
+                        args
                     });
                 });
             }).end_parse();
