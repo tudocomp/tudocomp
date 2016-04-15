@@ -68,17 +68,33 @@ using namespace tudocomp;
         Result(Parser& parser, boost::variant<T, Err> data_):
             trail(&parser), data(data_) {}
 
-        template<class U>
-        using Fun = std::function<Result<U> (T)>;
+        template<class A, class R>
+        using Fun = std::function<Result<R> (A)>;
 
         template<class U>
-        inline Result<U> and_then(Fun<U> f);
+        inline Result<U> and_then(Fun<T, U> f);
 
-        inline Result<T> or_else(Fun<Err> f);
+        inline Result<T> or_else(Fun<Err, T> f);
 
         inline T unwrap();
 
         inline Result<T> end_parse();
+
+        inline bool is_ok() {
+            struct visitor: public boost::static_visitor<bool> {
+                bool operator()(T& ok) const {
+                    return true;
+                }
+                bool operator()(Err& err) const {
+                    return false;
+                }
+            };
+            return boost::apply_visitor(visitor(), data);
+        }
+
+        inline bool is_err() {
+            return !is_ok();
+        }
     };
 
     class Parser {
@@ -183,6 +199,42 @@ using namespace tudocomp;
             };
         }
 
+        inline Result<AlgorithmArg> parse_arg(boost::string_ref keyword = "") {
+            Parser& p = *this;
+
+            return p.parse_ident().and_then<AlgorithmArg>([&](boost::string_ref arg_ident) {
+                // "ident ..." case
+
+                if (keyword == "") {
+                    auto r = p.parse_char('=').and_then<AlgorithmArg>([&](uint8_t chr) {
+                        // "ident = ..." case
+                        return p.parse_arg(arg_ident);
+                    });
+
+                    if (r.is_ok()) {
+                        return r;
+                    }
+                }
+
+                return p.parse_args().and_then<AlgorithmArg>([&](std::vector<AlgorithmArg> args) {
+                    // "ident(...) ..." case
+                    return p.ok(AlgorithmArg {
+                        std::string(keyword),
+                        AlgorithmSpec {
+                            std::string(arg_ident),
+                            args
+                        }
+                    });
+                }).or_else([&](Err err) {
+                    // "ident ..." fallback case
+                    return p.ok<AlgorithmArg>(AlgorithmArg {
+                        std::string(keyword),
+                        std::string(arg_ident)
+                    });
+                });
+            });//.or_else<AlgorithmArg>([&](Err err) {});
+        }
+
         inline Result<std::vector<AlgorithmArg>> parse_args() {
             Parser& p = *this;
 
@@ -191,11 +243,7 @@ using namespace tudocomp;
 
                 std::vector<AlgorithmArg> args;
 
-                /*p.parse_ident().and_then<AlgorithmArg>([&](boost::string_ref arg_ident) {
-
-                }).or_else<AlgorithmArg>([&](Err err) {
-
-                });*/
+                p.parse_arg();
 
                 return p.parse_char(')').and_then<std::vector<AlgorithmArg>>([&](uint8_t chr) {
                     return p.ok(args);
@@ -246,13 +294,13 @@ using namespace tudocomp;
 
     template<class T>
     template<class U>
-    inline Result<U> Result<T>::and_then(Fun<U> f) {
+    inline Result<U> Result<T>::and_then(Fun<T, U> f) {
         struct visitor: public boost::static_visitor<Result<U>> {
             // insert constructor here
-            Fun<U> m_f;
+            Fun<T, U> m_f;
             Parser* m_trail;
 
-            visitor(Fun<U> f, Parser* trail): m_f(f), m_trail(trail) {
+            visitor(Fun<T, U> f, Parser* trail): m_f(f), m_trail(trail) {
             }
 
             Result<U> operator()(T& ok) const {
@@ -266,13 +314,13 @@ using namespace tudocomp;
     }
 
     template<class T>
-    inline Result<T> Result<T>::or_else(Fun<Err> f) {
+    inline Result<T> Result<T>::or_else(Fun<Err, T> f) {
         struct visitor: public boost::static_visitor<Result<T>> {
             // insert constructor here
-            Fun<Err> m_f;
+            Fun<Err, T> m_f;
             Parser* m_trail;
 
-            visitor(Fun<Err> f, Parser* trail): m_f(f), m_trail(trail) {
+            visitor(Fun<Err, T> f, Parser* trail): m_f(f), m_trail(trail) {
             }
 
             Result<T> operator()(T& ok) const {
