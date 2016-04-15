@@ -108,10 +108,22 @@ TEST(TudocompDriver, algorithm_header) {
 
 TEST(NewAlgorithmStringParser, smoketest) {
     using namespace tudocomp_driver;
-    Parser p { "foo(abc, def=ghi, ijk=lmn(o, p))" };
+    Parser p { "foo(abc, def=ghi, jkl=mno(p, q=1))" };
 
     auto x = p.parse().unwrap();
 
     ASSERT_EQ(x.name, "foo");
     ASSERT_EQ(x.args.size(), 3);
+    ASSERT_EQ(x.args[0].keyword, "");
+    ASSERT_EQ(x.args[0].get<std::string>(), "abc");
+    ASSERT_EQ(x.args[1].keyword, "def");
+    ASSERT_EQ(x.args[1].get<std::string>(), "ghi");
+    ASSERT_EQ(x.args[2].keyword, "jkl");
+    ASSERT_EQ(x.args[2].get<AlgorithmSpec>().name, "mno");
+    auto y = x.args[2].get<AlgorithmSpec>().args;
+    ASSERT_EQ(y.size(), 2);
+    ASSERT_EQ(y[0].keyword, "");
+    ASSERT_EQ(y[0].get<std::string>(), "p");
+    ASSERT_EQ(y[1].keyword, "q");
+    ASSERT_EQ(y[1].get<std::string>(), "1");
 }

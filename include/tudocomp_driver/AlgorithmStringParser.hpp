@@ -41,6 +41,11 @@ using namespace tudocomp;
     struct AlgorithmArg {
         std::string keyword;
         boost::variant<std::string, AlgorithmSpec> arg;
+
+        template<class T>
+        inline T get() {
+            return boost::get<T>(arg);
+        }
     };
 
     class Err {
@@ -152,8 +157,8 @@ using namespace tudocomp;
             if (i < s.cursor().size() && valid_first(s.cursor()[i])) {
                 for (i = 1; i < s.cursor().size() && valid_middle(s.cursor()[i]); i++) {
                 }
-                s.skip(i);
                 auto r = s.cursor().substr(0, i);
+                s.skip(i);
                 return ok<boost::string_ref>(r);
             } else {
                 return err<boost::string_ref>("Expected an identifier");
@@ -243,7 +248,17 @@ using namespace tudocomp;
 
                 std::vector<AlgorithmArg> args;
 
-                p.parse_arg();
+                while (true) {
+                    auto arg = p.parse_arg();
+                    if (arg.is_ok()) {
+                        args.push_back(arg.unwrap());
+                        if (p.parse_char(',').is_err()) {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
 
                 return p.parse_char(')').and_then<std::vector<AlgorithmArg>>([&](uint8_t chr) {
                     return p.ok(args);
