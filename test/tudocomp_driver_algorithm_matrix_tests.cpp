@@ -6,7 +6,6 @@
 
 #include "test_util.h"
 #include "tudocomp_driver/registry.h"
-#include "tudocomp_driver/AlgorithmStringParser.hpp"
 
 #include "tudocomp_driver_util.h"
 
