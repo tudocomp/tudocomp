@@ -108,8 +108,9 @@ TEST(TudocompDriver, algorithm_header) {
 
 TEST(NewAlgorithmStringParser, smoketest) {
     using namespace tudocomp_driver;
+    Parser p { "foo(abc, def=ghi, ijk=lmn(o, p))" };
 
-    auto x = parse("foo(abc, def=ghi, ijk=lmn(o, p))").unwrap();
+    auto x = p.parse().unwrap();
 
     ASSERT_EQ(x.name, "foo");
     ASSERT_EQ(x.args.size(), 3);
