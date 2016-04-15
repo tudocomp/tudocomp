@@ -180,6 +180,27 @@ using namespace tudocomp;
             }
         }
 
+        inline Result<boost::string_ref> parse_number() {
+            Parser& s = *this;
+
+            s.skip_whitespace();
+
+            auto valid = [=](uint8_t c) {
+                return c >= '0' && c <= '9';
+            };
+
+            size_t i = 0;
+            if (i < s.cursor().size() && valid(s.cursor()[i])) {
+                for (i = 1; i < s.cursor().size() && valid(s.cursor()[i]); i++) {
+                }
+                auto r = s.cursor().substr(0, i);
+                s.skip(i);
+                return ok<boost::string_ref>(r);
+            } else {
+                return err<boost::string_ref>("Expected an number");
+            }
+        }
+
         template<class T>
         inline Result<T> ok(T t) {
             return Result<T> {
@@ -237,7 +258,15 @@ using namespace tudocomp;
                         std::string(arg_ident)
                     });
                 });
-            });//.or_else<AlgorithmArg>([&](Err err) {});
+            }).or_else([&](Err err) {
+                return p.parse_number().and_then<AlgorithmArg>([&](boost::string_ref n) {
+                    // "num ..." case
+                    return p.ok<AlgorithmArg>(AlgorithmArg {
+                        std::string(keyword),
+                        std::string(n)
+                    });
+                });
+            });
         }
 
         inline Result<std::vector<AlgorithmArg>> parse_args() {
