@@ -64,7 +64,11 @@ using namespace tudocomp;
         template<class U>
         inline Result<U> and_then(Fun<U> f);
 
+        inline Result<T> or_else(Fun<Err> f);
+
         inline T unwrap();
+
+        inline Result<T> end_parse();
     };
 
     class Parser {
@@ -189,22 +193,17 @@ using namespace tudocomp;
                 return p.parse_char('(').and_then<AlgorithmSpec>([&](uint8_t chr) {
                     // Parse arguments here
 
+                    //auto arg_ident = p.parse_ident();
 
 
                     return p.parse_char(')').and_then<AlgorithmSpec>([&](uint8_t chr) {
-                        p.skip_whitespace();
-
-                        if (p.cursor() == "") {
-                            return p.ok(AlgorithmSpec {
-                                std::string(ident),
-                                std::vector<AlgorithmArg> {}
-                            });
-                        } else {
-                            return p.err<AlgorithmSpec>("Expected end of input");
-                        }
+                        return p.ok(AlgorithmSpec {
+                            std::string(ident),
+                            std::vector<AlgorithmArg> {}
+                        });
                     });
                 });
-            });
+            }).end_parse();
         }
 
     };
@@ -254,6 +253,39 @@ using namespace tudocomp;
             }
         };
         return boost::apply_visitor(visitor(f, trail), data);
+    }
+
+    template<class T>
+    inline Result<T> Result<T>::or_else(Fun<Err> f) {
+        struct visitor: public boost::static_visitor<Result<T>> {
+            // insert constructor here
+            Fun<Err> m_f;
+            Parser* m_trail;
+
+            visitor(Fun<Err> f, Parser* trail): m_f(f), m_trail(trail) {
+            }
+
+            Result<T> operator()(T& ok) const {
+                return m_trail->ok<T>(ok);
+            }
+            Result<T> operator()(Err& err) const {
+                return m_f(err);
+            }
+        };
+        return boost::apply_visitor(visitor(f, trail), data);
+    }
+
+    template<class T>
+    inline Result<T> Result<T>::end_parse() {
+        Parser& p = *trail;
+
+        p.skip_whitespace();
+
+        if (p.cursor() == "") {
+            return *this;
+        } else {
+            return p.err<T>("Expected end of input");
+        }
     }
 }
 
