@@ -43,8 +43,18 @@ using namespace tudocomp;
         boost::variant<std::string, AlgorithmSpec> arg;
     };
 
-    struct Err {
-        std::string reason;
+    class Err {
+        std::string m_reason;
+        std::shared_ptr<Err> m_prev;
+    public:
+        inline Err(std::string reason): m_reason(reason) {
+        }
+        inline Err(const Err& prev, std::string reason): Err(reason) {
+            m_prev = std::make_shared<Err>(prev);
+        }
+        inline std::string reason() {
+            return m_reason;
+        }
     };
 
     class Parser;
@@ -114,12 +124,12 @@ using namespace tudocomp;
 
             auto valid_first = [](uint8_t c) {
                 return (c == '_')
-                    | (c >= 'a' && c <= 'z')
-                    | (c >= 'A' && c <= 'Z');
+                    || (c >= 'a' && c <= 'z')
+                    || (c >= 'A' && c <= 'Z');
             };
             auto valid_middle = [=](uint8_t c) {
                 return valid_first(c)
-                    | (c >= '0' && c <= '9');
+                    || (c >= '0' && c <= '9');
             };
 
             size_t i = 0;
@@ -128,15 +138,9 @@ using namespace tudocomp;
                 }
                 s.skip(i);
                 auto r = s.cursor().substr(0, i);
-                return Result<boost::string_ref> {
-                    s,
-                    r,
-                };
+                return ok<boost::string_ref>(r);
             } else {
-                return Result<boost::string_ref> {
-                    s,
-                    Err { "Expected an identifier" },
-                };
+                return err<boost::string_ref>("Expected an identifier");
             }
         }
 
@@ -147,18 +151,11 @@ using namespace tudocomp;
 
             if (s.cursor().size() > 0 && uint8_t(s.cursor()[0]) == chr) {
                 s.skip(1);
-                return Result<uint8_t> {
-                    s,
-                    chr,
-                };
+                return ok<uint8_t>(chr);
             } else {
-                return Result<uint8_t> {
-                    s,
-                    Err { std::string("Expected char '")
-                        + char(chr) + "'" + ", found '"
-                        + s.cursor()[0] + "'"
-                    },
-                };
+                return err<uint8_t>(std::string("Expected char '")
+                    + char(chr) + "'" + ", found '"
+                    + s.cursor()[0] + "'");
             }
         }
 
@@ -193,7 +190,7 @@ using namespace tudocomp;
                 return p.parse_char('(').and_then<AlgorithmSpec>([&](uint8_t chr) {
                     // Parse arguments here
 
-                    //auto arg_ident = p.parse_ident();
+                    auto arg_ident = p.parse_ident();
 
 
                     return p.parse_char(')').and_then<AlgorithmSpec>([&](uint8_t chr) {
@@ -226,7 +223,7 @@ using namespace tudocomp;
                 ss << m_trail->input() << "\n";
                 ss << std::setw(m_trail->cursor_pos()) << "";
                 ss << "^\n";
-                ss << err.reason << "\n";
+                ss << err.reason() << "\n";
 
                 throw std::runtime_error(ss.str());
             }
@@ -277,15 +274,17 @@ using namespace tudocomp;
 
     template<class T>
     inline Result<T> Result<T>::end_parse() {
-        Parser& p = *trail;
+        return this->and_then<T>([&](T _t) {
+            Parser& p = *trail;
 
-        p.skip_whitespace();
+            p.skip_whitespace();
 
-        if (p.cursor() == "") {
-            return *this;
-        } else {
-            return p.err<T>("Expected end of input");
-        }
+            if (p.cursor() == "") {
+                return *this;
+            } else {
+                return p.err<T>("Expected end of input");
+            }
+        });
     }
 }
 
