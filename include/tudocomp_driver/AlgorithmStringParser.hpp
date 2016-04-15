@@ -47,22 +47,57 @@ using namespace tudocomp;
         std::string reason;
     };
 
+    class Parser {
+        boost::string_ref m_input;
+        size_t m_current_pos;
+
+    public:
+        inline Parser(boost::string_ref input): m_input(input), m_current_pos(0) {}
+
+        inline boost::string_ref cursor() const {
+            return m_input.substr(m_current_pos);
+        }
+
+        //inline void end_parse_or_error()
+
+        inline void skip_whitespace() {
+            for (; m_current_pos < m_input.size(); m_current_pos++) {
+                if (m_input[m_current_pos] != ' ') {
+                    return;
+                }
+            }
+            return;
+        }
+
+        inline void skip(size_t i) {
+            m_current_pos += i;
+        }
+
+        inline size_t cursor_pos() const {
+            return m_current_pos;
+        }
+
+        inline boost::string_ref input() const {
+            return m_input;
+        }
+    };
+
     template<class T>
     struct Result {
-        boost::string_ref trail;
+        Parser trail;
         boost::variant<T, Err> data;
 
         template<class U>
-        using Fun = std::function<Result<U> (boost::string_ref, T)>;
+        using Fun = std::function<Result<U> (Parser, T)>;
 
         template<class U>
         inline Result<U> and_then(Fun<U> f) {
             struct visitor: public boost::static_visitor<Result<U>> {
                 // insert constructor here
                 const Fun<U> m_f;
-                const boost::string_ref m_trail;
+                const Parser m_trail;
 
-                visitor(Fun<U> f, boost::string_ref trail): m_f(f), m_trail(trail) {
+                visitor(Fun<U> f, Parser trail): m_f(f), m_trail(trail) {
                 }
 
                 Result<U> operator()(T& ok) const {
@@ -77,18 +112,24 @@ using namespace tudocomp;
 
         inline T unwrap() {
             struct visitor: public boost::static_visitor<T> {
-                const boost::string_ref m_trail;
+                const Parser m_trail;
 
-                visitor(boost::string_ref trail): m_trail(trail) {
+                visitor(Parser trail): m_trail(trail) {
                 }
 
                 T operator()(T& ok) const {
                     return ok;
                 }
                 T operator()(Err& err) const {
+                    std::stringstream ss;
 
+                    ss << "\nParse error at #" << int(m_trail.cursor_pos()) << ":\n";
+                    ss << m_trail.input() << "\n";
+                    ss << std::setw(m_trail.cursor_pos()) << "";
+                    ss << "^\n";
+                    ss << err.reason << "\n";
 
-                    throw std::runtime_error("Parse error: " + err.reason);
+                    throw std::runtime_error(ss.str());
                 }
             };
             return boost::apply_visitor(visitor(trail), data);
@@ -96,24 +137,15 @@ using namespace tudocomp;
     };
 
     template<class T>
-    inline Result<T> ok(boost::string_ref trail, T t) {
+    inline Result<T> ok(Parser trail, T t) {
         return Result<T> {
             trail,
             t,
         };
     }
 
-    inline boost::string_ref skip_whitespace(boost::string_ref s) {
-        for (size_t i = 0; i < s.size(); i++) {
-            if (s[i] != ' ') {
-                return s.substr(i);
-            }
-        }
-        return s.substr(s.size());
-    }
-
-    inline Result<boost::string_ref> parse_ident(boost::string_ref s) {
-        s = skip_whitespace(s);
+    inline Result<boost::string_ref> parse_ident(Parser s) {
+        s.skip_whitespace();
 
         auto valid_first = [](uint8_t c) {
             return (c == '_')
@@ -126,12 +158,14 @@ using namespace tudocomp;
         };
 
         size_t i = 0;
-        if (i < s.size() && valid_first(s[i])) {
-            for (i = 1; i < s.size() && valid_middle(s[i]); i++) {
+        if (i < s.cursor().size() && valid_first(s.cursor()[i])) {
+            for (i = 1; i < s.cursor().size() && valid_middle(s.cursor()[i]); i++) {
             }
+            s.skip(i);
+            auto r = s.cursor().substr(0, i);
             return Result<boost::string_ref> {
-                s.substr(i),
-                s.substr(0, i),
+                s,
+                r,
             };
         } else {
             return Result<boost::string_ref> {
@@ -141,36 +175,42 @@ using namespace tudocomp;
         }
     }
 
-    inline Result<uint8_t> parse_char(boost::string_ref s, uint8_t chr) {
-        s = skip_whitespace(s);
+    inline Result<uint8_t> parse_char(Parser s, uint8_t chr) {
+        s.skip_whitespace();
 
-        if (s.size() > 0 && uint8_t(s[0]) == chr) {
+        if (s.cursor().size() > 0 && uint8_t(s.cursor()[0]) == chr) {
+            s.skip(1);
             return Result<uint8_t> {
-                s.substr(1),
+                s,
                 chr,
             };
         } else {
             return Result<uint8_t> {
                 s,
-                Err { std::string("Expected char '") + char(chr) + "'" },
+                Err { std::string("Expected char '")
+                      + char(chr) + "'" + ", found '"
+                      + s.cursor()[0] + "'"
+                },
             };
         }
     }
 
     inline Result<AlgorithmSpec> parse(boost::string_ref s) {
-        return parse_ident(s).and_then<AlgorithmSpec>([=](boost::string_ref s,
+        Parser p { s };
+
+        return parse_ident(s).and_then<AlgorithmSpec>([=](Parser s,
                                                           boost::string_ref ident) {
-            return parse_char(s, '(').and_then<AlgorithmSpec>([=](boost::string_ref s,
+            return parse_char(s, '(').and_then<AlgorithmSpec>([=](Parser s,
                                                                   uint8_t chr) {
                 // Parse arguments here
 
 
 
-                return parse_char(s, ')').and_then<AlgorithmSpec>([=](boost::string_ref s,
+                return parse_char(s, ')').and_then<AlgorithmSpec>([=](Parser s,
                                                                       uint8_t chr) {
-                    s = skip_whitespace(s);
+                    s.skip_whitespace();
 
-                    if (s == "") {
+                    if (s.cursor() == "") {
                         return ok(s, AlgorithmSpec {
                             std::string(ident),
                             std::vector<AlgorithmArg> {}
