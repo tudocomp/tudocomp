@@ -127,3 +127,9 @@ TEST(NewAlgorithmStringParser, smoketest) {
     ASSERT_EQ(y[1].keyword, "q");
     ASSERT_EQ(y[1].get<std::string>(), "1");
 }
+
+TEST(RegistryV3, test) {
+    using namespace tudocomp_driver;
+    RegistryV3 r;
+    register2(r);
+}

@@ -24,6 +24,7 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/util.h>
+#include <tudocomp_driver/AlgorithmStringParser.hpp>
 
 namespace tudocomp_driver {
 
@@ -207,6 +208,54 @@ inline std::unique_ptr<Compressor> select_algo_or_exit(Registry& reg,
 }
 
 void register_algos(Registry& registry);
+
+// New unified algorithm spec registry
+
+class RegistryV3;
+
+class ArgTypeBuilder {
+    std::string m_id;
+    RegistryV3& m_registry;
+public:
+    ArgTypeBuilder(std::string id, RegistryV3& r): m_id(id), m_registry(r) {}
+
+    ArgTypeBuilder& arg_id(std::string arg, std::string id);
+    ArgTypeBuilder& doc(std::string doc);
+};
+
+class RegistryV3 {
+    std::unordered_map<std::string, AlgorithmSpec> m_algorithms;
+    std::unordered_map<std::string, std::string> m_docs;
+    std::unordered_map<std::string,
+        std::unordered_map<std::string, std::string>
+    > m_arg_ids;
+
+    friend class ArgTypeBuilder;
+public:
+    inline ArgTypeBuilder register_spec(
+        std::string id,
+        std::string spec
+    ) {
+        CHECK(m_algorithms.count(id) == 0);
+
+        Parser p { spec };
+        m_algorithms[id] = p.parse().unwrap();
+
+        return ArgTypeBuilder { id, *this };
+    }
+};
+
+inline ArgTypeBuilder& ArgTypeBuilder::arg_id(std::string arg, std::string id)  {
+    m_registry.m_arg_ids[m_id][arg] = id;
+    return *this;
+}
+
+inline ArgTypeBuilder& ArgTypeBuilder::doc(std::string doc) {
+    m_registry.m_docs[m_id] = doc;
+    return *this;
+}
+
+void register2(RegistryV3& registry);
 
 }
 
