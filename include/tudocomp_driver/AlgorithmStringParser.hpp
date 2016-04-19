@@ -46,7 +46,38 @@ using namespace tudocomp;
         inline T get() {
             return boost::get<T>(arg);
         }
+
     };
+
+    inline std::ostream& operator<<(std::ostream& os,
+                                    const AlgorithmArg& s);
+    inline std::ostream& operator<<(std::ostream& os_,
+                                    const AlgorithmSpec& s) {
+        std::stringstream os;
+        os << s.name << "(";
+        bool first = true;
+        for(auto& arg : s.args) {
+            if (!first) {
+                os << ", ";
+            }
+            os << arg;
+            first = false;
+        }
+        os << ")";
+        os_ << os.str();
+        return os_;
+    }
+
+    inline std::ostream& operator<<(std::ostream& os_,
+                                    const AlgorithmArg& s) {
+        std::stringstream os;
+        if (s.keyword.size() > 0) {
+            os << s.keyword << " = ";
+        }
+        os << s.arg;
+        os_ << os.str();
+        return os_;
+    }
 
     class Err {
         std::string m_reason;

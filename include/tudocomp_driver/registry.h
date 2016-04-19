@@ -213,22 +213,27 @@ void register_algos(Registry& registry);
 
 class RegistryV3;
 
-class ArgTypeBuilder {
+struct ArgTypeBuilder {
     std::string m_id;
+    size_t m_idx;
     RegistryV3& m_registry;
-public:
-    ArgTypeBuilder(std::string id, RegistryV3& r): m_id(id), m_registry(r) {}
 
     ArgTypeBuilder& arg_id(std::string arg, std::string id);
     ArgTypeBuilder& doc(std::string doc);
 };
 
+struct AlgorithmSpecBuilder {
+    AlgorithmSpec m_spec;
+    std::string m_doc;
+    std::unordered_map<std::string, std::string> m_arg_ids;
+
+    AlgorithmSpecBuilder(AlgorithmSpec spec): m_spec(spec) {}
+};
+
 class RegistryV3 {
-    std::unordered_map<std::string, AlgorithmSpec> m_algorithms;
-    std::unordered_map<std::string, std::string> m_docs;
+public:
     std::unordered_map<std::string,
-        std::unordered_map<std::string, std::string>
-    > m_arg_ids;
+                       std::vector<AlgorithmSpecBuilder>> m_algorithms;
 
     friend class ArgTypeBuilder;
 public:
@@ -236,22 +241,22 @@ public:
         std::string id,
         std::string spec
     ) {
-        CHECK(m_algorithms.count(id) == 0);
-
         Parser p { spec };
-        m_algorithms[id] = p.parse().unwrap();
+        AlgorithmSpecBuilder s { p.parse().unwrap() };
 
-        return ArgTypeBuilder { id, *this };
+        m_algorithms[id].push_back(s);
+
+        return ArgTypeBuilder { id, m_algorithms[id].size() - 1, *this };
     }
 };
 
 inline ArgTypeBuilder& ArgTypeBuilder::arg_id(std::string arg, std::string id)  {
-    m_registry.m_arg_ids[m_id][arg] = id;
+    m_registry.m_algorithms[m_id][m_idx].m_arg_ids[arg] = id;
     return *this;
 }
 
 inline ArgTypeBuilder& ArgTypeBuilder::doc(std::string doc) {
-    m_registry.m_docs[m_id] = doc;
+    m_registry.m_algorithms[m_id][m_idx].m_doc = doc;
     return *this;
 }
 

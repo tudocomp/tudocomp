@@ -4,6 +4,8 @@
 #include "gtest/gtest.h"
 #include "glog/logging.h"
 
+#include <tudocomp/util.h>
+
 #include "test_util.h"
 #include "tudocomp_driver/registry.h"
 #include "tudocomp_driver/AlgorithmStringParser.hpp"
@@ -132,4 +134,35 @@ TEST(RegistryV3, test) {
     using namespace tudocomp_driver;
     RegistryV3 r;
     register2(r);
+
+    auto print = [](std::vector<AlgorithmSpecBuilder>& x, size_t iden) {
+        const size_t pad = 35;
+        for (auto& y : x) {
+            std::cout << std::setw(iden) << "" << "  "
+                      << std::setw(pad)
+                      << std::left
+                      << y.m_spec
+                      << std::setw(pad) << first_line(y.m_doc)
+                      << "\n";
+            for (auto& z : y.m_arg_ids) {
+                std::cout << std::setw(iden) << ""
+                          << "    "
+                          << "where "
+                          << z.first << " one of [" << z.second << "]\n";
+            }
+        }
+        std::cout << "\n";
+    };
+
+    std::cout << "[Compression algorithms]\n";
+    print(r.m_algorithms["compressor"], 0);
+
+    std::cout << "[Argument types]\n";
+    for (auto& x : r.m_algorithms) {
+        if (x.first == "compressor") {
+            continue;
+        }
+        std::cout << "  [" << x.first << "]\n";
+        print(x.second, 2);
+    }
 }

@@ -177,11 +177,11 @@ void register2(RegistryV3& r) {
         .doc("Lempel-Ziv 78 [...]");
     {
         r.register_spec("lz78_coder", "bit()")
-            .doc("Bit coder\n\n "
+            .doc("Bit coder\n"
                  "Basic variable-bit-width encoding of the symbols");
         r.register_spec("lz78_coder", "debug()")
-            .doc("Debug coder\n\n "
-                "human readable, comma separated "
+            .doc("Debug coder\n"
+                "Human readable, comma separated "
                 "stream of (integer, char) tuples");
     }
     r.register_spec("compressor", "lz78_cics(coder = bit)")
@@ -191,11 +191,11 @@ void register2(RegistryV3& r) {
         .arg_id("coder", "lzw_coder");
     {
         r.register_spec("lzw_coder", "bit()")
-            .doc("Bit coder\n\n "
-                "basic variable-bit-width encoding of the symbols");
+            .doc("Bit coder\n"
+                "Basic variable-bit-width encoding of the symbols");
         r.register_spec("lzw_coder", "debug()")
-            .doc("Debug coder\n\n "
-                "human readable, comma separated stream of integers");
+            .doc("Debug coder\n"
+                "Human readable, comma separated stream of integers");
     }
     r.register_spec("compressor", "lz77ss(coder)")
         .arg_id("coder", "lzss_coder")
@@ -205,29 +205,29 @@ void register2(RegistryV3& r) {
         .doc("LZ77 Factorization using LCP");
     {
         r.register_spec("lzss_coder", "debug()")
-            .doc("Debug coder\n\n "
-                "direct encoding in ASCII");
+            .doc("Debug coder\n"
+                "Direct encoding in ASCII");
         r.register_spec("lzss_coder", "online(alphabet_coder=online)")
-            .arg_id("alphabet_coder", "lzss_alpha")
-            .doc("Online factor coder\n\n "
-                "direct encoding of factors");
+            .arg_id("alphabet_coder", "alpha_coder")
+            .doc("Online factor coder\n"
+                "Direct encoding of factors");
         r.register_spec("lzss_coder", "offline(alphabet_coder=online)")
-            .arg_id("alphabet_coder", "lzss_alpha")
-            .doc("Offline factor coder\n\n "
-                "analysis of created factors and optimized encoding");
+            .arg_id("alphabet_coder", "alpha_coder")
+            .doc("Offline factor coder\n"
+                "Analysis of created factors and optimized encoding");
         {
-            r.register_spec("lzss_alpha", "online()")
-                .doc("Online alphabet coder\n\n "
-                    "direct ASCII encoding of symbols");
-            r.register_spec("lzss_alpha", "offline()")
-                .doc("Offline alphabet coder\n\n "
-                    "optimized symbol encoding using alphabet statistics");
+            r.register_spec("alpha_coder", "online()")
+                .doc("Online alphabet coder\n"
+                    "Direct ASCII encoding of symbols");
+            r.register_spec("alpha_coder", "offline()")
+                .doc("Offline alphabet coder\n"
+                    "Optimized symbol encoding using alphabet statistics");
         }
     }
     r.register_spec("compressor", "esacomp(coder=online)")
         .arg_id("coder", "lzss_coder")
         .doc("ESAComp");
-    r.register_spec("compressor", "chain_test");
+    r.register_spec("compressor", "chain_test()");
 }
 
 }

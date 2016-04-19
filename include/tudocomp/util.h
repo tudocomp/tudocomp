@@ -11,6 +11,7 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <iomanip>
 
 #include <sdsl/bits.hpp>
 
@@ -150,6 +151,34 @@ namespace std {
     template<class T, class... Args>
         typename _Unique_if<T>::_Known_bound
         make_unique(Args&&...) = delete;
+}
+
+inline std::string indent_lines(std::string sentence, size_t ident) {
+    std::stringstream ss(sentence);
+    std::string to;
+    std::stringstream ret;
+
+    bool first = true;
+    while(std::getline(ss,to,'\n')){
+        if (!first) {
+            ret << "\n";
+        }
+        ret << std::setw(ident) << "" << to;
+        first = false;
+    }
+
+    return ret.str();
+}
+
+inline std::string first_line(std::string sentence) {
+    std::stringstream ss(sentence);
+    std::string to;
+
+    if(std::getline(ss,to,'\n')){
+        return to;
+    } else {
+        return "";
+    }
 }
 
 #endif
