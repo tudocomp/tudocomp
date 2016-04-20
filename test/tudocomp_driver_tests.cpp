@@ -136,22 +136,31 @@ TEST(RegistryV3, test) {
     register2(r);
 
     auto print = [](std::vector<AlgorithmSpecBuilder>& x, size_t iden) {
-        const size_t pad = 35;
+        std::vector<std::string> cells;
+
         for (auto& y : x) {
-            std::cout << std::setw(iden) << "" << "  "
-                      << std::setw(pad)
-                      << std::left
-                      << y.m_spec
-                      << std::setw(pad) << first_line(y.m_doc)
-                      << "\n";
+            auto spec = y.m_spec.to_string();
+
+            std::stringstream where;
+            bool first = true;
             for (auto& z : y.m_arg_ids) {
-                std::cout << std::setw(iden) << ""
-                          << "    "
-                          << "where "
-                          << z.first << " one of [" << z.second << "]\n";
+                if (first) {
+                    where << "\n  where ";
+                } else {
+                    where << "\n        ";
+                }
+                first = false;
+                where << "`" << z.first << "` is one of [" << z.second.first << "],";
             }
+            auto s = spec + where.str();
+            if (y.m_arg_ids.size() > 0) {
+                s = s.substr(0, s.size() - 1);
+            }
+            cells.push_back(s);
+            cells.push_back(y.m_doc);
         }
-        std::cout << "\n";
+
+        std::cout << indent_lines(make_table(cells, 2), iden) << "\n\n";
     };
 
     std::cout << "[Compression algorithms]\n";
@@ -165,4 +174,6 @@ TEST(RegistryV3, test) {
         std::cout << "  [" << x.first << "]\n";
         print(x.second, 2);
     }
+
+    r.check_for_undefined_compressors();
 }

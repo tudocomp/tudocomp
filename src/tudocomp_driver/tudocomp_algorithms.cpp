@@ -228,6 +228,44 @@ void register2(RegistryV3& r) {
         .arg_id("coder", "lzss_coder")
         .doc("ESAComp");
     r.register_spec("compressor", "chain_test()");
+
+    // Define which implementations to use for each combination:
+
+    // compressor() takes a function that constructs the right
+    // Compressor with an Env& argument. You could use a lambda like this:
+    //
+    //     r.compressor("lzw.debug", [](Env& env) {
+    //         return std::make_unique<LzwCompressor<LzwDebugCoder>>(env);
+    //     });
+    //
+    // But since most of the algorithms take no additional constructor
+    // arguments we use the make() helper function to make this less verbose.
+
+    r.compressor("lzw(debug())",           make<LzwCompressor<LzwDebugCoder>>);
+    r.compressor("lzw(bit())",             make<LzwCompressor<LzwBitCoder>>);
+    r.compressor("lz78(bit())",            make<Lz78Compressor<Lz78BitCoder>>);
+    r.compressor("lz77ss(debug())",            make<LZ77SSSlidingWindowCompressor<DebugLZSSCoder>>);
+    r.compressor("lz77ss(online(online()))",   make<LZ77SSSlidingWindowCompressor<OnlineLZSSCoder<OnlineAlphabetCoder>>>);
+    r.compressor("lz77ss(online(offline()))",  make<LZ77SSSlidingWindowCompressor<OnlineLZSSCoder<OfflineAlphabetCoder>>>);
+    r.compressor("lz77ss(offline(online()))",  make<LZ77SSSlidingWindowCompressor<OfflineLZSSCoder<OnlineAlphabetCoder>>>);
+    r.compressor("lz77ss(offline(offline()))", make<LZ77SSSlidingWindowCompressor<OfflineLZSSCoder<OfflineAlphabetCoder>>>);
+    r.compressor("lz77ss_lcp(debug())",            make<LZ77SSLCPCompressor<DebugLZSSCoder>>);
+    r.compressor("lz77ss_lcp(online(online()))",   make<LZ77SSLCPCompressor<OnlineLZSSCoder<OnlineAlphabetCoder>>>);
+    r.compressor("lz77ss_lcp(online(offline()))",  make<LZ77SSLCPCompressor<OnlineLZSSCoder<OfflineAlphabetCoder>>>);
+    r.compressor("esacomp(debug())",            make<LZSSESACompressor<DebugLZSSCoder>>);
+    r.compressor("esacomp(online(online()))",   make<LZSSESACompressor<OnlineLZSSCoder<OnlineAlphabetCoder>>>);
+    r.compressor("esacomp(online(offline()))",  make<LZSSESACompressor<OnlineLZSSCoder<OfflineAlphabetCoder>>>);
+    r.compressor("esacomp(offline(online()))",  make<LZSSESACompressor<OfflineLZSSCoder<OnlineAlphabetCoder>>>);
+    r.compressor("esacomp(offline(offline()))", make<LZSSESACompressor<OfflineLZSSCoder<OfflineAlphabetCoder>>>);
+
+    r.compressor("chain_test()", [](Env& env) {
+        std::vector<CompressorConstructor> algorithms {
+            make<LzwCompressor<LzwDebugCoder>>,
+            make<LzwCompressor<LzwDebugCoder>>,
+            make<LzwCompressor<LzwDebugCoder>>,
+        };
+        return std::make_unique<ChainCompressor>(env, std::move(algorithms));
+    });
 }
 
 }

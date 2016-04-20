@@ -119,6 +119,165 @@ inline size_t bytesFor(size_t bits) {
     return idiv_ceil(bits, 8U);
 }
 
+template<class T>
+std::vector<T> cross(std::vector<std::vector<T>>&& vs,
+                     std::function<T(T, T&)> f) {
+    auto remaining = vs;
+    if (remaining.size() == 0) {
+        return {};
+    }
+
+    std::vector<T> first = std::move(remaining[0]);
+    remaining.erase(remaining.begin());
+
+    auto next = cross(std::move(remaining), f);
+
+    if (next.size() == 0) {
+        return first;
+    } else {
+        std::vector<T> r;
+        for (auto& x : first) {
+            for (auto& y : next) {
+                r.push_back(f(x, y));
+            }
+        }
+        return r;
+    }
+}
+
+inline std::vector<std::string> split_lines(std::string s) {
+    std::stringstream ss(s);
+    std::string to;
+    std::vector<std::string> ret;
+
+    while(std::getline(ss,to,'\n')) {
+        ret.push_back(to);
+    }
+
+    return ret;
+}
+
+inline std::string indent_lines(std::string sentence, size_t ident) {
+    std::stringstream ss(sentence);
+    std::string to;
+    std::stringstream ret;
+
+    bool first = true;
+    while(std::getline(ss,to,'\n')){
+        if (!first) {
+            ret << "\n";
+        }
+        ret << std::setw(ident) << "" << to;
+        first = false;
+    }
+
+    return ret.str();
+}
+
+inline std::string first_line(std::string sentence) {
+    std::stringstream ss(sentence);
+    std::string to;
+
+    if(std::getline(ss,to,'\n')){
+        return to;
+    } else {
+        return "";
+    }
+}
+
+inline std::string make_table(std::vector<std::string> data,
+                              size_t cols,
+                              bool draw_grid = true) {
+    std::vector<size_t> widths;
+    std::vector<size_t> heights;
+    std::vector<std::vector<std::string>> data_lines;
+
+    // Gather inidividual cell dimensions
+    for (auto& elem : data) {
+        size_t w = 0;
+        size_t h = 0;
+
+        data_lines.push_back(split_lines(elem));
+        auto& lines = data_lines[data_lines.size() - 1];
+
+        for (auto& line : lines) {
+            w = std::max(w, line.size());
+        }
+
+        h = lines.size();
+
+
+        widths.push_back(w);
+        heights.push_back(h);
+    }
+
+    std::vector<size_t> col_widths(cols, 0);
+    std::vector<size_t> row_heights(data.size() / cols, 0);
+
+    // Calculate max. common row/column dimensions
+    for (size_t i = 0; i < data.size(); i++) {
+        size_t x = i % cols;
+        size_t y = i / cols;
+
+        col_widths[x] = std::max(col_widths[x], widths[i]);
+        row_heights[y] = std::max(row_heights[y], heights[i]);
+    }
+
+    // Adjust lines to match
+    for (size_t i = 0; i < data.size(); i++) {
+        size_t x = i % cols;
+        size_t y = i / cols;
+
+        while (data_lines[i].size() < row_heights[y]) {
+            data_lines[i].push_back("");
+        }
+
+        for (auto& line : data_lines[i]) {
+            size_t pad = col_widths[x] - line.size();
+            line.append(pad, ' ');
+        }
+    }
+
+    std::stringstream ret;
+
+    // Create formatted table
+
+    const char ROW = '-';
+    const std::string COL = " | ";
+
+    size_t total_width = 1;
+    for (size_t i = 0; i < col_widths.size(); i++) {
+        total_width += col_widths[i] + 3;
+    }
+
+    if (draw_grid) {
+        ret << std::string(total_width, ROW) << "\n";
+    }
+
+    for (size_t y = 0; y < data.size() / cols; y++) {
+        for (size_t line_i = 0; line_i < row_heights[y]; line_i++ ) {
+            for (size_t x = 0; x < cols; x++) {
+                if (draw_grid && x == 0) {
+                    ret << COL.substr(1);
+                }
+                if (draw_grid && x != 0) {
+                    ret << COL;
+                }
+                ret << data_lines[x + y * cols][line_i];
+                if (draw_grid && x == cols - 1) {
+                    ret << COL.substr(0, 2);
+                }
+            }
+            ret << "\n";
+        }
+        if (draw_grid) {
+            ret << std::string(total_width, ROW) << "\n";
+        }
+    }
+
+    return ret.str();
+}
+
 }
 
 // this codebase is using c++11 but would really like to use this function...

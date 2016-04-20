@@ -37,6 +37,19 @@ using namespace tudocomp;
     struct AlgorithmSpec {
         std::string name;
         std::vector<AlgorithmArg> args;
+
+        inline std::string to_string() const;
+
+        bool operator==(const AlgorithmSpec &other) const {
+            return (name == other.name)
+                && (args == other.args);
+        }
+
+        bool operator<(const AlgorithmSpec &other) const {
+            if (name != other.name) return name < other.name;
+            if (args != other.args) return args < other.args;
+            return false;
+        }
     };
     struct AlgorithmArg {
         std::string keyword;
@@ -47,12 +60,34 @@ using namespace tudocomp;
             return boost::get<T>(arg);
         }
 
+        inline std::string to_string() const;
+
+        bool operator==(const AlgorithmArg &other) const {
+            return (keyword == other.keyword)
+                && (arg == other.arg);
+        }
+
+        bool operator<(const AlgorithmArg &other) const {
+            if (keyword != other.keyword) return keyword < other.keyword;
+            if (arg != other.arg) return arg < other.arg;
+            return false;
+        }
     };
 
     inline std::ostream& operator<<(std::ostream& os,
-                                    const AlgorithmArg& s);
-    inline std::ostream& operator<<(std::ostream& os_,
                                     const AlgorithmSpec& s) {
+        os << s.to_string();
+        return os;
+    }
+
+    inline std::ostream& operator<<(std::ostream& os,
+                                    const AlgorithmArg& s) {
+        os << s.to_string();
+        return os;
+    }
+
+    inline std::string AlgorithmSpec::to_string() const {
+        auto& s = *this;
         std::stringstream os;
         os << s.name << "(";
         bool first = true;
@@ -64,19 +99,17 @@ using namespace tudocomp;
             first = false;
         }
         os << ")";
-        os_ << os.str();
-        return os_;
+        return os.str();
     }
 
-    inline std::ostream& operator<<(std::ostream& os_,
-                                    const AlgorithmArg& s) {
+    inline std::string AlgorithmArg::to_string() const {
+        auto& s = *this;
         std::stringstream os;
         if (s.keyword.size() > 0) {
             os << s.keyword << " = ";
         }
         os << s.arg;
-        os_ << os.str();
-        return os_;
+        return os.str();
     }
 
     class Err {

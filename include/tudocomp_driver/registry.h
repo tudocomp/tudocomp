@@ -54,45 +54,24 @@ struct AlgorithmInfo {
 
 };
 
-inline std::vector<std::string> cross(std::vector<std::vector<std::string>>&& vs) {
-    auto remaining = vs;
-    if (remaining.size() == 0) {
-        return {};
-    }
-
-    std::vector<std::string> first = std::move(remaining[0]);
-    remaining.erase(remaining.begin());
-
-    auto next = cross(std::move(remaining));
-
-    if (next.size() == 0) {
-        return first;
-    } else {
-        std::vector<std::string> r;
-        for (auto& x : first) {
-            for (auto& y : next) {
-                r.push_back(x + "." + y);
-            }
-        }
-        return r;
-    }
-}
-
-inline std::vector<std::string> algo_cross_product(AlgorithmDb& subalgo) {
-    std::vector<std::string> r;
+template<class T>
+std::vector<T> algo_cross_product(AlgorithmDb& subalgo,
+                                  std::function<T(T, T&)> f
+) {
+    std::vector<T> r;
     for (auto& algo : subalgo.sub_algo_info) {
 
         auto& name = algo.shortname;
-        std::vector<std::vector<std::string>> subalgos;
+        std::vector<std::vector<T>> subalgos;
         for (auto& subalgo : algo.sub_algo_info) {
-            subalgos.push_back(algo_cross_product(subalgo));
+            subalgos.push_back(algo_cross_product(subalgo, f));
         }
 
         if (subalgos.size() == 0) {
             r.push_back(name);
         } else {
-            for (auto x : cross(std::move(subalgos))) {
-                r.push_back(name + "." + x);
+            for (auto x : cross<T>(std::move(subalgos), f)) {
+                r.push_back(f(name, x));
             }
         }
     }
@@ -100,7 +79,13 @@ inline std::vector<std::string> algo_cross_product(AlgorithmDb& subalgo) {
 }
 
 inline std::vector<std::string> AlgorithmDb::id_product() {
-    return algo_cross_product(*this);
+    return algo_cross_product<std::string>(*this, [](std::string x, std::string& y) {
+        if (x == "") {
+            return y;
+        } else {
+            return x + "." + y;
+        }
+    });
 }
 
 const int ALGO_IDENT = 2;
@@ -218,14 +203,14 @@ struct ArgTypeBuilder {
     size_t m_idx;
     RegistryV3& m_registry;
 
-    ArgTypeBuilder& arg_id(std::string arg, std::string id);
+    ArgTypeBuilder& arg_id(std::string arg, std::string id, bool is_static = true);
     ArgTypeBuilder& doc(std::string doc);
 };
 
 struct AlgorithmSpecBuilder {
     AlgorithmSpec m_spec;
     std::string m_doc;
-    std::unordered_map<std::string, std::string> m_arg_ids;
+    std::unordered_map<std::string, std::pair<std::string, bool>> m_arg_ids;
 
     AlgorithmSpecBuilder(AlgorithmSpec spec): m_spec(spec) {}
 };
@@ -234,6 +219,8 @@ class RegistryV3 {
 public:
     std::unordered_map<std::string,
                        std::vector<AlgorithmSpecBuilder>> m_algorithms;
+
+    std::map<AlgorithmSpec, CompressorConstructor> m_compressors;
 
     friend class ArgTypeBuilder;
 public:
@@ -248,10 +235,165 @@ public:
 
         return ArgTypeBuilder { id, m_algorithms[id].size() - 1, *this };
     }
+
+    AlgorithmSpec eval(std::string id, AlgorithmSpec s) {
+        AlgorithmSpec r;
+
+        // Find s in the options given with id
+        for (auto& x : m_algorithms[id]) {
+            if (x.m_spec.name == s.name) {
+                // Found s, initialize r
+                r.name = x.m_spec.name;
+
+                // Evaluate the arguments, allowing positional
+                // arguments followed by keyword arguments
+                int i = 0;
+                bool positional_ok = true;
+                for (auto& pat_arg : s.args) {
+                    AlgorithmArg* spec_arg;
+
+                    if (pat_arg.keyword.size() == 0) {
+                        // positional argument
+                        CHECK(positional_ok);
+
+                        spec_arg = &x.m_spec.args[i];
+                    } else {
+                        // keyword argument
+                        positional_ok = false;
+
+                        bool found = false;
+                        for(uint j = 0; j < x.m_spec.args.size(); j++) {
+                            if (x.m_spec.args[j].keyword == pat_arg.keyword) {
+                                spec_arg = &x.m_spec.args[j];
+                                found = true;
+                                break;
+                            }
+                        }
+                        CHECK(found);
+                    }
+
+                    // Got a reference to the corresponding spec Arg,
+                    // extract keyword name from it
+                    AlgorithmArg& arg = *spec_arg;
+
+                    std::string arg_name;
+                    if (arg.keyword.size() == 0) {
+                        arg_name = arg.get<std::string>();
+                    } else {
+                        arg_name = arg.keyword;
+                    }
+                    CHECK(arg_name.size() > 0);
+                    CHECK(x.m_arg_ids.count(arg_name) > 0);
+
+                    // Use keyword/argument name to find out type
+                    auto arg_id = x.m_arg_ids[arg_name].first;
+
+                    // Combine argument name with argument
+                    r.args.push_back(AlgorithmArg {
+                        arg_name,
+                        eval(arg_id, pat_arg.get<AlgorithmSpec>())
+                    });
+
+                    i++;
+                }
+
+                break;
+            }
+        }
+
+        return r;
+    }
+
+    void compressor(std::string id, CompressorConstructor f) {
+        Parser p { id };
+        AlgorithmSpec s = p.parse().unwrap();
+
+        // evaluate it to full keyword=value form
+        s = eval("compressor", s);
+
+        m_compressors[s] = f;
+    }
+
+    std::vector<AlgorithmSpec> all_algorithms_with_static(std::string id) {
+        std::vector<AlgorithmSpec> r;
+
+        using AlgorithmArgs = std::vector<AlgorithmArg>;
+
+        for (auto& c : m_algorithms[id]) {
+            std::vector<std::vector<AlgorithmArgs>> args_variations;
+
+            for (auto& arg : c.m_spec.args) {
+                std::string arg_name;
+                if (arg.keyword.size() == 0) {
+                    arg_name = arg.get<std::string>();
+                } else {
+                    arg_name = arg.keyword;
+                }
+                CHECK(arg_name.size() > 0);
+                CHECK(c.m_arg_ids.count(arg_name) > 0);
+
+                auto arg_id = c.m_arg_ids[arg_name].first;
+                bool is_static = c.m_arg_ids[arg_name].second;
+                if (is_static) {
+                    std::vector<AlgorithmArgs> arg_variations;
+                    for(auto arg : all_algorithms_with_static(arg_id)) {
+                        arg_variations.push_back(AlgorithmArgs {
+                            AlgorithmArg {
+                                arg_name,
+                                arg
+                            }
+                        });
+                    }
+                    args_variations.push_back(arg_variations);
+                }
+            }
+
+            AlgorithmSpec x;
+            x.name = c.m_spec.name;
+            std::vector<AlgorithmArgs> r_;
+            if (args_variations.size() == 0) {
+                r.push_back(x);
+            } else {
+                r_ = cross<AlgorithmArgs>(
+                    std::move(args_variations), [](AlgorithmArgs s,
+                                                   AlgorithmArgs& t) {
+                    for (auto& e : t) {
+                        s.push_back(e);
+                    }
+                    return s;
+                });
+            }
+
+            for (auto& elem : r_) {
+                r.push_back(AlgorithmSpec {
+                    c.m_spec.name,
+                    elem
+                });
+            }
+        }
+
+        return r;
+    }
+
+    std::vector<AlgorithmSpec> check_for_undefined_compressors() {
+        std::cout << "Check!" << "\n";
+
+        std::vector<AlgorithmSpec> r;
+        for (auto& s : all_algorithms_with_static("compressor")) {
+            if (m_compressors.count(s) == 0) {
+                r.push_back(s);
+                std::cout << "MISSING " << s << "\n";
+            } else {
+                std::cout << "COVERED " << s << "\n";
+            }
+        }
+        return r;
+    }
 };
 
-inline ArgTypeBuilder& ArgTypeBuilder::arg_id(std::string arg, std::string id)  {
-    m_registry.m_algorithms[m_id][m_idx].m_arg_ids[arg] = id;
+inline ArgTypeBuilder& ArgTypeBuilder::arg_id(std::string arg, std::string id, bool is_static)  {
+    m_registry.m_algorithms[m_id][m_idx].m_arg_ids[arg]
+        = std::pair<std::string, bool>(id, is_static);
     return *this;
 }
 
