@@ -1,7 +1,3 @@
-% TuDoComp Documentation
-% Patrick Dinklage
-% 2016
-
 # Abstract
 
 This is the documentation for the **T**echnical **U**niversity of **DO**rtmund **COMP**ression Framework.
@@ -83,38 +79,35 @@ this should create as little performance overhead as possible.
 
 ## Framework utility
 
->TODO
+The main executable, `tudocomp_driver`, is used as a command-line tool that
+contains with the necessary usage information.
 
 ## Library
 
 The library is meant to make the compressor implementations accessible by third
 party applications.
 
-All code is written in C++11.
+It comes as a set of `C++` headers, no binary objects need to be built. Alas,
+in order to use a specific compressor implementation, including the respective
+headers suffices.
 
-### Inventory
+Please refer to the [Doxygen documentation](about:blank) for an overview over
+the available compression and coding implementations.
 
->TODO
+Please also note the library's [dependencies](#dependencies) and that all code
+is written in `C++11`.
 
-### License
-
->TODO
-
-### Linking
-
-The library comes as a set of C++ headers with no linked binaries in any form.
-Alas, in order to use a specific compressor implementation, including the
-respective headers suffices.
-
-Note the external dependencies listed below.
-
-### Dependencies
+### Dependencies {#dependencies}
 
 The library has the following external dependencies required for compilation:
 
 * [`Boost`](http://www.boost.org/) (`system`, `program_options` and `filesystem`; 1.55 or later).
 * [`sdsl-lite`](https://github.com/simongog/sdsl-lite) (2.03 or later).
 * [`glog`](https://github.com/google/glog) (0.34 or later).
+
+### License
+
+>TODO
 
 # Coding Guideline
 
@@ -156,11 +149,43 @@ identify what compressor to use to decompress an encoded input.
 
 ## Input and Output
 
-The framework comes with its own abstract [Input](about:blank) and
-[Output](about:blank) layer, which hides the actual source or destination of
-the data (e.g. a file or a place in memory) away from the implementation.
+The framework comes with its own abstract [`Input`](about:blank) and
+[`Output`](about:blank) layer, which hides the actual source or destination of
+the data (e.g. a file or a place in memory).
 
->TODO: some words on the paradigm
+`Input` can be used as a *stream* or as a *view*.
+
+The *stream* approach represents the classic technique of reading character by
+character. The current state of the stream (ie the reading position) can be
+retained by using the copy constructor - this allows "rewinding".
+
+Note that currently, *direct* streaming is not supported (streams are buffered
+before made available as an `Input`.
+
+A *view* provides random access on the input. This way, the input acts like an
+array of characters.
+
+The `Output` only works stream-based.
+
+### Bitwise input and output
+
+The [`BitIStream`](about:blank) and [`BitOStream`](about:blank) classes provide
+wrappers for bitwise reading and writing.
+
+Additionally to operations for reading and writing single bits and fixed-width
+integers, they support *compressed integers*. These can be used to minimize
+the effective bit width of small values in large value ranges.
+
+Let $b \geq 1$ be the *block width* in bits. A compressed integer is a bit
+string of the form `([0|1][0|1]`^b^`)`^+^ . The semantics are that the bit
+string for the represented value is split into blocks of $b$ bits, starting
+with the $b$ lowest bits. Each block is preceded by `1` in case a higher,
+non-zero block follows, or `0` if it is the block representing the highest
+bits. The lowest block, even if zero, is always stored.
+
+As an example, consider $b=3$. The compressed integer for $v = 42_d = 101010_b$
+would be `1 010 0 101`. The value $v' = 3_d = 11_b$ would be represented as
+`0 011`.
 
 # Credits
 
@@ -169,7 +194,6 @@ the data (e.g. a file or a place in memory) away from the implementation.
 | Name | Roles |
 | ---- | ----- |
 | Dinklage, Patrick | core development, research, documentation |
-| Köppl, Dominik    | initiation and supervision, advice, research |
+| Köppl, Dominik    | supervision, advice, research |
 | Löbel, Marvin     | core development |
 
->TODO: literature references? or rather put these in the inventory?
