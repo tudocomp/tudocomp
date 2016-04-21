@@ -177,7 +177,7 @@ integers, they support *compressed integers*. These can be used to minimize
 the effective bit width of small values in large value ranges.
 
 Let $b \geq 1$ be the *block width* in bits. A compressed integer is a bit
-string of the form `([0|1][0|1]`^b^`)`^+^ . The semantics are that the bit
+string of the form $([0|1][0|1]^b)^+$ . The semantics are that the bit
 string for the represented value is split into blocks of $b$ bits, starting
 with the $b$ lowest bits. Each block is preceded by `1` in case a higher,
 non-zero block follows, or `0` if it is the block representing the highest

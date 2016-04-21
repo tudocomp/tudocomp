@@ -3,14 +3,21 @@ find_package(Pandoc)
 if(PANDOC_FOUND)
 
     set(MAIN_LATEX_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/latex)
+    set(MAIN_HTML_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/html)
+
     file(MAKE_DIRECTORY ${MAIN_LATEX_OUT_DIR})
+    file(MAKE_DIRECTORY ${MAIN_HTML_OUT_DIR})
 
     add_custom_target(docs-main
+        # convert markdown doc to html
+        COMMAND ${PANDOC_BIN} -f markdown -t html -o ${MAIN_HTML_OUT_DIR}/_content.html ${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md
+        # copy html framework
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/html ${MAIN_HTML_OUT_DIR}
+
         # convert markdown doc to tex
         COMMAND ${PANDOC_BIN} -f markdown -t latex -o ${MAIN_LATEX_OUT_DIR}/_content.tex ${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md
         # copy tex framework
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/latex/header.tex ${MAIN_LATEX_OUT_DIR}
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/latex/main.tex   ${MAIN_LATEX_OUT_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/latex ${MAIN_LATEX_OUT_DIR}
         # build pdf
         COMMAND pdflatex -synctex=1 -interaction=nonstopmode main.tex #pass 1
         COMMAND pdflatex -synctex=1 -interaction=nonstopmode main.tex #pass 2
