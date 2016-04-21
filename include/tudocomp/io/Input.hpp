@@ -285,11 +285,11 @@ namespace io {
             }
             InputStream operator()(Input::File& f) const {
                 return InputStream {
-                    InputStream::File {
+                    std::move(InputStream::File {
                         std::string(f.path),
                         &f,
                         f.offset,
-                    }
+                    })
                 };
             }
         };
