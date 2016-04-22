@@ -5,7 +5,7 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ./bootstrap.sh
-    BUILD_COMMAND ./b2 --prefix=<INSTALL_DIR> --without-python install
+    BUILD_COMMAND ./b2 -s NO_BZIP2=1 --prefix=<INSTALL_DIR> --with-system --with-filesystem --with-program_options --without-python install
     #BUILD_COMMAND ./b2 --show-libraries
     INSTALL_COMMAND ""
 )
