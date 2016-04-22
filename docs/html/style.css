@@ -1,0 +1,119 @@
+html {
+    width: 100%;
+
+    font-family: sans-serif;
+    font-size: 14pt;
+}
+
+body {
+    margin-top: 0;
+    margin-bottom: 2rem;
+    margin-left: 20%;
+    margin-right: 20%;
+}
+
+header {
+    background-color: #DDD;
+
+    text-align: center;
+
+    padding: 1rem;
+    border-bottom: 2px solid black;
+}
+
+header #title {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+header #subtitle {
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+header #author {
+}
+
+header #date {
+}
+
+section#content {
+}
+
+h1 {
+    margin-top: 3rem;
+    font-size: 1.75rem;
+}
+
+h2 {
+    margin-top: 2rem;
+    font-size: 1.25rem;
+}
+
+h3 {
+    font-size: 1.0rem;
+}
+
+p {
+    margin-left: 1rem;
+}
+
+code {
+    font-family: monospace;
+
+    background-color: #DDD;
+
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+}
+
+span.math {
+    font-family: serif;
+
+    background-color: #DDD;
+
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+}
+
+table {
+    margin-left: 1rem;
+
+    width: 100%;
+
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+tr {
+    border: 1px solid black;
+}
+
+tr.header {
+    background-color: #BBB;
+}
+
+tr.odd {
+    background-color: #FFF;
+}
+
+tr.even {
+    background-color: #DDD;
+}
+
+td, th {
+    border-left: 1px dotted #888;
+    padding: 0.25rem;
+}
+
+a {
+    text-decoration: underline;
+    color: blue;
+}
+
+a:visited {
+    color: blue;
+}
+
+
+
