@@ -7,6 +7,8 @@ add_library(
 
 target_link_libraries(
     tudocomp
+
+    boost
     glog
     sdsl
 )
