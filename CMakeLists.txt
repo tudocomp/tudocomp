@@ -13,7 +13,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemod
 include(find_or_download_package)
 
 set(Boost_USE_STATIC_LIBS ON)
-find_or_download_package(Boost Boost boost 1.59 EXACT COMPONENTS system program_options filesystem)
+find_or_download_package(Boost Boost boost COMPONENTS system program_options filesystem)
 find_or_download_package(Glog GLOG glog)
 find_or_download_package(SDSL SDSL sdsl)
 
