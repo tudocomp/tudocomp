@@ -41,8 +41,8 @@ public:
 
         //Construct ISA and LCP
         //TODO SDSL ???
-        sdsl::int_vector<> isa(sa.size());
-        sdsl::int_vector<> lcp(sa.size());
+        sdsl::int_vector<> isa(sa.size(), 0, bitsFor(sa.size()));
+        sdsl::int_vector<> lcp(sa.size(), 0, bitsFor(sa.size()));
 
         for(size_t i = 0; i < sa.size(); i++) {
             isa[sa[i]] = i;
@@ -53,9 +53,6 @@ public:
             }
         }
 
-        sdsl::util::bit_compress(isa);
-        sdsl::util::bit_compress(lcp);
-        
         //Use strategy to generate factors
         size_t fact_min = 3; //factor threshold
         std::vector<LZSSFactor>& factors = LZSSCompressor<C>::m_factors;
