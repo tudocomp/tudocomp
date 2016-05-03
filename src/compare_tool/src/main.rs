@@ -55,10 +55,12 @@ fn main() {
             profile.with_mem = true;
         }
         if let Some(s) = arguments.find("--iterations") {
-            profile.runtime_iterations
-                = Some(s.as_str()
-                        .parse()
-                        .expect("iterations needs to be an integer"));
+            let s = s.as_str();
+            if s != "" {
+                profile.runtime_iterations
+                    = Some(s.parse()
+                            .expect("iterations needs to be an integer"));
+            }
         }
     }
 
@@ -102,7 +104,14 @@ fn main() {
             + label
             + "__.compressed"
         };
-        let auto_file_name = auto_file_name.replace(" ", "_");
+        let escape_file_name = |s: &str| -> String {
+            let s = s.replace(" ", "_");
+            let s = s.replace("$", "_");
+            let s = s.replace("/", "_");
+            let s = s.replace("\\", "_");
+            s
+        };
+        let auto_file_name = escape_file_name(&auto_file_name);
         //println!("Auto file: {}", auto_file_name);
         let output = &auto_file_name;
 
@@ -117,7 +126,7 @@ fn main() {
             };
 
             let max_details_opt = if max_detail {
-                " --detailed-freq=1 "
+                " --detailed-freq=1000000 "
             } else {
                 ""
             };
@@ -222,10 +231,12 @@ fn main() {
                 };
                 let mem_peak = mem_peak.as_ref().map(|s| &**s);
 
-                let label = &if iter_i == iter_count - 1 {
+                let label = &if iter_count == 1 {
+                    format!("{}", label)
+                } else if iter_i == iter_count - 1 {
                     format!("{}", label)
                 } else {
-                    format!("  {} {}", iter_i, label)
+                    format!("  iter {}", iter_i)
                 };
 
                 print_line(

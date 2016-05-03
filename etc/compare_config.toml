@@ -1,38 +1,10 @@
 # Fast running example config that compares a bunch of
 # compression commands on a source file in the repo
-[example_fast]
+[example]
 compare_commands = true
 with_mem = false
 inputs = [
     "$DATASETS/../src/tudocomp_driver/tudocomp_driver.cpp",
-]
-commands = [
-#      <shown command and args>                 <hidden args>
-    ["tudocomp_driver -a lzwrule.debug",       "$IN -o $OUT"],
-    ["tudocomp_driver -a lzwrule.bit",         "$IN -o $OUT"],
-    ["tudocomp_driver -a lz78rule.debug",      "$IN -o $OUT"],
-    ["tudocomp_driver -a lz78rule.bit",        "$IN -o $OUT"],
-    ["tudocomp_driver -a esacomp.dummy.dummy", "$IN -o $OUT"],
-    ["tudocomp_driver -a esacomp.dummy.debug", "$IN -o $OUT"],
-    ["tudocomp_driver -a esacomp.dummy.code1", "$IN -o $OUT"],
-    ["tudocomp_driver -a esacomp.dummy.code2", "$IN -o $OUT"],
-    ["tudocomp_driver -a esacomp.lz.code2",    "$IN -o $OUT"],
-    ["tudocomp_driver -a esacomp.esa.code2",   "$IN -o $OUT"],
-
-    ["gzip -9",                              "-c $IN > $OUT"],
-    ["bzip2 -9",                             "-c $IN > $OUT"],
-    # 7z prints to stdout per default
-    ["7z",                          "a $OUT $IN > /dev/null"],
-
-    ["tudocomp_driver -a esacomp.lz.code1",    "$IN -o $OUT"],
-    ["tudocomp_driver -a esacomp.esa.code1",   "$IN -o $OUT"],
-    ["tudocomp_driver -a esacomp.lz.dummy",    "$IN -o $OUT"],
-]
-
-# Compare a number of different text files with the same algorithms
-[example_compare_texts]
-compare_commands = false
-inputs = [
     "$DATASETS/download/real/english.50MB",
     "$DATASETS/download/real/sources.50MB",
     "$DATASETS/download/real/dblp.xml.50MB",
@@ -40,12 +12,38 @@ inputs = [
     "$DATASETS/download/real/dna.50MB",
 ]
 commands = [
-    ["tudocomp_driver -a lzwrule.bit",        "$IN -o $OUT"],
-    ["tudocomp_driver -a lz78rule.bit",       "$IN -o $OUT"],
-    ["tudocomp_driver -a esacomp.esa.code2",  "$IN -o $OUT"],
-    ["gzip -9",                               "-c $IN > $OUT"],
-    ["bzip2 -9",                              "-c $IN > $OUT"],
-    ["7z",                                    "a $OUT $IN"],
+#      <shown command and args>                 <hidden args>
+    ["tudocomp_driver -a lzw.bit",         "-r $IN -o $OUT"],
+    ["tudocomp_driver -a lz78.bit",        "-r $IN -o $OUT"],
+    ["tudocomp_driver -a lz77ss_lcp.online.online", "-r $IN -o $OUT"],
+    ["tudocomp_driver -a lz77ss_lcp.online.offline", "-r $IN -o $OUT"],
+    ["tudocomp_driver -a lz77ss_lcp.offline.online", "-r $IN -o $OUT"],
+    ["tudocomp_driver -a lz77ss_lcp.offline.offline", "-r $IN -o $OUT"],
+    ["tudocomp_driver -a lz77ss.online.online", "-r $IN -o $OUT"],
+    ["tudocomp_driver -a lz77ss.online.offline", "-r $IN -o $OUT"],
+    ["tudocomp_driver -a lz77ss.offline.online", "-r $IN -o $OUT"],
+    ["tudocomp_driver -a lz77ss.offline.offline", "-r $IN -o $OUT"],
+
+    ["gzip -9",                              "-c $IN > $OUT"],
+    ["bzip2 -9",                             "-c $IN > $OUT"],
+    # 7z prints to stdout per default
+    ["7z",                          "a $OUT $IN > /dev/null"],
+]
+
+[example2]
+compare_commands = false
+with_mem = true
+inputs = [
+    "$DATASETS/../src/tudocomp_driver/tudocomp_driver.cpp",
+    "$DATASETS/download/real/english.50MB",
+    "$DATASETS/download/real/sources.50MB",
+    "$DATASETS/download/real/dblp.xml.50MB",
+    "$DATASETS/download/real/proteins.50MB",
+    "$DATASETS/download/real/dna.50MB",
+]
+commands = [
+#      <shown command and args>                 <hidden args>
+    ["tudocomp_driver -a lzw.bit",         "-r $IN -o $OUT"],
 ]
 
 [lz78]
