@@ -13,12 +13,32 @@
 #include <boost/exception/exception.hpp>
 #include <boost/program_options/parsers.hpp>
 
+#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.h>
 #include <tudocomp/io/IOUtil.hpp>
 #include <tudocomp_driver/registry.h>
+
+/*namespace validate {
+  static bool algorithm(const char* flagname, int32 value) {
+    if (value > 0 && value < 32768)   // value is ok
+      return true;
+    printf("Invalid value for --%s: %d\n", flagname, (int)value);
+    return false;
+  }
+  static const bool algorithm_dummy = RegisterFlagValidator(&FLAGS_algorithm, &algorithm);
+}*/
+
+DEFINE_string(algorithm, "", "Algorithm to use for (de)compression. See --list for a complete list of them.");
+DEFINE_bool(compress, true, "Compress input.");
+DEFINE_bool(decompress, false, "Decompress input.");
+DEFINE_string(output, "", "Choose output filename instead the the default generated one of <input>.tdc or stdout.");
+DEFINE_bool(stats, false, "Print statistics to stdout.");
+DEFINE_bool(force, false, "Overwrite output even if it exists.");
+DEFINE_bool(list, false, "List all compression algorithms supported by this tool.");
+DEFINE_bool(raw, false, "Do not emit an header into the output file when compressing.");
 
 namespace tudocomp_driver {
 
@@ -59,6 +79,9 @@ Options:
     -O --option <option>    An additional option of the form key=value.
 )";
 
+
+
+
 static void exit(std::string msg) {
     throw std::runtime_error(msg);
 }
@@ -81,11 +104,12 @@ static bool check_for_file_already_exist(std::string& ofile,
 
 } // namespace tudocomp_driver
 
-int main(int argc, const char** argv)
+int main(int argc, char** argv)
 {
     using namespace tudocomp_driver;
 
     google::InitGoogleLogging(argv[0]);
+    //google::ParseCommandLineFlags(&argc, &argv, true);
 
     po::options_description desc("Options");
     desc.add_options()

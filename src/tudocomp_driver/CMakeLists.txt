@@ -24,6 +24,7 @@ target_link_libraries(
 
     tudocomp
     tudocomp_algorithms
+    gflags
     glog
     sdsl
     boost_program_options

@@ -9,5 +9,5 @@ ExternalProject_Get_Property(gflags_external source_dir install_dir)
 file(MAKE_DIRECTORY "${install_dir}/include")
 
 set(${package_found_prefix}_CMAKE_DEP gflags_external)
-set(${package_found_prefix}_LIBRARIES "${install_dir}/lib/libgflags.a")
+set(${package_found_prefix}_LIBRARIES "${install_dir}/lib/libgflags_nothreads.a")
 set(${package_found_prefix}_INCLUDE_DIRS "${install_dir}/include")
