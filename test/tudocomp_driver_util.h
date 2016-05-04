@@ -233,9 +233,11 @@ void roundtrip(std::string algo,
         std::string out = test_file_path(comp_file);
         std::string cmd;
         if (use_raw) {
-            cmd = "-r -k -a " + algo + " -o " + out + " " + in;
+            cmd = "--raw --compress --algorithm " + algo
+                + " --output " + out + " " + in;
         } else {
-            cmd = "-k -a " + algo + " -o " + out + " " + in;
+            cmd = "--compress --algorithm " + algo
+                + " --output " + out + " " + in;
         }
         comp_out = driver(cmd);
     }
@@ -260,9 +262,10 @@ void roundtrip(std::string algo,
         std::string out = test_file_path(decomp_file);
         std::string cmd;
         if (use_raw) {
-            cmd = "-r -d -a " + algo + " -o " + out + " " + in;
+            cmd = "--raw --decompress --algorithm " + algo
+                + " --output " + out + " " + in;
         } else {
-            cmd = "-d -o " + out + " " + in;
+            cmd = "--decompress --output " + out + " " + in;
         }
         decomp_out = driver(cmd);
     }

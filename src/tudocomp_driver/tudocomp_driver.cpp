@@ -8,10 +8,8 @@
 #include <string>
 #include <vector>
 
-#include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/exception.hpp>
-#include <boost/program_options/parsers.hpp>
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
@@ -39,48 +37,14 @@ DEFINE_bool(stats, false, "Print statistics to stdout.");
 DEFINE_bool(force, false, "Overwrite output even if it exists.");
 DEFINE_bool(list, false, "List all compression algorithms supported by this tool.");
 DEFINE_bool(raw, false, "Do not emit an header into the output file when compressing.");
+DEFINE_bool(stdin, false, "Read from stdin instead of trying to open a file.");
+DEFINE_bool(stdout, false, "Output to stdout instead of writing to a file");
 
 namespace tudocomp_driver {
 
 using namespace tudocomp;
 
-namespace po = boost::program_options;
-
 const std::string COMPRESSED_FILE_ENDING = "tdc";
-
-static const std::string USAGE =
-R"(TuDo Comp.
-
-Usage:
-    tudocomp [options] [-k]  -a <alg>  [-o <output>] [--] ( <input> | - )
-    tudocomp [options]  -d  [-a <alg>] [-o <output>] [--] ( <input> | - )
-    tudocomp --list
-    tudocomp --help
-
-Options:
-    -h --help               Show this screen.
-    -a --algorithm <alg>    Use algorithm <alg> for (de)compression.
-                            <alg> can be a dot-separated chain of
-                            sub-algorithms. See --list for a complete list
-                            of them.
-                            Example: -a lz77rule.esa.esa_code0
-    -k --compress           Compress input instead of compressing it.
-    -d --decompress         Decompress input instead of compressing it.
-    -o --output <output>    Choose output filename instead the the default of
-                            <input>.<compressor name>.<encoder name>.tdc
-                            or stdout if reading from stdin.
-    -s --stats              Print statistics to stdout.
-    -f --force              Overwrite output even if it exists.
-    -l --list               List all Compression algorithms supported
-                            by this tool.
-                            Algorithms may consist out of sub-algorithms,
-                            which will be displayed in a hierarchical fashion.
-    -r --raw                Do not emit an header when compressing.
-    -O --option <option>    An additional option of the form key=value.
-)";
-
-
-
 
 static void exit(std::string msg) {
     throw std::runtime_error(msg);
@@ -109,79 +73,13 @@ int main(int argc, char** argv)
     using namespace tudocomp_driver;
 
     google::InitGoogleLogging(argv[0]);
-    //google::ParseCommandLineFlags(&argc, &argv, true);
-
-    po::options_description desc("Options");
-    desc.add_options()
-        ("help,h", "")
-        ("algorithm,a", po::value<std::string>(), "")
-        ("compress,k", "")
-        ("decompress,d", "")
-        ("output,o", po::value<std::string>(), "")
-        ("stats,s", "")
-        ("force,f", "")
-        ("list,l", "")
-        ("raw,r", "")
-        ("option,O", po::value<std::vector<std::string>>(), "")
-        ("input", po::value<std::string>(), "")
-    ;
-    po::positional_options_description pos_desc;
-    pos_desc.add("input", 1);
-
-    po::variables_map args;
-
-    auto show_help = []() {
-        std::cout << USAGE << std::endl;
-    };
+    int first_cmd_arg = google::ParseCommandLineFlags(&argc, &argv, true);
 
     try {
-        po::store(
-            boost::program_options::parse_environment(desc, "TUDOCOMP_"),
-            args);
-
-        po::store(po::command_line_parser(argc, argv)
-                .positional(pos_desc)
-                .options(desc)
-                .run(),
-            args);
-        po::notify(args);
-
-        auto arg2boost = [](std::string s) -> std::string {
-            if (s.size() > 1 && s[0] == '-' && s[1] == '-') {
-                return s.substr(2);
-            } else if (s.size() > 0 && s[0] == '-') {
-                return s;
-            } else if (s.size() > 0 && s[0] == '<') {
-                return s.substr(1, s.size() - 2);
-            } else {
-                std::cout << "error";
-                return "";
-            }
-        };
-
-        auto value_arg_exists = [&](std::string s) {
-            return args.count(arg2boost(s)) > 0;
-        };
-        auto arg_exists = [&](std::string s) {
-            return args.count(arg2boost(s)) > 0;
-        };
-        auto string_arg = [&](std::string s) {
-            if (!value_arg_exists(s)) {
-                exit("Argument not given: '" + s + "'");
-            }
-            return args[arg2boost(s)].as<std::string>();
-        };
-        auto string_args = [&](std::string s) {
-            if (value_arg_exists(s)) {
-                return args[arg2boost(s)].as<std::vector<std::string>>();
-            } else {
-                return std::vector<std::string>();
-            }
-        };
 
         std::map<std::string, const std::string> algorithm_options;
 
-        for (auto& os : string_args("--option")) {
+        /*for (auto& os : string_args("--option")) {
             std::vector<std::string> options;
             boost::split(options, os, boost::is_any_of(","));
             for (auto& o : options) {
@@ -190,12 +88,12 @@ int main(int argc, char** argv)
                 CHECK(key_value.size() == 2);
                 algorithm_options.emplace(key_value[0], key_value[1]);
             }
-        }
+        }*/
 
-        if (arg_exists("--help")) {
+        /*if (arg_exists("--help")) {
             show_help();
             return 0;
-        }
+        }*/
 
         Env algorithm_env(algorithm_options, {});
 
@@ -204,7 +102,7 @@ int main(int argc, char** argv)
         Registry registry {&root};
         register_algos(registry);
 
-        if (arg_exists("--list")) {
+        if (FLAGS_list) {
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
 
@@ -215,50 +113,56 @@ int main(int argc, char** argv)
             return 0;
         }
 
-        bool print_stats = arg_exists("--stats");
+        bool print_stats = FLAGS_stats;
         int alphabet_size = 0;
 
-        bool do_compress = !arg_exists("--decompress");
+        bool do_compress = !FLAGS_decompress;
 
         /////////////////////////////////////////////////////////////////////////
         // Select algorithm
 
-        bool do_raw = arg_exists("--raw");
+        bool do_raw = FLAGS_raw;
 
         std::string algorithm_id;
         std::unique_ptr<Compressor> algo;
 
         if (do_raw || do_compress) {
-            algorithm_id = string_arg("--algorithm");
+            algorithm_id = FLAGS_algorithm;
             algo = select_algo_or_exit(registry, algorithm_env, algorithm_id);
         }
 
         /////////////////////////////////////////////////////////////////////////
         // Select where the input comes from
 
-        std::string file = string_arg("<input>");
-        bool use_stdin = !arg_exists("--")
-            && (file == "-" || arg_exists("-"));
+        std::string file;
 
-        if (!use_stdin && !fexists(file)) {
-            std::cerr << "input " << file << " does not exist\n";
+        if ((!FLAGS_stdin) && (first_cmd_arg < argc)) {
+            file = argv[first_cmd_arg];
+            if (!fexists(file)) {
+                std::cerr << "input file " << file << " does not exist\n";
+                return 1;
+            }
+        } else if (!FLAGS_stdin) {
+            std::cerr << "No input file given\n";
             return 1;
         }
+
+        bool use_stdin = FLAGS_stdin;
 
         /////////////////////////////////////////////////////////////////////////
         // Select where the output goes to
 
         std::string ofile;
-        bool use_stdout = use_stdin;
-        bool use_explict_output(value_arg_exists("--output"));
+        bool use_stdout = FLAGS_stdout;
+        bool use_explict_output = std::string(FLAGS_output) != "" ;
 
         if (use_explict_output) {
             // Output to manually specifed file
-            ofile = string_arg("--output");
+            ofile = FLAGS_output;
         } else if (!use_stdin && do_compress) {
             // Output to a automatically determined file
-            ofile = file + "." + algorithm_id + "." + COMPRESSED_FILE_ENDING;
-        } else if (!use_stdin && !do_compress) {
+            ofile = file + "." + COMPRESSED_FILE_ENDING;
+        } else if (!use_stdin && !do_compress && !use_stdout) {
             std::cerr << "Need to specify a output filename\n";
             return 1;
         }
@@ -294,7 +198,7 @@ int main(int argc, char** argv)
                 out = Output::from_stream(std::cout);
             } else {
                 // Output to specified file
-                bool force = bool(value_arg_exists("--force"));
+                bool force = FLAGS_force;
                 if (!check_for_file_already_exist(ofile, force)) {
                     return 1;
                 } else {
@@ -436,9 +340,6 @@ int main(int argc, char** argv)
         }
     } catch (std::exception& e) {
         std::cout << "Error: " << e.what() << '\n';
-        std::cout << '\n';
-        std::cout << "This tool is used like this:\n";
-        show_help();
         return 1;
     }
 

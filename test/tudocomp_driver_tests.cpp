@@ -12,40 +12,6 @@
 
 #include "tudocomp_driver_util.h"
 
-TEST(TudocompDriver, help) {
-    ASSERT_EQ(driver("--help"),
-"TuDo Comp.\n"
-"\n"
-"Usage:\n"
-"    tudocomp [options] [-k]  -a <alg>  [-o <output>] [--] ( <input> | - )\n"
-"    tudocomp [options]  -d  [-a <alg>] [-o <output>] [--] ( <input> | - )\n"
-"    tudocomp --list\n"
-"    tudocomp --help\n"
-"\n"
-"Options:\n"
-"    -h --help               Show this screen.\n"
-"    -a --algorithm <alg>    Use algorithm <alg> for (de)compression.\n"
-"                            <alg> can be a dot-separated chain of\n"
-"                            sub-algorithms. See --list for a complete list\n"
-"                            of them.\n"
-"                            Example: -a lz77rule.esa.esa_code0\n"
-"    -k --compress           Compress input instead of compressing it.\n"
-"    -d --decompress         Decompress input instead of compressing it.\n"
-"    -o --output <output>    Choose output filename instead the the default of\n"
-"                            <input>.<compressor name>.<encoder name>.tdc\n"
-"                            or stdout if reading from stdin.\n"
-"    -s --stats              Print statistics to stdout.\n"
-"    -f --force              Overwrite output even if it exists.\n"
-"    -l --list               List all Compression algorithms supported\n"
-"                            by this tool.\n"
-"                            Algorithms may consist out of sub-algorithms,\n"
-"                            which will be displayed in a hierarchical fashion.\n"
-"    -r --raw                Do not emit an header when compressing.\n"
-"    -O --option <option>    An additional option of the form key=value.\n"
-"\n"
-    );
-}
-
 TEST(TudocompDriver, list) {
     // Test that we got at least the amount of algorithms
     // we had when writing this test.
