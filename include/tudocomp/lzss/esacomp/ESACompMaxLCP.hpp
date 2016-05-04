@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <sdsl/suffix_arrays.hpp>
+#include <tudocomp/lzss/LZSSFactor.hpp>
 #include <tudocomp/util/MaxLCPSuffixList.hpp>
 
 namespace tudocomp {
@@ -37,7 +38,7 @@ class ESACompMaxLCP {
                 //generate factor
                 LZSSFactor fact(sa[m], sa[m-1], lcp[m]);
                 out_factors.push_back(fact);
-                DLOG(INFO) << "Factor: (" << fact.pos << ", " << fact.src << ", " << fact.num << ")";
+                //DLOG(INFO) << "Factor: (" << fact.pos << ", " << fact.src << ", " << fact.num << ")";
                 
                 //remove overlapped entries
                 for(size_t k = 0; k < fact.num; k++) {

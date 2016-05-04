@@ -9,6 +9,7 @@
 
 #include <tudocomp/lzss/LZSSCompressor.hpp>
 
+#include <tudocomp/lzss/esacomp/ESACompBulldozer.hpp>
 #include <tudocomp/lzss/esacomp/ESACompMaxLCP.hpp>
 
 namespace tudocomp {
@@ -16,7 +17,7 @@ namespace lzss {
 
 /// Factorizes the input by finding redundant phrases in a re-ordered version
 /// of the LCP table.
-template<typename C>
+template<typename S, typename C>
 class LZSSESACompressor : public LZSSCompressor<C> {
 
 public:
@@ -53,11 +54,20 @@ public:
             }
         }
 
+        //Debug output
+        /*
+        DLOG(INFO) << std::setfill(' ') << std::left << std::setw(8) << "i" << std::setw(8) << "SA[i]" << std::setw(8) << "LCP[i]";
+        DLOG(INFO) << "----------------------------";
+        for(size_t i = 0; i < sa.size(); i++) {
+            DLOG(INFO) << std::setfill(' ') << std::left << std::setw(8) << (i+1) << std::setw(8) << (sa[i]+1) << std::setw(8) << lcp[i];
+        }
+        */
+
         //Use strategy to generate factors
         size_t fact_min = 3; //factor threshold
         std::vector<LZSSFactor>& factors = LZSSCompressor<C>::m_factors;
 
-        ESACompMaxLCP interval_selector;
+        S interval_selector;
         interval_selector.factorize(sa, isa, lcp, fact_min, factors);
 
         //sort
