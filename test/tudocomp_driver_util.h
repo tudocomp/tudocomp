@@ -233,10 +233,10 @@ void roundtrip(std::string algo,
         std::string out = test_file_path(comp_file);
         std::string cmd;
         if (use_raw) {
-            cmd = "--raw --compress --algorithm " + algo
+            cmd = "--raw --algorithm " + algo
                 + " --output " + out + " " + in;
         } else {
-            cmd = "--compress --algorithm " + algo
+            cmd = "--algorithm " + algo
                 + " --output " + out + " " + in;
         }
         comp_out = driver(cmd);

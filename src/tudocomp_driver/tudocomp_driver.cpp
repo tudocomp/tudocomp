@@ -30,8 +30,7 @@
 }*/
 
 DEFINE_string(algorithm, "", "Algorithm to use for (de)compression. See --list for a complete list of them.");
-DEFINE_bool(compress, true, "Compress input.");
-DEFINE_bool(decompress, false, "Decompress input.");
+DEFINE_bool(decompress, false, "Decompress input instead of compressing it.");
 DEFINE_string(output, "", "Choose output filename instead the the default generated one of <input>.tdc or stdout.");
 DEFINE_bool(stats, false, "Print statistics to stdout.");
 DEFINE_bool(force, false, "Overwrite output even if it exists.");
@@ -47,7 +46,23 @@ using namespace tudocomp;
 const std::string COMPRESSED_FILE_ENDING = "tdc";
 
 static void exit(std::string msg) {
+    // TODO: Replace with more specific logic-error-exception
     throw std::runtime_error(msg);
+}
+
+static void validate_flag_combination() {
+    auto err = [](std::string s) {
+        exit(s);
+    };
+
+    if (!FLAGS_list) {
+        if (!FLAGS_decompress && (std::string(FLAGS_algorithm) == "")) {
+            err("Need to give an algorithm for compression");
+        }
+        if (FLAGS_decompress && FLAGS_raw && (std::string(FLAGS_algorithm) == "")) {
+            err("Need to give an algorithm for raw decompression");
+        }
+    }
 }
 
 static bool fexists(std::string filename)
@@ -76,6 +91,7 @@ int main(int argc, char** argv)
     int first_cmd_arg = google::ParseCommandLineFlags(&argc, &argv, true);
 
     try {
+        validate_flag_combination();
 
         std::map<std::string, const std::string> algorithm_options;
 
