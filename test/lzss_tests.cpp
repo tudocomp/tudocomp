@@ -26,7 +26,7 @@
 
 using namespace tudocomp;
 
-const std::string input_str = "abracadabra";
+const std::string input_str = "abcdefgh#defgh_abcde";
 
 std::string hex_bytes_str(const std::string& str) {
     std::stringstream result;
@@ -118,23 +118,63 @@ TEST(CodingPrototype, lz77ss_lcp_Aoffline_Foffline) {
     performTest<lzss::LZ77SSLCPCompressor<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
 }
 
-TEST(CodingPrototype, lzss_esacomp_debug) {
-    performTest<lzss::LZSSESACompressor<lzss::DebugLZSSCoder>>();
+TEST(CodingPrototype, lzss_esacomp_maxlcp_debug) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompMaxLCP, lzss::DebugLZSSCoder>>();
 }
 
-TEST(CodingPrototype, lzss_esacomp_Aonline_Fonline) {
-    performTest<lzss::LZSSESACompressor<lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
+TEST(CodingPrototype, lzss_esacomp_maxlcp_Aonline_Fonline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompMaxLCP, lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
 }
 
-TEST(CodingPrototype, lzss_esacomp_Aoffline_Fonline) {
-    performTest<lzss::LZSSESACompressor<lzss::OnlineLZSSCoder<OfflineAlphabetCoder>>>();
+TEST(CodingPrototype, lzss_esacomp_maxlcp_Aoffline_Fonline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompMaxLCP, lzss::OnlineLZSSCoder<OfflineAlphabetCoder>>>();
 }
 
-
-TEST(CodingPrototype, lzss_esacomp_Aonline_Foffline) {
-    performTest<lzss::LZSSESACompressor<lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>>();
+TEST(CodingPrototype, lzss_esacomp_maxlcp_Aonline_Foffline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompMaxLCP, lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>>();
 }
 
-TEST(CodingPrototype, lzss_esacomp_Aoffline_Foffline) {
-    performTest<lzss::LZSSESACompressor<lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
+TEST(CodingPrototype, lzss_esacomp_maxlcp_Aoffline_Foffline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompMaxLCP, lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
 }
+
+TEST(CodingPrototype, lzss_esacomp_bulldozer_debug) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompBulldozer, lzss::DebugLZSSCoder>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_bulldozer_Aonline_Fonline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompBulldozer, lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_bulldozer_Aoffline_Fonline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompBulldozer, lzss::OnlineLZSSCoder<OfflineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_bulldozer_Aonline_Foffline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompBulldozer, lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_bulldozer_Aoffline_Foffline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompBulldozer, lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_collider_debug) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompCollider, lzss::DebugLZSSCoder>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_collider_Aonline_Fonline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompCollider, lzss::OnlineLZSSCoder<OnlineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_collider_Aoffline_Fonline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompCollider, lzss::OnlineLZSSCoder<OfflineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_collider_Aonline_Foffline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompCollider, lzss::OfflineLZSSCoder<OnlineAlphabetCoder>>>();
+}
+
+TEST(CodingPrototype, lzss_esacomp_collider_Aoffline_Foffline) {
+    performTest<lzss::LZSSESACompressor<lzss::ESACompCollider, lzss::OfflineLZSSCoder<OfflineAlphabetCoder>>>();
+}
+
