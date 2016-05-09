@@ -1,6 +1,7 @@
 #ifndef _INCLUDED_ESACOMP_COLLIDER_HPP_
 #define _INCLUDED_ESACOMP_COLLIDER_HPP_
 
+#include <list>
 #include <vector>
 #include <sdsl/suffix_arrays.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
@@ -21,9 +22,21 @@ private:
         size_t other;
         bool deleted;
 
+        std::list<size_t> collisions;
+        size_t extent;
+
         Interval(size_t _p, size_t _q, size_t _l, size_t _other)
-            : p(_p), q(_q), l(_l), other(_other), deleted(false)
+            : p(_p), q(_q), l(_l), other(_other), deleted(false), extent(0)
         {
+        }
+
+        bool set_deleted() {
+            if(deleted) {
+                return false;
+            } else {
+                deleted = true;
+                return true;
+            }
         }
     };
 
@@ -61,24 +74,16 @@ public:
                 }
             }
 
-            //save best pick
-            struct {
-                size_t index, length;
-                size_t extent;
-                std::list<size_t> collisions;
-            } best;
-
-            best.index = SIZE_MAX;
-            best.extent = SIZE_MAX;
-
-            //find interval with smallest collision size
+            //calculate collision extents
             for(size_t i = 0; i < intervals.size(); i++) {
-                const Interval& it = intervals[i];
+                Interval& it = intervals[i];
+                it.collisions.clear();
+                it.extent = SIZE_MAX;
+
                 if(it.deleted) continue;
 
                 size_t lb = it.p;
                 size_t rb = it.p + it.l;
-                std::list<size_t> collisions;
 
                 for(size_t k = 0; k < intervals.size(); k++) {
                     if(k == i) continue;
@@ -88,87 +93,106 @@ public:
                     //test possible collision cases
                     if(it.p >= kt.p && it.p <= kt.p + kt.l) {
                         //start of it is included in kt
-                        collisions.push_back(k);
+                        it.collisions.push_back(k);
                         lb = std::min(lb, kt.p);
                     } else if(kt.p >= it.p && kt.p <= it.p + it.l) {
                         //start of kt is included in it
-                        collisions.push_back(k);
+                        it.collisions.push_back(k);
                         rb = std::max(rb, kt.p + kt.l);
                     } else if(kt.p <= it.p && kt.p + kt.l >= it.p + it.l) {
                         //it is fully included in kt
-                        collisions.push_back(k);
+                        it.collisions.push_back(k);
                         lb = std::min(lb, kt.p);
                         rb = std::max(rb, kt.p + kt.l);
                     } else if(it.p <= kt.p && it.p + it.l >= kt.p + kt.l) {
                         //kt is fully included in it
-                        collisions.push_back(k);
+                        it.collisions.push_back(k);
                     }
                 }
 
-                if(collisions.empty()) {
-                    best.extent = 0;
-                    best.index = i;
-                    best.length = it.l;
-                    best.collisions.clear();
-                    break;
+                if(it.collisions.empty()) {
+                    it.extent = 0;
                 } else {
-                    size_t extent = rb - lb;
-                    DLOG(INFO) << "collision extent of (" << i << ") is: " << extent;
+                    it.extent = rb - lb;
+                }
+            }
 
-                    if(extent < best.extent || (extent == best.extent && it.l > best.length)) {
-                        best.extent = extent;
-                        best.index = i;
-                        best.length = it.l;
-                        best.collisions = collisions;
+            //find best
+            size_t best = SIZE_MAX;
+            size_t best_extent = SIZE_MAX;
+
+            for(size_t i = 0; i < intervals.size(); i++) {
+                Interval& it = intervals[i];
+                if(!it.deleted) {
+                    size_t extent = it.extent;
+
+                    Interval& ot = intervals[it.other];
+                    if(!ot.deleted) {
+                        extent += ot.extent;
+                    }
+
+                    if(extent < best_extent || (extent == best_extent && it.l > intervals[best].l)) {
+                        best = i;
+                        best_extent = extent;
                     }
                 }
             }
 
-            //factorize best
-            if(best.index != SIZE_MAX) {
-                Interval& it = intervals[best.index];
-                DLOG(INFO) << "Pick: (" << best.index << ")";
+            //factorize
+            #define DECREASE_INTERVAL_COUNT assert(count > 0); --count;
+
+            if(best != SIZE_MAX) {
+                Interval& it = intervals[best];
+                DLOG(INFO) << "Pick: (" << best << ")";
 
                 //factorize
                 LZSSFactor fact(it.p, it.q, it.l);
                 out_factors.push_back(fact); 
 
                 //remove self
-                it.deleted = true;
-                assert(count > 0);
-                --count; 
-
-                //remove other and subintervals of other
-                {
-                    size_t j = it.other;
-                    size_t jl;
-                    do {
-                        Interval& jt = intervals[j];
-
-                        if(!jt.deleted) {
-                            DLOG(INFO) << "remove other (" << j << ")";
-                            jt.deleted = true;
-                            assert(count > 0);
-                            --count;
-                        }
-
-                        jl = jt.l;
-                        j += 2;
-                    } while(j < intervals.size() && intervals[j].l < jl);
-                }
+                it.set_deleted();
+                DLOG(INFO) << "remove self (" << best << ")";
+                DECREASE_INTERVAL_COUNT;
 
                 //remove collisions
-                for(auto x = best.collisions.begin(); x != best.collisions.end(); ++x) {
+                for(auto x = it.collisions.begin(); x != it.collisions.end(); ++x) {
                     Interval& xt = intervals[*x];
-                    if(!xt.deleted) {
+                    if(xt.set_deleted()) {
                         DLOG(INFO) << "remove collision (" << (*x) << ")";
-                        xt.deleted = true;
-                        assert(count > 0);
-                        --count;
+                        DECREASE_INTERVAL_COUNT;
                     }
                 }
+
+                //remove other
+                {
+                    size_t j = it.other;
+                    Interval& jt = intervals[j];
+                    if(jt.set_deleted()) {
+                        DLOG(INFO) << "remove other (" << j << ")";
+                        DECREASE_INTERVAL_COUNT;
+                    }
+
+                    //remove other full collisions
+                    for(auto x = jt.collisions.begin(); x != jt.collisions.end(); ++x) {
+                        Interval& xt = intervals[*x];
+                        if(
+                            (xt.p >= jt.p && xt.p + xt.l <= jt.p + jt.l) ||
+                            (jt.p >= xt.p && jt.p + jt.l <= xt.p + xt.l)
+                        ) {
+                            if(xt.set_deleted()) {
+                                DLOG(INFO) << "remove other full collision (" << (*x) << ")";
+                                DECREASE_INTERVAL_COUNT;
+                            }
+                        }
+                    }
+                }
+            } else {
+                DLOG(INFO) << "didn't find anything good!?";
+                //break;
             }
-        }
+
+            #undef DECREASE_INTERVAL_COUNT
+        } //while
     }
 };
 
