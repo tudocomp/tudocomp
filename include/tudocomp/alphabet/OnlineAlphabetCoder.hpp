@@ -35,13 +35,14 @@ public:
     inline void encode_sym_flush() {
     }
     
+    template<typename D>
     class Decoder {
     private:
         BitIStream* m_in;
-        DecodeBuffer* m_buf;
+        D* m_buf;
         
     public:
-        Decoder(Env& env, BitIStream& in, DecodeBuffer& buf) : m_in(&in), m_buf(&buf) {
+        Decoder(Env& env, BitIStream& in, D& buf) : m_in(&in), m_buf(&buf) {
         }
         
         size_t decode_sym() {

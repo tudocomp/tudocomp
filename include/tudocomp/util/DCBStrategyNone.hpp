@@ -6,7 +6,7 @@ namespace tudocomp {
 class DCBStrategyNone {
 
 public:
-    inline DCBStrategyNone() {
+    inline DCBStrategyNone(size_t len) {
     }
 
     inline void wait(size_t pos, size_t src) {

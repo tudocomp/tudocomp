@@ -107,7 +107,7 @@ inline void DebugLZSSCoder::decode(Env& env, Input& input, Output& out) {
         len_str >> len;
     }
 
-    DecodeBuffer buffer(len, DCBStrategyRetargetArray(len));
+    DecodeBuffer<DCBStrategyRetargetArray> buffer(len);
 
     //Decode text
     size_t pos = 0;

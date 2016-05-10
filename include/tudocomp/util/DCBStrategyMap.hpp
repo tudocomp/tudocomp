@@ -16,7 +16,7 @@ private:
     std::map<size_t, list_type> m_map;
 
 public:
-    inline DCBStrategyMap() {
+    inline DCBStrategyMap(size_t len) {
     }
 
     inline void wait(size_t pos, size_t src) {

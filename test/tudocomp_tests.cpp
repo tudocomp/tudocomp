@@ -266,7 +266,7 @@ TEST(IO, bits) {
 TEST(DecodeBuffer, cbstrategy_none) {
 
 
-    DecodeBuffer buffer(12, DCBStrategyNone());
+    DecodeBuffer<DCBStrategyNone> buffer(12);
     buffer.decode('b');
     buffer.decode('a');
     buffer.decode('n');
@@ -282,7 +282,7 @@ TEST(DecodeBuffer, cbstrategy_none) {
 
 TEST(DecodeBuffer, cbstrategy_map) {
 
-    DecodeBuffer buffer(12, DCBStrategyMap());
+    DecodeBuffer<DCBStrategyMap> buffer(12);
     buffer.decode('b');
     buffer.defact(3, 3);
     buffer.decode('n');
@@ -298,7 +298,7 @@ TEST(DecodeBuffer, cbstrategy_map) {
 
 TEST(DecodeBuffer, cbstrategy_array) {
 
-    DecodeBuffer buffer(12, DCBStrategyRetargetArray(12));
+    DecodeBuffer<DCBStrategyRetargetArray> buffer(12);
     buffer.decode('b');
     buffer.defact(3, 3);
     buffer.decode('n');

@@ -129,16 +129,11 @@ inline void OnlineLZSSCoder<A>::decode(Env& env, Input& input, Output& out) {
     size_t src_bits = in.read_compressed_int();
     bool src_use_delta = in.readBit();
 
-    DecodeCallbackStrategy strategy;
-    if(src_use_delta) {
-        strategy = DCBStrategyNone();
-    } else {
-        strategy = DCBStrategyRetargetArray(len);
-    }
+    //TODO: use DCBStrategyNone if src_use_delta is true
+    DecodeBuffer<DCBStrategyRetargetArray> buffer(len);
 
-    DecodeBuffer buffer(len, strategy);
-
-    auto alphabet_decoder = typename A::Decoder(env, in, buffer);
+    //TODO: wtf
+    typename A::template Decoder<DecodeBuffer<DCBStrategyRetargetArray>> alphabet_decoder(env, in, buffer);
 
     //Decode
     size_t pos = 0;

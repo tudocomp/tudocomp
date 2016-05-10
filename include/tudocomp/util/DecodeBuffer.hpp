@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 
-#include <boost/variant.hpp>
 #include <sdsl/int_vector.hpp>
 
 #include <glog/logging.h>
@@ -15,12 +14,11 @@
 
 namespace tudocomp {
 
-using DecodeCallbackStrategy = boost::variant<DCBStrategyNone, DCBStrategyMap, DCBStrategyRetargetArray>;
-
-class DecodeBuffer {
+template <typename C>
+class DecodeBuffer { // C should be one of: DCBStrategyNone, DCBStrategyMap, DCBStrategyRetargetArray
     
 private:
-    DecodeCallbackStrategy m_cb_strategy;
+    std::shared_ptr<C> m_cb_strategy;
     
     size_t m_len;
     sdsl::int_vector<8> m_text;
@@ -28,59 +26,14 @@ private:
     
     size_t m_pos;
     
-    struct visitor_next_waiting_for : public boost::static_visitor<bool> {
-        size_t pos;
-        size_t* out_waiting;
-        
-        visitor_next_waiting_for(size_t _pos, size_t& _out_waiting)
-            : pos(_pos), out_waiting(&_out_waiting) {}
-        
-        inline bool operator()(DCBStrategyNone& cb) const {
-            return cb.next_waiting_for(pos, *out_waiting);
-        }
-        
-        inline bool operator()(DCBStrategyMap& cb) const {
-            return cb.next_waiting_for(pos, *out_waiting);
-        }
-        
-        inline bool operator()(DCBStrategyRetargetArray& cb) const {
-            return cb.next_waiting_for(pos, *out_waiting);
-        }
-    };
-    
-    inline bool next_waiting_for(size_t pos, size_t& out_waiting) {
-        return boost::apply_visitor(visitor_next_waiting_for(pos, out_waiting), m_cb_strategy);
-    }
-    
-    struct visitor_wait : public boost::static_visitor<void> {
-        size_t pos, src;
-        
-        visitor_wait(size_t _pos, size_t _src)
-            : pos(_pos), src(_src) {}
-
-        inline void operator()(DCBStrategyNone& cb) const {
-            return cb.wait(pos, src);
-        }
-        
-        inline void operator()(DCBStrategyMap& cb) const {
-            return cb.wait(pos, src);
-        }
-        
-        inline void operator()(DCBStrategyRetargetArray& cb) const {
-            return cb.wait(pos, src);
-        }
-    };
-    
-    inline void wait(size_t pos, size_t src) {
-        return boost::apply_visitor(visitor_wait(pos, src), m_cb_strategy);
-    }
-    
 public:
-    DecodeBuffer(size_t len, DecodeCallbackStrategy cb_strategy)
-        : m_cb_strategy(cb_strategy), m_len(len), m_pos(0) {
+    DecodeBuffer(size_t len)
+        : m_len(len), m_pos(0) {
 
         m_text = sdsl::int_vector<8>(len, 0);
         m_decoded = sdsl::bit_vector(len, 0);
+
+        m_cb_strategy = std::shared_ptr<C>(new C(len));
     }
     
     inline void decode(size_t pos, uint8_t sym) {
@@ -90,7 +43,7 @@ public:
         m_decoded[pos] = 1;
         
         size_t waiting_pos;
-        while(next_waiting_for(pos, waiting_pos)) {
+        while(m_cb_strategy->next_waiting_for(pos, waiting_pos)) {
             decode(waiting_pos, sym); //recursion!
         }
     }
@@ -107,7 +60,7 @@ public:
             if(m_decoded[src]) {
                 decode(pos, m_text[src]);
             } else {
-                wait(pos, src);
+                m_cb_strategy->wait(pos, src);
             }
             
             ++pos;
