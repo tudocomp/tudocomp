@@ -8,10 +8,7 @@
 #define _INCLUDED_LZ77SS_SLIDING_WINDOW_COMPRESSOR_HPP
 
 #include <algorithm>
-#include <functional>
 #include <vector>
-
-#include <boost/circular_buffer.hpp>
 
 #include <tudocomp/util.h>
 #include <tudocomp/lzss/LZSSCompressor.hpp>
@@ -54,7 +51,7 @@ protected:
         auto in_guard = input.as_stream();
         std::istream& ins = *in_guard;
 
-        boost::circular_buffer<uint8_t> buf(2 * m_window);
+        std::vector<uint8_t> buf;
 
         size_t ahead = 0; //marks the index in the buffer at which the back buffer ends and the ahead buffer begins
         char c;
@@ -108,8 +105,8 @@ protected:
                     ++ahead;
                 } else if(!eof && ins.get(c)) {
                     //case 2: read a new symbol
-                    buf.pop_front();
-                    buf.push_back(uint8_t(c)); //TODO is this how to use circular buffers? ...
+                    buf.erase(buf.begin()); //TODO ouch
+                    buf.push_back(uint8_t(c));
                     ++buf_off;
                 } else {
                     //case 3: EOF, read rest of buffer
