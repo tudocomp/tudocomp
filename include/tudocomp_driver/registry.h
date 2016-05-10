@@ -18,7 +18,6 @@
 #include <vector>
 #include <memory>
 
-#include <boost/utility/string_ref.hpp>
 #include <glog/logging.h>
 
 #include <tudocomp/Env.hpp>
@@ -116,6 +115,8 @@ inline void AlgorithmInfo::print_to(std::ostream& out, int indent) {
     }
 }
 
+/*
+//commented out because it creates a Boost dependency despite being entirely unused
 inline boost::string_ref pop_algorithm_id(boost::string_ref& algorithm_id) {
     auto idx = algorithm_id.find('.');
     int dot_size = 1;
@@ -127,6 +128,7 @@ inline boost::string_ref pop_algorithm_id(boost::string_ref& algorithm_id) {
     algorithm_id.remove_prefix(idx + dot_size);
     return r;
 }
+*/
 
 struct SubRegistry;
 
