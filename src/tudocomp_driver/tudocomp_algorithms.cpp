@@ -40,7 +40,10 @@ using lz78::lzcics::Lz78cicsCompressor;
 
 using lzss::LZ77SSSlidingWindowCompressor;
 using lzss::LZ77SSLCPCompressor;
+
 using lzss::LZSSESACompressor;
+using lzss::ESACompBulldozer;
+using lzss::ESACompMaxLCP;
 
 using lzss::DebugLZSSCoder;
 using lzss::OnlineLZSSCoder;
@@ -154,11 +157,11 @@ void register_algos(Registry& r) {
     r.compressor("lz77ss_lcp.online.offline",  make<LZ77SSLCPCompressor<OnlineLZSSCoder<OfflineAlphabetCoder>>>);
     r.compressor("lz77ss_lcp.offline.online",  make<LZ77SSLCPCompressor<OfflineLZSSCoder<OnlineAlphabetCoder>>>);
     r.compressor("lz77ss_lcp.offline.offline", make<LZ77SSLCPCompressor<OfflineLZSSCoder<OfflineAlphabetCoder>>>);
-    r.compressor("esacomp.debug",           make<LZSSESACompressor<DebugLZSSCoder>>);
-    r.compressor("esacomp.online.online",   make<LZSSESACompressor<OnlineLZSSCoder<OnlineAlphabetCoder>>>);
-    r.compressor("esacomp.online.offline",  make<LZSSESACompressor<OnlineLZSSCoder<OfflineAlphabetCoder>>>);
-    r.compressor("esacomp.offline.online",  make<LZSSESACompressor<OfflineLZSSCoder<OnlineAlphabetCoder>>>);
-    r.compressor("esacomp.offline.offline", make<LZSSESACompressor<OfflineLZSSCoder<OfflineAlphabetCoder>>>);
+    r.compressor("esacomp.debug",           make<LZSSESACompressor<ESACompMaxLCP, DebugLZSSCoder>>);
+    r.compressor("esacomp.online.online",   make<LZSSESACompressor<ESACompMaxLCP, OnlineLZSSCoder<OnlineAlphabetCoder>>>);
+    r.compressor("esacomp.online.offline",  make<LZSSESACompressor<ESACompMaxLCP, OnlineLZSSCoder<OfflineAlphabetCoder>>>);
+    r.compressor("esacomp.offline.online",  make<LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OnlineAlphabetCoder>>>);
+    r.compressor("esacomp.offline.offline", make<LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OfflineAlphabetCoder>>>);
 
     r.compressor("chain_test", [](Env& env) {
         std::vector<CompressorConstructor> algorithms {
@@ -252,11 +255,11 @@ void register2(RegistryV3& r) {
     r.compressor("lz77ss_lcp(debug())",            make<LZ77SSLCPCompressor<DebugLZSSCoder>>);
     r.compressor("lz77ss_lcp(online(online()))",   make<LZ77SSLCPCompressor<OnlineLZSSCoder<OnlineAlphabetCoder>>>);
     r.compressor("lz77ss_lcp(online(offline()))",  make<LZ77SSLCPCompressor<OnlineLZSSCoder<OfflineAlphabetCoder>>>);
-    r.compressor("esacomp(debug())",            make<LZSSESACompressor<DebugLZSSCoder>>);
-    r.compressor("esacomp(online(online()))",   make<LZSSESACompressor<OnlineLZSSCoder<OnlineAlphabetCoder>>>);
-    r.compressor("esacomp(online(offline()))",  make<LZSSESACompressor<OnlineLZSSCoder<OfflineAlphabetCoder>>>);
-    r.compressor("esacomp(offline(online()))",  make<LZSSESACompressor<OfflineLZSSCoder<OnlineAlphabetCoder>>>);
-    r.compressor("esacomp(offline(offline()))", make<LZSSESACompressor<OfflineLZSSCoder<OfflineAlphabetCoder>>>);
+    r.compressor("esacomp(debug())",            make<LZSSESACompressor<ESACompMaxLCP, DebugLZSSCoder>>);
+    r.compressor("esacomp(online(online()))",   make<LZSSESACompressor<ESACompMaxLCP, OnlineLZSSCoder<OnlineAlphabetCoder>>>);
+    r.compressor("esacomp(online(offline()))",  make<LZSSESACompressor<ESACompMaxLCP, OnlineLZSSCoder<OfflineAlphabetCoder>>>);
+    r.compressor("esacomp(offline(online()))",  make<LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OnlineAlphabetCoder>>>);
+    r.compressor("esacomp(offline(offline()))", make<LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OfflineAlphabetCoder>>>);
 
     r.compressor("chain_test()", [](Env& env) {
         std::vector<CompressorConstructor> algorithms {

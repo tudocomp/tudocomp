@@ -43,7 +43,7 @@ public:
 
     /// Encodes a LZSS factor to the output.
     inline void encode_fact(const LZSSFactor& f) {
-        **m_out << "{" << f.src << "," << f.num << "}";
+        **m_out << "{" << (f.src + 1) << "," << f.num << "}";
     }
 
     /// Passes a raw symbol to the alphabet encoder.
@@ -133,8 +133,8 @@ inline void DebugLZSSCoder::decode(Env& env, Input& input, Output& out) {
                     src_str >> src;
                     num_str >> num;
                 }
-
-                buffer.defact(src, num);
+                
+                buffer.defact(src - 1, num);
                 pos += num;
             } else {
                 buffer.decode(uint8_t(c));
