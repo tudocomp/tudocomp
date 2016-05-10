@@ -18,8 +18,9 @@
 #include <vector>
 #include <memory>
 
-#include <boost/utility/string_ref.hpp>
 #include <glog/logging.h>
+
+#include <boost/variant.hpp>
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
@@ -167,15 +168,15 @@ using namespace tudocomp;
     };
 
     class Parser {
-        boost::string_ref m_input;
+        std::string m_input;
         size_t m_current_pos;
 
     public:
-        inline Parser(boost::string_ref input): m_input(input), m_current_pos(0) {}
+        inline Parser(const std::string& input): m_input(input), m_current_pos(0) {}
         inline Parser(const Parser& other) = delete;
         inline Parser(Parser&& other) = delete;
 
-        inline boost::string_ref cursor() const {
+        inline std::string cursor() const {
             return m_input.substr(m_current_pos);
         }
 
@@ -198,11 +199,11 @@ using namespace tudocomp;
             return m_current_pos;
         }
 
-        inline boost::string_ref input() const {
+        inline const std::string& input() const {
             return m_input;
         }
 
-        inline Result<boost::string_ref> parse_ident() {
+        inline Result<std::string> parse_ident() {
             Parser& s = *this;
 
             s.skip_whitespace();
@@ -223,9 +224,9 @@ using namespace tudocomp;
                 }
                 auto r = s.cursor().substr(0, i);
                 s.skip(i);
-                return ok<boost::string_ref>(r);
+                return ok<std::string>(r);
             } else {
-                return err<boost::string_ref>("Expected an identifier");
+                return err<std::string>("Expected an identifier");
             }
         }
 
@@ -244,7 +245,7 @@ using namespace tudocomp;
             }
         }
 
-        inline Result<boost::string_ref> parse_number() {
+        inline Result<std::string> parse_number() {
             Parser& s = *this;
 
             s.skip_whitespace();
@@ -259,9 +260,9 @@ using namespace tudocomp;
                 }
                 auto r = s.cursor().substr(0, i);
                 s.skip(i);
-                return ok<boost::string_ref>(r);
+                return ok<std::string>(r);
             } else {
-                return err<boost::string_ref>("Expected an number");
+                return err<std::string>("Expected an number");
             }
         }
 
@@ -289,10 +290,10 @@ using namespace tudocomp;
             };
         }
 
-        inline Result<AlgorithmArg> parse_arg(boost::string_ref keyword = "") {
+        inline Result<AlgorithmArg> parse_arg(const std::string& keyword = "") {
             Parser& p = *this;
 
-            return p.parse_ident().and_then<AlgorithmArg>([&](boost::string_ref arg_ident) {
+            return p.parse_ident().and_then<AlgorithmArg>([&](const std::string& arg_ident) {
                 // "ident ..." case
 
                 if (keyword == "") {
@@ -309,24 +310,24 @@ using namespace tudocomp;
                 return p.parse_args().and_then<AlgorithmArg>([&](std::vector<AlgorithmArg> args) {
                     // "ident(...) ..." case
                     return p.ok(AlgorithmArg {
-                        std::string(keyword),
+                        keyword,
                         AlgorithmSpec {
-                            std::string(arg_ident),
+                            arg_ident,
                             args
                         }
                     });
                 }).or_else([&](Err err) {
                     // "ident ..." fallback case
                     return p.ok<AlgorithmArg>(AlgorithmArg {
-                        std::string(keyword),
+                        keyword,
                         std::string(arg_ident)
                     });
                 });
             }).or_else([&](Err err) {
-                return p.parse_number().and_then<AlgorithmArg>([&](boost::string_ref n) {
+                return p.parse_number().and_then<AlgorithmArg>([&](const std::string& n) {
                     // "num ..." case
                     return p.ok<AlgorithmArg>(AlgorithmArg {
-                        std::string(keyword),
+                        keyword,
                         std::string(n)
                     });
                 });
@@ -362,10 +363,10 @@ using namespace tudocomp;
         inline Result<AlgorithmSpec> parse() {
             Parser& p = *this;
 
-            return p.parse_ident().and_then<AlgorithmSpec>([&](boost::string_ref ident) {
+            return p.parse_ident().and_then<AlgorithmSpec>([&](const std::string& ident) {
                 return p.parse_args().and_then<AlgorithmSpec>([&](std::vector<AlgorithmArg> args) {
                     return p.ok(AlgorithmSpec {
-                        std::string(ident),
+                        ident,
                         args
                     });
                 });
