@@ -6,21 +6,15 @@
 #include <sstream>
 #include <utility>
 
-#include <boost/iostreams/stream_buffer.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
+#include <tudocomp/io/vecstreambuf.hpp>
 
 namespace tudocomp {
 namespace io {
 
 /// A ostream that writes bytes into a stl byte container.
 class BackInsertStream {
-    // NB: Very hacky implementation right now...
-
     std::vector<uint8_t>* buffer;
-    std::unique_ptr<
-        boost::iostreams::stream_buffer<
-            boost::iostreams::back_insert_device<
-                std::vector<char>>>> outBuf;
+    std::unique_ptr<vecstreambuf<uint8_t>> outBuf;
     std::unique_ptr<std::stringstream> ss;
     std::ostream* o;
 
@@ -40,17 +34,7 @@ public:
 
     BackInsertStream(std::vector<uint8_t>& buf) {
         buffer = &buf;
-        outBuf = std::unique_ptr<
-            boost::iostreams::stream_buffer<
-                boost::iostreams::back_insert_device<
-                    std::vector<char>>>> {
-            new boost::iostreams::stream_buffer<
-                    boost::iostreams::back_insert_device<
-                        std::vector<char>>> {
-                // TODO: Very iffy cast here...
-                *((std::vector<char>*) buffer)
-            }
-        };
+        outBuf = std::unique_ptr<vecstreambuf<uint8_t>>(new vecstreambuf<uint8_t>(buf));
         ss = std::unique_ptr<std::stringstream> {
             new std::stringstream()
         };
