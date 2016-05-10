@@ -8,10 +8,14 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <boost/utility/string_ref.hpp>
-#include <boost/lexical_cast.hpp>
-
 namespace tudocomp {
+
+//DIY lexical cast
+template<typename T> T lexical_cast(const std::string& s) {
+    T val;
+    std::stringstream(s) >> val;
+    return val;
+}
 
 /// Local environment for a compression/encoding/decompression call.
 ///
@@ -104,7 +108,7 @@ public:
     T option_as(const std::string& name, T default_value = T()) const {
         known_options.insert(name);
         if (has_option(name)) {
-            return boost::lexical_cast<T>(options.at(name));
+            return lexical_cast<T>(options.at(name));
         } else {
             return default_value;
         }
