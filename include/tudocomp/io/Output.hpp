@@ -9,8 +9,6 @@
 #include <utility>
 #include <vector>
 
-#include <boost/variant.hpp>
-
 #include <tudocomp/io/BackInsertStream.hpp>
 
 namespace tudocomp {
@@ -19,45 +17,122 @@ namespace io {
     class OutputStream;
 
     class Output {
-        struct Memory {
-            std::vector<uint8_t>* buffer;
+        class Variant {
+        public:
+            virtual ~Variant() {}
+            virtual OutputStream as_stream() = 0;
         };
-        struct File {
-            std::string path;
+
+        class Memory: public Variant {
+            std::vector<uint8_t>* m_buffer;
+
+        public:
+            Memory(std::vector<uint8_t>* buffer): m_buffer(buffer) {}
+
+            inline OutputStream as_stream() override;
+        };
+        class File: public Variant {
+            std::string m_path;
             bool m_overwrite;
+
+        public:
+            File(std::string path, bool overwrite):
+                m_path(path), m_overwrite(overwrite) {}
+
+            inline OutputStream as_stream() override;
         };
-        struct Stream {
-            std::ostream* stream;
+        class Stream: public Variant {
+            std::ostream* m_stream;
+
+        public:
+            Stream(std::ostream* stream): m_stream(stream) {}
+
+            inline OutputStream as_stream() override;
         };
+
+        std::unique_ptr<Variant> m_data;
+
+        friend class OutputStream;
 
     public:
-        boost::variant<Memory, Stream, File> data;
+        /// An empty Output. Defaults to writing to stdout
+        inline Output(): Output(std::cout) {}
 
+        /// Move constructor
+        inline Output(Output&& other):
+            m_data(std::move(other.m_data)) {}
+
+        Output(std::string path, bool overwrite=false):
+            m_data(std::make_unique<File>(std::move(path), overwrite)) {}
+
+        Output(std::vector<uint8_t>& buf):
+            m_data(std::make_unique<Memory>(&buf)) {}
+
+        Output(std::ostream& stream):
+            m_data(std::make_unique<Stream>(&stream)) {}
+
+        Output& operator=(Output&& other) {
+            m_data = std::move(other.m_data);
+            return *this;
+        }
+
+        /// DEPRECATED
         static Output from_path(std::string path, bool overwrite=false) {
-            return Output { File { std::move(path), overwrite } };
+            return Output(std::move(path), overwrite);
         }
 
+        /// DEPRECATED
         static Output from_memory(std::vector<uint8_t>& buf) {
-            return Output { Memory { &buf } };
+            return Output(buf);
         }
 
+        /// DEPRECATED
         static Output from_stream(std::ostream& stream) {
-            return Output { Stream { &stream } };
+            return Output(stream);
         }
 
         inline OutputStream as_stream();
     };
 
     struct OutputStream {
-        struct Memory {
-            BackInsertStream stream;
+        class Variant {
+        public:
+            virtual ~Variant() {}
+            virtual std::ostream& stream() = 0;
         };
-        struct Stream {
-            std::ostream* stream;
+
+        class Memory: public Variant {
+            BackInsertStream m_stream;
+        public:
+            friend class OutputStream;
+
+            Memory(BackInsertStream&& stream): m_stream(stream) {}
+
+            inline std::ostream& stream() override {
+                return m_stream.stream();
+            }
         };
-        struct File {
+        class Stream: public Variant {
+            std::ostream* m_stream;
+        public:
+            friend class OutputStream;
+
+            Stream(std::ostream* stream): m_stream(stream) {}
+
+            inline std::ostream& stream() override {
+                return *m_stream;
+            }
+        };
+        class File: public Variant {
             std::string m_path;
-            std::unique_ptr<std::ofstream> stream;
+            std::unique_ptr<std::ofstream> m_stream;
+
+        public:
+            friend class OutputStream;
+
+            inline std::ostream& stream() override {
+                return *m_stream;
+            }
 
             File(const File& other): File(std::string(other.m_path)) {
             }
@@ -65,70 +140,71 @@ namespace io {
             File(std::string&& path, bool overwrite = false) {
                 m_path = path;
                 if (overwrite) {
-                    stream = std::make_unique<std::ofstream>(m_path,
+                    m_stream = std::make_unique<std::ofstream>(m_path,
                         std::ios::out | std::ios::binary);
                 } else {
-                    stream = std::make_unique<std::ofstream>(m_path,
+                    m_stream = std::make_unique<std::ofstream>(m_path,
                         std::ios::out | std::ios::binary | std::ios::app);
                 }
             }
 
             File(std::unique_ptr<std::ofstream>&& s) {
-                stream = std::move(s);
+                m_stream = std::move(s);
             }
 
             File(File&& other) {
-                stream = std::move(other.stream);
+                m_stream = std::move(other.m_stream);
             }
         };
 
-        boost::variant<Memory, Stream, File> data;
+        std::unique_ptr<Variant> m_data;
 
-        std::ostream& operator* () {
-            struct visitor: public boost::static_visitor<std::ostream&> {
-                std::ostream& operator()(OutputStream::Memory& m) const {
-                    return m.stream.stream();
-                }
-                std::ostream& operator()(OutputStream::Stream& m) const {
-                    return *m.stream;
-                }
-                std::ostream& operator()(OutputStream::File& m) const {
-                    return *m.stream;
-                }
-            };
-            return boost::apply_visitor(visitor(), data);
+    public:
+        inline std::ostream& operator* () {
+            return m_data->stream();
         }
+
+        OutputStream(const OutputStream* other) = delete;
+        OutputStream() = delete;
+
+        OutputStream(OutputStream::Memory&& mem):
+            m_data(std::make_unique<Memory>(std::move(mem))) {}
+        OutputStream(OutputStream::File&& s):
+            m_data(std::make_unique<File>(std::move(s))) {}
+        OutputStream(OutputStream::Stream&& s):
+            m_data(std::make_unique<Stream>(std::move(s))) {}
     };
+
+    inline OutputStream Output::Memory::as_stream() {
+        return OutputStream {
+            OutputStream::Memory {
+                BackInsertStream { *m_buffer }
+            }
+        };
+    }
+
+    inline OutputStream Output::File::as_stream() {
+        auto overwrite = m_overwrite;
+        m_overwrite = false;
+        return OutputStream {
+            OutputStream::File {
+                std::string(m_path),
+                overwrite,
+            }
+        };
+    }
+
+    inline OutputStream Output::Stream::as_stream() {
+        return OutputStream {
+            OutputStream::Stream {
+                m_stream
+            }
+        };
+    }
 
     inline OutputStream Output::as_stream() {
-        struct visitor: public boost::static_visitor<OutputStream> {
-            OutputStream operator()(Output::Memory& mem) const {
-                return OutputStream {
-                    OutputStream::Memory {
-                        BackInsertStream { *mem.buffer }
-                    }
-                };
-            }
-            OutputStream operator()(Output::File& f) const {
-                auto overwrite = f.m_overwrite;
-                f.m_overwrite = false;
-                return OutputStream {
-                    OutputStream::File {
-                        std::string(f.path),
-                        overwrite,
-                    }
-                };
-            }
-            OutputStream operator()(Output::Stream& strm) const {
-                return OutputStream {
-                    OutputStream::Stream {
-                        strm.stream
-                    }
-                };
-            }
-        };
-        return boost::apply_visitor(visitor(), data);
-    };
+        return m_data->as_stream();
+    }
 
 }}
 

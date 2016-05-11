@@ -10,7 +10,6 @@
 #include <vector>
 
 #include <boost/utility/string_ref.hpp>
-#include <boost/variant.hpp>
 
 #include <tudocomp/util.h>
 
