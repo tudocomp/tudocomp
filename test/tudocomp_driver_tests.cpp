@@ -8,7 +8,7 @@
 
 #include "test_util.h"
 #include "tudocomp_driver/registry.h"
-#include "tudocomp_driver/AlgorithmStringParser.hpp"
+//#include "tudocomp_driver/AlgorithmStringParser.hpp"
 
 #include "tudocomp_driver_util.h"
 
@@ -74,6 +74,7 @@ TEST(TudocompDriver, algorithm_header) {
 
 }
 
+/*
 TEST(NewAlgorithmStringParser, smoketest) {
     using namespace tudocomp_driver;
     Parser p { "foo(abc, def=ghi, jkl=mno(p, q=1))" };
@@ -143,3 +144,4 @@ TEST(RegistryV3, test) {
 
     r.check_for_undefined_compressors();
 }
+*/

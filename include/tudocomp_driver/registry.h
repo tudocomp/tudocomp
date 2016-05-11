@@ -23,7 +23,7 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/util.h>
-#include <tudocomp_driver/AlgorithmStringParser.hpp>
+// #include <tudocomp_driver/AlgorithmStringParser.hpp>
 
 namespace tudocomp_driver {
 
@@ -198,6 +198,7 @@ void register_algos(Registry& registry);
 
 // New unified algorithm spec registry
 
+/*
 class RegistryV3;
 
 struct ArgTypeBuilder {
@@ -405,6 +406,7 @@ inline ArgTypeBuilder& ArgTypeBuilder::doc(std::string doc) {
 }
 
 void register2(RegistryV3& registry);
+*/
 
 }
 
