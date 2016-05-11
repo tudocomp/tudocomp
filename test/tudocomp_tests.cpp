@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include <boost/filesystem.hpp>
+#include <boost/utility/string_ref.hpp>
 #include <gtest/gtest.h>
 
 #include <tudocomp/io.h>

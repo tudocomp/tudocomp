@@ -2,14 +2,18 @@
 #define TEST_UTIL_H
 
 #include <cstdint>
+#include <fstream>
 #include <iostream>
-
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/utility/string_ref.hpp>
 
 #include <glog/logging.h>
 #include <gtest/gtest.h>
+
+#ifdef __unix__
+    #include <sys/stat.h>
+#elif _WIN32
+    #include <windows.h>
+    #include <Shlwapi.h>
+#endif
 
 // TODO: Actually specialize the 3 kinds
 
@@ -44,19 +48,6 @@ void assert_eq_sequence(const T& expected, const U& actual) {
     for (size_t i = 0; i < expected.size(); i++)
         ASSERT_EQ(expected[i], actual[i]);
 }
-
-/// A `streambuf` that can be used as a `istream` that points into the
-/// contents of another string.
-///
-/// This is useful for testing the implementation of Coder::decode()
-/// with small hardcoded strings.
-// DEPRECATED tudocomp offers ViewStream now
-struct StringRefStream: std::streambuf
-{
-    inline StringRefStream(const boost::string_ref vec) {
-        this->setg((char*)vec.data(), (char*)vec.data(), (char*)vec.data() + vec.size());
-    }
-};
 
 /// Temporary provides a `ostream` to write into, and returns it as a string.
 ///
@@ -142,57 +133,63 @@ void test_roundtrip_batch(F f) {
 
 const std::string TEST_FILE_PATH = "test_files";
 
-// TODO: Make Tudocomp use boost::filesystem::path,
-// and migrate from strings away here
-
-inline std::string test_file_path(std::string filename) {
+inline std::string test_file_path(const std::string& filename) {
     return TEST_FILE_PATH + "/" + filename;
 }
 
-inline bool test_file_exists(std::string filename) {
-    boost::filesystem::path file_path = test_file_path(filename);
+inline bool test_file_exists(const std::string& filename) {
+    std::string test_file_name = test_file_path(filename);
 
-    std::stringbuf sb;
-    boost::filesystem::ifstream myfile;
-    myfile.open(file_path);
-    return bool(myfile);
+    #ifdef __unix__
+        //on Unix, use stat
+        struct stat buf;
+        return (stat(test_file_name.c_str(), &buf) == 0);
+    #elif _WIN32
+        //Windows
+        return PathFileExists(test_file_name.c_str());
+    #endif
 }
-inline std::string read_test_file(std::string filename) {
-    boost::filesystem::path file_path = test_file_path(filename);
 
-    std::stringbuf sb;
-    boost::filesystem::ifstream myfile;
-    myfile.open(file_path);
-    if (!bool(myfile)) {
-        std::stringstream ss;
-        ss << file_path;
-        throw std::runtime_error("Could not open test file " + ss.str());
+inline std::string read_test_file(const std::string& filename) {
+    std::ostringstream sout;
+
+    std::string test_file_name = test_file_path(filename);
+    std::ifstream fin(test_file_name);
+    if(fin) {
+        std::copy(std::istreambuf_iterator<char>(fin),
+              std::istreambuf_iterator<char>(),
+              std::ostreambuf_iterator<char>(sout));
+
+        fin.close();
+    } else {
+        std::string msg = "Could not open test file \"";
+        msg += test_file_name;
+        msg += "\"";
+        throw std::runtime_error(msg);
     }
-    myfile >> &sb;
-    myfile.close();
-    return sb.str();
+    return sout.str();
 }
 
-inline void write_test_file(std::string filename, std::string text) {
-    boost::filesystem::create_directory(boost::filesystem::path(TEST_FILE_PATH));
-    boost::filesystem::path file_path = test_file_path(filename);
+inline void create_test_directory() {
+    #ifdef __unix__
+        mkdir(TEST_FILE_PATH.c_str(), 0777);
+    #elif _WIN32
+        CreateDirectory(TEST_FILE_PATH.c_str());
+    #endif
+}
 
-    boost::filesystem::ofstream myfile;
-    myfile.open(file_path);
-    if (!bool(myfile)) {
-        std::stringstream ss;
-        ss << file_path;
-        throw std::runtime_error("Could not open test file " + ss.str());
+inline void write_test_file(const std::string& filename, const std::string& text) {
+    create_test_directory();
+    std::ofstream fout(test_file_path(filename));
+    if(fout) {
+        fout << text;
+        fout.close();
     }
-    myfile << text;
-    myfile.close();
 }
 
-inline void remove_test_file(std::string filename) {
-    boost::filesystem::create_directory(boost::filesystem::path(TEST_FILE_PATH));
-    boost::filesystem::path file_path = test_file_path(filename);
-
-    remove(file_path);
+inline void remove_test_file(const std::string& filename) {
+    create_test_directory();
+    remove(test_file_path(filename).c_str());
 }
 
 inline std::vector<uint8_t> pack_integers(std::vector<uint64_t> ints) {
