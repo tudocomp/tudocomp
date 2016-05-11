@@ -29,24 +29,24 @@ public:
     /// Construct the class with an environment.
     inline LZ77SSLCPCompressor(Env& env) : LZSSCompressor<C>(env) {
     }
-    
+
 protected:
     /// \copydoc
     inline virtual bool pre_factorize(Input& input) override {
         return false;
     }
-    
+
     /// \copydoc
     inline virtual LZSSCoderOpts coder_opts(Input& input) override {
         return LZSSCoderOpts(true, bitsFor(input.size()));
     }
-    
+
     /// \copydoc
     inline virtual void factorize(Input& input) override {
         auto in = input.as_view();
 
         size_t len = in.size();
-        const uint8_t* in_ptr = in.mem_ptr();
+        const uint8_t* in_ptr = (const uint8_t*)(*in).data();
         sdslex::int_vector_wrapper wrapper(in_ptr, len);
 
         //Construct SA
@@ -72,7 +72,7 @@ protected:
 
         //Factorize
         size_t fact_min = 3; //factor threshold
-        
+
         for(size_t i = 0; i < len;) {
             //get SA position for suffix i
             size_t h = isa[i];

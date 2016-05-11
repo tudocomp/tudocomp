@@ -34,7 +34,7 @@ public:
         auto in = input.as_view();
 
         size_t len = in.size();
-        const uint8_t* in_ptr = in.mem_ptr();
+        const uint8_t* in_ptr = (const uint8_t*)(*in).data();
         sdslex::int_vector_wrapper wrapper(in_ptr, len);
 
         //Construct SA
@@ -80,7 +80,7 @@ public:
     inline virtual LZSSCoderOpts coder_opts(Input& input) override {
         return LZSSCoderOpts(false, bitsFor(input.size()));
     }
-    
+
     /// \copydoc
     inline virtual void factorize(Input& input) override {
     }
