@@ -13,6 +13,8 @@
 #include <utility>
 #include <iomanip>
 
+#include <boost/utility/string_ref.hpp>
+
 #include <sdsl/bits.hpp>
 
 namespace tudocomp {
@@ -311,5 +313,7 @@ namespace std {
         typename _Unique_if<T>::_Known_bound
         make_unique(Args&&...) = delete;
 }
+
+using string_ref = boost::string_ref;
 
 #endif

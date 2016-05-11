@@ -117,14 +117,14 @@ inline void AlgorithmInfo::print_to(std::ostream& out, int indent) {
 
 /*
 //commented out because it creates a Boost dependency despite being entirely unused
-inline boost::string_ref pop_algorithm_id(boost::string_ref& algorithm_id) {
+inline string_ref pop_algorithm_id(string_ref& algorithm_id) {
     auto idx = algorithm_id.find('.');
     int dot_size = 1;
-    if (idx == boost::string_ref::npos) {
+    if (idx == string_ref::npos) {
         idx = algorithm_id.size();
         dot_size = 0;
     }
-    boost::string_ref r = algorithm_id.substr(0, idx);
+    string_ref r = algorithm_id.substr(0, idx);
     algorithm_id.remove_prefix(idx + dot_size);
     return r;
 }

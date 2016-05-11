@@ -9,8 +9,6 @@
 #include <utility>
 #include <vector>
 
-#include <boost/utility/string_ref.hpp>
-
 #include <tudocomp/util.h>
 
 #include <tudocomp/io/IOUtil.hpp>
@@ -98,7 +96,7 @@ namespace io {
             m_data(std::make_unique<Memory>(&buf[0], buf.size())) {}
 
         /// An Input referring to the contents of an string
-        Input(const boost::string_ref buf):
+        Input(const string_ref buf):
             m_data(std::make_unique<Memory>(
                     (const uint8_t*) &buf[0], buf.size())) {}
 
@@ -118,7 +116,7 @@ namespace io {
         }
 
         /// DEPRECATED
-        static Input from_memory(const boost::string_ref buf) {
+        static Input from_memory(const string_ref buf) {
             return Input(buf);
         }
 
@@ -132,7 +130,7 @@ namespace io {
 
     struct InputView {
         struct Variant {
-            virtual boost::string_ref view() = 0;
+            virtual string_ref view() = 0;
         };
 
         struct Memory: Variant {
@@ -144,8 +142,8 @@ namespace io {
                 this->size = size;
             }
 
-            boost::string_ref view() override {
-                return boost::string_ref {
+            string_ref view() override {
+                return string_ref {
                     (char*) ptr,
                     size
                 };
@@ -157,8 +155,8 @@ namespace io {
             File(std::vector<uint8_t>&& buffer_):
                 buffer(std::move(buffer_)) {}
 
-            boost::string_ref view() override {
-                return boost::string_ref {
+            string_ref view() override {
+                return string_ref {
                     (char*) buffer.data(),
                     buffer.size()
                 };
@@ -167,7 +165,7 @@ namespace io {
 
         std::unique_ptr<Variant> m_data;
 
-        boost::string_ref operator* () {
+        string_ref operator* () {
             return m_data->view();
         }
 
