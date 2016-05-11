@@ -9,6 +9,9 @@ function(find_or_download_package package package_found_prefix target_name)
     endif()
 
     add_library(${target_name} INTERFACE)
+    set_target_properties(${target_name} PROPERTIES
+        "INTERFACE_INCLUDE_DIRECTORIES" "${${package_found_prefix}_INCLUDE_DIRS}"
+    )
 
     foreach(sublib ${${package_found_prefix}_LIBRARIES})
         get_filename_component(LIB_NAME ${sublib} NAME_WE)
