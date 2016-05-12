@@ -94,10 +94,10 @@ int main(int argc, char** argv)
 
         /*for (auto& os : string_args("--option")) {
             std::vector<std::string> options;
-            boost::split(options, os, boost::is_any_of(","));
+            bost::split(options, os, bost::is_any_of(","));
             for (auto& o : options) {
                 std::vector<std::string> key_value;
-                boost::split(key_value, o, boost::is_any_of("="));
+                bost::split(key_value, o, bost::is_any_of("="));
                 CHECK(key_value.size() == 2);
                 algorithm_options.emplace(key_value[0], key_value[1]);
             }

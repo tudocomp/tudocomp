@@ -155,7 +155,7 @@ TEST(Lzw, LzwCompressor) {
     using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
 
     Env env;
-    boost::string_ref input_str = "xyxaybxa!xa!?";
+    string_ref input_str = "xyxaybxa!xa!?";
 
     std::vector<uint8_t> encoded_buffer;
     std::vector<uint8_t> decoded_buffer;

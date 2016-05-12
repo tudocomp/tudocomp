@@ -118,7 +118,7 @@ TEST(Lz78, Lz78Compressor) {
     using Compressor = tudocomp::lz78::Lz78Compressor<Coder>;
 
     Env env;
-    boost::string_ref input_str = "xyxaybxa!xa!?";
+    string_ref input_str = "xyxaybxa!xa!?";
 
     std::vector<uint8_t> encoded_buffer;
     std::vector<uint8_t> decoded_buffer;

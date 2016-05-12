@@ -4,7 +4,6 @@
 #include <stdexcept>
 #include <utility>
 
-#include <boost/utility/string_ref.hpp>
 #include <gtest/gtest.h>
 
 #include <tudocomp/io.h>
@@ -131,7 +130,7 @@ TEST(Input, vector) {
 }
 
 TEST(Input, string_ref) {
-    boost::string_ref v { "abc" };
+    string_ref v { "abc" };
 
     {
         Input inp = Input::from_memory(v);
