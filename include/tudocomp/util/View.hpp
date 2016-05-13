@@ -260,7 +260,7 @@ public:
 inline bool operator==(const View& lhs, const View& rhs) {
     // TODO: memcmp!
     return (lhs.size() == rhs.size())
-        && std::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
+        && (std::memcmp(lhs.data(), rhs.data(), lhs.size()) == 0);
 }
 inline bool operator!=(const View& lhs, const View& rhs) {
     return !(lhs == rhs);
