@@ -19,6 +19,7 @@ using tudocomp::lz78::Factor;
 using tudocomp::Input;
 using tudocomp::Output;
 using tudocomp::Env;
+using tudocomp::string_ref;
 
 using std::swap;
 

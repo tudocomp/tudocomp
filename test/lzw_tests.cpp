@@ -12,6 +12,7 @@
 #include <tudocomp/lzw/LzwDebugCoder.hpp>
 
 using lz78_dictionary::DMS_MAX;
+using tudocomp::string_ref;
 
 TEST(Lzw, compress) {
     {

@@ -280,6 +280,8 @@ inline std::string make_table(std::vector<std::string> data,
     return ret.str();
 }
 
+using string_ref = boost::string_ref;
+
 }
 
 // this codebase is using c++11 but would really like to use this function...
@@ -313,7 +315,5 @@ namespace std {
         typename _Unique_if<T>::_Known_bound
         make_unique(Args&&...) = delete;
 }
-
-using string_ref = boost::string_ref;
 
 #endif
