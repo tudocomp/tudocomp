@@ -18,8 +18,8 @@ namespace tudocomp {
 /// A view into a slice of memory.
 template<class T>
 class View {
-    T*     m_data;
-    size_t m_size;
+    const T* m_data;
+    size_t   m_size;
 
     void bound_check(size_t pos) {
         if (pos >= m_size) {
@@ -38,13 +38,9 @@ public:
     using value_type             = T;
     using size_type              = std::size_t;
     using difference_type        = std::ptrdiff_t;
-    using reference              = value_type&;
     using const_reference        = const value_type&;
-    using pointer                = value_type*;
     using const_pointer          = const value_type*;
-    using iterator               = pointer;
     using const_iterator         = const_pointer;
-    using reverse_iterator       = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
     // static value members
@@ -53,30 +49,20 @@ public:
 
     // Constructors
 
-    View(T* data, size_t len): m_data(data), m_size(len) {}
+    View(const T* data, size_t len): m_data(data), m_size(len) {}
 
     View(const View<T>& other):   View(other.m_data, other.m_size) {}
     View(View<T>&& other):        View(other.m_data, other.m_size) {}
 
-    View(std::vector<T>& other): View(other.data(), other.size()) {}
+    View(const std::vector<T>& other): View(other.data(), other.size()) {}
 
     // Element access
 
-    reference       at(size_type pos) {
-        bound_check(pos);
-        return m_data[pos];
-    }
     const_reference at(size_type pos) const {
         bound_check(pos);
         return m_data[pos];
     }
 
-    reference       operator[](size_type pos) {
-#ifdef DEBUG
-        bound_check(pos);
-#endif
-        return m_data[pos];
-    }
     const_reference operator[](size_type pos) const {
 #ifdef DEBUG
         bound_check(pos);
@@ -84,32 +70,20 @@ public:
         return m_data[pos];
     }
 
-    reference front() {
-        return (*this)[0];
-    }
     const_reference front() const {
         return (*this)[0];
     }
 
-    reference back() {
-        return (*this)[m_size - 1];
-    }
     const_reference back() const {
         return (*this)[m_size - 1];
     }
 
-    T* data() {
-        return front();
-    }
     const T* data() const {
         return front();
     }
 
     // Iterators
 
-    iterator begin() {
-        return (*this)[0];
-    }
     const_iterator begin() const {
         return (*this)[0];
     }
@@ -117,9 +91,6 @@ public:
         return begin();
     }
 
-    iterator end() {
-        return (*this)[m_size];
-    }
     const_iterator end() const {
         return (*this)[m_size];
     }
@@ -127,9 +98,6 @@ public:
         return end();
     }
 
-    reverse_iterator rbegin() {
-        return std::reverse_iterator<iterator>(end());
-    }
     const_reverse_iterator rbegin() const {
         return std::reverse_iterator<const_reverse_iterator>(end());
     }
@@ -137,9 +105,6 @@ public:
         return rbegin();
     }
 
-    reverse_iterator rend() {
-        return std::reverse_iterator<iterator>(begin());
-    }
     const_reverse_iterator rend() const {
         return std::reverse_iterator<const_reverse_iterator>(begin());
     }
@@ -172,7 +137,7 @@ public:
 
     // Slicing
 
-    View slice(size_type from, size_type to = npos) {
+    View slice(size_type from, size_type to = npos) const {
         // TODO
         // DCHECK(from <= to);
 
@@ -182,7 +147,7 @@ public:
         return View(&(*this)[from], to - from);
     }
 
-    View substr(size_type from, size_type to = npos) {
+    View substr(size_type from, size_type to = npos) const {
         return slice(from, to);
     }
 };
