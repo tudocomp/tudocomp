@@ -13,7 +13,7 @@
 #include <utility>
 #include <iomanip>
 
-#include <boost/utility/string_ref.hpp>
+#include <tudocomp/util/View.hpp>
 
 #include <sdsl/bits.hpp>
 
@@ -280,7 +280,7 @@ inline std::string make_table(std::vector<std::string> data,
     return ret.str();
 }
 
-using string_ref = boost::string_ref;
+using string_ref = View;
 
 }
 

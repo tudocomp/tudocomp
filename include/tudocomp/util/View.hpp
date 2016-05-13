@@ -12,6 +12,7 @@
 #include <type_traits>
 #include <utility>
 #include <iomanip>
+#include <cstring>
 
 namespace tudocomp {
 
@@ -51,7 +52,6 @@ public:
     inline View(const uint8_t* data, size_t len): m_data(data), m_size(len) {}
 
     inline View(const View& other):   View(other.m_data, other.m_size) {}
-    inline View(View&& other):        View(other.m_data, other.m_size) {}
 
     inline View(const std::vector<uint8_t>& other):
         View(other.data(), other.size()) {}
@@ -59,6 +59,18 @@ public:
         View((const uint8_t*) other.data(), other.size()) {}
     inline View(const char* other):
         View((const uint8_t*) other, strlen(other)) {}
+    inline View(const char* other, size_t len):
+        View((const uint8_t*) other, len) {}
+
+    // Conversion
+
+    inline operator std::string() const {
+        return std::string(cbegin(), cend());
+    }
+
+    inline operator std::vector<uint8_t>() const {
+        return std::vector<uint8_t>(cbegin(), cend());
+    }
 
     // Element access
 
@@ -126,17 +138,8 @@ public:
         return m_size;
     }
 
-    // Modifiers
-
-    inline void swap(View& other) {
-        using std::swap;
-
-        swap(m_data, other.m_data);
-        swap(m_size, other.m_size);
-    }
-
-    inline friend void swap(View& a, View& b) {
-        a.swap(b);
+    inline size_type max_size() const {
+        return size();
     }
 
     // Slicing
@@ -150,6 +153,49 @@ public:
         }
         return View(&(*this)[from], to - from);
     }
+
+    // Modifiers
+
+    inline void swap(View& other) {
+        using std::swap;
+
+        swap(m_data, other.m_data);
+        swap(m_size, other.m_size);
+    }
+
+    inline friend void swap(View& a, View& b) {
+        a.swap(b);
+    }
+
+    inline void clear() {
+        m_size = 0;
+    }
+
+    inline void remove_prefix(size_type n) {
+        *this = substr(n);
+    }
+
+    inline void remove_suffix(size_type n) {
+        *this = substr(0, m_size - n);
+    }
+
+    // string predicates
+
+    inline bool starts_with(uint8_t c) const {
+        return !empty() && (front() == c);
+    }
+    inline bool starts_with(char c) const {
+        return starts_with(uint8_t(c));
+    }
+    inline bool starts_with(const View& x) const;
+    inline bool ends_with(uint8_t c) const {
+        return !empty() && (back() == c);
+    }
+    inline bool ends_with(char c) const {
+        return ends_with(uint8_t(c));
+    }
+    inline bool ends_with(const View& x) const;
+
 };
 
 inline bool operator==(const View& lhs, const View& rhs) {
@@ -182,6 +228,15 @@ inline std::ostream& operator<<(std::ostream& os, const View& v) {
     return os;
 }
 
+inline bool View::starts_with(const View& x) const {
+    return (x.size() <= size())
+        && (substr(0, x.size()) == x);
+}
+
+inline bool View::ends_with(const View& x) const {
+    return (x.size() <= size())
+        && (substr(size() - x.size()) == x);
+}
 }
 
 #endif

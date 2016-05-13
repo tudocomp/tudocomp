@@ -346,6 +346,21 @@ TEST(View, construction) {
     ASSERT_EQ(f.size(), 3u);
     ASSERT_EQ(f[0], 'b');
     ASSERT_EQ(f[2], 'r');
+
+    View g("qux!!", 3);
+    ASSERT_EQ(g.size(), 3u);
+    ASSERT_EQ(g[0], 'q');
+    ASSERT_EQ(g[2], 'x');
+}
+
+TEST(View, conversion) {
+    View s("xyz");
+
+    std::string a(s);
+    ASSERT_EQ(a, "xyz");
+
+    std::vector<uint8_t> b(s);
+    ASSERT_EQ(b, (std::vector<uint8_t> { 'x', 'y', 'z' }));
 }
 
 TEST(View, indexing) {
@@ -399,11 +414,13 @@ TEST(View, capacity) {
 
     ASSERT_EQ(s.empty(), false);
     ASSERT_EQ(s.size(), 3u);
+    ASSERT_EQ(s.max_size(), 3u);
 
     View t("");
 
     ASSERT_EQ(t.empty(), true);
     ASSERT_EQ(t.size(), 0u);
+    ASSERT_EQ(t.max_size(), 0u);
 }
 
 TEST(View, modifiers) {
@@ -420,6 +437,14 @@ TEST(View, modifiers) {
     swap(a, b);
     ASSERT_EQ(a.size(), 3u);
     ASSERT_EQ(b.size(), 0u);
+
+    View c("asdf");
+    c.remove_prefix(1);
+    ASSERT_EQ(c, "sdf");
+    c.remove_suffix(1);
+    ASSERT_EQ(c, "sd");
+    c.clear();
+    ASSERT_EQ(c, "");
 }
 
 TEST(View, comparision) {
@@ -473,5 +498,20 @@ TEST(View, slicing) {
     View f = a.substr(1, 2);
     ASSERT_EQ(f.size(), 1u);
     ASSERT_EQ(f, "b");
+}
 
+
+TEST(View, string_predicates) {
+    View a("abc");
+    View aa("abcabc");
+
+    ASSERT_TRUE(a.starts_with('a'));
+    ASSERT_TRUE(a.starts_with(uint8_t('a')));
+    ASSERT_TRUE(a.ends_with('c'));
+    ASSERT_TRUE(a.ends_with(uint8_t('c')));
+
+    ASSERT_TRUE(a.starts_with(a));
+    ASSERT_TRUE(a.ends_with(a));
+    ASSERT_TRUE(aa.starts_with(a));
+    ASSERT_TRUE(aa.ends_with(a));
 }
