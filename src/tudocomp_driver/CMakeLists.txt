@@ -7,11 +7,9 @@ add_library(
 target_link_libraries(
     tudocomp_algorithms
 
-    boost
     tudocomp
     glog
     sdsl
-    boost_program_options
 )
 
 add_executable(
@@ -23,11 +21,9 @@ add_executable(
 target_link_libraries(
     tudocomp_driver
 
-    boost
     tudocomp
     tudocomp_algorithms
     gflags
     glog
     sdsl
-    boost_program_options
 )

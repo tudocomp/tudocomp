@@ -12,9 +12,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemod
 
 include(find_or_download_package)
 
-set(Boost_USE_STATIC_LIBS ON)
 # Usage: find_or_download_package(PACKAGE_NAME, FOUND_FLAG_PREFIX, TARGET_PREFIX)
-find_or_download_package(Boost Boost boost COMPONENTS system)
 find_or_download_package(Glog GLOG glog)
 find_or_download_package(SDSL SDSL sdsl)
 find_or_download_package(GFlags GFLAGS gflags)
