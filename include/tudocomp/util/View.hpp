@@ -177,6 +177,11 @@ inline bool operator>=(const View& lhs, const View& rhs) {
     return !(lhs < rhs);
 }
 
+inline std::ostream& operator<<(std::ostream& os, const View& v) {
+    os.write((const char*) v.data(), v.size());
+    return os;
+}
+
 }
 
 #endif

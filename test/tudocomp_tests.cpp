@@ -341,4 +341,137 @@ TEST(View, construction) {
     ASSERT_EQ(e[0], 'b');
     ASSERT_EQ(e[2], 'r');
 
+    std::string str("bar");
+    View f(str);
+    ASSERT_EQ(f.size(), 3u);
+    ASSERT_EQ(f[0], 'b');
+    ASSERT_EQ(f[2], 'r');
+}
+
+TEST(View, indexing) {
+    const char* s = "abcde";
+
+    View a(s);
+    ASSERT_EQ(a.at(0), 'a');
+    ASSERT_EQ(a.at(4), 'e');
+    ASSERT_EQ(a[0], 'a');
+    ASSERT_EQ(a[4], 'e');
+
+    try {
+        a.at(5);
+    } catch (std::out_of_range& e) {
+        ASSERT_EQ(std::string(e.what()),
+                  "indexed view of size 5 with out-of-bounds value 5");
+    }
+
+#ifdef DEBUG
+    try {
+        a[5];
+    } catch (std::out_of_range& e) {
+        ASSERT_EQ(std::string(e.what()),
+                  "indexed view of size 5 with out-of-bounds value 5");
+    }
+#endif
+
+    ASSERT_EQ(a.front(), 'a');
+    ASSERT_EQ(a.back(), 'e');
+    ASSERT_EQ(a.data(), (const uint8_t*) s);
+}
+
+TEST(View, iterators) {
+    View s("abc");
+
+    std::vector<uint8_t> a (s.begin(), s.end());
+    ASSERT_EQ(a, (std::vector<uint8_t> { 'a', 'b', 'c' }));
+
+    std::vector<uint8_t> b (s.cbegin(), s.cend());
+    ASSERT_EQ(b, (std::vector<uint8_t> { 'a', 'b', 'c' }));
+
+    std::vector<uint8_t> c (s.rbegin(), s.rend());
+    ASSERT_EQ(c, (std::vector<uint8_t> { 'c', 'b', 'a' }));
+
+    std::vector<uint8_t> d (s.crbegin(), s.crend());
+    ASSERT_EQ(d, (std::vector<uint8_t> { 'c', 'b', 'a' }));
+}
+
+TEST(View, capacity) {
+    View s("abc");
+
+    ASSERT_EQ(s.empty(), false);
+    ASSERT_EQ(s.size(), 3u);
+
+    View t("");
+
+    ASSERT_EQ(t.empty(), true);
+    ASSERT_EQ(t.size(), 0u);
+}
+
+TEST(View, modifiers) {
+    View a("abc");
+    ASSERT_EQ(a.size(), 3u);
+
+    View b("");
+    ASSERT_EQ(b.size(), 0u);
+
+    a.swap(b);
+    ASSERT_EQ(a.size(), 0u);
+    ASSERT_EQ(b.size(), 3u);
+
+    swap(a, b);
+    ASSERT_EQ(a.size(), 3u);
+    ASSERT_EQ(b.size(), 0u);
+}
+
+TEST(View, comparision) {
+    View a("abc");
+    View b("acc");
+    View c("");
+
+    ASSERT_TRUE(a == a);
+    ASSERT_TRUE(c == c);
+
+    ASSERT_TRUE(a != b);
+    ASSERT_TRUE(a != c);
+
+    ASSERT_TRUE(a < b);
+    ASSERT_TRUE(a <= b);
+
+    ASSERT_TRUE(b > a);
+    ASSERT_TRUE(b >= a);
+
+    ASSERT_TRUE(c < a);
+    ASSERT_TRUE(c < b);
+}
+
+TEST(View, ostream) {
+    std::stringstream ss;
+    ss << View("abc");
+    ASSERT_EQ(ss.str(), std::string("abc"));
+}
+
+TEST(View, slicing) {
+    View a("abc");
+    ASSERT_EQ(a.size(), 3u);
+    ASSERT_EQ(a, "abc");
+
+    View b = a.substr(0, 3);
+    ASSERT_EQ(b.size(), 3u);
+    ASSERT_EQ(b, "abc");
+
+    View c = a.substr(0);
+    ASSERT_EQ(c.size(), 3u);
+    ASSERT_EQ(c, "abc");
+
+    View d = a.substr(2);
+    ASSERT_EQ(d.size(), 1u);
+    ASSERT_EQ(d, "c");
+
+    View e = a.substr(2, 3);
+    ASSERT_EQ(e.size(), 1u);
+    ASSERT_EQ(e, "c");
+
+    View f = a.substr(1, 2);
+    ASSERT_EQ(f.size(), 1u);
+    ASSERT_EQ(f, "b");
+
 }
