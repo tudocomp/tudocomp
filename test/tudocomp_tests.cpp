@@ -376,7 +376,7 @@ TEST(View, indexing) {
         a.at(5);
     } catch (std::out_of_range& e) {
         ASSERT_EQ(std::string(e.what()),
-                  "indexed view of size 5 with out-of-bounds value 5");
+                  "accessing view with bounds [0, 5) at out-of-bounds index 5");
     }
 
 #ifdef DEBUG
@@ -384,7 +384,7 @@ TEST(View, indexing) {
         a[5];
     } catch (std::out_of_range& e) {
         ASSERT_EQ(std::string(e.what()),
-                  "indexed view of size 5 with out-of-bounds value 5");
+                  "accessing view with bounds [0, 5) at out-of-bounds index 5");
     }
 #endif
 
