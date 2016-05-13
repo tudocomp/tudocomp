@@ -9,6 +9,7 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 #include <tudocomp/util/DecodeBuffer.hpp>
+#include <tudocomp/util/View.hpp>
 
 #include "test_util.h"
 
@@ -308,5 +309,36 @@ TEST(DecodeBuffer, cbstrategy_array) {
     buffer.write_to(ss);
 
     ASSERT_EQ("bananabanana", ss.str());
+
+}
+
+TEST(View, construction) {
+    static const uint8_t DATA[3] = { 'f', 'o', 'o' };
+
+    View a(DATA, sizeof(DATA));
+    ASSERT_EQ(a.size(), 3u);
+    ASSERT_EQ(a[0], 'f');
+    ASSERT_EQ(a[2], 'o');
+
+    View b(a);
+    ASSERT_EQ(b.size(), 3u);
+    ASSERT_EQ(b[0], 'f');
+    ASSERT_EQ(b[2], 'o');
+
+    View c(std::move(a));
+    ASSERT_EQ(c.size(), 3u);
+    ASSERT_EQ(c[0], 'f');
+    ASSERT_EQ(c[2], 'o');
+
+    std::vector<uint8_t> vec { 'b', 'a', 'r' };
+    View d(vec);
+    ASSERT_EQ(d.size(), 3u);
+    ASSERT_EQ(d[0], 'b');
+    ASSERT_EQ(d[2], 'r');
+
+    View e("bar");
+    ASSERT_EQ(e.size(), 3u);
+    ASSERT_EQ(e[0], 'b');
+    ASSERT_EQ(e[2], 'r');
 
 }

@@ -16,12 +16,11 @@
 namespace tudocomp {
 
 /// A view into a slice of memory.
-template<class T>
 class View {
-    const T* m_data;
+    const uint8_t* m_data;
     size_t   m_size;
 
-    void bound_check(size_t pos) {
+    inline void bound_check(size_t pos) const {
         if (pos >= m_size) {
             std::stringstream ss;
             ss << "indexed view of size ";
@@ -35,7 +34,7 @@ class View {
 public:
     // Type members
 
-    using value_type             = T;
+    using value_type             = uint8_t;
     using size_type              = std::size_t;
     using difference_type        = std::ptrdiff_t;
     using const_reference        = const value_type&;
@@ -49,95 +48,100 @@ public:
 
     // Constructors
 
-    View(const T* data, size_t len): m_data(data), m_size(len) {}
+    inline View(const uint8_t* data, size_t len): m_data(data), m_size(len) {}
 
-    View(const View<T>& other):   View(other.m_data, other.m_size) {}
-    View(View<T>&& other):        View(other.m_data, other.m_size) {}
+    inline View(const View& other):   View(other.m_data, other.m_size) {}
+    inline View(View&& other):        View(other.m_data, other.m_size) {}
 
-    View(const std::vector<T>& other): View(other.data(), other.size()) {}
+    inline View(const std::vector<uint8_t>& other):
+        View(other.data(), other.size()) {}
+    inline View(const std::string& other):
+        View((const uint8_t*) other.data(), other.size()) {}
+    inline View(const char* other):
+        View((const uint8_t*) other, strlen(other)) {}
 
     // Element access
 
-    const_reference at(size_type pos) const {
+    inline const_reference at(size_type pos) const {
         bound_check(pos);
         return m_data[pos];
     }
 
-    const_reference operator[](size_type pos) const {
+    inline const_reference operator[](size_type pos) const {
 #ifdef DEBUG
         bound_check(pos);
 #endif
         return m_data[pos];
     }
 
-    const_reference front() const {
+    inline const_reference front() const {
         return (*this)[0];
     }
 
-    const_reference back() const {
+    inline const_reference back() const {
         return (*this)[m_size - 1];
     }
 
-    const T* data() const {
-        return front();
+    inline const uint8_t* data() const {
+        return &front();
     }
 
     // Iterators
 
-    const_iterator begin() const {
-        return (*this)[0];
+    inline const_iterator begin() const {
+        return &(*this)[0];
     }
-    const_iterator cbegin() const {
+    inline const_iterator cbegin() const {
         return begin();
     }
 
-    const_iterator end() const {
-        return (*this)[m_size];
+    inline const_iterator end() const {
+        return &(*this)[m_size];
     }
-    const_iterator cend() const {
+    inline const_iterator cend() const {
         return end();
     }
 
-    const_reverse_iterator rbegin() const {
-        return std::reverse_iterator<const_reverse_iterator>(end());
+    inline const_reverse_iterator rbegin() const {
+        return std::reverse_iterator<const_iterator>(end());
     }
-    const_reverse_iterator crbegin() const {
+    inline const_reverse_iterator crbegin() const {
         return rbegin();
     }
 
-    const_reverse_iterator rend() const {
-        return std::reverse_iterator<const_reverse_iterator>(begin());
+    inline const_reverse_iterator rend() const {
+        return std::reverse_iterator<const_iterator>(begin());
     }
-    const_reverse_iterator crend() const {
+    inline const_reverse_iterator crend() const {
         return rend();
     }
 
     // Capacity
 
-    bool empty() const {
+    inline bool empty() const {
         return m_size == 0;
     }
 
-    size_type size() const {
+    inline size_type size() const {
         return m_size;
     }
 
     // Modifiers
 
-    void swap(View<T>& other) {
+    inline void swap(View& other) {
         using std::swap;
 
         swap(m_data, other.m_data);
         swap(m_size, other.m_size);
     }
 
-    friend void swap(View<T>& a, View<T>& b) {
+    inline friend void swap(View& a, View& b) {
         a.swap(b);
     }
 
     // Slicing
 
-    View slice(size_type from, size_type to = npos) const {
+    inline View substr(size_type from, size_type to = npos) const {
         // TODO
         // DCHECK(from <= to);
 
@@ -146,44 +150,30 @@ public:
         }
         return View(&(*this)[from], to - from);
     }
-
-    View substr(size_type from, size_type to = npos) const {
-        return slice(from, to);
-    }
 };
 
-template<class T>
-bool operator==(const View<T>& lhs, const View<T>& rhs) {
+inline bool operator==(const View& lhs, const View& rhs) {
     return (lhs.size() == rhs.size())
         && std::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
 }
-template<class T>
-bool operator!=(const View<T>& lhs, const View<T>& rhs) {
+inline bool operator!=(const View& lhs, const View& rhs) {
     return !(lhs == rhs);
 }
-template<class T>
-bool operator<(const View<T>& lhs, const View<T>& rhs) {
+inline bool operator<(const View& lhs, const View& rhs) {
     return std::lexicographical_compare(lhs.cbegin(), lhs.cend(),
                                         rhs.cbegin(), rhs.cend());
 }
-template<class T>
-bool operator>(const View<T>& lhs, const View<T>& rhs) {
-    struct greater {
-        inline bool cmp(const T& l, const T& r) {
-            return l > r;
-        }
-    };
-
+inline bool operator>(const View& lhs, const View& rhs) {
     return std::lexicographical_compare(lhs.cbegin(), lhs.cend(),
                                         rhs.cbegin(), rhs.cend(),
-                                        greater());
+                                        [](const uint8_t& l, const uint8_t& r){
+                                            return l > r;
+                                        });
 }
-template<class T>
-bool operator<=(const View<T>& lhs, const View<T>& rhs) {
+inline bool operator<=(const View& lhs, const View& rhs) {
     return !(lhs > rhs);
 }
-template<class T>
-bool operator>=(const View<T>& lhs, const View<T>& rhs) {
+inline bool operator>=(const View& lhs, const View& rhs) {
     return !(lhs < rhs);
 }
 
