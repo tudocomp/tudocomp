@@ -9,6 +9,7 @@ target_link_libraries(
     tudocomp
 
     glog
+    gflags
     sdsl
 )
 
