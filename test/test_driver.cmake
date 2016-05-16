@@ -40,7 +40,7 @@ include(ExternalProject)
 # Download and install GoogleTest
 ExternalProject_Add(
     gtest
-    SVN_REPOSITORY http://googletest.googlecode.com/svn/trunk/
+	GIT_REPOSITORY https://github.com/google/googletest
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
     # Disable install and update step
     UPDATE_COMMAND ""
