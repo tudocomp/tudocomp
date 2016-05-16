@@ -33,8 +33,8 @@ DEFINE_bool(stats, false, "Print statistics to stdout.");
 DEFINE_bool(force, false, "Overwrite output even if it exists.");
 DEFINE_bool(list, false, "List all compression algorithms supported by this tool.");
 DEFINE_bool(raw, false, "Do not emit an header into the output file when compressing.");
-DEFINE_bool(stdin, false, "Read from stdin instead of trying to open a file.");
-DEFINE_bool(stdout, false, "Output to stdout instead of writing to a file");
+DEFINE_bool(usestdin, false, "Read from stdin instead of trying to open a file.");
+DEFINE_bool(usestdout, false, "Output to stdout instead of writing to a file");
 
 namespace tudocomp_driver {
 
@@ -149,24 +149,24 @@ int main(int argc, char** argv)
 
         std::string file;
 
-        if ((!FLAGS_stdin) && (first_cmd_arg < argc)) {
+        if ((!FLAGS_usestdin) && (first_cmd_arg < argc)) {
             file = argv[first_cmd_arg];
             if (!fexists(file)) {
                 std::cerr << "input file " << file << " does not exist\n";
                 return 1;
             }
-        } else if (!FLAGS_stdin) {
+        } else if (!FLAGS_usestdin) {
             std::cerr << "No input file given\n";
             return 1;
         }
 
-        bool use_stdin = FLAGS_stdin;
+        bool use_stdin = FLAGS_usestdin;
 
         /////////////////////////////////////////////////////////////////////////
         // Select where the output goes to
 
         std::string ofile;
-        bool use_stdout = FLAGS_stdout;
+        bool use_stdout = FLAGS_usestdout;
         bool use_explict_output = std::string(FLAGS_output) != "" ;
 
         if (use_explict_output) {
