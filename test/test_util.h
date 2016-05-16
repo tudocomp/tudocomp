@@ -8,12 +8,7 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#ifdef __unix__
-    #include <sys/stat.h>
-#elif _WIN32
-    #include <windows.h>
-    #include <Shlwapi.h>
-#endif
+#include <sys/stat.h>
 
 // TODO: Actually specialize the 3 kinds
 
@@ -140,14 +135,8 @@ inline std::string test_file_path(const std::string& filename) {
 inline bool test_file_exists(const std::string& filename) {
     std::string test_file_name = test_file_path(filename);
 
-    #ifdef __unix__
-        //on Unix, use stat
-        struct stat buf;
-        return (stat(test_file_name.c_str(), &buf) == 0);
-    #elif _WIN32
-        //Windows
-        return PathFileExists(test_file_name.c_str());
-    #endif
+    struct stat buf;
+    return (stat(test_file_name.c_str(), &buf) == 0);
 }
 
 inline std::string read_test_file(const std::string& filename) {
@@ -171,11 +160,7 @@ inline std::string read_test_file(const std::string& filename) {
 }
 
 inline void create_test_directory() {
-    #ifdef __unix__
-        mkdir(TEST_FILE_PATH.c_str(), 0777);
-    #elif _WIN32
-        CreateDirectory(TEST_FILE_PATH.c_str());
-    #endif
+    mkdir(TEST_FILE_PATH.c_str(), 0777);
 }
 
 inline void write_test_file(const std::string& filename, const std::string& text) {

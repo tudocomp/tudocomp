@@ -3,6 +3,9 @@ project (tudocomp)
 
 include(ExternalProject)
 
+# Friendly reminder not to use the _WIN32 macro in Cygwin
+set(CMAKE_LEGACY_CYGWIN_WIN32 0)
+
 # Using C++11, more warnings and debug info
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=gnu++11")
 
