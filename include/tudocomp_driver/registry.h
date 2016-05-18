@@ -23,7 +23,7 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/util.h>
-// #include <tudocomp_driver/AlgorithmStringParser.hpp>
+#include <tudocomp_driver/AlgorithmStringParser.hpp>
 
 namespace tudocomp_driver {
 

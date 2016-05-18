@@ -20,8 +20,6 @@
 
 #include <glog/logging.h>
 
-#include <boost/variant.hpp>
-
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/util.h>
@@ -38,37 +36,47 @@ using namespace tudocomp;
     struct AlgorithmSpec {
         std::string name;
         std::vector<AlgorithmArg> args;
+        bool is_spec;
 
         inline std::string to_string() const;
 
-        bool operator==(const AlgorithmSpec &other) const {
-            return (name == other.name)
-                && (args == other.args);
+        inline bool operator==(const AlgorithmSpec &rhs) const {
+            const auto& lhs = *this;
+
+            return (lhs.name == rhs.name)
+                && (lhs.args == rhs.args)
+                && (lhs.is_spec == rhs.is_spec);
         }
 
-        bool operator<(const AlgorithmSpec &other) const {
-            if (name != other.name) return name < other.name;
-            if (args != other.args) return args < other.args;
+        inline bool operator!=(const AlgorithmSpec &rhs) const {
+            const auto& lhs = *this;
+
+            return !(lhs == rhs);
+        }
+
+        inline bool operator<(const AlgorithmSpec &rhs) const {
+            const auto& lhs = *this;
+
+            if (lhs.name != rhs.name) return lhs.name < rhs.name;
+            if (lhs.args != rhs.args) return lhs.args < rhs.args;
+            if (lhs.is_spec != rhs.is_spec) return lhs.is_spec < rhs.is_spec;
             return false;
         }
+
     };
+
     struct AlgorithmArg {
         std::string keyword;
-        boost::variant<std::string, AlgorithmSpec> arg;
-
-        template<class T>
-        inline T get() {
-            return boost::get<T>(arg);
-        }
+        AlgorithmSpec arg;
 
         inline std::string to_string() const;
 
-        bool operator==(const AlgorithmArg &other) const {
+        inline bool operator==(const AlgorithmArg &other) const {
             return (keyword == other.keyword)
                 && (arg == other.arg);
         }
 
-        bool operator<(const AlgorithmArg &other) const {
+        inline bool operator<(const AlgorithmArg &other) const {
             if (keyword != other.keyword) return keyword < other.keyword;
             if (arg != other.arg) return arg < other.arg;
             return false;
@@ -90,16 +98,20 @@ using namespace tudocomp;
     inline std::string AlgorithmSpec::to_string() const {
         auto& s = *this;
         std::stringstream os;
-        os << s.name << "(";
-        bool first = true;
-        for(auto& arg : s.args) {
-            if (!first) {
-                os << ", ";
+        os << s.name;
+
+        if (is_spec) {
+            os << "(";
+            bool first = true;
+            for(auto& arg : s.args) {
+                if (!first) {
+                    os << ", ";
+                }
+                os << arg;
+                first = false;
             }
-            os << arg;
-            first = false;
+            os << ")";
         }
-        os << ")";
         return os.str();
     }
 
@@ -131,12 +143,59 @@ using namespace tudocomp;
 
     template<class T>
     class Result {
-        Parser* trail;
-        boost::variant<T, Err> data;
+        Parser* m_trail;
+
+        struct Variant {
+            virtual ~Variant() {}
+            virtual bool is_ok();
+            virtual T unwrap_or_else(std::function<T(Err&& err)>);
+            virtual void visit(std::function<void(T& ok)>,
+                               std::function<void(Err& err)>);
+        };
+        struct Ok: Variant {
+            T m_data;
+            inline Ok(T&& data): m_data(std::move(data)) {}
+
+            inline bool is_ok() override {
+                return true;
+            }
+            inline T unwrap_or_else(std::function<T(Err&& err)> f) override {
+                return std::move(m_data);
+            }
+            inline void visit(std::function<void(T& ok)> f_ok,
+                              std::function<void(Err& err)> f_err) override {
+                f_ok(m_data);
+            }
+        };
+        struct Error: Variant {
+            Err m_data;
+            inline Error(Err&& data): m_data(std::move(data)) {}
+
+            inline bool is_ok() override {
+                return false;
+            }
+            inline T unwrap_or_else(std::function<T(Err&& err)> f) {
+                return f(std::move(m_data));
+            }
+            inline void visit(std::function<void(T& ok)> f_ok,
+                              std::function<void(Err& err)> f_err) override {
+                f_err(m_data);
+            }
+        };
+
+        std::unique_ptr<Variant> m_data;
 
     public:
-        Result(Parser& parser, boost::variant<T, Err> data_):
-            trail(&parser), data(data_) {}
+        Result(Parser& parser):
+            m_trail(&parser) {}
+
+        Result(Parser& parser, T&& data):
+            m_trail(&parser),
+            m_data(std::make_unique<Ok> (std::move(data))) {}
+
+        Result(Parser& parser, Err&& data):
+            m_trail(&parser),
+            m_data(std::make_unique<Error> (std::move(data))) {}
 
         template<class A, class R>
         using Fun = std::function<Result<R> (A)>;
@@ -151,15 +210,7 @@ using namespace tudocomp;
         inline Result<T> end_parse();
 
         inline bool is_ok() {
-            struct visitor: public boost::static_visitor<bool> {
-                bool operator()(T& ok) const {
-                    return true;
-                }
-                bool operator()(Err& err) const {
-                    return false;
-                }
-            };
-            return boost::apply_visitor(visitor(), data);
+            return m_data->is_ok();
         }
 
         inline bool is_err() {
@@ -224,7 +275,7 @@ using namespace tudocomp;
                 }
                 auto r = s.cursor().substr(0, i);
                 s.skip(i);
-                return ok<std::string>(r);
+                return ok<std::string>(std::move(r));
             } else {
                 return err<std::string>("Expected an identifier");
             }
@@ -237,7 +288,7 @@ using namespace tudocomp;
 
             if (s.cursor().size() > 0 && uint8_t(s.cursor()[0]) == chr) {
                 s.skip(1);
-                return ok<uint8_t>(chr);
+                return ok<uint8_t>(std::move(chr));
             } else {
                 return err<uint8_t>(std::string("Expected char '")
                     + char(chr) + "'" + ", found '"
@@ -260,33 +311,33 @@ using namespace tudocomp;
                 }
                 auto r = s.cursor().substr(0, i);
                 s.skip(i);
-                return ok<std::string>(r);
+                return ok<std::string>(std::move(r));
             } else {
                 return err<std::string>("Expected an number");
             }
         }
 
         template<class T>
-        inline Result<T> ok(T t) {
+        inline Result<T> ok(T&& t) {
             return Result<T> {
                 *this,
-                t,
+                std::move(t),
             };
         }
 
         template<class T>
-        inline Result<T> err(std::string msg) {
+        inline Result<T> err(std::string&& msg) {
             return Result<T> {
                 *this,
-                Err { msg },
+                Err { std::move(msg) },
             };
         }
 
         template<class T>
-        inline Result<T> err(Err msg) {
+        inline Result<T> err(Err&& msg) {
             return Result<T> {
                 *this,
-                msg,
+                std::move(msg),
             };
         }
 
@@ -299,7 +350,7 @@ using namespace tudocomp;
                 if (keyword == "") {
                     auto r = p.parse_char('=').and_then<AlgorithmArg>([&](uint8_t chr) {
                         // "ident = ..." case
-                        return p.parse_arg(arg_ident);
+                        return p.parse_arg(std::string(arg_ident));
                     });
 
                     if (r.is_ok()) {
@@ -355,7 +406,7 @@ using namespace tudocomp;
                 }
 
                 return p.parse_char(')').and_then<std::vector<AlgorithmArg>>([&](uint8_t chr) {
-                    return p.ok(args);
+                    return p.ok(std::move(args));
                 });
             });
         }
@@ -377,80 +428,74 @@ using namespace tudocomp;
 
     template<class T>
     inline T Result<T>::unwrap() {
-        struct visitor: public boost::static_visitor<T> {
-            const Parser* m_trail;
+        /*T ret;
 
-            visitor(Parser* trail): m_trail(trail) {
+        m_data.visit(
+            [&](T& ok) {
+                ret = m_f(ok);
+            },
+            [&](Err& err) {
+                ret = m_trail->err<U>(err);
             }
+        );
 
-            T operator()(T& ok) const {
-                return ok;
-            }
-            T operator()(Err& err) const {
-                std::stringstream ss;
+        return ret;*/
 
-                ss << "\nParse error at #" << int(m_trail->cursor_pos()) << ":\n";
-                ss << m_trail->input() << "\n";
-                ss << std::setw(m_trail->cursor_pos()) << "";
-                ss << "^\n";
-                ss << err.reason() << "\n";
+        return m_data->unwrap_or_else([&](Err&& err) -> T {
+            std::stringstream ss;
 
-                throw std::runtime_error(ss.str());
-            }
-        };
-        return boost::apply_visitor(visitor(trail), data);
+            ss << "\nParse error at #" << int(m_trail->cursor_pos()) << ":\n";
+            ss << m_trail->input() << "\n";
+            ss << std::setw(m_trail->cursor_pos()) << "";
+            ss << "^\n";
+            ss << err.reason() << "\n";
+
+            throw std::runtime_error(ss.str());
+        });
     }
 
     template<class T>
     template<class U>
     inline Result<U> Result<T>::and_then(Fun<T, U> f) {
-        struct visitor: public boost::static_visitor<Result<U>> {
-            // insert constructor here
-            Fun<T, U> m_f;
-            Parser* m_trail;
+        Result<U> ret(*m_trail);
 
-            visitor(Fun<T, U> f, Parser* trail): m_f(f), m_trail(trail) {
+        m_data->visit(
+            [&](T& ok) {
+                ret = f(ok);
+            },
+            [&](Err& err) {
+                ret = m_trail->err<U>(std::move(err));
             }
+        );
 
-            Result<U> operator()(T& ok) const {
-                return m_f(ok);
-            }
-            Result<U> operator()(Err& err) const {
-                return m_trail->err<U>(err);
-            }
-        };
-        return boost::apply_visitor(visitor(f, trail), data);
+        return ret;
     }
 
     template<class T>
     inline Result<T> Result<T>::or_else(Fun<Err, T> f) {
-        struct visitor: public boost::static_visitor<Result<T>> {
-            // insert constructor here
-            Fun<Err, T> m_f;
-            Parser* m_trail;
+        Result<T> ret(*m_trail);
 
-            visitor(Fun<Err, T> f, Parser* trail): m_f(f), m_trail(trail) {
+        m_data->visit(
+            [&](T& ok) {
+                ret = m_trail->ok<T>(std::move(ok));
+            },
+            [&](Err& err) {
+                ret =  f(err);
             }
+        );
 
-            Result<T> operator()(T& ok) const {
-                return m_trail->ok<T>(ok);
-            }
-            Result<T> operator()(Err& err) const {
-                return m_f(err);
-            }
-        };
-        return boost::apply_visitor(visitor(f, trail), data);
+        return ret;
     }
 
     template<class T>
     inline Result<T> Result<T>::end_parse() {
         return this->and_then<T>([&](T _t) {
-            Parser& p = *trail;
+            Parser& p = *m_trail;
 
             p.skip_whitespace();
 
             if (p.cursor() == "") {
-                return *this;
+                return std::move(*this);
             } else {
                 return p.err<T>("Expected end of input");
             }
