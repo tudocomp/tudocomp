@@ -198,7 +198,6 @@ void register_algos(Registry& registry);
 
 // New unified algorithm spec registry
 
-/*
 class RegistryV3;
 
 struct ArgTypeBuilder {
@@ -281,7 +280,7 @@ public:
 
                     std::string arg_name;
                     if (arg.keyword.size() == 0) {
-                        arg_name = arg.get<std::string>();
+                        arg_name = arg.get_as_string();
                     } else {
                         arg_name = arg.keyword;
                     }
@@ -294,7 +293,7 @@ public:
                     // Combine argument name with argument
                     r.args.push_back(AlgorithmArg {
                         arg_name,
-                        eval(arg_id, pat_arg.get<AlgorithmSpec>())
+                        eval(arg_id, pat_arg.get_as_spec())
                     });
 
                     i++;
@@ -328,7 +327,7 @@ public:
             for (auto& arg : c.m_spec.args) {
                 std::string arg_name;
                 if (arg.keyword.size() == 0) {
-                    arg_name = arg.get<std::string>();
+                    arg_name = arg.get_as_string();
                 } else {
                     arg_name = arg.keyword;
                 }
@@ -406,7 +405,6 @@ inline ArgTypeBuilder& ArgTypeBuilder::doc(std::string doc) {
 }
 
 void register2(RegistryV3& registry);
-*/
 
 }
 

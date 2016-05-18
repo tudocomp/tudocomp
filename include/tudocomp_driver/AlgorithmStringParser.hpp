@@ -71,6 +71,22 @@ using namespace tudocomp;
 
         inline std::string to_string() const;
 
+        inline const std::string& get_as_string() const {
+            if (arg.is_spec) {
+                throw std::runtime_error("AlgorithmArg did not contain a string value");
+            } else {
+                return arg.name;
+            }
+        }
+
+        inline const AlgorithmSpec& get_as_spec() const {
+            if (!arg.is_spec) {
+                throw std::runtime_error("AlgorithmArg did not contain a AlgorithmSpec value");
+            } else {
+                return arg;
+            }
+        }
+
         inline bool operator==(const AlgorithmArg &other) const {
             return (keyword == other.keyword)
                 && (arg == other.arg);
