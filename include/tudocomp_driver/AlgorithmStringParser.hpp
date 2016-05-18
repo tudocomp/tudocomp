@@ -49,7 +49,7 @@ using namespace tudocomp;
             name(std::move(value)),
             is_spec(false) {}
 
-        inline AlgorithmSpec(): AlgorithmSpec("") {}
+        //inline AlgorithmSpec(): AlgorithmSpec("") {}
 
         inline std::string to_string() const;
 
@@ -81,6 +81,9 @@ using namespace tudocomp;
     struct AlgorithmArg {
         std::string keyword;
         AlgorithmSpec arg;
+
+        AlgorithmArg(std::string&& keyword_, AlgorithmSpec&& arg_):
+            keyword(keyword_), arg(arg_) {}
 
         inline std::string to_string() const;
 
@@ -390,7 +393,7 @@ using namespace tudocomp;
                 return p.parse_args().and_then<AlgorithmArg>([&](std::vector<AlgorithmArg> args) {
                     // "ident(...) ..." case
                     return p.ok(AlgorithmArg {
-                        keyword,
+                        std::string(keyword),
                         AlgorithmSpec {
                             std::string(arg_ident),
                             std::move(args)
@@ -399,7 +402,7 @@ using namespace tudocomp;
                 }).or_else([&](Err err) {
                     // "ident ..." fallback case
                     return p.ok<AlgorithmArg>(AlgorithmArg {
-                        keyword,
+                        std::string(keyword),
                         std::string(arg_ident)
                     });
                 });
@@ -407,7 +410,7 @@ using namespace tudocomp;
                 return p.parse_number().and_then<AlgorithmArg>([&](const std::string& n) {
                     // "num ..." case
                     return p.ok<AlgorithmArg>(AlgorithmArg {
-                        keyword,
+                        std::string(keyword),
                         std::string(n)
                     });
                 });

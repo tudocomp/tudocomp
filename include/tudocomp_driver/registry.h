@@ -239,13 +239,18 @@ public:
     }
 
     AlgorithmSpec eval(std::string id, AlgorithmSpec s) {
-        AlgorithmSpec r;
+        std::string r_name;
+        std::vector<AlgorithmArg> r_args;
+
+        bool not_found = true;
 
         // Find s in the options given with id
         for (auto& x : m_algorithms[id]) {
             if (x.m_spec.name == s.name) {
+                not_found = false;
+
                 // Found s, initialize r
-                r.name = x.m_spec.name;
+                r_name = x.m_spec.name;
 
                 // Evaluate the arguments, allowing positional
                 // arguments followed by keyword arguments
@@ -291,8 +296,8 @@ public:
                     auto arg_id = x.m_arg_ids[arg_name].first;
 
                     // Combine argument name with argument
-                    r.args.push_back(AlgorithmArg {
-                        arg_name,
+                    r_args.push_back(AlgorithmArg {
+                        std::string(arg_name),
                         eval(arg_id, pat_arg.get_as_spec())
                     });
 
@@ -301,6 +306,20 @@ public:
 
                 break;
             }
+        }
+
+        AlgorithmSpec r {
+            std::move(r_name),
+            std::move(r_args)
+        };
+
+        if (not_found) {
+            std::stringstream ss;
+            ss << "did not find ";
+            ss << s;
+            ss << "in m_algorithms!";
+
+            throw std::runtime_error(ss.str());
         }
 
         return r;
@@ -341,8 +360,8 @@ public:
                     for(auto arg : all_algorithms_with_static(arg_id)) {
                         arg_variations.push_back(AlgorithmArgs {
                             AlgorithmArg {
-                                arg_name,
-                                arg
+                                std::string(arg_name),
+                                std::move(arg)
                             }
                         });
                     }
@@ -350,10 +369,17 @@ public:
                 }
             }
 
-            AlgorithmSpec x;
-            x.name = c.m_spec.name;
+            std::string x_name;
+            std::vector<AlgorithmArg> x_args;
+
+            x_name = c.m_spec.name;
             std::vector<AlgorithmArgs> r_;
             if (args_variations.size() == 0) {
+                AlgorithmSpec x {
+                    std::move(x_name),
+                    std::move(x_args)
+                };
+
                 r.push_back(x);
             } else {
                 r_ = cross<AlgorithmArgs>(
