@@ -38,6 +38,19 @@ using namespace tudocomp;
         std::vector<AlgorithmArg> args;
         bool is_spec;
 
+
+        inline AlgorithmSpec(std::string&& name_,
+                             std::vector<AlgorithmArg>&& args_):
+            name(std::move(name_)),
+            args(std::move(args_)),
+            is_spec(true) {}
+
+        inline AlgorithmSpec(std::string&& value):
+            name(std::move(value)),
+            is_spec(false) {}
+
+        inline AlgorithmSpec(): AlgorithmSpec("") {}
+
         inline std::string to_string() const;
 
         inline bool operator==(const AlgorithmSpec &rhs) const {
@@ -379,8 +392,8 @@ using namespace tudocomp;
                     return p.ok(AlgorithmArg {
                         keyword,
                         AlgorithmSpec {
-                            arg_ident,
-                            args
+                            std::string(arg_ident),
+                            std::move(args)
                         }
                     });
                 }).or_else([&](Err err) {
@@ -433,8 +446,8 @@ using namespace tudocomp;
             return p.parse_ident().and_then<AlgorithmSpec>([&](const std::string& ident) {
                 return p.parse_args().and_then<AlgorithmSpec>([&](std::vector<AlgorithmArg> args) {
                     return p.ok(AlgorithmSpec {
-                        ident,
-                        args
+                        std::string(ident),
+                        std::move(args)
                     });
                 });
             }).end_parse();

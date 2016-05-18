@@ -173,7 +173,6 @@ void register_algos(Registry& r) {
     });
 }
 
-/*
 void register2(RegistryV3& r) {
 
     r.register_spec("compressor", "lz78(coder = bit)")
@@ -271,6 +270,5 @@ void register2(RegistryV3& r) {
         return std::make_unique<ChainCompressor>(env, std::move(algorithms));
     });
 }
-*/
 
 }

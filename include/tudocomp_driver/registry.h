@@ -368,8 +368,8 @@ public:
 
             for (auto& elem : r_) {
                 r.push_back(AlgorithmSpec {
-                    c.m_spec.name,
-                    elem
+                    std::string(c.m_spec.name),
+                    std::move(elem)
                 });
             }
         }

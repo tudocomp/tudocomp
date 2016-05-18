@@ -8,7 +8,7 @@
 
 #include "test_util.h"
 #include "tudocomp_driver/registry.h"
-//#include "tudocomp_driver/AlgorithmStringParser.hpp"
+#include "tudocomp_driver/AlgorithmStringParser.hpp"
 
 #include "tudocomp_driver_util.h"
 
@@ -74,7 +74,7 @@ TEST(TudocompDriver, algorithm_header) {
 
 }
 
-/*
+
 TEST(NewAlgorithmStringParser, smoketest) {
     using namespace tudocomp_driver;
     Parser p { "foo(abc, def=ghi, jkl=mno(p, q=1))" };
@@ -84,17 +84,17 @@ TEST(NewAlgorithmStringParser, smoketest) {
     ASSERT_EQ(x.name, "foo");
     ASSERT_EQ(x.args.size(), 3);
     ASSERT_EQ(x.args[0].keyword, "");
-    ASSERT_EQ(x.args[0].get<std::string>(), "abc");
+    ASSERT_EQ(x.args[0].get_as_string(), "abc");
     ASSERT_EQ(x.args[1].keyword, "def");
-    ASSERT_EQ(x.args[1].get<std::string>(), "ghi");
+    ASSERT_EQ(x.args[1].get_as_string(), "ghi");
     ASSERT_EQ(x.args[2].keyword, "jkl");
-    ASSERT_EQ(x.args[2].get<AlgorithmSpec>().name, "mno");
-    auto y = x.args[2].get<AlgorithmSpec>().args;
+    ASSERT_EQ(x.args[2].get_as_spec().name, "mno");
+    auto y = x.args[2].get_as_spec().args;
     ASSERT_EQ(y.size(), 2);
     ASSERT_EQ(y[0].keyword, "");
-    ASSERT_EQ(y[0].get<std::string>(), "p");
+    ASSERT_EQ(y[0].get_as_string(), "p");
     ASSERT_EQ(y[1].keyword, "q");
-    ASSERT_EQ(y[1].get<std::string>(), "1");
+    ASSERT_EQ(y[1].get_as_string(), "1");
 }
 
 TEST(RegistryV3, test) {
@@ -144,4 +144,3 @@ TEST(RegistryV3, test) {
 
     r.check_for_undefined_compressors();
 }
-*/
