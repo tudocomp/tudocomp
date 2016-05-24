@@ -6,9 +6,10 @@ run_test(lzw_tests tudocomp)
 
 run_test(lzss_tests tudocomp)
 
-set(SANDBOX_CPP "${CMAKE_CURRENT_SOURCE_DIR}/sandbox_tests.cpp")
+set(SANDBOX_CPP ${CMAKE_CURRENT_SOURCE_DIR}/sandbox_tests.cpp)
 if(NOT EXISTS ${SANDBOX_CPP})
-    file(WRITE ${SANDBOX_CPP} "#include <gtest/gtest.h>\n\n/* implement your quick tests here! */")
+    file(READ ${CMAKE_SOURCE_DIR}/etc/sandbox_tests.cpp.template SANDBOX_TEMPLATE)
+    file(WRITE ${SANDBOX_CPP} "${SANDBOX_TEMPLATE}")
 endif()
 
 run_test(sandbox_tests tudocomp)
