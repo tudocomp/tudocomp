@@ -24,11 +24,17 @@ macro(run_test test_target)
         TARGET ${test_target}
         POST_BUILD
         COMMAND ${test_target} #cmake 2.6 required
-        DEPENDS ${test_target}
+        DEPEND ${test_target}
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-        COMMENT "Running Unit tests" VERBATIM
+        COMMENT "Running ${test_target} ..." VERBATIM
     )
-    add_dependencies(check ${test_target})
+    add_custom_command(
+        TARGET check
+        POST_BUILD
+        COMMAND make ${test_target} #TODO: Windows?
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+        COMMENT "Running ${test_target} ..." VERBATIM
+    )
 endmacro()
 
 # We need thread support
