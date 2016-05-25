@@ -32,7 +32,7 @@ macro(run_test test_target)
     )
     add_custom_command(
         TARGET check
-        POST_BUILD
+        PRE_BUILD
         COMMAND make ${test_target} #TODO: Windows?
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
         COMMENT "Running ${test_target} ..." VERBATIM
