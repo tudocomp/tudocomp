@@ -179,22 +179,22 @@ using namespace tudocomp;
 
         struct Variant {
             virtual ~Variant() {}
-            virtual bool is_ok();
-            virtual T unwrap_or_else(std::function<T(Err&& err)>);
+            virtual bool is_ok() = 0;
+            virtual T unwrap_or_else(std::function<T(Err&& err)>) = 0;
             virtual void visit(std::function<void(T& ok)>,
-                               std::function<void(Err& err)>);
+                               std::function<void(Err& err)>) = 0;
         };
         struct Ok: Variant {
             T m_data;
             inline Ok(T&& data): m_data(std::move(data)) {}
 
-            inline bool is_ok() override {
+            inline virtual bool is_ok() override {
                 return true;
             }
-            inline T unwrap_or_else(std::function<T(Err&& err)> f) override {
+            inline virtual T unwrap_or_else(std::function<T(Err&& err)> f) override {
                 return std::move(m_data);
             }
-            inline void visit(std::function<void(T& ok)> f_ok,
+            inline virtual void visit(std::function<void(T& ok)> f_ok,
                               std::function<void(Err& err)> f_err) override {
                 f_ok(m_data);
             }
@@ -203,13 +203,13 @@ using namespace tudocomp;
             Err m_data;
             inline Error(Err&& data): m_data(std::move(data)) {}
 
-            inline bool is_ok() override {
+            inline virtual bool is_ok() override {
                 return false;
             }
-            inline T unwrap_or_else(std::function<T(Err&& err)> f) {
+            inline virtual T unwrap_or_else(std::function<T(Err&& err)> f) {
                 return f(std::move(m_data));
             }
-            inline void visit(std::function<void(T& ok)> f_ok,
+            inline virtual void visit(std::function<void(T& ok)> f_ok,
                               std::function<void(Err& err)> f_err) override {
                 f_err(m_data);
             }
