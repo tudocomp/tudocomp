@@ -99,11 +99,34 @@ is written in `C++11`.
 
 ### Dependencies {#dependencies}
 
-The library has the following external dependencies required for compilation:
+The framework is built using [CMake](https://cmake.org) (2.8 or later). It is
+written in `C++11` and only tested against the `gcc` compiler family.
 
-* [`Boost`](http://www.boost.org/) (`system`, `program_options` and `filesystem`; 1.55 or later).
-* [`sdsl-lite`](https://github.com/simongog/sdsl-lite) (2.03 or later).
+It has the following external dependencies:
+
+* [Succinct Data Structure Library](https://github.com/simongog/sdsl-lite)
+  (2.1 or later).
+* [`gflags`](https://gflags.github.io/gflags) (2.1.2 or later).
 * [`glog`](https://github.com/google/glog) (0.34 or later).
+
+Additionally, the tests require
+[Google Test](https://github.com/google/googletest) (1.7.0 or later).
+
+The build scripts will either find these dependencies on the build system or
+automatically download and build them from their official repositories.
+
+For building the documentation, the following tools are required:
+
+* LATEX (specifically the `pdflatex` component)
+* [Pandoc](http://pandoc.org)
+* [Doxygen](http://doxygen.org)
+
+### Building on Windows
+
+On Windows, only [Cygwin](https://www.cygwin.com/) is currently supported as a
+build platform.
+
+>TODO: some notes on what has to be done to get it working
 
 ### License
 
