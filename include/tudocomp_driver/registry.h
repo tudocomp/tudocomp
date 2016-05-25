@@ -23,343 +23,66 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/util.h>
-#include <tudocomp_driver/AlgorithmStringParser.hpp>
+#include <tudocomp_driver/AlgorithmStringParser2.hpp>
 
 namespace tudocomp_driver {
 
 using namespace tudocomp;
 
-struct AlgorithmInfo;
+class Registry;
 
-struct AlgorithmDb {
-    std::string kind;
-    std::vector<AlgorithmInfo> sub_algo_info;
+struct AlgorithmTypeBuilder {
+    View m_type;
+    Registry& m_registry;
 
-    inline void print_to(std::ostream& out, int indent);
-
-    inline std::vector<std::string> id_product();
+    inline void regist(View algorithm, View doc = View("TODO"));
 };
 
-struct AlgorithmInfo {
-    /// Human readable name
-    std::string name;
-    /// Used as id string for command line and output filenames
-    std::string shortname;
-    /// Description text
-    std::string description;
-    std::vector<AlgorithmDb> sub_algo_info;
-
-    inline void print_to(std::ostream& out, int indent);
-
-};
-
-template<class T>
-std::vector<T> algo_cross_product(AlgorithmDb& subalgo,
-                                  std::function<T(T, T&)> f
-) {
-    std::vector<T> r;
-    for (auto& algo : subalgo.sub_algo_info) {
-
-        auto& name = algo.shortname;
-        std::vector<std::vector<T>> subalgos;
-        for (auto& subalgo : algo.sub_algo_info) {
-            subalgos.push_back(algo_cross_product(subalgo, f));
-        }
-
-        if (subalgos.size() == 0) {
-            r.push_back(name);
-        } else {
-            for (auto x : cross<T>(std::move(subalgos), f)) {
-                r.push_back(f(name, x));
-            }
-        }
-    }
-    return r;
-}
-
-inline std::vector<std::string> AlgorithmDb::id_product() {
-    return algo_cross_product<std::string>(*this, [](std::string x, std::string& y) {
-        if (x == "") {
-            return y;
-        } else {
-            return x + "." + y;
-        }
-    });
-}
-
-const int ALGO_IDENT = 2;
-
-inline std::string kind_str(int indent, std::string kind) {
-    std::stringstream out;
-    out << std::setw(indent) << "" << "[" << kind << "]";
-    return out.str();
-}
-inline void AlgorithmDb::print_to(std::ostream& out, int indent) {
-    out << kind_str(indent, kind) << "\n";
-    for (auto& e : sub_algo_info) {
-        e.print_to(out, indent + ALGO_IDENT);
-    }
-}
-
-inline std::string shortname_str(int indent, std::string shortname) {
-    std::stringstream out;
-    out << std::setw(indent) << "" << shortname;
-    return out.str();
-}
-inline void AlgorithmInfo::print_to(std::ostream& out, int indent) {
-    out << shortname_str(indent, shortname) << " \t | "
-        << name << ": "
-        << description << "\n";
-    for (auto& e : sub_algo_info) {
-        e.print_to(out, indent + ALGO_IDENT);
-    }
-}
-
-/*
-//commented out because it creates a Boost dependency despite being entirely unused
-inline string_ref pop_algorithm_id(string_ref& algorithm_id) {
-    auto idx = algorithm_id.find('.');
-    int dot_size = 1;
-    if (idx == string_ref::npos) {
-        idx = algorithm_id.size();
-        dot_size = 0;
-    }
-    string_ref r = algorithm_id.substr(0, idx);
-    algorithm_id.remove_prefix(idx + dot_size);
-    return r;
-}
-*/
-
-struct SubRegistry;
-
-struct Registry {
-    AlgorithmDb* m_algorithms;
-
-    std::unordered_map<std::string, CompressorConstructor> m_compressors;
-
-    // AlgorithmInfo
-
-    void compressor(std::string id, CompressorConstructor f) {
-        m_compressors[id] = f;
-    }
-
-    inline SubRegistry algo(std::string id, std::string title, std::string desc);
-
-    std::vector<std::string> check_for_undefined_compressors() {
-        std::vector<std::string> r;
-        for (auto& s : m_algorithms->id_product()) {
-            if (m_compressors.count(s) == 0) {
-                r.push_back(s);
-            }
-        }
-        return r;
-    }
-
-    std::vector<AlgorithmInfo> get_sub_algos() {
-        return m_algorithms->sub_algo_info;
-    }
-};
-
-struct SubRegistry {
-    std::vector<AlgorithmInfo>* m_vector;
-    size_t m_index;
-
-    template<class G>
-    inline void sub_algo(std::string name, G g) {
-        auto& x = (*m_vector)[m_index].sub_algo_info;
-        x.push_back({name});
-        Registry y { &x[x.size() - 1] };
-        g(y);
-    }
-
-};
-
-inline SubRegistry Registry::algo(std::string id, std::string title, std::string desc) {
-    m_algorithms->sub_algo_info.push_back({title, id, desc});
-
-    return SubRegistry {
-        &m_algorithms->sub_algo_info,
-        m_algorithms->sub_algo_info.size() - 1
-    };
-}
-
-inline std::unique_ptr<Compressor> select_algo_or_exit(Registry& reg,
-                                                       Env& env,
-                                                       std::string a_id) {
-
-    if (reg.m_compressors.count(a_id) == 0) {
-        throw std::runtime_error("Unknown algorithm: " + a_id);
-    } else {
-        return reg.m_compressors[a_id](env);
-    }
-}
-
-void register_algos(Registry& registry);
-
-// New unified algorithm spec registry
-
-class RegistryV3;
-
-struct ArgTypeBuilder {
-    std::string m_id;
-    size_t m_idx;
-    RegistryV3& m_registry;
-
-    ArgTypeBuilder& arg_id(std::string arg, std::string id, bool is_static = true);
-    ArgTypeBuilder& doc(std::string doc);
-};
-
-struct AlgorithmSpecBuilder {
-    AlgorithmSpec m_spec;
-    std::string m_doc;
-    std::unordered_map<std::string, std::pair<std::string, bool>> m_arg_ids;
-
-    AlgorithmSpecBuilder(AlgorithmSpec spec): m_spec(spec) {}
-};
-
-class RegistryV3 {
+class Registry {
 public:
-    std::unordered_map<std::string,
-                       std::vector<AlgorithmSpecBuilder>> m_algorithms;
+    eval::AlgorithmTypes m_algorithms;
+    std::map<pattern::Algorithm, CompressorConstructor> m_compressors;
 
-    std::map<AlgorithmSpec, CompressorConstructor> m_compressors;
-
-    friend class ArgTypeBuilder;
 public:
-    inline ArgTypeBuilder register_spec(
-        std::string id,
-        std::string spec
-    ) {
-        Parser p { spec };
-        AlgorithmSpecBuilder s { p.parse().unwrap() };
 
-        m_algorithms[id].push_back(s);
-
-        return ArgTypeBuilder { id, m_algorithms[id].size() - 1, *this };
-    }
-
-    AlgorithmSpec eval(std::string id, AlgorithmSpec s) {
-        std::string r_name;
-        std::vector<AlgorithmArg> r_args;
-
-        bool not_found = true;
-
-        // Find s in the options given with id
-        for (auto& x : m_algorithms[id]) {
-            if (x.m_spec.name == s.name) {
-                not_found = false;
-
-                // Found s, initialize r
-                r_name = x.m_spec.name;
-
-                // Evaluate the arguments, allowing positional
-                // arguments followed by keyword arguments
-                int i = 0;
-                bool positional_ok = true;
-                for (auto& pat_arg : s.args) {
-                    AlgorithmArg* spec_arg;
-
-                    if (pat_arg.keyword.size() == 0) {
-                        // positional argument
-                        CHECK(positional_ok);
-
-                        spec_arg = &x.m_spec.args[i];
-                    } else {
-                        // keyword argument
-                        positional_ok = false;
-
-                        bool found = false;
-                        for(uint j = 0; j < x.m_spec.args.size(); j++) {
-                            if (x.m_spec.args[j].keyword == pat_arg.keyword) {
-                                spec_arg = &x.m_spec.args[j];
-                                found = true;
-                                break;
-                            }
-                        }
-                        CHECK(found);
-                    }
-
-                    // Got a reference to the corresponding spec Arg,
-                    // extract keyword name from it
-                    AlgorithmArg& arg = *spec_arg;
-
-                    std::string arg_name;
-                    if (arg.keyword.size() == 0) {
-                        arg_name = arg.get_as_string();
-                    } else {
-                        arg_name = arg.keyword;
-                    }
-                    CHECK(arg_name.size() > 0);
-                    CHECK(x.m_arg_ids.count(arg_name) > 0);
-
-                    // Use keyword/argument name to find out type
-                    auto arg_id = x.m_arg_ids[arg_name].first;
-
-                    // Combine argument name with argument
-                    r_args.push_back(AlgorithmArg {
-                        std::string(arg_name),
-                        eval(arg_id, pat_arg.get_as_spec())
-                    });
-
-                    i++;
-                }
-
-                break;
-            }
-        }
-
-        AlgorithmSpec r {
-            std::move(r_name),
-            std::move(r_args)
+    inline AlgorithmTypeBuilder type(View type) {
+        return AlgorithmTypeBuilder {
+            type,
+            *this
         };
-
-        if (not_found) {
-            std::stringstream ss;
-            ss << "did not find ";
-            ss << s;
-            ss << "in m_algorithms!";
-
-            throw std::runtime_error(ss.str());
-        }
-
-        return r;
     }
 
-    void compressor(std::string id, CompressorConstructor f) {
-        Parser p { id };
-        AlgorithmSpec s = p.parse().unwrap();
+    void compressor(View id, CompressorConstructor f) {
+        ast::Parser p { id };
+        ast::Value s = p.parse_value();
 
-        // evaluate it to full keyword=value form
-        s = eval("compressor", s);
+        auto static_s
+            = eval::pattern_eval(std::move(s), "compressor", m_algorithms);
 
-        m_compressors[s] = f;
+        CHECK(m_compressors.count(static_s) == 0); // Don't register twice...
+        m_compressors[std::move(static_s)] = f;
     }
 
-    std::vector<AlgorithmSpec> all_algorithms_with_static(std::string id) {
-        std::vector<AlgorithmSpec> r;
+    // Create the list of all possible static-argument-type combinations
+    std::vector<pattern::Algorithm> all_algorithms_with_static(View type) {
+        std::vector<pattern::Algorithm> r;
 
-        using AlgorithmArgs = std::vector<AlgorithmArg>;
+        using AlgorithmArgs = std::vector<pattern::Arg>;
 
-        for (auto& c : m_algorithms[id]) {
+        for (auto& c : m_algorithms[type]) {
             std::vector<std::vector<AlgorithmArgs>> args_variations;
 
-            for (auto& arg : c.m_spec.args) {
-                std::string arg_name;
-                if (arg.keyword.size() == 0) {
-                    arg_name = arg.get_as_string();
-                } else {
-                    arg_name = arg.keyword;
-                }
+            for (auto& arg : c.arguments()) {
+                std::string& arg_name = arg.name();
                 CHECK(arg_name.size() > 0);
-                CHECK(c.m_arg_ids.count(arg_name) > 0);
 
-                auto arg_id = c.m_arg_ids[arg_name].first;
-                bool is_static = c.m_arg_ids[arg_name].second;
+                auto arg_type = arg.type();
+                bool is_static = arg.is_static();
                 if (is_static) {
                     std::vector<AlgorithmArgs> arg_variations;
-                    for(auto arg : all_algorithms_with_static(arg_id)) {
+                    for(auto arg : all_algorithms_with_static(arg_type)) {
                         arg_variations.push_back(AlgorithmArgs {
-                            AlgorithmArg {
+                            pattern::Arg {
                                 std::string(arg_name),
                                 std::move(arg)
                             }
@@ -370,12 +93,12 @@ public:
             }
 
             std::string x_name;
-            std::vector<AlgorithmArg> x_args;
+            std::vector<pattern::Arg> x_args;
 
-            x_name = c.m_spec.name;
+            x_name = c.name();
             std::vector<AlgorithmArgs> r_;
             if (args_variations.size() == 0) {
-                AlgorithmSpec x {
+                pattern::Algorithm x {
                     std::move(x_name),
                     std::move(x_args)
                 };
@@ -393,8 +116,8 @@ public:
             }
 
             for (auto& elem : r_) {
-                r.push_back(AlgorithmSpec {
-                    std::string(c.m_spec.name),
+                r.push_back(pattern::Algorithm {
+                    std::string(c.name()),
                     std::move(elem)
                 });
             }
@@ -403,34 +126,110 @@ public:
         return r;
     }
 
-    std::vector<AlgorithmSpec> check_for_undefined_compressors() {
-        std::cout << "Check!" << "\n";
-
-        std::vector<AlgorithmSpec> r;
+    std::vector<pattern::Algorithm> check_for_undefined_compressors() {
+        std::vector<pattern::Algorithm> r;
         for (auto& s : all_algorithms_with_static("compressor")) {
             if (m_compressors.count(s) == 0) {
                 r.push_back(s);
-                std::cout << "MISSING " << s << "\n";
-            } else {
-                std::cout << "COVERED " << s << "\n";
             }
         }
         return r;
     }
 };
 
-inline ArgTypeBuilder& ArgTypeBuilder::arg_id(std::string arg, std::string id, bool is_static)  {
-    m_registry.m_algorithms[m_id][m_idx].m_arg_ids[arg]
-        = std::pair<std::string, bool>(id, is_static);
-    return *this;
+inline void AlgorithmTypeBuilder::regist(View algorithm, View doc) {
+    auto& m_algorithms = m_registry.m_algorithms;
+    auto& id = m_type;
+
+    ast::Parser p { algorithm };
+
+    ast::Value v = p.parse_value();
+    decl::Algorithm a = decl::from_ast(std::move(v), doc);
+
+    m_algorithms[id].push_back(std::move(a));
 }
 
-inline ArgTypeBuilder& ArgTypeBuilder::doc(std::string doc) {
-    m_registry.m_algorithms[m_id][m_idx].m_doc = doc;
-    return *this;
+
+void register_algorithms(Registry& registry);
+
+inline std::unique_ptr<Compressor> select_algo_or_exit2(Registry& reg,
+                                                        Env& env,
+                                                        View text) {
+
+
+    ast::Parser p { text };
+    auto parsed_algo = p.parse_value();
+    auto evald_algo = eval::cl_eval(std::move(parsed_algo),
+                                    "compressor",
+                                    reg.m_algorithms);
+
+    auto& static_only_evald_algo = evald_algo.static_selection;
+
+    // TODO: Extract static_only spec
+    // TODO: More efficient way, eg by using stringified-representation
+    //       created directly
+
+    if (reg.m_compressors.count(static_only_evald_algo) > 0) {
+        // TODO: Compressor specific arguments
+        return reg.m_compressors[static_only_evald_algo](env);
+    } else {
+        std::cout << static_only_evald_algo << "\n";
+        for (auto pair : reg.m_compressors) {
+            std::cout << pair.first << " = ... \n";
+        }
+
+        throw std::runtime_error("No implementation found for algorithm "
+        + static_only_evald_algo.to_string()
+        );
+    }
+
 }
 
-void register2(RegistryV3& registry);
+inline std::string generate_doc_string(Registry& r) {
+    auto print = [](std::vector<decl::Algorithm>& x, size_t iden) {
+        std::vector<std::string> cells;
+
+        for (auto& y : x) {
+            auto spec = y.to_string(true);
+
+            std::stringstream where;
+            bool first = true;
+            for (auto& z : y.arguments()) {
+                if (first) {
+                    where << "\n  where ";
+                } else {
+                    where << "\n        ";
+                }
+                first = false;
+                where << "`" << z.name() << "` is one of [" << z.type() << "],";
+            }
+            auto s = spec + where.str();
+            if (y.arguments().size() > 0) {
+                s = s.substr(0, s.size() - 1);
+            }
+            cells.push_back(s);
+            cells.push_back(y.doc());
+        }
+
+        return indent_lines(make_table(cells, 2), iden);
+    };
+
+    std::stringstream ss;
+
+    ss << "  [Compression algorithms]\n";
+    ss << print(r.m_algorithms["compressor"], 2) << "\n\n";
+
+    ss << "  [Argument types]\n";
+    for (auto& x : r.m_algorithms) {
+        if (x.first == "compressor") {
+            continue;
+        }
+        ss << "    [" << x.first << "]\n";
+        ss << print(x.second, 4) << "\n\n";
+    }
+
+    return ss.str();
+}
 
 }
 

@@ -6,38 +6,37 @@
 
 #include "test_util.h"
 #include "tudocomp_driver/registry.h"
-
 #include "tudocomp_driver_util.h"
 
-TEST(TudocompDriver, all_compressors_defined) {
-    using namespace tudocomp_driver;
+using namespace tudocomp_driver;
 
-    AlgorithmDb root;
-    Registry registry {&root};
-    register_algos(registry);
-    auto s = registry.check_for_undefined_compressors();
-    bool has_undefined_compressors = s.size() > 0;
-    if (has_undefined_compressors) {
-        std::stringstream ss;
-        for (auto& s2 : s) {
-            ss << "Undefined compressor: " << s2 << "\n";
-        }
-        EXPECT_FALSE(has_undefined_compressors) << ss.str();
-    }
-}
+// TODO
+const std::vector<std::string> additional_tests = {};
 
 TEST(TudocompDriver, roundtrip_matrix) {
-    std::cout << "[ Parsing Algorithm list from executable ]\n";
-    auto list = list::tudocomp_list().root;
-    std::cout << list.print("") << std::endl;
-    std::cout << "[ Generating cross product of all algorithms ]\n";
-    std::vector<std::string> algo_lines = algo_cross_product(list);
-    for (auto& e : algo_lines) {
+
+    Registry r;
+    register_algorithms(r);
+    Env env;
+
+    std::cout << "[ Generating list of test cases ]\n";
+
+    // Use cross product of all static arguments as base list to check
+    std::vector<std::string> test_cases;
+
+    for (const auto& x : r.all_algorithms_with_static("compressor")) {
+        test_cases.push_back(x.to_string(true));
+    }
+    for (const auto& x : additional_tests) {
+        test_cases.push_back(x);
+    }
+
+    for (auto& e : test_cases) {
         std::cout << "  " << e << "\n";
     }
     std::cout << "[ Start roundtrip tests ]\n";
 
-    for (auto& algo : algo_lines) {
+    for (auto& algo : test_cases) {
         int counter = 0;
         bool abort = false;
         test_roundtrip_batch([&](std::string text) {

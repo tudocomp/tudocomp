@@ -111,17 +111,13 @@ int main(int argc, char** argv)
         Env algorithm_env(algorithm_options, {});
 
         // Set up algorithms
-        AlgorithmDb root;
-        Registry registry {&root};
-        register_algos(registry);
+        Registry registry;
+        register_algorithms(registry);
 
         if (FLAGS_list) {
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
-
-            for (auto& e: registry.get_sub_algos()) {
-                e.print_to(std::cout, 0);
-            }
+            std::cout << generate_doc_string(registry);
 
             return 0;
         }
@@ -141,7 +137,7 @@ int main(int argc, char** argv)
 
         if (do_raw || do_compress) {
             algorithm_id = FLAGS_algorithm;
-            algo = select_algo_or_exit(registry, algorithm_env, algorithm_id);
+            algo = select_algo_or_exit2(registry, algorithm_env, algorithm_id);
         }
 
         /////////////////////////////////////////////////////////////////////////
@@ -264,7 +260,7 @@ int main(int argc, char** argv)
                         exit("Input did not have an algorithm header!");
                     }
                     algorithm_id = std::move(algorithm_header);
-                    algo = select_algo_or_exit(registry, algorithm_env, algorithm_id);
+                    algo = select_algo_or_exit2(registry, algorithm_env, algorithm_id);
                 }
 
                 setup_time = clk::now();
