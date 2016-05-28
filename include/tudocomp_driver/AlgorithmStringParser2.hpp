@@ -268,7 +268,7 @@ using namespace tudocomp;
             auto ident = parse_ident();
 
             bool has_type = false;
-            bool is_static;
+            bool is_static = false;
             View type_ident("");
 
             if (ident.size() > 0 && parse_char(':')) {
