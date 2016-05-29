@@ -13,16 +13,16 @@ inputs = [
 ]
 commands = [
 #      <shown command and args>                                     <hidden args>
-    ["tudocomp_driver -algorithm lzw.bit",                    "-raw $IN -output $OUT"],
-    ["tudocomp_driver -algorithm lz78.bit",                   "-raw $IN -output $OUT"],
-    ["tudocomp_driver -algorithm lz77ss_lcp.online.online",   "-raw $IN -output $OUT"],
-    ["tudocomp_driver -algorithm lz77ss_lcp.online.offline",  "-raw $IN -output $OUT"],
-    ["tudocomp_driver -algorithm lz77ss_lcp.offline.online",  "-raw $IN -output $OUT"],
-    ["tudocomp_driver -algorithm lz77ss_lcp.offline.offline", "-raw $IN -output $OUT"],
-    ["tudocomp_driver -algorithm lz77ss.online.online",       "-raw $IN -output $OUT"],
-    ["tudocomp_driver -algorithm lz77ss.online.offline",      "-raw $IN -output $OUT"],
-    ["tudocomp_driver -algorithm lz77ss.offline.online",      "-raw $IN -output $OUT"],
-    ["tudocomp_driver -algorithm lz77ss.offline.offline",     "-raw $IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lzw(bit)'",                     "-raw $IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lz78(bit)'",                    "-raw $IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lz77ss_lcp(online(online))'",   "-raw $IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lz77ss_lcp(online(offline))'",  "-raw $IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lz77ss_lcp(offline(online))'",  "-raw $IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lz77ss_lcp(offline(offline))'", "-raw $IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lz77ss(online(online))'",       "-raw $IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lz77ss(online(offline))'",      "-raw $IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lz77ss(offline(online))'",      "-raw $IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lz77ss(offline(offline))'",     "-raw $IN -output $OUT"],
 
     ["gzip -9",                              "-c $IN > $OUT"],
     ["bzip2 -9",                             "-c $IN > $OUT"],
@@ -43,7 +43,7 @@ inputs = [
 ]
 commands = [
 #      <shown command and args>                 <hidden args>
-    ["tudocomp_driver -algorithm lzw.bit",  "-raw $IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lzw(bit)'",  "-raw $IN -output $OUT"],
 ]
 
 [lz78]
@@ -53,6 +53,6 @@ inputs = [
     "$DATASETS/download/real/english.200MB",
 ]
 commands = [
-    ["tudocomp_driver -algorithm lz78.bit",   "$IN -output $OUT"],
-    ["tudocomp_driver -algorithm lz78.debug", "$IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lz78(bit)'",   "$IN -output $OUT"],
+    ["tudocomp_driver -algorithm 'lz78(debug)'", "$IN -output $OUT"],
 ]
