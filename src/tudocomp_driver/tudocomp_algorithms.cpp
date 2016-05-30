@@ -22,6 +22,7 @@
 #include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
 
 #include <tudocomp/ChainCompressor.hpp>
+#include <tudocomp/lzss/LZ77TestCompressor.hpp>
 
 namespace tudocomp_driver {
 
@@ -48,6 +49,8 @@ using lzss::ESACompMaxLCP;
 using lzss::DebugLZSSCoder;
 using lzss::OnlineLZSSCoder;
 using lzss::OfflineLZSSCoder;
+
+using lzss::LZ77TestCompressor;
 
 /// A small helper function for directly constructing a Compressor class.
 template<class C>
@@ -127,6 +130,9 @@ void register_algos(Registry& r) {
                     r.algo("offline", "Offline alphabet coder", "optimized symbol encoding using alphabet statistics");
             });
         });
+
+    r.algo("LZ77TestCompressor", "LZ77TestCompressor", "");
+
     r.algo("chain_test", "", "");
 
     // Define which implementations to use for each combination:
@@ -162,6 +168,7 @@ void register_algos(Registry& r) {
     r.compressor("esacomp.online.offline",  make<LZSSESACompressor<ESACompMaxLCP, OnlineLZSSCoder<OfflineAlphabetCoder>>>);
     r.compressor("esacomp.offline.online",  make<LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OnlineAlphabetCoder>>>);
     r.compressor("esacomp.offline.offline", make<LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OfflineAlphabetCoder>>>);
+    r.compressor("LZ77TestCompressor",                make<LZ77TestCompressor>);
 
     r.compressor("chain_test", [](Env& env) {
         std::vector<CompressorConstructor> algorithms {
