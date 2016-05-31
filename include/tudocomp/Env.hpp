@@ -17,6 +17,56 @@ template<typename T> T lexical_cast(const std::string& s) {
     return val;
 }
 
+class OptionValue;
+class AlgorithmValue {
+public:
+    using ArgumentMap = std::map<std::string, OptionValue>;
+private:
+    std::string m_name;
+    ArgumentMap m_arguments;
+    friend class OptionValue;
+public:
+    inline AlgorithmValue(std::string&& name, ArgumentMap&& arguments):
+        m_name(std::move(name)), m_arguments(std::move(arguments)) {}
+
+    inline const std::string& name() const {
+        return m_name;
+    }
+    inline const ArgumentMap& arguments() const {
+        return m_arguments;
+    }
+};
+
+class OptionValue {
+    bool m_is_value;
+    AlgorithmValue m_value_or_algorithm;
+    friend class AlgorithmValue;
+public:
+    inline OptionValue(): OptionValue("") {}
+    inline OptionValue(std::string&& value):
+        m_is_value(true),
+        m_value_or_algorithm(AlgorithmValue(std::move(value), {})) {}
+    inline OptionValue(AlgorithmValue&& algorithm):
+        m_is_value(false),
+        m_value_or_algorithm(std::move(algorithm)) {}
+
+    inline bool has_value() const {
+        return m_value_or_algorithm.m_name != "";
+    }
+    inline const std::string& value_as_string() const {
+        CHECK(m_is_value);
+        return m_value_or_algorithm.m_name;
+    }
+    inline const AlgorithmValue& value_as_algorithm() const {
+        CHECK(!m_is_value);
+        return m_value_or_algorithm;
+    }
+    inline uint64_t value_as_integer() const {
+        return lexical_cast<uint64_t>(value_as_string());
+    }
+};
+
+
 /// Local environment for a compression/encoding/decompression call.
 ///
 /// Gives access to a statistic logger, and to environment

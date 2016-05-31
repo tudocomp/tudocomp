@@ -695,7 +695,7 @@ using namespace tudocomp;
 
         struct Evaluated {
             pattern::Algorithm static_selection;
-            std::map<std::string, std::string> options;
+            OptionValue options;
         };
 
         inline Evaluated eval(ast::Value&& v,
@@ -707,7 +707,7 @@ using namespace tudocomp;
             if (type == "string") {
                 return Evaluated {
                     pattern::Algorithm(), // No static algorithm here to return
-                    {}  // TODO: Figure out how to dynamic value
+                    OptionValue(std::move(v.string_value()))
                 };
             }
 
@@ -731,7 +731,7 @@ using namespace tudocomp;
             // Prepare return value
             std::string r_name = v_signature.name();
             std::vector<pattern::Arg> r_static_args;
-            std::map<std::string, std::string> r_options;
+            AlgorithmValue::ArgumentMap r_dynamic_args;
 
             // Step 1: Find argument name of each option in the invokation's
             // signature
@@ -816,6 +816,9 @@ using namespace tudocomp;
                             std::move(arg_evaluated.static_selection)));
                 }
 
+                r_dynamic_args[signature_arg.name()]
+                    = std::move(arg_evaluated.options);
+
                 // TODO: populate r_options and merge with arg_evaluated.m_options
             }
 
@@ -823,9 +826,11 @@ using namespace tudocomp;
 
             return Evaluated {
                 pattern::Algorithm(
-                    std::move(r_name),
+                    std::string(r_name),
                     std::move(r_static_args)),
-                std::move(r_options)
+                OptionValue(AlgorithmValue(
+                    std::move(r_name),
+                    std::move(r_dynamic_args)))
             };
 
         }
