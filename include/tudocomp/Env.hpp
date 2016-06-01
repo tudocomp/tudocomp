@@ -64,37 +64,60 @@ public:
     inline uint64_t value_as_integer() const {
         return lexical_cast<uint64_t>(value_as_string());
     }
+    inline AlgorithmValue::ArgumentMap into_algorithm_options() {
+        value_as_algorithm();
+        auto tmp = std::move(m_value_or_algorithm);
+        return std::move(tmp.m_arguments);
+    }
 };
 
+/*
+
+class GlobalEnv {
+
+};
+
+class LocalEnv {
+    AlgorithmValue::ArgumentMap m_options;
+    GlobalEnv* m_global_env;
+public:
+    inline LocalEnv() {}
+
+    //inline GlobalEnv& global_env() {
+    //    return *m_global_env;
+    //}
+
+    //const AlgorithmValue::ArgumentMap
+};
+
+*/
 
 /// Local environment for a compression/encoding/decompression call.
 ///
 /// Gives access to a statistic logger, and to environment
 /// options that can be used to modify the default behavior of an algorithm.
 class Env {
-    std::map<std::string, const std::string> options;
-    std::map<std::string, const std::string> stats;
-    mutable std::set<std::string> known_options;
+    AlgorithmValue::ArgumentMap m_options;
+    //GlobalEnv* m_global_env;
 
 public:
     inline Env() {}
-    inline Env(std::map<std::string, const std::string> options_,
-               std::map<std::string, const std::string> stats_):
-        options(options_), stats(stats_) {}
+    inline Env(AlgorithmValue::ArgumentMap&& options):
+        m_options(options) {}
 
     /// Returns a copy of the backing map.
     inline std::map<std::string, const std::string> get_options() const {
-        return options;
+        return {};
     }
 
     /// Returns a copy of the backing map.
     inline std::map<std::string, const std::string> get_stats() const {
-        return stats;
+        return {};
     }
 
     /// Returns the set of options that got actually asked for by the algorithms
     inline std::set<std::string> get_known_options() const {
-        return known_options;
+        return {};
     }
 
     /// Log a statistic.
@@ -110,15 +133,16 @@ public:
     /// \param value The value of the statistic as a string.
     template<class T>
     inline void log_stat(const std::string& name, const T value) {
-        std::stringstream s;
-        s << value;
-        stats.emplace(name, s.str());
+        //std::stringstream s;
+        //s << value;
+        //stats.emplace(name, s.str());
     };
 
     /// Returns whether a option has been set.
     inline bool has_option(const std::string& name) const {
-        known_options.insert(name);
-        return options.count(name) > 0;
+        //known_options.insert(name);
+        //return options.count(name) > 0;
+        return false;
     };
 
     /// Returns a option as its raw string value, or the empty string if
@@ -131,10 +155,11 @@ public:
     /// \param default_value The default value to use if the option is not set.
     ///                      Defaults to the empty string.
     inline const std::string& option(const std::string& name, const std::string& default_value = "") const {
-        known_options.insert(name);
-        if (has_option(name)) {
-            return options.at(name);
-        } else {
+        //known_options.insert(name);
+        //if (has_option(name)) {
+        //    return options.at(name);
+        //} else
+        {
             return default_value;
         }
     };
@@ -156,10 +181,11 @@ public:
     ///                      Defaults to the default-constructed value of `T`.
     template<class T>
     T option_as(const std::string& name, T default_value = T()) const {
-        known_options.insert(name);
-        if (has_option(name)) {
-            return lexical_cast<T>(options.at(name));
-        } else {
+        //known_options.insert(name);
+        //if (has_option(name)) {
+        //    return lexical_cast<T>(options.at(name));
+        //} else
+        {
             return default_value;
         }
     };

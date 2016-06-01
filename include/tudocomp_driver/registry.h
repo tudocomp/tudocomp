@@ -152,11 +152,11 @@ inline void AlgorithmTypeBuilder::regist(View algorithm, View doc) {
 
 void register_algorithms(Registry& registry);
 
-inline std::unique_ptr<Compressor> select_algo_or_exit2(Registry& reg,
-                                                        Env& env,
-                                                        View text) {
-
-
+struct Selection {
+    std::unique_ptr<Compressor> compressor;
+    std::unique_ptr<Env> env;
+};
+inline Selection select_algo_or_exit2(Registry& reg, View text) {
     ast::Parser p { text };
     auto parsed_algo = p.parse_value();
     auto evald_algo = eval::cl_eval(std::move(parsed_algo),
@@ -164,25 +164,22 @@ inline std::unique_ptr<Compressor> select_algo_or_exit2(Registry& reg,
                                     reg.m_algorithms);
 
     auto& static_only_evald_algo = evald_algo.static_selection;
-
-    // TODO: Extract static_only spec
-    // TODO: More efficient way, eg by using stringified-representation
-    //       created directly
+    auto& options = evald_algo.options;
 
     if (reg.m_compressors.count(static_only_evald_algo) > 0) {
-        // TODO: Compressor specific arguments
-        return reg.m_compressors[static_only_evald_algo](env);
-    } else {
-        std::cout << static_only_evald_algo << "\n";
-        for (auto pair : reg.m_compressors) {
-            std::cout << pair.first << " = ... \n";
-        }
+        // TODO: PASS options
+        auto env = std::make_unique<Env>(std::move(
+            options.into_algorithm_options()));
 
+        return Selection {
+            reg.m_compressors[static_only_evald_algo](*env),
+            std::move(env)
+        };
+    } else {
         throw std::runtime_error("No implementation found for algorithm "
         + static_only_evald_algo.to_string()
         );
     }
-
 }
 
 inline std::string generate_doc_string(Registry& r) {

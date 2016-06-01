@@ -819,7 +819,6 @@ using namespace tudocomp;
                 r_dynamic_args[signature_arg.name()]
                     = std::move(arg_evaluated.options);
 
-                // TODO: populate r_options and merge with arg_evaluated.m_options
             }
 
             // Step 3: Return

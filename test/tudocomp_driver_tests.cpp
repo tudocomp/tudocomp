@@ -128,8 +128,7 @@ TEST(Registry, lookup) {
     using namespace tudocomp_driver;
     Registry r;
     register_algorithms(r);
-    Env env;
-    auto c = select_algo_or_exit2(r, env, "lz78(dict_size = \"100\")");
+    auto c = select_algo_or_exit2(r, "lz78(dict_size = \"100\")");
 }
 
 TEST(TudocompDriver, all_compressors_defined) {

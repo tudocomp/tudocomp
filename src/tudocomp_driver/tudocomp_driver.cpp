@@ -90,25 +90,7 @@ int main(int argc, char** argv)
     try {
         validate_flag_combination();
 
-        std::map<std::string, const std::string> algorithm_options;
-
-        /*for (auto& os : string_args("--option")) {
-            std::vector<std::string> options;
-            bost::split(options, os, bost::is_any_of(","));
-            for (auto& o : options) {
-                std::vector<std::string> key_value;
-                bost::split(key_value, o, bost::is_any_of("="));
-                CHECK(key_value.size() == 2);
-                algorithm_options.emplace(key_value[0], key_value[1]);
-            }
-        }*/
-
-        /*if (arg_exists("--help")) {
-            show_help();
-            return 0;
-        }*/
-
-        Env algorithm_env(algorithm_options, {});
+        std::unique_ptr<Env> algorithm_env;
 
         // Set up algorithms
         Registry registry;
@@ -137,7 +119,10 @@ int main(int argc, char** argv)
 
         if (do_raw || do_compress) {
             algorithm_id = FLAGS_algorithm;
-            algo = select_algo_or_exit2(registry, algorithm_env, algorithm_id);
+
+            auto selection = select_algo_or_exit2(registry, algorithm_id);
+            algo = std::move(selection.compressor);
+            algorithm_env = std::move(selection.env);
         }
 
         /////////////////////////////////////////////////////////////////////////
@@ -260,7 +245,10 @@ int main(int argc, char** argv)
                         exit("Input did not have an algorithm header!");
                     }
                     algorithm_id = std::move(algorithm_header);
-                    algo = select_algo_or_exit2(registry, algorithm_env, algorithm_id);
+
+                    auto selection = select_algo_or_exit2(registry, algorithm_id);
+                    algo = std::move(selection.compressor);
+                    algorithm_env = std::move(selection.env);
                 }
 
                 setup_time = clk::now();
@@ -327,17 +315,17 @@ int main(int argc, char** argv)
 
             std::cout << "---------------\n";
             std::cout << "Algorithm Known Options:\n";
-            for (auto& pair : algorithm_env.get_known_options()) {
+            for (auto& pair : algorithm_env->get_known_options()) {
                 std::cout << "  " << pair << "\n";
             }
             std::cout << "Algorithm Given Options:\n";
-            for (auto& pair : algorithm_env.get_options()) {
+            for (auto& pair : algorithm_env->get_options()) {
                 std::cout << "  " << pair.first << " = " << pair.second << "\n";
             }
 
             std::cout << "---------------\n";
             std::cout << "Algorithm Stats:\n";
-            for (auto& pair : algorithm_env.get_stats()) {
+            for (auto& pair : algorithm_env->get_stats()) {
                 std::cout << "  " << pair.first << ": " << pair.second << "\n";
             }
 
