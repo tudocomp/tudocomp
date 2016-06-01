@@ -131,6 +131,58 @@ TEST(Registry, lookup) {
     auto c = select_algo_or_exit2(r, "lz78(dict_size = \"100\")");
 }
 
+TEST(Registry, dynamic_options) {
+    using namespace tudocomp_driver;
+
+    Registry r;
+    r.type("compressor")
+        .regist("foo(a: static b, c: string, d: string = \"asdf\")");
+    r.type("b")
+        .regist("x(l: string = \"zzz\")");
+
+    struct MyCompressor: public Compressor {
+        using Compressor::Compressor;
+        inline virtual void decompress(Input& input, Output& output) {}
+
+        inline virtual void compress(Input& input, Output& output) {
+            auto x = output.as_stream();
+            auto& s = *x;
+            auto y = input.as_view();
+            auto t = *y;
+
+            ASSERT_EQ(t, "test");
+            s << "check";
+
+            auto& options = m_env->new_options();
+
+            ASSERT_TRUE(options["a"].has_value());
+            ASSERT_TRUE(options["c"].has_value());
+            ASSERT_TRUE(options["d"].has_value());
+            ASSERT_FALSE(options["o"].has_value());
+
+            ASSERT_EQ(options["c"].value_as_string(), "qwerty");
+            ASSERT_EQ(options["d"].value_as_string(), "asdf");
+
+            auto& a = options["a"].value_as_algorithm();
+            auto& a_options = a.arguments();
+            ASSERT_EQ(a.name(), "x");
+            ASSERT_EQ(a_options["l"].value_as_string(), "zzz");
+        }
+    };
+
+    r.compressor("foo(x)", [](Env& e) -> std::unique_ptr<Compressor> {
+        return std::make_unique<MyCompressor>(e);
+    });
+
+    auto c = select_algo_or_exit2(r, "foo(x, \"qwerty\")");
+    std::vector<uint8_t> data;
+    Output out(data);
+    Input inp("test");
+    c.compressor->compress(inp, out);
+
+    ASSERT_EQ(View(data), "check");
+}
+
 TEST(TudocompDriver, all_compressors_defined) {
     using namespace tudocomp_driver;
 

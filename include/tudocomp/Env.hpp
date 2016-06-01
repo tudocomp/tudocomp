@@ -32,7 +32,7 @@ public:
     inline const std::string& name() const {
         return m_name;
     }
-    inline const ArgumentMap& arguments() const {
+    inline ArgumentMap& arguments() {
         return m_arguments;
     }
 };
@@ -57,7 +57,7 @@ public:
         CHECK(m_is_value);
         return m_value_or_algorithm.m_name;
     }
-    inline const AlgorithmValue& value_as_algorithm() const {
+    inline AlgorithmValue& value_as_algorithm() {
         CHECK(!m_is_value);
         return m_value_or_algorithm;
     }
@@ -193,6 +193,10 @@ public:
     /// Log an error and end the current operation
     inline void error(const std::string& msg) {
         throw std::runtime_error(msg);
+    }
+
+    inline AlgorithmValue::ArgumentMap& new_options() {
+        return m_options;
     }
 };
 
