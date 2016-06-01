@@ -128,7 +128,7 @@ TEST(Registry, lookup) {
     using namespace tudocomp_driver;
     Registry r;
     register_algorithms(r);
-    auto c = select_algo_or_exit2(r, "lz78(dict_size = \"100\")");
+    auto c = r.select_algorithm_or_exit("lz78(dict_size = \"100\")");
 }
 
 TEST(Registry, dynamic_options) {
@@ -174,7 +174,7 @@ TEST(Registry, dynamic_options) {
         return std::make_unique<MyCompressor>(e);
     });
 
-    auto c = select_algo_or_exit2(r, "foo(x, \"qwerty\")");
+    auto c = r.select_algorithm_or_exit("foo(x, \"qwerty\")");
     std::vector<uint8_t> data;
     Output out(data);
     Input inp("test");

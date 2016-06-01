@@ -120,7 +120,7 @@ int main(int argc, char** argv)
         if (do_raw || do_compress) {
             algorithm_id = FLAGS_algorithm;
 
-            auto selection = select_algo_or_exit2(registry, algorithm_id);
+            auto selection = registry.select_algorithm_or_exit(algorithm_id);
             algo = std::move(selection.compressor);
             algorithm_env = std::move(selection.env);
         }
@@ -246,7 +246,8 @@ int main(int argc, char** argv)
                     }
                     algorithm_id = std::move(algorithm_header);
 
-                    auto selection = select_algo_or_exit2(registry, algorithm_id);
+                    auto selection =
+                        registry.select_algorithm_or_exit(algorithm_id);
                     algo = std::move(selection.compressor);
                     algorithm_env = std::move(selection.env);
                 }
