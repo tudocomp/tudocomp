@@ -315,20 +315,8 @@ int main(int argc, char** argv)
             };
 
             std::cout << "---------------\n";
-            std::cout << "Algorithm Known Options:\n";
-            for (auto& pair : algorithm_env->get_known_options()) {
-                std::cout << "  " << pair << "\n";
-            }
-            std::cout << "Algorithm Given Options:\n";
-            for (auto& pair : algorithm_env->get_options()) {
-                std::cout << "  " << pair.first << " = " << pair.second << "\n";
-            }
-
-            std::cout << "---------------\n";
             std::cout << "Algorithm Stats:\n";
-            for (auto& pair : algorithm_env->get_stats()) {
-                std::cout << "  " << pair.first << ": " << pair.second << "\n";
-            }
+            std::cout << algorithm_env->algo().statistics_to_string("  ");
 
             std::cout << "---------------\n";
             print_time("startup", setup_duration);

@@ -10,6 +10,8 @@ namespace tudocomp {
 
 /// Interface for a general compressor.
 class Compressor {
+// DEPRECATED
+// use accesor function instead, as preperation for per-algorithm env
 protected:
     Env* m_env;
 
@@ -19,6 +21,9 @@ public:
 
     /// Construct the class with an environment.
     inline Compressor(Env& env): m_env(&env) {}
+
+    /// Return a reference to the environment
+    inline Env& env() { return *m_env; }
 
     /// Compress `inp` into `out`.
     ///

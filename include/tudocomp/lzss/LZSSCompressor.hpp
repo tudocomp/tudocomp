@@ -48,7 +48,7 @@ public:
         Input input_copy_2(main_input);
         Input input_copy_3(main_input);
         auto out_guard = output.as_stream();
-        m_coder = new C(*m_env, input_copy_2, out_guard, coder_opts(input_copy_3));
+        m_coder = new C(env(), input_copy_2, out_guard, coder_opts(input_copy_3));
 
         //pass factor buffer (empty or filled)
         m_coder->set_buffer(m_factors);
@@ -111,7 +111,7 @@ public:
 
     /// \copydoc
     virtual void decompress(Input& input, Output& output) override {
-        C::decode(*m_env, input, output);
+        C::decode(env(), input, output);
     }
 
 protected:

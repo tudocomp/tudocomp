@@ -153,7 +153,7 @@ TEST(Registry, dynamic_options) {
             ASSERT_EQ(t, "test");
             s << "check";
 
-            auto& options = m_env->new_options();
+            auto& options = m_env->algo().arguments();
 
             ASSERT_TRUE(options["a"].has_value());
             ASSERT_TRUE(options["c"].has_value());

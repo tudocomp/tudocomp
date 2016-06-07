@@ -40,7 +40,7 @@ public:
         auto& is = *guard;
 
         EncoderDictionary ed(EncoderDictionary::Lzw, dms, reserve_dms);
-        C coder(*m_env, out);
+        C coder(env(), out);
         uint64_t factor_count = 0;
 
         CodeType i {dms}; // Index
@@ -76,7 +76,7 @@ public:
             coder.encode_fact(i);
             factor_count++;
         }
-        m_env->log_stat(RULESET_SIZE_LOG, factor_count);
+        env().algo().log_stat(RULESET_SIZE_LOG, factor_count);
     }
 
     virtual void decompress(Input& in, Output& out) override final {

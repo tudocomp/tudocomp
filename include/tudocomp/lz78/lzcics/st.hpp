@@ -132,7 +132,7 @@ struct ST {
 };
 
 void reset_bitvector(bit_vector& bv) { //! resets a bit-vector, clearing all ones
-	for(auto it = bv.begin(); it != bv.end(); ++it) *it = 0; //TODO: is this the fastest approach?
+	sdsl::util::set_to_value(bv, 0);
 }
 
 #endif

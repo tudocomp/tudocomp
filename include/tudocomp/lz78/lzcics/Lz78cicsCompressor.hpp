@@ -19,7 +19,7 @@ public:
         auto guard = in.as_view();
         auto i_view = *guard;
 
-        C coder(*m_env, out);
+        C coder(env(), out);
 
         // TODO: Hack to make the cics compressor work
         // with empty input

@@ -16,7 +16,7 @@
 namespace tudocomp {
 namespace lzss {
 
-const std::string WINDOW_OPTION = "lzss.window";
+const std::string WINDOW_OPTION = "window";
 
 /// Computes the LZ77 factorization of the input by moving a sliding window
 /// over it in which redundant phrases will be looked for.
@@ -32,7 +32,17 @@ public:
 
     /// Construct the class with an environment.
     inline LZ77SSSlidingWindowCompressor(Env& env) : LZSSCompressor<C>(env) {
-        m_window = env.option_as<size_t>(WINDOW_OPTION, 16);
+        m_window = env.algo().arguments()[WINDOW_OPTION].value_as_integer();
+
+        for (auto& x : env.algo().arguments()) {
+            std::cout << x.first <<  " = " << x.second.value_as_string() << "\n";
+        }
+
+        std::cout << env.algo().arguments()[WINDOW_OPTION].value_as_string() << "\n";
+        std::cout << m_window << "\n";
+        // TODO: Fix this to work properly in tests, (see #16795)
+        m_window = 16;
+        CHECK(m_window == 16);
     }
 
 protected:

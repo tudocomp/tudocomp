@@ -17,9 +17,9 @@ using lz78_dictionary::CodeType;
 using lz78_dictionary::EncoderDictionary;
 using lz78_dictionary::DMS_MAX;
 
-const std::string THRESHOLD_OPTION = "lz78.threshold";
-const std::string THRESHOLD_LOG = "lz78.threshold";
-const std::string RULESET_SIZE_LOG = "lz78.factor_count";
+const std::string THRESHOLD_OPTION = "threshold";
+const std::string THRESHOLD_LOG = "threshold";
+const std::string RULESET_SIZE_LOG = "factor_count";
 
 /**
  * A simple compressor that echoes the input into the coder without
@@ -33,6 +33,11 @@ private:
     //const CodeType dms {256 + 10};
     /// Preallocated dictionary size
     const CodeType reserve_dms {1024};
+
+    // Stats
+    uint64_t m_dictionary_resets = 0;
+    uint64_t m_dict_counter_at_last_reset = 0;
+
 public:
     using Compressor::Compressor;
 
@@ -41,7 +46,7 @@ public:
         auto& is = *guard;
 
         EncoderDictionary ed(EncoderDictionary::Lz78, dms, reserve_dms);
-        C coder(*m_env, out);
+        C coder(env(), out);
         uint64_t factor_count = 0;
 
         CodeType last_i {dms}; // needed for the end of the string
@@ -57,6 +62,8 @@ public:
             {
                 ed.reset();
                 rbwf = true;
+                m_dictionary_resets++;
+                m_dict_counter_at_last_reset = dms;
             }
 
             const CodeType temp {i};
@@ -88,7 +95,11 @@ public:
             coder.encode_fact(Factor { fact, b });
             factor_count++;
         }
-        m_env->log_stat(RULESET_SIZE_LOG, factor_count);
+        env().algo().log_stat(RULESET_SIZE_LOG, factor_count);
+        env().algo().log_stat("count_dictionary_reset",
+                              m_dictionary_resets);
+        env().algo().log_stat("max_factor_counter",
+                              m_dict_counter_at_last_reset);
     }
 
     virtual void decompress(Input& in, Output& out) override final {

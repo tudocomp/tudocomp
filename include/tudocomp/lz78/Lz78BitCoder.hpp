@@ -19,6 +19,9 @@ private:
     tudocomp::BitOStream m_out;
     uint64_t m_factor_counter = 0;
 
+    // Stats
+    uint32_t m_max_bits_needed_per_factor = 0;
+
 public:
     inline Lz78BitCoder(Env& env, Output& out)
         : m_out_guard(out.as_stream()), m_out(*m_out_guard)
@@ -40,6 +43,9 @@ public:
 
         m_out.write(entry.index, back_ref_idx_bits);
         m_out.write(entry.chr, 8);
+
+        m_max_bits_needed_per_factor = std::max<uint32_t>(
+                m_max_bits_needed_per_factor, back_ref_idx_bits + 8);
 
         m_factor_counter++;
     }

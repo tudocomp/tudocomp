@@ -153,8 +153,8 @@ public:
 
         if (reg.m_compressors.count(static_only_evald_algo) > 0) {
             // TODO: PASS options
-            auto env = std::make_unique<Env>(std::move(
-                options.into_algorithm_options()));
+            auto env = std::make_unique<Env>(
+                std::move(options.value_as_algorithm()));
 
             return Selection {
                 reg.m_compressors[static_only_evald_algo](*env),

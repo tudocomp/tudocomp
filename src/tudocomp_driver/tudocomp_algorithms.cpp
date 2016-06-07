@@ -70,7 +70,9 @@ void register_algorithms(Registry& r) {
     compressor.regist("lz78_cics(coder: static lz78_coder = bit)");
     compressor.regist("lzw(coder: static lzw_coder = bit)",
         "Lempel-Ziv-Welch");
-    compressor.regist("lz77ss(coder: static lzss_coder)",
+    compressor.regist(R"(
+        lz77ss(coder:  static lzss_coder,
+               window:        string = "16"))",
         "Lempel-Ziv-Storer-Szymanski");
     compressor.regist("lz77ss_lcp(coder: static lzss_coder = online)",
         "LZ77 Factorization using LCP");

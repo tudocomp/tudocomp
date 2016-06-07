@@ -60,7 +60,7 @@ public:
                 }
 
                 // then invoke the algorithm
-                auto compressor = m_compressors[i](*m_env);
+                auto compressor = m_compressors[i](env());
                 f(*chain_input, *chain_output, *compressor);
             }
 
