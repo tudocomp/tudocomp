@@ -35,6 +35,14 @@ private:
     size_t m_num_bits;
 
 public:
+    inline static Meta meta() {
+        Meta m("lzss_coder", "online",
+            "Direct encoding of factors"
+        );
+        m.option("alphabet_coder").templated<A>();
+        return m;
+    }
+
     /// Constructor.
     ///
     /// \param env The environment.

@@ -19,6 +19,13 @@ private:
     io::OutputStream* m_out;
 
 public:
+    inline static Meta meta() {
+        return Meta("lzss_coder", "debug",
+            "Debug coder\n"
+            "Direct encoding in ASCII"
+        );
+    }
+
     /// Constructor.
     ///
     /// \param env The environment.
@@ -133,7 +140,7 @@ inline void DebugLZSSCoder::decode(Env& env, Input& input, Output& out) {
                     src_str >> src;
                     num_str >> num;
                 }
-                
+
                 buffer.defact(src - 1, num);
                 pos += num;
             } else {

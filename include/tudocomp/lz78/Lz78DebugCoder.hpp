@@ -12,20 +12,39 @@ namespace lz78 {
 /**
  * Encodes factors as simple strings.
  */
-class Lz78DebugCoder {
+class Lz78DebugCoder: public Algorithm {
 private:
     // TODO: Change encode_* methods to not take Output& since that inital setup
     // rather, have a single init location
     tudocomp::io::OutputStream m_out;
 
+    bool empty = false;
+
 public:
-    inline Lz78DebugCoder(Env& env, Output& out)
-        : m_out(out.as_stream())
+    inline static Meta meta() {
+        return Meta("lz78_coder", "debug",
+            "Debug coder\n"
+            "Human readable, comma separated "
+            "stream of (integer, char) tuples"
+        );
+    }
+
+    inline Lz78DebugCoder(Env&& env, Output& out):
+        Algorithm(std::move(env)),
+        m_out(out.as_stream())
     {
     }
 
+    inline Lz78DebugCoder(Lz78DebugCoder&& other):
+        Algorithm(std::move(other.env())),
+        m_out(std::move(other.m_out)) {
+            other.empty = true;
+        }
+
     inline ~Lz78DebugCoder() {
-        (*m_out).flush();
+        if (!empty) {
+            (*m_out).flush();
+        }
     }
 
     inline void encode_fact(const Factor& fact) {

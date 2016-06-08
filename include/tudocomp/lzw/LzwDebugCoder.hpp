@@ -23,15 +23,31 @@ private:
     // TODO: Change encode_* methods to not take Output& since that inital setup
     // rather, have a single init location
     tudocomp::io::OutputStream m_out;
+    bool empty = false;
 
 public:
-    inline LzwDebugCoder(Env& env, Output& out)
+    inline static Meta meta() {
+        return Meta("lzw_coder", "debug",
+            "Debug coder\n"
+            "Human readable, comma separated stream of integers"
+        );
+    }
+
+    inline LzwDebugCoder(LzwDebugCoder&& other):
+        m_out(std::move(other.m_out))
+    {
+        other.empty = true;
+    }
+
+    inline LzwDebugCoder(Env&& env, Output& out)
         : m_out(out.as_stream())
     {
     }
 
     inline ~LzwDebugCoder() {
-        (*m_out).flush();
+        if (!empty) {
+            (*m_out).flush();
+        }
     }
 
     inline void encode_fact(const Factor& entry) {

@@ -3,27 +3,17 @@
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
+#include <tudocomp/Algorithm.hpp>
 #include <functional>
 #include <memory>
 
 namespace tudocomp {
 
 /// Interface for a general compressor.
-class Compressor {
-// DEPRECATED
-// use accesor function instead, as preperation for per-algorithm env
-protected:
-    Env* m_env;
-
+class Compressor: public Algorithm {
 public:
-    /// Class needs to be constructed with an `Env&` argument.
-    inline Compressor() = delete;
-
     /// Construct the class with an environment.
-    inline Compressor(Env& env): m_env(&env) {}
-
-    /// Return a reference to the environment
-    inline Env& env() { return *m_env; }
+    inline Compressor(Env&& env): Algorithm(std::move(env)) {}
 
     /// Compress `inp` into `out`.
     ///
@@ -38,7 +28,7 @@ public:
     virtual void decompress(Input& input, Output& output) = 0;
 };
 
-using CompressorConstructor = std::function<std::unique_ptr<Compressor>(Env&)>;
+using CompressorConstructor = std::function<std::unique_ptr<Compressor>(Env&&)>;
 
 
 }

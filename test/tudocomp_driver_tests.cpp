@@ -8,7 +8,7 @@
 
 #include "test_util.h"
 #include "tudocomp_driver/registry.h"
-#include "tudocomp_driver/AlgorithmStringParser2.hpp"
+#include "tudocomp/AlgorithmStringParser.hpp"
 
 #include "tudocomp_driver_util.h"
 
@@ -126,20 +126,31 @@ TEST(Registry, decl) {
 
 TEST(Registry, lookup) {
     using namespace tudocomp_driver;
-    Registry& r = REGISTRY.get();
+    Registry& r = REGISTRY;
     auto c = r.select_algorithm_or_exit("lz78(dict_size = \"100\")");
 }
 
 TEST(Registry, dynamic_options) {
     using namespace tudocomp_driver;
 
-    Registry& r = REGISTRY.get();
-    r.type("compressor")
-        .regist("foo(a: static b, c: string, d: string = \"asdf\")");
-    r.type("b")
-        .regist("x(l: string = \"zzz\")");
+    Registry& r = REGISTRY;
 
+    struct MySub {
+        inline static Meta meta() {
+            Meta y("b", "x");
+            y.option("l").dynamic("zzz");
+            return y;
+        }
+    };
     struct MyCompressor: public Compressor {
+        inline static Meta meta() {
+            Meta y("compressor", "foo");
+            y.option("a").templated<MySub>();
+            y.option("c").dynamic();
+            y.option("d").dynamic("asdf");
+            return y;
+        }
+
         using Compressor::Compressor;
         inline virtual void decompress(Input& input, Output& output) {}
 
@@ -152,7 +163,7 @@ TEST(Registry, dynamic_options) {
             ASSERT_EQ(t, "test");
             s << "check";
 
-            auto& options = m_env->algo().arguments();
+            auto& options = env().algo().arguments();
 
             ASSERT_TRUE(options["a"].has_value());
             ASSERT_TRUE(options["c"].has_value());
@@ -169,15 +180,13 @@ TEST(Registry, dynamic_options) {
         }
     };
 
-    r.compressor("foo(x)", [](Env& e) -> std::unique_ptr<Compressor> {
-        return std::make_unique<MyCompressor>(e);
-    });
+    r.compressor<MyCompressor>();
 
     auto c = r.select_algorithm_or_exit("foo(x, \"qwerty\")");
     std::vector<uint8_t> data;
     Output out(data);
     Input inp("test");
-    c.compressor->compress(inp, out);
+    c->compress(inp, out);
 
     ASSERT_EQ(View(data), "check");
 }
@@ -185,8 +194,7 @@ TEST(Registry, dynamic_options) {
 TEST(TudocompDriver, all_compressors_defined) {
     using namespace tudocomp_driver;
 
-    Registry& r = REGISTRY.get();
-    Env env;
+    Registry& r = REGISTRY;
     auto s = r.check_for_undefined_compressors();
     bool has_undefined_compressors = s.size() > 0;
     if (has_undefined_compressors) {

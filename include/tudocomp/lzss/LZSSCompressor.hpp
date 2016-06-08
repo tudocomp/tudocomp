@@ -34,8 +34,7 @@ public:
     /// Constructor.
     ///
     /// \param env The environment.
-    inline LZSSCompressor(Env& env) : Compressor(env) {
-    }
+    using Compressor::Compressor;
 
     /// \copydoc
     virtual void compress(Input& main_input, Output& output) override final {

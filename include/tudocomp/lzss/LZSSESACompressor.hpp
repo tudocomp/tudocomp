@@ -22,12 +22,18 @@ template<typename S, typename C>
 class LZSSESACompressor : public LZSSCompressor<C> {
 
 public:
+    inline static Meta meta() {
+        Meta m("compressor", "esacomp");
+        m.option("coder").templated<C>();
+        return m;
+    }
+
     /// Default constructor (not supported).
     inline LZSSESACompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZSSESACompressor(Env& env) : LZSSCompressor<C>(env) {
-    }
+    inline LZSSESACompressor(Env&& env) :
+        LZSSCompressor<C>(std::move(env)) {}
 
     /// \copydoc
     inline virtual bool pre_factorize(Input& input) override {

@@ -27,22 +27,23 @@ private:
     size_t m_window;
 
 public:
+    inline static Meta meta() {
+        Meta m("compressor", "lz77ss", "Lempel-Ziv-Storer-Szymanski");
+        m.option("coder").templated<C>();
+        m.option("window").dynamic("16");
+        return m;
+    }
+
     /// Default constructor (not supported).
     inline LZ77SSSlidingWindowCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZ77SSSlidingWindowCompressor(Env& env) : LZSSCompressor<C>(env) {
+    inline LZ77SSSlidingWindowCompressor(Env&& e):
+        LZSSCompressor<C>(std::move(e))
+    {
+        auto& env = this->env();
+
         m_window = env.algo().arguments()[WINDOW_OPTION].value_as_integer();
-
-        for (auto& x : env.algo().arguments()) {
-            std::cout << x.first <<  " = " << x.second.value_as_string() << "\n";
-        }
-
-        std::cout << env.algo().arguments()[WINDOW_OPTION].value_as_string() << "\n";
-        std::cout << m_window << "\n";
-        // TODO: Fix this to work properly in tests, (see #16795)
-        m_window = 16;
-        CHECK(m_window == 16);
     }
 
 protected:

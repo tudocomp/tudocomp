@@ -45,6 +45,15 @@ private:
     size_t m_src_bits = 0;
 
 public:
+    inline static Meta meta() {
+        Meta m("lzss_coder", "offline",
+            "Offline factor coder\n"
+            "Analysis of created factors and optimized encoding"
+        );
+        m.option("alphabet_coder").templated<A>();
+        return m;
+    }
+
     /// Constructor.
     ///
     /// \param env The environment.

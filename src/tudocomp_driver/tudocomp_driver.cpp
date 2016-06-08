@@ -90,10 +90,10 @@ int main(int argc, char** argv)
     try {
         validate_flag_combination();
 
-        std::unique_ptr<Env> algorithm_env;
+        std::shared_ptr<EnvRoot> algorithm_env;
 
         // Set up algorithms
-        Registry& registry = REGISTRY.get();
+        Registry& registry = REGISTRY;
 
         if (FLAGS_list) {
             std::cout << "This build supports the following algorithms:\n";
@@ -119,9 +119,8 @@ int main(int argc, char** argv)
         if (do_raw || do_compress) {
             algorithm_id = FLAGS_algorithm;
 
-            auto selection = registry.select_algorithm_or_exit(algorithm_id);
-            algo = std::move(selection.compressor);
-            algorithm_env = std::move(selection.env);
+            algo = registry.select_algorithm_or_exit(algorithm_id);
+            algorithm_env = algo->env().root();
         }
 
         /////////////////////////////////////////////////////////////////////////
@@ -245,10 +244,8 @@ int main(int argc, char** argv)
                     }
                     algorithm_id = std::move(algorithm_header);
 
-                    auto selection =
-                        registry.select_algorithm_or_exit(algorithm_id);
-                    algo = std::move(selection.compressor);
-                    algorithm_env = std::move(selection.env);
+                    algo = registry.select_algorithm_or_exit(algorithm_id);
+                    algorithm_env = algo->env().root();
                 }
 
                 setup_time = clk::now();
@@ -315,7 +312,7 @@ int main(int argc, char** argv)
 
             std::cout << "---------------\n";
             std::cout << "Algorithm Stats:\n";
-            std::cout << algorithm_env->algo().statistics_to_string("  ");
+            std::cout << algorithm_env->algo_value().statistics_to_string("  ");
 
             std::cout << "---------------\n";
             print_time("startup", setup_duration);

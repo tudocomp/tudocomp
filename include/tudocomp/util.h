@@ -280,8 +280,6 @@ inline std::string make_table(std::vector<std::string> data,
     return ret.str();
 }
 
-using string_ref = View;
-
 }
 
 // this codebase is using c++11 but would really like to use this function...

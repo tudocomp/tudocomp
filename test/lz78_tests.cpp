@@ -20,6 +20,7 @@ using tudocomp::Input;
 using tudocomp::Output;
 using tudocomp::Env;
 using tudocomp::string_ref;
+using tudocomp::create_algo;
 
 using std::swap;
 
@@ -47,12 +48,11 @@ TEST(Factor, ostream3) {
 TEST(Lz78, Lz78DebugCoder) {
     using Coder = tudocomp::lz78::Lz78DebugCoder;
 
-    Env env;
     std::vector<uint8_t> encoded_buffer;
     Output encoded_out = Output::from_memory(encoded_buffer);
 
     {
-        Coder coder(env, encoded_out);
+        auto coder = create_algo<Coder, Output&>("", encoded_out);
 
         coder.encode_fact(Factor {0, 'x'});
         coder.encode_fact(Factor {0, 'y'});
@@ -78,12 +78,11 @@ TEST(Lz78, Lz78DebugCoder) {
 TEST(Lz78, Lz78BitCoder) {
     using Coder = tudocomp::lz78::Lz78BitCoder;
 
-    Env env;
     std::vector<uint8_t> encoded_buffer;
     Output encoded_out = Output::from_memory(encoded_buffer);
 
     {
-        Coder coder(env, encoded_out);
+        auto coder = create_algo<Coder, Output&>("", encoded_out);
 
         coder.encode_fact(Factor {0, 'x'});
         coder.encode_fact(Factor {0, 'y'});
@@ -118,12 +117,11 @@ TEST(Lz78, Lz78Compressor) {
     using Coder = tudocomp::lz78::Lz78DebugCoder;
     using Compressor = tudocomp::lz78::Lz78Compressor<Coder>;
 
-    Env env;
     string_ref input_str = "xyxaybxa!xa!?";
 
     std::vector<uint8_t> encoded_buffer;
     std::vector<uint8_t> decoded_buffer;
-    Compressor compressor(env);
+    auto compressor = create_algo<Compressor>();
 
     {
         auto input = Input::from_memory(input_str);
@@ -147,19 +145,18 @@ TEST(Lz78, Lz78Compressor) {
 TEST(Lz78, compress) {
     using Coder = tudocomp::lz78::Lz78DebugCoder;
     using Compressor = tudocomp::lz78::Lz78Compressor<Coder>;
-
     {
-        auto encoded = test::compress<Compressor>("abaaabab");
+        auto encoded = test::RoundTrip<Compressor>().compress("abaaabab");
         ASSERT_EQ(encoded.str, "(0,a)(0,b)(1,a)(1,b)(1,b)");
         encoded.assert_decompress();
     }
     {
-        auto encoded = test::compress<Compressor>("abcdebcdeabc");
+        auto encoded = test::RoundTrip<Compressor>().compress("abcdebcdeabc");
         ASSERT_EQ(encoded.str, "(0,a)(0,b)(0,c)(0,d)(0,e)(2,c)(4,e)(1,b)(0,c)");
         encoded.assert_decompress();
     }
     {
-        auto encoded = test::compress<Compressor>("ananas");
+        auto encoded = test::RoundTrip<Compressor>().compress("ananas");
         ASSERT_EQ(encoded.str, "(0,a)(0,n)(1,n)(1,s)");
         encoded.assert_decompress();
     }

@@ -11,26 +11,48 @@ namespace lz78 {
 /**
  * Encodes factors as simple strings.
  */
-class Lz78BitCoder {
+class Lz78BitCoder: public Algorithm {
 private:
     // TODO: Change encode_* methods to not take Output& since that inital setup
     // rather, have a single init location
     tudocomp::io::OutputStream m_out_guard;
     tudocomp::BitOStream m_out;
+    bool empty = false;
     uint64_t m_factor_counter = 0;
 
     // Stats
     uint32_t m_max_bits_needed_per_factor = 0;
 
 public:
-    inline Lz78BitCoder(Env& env, Output& out)
-        : m_out_guard(out.as_stream()), m_out(*m_out_guard)
+    inline static Meta meta() {
+        return Meta("lz78_coder", "bit",
+            "Bit coder\n"
+            "Basic variable-bit-width encoding of the symbols"
+        );
+    }
+
+    inline Lz78BitCoder(Env&& env, Output& out):
+        Algorithm(std::move(env)),
+        m_out_guard(out.as_stream()),
+        m_out(*m_out_guard)
     {
     }
 
+    inline Lz78BitCoder(Lz78BitCoder&& other):
+        Algorithm(std::move(other.env())),
+        m_out_guard(std::move(other.m_out_guard)),
+        m_out(std::move(other.m_out)),
+        m_factor_counter(other.m_factor_counter),
+        m_max_bits_needed_per_factor(other.m_max_bits_needed_per_factor) {
+            other.empty = true;
+        }
+
+
     inline ~Lz78BitCoder() {
-        m_out.flush();
-        (*m_out_guard).flush();
+        if (!empty) {
+            m_out.flush();
+            (*m_out_guard).flush();
+        }
     }
 
     inline void encode_fact(const Factor& entry) {

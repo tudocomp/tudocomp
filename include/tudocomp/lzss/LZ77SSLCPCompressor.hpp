@@ -23,12 +23,18 @@ template<typename C>
 class LZ77SSLCPCompressor : public LZSSCompressor<C> {
 
 public:
+    inline static Meta meta() {
+        Meta m("compressor", "lz77ss_lcp", "LZ77 Factorization using LCP");
+        m.option("coder").templated<C>();
+        return m;
+    }
+
     /// Default constructor (not supported).
     inline LZ77SSLCPCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZ77SSLCPCompressor(Env& env) : LZSSCompressor<C>(env) {
-    }
+    inline LZ77SSLCPCompressor(Env&& env):
+        LZSSCompressor<C>(std::move(env)) {}
 
 protected:
     /// \copydoc

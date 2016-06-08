@@ -91,6 +91,8 @@ void test_roundtrip_batch(F f) {
 
     f("abc abc  abc");
 
+    f("abaaabbababb");
+
     f(
         "asdfasctjkcbweasbebvtiwetwcnbwbbqnqxernqzezwuqwezuet"
         "qcrnzxbneqebwcbqwicbqcbtnqweqxcbwuexcbzqwezcqbwecqbw"

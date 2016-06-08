@@ -24,6 +24,14 @@ private:
     sdsl::int_vector<> m_char2comp;
 
 public:
+    inline static Meta meta() {
+        Meta m("alpha_coder", "offline",
+            "Offline alphabet coder\n"
+            "Optimized symbol encoding using alphabet statistics"
+        );
+        return m;
+    }
+
     inline OfflineAlphabetCoder(Env& env, Input& input, BitOStream& out) : m_out(&out), m_in(input.as_view()) {
         Counter<uint8_t> counter;
 

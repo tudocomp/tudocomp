@@ -14,13 +14,18 @@ private:
     std::vector<CompressorConstructor> m_compressors;
 
 public:
+    inline static Meta meta() {
+        Meta m("compressor", "chain_test");
+        return m;
+    }
+
     /// No default construction allowed
     inline ChainCompressor() = delete;
 
     /// Construct the class with an environment and the algorithms to chain.
-    inline ChainCompressor(Env& env,
+    inline ChainCompressor(Env&& env,
                            std::vector<CompressorConstructor>&& compressors):
-                           Compressor(env),
+                           Compressor(std::move(env)),
                            m_compressors(std::move(compressors)) {}
 
     template<class F>
@@ -36,6 +41,9 @@ public:
                 std::swap(first, last);
             }
             {
+                // TODO: Fix
+                /*
+
                 // first, choose whether to put input/output into a buffer or not
 
                 Input buffer_input = Input::from_memory(in_buf);
@@ -60,8 +68,10 @@ public:
                 }
 
                 // then invoke the algorithm
+
                 auto compressor = m_compressors[i](env());
                 f(*chain_input, *chain_output, *compressor);
+                */
             }
 
             std::swap(in_buf, out_buf);

@@ -1,12 +1,15 @@
 #ifndef _INCLUDED_ENV_HPP
 #define _INCLUDED_ENV_HPP
 
+#include <glog/logging.h>
 #include <map>
 #include <set>
 #include <vector>
 #include <string>
 #include <sstream>
 #include <stdexcept>
+
+#include <tudocomp/util.h>
 
 namespace tudocomp {
 
@@ -116,19 +119,32 @@ inline std::string AlgorithmValue::statistics_to_string(const std::string& prefi
     return ss.str();
 }
 
+class EnvRoot {
+    std::unique_ptr<AlgorithmValue> m_algo_value;
+public:
+    inline EnvRoot() {}
+
+    inline EnvRoot(AlgorithmValue&& algo_value):
+        m_algo_value(std::make_unique<AlgorithmValue>(std::move(algo_value))) {}
+
+    inline AlgorithmValue& algo_value() {
+        return *m_algo_value;
+    }
+};
+
 /// Local environment for a compression/encoding/decompression call.
 ///
 /// Gives access to a statistic logger, and to environment
 /// options that can be used to modify the default behavior of an algorithm.
 class Env {
-    AlgorithmValue m_root;
-    //GlobalEnv* m_global_env;
+    std::shared_ptr<EnvRoot> m_root;
+    AlgorithmValue* m_node;
 
     inline Env() = delete;
 
 public:
-    inline Env(AlgorithmValue&& root):
-        m_root(std::move(root)) {}
+    inline Env(std::shared_ptr<EnvRoot> root, AlgorithmValue& node):
+        m_root(root), m_node(&node) {}
 
     /// Log an error and end the current operation
     inline void error(const std::string& msg) {
@@ -136,6 +152,16 @@ public:
     }
 
     inline AlgorithmValue& algo() {
+        return *m_node;
+    }
+
+    inline Env env_for_option(const std::string& option) {
+        auto& a = algo().arguments()[option].value_as_algorithm();
+
+        return Env(m_root, a);
+    }
+
+    inline std::shared_ptr<EnvRoot>& root() {
         return m_root;
     }
 };
