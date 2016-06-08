@@ -116,27 +116,6 @@ inline std::string AlgorithmValue::statistics_to_string(const std::string& prefi
     return ss.str();
 }
 
-/*
-
-class GlobalEnv {
-
-};
-
-class LocalEnv {
-    AlgorithmValue::ArgumentMap m_options;
-    GlobalEnv* m_global_env;
-public:
-    inline LocalEnv() {}
-
-    //inline GlobalEnv& global_env() {
-    //    return *m_global_env;
-    //}
-
-    //const AlgorithmValue::ArgumentMap
-};
-
-*/
-
 /// Local environment for a compression/encoding/decompression call.
 ///
 /// Gives access to a statistic logger, and to environment
@@ -145,8 +124,9 @@ class Env {
     AlgorithmValue m_root;
     //GlobalEnv* m_global_env;
 
+    inline Env() = delete;
+
 public:
-    inline Env(): m_root(AlgorithmValue("<unknown>", {})) {}
     inline Env(AlgorithmValue&& root):
         m_root(std::move(root)) {}
 

@@ -49,6 +49,9 @@ using lzss::DebugLZSSCoder;
 using lzss::OnlineLZSSCoder;
 using lzss::OfflineLZSSCoder;
 
+// One global instance for the registry
+GlobalRegistry REGISTRY = GlobalRegistry();
+
 /// A small helper function for directly constructing a Compressor class.
 template<class C>
 std::unique_ptr<Compressor> make(Env& env) {

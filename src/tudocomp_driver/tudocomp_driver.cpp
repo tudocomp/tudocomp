@@ -93,8 +93,7 @@ int main(int argc, char** argv)
         std::unique_ptr<Env> algorithm_env;
 
         // Set up algorithms
-        Registry registry;
-        register_algorithms(registry);
+        Registry& registry = REGISTRY.get();
 
         if (FLAGS_list) {
             std::cout << "This build supports the following algorithms:\n";

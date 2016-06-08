@@ -126,15 +126,14 @@ TEST(Registry, decl) {
 
 TEST(Registry, lookup) {
     using namespace tudocomp_driver;
-    Registry r;
-    register_algorithms(r);
+    Registry& r = REGISTRY.get();
     auto c = r.select_algorithm_or_exit("lz78(dict_size = \"100\")");
 }
 
 TEST(Registry, dynamic_options) {
     using namespace tudocomp_driver;
 
-    Registry r;
+    Registry& r = REGISTRY.get();
     r.type("compressor")
         .regist("foo(a: static b, c: string, d: string = \"asdf\")");
     r.type("b")
@@ -186,8 +185,7 @@ TEST(Registry, dynamic_options) {
 TEST(TudocompDriver, all_compressors_defined) {
     using namespace tudocomp_driver;
 
-    Registry r;
-    register_algorithms(r);
+    Registry& r = REGISTRY.get();
     Env env;
     auto s = r.check_for_undefined_compressors();
     bool has_undefined_compressors = s.size() > 0;

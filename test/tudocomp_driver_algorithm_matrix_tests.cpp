@@ -15,9 +15,7 @@ const std::vector<std::string> additional_tests = {};
 
 TEST(TudocompDriver, roundtrip_matrix) {
 
-    Registry r;
-    register_algorithms(r);
-    Env env;
+    Registry& r = REGISTRY.get();
 
     std::cout << "[ Generating list of test cases ]\n";
 

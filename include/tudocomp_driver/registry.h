@@ -30,6 +30,8 @@ namespace tudocomp_driver {
 using namespace tudocomp;
 
 class Registry;
+class GlobalRegistry;
+inline std::string generate_doc_string(Registry& r);
 
 struct AlgorithmTypeBuilder {
     View m_type;
@@ -39,9 +41,14 @@ struct AlgorithmTypeBuilder {
 };
 
 class Registry {
-public:
     eval::AlgorithmTypes m_algorithms;
     std::map<pattern::Algorithm, CompressorConstructor> m_compressors;
+
+    friend class AlgorithmTypeBuilder;
+    friend inline std::string generate_doc_string(Registry& r);
+    friend class GlobalRegistry;
+
+    inline Registry() {}
 
 public:
 
@@ -140,7 +147,7 @@ public:
         std::unique_ptr<Compressor> compressor;
         std::unique_ptr<Env> env;
     };
-    inline Selection select_algorithm_or_exit(View text) {
+    inline Selection select_algorithm_or_exit(string_ref text) {
         auto& reg = *this;
         ast::Parser p { text };
         auto parsed_algo = p.parse_value();
@@ -228,6 +235,19 @@ inline std::string generate_doc_string(Registry& r) {
 
     return ss.str();
 }
+
+class GlobalRegistry {
+    Registry m_registry;
+public:
+    inline GlobalRegistry() {
+        register_algorithms(m_registry);
+    }
+    inline Registry& get() {
+        return m_registry;
+    }
+};
+
+extern GlobalRegistry REGISTRY;
 
 }
 
