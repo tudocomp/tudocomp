@@ -9,10 +9,15 @@
 #include <time.h>
 #include <stdio.h>
 
-#define NANO_PER_MILLI 1000000
-
 namespace tudocomp {
 namespace stat {
+
+    ulong current_time_millis() {
+        timespec t;
+        clock_gettime(CLOCK_MONOTONIC, &t);
+
+        return t.tv_sec * 1000L + t.tv_nsec / 1000000L;
+    }
 
     struct phase_t {
         ulong time_start;
@@ -44,28 +49,22 @@ namespace stat {
     void begin_phase() {
         using namespace internal;
 
-        timespec t;
-        clock_gettime(CLOCK_MONOTONIC, &t);
-       
+        in_phase = true;
+
         current_phase.time_delta = 0;
         current_phase.mem_peak = 0;
 
         current_phase.mem_current = 0;
-        current_phase.time_start = t.tv_nsec / NANO_PER_MILLI;
-
-        in_phase = true;
+        current_phase.time_start = current_time_millis();
     }
 
     phase_t end_phase() {
         using namespace internal;
 
-        in_phase = false;
-
-        timespec t;
-        clock_gettime(CLOCK_MONOTONIC, &t);
-
-        ulong time_end = t.tv_nsec / NANO_PER_MILLI;
+        ulong time_end = current_time_millis();
         current_phase.time_delta = time_end - current_phase.time_start;
+
+        in_phase = false;
 
         return current_phase;
     }
