@@ -6,28 +6,71 @@
 #endif
 
 #include <map>
+#include <time.h>
 #include <stdio.h>
+
+#define NANO_PER_MILLI 1000000
 
 namespace tudocomp {
 namespace stat {
 
-namespace internal {
+    struct phase_t {
+        ulong time_start;
+        size_t mem_current;
 
-    #define MEMBLOCK_SIG 0xFEDCBA9876543210
-
-    struct block_header_t {
-        size_t sig;
-        size_t id;
-        size_t size;
+        //results
+        ulong time_delta;
+        size_t mem_peak;
     };
-    const size_t block_header_size = sizeof(block_header_t);
 
-    size_t next_id = 0;
-    size_t alloc_current = 0;
-    size_t alloc_peak = 0;
+    namespace internal {
+
+        #define MEMBLOCK_SIG 0xFEDCBA9876543210
+
+        struct block_header_t {
+            size_t sig;
+            size_t id;
+            size_t size;
+        };
+
+        size_t next_id = 0;
+        size_t alloc_current = 0;
+        size_t alloc_peak = 0;
+
+        phase_t current_phase;
+        bool in_phase = false;
+    }
+
+    void begin_phase() {
+        using namespace internal;
+
+        timespec t;
+        clock_gettime(CLOCK_MONOTONIC, &t);
+       
+        current_phase.time_delta = 0;
+        current_phase.mem_peak = 0;
+
+        current_phase.mem_current = 0;
+        current_phase.time_start = t.tv_nsec / NANO_PER_MILLI;
+
+        in_phase = true;
+    }
+
+    phase_t end_phase() {
+        using namespace internal;
+
+        in_phase = false;
+
+        timespec t;
+        clock_gettime(CLOCK_MONOTONIC, &t);
+
+        ulong time_end = t.tv_nsec / NANO_PER_MILLI;
+        current_phase.time_delta = time_end - current_phase.time_start;
+
+        return current_phase;
+    }
 }
 
-}
 }
 
 extern "C" void* __libc_malloc(size_t);
@@ -39,21 +82,26 @@ extern void* malloc(size_t size) {
 
     if(!size) return NULL;
 
-    void *ptr = __libc_malloc(size + block_header_size);
+    void *ptr = __libc_malloc(size + sizeof(block_header_t));
 
     auto block = (block_header_t*)ptr;
     block->sig = MEMBLOCK_SIG;
     block->id = next_id++;
     block->size = size;
 
-    //fprintf(stderr, "alloc #%zu (%zu bytes)\n", block->id, block->size);
+    //if(in_phase) {fprintf(stderr, "malloc #%zu (%zu bytes)\n", block->id, block->size);fflush(stderr);}
 
     alloc_current += size;
     if(alloc_current > alloc_peak) { 
         alloc_peak = alloc_current;
     }
 
-    return (char*)ptr + block_header_size;
+    current_phase.mem_current += size;
+    if(current_phase.mem_current > current_phase.mem_peak) {
+        current_phase.mem_peak = current_phase.mem_current;
+    }
+
+    return (char*)ptr + sizeof(block_header_t);
 }
 
 extern void free(void* ptr) {
@@ -61,13 +109,14 @@ extern void free(void* ptr) {
 
     if(!ptr) return;
 
-    auto block = (block_header_t*)((char*)ptr - block_header_size);
+    auto block = (block_header_t*)((char*)ptr - sizeof(block_header_t));
     if(block->sig == MEMBLOCK_SIG) {
-        //fprintf(stderr, "free #%zu (%zu bytes)\n", block->id, block->size);
+        //if(in_phase) {fprintf(stderr, "free #%zu (%zu bytes)\n", block->id, block->size); fflush(stderr);}
         alloc_current -= block->size;
+        current_phase.mem_current -= block->size;
         __libc_free(block);
     } else {
-        //fprintf(stderr, "free unmanaged block (%p)\n", ptr);
+        if(in_phase) fprintf(stderr, "free unmanaged block (%p)\n", ptr);
         __libc_free(ptr);
     }
 }
@@ -75,28 +124,39 @@ extern void free(void* ptr) {
 extern void* realloc(void* ptr, size_t size) {
     using namespace tudocomp::stat::internal;
 
-    //fprintf(stderr, "realloc(%p, %zu)\n", ptr, size);
-
-    auto block = (block_header_t*)((char*)ptr - block_header_size);
-    if(block->sig == MEMBLOCK_SIG) {
-        //allocate
-        void* ptr2 = malloc(size);
-
-        //copy
-        memcpy(ptr2, ptr, block->size);
-
-        //free
-        alloc_current -= block->size;
-        __libc_free(block);
-
-        return ptr2;
+    if(!size) {
+        //if(in_phase) {fprintf(stderr, "realloc %p to 0 (free)\n", ptr); fflush(stderr);}
+        free(ptr);
+        return NULL;
+    } else if(!ptr) {
+        //if(in_phase) {fprintf(stderr, "realloc NULL to %zu (malloc)\n", size); fflush(stderr);}
+        return malloc(size);
     } else {
-        return __libc_realloc(ptr, size);
+        auto block = (block_header_t*)((char*)ptr - sizeof(block_header_t));
+        if(block->sig == MEMBLOCK_SIG) {
+            //if(in_phase) {fprintf(stderr, "realloc #%zu from %zu to %zu\n", block->id, block->size, size); fflush(stderr);}
+
+            //allocate
+            void* ptr2 = malloc(size);
+
+            //copy
+            memcpy(ptr2, ptr, std::min(size, block->size));
+
+            //free
+            free(ptr);
+
+            return ptr2;
+        } else {
+            //if(in_phase) {fprintf(stderr, "realloc unmanaged block (%p) to %zu\n", ptr, size); fflush(stderr);}
+            return __libc_realloc(ptr, size);
+        }
     }
 }
 
 extern void* calloc(size_t num, size_t size) {
-    //fprintf(stderr, "calloc(%zu, %zu)\n", num, size);
+    using namespace tudocomp::stat::internal;
+
+    //if(in_phase) {fprintf(stderr, "calloc(%zu, %zu)\n", num, size); fflush(stderr);}
     
     size *= num;
     if(!size) return NULL;
