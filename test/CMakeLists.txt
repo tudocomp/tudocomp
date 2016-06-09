@@ -1,10 +1,12 @@
 include(test_driver.cmake)
 
-run_test(tudocomp_tests DEPS tudocomp)
+list(APPEND BASIC_DEPS tudostat malloc_count tudocomp)
 
-run_test(lz78_tests     DEPS tudocomp)
-run_test(lzw_tests      DEPS tudocomp)
-run_test(lzss_tests     DEPS tudocomp)
+run_test(tudocomp_tests DEPS ${BASIC_DEPS})
+
+run_test(lz78_tests     DEPS ${BASIC_DEPS})
+run_test(lzw_tests      DEPS ${BASIC_DEPS})
+run_test(lzss_tests     DEPS ${BASIC_DEPS})
 
 set(SANDBOX_CPP ${CMAKE_CURRENT_SOURCE_DIR}/sandbox_tests.cpp)
 if(NOT EXISTS ${SANDBOX_CPP})
@@ -12,7 +14,7 @@ if(NOT EXISTS ${SANDBOX_CPP})
     file(WRITE ${SANDBOX_CPP} "${SANDBOX_TEMPLATE}")
 endif()
 
-run_test(sandbox_tests  DEPS tudocomp)
+run_test(sandbox_tests  DEPS ${BASIC_DEPS})
 
 run_test(tudocomp_driver_tests
     DEPS     tudocomp_algorithms

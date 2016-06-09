@@ -1,16 +1,12 @@
 add_library(
-    tudocomp
+    tudostat
 
     INTERFACE
 )
 
 target_link_libraries(
-    tudocomp
+    tudostat
 
     INTERFACE
-
-    tudostat
-    glog
-    sdsl
 )
 
