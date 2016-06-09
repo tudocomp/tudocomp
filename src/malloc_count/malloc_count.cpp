@@ -1,27 +1,43 @@
 #include <malloc_count/malloc_count.hpp>
 
 namespace malloc_count {
-    size_t alloc_current = 0;
-    size_t alloc_peak = 0;
+    #define NO_PHASE_ID 0
+    #define PHASE_STACK_SIZE 16
 
-    size_t next_phase_id = 0;
-    phase_t current_phase { SIZE_MAX, 0, 0, 0, 0 };
+    size_t next_phase_id = 1;
+
+    phase_t pstack[PHASE_STACK_SIZE];
+    int pcur = -1;
+
+    bool paused = false;
 
     void begin_phase() {
-        current_phase.id = next_phase_id++;
+        pcur++;
+        if(pcur >= PHASE_STACK_SIZE) throw "phase stack overflow";
 
-        current_phase.mem_peak = 0;
-
-        current_phase.mem_current = 0;
-        current_phase.time_start = current_time_millis();
+        pstack[pcur].id = next_phase_id++;
+        pstack[pcur].mem_off = (pcur > 0) ? pstack[pcur - 1].mem_current : 0;
+        pstack[pcur].mem_peak = 0;
+        pstack[pcur].mem_current = 0;
+        pstack[pcur].time_start = current_time_millis();
     }
 
     phase_t end_phase() {
-        ulong time_end = current_time_millis();
-        current_phase.time_delta = time_end - current_phase.time_start;
-        current_phase.id = SIZE_MAX; //invalidate
+        if(pcur < 0) throw "ending a phase that never began";
 
-        return current_phase;
+        ulong time_end = current_time_millis();
+        pstack[pcur].time_delta = time_end - pstack[pcur].time_start;
+        pstack[pcur].id = SIZE_MAX; //invalidate
+
+        return pstack[pcur--];
+    }
+
+    void pause_phase() {
+        paused = true;
+    }
+
+    void continue_phase() {
+        paused = false;
     }
 }
 
@@ -34,17 +50,16 @@ void* malloc(size_t size) {
 
     auto block = (block_header_t*)ptr;
     block->magic = MEMBLOCK_MAGIC;
-    block->phase_id = current_phase.id;
+    block->phase_id = paused ? NO_PHASE_ID : pstack[pcur].id;
     block->size = size;
 
-    alloc_current += size;
-    if(alloc_current > alloc_peak) { 
-        alloc_peak = alloc_current;
-    }
-
-    current_phase.mem_current += size;
-    if(current_phase.mem_current > current_phase.mem_peak) {
-        current_phase.mem_peak = current_phase.mem_current;
+    if(!paused && pcur >= 0) {
+        for(int i = 0; i <= pcur; i++) {
+            pstack[i].mem_current += size;
+            if(pstack[i].mem_current > pstack[i].mem_peak) {
+                pstack[i].mem_peak = pstack[i].mem_current;
+            }
+        }
     }
 
     return (char*)ptr + sizeof(block_header_t);
@@ -57,10 +72,10 @@ void free(void* ptr) {
 
     auto block = (block_header_t*)((char*)ptr - sizeof(block_header_t));
     if(block->magic == MEMBLOCK_MAGIC) {
-        alloc_current -= block->size;
-
-        if(block->phase_id == current_phase.id) {
-            current_phase.mem_current -= block->size;
+        if(!paused && pcur >= 0 && block->phase_id >= pstack[0].id) {
+            for(int i = 0; i <= pcur; i++) {
+                pstack[i].mem_current -= block->size;
+            }
         }
 
         __libc_free(block);

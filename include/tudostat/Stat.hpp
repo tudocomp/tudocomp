@@ -14,18 +14,24 @@ public:
         ulong start_time;
         ulong duration;
 
+        size_t mem_off;
         size_t mem_peak;
     };
 
-    #define NULL_PHASE Phase{0, 0, 0}
+    #define NULL_PHASE Phase{0, 0, 0, 0}
 
 private:
     std::string m_title;
     Phase m_stats;
 
+    std::list<Stat> m_sub;
+
 public:
     static void (*begin_phase)(void);
     static Phase (*end_phase)(void);
+
+    static void (*pause_phase)(void);
+    static void (*continue_phase)(void);
 
     inline Stat() : m_stats(NULL_PHASE) {
     }
@@ -57,13 +63,26 @@ public:
         return m_stats;
     }
 
+    inline void add_sub_phase(const Stat& stat) {
+        if(pause_phase) pause_phase();
+        m_sub.push_back(stat);
+        if(continue_phase) continue_phase();
+    }
+
     inline std::string to_json() const {
         std::stringstream ss;
         ss << "{ title: '" << m_title << "'"
            << ", startTime: " << m_stats.start_time
            << ", duration: " << m_stats.duration
+           << ", memOff: " << m_stats.mem_off
            << ", memPeak: " << m_stats.mem_peak
-           << " }";
+           << ", sub: [ ";
+
+        for(auto it = m_sub.begin(); it != m_sub.end(); it++) {
+            ss << it->to_json();
+        }
+
+        ss << "]}";
         return ss.str();
     }
 };

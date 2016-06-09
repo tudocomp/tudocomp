@@ -27,6 +27,7 @@ namespace malloc_count {
 
         ulong time_start;
         ulong time_delta;
+        size_t mem_off;
         size_t mem_current;
         size_t mem_peak;
     };
@@ -39,6 +40,8 @@ namespace malloc_count {
 
     void begin_phase();
     phase_t end_phase();
+    void pause_phase();
+    void continue_phase();
 }
 
 extern "C" void* __libc_malloc(size_t);
