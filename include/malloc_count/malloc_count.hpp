@@ -41,7 +41,7 @@ namespace malloc_count {
     void begin_phase();
     phase_t end_phase();
     void pause_phase();
-    void continue_phase();
+    void resume_phase();
 }
 
 extern "C" void* __libc_malloc(size_t);

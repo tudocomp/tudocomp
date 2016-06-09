@@ -17,5 +17,5 @@ Stat::Phase end_phase_if() {
 void (*Stat::begin_phase)(void) = malloc_count::begin_phase;
 Stat::Phase (*Stat::end_phase)(void) = end_phase_if;
 void (*Stat::pause_phase)(void) = malloc_count::pause_phase;
-void (*Stat::continue_phase)(void) = malloc_count::continue_phase;
+void (*Stat::resume_phase)(void) = malloc_count::resume_phase;
 

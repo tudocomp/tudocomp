@@ -36,7 +36,7 @@ namespace malloc_count {
         paused = true;
     }
 
-    void continue_phase() {
+    void resume_phase() {
         paused = false;
     }
 }

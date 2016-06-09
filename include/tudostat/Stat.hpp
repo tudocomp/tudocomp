@@ -31,7 +31,7 @@ public:
     static Phase (*end_phase)(void);
 
     static void (*pause_phase)(void);
-    static void (*continue_phase)(void);
+    static void (*resume_phase)(void);
 
     inline Stat() : m_stats(NULL_PHASE) {
     }
@@ -59,14 +59,22 @@ public:
         }
     }
 
+    inline void pause() const {
+        if(pause_phase) pause_phase();
+    }
+
+    inline void resume() const {
+        if(resume_phase) resume_phase();
+    }
+
     inline const Phase& stats() const {
         return m_stats;
     }
 
     inline void add_sub_phase(const Stat& stat) {
-        if(pause_phase) pause_phase();
+        pause();
         m_sub.push_back(stat);
-        if(continue_phase) continue_phase();
+        resume();
     }
 
     inline std::string to_json() const {
