@@ -3,6 +3,7 @@
 
 #include <malloc_count/malloc_count.hpp>
 #include <list>
+#include <map>
 #include <sstream>
 
 namespace tudostat {
@@ -22,9 +23,12 @@ public:
 
 private:
     std::string m_title;
-    Phase m_stats;
+    Phase m_phase;
 
     std::list<Stat> m_sub;
+
+    std::map<std::string, int> m_stats_int;
+    std::map<std::string, double> m_stats_real;
 
 public:
     static void (*begin_phase)(void);
@@ -33,10 +37,10 @@ public:
     static void (*pause_phase)(void);
     static void (*resume_phase)(void);
 
-    inline Stat() : m_stats(NULL_PHASE) {
+    inline Stat() : m_phase(NULL_PHASE) {
     }
 
-    inline Stat(const std::string& title) : m_title(title), m_stats(NULL_PHASE) {
+    inline Stat(const std::string& title) : m_title(title), m_phase(NULL_PHASE) {
     }
 
     inline void set_title(const std::string& title) {
@@ -44,7 +48,7 @@ public:
     }
 
     inline void begin() {
-        m_stats = NULL_PHASE;
+        m_phase = NULL_PHASE;
         if(begin_phase) {
             begin_phase();
         }
@@ -52,10 +56,10 @@ public:
 
     inline const Phase& end() {
         if(end_phase) {
-            m_stats = end_phase();
-            return m_stats;
+            m_phase = end_phase();
+            return m_phase;
         } else {
-            return m_stats;
+            return m_phase;
         }
     }
 
@@ -67,8 +71,8 @@ public:
         if(resume_phase) resume_phase();
     }
 
-    inline const Phase& stats() const {
-        return m_stats;
+    inline const Phase& phase() const {
+        return m_phase;
     }
 
     inline void add_sub(const Stat& stat) {
@@ -77,24 +81,47 @@ public:
         resume();
     }
 
+    inline void add_stat(const std::string& key, int value) {
+        pause();
+        m_stats_int.emplace(key, value);
+        resume();
+    }
+
+    inline void add_stat(const std::string& key, double value) {
+        pause();
+        m_stats_real.emplace(key, value);
+        resume();
+    }
+
     inline std::string to_json() const {
         std::stringstream ss;
-        ss << "{ \"title\": \"" << m_title << "\""
-           << ", \"startTime\": " << m_stats.start_time
-           << ", \"duration\": " << m_stats.duration
-           << ", \"memOff\": " << m_stats.mem_off
-           << ", \"memPeak\": " << m_stats.mem_peak
-           << ", \"sub\": [";
+        ss << "{\"title\": \"" << m_title << "\""
+           << ", \"startTime\": " << m_phase.start_time
+           << ", \"duration\": " << m_phase.duration
+           << ", \"memOff\": " << m_phase.mem_off
+           << ", \"memPeak\": " << m_phase.mem_peak;
+        
+        ss << ", \"stats\": {";
 
-        for(auto it = m_sub.begin(); it != m_sub.end(); it++) {
-            ss << it->to_json();
+        size_t stats_total = m_stats_int.size() + m_stats_real.size();
+        size_t i = 0;
 
-            if(std::next(it) != m_sub.end()) {
-                ss << ",";
-            }
+        for(auto it = m_stats_int.begin(); it != m_stats_int.end(); it++) {
+            ss << "\"" << it->first << "\": " << it->second;
+            if(++i < stats_total) ss << ", ";
+        }
+        for(auto it = m_stats_real.begin(); it != m_stats_real.end(); it++) {
+            ss << "\"" << it->first << "\": " << it->second;
+            if(++i < stats_total) ss << ", ";
         }
 
+        ss << "}, \"sub\": [";
+        for(auto it = m_sub.begin(); it != m_sub.end(); it++) {
+            ss << it->to_json();
+            if(std::next(it) != m_sub.end()) ss << ", ";
+        }
         ss << "]}";
+
         return ss.str();
     }
 };
