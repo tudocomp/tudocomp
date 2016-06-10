@@ -71,7 +71,7 @@ public:
         return m_stats;
     }
 
-    inline void add_sub_phase(const Stat& stat) {
+    inline void add_sub(const Stat& stat) {
         pause();
         m_sub.push_back(stat);
         resume();
@@ -79,15 +79,19 @@ public:
 
     inline std::string to_json() const {
         std::stringstream ss;
-        ss << "{ title: '" << m_title << "'"
-           << ", startTime: " << m_stats.start_time
-           << ", duration: " << m_stats.duration
-           << ", memOff: " << m_stats.mem_off
-           << ", memPeak: " << m_stats.mem_peak
-           << ", sub: [ ";
+        ss << "{ \"title\": \"" << m_title << "\""
+           << ", \"startTime\": " << m_stats.start_time
+           << ", \"duration\": " << m_stats.duration
+           << ", \"memOff\": " << m_stats.mem_off
+           << ", \"memPeak\": " << m_stats.mem_peak
+           << ", \"sub\": [";
 
         for(auto it = m_sub.begin(); it != m_sub.end(); it++) {
             ss << it->to_json();
+
+            if(std::next(it) != m_sub.end()) {
+                ss << ",";
+            }
         }
 
         ss << "]}";
