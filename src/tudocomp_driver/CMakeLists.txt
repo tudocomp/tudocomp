@@ -8,6 +8,7 @@ target_link_libraries(
     tudocomp_algorithms
 
     tudostat
+    malloc_count
     tudocomp
     glog
     sdsl
