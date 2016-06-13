@@ -27,7 +27,7 @@ private:
 
     std::list<Stat> m_sub;
 
-    std::map<std::string, int> m_stats_int;
+    std::map<std::string, long> m_stats_int;
     std::map<std::string, double> m_stats_real;
 
 public:
@@ -82,9 +82,25 @@ public:
     }
 
     inline void add_stat(const std::string& key, int value) {
+        add_stat(key, (long)value);
+    }
+
+    inline void add_stat(const std::string& key, unsigned int value) {
+        add_stat(key, (long)value);
+    }
+
+    inline void add_stat(const std::string& key, size_t value) {
+        add_stat(key, (long)value);
+    }
+
+    inline void add_stat(const std::string& key, long value) {
         pause();
         m_stats_int.emplace(key, value);
         resume();
+    }
+
+    inline void add_stat(const std::string& key, float value) {
+        add_stat(key, (double)value);
     }
 
     inline void add_stat(const std::string& key, double value) {
