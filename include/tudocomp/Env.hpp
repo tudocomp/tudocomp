@@ -1,12 +1,18 @@
 #ifndef _INCLUDED_ENV_HPP
 #define _INCLUDED_ENV_HPP
 
+#include <cassert>
 #include <map>
 #include <set>
-#include <vector>
-#include <string>
 #include <sstream>
+#include <stack>
 #include <stdexcept>
+#include <string>
+#include <vector>
+
+#include <tudostat/Stat.hpp>
+
+using tudostat::Stat;
 
 namespace tudocomp {
 
@@ -23,47 +29,27 @@ template<typename T> T lexical_cast(const std::string& s) {
 /// options that can be used to modify the default behavior of an algorithm.
 class Env {
     std::map<std::string, const std::string> options;
-    std::map<std::string, const std::string> stats;
     mutable std::set<std::string> known_options;
 
+    std::stack<Stat> m_stat_stack;
+    Stat m_stat_root;
+
 public:
-    inline Env() {}
-    inline Env(std::map<std::string, const std::string> options_,
-               std::map<std::string, const std::string> stats_):
-        options(options_), stats(stats_) {}
+    inline Env() : m_stat_root(Stat("Root")) {}
+
+    inline Env(std::map<std::string, const std::string> options_)
+        : options(options_), m_stat_root(Stat("Root")) {
+    }
 
     /// Returns a copy of the backing map.
     inline std::map<std::string, const std::string> get_options() const {
         return options;
     }
 
-    /// Returns a copy of the backing map.
-    inline std::map<std::string, const std::string> get_stats() const {
-        return stats;
-    }
-
     /// Returns the set of options that got actually asked for by the algorithms
     inline std::set<std::string> get_known_options() const {
         return known_options;
     }
-
-    /// Log a statistic.
-    ///
-    /// Statistics will be gathered at a central location, and
-    /// can be used to judge the behavior and performance of an
-    /// implementation.
-    ///
-    /// \param name The name of the statistic. Should be a unique identifier
-    ///             with `.`-separated segments to allow easier grouping of
-    ///             the gathered values. For example:
-    ///             `"my_compressor.phase1.alphabet_size"`.
-    /// \param value The value of the statistic as a string.
-    template<class T>
-    inline void log_stat(const std::string& name, const T value) {
-        std::stringstream s;
-        s << value;
-        stats.emplace(name, s.str());
-    };
 
     /// Returns whether a option has been set.
     inline bool has_option(const std::string& name) const {
@@ -117,6 +103,42 @@ public:
     /// Log an error and end the current operation
     inline void error(const std::string& msg) {
         throw std::runtime_error(msg);
+    }
+
+    /// Returns a reference to the root statistics phase.
+    inline Stat& stat_root() {
+        return m_stat_root;
+    }
+
+    /// Begins a new statistics phase
+    inline void stat_begin(const std::string& name) {
+        m_stat_stack.push(Stat(name));
+        Stat& stat = m_stat_stack.top();
+        stat.begin();
+    }
+
+    /// Returns a reference to the current statistics phase.
+    /// This reference is valid only until the phase is ended.
+    inline Stat& stat_current() {
+        return m_stat_stack.top();
+    }
+
+    /// Ends the current statistics phase.
+    inline void stat_end() {
+        assert(!m_stat_stack.empty());
+
+        Stat& stat_ref = m_stat_stack.top();
+        stat_ref.end();
+        
+        Stat stat = stat_ref; //copy
+        m_stat_stack.pop();
+
+        if(!m_stat_stack.empty()) {
+            Stat& parent = m_stat_stack.top();
+            parent.add_sub(stat);
+        } else {
+            m_stat_root = stat;
+        }
     }
 };
 

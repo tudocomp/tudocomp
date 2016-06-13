@@ -76,7 +76,7 @@ public:
             coder.encode_fact(i);
             factor_count++;
         }
-        m_env->log_stat(RULESET_SIZE_LOG, factor_count);
+        //TODO update m_env->log_stat(RULESET_SIZE_LOG, factor_count);
     }
 
     virtual void decompress(Input& in, Output& out) override final {

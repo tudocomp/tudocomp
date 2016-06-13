@@ -108,7 +108,7 @@ int main(int argc, char** argv)
             return 0;
         }*/
 
-        Env algorithm_env(algorithm_options, {});
+        Env algorithm_env(algorithm_options);
 
         // Set up algorithms
         Registry registry;
@@ -335,11 +335,11 @@ int main(int argc, char** argv)
                 std::cout << "  " << pair.first << " = " << pair.second << "\n";
             }
 
-            std::cout << "---------------\n";
-            std::cout << "Algorithm Stats:\n";
-            for (auto& pair : algorithm_env.get_stats()) {
-                std::cout << "  " << pair.first << ": " << pair.second << "\n";
-            }
+            //std::cout << "---------------\n";
+            //std::cout << "Algorithm Stats:\n";
+            //for (auto& pair : algorithm_env.get_stats()) {
+            //    std::cout << "  " << pair.first << ": " << pair.second << "\n";
+            //}
 
             std::cout << "---------------\n";
             print_time("startup", setup_duration);
