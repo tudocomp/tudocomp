@@ -43,6 +43,7 @@ protected:
 
     /// \copydoc
     inline virtual void factorize(Input& input) override {
+        auto env = Compressor::m_env;
         auto in = input.as_view();
 
         size_t len = in.size();
@@ -50,13 +51,16 @@ protected:
         sdslex::int_vector_wrapper wrapper(in_ptr, len);
 
         //Construct SA
+        env->stat_begin("Construct SA");
         sdsl::csa_bitcompressed<> sa;
         sdsl::construct_im(sa, wrapper.int_vector);
+        env->stat_end();
 
         //Construct ISA and LCP
         //TODO SDSL ???
-        sdsl::int_vector<> isa(sa.size());
-        sdsl::int_vector<> lcp(sa.size());
+        env->stat_begin("Construct ISA and LCP");
+        sdsl::int_vector<> isa(sa.size(), 0, bitsFor(sa.size()));
+        sdsl::int_vector<> lcp(sa.size(), 0, bitsFor(sa.size()));
 
         for(size_t i = 0; i < sa.size(); i++) {
             isa[sa[i]] = i;
@@ -66,13 +70,13 @@ protected:
                 while(in_ptr[j++] == in_ptr[k++]) ++lcp[i];
             }
         }
-
-        sdsl::util::bit_compress(isa);
-        sdsl::util::bit_compress(lcp);
+        env->stat_end();
 
         //Factorize
+        env->stat_begin("Factorize");
         size_t fact_min = 3; //factor threshold
 
+        size_t num_factors = 0;
         for(size_t i = 0; i < len;) {
             //get SA position for suffix i
             size_t h = isa[i];
@@ -108,6 +112,7 @@ protected:
             //select maximum
             size_t p = std::max(p1, p2);
             if (p >= fact_min) {
+                num_factors++;
                 LZSSCompressor<C>::handle_fact(LZSSFactor(i, sa[p == p1 ? h1 : h2], p));
                 i += p; //advance
             } else {
@@ -115,6 +120,13 @@ protected:
                 ++i; //advance
             }
         }
+
+        {
+            Stat& stat = env->stat_current();
+            stat.add_stat("threshold", fact_min);
+            stat.add_stat("factors", num_factors);
+        }
+        env->stat_end();
     }
 };
 

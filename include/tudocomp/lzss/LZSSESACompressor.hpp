@@ -79,8 +79,11 @@ public:
         S interval_selector(*env);
         interval_selector.factorize(sa, isa, lcp, fact_min, factors);
 
-        env->stat_current().add_stat("threshold", fact_min);
-        env->stat_current().add_stat("factors", factors.size());
+        {
+            Stat& stat = env->stat_current();
+            stat.add_stat("threshold", fact_min);
+            stat.add_stat("factors", factors.size());
+        }
         env->stat_end();
 
         //sort
