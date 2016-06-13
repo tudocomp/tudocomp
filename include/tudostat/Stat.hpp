@@ -109,35 +109,63 @@ public:
         resume();
     }
 
+    #define JSON_INDENT 4
+
+    inline void to_json(std::ostream& stream, unsigned int indent = 0) const {
+        std::string indent_str(indent, ' ');
+        std::string indent2_str(indent + JSON_INDENT, ' ');
+
+        stream << indent_str << "{\n"
+               << indent2_str << "\"title\": \"" << m_title << "\",\n"
+               << indent2_str << "\"startTime\": " << m_phase.start_time << ",\n"
+               << indent2_str << "\"duration\": " << m_phase.duration << ",\n"
+               << indent2_str << "\"memOff\": " << m_phase.mem_off << ",\n"
+               << indent2_str << "\"memPeak\": " << m_phase.mem_peak << ",\n";
+
+        stream << indent2_str << "\"stats\": {";
+        size_t stats_total = m_stats_int.size() + m_stats_real.size();
+        if(stats_total == 0) {
+            stream << "},\n";
+        } else {
+            stream << "\n";
+
+            std::string indent3_str(indent + 2 * JSON_INDENT, ' ');
+            size_t i = 0;
+
+            for(auto it = m_stats_int.begin(); it != m_stats_int.end(); it++) {
+                stream << indent3_str << "\"" << it->first << "\": " << it->second;
+                if(++i < stats_total) stream << ",";
+                stream << "\n";
+            }
+
+            for(auto it = m_stats_real.begin(); it != m_stats_real.end(); it++) {
+                stream << indent3_str << "\"" << it->first << "\": " << it->second;
+                if(++i < stats_total) stream << ",";
+                stream << "\n";
+            }
+
+            stream << indent2_str << "},\n";
+        }
+
+        stream << indent2_str << "\"sub\": [";
+        if(m_sub.empty()) {
+            stream << "]\n";
+        } else {
+            stream << indent2_str << "\n";
+            for(auto it = m_sub.begin(); it != m_sub.end(); it++) {
+                it->to_json(stream, indent + 2 * JSON_INDENT);
+                if(std::next(it) != m_sub.end()) stream << ",";
+                stream << "\n";
+            }
+            stream << indent2_str << "]\n";
+        }
+
+        stream << indent_str << "}";
+    }
+
     inline std::string to_json() const {
         std::stringstream ss;
-        ss << "{\"title\": \"" << m_title << "\""
-           << ", \"startTime\": " << m_phase.start_time
-           << ", \"duration\": " << m_phase.duration
-           << ", \"memOff\": " << m_phase.mem_off
-           << ", \"memPeak\": " << m_phase.mem_peak;
-        
-        ss << ", \"stats\": {";
-
-        size_t stats_total = m_stats_int.size() + m_stats_real.size();
-        size_t i = 0;
-
-        for(auto it = m_stats_int.begin(); it != m_stats_int.end(); it++) {
-            ss << "\"" << it->first << "\": " << it->second;
-            if(++i < stats_total) ss << ", ";
-        }
-        for(auto it = m_stats_real.begin(); it != m_stats_real.end(); it++) {
-            ss << "\"" << it->first << "\": " << it->second;
-            if(++i < stats_total) ss << ", ";
-        }
-
-        ss << "}, \"sub\": [";
-        for(auto it = m_sub.begin(); it != m_sub.end(); it++) {
-            ss << it->to_json();
-            if(std::next(it) != m_sub.end()) ss << ", ";
-        }
-        ss << "]}";
-
+        to_json(ss);
         return ss.str();
     }
 };
