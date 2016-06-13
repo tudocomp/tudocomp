@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <sdsl/suffix_arrays.hpp>
+#include <tudocomp/Env.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 
 namespace tudocomp {
@@ -29,8 +30,10 @@ private:
         }
     };
 
+    Env *m_env;
+
 public:
-    inline ESACompBulldozer() {
+    inline ESACompBulldozer(Env& env) : m_env(&env) {
     }
 
     void factorize(const sdsl::csa_bitcompressed<>& sa,
@@ -43,6 +46,8 @@ public:
         size_t n = sa.size();
 
         //induce intervals
+        m_env->stat_begin("Induce intervals");
+
         std::vector<Interval> intervals;
         for(size_t i = 1; i < sa.size(); i++) {
             if(lcp[i] >= fact_min) {
@@ -51,8 +56,13 @@ public:
             }
         }
 
+        m_env->stat_current().add_stat("numIntervals", intervals.size());
+        m_env->stat_end();
+
         //sort
+        m_env->stat_begin("Sort intervals");
         std::sort(intervals.begin(), intervals.end(), IntervalComparator());
+        m_env->stat_end();
 
         //debug output
         /*DLOG(INFO) << "Intervals:";
@@ -62,6 +72,8 @@ public:
 
         //marker
         sdsl::bit_vector marked(n);
+
+        m_env->stat_begin("Process intervals");
 
         auto x = intervals.begin();
         while(x != intervals.end()) {
@@ -93,6 +105,7 @@ public:
             ++x;
         }
 
+        m_env->stat_end();
     }
 };
 

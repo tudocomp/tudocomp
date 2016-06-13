@@ -40,8 +40,10 @@ private:
         }
     };
 
+    Env *m_env;
+
 public:
-    inline ESACompCollider() {
+    inline ESACompCollider(Env& env) : m_env(&env) {
     }
 
     void factorize(const sdsl::csa_bitcompressed<>& sa,

@@ -12,7 +12,6 @@
 #include <tudocomp/lzss/esacomp/ESACompBulldozer.hpp>
 #include <tudocomp/lzss/esacomp/ESACompCollider.hpp>
 #include <tudocomp/lzss/esacomp/ESACompMaxLCP.hpp>
-
 namespace tudocomp {
 namespace lzss {
 
@@ -31,6 +30,7 @@ public:
 
     /// \copydoc
     inline virtual bool pre_factorize(Input& input) override {
+        auto env = Compressor::m_env;
         auto in = input.as_view();
 
         size_t len = in.size();
@@ -38,11 +38,15 @@ public:
         sdslex::int_vector_wrapper wrapper(in_ptr, len);
 
         //Construct SA
+        env->stat_begin("Construct SA");
         sdsl::csa_bitcompressed<> sa;
         sdsl::construct_im(sa, wrapper.int_vector);
+        env->stat_end();
 
         //Construct ISA and LCP
         //TODO SDSL ???
+        env->stat_begin("Construct ISA and LCP");
+
         sdsl::int_vector<> isa(sa.size(), 0, bitsFor(sa.size()));
         sdsl::int_vector<> lcp(sa.size(), 0, bitsFor(sa.size()));
 
@@ -54,6 +58,8 @@ public:
                 while(in_ptr[j++] == in_ptr[k++]) ++lcp[i];
             }
         }
+
+        env->stat_end();
 
         //Debug output
         /*
@@ -68,11 +74,20 @@ public:
         size_t fact_min = 3; //factor threshold
         std::vector<LZSSFactor>& factors = LZSSCompressor<C>::m_factors;
 
-        S interval_selector;
+        env->stat_begin("Factorize using strategy");
+
+        S interval_selector(*env);
         interval_selector.factorize(sa, isa, lcp, fact_min, factors);
 
+        env->stat_current().add_stat("threshold", fact_min);
+        env->stat_current().add_stat("factors", factors.size());
+        env->stat_end();
+
         //sort
+        env->stat_begin("Sort factors");
         std::sort(factors.begin(), factors.end());
+        env->stat_end();
+
         return true;
     }
 

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <sdsl/suffix_arrays.hpp>
+#include <tudocomp/Env.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 #include <tudocomp/util/MaxLCPSuffixList.hpp>
 
@@ -18,8 +19,11 @@ namespace lzss {
 /// This was the original naive approach in "Textkompression mithilfe von
 /// Enhanced Suffix Arrays" (BA thesis, Patrick Dinklage, 2015).
 class ESACompMaxLCP {
+    private:
+        Env *m_env;
+
     public:
-        inline ESACompMaxLCP() {
+        inline ESACompMaxLCP(Env& env) : m_env(&env) {
         }
 
         void factorize(const sdsl::csa_bitcompressed<>& sa,
@@ -28,9 +32,14 @@ class ESACompMaxLCP {
                        size_t fact_min,
                        std::vector<LZSSFactor>& out_factors) {
             
+            m_env->stat_begin("Construct MaxLCPSuffixList");
             MaxLCPSuffixList<sdsl::csa_bitcompressed<>, sdsl::int_vector<>> list(sa, lcp, fact_min);
+            m_env->stat_current().add_stat("entries", list.size());
+            m_env->stat_end();
 
             //Factorize
+            m_env->stat_begin("Factorize");
+
             while(list.size() > 0) {
                 //get suffix with longest LCP
                 size_t m = list.first();
@@ -65,6 +74,8 @@ class ESACompMaxLCP {
                     }
                 }
             }
+
+            m_env->stat_end();
         }
 };
 
