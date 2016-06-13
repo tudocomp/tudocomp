@@ -74,7 +74,9 @@ void free(void* ptr) {
     if(block->magic == MEMBLOCK_MAGIC) {
         if(!paused && pcur >= 0 && block->phase_id >= pstack[0].id) {
             for(int i = 0; i <= pcur; i++) {
-                pstack[i].mem_current -= block->size;
+                if(block->phase_id >= pstack[i].id) {
+                    pstack[i].mem_current -= block->size;
+                }
             }
         }
 
