@@ -40,6 +40,8 @@ public:
     /// \copydoc
     virtual void compress(Input& main_input, Output& output) override final {
 
+        auto env = Compressor::m_env;
+
         //init factorization (possibly factorize offline to buffer)
         Input input_copy_1(main_input);
         bool factorized = pre_factorize(input_copy_1);
@@ -67,6 +69,7 @@ public:
 
         //encode
         if(factorized || m_coder->uses_buffer()) {
+            env->stat_begin("Encode");
 
             size_t len = main_input.size();
 
@@ -102,6 +105,8 @@ public:
             }
 
             m_coder->encode_sym_flush();
+
+            env->stat_end();
         }
 
         //clean up

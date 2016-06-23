@@ -28,6 +28,8 @@ class OfflineLZSSCoder {
 //TODO more unique name (there may be more offline coders in the future...)
 
 private:
+    Env* m_env;
+
     size_t m_in_size;
     std::shared_ptr<BitOStream> m_out;
     std::shared_ptr<A> m_alphabet_coder;
@@ -52,7 +54,7 @@ public:
     /// \param out The (bitwise) output stream.
     /// \param opts Coder options determined by the compressor.
     inline OfflineLZSSCoder(Env& env, Input& in, io::OutputStream& out, LZSSCoderOpts opts)
-            : m_in_size(in.size()), m_src_use_delta(opts.use_src_delta) {
+            : m_env(&env), m_in_size(in.size()), m_src_use_delta(opts.use_src_delta) {
 
         m_out = std::shared_ptr<BitOStream>(new BitOStream(*out));
 
@@ -119,9 +121,11 @@ public:
     inline void set_buffer(std::vector<LZSSFactor>& buffer) {
         m_factors = &buffer;
 
+        m_env->stat_begin("Analyze factors");
         for(auto f : buffer) {
             analyze_fact(f);
         }
+        m_env->stat_end();
     }
 
     /// Buffers the given factor and allows the encoder to analyze it.

@@ -14,6 +14,8 @@ namespace tudocomp {
 class OfflineAlphabetCoder {
 
 private:
+    Env* m_env;
+
     BitOStream* m_out;
     io::InputView m_in;
 
@@ -24,7 +26,9 @@ private:
     sdsl::int_vector<> m_char2comp;
 
 public:
-    inline OfflineAlphabetCoder(Env& env, Input& input, BitOStream& out) : m_out(&out), m_in(input.as_view()) {
+    inline OfflineAlphabetCoder(Env& env, Input& input, BitOStream& out) : m_env(&env), m_out(&out), m_in(input.as_view()) {
+        env.stat_begin("Analyze alphabet");
+
         Counter<uint8_t> counter;
 
         for(uint8_t c : *m_in) {
@@ -44,6 +48,9 @@ public:
             m_comp2char[i] = c;
             m_char2comp[c] = i;
         }
+
+        env.stat_current().add_stat("alphabetSize", m_sigma);
+        env.stat_end();
     }
 
     inline ~OfflineAlphabetCoder() {
