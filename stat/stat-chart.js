@@ -1,28 +1,35 @@
 var colors = ["steelblue", "tomato", "orange", "darkseagreen", "slateblue", "rosybrown"];
 
 //convert stats to data
+var groups = [];
 var data = [];
 
 var convert = function(x, memOff) {
-    if(x.sub.length == 0) {
-        data.push({
-            title:   x.title,
-            tStart:  x.timeStart - stats.timeStart,
-            tEnd:    x.timeEnd - stats.timeStart,
-            memOff:  memOff + x.memOff,
-            memPeak: memOff + x.memOff + x.memPeak,
-            stats:   x.stats
-        });
-    } else {
-        for(var i = 0; i < x.sub.length; i++) {
-            convert(x.sub[i], memOff + x.memOff);
-        }
+    var ds = {
+        title:   x.title,
+        tStart:  x.timeStart - stats.timeStart,
+        tEnd:    x.timeEnd - stats.timeStart,
+        memOff:  memOff + x.memOff,
+        memPeak: memOff + x.memOff + x.memPeak,
+        stats:   x.stats
+    };
+
+    if(x != stats && x.sub.length > 0) {
+        groups.push(ds);
+    } else if(x.sub.length == 0) {
+        ds.color = colors[data.length % colors.length];
+        data.push(ds);
+    }
+
+    for(var i = 0; i < x.sub.length; i++) {
+        convert(x.sub[i], memOff + x.memOff);
     }
 };
+
 convert(stats, stats.memOff);
 
 // Define dimensions
-var margin = {top: 20, right: 100, bottom: 50, left: 100};
+var margin = {top: 50, right: 200, bottom: 50, left: 100};
 var width = 1280 - margin.left - margin.right;
 var height = 720 - margin.top - margin.bottom;
 
@@ -74,13 +81,13 @@ var chart = d3.select("#chart svg")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 // Draw bars
-var bar = chart.selectAll("g")
+var bar = chart.selectAll("g.bar")
     .data(data).enter()
     .append("g")
     .attr("class", "bar")
-    .attr("title", function(d) { return d.title; })
     .attr("transform", function(d) {
-        return "translate(" + x(tScale(d.tStart)) + ",0)"; });
+        return "translate(" + x(tScale(d.tStart)) + ",0)";
+     });
 
 bar.append("rect")
     .attr("class", "mem")
@@ -88,7 +95,7 @@ bar.append("rect")
     .attr("y", function(d) { return y(memScale(d.memPeak)); })
     .attr("height", function(d) { return height - y(memScale(d.memPeak)); })
     .attr("width", function(d) { return x(tScale(d.tEnd - d.tStart)) })
-    .attr("fill", function(d, i) { return colors[i % colors.length]; });
+    .attr("fill", function(d) { return d.color; });
 
 bar.append("line")
     .attr("x1", "0")
@@ -96,12 +103,75 @@ bar.append("line")
     .attr("y1", function(d) { return y(memScale(d.memOff)); })
     .attr("y2", function(d) { return y(memScale(d.memOff)); });
 
+/*
 bar.append("text")
     .attr("x", function(d) { return x(tScale(d.tEnd - d.tStart)); })
     .attr("y", function(d) { return y(memScale(d.memPeak)); })
     .attr("dx", "-0.5em")
     .attr("dy", "1.5em")
     .text(function(d) { return d.title; });
+*/
+
+// Draw legend
+var legend = chart.selectAll("g.legend")
+            .data(data).enter()
+            .append("g")
+            .attr("class", "legend")
+            .attr("transform", function(d) {
+                return "translate(" + x.range()[1] + ",0)";
+            });
+
+legend.append("rect")
+    .attr("fill", function(d) { return d.color; })
+    .attr("x", "0")
+    .attr("y", function(d, i) { return (i * 1.5) + "em" })
+    .attr("width", "1em")
+    .attr("height", "1em");
+
+legend.append("text")
+    .attr("x", "1.25em")
+    .attr("y", function(d, i) { return (i * 1.5) + "em" })
+    .attr("dy", "1em")
+    .text(function(d) { return d.title; });
+
+// Draw groups
+var group = chart.selectAll("g.group")
+            .data(groups).enter()
+            .append("g")
+            .attr("class", "group")
+            .attr("transform", function(d) {
+                return "translate(" + x(tScale(d.tStart)) + ",0)";
+            });
+
+group.append("text")
+    .attr("x", function(d) { return x(tScale((d.tEnd - d.tStart) / 2)); })
+    .attr("y", function(d) { return y(memScale(d.memPeak)); })
+    .attr("dy", "-25")
+    .text(function(d) { return d.title; });
+
+group.append("line")
+    .attr("x1", "0")
+    .attr("x2", "0")
+    .attr("y1", function(d) { return y(memScale(d.memPeak)); })
+    .attr("y2", height);
+
+group.append("line")
+    .attr("x1", function(d) { return x(tScale(d.tEnd - d.tStart)); })
+    .attr("x2", function(d) { return x(tScale(d.tEnd - d.tStart)); })
+    .attr("y1", function(d) { return y(memScale(d.memPeak)); })
+    .attr("y2", height);
+
+group.append("line")
+    .attr("x1", "0")
+    .attr("x2", function(d) { return x(tScale(d.tEnd - d.tStart)); })
+    .attr("y1", function(d) { return y(memScale(d.memPeak)); })
+    .attr("y2", function(d) { return y(memScale(d.memPeak)); });
+
+group.append("line")
+    .attr("x1", function(d) { return x(tScale((d.tEnd - d.tStart) / 2)); })
+    .attr("x2", function(d) { return x(tScale((d.tEnd - d.tStart) / 2)); })
+    .attr("y1", "-20")
+    .attr("y2", function(d) { return y(memScale(d.memPeak)); });
 
 // Marker
 var marker = chart.append("g")
@@ -183,7 +253,7 @@ chart.on("mousemove", function() {
     var mx = m[0];
     if(mx > 0) {
         var marker = setMarker(mx);
-        if(marker.data) {
+        if(marker && marker.data) {
             var d = marker.data;
             if(d.tStart != cachetStart) {
                 cachetStart = d.tStart;
@@ -206,13 +276,10 @@ chart.on("mousemove", function() {
                     tr.append("th").text(function(key) { return key + ":"; });
                     tr.append("td").text(function(key) { return d.stats[key]; });
                 }
-
-                //d3.select(".ext").html("");
             }
         }
 
         var mdoc = d3.mouse(document.documentElement);
-        //console.log(mdoc);
         d3.select("#tip")
             .style("display", "inline")
             .style("left", mdoc[0] + "px")

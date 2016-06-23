@@ -65,7 +65,23 @@ html {
 .bar line {
     stroke: rgba(0, 0, 0, 0.25);
     stroke-width: 2;
+    stroke-dasharray: 2,2;
+}
+
+.group text {
+    font-weight: bold;
+    text-anchor: middle;
+}
+
+.group line {
+    stroke: rgba(0, 0, 0, 0.75);
+    stroke-width: 1;
+
     stroke-dasharray: 5,2;
+}
+
+.legend text {
+    text-anchor: start;
 }
 
 .marker line {
