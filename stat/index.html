@@ -11,10 +11,19 @@
 <body>
     <div id="chart">
         <svg></svg>
-        <div id="info">
-            aaa
+        <div id="tip">
+            <div class="title"></div>
+            <table>
+                <tbody class="basic">
+                    <tr><th>Duration:</th><td class="duration"></td></tr>
+                    <tr><th>Memory Peak:</th><td class="mempeak"></td></tr>
+                    <tr><th>Local peak:</th><td class="memadd"></td></tr>
+                </tbody>
+                <tbody class="ext">
+                </tbody>
+            </table>
         </div>
-    <div id="chart-container">
+    </div>
     <script src="stat.kjv.js"></script>
     <script src="stat-chart.js"></script>
 </body>

@@ -2,18 +2,19 @@ var colors = ["steelblue", "tomato", "orange", "darkseagreen", "slateblue", "ros
 
 //convert stats to data
 var data = [];
-var t0 = stats.timeStart;
+
 var convert = function(x, memOff) {
     if(x.sub.length == 0) {
         data.push({
             title:   x.title,
-            tStart:  x.timeStart - t0,
-            tEnd:    x.timeEnd - t0,
+            tStart:  x.timeStart - stats.timeStart,
+            tEnd:    x.timeEnd - stats.timeStart,
             memOff:  memOff + x.memOff,
             memPeak: memOff + x.memOff + x.memPeak,
+            stats:   x.stats
         });
     } else {
-        for(var i  = 0; i < x.sub.length; i++) {
+        for(var i = 0; i < x.sub.length; i++) {
             convert(x.sub[i], memOff + x.memOff);
         }
     }
@@ -21,18 +22,48 @@ var convert = function(x, memOff) {
 convert(stats, stats.memOff);
 
 // Define dimensions
-var margin = {top: 20, right: 100, bottom: 30, left: 80};
+var margin = {top: 20, right: 100, bottom: 50, left: 100};
 var width = 1280 - margin.left - margin.right;
 var height = 720 - margin.top - margin.bottom;
 
+// Define scales
+var tDuration = stats.timeEnd - stats.timeStart;
+
+var tUnit = "s";
+var tScale = d3.scale.linear()
+            .range([0, tDuration / 1000])
+            .domain([0, tDuration]);
+
+var memUnits = ["bytes", "KiB", "MiB", "GiB"];
+
+var memUnit = 0;
+var memDiv = 1;
+{
+    var u = 0;
+    var memPeak = stats.memPeak;
+    while(u < memUnits.length && memPeak > 1024) {
+        memPeak /= 1024.0;
+        memDiv *= 1024;
+        u++;
+    }
+
+    memUnit = memUnits[u];
+}
+
+var memScale = d3.scale.linear()
+                .range([0, stats.memPeak / memDiv])
+                .domain([0, stats.memPeak]);
+
 // Define axes
-var x = d3.scale.linear().range([0, width], .5);
-var y = d3.scale.linear().range([height, 0]);
+var x = d3.scale.linear()
+            .range([0, width])
+            .domain(tScale.range());
 
-x.domain([0, d3.max(data, function(d) { return d.tEnd; })]);
-y.domain([0, d3.max(data, function(d) { return d.memPeak; })]);
+var y = d3.scale.linear()
+            .range([height, 0])
+            .domain(memScale.range());
 
-var xAxis = d3.svg.axis().scale(x).orient("bottom");
+var xAxis = d3.svg.axis().scale(x).orient("bottom").ticks(15);
 var yAxis = d3.svg.axis().scale(y).orient("left");
 
 // Create chart
@@ -48,25 +79,26 @@ var bar = chart.selectAll("g")
     .append("g")
     .attr("class", "bar")
     .attr("title", function(d) { return d.title; })
-    .attr("transform", function(d) { return "translate(" + x(d.tStart) + ",0)"; });
+    .attr("transform", function(d) {
+        return "translate(" + x(tScale(d.tStart)) + ",0)"; });
 
 bar.append("rect")
     .attr("class", "mem")
     .attr("x", "0")
-    .attr("y", function(d) { return y(d.memPeak); })
-    .attr("height", function(d) { return height - y(d.memPeak); })
-    .attr("width", function(d) { return x(d.tEnd - d.tStart) })
+    .attr("y", function(d) { return y(memScale(d.memPeak)); })
+    .attr("height", function(d) { return height - y(memScale(d.memPeak)); })
+    .attr("width", function(d) { return x(tScale(d.tEnd - d.tStart)) })
     .attr("fill", function(d, i) { return colors[i % colors.length]; });
 
 bar.append("line")
     .attr("x1", "0")
-    .attr("x2", function(d) { return x(d.tEnd - d.tStart); })
-    .attr("y1", function(d) { return y(d.memOff); })
-    .attr("y2", function(d) { return y(d.memOff); });
+    .attr("x2", function(d) { return x(tScale(d.tEnd - d.tStart)); })
+    .attr("y1", function(d) { return y(memScale(d.memOff)); })
+    .attr("y2", function(d) { return y(memScale(d.memOff)); });
 
 bar.append("text")
-    .attr("x", function(d) { return x(d.tEnd - d.tStart); })
-    .attr("y", function(d) { return y(d.memPeak); })
+    .attr("x", function(d) { return x(tScale(d.tEnd - d.tStart)); })
+    .attr("y", function(d) { return y(memScale(d.memPeak)); })
     .attr("dx", "-0.5em")
     .attr("dy", "1.5em")
     .text(function(d) { return d.title; });
@@ -84,7 +116,7 @@ marker.append("line")
 
 marker.append("circle")
     .attr("cx", "0")
-    .attr("cy", "100")
+    .attr("cy", "0")
     .attr("r", "3");
 
 // Draw axes
@@ -93,43 +125,98 @@ chart.append("g")
     .attr("transform", "translate(0," + height + ")")
     .call(xAxis);
 
+chart.append("text")
+    .attr("class", "axis-label")
+    .attr("transform", "translate(" + width/2 + "," + height + ")")
+    .attr("dy", "3em")
+    .text("Time / " + tUnit);
+
 chart.append("g")
     .attr("class", "axis")
     .call(yAxis);
 
+chart.append("text")
+    .attr("class", "axis-label")
+    .attr("transform", "translate(0," + height/2 + ") rotate(-90)")
+    .attr("dy", "-3em")
+    .text("Memory Peak / " + memUnit);
+
 // Utilities
 var setMarker = function(xpos) {
-    var t = x.invert(xpos);
+    var t = tScale.invert(x.invert(xpos));
 
     for(var i = 0; i < data.length; i++) {
         var d = data[i];
         if(t >= d.tStart && t <= d.tEnd) {
+            var memY = y(memScale(d.memPeak));
+
             marker.attr("transform", "translate(" + xpos + ",0)");
-            marker.select("line").attr("y1", y(d.memPeak));
-            marker.select("circle").attr("cy", y(d.memPeak));
-            return d;
+            marker.select("circle").attr("cy", memY);
+
+            return {
+                data: d,
+                y:    memY
+            };
         }
     }
 
     return null;
 };
 
-setMarker(280);
+// Formatting functions
+var formatTime = function(ms) {
+    return tScale(ms).toFixed(3) + " " + tUnit;
+};
+
+var formatMem = function(mem) {
+    return memScale(mem).toFixed(2) + " " + memUnit;
+}
+
+var formatPercent = function(pct) {
+    return (pct * 100.0).toFixed(2) + " %";
+}
 
 // Events
-chart
-.on("mouseover", function() {
-})
-.on("mousemove", function() {
+var cachetStart = -1;
+chart.on("mousemove", function() {
     var m = d3.mouse(this);
     var mx = m[0];
     if(mx > 0) {
-        var d = setMarker(mx);
-        if(d) {
-            d3.select("#chart #info").html(d.title);
+        var marker = setMarker(mx);
+        if(marker.data) {
+            var d = marker.data;
+            if(d.tStart != cachetStart) {
+                cachetStart = d.tStart;
+
+                var dur = d.tEnd - d.tStart;
+                var durPct = dur / tDuration;
+
+                var tip = d3.select("#tip");
+
+                tip.select(".title").text(d.title);
+                tip.select(".duration").text(
+                    formatTime(dur) + " (" + formatPercent(durPct) + ")");
+                tip.select(".mempeak").text(formatMem(d.memPeak));
+                tip.select(".memadd").text(formatMem(d.memPeak - d.memOff));
+
+                var ext = tip.select("tbody.ext").html("");
+                if(d.stats) {
+                    var tr = ext.selectAll("tr").data(Object.keys(d.stats)).enter().append("tr");
+
+                    tr.append("th").text(function(key) { return key + ":"; });
+                    tr.append("td").text(function(key) { return d.stats[key]; });
+                }
+
+                //d3.select(".ext").html("");
+            }
         }
+
+        var mdoc = d3.mouse(document.documentElement);
+        //console.log(mdoc);
+        d3.select("#tip")
+            .style("display", "inline")
+            .style("left", mdoc[0] + "px")
+            .style("top", mdoc[1] + "px");
     }
-})
-.on("mouseout", function() {
 });
 

@@ -6,9 +6,54 @@ html {
     text-align: center;
 }
 
-#chart #info {
-    margin-top: 2em;
-    font: 12pt monospace;
+#tip {
+    display: none;
+
+    position: absolute;
+    left: 0px;
+    top: 0px;
+
+    text-align: left;
+
+    margin-top: 1em;
+    margin-left: 1em;
+
+    background-color: rgba(0, 0, 0, 0.75);
+    border: 2px solid black;
+    border-radius: 0.5em;
+
+    padding: 0.5em;
+
+    color: white;
+}
+
+#tip .title {
+    font-weight: bold;
+    border-bottom: 1px solid white;
+    margin-bottom: 0.5em;
+}
+
+#tip table {
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
+#tip table th,
+#tip table td {
+    padding: 0;
+}
+
+#tip table th {
+    font-weight: normal;
+}
+
+#tip table td {
+    font-family: monospace;
+    padding-left: 1em;
+}
+
+#tip tbody.ext tr:first-child {
+    border-top: 1px dotted white;
 }
 
 .bar text {
@@ -24,12 +69,12 @@ html {
 }
 
 .marker line {
-    stroke: white;
+    stroke: black;
     stroke-width: 1;
 }
 
 .marker circle {
-    fill: darkred;
+    fill: black;
 }
 
 .axis text {
@@ -41,5 +86,12 @@ html {
     fill: none;
     stroke: black;
     shape-rendering: crispEdges;
+}
+
+text.axis-label {
+    font-weight: bold;
+    font-style: italic;
+
+    text-anchor: middle;
 }
 
