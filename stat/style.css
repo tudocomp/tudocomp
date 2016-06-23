@@ -1,0 +1,45 @@
+html {
+    font: 10pt sans-serif;
+}
+
+#chart {
+    text-align: center;
+}
+
+#chart #info {
+    margin-top: 2em;
+    font: 12pt monospace;
+}
+
+.bar text {
+    fill: black;
+    font-weight: bold;
+    text-anchor: end;
+}
+
+.bar line {
+    stroke: rgba(0, 0, 0, 0.25);
+    stroke-width: 2;
+    stroke-dasharray: 5,2;
+}
+
+.marker line {
+    stroke: white;
+    stroke-width: 1;
+}
+
+.marker circle {
+    fill: darkred;
+}
+
+.axis text {
+    fill: black;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
