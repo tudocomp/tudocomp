@@ -1,3 +1,6 @@
+var defaultWidth = 900;
+var defaultHeight = 450;
+
 var colors = [
     "steelblue",
     "tomato",
@@ -41,8 +44,11 @@ convert(stats, stats.memOff);
 
 // Define dimensions
 var margin = {top: 50, right: 200, bottom: 50, left: 50};
-var width = 1280 - margin.left - margin.right;
-var height = 720 - margin.top - margin.bottom;
+var width = defaultWidth - margin.left - margin.right;
+var height = defaultHeight - margin.top - margin.bottom;
+
+var svgWidth = width + margin.left + margin.right;
+var svgHeight = height + margin.top + margin.bottom;
 
 // Define scales
 var tDuration = stats.timeEnd - stats.timeStart;
@@ -86,8 +92,11 @@ var yAxis = d3.svg.axis().scale(y).orient("left");
 
 // Create chart
 var chart = d3.select("#chart svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+    .attr("width", svgWidth)
+    .attr("height", svgHeight)
+    .append("g")
+    .attr("class", "zoom")
+    .attr("transform", "scale(1.0)")
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
@@ -112,7 +121,10 @@ bar.append("line")
     .attr("x1", "0")
     .attr("x2", function(d) { return x(tScale(d.tEnd - d.tStart)); })
     .attr("y1", function(d) { return y(memScale(d.memOff)); })
-    .attr("y2", function(d) { return y(memScale(d.memOff)); });
+    .attr("y2", function(d) { return y(memScale(d.memOff)); })
+    .style("stroke", "rgba(0, 0, 0, 0.25)")
+    .style("stroke-width", "2")
+    .style("stroke-dasharray", "2,2");
 
 // Draw legend
 var legend = chart.selectAll("g.legend")
@@ -120,7 +132,7 @@ var legend = chart.selectAll("g.legend")
             .append("g")
             .attr("class", "legend")
             .attr("transform", function(d) {
-                return "translate(" + x.range()[1] + ",0)";
+                return "translate(" + (x.range()[1] + 5) + ",0)";
             });
 
 legend.append("rect")
@@ -149,6 +161,8 @@ group.append("text")
     .attr("x", function(d) { return x(tScale((d.tEnd - d.tStart) / 2)); })
     .attr("y", function(d) { return y(memScale(d.memPeak)); })
     .attr("dy", "-25")
+    .style("font-weight", "bold")
+    .style("text-anchor", "middle")
     .text(function(d) { return d.title; });
 
 group.append("line")
@@ -175,6 +189,11 @@ group.append("line")
     .attr("y1", function(d) { return y(memScale(d.memPeak)) - 20; })
     .attr("y2", function(d) { return y(memScale(d.memPeak)); });
 
+group.selectAll("line")
+    .style("stroke", "rgba(0, 0, 0, 0.75)")
+    .style("stroke-width", "1")
+    .style("stroke-dasharray", "5,2");
+
 // Marker
 var marker = chart.append("g")
     .attr("class", "marker")
@@ -184,12 +203,15 @@ marker.append("line")
     .attr("x1", "0")
     .attr("x2", "0")
     .attr("y1", 0)
-    .attr("y2", height);
+    .attr("y2", height)
+    .style("stroke", "black")
+    .style("stroke-width", "1");
 
 marker.append("circle")
     .attr("cx", "0")
     .attr("cy", "0")
-    .attr("r", "3");
+    .attr("r", "3")
+    .style("fill", "black");
 
 // Draw axes
 chart.append("g")
@@ -201,6 +223,9 @@ chart.append("text")
     .attr("class", "axis-label")
     .attr("transform", "translate(" + width/2 + "," + height + ")")
     .attr("dy", "3em")
+    .style("font-weight", "bold")
+    .style("font-style", "italic")
+    .style("text-anchor", "middle")
     .text("Time / " + tUnit);
 
 chart.append("g")
@@ -211,7 +236,18 @@ chart.append("text")
     .attr("class", "axis-label")
     .attr("transform", "translate(0," + height/2 + ") rotate(-90)")
     .attr("dy", "-3em")
+    .style("font-weight", "bold")
+    .style("font-style", "italic")
+    .style("text-anchor", "middle")
     .text("Memory Peak / " + memUnit);
+
+chart.selectAll(".axis path.domain")
+    .style("fill", "none")
+    .style("stroke", "black")
+    .style("shape-rendering", "crispEdges");
+
+chart.selectAll(".axis g.tick line")
+    .style("stroke", "black");
 
 // Utilities
 var setMarker = function(xpos) {
@@ -290,3 +326,22 @@ chart.on("mousemove", function() {
     }
 });
 
+//Option events
+d3.select("#options button.svg").on("click", function() {
+    var marker = d3.select("#chart svg g.marker");
+
+    marker.style("display", "none");
+    var b64 = btoa(d3.select("#svg-container").html());
+    marker.style("display", null);
+
+    window.open("data:image/svg+xml;base64,"+b64);
+});
+
+d3.select("#options .zoom").on("input", function() {
+    var zoom = parseFloat(this.value);
+    d3.select("#options .zoom-label").text(zoom.toFixed(1));
+    d3.select("#chart svg")
+        .attr("width", svgWidth * zoom)
+        .attr("height", svgHeight * zoom);
+    d3.select("#chart g.zoom").attr("transform", "scale(" + zoom + ")");
+});

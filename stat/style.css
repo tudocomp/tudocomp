@@ -1,9 +1,43 @@
 html {
-    font: 10pt sans-serif;
+    font-size: 10pt;
+    font-family: sans-serif;
 }
 
-#chart {
-    text-align: center;
+h2 {
+    margin: 0;
+    font-size: 115%;
+
+    border-bottom: 1px solid white;
+    margin-bottom: 0.5em;
+}
+
+#options {
+    float: right;
+
+    padding: 0.5em;
+    border-radius: 0.5em;
+
+    border: 2px solid black;
+    background-color: #444;
+
+    color: white;
+}
+
+#options input[type=range] {
+    vertical-align: middle;
+}
+
+#options button {
+    font-weight: bold;
+    padding: 0.5em;
+}
+
+#options span {
+    padding-left: 0.5em;
+}
+
+#options p#export {
+    text-align: right;
 }
 
 #tip {
@@ -56,58 +90,6 @@ html {
     border-top: 1px dotted white;
 }
 
-.bar text {
-    fill: black;
-    font-weight: bold;
-    text-anchor: end;
+#chart {
+    text-align: center;
 }
-
-.bar line {
-    stroke: rgba(0, 0, 0, 0.25);
-    stroke-width: 2;
-    stroke-dasharray: 2,2;
-}
-
-.group text {
-    font-weight: bold;
-    text-anchor: middle;
-}
-
-.group line {
-    stroke: rgba(0, 0, 0, 0.75);
-    stroke-width: 1;
-
-    stroke-dasharray: 5,2;
-}
-
-.legend text {
-    text-anchor: start;
-}
-
-.marker line {
-    stroke: black;
-    stroke-width: 1;
-}
-
-.marker circle {
-    fill: black;
-}
-
-.axis text {
-    fill: black;
-}
-
-.axis path,
-.axis line {
-    fill: none;
-    stroke: black;
-    shape-rendering: crispEdges;
-}
-
-text.axis-label {
-    font-weight: bold;
-    font-style: italic;
-
-    text-anchor: middle;
-}
-

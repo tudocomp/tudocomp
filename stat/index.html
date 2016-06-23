@@ -8,8 +8,17 @@
     <link rel="stylesheet" type="text/css" href="style.css"/>
 </head>
 <body>
+    <div id="options">
+        <h2>Options</h2>
+        <p>Zoom: <input class="zoom" type="range" min="0.5" max="4.0" step="0.1" value="1.0"></input><span class="zoom-label">1.0</span></p>
+        <p id="export">
+            <button class="svg">Save SVG</button>
+        </p>
+    </div>
     <div id="chart">
-        <svg></svg>
+        <div id="svg-container">
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="font-family: sans-serif; font-size: 10pt;"></svg>
+        </div>
         <div id="tip">
             <div class="title"></div>
             <table>
