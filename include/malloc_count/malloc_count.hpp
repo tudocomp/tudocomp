@@ -26,7 +26,7 @@ namespace malloc_count {
         size_t id;
 
         ulong time_start;
-        ulong time_delta;
+        ulong time_end;
         size_t mem_off;
         size_t mem_current;
         size_t mem_peak;

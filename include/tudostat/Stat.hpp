@@ -13,7 +13,7 @@ class Stat {
 public:
     struct Phase {
         ulong start_time;
-        ulong duration;
+        ulong end_time;
 
         size_t mem_off;
         size_t mem_peak;
@@ -117,8 +117,8 @@ public:
 
         stream << indent_str << "{\n"
                << indent2_str << "\"title\": \"" << m_title << "\",\n"
-               << indent2_str << "\"startTime\": " << m_phase.start_time << ",\n"
-               << indent2_str << "\"duration\": " << m_phase.duration << ",\n"
+               << indent2_str << "\"timeStart\": " << m_phase.start_time << ",\n"
+               << indent2_str << "\"timeEnd\": " << m_phase.end_time << ",\n"
                << indent2_str << "\"memOff\": " << m_phase.mem_off << ",\n"
                << indent2_str << "\"memPeak\": " << m_phase.mem_peak << ",\n";
 

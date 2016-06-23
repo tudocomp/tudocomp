@@ -25,8 +25,7 @@ namespace malloc_count {
     phase_t end_phase() {
         if(pcur < 0) throw "ending a phase that never began";
 
-        ulong time_end = current_time_millis();
-        pstack[pcur].time_delta = time_end - pstack[pcur].time_start;
+        pstack[pcur].time_end = current_time_millis();
         pstack[pcur].id = SIZE_MAX; //invalidate
 
         return pstack[pcur--];

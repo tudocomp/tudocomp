@@ -8,7 +8,7 @@ Stat::Phase end_phase_if() {
 
     Stat::Phase p;
     p.start_time = mp.time_start;
-    p.duration = mp.time_delta;
+    p.end_time = mp.time_end;
     p.mem_off = mp.mem_off;
     p.mem_peak = mp.mem_peak;
     return p;
