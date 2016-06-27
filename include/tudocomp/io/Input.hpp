@@ -128,7 +128,7 @@ namespace io {
         }
     };
 
-    struct InputView {
+    class InputViewVariant {
         struct Variant {
             virtual string_ref view() = 0;
         };
@@ -163,24 +163,36 @@ namespace io {
             }
         };
 
-        std::unique_ptr<Variant> m_data;
+        std::unique_ptr<Variant> m_variant;
 
+        friend class InputView;
+        friend class Input;
+
+        InputViewVariant(const InputViewVariant* other) = delete;
+        InputViewVariant() = delete;
+
+        InputViewVariant(InputViewVariant::Memory&& mem):
+            m_variant(std::make_unique<Memory>(std::move(mem))) {}
+        InputViewVariant(InputViewVariant::File&& s):
+            m_variant(std::make_unique<File>(std::move(s))) {}
+        InputViewVariant(InputViewVariant&& s):
+            m_variant(std::move(s.m_variant)) {}
+    };
+
+    class InputView: InputViewVariant, public View {
+        friend class Input;
+
+        InputView(InputViewVariant&& mem):
+            InputViewVariant(std::move(mem)),
+            View(m_variant->view()) {}
+    public:
+        /// DEPRECATED
         string_ref operator* () {
-            return m_data->view();
-        }
-
-        size_t size() {
-            return m_data->view().size();
+            return *this;
         }
 
         InputView(const InputView* other) = delete;
         InputView() = delete;
-
-        InputView(InputView::Memory&& mem):
-            m_data(std::make_unique<Memory>(std::move(mem))) {}
-        InputView(InputView::File&& s):
-            m_data(std::make_unique<File>(std::move(s))) {}
-
     };
 
     inline InputView Input::Memory::as_view() {
