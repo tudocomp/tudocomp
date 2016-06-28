@@ -113,16 +113,14 @@ TEST(Input, vector) {
 
     {
         Input inp = Input::from_memory(v);
-        auto guard = inp.as_view();
-        auto ref = *guard;
+        auto ref = inp.as_view();
 
         ASSERT_EQ(ref, "abc");
     }
 
     {
         Input inp = Input::from_memory(v);
-        auto guard = inp.as_stream();
-        auto& stream = *guard;
+        auto stream = inp.as_stream();
 
         std::string s;
 
@@ -137,16 +135,14 @@ TEST(Input, string_ref) {
 
     {
         Input inp = Input::from_memory(v);
-        auto guard = inp.as_view();
-        auto ref = *guard;
+        auto ref = inp.as_view();
 
         ASSERT_EQ(ref, "abc");
     }
 
     {
         Input inp = Input::from_memory(v);
-        auto guard = inp.as_stream();
-        auto& stream = *guard;
+        auto stream = inp.as_stream();
 
         std::string s;
 
@@ -165,16 +161,14 @@ TEST(Input, file) {
 
     {
         Input inp = Input::from_path(test_file_path(fn("short.txt")));
-        auto guard = inp.as_view();
-        auto ref = *guard;
+        auto ref = inp.as_view();
 
         ASSERT_EQ(ref, "abc");
     }
 
     {
         Input inp = Input::from_path(test_file_path(fn("short.txt")));
-        auto guard = inp.as_stream();
-        auto& stream = *guard;
+        auto stream = inp.as_stream();
 
         std::string s;
 
@@ -182,6 +176,41 @@ TEST(Input, file) {
 
         ASSERT_EQ(s, "abc");
     }
+}
+
+void stream_moving(Input& i) {
+    {
+        InputStream s1 = i.as_stream();
+        ASSERT_EQ(s1.get(), 'a');
+        InputStream s2(std::move(s1));
+        ASSERT_EQ(s2.get(), 'b');
+        InputStream s3(std::move(s2));
+        ASSERT_EQ(s3.get(), 'c');
+    }
+    {
+        InputStream s4 = i.as_stream();
+        ASSERT_EQ(s4.get(), 'd');
+        InputStream s5(std::move(s4));
+        ASSERT_EQ(s5.get(), 'e');
+    }
+}
+
+TEST(Input, stream_moving_vec) {
+    std::vector<uint8_t> v { 97, 98, 99, 100, 101 };
+    Input i(v);
+    stream_moving(i);
+}
+
+TEST(Input, stream_moving_mem) {
+    string_ref v { "abcde" };
+    Input i(v);
+    stream_moving(i);
+}
+
+TEST(Input, stream_moving_file) {
+    write_test_file(fn("stream_moving.txt"), "abcde");
+    Input i = Input::from_path(test_file_path(fn("stream_moving.txt")));
+    stream_moving(i);
 }
 
 TEST(Output, memory) {
