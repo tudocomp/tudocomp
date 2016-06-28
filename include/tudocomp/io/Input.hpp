@@ -169,7 +169,7 @@ namespace io {
         friend class InputView;
         friend class Input;
 
-        InputViewInternal(const InputViewInternal* other) = delete;
+        InputViewInternal(const InputViewInternal& other) = delete;
         InputViewInternal() = delete;
 
         InputViewInternal(InputViewInternal::Memory&& mem):
@@ -191,7 +191,7 @@ namespace io {
             InputViewInternal(std::move(mem)),
             View(std::move(mem)) {}
 
-        InputView(const InputView* other) = delete;
+        InputView(const InputView& other) = delete;
         InputView() = delete;
     };
 
@@ -319,7 +319,7 @@ namespace io {
         friend class InputStream;
         friend class Input;
 
-        InputStreamInternal(const InputStreamInternal* other) = delete;
+        InputStreamInternal(const InputStreamInternal& other) = delete;
         InputStreamInternal() = delete;
 
         InputStreamInternal(InputStreamInternal::Memory&& mem):
@@ -342,7 +342,7 @@ namespace io {
             InputStreamInternal(std::move(mem)),
             std::istream(mem.rdbuf()) {}
 
-        InputStream(const InputStream* other) = delete;
+        InputStream(const InputStream& other) = delete;
         InputStream() = delete;
     };
 
