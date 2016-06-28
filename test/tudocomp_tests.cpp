@@ -219,8 +219,7 @@ TEST(Output, memory) {
     Output out = Output::from_memory(vec);
 
     {
-        auto guard = out.as_stream();
-        auto& stream = *guard;
+        auto stream = out.as_stream();
 
         stream << "abc";
     }
@@ -232,8 +231,7 @@ TEST(Output, file) {
     Output out = Output::from_path(test_file_path(fn("short_out.txt")), true);
 
     {
-        auto guard = out.as_stream();
-        auto& stream = *guard;
+        auto stream = out.as_stream();
 
         stream << "abc";
     }
@@ -246,8 +244,7 @@ TEST(Output, stream) {
     Output out = Output::from_stream(ss);
 
     {
-        auto guard = out.as_stream();
-        auto& stream = *guard;
+        auto stream = out.as_stream();
 
         stream << "abc";
     }
@@ -586,8 +583,7 @@ struct MyCompressor: public Compressor {
 
     inline virtual void compress(Input& input, Output& output) {
         A a(env().env_for_option("sub"));
-        auto x = output.as_stream();
-        auto& s = *x;
+        auto s = output.as_stream();
         s << "ok! " << custom_data;
     }
 };

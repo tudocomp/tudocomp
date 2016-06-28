@@ -186,11 +186,6 @@ namespace io {
             OutputStreamInternal(std::move(mem)),
             std::ostream(mem.rdbuf()) {}
 
-        /// DEPRECATED
-        inline std::ostream& operator* () {
-            return m_variant->stream();
-        }
-
         OutputStream(const OutputStream& other) = delete;
         OutputStream() = delete;
     };
