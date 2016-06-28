@@ -59,8 +59,7 @@ protected:
 
     /// \copydoc
     inline virtual void factorize(Input& input) override {
-        auto in_guard = input.as_stream();
-        std::istream& ins = *in_guard;
+        auto ins = input.as_stream();
 
         std::vector<uint8_t> buf;
 

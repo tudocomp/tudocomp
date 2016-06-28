@@ -52,8 +52,7 @@ public:
     }
 
     virtual void compress(Input& input, Output& out) override {
-        auto guard = input.as_stream();
-        auto& is = *guard;
+        auto is = input.as_stream();
 
         EncoderDictionary ed(EncoderDictionary::Lz78, dms, reserve_dms);
         C coder(env().env_for_option("coder"), out);

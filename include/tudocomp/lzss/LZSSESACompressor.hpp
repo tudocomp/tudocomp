@@ -40,7 +40,7 @@ public:
         auto in = input.as_view();
 
         size_t len = in.size();
-        const uint8_t* in_ptr = (const uint8_t*)(*in).data();
+        const uint8_t* in_ptr = (const uint8_t*)in.data();
         sdslex::int_vector_wrapper wrapper(in_ptr, len);
 
         //Construct SA

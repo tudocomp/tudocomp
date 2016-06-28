@@ -155,10 +155,8 @@ TEST(Registry, dynamic_options) {
         inline virtual void decompress(Input& input, Output& output) {}
 
         inline virtual void compress(Input& input, Output& output) {
-            auto x = output.as_stream();
-            auto& s = *x;
-            auto y = input.as_view();
-            auto t = *y;
+            auto s = output.as_stream();
+            auto t = input.as_view();
 
             ASSERT_EQ(t, "test");
             s << "check";

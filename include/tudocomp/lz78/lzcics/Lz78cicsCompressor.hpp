@@ -22,8 +22,7 @@ public:
     }
 
     inline virtual void compress(Input& in, Output& out) override final {
-        auto guard = in.as_view();
-        auto i_view = *guard;
+        auto i_view = in.as_view();
 
         C coder(env().env_for_option("coder"), out);
 
@@ -81,7 +80,7 @@ public:
 
         auto o_guard = out.as_stream();
 
-        (*o_guard).write((const char*)&buf[0], buf.size());
+        o_guard.write((const char*)&buf[0], buf.size());
     }
 
 };

@@ -45,21 +45,21 @@ public:
     /// Initializes the encoding by writing information to the output that
     /// will be needed for decoding.
     inline void encode_init() {
-        **m_out << m_len << ':';
+        *m_out << m_len << ':';
     }
 
     /// Encodes a LZSS factor to the output.
     inline void encode_fact(const LZSSFactor& f) {
-        **m_out << "{" << (f.src + 1) << "," << f.num << "}";
+        *m_out << "{" << (f.src + 1) << "," << f.num << "}";
     }
 
     /// Passes a raw symbol to the alphabet encoder.
     inline void encode_sym(uint8_t sym) {
         if(sym == '{' || sym == '\\') {
-            **m_out << '\\'; //escape
+            *m_out << '\\'; //escape
         }
 
-        **m_out << sym;
+        *m_out << sym;
     }
 
     /// Notifies the alphabet encoder that the current batch of raw symbols
@@ -96,9 +96,7 @@ public:
 };
 
 inline void DebugLZSSCoder::decode(Env& env, Input& input, Output& out) {
-
-    auto in_guard = input.as_stream();
-    std::istream& in = *in_guard;
+    auto in = input.as_stream();
 
     char c;
 
@@ -153,7 +151,7 @@ inline void DebugLZSSCoder::decode(Env& env, Input& input, Output& out) {
 
     //Write
     auto out_guard = out.as_stream();
-    buffer.write_to(*out_guard);
+    buffer.write_to(out_guard);
 }
 
 }}

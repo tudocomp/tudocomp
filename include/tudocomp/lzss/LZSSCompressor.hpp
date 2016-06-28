@@ -69,8 +69,7 @@ public:
 
             size_t len = main_input.size();
 
-            auto in_guard = main_input.as_stream();
-            std::istream& in_stream = *in_guard;
+            auto in_stream = main_input.as_stream();
 
             //init (offline)
             m_coder->encode_init();

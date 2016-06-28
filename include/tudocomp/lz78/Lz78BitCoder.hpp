@@ -34,7 +34,7 @@ public:
     inline Lz78BitCoder(Env&& env, Output& out):
         Algorithm(std::move(env)),
         m_out_guard(out.as_stream()),
-        m_out(*m_out_guard)
+        m_out(m_out_guard)
     {
     }
 
@@ -51,7 +51,7 @@ public:
     inline ~Lz78BitCoder() {
         if (!empty) {
             m_out.flush();
-            (*m_out_guard).flush();
+            m_out_guard.flush();
         }
     }
 
@@ -82,10 +82,9 @@ public:
         bool done = false;
 
         auto i_guard = inp_.as_stream();
-        auto o_guard = out_.as_stream();
-        auto& out = *o_guard;
+        auto out = out_.as_stream();
 
-        BitIStream inp(*i_guard, done);
+        BitIStream inp(i_guard, done);
 
         uint64_t factor_counter = 0;
 

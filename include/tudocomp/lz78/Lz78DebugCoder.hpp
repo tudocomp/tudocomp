@@ -43,12 +43,12 @@ public:
 
     inline ~Lz78DebugCoder() {
         if (!empty) {
-            (*m_out).flush();
+            m_out.flush();
         }
     }
 
     inline void encode_fact(const Factor& fact) {
-        *m_out << "(" << fact.index << "," << char(fact.chr) << ")";
+        m_out << "(" << fact.index << "," << char(fact.chr) << ")";
     }
 
     inline void dictionary_reset() {
@@ -56,11 +56,8 @@ public:
     }
 
     inline static void decode(Input& in, Output& ou) {
-        auto i_guard = in.as_stream();
-        auto& inp = *i_guard;
-
-        auto o_guard = ou.as_stream();
-        auto& out = *o_guard;
+        auto inp = in.as_stream();
+        auto out = ou.as_stream();
 
         Lz78DecodeBuffer buf;
         char c;

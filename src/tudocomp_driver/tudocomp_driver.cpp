@@ -210,7 +210,7 @@ int main(int argc, char** argv)
                     CHECK(algorithm_id.find('%') == std::string::npos);
 
                     auto o_stream = out.as_stream();
-                    (*o_stream) << algorithm_id << '%';
+                    o_stream << algorithm_id << '%';
                 }
 
                 setup_time = clk::now();
@@ -226,7 +226,7 @@ int main(int argc, char** argv)
                     char c;
                     size_t sanity_size_check = 0;
                     bool err = false;
-                    while ((*i_stream).get(c)) {
+                    while (i_stream.get(c)) {
                         err = false;
                         if (sanity_size_check > 1023) {
                             err = true;

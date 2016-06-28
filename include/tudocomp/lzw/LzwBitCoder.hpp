@@ -42,14 +42,14 @@ public:
     }
 
     inline LzwBitCoder(Env&& env, Output& out)
-        : m_out_guard(out.as_stream()), m_out(*m_out_guard)
+        : m_out_guard(out.as_stream()), m_out(m_out_guard)
     {
     }
 
     inline ~LzwBitCoder() {
         if (!empty) {
             m_out.flush();
-            (*m_out_guard).flush();
+            m_out_guard.flush();
         }
     }
 
@@ -73,10 +73,8 @@ public:
     inline static void decode(Input& _inp, Output& _out,
                               CodeType dms,
                               CodeType reserve_dms) {
-        auto iguard = _inp.as_stream();
-        auto oguard = _out.as_stream();
-        auto& inp = *iguard;
-        auto& out = *oguard;
+        auto inp = _inp.as_stream();
+        auto out = _out.as_stream();
 
         bool done = false;
         BitIStream is(inp, done);

@@ -35,7 +35,7 @@ public:
     inline OfflineAlphabetCoder(Env& env, Input& input, BitOStream& out) : m_out(&out), m_in(input.as_view()) {
         Counter<uint8_t> counter;
 
-        for(uint8_t c : *m_in) {
+        for(uint8_t c : m_in) {
             counter.increase(c);
         }
 
