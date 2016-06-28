@@ -191,11 +191,6 @@ namespace io {
             InputViewVariant(std::move(mem)),
             View(std::move(mem)) {}
 
-        /// DEPRECATED
-        string_ref operator* () {
-            return *this;
-        }
-
         InputView(const InputView* other) = delete;
         InputView() = delete;
     };
@@ -346,11 +341,6 @@ namespace io {
         InputStream(InputStream&& mem):
             InputStreamVariant(std::move(mem)),
             std::istream(mem.rdbuf()) {}
-
-        /// DEPRECATED
-        std::istream& operator* () {
-            return *this;
-        }
 
         InputStream(const InputStream* other) = delete;
         InputStream() = delete;
