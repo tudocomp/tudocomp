@@ -31,24 +31,24 @@ class ESACompMaxLCP {
                        sdsl::int_vector<>& lcp,
                        size_t fact_min,
                        std::vector<LZSSFactor>& out_factors) {
-            
+
             m_env->stat_begin("Construct MaxLCPSuffixList");
             MaxLCPSuffixList<sdsl::csa_bitcompressed<>, sdsl::int_vector<>> list(sa, lcp, fact_min);
             m_env->stat_current().add_stat("entries", list.size());
             m_env->stat_end();
 
             //Factorize
-            m_env->stat_begin("Factorize");
+            m_env->stat_begin("Process MaxLCPSuffixList");
 
             while(list.size() > 0) {
                 //get suffix with longest LCP
                 size_t m = list.first();
-                
+
                 //generate factor
                 LZSSFactor fact(sa[m], sa[m-1], lcp[m]);
                 out_factors.push_back(fact);
                 //DLOG(INFO) << "Factor: (" << fact.pos << ", " << fact.src << ", " << fact.num << ")";
-                
+
                 //remove overlapped entries
                 for(size_t k = 0; k < fact.num; k++) {
                     size_t i = isa[fact.pos + k];
@@ -56,7 +56,7 @@ class ESACompMaxLCP {
                         list.remove(i);
                     }
                 }
-                
+
                 //correct intersecting entries
                 for(size_t k = 0; k < fact.num && fact.pos > k; k++) {
                     size_t s = fact.pos - k - 1;
@@ -64,7 +64,7 @@ class ESACompMaxLCP {
                     if(list.contains(i)) {
                         if(s + lcp[i] > fact.pos) {
                             list.remove(i);
-                            
+
                             size_t l = fact.pos - s;
                             lcp[i] = l;
                             if(l >= fact_min) {
