@@ -125,7 +125,7 @@ bar.append("rect")
     .attr("width", function(d) { return x(tScale(d.tDuration)); })
     .attr("fill", function(d) { return d.color; });
 
-bar.append("rect")
+bar.append("line")
     .attr("x1", "0")
     .attr("x2", function(d) { return x(tScale(d.tDuration)); })
     .attr("y1", function(d) { return y(memScale(d.memOff)); })
@@ -329,11 +329,11 @@ chart.on("mousemove", function() {
                 tip.select(".memadd").text(formatMem(d.memPeak - d.memOff));
 
                 var ext = tip.select("tbody.ext").html("");
-                if(d.stats) {
-                    var tr = ext.selectAll("tr").data(Object.keys(d.stats)).enter().append("tr");
+                if(d.stats.length > 0) {
+                    var tr = ext.selectAll("tr").data(d.stats).enter().append("tr");
 
-                    tr.append("th").text(function(key) { return key + ":"; });
-                    tr.append("td").text(function(key) { return d.stats[key]; });
+                    tr.append("th").text(function(kv) { return kv.key + ":"; });
+                    tr.append("td").text(function(kv) { return kv.value; });
                 }
             }
 

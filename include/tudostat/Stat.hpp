@@ -122,29 +122,28 @@ public:
                << indent2_str << "\"memOff\": " << m_phase.mem_off << ",\n"
                << indent2_str << "\"memPeak\": " << m_phase.mem_peak << ",\n";
 
-        stream << indent2_str << "\"stats\": {";
+        stream << indent2_str << "\"stats\": [";
         size_t stats_total = m_stats_int.size() + m_stats_real.size();
         if(stats_total == 0) {
-            stream << "},\n";
+            stream << "],\n";
         } else {
             stream << "\n";
 
             std::string indent3_str(indent + 2 * JSON_INDENT, ' ');
             size_t i = 0;
 
-            for(auto it = m_stats_int.begin(); it != m_stats_int.end(); it++) {
-                stream << indent3_str << "\"" << it->first << "\": " << it->second;
-                if(++i < stats_total) stream << ",";
-                stream << "\n";
+            #define STAT_LIST_JSON(lst)                                          \
+            for(auto it = lst.begin(); it != lst.end(); it++) {                  \
+                stream << indent3_str << "{ \"key\": \"" << it->first << "\", "; \
+                stream << "\"value\": " << it->second << " }";                   \
+                if(++i < stats_total) stream << ",";                             \
+                stream << "\n";                                                  \
             }
 
-            for(auto it = m_stats_real.begin(); it != m_stats_real.end(); it++) {
-                stream << indent3_str << "\"" << it->first << "\": " << it->second;
-                if(++i < stats_total) stream << ",";
-                stream << "\n";
-            }
+            STAT_LIST_JSON(m_stats_int);
+            STAT_LIST_JSON(m_stats_real);
 
-            stream << indent2_str << "},\n";
+            stream << indent2_str << "],\n";
         }
 
         stream << indent2_str << "\"sub\": [";
