@@ -9,9 +9,8 @@ var colors = [
     "slateblue",
     "rosybrown",
     "hotpink",
-    "gold",
+    "plum",
     "lightgreen",
-    "plum"
 ];
 
 //convert stats to data
@@ -20,12 +19,13 @@ var data = [];
 
 var convert = function(x, memOff) {
     var ds = {
-        title:   x.title,
-        tStart:  x.timeStart - stats.timeStart,
-        tEnd:    x.timeEnd - stats.timeStart,
-        memOff:  memOff + x.memOff,
-        memPeak: memOff + x.memOff + x.memPeak,
-        stats:   x.stats
+        title:     x.title,
+        tStart:    x.timeStart - stats.timeStart,
+        tEnd:      x.timeEnd - stats.timeStart,
+        tDuration: (x.timeEnd - x.timeStart),
+        memOff:    memOff + x.memOff,
+        memPeak:   memOff + x.memOff + x.memPeak,
+        stats:     x.stats
     };
 
     if(x != stats && x.sub.length > 0) {
@@ -43,7 +43,7 @@ var convert = function(x, memOff) {
 convert(stats, stats.memOff);
 
 // Define dimensions
-var margin = {top: 50, right: 200, bottom: 50, left: 50};
+var margin = {top: 50, right: 200, bottom: 50, left: 55};
 var width = defaultWidth - margin.left - margin.right;
 var height = defaultHeight - margin.top - margin.bottom;
 
@@ -100,6 +100,14 @@ var chart = d3.select("#chart svg")
     .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+// Draw background
+chart.append("rect")
+    .attr("x", "0")
+    .attr("y", "0")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("fill", "white");
+
 // Draw bars
 var bar = chart.selectAll("g.bar")
     .data(data).enter()
@@ -114,16 +122,16 @@ bar.append("rect")
     .attr("x", "0")
     .attr("y", function(d) { return y(memScale(d.memPeak)); })
     .attr("height", function(d) { return height - y(memScale(d.memPeak)); })
-    .attr("width", function(d) { return x(tScale(d.tEnd - d.tStart)) })
+    .attr("width", function(d) { return x(tScale(d.tDuration)); })
     .attr("fill", function(d) { return d.color; });
 
-bar.append("line")
+bar.append("rect")
     .attr("x1", "0")
-    .attr("x2", function(d) { return x(tScale(d.tEnd - d.tStart)); })
+    .attr("x2", function(d) { return x(tScale(d.tDuration)); })
     .attr("y1", function(d) { return y(memScale(d.memOff)); })
     .attr("y2", function(d) { return y(memScale(d.memOff)); })
     .style("stroke", "rgba(0, 0, 0, 0.25)")
-    .style("stroke-width", "2")
+    .style("stroke-width", "1")
     .style("stroke-dasharray", "2,2");
 
 // Draw legend
@@ -146,7 +154,8 @@ legend.append("text")
     .attr("x", "1.25em")
     .attr("y", function(d, i) { return (i * 1.5) + "em" })
     .attr("dy", "1em")
-    .text(function(d) { return d.title; });
+    .text(function(d) { return d.title; })
+    .style("font-style", function(d) { return (x(tScale(d.tDuration)) < 1.0) ? "italic" : "normal"; });
 
 // Draw groups
 var group = chart.selectAll("g.group")
@@ -158,7 +167,7 @@ var group = chart.selectAll("g.group")
             });
 
 group.append("text")
-    .attr("x", function(d) { return x(tScale((d.tEnd - d.tStart) / 2)); })
+    .attr("x", function(d) { return x(tScale(d.tDuration / 2)); })
     .attr("y", function(d) { return y(memScale(d.memPeak)); })
     .attr("dy", "-25")
     .style("font-weight", "bold")
@@ -172,20 +181,20 @@ group.append("line")
     .attr("y2", height);
 
 group.append("line")
-    .attr("x1", function(d) { return x(tScale(d.tEnd - d.tStart)); })
-    .attr("x2", function(d) { return x(tScale(d.tEnd - d.tStart)); })
+    .attr("x1", function(d) { return x(tScale(d.tDuration)); })
+    .attr("x2", function(d) { return x(tScale(d.tDuration)); })
     .attr("y1", function(d) { return y(memScale(d.memPeak)); })
     .attr("y2", height);
 
 group.append("line")
     .attr("x1", "0")
-    .attr("x2", function(d) { return x(tScale(d.tEnd - d.tStart)); })
+    .attr("x2", function(d) { return x(tScale(d.tDuration)); })
     .attr("y1", function(d) { return y(memScale(d.memPeak)); })
     .attr("y2", function(d) { return y(memScale(d.memPeak)); });
 
 group.append("line")
-    .attr("x1", function(d) { return x(tScale((d.tEnd - d.tStart) / 2)); })
-    .attr("x2", function(d) { return x(tScale((d.tEnd - d.tStart) / 2)); })
+    .attr("x1", function(d) { return x(tScale(d.tDuration / 2)); })
+    .attr("x2", function(d) { return x(tScale(d.tDuration / 2)); })
     .attr("y1", function(d) { return y(memScale(d.memPeak)) - 20; })
     .attr("y2", function(d) { return y(memScale(d.memPeak)); });
 
@@ -249,28 +258,6 @@ chart.selectAll(".axis path.domain")
 chart.selectAll(".axis g.tick line")
     .style("stroke", "black");
 
-// Utilities
-var setMarker = function(xpos) {
-    var t = tScale.invert(x.invert(xpos));
-
-    for(var i = 0; i < data.length; i++) {
-        var d = data[i];
-        if(t >= d.tStart && t <= d.tEnd) {
-            var memY = y(memScale(d.memPeak));
-
-            marker.attr("transform", "translate(" + xpos + ",0)");
-            marker.select("circle").attr("cy", memY);
-
-            return {
-                data: d,
-                y:    memY
-            };
-        }
-    }
-
-    return null;
-};
-
 // Formatting functions
 var formatTime = function(ms) {
     return tScale(ms).toFixed(3) + " " + tUnit;
@@ -284,17 +271,50 @@ var formatPercent = function(pct) {
     return (pct * 100.0).toFixed(2) + " %";
 }
 
+// Utilities
+var showMarker = function() {
+    marker.style("display", null);
+}
+
+var hideMarker = function() {
+    marker.style("display", "none");
+}
+
+var setMarker = function(xpos) {
+    var t = tScale.invert(x.invert(xpos));
+
+    for(var i = 0; i < data.length; i++) {
+        var d = data[i];
+        if(t >= d.tStart && t <= d.tEnd) {
+            var memY = y(memScale(d.memPeak));
+
+            showMarker();
+            marker.attr("transform", "translate(" + xpos + ",0)");
+            marker.select("circle").attr("cy", memY);
+
+            return {
+                data: d,
+                y:    memY
+            };
+        }
+    }
+
+    hideMarker();
+    return null;
+};
+
 // Events
-var cachetStart = -1;
+var cachedStart = -1;
 chart.on("mousemove", function() {
     var m = d3.mouse(this);
-    var mx = m[0];
-    if(mx > 0) {
+
+    var mx = m[0], my = m[1];
+    if(mx >= 0 && mx <= width && my >= 0 && my <= height) {
         var marker = setMarker(mx);
         if(marker && marker.data) {
             var d = marker.data;
-            if(d.tStart != cachetStart) {
-                cachetStart = d.tStart;
+            if(d.tStart != cachedStart) {
+                cachedStart = d.tStart;
 
                 var dur = d.tEnd - d.tStart;
                 var durPct = dur / tDuration;
@@ -316,32 +336,58 @@ chart.on("mousemove", function() {
                     tr.append("td").text(function(key) { return d.stats[key]; });
                 }
             }
-        }
 
-        var mdoc = d3.mouse(document.documentElement);
-        d3.select("#tip")
-            .style("display", "inline")
-            .style("left", mdoc[0] + "px")
-            .style("top", mdoc[1] + "px");
+            var mdoc = d3.mouse(document.documentElement);
+            d3.select("#tip")
+                .style("display", "inline")
+                .style("left", mdoc[0] + "px")
+                .style("top", mdoc[1] + "px");
+        } else {
+            d3.select("#tip").style("display", "none");
+        }
+    }
+});
+
+chart.on("mouseout", function() {
+    var m = d3.mouse(this);
+
+    var mx = m[0], my = m[1];
+    if(mx < 0 || mx > width || my < 0 || my > height) {
+        hideMarker();
+        d3.select("#tip").style("display", "none");
     }
 });
 
 //Option events
 d3.select("#options button.svg").on("click", function() {
-    var marker = d3.select("#chart svg g.marker");
-
-    marker.style("display", "none");
-    var b64 = btoa(d3.select("#svg-container").html());
-    marker.style("display", null);
-
-    window.open("data:image/svg+xml;base64,"+b64);
+    window.open("data:image/svg+xml;base64," +
+        btoa(d3.select("#svg-container").html()));
 });
 
-d3.select("#options .zoom").on("input", function() {
-    var zoom = parseFloat(this.value);
-    d3.select("#options .zoom-label").text(zoom.toFixed(1));
+var updateZoomText = function(zoom) {
+    d3.select("#options .zoom-label").text(
+        zoom.toFixed(1)
+        + " (" + (svgWidth * zoom).toFixed(0)
+        + " x " + (svgHeight * zoom).toFixed(0)
+        + ")"
+    );
+}
+updateZoomText(1.0);
+
+var setZoom = function(zoom) {
     d3.select("#chart svg")
         .attr("width", svgWidth * zoom)
         .attr("height", svgHeight * zoom);
     d3.select("#chart g.zoom").attr("transform", "scale(" + zoom + ")");
+
+    updateZoomText(zoom);
+}
+
+d3.select("#options .zoom").on("input", function() {
+    setZoom(parseFloat(this.value));
+});
+
+d3.select("#options .zoom").on("dblclick", function() {
+    this.value = 1.0;
+    setZoom(1.0);
 });
