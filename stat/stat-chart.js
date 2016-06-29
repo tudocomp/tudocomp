@@ -17,7 +17,7 @@ var colors = [
 var groups = [];
 var data = [];
 
-var convert = function(x, memOff) {
+var convert = function(x, memOff, level) {
     var ds = {
         title:     x.title,
         tStart:    x.timeStart - stats.timeStart,
@@ -29,6 +29,7 @@ var convert = function(x, memOff) {
     };
 
     if(x != stats && x.sub.length > 0) {
+        ds.level = level;
         groups.push(ds);
     } else if(x.sub.length == 0) {
         ds.color = colors[data.length % colors.length];
@@ -36,14 +37,14 @@ var convert = function(x, memOff) {
     }
 
     for(var i = 0; i < x.sub.length; i++) {
-        convert(x.sub[i], memOff + x.memOff);
+        convert(x.sub[i], memOff + x.memOff, level + 1);
     }
 };
 
-convert(stats, stats.memOff);
+convert(stats, stats.memOff, -1);
 
 // Define dimensions
-var margin = {top: 50, right: 200, bottom: 50, left: 55};
+var margin = {top: 75, right: 200, bottom: 50, left: 55};
 var width = defaultWidth - margin.left - margin.right;
 var height = defaultHeight - margin.top - margin.bottom;
 
@@ -158,6 +159,12 @@ legend.append("text")
     .style("font-style", function(d) { return (x(tScale(d.tDuration)) < 1.0) ? "italic" : "normal"; });
 
 // Draw groups
+var maxLevel = d3.max(groups, function(g) { return g.level; });
+
+var groupLevelIndent = function(g) {
+    return (maxLevel - g.level) * 30;
+}
+
 var group = chart.selectAll("g.group")
             .data(groups).enter()
             .append("g")
@@ -168,8 +175,8 @@ var group = chart.selectAll("g.group")
 
 group.append("text")
     .attr("x", function(d) { return x(tScale(d.tDuration / 2)); })
-    .attr("y", function(d) { return y(memScale(d.memPeak)); })
-    .attr("dy", "-25")
+    .attr("y", function(d) { return y(memScale(d.memPeak)) - groupLevelIndent(d); })
+    .attr("dy", "-12")
     .style("font-weight", "bold")
     .style("text-anchor", "middle")
     .text(function(d) { return d.title; });
@@ -177,26 +184,26 @@ group.append("text")
 group.append("line")
     .attr("x1", "0")
     .attr("x2", "0")
-    .attr("y1", function(d) { return y(memScale(d.memPeak)); })
+    .attr("y1", function(d) { return y(memScale(d.memPeak)) - groupLevelIndent(d); })
     .attr("y2", height);
 
 group.append("line")
     .attr("x1", function(d) { return x(tScale(d.tDuration)); })
     .attr("x2", function(d) { return x(tScale(d.tDuration)); })
-    .attr("y1", function(d) { return y(memScale(d.memPeak)); })
+    .attr("y1", function(d) { return y(memScale(d.memPeak)) - groupLevelIndent(d); })
     .attr("y2", height);
 
 group.append("line")
     .attr("x1", "0")
     .attr("x2", function(d) { return x(tScale(d.tDuration)); })
-    .attr("y1", function(d) { return y(memScale(d.memPeak)); })
-    .attr("y2", function(d) { return y(memScale(d.memPeak)); });
+    .attr("y1", function(d) { return y(memScale(d.memPeak)) - groupLevelIndent(d); })
+    .attr("y2", function(d) { return y(memScale(d.memPeak)) - groupLevelIndent(d); });
 
 group.append("line")
     .attr("x1", function(d) { return x(tScale(d.tDuration / 2)); })
     .attr("x2", function(d) { return x(tScale(d.tDuration / 2)); })
-    .attr("y1", function(d) { return y(memScale(d.memPeak)) - 20; })
-    .attr("y2", function(d) { return y(memScale(d.memPeak)); });
+    .attr("y1", function(d) { return y(memScale(d.memPeak)) - groupLevelIndent(d) - 10; })
+    .attr("y2", function(d) { return y(memScale(d.memPeak)) - groupLevelIndent(d); });
 
 group.selectAll("line")
     .style("stroke", "rgba(0, 0, 0, 0.75)")
