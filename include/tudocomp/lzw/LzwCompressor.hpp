@@ -81,7 +81,7 @@ public:
             coder.encode_fact(i);
             factor_count++;
         }
-        env().algo().log_stat(RULESET_SIZE_LOG, factor_count);
+        env().log_stat(RULESET_SIZE_LOG, factor_count);
     }
 
     virtual void decompress(Input& in, Output& out) override final {

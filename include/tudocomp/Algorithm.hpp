@@ -21,9 +21,6 @@ public:
 
     /// Return a reference to the environment
     inline Env& env() { return m_env; }
-
-    inline void test_add_log() {}
-    inline void test_get_option() {}
 };
 
 template<class T>

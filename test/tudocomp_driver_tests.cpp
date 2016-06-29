@@ -161,17 +161,15 @@ TEST(Registry, dynamic_options) {
             ASSERT_EQ(t, "test");
             s << "check";
 
-            auto& options = env().algo().arguments();
+            ASSERT_TRUE(env().option("a").has_value());
+            ASSERT_TRUE(env().option("c").has_value());
+            ASSERT_TRUE(env().option("d").has_value());
+            ASSERT_FALSE(env().option("o").has_value());
 
-            ASSERT_TRUE(options["a"].has_value());
-            ASSERT_TRUE(options["c"].has_value());
-            ASSERT_TRUE(options["d"].has_value());
-            ASSERT_FALSE(options["o"].has_value());
+            ASSERT_EQ(env().option("c").value_as_string(), "qwerty");
+            ASSERT_EQ(env().option("d").value_as_string(), "asdf");
 
-            ASSERT_EQ(options["c"].value_as_string(), "qwerty");
-            ASSERT_EQ(options["d"].value_as_string(), "asdf");
-
-            auto& a = options["a"].value_as_algorithm();
+            auto& a = env().option("a").value_as_algorithm();
             auto& a_options = a.arguments();
             ASSERT_EQ(a.name(), "x");
             ASSERT_EQ(a_options["l"].value_as_string(), "zzz");

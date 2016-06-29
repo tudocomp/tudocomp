@@ -584,7 +584,7 @@ struct MyCompressor: public Compressor {
     inline virtual void compress(Input& input, Output& output) {
         A a(env().env_for_option("sub"));
         auto s = output.as_stream();
-        s << "ok! " << custom_data;
+        s << "ok! " << custom_data << " " << env().option("dyn").value_as_string();
     }
 };
 
@@ -600,7 +600,7 @@ TEST(Algorithm, create) {
 
     auto s = vec_as_lossy_string(vec);
 
-    ASSERT_EQ(s, "ok! test");
+    ASSERT_EQ(s, "ok! test foobar");
 
 
 }

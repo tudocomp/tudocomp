@@ -104,11 +104,11 @@ public:
             coder.encode_fact(Factor { fact, b });
             factor_count++;
         }
-        env().algo().log_stat(RULESET_SIZE_LOG, factor_count);
-        env().algo().log_stat("count_dictionary_reset",
-                              m_dictionary_resets);
-        env().algo().log_stat("max_factor_counter",
-                              m_dict_counter_at_last_reset);
+        env().log_stat(RULESET_SIZE_LOG, factor_count);
+        env().log_stat("count_dictionary_reset",
+                       m_dictionary_resets);
+        env().log_stat("max_factor_counter",
+                       m_dict_counter_at_last_reset);
     }
 
     virtual void decompress(Input& in, Output& out) override final {

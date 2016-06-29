@@ -43,14 +43,6 @@ public:
     inline StatMap& statistics() {
         return m_stats;
     }
-    /// Log a statistic.
-    ///
-    /// Statistics will be gathered at a central location, and
-    /// can be used to judge the behavior and performance of an
-    /// implementation.
-    ///
-    /// \param name The name of the statistic.
-    /// \param value The value of the statistic as a string.
     template<class T>
     inline void log_stat(const std::string& name, const T value) {
         std::stringstream s;
@@ -142,28 +134,49 @@ class Env {
 
     inline Env() = delete;
 
+    inline AlgorithmValue& algo() {
+        return *m_node;
+    }
+
 public:
     inline Env(std::shared_ptr<EnvRoot> root, AlgorithmValue& node):
         m_root(root), m_node(&node) {}
+
+    inline std::shared_ptr<EnvRoot>& root() {
+        return m_root;
+    }
 
     /// Log an error and end the current operation
     inline void error(const std::string& msg) {
         throw std::runtime_error(msg);
     }
 
-    inline AlgorithmValue& algo() {
-        return *m_node;
-    }
-
+    /// Create the environment for a sub algorithm
+    /// option.
     inline Env env_for_option(const std::string& option) {
+        CHECK(algo().arguments().count(option) > 0);
         auto& a = algo().arguments()[option].value_as_algorithm();
 
         return Env(m_root, a);
     }
 
-    inline std::shared_ptr<EnvRoot>& root() {
-        return m_root;
+    /// Get an option of this algorithm
+    inline OptionValue& option(const std::string& option) {
+        return algo().arguments()[option];
     }
+
+    /// Log a statistic.
+    ///
+    /// Statistics will be gathered at a central location, and
+    /// can be used to judge the behavior and performance of an
+    /// implementation.
+    ///
+    /// \param name The name of the statistic.
+    /// \param value The value of the statistic as a string.
+    template<class T>
+    inline void log_stat(const std::string& name, const T value) {
+        algo().log_stat<T>(name, value);
+    };
 };
 
 }
