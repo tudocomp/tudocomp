@@ -18,11 +18,36 @@ body {
     background-color: #EEE;
 }
 
-#container {
+header, section#main {
     padding: 0.5em;
 }
 
+footer {
+    padding: 0.5em;
+    text-align: right;
+}
+
+#dropzone {
+    padding: 3em;
+    text-align: center;
+
+    border: 2px dashed black;
+    border-radius: 0.5em;
+
+    background-color: white;
+}
+
+#dropzone p {
+    margin: 0;
+}
+
+#dropzone p + p {
+    margin-top: 2em;
+}
+
 #chart {
+    display: none;
+
     background-color: white;
 
     border: 2px solid black;
@@ -37,13 +62,6 @@ body {
 #chart svg {
 }
 
-#options h2 {
-    display: inline-block;
-
-    font-size: 100%;
-    margin: 0;
-}
-
 #options {
     padding: 0.5em;
     border-radius: 0.5em;
@@ -54,6 +72,15 @@ body {
     color: white;
 
     margin-bottom: 0.5em;
+
+    display: none;
+}
+
+#options h2 {
+    display: inline-block;
+
+    font-size: 100%;
+    margin: 0;
 }
 
 #options input[type=range] {
