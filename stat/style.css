@@ -34,6 +34,9 @@ body {
     text-align: center;
 }
 
+#chart svg {
+}
+
 #options h2 {
     display: inline-block;
 
@@ -54,6 +57,10 @@ body {
 }
 
 #options input[type=range] {
+    vertical-align: middle;
+}
+
+#options input[type=checkbox] {
     vertical-align: middle;
 }
 
