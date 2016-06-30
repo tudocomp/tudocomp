@@ -21,31 +21,37 @@ template<typename S, typename C>
 class LZSSESACompressor : public LZSSCompressor<C> {
 
 public:
+    inline static Meta meta() {
+        Meta m("compressor", "esacomp");
+        m.option("coder").templated<C>();
+        return m;
+    }
+
     /// Default constructor (not supported).
     inline LZSSESACompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZSSESACompressor(Env& env) : LZSSCompressor<C>(env) {
-    }
+    inline LZSSESACompressor(Env&& env) :
+        LZSSCompressor<C>(std::move(env)) {}
 
     /// \copydoc
     inline virtual bool pre_factorize(Input& input) override {
-        auto env = Compressor::m_env;
+        auto env = this->env();
         auto in = input.as_view();
 
         size_t len = in.size();
-        const uint8_t* in_ptr = (const uint8_t*)(*in).data();
+        const uint8_t* in_ptr = (const uint8_t*)in.data();
         sdslex::int_vector_wrapper wrapper(in_ptr, len);
 
         //Construct SA
-        env->stat_begin("Construct SA");
+        env.stat_begin("Construct SA");
         sdsl::csa_bitcompressed<> sa;
         sdsl::construct_im(sa, wrapper.int_vector);
-        env->stat_end();
+        env.stat_end();
 
         //Construct ISA and LCP
         //TODO SDSL ???
-        env->stat_begin("Construct ISA and LCP");
+        env.stat_begin("Construct ISA and LCP");
 
         sdsl::int_vector<> isa(sa.size(), 0, bitsFor(sa.size()));
         sdsl::int_vector<> lcp(sa.size(), 0, bitsFor(sa.size()));
@@ -59,7 +65,7 @@ public:
             }
         }
 
-        env->stat_end();
+        env.stat_end();
 
         //Debug output
         /*
@@ -74,22 +80,22 @@ public:
         size_t fact_min = 3; //factor threshold
         std::vector<LZSSFactor>& factors = LZSSCompressor<C>::m_factors;
 
-        env->stat_begin("Factorize using strategy");
+        env.stat_begin("Factorize using strategy");
 
-        S interval_selector(*env);
+        S interval_selector(env); //TODO: use subalgo system
         interval_selector.factorize(sa, isa, lcp, fact_min, factors);
 
         {
-            Stat& stat = env->stat_current();
+            Stat& stat = env.stat_current();
             stat.add_stat("threshold", fact_min);
             stat.add_stat("factors", factors.size());
         }
-        env->stat_end();
+        env.stat_end();
 
         //sort
-        env->stat_begin("Sort factors");
+        env.stat_begin("Sort factors");
         std::sort(factors.begin(), factors.end());
-        env->stat_end();
+        env.stat_end();
 
         return true;
     }

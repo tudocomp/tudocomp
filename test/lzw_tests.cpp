@@ -71,12 +71,11 @@ TEST(Lzw, compress) {
 TEST(Lzw, LzwDebugCoder) {
     using Coder = tudocomp::lzw::LzwDebugCoder;
 
-    Env env;
     std::vector<uint8_t> encoded_buffer;
     Output encoded_out = Output::from_memory(encoded_buffer);
 
     {
-        Coder coder(env, encoded_out);
+        auto coder = create_algo<Coder, Output&>("", encoded_out);
 
         coder.encode_fact('x');
         coder.encode_fact('y');
@@ -107,12 +106,11 @@ TEST(Lzw, LzwDebugCoder) {
 TEST(Lzw, LzwBitCoder) {
     using Coder = tudocomp::lzw::LzwBitCoder;
 
-    Env env;
     std::vector<uint8_t> encoded_buffer;
     Output encoded_out = Output::from_memory(encoded_buffer);
 
     {
-        Coder coder(env, encoded_out);
+        auto coder = create_algo<Coder, Output&>("", encoded_out);
 
         coder.encode_fact('x');
         coder.encode_fact('y');
@@ -155,12 +153,12 @@ TEST(Lzw, LzwCompressor) {
     using Coder = tudocomp::lzw::LzwDebugCoder;
     using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
 
-    Env env;
     string_ref input_str = "xyxaybxa!xa!?";
 
     std::vector<uint8_t> encoded_buffer;
     std::vector<uint8_t> decoded_buffer;
-    Compressor compressor(env);
+
+    auto compressor = create_algo<Compressor>();
 
     {
         auto input = Input::from_memory(input_str);

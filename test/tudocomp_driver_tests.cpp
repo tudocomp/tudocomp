@@ -8,7 +8,7 @@
 
 #include "test_util.h"
 #include "tudocomp_driver/registry.h"
-#include "tudocomp_driver/AlgorithmStringParser2.hpp"
+#include "tudocomp/AlgorithmStringParser.hpp"
 
 #include "tudocomp_driver_util.h"
 
@@ -126,18 +126,71 @@ TEST(Registry, decl) {
 
 TEST(Registry, lookup) {
     using namespace tudocomp_driver;
-    Registry r;
-    register_algorithms(r);
-    Env env;
-    auto c = select_algo_or_exit2(r, env, "lz78(dict_size = \"100\")");
+    Registry& r = REGISTRY;
+    auto c = r.select_algorithm_or_exit("lz78(dict_size = \"100\")");
+}
+
+TEST(Registry, dynamic_options) {
+    using namespace tudocomp_driver;
+
+    Registry& r = REGISTRY;
+
+    struct MySub {
+        inline static Meta meta() {
+            Meta y("b", "x");
+            y.option("l").dynamic("zzz");
+            return y;
+        }
+    };
+    struct MyCompressor: public Compressor {
+        inline static Meta meta() {
+            Meta y("compressor", "foo");
+            y.option("a").templated<MySub>();
+            y.option("c").dynamic();
+            y.option("d").dynamic("asdf");
+            return y;
+        }
+
+        using Compressor::Compressor;
+        inline virtual void decompress(Input& input, Output& output) {}
+
+        inline virtual void compress(Input& input, Output& output) {
+            auto s = output.as_stream();
+            auto t = input.as_view();
+
+            ASSERT_EQ(t, "test");
+            s << "check";
+
+            ASSERT_TRUE(env().option("a").has_value());
+            ASSERT_TRUE(env().option("c").has_value());
+            ASSERT_TRUE(env().option("d").has_value());
+            ASSERT_FALSE(env().option("o").has_value());
+
+            ASSERT_EQ(env().option("c").value_as_string(), "qwerty");
+            ASSERT_EQ(env().option("d").value_as_string(), "asdf");
+
+            auto& a = env().option("a").value_as_algorithm();
+            auto& a_options = a.arguments();
+            ASSERT_EQ(a.name(), "x");
+            ASSERT_EQ(a_options["l"].value_as_string(), "zzz");
+        }
+    };
+
+    r.compressor<MyCompressor>();
+
+    auto c = r.select_algorithm_or_exit("foo(x, \"qwerty\")");
+    std::vector<uint8_t> data;
+    Output out(data);
+    Input inp("test");
+    c->compress(inp, out);
+
+    ASSERT_EQ(View(data), "check");
 }
 
 TEST(TudocompDriver, all_compressors_defined) {
     using namespace tudocomp_driver;
 
-    Registry r;
-    register_algorithms(r);
-    Env env;
+    Registry& r = REGISTRY;
     auto s = r.check_for_undefined_compressors();
     bool has_undefined_compressors = s.size() > 0;
     if (has_undefined_compressors) {

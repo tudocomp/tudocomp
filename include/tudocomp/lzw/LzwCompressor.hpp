@@ -4,7 +4,7 @@
 #include <tudocomp/Compressor.hpp>
 
 #include <tudocomp/lzw/Factor.hpp>
-
+#include <tudocomp/lzw/LzwBitCoder.hpp>
 #include <tudocomp/lz78/dictionary.hpp>
 
 namespace tudocomp {
@@ -35,12 +35,17 @@ private:
 public:
     using Compressor::Compressor;
 
+    inline static Meta meta() {
+        Meta m("compressor", "lzw", "Lempel-Ziv-Welch");
+        m.option("coder").templated<C, LzwBitCoder>();
+        return m;
+    }
+
     virtual void compress(Input& input, Output& out) override {
-        auto guard = input.as_stream();
-        auto& is = *guard;
+        auto is = input.as_stream();
 
         EncoderDictionary ed(EncoderDictionary::Lzw, dms, reserve_dms);
-        C coder(*m_env, out);
+        C coder(env().env_for_option("coder"), out);
         uint64_t factor_count = 0;
 
         CodeType i {dms}; // Index
@@ -76,7 +81,8 @@ public:
             coder.encode_fact(i);
             factor_count++;
         }
-        //TODO update m_env->log_stat(RULESET_SIZE_LOG, factor_count);
+
+        env().log_stat(RULESET_SIZE_LOG, factor_count); //TODO update to new stat sytem
     }
 
     virtual void decompress(Input& in, Output& out) override final {

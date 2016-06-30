@@ -16,8 +16,6 @@
 namespace tudocomp {
 namespace lzss {
 
-const std::string WINDOW_OPTION = "lzss.window";
-
 /// Computes the LZ77 factorization of the input by moving a sliding window
 /// over it in which redundant phrases will be looked for.
 template<typename C>
@@ -27,12 +25,21 @@ private:
     size_t m_window;
 
 public:
+    inline static Meta meta() {
+        Meta m("compressor", "lz77ss", "Lempel-Ziv-Storer-Szymanski");
+        m.option("coder").templated<C>();
+        m.option("window").dynamic("16");
+        return m;
+    }
+
     /// Default constructor (not supported).
     inline LZ77SSSlidingWindowCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZ77SSSlidingWindowCompressor(Env& env) : LZSSCompressor<C>(env) {
-        m_window = env.option_as<size_t>(WINDOW_OPTION, 16);
+    inline LZ77SSSlidingWindowCompressor(Env&& e):
+        LZSSCompressor<C>(std::move(e))
+    {
+        m_window = this->env().option("window").value_as_integer();
     }
 
 protected:
@@ -48,8 +55,7 @@ protected:
 
     /// \copydoc
     inline virtual void factorize(Input& input) override {
-        auto in_guard = input.as_stream();
-        std::istream& ins = *in_guard;
+        auto ins = input.as_stream();
 
         std::vector<uint8_t> buf;
 
@@ -90,10 +96,10 @@ protected:
             size_t advance;
 
             if(f.num > 0) {
-                LZSSCompressor<C>::handle_fact(f);
+                this->handle_fact(f);
                 advance = f.num;
             } else {
-                LZSSCompressor<C>::handle_sym(buf[ahead]);
+                this->handle_sym(buf[ahead]);
                 advance = 1;
             }
 

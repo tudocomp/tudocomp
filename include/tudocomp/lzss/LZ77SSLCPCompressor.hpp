@@ -23,12 +23,18 @@ template<typename C>
 class LZ77SSLCPCompressor : public LZSSCompressor<C> {
 
 public:
+    inline static Meta meta() {
+        Meta m("compressor", "lz77ss_lcp", "LZ77 Factorization using LCP");
+        m.option("coder").templated<C>();
+        return m;
+    }
+
     /// Default constructor (not supported).
     inline LZ77SSLCPCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZ77SSLCPCompressor(Env& env) : LZSSCompressor<C>(env) {
-    }
+    inline LZ77SSLCPCompressor(Env&& env):
+        LZSSCompressor<C>(std::move(env)) {}
 
 protected:
     /// \copydoc
@@ -43,22 +49,22 @@ protected:
 
     /// \copydoc
     inline virtual void factorize(Input& input) override {
-        auto env = Compressor::m_env;
+        auto env = this->env();
         auto in = input.as_view();
 
         size_t len = in.size();
-        const uint8_t* in_ptr = (const uint8_t*)(*in).data();
+        const uint8_t* in_ptr = (const uint8_t*) in.data();
         sdslex::int_vector_wrapper wrapper(in_ptr, len);
 
         //Construct SA
-        env->stat_begin("Construct SA");
+        env.stat_begin("Construct SA");
         sdsl::csa_bitcompressed<> sa;
         sdsl::construct_im(sa, wrapper.int_vector);
-        env->stat_end();
+        env.stat_end();
 
         //Construct ISA and LCP
         //TODO SDSL ???
-        env->stat_begin("Construct ISA and LCP");
+        env.stat_begin("Construct ISA and LCP");
         sdsl::int_vector<> isa(sa.size(), 0, bitsFor(sa.size()));
         sdsl::int_vector<> lcp(sa.size(), 0, bitsFor(sa.size()));
 
@@ -70,10 +76,10 @@ protected:
                 while(in_ptr[j++] == in_ptr[k++]) ++lcp[i];
             }
         }
-        env->stat_end();
+        env.stat_end();
 
         //Factorize
-        env->stat_begin("Factorize");
+        env.stat_begin("Factorize");
         size_t fact_min = 3; //factor threshold
 
         size_t num_factors = 0;
@@ -113,20 +119,20 @@ protected:
             size_t p = std::max(p1, p2);
             if (p >= fact_min) {
                 num_factors++;
-                LZSSCompressor<C>::handle_fact(LZSSFactor(i, sa[p == p1 ? h1 : h2], p));
+                this->handle_fact(LZSSFactor(i, sa[p == p1 ? h1 : h2], p));
                 i += p; //advance
             } else {
-                LZSSCompressor<C>::handle_sym(in_ptr[i]);
+                this->handle_sym(in_ptr[i]);
                 ++i; //advance
             }
         }
 
         {
-            Stat& stat = env->stat_current();
+            Stat& stat = env.stat_current();
             stat.add_stat("threshold", fact_min);
             stat.add_stat("factors", num_factors);
         }
-        env->stat_end();
+        env.stat_end();
     }
 };
 

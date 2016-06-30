@@ -40,8 +40,6 @@ template<typename C>
 void performTest() {
     DLOG(INFO) << "Input: " << input_str;
 
-    Env env;
-
     //compress
     std::string comp_result;
     {
@@ -50,7 +48,7 @@ void performTest() {
         std::stringstream stm;
         Output output = Output::from_stream(stm);
 
-        C compressor(env);
+        auto compressor = create_algo<C>();
         compressor.compress(input, output);
 
         comp_result = stm.str();
@@ -67,7 +65,7 @@ void performTest() {
         std::stringstream stm;
         Output output = Output::from_stream(stm);
 
-        C compressor(env);
+        auto compressor = create_algo<C>();
         compressor.decompress(input, output);
 
         decomp_result = stm.str();

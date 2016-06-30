@@ -22,45 +22,45 @@
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/Algorithm.hpp>
 #include <tudocomp/util.h>
-#include <tudocomp_driver/AlgorithmStringParser2.hpp>
+#include <tudocomp/AlgorithmStringParser.hpp>
 
 namespace tudocomp_driver {
 
 using namespace tudocomp;
 
 class Registry;
-
-struct AlgorithmTypeBuilder {
-    View m_type;
-    Registry& m_registry;
-
-    inline void regist(View algorithm, View doc = View("TODO"));
-};
+inline std::string generate_doc_string(Registry& r);
+extern Registry REGISTRY;
+void register_algorithms(Registry& registry);
 
 class Registry {
-public:
     eval::AlgorithmTypes m_algorithms;
     std::map<pattern::Algorithm, CompressorConstructor> m_compressors;
 
+    friend class AlgorithmTypeBuilder;
+    friend inline std::string generate_doc_string(Registry& r);
+    friend class GlobalRegistry;
+
+    inline Registry() {}
+
 public:
+    template<class T>
+    void compressor() {
+        auto meta = T::meta();
 
-    inline AlgorithmTypeBuilder type(View type) {
-        return AlgorithmTypeBuilder {
-            type,
-            *this
-        };
-    }
+        ast::Value s = std::move(meta).build_static_args_ast_value();
 
-    void compressor(View id, CompressorConstructor f) {
-        ast::Parser p { id };
-        ast::Value s = p.parse_value();
+        gather_types(m_algorithms, std::move(meta));
 
         auto static_s
             = eval::pattern_eval(std::move(s), "compressor", m_algorithms);
 
         CHECK(m_compressors.count(static_s) == 0); // Don't register twice...
-        m_compressors[std::move(static_s)] = f;
+        m_compressors[std::move(static_s)] = [](Env&& env) {
+            return std::make_unique<T>(std::move(env));
+        };
     }
 
     // Create the list of all possible static-argument-type combinations
@@ -135,55 +135,40 @@ public:
         }
         return r;
     }
-};
 
-inline void AlgorithmTypeBuilder::regist(View algorithm, View doc) {
-    auto& m_algorithms = m_registry.m_algorithms;
-    auto& id = m_type;
+    inline std::unique_ptr<Compressor> select_algorithm_or_exit(string_ref text) {
+        ast::Parser p { text };
+        auto parsed_algo = p.parse_value();
+        auto evald_algo = eval::cl_eval(std::move(parsed_algo),
+                                        "compressor",
+                                        m_algorithms);
 
-    ast::Parser p { algorithm };
+        auto& static_only_evald_algo = evald_algo.static_selection;
+        auto& options = evald_algo.options;
 
-    ast::Value v = p.parse_value();
-    decl::Algorithm a = decl::from_ast(std::move(v), doc);
+        if (m_compressors.count(static_only_evald_algo) > 0) {
+            auto env = std::make_shared<EnvRoot>(
+                std::move(options.value_as_algorithm()));
 
-    m_algorithms[id].push_back(std::move(a));
-}
-
-
-void register_algorithms(Registry& registry);
-
-inline std::unique_ptr<Compressor> select_algo_or_exit2(Registry& reg,
-                                                        Env& env,
-                                                        View text) {
-
-
-    ast::Parser p { text };
-    auto parsed_algo = p.parse_value();
-    auto evald_algo = eval::cl_eval(std::move(parsed_algo),
-                                    "compressor",
-                                    reg.m_algorithms);
-
-    auto& static_only_evald_algo = evald_algo.static_selection;
-
-    // TODO: Extract static_only spec
-    // TODO: More efficient way, eg by using stringified-representation
-    //       created directly
-
-    if (reg.m_compressors.count(static_only_evald_algo) > 0) {
-        // TODO: Compressor specific arguments
-        return reg.m_compressors[static_only_evald_algo](env);
-    } else {
-        std::cout << static_only_evald_algo << "\n";
-        for (auto pair : reg.m_compressors) {
-            std::cout << pair.first << " = ... \n";
+            auto& constructor = m_compressors[static_only_evald_algo];
+            return constructor(Env(env, env->algo_value()));
+        } else {
+            throw std::runtime_error("No implementation found for algorithm "
+            + static_only_evald_algo.to_string()
+            );
         }
-
-        throw std::runtime_error("No implementation found for algorithm "
-        + static_only_evald_algo.to_string()
-        );
     }
 
-}
+    inline static Registry with_all_from(std::function<void(Registry&)> f) {
+        Registry r;
+        f(r);
+        return std::move(r);
+    }
+
+    inline static Registry with_all_registered() {
+        return with_all_from(register_algorithms);
+    }
+};
 
 inline std::string generate_doc_string(Registry& r) {
     auto print = [](std::vector<decl::Algorithm>& x, size_t iden) {
@@ -230,6 +215,7 @@ inline std::string generate_doc_string(Registry& r) {
 
     return ss.str();
 }
+
 
 }
 

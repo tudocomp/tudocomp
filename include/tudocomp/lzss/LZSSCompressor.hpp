@@ -34,13 +34,10 @@ public:
     /// Constructor.
     ///
     /// \param env The environment.
-    inline LZSSCompressor(Env& env) : Compressor(env) {
-    }
+    using Compressor::Compressor;
 
     /// \copydoc
     virtual void compress(Input& main_input, Output& output) override final {
-
-        auto env = Compressor::m_env;
 
         //init factorization (possibly factorize offline to buffer)
         Input input_copy_1(main_input);
@@ -50,7 +47,7 @@ public:
         Input input_copy_2(main_input);
         Input input_copy_3(main_input);
         auto out_guard = output.as_stream();
-        m_coder = new C(*m_env, input_copy_2, out_guard, coder_opts(input_copy_3));
+        m_coder = new C(env(), input_copy_2, out_guard, coder_opts(input_copy_3));
 
         //pass factor buffer (empty or filled)
         m_coder->set_buffer(m_factors);
@@ -69,12 +66,11 @@ public:
 
         //encode
         if(factorized || m_coder->uses_buffer()) {
-            env->stat_begin("Encode");
+            env().stat_begin("Encode");
 
             size_t len = main_input.size();
 
-            auto in_guard = main_input.as_stream();
-            std::istream& in_stream = *in_guard;
+            auto in_stream = main_input.as_stream();
 
             //init (offline)
             m_coder->encode_init();
@@ -106,7 +102,7 @@ public:
 
             m_coder->encode_sym_flush();
 
-            env->stat_end();
+            env().stat_end();
         }
 
         //clean up
@@ -116,7 +112,7 @@ public:
 
     /// \copydoc
     virtual void decompress(Input& input, Output& output) override {
-        C::decode(*m_env, input, output);
+        C::decode(env(), input, output);
     }
 
 protected:

@@ -35,6 +35,14 @@ private:
     size_t m_num_bits;
 
 public:
+    inline static Meta meta() {
+        Meta m("lzss_coder", "online",
+            "Direct encoding of factors"
+        );
+        m.option("alphabet_coder").templated<A>();
+        return m;
+    }
+
     /// Constructor.
     ///
     /// \param env The environment.
@@ -43,7 +51,7 @@ public:
     /// \param opts Coder options determined by the compressor.
     inline OnlineLZSSCoder(Env& env, Input& in, io::OutputStream& out, LZSSCoderOpts opts)  {
 
-        m_out = std::shared_ptr<BitOStream>(new BitOStream(*out));
+        m_out = std::shared_ptr<BitOStream>(new BitOStream(out));
         m_len = in.size();
         m_alphabet_coder = std::shared_ptr<A>(new A(env, in, *m_out));
 
@@ -121,7 +129,7 @@ inline void OnlineLZSSCoder<A>::decode(Env& env, Input& input, Output& out) {
 
     bool done; //GRRR
     auto in_guard = input.as_stream();
-    BitIStream in(*in_guard, done);
+    BitIStream in(in_guard, done);
 
     //Init
     size_t len = in.read_compressed_int();
@@ -153,7 +161,7 @@ inline void OnlineLZSSCoder<A>::decode(Env& env, Input& input, Output& out) {
 
     //Write
     auto out_guard = out.as_stream();
-    buffer.write_to(*out_guard);
+    buffer.write_to(out_guard);
 }
 
 }}

@@ -14,17 +14,12 @@ using namespace tudocomp_driver;
 const std::vector<std::string> additional_tests = {};
 
 TEST(TudocompDriver, roundtrip_matrix) {
-
-    Registry r;
-    register_algorithms(r);
-    Env env;
-
     std::cout << "[ Generating list of test cases ]\n";
 
     // Use cross product of all static arguments as base list to check
     std::vector<std::string> test_cases;
 
-    for (const auto& x : r.all_algorithms_with_static("compressor")) {
+    for (const auto& x : REGISTRY.all_algorithms_with_static("compressor")) {
         test_cases.push_back(x.to_string(true));
     }
     for (const auto& x : additional_tests) {
