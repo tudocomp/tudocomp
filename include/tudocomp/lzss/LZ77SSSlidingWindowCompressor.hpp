@@ -96,10 +96,10 @@ protected:
             size_t advance;
 
             if(f.num > 0) {
-                LZSSCompressor<C>::handle_fact(f);
+                this->handle_fact(f);
                 advance = f.num;
             } else {
-                LZSSCompressor<C>::handle_sym(buf[ahead]);
+                this->handle_sym(buf[ahead]);
                 advance = 1;
             }
 

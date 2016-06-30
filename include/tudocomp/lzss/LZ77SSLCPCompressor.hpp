@@ -114,10 +114,10 @@ protected:
             //select maximum
             size_t p = std::max(p1, p2);
             if (p >= fact_min) {
-                LZSSCompressor<C>::handle_fact(LZSSFactor(i, sa[p == p1 ? h1 : h2], p));
+                this->handle_fact(LZSSFactor(i, sa[p == p1 ? h1 : h2], p));
                 i += p; //advance
             } else {
-                LZSSCompressor<C>::handle_sym(in_ptr[i]);
+                this->handle_sym(in_ptr[i]);
                 ++i; //advance
             }
         }
