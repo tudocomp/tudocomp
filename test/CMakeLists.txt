@@ -22,3 +22,5 @@ run_test(tudocomp_driver_tests
 run_test(tudocomp_driver_algorithm_matrix_tests
     DEPS     tudocomp_algorithms
     BIN_DEPS tudocomp_driver)
+
+run_test(example_compressor_tests DEPS tudocomp)
