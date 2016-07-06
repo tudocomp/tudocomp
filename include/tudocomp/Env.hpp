@@ -126,20 +126,18 @@ private:
     Stat m_stat_root;
 
 public:
-    inline EnvRoot() : m_stat_root(Stat("Root")) {
+    inline EnvRoot() {
+        stat_begin("root");
     }
 
     inline EnvRoot(AlgorithmValue&& algo_value):
-        m_algo_value(std::make_unique<AlgorithmValue>(std::move(algo_value))),
-        m_stat_root(Stat("Root")) {
+        m_algo_value(std::make_unique<AlgorithmValue>(std::move(algo_value)))  {
+
+        stat_begin("root");
     }
 
     inline AlgorithmValue& algo_value() {
         return *m_algo_value;
-    }
-
-    inline Stat& stat_root() {
-        return m_stat_root;
     }
 
     /// Returns a reference to the current statistics phase.
@@ -171,6 +169,15 @@ public:
         } else {
             m_stat_root = stat;
         }
+    }
+
+    /// Ends all current statistics phases and returns the root.
+    inline Stat& stat_finish() {
+        while(!m_stat_stack.empty()) {
+            stat_end();
+        }
+
+        return m_stat_root;
     }
 };
 
@@ -215,23 +222,26 @@ public:
         return algo().arguments()[option];
     }
 
-    /// Returns a reference to the current statistics phase.
-    /// This reference is valid only until the phase is ended.
-    inline Stat& stat_current() {
-        //delegate
-        return m_root->stat_current();
-    }
-
     /// Begins a new statistics phase
     inline void stat_begin(const std::string& name) {
+        DLOG(INFO) << "begin \"" << name << "\"";
+
         //delegate
         m_root->stat_begin(name);
     }
 
     /// Ends the current statistics phase.
     inline void stat_end() {
+        DLOG(INFO) << "end \"" << m_root->stat_current().title() << "\"";
+
         //delegate
         m_root->stat_end();
+    }
+
+    /// Ends all current statistics phases and returns the root.
+    inline Stat& stat_finish() {
+        //delegate
+        return m_root->stat_finish();
     }
 
     /// Log a statistic.
@@ -244,6 +254,7 @@ public:
     /// \param value The value of the statistic as a string.
     template<class T>
     inline void log_stat(const std::string& name, const T value) {
+        m_root->stat_current().add_stat(name, value);
         algo().log_stat<T>(name, value);
     };
 };

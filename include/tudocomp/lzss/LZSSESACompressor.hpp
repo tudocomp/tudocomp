@@ -85,11 +85,8 @@ public:
         S interval_selector(env); //TODO: use subalgo system
         interval_selector.factorize(sa, isa, lcp, fact_min, factors);
 
-        {
-            Stat& stat = env.stat_current();
-            stat.add_stat("threshold", fact_min);
-            stat.add_stat("factors", factors.size());
-        }
+        env.log_stat("threshold", fact_min);
+        env.log_stat("factors", factors.size());
         env.stat_end();
 
         //sort

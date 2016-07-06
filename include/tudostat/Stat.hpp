@@ -43,6 +43,10 @@ public:
     inline Stat(const std::string& title) : m_title(title), m_phase(NULL_PHASE) {
     }
 
+    inline const std::string& title() const {
+        return m_title;
+    }
+
     inline void set_title(const std::string& title) {
         m_title = title;
     }

@@ -57,7 +57,7 @@ public:
             m_char2comp[c] = i;
         }
 
-        env.stat_current().add_stat("alphabetSize", m_sigma);
+        env.log_stat("alphabetSize", m_sigma);
         env.stat_end();
     }
 

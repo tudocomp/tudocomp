@@ -127,11 +127,8 @@ protected:
             }
         }
 
-        {
-            Stat& stat = env.stat_current();
-            stat.add_stat("threshold", fact_min);
-            stat.add_stat("factors", num_factors);
-        }
+        env.log_stat("threshold", fact_min);
+        env.log_stat("factors", num_factors);
         env.stat_end();
     }
 };

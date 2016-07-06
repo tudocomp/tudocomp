@@ -34,7 +34,7 @@ class ESACompMaxLCP {
 
             m_env->stat_begin("Construct MaxLCPSuffixList");
             MaxLCPSuffixList<sdsl::csa_bitcompressed<>, sdsl::int_vector<>> list(sa, lcp, fact_min);
-            m_env->stat_current().add_stat("entries", list.size());
+            m_env->log_stat("entries", list.size());
             m_env->stat_end();
 
             //Factorize

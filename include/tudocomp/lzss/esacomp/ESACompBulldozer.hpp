@@ -56,7 +56,7 @@ public:
             }
         }
 
-        m_env->stat_current().add_stat("numIntervals", intervals.size());
+        m_env->log_stat("numIntervals", intervals.size());
         m_env->stat_end();
 
         //sort
