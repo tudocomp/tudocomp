@@ -336,6 +336,7 @@ var drawChart = function(raw) {
 
     // Post
     d3.select("#dropzone").style("display", "none");
+    d3.select("#sample").style("display", "none");
     d3.select("#chart").style("display", "block");
     d3.select("#options").style("display", "block");
 
@@ -448,20 +449,6 @@ var chartMouseOut = function() {
 };
 
 //Option events
-d3.select("#options button.svg").on("click", function() {
-    window.open("data:image/svg+xml;base64," +
-        btoa(d3.select("#svg-container").html()));
-});
-
-var updateZoomText = function(zoom) {
-    d3.select("#options .zoom-label").text(
-        zoom.toFixed(1)
-        + " (" + (app.svgWidth * zoom).toFixed(0)
-        + " x " + (app.svgHeight * zoom).toFixed(0)
-        + ")"
-    );
-}
-
 var setZoom = function(zoom) {
     d3.select("#chart svg")
         .attr("width", app.svgWidth * zoom)
@@ -471,83 +458,7 @@ var setZoom = function(zoom) {
     updateZoomText(zoom);
 }
 
-d3.select("#options .zoom")
-    .on("input", function() {
-        setZoom(parseFloat(this.value));
-    })
-    .on("dblclick", function() {
-        this.value = 1.0;
-        setZoom(1.0);
-    });
-
-d3.select("#options .groups").on("change", function() {
-    app.options.drawGroups = this.checked;
-    redrawChart();
-});
-
-d3.select("#options .offsets").on("change", function() {
-    app.options.drawOffsets = this.checked;
-    redrawChart();
-});
-
-d3.select("#options .legend").on("change", function() {
-    app.options.drawLegend = this.checked;
-    redrawChart();
-});
-
 var loadJSON = function(json) {
     drawChart(JSON.parse(json));
 }
 
-var urlPattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
-    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.?)+[a-z]{2,}|'+ // domain name
-    '((\\d{1,3}\\.){3}\\d{1,3}))'+ // OR ip (v4) address
-    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+ // port and path
-    '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
-    '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
-
-d3.select("#dropzone")
-    .on("dragover", function() {
-        event.stopPropagation();
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'copy';
-    })
-    .on("drop", function() {
-        event.stopPropagation();
-        event.preventDefault();
-
-        if(event.dataTransfer.files.length > 0) {
-            var file = event.dataTransfer.files[0];
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var x = e.target.result.indexOf("base64,");
-                if(x >= 0) {
-                    loadJSON(atob(e.target.result.substr(x + 7)));
-                }
-            };
-
-            reader.readAsDataURL(file);
-        } else if(event.dataTransfer.items.length > 0) {
-            var item = event.dataTransfer.items[0];
-            if(item.kind == "string") {
-                item.getAsString(function(url) {
-                    if(urlPattern.test(url)) {
-                        //get using AJAX
-                        var ajax = new XMLHttpRequest();
-                        ajax.onreadystatechange = function() {
-                            if(ajax.readyState == 4 && ajax.status == 200) {
-                                loadJSON(ajax.responseText);
-                            }
-                        };
-                        ajax.open("GET", url, true); // true for asynchronous
-                        ajax.send(null);
-
-                    }
-                });
-            }
-        }
-    });
-
-d3.select("#json-load").on("click", function() {
-    loadJSON(d3.select("#json")[0][0].value);
-});
