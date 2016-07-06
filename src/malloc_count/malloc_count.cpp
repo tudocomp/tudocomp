@@ -49,7 +49,7 @@ void* malloc(size_t size) {
 
     auto block = (block_header_t*)ptr;
     block->magic = MEMBLOCK_MAGIC;
-    block->phase_id = paused ? NO_PHASE_ID : pstack[pcur].id;
+    block->phase_id = (paused || pcur < 0) ? NO_PHASE_ID : pstack[pcur].id;
     block->size = size;
 
     if(!paused && pcur >= 0) {
