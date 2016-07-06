@@ -30,6 +30,14 @@ var updateZoomText = function(zoom) {
     );
 }
 
+d3.select("#options button.close").on("click", function() {
+    d3.select("#json")[0][0].value = "";
+    d3.select("#dropzone").style("display", "block");
+    d3.select("#sample").style("display", "block");
+    d3.select("#chart").style("display", "none");
+    d3.select("#options").style("display", "none");
+});
+
 d3.select("#options button.svg").on("click", function() {
     window.open("data:image/svg+xml;base64," +
         btoa(d3.select("#svg-container").html()));
