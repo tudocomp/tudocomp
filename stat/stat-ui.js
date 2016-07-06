@@ -30,6 +30,22 @@ var updateZoomText = function(zoom) {
     );
 }
 
+var getSVGData = function() {
+    return "data:image/svg+xml;base64," + btoa(d3.select("#svg-container").html());
+};
+
+var exportCanvas = document.createElement("canvas");
+var exportImage = document.createElement("img");
+
+exportImage.onload = function() {
+    exportCanvas.width = exportImage.width;
+    exportCanvas.height = exportImage.height;
+
+    var ctx = exportCanvas.getContext("2d");
+    ctx.drawImage(exportImage, 0, 0);
+    window.open(exportCanvas.toDataURL("image/png"));
+};
+
 d3.select("#options button.close").on("click", function() {
     d3.select("#json")[0][0].value = "";
     d3.select("#dropzone").style("display", "block");
@@ -38,9 +54,12 @@ d3.select("#options button.close").on("click", function() {
     d3.select("#options").style("display", "none");
 });
 
+d3.select("#options button.img").on("click", function() {
+    exportImage.setAttribute("src", getSVGData());
+});
+
 d3.select("#options button.svg").on("click", function() {
-    window.open("data:image/svg+xml;base64," +
-        btoa(d3.select("#svg-container").html()));
+    window.open(getSVGData());
 });
 
 d3.select("#options .zoom")

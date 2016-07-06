@@ -169,13 +169,14 @@ var drawChart = function(raw) {
     chart.on("mousemove", chartMouseMove);
     chart.on("mouseout", chartMouseOut);
 
-    // Draw background
-    chart.append("rect")
+    // Draw background - TODO: optional?
+    /*chart.append("rect")
+        .attr("class", "back")
         .attr("x", "0")
         .attr("y", "0")
         .attr("width", app.chartWidth)
         .attr("height", app.chartHeight)
-        .attr("fill", "white");
+        .attr("fill", "white");*/
 
     // Draw bars
     var bar = chart.selectAll("g.bar")
@@ -448,7 +449,6 @@ var chartMouseOut = function() {
     }
 };
 
-//Option events
 var setZoom = function(zoom) {
     d3.select("#chart svg")
         .attr("width", app.svgWidth * zoom)
