@@ -138,7 +138,6 @@ public:
 
     ~EnvRoot() {
         stat_finish();
-        DLOG(INFO) << "~EnvRoot()";
     }
 
     inline AlgorithmValue& algo_value() {
