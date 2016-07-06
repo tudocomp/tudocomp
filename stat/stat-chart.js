@@ -379,7 +379,6 @@ var setMarker = function(xpos) {
         if(t >= d.tStart && t <= d.tEnd) {
             var memY = app.memToPx(d.memPeak);
 
-            showMarker();
             app.marker.attr("transform", "translate(" + xpos + ",0)");
             app.marker.select("circle").attr("cy", memY);
 
@@ -390,12 +389,12 @@ var setMarker = function(xpos) {
         }
     }
 
-    hideMarker();
     return null;
 };
 
 // Events
 var cachedStart = -1;
+
 var chartMouseMove = function() {
     var m = d3.mouse(this);
 
@@ -403,9 +402,12 @@ var chartMouseMove = function() {
     if(mx >= 0 && mx <= app.chartWidth && my >= 0 && my <= app.chartHeight) {
         var marker = setMarker(mx);
         if(marker && marker.data) {
+            showMarker();
+
             var d = marker.data;
             if(d.tStart != cachedStart) {
                 cachedStart = d.tStart;
+                cachedTop = marker.y;
 
                 var dur = d.tEnd - d.tStart;
                 var durPct = dur / app.tScale.invert(app.tScale.range()[1]);
@@ -434,6 +436,7 @@ var chartMouseMove = function() {
                 .style("left", mdoc[0] + "px")
                 .style("top", mdoc[1] + "px");
         } else {
+            hideMarker();
             d3.select("#tip").style("display", "none");
         }
     }
@@ -443,10 +446,15 @@ var chartMouseOut = function() {
     var m = d3.mouse(this);
 
     var mx = m[0], my = m[1];
-    if(mx < 0 || mx > app.chartWidth || my < 0 || my > app.chartHeight) {
-        hideMarker();
-        d3.select("#tip").style("display", "none");
+    if(mx >= 0 && mx <= app.chartWidth && my >= 0 && my <= app.chartHeight) {
+        var marker = setMarker(mx);
+        if(marker && marker.data && my >= marker.y) {
+            return;
+        }
     }
+
+    hideMarker();
+    d3.select("#tip").style("display", "none");
 };
 
 var setZoom = function(zoom) {
