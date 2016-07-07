@@ -32,13 +32,13 @@ class ESACompMaxLCP {
                        size_t fact_min,
                        std::vector<LZSSFactor>& out_factors) {
 
-            m_env->stat_begin("Construct MaxLCPSuffixList");
+            m_env->begin_stat_phase("Construct MaxLCPSuffixList");
             MaxLCPSuffixList<sdsl::csa_bitcompressed<>, sdsl::int_vector<>> list(sa, lcp, fact_min);
             m_env->log_stat("entries", list.size());
-            m_env->stat_end();
+            m_env->end_stat_phase();
 
             //Factorize
-            m_env->stat_begin("Process MaxLCPSuffixList");
+            m_env->begin_stat_phase("Process MaxLCPSuffixList");
 
             while(list.size() > 0) {
                 //get suffix with longest LCP
@@ -75,7 +75,7 @@ class ESACompMaxLCP {
                 }
             }
 
-            m_env->stat_end();
+            m_env->end_stat_phase();
         }
 };
 

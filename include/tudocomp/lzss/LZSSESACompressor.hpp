@@ -44,14 +44,14 @@ public:
         sdslex::int_vector_wrapper wrapper(in_ptr, len);
 
         //Construct SA
-        env.stat_begin("Construct SA");
+        env.begin_stat_phase("Construct SA");
         sdsl::csa_bitcompressed<> sa;
         sdsl::construct_im(sa, wrapper.int_vector);
-        env.stat_end();
+        env.end_stat_phase();
 
         //Construct ISA and LCP
         //TODO SDSL ???
-        env.stat_begin("Construct ISA and LCP");
+        env.begin_stat_phase("Construct ISA and LCP");
 
         sdsl::int_vector<> isa(sa.size(), 0, bitsFor(sa.size()));
         sdsl::int_vector<> lcp(sa.size(), 0, bitsFor(sa.size()));
@@ -65,7 +65,7 @@ public:
             }
         }
 
-        env.stat_end();
+        env.end_stat_phase();
 
         //Debug output
         /*
@@ -80,19 +80,19 @@ public:
         size_t fact_min = 3; //factor threshold
         std::vector<LZSSFactor>& factors = LZSSCompressor<C>::m_factors;
 
-        env.stat_begin("Factorize using strategy");
+        env.begin_stat_phase("Factorize using strategy");
 
         S interval_selector(env); //TODO: use subalgo system
         interval_selector.factorize(sa, isa, lcp, fact_min, factors);
 
         env.log_stat("threshold", fact_min);
         env.log_stat("factors", factors.size());
-        env.stat_end();
+        env.end_stat_phase();
 
         //sort
-        env.stat_begin("Sort factors");
+        env.begin_stat_phase("Sort factors");
         std::sort(factors.begin(), factors.end());
-        env.stat_end();
+        env.end_stat_phase();
 
         return true;
     }

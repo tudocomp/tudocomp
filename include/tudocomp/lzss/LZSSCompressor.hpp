@@ -66,7 +66,7 @@ public:
 
         //encode
         if(factorized || m_coder->uses_buffer()) {
-            env().stat_begin("Encode");
+            env().begin_stat_phase("Encode");
 
             size_t len = main_input.size();
 
@@ -102,7 +102,7 @@ public:
 
             m_coder->encode_sym_flush();
 
-            env().stat_end();
+            env().end_stat_phase();
         }
 
         //clean up

@@ -35,7 +35,6 @@ public:
 private:
     std::string m_name;
     ArgumentMap m_arguments;
-    StatMap m_stats;
     friend class OptionValue;
 public:
     inline AlgorithmValue(std::string&& name, ArgumentMap&& arguments):
@@ -47,16 +46,6 @@ public:
     inline ArgumentMap& arguments() {
         return m_arguments;
     }
-    inline StatMap& statistics() {
-        return m_stats;
-    }
-    template<class T>
-    inline void log_stat(const std::string& name, const T value) {
-        std::stringstream s;
-        s << value;
-        m_stats.emplace(name, s.str());
-    };
-    inline std::string statistics_to_string(const std::string& prefix = "", bool is_first = true);
 };
 
 class OptionValue {
@@ -91,33 +80,6 @@ public:
     }
 };
 
-inline std::string AlgorithmValue::statistics_to_string(const std::string& prefix, bool is_first) {
-    std::stringstream ss;
-    std::string new_prefix;
-    if (is_first) {
-        new_prefix =
-            std::string(prefix)
-            + name();
-    } else {
-        new_prefix =
-            std::string(prefix)
-            + "."
-            + name();
-    }
-
-    for (auto& s : statistics()) {
-        ss << new_prefix << "." << s.first << " = " << s.second << "\n";
-    }
-    for (auto& a : arguments()) {
-        if (!a.second.value_is_algorithm()) {
-            continue;
-        }
-        auto& t = a.second.value_as_algorithm();
-        ss << t.statistics_to_string(new_prefix, false);
-    }
-    return ss.str();
-}
-
 class EnvRoot {
 private:
     std::unique_ptr<AlgorithmValue> m_algo_value;
@@ -127,17 +89,17 @@ private:
 
 public:
     inline EnvRoot() {
-        stat_begin("root");
+        begin_stat_phase("root");
     }
 
     inline EnvRoot(AlgorithmValue&& algo_value):
         m_algo_value(std::make_unique<AlgorithmValue>(std::move(algo_value)))  {
 
-        stat_begin("root");
+        begin_stat_phase("root");
     }
 
     ~EnvRoot() {
-        stat_finish();
+        finish_stats();
     }
 
     inline AlgorithmValue& algo_value() {
@@ -147,18 +109,18 @@ public:
     /// Returns a reference to the current statistics phase.
     /// This reference is valid only until the phase is ended.
     inline Stat& stat_current() {
-        return m_stat_stack.top();
+        return m_stat_stack.empty() ? m_stat_root : m_stat_stack.top();
     }
 
     /// Begins a new statistics phase
-    inline void stat_begin(const std::string& name) {
+    inline void begin_stat_phase(const std::string& name) {
         m_stat_stack.push(Stat(name));
         Stat& stat = m_stat_stack.top();
         stat.begin();
     }
 
     /// Ends the current statistics phase.
-    inline void stat_end() {
+    inline void end_stat_phase() {
         assert(!m_stat_stack.empty());
 
         Stat& stat_ref = m_stat_stack.top();
@@ -176,12 +138,24 @@ public:
     }
 
     /// Ends all current statistics phases and returns the root.
-    inline Stat& stat_finish() {
+    inline Stat& finish_stats() {
         while(!m_stat_stack.empty()) {
-            stat_end();
+            end_stat_phase();
         }
 
         return m_stat_root;
+    }
+
+    /// Resets all statistics and restarts with a new root.
+    inline void restart_stats(const std::string& root_name) {
+        finish_stats();
+        begin_stat_phase(root_name);
+    }
+
+    /// Logs a statistic
+    template<class T>
+    inline void log_stat(const std::string& name, const T value) {
+        stat_current().add_stat(name, value);
     }
 };
 
@@ -227,25 +201,25 @@ public:
     }
 
     /// Begins a new statistics phase
-    inline void stat_begin(const std::string& name) {
-        DLOG(INFO) << "begin \"" << name << "\"";
-
-        //delegate
-        m_root->stat_begin(name);
+    inline void begin_stat_phase(const std::string& name) {
+        DLOG(INFO) << "begin phase \"" << name << "\"";
+        m_root->begin_stat_phase(name); //delegate
     }
 
     /// Ends the current statistics phase.
-    inline void stat_end() {
-        DLOG(INFO) << "end \"" << m_root->stat_current().title() << "\"";
-
-        //delegate
-        m_root->stat_end();
+    inline void end_stat_phase() {
+        DLOG(INFO) << "end phase \"" << m_root->stat_current().title() << "\"";
+        m_root->end_stat_phase(); //delegate
     }
 
     /// Ends all current statistics phases and returns the root.
-    inline Stat& stat_finish() {
-        //delegate
-        return m_root->stat_finish();
+    inline Stat& finish_stats() {
+        return m_root->finish_stats(); //delegate
+    }
+
+    /// Resets all statistics and restarts with a new root.
+    inline void restart_stats(const std::string& root_name) {
+        m_root->restart_stats(root_name); //delegate
     }
 
     /// Log a statistic.
@@ -258,8 +232,7 @@ public:
     /// \param value The value of the statistic as a string.
     template<class T>
     inline void log_stat(const std::string& name, const T value) {
-        m_root->stat_current().add_stat(name, value);
-        algo().log_stat<T>(name, value);
+        m_root->log_stat(name, value);
     };
 };
 

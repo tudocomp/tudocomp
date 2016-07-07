@@ -57,14 +57,14 @@ protected:
         sdslex::int_vector_wrapper wrapper(in_ptr, len);
 
         //Construct SA
-        env.stat_begin("Construct SA");
+        env.begin_stat_phase("Construct SA");
         sdsl::csa_bitcompressed<> sa;
         sdsl::construct_im(sa, wrapper.int_vector);
-        env.stat_end();
+        env.end_stat_phase();
 
         //Construct ISA and LCP
         //TODO SDSL ???
-        env.stat_begin("Construct ISA and LCP");
+        env.begin_stat_phase("Construct ISA and LCP");
         sdsl::int_vector<> isa(sa.size(), 0, bitsFor(sa.size()));
         sdsl::int_vector<> lcp(sa.size(), 0, bitsFor(sa.size()));
 
@@ -76,10 +76,10 @@ protected:
                 while(in_ptr[j++] == in_ptr[k++]) ++lcp[i];
             }
         }
-        env.stat_end();
+        env.end_stat_phase();
 
         //Factorize
-        env.stat_begin("Factorize");
+        env.begin_stat_phase("Factorize");
         size_t fact_min = 3; //factor threshold
 
         size_t num_factors = 0;
@@ -129,7 +129,7 @@ protected:
 
         env.log_stat("threshold", fact_min);
         env.log_stat("factors", num_factors);
-        env.stat_end();
+        env.end_stat_phase();
     }
 };
 

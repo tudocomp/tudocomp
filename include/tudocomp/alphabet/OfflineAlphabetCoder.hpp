@@ -35,7 +35,7 @@ public:
     }
 
     inline OfflineAlphabetCoder(Env& env, Input& input, BitOStream& out) : m_out(&out), m_in(input.as_view()) {
-        env.stat_begin("Analyze alphabet");
+        env.begin_stat_phase("Analyze alphabet");
 
         Counter<uint8_t> counter;
 
@@ -58,7 +58,7 @@ public:
         }
 
         env.log_stat("alphabetSize", m_sigma);
-        env.stat_end();
+        env.end_stat_phase();
     }
 
     inline ~OfflineAlphabetCoder() {

@@ -130,11 +130,11 @@ public:
     inline void set_buffer(std::vector<LZSSFactor>& buffer) {
         m_factors = &buffer;
 
-        m_env->stat_begin("Analyze factors");
+        m_env->begin_stat_phase("Analyze factors");
         for(auto f : buffer) {
             analyze_fact(f);
         }
-        m_env->stat_end();
+        m_env->end_stat_phase();
     }
 
     /// Buffers the given factor and allows the encoder to analyze it.

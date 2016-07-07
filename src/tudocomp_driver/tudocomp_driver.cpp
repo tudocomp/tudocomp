@@ -213,6 +213,7 @@ int main(int argc, char** argv)
                     o_stream << algorithm_id << '%';
                 }
 
+                algorithm_env->restart_stats("Compress");
                 setup_time = clk::now();
 
                 algo->compress(inp, out);
@@ -250,12 +251,14 @@ int main(int argc, char** argv)
 
                 setup_time = clk::now();
 
+                algorithm_env->restart_stats("Decompress");
                 algo->decompress(inp, out);
 
                 comp_time = clk::now();
             }
         }
 
+        auto algo_stats = algorithm_env->finish_stats();
         end_time = clk::now();
 
         if (print_stats) {
@@ -312,7 +315,8 @@ int main(int argc, char** argv)
 
             std::cout << "---------------\n";
             std::cout << "Algorithm Stats:\n";
-            std::cout << algorithm_env->algo_value().statistics_to_string("  ");
+            algo_stats.to_json(std::cout); //TODO text output
+            std::cout << "\n";
             std::cout << "---------------\n";
             print_time("startup", setup_duration);
             print_time("compression", comp_duration);

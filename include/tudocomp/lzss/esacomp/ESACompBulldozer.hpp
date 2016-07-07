@@ -46,7 +46,7 @@ public:
         size_t n = sa.size();
 
         //induce intervals
-        m_env->stat_begin("Induce intervals");
+        m_env->begin_stat_phase("Induce intervals");
 
         std::vector<Interval> intervals;
         for(size_t i = 1; i < sa.size(); i++) {
@@ -57,12 +57,12 @@ public:
         }
 
         m_env->log_stat("numIntervals", intervals.size());
-        m_env->stat_end();
+        m_env->end_stat_phase();
 
         //sort
-        m_env->stat_begin("Sort intervals");
+        m_env->begin_stat_phase("Sort intervals");
         std::sort(intervals.begin(), intervals.end(), IntervalComparator());
-        m_env->stat_end();
+        m_env->end_stat_phase();
 
         //debug output
         /*DLOG(INFO) << "Intervals:";
@@ -73,7 +73,7 @@ public:
         //marker
         sdsl::bit_vector marked(n);
 
-        m_env->stat_begin("Process intervals");
+        m_env->begin_stat_phase("Process intervals");
 
         auto x = intervals.begin();
         while(x != intervals.end()) {
@@ -105,7 +105,7 @@ public:
             ++x;
         }
 
-        m_env->stat_end();
+        m_env->end_stat_phase();
     }
 };
 
