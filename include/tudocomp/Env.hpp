@@ -172,13 +172,17 @@ class Env {
     std::shared_ptr<EnvRoot> m_root;
     AlgorithmValue* m_node;
 
-    inline Env() = delete;
-
     inline AlgorithmValue& algo() {
         return *m_node;
     }
 
 public:
+    inline Env() = delete;
+    inline Env(const Env& other) = delete;
+    inline Env(Env&& other):
+        m_root(std::move(other.m_root)),
+        m_node(other.m_node) {}
+
     inline Env(std::shared_ptr<EnvRoot> root, AlgorithmValue& node):
         m_root(root), m_node(&node) {}
 

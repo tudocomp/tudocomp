@@ -36,7 +36,7 @@ public:
 
     /// \copydoc
     inline virtual bool pre_factorize(Input& input) override {
-        auto env = this->env();
+        auto& env = this->env();
         auto in = input.as_view();
 
         size_t len = in.size();
