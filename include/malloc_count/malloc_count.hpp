@@ -7,7 +7,9 @@
 
 #include <algorithm>
 #include <cstring>
-#include <stdio.h>
+#include <cstdio>
+#include <ctime>
+#include <cstdint>
 
 #define MEMBLOCK_MAGIC 0xFEDCBA9876543210
 
