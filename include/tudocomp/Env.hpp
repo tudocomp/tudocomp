@@ -114,6 +114,8 @@ public:
 
     /// Begins a new statistics phase
     inline void begin_stat_phase(const std::string& name) {
+        DLOG(INFO) << "begin phase \"" << name << "\"";
+
         m_stat_stack.push(Stat(name));
         Stat& stat = m_stat_stack.top();
         stat.begin();
@@ -124,6 +126,8 @@ public:
         assert(!m_stat_stack.empty());
 
         Stat& stat_ref = m_stat_stack.top();
+        DLOG(INFO) << "end phase \"" << stat_ref.title() << "\"";
+
         stat_ref.end();
 
         Stat stat = stat_ref; //copy
@@ -155,6 +159,7 @@ public:
     /// Logs a statistic
     template<class T>
     inline void log_stat(const std::string& name, const T value) {
+        DLOG(INFO) << "stat: " << name << " = " << value;
         stat_current().add_stat(name, value);
     }
 };
@@ -202,13 +207,11 @@ public:
 
     /// Begins a new statistics phase
     inline void begin_stat_phase(const std::string& name) {
-        DLOG(INFO) << "begin phase \"" << name << "\"";
         m_root->begin_stat_phase(name); //delegate
     }
 
     /// Ends the current statistics phase.
     inline void end_stat_phase() {
-        DLOG(INFO) << "end phase \"" << m_root->stat_current().title() << "\"";
         m_root->end_stat_phase(); //delegate
     }
 
