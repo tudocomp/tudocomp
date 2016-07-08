@@ -61,22 +61,22 @@ public:
         m_is_value(false),
         m_value_or_algorithm(std::move(algorithm)) {}
 
-    inline bool value_is_algorithm() {
+    inline bool is_algorithm() {
         return !m_is_value;
     }
     inline bool has_value() const {
         return m_value_or_algorithm.m_name != "";
     }
-    inline const std::string& value_as_string() const {
-        CHECK(m_is_value);
-        return m_value_or_algorithm.m_name;
-    }
-    inline AlgorithmValue& value_as_algorithm() {
+    inline AlgorithmValue& as_algorithm() {
         CHECK(!m_is_value);
         return m_value_or_algorithm;
     }
-    inline uint64_t value_as_integer() const {
-        return lexical_cast<uint64_t>(value_as_string());
+    inline const std::string& as_string() const {
+        CHECK(m_is_value);
+        return m_value_or_algorithm.m_name;
+    }
+    inline uint64_t as_integer() const {
+        return lexical_cast<uint64_t>(as_string());
     }
 };
 
@@ -195,7 +195,7 @@ public:
     /// option.
     inline Env env_for_option(const std::string& option) {
         CHECK(algo().arguments().count(option) > 0);
-        auto& a = algo().arguments()[option].value_as_algorithm();
+        auto& a = algo().arguments()[option].as_algorithm();
 
         return Env(m_root, a);
     }

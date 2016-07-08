@@ -148,7 +148,7 @@ public:
 
         if (m_compressors.count(static_only_evald_algo) > 0) {
             auto env = std::make_shared<EnvRoot>(
-                std::move(options.value_as_algorithm()));
+                std::move(options.as_algorithm()));
 
             auto& constructor = m_compressors[static_only_evald_algo];
             return constructor(Env(env, env->algo_value()));
