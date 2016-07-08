@@ -85,7 +85,7 @@ void free(void* ptr) {
     }
 }
 
-void* realloc(void* ptr, size_t size) throw() {
+void* realloc(void* ptr, size_t size) {
     using namespace malloc_count;
 
     if(!size) {
