@@ -2,7 +2,10 @@
 #define _INCLUDED_ESACOMP_MAX_LCP_HPP_
 
 #include <vector>
-#include <sdsl/suffix_arrays.hpp>
+
+#include <tudocomp/ds/SuffixArray.hpp>
+#include <tudocomp/ds/LCPArray.hpp>
+
 #include <tudocomp/Env.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 #include <tudocomp/util/MaxLCPSuffixList.hpp>
@@ -26,14 +29,16 @@ class ESACompMaxLCP {
         inline ESACompMaxLCP(Env& env) : m_env(&env) {
         }
 
-        void factorize(const sdsl::csa_bitcompressed<>& sa,
-                       const sdsl::int_vector<>& isa,
-                       sdsl::int_vector<>& lcp,
+        void factorize(const SuffixArray& sa,
+                       const LCPArray& _lcp,
                        size_t fact_min,
                        std::vector<LZSSFactor>& out_factors) {
 
+            auto isa = sa.isa;
+            sdsl::int_vector<> lcp(_lcp.lcp);
+
             m_env->begin_stat_phase("Construct MaxLCPSuffixList");
-            MaxLCPSuffixList<sdsl::csa_bitcompressed<>, sdsl::int_vector<>> list(sa, lcp, fact_min);
+            MaxLCPSuffixList<SuffixArray, sdsl::int_vector<>> list(sa, lcp, fact_min);
             m_env->log_stat("entries", list.size());
             m_env->end_stat_phase();
 
@@ -47,7 +52,6 @@ class ESACompMaxLCP {
                 //generate factor
                 LZSSFactor fact(sa[m], sa[m-1], lcp[m]);
                 out_factors.push_back(fact);
-                //DLOG(INFO) << "Factor: (" << fact.pos << ", " << fact.src << ", " << fact.num << ")";
 
                 //remove overlapped entries
                 for(size_t k = 0; k < fact.num; k++) {

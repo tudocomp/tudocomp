@@ -2,7 +2,10 @@
 #define _INCLUDED_ESACOMP_BULLDOZER_HPP_
 
 #include <vector>
-#include <sdsl/suffix_arrays.hpp>
+
+#include <tudocomp/ds/SuffixArray.hpp>
+#include <tudocomp/ds/LCPArray.hpp>
+
 #include <tudocomp/Env.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 
@@ -36,11 +39,12 @@ public:
     inline ESACompBulldozer(Env& env) : m_env(&env) {
     }
 
-    void factorize(const sdsl::csa_bitcompressed<>& sa,
-                   const sdsl::int_vector<>& isa,
-                   sdsl::int_vector<>& lcp,
-                   size_t fact_min,
-                   std::vector<LZSSFactor>& out_factors) {
+        void factorize(const SuffixArray& sa,
+                       const LCPArray& lcp,
+                       size_t fact_min,
+                       std::vector<LZSSFactor>& out_factors) {
+
+        auto isa = sa.isa;
 
         //
         size_t n = sa.size();
@@ -91,7 +95,7 @@ public:
                     for(size_t k = 0; k < l; k++) {
                         marked[x->p + k] = 1;
                     }
-                    
+
                     //jump to next available interval
                     size_t p = x->p;
                     do {

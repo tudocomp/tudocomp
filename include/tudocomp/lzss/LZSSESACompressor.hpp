@@ -1,8 +1,8 @@
 #ifndef _INCLUDED_LZSS_ESA_COMPRESSOR_HPP_
 #define _INCLUDED_LZSS_ESA_COMPRESSOR_HPP_
 
-#include <sdsl/int_vector.hpp>
-#include <sdsl/suffix_arrays.hpp>
+#include <tudocomp/ds/SuffixArray.hpp>
+#include <tudocomp/ds/LCPArray.hpp>
 
 #include <tudocomp/sdslex/int_vector_wrapper.hpp>
 #include <tudocomp/util.h>
@@ -44,37 +44,14 @@ public:
         sdslex::int_vector_wrapper wrapper(in_ptr, len);
 
         //Construct SA
-        env.begin_stat_phase("Construct SA");
-        sdsl::csa_bitcompressed<> sa;
-        sdsl::construct_im(sa, wrapper.int_vector);
+        env.begin_stat_phase("Construct SA and ISA");
+        SuffixArray sa(in);
         env.end_stat_phase();
 
-        //Construct ISA and LCP
-        //TODO SDSL ???
-        env.begin_stat_phase("Construct ISA and LCP");
-
-        sdsl::int_vector<> isa(sa.size(), 0, bitsFor(sa.size()));
-        sdsl::int_vector<> lcp(sa.size(), 0, bitsFor(sa.size()));
-
-        for(size_t i = 0; i < sa.size(); i++) {
-            isa[sa[i]] = i;
-
-            if(i >= 2) {
-                size_t j = sa[i], k = sa[i-1];
-                while(in_ptr[j++] == in_ptr[k++]) ++lcp[i];
-            }
-        }
-
+        //Construct LCP
+        env.begin_stat_phase("Construct LCP");
+        LCPArray lcp(in, sa);
         env.end_stat_phase();
-
-        //Debug output
-        /*
-        DLOG(INFO) << std::setfill(' ') << std::left << std::setw(8) << "i" << std::setw(8) << "SA[i]" << std::setw(8) << "LCP[i]";
-        DLOG(INFO) << "----------------------------";
-        for(size_t i = 0; i < sa.size(); i++) {
-            DLOG(INFO) << std::setfill(' ') << std::left << std::setw(8) << (i+1) << std::setw(8) << (sa[i]+1) << std::setw(8) << lcp[i];
-        }
-        */
 
         //Use strategy to generate factors
         size_t fact_min = 3; //factor threshold
@@ -83,7 +60,7 @@ public:
         env.begin_stat_phase("Factorize using strategy");
 
         S interval_selector(env); //TODO: use subalgo system
-        interval_selector.factorize(sa, isa, lcp, fact_min, factors);
+        interval_selector.factorize(sa, lcp, fact_min, factors);
 
         env.log_stat("threshold", fact_min);
         env.log_stat("factors", factors.size());
