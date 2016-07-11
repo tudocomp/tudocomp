@@ -23,6 +23,7 @@ class LZSSESACompressor : public LZSSCompressor<C> {
 public:
     inline static Meta meta() {
         Meta m("compressor", "esacomp");
+        m.option("strategy").templated<S, ESACompMaxLCP>();
         m.option("coder").templated<C>();
         return m;
     }
@@ -82,7 +83,7 @@ public:
 
         env.begin_stat_phase("Factorize using strategy");
 
-        S interval_selector(env); //TODO: use subalgo system
+        S interval_selector(env.env_for_option("strategy"));
         interval_selector.factorize(sa, isa, lcp, fact_min, factors);
 
         env.log_stat("threshold", fact_min);
