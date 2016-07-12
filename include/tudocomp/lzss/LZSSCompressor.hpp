@@ -25,7 +25,11 @@ protected:
     std::vector<LZSSFactor> m_factors;
 
 private:
-    C* m_coder;
+    // TODO: This is only used as a local variable
+    // in compress(), with other methods accessing i during that time onlyt.
+    // Find a better design such that the variable only has to exist
+    // in compress()'s scope.
+    std::unique_ptr<C> m_coder;
 
 public:
     /// Default constructor (not supported).
@@ -47,7 +51,7 @@ public:
         Input input_copy_2(main_input);
         Input input_copy_3(main_input);
         auto out_guard = output.as_stream();
-        m_coder = new C(env(), input_copy_2, out_guard, coder_opts(input_copy_3));
+        m_coder = std::make_unique<C>(env(), input_copy_2, out_guard, coder_opts(input_copy_3));
 
         //pass factor buffer (empty or filled)
         m_coder->set_buffer(m_factors);
@@ -106,7 +110,6 @@ public:
         }
 
         //clean up
-        delete m_coder;
         m_coder = nullptr;
     }
 
