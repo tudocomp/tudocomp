@@ -106,6 +106,10 @@ public:
     /// \copydoc
     inline virtual void factorize(Input& input) override {
     }
+
+    virtual Env create_decoder_env() override {
+        return this->env().env_for_option("coder");
+    }
 };
 
 }}

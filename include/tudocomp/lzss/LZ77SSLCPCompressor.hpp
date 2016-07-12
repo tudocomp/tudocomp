@@ -131,6 +131,10 @@ protected:
         env.log_stat("factors", num_factors);
         env.end_stat_phase();
     }
+
+    virtual Env create_decoder_env() override {
+        return this->env().env_for_option("coder");
+    }
 };
 
 }}

@@ -8,6 +8,7 @@
 
 #include <tudocomp/lzss/LZSSCoderOpts.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 namespace tudocomp {
 namespace lzss {
@@ -21,7 +22,7 @@ namespace lzss {
 ///
 /// \tparam A the alphabet coder to use for encoding raw symbols.
 template<typename A>
-class OnlineLZSSCoder {
+class OnlineLZSSCoder: Algorithm {
 //TODO more unique name (there may be more online coders in the future...)
 
 private:
@@ -49,11 +50,11 @@ public:
     /// \param in The input text.
     /// \param out The (bitwise) output stream.
     /// \param opts Coder options determined by the compressor.
-    inline OnlineLZSSCoder(Env& env, Input& in, io::OutputStream& out, LZSSCoderOpts opts)  {
+    inline OnlineLZSSCoder(Env&& env, Input& in, io::OutputStream& out, LZSSCoderOpts opts): Algorithm(std::move(env)) {
 
-        m_out = std::shared_ptr<BitOStream>(new BitOStream(out));
+        m_out = std::make_shared<BitOStream>(out);
         m_len = in.size();
-        m_alphabet_coder = std::shared_ptr<A>(new A(env, in, *m_out));
+        m_alphabet_coder = std::make_shared<A>(this->env(), in, *m_out);
 
         m_src_bits = std::min(bitsFor(m_len), opts.src_bits);
         m_num_bits = bitsFor(m_len);
@@ -121,11 +122,11 @@ public:
     inline void buffer_fact(const LZSSFactor& f) {
     }
 
-    static void decode(Env&, Input&, Output&);
+    static void decode(Env&&, Input&, Output&);
 };
 
 template<typename A>
-inline void OnlineLZSSCoder<A>::decode(Env& env, Input& input, Output& out) {
+inline void OnlineLZSSCoder<A>::decode(Env&& env, Input& input, Output& out) {
 
     bool done; //GRRR
     auto in_guard = input.as_stream();

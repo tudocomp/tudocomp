@@ -122,6 +122,10 @@ protected:
             }
         }
     }
+
+    virtual Env create_decoder_env() override {
+        return this->env().env_for_option("coder");
+    }
 };
 
 }}
