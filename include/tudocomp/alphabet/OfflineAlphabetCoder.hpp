@@ -7,11 +7,12 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 #include <tudocomp/util/Counter.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 //TODO only supports 8-bit characters
 namespace tudocomp {
 
-class OfflineAlphabetCoder {
+class OfflineAlphabetCoder: Algorithm {
 
 private:
     Env* m_env;
@@ -34,8 +35,9 @@ public:
         return m;
     }
 
-    inline OfflineAlphabetCoder(Env& env, Input& input, BitOStream& out) : m_out(&out), m_in(input.as_view()) {
-        env.begin_stat_phase("Analyze alphabet");
+    inline OfflineAlphabetCoder(Env&& env, Input& input, BitOStream& out):
+        Algorithm(std::move(env)), m_out(&out), m_in(input.as_view()) {
+        this->env().begin_stat_phase("Analyze alphabet");
 
         Counter<uint8_t> counter;
 
@@ -57,8 +59,8 @@ public:
             m_char2comp[c] = i;
         }
 
-        env.log_stat("alphabetSize", m_sigma);
-        env.end_stat_phase();
+        this->env().log_stat("alphabetSize", m_sigma);
+        this->env().end_stat_phase();
     }
 
     inline ~OfflineAlphabetCoder() {

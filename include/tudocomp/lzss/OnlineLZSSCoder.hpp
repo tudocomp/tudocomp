@@ -54,7 +54,8 @@ public:
 
         m_out = std::make_shared<BitOStream>(out);
         m_len = in.size();
-        m_alphabet_coder = std::make_shared<A>(this->env(), in, *m_out);
+        m_alphabet_coder = std::make_shared<A>(
+            this->env().env_for_option("alphabet_coder"), in, *m_out);
 
         m_src_bits = std::min(bitsFor(m_len), opts.src_bits);
         m_num_bits = bitsFor(m_len);

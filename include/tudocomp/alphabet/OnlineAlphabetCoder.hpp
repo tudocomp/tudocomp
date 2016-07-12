@@ -7,11 +7,12 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 #include <tudocomp/util/DecodeBuffer.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 namespace tudocomp {
 
 //TODO only supports 8-bit characters
-class OnlineAlphabetCoder {
+class OnlineAlphabetCoder: Algorithm {
 
 private:
     BitOStream* m_out;
@@ -25,7 +26,8 @@ public:
         return m;
     }
 
-    inline OnlineAlphabetCoder(Env& env, Input& input, BitOStream& out) : m_out(&out) {
+    inline OnlineAlphabetCoder(Env&& env, Input& input, BitOStream& out):
+        Algorithm(std::move(env)), m_out(&out) {
         //TODO write magic
     }
 
