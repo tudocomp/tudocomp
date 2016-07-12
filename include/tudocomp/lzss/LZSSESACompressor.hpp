@@ -23,8 +23,8 @@ class LZSSESACompressor : public LZSSCompressor<C> {
 public:
     inline static Meta meta() {
         Meta m("compressor", "esacomp");
-        m.option("strategy").templated<S, ESACompMaxLCP>();
         m.option("coder").templated<C>();
+        m.option("strategy").templated<S, ESACompMaxLCP>();
         return m;
     }
 
