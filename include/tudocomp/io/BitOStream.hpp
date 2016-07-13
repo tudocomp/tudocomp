@@ -71,7 +71,7 @@ public:
             writeBit((value & T(T(1) << i)) != T(0));
         }
     }
-    
+
     /// Write the given value as a compressed UINT.
     ///
     /// The input value is split into blocks. Each block is prepended
@@ -82,14 +82,14 @@ public:
     /// \param b The block width in bits (default is 7 bits).
     template<typename T>
     inline void write_compressed_int(T v, size_t b = 7) {
-        assert(b > 0);
-        
+        DCHECK(b > 0);
+
         uint64_t u = uint64_t(v);
         uint64_t mask = (u << b) - 1;
         do {
             uint64_t current = v & mask;
             v >>= b;
-            
+
             writeBit(v > 0);
             write(current, b);
         } while(v > 0);
@@ -109,7 +109,7 @@ public:
         writeNext();
         out.write(bytes, len);
     }
-    
+
     inline std::ostream& stream() {
         return out;
     }

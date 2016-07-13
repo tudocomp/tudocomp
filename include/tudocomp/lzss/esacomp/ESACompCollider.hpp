@@ -144,7 +144,7 @@ public:
             }
 
             //factorize
-            #define DECREASE_INTERVAL_COUNT assert(count > 0); --count;
+            #define DECREASE_INTERVAL_COUNT DCHECK(count > 0); --count;
 
             if(best != SIZE_MAX) {
                 Interval& it = intervals[best];

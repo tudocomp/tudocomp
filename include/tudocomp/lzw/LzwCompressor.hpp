@@ -16,41 +16,58 @@ using lz78_dictionary::CodeType;
 using lz78_dictionary::EncoderDictionary;
 using lz78_dictionary::DMS_MAX;
 
-const std::string THRESHOLD_OPTION = "lzw.threshold";
-const std::string THRESHOLD_LOG = "lzw.threshold";
-const std::string RULESET_SIZE_LOG = "lzw.factor_count";
+inline CodeType select_size(Env& env, string_ref name) {
+    auto& o = env.option(name);
+    if (o.as_string() == "inf") {
+        return DMS_MAX;
+    } else {
+        return o.as_integer();
+    }
+}
 
-/**
- * A simple compressor that echoes the input into the coder without
- * generating any factors whatsoever.
- */
 template<typename C>
 class LzwCompressor: public Compressor {
 private:
     /// Max dictionary size before reset
     const CodeType dms {DMS_MAX};
     //const CodeType dms {256 + 10};
-    /// Preallocated dictionary size
+    /// Preallocated dictionary size,
+    /// picked because (sizeof(CodeType) = 4) * 1024 == 4096,
+    /// which is the default page size on linux
     const CodeType reserve_dms {1024};
 public:
-    using Compressor::Compressor;
+    inline LzwCompressor(Env&& env):
+        Compressor(std::move(env)),
+        dms(select_size(this->env(), "dict_size"))
+    {}
 
     inline static Meta meta() {
-        Meta m("compressor", "lzw", "Lempel-Ziv-Welch");
+        Meta m("compressor", "lzw",
+               "Lempel-Ziv-Welch\n\n"
+               "`dict_size` has to either be \"inf\", or a positive integer,\n"
+               "and determines the maximum size of the backing storage of\n"
+               "the dictionary before it gets reset.");
         m.option("coder").templated<C, LzwBitCoder>();
+        m.option("dict_size").dynamic("inf");
         return m;
     }
 
     virtual void compress(Input& input, Output& out) override {
         auto is = input.as_stream();
 
+        // Stats
+        env().begin_stat_phase("Lzw compression");
+        uint64_t stat_dictionary_resets = 0;
+        uint64_t stat_dict_counter_at_last_reset = 0;
+        uint64_t stat_factor_count = 0;
+
         EncoderDictionary ed(EncoderDictionary::Lzw, dms, reserve_dms);
         C coder(env().env_for_option("coder"), out);
-        uint64_t factor_count = 0;
 
         CodeType i {dms}; // Index
         char c;
         bool rbwf {false}; // Reset Bit Width Flag
+
 
         while (is.get(c)) {
             uint8_t b = c;
@@ -60,6 +77,8 @@ public:
             {
                 ed.reset();
                 rbwf = true;
+                stat_dictionary_resets++;
+                stat_dict_counter_at_last_reset = dms;
             }
 
             const CodeType temp {i};
@@ -67,7 +86,7 @@ public:
             if ((i = ed.search_and_insert(temp, b)) == dms)
             {
                 coder.encode_fact(temp);
-                factor_count++;
+                stat_factor_count++;
                 i = b;
             }
 
@@ -79,10 +98,15 @@ public:
         }
         if (i != dms) {
             coder.encode_fact(i);
-            factor_count++;
+            stat_factor_count++;
         }
 
-        env().log_stat(RULESET_SIZE_LOG, factor_count); //TODO update to new stat sytem
+        env().log_stat("factor_count", stat_factor_count);
+        env().log_stat("dictionary_reset_counter",
+                       stat_dictionary_resets);
+        env().log_stat("max_factor_counter",
+                       stat_dict_counter_at_last_reset);
+        env().end_stat_phase();
     }
 
     virtual void decompress(Input& in, Output& out) override final {

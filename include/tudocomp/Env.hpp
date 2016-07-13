@@ -1,7 +1,6 @@
 #ifndef _INCLUDED_ENV_HPP
 #define _INCLUDED_ENV_HPP
 
-#include <cassert>
 #include <map>
 #include <set>
 #include <sstream>
@@ -123,7 +122,7 @@ public:
 
     /// Ends the current statistics phase.
     inline void end_stat_phase() {
-        assert(!m_stat_stack.empty());
+        DCHECK(!m_stat_stack.empty());
 
         Stat& stat_ref = m_stat_stack.top();
         DLOG(INFO) << "end phase \"" << stat_ref.title() << "\"";
