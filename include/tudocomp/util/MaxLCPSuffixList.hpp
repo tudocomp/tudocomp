@@ -41,7 +41,7 @@ private:
     /// Lookup the LCP index.
     inline size_t lookup_lcp_index(size_t lcp) const {
         //DLOG(INFO) << "lookup_lcp_index(" << lcp << ")";
-        assert(lcp <= m_lcp_index.size());
+        DCHECK(lcp <= m_lcp_index.size());
 
         size_t result = m_undef;
         while(lcp > 0 && result == m_undef) {
@@ -88,7 +88,7 @@ public:
 
     /// Insert suffix array item with index i.
     inline void insert(size_t i) {
-        assert(i < m_undef && !m_suffix_contained[i]);
+        DCHECK(i < m_undef && !m_suffix_contained[i]);
 
         size_t lcp = (*m_lcp)[i];
         size_t pos = lookup_lcp_index(lcp);
@@ -112,7 +112,7 @@ public:
             if(prev != m_undef) {
                 m_next[prev] = i;
             } else {
-                assert(pos == m_first);
+                DCHECK(pos == m_first);
                 m_first = i;
             }
 
@@ -134,20 +134,20 @@ public:
 
     /// Remove suffix array item with index i.
     inline void remove(size_t i) {
-        assert(i < m_undef && m_suffix_contained[i]);
+        DCHECK(i < m_undef && m_suffix_contained[i]);
 
         //unlink
         if(m_prev[i] != m_undef) {
             m_next[m_prev[i]] = m_next[i];
         } else {
-            assert(i == m_first);
+            DCHECK(i == m_first);
             m_first = m_next[i];
         }
 
         if(m_next[i] != m_undef) {
             m_prev[m_next[i]] = m_prev[i];
         } else {
-            assert(i == m_last);
+            DCHECK(i == m_last);
             m_last = m_prev[i];
         }
 
@@ -184,7 +184,7 @@ public:
 
     /// Get first item (suffix array index with highest LCP)
     inline size_t first() const {
-        assert(m_size > 0);
+        DCHECK(m_size > 0);
         return m_first;
     }
 };
