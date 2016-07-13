@@ -3,8 +3,6 @@
 
 namespace tudocomp {
 
-using io::InputView;
-
 //fwd
 class SuffixArray;
 class InverseSuffixArray;
@@ -22,7 +20,7 @@ public:
     virtual uint8_t operator[](size_t) const = 0;
     virtual const uint8_t* text() const = 0;
     virtual size_t size() const = 0;
-    
+
 };
 
 }

@@ -14,7 +14,6 @@
 
 namespace tudocomp {
 
-class TextDS; //fwd
 using io::InputView;
 
 class SuffixArray {
@@ -28,6 +27,8 @@ private:
 public:
     inline SuffixArray() {
     }
+
+    const iv_t& sa = m_sa;
 
     inline iv_t::value_type operator[](iv_t::size_type i) const {
         return m_sa[i];

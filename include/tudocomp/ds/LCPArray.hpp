@@ -4,10 +4,9 @@
 #include <tudocomp/util.h>
 #include <tudocomp/ds/ITextDSProvider.hpp>
 #include <tudocomp/ds/SuffixArray.hpp>
+#include <tudocomp/ds/PhiArray.hpp>
 
 namespace tudocomp {
-
-class TextDS;
 
 using io::InputView;
 
@@ -22,6 +21,8 @@ private:
 public:
     inline LCPArray() {
     }
+
+    const iv_t& lcp = m_lcp;
 
     inline void construct(ITextDSProvider& t) {
         auto sa = t.require_sa();
