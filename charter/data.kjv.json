@@ -1,110 +1,85 @@
 {
-    "title": "Sandbox test",
-    "timeStart": 1545259411,
-    "timeEnd": 1545276419,
+    "title": "Compress",
+    "timeStart": 29274409,
+    "timeEnd": 29290208,
     "memOff": 0,
-    "memPeak": 120018826,
-    "stats": [
-        { "key": "sizeCompressed", "value": 1834957 },
-        { "key": "sizeInput", "value": 5504282 }
-    ],
+    "memPeak": 120017939,
+    "memFinal": 18087287,
+    "stats": [],
     "sub": [
         {
-            "title": "Factorize",
-            "timeStart": 1545259411,
-            "timeEnd": 1545275047,
-            "memOff": 416,
-            "memPeak": 120018410,
+            "title": "Construct SA",
+            "timeStart": 29274411,
+            "timeEnd": 29278003,
+            "memOff": 5504777,
+            "memPeak": 82245549,
+            "memFinal": 31650680,
             "stats": [],
+            "sub": []
+        },
+        {
+            "title": "Construct ISA and LCP",
+            "timeStart": 29278003,
+            "timeEnd": 29282672,
+            "memOff": 37155501,
+            "memPeak": 31680136,
+            "memFinal": 31649632,
+            "stats": [],
+            "sub": []
+        },
+        {
+            "title": "Factorize using strategy",
+            "timeStart": 29282672,
+            "timeEnd": 29289839,
+            "memOff": 68805139,
+            "memPeak": 51212825,
+            "memFinal": 12582912,
+            "stats": [
+                { "key": "factors", "value": 416066 },
+                { "key": "threshold", "value": 3 }
+            ],
             "sub": [
                 {
-                    "title": "Construct SA",
-                    "timeStart": 1545259414,
-                    "timeEnd": 1545262987,
-                    "memOff": 5504314,
-                    "memPeak": 82246121,
-                    "stats": [],
-                    "sub": []
-                },
-                {
-                    "title": "Construct ISA and LCP",
-                    "timeStart": 1545262987,
-                    "timeEnd": 1545267651,
-                    "memOff": 37155606,
-                    "memPeak": 31649632,
-                    "stats": [],
-                    "sub": []
-                },
-                {
-                    "title": "Factorization strategy",
-                    "timeStart": 1545267651,
-                    "timeEnd": 1545274864,
-                    "memOff": 68805240,
-                    "memPeak": 51213193,
+                    "title": "Construct MaxLCPSuffixList",
+                    "timeStart": 29282672,
+                    "timeEnd": 29284947,
+                    "memOff": 54,
+                    "memPeak": 32368936,
+                    "memFinal": 32338432,
                     "stats": [
-                        { "key": "factors", "value": 419065 },
-                        { "key": "threshold", "value": 3 }
+                        { "key": "entries", "value": 5489079 }
                     ],
-                    "sub": [
-                        {
-                            "title": "Construct MaxLCPSuffixList",
-                            "timeStart": 1545267651,
-                            "timeEnd": 1545269996,
-                            "memOff": 422,
-                            "memPeak": 32338440,
-                            "stats": [
-                                { "key": "entries", "value": 5489079 }
-                            ],
-                            "sub": []
-                        },
-                        {
-                            "title": "Process MaxLCPSuffixList",
-                            "timeStart": 1545269996,
-                            "timeEnd": 1545274864,
-                            "memOff": 32338850,
-                            "memPeak": 18874368,
-                            "stats": [],
-                            "sub": []
-                        }
-                    ]
+                    "sub": []
                 },
                 {
-                    "title": "Sort factors",
-                    "timeStart": 1545274864,
-                    "timeEnd": 1545275047,
-                    "memOff": 81388106,
-                    "memPeak": 0,
+                    "title": "Process MaxLCPSuffixList",
+                    "timeStart": 29284947,
+                    "timeEnd": 29289839,
+                    "memOff": 32338482,
+                    "memPeak": 18874368,
+                    "memFinal": 12582912,
                     "stats": [],
                     "sub": []
                 }
             ]
         },
         {
-            "title": "Analyze alphabet",
-            "timeStart": 1545275049,
-            "timeEnd": 1545276055,
-            "memOff": 23592902,
-            "memPeak": 4448,
-            "stats": [
-                { "key": "alphabetSize", "value": 84 }
-            ],
-            "sub": []
-        },
-        {
-            "title": "Analyze factors",
-            "timeStart": 1545276055,
-            "timeEnd": 1545276062,
-            "memOff": 23593188,
-            "memPeak": 0,
+            "title": "Sort factors",
+            "timeStart": 29289839,
+            "timeEnd": 29290021,
+            "memOff": 81388001,
+            "memPeak": 30504,
+            "memFinal": 0,
             "stats": [],
             "sub": []
         },
         {
             "title": "Encode",
-            "timeStart": 1545276062,
-            "timeEnd": 1545276419,
-            "memOff": 23593188,
-            "memPeak": 3155058,
+            "timeStart": 29290021,
+            "timeEnd": 29290208,
+            "memOff": 18097159,
+            "memPeak": 39863,
+            "memFinal": 9359,
             "stats": [],
             "sub": []
         }
