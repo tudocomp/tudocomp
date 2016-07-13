@@ -11,6 +11,7 @@ Stat::Phase end_phase_if() {
     p.end_time = mp.time_end;
     p.mem_off = mp.mem_off;
     p.mem_peak = mp.mem_peak;
+    p.mem_final = mp.mem_current;
     return p;
 }
 

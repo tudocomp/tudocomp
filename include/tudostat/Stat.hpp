@@ -17,6 +17,7 @@ public:
 
         size_t mem_off;
         size_t mem_peak;
+        size_t mem_final;
     };
 
     #define NULL_PHASE Phase{0, 0, 0, 0}
@@ -124,7 +125,8 @@ public:
                << indent2_str << "\"timeStart\": " << m_phase.start_time << ",\n"
                << indent2_str << "\"timeEnd\": " << m_phase.end_time << ",\n"
                << indent2_str << "\"memOff\": " << m_phase.mem_off << ",\n"
-               << indent2_str << "\"memPeak\": " << m_phase.mem_peak << ",\n";
+               << indent2_str << "\"memPeak\": " << m_phase.mem_peak << ",\n"
+               << indent2_str << "\"memFinal\": " << m_phase.mem_final << ",\n";
 
         stream << indent2_str << "\"stats\": [";
         size_t stats_total = m_stats_int.size() + m_stats_real.size();
