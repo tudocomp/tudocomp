@@ -30,13 +30,13 @@ private:
     std::map<std::string, long> m_stats_int;
     std::map<std::string, double> m_stats_real;
 
-public:
     static void (*begin_phase)(void);
     static Phase (*end_phase)(void);
 
     static void (*pause_phase)(void);
     static void (*resume_phase)(void);
 
+public:
     inline Stat() : m_phase(NULL_PHASE) {
     }
 
