@@ -68,6 +68,7 @@ var convert = function(x, memOff, level) {
         tDuration: (x.timeEnd - x.timeStart),
         memOff:    memOff + x.memOff,
         memPeak:   memOff + x.memOff + x.memPeak,
+        memFinal:  memOff + x.memOff + x.memFinal,
         stats:     x.stats
     };
 
@@ -419,7 +420,10 @@ var chartMouseMove = function() {
                 tip.select(".duration").text(
                     formatTime(dur) + " (" + formatPercent(durPct) + ")");
                 tip.select(".mempeak").text(formatMem(d.memPeak));
-                tip.select(".memadd").text(formatMem(d.memPeak - d.memOff));
+                tip.select(".memlocal").text(formatMem(d.memPeak - d.memOff));
+                tip.select(".memoffset").text(formatMem(d.memOff));
+                tip.select(".memfinal").text(formatMem(d.memFinal));
+                tip.select(".memadd").text(formatMem(d.memFinal - d.memOff));
 
                 var ext = tip.select("tbody.ext").html("");
                 if(d.stats.length > 0) {
