@@ -6,8 +6,11 @@
 #endif
 
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
-#include <stdio.h>
+#include <cstdio>
+#include <ctime>
+#include <cstdint>
 
 #define MEMBLOCK_MAGIC 0xFEDCBA9876543210
 
@@ -48,10 +51,14 @@ extern "C" void* __libc_malloc(size_t);
 extern "C" void __libc_free(void*);
 extern "C" void* __libc_realloc(void*, size_t);
 
-extern void* malloc(size_t size);
-extern void free(void* ptr);
-extern void* realloc(void* ptr, size_t size);
-extern void* calloc(size_t num, size_t size);
+// We want to override these, but they are already defined in cstdlib,
+// and might have implementation-specific throws declarations,
+// so don't repeat the declarations manually here
+//
+// extern void* malloc(size_t size);
+// extern void free(void* ptr);
+// extern void* realloc(void* ptr, size_t size);
+// extern void* calloc(size_t num, size_t size);
 
 #endif
 

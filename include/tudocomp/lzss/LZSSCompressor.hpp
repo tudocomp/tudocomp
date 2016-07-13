@@ -25,7 +25,11 @@ protected:
     std::vector<LZSSFactor> m_factors;
 
 private:
-    C* m_coder;
+    // TODO: This is only used as a local variable
+    // in compress(), with other methods accessing i during that time onlyt.
+    // Find a better design such that the variable only has to exist
+    // in compress()'s scope.
+    std::unique_ptr<C> m_coder;
 
 public:
     /// Default constructor (not supported).
@@ -47,7 +51,7 @@ public:
         Input input_copy_2(main_input);
         Input input_copy_3(main_input);
         auto out_guard = output.as_stream();
-        m_coder = new C(env(), input_copy_2, out_guard, coder_opts(input_copy_3));
+        m_coder = std::make_unique<C>(create_decoder_env(), input_copy_2, out_guard, coder_opts(input_copy_3));
 
         //pass factor buffer (empty or filled)
         m_coder->set_buffer(m_factors);
@@ -106,13 +110,12 @@ public:
         }
 
         //clean up
-        delete m_coder;
         m_coder = nullptr;
     }
 
     /// \copydoc
     virtual void decompress(Input& input, Output& output) override {
-        C::decode(env(), input, output);
+        C::decode(create_decoder_env(), input, output);
     }
 
 protected:
@@ -159,6 +162,12 @@ protected:
     /// Factorizes the input and uses the handlers (handle_fact and handle_sym)
     /// to pass them to the encoder.
     virtual void factorize(Input& input) = 0;
+
+    /// Plumbing for correctly instanciating the Env of the coder
+    /// subalgorithm.
+    /// Usually just maps to a single `env().env_for_option(...)` call
+    /// in the parent.
+    virtual Env create_decoder_env() = 0;
 };
 
 }}

@@ -48,7 +48,7 @@ protected:
 
     /// \copydoc
     inline virtual void factorize(Input& input) override {
-        auto env = this->env();
+        auto& env = this->env();
         auto in = input.as_view();
 
         size_t len = in.size();
@@ -118,6 +118,10 @@ protected:
         env.log_stat("threshold", fact_min);
         env.log_stat("factors", num_factors);
         env.end_stat_phase();
+    }
+
+    virtual Env create_decoder_env() override {
+        return this->env().env_for_option("coder");
     }
 };
 

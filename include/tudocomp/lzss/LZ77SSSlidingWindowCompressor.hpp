@@ -39,7 +39,7 @@ public:
     inline LZ77SSSlidingWindowCompressor(Env&& e):
         LZSSCompressor<C>(std::move(e))
     {
-        m_window = this->env().option("window").value_as_integer();
+        m_window = this->env().option("window").as_integer();
     }
 
 protected:
@@ -121,6 +121,10 @@ protected:
                 }
             }
         }
+    }
+
+    virtual Env create_decoder_env() override {
+        return this->env().env_for_option("coder");
     }
 };
 

@@ -166,13 +166,13 @@ TEST(Registry, dynamic_options) {
             ASSERT_TRUE(env().option("d").has_value());
             ASSERT_FALSE(env().option("o").has_value());
 
-            ASSERT_EQ(env().option("c").value_as_string(), "qwerty");
-            ASSERT_EQ(env().option("d").value_as_string(), "asdf");
+            ASSERT_EQ(env().option("c").as_string(), "qwerty");
+            ASSERT_EQ(env().option("d").as_string(), "asdf");
 
-            auto& a = env().option("a").value_as_algorithm();
+            auto& a = env().option("a").as_algorithm();
             auto& a_options = a.arguments();
             ASSERT_EQ(a.name(), "x");
-            ASSERT_EQ(a_options["l"].value_as_string(), "zzz");
+            ASSERT_EQ(a_options["l"].as_string(), "zzz");
         }
     };
 

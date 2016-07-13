@@ -5,6 +5,7 @@
 #include <vector>
 #include <sdsl/suffix_arrays.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 namespace tudocomp {
 namespace lzss {
@@ -13,7 +14,7 @@ namespace lzss {
 /// Implements the "Collider" selection strategy for ESAComp.
 ///
 /// TODO: Describe
-class ESACompCollider {
+class ESACompCollider: Algorithm {
 
 private:
     struct Interval {
@@ -40,10 +41,12 @@ private:
         }
     };
 
-    Env *m_env;
-
 public:
-    inline ESACompCollider(Env& env) : m_env(&env) {
+    using Algorithm::Algorithm;
+
+    inline static Meta meta() {
+        Meta m("esacomp_strategy", "collider");
+        return m;
     }
 
     void factorize(const sdsl::csa_bitcompressed<>& sa,
@@ -91,7 +94,7 @@ public:
                     if(k == i) continue;
                     const Interval& kt = intervals[k];
                     if(kt.deleted) continue;
-                    
+
                     //test possible collision cases
                     if(it.p >= kt.p && it.p <= kt.p + kt.l) {
                         //start of it is included in kt
@@ -149,7 +152,7 @@ public:
 
                 //factorize
                 LZSSFactor fact(it.p, it.q, it.l);
-                out_factors.push_back(fact); 
+                out_factors.push_back(fact);
 
                 //remove self
                 it.set_deleted();

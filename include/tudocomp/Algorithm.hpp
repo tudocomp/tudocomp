@@ -63,7 +63,7 @@ T create_algo(const std::string& options = "",
         std::move(fixed_static_args)
     );
 
-    auto& evaluated_options = evald_algo.options.value_as_algorithm();
+    auto& evaluated_options = evald_algo.options.as_algorithm();
 
     auto env_root = std::make_shared<EnvRoot>(std::move(evaluated_options));
     Env env(env_root, env_root->algo_value());

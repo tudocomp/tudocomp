@@ -8,6 +8,8 @@
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
+#include <tudocomp/Algorithm.hpp>
+
 
 namespace tudocomp {
 namespace lzss {
@@ -16,7 +18,7 @@ namespace lzss {
 /// Implements the "Bulldozer" selection strategy for ESAComp.
 ///
 /// TODO: Describe
-class ESACompBulldozer {
+class ESACompBulldozer: Algorithm {
 
 private:
     struct Interval {
@@ -33,10 +35,12 @@ private:
         }
     };
 
-    Env *m_env;
-
 public:
-    inline ESACompBulldozer(Env& env) : m_env(&env) {
+    using Algorithm::Algorithm;
+
+    inline static Meta meta() {
+        Meta m("esacomp_strategy", "bulldozer");
+        return m;
     }
 
         void factorize(const SuffixArray& sa,
@@ -50,7 +54,7 @@ public:
         size_t n = sa.size();
 
         //induce intervals
-        m_env->begin_stat_phase("Induce intervals");
+        env().begin_stat_phase("Induce intervals");
 
         std::vector<Interval> intervals;
         for(size_t i = 1; i < sa.size(); i++) {
@@ -60,13 +64,13 @@ public:
             }
         }
 
-        m_env->log_stat("numIntervals", intervals.size());
-        m_env->end_stat_phase();
+        env().log_stat("numIntervals", intervals.size());
+        env().end_stat_phase();
 
         //sort
-        m_env->begin_stat_phase("Sort intervals");
+        env().begin_stat_phase("Sort intervals");
         std::sort(intervals.begin(), intervals.end(), IntervalComparator());
-        m_env->end_stat_phase();
+        env().end_stat_phase();
 
         //debug output
         /*DLOG(INFO) << "Intervals:";
@@ -77,7 +81,7 @@ public:
         //marker
         sdsl::bit_vector marked(n);
 
-        m_env->begin_stat_phase("Process intervals");
+        env().begin_stat_phase("Process intervals");
 
         auto x = intervals.begin();
         while(x != intervals.end()) {
@@ -109,7 +113,7 @@ public:
             ++x;
         }
 
-        m_env->end_stat_phase();
+        env().end_stat_phase();
     }
 };
 

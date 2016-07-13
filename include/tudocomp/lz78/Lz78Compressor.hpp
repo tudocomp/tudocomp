@@ -18,12 +18,6 @@ using lz78_dictionary::CodeType;
 using lz78_dictionary::EncoderDictionary;
 using lz78_dictionary::DMS_MAX;
 
-const std::string THRESHOLD_OPTION = "threshold";
-const std::string THRESHOLD_LOG = "threshold";
-const std::string RULESET_SIZE_LOG = "factor_count";
-
-
-
 /**
  * A simple compressor that echoes the input into the coder without
  * generating any factors whatsoever.
@@ -62,6 +56,8 @@ public:
         CodeType i {dms}; // Index
         char c;
         bool rbwf {false}; // Reset Bit Width Flag
+
+        env().begin_stat_phase("Lz78 compression");
 
         while (is.get(c)) {
             uint8_t b = c;
@@ -105,12 +101,12 @@ public:
             factor_count++;
         }
 
-        //TODO: change to new stat API
-        env().log_stat(RULESET_SIZE_LOG, factor_count);
+        env().log_stat("factor_count", factor_count);
         env().log_stat("count_dictionary_reset",
                        m_dictionary_resets);
         env().log_stat("max_factor_counter",
                        m_dict_counter_at_last_reset);
+        env().end_stat_phase();
     }
 
     virtual void decompress(Input& in, Output& out) override final {

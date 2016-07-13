@@ -584,7 +584,7 @@ struct MyCompressor: public Compressor {
     inline virtual void compress(Input& input, Output& output) {
         A a(env().env_for_option("sub"));
         auto s = output.as_stream();
-        s << "ok! " << custom_data << " " << env().option("dyn").value_as_string();
+        s << "ok! " << custom_data << " " << env().option("dyn").as_string();
     }
 };
 
@@ -647,62 +647,62 @@ TEST(Algorithm, meta) {
         g(evald.options);
     };
     f("my()", [](OptionValue& options){
-        auto& my = options.value_as_algorithm();
+        auto& my = options.as_algorithm();
         ASSERT_EQ(my.name(), "my");
         {
-            auto& sub = my.arguments()["sub"].value_as_algorithm();
+            auto& sub = my.arguments()["sub"].as_algorithm();
             ASSERT_EQ(sub.name(), "sub1");
             {
-                auto& x = sub.arguments()["x"].value_as_string();
+                auto& x = sub.arguments()["x"].as_string();
                 ASSERT_EQ(x, "x");
             }
 
-            auto& dyn = my.arguments()["dyn"].value_as_string();
+            auto& dyn = my.arguments()["dyn"].as_string();
             ASSERT_EQ(dyn, "foobar");
         }
     });
     f("my(dyn = \"quxqux\")", [](OptionValue& options){
-        auto& my = options.value_as_algorithm();
+        auto& my = options.as_algorithm();
         ASSERT_EQ(my.name(), "my");
         {
-            auto& sub = my.arguments()["sub"].value_as_algorithm();
+            auto& sub = my.arguments()["sub"].as_algorithm();
             ASSERT_EQ(sub.name(), "sub1");
             {
-                auto& x = sub.arguments()["x"].value_as_string();
+                auto& x = sub.arguments()["x"].as_string();
                 ASSERT_EQ(x, "x");
             }
 
-            auto& dyn = my.arguments()["dyn"].value_as_string();
+            auto& dyn = my.arguments()["dyn"].as_string();
             ASSERT_EQ(dyn, "quxqux");
         }
     });
     f("my(sub = sub1, dyn = \"quxqux\")", [](OptionValue& options){
-        auto& my = options.value_as_algorithm();
+        auto& my = options.as_algorithm();
         ASSERT_EQ(my.name(), "my");
         {
-            auto& sub = my.arguments()["sub"].value_as_algorithm();
+            auto& sub = my.arguments()["sub"].as_algorithm();
             ASSERT_EQ(sub.name(), "sub1");
             {
-                auto& x = sub.arguments()["x"].value_as_string();
+                auto& x = sub.arguments()["x"].as_string();
                 ASSERT_EQ(x, "x");
             }
 
-            auto& dyn = my.arguments()["dyn"].value_as_string();
+            auto& dyn = my.arguments()["dyn"].as_string();
             ASSERT_EQ(dyn, "quxqux");
         }
     });
     f("my(sub = sub1(x = \"asdf\"), dyn = \"quxqux\")", [](OptionValue& options){
-        auto& my = options.value_as_algorithm();
+        auto& my = options.as_algorithm();
         ASSERT_EQ(my.name(), "my");
         {
-            auto& sub = my.arguments()["sub"].value_as_algorithm();
+            auto& sub = my.arguments()["sub"].as_algorithm();
             ASSERT_EQ(sub.name(), "sub1");
             {
-                auto& x = sub.arguments()["x"].value_as_string();
+                auto& x = sub.arguments()["x"].as_string();
                 ASSERT_EQ(x, "asdf");
             }
 
-            auto& dyn = my.arguments()["dyn"].value_as_string();
+            auto& dyn = my.arguments()["dyn"].as_string();
             ASSERT_EQ(dyn, "quxqux");
         }
     });

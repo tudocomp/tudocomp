@@ -8,11 +8,12 @@
 
 #include <tudocomp/lzss/LZSSCoderOpts.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 namespace tudocomp {
 namespace lzss {
 
-class DebugLZSSCoder {
+class DebugLZSSCoder: Algorithm {
 
 private:
     size_t m_len;
@@ -32,8 +33,8 @@ public:
     /// \param in The input text.
     /// \param out The (bitwise) output stream.
     /// \param opts Coder options determined by the compressor.
-    inline DebugLZSSCoder(Env& env, Input& in, io::OutputStream& out, LZSSCoderOpts opts)
-        : m_out(&out) {
+    inline DebugLZSSCoder(Env&& env, Input& in, io::OutputStream& out, LZSSCoderOpts opts)
+        : Algorithm(std::move(env)), m_out(&out) {
 
         m_len = in.size();
     }
@@ -92,10 +93,10 @@ public:
     inline void buffer_fact(const LZSSFactor& f) {
     }
 
-    static void decode(Env&, Input&, Output&);
+    static void decode(Env&&, Input&, Output&);
 };
 
-inline void DebugLZSSCoder::decode(Env& env, Input& input, Output& out) {
+inline void DebugLZSSCoder::decode(Env&& env, Input& input, Output& out) {
     auto in = input.as_stream();
 
     char c;

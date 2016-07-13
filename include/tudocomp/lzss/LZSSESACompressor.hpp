@@ -24,6 +24,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "esacomp");
         m.option("coder").templated<C>();
+        m.option("strategy").templated<S, ESACompMaxLCP>();
         return m;
     }
 
@@ -36,7 +37,7 @@ public:
 
     /// \copydoc
     inline virtual bool pre_factorize(Input& input) override {
-        auto env = this->env();
+        auto& env = this->env();
         auto in = input.as_view();
 
         size_t len = in.size();
@@ -59,7 +60,7 @@ public:
 
         env.begin_stat_phase("Factorize using strategy");
 
-        S interval_selector(env); //TODO: use subalgo system
+        S interval_selector(env.env_for_option("strategy"));
         interval_selector.factorize(sa, lcp, fact_min, factors);
 
         env.log_stat("threshold", fact_min);
@@ -81,6 +82,10 @@ public:
 
     /// \copydoc
     inline virtual void factorize(Input& input) override {
+    }
+
+    virtual Env create_decoder_env() override {
+        return this->env().env_for_option("coder");
     }
 };
 

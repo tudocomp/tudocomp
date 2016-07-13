@@ -9,6 +9,7 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 #include <tudocomp/util/MaxLCPSuffixList.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 namespace tudocomp {
 namespace lzss {
@@ -21,12 +22,13 @@ namespace lzss {
 ///
 /// This was the original naive approach in "Textkompression mithilfe von
 /// Enhanced Suffix Arrays" (BA thesis, Patrick Dinklage, 2015).
-class ESACompMaxLCP {
-    private:
-        Env *m_env;
-
+class ESACompMaxLCP: Algorithm {
     public:
-        inline ESACompMaxLCP(Env& env) : m_env(&env) {
+        using Algorithm::Algorithm;
+
+        inline static Meta meta() {
+            Meta m("esacomp_strategy", "max_lcp");
+            return m;
         }
 
         void factorize(const SuffixArray& sa,
@@ -37,13 +39,13 @@ class ESACompMaxLCP {
             auto isa = sa.isa;
             sdsl::int_vector<> lcp(_lcp.lcp);
 
-            m_env->begin_stat_phase("Construct MaxLCPSuffixList");
+            env().begin_stat_phase("Construct MaxLCPSuffixList");
             MaxLCPSuffixList<SuffixArray, sdsl::int_vector<>> list(sa, lcp, fact_min);
-            m_env->log_stat("entries", list.size());
-            m_env->end_stat_phase();
+            env().log_stat("entries", list.size());
+            env().end_stat_phase();
 
             //Factorize
-            m_env->begin_stat_phase("Process MaxLCPSuffixList");
+            env().begin_stat_phase("Process MaxLCPSuffixList");
 
             while(list.size() > 0) {
                 //get suffix with longest LCP
@@ -79,7 +81,7 @@ class ESACompMaxLCP {
                 }
             }
 
-            m_env->end_stat_phase();
+            env().end_stat_phase();
         }
 };
 
