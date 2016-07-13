@@ -1,9 +1,6 @@
 #ifndef _INCLUDED_LZSS_ESA_COMPRESSOR_HPP_
 #define _INCLUDED_LZSS_ESA_COMPRESSOR_HPP_
 
-#include <tudocomp/ds/SuffixArray.hpp>
-#include <tudocomp/ds/LCPArray.hpp>
-
 #include <tudocomp/sdslex/int_vector_wrapper.hpp>
 #include <tudocomp/util.h>
 
@@ -12,6 +9,9 @@
 #include <tudocomp/lzss/esacomp/ESACompBulldozer.hpp>
 #include <tudocomp/lzss/esacomp/ESACompCollider.hpp>
 #include <tudocomp/lzss/esacomp/ESACompMaxLCP.hpp>
+
+#include <tudocomp/ds/TextDS.hpp>
+
 namespace tudocomp {
 namespace lzss {
 
@@ -40,32 +40,28 @@ public:
         auto& env = this->env();
         auto in = input.as_view();
 
-        size_t len = in.size();
-        const uint8_t* in_ptr = (const uint8_t*)in.data();
-        sdslex::int_vector_wrapper wrapper(in_ptr, len);
-
-        //Construct SA
-        env.begin_stat_phase("Construct SA and ISA");
-        SuffixArray sa(in);
-        env.end_stat_phase();
-
-        //Construct LCP
-        env.begin_stat_phase("Construct LCP");
-        LCPArray lcp(in, sa);
-        env.end_stat_phase();
-
         //Use strategy to generate factors
         size_t fact_min = 3; //factor threshold
-        std::vector<LZSSFactor>& factors = LZSSCompressor<C>::m_factors;
+        std::vector<LZSSFactor>& factors = this->m_factors;
 
-        env.begin_stat_phase("Factorize using strategy");
+        //Construct SA, ISA and LCP
+        {
+            TextDS t(in);
 
-        S interval_selector(env.env_for_option("strategy"));
-        interval_selector.factorize(sa, lcp, fact_min, factors);
+            env.begin_stat_phase("Construct text ds");
+            t.require(TextDS::SA | TextDS::ISA | TextDS::LCP);
+            env.end_stat_phase();
 
-        env.log_stat("threshold", fact_min);
-        env.log_stat("factors", factors.size());
-        env.end_stat_phase();
+            //Factorize
+            env.begin_stat_phase("Factorize using strategy");
+
+            S interval_selector(env.env_for_option("strategy"));
+            interval_selector.factorize(t, fact_min, factors);
+
+            env.log_stat("threshold", fact_min);
+            env.log_stat("factors", factors.size());
+            env.end_stat_phase();
+        }
 
         //sort
         env.begin_stat_phase("Sort factors");

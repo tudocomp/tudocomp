@@ -5,13 +5,12 @@
 #include <functional>
 #include <vector>
 
-#include <tudocomp/ds/SuffixArray.hpp>
-#include <tudocomp/ds/LCPArray.hpp>
-
 #include <tudocomp/sdslex/int_vector_wrapper.hpp>
 #include <tudocomp/util.h>
 
 #include <tudocomp/lzss/LZSSCompressor.hpp>
+
+#include <tudocomp/ds/TextDS.hpp>
 
 namespace tudocomp {
 namespace lzss {
@@ -55,16 +54,16 @@ protected:
         const uint8_t* in_ptr = (const uint8_t*) in.data();
 
         //Construct SA
-        env.begin_stat_phase("Construct SA and ISA");
-        SuffixArray sa(in);
+        //Construct SA, ISA and LCP
+        TextDS t(in);
+
+        env.begin_stat_phase("Construct SA, ISA and LCP");
+        t.require(TextDS::SA | TextDS::ISA | TextDS::LCP);
         env.end_stat_phase();
 
-        auto isa = sa.isa;
-
-        //Construct LCP
-        env.begin_stat_phase("Construct LCP");
-        LCPArray lcp(in, sa);
-        env.end_stat_phase();
+        auto sa = t.require_sa();
+        auto isa = t.require_isa();
+        auto lcp = t.require_lcp();
 
         //Factorize
         env.begin_stat_phase("Factorize");

@@ -3,13 +3,12 @@
 
 #include <vector>
 
-#include <tudocomp/ds/SuffixArray.hpp>
-#include <tudocomp/ds/LCPArray.hpp>
-
 #include <tudocomp/Env.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 #include <tudocomp/util/MaxLCPSuffixList.hpp>
 #include <tudocomp/Algorithm.hpp>
+
+#include <tudocomp/ds/TextDS.hpp>
 
 namespace tudocomp {
 namespace lzss {
@@ -31,13 +30,18 @@ class ESACompMaxLCP: Algorithm {
             return m;
         }
 
-        void factorize(const SuffixArray& sa,
-                       const LCPArray& _lcp,
+        void factorize(TextDS& t,
                        size_t fact_min,
                        std::vector<LZSSFactor>& out_factors) {
 
-            auto isa = sa.isa;
+            auto sa = t.require_sa();
+            auto isa = t.require_isa();
+
+            env().begin_stat_phase("Copy LCP array");
+            auto _lcp = t.require_lcp();
             sdsl::int_vector<> lcp(_lcp.lcp);
+            t.release_lcp();
+            env().end_stat_phase();
 
             env().begin_stat_phase("Construct MaxLCPSuffixList");
             MaxLCPSuffixList<SuffixArray, sdsl::int_vector<>> list(sa, lcp, fact_min);

@@ -43,12 +43,13 @@ public:
         return m;
     }
 
-        void factorize(const SuffixArray& sa,
-                       const LCPArray& lcp,
+        void factorize(TextDS& t,
                        size_t fact_min,
                        std::vector<LZSSFactor>& out_factors) {
 
-        auto isa = sa.isa;
+        auto sa = t.require_sa();
+        auto isa = t.require_isa();
+        auto lcp = t.require_lcp();
 
         //
         size_t n = sa.size();
