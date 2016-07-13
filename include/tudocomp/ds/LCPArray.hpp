@@ -1,9 +1,15 @@
 #ifndef _INCLUDED_DS_LCP_ARRAY_HPP
 #define _INCLUDED_DS_LCP_ARRAY_HPP
 
+#include <tudocomp/util.h>
+#include <tudocomp/ds/ITextDSProvider.hpp>
 #include <tudocomp/ds/SuffixArray.hpp>
 
 namespace tudocomp {
+
+class TextDS;
+
+using io::InputView;
 
 class LCPArray {
 
@@ -11,45 +17,40 @@ public:
     typedef sdsl::int_vector<> iv_t;
 
 private:
-    sdsl::int_vector<> m_lcp;
+    iv_t m_lcp;
 
 public:
-    inline LCPArray(io::InputView& in, const SuffixArray& sa) {
-        m_lcp = sdsl::int_vector<>(sa.size(), 0, bitsFor(sa.size()));
+    inline LCPArray() {
+    }
 
-        //copy SA
-        for(size_t i = 0; i < sa.size(); i++) {
-            m_lcp[i] = sa[i];
-        }
-
-        auto text = (const uint8_t*)in.data();
-        auto isa = sa.isa;
+    inline void construct(ITextDSProvider& t) {
+        auto sa = t.require_sa();
+        auto phi = t.require_phi();
         auto n = sa.size();
 
-        //Kasai
-        for(iv_t::size_type i=0,j=0,sa_1=0,l=0; i < n; ++i) {
-            sa_1 = isa[i];
-            if (sa_1) {
-                j = m_lcp[sa_1-1];
-                if (l) --l;
-                assert(i!=j);
-                while (text[i+l]==text[j+l]) { // i+l < n and j+l < n are not necessary, since text[n]=0 and text[i]!=0 (i<n) and i!=j
-                    ++l;
-                }
-                m_lcp[ sa_1-1 ] = l;
-            } else {
-                l = 0;
-                m_lcp[ n-1 ] = 0;
+        iv_t lcp(n, 0, bitsFor(n));
+
+        //Construct LCP using PHI
+        size_t max_lcp = 0;
+        for(size_t i = 0, l = 0; i < n - 1; i++) {
+            size_t phii = phi[i];
+            while(t[i+l] == t[phii+l]) {
+                l++;
+            }
+
+            lcp[i] = l;
+            if(l) {
+                max_lcp = std::max(max_lcp, l);
+                --l;
             }
         }
 
-        for (iv_t::size_type i=m_lcp.size(); i>1; --i) {
-            m_lcp[i-1] = m_lcp[i-2];
+        //bit compress
+        m_lcp = iv_t(n, 0, bitsFor(max_lcp));
+        for(size_t i = 1; i < n; i++) {
+            m_lcp[i] = lcp[sa[i]];
         }
-        m_lcp[0] = 0;
     }
-
-    const iv_t& lcp = m_lcp;
 
     inline iv_t::value_type operator[](iv_t::size_type i) const {
         return m_lcp[i];
