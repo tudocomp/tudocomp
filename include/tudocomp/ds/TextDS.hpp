@@ -29,10 +29,10 @@ private:
     size_t m_size;
     const uint8_t* m_text;
 
-    std::shared_ptr<SuffixArray>        m_sa;
-    std::shared_ptr<InverseSuffixArray> m_isa;
-    std::shared_ptr<PhiArray>           m_phi;
-    std::shared_ptr<LCPArray>           m_lcp;
+    std::unique_ptr<SuffixArray>        m_sa;
+    std::unique_ptr<InverseSuffixArray> m_isa;
+    std::unique_ptr<PhiArray>           m_phi;
+    std::unique_ptr<LCPArray>           m_lcp;
 
 public:
     inline TextDS(const InputView& input)
@@ -65,10 +65,10 @@ public:
     /// Optionally also constructs the Inverse Suffix Array just in time.
     inline const SuffixArray& require_sa(bool with_isa) {
         if(!m_sa) {
-            m_sa = std::shared_ptr<SuffixArray>(new SuffixArray());
+            m_sa = std::unique_ptr<SuffixArray>(new SuffixArray());
 
             if(with_isa && !m_isa) {
-                m_isa = std::shared_ptr<InverseSuffixArray>(new InverseSuffixArray());
+                m_isa = std::unique_ptr<InverseSuffixArray>(new InverseSuffixArray());
                 m_sa->with_isa(
                     &*m_isa,
                     &InverseSuffixArray::construct_jit_init,
@@ -84,7 +84,7 @@ public:
     /// Requires the Phi Array to be constructed if not already present.
     virtual inline const PhiArray& require_phi() override {
         if(!m_phi) {
-            m_phi = std::shared_ptr<PhiArray>(new PhiArray());
+            m_phi = std::unique_ptr<PhiArray>(new PhiArray());
             m_phi->construct(*this);
         }
 
@@ -94,7 +94,7 @@ public:
     /// Requires the Inverse Suffix Array to be constructed if not already present.
     virtual inline const InverseSuffixArray& require_isa() override {
         if(!m_isa) {
-            m_isa = std::shared_ptr<InverseSuffixArray>(new InverseSuffixArray());
+            m_isa = std::unique_ptr<InverseSuffixArray>(new InverseSuffixArray());
             m_isa->construct(*this);
         }
 
@@ -110,7 +110,7 @@ public:
     /// Optionally consumes the Phi array for in-place construction.
     inline const LCPArray& require_lcp(bool consume_phi) {
         if(!m_lcp) {
-            m_lcp = std::shared_ptr<LCPArray>(new LCPArray());
+            m_lcp = std::unique_ptr<LCPArray>(new LCPArray());
             m_lcp->construct(*this, consume_phi);
         }
 
