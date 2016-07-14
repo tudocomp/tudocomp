@@ -5,7 +5,7 @@
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
-#include <tudocomp/util/MaxLCPSuffixList.hpp>
+#include <tudocomp/lzss/esacomp/MaxLCPSuffixList.hpp>
 #include <tudocomp/Algorithm.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
@@ -42,7 +42,7 @@ class ESACompMaxLCP: Algorithm {
             auto lcp = _lcp->data();
 
             env().begin_stat_phase("Construct MaxLCPSuffixList");
-            MaxLCPSuffixList<SuffixArray, LCPArray> list(sa, *_lcp, fact_min);
+            MaxLCPSuffixList list(sa, *_lcp, fact_min);
             env().log_stat("entries", list.size());
             env().end_stat_phase();
 

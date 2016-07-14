@@ -11,13 +11,12 @@ namespace tudocomp {
 ///
 /// Addition and removal are achieved in near-constant time.
 /// (Dinklage, 2015).
-template<typename S, typename L>
 class MaxLCPSuffixList {
 
 private:
     //data backend
-    const S* m_sa;
-    const L* m_lcp;
+    const SuffixArray* m_sa;
+    const LCPArray* m_lcp;
 
     //undefined suffix
     size_t m_undef;
@@ -53,7 +52,7 @@ private:
 
 public:
     /// Constructor
-    inline MaxLCPSuffixList(const S& sa, const L& lcp, size_t min_lcp)
+    inline MaxLCPSuffixList(const SuffixArray& sa, const LCPArray& lcp, size_t min_lcp)
         : m_sa(&sa), m_lcp(&lcp) {
 
         size_t n = sa.size();
