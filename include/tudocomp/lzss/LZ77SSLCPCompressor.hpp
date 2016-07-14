@@ -61,9 +61,9 @@ protected:
         t.require(TextDS::SA | TextDS::ISA | TextDS::LCP);
         env.end_stat_phase();
 
-        auto sa = t.require_sa();
-        auto isa = t.require_isa();
-        auto lcp = t.require_lcp();
+        auto& sa = t.require_sa();
+        auto& isa = t.require_isa();
+        auto& lcp = t.require_lcp();
 
         //Factorize
         env.begin_stat_phase("Factorize");

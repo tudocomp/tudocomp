@@ -36,7 +36,7 @@ public:
     }
 
     inline void construct(ITextDSProvider& t, bool consume_phi = false) {
-        auto sa = t.require_sa();
+        auto& sa = t.require_sa();
         auto n = sa.size();
 
         //Require Phi, then consume it and either work in-place, or
@@ -54,7 +54,7 @@ public:
 
             phi_consumed = t.release_phi();
             phi = &*phi_consumed;
-            
+
             plcp_ptr = &phi_consumed->m_phi;
         } else {
             //allocate a new int vector for the pre-LCP array

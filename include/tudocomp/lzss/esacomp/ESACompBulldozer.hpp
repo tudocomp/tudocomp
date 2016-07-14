@@ -47,9 +47,9 @@ public:
                        size_t fact_min,
                        std::vector<LZSSFactor>& out_factors) {
 
-        auto sa = t.require_sa();
-        auto isa = t.require_isa();
-        auto lcp = t.require_lcp();
+        auto& sa = t.require_sa();
+        auto& isa = t.require_isa();
+        auto& lcp = t.require_lcp();
 
         //
         size_t n = sa.size();

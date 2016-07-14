@@ -40,7 +40,7 @@ public:
     }
 
     inline void construct(ITextDSProvider& t) {
-        auto sa = t.require_sa();
+        auto& sa = t.require_sa();
         auto n = sa.size();
 
         m_phi = iv_t(n, 0, bitsFor(n));

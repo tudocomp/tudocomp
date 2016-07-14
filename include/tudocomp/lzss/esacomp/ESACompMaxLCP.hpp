@@ -34,12 +34,12 @@ class ESACompMaxLCP: Algorithm {
                        size_t fact_min,
                        std::vector<LZSSFactor>& out_factors) {
 
-            auto sa = t.require_sa();
-            auto isa = t.require_isa();
+            auto& sa = t.require_sa();
+            auto& isa = t.require_isa();
 
             t.require_lcp();
             auto _lcp = t.release_lcp();
-            auto lcp = _lcp->data();
+            auto& lcp = _lcp->data();
 
             env().begin_stat_phase("Construct MaxLCPSuffixList");
             MaxLCPSuffixList list(sa, *_lcp, fact_min);
