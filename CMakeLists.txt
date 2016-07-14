@@ -3,8 +3,16 @@ project (tudocomp)
 
 include(ExternalProject)
 
+# Select C++ standard
+if(${CYGWIN})
+    set(CMAKE_LEGACY_CYGWIN_WIN32 0)
+    set(CXX_STANDARD gnu++11)
+else()
+    set(CXX_STANDARD c++11)
+endif()
+
 # Using C++11, more warnings and debug info
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=gnu++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=${CXX_STANDARD}")
 
 # Global dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
