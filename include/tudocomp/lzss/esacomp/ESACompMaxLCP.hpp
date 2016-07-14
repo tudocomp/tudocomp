@@ -42,7 +42,7 @@ class ESACompMaxLCP: Algorithm {
             auto lcp = _lcp->data();
 
             env().begin_stat_phase("Construct MaxLCPSuffixList");
-            MaxLCPSuffixList<SuffixArray, sdsl::int_vector<>> list(sa, lcp, fact_min);
+            MaxLCPSuffixList<SuffixArray, LCPArray> list(sa, *_lcp, fact_min);
             env().log_stat("entries", list.size());
             env().end_stat_phase();
 

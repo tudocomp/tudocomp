@@ -17,9 +17,10 @@ public:
 
 private:
     iv_t m_lcp;
+    size_t m_max;
 
 public:
-    inline LCPArray() {
+    inline LCPArray() : m_max(0) {
     }
 
     inline iv_t& data() {
@@ -28,6 +29,10 @@ public:
 
     inline const iv_t& data() const {
         return m_lcp;
+    }
+
+    inline size_t max_lcp() const {
+        return m_max;
     }
 
     inline void construct(ITextDSProvider& t, bool consume_phi = false) {
@@ -59,7 +64,7 @@ public:
         iv_t& plcp = *plcp_ptr;
 
         //Construct LCP using PHI
-        size_t max_lcp = 0;
+        m_max = 0;
         for(size_t i = 0, l = 0; i < n - 1; i++) {
             size_t phii = (*phi)[i];
             while(t[i+l] == t[phii+l]) {
@@ -68,13 +73,13 @@ public:
 
             plcp[i] = l;
             if(l) {
-                max_lcp = std::max(max_lcp, l);
+                m_max = std::max(m_max, l);
                 --l;
             }
         }
 
         //bit compress
-        m_lcp = iv_t(n, 0, bitsFor(max_lcp));
+        m_lcp = iv_t(n, 0, bitsFor(m_max));
         for(size_t i = 1; i < n; i++) {
             m_lcp[i] = plcp[sa[i]];
         }

@@ -65,15 +65,7 @@ public:
         m_prev = sdsl::int_vector<>(n, m_undef, bitsFor(m_undef));
         m_next = sdsl::int_vector<>(n, m_undef, bitsFor(m_undef));
 
-        //Initialize LCP index
-        size_t max_lcp = 0;
-        for (size_t i = 0; i < lcp.size(); i++) {
-            if (lcp[i] > max_lcp) {
-                max_lcp = lcp[i];
-            }
-        }
-
-        m_lcp_index = sdsl::int_vector<>(max_lcp, m_undef, bitsFor(m_undef));
+        m_lcp_index = sdsl::int_vector<>(lcp.max_lcp(), m_undef, bitsFor(m_undef));
 
         //Initialize suffix reference map
         m_suffix_contained = sdsl::bit_vector(n, 0);
