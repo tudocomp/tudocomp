@@ -67,6 +67,7 @@ namespace io {
         };
 
         friend class InputStream;
+        friend class InputStreamInternal;
         friend class InputView;
 
         std::unique_ptr<Variant> m_data;
@@ -128,7 +129,7 @@ namespace io {
         }
     };
 
-    struct InputView {
+    class InputViewInternal {
         struct Variant {
             virtual string_ref view() = 0;
         };
@@ -163,24 +164,35 @@ namespace io {
             }
         };
 
-        std::unique_ptr<Variant> m_data;
+        std::unique_ptr<Variant> m_variant;
 
-        string_ref operator* () {
-            return m_data->view();
-        }
+        friend class InputView;
+        friend class Input;
 
-        size_t size() {
-            return m_data->view().size();
-        }
+        InputViewInternal(const InputViewInternal& other) = delete;
+        InputViewInternal() = delete;
 
-        InputView(const InputView* other) = delete;
+        InputViewInternal(InputViewInternal::Memory&& mem):
+            m_variant(std::make_unique<Memory>(std::move(mem))) {}
+        InputViewInternal(InputViewInternal::File&& s):
+            m_variant(std::make_unique<File>(std::move(s))) {}
+        InputViewInternal(InputViewInternal&& s):
+            m_variant(std::move(s.m_variant)) {}
+    };
+
+    class InputView: InputViewInternal, public View {
+        friend class Input;
+
+        InputView(InputViewInternal&& mem):
+            InputViewInternal(std::move(mem)),
+            View(m_variant->view()) {}
+    public:
+        InputView(InputView&& mem):
+            InputViewInternal(std::move(mem)),
+            View(std::move(mem)) {}
+
+        InputView(const InputView& other) = delete;
         InputView() = delete;
-
-        InputView(InputView::Memory&& mem):
-            m_data(std::make_unique<Memory>(std::move(mem))) {}
-        InputView(InputView::File&& s):
-            m_data(std::make_unique<File>(std::move(s))) {}
-
     };
 
     inline InputView Input::Memory::as_view() {
@@ -214,14 +226,14 @@ namespace io {
         return m_data->as_view();
     }
 
-    struct InputStream {
+    class InputStreamInternal {
         class Variant {
         public:
             virtual std::istream& stream() = 0;
             virtual ~Variant() {}
         };
 
-        class Memory: public InputStream::Variant {
+        class Memory: public InputStreamInternal::Variant {
             ViewStream m_stream;
 
             Input::Memory* m_offset_back_ref;
@@ -229,7 +241,7 @@ namespace io {
 
             bool m_is_empty = false;
 
-            friend class InputStream;
+            friend class InputStreamInternal;
 
         public:
             Memory(const Memory& other) = delete;
@@ -259,14 +271,14 @@ namespace io {
                 return m_stream.stream();
             }
         };
-        class File: public InputStream::Variant {
+        class File: public InputStreamInternal::Variant {
             std::string m_path;
             std::unique_ptr<std::ifstream> m_stream;
 
             Input::File* m_offset_back_ref;
             size_t m_start_pos;
 
-            friend class InputStream;
+            friend class InputStreamInternal;
         public:
             File(const File& other) = delete;
             File() = delete;
@@ -302,19 +314,36 @@ namespace io {
             }
         };
 
-        std::unique_ptr<InputStream::Variant> m_data;
+        std::unique_ptr<InputStreamInternal::Variant> m_variant;
 
-        std::istream& operator* () {
-            return m_data->stream();
-        }
+        friend class InputStream;
+        friend class Input;
 
-        InputStream(const InputStream* other) = delete;
+        InputStreamInternal(const InputStreamInternal& other) = delete;
+        InputStreamInternal() = delete;
+
+        InputStreamInternal(InputStreamInternal::Memory&& mem):
+            m_variant(std::move(std::make_unique<InputStreamInternal::Memory>(std::move(mem)))) {}
+        InputStreamInternal(InputStreamInternal::File&& f):
+            m_variant(std::move(std::make_unique<InputStreamInternal::File>(std::move(f)))) {}
+        InputStreamInternal(InputStreamInternal&& s):
+            m_variant(std::move(s.m_variant)) {}
+
+    };
+
+    class InputStream: InputStreamInternal, public std::istream {
+        friend class Input;
+
+        InputStream(InputStreamInternal&& mem):
+            InputStreamInternal(std::move(mem)),
+            std::istream(m_variant->stream().rdbuf()) {}
+    public:
+        InputStream(InputStream&& mem):
+            InputStreamInternal(std::move(mem)),
+            std::istream(mem.rdbuf()) {}
+
+        InputStream(const InputStream& other) = delete;
         InputStream() = delete;
-
-        InputStream(InputStream::Memory&& mem):
-            m_data(std::move(std::make_unique<InputStream::Memory>(std::move(mem)))) {}
-        InputStream(InputStream::File&& f):
-            m_data(std::move(std::make_unique<InputStream::File>(std::move(f)))) {}
     };
 
     inline InputStream Input::Memory::as_stream() {

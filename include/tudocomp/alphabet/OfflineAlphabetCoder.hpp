@@ -7,13 +7,16 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 #include <tudocomp/util/Counter.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 //TODO only supports 8-bit characters
 namespace tudocomp {
 
-class OfflineAlphabetCoder {
+class OfflineAlphabetCoder: Algorithm {
 
 private:
+    Env* m_env;
+
     BitOStream* m_out;
     io::InputView m_in;
 
@@ -24,10 +27,21 @@ private:
     sdsl::int_vector<> m_char2comp;
 
 public:
-    inline OfflineAlphabetCoder(Env& env, Input& input, BitOStream& out) : m_out(&out), m_in(input.as_view()) {
+    inline static Meta meta() {
+        Meta m("alpha_coder", "offline",
+            "Offline alphabet coder\n"
+            "Optimized symbol encoding using alphabet statistics"
+        );
+        return m;
+    }
+
+    inline OfflineAlphabetCoder(Env&& env, Input& input, BitOStream& out):
+        Algorithm(std::move(env)), m_out(&out), m_in(input.as_view()) {
+        this->env().begin_stat_phase("Analyze alphabet");
+
         Counter<uint8_t> counter;
 
-        for(uint8_t c : *m_in) {
+        for(uint8_t c : m_in) {
             counter.increase(c);
         }
 
@@ -44,6 +58,9 @@ public:
             m_comp2char[i] = c;
             m_char2comp[c] = i;
         }
+
+        this->env().log_stat("alphabetSize", m_sigma);
+        this->env().end_stat_phase();
     }
 
     inline ~OfflineAlphabetCoder() {

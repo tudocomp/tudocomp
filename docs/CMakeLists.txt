@@ -1,6 +1,8 @@
 # docs-main target - builds the main documentation
+find_package(LATEX COMPONENTS PDFLATEX)
 find_package(Pandoc)
-if(PANDOC_FOUND)
+
+if(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
 
     set(MAIN_LATEX_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/latex)
     set(MAIN_HTML_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/html)
@@ -19,8 +21,8 @@ if(PANDOC_FOUND)
         # copy tex framework
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/latex ${MAIN_LATEX_OUT_DIR}
         # build pdf
-        COMMAND pdflatex -synctex=1 -interaction=nonstopmode main.tex #pass 1
-        COMMAND pdflatex -synctex=1 -interaction=nonstopmode main.tex #pass 2
+        COMMAND ${PDFLATEX_COMPILER} -synctex=1 -interaction=nonstopmode main.tex #pass 1
+        COMMAND ${PDFLATEX_COMPILER} -synctex=1 -interaction=nonstopmode main.tex #pass 2
         # move it to output directory
         COMMAND ${CMAKE_COMMAND} -E rename ${MAIN_LATEX_OUT_DIR}/main.pdf ${CMAKE_CURRENT_BINARY_DIR}/Documentation.pdf
         #
@@ -28,7 +30,7 @@ if(PANDOC_FOUND)
         COMMENT "Generating main documentation" VERBATIM
     )
 
-endif(PANDOC_FOUND)
+endif(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
 
 # docs-doxygen target - builds the Doxygen documentation
 find_package(Doxygen)

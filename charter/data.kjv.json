@@ -1,0 +1,87 @@
+{
+    "title": "Compress",
+    "timeStart": 29274409,
+    "timeEnd": 29290208,
+    "memOff": 0,
+    "memPeak": 120017939,
+    "memFinal": 18087287,
+    "stats": [],
+    "sub": [
+        {
+            "title": "Construct SA",
+            "timeStart": 29274411,
+            "timeEnd": 29278003,
+            "memOff": 5504777,
+            "memPeak": 82245549,
+            "memFinal": 31650680,
+            "stats": [],
+            "sub": []
+        },
+        {
+            "title": "Construct ISA and LCP",
+            "timeStart": 29278003,
+            "timeEnd": 29282672,
+            "memOff": 37155501,
+            "memPeak": 31680136,
+            "memFinal": 31649632,
+            "stats": [],
+            "sub": []
+        },
+        {
+            "title": "Factorize using strategy",
+            "timeStart": 29282672,
+            "timeEnd": 29289839,
+            "memOff": 68805139,
+            "memPeak": 51212825,
+            "memFinal": 12582912,
+            "stats": [
+                { "key": "factors", "value": 416066 },
+                { "key": "threshold", "value": 3 }
+            ],
+            "sub": [
+                {
+                    "title": "Construct MaxLCPSuffixList",
+                    "timeStart": 29282672,
+                    "timeEnd": 29284947,
+                    "memOff": 54,
+                    "memPeak": 32368936,
+                    "memFinal": 32338432,
+                    "stats": [
+                        { "key": "entries", "value": 5489079 }
+                    ],
+                    "sub": []
+                },
+                {
+                    "title": "Process MaxLCPSuffixList",
+                    "timeStart": 29284947,
+                    "timeEnd": 29289839,
+                    "memOff": 32338482,
+                    "memPeak": 18874368,
+                    "memFinal": 12582912,
+                    "stats": [],
+                    "sub": []
+                }
+            ]
+        },
+        {
+            "title": "Sort factors",
+            "timeStart": 29289839,
+            "timeEnd": 29290021,
+            "memOff": 81388001,
+            "memPeak": 30504,
+            "memFinal": 0,
+            "stats": [],
+            "sub": []
+        },
+        {
+            "title": "Encode",
+            "timeStart": 29290021,
+            "timeEnd": 29290208,
+            "memOff": 18097159,
+            "memPeak": 39863,
+            "memFinal": 9359,
+            "stats": [],
+            "sub": []
+        }
+    ]
+}

@@ -23,16 +23,34 @@ private:
     tudocomp::io::OutputStream m_out_guard;
     tudocomp::BitOStream m_out;
     uint64_t m_factor_counter = 0;
+    bool empty = false;
 
 public:
-    inline LzwBitCoder(Env& env, Output& out)
-        : m_out_guard(out.as_stream()), m_out(*m_out_guard)
+    inline static Meta meta() {
+        return Meta("lzw_coder", "bit",
+            "Bit coder\n"
+            "Basic variable-bit-width encoding of the symbols"
+        );
+    }
+
+    inline LzwBitCoder(LzwBitCoder&& other):
+        m_out_guard(std::move(other.m_out_guard)),
+        m_out(std::move(other.m_out)),
+        m_factor_counter(other.m_factor_counter)
+    {
+        other.empty = true;
+    }
+
+    inline LzwBitCoder(Env&& env, Output& out)
+        : m_out_guard(out.as_stream()), m_out(m_out_guard)
     {
     }
 
     inline ~LzwBitCoder() {
-        m_out.flush();
-        (*m_out_guard).flush();
+        if (!empty) {
+            m_out.flush();
+            m_out_guard.flush();
+        }
     }
 
     inline void encode_fact(const Factor& entry) {
@@ -55,10 +73,8 @@ public:
     inline static void decode(Input& _inp, Output& _out,
                               CodeType dms,
                               CodeType reserve_dms) {
-        auto iguard = _inp.as_stream();
-        auto oguard = _out.as_stream();
-        auto& inp = *iguard;
-        auto& out = *oguard;
+        auto inp = _inp.as_stream();
+        auto out = _out.as_stream();
 
         bool done = false;
         BitIStream is(inp, done);

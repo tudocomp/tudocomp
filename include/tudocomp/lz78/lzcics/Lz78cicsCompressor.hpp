@@ -15,11 +15,16 @@ class Lz78cicsCompressor: public Compressor {
 public:
     using Compressor::Compressor;
 
-    inline virtual void compress(Input& in, Output& out) override final {
-        auto guard = in.as_view();
-        auto i_view = *guard;
+    inline static Meta meta() {
+        Meta m("compressor", "lz78_cics");
+        m.option("coder").templated<C, Lz78BitCoder>();
+        return m;
+    }
 
-        C coder(*m_env, out);
+    inline virtual void compress(Input& in, Output& out) override final {
+        auto i_view = in.as_view();
+
+        C coder(env().env_for_option("coder"), out);
 
         // TODO: Hack to make the cics compressor work
         // with empty input
@@ -75,7 +80,7 @@ public:
 
         auto o_guard = out.as_stream();
 
-        (*o_guard).write((const char*)&buf[0], buf.size());
+        o_guard.write((const char*)&buf[0], buf.size());
     }
 
 };

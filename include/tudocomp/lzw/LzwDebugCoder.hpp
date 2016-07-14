@@ -23,22 +23,38 @@ private:
     // TODO: Change encode_* methods to not take Output& since that inital setup
     // rather, have a single init location
     tudocomp::io::OutputStream m_out;
+    bool empty = false;
 
 public:
-    inline LzwDebugCoder(Env& env, Output& out)
+    inline static Meta meta() {
+        return Meta("lzw_coder", "debug",
+            "Debug coder\n"
+            "Human readable, comma separated stream of integers"
+        );
+    }
+
+    inline LzwDebugCoder(LzwDebugCoder&& other):
+        m_out(std::move(other.m_out))
+    {
+        other.empty = true;
+    }
+
+    inline LzwDebugCoder(Env&& env, Output& out)
         : m_out(out.as_stream())
     {
     }
 
     inline ~LzwDebugCoder() {
-        (*m_out).flush();
+        if (!empty) {
+            m_out.flush();
+        }
     }
 
     inline void encode_fact(const Factor& entry) {
         if (entry >= 32u && entry <= 127u) {
-            (*m_out) << "'" << char(uint8_t(entry)) << "',";
+            m_out << "'" << char(uint8_t(entry)) << "',";
         } else {
-            (*m_out) << uint64_t(entry) << ",";
+            m_out << uint64_t(entry) << ",";
         }
     }
 
@@ -49,10 +65,8 @@ public:
     inline static void decode(Input& _inp, Output& _out,
                               CodeType dms,
                               CodeType reserve_dms) {
-        auto iguard = _inp.as_stream();
-        auto oguard = _out.as_stream();
-        auto& inp = *iguard;
-        auto& out = *oguard;
+        auto inp = _inp.as_stream();
+        auto out = _out.as_stream();
 
         bool more = true;
         char c = '?';

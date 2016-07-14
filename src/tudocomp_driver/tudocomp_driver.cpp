@@ -90,38 +90,15 @@ int main(int argc, char** argv)
     try {
         validate_flag_combination();
 
-        std::map<std::string, const std::string> algorithm_options;
-
-        /*for (auto& os : string_args("--option")) {
-            std::vector<std::string> options;
-            bost::split(options, os, bost::is_any_of(","));
-            for (auto& o : options) {
-                std::vector<std::string> key_value;
-                bost::split(key_value, o, bost::is_any_of("="));
-                CHECK(key_value.size() == 2);
-                algorithm_options.emplace(key_value[0], key_value[1]);
-            }
-        }*/
-
-        /*if (arg_exists("--help")) {
-            show_help();
-            return 0;
-        }*/
-
-        Env algorithm_env(algorithm_options, {});
+        std::shared_ptr<EnvRoot> algorithm_env;
 
         // Set up algorithms
-        AlgorithmDb root;
-        Registry registry {&root};
-        register_algos(registry);
+        Registry& registry = REGISTRY;
 
         if (FLAGS_list) {
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
-
-            for (auto& e: registry.get_sub_algos()) {
-                e.print_to(std::cout, 0);
-            }
+            std::cout << generate_doc_string(registry);
 
             return 0;
         }
@@ -141,7 +118,9 @@ int main(int argc, char** argv)
 
         if (do_raw || do_compress) {
             algorithm_id = FLAGS_algorithm;
-            algo = select_algo_or_exit(registry, algorithm_env, algorithm_id);
+
+            algo = registry.select_algorithm_or_exit(algorithm_id);
+            algorithm_env = algo->env().root();
         }
 
         /////////////////////////////////////////////////////////////////////////
@@ -231,9 +210,10 @@ int main(int argc, char** argv)
                     CHECK(algorithm_id.find('%') == std::string::npos);
 
                     auto o_stream = out.as_stream();
-                    (*o_stream) << algorithm_id << '%';
+                    o_stream << algorithm_id << '%';
                 }
 
+                algorithm_env->restart_stats("Compress");
                 setup_time = clk::now();
 
                 algo->compress(inp, out);
@@ -247,7 +227,7 @@ int main(int argc, char** argv)
                     char c;
                     size_t sanity_size_check = 0;
                     bool err = false;
-                    while ((*i_stream).get(c)) {
+                    while (i_stream.get(c)) {
                         err = false;
                         if (sanity_size_check > 1023) {
                             err = true;
@@ -264,17 +244,21 @@ int main(int argc, char** argv)
                         exit("Input did not have an algorithm header!");
                     }
                     algorithm_id = std::move(algorithm_header);
-                    algo = select_algo_or_exit(registry, algorithm_env, algorithm_id);
+
+                    algo = registry.select_algorithm_or_exit(algorithm_id);
+                    algorithm_env = algo->env().root();
                 }
 
                 setup_time = clk::now();
 
+                algorithm_env->restart_stats("Decompress");
                 algo->decompress(inp, out);
 
                 comp_time = clk::now();
             }
         }
 
+        auto algo_stats = algorithm_env->finish_stats();
         end_time = clk::now();
 
         if (print_stats) {
@@ -330,21 +314,9 @@ int main(int argc, char** argv)
             };
 
             std::cout << "---------------\n";
-            std::cout << "Algorithm Known Options:\n";
-            for (auto& pair : algorithm_env.get_known_options()) {
-                std::cout << "  " << pair << "\n";
-            }
-            std::cout << "Algorithm Given Options:\n";
-            for (auto& pair : algorithm_env.get_options()) {
-                std::cout << "  " << pair.first << " = " << pair.second << "\n";
-            }
-
-            std::cout << "---------------\n";
             std::cout << "Algorithm Stats:\n";
-            for (auto& pair : algorithm_env.get_stats()) {
-                std::cout << "  " << pair.first << ": " << pair.second << "\n";
-            }
-
+            algo_stats.to_json(std::cout); //TODO text output
+            std::cout << "\n";
             std::cout << "---------------\n";
             print_time("startup", setup_duration);
             print_time("compression", comp_duration);

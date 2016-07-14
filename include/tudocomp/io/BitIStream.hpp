@@ -57,23 +57,23 @@ public:
         }
         return value;
     }
-    
+
     /// Read a compressed integer from the input.
     ///
     /// \param b The block width in bits (default is 7 bits).
     template<typename T = size_t>
     inline T read_compressed_int(size_t b = 7) {
-        assert(b > 0);
-        
+        DCHECK(b > 0);
+
         uint64_t value = 0;
         size_t i = 0;
-        
+
         bool has_next;
         do {
             has_next = readBit();
             value |= (readBits<size_t>(b) << (b * (i++)));
         } while(has_next);
-        
+
         return T(value);
     }
 };

@@ -109,6 +109,10 @@ fn main() {
             let s = s.replace("$", "_");
             let s = s.replace("/", "_");
             let s = s.replace("\\", "_");
+            let s = s.replace("(", "_");
+            let s = s.replace(")", "_");
+            let s = s.replace("'", "_");
+            let s = s.replace("\"", "_");
             s
         };
         let auto_file_name = escape_file_name(&auto_file_name);
@@ -200,7 +204,8 @@ fn main() {
             let inp_size = &nice_size(input.size);
 
             if out.status.success() {
-                let out_size = fs::metadata(output).unwrap().len();
+                let out_size = fs::metadata(output)
+                    .expect(&format!("error on opening {}", output)).len();
                 let comp_size = &nice_size(out_size);
                 let ratio = (out_size as f64) / (input.size as f64) * 100.0;
 

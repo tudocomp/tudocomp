@@ -10,6 +10,8 @@
 #include <tudocomp/util.h>
 #include <tudocomp/util/DecodeBuffer.hpp>
 #include <tudocomp/util/View.hpp>
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 #include "test_util.h"
 
@@ -111,16 +113,14 @@ TEST(Input, vector) {
 
     {
         Input inp = Input::from_memory(v);
-        auto guard = inp.as_view();
-        auto ref = *guard;
+        auto ref = inp.as_view();
 
         ASSERT_EQ(ref, "abc");
     }
 
     {
         Input inp = Input::from_memory(v);
-        auto guard = inp.as_stream();
-        auto& stream = *guard;
+        auto stream = inp.as_stream();
 
         std::string s;
 
@@ -135,16 +135,14 @@ TEST(Input, string_ref) {
 
     {
         Input inp = Input::from_memory(v);
-        auto guard = inp.as_view();
-        auto ref = *guard;
+        auto ref = inp.as_view();
 
         ASSERT_EQ(ref, "abc");
     }
 
     {
         Input inp = Input::from_memory(v);
-        auto guard = inp.as_stream();
-        auto& stream = *guard;
+        auto stream = inp.as_stream();
 
         std::string s;
 
@@ -163,16 +161,14 @@ TEST(Input, file) {
 
     {
         Input inp = Input::from_path(test_file_path(fn("short.txt")));
-        auto guard = inp.as_view();
-        auto ref = *guard;
+        auto ref = inp.as_view();
 
         ASSERT_EQ(ref, "abc");
     }
 
     {
         Input inp = Input::from_path(test_file_path(fn("short.txt")));
-        auto guard = inp.as_stream();
-        auto& stream = *guard;
+        auto stream = inp.as_stream();
 
         std::string s;
 
@@ -182,14 +178,48 @@ TEST(Input, file) {
     }
 }
 
+void stream_moving(Input& i) {
+    {
+        InputStream s1 = i.as_stream();
+        ASSERT_EQ(s1.get(), 'a');
+        InputStream s2(std::move(s1));
+        ASSERT_EQ(s2.get(), 'b');
+        InputStream s3(std::move(s2));
+        ASSERT_EQ(s3.get(), 'c');
+    }
+    {
+        InputStream s4 = i.as_stream();
+        ASSERT_EQ(s4.get(), 'd');
+        InputStream s5(std::move(s4));
+        ASSERT_EQ(s5.get(), 'e');
+    }
+}
+
+TEST(Input, stream_moving_vec) {
+    std::vector<uint8_t> v { 97, 98, 99, 100, 101 };
+    Input i(v);
+    stream_moving(i);
+}
+
+TEST(Input, stream_moving_mem) {
+    string_ref v { "abcde" };
+    Input i(v);
+    stream_moving(i);
+}
+
+TEST(Input, stream_moving_file) {
+    write_test_file(fn("stream_moving.txt"), "abcde");
+    Input i = Input::from_path(test_file_path(fn("stream_moving.txt")));
+    stream_moving(i);
+}
+
 TEST(Output, memory) {
     std::vector<uint8_t> vec;
 
     Output out = Output::from_memory(vec);
 
     {
-        auto guard = out.as_stream();
-        auto& stream = *guard;
+        auto stream = out.as_stream();
 
         stream << "abc";
     }
@@ -201,8 +231,7 @@ TEST(Output, file) {
     Output out = Output::from_path(test_file_path(fn("short_out.txt")), true);
 
     {
-        auto guard = out.as_stream();
-        auto& stream = *guard;
+        auto stream = out.as_stream();
 
         stream << "abc";
     }
@@ -215,8 +244,7 @@ TEST(Output, stream) {
     Output out = Output::from_stream(ss);
 
     {
-        auto guard = out.as_stream();
-        auto& stream = *guard;
+        auto stream = out.as_stream();
 
         stream << "abc";
     }
@@ -514,4 +542,168 @@ TEST(View, string_predicates) {
     ASSERT_TRUE(a.ends_with(a));
     ASSERT_TRUE(aa.starts_with(a));
     ASSERT_TRUE(aa.ends_with(a));
+}
+
+struct MySubAlgo: Algorithm {
+    MySubAlgo(Env&& e): Algorithm(std::move(e)) {}
+
+    inline static Meta meta() {
+        Meta y("sub_t", "sub1");
+        y.option("x").dynamic("x");
+        return y;
+    }
+};
+
+struct MySubAlgo2: Algorithm {
+    MySubAlgo2(Env&& e): Algorithm(std::move(e)) {}
+
+    inline static Meta meta() {
+        Meta y("sub_t", "sub2");
+        y.option("y").dynamic("y");
+        return y;
+    }
+};
+
+template<class A>
+struct MyCompressor: public Compressor {
+    inline static Meta meta() {
+        Meta y("compressor", "my");
+        y.option("sub").templated<A, MySubAlgo2>();
+        y.option("dyn").dynamic("foobar");
+        return y;
+    }
+
+    std::string custom_data;
+    MyCompressor() = delete;
+    MyCompressor(Env&& env, std::string&& s):
+        Compressor(std::move(env)),
+        custom_data(std::move(s)) {}
+
+    inline virtual void decompress(Input& input, Output& output) {}
+
+    inline virtual void compress(Input& input, Output& output) {
+        A a(env().env_for_option("sub"));
+        auto s = output.as_stream();
+        s << "ok! " << custom_data << " " << env().option("dyn").as_string();
+    }
+};
+
+TEST(Algorithm, create) {
+
+
+    auto x = create_algo<MyCompressor<MySubAlgo>>("", "test");
+
+    std::vector<uint8_t> vec;
+    Output out(vec);
+    Input inp("");
+    x.compress(inp, out);
+
+    auto s = vec_as_lossy_string(vec);
+
+    ASSERT_EQ(s, "ok! test foobar");
+
+
+}
+
+// std::cout << __FILE__ ":" << __LINE__ << "\n";
+
+TEST(Algorithm, meta) {
+    using Compressor = MyCompressor<MySubAlgo>;
+    using Compressor2 = MyCompressor<MySubAlgo2>;
+    {
+        auto x = Compressor::meta();
+        auto y = std::move(x).build_def();
+        ASSERT_EQ(y.to_string(),
+                  R"(my(sub: static sub_t = sub2(y: string = "y"), dyn: string = "foobar"))");
+    }
+    {
+        auto x = Compressor::meta();
+        auto y = std::move(x).build_ast_value();
+        ASSERT_EQ(y.to_string(),
+                  R"(my(sub: static sub_t = sub2(y: string = "y"), dyn: string = "foobar"))");
+    }
+    auto f = [](const std::string& options, std::function<void(OptionValue&)> g) {
+        auto x = Compressor::meta();
+        auto y = std::move(x).build_static_args_ast_value();;
+
+        // TODO: Test eval
+
+        eval::AlgorithmTypes types;
+        gather_types(types, {
+            Compressor::meta(),
+            Compressor2::meta()
+        });
+
+        // error case: no "" for dyn
+        ast::Parser p { options };
+
+        auto evald = eval::cl_eval(
+            p.parse_value(),
+            "compressor",
+            types,
+            std::move(y)
+        );
+
+        g(evald.options);
+    };
+    f("my()", [](OptionValue& options){
+        auto& my = options.as_algorithm();
+        ASSERT_EQ(my.name(), "my");
+        {
+            auto& sub = my.arguments()["sub"].as_algorithm();
+            ASSERT_EQ(sub.name(), "sub1");
+            {
+                auto& x = sub.arguments()["x"].as_string();
+                ASSERT_EQ(x, "x");
+            }
+
+            auto& dyn = my.arguments()["dyn"].as_string();
+            ASSERT_EQ(dyn, "foobar");
+        }
+    });
+    f("my(dyn = \"quxqux\")", [](OptionValue& options){
+        auto& my = options.as_algorithm();
+        ASSERT_EQ(my.name(), "my");
+        {
+            auto& sub = my.arguments()["sub"].as_algorithm();
+            ASSERT_EQ(sub.name(), "sub1");
+            {
+                auto& x = sub.arguments()["x"].as_string();
+                ASSERT_EQ(x, "x");
+            }
+
+            auto& dyn = my.arguments()["dyn"].as_string();
+            ASSERT_EQ(dyn, "quxqux");
+        }
+    });
+    f("my(sub = sub1, dyn = \"quxqux\")", [](OptionValue& options){
+        auto& my = options.as_algorithm();
+        ASSERT_EQ(my.name(), "my");
+        {
+            auto& sub = my.arguments()["sub"].as_algorithm();
+            ASSERT_EQ(sub.name(), "sub1");
+            {
+                auto& x = sub.arguments()["x"].as_string();
+                ASSERT_EQ(x, "x");
+            }
+
+            auto& dyn = my.arguments()["dyn"].as_string();
+            ASSERT_EQ(dyn, "quxqux");
+        }
+    });
+    f("my(sub = sub1(x = \"asdf\"), dyn = \"quxqux\")", [](OptionValue& options){
+        auto& my = options.as_algorithm();
+        ASSERT_EQ(my.name(), "my");
+        {
+            auto& sub = my.arguments()["sub"].as_algorithm();
+            ASSERT_EQ(sub.name(), "sub1");
+            {
+                auto& x = sub.arguments()["x"].as_string();
+                ASSERT_EQ(x, "asdf");
+            }
+
+            auto& dyn = my.arguments()["dyn"].as_string();
+            ASSERT_EQ(dyn, "quxqux");
+        }
+    });
 }

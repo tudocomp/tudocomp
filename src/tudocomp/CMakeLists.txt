@@ -1,13 +1,15 @@
 add_library(
     tudocomp
 
-    lz78_impl.cpp
-    lzw_impl.cpp
+    INTERFACE
 )
 
 target_link_libraries(
     tudocomp
 
+    INTERFACE
+
+    tudostat
     glog
     gflags
     sdsl

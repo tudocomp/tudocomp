@@ -2,9 +2,13 @@
 #define _INCLUDED_ESACOMP_MAX_LCP_HPP_
 
 #include <vector>
-#include <sdsl/suffix_arrays.hpp>
+
+#include <tudocomp/Env.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 #include <tudocomp/util/MaxLCPSuffixList.hpp>
+#include <tudocomp/Algorithm.hpp>
+
+#include <tudocomp/ds/TextDS.hpp>
 
 namespace tudocomp {
 namespace lzss {
@@ -17,29 +21,42 @@ namespace lzss {
 ///
 /// This was the original naive approach in "Textkompression mithilfe von
 /// Enhanced Suffix Arrays" (BA thesis, Patrick Dinklage, 2015).
-class ESACompMaxLCP {
+class ESACompMaxLCP: Algorithm {
     public:
-        inline ESACompMaxLCP() {
+        using Algorithm::Algorithm;
+
+        inline static Meta meta() {
+            Meta m("esacomp_strategy", "max_lcp");
+            return m;
         }
 
-        void factorize(const sdsl::csa_bitcompressed<>& sa,
-                       const sdsl::int_vector<>& isa,
-                       sdsl::int_vector<>& lcp,
+        void factorize(TextDS& t,
                        size_t fact_min,
                        std::vector<LZSSFactor>& out_factors) {
-            
-            MaxLCPSuffixList<sdsl::csa_bitcompressed<>, sdsl::int_vector<>> list(sa, lcp, fact_min);
+
+            auto sa = t.require_sa();
+            auto isa = t.require_isa();
+
+            t.require_lcp();
+            auto _lcp = t.release_lcp();
+            auto lcp = _lcp->data();
+
+            env().begin_stat_phase("Construct MaxLCPSuffixList");
+            MaxLCPSuffixList<SuffixArray, sdsl::int_vector<>> list(sa, lcp, fact_min);
+            env().log_stat("entries", list.size());
+            env().end_stat_phase();
 
             //Factorize
+            env().begin_stat_phase("Process MaxLCPSuffixList");
+
             while(list.size() > 0) {
                 //get suffix with longest LCP
                 size_t m = list.first();
-                
+
                 //generate factor
                 LZSSFactor fact(sa[m], sa[m-1], lcp[m]);
                 out_factors.push_back(fact);
-                //DLOG(INFO) << "Factor: (" << fact.pos << ", " << fact.src << ", " << fact.num << ")";
-                
+
                 //remove overlapped entries
                 for(size_t k = 0; k < fact.num; k++) {
                     size_t i = isa[fact.pos + k];
@@ -47,7 +64,7 @@ class ESACompMaxLCP {
                         list.remove(i);
                     }
                 }
-                
+
                 //correct intersecting entries
                 for(size_t k = 0; k < fact.num && fact.pos > k; k++) {
                     size_t s = fact.pos - k - 1;
@@ -55,7 +72,7 @@ class ESACompMaxLCP {
                     if(list.contains(i)) {
                         if(s + lcp[i] > fact.pos) {
                             list.remove(i);
-                            
+
                             size_t l = fact.pos - s;
                             lcp[i] = l;
                             if(l >= fact_min) {
@@ -65,6 +82,8 @@ class ESACompMaxLCP {
                     }
                 }
             }
+
+            env().end_stat_phase();
         }
 };
 

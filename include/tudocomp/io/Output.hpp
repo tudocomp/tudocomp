@@ -94,7 +94,7 @@ namespace io {
         inline OutputStream as_stream();
     };
 
-    struct OutputStream {
+    class OutputStreamInternal {
         class Variant {
         public:
             virtual ~Variant() {}
@@ -104,7 +104,7 @@ namespace io {
         class Memory: public Variant {
             BackInsertStream m_stream;
         public:
-            friend class OutputStream;
+            friend class OutputStreamInternal;
 
             Memory(BackInsertStream&& stream): m_stream(stream) {}
 
@@ -115,7 +115,7 @@ namespace io {
         class Stream: public Variant {
             std::ostream* m_stream;
         public:
-            friend class OutputStream;
+            friend class OutputStreamInternal;
 
             Stream(std::ostream* stream): m_stream(stream) {}
 
@@ -128,7 +128,7 @@ namespace io {
             std::unique_ptr<std::ofstream> m_stream;
 
         public:
-            friend class OutputStream;
+            friend class OutputStreamInternal;
 
             inline std::ostream& stream() override {
                 return *m_stream;
@@ -157,22 +157,37 @@ namespace io {
             }
         };
 
-        std::unique_ptr<Variant> m_data;
+        std::unique_ptr<Variant> m_variant;
 
+        friend class Output;
+        friend class OutputStream;
+
+        OutputStreamInternal(OutputStreamInternal::Memory&& mem):
+            m_variant(std::make_unique<Memory>(std::move(mem))) {}
+        OutputStreamInternal(OutputStreamInternal::File&& s):
+            m_variant(std::make_unique<File>(std::move(s))) {}
+        OutputStreamInternal(OutputStreamInternal::Stream&& s):
+            m_variant(std::make_unique<Stream>(std::move(s))) {}
+        OutputStreamInternal(OutputStreamInternal&& other):
+            m_variant(std::move(other.m_variant)) {}
+
+        OutputStreamInternal(const OutputStreamInternal& other) = delete;
+        OutputStreamInternal() = delete;
+    };
+
+    class OutputStream: OutputStreamInternal, public std::ostream {
+        friend class Output;
+
+        OutputStream(OutputStreamInternal&& mem):
+            OutputStreamInternal(std::move(mem)),
+            std::ostream(m_variant->stream().rdbuf()) {}
     public:
-        inline std::ostream& operator* () {
-            return m_data->stream();
-        }
+        OutputStream(OutputStream&& mem):
+            OutputStreamInternal(std::move(mem)),
+            std::ostream(mem.rdbuf()) {}
 
-        OutputStream(const OutputStream* other) = delete;
+        OutputStream(const OutputStream& other) = delete;
         OutputStream() = delete;
-
-        OutputStream(OutputStream::Memory&& mem):
-            m_data(std::make_unique<Memory>(std::move(mem))) {}
-        OutputStream(OutputStream::File&& s):
-            m_data(std::make_unique<File>(std::move(s))) {}
-        OutputStream(OutputStream::Stream&& s):
-            m_data(std::make_unique<Stream>(std::move(s))) {}
     };
 
     inline OutputStream Output::Memory::as_stream() {

@@ -297,6 +297,9 @@ inline bool View::ends_with(const View& x) const {
     return (x.size() <= size())
         && (substr(size() - x.size()) == x);
 }
+
+using string_ref = View;
+
 }
 
 #endif

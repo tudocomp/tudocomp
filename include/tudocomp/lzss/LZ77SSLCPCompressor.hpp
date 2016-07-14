@@ -5,14 +5,12 @@
 #include <functional>
 #include <vector>
 
-#include <sdsl/int_vector.hpp>
-#include <sdsl/suffix_arrays.hpp>
-#include <sdsl/lcp.hpp>
-
 #include <tudocomp/sdslex/int_vector_wrapper.hpp>
 #include <tudocomp/util.h>
 
 #include <tudocomp/lzss/LZSSCompressor.hpp>
+
+#include <tudocomp/ds/TextDS.hpp>
 
 namespace tudocomp {
 namespace lzss {
@@ -23,12 +21,18 @@ template<typename C>
 class LZ77SSLCPCompressor : public LZSSCompressor<C> {
 
 public:
+    inline static Meta meta() {
+        Meta m("compressor", "lz77ss_lcp", "LZ77 Factorization using LCP");
+        m.option("coder").templated<C>();
+        return m;
+    }
+
     /// Default constructor (not supported).
     inline LZ77SSLCPCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZ77SSLCPCompressor(Env& env) : LZSSCompressor<C>(env) {
-    }
+    inline LZ77SSLCPCompressor(Env&& env):
+        LZSSCompressor<C>(std::move(env)) {}
 
 protected:
     /// \copydoc
@@ -43,36 +47,29 @@ protected:
 
     /// \copydoc
     inline virtual void factorize(Input& input) override {
+        auto& env = this->env();
         auto in = input.as_view();
 
         size_t len = in.size();
-        const uint8_t* in_ptr = (const uint8_t*)(*in).data();
-        sdslex::int_vector_wrapper wrapper(in_ptr, len);
+        const uint8_t* in_ptr = (const uint8_t*) in.data();
 
         //Construct SA
-        sdsl::csa_bitcompressed<> sa;
-        sdsl::construct_im(sa, wrapper.int_vector);
+        //Construct SA, ISA and LCP
+        TextDS t(in);
 
-        //Construct ISA and LCP
-        //TODO SDSL ???
-        sdsl::int_vector<> isa(sa.size());
-        sdsl::int_vector<> lcp(sa.size());
+        env.begin_stat_phase("Construct SA, ISA and LCP");
+        t.require(TextDS::SA | TextDS::ISA | TextDS::LCP);
+        env.end_stat_phase();
 
-        for(size_t i = 0; i < sa.size(); i++) {
-            isa[sa[i]] = i;
-
-            if(i >= 2) {
-                size_t j = sa[i], k = sa[i-1];
-                while(in_ptr[j++] == in_ptr[k++]) ++lcp[i];
-            }
-        }
-
-        sdsl::util::bit_compress(isa);
-        sdsl::util::bit_compress(lcp);
+        auto sa = t.require_sa();
+        auto isa = t.require_isa();
+        auto lcp = t.require_lcp();
 
         //Factorize
+        env.begin_stat_phase("Factorize");
         size_t fact_min = 3; //factor threshold
 
+        size_t num_factors = 0;
         for(size_t i = 0; i < len;) {
             //get SA position for suffix i
             size_t h = isa[i];
@@ -108,13 +105,22 @@ protected:
             //select maximum
             size_t p = std::max(p1, p2);
             if (p >= fact_min) {
-                LZSSCompressor<C>::handle_fact(LZSSFactor(i, sa[p == p1 ? h1 : h2], p));
+                num_factors++;
+                this->handle_fact(LZSSFactor(i, sa[p == p1 ? h1 : h2], p));
                 i += p; //advance
             } else {
-                LZSSCompressor<C>::handle_sym(in_ptr[i]);
+                this->handle_sym(in_ptr[i]);
                 ++i; //advance
             }
         }
+
+        env.log_stat("threshold", fact_min);
+        env.log_stat("factors", num_factors);
+        env.end_stat_phase();
+    }
+
+    virtual Env create_decoder_env() override {
+        return this->env().env_for_option("coder");
     }
 };
 

@@ -8,140 +8,196 @@
 
 #include "test_util.h"
 #include "tudocomp_driver/registry.h"
-//#include "tudocomp_driver/AlgorithmStringParser.hpp"
+#include "tudocomp/AlgorithmStringParser.hpp"
 
 #include "tudocomp_driver_util.h"
 
 TEST(TudocompDriver, list) {
-    // Test that we got at least the amount of algorithms
-    // we had when writing this test.
+    // Test that we got at some output with --list
 
-    //TODO this test does not make any sense this way...
-    //TODO should somehow compare against registry instead
+    auto list = driver("--list");
 
-    /*
-    auto list = list::tudocomp_list();
+    std::cout << list;
 
-    ASSERT_EQ(list.header, "This build supports the following algorithms:");
+    // Check that the output is long enough to not be empty
+    ASSERT_GE(list.size(), 100u);
 
-    auto& root = list.root;
-
-    ASSERT_GE(root.algos.size(), 2u);
-
-    {
-        auto& r0 = root.algos[0];
-        ASSERT_GE(r0.subalgos.size(), 2u);
-        {
-            auto& r00 = r0.subalgos[0];
-            ASSERT_GE(r00.algos.size(), 4u);
-        }
-        {
-            auto& r01 = r0.subalgos[1];
-            ASSERT_GE(r01.algos.size(), 4u);
-        }
-    }
-    {
-        auto& r1 = root.algos[1];
-        ASSERT_GE(r1.subalgos.size(), 1u);
-        {
-            auto& r10 = r1.subalgos[0];
-            ASSERT_GE(r10.algos.size(), 1u);
-        }
-    }
-    */
 }
 
 TEST(TudocompDriver, algorithm_header) {
     std::string text = "asdfghjklöä";
     bool abort = false;
     // Without header
-    roundtrip("lz78.debug", "_header_test_0", text, true, abort);
+    roundtrip("lz78(debug)", "_header_test_0", text, true, abort);
 
     // With header
-    roundtrip("lz78.debug", "_header_test_1", text, false, abort);
+    roundtrip("lz78(debug)", "_header_test_1", text, false, abort);
 
     ASSERT_FALSE(abort);
 
     std::string text0 = read_test_file(roundtrip_comp_file_name(
-        "lz78.debug", "_header_test_0"));
+        "lz78(debug)", "_header_test_0"));
 
     ASSERT_TRUE(text0.find('(') == 0);
 
     std::string text1 = read_test_file(roundtrip_comp_file_name(
-        "lz78.debug", "_header_test_1"));
+        "lz78(debug)", "_header_test_1"));
 
-    ASSERT_TRUE(text1.find("lz78.debug%(") == 0);
+    ASSERT_TRUE(text1.find("lz78(debug)%(") == 0);
 
 }
 
-/*
-TEST(NewAlgorithmStringParser, smoketest) {
+TEST(Registry, smoketest) {
     using namespace tudocomp_driver;
-    Parser p { "foo(abc, def=ghi, jkl=mno(p, q=1))" };
+    using ast::Value;
+    using ast::Arg;
+    ast::Parser p { "foo(abc, def=ghi, x : static y = z, "
+                    "jkl=mno(p, q=\"1\"), q:r)" };
 
-    auto x = p.parse().unwrap();
+    Value a = p.parse_value();
 
-    ASSERT_EQ(x.name, "foo");
-    ASSERT_EQ(x.args.size(), 3);
-    ASSERT_EQ(x.args[0].keyword, "");
-    ASSERT_EQ(x.args[0].get<std::string>(), "abc");
-    ASSERT_EQ(x.args[1].keyword, "def");
-    ASSERT_EQ(x.args[1].get<std::string>(), "ghi");
-    ASSERT_EQ(x.args[2].keyword, "jkl");
-    ASSERT_EQ(x.args[2].get<AlgorithmSpec>().name, "mno");
-    auto y = x.args[2].get<AlgorithmSpec>().args;
-    ASSERT_EQ(y.size(), 2);
-    ASSERT_EQ(y[0].keyword, "");
-    ASSERT_EQ(y[0].get<std::string>(), "p");
-    ASSERT_EQ(y[1].keyword, "q");
-    ASSERT_EQ(y[1].get<std::string>(), "1");
+    ASSERT_TRUE(a.is_invokation());
+    ASSERT_EQ(a.invokation_name(), "foo");
+    auto& b = a.invokation_arguments();
+    ASSERT_EQ(b.size(), 5);
+
+        ASSERT_FALSE(b[0].has_keyword());
+        ASSERT_FALSE(b[0].has_type());
+        ASSERT_EQ(b[0].value().invokation_name(), "abc");
+
+        ASSERT_TRUE(b[1].has_keyword());
+        ASSERT_FALSE(b[1].has_type());
+        ASSERT_EQ(b[1].keyword(), "def");
+        ASSERT_EQ(b[1].value().invokation_name(), "ghi");
+
+        ASSERT_TRUE(b[2].has_keyword());
+        ASSERT_TRUE(b[2].has_type());
+        ASSERT_TRUE(b[2].type_is_static());
+        ASSERT_EQ(b[2].keyword(), "x");
+        ASSERT_EQ(b[2].type(), "y");
+        ASSERT_EQ(b[2].value().invokation_name(), "z");
+
+        ASSERT_TRUE(b[3].has_keyword());
+        ASSERT_FALSE(b[3].has_type());
+        ASSERT_FALSE(b[3].type_is_static());
+        ASSERT_EQ(b[3].keyword(), "jkl");
+        ASSERT_EQ(b[3].value().invokation_name(), "mno");
+
+        auto& c = b[3].value().invokation_arguments();
+        ASSERT_EQ(c.size(), 2);
+
+            ASSERT_FALSE(c[1].value().is_invokation());
+            ASSERT_EQ(c[1].value().string_value(), "1");
+
+        ASSERT_FALSE(b[4].has_keyword());
+        ASSERT_TRUE(b[4].has_type());
+        ASSERT_EQ(b[4].value().invokation_name(), "q");
+        ASSERT_EQ(b[4].type(), "r");
 }
 
-TEST(RegistryV3, test) {
+TEST(Registry, decl) {
     using namespace tudocomp_driver;
-    RegistryV3 r;
-    register2(r);
-
-    auto print = [](std::vector<AlgorithmSpecBuilder>& x, size_t iden) {
-        std::vector<std::string> cells;
-
-        for (auto& y : x) {
-            auto spec = y.m_spec.to_string();
-
-            std::stringstream where;
-            bool first = true;
-            for (auto& z : y.m_arg_ids) {
-                if (first) {
-                    where << "\n  where ";
-                } else {
-                    where << "\n        ";
-                }
-                first = false;
-                where << "`" << z.first << "` is one of [" << z.second.first << "],";
-            }
-            auto s = spec + where.str();
-            if (y.m_arg_ids.size() > 0) {
-                s = s.substr(0, s.size() - 1);
-            }
-            cells.push_back(s);
-            cells.push_back(y.m_doc);
-        }
-
-        std::cout << indent_lines(make_table(cells, 2), iden) << "\n\n";
+    ast::Parser p {
+        "foo(a: b, c: d = e, f: static g)"
     };
 
-    std::cout << "[Compression algorithms]\n";
-    print(r.m_algorithms["compressor"], 0);
+    ast::Value a = p.parse_value();
 
-    std::cout << "[Argument types]\n";
-    for (auto& x : r.m_algorithms) {
-        if (x.first == "compressor") {
-            continue;
-        }
-        std::cout << "  [" << x.first << "]\n";
-        print(x.second, 2);
-    }
+    decl::Algorithm b = decl::from_ast(std::move(a), "blub");
 
-    r.check_for_undefined_compressors();
+    ASSERT_EQ(b.name(), "foo");
+    ASSERT_EQ(b.arguments().size(), 3);
+
+    ASSERT_EQ(b.arguments()[0].name(), "a");
+    ASSERT_EQ(b.arguments()[0].type(), "b");
+    ASSERT_FALSE(b.arguments()[0].is_static());
+
+    ASSERT_EQ(b.arguments()[1].name(), "c");
+    ASSERT_EQ(b.arguments()[1].type(), "d");
+    ASSERT_TRUE(b.arguments()[1].has_default());
+    ASSERT_EQ(b.arguments()[1].default_value().invokation_name(), "e");
+    ASSERT_FALSE(b.arguments()[1].is_static());
+
+    ASSERT_EQ(b.arguments()[2].name(), "f");
+    ASSERT_EQ(b.arguments()[2].type(), "g");
+    ASSERT_TRUE(b.arguments()[2].is_static());
+
 }
-*/
+
+TEST(Registry, lookup) {
+    using namespace tudocomp_driver;
+    Registry& r = REGISTRY;
+    auto c = r.select_algorithm_or_exit("lz78(dict_size = \"100\")");
+}
+
+TEST(Registry, dynamic_options) {
+    using namespace tudocomp_driver;
+
+    Registry& r = REGISTRY;
+
+    struct MySub {
+        inline static Meta meta() {
+            Meta y("b", "x");
+            y.option("l").dynamic("zzz");
+            return y;
+        }
+    };
+    struct MyCompressor: public Compressor {
+        inline static Meta meta() {
+            Meta y("compressor", "foo");
+            y.option("a").templated<MySub>();
+            y.option("c").dynamic();
+            y.option("d").dynamic("asdf");
+            return y;
+        }
+
+        using Compressor::Compressor;
+        inline virtual void decompress(Input& input, Output& output) {}
+
+        inline virtual void compress(Input& input, Output& output) {
+            auto s = output.as_stream();
+            auto t = input.as_view();
+
+            ASSERT_EQ(t, "test");
+            s << "check";
+
+            ASSERT_TRUE(env().option("a").has_value());
+            ASSERT_TRUE(env().option("c").has_value());
+            ASSERT_TRUE(env().option("d").has_value());
+            ASSERT_FALSE(env().option("o").has_value());
+
+            ASSERT_EQ(env().option("c").as_string(), "qwerty");
+            ASSERT_EQ(env().option("d").as_string(), "asdf");
+
+            auto& a = env().option("a").as_algorithm();
+            auto& a_options = a.arguments();
+            ASSERT_EQ(a.name(), "x");
+            ASSERT_EQ(a_options["l"].as_string(), "zzz");
+        }
+    };
+
+    r.compressor<MyCompressor>();
+
+    auto c = r.select_algorithm_or_exit("foo(x, \"qwerty\")");
+    std::vector<uint8_t> data;
+    Output out(data);
+    Input inp("test");
+    c->compress(inp, out);
+
+    ASSERT_EQ(View(data), "check");
+}
+
+TEST(TudocompDriver, all_compressors_defined) {
+    using namespace tudocomp_driver;
+
+    Registry& r = REGISTRY;
+    auto s = r.check_for_undefined_compressors();
+    bool has_undefined_compressors = s.size() > 0;
+    if (has_undefined_compressors) {
+        std::stringstream ss;
+        for (auto& s2 : s) {
+            ss << "Undefined compressor: " << s2 << "\n";
+        }
+        EXPECT_FALSE(has_undefined_compressors) << ss.str();
+    }
+}
