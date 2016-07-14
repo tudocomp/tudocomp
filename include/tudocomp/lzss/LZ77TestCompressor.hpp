@@ -5,6 +5,10 @@
 #ifndef _INCLUDED_LZ77_TEST_COMPRESSOR_HPP
 #define _INCLUDED_LZ77_TEST_COMPRESSOR_HPP
 
+#ifndef SLIDING_WINDOW_SIZE
+#define SLIDING_WINDOW_SIZE 1000
+#endif
+
 #include <sdsl/int_vector.hpp>
 
 #include <tudocomp/util.h>
@@ -38,7 +42,7 @@ public:
         auto in_guard = input.as_stream();
         std::istream& in = *in_guard;
         auto out_guard = output.as_stream();
-        std::ostream& out = *out_guard;
+        BitOStream* bito = new BitOStream(*out_guard);
 
         std::stringstream input_str;
         size_t curr_pos=0, text_length, pos, len;
@@ -51,8 +55,8 @@ public:
         input_text = input_str.str();
 
         // Here we store the size of the compressed string
-        text_length = input_text.length();
-        out << text_length << ':';
+        text_length = (input_text.length());
+        bito->write_compressed_int(text_length);
 
         // Here we convert the string into compressed factors
         while(curr_pos < text_length) {
@@ -61,7 +65,7 @@ public:
             size_t iter_pos = 1;
 
             // Here we check for the longest match in the string             
-            while(curr_pos >= iter_pos) {
+            while(curr_pos >= iter_pos && iter_pos <= SLIDING_WINDOW_SIZE) {
                 bool searchFlag = false;
                 size_t iter_len = 0, i = 0;
 
@@ -101,70 +105,51 @@ public:
             }
 
             // Here we output the current factor
-            out << "(" << pos << "," << len << ",";
+            bito->write_compressed_int(pos);
+            bito->write_compressed_int(len);
 
             // The $ character indicates the end of the string
             if(curr_pos < text_length) {
-                out << input_text[curr_pos] << ")";
+                bito->write(input_text[curr_pos], 8);
                 curr_pos++;
             } else {
-                out << "$" << ")";
+                bito->write('$', 8);
             }
         }
     }
 
     /// Decompress the input into an output
     virtual void decompress(Input& input, Output& output) override {
-        char c, nextChar='\0';
+        bool done = false;
 
         auto in_guard = input.as_stream();
-        std::istream& in = *in_guard;
         auto out_guard = output.as_stream();
         std::ostream& out = *out_guard;
+        BitIStream* biti = new BitIStream(*in_guard, done);
 
         std::stringstream total_len_str;
-        size_t curr_pos=0, total_len;
+        size_t curr_pos=0, total_len, pos, len;
 
         // Here we get the length of the original string from the compressed string
-        // and use it to declare a vector of the correct size to hold the result
-        while(in.get(c) && c != ':') {
-            total_len_str << c;
-        }
-        total_len_str >> total_len;
+        // and use it to declare a vector of the correct size to hold the result        
+        total_len = biti->read_compressed_int<size_t>();
         sdsl::int_vector<8> text = sdsl::int_vector<8>(total_len, 0);
 
         // Here we start moving through each of the factors in the compressed string
-        while(in.get(c) && nextChar != '$') {
-            size_t pos, len;
-            std::stringstream pos_str, len_str;
-
-            while(in.get(c) && c != ',') {
-                pos_str << c;
+        while(total_len > 0) {
+            pos = biti->read_compressed_int<size_t>();
+            len = biti->read_compressed_int<size_t>();
+            while(len != 0) {
+                text[curr_pos] = text[curr_pos-pos];
+                curr_pos++;
+                total_len--;
+                len--;
             }
-            while(in.get(c) && c != ',') {
-                len_str << c;
+            if (total_len > 0) {
+                text[curr_pos] = biti->readBits<char>(8);
+                curr_pos++;
+                total_len--;
             }
-            pos_str >> pos;
-            len_str >> len;
-
-            // Factors which are not symbols get decompressed
-            if(len != 0) {
-                while(len != 0) {
-                    text[curr_pos] = text[curr_pos-pos];
-                    curr_pos++;
-                    len--;
-                }
-            } 
-
-            // The next character is added to the text, unless we have reached the end
-            in.get(c);
-            nextChar = c;
-            if(nextChar != '$') {
-                text[curr_pos] = uint8_t(c);
-                curr_pos++;                
-            }
-            in.get(c);
-
         }
 
         // Here we write the output of the decompressed string

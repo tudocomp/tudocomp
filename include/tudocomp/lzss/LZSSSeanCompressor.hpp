@@ -5,6 +5,10 @@
 #ifndef _INCLUDED_LZSS_SEAN_COMPRESSOR_HPP
 #define _INCLUDED_LZSS_SEAN_COMPRESSOR_HPP
 
+#ifndef SLIDING_WINDOW_SIZE
+#define SLIDING_WINDOW_SIZE 1000
+#endif
+
 #include <sdsl/int_vector.hpp>
 
 #include <tudocomp/util.h>
@@ -17,7 +21,6 @@ namespace tudocomp {
 namespace lzss {
 
 // const std::string WINDOW_OPTION = "lzss.window";
-const size_t SLIDING_WINDOW_SIZE = 1000;
 
 /// Computes the LZ77 factorization of the input
 class LZSSSeanCompressor : public Compressor {
@@ -44,7 +47,7 @@ public:
         BitOStream* bito = new BitOStream(*out_guard);
 
         std::stringstream input_str;
-        size_t curr_pos=0, text_length, pos, len, iter_pos_limit = SLIDING_WINDOW_SIZE;
+        size_t curr_pos=0, text_length, pos, len;
 
         // Here we grab the input text and store it in input_text
         while(in.get(c) && c != '\0') {
@@ -64,7 +67,7 @@ public:
             size_t iter_pos = 1;
 
             // Here we check for the longest match in the string             
-            while(curr_pos >= iter_pos && iter_pos <= iter_pos_limit) {
+            while(curr_pos >= iter_pos && iter_pos <= SLIDING_WINDOW_SIZE) {
             // while(curr_pos >= iter_pos) {                
                 bool searchFlag = false;
                 size_t iter_len = 0, i = 0;
@@ -127,7 +130,6 @@ public:
         bool factor = false;
 
         auto in_guard = input.as_stream();
-        // std::istream& in = *in_guard;
         auto out_guard = output.as_stream();
         std::ostream& out = *out_guard;
         BitIStream* biti = new BitIStream(*in_guard, done);
