@@ -157,7 +157,7 @@ public:
 
     /// Logs a statistic
     template<class T>
-    inline void log_stat(const std::string& name, const T value) {
+    inline void log_stat(const std::string& name, const T& value) {
         DLOG(INFO) << "stat: " << name << " = " << value;
         stat_current().add_stat(name, value);
     }
@@ -237,7 +237,7 @@ public:
     /// \param name The name of the statistic.
     /// \param value The value of the statistic as a string.
     template<class T>
-    inline void log_stat(const std::string& name, const T value) {
+    inline void log_stat(const std::string& name, const T& value) {
         m_root->log_stat(name, value);
     };
 };
