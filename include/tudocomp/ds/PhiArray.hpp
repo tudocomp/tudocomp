@@ -31,7 +31,7 @@ public:
         return m_phi.size();
     }
 
-    void construct(ITextDSProvider& t) {
+    inline void construct(ITextDSProvider& t) {
         auto sa = t.require_sa();
         auto n = sa.size();
 

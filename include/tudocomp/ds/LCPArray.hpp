@@ -32,6 +32,7 @@ public:
         iv_t lcp(n, 0, bitsFor(n));
 
         //Construct LCP using PHI
+        //TODO allow in-place construction consuming Phi
         size_t max_lcp = 0;
         for(size_t i = 0, l = 0; i < n - 1; i++) {
             size_t phii = phi[i];

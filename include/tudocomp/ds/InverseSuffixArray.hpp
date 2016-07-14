@@ -31,7 +31,7 @@ public:
         return m_isa.size();
     }
 
-    void construct(ITextDSProvider& t) {
+    inline void construct(ITextDSProvider& t) {
         auto sa = t.require_sa();
         auto n = sa.size();
 
@@ -39,6 +39,16 @@ public:
         for(size_t i = 0; i < n; i++) {
             m_isa[sa[i]] = i;
         }
+    }
+
+    // Initializing callback for just-in-time construction
+    static inline void construct_jit_init(void *isa, size_t n) {
+        ((InverseSuffixArray*)isa)->m_isa = iv_t(n, 0, bitsFor(n));
+    }
+
+    // Just-in-time construction callback
+    static inline void construct_jit(void *isa, size_t i, size_t v) {
+        ((InverseSuffixArray*)isa)->m_isa[v] = i;
     }
 };
 
