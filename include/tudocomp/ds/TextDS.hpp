@@ -70,7 +70,7 @@ public:
             if(with_isa && !m_isa) {
                 m_isa = std::unique_ptr<InverseSuffixArray>(new InverseSuffixArray());
                 m_sa->with_isa(
-                    &*m_isa,
+                    *m_isa,
                     &InverseSuffixArray::construct_jit_init,
                     &InverseSuffixArray::construct_jit);
             }

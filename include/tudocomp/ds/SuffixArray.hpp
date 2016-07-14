@@ -16,17 +16,21 @@ namespace tudocomp {
 
 using io::InputView;
 
+class InverseSuffixArray;
 class SuffixArray {
 
 public:
     typedef sdsl::int_vector<> iv_t;
 
+    typedef void (*isa_jit_init_t)(InverseSuffixArray&, size_t);
+    typedef void (*isa_jit_t)(InverseSuffixArray&, size_t, size_t);
+
 private:
     iv_t m_sa;
 
-    void* m_isa;
-    ITextDSProvider::jit_init_t m_isa_init;
-    ITextDSProvider::jit_t      m_isa_jit;
+    InverseSuffixArray* m_isa;
+    isa_jit_init_t m_isa_init;
+    isa_jit_t      m_isa_jit;
 
 public:
     inline SuffixArray() : m_isa(nullptr) {
@@ -42,8 +46,11 @@ public:
         return m_sa.size();
     }
 
-    inline void with_isa(void* isa, ITextDSProvider::jit_init_t isa_init, ITextDSProvider::jit_t isa_jit) {
-        m_isa = isa;
+    inline void with_isa(InverseSuffixArray& isa,
+        isa_jit_init_t isa_init,
+        isa_jit_t isa_jit)
+    {
+        m_isa = &isa;
         m_isa_init = isa_init;
         m_isa_jit  = isa_jit;
     }
@@ -65,7 +72,7 @@ public:
 
         //Just-in-time initialization of ISA
         if(m_isa) DLOG(INFO) << "construct ISA just in time";
-        if(m_isa) m_isa_init(m_isa, len + 1);
+        if(m_isa) m_isa_init(*m_isa, len + 1);
 
         //Bit compress using SDSL
         size_t w = bitsFor(len + 1);
@@ -75,7 +82,7 @@ public:
             size_t s = sa[i];
 
             m_sa[i]  = s;
-            if(m_isa) m_isa_jit(m_isa, i, s); //JIT construction of ISA
+            if(m_isa) m_isa_jit(*m_isa, i, s); //JIT construction of ISA
         }
 
         delete[] sa;
