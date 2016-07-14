@@ -118,23 +118,23 @@ public:
     }
 
     /// Releases the suffix array if present.
-    virtual inline void release_sa() override {
-        m_sa.reset();
+    virtual inline std::unique_ptr<SuffixArray> release_sa() override {
+        return std::move(m_sa);
     }
 
     /// Releases the inverse suffix array array if present.
-    virtual inline void release_isa() override {
-        m_isa.reset();
+    virtual inline std::unique_ptr<InverseSuffixArray> release_isa() override {
+        return std::move(m_isa);
     }
 
     /// Releases the Phi array if present.
-    virtual inline void release_phi() override {
-        m_phi.reset();
+    virtual inline std::unique_ptr<PhiArray> release_phi() override {
+        return std::move(m_phi);
     }
 
     /// Releases the LCP array if present.
-    virtual inline void release_lcp() override {
-        m_lcp.reset();
+    virtual inline std::unique_ptr<LCPArray> release_lcp() override {
+        return std::move(m_lcp);
     }
 
     /// Accesses the input text at position i.

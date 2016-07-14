@@ -26,17 +26,28 @@ public:
 
     inline void construct(ITextDSProvider& t, bool consume_phi = false) {
         auto sa = t.require_sa();
-        auto phi = t.require_phi();
         auto n = sa.size();
 
+        //Require Phi, then consume it and either work in-place, or
+        //create a new vector for the pre-LCP array.
+        t.require_phi();
+
+        std::unique_ptr<PhiArray> phi_consumed;
+        const PhiArray* phi;
+
         iv_t *plcp_ptr;
-        //iv_t plcp(n, 0, bitsFor(n));
+
         if(consume_phi) {
-            //use the Phi array to construct the pre-LCP array in-place
+            //consume the Phi array to construct the pre-LCP array in-place
             DLOG(INFO) << "construct plcp in-place";
-            plcp_ptr = &phi.m_phi;
+
+            phi_consumed = t.release_phi();
+            phi = &*phi_consumed;
+            
+            plcp_ptr = &phi_consumed->m_phi;
         } else {
             //allocate a new int vector for the pre-LCP array
+            phi = &t.require_phi();
             plcp_ptr = new iv_t(n, 0, bitsFor(n));
         }
         iv_t& plcp = *plcp_ptr;
@@ -44,7 +55,7 @@ public:
         //Construct LCP using PHI
         size_t max_lcp = 0;
         for(size_t i = 0, l = 0; i < n - 1; i++) {
-            size_t phii = phi[i];
+            size_t phii = (*phi)[i];
             while(t[i+l] == t[phii+l]) {
                 l++;
             }
@@ -63,9 +74,7 @@ public:
         }
 
         //post steps
-        if(consume_phi) {
-            t.release_phi(); //Phi has been consumed
-        } else {
+        if(!phi_consumed) {
             delete plcp_ptr;
         }
     }
