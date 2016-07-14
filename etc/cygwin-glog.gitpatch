@@ -1,0 +1,27 @@
+From e9b46308e3891fbb8563d7b3d156ab10558ee70a Mon Sep 17 00:00:00 2001
+From: Patrick Dinklage <pdinklag@gmail.com>
+Date: Thu, 14 Jul 2016 21:28:43 +0200
+Subject: [PATCH] Fix for Cygwin build
+
+---
+ src/utilities.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/utilities.h b/src/utilities.h
+index 5f79968..108f343 100644
+--- a/src/utilities.h
++++ b/src/utilities.h
+@@ -36,8 +36,8 @@
+ 
+ #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+ # define OS_WINDOWS
+-#elif defined(__CYGWIN__) || defined(__CYGWIN32__)
+-# define OS_CYGWIN
++//#elif defined(__CYGWIN__) || defined(__CYGWIN32__)
++//# define OS_CYGWIN
+ #elif defined(linux) || defined(__linux) || defined(__linux__)
+ # define OS_LINUX
+ #elif defined(macintosh) || defined(__APPLE__) || defined(__APPLE_CC__)
+-- 
+2.8.2
+
