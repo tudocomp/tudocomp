@@ -15,9 +15,9 @@ public:
         ulong start_time;
         ulong end_time;
 
-        size_t mem_off;
-        size_t mem_peak;
-        size_t mem_final;
+        ssize_t mem_off;
+        ssize_t mem_peak;
+        ssize_t mem_final;
     };
 
     #define NULL_PHASE Phase{0, 0, 0, 0}

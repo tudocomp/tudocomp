@@ -30,9 +30,9 @@ namespace malloc_count {
 
         ulong time_start;
         ulong time_end;
-        size_t mem_off;
-        size_t mem_current;
-        size_t mem_peak;
+        ssize_t mem_off;
+        ssize_t mem_current;
+        ssize_t mem_peak;
     };
 
     struct block_header_t {
