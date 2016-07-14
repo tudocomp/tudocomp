@@ -71,11 +71,11 @@ void free(void* ptr) {
 
     auto block = (block_header_t*)((char*)ptr - sizeof(block_header_t));
     if(block->magic == MEMBLOCK_MAGIC) {
-        if(!paused && pcur >= 0 && block->phase_id >= pstack[0].id) {
+        if(!paused && pcur >= 0 /*&& block->phase_id >= pstack[0].id*/) {
             for(int i = 0; i <= pcur; i++) {
-                if(block->phase_id >= pstack[i].id) {
+                //if(block->phase_id >= pstack[i].id) {
                     pstack[i].mem_current -= block->size;
-                }
+                //}
             }
         }
 
