@@ -36,7 +36,13 @@ public:
     inline SuffixArray() : m_isa(nullptr) {
     }
 
-    const iv_t& sa = m_sa;
+    inline iv_t& data() {
+        return m_sa;
+    }
+
+    inline const iv_t& data() const {
+        return m_sa;
+    }
 
     inline iv_t::value_type operator[](iv_t::size_type i) const {
         return m_sa[i];

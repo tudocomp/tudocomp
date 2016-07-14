@@ -23,7 +23,13 @@ public:
     inline PhiArray() {
     }
 
-    const iv_t& phi = m_phi;
+    inline iv_t& data() {
+        return m_phi;
+    }
+
+    inline const iv_t& data() const {
+        return m_phi;
+    }
 
     inline iv_t::value_type operator[](iv_t::size_type i) const {
         return m_phi[i];

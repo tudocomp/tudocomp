@@ -37,11 +37,9 @@ class ESACompMaxLCP: Algorithm {
             auto sa = t.require_sa();
             auto isa = t.require_isa();
 
-            env().begin_stat_phase("Copy LCP array");
-            auto _lcp = t.require_lcp();
-            sdsl::int_vector<> lcp(_lcp.lcp);
-            t.release_lcp();
-            env().end_stat_phase();
+            t.require_lcp();
+            auto _lcp = t.release_lcp();
+            auto lcp = _lcp->data();
 
             env().begin_stat_phase("Construct MaxLCPSuffixList");
             MaxLCPSuffixList<SuffixArray, sdsl::int_vector<>> list(sa, lcp, fact_min);

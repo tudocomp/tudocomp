@@ -22,7 +22,13 @@ public:
     inline LCPArray() {
     }
 
-    const iv_t& lcp = m_lcp;
+    inline iv_t& data() {
+        return m_lcp;
+    }
+
+    inline const iv_t& data() const {
+        return m_lcp;
+    }
 
     inline void construct(ITextDSProvider& t, bool consume_phi = false) {
         auto sa = t.require_sa();

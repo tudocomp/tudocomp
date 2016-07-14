@@ -21,7 +21,13 @@ public:
     inline InverseSuffixArray() {
     }
 
-    const iv_t& isa = m_isa;
+    inline iv_t& data() {
+        return m_isa;
+    }
+
+    inline const iv_t& data() const {
+        return m_isa;
+    }
 
     inline iv_t::value_type operator[](iv_t::size_type i) const {
         return m_isa[i];
