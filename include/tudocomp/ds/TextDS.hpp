@@ -47,7 +47,7 @@ public:
         if(flags & SA) require_sa(flags & ISA);
         if(flags & ISA) require_isa();
         if(flags & Phi) require_phi();
-        if(flags & LCP) require_lcp();
+        if(flags & LCP) require_lcp(!(flags & Phi));
 
         //Step 2: release unwanted (may have been constructed beforehand)
         if(!(flags & SA)) release_sa();
@@ -103,31 +103,37 @@ public:
 
     /// Requires the LCP Array to be constructed if not already present.
     virtual inline const LCPArray& require_lcp() override {
+        return require_lcp(false);
+    }
+    
+    /// Requires the Suffix Array to be constructed if not already present.
+    /// Optionally consumes the Phi array for in-place construction.
+    inline const LCPArray& require_lcp(bool consume_phi) {
         if(!m_lcp) {
             m_lcp = std::shared_ptr<LCPArray>(new LCPArray());
-            m_lcp->construct(*this);
+            m_lcp->construct(*this, consume_phi);
         }
 
         return *m_lcp;
     }
 
     /// Releases the suffix array if present.
-    inline void release_sa() {
+    virtual inline void release_sa() override {
         m_sa.reset();
     }
 
     /// Releases the inverse suffix array array if present.
-    inline void release_isa() {
+    virtual inline void release_isa() override {
         m_isa.reset();
     }
 
     /// Releases the Phi array if present.
-    inline void release_phi() {
+    virtual inline void release_phi() override {
         m_phi.reset();
     }
 
     /// Releases the LCP array if present.
-    inline void release_lcp() {
+    virtual inline void release_lcp() override {
         m_lcp.reset();
     }
 

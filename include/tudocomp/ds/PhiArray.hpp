@@ -11,6 +11,8 @@ using io::InputView;
 
 class PhiArray {
 
+friend class LCPArray;
+
 public:
     typedef sdsl::int_vector<> iv_t;
 
