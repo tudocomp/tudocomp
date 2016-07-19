@@ -48,7 +48,6 @@ public:
                        std::vector<LZSSFactor>& out_factors) {
 
         auto& sa = t.require_sa();
-        auto& isa = t.require_isa();
         auto& lcp = t.require_lcp();
 
         //
