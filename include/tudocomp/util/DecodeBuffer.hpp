@@ -21,7 +21,7 @@ private:
     std::shared_ptr<C> m_cb_strategy;
 
     size_t m_len;
-    sdsl::int_vector<8> m_text;
+    uint8_t* m_text;
     sdsl::bit_vector m_decoded;
 
     size_t m_pos;
@@ -30,22 +30,23 @@ public:
     DecodeBuffer(size_t len)
         : m_len(len), m_pos(0) {
 
-        m_text = sdsl::int_vector<8>(len, 0);
+        m_text = new uint8_t[len];
         m_decoded = sdsl::bit_vector(len, 0);
 
         m_cb_strategy = std::shared_ptr<C>(new C(len));
     }
 
+    ~DecodeBuffer() {
+        delete[] m_text;
+    }
+
     inline void decode(size_t pos, uint8_t sym) {
-        DCHECK(pos < m_len);
+        do {
+            DCHECK(pos < m_len);
 
-        m_text[pos] = sym;
-        m_decoded[pos] = 1;
-
-        size_t waiting_pos;
-        while(m_cb_strategy->next_waiting_for(pos, waiting_pos)) {
-            decode(waiting_pos, sym); //recursion!
-        }
+            m_text[pos] = sym;
+            m_decoded[pos] = 1;
+        } while(m_cb_strategy->next_waiting_for(pos, pos));
     }
 
     inline void decode(uint8_t sym) {
@@ -60,6 +61,7 @@ public:
             if(m_decoded[src]) {
                 decode(pos, m_text[src]);
             } else {
+                //DLOG(INFO) << "wait: " << pos << " for " << src;
                 m_cb_strategy->wait(pos, src);
             }
 
@@ -76,12 +78,12 @@ public:
 
     /// Write the current state of the decode buffer into an ostream.
     inline void write_to(std::ostream& out) const {
-        out.write((const char*)m_text.data(), m_text.size());
+        out.write((const char*)m_text, m_len);
     }
 
     /// Return the expected size of the decoded text.
     inline size_t size() const {
-        return m_text.size();
+        return m_len;
     }
 };
 
