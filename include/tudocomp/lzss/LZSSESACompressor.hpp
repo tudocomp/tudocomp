@@ -8,6 +8,7 @@
 
 #include <tudocomp/lzss/esacomp/ESACompBulldozer.hpp>
 #include <tudocomp/lzss/esacomp/ESACompMaxLCP.hpp>
+#include <tudocomp/lzss/esacomp/ESACompNaive.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 
