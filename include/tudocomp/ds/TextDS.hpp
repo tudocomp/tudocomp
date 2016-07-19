@@ -1,6 +1,9 @@
 #ifndef _INCLUDED_DS_TEXTDS_HPP
 #define _INCLUDED_DS_TEXTDS_HPP
 
+#include <cmath>
+#include <ostream>
+
 #include <sdsl/int_vector.hpp>
 
 #include <tudocomp/ds/ITextDSProvider.hpp>
@@ -105,7 +108,7 @@ public:
     virtual inline const LCPArray& require_lcp() override {
         return require_lcp(false);
     }
-    
+
     /// Requires the Suffix Array to be constructed if not already present.
     /// Optionally consumes the Phi array for in-place construction.
     inline const LCPArray& require_lcp(bool consume_phi) {
@@ -150,6 +153,40 @@ public:
     /// Returns the size of the input text.
     virtual inline size_t size() const override {
         return m_size;
+    }
+
+    /// Prints the constructed tables.
+    virtual inline void print(std::ostream& out, size_t base = 0) {
+        size_t w = std::max(6UL, (size_t)std::log10((double)m_size) + 1);
+        out << std::setfill(' ');
+
+        //Heading
+        out << std::setw(w) << "i" << " | ";
+        if(m_sa) out << std::setw(w) << "SA[i]" << " | ";
+        if(m_isa) out << std::setw(w) << "ISA[i]" << " | ";
+        if(m_phi) out << std::setw(w) << "Phi[i]" << " | ";
+        if(m_lcp) out << std::setw(w) << "LCP[i]" << " | ";
+        out << std::endl;
+
+        //Separator
+        out << std::setfill('-');
+        out << std::setw(w) << "" << "-|-";
+        if(m_sa) out << std::setw(w) << "" << "-|-";
+        if(m_isa) out << std::setw(w) << "" << "-|-";
+        if(m_phi) out << std::setw(w) << "" << "-|-";
+        if(m_lcp) out << std::setw(w) << "" << "-|-";
+        out << std::endl;
+
+        //Body
+        out << std::setfill(' ');
+        for(size_t i = 0; i < m_size + 1; i++) {
+            out << std::setw(w) << (i + base) << " | ";
+            if(m_sa) out << std::setw(w) << ((*m_sa)[i] + base) << " | ";
+            if(m_isa) out << std::setw(w) << ((*m_isa)[i] + base) << " | ";
+            if(m_phi) out << std::setw(w) << ((*m_phi)[i] + base) << " | ";
+            if(m_lcp) out << std::setw(w) << (*m_lcp)[i] << " | ";
+            out << std::endl;
+        }
     }
 };
 
