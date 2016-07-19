@@ -24,6 +24,7 @@ public:
         Meta m("compressor", "esacomp");
         m.option("coder").templated<C>();
         m.option("strategy").templated<S, ESACompMaxLCP>();
+        m.option("threshold").dynamic("6");
         return m;
     }
 
@@ -40,7 +41,8 @@ public:
         auto in = input.as_view();
 
         //Use strategy to generate factors
-        size_t fact_min = 3; //factor threshold
+        size_t fact_min = env.option("threshold").as_integer(); //factor threshold
+        DLOG(INFO) << "fact_min = " << fact_min;
         std::vector<LZSSFactor>& factors = this->m_factors;
 
         //Construct SA, ISA and LCP
