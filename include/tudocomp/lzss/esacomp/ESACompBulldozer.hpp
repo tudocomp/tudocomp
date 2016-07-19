@@ -79,9 +79,8 @@ public:
         }*/
 
         //marker
-        sdsl::bit_vector marked(n);
-
         env().begin_stat_phase("Process intervals");
+        sdsl::bit_vector marked(n);
 
         auto x = intervals.begin();
         while(x != intervals.end()) {
