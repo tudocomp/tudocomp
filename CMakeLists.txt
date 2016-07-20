@@ -1,5 +1,9 @@
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 3.0.2)
 project (tudocomp)
+
+if(NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "4.9")
+    message(FATAL_ERROR "g++ version 4.9 or greater required!")
+endif()
 
 include(ExternalProject)
 
