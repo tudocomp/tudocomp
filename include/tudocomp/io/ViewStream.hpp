@@ -17,6 +17,15 @@ class ViewStream {
             setg(begin, begin, begin + size);
         }
 
+        // TODO: Figure out if there are actual ways to move the streambuf
+        // even under older compiler versions.
+
+        inline membuf(const membuf& other):
+            membuf(other.eback(), other.egptr() - other.eback()) {}
+
+        inline membuf(membuf&& other):
+            membuf(other.eback(), other.egptr() - other.eback()) {}
+
         virtual inline std::streampos seekpos(std::streampos sp,
                                               std::ios_base::openmode which) override
         {
