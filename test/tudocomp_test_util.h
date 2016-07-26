@@ -13,7 +13,6 @@ using tudocomp::Env;
 using tudocomp::Input;
 using tudocomp::Output;
 using tudocomp::create_algo;
-using tudocomp::EnvWrapper;
 
 namespace test {
     template<class C>

@@ -23,17 +23,6 @@ public:
     inline Env& env() { return m_env; }
 };
 
-template<class T>
-class EnvWrapper: EnvRoot, public T {
-public:
-    EnvWrapper(EnvRoot&& env_root, T&& t):
-        EnvRoot(std::move(env_root)),
-        T(std::move(t)) {}
-    EnvWrapper(EnvWrapper<T>&& other):
-        EnvRoot(std::move(static_cast<EnvRoot&>(other))),
-        T(std::move(static_cast<T&>(other))) {}
-};
-
 struct Meta;
 inline void gather_types(eval::AlgorithmTypes& target, std::vector<Meta>&& metas);
 
