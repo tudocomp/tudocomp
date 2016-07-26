@@ -29,9 +29,7 @@ inline void gather_types(eval::AlgorithmTypes& target, std::vector<Meta>&& metas
 /// meta: the AlgorithmMeta of the algorithm to create
 /// options: optional options to set / overwrite from default
 template<class T, class... Args>
-T create_algo(const std::string& options = "",
-                          Args&&... args) {
-
+T create_algo(const std::string& options, Args&&... args) {
     auto meta = T::meta();
     auto fixed_static_args = std::move(meta).build_static_args_ast_value();
 
@@ -58,6 +56,13 @@ T create_algo(const std::string& options = "",
     Env env(env_root, env_root->algo_value());
 
     return T(std::move(env), std::forward<Args>(args)...);
+}
+
+/// meta: the AlgorithmMeta of the algorithm to create
+/// options: optional options to set / overwrite from default
+template<class T>
+T create_algo() {
+    return create_algo<T>("");
 }
 
 class Meta {
