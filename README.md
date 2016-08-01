@@ -30,11 +30,8 @@ the dependencies are downloaded directly, including:
 
 # Compiling and running unit tests
 
-> NOTE: This repo is only tested on a linux system, and will most likely
-> not work on windows or OS X.
-
-This repository uses cmake for its buildsystem, for more information about
-all its functionality refer to the official cmake docs.
+The framework is tested under the following systems
+- Debian Linux 8 (Jessie), g++ 4.9.2, cmake 3.0.2, clang++ 3.5.0
 
 For quickly getting this repository to compile and
 run its unit tests, follow these steps in a terminal:
@@ -62,14 +59,14 @@ during the development process:
   they will be placed directly at `datasets/download`
   in the source directory instead of in the build directory.
 - `make compare_workspace` to create a workspace directory in which
-  different algorithms and/or input tetxfiles from datasets can be
+  different algorithms and/or input files from datasets can be
   compared.
 - `make clean` to remove every build artifact without removing the
   makefile itself, allowing a clean start.
 
 Builds will be placed in a subdirectory of `build` corresponding to the source
 directory. For example, if you are in `./src/build` and do a `make`, then
-afterwards the executable for the commandline interface will be at
+afterwards the executable for the command-line interface will be at
 `./build/src/tudocomp_driver/tudocomp_driver`.
 
 Documentation will end up in `./build/docs`, and datasets in `./build/datasets`.
@@ -77,11 +74,11 @@ Documentation will end up in `./build/docs`, and datasets in `./build/datasets`.
 ## Compiling in release vs debug mode
 
 Per default, the instructions given above will compile code in debug mode,
-which will result in slower but better debuggable binaries
-(They will include optional asserts, debugging log output, etc).
+which will result in slower but better debug-able binaries
+(They will include optional asserts, debugging log output, etc.).
 
 This is fine except to get usable results from benchmarks. For those, you
-need to initalize the build directory with
+need to initialize the build directory with
 `cmake -DCMAKE_BUILD_TYPE=Release ..` instead to make it explicit build in
 optimized release mode.
 
@@ -125,7 +122,7 @@ subproject that can be used as an example.
    into that directory. This will be the cmake build script for your code.
    For more details on how to write such a file, see the CMake docs.
 3. Add all `.cpp` files that make up your project into that file.
-4. Add a additional `add_subdirectory(<YOUR DIRECTORY>)` line into
+4. Add an additional `add_subdirectory(<YOUR DIRECTORY>)` line into
    `./src/CMakeLists.txt`.
    This will make your code actually get picked up by the buildsystem.
 5. Add a C++ file for your project into `./test/` that contains unit tests

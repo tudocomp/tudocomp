@@ -64,11 +64,15 @@ public:
     inline void construct(ITextDSProvider& t) {
         size_t len = t.size();
 
+		//TODO:  t.text(); should do the job?
         uint8_t* copy = new uint8_t[len + 1];
         for(size_t i = 0; i < len; i++) {
             copy[i] = t[i];
         }
         copy[len] = 0;
+
+		//TODO: with int32_t we can only create SA for texts less than 4GB
+		// should be divsufsort64
 
         //Use divsufsort to construct
         int32_t *sa = new int32_t[len + 1];
