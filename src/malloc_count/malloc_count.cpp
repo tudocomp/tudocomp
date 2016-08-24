@@ -40,6 +40,12 @@ namespace malloc_count {
     }
 }
 
+#ifndef __libc_malloc
+
+#pragma message("__libc_malloc is not defined on this system. Therefore, the malloc_count module will not function properly.")
+
+#else
+
 void* malloc(size_t size) {
     using namespace malloc_count;
 
@@ -115,3 +121,4 @@ void* calloc(size_t num, size_t size) {
     return ptr;
 }
 
+#endif
