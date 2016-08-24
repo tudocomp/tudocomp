@@ -3,8 +3,7 @@
 
 #include <vector>
 
-#include <tudocomp/ds/SuffixArray.hpp>
-#include <tudocomp/ds/LCPArray.hpp>
+#include <tudocomp/ds/TextDS.hpp>
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
