@@ -43,6 +43,11 @@ public:
     {
     }
 
+    inline TextDS(const InputView& input, uint64_t flags) : TextDS(input)
+    {
+        require(flags);
+    }
+
     /// Constructs the required data structures as denoted by the given flags
     /// and releases all unwanted ones in a second step.
     inline void require(uint64_t flags) {
