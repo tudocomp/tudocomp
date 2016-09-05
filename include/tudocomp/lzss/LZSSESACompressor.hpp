@@ -7,7 +7,6 @@
 #include <tudocomp/lzss/LZSSCompressor.hpp>
 
 #include <tudocomp/lzss/esacomp/ESACompBulldozer.hpp>
-#include <tudocomp/lzss/esacomp/ESACompLinear.hpp>
 #include <tudocomp/lzss/esacomp/ESACompMaxLCP.hpp>
 #include <tudocomp/lzss/esacomp/ESACompNaive.hpp>
 

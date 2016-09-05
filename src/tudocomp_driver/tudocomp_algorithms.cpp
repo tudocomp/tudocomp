@@ -42,7 +42,7 @@ using lzss::LZ77SSLCPCompressor;
 using lzss::LZSSESACompressor;
 using lzss::ESACompBulldozer;
 using lzss::ESACompMaxLCP;
-using lzss::ESACompLinear;
+using lzss::ESACompNaive;
 
 using lzss::DebugLZSSCoder;
 using lzss::OnlineLZSSCoder;
@@ -84,11 +84,16 @@ void register_algorithms(Registry& r) {
     r.compressor< LZSSESACompressor<ESACompMaxLCP, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
     r.compressor< LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
     r.compressor< LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompLinear, DebugLZSSCoder> >();
-    r.compressor< LZSSESACompressor<ESACompLinear, OnlineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompLinear, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompLinear, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompLinear, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.compressor< LZSSESACompressor<ESACompBulldozer, DebugLZSSCoder> >();
+    r.compressor< LZSSESACompressor<ESACompBulldozer, OnlineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.compressor< LZSSESACompressor<ESACompBulldozer, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.compressor< LZSSESACompressor<ESACompBulldozer, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.compressor< LZSSESACompressor<ESACompBulldozer, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.compressor< LZSSESACompressor<ESACompNaive, DebugLZSSCoder> >();
+    r.compressor< LZSSESACompressor<ESACompNaive, OnlineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.compressor< LZSSESACompressor<ESACompNaive, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.compressor< LZSSESACompressor<ESACompNaive, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.compressor< LZSSESACompressor<ESACompNaive, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
 }
 
 }
