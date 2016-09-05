@@ -68,11 +68,11 @@ struct ExplorationValues {
     virtual ~ExplorationValues() {
         delete [] ne;
     }
-    size_t operator[](const cst_t::node_type& node)const {
+    size_t operator[](const ST::cst_t::node_type& node)const {
         assert(node < nodes);
         return ne[node];
     }
-    void incr(const cst_t::node_type& node) {
+    void incr(const ST::cst_t::node_type& node) {
         assert(node < nodes);
         DLOG(INFO) << "ne incr " << node << std::endl;
         ++ne[node];
@@ -133,7 +133,7 @@ LZ78rule lz78naiv(const std::string& text, const ST&) {
 }
 
 LZ78rule lz78(const ST& st) {
-    const cst_t& cst = st.cst;
+    const ST::cst_t& cst = st.cst;
     ExplorationValues ev(st);
 
     bit_vector bV(st.internal_nodes);

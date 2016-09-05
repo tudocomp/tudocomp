@@ -17,9 +17,9 @@ std::string file_get_contents(const std::string& filename) {
 }
 
 //get suffix tree for text
-ST suffix_tree(const std::string& text, cst_t& cst) {
+tudocomp::ST suffix_tree(const std::string& text, tudocomp::ST::cst_t& cst) {
 	construct_im(cst, text, 1);
-    return ST(cst);
+    return tudocomp::ST(cst);
 }
 
 #endif

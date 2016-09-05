@@ -39,7 +39,7 @@ public:
         std::string text(i_view);
 
         //Build ST
-        cst_t cst;
+        ST::cst_t cst;
         ST st = suffix_tree(text, cst);
 
         LZ78rule l78 = lz78(st);
@@ -90,3 +90,4 @@ public:
 }
 
 #endif
+

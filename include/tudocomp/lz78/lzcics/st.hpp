@@ -9,13 +9,15 @@
 
 using namespace sdsl;
 
-typedef cst_sada_light<csa_sada_light<>, bp_support_sadaM<>> cst_t;
+namespace tudocomp {
 
 /**
  * This is a wrapper class around the sdsl-lite library to get a easier translation between
  * the pseudocode in the LZCICS-paper and the C++ code
  */
 struct ST {
+    typedef cst_sada_light<csa_sada_light<>, bp_support_sadaM<>> cst_t;
+
 	const cst_t& cst; //! sdsl suffix tree
 	const cst_t::node_type root; //! the root node of the suffix tree
 	const cst_t::size_type alpha; //! the \alpha-th leaf in the suffix tree has label 1
@@ -133,6 +135,8 @@ struct ST {
 
 void reset_bitvector(bit_vector& bv) { //! resets a bit-vector, clearing all ones
 	sdsl::util::set_to_value(bv, 0);
+}
+
 }
 
 #endif
