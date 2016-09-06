@@ -16,6 +16,8 @@
 
 using ulong = unsigned long;
 
+/// \brief Contains a custom override of \c malloc used to count allocated
+/// memory over time.
 namespace malloc_count {
 
     inline ulong current_time_millis() {
@@ -50,15 +52,6 @@ namespace malloc_count {
 extern "C" void* __libc_malloc(size_t);
 extern "C" void __libc_free(void*);
 extern "C" void* __libc_realloc(void*, size_t);
-
-// We want to override these, but they are already defined in cstdlib,
-// and might have implementation-specific throws declarations,
-// so don't repeat the declarations manually here
-//
-// extern void* malloc(size_t size);
-// extern void free(void* ptr);
-// extern void* realloc(void* ptr, size_t size);
-// extern void* calloc(size_t num, size_t size);
 
 #endif
 
