@@ -9,7 +9,6 @@
 #include <sdsl/int_vector.hpp>
 
 #include <tudocomp/io.h>
-#include <tudocomp/sdslex/int_vector_wrapper.hpp>
 #include <tudocomp/util.h>
 
 namespace tudocomp {

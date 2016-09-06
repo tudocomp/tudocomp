@@ -5,7 +5,6 @@
 #include <functional>
 #include <vector>
 
-#include <tudocomp/sdslex/int_vector_wrapper.hpp>
 #include <tudocomp/util.h>
 
 #include <tudocomp/lzss/LZSSCompressor.hpp>
