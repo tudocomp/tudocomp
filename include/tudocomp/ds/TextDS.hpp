@@ -6,21 +6,20 @@
 
 #include <sdsl/int_vector.hpp>
 
-#include <tudocomp/ds/ITextDSProvider.hpp>
 
-#include <tudocomp/ds/SuffixArray.hpp>
-#include <tudocomp/ds/InverseSuffixArray.hpp>
-#include <tudocomp/ds/PhiArray.hpp>
-#include <tudocomp/ds/LCPArray.hpp>
 
 #include <tudocomp/io.h>
 
 namespace tudocomp {
+class SuffixArray;
+class InverseSuffixArray;
+class PhiArray;
+class LCPArray;
 
 using io::InputView;
 
 /// Manages text related data structures.
-class TextDS : public ITextDSProvider {
+class TextDS {
 
 public:
     static const uint64_t SA = 0x01;
@@ -55,7 +54,7 @@ public:
         if(flags & SA) require_sa();
         if(flags & ISA) require_isa();
         if(flags & Phi) require_phi();
-        if(flags & LCP) require_lcp(!(flags & Phi));
+        if(flags & LCP) require_lcp();
 
         //Step 2: release unwanted (may have been constructed beforehand)
         if(!(flags & SA)) release_sa();
@@ -65,121 +64,133 @@ public:
     }
 
     /// Requires the Suffix Array to be constructed if not already present.
-    virtual inline const SuffixArray& require_sa() override {
-        if(!m_sa) {
-            m_sa = std::unique_ptr<SuffixArray>(new SuffixArray());
-            m_sa->construct(*this);
-        }
-        return *m_sa;
-    }
+    inline const SuffixArray& require_sa();
 
     /// Requires the Phi Array to be constructed if not already present.
-    virtual inline const PhiArray& require_phi() override {
-        if(!m_phi) {
-            m_phi = std::unique_ptr<PhiArray>(new PhiArray());
-            m_phi->construct(*this);
-        }
-
-        return *m_phi;
-    }
+    inline const PhiArray& require_phi();
 
     /// Requires the Inverse Suffix Array to be constructed if not already present.
-    virtual inline const InverseSuffixArray& require_isa() override {
-        if(!m_isa) {
-            m_isa = std::unique_ptr<InverseSuffixArray>(new InverseSuffixArray());
-            m_isa->construct(*this);
-        }
-
-        return *m_isa;
-    }
+    inline const InverseSuffixArray& require_isa();
 
     /// Requires the LCP Array to be constructed if not already present.
-    virtual inline const LCPArray& require_lcp() override {
-        return require_lcp(false);
-    }
+    inline const LCPArray& require_lcp();
 
-    /// Requires the Suffix Array to be constructed if not already present.
-    /// Optionally consumes the Phi array for in-place construction.
-    inline const LCPArray& require_lcp(bool consume_phi) {
-        if(!m_lcp) {
-            m_lcp = std::unique_ptr<LCPArray>(new LCPArray());
-            m_lcp->construct(*this, consume_phi);
-        }
-
-        return *m_lcp;
-    }
 
     /// Releases the suffix array if present.
-    virtual inline std::unique_ptr<SuffixArray> release_sa() override {
+    inline std::unique_ptr<SuffixArray> release_sa() {
         return std::move(m_sa);
     }
 
     /// Releases the inverse suffix array array if present.
-    virtual inline std::unique_ptr<InverseSuffixArray> release_isa() override {
+    inline std::unique_ptr<InverseSuffixArray> release_isa() {
         return std::move(m_isa);
     }
 
     /// Releases the Phi array if present.
-    virtual inline std::unique_ptr<PhiArray> release_phi() override {
+    inline std::unique_ptr<PhiArray> release_phi() {
         return std::move(m_phi);
     }
 
     /// Releases the LCP array if present.
-    virtual inline std::unique_ptr<LCPArray> release_lcp() override {
+    inline std::unique_ptr<LCPArray> release_lcp() {
         return std::move(m_lcp);
     }
 
     /// Accesses the input text at position i.
-    virtual inline uint8_t operator[](size_t i) const override {
+    inline uint8_t operator[](size_t i) const {
         return m_text[i];
     }
 
     /// Provides access to the input text.
-    virtual inline const uint8_t* text() const override {
+    inline const uint8_t* text() const {
         return m_text;
     }
 
     /// Returns the size of the input text.
-    virtual inline size_t size() const override {
+    inline size_t size() const {
         return m_size;
     }
 
     /// Prints the constructed tables.
-    virtual inline void print(std::ostream& out, size_t base = 0) {
-        size_t w = std::max(6UL, (size_t)std::log10((double)m_size) + 1);
-        out << std::setfill(' ');
-
-        //Heading
-        out << std::setw(w) << "i" << " | ";
-        if(m_sa) out << std::setw(w) << "SA[i]" << " | ";
-        if(m_isa) out << std::setw(w) << "ISA[i]" << " | ";
-        if(m_phi) out << std::setw(w) << "Phi[i]" << " | ";
-        if(m_lcp) out << std::setw(w) << "LCP[i]" << " | ";
-        out << std::endl;
-
-        //Separator
-        out << std::setfill('-');
-        out << std::setw(w) << "" << "-|-";
-        if(m_sa) out << std::setw(w) << "" << "-|-";
-        if(m_isa) out << std::setw(w) << "" << "-|-";
-        if(m_phi) out << std::setw(w) << "" << "-|-";
-        if(m_lcp) out << std::setw(w) << "" << "-|-";
-        out << std::endl;
-
-        //Body
-        out << std::setfill(' ');
-        for(size_t i = 0; i < m_size + 1; i++) {
-            out << std::setw(w) << (i + base) << " | ";
-            if(m_sa) out << std::setw(w) << ((*m_sa)[i] + base) << " | ";
-            if(m_isa) out << std::setw(w) << ((*m_isa)[i] + base) << " | ";
-            if(m_phi) out << std::setw(w) << ((*m_phi)[i] + base) << " | ";
-            if(m_lcp) out << std::setw(w) << (*m_lcp)[i] << " | ";
-            out << std::endl;
-        }
-    }
+    inline void print(std::ostream& out, size_t base = 0);
 };
 
+}//ns
+
+#include <tudocomp/ds/SuffixArray.hpp>
+#include <tudocomp/ds/InverseSuffixArray.hpp>
+#include <tudocomp/ds/PhiArray.hpp>
+#include <tudocomp/ds/LCPArray.hpp>
+
+namespace tudocomp {
+
+inline void TextDS::print(std::ostream& out, size_t base) {
+	size_t w = std::max(6UL, (size_t)std::log10((double)m_size) + 1);
+	out << std::setfill(' ');
+
+	//Heading
+	out << std::setw(w) << "i" << " | ";
+	if(m_sa) out << std::setw(w) << "SA[i]" << " | ";
+	if(m_isa) out << std::setw(w) << "ISA[i]" << " | ";
+	if(m_phi) out << std::setw(w) << "Phi[i]" << " | ";
+	if(m_lcp) out << std::setw(w) << "LCP[i]" << " | ";
+	out << std::endl;
+
+	//Separator
+	out << std::setfill('-');
+	out << std::setw(w) << "" << "-|-";
+	if(m_sa) out << std::setw(w) << "" << "-|-";
+	if(m_isa) out << std::setw(w) << "" << "-|-";
+	if(m_phi) out << std::setw(w) << "" << "-|-";
+	if(m_lcp) out << std::setw(w) << "" << "-|-";
+	out << std::endl;
+
+	//Body
+	out << std::setfill(' ');
+	for(size_t i = 0; i < m_size + 1; i++) {
+		out << std::setw(w) << (i + base) << " | ";
+		if(m_sa) out << std::setw(w) << ((*m_sa)[i] + base) << " | ";
+		if(m_isa) out << std::setw(w) << ((*m_isa)[i] + base) << " | ";
+		if(m_phi) out << std::setw(w) << ((*m_phi)[i] + base) << " | ";
+		if(m_lcp) out << std::setw(w) << (*m_lcp)[i] << " | ";
+		out << std::endl;
+	}
 }
+const SuffixArray& TextDS::require_sa() {
+	if(!m_sa) {
+		m_sa = std::unique_ptr<SuffixArray>(new SuffixArray());
+		m_sa->construct(*this);
+	}
+	return *m_sa;
+}
+
+const PhiArray& TextDS::require_phi() {
+	if(!m_phi) {
+		m_phi = std::unique_ptr<PhiArray>(new PhiArray());
+		m_phi->construct(*this);
+	}
+
+	return *m_phi;
+}
+
+const InverseSuffixArray& TextDS::require_isa() {
+	if(!m_isa) {
+		m_isa = std::unique_ptr<InverseSuffixArray>(new InverseSuffixArray());
+		m_isa->construct(*this);
+	}
+
+	return *m_isa;
+}
+
+const LCPArray& TextDS::require_lcp() {
+	if(!m_lcp) {
+		m_lcp = std::unique_ptr<LCPArray>(new LCPArray());
+		m_lcp->construct(*this);
+	}
+	return *m_lcp;
+}
+
+}//ns
 
 #endif
 

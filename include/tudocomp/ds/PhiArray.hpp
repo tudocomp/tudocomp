@@ -2,12 +2,14 @@
 #define _INCLUDED_DS_PHI_ARRAY_HPP
 
 #include <tudocomp/util.h>
-#include <tudocomp/ds/ITextDSProvider.hpp>
-#include <tudocomp/ds/SuffixArray.hpp>
+
 
 namespace tudocomp {
 
 using io::InputView;
+
+class SuffixArray;
+class TextDS;
 
 class PhiArray {
 
@@ -39,18 +41,25 @@ public:
         return m_phi.size();
     }
 
-    inline void construct(ITextDSProvider& t) {
-        auto& sa = t.require_sa();
-        auto n = sa.size();
-
-        m_phi = iv_t(n, 0, bitsFor(n));
-        for(size_t i = 0, prev = 0; i < n; i++) {
-            auto s = sa[i];
-            m_phi[s] = prev;
-            prev = s;
-        }
-    }
+    inline void construct(TextDS& t);
 };
+
+}//ns
+#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/SuffixArray.hpp>
+namespace tudocomp {
+
+inline void PhiArray::construct(TextDS& t) {
+	auto& sa = t.require_sa();
+	auto n = sa.size();
+
+	m_phi = iv_t(n, 0, bitsFor(n));
+	for(size_t i = 0, prev = 0; i < n; i++) {
+		auto s = sa[i];
+		m_phi[s] = prev;
+		prev = s;
+	}
+}
 
 }
 

@@ -2,13 +2,11 @@
 #define _INCLUDED_DS_INVERSE_SUFFIX_ARRAY_HPP
 
 #include <tudocomp/util.h>
-#include <tudocomp/ds/ITextDSProvider.hpp>
-#include <tudocomp/ds/SuffixArray.hpp>
 
 namespace tudocomp {
 
-using io::InputView;
-
+class TextDS;
+class SuffixArray;
 class InverseSuffixArray {
 
 public:
@@ -36,17 +34,24 @@ public:
     inline iv_t::size_type size() const {
         return m_isa.size();
     }
+    inline void construct(TextDS& t);
 
-    inline void construct(ITextDSProvider& t) {
-        auto& sa = t.require_sa();
-        auto n = sa.size();
-
-        m_isa = iv_t(n, 0, bitsFor(n));
-        for(size_t i = 0; i < n; i++) {
-            m_isa[sa[i]] = i;
-        }
-    }
 };
+
+}//ns
+#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/SuffixArray.hpp>
+namespace tudocomp {
+
+inline void InverseSuffixArray::construct(TextDS& t) {
+	auto& sa = t.require_sa();
+	auto n = sa.size();
+
+	m_isa = iv_t(n, 0, bitsFor(n));
+	for(size_t i = 0; i < n; i++) {
+		m_isa[sa[i]] = i;
+	}
+}
 
 }
 
