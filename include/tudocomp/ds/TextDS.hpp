@@ -52,7 +52,7 @@ public:
     /// and releases all unwanted ones in a second step.
     inline void require(uint64_t flags) {
         //Step 1: construct
-        if(flags & SA) require_sa(flags & ISA);
+        if(flags & SA) require_sa();
         if(flags & ISA) require_isa();
         if(flags & Phi) require_phi();
         if(flags & LCP) require_lcp(!(flags & Phi));
@@ -66,26 +66,10 @@ public:
 
     /// Requires the Suffix Array to be constructed if not already present.
     virtual inline const SuffixArray& require_sa() override {
-        return require_sa(false);
-    }
-
-    /// Requires the Suffix Array to be constructed if not already present.
-    /// Optionally also constructs the Inverse Suffix Array just in time.
-    inline const SuffixArray& require_sa(bool with_isa) {
         if(!m_sa) {
             m_sa = std::unique_ptr<SuffixArray>(new SuffixArray());
-
-            if(with_isa && !m_isa) {
-                m_isa = std::unique_ptr<InverseSuffixArray>(new InverseSuffixArray());
-                m_sa->with_isa(
-                    *m_isa,
-                    &InverseSuffixArray::construct_jit_init,
-                    &InverseSuffixArray::construct_jit);
-            }
-
             m_sa->construct(*this);
         }
-
         return *m_sa;
     }
 

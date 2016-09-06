@@ -46,16 +46,6 @@ public:
             m_isa[sa[i]] = i;
         }
     }
-
-    // Initializing callback for just-in-time construction
-    static inline void construct_jit_init(InverseSuffixArray& isa, size_t n) {
-        isa.m_isa = iv_t(n, 0, bitsFor(n));
-    }
-
-    // Just-in-time construction callback
-    static inline void construct_jit(InverseSuffixArray& isa, size_t i, size_t v) {
-        isa.m_isa[v] = i;
-    }
 };
 
 }

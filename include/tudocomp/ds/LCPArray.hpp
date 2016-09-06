@@ -5,23 +5,147 @@
 #include <tudocomp/ds/ITextDSProvider.hpp>
 #include <tudocomp/ds/SuffixArray.hpp>
 #include <tudocomp/ds/PhiArray.hpp>
+#include <sdsl/rank_support.hpp> // for the rank data structure
 
 namespace tudocomp {
 
 using io::InputView;
 
+constexpr int bits = 0;
+typedef size_t len_t;
+
+
+namespace LCP {
+    typedef sdsl::int_vector<bits> iv_t;
+	inline static sdsl::bit_vector construct_lcp_sada(const iv_t& plcp) {
+		const len_t n = plcp.size();
+		len_t len = 0;
+		for(len_t i = 0; i+1 < n; i++) {
+			assert(plcp[i+1]+1 >= plcp[i]);
+			len += plcp[i+1]-plcp[i]+1;
+		}
+		sdsl::bit_vector bv(len+2*n,0);
+		bv[0]=1;
+		len=0;
+		for(len_t i = 0; i+1 < n; i++) {
+			len += plcp[i+1]-plcp[i]+2;
+			assert(len < bv.size());
+			bv[len] = 1;
+		}
+		return bv;
+	}
+	inline static iv_t phi_algorithm(ITextDSProvider& t) {
+		auto& sa = t.require_sa();
+		const auto n = sa.size();
+		t.require_phi();
+		std::unique_ptr<PhiArray> phi(t.release_phi());
+		iv_t plcp(std::move(phi->data()));
+		for(len_t i = 0, l = 0; i < n - 1; ++i) {
+			const len_t phii = (*phi)[i];
+			while(t[i+l] == t[phii+l]) {
+				l++;
+			}
+			plcp[i] = l;
+			if(l) {
+				--l;
+			}
+		}
+		return plcp;
+	}
+	template<class lcp_t, class sa_t>
+	iv_t create_plcp_array(const lcp_t& lcp, const sa_t& isa) {
+		const len_t n = isa.size();
+		iv_t plcp(n);
+		for(len_t i = 0; i < n; ++i) {
+			assert(isa[i] < n);
+			assert(isa[i] >= 0);
+			plcp[i] = lcp[isa[i]];
+		}
+		return plcp;
+	}
+}
+
+
+
+
+
+template<
+typename sa_t,
+typename select_t = sdsl::select_support_mcl<1,1>>
+class lcp_sada {
+    typedef sdsl::int_vector<bits> iv_t;
+	sa_t* sa;
+	sdsl::bit_vector bv;
+	select_t s;
+	public:
+	inline len_t operator[](len_t i) const {
+		const len_t idx = (*sa)[i];
+		return s.select(idx+1) - 2*idx;
+	}
+    inline void construct(ITextDSProvider& t) {
+		iv_t plcp(LCP::phi_algorithm(t));
+		bv(LCP::construct_lcp_sada(plcp));
+		s.set_vector(&bv); 
+    }
+
+    inline len_t size() const {
+        return sa->size();
+    }
+	/**
+	 * Returns the maximum value of the LCP array
+	 */
+	inline len_t max_lcp() const {
+		len_t max = (*this)[0];
+		for(len_t i = 1; i < sa->size(); ++i) {
+			max = std::max(max, (*this)[i]);
+		}
+		return max;
+	}
+	
+};
+
+
+
+
+
+
+//template<int bits>
 class LCPArray {
+    typedef sdsl::int_vector<bits> iv_t;
 
 public:
-    typedef sdsl::int_vector<> iv_t;
 
 private:
     iv_t m_lcp;
-    size_t m_max;
+	len_t m_max;
+
+    template <int T = bits, typename std::enable_if<T == 0,int>::type = 0>
+	inline void construct_lcp_array(const iv_t& plcp, const SuffixArray& sa) {
+        const auto& n = sa.size();
+		m_max = bitsFor(*std::max_element(plcp.begin(),plcp.end()));
+		m_lcp = iv_t(n, 0, bitsFor(m_max));
+		for(len_t i = 1; i < n; i++) {
+			m_lcp[i] = plcp[sa[i]];
+		}
+	}
+
+    template <int T = bits, typename std::enable_if<T != 0,int>::type = 0>
+	inline void construct_lcp_array(const iv_t& plcp, const SuffixArray& sa) {
+		m_max = bitsFor(*std::max_element(plcp.begin(),plcp.end()));
+        const auto& n = sa.size();
+		for(len_t i = 1; i < n; i++) {
+			m_lcp[i] = plcp[sa[i]];
+		}
+	}
+
 
 public:
-    inline LCPArray() : m_max(0) {
-    }
+	/**
+	 * Returns the maximum value of the LCP array
+	 */
+	inline len_t max_lcp() const {
+		return m_max;
+	}
 
     inline iv_t& data() {
         return m_lcp;
@@ -31,63 +155,9 @@ public:
         return m_lcp;
     }
 
-    inline size_t max_lcp() const {
-        return m_max;
-    }
-
     inline void construct(ITextDSProvider& t, bool consume_phi = false) {
-        auto& sa = t.require_sa();
-        auto n = sa.size();
-
-        //Require Phi, then consume it and either work in-place, or
-        //create a new vector for the pre-LCP array.
-        t.require_phi();
-
-        std::unique_ptr<PhiArray> phi_consumed;
-        const PhiArray* phi;
-
-        iv_t *plcp_ptr;
-
-        if(consume_phi) {
-            //consume the Phi array to construct the pre-LCP array in-place
-            DLOG(INFO) << "construct plcp in-place";
-
-            phi_consumed = t.release_phi();
-            phi = &*phi_consumed;
-
-            plcp_ptr = &phi_consumed->m_phi;
-        } else {
-            //allocate a new int vector for the pre-LCP array
-            phi = &t.require_phi();
-            plcp_ptr = new iv_t(n, 0, bitsFor(n));
-        }
-        iv_t& plcp = *plcp_ptr;
-
-        //Construct LCP using PHI
-        m_max = 0;
-        for(size_t i = 0, l = 0; i < n - 1; i++) {
-            size_t phii = (*phi)[i];
-            while(t[i+l] == t[phii+l]) {
-                l++;
-            }
-
-            plcp[i] = l;
-            if(l) {
-                m_max = std::max(m_max, l);
-                --l;
-            }
-        }
-
-        //bit compress
-        m_lcp = iv_t(n, 0, bitsFor(m_max));
-        for(size_t i = 1; i < n; i++) {
-            m_lcp[i] = plcp[sa[i]];
-        }
-
-        //post steps
-        if(!phi_consumed) {
-            delete plcp_ptr;
-        }
+		iv_t plcp(LCP::phi_algorithm(t));
+		construct_lcp_array(plcp, t.require_sa());
     }
 
     inline iv_t::value_type operator[](iv_t::size_type i) const {
