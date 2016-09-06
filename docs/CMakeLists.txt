@@ -41,9 +41,9 @@ if(DOXYGEN_FOUND)
         #invoke doxygen
         ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
         # make doxygen PDF
-        COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_CURRENT_BINARY_DIR}/doxygen/latex make
+        # COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_CURRENT_BINARY_DIR}/doxygen/latex make
         # move it to output directory
-        COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/doxygen/latex/refman.pdf ${CMAKE_CURRENT_BINARY_DIR}/Doxygen.pdf
+        # COMMAND ${CMAKE_COMMAND} -E rename ${CMAKE_CURRENT_BINARY_DIR}/doxygen/latex/refman.pdf # ${CMAKE_CURRENT_BINARY_DIR}/Doxygen.pdf
         #
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Generating doxygen documentation"

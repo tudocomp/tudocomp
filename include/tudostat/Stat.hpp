@@ -6,6 +6,7 @@
 #include <map>
 #include <sstream>
 
+/// \brief Contains the runtime statistics interface \ref Stat.
 namespace tudostat {
 
 class Stat {

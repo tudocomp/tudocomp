@@ -50,7 +50,7 @@ protected:
 
     /// \copydoc
     inline virtual LZSSCoderOpts coder_opts(Input& input) override {
-        return LZSSCoderOpts(true, bitsFor(m_window));
+        return LZSSCoderOpts(true, bits_for(m_window));
     }
 
     /// \copydoc

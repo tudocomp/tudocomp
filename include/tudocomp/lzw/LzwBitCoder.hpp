@@ -57,9 +57,9 @@ public:
         // output format: variable_number_backref_bits 8bit_char
 
         // slowly grow the number of bits needed together with the output
-        size_t back_ref_idx_bits = bitsFor(m_factor_counter + 256);
+        size_t back_ref_idx_bits = bits_for(m_factor_counter + 256);
 
-        DCHECK(bitsFor(entry) <= back_ref_idx_bits);
+        DCHECK(bits_for(entry) <= back_ref_idx_bits);
 
         m_out.write(entry, back_ref_idx_bits);
 
@@ -86,7 +86,7 @@ public:
             }
 
             // Try to read next factor
-            Factor factor(is.readBits<uint64_t>(bitsFor(counter + 256)));
+            Factor factor(is.readBits<uint64_t>(bits_for(counter + 256)));
             if (done) {
                 // Could not read all bits -> done
                 // (this works because the encoded factors are always > 8 bit)

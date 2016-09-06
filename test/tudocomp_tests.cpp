@@ -32,37 +32,37 @@ TEST(Test, test_file) {
     ASSERT_EQ("Could not open test file \"test_files/not_test.txt\"", err);
 }
 
-TEST(Util, bitsFor) {
-    ASSERT_EQ(bitsFor(0b0), 1u);
-    ASSERT_EQ(bitsFor(0b1), 1u);
-    ASSERT_EQ(bitsFor(0b10), 2u);
-    ASSERT_EQ(bitsFor(0b11), 2u);
-    ASSERT_EQ(bitsFor(0b100), 3u);
-    ASSERT_EQ(bitsFor(0b111), 3u);
-    ASSERT_EQ(bitsFor(0b1000), 4u);
-    ASSERT_EQ(bitsFor(0b1111), 4u);
-    ASSERT_EQ(bitsFor(0b10000), 5u);
-    ASSERT_EQ(bitsFor(0b11111), 5u);
-    ASSERT_EQ(bitsFor(0b100000), 6u);
-    ASSERT_EQ(bitsFor(0b111111), 6u);
-    ASSERT_EQ(bitsFor(0b1000000), 7u);
-    ASSERT_EQ(bitsFor(0b1111111), 7u);
-    ASSERT_EQ(bitsFor(0b10000000), 8u);
-    ASSERT_EQ(bitsFor(0b11111111), 8u);
-    ASSERT_EQ(bitsFor(0b100000000), 9u);
-    ASSERT_EQ(bitsFor(0b111111111), 9u);
+TEST(Util, bits_for) {
+    ASSERT_EQ(bits_for(0b0), 1u);
+    ASSERT_EQ(bits_for(0b1), 1u);
+    ASSERT_EQ(bits_for(0b10), 2u);
+    ASSERT_EQ(bits_for(0b11), 2u);
+    ASSERT_EQ(bits_for(0b100), 3u);
+    ASSERT_EQ(bits_for(0b111), 3u);
+    ASSERT_EQ(bits_for(0b1000), 4u);
+    ASSERT_EQ(bits_for(0b1111), 4u);
+    ASSERT_EQ(bits_for(0b10000), 5u);
+    ASSERT_EQ(bits_for(0b11111), 5u);
+    ASSERT_EQ(bits_for(0b100000), 6u);
+    ASSERT_EQ(bits_for(0b111111), 6u);
+    ASSERT_EQ(bits_for(0b1000000), 7u);
+    ASSERT_EQ(bits_for(0b1111111), 7u);
+    ASSERT_EQ(bits_for(0b10000000), 8u);
+    ASSERT_EQ(bits_for(0b11111111), 8u);
+    ASSERT_EQ(bits_for(0b100000000), 9u);
+    ASSERT_EQ(bits_for(0b111111111), 9u);
 }
 
-TEST(Util, bytesFor) {
-    ASSERT_EQ(bytesFor(0), 0u);
-    ASSERT_EQ(bytesFor(1), 1u);
-    ASSERT_EQ(bytesFor(8), 1u);
-    ASSERT_EQ(bytesFor(9), 2u);
-    ASSERT_EQ(bytesFor(16), 2u);
-    ASSERT_EQ(bytesFor(17), 3u);
-    ASSERT_EQ(bytesFor(24), 3u);
-    ASSERT_EQ(bytesFor(25), 4u);
-    ASSERT_EQ(bytesFor(32), 4u);
+TEST(Util, bytes_for) {
+    ASSERT_EQ(bytes_for(0), 0u);
+    ASSERT_EQ(bytes_for(1), 1u);
+    ASSERT_EQ(bytes_for(8), 1u);
+    ASSERT_EQ(bytes_for(9), 2u);
+    ASSERT_EQ(bytes_for(16), 2u);
+    ASSERT_EQ(bytes_for(17), 3u);
+    ASSERT_EQ(bytes_for(24), 3u);
+    ASSERT_EQ(bytes_for(25), 4u);
+    ASSERT_EQ(bytes_for(32), 4u);
 }
 
 TEST(Util, pack_integers) {

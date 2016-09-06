@@ -83,8 +83,8 @@ public:
         m_out->write_compressed_int(m_in_size);
         m_out->writeBit(m_src_use_delta);
 
-        m_num_bits = bitsFor(m_num_max - m_num_min);
-        m_src_bits = bitsFor(m_src_max);
+        m_num_bits = bits_for(m_num_max - m_num_min);
+        m_src_bits = bits_for(m_src_max);
 
         m_out->write_compressed_int(m_num_min, 4);
         m_out->write_compressed_int(m_num_bits, 5);

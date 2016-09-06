@@ -8,7 +8,6 @@
 #include <sdsl/int_vector.hpp>
 
 #include <tudocomp/io.h>
-#include <tudocomp/sdslex/int_vector_wrapper.hpp>
 #include <tudocomp/util.h>
 
 namespace tudocomp {
@@ -70,7 +69,7 @@ void SuffixArray::construct(TextDS& t) {
 	delete[] copy;
 
 	//Bit compress using SDSL
-	size_t w = bitsFor(len + 1);
+	size_t w = bits_for(len + 1);
 	m_sa = iv_t(len + 1, 0, w);
 
 	for(size_t i = 0; i < len + 1; i++) {

@@ -29,8 +29,8 @@ private:
     template <typename sa_t, int T = bits, typename std::enable_if<T == 0,int>::type = 0>
 	inline void construct_lcp_array(const iv_t& plcp, const sa_t& sa) {
         const auto& n = sa.size();
-		m_max = bitsFor(*std::max_element(plcp.begin(),plcp.end()));
-		m_lcp = iv_t(n, 0, bitsFor(m_max));
+		m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
+		m_lcp = iv_t(n, 0, bits_for(m_max));
 		for(len_t i = 1; i < n; i++) {
 			m_lcp[i] = plcp[sa[i]];
 		}
@@ -38,7 +38,7 @@ private:
 
     template <typename sa_t, int T = bits, typename std::enable_if<T != 0,int>::type = 0>
 	inline void construct_lcp_array(const iv_t& plcp, const sa_t& sa) {
-		m_max = bitsFor(*std::max_element(plcp.begin(),plcp.end()));
+		m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
         const auto& n = sa.size();
 		for(len_t i = 1; i < n; i++) {
 			m_lcp[i] = plcp[sa[i]];

@@ -53,7 +53,7 @@ inline void PhiArray::construct(TextDS& t) {
 	auto& sa = t.require_sa();
 	auto n = sa.size();
 
-	m_phi = iv_t(n, 0, bitsFor(n));
+	m_phi = iv_t(n, 0, bits_for(n));
 	for(size_t i = 0, prev = 0; i < n; i++) {
 		auto s = sa[i];
 		m_phi[s] = prev;

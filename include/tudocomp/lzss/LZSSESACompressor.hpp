@@ -1,7 +1,6 @@
 #ifndef _INCLUDED_LZSS_ESA_COMPRESSOR_HPP_
 #define _INCLUDED_LZSS_ESA_COMPRESSOR_HPP_
 
-#include <tudocomp/sdslex/int_vector_wrapper.hpp>
 #include <tudocomp/util.h>
 
 #include <tudocomp/lzss/LZSSCompressor.hpp>
@@ -75,7 +74,7 @@ public:
 
     /// \copydoc
     inline virtual LZSSCoderOpts coder_opts(Input& input) override {
-        return LZSSCoderOpts(false, bitsFor(input.size()));
+        return LZSSCoderOpts(false, bits_for(input.size()));
     }
 
     /// \copydoc

@@ -59,9 +59,9 @@ public:
         // output format: variable_number_backref_bits 8bit_char
 
         // slowly grow the number of bits needed together with the output
-        size_t back_ref_idx_bits = bitsFor(m_factor_counter);
+        size_t back_ref_idx_bits = bits_for(m_factor_counter);
 
-        DCHECK(bitsFor(entry.index) <= back_ref_idx_bits);
+        DCHECK(bits_for(entry.index) <= back_ref_idx_bits);
 
         m_out.write(entry.index, back_ref_idx_bits);
         m_out.write(entry.chr, 8);
@@ -89,7 +89,7 @@ public:
         uint64_t factor_counter = 0;
 
         while (!done) {
-            size_t back_ref_idx_bits = bitsFor(factor_counter);
+            size_t back_ref_idx_bits = bits_for(factor_counter);
 
             CodeType index = inp.readBits<CodeType>(back_ref_idx_bits);
             uint8_t chr = inp.readBits<uint8_t>(8);
