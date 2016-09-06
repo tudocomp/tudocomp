@@ -30,7 +30,7 @@ class ESACompMaxLCP: Algorithm {
             return m;
         }
 
-        void factorize(TextDS& t,
+        void factorize(TextDS<>& t,
                        size_t fact_min,
                        std::vector<LZSSFactor>& out_factors) {
 
@@ -42,7 +42,7 @@ class ESACompMaxLCP: Algorithm {
             auto& lcp = _lcp->data();
 
             env().begin_stat_phase("Construct MaxLCPSuffixList");
-            MaxLCPSuffixList list(sa, *_lcp, fact_min);
+            MaxLCPSuffixList<TextDS<>::sa_t, TextDS<>::lcp_t> list(sa, *_lcp, fact_min);
             env().log_stat("entries", list.size());
             env().end_stat_phase();
 

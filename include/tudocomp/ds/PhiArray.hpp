@@ -2,18 +2,15 @@
 #define _INCLUDED_DS_PHI_ARRAY_HPP
 
 #include <tudocomp/util.h>
+#include "forward.hh"
 
 
 namespace tudocomp {
 
 using io::InputView;
 
-class SuffixArray;
-class TextDS;
-
+template<class T>
 class PhiArray {
-
-friend class LCPArray;
 
 public:
     typedef sdsl::int_vector<> iv_t;
@@ -41,7 +38,7 @@ public:
         return m_phi.size();
     }
 
-    inline void construct(TextDS& t);
+    inline void construct(T& t);
 };
 
 }//ns
@@ -49,7 +46,8 @@ public:
 #include <tudocomp/ds/SuffixArray.hpp>
 namespace tudocomp {
 
-inline void PhiArray::construct(TextDS& t) {
+template<class T>
+inline void PhiArray<T>::construct(T& t) {
 	auto& sa = t.require_sa();
 	auto n = sa.size();
 

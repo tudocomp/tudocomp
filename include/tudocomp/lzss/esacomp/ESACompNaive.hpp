@@ -27,7 +27,7 @@ public:
         return m;
     }
 
-        void factorize(TextDS& t,
+        void factorize(TextDS<>& t,
                        size_t fact_min,
                        std::vector<LZSSFactor>& out_factors) {
 

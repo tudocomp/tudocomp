@@ -9,13 +9,10 @@
 
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
-
+#include "forward.hh"
 namespace tudocomp {
 
-using io::InputView;
-
-class InverseSuffixArray;
-class TextDS;
+template<class T>
 class SuffixArray {
 
 public:
@@ -42,14 +39,14 @@ public:
         return m_sa.size();
     }
 
-    inline void construct(TextDS& t);
+    inline void construct(T& t);
 };
 
 }//ns
-#include <tudocomp/ds/TextDS.hpp>
 namespace tudocomp {
 
-void SuffixArray::construct(TextDS& t) {
+template<class T>
+void SuffixArray<T>::construct(T& t) {
 	size_t len = t.size();
 
 	//TODO:  t.text(); should do the job?

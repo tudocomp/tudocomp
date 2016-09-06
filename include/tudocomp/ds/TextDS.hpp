@@ -9,16 +9,18 @@
 
 
 #include <tudocomp/io.h>
+#include "forward.hh"
 
 namespace tudocomp {
-class SuffixArray;
-class InverseSuffixArray;
-class PhiArray;
-class LCPArray;
 
 using io::InputView;
 
+
+
 /// Manages text related data structures.
+template<
+	template<typename> class lcp_tt = LCPArray, 
+    template<typename> class isa_tt = InverseSuffixArray>
 class TextDS {
 
 public:
@@ -26,15 +28,20 @@ public:
     static const uint64_t ISA = 0x02;
     static const uint64_t Phi = 0x04;
     static const uint64_t LCP = 0x08;
+	typedef TextDS<lcp_tt,isa_tt> this_t;
+	typedef lcp_tt<this_t> lcp_t;
+	typedef isa_tt<this_t> isa_t;
+	typedef SuffixArray<this_t> sa_t;
+	typedef PhiArray<this_t> phi_t;
 
 private:
     size_t m_size;
     const uint8_t* m_text;
 
-    std::unique_ptr<SuffixArray>        m_sa;
-    std::unique_ptr<InverseSuffixArray> m_isa;
-    std::unique_ptr<PhiArray>           m_phi;
-    std::unique_ptr<LCPArray>           m_lcp;
+    std::unique_ptr<sa_t>        m_sa;
+    std::unique_ptr<isa_t> m_isa;
+    std::unique_ptr<phi_t>           m_phi;
+    std::unique_ptr<lcp_t>              m_lcp;
 
 public:
     inline TextDS(const InputView& input)
@@ -64,35 +71,35 @@ public:
     }
 
     /// Requires the Suffix Array to be constructed if not already present.
-    inline const SuffixArray& require_sa();
+    inline const sa_t& require_sa();
 
     /// Requires the Phi Array to be constructed if not already present.
-    inline const PhiArray& require_phi();
+    inline const phi_t& require_phi();
 
     /// Requires the Inverse Suffix Array to be constructed if not already present.
-    inline const InverseSuffixArray& require_isa();
+    inline const isa_t& require_isa();
 
     /// Requires the LCP Array to be constructed if not already present.
-    inline const LCPArray& require_lcp();
+    inline const lcp_t& require_lcp();
 
 
     /// Releases the suffix array if present.
-    inline std::unique_ptr<SuffixArray> release_sa() {
+    inline std::unique_ptr<sa_t> release_sa() {
         return std::move(m_sa);
     }
 
     /// Releases the inverse suffix array array if present.
-    inline std::unique_ptr<InverseSuffixArray> release_isa() {
+    inline std::unique_ptr<isa_t> release_isa() {
         return std::move(m_isa);
     }
 
     /// Releases the Phi array if present.
-    inline std::unique_ptr<PhiArray> release_phi() {
+    inline std::unique_ptr<phi_t> release_phi() {
         return std::move(m_phi);
     }
 
     /// Releases the LCP array if present.
-    inline std::unique_ptr<LCPArray> release_lcp() {
+    inline std::unique_ptr<lcp_t> release_lcp() {
         return std::move(m_lcp);
     }
 
@@ -124,7 +131,10 @@ public:
 
 namespace tudocomp {
 
-inline void TextDS::print(std::ostream& out, size_t base) {
+template<
+	template<typename> class lcp_tt, 
+    template<typename> class isa_tt>
+inline void TextDS<lcp_tt,isa_tt>::print(std::ostream& out, size_t base) {
 	size_t w = std::max(6UL, (size_t)std::log10((double)m_size) + 1);
 	out << std::setfill(' ');
 
@@ -156,40 +166,55 @@ inline void TextDS::print(std::ostream& out, size_t base) {
 		out << std::endl;
 	}
 }
-const SuffixArray& TextDS::require_sa() {
+
+template<
+	template<typename> class lcp_tt, 
+    template<typename> class isa_tt>
+const SuffixArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_sa() {
 	if(!m_sa) {
-		m_sa = std::unique_ptr<SuffixArray>(new SuffixArray());
+		m_sa = std::unique_ptr<sa_t>(new sa_t());
 		m_sa->construct(*this);
 	}
 	return *m_sa;
 }
 
-const PhiArray& TextDS::require_phi() {
+template<
+	template<typename> class lcp_tt, 
+    template<typename> class isa_tt>
+const PhiArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_phi() {
 	if(!m_phi) {
-		m_phi = std::unique_ptr<PhiArray>(new PhiArray());
+		m_phi = std::unique_ptr<phi_t>(new phi_t());
 		m_phi->construct(*this);
 	}
 
 	return *m_phi;
 }
 
-const InverseSuffixArray& TextDS::require_isa() {
+template<
+	template<typename> class lcp_tt, 
+    template<typename> class isa_tt>
+const isa_tt<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_isa() {
 	if(!m_isa) {
-		m_isa = std::unique_ptr<InverseSuffixArray>(new InverseSuffixArray());
+		m_isa = std::unique_ptr<isa_t>(new isa_t());
 		m_isa->construct(*this);
 	}
 
 	return *m_isa;
 }
 
-const LCPArray& TextDS::require_lcp() {
+template<
+	template<typename> class lcp_tt, 
+    template<typename> class isa_tt>
+const lcp_tt<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_lcp() {
 	if(!m_lcp) {
-		m_lcp = std::unique_ptr<LCPArray>(new LCPArray());
+		m_lcp = std::unique_ptr<lcp_t>(new lcp_t());
 		m_lcp->construct(*this);
 	}
 	return *m_lcp;
 }
 
+//typedef TextDS<lcp_sada<TextDS<lcp_sada,InverseSuffixArray>, InverseSuffixArray<TextDS<lcp_sada,InverseSuffixArray>> TextDSI;
+typedef TextDS<LCPArray, InverseSuffixArray> TextDSI;
 }//ns
 
 #endif

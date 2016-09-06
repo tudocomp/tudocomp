@@ -3,20 +3,14 @@
 
 #include <tudocomp/util.h>
 #include <sdsl/rank_support.hpp> // for the rank data structure
+#include "forward.hh"
 
 namespace tudocomp {
-class SuffixArray;
-class PhiArray;
-class TextDS;
-
-using io::InputView;
 
 constexpr int bits = 0;
 typedef size_t len_t;
 
-
-
-//template<int bits>
+template<class T>
 class LCPArray {
     typedef sdsl::int_vector<bits> iv_t;
 
@@ -26,7 +20,7 @@ private:
     iv_t m_lcp;
 	len_t m_max;
 
-    template <typename sa_t, int T = bits, typename std::enable_if<T == 0,int>::type = 0>
+    template <typename sa_t, int U = bits, typename std::enable_if<U == 0,int>::type = 0>
 	inline void construct_lcp_array(const iv_t& plcp, const sa_t& sa) {
         const auto& n = sa.size();
 		m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
@@ -36,7 +30,7 @@ private:
 		}
 	}
 
-    template <typename sa_t, int T = bits, typename std::enable_if<T != 0,int>::type = 0>
+    template <typename sa_t, int U = bits, typename std::enable_if<U != 0,int>::type = 0>
 	inline void construct_lcp_array(const iv_t& plcp, const sa_t& sa) {
 		m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
         const auto& n = sa.size();
@@ -71,13 +65,14 @@ public:
         return m_lcp.size();
     }
 
-    inline void construct(TextDS& t);
+    inline void construct(T& t);
 };
 
 
 
 
 template<
+typename T,
 typename sa_t,
 typename select_t = sdsl::select_support_mcl<1,1>>
 class lcp_sada {
@@ -87,7 +82,7 @@ class lcp_sada {
 	select_t s;
 	public:
 	inline len_t operator[](len_t i) const;
-    inline void construct(TextDS& t);
+    inline void construct(T& t);
 
     inline len_t size() const;
 	/**
@@ -134,14 +129,15 @@ namespace LCP {
 		}
 		return bv;
 	}
-	inline static iv_t phi_algorithm(TextDS& t) {
+	template<typename T>
+	inline static iv_t phi_algorithm(T& t) {
 		auto& sa = t.require_sa();
 		const auto n = sa.size();
 		t.require_phi();
-		std::unique_ptr<PhiArray> phi(t.release_phi());
+		std::unique_ptr<PhiArray<T>> phi(std::move(t.release_phi()));
 		iv_t plcp(std::move(phi->data()));
 		for(len_t i = 0, l = 0; i < n - 1; ++i) {
-			const len_t phii = (*phi)[i];
+			const len_t phii = plcp[i];
 			while(t[i+l] == t[phii+l]) {
 				l++;
 			}
@@ -165,25 +161,26 @@ namespace LCP {
 	}
 }
 
-template< typename sa_t, typename select_t>
-inline len_t lcp_sada<sa_t,select_t>::operator[](len_t i) const {
+template<typename T, typename sa_t, typename select_t>
+inline len_t lcp_sada<T,sa_t,select_t>::operator[](len_t i) const {
 	const len_t idx = (*sa)[i];
 	return s.select(idx+1) - 2*idx;
 }
 
-template< typename sa_t, typename select_t>
-inline void lcp_sada<sa_t,select_t>::construct(TextDS& t) {
+template<typename T, typename sa_t, typename select_t>
+inline void lcp_sada<T,sa_t,select_t>::construct(T& t) {
 	iv_t plcp(LCP::phi_algorithm(t));
 	bv(LCP::construct_lcp_sada(plcp));
 	s.set_vector(&bv); 
 }
 
-template< typename sa_t, typename select_t>
-inline len_t lcp_sada<sa_t,select_t>::size() const {
+template<typename T, typename sa_t, typename select_t>
+inline len_t lcp_sada<T,sa_t,select_t>::size() const {
 	return sa->size();
 }
 
-inline void LCPArray::construct(TextDS& t) {
+template<class T>
+inline void LCPArray<T>::construct(T& t) {
 	iv_t plcp(LCP::phi_algorithm(t));
 	construct_lcp_array(plcp, t.require_sa());
 }

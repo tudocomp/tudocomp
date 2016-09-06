@@ -47,10 +47,10 @@ public:
 
         //Construct SA, ISA and LCP
         {
-            TextDS t(in);
+            TextDS<> t(in);
 
             env.begin_stat_phase("Construct text ds");
-            t.require(TextDS::SA | TextDS::ISA | TextDS::LCP);
+            t.require(TextDS<>::SA | TextDS<>::ISA | TextDS<>::LCP);
             env.end_stat_phase();
 
             //Factorize
