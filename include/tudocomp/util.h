@@ -19,11 +19,14 @@
 
 namespace tudocomp {
 
-/// Convert a vector-like type into a string showing the element values.
+/// \brief Builds the string representation of a vector of byte values,
+/// sorrounded by square brackets (\c \[ and \c \]).
 ///
-/// Useful for logging output.
+/// Example: [1, 2, 3] yields \c "[1, 2, 3]".
 ///
-/// Example: [1, 2, 3] -> "[1, 2, 3]"
+/// \tparam T The byte vector type.
+/// \param s The byte vector.
+/// \return The string representation of the byte vector.
 template<class T>
 std::string vec_to_debug_string(const T& s) {
     std::stringstream ss;
@@ -40,6 +43,12 @@ std::string vec_to_debug_string(const T& s) {
     return ss.str();
 }
 
+/// \brief Converts a byte value into its ASCII representation sorrounded by
+/// single quotes (\c ') or its string representation.
+///
+/// \param byte The byte value.
+/// \return \c 'char(byte)' if the byte represents an ASCII symbol,
+///         the string representation of the byte value otherwise.
 inline std::string byte_to_nice_ascii_char(uint64_t byte) {
     std::stringstream out;
     if (byte >= 32 && byte <= 127) {
@@ -50,12 +59,16 @@ inline std::string byte_to_nice_ascii_char(uint64_t byte) {
     return out.str();
 }
 
-/// Convert a vector-like type into a string by interpreting printable ASCII
-/// bytes as chars, and substituting others.
+/// \brief Converts a vector of bytes into a readable ASCII string,
+/// substituting non-ASCII symbols.
 ///
-/// Useful for logging output.
+/// Example: [97, 32, 97, 0] is converted to \c "a a?".
 ///
-/// Example: [97, 32, 97, 0] -> "a a?"
+/// \tparam T The input vector type.
+/// \param s The input vector.
+/// \param start The indext at which to start processing the vector.
+/// \param replacement The character to replace non-ASCII symbols with.
+/// \return The ASCII string representation of the byte vector.
 template<class T>
 std::string vec_as_lossy_string(const T& s, size_t start = 0,
                                 char replacement = '?') {
@@ -70,6 +83,19 @@ std::string vec_as_lossy_string(const T& s, size_t start = 0,
     return ss.str();
 }
 
+/// \brief Reads digits from the input stream (\c 0 to \c 9) until a non-digit
+/// character is reached and parses them as an integer.
+///
+/// If the initial stream position contains a non-digit, a value of zero is
+/// parsed.
+///
+/// \param inp The input stream.
+/// \param last Used to store the first non-digit character read upon
+///             termination.
+/// \param out Used to store the parsed integer value. This will be zero if no
+///            digit character is found.
+/// \return \c true if there are more characters left on the stream after
+///         reading to the first non-digit, \c false if the stream is over.
 inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out) {
     size_t n = 0;
     char c;
@@ -87,40 +113,68 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
     return more;
 }
 
-/// Returns number of bits needed to store the integer value n
+/// \brief Computes the number of bits required to store the given integer
+/// value.
 ///
-/// The returned value will always be greater than 0
+/// This is equivalent to binary logarithm rounded up to the next integer.
 ///
-/// Example:
+/// Examples:
 /// - `bitsFor(0b0) == 1`
 /// - `bitsFor(0b1) == 1`
 /// - `bitsFor(0b10) == 2`
 /// - `bitsFor(0b11) == 2`
 /// - `bitsFor(0b100) == 3`
+///
+/// \param n The integer to be stored.
+/// \return The amount of bits required to store the value (guaranteed to be
+/// greater than zero).
 inline size_t bitsFor(size_t n) {
     if(n == 0) {
         return 1U;
     } else {
-        return sdsl::bits::hi(n) + 1;
+        return sdsl::bits::hi(n) + 1; //TODO get rid of SDSL dependency
     }
 }
 
-/// integer division with rounding up
+/// \brief Performs an integer division with the result rounded up to the
+/// next integer.
+///
+/// \param a The dividend.
+/// \param b The divisor.
+/// \return The quotient, rounded up to the next integer value.
 inline size_t idiv_ceil(size_t a, size_t b) {
     return (a / b) + ((a % b) > 0);
 }
 
-/// Returns number of bytes needed to store the amount of bits.
+/// \brief Computes the number of bytes needed to store the given amount of
+/// bits.
 ///
-/// Example:
+/// This is a simple helper functions performing a ceiling integer division
+/// by 8.
+///
+/// Examples:
 /// - `bytesFor(0) == 0`
 /// - `bytesFor(1) == 1`
 /// - `bytesFor(8) == 1`
 /// - `bytesFor(9) == 2`
+///
+/// \param bits The amount of bits to represent.
+/// \return The amount of bytes required to store the given amount of bits.
+/// \sa idiv_ceil.
 inline size_t bytesFor(size_t bits) {
     return idiv_ceil(bits, 8U);
 }
 
+/// \brief Creates the cross product of a set of elements given a product
+/// function.
+///
+/// The function \c f is applied to each possible pair of elements in the
+/// input set and the results are stored into the result vector.
+///
+/// \tparam The element type.
+/// \param vs The input set.
+/// \param f The product function.
+/// \return The results of the product function for each pair.
 template<class T>
 std::vector<T> cross(std::vector<std::vector<T>>&& vs,
                      std::function<T(T, T&)> f) {
@@ -147,6 +201,10 @@ std::vector<T> cross(std::vector<std::vector<T>>&& vs,
     }
 }
 
+/// \brief Splits the input string into lines (separated by \c \\n).
+///
+/// \param s The input string.
+/// \return A vector containing the individual lines.
 inline std::vector<std::string> split_lines(std::string s) {
     std::stringstream ss(s);
     std::string to;
@@ -159,8 +217,14 @@ inline std::vector<std::string> split_lines(std::string s) {
     return ret;
 }
 
-inline std::string indent_lines(std::string sentence, size_t ident) {
-    std::stringstream ss(sentence);
+/// \brief Indents each line of a string (separated by \c \\n) by the
+/// specified amount of spaces.
+///
+/// \param s The input string.
+/// \param indent The amount of spaces to indent each line.
+/// \return The indented string.
+inline std::string indent_lines(std::string s, size_t indent) {
+    std::stringstream ss(s);
     std::string to;
     std::stringstream ret;
 
@@ -169,24 +233,20 @@ inline std::string indent_lines(std::string sentence, size_t ident) {
         if (!first) {
             ret << "\n";
         }
-        ret << std::setw(ident) << "" << to;
+        ret << std::setw(indent) << "" << to;
         first = false;
     }
 
     return ret.str();
 }
 
-inline std::string first_line(std::string sentence) {
-    std::stringstream ss(sentence);
-    std::string to;
-
-    if(std::getline(ss,to,'\n')){
-        return to;
-    } else {
-        return "";
-    }
-}
-
+/// \brief Renders the given dataset into an ASCII table.
+///
+/// \param data The data vector. Each contained string represents a cell in
+///             the table. Every \c cols entries make up one row.
+/// \param cols The amount of columns to display the data in.
+/// \param draw_grid If \c true, draws an ASCII grid for the cells.
+/// \return The rendered ASCII table string.
 inline std::string make_table(std::vector<std::string> data,
                               size_t cols,
                               bool draw_grid = true) {
@@ -282,6 +342,7 @@ inline std::string make_table(std::vector<std::string> data,
 
 }
 
+/// \cond INTERNAL
 // this codebase is using c++11 but would really like to use this function...
 namespace std {
     template<class T> struct _Unique_if {
@@ -313,5 +374,6 @@ namespace std {
         typename _Unique_if<T>::_Known_bound
         make_unique(Args&&...) = delete;
 }
+/// \endcond
 
 #endif
