@@ -15,17 +15,17 @@ private:
 
 public:
     inline DCBStrategyRetargetArray(size_t len) : m_none(len) {
-        m_waiting = sdsl::int_vector<>(len, m_none, bitsFor(len));
+        m_waiting = sdsl::int_vector<>(len, m_none, bits_for(len));
     }
 
     inline void wait(size_t pos, size_t src) {
         while(m_waiting[src] != m_none) {
             src = m_waiting[src];
         }
-        
+
         m_waiting[src] = pos;
     }
-    
+
     inline bool next_waiting_for(size_t pos, size_t& out_waiting) {
         size_t waiting = m_waiting[pos];
         if(waiting == m_none) {

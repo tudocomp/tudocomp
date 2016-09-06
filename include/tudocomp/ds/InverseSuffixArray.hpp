@@ -41,7 +41,7 @@ public:
         auto& sa = t.require_sa();
         auto n = sa.size();
 
-        m_isa = iv_t(n, 0, bitsFor(n));
+        m_isa = iv_t(n, 0, bits_for(n));
         for(size_t i = 0; i < n; i++) {
             m_isa[sa[i]] = i;
         }
@@ -49,7 +49,7 @@ public:
 
     // Initializing callback for just-in-time construction
     static inline void construct_jit_init(InverseSuffixArray& isa, size_t n) {
-        isa.m_isa = iv_t(n, 0, bitsFor(n));
+        isa.m_isa = iv_t(n, 0, bits_for(n));
     }
 
     // Just-in-time construction callback

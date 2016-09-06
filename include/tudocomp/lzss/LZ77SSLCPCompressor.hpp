@@ -41,7 +41,7 @@ protected:
 
     /// \copydoc
     inline virtual LZSSCoderOpts coder_opts(Input& input) override {
-        return LZSSCoderOpts(true, bitsFor(input.size()));
+        return LZSSCoderOpts(true, bits_for(input.size()));
     }
 
     /// \copydoc

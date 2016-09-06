@@ -84,7 +84,7 @@ public:
         if(m_isa) m_isa_init(*m_isa, len + 1);
 
         //Bit compress using SDSL
-        size_t w = bitsFor(len + 1);
+        size_t w = bits_for(len + 1);
         m_sa = iv_t(len + 1, 0, w);
 
         for(size_t i = 0; i < len + 1; i++) {

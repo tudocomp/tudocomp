@@ -74,7 +74,7 @@ public:
 
     /// \copydoc
     inline virtual LZSSCoderOpts coder_opts(Input& input) override {
-        return LZSSCoderOpts(false, bitsFor(input.size()));
+        return LZSSCoderOpts(false, bits_for(input.size()));
     }
 
     /// \copydoc

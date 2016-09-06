@@ -57,8 +57,8 @@ public:
         m_alphabet_coder = std::make_shared<A>(
             this->env().env_for_option("alphabet_coder"), in, *m_out);
 
-        m_src_bits = std::min(bitsFor(m_len), opts.src_bits);
-        m_num_bits = bitsFor(m_len);
+        m_src_bits = std::min(bits_for(m_len), opts.src_bits);
+        m_num_bits = bits_for(m_len);
         m_src_use_delta = opts.use_src_delta;
     }
 
@@ -135,7 +135,7 @@ inline void OnlineLZSSCoder<A>::decode(Env&& env, Input& input, Output& out) {
 
     //Init
     size_t len = in.read_compressed_int();
-    size_t num_bits = bitsFor(len);
+    size_t num_bits = bits_for(len);
     size_t src_bits = in.read_compressed_int();
     bool src_use_delta = in.readBit();
 

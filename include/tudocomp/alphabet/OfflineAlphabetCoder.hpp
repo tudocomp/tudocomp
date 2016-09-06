@@ -48,7 +48,7 @@ public:
         auto ordered = counter.getSorted();
 
         m_sigma = ordered.size();
-        m_sigma_bits = bitsFor(m_sigma - 1);
+        m_sigma_bits = bits_for(m_sigma - 1);
 
         m_comp2char = sdsl::int_vector<>(m_sigma, 0, 8);
         m_char2comp = sdsl::int_vector<>(255, 0, m_sigma_bits);
@@ -96,7 +96,7 @@ public:
 
             size_t sigma = in.read_compressed_int();
 
-            m_sigma_bits = bitsFor(sigma - 1);
+            m_sigma_bits = bits_for(sigma - 1);
             m_comp2char = sdsl::int_vector<>(sigma, 0, 8);
 
             //Decode alphabet

@@ -119,16 +119,16 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
 /// This is equivalent to binary logarithm rounded up to the next integer.
 ///
 /// Examples:
-/// - `bitsFor(0b0) == 1`
-/// - `bitsFor(0b1) == 1`
-/// - `bitsFor(0b10) == 2`
-/// - `bitsFor(0b11) == 2`
-/// - `bitsFor(0b100) == 3`
+/// - `bits_for(0b0) == 1`
+/// - `bits_for(0b1) == 1`
+/// - `bits_for(0b10) == 2`
+/// - `bits_for(0b11) == 2`
+/// - `bits_for(0b100) == 3`
 ///
 /// \param n The integer to be stored.
 /// \return The amount of bits required to store the value (guaranteed to be
 /// greater than zero).
-inline size_t bitsFor(size_t n) {
+inline size_t bits_for(size_t n) {
     if(n == 0) {
         return 1U;
     } else {
@@ -153,15 +153,15 @@ inline size_t idiv_ceil(size_t a, size_t b) {
 /// by 8.
 ///
 /// Examples:
-/// - `bytesFor(0) == 0`
-/// - `bytesFor(1) == 1`
-/// - `bytesFor(8) == 1`
-/// - `bytesFor(9) == 2`
+/// - `bytes_for(0) == 0`
+/// - `bytes_for(1) == 1`
+/// - `bytes_for(8) == 1`
+/// - `bytes_for(9) == 2`
 ///
 /// \param bits The amount of bits to represent.
 /// \return The amount of bytes required to store the given amount of bits.
 /// \sa idiv_ceil.
-inline size_t bytesFor(size_t bits) {
+inline size_t bytes_for(size_t bits) {
     return idiv_ceil(bits, 8U);
 }
 

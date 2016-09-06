@@ -59,7 +59,7 @@ public:
         } else {
             //allocate a new int vector for the pre-LCP array
             phi = &t.require_phi();
-            plcp_ptr = new iv_t(n, 0, bitsFor(n));
+            plcp_ptr = new iv_t(n, 0, bits_for(n));
         }
         iv_t& plcp = *plcp_ptr;
 
@@ -79,7 +79,7 @@ public:
         }
 
         //bit compress
-        m_lcp = iv_t(n, 0, bitsFor(m_max));
+        m_lcp = iv_t(n, 0, bits_for(m_max));
         for(size_t i = 1; i < n; i++) {
             m_lcp[i] = plcp[sa[i]];
         }

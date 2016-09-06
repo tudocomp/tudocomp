@@ -61,10 +61,10 @@ public:
         //Initialize doubly linked list
         m_first = m_undef;
         m_last = m_undef;
-        m_prev = sdsl::int_vector<>(n, m_undef, bitsFor(m_undef));
-        m_next = sdsl::int_vector<>(n, m_undef, bitsFor(m_undef));
+        m_prev = sdsl::int_vector<>(n, m_undef, bits_for(m_undef));
+        m_next = sdsl::int_vector<>(n, m_undef, bits_for(m_undef));
 
-        m_lcp_index = sdsl::int_vector<>(lcp.max_lcp(), m_undef, bitsFor(m_undef));
+        m_lcp_index = sdsl::int_vector<>(lcp.max_lcp(), m_undef, bits_for(m_undef));
 
         //Initialize suffix reference map
         m_suffix_contained = sdsl::bit_vector(n, 0);
