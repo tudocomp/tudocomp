@@ -205,7 +205,7 @@ std::vector<T> cross(std::vector<std::vector<T>>&& vs,
 ///
 /// \param s The input string.
 /// \return A vector containing the individual lines.
-inline std::vector<std::string> split_lines(std::string s) {
+inline std::vector<std::string> split_lines(const std::string& s) {
     std::stringstream ss(s);
     std::string to;
     std::vector<std::string> ret;
@@ -223,7 +223,7 @@ inline std::vector<std::string> split_lines(std::string s) {
 /// \param s The input string.
 /// \param indent The amount of spaces to indent each line.
 /// \return The indented string.
-inline std::string indent_lines(std::string s, size_t indent) {
+inline std::string indent_lines(const std::string& s, size_t indent) {
     std::stringstream ss(s);
     std::string to;
     std::stringstream ret;
@@ -247,7 +247,7 @@ inline std::string indent_lines(std::string s, size_t indent) {
 /// \param cols The amount of columns to display the data in.
 /// \param draw_grid If \c true, draws an ASCII grid for the cells.
 /// \return The rendered ASCII table string.
-inline std::string make_table(std::vector<std::string> data,
+inline std::string make_table(const std::vector<std::string>& data,
                               size_t cols,
                               bool draw_grid = true) {
     std::vector<size_t> widths;
