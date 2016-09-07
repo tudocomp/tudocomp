@@ -8,9 +8,11 @@
 namespace tudocomp {
 namespace io {
 
-/// Wrapper over an istream that can be used to read single bits.
+/// \brief Wrapper for input streams that provides bitwise reading
+/// functionality.
 ///
-/// Read bytes are buffered on the inside until all bits of them had been read.
+/// The current byte in the underlying input stream is buffered and processed
+/// bitwise using another cursor.
 class BitIStream {
     std::istream& inp;
     uint8_t next = 0;
@@ -29,14 +31,17 @@ class BitIStream {
     }
 
 public:
-    /// Create a new BitIstream.
+    /// \brief Constructs a bitwise input stream.
     ///
-    /// \param inp_ The istream to read bits from.
+    /// \param inp_ The underlying input stream.
+    /// \param done_ A reference to a flag that is set to \c true when the
+    ///              underlying input stream has been read completely.
     inline BitIStream(std::istream& inp_, bool& done_): inp(inp_), done(&done_) {
         c = -1;
     }
 
-    /// Read a single bit, and return it as a byte of either the value 0 or 1.
+    /// \brief Reads the next single bit from the input.
+    /// \return 1 if the next bit is set, 0 otherwise.
     inline uint8_t readBit() {
         if (c < 0) {
             readNext();
@@ -46,8 +51,13 @@ public:
         return bit;
     }
 
-    /// Read a number of bits, and accumulate them in the return value
-    /// with the last bit read at least significant position of the integer.
+    /// \brief Reads the integer value of the next \c amount bits in MSB first
+    ///        order.
+    /// \tparam The integer type to read.
+    /// \param amount The bit width of the integer to read. By default, this
+    ///               equals the bit width of type \c T.
+    /// \return The integer value of the next \c amount bits in MSB first
+    ///         order.
     template<class T>
     T readBits(size_t amount = sizeof(T) * CHAR_BIT) {
         T value = 0;
@@ -58,9 +68,16 @@ public:
         return value;
     }
 
-    /// Read a compressed integer from the input.
+    /// \brief Reads a compressed integer from the input.
     ///
-    /// \param b The block width in bits (default is 7 bits).
+    /// The \e compressed form of an integer \c n is achieved by splitting
+    /// up the bit representation of \c n in blocks of width \c b. For each
+    /// non-zero block (in little endian order), a 1-bit and the block itself
+    /// is written. The compressed integer is finally terminated by a 0-bit.
+    ///
+    /// \tparam The integer type to read.
+    /// \param b The block width in bits. The default is 7 bits.
+    /// \return The read integer value.
     template<typename T = size_t>
     inline T read_compressed_int(size_t b = 7) {
         DCHECK(b > 0);

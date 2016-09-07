@@ -8,9 +8,11 @@
 namespace tudocomp {
 namespace io {
 
-/// Wrapper over an ostream that can be used to write single bits.
+/// \brief Wrapper for output streams that provides bitwise writing
+/// functionality.
 ///
-/// Bits are buffered in a byte until it is filled, or until flush() is called.
+/// Bits are written into a buffer byte, which is written to the output when
+/// it is either filled or when a flush is explicitly requested.
 class BitOStream {
     std::ostream& out;
     bool dirty;
@@ -33,16 +35,15 @@ class BitOStream {
     }
 
 public:
-    /// Create a new BitOstream.
+    /// \brief Constructs a bitwise output stream.
     ///
-    /// \param out_ The ostream bits should be written to.
+    /// \param out_ The underlying output stream.
     inline BitOStream(std::ostream& out_): out(out_) {
         reset();
     }
 
-    /// Write a single bit.
-    ///
-    /// \param set Wether or not the bit is set. true equals 1, false equals 0.
+    /// \brief Writes a single bit to the output.
+    /// \param set The bit value (0 or 1).
     inline void writeBit(bool set) {
         if (set) {
             next |= (1 << c);
@@ -54,17 +55,13 @@ public:
         }
     }
 
-    /// Write a number of bits taken from a integer value, defaulting to
-    /// all of them.
+    /// Writes the bit representation of an integer in MSB first order to
+    /// the output.
     ///
-    /// The bits will be taken from the least significant end of the integer,
-    /// but written starting with the most significant one of them.
-    ///
-    /// Example: Given the bits named as `76543210`, then write(_, 5) will
-    /// write the bits 4, 3, 2, 1, 0 in that order.
-    ///
-    /// \param value The integer value to take the bits from.
-    /// \param bits The number of bits to take and write.
+    /// \tparam The type of integer to write.
+    /// \param value The integer to write.
+    /// \param bits The amount of low bits of the value to write. By default,
+    ///             this equals the bit width of type \c T.
     template<class T>
     inline void write(T value, size_t bits = sizeof(T) * CHAR_BIT) {
         for (int i = bits - 1; i >= 0; i--) {
@@ -72,14 +69,16 @@ public:
         }
     }
 
-    /// Write the given value as a compressed UINT.
+    /// \brief Writes a compressed integer to the input.
     ///
-    /// The input value is split into blocks. Each block is prepended
-    /// with a bit that tells if there is a following block or not.
-    /// This way, the integer is only stored in as many blocks as necessary.
+    /// The \e compressed form of an integer \c n is achieved by splitting
+    /// up the bit representation of \c n in blocks of width \c b. For each
+    /// non-zero block (in little endian order), a 1-bit and the block itself
+    /// is written. The compressed integer is finally terminated by a 0-bit.
     ///
-    /// \param v The integer value to write.
-    /// \param b The block width in bits (default is 7 bits).
+    /// \tparam The integer type to write.
+    /// \param v The integer to write.
+    /// \param b The block width in bits. The default is 7 bits.
     template<typename T>
     inline void write_compressed_int(T v, size_t b = 7) {
         DCHECK(b > 0);
@@ -95,21 +94,26 @@ public:
         } while(v > 0);
     }
 
-    /// If there where any bits written to the internal buffer, write
-    /// them out one byte at a time, filling the gap at the end with zeroes.
+    /// \brief Forces the buffer byte to be flushed to the output. Any
+    ///        unwritten bit will be unset (0).
     inline void flush() {
         writeNext();
     }
 
-    /// Write a number of bytes aligned to the byte grid.
+    /// \brief Writes a sequence of bytes to the output.
     ///
-    /// If the internal buffer currently holds a number of bits less than 8,
-    /// the remainder will be filled with zeroes before writing the bytes.
+    /// Before the sequence is written, the current buffer byte will be
+    /// flushed to the output (see \c flush).
+    ///
+    /// \param bytes The pointer to the byte sequence to write.
+    /// \param len The length of the byte sequence.
     inline void write_aligned_bytes(const char* bytes, size_t len) {
         writeNext();
         out.write(bytes, len);
     }
 
+    /// \brief Provides access to the underlying output stream.
+    /// \return A reference to the underlying output stream.
     inline std::ostream& stream() {
         return out;
     }
