@@ -16,6 +16,11 @@ namespace io {
 
     class OutputStream;
 
+    /// \brief An abstraction layer for algorithm output.
+    ///
+    /// This class serves as a generic abstraction over different output sinks:
+    /// memory, files or streams. Output is generally done in a stream, ie it
+    /// is written to the sink character by character.
     class Output {
         class Variant {
         public:
@@ -55,45 +60,72 @@ namespace io {
         friend class OutputStream;
 
     public:
-        /// An empty Output. Defaults to writing to stdout
+        /// \brief Constructs an output to \c stdout.
         inline Output(): Output(std::cout) {}
 
-        /// Move constructor
+        /// \brief Move constructor.
         inline Output(Output&& other):
             m_data(std::move(other.m_data)) {}
 
+        /// \brief Constructs a file output writing to the file at the given
+        /// path.
+        ///
+        /// \param path The path to the output file.
+        /// \param overwrite If \c true, the file will be overwritten in case
+        /// it already exists, otherwise the output will be appended to it.
         Output(std::string path, bool overwrite=false):
             m_data(std::make_unique<File>(std::move(path), overwrite)) {}
 
+        /// \brief Constructs an output to a byte buffer.
+        ///
+        /// \param buf The byte buffer to write to.
         Output(std::vector<uint8_t>& buf):
             m_data(std::make_unique<Memory>(&buf)) {}
 
+        /// \brief Constructs an output to a stream.
+        ///
+        /// \param stream The stream to write to.
         Output(std::ostream& stream):
             m_data(std::make_unique<Stream>(&stream)) {}
 
+        /// \brief Move assignment operator.
         Output& operator=(Output&& other) {
             m_data = std::move(other.m_data);
             return *this;
         }
 
-        /// DEPRECATED
+        /// \deprecated Use the respective constructor instead.
+        /// \brief Constructs a file output writing to the file at the given
+        /// path.
+        ///
+        /// \param path The path to the input file.
+        /// \param overwrite If \c true, the file will be overwritten in case
+        /// it already exists, otherwise the output will be appended to it.
         static Output from_path(std::string path, bool overwrite=false) {
             return Output(std::move(path), overwrite);
         }
 
-        /// DEPRECATED
+        /// \deprecated Use the respective constructor instead.
+        /// \brief Constructs an output to a byte buffer.
+        ///
+        /// \param buf The byte buffer to write to.
         static Output from_memory(std::vector<uint8_t>& buf) {
             return Output(buf);
         }
 
-        /// DEPRECATED
+        /// \deprecated Use the respective constructor instead.
+        /// \brief Constructs an output to a stream.
+        ///
+        /// \param stream The stream to write to.
         static Output from_stream(std::ostream& stream) {
             return Output(stream);
         }
 
+        /// \brief Creates a stream that allows for character-wise output.
         inline OutputStream as_stream();
     };
 
+    /// \cond INTERNAL
     class OutputStreamInternal {
         class Variant {
         public:
@@ -174,7 +206,9 @@ namespace io {
         OutputStreamInternal(const OutputStreamInternal& other) = delete;
         OutputStreamInternal() = delete;
     };
+    /// \endcond
 
+    /// \brief Provides a character stream to the underlying output.
     class OutputStream: OutputStreamInternal, public std::ostream {
         friend class Output;
 
@@ -182,11 +216,15 @@ namespace io {
             OutputStreamInternal(std::move(mem)),
             std::ostream(m_variant->stream().rdbuf()) {}
     public:
+        /// \brief Move constructor.
         OutputStream(OutputStream&& mem):
             OutputStreamInternal(std::move(mem)),
             std::ostream(mem.rdbuf()) {}
 
+        /// \brief Copy constructor (deleted).
         OutputStream(const OutputStream& other) = delete;
+
+        /// \brief Default constructor (deleted).
         OutputStream() = delete;
     };
 

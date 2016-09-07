@@ -23,11 +23,11 @@ namespace io {
     /// \brief An abstraction layer for algorithm input.
     ///
     /// This class serves as a generic abstraction over different sources of
-    /// input: memory, files or streams. It provides two ways of handling the
-    /// input: \e streams or \e views. While a view allows random access on all
-    /// of the input, it requires the entire input to be stored in memory.
-    /// Streaming, on the other hand, is used for character-wise reading
-    /// without the ability to rewind (online).
+    /// input: memory buffers, files or streams. It provides two ways of
+    /// handling the input: \e streams or \e views. While a view allows random
+    /// access on all of the input, it requires the entire input to be stored
+    /// in memory. Streaming, on the other hand, is used for character-wise
+    /// reading without the ability to rewind (online).
     class Input {
         struct Variant {
             virtual std::unique_ptr<Variant> virtual_copy() = 0;
@@ -123,7 +123,7 @@ namespace io {
             m_data(std::make_unique<Memory>(
                     (const uint8_t*) &buf[0], buf.size())) {}
 
-        /// \brief Move operator.
+        /// \brief Move assignment operator.
         Input& operator=(Input&& other) {
             m_data = std::move(other.m_data);
             return *this;
