@@ -6,15 +6,16 @@
 #include <sstream>
 #include <utility>
 
-#include <tudocomp/io/vecstreambuf.hpp>
+#include <tudocomp/io/VectorStreamBuffer.hpp>
 
 namespace tudocomp {
 namespace io {
 
-/// A ostream that writes bytes into a stl byte container.
+/// \cond INTERNAL
+
 class BackInsertStream {
     std::vector<uint8_t>* buffer;
-    std::unique_ptr<vecstreambuf<uint8_t>> outBuf;
+    std::unique_ptr<VectorStreamBuffer<uint8_t>> outBuf;
     std::unique_ptr<std::stringstream> ss;
     std::ostream* o;
 
@@ -34,7 +35,9 @@ public:
 
     BackInsertStream(std::vector<uint8_t>& buf) {
         buffer = &buf;
-        outBuf = std::unique_ptr<vecstreambuf<uint8_t>>(new vecstreambuf<uint8_t>(buf));
+        outBuf = std::unique_ptr<VectorStreamBuffer<uint8_t>>(
+            new VectorStreamBuffer<uint8_t>(buf));
+
         ss = std::unique_ptr<std::stringstream> {
             new std::stringstream()
         };
@@ -46,6 +49,8 @@ public:
         return *o;
     }
 };
+
+/// \endcond
 
 }}
 

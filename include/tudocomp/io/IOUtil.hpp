@@ -5,10 +5,10 @@
 #include <iostream>
 #include <string>
 
-/// \cond INTERNAL
-
 namespace tudocomp {
 namespace io {
+
+/// \cond INTERNAL
 
 // TODO: Error handling
 
@@ -83,9 +83,9 @@ inline size_t read_file_size(std::string& file) {
     throw(errno);
 }
 
-}
-}
-
 /// \endcond
+
+}
+}
 
 #endif

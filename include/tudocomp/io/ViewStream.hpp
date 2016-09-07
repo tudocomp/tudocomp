@@ -9,8 +9,8 @@
 namespace tudocomp {
 namespace io {
 
-/// A wrapper around a istream that reads from
-/// a existing memory buffer.
+/// \cond INTERNAL
+
 class ViewStream {
     struct membuf: public std::streambuf {
         inline membuf(char* begin, size_t size) {
@@ -87,6 +87,8 @@ public:
         return *m_stream;
     }
 };
+
+/// \endcond
 
 }}
 

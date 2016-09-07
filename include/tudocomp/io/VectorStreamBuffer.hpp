@@ -7,17 +7,19 @@
 namespace tudocomp {
 namespace io {
 
+/// \cond INTERNAL
+
 template<typename T>
-class vecstreambuf : public std::streambuf {
+class VectorStreamBuffer : public std::streambuf {
 
 private:
     std::vector<T> *m_vec;
 
 public:
-    vecstreambuf(std::vector<T>& vec) : m_vec(&vec) {
+    VectorStreamBuffer(std::vector<T>& vec) : m_vec(&vec) {
     }
 
-    virtual ~vecstreambuf() {
+    virtual ~VectorStreamBuffer() {
     }
 
 protected:
@@ -34,6 +36,8 @@ protected:
         return EOF;
     }
 };
+
+/// \endcond
 
 }}
 
