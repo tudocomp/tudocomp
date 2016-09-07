@@ -61,7 +61,7 @@ public:
 
         DCHECK(bits_for(entry) <= back_ref_idx_bits);
 
-        m_out.write(entry, back_ref_idx_bits);
+        m_out.write_int(entry, back_ref_idx_bits);
 
         m_factor_counter++;
     }
@@ -86,7 +86,7 @@ public:
             }
 
             // Try to read next factor
-            Factor factor(is.readBits<uint64_t>(bits_for(counter + 256)));
+            Factor factor(is.read_int<uint64_t>(bits_for(counter + 256)));
             if (done) {
                 // Could not read all bits -> done
                 // (this works because the encoded factors are always > 8 bit)

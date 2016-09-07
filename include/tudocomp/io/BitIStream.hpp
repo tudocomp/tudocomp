@@ -43,7 +43,7 @@ public:
 
     /// \brief Reads the next single bit from the input.
     /// \return 1 if the next bit is set, 0 otherwise.
-    inline uint8_t readBit() {
+    inline uint8_t read_bit() {
         if (m_cursor < 0) {
             read_next();
         }
@@ -60,11 +60,11 @@ public:
     /// \return The integer value of the next \c amount bits in MSB first
     ///         order.
     template<class T>
-    T readBits(size_t amount = sizeof(T) * CHAR_BIT) {
+    T read_int(size_t amount = sizeof(T) * CHAR_BIT) {
         T value = 0;
         for(size_t i = 0; i < amount; i++) {
             value <<= 1;
-            value |= readBit();
+            value |= read_bit();
         }
         return value;
     }
@@ -88,8 +88,8 @@ public:
 
         bool has_next;
         do {
-            has_next = readBit();
-            value |= (readBits<size_t>(b) << (b * (i++)));
+            has_next = read_bit();
+            value |= (read_int<size_t>(b) << (b * (i++)));
         } while(has_next);
 
         return T(value);

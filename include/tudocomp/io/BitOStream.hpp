@@ -44,7 +44,7 @@ public:
 
     /// \brief Writes a single bit to the output.
     /// \param set The bit value (0 or 1).
-    inline void writeBit(bool set) {
+    inline void write_bit(bool set) {
         if (set) {
             m_next |= (1 << m_cursor);
         }
@@ -63,9 +63,9 @@ public:
     /// \param bits The amount of low bits of the value to write. By default,
     ///             this equals the bit width of type \c T.
     template<class T>
-    inline void write(T value, size_t bits = sizeof(T) * CHAR_BIT) {
+    inline void write_int(T value, size_t bits = sizeof(T) * CHAR_BIT) {
         for (int i = bits - 1; i >= 0; i--) {
-            writeBit((value & T(T(1) << i)) != T(0));
+            write_bit((value & T(T(1) << i)) != T(0));
         }
     }
 
@@ -89,8 +89,8 @@ public:
             uint64_t current = v & mask;
             v >>= b;
 
-            writeBit(v > 0);
-            write(current, b);
+            write_bit(v > 0);
+            write_int(current, b);
         } while(v > 0);
     }
 
@@ -107,7 +107,7 @@ public:
     ///
     /// \param bytes The pointer to the byte sequence to write.
     /// \param len The length of the byte sequence.
-    inline void write_aligned_bytes(const char* bytes, size_t len) {
+    inline void write_bytes_aligned(const char* bytes, size_t len) {
         write_next();
         m_output.write(bytes, len);
     }

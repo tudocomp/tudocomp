@@ -70,13 +70,13 @@ public:
         //Encode alphabet
         m_out->write_compressed_int(m_sigma);
         for(uint8_t c : m_comp2char) {
-            m_out->write(c);
+            m_out->write_int(c);
         }
     }
 
     inline void encode_sym(uint8_t sym) {
-        m_out->writeBit(0);
-        m_out->write(uint8_t(m_char2comp[sym]), m_sigma_bits);
+        m_out->write_bit(0);
+        m_out->write_int(uint8_t(m_char2comp[sym]), m_sigma_bits);
     }
 
     inline void encode_sym_flush() {
@@ -101,13 +101,13 @@ public:
 
             //Decode alphabet
             for(size_t i = 0; i < sigma; i++) {
-                uint8_t c = in.readBits<uint8_t>();
+                uint8_t c = in.read_int<uint8_t>();
                 m_comp2char[i] = c;
             }
         }
 
         size_t decode_sym() {
-            uint8_t sym = m_comp2char[m_in->readBits<uint8_t>(m_sigma_bits)];
+            uint8_t sym = m_comp2char[m_in->read_int<uint8_t>(m_sigma_bits)];
             m_buf->decode(sym);
             return 1;
         }

@@ -73,7 +73,7 @@ public:
         //TODO write magic
         m_out->write_compressed_int(m_len);
         m_out->write_compressed_int(m_src_bits);
-        m_out->writeBit(m_src_use_delta);
+        m_out->write_bit(m_src_use_delta);
 
         m_alphabet_coder->encode_init();
     }
@@ -82,9 +82,9 @@ public:
     inline void encode_fact(const LZSSFactor& f) {
         m_alphabet_coder->encode_sym_flush();
 
-        m_out->writeBit(1);
-        m_out->write(m_src_use_delta ? (f.pos - f.src) : f.src, m_src_bits);
-        m_out->write(f.num, m_num_bits);
+        m_out->write_bit(1);
+        m_out->write_int(m_src_use_delta ? (f.pos - f.src) : f.src, m_src_bits);
+        m_out->write_int(f.num, m_num_bits);
     }
 
     /// Passes a raw symbol to the alphabet encoder.
@@ -137,7 +137,7 @@ inline void OnlineLZSSCoder<A>::decode(Env&& env, Input& input, Output& out) {
     size_t len = in.read_compressed_int();
     size_t num_bits = bits_for(len);
     size_t src_bits = in.read_compressed_int();
-    bool src_use_delta = in.readBit();
+    bool src_use_delta = in.read_bit();
 
     //TODO: use DCBStrategyNone if src_use_delta is true
     DecodeBuffer<DCBStrategyRetargetArray> buffer(len);
@@ -148,10 +148,10 @@ inline void OnlineLZSSCoder<A>::decode(Env&& env, Input& input, Output& out) {
     //Decode
     size_t pos = 0;
     while(pos < len) {
-        if(in.readBit()) {
+        if(in.read_bit()) {
             //decode factor
-            size_t src = in.readBits<size_t>(src_bits);
-            size_t num = in.readBits<size_t>(num_bits);
+            size_t src = in.read_int<size_t>(src_bits);
+            size_t num = in.read_int<size_t>(num_bits);
 
             buffer.defact(src_use_delta ? (pos - src) : src, num);
             pos += num;

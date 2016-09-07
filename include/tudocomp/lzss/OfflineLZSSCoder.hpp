@@ -81,7 +81,7 @@ public:
     inline void encode_init() {
         //TODO write magic
         m_out->write_compressed_int(m_in_size);
-        m_out->writeBit(m_src_use_delta);
+        m_out->write_bit(m_src_use_delta);
 
         m_num_bits = bits_for(m_num_max - m_num_min);
         m_src_bits = bits_for(m_src_max);
@@ -95,9 +95,9 @@ public:
 
     /// Encodes a LZSS factor to the output.
     inline void encode_fact(const LZSSFactor& f) {
-        m_out->writeBit(1);
-        m_out->write(m_src_use_delta ? (f.pos - f.src) : f.src, m_src_bits);
-        m_out->write(f.num - m_num_min, m_num_bits);
+        m_out->write_bit(1);
+        m_out->write_int(m_src_use_delta ? (f.pos - f.src) : f.src, m_src_bits);
+        m_out->write_int(f.num - m_num_min, m_num_bits);
     }
 
     /// Passes a raw symbol to the alphabet encoder.
@@ -175,7 +175,7 @@ inline void OfflineLZSSCoder<A>::decode(Env&& env, Input& input, Output& out) {
 
     //Init
     size_t len = in.read_compressed_int();
-    bool src_use_delta = in.readBit();
+    bool src_use_delta = in.read_bit();
     size_t num_min = in.read_compressed_int(4);
     size_t num_bits = in.read_compressed_int(5);
     size_t src_bits = in.read_compressed_int(5);
@@ -189,10 +189,10 @@ inline void OfflineLZSSCoder<A>::decode(Env&& env, Input& input, Output& out) {
     //Decode
     size_t pos = 0;
     while(pos < len) {
-        if(in.readBit()) {
+        if(in.read_bit()) {
             //decode factor
-            size_t src = in.readBits<size_t>(src_bits);
-            size_t num = in.readBits<size_t>(num_bits) + num_min;
+            size_t src = in.read_int<size_t>(src_bits);
+            size_t num = in.read_int<size_t>(num_bits) + num_min;
 
             buffer.defact(src_use_delta ? (pos - src) : src, num);
             pos += num;

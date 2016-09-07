@@ -38,8 +38,8 @@ public:
     }
 
     inline void encode_sym(uint8_t sym) {
-        m_out->writeBit(0);
-        m_out->write(sym);
+        m_out->write_bit(0);
+        m_out->write_int(sym);
     }
 
     inline void encode_sym_flush() {
@@ -56,7 +56,7 @@ public:
         }
 
         size_t decode_sym() {
-            uint8_t sym = m_in->readBits<uint8_t>();
+            uint8_t sym = m_in->read_int<uint8_t>();
             m_buf->decode(sym);
             return 1;
         }

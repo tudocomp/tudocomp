@@ -63,8 +63,8 @@ public:
 
         DCHECK(bits_for(entry.index) <= back_ref_idx_bits);
 
-        m_out.write(entry.index, back_ref_idx_bits);
-        m_out.write(entry.chr, 8);
+        m_out.write_int(entry.index, back_ref_idx_bits);
+        m_out.write_int(entry.chr, 8);
 
         m_max_bits_needed_per_factor = std::max<uint32_t>(
                 m_max_bits_needed_per_factor, back_ref_idx_bits + 8);
@@ -91,8 +91,8 @@ public:
         while (!done) {
             size_t back_ref_idx_bits = bits_for(factor_counter);
 
-            CodeType index = inp.readBits<CodeType>(back_ref_idx_bits);
-            uint8_t chr = inp.readBits<uint8_t>(8);
+            CodeType index = inp.read_int<CodeType>(back_ref_idx_bits);
+            uint8_t chr = inp.read_int<uint8_t>(8);
 
             if (done) {
                 break;
