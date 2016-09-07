@@ -14,40 +14,41 @@ namespace io {
 /// The current byte in the underlying input stream is buffered and processed
 /// bitwise using another cursor.
 class BitIStream {
-    std::istream& inp;
-    uint8_t next = 0;
-    int c;
-    bool* done;
+    std::istream& m_input;
+    uint8_t m_next = 0;
+    int m_cursor;
+    bool* m_done;
 
-    inline void readNext() {
+    inline void read_next() {
         const int MSB = 7;
 
         char tmp;
         // TODO: Error reporting
-        *done |= !inp.get(tmp);
-        next = tmp;
+        *m_done |= !m_input.get(tmp);
+        m_next = tmp;
 
-        c = MSB;
+        m_cursor = MSB;
     }
 
 public:
     /// \brief Constructs a bitwise input stream.
     ///
-    /// \param inp_ The underlying input stream.
-    /// \param done_ A reference to a flag that is set to \c true when the
+    /// \param input The underlying input stream.
+    /// \param done A reference to a flag that is set to \c true when the
     ///              underlying input stream has been read completely.
-    inline BitIStream(std::istream& inp_, bool& done_): inp(inp_), done(&done_) {
-        c = -1;
+    inline BitIStream(std::istream& input, bool& done)
+        : m_input(input), m_done(&done) {
+        m_cursor = -1;
     }
 
     /// \brief Reads the next single bit from the input.
     /// \return 1 if the next bit is set, 0 otherwise.
     inline uint8_t readBit() {
-        if (c < 0) {
-            readNext();
+        if (m_cursor < 0) {
+            read_next();
         }
-        uint8_t bit = (next >> c) & 0b1;
-        c--;
+        uint8_t bit = (m_next >> m_cursor) & 0b1;
+        m_cursor--;
         return bit;
     }
 

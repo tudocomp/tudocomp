@@ -14,22 +14,22 @@ namespace io {
 /// Bits are written into a buffer byte, which is written to the output when
 /// it is either filled or when a flush is explicitly requested.
 class BitOStream {
-    std::ostream& out;
-    bool dirty;
-    uint8_t next;
-    int c;
+    std::ostream& m_output;
+    bool m_dirty;
+    uint8_t m_next;
+    int m_cursor;
 
     inline void reset() {
         const int MSB = 7;
 
-        this->next = 0;
-        this->c = MSB;
-        this->dirty = false;
+        m_next = 0;
+        m_cursor = MSB;
+        m_dirty = false;
     }
 
-    inline void writeNext() {
-        if (dirty) {
-            out.put(char(next));
+    inline void write_next() {
+        if (m_dirty) {
+            m_output.put(char(m_next));
             reset();
         }
     }
@@ -37,8 +37,8 @@ class BitOStream {
 public:
     /// \brief Constructs a bitwise output stream.
     ///
-    /// \param out_ The underlying output stream.
-    inline BitOStream(std::ostream& out_): out(out_) {
+    /// \param output The underlying output stream.
+    inline BitOStream(std::ostream& output) : m_output(output) {
         reset();
     }
 
@@ -46,12 +46,12 @@ public:
     /// \param set The bit value (0 or 1).
     inline void writeBit(bool set) {
         if (set) {
-            next |= (1 << c);
+            m_next |= (1 << m_cursor);
         }
 
-        dirty = true;
-        if (--c < 0) {
-            writeNext();
+        m_dirty = true;
+        if (--m_cursor < 0) {
+            write_next();
         }
     }
 
@@ -97,7 +97,7 @@ public:
     /// \brief Forces the buffer byte to be flushed to the output. Any
     ///        unwritten bit will be unset (0).
     inline void flush() {
-        writeNext();
+        write_next();
     }
 
     /// \brief Writes a sequence of bytes to the output.
@@ -108,14 +108,14 @@ public:
     /// \param bytes The pointer to the byte sequence to write.
     /// \param len The length of the byte sequence.
     inline void write_aligned_bytes(const char* bytes, size_t len) {
-        writeNext();
-        out.write(bytes, len);
+        write_next();
+        m_output.write(bytes, len);
     }
 
     /// \brief Provides access to the underlying output stream.
     /// \return A reference to the underlying output stream.
     inline std::ostream& stream() {
-        return out;
+        return m_output;
     }
 };
 
