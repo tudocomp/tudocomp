@@ -20,10 +20,14 @@ namespace io {
     struct InputView;
     struct InputStream;
 
-    /// Represents the input of an algorithm.
+    /// \brief An abstraction layer for algorithm input.
     ///
-    /// Can be used as either a istream or a memory buffer
-    /// with the as_stream or as_view methods.
+    /// This class serves as a generic abstraction over different sources of
+    /// input: memory, files or streams. It provides two ways of handling the
+    /// input: \e streams or \e views. While a view allows random access on all
+    /// of the input, it requires the entire input to be stored in memory.
+    /// Streaming, on the other hand, is used for character-wise reading
+    /// without the ability to rewind (online).
     class Input {
         struct Variant {
             virtual std::unique_ptr<Variant> virtual_copy() = 0;
@@ -73,62 +77,106 @@ namespace io {
         std::unique_ptr<Variant> m_data;
 
     public:
-        struct Path { std::string path; };
+        /// \brief Represents a file path.
+        ///
+        /// Pass a Path instance to the respective constructor in order to
+        /// create an input from the file pointed to by the path.
+        struct Path {
+            /// The path string.
+            std::string path;
+        };
 
-        /// An empty Input
+        /// \brief Constructs an empty input.
         inline Input():
             m_data(std::make_unique<Memory>(nullptr, 0)) {}
 
-        /// Create an copy of the Input, with internal cursors
-        /// set to the current position
+        /// \brief Constructs an input from another input, retaining its
+        /// internal state ("cursor").
+        ///
+        /// Use this in combination with streams to store a rewind point.
+        ///
+        /// \param other The input to copy.
         inline Input(const Input& other):
             m_data(std::move(other.m_data->virtual_copy())) {}
 
-        /// Move constructor
+        /// \brief Move constructor.
         inline Input(Input&& other):
             m_data(std::move(other.m_data)) {}
 
-        /// An Input referring to the contents of a file
+        /// \brief Constructs a file input reading from the file at the given
+        /// path.
+        ///
+        /// \param path The path to the input file.
         Input(Input::Path&& path):
             m_data(std::make_unique<File>(std::move(path.path), 0)) {}
 
-        /// An Input referring to the contents of an vector
+        /// \brief Constructs an input reading from the specified byte buffer.
+        ///
+        /// \param buf The input byte buffer.
         Input(const std::vector<uint8_t>& buf):
             m_data(std::make_unique<Memory>(&buf[0], buf.size())) {}
 
-        /// An Input referring to the contents of an string
+        /// \brief Constructs an input reading from a string in memory.
+        ///
+        /// \param buf The input string.
         Input(const string_ref buf):
             m_data(std::make_unique<Memory>(
                     (const uint8_t*) &buf[0], buf.size())) {}
 
+        /// \brief Move operator.
         Input& operator=(Input&& other) {
             m_data = std::move(other.m_data);
             return *this;
         }
 
-        /// DEPRECATED
+        /// \deprecated Use the respective constructor instead.
+        /// \brief Constructs a file input reading from the file at the given
+        /// path.
+        ///
+        /// \param path The path to the input file.
         static Input from_path(std::string path) {
             return Input(Path { path });
         }
 
-        /// DEPRECATED
+        /// \deprecated Use the respective constructor instead.
+        /// \brief Constructs a file input reading from a byte buffer.
+        ///
+        /// \param buf The input byte buffer.
         static Input from_memory(const std::vector<uint8_t>& buf) {
             return Input(buf);
         }
 
-        /// DEPRECATED
+        /// \deprecated Use the respective constructor instead.
+        /// \brief Constructs a file input reading from a string in memory.
+        ///
+        /// \param buf The input string.
         static Input from_memory(const string_ref buf) {
             return Input(buf);
         }
 
+        /// \brief Provides a view on the input that allows for random access.
+        ///
+        /// This will store the entire input in memory, ie a file or stream
+        /// will be fully read in order to provide the view.
+        ///
+        /// \return A random access view on the input.
         inline InputView as_view();
+
+        /// \brief Creates a stream that allows for character-wise reading of
+        /// the input.
+        ///
+        /// \return A character stream for the input.
         inline InputStream as_stream();
 
+        /// \brief Yields the total amount of characters in the input.
+        ///
+        /// \return The total amount of characters in the input.
         inline size_t size() {
             return m_data->size();
         }
     };
 
+    /// \cond INTERNAL
     class InputViewInternal {
         struct Variant {
             virtual string_ref view() = 0;
@@ -179,7 +227,12 @@ namespace io {
         InputViewInternal(InputViewInternal&& s):
             m_variant(std::move(s.m_variant)) {}
     };
+    /// \endcond
 
+
+    /// \brief Provides a view on the input that allows for random access.
+    ///
+    /// \sa View.
     class InputView: InputViewInternal, public View {
         friend class Input;
 
@@ -187,11 +240,15 @@ namespace io {
             InputViewInternal(std::move(mem)),
             View(m_variant->view()) {}
     public:
+        /// Move constructor.
         InputView(InputView&& mem):
             InputViewInternal(std::move(mem)),
             View(std::move(mem)) {}
 
+        /// Copy constructor (deleted).
         InputView(const InputView& other) = delete;
+
+        /// Default constructor (deleted).
         InputView() = delete;
     };
 
@@ -226,6 +283,7 @@ namespace io {
         return m_data->as_view();
     }
 
+    /// \cond INTERNAL
     class InputStreamInternal {
         class Variant {
         public:
@@ -330,7 +388,9 @@ namespace io {
             m_variant(std::move(s.m_variant)) {}
 
     };
+    /// \endcond
 
+   /// \brief Provides a character stream of the underlying input.
     class InputStream: InputStreamInternal, public std::istream {
         friend class Input;
 
@@ -338,11 +398,15 @@ namespace io {
             InputStreamInternal(std::move(mem)),
             std::istream(m_variant->stream().rdbuf()) {}
     public:
+        /// Move constructor.
         InputStream(InputStream&& mem):
             InputStreamInternal(std::move(mem)),
             std::istream(mem.rdbuf()) {}
 
+        /// Copy constructor (deleted).
         InputStream(const InputStream& other) = delete;
+
+        /// Default constructor (deleted).
         InputStream() = delete;
     };
 
