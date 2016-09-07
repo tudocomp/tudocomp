@@ -175,7 +175,7 @@ int main(int argc, char** argv)
 
             if (use_stdin) {
                 // Input from stdin
-                stream_buffer = read_stream_to_stl_byte_container<
+                stream_buffer = io::read_stream_to_stl_byte_container<
                     std::vector<uint8_t>
                 >(std::cin);
                 inp = Input::from_memory(stream_buffer);
@@ -273,7 +273,7 @@ int main(int argc, char** argv)
                 std::cout << "input: <stdin>\n";
                 std::cout << "input size: ? B\n";
             } else {
-                inp_size = read_file_size(file);
+                inp_size = io::read_file_size(file);
                 std::cout << "input: "<<file<<"\n";
                 std::cout << "input size: "<<inp_size<<" B\n";
             }
@@ -284,7 +284,7 @@ int main(int argc, char** argv)
                 std::cout << "output: <stdout>\n";
                 std::cout << "output size: ? B\n";
             } else {
-                out_size = read_file_size(ofile);
+                out_size = io::read_file_size(ofile);
                 std::cout << "output: "<<ofile<<"\n";
                 std::cout << "output size: "<<out_size<<" B\n";
             }
