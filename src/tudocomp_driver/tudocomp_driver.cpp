@@ -98,7 +98,7 @@ int main(int argc, char** argv)
         if (FLAGS_list) {
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
-            std::cout << generate_doc_string(registry);
+            std::cout << registry.generate_doc_string();
 
             return 0;
         }

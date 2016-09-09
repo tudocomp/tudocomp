@@ -176,7 +176,7 @@ TEST(Registry, dynamic_options) {
         }
     };
 
-    r.compressor<MyCompressor>();
+    r.register_compressor<MyCompressor>();
 
     auto c = r.select_algorithm_or_exit("foo(x, \"qwerty\")");
     std::vector<uint8_t> data;
