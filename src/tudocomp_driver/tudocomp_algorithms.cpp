@@ -1,4 +1,4 @@
-#include <tudocomp_driver/registry.h>
+#include <tudocomp_driver/Registry.hpp>
 
 #include <tudocomp/lz78/Lz78Compressor.hpp>
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
