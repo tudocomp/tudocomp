@@ -32,8 +32,9 @@ private:
 
     template <typename sa_t, int U = bits, typename std::enable_if<U != 0,int>::type = 0>
 	inline void construct_lcp_array(const iv_t& plcp, const sa_t& sa) {
-		m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
         const auto& n = sa.size();
+		m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
+        m_lcp = iv_t(n);
 		for(len_t i = 1; i < n; i++) {
 			m_lcp[i] = plcp[sa[i]];
 		}
@@ -116,7 +117,7 @@ namespace LCP {
 		const len_t n = plcp.size();
 		len_t len = 0;
 		for(len_t i = 0; i+1 < n; i++) {
-			assert(plcp[i+1]+1 >= plcp[i]);
+			DCHECK_GE(plcp[i+1]+1, plcp[i]);
 			len += plcp[i+1]-plcp[i]+1;
 		}
 		sdsl::bit_vector bv(len+2*n,0);
@@ -124,7 +125,7 @@ namespace LCP {
 		len=0;
 		for(len_t i = 0; i+1 < n; i++) {
 			len += plcp[i+1]-plcp[i]+2;
-			assert(len < bv.size());
+			DCHECK_LT(len, bv.size());
 			bv[len] = 1;
 		}
 		return bv;
@@ -133,13 +134,18 @@ namespace LCP {
 	inline static iv_t phi_algorithm(T& t) {
 		auto& sa = t.require_sa();
 		const auto n = sa.size();
-		t.require_phi();
+        t.require_phi();
 		std::unique_ptr<PhiArray<T>> phi(std::move(t.release_phi()));
 		iv_t plcp(std::move(phi->data()));
 		for(len_t i = 0, l = 0; i < n - 1; ++i) {
 			const len_t phii = plcp[i];
+            DCHECK_LT(i+l, n);
+            DCHECK_LT(phii+l, n);
+            DCHECK_NE(i, phii);
 			while(t[i+l] == t[phii+l]) {
 				l++;
+                DCHECK_LT(i+l, n);
+                DCHECK_LT(phii+l, n);
 			}
 			plcp[i] = l;
 			if(l) {
@@ -153,8 +159,8 @@ namespace LCP {
 		const len_t n = isa.size();
 		iv_t plcp(n);
 		for(len_t i = 0; i < n; ++i) {
-			assert(isa[i] < n);
-			assert(isa[i] >= 0);
+			DCHECK_LT(isa[i], n);
+			DCHECK_GE(isa[i], 0);
 			plcp[i] = lcp[isa[i]];
 		}
 		return plcp;
