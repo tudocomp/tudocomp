@@ -25,7 +25,7 @@
 #include <tudocomp/util.h>
 
 namespace tudocomp {
-using namespace tudocomp;
+    /// \cond INTERNAL
     namespace ast {
         /*
             Base Grammar of an Algorithm string as used on the command
@@ -973,7 +973,7 @@ using namespace tudocomp;
                                   true).static_selection);
         }
     }
-
+    /// \endcond
 }
 
 #endif

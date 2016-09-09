@@ -16,6 +16,8 @@
 
 using ulong = unsigned long;
 
+/// \cond INTERNAL
+
 /// \brief Contains a custom override of \c malloc used to count allocated
 /// memory over time.
 namespace malloc_count {
@@ -52,6 +54,8 @@ namespace malloc_count {
 extern "C" void* __libc_malloc(size_t);
 extern "C" void __libc_free(void*);
 extern "C" void* __libc_realloc(void*, size_t);
+
+/// \endcond
 
 #endif
 
