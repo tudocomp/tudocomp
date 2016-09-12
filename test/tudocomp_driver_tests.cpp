@@ -48,7 +48,7 @@ TEST(TudocompDriver, algorithm_header) {
 }
 
 TEST(Registry, smoketest) {
-    using namespace tudocomp_driver;
+    using namespace tudocomp_algorithms;
     using ast::Value;
     using ast::Arg;
     ast::Parser p { "foo(abc, def=ghi, x : static y = z, "
@@ -96,7 +96,7 @@ TEST(Registry, smoketest) {
 }
 
 TEST(Registry, decl) {
-    using namespace tudocomp_driver;
+    using namespace tudocomp_algorithms;
     ast::Parser p {
         "foo(a: b, c: d = e, f: static g)"
     };
@@ -125,13 +125,13 @@ TEST(Registry, decl) {
 }
 
 TEST(Registry, lookup) {
-    using namespace tudocomp_driver;
+    using namespace tudocomp_algorithms;
     Registry& r = REGISTRY;
     auto c = r.select_algorithm_or_exit("lz78(dict_size = \"100\")");
 }
 
 TEST(Registry, dynamic_options) {
-    using namespace tudocomp_driver;
+    using namespace tudocomp_algorithms;
 
     Registry& r = REGISTRY;
 
@@ -188,7 +188,7 @@ TEST(Registry, dynamic_options) {
 }
 
 TEST(TudocompDriver, all_compressors_defined) {
-    using namespace tudocomp_driver;
+    using namespace tudocomp_algorithms;
 
     Registry& r = REGISTRY;
     auto s = r.check_for_undefined_compressors();

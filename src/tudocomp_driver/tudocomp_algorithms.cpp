@@ -21,7 +21,7 @@
 #include <tudocomp/alphabet/OnlineAlphabetCoder.hpp>
 #include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
 
-namespace tudocomp_driver {
+namespace tudocomp_algorithms {
 
 using namespace tudocomp;
 

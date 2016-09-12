@@ -35,7 +35,7 @@
 /// For algorithms to be made available in the driver application, they need
 /// to be registered in the \ref Registry. Any registered algorithm will also
 /// be listed in the utility's help message.
-namespace tudocomp_driver {
+namespace tudocomp_algorithms {
 
 using namespace tudocomp;
 
@@ -199,9 +199,6 @@ public:
         return std::move(r);
     }
 
-    inline static Registry with_all_registered() {
-        return with_all_from(register_algorithms);
-    }
 
     inline std::string generate_doc_string() {
         auto print = [](std::vector<decl::Algorithm>& x, size_t iden) {

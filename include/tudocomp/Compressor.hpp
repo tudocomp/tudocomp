@@ -30,7 +30,6 @@ public:
 
 using CompressorConstructor = std::function<std::unique_ptr<Compressor>(Env&&)>;
 
-
 }
 
 #endif
