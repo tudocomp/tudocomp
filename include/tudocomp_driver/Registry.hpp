@@ -26,28 +26,60 @@
 #include <tudocomp/util.h>
 #include <tudocomp/AlgorithmStringParser.hpp>
 
+/// \brief Contains the executable driver application.
+///
+/// The driver application is a standalone executable that makes the
+/// framework's compression and encoding algorithms available for use in a
+/// command-line utility.
+///
+/// For algorithms to be made available in the driver application, they need
+/// to be registered in the \ref Registry. Any registered algorithm will also
+/// be listed in the utility's help message.
 namespace tudocomp_driver {
 
 using namespace tudocomp;
 
 class Registry;
-inline std::string generate_doc_string(Registry& r);
+
+/// \cond INTERNAL
 extern Registry REGISTRY;
+/// \endcond
+
+/// \brief Called when the driver application compiles its list of available
+///        algorithms.
+///
+/// \param registry The application's registry.
 void register_algorithms(Registry& registry);
 
+/// \brief A registry for algorithms to be made available in the driver
+///        application.
+///
+/// For algorithms to be made available in the driver application, they need
+/// to be registered in the application's main registry. This is done in
+/// the \ref register_algorithms step. Any registered algorithm will also
+/// be listed in the utility's help message.
 class Registry {
     eval::AlgorithmTypes m_algorithms;
     std::map<pattern::Algorithm, CompressorConstructor> m_compressors;
 
+    /// \cond INTERNAL
     friend class AlgorithmTypeBuilder;
-    friend inline std::string generate_doc_string(Registry& r);
     friend class GlobalRegistry;
+    /// \endcond
 
     inline Registry() {}
 
 public:
+    /// \brief Registers a \ref tudocomp::Compressor.
+    ///
+    /// Note that the compressor type \c T needs to implement a static function
+    /// called \c meta() that returns a \ref tudocomp::Meta information object.
+    /// This meta information is used to automatically generate the
+    /// documentation for the driver application's help message.
+    ///
+    /// \tparam T The compressor to register.
     template<class T>
-    void compressor() {
+    void register_compressor() {
         auto meta = T::meta();
 
         ast::Value s = std::move(meta).build_static_args_ast_value();
@@ -62,6 +94,8 @@ public:
             return std::make_unique<T>(std::move(env));
         };
     }
+
+    /// \cond INTERNAL
 
     // Create the list of all possible static-argument-type combinations
     std::vector<pattern::Algorithm> all_algorithms_with_static(View type) {
@@ -168,54 +202,55 @@ public:
     inline static Registry with_all_registered() {
         return with_all_from(register_algorithms);
     }
-};
 
-inline std::string generate_doc_string(Registry& r) {
-    auto print = [](std::vector<decl::Algorithm>& x, size_t iden) {
-        std::vector<std::string> cells;
+    inline std::string generate_doc_string() {
+        auto print = [](std::vector<decl::Algorithm>& x, size_t iden) {
+            std::vector<std::string> cells;
 
-        for (auto& y : x) {
-            auto spec = y.to_string(true);
+            for (auto& y : x) {
+                auto spec = y.to_string(true);
 
-            std::stringstream where;
-            bool first = true;
-            for (auto& z : y.arguments()) {
-                if (first) {
-                    where << "\n  where ";
-                } else {
-                    where << "\n        ";
+                std::stringstream where;
+                bool first = true;
+                for (auto& z : y.arguments()) {
+                    if (first) {
+                        where << "\n  where ";
+                    } else {
+                        where << "\n        ";
+                    }
+                    first = false;
+                    where << "`" << z.name() << "` is one of [" << z.type() << "],";
                 }
-                first = false;
-                where << "`" << z.name() << "` is one of [" << z.type() << "],";
+                auto s = spec + where.str();
+                if (y.arguments().size() > 0) {
+                    s = s.substr(0, s.size() - 1);
+                }
+                cells.push_back(s);
+                cells.push_back(y.doc());
             }
-            auto s = spec + where.str();
-            if (y.arguments().size() > 0) {
-                s = s.substr(0, s.size() - 1);
+
+            return indent_lines(make_table(cells, 2), iden);
+        };
+
+        std::stringstream ss;
+
+        ss << "  [Compression algorithms]\n";
+        ss << print(m_algorithms["compressor"], 2) << "\n\n";
+
+        ss << "  [Argument types]\n";
+        for (auto& x : m_algorithms) {
+            if (x.first == "compressor") {
+                continue;
             }
-            cells.push_back(s);
-            cells.push_back(y.doc());
+            ss << "    [" << x.first << "]\n";
+            ss << print(x.second, 4) << "\n\n";
         }
 
-        return indent_lines(make_table(cells, 2), iden);
-    };
-
-    std::stringstream ss;
-
-    ss << "  [Compression algorithms]\n";
-    ss << print(r.m_algorithms["compressor"], 2) << "\n\n";
-
-    ss << "  [Argument types]\n";
-    for (auto& x : r.m_algorithms) {
-        if (x.first == "compressor") {
-            continue;
-        }
-        ss << "    [" << x.first << "]\n";
-        ss << print(x.second, 4) << "\n\n";
+        return ss.str();
     }
 
-    return ss.str();
-}
-
+    /// \endcond
+};
 
 }
 

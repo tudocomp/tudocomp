@@ -51,6 +51,7 @@ inline void InverseSuffixArray<T>::construct(T& t) {
 
 	m_isa = iv_t(n, 0, bits_for(n));
 	for(size_t i = 0; i < n; i++) {
+        DCHECK_LT(sa[i], n);
 		m_isa[sa[i]] = i;
 	}
 }

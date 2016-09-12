@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <cstdint>
 #include <iostream>
-#include "gtest/gtest.h"
-#include "glog/logging.h"
+#include <gtest/gtest.h>
+#include <glog/logging.h>
 
 #include "test_util.h"
-#include "tudocomp_driver/registry.h"
+#include <tudocomp_driver/Registry.hpp>
 #include "tudocomp_driver_util.h"
 
 using namespace tudocomp_driver;

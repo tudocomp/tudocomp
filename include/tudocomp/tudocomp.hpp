@@ -15,7 +15,7 @@
 namespace tudocomp {
 }
 
-/// \brief Contains the I/O abstraction classes for reading and writing text.
+/// \brief Contains I/O abstractions and utilities.
 ///
 /// All I/O done by compressors and encoders is routed through the \ref Input
 /// and \ref Output abstractions over the underlying file, memory or stream

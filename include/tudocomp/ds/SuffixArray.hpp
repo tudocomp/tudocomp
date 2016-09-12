@@ -47,7 +47,7 @@ namespace tudocomp {
 
 template<class T>
 void SuffixArray<T>::construct(T& t) {
-	size_t len = t.size();
+	const size_t len = t.size();
 
 	//TODO:  t.text(); should do the job?
 	uint8_t* copy = new uint8_t[len + 1];
@@ -61,7 +61,7 @@ void SuffixArray<T>::construct(T& t) {
 
 	//Use divsufsort to construct
 	int32_t *sa = new int32_t[len + 1];
-	divsufsort(t.text(), sa, len + 1);
+	divsufsort(copy, sa, len + 1);
 
 	delete[] copy;
 
@@ -70,8 +70,8 @@ void SuffixArray<T>::construct(T& t) {
 	m_sa = iv_t(len + 1, 0, w);
 
 	for(size_t i = 0; i < len + 1; i++) {
-		size_t s = sa[i];
-		m_sa[i]  = s;
+		m_sa[i]  = sa[i];
+        DCHECK_LT(m_sa[i], len+1);
 	}
 
 	delete[] sa;

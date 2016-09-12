@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <cstdint>
 #include <iostream>
-#include "gtest/gtest.h"
-#include "glog/logging.h"
+#include <gtest/gtest.h>
+#include <glog/logging.h>
 
 #include <tudocomp/util.h>
 
 #include "test_util.h"
-#include "tudocomp_driver/registry.h"
-#include "tudocomp/AlgorithmStringParser.hpp"
+#include <tudocomp_driver/Registry.hpp>
+#include <tudocomp/AlgorithmStringParser.hpp>
 
 #include "tudocomp_driver_util.h"
 
@@ -176,7 +176,7 @@ TEST(Registry, dynamic_options) {
         }
     };
 
-    r.compressor<MyCompressor>();
+    r.register_compressor<MyCompressor>();
 
     auto c = r.select_algorithm_or_exit("foo(x, \"qwerty\")");
     std::vector<uint8_t> data;

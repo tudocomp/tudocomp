@@ -1,4 +1,4 @@
-#include <tudocomp_driver/registry.h>
+#include <tudocomp_driver/Registry.hpp>
 
 #include <tudocomp/lz78/Lz78Compressor.hpp>
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
@@ -63,37 +63,37 @@ void register_algorithms(Registry& r) {
     // at runtime, we need to explicitly register all possible
     // template instances
 
-    r.compressor< LzwCompressor<LzwDebugCoder> >();
-    r.compressor< LzwCompressor<LzwBitCoder> >();
-    r.compressor< Lz78Compressor<Lz78BitCoder> >();
-    r.compressor< Lz78Compressor<Lz78DebugCoder> >();
-    r.compressor< Lz78cicsCompressor<Lz78BitCoder> >();
-    r.compressor< Lz78cicsCompressor<Lz78DebugCoder> >();
-    r.compressor< LZ77SSSlidingWindowCompressor<DebugLZSSCoder> >();
-    r.compressor< LZ77SSSlidingWindowCompressor<OnlineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZ77SSSlidingWindowCompressor<OnlineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.compressor< LZ77SSSlidingWindowCompressor<OfflineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZ77SSSlidingWindowCompressor<OfflineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.compressor< LZ77SSLCPCompressor<DebugLZSSCoder> >();
-    r.compressor< LZ77SSLCPCompressor<OnlineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZ77SSLCPCompressor<OnlineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.compressor< LZ77SSLCPCompressor<OfflineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZ77SSLCPCompressor<OfflineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompMaxLCP, DebugLZSSCoder> >();
-    r.compressor< LZSSESACompressor<ESACompMaxLCP, OnlineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompMaxLCP, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompBulldozer, DebugLZSSCoder> >();
-    r.compressor< LZSSESACompressor<ESACompBulldozer, OnlineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompBulldozer, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompBulldozer, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompBulldozer, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompNaive, DebugLZSSCoder> >();
-    r.compressor< LZSSESACompressor<ESACompNaive, OnlineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompNaive, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompNaive, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.compressor< LZSSESACompressor<ESACompNaive, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< LzwCompressor<LzwDebugCoder> >();
+    r.register_compressor< LzwCompressor<LzwBitCoder> >();
+    r.register_compressor< Lz78Compressor<Lz78BitCoder> >();
+    r.register_compressor< Lz78Compressor<Lz78DebugCoder> >();
+    r.register_compressor< Lz78cicsCompressor<Lz78BitCoder> >();
+    r.register_compressor< Lz78cicsCompressor<Lz78DebugCoder> >();
+    r.register_compressor< LZ77SSSlidingWindowCompressor<DebugLZSSCoder> >();
+    r.register_compressor< LZ77SSSlidingWindowCompressor<OnlineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.register_compressor< LZ77SSSlidingWindowCompressor<OnlineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< LZ77SSSlidingWindowCompressor<OfflineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.register_compressor< LZ77SSSlidingWindowCompressor<OfflineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< LZ77SSLCPCompressor<DebugLZSSCoder> >();
+    r.register_compressor< LZ77SSLCPCompressor<OnlineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.register_compressor< LZ77SSLCPCompressor<OnlineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< LZ77SSLCPCompressor<OfflineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.register_compressor< LZ77SSLCPCompressor<OfflineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompMaxLCP, DebugLZSSCoder> >();
+    r.register_compressor< LZSSESACompressor<ESACompMaxLCP, OnlineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompMaxLCP, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompMaxLCP, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompBulldozer, DebugLZSSCoder> >();
+    r.register_compressor< LZSSESACompressor<ESACompBulldozer, OnlineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompBulldozer, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompBulldozer, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompBulldozer, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompNaive, DebugLZSSCoder> >();
+    r.register_compressor< LZSSESACompressor<ESACompNaive, OnlineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompNaive, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompNaive, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
+    r.register_compressor< LZSSESACompressor<ESACompNaive, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
 }
 
 }

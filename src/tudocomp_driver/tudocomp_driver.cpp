@@ -14,7 +14,7 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.h>
 #include <tudocomp/io/IOUtil.hpp>
-#include <tudocomp_driver/registry.h>
+#include <tudocomp_driver/Registry.hpp>
 
 /*namespace validate {
   static bool algorithm(const char* flagname, int32 value) {
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
         if (FLAGS_list) {
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
-            std::cout << generate_doc_string(registry);
+            std::cout << registry.generate_doc_string();
 
             return 0;
         }
