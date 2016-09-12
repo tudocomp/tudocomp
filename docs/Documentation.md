@@ -1,106 +1,96 @@
+TODO: utility <-> driver
+
 # Abstract
 
-This is the documentation for the **T**echnical **U**niversity of **DO**rtmund **COMP**ression Framework.
-
-*tudocomp* is a compression utility that implements a range of data compression
-and encoding algorithms. These can be mixed and parameterized with the
+The **T**echnical **U**niversity of **DO**rtmund **COMP**ression Framework (*tudocomp*)
+is a lossless compression framework with the aim to support and facilitate
+the implementation of novel compression algorithms. It already comprises a range 
+of standard data compression and encoding algorithms. These can be mixed and parameterized with the
 following uses in mind:
 
-* Finding the optimal compression strategy for a given input.
-* Benchmarking and comparison of compression and encoding algorithms.
+* Baseline implementations of well-known compression schemes.
+* Detailed benchmarking and comparison of compression and encoding algorithms.
 * Easy integration of new algorithm implementations.
 
-# Project Structure
+# Framework Structure
 
-In this chapter, we will have a look at the framework's base structure. The
-structure is meant to offer a solid and extensible base for new implementations
-to be integrated.
+The structure of this framework offers a solid and extensible base for new implementations.
+It is designed such that most individual steps are modularized and interchangeable. 
+This way, the user can mix and match algorithms to find the optimal compression strategy for a given input.
+The framework gives this opportunity while creating as little performance overhead as possible.
 
 ## Library and driver
 
-The project is made of two major components: the compression *library*
+The framework consists of two major components: the compression *library*
 (*tudocomp*) and the framework utility, called the *driver*. The library
 contains the core interfaces and provides implementations of various
 compressors; the driver provides the interface for the user in the form of an
 executable.
 
 The driver uses a *registry* of compressors, which acts as the link between the
-driver and the library. The library is meant to be a fully functional component
-on its own, however, so that third party applications can make use of the
-provided compressors.
+driver and the library. The library is a fully functional stand-alone library
+such that third party applications can make use of the provided compressors.
 
 ## Compressor Families
 
 The *compressor families* form the topmost abstraction level in the framework.
-Any compression or encoding algorithm belongs to a certain family.
+Every compression or encoding algorithm belongs to a certain family.
 
-For instance, the family *lzss* contains various compressors that factorize
-the input and different strategies to encode the resulting string of
-remaining symbols and the produced factors. This includes the classic
-*Lempel-Ziv-Storer-Szymanski* algorithm itself.
+For instance, the compressor family *lzss* (named after *Lempel-Ziv-Storer-Szymanski*)
+contains various compressors that factorize
+the input resulting in symbols and the produced factors. This output can then be piped to
+different encoders specialized for lzss to get a binary encoded compressed file.
 
 ## Compressors and Modules
 
-A *compressor*, in terms of this framework, transforms a given input to an
-output. It forms an entry point for the utility, which needs to be invoked
-with a descriptor pointing at the compressor to use for the input.
+A *compressor*, in terms of this framework, transforms an input.
+A compressor is the entry point for the utility. 
+The utility can invoke a compressor, and chain it with another compressor or with an encoder.
 
-Compressors are required to implement a decompressor for any produced output
-that can restore the original input losslessly. Apart from this, there are no
-strict rules as to *what* transformation occurs.
+Each compressor family has to implement a decompressor
+that can restore the original input (losslessly). Apart from that, there are no
+strict rules as to *what* kind of transformation occurs.
 
-Of course, the goal is to compress data, and data compression is often achieved
-in multiple steps. The idea behind compressors is that they are *modular* and
-its modules are interchangeable.
+In this framework it is possible to build a compression program by chaining multiple compressors/encoders. 
+That is because compressors are *modular* and their modules are interchangeable.
 
-As an example, any factor-based compressor produces a set of factors and
-encodes these factors and the remaining, unfactorized raw input. This already
-offers the chance for the following modularization:
-
-1. The *factorizer* that produces the factors,
-2. a *factor encoder* that encodes these factors to the output and
+For instance, a factor-based compressor consists of 
+1. A *factorizer* that produces factors,
+2. a *factor encoder* that encodes these factors, and
 3. a *raw symbol encoder* that encodes the remaining, unfactorized input.
+
+The factorizer divides the input into factors that are substrings of the input.
+A factorizer can either transform a factor or leave it untouched (*unfactorized*).
+Both encoders encode the factors and the unfactorized substrings. 
+
 
 For each of these tasks, there can be different strategies. For instance, we
 can factorize the input using a classic sliding window approach, but we could
-as well do it using lcp tables. Factors could be encoded directly with fixed
-bit lengths, or we could use a variable-length approach such as Huffman code.
+as well use a data structure that analyzes the entire input.
+The decision for an encoder is up to the user:
+We can encode the factors directly with fixed bit lengths, with a variable length approach such as Huffman code, etc.
 The same goes for the raw symbol encoder.
-
-The idea behind this framework is that as many individual steps as possible for
-each compression family are modularized and interchangeable. This way, the
-user (or ultimately an artificial intelligence) can mix and match algorithms to
-find the optimal compression strategy for a given input.
-
-As much behaviour as possible should be controllable by the user. However,
-this should create as little performance overhead as possible.
 
 # Usage
 
 ## Framework utility
 
-The main executable, `tudocomp_driver`, is used as a command-line tool that
-contains with the necessary usage information.
+The main executable `tudocomp_driver` is a command line tool that bundles all implemented algorithms.
+It provides a fast and easy way to compress and decompress a file with a specified chain of compressors.
 
 ## Library
 
-The library is meant to make the compressor implementations accessible by third
-party applications.
+The library comes as a set of `C++` headers, no binary object needs to be built. 
+Hence, it suffices to include the respective headers for using a specific compressor implementation.
 
-It comes as a set of `C++` headers, no binary objects need to be built. Alas,
-in order to use a specific compressor implementation, including the respective
-headers suffices.
-
-Please refer to the [Doxygen documentation](about:blank) for an overview over
-the available compression and coding implementations.
-
-Please also note the library's [dependencies](#dependencies) and that all code
-is written in `C++11`.
+The [Doxygen documentation](about:blank) provides an overview of
+the available compression and encoding implementations.
 
 ### Dependencies {#dependencies}
 
-The framework is built using [CMake](https://cmake.org) (2.8 or later). It is
-written in `C++11` and only tested against the `gcc` compiler family.
+The framework is built using [CMake](https://cmake.org) (2.8 or later). 
+It is written in `C++11` with GNU extensions.
+We have tested it with the `gcc` compiler family (version 4.9.2 and newer) and `clang` (version 3.5.2 or newer).
 
 It has the following external dependencies:
 
@@ -112,7 +102,7 @@ It has the following external dependencies:
 Additionally, the tests require
 [Google Test](https://github.com/google/googletest) (1.7.0 or later).
 
-The build scripts will either find these dependencies on the build system or
+The CMake-build scripts will either find the external dependencies on the build system or
 automatically download and build them from their official repositories.
 
 For building the documentation, the following tools are required:
@@ -130,63 +120,67 @@ build platform.
 
 ### License
 
->TODO
+The framework is published under the GPLv3.
 
 # Coding Guideline
 
 This chapter describes how the code is structured on a file level and what
-steps are necessary to extend the framework by additional compressor. It also
+steps are necessary to extend the framework by an additional compressor. It also
 presents some techniques and standards that have been picked for a
-performance-neutral modularization of compressors.
+performance-neutral modularization of the compressors.
 
-For detailled information on types and functions, please refer to the
+For detailed information on types and functions, please refer to the
 [Doxygen documentation](about:blank).
 
 ## The Compressor interface
 
 The [`Compressor`](about:blank) class is the foundation for the compression and
 decompression cycle of the framework. It acts as a purely virtual interface for
-actual compressors to inherit from.
+actual compressors (that inherit from it).
 
 It defines the two central methods for the compression cycle: `compress` and
-`decompress`. These are responsible for transforming any input to an output
-so that the following (pseudocode) statement is true for any input:
+`decompress`. These are responsible for transforming an input to an output
+so that the following (pseudo code) statement is true for every input:
 
     decompress(compress(input)) == input
 
 In other words, the transformation must be losslessly reversible by the same
 compressor class.
 
-When compressing, the framework will ensure that additional information will be
-stored in the output so that at a later point, it can detect what compressor
-needs to be used to decompress it. This is not the compressor's responsibility.
+The compressor is not responsible for generating information that it was used for creating its output.
+By default, the utility stores some additional information (a magic number) in the output
+such that it can detect the used compressor family.
+Thus, it can decompress an already compressed file without the help of the user (who could specify the used algorithm).
 
 ## The Registry
 
-The [Registry](about:blank) keeps information about available compressor
-implementations and thus builds the link between the library and the driver.
+The [Registry](about:blank) keeps information about the available compressor
+implementations; it is the link between the library and the driver.
 
-Registered compressors will be made available to the user in the utility
-(including the listing in the help output). The registry is also used to
-identify what compressor to use to decompress an encoded input.
+The registered compressors will be made available to the user by the utility.
+The registry can also identify the compressor that was used to compress a given file 
+(we can use the information to decompress this file).
 
 ## Input and Output
 
-The framework comes with its own abstract [`Input`](about:blank) and
-[`Output`](about:blank) layer, which hides the actual source or destination of
+The framework abstracts the in- and output by the two abstract classes  [`Input`](about:blank) and
+[`Output`](about:blank). Both hide the actual source or destination of
 the data (e.g. a file or a place in memory).
 
 `Input` can be used as a *stream* or as a *view*.
 
-The *stream* approach represents the classic technique of reading character by
-character. The current state of the stream (ie the reading position) can be
+The *stream* approach represents the approach to read character by character successively from the input. 
+The current state of the stream (i.e., the reading position) can be
 retained by using the copy constructor - this allows "rewinding".
+TODO: why is that?
 
-Note that currently, streaming from an `std::istream` is not supported (such streams are buffered
-before made available as an `Input`. Streaming from a file works fine, however.
+Currently, streaming from an `std::istream` is not supported (such streams are buffered
+before made available as an `Input`). Streaming from a file works fine, however.
+TODO: What does (such streams are buffered before made available as an `Input`) mean?
 
 A *view* provides random access on the input. This way, the input acts like an
 array of characters.
+Characters are stored in bytes. It is up to the compressor to reinterpret the input (e.g., as a sequence of integers), if necessary.
 
 The `Output` only works stream-based.
 
