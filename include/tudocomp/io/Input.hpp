@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iterator>
 
 #include <tudocomp/util.h>
 
@@ -217,14 +218,14 @@ namespace io {
         friend class InputView;
         friend class Input;
 
-        InputViewInternal(const InputViewInternal& other) = delete;
-        InputViewInternal() = delete;
+        inline InputViewInternal(const InputViewInternal& other) = delete;
+        inline InputViewInternal() = delete;
 
-        InputViewInternal(InputViewInternal::Memory&& mem):
+        inline InputViewInternal(InputViewInternal::Memory&& mem):
             m_variant(std::make_unique<Memory>(std::move(mem))) {}
-        InputViewInternal(InputViewInternal::File&& s):
+        inline InputViewInternal(InputViewInternal::File&& s):
             m_variant(std::make_unique<File>(std::move(s))) {}
-        InputViewInternal(InputViewInternal&& s):
+        inline InputViewInternal(InputViewInternal&& s):
             m_variant(std::move(s.m_variant)) {}
     };
     /// \endcond
@@ -236,20 +237,20 @@ namespace io {
     class InputView: InputViewInternal, public View {
         friend class Input;
 
-        InputView(InputViewInternal&& mem):
+        inline InputView(InputViewInternal&& mem):
             InputViewInternal(std::move(mem)),
             View(m_variant->view()) {}
     public:
         /// Move constructor.
-        InputView(InputView&& mem):
+        inline InputView(InputView&& mem):
             InputViewInternal(std::move(mem)),
             View(std::move(mem)) {}
 
         /// Copy constructor (deleted).
-        InputView(const InputView& other) = delete;
+        inline InputView(const InputView& other) = delete;
 
         /// Default constructor (deleted).
-        InputView() = delete;
+        inline InputView() = delete;
     };
 
     inline InputView Input::Memory::as_view() {
@@ -377,14 +378,14 @@ namespace io {
         friend class InputStream;
         friend class Input;
 
-        InputStreamInternal(const InputStreamInternal& other) = delete;
-        InputStreamInternal() = delete;
+        inline InputStreamInternal(const InputStreamInternal& other) = delete;
+        inline InputStreamInternal() = delete;
 
-        InputStreamInternal(InputStreamInternal::Memory&& mem):
+        inline InputStreamInternal(InputStreamInternal::Memory&& mem):
             m_variant(std::move(std::make_unique<InputStreamInternal::Memory>(std::move(mem)))) {}
-        InputStreamInternal(InputStreamInternal::File&& f):
+        inline InputStreamInternal(InputStreamInternal::File&& f):
             m_variant(std::move(std::make_unique<InputStreamInternal::File>(std::move(f)))) {}
-        InputStreamInternal(InputStreamInternal&& s):
+        inline InputStreamInternal(InputStreamInternal&& s):
             m_variant(std::move(s.m_variant)) {}
 
     };
@@ -394,20 +395,28 @@ namespace io {
     class InputStream: InputStreamInternal, public std::istream {
         friend class Input;
 
-        InputStream(InputStreamInternal&& mem):
+        inline InputStream(InputStreamInternal&& mem):
             InputStreamInternal(std::move(mem)),
             std::istream(m_variant->stream().rdbuf()) {}
     public:
         /// Move constructor.
-        InputStream(InputStream&& mem):
+        inline InputStream(InputStream&& mem):
             InputStreamInternal(std::move(mem)),
             std::istream(mem.rdbuf()) {}
 
         /// Copy constructor (deleted).
-        InputStream(const InputStream& other) = delete;
+        inline InputStream(const InputStream& other) = delete;
 
         /// Default constructor (deleted).
-        InputStream() = delete;
+        inline InputStream() = delete;
+
+        using iterator = std::istreambuf_iterator<char>;
+        inline iterator begin() {
+            return iterator(*this);
+        }
+        inline iterator end() {
+            return iterator();
+        }
     };
 
     inline InputStream Input::Memory::as_stream() {
