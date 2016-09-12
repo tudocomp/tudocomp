@@ -14,6 +14,16 @@ if(NOT EXISTS ${SANDBOX_CPP})
     file(WRITE ${SANDBOX_CPP} "${SANDBOX_TEMPLATE}")
 endif()
 
+    add_executable(mymain
+        EXCLUDE_FROM_ALL
+        main.cpp
+    )
+    target_link_libraries(mymain
+        gtest
+        glog
+        ${TEST_TARGET_DEPS}
+    )
+
 run_test(sandbox_tests  DEPS ${BASIC_DEPS})
 
 run_test(tudocomp_driver_tests

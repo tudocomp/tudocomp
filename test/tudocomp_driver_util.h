@@ -68,6 +68,7 @@ void roundtrip(std::string algo,
             cmd = "--algorithm \"" + algo + "\""
                 + " --output \"" + out + "\" \"" + in + "\"";
         }
+		std::cout << "Executing " << cmd << std::endl;
         comp_out = driver(cmd);
     }
 
@@ -96,6 +97,7 @@ void roundtrip(std::string algo,
         } else {
             cmd = "--decompress --output \"" + out + "\" \"" + in + "\"";
         }
+		std::cout << "Executing " << cmd << std::endl;
         decomp_out = driver(cmd);
     }
 
