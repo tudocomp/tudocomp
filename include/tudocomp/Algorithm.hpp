@@ -38,60 +38,6 @@ struct Meta;
 inline void gather_types(eval::AlgorithmTypes& target, std::vector<Meta>&& metas);
 /// \endcond
 
-/// \brief Template for easy algorithm instantiation.
-///
-/// Using this function allows the quick instantiation of an Algorithm from its
-/// type alone. It will create an environment for the algorithm with the given
-/// runtime options and return the created algorithm instance.
-///
-/// \tparam T The Algorithm type.
-/// \tparam Args The constructor's argument types (typically inferred).
-/// \param options An options string for the created environment.
-/// \param args Additional arguments passed to the algorithm's constructor.
-/// \return The created algorithm instance.
-template<class T, class... Args>
-T create_algo(const std::string& options, Args&&... args) {
-    auto meta = T::meta();
-    auto fixed_static_args = std::move(meta).build_static_args_ast_value();
-
-    auto padded_options = meta.name() + "(" + options + ")";
-    auto meta_type = meta.type();
-
-    eval::AlgorithmTypes types;
-    gather_types(types, {
-        std::move(meta)
-    });
-
-    ast::Parser p { padded_options };
-
-    auto evald_algo = eval::cl_eval(
-        p.parse_value(),
-        meta_type,
-        types,
-        std::move(fixed_static_args)
-    );
-
-    auto& evaluated_options = evald_algo.options.as_algorithm();
-
-    auto env_root = std::make_shared<EnvRoot>(std::move(evaluated_options));
-    Env env(env_root, env_root->algo_value());
-
-    return T(std::move(env), std::forward<Args>(args)...);
-}
-
-/// \brief Template for easy algorithm instantiation.
-///
-/// Using this function allows the quick instantiation of an Algorithm from its
-/// type alone. It will create an environment for the algorithm with no runtime
-/// options passed and using the algorithm's constructor.
-///
-/// \tparam T The Algorithm type.
-/// \return The created algorithm instance.
-template<class T>
-T create_algo() {
-    return create_algo<T>("");
-}
-
 /// \brief Provides meta information about an Algorithm.
 ///
 /// Any Algorithm must implement a static function \c meta() that returns an
@@ -322,6 +268,60 @@ inline void gather_types(eval::AlgorithmTypes& target,
     for (auto& meta : metas) {
         gather_types(target, std::move(meta));
     }
+}
+
+/// \brief Template for easy algorithm instantiation.
+///
+/// Using this function allows the quick instantiation of an Algorithm from its
+/// type alone. It will create an environment for the algorithm with the given
+/// runtime options and return the created algorithm instance.
+///
+/// \tparam T The Algorithm type.
+/// \tparam Args The constructor's argument types (typically inferred).
+/// \param options An options string for the created environment.
+/// \param args Additional arguments passed to the algorithm's constructor.
+/// \return The created algorithm instance.
+template<class T, class... Args>
+T create_algo(const std::string& options, Args&&... args) {
+    Meta meta = T::meta();
+    auto fixed_static_args = std::move(meta).build_static_args_ast_value();
+
+    auto padded_options = meta.name() + "(" + options + ")";
+    auto meta_type = meta.type();
+
+    eval::AlgorithmTypes types;
+    gather_types(types, {
+        std::move(meta)
+    });
+
+    ast::Parser p { padded_options };
+
+    auto evald_algo = eval::cl_eval(
+        p.parse_value(),
+        meta_type,
+        types,
+        std::move(fixed_static_args)
+    );
+
+    auto& evaluated_options = evald_algo.options.as_algorithm();
+
+    auto env_root = std::make_shared<EnvRoot>(std::move(evaluated_options));
+    Env env(env_root, env_root->algo_value());
+
+    return T(std::move(env), std::forward<Args>(args)...);
+}
+
+/// \brief Template for easy algorithm instantiation.
+///
+/// Using this function allows the quick instantiation of an Algorithm from its
+/// type alone. It will create an environment for the algorithm with no runtime
+/// options passed and using the algorithm's constructor.
+///
+/// \tparam T The Algorithm type.
+/// \return The created algorithm instance.
+template<class T>
+T create_algo() {
+    return create_algo<T>("");
 }
 
 }
