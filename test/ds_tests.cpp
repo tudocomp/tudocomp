@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 
 #include <tudocomp/io.h>
+#include <tudocomp/util/Generators.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
 using namespace tudocomp;
@@ -45,6 +46,7 @@ public:
 const size_t StringArrayDispenser::NUM_TEST_STRINGS = 4;
 const std::string StringArrayDispenser::TEST_STRINGS[] = {
     "",
+    "0",
     "aaaaaaa",
     "aabaaababaaabbaabababaab",
     "fjgwehfwbz43bngkwrp23fa"
@@ -60,10 +62,18 @@ void run_tests(string_test_func_t test) {
     }
 }
 
+size_t lce(const std::string& text, size_t a, size_t b) {
+	DCHECK_NE(a,b);
+	size_t i = 0;
+	while(text[a+i] == text[b+i]) { ++i; }
+	return i;
+}
+
+
 // === THE ACTUAL TESTS ===
 template<class textds_t>
 void test_TestSA(const std::string& str) {
-    DLOG(INFO) << "str = \"" << str << "\"";
+    DLOG(INFO) << "str = \"" << str << "\"" << " size: " << str.length();
 
     size_t n = str.length();
     Input input(str);
@@ -77,9 +87,60 @@ void test_TestSA(const std::string& str) {
     //check lexicographic order
     for(size_t i = 1; i < n+1; i++) {
         ASSERT_GE(t[sa[i]], t[sa[i-1]]);
+		ASSERT_LT(str.substr(sa[i-1]), str.substr(sa[i])); //TODO: use basic_string_view to speed up!
     }
+
+    auto& phi = t.require_phi();
+    ASSERT_EQ(phi.size(), sa.size()); //length
+    ASSERT_PERMUTATION(phi, phi.size()); //permutation
+
+	for(size_t i = 0; i < sa.size(); ++i) {
+		ASSERT_EQ(phi[sa[(i+1) % sa.size()]], sa[i]);
+	}
+	
+
+    auto& isa = t.require_isa();
+    ASSERT_EQ(isa.size(), sa.size()); 
+	for(size_t i = 0; i < sa.size(); ++i) {
+		ASSERT_EQ(isa[sa[i]], i);
+	}
+
+    auto& lcp = t.require_lcp();
+    ASSERT_EQ(lcp.size(), sa.size()); //length
+
+	for(size_t i = 1; i < lcp.size(); ++i) {
+		ASSERT_EQ(lcp[i], lce(str, sa[i], sa[i-1]));
+	}
+
+	{
+	size_t plcp[lcp.size()];
+	for(size_t i = 0; i < lcp.size(); ++i)
+		plcp[i] = lcp[isa[i]];
+	for(size_t i = 1; i < lcp.size(); ++i)
+		ASSERT_GE(plcp[i]+1, plcp[i-1]);
+	}
+	// std::sort(plcp);
+	// const size_t maxlcp = *std::max_element(plcp,plcp+lcp.size());
+	// size_t oldbound = std::lower_bound(plcp,plcp+lcp.size(),1);
+	// size_t oldrange= oldbound;
+	// for(size_t i = 2; i < maxlcp; ++i) {
+	// 	size_t bound = std::lower_bound(plcp,plcp+lcp.size(),i);
+	// 	ASSERT_GE(
+    //
+	// }
+
 }
 
 TEST(ds, TestSA) {
     run_tests<StringArrayDispenser>(&test_TestSA<TextDS<>>);
+	for(size_t i = 0; i < 4; ++i) {
+		std::string s = fibonacci_word(1<<i);
+		test_TestSA<TextDS<>>(s);
+	}
+	for(size_t i = 0; i < 11; ++i) {
+		for(size_t j = 0; j < 2+50/(i+1); ++j) {
+			std::string s = random_uniform(1<<i,Ranges::numbers,j);
+			test_TestSA<TextDS<>>(s);
+		}
+	}
 }
