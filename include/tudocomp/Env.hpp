@@ -77,6 +77,13 @@ public:
     inline uint64_t as_integer() const {
         return lexical_cast<uint64_t>(as_string());
     }
+    inline bool as_bool() const {
+        return lexical_cast<bool>(as_string());
+    }
+    template<class T>
+    inline T as() const {
+        return lexical_cast<T>(as_string());
+    }
 };
 
 class EnvRoot {

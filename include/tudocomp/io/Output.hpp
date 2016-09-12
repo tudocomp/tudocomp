@@ -73,23 +73,23 @@ namespace io {
         /// \param path The path to the output file.
         /// \param overwrite If \c true, the file will be overwritten in case
         /// it already exists, otherwise the output will be appended to it.
-        Output(std::string path, bool overwrite=false):
+        inline Output(std::string path, bool overwrite=false):
             m_data(std::make_unique<File>(std::move(path), overwrite)) {}
 
         /// \brief Constructs an output to a byte buffer.
         ///
         /// \param buf The byte buffer to write to.
-        Output(std::vector<uint8_t>& buf):
+        inline Output(std::vector<uint8_t>& buf):
             m_data(std::make_unique<Memory>(&buf)) {}
 
         /// \brief Constructs an output to a stream.
         ///
         /// \param stream The stream to write to.
-        Output(std::ostream& stream):
+        inline Output(std::ostream& stream):
             m_data(std::make_unique<Stream>(&stream)) {}
 
         /// \brief Move assignment operator.
-        Output& operator=(Output&& other) {
+        inline Output& operator=(Output&& other) {
             m_data = std::move(other.m_data);
             return *this;
         }
@@ -101,7 +101,7 @@ namespace io {
         /// \param path The path to the input file.
         /// \param overwrite If \c true, the file will be overwritten in case
         /// it already exists, otherwise the output will be appended to it.
-        static Output from_path(std::string path, bool overwrite=false) {
+        inline static Output from_path(std::string path, bool overwrite=false) {
             return Output(std::move(path), overwrite);
         }
 
@@ -109,7 +109,7 @@ namespace io {
         /// \brief Constructs an output to a byte buffer.
         ///
         /// \param buf The byte buffer to write to.
-        static Output from_memory(std::vector<uint8_t>& buf) {
+        inline static Output from_memory(std::vector<uint8_t>& buf) {
             return Output(buf);
         }
 
@@ -117,7 +117,7 @@ namespace io {
         /// \brief Constructs an output to a stream.
         ///
         /// \param stream The stream to write to.
-        static Output from_stream(std::ostream& stream) {
+        inline static Output from_stream(std::ostream& stream) {
             return Output(stream);
         }
 
@@ -138,7 +138,7 @@ namespace io {
         public:
             friend class OutputStreamInternal;
 
-            Memory(BackInsertStream&& stream): m_stream(stream) {}
+            inline Memory(BackInsertStream&& stream): m_stream(stream) {}
 
             inline std::ostream& stream() override {
                 return m_stream.stream();
@@ -149,7 +149,7 @@ namespace io {
         public:
             friend class OutputStreamInternal;
 
-            Stream(std::ostream* stream): m_stream(stream) {}
+            inline Stream(std::ostream* stream): m_stream(stream) {}
 
             inline std::ostream& stream() override {
                 return *m_stream;
@@ -166,10 +166,10 @@ namespace io {
                 return *m_stream;
             }
 
-            File(const File& other): File(std::string(other.m_path)) {
+            inline File(const File& other): File(std::string(other.m_path)) {
             }
 
-            File(std::string&& path, bool overwrite = false) {
+            inline File(std::string&& path, bool overwrite = false) {
                 m_path = path;
                 if (overwrite) {
                     m_stream = std::make_unique<std::ofstream>(m_path,
@@ -180,11 +180,11 @@ namespace io {
                 }
             }
 
-            File(std::unique_ptr<std::ofstream>&& s) {
+            inline File(std::unique_ptr<std::ofstream>&& s) {
                 m_stream = std::move(s);
             }
 
-            File(File&& other) {
+            inline File(File&& other) {
                 m_stream = std::move(other.m_stream);
             }
         };
@@ -194,17 +194,17 @@ namespace io {
         friend class Output;
         friend class OutputStream;
 
-        OutputStreamInternal(OutputStreamInternal::Memory&& mem):
+        inline OutputStreamInternal(OutputStreamInternal::Memory&& mem):
             m_variant(std::make_unique<Memory>(std::move(mem))) {}
-        OutputStreamInternal(OutputStreamInternal::File&& s):
+        inline OutputStreamInternal(OutputStreamInternal::File&& s):
             m_variant(std::make_unique<File>(std::move(s))) {}
-        OutputStreamInternal(OutputStreamInternal::Stream&& s):
+        inline OutputStreamInternal(OutputStreamInternal::Stream&& s):
             m_variant(std::make_unique<Stream>(std::move(s))) {}
-        OutputStreamInternal(OutputStreamInternal&& other):
+        inline OutputStreamInternal(OutputStreamInternal&& other):
             m_variant(std::move(other.m_variant)) {}
 
-        OutputStreamInternal(const OutputStreamInternal& other) = delete;
-        OutputStreamInternal() = delete;
+        inline OutputStreamInternal(const OutputStreamInternal& other) = delete;
+        inline OutputStreamInternal() = delete;
     };
     /// \endcond
 
@@ -212,20 +212,20 @@ namespace io {
     class OutputStream: OutputStreamInternal, public std::ostream {
         friend class Output;
 
-        OutputStream(OutputStreamInternal&& mem):
+        inline OutputStream(OutputStreamInternal&& mem):
             OutputStreamInternal(std::move(mem)),
             std::ostream(m_variant->stream().rdbuf()) {}
     public:
         /// \brief Move constructor.
-        OutputStream(OutputStream&& mem):
+        inline OutputStream(OutputStream&& mem):
             OutputStreamInternal(std::move(mem)),
             std::ostream(mem.rdbuf()) {}
 
         /// \brief Copy constructor (deleted).
-        OutputStream(const OutputStream& other) = delete;
+        inline OutputStream(const OutputStream& other) = delete;
 
         /// \brief Default constructor (deleted).
-        OutputStream() = delete;
+        inline OutputStream() = delete;
     };
 
     inline OutputStream Output::Memory::as_stream() {

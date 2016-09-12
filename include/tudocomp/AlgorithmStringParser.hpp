@@ -253,7 +253,7 @@ namespace tudocomp {
             inline void parse_whitespace();
             inline bool parse_char(char c);
             inline bool peek_char(char c);
-            inline std::string parse_string();
+            inline std::string parse_string(char delim);
             inline bool parse_keyword(View keyword);
             inline View expect_ident();
         };
@@ -265,8 +265,13 @@ namespace tudocomp {
         inline Value Parser::parse_value(View already_parsed_ident) {
             parse_whitespace();
 
-            if (already_parsed_ident.size() == 0 && peek_char('"')) {
-                return Value(parse_string());
+            if (already_parsed_ident.size() == 0) {
+                if (peek_char('"')) {
+                    return Value(parse_string('"'));
+                }
+                if (peek_char('\'')) {
+                    return Value(parse_string('\''));
+                }
             }
 
             View value_name("");
@@ -275,6 +280,11 @@ namespace tudocomp {
                 value_name = already_parsed_ident;
             } else {
                 value_name = expect_ident();
+            }
+
+            if (value_name == "true"
+                || value_name == "false") {
+                return Value(value_name);
             }
 
             std::vector<Arg> args;
@@ -397,14 +407,14 @@ namespace tudocomp {
             }
             return false;
         }
-        inline std::string Parser::parse_string() {
+        inline std::string Parser::parse_string(char delim) {
             size_t start;
             size_t end;
-            if (parse_char('"')) {
+            if (parse_char(delim)) {
                 start = m_cursor;
                 end = start - 1;
                 while(has_next()) {
-                    if (parse_char('"')) {
+                    if (parse_char(delim)) {
                         end = m_cursor - 1;
                         break;
                     }
@@ -414,7 +424,7 @@ namespace tudocomp {
                     return m_text.substr(start, end);
                 }
             }
-            error("Expected \"");
+            error("Expected " + delim);
             return "";
         }
         inline bool Parser::parse_keyword(View keyword) {

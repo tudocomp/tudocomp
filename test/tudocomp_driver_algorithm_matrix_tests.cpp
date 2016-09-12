@@ -8,7 +8,7 @@
 #include <tudocomp_driver/Registry.hpp>
 #include "tudocomp_driver_util.h"
 
-using namespace tudocomp_driver;
+using namespace tudocomp_algorithms;
 
 // TODO
 const std::vector<std::string> additional_tests = {};

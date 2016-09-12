@@ -39,6 +39,7 @@ DEFINE_bool(usestdout, false, "Output to stdout instead of writing to a file");
 namespace tudocomp_driver {
 
 using namespace tudocomp;
+using namespace tudocomp_algorithms;
 
 const std::string COMPRESSED_FILE_ENDING = "tdc";
 
@@ -83,6 +84,7 @@ static bool check_for_file_already_exist(std::string& ofile,
 int main(int argc, char** argv)
 {
     using namespace tudocomp_driver;
+    using namespace tudocomp_algorithms;
 
     google::InitGoogleLogging(argv[0]);
     int first_cmd_arg = google::ParseCommandLineFlags(&argc, &argv, true);

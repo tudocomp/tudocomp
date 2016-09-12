@@ -213,6 +213,18 @@ TEST(Input, stream_moving_file) {
     stream_moving(i);
 }
 
+TEST(Input, stream_iterator) {
+    Input i("asdf");
+
+    std::stringstream ss;
+
+    for (uint8_t x : i.as_stream()) {
+        ss << x;
+    }
+
+    ASSERT_EQ(ss.str(), "asdf");
+}
+
 TEST(Output, memory) {
     std::vector<uint8_t> vec;
 
