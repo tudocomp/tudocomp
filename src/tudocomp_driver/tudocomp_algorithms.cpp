@@ -21,6 +21,8 @@
 #include <tudocomp/alphabet/OnlineAlphabetCoder.hpp>
 #include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
 
+#include <tudocomp/example/ExampleCompressor.hpp>
+
 namespace tudocomp_algorithms {
 
 using namespace tudocomp;
@@ -94,6 +96,9 @@ void register_algorithms(Registry& r) {
     r.register_compressor< LZSSESACompressor<ESACompNaive, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
     r.register_compressor< LZSSESACompressor<ESACompNaive, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
     r.register_compressor< LZSSESACompressor<ESACompNaive, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< ExampleCompressor >();
+    r.register_compressor< TemplatedExampleCompressor<ExampleDebugCoder> >();
+    r.register_compressor< TemplatedExampleCompressor<ExampleBitCoder> >();
 }
 
 }
