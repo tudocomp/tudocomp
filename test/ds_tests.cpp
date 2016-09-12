@@ -6,6 +6,7 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util/Generators.hpp>
 #include <tudocomp/ds/TextDS.hpp>
+#include "test_util.h"
 
 using namespace tudocomp;
 
@@ -69,6 +70,29 @@ size_t lce(const std::string& text, size_t a, size_t b) {
 	return i;
 }
 
+template<class sa_t>
+sdsl::int_vector<> create_lcp_naive(const std::string& text, const sa_t& sa) {
+	sdsl::int_vector<> lcp(sa.size());
+	lcp[0]=0;
+	for(size_t i = 1; i < sa.size(); ++i) {
+		lcp[i] = lce(text, sa[i],sa[i-1]);
+	}
+	return lcp;
+}
+template<class lcp_t, class isa_t>
+sdsl::int_vector<> create_plcp_naive(const lcp_t& lcp, const isa_t& isa) {
+	sdsl::int_vector<> plcp(lcp.size());
+	for(size_t i = 0; i < lcp.size(); ++i) {
+		DCHECK_LT(isa[i], lcp.size());
+		DCHECK_GE(isa[i], 0);
+		plcp[i] = lcp[isa[i]];
+	}
+	for(size_t i = 1; i < lcp.size(); ++i) {
+		DCHECK_GE(plcp[i]+1, plcp[i-1]);
+	}
+	return plcp;
+}
+
 
 // === THE ACTUAL TESTS ===
 template<class textds_t>
@@ -104,32 +128,27 @@ void test_TestSA(const std::string& str) {
 	for(size_t i = 0; i < sa.size(); ++i) {
 		ASSERT_EQ(isa[sa[i]], i);
 	}
+	const sdsl::int_vector<> lcp_naive(create_lcp_naive(str,sa));
+	const auto plcp = LCP::phi_algorithm(t);
+	const auto plcp_naive = create_plcp_naive(lcp_naive, isa);
+	assert_eq_sequence(plcp, plcp_naive);
+
 
     auto& lcp = t.require_lcp();
+	assert_eq_sequence(lcp, lcp_naive);
     ASSERT_EQ(lcp.size(), sa.size()); //length
-
+	for(size_t i = 0; i < lcp.size(); ++i) {
+		ASSERT_EQ(lcp_naive[i], plcp_naive[sa[i]]);
+		ASSERT_EQ(lcp[i], plcp[sa[i]]);
+		ASSERT_EQ(lcp[i], plcp_naive[sa[i]]);
+	}
 	for(size_t i = 1; i < lcp.size(); ++i) {
 		ASSERT_EQ(lcp[i], lce(str, sa[i], sa[i-1]));
 	}
-
-	{
-	size_t plcp[lcp.size()];
-	for(size_t i = 0; i < lcp.size(); ++i)
-		plcp[i] = lcp[isa[i]];
-	for(size_t i = 1; i < lcp.size(); ++i)
-		ASSERT_GE(plcp[i]+1, plcp[i-1]);
-	}
-	// std::sort(plcp);
-	// const size_t maxlcp = *std::max_element(plcp,plcp+lcp.size());
-	// size_t oldbound = std::lower_bound(plcp,plcp+lcp.size(),1);
-	// size_t oldrange= oldbound;
-	// for(size_t i = 2; i < maxlcp; ++i) {
-	// 	size_t bound = std::lower_bound(plcp,plcp+lcp.size(),i);
-	// 	ASSERT_GE(
-    //
-	// }
-
 }
+
+
+
 
 TEST(ds, TestSA) {
     run_tests<StringArrayDispenser>(&test_TestSA<TextDS<>>);
@@ -137,10 +156,10 @@ TEST(ds, TestSA) {
 		std::string s = fibonacci_word(1<<i);
 		test_TestSA<TextDS<>>(s);
 	}
-	for(size_t i = 0; i < 11; ++i) {
-		for(size_t j = 0; j < 2+50/(i+1); ++j) {
-			std::string s = random_uniform(1<<i,Ranges::numbers,j);
-			test_TestSA<TextDS<>>(s);
-		}
-	}
+	// for(size_t i = 0; i < 11; ++i) {
+	// 	for(size_t j = 0; j < 2+50/(i+1); ++j) {
+	// 		std::string s = random_uniform(1<<i,Ranges::numbers,j);
+	// 		test_TestSA<TextDS<>>(s);
+	// 	}
+	// }
 }

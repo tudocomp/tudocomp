@@ -23,10 +23,14 @@ private:
     template <typename sa_t, int U = bits, typename std::enable_if<U == 0,int>::type = 0>
 	inline void construct_lcp_array(const iv_t& plcp, const sa_t& sa) {
         const auto& n = sa.size();
-		m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
+		m_max = *std::max_element(plcp.begin(),plcp.end());
 		m_lcp = iv_t(n, 0, bits_for(m_max));
-		for(len_t i = 1; i < n; i++) {
+		for(len_t i = 0; i < n; i++) {
+			DCHECK_LT(sa[i], n);
 			m_lcp[i] = plcp[sa[i]];
+		}
+		for(size_t i = 0; i < m_lcp.size(); ++i) {
+			DCHECK_EQ(m_lcp[i], plcp[sa[i]]);
 		}
 	}
 
@@ -35,7 +39,7 @@ private:
         const auto& n = sa.size();
 		m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
         m_lcp = iv_t(n);
-		for(len_t i = 1; i < n; i++) {
+		for(len_t i = 0; i < n; i++) {
 			m_lcp[i] = plcp[sa[i]];
 		}
 	}
@@ -151,17 +155,6 @@ namespace LCP {
 			if(l) {
 				--l;
 			}
-		}
-		return plcp;
-	}
-	template<class lcp_t, class sa_t>
-	iv_t create_plcp_array(const lcp_t& lcp, const sa_t& isa) {
-		const len_t n = isa.size();
-		iv_t plcp(n);
-		for(len_t i = 0; i < n; ++i) {
-			DCHECK_LT(isa[i], n);
-			DCHECK_GE(isa[i], 0);
-			plcp[i] = lcp[isa[i]];
 		}
 		return plcp;
 	}
