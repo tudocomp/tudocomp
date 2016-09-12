@@ -111,7 +111,8 @@ void test_TestSA(const std::string& str) {
     //check lexicographic order
     for(size_t i = 1; i < n+1; i++) {
         ASSERT_GE(t[sa[i]], t[sa[i-1]]);
-		ASSERT_LT(str.substr(sa[i-1]), str.substr(sa[i])); //TODO: use basic_string_view to speed up!
+		ASSERT_LT(str.substr(sa[i-1]), str.substr(sa[i])); //TODO: remove this (should be equal to below
+		ASSERT_LT(View(str,sa[i-1]), View(str,sa[i])); 
     }
 
     auto& phi = t.require_phi();
