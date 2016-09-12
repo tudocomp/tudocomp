@@ -13,8 +13,6 @@ class uint_t {
 	static_assert(bits < 65, "bits must be at most 64");
 	uint64_t data : bits;
 	public:
-	uint_t() {}
-	uint_t(uint64_t val) : data(val) {}
 	inline uint_t& operator=(uint64_t& data) { this->data = data; return *this; }
 	inline uint_t& operator=(uint64_t&& data) { this->data = data; return *this; }
 	inline uint_t& operator=(uint_t<bits>& b) { this->data = b.data; return *this; }
@@ -33,18 +31,5 @@ class uint_t {
     inline bool operator<(const uint_t<bits>& b) const { return data < b.data; }
     inline bool operator>(const uint_t<bits>& b) const { return data > b.data; }
 } __attribute__((packed));
-
-#include <functional>
-namespace std { 
-  template <int bits>
-	struct hash<uint_t<bits>> {
-  size_t operator()(const uint_t<bits>& x) const { 
-		return static_cast<uint64_t>(x);
-	} 
-};
-  // or
-  // hash<X>::operator()(X x) const { return hash<int>()(x.id); }     // works for g++ 4.7, but not for VC10 
-}//ns                                                                 
-
 
 #endif /* UINT_T_HPP */
