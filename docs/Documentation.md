@@ -1,4 +1,4 @@
-TODO: utility <-> driver
+> TODO: utility <-> driver
 
 # Abstract
 
@@ -163,42 +163,46 @@ The registry can also identify the compressor that was used to compress a given 
 
 ## Input and Output
 
-The framework abstracts the in- and output by the two abstract classes  [`Input`](about:blank) and
+The framework abstracts the in- and output by the two classes  [`Input`](about:blank) and
 [`Output`](about:blank). Both hide the actual source or destination of
 the data (e.g. a file or a place in memory).
 
 `Input` can be used as a *stream* or as a *view*.
 
-The *stream* approach represents the approach to read character by character successively from the input. 
+The *stream* represents the approach to read character by character successively from the input. 
 The current state of the stream (i.e., the reading position) can be
 retained by using the copy constructor - this allows "rewinding".
-TODO: why is that?
+>TODO: why is that?
 
 Currently, streaming from an `std::istream` is not supported (such streams are buffered
 before made available as an `Input`). Streaming from a file works fine, however.
-TODO: What does (such streams are buffered before made available as an `Input`) mean?
+>TODO: What does (such streams are buffered before made available as an `Input`) mean?
 
 A *view* provides random access on the input. This way, the input acts like an
 array of characters.
-Characters are stored in bytes. It is up to the compressor to reinterpret the input (e.g., as a sequence of integers), if necessary.
+
+The input is interpreted as a sequence of bytes, i.e., we assume a byte-alphabet.
+It is up to the compressor to reinterpret the input (e.g., as a sequence of integers), if necessary.
 
 The `Output` only works stream-based.
 
 ### Bitwise input and output
 
 The [`BitIStream`](about:blank) and [`BitOStream`](about:blank) classes provide
-wrappers for bitwise reading and writing.
+wrappers for bitwise reading and writing operations.
+They support reading and writing single bits and fixed-width integers.
 
-Additionally to operations for reading and writing single bits and fixed-width
-integers, they support *compressed integers*. These can be used to minimize
-the effective bit width of small values in large value ranges.
+Additionally to that, they support *compressed integers* (a derivation of byte coding).
+These can be used to minimize the effective bit width of small values in large value ranges:
 
-Let $b \geq 1$ be the *block width* in bits. A compressed integer is a bit
-string of the form $([0|1][0|1]^b)^+$ . The semantics are that the bit
-string for the represented value is split into blocks of $b$ bits, starting
-with the $b$ lowest bits. Each block is preceded by `1` in case a higher,
-non-zero block follows, or `0` if it is the block representing the highest
+Let $b \geq 1$ be the *block width* in bits. This value is a chosen fixed constant.
+A compressed integer is a bit string of the form $([0|1][0|1]^b)^+$.
+Given an integer, we transform it to a compressed integer by splitting its bit representation in $b$ bits, starting 
+with the $b$ lowest bits.
+Each block is preceded by `1` in case that a higher,
+non-zero block follows, or `0` if it contains the highest
 bits. The lowest block, even if zero, is always stored.
+>TODO: How should that work if you have something like 10000000? Then the middle blocks are dismissed, and hence, you cannot restore the integer?
 
 As an example, consider $b=3$. The compressed integer for $v = 42_d = 101010_b$
 would be `1 010 0 101`. The value $v' = 3_d = 11_b$ would be represented as
@@ -206,9 +210,9 @@ would be `1 010 0 101`. The value $v' = 3_d = 11_b$ would be represented as
 
 # Tutorial
 
-This document will walk you through writing an compressor using
-most of the provided functionality of the framework. It will discuss the
-following topics:
+The main goal of this section is to show you how to implement an compressor 
+using most of the provided functionality of the framework.
+To this end, we will discuss the following topics:
 
 - How to build the framework.
 - Where and how to start adding files into the framework.
@@ -220,14 +224,13 @@ following topics:
   is being spent.
 - Adding runtime options to your code to select different
   behavior.
-- Adding compiletime (template) options to your code to select
-  different behavior that due to performance reasons
-  should not be selected at runtime.
+- Adding compile time (template) options to your code to select
+  different behaviors that should not be selected at runtime due to performance reasons.
 - Registering your code in the registry.
 - Using the `tudocomp_driver` command line tool
   with your algorithm.
 - Using the `compare_tool` to compare compression ratio and
-  runtime between other algorithms or text files.
+  runtime between other algorithms on different input files.
 
 You may also refer to an [UML overview](#uml-class-overview) of the framework.
 
@@ -235,19 +238,19 @@ You may also refer to an [UML overview](#uml-class-overview) of the framework.
 
 Tudocomp is set up as a cmake project, which means that
 all metadata for building it is encoded in
-`CMakeLists.txt` files through the source tree.
+the `CMakeLists.txt` files through the source tree.
 
 If you are unfamiliar with cmake, note that it works by generating build
 scripts for the platform it is run on. In the case of Tudocomp, you will
 likely use it in a Linux or a Windows-Cygwin environment, for which
-cmake will generate makefiles to be used by `make`.
+cmake will generate makefiles that can be interpreted by the `make` program.
 
-We will also assume the use of the command line through this tutorial.
+We will also embrace the usage of command line tools in this tutorial.
 There exist graphical interfaces for some of the used tools,
 but those are outside the scope of this document.
 
-So, starting with a copy of the Tudocomp sources, our first step
-is to generate the build environment.
+We start with a copy of the Tudocomp sources.
+Our first step is to generate the build environment.
 The usual setup for this is to create a "build" directory inside the
 Tudocomp sources, and invoke `cmake` inside it with the parent directory as
 an argument:
@@ -258,35 +261,37 @@ an argument:
 .../build> cmake ..
 ~~~
 
-If it the output ends with `-- Build files have been written to: [...]`, then the command was successful.
-Otherwise your probably have to install a few dependencies first.
+If the output ends with `-- Build files have been written to: [...]`, then the command was successful.
+Otherwise you probably have to install some missing dependencies first.
 
-Note that `cmake ..` configures the build in debugging mode per default,
-which means the compiled C++ code will not be optimized and instead will
-have additional debugging code enabled.
+The command `cmake ..` configures the build in debugging mode per default; 
+this means that the compiled C++ code will not be optimized. Instead, it will
+be enhanced with debugging information, convenient for debuggers like `gdb`.
 
-This is usually wanted for development, but is unhelpful for comparing performance, so if you want to compile your code optimized you can explicitly tell cmake to configure in "Release" mode:
+The debugging mode is usually wanted for development, 
+but is unhelpful for comparing the performance.
+If you want to compile your code optimized you can explicitly tell `cmake` to configure the project in "Release" mode:
 
 ~~~
 .../build> cmake -DCMAKE_BUILD_TYPE=Release ..
 ~~~
 
-And if ou want to be explicit with using the Debug mode, you can also do this:
+There is also the option to explicitly configure the project in "Debug" mode by writing this:
 
 ~~~
 .../build> cmake -DCMAKE_BUILD_TYPE=Debug ..
 ~~~
 
-The next step is to actually build the library.
+The next step is to build the library.
 This could take a while at the first time,
-since it might have to download and compile a few missing dependencies:
+since it might have to download and compile a few external libraries on which the project depends:
 
 ~~~
 .../build> make
 [...] lots of output [...]
 ~~~
 
-We can then run the testsuite and generate the docs:
+Finally, we can run the test suite and generate the docs:
 
 ~~~
 .../build> make check
@@ -302,13 +307,14 @@ After you have verified in the previous step that the basic
 framework compiled correctly, its time to look
 at how the source files are organized.
 
-The source tree contains a few different things: The framework library, the command line driver for it, the algorithm registry used by the former, the test suite and the compare tool.
+The source tree contains a few different things: 
+The framework library, the command line driver, the algorithm registry used by the former, the test suite and the compare tool.
 
-The `.cpp` files for these parts lives in their own directories
+The `.cpp` files for these parts live in their own directories
 in `/src`, and the header files live in their own directories
 in `/include`.
 
-The framework itself is organized as a header-only C++ library,
+The library of the framework is organized as a header-only C++ library,
 which means that all code lives in header files, and none in `.cpp` source files.
 
 This is done for two reasons:
@@ -318,21 +324,22 @@ This is done for two reasons:
   thus can do optimizations it could not do if parts of the code would
   only be linked together from another compiled `.cpp` file.
 - Convenience: A lot of the code is templated, and thus would live in
-  in a header anyway. By also moving all the code that would not
-  _have_ to be in a header there, we get rid of the typcial C++ way
+  in a header anyway. But we also moved the code that does not necessarily 
+  _have_ to be put in a header file. By doing so, we get rid of the typical C++ way
   of splitting up all the code between header and `.cpp` files.
 
 > Note: This is not a hard design decision, and might change again
 > depending on how the framework develops.
 
-If there is uncertainty about how header-only C++ code works,
+If there is some uncertainty about how header-only C++ code works,
 note that the basic idea is
 that any function or other definition not defined as a template
 gets annotated with `inline`, which allows putting its
 implementation directly in the header.
+>TODO: I do not understand this paragraph. Why is it useful to know inline if you do not know header-only?
 
-So, as a start for adding a new compressor
-to the framework, we would create a new header file somewhere in `/include/tudocomp/` or in a new subdirectory in it.
+We now start with adding a new compressor to the framework.
+Our aim is to create a new header file somewhere in `/include/tudocomp/` or in a new subdirectory in it.
 
 For this tutorial, we will pick `/include/tudocomp/example/`.
 
@@ -346,9 +353,10 @@ For this tutorial, we will pick `/include/tudocomp/example/`.
 Adding a new compressor starts with
 implementing the basic interface for a Tudocomp compressor.
 
-Since the framework is a template heavy library, this involves
-having the right members and properties in your class, rather than just
+Since the framework is a template library, this involves
+having the right members and properties in your class, rather than 
 inheriting from an abstract interface.
+>TODO: this does not make sense since you do inherit (see below)
 
 Specifically, to implement a Tudocomp compressor
 the following interface needs to hold for the class:
@@ -356,22 +364,23 @@ the following interface needs to hold for the class:
 - The class needs to publicly inherit from the `tudocomp::Compressor`
   interface and implement its virtual methods.
 - The class needs a constructor with the signature `(tudocomp::Env&&)` that
-  delegates to the `Compressor` constructor.
+  delegates the `Env` variable to the `Compressor` constructor.
 - The class needs to have a static member function `meta()`
   that returns an instance of the `tudocomp::Meta` type.
 
 `Env` is a helper class for accessing the environment around the algorithm; it
-gives you access to possible runtime flags, and the
+gives you access to runtime flags, and the
 statistic tracking framework. Conceptually, a compressor owns its environment,
 which is why the constructor takes ownership through the rvalue reference. It
-should always just be delegated to the base class constructor, since that will
-take care about storing it and providing access to it with the `.env()` getter.
+should always be delegated to the base class constructor, since that will
+take care of storing it. The base class provides access to the `Env` instance with the `.env()` getter method.
 
 `Meta` contains metadata that is important for the algorithm to identify itself,
 and to declare what additional options it might take. It is mainly used by the
-registry to tell apart different Algorithms at run time, but is also needed for
-correct construction of your class since the environment will have
+registry to tell the algorithms apart at runtime. Apart from that it is also needed for
+the correct construction of your class since the environment will have
 to be initialized in an algorithm-specific way by the framework.
+>TODO: what does algorithm-specific way mean?
 
 For more details on those types see the API docs, or the headers
 `tudocomp/Compressor.hpp`, `tudocomp/Env.hpp` and `tudocomp/Algorithm.hpp`.
@@ -380,10 +389,12 @@ The algorithm registry is not just intended as a
 collection of compression algorithms, but also as a collection of modular sub
 algorithms that the former can make use of for evaluation and customization
 purposes.
+>TODO: did not understand.
 
 This means that the registry has its own small type system, consisting of "types"
 in the form of names for the same class of algorithms, and "names" for each
 different algorithm in the same class.
+>TODO: did not understand.
 
 In our case, a compressor would have the type `"compressor"` and a suitable name
 like `"example_compressor"`.
@@ -407,7 +418,7 @@ private:
 public:
     inline static Meta meta() {
         Meta m("compressor", "example_compressor",
-               "This is a example compressor.");
+               "This is an example compressor.");
         // ...
         return m;
     }
@@ -444,23 +455,21 @@ points for the actual compression algorithm.
 (De)Compressing processes data by reading bytes from an input source,
 and outputting bytes to the output target. This happens through the `Input` and
 `Output` types, which are abstractions to support different kinds of sources
-and targets internally, like for example files, memory locations, or stdin and
-stdout.
+and targets internally, like files, memory locations, or stdin and stdout.
 
 `Input` allows two different ways to access the input bytes: Either as a
 random-access `tudocomp::View` to the whole input, or as a `std::istream` for
-linearily walking through the bytes.
+linearly processing the bytes.
 
-This separation exists to support both online algorithms,
-that only need linear access to a current position in the text, and
-offline algorithms, that require random access to the whole input
-at the cost of having it entirely loaded into memory.
+This separation exists to support both online and offline algorithms.
+The former type of algorithm only needs linear access to a current position in the text (it processes the input subsequently character by character).
+The latter type requires random access to the whole input at the cost of having the input entirely loaded into memory.
 
 A `View` behaves like a read-only `std::vector<uint8_t>` or `std::string`,
 and represents a "window" into a section of memory without requiring
 an additional copy of the data. Specifically, this means that copying an
-instance of a `View` only copies some pointer, and
-that you can cheaply create sub-views into parts of it from it:
+instance of a `View` only copies one pointer and one integer;
+thus you can cheaply create sub-views into parts of it:
 
 ~~~ { .cpp }
 inline virtual void compress(Input& input, Output& output) override {
@@ -478,9 +487,8 @@ inline virtual void compress(Input& input, Output& output) override {
 }
 ~~~
 
-This allows it to keep the input loaded into memory just once,
-with all further processing just consisting of manipulating
-pointer and indices into it.
+This allows it to keep the input loaded into memory _just once_.
+All further processing consists of manipulating pointers and indices.
 
 In contrast, this is what accessing the input as a `std::istream`
 looks like:
@@ -525,11 +533,10 @@ inline virtual void compress(Input& input, Output& output) override {
 
 ### An example implementation
 
-As an example, here is a simple run length encoding compressor that only
+As an example, we provide here a simple run length encoding compressor that 
 replaces consecutive runs of the same byte with an integer.
-Eg, `"abcccccccde"` would be
-encoded as `"abc%6%de"` to indicate that the
-previous `'c'` should be repeated 6 times.
+E.g., we encode `"abcccccccde"` as `"abc%6%de"` by replacing the substring `"ccccccc"` consisting of seven subsequent `c`s with `"c%6%"` 
+to indicate that the previous `'c'` should be repeated six times.
 
 ~~~ { .cpp }
 inline virtual void compress(Input& input, Output& output) override {
@@ -602,36 +609,38 @@ inline virtual void decompress(Input& input, Output& output) override {
 }
 ~~~
 
+> Exercise: Implement the decompress-method such that it uses the input as a stream.
+
 > Note: For simplicity, we don't address a few bugs hiding in this
 > implementation, most notably the fact that this code would stumble over the
 > symbol `'%'` used in the actual input text.
 
 ## Tests
 
-Now that we have a basic implementation of a compressor, we need to actually
+After having an implementation of a compressor, we want to
 check whether it is working correctly. For that, the framework provides unit
-testing with the [gtest](https://github.com/google/googletest) library, and can be found under `/test`.
+testing with the [gtest](https://github.com/google/googletest) library.
+The tests are in the directory `/test`.
 
 ### File locations
 
-The layout there is relativly simple: Tests are grouped in individual `.cpp`
+The layout is relatively simple: Tests are grouped in individual `.cpp`
 source files, which in turn are registered in the `CMakeLists.txt` file.
 
 Running `make check` (from the build directory) will run all registered files,
-while `make <test_name>` will only run the test file corresponding
+while `make <test_name>` will only run the test corresponding
 to `<test_name>.cpp`.
 
-From there, there are two options:
+We provide permanent and temporary tests:
 
-If you only want to quickly check something, say part of your algorithms,
+For the latter, if you only want to quickly check something, say a part of your algorithms,
 or some std library types, you can use the pre-defined `sandbox_tests.cpp` file.
 Changes to that file are intended to only be local to the current
 developer machine, and will not be committed into GIT.
+> TODO: first occurrence of GIT. should we add some kind of commit-etiquette before?
 
-Otherwise, for permanent testing, we need to add one or more source
-files for tests that correspond to our addition to the framework.
-
-We'll add the file `/test/example_tests.cpp` here...
+Otherwise, for permanent testing, we create a new source file and register it in the `CMakeLists.txt`.
+Here, we add the file `/test/example_tests.cpp`...
 
 ~~~ { .cpp }
 // [/test/example_tests.cpp]
@@ -655,10 +664,11 @@ one successful test.
 
 ### Adding tests
 
-Next, we'll add some real tests to check that the compressor works correctly.
+Next, we will add some real tests to check that the compressor works correctly.
 
 We start with one that manually constructs the `Input` and `Output`
 handles and the compressor, and then checks that the result is as expected:
+> TODO: first time 'handle' is used
 
 ~~~ { .cpp }
 #include <tudocomp/example/ExampleCompressor.hpp>
@@ -684,18 +694,18 @@ TEST(example, compress) {
 
 We need to use the `create_algo<T>()` helper function to correctly instantiate
 the compressor, and then create an `Input` that points to the memory
-containing the string `"abcccccccde"`. For the `Output` on the other hand
-we pass in a reference to a byte vector that will get filled with the output.
+containing the string `"abcccccccde"`. For the `Output`,
+we pass a byte vector that will get filled with the output.
 
-Then we simply call the compressor's `compress` method and look at the content
-of the byte vector afterwards. To make comparing it easier, we convert
-it to an string first, and then use the gtest `ASSERT_EQ` macro.
+Then we simply call the compressor's `compress` method, and look at the content
+of the byte vector afterwards. To make comparisons easier, we convert
+the output to an string first, and then use the gtest `ASSERT_EQ` macro.
 
-Though this basic approach could be used for all input-output tests,
-it is somewhat verbose and gets complicated fast if
-we also want to check if the result can be decompressed again or
-want to check with many different inputs, so there exists a header file in
-the test directory with a few helper functions:
+Although this basic approach could be used for all input/output tests,
+it is somewhat verbose and gets complicated if
+we additionally want to check whether the result is decompressable, or if
+we want to test with different inputs.
+For this purpose, there exists a header file in the test directory with a few helper functions:
 
 ~~~ { .cpp }
 #include "tudocomp_test_util.h"
@@ -710,7 +720,7 @@ TEST(example, roundtrip1) {
 This will check both that `"abcccccccde"` compresses to `"abc%6%de"`, and
 that `"abc%6%de"` decompresses to `"abcccccccde"`.
 
-Note that you can also compare against a byte vector, for the usual
+You can also compare against a byte vector, for the usual
 case that your encoding is not human readable text:
 
 ~~~ { .cpp }
@@ -722,15 +732,17 @@ TEST(example, roundtrip2) {
 
 ## Statistics
 
-Now we'll look at how to add some statistic tracking to the implementation,
-to allow measuring of data that might be relevant for the evaluation of the
-algorithm. For this, the framework offers suitable methods on the
-`Env` type.
+Finally, we show how to add some statistic tracking to the implementation.
+The tracking allows to measure data that might be relevant for the evaluation of the
+algorithm like the number of computed factors, or the speed. 
+To this end, the framework offers suitable methods in the `Env` class.
 
-The framework in general is capable of measuring the time and, if the
-`malloc_count` library is linked in, the used dynamic heap memory of a run.
-It can't know what the memory is used for specifically though,
-so the first set of tracking methods is about dividing the run time
+The framework is capable of measuring the time and the used dynamic heap memory during the execution.
+To enable the latter capability (tracking the memory), the library `malloc_count` has to linked in;
+`malloc_count` tracks the number of allocated bytes; it is unaware for what the memory is used specifically.
+> TODO: Hat Patrick nicht seinen eigenen malloc_count geschrieben?
+
+We first present a set of tracking methods that divide the algorithm
 into different, possibly nesting, phases:
 
 ### Phases
@@ -750,14 +762,14 @@ env().begin_stat_phase("Phase 2");
 env().end_stat_phase();
 ~~~
 
-In the case of our example, all the work happens in a single loop though,
-so there aren't really different phases you could make out.
-Also, we are testing it with short enough inputs that the algorithms
-basically finishes instantaneously.
+In the case of our run length encoding example, all the work happens in a single loop.
+This makes it hard to assess different phases.
+Moreover, we are testing it with inputs that are so short that the algorithms
+finishes nearly instantaneously (on a commodity computer).
 
-So, for the sake of showing how it works, we cheat a bit:
-We add a few fake phases, make all phases take up run time by letting the
-program simply sleep for a few seconds, and also add a fake big memory allocation:
+For didactic purposes, we cheat a little:
+We add a few fake phases, make all phases waste runtime by letting the
+program simply sleep for a few seconds, and add a fake big memory allocation:
 
 ~~~ { .cpp }
 #include <chrono>
@@ -789,25 +801,24 @@ inline virtual void compress(Input& input, Output& output) override {
 }
 ~~~
 
-Now, if we run `make example_tests` again, we will notice that each compression
-roughly takes 3 seconds, presumably each of which is spend in a different phase.
+If we run `make example_tests` again, we will notice that each compression
+roughly takes 3 seconds, presumably each of those is spent in a different phase.
 
-### Web service
+### Web Service
 
-But how do we actually look at this data? For this, the framework provides a
-web
-service [here](http://dacit.cs.uni-dortmund.de/dinklage/stat/) for
-visualizing statistic data given in form of a JSON document.
+Analyzing the collected statistics can be done by the 
+web service [here](http://dacit.cs.uni-dortmund.de/dinklage/stat/).
+The web service visualizes statistic data given in form of a JSON file.
 
-Said JSON data can be retrieved from an `Env` instance.
-For example, we can add this line to our manual compressor test to
-get it printed out to the terminal:
+We can retrieve the required JSON file from the `Env` instance.
+To this end, we add this line to our written compressor test to
+get it printed to the terminal:
 
 ~~~ { .cpp }
 std::cout << compressor.env().finish_stats().to_json() << "\n";
 ~~~
 
-Which should `make example_tests` print out JSON data looking something like this:
+The command `make example_tests` will print JSON data looking something like this:
 
 ~~~
 {
@@ -853,15 +864,14 @@ Which should `make example_tests` print out JSON data looking something like thi
 }
 ~~~
 
-If we paste this into the website we'll see a bar diagram highlighting the memory profile and run time of the 3 phases.
+If we paste this into the website we will see a bar diagram highlighting the memory profile and the runtime of all three phases.
 
 ### Statistics
 
-You can also log individual data points during the run of the algorithm,
-for example to log the maximum amount of factors encountered, or some maximum
-value reached. For this, the `Env` struct provides the `log_stat()` method.
+You can also log individual data points during the run of the algorithm (e.g., logging the number of factors)
+For this purpose, the `Env` class provides the `log_stat()` method.
 
-In our example, we'll log two statistics; the maximum run length encountered, and the amount of repeat sequences encountered:
+In our example, we will log two statistics: the maximum run length, and the amount of repetitions of the same character (longer than three):
 
 ~~~ { .cpp }
 inline virtual void compress(Input& input, Output& output) override {
@@ -915,18 +925,19 @@ inline virtual void compress(Input& input, Output& output) override {
     // ...
 }
 ~~~
+> TODO: would be cool if you can highlight the changes like with `diff`
 
 Pasting the JSON output of this in the website will make the two added
 statistics appear in the tool tip of the middle phase.
 
 ## Options
 
-Next we'll look at how to add support for runtime flags and options. These are
+Next we will look at how to add support for runtime flags and options. These are
 useful in cases where you want to evaluate your implementation with different
 parameters, for example a different dictionary size, a different threshold
 value, enabling of optional code paths, etc.
 
-For our example, we'll add two options: one to disable the thread sleep
+For our example, we will add two options: one to disable the thread sleep
 calls, and one to change the escape symbol used by the encoding.
 
 To add these options to your code, you need to first declare them in the
@@ -935,7 +946,7 @@ Algorithm's `meta()` method:
 ~~~ { .cpp }
 inline static Meta meta() {
     Meta m("compressor", "example_compressor",
-           "This is a example compressor.");
+           "This is an example compressor.");
     m.option("debug_sleep").dynamic("false");
     m.option("escape_symbol").dynamic("%");
     return m;
@@ -944,15 +955,14 @@ inline static Meta meta() {
 
 `m.option("...")` declares an option with a specific name,
 and the `.dynamic()` indicates that these are runtime options,
-as opposed to "templated" ones (We'll look at those in the next section).
+as opposed to "templated" ones (We will look at those in the next section).
 
 The argument of `dynamic()` is optional, and provides a default value if
-given. In our case, we want to default to no sleep calls, and using the
+given. In our case, we want to default to no sleep calls, and to the usage of the
 `%` symbol.
 
-We then can go ahead and starting querying the value of these
-options in the implementation, by using
-the `env().option("...").as_...` family of methods:
+After defining these options, we can query the value of these
+options in the implementation by using the `env().option("...").as_...` family of methods:
 
 ~~~ { .cpp }
 class ExampleCompressor: public Compressor {
@@ -999,18 +1009,20 @@ public:
 }
 ~~~
 
-## Option syntax and testing
+## Option Syntax and Testing
 
-Now we need to test these changes. For this, we need to briefly look
-at the command line syntax used for specifying an algorithm and its options.
+By adding new options to the algorithm we have to add additional tests covering
+the new possibilities of how the algorithm may work. 
+In order to understand how this works, 
+we briefly look at the command line syntax used for specifying an algorithm and its options.
 
-Algorithms are specified with an id string that concisely
+An algorithm is specified with an id string that concisely
 specifies all (sub)algorithms and options it takes. The syntax works
 like a function call that supports keyword arguments and default arguments.
 
 As an example, say we have an algorithm `foo` that accepts a string option
 `opt1` with default value `'qux'` and a string option `opt2` with default
-value `'bar'`, then all these are valid id strings:
+value `'bar'`, then all of these are valid id strings:
 
  Id string                            | Full meaning
 --------------------------------------|------------
@@ -1022,15 +1034,15 @@ value `'bar'`, then all these are valid id strings:
  `foo(opt2 = 'asd', opt1 = 'xkc')  `  | `foo(opt1='xkc',opt2='asd')`
  `foo(opt2 = '...')`                  | `foo(opt1='qux',opt2='...')`
 
-The reason the syntax is so complex is that the framework wants to support
-many different algorithms with many options, and thus needs a concise
+The reason why the syntax is so complex is that the framework supports
+a variety of algorithms with many options; thus it needs a concise
 notation for specifying a concrete combination of them that works with
-default values.
+default values (regardless of the ordering of the parameters like python, but unlike C++).
 
 Now, if we go back to our example code, both the
 `tudocomp::create_algo()` and the `test::roundtrip()` functions
-accept an optional string argument which accepts option values
-in the same syntax as above, though without the enclosing algorithms name:
+accept an optional string argument that is used for passing options to the algorithm.
+This string has to be written in the same syntax as above, but without the enclosing algorithm's name:
 
 ~~~ { .cpp }
 tudocomp::create_algo<ExampleCompressor>("'/', true");
@@ -1045,27 +1057,26 @@ You can see this in action in the `compress_stats_options` example test.
 
 ## Template Options
 
-Normal runtime options as discussed above are useful,
+The runtime options as discussed above are useful,
 but they have one aspect that makes them not universally applicable:
 Their value is determined at runtime.
 
 This is often fine, but there are scenarios where this can hamper
 performance for one simple reason: If the value is only know at
 runtime, the compiler can not make optimization decisions
-based on its value at compiletime.
+based on its value at compile time.
 
 In the context of the framework, this issue can mostly
-be encountered if your algorithm starts to have different sub algorithms,
-like for example different binary encoding schemes, or different algorithms
-for finding redundancy in the input text.
+be encountered if your algorithm can choose different sub algorithms,
+like encoders, or algorithms pre-processing in the input text.
 
 Lets look at an example of what the actual performance problem
 can be in that case:
 
-Say in your compressor you produce some kind
-of compression data in a loop, and then process and encode it
-with an sub algorithm that is selected by an runtime option.
-The code would look somewhat like this:
+Imagine that your produces some data in a loop. 
+You want to pass this data on-the-fly to a sub algorithm that processes and encodes it.
+Since you can choose different sub algorithms you have a runtime option that selects a specific sub algorithm.
+In this case, the code would look somewhat like this:
 
 ~~~ { .cpp }
 class SubAlgorithmInterface {
@@ -1076,9 +1087,9 @@ std::unique_ptr<SubAlgorithmInterface> sub_algo;
 std::string sub_algo_name = env().option("...").as_string();
 
 // Select the algorithm to use
-if sub_algo_name == "algo1" {
+if (sub_algo_name == "algo1") {
     sub_algo = std::make_unique<SubAlgo1>();
-} else if sub_algo_name == "algo2" {
+} else if (sub_algo_name == "algo2") {
     sub_algo = std::make_unique<SubAlgo2>();
 }
 
@@ -1090,25 +1101,27 @@ for(auto byte : input.as_stream()) {
 }
 ~~~
 
-The problem with this code is the `process_and_encode()` call inside the
+The bottleneck in this code is the `process_and_encode()` call inside the
 loop.
-Because the compiler does not know which of the algorithms will actually be
-selected at run time, it needs to emit native code that does a virtual call
+Because the compiler does not know which of the algorithms will be
+selected at runtime, it needs to emit native code that does a virtual call
 (that is, it loads the function pointer for the method from a
 [vtable](https://en.wikipedia.org/wiki/Virtual_method_table) and calls it).
-Not only can doing this a lot in a tight loop cause overhead,
-the compiler is also not able to "merge" the native code of the function body
+Besides causing overhead, 
+the compiler is not able to "merge" the native code of the function body
 with the native code of the loop for a more efficient and faster compiled
 program.
+> TODO: Why do you emphasize on "native" code?
 
-So, in order to enable these optimizations, the compiler needs to know
-at compile time what function or method will be called of what object.
+In order to enable these optimizations, the compiler needs to know
+at compile time what function or method of what object will be called.
 For standalone functions, it knows this if the function is defined in the
 same
 `*.cpp` file, or exists with a `inline` annotation in a header
 (hence the header-only design of the library).
+> TODO: why is inline necessary? This is only a compiler hint
 
-For our example of an algorithm selection, the recommended way is to turn
+For the above example, the recommended way is to turn
 the sub algorithm into a generic template parameter of the class:
 
 ~~~ { .cpp }
@@ -1128,46 +1141,44 @@ class MyCompressor {
 }
 ~~~
 
-This basically moves the selection of the sub algorithm
-up from a runtime lookup to a compiletime decision between
+This transforms the selection of the sub algorithm
+from a runtime lookup in a compile time decision between
 `MyCompressor<SubAlgo1>` and `MyCompressor<SubAlgo2>`.
 
-By compiling code using either of those types, it will generate
+By compiling code using one of those types, it will generate
 native code
 for the `SubAlgo1` case, or native code for the `SubAlgo2` case,
 in either case having full knowledge of the code inside the loop body, which allows
-the optimizations.
+further optimizations.
 
-Now lets look at how this would work for our example compressor.
-Again, we don't really have enough code that actually does something
-for a real example, but we can still show the idea by making the
-exact way the repeated character is encoded changeable with a sub algorithm.
+Now let us head back to our example compressor.
+Here, we want to make the encoding of the repeated characters exchangeable.
+We will do this by adding a sub algorithm that will encode this kind of repetitions.
 
-Because this changes and adds a lot more to the existing example code,
-we create and modify a copy of the `ExampleCompressor` source in the
-`ExampleCompressor.hpp` file, called `TemplatedExampleCompressor`.
-It can be found below the original.
+Because this modification changes the existing example code more seriously,
+we make a copy of the `ExampleCompressor` class from the
+`ExampleCompressor.hpp` file. 
+We rename the copied class to `TemplatedExampleCompressor`.
 
 First, we make the class generic and give it a private
-field that should hold the concrete encoder:
+member that stores an instance of the chosen encoder:
 
 ~~~ { .cpp }
 template<typename T>
 class TemplatedExampleCompressor: public Compressor {
 private:
-    // We want to keep a instance of the encoder
-    // alive for the same duration as the compressor itself, so
+    // We want to keep an instance of the encoder
+    // alive for the same duration as the compressor itself, so we
     // keep it as a field
     T m_encoder;
 ~~~
 
-Note that depending on the design of the algorithm, the class could also
-just be instantiated temporary in the `compress()` or `decompress()` methods,
-so it doesn't _have_ to be a field of the compressor.
+The sub algorithm does _not have_ to be a field of the compressor.
+Depending on the design of the algorithm, the class could also
+be instantiated in the `compress()` or `decompress()` methods.
 
-Then, because we want to make the choice of the encoder
-visible as an option of the algorithm, we declare
-it as an "templated" option in our meta method:
+As a second step, we declare the sub algorithm as an "templated" option in our meta method,
+since we want to make the choice of the encoder visible as an option.
 
 ~~~ { .cpp }
 public:
@@ -1180,27 +1191,25 @@ public:
     }
 ~~~
 
-Note that we have removed the `escape_symbol` option. That is
-because it'll become specific to the actual encoder used.
+We have removed the `escape_symbol` option, because it is now specified by the used encoder.
 
-Just as with `dynamic()`, we also have the option of giving a default
-"value" for the `templated()` options - specifically,
-it would look like `.templated<T, ActualType>()`.
+Exactly as with `dynamic()`, we have the option of giving a default
+"value" for the `templated()` options. Specifically,
+the syntax looks like `.templated<T, ActualType>()`.
 Note that this will not automatically make this the default for the template
 parameter of the class itself, just for the registry and command line tool.
+>TODO: Do you mean that it does not mean that this does not cause a default template parameter like <T = ActualType> 
 
-Next, we'll have to initialize the encoder in the constructor of the compressor.
-It should again be noted that the actual API of an sub algorithm can be
-pretty free form, with almost no restrictions on the amount of methods
-and life cycle of the instances themselves.
+Next, we initialize the encoder in the constructor of the compressor.
+The actual API of a sub algorithm can be arbitrary, with almost no restrictions on the amount of methods
+and the life cycle of the instances themselves.
 
 However, if you want to use the templated parameter as an proper algorithm option
-then you should make sure that they inherit from `tudocomp::Algorithm`,
-and have an constructor that takes an `Env&&` as first argument delegating
-to its constructor.
-
-We'd then initialize it with an new `Env` instance created by
-`env().env_for_option("<option_name>")`. This ensures that the options for an
+then you should make sure that your sub algorithms inherit from `tudocomp::Algorithm`,
+and have a constructor that takes an `Env&&` as the first argument that has to be delegated
+to its base class constructor.
+By following these steps, we can initialize it with a new `Env` instance created by
+`env().env_for_option("<option_name>")`. This ensures that the options for a
 sub algorithm will be delegated to its actual constructor:
 
 ~~~ { .cpp }
@@ -1210,26 +1219,20 @@ sub algorithm will be delegated to its actual constructor:
         m_encoder(this->env().env_for_option("encoder")) {}
 ~~~
 
-Then we'll have to modify the actual compression routine to
-delegate to the template class at the points where we want different
-pluggable behavior.
+We finalize the changes in the compressor class by calling the encoder in the actual compression routine.
+For this purpose, we define four methods that a suitable "ExampleEncoder" needs to provide:
 
-For this, we define 4 methods that an suitable "ExampleEncoder" need to provide:
-
-- `size_t threshold()`, which returns an integer for the minimum repeat count
+- `size_t threshold()` returns an integer for the minimum repeat count
 that should be replaced for the encoder. For example, if you replace `"aaa..."`
-with `a%N%` then that will only reduce the size for repeats >3.
-- `void encode_repeat(char last, size_t repeat, io::OutputStream& ostream)`,
-for actually emitting the encoding for a char repeat sequence.
-- `is_start_of_encoding(const io::InputView& iview, size_t i)`,
-for identifying the start of an repeat sequence in the decoder.
-- `size_t decode(const io::InputView& iview, size_t& i)`,
-for actually decoding a sequence in the decoder (advancing the cursor i in the process).
+with `a%N%` then that will reduce the size only for repeats longer than three.
+- `void encode_repeat(char last, size_t repeat, io::OutputStream& ostream)`  encodes a repetition of length repeat consisting of the same character char.
+- `bool is_start_of_encoding(const io::InputView& iview, size_t i)` identifies the start of a character repetition in the decoder.
+- `size_t decode(const io::InputView& iview, size_t& i)` decodes a character repetition and returns the length of this repetition (while advancing the input cursor at position i in the process).
+> TODO: cursor undef
 
-Again, this interface is an entirely arbitrary example, any algorithm
-can define its own one.
+(This interface is an entirely arbitrary example, every algorithm can define its own design patterns.)
 
-So, integrated in the example code, it looks like this:
+Integrated in the example code, it looks like this:
 
 ~~~ { .cpp }
     inline virtual void compress(Input& input, Output& output) override {
@@ -1311,16 +1314,16 @@ So, integrated in the example code, it looks like this:
 
 ~~~
 
-Finally, lets look at the implementation for the actual encoder classes.
-For our example, we'll define two different ones, one doing the existing
+Finally, let us look at the implementation for the actual encoder classes.
+For our example, we will define two encoders: one doing the existing
 human readable encoding of repeats (`"aaaa" -> "a%3%"`), and another one
-doing a more binary oriented one, where instead of a readable number it just
-encodes the length as an byte directly (`"aaaa" -> [97, 255, 3]`, with `255`
+computing a binary oriented output, where (instead of a readable number) it
+encodes the length as a byte directly (`"aaaa" -> [97, 255, 3]`, with `255`
 being the escape symbol).
 
 Again, for the sake of simplicity, we don't address some of the hidden bugs
-like `'%'` or `'\xff'` appearing in the input text, or there being an
-repeat longer than what fits in an byte.
+like `'%'` or `'\xff'` appearing in the input text, or the case that there is 
+a character repetition longer than what fits in a byte.
 
 ~~~ { .cpp }
 class ExampleDebugCoder: public Algorithm {
@@ -1333,7 +1336,7 @@ public:
 
     inline static Meta meta() {
         Meta m("example_coder", "debug",
-               "This is a example debug coder, encoding human readable.");
+               "This is an example debug coder, encoding human readable.");
         m.option("escape_symbol").dynamic("%");
         return m;
     }
@@ -1372,7 +1375,7 @@ public:
 
     inline static Meta meta() {
         Meta m("example_coder", "bit",
-               "This is a example bit coder, encoding as a binary integer.");
+               "This is an example bit coder, encoding as a binary integer.");
         m.option("escape_byte").dynamic("255");
         return m;
     }
@@ -1397,8 +1400,8 @@ public:
 
 ### Tests
 
-We also want to test that the templated version of the compressor works as
-intended. For that, we can just do the same testing as before:
+As a subsequent step we want to verify that the templated version of the compressor works as
+intended. To this end, we use the same testing as before:
 
 ~~~ { .cpp }
 using tudocomp::TemplatedExampleCompressor;
@@ -1433,11 +1436,12 @@ TEST(example, templated_bit) {
 }
 ~~~
 
-Note that template options will set the corresponding parameters
-in an option string to an fixed value, so if you explicitly set some options
-you either have to leave off the option parameter belonging
-to the template parameter, or give it the same value as indicated by it;
-otherwise you will get an error:
+The template options will set the corresponding parameters
+in an option string to a fixed value.
+If you explicitly set some options
+you either have to skip the option parameters belonging to the template parameter, 
+or you have to give it the same value as indicated by it; otherwise you will get an error:
+> TODO: not really clear
 
 ~~~ { .cpp }
 // ok
@@ -1448,21 +1452,21 @@ tudocomp::create_algo<TemplatedExampleCompressor<ExampleDebugCoder>>("bit(escape
 
 ## The Registry
 
-Once an compressor implementation exists and has a few unit tests that
-verify the basic operation, it needs to be registered in the global
-algorithm registry in order to be usable from the command line tool,
-and to be automatically picked up by a few automatic unit tests
-that run all algorithms with a number of exotic strings.
+Once a compressor implementation exists, and has a few unit tests that
+verify the basic operation, it can be registered in the global
+algorithm registry in order to be usable from the command line tool.
+Adding a compressor to the registry will also result in getting picked by a few automatic unit tests
+that run all algorithms with a number of small test cases.
 
-Doing this is relatively easy: In `src/tudocomp_driver/tudocmp_algorithms.cpp`,
+Doing this is easy: In `src/tudocomp_driver/tudocmp_algorithms.cpp`,
 add includes for your compressor headers, and then add new `r.compressor<T>()`
 lines for all compressor classes in the function body there.
+> TODO: where is the function body?
 
 For the templated version, you need to register the class with
-all possible combinations of type parameters it can accept, in order for there
-to be an native code instance for all of them.
+all possible combinations of type parameters it can accept, in order to generate native code instance for all of them.
 
-So, for this example we add these three lines:
+For our running example, we add these three lines:
 
 ~~~ { .cpp }
 r.compressor<ExampleCompressor>()
@@ -1472,7 +1476,7 @@ r.compressor<TemplatedExampleCompressor<ExampleBitCoder>>();
 
 If we now run `make check`
 (or directly `make tudocomp_driver_algorithm_matrix_tests`), the new
-compressors should be picked up by the "tudocomp_driver_algorithm_matrix_tests"
+compressors should be picked by the "tudocomp_driver_algorithm_matrix_tests"
 target, which will run the previously mentioned tests on them:
 
 ~~~
@@ -1486,12 +1490,12 @@ example_compressor_3.txt -> example_compressor_3.tdc -> example_compressor_3.dec
 
 ## The Driver
 
-After integrating into the registry, we can start using the algorithm
-through the command line tool itself.
+After integrating a compressor into the registry, we can start using it
+with the command line tool.
 
 The "Driver" (named this way because it serves as an user interface that
-drives the underlying tudocomp library) can be compiled with `make tudocomp_driver`, and can be found at
-`build/src/tudocomp_driver/tudocomp_driver` afterwards.
+drives the underlying tudocomp library) can be compiled with `make tudocomp_driver`.
+The executable of the driver is stored in `build/src/tudocomp_driver/tudocomp_driver` (after compilation).
 
 As a first step after building it, we can verify that the new compressors
 exists by listing all known algorithms:
@@ -1504,7 +1508,7 @@ This build supports the following algorithms:
   -------------------------------------------------------------------------------------------------------------------------------
   | ...                                                            | ...                                                        |
   -------------------------------------------------------------------------------------------------------------------------------
-  | example_compressor(escape_symbol = "%", debug_sleep = "false") | This is a example compressor.                              |
+  | example_compressor(escape_symbol = "%", debug_sleep = "false") | This is an example compressor.                             |
   |   where `escape_symbol` is one of [string],                    |                                                            |
   |         `debug_sleep` is one of [string]                       |                                                            |
   -------------------------------------------------------------------------------------------------------------------------------
@@ -1516,18 +1520,18 @@ This build supports the following algorithms:
   [Argument types]
     [example_coder]
     -----------------------------------------------------------------------------------------------------------
-    | debug(escape_symbol = "%")                 | This is a example debug coder, encoding human readable.    |
+    | debug(escape_symbol = "%")                 | This is an example debug coder, encoding human readable.   |
     |   where `escape_symbol` is one of [string] |                                                            |
     -----------------------------------------------------------------------------------------------------------
-    | bit(escape_byte = "255")                   | This is a example bit coder, encoding as a binary integer. |
+    | bit(escape_byte = "255")                   | This is an example bit coder, encoding as a binary integer.|
     |   where `escape_byte` is one of [string]   |                                                            |
     -----------------------------------------------------------------------------------------------------------
 
   ...
 ~~~
 
-Next we'll actually compress something with the tool. Since this is just
-supposed to be a quick test, we'll use an already existing file in the build
+Next we will compress something with the tool. Since this is 
+a quick test, we use an already existing file in the build
 directory, the `CMakeCache.txt`:
 
 ~~~
@@ -1535,22 +1539,22 @@ directory, the `CMakeCache.txt`:
 ~~~
 
 This will create a compressed file `cache.tdc` in the current directory, and
-also print some statistics to the command line, including the JSON data that
+print some statistics to the command line, including the JSON data that
 can be pasted into the previously mentioned web visualizer.
 
 > Note: The tool will prevent accidental overwrites if a file with the
-output filename already exists. To disable this, and allow overwriting,
-the `-force` option can be used.
+output filename already exists. To bypass this security mechanism, and hence allow overwriting,
+the `-force` option has to be used.
 
 The stat output will likely show a very small compression effect, if any at
-all, but the file format seems to contain a few sections decorated with
-comments containing repeats of the same character, so viewing the contents
-of `cache.tdc`, say with `cat cache.tdc | less`, should allow seeing some
+all. But the file format contains a few sections decorated with
+comments containing repeats of the same character.
+If you look at the contents of `cache.tdc`, say with `cat cache.tdc | less`, you should be able to see some
 encoding sequences in the file.
 
-As a point of reference, on the authors machine it only resulted in a 1% reduction, with 4 actual run length replacements.
+As a point of reference, on the authors' machine it only resulted in a 1% reduction, with 4 actual run length replacements.
 
-For a last check, we can see if decompression works as well:
+For a last check, we can see if the decompression works as well:
 
 ~~~
 .../build> ./src/tudocomp_driver/tudocomp_driver -decompress cache.tdc -output cache.orig.txt
@@ -1558,11 +1562,11 @@ For a last check, we can see if decompression works as well:
 Files CMakeCache.txt and cache.orig.txt are identical
 ~~~
 
-Seems to be the case.
+... which seems to be the case.
 
 ## The Compare Tool
 
-Finally, the framework also provides a rudimentary tool for
+Last but not least, the framework provides a tool for
 automatically running different command line tools on different input text
 files.
 
@@ -1570,27 +1574,25 @@ This "compare_tool" can be used to compare the effects of a compression
 algorithm on different classes of input text, or the effects of
 different algorithms on the same input files. It can be build with `make compare_tool`.
 
-It does not currently integrate into the frameworks own statistics tracking
-though, so it can only easily be used for comparing the run time and
-compression ration of different file-command combinations.
+It's main purpose is to compare the runtime and compression ratio of compressors combined with different options and input files.
+However, it does not integrate into the framework's own statistics tracking. 
 
 > There is also a separate, experimental support for measuring the memory
-footprint with the valgrind tool massif, but this does not work well with
-external compression programs, and became unneeded for tudocomp itself
-with the new memory statistic tracking methods, so it can be considered
-deprecated.
+footprint with the Valgrind tool massif, but this does not work well with
+external compression programs. Further, it seems redundant in the light of the memory statistic tracking methods.
 
-The way the tool works is that it gets invoked with
-a config file containing a number of comparison profiles,
-and a name of one of them, and then executes the profile, printing
-the results to stdout as they come in.
+The compare tool works as follows:
+It takes a config file as a parameter and a profile name.
+The config file contains a number of comparison profiles, where each profile has a name.
+The compare tool executes the profile in the config file whose name matches with the name passed as the parameter.
+While executing the profile, the compare tool prints the results to stdout.
 
-A profile consists of a few options, and two lists. One is a list of commands
-to run, and one a list of input files to run them on. All the tool then does is
-building the Cartesian product of both lists, and executing each combination
-in turn, noting time and compressed size.
+A profile consists of a few options, and two lists. The one list contains the commands
+to run, and the other contains the input files. The compare tool
+builds the Cartesian product of both lists, and executes each combination
+in turn, noting time and compressed size. In the following, we call such a combination a benchmark run.
 
-The config file follows [TOML](https://github.com/toml-lang/toml) syntax,
+The config file obeys the [TOML](https://github.com/toml-lang/toml) syntax,
 and expects one or more profiles defined like this:
 
 ~~~ { .toml }
@@ -1611,21 +1613,20 @@ commands = [
 # ...
 ~~~
 
-`inputs` contains the list of filenames, and `commands` the list
+`inputs` is the list of input files, and `commands` is the list
 of command line commands to run. The commands are split into two
 strings that will be merged by the tool. The reason for this split
-is just so that the first part of the command line can act as a label, while
-the second part can contain plumbing like correctly directing the
+is that the first part of the command line acts as a label, while
+the second part contains some boilerplate arguments (e.g., correctly directing the
 input and the output, while being irrelevant for identifying the tool and
-algorithm itself.
+algorithm itself).
 
-For the command strings there are also two special variables
-defined, `$IN` and `$OUT`, that are filled-in by the compare_tool
-with file paths to the input/output filename.
+You can use in the command strings the two special variables `$IN` and `$OUT`
+that are substituted by the compare tool with file paths to the input and output filename, respectively.
 
 The `compare_commands` flag decides how the benchmark runs are grouped.
 If it is set to `true`, it will run each command in turn on the same input
-file, if it is set to `false` it will run the same command with all input
+file; if it is set to `false`, it will run the same command with all input
 files:
 
  `compare_commands = true` | `compare_commands = false`
@@ -1636,15 +1637,10 @@ files:
 
 ### Datasets
 
-Before we look at how to such a config file would look like for our example
-compressor, we need some real text examples to compare against.
-A good source for them is the [Pizza&Chili Corpus](http://pizzachili.dcc.uchile.cl/texts.html),
-which contains a number of different text classes.
-
-The build system provides a target `datasets` that will download a selection
-of files from that site. Note that at the point of writing this,
-this resulted in 9.4 GiB of files, so make sure you have enough free storage
-before doing this:
+Tudocomp provides a target `datasets` that will download a selection
+of files, mostly from the [Pizza&Chili Corpus](http://pizzachili.dcc.uchile.cl/texts.html). 
+At the point of writing this document, the datasets take 9.4 GiB of space.
+Make sure you have enough free storage before doing this!
 
 ~~~
 .../build> make datasets
@@ -1653,37 +1649,40 @@ before doing this:
 > Note that the make target can be aborted at any time and will resume
 > with what it had already downloaded the next time it gets invoked.
 
-After the downloaded, the files can be found in the __source__ directory
+The downloaded files can be found in the __source__ directory
 of the project, under `/datasets/download`.
 
 This example will use some of those texts.
 
 ### Compare Workspace
 
-At this point it would be possible to just build the compare tool
-and invoke it with a config file referring to the datasets example
-text, but this would still be a bit cumbersome because:
+At this point we already can build the compare tool
+and invoke it with a config file. 
+But this is a bit cumbersome, because:
 
-- The text files and compare tool end up with somewhat complex file paths.
+- The input files and the compare tool can have complex file paths.
 - The compare files dumps log files and compression artifacts to the current
   working directory, so it should run in its own directory.
-- Changes to the tudocomp codebase will not automatically be picked up
+  > TODO: what are compare files dumps log files?
+- Changes to the tudocomp codebase will not automatically be recognized
   by the tool.
 
-To address these, arguably minor, concerns the build system offers the target
+To address these (arguably minor) concerns the build system offers the target
 `compare_workspace`. It will create the directory `/build/compare_workspace`,
 and fill it with a short shell script `run.sh` that:
 
 - Invokes the make targets `tudocomp_driver`, `compare_tool` and
-  `compare_workspace` to ensure all build code is up to date.
-- Locally appends the binary directory of tudocomp to`$PATH` so it doesn't have to be
-  installed or be invoked with the full path.
-- Defines a environment variable `$DATASETS` pointing
+  `compare_workspace` to ensure that the built code is up to date.
+- Locally appends the binary directory of Tudocomp to`$PATH` such that it does not have to be
+  installed or be invoked with the relative/full path.
+> TODO: what is "it"?
+- Defines an environment variable `$DATASETS` pointing
   to the dataset directory.
-- And finally delegates to the `compare_tool` with the environment
+- Delegates to the `compare_tool` with the environment
   defined above.
+> TODO: what will be delegated? The environment variables? Parameters like below?
 
-This enables us to quickly set up a test environment for different algorithms:
+This set-up enables us to quickly create a test environment for different algorithms:
 
 ~~~
 .../build> make compare_workspace
@@ -1692,16 +1691,15 @@ This enables us to quickly set up a test environment for different algorithms:
 ...
 ~~~
 
-### An example config file
+### An Example Config File
 
-As the last step of this Tutorial, we'll create an
-example compare config file in the workspace directory.
+As the last step of this tutorial, we will create a compare config file in the workspace directory for our running example.
 
-Our goal here is to compare the three compressor variants we had
-defined with a few different classes of input: english text,
-source code, dna sequences, etc. This requires the datasets.
+Our goal is to compare the three compressor variants we had
+defined with a few different input files: English text,
+source code, DNA sequences, etc. We use the datasets we downloaded in the previous step.
 
-We create a new textfile `/build/compare_workspace/example_config.toml`, and
+We create a new text file `/build/compare_workspace/example_config.toml`, and
 give it the following content:
 
 ~~~ { .toml }
@@ -1721,12 +1719,12 @@ commands = [
 ]
 ~~~
 
-This defines a config file with the profile `example`
-that runs the algorithms `example_compressor`, `templated_example_compressor(bit)`
-and `templated_example_compressor(debug)` on 5 different input texts,
-grouping the algorithms together since their differences should be compared.
+This content defines a config file with the profile `example`.
+The profile `example` runs the algorithms `example_compressor`, `templated_example_compressor(bit)`
+and `templated_example_compressor(debug)` on five input texts. 
+The benchmark runs are grouped by the input files since we want to compare the differences between the algorithms on the same text.
 
-We then invoke this config, and should get an output like this:
+By invoking the run script with this config, we get an output like this:
 
 ~~~
 .../compare_workspace> ./run.sh example_config.toml example
@@ -1774,12 +1772,12 @@ cmd  | tudocomp_driver -algorithm 'templated_example_compressor(debug)' |~  1.85
 
 ~~~
 
-As we can see, the algorithms are not very effective in either
-case, and as expected there is no visible difference between the
+We see that the algorithms are not very effective.
+As expected, there is no visible difference between the
 first compressor, and the second one with the debug encoder.
 
 We can also toggle the `compare_commands` option to group
-by input file instead, to compare how the algorithms perform on different text:
+by the algorithms instead; this allows us to compare how an algorithms performs on different inputs:
 
 ~~~
 .../compare_workspace> ./run.sh example_config.toml example
@@ -1821,7 +1819,7 @@ file | $DATASETS/download/real/dna.50MB                                 |~  1.83
 
 ~~~
 
-As we can see, source code seems to compress best, presumably due
+Regarding the compression ratio, the source code file seems to compress best, presumably due
 the repetition of indentation characters like tabs and spaces.
 
 # UML Type Overview
