@@ -9,7 +9,7 @@
 #include "st.hpp"
 
 //read file fully
-std::string file_get_contents(const std::string& filename) {
+inline std::string file_get_contents(const std::string& filename) {
     std::ifstream stream(filename);
     return std::string(
             (std::istreambuf_iterator<char>(stream)),
@@ -17,7 +17,7 @@ std::string file_get_contents(const std::string& filename) {
 }
 
 //get suffix tree for text
-tudocomp::ST suffix_tree(const std::string& text, tudocomp::ST::cst_t& cst) {
+inline tudocomp::ST suffix_tree(const std::string& text, tudocomp::ST::cst_t& cst) {
 	construct_im(cst, text, 1);
     return tudocomp::ST(cst);
 }

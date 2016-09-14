@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <tudocomp/tudocomp.hpp>
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 #include <tudocomp/util/DecodeBuffer.hpp>
@@ -14,6 +15,7 @@
 #include <tudocomp/Algorithm.hpp>
 
 #include "test_util.h"
+#include "tudocomp_test_util.h"
 
 using namespace tudocomp;
 using namespace tudocomp::io;
@@ -30,6 +32,24 @@ TEST(Test, test_file) {
         err = e.what();
     }
     ASSERT_EQ("Could not open test file \"test_files/not_test.txt\"", err);
+}
+
+TEST(Test, test_file_null) {
+    write_test_file("test_nte.txt", "foo\0bar\0"_v);
+    ASSERT_EQ(read_test_file("test_nte.txt"), "foo\0bar\0"_v);
+    ASSERT_NE(read_test_file("test_nte.txt"), "foo");
+}
+
+TEST(View, string_conv_null) {
+    ASSERT_EQ("abc\0def\0"_v, std::string("abc\0def\0"_v));
+    ASSERT_NE("abc\0dez\0"_v, std::string("abc\0def\0"_v));
+    ASSERT_NE("abc\0def\0"_v, std::string("abc\0dez\0"_v));
+
+    std::string x("x");
+    x = x + std::string("abc\0def\0"_v);
+
+    ASSERT_EQ(x, "xabc\0def\0"_v);
+    ASSERT_NE(x, "xabc\0dez\0"_v);
 }
 
 TEST(Util, bits_for) {
@@ -223,6 +243,305 @@ TEST(Input, stream_iterator) {
     }
 
     ASSERT_EQ(ss.str(), "asdf");
+}
+
+TEST(Input, ensure_null_term) {
+    std::vector<uint8_t> a  { 96, 97, 98, 99, 100, 101, 102 };
+    std::vector<uint8_t> a2 { 96, 97, 98, 99, 100, 101, 102 };
+    std::vector<uint8_t> b  { 96, 97, 98 };
+    std::vector<uint8_t> c  { 96, 97, 98, 0 };
+
+    {
+        Input i(View(a).substr(0, 3));
+        auto x = i.as_view();
+        std::vector<uint8_t> y = x;
+        ASSERT_EQ(y, b);
+        ASSERT_NE(y, c);
+    }
+    ASSERT_EQ(a, a2);
+
+    {
+        Input i(View(a).substr(0, 3));
+        auto x = i.as_view();
+        x.ensure_null_terminator();
+        ASSERT_NE(x, b);
+        ASSERT_EQ(x, c);
+    }
+    ASSERT_EQ(a, a2);
+
+    {
+        Input i(View(a).substr(0, 3));
+        Input i2 = std::move(i);
+        auto x = i2.as_view();
+        x.ensure_null_terminator();
+        ASSERT_NE(x, b);
+        ASSERT_EQ(x, c);
+    }
+    ASSERT_EQ(a, a2);
+
+    {
+        Input i(View(a).substr(0, 3));
+
+        Input i2 = i;
+
+        auto x = i2.as_view();
+        x.ensure_null_terminator();
+        ASSERT_NE(x, b);
+        ASSERT_EQ(x, c);
+
+        auto y = i.as_view();
+        y.ensure_null_terminator();
+        ASSERT_NE(y, b);
+        ASSERT_EQ(y, c);
+    }
+    ASSERT_EQ(a, a2);
+
+    {
+        Input i(View(a).substr(0, 3));
+        {
+            auto x = i.as_view();
+            x.ensure_null_terminator();
+            ASSERT_NE(x, b);
+            ASSERT_EQ(x, c);
+        }
+        {
+            auto x = i.as_view();
+            ASSERT_EQ(x, ""_v);
+        }
+        {
+            auto x = i.as_view();
+            x.ensure_null_terminator();
+            ASSERT_EQ(x, "\0"_v);
+        }
+        {
+            auto x = i.as_view();
+            ASSERT_EQ(x, ""_v);
+        }
+        {
+            auto x = i.as_view();
+            x.ensure_null_terminator();
+            ASSERT_EQ(x, "\0"_v);
+        }
+    }
+    ASSERT_EQ(a, a2);
+}
+
+namespace input_nte_matrix {
+    using Path = Input::Path;
+
+    std::vector<uint8_t>       slice_buf       { 97,  98,  99, 100, 101, 102 };
+    const View                 slice           = View(slice_buf).substr(0, 3);
+    const std::vector<uint8_t> o_slice         { 97,  98,  99  };
+
+    template<class T, class CStrat>
+    void matrix_row(T input,
+                    View expected_output,
+                    CStrat i_copy_strat,
+                    std::function<void(Input&, View)> i_out_compare) {
+
+        i_copy_strat(std::move(input),
+                     expected_output,
+                     [](Input& i) {},
+                     i_out_compare);
+    }
+
+    View view(View i) {
+        return i;
+    }
+
+    Input::Path file(View i) {
+        std::hash<std::string> hasher;
+
+        std::string basename = std::string("matrix_test_file_path") + std::string(i);
+        std::cout << "basename before: " << basename;
+        std::stringstream ss;
+        ss << hasher(basename);
+        basename = ss.str() + ".txt";
+        std::cout << " basename after: " << basename << "\n";
+
+        write_test_file(basename, i);
+        return Input::Path { test_file_path(basename) };
+    }
+
+    template<class T>
+    void no_copy(T i,
+                 View o,
+                 std::function<void(Input&)> i_nte_mod,
+                 std::function<void(Input&, View)> i_out_compare) {
+        Input target_input(std::move(i));
+        i_nte_mod(target_input);
+
+        i_out_compare(target_input, o);
+        i_out_compare(target_input, "");
+
+    }
+
+    template<class T>
+    void copy(T i,
+              View o,
+              std::function<void(Input&)> i_nte_mod,
+              std::function<void(Input&, View)> i_out_compare) {
+        Input target_input;
+        {
+            Input source_input(std::move(i));
+            i_nte_mod(source_input);
+            target_input = source_input;
+            i_out_compare(source_input, o);
+            i_out_compare(source_input, "");
+        }
+
+        i_out_compare(target_input, o);
+        i_out_compare(target_input, "");
+    }
+
+    template<class T>
+    void move(T i,
+              View o,
+              std::function<void(Input&)> i_nte_mod,
+              std::function<void(Input&, View)> i_out_compare) {
+        Input target_input;
+        {
+            Input source_input(std::move(i));
+            i_nte_mod(source_input);
+            target_input = std::move(source_input);
+        }
+
+        i_out_compare(target_input, o);
+        i_out_compare(target_input, "");
+    }
+
+    void out_view(Input& i_, View o) {
+        std::vector<uint8_t> b = o;
+        std::vector<uint8_t> c = o;
+        if (c.size() == 0 || c.back() != 0) {
+            c.push_back(0);
+        }
+
+        // First, do a bunch of tests on the copies to check for the null terminator
+        // behaving correctly.
+
+        Input i_bak = i_;
+
+        {
+            Input i = i_bak;
+            auto x = i.as_view();
+            std::vector<uint8_t> y = x;
+            ASSERT_EQ(y, b);
+            ASSERT_NE(y, c);
+        }
+        {
+            Input i = i_bak;
+            auto x = i.as_view();
+            x.ensure_null_terminator();
+            ASSERT_NE(x, b);
+            ASSERT_EQ(x, c);
+        }
+
+        {
+            Input i = i_bak;
+            Input i2 = i;
+
+            auto x = i2.as_view();
+            x.ensure_null_terminator();
+            ASSERT_NE(x, b);
+            ASSERT_EQ(x, c);
+
+            auto y = i.as_view();
+            y.ensure_null_terminator();
+            ASSERT_NE(y, b);
+            ASSERT_EQ(y, c);
+        }
+
+        {
+            Input i = i_bak;
+            {
+                auto x = i.as_view();
+                x.ensure_null_terminator();
+                ASSERT_NE(x, b);
+                ASSERT_EQ(x, c);
+            }
+            {
+                auto x = i.as_view();
+                ASSERT_EQ(x, ""_v);
+            }
+            {
+                auto x = i.as_view();
+                x.ensure_null_terminator();
+                ASSERT_EQ(x, "\0"_v);
+            }
+            {
+                auto x = i.as_view();
+                ASSERT_EQ(x, ""_v);
+            }
+            {
+                auto x = i.as_view();
+                x.ensure_null_terminator();
+                ASSERT_EQ(x, "\0"_v);
+            }
+        }
+
+        // Then ensure we actually skip i forward in the end:
+        i_.as_view();
+    }
+
+    void out_stream(Input& i, View o) {
+        auto tmp = i.as_stream();
+        std::stringstream ss;
+        ss << tmp.rdbuf();
+        std::string a_ = ss.str();
+        std::vector<uint8_t> a = View(a_);
+        std::vector<uint8_t> b = o;
+        ASSERT_EQ(a, b);
+    }
+
+    TEST(InputNteMatrix, n1) {
+        matrix_row(view(slice), View(o_slice), no_copy<View>, out_view);
+    }
+
+    TEST(InputNteMatrix, n2) {
+        matrix_row(view(slice), View(o_slice), no_copy<View>, out_stream);
+    }
+
+    TEST(InputNteMatrix, n7) {
+        matrix_row(view(slice), View(o_slice), copy<View>, out_view);
+    }
+
+    TEST(InputNteMatrix, n8) {
+        matrix_row(view(slice), View(o_slice), copy<View>, out_stream);
+    }
+
+    TEST(InputNteMatrix, n13) {
+        matrix_row(view(slice), View(o_slice), move<View>, out_view);
+    }
+
+    TEST(InputNteMatrix, n14) {
+        matrix_row(view(slice), View(o_slice), move<View>, out_stream);
+    }
+
+    TEST(InputNteMatrix, n19) {
+        matrix_row(file(slice), View(o_slice), no_copy<Path>, out_view);
+    }
+
+    TEST(InputNteMatrix, n20) {
+        matrix_row(file(slice), View(o_slice), no_copy<Path>, out_stream);
+    }
+
+    TEST(InputNteMatrix, n25) {
+        matrix_row(file(slice), View(o_slice), copy<Path>, out_view);
+    }
+
+    TEST(InputNteMatrix, n26) {
+        matrix_row(file(slice), View(o_slice), copy<Path>, out_stream);
+    }
+
+    TEST(InputNteMatrix, n31) {
+        matrix_row(file(slice), View(o_slice), move<Path>, out_view);
+    }
+
+    TEST(InputNteMatrix, n32) {
+        matrix_row(file(slice), View(o_slice), move<Path>, out_stream);
+    }
+
 }
 
 TEST(Output, memory) {
@@ -556,6 +875,15 @@ TEST(View, string_predicates) {
     ASSERT_TRUE(aa.ends_with(a));
 }
 
+TEST(View, literal) {
+    ASSERT_EQ("abc"_v, View("abc"));
+    ASSERT_NE("abc"_v, "abc\0def\0"_v);
+    ASSERT_EQ("abc\0def\0"_v, "abc\0def\0"_v);
+    ASSERT_NE("abc\0def\0"_v, "abc"_v);
+
+    ASSERT_EQ("a\0"_v.back(), 0);
+}
+
 struct MySubAlgo: Algorithm {
     MySubAlgo(Env&& e): Algorithm(std::move(e)) {}
 
@@ -656,20 +984,20 @@ TEST(Algorithm, meta) {
             std::move(y)
         );
 
-        g(evald.options);
+        g(evald);
     };
     f("my()", [](OptionValue& options){
         auto& my = options.as_algorithm();
         ASSERT_EQ(my.name(), "my");
         {
-            auto& sub = my.arguments()["sub"].as_algorithm();
+            auto& sub = my.arguments().at("sub").as_algorithm();
             ASSERT_EQ(sub.name(), "sub1");
             {
-                auto& x = sub.arguments()["x"].as_string();
+                auto& x = sub.arguments().at("x").as_string();
                 ASSERT_EQ(x, "x");
             }
 
-            auto& dyn = my.arguments()["dyn"].as_string();
+            auto& dyn = my.arguments().at("dyn").as_string();
             ASSERT_EQ(dyn, "foobar");
         }
     });
@@ -677,14 +1005,14 @@ TEST(Algorithm, meta) {
         auto& my = options.as_algorithm();
         ASSERT_EQ(my.name(), "my");
         {
-            auto& sub = my.arguments()["sub"].as_algorithm();
+            auto& sub = my.arguments().at("sub").as_algorithm();
             ASSERT_EQ(sub.name(), "sub1");
             {
-                auto& x = sub.arguments()["x"].as_string();
+                auto& x = sub.arguments().at("x").as_string();
                 ASSERT_EQ(x, "x");
             }
 
-            auto& dyn = my.arguments()["dyn"].as_string();
+            auto& dyn = my.arguments().at("dyn").as_string();
             ASSERT_EQ(dyn, "quxqux");
         }
     });
@@ -692,14 +1020,14 @@ TEST(Algorithm, meta) {
         auto& my = options.as_algorithm();
         ASSERT_EQ(my.name(), "my");
         {
-            auto& sub = my.arguments()["sub"].as_algorithm();
+            auto& sub = my.arguments().at("sub").as_algorithm();
             ASSERT_EQ(sub.name(), "sub1");
             {
-                auto& x = sub.arguments()["x"].as_string();
+                auto& x = sub.arguments().at("x").as_string();
                 ASSERT_EQ(x, "x");
             }
 
-            auto& dyn = my.arguments()["dyn"].as_string();
+            auto& dyn = my.arguments().at("dyn").as_string();
             ASSERT_EQ(dyn, "quxqux");
         }
     });
@@ -707,14 +1035,14 @@ TEST(Algorithm, meta) {
         auto& my = options.as_algorithm();
         ASSERT_EQ(my.name(), "my");
         {
-            auto& sub = my.arguments()["sub"].as_algorithm();
+            auto& sub = my.arguments().at("sub").as_algorithm();
             ASSERT_EQ(sub.name(), "sub1");
             {
-                auto& x = sub.arguments()["x"].as_string();
+                auto& x = sub.arguments().at("x").as_string();
                 ASSERT_EQ(x, "asdf");
             }
 
-            auto& dyn = my.arguments()["dyn"].as_string();
+            auto& dyn = my.arguments().at("dyn").as_string();
             ASSERT_EQ(dyn, "quxqux");
         }
     });

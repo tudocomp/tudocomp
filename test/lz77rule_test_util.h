@@ -1,6 +1,8 @@
 #ifndef LZ77_RULE_TEST_UTIL_H
 #define LZ77_RULE_TEST_UTIL_H
 
+#include <tudocomp/tudocomp.hpp>
+
 namespace lz77rule_test {
 
 using namespace tudocomp;

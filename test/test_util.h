@@ -159,9 +159,7 @@ inline std::string read_test_file(const std::string& filename) {
     std::string test_file_name = test_file_path(filename);
     std::ifstream fin(test_file_name);
     if(fin) {
-        std::copy(std::istreambuf_iterator<char>(fin),
-              std::istreambuf_iterator<char>(),
-              std::ostreambuf_iterator<char>(sout));
+        sout << fin.rdbuf();
 
         fin.close();
     } else {
@@ -170,7 +168,15 @@ inline std::string read_test_file(const std::string& filename) {
         msg += "\"";
         throw std::runtime_error(msg);
     }
-    return sout.str();
+
+    auto s = sout.str();
+
+    for (char c : s) {
+        std::cout << int(c) << ", ";
+    }
+    std::cout << "\n";
+
+    return s;
 }
 
 inline void create_test_directory() {
@@ -181,7 +187,11 @@ inline void write_test_file(const std::string& filename, const std::string& text
     create_test_directory();
     std::ofstream fout(test_file_path(filename));
     if(fout) {
-        fout << text;
+        for (char c : text) {
+            std::cout << int(c) << ", ";
+            fout.put(c);
+        }
+        std::cout << "\n";
         fout.close();
     }
 }

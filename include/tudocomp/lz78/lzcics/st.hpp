@@ -133,7 +133,7 @@ struct ST {
 
 };
 
-void reset_bitvector(bit_vector& bv) { //! resets a bit-vector, clearing all ones
+inline void reset_bitvector(bit_vector& bv) { //! resets a bit-vector, clearing all ones
 	sdsl::util::set_to_value(bv, 0);
 }
 

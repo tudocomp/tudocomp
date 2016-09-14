@@ -1,5 +1,8 @@
 #include <tudocomp_driver/Registry.hpp>
 
+#include <tudocomp/ChainCompressor.hpp>
+
+
 #include <tudocomp/lz78/Lz78Compressor.hpp>
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
 #include <tudocomp/lz78/Lz78BitCoder.hpp>

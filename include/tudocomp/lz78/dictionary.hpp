@@ -57,6 +57,10 @@ const CodeType DMS_MAX = std::numeric_limits<CodeType>::max();
 /// @brief Encoder's custom dictionary type.
 ///
 class EncoderDictionary {
+    struct Node;
+
+    /// Vector of nodes on top of which the binary search tree is implemented.
+    std::vector<Node> vn;
 
     ///
     /// @brief Binary search tree node.
@@ -68,15 +72,15 @@ class EncoderDictionary {
         /// @param c    byte that the Node will contain
         ///
         explicit Node(uint8_t c, CodeType dms):
-            first(dms), c(c), left(dms), right(dms)
+            first(dms), left(dms), right(dms), c(c)
         {
         }
 
         CodeType    first;  ///< Code of first child string.
-        uint8_t     c;      ///< Byte.
         CodeType    left;   ///< Code of child node with byte < `c`.
         CodeType    right;  ///< Code of child node with byte > `c`.
-    };
+        uint8_t     c;      ///< Byte.
+    } __attribute__((packed));
 
     CodeType m_dms;
     CodeType m_reserve_dms;
@@ -206,12 +210,6 @@ public:
     {
         return vn.size();
     }
-
-private:
-
-    /// Vector of nodes on top of which the binary search tree is implemented.
-    std::vector<Node> vn;
-
 };
 
 }

@@ -1,253 +1,126 @@
 #ifndef _INCLUDED_ENV_HPP
 #define _INCLUDED_ENV_HPP
 
-#include <map>
-#include <set>
-#include <sstream>
-#include <stack>
-#include <stdexcept>
-#include <string>
-#include <vector>
-
-#include <glog/logging.h>
-
-#include <tudocomp/Stat.hpp>
-
-using tudocomp::Stat;
-
-#include <tudocomp/util.h>
+#include <tudocomp/pre_header/Registry.hpp>
+#include <tudocomp/pre_header/Env.hpp>
 
 namespace tudocomp {
 
-//DIY lexical cast
-template<typename T> T lexical_cast(const std::string& s) {
-    T val;
-    std::stringstream(s) >> val;
-    return val;
+inline AlgorithmValue& EnvRoot::algo_value() {
+    return *m_algo_value;
 }
 
-class OptionValue;
-class AlgorithmValue {
-public:
-    using ArgumentMap = std::map<std::string, OptionValue>;
-    using StatMap = std::map<std::string, std::string>;
-private:
-    std::string m_name;
-    ArgumentMap m_arguments;
-    friend class OptionValue;
-public:
-    inline AlgorithmValue(std::string&& name, ArgumentMap&& arguments):
-        m_name(std::move(name)), m_arguments(std::move(arguments)) {}
+inline Stat& EnvRoot::stat_current() {
+    return m_stat_stack.empty() ? m_stat_root : m_stat_stack.top();
+}
 
-    inline const std::string& name() const {
-        return m_name;
-    }
-    inline ArgumentMap& arguments() {
-        return m_arguments;
-    }
-};
+inline void EnvRoot::begin_stat_phase(const std::string& name) {
+    DLOG(INFO) << "begin phase \"" << name << "\"";
 
-class OptionValue {
-    bool m_is_value;
-    AlgorithmValue m_value_or_algorithm;
-    friend class AlgorithmValue;
-public:
-    inline OptionValue(): OptionValue("") {}
-    inline OptionValue(std::string&& value):
-        m_is_value(true),
-        m_value_or_algorithm(AlgorithmValue(std::move(value), {})) {}
-    inline OptionValue(AlgorithmValue&& algorithm):
-        m_is_value(false),
-        m_value_or_algorithm(std::move(algorithm)) {}
+    m_stat_stack.push(Stat(name));
+    Stat& stat = m_stat_stack.top();
+    stat.begin();
+}
 
-    inline bool is_algorithm() {
-        return !m_is_value;
-    }
-    inline bool has_value() const {
-        return m_value_or_algorithm.m_name != "";
-    }
-    inline AlgorithmValue& as_algorithm() {
-        CHECK(!m_is_value);
-        return m_value_or_algorithm;
-    }
-    inline const std::string& as_string() const {
-        CHECK(m_is_value);
-        return m_value_or_algorithm.m_name;
-    }
-    inline uint64_t as_integer() const {
-        return lexical_cast<uint64_t>(as_string());
-    }
-    inline bool as_bool() const {
-        return lexical_cast<bool>(as_string());
-    }
-    template<class T>
-    inline T as() const {
-        return lexical_cast<T>(as_string());
-    }
-};
+inline void EnvRoot::end_stat_phase() {
+    DCHECK(!m_stat_stack.empty());
 
-class EnvRoot {
-private:
-    std::unique_ptr<AlgorithmValue> m_algo_value;
+    Stat& stat_ref = m_stat_stack.top();
+    DLOG(INFO) << "end phase \"" << stat_ref.title() << "\"";
 
-    std::stack<Stat> m_stat_stack;
-    Stat m_stat_root;
+    stat_ref.end();
 
-public:
-    inline EnvRoot() {
-        begin_stat_phase("root");
+    Stat stat = stat_ref; //copy
+    m_stat_stack.pop();
+
+    if(!m_stat_stack.empty()) {
+        Stat& parent = m_stat_stack.top();
+        parent.add_sub(stat);
+    } else {
+        m_stat_root = stat;
+    }
+}
+
+inline Stat& EnvRoot::finish_stats() {
+    while(!m_stat_stack.empty()) {
+        end_stat_phase();
     }
 
-    inline EnvRoot(AlgorithmValue&& algo_value):
-        m_algo_value(std::make_unique<AlgorithmValue>(std::move(algo_value)))  {
+    return m_stat_root;
+}
 
-        begin_stat_phase("root");
-    }
+inline void EnvRoot::restart_stats(const std::string& root_name) {
+    finish_stats();
+    begin_stat_phase(root_name);
+}
 
-    ~EnvRoot() {
-        finish_stats();
-    }
+template<class T>
+inline void EnvRoot::log_stat(const std::string& name, const T& value) {
+    DLOG(INFO) << "stat: " << name << " = " << value;
+    stat_current().add_stat(name, value);
+}
 
-    inline AlgorithmValue& algo_value() {
-        return *m_algo_value;
-    }
+inline Env::Env(Env&& other):
+    m_root(std::move(other.m_root)),
+    m_node(other.m_node),
+    m_registry(std::move(other.m_registry)) {}
 
-    /// Returns a reference to the current statistics phase.
-    /// This reference is valid only until the phase is ended.
-    inline Stat& stat_current() {
-        return m_stat_stack.empty() ? m_stat_root : m_stat_stack.top();
-    }
+inline Env::Env(std::shared_ptr<EnvRoot> root,
+                const AlgorithmValue& node,
+                const Registry& registry):
+    m_root(root),
+    m_node(node),
+    m_registry(make_ptr_copy_of_registry(registry)) {}
 
-    /// Begins a new statistics phase
-    inline void begin_stat_phase(const std::string& name) {
-        DLOG(INFO) << "begin phase \"" << name << "\"";
+inline Env::~Env() = default;
 
-        m_stat_stack.push(Stat(name));
-        Stat& stat = m_stat_stack.top();
-        stat.begin();
-    }
+inline const AlgorithmValue& Env::algo() const {
+    return m_node;
+}
 
-    /// Ends the current statistics phase.
-    inline void end_stat_phase() {
-        DCHECK(!m_stat_stack.empty());
+inline std::shared_ptr<EnvRoot>& Env::root() {
+    return m_root;
+}
 
-        Stat& stat_ref = m_stat_stack.top();
-        DLOG(INFO) << "end phase \"" << stat_ref.title() << "\"";
+inline const Registry& Env::registry() const {
+    return *m_registry;
+}
 
-        stat_ref.end();
+inline void Env::error(const std::string& msg) {
+    throw std::runtime_error(msg);
+}
 
-        Stat stat = stat_ref; //copy
-        m_stat_stack.pop();
+inline Env Env::env_for_option(const std::string& option) {
+    CHECK(algo().arguments().count(option) > 0);
+    auto& a = algo().arguments().at(option).as_algorithm();
 
-        if(!m_stat_stack.empty()) {
-            Stat& parent = m_stat_stack.top();
-            parent.add_sub(stat);
-        } else {
-            m_stat_root = stat;
-        }
-    }
+    return Env(m_root, a, registry());
+}
 
-    /// Ends all current statistics phases and returns the root.
-    inline Stat& finish_stats() {
-        while(!m_stat_stack.empty()) {
-            end_stat_phase();
-        }
+inline const OptionValue& Env::option(const std::string& option) const {
+    return algo().arguments().at(option);
+}
 
-        return m_stat_root;
-    }
+inline void Env::begin_stat_phase(const std::string& name) {
+    m_root->begin_stat_phase(name); //delegate
+}
 
-    /// Resets all statistics and restarts with a new root.
-    inline void restart_stats(const std::string& root_name) {
-        finish_stats();
-        begin_stat_phase(root_name);
-    }
+inline void Env::end_stat_phase() {
+    m_root->end_stat_phase(); //delegate
+}
 
-    /// Logs a statistic
-    template<class T>
-    inline void log_stat(const std::string& name, const T& value) {
-        DLOG(INFO) << "stat: " << name << " = " << value;
-        stat_current().add_stat(name, value);
-    }
-};
+inline Stat& Env::finish_stats() {
+    return m_root->finish_stats(); //delegate
+}
 
-/// Local environment for a compression/encoding/decompression call.
-///
-/// Gives access to a statistic logger, and to environment
-/// options that can be used to modify the default behavior of an algorithm.
-class Env {
-    std::shared_ptr<EnvRoot> m_root;
-    AlgorithmValue* m_node;
+inline void Env::restart_stats(const std::string& root_name) {
+    m_root->restart_stats(root_name); //delegate
+}
 
-    inline AlgorithmValue& algo() {
-        return *m_node;
-    }
-
-public:
-    inline Env() = delete;
-    inline Env(const Env& other) = delete;
-    inline Env(Env&& other):
-        m_root(std::move(other.m_root)),
-        m_node(other.m_node) {}
-
-    inline Env(std::shared_ptr<EnvRoot> root, AlgorithmValue& node):
-        m_root(root), m_node(&node) {}
-
-    inline std::shared_ptr<EnvRoot>& root() {
-        return m_root;
-    }
-
-    /// Log an error and end the current operation
-    inline void error(const std::string& msg) {
-        throw std::runtime_error(msg);
-    }
-
-    /// Create the environment for a sub algorithm
-    /// option.
-    inline Env env_for_option(const std::string& option) {
-        CHECK(algo().arguments().count(option) > 0);
-        auto& a = algo().arguments()[option].as_algorithm();
-
-        return Env(m_root, a);
-    }
-
-    /// Get an option of this algorithm
-    inline OptionValue& option(const std::string& option) {
-        return algo().arguments()[option];
-    }
-
-    /// Begins a new statistics phase
-    inline void begin_stat_phase(const std::string& name) {
-        m_root->begin_stat_phase(name); //delegate
-    }
-
-    /// Ends the current statistics phase.
-    inline void end_stat_phase() {
-        m_root->end_stat_phase(); //delegate
-    }
-
-    /// Ends all current statistics phases and returns the root.
-    inline Stat& finish_stats() {
-        return m_root->finish_stats(); //delegate
-    }
-
-    /// Resets all statistics and restarts with a new root.
-    inline void restart_stats(const std::string& root_name) {
-        m_root->restart_stats(root_name); //delegate
-    }
-
-    /// Log a statistic.
-    ///
-    /// Statistics will be gathered at a central location, and
-    /// can be used to judge the behavior and performance of an
-    /// implementation.
-    ///
-    /// \param name The name of the statistic.
-    /// \param value The value of the statistic as a string.
-    template<class T>
-    inline void log_stat(const std::string& name, const T& value) {
-        m_root->log_stat(name, value);
-    };
-};
+template<class T>
+inline void Env::log_stat(const std::string& name, const T& value) {
+    m_root->log_stat(name, value);
+}
 
 }
 #endif

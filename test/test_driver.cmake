@@ -9,6 +9,14 @@ add_custom_command(
     COMMENT "All tests were successful!" VERBATIM
 )
 
+# Custom test target to just build the googletest tests
+add_custom_target(build_check)
+add_custom_command(
+    TARGET build_check
+    POST_BUILD
+    COMMENT "All test builds were successful!" VERBATIM
+)
+
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/stamps)
 
 # will compile and run ${test_target}.cpp
@@ -64,6 +72,17 @@ macro(run_test test_target)
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
         COMMENT "Test ${test_target}" VERBATIM
     )
+
+    # Hook into build_check target
+    add_custom_command(
+        TARGET build_check
+        PRE_BUILD
+        COMMAND cmake --build . --target ${test_target}_testrunner
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+        COMMENT "Building test ${test_target}" VERBATIM
+    )
+
+    # Ensure binary deps of the testrunner are compiled first
     foreach(bin_dep ${TEST_TARGET_BIN_DEPS})
         add_custom_command(
             TARGET ${test_target}_testrunner

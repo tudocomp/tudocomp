@@ -14,7 +14,7 @@ namespace io {
 /// The current byte in the underlying input stream is buffered and processed
 /// bitwise using another cursor.
 class BitIStream {
-    std::istream& m_input;
+    std::istream* m_stream;
     uint8_t m_next = 0;
     int m_cursor;
     bool* m_done;
@@ -24,7 +24,7 @@ class BitIStream {
 
         char tmp;
         // TODO: Error reporting
-        *m_done |= !m_input.get(tmp);
+        *m_done |= !m_stream->get(tmp);
         m_next = tmp;
 
         m_cursor = MSB;
@@ -37,7 +37,7 @@ public:
     /// \param done A reference to a flag that is set to \c true when the
     ///              underlying input stream has been read completely.
     inline BitIStream(std::istream& input, bool& done)
-        : m_input(input), m_done(&done) {
+        : m_stream(&input), m_done(&done) {
         m_cursor = -1;
     }
 
@@ -47,7 +47,7 @@ public:
         if (m_cursor < 0) {
             read_next();
         }
-        uint8_t bit = (m_next >> m_cursor) & 0b1;
+        uint8_t bit = (m_next >> m_cursor) & 1;
         m_cursor--;
         return bit;
     }
@@ -93,6 +93,12 @@ public:
         } while(has_next);
 
         return T(value);
+    }
+
+    /// \brief Provides access to the underlying input stream.
+    /// \return A reference to the underlying input stream.
+    inline std::istream& stream() {
+        return *m_stream;
     }
 };
 

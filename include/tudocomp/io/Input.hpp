@@ -18,8 +18,8 @@
 namespace tudocomp {
 namespace io {
 
-    struct InputView;
-    struct InputStream;
+    class InputView;
+    class InputStream;
 
     /// \brief An abstraction layer for algorithm input.
     ///
@@ -40,13 +40,19 @@ namespace io {
         struct Memory: Variant {
             const uint8_t* ptr;
             size_t m_size;
+            std::shared_ptr<std::vector<uint8_t>> m_owned;
 
             Memory(const uint8_t* ptr, size_t size): m_size(size) {
                 this->ptr = ptr;
             }
 
+            Memory(const Memory& other):
+                ptr(other.ptr),
+                m_size(other.m_size),
+                m_owned(other.m_owned) {}
+
             std::unique_ptr<Variant> virtual_copy() override {
-                return std::make_unique<Memory>(ptr, m_size);
+                return std::make_unique<Memory>(*this);
             }
 
             inline InputView as_view() override;
@@ -62,8 +68,12 @@ namespace io {
                 this->offset = offset;
             }
 
+            File(const File& other):
+                path(other.path),
+                offset(other.offset) {}
+
             std::unique_ptr<Variant> virtual_copy() override {
-                return std::make_unique<File>(path, offset);
+                return std::make_unique<File>(*this);
             }
 
             inline InputView as_view() override;
@@ -98,7 +108,7 @@ namespace io {
         ///
         /// \param other The input to copy.
         inline Input(const Input& other):
-            m_data(std::move(other.m_data->virtual_copy())) {}
+            m_data(other.m_data->virtual_copy()) {}
 
         /// \brief Move constructor.
         inline Input(Input&& other):
@@ -127,6 +137,13 @@ namespace io {
         /// \brief Move assignment operator.
         Input& operator=(Input&& other) {
             m_data = std::move(other.m_data);
+            return *this;
+        }
+
+        /// \brief Copy assignment operator.
+        Input& operator=(const Input& other) {
+            Input cpy(other);
+            *this = std::move(cpy);
             return *this;
         }
 
@@ -175,41 +192,57 @@ namespace io {
         inline size_t size() {
             return m_data->size();
         }
+
     };
 
     /// \cond INTERNAL
     class InputViewInternal {
         struct Variant {
-            virtual string_ref view() = 0;
+            inline virtual ~Variant() {}
+            virtual View view() = 0;
+            virtual void ensure_null_terminator() = 0;
         };
 
         struct Memory: Variant {
-            const uint8_t* ptr;
-            size_t size;
+            View m_view;
+            std::unique_ptr<std::vector<uint8_t>> m_owned;
 
-            Memory(const uint8_t* ptr, size_t size) {
-                this->ptr = ptr;
-                this->size = size;
+            inline Memory(const uint8_t* ptr, size_t size):
+                m_view(ptr, size) { }
+
+            inline View view() override {
+                return m_view;
             }
 
-            string_ref view() override {
-                return string_ref {
-                    (char*) ptr,
-                    size
-                };
+            inline virtual void ensure_null_terminator() override {
+                if ((m_view.size() == 0) || (m_view.back() != 0)) {
+                    m_owned = std::make_unique<std::vector<uint8_t>>();
+                    auto& v = *m_owned;
+                    v.reserve(m_view.size() + 1);
+                    for (uint8_t byte : m_view) {
+                        v.push_back(byte);
+                    }
+                    v.push_back(0);
+                    m_view = *m_owned;
+                }
             }
         };
         struct File: Variant {
             std::vector<uint8_t> buffer;
+            size_t m_null_skip = 1;
 
-            File(std::vector<uint8_t>&& buffer_):
+            inline File(std::vector<uint8_t>&& buffer_):
                 buffer(std::move(buffer_)) {}
 
-            string_ref view() override {
-                return string_ref {
+            inline View view() override {
+                return View {
                     (char*) buffer.data(),
-                    buffer.size()
+                    buffer.size() - m_null_skip
                 };
+            }
+
+            inline virtual void ensure_null_terminator() override {
+                m_null_skip = 0;
             }
         };
 
@@ -251,6 +284,15 @@ namespace io {
 
         /// Default constructor (deleted).
         inline InputView() = delete;
+
+        /// Ensures that that this View is terminated with a null byte.
+        ///
+        /// Depending on internal Input source, this might involve
+        /// a (re)allocation of a buffer for the input data.
+        inline void ensure_null_terminator() {
+            m_variant->ensure_null_terminator();
+            (View&) *this = m_variant->view();
+        }
     };
 
     inline InputView Input::Memory::as_view() {
@@ -268,10 +310,14 @@ namespace io {
     inline InputView Input::File::as_view() {
         // read file into buffer starting at current offset
         auto buf = read_file_to_stl_byte_container<
-            std::vector<uint8_t>>(path, offset);
+            std::vector<uint8_t>>(path, offset, true);
+
+        std::cout << path << " offset: " << offset <<"\n";
 
         // We read the whole file, so skip it on next read.
-        offset += buf.size();
+        // `size - 1` because of the null terminator that
+        // does not exist in the file.
+        offset += buf.size() - 1;
 
         return InputView {
             InputView::File {
@@ -333,7 +379,6 @@ namespace io {
         class File: public InputStreamInternal::Variant {
             std::string m_path;
             std::unique_ptr<std::ifstream> m_stream;
-
             Input::File* m_offset_back_ref;
             size_t m_start_pos;
 
@@ -342,35 +387,35 @@ namespace io {
             File(const File& other) = delete;
             File() = delete;
 
-            File(std::string&& path,
-                 Input::File* offset_back_ref,
-                 size_t offset)
+            File(std::string&& path, Input::File* offset_back_ref, size_t offset):
+                m_path(std::move(path)),
+                m_stream(std::make_unique<std::ifstream>(
+                    m_path, std::ios::in | std::ios::binary))
             {
-                m_path = path;
-                m_stream = std::make_unique<std::ifstream>(
-                    m_path, std::ios::in | std::ios::binary);
-                m_stream->seekg(offset, std::ios::beg);
-                m_start_pos = m_stream->tellg();
+                auto& s = *m_stream;
+                s.seekg(offset, std::ios::beg);
+                m_start_pos = s.tellg();
                 m_offset_back_ref = offset_back_ref;
             }
 
             File(File&& other) {
+                m_path = std::move(other.m_path);
                 m_stream = std::move(other.m_stream);
                 m_offset_back_ref = other.m_offset_back_ref;
-                m_path = other.m_path;
                 m_start_pos = other.m_start_pos;
-            }
-
-            virtual ~File() {
-                if (m_stream != nullptr) {
-                    auto len = size_t(m_stream->tellg()) - m_start_pos;
-                    m_offset_back_ref->offset += len;
-                }
             }
 
             std::istream& stream() override {
                 return *m_stream;
             }
+
+            virtual ~File() {
+                if (m_stream) {
+                    auto len = size_t(stream().tellg()) - m_start_pos;
+                    m_offset_back_ref->offset += len;
+                }
+            }
+
         };
 
         std::unique_ptr<InputStreamInternal::Variant> m_variant;
@@ -382,9 +427,9 @@ namespace io {
         inline InputStreamInternal() = delete;
 
         inline InputStreamInternal(InputStreamInternal::Memory&& mem):
-            m_variant(std::move(std::make_unique<InputStreamInternal::Memory>(std::move(mem)))) {}
+            m_variant(std::make_unique<InputStreamInternal::Memory>(std::move(mem))) {}
         inline InputStreamInternal(InputStreamInternal::File&& f):
-            m_variant(std::move(std::make_unique<InputStreamInternal::File>(std::move(f)))) {}
+            m_variant(std::make_unique<InputStreamInternal::File>(std::move(f))) {}
         inline InputStreamInternal(InputStreamInternal&& s):
             m_variant(std::move(s.m_variant)) {}
 
@@ -436,7 +481,7 @@ namespace io {
             InputStream::File {
                 std::string(path),
                 this,
-                offset,
+                offset
             }
         };
     }

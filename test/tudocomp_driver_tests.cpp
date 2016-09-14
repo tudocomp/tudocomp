@@ -161,10 +161,9 @@ TEST(Registry, dynamic_options) {
             ASSERT_EQ(t, "test");
             s << "check";
 
-            ASSERT_TRUE(env().option("a").has_value());
-            ASSERT_TRUE(env().option("c").has_value());
-            ASSERT_TRUE(env().option("d").has_value());
-            ASSERT_FALSE(env().option("o").has_value());
+            ASSERT_TRUE((env().option("a"), true));
+            ASSERT_TRUE((env().option("c"), true));
+            ASSERT_TRUE((env().option("d"), true));
 
             ASSERT_EQ(env().option("c").as_string(), "qwerty");
             ASSERT_EQ(env().option("d").as_string(), "asdf");
@@ -172,7 +171,7 @@ TEST(Registry, dynamic_options) {
             auto& a = env().option("a").as_algorithm();
             auto& a_options = a.arguments();
             ASSERT_EQ(a.name(), "x");
-            ASSERT_EQ(a_options["l"].as_string(), "zzz");
+            ASSERT_EQ(a_options.at("l").as_string(), "zzz");
         }
     };
 

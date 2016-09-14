@@ -11,7 +11,7 @@
 
 #include <glog/logging.h>
 
-#include <tudocomp/io.h>
+#include <tudocomp/tudocomp.hpp>
 
 #include <tudocomp/lzss/LZ77SSLCPCompressor.hpp>
 #include <tudocomp/lzss/LZ77SSSlidingWindowCompressor.hpp>

@@ -9,6 +9,9 @@ run_test(lz78_tests     DEPS ${BASIC_DEPS})
 run_test(lzw_tests      DEPS ${BASIC_DEPS})
 run_test(lzss_tests     DEPS ${BASIC_DEPS})
 
+run_test(compressor_adapter_tests
+    DEPS tudocomp_algorithms ${BASIC_DEPS})
+
 run_test(example_tests  DEPS ${BASIC_DEPS})
 
 

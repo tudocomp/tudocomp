@@ -38,7 +38,9 @@ void read_bytes_to_vec(std::istream& inp, T& vec, size_t bytes) {
 }
 
 template<class T>
-T read_file_to_stl_byte_container(std::string& filename, size_t offset = 0) {
+T read_file_to_stl_byte_container(std::string& filename,
+                                  size_t offset = 0,
+                                  bool null_term = false) {
     std::ifstream in(filename, std::ios::in | std::ios::binary);
     if (in) {
         T contents;
@@ -51,13 +53,21 @@ T read_file_to_stl_byte_container(std::string& filename, size_t offset = 0) {
         auto len = end - start;
 
         // use length to allocate a single buffer for the file
-        contents.resize(len);
+        if (null_term) {
+            contents.resize(len + 1, 0);
+        } else {
+            contents.resize(len);
+        }
 
         // set position back to the start position at offset
         in.seekg(offset, std::ios::beg);
 
         // read file into contents without reallocating
-        in.read((char*)&contents[0], contents.size());
+        if (null_term) {
+            in.read((char*)&contents[0], contents.size() - 1);
+        } else {
+            in.read((char*)&contents[0], contents.size());
+        }
         in.close();
         return(contents);
     }

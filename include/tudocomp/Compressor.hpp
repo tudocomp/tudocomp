@@ -1,11 +1,12 @@
 #ifndef _INCLUDED_COMPRESSOR_HPP_
 #define _INCLUDED_COMPRESSOR_HPP_
 
-#include <tudocomp/Env.hpp>
-#include <tudocomp/io.h>
-#include <tudocomp/Algorithm.hpp>
 #include <functional>
 #include <memory>
+
+#include <tudocomp/pre_header/Registry.hpp>
+#include <tudocomp/pre_header/Env.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 namespace tudocomp {
 

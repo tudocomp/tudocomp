@@ -15,7 +15,7 @@ struct LZ78rule {
     std::vector<char> cha;
 };
 
-std::string lz78decode(const std::vector<size_t>& ref, const std::vector<char>& cha) {
+inline std::string lz78decode(const std::vector<size_t>& ref, const std::vector<char>& cha) {
     std::string t;
     for(size_t i = 0; i < ref.size(); ++i) {
         if(ref[i] == undef) {
@@ -91,7 +91,7 @@ struct ExplorationValues {
 //     return ret;
 // }
 
-LZ78rule lz78naiv(const std::string& text, const ST&) {
+inline LZ78rule lz78naiv(const std::string& text, const ST&) {
     std::vector<size_t> ref;
     std::vector<char> cha;
     std::vector<std::string> factors;
@@ -132,7 +132,7 @@ LZ78rule lz78naiv(const std::string& text, const ST&) {
 
 }
 
-LZ78rule lz78(const ST& st) {
+inline LZ78rule lz78(const ST& st) {
     const ST::cst_t& cst = st.cst;
     ExplorationValues ev(st);
 

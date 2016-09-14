@@ -21,7 +21,7 @@
 
 #include <glog/logging.h>
 
-#include <tudocomp/Env.hpp>
+#include <tudocomp/OptionValue.hpp>
 #include <tudocomp/util.h>
 
 namespace tudocomp {
@@ -55,28 +55,40 @@ namespace tudocomp {
                 m_invokation_name_or_value(std::move(name)),
                 m_invokation_arguments(std::move(args)) {}
 
-            inline bool is_invokation() {
+            inline bool is_invokation() const {
                 return m_is_invokation;
             }
 
+            inline const std::string& invokation_name() const {
+                CHECK(is_invokation());
+                return m_invokation_name_or_value;
+            }
             inline std::string& invokation_name() {
                 CHECK(is_invokation());
                 return m_invokation_name_or_value;
             }
 
+            inline const std::vector<Arg>& invokation_arguments() const {
+                CHECK(is_invokation());
+                return m_invokation_arguments;
+            }
             inline std::vector<Arg>& invokation_arguments() {
                 CHECK(is_invokation());
                 return m_invokation_arguments;
             }
 
+            inline const std::string& string_value() const {
+                CHECK(!is_invokation());
+                return m_invokation_name_or_value;
+            }
             inline std::string& string_value() {
                 CHECK(!is_invokation());
                 return m_invokation_name_or_value;
             }
 
-            inline std::string to_string();
+            inline std::string to_string() const;
 
-            inline bool is_empty() {
+            inline bool is_empty() const {
                 return m_invokation_name_or_value == "";
             }
 
@@ -118,37 +130,48 @@ namespace tudocomp {
                 m_type(type)
                 {}
 
-            inline bool has_keyword() {
+            inline bool has_keyword() const {
                 return m_has_keyword;
             }
-            inline bool has_type() {
+            inline bool has_type() const {
                 return m_has_type;
             }
-            inline bool type_is_static() {
+            inline bool type_is_static() const {
                 return m_type_is_static;
+            }
+            inline const std::string& keyword() const {
+                return m_keyword;
             }
             inline std::string& keyword() {
                 return m_keyword;
             }
+
+            inline const std::string& type() const {
+                return m_type;
+            }
             inline std::string& type() {
                 return m_type;
+            }
+
+            inline const Value& value() const {
+                return m_value;
             }
             inline Value& value() {
                 return m_value;
             }
 
-            inline std::string to_string();
+            inline std::string to_string() const;
 
             friend inline bool operator==(const Arg &lhs, const Arg &rhs);
         };
 
         inline std::ostream& operator<<(std::ostream& os,
-                                        Value& x) {
+                                        const Value& x) {
             os << x.to_string();
             return os;
         }
         inline std::ostream& operator<<(std::ostream& os,
-                                        Arg& x) {
+                                        const Arg& x) {
             os << x.to_string();
             return os;
         }
@@ -180,7 +203,7 @@ namespace tudocomp {
             return true;
         }
 
-        inline std::string Value::to_string() {
+        inline std::string Value::to_string() const {
             std::stringstream ss;
             if (is_invokation()) {
                 ss << invokation_name();
@@ -202,7 +225,7 @@ namespace tudocomp {
             return ss.str();
         }
 
-        inline std::string Arg::to_string() {
+        inline std::string Arg::to_string() const {
             std::stringstream ss;
             if (has_keyword()) {
                 ss << keyword();
@@ -296,6 +319,10 @@ namespace tudocomp {
                     if (parse_char(')')) {
                         break;
                     } else if (first || parse_char(',')) {
+                        if (parse_char(')')) {
+                            // allow trailling commas
+                            break;
+                        }
                         first = false;
                         args.push_back(parse_arg());
                     } else {
@@ -424,7 +451,7 @@ namespace tudocomp {
                     return m_text.substr(start, end);
                 }
             }
-            error("Expected " + delim);
+            error(std::string("Expected ") + delim);
             return "";
         }
         inline bool Parser::parse_keyword(View keyword) {
@@ -467,16 +494,21 @@ namespace tudocomp {
                 m_arguments(std::move(args)),
                 m_doc(std::move(doc)) {}
 
-            inline std::string& name() {
+            inline const std::string& name() const {
                 return m_name;
+            }
+
+            inline const std::vector<Arg>& arguments() const {
+                return m_arguments;
             }
             inline std::vector<Arg>& arguments() {
                 return m_arguments;
             }
-            inline std::string& doc() {
+
+            inline const std::string& doc() const {
                 return m_doc;
             }
-            inline std::string to_string(bool omit_type = false);
+            inline std::string to_string(bool omit_type = false) const;
 
             friend inline bool operator==(const Algorithm &lhs, const Algorithm &rhs);
         };
@@ -506,38 +538,43 @@ namespace tudocomp {
                 m_has_default(true),
                 m_default(std::move(default_value)) {}
 
-            inline std::string& name() {
+            inline const std::string& name() const {
                 return m_name;
             }
-            inline bool is_static() {
+            inline bool is_static() const {
                 return m_is_static;
             }
-            inline std::string& type() {
+            inline const std::string& type() const {
                 return m_type;
             }
-            inline bool has_default() {
+            inline bool has_default() const {
                 return m_has_default;
+            }
+
+            inline const ast::Value& default_value() const {
+                return m_default;
             }
             inline ast::Value& default_value() {
                 return m_default;
             }
-            inline std::string to_string(bool omit_type = false);
+
+            inline std::string to_string(bool omit_type = false) const;
 
             friend inline bool operator==(const Arg &lhs, const Arg &rhs);
         };
 
         inline std::ostream& operator<<(std::ostream& os,
-                                        Algorithm& x) {
+                                        const Algorithm& x) {
             os << x.to_string();
             return os;
         }
         inline std::ostream& operator<<(std::ostream& os,
-                                        Arg& x) {
+                                        const Arg& x) {
             os << x.to_string();
             return os;
         }
 
-        inline std::string Algorithm::to_string(bool omit_type) {
+        inline std::string Algorithm::to_string(bool omit_type) const {
             std::stringstream ss;
             ss << name();
             if (arguments().size() > 0) {
@@ -581,7 +618,7 @@ namespace tudocomp {
             return true;
         }
 
-        inline std::string Arg::to_string(bool omit_type) {
+        inline std::string Arg::to_string(bool omit_type) const {
             std::stringstream ss;
             ss << name();
             if (!omit_type) {
@@ -655,6 +692,10 @@ namespace tudocomp {
             inline Algorithm(std::string&& name, std::vector<Arg>&& args):
                 m_name(std::move(name)),
                 m_arguments(std::move(args)) {}
+            inline Algorithm(const Algorithm& other):
+                m_name(other.m_name),
+                m_arguments(other.m_arguments) {}
+
             inline std::string& name() {
                 return m_name;
             }
@@ -768,35 +809,98 @@ namespace tudocomp {
         using AlgorithmTypes = std::unordered_map<
             std::string, std::vector<decl::Algorithm>>;
 
-        struct Evaluated {
-            pattern::Algorithm static_selection;
-            OptionValue options;
-        };
+        inline void check_string_not_string(ast::Value& v) {
+            // TODO: Nice error
+            CHECK(!v.is_invokation());
+        }
 
-        inline Evaluated eval(ast::Value&& v,
-                              View type,
-                              AlgorithmTypes& types,
-                              bool pattern,
-                              ast::Value&& fixed_static_args = ast::Value())
+        inline void check_static_override_fits_to_be_evaled_algo(
+            ast::Value& fixed_static_args, ast::Value& v)
+        {
+            // TODO: Nice error
+            // Check that the static "overrides" fit the
+            // to-be-evaluated algorithm
+            CHECK(fixed_static_args.is_invokation());
+            CHECK(fixed_static_args.invokation_name() == v.invokation_name());
+        }
+
+        inline void check_arg_has_value(decl::Arg& arg, ast::Value& arg_value) {
+            if (arg_value.is_empty()) {
+                std::stringstream ss;
+                ss << "option parser: ";
+                ss << "argument '" << arg.name() << "' of type '"
+                   << arg.type()
+                   << "' has not been assigned an value";
+                throw std::runtime_error(ss.str());
+            }
+        }
+
+        inline void check_2(decl::Algorithm* found,
+                            ast::Value& v,
+                            std::vector<decl::Algorithm> candidates) {
+            if (found == nullptr) {
+                std::stringstream ss;
+
+                ss << "option parser: ";
+                ss << "algorithm '" << v.invokation_name() << "'";
+                ss << " is not known to the evaluation engine. Currently known algorithms: [";
+                for (auto& x : candidates) {
+                    ss << x.name() << ", ";
+                }
+                ss << "]";
+
+                throw std::runtime_error(ss.str());
+            }
+        }
+
+        inline void check_3(ast::Value& v) {
+
+        }
+
+        inline void check_4(ast::Value& v) {
+
+        }
+
+        inline void check_5(ast::Value& v) {
+
+        }
+
+        inline void check_6(ast::Value& v) {
+
+        }
+
+        inline void check_7(ast::Value& v) {
+
+        }
+
+        inline void check_8(ast::Value& v) {
+
+        }
+
+        inline void check_9(ast::Value& v) {
+
+        }
+
+        inline void check_10(ast::Value& v) {
+
+        }
+
+        inline OptionValue eval(ast::Value&& v,
+                                View type,
+                                AlgorithmTypes& types,
+                                bool pattern,
+                                ast::Value&& fixed_static_args = ast::Value())
         {
             // Check for build-in types
             if (type == "string") {
-                // TODO: Nice error
-                CHECK(!v.is_invokation());
-                return Evaluated {
-                    pattern::Algorithm(), // No static algorithm here to return
-                    OptionValue(std::move(v.string_value()))
-                };
+                check_string_not_string(v);
+                return OptionValue(std::move(v.string_value()));
             }
 
             bool has_fixed_static_args = !fixed_static_args.is_empty();
 
             if (has_fixed_static_args) {
-                // TODO: Nice error
-                // Check that the static "overrides" fit the
-                // to-be-evaluated algorithm
-                CHECK(fixed_static_args.is_invokation());
-                CHECK(fixed_static_args.invokation_name() == v.invokation_name());
+                check_static_override_fits_to_be_evaled_algo(fixed_static_args, v);
                 auto& a = fixed_static_args.invokation_arguments();
                 std::reverse(a.begin(), a.end());
             }
@@ -813,8 +917,7 @@ namespace tudocomp {
                    found = &candidate;
                 }
             }
-            // TODO: Nice error
-            CHECK(found != nullptr);
+            check_2(found, v, candidates);
 
             // Signature found, evaluate by walking v and signature
             auto& v_signature = *found;
@@ -921,11 +1024,10 @@ namespace tudocomp {
                     }
                 }
 
-                // TODO: Nice error
-                CHECK(!arg_value.is_empty());
+                check_arg_has_value(signature_arg, arg_value);
 
                 // Recursivly evaluate the argument
-                Evaluated arg_evaluated
+                OptionValue arg_evaluated
                     = eval(std::move(arg_value),
                            signature_arg.type(),
                            types,
@@ -933,16 +1035,16 @@ namespace tudocomp {
                            std::move(arg_fixed_static_value));
 
                 if (signature_arg.is_static()
-                    && arg_evaluated.static_selection.name() != "")
+                    && arg_evaluated.as_algorithm().static_selection().name() != "")
                 {
                     r_static_args.push_back(
                         pattern::Arg(
                             std::string(signature_arg.name()),
-                            std::move(arg_evaluated.static_selection)));
+                            pattern::Algorithm(arg_evaluated.as_algorithm().static_selection())));
                 }
 
                 r_dynamic_args[signature_arg.name()]
-                    = std::move(arg_evaluated.options);
+                    = std::move(arg_evaluated);
 
             }
 
@@ -951,23 +1053,22 @@ namespace tudocomp {
             if (has_fixed_static_args) {
                 CHECK(fixed_static_args.invokation_arguments().size() == 0);
             }
+
             // Step 3: Return
-
-            return Evaluated {
-                pattern::Algorithm(
+            auto tmp = std::make_unique<pattern::Algorithm>(
                     std::string(r_name),
-                    std::move(r_static_args)),
-                OptionValue(AlgorithmValue(
-                    std::move(r_name),
-                    std::move(r_dynamic_args)))
-            };
+                    std::move(r_static_args));
 
+            return OptionValue(AlgorithmValue(
+                std::move(r_name),
+                std::move(r_dynamic_args),
+                std::move(tmp)));
         }
 
-        inline Evaluated cl_eval(ast::Value&& v,
-                                 View type,
-                                 AlgorithmTypes& types,
-                                 ast::Value&& fixed_static_args = ast::Value()) {
+        inline OptionValue cl_eval(ast::Value&& v,
+                                   View type,
+                                   AlgorithmTypes& types,
+                                   ast::Value&& fixed_static_args = ast::Value()) {
             return eval(std::move(v),
                         type,
                         types,
@@ -980,7 +1081,7 @@ namespace tudocomp {
             return std::move(eval(std::move(v),
                                   type,
                                   types,
-                                  true).static_selection);
+                                  true).as_algorithm().static_selection());
         }
     }
     /// \endcond

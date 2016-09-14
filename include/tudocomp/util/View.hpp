@@ -55,6 +55,9 @@ public:
 
     // Constructors
 
+    /// Construct a empty View
+    inline View(): View("") {}
+
     /// Construct a View pointing at `len` elements starting from `data`
     inline View(const uint8_t* data, size_t len): m_data(data), m_size(len) {}
 
@@ -70,7 +73,7 @@ public:
         View((const uint8_t*) other.data(), other.size()) {}
 
     /// Construct a View equal to the (offset)-th suffix of other
-    inline View(const std::string& other, size_t offset):
+    inline View(const View& other, size_t offset):
         View((const uint8_t*) other.data()+offset, other.size()-offset) { DCHECK_LE(offset, other.size()); }
 
     /// Construct a View pointing at a C-style null terminated string.
@@ -300,6 +303,11 @@ inline bool View::starts_with(const View& x) const {
 inline bool View::ends_with(const View& x) const {
     return (x.size() <= size())
         && (substr(size() - x.size()) == x);
+}
+
+inline View operator "" _v(const char* str, size_t n)
+{
+    return View(str, n);
 }
 
 using string_ref = View;

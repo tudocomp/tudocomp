@@ -13,6 +13,7 @@
 
 using lz78_dictionary::DMS_MAX;
 using tudocomp::string_ref;
+using tudocomp::create_algo;
 
 TEST(Lzw, compress) {
     {

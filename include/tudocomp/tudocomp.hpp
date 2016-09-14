@@ -71,6 +71,8 @@ namespace lzw {
 #include <tudocomp/ChainCompressor.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Env.hpp>
+#include <tudocomp/Registry.hpp>
+#include <tudocomp/CreateAlgorithm.hpp>
 
 #include <tudocomp/util/Counter.hpp>
 #include <tudocomp/util/DecodeBuffer.hpp>
