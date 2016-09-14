@@ -23,20 +23,17 @@ if(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
 
     add_custom_target(docs-main-pdf
         # convert markdown doc to tex
-        COMMAND ${PANDOC_BIN} -s -f markdown -t latex -o ${MAIN_LATEX_OUT_DIR}/_content.tex ${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md
+        COMMAND ${PANDOC_BIN} -f markdown -t latex -o ${MAIN_LATEX_OUT_DIR}/_content.tex ${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md
+
         # copy tex framework
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/latex ${MAIN_LATEX_OUT_DIR}
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/media ${MAIN_LATEX_OUT_DIR}/media
 
         # build pdf
-        #COMMAND ${PDFLATEX_COMPILER} -synctex=1 -interaction=nonstopmode main.tex #pass 1
-        #COMMAND ${PDFLATEX_COMPILER} -synctex=1 -interaction=nonstopmode main.tex #pass 2
+        COMMAND ${PDFLATEX_COMPILER} -synctex=1 -interaction=nonstopmode main.tex #pass 1
+        COMMAND ${PDFLATEX_COMPILER} -synctex=1 -interaction=nonstopmode main.tex #pass 2
         # move it to output directory
-        #COMMAND ${CMAKE_COMMAND} -E rename ${MAIN_LATEX_OUT_DIR}/main.pdf ${CMAKE_CURRENT_BINARY_DIR}/Documentation.pdf
-
-        # TEMPORARY workaround to get a succesfull build
-        COMMAND ${PDFLATEX_COMPILER} -synctex=1 -interaction=nonstopmode _content.tex
-        COMMAND ${CMAKE_COMMAND} -E rename ${MAIN_LATEX_OUT_DIR}/_content.pdf ${CMAKE_CURRENT_BINARY_DIR}/Documentation.pdf
+        COMMAND ${CMAKE_COMMAND} -E rename ${MAIN_LATEX_OUT_DIR}/main.pdf ${CMAKE_CURRENT_BINARY_DIR}/Documentation.pdf
 
         #
         WORKING_DIRECTORY ${MAIN_LATEX_OUT_DIR}
