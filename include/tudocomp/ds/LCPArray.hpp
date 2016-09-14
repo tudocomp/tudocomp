@@ -2,7 +2,7 @@
 #define _INCLUDED_DS_LCP_ARRAY_HPP
 
 #include <tudocomp/util.h>
-#include <sdsl/rank_support.hpp> // for the rank data structure
+#include <sdsl/select_support_mcl.hpp> // for the select data structure
 #include "forward.hh"
 
 namespace tudocomp {
@@ -75,16 +75,15 @@ public:
 
 
 
-
 template<
 typename T,
 typename sa_t,
 typename select_t = sdsl::select_support_mcl<1,1>>
 class lcp_sada {
     typedef sdsl::int_vector<bits> iv_t;
-	sa_t* sa;
+	const sa_t* sa;
 	sdsl::bit_vector bv;
-	select_t s;
+	std::unique_ptr<select_t> s;
 	public:
 	inline len_t operator[](len_t i) const;
     inline void construct(T& t);
@@ -119,19 +118,21 @@ namespace LCP {
     typedef sdsl::int_vector<bits> iv_t;
 	inline static sdsl::bit_vector construct_lcp_sada(const iv_t& plcp) {
 		const len_t n = plcp.size();
-		len_t len = 0;
+		len_t len = plcp[0];
 		for(len_t i = 0; i+1 < n; i++) {
 			DCHECK_GE(plcp[i+1]+1, plcp[i]);
 			len += plcp[i+1]-plcp[i]+1;
 		}
-		sdsl::bit_vector bv(len+2*n,0);
-		bv[0]=1;
-		len=0;
+		sdsl::bit_vector bv(len+n,0);
+		bv[plcp[0]]=1;
+		len=plcp[0];
 		for(len_t i = 0; i+1 < n; i++) {
 			len += plcp[i+1]-plcp[i]+2;
 			DCHECK_LT(len, bv.size());
 			bv[len] = 1;
 		}
+		DCHECK_EQ(len, bv.size()-1);
+		DCHECK_EQ(plcp.size(), std::accumulate(bv.begin(), bv.end(), 0));
 		return bv;
 	}
 	template<typename T>
@@ -158,19 +159,37 @@ namespace LCP {
 		}
 		return plcp;
 	}
+	
+	// delete this method when the phi-algo works!
+template<class lcp_t, class isa_t>
+sdsl::int_vector<> create_plcp_naive(const lcp_t& lcp, const isa_t& isa) {
+	sdsl::int_vector<> plcp(lcp.size());
+	for(size_t i = 0; i < lcp.size(); ++i) {
+		DCHECK_LT(isa[i], lcp.size());
+		DCHECK_GE(isa[i], 0);
+		plcp[i] = lcp[isa[i]];
+	}
+	for(size_t i = 1; i < lcp.size(); ++i) {
+		DCHECK_GE(plcp[i]+1, plcp[i-1]);
+	}
+	return plcp;
+}
 }
 
 template<typename T, typename sa_t, typename select_t>
 inline len_t lcp_sada<T,sa_t,select_t>::operator[](len_t i) const {
+	if(size() == 1) return 0;
 	const len_t idx = (*sa)[i];
-	return s.select(idx+1) - 2*idx;
+	return s->select(idx+1) - 2*idx;
 }
 
 template<typename T, typename sa_t, typename select_t>
 inline void lcp_sada<T,sa_t,select_t>::construct(T& t) {
-	iv_t plcp(LCP::phi_algorithm(t));
-	bv(LCP::construct_lcp_sada(plcp));
-	s.set_vector(&bv); 
+	sa = &t.require_sa();
+	//iv_t plcp(LCP::phi_algorithm(t)); // use this when the phi algo works!
+	iv_t plcp(LCP::create_plcp_naive(t.require_lcp(),t.require_isa()));
+	bv = LCP::construct_lcp_sada(plcp);
+	s = std::unique_ptr<select_t>(new select_t(&bv)); 
 }
 
 template<typename T, typename sa_t, typename select_t>

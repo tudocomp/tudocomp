@@ -162,6 +162,14 @@ void test_ds(const std::string& str, void (*testfunc)(const std::string&, textds
     TEST_FIBNOACCI(testfunc, 5); \
     TEST_RANDOM(testfunc, 11);
 
+void test_lcpsada(const std::string&,TextDS<>& t) {
+	lcp_sada<TextDS<>,SuffixArray<TextDS<>>> lcp;
+	lcp.construct(t);
+	std::cout << lcp.size() << std::endl;
+	assert_eq_sequence(lcp, t.require_lcp());
+}
+TEST(ds, lcpsada) { TEST_ALL(test_lcpsada); }
+
 TEST(ds, SA)          { TEST_ALL(test_sa); }
 TEST(ds, ISA)         { TEST_ALL(test_isa); }
 TEST(ds, Phi)         { TEST_ALL(test_phi); }
