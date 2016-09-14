@@ -143,9 +143,20 @@ void test_ds(const std::string& str, void (*testfunc)(const std::string&, textds
     test_ds<TextDS<>>("banana", &testfunc); \
     test_ds<TextDS<>>("abcdefgh#defgh_abcde", &testfunc); \
 
-#define TEST_FIBNOACCI(testfunc, n) \
+#define TEST_FIBONACCI(testfunc, n) \
 	for(size_t i = 0; i < n; ++i) { \
-		std::string s = fibonacci_word(1<<i); \
+		std::string s = fibonacci_word(1); \
+        test_ds<TextDS<>>(s, &testfunc); \
+	}
+
+#define TEST_THUEMORSE(testfunc, n) \
+	for(size_t i = 0; i < n; ++i) { \
+		std::string s = thue_morse_word(1); \
+        test_ds<TextDS<>>(s, &testfunc); \
+	}
+#define TEST_RUNRICH(testfunc, n) \
+	for(size_t i = 0; i < n; ++i) { \
+		std::string s = run_rich(1); \
         test_ds<TextDS<>>(s, &testfunc); \
 	}
 
@@ -159,7 +170,9 @@ void test_ds(const std::string& str, void (*testfunc)(const std::string&, textds
 
 #define TEST_ALL(testfunc) \
     TEST_COLLECTION(testfunc); \
-    TEST_FIBNOACCI(testfunc, 5); \
+    TEST_FIBONACCI(testfunc, 20); \
+    TEST_THUEMORSE(testfunc, 20); \
+    TEST_RUNRICH(testfunc, 20); \
     TEST_RANDOM(testfunc, 11);
 
 void test_lcpsada(const std::string&,TextDS<>& t) {
