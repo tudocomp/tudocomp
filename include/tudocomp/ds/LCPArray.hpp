@@ -25,11 +25,11 @@ private:
         const auto& n = sa.size();
 		m_max = *std::max_element(plcp.begin(),plcp.end());
 		m_lcp = iv_t(n, 0, bits_for(m_max));
-		for(len_t i = 0; i < n; i++) {
+		for(len_t i = 1; i < n; i++) { //TODO: start at 0, see line 149
 			DCHECK_LT(sa[i], n);
 			m_lcp[i] = plcp[sa[i]];
 		}
-		for(size_t i = 0; i < m_lcp.size(); ++i) {
+		for(size_t i = 1; i < m_lcp.size(); ++i) { //TODO: start at 0, see line 149
 			DCHECK_EQ(m_lcp[i], plcp[sa[i]]);
 		}
 	}
@@ -39,7 +39,7 @@ private:
         const auto& n = sa.size();
 		m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
         m_lcp = iv_t(n);
-		for(len_t i = 0; i < n; i++) {
+		for(len_t i = 1; i < n; i++) { //TODO: start at 0, see line 149
 			m_lcp[i] = plcp[sa[i]];
 		}
 	}
@@ -136,17 +136,17 @@ namespace LCP {
 	}
 	template<typename T>
 	inline static iv_t phi_algorithm(T& t) {
-		auto& sa = t.require_sa();
-		const auto n = sa.size();
         t.require_phi();
 		std::unique_ptr<PhiArray<T>> phi(std::move(t.release_phi()));
+        size_t n = phi->size();
+
 		iv_t plcp(std::move(phi->data()));
 		for(len_t i = 0, l = 0; i < n - 1; ++i) {
 			const len_t phii = plcp[i];
             DCHECK_LT(i+l, n);
             DCHECK_LT(phii+l, n);
             DCHECK_NE(i, phii);
-			while(t[i+l] == t[phii+l]) {
+			while(t[i+l] == t[phii+l]) { // !!! UNDEFINED BEHAVIOUR, t[phi.size()-1] is not defined -> InputView needs to be checked
 				l++;
                 DCHECK_LT(i+l, n);
                 DCHECK_LT(phii+l, n);
