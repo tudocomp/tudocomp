@@ -10,60 +10,7 @@
 
 using namespace tudocomp;
 
-typedef void (*string_test_func_t)(const std::string&);
-
-//Check that p is a permutation of [0..n-1]
-template<class T>
-void ASSERT_PERMUTATION(const T& p, size_t n) {
-    for(size_t i = 0; i < n; ++i)
-    for(size_t j = 0; j < n; ++j)
-    {
-        if(i == j) continue;
-        ASSERT_NE(p[i],p[j]) << "at positions " << i << " and " << j;
-        ASSERT_LT(p[i],n);
-    }
-}
-
-// Simple string array dispenser
-class StringArrayDispenser {
-private:
-    static const size_t NUM_TEST_STRINGS;
-    static const std::string TEST_STRINGS[];
-
-    size_t m_next;
-
-public:
-    StringArrayDispenser() : m_next(0) {};
-
-    bool has_next() {
-        return m_next < NUM_TEST_STRINGS;
-    }
-
-    const std::string& next() {
-        return TEST_STRINGS[m_next++];
-    }
-};
-
-const size_t StringArrayDispenser::NUM_TEST_STRINGS = 4;
-const std::string StringArrayDispenser::TEST_STRINGS[] = {
-    "",
-    "0",
-    "aaaaaaa",
-    "aabaaababaaabbaabababaab",
-    "fjgwehfwbz43bngkwrp23fa"
-};
-
-//TODO: Markov chain generator
-
-template<class generator_t>
-void run_tests(string_test_func_t test) {
-    generator_t generator;
-    while(generator.has_next()) {
-        test(generator.next());
-    }
-}
-
-size_t lce(const std::string& text, size_t a, size_t b) {
+size_t longest_common_extension(const std::string& text, size_t a, size_t b) {
 	DCHECK_NE(a,b);
 	size_t i = 0;
 	while(text[a+i] == text[b+i]) { ++i; }
@@ -75,10 +22,11 @@ sdsl::int_vector<> create_lcp_naive(const std::string& text, const sa_t& sa) {
 	sdsl::int_vector<> lcp(sa.size());
 	lcp[0]=0;
 	for(size_t i = 1; i < sa.size(); ++i) {
-		lcp[i] = lce(text, sa[i],sa[i-1]);
+		lcp[i] = longest_common_extension(text, sa[i],sa[i-1]);
 	}
 	return lcp;
 }
+
 template<class lcp_t, class isa_t>
 sdsl::int_vector<> create_plcp_naive(const lcp_t& lcp, const isa_t& isa) {
 	sdsl::int_vector<> plcp(lcp.size());
@@ -96,71 +44,127 @@ sdsl::int_vector<> create_plcp_naive(const lcp_t& lcp, const isa_t& isa) {
 
 // === THE ACTUAL TESTS ===
 template<class textds_t>
-void test_TestSA(const std::string& str) {
-    DLOG(INFO) << "str = \"" << str << "\"" << " size: " << str.length();
-
-    size_t n = str.length();
-    Input input(str);
-    textds_t t(input.as_view());
+void test_sa(const std::string& str, textds_t& t) {
     auto& sa = t.require_sa();
 
-    ASSERT_EQ(sa.size(), n+1); //length
-    ASSERT_PERMUTATION(sa, n+1); //permutation
-    ASSERT_EQ(sa[0], n); //first element is $
+    ASSERT_EQ(sa.size(), str.length()+1); //length
+    assert_permutation(sa, str.length()+1); //permutation
+    ASSERT_EQ(sa[0], str.length()); //first element is $
 
-    //check lexicographic order
-    for(size_t i = 1; i < n+1; i++) {
+    //lexicographic order
+    for(size_t i = 1; i < t.size()+1; i++) {
         ASSERT_GE(t[sa[i]], t[sa[i-1]]);
-		ASSERT_LT(str.substr(sa[i-1]), str.substr(sa[i])); //TODO: remove this (should be equal to below
+		ASSERT_LT(str.substr(sa[i-1]), str.substr(sa[i]));
 		ASSERT_LT(View(str,sa[i-1]), View(str,sa[i])); 
     }
+}
 
-    auto& phi = t.require_phi();
-    ASSERT_EQ(phi.size(), sa.size()); //length
-    ASSERT_PERMUTATION(phi, phi.size()); //permutation
-
-	for(size_t i = 0; i < sa.size(); ++i) {
-		ASSERT_EQ(phi[sa[(i+1) % sa.size()]], sa[i]);
-	}
-	
-
+template<class textds_t>
+void test_isa(const std::string& str, textds_t& t) {
     auto& isa = t.require_isa();
-    ASSERT_EQ(isa.size(), sa.size()); 
+    auto& sa  = t.require_sa(); //request afterwards!
+
+    ASSERT_EQ(isa.size(), sa.size()); //length
+
+    //correctness
 	for(size_t i = 0; i < sa.size(); ++i) {
 		ASSERT_EQ(isa[sa[i]], i);
 	}
-	const sdsl::int_vector<> lcp_naive(create_lcp_naive(str,sa));
+}
+
+template<class textds_t>
+void test_phi(const std::string& str, textds_t& t) {
+    auto& phi = t.require_phi();
+    auto& sa  = t.require_sa(); //request afterwards!
+
+    ASSERT_EQ(phi.size(), sa.size()); //length
+    assert_permutation(phi, phi.size()); //permutation
+
+    //correctness
+	for(size_t i = 0; i < sa.size(); ++i) {
+		ASSERT_EQ(phi[sa[(i+1) % sa.size()]], sa[i]);
+	}
+}
+
+template<class textds_t>
+void test_lcp(const std::string& str, textds_t& t) {
+    auto& lcp = t.require_lcp();
+    auto& sa  = t.require_sa(); //request afterwards!
+
+    ASSERT_EQ(lcp.size(), sa.size()); //length
+
+    //correctness
+	for(size_t i = 1; i < lcp.size(); ++i) {
+		ASSERT_EQ(lcp[i], longest_common_extension(str, sa[i], sa[i-1]));
+	}
+}
+
+template<class textds_t>
+void test_lcp_naive(const std::string& str, textds_t& t) {
+    auto& sa = t.require_sa();
+    auto& isa = t.require_isa();
+
+    const sdsl::int_vector<> lcp_naive(create_lcp_naive(str,sa));
 	const auto plcp = LCP::phi_algorithm(t);
 	const auto plcp_naive = create_plcp_naive(lcp_naive, isa);
-	assert_eq_sequence(plcp, plcp_naive);
-
+	//assert_eq_sequence(plcp, plcp_naive);
 
     auto& lcp = t.require_lcp();
-	assert_eq_sequence(lcp, lcp_naive);
+	//assert_eq_sequence(lcp, lcp_naive);
     ASSERT_EQ(lcp.size(), sa.size()); //length
-	for(size_t i = 0; i < lcp.size(); ++i) {
-		ASSERT_EQ(lcp_naive[i], plcp_naive[sa[i]]);
-		ASSERT_EQ(lcp[i], plcp[sa[i]]);
-		ASSERT_EQ(lcp[i], plcp_naive[sa[i]]);
-	}
 	for(size_t i = 1; i < lcp.size(); ++i) {
-		ASSERT_EQ(lcp[i], lce(str, sa[i], sa[i-1]));
+		ASSERT_EQ(lcp_naive[i], plcp_naive[sa[i]]) << "for i=" << i;
+		ASSERT_EQ(lcp[i], plcp[sa[i]]) << "for i=" << i;
+		ASSERT_EQ(lcp[i], plcp_naive[sa[i]]) << "for i=" << i;
 	}
 }
 
-
-
-
-TEST(ds, TestSA) {
-    run_tests<StringArrayDispenser>(&test_TestSA<TextDS<>>);
-	for(size_t i = 0; i < 4; ++i) {
-		std::string s = fibonacci_word(1<<i);
-		test_TestSA<TextDS<>>(s);
-	}
-	// for(size_t i = 0; i < 11; ++i) {
-	// 	for(size_t j = 0; j < 2+50/(i+1); ++j) {
-	// 		std::string s = random_uniform(1<<i,Ranges::numbers,j);
-	// 		test_TestSA<TextDS<>>(s);
-	// 	}
-	// }
+template<class textds_t>
+void test_all_ds(const std::string& str, textds_t& t) {
+    test_sa(str, t);
+    test_isa(str, t);
+    test_phi(str, t);
+    test_lcp(str, t);
+    test_lcp_naive(str, t);
 }
+
+template<class textds_t>
+void test_ds(const std::string& str, void (*testfunc)(const std::string&, textds_t&)) {
+    DLOG(INFO) << "str = \"" << str << "\"" << " size: " << str.length();
+
+    Input input(str);
+    textds_t t(input.as_view());
+    testfunc(str, t);
+}
+
+#define TEST_COLLECTION(testfunc) \
+    test_ds<TextDS<>>("", &testfunc); \
+    test_ds<TextDS<>>("aaaaaaaaa", &testfunc); \
+    test_ds<TextDS<>>("banana", &testfunc); \
+    test_ds<TextDS<>>("abcdefgh#defgh_abcde", &testfunc); \
+
+#define TEST_FIBNOACCI(testfunc, n) \
+	for(size_t i = 0; i < n; ++i) { \
+		std::string s = fibonacci_word(1<<i); \
+        test_ds<TextDS<>>(s, &testfunc); \
+	}
+
+#define TEST_RANDOM(testfunc, n) \
+	for(size_t i = 2; i < n; ++i) { \
+	 	for(size_t j = 0; j < 2+50/(i+1); ++j) { \
+	 		std::string s = random_uniform(1<<i,Ranges::numbers,j); \
+	 		test_ds<TextDS<>>(s, &testfunc); \
+	 	} \
+	 }
+
+#define TEST_ALL(testfunc) \
+    TEST_COLLECTION(testfunc); \
+    TEST_FIBNOACCI(testfunc, 5); \
+    TEST_RANDOM(testfunc, 11);
+
+TEST(ds, SA)          { TEST_ALL(test_sa); }
+TEST(ds, ISA)         { TEST_ALL(test_isa); }
+TEST(ds, Phi)         { TEST_ALL(test_phi); }
+TEST(ds, LCP)         { TEST_ALL(test_lcp); }
+TEST(ds, Integration) { TEST_ALL(test_all_ds); }
+
