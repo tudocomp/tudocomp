@@ -194,6 +194,8 @@ They support reading and writing single bits and fixed-width integers.
 
 Additionally to that, they support *compressed integers* (a derivation of byte coding).
 These can be used to minimize the effective bit width of small values in large value ranges:
+> TODO: It the literature, 'compressed integers' is actually called 'VByte coding', but only if b=7
+> There is actually still research about it: https://github.com/lemire/MaskedVByte
 
 Let $b \geq 1$ be the *block width* in bits. This value is a chosen fixed constant.
 A compressed integer is a bit string of the form $([0|1][0|1]^b)^+$.
