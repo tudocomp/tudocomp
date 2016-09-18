@@ -1,8 +1,11 @@
 /*
-    This file exists merely to provide Doxygen documentation for the namespaces themselves.
+    Include this to include practically all of tudocomp.
 
-    In the future, this may be used as a shortcut to include everything.
+    This header also contains the Doxygen documentation of the main namespaces.
 */
+
+#ifndef _INCLUDED_TUDOCOMP_HPP
+#define _INCLUDED_TUDOCOMP_HPP
 
 /// \brief Contains the text compression and encoding framework.
 ///
@@ -13,7 +16,6 @@
 /// namespace \c tudocomp itself contains types important for all of the
 /// framework and its communication.
 namespace tudocomp {
-}
 
 /// \brief Contains I/O abstractions and utilities.
 ///
@@ -24,7 +26,7 @@ namespace tudocomp {
 /// \sa
 /// \ref Input for the input interface and \ref Output for the output
 /// interface.
-namespace tudocomp::io {
+namespace io {
 }
 
 /// \brief Contains compressors and encoders that work with Lempel-Ziv-78-like
@@ -33,7 +35,7 @@ namespace tudocomp::io {
 /// The LZ78 family works with bottom-up dictionaries containing indexed
 /// entries to achieve compression. Each entry points to a \e prefix (another
 /// dictionary entry) and a follow-up symbol.
-namespace tudocomp::lz78 {
+namespace lz78 {
 }
 
 /// \brief Contains compressors and encoders that work with
@@ -43,7 +45,7 @@ namespace tudocomp::lz78 {
 /// within the original text that replace parts of the same text, effectively
 /// using the input text itself as a dictionary. They consist of a \e source
 /// text position and a \e length.
-namespace tudocomp::lzss {
+namespace lzss {
 }
 
 /// \brief Contains compressors and encoders that work with
@@ -53,5 +55,53 @@ namespace tudocomp::lzss {
 /// to achieve compression. Other than \ref lz78, the dictionary entries do not
 /// explicitly store the follow-up symbol. Instead, they are re-generated on
 /// the fly by the decoder.
-namespace tudocomp::lzw {
+namespace lzw {
 }
+
+} //namespace tudocomp
+
+// Include f'in everything!
+#include <glog/logging.h>
+#include <sdsl/int_vector.hpp>
+
+#include <tudocomp/io.h>
+#include <tudocomp/util.h>
+
+#include <tudocomp/Algorithm.hpp>
+#include <tudocomp/ChainCompressor.hpp>
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/Env.hpp>
+
+#include <tudocomp/util/Counter.hpp>
+#include <tudocomp/util/DecodeBuffer.hpp>
+
+#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/SuffixArray.hpp>
+#include <tudocomp/ds/InverseSuffixArray.hpp>
+#include <tudocomp/ds/PhiArray.hpp>
+#include <tudocomp/ds/LCPArray.hpp>
+#include <tudocomp/ds/uint_t.hpp>
+
+#include <tudocomp/lz78/Lz78Compressor.hpp>
+#include <tudocomp/lz78/Lz78DebugCoder.hpp>
+#include <tudocomp/lz78/Lz78BitCoder.hpp>
+
+#include <tudocomp/lzw/LzwCompressor.hpp>
+#include <tudocomp/lzw/LzwDebugCoder.hpp>
+#include <tudocomp/lzw/LzwBitCoder.hpp>
+
+#include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
+
+#include <tudocomp/lzss/LZ77SSSlidingWindowCompressor.hpp>
+#include <tudocomp/lzss/LZ77SSLCPCompressor.hpp>
+#include <tudocomp/lzss/LZSSESACompressor.hpp>
+
+#include <tudocomp/lzss/DebugLZSSCoder.hpp>
+#include <tudocomp/lzss/OnlineLZSSCoder.hpp>
+#include <tudocomp/lzss/OfflineLZSSCoder.hpp>
+
+#include <tudocomp/alphabet/OnlineAlphabetCoder.hpp>
+#include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
+
+#endif
+
