@@ -1,10 +1,8 @@
-> TODO: utility <-> driver
-
 # Abstract
 
 The **T**echnical **U**niversity of **DO**rtmund **COMP**ression Framework (*tudocomp*)
 is a lossless compression framework with the aim to support and facilitate
-the implementation of novel compression algorithms. It already comprises a range 
+the implementation of novel compression algorithms. It already comprises a range
 of standard data compression and encoding algorithms. These can be mixed and parameterized with the
 following uses in mind:
 
@@ -15,7 +13,7 @@ following uses in mind:
 # Framework Structure
 
 The structure of this framework offers a solid and extensible base for new implementations.
-It is designed such that most individual steps are modularized and interchangeable. 
+It is designed such that most individual steps are modularized and interchangeable.
 This way, the user can mix and match algorithms to find the optimal compression strategy for a given input.
 The framework gives this opportunity while creating as little performance overhead as possible.
 
@@ -28,7 +26,7 @@ compressors; the driver provides the interface for the user in the form of an
 executable.
 
 The driver uses a *registry* of compressors, which acts as the link between the
-driver and the library. The library is a fully functional stand-alone library
+driver and the library. The library is a fully functional standalone library
 such that third party applications can make use of the provided compressors.
 
 ## Compressor Families
@@ -38,49 +36,56 @@ Every compression or encoding algorithm belongs to a certain family.
 
 For instance, the compressor family *lzss* (named after *Lempel-Ziv-Storer-Szymanski*)
 contains various compressors that factorize
-the input resulting in symbols and the produced factors. This output can then be piped to
-different encoders specialized for lzss to get a binary encoded compressed file.
+the input resulting in symbols and the produced Lempel-Ziv factors. This output can then be passed to
+different encoders specialized for LZSS-type factors to get a binary encoded compressed file.
 
-## Compressors and Modules
+## Compressors and Modularity
 
-A *compressor*, in terms of this framework, transforms an input.
-A compressor is the entry point for the utility. 
-The utility can invoke a compressor, and chain it with another compressor or with an encoder.
+A *compressor*, in terms of this framework, transforms an input sequence and writes the result to an output.
+A compressor is the entry point for the utility.
 
 Each compressor family has to implement a decompressor
-that can restore the original input (losslessly). Apart from that, there are no
-strict rules as to *what* kind of transformation occurs.
+that can restore the original input losslessly. Apart from that, there are no
+strict rules as to *what* kind of transformation of the input occurs. In that sense,
+an *encoder* is also a compressor.
 
-In this framework it is possible to build a compression program by chaining multiple compressors/encoders. 
-That is because compressors are *modular* and their modules are interchangeable.
+Compressors and encoders are implemented in a *modular* way. They are interchangeable and can
+be chained (ie the output of one becomes the input of another).
 
-For instance, a factor-based compressor consists of 
+For instance, a factor-based conpressor consists of three main modules:
+
 1. A *factorizer* that produces factors,
 2. a *factor encoder* that encodes these factors, and
 3. a *raw symbol encoder* that encodes the remaining, unfactorized input.
 
-The factorizer divides the input into factors that are substrings of the input.
-A factorizer can either transform a factor or leave it untouched (*unfactorized*).
-Both encoders encode the factors and the unfactorized substrings. 
+In this example, the factorizer divides the input into factors that refer to substrings of the input.
+The encoders then encode the factors and any unfactorized substrings in an independent manner (e.g.
+human readable or bit-optimal).
 
+For each of these tasks, there can be different strategies. For instance, the input can be factorized
+using a classic online sliding window approach, but one can also think of using a data structure that works offline and
+requires the entire input, such as the suffix array.
 
-For each of these tasks, there can be different strategies. For instance, we
-can factorize the input using a classic sliding window approach, but we could
-as well use a data structure that analyzes the entire input.
-The decision for an encoder is up to the user:
-We can encode the factors directly with fixed bit lengths, with a variable length approach such as Huffman code, etc.
-The same goes for the raw symbol encoder.
+Encoders can use myriad representations for the information they encode (e.g. fixed width integers, Huffman codes) which may work better or worse for different types of inputs.
+
+Each of these factorization or encoding strategies can have different sub-strategies
+in their own right. The goal of this framework is to modularize compression and encoding
+algorithms as much as possible into strategies.
+
+The produced output must contain all information necessary for the respective
+decompressor (or decoder) to restore the original input losslessly.
+
+## Runtime Statistics
+
+>TODO: `malloc_count` / `tudostat`
 
 # Usage
 
-## Framework utility
-
-The main executable `tudocomp_driver` is a command line tool that bundles all implemented algorithms.
-It provides a fast and easy way to compress and decompress a file with a specified chain of compressors.
-
 ## Library
 
-The library comes as a set of `C++` headers, no binary object needs to be built. 
+The library comes as a set of `C++` headers, no binary object needs to be built.
+>TODO: Not true. `malloc_count` is a binary object and needed for a core feature.
+
 Hence, it suffices to include the respective headers for using a specific compressor implementation.
 
 The [Doxygen documentation](about:blank) provides an overview of
@@ -88,13 +93,13 @@ the available compression and encoding implementations.
 
 ### Dependencies {#dependencies}
 
-The framework is built using [CMake](https://cmake.org) (2.8 or later). 
-It is written in `C++11` with GNU extensions.
-We have tested it with the `gcc` compiler family (version 4.9.2 and newer) and `clang` (version 3.5.2 or newer).
+The framework is built using [CMake](https://cmake.org) (2.8 or later).
+It is written in `C++11` with GNU extensions and has been tested with the `gcc` compiler family (version 4.9.2 or later)
+and `clang` (version 3.5.2 or later).
 
 It has the following external dependencies:
 
-* [Succinct Data Structure Library](https://github.com/simongog/sdsl-lite)
+* [SDSL](https://github.com/simongog/sdsl-lite)
   (2.1 or later).
 * [`gflags`](https://gflags.github.io/gflags) (2.1.2 or later).
 * [`glog`](https://github.com/google/glog) (0.34 or later).
@@ -102,8 +107,8 @@ It has the following external dependencies:
 Additionally, the tests require
 [Google Test](https://github.com/google/googletest) (1.7.0 or later).
 
-The CMake-build scripts will either find the external dependencies on the build system or
-automatically download and build them from their official repositories.
+The CMake build scripts will either find the external dependencies on the build system, or
+automatically download and build them from their official repositories in case they cannot be found.
 
 For building the documentation, the following tools are required:
 
@@ -111,166 +116,142 @@ For building the documentation, the following tools are required:
 * [Pandoc](http://pandoc.org)
 * [Doxygen](http://doxygen.org)
 
-### Building on Windows
+## Framework driver utility
 
-On Windows, only [Cygwin](https://www.cygwin.com/) is currently supported as a
-build platform.
+The main executable `tudocomp_driver` is a command line tool that bundles all implemented algorithms.
+It provides a fast and easy way to compress and decompress a file with a specified chain of compressors.
 
->TODO: some notes on what has to be done to get it working
+It is called the *driver* because it makes available the library functionality for command-line usage.
 
-### License
+Every registered compression or encoding algorithm will be listed in the help output of the driver utility
+when passing the `--list` command-line argument.
 
-The framework is published under the GPLv3.
+## Building on Windows
 
-# Coding Guideline
+On Windows, the framework can be built in a [Cygwin](https://www.cygwin.com/) environment.
+`mingw` and Microsoft Visual Studio are *not* supported at this point.
 
-This chapter describes how the code is structured on a file level and what
-steps are necessary to extend the framework by an additional compressor. It also
-presents some techniques and standards that have been picked for a
-performance-neutral modularization of the compressors.
+>TODO: Note about `malloc_count`
 
-For detailed information on types and functions, please refer to the
-[Doxygen documentation](about:blank).
+## License
+
+The framework is published under the [GNU General Public License, Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+# GIVE ME A NICE HEADING
+
+This chapter provides a brief introduction of the data flow in the framework.
+
+>TODO: new chapter name, data flow diagram
 
 ## The Compressor interface
 
 The [`Compressor`](about:blank) class is the foundation for the compression and
-decompression cycle of the framework. It acts as a purely virtual interface for
-actual compressors (that inherit from it).
-
-It defines the two central methods for the compression cycle: `compress` and
-`decompress`. These are responsible for transforming an input to an output
-so that the following (pseudo code) statement is true for every input:
+decompression cycle of the framework. It defines the two central operations:
+`compress` and `decompress`. These are responsible for transforming an input to
+an output so that the following (pseudo code) statement is true for every input:
 
     decompress(compress(input)) == input
 
 In other words, the transformation must be losslessly reversible by the same
 compressor class.
 
-The compressor is not responsible for generating information that it was used for creating its output.
-By default, the utility stores some additional information (a magic number) in the output
-such that it can detect the used compressor family.
-Thus, it can decompress an already compressed file without the help of the user (who could specify the used algorithm).
+### Magic
 
-## The Registry
+In order to identify what compressor has been used to produce a compressed output,
+the driver utility can prepend a unique identifier (*magic keyword*) to the output.
+This is *not* the responsibility of the compressor.
 
-The [Registry](about:blank) keeps information about the available compressor
-implementations; it is the link between the library and the driver.
+The identifier is used by the driver when decompressing, to find out what class to use.
 
-The registered compressors will be made available to the user by the utility.
-The registry can also identify the compressor that was used to compress a given file 
-(we can use the information to decompress this file).
+## I/O
 
-## Input and Output
-
-The framework abstracts the in- and output by the two classes  [`Input`](about:blank) and
-[`Output`](about:blank). Both hide the actual source or destination of
+The framework provides an I/O abstraction in the two classes [`Input`](about:blank) and
+[`Output`](about:blank). Both hide the actual source or sink of
 the data (e.g. a file or a place in memory).
 
-`Input` can be used as a *stream* or as a *view*.
+### Input
 
-The *stream* represents the approach to read character by character successively from the input. 
-The current state of the stream (i.e., the reading position) can be
-retained by using the copy constructor - this allows "rewinding".
->TODO: why is that?
+`Input` allows for byte-wise reading from the data source.
+It can be used either as a *stream* or as a *view*.
 
-Currently, streaming from an `std::istream` is not supported (such streams are buffered
-before made available as an `Input`). Streaming from a file works fine, however.
->TODO: What does (such streams are buffered before made available as an `Input`) mean?
+Using a *stream*, characters are read sequentially from the input [^direct-streaming].
+The current state of a stream (i.e. the reading position) can be
+retained by creating a copy of the stream object - this allows for *rewinding*,
+i.e. reading characters again that have already been read.
+
+[^direct-streaming]: Currently, direct streaming from an `std::istream` is not supported. When an `Input`
+is constructed from an `istream`, the stream is fully read and buffered in memory. This is an
+implementation decision that may change in the future. Note that files, on the other hand,
+are not buffered and will always be streamed from disk directly.
 
 A *view* provides random access on the input. This way, the input acts like an
 array of characters.
 
-The input is interpreted as a sequence of bytes, i.e., we assume a byte-alphabet.
-It is up to the compressor to reinterpret the input (e.g., as a sequence of integers), if necessary.
+### Output
 
-The `Output` only works stream-based.
+`Output` provides functionality to stream bytes sequentially to the data sink.
 
-### Bitwise input and output
+### Bitwise I/O
 
 The [`BitIStream`](about:blank) and [`BitOStream`](about:blank) classes provide
 wrappers for bitwise reading and writing operations.
-They support reading and writing single bits and fixed-width integers.
-
-Additionally to that, they support *compressed integers* (a derivation of byte coding).
-These can be used to minimize the effective bit width of small values in large value ranges:
-> TODO: It the literature, 'compressed integers' is actually called 'VByte coding', but only if b=7
-> There is actually still research about it: https://github.com/lemire/MaskedVByte
-
-Let $b \geq 1$ be the *block width* in bits. This value is a chosen fixed constant.
-A compressed integer is a bit string of the form $([0|1][0|1]^b)^+$.
-Given an integer, we transform it to a compressed integer by splitting its bit representation in $b$ bits, starting 
-with the $b$ lowest bits.
-Each block is preceded by `1` in case that a higher,
-non-zero block follows, or `0` if it contains the highest
-bits. The lowest block, even if zero, is always stored.
->TODO: How should that work if you have something like 10000000? Then the middle blocks are dismissed, and hence, you cannot restore the integer?
-
-As an example, consider $b=3$. The compressed integer for $v = 42_d = 101010_b$
-would be `1 010 0 101`. The value $v' = 3_d = 11_b$ would be represented as
-`0 011`.
+They support reading and writing of single bits, as well as fixed and variable
+width integers.
 
 # Tutorial
 
-The main goal of this section is to show you how to implement an compressor 
-using most of the provided functionality of the framework.
-To this end, we will discuss the following topics:
+This chapter provides a guided tour through the implementation of a compressor,
+spanning much of the framework's functionality. The following topics will be
+discussed:
 
-- How to build the framework.
-- Where and how to start adding files into the framework.
+- Building the framework
+- Understanding the framework's file structure
 - Writing a simple compressor by implementing the `Compressor`
-  interface.
-- Adding tests for debugging and checking your code.
-- Adding basic statistic tracking to your code,
-  for keeping track of where time and memory
-  is being spent.
-- Adding runtime options to your code to select different
-  behavior.
+  interface
+- Implementing unit tests
+- Adding basic time and memory statistics tracking
+- Adding runtime options  select different behavior
 - Adding compile time (template) options to your code to select
   different behaviors that should not be selected at runtime due to performance reasons.
-- Registering your code in the registry.
-- Using the `tudocomp_driver` command line tool
-  with your algorithm.
-- Using the `compare_tool` to compare compression ratio and
-  runtime between other algorithms on different input files.
+- Registering a compressor in the driver registry
+- Using the `tudocomp_driver` command line tool with the newly implemented compressor
+- Using the `compare_tool` for benchmarking the compressor against other compressors
+  for different inputs
 
-You may also refer to an [UML overview](#uml-class-overview) of the framework.
+You may also refer to an [UML overview](#uml-type-overview) of the framework.
 
 ## Building the Framework
 
-Tudocomp is set up as a cmake project, which means that
-all metadata for building it is encoded in
-the `CMakeLists.txt` files through the source tree.
+The tutorial assumes a clean clone of the [tudocomp git repository](about:blank).
+tudocomp is set up as a CMake project[^cmake].
 
-If you are unfamiliar with cmake, note that it works by generating build
-scripts for the platform it is run on. In the case of Tudocomp, you will
-likely use it in a Linux or a Windows-Cygwin environment, for which
-cmake will generate makefiles that can be interpreted by the `make` program.
+[^cmake]: [CMake](https://cmake.org/) processes the `CMakeLists.txt` files
+          throughout the source tree and produces Makefiles for building
+          with `make`.
 
-We will also embrace the usage of command line tools in this tutorial.
-There exist graphical interfaces for some of the used tools,
-but those are outside the scope of this document.
+The standard procedure to build is to create a directory named `build` and use
+this as CMake's workspace to generate Makefiles. The produced binaries will later
+also be placed in the `build` directory tree.
 
-We start with a copy of the Tudocomp sources.
-Our first step is to generate the build environment.
-The usual setup for this is to create a "build" directory inside the
-Tudocomp sources, and invoke `cmake` inside it with the parent directory as
-an argument:
+Let us create the build workspace and generate the project Makefiles:
 
 ~~~
 .../tudocomp> mkdir build
 .../tudocomp> cd build
-.../build> cmake ..
+.../tudocomp/build> cmake ..
 ~~~
 
-If the output ends with `-- Build files have been written to: [...]`, then the command was successful.
-Otherwise you probably have to install some missing dependencies first.
+When successful, the output ends with `-- Build files have been written to: [...]`.
+In case of an error, please make sure the required [dependencies](#dependencies) are
+available on the build system.
 
-The command `cmake ..` configures the build in debugging mode per default; 
+>LESEZEICHEN
+
+The command `cmake ..` configures the build in debugging mode per default;
 this means that the compiled C++ code will not be optimized. Instead, it will
 be enhanced with debugging information, convenient for debuggers like `gdb`.
 
-The debugging mode is usually wanted for development, 
+The debugging mode is usually wanted for development,
 but is unhelpful for comparing the performance.
 If you want to compile your code optimized you can explicitly tell `cmake` to configure the project in "Release" mode:
 
@@ -309,7 +290,7 @@ After you have verified in the previous step that the basic
 framework compiled correctly, its time to look
 at how the source files are organized.
 
-The source tree contains a few different things: 
+The source tree contains a few different things:
 The framework library, the command line driver, the algorithm registry used by the former, the test suite and the compare tool.
 
 The `.cpp` files for these parts live in their own directories
@@ -326,7 +307,7 @@ This is done for two reasons:
   thus can do optimizations it could not do if parts of the code would
   only be linked together from another compiled `.cpp` file.
 - Convenience: A lot of the code is templated, and thus would live in
-  in a header anyway. But we also moved the code that does not necessarily 
+  in a header anyway. But we also moved the code that does not necessarily
   _have_ to be put in a header file. By doing so, we get rid of the typical C++ way
   of splitting up all the code between header and `.cpp` files.
 
@@ -356,7 +337,7 @@ Adding a new compressor starts with
 implementing the basic interface for a Tudocomp compressor.
 
 Since the framework is a template library, this involves
-having the right members and properties in your class, rather than 
+having the right members and properties in your class, rather than
 inheriting from an abstract interface.
 >TODO: this does not make sense since you do inherit (see below)
 
@@ -535,9 +516,9 @@ inline virtual void compress(Input& input, Output& output) override {
 
 ### An example implementation
 
-As an example, we provide here a simple run length encoding compressor that 
+As an example, we provide here a simple run length encoding compressor that
 replaces consecutive runs of the same byte with an integer.
-E.g., we encode `"abcccccccde"` as `"abc%6%de"` by replacing the substring `"ccccccc"` consisting of seven subsequent `c`s with `"c%6%"` 
+E.g., we encode `"abcccccccde"` as `"abc%6%de"` by replacing the substring `"ccccccc"` consisting of seven subsequent `c`s with `"c%6%"`
 to indicate that the previous `'c'` should be repeated six times.
 
 ~~~ { .cpp }
@@ -736,7 +717,7 @@ TEST(example, roundtrip2) {
 
 Finally, we show how to add some statistic tracking to the implementation.
 The tracking allows to measure data that might be relevant for the evaluation of the
-algorithm like the number of computed factors, or the speed. 
+algorithm like the number of computed factors, or the speed.
 To this end, the framework offers suitable methods in the `Env` class.
 
 The framework is capable of measuring the time and the used dynamic heap memory during the execution.
@@ -808,7 +789,7 @@ roughly takes 3 seconds, presumably each of those is spent in a different phase.
 
 ### Web Service
 
-Analyzing the collected statistics can be done by the 
+Analyzing the collected statistics can be done by the
 web service [here](http://dacit.cs.uni-dortmund.de/dinklage/stat/).
 The web service visualizes statistic data given in form of a JSON file.
 
@@ -1014,8 +995,8 @@ public:
 ## Option Syntax and Testing
 
 By adding new options to the algorithm we have to add additional tests covering
-the new possibilities of how the algorithm may work. 
-In order to understand how this works, 
+the new possibilities of how the algorithm may work.
+In order to understand how this works,
 we briefly look at the command line syntax used for specifying an algorithm and its options.
 
 An algorithm is specified with an id string that concisely
@@ -1075,7 +1056,7 @@ like encoders, or algorithms pre-processing in the input text.
 Lets look at an example of what the actual performance problem
 can be in that case:
 
-Imagine that your produces some data in a loop. 
+Imagine that your produces some data in a loop.
 You want to pass this data on-the-fly to a sub algorithm that processes and encodes it.
 Since you can choose different sub algorithms you have a runtime option that selects a specific sub algorithm.
 In this case, the code would look somewhat like this:
@@ -1109,7 +1090,7 @@ Because the compiler does not know which of the algorithms will be
 selected at runtime, it needs to emit native code that does a virtual call
 (that is, it loads the function pointer for the method from a
 [vtable](https://en.wikipedia.org/wiki/Virtual_method_table) and calls it).
-Besides causing overhead, 
+Besides causing overhead,
 the compiler is not able to "merge" the native code of the function body
 with the native code of the loop for a more efficient and faster compiled
 program.
@@ -1159,7 +1140,7 @@ We will do this by adding a sub algorithm that will encode this kind of repetiti
 
 Because this modification changes the existing example code more seriously,
 we make a copy of the `ExampleCompressor` class from the
-`ExampleCompressor.hpp` file. 
+`ExampleCompressor.hpp` file.
 We rename the copied class to `TemplatedExampleCompressor`.
 
 First, we make the class generic and give it a private
@@ -1200,7 +1181,7 @@ Exactly as with `dynamic()`, we have the option of giving a default
 the syntax looks like `.templated<T, ActualType>()`.
 Note that this will not automatically make this the default for the template
 parameter of the class itself, just for the registry and command line tool.
->TODO: Do you mean that it does not mean that this does not cause a default template parameter like <T = ActualType> 
+>TODO: Do you mean that it does not mean that this does not cause a default template parameter like <T = ActualType>
 
 Next, we initialize the encoder in the constructor of the compressor.
 The actual API of a sub algorithm can be arbitrary, with almost no restrictions on the amount of methods
@@ -1324,7 +1305,7 @@ encodes the length as a byte directly (`"aaaa" -> [97, 255, 3]`, with `255`
 being the escape symbol).
 
 Again, for the sake of simplicity, we don't address some of the hidden bugs
-like `'%'` or `'\xff'` appearing in the input text, or the case that there is 
+like `'%'` or `'\xff'` appearing in the input text, or the case that there is
 a character repetition longer than what fits in a byte.
 
 ~~~ { .cpp }
@@ -1441,7 +1422,7 @@ TEST(example, templated_bit) {
 The template options will set the corresponding parameters
 in an option string to a fixed value.
 If you explicitly set some options
-you either have to skip the option parameters belonging to the template parameter, 
+you either have to skip the option parameters belonging to the template parameter,
 or you have to give it the same value as indicated by it; otherwise you will get an error:
 > TODO: not really clear
 
@@ -1532,7 +1513,7 @@ This build supports the following algorithms:
   ...
 ~~~
 
-Next we will compress something with the tool. Since this is 
+Next we will compress something with the tool. Since this is
 a quick test, we use an already existing file in the build
 directory, the `CMakeCache.txt`:
 
@@ -1577,7 +1558,7 @@ algorithm on different classes of input text, or the effects of
 different algorithms on the same input files. It can be build with `make compare_tool`.
 
 It's main purpose is to compare the runtime and compression ratio of compressors combined with different options and input files.
-However, it does not integrate into the framework's own statistics tracking. 
+However, it does not integrate into the framework's own statistics tracking.
 
 > There is also a separate, experimental support for measuring the memory
 footprint with the Valgrind tool massif, but this does not work well with
@@ -1640,7 +1621,7 @@ files:
 ### Datasets
 
 Tudocomp provides a target `datasets` that will download a selection
-of files, mostly from the [Pizza&Chili Corpus](http://pizzachili.dcc.uchile.cl/texts.html). 
+of files, mostly from the [Pizza&Chili Corpus](http://pizzachili.dcc.uchile.cl/texts.html).
 At the point of writing this document, the datasets take 9.4 GiB of space.
 Make sure you have enough free storage before doing this!
 
@@ -1659,7 +1640,7 @@ This example will use some of those texts.
 ### Compare Workspace
 
 At this point we already can build the compare tool
-and invoke it with a config file. 
+and invoke it with a config file.
 But this is a bit cumbersome, because:
 
 - The input files and the compare tool can have complex file paths.
@@ -1723,7 +1704,7 @@ commands = [
 
 This content defines a config file with the profile `example`.
 The profile `example` runs the algorithms `example_compressor`, `templated_example_compressor(bit)`
-and `templated_example_compressor(debug)` on five input texts. 
+and `templated_example_compressor(debug)` on five input texts.
 The benchmark runs are grouped by the input files since we want to compare the differences between the algorithms on the same text.
 
 By invoking the run script with this config, we get an output like this:
