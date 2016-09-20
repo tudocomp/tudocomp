@@ -31,7 +31,6 @@ macro(run_test test_target)
         TARGET ${test_target}
         POST_BUILD
         COMMAND ${test_target} #cmake 2.6 required
-        DEPEND ${test_target}
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
         COMMENT "Running ${test_target} ..." VERBATIM
     )
