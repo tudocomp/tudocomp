@@ -66,7 +66,7 @@ macro(run_test test_target)
     )
     foreach(bin_dep ${TEST_TARGET_BIN_DEPS})
         add_custom_command(
-            TARGET ${test_target}
+            TARGET ${test_target}_testrunner
             PRE_BUILD
             COMMAND cmake --build . --target ${bin_dep}
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
