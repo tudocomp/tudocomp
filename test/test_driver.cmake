@@ -42,10 +42,12 @@ macro(run_test test_target)
         COMMENT "Running ${test_target} ..." VERBATIM
     )
     foreach(bin_dep ${TEST_TARGET_BIN_DEPS})
-        # TODO: Maybe replace by a custom command that
-        # invokes make directly, to ensure all dependcies
-        # are actually build
-        add_dependencies(${test_target} ${bin_dep})
+        add_custom_command(
+            TARGET ${test_target}
+            PRE_BUILD
+            COMMAND cmake --build . --target ${bin_dep}
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+        )
     endforeach(bin_dep)
 endmacro()
 
