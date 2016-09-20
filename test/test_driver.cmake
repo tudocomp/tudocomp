@@ -39,7 +39,7 @@ macro(run_test test_target)
         PRE_BUILD
         COMMAND cmake --build . --target ${test_target}
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-        COMMENT "Running ${test_target} ..." VERBATIM
+        COMMENT "Test ${test_target}" VERBATIM
     )
     foreach(bin_dep ${TEST_TARGET_BIN_DEPS})
         add_custom_command(
