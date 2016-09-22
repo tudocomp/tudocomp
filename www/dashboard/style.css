@@ -1,0 +1,101 @@
+@import url(//fonts.googleapis.com/css?family=Montserrat:400|Raleway:300,400,600|Inconsolata|Lora:400);
+
+html, body {
+    margin: 0;
+    padding: 0;
+
+    height: 100%;
+}
+
+html {
+    font-family: "Raleway", "Helvetica", "Tahoma", "Geneva", "Arial", sans-serif;
+    font-size: 100%;
+}
+
+body {
+    margin-left: 20%;
+    width: 60%;
+}
+
+a {
+    text-decoration: none;
+    color: #030;
+}
+
+a:hover {
+    color: #363;
+}
+
+header {
+    margin-top: 2em;
+
+    height: 4em;
+
+    background-color: #DDD;
+
+    background-image: url(tudocomp.svg);
+    background-repeat: no-repeat;
+    background-size: auto 3em;
+    background-position: 0.5em 0.5em;
+}
+
+header h1 {
+    margin: 0;
+    padding-top: 2em;
+    padding-right: 1em;
+
+    font-size: 1em;
+    font-weight: bold;
+    text-align: right;
+}
+
+#dashboard {
+    margin-top: 1em;
+    margin-left: 15%;
+    width: 70%;
+}
+
+#dashboard ul {
+    list-style-type: none;
+
+    margin: 0;
+    padding: 0;
+}
+
+#dashboard li {
+    margin-top: 1em;
+
+    background-color: #DDD;
+
+    border: 2px solid #AAA;
+    border-radius: 0.5em;
+
+    padding: 0.5em;
+}
+
+#dashboard li a {
+    font-size: 1.5em;
+    font-weight: bold;
+
+    border-bottom: 1px dotted #AAA;
+}
+
+#dashboard li p {
+    margin: 0;
+    margin-top: 1em;
+    margin-left: 1em;
+
+    padding: 0;
+    padding-left: 0.5em;
+
+    border-left: 0.25em solid #AAA;
+}
+
+footer {
+    margin-top: 2em;
+
+    height: 2em;
+    background-color: #DDD;
+}
+
+
