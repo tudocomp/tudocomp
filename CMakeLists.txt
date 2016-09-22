@@ -46,4 +46,7 @@ add_subdirectory(etc/datasets)
 # Docs
 add_subdirectory(docs)
 
+# Web
+add_subdirectory(www)
+
 include(compare_workspace)
