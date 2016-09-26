@@ -13,8 +13,10 @@ html {
 }
 
 body {
-    margin-left: 20%;
-    width: 60%;
+    margin: 0;
+    width: 100%;
+
+    background-color: #DDD;
 }
 
 a {
@@ -27,11 +29,7 @@ a:hover {
 }
 
 header {
-    margin-top: 2em;
-
     height: 4em;
-
-    background-color: #DDD;
 
     background-image: url(tudocomp.svg);
     background-repeat: no-repeat;
@@ -49,10 +47,15 @@ header h1 {
     text-align: right;
 }
 
+section#content {
+    background-color: white;
+}
+
 #dashboard {
-    margin-top: 1em;
-    margin-left: 15%;
-    width: 70%;
+    padding-top: 1em;
+    padding-bottom: 2em;
+    margin-left: 25%;
+    width: 50%;
 }
 
 #dashboard ul {
@@ -92,10 +95,4 @@ header h1 {
 }
 
 footer {
-    margin-top: 2em;
-
-    height: 2em;
-    background-color: #DDD;
 }
-
-
