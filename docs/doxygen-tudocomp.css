@@ -2,3 +2,66 @@
     This is included by the HTML version of the Doxygen documentation
     and can be used to override the default style.
 */
+
+@import 'https://fonts.googleapis.com/css?family=Raleway:600|Roboto|Source+Code+Pro:500';
+
+tt, code, kbd, samp {
+    font-family: 'Source Code Pro', monospace;
+    font-size: 100%;
+}
+
+.tabs, .tabs2, .tabs3, .title, table.directory, #MSearchField, #nav-tree .label {
+    font-family: 'Roboto', sans-serif;
+}
+
+body, table, div, p, dl {
+    font-family: 'Roboto', sans-serif;
+    font-size: 100%;
+}
+
+#titlearea {
+    background-color: #DDD;
+    padding-bottom: 0.5em;
+}
+
+#projectbrief, #projectnumber {
+    font-family: 'Raleway', sans-serif;
+    font-size: 100%;
+}
+
+#projectlogo img {
+    width: auto;
+    height: 3.0em;
+    margin-left: 0.5em;
+}
+
+#projectname {
+    width: 100%;
+
+    text-indent: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+
+    font-size: 150%;
+    font-weight: bold;
+}
+
+#projectnumber::before {
+    content: 'v';
+}
+
+#projectnumber {
+    font-size: inherit;
+    font-weight: bold;
+
+    text-indent: 0;
+    white-space: normal;
+    overflow: auto;
+
+    display: block;
+    margin-top: -1em;
+}
+
+#projectbrief {
+    font-size: 100%;
+}
