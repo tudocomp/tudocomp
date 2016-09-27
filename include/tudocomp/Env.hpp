@@ -11,9 +11,9 @@
 
 #include <glog/logging.h>
 
-#include <tudostat/Stat.hpp>
+#include <tudocomp/Stat.hpp>
 
-using tudostat::Stat;
+using tudocomp::Stat;
 
 #include <tudocomp/util.h>
 

@@ -1,6 +1,6 @@
 include(test_driver.cmake)
 
-list(APPEND BASIC_DEPS tudostat malloc_count tudocomp)
+list(APPEND BASIC_DEPS malloc_count tudocomp)
 
 run_test(tudocomp_tests DEPS ${BASIC_DEPS})
 run_test(ds_tests       DEPS ${BASIC_DEPS})

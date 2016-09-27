@@ -8,6 +8,5 @@ add_library(
 target_link_libraries(
     malloc_count
 
-    tudostat
+    tudocomp
 )
-

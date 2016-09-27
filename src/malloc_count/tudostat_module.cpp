@@ -1,7 +1,7 @@
-#include <tudostat/Stat.hpp>
+#include <tudocomp/Stat.hpp>
 #include <malloc_count/malloc_count.hpp>
 
-using namespace tudostat;
+using namespace tudocomp;
 
 Stat::Phase end_phase_if() {
     auto mp = malloc_count::end_phase();

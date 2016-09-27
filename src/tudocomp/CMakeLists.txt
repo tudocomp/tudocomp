@@ -9,7 +9,6 @@ target_link_libraries(
 
     INTERFACE
 
-    tudostat
     glog
     gflags
     sdsl
