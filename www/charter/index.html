@@ -2,23 +2,31 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>tudocomp chart</title>
+    <title>tudocomp &ndash; Charter</title>
     <script src="http://d3js.org/d3.v3.js"></script>
 
     <!--<script src="data.kjv.js"></script>-->
     <script defer src="stat-chart.js"></script>
     <script defer src="stat-ui.js"></script>
 
+    <link rel="stylesheet" type="text/css" href="../font-awesome-4.6.3/css/font-awesome.min.css"/>
     <link rel="stylesheet" type="text/css" href="style.css"/>
+
+    <link rel="icon" type="image/svg+xml" href="../tudocomp-icon.svg">
+    <!-- Chrome currently doesn't support SVG favicons -->
+    <link rel="icon" type="image/png" href="../tudocomp-icon.png">
 </head>
 <body>
-    <header></header>
-    <section id="main">
+    <header>
+        <h1><i class="fa fa-bar-chart"></i> Charter</h1>
+    </header>
+    <section id="content">
+        <div id="main">
         <div id="options">
             <p id="export">
                 <button class="close">Reset Chart</button>
-                <button class="img">Save Image</button>
-                <button class="svg">Save SVG</button>
+                <button class="img">Create PNG</button>
+                <button class="svg">Create SVG</button>
             </p>
 
             <h2>Options:</h2>
@@ -27,12 +35,13 @@
             <p><label><input class="offsets" type="checkbox" checked></input>Show memory offsets</label></p>
             <p><label><input class="legend" type="checkbox" checked></input>Show legend</label></p>
         </div>
+        <div id="dropzone-wrapper">
         <div id="dropzone">
-            <p><strong>Drag a stat JSON file or URL here!</strong></p>
-            <p>
-                Or paste the JSON below and <button id="json-load">Load</button><br/>
-                <textarea cols="32" rows="5" id="json"></textarea>
-            </p>
+            <!--<h1><i class="fa fa-bar-chart"></i> Charter</h1>-->
+            <p><strong>Drag a statistics JSON file into this box!</strong></p>
+            <p>&hellip; or paste the JSON below and click <button id="json-load">Load</button>.</p>
+            <p><textarea cols="32" rows="5" id="json"></textarea></p>
+        </div>
         </div>
         <div id="chart">
             <div id="tip">
@@ -55,8 +64,9 @@
                 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="font-family: sans-serif; font-size: 10pt;"></svg>
             </div>
         </div>
+        </div>
     </section>
-    <footer>
+    <footer id="footer">
         <div id="sample">
             Example JSON sets for testing: <button onclick="loadJSONfromURL('data.kjv.json')">data.kjv.json</a>
         </div>

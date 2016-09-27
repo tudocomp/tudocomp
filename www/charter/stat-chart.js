@@ -337,8 +337,8 @@ var drawChart = function(raw) {
         .style("fill", "black");
 
     // Post
-    d3.select("#dropzone").style("display", "none");
-    d3.select("#sample").style("display", "none");
+    d3.select("#dropzone-wrapper").style("display", "none");
+    d3.select("#footer").style("display", "none");
     d3.select("#chart").style("display", "block");
     d3.select("#options").style("display", "block");
 

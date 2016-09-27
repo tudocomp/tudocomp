@@ -48,8 +48,8 @@ exportImage.onload = function() {
 
 d3.select("#options button.close").on("click", function() {
     d3.select("#json")[0][0].value = "";
-    d3.select("#dropzone").style("display", "block");
-    d3.select("#sample").style("display", "block");
+    d3.select("#dropzone-wrapper").style("display", "block");
+    d3.select("#footer").style("display", "block");
     d3.select("#chart").style("display", "none");
     d3.select("#options").style("display", "none");
 });
