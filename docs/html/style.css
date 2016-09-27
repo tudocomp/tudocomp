@@ -44,6 +44,11 @@ header #author {
 header #date {
 }
 
+em {
+    font-style: oblique;
+    font-weight: 600;
+}
+
 /**
  * Correct `block` display not defined in IE 8/9.
  */

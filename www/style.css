@@ -21,11 +21,16 @@ body {
 
 a {
     text-decoration: none;
-    color: #030;
+    color: #363;
 }
 
 a:hover {
-    color: #363;
+    color: #696;
+}
+
+em {
+    font-style: oblique;
+    font-weight: 600;
 }
 
 header {
@@ -77,10 +82,16 @@ section#content {
 }
 
 #dashboard li a {
+    padding-bottom: 1px;
+
     font-size: 1.5em;
     font-weight: bold;
 
-    border-bottom: 1px dotted #AAA;
+    border-bottom: 1px dotted #393;
+}
+
+#dashboard li a:hover {
+    border-bottom-color: #696;
 }
 
 #dashboard li p {
