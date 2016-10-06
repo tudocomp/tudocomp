@@ -86,6 +86,9 @@ d3.select("#options .legend").on("change", function() {
     redrawChart();
 });
 
+d3.select("#options .table").on("change", function() {
+    d3.select("#data").style("display", this.checked ? "block" : "none");
+});
 
 d3.select("#dropzone")
     .on("dragover", function() {

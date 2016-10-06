@@ -22,48 +22,69 @@
     </header>
     <section id="content">
         <div id="main">
-        <div id="options">
-            <p id="export">
-                <button class="close">Reset Chart</button>
-                <button class="img">Create PNG</button>
-                <button class="svg">Create SVG</button>
-            </p>
+            <div id="options">
+                <p id="export">
+                    <button class="close"><i class="fa fa-close"></i> Reset</button>
+                    <button class="img"><i class="fa fa-file-image-o"></i> PNG chart</button>
+                    <button class="svg"><i class="fa fa-file-code-o"></i> SVG chart</button>
+                </p>
 
-            <h2>Options:</h2>
-            <p>Zoom: <input class="zoom" type="range" min="0.5" max="4.0" step="0.1" value="1.0"></input><span class="zoom-label">1.0</span></p>
-            <p><label><input class="groups" type="checkbox" checked></input>Show groups</label></p>
-            <p><label><input class="offsets" type="checkbox" checked></input>Show memory offsets</label></p>
-            <p><label><input class="legend" type="checkbox" checked></input>Show legend</label></p>
-        </div>
-        <div id="dropzone-wrapper">
-        <div id="dropzone">
-            <!--<h1><i class="fa fa-bar-chart"></i> Charter</h1>-->
-            <p><strong>Drag a statistics JSON file into this box!</strong></p>
-            <p>&hellip; or paste the JSON below and click <button id="json-load">Load</button>.</p>
-            <p><textarea cols="32" rows="5" id="json"></textarea></p>
-        </div>
-        </div>
-        <div id="chart">
-            <div id="tip">
-                <div class="title"></div>
-                <table>
-                    <tbody class="basic">
-                        <tr><th>Start time:</th><td class="start"></td></tr>
-                        <tr><th>Duration:</th><td class="duration"></td></tr>
-                        <tr><th>Memory peak:</th><td class="mempeak"></td></tr>
-                        <tr><th>Memory offset:</th><td class="memoffset"></td></tr>
-                        <tr><th>Local peak:</th><td class="memlocal"></td></tr>
-                        <tr><th>Closing usage:</th><td class="memfinal"></td></tr>
-                        <tr><th>Additional memory:</th><td class="memadd"></td></tr>
-                    </tbody>
-                    <tbody class="ext">
-                    </tbody>
-                </table>
+                <h2>Options:</h2>
+                <p>Zoom: <input class="zoom" type="range" min="0.5" max="4.0" step="0.1" value="1.0"></input><span class="zoom-label">1.0</span></p>
+                <p><label><input class="groups" type="checkbox" checked></input>Show groups</label></p>
+                <p><label><input class="offsets" type="checkbox" checked></input>Show memory offsets</label></p>
+                <p><label><input class="legend" type="checkbox" checked></input>Show legend</label></p>
+                <p><label><input class="table" type="checkbox" checked></input>Show data table</label></p>
             </div>
-            <div id="svg-container">
-                <svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="font-family: sans-serif; font-size: 10pt;"></svg>
+            <div id="dropzone-wrapper">
+                <div id="dropzone">
+                    <!--<h1><i class="fa fa-bar-chart"></i> Charter</h1>-->
+                    <p><strong>Drag a statistics JSON file into this box!</strong></p>
+                    <p>&hellip; or paste the JSON below and click <button id="json-load"><i class="fa fa-play"></i> Load</button>.</p>
+                    <p><textarea cols="32" rows="5" id="json"></textarea></p>
+                </div>
             </div>
-        </div>
+            <div id="chart">
+                <div id="tip">
+                    <div class="title"></div>
+                    <table>
+                        <tbody class="basic">
+                            <tr><th>Start time:</th><td class="start"></td></tr>
+                            <tr><th>Duration:</th><td class="duration"></td></tr>
+                            <tr><th>Memory peak:</th><td class="mempeak"></td></tr>
+                            <tr><th>Memory offset:</th><td class="memoffset"></td></tr>
+                            <tr><th>Local peak:</th><td class="memlocal"></td></tr>
+                            <tr><th>Closing usage:</th><td class="memfinal"></td></tr>
+                            <tr><th>Additional memory:</th><td class="memadd"></td></tr>
+                        </tbody>
+                        <tbody class="ext">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="svg-container">
+                    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="font-family: sans-serif; font-size: 10pt;"></svg>
+                </div>
+                <div id="data">
+                    <div id="data-template" style="display: none;">
+                        <table>
+                            <tbody class="basic">
+                                <tr><th>Start time:</th><td class="start"></td></tr>
+                                <tr><th>Duration:</th><td class="duration"></td></tr>
+                                <tr><th>Memory peak:</th><td class="mempeak"></td></tr>
+                                <tr><th>Memory offset:</th><td class="memoffset"></td></tr>
+                                <tr><th>Local peak:</th><td class="memlocal"></td></tr>
+                                <tr><th>Closing usage:</th><td class="memfinal"></td></tr>
+                                <tr><th>Additional memory:</th><td class="memadd"></td></tr>
+                            </tbody>
+                            <tbody class="ext">
+                            </tbody>
+                        </table>
+                    </div>
+                    <h1>Data</h1>
+                    <div id="data-content">
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
     <footer id="footer">

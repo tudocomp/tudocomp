@@ -17,6 +17,7 @@ var app = {
     raw: null,
     data: [],
     groups: [],
+    root: null,
 
     // Options
     options: {
@@ -56,9 +57,6 @@ var app = {
     }
 }
 
-var groups = [];
-var data = [];
-
 //Convert stats to data
 var convert = function(x, memOff, level) {
     var ds = {
@@ -69,7 +67,8 @@ var convert = function(x, memOff, level) {
         memOff:    memOff + x.memOff,
         memPeak:   memOff + x.memOff + x.memPeak,
         memFinal:  memOff + x.memOff + x.memFinal,
-        stats:     x.stats
+        stats:     x.stats,
+        sub:       []
     };
 
     if(x != app.raw && x.sub.length > 0) {
@@ -81,8 +80,10 @@ var convert = function(x, memOff, level) {
     }
 
     for(var i = 0; i < x.sub.length; i++) {
-        convert(x.sub[i], memOff + x.memOff, level + 1);
+        ds.sub.push(convert(x.sub[i], memOff + x.memOff, level + 1));
     }
+
+    return ds;
 };
 
 var drawChart = function(raw) {
@@ -90,7 +91,7 @@ var drawChart = function(raw) {
     app.data = [];
     app.groups = [];
 
-    convert(raw, raw.memOff, -1);
+    app.root = convert(raw, raw.memOff, -1);
 
     // Define dimensions
     var groupLevelMax = d3.max(app.groups, function(g) { return g.level; });
@@ -336,6 +337,9 @@ var drawChart = function(raw) {
         .attr("r", "3")
         .style("fill", "black");
 
+    // Data table
+    printDataTable();
+
     // Post
     d3.select("#dropzone-wrapper").style("display", "none");
     d3.select("#footer").style("display", "none");
@@ -345,6 +349,58 @@ var drawChart = function(raw) {
     updateZoomText(1.0);
     hideMarker();
 };
+
+var printPhase = function(parentElem, d) {
+    var phaseNode = parentElem.insert("div").attr("class", "phase");
+
+    var titleNode = phaseNode.insert("div")
+        .attr("class", "title " + ((d.sub.length > 0) ? "group" : "leaf"))
+        .style("border-left-color", d.color)
+        .text(d.title);
+
+    var e = phaseNode.insert("div")
+        .attr("class", "content")
+        .html(d3.select("#data-template").html());
+
+    fillStatTable(d, e);
+
+    if(d.sub.length > 0) {
+        e.insert("div").attr("class", "sub").text("Sub phases:");
+        for(var i = 0; i < d.sub.length; i++) {
+            printPhase(e, d.sub[i]);
+        }
+    }
+};
+
+var printDataTable = function() {
+    var data = d3.select("#data-content");
+    data.html("");
+    
+    printPhase(data, app.root);
+};
+
+var fillStatTable = function(d, e) {
+    var dur = d.tEnd - d.tStart;
+    var durPct = dur / app.tScale.invert(app.tScale.range()[1]);
+
+    e.select(".title").text(d.title);
+    e.select(".start").text(formatTime(d.tStart));
+    e.select(".duration").text(
+        formatTime(dur) + " (" + formatPercent(durPct) + ")");
+    e.select(".mempeak").text(formatMem(d.memPeak));
+    e.select(".memlocal").text(formatMem(d.memPeak - d.memOff));
+    e.select(".memoffset").text(formatMem(d.memOff));
+    e.select(".memfinal").text(formatMem(d.memFinal));
+    e.select(".memadd").text(formatMem(d.memFinal - d.memOff));
+
+    var ext = e.select("tbody.ext").html("");
+    if(d.stats.length > 0) {
+        var tr = ext.selectAll("tr").data(d.stats).enter().append("tr");
+
+        tr.append("th").text(function(kv) { return kv.key + ":"; });
+        tr.append("td").text(function(kv) { return kv.value; });
+    }
+}
 
 var redrawChart = function() {
     drawChart(app.raw);
@@ -414,24 +470,7 @@ var chartMouseMove = function() {
                 var durPct = dur / app.tScale.invert(app.tScale.range()[1]);
 
                 var tip = d3.select("#tip");
-
-                tip.select(".title").text(d.title);
-                tip.select(".start").text(formatTime(d.tStart));
-                tip.select(".duration").text(
-                    formatTime(dur) + " (" + formatPercent(durPct) + ")");
-                tip.select(".mempeak").text(formatMem(d.memPeak));
-                tip.select(".memlocal").text(formatMem(d.memPeak - d.memOff));
-                tip.select(".memoffset").text(formatMem(d.memOff));
-                tip.select(".memfinal").text(formatMem(d.memFinal));
-                tip.select(".memadd").text(formatMem(d.memFinal - d.memOff));
-
-                var ext = tip.select("tbody.ext").html("");
-                if(d.stats.length > 0) {
-                    var tr = ext.selectAll("tr").data(d.stats).enter().append("tr");
-
-                    tr.append("th").text(function(kv) { return kv.key + ":"; });
-                    tr.append("td").text(function(kv) { return kv.value; });
-                }
+                fillStatTable(d, tip);
             }
 
             var mdoc = d3.mouse(document.documentElement);
