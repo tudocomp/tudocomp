@@ -96,7 +96,8 @@ section#content > div {
 #subtitle {
     font-size: 1.25em;
     font-weight: bold;
-    line-height: 2.5em;
+
+    margin-bottom: 1em;
 }
 
 #content h1 {
@@ -173,5 +174,40 @@ a.footnoteRef {
 }
 
 footer {
+}
+
+@media only screen and (max-device-width: 800px) {
+    html {
+        font-size: 150%;
+    }
+
+    header {
+        background-position: center 0.5em;
+    }
+
+    header h1 {
+        display: none;
+    }
+
+    section#content > div {
+        border: none;
+        border-radius: 0;
+        padding: 0;
+
+        margin-left: 5%;
+        width: 90%;
+    }
+
+    #content p {
+        padding-left: 0;
+    }
+
+    #content blockquote {
+        padding-left: 0;
+    }
+
+    pre {
+        margin-left: 0;
+    }
 }
 
