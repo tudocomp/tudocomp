@@ -77,14 +77,15 @@ decompressor (or decoder) to restore the original input losslessly.
 
 ## Runtime Statistics
 
->TODO: `malloc_count` / `tudostat`
+>> *TODO*: `malloc_count` / `tudostat`
 
 # Usage
 
 ## Library
 
 The library comes as a set of `C++` headers, no binary object needs to be built.
->TODO: Not true. `malloc_count` is a binary object and needed for a core feature.
+
+>> *TODO*: Not true. `malloc_count` is a binary object and needed for a core feature.
 
 Hence, it suffices to include the respective headers for using a specific compressor implementation.
 
@@ -131,7 +132,7 @@ when passing the `--list` command-line argument.
 On Windows, the framework can be built in a [Cygwin](https://www.cygwin.com/) environment.
 `mingw` and Microsoft Visual Studio are *not* supported at this point.
 
->TODO: Note about `malloc_count`
+>> *TODO*: Note about `malloc_count`
 
 ## License
 
@@ -141,7 +142,7 @@ The framework is published under the [GNU General Public License, Version 3](htt
 
 This chapter provides a brief introduction of the data flow in the framework.
 
->TODO: new chapter name, data flow diagram
+>> *TODO*: new chapter name, data flow diagram
 
 ## The Compressor interface
 
@@ -277,7 +278,7 @@ the entire unit test range (which can take a while):
 All tests were successful!
 ~~~
 
->TODO: make target overview
+>> *TODO*: make target overview
 
 ## The framework's file structure
 
@@ -413,7 +414,7 @@ of bytes available on the input.
 The following code snippets complete the `compress` implementation by simply
 copying the contents of the input to the output.
 
->TODO XXX
+>> XXX
 
 ~~~ { .cpp }
 inline virtual void compress(Input& input, Output& output) override {
@@ -471,7 +472,7 @@ inline virtual void compress(Input& input, Output& output) override {
 }
 ~~~
 
-> Note: The framework assumes that a `char` is a 8 bit byte,
+> *Note*: The framework assumes that a `char` is a 8 bit byte,
 > and will use the unsigned `uint8_t` byte type for input/output data unless
 > the use of std library types like streams require the use of `char`.
 
@@ -553,9 +554,9 @@ inline virtual void decompress(Input& input, Output& output) override {
 }
 ~~~
 
-> Exercise: Implement the decompress-method such that it uses the input as a stream.
+> *Exercise*: Implement the decompress-method such that it uses the input as a stream.
 
-> Note: For simplicity, we don't address a few bugs hiding in this
+> *Note*: For simplicity, we don't address a few bugs hiding in this
 > implementation, most notably the fact that this code would stumble over the
 > symbol `'%'` used in the actual input text.
 
@@ -581,7 +582,8 @@ For the latter, if you only want to quickly check something, say a part of your 
 or some std library types, you can use the pre-defined `sandbox_tests.cpp` file.
 Changes to that file are intended to only be local to the current
 developer machine, and will not be committed into GIT.
-> TODO: first occurrence of GIT. should we add some kind of commit-etiquette before?
+
+>> *TODO*: first occurrence of GIT. should we add some kind of commit-etiquette before?
 
 Otherwise, for permanent testing, we create a new source file and register it in the `CMakeLists.txt`.
 Here, we add the file `/test/example_tests.cpp`...
@@ -612,7 +614,8 @@ Next, we will add some real tests to check that the compressor works correctly.
 
 We start with one that manually constructs the `Input` and `Output`
 handles and the compressor, and then checks that the result is as expected:
-> TODO: first time 'handle' is used
+
+>> *TODO*: first time 'handle' is used
 
 ~~~ { .cpp }
 #include <tudocomp/example/ExampleCompressor.hpp>
@@ -684,7 +687,8 @@ To this end, the framework offers suitable methods in the `Env` class.
 The framework is capable of measuring the time and the used dynamic heap memory during the execution.
 To enable the latter capability (tracking the memory), the library `malloc_count` has to linked in;
 `malloc_count` tracks the number of allocated bytes; it is unaware for what the memory is used specifically.
-> TODO: Hat Patrick nicht seinen eigenen malloc_count geschrieben?
+
+>> *TODO*: Hat Patrick nicht seinen eigenen malloc_count geschrieben?
 
 We first present a set of tracking methods that divide the algorithm
 into different, possibly nesting, phases:
@@ -869,7 +873,8 @@ inline virtual void compress(Input& input, Output& output) override {
     // ...
 }
 ~~~
-> TODO: would be cool if you can highlight the changes like with `diff`
+
+>> *TODO*: would be cool if you can highlight the changes like with `diff`
 
 Pasting the JSON output of this in the website will make the two added
 statistics appear in the tool tip of the middle phase.
@@ -1055,7 +1060,8 @@ Besides causing overhead,
 the compiler is not able to "merge" the native code of the function body
 with the native code of the loop for a more efficient and faster compiled
 program.
-> TODO: Why do you emphasize on "native" code?
+
+>> *TODO*: Why do you emphasize on "native" code?
 
 In order to enable these optimizations, the compiler needs to know
 at compile time what function or method of what object will be called.
@@ -1063,7 +1069,8 @@ For standalone functions, it knows this if the function is defined in the
 same
 `*.cpp` file, or exists with a `inline` annotation in a header
 (hence the header-only design of the library).
-> TODO: why is inline necessary? This is only a compiler hint
+
+>> *TODO*: why is inline necessary? This is only a compiler hint
 
 For the above example, the recommended way is to turn
 the sub algorithm into a generic template parameter of the class:
@@ -1142,7 +1149,8 @@ Exactly as with `dynamic()`, we have the option of giving a default
 the syntax looks like `.templated<T, ActualType>()`.
 Note that this will not automatically make this the default for the template
 parameter of the class itself, just for the registry and command line tool.
->TODO: Do you mean that it does not mean that this does not cause a default template parameter like <T = ActualType>
+
+>> *TODO*: Do you mean that it does not mean that this does not cause a default template parameter like <T = ActualType>
 
 Next, we initialize the encoder in the constructor of the compressor.
 The actual API of a sub algorithm can be arbitrary, with almost no restrictions on the amount of methods
@@ -1172,7 +1180,8 @@ with `a%N%` then that will reduce the size only for repeats longer than three.
 - `void encode_repeat(char last, size_t repeat, io::OutputStream& ostream)`  encodes a repetition of length repeat consisting of the same character char.
 - `bool is_start_of_encoding(const io::InputView& iview, size_t i)` identifies the start of a character repetition in the decoder.
 - `size_t decode(const io::InputView& iview, size_t& i)` decodes a character repetition and returns the length of this repetition (while advancing the input cursor at position i in the process).
-> TODO: cursor undef
+
+>> *TODO*: cursor undef
 
 (This interface is an entirely arbitrary example, every algorithm can define its own design patterns.)
 
@@ -1385,7 +1394,8 @@ in an option string to a fixed value.
 If you explicitly set some options
 you either have to skip the option parameters belonging to the template parameter,
 or you have to give it the same value as indicated by it; otherwise you will get an error:
-> TODO: not really clear
+
+>> *TODO*: not really clear
 
 ~~~ { .cpp }
 // ok
@@ -1405,7 +1415,8 @@ that run all algorithms with a number of small test cases.
 Doing this is easy: In `src/tudocomp_driver/tudocmp_algorithms.cpp`,
 add includes for your compressor headers, and then add new `r.compressor<T>()`
 lines for all compressor classes in the function body there.
-> TODO: where is the function body?
+
+>> *TODO*: where is the function body?
 
 For the templated version, you need to register the class with
 all possible combinations of type parameters it can accept, in order to generate native code instance for all of them.
@@ -1486,7 +1497,7 @@ This will create a compressed file `cache.tdc` in the current directory, and
 print some statistics to the command line, including the JSON data that
 can be pasted into the previously mentioned web visualizer.
 
-> Note: The tool will prevent accidental overwrites if a file with the
+> *Note*: The tool will prevent accidental overwrites if a file with the
 output filename already exists. To bypass this security mechanism, and hence allow overwriting,
 the `-force` option has to be used.
 
@@ -1521,7 +1532,7 @@ different algorithms on the same input files. It can be build with `make compare
 It's main purpose is to compare the runtime and compression ratio of compressors combined with different options and input files.
 However, it does not integrate into the framework's own statistics tracking.
 
-> There is also a separate, experimental support for measuring the memory
+> *Note*: There is also a separate, experimental support for measuring the memory
 footprint with the Valgrind tool massif, but this does not work well with
 external compression programs. Further, it seems redundant in the light of the memory statistic tracking methods.
 
@@ -1590,7 +1601,7 @@ Make sure you have enough free storage before doing this!
 .../build> make datasets
 ~~~
 
-> Note that the make target can be aborted at any time and will resume
+> *Note* that the make target can be aborted at any time and will resume
 > with what it had already downloaded the next time it gets invoked.
 
 The downloaded files can be found in `/etc/datasets/download`.
@@ -1606,7 +1617,9 @@ But this is a bit cumbersome, because:
 - The input files and the compare tool can have complex file paths.
 - The compare files dumps log files and compression artifacts to the current
   working directory, so it should run in its own directory.
-  > TODO: what are compare files dumps log files?
+
+  >> *TODO*: what are compare files dumps log files?
+
 - Changes to the tudocomp codebase will not automatically be recognized
   by the tool.
 
@@ -1618,12 +1631,15 @@ and fill it with a short shell script `run.sh` that:
   `compare_workspace` to ensure that the built code is up to date.
 - Locally appends the binary directory of Tudocomp to`$PATH` such that it does not have to be
   installed or be invoked with the relative/full path.
-> TODO: what is "it"?
+
+>> *TODO*: what is "it"?
+
 - Defines an environment variable `$DATASETS` pointing
   to the dataset directory.
 - Delegates to the `compare_tool` with the environment
   defined above.
-> TODO: what will be delegated? The environment variables? Parameters like below?
+
+>> *TODO*: what will be delegated? The environment variables? Parameters like below?
 
 This set-up enables us to quickly create a test environment for different algorithms:
 

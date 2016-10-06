@@ -105,6 +105,19 @@ section#content {
     border-left: 0.25em solid #AAA;
 }
 
+#under-construction {
+    background-color: #FF8;
+    border: 4px solid #FA0;
+    border-radius: 1em;
+    padding: 1em;
+
+    margin-top: 1em;
+    margin-bottom: 1em;
+
+    font-weight: bold;
+    text-align: center;
+}
+
 footer {
 }
 
