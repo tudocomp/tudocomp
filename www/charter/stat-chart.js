@@ -510,6 +510,12 @@ var setZoom = function(zoom) {
 }
 
 var loadJSON = function(json) {
-    drawChart(JSON.parse(json));
+    d3.select("#json-error").style("display", "none");
+    try {
+        drawChart(JSON.parse(json));
+    } catch(err) {
+        d3.select("#json-error-message").text(err.message);
+        d3.select("#json-error").style("display", "block");
+    }
 }
 

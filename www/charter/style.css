@@ -43,7 +43,7 @@ section#content {
     background-color: white;
 }
 
-tt {
+tt, code {
     font-family: 'Source Code Pro', monospace;
 }
 
@@ -87,6 +87,24 @@ footer {
 #dropzone textarea {
     width: 50%;
     min-height: 5em;
+}
+
+#dropzone p#json-error {
+    display: none;
+
+    font-weight: bold;
+    color: red;
+
+    background-color: #FDD;
+    border: 2px dotted red;
+    border-radius: 1em;
+    padding: 0.5em;
+
+    margin: 1em;
+}
+
+#json-error-message {
+    font-weight: normal;
 }
 
 button {
