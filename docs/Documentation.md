@@ -282,19 +282,15 @@ All tests were successful!
 
 ## The framework's file structure
 
-*tudocomp*'s root directory structure looks as follows:
-
-* `cmakemodules` contains CMake build modules.
-* `docs` contains this documentation's Markdown source as well as the Doxygen configuration.
-* `etc` contains miscellaneous internal configurations and scripts.
-* `include` contains the framework's C++ headers.
-* `src` contains the framework's C++ sources.
-* `test` contains the unit tests (*Google Test*).
-* `www` contains web related sources, like the charter web application.
+*tudocomp*'s root directory structure follows that of a typical C++ project.
+The `include` directory contains the framework's C++ headers, `src` contains
+the C++ sources. The unit tests (*Google Test*) are located in `test`. The
+remaining directories help structure the project further, but they are not
+needed for this tutorial.
 
 Note that *tudocomp* is concepted as a header-only library. While the driver
 application and the `malloc_count` module need to be implemented in C++ source
-files, all compression and coding algorithm implementations come in the form 
+files, all compression and coding algorithm implementations come in the form
 of templated classes with inlined functions in the `include` tree.
 
 This is a design decision that allows for the compiler to do heavy code
@@ -320,8 +316,8 @@ A complete implementation consists of
 * a static function `meta()` that yields a `Meta` information
   object about the compressor.
 
-Note that while the latter is not strictly defined in the `Compressor` class,
-it is required due to the nature of templated construction.
+Note that while the latter (`meta()`) is not strictly defined in the
+`Compressor` class, it is required due to the nature of templated construction.
 
 The class [`Env`](about:blank) represents the compressor's runtime environment.
 It provides access to runtime options as well as the framework's statistics
@@ -362,7 +358,7 @@ public:
         return m;
     }
 
-    inline ExampleCompressor(Env&& env): Compressor(std::move(env)) {
+    inline ExampleCompressor(Env&& env) : Compressor(std::move(env)) {
     }
 
     inline virtual void compress(Input& input, Output& output) override {
@@ -411,70 +407,75 @@ and also provides iterator access. The object returned by `as_view` provides the
 indexed access `[]` operator for and the function `size()` to return the amount
 of bytes available on the input.
 
-The following code snippets complete the `compress` implementation by simply
-copying the contents of the input to the output.
+The following code snippet demonstrates using a given `input` as a view:
+
+~~~ { .cpp }
+//retrieve a view
+auto view = input.as_view();
+
+// create a shallow copy of the view
+auto view2 = view;
+
+// compare the view's content against a certain string
+// the CHECK macro is Google Logging's "assert"
+CHECK(view == "foobar");
+
+// create a sub-view for a range within the main view
+auto sub_view = view.substr(1, 5);
+
+// assertion for the sub-view's contents
+CHECK(sub_view == "ooba");
+
+// iterate over the whole view character-wise
+for (size_t i = 0; i < view.size(); i++) {
+    uint8_t c = view[i];
+    // ...
+}
+~~~
+
+Note that copies and sub-views are shallow, ie. they point to the same memory
+location as the original view.
+
+In contrast, The following code snippet demonstrates using a given `input`
+as a stream:
+
+~~~ { .cpp }
+// retrieve a stream
+auto stream = input.as_stream();
+
+// read the input character-wise using a C++11 range-based for loop
+for(uint8_t c : stream) {
+    // ...
+}
+
+// read the input character-wise using the std::istream interface
+char c;
+while(stream.get(c)) {
+    // ...
+}
+~~~
+
+Note how the framework uses the `uint8_t` (unsigned byte) type to represent
+characters. This is contrary to the `std` library, which uses C's `char` type.
+
+An output has to be generated sequentially and thus only provides a stream
+interface. The following code snippet demonstrates this by copying the entire
+input to the output:
+
+~~~ { .cpp }
+// retrieve the input stream
+auto in_stream = input.as_stream();
+
+// retrieve the output stream
+auto out_stream = output.as_stream();
+
+// copy the input to the output
+for(uint8_t c : in_stream) {
+    out_stream << c;
+}
+~~~
 
 >> XXX
-
-~~~ { .cpp }
-inline virtual void compress(Input& input, Output& output) override {
-    auto view = input.as_view();
-
-    auto view2 = view; // Only copies a pointer
-    CHECK(view2 == "foobar");
-    auto sub_view = view.substr(1, 5); // Only increments a pointer and length
-    CHECK(sub_view == "ooba");
-
-    for (size_t i = 0; i < view.size(); i++) {
-        uint8_t c = view[i];
-        // ...
-    }
-}
-~~~
-
-This allows it to keep the input loaded into memory _just once_.
-All further processing consists of manipulating pointers and indices.
-
-In contrast, this is what accessing the input as a `std::istream`
-looks like:
-
-~~~ { .cpp }
-inline virtual void compress(Input& input, Output& output) override {
-    auto stream = input.as_stream();
-
-    char c;
-    while(stream.get(c)) {
-        // for each char c...
-    }
-}
-~~~
-
-Alternatively, the stream interface also offers an iterator interface:
-
-~~~ { .cpp }
-inline virtual void compress(Input& input, Output& output) override {
-    auto stream = input.as_stream();
-
-    for(uint8_t c : stream) {
-        // for each char c...
-    }
-}
-~~~
-
-
-`Output` is similar, but only provides the stream interface since
-buffering can be done manually:
-
-~~~ { .cpp }
-inline virtual void compress(Input& input, Output& output) override {
-    auto stream = output.as_stream();
-    stream << "foo";
-}
-~~~
-
-> *Note*: The framework assumes that a `char` is a 8 bit byte,
-> and will use the unsigned `uint8_t` byte type for input/output data unless
-> the use of std library types like streams require the use of `char`.
 
 ### An example implementation
 

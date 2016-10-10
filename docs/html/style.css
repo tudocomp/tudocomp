@@ -34,20 +34,25 @@ em {
 }
 
 pre {
-    margin-left: 3rem;
+    margin: 0 0 0 1rem;
     border: 1px solid #AAA;
-    border-left: 0.5rem solid #AAA;
+    border-left: 4px solid #AAA;
     padding: 0.5rem;
 
     background-color: #DDD;
 
-    line-height: 1.5rem;
+    line-height: 1.5em;
 
     overflow-x: auto;
 }
 
 pre, code {
     font-family: "Source Code Pro", monospace;
+    font-size: 0.9rem;
+}
+
+code {
+    background-color: #DDD;
 }
 
 header {
@@ -102,7 +107,7 @@ section#content > div {
 }
 
 #content h1 {
-    margin: 0.5rem 0 0.5rem 0;
+    margin: 3rem 0 0.5rem 0;
     font-size: 1.75rem;
     font-weight: bold;
 
@@ -110,14 +115,14 @@ section#content > div {
 }
 
 #content h2 {
-    margin: 0.5rem 0 0.5rem 0;
+    margin: 2rem 0 0.5rem 0;
 
     font-size: 1.5rem;
     font-weight: bold;
 }
 
 #content h3 {
-    margin: 0.5rem 0 0.5rem 0;
+    margin: 2rem 0 0.5rem 0;
 
     font-size: 1.0rem;
     font-weight: bold;
@@ -128,9 +133,11 @@ section#content > div {
 }
 
 #content blockquote {
-    margin-left: 0;
-    margin-right: 0;
-    padding-left: 1rem;
+    margin: 0 0 0 1rem;
+}
+
+#content blockquote > blockquote {
+    margin: 0;
 }
 
 #content blockquote p {
