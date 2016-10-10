@@ -1,7 +1,8 @@
 #include <tudocomp_driver/Registry.hpp>
 
 #include <tudocomp/ChainCompressor.hpp>
-
+#include <tudocomp/NoopCompressor.hpp>
+#include <tudocomp/InnerNullCompressor.hpp>
 
 #include <tudocomp/lz78/Lz78Compressor.hpp>
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
@@ -102,6 +103,8 @@ void register_algorithms(Registry& r) {
     r.register_compressor< ExampleCompressor >();
     r.register_compressor< TemplatedExampleCompressor<ExampleDebugCoder> >();
     r.register_compressor< TemplatedExampleCompressor<ExampleBitCoder> >();
+
+    r.register_compressor< NoopCompressor >();
 }
 
 }

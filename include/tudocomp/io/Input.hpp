@@ -312,8 +312,6 @@ namespace io {
         auto buf = read_file_to_stl_byte_container<
             std::vector<uint8_t>>(path, offset, true);
 
-        std::cout << path << " offset: " << offset <<"\n";
-
         // We read the whole file, so skip it on next read.
         // `size - 1` because of the null terminator that
         // does not exist in the file.

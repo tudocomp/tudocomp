@@ -107,7 +107,12 @@ public:
         return lexical_cast<uint64_t>(as_string());
     }
     inline bool as_bool() const {
-        return lexical_cast<bool>(as_string());
+        auto& s = as_string();
+        if (s == "true") return true;
+        if (s == "false") return false;
+        throw std::runtime_error(std::string("option with string value '")
+            + s
+            + "' can not be converted to an boolean value!");
     }
     template<class T>
     inline T as() const {

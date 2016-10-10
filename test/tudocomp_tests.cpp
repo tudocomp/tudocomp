@@ -50,6 +50,8 @@ TEST(View, string_conv_null) {
 
     ASSERT_EQ(x, "xabc\0def\0"_v);
     ASSERT_NE(x, "xabc\0dez\0"_v);
+
+    ASSERT_EQ(std::string("\xff\0"_v).size(), 2);
 }
 
 TEST(Util, bits_for) {
@@ -353,11 +355,11 @@ namespace input_nte_matrix {
         std::hash<std::string> hasher;
 
         std::string basename = std::string("matrix_test_file_path") + std::string(i);
-        std::cout << "basename before: " << basename;
+        //std::cout << "basename before: " << basename;
         std::stringstream ss;
         ss << hasher(basename);
         basename = ss.str() + ".txt";
-        std::cout << " basename after: " << basename << "\n";
+        //std::cout << " basename after: " << basename << "\n";
 
         write_test_file(basename, i);
         return Input::Path { test_file_path(basename) };
@@ -910,6 +912,7 @@ struct MyCompressor: public Compressor {
         Meta y("compressor", "my");
         y.option("sub").templated<A, MySubAlgo2>();
         y.option("dyn").dynamic("foobar");
+        y.option("bool_val").dynamic("true");
         return y;
     }
 
@@ -925,6 +928,7 @@ struct MyCompressor: public Compressor {
         A a(env().env_for_option("sub"));
         auto s = output.as_stream();
         s << "ok! " << custom_data << " " << env().option("dyn").as_string();
+        ASSERT_TRUE(env().option("bool_val").as_bool());
     }
 };
 
@@ -954,13 +958,13 @@ TEST(Algorithm, meta) {
         auto x = Compressor::meta();
         auto y = std::move(x).build_def();
         ASSERT_EQ(y.to_string(),
-                  R"(my(sub: static sub_t = sub2(y: string = "y"), dyn: string = "foobar"))");
+                  R"(my(sub: static sub_t = sub2(y: string = "y"), dyn: string = "foobar", bool_val: string = "true"))");
     }
     {
         auto x = Compressor::meta();
         auto y = std::move(x).build_ast_value();
         ASSERT_EQ(y.to_string(),
-                  R"(my(sub: static sub_t = sub2(y: string = "y"), dyn: string = "foobar"))");
+                  R"(my(sub: static sub_t = sub2(y: string = "y"), dyn: string = "foobar", bool_val: string = "true"))");
     }
     auto f = [](const std::string& options, std::function<void(OptionValue&)> g) {
         auto x = Compressor::meta();

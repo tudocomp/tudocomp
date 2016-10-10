@@ -19,6 +19,7 @@ using tudocomp::Output;
 using tudocomp::create_algo_with_registry;
 using tudocomp::Registry;
 using tudocomp::View;
+using tudocomp::string_ref;
 
 namespace test {
     template<class C>
@@ -89,7 +90,7 @@ namespace test {
         {
         }
 
-        CompressResult<C> compress(const std::string& text) {
+        CompressResult<C> compress(string_ref text) {
             std::vector<uint8_t> encoded_buffer;
             {
                 Input text_in = Input::from_memory(text);
@@ -111,25 +112,25 @@ namespace test {
     };
 
     template<class T>
-    inline CompressResult<T> compress(const std::string& text,
+    inline CompressResult<T> compress(string_ref text,
                                       const std::string& options = "",
                                       const Registry& registry = Registry()) {
         return RoundTrip<T>(options, registry).compress(text);
     }
 
     template<class T>
-    inline void roundtrip(const std::string& original_text,
-                          const std::string& expected_compressed_text,
+    inline void roundtrip(string_ref original_text,
+                          string_ref expected_compressed_text,
                           const std::string& options = "",
                           const Registry& registry = Registry()) {
         auto e = RoundTrip<T>(options, registry).compress(original_text);
         auto& compressed_text = e.str;
-        ASSERT_EQ(expected_compressed_text, compressed_text);
+        ASSERT_EQ(std::string(expected_compressed_text), compressed_text);
         e.assert_decompress();
     }
 
     template<class T>
-    inline void roundtrip(const std::string& original_text,
+    inline void roundtrip(string_ref original_text,
                           const std::vector<uint8_t>& expected_compressed_text,
                           const std::string& options = "",
                           const Registry& registry = Registry()) {
