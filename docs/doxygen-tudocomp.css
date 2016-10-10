@@ -21,7 +21,7 @@ body, table, div, p, dl {
 
 #titlearea {
     background-color: #DDD;
-    padding-bottom: 0.5em;
+    padding-bottom: 0.5rem;
 }
 
 #projectbrief, #projectnumber {
@@ -31,8 +31,8 @@ body, table, div, p, dl {
 
 #projectlogo img {
     width: auto;
-    height: 3.0em;
-    margin-left: 0.5em;
+    height: 3.0rem;
+    margin-left: 0.5rem;
 }
 
 #projectname {
@@ -59,7 +59,7 @@ body, table, div, p, dl {
     overflow: auto;
 
     display: block;
-    margin-top: -1em;
+    margin-top: -1rem;
 }
 
 #projectbrief {

@@ -21,20 +21,20 @@ body {
 }
 
 header {
-    height: 4em;
+    height: 4rem;
 
     background-image: url(../tudocomp.svg);
     background-repeat: no-repeat;
-    background-size: auto 3em;
-    background-position: 0.5em 0.5em;
+    background-size: auto 3rem;
+    background-position: 0.5rem 0.5rem;
 }
 
 header h1 {
     margin: 0;
-    padding-top: 2em;
-    padding-right: 1em;
+    padding-top: 2rem;
+    padding-right: 1rem;
 
-    font-size: 1em;
+    font-size: 1rem;
     font-weight: bold;
     text-align: right;
 }
@@ -51,42 +51,42 @@ tt, code {
 }
 
 footer {
-    padding: 0.5em;
+    padding: 0.5rem;
     text-align: right;
 }
 
 #dropzone-wrapper {
-    padding: 3em;
+    padding: 3rem;
 }
 
 #dropzone {
-    padding: 3em;
+    padding: 3rem;
     text-align: center;
 
     background-color: #CFC;
 
     border: 2px solid #9B9;
-    border-radius: 0.5em;
+    border-radius: 0.5rem;
 }
 
 #dropzone h1 {
-    font-size: 2em;
+    font-size: 2rem;
 
     margin: 0;
-    padding-bottom: 0.5em;
-    margin-bottom: 0.5em;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
 
     border-bottom: 2px solid #9B9;
 }
 
 #dropzone p {
-    line-height: 2em;
+    line-height: 2rem;
     margin: 0;
 }
 
 #dropzone textarea {
     width: 50%;
-    min-height: 5em;
+    min-height: 5rem;
 }
 
 #dropzone p#json-error {
@@ -97,10 +97,10 @@ footer {
 
     background-color: #FDD;
     border: 2px dotted red;
-    border-radius: 1em;
-    padding: 0.5em;
+    border-radius: 1rem;
+    padding: 0.5rem;
 
-    margin: 1em;
+    margin: 1rem;
 }
 
 #json-error-message {
@@ -109,10 +109,10 @@ footer {
 
 button {
     vertical-align: baseline;
-    padding: 1px 0.5em 1px 0.5em;
+    padding: 1px 0.5rem 1px 0.5rem;
 
     font-family: 'Raleway', sans-serif;
-    font-size: 1em;
+    font-size: 1rem;
 }
 
 #display {
@@ -132,14 +132,14 @@ button {
 }
 
 #options {
-    font-size: 0.8em;
+    font-size: 0.8rem;
 
-    padding: 0.5em;
+    padding: 0.5rem;
 
     background-color: #666;
     color: white;
 
-    margin-bottom: 0.5em;
+    margin-bottom: 0.5rem;
 
     display: none;
 }
@@ -163,13 +163,13 @@ button {
 }
 
 #options span {
-    padding-left: 0.5em;
+    padding-left: 0.5rem;
 }
 
 #options p {
     display: inline-block;
     margin: 0;
-    margin-left: 1em;
+    margin-left: 1rem;
 }
 
 #options p#export {
@@ -179,7 +179,7 @@ button {
 #tip {
     display: none;
 
-    font-size: 0.85em;
+    font-size: 0.85rem;
 
     position: absolute;
     left: 0px;
@@ -187,14 +187,14 @@ button {
 
     text-align: left;
 
-    margin-top: 1em;
-    margin-left: 1em;
+    margin-top: 1rem;
+    margin-left: 1rem;
 
     background-color: rgba(0, 0, 0, 0.75);
     border: 2px solid black;
-    border-radius: 0.5em;
+    border-radius: 0.5rem;
 
-    padding: 0.5em;
+    padding: 0.5rem;
 
     color: white;
 }
@@ -202,7 +202,7 @@ button {
 #tip .title {
     font-weight: bold;
     border-bottom: 1px solid white;
-    margin-bottom: 0.5em;
+    margin-bottom: 0.5rem;
 }
 
 #tip table {
@@ -221,7 +221,7 @@ button {
 
 #tip table td {
     font-family: 'Source Code Pro', monospace;
-    padding-left: 1em;
+    padding-left: 1rem;
 }
 
 #tip tbody.ext tr:first-child {
@@ -232,51 +232,51 @@ button {
     margin-left: 20%;
     width: 60%;
 
-    margin-top: 2em;
-    margin-bottom: 2em;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
 
     text-align: left;
-    padding: 0.5em;
+    padding: 0.5rem;
 }
 
 #data h1 {
     margin: 0;
-    margin-bottom: 1em;
+    margin-bottom: 1rem;
 
     border-bottom: 2px solid #AAA;
 
-    font-size: 1.5em;
+    font-size: 1.5rem;
     font-weight: bold;
 }
 
 #data .phase {
-    margin-top: 0.5em;
+    margin-top: 0.5rem;
 
     border: 4px solid #AAA;
-    border-radius: 0.5em;
+    border-radius: 0.5rem;
 
-    padding: 0.5em;
+    padding: 0.5rem;
 }
 
 #data .phase .phase {
-    margin-left: 2em;
+    margin-left: 2rem;
 }
 
 #data .phase .title {
     font-weight: bold;
-    margin-bottom: 0.5em;
+    margin-bottom: 0.5rem;
 }
 
 #data .phase .sub {
-    margin-top: 2em;
-    margin-left: 2em;
+    margin-top: 2rem;
+    margin-left: 2rem;
 }
 
 #data .phase .leaf {
-    border-left-width: 1em;
+    border-left-width: 1rem;
     border-left-style: solid;
 
-    padding-left: 0.5em;
+    padding-left: 0.5rem;
 
     font-weight: bold;
 }
@@ -285,15 +285,15 @@ button {
 }
 
 #data table {
-    margin-left: 2em;
-    font-size: 0.85em;
+    margin-left: 2rem;
+    font-size: 0.85rem;
 
     border: 2px solid #AAA;
     border-collapse: collapse;
 }
 
 #data table th, #data table td {
-    padding: 0.25em;
+    padding: 0.25rem;
     border: 1px solid #AAA;
 }
 
@@ -312,6 +312,6 @@ button {
 #data table td {
     font-family: 'Source Code Pro', monospace;
     text-align: right;
-    padding-left: 1em;
+    padding-left: 1rem;
 }
 
