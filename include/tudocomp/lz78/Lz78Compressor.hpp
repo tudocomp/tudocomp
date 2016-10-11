@@ -8,12 +8,12 @@
 #include <tudocomp/lz78/Factor.hpp>
 #include <tudocomp/lz78/Lz78BitCoder.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 namespace lz78 {
 
-using tudocomp::lz78::Factor;
-using ::tudocomp::Compressor;
+using tdc::lz78::Factor;
+using ::tdc::Compressor;
 using lz78_dictionary::CodeType;
 using lz78_dictionary::EncoderDictionary;
 using lz78_dictionary::DMS_MAX;

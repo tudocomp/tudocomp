@@ -8,7 +8,7 @@
 #include <tudocomp/pre_header/Env.hpp>
 #include <tudocomp/Algorithm.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 /// Interface for a general compressor.
 class Compressor: public Algorithm {

@@ -12,7 +12,7 @@
 #include <tudocomp/util/DCBStrategyMap.hpp>
 #include <tudocomp/util/DCBStrategyRetargetArray.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 template <typename C>
 class DecodeBuffer { // C should be one of: DCBStrategyNone, DCBStrategyMap, DCBStrategyRetargetArray

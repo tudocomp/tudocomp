@@ -11,7 +11,7 @@
 
 #include <tudocomp/ds/TextDS.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace lzss {
 
 /// Factorizes the input by finding redundant phrases in a re-ordered version

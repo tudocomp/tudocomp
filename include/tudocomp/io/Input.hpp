@@ -15,7 +15,7 @@
 #include <tudocomp/io/IOUtil.hpp>
 #include <tudocomp/io/ViewStream.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace io {
 
     class InputView;

@@ -12,19 +12,19 @@
 
 #include "tudocomp_test_util.h"
 
-using tudocomp::ExampleCompressor;
+using tdc::ExampleCompressor;
 
 TEST(example, test) {
     ASSERT_TRUE(true);
 }
 
 TEST(example, manual_compress) {
-    auto compressor = tudocomp::create_algo<ExampleCompressor>();
+    auto compressor = tdc::create_algo<ExampleCompressor>();
 
-    tudocomp::Input i("abcccccccde");
+    tdc::Input i("abcccccccde");
 
     std::vector<uint8_t> o_buf;
-    tudocomp::Output o(o_buf);
+    tdc::Output o(o_buf);
 
     compressor.compress(i, o);
 
@@ -33,12 +33,12 @@ TEST(example, manual_compress) {
 }
 
 TEST(example, manual_decompress) {
-    auto compressor = tudocomp::create_algo<ExampleCompressor>();
+    auto compressor = tdc::create_algo<ExampleCompressor>();
 
-    tudocomp::Input i("abc%6%de");
+    tdc::Input i("abc%6%de");
 
     std::vector<uint8_t> o_buf;
-    tudocomp::Output o(o_buf);
+    tdc::Output o(o_buf);
 
     compressor.decompress(i, o);
 
@@ -57,12 +57,12 @@ TEST(example, roundtrip2) {
 
 TEST(example, compress_stats_options) {
     auto compressor
-        = tudocomp::create_algo<ExampleCompressor>(" '/', true ");
+        = tdc::create_algo<ExampleCompressor>(" '/', true ");
 
-    tudocomp::Input i("abcccccccde");
+    tdc::Input i("abcccccccde");
 
     std::vector<uint8_t> o_buf;
-    tudocomp::Output o(o_buf);
+    tdc::Output o(o_buf);
 
     compressor.compress(i, o);
 
@@ -79,9 +79,9 @@ TEST(example, compress_stats_options) {
                                        "debug_sleep = true");
 }
 
-using tudocomp::TemplatedExampleCompressor;
-using tudocomp::ExampleDebugCoder;
-using tudocomp::ExampleBitCoder;
+using tdc::TemplatedExampleCompressor;
+using tdc::ExampleDebugCoder;
+using tdc::ExampleBitCoder;
 
 TEST(example, templated_debug) {
     test::roundtrip<TemplatedExampleCompressor<ExampleDebugCoder>>(

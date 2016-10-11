@@ -4,7 +4,7 @@
 #include "st.hpp"
 #include "util.hpp"
 
-namespace tudocomp {
+namespace tdc {
 namespace lz78 {
 namespace lzcics {
 

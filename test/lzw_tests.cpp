@@ -12,13 +12,13 @@
 #include <tudocomp/lzw/LzwDebugCoder.hpp>
 
 using lz78_dictionary::DMS_MAX;
-using tudocomp::string_ref;
-using tudocomp::create_algo;
+using tdc::string_ref;
+using tdc::create_algo;
 
 TEST(Lzw, compress) {
     {
-        using Coder = tudocomp::lzw::LzwDebugCoder;
-        using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+        using Coder = tdc::lzw::LzwDebugCoder;
+        using Compressor = tdc::lzw::LzwCompressor<Coder>;
 
         auto encoded = test::compress<Compressor>("LZWLZ78LZ77LZCLZMWLZAP");
         ASSERT_EQ(encoded.str,
@@ -26,32 +26,32 @@ TEST(Lzw, compress) {
         encoded.assert_decompress();
     }
     {
-        using Coder = tudocomp::lzw::LzwDebugCoder;
-        using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+        using Coder = tdc::lzw::LzwDebugCoder;
+        using Compressor = tdc::lzw::LzwCompressor<Coder>;
 
         auto encoded = test::compress<Compressor>("abcdebcdeabcd");
         ASSERT_EQ(encoded.str, "'a','b','c','d','e',257,259,256,258,");
         encoded.assert_decompress();
     }
     {
-        using Coder = tudocomp::lzw::LzwDebugCoder;
-        using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+        using Coder = tdc::lzw::LzwDebugCoder;
+        using Compressor = tdc::lzw::LzwCompressor<Coder>;
 
         auto encoded = test::compress<Compressor>("abcdebcdeabc");
         ASSERT_EQ(encoded.str, "'a','b','c','d','e',257,259,256,'c',");
         encoded.assert_decompress();
     }
     {
-        using Coder = tudocomp::lzw::LzwDebugCoder;
-        using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+        using Coder = tdc::lzw::LzwDebugCoder;
+        using Compressor = tdc::lzw::LzwCompressor<Coder>;
 
         auto encoded = test::compress<Compressor>("xyxaybxa!xa!?");
         ASSERT_EQ(encoded.str, "'x','y','x','a','y','b',258,'!',262,'?',");
         encoded.assert_decompress();
     }
     {
-        using Coder = tudocomp::lzw::LzwBitCoder;
-        using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+        using Coder = tdc::lzw::LzwBitCoder;
+        using Compressor = tdc::lzw::LzwCompressor<Coder>;
 
         auto encoded = test::compress<Compressor>("abcdebcdeabc");
         ASSERT_EQ(encoded.bytes, (pack_integers({
@@ -70,7 +70,7 @@ TEST(Lzw, compress) {
 }
 
 TEST(Lzw, LzwDebugCoder) {
-    using Coder = tudocomp::lzw::LzwDebugCoder;
+    using Coder = tdc::lzw::LzwDebugCoder;
 
     std::vector<uint8_t> encoded_buffer;
     Output encoded_out = Output::from_memory(encoded_buffer);
@@ -105,7 +105,7 @@ TEST(Lzw, LzwDebugCoder) {
 }
 
 TEST(Lzw, LzwBitCoder) {
-    using Coder = tudocomp::lzw::LzwBitCoder;
+    using Coder = tdc::lzw::LzwBitCoder;
 
     std::vector<uint8_t> encoded_buffer;
     Output encoded_out = Output::from_memory(encoded_buffer);
@@ -151,8 +151,8 @@ TEST(Lzw, LzwBitCoder) {
 }
 
 TEST(Lzw, LzwCompressor) {
-    using Coder = tudocomp::lzw::LzwDebugCoder;
-    using Compressor = tudocomp::lzw::LzwCompressor<Coder>;
+    using Coder = tdc::lzw::LzwDebugCoder;
+    using Compressor = tdc::lzw::LzwCompressor<Coder>;
 
     string_ref input_str = "xyxaybxa!xa!?";
 

@@ -5,7 +5,7 @@
 
 namespace lz77rule_test {
 
-using namespace tudocomp;
+using namespace tdc;
 using namespace esacomp;
 
 /// A simple builder class for testing the implementation of a compressor.

@@ -13,7 +13,7 @@
 #include <tudocomp/util.h>
 #include <tudocomp/lzss/LZSSCompressor.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace lzss {
 
 /// Computes the LZ77 factorization of the input by moving a sliding window

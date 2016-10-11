@@ -17,7 +17,7 @@
 
 #include <sdsl/bits.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 /// \brief Builds the string representation of a vector of byte values,
 /// sorrounded by square brackets (\c \[ and \c \]).

@@ -6,7 +6,7 @@
 
 #include <glog/logging.h>
 
-namespace tudocomp {
+namespace tdc {
 
 class DCBStrategyMap {
 

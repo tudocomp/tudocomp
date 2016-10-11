@@ -6,11 +6,11 @@
 #include <tudocomp/lzw/Factor.hpp>
 #include <tudocomp/lzw/decode.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 namespace lzw {
 
-using tudocomp::lzw::Factor;
+using tdc::lzw::Factor;
 using lz78_dictionary::CodeType;
 
 /**
@@ -20,8 +20,8 @@ class LzwBitCoder {
 private:
     // TODO: Change encode_* methods to not take Output& since that inital setup
     // rather, have a single init location
-    tudocomp::io::OutputStream m_out_guard;
-    tudocomp::BitOStream m_out;
+    tdc::io::OutputStream m_out_guard;
+    tdc::BitOStream m_out;
     uint64_t m_factor_counter = 0;
     bool empty = false;
 

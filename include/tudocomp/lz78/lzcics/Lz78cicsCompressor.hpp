@@ -6,7 +6,7 @@
 #include <tudocomp/lz78/lzcics/st.hpp>
 #include <tudocomp/lz78/lzcics/util.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace lz78 {
 namespace lzcics {
 

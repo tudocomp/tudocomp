@@ -9,7 +9,7 @@
 #include <chrono>
 #include <thread>
 
-namespace tudocomp {
+namespace tdc {
 
 class ExampleCompressor: public Compressor {
 private:

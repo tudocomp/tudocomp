@@ -17,8 +17,8 @@
 #include "test_util.h"
 #include "tudocomp_test_util.h"
 
-using namespace tudocomp;
-using namespace tudocomp::io;
+using namespace tdc;
+using namespace tdc::io;
 
 TEST(Test, test_file) {
     ASSERT_EQ(test_file_path("test.txt"), "test_files/test.txt");

@@ -27,9 +27,9 @@
 
 #include <tudocomp/example/ExampleCompressor.hpp>
 
-namespace tudocomp_algorithms {
+namespace tdc_algorithms {
 
-using namespace tudocomp;
+using namespace tdc;
 
 // Algorithm implementations
 using lzw::LzwCompressor;

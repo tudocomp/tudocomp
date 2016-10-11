@@ -8,7 +8,7 @@
 #include <vector>
 #include <memory>
 
-namespace tudocomp {
+namespace tdc {
 
 class InnerNullCompressor: public Compressor {
     std::unique_ptr<Compressor> m_compressor;

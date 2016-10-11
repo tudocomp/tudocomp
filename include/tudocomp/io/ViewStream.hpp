@@ -6,7 +6,7 @@
 #include <utility>
 #include <streambuf>
 
-namespace tudocomp {
+namespace tdc {
 namespace io {
 
 /// \cond INTERNAL

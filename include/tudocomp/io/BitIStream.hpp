@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <iostream>
 
-namespace tudocomp {
+namespace tdc {
 namespace io {
 
 /// \brief Wrapper for input streams that provides bitwise reading

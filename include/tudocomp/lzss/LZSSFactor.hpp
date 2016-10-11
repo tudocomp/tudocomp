@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace tudocomp {
+namespace tdc {
 namespace lzss {
 
 /// Represents a factor according Lempel-Ziv-Storer-Szymanski (LZSS).

@@ -1,7 +1,7 @@
 #include <tudocomp/Stat.hpp>
 #include <malloc_count/malloc_count.hpp>
 
-using namespace tudocomp;
+using namespace tdc;
 
 Stat::Phase end_phase_if() {
     auto mp = malloc_count::end_phase();

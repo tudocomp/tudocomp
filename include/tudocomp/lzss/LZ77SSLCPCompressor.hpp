@@ -11,7 +11,7 @@
 
 #include <tudocomp/ds/TextDS.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace lzss {
 
 /// Computes the LZ77 factorization of the input using its suffix array and

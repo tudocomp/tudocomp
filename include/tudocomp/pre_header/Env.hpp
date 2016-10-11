@@ -25,7 +25,7 @@
 
 #include <tudocomp/Stat.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 class Registry;
 inline std::unique_ptr<Registry> make_ptr_copy_of_registry(const Registry& registry);

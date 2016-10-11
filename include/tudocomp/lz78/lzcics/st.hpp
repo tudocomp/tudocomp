@@ -9,7 +9,7 @@
 
 using namespace sdsl;
 
-namespace tudocomp {
+namespace tdc {
 
 /**
  * This is a wrapper class around the sdsl-lite library to get a easier translation between

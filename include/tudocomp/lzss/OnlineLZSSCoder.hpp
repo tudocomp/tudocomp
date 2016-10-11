@@ -10,7 +10,7 @@
 #include <tudocomp/lzss/LZSSFactor.hpp>
 #include <tudocomp/Algorithm.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace lzss {
 
 /// Encoder for LZSS factors using a static amount of bits to encode factor

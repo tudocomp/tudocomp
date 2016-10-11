@@ -10,7 +10,7 @@
 #include <tudocomp/lzss/LZSSFactor.hpp>
 #include <tudocomp/Algorithm.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace lzss {
 
 class DebugLZSSCoder: Algorithm {

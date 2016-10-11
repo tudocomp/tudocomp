@@ -15,7 +15,7 @@
 #include <cstring>
 #include <glog/logging.h>
 
-namespace tudocomp {
+namespace tdc {
 
 /// A view into a slice of memory.
 ///

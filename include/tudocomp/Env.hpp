@@ -4,7 +4,7 @@
 #include <tudocomp/pre_header/Registry.hpp>
 #include <tudocomp/pre_header/Env.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 inline AlgorithmValue& EnvRoot::algo_value() {
     return *m_algo_value;

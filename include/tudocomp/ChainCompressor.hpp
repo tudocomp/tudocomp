@@ -8,7 +8,7 @@
 #include <vector>
 #include <memory>
 
-namespace tudocomp {
+namespace tdc {
 
 class ChainCompressor: public Compressor {
 public:

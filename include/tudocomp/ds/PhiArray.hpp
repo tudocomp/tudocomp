@@ -5,7 +5,7 @@
 #include "forward.hh"
 
 
-namespace tudocomp {
+namespace tdc {
 
 using io::InputView;
 
@@ -44,7 +44,7 @@ public:
 }//ns
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/SuffixArray.hpp>
-namespace tudocomp {
+namespace tdc {
 
 template<class T>
 bool check_permutation(const T& p, size_t n) {

@@ -1,6 +1,6 @@
 #ifndef FORWARD_HH
 #define FORWARD_HH
-namespace tudocomp {
+namespace tdc {
 
 template<typename T>
 class SuffixArray;

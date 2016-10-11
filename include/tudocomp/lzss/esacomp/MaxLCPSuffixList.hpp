@@ -4,7 +4,7 @@
 #include <sdsl/int_vector.hpp>
 #include <tudocomp/util.h>
 
-namespace tudocomp {
+namespace tdc {
 
 /// Provides constant-time access to the suffix in a suffix array
 /// with the longest correspondig lcp table entry.

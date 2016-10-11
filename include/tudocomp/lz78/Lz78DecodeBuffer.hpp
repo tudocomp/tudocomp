@@ -3,7 +3,7 @@
 
 #include <tudocomp/lz78/Factor.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 namespace lz78 {
 

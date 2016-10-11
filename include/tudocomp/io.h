@@ -7,7 +7,7 @@
 #include <tudocomp/io/BitIStream.hpp>
 #include <tudocomp/io/BitOStream.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 using Input = io::Input;
 using Output = io::Output;

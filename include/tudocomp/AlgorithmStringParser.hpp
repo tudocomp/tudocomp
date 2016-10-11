@@ -24,7 +24,7 @@
 #include <tudocomp/OptionValue.hpp>
 #include <tudocomp/util.h>
 
-namespace tudocomp {
+namespace tdc {
     /// \cond INTERNAL
     namespace ast {
         /*

@@ -5,7 +5,7 @@
 #include <tudocomp/Registry.hpp>
 #include <tudocomp/Algorithm.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 /// \cond INTERNAL
 inline std::unique_ptr<Compressor> create_algo_with_registry_dynamic(

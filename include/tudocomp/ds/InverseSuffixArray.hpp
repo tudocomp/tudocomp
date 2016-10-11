@@ -4,7 +4,7 @@
 #include <tudocomp/util.h>
 #include "forward.hh"
 
-namespace tudocomp {
+namespace tdc {
 
 
 template<class T>
@@ -42,7 +42,7 @@ public:
 }//ns
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/SuffixArray.hpp>
-namespace tudocomp {
+namespace tdc {
 
 template<class T>
 inline void InverseSuffixArray<T>::construct(T& t) {

@@ -10,7 +10,7 @@
 #include <tudocomp/Algorithm.hpp>
 
 //TODO only supports 8-bit characters
-namespace tudocomp {
+namespace tdc {
 
 class OfflineAlphabetCoder: Algorithm {
 

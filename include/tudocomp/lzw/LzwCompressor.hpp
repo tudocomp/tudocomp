@@ -7,11 +7,11 @@
 #include <tudocomp/lzw/LzwBitCoder.hpp>
 #include <tudocomp/lz78/dictionary.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 namespace lzw {
 
-using ::tudocomp::Compressor;
+using ::tdc::Compressor;
 using lz78_dictionary::CodeType;
 using lz78_dictionary::EncoderDictionary;
 using lz78_dictionary::DMS_MAX;

@@ -5,7 +5,7 @@
 #include <sdsl/select_support_mcl.hpp> // for the select data structure
 #include "forward.hh"
 
-namespace tudocomp {
+namespace tdc {
 
 constexpr int bits = 0;
 typedef size_t len_t;
@@ -109,7 +109,7 @@ class lcp_sada {
 }//ns
 #include <tudocomp/ds/SuffixArray.hpp>
 #include <tudocomp/ds/PhiArray.hpp>
-namespace tudocomp {
+namespace tdc {
 
 
 

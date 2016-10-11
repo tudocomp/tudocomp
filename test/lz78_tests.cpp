@@ -14,13 +14,13 @@
 #include <tudocomp/lz78/Lz78Compressor.hpp>
 #include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
 
-using tudocomp::lz78::Factor;
+using tdc::lz78::Factor;
 
-using tudocomp::Input;
-using tudocomp::Output;
-using tudocomp::Env;
-using tudocomp::string_ref;
-using tudocomp::create_algo;
+using tdc::Input;
+using tdc::Output;
+using tdc::Env;
+using tdc::string_ref;
+using tdc::create_algo;
 
 using std::swap;
 
@@ -46,7 +46,7 @@ TEST(Factor, ostream3) {
 }
 
 TEST(Lz78, Lz78DebugCoder) {
-    using Coder = tudocomp::lz78::Lz78DebugCoder;
+    using Coder = tdc::lz78::Lz78DebugCoder;
 
     std::vector<uint8_t> encoded_buffer;
     Output encoded_out = Output::from_memory(encoded_buffer);
@@ -76,7 +76,7 @@ TEST(Lz78, Lz78DebugCoder) {
 }
 
 TEST(Lz78, Lz78BitCoder) {
-    using Coder = tudocomp::lz78::Lz78BitCoder;
+    using Coder = tdc::lz78::Lz78BitCoder;
 
     std::vector<uint8_t> encoded_buffer;
     Output encoded_out = Output::from_memory(encoded_buffer);
@@ -114,8 +114,8 @@ TEST(Lz78, Lz78BitCoder) {
 }
 
 TEST(Lz78, Lz78Compressor) {
-    using Coder = tudocomp::lz78::Lz78DebugCoder;
-    using Compressor = tudocomp::lz78::Lz78Compressor<Coder>;
+    using Coder = tdc::lz78::Lz78DebugCoder;
+    using Compressor = tdc::lz78::Lz78Compressor<Coder>;
 
     string_ref input_str = "xyxaybxa!xa!?";
 
@@ -143,8 +143,8 @@ TEST(Lz78, Lz78Compressor) {
 }
 
 TEST(Lz78, compress) {
-    using Coder = tudocomp::lz78::Lz78DebugCoder;
-    using Compressor = tudocomp::lz78::Lz78Compressor<Coder>;
+    using Coder = tdc::lz78::Lz78DebugCoder;
+    using Compressor = tdc::lz78::Lz78Compressor<Coder>;
     {
         auto encoded = test::RoundTrip<Compressor>().compress("abaaabab");
         ASSERT_EQ(encoded.str, "(0,a)(0,b)(1,a)(1,b)(1,b)");

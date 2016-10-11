@@ -8,11 +8,11 @@
 #include <tudocomp/lzw/Factor.hpp>
 #include <tudocomp/lzw/decode.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 namespace lzw {
 
-using tudocomp::lzw::Factor;
+using tdc::lzw::Factor;
 using lz78_dictionary::CodeType;
 
 /**
@@ -22,7 +22,7 @@ class LzwDebugCoder {
 private:
     // TODO: Change encode_* methods to not take Output& since that inital setup
     // rather, have a single init location
-    tudocomp::io::OutputStream m_out;
+    tdc::io::OutputStream m_out;
     bool empty = false;
 
 public:

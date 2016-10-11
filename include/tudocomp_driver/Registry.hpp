@@ -36,11 +36,11 @@
 /// For algorithms to be made available in the driver application, they need
 /// to be registered in the \ref Registry. Any registered algorithm will also
 /// be listed in the utility's help message.
-namespace tudocomp_driver {}
+namespace tdc_driver {}
 
-namespace tudocomp_algorithms {
+namespace tdc_algorithms {
 
-using namespace tudocomp;
+using namespace tdc;
 
 /// \cond INTERNAL
 extern Registry REGISTRY;

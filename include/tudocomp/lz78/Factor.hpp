@@ -7,7 +7,7 @@
 #include <tudocomp/util.h>
 #include <tudocomp/lz78/dictionary.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace lz78 {
 
 using lz78_dictionary::CodeType;
@@ -20,7 +20,7 @@ struct Factor {
 
 inline std::ostream& operator<< (std::ostream& stream, const Factor& rule) {
     stream << "(" << rule.index << ", ";
-    return stream << tudocomp::byte_to_nice_ascii_char(rule.chr) << ")";
+    return stream << tdc::byte_to_nice_ascii_char(rule.chr) << ")";
 }
 
 inline bool operator== (const Factor& left, const Factor& right) {

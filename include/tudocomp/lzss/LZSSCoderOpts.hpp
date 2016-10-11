@@ -1,7 +1,7 @@
 #ifndef _INCLUDED_LZSS_CODER_OPTS_HPP
 #define _INCLUDED_LZSS_CODER_OPTS_HPP
 
-namespace tudocomp {
+namespace tdc {
 namespace lzss {
 
 /// Options for LZSS coders.

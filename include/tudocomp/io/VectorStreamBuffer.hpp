@@ -4,7 +4,7 @@
 #include <streambuf>
 #include <vector>
 
-namespace tudocomp {
+namespace tdc {
 namespace io {
 
 /// \cond INTERNAL

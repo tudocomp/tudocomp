@@ -4,7 +4,7 @@
 #include <tudocomp/lz78/Factor.hpp>
 #include <tudocomp/lz78/Lz78DecodeBuffer.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 namespace lz78 {
 
@@ -15,8 +15,8 @@ class Lz78BitCoder: public Algorithm {
 private:
     // TODO: Change encode_* methods to not take Output& since that inital setup
     // rather, have a single init location
-    tudocomp::io::OutputStream m_out_guard;
-    tudocomp::BitOStream m_out;
+    tdc::io::OutputStream m_out_guard;
+    tdc::BitOStream m_out;
     bool empty = false;
     uint64_t m_factor_counter = 0;
 

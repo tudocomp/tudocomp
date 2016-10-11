@@ -5,7 +5,7 @@
 
 #include <tudocomp/util.h>
 
-namespace tudocomp {
+namespace tdc {
 
 class DCBStrategyRetargetArray {
 

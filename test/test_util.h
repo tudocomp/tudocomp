@@ -12,7 +12,7 @@
 
 #include <tudocomp/util/View.hpp>
 
-using tudocomp::View;
+using tdc::View;
 
 // TODO: Actually specialize the 3 kinds
 

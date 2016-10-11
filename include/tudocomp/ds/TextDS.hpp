@@ -11,7 +11,7 @@
 #include <tudocomp/io.h>
 #include "forward.hh"
 
-namespace tudocomp {
+namespace tdc {
 
 using io::InputView;
 
@@ -129,7 +129,7 @@ public:
 #include <tudocomp/ds/PhiArray.hpp>
 #include <tudocomp/ds/LCPArray.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 template<
 	template<typename> class lcp_tt, 

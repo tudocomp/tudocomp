@@ -5,7 +5,7 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/io.h>
 
-namespace tudocomp {
+namespace tdc {
 
 class NoopCompressor: public Compressor {
 

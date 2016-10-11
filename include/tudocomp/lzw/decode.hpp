@@ -5,7 +5,7 @@
 #include <tudocomp/lz78/dictionary.hpp>
 #include <tudocomp/util.h>
 
-namespace tudocomp {
+namespace tdc {
 
 namespace lzw {
 

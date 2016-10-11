@@ -3,7 +3,7 @@
 
 #include <tudocomp/AlgorithmStringParser.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 class Env;
 class Compressor;
@@ -34,10 +34,10 @@ public:
     inline Registry():
         m_data(std::make_shared<RegistryData>()) {}
 
-    /// \brief Registers a \ref tudocomp::Compressor.
+    /// \brief Registers a \ref tdc::Compressor.
     ///
     /// Note that the compressor type \c T needs to implement a static function
-    /// called \c meta() that returns a \ref tudocomp::Meta information object.
+    /// called \c meta() that returns a \ref tdc::Meta information object.
     /// This meta information is used to automatically generate the
     /// documentation for the driver application's help message.
     ///

@@ -15,7 +15,7 @@
 /// or utility groups are contained in the respective sub-namespaces. The
 /// namespace \c tudocomp itself contains types important for all of the
 /// framework and its communication.
-namespace tudocomp {
+namespace tdc {
 
 /// \brief Contains I/O abstractions and utilities.
 ///
@@ -58,7 +58,7 @@ namespace lzss {
 namespace lzw {
 }
 
-} //namespace tudocomp
+} //namespace tdc
 
 // Include f'in everything!
 #include <glog/logging.h>

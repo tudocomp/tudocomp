@@ -7,7 +7,7 @@
 #include <functional>
 #include <memory>
 
-namespace tudocomp {
+namespace tdc {
 
 /// \brief Interface for algorithms.
 ///

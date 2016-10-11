@@ -11,7 +11,7 @@
 
 #include <tudocomp/io/BackInsertStream.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace io {
 
     class OutputStream;

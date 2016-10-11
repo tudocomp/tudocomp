@@ -24,7 +24,7 @@
 #include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
 #include <tudocomp/alphabet/OnlineAlphabetCoder.hpp>
 
-using namespace tudocomp;
+using namespace tdc;
 
 const std::string input_str = "abcdefgh#defgh_abcde";
 

@@ -22,8 +22,8 @@
 #include "test_util.h"
 #include "tudocomp_test_util.h"
 
-using namespace tudocomp;
-using namespace tudocomp_algorithms;
+using namespace tdc;
+using namespace tdc_algorithms;
 
 TEST(Chain, test) {
     test::roundtrip<ChainCompressor>("aaaaaabaaaaaabaaaaaabaaaaaab",

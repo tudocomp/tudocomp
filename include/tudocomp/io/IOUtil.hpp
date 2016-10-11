@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-namespace tudocomp {
+namespace tdc {
 namespace io {
 
 /// \cond INTERNAL

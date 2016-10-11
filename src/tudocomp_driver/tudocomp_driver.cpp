@@ -36,10 +36,10 @@ DEFINE_bool(raw, false, "Do not emit an header into the output file when compres
 DEFINE_bool(usestdin, false, "Read from stdin instead of trying to open a file.");
 DEFINE_bool(usestdout, false, "Output to stdout instead of writing to a file");
 
-namespace tudocomp_driver {
+namespace tdc_driver {
 
-using namespace tudocomp;
-using namespace tudocomp_algorithms;
+using namespace tdc;
+using namespace tdc_algorithms;
 
 const std::string COMPRESSED_FILE_ENDING = "tdc";
 
@@ -79,12 +79,12 @@ static bool check_for_file_already_exist(std::string& ofile,
     return true;
 }
 
-} // namespace tudocomp_driver
+} // namespace tdc_driver
 
 int main(int argc, char** argv)
 {
-    using namespace tudocomp_driver;
-    using namespace tudocomp_algorithms;
+    using namespace tdc_driver;
+    using namespace tdc_algorithms;
 
     google::InitGoogleLogging(argv[0]);
     int first_cmd_arg = google::ParseCommandLineFlags(&argc, &argv, true);

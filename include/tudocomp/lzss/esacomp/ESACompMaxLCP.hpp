@@ -10,7 +10,7 @@
 
 #include <tudocomp/ds/TextDS.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace lzss {
 
 /// Implements the original "Max LCP" selection strategy for ESAComp.

@@ -8,7 +8,7 @@
 #include <tudocomp/lzss/LZSSCoderOpts.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace lzss {
 
 /// Base for Lempel-Ziv-Storer-Szymanski-based compressors.

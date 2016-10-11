@@ -1,7 +1,7 @@
 #ifndef _INCLUDED_DCB_STRATEGY_NONE_HPP_
 #define _INCLUDED_DCB_STRATEGY_NONE_HPP_
 
-namespace tudocomp {
+namespace tdc {
 
 class DCBStrategyNone {
 

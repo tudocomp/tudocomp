@@ -5,7 +5,7 @@
 #include <tudocomp/lz78/Lz78DecodeBuffer.hpp>
 #include <glog/logging.h>
 
-namespace tudocomp {
+namespace tdc {
 
 namespace lz78 {
 
@@ -16,7 +16,7 @@ class Lz78DebugCoder: public Algorithm {
 private:
     // TODO: Change encode_* methods to not take Output& since that inital setup
     // rather, have a single init location
-    tudocomp::io::OutputStream m_out;
+    tdc::io::OutputStream m_out;
 
     bool empty = false;
 

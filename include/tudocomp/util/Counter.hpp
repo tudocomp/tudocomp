@@ -9,7 +9,7 @@
 
 #include <glog/logging.h>
 
-namespace tudocomp {
+namespace tdc {
 
 /// A data structure for counting occurences of values of a given type T.
 template<class T>

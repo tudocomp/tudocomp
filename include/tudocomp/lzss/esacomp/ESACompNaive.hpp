@@ -11,7 +11,7 @@
 #include <tudocomp/Algorithm.hpp>
 
 
-namespace tudocomp {
+namespace tdc {
 namespace lzss {
 
 /// A very naive selection strategy for ESAComp.

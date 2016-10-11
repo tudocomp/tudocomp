@@ -8,7 +8,7 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include "test_util.h"
 
-using namespace tudocomp;
+using namespace tdc;
 
 size_t longest_common_extension(const std::string& text, size_t a, size_t b) {
 	DCHECK_NE(a,b);

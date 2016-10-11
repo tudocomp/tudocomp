@@ -13,13 +13,13 @@
 #include <string>
 #include <memory>
 
-using tudocomp::Env;
-using tudocomp::Input;
-using tudocomp::Output;
-using tudocomp::create_algo_with_registry;
-using tudocomp::Registry;
-using tudocomp::View;
-using tudocomp::string_ref;
+using tdc::Env;
+using tdc::Input;
+using tdc::Output;
+using tdc::create_algo_with_registry;
+using tdc::Registry;
+using tdc::View;
+using tdc::string_ref;
 
 namespace test {
     template<class C>

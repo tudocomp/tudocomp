@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <iostream>
 
-namespace tudocomp {
+namespace tdc {
 namespace io {
 
 /// \brief Wrapper for output streams that provides bitwise writing

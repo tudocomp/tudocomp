@@ -9,7 +9,7 @@
 #include <tudocomp/util/DecodeBuffer.hpp>
 #include <tudocomp/Algorithm.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 //TODO only supports 8-bit characters
 class OnlineAlphabetCoder: Algorithm {

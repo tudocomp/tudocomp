@@ -13,7 +13,7 @@
 
 #include <tudocomp/util.h>
 
-namespace tudocomp {
+namespace tdc {
 
 // Forward declaration to be used by the parser
 namespace pattern {

@@ -4,7 +4,7 @@
 #include <tudocomp/pre_header/Registry.hpp>
 #include <tudocomp/pre_header/Env.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 template<class T>
 inline void Registry::register_compressor() {

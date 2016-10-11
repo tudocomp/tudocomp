@@ -10,7 +10,7 @@
 #include <tudocomp/io.h>
 #include <tudocomp/util.h>
 #include "forward.hh"
-namespace tudocomp {
+namespace tdc {
 
 template<class T>
 class SuffixArray {
@@ -43,7 +43,7 @@ public:
 };
 
 }//ns
-namespace tudocomp {
+namespace tdc {
 
 template<class T>
 void SuffixArray<T>::construct(T& t) {

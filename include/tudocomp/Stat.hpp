@@ -7,7 +7,7 @@
 #include <sstream>
 
 /// \brief Contains the runtime statistics interface \ref Stat.
-namespace tudocomp {
+namespace tdc {
 
 class Stat {
 

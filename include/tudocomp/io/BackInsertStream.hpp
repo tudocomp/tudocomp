@@ -8,7 +8,7 @@
 
 #include <tudocomp/io/VectorStreamBuffer.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace io {
 
 /// \cond INTERNAL
