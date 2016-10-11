@@ -102,8 +102,8 @@ It has the following external dependencies:
 
 * [SDSL](https://github.com/simongog/sdsl-lite)
   (2.1 or later).
-* [`gflags`](https://gflags.github.io/gflags) (2.1.2 or later).
-* [`glog`](https://github.com/google/glog) (0.34 or later).
+* [Gflags](https://gflags.github.io/gflags) (2.1.2 or later).
+* [Google Logging (glog)](https://github.com/google/glog) (0.34 or later).
 
 Additionally, the tests require
 [Google Test](https://github.com/google/googletest) (1.7.0 or later).
@@ -114,8 +114,10 @@ automatically download and build them from their official repositories in case t
 For building the documentation, the following tools are required:
 
 * LATEX (specifically the `pdflatex` component)
-* [Pandoc](http://pandoc.org)
-* [Doxygen](http://doxygen.org)
+* [Doxygen](http://doxygen.org) (1.8 or later).
+* [Pandoc](http://pandoc.org) (1.16 or later).
+* [Python](https://www.python.org/) (2.7 or later).
+* [pandocfilters (Python module)](https://pypi.python.org/pypi/pandocfilters) (1.3 or later).
 
 ## Framework driver utility
 

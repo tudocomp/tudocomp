@@ -1,18 +1,28 @@
 # docs-main target - builds the main documentation
 find_package(LATEX COMPONENTS PDFLATEX)
 find_package(Pandoc)
+find_package(PythonInterp)
 
 if(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
 
     set(MAIN_LATEX_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/latex)
     set(MAIN_HTML_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/html)
 
+    set(PANDOC_COMMAND ${PANDOC_BIN}
+            -M doxygen_url=http://dacit.cs.uni-dortmund.de/tudocomp/doxygen
+            --filter ${CMAKE_CURRENT_SOURCE_DIR}/metavars.py
+            -f markdown
+    )
+
     file(MAKE_DIRECTORY ${MAIN_LATEX_OUT_DIR})
     file(MAKE_DIRECTORY ${MAIN_HTML_OUT_DIR})
 
     add_custom_target(docs-main-html
         # convert markdown doc to html
-        COMMAND ${PANDOC_BIN} -s --toc -f markdown -t html -o ${MAIN_HTML_OUT_DIR}/_content.html ${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md
+        COMMAND ${PANDOC_COMMAND} -s --toc -t html
+            -o ${MAIN_HTML_OUT_DIR}/_content.html
+            ${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md
+
         # copy html framework
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/html ${MAIN_HTML_OUT_DIR}
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/media ${MAIN_HTML_OUT_DIR}/media
@@ -23,7 +33,9 @@ if(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
 
     add_custom_target(docs-main-pdf
         # convert markdown doc to tex
-        COMMAND ${PANDOC_BIN} -f markdown -t latex -o ${MAIN_LATEX_OUT_DIR}/_content.tex ${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md
+        COMMAND ${PANDOC_COMMAND} -t latex
+            -o ${MAIN_LATEX_OUT_DIR}/_content.tex
+            ${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md
 
         # copy tex framework
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/latex ${MAIN_LATEX_OUT_DIR}
