@@ -155,10 +155,6 @@ inline std::string Registry::generate_doc_string() {
     return ss.str();
 }
 
-inline std::unique_ptr<Registry> make_ptr_copy_of_registry(const Registry& registry) {
-    return std::make_unique<Registry>(registry);
-}
-
 inline std::unique_ptr<Compressor> Registry::select_algorithm_or_exit(const AlgorithmValue& algo) const {
     auto& static_only_evald_algo = algo.static_selection();
 
@@ -167,7 +163,6 @@ inline std::unique_ptr<Compressor> Registry::select_algorithm_or_exit(const Algo
 
         auto& constructor = m_data->m_compressors[static_only_evald_algo];
 
-        std::cout << __FILE__ << " " << __LINE__ << "\n";
         auto registry = Registry();
 
         return constructor(Env(env, env->algo_value(), registry));

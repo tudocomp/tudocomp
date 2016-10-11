@@ -70,7 +70,7 @@ inline Env::Env(std::shared_ptr<EnvRoot> root,
                 const Registry& registry):
     m_root(root),
     m_node(node),
-    m_registry(make_ptr_copy_of_registry(registry)) {}
+    m_registry(std::make_unique<Registry>(registry)) {}
 
 inline Env::~Env() = default;
 
