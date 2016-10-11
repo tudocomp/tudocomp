@@ -4,7 +4,7 @@
 #include <vector>
 
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/io.h>
+#include <tudocomp/io.hpp>
 #include <tudocomp/lzss/LZSSCoderOpts.hpp>
 #include <tudocomp/lzss/LZSSFactor.hpp>
 

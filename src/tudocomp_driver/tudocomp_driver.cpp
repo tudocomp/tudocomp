@@ -12,7 +12,7 @@
 #include <glog/logging.h>
 
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/io.h>
+#include <tudocomp/io.hpp>
 #include <tudocomp/io/IOUtil.hpp>
 #include <tudocomp_driver/Registry.hpp>
 

@@ -8,8 +8,8 @@
 
 
 
-#include <tudocomp/io.h>
-#include "forward.hh"
+#include <tudocomp/io.hpp>
+#include "forward.hpp"
 
 namespace tdc {
 

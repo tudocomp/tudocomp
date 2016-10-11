@@ -1,9 +1,9 @@
 #ifndef _INCLUDED_DS_LCP_ARRAY_HPP
 #define _INCLUDED_DS_LCP_ARRAY_HPP
 
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 #include <sdsl/select_support_mcl.hpp> // for the select data structure
-#include "forward.hh"
+#include "forward.hpp"
 
 namespace tdc {
 

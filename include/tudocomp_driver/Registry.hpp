@@ -23,7 +23,7 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
 #include <tudocomp/Registry.hpp>
 

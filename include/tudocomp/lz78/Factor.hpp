@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <iostream>
 
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 #include <tudocomp/lz78/dictionary.hpp>
 
 namespace tdc {

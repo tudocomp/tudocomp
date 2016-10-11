@@ -1,7 +1,7 @@
 #ifndef _INCLUDED_LZSS_ESA_COMPRESSOR_HPP_
 #define _INCLUDED_LZSS_ESA_COMPRESSOR_HPP_
 
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 
 #include <tudocomp/lzss/LZSSCompressor.hpp>
 

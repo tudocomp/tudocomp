@@ -4,9 +4,9 @@
 #include <gtest/gtest.h>
 #include <glog/logging.h>
 
-#include "test_util.h"
+#include "test_util.hpp"
 #include <tudocomp_driver/Registry.hpp>
-#include "tudocomp_driver_util.h"
+#include "tudocomp_driver_util.hpp"
 
 using namespace tdc_algorithms;
 

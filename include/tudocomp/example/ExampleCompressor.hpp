@@ -5,7 +5,7 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/io.h>
+#include <tudocomp/io.hpp>
 #include <chrono>
 #include <thread>
 

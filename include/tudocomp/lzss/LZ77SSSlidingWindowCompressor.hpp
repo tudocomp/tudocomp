@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <vector>
 
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 #include <tudocomp/lzss/LZSSCompressor.hpp>
 
 namespace tdc {

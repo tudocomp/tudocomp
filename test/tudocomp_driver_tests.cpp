@@ -4,13 +4,13 @@
 #include <gtest/gtest.h>
 #include <glog/logging.h>
 
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 
-#include "test_util.h"
+#include "test_util.hpp"
 #include <tudocomp_driver/Registry.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
 
-#include "tudocomp_driver_util.h"
+#include "tudocomp_driver_util.hpp"
 
 TEST(TudocompDriver, list) {
     // Test that we got at some output with --list

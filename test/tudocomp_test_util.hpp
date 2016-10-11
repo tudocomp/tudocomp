@@ -1,14 +1,14 @@
 #ifndef TC_TEST_UTIL_H
 #define TC_TEST_UTIL_H
 
-#include "test_util.h"
+#include "test_util.hpp"
 #include <tudocomp/tudocomp.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
 #include <tudocomp/Registry.hpp>
-#include <tudocomp/io.h>
+#include <tudocomp/io.hpp>
 #include <tudocomp/util/View.hpp>
 #include <string>
 #include <memory>

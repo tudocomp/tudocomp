@@ -11,7 +11,7 @@
 
 #include <glog/logging.h>
 
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 
 namespace tdc {
 

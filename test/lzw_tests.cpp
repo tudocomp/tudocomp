@@ -4,8 +4,8 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#include "test_util.h"
-#include "tudocomp_test_util.h"
+#include "test_util.hpp"
+#include "tudocomp_test_util.hpp"
 
 #include <tudocomp/lzw/LzwCompressor.hpp>
 #include <tudocomp/lzw/LzwBitCoder.hpp>

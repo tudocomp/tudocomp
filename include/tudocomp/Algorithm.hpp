@@ -3,7 +3,7 @@
 
 #include <tudocomp/AlgorithmStringParser.hpp>
 #include <tudocomp/pre_header/Env.hpp>
-#include <tudocomp/io.h>
+#include <tudocomp/io.hpp>
 #include <functional>
 #include <memory>
 

@@ -1,8 +1,8 @@
 #ifndef _INCLUDED_DS_INVERSE_SUFFIX_ARRAY_HPP
 #define _INCLUDED_DS_INVERSE_SUFFIX_ARRAY_HPP
 
-#include <tudocomp/util.h>
-#include "forward.hh"
+#include <tudocomp/util.hpp>
+#include "forward.hpp"
 
 namespace tdc {
 

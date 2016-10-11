@@ -2,7 +2,7 @@
 #define _INCLUDED_MAX_LCP_SUFFIX_LIST_HPP_
 
 #include <sdsl/int_vector.hpp>
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 
 namespace tdc {
 

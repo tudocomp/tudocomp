@@ -64,8 +64,8 @@ namespace lzw {
 #include <glog/logging.h>
 #include <sdsl/int_vector.hpp>
 
-#include <tudocomp/io.h>
-#include <tudocomp/util.h>
+#include <tudocomp/io.hpp>
+#include <tudocomp/util.hpp>
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ChainCompressor.hpp>

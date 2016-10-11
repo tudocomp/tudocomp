@@ -5,8 +5,8 @@
 
 #include <gtest/gtest.h>
 
-#include "test_util.h"
-#include "tudocomp_test_util.h"
+#include "test_util.hpp"
+#include "tudocomp_test_util.hpp"
 
 #include <tudocomp/lz78/Factor.hpp>
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>

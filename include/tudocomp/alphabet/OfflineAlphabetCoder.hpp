@@ -4,8 +4,8 @@
 #include <sdsl/int_vector.hpp>
 
 #include <tudocomp/Env.hpp>
-#include <tudocomp/io.h>
-#include <tudocomp/util.h>
+#include <tudocomp/io.hpp>
+#include <tudocomp/util.hpp>
 #include <tudocomp/util/Counter.hpp>
 #include <tudocomp/Algorithm.hpp>
 

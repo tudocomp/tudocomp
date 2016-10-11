@@ -7,15 +7,15 @@
 #include <gtest/gtest.h>
 
 #include <tudocomp/tudocomp.hpp>
-#include <tudocomp/io.h>
-#include <tudocomp/util.h>
+#include <tudocomp/io.hpp>
+#include <tudocomp/util.hpp>
 #include <tudocomp/util/DecodeBuffer.hpp>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
 
-#include "test_util.h"
-#include "tudocomp_test_util.h"
+#include "test_util.hpp"
+#include "tudocomp_test_util.hpp"
 
 using namespace tdc;
 using namespace tdc::io;

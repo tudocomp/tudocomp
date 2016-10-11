@@ -10,7 +10,7 @@
 #include <chrono>
 #include <thread>
 
-#include "tudocomp_test_util.h"
+#include "tudocomp_test_util.hpp"
 
 using tdc::ExampleCompressor;
 

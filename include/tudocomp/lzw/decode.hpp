@@ -3,7 +3,7 @@
 
 #include <tudocomp/lzw/Factor.hpp>
 #include <tudocomp/lz78/dictionary.hpp>
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 
 namespace tdc {
 

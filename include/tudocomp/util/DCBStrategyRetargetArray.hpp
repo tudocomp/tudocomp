@@ -3,7 +3,7 @@
 
 #include <sdsl/int_vector.hpp>
 
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 
 namespace tdc {
 

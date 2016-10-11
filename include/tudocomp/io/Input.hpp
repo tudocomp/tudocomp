@@ -10,7 +10,7 @@
 #include <vector>
 #include <iterator>
 
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 
 #include <tudocomp/io/IOUtil.hpp>
 #include <tudocomp/io/ViewStream.hpp>

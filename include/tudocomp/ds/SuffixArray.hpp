@@ -7,9 +7,9 @@
 
 #include <sdsl/int_vector.hpp>
 
-#include <tudocomp/io.h>
-#include <tudocomp/util.h>
-#include "forward.hh"
+#include <tudocomp/io.hpp>
+#include <tudocomp/util.hpp>
+#include "forward.hpp"
 namespace tdc {
 
 template<class T>

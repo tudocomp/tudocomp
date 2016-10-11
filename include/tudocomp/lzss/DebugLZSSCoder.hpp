@@ -2,8 +2,8 @@
 #define _INCLUDED_DEBUG_LZSS_CODER_HPP
 
 #include <tudocomp/Env.hpp>
-#include <tudocomp/io.h>
-#include <tudocomp/util.h>
+#include <tudocomp/io.hpp>
+#include <tudocomp/util.hpp>
 #include <tudocomp/util/DecodeBuffer.hpp>
 
 #include <tudocomp/lzss/LZSSCoderOpts.hpp>

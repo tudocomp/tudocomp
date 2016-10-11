@@ -3,10 +3,10 @@
 
 #include <gtest/gtest.h>
 
-#include <tudocomp/io.h>
+#include <tudocomp/io.hpp>
 #include <tudocomp/util/Generators.hpp>
 #include <tudocomp/ds/TextDS.hpp>
-#include "test_util.h"
+#include "test_util.hpp"
 
 using namespace tdc;
 
