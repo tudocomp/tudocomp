@@ -1,18 +1,21 @@
 # docs-main target - builds the main documentation
 find_package(LATEX COMPONENTS PDFLATEX)
 find_package(Pandoc)
-find_package(PythonInterp)
 
 if(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
 
     set(MAIN_LATEX_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/latex)
     set(MAIN_HTML_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/html)
 
-    set(PANDOC_COMMAND ${PANDOC_BIN}
-            -M doxygen_url=http://dacit.cs.uni-dortmund.de/tudocomp/doxygen
-            --filter ${CMAKE_CURRENT_SOURCE_DIR}/metavars.py
-            -f markdown
-    )
+    set(PANDOC_COMMAND ${PANDOC_BIN} -f markdown)
+
+    find_python_module(pandocfilters)
+    if(PY_PANDOCFILTERS)
+        set(PANDOC_COMMAND ${PANDOC_COMMAND}
+                --filter ${CMAKE_CURRENT_SOURCE_DIR}/metavars.py
+                -f markdown
+        )
+    endif(PY_PANDOCFILTERS)
 
     file(MAKE_DIRECTORY ${MAIN_LATEX_OUT_DIR})
     file(MAKE_DIRECTORY ${MAIN_HTML_OUT_DIR})
@@ -77,5 +80,6 @@ endif(DOXYGEN_FOUND)
 # docs target - invokes docs-main and docs-doxygen
 if(DOXYGEN_FOUND AND PANDOC_FOUND)
 add_custom_target(docs DEPENDS docs-main docs-doxygen)
+
 endif(DOXYGEN_FOUND AND PANDOC_FOUND)
 
