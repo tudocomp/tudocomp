@@ -6,6 +6,7 @@
 #include <tudocomp/io.hpp>
 #include <tudocomp/util/Generators.hpp>
 #include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/uint_t.hpp>
 #include "test_util.hpp"
 
 using namespace tdc;
@@ -55,7 +56,7 @@ void test_sa(const std::string& str, textds_t& t) {
     for(size_t i = 1; i < t.size()+1; i++) {
         ASSERT_GE(t[sa[i]], t[sa[i-1]]);
 		ASSERT_LT(str.substr(sa[i-1]), str.substr(sa[i]));
-		ASSERT_LT(View(str,sa[i-1]), View(str,sa[i])); 
+		ASSERT_LT(View(str,sa[i-1]), View(str,sa[i]));
     }
 }
 

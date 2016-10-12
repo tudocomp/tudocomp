@@ -9,17 +9,18 @@
  */
 template<int bits = 40>
 class uint_t {
-	static_assert(bits > 0, "bits must be non-negative");
-	static_assert(bits < 65, "bits must be at most 64");
-	uint64_t data : bits;
-	public:
-	uint_t(uint64_t i) : data(i) {}
-	uint_t() {}
-	uint_t(const uint_t<bits>&& i) : data(i.data) {}
-	uint_t(const uint_t<bits>& i) : data(i.data) {}
-	inline uint_t& operator=(uint64_t data) { this->data = data; return *this; }
-	inline uint_t& operator=(const uint_t<bits>& b) { this->data = b.data; return *this; }
-	inline operator uint64_t() const { return data; }   
+    static_assert(bits > 0, "bits must be non-negative");
+    static_assert(bits < 65, "bits must be at most 64");
+    uint64_t data : bits;
+
+public:
+    uint_t(uint64_t i) : data(i) {}
+    uint_t() {}
+    uint_t(const uint_t<bits>&& i) : data(i.data) {}
+    uint_t(const uint_t<bits>& i) : data(i.data) {}
+    inline uint_t& operator=(uint64_t data) { this->data = data; return *this; }
+    inline uint_t& operator=(const uint_t<bits>& b) { this->data = b.data; return *this; }
+    inline operator uint64_t() const { return data; }
     inline uint_t<bits>& operator--() { --data; return *this;}
     inline uint_t<bits>& operator++() { ++data; return *this;}
     inline uint64_t operator--(int) { return data--; }
@@ -38,5 +39,14 @@ class uint_t {
     inline bool operator>(uint64_t b) const { return data > b; }
     inline bool operator>(const uint_t<bits>& b) const { return data > b.data; }
 } __attribute__((packed));
+
+static_assert(sizeof(uint_t<8>)  == 1);
+static_assert(sizeof(uint_t<16>) == 2);
+static_assert(sizeof(uint_t<24>) == 3);
+static_assert(sizeof(uint_t<32>) == 4);
+static_assert(sizeof(uint_t<40>) == 5);
+static_assert(sizeof(uint_t<48>) == 6);
+static_assert(sizeof(uint_t<56>) == 7);
+static_assert(sizeof(uint_t<64>) == 8);
 
 #endif /* UINT_T_HPP */
