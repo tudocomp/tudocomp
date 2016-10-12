@@ -4,6 +4,7 @@ list(APPEND BASIC_DEPS malloc_count tudocomp)
 
 run_test(tudocomp_tests DEPS ${BASIC_DEPS})
 run_test(ds_tests       DEPS ${BASIC_DEPS})
+run_test(generic_int_vector_tests DEPS ${BASIC_DEPS})
 
 #run_bench(int_vector_benchs DEPS ${BASIC_DEPS})
 
