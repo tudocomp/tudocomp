@@ -177,10 +177,7 @@ int main(int argc, char** argv)
 
             if (use_stdin) {
                 // Input from stdin
-                stream_buffer = io::read_stream_to_stl_byte_container<
-                    std::vector<uint8_t>
-                >(std::cin);
-                inp = Input::from_memory(stream_buffer);
+                inp = Input(std::cin);
             } else {
                 // Input from specified file
                 inp = Input::from_path(file);

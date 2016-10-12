@@ -31,24 +31,27 @@ namespace io {
     /// reading without the ability to rewind (online).
     class Input {
         struct Variant {
+            virtual ~Variant() {}
             virtual std::unique_ptr<Variant> virtual_copy() = 0;
             virtual InputView as_view() = 0;
             virtual InputStream as_stream() = 0;
             virtual size_t size() = 0;
+            virtual bool has_hidden_null_terminator() = 0;
         };
 
         struct Memory: Variant {
-            const uint8_t* ptr;
-            size_t m_size;
+            View m_view;
             std::shared_ptr<std::vector<uint8_t>> m_owned;
 
-            Memory(const uint8_t* ptr, size_t size): m_size(size) {
-                this->ptr = ptr;
-            }
+            Memory(View view):
+                m_view(view) {}
+
+            Memory(View view, std::shared_ptr<std::vector<uint8_t>> owned):
+                m_view(view),
+                m_owned(owned) {}
 
             Memory(const Memory& other):
-                ptr(other.ptr),
-                m_size(other.m_size),
+                m_view(other.m_view),
                 m_owned(other.m_owned) {}
 
             std::unique_ptr<Variant> virtual_copy() override {
@@ -58,6 +61,11 @@ namespace io {
             inline InputView as_view() override;
             inline InputStream as_stream() override;
             inline size_t size() override;
+            inline bool has_hidden_null_terminator() override {
+                // The slice has a hidden null character after its end
+                // if it points into m_owned and ends one before its end
+                return m_owned && ((m_view.data() + m_view.size()) == &m_owned->back());
+            }
         };
         struct File: Variant {
             std::string path;
@@ -79,6 +87,9 @@ namespace io {
             inline InputView as_view() override;
             inline InputStream as_stream() override;
             inline size_t size() override;
+            inline bool has_hidden_null_terminator() override {
+                return false;
+            }
         };
 
         friend class InputStream;
@@ -99,7 +110,7 @@ namespace io {
 
         /// \brief Constructs an empty input.
         inline Input():
-            m_data(std::make_unique<Memory>(nullptr, 0)) {}
+            m_data(std::make_unique<Memory>(""_v)) {}
 
         /// \brief Constructs an input from another input, retaining its
         /// internal state ("cursor").
@@ -125,14 +136,29 @@ namespace io {
         ///
         /// \param buf The input byte buffer.
         Input(const std::vector<uint8_t>& buf):
-            m_data(std::make_unique<Memory>(&buf[0], buf.size())) {}
+            m_data(std::make_unique<Memory>(buf)) {}
 
         /// \brief Constructs an input reading from a string in memory.
         ///
         /// \param buf The input string.
         Input(const string_ref buf):
-            m_data(std::make_unique<Memory>(
-                    (const uint8_t*) &buf[0], buf.size())) {}
+            m_data(std::make_unique<Memory>(buf)) {}
+
+        /// \brief Constructs an input reading from a stream.
+        ///
+        /// The stream will still be buffered in memory.
+        ///
+        /// \param buf The input string.
+        Input(std::istream& stream) {
+            auto buf = io::read_stream_to_stl_byte_container<
+                std::vector<uint8_t>>(stream);
+            buf.push_back(0);
+
+            View data(buf.data(), buf.size() - 1);
+            auto owned = std::make_shared<std::vector<uint8_t>>(std::move(buf));
+
+            m_data = std::make_unique<Memory>(data, owned);
+        }
 
         /// \brief Move assignment operator.
         Input& operator=(Input&& other) {
@@ -205,17 +231,21 @@ namespace io {
 
         struct Memory: Variant {
             View m_view;
+            bool m_view_has_hidden_null_terminator;
             std::unique_ptr<std::vector<uint8_t>> m_owned;
 
-            inline Memory(const uint8_t* ptr, size_t size):
-                m_view(ptr, size) { }
+            inline Memory(View view, bool has_hidden_null_terminator = false):
+                m_view(view),
+                m_view_has_hidden_null_terminator(has_hidden_null_terminator) {}
 
             inline View view() override {
                 return m_view;
             }
 
             inline virtual void ensure_null_terminator() override {
-                if ((m_view.size() == 0) || (m_view.back() != 0)) {
+                if (m_view_has_hidden_null_terminator) {
+                    m_view = View(m_view.data(), m_view.size() + 1);
+                } else if ((m_view.size() == 0) || (m_view.back() != 0)) {
                     m_owned = std::make_unique<std::vector<uint8_t>>();
                     auto& v = *m_owned;
                     v.reserve(m_view.size() + 1);
@@ -236,7 +266,7 @@ namespace io {
 
             inline View view() override {
                 return View {
-                    (char*) buffer.data(),
+                    buffer.data(),
                     buffer.size() - m_null_skip
                 };
             }
@@ -299,11 +329,10 @@ namespace io {
         Input::Memory mem2 = *this;
 
         // advance view into memory by its whole length
-        ptr += m_size;
-        m_size = 0;
+        m_view = m_view.substr(m_view.size());
 
         return InputView {
-            InputView::Memory { mem2.ptr, mem2.m_size }
+            InputView::Memory { mem2.m_view }
         };
     }
 
@@ -366,8 +395,7 @@ namespace io {
             virtual ~Memory() {
                 if (!m_is_empty) {
                     size_t len = size_t(m_stream.stream().tellg()) - m_start_pos;
-                    m_offset_back_ref->ptr += len;
-                    m_offset_back_ref->m_size -= len;
+                    m_offset_back_ref->m_view = m_offset_back_ref->m_view.substr(len);
                 }
             }
             std::istream& stream() override {
@@ -466,8 +494,8 @@ namespace io {
         return InputStream {
             InputStream::Memory {
                 ViewStream {
-                    (char*)ptr,
-                    m_size
+                    (char*) m_view.data(),
+                    m_view.size()
                 },
                 this
             }
@@ -489,7 +517,7 @@ namespace io {
     }
 
     inline size_t Input::Memory::size() {
-        return m_size;
+        return m_view.size();
     }
 
     inline size_t Input::File::size() {
