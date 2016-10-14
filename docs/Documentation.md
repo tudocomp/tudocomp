@@ -301,7 +301,7 @@ makes development more convenient as well.
 
 ## Implementing a simple compressor
 
-This chapter presents the steps necessary to implement a simple compressor. The
+This section presents the steps necessary to implement a simple compressor. The
 implementation that is developed here is available in the framework's
 repository in the `/include/tudocomp/example/` directory.
 
@@ -336,8 +336,6 @@ compressors) such as its name and type. This information is used by the generic
 algorithm constructor `create_algo`, which will be explained below, as well as
 for the registry of the driver utility.
 
-### Example compressor frame
-
 The following example header (`/include/tudocomp/example/ExampleCompressor.hpp`)
 contains a minimal `Compressor` implementation named `ExampleCompressor`:
 
@@ -349,7 +347,7 @@ contains a minimal `Compressor` implementation named `ExampleCompressor`:
 
 #include <tudocomp/tudocomp.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 class ExampleCompressor : public Compressor {
 public:
@@ -375,7 +373,7 @@ public:
 #endif
 ~~~
 
-The `tudocomp` namespace contains most of the core types required for
+The `tdc` namespace contains most of the core types required for
 implementing compressors, including the `Compressor` interface and the `Env`
 and `Meta` types.
 
@@ -409,50 +407,43 @@ and also provides iterator access. The object returned by `as_view` provides the
 indexed access `[]` operator for and the function `size()` to return the amount
 of bytes available on the input.
 
-The following code snippet demonstrates using a given `input` as a view:
+The following code snippet demonstrates using a given input as a view:
 
 ~~~ { .cpp }
-//retrieve a view
-auto view = input.as_view();
-
-// create a shallow copy of the view
-auto view2 = view;
+auto iview = input.as_view(); //retrieve an input view
+auto iview2 = iview; // create a shallow copy of the view
 
 // compare the view's content against a certain string
 // the CHECK macro is Google Logging's "assert"
-CHECK(view == "foobar");
+CHECK(iview == "foobar");
 
-// create a sub-view for a range within the main view
-auto sub_view = view.substr(1, 5);
-
-// assertion for the sub-view's contents
-CHECK(sub_view == "ooba");
+auto sub_view = iview.substr(1, 5); // create a sub-view for a range within the main view
+CHECK(sub_view == "ooba"); // assertion for the sub-view's contents
 
 // iterate over the whole view character-wise
-for (size_t i = 0; i < view.size(); i++) {
-    uint8_t c = view[i];
+for (size_t i = 0; i < iview.size(); i++) {
+    uint8_t c = iview[i];
     // ...
 }
 ~~~
 
 Note that copies and sub-views are shallow, ie. they point to the same memory
-location as the original view.
+location as the original view and thus have the same content.
 
-In contrast, The following code snippet demonstrates using a given `input`
-as a stream:
+In contrast, The following code snippet demonstrates using an input as a stream:
 
 ~~~ { .cpp }
-// retrieve a stream
-auto stream = input.as_stream();
+auto istream = input.as_stream(); // retrieve an input stream
+auto istream2 = istream; // create a second stream as a "rewind" position
 
 // read the input character-wise using a C++11 range-based for loop
-for(uint8_t c : stream) {
+for(uint8_t c : istream) {
     // ...
 }
 
 // read the input character-wise using the std::istream interface
 char c;
-while(stream.get(c)) {
+while(istream2.get(c)) {
     // ...
 }
 ~~~
@@ -460,96 +451,117 @@ while(stream.get(c)) {
 Note how the framework uses the `uint8_t` (unsigned byte) type to represent
 characters. This is contrary to the `std` library, which uses C's `char` type.
 
-An output has to be generated sequentially and thus only provides a stream
+Furthermore, note how `istream2` is created as a copy of `istream`. This way,
+`istream2` points at the same stream position as `istream` at the time the
+copy is created and can be used as a "rewind" point for use independently
+of `istream`.
+
+The output has to be generated sequentially and thus only provides a stream
 interface. The following code snippet demonstrates this by copying the entire
 input to the output:
 
 ~~~ { .cpp }
-// retrieve the input stream
-auto in_stream = input.as_stream();
+auto istream = input.as_stream(); // retrieve the input stream
+auto ostream = output.as_stream(); // retrieve the output stream
 
-// retrieve the output stream
-auto out_stream = output.as_stream();
-
-// copy the input to the output
-for(uint8_t c : in_stream) {
-    out_stream << c;
+// copy the input to the output character by character
+for(uint8_t c : istream) {
+    ostream << c;
 }
 ~~~
 
->> XXX
+### Example: Run-length encoding
 
-### An example implementation
+The following example implements the `compress` method so that it yields a
+run-length encoding of the input. In run-length encoding, sequences (runs)
+of the same character are replaced by one single occurence, followed by the
+length of the run.
 
-As an example, we provide here a simple run length encoding compressor that
-replaces consecutive runs of the same byte with an integer.
-E.g., we encode `"abcccccccde"` as `"abc%6%de"` by replacing the substring `"ccccccc"` consisting of seven subsequent `c`s with `"c%6%"`
-to indicate that the previous `'c'` should be repeated six times.
+For example, the input `"abcccccccde"`, which contains a run of six `c`
+characters, would be encoded as `"abc%6%de"`, where `%6%` designates that the
+preceding character is repeated six times. This way, the original input can be
+restored from the encoded string.
 
 ~~~ { .cpp }
 inline virtual void compress(Input& input, Output& output) override {
-    auto istream = input.as_stream();
-    auto ostream = output.as_stream();
+    auto istream = input.as_stream(); // retrieve the input stream
+    auto ostream = output.as_stream(); // retrieve the output stream
 
-    char last;
-    char current;
-    size_t counter = 0;
+    char current; // stores the current character read from the input
+    char last; //stores the character that preceded the current character
+    size_t counter = 0; // counts the length of the run of the current character
 
-    // Use a lambda function here to keep the code DRY
+    // writes the current run to the output stream
     auto emit_run = [&]() {
         if (counter > 3) {
-            // Only replace if we actually get shorter
+            // if the run exceeds 3 characters, encode the run using the %% syntax
             ostream << last << '%' << counter << '%';
         } else {
-            // Else output chars as normal
+            // otherwise, do not encode and emit the whole run
             for (size_t i = 0; i <= counter; i++) {
                 ostream << last;
             }
         }
     };
 
-    // Try to get first char
-    // if false then input == "" and we exit the function
+    // retrieve the first character on the stream
     if (istream.get(last)) {
+        // continue reading from the stream
         while(istream.get(current)) {
             if (current == last) {
+                // increase length of the current run
                 counter++;
             } else {
-                // Emit run length encoding here
+                // emit the previous run
                 emit_run();
-                // Then continue with the next character
+
+                // continue reading from the stream, starting a new run
                 last = current;
                 counter = 0;
             }
         }
-        // Don't forget trailing chars
+
+        // emit the final run
         emit_run();
     }
 }
+~~~
 
+The decoding is handled by the `decompress` method as follows. It attempts to
+find patterns of the form `c%n%` and writes the character `c` to the output
+`n` times. Any character not part of such a pattern will simply be copied to
+the output.
+
+~~~ { .cpp }
 inline virtual void decompress(Input& input, Output& output) override {
-    // Use the input as a memory view here, just to have both variants used
-    auto iview = input.as_view();
-    auto ostream = output.as_stream();
+    auto iview = input.as_view(); // retrieve the input as a view (for didactical reasons)
+    auto ostream = output.as_stream(); // retrieve the output stream
 
-    char last = '?';
+    char last = '?'; // stores the last character read before a "%n%" pattern is encountered
 
+    // process the input
     for (size_t i = 0; i < iview.size(); i++) {
         if (iview[i] == '%') {
+            // after encountering the '%' chracter, parse the following characters
+            // as a decimal number until the next '%' is encountered
             size_t counter = 0;
             for (i++; i < iview.size(); i++) {
                 if (iview[i] == '%') {
+                    // conclusion of the "%n%" pattern
                     break;
                 } else {
-                    // parse the number
+                    // naive decimal number parser
                     counter *= 10;
                     counter += (iview[i] - '0');
                 }
             }
+
+            // repeat the previous character according to the parsed length
             for (size_t x = 0; x < counter; x++) {
                 ostream << last;
             }
         } else {
+            // output any character not part of a "c%n%" pattern and continue reading
             ostream << iview[i];
             last = iview[i];
         }
@@ -557,39 +569,34 @@ inline virtual void decompress(Input& input, Output& output) override {
 }
 ~~~
 
-> *Exercise*: Implement the decompress-method such that it uses the input as a stream.
+Note that this implementation will obviously not work if the original input
+contained the `%` character. It merely serves as an example.
 
-> *Note*: For simplicity, we don't address a few bugs hiding in this
-> implementation, most notably the fact that this code would stumble over the
-> symbol `'%'` used in the actual input text.
+> *Exercise*: Implement the `decompress` method using the input as stream
+rather than a view.
 
-## Tests
+## Unit Tests
 
-After having an implementation of a compressor, we want to
-check whether it is working correctly. For that, the framework provides unit
-testing with the [gtest](https://github.com/google/googletest) library.
-The tests are in the directory `/test`.
+This section provides a guide to implementing unit tests for the framework.
+Unit testing is done with the aid of the
+[Google Test](https://github.com/google/googletest) library. The test sources
+are located in the `test` directory in the repository root.
 
-### File locations
+### Registering and running unit tests
 
-The layout is relatively simple: Tests are grouped in individual `.cpp`
-source files, which in turn are registered in the `CMakeLists.txt` file.
+The test source files categorize the unit tests into test suites and are
+registered in the `CMakeLists.txt` file.
 
-Running `make check` (from the build directory) will run all registered files,
-while `make <test_name>` will only run the test corresponding
-to `<test_name>.cpp`.
+The generated Makefile contains a target for registered each test suite.
+For example, `make tudocomp_tests` invokes the `tudocomp_tests` suite which is
+contained in `tudocomp_tests.cpp`. The `check` target executes all registered
+test suites in succession.
 
-We provide permanent and temporary tests:
+The `sandbox_tests` suite is ignored by the framework's repository and can be
+used for quick developmental tests to avoid the registration procedure.
 
-For the latter, if you only want to quickly check something, say a part of your algorithms,
-or some std library types, you can use the pre-defined `sandbox_tests.cpp` file.
-Changes to that file are intended to only be local to the current
-developer machine, and will not be committed into GIT.
-
->> *TODO*: first occurrence of GIT. should we add some kind of commit-etiquette before?
-
-Otherwise, for permanent testing, we create a new source file and register it in the `CMakeLists.txt`.
-Here, we add the file `/test/example_tests.cpp`...
+A test suite consists of including the *Google Test* library and at least one
+unit test as follows, starting with an empty `example_tests.cpp`
 
 ~~~ { .cpp }
 // [/test/example_tests.cpp]
@@ -602,16 +609,18 @@ TEST(example, test) {
 
 ~~~
 
-... and register it in the `CMakeLists.txt` with this line:
+The corresponding registration line in `CMakeLists.txt` looks as follows:
 
 ~~~
 run_test(example_tests DEPS ${BASIC_DEPS})
 ~~~
 
-Now, if you do `make example_tests`, you should get a test run with
-one successful test.
+The Makefile generated by CMake will contain a target `example_tests` that
+executes the example test suite.
 
-### Adding tests
+>> XXX
+
+### Implementing unit tests
 
 Next, we will add some real tests to check that the compressor works correctly.
 
