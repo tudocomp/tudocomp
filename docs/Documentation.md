@@ -534,7 +534,7 @@ the output.
 
 ~~~ { .cpp }
 inline virtual void decompress(Input& input, Output& output) override {
-    auto iview = input.as_view(); // retrieve the input as a view (for didactical reasons)
+    auto iview = input.as_view(); // retrieve the input as a view (merely for educational reasons)
     auto ostream = output.as_stream(); // retrieve the output stream
 
     char last = '?'; // stores the last character read before a "%n%" pattern is encountered
@@ -582,7 +582,7 @@ Unit testing is done with the aid of the
 [Google Test](https://github.com/google/googletest) library. The test sources
 are located in the `test` directory in the repository root.
 
-### Registering and running unit tests
+### Registering and Running unit tests
 
 The test source files categorize the unit tests into test suites and are
 registered in the `CMakeLists.txt` file.
@@ -661,6 +661,9 @@ from a string constant and the output is linked to a byte buffer that will be
 filled. After invoking `compress`, the output is tested against the expected
 result.
 
+>> *TODO*: I would like to rename `create_algo` to something memorable like
+           `instantiate`.
+
 >> *TODO*: Once we have string generators (random, Markov, ...), they should
 be mentioned here.
 
@@ -699,40 +702,56 @@ TEST(example, roundtrip_bytes) {
 >> *TODO*: We need to consider if the term *roundtrip* should be replaced by
    something more meaningful.
 
->> XXX
+## Runtime Statistics
 
-## Statistics
+*tudocomp* provides functionality to measure the running time and the peak
+amount of dynamically allocated memory (e.h. via `malloc` or `new`) over the
+course of a compression or decompression run.
 
-Finally, we show how to add some statistic tracking to the implementation.
-The tracking allows to measure data that might be relevant for the evaluation of the
-algorithm like the number of computed factors, or the speed.
-To this end, the framework offers suitable methods in the `Env` class.
+This functionality is accessible via a compressor's *environment* (represented
+by the [`Env`](about:blank) class), which can be retrieved using the
+[`env()`](about:blank) function.
 
-The framework is capable of measuring the time and the used dynamic heap memory during the execution.
-To enable the latter capability (tracking the memory), the library `malloc_count` has to linked in;
-`malloc_count` tracks the number of allocated bytes; it is unaware for what the memory is used specifically.
+Runtime statistics are tracked in *phases*, ie. the running time and memory
+peak can be measured for individual stages during a compression run. These
+phases may be nested, ie. a phase can consist of multiple other phases. When
+a compressor is instantiated (using `create_algo`) it will automatically enter
+a *root phase*.
 
->> *TODO*: Hat Patrick nicht seinen eigenen malloc_count geschrieben?
+The measured data can be retrieved as JSON for visualization in the
+[*tudocomp Charter*](about:blank) or processing in a third-party application.
 
-We first present a set of tracking methods that divide the algorithm
-into different, possibly nesting, phases:
+> *Note:* In a *Cygwin* environment, due to its nature of not allowing overrides
+          of `malloc` and friends, memory allocation cannot be measured.
 
-### Phases
+### Usage
+
+Making use of the statistics tracking functions is as easy as sorrounding
+single phases with calls to the [`begin_stat_phase`](about:blank) and
+[`end_stat_phase`](about:blank) functions like so:
 
 ~~~ { .cpp }
-// ... inside an algorithm ...
 env().begin_stat_phase("Phase 1");
-    some_expensive_operation();
+    // ... Phase 1
 env().end_stat_phase();
 env().begin_stat_phase("Phase 2");
+    // ... Phase 2
     env().begin_stat_phase("Phase 2.1");
-        some_other_expensive_operation();
+        // ... Phase 2.1, part of Phase 2
     env().end_stat_phase();
+    // ... Phase 2
     env().begin_stat_phase("Phase 2.2");
-        some_expensive_sub_operation();
+        // ... Phase 2.2, part of Phase 2
     env().end_stat_phase();
+    // ... Phase 2
 env().end_stat_phase();
 ~~~
+
+> *Note*: In order to receive meaningful results, each phase should "clean up"
+          properly, ie. it should free any memory that is no longer needed after
+          the phase is finished.
+
+>> XXX
 
 In the case of our run length encoding example, all the work happens in a single loop.
 This makes it hard to assess different phases.

@@ -48,11 +48,18 @@ pre {
 
 pre, code {
     font-family: "Source Code Pro", monospace;
+}
+
+pre {
     font-size: 0.9rem;
 }
 
 code {
     background-color: #DDD;
+}
+
+a code {
+    font-weight: bold;
 }
 
 header {
