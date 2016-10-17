@@ -39,44 +39,17 @@ private:
     std::unique_ptr<pattern::Algorithm> m_static_selection;
     friend class OptionValue;
 public:
-    inline AlgorithmValue(const AlgorithmValue& other):
-        m_name(other.m_name),
-        m_arguments(other.m_arguments)
-    {
-        if (other.m_static_selection != nullptr) {
-            m_static_selection = std::make_unique<pattern::Algorithm>(
-                *other.m_static_selection);
-        }
-    }
-
-    inline AlgorithmValue(AlgorithmValue&& other):
-        m_name(std::move(other.m_name)),
-        m_arguments(std::move(other.m_arguments)),
-        m_static_selection(std::move(other.m_static_selection)) {}
-
+    inline ~AlgorithmValue();
+    inline AlgorithmValue(const AlgorithmValue& other);
+    inline AlgorithmValue(AlgorithmValue&& other);
     inline AlgorithmValue(std::string&& name,
                           ArgumentMap&& arguments,
-                          std::unique_ptr<pattern::Algorithm>&& static_selection):
-        m_name(std::move(name)),
-        m_arguments(std::move(arguments)),
-        m_static_selection(std::move(static_selection)) {}
+                          std::unique_ptr<pattern::Algorithm>&& static_selection);
 
-    inline const std::string& name() const {
-        return m_name;
-    }
-    inline const ArgumentMap& arguments() const {
-        return m_arguments;
-    }
-    inline const pattern::Algorithm& static_selection() const {
-        CHECK(m_static_selection != nullptr);
-        return *m_static_selection;
-    }
-    inline AlgorithmValue& operator=(AlgorithmValue&& other) {
-        this->m_name = std::move(other.m_name);
-        this->m_arguments = std::move(other.m_arguments);
-        this->m_static_selection = std::move(other.m_static_selection);
-        return *this;
-    }
+    inline const std::string& name() const;
+    inline const ArgumentMap& arguments() const;
+    inline const pattern::Algorithm& static_selection() const;
+    inline AlgorithmValue& operator=(AlgorithmValue&& other);
 };
 
 class OptionValue {
@@ -84,41 +57,114 @@ class OptionValue {
     AlgorithmValue m_value_or_algorithm;
     friend class AlgorithmValue;
 public:
-    inline OptionValue(): OptionValue("") {}
-    inline OptionValue(std::string&& value):
-        m_is_value(true),
-        m_value_or_algorithm(AlgorithmValue(std::move(value), {}, std::make_unique<pattern::Algorithm>())) {}
-    inline OptionValue(AlgorithmValue&& algorithm):
-        m_is_value(false),
-        m_value_or_algorithm(std::move(algorithm)) {}
+    inline ~OptionValue();
+    inline OptionValue();
+    inline OptionValue(std::string&& value);
+    inline OptionValue(AlgorithmValue&& algorithm);
+    inline OptionValue(const OptionValue& other);
+    inline OptionValue(OptionValue&& other);
 
-    inline bool is_algorithm() const {
-        return !m_is_value;
-    }
-    inline const AlgorithmValue& as_algorithm() const {
-        CHECK(!m_is_value);
-        return m_value_or_algorithm;
-    }
-    inline const std::string& as_string() const {
-        CHECK(m_is_value);
-        return m_value_or_algorithm.m_name;
-    }
-    inline uint64_t as_integer() const {
-        return lexical_cast<uint64_t>(as_string());
-    }
-    inline bool as_bool() const {
-        auto& s = as_string();
-        if (s == "true") return true;
-        if (s == "false") return false;
-        throw std::runtime_error(std::string("option with string value '")
-            + s
-            + "' can not be converted to an boolean value!");
-    }
+    inline bool is_algorithm() const;
+    inline const AlgorithmValue& as_algorithm() const;
+    inline const std::string& as_string() const;
+    inline uint64_t as_integer() const;
+    inline bool as_bool() const;
     template<class T>
-    inline T as() const {
-        return lexical_cast<T>(as_string());
-    }
+    inline T as() const;
+    inline OptionValue& operator=(OptionValue&& other);
 };
+
+inline AlgorithmValue::~AlgorithmValue() {}
+
+inline AlgorithmValue::AlgorithmValue(const AlgorithmValue& other):
+    m_name(other.m_name),
+    m_arguments(other.m_arguments)
+{
+    if (other.m_static_selection != nullptr) {
+        m_static_selection = std::make_unique<pattern::Algorithm>(
+            *other.m_static_selection);
+    }
+}
+
+inline AlgorithmValue::AlgorithmValue(AlgorithmValue&& other):
+    m_name(std::move(other.m_name)),
+    m_arguments(std::move(other.m_arguments)),
+    m_static_selection(std::move(other.m_static_selection)) {}
+
+inline AlgorithmValue::AlgorithmValue(std::string&& name,
+                        ArgumentMap&& arguments,
+                        std::unique_ptr<pattern::Algorithm>&& static_selection):
+    m_name(std::move(name)),
+    m_arguments(std::move(arguments)),
+    m_static_selection(std::move(static_selection)) {}
+
+inline const std::string& AlgorithmValue::name() const {
+    return m_name;
+}
+inline const AlgorithmValue::ArgumentMap& AlgorithmValue::arguments() const {
+    return m_arguments;
+}
+inline const pattern::Algorithm& AlgorithmValue::static_selection() const {
+    CHECK(m_static_selection != nullptr);
+    return *m_static_selection;
+}
+inline AlgorithmValue& AlgorithmValue::operator=(AlgorithmValue&& other) {
+    this->m_name = std::move(other.m_name);
+    this->m_arguments = std::move(other.m_arguments);
+    this->m_static_selection = std::move(other.m_static_selection);
+    return *this;
+}
+
+inline OptionValue::~OptionValue() {}
+
+inline OptionValue::OptionValue(): OptionValue("") {}
+inline OptionValue::OptionValue(std::string&& value):
+    m_is_value(true),
+    m_value_or_algorithm(AlgorithmValue(std::move(value), {}, std::make_unique<pattern::Algorithm>())) {}
+inline OptionValue::OptionValue(AlgorithmValue&& algorithm):
+    m_is_value(false),
+    m_value_or_algorithm(std::move(algorithm)) {}
+
+inline OptionValue::OptionValue(const OptionValue& other):
+    m_is_value(other.m_is_value),
+    m_value_or_algorithm(other.m_value_or_algorithm) {}
+
+inline OptionValue::OptionValue(OptionValue&& other):
+    m_is_value(other.m_is_value),
+    m_value_or_algorithm(std::move(other.m_value_or_algorithm)) {}
+
+inline bool OptionValue::is_algorithm() const {
+    return !m_is_value;
+}
+inline const AlgorithmValue& OptionValue::as_algorithm() const {
+    CHECK(!m_is_value);
+    return m_value_or_algorithm;
+}
+inline const std::string& OptionValue::as_string() const {
+    CHECK(m_is_value);
+    return m_value_or_algorithm.m_name;
+}
+inline uint64_t OptionValue::as_integer() const {
+    return lexical_cast<uint64_t>(as_string());
+}
+inline bool OptionValue::as_bool() const {
+    auto& s = as_string();
+    if (s == "true") return true;
+    if (s == "false") return false;
+    throw std::runtime_error(std::string("option with string value '")
+        + s
+        + "' can not be converted to an boolean value!");
+}
+template<class T>
+inline T OptionValue::as() const {
+    return lexical_cast<T>(as_string());
+}
+inline OptionValue& OptionValue::operator=(OptionValue&& other) {
+    this->m_is_value = other.m_is_value;
+    this->m_value_or_algorithm = std::move(other.m_value_or_algorithm);
+    return *this;
+}
+
 
 }
 #endif
