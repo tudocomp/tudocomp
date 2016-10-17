@@ -40,13 +40,30 @@ public:
     inline bool operator>(const uint_t<bits>& b) const { return data > b.data; }
 } __attribute__((packed));
 
-static_assert(sizeof(uint_t<8>)  == 1);
-static_assert(sizeof(uint_t<16>) == 2);
-static_assert(sizeof(uint_t<24>) == 3);
-static_assert(sizeof(uint_t<32>) == 4);
-static_assert(sizeof(uint_t<40>) == 5);
-static_assert(sizeof(uint_t<48>) == 6);
-static_assert(sizeof(uint_t<56>) == 7);
-static_assert(sizeof(uint_t<64>) == 8);
+static_assert(sizeof(uint_t<8>)  == 1, "sanity check");
+static_assert(sizeof(uint_t<16>) == 2, "sanity check");
+static_assert(sizeof(uint_t<24>) == 3, "sanity check");
+static_assert(sizeof(uint_t<32>) == 4, "sanity check");
+static_assert(sizeof(uint_t<40>) == 5, "sanity check");
+static_assert(sizeof(uint_t<48>) == 6, "sanity check");
+static_assert(sizeof(uint_t<56>) == 7, "sanity check");
+static_assert(sizeof(uint_t<64>) == 8, "sanity check");
+
+static_assert(sizeof(uint_t<7>)  == 1, "sanity check");
+static_assert(sizeof(uint_t<15>) == 2, "sanity check");
+static_assert(sizeof(uint_t<23>) == 3, "sanity check");
+static_assert(sizeof(uint_t<31>) == 4, "sanity check");
+static_assert(sizeof(uint_t<39>) == 5, "sanity check");
+static_assert(sizeof(uint_t<47>) == 6, "sanity check");
+static_assert(sizeof(uint_t<55>) == 7, "sanity check");
+static_assert(sizeof(uint_t<63>) == 8, "sanity check");
+
+static_assert(sizeof(uint_t<9>)  == 2, "sanity check");
+static_assert(sizeof(uint_t<17>) == 3, "sanity check");
+static_assert(sizeof(uint_t<25>) == 4, "sanity check");
+static_assert(sizeof(uint_t<33>) == 5, "sanity check");
+static_assert(sizeof(uint_t<41>) == 6, "sanity check");
+static_assert(sizeof(uint_t<49>) == 7, "sanity check");
+static_assert(sizeof(uint_t<57>) == 8, "sanity check");
 
 #endif /* UINT_T_HPP */
