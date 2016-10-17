@@ -4,6 +4,8 @@ find_package(Pandoc)
 
 if(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
 
+    include(${CMAKE_CURRENT_SOURCE_DIR}/DocumentationVars.txt)
+
     set(MAIN_LATEX_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/latex)
     set(MAIN_HTML_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/html)
 

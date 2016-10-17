@@ -1,5 +1,7 @@
 # Abstract
 
+@URL_DOXYGEN@
+
 The **T**echnical **U**niversity of **DO**rtmund **COMP**ression Framework (*tudocomp*)
 is a lossless compression framework with the aim to support and facilitate
 the implementation of novel compression algorithms. It already comprises a range
@@ -148,10 +150,11 @@ This chapter provides a brief introduction of the data flow in the framework.
 
 ## The Compressor interface
 
-The [`Compressor`](about:blank) class is the foundation for the compression and
-decompression cycle of the framework. It defines the two central operations:
-`compress` and `decompress`. These are responsible for transforming an input to
-an output so that the following (pseudo code) statement is true for every input:
+The [`Compressor`](@URL_DOXYGEN_COMPRESSOR@) class is the foundation for the
+compression and decompression cycle of the framework. It defines the two central
+operations: `compress` and `decompress`. These are responsible for transforming
+an input to an output so that the following (pseudo code) statement is true for
+every input:
 
     decompress(compress(input)) == input
 
@@ -168,9 +171,9 @@ The identifier is used by the driver when decompressing, to find out what class 
 
 ## I/O
 
-The framework provides an I/O abstraction in the two classes [`Input`](about:blank) and
-[`Output`](about:blank). Both hide the actual source or sink of
-the data (e.g. a file or a place in memory).
+The framework provides an I/O abstraction in the two classes
+[`Input`](@URL_DOXYGEN_INPUT@) and [`Output`](@URL_DOXYGEN_OUTPUT@). Both hide
+the actual source or sink of the data (e.g. a file or a place in memory).
 
 ### Input
 
@@ -196,10 +199,10 @@ array of characters.
 
 ### Bitwise I/O
 
-The [`BitIStream`](about:blank) and [`BitOStream`](about:blank) classes provide
-wrappers for bitwise reading and writing operations.
-They support reading and writing of single bits, as well as fixed and variable
-width integers.
+The [`BitIStream`](@URL_DOXYGEN_BITISTREAM@) and
+[`BitOStream`](@URL_DOXYGEN_BITOSTREAM@) classes provide wrappers for bitwise
+reading and writing operations. They support reading and writing of single bits,
+as well as fixed and variable width integers.
 
 # Tutorial
 
@@ -307,8 +310,8 @@ repository in the `/include/tudocomp/example/` directory.
 
 ### Implementing the Compressor interface
 
-Any compressor needs to implement the [`Compressor`](about:blank) interface.
-A complete implementation consists of
+Any compressor needs to implement the [`Compressor`](@URL_DOXYGEN_COMPRESSOR@)
+interface. A complete implementation consists of
 
 * a constructor accepting an rvalue reference to an environment
   (`Env&&`),
@@ -321,7 +324,7 @@ A complete implementation consists of
 Note that while the latter (`meta()`) is not strictly defined in the
 `Compressor` class, it is required due to the nature of templated construction.
 
-The class [`Env`](about:blank) represents the compressor's runtime environment.
+The class [`Env`](@URL_DOXYGEN_ENV@) represents the compressor's runtime environment.
 It provides access to runtime options as well as the framework's statistics
 tracking functionality. A compressor conceptually owns[^cpp11-ownership] its
 environment, therefore the constructor takes an rvalue reference to it. The
@@ -331,10 +334,10 @@ reference should always be delegated down to the base constructor
 [^cpp11-ownership]: This refers to the C++11 ownership semantics, ie. a
 `unique_ptr<Env>` is stored internally.
 
-A [`Meta`](about:blank) object contains information about an algorithm (e.g.
-compressors) such as its name and type. This information is used by the generic
-algorithm constructor `create_algo`, which will be explained below, as well as
-for the registry of the driver utility.
+A [`Meta`](@URL_DOXYGEN_META@) object contains information about an algorithm
+(e.g. compressors) such as its name and type. This information is used by the
+generic algorithm constructor `create_algo`, which will be explained below, as
+well as for the registry of the driver utility.
 
 The following example header (`/include/tudocomp/example/ExampleCompressor.hpp`)
 contains a minimal `Compressor` implementation named `ExampleCompressor`:
@@ -373,9 +376,9 @@ public:
 #endif
 ~~~
 
-The `tdc` namespace contains most of the core types required for
-implementing compressors, including the `Compressor` interface and the `Env`
-and `Meta` types.
+The [`tdc`](@URL_DOXYGEN_TDC@) namespace contains most of the core types
+required for implementing compressors, including the `Compressor` interface
+and the `Env` and `Meta` types.
 
 The `Meta` object returned by `meta()` contains the following information:
 
@@ -389,8 +392,8 @@ The `Meta` object returned by `meta()` contains the following information:
 
 In the above example, `compress` and `decompress` do not produce any output.
 Generally speaking, (de)compression by means of this framework processes data
-by reading from an [`Input`](about:blank) and writing to an
-[`Output`](about:blank).
+by reading from an [`Input`](@URL_DOXYGEN_INPUT@) and writing to an
+[`Output`](@URL_DOXYGEN_OUTPUT@).
 
 While the output has to be generated sequentially, the input can be accessed in
 two conceptually different ways:
@@ -401,11 +404,12 @@ two conceptually different ways:
    bytes (the concept of *offline* algorithms).
 
 The choice is done by acquiring the respective object from either the
-[`as_stream`](about:blank) or the [`as_view`](about:blank) function. The
-stream object returned by `as_stream` conforms to the `std::istream` interface
-and also provides iterator access. The object returned by `as_view` provides the
-indexed access `[]` operator for and the function `size()` to return the amount
-of bytes available on the input.
+[`as_stream`](@URL_DOXYGEN_INPUT_ASSTREAM@) or the
+[`as_view`](@URL_DOXYGEN_INPUT_ASVIEW@) function. The stream object returned by
+`as_stream` conforms to the `std::istream` interface and also provides iterator
+access. The object returned by `as_view` provides the indexed access `[]`
+operator for and the function `size()` to return the amount of bytes available
+on the input.
 
 The following code snippet demonstrates using a given input as a view:
 
@@ -654,12 +658,12 @@ TEST(example, compress) {
 }
 ~~~
 
-*tudocomp* provides the [`create_algo`](about:blank) function template that
-properly instantiates compressors (or more precisely: any class inheriting from
-[`Algorithm`](about:blank)). In this example, the compressor's input is created
-from a string constant and the output is linked to a byte buffer that will be
-filled. After invoking `compress`, the output is tested against the expected
-result.
+*tudocomp* provides the [`create_algo`](@URL_DOXYGEN_CREATEALGO@) function
+template that properly instantiates compressors (or more precisely: any class
+inheriting from [`Algorithm`](@URL_DOXYGEN_ALGORITHM@)). In this example, the
+compressor's input is created from a string constant and the output is linked to
+a byte buffer that will be filled. After invoking `compress`, the output is
+tested against the expected result.
 
 >> *TODO*: I would like to rename `create_algo` to something memorable like
            `instantiate`.
@@ -679,6 +683,8 @@ TEST(example, roundtrip) {
     test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de");
 }
 ~~~
+
+>> *TODO*: `test::roundtrip` is not in Doxygen!
 
 [`test::roundtrip`](about:blank) performs the following operations: It
 
@@ -709,8 +715,8 @@ amount of dynamically allocated memory (e.h. via `malloc` or `new`) over the
 course of a compression or decompression run.
 
 This functionality is accessible via a compressor's *environment* (represented
-by the [`Env`](about:blank) class), which can be retrieved using the
-[`env()`](about:blank) function.
+by the [`Env`](@URL_DOXYGEN_ENV@) class), which can be retrieved using the
+[`env()`](@URL_DOXYGEN_ALGORITH_ENV@) function.
 
 Runtime statistics are tracked in *phases*, ie. the running time and memory
 peak can be measured for individual stages during a compression run. These
@@ -719,7 +725,7 @@ a compressor is instantiated (using `create_algo`) it will automatically enter
 a *root phase*.
 
 The measured data can be retrieved as JSON for visualization in the
-[*tudocomp Charter*](about:blank) or processing in a third-party application.
+[*tudocomp Charter*](@URL_CHARTER@) or processing in a third-party application.
 
 > *Note:* In a *Cygwin* environment, due to its nature of not allowing overrides
           of `malloc` and friends, memory allocation cannot be measured.
@@ -727,8 +733,9 @@ The measured data can be retrieved as JSON for visualization in the
 ### Usage
 
 Making use of the statistics tracking functions is as easy as sorrounding
-single phases with calls to the [`begin_stat_phase`](about:blank) and
-[`end_stat_phase`](about:blank) functions like so:
+single phases with calls to the
+[`begin_stat_phase`](@URL_DOXYGEN_ENV_BEGINSTATPHASE@) and
+[`end_stat_phase`](@URL_DOXYGEN_ENV_ENDSTATPHASE@) functions like so:
 
 ~~~ { .cpp }
 env().begin_stat_phase("Phase 1");
@@ -752,7 +759,7 @@ env().end_stat_phase();
           the phase is finished.
 
 During any phase, custom statistics can be logged using the
-[`log_stat`](about:blank) method like so:
+[`log_stat`](@URL_DOXYGEN_ENV_LOGSTAT@) method like so:
 
 ~~~ { .cpp }
 env().log_stat("A statistic", 147);
@@ -763,9 +770,10 @@ env().log_stat("Another statistic", 0.5);
    for `bool` and `std::string` should be added at least.
 
 Statistic tracking is concluded using the
-[`finish_stats`](about:blank) function, which yields a reference to a
-[`Stat`](about:blank) object. The JSON can be written to a stream or retrieved
-as a string using its [`to_json`](about:blank) function overloads:
+[`finish_stats`](@URL_DOXYGEN_ENV_FINISHSTATS@) function, which yields a
+reference to a [`Stat`](@URL_DOXYGEN_STAT@) object. The JSON can be written to a
+stream or retrieved as a string using its [`to_json`](@URL_DOXYGEN_STAT_TOJSON@)
+function overloads:
 
 ~~~ { .cpp }
 // finish statistics
