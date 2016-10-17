@@ -751,7 +751,43 @@ env().end_stat_phase();
           properly, ie. it should free any memory that is no longer needed after
           the phase is finished.
 
+During any phase, custom statistics can be logged using the
+[`log_stat`](about:blank) method like so:
+
+~~~ { .cpp }
+env().log_stat("A statistic", 147);
+env().log_stat("Another statistic", 0.5);
+~~~
+
+>> *TODO*: Currently, there are only overloads for integer types. Overloads
+   for `bool` and `std::string` should be added at least.
+
+Statistic tracking is concluded using the
+[`finish_stats`](about:blank) function, which yields a reference to a
+[`Stat`](about:blank) object. The JSON can be written to a stream or retrieved
+as a string using its [`to_json`](about:blank) function overloads:
+
+~~~ { .cpp }
+// finish statistics
+auto& stats = compressor.env().finish_stats();
+
+// print JSON to a stream directly
+stats.to_json(std::cout);
+
+// retrieve JSON as string
+std::string json = stats.to_json();
+~~~
+
+### Example
+
+>> *TODO*: Instead of expanding the RLE example and bloat it with more
+           features, I would suggest that we isolate new feature examples
+           like above and refer to `example_tests.cpp` as a complete
+           example with all features.
+
 >> XXX
+
+### Obsolete
 
 In the case of our run length encoding example, all the work happens in a single loop.
 This makes it hard to assess different phases.
@@ -795,7 +831,7 @@ inline virtual void compress(Input& input, Output& output) override {
 If we run `make example_tests` again, we will notice that each compression
 roughly takes 3 seconds, presumably each of those is spent in a different phase.
 
-### Web Service
+> ### Web Service
 
 Analyzing the collected statistics can be done by the
 web service [here](http://dacit.cs.uni-dortmund.de/dinklage/stat/).
@@ -857,7 +893,9 @@ The command `make example_tests` will print JSON data looking something like thi
 
 If we paste this into the website we will see a bar diagram highlighting the memory profile and the runtime of all three phases.
 
-### Statistics
+>> *TODO*: Screenshot here!
+
+> ### Statistics
 
 You can also log individual data points during the run of the algorithm (e.g., logging the number of factors)
 For this purpose, the `Env` class provides the `log_stat()` method.
