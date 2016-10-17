@@ -9,22 +9,16 @@ if(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
 
     set(PANDOC_COMMAND ${PANDOC_BIN} -f markdown)
 
-    find_python_module(pandocfilters)
-    if(PY_PANDOCFILTERS)
-        set(PANDOC_COMMAND ${PANDOC_COMMAND}
-                --filter ${CMAKE_CURRENT_SOURCE_DIR}/metavars.py
-                -f markdown
-        )
-    endif(PY_PANDOCFILTERS)
-
     file(MAKE_DIRECTORY ${MAIN_LATEX_OUT_DIR})
     file(MAKE_DIRECTORY ${MAIN_HTML_OUT_DIR})
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md @ONLY)
 
     add_custom_target(docs-main-html
         # convert markdown doc to html
         COMMAND ${PANDOC_COMMAND} -s --toc -t html
             -o ${MAIN_HTML_OUT_DIR}/_content.html
-            ${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md
+            ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md
 
         # copy html framework
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/html ${MAIN_HTML_OUT_DIR}
@@ -38,7 +32,7 @@ if(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
         # convert markdown doc to tex
         COMMAND ${PANDOC_COMMAND} -t latex
             -o ${MAIN_LATEX_OUT_DIR}/_content.tex
-            ${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md
+            ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md
 
         # copy tex framework
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/latex ${MAIN_LATEX_OUT_DIR}
