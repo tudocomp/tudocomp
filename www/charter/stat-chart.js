@@ -216,7 +216,7 @@ var drawChart = function(raw) {
                     .append("g")
                     .attr("class", "legend")
                     .attr("transform", function(d) {
-                        return "translate(" + (app.x.range()[1] + 5) + ",0)";
+                        return "translate(" + (app.x.range()[1] + 1) + ",0)";
                     });
 
         legend.append("rect")
