@@ -1,23 +1,74 @@
 # Abstract
 
-@URL_DOXYGEN@
-
-The **T**echnical **U**niversity of **DO**rtmund **COMP**ression Framework (*tudocomp*)
-is a lossless compression framework with the aim to support and facilitate
-the implementation of novel compression algorithms. It already comprises a range
-of standard data compression and encoding algorithms. These can be mixed and parameterized with the
-following uses in mind:
+The **T**echnical **U**niversity of **DO**rtmund **COMP**ression Framework
+(*tudocomp*) is a lossless compression framework with the aim to support and
+facilitate the implementation of novel compression algorithms. It already
+comprises a range of standard data compression and encoding algorithms. These
+can be mixed and parameterized with the following uses in mind:
 
 * Baseline implementations of well-known compression schemes.
 * Detailed benchmarking and comparison of compression and encoding algorithms.
 * Easy integration of new algorithm implementations.
 
-# Framework Structure
+# Philosophy
 
-The structure of this framework offers a solid and extensible base for new implementations.
-It is designed such that most individual steps are modularized and interchangeable.
-This way, the user can mix and match algorithms to find the optimal compression strategy for a given input.
-The framework gives this opportunity while creating as little performance overhead as possible.
+The framework offers a solid and extensible base for new implementations. It is
+designed so that most individual processes are modularized and interchangeable.
+This way, the user can mix and match algorithms to find the optimal compression
+strategy for a given input. The framework gives this opportunity while creating
+as little performance overhead as possible.
+
+## Compressor Families
+
+The *compressor families* form the topmost abstraction level in the framework.
+Every compression or encoding algorithm belongs to a certain family.
+
+For instance, the compressor family *lzss* (named after
+*Lempel-Ziv-Storer-Szymanski*) contains various compressors that factorize the
+input resulting in symbols and the produced Lempel-Ziv factors. This output can
+then be passed to different encoders specialized for LZSS-type factors to get a
+binary encoded compressed file.
+
+## Compressors and Modularity
+
+A *compressor*, in terms of this framework, transforms an input sequence and
+writes the result to an output. A compressor is the entry point for the utility.
+
+Each compressor family has to implement a decompressor
+that can restore the original input losslessly. Apart from that, there are no
+strict rules as to *what* kind of transformation of the input occurs. In that
+sense, an *encoder* is also a compressor.
+
+Compressors and encoders are implemented in a *modular* way. They are
+interchangeable and can be chained (ie the output of one becomes the input of
+another).
+
+For instance, a factor-based conpressor consists of three main modules:
+
+1. A *factorizer* that produces factors,
+2. a *factor encoder* that encodes these factors, and
+3. a *raw symbol encoder* that encodes the remaining, unfactorized input.
+
+In this example, the factorizer divides the input into factors that refer to
+substrings of the input. The encoders then encode the factors and any
+unfactorized substrings in an independent manner (e.g. human readable or
+bit-optimal).
+
+For each of these tasks, there can be different strategies. For instance, the
+input can be factorized using a classic online sliding window approach, but one
+can also think of using a data structure that works offline and requires the
+entire input, such as the suffix array.
+
+Encoders can use myriad representations for the information they encode (e.g.
+fixed-width integers, Huffman codes) which may work better or worse for
+different types of inputs.
+
+Each of these factorization or encoding strategies can have different
+sub-strategies in their own right. The goal of this framework is to modularize
+compression and encoding algorithms as much as possible into strategies.
+
+The produced output must contain all information necessary for the respective
+decompressor (or decoder) to restore the original input losslessly.
 
 ## Library and driver
 
@@ -31,74 +82,36 @@ The driver uses a *registry* of compressors, which acts as the link between the
 driver and the library. The library is a fully functional standalone library
 such that third party applications can make use of the provided compressors.
 
-## Compressor Families
+>> *TODO*: Create a data flow diagram for a whole compression cycle.
 
-The *compressor families* form the topmost abstraction level in the framework.
-Every compression or encoding algorithm belongs to a certain family.
+# Features
 
-For instance, the compressor family *lzss* (named after *Lempel-Ziv-Storer-Szymanski*)
-contains various compressors that factorize
-the input resulting in symbols and the produced Lempel-Ziv factors. This output can then be passed to
-different encoders specialized for LZSS-type factors to get a binary encoded compressed file.
-
-## Compressors and Modularity
-
-A *compressor*, in terms of this framework, transforms an input sequence and writes the result to an output.
-A compressor is the entry point for the utility.
-
-Each compressor family has to implement a decompressor
-that can restore the original input losslessly. Apart from that, there are no
-strict rules as to *what* kind of transformation of the input occurs. In that sense,
-an *encoder* is also a compressor.
-
-Compressors and encoders are implemented in a *modular* way. They are interchangeable and can
-be chained (ie the output of one becomes the input of another).
-
-For instance, a factor-based conpressor consists of three main modules:
-
-1. A *factorizer* that produces factors,
-2. a *factor encoder* that encodes these factors, and
-3. a *raw symbol encoder* that encodes the remaining, unfactorized input.
-
-In this example, the factorizer divides the input into factors that refer to substrings of the input.
-The encoders then encode the factors and any unfactorized substrings in an independent manner (e.g.
-human readable or bit-optimal).
-
-For each of these tasks, there can be different strategies. For instance, the input can be factorized
-using a classic online sliding window approach, but one can also think of using a data structure that works offline and
-requires the entire input, such as the suffix array.
-
-Encoders can use myriad representations for the information they encode (e.g. fixed width integers, Huffman codes) which may work better or worse for different types of inputs.
-
-Each of these factorization or encoding strategies can have different sub-strategies
-in their own right. The goal of this framework is to modularize compression and encoding
-algorithms as much as possible into strategies.
-
-The produced output must contain all information necessary for the respective
-decompressor (or decoder) to restore the original input losslessly.
-
-## Runtime Statistics
-
->> *TODO*: `malloc_count` / `tudostat`
+>> *TODO*: We should probably have something like a feature overview.
 
 # Usage
 
 ## Library
 
-The library comes as a set of `C++` headers, no binary object needs to be built.
+The library comes as a set of `C++` headers where most of the implementations
+are inlined.
 
->> *TODO*: Not true. `malloc_count` is a binary object and needed for a core feature.
+Development of new compression or encoding algorithms is intended to take place
+within *tudocomp*'s repository itself. In order to use *tudocomp* as a library
+for a third-party application, the custom `malloc_count` module, which includes
+overrides of `malloc`, `free` etc. for the heap memory usage counters,
+(`libmalloc_count.a`) needs to be linked.
 
-Hence, it suffices to include the respective headers for using a specific compressor implementation.
+>> *TODO*: We should probably rename our `malloc_count` module to avoid
+           confusion.
 
-The [Doxygen documentation](about:blank) provides an overview of
-the available compression and encoding implementations.
+The [Doxygen documentation](@URL_DOXYGEN@) provides an overview of the available
+compression and encoding implementations as well as the framework's full API.
 
 ### Dependencies {#dependencies}
 
 The framework is built using [CMake](https://cmake.org) (2.8 or later).
-It is written in `C++11` with GNU extensions and has been tested with the `gcc` compiler family (version 4.9.2 or later)
-and `clang` (version 3.5.2 or later).
+It is written in `C++11` with GNU extensions and has been tested with the `gcc`
+compiler family (version 4.9.2 or later) and `clang` (version 3.5.2 or later).
 
 It has the following external dependencies:
 
@@ -110,8 +123,9 @@ It has the following external dependencies:
 Additionally, the tests require
 [Google Test](https://github.com/google/googletest) (1.7.0 or later).
 
-The CMake build scripts will either find the external dependencies on the build system, or
-automatically download and build them from their official repositories in case they cannot be found.
+The CMake build scripts will either find the external dependencies on the build
+system, or automatically download and build them from their official
+repositories in case they cannot be found.
 
 For building the documentation, the following tools are required:
 
@@ -119,34 +133,43 @@ For building the documentation, the following tools are required:
 * [Doxygen](http://doxygen.org) (1.8 or later).
 * [Pandoc](http://pandoc.org) (1.16 or later).
 * [Python](https://www.python.org/) (optional, 2.7 or later).
-* [pandocfilters (Python module)](https://pypi.python.org/pypi/pandocfilters) (optional, 1.3 or later).
+* [pandocfilters (Python module)](https://pypi.python.org/pypi/pandocfilters)
+  (optional, 1.3 or later).
 
 ## Framework driver utility
 
-The main executable `tudocomp_driver` is a command line tool that bundles all implemented algorithms.
-It provides a fast and easy way to compress and decompress a file with a specified chain of compressors.
+The main executable `tudocomp_driver` is a command line tool that bundles all
+implemented algorithms. It provides a fast and easy way to compress and
+decompress a file with a specified chain of compressors.
 
-It is called the *driver* because it makes available the library functionality for command-line usage.
+It is called the *driver* because it makes available the library functionality
+for command-line usage.
 
-Every registered compression or encoding algorithm will be listed in the help output of the driver utility
-when passing the `--list` command-line argument.
+Every registered compression or encoding algorithm will be listed in the help
+output of the driver utility when passing the `--list` command-line argument.
 
 ## Building on Windows
 
-On Windows, the framework can be built in a [Cygwin](https://www.cygwin.com/) environment.
-`mingw` and Microsoft Visual Studio are *not* supported at this point.
+On Windows, the framework can be built in a [Cygwin](https://www.cygwin.com/)
+environment. `mingw` and Microsoft Visual Studio are *not* supported at this
+point.
 
->> *TODO*: Note about `malloc_count`
+> *Note:* In a *Cygwin* environment, due to its nature of not allowing overrides
+          of `malloc` and friends, the `malloc_count` module is not functional,
+          ie. memory heap allocation cannot be measured.
 
 ## License
 
-The framework is published under the [GNU General Public License, Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+The framework is published under the 
+[GNU General Public License, Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html).
 
-# GIVE ME A NICE HEADING
+# Framework Overview
 
-This chapter provides a brief introduction of the data flow in the framework.
+>> *TODO*: This whole section is out of place. Its contents should be merged
+           into the tutorial.
 
->> *TODO*: new chapter name, data flow diagram
+This chapter provides a brief introduction of the core components of the
+framework.
 
 ## The Compressor interface
 
@@ -212,6 +235,7 @@ discussed:
 
 - Building the framework
 - Understanding the framework's file structure
+- Using the framework's I/O abstractions
 - Writing a simple compressor by implementing the `Compressor`
   interface
 - Implementing unit tests
@@ -283,8 +307,6 @@ the entire unit test range (which can take a while):
 All tests were successful!
 ~~~
 
->> *TODO*: make target overview
-
 ## The framework's file structure
 
 *tudocomp*'s root directory structure follows that of a typical C++ project.
@@ -301,6 +323,10 @@ of templated classes with inlined functions in the `include` tree.
 This is a design decision that allows for the compiler to do heavy code
 optimization. Due to the nature of almost everything being templated, this
 makes development more convenient as well.
+
+## Input and Output
+
+>> *TODO*: ...
 
 ## Implementing a simple compressor
 
