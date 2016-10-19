@@ -810,86 +810,80 @@ displayed as a tooltip when the mouse is moved over its bar in the diagram.
 The Charter provides several options to customize the chart, as well as
 exporting it as either a vector graphic (`svg`) or an image file (`png`).
 
->> XXX
-
 ## Options
 
-Next we will look at how to add support for runtime flags and options. These are
-useful in cases where you want to evaluate your implementation with different
-parameters, for example a different dictionary size, a different threshold
-value, enabling of optional code paths, etc.
+In *tudocomp*, algorithms can take runtime *options* that may alter their
+behaviour (e.g. the minimum length of a run before it is replaced in the
+run-length code example above). These options can be passed, for instance,
+via the command-line when invoking the driver application.
 
-For our example, we will add two options: one to disable the thread sleep
-calls, and one to change the escape symbol used by the encoding.
+The framework knows two different types of runtime options, *dynamic* options
+and *templated* options. The options that an algorithm takes are defined in
+its meta information object.
 
-To add these options to your code, you need to first declare them in the
-Algorithm's `meta()` method:
+### Dynamic Options
 
-~~~ { .cpp }
+Dynamic options are options that accept values of any type that can be parsed
+from a string representation (because options passed from a command-line, for
+instance, are generally in string representation). For primitive types such
+as booleans or integers, parsers are predefined in the
+[`OptionValue`](@URL_DOXYGEN_OPTIONVALUE@) class.
+
+In the following examples, two dynamic options are introduced to the
+[run-length encoder](#example-run-length-encoding) example in the `Compressor`'s
+meta information object. The `minimum_run` option will determine the minimum
+length of a run before it is encoded (4 by default), while the `rle_symbol`
+option defines the symbol used to 
+
+~~~ {.cpp}
 inline static Meta meta() {
     Meta m("compressor", "example_compressor",
            "This is an example compressor.");
-    m.option("debug_sleep").dynamic("false");
-    m.option("escape_symbol").dynamic("%");
+
+    //Define options
+    m.option("minimum_run").dynamic("4");
+    m.option("rle_symbol").dynamic("%");
+
     return m;
 }
 ~~~
 
-`m.option("...")` declares an option with a specific name,
-and the `.dynamic()` indicates that these are runtime options,
-as opposed to "templated" ones (We will look at those in the next section).
+The `Meta`'s [`option`](@URL_DOXYGEN_META_OPTION@) method introduces a new
+option. Using [`dynamic`](@URL_DOXYGEN_OPTIONBUILDER_DYNAMIC@), this option
+is declared a dynamic option with the specified default value.
 
-The argument of `dynamic()` is optional, and provides a default value if
-given. In our case, we want to default to no sleep calls, and to the usage of the
-`%` symbol.
+In the following snippet, these options are used to alter the actual run-length
+encoding done by the `emit_run` function:
 
-After defining these options, we can query the value of these
-options in the implementation by using the `env().option("...").as_...` family of methods:
+~~~ {.cpp}
+// read the option values
+auto minimum_run = env().option("minimum_run").as_integer();
+auto rle_symbol = env().option("rle_symbol").as_string();
 
-~~~ { .cpp }
-class ExampleCompressor: public Compressor {
-private:
-    // The escape symbol gets stored as a field of the class
-    const char m_escape_symbol;
-public:
-    // ...
-
-    inline ExampleCompressor(Env&& env):
-        Compressor(std::move(env)),
-        // use the first char of the options value
-        m_escape_symbol(this->env().option("escape_symbol").as_string()[0])
-    {
-        // ...
-    }
-
-    inline virtual void compress(Input& input, Output& output) override {
-        // ...
-
-        bool opt_enable_sleep = env().option("debug_sleep").as_bool();
-
-        auto emit_run = [&]() {
-            if (counter > 3) {
-                // ...
-                ostream << last << m_escape_symbol << counter << m_escape_symbol;
-                // ...
-            } else {
-                // ...
-            }
-            // ...
-        };
-
-        // ...
-
-        if (opt_enable_sleep) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+// writes the current run to the output stream
+auto emit_run = [&]() {
+    if (counter >= minimum_run) {
+        // if the run exceeds the minimum amount of characters,
+        // encode the run using using the RLE symbol syntax
+        ostream << last << rle_symbol << counter << rle_symbol;
+    } else {
+        // otherwise, do not encode and emit the whole run
+        for (size_t i = 0; i <= counter; i++) {
+            ostream << last;
         }
-
-        // ...
     }
-
-    // ...
-}
+};
 ~~~
+
+Note how options are accessible via the environment's
+[`option`](@URL_DOXYGEN_ENV_OPTION@) function, which returns the corresponding
+[`OptionValue`](@URL_DOXYGEN_OPTIONVALUE@) object. 
+
+> *Exercise*: Modify the decompression of the run-length encoder so that it
+              uses the `rle_symbol` option as well.
+
+
+>> XXX
 
 ## Option Syntax and Testing
 
