@@ -725,7 +725,7 @@ a compressor is instantiated (using `create_algo`) it will automatically enter
 a *root phase*.
 
 The measured data can be retrieved as JSON for visualization in the
-[*tudocomp Charter*](@URL_CHARTER@) or processing in a third-party application.
+[*tudocomp Charter*](#charter-web-application) or processing in a third-party application.
 
 > *Note:* In a *Cygwin* environment, due to its nature of not allowing overrides
           of `malloc` and friends, memory allocation cannot be measured.
@@ -786,187 +786,31 @@ stats.to_json(std::cout);
 std::string json = stats.to_json();
 ~~~
 
-### Example
+### Charter Web Application
 
->> *TODO*: Instead of expanding the RLE example and bloat it with more
-           features, I would suggest that we isolate new feature examples
-           like above and refer to `example_tests.cpp` as a complete
-           example with all features.
+The [tudocomp Charter](@URL_CHARTER@) is a JavaScript-based web application
+that visualizes the statistics JSON output. Based on the data, it plots a
+bar chart that displays the single phases of the compression run with their
+running time on the X axis and their peak heap memory usage on the Y axis.
+
+![A diagram plotted by the Charter.](media/charter_diagram.png)
+
+The dashed line within a phase bar displays the *memory offset* of the phase,
+ie. how much memory was already allocated at the beginning of the phase. Ergo,
+the top border of the bar displays the global, application-wide memory peak
+during the phase, while the phase's local memory peak is the difference between
+the top and the dashed line.
+
+This information is explicitly printed in table view below the diagram. This is
+also where custom statistics are printed. The table view of a phase will also be
+displayed as a tooltip when the mouse is moved over its bar in the diagram.
+
+![The table view of a statistics phase.](media/charter_table.png)
+
+The Charter provides several options to customize the chart, as well as
+exporting it as either a vector graphic (`svg`) or an image file (`png`).
 
 >> XXX
-
-### Obsolete
-
-In the case of our run length encoding example, all the work happens in a single loop.
-This makes it hard to assess different phases.
-Moreover, we are testing it with inputs that are so short that the algorithms
-finishes nearly instantaneously (on a commodity computer).
-
-For didactic purposes, we cheat a little:
-We add a few fake phases, make all phases waste runtime by letting the
-program simply sleep for a few seconds, and add a fake big memory allocation:
-
-~~~ { .cpp }
-#include <chrono>
-#include <thread>
-
-// ...
-
-inline virtual void compress(Input& input, Output& output) override {
-    env().begin_stat_phase("init");
-        auto istream = input.as_stream();
-        // ...
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    env().end_stat_phase();
-
-    env().begin_stat_phase("run length encoding");
-        istream.get(last);
-        while(istream.get(current)) {
-        // ...
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        // add a fake memory allocation
-        {
-            std::vector<uint8_t> v(100 * 1024, 42); // 100 KiB of the byte 42
-        }
-    env().end_stat_phase();
-
-    env().begin_stat_phase("nothing");
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    env().end_stat_phase();
-}
-~~~
-
-If we run `make example_tests` again, we will notice that each compression
-roughly takes 3 seconds, presumably each of those is spent in a different phase.
-
-> ### Web Service
-
-Analyzing the collected statistics can be done by the
-web service [here](http://dacit.cs.uni-dortmund.de/dinklage/stat/).
-The web service visualizes statistic data given in form of a JSON file.
-
-We can retrieve the required JSON file from the `Env` instance.
-To this end, we add this line to our written compressor test to
-get it printed to the terminal:
-
-~~~ { .cpp }
-std::cout << compressor.env().finish_stats().to_json() << "\n";
-~~~
-
-The command `make example_tests` will print JSON data looking something like this:
-
-~~~
-{
-    "title": "root",
-    "timeStart": 167494201,
-    "timeEnd": 167497202,
-    "memOff": 0,
-    "memPeak": 103464,
-    "memFinal": -252,
-    "stats": [],
-    "sub": [
-        {
-            "title": "init",
-            "timeStart": 167494201,
-            "timeEnd": 167495201,
-            "memOff": 124,
-            "memPeak": 31416,
-            "memFinal": 912,
-            "stats": [],
-            "sub": []
-        },
-        {
-            "title": "run length encoding",
-            "timeStart": 167495201,
-            "timeEnd": 167496202,
-            "memOff": 1076,
-            "memPeak": 102388,
-            "memFinal": -12,
-            "stats": [],
-            "sub": []
-        },
-        {
-            "title": "nothing",
-            "timeStart": 167496202,
-            "timeEnd": 167497202,
-            "memOff": 1044,
-            "memPeak": 30504,
-            "memFinal": 0,
-            "stats": [],
-            "sub": []
-        }
-    ]
-}
-~~~
-
-If we paste this into the website we will see a bar diagram highlighting the memory profile and the runtime of all three phases.
-
->> *TODO*: Screenshot here!
-
-> ### Statistics
-
-You can also log individual data points during the run of the algorithm (e.g., logging the number of factors)
-For this purpose, the `Env` class provides the `log_stat()` method.
-
-In our example, we will log two statistics: the maximum run length, and the amount of repetitions of the same character (longer than three):
-
-~~~ { .cpp }
-inline virtual void compress(Input& input, Output& output) override {
-    // ...
-
-    size_t stat_max_repeat_counter = 0;
-    size_t stat_count_repeat_segments = 0;
-
-    // Use a lambda here to keep the code DRY
-    auto emit_run = [&]() {
-        if (counter > 3) {
-            // Only replace if we actually get shorter
-            ostream << last << '%' << counter << '%';
-            stat_count_repeat_segments++;
-        } else {
-            // Else output chars as normal
-            for (size_t i = 0; i <= counter; i++) {
-                ostream << last;
-            }
-        }
-        stat_max_repeat_counter = std::max(stat_max_repeat_counter,
-                                           counter);
-    };
-
-    // ...
-
-    env().begin_stat_phase("run length encoding");
-
-    istream.get(last);
-    while(istream.get(current)) {
-        if (current == last) {
-            counter++;
-        } else {
-            // Emit run length encoding here
-            emit_run();
-            // Then continue with the next character
-            last = current;
-            counter = 0;
-        }
-    }
-    // Don't forget trailing chars
-    emit_run();
-
-    env().log_stat("max repeat", stat_max_repeat_counter);
-    env().log_stat("count repeat segments", stat_count_repeat_segments);
-
-    // ...
-
-    env().end_stat_phase();
-
-    // ...
-}
-~~~
-
->> *TODO*: would be cool if you can highlight the changes like with `diff`
-
-Pasting the JSON output of this in the website will make the two added
-statistics appear in the tool tip of the middle phase.
 
 ## Options
 

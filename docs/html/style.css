@@ -139,6 +139,30 @@ section#content > div {
     padding-left: 1rem;
 }
 
+#content .figure {
+    margin-left: 1rem;
+
+    border: 1px solid #AAA;
+    border-left: 4px solid #AAA;
+
+    text-align: center;
+}
+
+#content .figure img {
+}
+
+#content .figure .caption {
+    background-color: #DDD;
+
+    font-size: 0.85rem;
+    font-style: italic;
+
+    border-top: 1px dotted #AAA;
+
+    margin: 0;
+    padding: 0.5rem;
+}
+
 #content blockquote {
     margin: 0 0 0 1rem;
 }
