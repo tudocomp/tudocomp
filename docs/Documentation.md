@@ -481,7 +481,7 @@ run-length encoding of the input. In run-length encoding, sequences (runs)
 of the same character are replaced by one single occurence, followed by the
 length of the run.
 
-For example, the input `"abcccccccde"`, which contains a run of six `c`
+For example, the input `"abcccccccde"`, which contains a run of seven `c`
 characters, would be encoded as `"abc%6%de"`, where `%6%` designates that the
 preceding character is repeated six times. This way, the original input can be
 restored from the encoded string.
@@ -833,7 +833,7 @@ In the following examples, two dynamic options are introduced to the
 [run-length encoder](#example-run-length-encoding) example in the `Compressor`'s
 meta information object. The `minimum_run` option will determine the minimum
 length of a run before it is encoded (4 by default), while the `rle_symbol`
-option defines the symbol used to 
+option defines the separation symbol used to use for encoding runs.
 
 ~~~ {.cpp}
 inline static Meta meta() {
@@ -850,7 +850,9 @@ inline static Meta meta() {
 
 The `Meta`'s [`option`](@URL_DOXYGEN_META_OPTION@) method introduces a new
 option. Using [`dynamic`](@URL_DOXYGEN_OPTIONBUILDER_DYNAMIC@), this option
-is declared a dynamic option with the specified default value.
+is declared a dynamic option with the specified default value. The default value
+is used when the option's value was not explicitly passed (ie. via the command
+line).
 
 In the following snippet, these options are used to alter the actual run-length
 encoding done by the `emit_run` function:
@@ -882,6 +884,38 @@ Note how options are accessible via the environment's
 > *Exercise*: Modify the decompression of the run-length encoder so that it
               uses the `rle_symbol` option as well.
 
+### Templated Options
+
+>> I would like a MUCH shorter explanation here focussing on _how_ to use it
+   and _what_ to use it for, rather than _why_ it is important.
+
+### Unit Testing with Options
+
+>> *TODO*: `test::roundtrip` is not in Doxygen!
+
+In the [Unit Tests](#unit-tests) section, the [`test::roundtrip`](about:blank)
+method was introduced for testing a compression cycle. In another overload,
+additionally to the input and expected encoding, options can be passed as a
+third argument like so:
+
+~~~ {.cpp}
+TEST(example, roundtrip_options) {
+    // Test with options
+    test::roundtrip<ExampleCompressor>("abcccccccde", "abc#6#de",  "minimum_run = 7, rle_symbol = '#'");
+    test::roundtrip<ExampleCompressor>("abccccccde",  "abcccccde", "minimum_run = 7,rle_symbol = '#'");
+
+    // Test defaults
+    test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de");
+
+    // Test partially with defaults
+    test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de",  "minimum_run = 7");
+    test::roundtrip<ExampleCompressor>("abccccccde",  "abcccccde", "minimum_run = 7");
+    test::roundtrip<ExampleCompressor>("abccccde",    "abc#3#de",  "rle_symbol = '#'");
+    test::roundtrip<ExampleCompressor>("abcccde",     "abcccde",   "rle_symbol = '#'");
+}
+~~~
+
+Note how options that are not passed will take their default values.
 
 >> XXX
 
