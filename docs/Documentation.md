@@ -887,7 +887,13 @@ Note how options are accessible via the environment's
 ### Templated Options
 
 >> I would like a MUCH shorter explanation here focussing on _how_ to use it
-   and _what_ to use it for, rather than _why_ it is important.
+   and _what_ to use it for, rather than _why_ it is important. Also, instead
+   of clogging the tutorial with unreadably long code examples, I would rather
+   refer to an existing example implementation.
+
+### Option Syntax
+
+>> *TODO*: ...
 
 ### Unit Testing with Options
 
@@ -919,7 +925,9 @@ Note how options that are not passed will take their default values.
 
 >> XXX
 
-## Option Syntax and Testing
+### Rewrite
+
+> ### Option Syntax and Testing
 
 By adding new options to the algorithm we have to add additional tests covering
 the new possibilities of how the algorithm may work.
@@ -965,7 +973,7 @@ test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de",
 
 You can see this in action in the `compress_stats_options` example test.
 
-## Template Options
+> ### Template Options
 
 The runtime options as discussed above are useful,
 but they have one aspect that makes them not universally applicable:
@@ -1312,7 +1320,7 @@ public:
 };
 ~~~
 
-### Tests
+> ### Tests
 
 As a subsequent step we want to verify that the templated version of the compressor works as
 intended. To this end, we use the same testing as before:
