@@ -17,6 +17,7 @@ endif()
 
 # Using C++11, more warnings and debug info
 # TODO: Add --pedantic and fix issues
+# TODO: Actually add -Wall -Wextra -Werror -pedantic
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=${CXX_STANDARD}")
 
 # Global dependencies
