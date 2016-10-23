@@ -975,14 +975,90 @@ Note how options are accessible via the environment's
 
 ### Templated Options
 
->> I would like a MUCH shorter explanation here focussing on _how_ to use it
-   and _what_ to use it for, rather than _why_ it is important. Also, instead
-   of clogging the tutorial with unreadably long code examples, I would rather
-   refer to an existing example implementation.
+Since algorithms are meant to be modular, the framework provides functionality
+to pass a sub-algorithm as an option of the main algorithm, which the main
+algorithm then instantiates at runtime. This is done using templated options.
 
-### Option Syntax
+The following example declares the main algorithm,
+`TemplatedExampleCompressor`, with a template parameter `encoder_t` and the
+correspondig templated option:
 
->> *TODO*: ...
+~~~ {.cpp}
+template <typename encoder_t>
+class TemplatedExampleCompressor : public Compressor {
+public:
+    inline static Meta meta() {
+        Meta m("compressor", "example_compressor",
+               "This is an example compressor.");
+
+        //Define options
+        m.option("encoder").templated<encoder_t>();
+
+        return m;
+    }
+
+    // ...
+};
+~~~
+
+The following snippet shows an alternative implementation of the
+[run-length encoder](#example-run-length-encoding)'s `compress` function using
+the templated option:
+
+~~~ {.cpp}
+inline virtual void compress(Input& input, Output& output) override {
+    auto istream = input.as_stream(); // retrieve the input stream
+    auto ostream = output.as_stream(); // retrieve the output stream
+
+    char current; // stores the current character read from the input
+    char last; //stores the character that preceded the current character
+    size_t counter = 0; // counts the length of the run of the current character
+
+    // create the encoder
+    encoder_t encoder(env().env_for_option("encoder"));
+
+    // retrieve the first character on the stream
+    if (istream.get(last)) {
+        // continue reading from the stream
+        while(istream.get(current)) {
+            if (current == last) {
+                // increase length of the current run
+                counter++;
+            } else {
+                // emit the previous run
+                encoder.emit_run(last, counter);
+
+                // continue reading from the stream, starting a new run
+                last = current;
+                counter = 0;
+            }
+        }
+
+        // emit the final run
+        encoder.emit_run(last, counter);
+    }
+}
+~~~
+
+Note how in this example, the template type `encoder_t` is used to create an
+encoder. The function `emit_run` has been removed, instead the type `encoder_t`
+is expected to declare `emit_run` accepting two parameters: the character and
+the length of the run. This way, the actual encoding has been made *modular*.
+
+The function [`env_for_option`](@URL_DOXYGEN_ENV_ENVFOROPTION@) is used to
+create an environment from the current environment's `"encoder`" option.
+`encoder_t` accepts this in its constructor and get nested options from it.
+
+For instance, `encoder_t` could accept the dynamic options `minimum_run` and
+`rle_symbol` and encode a run like in the previous section. However, as long as
+`encoder_t` provides the `emit_run` function, it could use any arbitrary
+strategy to encode the run. In either scenario, the `decompress` method would
+have to use the sub-algorithm as well in order to decode the runs correctly.
+
+> *Example*: A full example of the `TemplatedExampleCompressor` is available in
+             the `include/tudocomp/example` directory in the framework's
+             repository. Most of the framework's compressor implementations
+             follow this scheme and can be viewn as advanced examples as well.
 
 ### Unit Testing with Options
 
@@ -997,7 +1073,7 @@ third argument like so:
 TEST(example, roundtrip_options) {
     // Test with options
     test::roundtrip<ExampleCompressor>("abcccccccde", "abc#6#de",  "minimum_run = 7, rle_symbol = '#'");
-    test::roundtrip<ExampleCompressor>("abccccccde",  "abcccccde", "minimum_run = 7,rle_symbol = '#'");
+    test::roundtrip<ExampleCompressor>("abccccccde",  "abcccccde", "minimum_run = 7, rle_symbol = '#'");
 
     // Test defaults
     test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de");
@@ -1012,7 +1088,14 @@ TEST(example, roundtrip_options) {
 
 Note how options that are not passed will take their default values.
 
+While options are generally passed following a simple syntax (`option = value`,
+separated by `,`), options to nested algorithms are passed like so:
+
+>> *TODO*: Roundtrip for `TemplatedExampleCompressor` .
+
 >> XXX
+
+>> *TODO*: ...
 
 ### Rewrite
 
@@ -1061,406 +1144,6 @@ test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de",
 ~~~
 
 You can see this in action in the `compress_stats_options` example test.
-
-> ### Template Options
-
-The runtime options as discussed above are useful,
-but they have one aspect that makes them not universally applicable:
-Their value is determined at runtime.
-
-This is often fine, but there are scenarios where this can hamper
-performance for one simple reason: If the value is only know at
-runtime, the compiler can not make optimization decisions
-based on its value at compile time.
-
-In the context of the framework, this issue can mostly
-be encountered if your algorithm can choose different sub algorithms,
-like encoders, or algorithms pre-processing in the input text.
-
-Lets look at an example of what the actual performance problem
-can be in that case:
-
-Imagine that your produces some data in a loop.
-You want to pass this data on-the-fly to a sub algorithm that processes and encodes it.
-Since you can choose different sub algorithms you have a runtime option that selects a specific sub algorithm.
-In this case, the code would look somewhat like this:
-
-~~~ { .cpp }
-class SubAlgorithmInterface {
-    virtual void process_and_encode(...);
-}
-
-std::unique_ptr<SubAlgorithmInterface> sub_algo;
-std::string sub_algo_name = env().option("...").as_string();
-
-// Select the algorithm to use
-if (sub_algo_name == "algo1") {
-    sub_algo = std::make_unique<SubAlgo1>();
-} else if (sub_algo_name == "algo2") {
-    sub_algo = std::make_unique<SubAlgo2>();
-}
-
-for(auto byte : input.as_stream()) {
-    // ... process(byte)
-    data = ...;
-    sub_algo.process_and_encode(data);
-    // ...
-}
-~~~
-
-The bottleneck in this code is the `process_and_encode()` call inside the
-loop.
-Because the compiler does not know which of the algorithms will be
-selected at runtime, it needs to emit native code that does a virtual call
-(that is, it loads the function pointer for the method from a
-[vtable](https://en.wikipedia.org/wiki/Virtual_method_table) and calls it).
-Besides causing overhead,
-the compiler is not able to "merge" the native code of the function body
-with the native code of the loop for a more efficient and faster compiled
-program.
-
->> *TODO*: Why do you emphasize on "native" code?
-
-In order to enable these optimizations, the compiler needs to know
-at compile time what function or method of what object will be called.
-For standalone functions, it knows this if the function is defined in the
-same
-`*.cpp` file, or exists with a `inline` annotation in a header
-(hence the header-only design of the library).
-
->> *TODO*: why is inline necessary? This is only a compiler hint
-
-For the above example, the recommended way is to turn
-the sub algorithm into a generic template parameter of the class:
-
-~~~ { .cpp }
-template<class T>
-class MyCompressor {
-    // ...
-    void compress(...) {
-        // ...
-        T sub_algo = T();
-        for(auto byte : input.as_stream()) {
-            // ... process(byte)
-            data = ...;
-            sub_algo.process_and_encode(data);
-            // ...
-        }
-    }
-}
-~~~
-
-This transforms the selection of the sub algorithm
-from a runtime lookup in a compile time decision between
-`MyCompressor<SubAlgo1>` and `MyCompressor<SubAlgo2>`.
-
-By compiling code using one of those types, it will generate
-native code
-for the `SubAlgo1` case, or native code for the `SubAlgo2` case,
-in either case having full knowledge of the code inside the loop body, which allows
-further optimizations.
-
-Now let us head back to our example compressor.
-Here, we want to make the encoding of the repeated characters exchangeable.
-We will do this by adding a sub algorithm that will encode this kind of repetitions.
-
-Because this modification changes the existing example code more seriously,
-we make a copy of the `ExampleCompressor` class from the
-`ExampleCompressor.hpp` file.
-We rename the copied class to `TemplatedExampleCompressor`.
-
-First, we make the class generic and give it a private
-member that stores an instance of the chosen encoder:
-
-~~~ { .cpp }
-template<typename T>
-class TemplatedExampleCompressor: public Compressor {
-private:
-    // We want to keep an instance of the encoder
-    // alive for the same duration as the compressor itself, so we
-    // keep it as a field
-    T m_encoder;
-~~~
-
-The sub algorithm does _not have_ to be a field of the compressor.
-Depending on the design of the algorithm, the class could also
-be instantiated in the `compress()` or `decompress()` methods.
-
-As a second step, we declare the sub algorithm as an "templated" option in our meta method,
-since we want to make the choice of the encoder visible as an option.
-
-~~~ { .cpp }
-public:
-    inline static Meta meta() {
-        Meta m("compressor", "templated_example_compressor",
-               "This is a templated example compressor.");
-        m.option("encoder").templated<T>();
-        m.option("debug_sleep").dynamic("false");
-        return m;
-    }
-~~~
-
-We have removed the `escape_symbol` option, because it is now specified by the used encoder.
-
-Exactly as with `dynamic()`, we have the option of giving a default
-"value" for the `templated()` options. Specifically,
-the syntax looks like `.templated<T, ActualType>()`.
-Note that this will not automatically make this the default for the template
-parameter of the class itself, just for the registry and command line tool.
-
->> *TODO*: Do you mean that it does not mean that this does not cause a default template parameter like <T = ActualType>
-
-Next, we initialize the encoder in the constructor of the compressor.
-The actual API of a sub algorithm can be arbitrary, with almost no restrictions on the amount of methods
-and the life cycle of the instances themselves.
-
-However, if you want to use the templated parameter as an proper algorithm option
-then you should make sure that your sub algorithms inherit from `tudocomp::Algorithm`,
-and have a constructor that takes an `Env&&` as the first argument that has to be delegated
-to its base class constructor.
-By following these steps, we can initialize it with a new `Env` instance created by
-`env().env_for_option("<option_name>")`. This ensures that the options for a
-sub algorithm will be delegated to its actual constructor:
-
-~~~ { .cpp }
-    inline TemplatedExampleCompressor(Env&& env):
-        Compressor(std::move(env)),
-        // Initialize it with an `Env` for all its options
-        m_encoder(this->env().env_for_option("encoder")) {}
-~~~
-
-We finalize the changes in the compressor class by calling the encoder in the actual compression routine.
-For this purpose, we define four methods that a suitable "ExampleEncoder" needs to provide:
-
-- `size_t threshold()` returns an integer for the minimum repeat count
-that should be replaced for the encoder. For example, if you replace `"aaa..."`
-with `a%N%` then that will reduce the size only for repeats longer than three.
-- `void encode_repeat(char last, size_t repeat, io::OutputStream& ostream)`  encodes a repetition of length repeat consisting of the same character char.
-- `bool is_start_of_encoding(const io::InputView& iview, size_t i)` identifies the start of a character repetition in the decoder.
-- `size_t decode(const io::InputView& iview, size_t& i)` decodes a character repetition and returns the length of this repetition (while advancing the input cursor at position i in the process).
-
->> *TODO*: cursor undef
-
-(This interface is an entirely arbitrary example, every algorithm can define its own design patterns.)
-
-Integrated in the example code, it looks like this:
-
-~~~ { .cpp }
-    inline virtual void compress(Input& input, Output& output) override {
-        auto istream = input.as_stream();
-        auto ostream = output.as_stream();
-
-        char last;
-        char current;
-        size_t counter = 0;
-
-        size_t stat_max_repeat_counter = 0;
-        size_t stat_count_repeat_segments = 0;
-        bool opt_enable_sleep = env().option("debug_sleep").as_bool();
-
-        auto emit_run = [&]() {
-            if (counter > m_encoder.threshold()) {
-                // Delegate encoding to encoder
-                m_encoder.encode_repeat(last, counter, ostream);
-
-                stat_count_repeat_segments++;
-            } else {
-                // Else output chars as normal
-                for (size_t i = 0; i <= counter; i++) {
-                    ostream << last;
-                }
-            }
-            stat_max_repeat_counter = std::max(stat_max_repeat_counter,
-                                               counter);
-        };
-
-        env().begin_stat_phase("run length encoding");
-
-        istream.get(last);
-        while(istream.get(current)) {
-            if (current == last) {
-                counter++;
-            } else {
-                // Emit run length encoding here
-                emit_run();
-                // Then continue with the next character
-                last = current;
-                counter = 0;
-            }
-        }
-        // Don't forget trailing chars
-        emit_run();
-
-        env().log_stat("max repeat", stat_max_repeat_counter);
-        env().log_stat("count repeat segments", stat_count_repeat_segments);
-
-        if (opt_enable_sleep) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            // FIXME, adding a fake memory allocation
-            std::vector<uint8_t> v(100 * 1024, 42); // 100 KiB of the byte 42
-        }
-        env().end_stat_phase();
-    }
-
-    inline virtual void decompress(Input& input, Output& output) override {
-        // Use the input as a memory view here, just to have both variants used
-        auto iview = input.as_view();
-        auto ostream = output.as_stream();
-
-        char last = '?';
-
-        for (size_t i = 0; i < iview.size(); i++) {
-            if (m_encoder.is_start_of_encoding(iview, i)) {
-                size_t counter = m_encoder.decode(iview, i);
-                for (size_t x = 0; x < counter; x++) {
-                    ostream << last;
-                }
-            } else {
-                ostream << iview[i];
-                last = iview[i];
-            }
-        }
-    }
-};
-
-~~~
-
-Finally, let us look at the implementation for the actual encoder classes.
-For our example, we will define two encoders: one doing the existing
-human readable encoding of repeats (`"aaaa" -> "a%3%"`), and another one
-computing a binary oriented output, where (instead of a readable number) it
-encodes the length as a byte directly (`"aaaa" -> [97, 255, 3]`, with `255`
-being the escape symbol).
-
-Again, for the sake of simplicity, we don't address some of the hidden bugs
-like `'%'` or `'\xff'` appearing in the input text, or the case that there is
-a character repetition longer than what fits in a byte.
-
-~~~ { .cpp }
-class ExampleDebugCoder: public Algorithm {
-private:
-    const char m_escape_symbol;
-public:
-    inline ExampleDebugCoder(Env&& env):
-        Algorithm(std::move(env)),
-        m_escape_symbol(this->env().option("escape_symbol").as_string()[0]) {}
-
-    inline static Meta meta() {
-        Meta m("example_coder", "debug",
-               "This is an example debug coder, encoding human readable.");
-        m.option("escape_symbol").dynamic("%");
-        return m;
-    }
-
-    inline void encode_repeat(char last, size_t repeat, io::OutputStream& ostream) {
-        ostream << last << m_escape_symbol << repeat << m_escape_symbol;
-    }
-
-    inline bool is_start_of_encoding(const io::InputView& iview, size_t i) {
-        return iview[i] == m_escape_symbol;
-    }
-
-    inline size_t decode(const io::InputView& iview, size_t& i) {
-        size_t counter = 0;
-        for (i++; i < iview.size(); i++) {
-            if (iview[i] == m_escape_symbol) {
-                break;
-            } else {
-                counter *= 10;
-                counter += (iview[i] - '0');
-            }
-        }
-        return counter;
-    }
-
-    inline size_t threshold() { return 3; }
-};
-
-class ExampleBitCoder: public Algorithm {
-private:
-    const char m_escape_symbol;
-public:
-    inline ExampleBitCoder(Env&& env):
-        Algorithm(std::move(env)),
-        m_escape_symbol(this->env().option("escape_byte").as_integer()) {}
-
-    inline static Meta meta() {
-        Meta m("example_coder", "bit",
-               "This is an example bit coder, encoding as a binary integer.");
-        m.option("escape_byte").dynamic("255");
-        return m;
-    }
-
-    inline void encode_repeat(char last, size_t repeat, io::OutputStream& ostream) {
-        ostream << last << m_escape_symbol << char(uint8_t(repeat));
-    }
-
-    inline bool is_start_of_encoding(const io::InputView& iview, size_t i) {
-        return iview[i] == uint8_t(m_escape_symbol);
-    }
-
-    inline size_t decode(const io::InputView& iview, size_t& i) {
-        i++;
-        size_t counter = uint8_t(iview[i]);
-        return counter;
-    }
-
-    inline size_t threshold() { return 2; }
-};
-~~~
-
-> ### Tests
-
-As a subsequent step we want to verify that the templated version of the compressor works as
-intended. To this end, we use the same testing as before:
-
-~~~ { .cpp }
-using tudocomp::TemplatedExampleCompressor;
-using tudocomp::ExampleDebugCoder;
-using tudocomp::ExampleBitCoder;
-
-TEST(example, templated_debug) {
-    test::roundtrip<TemplatedExampleCompressor<ExampleDebugCoder>>(
-        "abbbbcccccccde", "abbbbc%6%de");
-
-    test::roundtrip<TemplatedExampleCompressor<ExampleDebugCoder>>(
-        "abbbbcccccccde", "abbbbc%6%de", "debug()");
-
-    test::roundtrip<TemplatedExampleCompressor<ExampleDebugCoder>>(
-        "abbbbcccccccde", "abbbbc-6-de", "debug(escape_symbol = '-')");
-}
-
-TEST(example, templated_bit) {
-    test::roundtrip<TemplatedExampleCompressor<ExampleBitCoder>>(
-        "abbbbcccccccde",
-        std::vector<uint8_t> { 'a', 'b', 0xff, 3, 'c', 0xff, 6, 'd', 'e' });
-
-    test::roundtrip<TemplatedExampleCompressor<ExampleBitCoder>>(
-        "abbbbcccccccde",
-        std::vector<uint8_t> { 'a', 'b', 0xff, 3, 'c', 0xff, 6, 'd', 'e' },
-        "bit()");
-
-    test::roundtrip<TemplatedExampleCompressor<ExampleBitCoder>>(
-        "abbbbcccccccde",
-        std::vector<uint8_t> { 'a', 'b', 0, 3, 'c', 0, 6, 'd', 'e' },
-        "bit(escape_byte = '0')");
-}
-~~~
-
-The template options will set the corresponding parameters
-in an option string to a fixed value.
-If you explicitly set some options
-you either have to skip the option parameters belonging to the template parameter,
-or you have to give it the same value as indicated by it; otherwise you will get an error:
-
->> *TODO*: not really clear
-
-~~~ { .cpp }
-// ok
-tudocomp::create_algo<TemplatedExampleCompressor<ExampleDebugCoder>>("debug(escape_symbol = '-')");
-// error
-tudocomp::create_algo<TemplatedExampleCompressor<ExampleDebugCoder>>("bit(escape_byte = '123')");
-~~~
 
 ## The Registry
 
