@@ -1088,62 +1088,18 @@ TEST(example, roundtrip_options) {
 
 Note how options that are not passed will take their default values.
 
-While options are generally passed following a simple syntax (`option = value`,
-separated by `,`), options to nested algorithms are passed like so:
+Dynamic options are passed following the simple `name = value` syntax, separated
+by `,`. Options for nested algorithms are grouped in brackets (`(` and `)`). The
+following example shows this for the `TemplatedExampleCompressor`:
 
->> *TODO*: Roundtrip for `TemplatedExampleCompressor` .
-
->> XXX
-
->> *TODO*: ...
-
-### Rewrite
-
-> ### Option Syntax and Testing
-
-By adding new options to the algorithm we have to add additional tests covering
-the new possibilities of how the algorithm may work.
-In order to understand how this works,
-we briefly look at the command line syntax used for specifying an algorithm and its options.
-
-An algorithm is specified with an id string that concisely
-specifies all (sub)algorithms and options it takes. The syntax works
-like a function call that supports keyword arguments and default arguments.
-
-As an example, say we have an algorithm `foo` that accepts a string option
-`opt1` with default value `'qux'` and a string option `opt2` with default
-value `'bar'`, then all of these are valid id strings:
-
- Id string                            | Full meaning
---------------------------------------|------------
- `foo`                                | `foo(opt1='qux',opt2='bar')`
- `foo()`                              | `foo(opt1='qux',opt2='bar')`
- `foo('x')`                           | `foo(opt1='x',  opt2='bar')`
- `foo('x', 'yz')`                     | `foo(opt1='x',  opt2='yz' )`
- `foo('123', opt2='456')`             | `foo(opt1='123',opt2='456')`
- `foo(opt2 = 'asd', opt1 = 'xkc')  `  | `foo(opt1='xkc',opt2='asd')`
- `foo(opt2 = '...')`                  | `foo(opt1='qux',opt2='...')`
-
-The reason why the syntax is so complex is that the framework supports
-a variety of algorithms with many options; thus it needs a concise
-notation for specifying a concrete combination of them that works with
-default values (regardless of the ordering of the parameters like python, but unlike C++).
-
-Now, if we go back to our example code, both the
-`tudocomp::create_algo()` and the `test::roundtrip()` functions
-accept an optional string argument that is used for passing options to the algorithm.
-This string has to be written in the same syntax as above, but without the enclosing algorithm's name:
-
-~~~ { .cpp }
-tudocomp::create_algo<ExampleCompressor>("'/', true");
-
-test::roundtrip<ExampleCompressor>("abcccccccde", "abc-6-de",
-                                   "escape_symbol = '-'");
-test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de",
-                                   "debug_sleep = true");
+~~~ {.cpp}
+test::roundtrip<TemplatedExampleCompressor<ExampleRunEmitter>>
+    ("abcccccccde", "abc#6#de",  "encoder(minimum_run = 7, rle_symbol = '#'");
 ~~~
 
-You can see this in action in the `compress_stats_options` example test.
+>> *TODO*: Is this correct?
+
+>> XXX
 
 ## The Registry
 
