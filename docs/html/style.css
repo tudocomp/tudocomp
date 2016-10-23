@@ -33,6 +33,22 @@ em {
     font-weight: bold;
 }
 
+table {
+    margin-left: 1rem;
+
+    border: 2px solid #AAA;
+    border-collapse: collapse;
+}
+
+td, th {
+    border: 1px dotted #AAA;
+    padding: 0.5rem;
+}
+
+th {
+    border-bottom: 2px solid #AAA;
+}
+
 pre {
     margin: 0 0 0 1rem;
     border: 1px solid #AAA;
