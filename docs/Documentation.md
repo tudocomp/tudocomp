@@ -412,7 +412,62 @@ for(uint8_t c : istream) {
 
 ### Bitwise I/O
 
->> *TODO*: ...
+The framework provides the classes [`BitIStream`](@URL_DOXYGEN_BITISTREAM@) and
+[`BitOStream`](@URL_DOXYGEN_BITOSTREAM@) for bitwise input and output. They are
+wrappers around `std::istream` and `std::ostream`, respectively, and provide
+functionality to read or write bits or fixed-width (MSBF order) integers from
+their underlying stream.
+
+The following example performs several bitwise write operations on an output:
+
+~~~ {.cpp}
+auto ostream = output.as_stream(); // retrieve an output stream
+BitOStream obits(ostream); //construct the bitwise output stream
+
+obits.write_bit(0);     // write a single unset bit
+obits.write_bit(1);     // write a single set bit
+obits.write_int(27, 5); // write the value 27 using 5 bits (11011)
+obits.write_int(27, 3); // write the value 27 using 3 bits (truncated to 011)
+
+int a = 27;
+obits.write_int(a); // write the value 27 using 8*sizeof(int) bits (32)
+                    // (00000000000000000000000000011011)
+
+uint8_t b = 27;
+obits.write_int(b); // write the value 27 using 8*sizeof(uint8_t) bits (8)
+                    // (00011011)
+
+obits.flush(); //(!) flush the buffer byte
+~~~
+
+Note how `write_int` will use the default size of the passed integer type if
+no bit width is explicitly given in the second argument.
+
+The last operation, [`flush()`](@URL_DOXYGEN_BITOSTREAM_FLUSH@), is
+_required_ after each batch of bitwise write operations (e.g. when
+`ostream` is closed or used otherwise). `BitOStream` internally writes to a
+buffer byte that is written to the underlying `std::ostream` whenever it is full
+(ie. eight bytes have been written). `flush` will force the buffer byte to be
+written; its remaining bits will be unset (zero).
+
+The following example performs several bitwise read operations from an input:
+
+~~~ {.cpp}
+auto istream = input.as_stream(); // retrieve an input stream
+BitIStream ibits(istream); // construct the bitwise input stream
+
+bool bit = ibits.read_bit(); // read a single bit
+
+uint8_t  a = ibits.read_int<uint8_t>(5); // read a 5-bit integer into a uint8_t
+uint16_t b = ibits.read_int<uint16_t>;   // read a 16-bit integer
+~~~
+
+Note how `read_int` requires a template parameter in order to "know" into which
+data type the read integer will be stored. If no bit width is given, the default
+size of the data type will be used.
+
+>> *TODO*: Describe variable-width integers once wording and implementation are
+           correct.
 
 ## A Simple Compressor
 
