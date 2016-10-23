@@ -1099,48 +1099,35 @@ test::roundtrip<TemplatedExampleCompressor<ExampleRunEmitter>>
 
 >> *TODO*: Is this correct?
 
->> XXX
-
 ## The Registry
 
-Once a compressor implementation exists, and has a few unit tests that
-verify the basic operation, it can be registered in the global
-algorithm registry in order to be usable from the command line tool.
-Adding a compressor to the registry will also result in getting picked by a few automatic unit tests
-that run all algorithms with a number of small test cases.
+In order to make a compressor available for the driver application, it needs
+to be registered in the driver's [`Registry`](@URL_DOXYGEN_REGISTRY@).
 
-Doing this is easy: In `src/tudocomp_driver/tudocmp_algorithms.cpp`,
-add includes for your compressor headers, and then add new `r.compressor<T>()`
-lines for all compressor classes in the function body there.
+This is currently possible only by editing the source code file
+`src/tudocomp_driver/tudocmp_algorithms.cpp`. Adding the necessary includes and
+following lines to the body of the `register_algorithms` function will register
+the example compressors:
 
->> *TODO*: where is the function body?
-
-For the templated version, you need to register the class with
-all possible combinations of type parameters it can accept, in order to generate native code instance for all of them.
-
-For our running example, we add these three lines:
-
-~~~ { .cpp }
-r.compressor<ExampleCompressor>()
-r.compressor<TemplatedExampleCompressor<ExampleDebugCoder>>();
-r.compressor<TemplatedExampleCompressor<ExampleBitCoder>>();
+~~~ {.cpp}
+r.register_compressor<ExampleCompressor>();
+r.register_compressor<TemplatedExampleCompressor<ExampleRunEmitter>>();
 ~~~
 
-If we now run `make check`
-(or directly `make tudocomp_driver_algorithm_matrix_tests`), the new
-compressors should be picked by the "tudocomp_driver_algorithm_matrix_tests"
-target, which will run the previously mentioned tests on them:
+Note how modular compressors with sub algorithms need every possible combination
+registered explicitly.
 
-~~~
-...
-example_compressor_0.txt -> example_compressor_0.tdc -> example_compressor_0.decomp.txt ... OK
-example_compressor_1.txt -> example_compressor_1.tdc -> example_compressor_1.decomp.txt ... OK
-example_compressor_2.txt -> example_compressor_2.tdc -> example_compressor_2.decomp.txt ... OK
-example_compressor_3.txt -> example_compressor_3.tdc -> example_compressor_3.decomp.txt ... OK
-...
-~~~
+Once registered, the example compressors are available in the command-line
+application and will be listed in the help output. They are also part of the
+matrix test when invoking the `check` make target.
 
 ## The Driver
+
+>> *TODO*: Do we need this section? A usage example should be provided
+           in the Usage section. Once registered, a self-made compressor can
+           be used in exactly the same way.
+
+>> XXX
 
 After integrating a compressor into the registry, we can start using it
 with the command line tool.
