@@ -70,13 +70,13 @@ compression and encoding algorithms as much as possible into strategies.
 The produced output must contain all information necessary for the respective
 decompressor (or decoder) to restore the original input losslessly.
 
-## Library and driver
+## Library and Driver
 
 The framework consists of two major components: the compression *library*
-(*tudocomp*) and the framework utility, called the *driver*. The library
+(*tudocomp*) and the command-line utility, called the *driver*. The library
 contains the core interfaces and provides implementations of various
-compressors; the driver provides the interface for the user in the form of an
-executable.
+compressors; the driver makes them available in form of an executable that can
+be used from the command-line.
 
 The driver uses a *registry* of compressors, which acts as the link between the
 driver and the library. The library is a fully functional standalone library
@@ -136,17 +136,16 @@ For building the documentation, the following tools are required:
 * [pandocfilters (Python module)](https://pypi.python.org/pypi/pandocfilters)
   (optional, 1.3 or later).
 
-## Framework driver utility
+## Command-line utility
 
-The main executable `tudocomp_driver` is a command line tool that bundles all
-implemented algorithms. It provides a fast and easy way to compress and
+The executable `tudocomp_driver` is the command-line application that bundles
+all registered algorithms. It provides a fast and easy way to compress and
 decompress a file with a specified chain of compressors.
 
-It is called the *driver* because it makes available the library functionality
-for command-line usage.
-
 Every registered compression or encoding algorithm will be listed in the help
-output of the driver utility when passing the `--list` command-line argument.
+output of the utility when passing the `--list` argument.
+
+>> *TODO*: Maybe add a small example here.
 
 ## Building on Windows
 
@@ -176,13 +175,13 @@ discussed:
   interface
 - Implementing unit tests
 - Adding basic time and memory statistics tracking
-- Adding runtime options  select different behavior
-- Adding compile time (template) options to your code to select
-  different behaviors that should not be selected at runtime due to performance reasons.
-- Registering a compressor in the driver registry
-- Using the `tudocomp_driver` command line tool with the newly implemented compressor
-- Using the `compare_tool` for benchmarking the compressor against other compressors
-  for different inputs
+- Adding options to select different behavior
+- Making a compressor modular by using sub algorithms and templated options
+- Registering a compressor in the registry
+- Using the `tudocomp_driver` command-line application with the newly
+  implemented compressor
+- Using the `compare_tool` for benchmarking the compressor against other
+  compressors for different inputs
 
 You may also refer to an [UML overview](#uml-type-overview) of the framework.
 
@@ -504,7 +503,7 @@ reference should always be delegated down to the base constructor
 A [`Meta`](@URL_DOXYGEN_META@) object contains information about an algorithm
 (e.g. compressors) such as its name and type. This information is used by the
 generic algorithm constructor `create_algo`, which will be explained below, as
-well as for the registry of the driver utility.
+well as for the registry of the command-line utility.
 
 The following example header (`/include/tudocomp/example/ExampleCompressor.hpp`)
 contains a minimal `Compressor` implementation named `ExampleCompressor`:
@@ -552,8 +551,8 @@ The `Meta` object returned by `meta()` contains the following information:
 * The algorithm type (in this case, a `"compressor"`),
 * the algorithm's identifier (for shell compatibility, this should not contain
   any spaces or special characters) and
-* a brief description of the algorithm (which would be displayed in the driver
-  utility's help output).
+* a brief description of the algorithm (which is be displayed in the
+  command-line help output).
 
 ### Example: Run-Length Encoding
 
@@ -663,7 +662,7 @@ rather than a view.
 ### Magic
 
 In order to identify what compressor has been used to produce a compressed
-output, the driver utility (described later on) can prepend a unique identifier
+output, the driver application can prepend a unique identifier
 (*magic keyword*) to the output.
 
 It is important to note that this is *not* the responsibility of the compressor.
