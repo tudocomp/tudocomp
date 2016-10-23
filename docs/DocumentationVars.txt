@@ -15,6 +15,7 @@ set(URL_DOXYGEN_INPUT ${URL_DOXYGEN}/classtdc_1_1io_1_1_input.html)
 set(URL_DOXYGEN_OUTPUT ${URL_DOXYGEN}/classtdc_1_1io_1_1_output.html)
 set(URL_DOXYGEN_BITISTREAM ${URL_DOXYGEN}/classtdc_1_1io_1_1_bit_i_stream.html)
 set(URL_DOXYGEN_BITOSTREAM ${URL_DOXYGEN}/classtdc_1_1io_1_1_bit_o_stream.html)
+set(URL_DOXYGEN_REGISTRY ${URL_DOXYGEN}/classtdc_1_1_registry.html)
 
 set(URL_DOXYGEN_ALGORITH_ENV "${URL_DOXYGEN_ALGORITHM}#a57ce1a8c2d8d2c938274d61e786c33c2")
 set(URL_DOXYGEN_INPUT_ASVIEW "${URL_DOXYGEN_INPUT}#a01b43ae61e9c5097de455407940be1ff")
