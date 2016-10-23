@@ -32,7 +32,8 @@ binary encoded compressed file.
 ## Compressors and Modularity
 
 A *compressor*, in terms of this framework, transforms an input sequence and
-writes the result to an output. A compressor is the entry point for the utility.
+writes the result to an output. A compressor is the entry point for the driver
+application.
 
 Each compressor family has to implement a *decompressor* that can restore the
 original input losslessly from a compressed output. Apart from that, there are
@@ -73,7 +74,7 @@ decompressor (or decoder) to restore the original input losslessly.
 ## Library and Driver
 
 The framework consists of two major components: the compression *library*
-(*tudocomp*) and the command-line utility, called the *driver*. The library
+(*tudocomp*) and the command-line application, called the *driver*. The library
 contains the core interfaces and provides implementations of various
 compressors; the driver makes them available in form of an executable that can
 be used from the command-line.
@@ -136,14 +137,14 @@ For building the documentation, the following tools are required:
 * [pandocfilters (Python module)](https://pypi.python.org/pypi/pandocfilters)
   (optional, 1.3 or later).
 
-## Command-line utility
+## Command-line application
 
 The executable `tudocomp_driver` is the command-line application that bundles
 all registered algorithms. It provides a fast and easy way to compress and
 decompress a file with a specified chain of compressors.
 
 Every registered compression or encoding algorithm will be listed in the help
-output of the utility when passing the `--list` argument.
+output of the application when passing the `--list` argument.
 
 >> *TODO*: Maybe add a small example here.
 
@@ -503,7 +504,7 @@ reference should always be delegated down to the base constructor
 A [`Meta`](@URL_DOXYGEN_META@) object contains information about an algorithm
 (e.g. compressors) such as its name and type. This information is used by the
 generic algorithm constructor `create_algo`, which will be explained below, as
-well as for the registry of the command-line utility.
+well as for the registry of the command-line application.
 
 The following example header (`/include/tudocomp/example/ExampleCompressor.hpp`)
 contains a minimal `Compressor` implementation named `ExampleCompressor`:
