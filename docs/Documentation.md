@@ -1046,7 +1046,7 @@ is expected to declare `emit_run` accepting two parameters: the character and
 the length of the run. This way, the actual encoding has been made *modular*.
 
 The function [`env_for_option`](@URL_DOXYGEN_ENV_ENVFOROPTION@) is used to
-create an environment from the current environment's `"encoder`" option.
+create an environment from the current environment's `"encoder"` option.
 `encoder_t` accepts this in its constructor and get nested options from it.
 
 For instance, `encoder_t` could accept the dynamic options `minimum_run` and
