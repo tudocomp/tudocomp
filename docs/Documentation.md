@@ -34,9 +34,9 @@ binary encoded compressed file.
 A *compressor*, in terms of this framework, transforms an input sequence and
 writes the result to an output. A compressor is the entry point for the utility.
 
-Each compressor family has to implement a decompressor
-that can restore the original input losslessly. Apart from that, there are no
-strict rules as to *what* kind of transformation of the input occurs. In that
+Each compressor family has to implement a *decompressor* that can restore the
+original input losslessly from a compressed output. Apart from that, there are
+no strict rules as to *what* kind of transformation of the input occurs. In that
 sense, an *encoder* is also a compressor.
 
 Compressors and encoders are implemented in a *modular* way. They are
@@ -160,72 +160,8 @@ point.
 
 ## License
 
-The framework is published under the 
+The framework is published under the
 [GNU General Public License, Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html).
-
-# Framework Overview
-
->> *TODO*: This whole section is out of place. Its contents should be merged
-           into the tutorial.
-
-This chapter provides a brief introduction of the core components of the
-framework.
-
-## The Compressor interface
-
-The [`Compressor`](@URL_DOXYGEN_COMPRESSOR@) class is the foundation for the
-compression and decompression cycle of the framework. It defines the two central
-operations: `compress` and `decompress`. These are responsible for transforming
-an input to an output so that the following (pseudo code) statement is true for
-every input:
-
-    decompress(compress(input)) == input
-
-In other words, the transformation must be losslessly reversible by the same
-compressor class.
-
-### Magic
-
-In order to identify what compressor has been used to produce a compressed output,
-the driver utility can prepend a unique identifier (*magic keyword*) to the output.
-This is *not* the responsibility of the compressor.
-
-The identifier is used by the driver when decompressing, to find out what class to use.
-
-## I/O
-
-The framework provides an I/O abstraction in the two classes
-[`Input`](@URL_DOXYGEN_INPUT@) and [`Output`](@URL_DOXYGEN_OUTPUT@). Both hide
-the actual source or sink of the data (e.g. a file or a place in memory).
-
-### Input
-
-`Input` allows for byte-wise reading from the data source.
-It can be used either as a *stream* or as a *view*.
-
-Using a *stream*, characters are read sequentially from the input [^direct-streaming].
-The current state of a stream (i.e. the reading position) can be
-retained by creating a copy of the stream object - this allows for *rewinding*,
-i.e. reading characters again that have already been read.
-
-[^direct-streaming]: Currently, direct streaming from an `std::istream` is not supported. When an `Input`
-is constructed from an `istream`, the stream is fully read and buffered in memory. This is an
-implementation decision that may change in the future. Note that files, on the other hand,
-are not buffered and will always be streamed from disk directly.
-
-A *view* provides random access on the input. This way, the input acts like an
-array of characters.
-
-### Output
-
-`Output` provides functionality to stream bytes sequentially to the data sink.
-
-### Bitwise I/O
-
-The [`BitIStream`](@URL_DOXYGEN_BITISTREAM@) and
-[`BitOStream`](@URL_DOXYGEN_BITOSTREAM@) classes provide wrappers for bitwise
-reading and writing operations. They support reading and writing of single bits,
-as well as fixed and variable width integers.
 
 # Tutorial
 
@@ -326,9 +262,159 @@ makes development more convenient as well.
 
 ## Input and Output
 
+Before going into the details of compressor implementation, this section will
+present one of the framework's core components in its I/O abstractions.
+
+As described in the [Philosophy](#philosophy) chapter, (de)compression, by means
+of this framework, processes data by reading from an input and writing to an
+output. The framework provides an abstraction for this in the two classes
+[`Input`](@URL_DOXYGEN_INPUT@) and [`Output`](@URL_DOXYGEN_OUTPUT@). Both hide
+the actual source or sink of the data (e.g. a file or a place in memory).
+
+This section will describe their usage only briefly, but they will be presented
+"in action" in the following sections of the tutorial.
+
+### Reading an Input
+
+An [`Input`](@URL_DOXYGEN_INPUT@) can be created from different data sources:
+
+* a memory pointer (e.g. a string literal),
+* a byte buffer (`std::vector<uint8_t>`),
+* a file or
+* an input stream(`std::istream`)[^direct-streaming].
+
+For each type of data source, the `Input` class provides a corresponding
+constructor:
+
+~~~ {.cpp}
+// Create an Input from a string literal
+Input input_from_memory("This is the input data");
+
+// Create an Input from a given byte buffer (std::vector<uint8_t>)
+Input input_from_buffer(buffer);
+
+// Create an Input from a file
+Input input_from_file(Input::Path{"example.txt"});
+
+// Create an Input from a given std::istream
+Input input_from_stream(std::cin); // from stdin
+~~~
+
+[^direct-streaming]: Currently, direct streaming from an `std::istream` is not
+supported. When an `Input` is constructed from an `istream`, the stream is fully
+read and buffered in memory. This is an implementation decision that may change
+in the future. Note that files, on the other hand, are not buffered and will
+always be streamed from disk directly.
+
+The input can be accessed in two conceptually different ways:
+
+1. As a *stream*, requiring bytes to be read sequentially from the input source
+   (the concept of online algorithms) or
+2. as a *view*, providing random access to the input source as to an array of
+   bytes (the concept of offline algorithms).
+
+The choice is done by acquiring the respective object from either the
+[`as_stream`](@URL_DOXYGEN_INPUT_ASSTREAM@) or the
+[`as_view`](@URL_DOXYGEN_INPUT_ASVIEW@) function. The stream object returned by
+`as_stream` conforms to the `std::istream` interface and also provides iterator
+access. The object returned by `as_view` provides the indexed access `[]`
+operator for and the function `size()` to return the amount of bytes available
+on the input.
+
+The following code snippet demonstrates using a given input as a view:
+
+~~~ { .cpp }
+auto iview = input.as_view(); //retrieve an input view
+auto iview2 = iview; // create a shallow copy of the view
+
+// compare the view's content against a certain string
+// the CHECK macro is Google Logging's "assert"
+CHECK(iview == "foobar");
+
+auto sub_view = iview.substr(1, 5); // create a sub-view for a range within the main view
+CHECK(sub_view == "ooba"); // assertion for the sub-view's contents
+
+// iterate over the whole view character-wise
+for (size_t i = 0; i < iview.size(); i++) {
+    uint8_t c = iview[i];
+    // ...
+}
+~~~
+
+Note that copies and sub-views are shallow, ie. they point to the same memory
+location as the original view and thus have the same content.
+
+In contrast, The following code snippet demonstrates using an input as a stream:
+
+~~~ { .cpp }
+auto istream = input.as_stream(); // retrieve an input stream
+auto istream2 = istream; // create a second stream as a "rewind" position
+
+// read the input character-wise using a C++11 range-based for loop
+for(uint8_t c : istream) {
+    // ...
+}
+
+// read the input character-wise using the std::istream interface
+char c;
+while(istream2.get(c)) {
+    // ...
+}
+~~~
+
+Note how the framework uses the `uint8_t` (unsigned byte) type to represent
+characters. This is contrary to the `std` library, which uses C's `char` type.
+
+Furthermore, note how `istream2` is created as a copy of `istream`. This way,
+`istream2` points at the same stream position as `istream` at the time the
+copy is created and can be used as a "rewind" point for use independently
+of `istream`.
+
+### Producing an Output
+
+An [`Output`](@URL_DOXYGEN_INPUT@) can be created for different data sinks:
+
+* a byte buffer (`std::vector<uint8_t>`),
+* a file or
+* an output stream (`std::ostream).
+
+Like `Input`, it provides a constructor for each type of sink:
+
+~~~ {.cpp}
+// Create an Output to a given byte buffer (std::vector<uint8_t>)
+Output output_to_buffer(buffer);
+
+// Create an Output to a file:
+Output output_to_file1("example.txt", false); // do not overwrite if exists (default)
+Output output_to_file2("example.txt", true); // overwrite if exists
+
+// Create an Output to a given std::ostream
+Output output_to_stream(std::cout); // to stdout
+~~~
+
+>> *TODO*: Creating an output to a file is inconsistent compared to creating an
+           input from a file: for `Input`, there is `Input::Path`, while
+           `Output` takes a string.
+
+An output has to be generated sequentially and thus only provides a stream
+interface. The following code snippet demonstrates this by copying an entire
+input to an output:
+
+~~~ { .cpp }
+auto istream = input.as_stream(); // retrieve the input stream
+auto ostream = output.as_stream(); // retrieve the output stream
+
+// copy the input to the output character by character
+for(uint8_t c : istream) {
+    ostream << c;
+}
+~~~
+
+### Bitwise I/O
+
 >> *TODO*: ...
 
-## Implementing a simple compressor
+## A Simple Compressor
 
 This section presents the steps necessary to implement a simple compressor. The
 implementation that is developed here is available in the framework's
@@ -414,93 +500,7 @@ The `Meta` object returned by `meta()` contains the following information:
 * a brief description of the algorithm (which would be displayed in the driver
   utility's help output).
 
-### Input and output
-
-In the above example, `compress` and `decompress` do not produce any output.
-Generally speaking, (de)compression by means of this framework processes data
-by reading from an [`Input`](@URL_DOXYGEN_INPUT@) and writing to an
-[`Output`](@URL_DOXYGEN_OUTPUT@).
-
-While the output has to be generated sequentially, the input can be accessed in
-two conceptually different ways:
-
-1. As a *stream*, requiring bytes to be read sequentially from the input source
-   (the concept of *online* algorithms) or
-2. as a *view*, providing random access to the input source as to an array of
-   bytes (the concept of *offline* algorithms).
-
-The choice is done by acquiring the respective object from either the
-[`as_stream`](@URL_DOXYGEN_INPUT_ASSTREAM@) or the
-[`as_view`](@URL_DOXYGEN_INPUT_ASVIEW@) function. The stream object returned by
-`as_stream` conforms to the `std::istream` interface and also provides iterator
-access. The object returned by `as_view` provides the indexed access `[]`
-operator for and the function `size()` to return the amount of bytes available
-on the input.
-
-The following code snippet demonstrates using a given input as a view:
-
-~~~ { .cpp }
-auto iview = input.as_view(); //retrieve an input view
-auto iview2 = iview; // create a shallow copy of the view
-
-// compare the view's content against a certain string
-// the CHECK macro is Google Logging's "assert"
-CHECK(iview == "foobar");
-
-auto sub_view = iview.substr(1, 5); // create a sub-view for a range within the main view
-CHECK(sub_view == "ooba"); // assertion for the sub-view's contents
-
-// iterate over the whole view character-wise
-for (size_t i = 0; i < iview.size(); i++) {
-    uint8_t c = iview[i];
-    // ...
-}
-~~~
-
-Note that copies and sub-views are shallow, ie. they point to the same memory
-location as the original view and thus have the same content.
-
-In contrast, The following code snippet demonstrates using an input as a stream:
-
-~~~ { .cpp }
-auto istream = input.as_stream(); // retrieve an input stream
-auto istream2 = istream; // create a second stream as a "rewind" position
-
-// read the input character-wise using a C++11 range-based for loop
-for(uint8_t c : istream) {
-    // ...
-}
-
-// read the input character-wise using the std::istream interface
-char c;
-while(istream2.get(c)) {
-    // ...
-}
-~~~
-
-Note how the framework uses the `uint8_t` (unsigned byte) type to represent
-characters. This is contrary to the `std` library, which uses C's `char` type.
-
-Furthermore, note how `istream2` is created as a copy of `istream`. This way,
-`istream2` points at the same stream position as `istream` at the time the
-copy is created and can be used as a "rewind" point for use independently
-of `istream`.
-
-The output has to be generated sequentially and thus only provides a stream
-interface. The following code snippet demonstrates this by copying the entire
-input to the output:
-
-~~~ { .cpp }
-auto istream = input.as_stream(); // retrieve the input stream
-auto ostream = output.as_stream(); // retrieve the output stream
-
-// copy the input to the output character by character
-for(uint8_t c : istream) {
-    ostream << c;
-}
-~~~
-
-### Example: Run-length encoding
+### Example: Run-Length Encoding
 
 The following example implements the `compress` method so that it yields a
 run-length encoding of the input. In run-length encoding, sequences (runs)
@@ -508,7 +508,7 @@ of the same character are replaced by one single occurence, followed by the
 length of the run.
 
 For example, the input `"abcccccccde"`, which contains a run of seven `c`
-characters, would be encoded as `"abc%6%de"`, where `%6%` designates that the
+characters, is encoded as `"abc%6%de"`, where `%6%` designates that the
 preceding character is repeated six times. This way, the original input can be
 restored from the encoded string.
 
@@ -604,6 +604,14 @@ contained the `%` character. It merely serves as an example.
 
 > *Exercise*: Implement the `decompress` method using the input as stream
 rather than a view.
+
+### Magic
+
+In order to identify what compressor has been used to produce a compressed
+output, the driver utility (described later on) can prepend a unique identifier
+(*magic keyword*) to the output.
+
+It is important to note that this is *not* the responsibility of the compressor.
 
 ## Unit Tests
 
@@ -905,7 +913,7 @@ auto emit_run = [&]() {
 
 Note how options are accessible via the environment's
 [`option`](@URL_DOXYGEN_ENV_OPTION@) function, which returns the corresponding
-[`OptionValue`](@URL_DOXYGEN_OPTIONVALUE@) object. 
+[`OptionValue`](@URL_DOXYGEN_OPTIONVALUE@) object.
 
 > *Exercise*: Modify the decompression of the run-length encoder so that it
               uses the `rle_symbol` option as well.
