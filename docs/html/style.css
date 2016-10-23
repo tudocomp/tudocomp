@@ -149,6 +149,7 @@ section#content > div {
 }
 
 #content .figure img {
+    max-width: 100%;
 }
 
 #content .figure .caption {
