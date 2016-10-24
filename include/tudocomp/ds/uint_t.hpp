@@ -25,21 +25,21 @@ public:
     uint_t(const uint_t&& i): m_data(i.m_data) {}
 
     // copying
-    uint_t(const uint_t& i): m_data(i.m_data) {}
+    inline uint_t(const uint_t& i): m_data(i.m_data) {}
     inline uint_t& operator=(const uint_t& b) { m_data = b.data; return *this; }
 
     // 64 bit conversions
-    uint_t(uint64_t i): m_data(i) {}
+    inline uint_t(uint64_t i): m_data(i) {}
     inline uint_t& operator=(uint64_t data) { m_data = data; return *this; }
     inline operator uint64_t() const { return m_data; }
 
     // 32 bit conversions
-    uint_t(uint32_t i): m_data(i) {}
+    inline uint_t(uint32_t i): m_data(i) {}
     inline uint_t& operator=(uint32_t data) { m_data = data; return *this; }
     inline operator uint32_t() const { return m_data; }
 
     // compatibility with unsuffixed integer literals
-    uint_t(int i): m_data(i) {}
+    inline uint_t(int i): m_data(i) {}
     inline uint_t& operator=(int data) { m_data = data; return *this; }
     inline operator int() const { return m_data; }
 

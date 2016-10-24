@@ -9,88 +9,21 @@ template<class T, class X = void>
 struct IntegerBaseTrait {
     typedef uint64_t SelfMaxBit;
 
-    inline static void assign(T& self, uint32_t v) {
-    }
-
-    inline static void assign(T& self, uint64_t v) {
-    }
-
-    inline static SelfMaxBit cast_for_self_op(const T& self) {
-        return 0;
-    }
-
-    inline static SelfMaxBit cast_for_32_op(const T& self) {
-        return 0;
-    }
-
-    inline static uint64_t cast_for_64_op(const T& self) {
-        return 0;
-    }
+    inline static void assign(T& self, uint32_t v) {}
+    inline static void assign(T& self, uint64_t v) {}
+    inline static SelfMaxBit cast_for_self_op(const T& self) { return 0; }
+    inline static SelfMaxBit cast_for_32_op(const T& self)   { return 0; }
+    inline static uint64_t cast_for_64_op(const T& self)     { return 0; }
 };
 
-/*
- This expects a set ofmethodsin Self, either
-
-    // cast self to a 32bit value
-    inline uint32_t cast_for_self_op() const {
-        ...
-    }
-
-    // cast self to a 64bit value
-    inline uint64_t cast_for_64_op() const {
-        ...
-    }
-
-    // cast self to a 32bit value
-    inline uint32_t cast_for_32_op() const {
-        ...
-    }
-
-if Self has a bitness <= 32, or
-
-    // cast self to a 64bit value
-    inline uint64_t cast_for_self_op() const {
-        ...
-    }
-
-    // cast self to a 64bit value
-    inline uint64_t cast_for_64_op() const {
-        ...
-    }
-
-    // cast self to a 64bit value
-    inline uint64_t cast_for_32_op() const {
-        ...
-    }
-
-if Self has a bitness <= 64
-
-Additional, it needs to provide
-
-    /// Set self to the value v
-    inline void assign(uint32_t v) {
-        ...
-    }
-
-    /// Set self to the value v
-    inline void assign(uint64_t v) {
-        ...
-    }
-
- */
 template<class Self>
-class IntegerBase {
+class IntegerBase;
+
+template<class Self>
+class ConstIntegerBase {
 public:
     typedef typename IntegerBaseTrait<Self>::SelfMaxBit SelfMaxBit;
 private:
-    inline static void assign(Self& self, uint32_t v) {
-        IntegerBaseTrait<Self>::assign(self, v);
-    }
-
-    inline static void assign(Self& self, uint64_t v) {
-        IntegerBaseTrait<Self>::assign(self, v);
-    }
-
     inline static SelfMaxBit cast_for_self_op(const Self& self) {
         return IntegerBaseTrait<Self>::cast_for_self_op(self);
     }
@@ -102,6 +35,8 @@ private:
     inline static SelfMaxBit cast_for_32_op(const Self& self) {
         return IntegerBaseTrait<Self>::cast_for_32_op(self);
     }
+
+    friend class IntegerBase<Self>;
 public:
     friend SelfMaxBit operator+(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) + cast_for_self_op(rhs); }
     friend SelfMaxBit operator+(const uint32_t& lhs, const Self& rhs) { return lhs                   + cast_for_32_op(rhs);   }
@@ -142,37 +77,6 @@ public:
     friend uint64_t   operator%(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   % rhs;                   }
     friend SelfMaxBit operator%(const int& lhs, const Self& rhs)      { return lhs                   % cast_for_32_op(rhs);   }
     friend SelfMaxBit operator%(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   % rhs;                   }
-
-    Self& operator+=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
-    Self& operator+=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
-    Self& operator+=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
-    Self& operator+=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
-
-    Self& operator-=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
-    Self& operator-=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
-    Self& operator-=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
-    Self& operator-=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
-
-    Self& operator*=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
-    Self& operator*=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
-    Self& operator*=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
-    Self& operator*=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
-
-    Self& operator/=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
-    Self& operator/=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
-    Self& operator/=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
-    Self& operator/=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
-
-    Self& operator%=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
-    Self& operator%=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
-    Self& operator%=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
-    Self& operator%=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
-
-    Self& operator++() { auto& self = static_cast<Self&>(*this); assign(self, self + 1); return self; }
-    Self& operator--() { auto& self = static_cast<Self&>(*this); assign(self, self - 1); return self; }
-
-    SelfMaxBit operator++(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self + 1); return tmp; }
-    SelfMaxBit operator--(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self - 1); return tmp; }
 
     friend SelfMaxBit operator&(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) & cast_for_self_op(rhs); }
     friend SelfMaxBit operator&(const uint32_t& lhs, const Self& rhs) { return lhs                   & cast_for_32_op(rhs);   }
@@ -215,31 +119,6 @@ public:
     friend uint64_t   operator>>(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   >> rhs;                   }
     friend SelfMaxBit operator>>(const int& lhs, const Self& rhs)      { return lhs                   >> cast_for_32_op(rhs);   }
     friend SelfMaxBit operator>>(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   >> rhs;                   }
-
-    Self& operator&=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
-    Self& operator&=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
-    Self& operator&=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
-    Self& operator&=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
-
-    Self& operator|=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
-    Self& operator|=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
-    Self& operator|=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
-    Self& operator|=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
-
-    Self& operator^=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
-    Self& operator^=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
-    Self& operator^=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
-    Self& operator^=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
-
-    Self& operator>>=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
-    Self& operator>>=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
-    Self& operator>>=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
-    Self& operator>>=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
-
-    Self& operator<<=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
-    Self& operator<<=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
-    Self& operator<<=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
-    Self& operator<<=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
 
     friend bool operator==(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) == cast_for_self_op(rhs); }
     friend bool operator==(const uint32_t& lhs, const Self& rhs) { return lhs                   == cast_for_32_op(rhs);   }
@@ -288,6 +167,80 @@ public:
     friend bool operator<=(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   <= rhs;                   }
     friend bool operator<=(const int& lhs, const Self& rhs)      { return lhs                   <= cast_for_32_op(rhs);   }
     friend bool operator<=(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   <= rhs;                   }
+
+};
+
+template<class Self>
+class IntegerBase: public ConstIntegerBase<Self> {
+private:
+    typedef typename ConstIntegerBase<Self>::SelfMaxBit SelfMaxBit;
+    using ConstIntegerBase<Self>::cast_for_self_op;
+    using ConstIntegerBase<Self>::cast_for_32_op;
+    using ConstIntegerBase<Self>::cast_for_64_op;
+
+    inline static void assign(Self& self, uint32_t v) {
+        IntegerBaseTrait<Self>::assign(self, v);
+    }
+
+    inline static void assign(Self& self, uint64_t v) {
+        IntegerBaseTrait<Self>::assign(self, v);
+    }
+public:
+    Self& operator+=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
+    Self& operator+=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
+    Self& operator+=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
+    Self& operator+=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
+
+    Self& operator-=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
+    Self& operator-=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
+    Self& operator-=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
+    Self& operator-=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
+
+    Self& operator*=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
+    Self& operator*=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
+    Self& operator*=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
+    Self& operator*=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
+
+    Self& operator/=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
+    Self& operator/=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
+    Self& operator/=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
+    Self& operator/=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
+
+    Self& operator%=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
+    Self& operator%=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
+    Self& operator%=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
+    Self& operator%=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
+
+    Self& operator++() { auto& self = static_cast<Self&>(*this); assign(self, self + 1); return self; }
+    Self& operator--() { auto& self = static_cast<Self&>(*this); assign(self, self - 1); return self; }
+
+    SelfMaxBit operator++(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self + 1); return tmp; }
+    SelfMaxBit operator--(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self - 1); return tmp; }
+
+    Self& operator&=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
+    Self& operator&=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
+    Self& operator&=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
+    Self& operator&=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
+
+    Self& operator|=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
+    Self& operator|=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
+    Self& operator|=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
+    Self& operator|=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
+
+    Self& operator^=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
+    Self& operator^=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
+    Self& operator^=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
+    Self& operator^=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
+
+    Self& operator>>=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
+    Self& operator>>=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
+    Self& operator>>=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
+    Self& operator>>=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
+
+    Self& operator<<=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
+    Self& operator<<=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
+    Self& operator<<=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
+    Self& operator<<=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
 
 };
 
