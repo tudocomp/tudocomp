@@ -16,6 +16,7 @@
 #include <utility>
 
 #include <tudocomp/ds/uint_t.hpp>
+#include <tudocomp/util/IntegerBase.hpp>
 
 #include <sdsl/bits.hpp>
 #include <glog/logging.h>
