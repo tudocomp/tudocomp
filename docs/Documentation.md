@@ -981,7 +981,7 @@ algorithm then instantiates at runtime. This is done using templated options.
 
 The following example declares the main algorithm,
 `TemplatedExampleCompressor`, with a template parameter `encoder_t` and the
-correspondig templated option:
+corresponding templated option:
 
 ~~~ {.cpp}
 template <typename encoder_t>
@@ -1094,10 +1094,8 @@ following example shows this for the `TemplatedExampleCompressor`:
 
 ~~~ {.cpp}
 test::roundtrip<TemplatedExampleCompressor<ExampleRunEmitter>>
-    ("abcccccccde", "abc#6#de",  "encoder(minimum_run = 7, rle_symbol = '#'");
+    ("abcccccccde", "abc#6#de",  "encoder(minimum_run = 7, rle_symbol = '#')");
 ~~~
-
->> *TODO*: Is this correct?
 
 ## The Registry
 
