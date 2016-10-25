@@ -14,6 +14,7 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <climits>
 
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/util/IntegerBase.hpp>
@@ -27,206 +28,176 @@ namespace int_vector {
 
     typedef uint64_t DynamicIntValueType;
 
+    // TODO: On rrferences, provide 32 or 64 bit ops depending on bits
+    // of uint_t type
+
     struct Const {
         typedef const DynamicIntValueType* ptr;
-        typedef const uint16_t             off;
-        typedef const uint16_t             len;
+        typedef uint8_t                    off;
+        typedef const uint8_t              len;
         typedef DynamicIntValueType        val;
     };
 
     struct Mut {
         typedef DynamicIntValueType* ptr;
-        typedef uint16_t             off;
-        typedef uint16_t             len;
+        typedef uint8_t              off;
+        typedef const uint8_t        len;
         typedef DynamicIntValueType  val;
     };
 
-    template<class T>
-    class DynamicIntRef;
+    template<class T, class U, class V>
+    class GenericIntRef;
     class IntRef;
     class ConstIntRef;
+    class IntPtr;
+    class ConstIntPtr;
 
-    template<class T>
-    class DynamicIntPtr {
+    template<class Self, class T>
+    class GenericIntPtr {
     protected:
-        friend class DynamicIntRef<Const>;
-        friend class DynamicIntRef<Mut>;
+        friend class GenericIntRef<IntRef, IntPtr, Mut>;
+        friend class GenericIntRef<ConstIntRef, ConstIntPtr, Const>;
         friend class IntRef;
         friend class ConstIntRef;
+        friend class IntegerBaseTrait<IntRef>;
+        friend class IntegerBaseTraitConst<IntRef>;
+        friend class IntegerBaseTraitConst<ConstIntRef>;
 
         typename T::ptr m_ptr;
         typename T::off m_bit_offset;
         typename T::len m_bit_size;
     public:
-        DynamicIntPtr(typename T::ptr ptr,
+        GenericIntPtr(typename T::ptr ptr,
                       typename T::off bit_offset,
                       typename T::len bit_size):
             m_ptr(ptr),
             m_bit_offset(bit_offset),
             m_bit_size(bit_size) {}
+        GenericIntPtr(): GenericIntPtr("\0\0\0\0", 0, 0) {}
+        GenericIntPtr(const GenericIntPtr& other):
+            GenericIntPtr(other.m_ptr, other.m_bit_offset, other.m_bit_size) {}
 
-        // TODO: Big bug, ensure the operators return the right child class
-
-        DynamicIntPtr(): DynamicIntPtr("\0\0\0\0", 0, 0) {}
-
-        DynamicIntPtr(const DynamicIntPtr<T>& other):
-            DynamicIntPtr(other.m_ptr, other.m_bit_offset, other.m_bit_size) {}
-
-        DynamicIntPtr<T>& operator=(const DynamicIntPtr<T>& other) {
+        Self& operator=(const Self& other) {
+            DCHECK(m_bit_size == other.m_bit_size);
             m_ptr = other.m_ptr;
             m_bit_offset = other.m_bit_offset;
-            m_bit_size = other.m_bit_size;
+            return static_cast<Self&>(*this);
         }
 
-        bool operator==(const DynamicIntPtr<T>& other) {
-            return (m_ptr == other.m_ptr)
-                && (m_bit_offset == other.m_bit_offset)
-                && (m_bit_size == other.m_bit_size);
+        Self& operator++() {
+            const DynamicIntValueType* tmp = m_ptr;
+            bits::move_right(tmp, m_bit_offset, m_bit_size);
+            m_ptr = (DynamicIntValueType*) tmp;
+            return static_cast<Self&>(*this);
         }
 
-        bool operator!=(const DynamicIntPtr<T>& other) {
-            return !(*this == other);
+        Self& operator--() {
+            const DynamicIntValueType* tmp = m_ptr;
+            bits::move_left(tmp, m_bit_offset, m_bit_size);
+            m_ptr = (DynamicIntValueType*) tmp;
+            return static_cast<Self&>(*this);
         }
 
-        T::val operator->() {
-            return **this;
-        }
-
-        DynamicIntPtr<T> operator++(int) {
-            auto x = *this;
-            ++(*this);
-            return x;
-        }
-
-        DynamicIntPtr<T>& operator++() {
-            bits::move_right(m_ptr, m_bit_offset, m_bit_size);
-            return *this;
-        }
-
-        DynamicIntPtr<T> operator--(int) {
-            auto x = *this;
-            --(*this);
-            return x;
-        }
-
-        DynamicIntPtr<T>& operator--() {
-            bits::move_left(m_ptr, m_bit_offset, m_bit_size);
-            return *this;
-        }
-
-        // TODO: Make sure these operations don't end up O(N)
-
-        DynamicIntPtr<T>& operator+=(size_t i) {
-            for(size_t j = 0; j < i; j++) {
-                ++(*this);
+        friend Self operator+(const Self& lhs, const ptrdiff_t& rhs) {
+            auto tmp = lhs;
+            if (rhs >= 0) {
+                for(size_t i = 0; i < size_t(rhs); i++) {
+                    ++tmp;
+                }
+            } else {
+                for(size_t i = 0; i < size_t(-rhs); i++) {
+                    --tmp;
+                }
             }
-            return *this;
+            return tmp;
         }
 
-        DynamicIntPtr<T>& operator-=(size_t i) {
-            for(size_t j = 0; j < i; j++) {
-                --(*this);
-            }
-            return *this;
+        friend Self operator+(const ptrdiff_t& lhs, const Self& rhs) { return rhs + lhs;      }
+        friend Self operator-(const Self& lhs, const ptrdiff_t& rhs) { return lhs + (-rhs);   }
+
+        friend ptrdiff_t operator-(const Self& lhs, const Self& rhs) {
+            // TODO: test
+            DCHECK(lhs.m_bit_size == rhs.m_bit_size);
+            auto ptr_diff = lhs.m_ptr - rhs.m_ptr;
+            auto bit_count = ptr_diff * sizeof(typename T::val) * CHAR_BIT;
+            bit_count += lhs.m_bit_offset;
+            bit_count -= rhs.m_bit_offset;
+            bit_count /= lhs.m_bit_size;
+            return bit_count;
         }
 
-        ConstIntRef operator[](size_t i) const {
-            auto x = *this;
-            x += i;
-            return ConstIntRef(x);
+        friend bool operator==(const Self& lhs, const Self& rhs) {
+            DCHECK(lhs.m_bit_size == rhs.m_bit_size);
+            return (lhs.m_ptr == rhs.m_ptr)
+                && (lhs.m_bit_offset == rhs.m_bit_offset);
         }
+        friend bool operator<(const Self& lhs, const Self& rhs)  {
+            // TODO: test
+            DCHECK(lhs.m_bit_size == rhs.m_bit_size);
+            if (lhs.m_ptr < rhs.m_ptr) return true;
+            if ((lhs.m_ptr == rhs.m_ptr) && (lhs.m_bit_offset < rhs.m_bit_offset)) return true;
+            return false;
+        }
+        friend bool operator!=(const Self& lhs, const Self& rhs) { return !(lhs == rhs);               }
+        friend bool operator>(const Self& lhs, const Self& rhs)  { return !(lhs < rhs);                }
+        friend bool operator>=(const Self& lhs, const Self& rhs) { return (lhs > rhs) || (lhs == rhs); }
+        friend bool operator<=(const Self& lhs, const Self& rhs) { return (lhs < rhs) || (lhs == rhs); }
 
+        Self& operator+=(const ptrdiff_t& v) { auto& self = static_cast<Self&>(*this); self = (self + v); return self; }
+        Self& operator-=(const ptrdiff_t& v) { auto& self = static_cast<Self&>(*this); self = (self - v); return self; }
+
+        Self operator++(int) { auto self = static_cast<Self&>(*this); ++(*this); return self; }
+        Self operator--(int) { auto self = static_cast<Self&>(*this); --(*this); return self; }
+
+        ConstIntRef operator[](size_t i) const;
+        ConstIntRef operator*() const;
     };
 
-    DynamicIntPtr<T> operator+(V, DynamicIntPtr<T>) {
+    class ConstIntPtr: public GenericIntPtr<ConstIntPtr, Const> {
+    public:
+        using GenericIntPtr<ConstIntPtr, Const>::GenericIntPtr;
+        inline ConstIntPtr(const ConstIntPtr& other): GenericIntPtr(other) {}
+        ConstIntPtr& operator=(const ConstIntPtr& other) {
+            return ((GenericIntPtr<ConstIntPtr, Const>&) *this) = other;
+        }
+    };
 
-    }
+    class IntPtr: public GenericIntPtr<IntPtr, Mut> {
+    public:
+        using GenericIntPtr<IntPtr, Mut>::GenericIntPtr;
+        inline IntPtr(const IntPtr& other): GenericIntPtr(other) {}
+        IntPtr& operator=(const IntPtr& other) {
+            return ((GenericIntPtr<IntPtr, Mut>&) *this) = other;
+        }
 
-    DynamicIntPtr<T> operator+(DynamicIntPtr<T>, V) {
+        inline IntRef operator*();
+        inline IntRef operator[](size_t i);
+    };
 
-    }
-
-    DynamicIntPtr<T> operator-(DynamicIntPtr<T>, V) {
-
-    }
-
-    size_t operator-(DynamicIntPtr<T>, DynamicIntPtr<T>) {
-
-    }
-
-    bool operator<(DynamicIntPtr<T>, DynamicIntPtr<T>) {
-
-    }
-
-    bool operator>(DynamicIntPtr<T>, DynamicIntPtr<T>) {
-
-    }
-
-    bool operator<=(DynamicIntPtr<T>, DynamicIntPtr<T>) {
-
-    }
-
-    bool operator>=(DynamicIntPtr<T>, DynamicIntPtr<T>) {
-
-    }
-
-    void swap(DynamicIntPtr<T>&, DynamicIntPtr<T>&)
-    {
-        printf("swap(A, A)\n");
-    }
-
-    static_assert(sizeof(DynamicIntPtr<Const>) <= (sizeof(void*) * 2), "make sure this is reasonably small");
-
-    template<class T>
-    class DynamicIntRef {
+    template<class Self, class Ptr, class T>
+    class GenericIntRef {
     protected:
-        friend class DynamicIntPtr<Const>;
-        friend class DynamicIntPtr<Mut>;
         friend class IntPtr;
         friend class ConstIntPtr;
+        friend class IntegerBaseTrait<IntRef>;
+        friend class IntegerBaseTraitConst<IntRef>;
+        friend class IntegerBaseTraitConst<ConstIntRef>;
 
-        DynamicIntPtr<T> m_ptr;
+        Ptr m_ptr;
     public:
         typedef typename T::val value_type;
 
-        explicit DynamicIntRef(const DynamicIntPtr<T>& ptr): m_ptr(ptr) {}
+        explicit GenericIntRef(const Ptr& ptr): m_ptr(ptr) {}
 
         operator value_type() const {
             return bits::read_int(m_ptr.m_ptr, m_ptr.m_bit_offset, m_ptr.m_bit_size);
         }
 
-        template<class U>
-        bool operator==(const DynamicIntRef<U>& other) const {
-            return value_type(*this) == value_type(other);
-        }
-
-        template<class U>
-        bool operator<(const DynamicIntRef<U>& other) const {
-            return value_type(*this) < value_type(other);
-        }
     };
 
-
-    class IntPtr: public DynamicIntPtr<Mut> {
+    class IntRef: public GenericIntRef<IntRef, IntPtr, Mut> {
     public:
-        IntPtr(Mut::ptr ptr,
-               Mut::off bit_offset,
-               Mut::len bit_size): DynamicIntPtr(ptr, bit_offset, bit_size) {}
-        inline IntRef operator*();
-    };
-
-    class ConstIntPtr: public DynamicIntPtr<Const> {
-    public:
-        ConstIntPtr(Const::ptr ptr,
-                    Const::off bit_offset,
-                    Const::len bit_size): DynamicIntPtr(ptr, bit_offset, bit_size) {}
-        inline ConstIntRef operator*() const;
-    };
-
-    class IntRef: public DynamicIntRef<Mut> {
-    public:
-        explicit IntRef(const DynamicIntPtr<Mut>& ptr):
-            DynamicIntRef(ptr) {}
+        explicit IntRef(const IntPtr& ptr): GenericIntRef(ptr) {}
 
         IntRef& operator=(value_type other)
         {
@@ -234,53 +205,11 @@ namespace int_vector {
             return *this;
         };
 
-        IntRef& operator++()
-        {
-            value_type x = bits::read_int(m_ptr.m_ptr, m_ptr.m_bit_offset, m_ptr.m_bit_size);
-            bits::write_int(m_ptr.m_ptr, x + 1, m_ptr.m_bit_offset, m_ptr.m_bit_size);
-            return *this;
-        }
-
-        value_type operator++(int)
-        {
-            value_type val(*this);
-            ++(*this);
-            return val;
-        }
-
-        IntRef& operator--()
-        {
-            value_type x = bits::read_int(m_ptr.m_ptr, m_ptr.m_bit_offset, m_ptr.m_bit_size);
-            bits::write_int(m_ptr.m_ptr, x - 1, m_ptr.m_bit_offset, m_ptr.m_bit_size);
-            return *this;
-        }
-
-        value_type operator--(int)
-        {
-            value_type val(*this);
-            --(*this);
-            return val;
-        }
-
-        IntRef& operator+=(const value_type other)
-        {
-            value_type x = bits::read_int(m_ptr.m_ptr, m_ptr.m_bit_offset, m_ptr.m_bit_size);
-            bits::write_int(m_ptr.m_ptr, x + other, m_ptr.m_bit_offset, m_ptr.m_bit_size);
-            return *this;
-        }
-
-        IntRef& operator-=(const value_type other)
-        {
-            value_type x = bits::read_int(m_ptr.m_ptr, m_ptr.m_bit_offset, m_ptr.m_bit_size);
-            bits::write_int(m_ptr.m_ptr, x - other, m_ptr.m_bit_offset, m_ptr.m_bit_size);
-            return *this;
-        }
     };
 
-    class ConstIntRef: public DynamicIntRef<Const> {
+    class ConstIntRef: public GenericIntRef<ConstIntRef, ConstIntPtr, Const> {
     public:
-        explicit ConstIntRef(const DynamicIntPtr<Const>& ptr):
-            DynamicIntRef(ptr) {}
+        explicit ConstIntRef(const ConstIntPtr& ptr): GenericIntRef(ptr) {}
     };
 
 
@@ -288,12 +217,28 @@ namespace int_vector {
         return IntRef(*this);
     }
 
-    inline ConstIntRef ConstIntPtr::operator*() const {
-        return ConstIntRef(*this);
+    template<class Self, class U>
+    ConstIntRef GenericIntPtr<Self, U>::operator*() const {
+        return ConstIntRef(static_cast<const Self&>(*this));
     }
 
+    template<class Self, class U>
+    ConstIntRef GenericIntPtr<Self, U>::operator[](size_t i) const {
+        auto x = *this;
+        x += i;
+        return ConstIntRef(static_cast<const Self&>(x));
+    }
+
+    inline IntRef IntPtr::operator[](size_t i) {
+        auto x = *this;
+        x += i;
+        return IntRef(x);
+    }
+
+    static_assert(sizeof(GenericIntPtr<ConstIntPtr, Const>) <= (sizeof(void*) * 2), "make sure this is reasonably small");
+
     template<class T, class X = void>
-    class DynamicIntVectorTrait {
+    class GenericIntVectorTrait {
         typedef typename std::vector<T>::value_type             value_type;
 
         typedef typename std::vector<T>::reference              reference;
@@ -315,7 +260,7 @@ namespace int_vector {
     };
 
     template<size_t N>
-    class DynamicIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) == 0>::type> {
+    class GenericIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) == 0>::type> {
         typedef typename std::vector<uint_t<N>>::value_type             value_type;
 
         typedef typename std::vector<uint_t<N>>::reference              reference;
@@ -337,7 +282,7 @@ namespace int_vector {
     };
 
     template<size_t N>
-    class DynamicIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) != 0>::type> {
+    class GenericIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) != 0>::type> {
         typedef uint_t<N>                                            value_type;
 
         typedef IntRef                                               reference;
@@ -359,21 +304,92 @@ namespace int_vector {
     };
 
     template<class T>
-    class DynamicIntVector {
-        typedef typename DynamicIntVectorTrait<T>::value_type             value_type;
-        typedef typename DynamicIntVectorTrait<T>::reference              reference;
-        typedef typename DynamicIntVectorTrait<T>::const_reference        const_reference;
-        typedef typename DynamicIntVectorTrait<T>::pointer                pointer;
-        typedef typename DynamicIntVectorTrait<T>::const_pointer          const_pointer;
-        typedef typename DynamicIntVectorTrait<T>::iterator               iterator;
-        typedef typename DynamicIntVectorTrait<T>::const_iterator         const_iterator;
-        typedef typename DynamicIntVectorTrait<T>::reverse_iterator       reverse_iterator;
-        typedef typename DynamicIntVectorTrait<T>::const_reverse_iterator const_reverse_iterator;
-        typedef typename DynamicIntVectorTrait<T>::difference_type        difference_type;
-        typedef typename DynamicIntVectorTrait<T>::size_type              size_type;
+    class GenericIntVector {
+        typedef typename GenericIntVectorTrait<T>::value_type             value_type;
+        typedef typename GenericIntVectorTrait<T>::reference              reference;
+        typedef typename GenericIntVectorTrait<T>::const_reference        const_reference;
+        typedef typename GenericIntVectorTrait<T>::pointer                pointer;
+        typedef typename GenericIntVectorTrait<T>::const_pointer          const_pointer;
+        typedef typename GenericIntVectorTrait<T>::iterator               iterator;
+        typedef typename GenericIntVectorTrait<T>::const_iterator         const_iterator;
+        typedef typename GenericIntVectorTrait<T>::reverse_iterator       reverse_iterator;
+        typedef typename GenericIntVectorTrait<T>::const_reverse_iterator const_reverse_iterator;
+        typedef typename GenericIntVectorTrait<T>::difference_type        difference_type;
+        typedef typename GenericIntVectorTrait<T>::size_type              size_type;
     };
 
 }
+
+template<>
+struct IntegerBaseTraitConst<int_vector::IntRef> {
+    typedef sdsl::bits bits;
+    typedef int_vector::IntRef T;
+
+    typedef uint64_t SelfMaxBit;
+
+    inline static SelfMaxBit cast_for_self_op(const T& self) {
+        return bits::read_int(self.m_ptr.m_ptr,
+                              self.m_ptr.m_bit_offset,
+                              self.m_ptr.m_bit_size);
+    }
+    inline static SelfMaxBit cast_for_32_op(const T& self) {
+        return bits::read_int(self.m_ptr.m_ptr,
+                              self.m_ptr.m_bit_offset,
+                              self.m_ptr.m_bit_size);
+
+    }
+    inline static uint64_t cast_for_64_op(const T& self) {
+        return bits::read_int(self.m_ptr.m_ptr,
+                              self.m_ptr.m_bit_offset,
+                              self.m_ptr.m_bit_size);
+    }
+};
+
+template<>
+struct IntegerBaseTrait<int_vector::IntRef> {
+    typedef sdsl::bits bits;
+    typedef int_vector::IntRef T;
+
+    inline static void assign(T& self, uint32_t v) {
+        bits::write_int(self.m_ptr.m_ptr,
+                        v,
+                        self.m_ptr.m_bit_offset,
+                        self.m_ptr.m_bit_size);
+    }
+    inline static void assign(T& self, uint64_t v) {
+        bits::write_int(self.m_ptr.m_ptr,
+                        v,
+                        self.m_ptr.m_bit_offset,
+                        self.m_ptr.m_bit_size);
+    }
+};
+
+template<>
+struct IntegerBaseTraitConst<int_vector::ConstIntRef> {
+    typedef sdsl::bits bits;
+    typedef int_vector::ConstIntRef T;
+
+    typedef uint64_t SelfMaxBit;
+
+    inline static SelfMaxBit cast_for_self_op(const T& self) {
+        return bits::read_int(self.m_ptr.m_ptr,
+                              self.m_ptr.m_bit_offset,
+                              self.m_ptr.m_bit_size);
+    }
+    inline static SelfMaxBit cast_for_32_op(const T& self) {
+        return bits::read_int(self.m_ptr.m_ptr,
+                              self.m_ptr.m_bit_offset,
+                              self.m_ptr.m_bit_size);
+
+    }
+    inline static uint64_t cast_for_64_op(const T& self) {
+        return bits::read_int(self.m_ptr.m_ptr,
+                              self.m_ptr.m_bit_offset,
+                              self.m_ptr.m_bit_size);
+    }
+};
+
+
 }
 
 #endif

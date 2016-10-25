@@ -3,50 +3,178 @@
 
 #include <gtest/gtest.h>
 
-//#include <tudocomp/ds/GenericIntVector.hpp>
-
+#include <tudocomp/ds/GenericIntVector.hpp>
 #include <tudocomp/util/IntegerBase.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 
 #include "test_util.hpp"
 
 using namespace tdc;
-//using namespace int_vector;
 
-/*TEST(generic_int_vector, ptr) {
+template<class P>
+void generic_int_vector_ptr_template_const() {
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
-    IntPtr a(&data[0], 0, 32);
-    IntPtr b(&data[0], 32, 32);
-    IntPtr c(&data[1], 0, 32);
-    IntPtr d(&data[1], 32, 32);
+    P a(&data[0], 0, 32);
+    P b(&data[0], 32, 32);
+    P c(&data[1], 0, 32);
+    P d(&data[1], 32, 32);
 
     ASSERT_EQ(*a, 0x00001111);
     ASSERT_EQ(*b, 0xff00ffff);
     ASSERT_EQ(*c, 0x89ABCDEF);
     ASSERT_EQ(*d, 0x01234567);
 
+    {
+        auto tmp = a;
+        a = d;
+        d = tmp;
+
+        ASSERT_EQ(*d, 0x00001111);
+        ASSERT_EQ(*a, 0x01234567);
+
+        tmp = a;
+        a = d;
+        d = tmp;
+
+        ASSERT_EQ(*a, 0x00001111);
+        ASSERT_EQ(*d, 0x01234567);
+    }
+
+    ASSERT_EQ(a[0], 0x00001111);
+    ASSERT_EQ(a[1], 0xff00ffff);
+    ASSERT_EQ(a[2], 0x89ABCDEF);
+    ASSERT_EQ(a[3], 0x01234567);
+
     ASSERT_EQ(data, (std::vector<uint64_t> { 0xff00ffff00001111, 0x0123456789ABCDEF }));
 
+    {
+        auto tmp = a++;
+        ASSERT_EQ(*a, 0xff00ffff);
+        ASSERT_EQ(*tmp, 0x00001111);
+    }
+
+    {
+        auto tmp = ++a;
+        ASSERT_EQ(*a, 0x89ABCDEF);
+        ASSERT_EQ(*tmp, 0x89ABCDEF);
+    }
+
+    {
+        auto tmp = a += 1;
+        ASSERT_EQ(*a, 0x01234567);
+        ASSERT_EQ(*tmp, 0x01234567);
+    }
+
+    {
+        auto tmp = a -= 1;
+        ASSERT_EQ(*a, 0x89ABCDEF);
+        ASSERT_EQ(*tmp, 0x89ABCDEF);
+    }
+
+    {
+        auto tmp = --a;
+        ASSERT_EQ(*a,  0xff00ffff);
+        ASSERT_EQ(*tmp, 0xff00ffff);
+    }
+
+    {
+        auto tmp = a--;
+        ASSERT_EQ(*a, 0x00001111);
+        ASSERT_EQ(*tmp, 0xff00ffff);
+    }
+
+    ASSERT_TRUE(a < b);
+    ASSERT_TRUE(b < c);
+    ASSERT_TRUE(c < d);
+
+    ASSERT_TRUE(a <= b);
+    ASSERT_TRUE(b <= c);
+    ASSERT_TRUE(c <= d);
+
+    ASSERT_TRUE(d > c);
+    ASSERT_TRUE(c > b);
+    ASSERT_TRUE(b > a);
+
+    ASSERT_TRUE(d >= c);
+    ASSERT_TRUE(c >= b);
+    ASSERT_TRUE(b >= a);
+
+    ASSERT_FALSE(b < a);
+    ASSERT_FALSE(c < b);
+    ASSERT_FALSE(d < c);
+
+    ASSERT_FALSE(b <= a);
+    ASSERT_FALSE(c <= b);
+    ASSERT_FALSE(d <= c);
+
+    ASSERT_FALSE(c > d);
+    ASSERT_FALSE(b > c);
+    ASSERT_FALSE(a > b);
+
+    ASSERT_FALSE(c >= d);
+    ASSERT_FALSE(b >= c);
+    ASSERT_FALSE(a >= b);
+
+    ASSERT_TRUE(a == a);
+    ASSERT_TRUE(b == b);
+    ASSERT_TRUE(c == c);
+    ASSERT_TRUE(d == d);
+
+    ASSERT_TRUE(a != b);
+    ASSERT_TRUE(b != c);
+    ASSERT_TRUE(c != d);
+
+    ASSERT_EQ(a + 3, d);
+    ASSERT_EQ(d - 3, a);
+    ASSERT_EQ(d - a, 3);
+    ASSERT_EQ((d+1) - a, 4);
+}
+
+template<class P>
+void generic_int_vector_ptr_template() {
+    generic_int_vector_ptr_template_const<P>();
+
+    std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
+
+    P a(&data[0], 0, 32);
+    P b(&data[0], 32, 32);
+    P c(&data[1], 0, 32);
+    P d(&data[1], 32, 32);
+
     *c = 0;
-
+    ASSERT_EQ(*c, 0);
     ASSERT_EQ(data, (std::vector<uint64_t> { 0xff00ffff00001111, 0x0123456700000000 }));
+    a[2] = 1;
+    ASSERT_EQ(a[2], 1);
+    ASSERT_EQ(data, (std::vector<uint64_t> { 0xff00ffff00001111, 0x0123456700000001 }));
 
-    a++;
+}
 
-}*/
+TEST(generic_int_vector, int_ptr) {
+    using namespace int_vector;
+    generic_int_vector_ptr_template<IntPtr>();
+}
+
+TEST(generic_int_vector, const_int_ptr) {
+    using namespace int_vector;
+    generic_int_vector_ptr_template_const<ConstIntPtr>();
+}
 
 struct IBTest;
 
 namespace tdc {
     template<>
-    struct IntegerBaseTrait<IBTest> {
+    struct IntegerBaseTraitConst<IBTest> {
         typedef uint32_t SelfMaxBit;
-        inline static void assign(IBTest& self, uint32_t v);
-        inline static void assign(IBTest& self, uint64_t v);
         inline static SelfMaxBit cast_for_self_op(const IBTest& self);
         inline static SelfMaxBit cast_for_32_op(const IBTest& self);
         inline static uint64_t cast_for_64_op(const IBTest& self);
+    };
+    template<>
+    struct IntegerBaseTrait<IBTest>: IntegerBaseTraitConst<IBTest> {
+        inline static void assign(IBTest& self, uint32_t v);
+        inline static void assign(IBTest& self, uint64_t v);
     };
 }
 
@@ -61,9 +189,9 @@ struct IBTest: public IntegerBase<IBTest> {
 
 inline void tdc::IntegerBaseTrait<IBTest>::assign(IBTest& self, uint32_t v)         { *self.m_ptr = v;    }
 inline void tdc::IntegerBaseTrait<IBTest>::assign(IBTest& self, uint64_t v)         { *self.m_ptr = v;    }
-inline uint32_t tdc::IntegerBaseTrait<IBTest>::cast_for_self_op(const IBTest& self) { return *self.m_ptr; }
-inline uint32_t tdc::IntegerBaseTrait<IBTest>::cast_for_32_op(const IBTest& self)   { return *self.m_ptr; }
-inline uint64_t tdc::IntegerBaseTrait<IBTest>::cast_for_64_op(const IBTest& self)   { return *self.m_ptr; }
+inline uint32_t tdc::IntegerBaseTraitConst<IBTest>::cast_for_self_op(const IBTest& self) { return *self.m_ptr; }
+inline uint32_t tdc::IntegerBaseTraitConst<IBTest>::cast_for_32_op(const IBTest& self)   { return *self.m_ptr; }
+inline uint64_t tdc::IntegerBaseTraitConst<IBTest>::cast_for_64_op(const IBTest& self)   { return *self.m_ptr; }
 
 TEST(integer_base, basic_binop) {
     uint8_t i = 3;

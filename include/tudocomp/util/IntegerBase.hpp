@@ -6,14 +6,18 @@ namespace tdc {
 static_assert(sizeof(int) * 8 == 32, "Make sure the logic here remains correct");
 
 template<class T, class X = void>
-struct IntegerBaseTrait {
+struct IntegerBaseTraitConst {
     typedef uint64_t SelfMaxBit;
 
-    inline static void assign(T& self, uint32_t v) {}
-    inline static void assign(T& self, uint64_t v) {}
     inline static SelfMaxBit cast_for_self_op(const T& self) { return 0; }
     inline static SelfMaxBit cast_for_32_op(const T& self)   { return 0; }
     inline static uint64_t cast_for_64_op(const T& self)     { return 0; }
+};
+
+template<class T, class X = void>
+struct IntegerBaseTrait: public IntegerBaseTraitConst<T, X> {
+    inline static void assign(T& self, uint32_t v) {}
+    inline static void assign(T& self, uint64_t v) {}
 };
 
 template<class Self>
@@ -22,18 +26,18 @@ class IntegerBase;
 template<class Self>
 class ConstIntegerBase {
 public:
-    typedef typename IntegerBaseTrait<Self>::SelfMaxBit SelfMaxBit;
+    typedef typename IntegerBaseTraitConst<Self>::SelfMaxBit SelfMaxBit;
 private:
     inline static SelfMaxBit cast_for_self_op(const Self& self) {
-        return IntegerBaseTrait<Self>::cast_for_self_op(self);
+        return IntegerBaseTraitConst<Self>::cast_for_self_op(self);
     }
 
     inline static uint64_t cast_for_64_op(const Self& self) {
-        return IntegerBaseTrait<Self>::cast_for_64_op(self);
+        return IntegerBaseTraitConst<Self>::cast_for_64_op(self);
     }
 
     inline static SelfMaxBit cast_for_32_op(const Self& self) {
-        return IntegerBaseTrait<Self>::cast_for_32_op(self);
+        return IntegerBaseTraitConst<Self>::cast_for_32_op(self);
     }
 
     friend class IntegerBase<Self>;

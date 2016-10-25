@@ -19,6 +19,7 @@ class uint_t: public IntegerBase<uint_t<bits>> {
     uint64_t m_data : bits;
 
     friend class tdc::IntegerBaseTrait<uint_t<bits>>;
+    friend class tdc::IntegerBaseTraitConst<uint_t<bits>>;
 
 public:
     uint_t() {}
@@ -50,16 +51,8 @@ public:
 
 namespace tdc {
     template<size_t N>
-    struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N <= 32)>::type> {
+    struct IntegerBaseTraitConst<uint_t<N>, typename std::enable_if<(N <= 32)>::type> {
         typedef uint32_t SelfMaxBit;
-
-        inline static void assign(uint_t<N>& self, uint32_t v) {
-            self.m_data = v;
-        }
-
-        inline static void assign(uint_t<N>& self, uint64_t v) {
-            self.m_data = v;
-        }
 
         inline static SelfMaxBit cast_for_self_op(const uint_t<N>& self) {
             return self.m_data;
@@ -75,9 +68,8 @@ namespace tdc {
     };
 
     template<size_t N>
-    struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type> {
-        typedef uint64_t SelfMaxBit;
-
+    struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N <= 32)>::type>
+    : IntegerBaseTraitConst<uint_t<N>> {
         inline static void assign(uint_t<N>& self, uint32_t v) {
             self.m_data = v;
         }
@@ -85,6 +77,11 @@ namespace tdc {
         inline static void assign(uint_t<N>& self, uint64_t v) {
             self.m_data = v;
         }
+    };
+
+    template<size_t N>
+    struct IntegerBaseTraitConst<uint_t<N>, typename std::enable_if<(N > 32)>::type> {
+        typedef uint64_t SelfMaxBit;
 
         inline static SelfMaxBit cast_for_self_op(const uint_t<N>& self) {
             return self.m_data;
@@ -96,6 +93,18 @@ namespace tdc {
 
         inline static uint64_t cast_for_64_op(const uint_t<N>& self) {
             return self.m_data;
+        }
+    };
+
+    template<size_t N>
+    struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type>
+    : IntegerBaseTraitConst<uint_t<N>> {
+        inline static void assign(uint_t<N>& self, uint32_t v) {
+            self.m_data = v;
+        }
+
+        inline static void assign(uint_t<N>& self, uint64_t v) {
+            self.m_data = v;
         }
     };
 }
