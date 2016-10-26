@@ -3,8 +3,11 @@
 
 #include <benchpress/benchpress.hpp>
 
+#include <tudocomp/ds/GenericIntVector.hpp>
+#include <tudocomp/util/IntegerBase.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 
+using namespace tdc;
 using namespace benchpress;
 
 const uint32_t N_SUB_ITER = 10000;
@@ -84,6 +87,21 @@ BENCHMARK("ref::uint_t<40>&", [](benchpress::context* ctx) {
     for (size_t i = 0; i < ctx->num_iterations(); ++i) {
         escape(&n);
         auto& x = n;
+        for (size_t j = 0; j < N_SUB_ITER; j++) {
+            x += 1;
+        }
+    }
+
+    escape(&n);
+})
+
+BENCHMARK("ref::IntRef", [](benchpress::context* ctx) {
+    using namespace tdc::int_vector;
+    uint64_t n = 0;
+
+    for (size_t i = 0; i < ctx->num_iterations(); ++i) {
+        escape(&n);
+        IntRef x(IntPtr(&n, 5, 32));
         for (size_t j = 0; j < N_SUB_ITER; j++) {
             x += 1;
         }

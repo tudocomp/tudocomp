@@ -25,10 +25,10 @@ void generic_int_vector_ref_template_const() {
     R y(c);
     R z(d);
 
-    ASSERT_EQ(w, 0x00001111);
-    ASSERT_EQ(x, 0xff00ffff);
-    ASSERT_EQ(y, 0x89ABCDEF);
-    ASSERT_EQ(z, 0x01234567);
+    ASSERT_EQ(w, 0x00001111u);
+    ASSERT_EQ(x, 0xff00ffffu);
+    ASSERT_EQ(y, 0x89ABCDEFu);
+    ASSERT_EQ(z, 0x01234567u);
 
     ASSERT_EQ(w + 1, 0x00001112);
     ASSERT_EQ(~x, ~uint64_t(0xff00ffff));
@@ -58,10 +58,10 @@ void generic_int_vector_ref_template() {
     R y(c);
     R z(d);
 
-    ASSERT_EQ(w, 0x00001111);
-    ASSERT_EQ(x, 0xff00ffff);
-    ASSERT_EQ(y, 0x89ABCDEF);
-    ASSERT_EQ(z, 0x01234567);
+    ASSERT_EQ(w, 0x00001111u);
+    ASSERT_EQ(x, 0xff00ffffu);
+    ASSERT_EQ(y, 0x89ABCDEFu);
+    ASSERT_EQ(z, 0x01234567u);
 
     w = uint32_t(0xDEADBEEF);
     ASSERT_EQ(w, 0xDEADBEEF);
@@ -78,18 +78,18 @@ void generic_int_vector_ref_template() {
 
     ASSERT_EQ(data, (std::vector<uint64_t> { 0xCAFEBABEDEADBEEF, 0x01234567BADEAFFE }));
 
-    ASSERT_EQ(w, 0xDEADBEEF);
-    ASSERT_EQ(z, 0x01234567);
-    ASSERT_EQ(*a, 0xDEADBEEF);
-    ASSERT_EQ(*d, 0x01234567);
+    ASSERT_EQ(w,  0xDEADBEEFu);
+    ASSERT_EQ(z,  0x01234567u);
+    ASSERT_EQ(*a, 0xDEADBEEFu);
+    ASSERT_EQ(*d, 0x01234567u);
 
     using std::swap;
     swap(w, z);
 
-    ASSERT_EQ(w, 0x01234567);
-    ASSERT_EQ(z, 0xDEADBEEF);
-    ASSERT_EQ(*a, 0x01234567);
-    ASSERT_EQ(*d, 0xDEADBEEF);
+    ASSERT_EQ(w,  0x01234567u);
+    ASSERT_EQ(z,  0xDEADBEEFu);
+    ASSERT_EQ(*a, 0x01234567u);
+    ASSERT_EQ(*d, 0xDEADBEEFu);
 
     ASSERT_EQ(data, (std::vector<uint64_t> { 0xCAFEBABE01234567, 0xDEADBEEFBADEAFFE }));
 }
@@ -111,68 +111,68 @@ void generic_int_vector_ptr_template_const() {
     P c(&data[1], 0, 32);
     P d(&data[1], 32, 32);
 
-    ASSERT_EQ(*a, 0x00001111);
-    ASSERT_EQ(*b, 0xff00ffff);
-    ASSERT_EQ(*c, 0x89ABCDEF);
-    ASSERT_EQ(*d, 0x01234567);
+    ASSERT_EQ(*a, 0x00001111u);
+    ASSERT_EQ(*b, 0xff00ffffu);
+    ASSERT_EQ(*c, 0x89ABCDEFu);
+    ASSERT_EQ(*d, 0x01234567u);
 
     {
         auto tmp = a;
         a = d;
         d = tmp;
 
-        ASSERT_EQ(*d, 0x00001111);
-        ASSERT_EQ(*a, 0x01234567);
+        ASSERT_EQ(*d, 0x00001111u);
+        ASSERT_EQ(*a, 0x01234567u);
 
         tmp = a;
         a = d;
         d = tmp;
 
-        ASSERT_EQ(*a, 0x00001111);
-        ASSERT_EQ(*d, 0x01234567);
+        ASSERT_EQ(*a, 0x00001111u);
+        ASSERT_EQ(*d, 0x01234567u);
     }
 
-    ASSERT_EQ(a[0], 0x00001111);
-    ASSERT_EQ(a[1], 0xff00ffff);
-    ASSERT_EQ(a[2], 0x89ABCDEF);
-    ASSERT_EQ(a[3], 0x01234567);
+    ASSERT_EQ(a[0], 0x00001111u);
+    ASSERT_EQ(a[1], 0xff00ffffu);
+    ASSERT_EQ(a[2], 0x89ABCDEFu);
+    ASSERT_EQ(a[3], 0x01234567u);
 
     ASSERT_EQ(data, (std::vector<uint64_t> { 0xff00ffff00001111, 0x0123456789ABCDEF }));
 
     {
         auto tmp = a++;
-        ASSERT_EQ(*a, 0xff00ffff);
-        ASSERT_EQ(*tmp, 0x00001111);
+        ASSERT_EQ(*a,   0xff00ffffu);
+        ASSERT_EQ(*tmp, 0x00001111u);
     }
 
     {
         auto tmp = ++a;
-        ASSERT_EQ(*a, 0x89ABCDEF);
-        ASSERT_EQ(*tmp, 0x89ABCDEF);
+        ASSERT_EQ(*a,   0x89ABCDEFu);
+        ASSERT_EQ(*tmp, 0x89ABCDEFu);
     }
 
     {
         auto tmp = a += 1;
-        ASSERT_EQ(*a, 0x01234567);
-        ASSERT_EQ(*tmp, 0x01234567);
+        ASSERT_EQ(*a,   0x01234567u);
+        ASSERT_EQ(*tmp, 0x01234567u);
     }
 
     {
         auto tmp = a -= 1;
-        ASSERT_EQ(*a, 0x89ABCDEF);
-        ASSERT_EQ(*tmp, 0x89ABCDEF);
+        ASSERT_EQ(*a,   0x89ABCDEFu);
+        ASSERT_EQ(*tmp, 0x89ABCDEFu);
     }
 
     {
         auto tmp = --a;
-        ASSERT_EQ(*a,  0xff00ffff);
-        ASSERT_EQ(*tmp, 0xff00ffff);
+        ASSERT_EQ(*a,   0xff00ffffu);
+        ASSERT_EQ(*tmp, 0xff00ffffu);
     }
 
     {
         auto tmp = a--;
-        ASSERT_EQ(*a, 0x00001111);
-        ASSERT_EQ(*tmp, 0xff00ffff);
+        ASSERT_EQ(*a,   0x00001111u);
+        ASSERT_EQ(*tmp, 0xff00ffffu);
     }
 
     ASSERT_TRUE(a < b);
@@ -234,10 +234,10 @@ void generic_int_vector_ptr_template() {
     P d(&data[1], 32, 32);
 
     *c = 0;
-    ASSERT_EQ(*c, 0);
+    ASSERT_EQ(*c, 0u);
     ASSERT_EQ(data, (std::vector<uint64_t> { 0xff00ffff00001111, 0x0123456700000000 }));
     a[2] = 1;
-    ASSERT_EQ(a[2], 1);
+    ASSERT_EQ(a[2], 1u);
     ASSERT_EQ(data, (std::vector<uint64_t> { 0xff00ffff00001111, 0x0123456700000001 }));
 
 }
@@ -571,4 +571,87 @@ TEST(uint_t, b40) {
     // v = int64_t(0);
     v = 0;
 
+}
+
+template<class T> struct bit_size {
+    static const uint64_t size = sizeof(T) * CHAR_BIT;
+};
+template<size_t N> struct bit_size<uint_t<N>> {
+    static const uint64_t size = N;
+};
+
+template<class T>
+void generic_int_vector_template() {
+    using namespace int_vector;
+    auto N = bit_size<T>::size;
+
+    GenericIntVector<T> dflt;
+    // assert size capa 0
+
+    GenericIntVector<T> fill1(size_t(10));
+    // assert size 10, values 0, bit_size
+
+    GenericIntVector<T> fill2(size_t(10), T(1));
+    // assert size 10, values 1, bit_size
+
+}
+
+
+TEST(generic_int_vector, uint32_t) {
+    generic_int_vector_template<uint32_t>();
+}
+
+TEST(generic_int_vector, uint_t_32) {
+    generic_int_vector_template<uint_t<32>>();
+}
+
+TEST(generic_int_vector, uint_t_40) {
+    generic_int_vector_template<uint_t<40>>();
+}
+
+TEST(generic_int_vector, uint_t_64) {
+    generic_int_vector_template<uint_t<64>>();
+}
+
+TEST(generic_int_vector, uint_t_24) {
+    generic_int_vector_template<uint_t<24>>();
+}
+
+TEST(generic_int_vector, uint_t_1) {
+    generic_int_vector_template<uint_t<1>>();
+}
+
+template<size_t N>
+void generic_int_vector_trait_template() {
+    using namespace int_vector;
+
+    typedef typename GenericIntVectorTrait<uint_t<N>>::backing_data T;
+
+    ASSERT_EQ(T::backing2bits(1), 64);
+    ASSERT_EQ(T::backing2bits(10), 640);
+
+    ASSERT_EQ(T::bits2backing(0), 0);
+    ASSERT_EQ(T::bits2backing(1), 1);
+    ASSERT_EQ(T::bits2backing(7), 1);
+    ASSERT_EQ(T::bits2backing(63), 1);
+    ASSERT_EQ(T::bits2backing(64), 1);
+    ASSERT_EQ(T::bits2backing(65), 2);
+    ASSERT_EQ(T::bits2backing(127), 2);
+    ASSERT_EQ(T::bits2backing(128), 2);
+    ASSERT_EQ(T::bits2backing(129), 3);
+
+    ASSERT_EQ(T::elem2bits(1), N);
+    ASSERT_EQ(T::elem2bits(10), N * 10);
+}
+
+TEST(generic_int_vector_trait_template, N1) {
+    generic_int_vector_trait_template<1>();
+}
+
+TEST(generic_int_vector_trait_template, N7) {
+    generic_int_vector_trait_template<7>();
+}
+
+TEST(generic_int_vector_trait_template, N9) {
+    generic_int_vector_trait_template<9>();
 }

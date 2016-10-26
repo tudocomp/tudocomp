@@ -23,6 +23,45 @@
 #include <glog/logging.h>
 
 namespace tdc {
+
+namespace int_vector {
+    class IntRef;
+    class ConstIntRef;
+}
+
+template<>
+struct IntegerBaseTraitConst<int_vector::IntRef> {
+    typedef sdsl::bits bits;
+    typedef int_vector::IntRef T;
+
+    typedef uint64_t SelfMaxBit;
+
+    inline static SelfMaxBit cast_for_self_op(const T& self);
+    inline static SelfMaxBit cast_for_32_op(const T& self);
+    inline static uint64_t cast_for_64_op(const T& self);
+};
+
+template<>
+struct IntegerBaseTrait<int_vector::IntRef> {
+    typedef sdsl::bits bits;
+    typedef int_vector::IntRef T;
+
+    inline static void assign(T& self, uint32_t v);
+    inline static void assign(T& self, uint64_t v);
+};
+
+template<>
+struct IntegerBaseTraitConst<int_vector::ConstIntRef> {
+    typedef sdsl::bits bits;
+    typedef int_vector::ConstIntRef T;
+
+    typedef uint64_t SelfMaxBit;
+
+    inline static SelfMaxBit cast_for_self_op(const T& self);
+    inline static SelfMaxBit cast_for_32_op(const T& self);
+    inline static uint64_t cast_for_64_op(const T& self);
+};
+
 namespace int_vector {
     using sdsl::bits;
 
@@ -195,7 +234,7 @@ namespace int_vector {
 
     };
 
-    class IntRef: public GenericIntRef<IntRef, IntPtr, Mut> {
+    class IntRef: public GenericIntRef<IntRef, IntPtr, Mut>, public IntegerBase<IntRef> {
     public:
         explicit IntRef(const IntPtr& ptr): GenericIntRef(ptr) {}
 
@@ -207,7 +246,7 @@ namespace int_vector {
 
     };
 
-    class ConstIntRef: public GenericIntRef<ConstIntRef, ConstIntPtr, Const> {
+    class ConstIntRef: public GenericIntRef<ConstIntRef, ConstIntPtr, Const>, public ConstIntegerBase<ConstIntRef> {
     public:
         explicit ConstIntRef(const ConstIntPtr& ptr): GenericIntRef(ptr) {}
     };
@@ -261,8 +300,8 @@ namespace int_vector {
 
     static_assert(sizeof(GenericIntPtr<ConstIntPtr, Const>) <= (sizeof(void*) * 2), "make sure this is reasonably small");
 
-    template<class T, class X = void>
-    class GenericIntVectorTrait {
+    template<class T>
+    struct even_bit_backing_data {
         typedef typename std::vector<T>::value_type             value_type;
 
         typedef typename std::vector<T>::reference              reference;
@@ -280,33 +319,20 @@ namespace int_vector {
         typedef typename std::vector<T>::difference_type        difference_type;
         typedef typename std::vector<T>::size_type              size_type;
 
-        typedef typename std::vector<T>                         backing_vec;
+        std::vector<T> m_vec;
+
+        inline explicit even_bit_backing_data() {}
+        inline explicit even_bit_backing_data(size_type n): m_vec(n) {}
+        inline even_bit_backing_data(size_type n, const value_type& val): m_vec(n, val) {}
+        template <class InputIterator>
+        inline even_bit_backing_data (InputIterator first, InputIterator last): m_vec(first, last) {}
+        inline even_bit_backing_data (const even_bit_backing_data& other): m_vec(other.m_vec) {}
+        inline even_bit_backing_data (even_bit_backing_data&& other): m_vec(std::move(other.m_vec)) {}
+        inline even_bit_backing_data (std::initializer_list<value_type> il): m_vec(il) {}
     };
 
     template<size_t N>
-    class GenericIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) == 0>::type> {
-        typedef typename std::vector<uint_t<N>>::value_type             value_type;
-
-        typedef typename std::vector<uint_t<N>>::reference              reference;
-        typedef typename std::vector<uint_t<N>>::const_reference        const_reference;
-
-        typedef typename std::vector<uint_t<N>>::pointer                pointer;
-        typedef typename std::vector<uint_t<N>>::const_pointer          const_pointer;
-
-        typedef typename std::vector<uint_t<N>>::iterator               iterator;
-        typedef typename std::vector<uint_t<N>>::const_iterator         const_iterator;
-
-        typedef typename std::vector<uint_t<N>>::reverse_iterator       reverse_iterator;
-        typedef typename std::vector<uint_t<N>>::const_reverse_iterator const_reverse_iterator;
-
-        typedef typename std::vector<uint_t<N>>::difference_type        difference_type;
-        typedef typename std::vector<uint_t<N>>::size_type              size_type;
-
-        typedef typename std::vector<uint_t<N>>                         backing_vec;
-    };
-
-    template<size_t N>
-    class GenericIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) != 0>::type> {
+    struct odd_bit_backing_data {
         typedef uint_t<N>                                            value_type;
 
         typedef IntRef                                               reference;
@@ -324,7 +350,100 @@ namespace int_vector {
         typedef ptrdiff_t                                            difference_type;
         typedef size_t                                               size_type;
 
-        typedef typename std::vector<DynamicIntValueType>            backing_vec;
+        std::vector<DynamicIntValueType> m_vec;
+        uint64_t m_bit_size;
+
+        inline static uint64_t backing2bits(size_t n) {
+            return uint64_t(sizeof(DynamicIntValueType) * CHAR_BIT) * uint64_t(n);
+        }
+
+        inline static uint64_t elem2bits(size_t n) {
+            return uint64_t(N) * uint64_t(n);
+        }
+
+        inline static uint64_t bits2backing(uint64_t bits) {
+            if (bits == 0) {
+                return 0;
+            }
+            return ((bits - 1) / backing2bits(1)) + 1;
+        }
+
+        inline explicit odd_bit_backing_data() {}
+        inline explicit odd_bit_backing_data(size_type n) {
+            m_bit_size = elem2bits(n);
+
+            size_t initial_size = bits2backing(m_bit_size);
+            m_vec = std::vector<DynamicIntValueType>(initial_size);
+        }
+        inline odd_bit_backing_data(size_type n, const value_type& val): odd_bit_backing_data(n) {
+            //m_vec;
+        }
+    };
+
+    template<class T, class X = void>
+    struct GenericIntVectorTrait {
+        typedef typename even_bit_backing_data<T>::value_type             value_type;
+
+        typedef typename even_bit_backing_data<T>::reference              reference;
+        typedef typename even_bit_backing_data<T>::const_reference        const_reference;
+
+        typedef typename even_bit_backing_data<T>::pointer                pointer;
+        typedef typename even_bit_backing_data<T>::const_pointer          const_pointer;
+
+        typedef typename even_bit_backing_data<T>::iterator               iterator;
+        typedef typename even_bit_backing_data<T>::const_iterator         const_iterator;
+
+        typedef typename even_bit_backing_data<T>::reverse_iterator       reverse_iterator;
+        typedef typename even_bit_backing_data<T>::const_reverse_iterator const_reverse_iterator;
+
+        typedef typename even_bit_backing_data<T>::difference_type        difference_type;
+        typedef typename even_bit_backing_data<T>::size_type              size_type;
+
+        typedef          even_bit_backing_data<T>                         backing_data;
+    };
+
+    template<size_t N>
+    struct GenericIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) == 0>::type> {
+        typedef typename even_bit_backing_data<uint_t<N>>::value_type             value_type;
+
+        typedef typename even_bit_backing_data<uint_t<N>>::reference              reference;
+        typedef typename even_bit_backing_data<uint_t<N>>::const_reference        const_reference;
+
+        typedef typename even_bit_backing_data<uint_t<N>>::pointer                pointer;
+        typedef typename even_bit_backing_data<uint_t<N>>::const_pointer          const_pointer;
+
+        typedef typename even_bit_backing_data<uint_t<N>>::iterator               iterator;
+        typedef typename even_bit_backing_data<uint_t<N>>::const_iterator         const_iterator;
+
+        typedef typename even_bit_backing_data<uint_t<N>>::reverse_iterator       reverse_iterator;
+        typedef typename even_bit_backing_data<uint_t<N>>::const_reverse_iterator const_reverse_iterator;
+
+        typedef typename even_bit_backing_data<uint_t<N>>::difference_type        difference_type;
+        typedef typename even_bit_backing_data<uint_t<N>>::size_type              size_type;
+
+        typedef          even_bit_backing_data<uint_t<N>>                         backing_data;
+    };
+
+    template<size_t N>
+    struct GenericIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) != 0>::type> {
+        typedef uint_t<N>                                            value_type;
+
+        typedef IntRef                                               reference;
+        typedef ConstIntRef                                          const_reference;
+
+        typedef IntPtr                                               pointer;
+        typedef ConstIntPtr                                          const_pointer;
+
+        typedef pointer                                              iterator;
+        typedef const_pointer                                        const_iterator;
+
+        typedef typename std::reverse_iterator<iterator>             reverse_iterator;
+        typedef typename std::reverse_iterator<const_iterator>       const_reverse_iterator;
+
+        typedef ptrdiff_t                                            difference_type;
+        typedef size_t                                               size_type;
+
+        typedef odd_bit_backing_data<N>                              backing_data;
     };
 
     template<class T>
@@ -340,79 +459,75 @@ namespace int_vector {
         typedef typename GenericIntVectorTrait<T>::const_reverse_iterator const_reverse_iterator;
         typedef typename GenericIntVectorTrait<T>::difference_type        difference_type;
         typedef typename GenericIntVectorTrait<T>::size_type              size_type;
+
+        typename GenericIntVectorTrait<T>::backing_data m_data;
+    public:
+        // default
+        explicit GenericIntVector() {}
+
+        // fill
+        explicit GenericIntVector(size_type n): m_data(n) {}
+        GenericIntVector(size_type n, const value_type& val): m_data(n, val) {}
+
+        // range
+        template <class InputIterator>
+        GenericIntVector (InputIterator first, InputIterator last);
+
+        // copy
+        GenericIntVector (const GenericIntVector& x);
+
+        // move
+        GenericIntVector (GenericIntVector&& x);
+
+        // initializer list
+        GenericIntVector (std::initializer_list<value_type> il);
     };
 
 }
 
-template<>
-struct IntegerBaseTraitConst<int_vector::IntRef> {
-    typedef sdsl::bits bits;
-    typedef int_vector::IntRef T;
+inline IntegerBaseTraitConst<int_vector::IntRef>::SelfMaxBit IntegerBaseTraitConst<int_vector::IntRef>::cast_for_self_op(const T& self) {
+    return bits::read_int(self.m_ptr.m_ptr,
+                            self.m_ptr.m_bit_offset,
+                            self.m_ptr.m_bit_size);
+}
+inline IntegerBaseTraitConst<int_vector::IntRef>::SelfMaxBit IntegerBaseTraitConst<int_vector::IntRef>::cast_for_32_op(const T& self) {
+    return bits::read_int(self.m_ptr.m_ptr,
+                            self.m_ptr.m_bit_offset,
+                            self.m_ptr.m_bit_size);
+}
+inline uint64_t IntegerBaseTraitConst<int_vector::IntRef>::cast_for_64_op(const T& self) {
+    return bits::read_int(self.m_ptr.m_ptr,
+                            self.m_ptr.m_bit_offset,
+                            self.m_ptr.m_bit_size);
+}
+inline void IntegerBaseTrait<int_vector::IntRef>::assign(T& self, uint32_t v) {
+    bits::write_int(self.m_ptr.m_ptr,
+                    v,
+                    self.m_ptr.m_bit_offset,
+                    self.m_ptr.m_bit_size);
+}
+inline void IntegerBaseTrait<int_vector::IntRef>::assign(T& self, uint64_t v) {
+    bits::write_int(self.m_ptr.m_ptr,
+                    v,
+                    self.m_ptr.m_bit_offset,
+                    self.m_ptr.m_bit_size);
+}
 
-    typedef uint64_t SelfMaxBit;
-
-    inline static SelfMaxBit cast_for_self_op(const T& self) {
-        return bits::read_int(self.m_ptr.m_ptr,
-                              self.m_ptr.m_bit_offset,
-                              self.m_ptr.m_bit_size);
-    }
-    inline static SelfMaxBit cast_for_32_op(const T& self) {
-        return bits::read_int(self.m_ptr.m_ptr,
-                              self.m_ptr.m_bit_offset,
-                              self.m_ptr.m_bit_size);
-
-    }
-    inline static uint64_t cast_for_64_op(const T& self) {
-        return bits::read_int(self.m_ptr.m_ptr,
-                              self.m_ptr.m_bit_offset,
-                              self.m_ptr.m_bit_size);
-    }
-};
-
-template<>
-struct IntegerBaseTrait<int_vector::IntRef> {
-    typedef sdsl::bits bits;
-    typedef int_vector::IntRef T;
-
-    inline static void assign(T& self, uint32_t v) {
-        bits::write_int(self.m_ptr.m_ptr,
-                        v,
-                        self.m_ptr.m_bit_offset,
-                        self.m_ptr.m_bit_size);
-    }
-    inline static void assign(T& self, uint64_t v) {
-        bits::write_int(self.m_ptr.m_ptr,
-                        v,
-                        self.m_ptr.m_bit_offset,
-                        self.m_ptr.m_bit_size);
-    }
-};
-
-template<>
-struct IntegerBaseTraitConst<int_vector::ConstIntRef> {
-    typedef sdsl::bits bits;
-    typedef int_vector::ConstIntRef T;
-
-    typedef uint64_t SelfMaxBit;
-
-    inline static SelfMaxBit cast_for_self_op(const T& self) {
-        return bits::read_int(self.m_ptr.m_ptr,
-                              self.m_ptr.m_bit_offset,
-                              self.m_ptr.m_bit_size);
-    }
-    inline static SelfMaxBit cast_for_32_op(const T& self) {
-        return bits::read_int(self.m_ptr.m_ptr,
-                              self.m_ptr.m_bit_offset,
-                              self.m_ptr.m_bit_size);
-
-    }
-    inline static uint64_t cast_for_64_op(const T& self) {
-        return bits::read_int(self.m_ptr.m_ptr,
-                              self.m_ptr.m_bit_offset,
-                              self.m_ptr.m_bit_size);
-    }
-};
-
+inline IntegerBaseTraitConst<int_vector::ConstIntRef>::SelfMaxBit IntegerBaseTraitConst<int_vector::ConstIntRef>::cast_for_self_op(const T& self) {
+    return bits::read_int(self.m_ptr.m_ptr,
+                            self.m_ptr.m_bit_offset,
+                            self.m_ptr.m_bit_size);
+}
+inline IntegerBaseTraitConst<int_vector::ConstIntRef>::SelfMaxBit IntegerBaseTraitConst<int_vector::ConstIntRef>::cast_for_32_op(const T& self) {
+    return bits::read_int(self.m_ptr.m_ptr,
+                            self.m_ptr.m_bit_offset,
+                            self.m_ptr.m_bit_size);
+}
+inline uint64_t IntegerBaseTraitConst<int_vector::ConstIntRef>::cast_for_64_op(const T& self) {
+    return bits::read_int(self.m_ptr.m_ptr,
+                            self.m_ptr.m_bit_offset,
+                            self.m_ptr.m_bit_size);
+}
 
 }
 

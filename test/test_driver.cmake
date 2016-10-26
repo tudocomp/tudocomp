@@ -70,7 +70,7 @@ macro(generic_run_test test_target
         WORKING_DIRECTORY
             "${CMAKE_BINARY_DIR}"
         COMMENT
-            "Running test ${test_target} ..."
+            "Running ${kind_name} ${test_target} ..."
         VERBATIM
     )
 
