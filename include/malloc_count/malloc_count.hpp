@@ -51,9 +51,13 @@ namespace malloc_count {
     void resume_phase();
 }
 
+#ifndef __CYGWIN__ //these are not defined in Cygwin
+
 extern "C" void* __libc_malloc(size_t);
 extern "C" void __libc_free(void*);
 extern "C" void* __libc_realloc(void*, size_t);
+
+#endif
 
 /// \endcond
 

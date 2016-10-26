@@ -40,6 +40,12 @@ namespace malloc_count {
     }
 }
 
+#ifdef __CYGWIN__
+
+#pragma message("malloc overrides are not supported on Cygwin.")
+
+#else
+
 void* malloc(size_t size) {
     using namespace malloc_count;
 
@@ -115,3 +121,4 @@ void* calloc(size_t num, size_t size) {
     return ptr;
 }
 
+#endif
