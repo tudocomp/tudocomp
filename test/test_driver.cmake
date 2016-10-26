@@ -1,6 +1,6 @@
 # Grab gtest and microbenchmark support
 find_or_download_package(GTest GTEST gtest)
-find_or_download_package(benchpress BENCHPRESS benchpress)
+find_or_download_package(Benchpress BENCHPRESS benchpress)
 
 # Custom test target to run the googletest tests
 add_custom_target(check)
