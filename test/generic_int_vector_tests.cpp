@@ -11,6 +11,97 @@
 
 using namespace tdc;
 
+template<class P, class R>
+void generic_int_vector_ref_template_const() {
+    std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
+
+    P a(&data[0], 0, 32);
+    P b(&data[0], 32, 32);
+    P c(&data[1], 0, 32);
+    P d(&data[1], 32, 32);
+
+    R w(a);
+    R x(b);
+    R y(c);
+    R z(d);
+
+    ASSERT_EQ(w, 0x00001111);
+    ASSERT_EQ(x, 0xff00ffff);
+    ASSERT_EQ(y, 0x89ABCDEF);
+    ASSERT_EQ(z, 0x01234567);
+
+    ASSERT_EQ(w + 1, 0x00001112);
+    ASSERT_EQ(~x, ~uint64_t(0xff00ffff));
+
+    uint32_t u32 = y;
+    uint64_t u64 = y;
+    int      i32 = y;
+
+    ASSERT_EQ(u32, 0x89ABCDEF);
+    ASSERT_EQ(u64, 0x89ABCDEF);
+    ASSERT_EQ(i32, 0x89ABCDEF);
+
+}
+
+template<class P, class R>
+void generic_int_vector_ref_template() {
+    generic_int_vector_ref_template_const<P, R>();
+    std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
+
+    P a(&data[0], 0, 32);
+    P b(&data[0], 32, 32);
+    P c(&data[1], 0, 32);
+    P d(&data[1], 32, 32);
+
+    R w(a);
+    R x(b);
+    R y(c);
+    R z(d);
+
+    ASSERT_EQ(w, 0x00001111);
+    ASSERT_EQ(x, 0xff00ffff);
+    ASSERT_EQ(y, 0x89ABCDEF);
+    ASSERT_EQ(z, 0x01234567);
+
+    w = uint32_t(0xDEADBEEF);
+    ASSERT_EQ(w, 0xDEADBEEF);
+
+    x = uint64_t(0xCAFEBABE);
+    ASSERT_EQ(x, 0xCAFEBABE);
+
+    y = int(0xBADEAFFE);
+    ASSERT_EQ(y, 0xBADEAFFE);
+
+    ASSERT_EQ(w, 0xDEADBEEF);
+    ASSERT_EQ(x, 0xCAFEBABE);
+    ASSERT_EQ(y, 0xBADEAFFE);
+
+    ASSERT_EQ(data, (std::vector<uint64_t> { 0xCAFEBABEDEADBEEF, 0x01234567BADEAFFE }));
+
+    ASSERT_EQ(w, 0xDEADBEEF);
+    ASSERT_EQ(z, 0x01234567);
+    ASSERT_EQ(*a, 0xDEADBEEF);
+    ASSERT_EQ(*d, 0x01234567);
+
+    using std::swap;
+    swap(w, z);
+
+    ASSERT_EQ(w, 0x01234567);
+    ASSERT_EQ(z, 0xDEADBEEF);
+    ASSERT_EQ(*a, 0x01234567);
+    ASSERT_EQ(*d, 0xDEADBEEF);
+
+    ASSERT_EQ(data, (std::vector<uint64_t> { 0xCAFEBABE01234567, 0xDEADBEEFBADEAFFE }));
+}
+
+TEST(generic_int_vector, int_ref) {
+    generic_int_vector_ref_template<int_vector::IntPtr, int_vector::IntRef>();
+}
+
+TEST(generic_int_vector, const_int_ref) {
+    generic_int_vector_ref_template_const<int_vector::ConstIntPtr, int_vector::ConstIntRef>();
+}
+
 template<class P>
 void generic_int_vector_ptr_template_const() {
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };

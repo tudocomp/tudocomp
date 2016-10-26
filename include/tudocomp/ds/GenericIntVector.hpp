@@ -45,14 +45,14 @@ namespace int_vector {
         typedef DynamicIntValueType  val;
     };
 
-    template<class T, class U, class V>
+    template<class Self, class Ptr, class Layout>
     class GenericIntRef;
     class IntRef;
     class ConstIntRef;
     class IntPtr;
     class ConstIntPtr;
 
-    template<class Self, class T>
+    template<class Self, class Layout>
     class GenericIntPtr {
     protected:
         friend class GenericIntRef<IntRef, IntPtr, Mut>;
@@ -63,13 +63,13 @@ namespace int_vector {
         friend class IntegerBaseTraitConst<IntRef>;
         friend class IntegerBaseTraitConst<ConstIntRef>;
 
-        typename T::ptr m_ptr;
-        typename T::off m_bit_offset;
-        typename T::len m_bit_size;
+        typename Layout::ptr m_ptr;
+        typename Layout::off m_bit_offset;
+        typename Layout::len m_bit_size;
     public:
-        GenericIntPtr(typename T::ptr ptr,
-                      typename T::off bit_offset,
-                      typename T::len bit_size):
+        GenericIntPtr(typename Layout::ptr ptr,
+                      typename Layout::off bit_offset,
+                      typename Layout::len bit_size):
             m_ptr(ptr),
             m_bit_offset(bit_offset),
             m_bit_size(bit_size) {}
@@ -119,7 +119,7 @@ namespace int_vector {
             // TODO: test
             DCHECK(lhs.m_bit_size == rhs.m_bit_size);
             auto ptr_diff = lhs.m_ptr - rhs.m_ptr;
-            auto bit_count = ptr_diff * sizeof(typename T::val) * CHAR_BIT;
+            auto bit_count = ptr_diff * sizeof(typename Layout::val) * CHAR_BIT;
             bit_count += lhs.m_bit_offset;
             bit_count -= rhs.m_bit_offset;
             bit_count /= lhs.m_bit_size;
@@ -174,7 +174,7 @@ namespace int_vector {
         inline IntRef operator[](size_t i);
     };
 
-    template<class Self, class Ptr, class T>
+    template<class Self, class Ptr, class Layout>
     class GenericIntRef {
     protected:
         friend class IntPtr;
@@ -185,7 +185,7 @@ namespace int_vector {
 
         Ptr m_ptr;
     public:
-        typedef typename T::val value_type;
+        typedef typename Layout::val value_type;
 
         explicit GenericIntRef(const Ptr& ptr): m_ptr(ptr) {}
 
@@ -233,6 +233,30 @@ namespace int_vector {
         auto x = *this;
         x += i;
         return IntRef(x);
+    }
+
+    // TODO: uint64_t should be a type corresponding to the element type,
+    // eg uint_t<5>
+    inline void swap(IntRef& lhs, IntRef& rhs) noexcept {
+        uint64_t tmp = lhs;
+        lhs = uint64_t(rhs);
+        rhs = tmp;
+    }
+
+    // TODO: uint64_t should be a type corresponding to the element type,
+    // eg uint_t<5>
+    inline void swap(IntRef& lhs, uint64_t& rhs) noexcept {
+        uint64_t tmp = lhs;
+        lhs = uint64_t(rhs);
+        rhs = tmp;
+    }
+
+    // TODO: uint64_t should be a type corresponding to the element type,
+    // eg uint_t<5>
+    inline void swap(uint64_t& lhs, IntRef& rhs) noexcept {
+        uint64_t tmp = lhs;
+        lhs = uint64_t(rhs);
+        rhs = tmp;
     }
 
     static_assert(sizeof(GenericIntPtr<ConstIntPtr, Const>) <= (sizeof(void*) * 2), "make sure this is reasonably small");

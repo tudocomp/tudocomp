@@ -245,7 +245,6 @@ public:
     Self& operator<<=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
     Self& operator<<=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
     Self& operator<<=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
-
 };
 
 }
