@@ -594,6 +594,38 @@ void generic_int_vector_template() {
     GenericIntVector<T> fill2(size_t(10), T(1));
     // assert size 10, values 1, bit_size
 
+    std::vector<T> iter_src_1(10, T(1));
+    GenericIntVector<T> range1(iter_src_1.begin(), iter_src_1.end());
+    // assert size 10, values 1, bit_size
+
+    std::vector<uint64_t> iter_src_2(10, 1);
+    GenericIntVector<T> range2(iter_src_2.begin(), iter_src_2.end());
+    // assert size 10, values 1, bit_size
+
+    GenericIntVector<T> copy(dflt);
+    // assert of both dflt and copy with divergence
+
+    GenericIntVector<T> move(std::move(copy));
+    // assert of equivalence to prev cpy
+
+    GenericIntVector<T> il1 { T(1), T(2), T(3), T(4) };
+    // assert size, bit size and content
+
+    GenericIntVector<T> il2 { 1, 2, 3, 4 };
+    // assert size, bit size and content
+
+    GenericIntVector<T> assign_target;
+    GenericIntVector<T> assign_src1 { 1, 2, 3, 4 };
+    GenericIntVector<T> assign_src2 { 5, 6, 7 };
+
+    assign_target = assign_src1;
+    // assert contents and cpacity
+
+    assign_target = std::move(assign_src2);
+    // assert contents and cpacity
+
+    assign_target = { 8, 9, 10, 11, 12 };
+    // assert contents and cpacity
 }
 
 

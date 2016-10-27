@@ -16,7 +16,7 @@ template<size_t bits>
 class uint_t: public IntegerBase<uint_t<bits>> {
     static_assert(bits > 0, "bits must be non-negative");
     static_assert(bits < 65, "bits must be at most 64");
-    uint64_t m_data : bits;
+    uint64_t m_data: bits;
 
     friend class tdc::IntegerBaseTrait<uint_t<bits>>;
     friend class tdc::IntegerBaseTraitConst<uint_t<bits>>;
@@ -27,7 +27,7 @@ public:
 
     // copying
     inline uint_t(const uint_t& i): m_data(i.m_data) {}
-    inline uint_t& operator=(const uint_t& b) { m_data = b.data; return *this; }
+    inline uint_t& operator=(const uint_t& b) { m_data = b.m_data; return *this; }
 
     // 64 bit conversions
     inline uint_t(uint64_t i): m_data(i) {}

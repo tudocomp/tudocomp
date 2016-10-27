@@ -23,11 +23,36 @@
 #include <glog/logging.h>
 
 namespace tdc {
-
-namespace int_vector {
-    class IntRef;
-    class ConstIntRef;
+    namespace int_vector {
+        class IntRef;
+        class ConstIntRef;
+        class IntPtr;
+        class ConstIntPtr;
+    }
 }
+
+namespace std {
+    template<>
+    struct iterator_traits<tdc::int_vector::IntPtr> {
+        typedef ptrdiff_t                       difference_type;
+        // TODO: Fix if pointers become generic
+        typedef uint64_t                        value_type;
+        typedef tdc::int_vector::IntPtr         pointer;
+        typedef tdc::int_vector::IntRef         reference;
+        typedef std::random_access_iterator_tag iterator_category;
+    };
+    template<>
+    struct iterator_traits<tdc::int_vector::ConstIntPtr> {
+        typedef ptrdiff_t                       difference_type;
+        // TODO: Fix if pointers become generic
+        typedef uint64_t                        value_type;
+        typedef tdc::int_vector::ConstIntPtr    pointer;
+        typedef tdc::int_vector::ConstIntRef    reference;
+        typedef std::random_access_iterator_tag iterator_category;
+    };
+}
+
+namespace tdc {
 
 template<>
 struct IntegerBaseTraitConst<int_vector::IntRef> {
@@ -329,6 +354,69 @@ namespace int_vector {
         inline even_bit_backing_data (const even_bit_backing_data& other): m_vec(other.m_vec) {}
         inline even_bit_backing_data (even_bit_backing_data&& other): m_vec(std::move(other.m_vec)) {}
         inline even_bit_backing_data (std::initializer_list<value_type> il): m_vec(il) {}
+
+        inline even_bit_backing_data& operator=(const even_bit_backing_data& other) {
+            m_vec = other.m_vec;
+            return *this;
+        }
+
+        inline even_bit_backing_data& operator=(even_bit_backing_data&& other) {
+            m_vec = std::move(other.m_vec);
+            return *this;
+        }
+
+        inline even_bit_backing_data& operator=(std::initializer_list<value_type> il) {
+            m_vec = il;
+            return *this;
+        }
+
+        inline iterator begin() {
+            return m_vec.begin();
+        }
+
+        inline iterator end() {
+            return m_vec.end();
+        }
+
+        inline reverse_iterator rbegin() {
+            return m_vec.rbegin();
+        }
+
+        inline reverse_iterator rend() {
+            return m_vec.rend();
+        }
+
+        inline const_iterator begin() const {
+            return m_vec.begin();
+        }
+
+        inline const_iterator end() const {
+            return m_vec.end();
+        }
+
+        inline const_reverse_iterator rbegin() const {
+            return m_vec.rbegin();
+        }
+
+        inline const_reverse_iterator rend() const {
+            return m_vec.rend();
+        }
+
+        inline const_iterator cbegin() const {
+            return m_vec.cbegin();
+        }
+
+        inline const_iterator cend() const {
+            return m_vec.cend();
+        }
+
+        inline const_reverse_iterator crbegin() const {
+            return m_vec.crbegin();
+        }
+
+        inline const_reverse_iterator crend() const {
+            return m_vec.crend();
+        }
     };
 
     template<size_t N>
@@ -368,15 +456,110 @@ namespace int_vector {
             return ((bits - 1) / backing2bits(1)) + 1;
         }
 
+        struct PosAndOffset { size_t elem_pos; uint8_t elem_offset; };
+        inline PosAndOffset bitpos2elempos(uint64_t bits) {
+            return PosAndOffset {
+                bits / backing2bits(1),
+                bits % backing2bits(1)
+            };
+        }
+
         inline explicit odd_bit_backing_data() {}
         inline explicit odd_bit_backing_data(size_type n) {
             m_bit_size = elem2bits(n);
-
-            size_t initial_size = bits2backing(m_bit_size);
-            m_vec = std::vector<DynamicIntValueType>(initial_size);
+            size_t converted_size = bits2backing(m_bit_size);
+            m_vec = std::vector<DynamicIntValueType>(converted_size);
         }
         inline odd_bit_backing_data(size_type n, const value_type& val): odd_bit_backing_data(n) {
-            //m_vec;
+            auto ptr = m_vec.data();
+            uint8_t offset = 0;
+
+            for (size_t i = 0; i < n; i++) {
+                bits::write_int_and_move(ptr, val, offset, N);
+            }
+        }
+        template <class InputIterator>
+        inline odd_bit_backing_data(InputIterator first, InputIterator last) {
+            // TODO: specialize for random acces iterator
+            for(; first != last; first++) {
+                //TODO: push_back(*first);
+                // TODO: Update bit_size
+            }
+        }
+        inline odd_bit_backing_data (const odd_bit_backing_data& other):
+            m_vec(other.m_vec), m_bit_size(other.m_bit_size) {}
+        inline odd_bit_backing_data (odd_bit_backing_data&& other):
+            m_vec(std::move(other.m_vec)), m_bit_size(other.m_bit_size) {}
+        inline odd_bit_backing_data(std::initializer_list<value_type> il):
+            odd_bit_backing_data(il.begin(), il.end()) {}
+
+        inline odd_bit_backing_data& operator=(const odd_bit_backing_data& other) {
+            m_vec = other.m_vec;
+            m_bit_size = other.m_bit_size;
+            return *this;
+        }
+
+        inline odd_bit_backing_data& operator=(odd_bit_backing_data&& other) {
+            m_vec = std::move(other.m_vec);
+            m_bit_size = other.m_bit_size;
+            return *this;
+        }
+
+        inline odd_bit_backing_data& operator=(std::initializer_list<value_type> il) {
+            *this = odd_bit_backing_data(il);
+            return *this;
+        }
+
+        inline iterator begin() {
+            auto x = bitpos2elempos(0);
+            return pointer(&m_vec[x.elem_pos], x.elem_offset, N);
+        }
+
+        inline iterator end() {
+            auto x = bitpos2elempos(m_bit_size);
+            return pointer(&m_vec[x.elem_pos], x.elem_offset, N);
+        }
+
+        inline reverse_iterator rbegin() {
+            return std::reverse_iterator<iterator>(end());
+        }
+
+        inline reverse_iterator rend() {
+            return std::reverse_iterator<iterator>(begin());
+        }
+
+        inline const_iterator begin() const {
+            auto x = bitpos2elempos(0);
+            return const_pointer(&m_vec[x.elem_pos], x.elem_offset, N);
+        }
+
+        inline const_iterator end() const {
+            auto x = bitpos2elempos(m_bit_size);
+            return const_pointer(&m_vec[x.elem_pos], x.elem_offset, N);
+        }
+
+        inline const_reverse_iterator rbegin() const {
+            return std::reverse_iterator<const_iterator>(end());
+        }
+
+        inline const_reverse_iterator rend() const {
+            return std::reverse_iterator<const_iterator>(begin());
+        }
+
+        inline const_iterator cbegin() const {
+            return begin();
+        }
+
+        inline const_iterator cend() const {
+            return end();
+        }
+
+        inline const_reverse_iterator crbegin() const {
+            return rbegin();
+        }
+
+        inline const_reverse_iterator crend() const {
+            return rend();
         }
     };
 
@@ -448,6 +631,8 @@ namespace int_vector {
 
     template<class T>
     class GenericIntVector {
+        // TODO: Add custom allocator support
+
         typedef typename GenericIntVectorTrait<T>::value_type             value_type;
         typedef typename GenericIntVectorTrait<T>::reference              reference;
         typedef typename GenericIntVectorTrait<T>::const_reference        const_reference;
@@ -463,24 +648,39 @@ namespace int_vector {
         typename GenericIntVectorTrait<T>::backing_data m_data;
     public:
         // default
-        explicit GenericIntVector() {}
+        inline explicit GenericIntVector() {}
 
         // fill
         explicit GenericIntVector(size_type n): m_data(n) {}
-        GenericIntVector(size_type n, const value_type& val): m_data(n, val) {}
+        inline GenericIntVector(size_type n, const value_type& val): m_data(n, val) {}
 
         // range
         template <class InputIterator>
-        GenericIntVector (InputIterator first, InputIterator last);
+        inline GenericIntVector(InputIterator first, InputIterator last): m_data(first, last) {}
 
         // copy
-        GenericIntVector (const GenericIntVector& x);
+        inline GenericIntVector(const GenericIntVector& other): m_data(other.m_data) {}
 
         // move
-        GenericIntVector (GenericIntVector&& x);
+        inline GenericIntVector(GenericIntVector&& other): m_data(std::move(other.m_data)) {}
 
         // initializer list
-        GenericIntVector (std::initializer_list<value_type> il);
+        inline GenericIntVector(std::initializer_list<value_type> il): m_data(il) {}
+
+        inline GenericIntVector& operator=(const GenericIntVector& other) {
+            m_data = other.m_data;
+            return *this;
+        }
+
+        inline GenericIntVector& operator=(GenericIntVector&& other) {
+            m_data = std::move(other.m_data);
+            return *this;
+        }
+
+        inline GenericIntVector& operator=(std::initializer_list<value_type> il) {
+            m_data = il;
+            return *this;
+        }
     };
 
 }
