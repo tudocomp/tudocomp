@@ -1,5 +1,6 @@
-# Grab gtest
+# Grab gtest and microbenchmark support
 find_or_download_package(GTest GTEST gtest)
+find_or_download_package(Benchpress BENCHPRESS benchpress)
 
 # Custom test target to run the googletest tests
 add_custom_target(check)
@@ -17,11 +18,28 @@ add_custom_command(
     COMMENT "All test builds were successful!" VERBATIM
 )
 
+# Custom test target to run the benchpress benchmarks
+add_custom_target(bench)
+add_custom_command(
+    TARGET bench
+    POST_BUILD
+    COMMENT "All bench were successful!" VERBATIM
+)
+
+# Custom test target to just build the benchpress benchmarks
+add_custom_target(build_bench)
+add_custom_command(
+    TARGET build_bench
+    POST_BUILD
+    COMMENT "All bench builds were successful!" VERBATIM
+)
+
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/stamps)
 
 # will compile and run ${test_target}.cpp
 # and add all further arguments as dependencies
-macro(run_test test_target)
+macro(generic_run_test test_target
+      driver driver_dep register_target register_build_target kind_name)
     set(options)
     set(oneValueArgs)
     set(multiValueArgs DEPS BIN_DEPS)
@@ -30,12 +48,12 @@ macro(run_test test_target)
     # The test executable itself
     add_executable(${test_target}_testrunner
         EXCLUDE_FROM_ALL
-        test_driver.cpp
+        ${driver}
         ${test_target}.cpp
     )
     target_link_libraries(${test_target}_testrunner
-        gtest
         glog
+        ${driver_dep}
         ${TEST_TARGET_DEPS}
     )
 
@@ -66,20 +84,20 @@ macro(run_test test_target)
 
     # Hook into check target
     add_custom_command(
-        TARGET check
+        TARGET ${register_target}
         PRE_BUILD
         COMMAND cmake --build . --target ${test_target}
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-        COMMENT "Test ${test_target}" VERBATIM
+        COMMENT "${kind_name} ${test_target}" VERBATIM
     )
 
     # Hook into build_check target
     add_custom_command(
-        TARGET build_check
+        TARGET ${register_build_target}
         PRE_BUILD
         COMMAND cmake --build . --target ${test_target}_testrunner
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-        COMMENT "Building test ${test_target}" VERBATIM
+        COMMENT "Building ${kind_name} ${test_target}" VERBATIM
     )
 
     # Ensure binary deps of the testrunner are compiled first
@@ -93,3 +111,26 @@ macro(run_test test_target)
     endforeach(bin_dep)
 endmacro()
 
+macro(run_test test_target)
+generic_run_test(
+    ${test_target}
+    "test_driver.cpp"
+    gtest
+    check
+    build_check
+    "Test"
+    ${ARGN}
+)
+endmacro()
+
+macro(run_bench test_target)
+generic_run_test(
+    ${test_target}
+    "bench_driver.cpp"
+    benchpress
+    bench
+    build_bench
+    "Bench"
+    ${ARGN}
+)
+endmacro()
