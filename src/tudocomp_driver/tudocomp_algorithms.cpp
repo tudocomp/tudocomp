@@ -14,6 +14,9 @@
 
 #include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
 
+#include <tudocomp/misc/LCPSuffixLinkCompressor.hpp>
+
+#include <tudocomp/lzss/LZSSSeanCompressor.hpp>
 #include <tudocomp/lzss/LZ77SSSlidingWindowCompressor.hpp>
 #include <tudocomp/lzss/LZ77SSLCPCompressor.hpp>
 #include <tudocomp/lzss/LZSSESACompressor.hpp>
@@ -43,6 +46,7 @@ using lz78::Lz78BitCoder;
 using lz78::lzcics::Lz78cicsCompressor;
 
 using lzss::LZ77SSSlidingWindowCompressor;
+using lzss::LZSSSeanCompressor;
 using lzss::LZ77SSLCPCompressor;
 
 using lzss::LZSSESACompressor;
@@ -100,6 +104,8 @@ void register_algorithms(Registry& r) {
     r.register_compressor< LZSSESACompressor<ESACompNaive, OnlineLZSSCoder<OfflineAlphabetCoder>> >();
     r.register_compressor< LZSSESACompressor<ESACompNaive, OfflineLZSSCoder<OnlineAlphabetCoder>> >();
     r.register_compressor< LZSSESACompressor<ESACompNaive, OfflineLZSSCoder<OfflineAlphabetCoder>> >();
+    r.register_compressor< LZSSSeanCompressor >();
+    //broken: r.register_compressor< LCPSuffixLinkCompressor >();
     r.register_compressor< ExampleCompressor >();
     r.register_compressor< TemplatedExampleCompressor<ExampleDebugCoder> >();
     r.register_compressor< TemplatedExampleCompressor<ExampleBitCoder> >();

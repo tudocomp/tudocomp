@@ -4,11 +4,17 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/io/BitOStream.hpp>
 #include <tudocomp/io/BitIStream.hpp>
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 
-namespace tudocomp {
+namespace tdc {
 
 class LCPSuffixLinkCompressor : public Compressor {
+
+public:
+    inline static Meta meta() {
+        Meta m("compressor", "suflink", "Suffix Link Compressor");
+        return m;
+    }
 
 private:
     // This is the suffix tree used to store all the symbols for a given text
@@ -20,7 +26,7 @@ private:
 
         bool operator==(const cstSymbol& rhs) const {
             return (c == rhs.c) && (length == rhs.length);
-        }      
+        }
     };
     std::vector<cstSymbol> symbols;
     size_t longest;
@@ -31,7 +37,7 @@ private:
         std::string edge;
 
         // This first run through the suffix tree maps the node elements to the elements in the symbol table
-        for(auto it = cst.begin(); it != cst.end(); it++) {          
+        for(auto it = cst.begin(); it != cst.end(); it++) {
             if(it.visit()==1) {
                 if(*it != cst.root()) {
                         edge = extract(cst, *it);
@@ -40,24 +46,24 @@ private:
                         if(edge.back() != '\0') {
                             symbols.push_back(cstSymbol());
                             slMap[*it] = symbols.size()-1;
-                        }                       
+                        }
                 }
-            }            
+            }
         }
 
         // This second run through the suffix tree fills the symbols in the symbol table
         // We need two runs since it could happen that a symbol needs to link to another symbol that had not yet been mapped
-        for(auto it = cst.begin(); it != cst.end(); it++) {          
+        for(auto it = cst.begin(); it != cst.end(); it++) {
             if(it.visit()==1) {
                 if(*it != cst.root()) {
                         edge = extract(cst, *it);
 
                         // We want to check all inner nodes
                         if(edge.back() != '\0') {
-                            visit(*it);                            
-                        }                       
+                            visit(*it);
+                        }
                 }
-            }            
+            }
         }
     }
 
@@ -103,8 +109,8 @@ private:
                 output_text += extract(cst,n).front();
 
                 // A 0 bit indicates that a char is being encoded directly
-                bito->writeBit(0);
-                bito->write(input_text[i], 8);
+                bito->write_bit(0);
+                bito->write_int(input_text[i], 8);
             }
             // If the node we are looking at is not the child of the root, then it can be compressed. We go through the
             // suffix links and encode it that way
@@ -115,7 +121,7 @@ private:
                 output_text += std::to_string(sym_ind);
 
                 // A 1 bit indicates that a compressed symbol is being encoded
-                bito->writeBit(1);
+                bito->write_bit(1);
                 bito->write_compressed_int(sym_ind);
 
                 i += symbols[sym_ind].length-1;
@@ -123,7 +129,7 @@ private:
         }
 
         // Flush out the last few bits
-        bito->flush();        
+        bito->flush();
         DLOG(INFO) << "Encoded string: " << output_text;
     }
 
@@ -132,16 +138,15 @@ public:
     inline LCPSuffixLinkCompressor() = delete;
 
     /// Construct the class with an environment
-    inline LCPSuffixLinkCompressor(Env& env) : Compressor(env) {
-    }	
+    inline LCPSuffixLinkCompressor(Env&& env) : Compressor(std::move(env)) {
+    }
 
     /// Compress the input into an output
     virtual void compress(Input& input, Output& output) override final {
         char c;
-        auto in_guard = input.as_stream();
-        std::istream& in = *in_guard;
+        auto in = input.as_stream();
         auto out_guard = output.as_stream();
-        BitOStream* bito = new BitOStream(*out_guard);        
+        BitOStream* bito = new BitOStream(out_guard);
         std::stringstream input_str;
         size_t text_length;
 
@@ -169,24 +174,23 @@ public:
     virtual void decompress(Input& input, Output& output) override {
         bool done = false;
         auto in_guard = input.as_stream();
-        auto out_guard = output.as_stream();
-        std::ostream& out = *out_guard;
-        BitIStream* biti = new BitIStream(*in_guard, done);
+        auto out = output.as_stream();
+        BitIStream* biti = new BitIStream(in_guard, done);
 
         std::stringstream total_len_str;
         size_t curr_pos=0, total_len=0;
         ssize_t symbol;
 
         // Here we get the length of the original string from the compressed string
-        // and use it to declare a vector of the correct size to hold the result        
+        // and use it to declare a vector of the correct size to hold the result
         total_len = biti->read_compressed_int<size_t>();
         sdsl::int_vector<8> text = sdsl::int_vector<8>(total_len, 0);
 
         while(total_len > 0) {
             // Here we have a compressed symbol
-            if(biti->readBit()) {
+            if(biti->read_bit()) {
                 symbol = biti->read_compressed_int();
-                
+
                 // Once the symbol points to -1, we are done decoding it
                 while(symbol != -1) {
                     text[curr_pos] = symbols[symbol].c;
@@ -198,14 +202,14 @@ public:
             }
             // Here we have a simple char
             else {
-                text[curr_pos] = biti->readBits<char>(8);
+                text[curr_pos] = biti->read_int<char>(8);
                 curr_pos++;
                 total_len--;
             }
         }
 
         // Here we write the output of the decompressed string
-        out.write((const char*)text.data(), text.size());        
+        out.write((const char*)text.data(), text.size());
     }
 };
 

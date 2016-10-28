@@ -11,19 +11,25 @@
 
 #include <sdsl/int_vector.hpp>
 
-#include <tudocomp/util.h>
+#include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/io.h>
+#include <tudocomp/io.hpp>
 #include <tudocomp/io/BitOStream.hpp>
 #include <tudocomp/io/BitIStream.hpp>
 
-namespace tudocomp {
+namespace tdc {
 namespace lzss {
 
 // const std::string WINDOW_OPTION = "lzss.window";
 
 /// Computes the LZ77 factorization of the input
 class LZSSSeanCompressor : public Compressor {
+
+public:
+    inline static Meta meta() {
+        Meta m("compressor", "lz77ss_sean", "Sean's LZ77 compressor");
+        return m;
+    }
 
 private:
     // size_t m_window;
@@ -33,7 +39,7 @@ public:
     inline LZSSSeanCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZSSSeanCompressor(Env& env) : Compressor(env) {
+    inline LZSSSeanCompressor(Env&& env) : Compressor(std::move(env)) {
         // m_window = env.option_as<size_t>(WINDOW_OPTION, 16);
     }
 
@@ -41,10 +47,9 @@ public:
     virtual void compress(Input& input, Output& output) override final {
         char c;
 
-        auto in_guard = input.as_stream();
-        std::istream& in = *in_guard;
+        auto in = input.as_stream();
         auto out_guard = output.as_stream();
-        BitOStream* bito = new BitOStream(*out_guard);
+        BitOStream* bito = new BitOStream(out_guard);
 
         std::stringstream input_str;
         size_t curr_pos=0, text_length, pos, len;
@@ -66,9 +71,9 @@ public:
             len = 0;
             size_t iter_pos = 1;
 
-            // Here we check for the longest match in the string             
+            // Here we check for the longest match in the string
             while(curr_pos >= iter_pos && iter_pos <= SLIDING_WINDOW_SIZE) {
-            // while(curr_pos >= iter_pos) {                
+            // while(curr_pos >= iter_pos) {
                 bool searchFlag = false;
                 size_t iter_len = 0, i = 0;
 
@@ -89,7 +94,7 @@ public:
                     else {
 
                         searchFlag = true;
-                    } 
+                    }
                 }
 
                 // We store the longest length matched sequence
@@ -103,16 +108,16 @@ public:
 
             // Here we output a symbol, which is initialized with a 0 bit
             if(len == 0) {
-                bito->writeBit(0);
+                bito->write_bit(0);
                 // bito->flush();
                 // bito->write_aligned_bytes(&input_text[curr_pos],1);
-                bito->write(input_text[curr_pos], 8);
+                bito->write_int(input_text[curr_pos], 8);
                 curr_pos++;
             }
             // Here we output a factor, which is initialized with a 1 bit
             else {
                 curr_pos += len;
-                bito->writeBit(1);
+                bito->write_bit(1);
                 // bito->flush();
                 bito->write_compressed_int(pos);
                 bito->write_compressed_int(len);
@@ -130,25 +135,24 @@ public:
         bool factor = false;
 
         auto in_guard = input.as_stream();
-        auto out_guard = output.as_stream();
-        std::ostream& out = *out_guard;
-        BitIStream* biti = new BitIStream(*in_guard, done);
+        auto out = output.as_stream();
+        BitIStream* biti = new BitIStream(in_guard, done);
 
         std::stringstream total_len_str;
         size_t curr_pos=0, total_len=0;
 
         // Here we get the length of the original string from the compressed string
-        // and use it to declare a vector of the correct size to hold the result        
+        // and use it to declare a vector of the correct size to hold the result
         total_len = biti->read_compressed_int<size_t>();
         sdsl::int_vector<8> text = sdsl::int_vector<8>(total_len, 0);
 
         // Here we start moving through each of the factors in the compressed string
         while(total_len > 0) {
             size_t pos, len;
-            factor = biti->readBit();
+            factor = biti->read_bit();
             // biti->readBits<char>(7);
             if(!factor) {
-;               text[curr_pos] = biti->readBits<char>(8);
+;               text[curr_pos] = biti->read_int<char>(8);
                 curr_pos++;
                 total_len--;
             }
