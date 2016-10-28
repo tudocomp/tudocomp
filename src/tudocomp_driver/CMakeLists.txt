@@ -28,3 +28,7 @@ target_link_libraries(
     glog
     sdsl
 )
+
+add_custom_command(TARGET tudocomp_driver POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_driver ${CMAKE_BINARY_DIR})
+
