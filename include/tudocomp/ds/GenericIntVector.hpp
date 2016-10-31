@@ -439,7 +439,7 @@ namespace int_vector {
         typedef size_t                                               size_type;
 
         std::vector<DynamicIntValueType> m_vec;
-        uint64_t m_bit_size = 0;
+        uint64_t m_real_size = 0;
 
         inline static uint64_t backing2bits(size_t n) {
             return uint64_t(sizeof(DynamicIntValueType) * CHAR_BIT) * uint64_t(n);
@@ -456,8 +456,8 @@ namespace int_vector {
             return ((bits - 1) / backing2bits(1)) + 1;
         }
 
-        struct PosAndOffset { size_t elem_pos; uint8_t elem_offset; };
-        inline static PosAndOffset bitpos2elempos(uint64_t bits) {
+        struct PosAndOffset { size_t pos; uint8_t offset; };
+        inline static PosAndOffset bitpos2backingpos(uint64_t bits) {
             return PosAndOffset {
                 bits / backing2bits(1),
                 uint8_t(bits % backing2bits(1))
@@ -466,8 +466,8 @@ namespace int_vector {
 
         inline explicit odd_bit_backing_data() {}
         inline explicit odd_bit_backing_data(size_type n) {
-            m_bit_size = elem2bits(n);
-            size_t converted_size = bits2backing(m_bit_size);
+            m_real_size = n;
+            size_t converted_size = bits2backing(elem2bits(m_real_size));
             m_vec = std::vector<DynamicIntValueType>(converted_size);
         }
         inline odd_bit_backing_data(size_type n, const value_type& val): odd_bit_backing_data(n) {
@@ -484,32 +484,32 @@ namespace int_vector {
             for(; first != last; first++) {
                 //asm("int $3");
                 // TODO: Move to push_back
-                m_bit_size += N;
-                while (m_bit_size > elem2bits(m_vec.size())) {
+                m_real_size += 1;
+                while (elem2bits(m_real_size) > backing2bits(m_vec.size())) {
                     m_vec.push_back(0);
                 }
 
                 // TODO: Move to writing with .back()
-                auto x = bitpos2elempos(m_bit_size - N);
-                bits::write_int(&m_vec[x.elem_pos], *first, x.elem_offset, N);
+                auto x = bitpos2backingpos(elem2bits(m_real_size - 1));
+                bits::write_int(&m_vec[x.pos], *first, x.offset, N);
             }
         }
         inline odd_bit_backing_data (const odd_bit_backing_data& other):
-            m_vec(other.m_vec), m_bit_size(other.m_bit_size) {}
+            m_vec(other.m_vec), m_real_size(other.m_real_size) {}
         inline odd_bit_backing_data (odd_bit_backing_data&& other):
-            m_vec(std::move(other.m_vec)), m_bit_size(other.m_bit_size) {}
+            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
         inline odd_bit_backing_data(std::initializer_list<value_type> il):
             odd_bit_backing_data(il.begin(), il.end()) {}
 
         inline odd_bit_backing_data& operator=(const odd_bit_backing_data& other) {
             m_vec = other.m_vec;
-            m_bit_size = other.m_bit_size;
+            m_real_size = other.m_real_size;
             return *this;
         }
 
         inline odd_bit_backing_data& operator=(odd_bit_backing_data&& other) {
             m_vec = std::move(other.m_vec);
-            m_bit_size = other.m_bit_size;
+            m_real_size = other.m_real_size;
             return *this;
         }
 
@@ -519,13 +519,13 @@ namespace int_vector {
         }
 
         inline iterator begin() {
-            auto x = bitpos2elempos(0);
-            return pointer(&m_vec[x.elem_pos], x.elem_offset, N);
+            auto x = bitpos2backingpos(0);
+            return pointer(&m_vec[x.pos], x.offset, N);
         }
 
         inline iterator end() {
-            auto x = bitpos2elempos(m_bit_size);
-            return pointer(&m_vec[x.elem_pos], x.elem_offset, N);
+            auto x = bitpos2backingpos(elem2bits(m_real_size));
+            return pointer(&m_vec[x.pos], x.offset, N);
         }
 
         inline reverse_iterator rbegin() {
@@ -537,13 +537,13 @@ namespace int_vector {
         }
 
         inline const_iterator begin() const {
-            auto x = bitpos2elempos(0);
-            return const_pointer(&m_vec[x.elem_pos], x.elem_offset, N);
+            auto x = bitpos2backingpos(0);
+            return const_pointer(&m_vec[x.pos], x.offset, N);
         }
 
         inline const_iterator end() const {
-            auto x = bitpos2elempos(m_bit_size);
-            return const_pointer(&m_vec[x.elem_pos], x.elem_offset, N);
+            auto x = bitpos2backingpos(elem2bits(m_real_size));
+            return const_pointer(&m_vec[x.pos], x.offset, N);
         }
 
         inline const_reverse_iterator rbegin() const {
