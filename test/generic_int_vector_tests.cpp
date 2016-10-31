@@ -690,13 +690,28 @@ void generic_int_vector_template() {
     ASSERT_EQ(dflt.max_size(), std::vector<T>().max_size());
 
     GenericIntVector<T> resize { 1, 2, 3, 4 };
+    ASSERT_EQ(resize.size(), 4);
+    auto tmp_capa = resize.capacity();
     // assert content 1 2 3 4 size 4 tmp=capacity >= size
 
     resize.resize(2);
+    ASSERT_EQ(resize.size(), 2);
+    ASSERT_EQ(tmp_capa, resize.capacity());
     // assert content 1 2 size 2 capacity == tmp
 
     resize.resize(5, 1);
+    ASSERT_EQ(resize.size(), 5);
     // assert content 1 2 1 1 1 size 5 capacity ?
+
+    ASSERT_GE(resize.capacity(), resize.size());
+
+    ASSERT_TRUE(dflt.empty());
+    ASSERT_FALSE(fill1.empty());
+
+    GenericIntVector<T> reserve;
+    ASSERT_EQ(reserve.capacity(), 0);
+    reserve.reserve(10);
+    ASSERT_GE(reserve.capacity(), 10);
 }
 
 

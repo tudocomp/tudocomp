@@ -437,6 +437,14 @@ namespace int_vector {
         inline void resize(size_type n, const value_type& val) {
             m_vec.resize(n, val);
         }
+
+        inline size_type capacity() const {
+            return m_vec.capacity();
+        }
+
+        inline void reserve(size_type n) {
+            m_vec.reserve(n);
+        }
     };
 
     template<size_t N>
@@ -474,6 +482,13 @@ namespace int_vector {
                 return 0;
             }
             return ((bits - 1) / backing2bits(1)) + 1;
+        }
+
+        inline static uint64_t bits2elem(uint64_t bits) {
+            if (bits == 0) {
+                return 0;
+            }
+            return ((bits - 1) / elem2bits(1)) + 1;
         }
 
         struct PosAndOffset { size_t pos; uint8_t offset; };
@@ -609,10 +624,22 @@ namespace int_vector {
         }
 
         inline void resize(size_type n, const value_type& val) {
-            m_real_size = n;
-            m_vec.resize(bits2backing(elem2bits(n)), 0);
+            auto old_size = size();
+            resize(n);
+            if (old_size < n) {
+                for (auto a = begin() + old_size, b = end(); a != b; ++a) {
+                    *a = val;
+                }
+            }
         }
 
+        inline size_type capacity() const {
+            return bits2elem(backing2bits(m_vec.capacity()));
+        }
+
+        inline void reserve(size_type n) {
+            m_vec.reserve(bits2backing(elem2bits(n)));
+        }
     };
 
     template<class T, class X = void>
@@ -800,6 +827,18 @@ namespace int_vector {
 
         inline void resize(size_type n, const value_type& val) {
             m_data.resize(n, val);
+        }
+
+        inline size_type capacity() const {
+            return m_data.capacity();
+        }
+
+        inline bool empty() const {
+            return size() == 0;
+        }
+
+        inline void reserve(size_type n) {
+            m_data.reserve(n);
         }
     };
 
