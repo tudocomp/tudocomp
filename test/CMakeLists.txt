@@ -28,6 +28,6 @@ run_test(sandbox_tests  DEPS ${BASIC_DEPS})
 run_test(tudocomp_driver_tests
     DEPS     tudocomp_algorithms
     BIN_DEPS tudocomp_driver)
-run_test(tudocomp_driver_algorithm_matrix_tests
+run_test(matrix_tests
     DEPS     tudocomp_algorithms
     BIN_DEPS tudocomp_driver)
