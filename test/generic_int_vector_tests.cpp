@@ -584,6 +584,7 @@ template<class T>
 void generic_int_vector_template() {
     using namespace int_vector;
     auto N = bit_size<T>::size;
+    std::cout << "tests for " << N << "\n";
 
     GenericIntVector<T> dflt;
     // assert size capa 0
@@ -626,6 +627,41 @@ void generic_int_vector_template() {
 
     assign_target = { 8, 9, 10, 11, 12 };
     // assert contents and cpacity
+
+    GenericIntVector<T> iter_src { 1, 2, 3, 4 };
+    std::vector<uint64_t> iter_src_cmp  { T(1), T(2), T(3), T(4) };
+
+    ASSERT_EQ(*iter_src.begin(), *iter_src_cmp.begin());
+    ASSERT_EQ(*iter_src.rbegin(), *iter_src_cmp.rbegin());
+    ASSERT_EQ(*iter_src.cbegin(), *iter_src_cmp.cbegin());
+    ASSERT_EQ(*iter_src.crbegin(), *iter_src_cmp.crbegin());
+
+    std::vector<T> iterd1(iter_src.begin(), iter_src.end());
+    ASSERT_EQ(iterd1, (std::vector<T> { 1, 2, 3, 4 }));
+
+    std::vector<T> iterd2(iter_src.rbegin(), iter_src.rend());
+    ASSERT_EQ(iterd2, (std::vector<T> { 4, 3, 2, 1 }));
+
+    auto iterd_i = 1;
+    for (auto a = iter_src.begin(), b = iter_src.end(); a != b; ++a) {
+        *a = iterd_i;
+        iterd_i++;
+    }
+    // asser eq to { 2, 4, 6, 8  }
+
+    for (auto a = iter_src.rbegin(), b = iter_src.rend(); a != b; ++a) {
+        *a = iterd_i;
+        iterd_i++;
+    }
+    // asser eq to { 13, 12, 13, 10 }
+
+    const GenericIntVector<T> const_iter_src { 1, 2, 3, 4 };
+
+    std::vector<T> iterd3(const_iter_src.begin(), const_iter_src.end());
+    ASSERT_EQ(iterd3, (std::vector<T> { 1, 2, 3, 4 }));
+
+    std::vector<T> iterd4(const_iter_src.rbegin(), const_iter_src.rend());
+    ASSERT_EQ(iterd4, (std::vector<T> { 4, 3, 2, 1 }));
 }
 
 

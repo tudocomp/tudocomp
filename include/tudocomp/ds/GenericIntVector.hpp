@@ -439,7 +439,7 @@ namespace int_vector {
         typedef size_t                                               size_type;
 
         std::vector<DynamicIntValueType> m_vec;
-        uint64_t m_bit_size;
+        uint64_t m_bit_size = 0;
 
         inline static uint64_t backing2bits(size_t n) {
             return uint64_t(sizeof(DynamicIntValueType) * CHAR_BIT) * uint64_t(n);
@@ -457,10 +457,10 @@ namespace int_vector {
         }
 
         struct PosAndOffset { size_t elem_pos; uint8_t elem_offset; };
-        inline PosAndOffset bitpos2elempos(uint64_t bits) {
+        inline static PosAndOffset bitpos2elempos(uint64_t bits) {
             return PosAndOffset {
                 bits / backing2bits(1),
-                bits % backing2bits(1)
+                uint8_t(bits % backing2bits(1))
             };
         }
 
@@ -482,8 +482,16 @@ namespace int_vector {
         inline odd_bit_backing_data(InputIterator first, InputIterator last) {
             // TODO: specialize for random acces iterator
             for(; first != last; first++) {
-                //TODO: push_back(*first);
-                // TODO: Update bit_size
+                //asm("int $3");
+                // TODO: Move to push_back
+                m_bit_size += N;
+                while (m_bit_size > elem2bits(m_vec.size())) {
+                    m_vec.push_back(0);
+                }
+
+                // TODO: Move to writing with .back()
+                auto x = bitpos2elempos(m_bit_size - N);
+                bits::write_int(&m_vec[x.elem_pos], *first, x.elem_offset, N);
             }
         }
         inline odd_bit_backing_data (const odd_bit_backing_data& other):
@@ -680,6 +688,54 @@ namespace int_vector {
         inline GenericIntVector& operator=(std::initializer_list<value_type> il) {
             m_data = il;
             return *this;
+        }
+
+        inline iterator begin() {
+            return m_data.begin();
+        }
+
+        inline iterator end() {
+            return m_data.end();
+        }
+
+        inline reverse_iterator rbegin() {
+            return m_data.rbegin();
+        }
+
+        inline reverse_iterator rend() {
+            return m_data.rend();
+        }
+
+        inline const_iterator begin() const {
+            return m_data.begin();
+        }
+
+        inline const_iterator end() const {
+            return m_data.end();
+        }
+
+        inline const_reverse_iterator rbegin() const {
+            return m_data.rbegin();
+        }
+
+        inline const_reverse_iterator rend() const {
+            return m_data.rend();
+        }
+
+        inline const_iterator cbegin() const {
+            return m_data.cbegin();
+        }
+
+        inline const_iterator cend() const {
+            return m_data.cend();
+        }
+
+        inline const_reverse_iterator crbegin() const {
+            return m_data.crbegin();
+        }
+
+        inline const_reverse_iterator crend() const {
+            return m_data.crend();
         }
     };
 
