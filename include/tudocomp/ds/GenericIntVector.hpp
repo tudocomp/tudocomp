@@ -425,6 +425,18 @@ namespace int_vector {
         inline uint64_t bit_size() const {
             return size() * sizeof(T) * CHAR_BIT;
         }
+
+        inline size_type max_size() const {
+            return m_vec.max_size();
+        }
+
+        inline void resize(size_type n) {
+            m_vec.resize(n);
+        }
+
+        inline void resize(size_type n, const value_type& val) {
+            m_vec.resize(n, val);
+        }
     };
 
     template<size_t N>
@@ -585,6 +597,22 @@ namespace int_vector {
         inline uint64_t bit_size() const {
             return elem2bits(m_real_size);
         }
+
+        inline size_type max_size() const {
+            // Empty vector does not allocate, so this is fine
+            return std::vector<uint_t<N>>().max_size();
+        }
+
+        inline void resize(size_type n) {
+            m_real_size = n;
+            m_vec.resize(bits2backing(elem2bits(n)), 0);
+        }
+
+        inline void resize(size_type n, const value_type& val) {
+            m_real_size = n;
+            m_vec.resize(bits2backing(elem2bits(n)), 0);
+        }
+
     };
 
     template<class T, class X = void>
@@ -760,6 +788,18 @@ namespace int_vector {
 
         inline uint64_t bit_size() const {
             return m_data.bit_size();
+        }
+
+        inline size_type max_size() const {
+            return m_data.max_size();
+        }
+
+        inline void resize(size_type n) {
+            m_data.resize(n);
+        }
+
+        inline void resize(size_type n, const value_type& val) {
+            m_data.resize(n, val);
         }
     };
 
