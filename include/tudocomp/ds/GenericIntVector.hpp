@@ -417,6 +417,14 @@ namespace int_vector {
         inline const_reverse_iterator crend() const {
             return m_vec.crend();
         }
+
+        inline size_type size() const {
+            return m_vec.size();
+        }
+
+        inline uint64_t bit_size() const {
+            return size() * sizeof(T) * CHAR_BIT;
+        }
     };
 
     template<size_t N>
@@ -568,6 +576,14 @@ namespace int_vector {
 
         inline const_reverse_iterator crend() const {
             return rend();
+        }
+
+        inline size_type size() const {
+            return m_real_size;
+        }
+
+        inline uint64_t bit_size() const {
+            return elem2bits(m_real_size);
         }
     };
 
@@ -736,6 +752,14 @@ namespace int_vector {
 
         inline const_reverse_iterator crend() const {
             return m_data.crend();
+        }
+
+        inline size_type size() const {
+            return m_data.size();
+        }
+
+        inline uint64_t bit_size() const {
+            return m_data.bit_size();
         }
     };
 

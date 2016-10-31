@@ -587,32 +587,50 @@ void generic_int_vector_template() {
     std::cout << "tests for " << N << "\n";
 
     GenericIntVector<T> dflt;
+    ASSERT_EQ(dflt.size(), 0);
+    ASSERT_EQ(dflt.bit_size(), 0);
     // assert size capa 0
 
     GenericIntVector<T> fill1(size_t(10));
+    ASSERT_EQ(fill1.size(), 10);
+    ASSERT_EQ(fill1.bit_size(), 10 * N);
     // assert size 10, values 0, bit_size
 
     GenericIntVector<T> fill2(size_t(10), T(1));
+    ASSERT_EQ(fill2.size(), 10);
+    ASSERT_EQ(fill2.bit_size(), 10 * N);
     // assert size 10, values 1, bit_size
 
     std::vector<T> iter_src_1(10, T(1));
     GenericIntVector<T> range1(iter_src_1.begin(), iter_src_1.end());
+    ASSERT_EQ(range1.size(), 10);
+    ASSERT_EQ(range1.bit_size(), 10 * N);
     // assert size 10, values 1, bit_size
 
     std::vector<uint64_t> iter_src_2(10, 1);
     GenericIntVector<T> range2(iter_src_2.begin(), iter_src_2.end());
+    ASSERT_EQ(range2.size(), 10);
+    ASSERT_EQ(range2.bit_size(), 10 * N);
     // assert size 10, values 1, bit_size
 
-    GenericIntVector<T> copy(dflt);
+    GenericIntVector<T> copy(fill1);
+    ASSERT_EQ(copy.size(), 10);
+    ASSERT_EQ(copy.bit_size(), 10 * N);
     // assert of both dflt and copy with divergence
 
     GenericIntVector<T> move(std::move(copy));
+    ASSERT_EQ(move.size(), 10);
+    ASSERT_EQ(move.bit_size(), 10 * N);
     // assert of equivalence to prev cpy
 
     GenericIntVector<T> il1 { T(1), T(2), T(3), T(4) };
+    ASSERT_EQ(il1.size(), 4);
+    ASSERT_EQ(il1.bit_size(), 4 * N);
     // assert size, bit size and content
 
     GenericIntVector<T> il2 { 1, 2, 3, 4 };
+    ASSERT_EQ(il2.size(), 4);
+    ASSERT_EQ(il2.bit_size(), 4 * N);
     // assert size, bit size and content
 
     GenericIntVector<T> assign_target;
@@ -620,12 +638,18 @@ void generic_int_vector_template() {
     GenericIntVector<T> assign_src2 { 5, 6, 7 };
 
     assign_target = assign_src1;
+    ASSERT_EQ(assign_target.size(), 4);
+    ASSERT_EQ(assign_target.bit_size(), 4 * N);
     // assert contents and cpacity
 
     assign_target = std::move(assign_src2);
+    ASSERT_EQ(assign_target.size(), 3);
+    ASSERT_EQ(assign_target.bit_size(), 3 * N);
     // assert contents and cpacity
 
     assign_target = { 8, 9, 10, 11, 12 };
+    ASSERT_EQ(assign_target.size(), 5);
+    ASSERT_EQ(assign_target.bit_size(), 5 * N);
     // assert contents and cpacity
 
     GenericIntVector<T> iter_src { 1, 2, 3, 4 };
