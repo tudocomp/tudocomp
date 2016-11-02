@@ -492,6 +492,14 @@ namespace int_vector {
         inline void assign(std::initializer_list<value_type> il) {
             m_vec.assign(il);
         }
+
+        inline void push_back(const value_type& val) {
+            m_vec.push_back(val);
+        }
+
+        inline void push_back(value_type&& val) {
+            m_vec.push_back(std::move(val));
+        }
     };
 
     template<size_t N>
@@ -562,20 +570,12 @@ namespace int_vector {
                 bits::write_int_and_move(ptr, val, offset, N);
             }
         }
+
         template <class InputIterator>
         inline odd_bit_backing_data(InputIterator first, InputIterator last) {
             // TODO: specialize for random acces iterator
             for(; first != last; first++) {
-                //asm("int $3");
-                // TODO: Move to push_back
-                m_real_size += 1;
-                while (elem2bits(m_real_size) > backing2bits(m_vec.size())) {
-                    m_vec.push_back(0);
-                }
-
-                // TODO: Move to writing with .back()
-                auto x = bitpos2backingpos(elem2bits(m_real_size - 1));
-                bits::write_int(&m_vec[x.pos], *first, x.offset, N);
+                push_back(*first);
             }
         }
         inline odd_bit_backing_data (const odd_bit_backing_data& other):
@@ -752,6 +752,20 @@ namespace int_vector {
             *this = odd_bit_backing_data(il);
         }
 
+        inline void push_back(const value_type& val) {
+            m_real_size += 1;
+
+            while (elem2bits(m_real_size) > backing2bits(m_vec.size())) {
+                m_vec.push_back(0);
+            }
+
+            back() = val;
+        }
+
+        inline void push_back(value_type&& val) {
+            const auto& r = val;
+            push_back(r);
+        }
     };
 
     template<class T, class X = void>
@@ -1014,6 +1028,14 @@ namespace int_vector {
 
         inline void assign(std::initializer_list<value_type> il) {
             m_data.assign(il);
+        }
+
+        inline void push_back(const value_type& val) {
+            m_data.push_back(val);
+        }
+
+        inline void push_back(value_type&& val) {
+            m_data.push_back(std::move(val));
         }
     };
 
