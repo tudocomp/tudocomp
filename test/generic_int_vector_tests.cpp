@@ -92,6 +92,9 @@ void generic_int_vector_ref_template() {
     ASSERT_EQ(*d, 0xDEADBEEFu);
 
     ASSERT_EQ(data, (std::vector<uint64_t> { 0xCAFEBABE01234567, 0xDEADBEEFBADEAFFE }));
+
+    w = z;
+    ASSERT_EQ(w, 0xDEADBEEFu);
 }
 
 TEST(generic_int_vector, int_ref) {
@@ -239,6 +242,16 @@ void generic_int_vector_ptr_template() {
     a[2] = 1;
     ASSERT_EQ(a[2], 1u);
     ASSERT_EQ(data, (std::vector<uint64_t> { 0xff00ffff00001111, 0x0123456700000001 }));
+
+    uint64_t ta = *a;
+
+    *a = ta;
+    *a = *b;
+    ASSERT_EQ(*a, uint64_t(*b));
+
+    *a = ta;
+    *a = uint64_t(*b);
+    ASSERT_EQ(*a, uint64_t(*b));
 
 }
 
@@ -865,6 +878,22 @@ void generic_int_vector_template() {
     ASSERT_TRUE((insert5.begin() < insert5_r) && (insert5_r < insert5.end()));
     // ASSERT EQ { 6, 5, 4, 9, 8, 7, 3, 2, 1 }
 
+    GenericIntVector<T> erase1 { 1, 2, 3, 9, 4, 5, 6 };
+    auto erase1_r = erase1.erase(erase1.cbegin() + 3);
+    ASSERT_TRUE((erase1.begin() < erase1_r) && (erase1_r < erase1.end()));
+    ASSERT_EQ(*erase1_r, uint64_t(T(4)));
+    // ASSERT EQ { 1, 2, 3, 4, 5, 6 }
+
+    GenericIntVector<T> erase2 { 1, 2, 3, 9, 4, 5, 6 };
+    auto erase2_r = erase2.erase(erase2.cbegin() + 3, erase2.cbegin() + 5);
+    ASSERT_TRUE((erase2.begin() < erase2_r) && (erase2_r < erase2.end()));
+    ASSERT_EQ(*erase2_r, uint64_t(T(5)));
+    // ASSERT EQ { 1, 2, 3, 6 }
+
+
+
+
+    // TODO: Add tests for &foo[i], maybe add overload to return IntPtr
 }
 
 

@@ -263,12 +263,16 @@ namespace int_vector {
     public:
         explicit IntRef(const IntPtr& ptr): GenericIntRef(ptr) {}
 
-        IntRef& operator=(value_type other)
-        {
+        inline IntRef& operator=(value_type other) {
             bits::write_int(m_ptr.m_ptr, other, m_ptr.m_bit_offset, m_ptr.m_bit_size);
             return *this;
         };
 
+        inline IntRef& operator=(const IntRef& other) {
+            return operator=(value_type(other));
+        };
+
+        inline IntRef& operator=(const ConstIntRef& other);
     };
 
     class ConstIntRef: public GenericIntRef<ConstIntRef, ConstIntPtr, Const>, public ConstIntegerBase<ConstIntRef> {
@@ -276,6 +280,9 @@ namespace int_vector {
         explicit ConstIntRef(const ConstIntPtr& ptr): GenericIntRef(ptr) {}
     };
 
+    inline IntRef& IntRef::operator=(const ConstIntRef& other) {
+        return operator=(value_type(other));
+    };
 
     inline IntRef IntPtr::operator*() {
         return IntRef(*this);
@@ -529,6 +536,15 @@ namespace int_vector {
         inline iterator insert(const_iterator position, std::initializer_list<value_type> il) {
             return m_vec.insert(position, il);
         }
+
+        inline iterator erase(const_iterator position) {
+            return m_vec.erase(position);
+        }
+
+        inline iterator erase(const_iterator first, const_iterator last) {
+            return m_vec.erase(first, last);
+        }
+
     };
 
     template<size_t N>
@@ -837,6 +853,7 @@ namespace int_vector {
                 auto old_end = rbegin();
                 m_real_size += n;
                 auto new_end = rbegin();
+                // TODO: std::copy_backwards
                 std::copy(old_end, start, new_end);
             }
 
@@ -874,6 +891,52 @@ namespace int_vector {
         inline iterator insert(const_iterator position, std::initializer_list<value_type> il) {
             return insert(position, il.begin(), il.end());
         }
+
+        inline iterator erase(const_iterator position) {
+            return erase(position, position + 1);
+        }
+
+        inline void debug_print(int s) {
+            std::cout << s << ": { ";
+            for (auto x : *this) {
+                std::cout << x << ", ";
+            }
+            std::cout << "}\n";
+        }
+
+        inline iterator erase(const_iterator first, const_iterator last) {
+            debug_print(__LINE__);
+            auto from = (first - cbegin());
+            auto to = (last - cbegin());
+            auto n = to - from;
+            std::cout << from << ", " << to << ", " << n << "\n";
+            //std::copy(begin() + to, end(), begin() + from);
+
+            auto a = begin() + to;
+            auto b = end();
+            auto c = begin() + from;
+            for(; a != b; ++a, ++c) {
+                std::cout << "*c (" << int(*c) << ") = *a(" << int(*a) << ") => ";
+
+                // TODO: BUG! ref = ref does not work!
+                *c = value_type(*a);
+                std::cout << "*c (" << int(*c) << ")\n";
+            }
+
+            std::cout << "to:   " << int(*(begin() + to)) << ", "
+                      << "from: " << int(*(begin() + from)) << ", "
+                      << "end:  " << int(*(end() - 1))
+                      << "\n";
+            debug_print(__LINE__);
+
+            m_real_size -= n;
+
+            auto obsolete_backing = m_vec.size() - bits2backing(elem2bits(m_real_size));
+            m_vec.erase(m_vec.cend() - obsolete_backing, m_vec.cend());
+            debug_print(__LINE__);
+            return begin() + from;
+        }
+
     };
 
     template<class T, class X = void>
@@ -1169,6 +1232,14 @@ namespace int_vector {
 
         inline iterator insert(const_iterator position, std::initializer_list<value_type> il) {
             return m_data.insert(position, il);
+        }
+
+        inline iterator erase(const_iterator position) {
+            return m_data.erase(position);
+        }
+
+        inline iterator erase(const_iterator first, const_iterator last) {
+            return m_data.erase(first, last);
         }
 
     };
