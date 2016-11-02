@@ -444,6 +444,10 @@ namespace int_vector {
             return m_vec.capacity();
         }
 
+        inline bool empty() const {
+            return m_vec.empty();
+        }
+
         inline void reserve(size_type n) {
             m_vec.reserve(n);
         }
@@ -499,6 +503,10 @@ namespace int_vector {
 
         inline void push_back(value_type&& val) {
             m_vec.push_back(std::move(val));
+        }
+
+        inline void pop_back() {
+            m_vec.pop_back();
         }
     };
 
@@ -686,6 +694,10 @@ namespace int_vector {
             return bits2elem(backing2bits(m_vec.capacity()));
         }
 
+        inline bool empty() const {
+            return size() == 0;
+        }
+
         inline void reserve(size_type n) {
             m_vec.reserve(bits2backing(elem2bits(n)));
         }
@@ -765,6 +777,14 @@ namespace int_vector {
         inline void push_back(value_type&& val) {
             const auto& r = val;
             push_back(r);
+        }
+
+        inline void pop_back() {
+            DCHECK(!empty());
+            m_real_size -= 1;
+            while (bits2backing(elem2bits(m_real_size)) < m_vec.size()) {
+                m_vec.pop_back();
+            }
         }
     };
 
@@ -966,7 +986,7 @@ namespace int_vector {
         }
 
         inline bool empty() const {
-            return size() == 0;
+            return m_data.empty();
         }
 
         inline void reserve(size_type n) {
@@ -1036,6 +1056,10 @@ namespace int_vector {
 
         inline void push_back(value_type&& val) {
             m_data.push_back(std::move(val));
+        }
+
+        inline void pop_back() {
+            m_data.pop_back();
         }
     };
 

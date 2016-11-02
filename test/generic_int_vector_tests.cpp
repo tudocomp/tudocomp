@@ -812,6 +812,25 @@ void generic_int_vector_template() {
     ASSERT_EQ(assign4.bit_size(), 4 * N);
     // assert size, bit size and content
 
+    GenericIntVector<T> push_back;
+    ASSERT_EQ(push_back.size(), 0);
+    ASSERT_EQ(push_back.bit_size(), 0 * N);
+
+    push_back.push_back(T(15));
+    ASSERT_EQ(push_back.size(), 1);
+    ASSERT_EQ(push_back.bit_size(), 1 * N);
+    // ASEERT eq { 15 }
+
+    push_back.push_back(T(9));
+    ASSERT_EQ(push_back.size(), 2);
+    ASSERT_EQ(push_back.bit_size(), 2 * N);
+    // ASEERT eq { 15, 9 }
+
+    push_back.pop_back();
+    ASSERT_EQ(push_back.size(), 1);
+    ASSERT_EQ(push_back.bit_size(), 1 * N);
+    // ASEERT eq { 15 }
+
 }
 
 
