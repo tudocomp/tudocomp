@@ -712,6 +712,20 @@ void generic_int_vector_template() {
     ASSERT_EQ(reserve.capacity(), 0);
     reserve.reserve(10);
     ASSERT_GE(reserve.capacity(), 10);
+
+    reserve.shrink_to_fit();
+
+    GenericIntVector<T> referenced { 1, 2, 3, 4, 5 };
+    // TODO: Remove _real type_ overloads
+    ASSERT_EQ(referenced[0], uint64_t(T(1)));
+    ASSERT_EQ(referenced[1], uint64_t(T(2)));
+    ASSERT_EQ(referenced[2], uint64_t(T(3)));
+    ASSERT_EQ(referenced[3], uint64_t(T(4)));
+    ASSERT_EQ(referenced[4], uint64_t(T(5)));
+
+    referenced[2] = T(100);
+    ASSERT_EQ(referenced[2], uint64_t(T(100)));
+    // assert equality with 1, 2, 100, 4, 5
 }
 
 
@@ -737,6 +751,10 @@ TEST(generic_int_vector, uint_t_24) {
 
 TEST(generic_int_vector, uint_t_1) {
     generic_int_vector_template<uint_t<1>>();
+}
+
+TEST(generic_int_vector, uint_t_7) {
+    generic_int_vector_template<uint_t<7>>();
 }
 
 template<size_t N>

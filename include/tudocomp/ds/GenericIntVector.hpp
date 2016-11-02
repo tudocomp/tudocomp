@@ -445,6 +445,14 @@ namespace int_vector {
         inline void reserve(size_type n) {
             m_vec.reserve(n);
         }
+
+        inline reference operator[](size_type n) {
+            return m_vec[n];
+        }
+
+        inline const_reference operator[](size_type n) const {
+            return m_vec[n];
+        }
     };
 
     template<size_t N>
@@ -640,6 +648,19 @@ namespace int_vector {
         inline void reserve(size_type n) {
             m_vec.reserve(bits2backing(elem2bits(n)));
         }
+
+        inline reference operator[](size_type n) {
+            DCHECK(n < size());
+            auto x = bitpos2backingpos(elem2bits(n));
+            return IntRef(IntPtr(m_vec.data() + x.pos, x.offset, N));
+        }
+
+        inline const_reference operator[](size_type n) const {
+            DCHECK(n < size());
+            auto x = bitpos2backingpos(elem2bits(n));
+            return ConstIntRef(ConstIntPtr(m_vec.data() + x.pos, x.offset, N));
+        }
+
     };
 
     template<class T, class X = void>
@@ -839,6 +860,18 @@ namespace int_vector {
 
         inline void reserve(size_type n) {
             m_data.reserve(n);
+        }
+
+        inline void shrink_to_fit() {
+            m_data.m_vec.shrink_to_fit();
+        }
+
+        inline reference operator[](size_type n) {
+            return m_data[n];
+        }
+
+        inline const_reference operator[](size_type n) const {
+            return m_data[n];
         }
     };
 
