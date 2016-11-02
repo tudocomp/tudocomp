@@ -726,6 +726,30 @@ void generic_int_vector_template() {
     referenced[2] = T(100);
     ASSERT_EQ(referenced[2], uint64_t(T(100)));
     // assert equality with 1, 2, 100, 4, 5
+
+    ASSERT_EQ(referenced.at(0), uint64_t(T(1)));
+    ASSERT_EQ(referenced.at(1), uint64_t(T(2)));
+    ASSERT_EQ(referenced.at(2), uint64_t(T(100)));
+    ASSERT_EQ(referenced.at(3), uint64_t(T(4)));
+    ASSERT_EQ(referenced.at(4), uint64_t(T(5)));
+
+    referenced.at(3) = T(99);
+    ASSERT_EQ(referenced.at(3), uint64_t(T(99)));
+    // assert equality with 1, 2, 100, 4, 5
+
+    bool caught = false;
+    try {
+        referenced.at(100);
+    } catch (const std::out_of_range& e) {
+        caught = true;
+
+        if (N % 8 != 0)  {
+            std::string what = "Out-of-range access of GenericIntVector: index is 100, size() is 5";
+            ASSERT_EQ(e.what(), what);
+        }
+    }
+    ASSERT_TRUE(caught);
+
 }
 
 

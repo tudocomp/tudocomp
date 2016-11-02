@@ -453,6 +453,14 @@ namespace int_vector {
         inline const_reference operator[](size_type n) const {
             return m_vec[n];
         }
+
+        inline reference at(size_type n) {
+            return m_vec.at(n);
+        }
+
+        inline const_reference at(size_type n) const {
+            return m_vec.at(n);
+        }
     };
 
     template<size_t N>
@@ -659,6 +667,27 @@ namespace int_vector {
             DCHECK(n < size());
             auto x = bitpos2backingpos(elem2bits(n));
             return ConstIntRef(ConstIntPtr(m_vec.data() + x.pos, x.offset, N));
+        }
+
+        inline void range_check(size_type n) {
+            if (n >= size()) {
+                std::stringstream ss;
+                ss << "Out-of-range access of GenericIntVector: index is ";
+                ss << n;
+                ss << ", size() is ";
+                ss << size();
+                throw std::out_of_range(ss.str());
+            }
+        }
+
+        inline reference at(size_type n) {
+            range_check(n);
+            return operator[](n);
+        }
+
+        inline const_reference at(size_type n) const {
+            range_check(n);
+            return operator[](n);
         }
 
     };
@@ -872,6 +901,14 @@ namespace int_vector {
 
         inline const_reference operator[](size_type n) const {
             return m_data[n];
+        }
+
+        inline reference at(size_type n) {
+            return m_data.at(n);
+        }
+
+        inline const_reference at(size_type n) const {
+            return m_data.at(n);
         }
     };
 
