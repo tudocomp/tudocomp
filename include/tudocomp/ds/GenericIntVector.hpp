@@ -479,6 +479,19 @@ namespace int_vector {
         inline const_reference back() const {
             return m_vec.back();
         }
+
+        template <class InputIterator>
+        inline void assign(InputIterator first, InputIterator last) {
+            m_vec.assign(first, last);
+        }
+
+        inline void assign(size_type n, const value_type& val) {
+            m_vec.assign(n, val);
+        }
+
+        inline void assign(std::initializer_list<value_type> il) {
+            m_vec.assign(il);
+        }
     };
 
     template<size_t N>
@@ -724,6 +737,19 @@ namespace int_vector {
 
         inline const_reference back() const {
             return operator[](size() - 1);
+        }
+
+        template <class InputIterator>
+        inline void assign(InputIterator first, InputIterator last) {
+            *this = odd_bit_backing_data(first, last);
+        }
+
+        inline void assign(size_type n, const value_type& val) {
+            *this = odd_bit_backing_data(n, val);
+        }
+
+        inline void assign(std::initializer_list<value_type> il) {
+            *this = odd_bit_backing_data(il);
         }
 
     };
@@ -972,8 +998,22 @@ namespace int_vector {
         inline internal_data_type* data() noexcept {
             return m_data.m_vec.data();
         }
+
         inline const internal_data_type* data() const noexcept {
             return m_data.m_vec.data();
+        }
+
+        template <class InputIterator>
+        inline void assign(InputIterator first, InputIterator last) {
+            m_data.assign(first, last);
+        }
+
+        inline void assign(size_type n, const value_type& val) {
+            m_data.assign(n, val);
+        }
+
+        inline void assign(std::initializer_list<value_type> il) {
+            m_data.assign(il);
         }
     };
 

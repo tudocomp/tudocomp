@@ -777,17 +777,40 @@ void generic_int_vector_template() {
             }
         }
         ASSERT_TRUE(caught);
-
-        // TODO: Fix casts
-        ASSERT_EQ(referenced.front(), uint64_t(T(1)));
-        ASSERT_EQ(const_referenced.front(), uint64_t(T(1)));
-        ASSERT_EQ(referenced.back(), uint64_t(T(5)));
-        ASSERT_EQ(const_referenced.back(), uint64_t(T(5)));
-
-        ASSERT_NE(referenced.data(), nullptr);
-        ASSERT_NE(const_referenced.data(), nullptr);
     }
 
+    // TODO: Fix casts
+    ASSERT_EQ(referenced.front(), uint64_t(T(1)));
+    ASSERT_EQ(const_referenced.front(), uint64_t(T(1)));
+    ASSERT_EQ(referenced.back(), uint64_t(T(5)));
+    ASSERT_EQ(const_referenced.back(), uint64_t(T(5)));
+
+    ASSERT_NE(referenced.data(), nullptr);
+    ASSERT_NE(const_referenced.data(), nullptr);
+
+    GenericIntVector<T> assign1;
+    assign1.assign(size_t(10), T(1));
+    ASSERT_EQ(assign1.size(), 10);
+    ASSERT_EQ(assign1.bit_size(), 10 * N);
+    // assert size 10, values 1, bit_size
+
+    GenericIntVector<T> assign2;
+    assign2.assign(iter_src_1.begin(), iter_src_1.end());
+    ASSERT_EQ(assign2.size(), 10);
+    ASSERT_EQ(assign2.bit_size(), 10 * N);
+    // assert size 10, values 1, bit_size
+
+    GenericIntVector<T> assign3;
+    assign3.assign(iter_src_2.begin(), iter_src_2.end());
+    ASSERT_EQ(assign3.size(), 10);
+    ASSERT_EQ(assign3.bit_size(), 10 * N);
+    // assert size 10, values 1, bit_size
+
+    GenericIntVector<T> assign4;
+    assign4.assign({ T(1), T(2), T(3), T(4) });
+    ASSERT_EQ(assign4.size(), 4);
+    ASSERT_EQ(assign4.bit_size(), 4 * N);
+    // assert size, bit size and content
 
 }
 
