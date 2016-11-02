@@ -716,12 +716,19 @@ void generic_int_vector_template() {
     reserve.shrink_to_fit();
 
     GenericIntVector<T> referenced { 1, 2, 3, 4, 5 };
+    const GenericIntVector<T> const_referenced { 1, 2, 3, 4, 5 };
     // TODO: Remove _real type_ overloads
     ASSERT_EQ(referenced[0], uint64_t(T(1)));
     ASSERT_EQ(referenced[1], uint64_t(T(2)));
     ASSERT_EQ(referenced[2], uint64_t(T(3)));
     ASSERT_EQ(referenced[3], uint64_t(T(4)));
     ASSERT_EQ(referenced[4], uint64_t(T(5)));
+
+    ASSERT_EQ(const_referenced[0], uint64_t(T(1)));
+    ASSERT_EQ(const_referenced[1], uint64_t(T(2)));
+    ASSERT_EQ(const_referenced[2], uint64_t(T(3)));
+    ASSERT_EQ(const_referenced[3], uint64_t(T(4)));
+    ASSERT_EQ(const_referenced[4], uint64_t(T(5)));
 
     referenced[2] = T(100);
     ASSERT_EQ(referenced[2], uint64_t(T(100)));
@@ -733,22 +740,54 @@ void generic_int_vector_template() {
     ASSERT_EQ(referenced.at(3), uint64_t(T(4)));
     ASSERT_EQ(referenced.at(4), uint64_t(T(5)));
 
+    ASSERT_EQ(const_referenced.at(0), uint64_t(T(1)));
+    ASSERT_EQ(const_referenced.at(1), uint64_t(T(2)));
+    ASSERT_EQ(const_referenced.at(2), uint64_t(T(3)));
+    ASSERT_EQ(const_referenced.at(3), uint64_t(T(4)));
+    ASSERT_EQ(const_referenced.at(4), uint64_t(T(5)));
+
     referenced.at(3) = T(99);
     ASSERT_EQ(referenced.at(3), uint64_t(T(99)));
     // assert equality with 1, 2, 100, 4, 5
 
-    bool caught = false;
-    try {
-        referenced.at(100);
-    } catch (const std::out_of_range& e) {
-        caught = true;
+    {
+        bool caught = false;
+        try {
+            referenced.at(100);
+        } catch (const std::out_of_range& e) {
+            caught = true;
 
-        if (N % 8 != 0)  {
-            std::string what = "Out-of-range access of GenericIntVector: index is 100, size() is 5";
-            ASSERT_EQ(e.what(), what);
+            if (N % 8 != 0)  {
+                std::string what = "Out-of-range access of GenericIntVector: index is 100, size() is 5";
+                ASSERT_EQ(e.what(), what);
+            }
         }
+        ASSERT_TRUE(caught);
     }
-    ASSERT_TRUE(caught);
+    {
+        bool caught = false;
+        try {
+            const_referenced.at(100);
+        } catch (const std::out_of_range& e) {
+            caught = true;
+
+            if (N % 8 != 0)  {
+                std::string what = "Out-of-range access of GenericIntVector: index is 100, size() is 5";
+                ASSERT_EQ(e.what(), what);
+            }
+        }
+        ASSERT_TRUE(caught);
+
+        // TODO: Fix casts
+        ASSERT_EQ(referenced.front(), uint64_t(T(1)));
+        ASSERT_EQ(const_referenced.front(), uint64_t(T(1)));
+        ASSERT_EQ(referenced.back(), uint64_t(T(5)));
+        ASSERT_EQ(const_referenced.back(), uint64_t(T(5)));
+
+        ASSERT_NE(referenced.data(), nullptr);
+        ASSERT_NE(const_referenced.data(), nullptr);
+    }
+
 
 }
 

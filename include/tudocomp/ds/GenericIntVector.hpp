@@ -344,6 +344,8 @@ namespace int_vector {
         typedef typename std::vector<T>::difference_type        difference_type;
         typedef typename std::vector<T>::size_type              size_type;
 
+        typedef T                                               internal_data_type;
+
         std::vector<T> m_vec;
 
         inline explicit even_bit_backing_data() {}
@@ -461,6 +463,22 @@ namespace int_vector {
         inline const_reference at(size_type n) const {
             return m_vec.at(n);
         }
+
+        inline reference front() {
+            return m_vec.front();
+        }
+
+        inline const_reference front() const {
+            return m_vec.front();
+        }
+
+        inline reference back() {
+            return m_vec.back();
+        }
+
+        inline const_reference back() const {
+            return m_vec.back();
+        }
     };
 
     template<size_t N>
@@ -482,11 +500,13 @@ namespace int_vector {
         typedef ptrdiff_t                                            difference_type;
         typedef size_t                                               size_type;
 
-        std::vector<DynamicIntValueType> m_vec;
+        typedef DynamicIntValueType                                  internal_data_type;
+
+        std::vector<internal_data_type> m_vec;
         uint64_t m_real_size = 0;
 
         inline static uint64_t backing2bits(size_t n) {
-            return uint64_t(sizeof(DynamicIntValueType) * CHAR_BIT) * uint64_t(n);
+            return uint64_t(sizeof(internal_data_type) * CHAR_BIT) * uint64_t(n);
         }
 
         inline static uint64_t elem2bits(size_t n) {
@@ -519,7 +539,7 @@ namespace int_vector {
         inline explicit odd_bit_backing_data(size_type n) {
             m_real_size = n;
             size_t converted_size = bits2backing(elem2bits(m_real_size));
-            m_vec = std::vector<DynamicIntValueType>(converted_size);
+            m_vec = std::vector<internal_data_type>(converted_size);
         }
         inline odd_bit_backing_data(size_type n, const value_type& val): odd_bit_backing_data(n) {
             auto ptr = m_vec.data();
@@ -669,7 +689,7 @@ namespace int_vector {
             return ConstIntRef(ConstIntPtr(m_vec.data() + x.pos, x.offset, N));
         }
 
-        inline void range_check(size_type n) {
+        inline void range_check(size_type n) const {
             if (n >= size()) {
                 std::stringstream ss;
                 ss << "Out-of-range access of GenericIntVector: index is ";
@@ -688,6 +708,22 @@ namespace int_vector {
         inline const_reference at(size_type n) const {
             range_check(n);
             return operator[](n);
+        }
+
+        inline reference front() {
+            return operator[](0);
+        }
+
+        inline const_reference front() const {
+            return operator[](0);
+        }
+
+        inline reference back() {
+            return operator[](size() - 1);
+        }
+
+        inline const_reference back() const {
+            return operator[](size() - 1);
         }
 
     };
@@ -712,6 +748,7 @@ namespace int_vector {
         typedef typename even_bit_backing_data<T>::size_type              size_type;
 
         typedef          even_bit_backing_data<T>                         backing_data;
+        typedef typename even_bit_backing_data<T>::internal_data_type     internal_data_type;
     };
 
     template<size_t N>
@@ -734,34 +771,36 @@ namespace int_vector {
         typedef typename even_bit_backing_data<uint_t<N>>::size_type              size_type;
 
         typedef          even_bit_backing_data<uint_t<N>>                         backing_data;
+        typedef typename even_bit_backing_data<uint_t<N>>::internal_data_type     internal_data_type;
     };
 
     template<size_t N>
     struct GenericIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) != 0>::type> {
-        typedef uint_t<N>                                            value_type;
+        typedef typename odd_bit_backing_data<N>::value_type             value_type;
 
-        typedef IntRef                                               reference;
-        typedef ConstIntRef                                          const_reference;
+        typedef typename odd_bit_backing_data<N>::reference              reference;
+        typedef typename odd_bit_backing_data<N>::const_reference        const_reference;
 
-        typedef IntPtr                                               pointer;
-        typedef ConstIntPtr                                          const_pointer;
+        typedef typename odd_bit_backing_data<N>::pointer                pointer;
+        typedef typename odd_bit_backing_data<N>::const_pointer          const_pointer;
 
-        typedef pointer                                              iterator;
-        typedef const_pointer                                        const_iterator;
+        typedef typename odd_bit_backing_data<N>::iterator               iterator;
+        typedef typename odd_bit_backing_data<N>::const_iterator         const_iterator;
 
-        typedef typename std::reverse_iterator<iterator>             reverse_iterator;
-        typedef typename std::reverse_iterator<const_iterator>       const_reverse_iterator;
+        typedef typename odd_bit_backing_data<N>::reverse_iterator       reverse_iterator;
+        typedef typename odd_bit_backing_data<N>::const_reverse_iterator const_reverse_iterator;
 
-        typedef ptrdiff_t                                            difference_type;
-        typedef size_t                                               size_type;
+        typedef typename odd_bit_backing_data<N>::difference_type        difference_type;
+        typedef typename odd_bit_backing_data<N>::size_type              size_type;
 
-        typedef odd_bit_backing_data<N>                              backing_data;
+        typedef          odd_bit_backing_data<N>                         backing_data;
+        typedef typename odd_bit_backing_data<N>::internal_data_type     internal_data_type;
     };
 
     template<class T>
     class GenericIntVector {
         // TODO: Add custom allocator support
-
+    public:
         typedef typename GenericIntVectorTrait<T>::value_type             value_type;
         typedef typename GenericIntVectorTrait<T>::reference              reference;
         typedef typename GenericIntVectorTrait<T>::const_reference        const_reference;
@@ -774,6 +813,9 @@ namespace int_vector {
         typedef typename GenericIntVectorTrait<T>::difference_type        difference_type;
         typedef typename GenericIntVectorTrait<T>::size_type              size_type;
 
+        /// The element type of the internal data buffer accessed with data()
+        typedef typename GenericIntVectorTrait<T>::internal_data_type     internal_data_type;
+    private:
         typename GenericIntVectorTrait<T>::backing_data m_data;
     public:
         // default
@@ -909,6 +951,29 @@ namespace int_vector {
 
         inline const_reference at(size_type n) const {
             return m_data.at(n);
+        }
+
+        inline reference front() {
+            return m_data.front();
+        }
+
+        inline const_reference front() const {
+            return m_data.front();
+        }
+
+        inline reference back() {
+            return m_data.back();
+        }
+
+        inline const_reference back() const {
+            return m_data.back();
+        }
+
+        inline internal_data_type* data() noexcept {
+            return m_data.m_vec.data();
+        }
+        inline const internal_data_type* data() const noexcept {
+            return m_data.m_vec.data();
         }
     };
 
