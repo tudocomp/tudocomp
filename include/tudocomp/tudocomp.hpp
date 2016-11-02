@@ -84,7 +84,6 @@ namespace lzw {
 #include <tudocomp/ds/LCPArray.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 
-#include <tudocomp/lz78/Lz78Compressor.hpp>
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
 #include <tudocomp/lz78/Lz78BitCoder.hpp>
 
@@ -95,7 +94,6 @@ namespace lzw {
 #include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
 
 #include <tudocomp/lzss/LZ77SSSlidingWindowCompressor.hpp>
-#include <tudocomp/lzss/LZ77SSLCPCompressor.hpp>
 #include <tudocomp/lzss/LZSSESACompressor.hpp>
 
 #include <tudocomp/lzss/DebugLZSSCoder.hpp>
@@ -104,6 +102,15 @@ namespace lzw {
 
 #include <tudocomp/alphabet/OnlineAlphabetCoder.hpp>
 #include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
+
+#include <tudocomp/Range.hpp>
+#include <tudocomp/ByteCodeCompressor.hpp>
+#include <tudocomp/coders/ASCIICoder.hpp>
+#include <tudocomp/coders/ByteCoder.hpp>
+#include <tudocomp/coders/BitOptimalCoder.hpp>
+#include <tudocomp/coders/RunLengthCoder.hpp>
+#include <tudocomp/compressors/LZ78Compressor.hpp>
+#include <tudocomp/compressors/LZSSLCPCompressor.hpp>
 
 #endif
 
