@@ -831,6 +831,40 @@ void generic_int_vector_template() {
     ASSERT_EQ(push_back.bit_size(), 1 * N);
     // ASEERT eq { 15 }
 
+    // TODO: Fix uint64_t casts
+
+    GenericIntVector<T> insert1 { 6, 5, 4, 3, 2, 1 };
+    auto insert1_r = insert1.insert(insert1.cbegin() + 3, T(9));
+    ASSERT_EQ(*insert1_r, uint64_t(T(9)));
+    ASSERT_TRUE((insert1.begin() < insert1_r) && (insert1_r < insert1.end()));
+    // ASSERT EQ { 6, 5, 4, 9, 3, 2, 1 }
+
+    GenericIntVector<T> insert2 { 6, 5, 4, 3, 2, 1 };
+    auto insert2_r = insert2.insert(insert2.cbegin() + 3, 3, T(9));
+    ASSERT_EQ(*insert2_r, uint64_t(T(9)));
+    ASSERT_TRUE((insert2.begin() < insert2_r) && (insert2_r < insert2.end()));
+    // ASSERT EQ { 6, 5, 4, 9, 9, 9, 3, 2, 1 }
+
+    GenericIntVector<T> insert3 { 6, 5, 4, 3, 2, 1 };
+    GenericIntVector<T> insert3_src { 9, 8, 7 };
+    auto insert3_r = insert3.insert(insert3.cbegin() + 3, insert3_src.begin(), insert3_src.end());
+    ASSERT_EQ(*insert3_r, uint64_t(T(9)));
+    ASSERT_TRUE((insert3.begin() < insert3_r) && (insert3_r < insert3.end()));
+    // ASSERT EQ { 6, 5, 4, 9, 8, 7, 3, 2, 1 }
+
+    GenericIntVector<T> insert4 { 6, 5, 4, 3, 2, 1 };
+    auto insert4_v = T(9);
+    auto insert4_r = insert4.insert(insert4.cbegin() + 3, std::move(insert4_v));
+    ASSERT_EQ(*insert4_r, uint64_t(T(9)));
+    ASSERT_TRUE((insert4.begin() < insert4_r) && (insert4_r < insert4.end()));
+    // ASSERT EQ { 6, 5, 4, 9, 3, 2, 1 }
+
+    GenericIntVector<T> insert5 { 6, 5, 4, 3, 2, 1 };
+    auto insert5_r = insert5.insert(insert5.cbegin() + 3, { 9, 8, 7 });
+    ASSERT_EQ(*insert5_r, uint64_t(T(9)));
+    ASSERT_TRUE((insert5.begin() < insert5_r) && (insert5_r < insert5.end()));
+    // ASSERT EQ { 6, 5, 4, 9, 8, 7, 3, 2, 1 }
+
 }
 
 
@@ -856,6 +890,10 @@ TEST(generic_int_vector, uint_t_24) {
 
 TEST(generic_int_vector, uint_t_1) {
     generic_int_vector_template<uint_t<1>>();
+}
+
+TEST(generic_int_vector, uint_t_2) {
+    generic_int_vector_template<uint_t<2>>();
 }
 
 TEST(generic_int_vector, uint_t_7) {

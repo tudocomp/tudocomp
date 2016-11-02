@@ -508,6 +508,27 @@ namespace int_vector {
         inline void pop_back() {
             m_vec.pop_back();
         }
+
+        inline iterator insert(const_iterator position, const value_type& val) {
+            return m_vec.insert(position, val);
+        }
+
+        inline iterator insert(const_iterator position, size_type n, const value_type& val) {
+            return m_vec.insert(position, n, val);
+        }
+
+        template <class InputIterator>
+        inline iterator insert(const_iterator position, InputIterator first, InputIterator last) {
+            return m_vec.insert(position, first, last);
+        }
+
+        inline iterator insert(const_iterator position, value_type&& val) {
+            return m_vec.insert(position, std::move(val));
+        }
+
+        inline iterator insert(const_iterator position, std::initializer_list<value_type> il) {
+            return m_vec.insert(position, il);
+        }
     };
 
     template<size_t N>
@@ -786,6 +807,73 @@ namespace int_vector {
                 m_vec.pop_back();
             }
         }
+
+        inline iterator insert(const_iterator position, const value_type& val) {
+            return insert(position, size_type(1), val);
+        }
+
+        inline iterator insert(const_iterator position, size_type n, const value_type& val) {
+            // Remember integer offset before iterator invalidation
+            auto p = (position - cbegin());
+
+            // Step 1: Grow backing vector by needed amount
+            {
+                auto new_bits_needed = elem2bits(n);
+                auto existing_extra_bits = backing2bits(m_vec.size()) - elem2bits(m_real_size);
+
+                if (new_bits_needed > existing_extra_bits) {
+                    new_bits_needed -= existing_extra_bits;
+                } else {
+                    new_bits_needed = 0;
+                }
+
+                auto new_backing_needed = bits2backing(new_bits_needed);
+                m_vec.insert(m_vec.end(), new_backing_needed, 0);
+            }
+
+            // Step 2: move elements to back, leaving a gap
+            {
+                auto start = std::reverse_iterator<iterator>(begin() + p);
+                auto old_end = rbegin();
+                m_real_size += n;
+                auto new_end = rbegin();
+                std::copy(old_end, start, new_end);
+            }
+
+            // Step 3: insert new values at gap
+            {
+                for(auto a = begin() + p, b = end(); a != b; ++a) {
+                    *a = val;
+                }
+
+                return begin() + p;
+            }
+        }
+
+        template <class InputIterator>
+        inline iterator insert(const_iterator position, InputIterator first, InputIterator last) {
+            // TODO: Optimize for random access iterators (multiple insertions at once)
+
+            // Remember integer offset before iterator invalidation
+            const auto p = (position - cbegin());
+            auto pi = p;
+
+            for(; first != last; ++first) {
+                insert(cbegin() + pi, value_type(*first));
+                pi++;
+            }
+
+            return begin() + p;
+        }
+
+        inline iterator insert(const_iterator position, value_type&& val) {
+            const auto& v = val;
+            return insert(position, v);
+        }
+
+        inline iterator insert(const_iterator position, std::initializer_list<value_type> il) {
+            return insert(position, il.begin(), il.end());
+        }
     };
 
     template<class T, class X = void>
@@ -1061,6 +1149,28 @@ namespace int_vector {
         inline void pop_back() {
             m_data.pop_back();
         }
+
+        inline iterator insert(const_iterator position, const value_type& val) {
+            return m_data.insert(position, val);
+        }
+
+        inline iterator insert(const_iterator position, size_type n, const value_type& val) {
+            return m_data.insert(position, n, val);
+        }
+
+        template <class InputIterator>
+        inline iterator insert(const_iterator position, InputIterator first, InputIterator last) {
+            return m_data.insert(position, first, last);
+        }
+
+        inline iterator insert(const_iterator position, value_type&& val) {
+            return m_data.insert(position, std::move(val));
+        }
+
+        inline iterator insert(const_iterator position, std::initializer_list<value_type> il) {
+            return m_data.insert(position, il);
+        }
+
     };
 
 }
