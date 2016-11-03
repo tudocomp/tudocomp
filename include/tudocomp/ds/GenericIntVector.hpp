@@ -564,6 +564,42 @@ namespace int_vector {
         }
     };
 
+    template<class T>
+    bool operator==(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
+        return lhs.m_vec == rhs.m_vec;
+    }
+
+    template<class T>
+    bool operator!=(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
+        return lhs.m_vec != rhs.m_vec;
+    }
+
+    template<class T>
+    bool operator<(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
+        return lhs.m_vec < rhs.m_vec;
+    }
+
+    template<class T>
+    bool operator<=(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
+        return lhs.m_vec <= rhs.m_vec;
+    }
+
+    template<class T>
+    bool operator>(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
+        return lhs.m_vec > rhs.m_vec;
+    }
+
+    template<class T>
+    bool operator>=(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
+        return lhs.m_vec >= rhs.m_vec;
+    }
+
+    template<class T>
+    void swap(even_bit_backing_data<T>& lhs, even_bit_backing_data<T>& rhs) {
+        using std::swap;
+        swap(lhs.m_vec, rhs.m_vec);
+    }
+
     template<size_t N>
     struct odd_bit_backing_data {
         typedef uint_t<N>                                            value_type;
@@ -587,6 +623,9 @@ namespace int_vector {
 
         std::vector<internal_data_type> m_vec;
         uint64_t m_real_size = 0;
+
+        template<size_t M>
+        friend bool operator==(const odd_bit_backing_data<M>& lhs, const odd_bit_backing_data<M>& rhs);
 
         inline static uint64_t backing2bits(size_t n) {
             return uint64_t(sizeof(internal_data_type) * CHAR_BIT) * uint64_t(n);
@@ -947,6 +986,59 @@ namespace int_vector {
         }
     };
 
+    template<size_t N>
+    bool operator==(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
+        if (lhs.size() == rhs.size()) {
+            auto extra_bits = odd_bit_backing_data<N>::backing2bits(lhs.m_vec.size())
+                              - odd_bit_backing_data<N>::elem2bits(lhs.m_real_size);
+
+            if (extra_bits == 0) {
+                return lhs.m_vec == rhs.m_vec;
+            } else {
+                if (!std::equal(lhs.m_vec.cbegin(), lhs.m_vec.cend() - 1, rhs.m_vec.cbegin())) {
+                    return false;
+                }
+                auto occupied_bits = odd_bit_backing_data<N>::backing2bits(1) - extra_bits;
+                // NB: Underflow can not happen here because there are never
+                // completely unoccupied backing integers
+                auto elements = (occupied_bits - 1) / odd_bit_backing_data<N>::elem2bits(1) + 1;
+
+                return std::equal(lhs.cend() - elements, lhs.cend(), rhs.cend() - elements);
+            }
+        }
+        return false;
+    }
+
+    template<size_t N>
+    bool operator!=(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
+        return !(lhs == rhs);
+    }
+
+    template<size_t N>
+    bool operator<(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
+        return std::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
+    }
+
+    template<size_t N>
+    bool operator<=(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
+        return !(lhs > rhs);
+    }
+
+    template<size_t N>
+    bool operator>(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
+        return std::lexicographical_compare(rhs.cbegin(), rhs.cend(), lhs.cbegin(), lhs.cend());
+    }
+
+    template<size_t N>
+    bool operator>=(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
+        return !(lhs < rhs);
+    }
+
+    template<size_t N>
+    void swap(odd_bit_backing_data<N>& x, odd_bit_backing_data<N>& y) {
+        x.swap(y);
+    }
+
     template<class T, class X = void>
     struct GenericIntVectorTrait {
         typedef typename even_bit_backing_data<T>::value_type             value_type;
@@ -1268,7 +1360,57 @@ namespace int_vector {
             m_data.emplace_back(std::forward<Args...>(args)...);
         }
 
+        template<class U>
+        friend bool operator==(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        template<class U>
+        friend bool operator!=(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        template<class U>
+        friend bool operator<(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        template<class U>
+        friend bool operator<=(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        template<class U>
+        friend bool operator>(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        template<class U>
+        friend bool operator>=(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        template<class U>
+        friend void swap(GenericIntVector<U>& lhs, GenericIntVector<U>& rhs);
     };
+
+    template<class T>
+    bool operator==(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+        return lhs.m_data == rhs.m_data;
+    }
+
+    template<class T>
+    bool operator!=(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+        return lhs.m_data != rhs.m_data;
+    }
+
+    template<class T>
+    bool operator<(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+        return lhs.m_data < rhs.m_data;
+    }
+
+    template<class T>
+    bool operator<=(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+        return lhs.m_data <= rhs.m_data;
+    }
+
+    template<class T>
+    bool operator>(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+        return lhs.m_data > rhs.m_data;
+    }
+
+    template<class T>
+    bool operator>=(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+        return lhs.m_data >= rhs.m_data;
+    }
+
+    template<class T>
+    void swap(GenericIntVector<T>& lhs, GenericIntVector<T>& rhs) {
+        using std::swap;
+        swap(lhs.m_data, rhs.m_data);
+    }
 
 }
 
