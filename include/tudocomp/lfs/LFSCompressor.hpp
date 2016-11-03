@@ -1,7 +1,12 @@
 #ifndef _INCLUDED_LFS_COMPRESSOR_HPP_
 #define _INCLUDED_LFS_COMPRESSOR_HPP_
 
-#include <tudocomp/tudocomp.hpp>
+//#include <tudocomp/tudocomp.hpp>
+#include <tudocomp/Algorithm.hpp>
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/io.hpp>
+#include <chrono>
+#include <thread>
 
 namespace tdc {
 
