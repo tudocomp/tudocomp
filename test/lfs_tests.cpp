@@ -2,6 +2,8 @@
 
 #include <tudocomp/lfs/LFSCompressor.hpp>
 
+#include <tudocomp/example/ExampleCompressor.hpp>
+
 #include "gtest/gtest.h"
 
 #include <tudocomp/Algorithm.hpp>
@@ -17,19 +19,24 @@ using tdc::LFSCompressor;
 
 TEST(lfs, test) {
     auto compressor = tdc::create_algo<LFSCompressor>();
+
+//std::cout << "output"<< std::endl;
+  //  compressor = tdc::create_algo<LFSCompressor>();
     //comp.compress("String", null);
     // create the input for the test (a string constant)
-   // tdc::Input input("abcccccccde");
+    tdc::Input input("abaaabbababb$");
 
     // create the output for the test (a buffer)
-    //std::vector<uint8_t> buffer;
-    //tdc::Output output(buffer);
+    std::vector<uint8_t> buffer;
+    tdc::Output output(buffer);
 
     // invoke the compress method
-   // compressor.compress(input, output);
+    compressor.compress(input, output);
 
+    tdc::Input input2("mississippi$");
+    compressor.compress(input2, output);
         // retrieve the output as a string
-    //std::string output_str(buffer.begin(), buffer.end());
+    std::string output_str(buffer.begin(), buffer.end());
 
     // compare the expected result against the output string to determine test failure or success
     //ASSERT_EQ("abc%6%de", output_str);
