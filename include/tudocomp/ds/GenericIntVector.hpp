@@ -545,6 +545,23 @@ namespace int_vector {
             return m_vec.erase(first, last);
         }
 
+        inline void swap(even_bit_backing_data& other) {
+            m_vec.swap(other.m_vec);
+        }
+
+        inline void clear() {
+            m_vec.clear();
+        }
+
+        template <class... Args>
+        inline iterator emplace(const_iterator position, Args&&... args) {
+            return m_vec.emplace(position, std::forward<Args...>(args)...);
+        }
+
+        template <class... Args>
+        inline void emplace_back(Args&&... args) {
+            m_vec.emplace_back(std::forward<Args...>(args)...);
+        }
     };
 
     template<size_t N>
@@ -896,14 +913,6 @@ namespace int_vector {
             return erase(position, position + 1);
         }
 
-        inline void debug_print(int s) {
-            std::cout << s << ": { ";
-            for (auto x : *this) {
-                std::cout << x << ", ";
-            }
-            std::cout << "}\n";
-        }
-
         inline iterator erase(const_iterator first, const_iterator last) {
             auto from = (first - cbegin());
             auto to = (last - cbegin());
@@ -917,6 +926,25 @@ namespace int_vector {
             return begin() + from;
         }
 
+        inline void swap(odd_bit_backing_data& other) {
+            m_vec.swap(other.m_vec);
+            std::swap(m_real_size, other.m_real_size);
+        }
+
+        inline void clear() {
+            m_vec.clear();
+            m_real_size = 0;
+        }
+
+        template <class... Args>
+        inline iterator emplace(const_iterator position, Args&&... args) {
+            return insert(position, value_type(std::forward<Args...>(args)...));
+        }
+
+        template <class... Args>
+        inline void emplace_back(Args&&... args) {
+            push_back(value_type(std::forward<Args...>(args)...));
+        }
     };
 
     template<class T, class X = void>
@@ -1220,6 +1248,24 @@ namespace int_vector {
 
         inline iterator erase(const_iterator first, const_iterator last) {
             return m_data.erase(first, last);
+        }
+
+        inline void swap(GenericIntVector& other) {
+            m_data.swap(other.m_data);
+        }
+
+        inline void clear() {
+            m_data.clear();
+        }
+
+        template <class... Args>
+        inline iterator emplace(const_iterator position, Args&&... args) {
+            return m_data.emplace(position, std::forward<Args...>(args)...);
+        }
+
+        template <class... Args>
+        inline void emplace_back(Args&&... args) {
+            m_data.emplace_back(std::forward<Args...>(args)...);
         }
 
     };

@@ -890,8 +890,27 @@ void generic_int_vector_template() {
     ASSERT_EQ(*erase2_r, uint64_t(T(5)));
     // ASSERT EQ { 1, 2, 3, 6 }
 
+    GenericIntVector<T> swap_a { 1, 2, 3 };
+    GenericIntVector<T> swap_b { 4, 5, 6 };
+    swap_a.swap(swap_b);
+    // ASSERT a and b swapped
 
+    GenericIntVector<T> clear { 9, 8, 7 };
+    clear.clear();
+    ASSERT_EQ(clear.size(), 0);
+    ASSERT_EQ(clear.bit_size(), 0);
+    // ASSERT eq with empty
 
+    GenericIntVector<T> emplace1 { 1, 2, 3, 4 };
+    auto emplace1_r = emplace1.emplace(emplace1.cbegin() + 2, T(125));
+    // assert eq 1 2 125 3 4
+    ASSERT_TRUE((emplace1.begin() < emplace1_r) && (emplace1_r < emplace1.end()));
+    // TODO: Fix
+    ASSERT_EQ(*emplace1_r, uint64_t(T(125)));
+
+    GenericIntVector<T> emplace2 { 1, 2, 3, 4 };
+    emplace2.emplace_back(125);
+    // assert eq 1 2 3 4 125
 
     // TODO: Add tests for &foo[i], maybe add overload to return IntPtr
 }
