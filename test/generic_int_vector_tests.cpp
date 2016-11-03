@@ -963,7 +963,11 @@ void generic_int_vector_template() {
     ASSERT_FALSE((GenericIntVector<T> { 0, 1, 3 }) >= (GenericIntVector<T> { 3, 0, 0 }));
     ASSERT_FALSE((GenericIntVector<T> {         }) >= (GenericIntVector<T> { 1       }));
 
-    // TODO: Add tests for &foo[i], maybe add overload to return IntPtr
+    GenericIntVector<T> ref_ptr { 1, 2, 3 };
+    auto ptr = &ref_ptr[1];
+
+    // TODO: fix
+    ASSERT_EQ(*ptr, uint64_t(T(2)));
 }
 
 

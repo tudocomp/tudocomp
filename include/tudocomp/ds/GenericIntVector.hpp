@@ -273,11 +273,15 @@ namespace int_vector {
         };
 
         inline IntRef& operator=(const ConstIntRef& other);
+
+        inline IntPtr operator&() { return m_ptr; }
     };
 
     class ConstIntRef: public GenericIntRef<ConstIntRef, ConstIntPtr, Const>, public ConstIntegerBase<ConstIntRef> {
     public:
         explicit ConstIntRef(const ConstIntPtr& ptr): GenericIntRef(ptr) {}
+
+        inline ConstIntPtr operator&() { return m_ptr; }
     };
 
     inline IntRef& IntRef::operator=(const ConstIntRef& other) {
