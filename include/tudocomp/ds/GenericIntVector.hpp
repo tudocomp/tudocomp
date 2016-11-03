@@ -905,35 +905,15 @@ namespace int_vector {
         }
 
         inline iterator erase(const_iterator first, const_iterator last) {
-            debug_print(__LINE__);
             auto from = (first - cbegin());
             auto to = (last - cbegin());
             auto n = to - from;
-            std::cout << from << ", " << to << ", " << n << "\n";
-            //std::copy(begin() + to, end(), begin() + from);
-
-            auto a = begin() + to;
-            auto b = end();
-            auto c = begin() + from;
-            for(; a != b; ++a, ++c) {
-                std::cout << "*c (" << int(*c) << ") = *a(" << int(*a) << ") => ";
-
-                // TODO: BUG! ref = ref does not work!
-                *c = value_type(*a);
-                std::cout << "*c (" << int(*c) << ")\n";
-            }
-
-            std::cout << "to:   " << int(*(begin() + to)) << ", "
-                      << "from: " << int(*(begin() + from)) << ", "
-                      << "end:  " << int(*(end() - 1))
-                      << "\n";
-            debug_print(__LINE__);
+            std::copy(begin() + to, end(), begin() + from);
 
             m_real_size -= n;
 
             auto obsolete_backing = m_vec.size() - bits2backing(elem2bits(m_real_size));
             m_vec.erase(m_vec.cend() - obsolete_backing, m_vec.cend());
-            debug_print(__LINE__);
             return begin() + from;
         }
 
