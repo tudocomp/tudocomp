@@ -133,9 +133,6 @@ For building the documentation, the following tools are required:
 * LATEX (specifically the `pdflatex` component)
 * [Doxygen](http://doxygen.org) (1.8 or later).
 * [Pandoc](http://pandoc.org) (1.16 or later).
-* [Python](https://www.python.org/) (optional, 2.7 or later).
-* [pandocfilters (Python module)](https://pypi.python.org/pypi/pandocfilters)
-  (optional, 1.3 or later).
 
 ## Command-line application
 
