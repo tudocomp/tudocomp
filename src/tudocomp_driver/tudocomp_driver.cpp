@@ -316,7 +316,7 @@ int main(int argc, char** argv)
             }
             std::cout << "---------------\n";
             if (inp_size != 0) {
-                std::cout << "compress ratio: "<<(double(out_size)/double(inp_size) * 100)<<"%\n";
+                std::cout << "compress rate: "<<(double(out_size)/double(inp_size) * 100)<<"%\n";
             }
 
             auto print_time = [] (std::string s, decltype(setup_duration)& t) {

@@ -107,8 +107,8 @@ void register_algorithms(Registry& r) {
     r.register_compressor< LZSSSeanCompressor >();
     //broken: r.register_compressor< LCPSuffixLinkCompressor >();
     r.register_compressor< ExampleCompressor >();
-    r.register_compressor< TemplatedExampleCompressor<ExampleDebugCoder> >();
-    r.register_compressor< TemplatedExampleCompressor<ExampleBitCoder> >();
+    //needs new impl: r.register_compressor< TemplatedExampleCompressor<ExampleDebugCoder> >();
+    //needs new impl: r.register_compressor< TemplatedExampleCompressor<ExampleBitCoder> >();
 
     r.register_compressor< NoopCompressor >();
 }

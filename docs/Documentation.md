@@ -133,9 +133,6 @@ For building the documentation, the following tools are required:
 * LATEX (specifically the `pdflatex` component)
 * [Doxygen](http://doxygen.org) (1.8 or later).
 * [Pandoc](http://pandoc.org) (1.16 or later).
-* [Python](https://www.python.org/) (optional, 2.7 or later).
-* [pandocfilters (Python module)](https://pypi.python.org/pypi/pandocfilters)
-  (optional, 1.3 or later).
 
 ## Command-line application
 
@@ -694,7 +691,7 @@ unit test as follows, starting with an empty `example_tests.cpp`
 ~~~ { .cpp }
 // [/test/example_tests.cpp]
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 TEST(example, test) {
     ASSERT_TRUE(true);
@@ -719,7 +716,7 @@ from the previous chapter, the run-length encoder:
 ~~~ { .cpp }
 // [/test/example_tests.cpp]
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include <tudocomp/example/ExampleCompressor.hpp>
 #include <tudocomp/Algorithm.hpp>
@@ -727,7 +724,7 @@ from the previous chapter, the run-length encoder:
 
 TEST(example, compress) {
     // instantiate the ExampleCompressor
-    auto compressor = tdc::create_algo<ExampleCompressor>();
+    auto compressor = tdc::create_algo<tdc::ExampleCompressor>();
 
     // create the input for the test (a string constant)
     tdc::Input input("abcccccccde");
@@ -766,10 +763,10 @@ a helper function that performs such a compression cycle, which is presented
 in the following unit test:
 
 ~~~ { .cpp }
-#include "tudocomp_test_util.h"
+#include "tudocomp_test_util.hpp"
 
 TEST(example, roundtrip) {
-    test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de");
+    test::roundtrip<tdc::ExampleCompressor>("abcccccccde", "abc%6%de");
 }
 ~~~
 
@@ -790,7 +787,7 @@ be passed as a vector of bytes like so:
 ~~~ { .cpp }
 TEST(example, roundtrip_bytes) {
     std::vector<uint8_t> v { 97, 98, 99, 37, 54, 37, 100, 101 };
-    test::roundtrip<ExampleCompressor>("abcccccccde", v);
+    test::roundtrip<tdc::ExampleCompressor>("abcccccccde", v);
 }
 ~~~
 
@@ -921,7 +918,7 @@ as booleans or integers, parsers are predefined in the
 In the following examples, two dynamic options are introduced to the
 [run-length encoder](#example-run-length-encoding) example in the `Compressor`'s
 meta information object. The `minimum_run` option will determine the minimum
-length of a run before it is encoded (4 by default), while the `rle_symbol`
+length of a run before it is encoded (3 by default), while the `rle_symbol`
 option defines the separation symbol used to use for encoding runs.
 
 ~~~ {.cpp}
@@ -930,7 +927,7 @@ inline static Meta meta() {
            "This is an example compressor.");
 
     //Define options
-    m.option("minimum_run").dynamic("4");
+    m.option("minimum_run").dynamic("3");
     m.option("rle_symbol").dynamic("%");
 
     return m;
@@ -1055,6 +1052,13 @@ For instance, `encoder_t` could accept the dynamic options `minimum_run` and
 strategy to encode the run. In either scenario, the `decompress` method would
 have to use the sub-algorithm as well in order to decode the runs correctly.
 
+> *Exercise*: Implement an encoder `ExampleRunEmitter` for the
+              `TemplatedExampleCompressor`.
+
+> *Exercise*: Implement the `decompress` function for the
+              `TemplatedExampleCompressor` using the given encoder type (hint:
+               add a `decode_run` function to the encoder).
+
 > *Example*: A full example of the `TemplatedExampleCompressor` is available in
              the `include/tudocomp/example` directory in the framework's
              repository. Most of the framework's compressor implementations
@@ -1071,16 +1075,18 @@ third argument like so:
 
 ~~~ {.cpp}
 TEST(example, roundtrip_options) {
+    using namespace tdc;
+
     // Test with options
-    test::roundtrip<ExampleCompressor>("abcccccccde", "abc#6#de",  "minimum_run = 7, rle_symbol = '#'");
-    test::roundtrip<ExampleCompressor>("abccccccde",  "abcccccde", "minimum_run = 7, rle_symbol = '#'");
+    test::roundtrip<ExampleCompressor>("abcccccccde", "abc#6#de",  "minimum_run = '6', rle_symbol = '#'");
+    test::roundtrip<ExampleCompressor>("abccccccde",  "abccccccde", "minimum_run = '6', rle_symbol = '#'");
 
     // Test defaults
     test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de");
 
     // Test partially with defaults
-    test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de",  "minimum_run = 7");
-    test::roundtrip<ExampleCompressor>("abccccccde",  "abcccccde", "minimum_run = 7");
+    test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de",  "minimum_run = '6'");
+    test::roundtrip<ExampleCompressor>("abccccccde",  "abccccccde", "minimum_run = '6'");
     test::roundtrip<ExampleCompressor>("abccccde",    "abc#3#de",  "rle_symbol = '#'");
     test::roundtrip<ExampleCompressor>("abcccde",     "abcccde",   "rle_symbol = '#'");
 }
@@ -1094,7 +1100,7 @@ following example shows this for the `TemplatedExampleCompressor`:
 
 ~~~ {.cpp}
 test::roundtrip<TemplatedExampleCompressor<ExampleRunEmitter>>
-    ("abcccccccde", "abc#6#de",  "encoder(minimum_run = 7, rle_symbol = '#')");
+    ("abcccccccde", "abc#6#de",  "encoder(minimum_run = '6', rle_symbol = '#')");
 ~~~
 
 ## The Registry
