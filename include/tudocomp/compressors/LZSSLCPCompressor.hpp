@@ -5,8 +5,9 @@
 #include <functional>
 #include <vector>
 
-#include <tudocomp/util.hpp>
+#include <tudocomp/Compressor.hpp>
 #include <tudocomp/Range.hpp>
+#include <tudocomp/util.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 

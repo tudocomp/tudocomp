@@ -108,9 +108,9 @@ namespace lzw {
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp>
-#include <tudocomp/coders/RunLengthCoder.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
+#include <tudocomp/compressors/RunLengthEncoder.hpp>
 
 #endif
 

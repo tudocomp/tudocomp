@@ -25,7 +25,6 @@ public:
 
     template<typename range_t>
     inline void encode(uint64_t v, const range_t& r) {
-        //std::cout << "encode(" << v << ", [" << r.min() << "," << r.max() << "])" << std::endl;
         m_out->write_int(v, 8 * bytes_for(bits_for(r.max())));
     }
 
