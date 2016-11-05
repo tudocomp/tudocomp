@@ -1,16 +1,11 @@
-#ifndef _INCLUDED_BYTE_CODER_HPP
-#define _INCLUDED_BYTE_CODER_HPP
+#ifndef _INCLUDED_BYTE_CODER_HPP_
+#define _INCLUDED_BYTE_CODER_HPP_
 
-#include <tudocomp/util.hpp>
-#include <tudocomp/Algorithm.hpp>
+#include <tudocomp/Coder.hpp>
 
 namespace tdc {
 
-class ByteCoder : public Algorithm {
-
-private:
-    BitOStream* m_out;
-
+class ByteCoder : public Coder {
 public:
     inline static Meta meta() {
         Meta m("coder", "byte", "Simple byte encoding");
@@ -18,10 +13,7 @@ public:
     }
 
     inline ByteCoder() = delete;
-
-    inline ByteCoder(Env&& env, BitOStream& out)
-        : Algorithm(std::move(env)), m_out(&out) {
-    }
+    inline ByteCoder(Env&& env) : Coder(std::move(env)) {}
 
     template<typename range_t>
     inline void encode(uint64_t v, const range_t& r) {

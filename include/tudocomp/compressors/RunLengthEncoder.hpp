@@ -26,11 +26,10 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         // setup I/O
         auto ins = input.as_stream();
-        auto outs = output.as_stream();
-        BitOStream out_bits(outs);
 
         // instantiate coder
-        coder_t coder(env().env_for_option("coder"), out_bits);
+        coder_t coder(env().env_for_option("coder"));
+        coder.encode_init(output);
 
         // define working variables
         len_t min_run = env().option("min_run").as_integer();

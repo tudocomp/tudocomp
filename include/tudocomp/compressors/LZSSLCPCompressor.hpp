@@ -15,7 +15,7 @@ namespace tdc {
 
 /// Computes the LZ77 factorization of the input using its suffix array and
 /// LCP table.
-template<typename C, typename len_t = uint32_t>
+template<typename coder_t, typename len_t = uint32_t>
 class LZSSLCPCompressor : public Compressor {
 
 private:
@@ -39,7 +39,7 @@ private:
 public:
     inline static Meta meta() {
         Meta m("compressor", "lzss_lcp", "LZSS Factorization using LCP");
-        m.option("coder").templated<C>();
+        m.option("coder").templated<coder_t>();
         return m;
     }
 
@@ -131,9 +131,8 @@ private:
         const lzfactors_t& factors,
         Output& output) {
 
-        auto output_stream = output.as_stream();
-        BitOStream out(output_stream);
-        C coder(env().env_for_option("coder"), out);
+        coder_t coder(env().env_for_option("coder"));
+        coder.encode_init(output);
 
         //define ranges
         Range text_r(text.size());

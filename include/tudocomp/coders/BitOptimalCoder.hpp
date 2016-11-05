@@ -2,26 +2,19 @@
 #define _INCLUDED_BIT_OPTIMAL_CODER_HPP
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/Algorithm.hpp>
+#include <tudocomp/Coder.hpp>
 
 namespace tdc {
 
-class BitOptimalCoder : public Algorithm {
-
-private:
-    BitOStream* m_out;
-
+class BitOptimalCoder : public Coder {
 public:
     inline static Meta meta() {
-        Meta m("coder", "bitopt", "Bit optimal encoding");
+        Meta m("coder", "bit", "Bit optimal encoding");
         return m;
     }
 
     inline BitOptimalCoder() = delete;
-
-    inline BitOptimalCoder(Env&& env, BitOStream& out)
-        : Algorithm(std::move(env)), m_out(&out) {
-    }
+    inline BitOptimalCoder(Env&& env) : Coder(std::move(env)) {}
 
     template<typename range_t>
     inline void encode(uint64_t v, const range_t& r) {

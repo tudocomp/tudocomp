@@ -10,7 +10,7 @@
 
 namespace tdc {
 
-template <typename C>
+template <typename coder_t>
 class LZ78Compressor: public Compressor {
 private:
     static inline lz78_dictionary::CodeType select_size(Env& env, string_ref name) {
@@ -42,7 +42,7 @@ public:
                "`dict_size` has to either be \"inf\", or a positive integer,\n"
                "and determines the maximum size of the backing storage of\n"
                "the dictionary before it gets reset.");
-        m.option("coder").templated<C>();
+        m.option("coder").templated<coder_t>();
         m.option("dict_size").dynamic("inf");
         return m;
     }
@@ -57,11 +57,9 @@ public:
         uint64_t stat_factor_count = 0;
         uint64_t factor_count = 0;
 
-        auto ostream = out.as_stream();
-        BitOStream bitostream(ostream);
-
         lz78_dictionary::EncoderDictionary ed(lz78_dictionary::EncoderDictionary::Lz78, dms, reserve_dms);
-        C coder(env().env_for_option("coder"), bitostream);
+        coder_t coder(env().env_for_option("coder"));
+        coder.encode_init(out);
 
         // Define ranges
         lz78_dictionary::CodeType last_i {dms}; // needed for the end of the string
