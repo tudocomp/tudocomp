@@ -64,8 +64,6 @@ public:
         C coder(env().env_for_option("coder"), bitostream);
 
         // Define ranges
-        CharRange r_char;
-
         lz78_dictionary::CodeType last_i {dms}; // needed for the end of the string
         lz78_dictionary::CodeType i {dms}; // Index
         char c;
@@ -94,7 +92,7 @@ public:
                 }
                 //coder.encode_fact(Factor { fact, b });
                 coder.encode(fact, Range(factor_count));
-                coder.encode(b, r_char);
+                coder.encode(b, char_r);
                 factor_count++;
                 stat_factor_count++;
                 i = dms;
@@ -113,7 +111,7 @@ public:
                 fact = 0;
             }
             coder.encode(fact, Range(factor_count));
-            coder.encode(b, r_char);
+            coder.encode(b, char_r);
             factor_count++;
             stat_factor_count++;
         }

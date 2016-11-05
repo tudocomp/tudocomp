@@ -17,36 +17,27 @@ namespace tdc {
 
     template<typename T>
     class TypeRange {
-    private:
-        const uint64_t m_max = std::numeric_limits<T>::max();
-
     public:
-        inline TypeRange() {}
         inline uint64_t min() const { return 0; }
-        inline uint64_t max() const { return m_max; }
+        inline uint64_t max() const { return std::numeric_limits<T>::max(); }
     };
 
-    template<uint64_t m_min = 0, uint64_t m_max = UINT64_MAX>
-    class IntRange {
+    template<uint64_t m_min, uint64_t m_max>
+    class FixedRange {
     public:
-        inline IntRange() {}
         inline uint64_t min() const { return m_min; }
         inline uint64_t max() const { return m_max; }
     };
 
-    using Int64Range = IntRange<0, UINT64_MAX>;
-    using Int32Range = IntRange<0, UINT32_MAX>;
-    using Int16Range = IntRange<0, UINT16_MAX>;
-    using Int8Range = IntRange<0, UINT8_MAX>;
-    using ByteRange = Int8Range;
-    using BitRange = IntRange<0, 1>;
+    using BitRange = FixedRange<0, 1>;
+    using CharRange = FixedRange<0, 255>;
 
-    class CharRange {
-    public:
-        inline CharRange() {}
-        inline uint64_t min() const { return 0; }
-        inline uint64_t max() const { return 255; }
-    };
+    const TypeRange<uint64_t> uint64_r;
+    const TypeRange<uint32_t> uint32_r;
+    const TypeRange<uint16_t> uint16_r;
+    const TypeRange<uint8_t>  uint8_r;
+    const BitRange bit_r;
+    const CharRange char_r;
 }
 
 #endif

@@ -104,7 +104,6 @@ namespace lzw {
 #include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
 
 #include <tudocomp/Range.hpp>
-#include <tudocomp/ByteCodeCompressor.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp>

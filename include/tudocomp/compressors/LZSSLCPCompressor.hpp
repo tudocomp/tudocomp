@@ -136,13 +136,7 @@ private:
         C coder(env().env_for_option("coder"), out);
 
         //define ranges
-        TypeRange<len_t> r_len;
-        BitRange r_bit;
-        CharRange r_char;
-        Range r_text(text.size());
-
-        //encode text length
-        coder.encode(text.size(), r_len);
+        Range text_r(text.size());
 
         //TODO: factors must be sorted
 
@@ -152,14 +146,14 @@ private:
                 uint8_t c = text[p++];
 
                 // encode symbol
-                coder.encode(0, r_bit);
-                coder.encode(c, r_char);
+                coder.encode(0, bit_r);
+                coder.encode(c, char_r);
             }
 
             // encode factor
-            coder.encode(1, r_bit);
-            coder.encode(factors.src[i], r_text);
-            coder.encode(factors.len[i], r_text);
+            coder.encode(1, bit_r);
+            coder.encode(factors.src[i], text_r);
+            coder.encode(factors.len[i], text_r);
 
             p += factors.len[i];
         }
@@ -168,8 +162,8 @@ private:
             uint8_t c = text[p++];
 
             // encode symbol
-            coder.encode(0, r_bit);
-            coder.encode(c, r_char);
+            coder.encode(0, bit_r);
+            coder.encode(c, char_r);
         }
 
         // finalize
