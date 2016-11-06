@@ -14,6 +14,9 @@
 #include <sdsl/suffix_arrays.hpp>
 #include <sdsl/bit_vectors.hpp>
 
+#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/SuffixArray.hpp>
+
 //#include <sdsl/suffixtrees.hpp>
 
 namespace tdc {
@@ -49,8 +52,22 @@ public:
        // auto ostream = output.as_stream();
 
 
-        //sdsl::lcp_wt<> lcp_array;
-        //sdsl::csa_wt<> suffix_array;
+
+
+        //alternative method of creating lcp and sa
+         auto in = input.as_view();
+        TextDS<> t(in);
+      //  env.begin_stat_phase("Construct text ds");
+        t.require(TextDS<>::SA | TextDS<>::LCP);
+       // env.end_stat_phase();
+
+
+        t.print(std::cout);
+
+        auto& sa_t = t.require_sa();
+        auto& lcp_t = t.require_lcp();
+        //t.sa[0];
+        std::cout << sa_t[0] << std::endl;
 
         std::string file = "test_files/lfs_test.txt";
         std::string text;
@@ -62,6 +79,7 @@ public:
         //text = "abaaabbababb$";
         //input.as_stream;
 
+        //just necessary for construct()
         std::ofstream myfile;
         myfile.open (file);
         myfile << text;
