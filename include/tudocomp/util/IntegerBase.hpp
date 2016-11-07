@@ -6,7 +6,7 @@ namespace tdc {
 static_assert(sizeof(int) * 8 == 32, "Make sure the logic here remains correct");
 
 template<class T, class X = void>
-struct IntegerBaseTraitConst {
+struct ConstIntegerBaseTrait {
     typedef uint64_t SelfMaxBit;
 
     inline static SelfMaxBit cast_for_self_op(const T& self) { return 0; }
@@ -15,13 +15,11 @@ struct IntegerBaseTraitConst {
 };
 
 template<class T, class X = void>
-struct IntegerBaseTrait: public IntegerBaseTraitConst<T, X> {
+struct IntegerBaseTrait: public ConstIntegerBaseTrait<T, X> {
     inline static void assign(T& self, uint32_t v) {}
     inline static void assign(T& self, uint64_t v) {}
 };
 
-template<class Self>
-class IntegerBase;
 template<class Self>
 class IntegerBaseWithSelf;
 template<class Self, class Other>
@@ -32,10 +30,10 @@ class IntegerBaseWith64;
 template<class Self, class Other>
 class ConstIntegerBaseWith32 {
 public:
-    typedef typename IntegerBaseTraitConst<Self>::SelfMaxBit SelfMaxBit;
+    typedef typename ConstIntegerBaseTrait<Self>::SelfMaxBit SelfMaxBit;
 private:
     inline static SelfMaxBit cast_for_32_op(const Self& self) {
-        return IntegerBaseTraitConst<Self>::cast_for_32_op(self);
+        return ConstIntegerBaseTrait<Self>::cast_for_32_op(self);
     }
 
     friend class IntegerBaseWith32<Self, Other>;
@@ -92,10 +90,10 @@ public:
 template<class Self, class Other>
 class ConstIntegerBaseWith64 {
 public:
-    typedef typename IntegerBaseTraitConst<Self>::SelfMaxBit SelfMaxBit;
+    typedef typename ConstIntegerBaseTrait<Self>::SelfMaxBit SelfMaxBit;
 private:
     inline static Other cast_for_64_op(const Self& self) {
-        return IntegerBaseTraitConst<Self>::cast_for_64_op(self);
+        return ConstIntegerBaseTrait<Self>::cast_for_64_op(self);
     }
 
     friend class IntegerBaseWith64<Self, Other>;
@@ -152,10 +150,10 @@ public:
 template<class Self>
 class ConstIntegerBaseWithSelf {
 public:
-    typedef typename IntegerBaseTraitConst<Self>::SelfMaxBit SelfMaxBit;
+    typedef typename ConstIntegerBaseTrait<Self>::SelfMaxBit SelfMaxBit;
 private:
     inline static SelfMaxBit cast_for_self_op(const Self& self) {
-        return IntegerBaseTraitConst<Self>::cast_for_self_op(self);
+        return ConstIntegerBaseTrait<Self>::cast_for_self_op(self);
     }
 
     friend class IntegerBaseWithSelf<Self>;
@@ -179,16 +177,24 @@ public:
     friend bool operator<=(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) <= cast_for_self_op(rhs); }
 };
 
-template<class Self>
-class ConstIntegerBase:
-    public ConstIntegerBaseWithSelf<Self>,
-    public ConstIntegerBaseWith32<Self, uint32_t>,
-    public ConstIntegerBaseWith32<Self, int>,
-    public ConstIntegerBaseWith64<Self, uint64_t>
-{
-public:
-    typedef typename IntegerBaseTraitConst<Self>::SelfMaxBit SelfMaxBit;
+template<typename...>
+class ConstIntegerBaseCombiner;
+
+template<typename T, typename... Ts>
+class ConstIntegerBaseCombiner<T, Ts...>: public T, public ConstIntegerBaseCombiner<Ts...> {
 };
+
+template<typename T>
+class ConstIntegerBaseCombiner<T>: public T {
+};
+
+template<class Self>
+using ConstIntegerBase = ConstIntegerBaseCombiner<
+    ConstIntegerBaseWithSelf<Self>,
+    ConstIntegerBaseWith32<Self, uint32_t>,
+    ConstIntegerBaseWith32<Self, int>,
+    ConstIntegerBaseWith64<Self, uint64_t>
+>;
 
 template<class Self, class Other>
 class IntegerBaseWith32: public ConstIntegerBaseWith32<Self, Other> {
@@ -239,7 +245,7 @@ public:
 template<class Self>
 class IntegerBaseWithSelf: public ConstIntegerBaseWithSelf<Self> {
 private:
-    typedef typename ConstIntegerBase<Self>::SelfMaxBit SelfMaxBit;
+    typedef typename ConstIntegerBaseTrait<Self>::SelfMaxBit SelfMaxBit;
     using ConstIntegerBaseWithSelf<Self>::cast_for_self_op;
 
     inline static void assign(Self& self, uint32_t v) {
@@ -320,15 +326,12 @@ public:
 };
 
 template<class Self>
-class IntegerBase:
-    public IntegerBaseCombiner<
-        IntegerBaseWithSelf<Self>,
-        IntegerBaseWith32<Self, uint32_t>,
-        IntegerBaseWith32<Self, int>,
-        IntegerBaseWith64<Self, uint64_t>
-    >
-{
-};
+using IntegerBase = IntegerBaseCombiner<
+    IntegerBaseWithSelf<Self>,
+    IntegerBaseWith32<Self, uint32_t>,
+    IntegerBaseWith32<Self, int>,
+    IntegerBaseWith64<Self, uint64_t>
+>;
 
 }
 

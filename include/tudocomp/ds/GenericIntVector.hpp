@@ -55,7 +55,7 @@ namespace std {
 namespace tdc {
 
 template<>
-struct IntegerBaseTraitConst<int_vector::IntRef> {
+struct ConstIntegerBaseTrait<int_vector::IntRef> {
     typedef sdsl::bits bits;
     typedef int_vector::IntRef T;
 
@@ -76,7 +76,7 @@ struct IntegerBaseTrait<int_vector::IntRef> {
 };
 
 template<>
-struct IntegerBaseTraitConst<int_vector::ConstIntRef> {
+struct ConstIntegerBaseTrait<int_vector::ConstIntRef> {
     typedef sdsl::bits bits;
     typedef int_vector::ConstIntRef T;
 
@@ -124,8 +124,8 @@ namespace int_vector {
         friend class IntRef;
         friend class ConstIntRef;
         friend class IntegerBaseTrait<IntRef>;
-        friend class IntegerBaseTraitConst<IntRef>;
-        friend class IntegerBaseTraitConst<ConstIntRef>;
+        friend class ConstIntegerBaseTrait<IntRef>;
+        friend class ConstIntegerBaseTrait<ConstIntRef>;
 
         typename Layout::ptr m_ptr;
         typename Layout::off m_bit_offset;
@@ -244,8 +244,8 @@ namespace int_vector {
         friend class IntPtr;
         friend class ConstIntPtr;
         friend class IntegerBaseTrait<IntRef>;
-        friend class IntegerBaseTraitConst<IntRef>;
-        friend class IntegerBaseTraitConst<ConstIntRef>;
+        friend class ConstIntegerBaseTrait<IntRef>;
+        friend class ConstIntegerBaseTrait<ConstIntRef>;
 
         Ptr m_ptr;
     public:
@@ -1170,17 +1170,17 @@ namespace int_vector {
 
 }
 
-inline IntegerBaseTraitConst<int_vector::IntRef>::SelfMaxBit IntegerBaseTraitConst<int_vector::IntRef>::cast_for_self_op(const T& self) {
+inline ConstIntegerBaseTrait<int_vector::IntRef>::SelfMaxBit ConstIntegerBaseTrait<int_vector::IntRef>::cast_for_self_op(const T& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
                             self.m_ptr.m_bit_size);
 }
-inline IntegerBaseTraitConst<int_vector::IntRef>::SelfMaxBit IntegerBaseTraitConst<int_vector::IntRef>::cast_for_32_op(const T& self) {
+inline ConstIntegerBaseTrait<int_vector::IntRef>::SelfMaxBit ConstIntegerBaseTrait<int_vector::IntRef>::cast_for_32_op(const T& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
                             self.m_ptr.m_bit_size);
 }
-inline uint64_t IntegerBaseTraitConst<int_vector::IntRef>::cast_for_64_op(const T& self) {
+inline uint64_t ConstIntegerBaseTrait<int_vector::IntRef>::cast_for_64_op(const T& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
                             self.m_ptr.m_bit_size);
@@ -1198,17 +1198,17 @@ inline void IntegerBaseTrait<int_vector::IntRef>::assign(T& self, uint64_t v) {
                     self.m_ptr.m_bit_size);
 }
 
-inline IntegerBaseTraitConst<int_vector::ConstIntRef>::SelfMaxBit IntegerBaseTraitConst<int_vector::ConstIntRef>::cast_for_self_op(const T& self) {
+inline ConstIntegerBaseTrait<int_vector::ConstIntRef>::SelfMaxBit ConstIntegerBaseTrait<int_vector::ConstIntRef>::cast_for_self_op(const T& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
                             self.m_ptr.m_bit_size);
 }
-inline IntegerBaseTraitConst<int_vector::ConstIntRef>::SelfMaxBit IntegerBaseTraitConst<int_vector::ConstIntRef>::cast_for_32_op(const T& self) {
+inline ConstIntegerBaseTrait<int_vector::ConstIntRef>::SelfMaxBit ConstIntegerBaseTrait<int_vector::ConstIntRef>::cast_for_32_op(const T& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
                             self.m_ptr.m_bit_size);
 }
-inline uint64_t IntegerBaseTraitConst<int_vector::ConstIntRef>::cast_for_64_op(const T& self) {
+inline uint64_t ConstIntegerBaseTrait<int_vector::ConstIntRef>::cast_for_64_op(const T& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
                             self.m_ptr.m_bit_size);

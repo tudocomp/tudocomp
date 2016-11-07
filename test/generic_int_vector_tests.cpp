@@ -269,14 +269,14 @@ struct IBTest;
 
 namespace tdc {
     template<>
-    struct IntegerBaseTraitConst<IBTest> {
+    struct ConstIntegerBaseTrait<IBTest> {
         typedef uint32_t SelfMaxBit;
         inline static SelfMaxBit cast_for_self_op(const IBTest& self);
         inline static SelfMaxBit cast_for_32_op(const IBTest& self);
         inline static uint64_t cast_for_64_op(const IBTest& self);
     };
     template<>
-    struct IntegerBaseTrait<IBTest>: IntegerBaseTraitConst<IBTest> {
+    struct IntegerBaseTrait<IBTest>: ConstIntegerBaseTrait<IBTest> {
         inline static void assign(IBTest& self, uint32_t v);
         inline static void assign(IBTest& self, uint64_t v);
     };
@@ -293,9 +293,9 @@ struct IBTest: public IntegerBase<IBTest> {
 
 inline void tdc::IntegerBaseTrait<IBTest>::assign(IBTest& self, uint32_t v)         { *self.m_ptr = v;    }
 inline void tdc::IntegerBaseTrait<IBTest>::assign(IBTest& self, uint64_t v)         { *self.m_ptr = v;    }
-inline uint32_t tdc::IntegerBaseTraitConst<IBTest>::cast_for_self_op(const IBTest& self) { return *self.m_ptr; }
-inline uint32_t tdc::IntegerBaseTraitConst<IBTest>::cast_for_32_op(const IBTest& self)   { return *self.m_ptr; }
-inline uint64_t tdc::IntegerBaseTraitConst<IBTest>::cast_for_64_op(const IBTest& self)   { return *self.m_ptr; }
+inline uint32_t tdc::ConstIntegerBaseTrait<IBTest>::cast_for_self_op(const IBTest& self) { return *self.m_ptr; }
+inline uint32_t tdc::ConstIntegerBaseTrait<IBTest>::cast_for_32_op(const IBTest& self)   { return *self.m_ptr; }
+inline uint64_t tdc::ConstIntegerBaseTrait<IBTest>::cast_for_64_op(const IBTest& self)   { return *self.m_ptr; }
 
 TEST(integer_base, basic_binop) {
     uint8_t i = 3;
