@@ -864,44 +864,45 @@ void generic_int_vector_template() {
     assign1.assign(size_t(10), T(1));
     ASSERT_EQ(assign1.size(), 10);
     ASSERT_EQ(assign1.bit_size(), 10 * N);
-    // assert size 10, values 1, bit_size
+    ASSERT_EQ(assign1, (GenericIntVector<T> { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
 
     GenericIntVector<T> assign2;
     assign2.assign(iter_src_1.begin(), iter_src_1.end());
     ASSERT_EQ(assign2.size(), 10);
     ASSERT_EQ(assign2.bit_size(), 10 * N);
-    // assert size 10, values 1, bit_size
+    ASSERT_EQ(assign2, (GenericIntVector<T> { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
 
     GenericIntVector<T> assign3;
     assign3.assign(iter_src_2.begin(), iter_src_2.end());
     ASSERT_EQ(assign3.size(), 10);
     ASSERT_EQ(assign3.bit_size(), 10 * N);
-    // assert size 10, values 1, bit_size
+    ASSERT_EQ(assign3, (GenericIntVector<T> { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
 
     GenericIntVector<T> assign4;
     assign4.assign({ T(1), T(2), T(3), T(4) });
     ASSERT_EQ(assign4.size(), 4);
     ASSERT_EQ(assign4.bit_size(), 4 * N);
-    // assert size, bit size and content
+    ASSERT_EQ(assign4, (GenericIntVector<T> { 1, 2, 3, 4 }));
 
     GenericIntVector<T> push_back;
     ASSERT_EQ(push_back.size(), 0);
     ASSERT_EQ(push_back.bit_size(), 0 * N);
+    ASSERT_EQ(push_back, (GenericIntVector<T> { }));
 
     push_back.push_back(T(15));
     ASSERT_EQ(push_back.size(), 1);
     ASSERT_EQ(push_back.bit_size(), 1 * N);
-    // ASEERT eq { 15 }
+    ASSERT_EQ(push_back, (GenericIntVector<T> { 15 }));
 
     push_back.push_back(T(9));
     ASSERT_EQ(push_back.size(), 2);
     ASSERT_EQ(push_back.bit_size(), 2 * N);
-    // ASEERT eq { 15, 9 }
+    ASSERT_EQ(push_back, (GenericIntVector<T> { 15, 9 }));
 
     push_back.pop_back();
     ASSERT_EQ(push_back.size(), 1);
     ASSERT_EQ(push_back.bit_size(), 1 * N);
-    // ASEERT eq { 15 }
+    ASSERT_EQ(push_back, (GenericIntVector<T> { 15 }));
 
     // TODO: Fix uint64_t casts
 
@@ -909,67 +910,68 @@ void generic_int_vector_template() {
     auto insert1_r = insert1.insert(insert1.cbegin() + 3, T(9));
     ASSERT_EQ(*insert1_r, uint64_t(T(9)));
     ASSERT_TRUE((insert1.begin() < insert1_r) && (insert1_r < insert1.end()));
-    // ASSERT EQ { 6, 5, 4, 9, 3, 2, 1 }
+    ASSERT_EQ(insert1, (GenericIntVector<T> { 6, 5, 4, 9, 3, 2, 1 }));
 
     GenericIntVector<T> insert2 { 6, 5, 4, 3, 2, 1 };
     auto insert2_r = insert2.insert(insert2.cbegin() + 3, 3, T(9));
     ASSERT_EQ(*insert2_r, uint64_t(T(9)));
     ASSERT_TRUE((insert2.begin() < insert2_r) && (insert2_r < insert2.end()));
-    // ASSERT EQ { 6, 5, 4, 9, 9, 9, 3, 2, 1 }
+    ASSERT_EQ(insert2, (GenericIntVector<T> { 6, 5, 4, 9, 9, 9, 3, 2, 1 }));
 
     GenericIntVector<T> insert3 { 6, 5, 4, 3, 2, 1 };
     GenericIntVector<T> insert3_src { 9, 8, 7 };
     auto insert3_r = insert3.insert(insert3.cbegin() + 3, insert3_src.begin(), insert3_src.end());
     ASSERT_EQ(*insert3_r, uint64_t(T(9)));
     ASSERT_TRUE((insert3.begin() < insert3_r) && (insert3_r < insert3.end()));
-    // ASSERT EQ { 6, 5, 4, 9, 8, 7, 3, 2, 1 }
+    ASSERT_EQ(insert3, (GenericIntVector<T> { 6, 5, 4, 9, 8, 7, 3, 2, 1 }));
 
     GenericIntVector<T> insert4 { 6, 5, 4, 3, 2, 1 };
     auto insert4_v = T(9);
     auto insert4_r = insert4.insert(insert4.cbegin() + 3, std::move(insert4_v));
     ASSERT_EQ(*insert4_r, uint64_t(T(9)));
     ASSERT_TRUE((insert4.begin() < insert4_r) && (insert4_r < insert4.end()));
-    // ASSERT EQ { 6, 5, 4, 9, 3, 2, 1 }
+    ASSERT_EQ(insert4, (GenericIntVector<T> { 6, 5, 4, 9, 3, 2, 1 }));
 
     GenericIntVector<T> insert5 { 6, 5, 4, 3, 2, 1 };
     auto insert5_r = insert5.insert(insert5.cbegin() + 3, { 9, 8, 7 });
     ASSERT_EQ(*insert5_r, uint64_t(T(9)));
     ASSERT_TRUE((insert5.begin() < insert5_r) && (insert5_r < insert5.end()));
-    // ASSERT EQ { 6, 5, 4, 9, 8, 7, 3, 2, 1 }
+    ASSERT_EQ(insert5, (GenericIntVector<T> { 6, 5, 4, 9, 8, 7, 3, 2, 1 }));
 
     GenericIntVector<T> erase1 { 1, 2, 3, 9, 4, 5, 6 };
     auto erase1_r = erase1.erase(erase1.cbegin() + 3);
     ASSERT_TRUE((erase1.begin() < erase1_r) && (erase1_r < erase1.end()));
     ASSERT_EQ(*erase1_r, uint64_t(T(4)));
-    // ASSERT EQ { 1, 2, 3, 4, 5, 6 }
+    ASSERT_EQ(erase1, (GenericIntVector<T> { 1, 2, 3, 4, 5, 6 }));
 
     GenericIntVector<T> erase2 { 1, 2, 3, 9, 4, 5, 6 };
     auto erase2_r = erase2.erase(erase2.cbegin() + 3, erase2.cbegin() + 5);
     ASSERT_TRUE((erase2.begin() < erase2_r) && (erase2_r < erase2.end()));
     ASSERT_EQ(*erase2_r, uint64_t(T(5)));
-    // ASSERT EQ { 1, 2, 3, 6 }
+    ASSERT_EQ(erase2, (GenericIntVector<T> { 1, 2, 3, 5, 6 }));
 
     GenericIntVector<T> swap_a { 1, 2, 3 };
     GenericIntVector<T> swap_b { 4, 5, 6 };
     swap_a.swap(swap_b);
-    // ASSERT a and b swapped
+    ASSERT_EQ(swap_a, (GenericIntVector<T> { 4, 5, 6 }));
+    ASSERT_EQ(swap_b, (GenericIntVector<T> { 1, 2, 3 }));
 
     GenericIntVector<T> clear { 9, 8, 7 };
     clear.clear();
     ASSERT_EQ(clear.size(), 0);
     ASSERT_EQ(clear.bit_size(), 0);
-    // ASSERT eq with empty
+    ASSERT_EQ(clear, (GenericIntVector<T> { }));
 
     GenericIntVector<T> emplace1 { 1, 2, 3, 4 };
     auto emplace1_r = emplace1.emplace(emplace1.cbegin() + 2, T(125));
-    // assert eq 1 2 125 3 4
+    ASSERT_EQ(emplace1, (GenericIntVector<T> { 1, 2, 125, 3, 4 }));
     ASSERT_TRUE((emplace1.begin() < emplace1_r) && (emplace1_r < emplace1.end()));
     // TODO: Fix
     ASSERT_EQ(*emplace1_r, uint64_t(T(125)));
 
     GenericIntVector<T> emplace2 { 1, 2, 3, 4 };
     emplace2.emplace_back(125);
-    // assert eq 1 2 3 4 125
+    ASSERT_EQ(emplace2, (GenericIntVector<T> { 1, 2, 3, 4, 125 }));
 
     GenericIntVector<T> ref_ptr { 1, 2, 3 };
     auto ptr = &ref_ptr[1];
@@ -999,17 +1001,22 @@ TEST(generic_int_vector, uint_t_24) {
     generic_int_vector_template<uint_t<24>>();
 }
 
-TEST(generic_int_vector, uint_t_1) {
-    generic_int_vector_template<uint_t<1>>();
+TEST(generic_int_vector, uint_t_9) {
+    generic_int_vector_template<uint_t<9>>();
+}
+
+TEST(generic_int_vector, uint_t_7) {
+    generic_int_vector_template<uint_t<7>>();
 }
 
 TEST(generic_int_vector, uint_t_2) {
     generic_int_vector_template<uint_t<2>>();
 }
 
-TEST(generic_int_vector, uint_t_7) {
-    generic_int_vector_template<uint_t<7>>();
+TEST(generic_int_vector, uint_t_1) {
+    generic_int_vector_template<uint_t<1>>();
 }
+
 
 template<size_t N>
 void generic_int_vector_trait_template() {
@@ -1034,14 +1041,14 @@ void generic_int_vector_trait_template() {
     ASSERT_EQ(T::elem2bits(10), N * 10);
 }
 
-TEST(generic_int_vector_trait_template, N1) {
-    generic_int_vector_trait_template<1>();
+TEST(generic_int_vector_trait_template, N9) {
+    generic_int_vector_trait_template<9>();
 }
 
 TEST(generic_int_vector_trait_template, N7) {
     generic_int_vector_trait_template<7>();
 }
 
-TEST(generic_int_vector_trait_template, N9) {
-    generic_int_vector_trait_template<9>();
+TEST(generic_int_vector_trait_template, N1) {
+    generic_int_vector_trait_template<1>();
 }
