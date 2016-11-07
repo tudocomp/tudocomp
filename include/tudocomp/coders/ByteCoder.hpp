@@ -12,7 +12,6 @@ public:
         return m;
     }
 
-    inline ByteCoder() = delete;
     inline ByteCoder(Env&& env) : Coder(std::move(env)) {}
 
     template<typename range_t>

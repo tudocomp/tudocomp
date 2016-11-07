@@ -13,7 +13,6 @@ public:
         return m;
     }
 
-    inline ASCIICoder() = delete;
     inline ASCIICoder(Env&& env) : Coder(std::move(env)) {}
 
     template<typename range_t>

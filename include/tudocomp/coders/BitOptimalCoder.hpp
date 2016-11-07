@@ -13,7 +13,6 @@ public:
         return m;
     }
 
-    inline BitOptimalCoder() = delete;
     inline BitOptimalCoder(Env&& env) : Coder(std::move(env)) {}
 
     template<typename range_t>

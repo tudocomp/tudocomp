@@ -18,7 +18,6 @@ protected:
     std::unique_ptr<BitIStream> m_in;
 
 public:
-    inline Coder() = delete;
     inline Coder(Env&& env) : Algorithm(std::move(env)) {}
 
     inline ~Coder() {
