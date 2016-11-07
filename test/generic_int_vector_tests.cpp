@@ -586,6 +586,14 @@ TEST(uint_t, b40) {
 
 }
 
+TEST(uint_t, multi_inherit) {
+    uint_t<7> x = 0;
+    x = x + uint32_t(1);
+    x = x + uint64_t(1);
+    x = x + int(1);
+    ASSERT_EQ(int(x), 3);
+}
+
 template<class T> struct bit_size {
     static const uint64_t size = sizeof(T) * CHAR_BIT;
 };

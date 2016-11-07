@@ -22,9 +22,135 @@ struct IntegerBaseTrait: public IntegerBaseTraitConst<T, X> {
 
 template<class Self>
 class IntegerBase;
+template<class Self>
+class IntegerBaseWithSelf;
+template<class Self, class Other>
+class IntegerBaseWith32;
+template<class Self, class Other>
+class IntegerBaseWith64;
+
+template<class Self, class Other>
+class ConstIntegerBaseWith32 {
+public:
+    typedef typename IntegerBaseTraitConst<Self>::SelfMaxBit SelfMaxBit;
+private:
+    inline static SelfMaxBit cast_for_32_op(const Self& self) {
+        return IntegerBaseTraitConst<Self>::cast_for_32_op(self);
+    }
+
+    friend class IntegerBaseWith32<Self, Other>;
+public:
+    friend SelfMaxBit operator+(const Other& lhs, const Self& rhs) { return lhs                   + cast_for_32_op(rhs);   }
+    friend SelfMaxBit operator+(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   + rhs;                   }
+
+    friend SelfMaxBit operator-(const Other& lhs, const Self& rhs) { return lhs                   - cast_for_32_op(rhs);   }
+    friend SelfMaxBit operator-(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   - rhs;                   }
+
+    friend SelfMaxBit operator*(const Other& lhs, const Self& rhs) { return lhs                   * cast_for_32_op(rhs);   }
+    friend SelfMaxBit operator*(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   * rhs;                   }
+
+    friend SelfMaxBit operator/(const Other& lhs, const Self& rhs) { return lhs                   / cast_for_32_op(rhs);   }
+    friend SelfMaxBit operator/(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   / rhs;                   }
+
+    friend SelfMaxBit operator%(const Other& lhs, const Self& rhs) { return lhs                   % cast_for_32_op(rhs);   }
+    friend SelfMaxBit operator%(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   % rhs;                   }
+
+    friend SelfMaxBit operator&(const Other& lhs, const Self& rhs) { return lhs                   & cast_for_32_op(rhs);   }
+    friend SelfMaxBit operator&(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   & rhs;                   }
+
+    friend SelfMaxBit operator|(const Other& lhs, const Self& rhs) { return lhs                   | cast_for_32_op(rhs);   }
+    friend SelfMaxBit operator|(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   | rhs;                   }
+
+    friend SelfMaxBit operator^(const Other& lhs, const Self& rhs) { return lhs                   ^ cast_for_32_op(rhs);   }
+    friend SelfMaxBit operator^(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   ^ rhs;                   }
+
+    friend SelfMaxBit operator<<(const Other& lhs, const Self& rhs) { return lhs                   << cast_for_32_op(rhs);   }
+    friend SelfMaxBit operator<<(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   << rhs;                   }
+
+    friend SelfMaxBit operator>>(const Other& lhs, const Self& rhs) { return lhs                   >> cast_for_32_op(rhs);   }
+    friend SelfMaxBit operator>>(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   >> rhs;                   }
+
+    friend bool operator==(const Other& lhs, const Self& rhs) { return lhs                   == cast_for_32_op(rhs);   }
+    friend bool operator==(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   == rhs;                   }
+
+    friend bool operator!=(const Other& lhs, const Self& rhs) { return lhs                   != cast_for_32_op(rhs);   }
+    friend bool operator!=(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   != rhs;                   }
+
+    friend bool operator>(const Other& lhs, const Self& rhs) { return lhs                   > cast_for_32_op(rhs);   }
+    friend bool operator>(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   > rhs;                   }
+
+    friend bool operator<(const Other& lhs, const Self& rhs) { return lhs                   < cast_for_32_op(rhs);   }
+    friend bool operator<(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   < rhs;                   }
+
+    friend bool operator>=(const Other& lhs, const Self& rhs) { return lhs                   >= cast_for_32_op(rhs);   }
+    friend bool operator>=(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   >= rhs;                   }
+
+    friend bool operator<=(const Other& lhs, const Self& rhs) { return lhs                   <= cast_for_32_op(rhs);   }
+    friend bool operator<=(const Self& lhs, const Other& rhs) { return cast_for_32_op(lhs)   <= rhs;                   }
+};
+
+template<class Self, class Other>
+class ConstIntegerBaseWith64 {
+public:
+    typedef typename IntegerBaseTraitConst<Self>::SelfMaxBit SelfMaxBit;
+private:
+    inline static Other cast_for_64_op(const Self& self) {
+        return IntegerBaseTraitConst<Self>::cast_for_64_op(self);
+    }
+
+    friend class IntegerBaseWith64<Self, Other>;
+public:
+    friend Other   operator+(const Other& lhs, const Self& rhs) { return lhs                   + cast_for_64_op(rhs);   }
+    friend Other   operator+(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   + rhs;                   }
+
+    friend Other   operator-(const Other& lhs, const Self& rhs) { return lhs                   - cast_for_64_op(rhs);   }
+    friend Other   operator-(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   - rhs;                   }
+
+    friend Other   operator*(const Other& lhs, const Self& rhs) { return lhs                   * cast_for_64_op(rhs);   }
+    friend Other   operator*(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   * rhs;                   }
+
+    friend Other   operator/(const Other& lhs, const Self& rhs) { return lhs                   / cast_for_64_op(rhs);   }
+    friend Other   operator/(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   / rhs;                   }
+
+    friend Other   operator%(const Other& lhs, const Self& rhs) { return lhs                   % cast_for_64_op(rhs);   }
+    friend Other   operator%(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   % rhs;                   }
+
+    friend Other   operator&(const Other& lhs, const Self& rhs) { return lhs                   & cast_for_64_op(rhs);   }
+    friend Other   operator&(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   & rhs;                   }
+
+    friend Other   operator|(const Other& lhs, const Self& rhs) { return lhs                   | cast_for_64_op(rhs);   }
+    friend Other   operator|(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   | rhs;                   }
+
+    friend Other   operator^(const Other& lhs, const Self& rhs) { return lhs                   ^ cast_for_64_op(rhs);   }
+    friend Other   operator^(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   ^ rhs;                   }
+
+    friend Other   operator<<(const Other& lhs, const Self& rhs) { return lhs                   << cast_for_64_op(rhs);   }
+    friend Other   operator<<(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   << rhs;                   }
+
+    friend Other   operator>>(const Other& lhs, const Self& rhs) { return lhs                   >> cast_for_64_op(rhs);   }
+    friend Other   operator>>(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   >> rhs;                   }
+
+    friend bool operator==(const Other& lhs, const Self& rhs) { return lhs                   == cast_for_64_op(rhs);   }
+    friend bool operator==(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   == rhs;                   }
+
+    friend bool operator!=(const Other& lhs, const Self& rhs) { return lhs                   != cast_for_64_op(rhs);   }
+    friend bool operator!=(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   != rhs;                   }
+
+    friend bool operator>(const Other& lhs, const Self& rhs) { return lhs                   > cast_for_64_op(rhs);   }
+    friend bool operator>(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   > rhs;                   }
+
+    friend bool operator<(const Other& lhs, const Self& rhs) { return lhs                   < cast_for_64_op(rhs);   }
+    friend bool operator<(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   < rhs;                   }
+
+    friend bool operator>=(const Other& lhs, const Self& rhs) { return lhs                   >= cast_for_64_op(rhs);   }
+    friend bool operator>=(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   >= rhs;                   }
+
+    friend bool operator<=(const Other& lhs, const Self& rhs) { return lhs                   <= cast_for_64_op(rhs);   }
+    friend bool operator<=(const Self& lhs, const Other& rhs) { return cast_for_64_op(lhs)   <= rhs;                   }
+};
 
 template<class Self>
-class ConstIntegerBase {
+class ConstIntegerBaseWithSelf {
 public:
     typedef typename IntegerBaseTraitConst<Self>::SelfMaxBit SelfMaxBit;
 private:
@@ -32,155 +158,89 @@ private:
         return IntegerBaseTraitConst<Self>::cast_for_self_op(self);
     }
 
-    inline static uint64_t cast_for_64_op(const Self& self) {
-        return IntegerBaseTraitConst<Self>::cast_for_64_op(self);
-    }
-
-    inline static SelfMaxBit cast_for_32_op(const Self& self) {
-        return IntegerBaseTraitConst<Self>::cast_for_32_op(self);
-    }
-
-    friend class IntegerBase<Self>;
+    friend class IntegerBaseWithSelf<Self>;
 public:
-    friend SelfMaxBit operator+(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) + cast_for_self_op(rhs); }
-    friend SelfMaxBit operator+(const uint32_t& lhs, const Self& rhs) { return lhs                   + cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator+(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   + rhs;                   }
-    friend uint64_t   operator+(const uint64_t& lhs, const Self& rhs) { return lhs                   + cast_for_64_op(rhs);   }
-    friend uint64_t   operator+(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   + rhs;                   }
-    friend SelfMaxBit operator+(const int& lhs, const Self& rhs)      { return lhs                   + cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator+(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   + rhs;                   }
-
-    friend SelfMaxBit operator-(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) - cast_for_self_op(rhs); }
-    friend SelfMaxBit operator-(const uint32_t& lhs, const Self& rhs) { return lhs                   - cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator-(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   - rhs;                   }
-    friend uint64_t   operator-(const uint64_t& lhs, const Self& rhs) { return lhs                   - cast_for_64_op(rhs);   }
-    friend uint64_t   operator-(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   - rhs;                   }
-    friend SelfMaxBit operator-(const int& lhs, const Self& rhs)      { return lhs                   - cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator-(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   - rhs;                   }
-
-    friend SelfMaxBit operator*(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) * cast_for_self_op(rhs); }
-    friend SelfMaxBit operator*(const uint32_t& lhs, const Self& rhs) { return lhs                   * cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator*(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   * rhs;                   }
-    friend uint64_t   operator*(const uint64_t& lhs, const Self& rhs) { return lhs                   * cast_for_64_op(rhs);   }
-    friend uint64_t   operator*(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   * rhs;                   }
-    friend SelfMaxBit operator*(const int& lhs, const Self& rhs)      { return lhs                   * cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator*(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   * rhs;                   }
-
-    friend SelfMaxBit operator/(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) / cast_for_self_op(rhs); }
-    friend SelfMaxBit operator/(const uint32_t& lhs, const Self& rhs) { return lhs                   / cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator/(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   / rhs;                   }
-    friend uint64_t   operator/(const uint64_t& lhs, const Self& rhs) { return lhs                   / cast_for_64_op(rhs);   }
-    friend uint64_t   operator/(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   / rhs;                   }
-    friend SelfMaxBit operator/(const int& lhs, const Self& rhs)      { return lhs                   / cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator/(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   / rhs;                   }
-
-    friend SelfMaxBit operator%(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) % cast_for_self_op(rhs); }
-    friend SelfMaxBit operator%(const uint32_t& lhs, const Self& rhs) { return lhs                   % cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator%(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   % rhs;                   }
-    friend uint64_t   operator%(const uint64_t& lhs, const Self& rhs) { return lhs                   % cast_for_64_op(rhs);   }
-    friend uint64_t   operator%(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   % rhs;                   }
-    friend SelfMaxBit operator%(const int& lhs, const Self& rhs)      { return lhs                   % cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator%(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   % rhs;                   }
-
-    friend SelfMaxBit operator&(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) & cast_for_self_op(rhs); }
-    friend SelfMaxBit operator&(const uint32_t& lhs, const Self& rhs) { return lhs                   & cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator&(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   & rhs;                   }
-    friend uint64_t   operator&(const uint64_t& lhs, const Self& rhs) { return lhs                   & cast_for_64_op(rhs);   }
-    friend uint64_t   operator&(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   & rhs;                   }
-    friend SelfMaxBit operator&(const int& lhs, const Self& rhs)      { return lhs                   & cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator&(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   & rhs;                   }
-
-    friend SelfMaxBit operator|(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) | cast_for_self_op(rhs); }
-    friend SelfMaxBit operator|(const uint32_t& lhs, const Self& rhs) { return lhs                   | cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator|(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   | rhs;                   }
-    friend uint64_t   operator|(const uint64_t& lhs, const Self& rhs) { return lhs                   | cast_for_64_op(rhs);   }
-    friend uint64_t   operator|(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   | rhs;                   }
-    friend SelfMaxBit operator|(const int& lhs, const Self& rhs)      { return lhs                   | cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator|(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   | rhs;                   }
-
-    friend SelfMaxBit operator^(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) ^ cast_for_self_op(rhs); }
-    friend SelfMaxBit operator^(const uint32_t& lhs, const Self& rhs) { return lhs                   ^ cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator^(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   ^ rhs;                   }
-    friend uint64_t   operator^(const uint64_t& lhs, const Self& rhs) { return lhs                   ^ cast_for_64_op(rhs);   }
-    friend uint64_t   operator^(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   ^ rhs;                   }
-    friend SelfMaxBit operator^(const int& lhs, const Self& rhs)      { return lhs                   ^ cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator^(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   ^ rhs;                   }
-
+    friend SelfMaxBit operator+(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) + cast_for_self_op(rhs); }
+    friend SelfMaxBit operator-(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) - cast_for_self_op(rhs); }
+    friend SelfMaxBit operator*(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) * cast_for_self_op(rhs); }
+    friend SelfMaxBit operator/(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) / cast_for_self_op(rhs); }
+    friend SelfMaxBit operator%(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) % cast_for_self_op(rhs); }
+    friend SelfMaxBit operator&(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) & cast_for_self_op(rhs); }
+    friend SelfMaxBit operator|(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) | cast_for_self_op(rhs); }
+    friend SelfMaxBit operator^(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) ^ cast_for_self_op(rhs); }
     friend SelfMaxBit operator~(const Self& self) { return ~(cast_for_self_op(self)); }
-
-    friend SelfMaxBit operator<<(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) << cast_for_self_op(rhs); }
-    friend SelfMaxBit operator<<(const uint32_t& lhs, const Self& rhs) { return lhs                   << cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator<<(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   << rhs;                   }
-    friend uint64_t   operator<<(const uint64_t& lhs, const Self& rhs) { return lhs                   << cast_for_64_op(rhs);   }
-    friend uint64_t   operator<<(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   << rhs;                   }
-    friend SelfMaxBit operator<<(const int& lhs, const Self& rhs)      { return lhs                   << cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator<<(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   << rhs;                   }
-
-    friend SelfMaxBit operator>>(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) >> cast_for_self_op(rhs); }
-    friend SelfMaxBit operator>>(const uint32_t& lhs, const Self& rhs) { return lhs                   >> cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator>>(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   >> rhs;                   }
-    friend uint64_t   operator>>(const uint64_t& lhs, const Self& rhs) { return lhs                   >> cast_for_64_op(rhs);   }
-    friend uint64_t   operator>>(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   >> rhs;                   }
-    friend SelfMaxBit operator>>(const int& lhs, const Self& rhs)      { return lhs                   >> cast_for_32_op(rhs);   }
-    friend SelfMaxBit operator>>(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   >> rhs;                   }
-
-    friend bool operator==(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) == cast_for_self_op(rhs); }
-    friend bool operator==(const uint32_t& lhs, const Self& rhs) { return lhs                   == cast_for_32_op(rhs);   }
-    friend bool operator==(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   == rhs;                   }
-    friend bool operator==(const uint64_t& lhs, const Self& rhs) { return lhs                   == cast_for_64_op(rhs);   }
-    friend bool operator==(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   == rhs;                   }
-    friend bool operator==(const int& lhs, const Self& rhs)      { return lhs                   == cast_for_32_op(rhs);   }
-    friend bool operator==(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   == rhs;                   }
-
-    friend bool operator!=(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) != cast_for_self_op(rhs); }
-    friend bool operator!=(const uint32_t& lhs, const Self& rhs) { return lhs                   != cast_for_32_op(rhs);   }
-    friend bool operator!=(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   != rhs;                   }
-    friend bool operator!=(const uint64_t& lhs, const Self& rhs) { return lhs                   != cast_for_64_op(rhs);   }
-    friend bool operator!=(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   != rhs;                   }
-    friend bool operator!=(const int& lhs, const Self& rhs)      { return lhs                   != cast_for_32_op(rhs);   }
-    friend bool operator!=(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   != rhs;                   }
-
-    friend bool operator>(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) > cast_for_self_op(rhs); }
-    friend bool operator>(const uint32_t& lhs, const Self& rhs) { return lhs                   > cast_for_32_op(rhs);   }
-    friend bool operator>(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   > rhs;                   }
-    friend bool operator>(const uint64_t& lhs, const Self& rhs) { return lhs                   > cast_for_64_op(rhs);   }
-    friend bool operator>(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   > rhs;                   }
-    friend bool operator>(const int& lhs, const Self& rhs)      { return lhs                   > cast_for_32_op(rhs);   }
-    friend bool operator>(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   > rhs;                   }
-
-    friend bool operator<(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) < cast_for_self_op(rhs); }
-    friend bool operator<(const uint32_t& lhs, const Self& rhs) { return lhs                   < cast_for_32_op(rhs);   }
-    friend bool operator<(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   < rhs;                   }
-    friend bool operator<(const uint64_t& lhs, const Self& rhs) { return lhs                   < cast_for_64_op(rhs);   }
-    friend bool operator<(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   < rhs;                   }
-    friend bool operator<(const int& lhs, const Self& rhs)      { return lhs                   < cast_for_32_op(rhs);   }
-    friend bool operator<(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   < rhs;                   }
-
-    friend bool operator>=(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) >= cast_for_self_op(rhs); }
-    friend bool operator>=(const uint32_t& lhs, const Self& rhs) { return lhs                   >= cast_for_32_op(rhs);   }
-    friend bool operator>=(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   >= rhs;                   }
-    friend bool operator>=(const uint64_t& lhs, const Self& rhs) { return lhs                   >= cast_for_64_op(rhs);   }
-    friend bool operator>=(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   >= rhs;                   }
-    friend bool operator>=(const int& lhs, const Self& rhs)      { return lhs                   >= cast_for_32_op(rhs);   }
-    friend bool operator>=(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   >= rhs;                   }
-
-    friend bool operator<=(const Self& lhs, const Self& rhs)     { return cast_for_self_op(lhs) <= cast_for_self_op(rhs); }
-    friend bool operator<=(const uint32_t& lhs, const Self& rhs) { return lhs                   <= cast_for_32_op(rhs);   }
-    friend bool operator<=(const Self& lhs, const uint32_t& rhs) { return cast_for_32_op(lhs)   <= rhs;                   }
-    friend bool operator<=(const uint64_t& lhs, const Self& rhs) { return lhs                   <= cast_for_64_op(rhs);   }
-    friend bool operator<=(const Self& lhs, const uint64_t& rhs) { return cast_for_64_op(lhs)   <= rhs;                   }
-    friend bool operator<=(const int& lhs, const Self& rhs)      { return lhs                   <= cast_for_32_op(rhs);   }
-    friend bool operator<=(const Self& lhs, const int& rhs)      { return cast_for_32_op(lhs)   <= rhs;                   }
-
+    friend SelfMaxBit operator<<(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) << cast_for_self_op(rhs); }
+    friend SelfMaxBit operator>>(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) >> cast_for_self_op(rhs); }
+    friend bool operator==(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) == cast_for_self_op(rhs); }
+    friend bool operator!=(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) != cast_for_self_op(rhs); }
+    friend bool operator>(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) > cast_for_self_op(rhs); }
+    friend bool operator<(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) < cast_for_self_op(rhs); }
+    friend bool operator>=(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) >= cast_for_self_op(rhs); }
+    friend bool operator<=(const Self& lhs, const Self& rhs) { return cast_for_self_op(lhs) <= cast_for_self_op(rhs); }
 };
 
 template<class Self>
-class IntegerBase: public ConstIntegerBase<Self> {
+class ConstIntegerBase:
+    public ConstIntegerBaseWithSelf<Self>,
+    public ConstIntegerBaseWith32<Self, uint32_t>,
+    public ConstIntegerBaseWith32<Self, int>,
+    public ConstIntegerBaseWith64<Self, uint64_t>
+{
+public:
+    typedef typename IntegerBaseTraitConst<Self>::SelfMaxBit SelfMaxBit;
+};
+
+template<class Self, class Other>
+class IntegerBaseWith32: public ConstIntegerBaseWith32<Self, Other> {
+private:
+    inline static void assign(Self& self, uint32_t v) {
+        IntegerBaseTrait<Self>::assign(self, v);
+    }
+
+    inline static void assign(Self& self, uint64_t v) {
+        IntegerBaseTrait<Self>::assign(self, v);
+    }
+public:
+    Self& operator+=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
+    Self& operator-=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
+    Self& operator*=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
+    Self& operator/=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
+    Self& operator%=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
+    Self& operator&=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
+    Self& operator|=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
+    Self& operator^=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
+    Self& operator>>=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
+    Self& operator<<=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
+};
+
+template<class Self, class Other>
+class IntegerBaseWith64: public ConstIntegerBaseWith64<Self, Other> {
+private:
+    inline static void assign(Self& self, uint32_t v) {
+        IntegerBaseTrait<Self>::assign(self, v);
+    }
+
+    inline static void assign(Self& self, uint64_t v) {
+        IntegerBaseTrait<Self>::assign(self, v);
+    }
+public:
+    Self& operator+=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
+    Self& operator-=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
+    Self& operator*=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
+    Self& operator/=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
+    Self& operator%=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
+    Self& operator&=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
+    Self& operator|=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
+    Self& operator^=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
+    Self& operator>>=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
+    Self& operator<<=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
+};
+
+template<class Self>
+class IntegerBaseWithSelf: public ConstIntegerBaseWithSelf<Self> {
 private:
     typedef typename ConstIntegerBase<Self>::SelfMaxBit SelfMaxBit;
-    using ConstIntegerBase<Self>::cast_for_self_op;
-    using ConstIntegerBase<Self>::cast_for_32_op;
-    using ConstIntegerBase<Self>::cast_for_64_op;
+    using ConstIntegerBaseWithSelf<Self>::cast_for_self_op;
 
     inline static void assign(Self& self, uint32_t v) {
         IntegerBaseTrait<Self>::assign(self, v);
@@ -190,61 +250,84 @@ private:
         IntegerBaseTrait<Self>::assign(self, v);
     }
 public:
-    Self& operator+=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
-    Self& operator+=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
-    Self& operator+=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
-    Self& operator+=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
-
-    Self& operator-=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
-    Self& operator-=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
-    Self& operator-=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
-    Self& operator-=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self; }
-
-    Self& operator*=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
-    Self& operator*=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
-    Self& operator*=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
-    Self& operator*=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self; }
-
-    Self& operator/=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
-    Self& operator/=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
-    Self& operator/=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
-    Self& operator/=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self; }
-
-    Self& operator%=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
-    Self& operator%=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
-    Self& operator%=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
-    Self& operator%=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self; }
+    Self& operator+=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self;  }
+    Self& operator-=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self - v); return self;  }
+    Self& operator*=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self * v); return self;  }
+    Self& operator/=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self;  }
+    Self& operator%=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self;  }
 
     Self& operator++() { auto& self = static_cast<Self&>(*this); assign(self, self + 1); return self; }
     Self& operator--() { auto& self = static_cast<Self&>(*this); assign(self, self - 1); return self; }
-
     SelfMaxBit operator++(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self + 1); return tmp; }
     SelfMaxBit operator--(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self - 1); return tmp; }
 
-    Self& operator&=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
-    Self& operator&=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
-    Self& operator&=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
-    Self& operator&=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self; }
+    Self& operator&=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self;  }
+    Self& operator|=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self;  }
+    Self& operator^=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self;  }
+    Self& operator>>=(const Self& v)    { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
+    Self& operator<<=(const Self& v)    { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
+};
 
-    Self& operator|=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
-    Self& operator|=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
-    Self& operator|=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
-    Self& operator|=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self; }
 
-    Self& operator^=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
-    Self& operator^=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
-    Self& operator^=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
-    Self& operator^=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self ^ v); return self; }
+// NB: This is a hack needed to get the lookup rules for the operator memebers
+// play nice. The basic issue is that different overloads in different base
+// classes will be considered ambigious, so we need to import them all into
+// the same base class.
 
-    Self& operator>>=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
-    Self& operator>>=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
-    Self& operator>>=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
-    Self& operator>>=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self >> v); return self; }
+template<typename...>
+class IntegerBaseCombiner;
 
-    Self& operator<<=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
-    Self& operator<<=(const uint32_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
-    Self& operator<<=(const uint64_t& v) { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
-    Self& operator<<=(const int& v)      { auto& self = static_cast<Self&>(*this); assign(self, self << v); return self; }
+template<typename T, typename... Ts>
+class IntegerBaseCombiner<T, Ts...>: public T, public IntegerBaseCombiner<Ts...> {
+public:
+    using T::operator +=;
+    using T::operator -=;
+    using T::operator *=;
+    using T::operator /=;
+    using T::operator %=;
+    using T::operator &=;
+    using T::operator |=;
+    using T::operator ^=;
+    using T::operator >>=;
+    using T::operator <<=;
+
+    using IntegerBaseCombiner<Ts...>::operator +=;
+    using IntegerBaseCombiner<Ts...>::operator +=;
+    using IntegerBaseCombiner<Ts...>::operator -=;
+    using IntegerBaseCombiner<Ts...>::operator *=;
+    using IntegerBaseCombiner<Ts...>::operator /=;
+    using IntegerBaseCombiner<Ts...>::operator %=;
+    using IntegerBaseCombiner<Ts...>::operator &=;
+    using IntegerBaseCombiner<Ts...>::operator |=;
+    using IntegerBaseCombiner<Ts...>::operator ^=;
+    using IntegerBaseCombiner<Ts...>::operator >>=;
+    using IntegerBaseCombiner<Ts...>::operator <<=;
+};
+
+template<typename T>
+class IntegerBaseCombiner<T>: public T {
+public:
+    using T::operator +=;
+    using T::operator -=;
+    using T::operator *=;
+    using T::operator /=;
+    using T::operator %=;
+    using T::operator &=;
+    using T::operator |=;
+    using T::operator ^=;
+    using T::operator >>=;
+    using T::operator <<=;
+};
+
+template<class Self>
+class IntegerBase:
+    public IntegerBaseCombiner<
+        IntegerBaseWithSelf<Self>,
+        IntegerBaseWith32<Self, uint32_t>,
+        IntegerBaseWith32<Self, int>,
+        IntegerBaseWith64<Self, uint64_t>
+    >
+{
 };
 
 }
