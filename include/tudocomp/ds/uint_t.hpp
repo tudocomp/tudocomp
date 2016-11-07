@@ -22,7 +22,7 @@ class uint_t: public IntegerBase<uint_t<bits>> {
     friend class tdc::IntegerBaseTraitConst<uint_t<bits>>;
 
 public:
-    uint_t() {}
+    uint_t(): m_data(0) {}
     uint_t(const uint_t&& i): m_data(i.m_data) {}
 
     // copying
