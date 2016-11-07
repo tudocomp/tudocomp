@@ -189,4 +189,3 @@ TEST(ds, ISA)         { TEST_ALL(test_isa); }
 TEST(ds, Phi)         { TEST_ALL(test_phi); }
 TEST(ds, LCP)         { TEST_ALL(test_lcp); }
 TEST(ds, Integration) { TEST_ALL(test_all_ds); }
-
