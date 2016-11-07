@@ -638,7 +638,7 @@ namespace int_vector {
         }
 
         inline iterator insert(const_iterator position, size_type n, const value_type& val) {
-            // Remember integer offset before iterator invalidation
+            // Remember element offset before iterator invalidation
             auto p = (position - cbegin());
 
             // Step 1: Grow backing vector by needed amount
@@ -653,22 +653,28 @@ namespace int_vector {
                 }
 
                 auto new_backing_needed = bits2backing(new_bits_needed);
-                m_vec.insert(m_vec.end(), new_backing_needed, 0);
+                m_vec.insert(m_vec.cend(), new_backing_needed, 0);
+                m_real_size += n;
             }
 
             // Step 2: move elements to back, leaving a gap
             {
-                auto start = std::reverse_iterator<iterator>(begin() + p);
-                auto old_end = rbegin();
-                m_real_size += n;
-                auto new_end = rbegin();
-                // TODO: std::copy_backwards
-                std::copy(old_end, start, new_end);
+                auto start = begin() + p;
+                auto old_end = end() - n;
+                auto new_end = end();
+
+                // NB: failed at using std::reverse_copy() for this,
+                // so writing it manually
+                while(start != old_end) {
+                    --new_end;
+                    --old_end;
+                    *new_end = *old_end;
+                }
             }
 
             // Step 3: insert new values at gap
             {
-                for(auto a = begin() + p, b = end(); a != b; ++a) {
+                for(auto a = begin() + p, b = begin() + p + n; a != b; ++a) {
                     *a = val;
                 }
 
