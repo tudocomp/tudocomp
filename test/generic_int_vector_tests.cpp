@@ -599,6 +599,12 @@ void generic_int_vector_template() {
     auto N = bit_size<T>::size;
     std::cout << "tests for " << N << "\n";
 
+    if (N % 8 == 0) {
+        ASSERT_EQ(GenericIntVector<T>::element_storage_mode(), ElementStorageMode::Direct);
+    } else {
+        ASSERT_EQ(GenericIntVector<T>::element_storage_mode(), ElementStorageMode::BitPacked);
+    }
+
     ASSERT_TRUE ((GenericIntVector<T> { 1, 2, 3 }) == (GenericIntVector<T> { 1, 2, 3 }));
     ASSERT_TRUE ((GenericIntVector<T> {         }) == (GenericIntVector<T> {         }));
     ASSERT_TRUE ((GenericIntVector<T> { 9       }) == (GenericIntVector<T> { 9       }));

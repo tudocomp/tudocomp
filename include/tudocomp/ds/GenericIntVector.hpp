@@ -336,273 +336,10 @@ namespace int_vector {
 
     static_assert(sizeof(GenericIntPtr<ConstIntPtr, Const>) <= (sizeof(void*) * 2), "make sure this is reasonably small");
 
-    template<class T>
-    struct even_bit_backing_data {
-        typedef typename std::vector<T>::value_type             value_type;
-
-        typedef typename std::vector<T>::reference              reference;
-        typedef typename std::vector<T>::const_reference        const_reference;
-
-        typedef typename std::vector<T>::pointer                pointer;
-        typedef typename std::vector<T>::const_pointer          const_pointer;
-
-        typedef typename std::vector<T>::iterator               iterator;
-        typedef typename std::vector<T>::const_iterator         const_iterator;
-
-        typedef typename std::vector<T>::reverse_iterator       reverse_iterator;
-        typedef typename std::vector<T>::const_reverse_iterator const_reverse_iterator;
-
-        typedef typename std::vector<T>::difference_type        difference_type;
-        typedef typename std::vector<T>::size_type              size_type;
-
-        typedef T                                               internal_data_type;
-
-        std::vector<T> m_vec;
-
-        inline explicit even_bit_backing_data() {}
-        inline explicit even_bit_backing_data(size_type n): m_vec(n) {}
-        inline even_bit_backing_data(size_type n, const value_type& val): m_vec(n, val) {}
-        template <class InputIterator>
-        inline even_bit_backing_data (InputIterator first, InputIterator last): m_vec(first, last) {}
-        inline even_bit_backing_data (const even_bit_backing_data& other): m_vec(other.m_vec) {}
-        inline even_bit_backing_data (even_bit_backing_data&& other): m_vec(std::move(other.m_vec)) {}
-        inline even_bit_backing_data (std::initializer_list<value_type> il): m_vec(il) {}
-
-        inline even_bit_backing_data& operator=(const even_bit_backing_data& other) {
-            m_vec = other.m_vec;
-            return *this;
-        }
-
-        inline even_bit_backing_data& operator=(even_bit_backing_data&& other) {
-            m_vec = std::move(other.m_vec);
-            return *this;
-        }
-
-        inline even_bit_backing_data& operator=(std::initializer_list<value_type> il) {
-            m_vec = il;
-            return *this;
-        }
-
-        inline iterator begin() {
-            return m_vec.begin();
-        }
-
-        inline iterator end() {
-            return m_vec.end();
-        }
-
-        inline reverse_iterator rbegin() {
-            return m_vec.rbegin();
-        }
-
-        inline reverse_iterator rend() {
-            return m_vec.rend();
-        }
-
-        inline const_iterator begin() const {
-            return m_vec.begin();
-        }
-
-        inline const_iterator end() const {
-            return m_vec.end();
-        }
-
-        inline const_reverse_iterator rbegin() const {
-            return m_vec.rbegin();
-        }
-
-        inline const_reverse_iterator rend() const {
-            return m_vec.rend();
-        }
-
-        inline const_iterator cbegin() const {
-            return m_vec.cbegin();
-        }
-
-        inline const_iterator cend() const {
-            return m_vec.cend();
-        }
-
-        inline const_reverse_iterator crbegin() const {
-            return m_vec.crbegin();
-        }
-
-        inline const_reverse_iterator crend() const {
-            return m_vec.crend();
-        }
-
-        inline size_type size() const {
-            return m_vec.size();
-        }
-
-        inline uint64_t bit_size() const {
-            return size() * sizeof(T) * CHAR_BIT;
-        }
-
-        inline size_type max_size() const {
-            return m_vec.max_size();
-        }
-
-        inline void resize(size_type n) {
-            m_vec.resize(n);
-        }
-
-        inline void resize(size_type n, const value_type& val) {
-            m_vec.resize(n, val);
-        }
-
-        inline size_type capacity() const {
-            return m_vec.capacity();
-        }
-
-        inline bool empty() const {
-            return m_vec.empty();
-        }
-
-        inline void reserve(size_type n) {
-            m_vec.reserve(n);
-        }
-
-        inline reference operator[](size_type n) {
-            return m_vec[n];
-        }
-
-        inline const_reference operator[](size_type n) const {
-            return m_vec[n];
-        }
-
-        inline reference at(size_type n) {
-            return m_vec.at(n);
-        }
-
-        inline const_reference at(size_type n) const {
-            return m_vec.at(n);
-        }
-
-        inline reference front() {
-            return m_vec.front();
-        }
-
-        inline const_reference front() const {
-            return m_vec.front();
-        }
-
-        inline reference back() {
-            return m_vec.back();
-        }
-
-        inline const_reference back() const {
-            return m_vec.back();
-        }
-
-        template <class InputIterator>
-        inline void assign(InputIterator first, InputIterator last) {
-            m_vec.assign(first, last);
-        }
-
-        inline void assign(size_type n, const value_type& val) {
-            m_vec.assign(n, val);
-        }
-
-        inline void assign(std::initializer_list<value_type> il) {
-            m_vec.assign(il);
-        }
-
-        inline void push_back(const value_type& val) {
-            m_vec.push_back(val);
-        }
-
-        inline void push_back(value_type&& val) {
-            m_vec.push_back(std::move(val));
-        }
-
-        inline void pop_back() {
-            m_vec.pop_back();
-        }
-
-        inline iterator insert(const_iterator position, const value_type& val) {
-            return m_vec.insert(position, val);
-        }
-
-        inline iterator insert(const_iterator position, size_type n, const value_type& val) {
-            return m_vec.insert(position, n, val);
-        }
-
-        template <class InputIterator>
-        inline iterator insert(const_iterator position, InputIterator first, InputIterator last) {
-            return m_vec.insert(position, first, last);
-        }
-
-        inline iterator insert(const_iterator position, value_type&& val) {
-            return m_vec.insert(position, std::move(val));
-        }
-
-        inline iterator insert(const_iterator position, std::initializer_list<value_type> il) {
-            return m_vec.insert(position, il);
-        }
-
-        inline iterator erase(const_iterator position) {
-            return m_vec.erase(position);
-        }
-
-        inline iterator erase(const_iterator first, const_iterator last) {
-            return m_vec.erase(first, last);
-        }
-
-        inline void swap(even_bit_backing_data& other) {
-            m_vec.swap(other.m_vec);
-        }
-
-        inline void clear() {
-            m_vec.clear();
-        }
-
-        template <class... Args>
-        inline iterator emplace(const_iterator position, Args&&... args) {
-            return m_vec.emplace(position, std::forward<Args...>(args)...);
-        }
-
-        template <class... Args>
-        inline void emplace_back(Args&&... args) {
-            m_vec.emplace_back(std::forward<Args...>(args)...);
-        }
+    enum class ElementStorageMode {
+        Direct,
+        BitPacked
     };
-
-    template<class T>
-    bool operator==(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
-        return lhs.m_vec == rhs.m_vec;
-    }
-
-    template<class T>
-    bool operator!=(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
-        return lhs.m_vec != rhs.m_vec;
-    }
-
-    template<class T>
-    bool operator<(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
-        return lhs.m_vec < rhs.m_vec;
-    }
-
-    template<class T>
-    bool operator<=(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
-        return lhs.m_vec <= rhs.m_vec;
-    }
-
-    template<class T>
-    bool operator>(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
-        return lhs.m_vec > rhs.m_vec;
-    }
-
-    template<class T>
-    bool operator>=(const even_bit_backing_data<T>& lhs, const even_bit_backing_data<T>& rhs) {
-        return lhs.m_vec >= rhs.m_vec;
-    }
-
-    template<class T>
-    void swap(even_bit_backing_data<T>& lhs, even_bit_backing_data<T>& rhs) {
-        using std::swap;
-        swap(lhs.m_vec, rhs.m_vec);
-    }
 
     template<size_t N>
     struct odd_bit_backing_data {
@@ -799,6 +536,10 @@ namespace int_vector {
             m_vec.reserve(bits2backing(elem2bits(n)));
         }
 
+        inline void shrink_to_fit() {
+            m_vec.shrink_to_fit();
+        }
+
         inline reference operator[](size_type n) {
             DCHECK(n < size());
             auto x = bitpos2backingpos(elem2bits(n));
@@ -846,6 +587,14 @@ namespace int_vector {
 
         inline const_reference back() const {
             return operator[](size() - 1);
+        }
+
+        inline internal_data_type* data() noexcept {
+            return m_vec.data();
+        }
+
+        inline const internal_data_type* data() const noexcept {
+            return m_vec.data();
         }
 
         template <class InputIterator>
@@ -1045,48 +794,33 @@ namespace int_vector {
 
     template<class T, class X = void>
     struct GenericIntVectorTrait {
-        typedef typename even_bit_backing_data<T>::value_type             value_type;
+        typedef typename std::vector<T>::value_type             value_type;
 
-        typedef typename even_bit_backing_data<T>::reference              reference;
-        typedef typename even_bit_backing_data<T>::const_reference        const_reference;
+        typedef typename std::vector<T>::reference              reference;
+        typedef typename std::vector<T>::const_reference        const_reference;
 
-        typedef typename even_bit_backing_data<T>::pointer                pointer;
-        typedef typename even_bit_backing_data<T>::const_pointer          const_pointer;
+        typedef typename std::vector<T>::pointer                pointer;
+        typedef typename std::vector<T>::const_pointer          const_pointer;
 
-        typedef typename even_bit_backing_data<T>::iterator               iterator;
-        typedef typename even_bit_backing_data<T>::const_iterator         const_iterator;
+        typedef typename std::vector<T>::iterator               iterator;
+        typedef typename std::vector<T>::const_iterator         const_iterator;
 
-        typedef typename even_bit_backing_data<T>::reverse_iterator       reverse_iterator;
-        typedef typename even_bit_backing_data<T>::const_reverse_iterator const_reverse_iterator;
+        typedef typename std::vector<T>::reverse_iterator       reverse_iterator;
+        typedef typename std::vector<T>::const_reverse_iterator const_reverse_iterator;
 
-        typedef typename even_bit_backing_data<T>::difference_type        difference_type;
-        typedef typename even_bit_backing_data<T>::size_type              size_type;
+        typedef typename std::vector<T>::difference_type        difference_type;
+        typedef typename std::vector<T>::size_type              size_type;
 
-        typedef          even_bit_backing_data<T>                         backing_data;
-        typedef typename even_bit_backing_data<T>::internal_data_type     internal_data_type;
-    };
+        typedef          std::vector<T>                         backing_data;
+        typedef          T                                      internal_data_type;
 
-    template<size_t N>
-    struct GenericIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) == 0>::type> {
-        typedef typename even_bit_backing_data<uint_t<N>>::value_type             value_type;
+        inline static uint64_t bit_size(const backing_data& self) {
+            return sizeof(T) * CHAR_BIT * self.size();
+        }
 
-        typedef typename even_bit_backing_data<uint_t<N>>::reference              reference;
-        typedef typename even_bit_backing_data<uint_t<N>>::const_reference        const_reference;
-
-        typedef typename even_bit_backing_data<uint_t<N>>::pointer                pointer;
-        typedef typename even_bit_backing_data<uint_t<N>>::const_pointer          const_pointer;
-
-        typedef typename even_bit_backing_data<uint_t<N>>::iterator               iterator;
-        typedef typename even_bit_backing_data<uint_t<N>>::const_iterator         const_iterator;
-
-        typedef typename even_bit_backing_data<uint_t<N>>::reverse_iterator       reverse_iterator;
-        typedef typename even_bit_backing_data<uint_t<N>>::const_reverse_iterator const_reverse_iterator;
-
-        typedef typename even_bit_backing_data<uint_t<N>>::difference_type        difference_type;
-        typedef typename even_bit_backing_data<uint_t<N>>::size_type              size_type;
-
-        typedef          even_bit_backing_data<uint_t<N>>                         backing_data;
-        typedef typename even_bit_backing_data<uint_t<N>>::internal_data_type     internal_data_type;
+        static constexpr ElementStorageMode element_storage_mode() {
+            return ElementStorageMode::Direct;
+        }
     };
 
     template<size_t N>
@@ -1110,6 +844,14 @@ namespace int_vector {
 
         typedef          odd_bit_backing_data<N>                         backing_data;
         typedef typename odd_bit_backing_data<N>::internal_data_type     internal_data_type;
+
+        inline static uint64_t bit_size(const backing_data& self) {
+            return self.size() * N;
+        }
+
+        static constexpr ElementStorageMode element_storage_mode() {
+            return ElementStorageMode::BitPacked;
+        }
     };
 
     template<class T>
@@ -1130,6 +872,10 @@ namespace int_vector {
 
         /// The element type of the internal data buffer accessed with data()
         typedef typename GenericIntVectorTrait<T>::internal_data_type     internal_data_type;
+
+        static constexpr ElementStorageMode element_storage_mode() {
+            return GenericIntVectorTrait<T>::element_storage_mode();
+        }
     private:
         typename GenericIntVectorTrait<T>::backing_data m_data;
     public:
@@ -1221,7 +967,7 @@ namespace int_vector {
         }
 
         inline uint64_t bit_size() const {
-            return m_data.bit_size();
+            return GenericIntVectorTrait<T>::bit_size(m_data);
         }
 
         inline size_type max_size() const {
@@ -1249,7 +995,7 @@ namespace int_vector {
         }
 
         inline void shrink_to_fit() {
-            m_data.m_vec.shrink_to_fit();
+            m_data.shrink_to_fit();
         }
 
         inline reference operator[](size_type n) {
@@ -1285,11 +1031,11 @@ namespace int_vector {
         }
 
         inline internal_data_type* data() noexcept {
-            return m_data.m_vec.data();
+            return m_data.data();
         }
 
         inline const internal_data_type* data() const noexcept {
-            return m_data.m_vec.data();
+            return m_data.data();
         }
 
         template <class InputIterator>
