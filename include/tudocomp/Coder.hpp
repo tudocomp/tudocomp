@@ -21,6 +21,10 @@ public:
     inline Coder() = delete;
     inline Coder(Env&& env) : Algorithm(std::move(env)) {}
 
+    inline ~Coder() {
+        finalize();
+    }
+
     inline void encode_init(Output& out) {
         m_outs = std::make_unique<io::OutputStream>(out.as_stream());
         m_out = std::make_unique<BitOStream>(*m_outs);
@@ -29,6 +33,10 @@ public:
     inline void decode_init(Input& in) {
         m_ins = std::make_unique<io::InputStream>(in.as_stream());
         m_in = std::make_unique<BitIStream>(*m_ins, m_ins_done);
+    }
+
+    inline void finalize() {
+        m_out->flush();
     }
 };
 

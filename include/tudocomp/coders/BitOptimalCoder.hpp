@@ -24,10 +24,6 @@ public:
             m_out->write_int(v - r.min(), bits_for(r.max() - r.min()));
         }
     }
-
-    inline void finalize() {
-        m_out->flush();
-    }
 };
 
 }

@@ -19,10 +19,6 @@ public:
     inline void encode(uint64_t v, const range_t& r) {
         m_out->write_int(v, 8 * bytes_for(bits_for(r.max())));
     }
-
-    inline void finalize() {
-        m_out->flush();
-    }
 };
 
 }

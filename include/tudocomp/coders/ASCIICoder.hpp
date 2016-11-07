@@ -23,10 +23,6 @@ public:
         for(uint8_t c : s.str()) m_out->write_int(c);
         m_out->write_int(':');
     }
-
-    inline void finalize() {
-        m_out->flush();
-    }
 };
 
 template<>
