@@ -111,11 +111,55 @@ namespace int_vector {
         typedef DynamicIntValueType  val;
     };
 
+    template<size_t N>
+    struct StaticBitSize {
+        inline uint8_t size() { return N; }
+    };
+
+    struct DynamicBitSize {
+        uint8_t m_bit_size;
+        inline uint8_t size() { return m_bit_size; }
+    };
+
+    template<class T>
+    struct IntPtrTrait {
+    };
+
+    template<size_t N>
+    struct IntPtrTrait<ConstIntPtr<uint_t<N>>> {
+        class Data {
+        public:
+            const DynamicIntValueType* m_ptr;
+            uint8_t m_bit_offset;
+        private:
+            const uint8_t m_bit_size;
+        public:
+            Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
+                m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
+            inline uint8_t data_bit_size() const { return m_bit_size; }
+        };
+    };
+
+    template<size_t N>
+    struct IntPtrTrait<IntPtr<uint_t<N>>> {
+        class Data {
+        public:
+            DynamicIntValueType* m_ptr;
+            uint8_t m_bit_offset;
+        private:
+            const uint8_t m_bit_size;
+        public:
+            Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
+                m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
+            inline uint8_t data_bit_size() const { return m_bit_size; }
+        };
+    };
+
     template<class Self, class Ptr, class Layout, class T>
     class GenericIntRef;
 
     template<class Self, class Layout, class T>
-    class GenericIntPtr {
+    class GenericIntPtr: IntPtrTrait<Self>::Data {
     protected:
         friend class GenericIntRef<IntRef<T>, IntPtr<T>, Mut, T>;
         friend class GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, Const, T>;
@@ -125,38 +169,36 @@ namespace int_vector {
         friend class ConstIntegerBaseTrait<IntRef<T>>;
         friend class ConstIntegerBaseTrait<ConstIntRef<T>>;
 
-        typename Layout::ptr m_ptr;
-        typename Layout::off m_bit_offset;
-        typename Layout::len m_bit_size;
     public:
         GenericIntPtr(typename Layout::ptr ptr,
                       typename Layout::off bit_offset,
                       typename Layout::len bit_size):
-            m_ptr(ptr),
-            m_bit_offset(bit_offset),
-            m_bit_size(bit_size) {}
-        GenericIntPtr(): GenericIntPtr("\0\0\0\0", 0, 0) {}
+            IntPtrTrait<Self>::Data(ptr, bit_offset, bit_size) {}
+        // TODO: Nullpointer instead?
+        GenericIntPtr(): GenericIntPtr("\0\0\0\0\0\0\0\0", 0, 0) {}
+        GenericIntPtr(const typename IntPtrTrait<Self>::Data& other):
+            IntPtrTrait<Self>::Data(other) {}
         GenericIntPtr(const GenericIntPtr& other):
-            GenericIntPtr(other.m_ptr, other.m_bit_offset, other.m_bit_size) {}
+            IntPtrTrait<Self>::Data(other){}
 
         Self& operator=(const Self& other) {
-            DCHECK(m_bit_size == other.m_bit_size);
-            m_ptr = other.m_ptr;
-            m_bit_offset = other.m_bit_offset;
+            DCHECK(this->data_bit_size() == other.data_bit_size());
+            this->m_ptr = other.m_ptr;
+            this->m_bit_offset = other.m_bit_offset;
             return static_cast<Self&>(*this);
         }
 
         Self& operator++() {
-            const DynamicIntValueType* tmp = m_ptr;
-            bits::move_right(tmp, m_bit_offset, m_bit_size);
-            m_ptr = (DynamicIntValueType*) tmp;
+            const DynamicIntValueType* tmp = this->m_ptr;
+            bits::move_right(tmp, this->m_bit_offset, this->data_bit_size());
+            this->m_ptr = (DynamicIntValueType*) tmp;
             return static_cast<Self&>(*this);
         }
 
         Self& operator--() {
-            const DynamicIntValueType* tmp = m_ptr;
-            bits::move_left(tmp, m_bit_offset, m_bit_size);
-            m_ptr = (DynamicIntValueType*) tmp;
+            const DynamicIntValueType* tmp = this->m_ptr;
+            bits::move_left(tmp, this->m_bit_offset, this->data_bit_size());
+            this->m_ptr = (DynamicIntValueType*) tmp;
             return static_cast<Self&>(*this);
         }
 
@@ -179,23 +221,23 @@ namespace int_vector {
 
         friend ptrdiff_t operator-(const Self& lhs, const Self& rhs) {
             // TODO: test
-            DCHECK(lhs.m_bit_size == rhs.m_bit_size);
+            DCHECK(lhs.data_bit_size() == rhs.data_bit_size());
             auto ptr_diff = lhs.m_ptr - rhs.m_ptr;
             auto bit_count = ptr_diff * sizeof(typename Layout::val) * CHAR_BIT;
             bit_count += lhs.m_bit_offset;
             bit_count -= rhs.m_bit_offset;
-            bit_count /= lhs.m_bit_size;
+            bit_count /= lhs.data_bit_size();
             return bit_count;
         }
 
         friend bool operator==(const Self& lhs, const Self& rhs) {
-            DCHECK(lhs.m_bit_size == rhs.m_bit_size);
+            DCHECK(lhs.data_bit_size() == rhs.data_bit_size());
             return (lhs.m_ptr == rhs.m_ptr)
                 && (lhs.m_bit_offset == rhs.m_bit_offset);
         }
         friend bool operator<(const Self& lhs, const Self& rhs)  {
             // TODO: test
-            DCHECK(lhs.m_bit_size == rhs.m_bit_size);
+            DCHECK(lhs.data_bit_size() == rhs.data_bit_size());
             if (lhs.m_ptr < rhs.m_ptr) return true;
             if ((lhs.m_ptr == rhs.m_ptr) && (lhs.m_bit_offset < rhs.m_bit_offset)) return true;
             return false;
@@ -257,7 +299,7 @@ namespace int_vector {
         explicit GenericIntRef(const Ptr& ptr): m_ptr(ptr) {}
 
         operator value_type() const {
-            return bits::read_int(m_ptr.m_ptr, m_ptr.m_bit_offset, m_ptr.m_bit_size);
+            return bits::read_int(m_ptr.m_ptr, m_ptr.m_bit_offset, this->m_ptr.data_bit_size());
         }
 
     };
@@ -281,7 +323,7 @@ namespace int_vector {
         inline IntRef& operator=(value_type other) {
             bits::write_int(this->m_ptr.m_ptr, other,
                             this->m_ptr.m_bit_offset,
-                            this->m_ptr.m_bit_size);
+                            this->m_ptr.data_bit_size());
             return *this;
         };
 
@@ -361,7 +403,7 @@ namespace int_vector {
         rhs = tmp;
     }
 
-    static_assert(sizeof(GenericIntPtr<ConstIntPtr<void>, Const, void>) <= (sizeof(void*) * 2),
+    static_assert(sizeof(GenericIntPtr<ConstIntPtr<uint_t<40>>, Const, uint_t<40>>) <= (sizeof(void*) * 2),
                   "make sure this is reasonably small");
 
     enum class ElementStorageMode {
@@ -1202,21 +1244,21 @@ template<class T>
 inline typename ConstIntegerBaseTrait<int_vector::IntRef<T>>::SelfMaxBit ConstIntegerBaseTrait<int_vector::IntRef<T>>::cast_for_self_op(const S& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
+                            self.m_ptr.data_bit_size());
 }
 
 template<class T>
 inline typename ConstIntegerBaseTrait<int_vector::IntRef<T>>::SelfMaxBit ConstIntegerBaseTrait<int_vector::IntRef<T>>::cast_for_32_op(const S& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
+                            self.m_ptr.data_bit_size());
 }
 
 template<class T>
 inline uint64_t ConstIntegerBaseTrait<int_vector::IntRef<T>>::cast_for_64_op(const S& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
+                            self.m_ptr.data_bit_size());
 }
 
 template<class T>
@@ -1224,7 +1266,7 @@ inline void IntegerBaseTrait<int_vector::IntRef<T>>::assign(S& self, uint32_t v)
     bits::write_int(self.m_ptr.m_ptr,
                     v,
                     self.m_ptr.m_bit_offset,
-                    self.m_ptr.m_bit_size);
+                    self.m_ptr.data_bit_size());
 }
 
 template<class T>
@@ -1232,28 +1274,28 @@ inline void IntegerBaseTrait<int_vector::IntRef<T>>::assign(S& self, uint64_t v)
     bits::write_int(self.m_ptr.m_ptr,
                     v,
                     self.m_ptr.m_bit_offset,
-                    self.m_ptr.m_bit_size);
+                    self.m_ptr.data_bit_size());
 }
 
 template<class T>
 inline typename ConstIntegerBaseTrait<int_vector::ConstIntRef<T>>::SelfMaxBit ConstIntegerBaseTrait<int_vector::ConstIntRef<T>>::cast_for_self_op(const S& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
+                            self.m_ptr.data_bit_size());
 }
 
 template<class T>
 inline typename ConstIntegerBaseTrait<int_vector::ConstIntRef<T>>::SelfMaxBit ConstIntegerBaseTrait<int_vector::ConstIntRef<T>>::cast_for_32_op(const S& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
+                            self.m_ptr.data_bit_size());
 }
 
 template<class T>
 inline uint64_t ConstIntegerBaseTrait<int_vector::ConstIntRef<T>>::cast_for_64_op(const S& self) {
     return bits::read_int(self.m_ptr.m_ptr,
                             self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
+                            self.m_ptr.data_bit_size());
 }
 
 }
