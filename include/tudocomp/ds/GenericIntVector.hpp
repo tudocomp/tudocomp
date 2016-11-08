@@ -408,9 +408,9 @@ namespace int_vector {
         inline uint8_t width() const { return N; }
     };
 
-    template<size_t N>
-    struct odd_bit_backing_data: OddBitBackingBase<uint_t<N>> {
-        typedef typename OddBitBackingBase<uint_t<N>>::value_type    value_type;
+    template<class T>
+    struct odd_bit_backing_data: OddBitBackingBase<T> {
+        typedef typename OddBitBackingBase<T>::value_type    value_type;
 
         typedef IntRef<value_type>                                   reference;
         typedef ConstIntRef<value_type>                              const_reference;
@@ -427,9 +427,9 @@ namespace int_vector {
         typedef ptrdiff_t                                            difference_type;
         typedef size_t                                               size_type;
 
-        typedef typename OddBitBackingBase<uint_t<N>>::internal_data_type internal_data_type;
+        typedef typename OddBitBackingBase<T>::internal_data_type internal_data_type;
 
-        template<size_t M>
+        template<class M>
         friend bool operator==(const odd_bit_backing_data<M>& lhs, const odd_bit_backing_data<M>& rhs);
 
         inline uint64_t backing2bits(size_t n) const {
@@ -485,9 +485,9 @@ namespace int_vector {
             }
         }
         inline odd_bit_backing_data (const odd_bit_backing_data& other):
-            OddBitBackingBase<uint_t<N>>(other.m_vec, other.m_real_size) {}
+            OddBitBackingBase<T>(other.m_vec, other.m_real_size) {}
         inline odd_bit_backing_data (odd_bit_backing_data&& other):
-            OddBitBackingBase<uint_t<N>>(std::move(other.m_vec), other.m_real_size) {}
+            OddBitBackingBase<T>(std::move(other.m_vec), other.m_real_size) {}
         inline odd_bit_backing_data(std::initializer_list<value_type> il):
             odd_bit_backing_data(il.begin(), il.end()) {}
 
@@ -574,7 +574,7 @@ namespace int_vector {
 
         inline size_type max_size() const {
             // Empty vector does not allocate, so this is fine
-            return std::vector<internal_data_type>().max_size();
+            return std::vector<value_type>().max_size();
         }
 
         inline void resize(size_type n) {
@@ -612,14 +612,14 @@ namespace int_vector {
             using Data = typename int_vector::IntPtrTrait<pointer>::Data;
             DCHECK(n < size());
             auto x = bitpos2backingpos(elem2bits(n));
-            return reference(pointer(Data(this->m_vec.data() + x.pos, x.offset, N)));
+            return reference(pointer(Data(this->m_vec.data() + x.pos, x.offset, this->width())));
         }
 
         inline const_reference operator[](size_type n) const {
             using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
             DCHECK(n < size());
             auto x = bitpos2backingpos(elem2bits(n));
-            return const_reference(const_pointer(Data(this->m_vec.data() + x.pos, x.offset, N)));
+            return const_reference(const_pointer(Data(this->m_vec.data() + x.pos, x.offset, this->width())));
         }
 
         inline void range_check(size_type n) const {
@@ -815,7 +815,7 @@ namespace int_vector {
         }
     };
 
-    template<size_t N>
+    template<class N>
     bool operator==(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
         DCHECK(lhs.width() == rhs.width());
         if (lhs.size() == rhs.size()) {
@@ -839,32 +839,32 @@ namespace int_vector {
         return false;
     }
 
-    template<size_t N>
+    template<class N>
     bool operator!=(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
         return !(lhs == rhs);
     }
 
-    template<size_t N>
+    template<class N>
     bool operator<(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
         return std::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
     }
 
-    template<size_t N>
+    template<class N>
     bool operator<=(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
         return !(lhs > rhs);
     }
 
-    template<size_t N>
+    template<class N>
     bool operator>(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
         return std::lexicographical_compare(rhs.cbegin(), rhs.cend(), lhs.cbegin(), lhs.cend());
     }
 
-    template<size_t N>
+    template<class N>
     bool operator>=(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
         return !(lhs < rhs);
     }
 
-    template<size_t N>
+    template<class N>
     void swap(odd_bit_backing_data<N>& x, odd_bit_backing_data<N>& y) {
         x.swap(y);
     }
@@ -906,25 +906,25 @@ namespace int_vector {
 
     template<size_t N>
     struct GenericIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) != 0>::type> {
-        typedef typename odd_bit_backing_data<N>::value_type             value_type;
+        typedef typename odd_bit_backing_data<uint_t<N>>::value_type             value_type;
 
-        typedef typename odd_bit_backing_data<N>::reference              reference;
-        typedef typename odd_bit_backing_data<N>::const_reference        const_reference;
+        typedef typename odd_bit_backing_data<uint_t<N>>::reference              reference;
+        typedef typename odd_bit_backing_data<uint_t<N>>::const_reference        const_reference;
 
-        typedef typename odd_bit_backing_data<N>::pointer                pointer;
-        typedef typename odd_bit_backing_data<N>::const_pointer          const_pointer;
+        typedef typename odd_bit_backing_data<uint_t<N>>::pointer                pointer;
+        typedef typename odd_bit_backing_data<uint_t<N>>::const_pointer          const_pointer;
 
-        typedef typename odd_bit_backing_data<N>::iterator               iterator;
-        typedef typename odd_bit_backing_data<N>::const_iterator         const_iterator;
+        typedef typename odd_bit_backing_data<uint_t<N>>::iterator               iterator;
+        typedef typename odd_bit_backing_data<uint_t<N>>::const_iterator         const_iterator;
 
-        typedef typename odd_bit_backing_data<N>::reverse_iterator       reverse_iterator;
-        typedef typename odd_bit_backing_data<N>::const_reverse_iterator const_reverse_iterator;
+        typedef typename odd_bit_backing_data<uint_t<N>>::reverse_iterator       reverse_iterator;
+        typedef typename odd_bit_backing_data<uint_t<N>>::const_reverse_iterator const_reverse_iterator;
 
-        typedef typename odd_bit_backing_data<N>::difference_type        difference_type;
-        typedef typename odd_bit_backing_data<N>::size_type              size_type;
+        typedef typename odd_bit_backing_data<uint_t<N>>::difference_type        difference_type;
+        typedef typename odd_bit_backing_data<uint_t<N>>::size_type              size_type;
 
-        typedef          odd_bit_backing_data<N>                         backing_data;
-        typedef typename odd_bit_backing_data<N>::internal_data_type     internal_data_type;
+        typedef          odd_bit_backing_data<uint_t<N>>                         backing_data;
+        typedef typename odd_bit_backing_data<uint_t<N>>::internal_data_type     internal_data_type;
 
         inline static uint64_t bit_size(const backing_data& self) {
             return self.size() * N;
