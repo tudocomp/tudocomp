@@ -6,32 +6,23 @@
 
 namespace tdc {
 
-class Coder : public Algorithm {
+/*abstract*/
+class Encoder : public Algorithm {
 
 private:
     std::unique_ptr<io::OutputStream> m_outs;
-    std::unique_ptr<io::InputStream> m_ins;
-    bool m_ins_done;
 
 protected:
     std::unique_ptr<BitOStream> m_out;
-    std::unique_ptr<BitIStream> m_in;
 
 public:
-    inline Coder(Env&& env) : Algorithm(std::move(env)) {}
-
-    inline ~Coder() {
-        finalize();
-    }
-
-    inline void encode_init(Output& out) {
+    inline Encoder(Env&& env, Output& out) : Algorithm(std::move(env)) {
         m_outs = std::make_unique<io::OutputStream>(out.as_stream());
         m_out = std::make_unique<BitOStream>(*m_outs);
     }
 
-    inline void decode_init(Input& in) {
-        m_ins = std::make_unique<io::InputStream>(in.as_stream());
-        m_in = std::make_unique<BitIStream>(*m_ins, m_ins_done);
+    inline ~Encoder() {
+        finalize();
     }
 
     inline void finalize() {

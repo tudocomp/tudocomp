@@ -58,8 +58,7 @@ public:
         uint64_t factor_count = 0;
 
         lz78_dictionary::EncoderDictionary ed(lz78_dictionary::EncoderDictionary::Lz78, dms, reserve_dms);
-        coder_t coder(env().env_for_option("coder"));
-        coder.encode_init(out);
+        typename coder_t::Encoder coder(env().env_for_option("coder"), out);
 
         // Define ranges
         lz78_dictionary::CodeType last_i {dms}; // needed for the end of the string

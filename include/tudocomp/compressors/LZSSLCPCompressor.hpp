@@ -131,8 +131,7 @@ private:
         const lzfactors_t& factors,
         Output& output) {
 
-        coder_t coder(env().env_for_option("coder"));
-        coder.encode_init(output);
+        typename coder_t::Encoder coder(env().env_for_option("coder"), output);
 
         //define ranges
         Range text_r(text.size());

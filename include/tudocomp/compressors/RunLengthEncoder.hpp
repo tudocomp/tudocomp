@@ -28,8 +28,7 @@ public:
         auto ins = input.as_stream();
 
         // instantiate coder
-        coder_t coder(env().env_for_option("coder"));
-        coder.encode_init(output);
+        typename coder_t::Encoder coder(env().env_for_option("coder"), output);
 
         // define working variables
         len_t min_run = env().option("min_run").as_integer();
