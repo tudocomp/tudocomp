@@ -11,7 +11,7 @@
 
 using namespace tdc;
 
-template<class P, class R>
+template<class P, class R, class T>
 void generic_int_vector_ref_template_const() {
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
@@ -33,9 +33,9 @@ void generic_int_vector_ref_template_const() {
     ASSERT_EQ(w + 1, 0x00001112);
     ASSERT_EQ(~x, ~uint64_t(0xff00ffff));
 
-    uint32_t u32 = y;
-    uint64_t u64 = y;
-    int      i32 = y;
+    uint32_t u32 = T(y);
+    uint64_t u64 = T(y);
+    int      i32 = T(y);
 
     ASSERT_EQ(u32, 0x89ABCDEF);
     ASSERT_EQ(u64, 0x89ABCDEF);
@@ -43,9 +43,9 @@ void generic_int_vector_ref_template_const() {
 
 }
 
-template<class P, class R>
+template<class P, class R, class T>
 void generic_int_vector_ref_template() {
-    generic_int_vector_ref_template_const<P, R>();
+    generic_int_vector_ref_template_const<P, R, T>();
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
     P a(&data[0], 0, 32);
@@ -98,11 +98,11 @@ void generic_int_vector_ref_template() {
 }
 
 TEST(generic_int_vector, int_ref) {
-    generic_int_vector_ref_template<int_vector::IntPtr, int_vector::IntRef>();
+    generic_int_vector_ref_template<int_vector::IntPtr<uint_t<32>>, int_vector::IntRef<uint_t<32>>, uint_t<32>>();
 }
 
 TEST(generic_int_vector, const_int_ref) {
-    generic_int_vector_ref_template_const<int_vector::ConstIntPtr, int_vector::ConstIntRef>();
+    generic_int_vector_ref_template_const<int_vector::ConstIntPtr<uint_t<32>>, int_vector::ConstIntRef<uint_t<32>>, uint_t<32>>();
 }
 
 template<class P>
@@ -225,7 +225,7 @@ void generic_int_vector_ptr_template_const() {
     ASSERT_EQ((d+1) - a, 4);
 }
 
-template<class P>
+template<class P, class T>
 void generic_int_vector_ptr_template() {
     generic_int_vector_ptr_template_const<P>();
 
@@ -243,26 +243,26 @@ void generic_int_vector_ptr_template() {
     ASSERT_EQ(a[2], 1u);
     ASSERT_EQ(data, (std::vector<uint64_t> { 0xff00ffff00001111, 0x0123456700000001 }));
 
-    uint64_t ta = *a;
+    uint64_t ta = T(*a);
 
     *a = ta;
     *a = *b;
-    ASSERT_EQ(*a, uint64_t(*b));
+    ASSERT_EQ(*a, T(*b));
 
     *a = ta;
-    *a = uint64_t(*b);
-    ASSERT_EQ(*a, uint64_t(*b));
+    *a = T(*b);
+    ASSERT_EQ(*a, T(*b));
 
 }
 
 TEST(generic_int_vector, int_ptr) {
     using namespace int_vector;
-    generic_int_vector_ptr_template<IntPtr>();
+    generic_int_vector_ptr_template<IntPtr<uint_t<32>>, uint_t<32>>();
 }
 
 TEST(generic_int_vector, const_int_ptr) {
     using namespace int_vector;
-    generic_int_vector_ptr_template_const<ConstIntPtr>();
+    generic_int_vector_ptr_template_const<ConstIntPtr<uint_t<32>>>();
 }
 
 struct IBTest;
@@ -797,37 +797,36 @@ void generic_int_vector_template() {
 
     GenericIntVector<T> referenced { 1, 2, 3, 4, 5 };
     const GenericIntVector<T> const_referenced { 1, 2, 3, 4, 5 };
-    // TODO: Remove _real type_ overloads
-    ASSERT_EQ(referenced[0], uint64_t(T(1)));
-    ASSERT_EQ(referenced[1], uint64_t(T(2)));
-    ASSERT_EQ(referenced[2], uint64_t(T(3)));
-    ASSERT_EQ(referenced[3], uint64_t(T(4)));
-    ASSERT_EQ(referenced[4], uint64_t(T(5)));
+    ASSERT_EQ(referenced[0], (T(1)));
+    ASSERT_EQ(referenced[1], (T(2)));
+    ASSERT_EQ(referenced[2], (T(3)));
+    ASSERT_EQ(referenced[3], (T(4)));
+    ASSERT_EQ(referenced[4], (T(5)));
 
-    ASSERT_EQ(const_referenced[0], uint64_t(T(1)));
-    ASSERT_EQ(const_referenced[1], uint64_t(T(2)));
-    ASSERT_EQ(const_referenced[2], uint64_t(T(3)));
-    ASSERT_EQ(const_referenced[3], uint64_t(T(4)));
-    ASSERT_EQ(const_referenced[4], uint64_t(T(5)));
+    ASSERT_EQ(const_referenced[0], (T(1)));
+    ASSERT_EQ(const_referenced[1], (T(2)));
+    ASSERT_EQ(const_referenced[2], (T(3)));
+    ASSERT_EQ(const_referenced[3], (T(4)));
+    ASSERT_EQ(const_referenced[4], (T(5)));
 
     referenced[2] = T(100);
-    ASSERT_EQ(referenced[2], uint64_t(T(100)));
+    ASSERT_EQ(referenced[2], (T(100)));
     ASSERT_EQ(referenced, (GenericIntVector<T> { 1, 2, 100, 4, 5 }));
 
-    ASSERT_EQ(referenced.at(0), uint64_t(T(1)));
-    ASSERT_EQ(referenced.at(1), uint64_t(T(2)));
-    ASSERT_EQ(referenced.at(2), uint64_t(T(100)));
-    ASSERT_EQ(referenced.at(3), uint64_t(T(4)));
-    ASSERT_EQ(referenced.at(4), uint64_t(T(5)));
+    ASSERT_EQ(referenced.at(0), (T(1)));
+    ASSERT_EQ(referenced.at(1), (T(2)));
+    ASSERT_EQ(referenced.at(2), (T(100)));
+    ASSERT_EQ(referenced.at(3), (T(4)));
+    ASSERT_EQ(referenced.at(4), (T(5)));
 
-    ASSERT_EQ(const_referenced.at(0), uint64_t(T(1)));
-    ASSERT_EQ(const_referenced.at(1), uint64_t(T(2)));
-    ASSERT_EQ(const_referenced.at(2), uint64_t(T(3)));
-    ASSERT_EQ(const_referenced.at(3), uint64_t(T(4)));
-    ASSERT_EQ(const_referenced.at(4), uint64_t(T(5)));
+    ASSERT_EQ(const_referenced.at(0), (T(1)));
+    ASSERT_EQ(const_referenced.at(1), (T(2)));
+    ASSERT_EQ(const_referenced.at(2), (T(3)));
+    ASSERT_EQ(const_referenced.at(3), (T(4)));
+    ASSERT_EQ(const_referenced.at(4), (T(5)));
 
     referenced.at(3) = T(99);
-    ASSERT_EQ(referenced.at(3), uint64_t(T(99)));
+    ASSERT_EQ(referenced.at(3), (T(99)));
     ASSERT_EQ(referenced, (GenericIntVector<T> { 1, 2, 100, 99, 5 }));
 
     {
@@ -859,11 +858,10 @@ void generic_int_vector_template() {
         ASSERT_TRUE(caught);
     }
 
-    // TODO: Fix casts
-    ASSERT_EQ(referenced.front(), uint64_t(T(1)));
-    ASSERT_EQ(const_referenced.front(), uint64_t(T(1)));
-    ASSERT_EQ(referenced.back(), uint64_t(T(5)));
-    ASSERT_EQ(const_referenced.back(), uint64_t(T(5)));
+    ASSERT_EQ(referenced.front(), (T(1)));
+    ASSERT_EQ(const_referenced.front(), (T(1)));
+    ASSERT_EQ(referenced.back(), (T(5)));
+    ASSERT_EQ(const_referenced.back(), (T(5)));
 
     ASSERT_NE(referenced.data(), nullptr);
     ASSERT_NE(const_referenced.data(), nullptr);
@@ -912,50 +910,48 @@ void generic_int_vector_template() {
     ASSERT_EQ(push_back.bit_size(), 1 * N);
     ASSERT_EQ(push_back, (GenericIntVector<T> { 15 }));
 
-    // TODO: Fix uint64_t casts
-
     GenericIntVector<T> insert1 { 6, 5, 4, 3, 2, 1 };
     auto insert1_r = insert1.insert(insert1.cbegin() + 3, T(9));
-    ASSERT_EQ(*insert1_r, uint64_t(T(9)));
+    ASSERT_EQ(*insert1_r, (T(9)));
     ASSERT_TRUE((insert1.begin() < insert1_r) && (insert1_r < insert1.end()));
     ASSERT_EQ(insert1, (GenericIntVector<T> { 6, 5, 4, 9, 3, 2, 1 }));
 
     GenericIntVector<T> insert2 { 6, 5, 4, 3, 2, 1 };
     auto insert2_r = insert2.insert(insert2.cbegin() + 3, 3, T(9));
-    ASSERT_EQ(*insert2_r, uint64_t(T(9)));
+    ASSERT_EQ(*insert2_r, (T(9)));
     ASSERT_TRUE((insert2.begin() < insert2_r) && (insert2_r < insert2.end()));
     ASSERT_EQ(insert2, (GenericIntVector<T> { 6, 5, 4, 9, 9, 9, 3, 2, 1 }));
 
     GenericIntVector<T> insert3 { 6, 5, 4, 3, 2, 1 };
     GenericIntVector<T> insert3_src { 9, 8, 7 };
     auto insert3_r = insert3.insert(insert3.cbegin() + 3, insert3_src.begin(), insert3_src.end());
-    ASSERT_EQ(*insert3_r, uint64_t(T(9)));
+    ASSERT_EQ(*insert3_r, (T(9)));
     ASSERT_TRUE((insert3.begin() < insert3_r) && (insert3_r < insert3.end()));
     ASSERT_EQ(insert3, (GenericIntVector<T> { 6, 5, 4, 9, 8, 7, 3, 2, 1 }));
 
     GenericIntVector<T> insert4 { 6, 5, 4, 3, 2, 1 };
     auto insert4_v = T(9);
     auto insert4_r = insert4.insert(insert4.cbegin() + 3, std::move(insert4_v));
-    ASSERT_EQ(*insert4_r, uint64_t(T(9)));
+    ASSERT_EQ(*insert4_r, (T(9)));
     ASSERT_TRUE((insert4.begin() < insert4_r) && (insert4_r < insert4.end()));
     ASSERT_EQ(insert4, (GenericIntVector<T> { 6, 5, 4, 9, 3, 2, 1 }));
 
     GenericIntVector<T> insert5 { 6, 5, 4, 3, 2, 1 };
     auto insert5_r = insert5.insert(insert5.cbegin() + 3, { 9, 8, 7 });
-    ASSERT_EQ(*insert5_r, uint64_t(T(9)));
+    ASSERT_EQ(*insert5_r, (T(9)));
     ASSERT_TRUE((insert5.begin() < insert5_r) && (insert5_r < insert5.end()));
     ASSERT_EQ(insert5, (GenericIntVector<T> { 6, 5, 4, 9, 8, 7, 3, 2, 1 }));
 
     GenericIntVector<T> erase1 { 1, 2, 3, 9, 4, 5, 6 };
     auto erase1_r = erase1.erase(erase1.cbegin() + 3);
     ASSERT_TRUE((erase1.begin() < erase1_r) && (erase1_r < erase1.end()));
-    ASSERT_EQ(*erase1_r, uint64_t(T(4)));
+    ASSERT_EQ(*erase1_r, (T(4)));
     ASSERT_EQ(erase1, (GenericIntVector<T> { 1, 2, 3, 4, 5, 6 }));
 
     GenericIntVector<T> erase2 { 1, 2, 3, 9, 4, 5, 6 };
     auto erase2_r = erase2.erase(erase2.cbegin() + 3, erase2.cbegin() + 5);
     ASSERT_TRUE((erase2.begin() < erase2_r) && (erase2_r < erase2.end()));
-    ASSERT_EQ(*erase2_r, uint64_t(T(5)));
+    ASSERT_EQ(*erase2_r, (T(5)));
     ASSERT_EQ(erase2, (GenericIntVector<T> { 1, 2, 3, 5, 6 }));
 
     GenericIntVector<T> swap_a { 1, 2, 3 };
@@ -974,8 +970,8 @@ void generic_int_vector_template() {
     auto emplace1_r = emplace1.emplace(emplace1.cbegin() + 2, T(125));
     ASSERT_EQ(emplace1, (GenericIntVector<T> { 1, 2, 125, 3, 4 }));
     ASSERT_TRUE((emplace1.begin() < emplace1_r) && (emplace1_r < emplace1.end()));
-    // TODO: Fix
-    ASSERT_EQ(*emplace1_r, uint64_t(T(125)));
+
+    ASSERT_EQ(*emplace1_r, (T(125)));
 
     GenericIntVector<T> emplace2 { 1, 2, 3, 4 };
     emplace2.emplace_back(125);
@@ -984,8 +980,7 @@ void generic_int_vector_template() {
     GenericIntVector<T> ref_ptr { 1, 2, 3 };
     auto ptr = &ref_ptr[1];
 
-    // TODO: fix
-    ASSERT_EQ(*ptr, uint64_t(T(2)));
+    ASSERT_EQ(*ptr, (T(2)));
 }
 
 
