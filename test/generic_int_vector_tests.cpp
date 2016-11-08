@@ -13,12 +13,14 @@ using namespace tdc;
 
 template<class P, class R, class T>
 void generic_int_vector_ref_template_const() {
+    using Data = typename int_vector::IntPtrTrait<P>::Data;
+
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
-    P a(&data[0], 0, 32);
-    P b(&data[0], 32, 32);
-    P c(&data[1], 0, 32);
-    P d(&data[1], 32, 32);
+    P a(Data(&data[0], 0, 32));
+    P b(Data(&data[0], 32, 32));
+    P c(Data(&data[1], 0, 32));
+    P d(Data(&data[1], 32, 32));
 
     R w(a);
     R x(b);
@@ -45,13 +47,14 @@ void generic_int_vector_ref_template_const() {
 
 template<class P, class R, class T>
 void generic_int_vector_ref_template() {
+    using Data = typename int_vector::IntPtrTrait<P>::Data;
     generic_int_vector_ref_template_const<P, R, T>();
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
-    P a(&data[0], 0, 32);
-    P b(&data[0], 32, 32);
-    P c(&data[1], 0, 32);
-    P d(&data[1], 32, 32);
+    P a(Data(&data[0], 0, 32));
+    P b(Data(&data[0], 32, 32));
+    P c(Data(&data[1], 0, 32));
+    P d(Data(&data[1], 32, 32));
 
     R w(a);
     R x(b);
@@ -107,12 +110,13 @@ TEST(generic_int_vector, const_int_ref) {
 
 template<class P>
 void generic_int_vector_ptr_template_const() {
+    using Data = typename int_vector::IntPtrTrait<P>::Data;
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
-    P a(&data[0], 0, 32);
-    P b(&data[0], 32, 32);
-    P c(&data[1], 0, 32);
-    P d(&data[1], 32, 32);
+    P a(Data(&data[0], 0, 32));
+    P b(Data(&data[0], 32, 32));
+    P c(Data(&data[1], 0, 32));
+    P d(Data(&data[1], 32, 32));
 
     ASSERT_EQ(*a, 0x00001111u);
     ASSERT_EQ(*b, 0xff00ffffu);
@@ -227,14 +231,15 @@ void generic_int_vector_ptr_template_const() {
 
 template<class P, class T>
 void generic_int_vector_ptr_template() {
+    using Data = typename int_vector::IntPtrTrait<P>::Data;
     generic_int_vector_ptr_template_const<P>();
 
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
-    P a(&data[0], 0, 32);
-    P b(&data[0], 32, 32);
-    P c(&data[1], 0, 32);
-    P d(&data[1], 32, 32);
+    P a(Data(&data[0], 0, 32));
+    P b(Data(&data[0], 32, 32));
+    P c(Data(&data[1], 0, 32));
+    P d(Data(&data[1], 32, 32));
 
     *c = 0;
     ASSERT_EQ(*c, 0u);

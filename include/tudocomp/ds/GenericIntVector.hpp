@@ -94,23 +94,6 @@ namespace int_vector {
 
     typedef uint64_t DynamicIntValueType;
 
-    // TODO: On rrferences, provide 32 or 64 bit ops depending on bits
-    // of uint_t type
-
-    struct Const {
-        typedef const DynamicIntValueType* ptr;
-        typedef uint8_t                    off;
-        typedef const uint8_t              len;
-        typedef DynamicIntValueType        val;
-    };
-
-    struct Mut {
-        typedef DynamicIntValueType* ptr;
-        typedef uint8_t              off;
-        typedef const uint8_t        len;
-        typedef DynamicIntValueType  val;
-    };
-
     template<size_t N>
     struct StaticBitSize {
         inline uint8_t size() { return N; }
@@ -125,6 +108,8 @@ namespace int_vector {
     struct IntPtrTrait {
     };
 
+    // TODO: Change to static N, add dynamic cases
+
     template<size_t N>
     struct IntPtrTrait<ConstIntPtr<uint_t<N>>> {
         class Data {
@@ -137,6 +122,9 @@ namespace int_vector {
             Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
                 m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
             inline uint8_t data_bit_size() const { return m_bit_size; }
+            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) {
+                return Data(ptr, offset, this->data_bit_size());
+            }
         };
     };
 
@@ -152,17 +140,20 @@ namespace int_vector {
             Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
                 m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
             inline uint8_t data_bit_size() const { return m_bit_size; }
+            inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
+                return Data(ptr, offset, this->data_bit_size());
+            }
         };
     };
 
-    template<class Self, class Ptr, class Layout, class T>
+    template<class Self, class Ptr, class T>
     class GenericIntRef;
 
-    template<class Self, class Layout, class T>
+    template<class Self, class T>
     class GenericIntPtr: IntPtrTrait<Self>::Data {
     protected:
-        friend class GenericIntRef<IntRef<T>, IntPtr<T>, Mut, T>;
-        friend class GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, Const, T>;
+        friend class GenericIntRef<IntRef<T>, IntPtr<T>, T>;
+        friend class GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>;
         friend class IntRef<T>;
         friend class ConstIntRef<T>;
         friend class IntegerBaseTrait<IntRef<T>>;
@@ -170,10 +161,6 @@ namespace int_vector {
         friend class ConstIntegerBaseTrait<ConstIntRef<T>>;
 
     public:
-        GenericIntPtr(typename Layout::ptr ptr,
-                      typename Layout::off bit_offset,
-                      typename Layout::len bit_size):
-            IntPtrTrait<Self>::Data(ptr, bit_offset, bit_size) {}
         // TODO: Nullpointer instead?
         GenericIntPtr(): GenericIntPtr("\0\0\0\0\0\0\0\0", 0, 0) {}
         GenericIntPtr(const typename IntPtrTrait<Self>::Data& other):
@@ -223,7 +210,7 @@ namespace int_vector {
             // TODO: test
             DCHECK(lhs.data_bit_size() == rhs.data_bit_size());
             auto ptr_diff = lhs.m_ptr - rhs.m_ptr;
-            auto bit_count = ptr_diff * sizeof(typename Layout::val) * CHAR_BIT;
+            auto bit_count = ptr_diff * sizeof(DynamicIntValueType) * CHAR_BIT;
             bit_count += lhs.m_bit_offset;
             bit_count -= rhs.m_bit_offset;
             bit_count /= lhs.data_bit_size();
@@ -258,31 +245,31 @@ namespace int_vector {
     };
 
     template<class T>
-    class ConstIntPtr: public GenericIntPtr<ConstIntPtr<T>, Const, T> {
+    class ConstIntPtr: public GenericIntPtr<ConstIntPtr<T>, T> {
     public:
-        using GenericIntPtr<ConstIntPtr<T>, Const, T>::GenericIntPtr;
+        using GenericIntPtr<ConstIntPtr<T>, T>::GenericIntPtr;
 
-        inline ConstIntPtr(const ConstIntPtr& other): GenericIntPtr<ConstIntPtr<T>, Const, T>::GenericIntPtr(other) {}
+        inline ConstIntPtr(const ConstIntPtr& other): GenericIntPtr<ConstIntPtr<T>, T>::GenericIntPtr(other) {}
         ConstIntPtr& operator=(const ConstIntPtr& other) {
-            return ((GenericIntPtr<ConstIntPtr<T>, Const, T>&) *this) = other;
+            return ((GenericIntPtr<ConstIntPtr<T>, T>&) *this) = other;
         }
     };
 
     template<class T>
-    class IntPtr: public GenericIntPtr<IntPtr<T>, Mut, T> {
+    class IntPtr: public GenericIntPtr<IntPtr<T>, T> {
     public:
-        using GenericIntPtr<IntPtr<T>, Mut, T>::GenericIntPtr;
+        using GenericIntPtr<IntPtr<T>, T>::GenericIntPtr;
 
-        inline IntPtr(const IntPtr& other): GenericIntPtr<IntPtr<T>, Mut, T>::GenericIntPtr(other) {}
+        inline IntPtr(const IntPtr& other): GenericIntPtr<IntPtr<T>, T>::GenericIntPtr(other) {}
         IntPtr& operator=(const IntPtr& other) {
-            return ((GenericIntPtr<IntPtr<T>, Mut, T>&) *this) = other;
+            return ((GenericIntPtr<IntPtr<T>, T>&) *this) = other;
         }
 
         inline IntRef<T> operator*();
         inline IntRef<T> operator[](size_t i);
     };
 
-    template<class Self, class Ptr, class Layout, class T>
+    template<class Self, class Ptr, class T>
     class GenericIntRef {
     protected:
         friend class IntPtr<T>;
@@ -306,7 +293,7 @@ namespace int_vector {
 
     template<class T>
     class IntRef:
-        public GenericIntRef<IntRef<T>, IntPtr<T>, Mut, T>,
+        public GenericIntRef<IntRef<T>, IntPtr<T>, T>,
         public IntegerBaseCombiner<
             IntegerBaseWithSelf<IntRef<T>>,
             IntegerBaseWith32<IntRef<T>, uint32_t>,
@@ -315,10 +302,10 @@ namespace int_vector {
             IntegerBaseWith64<IntRef<T>, T>
         > {
     public:
-        using typename GenericIntRef<IntRef<T>, IntPtr<T>, Mut, T>::value_type;
+        using typename GenericIntRef<IntRef<T>, IntPtr<T>, T>::value_type;
 
         inline IntRef() = delete;
-        explicit IntRef(const IntPtr<T>& ptr): GenericIntRef<IntRef<T>, IntPtr<T>, Mut, T>::GenericIntRef(ptr) {}
+        explicit IntRef(const IntPtr<T>& ptr): GenericIntRef<IntRef<T>, IntPtr<T>, T>::GenericIntRef(ptr) {}
 
         inline IntRef& operator=(value_type other) {
             bits::write_int(this->m_ptr.m_ptr, other,
@@ -338,7 +325,7 @@ namespace int_vector {
 
     template<class T>
     class ConstIntRef:
-        public GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, Const, T>,
+        public GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>,
         public ConstIntegerBaseCombiner<
             ConstIntegerBaseWithSelf<ConstIntRef<T>>,
             ConstIntegerBaseWith32<ConstIntRef<T>, uint32_t>,
@@ -348,7 +335,7 @@ namespace int_vector {
         > {
     public:
         inline ConstIntRef() = delete;
-        explicit ConstIntRef(const ConstIntPtr<T>& ptr): GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, Const, T>::GenericIntRef(ptr) {}
+        explicit ConstIntRef(const ConstIntPtr<T>& ptr): GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>::GenericIntRef(ptr) {}
 
         inline ConstIntPtr<T> operator&() { return this->m_ptr; }
     };
@@ -363,13 +350,13 @@ namespace int_vector {
         return IntRef<T>(*this);
     }
 
-    template<class Self, class U, class T>
-    ConstIntRef<T> GenericIntPtr<Self, U, T>::operator*() const {
+    template<class Self, class T>
+    ConstIntRef<T> GenericIntPtr<Self, T>::operator*() const {
         return ConstIntRef<T>(static_cast<const Self&>(*this));
     }
 
-    template<class Self, class U, class T>
-    ConstIntRef<T> GenericIntPtr<Self, U, T>::operator[](size_t i) const {
+    template<class Self, class T>
+    ConstIntRef<T> GenericIntPtr<Self, T>::operator[](size_t i) const {
         auto x = *this;
         x += i;
         return ConstIntRef<T>(static_cast<const Self&>(x));
@@ -403,7 +390,7 @@ namespace int_vector {
         rhs = tmp;
     }
 
-    static_assert(sizeof(GenericIntPtr<ConstIntPtr<uint_t<40>>, Const, uint_t<40>>) <= (sizeof(void*) * 2),
+    static_assert(sizeof(GenericIntPtr<ConstIntPtr<uint_t<40>>, uint_t<40>>) <= (sizeof(void*) * 2),
                   "make sure this is reasonably small");
 
     enum class ElementStorageMode {
@@ -515,13 +502,15 @@ namespace int_vector {
         }
 
         inline iterator begin() {
+            using Data = typename int_vector::IntPtrTrait<pointer>::Data;
             auto x = bitpos2backingpos(0);
-            return pointer(&m_vec[x.pos], x.offset, N);
+            return pointer(Data(&m_vec[x.pos], x.offset, N));
         }
 
         inline iterator end() {
+            using Data = typename int_vector::IntPtrTrait<pointer>::Data;
             auto x = bitpos2backingpos(elem2bits(m_real_size));
-            return pointer(&m_vec[x.pos], x.offset, N);
+            return pointer(Data(&m_vec[x.pos], x.offset, N));
         }
 
         inline reverse_iterator rbegin() {
@@ -533,13 +522,15 @@ namespace int_vector {
         }
 
         inline const_iterator begin() const {
+            using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
             auto x = bitpos2backingpos(0);
-            return const_pointer(&m_vec[x.pos], x.offset, N);
+            return const_pointer(Data(&m_vec[x.pos], x.offset, N));
         }
 
         inline const_iterator end() const {
+            using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
             auto x = bitpos2backingpos(elem2bits(m_real_size));
-            return const_pointer(&m_vec[x.pos], x.offset, N);
+            return const_pointer(Data(&m_vec[x.pos], x.offset, N));
         }
 
         inline const_reverse_iterator rbegin() const {
@@ -611,15 +602,17 @@ namespace int_vector {
         }
 
         inline reference operator[](size_type n) {
+            using Data = typename int_vector::IntPtrTrait<pointer>::Data;
             DCHECK(n < size());
             auto x = bitpos2backingpos(elem2bits(n));
-            return reference(pointer(m_vec.data() + x.pos, x.offset, N));
+            return reference(pointer(Data(m_vec.data() + x.pos, x.offset, N)));
         }
 
         inline const_reference operator[](size_type n) const {
+            using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
             DCHECK(n < size());
             auto x = bitpos2backingpos(elem2bits(n));
-            return const_reference(const_pointer(m_vec.data() + x.pos, x.offset, N));
+            return const_reference(const_pointer(Data(m_vec.data() + x.pos, x.offset, N)));
         }
 
         inline void range_check(size_type n) const {
