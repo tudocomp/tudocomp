@@ -774,7 +774,7 @@ void generic_int_vector_template() {
     std::vector<T> iterd4(const_iter_src.rbegin(), const_iter_src.rend());
     ASSERT_EQ(iterd4, (std::vector<T> { 4, 3, 2, 1 }));
 
-    ASSERT_EQ(dflt.max_size(), std::vector<T>().max_size());
+    ASSERT_GE(dflt.max_size(), std::vector<uint64_t>().max_size());
 
     GenericIntVector<T> resize { 1, 2, 3, 4 };
     ASSERT_EQ(resize.size(), 4);

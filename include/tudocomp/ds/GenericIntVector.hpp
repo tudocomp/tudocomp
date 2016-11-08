@@ -388,15 +388,35 @@ namespace int_vector {
         BitPacked
     };
 
+    template<class T>
+    struct OddBitBackingBase {};
     template<size_t N>
-    struct odd_bit_backing_data {
-        typedef uint_t<N>                                            value_type;
+    struct OddBitBackingBase<uint_t<N>> {
+        typedef DynamicIntValueType internal_data_type;
+        typedef uint_t<N>           value_type;
 
-        typedef IntRef<uint_t<N>>                                    reference;
-        typedef ConstIntRef<uint_t<N>>                               const_reference;
+        std::vector<internal_data_type> m_vec;
+        uint64_t m_real_size = 0;
 
-        typedef IntPtr<uint_t<N>>                                    pointer;
-        typedef ConstIntPtr<uint_t<N>>                               const_pointer;
+        inline OddBitBackingBase():
+            m_vec(), m_real_size(0) {}
+        inline OddBitBackingBase(const std::vector<internal_data_type>& vec, uint64_t real_size):
+            m_vec(vec), m_real_size(real_size) {}
+        inline OddBitBackingBase(std::vector<internal_data_type>&& vec, uint64_t real_size):
+            m_vec(std::move(vec)), m_real_size(real_size) {}
+
+        inline uint8_t bit_size() const { return N; }
+    };
+
+    template<size_t N>
+    struct odd_bit_backing_data: OddBitBackingBase<uint_t<N>> {
+        typedef typename OddBitBackingBase<uint_t<N>>::value_type    value_type;
+
+        typedef IntRef<value_type>                                   reference;
+        typedef ConstIntRef<value_type>                              const_reference;
+
+        typedef IntPtr<value_type>                                   pointer;
+        typedef ConstIntPtr<value_type>                              const_pointer;
 
         typedef pointer                                              iterator;
         typedef const_pointer                                        const_iterator;
@@ -407,10 +427,7 @@ namespace int_vector {
         typedef ptrdiff_t                                            difference_type;
         typedef size_t                                               size_type;
 
-        typedef DynamicIntValueType                                  internal_data_type;
-
-        std::vector<internal_data_type> m_vec;
-        uint64_t m_real_size = 0;
+        typedef typename OddBitBackingBase<uint_t<N>>::internal_data_type internal_data_type;
 
         template<size_t M>
         friend bool operator==(const odd_bit_backing_data<M>& lhs, const odd_bit_backing_data<M>& rhs);
@@ -447,12 +464,12 @@ namespace int_vector {
 
         inline explicit odd_bit_backing_data() {}
         inline explicit odd_bit_backing_data(size_type n) {
-            m_real_size = n;
-            size_t converted_size = bits2backing(elem2bits(m_real_size));
-            m_vec = std::vector<internal_data_type>(converted_size);
+            this->m_real_size = n;
+            size_t converted_size = bits2backing(elem2bits(this->m_real_size));
+            this->m_vec = std::vector<internal_data_type>(converted_size);
         }
         inline odd_bit_backing_data(size_type n, const value_type& val): odd_bit_backing_data(n) {
-            auto ptr = m_vec.data();
+            auto ptr = this->m_vec.data();
             uint8_t offset = 0;
 
             for (size_t i = 0; i < n; i++) {
@@ -468,21 +485,21 @@ namespace int_vector {
             }
         }
         inline odd_bit_backing_data (const odd_bit_backing_data& other):
-            m_vec(other.m_vec), m_real_size(other.m_real_size) {}
+            OddBitBackingBase<uint_t<N>>(other.m_vec, other.m_real_size) {}
         inline odd_bit_backing_data (odd_bit_backing_data&& other):
-            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
+            OddBitBackingBase<uint_t<N>>(std::move(other.m_vec), other.m_real_size) {}
         inline odd_bit_backing_data(std::initializer_list<value_type> il):
             odd_bit_backing_data(il.begin(), il.end()) {}
 
         inline odd_bit_backing_data& operator=(const odd_bit_backing_data& other) {
-            m_vec = other.m_vec;
-            m_real_size = other.m_real_size;
+            this->m_vec = other.m_vec;
+            this->m_real_size = other.m_real_size;
             return *this;
         }
 
         inline odd_bit_backing_data& operator=(odd_bit_backing_data&& other) {
-            m_vec = std::move(other.m_vec);
-            m_real_size = other.m_real_size;
+            this->m_vec = std::move(other.m_vec);
+            this->m_real_size = other.m_real_size;
             return *this;
         }
 
@@ -494,13 +511,13 @@ namespace int_vector {
         inline iterator begin() {
             using Data = typename int_vector::IntPtrTrait<pointer>::Data;
             auto x = bitpos2backingpos(0);
-            return pointer(Data(&m_vec[x.pos], x.offset, N));
+            return pointer(Data(&this->m_vec[x.pos], x.offset, N));
         }
 
         inline iterator end() {
             using Data = typename int_vector::IntPtrTrait<pointer>::Data;
-            auto x = bitpos2backingpos(elem2bits(m_real_size));
-            return pointer(Data(&m_vec[x.pos], x.offset, N));
+            auto x = bitpos2backingpos(elem2bits(this->m_real_size));
+            return pointer(Data(&this->m_vec[x.pos], x.offset, N));
         }
 
         inline reverse_iterator rbegin() {
@@ -514,13 +531,13 @@ namespace int_vector {
         inline const_iterator begin() const {
             using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
             auto x = bitpos2backingpos(0);
-            return const_pointer(Data(&m_vec[x.pos], x.offset, N));
+            return const_pointer(Data(&this->m_vec[x.pos], x.offset, N));
         }
 
         inline const_iterator end() const {
             using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
-            auto x = bitpos2backingpos(elem2bits(m_real_size));
-            return const_pointer(Data(&m_vec[x.pos], x.offset, N));
+            auto x = bitpos2backingpos(elem2bits(this->m_real_size));
+            return const_pointer(Data(&this->m_vec[x.pos], x.offset, N));
         }
 
         inline const_reverse_iterator rbegin() const {
@@ -548,21 +565,21 @@ namespace int_vector {
         }
 
         inline size_type size() const {
-            return m_real_size;
+            return this->m_real_size;
         }
 
         inline uint64_t bit_size() const {
-            return elem2bits(m_real_size);
+            return elem2bits(this->m_real_size);
         }
 
         inline size_type max_size() const {
             // Empty vector does not allocate, so this is fine
-            return std::vector<uint_t<N>>().max_size();
+            return std::vector<internal_data_type>().max_size();
         }
 
         inline void resize(size_type n) {
-            m_real_size = n;
-            m_vec.resize(bits2backing(elem2bits(n)), 0);
+            this->m_real_size = n;
+            this->m_vec.resize(bits2backing(elem2bits(n)), 0);
         }
 
         inline void resize(size_type n, const value_type& val) {
@@ -576,7 +593,7 @@ namespace int_vector {
         }
 
         inline size_type capacity() const {
-            return bits2elem(backing2bits(m_vec.capacity()));
+            return bits2elem(backing2bits(this->m_vec.capacity()));
         }
 
         inline bool empty() const {
@@ -584,25 +601,25 @@ namespace int_vector {
         }
 
         inline void reserve(size_type n) {
-            m_vec.reserve(bits2backing(elem2bits(n)));
+           this->m_vec.reserve(bits2backing(elem2bits(n)));
         }
 
         inline void shrink_to_fit() {
-            m_vec.shrink_to_fit();
+            this->m_vec.shrink_to_fit();
         }
 
         inline reference operator[](size_type n) {
             using Data = typename int_vector::IntPtrTrait<pointer>::Data;
             DCHECK(n < size());
             auto x = bitpos2backingpos(elem2bits(n));
-            return reference(pointer(Data(m_vec.data() + x.pos, x.offset, N)));
+            return reference(pointer(Data(this->m_vec.data() + x.pos, x.offset, N)));
         }
 
         inline const_reference operator[](size_type n) const {
             using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
             DCHECK(n < size());
             auto x = bitpos2backingpos(elem2bits(n));
-            return const_reference(const_pointer(Data(m_vec.data() + x.pos, x.offset, N)));
+            return const_reference(const_pointer(Data(this->m_vec.data() + x.pos, x.offset, N)));
         }
 
         inline void range_check(size_type n) const {
@@ -643,11 +660,11 @@ namespace int_vector {
         }
 
         inline internal_data_type* data() noexcept {
-            return m_vec.data();
+            return this->m_vec.data();
         }
 
         inline const internal_data_type* data() const noexcept {
-            return m_vec.data();
+            return this->m_vec.data();
         }
 
         template <class InputIterator>
@@ -664,10 +681,10 @@ namespace int_vector {
         }
 
         inline void push_back(const value_type& val) {
-            m_real_size += 1;
+            this->m_real_size += 1;
 
-            while (elem2bits(m_real_size) > backing2bits(m_vec.size())) {
-                m_vec.push_back(0);
+            while (elem2bits(this->m_real_size) > backing2bits(this->m_vec.size())) {
+                this->m_vec.push_back(0);
             }
 
             back() = val;
@@ -680,9 +697,9 @@ namespace int_vector {
 
         inline void pop_back() {
             DCHECK(!empty());
-            m_real_size -= 1;
-            while (bits2backing(elem2bits(m_real_size)) < m_vec.size()) {
-                m_vec.pop_back();
+            this->m_real_size -= 1;
+            while (bits2backing(elem2bits(this->m_real_size)) < this->m_vec.size()) {
+                this->m_vec.pop_back();
             }
         }
 
@@ -697,7 +714,7 @@ namespace int_vector {
             // Step 1: Grow backing vector by needed amount
             {
                 auto new_bits_needed = elem2bits(n);
-                auto existing_extra_bits = backing2bits(m_vec.size()) - elem2bits(m_real_size);
+                auto existing_extra_bits = backing2bits(this->m_vec.size()) - elem2bits(this->m_real_size);
 
                 if (new_bits_needed > existing_extra_bits) {
                     new_bits_needed -= existing_extra_bits;
@@ -706,8 +723,8 @@ namespace int_vector {
                 }
 
                 auto new_backing_needed = bits2backing(new_bits_needed);
-                m_vec.insert(m_vec.cend(), new_backing_needed, 0);
-                m_real_size += n;
+                this->m_vec.insert(this->m_vec.cend(), new_backing_needed, 0);
+                this->m_real_size += n;
             }
 
             // Step 2: move elements to back, leaving a gap
@@ -770,21 +787,21 @@ namespace int_vector {
             auto n = to - from;
             std::copy(begin() + to, end(), begin() + from);
 
-            m_real_size -= n;
+            this->m_real_size -= n;
 
-            auto obsolete_backing = m_vec.size() - bits2backing(elem2bits(m_real_size));
-            m_vec.erase(m_vec.cend() - obsolete_backing, m_vec.cend());
+            auto obsolete_backing = this->m_vec.size() - bits2backing(elem2bits(this->m_real_size));
+            this->m_vec.erase(this->m_vec.cend() - obsolete_backing, this->m_vec.cend());
             return begin() + from;
         }
 
         inline void swap(odd_bit_backing_data& other) {
-            m_vec.swap(other.m_vec);
-            std::swap(m_real_size, other.m_real_size);
+            this->m_vec.swap(other.m_vec);
+            std::swap(this->m_real_size, other.m_real_size);
         }
 
         inline void clear() {
-            m_vec.clear();
-            m_real_size = 0;
+            this->m_vec.clear();
+            this->m_real_size = 0;
         }
 
         template <class... Args>
