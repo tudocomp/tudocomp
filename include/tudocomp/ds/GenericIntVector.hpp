@@ -94,21 +94,9 @@ namespace int_vector {
 
     typedef uint64_t DynamicIntValueType;
 
-    template<size_t N>
-    struct StaticBitSize {
-        inline uint8_t size() { return N; }
-    };
-
-    struct DynamicBitSize {
-        uint8_t m_bit_size;
-        inline uint8_t size() { return m_bit_size; }
-    };
-
     template<class T>
     struct IntPtrTrait {
     };
-
-    // TODO: Change to static N, add dynamic cases
 
     template<size_t N>
     struct IntPtrTrait<ConstIntPtr<uint_t<N>>> {
@@ -161,8 +149,8 @@ namespace int_vector {
         friend class ConstIntegerBaseTrait<ConstIntRef<T>>;
 
     public:
-        // TODO: Nullpointer instead?
-        GenericIntPtr(): GenericIntPtr("\0\0\0\0\0\0\0\0", 0, 0) {}
+        GenericIntPtr():
+            IntPtrTrait<Self>::Data(nullptr, 0, 0) {}
         GenericIntPtr(const typename IntPtrTrait<Self>::Data& other):
             IntPtrTrait<Self>::Data(other) {}
         GenericIntPtr(const GenericIntPtr& other):
@@ -248,8 +236,9 @@ namespace int_vector {
     class ConstIntPtr: public GenericIntPtr<ConstIntPtr<T>, T> {
     public:
         using GenericIntPtr<ConstIntPtr<T>, T>::GenericIntPtr;
-
+        inline ConstIntPtr(): GenericIntPtr<ConstIntPtr<T>, T>::GenericIntPtr() {}
         inline ConstIntPtr(const ConstIntPtr& other): GenericIntPtr<ConstIntPtr<T>, T>::GenericIntPtr(other) {}
+
         ConstIntPtr& operator=(const ConstIntPtr& other) {
             return ((GenericIntPtr<ConstIntPtr<T>, T>&) *this) = other;
         }
@@ -259,8 +248,9 @@ namespace int_vector {
     class IntPtr: public GenericIntPtr<IntPtr<T>, T> {
     public:
         using GenericIntPtr<IntPtr<T>, T>::GenericIntPtr;
-
+        inline IntPtr(): GenericIntPtr<IntPtr<T>, T>::GenericIntPtr() {}
         inline IntPtr(const IntPtr& other): GenericIntPtr<IntPtr<T>, T>::GenericIntPtr(other) {}
+
         IntPtr& operator=(const IntPtr& other) {
             return ((GenericIntPtr<IntPtr<T>, T>&) *this) = other;
         }

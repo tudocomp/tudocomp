@@ -113,6 +113,8 @@ void generic_int_vector_ptr_template_const() {
     using Data = typename int_vector::IntPtrTrait<P>::Data;
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
+    P();
+
     P a(Data(&data[0], 0, 32));
     P b(Data(&data[0], 32, 32));
     P c(Data(&data[1], 0, 32));
