@@ -405,7 +405,7 @@ namespace int_vector {
         inline OddBitBackingBase(std::vector<internal_data_type>&& vec, uint64_t real_size):
             m_vec(std::move(vec)), m_real_size(real_size) {}
 
-        inline uint8_t bit_size() const { return N; }
+        inline uint8_t width() const { return N; }
     };
 
     template<size_t N>
@@ -432,22 +432,22 @@ namespace int_vector {
         template<size_t M>
         friend bool operator==(const odd_bit_backing_data<M>& lhs, const odd_bit_backing_data<M>& rhs);
 
-        inline static uint64_t backing2bits(size_t n) {
+        inline uint64_t backing2bits(size_t n) const {
             return uint64_t(sizeof(internal_data_type) * CHAR_BIT) * uint64_t(n);
         }
 
-        inline static uint64_t elem2bits(size_t n) {
-            return uint64_t(N) * uint64_t(n);
+        inline uint64_t elem2bits(size_t n) const {
+            return uint64_t(this->width()) * uint64_t(n);
         }
 
-        inline static uint64_t bits2backing(uint64_t bits) {
+        inline uint64_t bits2backing(uint64_t bits) const {
             if (bits == 0) {
                 return 0;
             }
             return ((bits - 1) / backing2bits(1)) + 1;
         }
 
-        inline static uint64_t bits2elem(uint64_t bits) {
+        inline uint64_t bits2elem(uint64_t bits) const {
             if (bits == 0) {
                 return 0;
             }
@@ -455,7 +455,7 @@ namespace int_vector {
         }
 
         struct PosAndOffset { size_t pos; uint8_t offset; };
-        inline static PosAndOffset bitpos2backingpos(uint64_t bits) {
+        inline PosAndOffset bitpos2backingpos(uint64_t bits) const {
             return PosAndOffset {
                 bits / backing2bits(1),
                 uint8_t(bits % backing2bits(1))
@@ -473,7 +473,7 @@ namespace int_vector {
             uint8_t offset = 0;
 
             for (size_t i = 0; i < n; i++) {
-                bits::write_int_and_move(ptr, val, offset, N);
+                bits::write_int_and_move(ptr, val, offset, this->width());
             }
         }
 
@@ -511,13 +511,13 @@ namespace int_vector {
         inline iterator begin() {
             using Data = typename int_vector::IntPtrTrait<pointer>::Data;
             auto x = bitpos2backingpos(0);
-            return pointer(Data(&this->m_vec[x.pos], x.offset, N));
+            return pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline iterator end() {
             using Data = typename int_vector::IntPtrTrait<pointer>::Data;
             auto x = bitpos2backingpos(elem2bits(this->m_real_size));
-            return pointer(Data(&this->m_vec[x.pos], x.offset, N));
+            return pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline reverse_iterator rbegin() {
@@ -531,13 +531,13 @@ namespace int_vector {
         inline const_iterator begin() const {
             using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
             auto x = bitpos2backingpos(0);
-            return const_pointer(Data(&this->m_vec[x.pos], x.offset, N));
+            return const_pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline const_iterator end() const {
             using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
             auto x = bitpos2backingpos(elem2bits(this->m_real_size));
-            return const_pointer(Data(&this->m_vec[x.pos], x.offset, N));
+            return const_pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline const_reverse_iterator rbegin() const {
@@ -817,9 +817,10 @@ namespace int_vector {
 
     template<size_t N>
     bool operator==(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
+        DCHECK(lhs.width() == rhs.width());
         if (lhs.size() == rhs.size()) {
-            auto extra_bits = odd_bit_backing_data<N>::backing2bits(lhs.m_vec.size())
-                              - odd_bit_backing_data<N>::elem2bits(lhs.m_real_size);
+            auto extra_bits = lhs.backing2bits(lhs.m_vec.size())
+                              - lhs.elem2bits(lhs.m_real_size);
 
             if (extra_bits == 0) {
                 return lhs.m_vec == rhs.m_vec;
@@ -827,10 +828,10 @@ namespace int_vector {
                 if (!std::equal(lhs.m_vec.cbegin(), lhs.m_vec.cend() - 1, rhs.m_vec.cbegin())) {
                     return false;
                 }
-                auto occupied_bits = odd_bit_backing_data<N>::backing2bits(1) - extra_bits;
+                auto occupied_bits = lhs.backing2bits(1) - extra_bits;
                 // NB: Underflow can not happen here because there are never
                 // completely unoccupied backing integers
-                auto elements = (occupied_bits - 1) / odd_bit_backing_data<N>::elem2bits(1) + 1;
+                auto elements = (occupied_bits - 1) / lhs.elem2bits(1) + 1;
 
                 return std::equal(lhs.cend() - elements, lhs.cend(), rhs.cend() - elements);
             }
@@ -897,6 +898,10 @@ namespace int_vector {
         static constexpr ElementStorageMode element_storage_mode() {
             return ElementStorageMode::Direct;
         }
+
+        inline static uint8_t width(const backing_data& self) {
+            return sizeof(T) * CHAR_BIT;
+        }
     };
 
     template<size_t N>
@@ -928,6 +933,11 @@ namespace int_vector {
         static constexpr ElementStorageMode element_storage_mode() {
             return ElementStorageMode::BitPacked;
         }
+
+        inline static uint8_t width(const backing_data& self) {
+            return self.width();
+        }
+
     };
 
     template<class T>

@@ -1034,21 +1034,23 @@ void generic_int_vector_trait_template() {
 
     typedef typename GenericIntVectorTrait<uint_t<N>>::backing_data T;
 
-    ASSERT_EQ(T::backing2bits(1), 64);
-    ASSERT_EQ(T::backing2bits(10), 640);
+    T t = T();
 
-    ASSERT_EQ(T::bits2backing(0), 0);
-    ASSERT_EQ(T::bits2backing(1), 1);
-    ASSERT_EQ(T::bits2backing(7), 1);
-    ASSERT_EQ(T::bits2backing(63), 1);
-    ASSERT_EQ(T::bits2backing(64), 1);
-    ASSERT_EQ(T::bits2backing(65), 2);
-    ASSERT_EQ(T::bits2backing(127), 2);
-    ASSERT_EQ(T::bits2backing(128), 2);
-    ASSERT_EQ(T::bits2backing(129), 3);
+    ASSERT_EQ(t.backing2bits(1), 64);
+    ASSERT_EQ(t.backing2bits(10), 640);
 
-    ASSERT_EQ(T::elem2bits(1), N);
-    ASSERT_EQ(T::elem2bits(10), N * 10);
+    ASSERT_EQ(t.bits2backing(0), 0);
+    ASSERT_EQ(t.bits2backing(1), 1);
+    ASSERT_EQ(t.bits2backing(7), 1);
+    ASSERT_EQ(t.bits2backing(63), 1);
+    ASSERT_EQ(t.bits2backing(64), 1);
+    ASSERT_EQ(t.bits2backing(65), 2);
+    ASSERT_EQ(t.bits2backing(127), 2);
+    ASSERT_EQ(t.bits2backing(128), 2);
+    ASSERT_EQ(t.bits2backing(129), 3);
+
+    ASSERT_EQ(t.elem2bits(1), N);
+    ASSERT_EQ(t.elem2bits(10), N * 10);
 }
 
 TEST(generic_int_vector_trait_template, N9) {
