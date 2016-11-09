@@ -142,7 +142,7 @@ public:
         sdsl::bit_vector non_terminals(sa_t.size(), 0);
         //Pq for the non-terminal symbols
         //the first in pair is position, the seconds the number of the non terminal symbol
-        std::priority_queue<std::tuple<int,int,int> > non_terminal_symbols;
+        std::priority_queue<std::tuple<int,int,int>, std::vector<std::tuple<int,int,int>>, std::greater<std::tuple<int,int,int>> > non_terminal_symbols;
         int non_terminal_symbol_number = 1;
         while(!pq.empty()){
 
