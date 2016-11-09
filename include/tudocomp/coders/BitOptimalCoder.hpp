@@ -19,12 +19,27 @@ public:
     public:
         inline Encoder(Env&& env, Output& out) : tdc::Encoder(std::move(env), out) {}
 
-        template<typename range_t>
-        inline void encode(uint64_t v, const range_t& r) {
+        template<typename value_t, typename range_t>
+        inline void encode(value_t v, const range_t& r) {
             if(r.min() == 0) {
                 m_out->write_int(v, bits_for(r.max()));
             } else {
                 m_out->write_int(v - r.min(), bits_for(r.max() - r.min()));
+            }
+        }
+    };
+
+    class Decoder : public tdc::Decoder {
+    public:
+        inline Decoder(Env&& env, Input& in) : tdc::Decoder(std::move(env), in) {}
+
+        template<typename value_t, typename range_t>
+        inline value_t decode(value_t v, const range_t& r) {
+            if(r.min() == 0) {
+                return m_in->read_int<value_t>(bits_for(r.max()));
+            } else {
+                return (value_t)r.min() +
+                    m_in->read_int<value_t>(bits_for(r.max() - r.min()));
             }
         }
     };
