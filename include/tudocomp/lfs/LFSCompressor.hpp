@@ -142,7 +142,7 @@ public:
         sdsl::bit_vector non_terminals(sa_t.size(), 0);
         //Pq for the non-terminal symbols
         //the first in pair is position, the seconds the number of the non terminal symbol
-        std::priority_queue<std::pair<int,int>> non_terminal_symbols;
+        std::priority_queue<std::tuple<int,int,int> > non_terminal_symbols;
         int non_terminal_symbol_number = 1;
         while(!pq.empty()){
 
@@ -233,9 +233,12 @@ public:
                         //DLOG(INFO) << "position non viable: " << *it+k << std::endl;
                         non_terminals[*it+k]=1;
                     }
+                    int length_of_symbol = top.first;
+                    std::tuple<int,int,int> symbol(*it, non_terminal_symbol_number, length_of_symbol);
+                    DLOG(INFO) << "added symbol: " << non_terminal_symbol_number << " at pos " << *it << std::endl;
+                    non_terminal_symbols.push(symbol);
                 }
-                std::pair<int,int> symbol(*it, non_terminal_symbol_number);
-                non_terminal_symbols.push(symbol);
+                non_terminal_symbol_number++;
                 DLOG(INFO) << "non-terminals after:" << std::endl << non_terminals << std::endl;
             }
 
@@ -246,8 +249,8 @@ public:
         DLOG(INFO) << std::endl;
 
         while(!non_terminal_symbols.empty()){
-            std::pair<int,int> position = non_terminal_symbols.top();
-            DLOG(INFO) << "at pos: " << position.first << " symbol: " << position.second << std::endl;
+            std::tuple<int,int,int> position = non_terminal_symbols.top();
+            DLOG(INFO) << "at pos: " << std::get<0>(position) << " symbol: " << std::get<1>(position)  << " length: "<< std::get<2>(position)  <<  std::endl;
             non_terminal_symbols.pop();
         }
 
