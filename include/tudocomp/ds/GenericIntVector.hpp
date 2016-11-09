@@ -482,7 +482,7 @@ namespace int_vector {
         inline OddBitBackingBase(OddBitBackingBase&& other):
             m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
 
-        inline uint8_t width() const { return N; }
+        inline uint8_t raw_width() const { return N; }
         inline void set_width_raw(uint8_t width) { }
 
     };
@@ -503,7 +503,7 @@ namespace int_vector {
         inline OddBitBackingBase(OddBitBackingBase&& other):
             m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size), m_width(other.m_width) {}
 
-        inline uint8_t width() const { return m_width; }
+        inline uint8_t raw_width() const { return m_width; }
         inline void set_width_raw(uint8_t width) { m_width = width; }
 
     };
@@ -527,39 +527,54 @@ namespace int_vector {
         typedef ptrdiff_t                                            difference_type;
         typedef size_t                                               size_type;
 
-        typedef typename OddBitBackingBase<T>::internal_data_type internal_data_type;
+        typedef typename OddBitBackingBase<T>::internal_data_type    internal_data_type;
 
         template<class M>
         friend bool operator==(const odd_bit_backing_data<M>& lhs, const odd_bit_backing_data<M>& rhs);
 
-        inline uint64_t backing2bits(size_t n) const {
+        inline static uint64_t backing2bits_w(size_t n, uint8_t w) {
             return uint64_t(sizeof(internal_data_type) * CHAR_BIT) * uint64_t(n);
         }
+        inline uint64_t backing2bits(size_t n) const {
+            return backing2bits_w(n, this->width());
+        }
 
+        inline static uint64_t elem2bits_w(size_t n, uint8_t w) {
+            return uint64_t(w) * uint64_t(n);
+        }
         inline uint64_t elem2bits(size_t n) const {
-            return uint64_t(this->width()) * uint64_t(n);
+            return elem2bits_w(n, this->width());
         }
 
+        inline static uint64_t bits2backing_w(uint64_t bits, uint8_t w) {
+            if (bits == 0) {
+                return 0;
+            }
+            return ((bits - 1) / backing2bits_w(1, w)) + 1;
+        }
         inline uint64_t bits2backing(uint64_t bits) const {
-            if (bits == 0) {
-                return 0;
-            }
-            return ((bits - 1) / backing2bits(1)) + 1;
+            return bits2backing_w(bits, this->width());
         }
 
-        inline uint64_t bits2elem(uint64_t bits) const {
+        inline static uint64_t bits2elem_w(uint64_t bits, uint8_t w) {
             if (bits == 0) {
                 return 0;
             }
-            return ((bits - 1) / elem2bits(1)) + 1;
+            return ((bits - 1) / elem2bits_w(1, w)) + 1;
+        }
+        inline uint64_t bits2elem(uint64_t bits) const {
+            return bits2elem_w(bits, this->width());
         }
 
         struct PosAndOffset { size_t pos; uint8_t offset; };
-        inline PosAndOffset bitpos2backingpos(uint64_t bits) const {
+        inline static PosAndOffset bitpos2backingpos_w(uint64_t bits, uint8_t w) {
             return PosAndOffset {
-                bits / backing2bits(1),
-                uint8_t(bits % backing2bits(1))
+                bits / backing2bits_w(1, w),
+                uint8_t(bits % backing2bits_w(1, w))
             };
+        }
+        inline PosAndOffset bitpos2backingpos(uint64_t bits) const {
+            return bitpos2backingpos_w(bits, this->width());
         }
 
         inline explicit odd_bit_backing_data(): OddBitBackingBase<T>::OddBitBackingBase() {}
@@ -926,6 +941,27 @@ namespace int_vector {
         inline void emplace_back(Args&&... args) {
             push_back(value_type(std::forward<Args...>(args)...));
         }
+
+        inline uint8_t width() const {
+            return this->raw_width();
+        }
+
+        inline void width(uint8_t w) {
+            //auto old_bit_size = bit_size();
+            //auto new_bit_size = bit_size();
+        }
+
+        inline void bit_resize(uint64_t n) {
+
+        }
+
+        inline void resize(size_type n, const value_type& val, uint8_t w) {
+
+        }
+
+        inline void bit_reserve(uint64_t n) {
+
+        }
     };
 
     template<class N>
@@ -1039,6 +1075,21 @@ namespace int_vector {
             return backing_data(n, val);
         }
 
+        inline static void width(backing_data& self, uint8_t w) {
+            width_error();
+        }
+
+        inline static void bit_resize(backing_data& self, uint64_t n) {
+            width_error();
+        }
+
+        inline static void resize(backing_data& self, size_type n, const value_type& val, uint8_t w) {
+            width_error();
+        }
+
+        inline static void bit_reserve(backing_data& self, uint64_t n) {
+            width_error();
+        }
     };
 
     template<>
@@ -1083,6 +1134,21 @@ namespace int_vector {
             return backing_data(n, val, width);
         }
 
+        inline static void width(backing_data& self, uint8_t w) {
+            self.width(w);
+        }
+
+        inline static void bit_resize(backing_data& self, uint64_t n) {
+            self.bit_resize(n);
+        }
+
+        inline static void resize(backing_data& self, size_type n, const value_type& val, uint8_t w) {
+            self.resize(n, val, w);
+        }
+
+        inline static void bit_reserve(backing_data& self, uint64_t n) {
+            self.bit_reserve(n);
+        }
     };
 
     template<size_t N>
@@ -1128,6 +1194,21 @@ namespace int_vector {
             return backing_data(n, val);
         }
 
+        inline static void width(backing_data& self, uint8_t w) {
+            width_error();
+        }
+
+        inline static void bit_resize(backing_data& self, uint64_t n) {
+            width_error();
+        }
+
+        inline static void resize(backing_data& self, size_type n, const value_type& val, uint8_t w) {
+            width_error();
+        }
+
+        inline static void bit_reserve(backing_data& self, uint64_t n) {
+            width_error();
+        }
     };
 
     template<class T>
@@ -1256,12 +1337,24 @@ namespace int_vector {
             return GenericIntVectorTrait<T>::width(m_data);
         }
 
+        inline void width(uint8_t w) {
+            GenericIntVectorTrait<T>::width(m_data, w);
+        }
+
         inline void resize(size_type n) {
             m_data.resize(n);
         }
 
+        inline void bit_resize(uint64_t n) {
+            GenericIntVectorTrait<T>::bit_resize(m_data, n);
+        }
+
         inline void resize(size_type n, const value_type& val) {
             m_data.resize(n, val);
+        }
+
+        inline void resize(size_type n, const value_type& val, uint8_t w) {
+            GenericIntVectorTrait<T>::resize(m_data, n, val, w);
         }
 
         inline size_type capacity() const {
@@ -1278,6 +1371,10 @@ namespace int_vector {
 
         inline void reserve(size_type n) {
             m_data.reserve(n);
+        }
+
+        inline void bit_reserve(uint64_t n) {
+            GenericIntVectorTrait<T>::bit_reserve(m_data, n);
         }
 
         inline void shrink_to_fit() {

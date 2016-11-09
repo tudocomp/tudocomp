@@ -1008,6 +1008,7 @@ void generic_int_vector_template() {
     ASSERT_EQ(*ptr, (T(2)));
 }
 
+// TODO: Test constness of operations
 
 TEST(generic_int_vector, uint32_t) {
     generic_int_vector_template<uint32_t>();
@@ -1117,6 +1118,21 @@ TEST(generic_int_vector, dynamic_t_extra) {
         ASSERT_EQ(bv, (std::vector<dynamic_t> { 4, 4, 4 }));
         ASSERT_EQ(cv, (std::vector<dynamic_t> { 3, 3, 3 }));
     }
+
+    a.width(4);
+    {
+        ASSERT_EQ(a.width(), 4);
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
+    }
+    a.push_back(7);
+    a.push_back(8);
+    a.push_back(15);
+    {
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3, 7, 0, 7 }));
+    }
+
 }
 
 
