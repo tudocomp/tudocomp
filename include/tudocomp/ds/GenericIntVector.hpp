@@ -950,10 +950,6 @@ namespace int_vector {
             this->resize(this->size(), 0, w);
         }
 
-        inline void bit_resize(uint64_t n) {
-
-        }
-
         inline void resize(size_type n, const value_type& val, uint8_t w) {
             auto old_width = this->width();
             auto new_width = w;
@@ -1081,8 +1077,8 @@ namespace int_vector {
      * TODO:
      o constructor for int width
      o swap/reassign ops
-     - void bit_resize(const size_type size);
-     - bit capacity?
+     x void bit_resize(const size_type size);
+     o bit capacity?
      - value_type get_int(size_type idx, const uint8_t len=64) const;
      - void set_int(size_type idx, value_type x, const uint8_t len=64);
      - width setter
@@ -1135,10 +1131,6 @@ namespace int_vector {
         }
 
         inline static void width(backing_data& self, uint8_t w) {
-            width_error();
-        }
-
-        inline static void bit_resize(backing_data& self, uint64_t n) {
             width_error();
         }
 
@@ -1197,10 +1189,6 @@ namespace int_vector {
             self.width(w);
         }
 
-        inline static void bit_resize(backing_data& self, uint64_t n) {
-            self.bit_resize(n);
-        }
-
         inline static void resize(backing_data& self, size_type n, const value_type& val, uint8_t w) {
             self.resize(n, val, w);
         }
@@ -1254,10 +1242,6 @@ namespace int_vector {
         }
 
         inline static void width(backing_data& self, uint8_t w) {
-            width_error();
-        }
-
-        inline static void bit_resize(backing_data& self, uint64_t n) {
             width_error();
         }
 
@@ -1402,10 +1386,6 @@ namespace int_vector {
 
         inline void resize(size_type n) {
             m_data.resize(n);
-        }
-
-        inline void bit_resize(uint64_t n) {
-            GenericIntVectorTrait<T>::bit_resize(m_data, n);
         }
 
         inline void resize(size_type n, const value_type& val) {
