@@ -1044,6 +1044,22 @@ TEST(generic_int_vector, dynamic_t) {
     generic_int_vector_template<dynamic_t>();
 }
 
+TEST(generic_int_vector, dynamic_t_extra) {
+    using namespace int_vector;
+
+    GenericIntVector<dynamic_t> a(3, 3, 1);
+    GenericIntVector<dynamic_t> b(3, 3, 2);
+
+    ASSERT_EQ(a.width(), 1);
+    ASSERT_EQ(b.width(), 2);
+
+    std::vector<dynamic_t> av(a.begin(), a.end());
+    std::vector<dynamic_t> bv(b.begin(), b.end());
+
+    ASSERT_EQ(av, (std::vector<dynamic_t> { 1, 1, 1 }));
+    ASSERT_EQ(bv, (std::vector<dynamic_t> { 3, 3, 3 }));
+}
+
 
 template<size_t N>
 void generic_int_vector_trait_template() {

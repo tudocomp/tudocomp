@@ -460,6 +460,10 @@ namespace int_vector {
         BitPacked
     };
 
+    inline void width_error() {
+        throw std::runtime_error("Can not set the width of a IntVector with statically sized elements");
+    }
+
     template<class T>
     struct OddBitBackingBase {};
 
@@ -473,12 +477,16 @@ namespace int_vector {
 
         inline OddBitBackingBase():
             m_vec(), m_real_size(0) {}
-        inline OddBitBackingBase(const std::vector<internal_data_type>& vec, uint64_t real_size):
-            m_vec(vec), m_real_size(real_size) {}
-        inline OddBitBackingBase(std::vector<internal_data_type>&& vec, uint64_t real_size):
-            m_vec(std::move(vec)), m_real_size(real_size) {}
+        inline OddBitBackingBase(const OddBitBackingBase& other):
+            m_vec(other.m_vec), m_real_size(other.m_real_size) {}
+        inline OddBitBackingBase(OddBitBackingBase&& other):
+            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
 
         inline uint8_t width() const { return N; }
+        inline void set_width_raw(uint8_t width) {
+            width_error();
+        }
+
     };
 
     template<>
@@ -492,12 +500,13 @@ namespace int_vector {
 
         inline OddBitBackingBase():
             m_vec(), m_real_size(0), m_width(64) {}
-        inline OddBitBackingBase(const std::vector<internal_data_type>& vec, uint64_t real_size):
-            m_vec(vec), m_real_size(real_size), m_width(64) {}
-        inline OddBitBackingBase(std::vector<internal_data_type>&& vec, uint64_t real_size):
-            m_vec(std::move(vec)), m_real_size(real_size), m_width(64) {}
+        inline OddBitBackingBase(const OddBitBackingBase& other):
+            m_vec(other.m_vec), m_real_size(other.m_real_size), m_width(other.m_width) {}
+        inline OddBitBackingBase(OddBitBackingBase&& other):
+            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size), m_width(other.m_width) {}
 
         inline uint8_t width() const { return m_width; }
+        inline void set_width_raw(uint8_t width) { m_width = width; }
     };
 
     template<class T>
@@ -569,17 +578,24 @@ namespace int_vector {
             }
         }
 
+        inline odd_bit_backing_data(size_type n, const value_type& val, uint8_t width):
+            odd_bit_backing_data()
+        {
+            this->set_width_raw(width);
+            this->resize(n, val);
+        }
+
         template <class InputIterator>
         inline odd_bit_backing_data(InputIterator first, InputIterator last) {
-            // TODO: specialize for random acces iterator
+            // TODO: specialize for random access iterator
             for(; first != last; first++) {
                 push_back(*first);
             }
         }
         inline odd_bit_backing_data (const odd_bit_backing_data& other):
-            OddBitBackingBase<T>(other.m_vec, other.m_real_size) {}
+            OddBitBackingBase<T>(other) {}
         inline odd_bit_backing_data (odd_bit_backing_data&& other):
-            OddBitBackingBase<T>(std::move(other.m_vec), other.m_real_size) {}
+            OddBitBackingBase<T>(std::move(other)) {}
         inline odd_bit_backing_data(std::initializer_list<value_type> il):
             odd_bit_backing_data(il.begin(), il.end()) {}
 
@@ -961,6 +977,19 @@ namespace int_vector {
         x.swap(y);
     }
 
+    /*
+     * TODO:
+     - constructor for int width
+     - void bit_resize(const size_type size);
+     - bit capacity?
+     - value_type get_int(size_type idx, const uint8_t len=64) const;
+     - void set_int(size_type idx, value_type x, const uint8_t len=64);
+     - width setter
+     - in.place widt setting?
+     - flip?
+     . bit resize
+     */
+
     template<class T, class X = void>
     struct GenericIntVectorTrait {
         typedef typename std::vector<T>::value_type             value_type;
@@ -994,6 +1023,12 @@ namespace int_vector {
         inline static uint8_t width(const backing_data& self) {
             return sizeof(T) * CHAR_BIT;
         }
+
+        inline static backing_data with_width(size_type n, const value_type& val, uint8_t width) {
+            width_error();
+            return backing_data(n, val);
+        }
+
     };
 
     template<>
@@ -1028,6 +1063,10 @@ namespace int_vector {
 
         inline static uint8_t width(const backing_data& self) {
             return self.width();
+        }
+
+        inline static backing_data with_width(size_type n, const value_type& val, uint8_t width) {
+            return backing_data(n, val, width);
         }
 
     };
@@ -1066,6 +1105,11 @@ namespace int_vector {
             return self.width();
         }
 
+        inline static backing_data with_width(size_type n, const value_type& val, uint8_t width) {
+            width_error();
+            return backing_data(n, val);
+        }
+
     };
 
     template<class T>
@@ -1099,6 +1143,8 @@ namespace int_vector {
         // fill
         explicit GenericIntVector(size_type n): m_data(n) {}
         inline GenericIntVector(size_type n, const value_type& val): m_data(n, val) {}
+        inline GenericIntVector(size_type n, const value_type& val, uint8_t width):
+            m_data(GenericIntVectorTrait<T>::with_width(n, val, width)) {}
 
         // range
         template <class InputIterator>
@@ -1186,6 +1232,10 @@ namespace int_vector {
 
         inline size_type max_size() const {
             return m_data.max_size();
+        }
+
+        inline uint8_t width() const {
+            return GenericIntVectorTrait<T>::width(m_data);
         }
 
         inline void resize(size_type n) {

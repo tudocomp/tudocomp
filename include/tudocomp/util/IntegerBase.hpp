@@ -143,11 +143,6 @@ public:
 template<class Self>
 class ConstIntegerBaseWithSelf {
 public:
-    /*
- XYZ;
-    typedef typename XYZ
-     */
-
     typedef typename ConstIntegerBaseTrait<Self>::Dispatch::SelfMaxBit SelfMaxBit;
 private:
     inline static SelfMaxBit cast_for_self_op(const Self& self) {
