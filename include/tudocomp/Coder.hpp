@@ -30,6 +30,26 @@ public:
     }
 };
 
+/*abstract*/
+class Decoder : public Algorithm {
+
+private:
+    std::unique_ptr<io::InputStream> m_ins;
+
+protected:
+    std::unique_ptr<BitIStream> m_in;
+
+public:
+    inline Decoder(Env&& env, Input& in) : Algorithm(std::move(env)) {
+        m_ins = std::make_unique<io::InputStream>(in.as_stream());
+        m_in = std::make_unique<BitIStream>(*m_ins);
+    }
+
+    inline bool eof() const {
+        return true; //TODO: return m_in->eof();
+    }
+};
+
 }
 
 #endif
