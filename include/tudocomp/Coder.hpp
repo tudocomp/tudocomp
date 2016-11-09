@@ -46,7 +46,7 @@ public:
     }
 
     inline bool eof() const {
-        return true; //TODO: return m_in->eof();
+        return m_in->eof();
     }
 };
 
