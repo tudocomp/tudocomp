@@ -129,9 +129,8 @@ public:
 template<typename A>
 inline void OnlineLZSSCoder<A>::decode(Env&& env, Input& input, Output& out) {
 
-    bool done; //GRRR
     auto in_guard = input.as_stream();
-    BitIStream in(in_guard, done);
+    BitIStream in(in_guard);
 
     //Init
     size_t len = in.read_compressed_int();

@@ -131,12 +131,11 @@ public:
     /// Decompress the input into an output
     virtual void decompress(Input& input, Output& output) override {
         // char c;
-        bool done = false;
         bool factor = false;
 
         auto in_guard = input.as_stream();
         auto out = output.as_stream();
-        BitIStream* biti = new BitIStream(in_guard, done);
+        BitIStream* biti = new BitIStream(in_guard);
 
         std::stringstream total_len_str;
         size_t curr_pos=0, total_len=0;

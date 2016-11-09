@@ -15,17 +15,20 @@ namespace io {
 /// bitwise using another cursor.
 class BitIStream {
     std::istream* m_stream;
-    uint8_t m_next = 0;
-    int m_cursor;
-    bool* m_done;
+    uint8_t m_next;
+    uint8_t m_cursor;
+    bool m_require_next;
 
     inline void read_next() {
-        const int MSB = 7;
+        const uint8_t MSB = 7;
 
         char tmp;
-        // TODO: Error reporting
-        *m_done |= !m_stream->get(tmp);
-        m_next = tmp;
+        if(m_stream->get(tmp)) {
+            m_require_next = false;
+            m_next = tmp;
+        } else {
+            m_next = 0;
+        }
 
         m_cursor = MSB;
     }
@@ -34,21 +37,24 @@ public:
     /// \brief Constructs a bitwise input stream.
     ///
     /// \param input The underlying input stream.
-    /// \param done A reference to a flag that is set to \c true when the
-    ///              underlying input stream has been read completely.
-    inline BitIStream(std::istream& input, bool& done)
-        : m_stream(&input), m_done(&done) {
-        m_cursor = -1;
+    inline BitIStream(std::istream& input)
+        : m_stream(&input), m_require_next(true) {
     }
 
     /// \brief Reads the next single bit from the input.
     /// \return 1 if the next bit is set, 0 otherwise.
     inline uint8_t read_bit() {
-        if (m_cursor < 0) {
+        if (m_require_next) {
             read_next();
         }
         uint8_t bit = (m_next >> m_cursor) & 1;
-        m_cursor--;
+
+        if(m_cursor) {
+            --m_cursor;
+        } else {
+            m_require_next = true;
+        }
+
         return bit;
     }
 
@@ -99,6 +105,19 @@ public:
     /// \return A reference to the underlying input stream.
     inline std::istream& stream() {
         return *m_stream;
+    }
+
+    /// \brief Tests whether the end of the stream has been reached.
+    ///
+    /// Note that this function cannot know if the last bit of the actual
+    /// bit stream has been read, because it is byte-aligned (8 bit).
+    /// For example, if the bit stream actually ends after 5 bits, this function
+    /// will report EOF only after 8 bits.
+    ///
+    /// \return \c true if the end of the stream has been reached, \c false
+    ///         otherwise.
+    inline bool eof() const {
+        return m_require_next && m_stream->eof();
     }
 };
 

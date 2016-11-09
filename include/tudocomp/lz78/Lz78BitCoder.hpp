@@ -79,22 +79,20 @@ public:
     inline static void decode(Input& inp_, Output& out_) {
         Lz78DecodeBuffer buf;
 
-        bool done = false;
-
         auto i_guard = inp_.as_stream();
         auto out = out_.as_stream();
 
-        BitIStream inp(i_guard, done);
+        BitIStream inp(i_guard);
 
         uint64_t factor_counter = 0;
 
-        while (!done) {
+        while (!inp.eof()) {
             size_t back_ref_idx_bits = bits_for(factor_counter);
 
             CodeType index = inp.read_int<CodeType>(back_ref_idx_bits);
             uint8_t chr = inp.read_int<uint8_t>(8);
 
-            if (done) {
+            if (inp.eof()) {
                 break;
             }
 

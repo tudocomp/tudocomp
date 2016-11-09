@@ -76,8 +76,7 @@ public:
         auto inp = _inp.as_stream();
         auto out = _out.as_stream();
 
-        bool done = false;
-        BitIStream is(inp, done);
+        BitIStream is(inp);
 
         uint64_t counter = 0;
         decode_step([&](CodeType& entry, bool reset, bool &file_corrupted) -> Factor {
@@ -87,7 +86,7 @@ public:
 
             // Try to read next factor
             Factor factor(is.read_int<uint64_t>(bits_for(counter + 256)));
-            if (done) {
+            if (is.eof()) {
                 // Could not read all bits -> done
                 // (this works because the encoded factors are always > 8 bit)
                 return false;
