@@ -13,12 +13,14 @@ using namespace tdc;
 
 template<class P, class R, class T>
 void generic_int_vector_ref_template_const() {
+    using Data = typename int_vector::IntPtrTrait<P>::Data;
+
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
-    P a(&data[0], 0, 32);
-    P b(&data[0], 32, 32);
-    P c(&data[1], 0, 32);
-    P d(&data[1], 32, 32);
+    P a(Data(&data[0], 0, 32));
+    P b(Data(&data[0], 32, 32));
+    P c(Data(&data[1], 0, 32));
+    P d(Data(&data[1], 32, 32));
 
     R w(a);
     R x(b);
@@ -31,7 +33,7 @@ void generic_int_vector_ref_template_const() {
     ASSERT_EQ(z, 0x01234567u);
 
     ASSERT_EQ(w + 1, 0x00001112);
-    ASSERT_EQ(~x, ~uint64_t(0xff00ffff));
+    ASSERT_EQ(~x, ~T(0xff00ffff));
 
     uint32_t u32 = T(y);
     uint64_t u64 = T(y);
@@ -45,13 +47,14 @@ void generic_int_vector_ref_template_const() {
 
 template<class P, class R, class T>
 void generic_int_vector_ref_template() {
+    using Data = typename int_vector::IntPtrTrait<P>::Data;
     generic_int_vector_ref_template_const<P, R, T>();
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
-    P a(&data[0], 0, 32);
-    P b(&data[0], 32, 32);
-    P c(&data[1], 0, 32);
-    P d(&data[1], 32, 32);
+    P a(Data(&data[0], 0, 32));
+    P b(Data(&data[0], 32, 32));
+    P c(Data(&data[1], 0, 32));
+    P d(Data(&data[1], 32, 32));
 
     R w(a);
     R x(b);
@@ -107,12 +110,15 @@ TEST(generic_int_vector, const_int_ref) {
 
 template<class P>
 void generic_int_vector_ptr_template_const() {
+    using Data = typename int_vector::IntPtrTrait<P>::Data;
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
-    P a(&data[0], 0, 32);
-    P b(&data[0], 32, 32);
-    P c(&data[1], 0, 32);
-    P d(&data[1], 32, 32);
+    P();
+
+    P a(Data(&data[0], 0, 32));
+    P b(Data(&data[0], 32, 32));
+    P c(Data(&data[1], 0, 32));
+    P d(Data(&data[1], 32, 32));
 
     ASSERT_EQ(*a, 0x00001111u);
     ASSERT_EQ(*b, 0xff00ffffu);
@@ -227,14 +233,15 @@ void generic_int_vector_ptr_template_const() {
 
 template<class P, class T>
 void generic_int_vector_ptr_template() {
+    using Data = typename int_vector::IntPtrTrait<P>::Data;
     generic_int_vector_ptr_template_const<P>();
 
     std::vector<uint64_t> data = { 0xff00ffff00001111, 0x0123456789ABCDEF };
 
-    P a(&data[0], 0, 32);
-    P b(&data[0], 32, 32);
-    P c(&data[1], 0, 32);
-    P d(&data[1], 32, 32);
+    P a(Data(&data[0], 0, 32));
+    P b(Data(&data[0], 32, 32));
+    P c(Data(&data[1], 0, 32));
+    P d(Data(&data[1], 32, 32));
 
     *c = 0;
     ASSERT_EQ(*c, 0u);
@@ -268,17 +275,28 @@ TEST(generic_int_vector, const_int_ptr) {
 struct IBTest;
 
 namespace tdc {
+    struct IBTestDispatch {
+        typedef uint32_t SelfMaxBit;
+
+        template<class Ref, class V>
+        inline static void assign(Ref& self, V v) {
+            *self.m_ptr = v;
+        };
+
+        template<class Ref, class R>
+        inline static R cast_for_op(const Ref& self) {
+            return *self.m_ptr;
+        }
+    };
+
     template<>
     struct ConstIntegerBaseTrait<IBTest> {
-        typedef uint32_t SelfMaxBit;
-        inline static SelfMaxBit cast_for_self_op(const IBTest& self);
-        inline static SelfMaxBit cast_for_32_op(const IBTest& self);
-        inline static uint64_t cast_for_64_op(const IBTest& self);
+        typedef IBTestDispatch Dispatch;
     };
+
     template<>
     struct IntegerBaseTrait<IBTest>: ConstIntegerBaseTrait<IBTest> {
-        inline static void assign(IBTest& self, uint32_t v);
-        inline static void assign(IBTest& self, uint64_t v);
+        typedef IBTestDispatch Dispatch;
     };
 }
 
@@ -290,12 +308,6 @@ struct IBTest: public IntegerBase<IBTest> {
         return *m_ptr;
     }
 };
-
-inline void tdc::IntegerBaseTrait<IBTest>::assign(IBTest& self, uint32_t v)         { *self.m_ptr = v;    }
-inline void tdc::IntegerBaseTrait<IBTest>::assign(IBTest& self, uint64_t v)         { *self.m_ptr = v;    }
-inline uint32_t tdc::ConstIntegerBaseTrait<IBTest>::cast_for_self_op(const IBTest& self) { return *self.m_ptr; }
-inline uint32_t tdc::ConstIntegerBaseTrait<IBTest>::cast_for_32_op(const IBTest& self)   { return *self.m_ptr; }
-inline uint64_t tdc::ConstIntegerBaseTrait<IBTest>::cast_for_64_op(const IBTest& self)   { return *self.m_ptr; }
 
 TEST(integer_base, basic_binop) {
     uint8_t i = 3;
@@ -596,18 +608,26 @@ TEST(uint_t, multi_inherit) {
 
 template<class T> struct bit_size {
     static const uint64_t size = sizeof(T) * CHAR_BIT;
+    static const bool dynamic = false;
 };
 template<size_t N> struct bit_size<uint_t<N>> {
     static const uint64_t size = N;
+    static const bool dynamic = false;
+};
+template<> struct bit_size<dynamic_t> {
+    static const uint64_t size = 64;
+    static const bool dynamic = true;
 };
 
 template<class T>
 void generic_int_vector_template() {
     using namespace int_vector;
     auto N = bit_size<T>::size;
+    using V = typename GenericIntVector<T>::value_type;
+
     std::cout << "tests for " << N << "\n";
 
-    if (N % 8 == 0) {
+    if (N % 8 == 0 && !bit_size<T>::dynamic) {
         ASSERT_EQ(GenericIntVector<T>::element_storage_mode(), ElementStorageMode::Direct);
     } else {
         ASSERT_EQ(GenericIntVector<T>::element_storage_mode(), ElementStorageMode::BitPacked);
@@ -674,12 +694,12 @@ void generic_int_vector_template() {
     ASSERT_EQ(fill1.bit_size(), 10 * N);
     ASSERT_EQ(fill1, (GenericIntVector<T> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
 
-    GenericIntVector<T> fill2(size_t(10), T(1));
+    GenericIntVector<T> fill2(size_t(10), V(1));
     ASSERT_EQ(fill2.size(), 10);
     ASSERT_EQ(fill2.bit_size(), 10 * N);
     ASSERT_EQ(fill2, (GenericIntVector<T> { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
 
-    std::vector<T> iter_src_1(10, T(1));
+    std::vector<V> iter_src_1(10, V(1));
     GenericIntVector<T> range1(iter_src_1.begin(), iter_src_1.end());
     ASSERT_EQ(range1.size(), 10);
     ASSERT_EQ(range1.bit_size(), 10 * N);
@@ -703,7 +723,7 @@ void generic_int_vector_template() {
     ASSERT_EQ(move, (GenericIntVector<T> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
     ASSERT_EQ(move, fill1);
 
-    GenericIntVector<T> il1 { T(1), T(2), T(3), T(4) };
+    GenericIntVector<T> il1 { V(1), V(2), V(3), V(4) };
     ASSERT_EQ(il1.size(), 4);
     ASSERT_EQ(il1.bit_size(), 4 * N);
     ASSERT_EQ(il1, (GenericIntVector<T> { 1, 2, 3, 4 }));
@@ -733,18 +753,18 @@ void generic_int_vector_template() {
     ASSERT_EQ(assign_target, (GenericIntVector<T> { 8, 9, 10, 11, 12 }));
 
     GenericIntVector<T> iter_src { 1, 2, 3, 4 };
-    std::vector<uint64_t> iter_src_cmp  { T(1), T(2), T(3), T(4) };
+    std::vector<uint64_t> iter_src_cmp  { V(1), V(2), V(3), V(4) };
 
     ASSERT_EQ(*iter_src.begin(), *iter_src_cmp.begin());
     ASSERT_EQ(*iter_src.rbegin(), *iter_src_cmp.rbegin());
     ASSERT_EQ(*iter_src.cbegin(), *iter_src_cmp.cbegin());
     ASSERT_EQ(*iter_src.crbegin(), *iter_src_cmp.crbegin());
 
-    std::vector<T> iterd1(iter_src.begin(), iter_src.end());
-    ASSERT_EQ(iterd1, (std::vector<T> { 1, 2, 3, 4 }));
+    std::vector<V> iterd1(iter_src.begin(), iter_src.end());
+    ASSERT_EQ(iterd1, (std::vector<V> { 1, 2, 3, 4 }));
 
-    std::vector<T> iterd2(iter_src.rbegin(), iter_src.rend());
-    ASSERT_EQ(iterd2, (std::vector<T> { 4, 3, 2, 1 }));
+    std::vector<V> iterd2(iter_src.rbegin(), iter_src.rend());
+    ASSERT_EQ(iterd2, (std::vector<V> { 4, 3, 2, 1 }));
 
     auto iterd_i = 1;
     for (auto a = iter_src.begin(), b = iter_src.end(); a != b; ++a) {
@@ -761,37 +781,42 @@ void generic_int_vector_template() {
 
     const GenericIntVector<T> const_iter_src { 1, 2, 3, 4 };
 
-    std::vector<T> iterd3(const_iter_src.begin(), const_iter_src.end());
-    ASSERT_EQ(iterd3, (std::vector<T> { 1, 2, 3, 4 }));
+    std::vector<V> iterd3(const_iter_src.begin(), const_iter_src.end());
+    ASSERT_EQ(iterd3, (std::vector<V> { 1, 2, 3, 4 }));
 
-    std::vector<T> iterd4(const_iter_src.rbegin(), const_iter_src.rend());
-    ASSERT_EQ(iterd4, (std::vector<T> { 4, 3, 2, 1 }));
+    std::vector<V> iterd4(const_iter_src.rbegin(), const_iter_src.rend());
+    ASSERT_EQ(iterd4, (std::vector<V> { 4, 3, 2, 1 }));
 
-    ASSERT_EQ(dflt.max_size(), std::vector<T>().max_size());
+    ASSERT_GE(dflt.max_size(), std::vector<uint64_t>().max_size());
 
     GenericIntVector<T> resize { 1, 2, 3, 4 };
     ASSERT_EQ(resize.size(), 4);
     auto tmp_capa = resize.capacity();
     ASSERT_EQ(resize, (GenericIntVector<T> { 1, 2, 3, 4 }));
     ASSERT_GE(resize.capacity(), resize.size());
+    ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
 
     resize.resize(2);
     ASSERT_EQ(resize.size(), 2);
     ASSERT_EQ(tmp_capa, resize.capacity());
+    ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
     ASSERT_EQ(resize, (GenericIntVector<T> { 1, 2 }));
 
     resize.resize(5, 1);
     ASSERT_EQ(resize.size(), 5);
     ASSERT_EQ(resize, (GenericIntVector<T> { 1, 2, 1, 1, 1 }));
     ASSERT_GE(resize.capacity(), resize.size());
+    ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
 
     ASSERT_TRUE(dflt.empty());
     ASSERT_FALSE(fill1.empty());
 
     GenericIntVector<T> reserve;
     ASSERT_EQ(reserve.capacity(), 0);
+    ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
     reserve.reserve(10);
     ASSERT_GE(reserve.capacity(), 10);
+    ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
 
     reserve.shrink_to_fit();
 
@@ -809,24 +834,24 @@ void generic_int_vector_template() {
     ASSERT_EQ(const_referenced[3], (T(4)));
     ASSERT_EQ(const_referenced[4], (T(5)));
 
-    referenced[2] = T(100);
-    ASSERT_EQ(referenced[2], (T(100)));
+    referenced[2] = V(100);
+    ASSERT_EQ(referenced[2], (V(100)));
     ASSERT_EQ(referenced, (GenericIntVector<T> { 1, 2, 100, 4, 5 }));
 
-    ASSERT_EQ(referenced.at(0), (T(1)));
-    ASSERT_EQ(referenced.at(1), (T(2)));
-    ASSERT_EQ(referenced.at(2), (T(100)));
-    ASSERT_EQ(referenced.at(3), (T(4)));
-    ASSERT_EQ(referenced.at(4), (T(5)));
+    ASSERT_EQ(referenced.at(0), (V(1)));
+    ASSERT_EQ(referenced.at(1), (V(2)));
+    ASSERT_EQ(referenced.at(2), (V(100)));
+    ASSERT_EQ(referenced.at(3), (V(4)));
+    ASSERT_EQ(referenced.at(4), (V(5)));
 
-    ASSERT_EQ(const_referenced.at(0), (T(1)));
-    ASSERT_EQ(const_referenced.at(1), (T(2)));
-    ASSERT_EQ(const_referenced.at(2), (T(3)));
-    ASSERT_EQ(const_referenced.at(3), (T(4)));
-    ASSERT_EQ(const_referenced.at(4), (T(5)));
+    ASSERT_EQ(const_referenced.at(0), (V(1)));
+    ASSERT_EQ(const_referenced.at(1), (V(2)));
+    ASSERT_EQ(const_referenced.at(2), (V(3)));
+    ASSERT_EQ(const_referenced.at(3), (V(4)));
+    ASSERT_EQ(const_referenced.at(4), (V(5)));
 
-    referenced.at(3) = T(99);
-    ASSERT_EQ(referenced.at(3), (T(99)));
+    referenced.at(3) = V(99);
+    ASSERT_EQ(referenced.at(3), (V(99)));
     ASSERT_EQ(referenced, (GenericIntVector<T> { 1, 2, 100, 99, 5 }));
 
     {
@@ -983,6 +1008,7 @@ void generic_int_vector_template() {
     ASSERT_EQ(*ptr, (T(2)));
 }
 
+// TODO: Test constness of operations
 
 TEST(generic_int_vector, uint32_t) {
     generic_int_vector_template<uint32_t>();
@@ -1020,6 +1046,163 @@ TEST(generic_int_vector, uint_t_1) {
     generic_int_vector_template<uint_t<1>>();
 }
 
+TEST(generic_int_vector, dynamic_t) {
+    generic_int_vector_template<dynamic_t>();
+}
+
+TEST(generic_int_vector, dynamic_t_extra) {
+    using namespace int_vector;
+
+    GenericIntVector<dynamic_t> a(3, 3, 1);
+    GenericIntVector<dynamic_t> b(3, 3, 2);
+    GenericIntVector<dynamic_t> c(size_t(3), dynamic_t(4));
+
+    {
+        ASSERT_EQ(a.width(), 1);
+        ASSERT_EQ(b.width(), 2);
+        ASSERT_EQ(c.width(), 64);
+
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        std::vector<dynamic_t> bv(b.begin(), b.end());
+        std::vector<dynamic_t> cv(c.begin(), c.end());
+
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 1, 1, 1 }));
+        ASSERT_EQ(bv, (std::vector<dynamic_t> { 3, 3, 3 }));
+        ASSERT_EQ(cv, (std::vector<dynamic_t> { 4, 4, 4 }));
+    }
+
+    a.swap(b);
+
+    {
+        ASSERT_EQ(a.width(), 2);
+        ASSERT_EQ(b.width(), 1);
+        ASSERT_EQ(c.width(), 64);
+
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        std::vector<dynamic_t> bv(b.begin(), b.end());
+        std::vector<dynamic_t> cv(c.begin(), c.end());
+
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
+        ASSERT_EQ(bv, (std::vector<dynamic_t> { 1, 1, 1 }));
+        ASSERT_EQ(cv, (std::vector<dynamic_t> { 4, 4, 4 }));
+    }
+
+    b = c;
+
+    {
+        ASSERT_EQ(a.width(), 2);
+        ASSERT_EQ(b.width(), 64);
+        ASSERT_EQ(c.width(), 64);
+
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        std::vector<dynamic_t> bv(b.begin(), b.end());
+        std::vector<dynamic_t> cv(c.begin(), c.end());
+
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
+        ASSERT_EQ(bv, (std::vector<dynamic_t> { 4, 4, 4 }));
+        ASSERT_EQ(cv, (std::vector<dynamic_t> { 4, 4, 4 }));
+    }
+
+    c = a;
+
+    {
+        ASSERT_EQ(a.width(), 2);
+        ASSERT_EQ(b.width(), 64);
+        ASSERT_EQ(c.width(), 2);
+
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        std::vector<dynamic_t> bv(b.begin(), b.end());
+        std::vector<dynamic_t> cv(c.begin(), c.end());
+
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
+        ASSERT_EQ(bv, (std::vector<dynamic_t> { 4, 4, 4 }));
+        ASSERT_EQ(cv, (std::vector<dynamic_t> { 3, 3, 3 }));
+    }
+
+    a.width(3);
+    {
+        ASSERT_EQ(a.width(), 3);
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
+    }
+    a.push_back(7);
+    a.push_back(8);
+    a.push_back(15);
+    {
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3, 7, 0, 7 }));
+    }
+    a.width(2);
+    {
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3, 3, 0, 3 }));
+    }
+    a.width(1);
+    {
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 1, 1, 1, 1, 0, 1 }));
+    }
+
+    GenericIntVector<dynamic_t> d { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    d.width(4);
+
+    ASSERT_EQ(d.size(), 10);
+    ASSERT_EQ(d.width(), 4);
+    auto dbs = d.bit_size();
+    auto dbc = d.bit_capacity();
+    {
+        std::vector<dynamic_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }));
+    }
+
+    d.resize(5, 0, 8);
+
+    ASSERT_EQ(d.size(), 5);
+    ASSERT_EQ(d.width(), 8);
+    ASSERT_EQ(dbs, d.bit_size());
+    ASSERT_EQ(dbc, d.bit_capacity());
+    {
+        std::vector<dynamic_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 4, 5 }));
+    }
+
+    d.resize(10, 11, 4);
+
+    ASSERT_EQ(d.size(), 10);
+    ASSERT_EQ(d.width(), 4);
+    ASSERT_EQ(dbs, d.bit_size());
+    ASSERT_EQ(dbc, d.bit_capacity());
+    {
+        std::vector<dynamic_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 4, 5, 11, 11, 11, 11, 11 }));
+    }
+
+    d.resize(5, 11, 2);
+
+    ASSERT_EQ(d.size(), 5);
+    ASSERT_EQ(d.width(), 2);
+    ASSERT_EQ(10, d.bit_size());
+    {
+        std::vector<dynamic_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 0, 1 }));
+    }
+
+    d.resize(11, 20, 10);
+
+    ASSERT_EQ(d.size(), 11);
+    ASSERT_EQ(d.width(), 10);
+    ASSERT_EQ(110, d.bit_size());
+    {
+        std::vector<dynamic_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 0, 1, 20, 20, 20, 20, 20, 20 }));
+    }
+
+    GenericIntVector<dynamic_t> e;
+    e.bit_reserve(1024);
+    ASSERT_GE(e.bit_capacity(), 1024);
+
+}
+
 
 template<size_t N>
 void generic_int_vector_trait_template() {
@@ -1027,21 +1210,23 @@ void generic_int_vector_trait_template() {
 
     typedef typename GenericIntVectorTrait<uint_t<N>>::backing_data T;
 
-    ASSERT_EQ(T::backing2bits(1), 64);
-    ASSERT_EQ(T::backing2bits(10), 640);
+    T t = T();
 
-    ASSERT_EQ(T::bits2backing(0), 0);
-    ASSERT_EQ(T::bits2backing(1), 1);
-    ASSERT_EQ(T::bits2backing(7), 1);
-    ASSERT_EQ(T::bits2backing(63), 1);
-    ASSERT_EQ(T::bits2backing(64), 1);
-    ASSERT_EQ(T::bits2backing(65), 2);
-    ASSERT_EQ(T::bits2backing(127), 2);
-    ASSERT_EQ(T::bits2backing(128), 2);
-    ASSERT_EQ(T::bits2backing(129), 3);
+    ASSERT_EQ(t.backing2bits(1), 64);
+    ASSERT_EQ(t.backing2bits(10), 640);
 
-    ASSERT_EQ(T::elem2bits(1), N);
-    ASSERT_EQ(T::elem2bits(10), N * 10);
+    ASSERT_EQ(t.bits2backing(0), 0);
+    ASSERT_EQ(t.bits2backing(1), 1);
+    ASSERT_EQ(t.bits2backing(7), 1);
+    ASSERT_EQ(t.bits2backing(63), 1);
+    ASSERT_EQ(t.bits2backing(64), 1);
+    ASSERT_EQ(t.bits2backing(65), 2);
+    ASSERT_EQ(t.bits2backing(127), 2);
+    ASSERT_EQ(t.bits2backing(128), 2);
+    ASSERT_EQ(t.bits2backing(129), 3);
+
+    ASSERT_EQ(t.elem2bits(1), N);
+    ASSERT_EQ(t.elem2bits(10), N * 10);
 }
 
 TEST(generic_int_vector_trait_template, N9) {

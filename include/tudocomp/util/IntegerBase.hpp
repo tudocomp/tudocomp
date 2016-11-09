@@ -7,17 +7,10 @@ static_assert(sizeof(int) * 8 == 32, "Make sure the logic here remains correct")
 
 template<class T, class X = void>
 struct ConstIntegerBaseTrait {
-    typedef uint64_t SelfMaxBit;
-
-    inline static SelfMaxBit cast_for_self_op(const T& self) { return 0; }
-    inline static SelfMaxBit cast_for_32_op(const T& self)   { return 0; }
-    inline static uint64_t cast_for_64_op(const T& self)     { return 0; }
 };
 
 template<class T, class X = void>
 struct IntegerBaseTrait: public ConstIntegerBaseTrait<T, X> {
-    inline static void assign(T& self, uint32_t v) {}
-    inline static void assign(T& self, uint64_t v) {}
 };
 
 template<class Self>
@@ -30,10 +23,10 @@ class IntegerBaseWith64;
 template<class Self, class Other>
 class ConstIntegerBaseWith32 {
 public:
-    typedef typename ConstIntegerBaseTrait<Self>::SelfMaxBit SelfMaxBit;
+    typedef typename ConstIntegerBaseTrait<Self>::Dispatch::SelfMaxBit SelfMaxBit;
 private:
     inline static SelfMaxBit cast_for_32_op(const Self& self) {
-        return ConstIntegerBaseTrait<Self>::cast_for_32_op(self);
+        return ConstIntegerBaseTrait<Self>::Dispatch::template cast_for_op<Self, SelfMaxBit>(self);
     }
 
     friend class IntegerBaseWith32<Self, Other>;
@@ -90,10 +83,10 @@ public:
 template<class Self, class Other>
 class ConstIntegerBaseWith64 {
 public:
-    typedef typename ConstIntegerBaseTrait<Self>::SelfMaxBit SelfMaxBit;
+    typedef typename ConstIntegerBaseTrait<Self>::Dispatch::SelfMaxBit SelfMaxBit;
 private:
     inline static Other cast_for_64_op(const Self& self) {
-        return ConstIntegerBaseTrait<Self>::cast_for_64_op(self);
+        return ConstIntegerBaseTrait<Self>::Dispatch::template cast_for_op<Self, uint64_t>(self);
     }
 
     friend class IntegerBaseWith64<Self, Other>;
@@ -150,10 +143,10 @@ public:
 template<class Self>
 class ConstIntegerBaseWithSelf {
 public:
-    typedef typename ConstIntegerBaseTrait<Self>::SelfMaxBit SelfMaxBit;
+    typedef typename ConstIntegerBaseTrait<Self>::Dispatch::SelfMaxBit SelfMaxBit;
 private:
     inline static SelfMaxBit cast_for_self_op(const Self& self) {
-        return ConstIntegerBaseTrait<Self>::cast_for_self_op(self);
+        return ConstIntegerBaseTrait<Self>::Dispatch::template cast_for_op<Self, SelfMaxBit>(self);
     }
 
     friend class IntegerBaseWithSelf<Self>;
@@ -200,11 +193,11 @@ template<class Self, class Other>
 class IntegerBaseWith32: public ConstIntegerBaseWith32<Self, Other> {
 private:
     inline static void assign(Self& self, uint32_t v) {
-        IntegerBaseTrait<Self>::assign(self, v);
+        IntegerBaseTrait<Self>::Dispatch::template assign<Self, uint32_t>(self, v);
     }
 
     inline static void assign(Self& self, uint64_t v) {
-        IntegerBaseTrait<Self>::assign(self, v);
+        IntegerBaseTrait<Self>::Dispatch::template assign<Self, uint64_t>(self, v);
     }
 public:
     Self& operator+=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
@@ -223,11 +216,11 @@ template<class Self, class Other>
 class IntegerBaseWith64: public ConstIntegerBaseWith64<Self, Other> {
 private:
     inline static void assign(Self& self, uint32_t v) {
-        IntegerBaseTrait<Self>::assign(self, v);
+        IntegerBaseTrait<Self>::Dispatch::template assign<Self, uint32_t>(self, v);
     }
 
     inline static void assign(Self& self, uint64_t v) {
-        IntegerBaseTrait<Self>::assign(self, v);
+        IntegerBaseTrait<Self>::Dispatch::template assign<Self, uint64_t>(self, v);
     }
 public:
     Self& operator+=(const Other& v) { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self; }
@@ -245,15 +238,17 @@ public:
 template<class Self>
 class IntegerBaseWithSelf: public ConstIntegerBaseWithSelf<Self> {
 private:
-    typedef typename ConstIntegerBaseTrait<Self>::SelfMaxBit SelfMaxBit;
-    using ConstIntegerBaseWithSelf<Self>::cast_for_self_op;
+    typedef typename ConstIntegerBaseTrait<Self>::Dispatch::SelfMaxBit SelfMaxBit;
+    inline static SelfMaxBit cast_for_self_op(const Self& self) {
+        return ConstIntegerBaseTrait<Self>::Dispatch::template cast_for_op<Self, SelfMaxBit>(self);
+    }
 
     inline static void assign(Self& self, uint32_t v) {
-        IntegerBaseTrait<Self>::assign(self, v);
+        IntegerBaseTrait<Self>::Dispatch::template assign<Self, uint32_t>(self, v);
     }
 
     inline static void assign(Self& self, uint64_t v) {
-        IntegerBaseTrait<Self>::assign(self, v);
+        IntegerBaseTrait<Self>::Dispatch::template assign<Self, uint64_t>(self, v);
     }
 public:
     Self& operator+=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self + v); return self;  }

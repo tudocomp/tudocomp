@@ -5,7 +5,47 @@
 
 #include <cstdint>
 
-using tdc::IntegerBase;
+namespace tdc {
+
+template<size_t bits>
+class uint_t;
+
+template<class MB>
+struct UinttDispatch {
+    typedef MB SelfMaxBit;
+
+    template<class Ref, class V>
+    inline static void assign(Ref& self, V v) {
+        self.m_data = v;
+    };
+
+    template<class Ref, class R>
+    inline static R cast_for_op(const Ref& self) {
+        return self.m_data;
+    }
+};
+
+template<size_t N>
+struct ConstIntegerBaseTrait<uint_t<N>, typename std::enable_if<(N <= 32)>::type> {
+    typedef UinttDispatch<uint32_t> Dispatch;
+};
+
+template<size_t N>
+struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N <= 32)>::type>
+: ConstIntegerBaseTrait<uint_t<N>> {
+    typedef UinttDispatch<uint32_t> Dispatch;
+};
+
+template<size_t N>
+struct ConstIntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type> {
+    typedef UinttDispatch<uint64_t> Dispatch;
+};
+
+template<size_t N>
+struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type>
+: ConstIntegerBaseTrait<uint_t<N>> {
+    typedef UinttDispatch<uint64_t> Dispatch;
+};
 
 /** class for storing integers of arbitrary bits.
  * Useful values are 40,48, and 56.
@@ -18,12 +58,12 @@ class uint_t: public IntegerBase<uint_t<bits>> {
     static_assert(bits < 65, "bits must be at most 64");
     uint64_t m_data: bits;
 
-    friend class tdc::IntegerBaseTrait<uint_t<bits>>;
-    friend class tdc::ConstIntegerBaseTrait<uint_t<bits>>;
+    friend class UinttDispatch<uint32_t>;
+    friend class UinttDispatch<uint64_t>;
 
 public:
     uint_t(): m_data(0) {}
-    uint_t(const uint_t&& i): m_data(i.m_data) {}
+    uint_t(uint_t&& i): m_data(i.m_data) {}
 
     // copying
     inline uint_t(const uint_t& i): m_data(i.m_data) {}
@@ -48,66 +88,6 @@ public:
     inline operator long long int() const { return m_data; }
 
 } __attribute__((packed));
-
-namespace tdc {
-    template<size_t N>
-    struct ConstIntegerBaseTrait<uint_t<N>, typename std::enable_if<(N <= 32)>::type> {
-        typedef uint32_t SelfMaxBit;
-
-        inline static SelfMaxBit cast_for_self_op(const uint_t<N>& self) {
-            return self.m_data;
-        }
-
-        inline static SelfMaxBit cast_for_32_op(const uint_t<N>& self) {
-            return self.m_data;
-        }
-
-        inline static uint64_t cast_for_64_op(const uint_t<N>& self) {
-            return self.m_data;
-        }
-    };
-
-    template<size_t N>
-    struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N <= 32)>::type>
-    : ConstIntegerBaseTrait<uint_t<N>> {
-        inline static void assign(uint_t<N>& self, uint32_t v) {
-            self.m_data = v;
-        }
-
-        inline static void assign(uint_t<N>& self, uint64_t v) {
-            self.m_data = v;
-        }
-    };
-
-    template<size_t N>
-    struct ConstIntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type> {
-        typedef uint64_t SelfMaxBit;
-
-        inline static SelfMaxBit cast_for_self_op(const uint_t<N>& self) {
-            return self.m_data;
-        }
-
-        inline static SelfMaxBit cast_for_32_op(const uint_t<N>& self) {
-            return self.m_data;
-        }
-
-        inline static uint64_t cast_for_64_op(const uint_t<N>& self) {
-            return self.m_data;
-        }
-    };
-
-    template<size_t N>
-    struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type>
-    : ConstIntegerBaseTrait<uint_t<N>> {
-        inline static void assign(uint_t<N>& self, uint32_t v) {
-            self.m_data = v;
-        }
-
-        inline static void assign(uint_t<N>& self, uint64_t v) {
-            self.m_data = v;
-        }
-    };
-}
 
 static_assert(sizeof(uint_t<8>)  == 1, "sanity check");
 static_assert(sizeof(uint_t<16>) == 2, "sanity check");
@@ -134,5 +114,7 @@ static_assert(sizeof(uint_t<33>) == 5, "sanity check");
 static_assert(sizeof(uint_t<41>) == 6, "sanity check");
 static_assert(sizeof(uint_t<49>) == 7, "sanity check");
 static_assert(sizeof(uint_t<57>) == 8, "sanity check");
+
+}
 
 #endif /* UINT_T_HPP */

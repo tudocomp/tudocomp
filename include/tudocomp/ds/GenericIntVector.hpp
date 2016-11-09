@@ -17,6 +17,7 @@
 #include <climits>
 
 #include <tudocomp/ds/uint_t.hpp>
+#include <tudocomp/ds/dynamic_t.hpp>
 #include <tudocomp/util/IntegerBase.hpp>
 
 #include <sdsl/bits.hpp>
@@ -33,6 +34,71 @@ namespace tdc {
         template<class T>
         class ConstIntPtr;
     }
+
+template<class MB>
+struct RefDispatch {
+    typedef MB SelfMaxBit;
+
+    template<class Ref, class V>
+    inline static void assign(Ref& self, V v) {
+        sdsl::bits::write_int(self.m_ptr.m_ptr,
+                              v,
+                              self.m_ptr.m_bit_offset,
+                              self.m_ptr.data_bit_size());
+    };
+
+    template<class Ref, class R>
+    inline static R cast_for_op(const Ref& self) {
+        return sdsl::bits::read_int(self.m_ptr.m_ptr,
+                                    self.m_ptr.m_bit_offset,
+                                    self.m_ptr.data_bit_size());
+    }
+};
+
+template<size_t N>
+struct ConstIntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
+    typedef RefDispatch<uint32_t> Dispatch;
+};
+
+template<size_t N>
+struct IntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
+    typedef RefDispatch<uint32_t> Dispatch;
+};
+
+template<size_t N>
+struct ConstIntegerBaseTrait<int_vector::ConstIntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
+    typedef RefDispatch<uint32_t> Dispatch;
+};
+
+template<size_t N>
+struct ConstIntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
+    typedef RefDispatch<uint64_t> Dispatch;
+};
+
+template<size_t N>
+struct IntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
+    typedef RefDispatch<uint64_t> Dispatch;
+};
+
+template<size_t N>
+struct ConstIntegerBaseTrait<int_vector::ConstIntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
+    typedef RefDispatch<uint64_t> Dispatch;
+};
+
+template<>
+struct ConstIntegerBaseTrait<int_vector::IntRef<dynamic_t>> {
+    typedef RefDispatch<uint64_t> Dispatch;
+};
+
+template<>
+struct IntegerBaseTrait<int_vector::IntRef<dynamic_t>> {
+    typedef RefDispatch<uint64_t> Dispatch;
+};
+
+template<>
+struct ConstIntegerBaseTrait<int_vector::ConstIntRef<dynamic_t>> {
+    typedef RefDispatch<uint64_t> Dispatch;
+};
 }
 
 namespace std {
@@ -55,108 +121,129 @@ namespace std {
 }
 
 namespace tdc {
-
-template<class T>
-struct ConstIntegerBaseTrait<int_vector::IntRef<T>> {
-    typedef sdsl::bits bits;
-    typedef int_vector::IntRef<T> S;
-
-    typedef uint64_t SelfMaxBit;
-
-    inline static SelfMaxBit cast_for_self_op(const S& self);
-    inline static SelfMaxBit cast_for_32_op(const S& self);
-    inline static uint64_t cast_for_64_op(const S& self);
-};
-
-template<class T>
-struct IntegerBaseTrait<int_vector::IntRef<T>> {
-    typedef sdsl::bits bits;
-    typedef int_vector::IntRef<T> S;
-
-    inline static void assign(S& self, uint32_t v);
-    inline static void assign(S& self, uint64_t v);
-};
-
-template<class T>
-struct ConstIntegerBaseTrait<int_vector::ConstIntRef<T>> {
-    typedef sdsl::bits bits;
-    typedef int_vector::ConstIntRef<T> S;
-
-    typedef uint64_t SelfMaxBit;
-
-    inline static SelfMaxBit cast_for_self_op(const S& self);
-    inline static SelfMaxBit cast_for_32_op(const S& self);
-    inline static uint64_t cast_for_64_op(const S& self);
-};
-
 namespace int_vector {
     using sdsl::bits;
 
     typedef uint64_t DynamicIntValueType;
 
-    // TODO: On rrferences, provide 32 or 64 bit ops depending on bits
-    // of uint_t type
-
-    struct Const {
-        typedef const DynamicIntValueType* ptr;
-        typedef uint8_t                    off;
-        typedef const uint8_t              len;
-        typedef DynamicIntValueType        val;
+    template<class T>
+    struct IntPtrTrait {
     };
 
-    struct Mut {
-        typedef DynamicIntValueType* ptr;
-        typedef uint8_t              off;
-        typedef const uint8_t        len;
-        typedef DynamicIntValueType  val;
+    template<size_t N>
+    struct IntPtrTrait<ConstIntPtr<uint_t<N>>> {
+        class Data {
+        public:
+            const DynamicIntValueType* m_ptr;
+            uint8_t m_bit_offset;
+        private:
+            //const uint8_t m_bit_size;
+        public:
+            Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
+                m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
+            inline uint8_t data_bit_size() const { return N; }
+            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) {
+                return Data(ptr, offset, this->data_bit_size());
+            }
+        };
     };
 
-    template<class Self, class Ptr, class Layout, class T>
+    template<size_t N>
+    struct IntPtrTrait<IntPtr<uint_t<N>>> {
+        class Data {
+        public:
+            DynamicIntValueType* m_ptr;
+            uint8_t m_bit_offset;
+        private:
+            //const uint8_t m_bit_size;
+        public:
+            Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
+                m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
+            inline uint8_t data_bit_size() const { return N; }
+            inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
+                return Data(ptr, offset, this->data_bit_size());
+            }
+        };
+    };
+
+    template<>
+    struct IntPtrTrait<ConstIntPtr<dynamic_t>> {
+        class Data {
+        public:
+            const DynamicIntValueType* m_ptr;
+            uint8_t m_bit_offset;
+        private:
+            const uint8_t m_bit_size;
+        public:
+            Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
+                m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
+            inline uint8_t data_bit_size() const { return m_bit_size; }
+            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) {
+                return Data(ptr, offset, this->data_bit_size());
+            }
+        };
+    };
+
+    template<>
+    struct IntPtrTrait<IntPtr<dynamic_t>> {
+        class Data {
+        public:
+            DynamicIntValueType* m_ptr;
+            uint8_t m_bit_offset;
+        private:
+            const uint8_t m_bit_size;
+        public:
+            Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
+                m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
+            inline uint8_t data_bit_size() const { return m_bit_size; }
+            inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
+                return Data(ptr, offset, this->data_bit_size());
+            }
+        };
+    };
+
+    template<class Self, class Ptr, class T>
     class GenericIntRef;
 
-    template<class Self, class Layout, class T>
-    class GenericIntPtr {
+    template<class Self, class T>
+    class GenericIntPtr: IntPtrTrait<Self>::Data {
     protected:
-        friend class GenericIntRef<IntRef<T>, IntPtr<T>, Mut, T>;
-        friend class GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, Const, T>;
+        friend class GenericIntRef<IntRef<T>, IntPtr<T>, T>;
+        friend class GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>;
         friend class IntRef<T>;
         friend class ConstIntRef<T>;
         friend class IntegerBaseTrait<IntRef<T>>;
         friend class ConstIntegerBaseTrait<IntRef<T>>;
         friend class ConstIntegerBaseTrait<ConstIntRef<T>>;
+        friend class RefDispatch<uint32_t>;
+        friend class RefDispatch<uint64_t>;
 
-        typename Layout::ptr m_ptr;
-        typename Layout::off m_bit_offset;
-        typename Layout::len m_bit_size;
     public:
-        GenericIntPtr(typename Layout::ptr ptr,
-                      typename Layout::off bit_offset,
-                      typename Layout::len bit_size):
-            m_ptr(ptr),
-            m_bit_offset(bit_offset),
-            m_bit_size(bit_size) {}
-        GenericIntPtr(): GenericIntPtr("\0\0\0\0", 0, 0) {}
+        GenericIntPtr():
+            IntPtrTrait<Self>::Data(nullptr, 0, 0) {}
+        GenericIntPtr(const typename IntPtrTrait<Self>::Data& other):
+            IntPtrTrait<Self>::Data(other) {}
         GenericIntPtr(const GenericIntPtr& other):
-            GenericIntPtr(other.m_ptr, other.m_bit_offset, other.m_bit_size) {}
+            IntPtrTrait<Self>::Data(other){}
 
         Self& operator=(const Self& other) {
-            DCHECK(m_bit_size == other.m_bit_size);
-            m_ptr = other.m_ptr;
-            m_bit_offset = other.m_bit_offset;
+            DCHECK(this->data_bit_size() == other.data_bit_size());
+            this->m_ptr = other.m_ptr;
+            this->m_bit_offset = other.m_bit_offset;
             return static_cast<Self&>(*this);
         }
 
         Self& operator++() {
-            const DynamicIntValueType* tmp = m_ptr;
-            bits::move_right(tmp, m_bit_offset, m_bit_size);
-            m_ptr = (DynamicIntValueType*) tmp;
+            const DynamicIntValueType* tmp = this->m_ptr;
+            bits::move_right(tmp, this->m_bit_offset, this->data_bit_size());
+            this->m_ptr = (DynamicIntValueType*) tmp;
             return static_cast<Self&>(*this);
         }
 
         Self& operator--() {
-            const DynamicIntValueType* tmp = m_ptr;
-            bits::move_left(tmp, m_bit_offset, m_bit_size);
-            m_ptr = (DynamicIntValueType*) tmp;
+            const DynamicIntValueType* tmp = this->m_ptr;
+            bits::move_left(tmp, this->m_bit_offset, this->data_bit_size());
+            this->m_ptr = (DynamicIntValueType*) tmp;
             return static_cast<Self&>(*this);
         }
 
@@ -179,23 +266,23 @@ namespace int_vector {
 
         friend ptrdiff_t operator-(const Self& lhs, const Self& rhs) {
             // TODO: test
-            DCHECK(lhs.m_bit_size == rhs.m_bit_size);
+            DCHECK(lhs.data_bit_size() == rhs.data_bit_size());
             auto ptr_diff = lhs.m_ptr - rhs.m_ptr;
-            auto bit_count = ptr_diff * sizeof(typename Layout::val) * CHAR_BIT;
+            auto bit_count = ptr_diff * sizeof(DynamicIntValueType) * CHAR_BIT;
             bit_count += lhs.m_bit_offset;
             bit_count -= rhs.m_bit_offset;
-            bit_count /= lhs.m_bit_size;
+            bit_count /= lhs.data_bit_size();
             return bit_count;
         }
 
         friend bool operator==(const Self& lhs, const Self& rhs) {
-            DCHECK(lhs.m_bit_size == rhs.m_bit_size);
+            DCHECK(lhs.data_bit_size() == rhs.data_bit_size());
             return (lhs.m_ptr == rhs.m_ptr)
                 && (lhs.m_bit_offset == rhs.m_bit_offset);
         }
         friend bool operator<(const Self& lhs, const Self& rhs)  {
             // TODO: test
-            DCHECK(lhs.m_bit_size == rhs.m_bit_size);
+            DCHECK(lhs.data_bit_size() == rhs.data_bit_size());
             if (lhs.m_ptr < rhs.m_ptr) return true;
             if ((lhs.m_ptr == rhs.m_ptr) && (lhs.m_bit_offset < rhs.m_bit_offset)) return true;
             return false;
@@ -216,31 +303,33 @@ namespace int_vector {
     };
 
     template<class T>
-    class ConstIntPtr: public GenericIntPtr<ConstIntPtr<T>, Const, T> {
+    class ConstIntPtr: public GenericIntPtr<ConstIntPtr<T>, T> {
     public:
-        using GenericIntPtr<ConstIntPtr<T>, Const, T>::GenericIntPtr;
+        using GenericIntPtr<ConstIntPtr<T>, T>::GenericIntPtr;
+        inline ConstIntPtr(): GenericIntPtr<ConstIntPtr<T>, T>::GenericIntPtr() {}
+        inline ConstIntPtr(const ConstIntPtr& other): GenericIntPtr<ConstIntPtr<T>, T>::GenericIntPtr(other) {}
 
-        inline ConstIntPtr(const ConstIntPtr& other): GenericIntPtr<ConstIntPtr<T>, Const, T>::GenericIntPtr(other) {}
         ConstIntPtr& operator=(const ConstIntPtr& other) {
-            return ((GenericIntPtr<ConstIntPtr<T>, Const, T>&) *this) = other;
+            return ((GenericIntPtr<ConstIntPtr<T>, T>&) *this) = other;
         }
     };
 
     template<class T>
-    class IntPtr: public GenericIntPtr<IntPtr<T>, Mut, T> {
+    class IntPtr: public GenericIntPtr<IntPtr<T>, T> {
     public:
-        using GenericIntPtr<IntPtr<T>, Mut, T>::GenericIntPtr;
+        using GenericIntPtr<IntPtr<T>, T>::GenericIntPtr;
+        inline IntPtr(): GenericIntPtr<IntPtr<T>, T>::GenericIntPtr() {}
+        inline IntPtr(const IntPtr& other): GenericIntPtr<IntPtr<T>, T>::GenericIntPtr(other) {}
 
-        inline IntPtr(const IntPtr& other): GenericIntPtr<IntPtr<T>, Mut, T>::GenericIntPtr(other) {}
         IntPtr& operator=(const IntPtr& other) {
-            return ((GenericIntPtr<IntPtr<T>, Mut, T>&) *this) = other;
+            return ((GenericIntPtr<IntPtr<T>, T>&) *this) = other;
         }
 
         inline IntRef<T> operator*();
         inline IntRef<T> operator[](size_t i);
     };
 
-    template<class Self, class Ptr, class Layout, class T>
+    template<class Self, class Ptr, class T>
     class GenericIntRef {
     protected:
         friend class IntPtr<T>;
@@ -248,6 +337,8 @@ namespace int_vector {
         friend class IntegerBaseTrait<IntRef<T>>;
         friend class ConstIntegerBaseTrait<IntRef<T>>;
         friend class ConstIntegerBaseTrait<ConstIntRef<T>>;
+        friend class RefDispatch<uint32_t>;
+        friend class RefDispatch<uint64_t>;
 
         Ptr m_ptr;
     public:
@@ -257,14 +348,14 @@ namespace int_vector {
         explicit GenericIntRef(const Ptr& ptr): m_ptr(ptr) {}
 
         operator value_type() const {
-            return bits::read_int(m_ptr.m_ptr, m_ptr.m_bit_offset, m_ptr.m_bit_size);
+            return bits::read_int(m_ptr.m_ptr, m_ptr.m_bit_offset, this->m_ptr.data_bit_size());
         }
 
     };
 
     template<class T>
     class IntRef:
-        public GenericIntRef<IntRef<T>, IntPtr<T>, Mut, T>,
+        public GenericIntRef<IntRef<T>, IntPtr<T>, T>,
         public IntegerBaseCombiner<
             IntegerBaseWithSelf<IntRef<T>>,
             IntegerBaseWith32<IntRef<T>, uint32_t>,
@@ -273,15 +364,15 @@ namespace int_vector {
             IntegerBaseWith64<IntRef<T>, T>
         > {
     public:
-        using typename GenericIntRef<IntRef<T>, IntPtr<T>, Mut, T>::value_type;
+        using typename GenericIntRef<IntRef<T>, IntPtr<T>, T>::value_type;
 
         inline IntRef() = delete;
-        explicit IntRef(const IntPtr<T>& ptr): GenericIntRef<IntRef<T>, IntPtr<T>, Mut, T>::GenericIntRef(ptr) {}
+        explicit IntRef(const IntPtr<T>& ptr): GenericIntRef<IntRef<T>, IntPtr<T>, T>::GenericIntRef(ptr) {}
 
         inline IntRef& operator=(value_type other) {
             bits::write_int(this->m_ptr.m_ptr, other,
                             this->m_ptr.m_bit_offset,
-                            this->m_ptr.m_bit_size);
+                            this->m_ptr.data_bit_size());
             return *this;
         };
 
@@ -296,7 +387,7 @@ namespace int_vector {
 
     template<class T>
     class ConstIntRef:
-        public GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, Const, T>,
+        public GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>,
         public ConstIntegerBaseCombiner<
             ConstIntegerBaseWithSelf<ConstIntRef<T>>,
             ConstIntegerBaseWith32<ConstIntRef<T>, uint32_t>,
@@ -306,7 +397,7 @@ namespace int_vector {
         > {
     public:
         inline ConstIntRef() = delete;
-        explicit ConstIntRef(const ConstIntPtr<T>& ptr): GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, Const, T>::GenericIntRef(ptr) {}
+        explicit ConstIntRef(const ConstIntPtr<T>& ptr): GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>::GenericIntRef(ptr) {}
 
         inline ConstIntPtr<T> operator&() { return this->m_ptr; }
     };
@@ -321,13 +412,13 @@ namespace int_vector {
         return IntRef<T>(*this);
     }
 
-    template<class Self, class U, class T>
-    ConstIntRef<T> GenericIntPtr<Self, U, T>::operator*() const {
+    template<class Self, class T>
+    ConstIntRef<T> GenericIntPtr<Self, T>::operator*() const {
         return ConstIntRef<T>(static_cast<const Self&>(*this));
     }
 
-    template<class Self, class U, class T>
-    ConstIntRef<T> GenericIntPtr<Self, U, T>::operator[](size_t i) const {
+    template<class Self, class T>
+    ConstIntRef<T> GenericIntPtr<Self, T>::operator[](size_t i) const {
         auto x = *this;
         x += i;
         return ConstIntRef<T>(static_cast<const Self&>(x));
@@ -361,7 +452,7 @@ namespace int_vector {
         rhs = tmp;
     }
 
-    static_assert(sizeof(GenericIntPtr<ConstIntPtr<void>, Const, void>) <= (sizeof(void*) * 2),
+    static_assert(sizeof(GenericIntPtr<ConstIntPtr<uint_t<40>>, uint_t<40>>) <= (sizeof(void*) * 2),
                   "make sure this is reasonably small");
 
     enum class ElementStorageMode {
@@ -369,15 +460,63 @@ namespace int_vector {
         BitPacked
     };
 
+    inline void width_error() {
+        throw std::runtime_error("Can not set the width of a IntVector with statically sized elements");
+    }
+
+    template<class T>
+    struct OddBitBackingBase {};
+
     template<size_t N>
-    struct odd_bit_backing_data {
-        typedef uint_t<N>                                            value_type;
+    struct OddBitBackingBase<uint_t<N>> {
+        typedef DynamicIntValueType internal_data_type;
+        typedef uint_t<N>           value_type;
 
-        typedef IntRef<uint_t<N>>                                    reference;
-        typedef ConstIntRef<uint_t<N>>                               const_reference;
+        std::vector<internal_data_type> m_vec;
+        uint64_t m_real_size;
 
-        typedef IntPtr<uint_t<N>>                                    pointer;
-        typedef ConstIntPtr<uint_t<N>>                               const_pointer;
+        inline OddBitBackingBase():
+            m_vec(), m_real_size(0) {}
+        inline OddBitBackingBase(const OddBitBackingBase& other):
+            m_vec(other.m_vec), m_real_size(other.m_real_size) {}
+        inline OddBitBackingBase(OddBitBackingBase&& other):
+            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
+
+        inline uint8_t raw_width() const { return N; }
+        inline void set_width_raw(uint8_t width) { }
+
+    };
+
+    template<>
+    struct OddBitBackingBase<dynamic_t> {
+        typedef DynamicIntValueType internal_data_type;
+        typedef dynamic_t           value_type;
+
+        std::vector<internal_data_type> m_vec;
+        uint64_t m_real_size;
+        uint8_t m_width;
+
+        inline OddBitBackingBase():
+            m_vec(), m_real_size(0), m_width(64) {}
+        inline OddBitBackingBase(const OddBitBackingBase& other):
+            m_vec(other.m_vec), m_real_size(other.m_real_size), m_width(other.m_width) {}
+        inline OddBitBackingBase(OddBitBackingBase&& other):
+            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size), m_width(other.m_width) {}
+
+        inline uint8_t raw_width() const { return m_width; }
+        inline void set_width_raw(uint8_t width) { m_width = width; }
+
+    };
+
+    template<class T>
+    struct odd_bit_backing_data: OddBitBackingBase<T> {
+        typedef typename OddBitBackingBase<T>::value_type            value_type;
+
+        typedef IntRef<value_type>                                   reference;
+        typedef ConstIntRef<value_type>                              const_reference;
+
+        typedef IntPtr<value_type>                                   pointer;
+        typedef ConstIntPtr<value_type>                              const_pointer;
 
         typedef pointer                                              iterator;
         typedef const_pointer                                        const_iterator;
@@ -388,82 +527,103 @@ namespace int_vector {
         typedef ptrdiff_t                                            difference_type;
         typedef size_t                                               size_type;
 
-        typedef DynamicIntValueType                                  internal_data_type;
+        typedef typename OddBitBackingBase<T>::internal_data_type    internal_data_type;
 
-        std::vector<internal_data_type> m_vec;
-        uint64_t m_real_size = 0;
-
-        template<size_t M>
+        template<class M>
         friend bool operator==(const odd_bit_backing_data<M>& lhs, const odd_bit_backing_data<M>& rhs);
 
-        inline static uint64_t backing2bits(size_t n) {
+        inline static uint64_t backing2bits_w(size_t n) {
             return uint64_t(sizeof(internal_data_type) * CHAR_BIT) * uint64_t(n);
         }
-
-        inline static uint64_t elem2bits(size_t n) {
-            return uint64_t(N) * uint64_t(n);
+        inline uint64_t backing2bits(size_t n) const {
+            return backing2bits_w(n);
         }
 
-        inline static uint64_t bits2backing(uint64_t bits) {
+        inline static uint64_t elem2bits_w(size_t n, uint8_t w) {
+            return uint64_t(w) * uint64_t(n);
+        }
+        inline uint64_t elem2bits(size_t n) const {
+            return elem2bits_w(n, this->width());
+        }
+
+        inline static uint64_t bits2backing_w(uint64_t bits) {
             if (bits == 0) {
                 return 0;
             }
-            return ((bits - 1) / backing2bits(1)) + 1;
+            return ((bits - 1) / backing2bits_w(1)) + 1;
+        }
+        inline uint64_t bits2backing(uint64_t bits) const {
+            return bits2backing_w(bits);
         }
 
-        inline static uint64_t bits2elem(uint64_t bits) {
+        inline static uint64_t bits2elem_w(uint64_t bits, uint8_t w) {
             if (bits == 0) {
                 return 0;
             }
-            return ((bits - 1) / elem2bits(1)) + 1;
+            return ((bits - 1) / elem2bits_w(1, w)) + 1;
+        }
+        inline uint64_t bits2elem(uint64_t bits) const {
+            return bits2elem_w(bits, this->width());
         }
 
         struct PosAndOffset { size_t pos; uint8_t offset; };
-        inline static PosAndOffset bitpos2backingpos(uint64_t bits) {
+        inline static PosAndOffset bitpos2backingpos_w(uint64_t bits) {
             return PosAndOffset {
-                bits / backing2bits(1),
-                uint8_t(bits % backing2bits(1))
+                bits / backing2bits_w(1),
+                uint8_t(bits % backing2bits_w(1))
             };
         }
+        inline PosAndOffset bitpos2backingpos(uint64_t bits) const {
+            return bitpos2backingpos_w(bits);
+        }
 
-        inline explicit odd_bit_backing_data() {}
-        inline explicit odd_bit_backing_data(size_type n) {
-            m_real_size = n;
-            size_t converted_size = bits2backing(elem2bits(m_real_size));
-            m_vec = std::vector<internal_data_type>(converted_size);
+        inline explicit odd_bit_backing_data(): OddBitBackingBase<T>::OddBitBackingBase() {}
+        inline explicit odd_bit_backing_data(size_type n): odd_bit_backing_data() {
+            this->m_real_size = n;
+            size_t converted_size = bits2backing(elem2bits(this->m_real_size));
+            this->m_vec = std::vector<internal_data_type>(converted_size);
         }
         inline odd_bit_backing_data(size_type n, const value_type& val): odd_bit_backing_data(n) {
-            auto ptr = m_vec.data();
+            auto ptr = this->m_vec.data();
             uint8_t offset = 0;
 
             for (size_t i = 0; i < n; i++) {
-                bits::write_int_and_move(ptr, val, offset, N);
+                bits::write_int_and_move(ptr, val, offset, this->width());
             }
+        }
+
+        inline odd_bit_backing_data(size_type n, const value_type& val, uint8_t width):
+            odd_bit_backing_data()
+        {
+            this->set_width_raw(width);
+            this->resize(n, val);
         }
 
         template <class InputIterator>
         inline odd_bit_backing_data(InputIterator first, InputIterator last) {
-            // TODO: specialize for random acces iterator
+            // TODO: specialize for random access iterator
             for(; first != last; first++) {
                 push_back(*first);
             }
         }
         inline odd_bit_backing_data (const odd_bit_backing_data& other):
-            m_vec(other.m_vec), m_real_size(other.m_real_size) {}
+            OddBitBackingBase<T>(other) {}
         inline odd_bit_backing_data (odd_bit_backing_data&& other):
-            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
+            OddBitBackingBase<T>(std::move(other)) {}
         inline odd_bit_backing_data(std::initializer_list<value_type> il):
             odd_bit_backing_data(il.begin(), il.end()) {}
 
         inline odd_bit_backing_data& operator=(const odd_bit_backing_data& other) {
-            m_vec = other.m_vec;
-            m_real_size = other.m_real_size;
+            this->m_vec = other.m_vec;
+            this->m_real_size = other.m_real_size;
+            this->set_width_raw(other.width());
             return *this;
         }
 
         inline odd_bit_backing_data& operator=(odd_bit_backing_data&& other) {
-            m_vec = std::move(other.m_vec);
-            m_real_size = other.m_real_size;
+            this->m_vec = std::move(other.m_vec);
+            this->m_real_size = other.m_real_size;
+            this->set_width_raw(other.width());
             return *this;
         }
 
@@ -473,13 +633,15 @@ namespace int_vector {
         }
 
         inline iterator begin() {
+            using Data = typename int_vector::IntPtrTrait<pointer>::Data;
             auto x = bitpos2backingpos(0);
-            return pointer(&m_vec[x.pos], x.offset, N);
+            return pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline iterator end() {
-            auto x = bitpos2backingpos(elem2bits(m_real_size));
-            return pointer(&m_vec[x.pos], x.offset, N);
+            using Data = typename int_vector::IntPtrTrait<pointer>::Data;
+            auto x = bitpos2backingpos(elem2bits(this->m_real_size));
+            return pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline reverse_iterator rbegin() {
@@ -491,13 +653,15 @@ namespace int_vector {
         }
 
         inline const_iterator begin() const {
+            using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
             auto x = bitpos2backingpos(0);
-            return const_pointer(&m_vec[x.pos], x.offset, N);
+            return const_pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline const_iterator end() const {
-            auto x = bitpos2backingpos(elem2bits(m_real_size));
-            return const_pointer(&m_vec[x.pos], x.offset, N);
+            using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
+            auto x = bitpos2backingpos(elem2bits(this->m_real_size));
+            return const_pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline const_reverse_iterator rbegin() const {
@@ -525,21 +689,21 @@ namespace int_vector {
         }
 
         inline size_type size() const {
-            return m_real_size;
+            return this->m_real_size;
         }
 
         inline uint64_t bit_size() const {
-            return elem2bits(m_real_size);
+            return elem2bits(this->m_real_size);
         }
 
         inline size_type max_size() const {
             // Empty vector does not allocate, so this is fine
-            return std::vector<uint_t<N>>().max_size();
+            return std::vector<value_type>().max_size();
         }
 
         inline void resize(size_type n) {
-            m_real_size = n;
-            m_vec.resize(bits2backing(elem2bits(n)), 0);
+            this->m_real_size = n;
+            this->m_vec.resize(bits2backing(elem2bits(n)), 0);
         }
 
         inline void resize(size_type n, const value_type& val) {
@@ -553,7 +717,7 @@ namespace int_vector {
         }
 
         inline size_type capacity() const {
-            return bits2elem(backing2bits(m_vec.capacity()));
+            return bits2elem(backing2bits(this->m_vec.capacity()));
         }
 
         inline bool empty() const {
@@ -561,23 +725,25 @@ namespace int_vector {
         }
 
         inline void reserve(size_type n) {
-            m_vec.reserve(bits2backing(elem2bits(n)));
+           this->m_vec.reserve(bits2backing(elem2bits(n)));
         }
 
         inline void shrink_to_fit() {
-            m_vec.shrink_to_fit();
+            this->m_vec.shrink_to_fit();
         }
 
         inline reference operator[](size_type n) {
+            using Data = typename int_vector::IntPtrTrait<pointer>::Data;
             DCHECK(n < size());
             auto x = bitpos2backingpos(elem2bits(n));
-            return reference(pointer(m_vec.data() + x.pos, x.offset, N));
+            return reference(pointer(Data(this->m_vec.data() + x.pos, x.offset, this->width())));
         }
 
         inline const_reference operator[](size_type n) const {
+            using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
             DCHECK(n < size());
             auto x = bitpos2backingpos(elem2bits(n));
-            return const_reference(const_pointer(m_vec.data() + x.pos, x.offset, N));
+            return const_reference(const_pointer(Data(this->m_vec.data() + x.pos, x.offset, this->width())));
         }
 
         inline void range_check(size_type n) const {
@@ -618,11 +784,11 @@ namespace int_vector {
         }
 
         inline internal_data_type* data() noexcept {
-            return m_vec.data();
+            return this->m_vec.data();
         }
 
         inline const internal_data_type* data() const noexcept {
-            return m_vec.data();
+            return this->m_vec.data();
         }
 
         template <class InputIterator>
@@ -639,10 +805,10 @@ namespace int_vector {
         }
 
         inline void push_back(const value_type& val) {
-            m_real_size += 1;
+            this->m_real_size += 1;
 
-            while (elem2bits(m_real_size) > backing2bits(m_vec.size())) {
-                m_vec.push_back(0);
+            while (elem2bits(this->m_real_size) > backing2bits(this->m_vec.size())) {
+                this->m_vec.push_back(0);
             }
 
             back() = val;
@@ -655,9 +821,9 @@ namespace int_vector {
 
         inline void pop_back() {
             DCHECK(!empty());
-            m_real_size -= 1;
-            while (bits2backing(elem2bits(m_real_size)) < m_vec.size()) {
-                m_vec.pop_back();
+            this->m_real_size -= 1;
+            while (bits2backing(elem2bits(this->m_real_size)) < this->m_vec.size()) {
+                this->m_vec.pop_back();
             }
         }
 
@@ -672,7 +838,7 @@ namespace int_vector {
             // Step 1: Grow backing vector by needed amount
             {
                 auto new_bits_needed = elem2bits(n);
-                auto existing_extra_bits = backing2bits(m_vec.size()) - elem2bits(m_real_size);
+                auto existing_extra_bits = backing2bits(this->m_vec.size()) - elem2bits(this->m_real_size);
 
                 if (new_bits_needed > existing_extra_bits) {
                     new_bits_needed -= existing_extra_bits;
@@ -681,8 +847,8 @@ namespace int_vector {
                 }
 
                 auto new_backing_needed = bits2backing(new_bits_needed);
-                m_vec.insert(m_vec.cend(), new_backing_needed, 0);
-                m_real_size += n;
+                this->m_vec.insert(this->m_vec.cend(), new_backing_needed, 0);
+                this->m_real_size += n;
             }
 
             // Step 2: move elements to back, leaving a gap
@@ -745,21 +911,25 @@ namespace int_vector {
             auto n = to - from;
             std::copy(begin() + to, end(), begin() + from);
 
-            m_real_size -= n;
+            this->m_real_size -= n;
 
-            auto obsolete_backing = m_vec.size() - bits2backing(elem2bits(m_real_size));
-            m_vec.erase(m_vec.cend() - obsolete_backing, m_vec.cend());
+            auto obsolete_backing = this->m_vec.size() - bits2backing(elem2bits(this->m_real_size));
+            this->m_vec.erase(this->m_vec.cend() - obsolete_backing, this->m_vec.cend());
             return begin() + from;
         }
 
         inline void swap(odd_bit_backing_data& other) {
-            m_vec.swap(other.m_vec);
-            std::swap(m_real_size, other.m_real_size);
+            this->m_vec.swap(other.m_vec);
+            std::swap(this->m_real_size, other.m_real_size);
+            auto a = this->width();
+            auto b = other.width();
+            this->set_width_raw(b);
+            other.set_width_raw(a);
         }
 
         inline void clear() {
-            m_vec.clear();
-            m_real_size = 0;
+            this->m_vec.clear();
+            this->m_real_size = 0;
         }
 
         template <class... Args>
@@ -771,13 +941,90 @@ namespace int_vector {
         inline void emplace_back(Args&&... args) {
             push_back(value_type(std::forward<Args...>(args)...));
         }
+
+        inline uint8_t width() const {
+            return this->raw_width();
+        }
+
+        inline void width(uint8_t w) {
+            this->resize(this->size(), 0, w);
+        }
+
+        inline void resize(size_type n, const value_type& val, uint8_t w) {
+            auto old_width = this->width();
+            auto new_width = w;
+            auto old_size = this->size();
+            auto new_size = n;
+
+            auto new_bit_size = elem2bits_w(new_size, new_width);
+            auto common_size = std::min(old_size, new_size);
+
+            if (old_width < new_width) {
+                // grow
+
+                // Read from position of last element in the old width grid,
+                // and write to position of last element in the new width grid
+                auto old_p = bitpos2backingpos_w(elem2bits_w(common_size, old_width));
+                auto new_p = bitpos2backingpos_w(elem2bits_w(common_size, new_width));
+
+                // make room for new bits, reallocating as needed
+                this->m_vec.resize(bits2backing_w(new_bit_size));
+                this->set_width_raw(w);
+                this->m_real_size = new_size;
+
+                uint64_t* old_ptr = this->m_vec.data() + old_p.pos;
+                uint64_t* new_ptr = this->m_vec.data() + new_p.pos;
+
+                // move elements into new width grid
+                for (uint64_t i = 0; i < common_size; i++) {
+                    sdsl::bits::move_left((const uint64_t*&) old_ptr, old_p.offset, old_width);
+                    auto v = sdsl::bits::read_int(           old_ptr, old_p.offset, old_width);
+
+                    sdsl::bits::move_left((const uint64_t*&) new_ptr,    new_p.offset, new_width);
+                    sdsl::bits::write_int(                   new_ptr, v, new_p.offset, new_width);
+                }
+            } else if (old_width > new_width) {
+                // shrink
+
+                uint64_t* old_ptr = this->m_vec.data();
+                uint64_t* new_ptr = this->m_vec.data();
+
+                uint8_t old_offset = 0;
+                uint8_t new_offset = 0;
+
+                // move elements into new width grid
+                for (uint64_t i = 0; i < common_size; i++) {
+                    auto v = sdsl::bits::read_int_and_move((const uint64_t*&) old_ptr, old_offset, old_width);
+                    sdsl::bits::write_int_and_move(new_ptr, v, new_offset, new_width);
+                }
+
+                // remove extra bits, dropping as needed
+                this->m_vec.resize(bits2backing_w(new_bit_size));
+                this->set_width_raw(w);
+                this->m_real_size = new_size;
+            }
+
+            // initialize new elements correctly
+            if (old_size < new_size) {
+                auto a = this->begin() + old_size;
+                auto b = this->end();
+                for(; a != b; ++a) {
+                    *a = val;
+                }
+            }
+        }
+
+        inline void bit_reserve(uint64_t n) {
+            this->m_vec.reserve(bits2backing(n));
+        }
     };
 
-    template<size_t N>
+    template<class N>
     bool operator==(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
+        DCHECK(lhs.width() == rhs.width());
         if (lhs.size() == rhs.size()) {
-            auto extra_bits = odd_bit_backing_data<N>::backing2bits(lhs.m_vec.size())
-                              - odd_bit_backing_data<N>::elem2bits(lhs.m_real_size);
+            auto extra_bits = lhs.backing2bits(lhs.m_vec.size())
+                              - lhs.elem2bits(lhs.m_real_size);
 
             if (extra_bits == 0) {
                 return lhs.m_vec == rhs.m_vec;
@@ -785,10 +1032,10 @@ namespace int_vector {
                 if (!std::equal(lhs.m_vec.cbegin(), lhs.m_vec.cend() - 1, rhs.m_vec.cbegin())) {
                     return false;
                 }
-                auto occupied_bits = odd_bit_backing_data<N>::backing2bits(1) - extra_bits;
+                auto occupied_bits = lhs.backing2bits(1) - extra_bits;
                 // NB: Underflow can not happen here because there are never
                 // completely unoccupied backing integers
-                auto elements = (occupied_bits - 1) / odd_bit_backing_data<N>::elem2bits(1) + 1;
+                auto elements = (occupied_bits - 1) / lhs.elem2bits(1) + 1;
 
                 return std::equal(lhs.cend() - elements, lhs.cend(), rhs.cend() - elements);
             }
@@ -796,35 +1043,49 @@ namespace int_vector {
         return false;
     }
 
-    template<size_t N>
+    template<class N>
     bool operator!=(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
         return !(lhs == rhs);
     }
 
-    template<size_t N>
+    template<class N>
     bool operator<(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
         return std::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
     }
 
-    template<size_t N>
+    template<class N>
     bool operator<=(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
         return !(lhs > rhs);
     }
 
-    template<size_t N>
+    template<class N>
     bool operator>(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
         return std::lexicographical_compare(rhs.cbegin(), rhs.cend(), lhs.cbegin(), lhs.cend());
     }
 
-    template<size_t N>
+    template<class N>
     bool operator>=(const odd_bit_backing_data<N>& lhs, const odd_bit_backing_data<N>& rhs) {
         return !(lhs < rhs);
     }
 
-    template<size_t N>
+    template<class N>
     void swap(odd_bit_backing_data<N>& x, odd_bit_backing_data<N>& y) {
         x.swap(y);
     }
+
+    /*
+     * TODO:
+     o constructor for int width
+     o swap/reassign ops
+     x void bit_resize(const size_type size);
+     o bit capacity?
+     - value_type get_int(size_type idx, const uint8_t len=64) const;
+     - void set_int(size_type idx, value_type x, const uint8_t len=64);
+     - width setter
+     - in.place widt setting?
+     - flip?
+     . bit resize
+     */
 
     template<class T, class X = void>
     struct GenericIntVectorTrait {
@@ -852,39 +1113,144 @@ namespace int_vector {
             return sizeof(T) * CHAR_BIT * self.size();
         }
 
+        inline static uint64_t bit_capacity(const backing_data& self) {
+            return sizeof(T) * CHAR_BIT * self.capacity();
+        }
+
         static constexpr ElementStorageMode element_storage_mode() {
             return ElementStorageMode::Direct;
+        }
+
+        inline static uint8_t width(const backing_data& self) {
+            return sizeof(T) * CHAR_BIT;
+        }
+
+        inline static backing_data with_width(size_type n, const value_type& val, uint8_t width) {
+            width_error();
+            return backing_data(n, val);
+        }
+
+        inline static void width(backing_data& self, uint8_t w) {
+            width_error();
+        }
+
+        inline static void resize(backing_data& self, size_type n, const value_type& val, uint8_t w) {
+            width_error();
+        }
+
+        inline static void bit_reserve(backing_data& self, uint64_t n) {
+            width_error();
+        }
+    };
+
+    template<>
+    struct GenericIntVectorTrait<dynamic_t> {
+        typedef typename odd_bit_backing_data<dynamic_t>::value_type             value_type;
+
+        typedef typename odd_bit_backing_data<dynamic_t>::reference              reference;
+        typedef typename odd_bit_backing_data<dynamic_t>::const_reference        const_reference;
+
+        typedef typename odd_bit_backing_data<dynamic_t>::pointer                pointer;
+        typedef typename odd_bit_backing_data<dynamic_t>::const_pointer          const_pointer;
+
+        typedef typename odd_bit_backing_data<dynamic_t>::iterator               iterator;
+        typedef typename odd_bit_backing_data<dynamic_t>::const_iterator         const_iterator;
+
+        typedef typename odd_bit_backing_data<dynamic_t>::reverse_iterator       reverse_iterator;
+        typedef typename odd_bit_backing_data<dynamic_t>::const_reverse_iterator const_reverse_iterator;
+
+        typedef typename odd_bit_backing_data<dynamic_t>::difference_type        difference_type;
+        typedef typename odd_bit_backing_data<dynamic_t>::size_type              size_type;
+
+        typedef          odd_bit_backing_data<dynamic_t>                         backing_data;
+        typedef typename odd_bit_backing_data<dynamic_t>::internal_data_type     internal_data_type;
+
+        inline static uint64_t bit_size(const backing_data& self) {
+            return self.size() * self.width();
+        }
+
+        inline static uint64_t bit_capacity(const backing_data& self) {
+            return self.capacity() * self.width();
+        }
+
+        static constexpr ElementStorageMode element_storage_mode() {
+            return ElementStorageMode::BitPacked;
+        }
+
+        inline static uint8_t width(const backing_data& self) {
+            return self.width();
+        }
+
+        inline static backing_data with_width(size_type n, const value_type& val, uint8_t width) {
+            return backing_data(n, val, width);
+        }
+
+        inline static void width(backing_data& self, uint8_t w) {
+            self.width(w);
+        }
+
+        inline static void resize(backing_data& self, size_type n, const value_type& val, uint8_t w) {
+            self.resize(n, val, w);
+        }
+
+        inline static void bit_reserve(backing_data& self, uint64_t n) {
+            self.bit_reserve(n);
         }
     };
 
     template<size_t N>
     struct GenericIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) != 0>::type> {
-        typedef typename odd_bit_backing_data<N>::value_type             value_type;
+        typedef typename odd_bit_backing_data<uint_t<N>>::value_type             value_type;
 
-        typedef typename odd_bit_backing_data<N>::reference              reference;
-        typedef typename odd_bit_backing_data<N>::const_reference        const_reference;
+        typedef typename odd_bit_backing_data<uint_t<N>>::reference              reference;
+        typedef typename odd_bit_backing_data<uint_t<N>>::const_reference        const_reference;
 
-        typedef typename odd_bit_backing_data<N>::pointer                pointer;
-        typedef typename odd_bit_backing_data<N>::const_pointer          const_pointer;
+        typedef typename odd_bit_backing_data<uint_t<N>>::pointer                pointer;
+        typedef typename odd_bit_backing_data<uint_t<N>>::const_pointer          const_pointer;
 
-        typedef typename odd_bit_backing_data<N>::iterator               iterator;
-        typedef typename odd_bit_backing_data<N>::const_iterator         const_iterator;
+        typedef typename odd_bit_backing_data<uint_t<N>>::iterator               iterator;
+        typedef typename odd_bit_backing_data<uint_t<N>>::const_iterator         const_iterator;
 
-        typedef typename odd_bit_backing_data<N>::reverse_iterator       reverse_iterator;
-        typedef typename odd_bit_backing_data<N>::const_reverse_iterator const_reverse_iterator;
+        typedef typename odd_bit_backing_data<uint_t<N>>::reverse_iterator       reverse_iterator;
+        typedef typename odd_bit_backing_data<uint_t<N>>::const_reverse_iterator const_reverse_iterator;
 
-        typedef typename odd_bit_backing_data<N>::difference_type        difference_type;
-        typedef typename odd_bit_backing_data<N>::size_type              size_type;
+        typedef typename odd_bit_backing_data<uint_t<N>>::difference_type        difference_type;
+        typedef typename odd_bit_backing_data<uint_t<N>>::size_type              size_type;
 
-        typedef          odd_bit_backing_data<N>                         backing_data;
-        typedef typename odd_bit_backing_data<N>::internal_data_type     internal_data_type;
+        typedef          odd_bit_backing_data<uint_t<N>>                         backing_data;
+        typedef typename odd_bit_backing_data<uint_t<N>>::internal_data_type     internal_data_type;
 
         inline static uint64_t bit_size(const backing_data& self) {
             return self.size() * N;
         }
 
+        inline static uint64_t bit_capacity(const backing_data& self) {
+            return self.capacity() * N;
+        }
+
         static constexpr ElementStorageMode element_storage_mode() {
             return ElementStorageMode::BitPacked;
+        }
+
+        inline static uint8_t width(const backing_data& self) {
+            return self.width();
+        }
+
+        inline static backing_data with_width(size_type n, const value_type& val, uint8_t width) {
+            width_error();
+            return backing_data(n, val);
+        }
+
+        inline static void width(backing_data& self, uint8_t w) {
+            width_error();
+        }
+
+        inline static void resize(backing_data& self, size_type n, const value_type& val, uint8_t w) {
+            width_error();
+        }
+
+        inline static void bit_reserve(backing_data& self, uint64_t n) {
+            width_error();
         }
     };
 
@@ -919,6 +1285,8 @@ namespace int_vector {
         // fill
         explicit GenericIntVector(size_type n): m_data(n) {}
         inline GenericIntVector(size_type n, const value_type& val): m_data(n, val) {}
+        inline GenericIntVector(size_type n, const value_type& val, uint8_t width):
+            m_data(GenericIntVectorTrait<T>::with_width(n, val, width)) {}
 
         // range
         template <class InputIterator>
@@ -1008,6 +1376,14 @@ namespace int_vector {
             return m_data.max_size();
         }
 
+        inline uint8_t width() const {
+            return GenericIntVectorTrait<T>::width(m_data);
+        }
+
+        inline void width(uint8_t w) {
+            GenericIntVectorTrait<T>::width(m_data, w);
+        }
+
         inline void resize(size_type n) {
             m_data.resize(n);
         }
@@ -1016,8 +1392,16 @@ namespace int_vector {
             m_data.resize(n, val);
         }
 
+        inline void resize(size_type n, const value_type& val, uint8_t w) {
+            GenericIntVectorTrait<T>::resize(m_data, n, val, w);
+        }
+
         inline size_type capacity() const {
             return m_data.capacity();
+        }
+
+        inline uint64_t bit_capacity() const {
+            return GenericIntVectorTrait<T>::bit_capacity(m_data);
         }
 
         inline bool empty() const {
@@ -1026,6 +1410,10 @@ namespace int_vector {
 
         inline void reserve(size_type n) {
             m_data.reserve(n);
+        }
+
+        inline void bit_reserve(uint64_t n) {
+            GenericIntVectorTrait<T>::bit_reserve(m_data, n);
         }
 
         inline void shrink_to_fit() {
@@ -1196,64 +1584,6 @@ namespace int_vector {
         swap(lhs.m_data, rhs.m_data);
     }
 
-}
-
-template<class T>
-inline typename ConstIntegerBaseTrait<int_vector::IntRef<T>>::SelfMaxBit ConstIntegerBaseTrait<int_vector::IntRef<T>>::cast_for_self_op(const S& self) {
-    return bits::read_int(self.m_ptr.m_ptr,
-                            self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
-}
-
-template<class T>
-inline typename ConstIntegerBaseTrait<int_vector::IntRef<T>>::SelfMaxBit ConstIntegerBaseTrait<int_vector::IntRef<T>>::cast_for_32_op(const S& self) {
-    return bits::read_int(self.m_ptr.m_ptr,
-                            self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
-}
-
-template<class T>
-inline uint64_t ConstIntegerBaseTrait<int_vector::IntRef<T>>::cast_for_64_op(const S& self) {
-    return bits::read_int(self.m_ptr.m_ptr,
-                            self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
-}
-
-template<class T>
-inline void IntegerBaseTrait<int_vector::IntRef<T>>::assign(S& self, uint32_t v) {
-    bits::write_int(self.m_ptr.m_ptr,
-                    v,
-                    self.m_ptr.m_bit_offset,
-                    self.m_ptr.m_bit_size);
-}
-
-template<class T>
-inline void IntegerBaseTrait<int_vector::IntRef<T>>::assign(S& self, uint64_t v) {
-    bits::write_int(self.m_ptr.m_ptr,
-                    v,
-                    self.m_ptr.m_bit_offset,
-                    self.m_ptr.m_bit_size);
-}
-
-template<class T>
-inline typename ConstIntegerBaseTrait<int_vector::ConstIntRef<T>>::SelfMaxBit ConstIntegerBaseTrait<int_vector::ConstIntRef<T>>::cast_for_self_op(const S& self) {
-    return bits::read_int(self.m_ptr.m_ptr,
-                            self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
-}
-
-template<class T>
-inline typename ConstIntegerBaseTrait<int_vector::ConstIntRef<T>>::SelfMaxBit ConstIntegerBaseTrait<int_vector::ConstIntRef<T>>::cast_for_32_op(const S& self) {
-    return bits::read_int(self.m_ptr.m_ptr,
-                            self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
-}
-
-template<class T>
-inline uint64_t ConstIntegerBaseTrait<int_vector::ConstIntRef<T>>::cast_for_64_op(const S& self) {
-    return bits::read_int(self.m_ptr.m_ptr,
-                            self.m_ptr.m_bit_offset,
-                            self.m_ptr.m_bit_size);
 }
 
 }
