@@ -15,7 +15,7 @@ run_test(lzss_tests     DEPS ${BASIC_DEPS})
 run_test(compressor_adapter_tests
     DEPS tudocomp_algorithms ${BASIC_DEPS})
 
-run_test(example_tests  DEPS ${BASIC_DEPS})
+#run_test(example_tests  DEPS ${BASIC_DEPS})
 
 
 set(SANDBOX_CPP ${CMAKE_CURRENT_SOURCE_DIR}/sandbox_tests.cpp)
