@@ -483,9 +483,7 @@ namespace int_vector {
             m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
 
         inline uint8_t width() const { return N; }
-        inline void set_width_raw(uint8_t width) {
-            width_error();
-        }
+        inline void set_width_raw(uint8_t width) { }
 
     };
 
@@ -507,6 +505,7 @@ namespace int_vector {
 
         inline uint8_t width() const { return m_width; }
         inline void set_width_raw(uint8_t width) { m_width = width; }
+
     };
 
     template<class T>
@@ -563,8 +562,8 @@ namespace int_vector {
             };
         }
 
-        inline explicit odd_bit_backing_data() {}
-        inline explicit odd_bit_backing_data(size_type n) {
+        inline explicit odd_bit_backing_data(): OddBitBackingBase<T>::OddBitBackingBase() {}
+        inline explicit odd_bit_backing_data(size_type n): odd_bit_backing_data() {
             this->m_real_size = n;
             size_t converted_size = bits2backing(elem2bits(this->m_real_size));
             this->m_vec = std::vector<internal_data_type>(converted_size);
@@ -602,12 +601,14 @@ namespace int_vector {
         inline odd_bit_backing_data& operator=(const odd_bit_backing_data& other) {
             this->m_vec = other.m_vec;
             this->m_real_size = other.m_real_size;
+            this->set_width_raw(other.width());
             return *this;
         }
 
         inline odd_bit_backing_data& operator=(odd_bit_backing_data&& other) {
             this->m_vec = std::move(other.m_vec);
             this->m_real_size = other.m_real_size;
+            this->set_width_raw(other.width());
             return *this;
         }
 
@@ -905,6 +906,10 @@ namespace int_vector {
         inline void swap(odd_bit_backing_data& other) {
             this->m_vec.swap(other.m_vec);
             std::swap(this->m_real_size, other.m_real_size);
+            auto a = this->width();
+            auto b = other.width();
+            this->set_width_raw(b);
+            other.set_width_raw(a);
         }
 
         inline void clear() {
@@ -979,7 +984,8 @@ namespace int_vector {
 
     /*
      * TODO:
-     - constructor for int width
+     o constructor for int width
+     o swap/reassign ops
      - void bit_resize(const size_type size);
      - bit capacity?
      - value_type get_int(size_type idx, const uint8_t len=64) const;

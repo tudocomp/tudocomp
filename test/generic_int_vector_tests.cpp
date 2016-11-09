@@ -1049,15 +1049,69 @@ TEST(generic_int_vector, dynamic_t_extra) {
 
     GenericIntVector<dynamic_t> a(3, 3, 1);
     GenericIntVector<dynamic_t> b(3, 3, 2);
+    GenericIntVector<dynamic_t> c(size_t(3), dynamic_t(4));
 
-    ASSERT_EQ(a.width(), 1);
-    ASSERT_EQ(b.width(), 2);
+    {
+        ASSERT_EQ(a.width(), 1);
+        ASSERT_EQ(b.width(), 2);
+        ASSERT_EQ(c.width(), 64);
 
-    std::vector<dynamic_t> av(a.begin(), a.end());
-    std::vector<dynamic_t> bv(b.begin(), b.end());
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        std::vector<dynamic_t> bv(b.begin(), b.end());
+        std::vector<dynamic_t> cv(c.begin(), c.end());
 
-    ASSERT_EQ(av, (std::vector<dynamic_t> { 1, 1, 1 }));
-    ASSERT_EQ(bv, (std::vector<dynamic_t> { 3, 3, 3 }));
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 1, 1, 1 }));
+        ASSERT_EQ(bv, (std::vector<dynamic_t> { 3, 3, 3 }));
+        ASSERT_EQ(cv, (std::vector<dynamic_t> { 4, 4, 4 }));
+    }
+
+    a.swap(b);
+
+    {
+        ASSERT_EQ(a.width(), 2);
+        ASSERT_EQ(b.width(), 1);
+        ASSERT_EQ(c.width(), 64);
+
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        std::vector<dynamic_t> bv(b.begin(), b.end());
+        std::vector<dynamic_t> cv(c.begin(), c.end());
+
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
+        ASSERT_EQ(bv, (std::vector<dynamic_t> { 1, 1, 1 }));
+        ASSERT_EQ(cv, (std::vector<dynamic_t> { 4, 4, 4 }));
+    }
+
+    b = c;
+
+    {
+        ASSERT_EQ(a.width(), 2);
+        ASSERT_EQ(b.width(), 64);
+        ASSERT_EQ(c.width(), 64);
+
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        std::vector<dynamic_t> bv(b.begin(), b.end());
+        std::vector<dynamic_t> cv(c.begin(), c.end());
+
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
+        ASSERT_EQ(bv, (std::vector<dynamic_t> { 4, 4, 4 }));
+        ASSERT_EQ(cv, (std::vector<dynamic_t> { 4, 4, 4 }));
+    }
+
+    c = a;
+
+    {
+        ASSERT_EQ(a.width(), 2);
+        ASSERT_EQ(b.width(), 64);
+        ASSERT_EQ(c.width(), 2);
+
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        std::vector<dynamic_t> bv(b.begin(), b.end());
+        std::vector<dynamic_t> cv(c.begin(), c.end());
+
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
+        ASSERT_EQ(bv, (std::vector<dynamic_t> { 4, 4, 4 }));
+        ASSERT_EQ(cv, (std::vector<dynamic_t> { 3, 3, 3 }));
+    }
 }
 
 
