@@ -1022,6 +1022,10 @@ namespace int_vector {
             return sizeof(T) * CHAR_BIT * self.size();
         }
 
+        inline static uint64_t bit_capacity(const backing_data& self) {
+            return sizeof(T) * CHAR_BIT * self.capacity();
+        }
+
         static constexpr ElementStorageMode element_storage_mode() {
             return ElementStorageMode::Direct;
         }
@@ -1063,6 +1067,10 @@ namespace int_vector {
             return self.size() * self.width();
         }
 
+        inline static uint64_t bit_capacity(const backing_data& self) {
+            return self.capacity() * self.width();
+        }
+
         static constexpr ElementStorageMode element_storage_mode() {
             return ElementStorageMode::BitPacked;
         }
@@ -1101,6 +1109,10 @@ namespace int_vector {
 
         inline static uint64_t bit_size(const backing_data& self) {
             return self.size() * N;
+        }
+
+        inline static uint64_t bit_capacity(const backing_data& self) {
+            return self.capacity() * N;
         }
 
         static constexpr ElementStorageMode element_storage_mode() {
@@ -1254,6 +1266,10 @@ namespace int_vector {
 
         inline size_type capacity() const {
             return m_data.capacity();
+        }
+
+        inline uint64_t bit_capacity() const {
+            return GenericIntVectorTrait<T>::bit_capacity(m_data);
         }
 
         inline bool empty() const {

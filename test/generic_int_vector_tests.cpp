@@ -794,24 +794,29 @@ void generic_int_vector_template() {
     auto tmp_capa = resize.capacity();
     ASSERT_EQ(resize, (GenericIntVector<T> { 1, 2, 3, 4 }));
     ASSERT_GE(resize.capacity(), resize.size());
+    ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
 
     resize.resize(2);
     ASSERT_EQ(resize.size(), 2);
     ASSERT_EQ(tmp_capa, resize.capacity());
+    ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
     ASSERT_EQ(resize, (GenericIntVector<T> { 1, 2 }));
 
     resize.resize(5, 1);
     ASSERT_EQ(resize.size(), 5);
     ASSERT_EQ(resize, (GenericIntVector<T> { 1, 2, 1, 1, 1 }));
     ASSERT_GE(resize.capacity(), resize.size());
+    ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
 
     ASSERT_TRUE(dflt.empty());
     ASSERT_FALSE(fill1.empty());
 
     GenericIntVector<T> reserve;
     ASSERT_EQ(reserve.capacity(), 0);
+    ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
     reserve.reserve(10);
     ASSERT_GE(reserve.capacity(), 10);
+    ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
 
     reserve.shrink_to_fit();
 
