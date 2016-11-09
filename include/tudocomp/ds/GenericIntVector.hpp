@@ -532,11 +532,11 @@ namespace int_vector {
         template<class M>
         friend bool operator==(const odd_bit_backing_data<M>& lhs, const odd_bit_backing_data<M>& rhs);
 
-        inline static uint64_t backing2bits_w(size_t n, uint8_t w) {
+        inline static uint64_t backing2bits_w(size_t n) {
             return uint64_t(sizeof(internal_data_type) * CHAR_BIT) * uint64_t(n);
         }
         inline uint64_t backing2bits(size_t n) const {
-            return backing2bits_w(n, this->width());
+            return backing2bits_w(n);
         }
 
         inline static uint64_t elem2bits_w(size_t n, uint8_t w) {
@@ -546,14 +546,14 @@ namespace int_vector {
             return elem2bits_w(n, this->width());
         }
 
-        inline static uint64_t bits2backing_w(uint64_t bits, uint8_t w) {
+        inline static uint64_t bits2backing_w(uint64_t bits) {
             if (bits == 0) {
                 return 0;
             }
-            return ((bits - 1) / backing2bits_w(1, w)) + 1;
+            return ((bits - 1) / backing2bits_w(1)) + 1;
         }
         inline uint64_t bits2backing(uint64_t bits) const {
-            return bits2backing_w(bits, this->width());
+            return bits2backing_w(bits);
         }
 
         inline static uint64_t bits2elem_w(uint64_t bits, uint8_t w) {
@@ -567,14 +567,14 @@ namespace int_vector {
         }
 
         struct PosAndOffset { size_t pos; uint8_t offset; };
-        inline static PosAndOffset bitpos2backingpos_w(uint64_t bits, uint8_t w) {
+        inline static PosAndOffset bitpos2backingpos_w(uint64_t bits) {
             return PosAndOffset {
-                bits / backing2bits_w(1, w),
-                uint8_t(bits % backing2bits_w(1, w))
+                bits / backing2bits_w(1),
+                uint8_t(bits % backing2bits_w(1))
             };
         }
         inline PosAndOffset bitpos2backingpos(uint64_t bits) const {
-            return bitpos2backingpos_w(bits, this->width());
+            return bitpos2backingpos_w(bits);
         }
 
         inline explicit odd_bit_backing_data(): OddBitBackingBase<T>::OddBitBackingBase() {}
@@ -947,8 +947,54 @@ namespace int_vector {
         }
 
         inline void width(uint8_t w) {
-            //auto old_bit_size = bit_size();
-            //auto new_bit_size = bit_size();
+            auto old_width = this->width();
+            auto new_width = w;
+            auto old_bit_size = elem2bits_w(this->size(), old_width);
+            auto new_bit_size = elem2bits_w(this->size(), new_width);
+            auto old_size = this->size();
+
+            if (old_bit_size < new_bit_size) {
+                // grow
+
+                // Read from position of last element in the old width grid,
+                // and write to position of last element in the new width grid
+                auto old_p = bitpos2backingpos_w(elem2bits_w(old_size, old_width));
+                auto new_p = bitpos2backingpos_w(elem2bits_w(old_size, new_width));
+
+                // make room for new bits, reallocating as needed
+                this->m_vec.resize(bits2backing_w(new_bit_size));
+                this->set_width_raw(w);
+
+                uint64_t* old_ptr = this->m_vec.data() + old_p.pos;
+                uint64_t* new_ptr = this->m_vec.data() + new_p.pos;
+
+                // move elements into new width grid
+                for (uint64_t i = 0; i < old_size; i++) {
+                    sdsl::bits::move_left((const uint64_t*&) old_ptr, old_p.offset, old_width);
+                    auto v = sdsl::bits::read_int(           old_ptr, old_p.offset, old_width);
+
+                    sdsl::bits::move_left((const uint64_t*&) new_ptr,    new_p.offset, new_width);
+                    sdsl::bits::write_int(                   new_ptr, v, new_p.offset, new_width);
+                }
+            } else if (old_bit_size > new_bit_size) {
+                // shrink
+
+                // remove extra bits, dropping as needed
+                this->m_vec.resize(bits2backing_w(new_bit_size));
+                this->set_width_raw(w);
+
+                uint64_t* old_ptr = this->m_vec.data();
+                uint64_t* new_ptr = this->m_vec.data();
+
+                uint8_t old_offset = 0;
+                uint8_t new_offset = 0;
+
+                // move elements into new width grid
+                for (uint64_t i = 0; i < old_size; i++) {
+                    auto v = sdsl::bits::read_int_and_move((const uint64_t*&) old_ptr, old_offset, old_width);
+                    sdsl::bits::write_int_and_move(new_ptr, v, new_offset, new_width);
+                }
+            }
         }
 
         inline void bit_resize(uint64_t n) {

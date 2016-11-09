@@ -1119,9 +1119,9 @@ TEST(generic_int_vector, dynamic_t_extra) {
         ASSERT_EQ(cv, (std::vector<dynamic_t> { 3, 3, 3 }));
     }
 
-    a.width(4);
+    a.width(3);
     {
-        ASSERT_EQ(a.width(), 4);
+        ASSERT_EQ(a.width(), 3);
         std::vector<dynamic_t> av(a.begin(), a.end());
         ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
     }
@@ -1131,6 +1131,16 @@ TEST(generic_int_vector, dynamic_t_extra) {
     {
         std::vector<dynamic_t> av(a.begin(), a.end());
         ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3, 7, 0, 7 }));
+    }
+    a.width(2);
+    {
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3, 3, 0, 3 }));
+    }
+    a.width(1);
+    {
+        std::vector<dynamic_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<dynamic_t> { 1, 1, 1, 1, 0, 1 }));
     }
 
 }
