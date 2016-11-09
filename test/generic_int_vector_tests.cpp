@@ -1143,6 +1143,60 @@ TEST(generic_int_vector, dynamic_t_extra) {
         ASSERT_EQ(av, (std::vector<dynamic_t> { 1, 1, 1, 1, 0, 1 }));
     }
 
+    GenericIntVector<dynamic_t> d { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    d.width(4);
+
+    ASSERT_EQ(d.size(), 10);
+    ASSERT_EQ(d.width(), 4);
+    auto dbs = d.bit_size();
+    auto dbc = d.bit_capacity();
+    {
+        std::vector<dynamic_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }));
+    }
+
+    d.resize(5, 0, 8);
+
+    ASSERT_EQ(d.size(), 5);
+    ASSERT_EQ(d.width(), 8);
+    ASSERT_EQ(dbs, d.bit_size());
+    ASSERT_EQ(dbc, d.bit_capacity());
+    {
+        std::vector<dynamic_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 4, 5 }));
+    }
+
+    d.resize(10, 11, 4);
+
+    ASSERT_EQ(d.size(), 10);
+    ASSERT_EQ(d.width(), 4);
+    ASSERT_EQ(dbs, d.bit_size());
+    ASSERT_EQ(dbc, d.bit_capacity());
+    {
+        std::vector<dynamic_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 4, 5, 11, 11, 11, 11, 11 }));
+    }
+
+    d.resize(5, 11, 2);
+
+    ASSERT_EQ(d.size(), 5);
+    ASSERT_EQ(d.width(), 2);
+    ASSERT_EQ(10, d.bit_size());
+    {
+        std::vector<dynamic_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 0, 1 }));
+    }
+
+    d.resize(11, 20, 10);
+
+    ASSERT_EQ(d.size(), 11);
+    ASSERT_EQ(d.width(), 10);
+    ASSERT_EQ(110, d.bit_size());
+    {
+        std::vector<dynamic_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 0, 1, 20, 20, 20, 20, 20, 20 }));
+    }
+
 }
 
 

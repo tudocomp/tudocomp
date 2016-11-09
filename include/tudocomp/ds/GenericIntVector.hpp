@@ -947,41 +947,48 @@ namespace int_vector {
         }
 
         inline void width(uint8_t w) {
+            this->resize(this->size(), 0, w);
+        }
+
+        inline void bit_resize(uint64_t n) {
+
+        }
+
+        inline void resize(size_type n, const value_type& val, uint8_t w) {
             auto old_width = this->width();
             auto new_width = w;
-            auto old_bit_size = elem2bits_w(this->size(), old_width);
-            auto new_bit_size = elem2bits_w(this->size(), new_width);
             auto old_size = this->size();
+            auto new_size = n;
 
-            if (old_bit_size < new_bit_size) {
+            auto new_bit_size = elem2bits_w(new_size, new_width);
+            auto common_size = std::min(old_size, new_size);
+
+            if (old_width < new_width) {
                 // grow
 
                 // Read from position of last element in the old width grid,
                 // and write to position of last element in the new width grid
-                auto old_p = bitpos2backingpos_w(elem2bits_w(old_size, old_width));
-                auto new_p = bitpos2backingpos_w(elem2bits_w(old_size, new_width));
+                auto old_p = bitpos2backingpos_w(elem2bits_w(common_size, old_width));
+                auto new_p = bitpos2backingpos_w(elem2bits_w(common_size, new_width));
 
                 // make room for new bits, reallocating as needed
                 this->m_vec.resize(bits2backing_w(new_bit_size));
                 this->set_width_raw(w);
+                this->m_real_size = new_size;
 
                 uint64_t* old_ptr = this->m_vec.data() + old_p.pos;
                 uint64_t* new_ptr = this->m_vec.data() + new_p.pos;
 
                 // move elements into new width grid
-                for (uint64_t i = 0; i < old_size; i++) {
+                for (uint64_t i = 0; i < common_size; i++) {
                     sdsl::bits::move_left((const uint64_t*&) old_ptr, old_p.offset, old_width);
                     auto v = sdsl::bits::read_int(           old_ptr, old_p.offset, old_width);
 
                     sdsl::bits::move_left((const uint64_t*&) new_ptr,    new_p.offset, new_width);
                     sdsl::bits::write_int(                   new_ptr, v, new_p.offset, new_width);
                 }
-            } else if (old_bit_size > new_bit_size) {
+            } else if (old_width > new_width) {
                 // shrink
-
-                // remove extra bits, dropping as needed
-                this->m_vec.resize(bits2backing_w(new_bit_size));
-                this->set_width_raw(w);
 
                 uint64_t* old_ptr = this->m_vec.data();
                 uint64_t* new_ptr = this->m_vec.data();
@@ -990,19 +997,25 @@ namespace int_vector {
                 uint8_t new_offset = 0;
 
                 // move elements into new width grid
-                for (uint64_t i = 0; i < old_size; i++) {
+                for (uint64_t i = 0; i < common_size; i++) {
                     auto v = sdsl::bits::read_int_and_move((const uint64_t*&) old_ptr, old_offset, old_width);
                     sdsl::bits::write_int_and_move(new_ptr, v, new_offset, new_width);
                 }
+
+                // remove extra bits, dropping as needed
+                this->m_vec.resize(bits2backing_w(new_bit_size));
+                this->set_width_raw(w);
+                this->m_real_size = new_size;
             }
-        }
 
-        inline void bit_resize(uint64_t n) {
-
-        }
-
-        inline void resize(size_type n, const value_type& val, uint8_t w) {
-
+            // initialize new elements correctly
+            if (old_size < new_size) {
+                auto a = this->begin() + old_size;
+                auto b = this->end();
+                for(; a != b; ++a) {
+                    *a = val;
+                }
+            }
         }
 
         inline void bit_reserve(uint64_t n) {
