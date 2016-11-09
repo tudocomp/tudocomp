@@ -1197,6 +1197,10 @@ TEST(generic_int_vector, dynamic_t_extra) {
         ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 0, 1, 20, 20, 20, 20, 20, 20 }));
     }
 
+    GenericIntVector<dynamic_t> e;
+    e.bit_reserve(1024);
+    ASSERT_GE(e.bit_capacity(), 1024);
+
 }
 
 

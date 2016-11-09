@@ -1015,7 +1015,7 @@ namespace int_vector {
         }
 
         inline void bit_reserve(uint64_t n) {
-
+            this->m_vec.reserve(bits2backing(n));
         }
     };
 
