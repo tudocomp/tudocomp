@@ -48,7 +48,7 @@ public:
         //env().begin_stat_phase("LFS compression");
        // env().log_stat("A statistic", 147);
         //build lcp array and suffix array:
-        auto istream = input.as_stream();
+        //auto istream = input.as_stream();
        // auto ostream = output.as_stream();
 
 
@@ -67,41 +67,43 @@ public:
         auto& sa_t = t.require_sa();
         auto& lcp_t = t.require_lcp();
         //t.sa[0];
-        std::cout << sa_t[0] << std::endl;
+       // std::cout << sa_t[0] << std::endl;
 
-        std::string file = "test_files/lfs_test.txt";
-        std::string text;
-        char cur_char;
-        while(istream.get(cur_char)){
-            text += cur_char;
-        }
+
+
+       // std::string file = "test_files/lfs_test.txt";
+        //std::string text;
+       // char cur_char;
+       // while(in.get(cur_char)){
+       //     text += cur_char;
+       // }
 
         //text = "abaaabbababb$";
         //input.as_stream;
 
         //just necessary for construct()
-        std::ofstream myfile;
-        myfile.open (file);
-        myfile << text;
-        myfile.close();
+        //std::ofstream myfile;
+        //myfile.open (file);
+        //myfile << text;
+        //myfile.close();
 
 
 
-        sdsl::cache_config cc(false); // do not delete temp files after csa construction
-        sdsl::csa_wt<> csa;
-        sdsl::construct(csa, file, 1);
+       // sdsl::cache_config cc(false); // do not delete temp files after csa construction
+      //  sdsl::csa_wt<> csa;
+      //  sdsl::construct(csa, file, 1);
 
-        cc.delete_files = true; // delete temp files after lcp construction
-        sdsl::lcp_wt<> lcp;
-        sdsl::construct(lcp, file, 1);
+      //  cc.delete_files = true; // delete temp files after lcp construction
+       // sdsl::lcp_wt<> lcp;
+       // sdsl::construct(lcp, file, 1);
 
-        std::cout << "Text:" << std::endl << text << std::endl  << std::endl;
+        //std::cout << "Text:" << std::endl << text << std::endl  << std::endl;
 
-        std::cout << "suffix array:" << std::endl;
-        std::cout << csa << std::endl;
-        std::cout << "-------" << std::endl;
-        std::cout << "lcp array:" << std::endl;
-        std::cout << lcp << std::endl;
+        //std::cout << "suffix array:" << std::endl;
+       // std::cout << csa << std::endl;
+        //std::cout << "-------" << std::endl;
+        //std::cout << "lcp array:" << std::endl;
+        //std::cout << lcp << std::endl;
 
         //std::cout << lcp << std::endl;
         // iterate over lcp array, add indexes with non overlapping prefix length grater than 2 to pq
@@ -109,18 +111,18 @@ public:
 
         int dif ;
         int factor_length;
-        for(uint i = 1; i<lcp.size(); i++){
+        for(uint i = 1; i<lcp_t.size(); i++){
 
             //std::cout <<  lcp[i] << " ";
-            if(lcp[i] >= 2){
+            if(lcp_t[i] >= 2){
                 //compute length of non-overlapping factor:
 
-                if(csa[i-1] > csa[i]){
-                    dif =  csa[i-1] - csa[i];
+                if(sa_t[i-1] > sa_t[i]){
+                    dif =  sa_t[i-1] - sa_t[i];
                 } else {
-                    dif =  csa[i] - csa[i-1];
+                    dif =  sa_t[i] - sa_t[i-1];
                 }
-                factor_length = lcp[i];
+                factor_length = lcp_t[i];
 
 
                 if(dif < factor_length) {
@@ -137,7 +139,7 @@ public:
         std::cout << std::endl;
         std::cout << "repeating factors:" << std::endl;
         // Pop PQ, Select occurences of suffix, check if contains replaced symbols
-        sdsl::bit_vector non_terminals(csa.size(), 0);
+        sdsl::bit_vector non_terminals(sa_t.size(), 0);
         //Pq for the non-terminal symbols
         //the first in pair is position, the seconds the number of the non terminal symbol
         std::priority_queue<std::pair<int,int>> non_terminal_symbols;
@@ -145,27 +147,31 @@ public:
         while(!pq.empty()){
 
             std::pair<int,int> top = pq.top();
-            std::cout << "pos1: "<< csa[top.second] << " pos2: "<< csa[top.second-1] << " len: " << top.first << "; ";
+            std::cout << "pos1: "<< sa_t[top.second] << " pos2: "<< sa_t[top.second-1] << " len: " << top.first << "; ";
             std::cout << std::endl;
             pq.pop();
 
-            std::string substring = text.substr(csa[top.second-1], top.first);
+            std::string substring;// = text.substr(sa_t[top.second-1], top.first);
+            int offset= sa_t[top.second-1];
+            for(int k = 0; k<top.first;k++){
+                substring += t[offset+k];
+            }
             std::cout << "string: " << substring << std::endl;
 
             //detect all starting positions of this string using the sa and lcp:
             std::vector<int> starting_positions;
 
-            starting_positions.push_back(csa[top.second]);
+            starting_positions.push_back(sa_t[top.second]);
             std::cout <<"starting positions: " << std::endl;
             int i = top.second;
-            while(i>=0 && lcp[i]>=top.first){
-                starting_positions.push_back(csa[i-1]);
-                //std::cout << csa[i-1] << " ";
+            while(i>=0 && lcp_t[i]>=top.first){
+                starting_positions.push_back(sa_t[i-1]);
+                //std::cout << sa_t[i-1] << " ";
                 i--;
             }
             i = top.second+1;
-            while(i< lcp.size() && lcp[i]>=top.first){
-                starting_positions.push_back(csa[i]);
+            while(i< lcp_t.size() && lcp_t[i]>=top.first){
+                starting_positions.push_back(sa_t[i]);
                 //std::cout << csa[i];
                 i++;
             }
