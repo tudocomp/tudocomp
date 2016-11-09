@@ -1077,14 +1077,15 @@ namespace int_vector {
      * TODO:
      o constructor for int width
      o swap/reassign ops
-     x void bit_resize(const size_type size);
      o bit capacity?
-     - value_type get_int(size_type idx, const uint8_t len=64) const;
-     - void set_int(size_type idx, value_type x, const uint8_t len=64);
-     - width setter
-     - in.place widt setting?
+     o width setter
+     ? void bit_resize(const size_type size);
+     ? value_type get_int(size_type idx, const uint8_t len=64) const;
+     ? void set_int(size_type idx, value_type x, const uint8_t len=64);
+     - in-place width setting?
      - flip?
-     . bit resize
+
+     maybe split up into raw-bits-vector and element-vector?
      */
 
     template<class T, class X = void>
