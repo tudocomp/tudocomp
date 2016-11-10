@@ -4,13 +4,7 @@
 #include <limits>
 
 namespace tdc {
-    class RangeBase {
-    public:
-        inline uint64_t min() const { return 0; }
-        inline uint64_t max() const { return UINT64_MAX; }
-    };
-
-    class Range : public RangeBase {
+    class Range {
     private:
         uint64_t m_min, m_max;
 
@@ -22,17 +16,19 @@ namespace tdc {
     };
 
     template<typename T>
-    class TypeRange : public RangeBase {
+    class TypeRange : public Range {
     public:
-        inline uint64_t min() const { return 0; }
-        inline uint64_t max() const { return std::numeric_limits<T>::max(); }
+        TypeRange() : Range(0, std::numeric_limits<T>::max()) {}
+        //inline uint64_t min() const { return 0; }
+        //inline uint64_t max() const { return std::numeric_limits<T>::max(); }
     };
 
-    template<uint64_t m_min, uint64_t m_max>
-    class FixedRange : public RangeBase {
+    template<uint64_t t_min, uint64_t t_max>
+    class FixedRange : public Range {
     public:
-        inline uint64_t min() const { return m_min; }
-        inline uint64_t max() const { return m_max; }
+        FixedRange() : Range(t_min, t_max)  {}
+        //inline uint64_t min() const { return t_min; }
+        //inline uint64_t max() const { return t_max; }
     };
 
     using BitRange = FixedRange<0, 1>;
@@ -47,3 +43,4 @@ namespace tdc {
 }
 
 #endif
+

@@ -20,7 +20,7 @@ public:
         inline Encoder(Env&& env, Output& out) : tdc::Encoder(std::move(env), out) {}
 
         template<typename value_t>
-        inline void encode(value_t v, const RangeBase& r) {
+        inline void encode(value_t v, const Range& r) {
             std::ostringstream s;
             s << v;
             for(uint8_t c : s.str()) m_out->write_int(c);
@@ -43,7 +43,7 @@ public:
         inline Decoder(Env&& env, Input& in) : tdc::Decoder(std::move(env), in) {}
 
         template<typename value_t>
-        inline value_t decode(const RangeBase& r) {
+        inline value_t decode(const Range& r) {
             std::ostringstream os;
             for(uint8_t c = m_in->read_int<uint8_t>();
                 c != ':';

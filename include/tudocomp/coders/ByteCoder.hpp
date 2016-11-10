@@ -18,8 +18,8 @@ public:
     public:
         inline Encoder(Env&& env, Output& out) : tdc::Encoder(std::move(env), out) {}
 
-        template<typename value_t, typename range_t>
-        inline void encode(value_t v, const range_t& r) {
+        template<typename value_t>
+        inline void encode(value_t v, const Range& r) {
             m_out->write_int(v, 8 * bytes_for(bits_for(r.max())));
         }
     };
@@ -28,8 +28,8 @@ public:
     public:
         inline Decoder(Env&& env, Input& in) : tdc::Decoder(std::move(env), in) {}
 
-        template<typename value_t, typename range_t>
-        inline value_t decode(value_t v, const range_t& r) {
+        template<typename value_t>
+        inline value_t decode(const Range& r) {
             return m_in->read_int<value_t>(8 * bytes_for(bits_for(r.max())));
         }
     };
