@@ -107,15 +107,7 @@ public:
         return *m_stream;
     }
 
-    /// \brief Tests whether the end of the stream has been reached.
-    ///
-    /// Note that this function cannot know if the last bit of the actual
-    /// bit stream has been read, because it is byte-aligned (8 bit).
-    /// For example, if the bit stream actually ends after 5 bits, this function
-    /// will report EOF only after 8 bits.
-    ///
-    /// \return \c true if the end of the stream has been reached, \c false
-    ///         otherwise.
+    /// \deprecated Unreliable, don't use.
     inline bool eof() const {
         return m_require_next && m_stream->eof();
     }

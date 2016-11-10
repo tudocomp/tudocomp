@@ -17,7 +17,7 @@ protected:
     std::unique_ptr<BitOStream> m_out;
 
 public:
-    inline Encoder(Env&& env, Output& out) 
+    inline Encoder(Env&& env, Output& out)
         : Algorithm(std::move(env)), m_outs(out.as_stream()) {
 
         m_out = std::make_unique<BitOStream>(m_outs);
@@ -46,10 +46,6 @@ public:
         : Algorithm(std::move(env)), m_ins(in.as_stream()) {
 
         m_in = std::make_unique<BitIStream>(m_ins);
-    }
-
-    inline bool eof() const {
-        return m_in->eof();
     }
 };
 

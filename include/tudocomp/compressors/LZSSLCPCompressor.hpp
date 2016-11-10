@@ -68,7 +68,7 @@ private:
         }
 
         inline LiteralIterator& operator++() {
-            assert(m_pos < m_text->size());            
+            assert(m_pos < m_text->size());
 
             m_pos++;
             skip_factors();
@@ -196,7 +196,7 @@ public:
         DecodeBuffer<DCBStrategyNone> buffer(text_len);
 
         // decode
-        while(!decoder.eof()) {
+        while(true) {
             bool is_factor = decoder.template decode<bool>(bit_r);
             if(is_factor) {
                 len_t src = decoder.template decode<len_t>(len_r);

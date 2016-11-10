@@ -605,10 +605,7 @@ TEST(IO, bits) {
         std::stringstream ss_in(result);
         BitIStream in(ss_in);
 
-        ASSERT_EQ(false, in.eof());
         ASSERT_EQ(in.read_int<uint32_t>(24), 0x76F433U);
-        in.read_int<uint8_t>(); // read terminal zero
-        ASSERT_EQ(true, in.eof());
     }
 
     //advanced input test
@@ -616,18 +613,12 @@ TEST(IO, bits) {
         std::stringstream ss_in(result);
         BitIStream in(ss_in);
 
-        ASSERT_EQ(false, in.eof());
         ASSERT_EQ(in.read_bit(), 0);
         ASSERT_EQ(in.read_bit(), 1);
         ASSERT_EQ(in.read_int<size_t>(2), 3U);
         ASSERT_EQ(in.read_int<size_t>(4), 6U);
-        ASSERT_EQ(false, in.eof());
         ASSERT_EQ(in.read_compressed_int<size_t>(3), 0x27U);
         ASSERT_EQ(in.read_compressed_int<size_t>(), 0x33U);
-        in.read_int<uint8_t>(); // read terminal zero
-        ASSERT_EQ(true, in.eof());
-        ASSERT_EQ(in.read_bit(), 0); // when EOF is reached, expect 0
-        ASSERT_EQ(true, in.eof());
     }
 }
 
