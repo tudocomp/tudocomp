@@ -1,43 +1,92 @@
 #ifndef UINT_T_HPP
 #define UINT_T_HPP
 
+#include <tudocomp/util/IntegerBase.hpp>
+
 #include <cstdint>
+
+namespace tdc {
+
+template<size_t bits>
+class uint_t;
+
+template<class MB>
+struct UinttDispatch {
+    typedef MB SelfMaxBit;
+
+    template<class Ref, class V>
+    inline static void assign(Ref& self, V v) {
+        self.m_data = v;
+    };
+
+    template<class Ref, class R>
+    inline static R cast_for_op(const Ref& self) {
+        return self.m_data;
+    }
+};
+
+template<size_t N>
+struct ConstIntegerBaseTrait<uint_t<N>, typename std::enable_if<(N <= 32)>::type> {
+    typedef UinttDispatch<uint32_t> Dispatch;
+};
+
+template<size_t N>
+struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N <= 32)>::type>
+: ConstIntegerBaseTrait<uint_t<N>> {
+    typedef UinttDispatch<uint32_t> Dispatch;
+};
+
+template<size_t N>
+struct ConstIntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type> {
+    typedef UinttDispatch<uint64_t> Dispatch;
+};
+
+template<size_t N>
+struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type>
+: ConstIntegerBaseTrait<uint_t<N>> {
+    typedef UinttDispatch<uint64_t> Dispatch;
+};
+
 /** class for storing integers of arbitrary bits.
  * Useful values are 40,48, and 56.
  * Standard value is 40 bits since we can store values up to 1TiB and
  * address values up to 1TB with 40-bits integers and 40-bits pointers, respectively.
  */
-template<int bits = 40>
-class uint_t {
+template<size_t bits>
+class uint_t: public IntegerBase<uint_t<bits>> {
     static_assert(bits > 0, "bits must be non-negative");
     static_assert(bits < 65, "bits must be at most 64");
-    uint64_t data : bits;
+    uint64_t m_data: bits;
+
+    friend class UinttDispatch<uint32_t>;
+    friend class UinttDispatch<uint64_t>;
 
 public:
-    uint_t(uint64_t i) : data(i) {}
-    uint_t() {}
-    uint_t(const uint_t<bits>&& i) : data(i.data) {}
-    uint_t(const uint_t<bits>& i) : data(i.data) {}
-    inline uint_t& operator=(uint64_t data) { this->data = data; return *this; }
-    inline uint_t& operator=(const uint_t<bits>& b) { this->data = b.data; return *this; }
-    inline operator uint64_t() const { return data; }
-    inline uint_t<bits>& operator--() { --data; return *this;}
-    inline uint_t<bits>& operator++() { ++data; return *this;}
-    inline uint64_t operator--(int) { return data--; }
-    inline uint64_t operator++(int) { return data++; }
-    inline uint_t<bits>& operator+=(const uint_t<bits>& b) { data += b.data; return *this; }
-    inline uint_t<bits>& operator-=(const uint_t<bits>& b) { data -= b.data; return *this; }
-    inline uint_t<bits>& operator*=(const uint_t<bits>& b) { data *= b.data; return *this; }
-    inline bool operator==(const uint_t<bits>& b) const { return data == b.data; }
-    inline bool operator!=(const uint_t<bits>& b) const { return data != b.data; }
-    inline bool operator!=(uint64_t b) const { return data != b; }
-    inline bool operator!=(int b) const { return data != b; }
-    inline bool operator<=(const uint_t<bits>& b) const { return data <= b.data; }
-    inline bool operator>=(const uint_t<bits>& b) const { return data >= b.data; }
-    inline bool operator<(const uint_t<bits>& b) const { return data < b.data; }
-    inline bool operator<(uint64_t b) const { return data < b; }
-    inline bool operator>(uint64_t b) const { return data > b; }
-    inline bool operator>(const uint_t<bits>& b) const { return data > b.data; }
+    uint_t(): m_data(0) {}
+    uint_t(uint_t&& i): m_data(i.m_data) {}
+
+    // copying
+    inline uint_t(const uint_t& i): m_data(i.m_data) {}
+    inline uint_t& operator=(const uint_t& b) { m_data = b.m_data; return *this; }
+
+    // 64 bit conversions
+    inline uint_t(uint64_t i): m_data(i) {}
+    inline uint_t& operator=(uint64_t data) { m_data = data; return *this; }
+    inline operator uint64_t() const { return m_data; }
+
+    // 32 bit conversions
+    inline uint_t(uint32_t i): m_data(i) {}
+    inline uint_t& operator=(uint32_t data) { m_data = data; return *this; }
+    inline operator uint32_t() const { return m_data; }
+
+    // compatibility with unsuffixed integer literals
+    inline uint_t(int i): m_data(i) {}
+    inline uint_t& operator=(int data) { m_data = data; return *this; }
+    inline operator int() const { return m_data; }
+
+    // To enable interop with gtest
+    inline operator long long int() const { return m_data; }
+
 } __attribute__((packed));
 
 static_assert(sizeof(uint_t<8>)  == 1, "sanity check");
@@ -65,5 +114,7 @@ static_assert(sizeof(uint_t<33>) == 5, "sanity check");
 static_assert(sizeof(uint_t<41>) == 6, "sanity check");
 static_assert(sizeof(uint_t<49>) == 7, "sanity check");
 static_assert(sizeof(uint_t<57>) == 8, "sanity check");
+
+}
 
 #endif /* UINT_T_HPP */

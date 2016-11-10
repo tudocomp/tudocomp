@@ -4,6 +4,7 @@ list(APPEND BASIC_DEPS malloc_count tudocomp)
 
 run_test(tudocomp_tests DEPS ${BASIC_DEPS})
 run_test(ds_tests       DEPS ${BASIC_DEPS})
+run_test(generic_int_vector_tests DEPS ${BASIC_DEPS})
 
 #run_bench(int_vector_benchs DEPS ${BASIC_DEPS})
 
@@ -14,7 +15,7 @@ run_test(lzss_tests     DEPS ${BASIC_DEPS})
 run_test(compressor_adapter_tests
     DEPS tudocomp_algorithms ${BASIC_DEPS})
 
-run_test(example_tests  DEPS ${BASIC_DEPS})
+#run_test(example_tests  DEPS ${BASIC_DEPS})
 
 
 set(SANDBOX_CPP ${CMAKE_CURRENT_SOURCE_DIR}/sandbox_tests.cpp)

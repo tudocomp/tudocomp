@@ -81,12 +81,39 @@ static bool check_for_file_already_exist(std::string& ofile,
 
 } // namespace tdc_driver
 
+#include <iomanip>
+
 int main(int argc, char** argv)
 {
     using namespace tdc_driver;
     using namespace tdc_algorithms;
 
     google::InitGoogleLogging(argv[0]);
+	google::SetUsageMessage("This tool compresses and decompresses files");
+	if(argc == 1 || strcmp(argv[1],"-h") == 0) {
+//		google::ShowUsageWithFlagsRestrict(argv[0], __FILE__); //shortcut
+		std::vector<google::CommandLineFlagInfo> info;
+		google::GetAllFlags(&info);
+
+		std::cout << argv[0] << " [options] {file to compress/decompress}" << std::endl;
+		std::cout << "You need to provide at least an algorithm and a source (a file) to compress/decompress." << std::endl << std::endl;
+		std::cout 
+			<< std::setw(20) << std::setiosflags(std::ios::left) << "Parameter" 
+			<< std::setw(10) << "Type" 
+			<< std::setw(20) << "Default"
+			<< "Description" << std::endl;
+		std::cout << std::endl;
+		 for(auto it = info.cbegin(); it != info.cend(); ++it) {
+			 if(it->filename != __FILE__) continue;
+			 	std::cout 
+					<< std::setw(20) << std::setiosflags(std::ios::left)<< (std::string("--")+ it->name) 
+					<< std::setw(10) << it->type 
+					<< std::setw(20) << (std::string("(") + it->default_value + ")") 
+					<< it->description << std::endl;
+		 }
+		return 0;
+	}
+
     int first_cmd_arg = google::ParseCommandLineFlags(&argc, &argv, true);
 
     try {
@@ -289,7 +316,7 @@ int main(int argc, char** argv)
             }
             std::cout << "---------------\n";
             if (inp_size != 0) {
-                std::cout << "compress ratio: "<<(double(out_size)/double(inp_size) * 100)<<"%\n";
+                std::cout << "compress rate: "<<(double(out_size)/double(inp_size) * 100)<<"%\n";
             }
 
             auto print_time = [] (std::string s, decltype(setup_duration)& t) {
