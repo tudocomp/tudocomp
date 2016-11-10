@@ -17,7 +17,10 @@ public:
 
     class Encoder : public tdc::Encoder {
     public:
-        inline Encoder(Env&& env, Output& out) : tdc::Encoder(std::move(env), out) {}
+        template<typename literals_t>
+        inline Encoder(Env&& env, Output& out, const literals_t& literals)
+            : tdc::Encoder(std::move(env), out) {
+        }
 
         template<typename value_t>
         inline void encode(value_t v, const Range& r) {
@@ -28,7 +31,7 @@ public:
         }
 
         template<typename value_t>
-        inline void encode(value_t v, const CharRange& r) {
+        inline void encode(value_t v, const LiteralRange& r) {
             m_out->write_int(uint8_t(v));
         }
 
@@ -61,7 +64,7 @@ public:
         }
 
         template<typename value_t>
-        inline value_t decode(const CharRange& r) {
+        inline value_t decode(const LiteralRange& r) {
             return value_t(m_in->read_int<uint8_t>());
         }
 

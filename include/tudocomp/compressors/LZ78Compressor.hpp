@@ -58,7 +58,7 @@ public:
         uint64_t factor_count = 0;
 
         lz78_dictionary::EncoderDictionary ed(lz78_dictionary::EncoderDictionary::Lz78, dms, reserve_dms);
-        typename coder_t::Encoder coder(env().env_for_option("coder"), out);
+        typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
         // Define ranges
         lz78_dictionary::CodeType last_i {dms}; // needed for the end of the string
@@ -89,7 +89,7 @@ public:
                 }
                 //coder.encode_fact(Factor { fact, b });
                 coder.encode(fact, Range(factor_count));
-                coder.encode(b, char_r);
+                coder.encode(b, literal_r);
                 factor_count++;
                 stat_factor_count++;
                 i = dms;
@@ -108,7 +108,7 @@ public:
                 fact = 0;
             }
             coder.encode(fact, Range(factor_count));
-            coder.encode(b, char_r);
+            coder.encode(b, literal_r);
             factor_count++;
             stat_factor_count++;
         }

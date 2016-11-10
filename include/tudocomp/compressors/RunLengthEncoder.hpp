@@ -28,7 +28,7 @@ public:
         auto ins = input.as_stream();
 
         // instantiate coder
-        typename coder_t::Encoder coder(env().env_for_option("coder"), output);
+        typename coder_t::Encoder coder(env().env_for_option("coder"), output, NoLiterals()); //TODO: literal iterator for input streams
 
         // define working variables
         len_t min_run = env().option("min_run").as_integer();
@@ -39,8 +39,8 @@ public:
         auto emit_run = [&]() {
             if (run_length >= min_run) {
                 // encode the character twice
-                coder.encode(run_char, char_r);
-                coder.encode(run_char, char_r);
+                coder.encode(run_char, literal_r);
+                coder.encode(run_char, literal_r);
 
                 // encode run length
                 coder.encode(true, bit_r); // yes, this is an encoded run
@@ -54,10 +54,10 @@ public:
                 // is no encoded run
                 bool flip = false;
                 while(run_length--) {
-                    coder.encode(run_char, char_r);
+                    coder.encode(run_char, literal_r);
 
                     if(flip) {
-                        coder.encode(run_char, char_r);
+                        coder.encode(run_char, literal_r);
                         coder.encode(false, bit_r);
                     }
 

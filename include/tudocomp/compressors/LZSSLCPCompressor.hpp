@@ -38,6 +38,63 @@ private:
         }
     };
 
+    class LiteralIterator {
+    private:
+        const text_t* m_text;
+        const lzfactors_t* m_factors;
+        len_t m_pos;
+        len_t m_next_factor;
+
+        inline void skip_factors() {
+            while(m_next_factor < m_factors->num && m_pos == m_factors->pos[m_next_factor]) {
+                m_pos += m_factors->len[m_next_factor++];
+            }
+        }
+
+    public:
+        inline LiteralIterator(const text_t& text, const lzfactors_t& factors, len_t pos)
+            : m_text(&text), m_factors(&factors), m_pos(pos), m_next_factor(0) {
+
+            skip_factors();
+        }
+
+        inline Literal operator*() const {
+            assert(m_pos < m_text->size());
+            return {(*m_text)[m_pos], m_pos};
+        }
+
+        inline bool operator!= (const LiteralIterator& other) const {
+            return (m_text != other.m_text || m_pos != other.m_pos);
+        }
+
+        inline LiteralIterator& operator++() {
+            assert(m_pos < m_text->size());            
+
+            m_pos++;
+            skip_factors();
+            return *this;
+        }
+    };
+
+    class Literals {
+    private:
+        const text_t* m_text;
+        const lzfactors_t* m_factors;
+
+    public:
+        inline Literals(const text_t& text, const lzfactors_t& factors)
+            : m_text(&text), m_factors(&factors) {
+        }
+
+        inline LiteralIterator begin() const {
+            return LiteralIterator(*m_text, *m_factors, 0);
+        }
+
+        inline LiteralIterator end() const {
+            return LiteralIterator(*m_text, *m_factors, m_text->size());
+        }
+    };
+
 public:
     inline static Meta meta() {
         Meta m("compressor", "lzss_lcp", "LZSS Factorization using LCP");
@@ -119,6 +176,12 @@ public:
         env().log_stat("factors", factors.num);
         env().end_stat_phase();
 
+        // TODO debug
+        DLOG(INFO) << "factors: " << factors.num;
+        for(len_t i = 0; i < factors.num; i++) {
+            DLOG(INFO) << "\t{" << factors.pos[i] << ", " << factors.src[i] << ", " << factors.len[i] << "}";
+        }
+
         // encode
         encode_text_lzss(t, factors, output);
     }
@@ -146,7 +209,7 @@ public:
                     buffer.defact(src, len);
                 }
             } else {
-                uint8_t c = decoder.template decode<uint8_t>(char_r);
+                uint8_t c = decoder.template decode<uint8_t>(literal_r);
                 buffer.decode(c);
             }
         }
@@ -162,7 +225,7 @@ private:
         const lzfactors_t& factors,
         Output& output) {
 
-        typename coder_t::Encoder coder(env().env_for_option("coder"), output);
+        typename coder_t::Encoder coder(env().env_for_option("coder"), output, Literals(text, factors));
 
         // encode text size
         coder.encode(text.size(), len_r);
@@ -179,7 +242,7 @@ private:
 
                 // encode symbol
                 coder.encode(0, bit_r);
-                coder.encode(c, char_r);
+                coder.encode(c, literal_r);
             }
 
             // encode factor
@@ -195,7 +258,7 @@ private:
 
             // encode symbol
             coder.encode(0, bit_r);
-            coder.encode(c, char_r);
+            coder.encode(c, literal_r);
         }
 
         // write terminator (factor [0,0])

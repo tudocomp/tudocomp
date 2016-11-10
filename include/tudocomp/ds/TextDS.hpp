@@ -11,11 +11,11 @@
 #include <tudocomp/io.hpp>
 #include "forward.hpp"
 
+#include <tudocomp/Literal.hpp>
+
 namespace tdc {
 
 using io::InputView;
-
-
 
 /// Manages text related data structures.
 template<
@@ -120,6 +120,39 @@ public:
 
     /// Prints the constructed tables.
     inline void print(std::ostream& out, size_t base = 0);
+
+    class LiteralIterator {
+    protected:
+        const this_t* m_text;
+        size_t m_pos;
+
+    public:
+        inline LiteralIterator(const this_t& text, size_t pos) : m_text(&text), m_pos(pos) {}
+
+        inline Literal operator*() const {
+            assert(m_pos < m_text->size());
+            return {(*m_text)[m_pos], m_pos};
+        }
+
+        inline bool operator!= (const LiteralIterator& other) const {
+            return (m_text != other.m_text || m_pos != other.m_pos);
+        }
+
+        inline LiteralIterator& operator++() {
+            assert(m_pos < m_text->size());            
+
+            m_pos++;
+            return *this;
+        }
+    };
+
+    inline LiteralIterator begin() const {
+        return iterator(*this, 0);
+    }
+
+    inline LiteralIterator end() const {
+        return iterator(*this, size());
+    }
 };
 
 }//ns

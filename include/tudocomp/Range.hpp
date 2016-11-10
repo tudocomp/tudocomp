@@ -32,14 +32,14 @@ namespace tdc {
     };
 
     using BitRange = FixedRange<0, 1>;
-    using CharRange = FixedRange<0, 255>;
+    using LiteralRange = FixedRange<0, 255>;
 
     const TypeRange<uint64_t> uint64_r;
     const TypeRange<uint32_t> uint32_r;
     const TypeRange<uint16_t> uint16_r;
     const TypeRange<uint8_t>  uint8_r;
     const BitRange bit_r;
-    const CharRange char_r;
+    const LiteralRange literal_r;
 }
 
 #endif
