@@ -4,7 +4,13 @@
 #include <limits>
 
 namespace tdc {
-    class Range {
+    class RangeBase {
+    public:
+        inline uint64_t min() const { return 0; }
+        inline uint64_t max() const { return UINT64_MAX; }
+    };
+
+    class Range : public RangeBase {
     private:
         uint64_t m_min, m_max;
 
@@ -16,14 +22,14 @@ namespace tdc {
     };
 
     template<typename T>
-    class TypeRange {
+    class TypeRange : public RangeBase {
     public:
         inline uint64_t min() const { return 0; }
         inline uint64_t max() const { return std::numeric_limits<T>::max(); }
     };
 
     template<uint64_t m_min, uint64_t m_max>
-    class FixedRange {
+    class FixedRange : public RangeBase {
     public:
         inline uint64_t min() const { return m_min; }
         inline uint64_t max() const { return m_max; }
