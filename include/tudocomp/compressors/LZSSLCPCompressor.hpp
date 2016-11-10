@@ -19,6 +19,8 @@ template<typename coder_t, typename len_t = uint32_t>
 class LZSSLCPCompressor : public Compressor {
 
 private:
+    const TypeRange<len_t> len_r = TypeRange<len_t>();
+
     typedef TextDS<> text_t;
 
     struct lzfactors_t {
@@ -122,7 +124,36 @@ public:
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        //TODO
+        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+
+        // decode text range
+        len_t text_len = decoder.template decode<len_t>(len_r);
+
+        // init decode buffer
+        DecodeBuffer<DCBStrategyNone> buffer(text_len);
+
+        // decode
+        while(!decoder.eof()) {
+            bool is_factor = decoder.template decode<bool>(bit_r);
+            if(is_factor) {
+                len_t src = decoder.template decode<len_t>(len_r);
+                len_t len = decoder.template decode<len_t>(len_r);
+
+                if(len == 0) {
+                    // terminator
+                    break;
+                } else {
+                    buffer.defact(src, len);
+                }
+            } else {
+                uint8_t c = decoder.template decode<uint8_t>(char_r);
+                buffer.decode(c);
+            }
+        }
+
+        // write decoded text
+        auto outs = output.as_stream();
+        buffer.write_to(outs);
     }
 
 private:
@@ -133,7 +164,10 @@ private:
 
         typename coder_t::Encoder coder(env().env_for_option("coder"), output);
 
-        //define ranges
+        // encode text size
+        coder.encode(text.size(), len_r);
+
+        // define ranges
         Range text_r(text.size());
 
         //TODO: factors must be sorted
@@ -163,6 +197,11 @@ private:
             coder.encode(0, bit_r);
             coder.encode(c, char_r);
         }
+
+        // write terminator (factor [0,0])
+        coder.encode(1, bit_r);
+        coder.encode(0, text_r);
+        coder.encode(0, text_r);
 
         // finalize
         coder.finalize();
