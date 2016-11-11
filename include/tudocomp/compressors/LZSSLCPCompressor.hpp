@@ -176,12 +176,6 @@ public:
         env().log_stat("factors", factors.num);
         env().end_stat_phase();
 
-        // TODO debug
-        DLOG(INFO) << "factors: " << factors.num;
-        for(len_t i = 0; i < factors.num; i++) {
-            DLOG(INFO) << "\t{" << factors.pos[i] << ", " << factors.src[i] << ", " << factors.len[i] << "}";
-        }
-
         // encode
         encode_text_lzss(t, factors, output);
     }
