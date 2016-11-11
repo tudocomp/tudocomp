@@ -120,12 +120,15 @@ namespace test {
 
     template<class T>
     inline void roundtrip(string_ref original_text,
-                          string_ref expected_compressed_text,
+                          string_ref expected_compressed_text = "",
                           const std::string& options = "",
                           const Registry& registry = Registry()) {
         auto e = RoundTrip<T>(options, registry).compress(original_text);
         auto& compressed_text = e.str;
+
+        if(expected_compressed_text.size() > 0)
         ASSERT_EQ(std::string(expected_compressed_text), compressed_text);
+
         e.assert_decompress();
     }
 
@@ -136,7 +139,9 @@ namespace test {
                           const Registry& registry = Registry()) {
         auto e = RoundTrip<T>(options, registry).compress(original_text);
         auto& compressed_text = e.bytes;
+
         ASSERT_EQ(expected_compressed_text, compressed_text);
+
         e.assert_decompress_bytes();
     }
 

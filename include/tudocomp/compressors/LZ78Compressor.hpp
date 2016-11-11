@@ -123,8 +123,24 @@ public:
         env().end_stat_phase();
     }
 
-    virtual void decompress(Input& in, Output& out) override final {
-        //TODO: C::decode(in, out);
+    virtual void decompress(Input& input, Output& output) override final {
+        auto out = output.as_stream();
+        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+
+        lz78::Lz78DecodeBuffer buf;
+        uint64_t factor_count = 0;
+
+        while (!decoder.eof()) {
+            auto index = decoder.template decode<lz78_dictionary::CodeType>(Range(factor_count));
+            auto chr = decoder.template decode<uint8_t>(literal_r);
+
+            lz78::Factor entry { index, chr };
+
+            buf.decode(entry, out);
+            factor_count++;
+        }
+
+        out.flush();
     }
 
 };
