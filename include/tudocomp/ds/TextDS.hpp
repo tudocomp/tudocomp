@@ -24,6 +24,7 @@ template<
 class TextDS {
 
 public:
+	typedef uint8_t value_type;
     static const uint64_t SA = 0x01;
     static const uint64_t ISA = 0x02;
     static const uint64_t Phi = 0x04;
@@ -36,7 +37,7 @@ public:
 
 private:
     size_t m_size;
-    const uint8_t* m_text;
+    const value_type* m_text;
 
     std::unique_ptr<sa_t>        m_sa;
     std::unique_ptr<isa_t> m_isa;
@@ -45,7 +46,7 @@ private:
 
 public:
     inline TextDS(const InputView& input)
-        : m_size(input.size()), m_text((const uint8_t*)input.data())
+        : m_size(input.size()), m_text((const value_type*)input.data())
     {
     }
 
@@ -104,12 +105,12 @@ public:
     }
 
     /// Accesses the input text at position i.
-    inline uint8_t operator[](size_t i) const {
+    inline value_type operator[](size_t i) const {
         return m_text[i];
     }
 
     /// Provides access to the input text.
-    inline const uint8_t* text() const {
+    inline const value_type* text() const {
         return m_text;
     }
 
