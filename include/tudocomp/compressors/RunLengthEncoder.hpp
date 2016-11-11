@@ -82,6 +82,32 @@ public:
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
+        // setup I/O
+        auto outs = output.as_stream();
+
+        // instantiate decoder
+        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+
+        // decode
+        bool flip = false;
+        uint8_t run_char;
+
+        while(!decoder.eof()) {
+            uint8_t c = decoder.template decode<uint8_t>(literal_r);
+            outs << c;
+
+            if(flip && c == run_char) {
+                flip = false;
+                bool is_run = decoder.template decode<bool>(bit_r);
+                if(is_run) {
+                    len_t run_length = decoder.template decode<len_t>(len_r);
+                    while(run_length--) outs << c; // repeat
+                }
+            } else {
+                flip = true;
+                run_char = c;
+            }
+        }
     }
 };
 

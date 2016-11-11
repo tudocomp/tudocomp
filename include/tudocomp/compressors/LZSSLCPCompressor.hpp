@@ -196,18 +196,13 @@ public:
         DecodeBuffer<DCBStrategyNone> buffer(text_len);
 
         // decode
-        while(true) {
+        while(!decoder.eof()) {
             bool is_factor = decoder.template decode<bool>(bit_r);
             if(is_factor) {
                 len_t src = decoder.template decode<len_t>(len_r);
                 len_t len = decoder.template decode<len_t>(len_r);
 
-                if(len == 0) {
-                    // terminator
-                    break;
-                } else {
-                    buffer.defact(src, len);
-                }
+                buffer.defact(src, len);
             } else {
                 uint8_t c = decoder.template decode<uint8_t>(literal_r);
                 buffer.decode(c);
@@ -260,11 +255,6 @@ private:
             coder.encode(0, bit_r);
             coder.encode(c, literal_r);
         }
-
-        // write terminator (factor [0,0])
-        coder.encode(1, bit_r);
-        coder.encode(0, text_r);
-        coder.encode(0, text_r);
 
         // finalize
         coder.finalize();

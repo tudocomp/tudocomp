@@ -47,6 +47,10 @@ public:
 
         m_in = std::make_unique<BitIStream>(m_ins);
     }
+
+    inline bool eof() const {
+        return m_in->eof();
+    }
 };
 
 }
