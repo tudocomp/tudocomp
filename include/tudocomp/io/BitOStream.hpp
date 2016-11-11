@@ -42,6 +42,19 @@ public:
         reset();
     }
 
+    ~BitOStream() {
+        char set = 7 - m_cursor;
+        if(m_cursor >= 2) {
+            m_next |= set;
+        } else {
+            write_next();
+            m_next = set;
+        }
+
+        m_dirty = true;
+        write_next();
+    }
+
     /// \brief Writes a single bit to the output.
     /// \param set The bit value (0 or 1).
     inline void write_bit(bool set) {
@@ -94,8 +107,7 @@ public:
         } while(v > 0);
     }
 
-    /// \brief Forces the buffer byte to be flushed to the output. Any
-    ///        unwritten bit will be unset (0).
+    /// \brief TODO document - also: deprecated?
     inline void flush() {
         write_next();
     }

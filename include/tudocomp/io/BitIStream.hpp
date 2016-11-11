@@ -15,22 +15,50 @@ namespace io {
 /// bitwise using another cursor.
 class BitIStream {
     std::istream* m_stream;
-    uint8_t m_next;
+
+    uint8_t m_current, m_next;
+
+    bool m_is_final;
+    uint8_t m_final_bits;
+
     uint8_t m_cursor;
-    bool m_require_next;
 
     inline void read_next() {
         const uint8_t MSB = 7;
 
-        char tmp;
-        if(m_stream->get(tmp)) {
-            m_require_next = false;
-            m_next = tmp;
-        } else {
-            m_next = 0;
-        }
-
+        m_current = m_next;
         m_cursor = MSB;
+
+        char c;
+        if(m_stream->get(c)) {
+            m_next = c;
+
+            if(m_stream->get(c)) {
+                /*DLOG(INFO) << "read_next: ...";*/
+
+                // stream still going
+                m_stream->unget();
+            } else {
+                // stream over after next, do some checks
+                m_final_bits = c;
+                m_final_bits &= 0x7;
+                if(m_final_bits >= 6) {
+                    // special case - already final
+                    m_is_final = true;
+                    m_next = 0;
+                    /*DLOG(INFO) << "read_next: EOF*" <<
+                        ", m_final_bits := " << size_t(m_final_bits);*/
+                }
+            }
+        } else {
+            m_is_final = true;
+            m_final_bits = m_current & 0x7;
+
+            m_next = 0;
+
+            /*DLOG(INFO) << "read_next: EOF" <<
+                ", m_final_bits := " << size_t(m_final_bits);*/
+        }
     }
 
 public:
@@ -38,24 +66,41 @@ public:
     ///
     /// \param input The underlying input stream.
     inline BitIStream(std::istream& input)
-        : m_stream(&input), m_require_next(true) {
+        : m_stream(&input) {
+
+        char c;
+        if(m_stream->get(c)) {
+            m_is_final = false;
+            m_next = c;
+
+            read_next();
+        } else {
+            //empty stream
+            m_is_final = true;
+            m_final_bits = 0;
+        }
     }
 
     /// \brief Reads the next single bit from the input.
     /// \return 1 if the next bit is set, 0 otherwise.
     inline uint8_t read_bit() {
-        if (m_require_next) {
-            read_next();
-        }
-        uint8_t bit = (m_next >> m_cursor) & 1;
+        /*DLOG(INFO) <<"read_bit: " <<
+                "m_is_final = " << m_is_final <<
+                ", m_final_bits = " << size_t(m_final_bits) <<
+                ", m_cursor = " << size_t(m_cursor);*/
 
-        if(m_cursor) {
-            --m_cursor;
+        if(!eof()) {
+            uint8_t bit = (m_current >> m_cursor) & 1;
+            if(m_cursor) {
+                --m_cursor;
+            } else {
+                read_next();
+            }
+
+            return bit;
         } else {
-            m_require_next = true;
+            return 0; //EOF
         }
-
-        return bit;
     }
 
     /// \brief Reads the integer value of the next \c amount bits in MSB first
@@ -107,9 +152,9 @@ public:
         return *m_stream;
     }
 
-    /// \deprecated Unreliable, don't use.
+    /// TODO document
     inline bool eof() const {
-        return m_require_next && m_stream->eof();
+        return m_is_final && m_cursor <= (7 - m_final_bits);
     }
 };
 

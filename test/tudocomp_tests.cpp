@@ -587,18 +587,20 @@ TEST(Output, stream) {
 
 TEST(IO, bits) {
     std::stringstream ss_out;
-    BitOStream out(ss_out);
 
-    out.write_bit(0);                   //0
-    out.write_bit(1);                   //1
-    out.write_int(-1, 2);               //11
-    out.write_int(0b11010110, 4);       //0110
-    out.write_compressed_int(0x27, 3); //1 111 0 100
-    out.write_compressed_int(0x33);    //0 0110011
+    {
+        BitOStream out(ss_out);
+        out.write_bit(0);                   //0
+        out.write_bit(1);                   //1
+        out.write_int(-1, 2);               //11
+        out.write_int(0b11010110, 4);       //0110
+        out.write_compressed_int(0x27, 3); //1 111 0 100
+        out.write_compressed_int(0x33);    //0 0110011
+    }
     //output should contain 0111 0110 1111 0100 0011 0011 = 76 F4 33
 
     std::string result = ss_out.str();
-    ASSERT_EQ(result.length(), 3U); //24 bits = 3 bytes
+    ASSERT_EQ(result.length(), 4U); //24 bits = 3 bytes + terminator byte
 
     //basic input test
     {
@@ -606,6 +608,7 @@ TEST(IO, bits) {
         BitIStream in(ss_in);
 
         ASSERT_EQ(in.read_int<uint32_t>(24), 0x76F433U);
+        ASSERT_TRUE(in.eof());
     }
 
     //advanced input test
@@ -619,6 +622,30 @@ TEST(IO, bits) {
         ASSERT_EQ(in.read_int<size_t>(4), 6U);
         ASSERT_EQ(in.read_compressed_int<size_t>(3), 0x27U);
         ASSERT_EQ(in.read_compressed_int<size_t>(), 0x33U);
+        ASSERT_TRUE(in.eof());
+    }
+}
+
+TEST(IO, bits_eof) {
+    // write i bits to a bit stream, then read the whole
+    // bit stream until EOF and ensure exactly i bits have been read
+    for(size_t i = 0; i < 100; i++) {
+        // write i bits
+        std::ostringstream result;
+        {
+            BitOStream out(result);
+            for(size_t k = i; k; k--) out.write_bit(1);
+        }
+
+        // read bits until EOF
+        size_t n = 0;
+        {
+            std::istringstream is(result.str());
+            BitIStream in(is);
+            for(; !in.eof(); n++) ASSERT_EQ(1, in.read_bit());
+        }
+
+        ASSERT_EQ(i, n);
     }
 }
 
