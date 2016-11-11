@@ -7,6 +7,7 @@
 #include <tudocomp/util/Generators.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/uint_t.hpp>
+#include <tudocomp/ds/bwt.hpp>
 #include "test_util.hpp"
 
 using namespace tdc;
@@ -40,6 +41,27 @@ sdsl::int_vector<> create_plcp_naive(const lcp_t& lcp, const isa_t& isa) {
 		DCHECK_GE(plcp[i]+1, plcp[i-1]);
 	}
 	return plcp;
+}
+
+
+template<class textds_t>
+void test_bwt(const std::string& str, textds_t& t) {
+    auto& sa = t.require_sa();
+
+	const len_t input_size = str.length()+1;
+	std::vector<char> bwt;
+	for(size_t i = 0; i < input_size; ++i) {
+		bwt.push_back(bwt::bwt(str,sa,i));
+	}      
+	bwt::char_t* decoded_string = bwt::decode_bwt(bwt);
+	if(decoded_string == nullptr) {
+		ASSERT_EQ(str.length(), 0);
+		return;
+	}
+	std::string decoded;
+	decoded.assign(reinterpret_cast<char*>(decoded_string));
+	ASSERT_EQ(decoded, str);
+	delete [] decoded_string;
 }
 
 
@@ -122,6 +144,7 @@ void test_lcp_naive(const std::string& str, textds_t& t) {
 
 template<class textds_t>
 void test_all_ds(const std::string& str, textds_t& t) {
+	test_bwt(str,t);
     test_sa(str, t);
     test_isa(str, t);
     test_phi(str, t);

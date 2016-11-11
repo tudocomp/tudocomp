@@ -43,6 +43,27 @@ std::string vec_to_debug_string(const T& s) {
     return ss.str();
 }
 
+/// \brief Builds the string representation of an array of printable values,
+/// sorrounded by square brackets (\c \[ and \c \]).
+///
+/// Example: [1, 2, 3] yields \c "[1, 2, 3]".
+///
+/// \tparam T The byte array type.
+/// \param s The byte array.
+/// \return The string representation of the byte array.
+template<class T>
+std::string arr_to_debug_string(const T* s, size_t length) {
+    if(length == 0) return "[]";
+    std::stringstream ss;
+    ss << "[";
+	for (size_t i = 0; i < length - 1; ++i) {
+		ss << s[i] << ", ";
+	}
+	ss << s[length - 1];
+    ss << "]";
+    return ss.str();
+}
+
 /// \brief Converts a byte value into its ASCII representation sorrounded by
 /// single quotes (\c ') or its string representation.
 ///
