@@ -77,6 +77,15 @@ void SuffixArray<T>::construct(T& t) {
 	delete[] sa;
 }
 
+/** 
+ * Computes the value BWT[i] of a text T given its suffix array SA
+ * Runs in O(1) time since BWT[i] = SA[(T[i]-1) mod |SA|]
+ */ 
+template<typename text_t, typename sa_t>
+inline typename text_t::value_type bwt(const text_t& text, const sa_t& sa, const size_t i) {
+	return (sa[i] == 0) ? text[sa.size()-1] : text[sa[i]-1];
+}
+
 }//ns
 
 #endif
