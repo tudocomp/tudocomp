@@ -28,7 +28,6 @@ public:
     }
 
     inline void finalize() {
-        m_out->flush();
     }
 };
 
