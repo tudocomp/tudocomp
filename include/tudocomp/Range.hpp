@@ -38,6 +38,7 @@ namespace tdc {
     const TypeRange<uint32_t> uint32_r;
     const TypeRange<uint16_t> uint16_r;
     const TypeRange<uint8_t>  uint8_r;
+    const TypeRange<size_t>   size_r;
     const BitRange bit_r;
     const LiteralRange literal_r;
 }
