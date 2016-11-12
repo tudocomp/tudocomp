@@ -185,6 +185,7 @@ public:
 
         // decode text range
         len_t text_len = decoder.template decode<len_t>(len_r);
+        Range text_r(text_len);
 
         // init decode buffer
         DecodeBuffer<DCBStrategyNone> buffer(text_len);
@@ -193,8 +194,8 @@ public:
         while(!decoder.eof()) {
             bool is_factor = decoder.template decode<bool>(bit_r);
             if(is_factor) {
-                len_t src = decoder.template decode<len_t>(len_r);
-                len_t len = decoder.template decode<len_t>(len_r);
+                len_t src = decoder.template decode<len_t>(text_r);
+                len_t len = decoder.template decode<len_t>(text_r);
 
                 buffer.defact(src, len);
             } else {
