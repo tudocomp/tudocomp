@@ -76,15 +76,16 @@ TEST(Util, bits_for) {
 }
 
 TEST(Util, bytes_for) {
-    ASSERT_EQ(bytes_for(0), 0u);
-    ASSERT_EQ(bytes_for(1), 1u);
-    ASSERT_EQ(bytes_for(8), 1u);
-    ASSERT_EQ(bytes_for(9), 2u);
-    ASSERT_EQ(bytes_for(16), 2u);
-    ASSERT_EQ(bytes_for(17), 3u);
-    ASSERT_EQ(bytes_for(24), 3u);
-    ASSERT_EQ(bytes_for(25), 4u);
-    ASSERT_EQ(bytes_for(32), 4u);
+    ASSERT_EQ(bytes_for(0x00), 1u);
+
+    size_t l = 0x01U;
+    size_t h = 0xFFU;
+
+    for(size_t i = 0; i < sizeof(size_t) - 1; i++) {
+        ASSERT_EQ(i+1, bytes_for(l));
+        ASSERT_EQ(i+1, bytes_for(h));
+        l <<= 8U; h <<= 8U;
+    }
 }
 
 TEST(Util, pack_integers) {

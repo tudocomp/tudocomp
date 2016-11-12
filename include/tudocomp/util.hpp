@@ -137,7 +137,7 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
 /// \brief Computes the number of bits required to store the given integer
 /// value.
 ///
-/// This is equivalent to binary logarithm rounded up to the next integer.
+/// This is equivalent to the binary logarithm rounded up to the next integer.
 ///
 /// Examples:
 /// - `bits_for(0b0) == 1`
@@ -167,23 +167,25 @@ inline size_t idiv_ceil(size_t a, size_t b) {
     return (a / b) + ((a % b) > 0);
 }
 
-/// \brief Computes the number of bytes needed to store the given amount of
-/// bits.
+/// \brief Computes the number of bytes needed to store the given integer
+/// value.
 ///
-/// This is a simple helper functions performing a ceiling integer division
-/// by 8.
+/// This is equivalent to binary logarithm divided by 8 and rounded up to the
+/// next integer.
 ///
 /// Examples:
-/// - `bytes_for(0) == 0`
-/// - `bytes_for(1) == 1`
-/// - `bytes_for(8) == 1`
-/// - `bytes_for(9) == 2`
+/// - `bytes_for(0) == 1`
+/// - `bytes_for(255) == 1`
+/// - `bytes_for(256) == 2`
+/// - `bytes_for(65535) == 2`
+/// - `bytes_for(65536) == 3`
+/// - etc.
 ///
-/// \param bits The amount of bits to represent.
-/// \return The amount of bytes required to store the given amount of bits.
-/// \sa idiv_ceil.
-inline size_t bytes_for(size_t bits) {
-    return idiv_ceil(bits, 8U);
+/// \param n The integer to be stored.
+/// \return The amount of bits required to store the value (guaranteed to be
+/// greater than zero).
+inline size_t bytes_for(size_t n) {
+    return idiv_ceil(bits_for(n), 8U);
 }
 
 /// \brief Creates the cross product of a set of elements given a product

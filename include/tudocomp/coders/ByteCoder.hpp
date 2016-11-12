@@ -23,7 +23,7 @@ public:
 
         template<typename value_t>
         inline void encode(value_t v, const Range& r) {
-            m_out->write_int(v, 8 * bytes_for(bits_for(r.max())));
+            m_out->write_int(v, 8 * bytes_for(r.max()));
         }
     };
 
@@ -33,7 +33,7 @@ public:
 
         template<typename value_t>
         inline value_t decode(const Range& r) {
-            return m_in->read_int<value_t>(8 * bytes_for(bits_for(r.max())));
+            return m_in->read_int<value_t>(8 * bytes_for(r.max()));
         }
     };
 };
