@@ -11,7 +11,6 @@
 
 #include <tudocomp/misc/LCPSuffixLinkCompressor.hpp>
 
-#include <tudocomp/lzss/LZSSSeanCompressor.hpp>
 #include <tudocomp/lzss/LZ77SSSlidingWindowCompressor.hpp>
 
 #include <tudocomp/lzss/DebugLZSSCoder.hpp>
@@ -93,11 +92,6 @@ void register_algorithms(Registry& r) {
     r.register_compressor< LZ77SSSlidingWindowCompressor<OnlineLZSSCoder<OfflineAlphabetCoder>> >();
     r.register_compressor< LZ77SSSlidingWindowCompressor<OfflineLZSSCoder<OnlineAlphabetCoder>> >();
     r.register_compressor< LZ77SSSlidingWindowCompressor<OfflineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.register_compressor< LZSSSeanCompressor >();
-    //broken: r.register_compressor< LCPSuffixLinkCompressor >();
-    r.register_compressor< ExampleCompressor >();
-    //needs new impl: r.register_compressor< TemplatedExampleCompressor<ExampleDebugCoder> >();
-    //needs new impl: r.register_compressor< TemplatedExampleCompressor<ExampleBitCoder> >();
 
     r.register_compressor< NoopCompressor >();
 }
