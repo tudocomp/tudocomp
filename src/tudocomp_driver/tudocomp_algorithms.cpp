@@ -44,7 +44,6 @@ using lz78::Lz78BitCoder;
 using lz78::lzcics::Lz78cicsCompressor;
 
 using lzss::LZ77SSSlidingWindowCompressor;
-using lzss::LZSSSeanCompressor;
 
 using lzss::DebugLZSSCoder;
 using lzss::OnlineLZSSCoder;
@@ -54,11 +53,6 @@ void register_algorithms(Registry& r);
 
 // One global instance for the registry
 Registry REGISTRY = Registry::with_all_from(register_algorithms);
-
-#define REGISTER_COMPRESSOR_ALL_CODERS(X) \
-    r.register_compressor<X<ASCIICoder>>(); \
-    r.register_compressor<X<ByteCoder>>(); \
-    r.register_compressor<X<BitOptimalCoder>>();
 
 // All compression and encoding algorithms exposed by the command
 // line interface.
@@ -81,9 +75,17 @@ void register_algorithms(Registry& r) {
     r.register_compressor<ESACompressor<esacomp::ESACompNaive, ByteCoder>>();
     r.register_compressor<ESACompressor<esacomp::ESACompNaive, BitOptimalCoder>>();
 
-    REGISTER_COMPRESSOR_ALL_CODERS(LZ78Compressor);
-    REGISTER_COMPRESSOR_ALL_CODERS(LZWCompressor);
-    REGISTER_COMPRESSOR_ALL_CODERS(LZSSLCPCompressor);
+    r.register_compressor<LZ78Compressor<ASCIICoder>>();
+    r.register_compressor<LZ78Compressor<ByteCoder>>();
+    r.register_compressor<LZ78Compressor<BitOptimalCoder>>();
+
+    r.register_compressor<LZWCompressor<ASCIICoder>>();
+    r.register_compressor<LZWCompressor<ByteCoder>>();
+    r.register_compressor<LZWCompressor<BitOptimalCoder>>();
+
+    r.register_compressor<LZSSLCPCompressor<ASCIICoder>>();
+    r.register_compressor<LZSSLCPCompressor<ByteCoder>>();
+    r.register_compressor<LZSSLCPCompressor<BitOptimalCoder>>();
 
     r.register_compressor< Lz78cicsCompressor<Lz78BitCoder> >();
     r.register_compressor< Lz78cicsCompressor<Lz78DebugCoder> >();
