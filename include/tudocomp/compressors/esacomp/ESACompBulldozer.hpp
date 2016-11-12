@@ -3,23 +3,21 @@
 
 #include <vector>
 
+#include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
-#include <tudocomp/Env.hpp>
-#include <tudocomp/lzss/LZSSFactor.hpp>
-#include <tudocomp/Algorithm.hpp>
-
+#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 
 namespace tdc {
-namespace lzss {
-
+namespace esacomp {
 
 /// Implements the "Bulldozer" selection strategy for ESAComp.
 ///
 /// TODO: Describe
-class ESACompBulldozer: Algorithm {
-
+class ESACompBulldozer : public Algorithm {
 private:
+    typedef TextDS<> text_t;
+
     struct Interval {
         size_t p, q, l;
     };
@@ -35,19 +33,19 @@ private:
     };
 
 public:
-    using Algorithm::Algorithm;
+    using Algorithm::Algorithm; //import constructor
 
     inline static Meta meta() {
         Meta m("esacomp_strategy", "bulldozer");
         return m;
     }
 
-        void factorize(TextDS<>& t,
-                       size_t fact_min,
-                       std::vector<LZSSFactor>& out_factors) {
+    inline void factorize(text_t& text,
+                   size_t threshold,
+                   lzss::FactorBuffer& factors) {
 
-        auto& sa = t.require_sa();
-        auto& lcp = t.require_lcp();
+        auto& sa = text.require_sa();
+        auto& lcp = text.require_lcp();
 
         //
         size_t n = sa.size();
@@ -57,7 +55,7 @@ public:
 
         std::vector<Interval> intervals;
         for(size_t i = 1; i < sa.size(); i++) {
-            if(lcp[i] >= fact_min) {
+            if(lcp[i] >= threshold) {
                 intervals.push_back(Interval{sa[i], sa[i-1], lcp[i]});
                 intervals.push_back(Interval{sa[i-1], sa[i], lcp[i]});
             }
@@ -90,8 +88,8 @@ public:
                     ++l;
                 }
 
-                if(l >= fact_min) {
-                    out_factors.push_back(LZSSFactor(x->p, x->q, l));
+                if(l >= threshold) {
+                    factors.push_back(lzss::Factor(x->p, x->q, l));
 
                     //mark source positions as "unreplaceable"
                     for(size_t k = 0; k < l; k++) {

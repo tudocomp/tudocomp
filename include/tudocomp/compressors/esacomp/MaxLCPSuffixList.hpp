@@ -5,6 +5,7 @@
 #include <tudocomp/util.hpp>
 
 namespace tdc {
+namespace esacomp {
 
 /// Provides constant-time access to the suffix in a suffix array
 /// with the longest correspondig lcp table entry.
@@ -181,6 +182,6 @@ public:
     }
 };
 
-}
+}} //ns
 
 #endif

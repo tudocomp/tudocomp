@@ -2,48 +2,56 @@
 #define _INCLUDED_LZSS_FACTORS_HPP_
 
 #include <tuple>
+#include <sdsl/int_vector.hpp>
 
 namespace tdc {
 namespace lzss {
 
-using Factor = std::tuple<size_t, size_t, size_t>;
+class Factor {
+public:
+    size_t pos, src, len;
+
+    inline Factor(size_t fpos, size_t fsrc, size_t flen)
+        : pos(fpos), src(fsrc), len(flen) {
+    }
+};
 
 class FactorBuffer {
 private:
-    size_t m_size;
-    std::vector<size_t> m_pos, m_src, m_len;
+    std::vector<Factor> m_factors;
+    bool m_sorted;
 
 public:
-    inline FactorBuffer() : m_size(0) {}
+    inline FactorBuffer() : m_sorted(true) {}
 
     inline void push_back(Factor f) {
-        size_t pos, src, len;
-        std::tie(pos, src, len) = f;
-
-        m_pos.push_back(pos);
-        m_src.push_back(src);
-        m_len.push_back(len);
-        m_size++;
+        m_sorted = m_sorted && (m_factors.empty() || f.pos >= m_factors.back().pos);
+        m_factors.push_back(f);
     }
 
-    inline Factor operator[](size_t i) const {
-        return Factor(m_pos[i], m_src[i], m_len[i]);
+    inline const Factor& operator[](size_t i) const {
+        return m_factors[i];
     }
 
-    inline size_t pos(size_t i) const {
-        return m_pos[i];
-    }
-
-    inline size_t src(size_t i) const {
-        return m_src[i];
-    }
-
-    inline size_t len(size_t i) const {
-        return m_len[i];
+    inline bool empty() const {
+        return m_factors.empty();
     }
 
     inline size_t size() const {
-        return m_size;
+        return m_factors.size();
+    }
+
+    inline bool is_sorted() const {
+        return m_sorted;
+    }
+
+    inline void sort() {
+        if(!m_sorted) {
+            std::sort(m_factors.begin(), m_factors.end(),
+                [](const Factor& a, const Factor& b) -> bool { return a.pos < b.pos; });
+
+            m_sorted = true;
+        }
     }
 };
 

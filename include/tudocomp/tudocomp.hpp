@@ -90,7 +90,6 @@ namespace lzw {
 #include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
 
 #include <tudocomp/lzss/LZ77SSSlidingWindowCompressor.hpp>
-#include <tudocomp/lzss/LZSSESACompressor.hpp>
 
 #include <tudocomp/lzss/DebugLZSSCoder.hpp>
 #include <tudocomp/lzss/OnlineLZSSCoder.hpp>
@@ -103,6 +102,7 @@ namespace lzw {
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp>
+#include <tudocomp/compressors/ESACompressor.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
 #include <tudocomp/compressors/LZWCompressor.hpp>

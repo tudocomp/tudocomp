@@ -18,8 +18,8 @@ private:
         size_t m_next_factor;
 
         inline void skip_factors() {
-            while(m_next_factor < m_factors->size() && m_pos == m_factors->pos(m_next_factor)) {
-                m_pos += m_factors->len(m_next_factor++);
+            while(m_next_factor < m_factors->size() && m_pos == (*m_factors)[m_next_factor].pos) {
+                m_pos += (*m_factors)[m_next_factor++].len;
             }
         }
 
