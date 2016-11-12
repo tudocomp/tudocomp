@@ -7,10 +7,6 @@
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
 #include <tudocomp/lz78/Lz78BitCoder.hpp>
 
-#include <tudocomp/lzw/LzwCompressor.hpp>
-#include <tudocomp/lzw/LzwDebugCoder.hpp>
-#include <tudocomp/lzw/LzwBitCoder.hpp>
-
 #include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
 
 #include <tudocomp/misc/LCPSuffixLinkCompressor.hpp>
@@ -28,6 +24,7 @@
 
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
+#include <tudocomp/compressors/LZWCompressor.hpp>
 
 #include <tudocomp/example/ExampleCompressor.hpp>
 
@@ -36,10 +33,6 @@ namespace tdc_algorithms {
 using namespace tdc;
 
 // Algorithm implementations
-using lzw::LzwCompressor;
-using lzw::LzwDebugCoder;
-using lzw::LzwBitCoder;
-
 using lz78::Lz78DebugCoder;
 using lz78::Lz78BitCoder;
 
@@ -72,9 +65,9 @@ void register_algorithms(Registry& r) {
     // at runtime, we need to explicitly register all possible
     // template instances
 
-    r.register_compressor< LzwCompressor<LzwDebugCoder> >();
+    /*r.register_compressor< LzwCompressor<LzwDebugCoder> >();
     r.register_compressor< LzwCompressor<LzwBitCoder> >();
-    /*r.register_compressor< LZ78Compressor<Lz78BitCoder> >();
+    r.register_compressor< LZ78Compressor<Lz78BitCoder> >();
     r.register_compressor< LZ78Compressor<Lz78DebugCoder> >();*/
     r.register_compressor< Lz78cicsCompressor<Lz78BitCoder> >();
     r.register_compressor< Lz78cicsCompressor<Lz78DebugCoder> >();

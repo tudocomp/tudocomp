@@ -87,10 +87,6 @@ namespace lzw {
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
 #include <tudocomp/lz78/Lz78BitCoder.hpp>
 
-#include <tudocomp/lzw/LzwCompressor.hpp>
-#include <tudocomp/lzw/LzwDebugCoder.hpp>
-#include <tudocomp/lzw/LzwBitCoder.hpp>
-
 #include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
 
 #include <tudocomp/lzss/LZ77SSSlidingWindowCompressor.hpp>
@@ -109,6 +105,7 @@ namespace lzw {
 #include <tudocomp/coders/BitOptimalCoder.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
+#include <tudocomp/compressors/LZWCompressor.hpp>
 #include <tudocomp/compressors/RunLengthEncoder.hpp>
 
 #endif

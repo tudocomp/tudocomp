@@ -3,40 +3,33 @@
 
 #include <tudocomp/Compressor.hpp>
 
+#include <tudocomp/lzw/decode.hpp>
 #include <tudocomp/lzw/Factor.hpp>
-#include <tudocomp/lzw/LzwBitCoder.hpp>
 #include <tudocomp/lz78/dictionary.hpp>
 
 namespace tdc {
 
-namespace lzw {
-
-using ::tdc::Compressor;
-using lz78_dictionary::CodeType;
-using lz78_dictionary::EncoderDictionary;
-using lz78_dictionary::DMS_MAX;
-
-inline CodeType select_size(Env& env, string_ref name) {
-    auto& o = env.option(name);
-    if (o.as_string() == "inf") {
-        return DMS_MAX;
-    } else {
-        return o.as_integer();
-    }
-}
-
-template<typename C>
-class LzwCompressor: public Compressor {
+template<typename coder_t>
+class LZWCompressor: public Compressor {
 private:
+    static inline lz78_dictionary::CodeType select_size(Env& env, string_ref name) {
+        auto& o = env.option(name);
+        if (o.as_string() == "inf") {
+            return lz78_dictionary::DMS_MAX;
+        } else {
+            return o.as_integer();
+        }
+    }
+
     /// Max dictionary size before reset
-    const CodeType dms {DMS_MAX};
+    const lz78_dictionary::CodeType dms {lz78_dictionary::DMS_MAX};
     //const CodeType dms {256 + 10};
     /// Preallocated dictionary size,
     /// picked because (sizeof(CodeType) = 4) * 1024 == 4096,
     /// which is the default page size on linux
-    const CodeType reserve_dms {1024};
+    const lz78_dictionary::CodeType reserve_dms {1024};
 public:
-    inline LzwCompressor(Env&& env):
+    inline LZWCompressor(Env&& env):
         Compressor(std::move(env)),
         dms(select_size(this->env(), "dict_size"))
     {}
@@ -47,7 +40,7 @@ public:
                "`dict_size` has to either be \"inf\", or a positive integer,\n"
                "and determines the maximum size of the backing storage of\n"
                "the dictionary before it gets reset.");
-        m.option("coder").templated<C, LzwBitCoder>();
+        m.option("coder").templated<coder_t>();
         m.option("dict_size").dynamic("inf");
         return m;
     }
@@ -56,18 +49,18 @@ public:
         auto is = input.as_stream();
 
         // Stats
-        env().begin_stat_phase("Lzw compression");
+        env().begin_stat_phase("LZW Compression");
         uint64_t stat_dictionary_resets = 0;
         uint64_t stat_dict_counter_at_last_reset = 0;
         uint64_t stat_factor_count = 0;
+        uint64_t factor_count = 0;
 
-        EncoderDictionary ed(EncoderDictionary::Lzw, dms, reserve_dms);
-        C coder(env().env_for_option("coder"), out);
+        lz78_dictionary::EncoderDictionary ed(lz78_dictionary::EncoderDictionary::Lzw, dms, reserve_dms);
+        typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
-        CodeType i {dms}; // Index
+        lz78_dictionary::CodeType i {dms}; // Index
         char c;
         bool rbwf {false}; // Reset Bit Width Flag
-
 
         while (is.get(c)) {
             uint8_t b = c;
@@ -81,24 +74,28 @@ public:
                 stat_dict_counter_at_last_reset = dms;
             }
 
-            const CodeType temp {i};
+            const lz78_dictionary::CodeType temp {i};
 
             if ((i = ed.search_and_insert(temp, b)) == dms)
             {
-                coder.encode_fact(temp);
+                coder.encode(temp, Range(factor_count + 256));
+                //coder.encode_fact(temp);
                 stat_factor_count++;
+                factor_count++;
                 i = b;
             }
 
             if (rbwf)
             {
-                coder.dictionary_reset();
+                factor_count = 0; //coder.dictionary_reset();
                 rbwf = false;
             }
         }
         if (i != dms) {
-            coder.encode_fact(i);
+            //coder.encode_fact(i);
+            coder.encode(i, Range(factor_count + 256));
             stat_factor_count++;
+            factor_count++;
         }
 
         env().log_stat("factor_count", stat_factor_count);
@@ -109,13 +106,29 @@ public:
         env().end_stat_phase();
     }
 
-    virtual void decompress(Input& in, Output& out) override final {
-        C::decode(in, out, dms, reserve_dms);
+    virtual void decompress(Input& input, Output& output) override final {
+        //TODO C::decode(in, out, dms, reserve_dms);
+        auto out = output.as_stream();
+        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+
+        uint64_t counter = 0;
+        lzw::decode_step([&](lz78_dictionary::CodeType& entry, bool reset, bool &file_corrupted) -> lzw::Factor {
+            if (reset) {
+                counter = 0;
+            }
+
+            if(decoder.eof()) {
+                return false;
+            }
+
+            lzw::Factor factor(decoder.template decode<uint64_t>(Range(counter + 256)));
+            counter++;
+            entry = factor;
+            return true;
+        }, out, dms, reserve_dms);
     }
 
 };
-
-}
 
 }
 
