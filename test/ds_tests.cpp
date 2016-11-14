@@ -4,7 +4,6 @@
 #include <gtest/gtest.h>
 
 #include <tudocomp/io.hpp>
-#include <tudocomp/util/Generators.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/bwt.hpp>
@@ -152,52 +151,6 @@ void test_all_ds(const std::string& str, textds_t& t) {
     test_lcp_naive(str, t);
 }
 
-template<class textds_t>
-void test_ds(const std::string& str, void (*testfunc)(const std::string&, textds_t&)) {
-    DLOG(INFO) << "str = \"" << str << "\"" << " size: " << str.length();
-
-    Input input(str);
-    textds_t t(input.as_view());
-    testfunc(str, t);
-}
-
-#define TEST_COLLECTION(testfunc) \
-    test_ds<TextDS<>>("", &testfunc); \
-    test_ds<TextDS<>>("aaaaaaaaa", &testfunc); \
-    test_ds<TextDS<>>("banana", &testfunc); \
-    test_ds<TextDS<>>("abcdefgh#defgh_abcde", &testfunc); \
-
-#define TEST_FIBONACCI(testfunc, n) \
-	for(size_t i = 0; i < n; ++i) { \
-		std::string s = fibonacci_word(1); \
-        test_ds<TextDS<>>(s, &testfunc); \
-	}
-
-#define TEST_THUEMORSE(testfunc, n) \
-	for(size_t i = 0; i < n; ++i) { \
-		std::string s = thue_morse_word(1); \
-        test_ds<TextDS<>>(s, &testfunc); \
-	}
-#define TEST_RUNRICH(testfunc, n) \
-	for(size_t i = 0; i < n; ++i) { \
-		std::string s = run_rich(1); \
-        test_ds<TextDS<>>(s, &testfunc); \
-	}
-
-#define TEST_RANDOM(testfunc, n) \
-	for(size_t i = 2; i < n; ++i) { \
-	 	for(size_t j = 0; j < 2+50/(i+1); ++j) { \
-	 		std::string s = random_uniform(1<<i,Ranges::numbers,j); \
-	 		test_ds<TextDS<>>(s, &testfunc); \
-	 	} \
-	 }
-
-#define TEST_ALL(testfunc) \
-    TEST_COLLECTION(testfunc); \
-    TEST_FIBONACCI(testfunc, 20); \
-    TEST_THUEMORSE(testfunc, 20); \
-    TEST_RUNRICH(testfunc, 20); \
-    TEST_RANDOM(testfunc, 11);
 
 void test_lcpsada(const std::string&,TextDS<>& t) {
 	lcp_sada<TextDS<>,SuffixArray<TextDS<>>> lcp;
@@ -205,10 +158,35 @@ void test_lcpsada(const std::string&,TextDS<>& t) {
 	std::cout << lcp.size() << std::endl;
 	assert_eq_sequence(lcp, t.require_lcp());
 }
-TEST(ds, lcpsada) { TEST_ALL(test_lcpsada); }
 
-TEST(ds, SA)          { TEST_ALL(test_sa); }
-TEST(ds, ISA)         { TEST_ALL(test_isa); }
-TEST(ds, Phi)         { TEST_ALL(test_phi); }
-TEST(ds, LCP)         { TEST_ALL(test_lcp); }
-TEST(ds, Integration) { TEST_ALL(test_all_ds); }
+
+
+
+
+template<class textds_t>
+class RunTestDS {
+	void (*m_testfunc)(const std::string&, textds_t&);
+	public:
+	RunTestDS(void (*testfunc)(const std::string&, textds_t&)) 
+		: m_testfunc(testfunc) {}
+
+	void operator()(const std::string& str) {
+		VLOG(2) << "str = \"" << str << "\"" << " size: " << str.length();
+		Input input(str);
+		textds_t t(input.as_view());
+		m_testfunc(str, t);
+	}
+};
+
+#define TEST_DS_STRINGCOLLECTION(func) \
+	RunTestDS<TextDS<>> runner(test_sa); \
+	test_roundtrip_batch(runner); \
+	test_on_string_generators(runner,11); 
+TEST(ds, lcpsada)     { TEST_DS_STRINGCOLLECTION(test_lcpsada); }
+TEST(ds, SA)          { TEST_DS_STRINGCOLLECTION(test_sa); }
+TEST(ds, ISA)         { TEST_DS_STRINGCOLLECTION(test_isa); }
+TEST(ds, Phi)         { TEST_DS_STRINGCOLLECTION(test_phi); }
+TEST(ds, LCP)         { TEST_DS_STRINGCOLLECTION(test_lcp); }
+TEST(ds, Integration) { TEST_DS_STRINGCOLLECTION(test_all_ds); }
+#undef TEST_DS_STRINGCOLLECTION
+

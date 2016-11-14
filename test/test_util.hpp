@@ -96,6 +96,12 @@ void test_roundtrip_batch(F f) {
     f("abcdebcdeabc");
     f("a");
     f("");
+
+    f("aaaaaaaaa"); \
+    f("banana"); \
+    f("ananas"); \
+    f("abcdefgh#defgh_abcde"); \
+
     f("abcdebcdeabcd");
     f("foobar");
     f("abcabcabcabc");
@@ -167,6 +173,31 @@ void test_roundtrip_batch(F f) {
     // TODO: Make compressors work with this
     //f(View(bytes_escaped));
 }
+
+#include <tudocomp/util/Generators.hpp>
+template<class F>
+void test_on_string_generators(F func, size_t n) {
+	for(size_t i = 0; i < n; ++i) { 
+		std::string s = fibonacci_word(i); 
+		func(s); 
+	} 
+	for(size_t i = 0; i < n; ++i) { 
+		std::string s = thue_morse_word(i); 
+		func(s); 
+	} 
+	for(size_t i = 0; i < n; ++i) { 
+		std::string s = run_rich(i); 
+		func(s); 
+	} 
+	for(size_t i = 2; i < n; ++i) { 
+		for(size_t j = 0; j < 2+50/(i+1); ++j) { 
+			std::string s = random_uniform(1<<i,Ranges::numbers,j); 
+			func(s); 
+		} 
+	}
+}
+
+
 
 const std::string TEST_FILE_PATH = "test_files";
 
