@@ -89,13 +89,6 @@ namespace lzw {
 
 #include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
 
-#include <tudocomp/lzss/DebugLZSSCoder.hpp>
-#include <tudocomp/lzss/OnlineLZSSCoder.hpp>
-#include <tudocomp/lzss/OfflineLZSSCoder.hpp>
-
-#include <tudocomp/alphabet/OnlineAlphabetCoder.hpp>
-#include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
-
 #include <tudocomp/Range.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>

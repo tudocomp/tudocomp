@@ -11,13 +11,6 @@
 
 #include <tudocomp/misc/LCPSuffixLinkCompressor.hpp>
 
-#include <tudocomp/lzss/DebugLZSSCoder.hpp>
-#include <tudocomp/lzss/OnlineLZSSCoder.hpp>
-#include <tudocomp/lzss/OfflineLZSSCoder.hpp>
-
-#include <tudocomp/alphabet/OnlineAlphabetCoder.hpp>
-#include <tudocomp/alphabet/OfflineAlphabetCoder.hpp>
-
 //compressors
 #include <tudocomp/compressors/ESACompressor.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
@@ -41,10 +34,6 @@ using lz78::Lz78DebugCoder;
 using lz78::Lz78BitCoder;
 
 using lz78::lzcics::Lz78cicsCompressor;
-
-using lzss::DebugLZSSCoder;
-using lzss::OnlineLZSSCoder;
-using lzss::OfflineLZSSCoder;
 
 void register_algorithms(Registry& r);
 
