@@ -47,11 +47,15 @@ struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type>
     typedef UinttDispatch<uint64_t> Dispatch;
 };
 
-/** class for storing integers of arbitrary bits.
- * Useful values are 40,48, and 56.
- * Standard value is 40 bits since we can store values up to 1TiB and
- * address values up to 1TB with 40-bits integers and 40-bits pointers, respectively.
- */
+/// Custom integer type for storing values of arbitrary bit size `bits`.
+///
+/// It is guaranteed that this type will only have a byte size as large
+/// as needed to store all bits, but there will be padding bits for values
+/// not multiples of 8.
+///
+/// In practice useful sizes are 40, 48 and 56 bits.
+/// 40 bit indices correspond to 1TiB of addressable memory,
+/// and 48 bit correspond to today's hardware limits of the x86_64 architecture.
 template<size_t bits>
 class uint_t: public IntegerBase<uint_t<bits>> {
     static_assert(bits > 0, "bits must be non-negative");

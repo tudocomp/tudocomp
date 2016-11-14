@@ -209,6 +209,22 @@ namespace int_vector {
         }
     };
 
+    /// A vector over arbitrary unsigned integer types.
+    ///
+    /// The API behaves mostly identical to `std::vector<T>`.
+    ///
+    /// Only divergences are the following specializations:
+    ///
+    /// - `GenericIntVector<uint_t<N>>` where `N % 8 != 0`
+    /// - `GenericIntVector<dynamic_t>`
+    ///
+    /// In both cases, the bits of each integer will be packed efficiently next
+    /// to each other, as opposed to the padding introduced if stored
+    /// in a `std::vector`.
+    ///
+    /// In the `dynamic_t` case, the bit with of an integer can be changed at
+    /// runtime, in all other cases the corresponding methods will throw.
+    // TODO ^ Could just not offer the methods for the non-dynamic case
     template<class T>
     class GenericIntVector {
         // TODO: Add custom allocator support
