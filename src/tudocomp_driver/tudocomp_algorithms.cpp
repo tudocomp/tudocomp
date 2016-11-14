@@ -11,8 +11,6 @@
 
 #include <tudocomp/misc/LCPSuffixLinkCompressor.hpp>
 
-#include <tudocomp/lzss/LZ77SSSlidingWindowCompressor.hpp>
-
 #include <tudocomp/lzss/DebugLZSSCoder.hpp>
 #include <tudocomp/lzss/OnlineLZSSCoder.hpp>
 #include <tudocomp/lzss/OfflineLZSSCoder.hpp>
@@ -24,6 +22,7 @@
 #include <tudocomp/compressors/ESACompressor.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
+#include <tudocomp/compressors/LZSSSlidingWindowCompressor.hpp>
 #include <tudocomp/compressors/LZWCompressor.hpp>
 
 //coders
@@ -42,8 +41,6 @@ using lz78::Lz78DebugCoder;
 using lz78::Lz78BitCoder;
 
 using lz78::lzcics::Lz78cicsCompressor;
-
-using lzss::LZ77SSSlidingWindowCompressor;
 
 using lzss::DebugLZSSCoder;
 using lzss::OnlineLZSSCoder;
@@ -87,13 +84,12 @@ void register_algorithms(Registry& r) {
     r.register_compressor<LZSSLCPCompressor<ByteCoder>>();
     r.register_compressor<LZSSLCPCompressor<BitOptimalCoder>>();
 
+    r.register_compressor<LZSSSlidingWindowCompressor<ASCIICoder>>();
+    r.register_compressor<LZSSSlidingWindowCompressor<ByteCoder>>();
+    r.register_compressor<LZSSSlidingWindowCompressor<BitOptimalCoder>>();
+
     r.register_compressor< Lz78cicsCompressor<Lz78BitCoder> >();
     r.register_compressor< Lz78cicsCompressor<Lz78DebugCoder> >();
-    r.register_compressor< LZ77SSSlidingWindowCompressor<DebugLZSSCoder> >();
-    r.register_compressor< LZ77SSSlidingWindowCompressor<OnlineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.register_compressor< LZ77SSSlidingWindowCompressor<OnlineLZSSCoder<OfflineAlphabetCoder>> >();
-    r.register_compressor< LZ77SSSlidingWindowCompressor<OfflineLZSSCoder<OnlineAlphabetCoder>> >();
-    r.register_compressor< LZ77SSSlidingWindowCompressor<OfflineLZSSCoder<OfflineAlphabetCoder>> >();
 
     r.register_compressor< NoopCompressor >();
 }

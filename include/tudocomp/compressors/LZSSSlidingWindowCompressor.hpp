@@ -7,55 +7,43 @@
 #ifndef _INCLUDED_LZ77SS_SLIDING_WINDOW_COMPRESSOR_HPP
 #define _INCLUDED_LZ77SS_SLIDING_WINDOW_COMPRESSOR_HPP
 
-#include <algorithm>
-#include <vector>
-
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/Literal.hpp>
+#include <tudocomp/Range.hpp>
 #include <tudocomp/util.hpp>
-#include <tudocomp/lzss/LZSSCompressor.hpp>
 
 namespace tdc {
-namespace lzss {
 
 /// Computes the LZ77 factorization of the input by moving a sliding window
 /// over it in which redundant phrases will be looked for.
-template<typename C>
-class LZ77SSSlidingWindowCompressor : public LZSSCompressor<C> {
+template<typename coder_t>
+class LZSSSlidingWindowCompressor : public Compressor {
 
 private:
     size_t m_window;
 
 public:
     inline static Meta meta() {
-        Meta m("compressor", "lz77ss", "Lempel-Ziv-Storer-Szymanski");
-        m.option("coder").templated<C>();
+        Meta m("compressor", "lzss", "Lempel-Ziv-Storer-Szymanski (Sliding Window)");
+        m.option("coder").templated<coder_t>();
         m.option("window").dynamic("16");
         return m;
     }
 
     /// Default constructor (not supported).
-    inline LZ77SSSlidingWindowCompressor() = delete;
+    inline LZSSSlidingWindowCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZ77SSSlidingWindowCompressor(Env&& e):
-        LZSSCompressor<C>(std::move(e))
+    inline LZSSSlidingWindowCompressor(Env&& e) : Compressor(std::move(e))
     {
         m_window = this->env().option("window").as_integer();
     }
 
-protected:
     /// \copydoc
-    inline virtual bool pre_factorize(Input& input) override {
-        return false;
-    }
-
-    /// \copydoc
-    inline virtual LZSSCoderOpts coder_opts(Input& input) override {
-        return LZSSCoderOpts(true, bits_for(m_window));
-    }
-
-    /// \copydoc
-    inline virtual void factorize(Input& input) override {
+    inline virtual void compress(Input& input, Output& output) override {
         auto ins = input.as_stream();
+
+        typename coder_t::Encoder coder(env().env_for_option("coder"), output, NoLiterals());
 
         std::vector<uint8_t> buf;
 
@@ -74,7 +62,7 @@ protected:
         size_t pos = 0;
         bool eof = false;
         while(ahead < buf.size()) {
-            LZSSFactor f;
+            size_t fpos, fsrc, fnum = 0;
 
             //walk back buffer
             for(size_t k = (ahead > m_window ? ahead - m_window : 0); k < ahead; k++) {
@@ -85,21 +73,28 @@ protected:
                 }
 
                 //factorize if longer than one already found
-                if(j >= fact_min && j > f.num) {
-                    f.pos = buf_off + ahead;
-                    f.src = buf_off + k;
-                    f.num = j;
+                if(j >= fact_min && j > fnum) {
+                    fpos = buf_off + ahead;
+                    fsrc = buf_off + k;
+                    fnum = j;
                 }
             }
 
             //output longest factor or symbol
             size_t advance;
 
-            if(f.num > 0) {
-                this->handle_fact(f);
-                advance = f.num;
+            if(fnum > 0) {
+                // encode factor
+                coder.encode(1, bit_r);
+                coder.encode(fpos - fsrc, Range(fpos)); //delta
+                coder.encode(fnum, Range(m_window));
+
+                advance = fnum;
             } else {
-                this->handle_sym(buf[ahead]);
+                // encode literal
+                coder.encode(0, bit_r);
+                coder.encode(buf[ahead], literal_r);
+
                 advance = 1;
             }
 
@@ -123,11 +118,32 @@ protected:
         }
     }
 
-    virtual Env create_decoder_env() override {
-        return this->env().env_for_option("coder");
+    inline virtual void decompress(Input& input, Output& output) override {
+        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+
+        std::vector<uint8_t> text;
+        while(!decoder.eof()) {
+            bool is_factor = decoder.template decode<bool>(bit_r);
+            if(is_factor) {
+                size_t fsrc = text.size() - decoder.template decode<size_t>(Range(text.size()));
+
+                //TODO are the compressor options saved into tudocomp's magic?
+                size_t fnum = decoder.template decode<size_t>(Range(m_window));
+
+                for(size_t i = 0; i < fnum; i++) {
+                    text.push_back(text[fsrc+i]);
+                }
+            } else {
+                uint8_t c = decoder.template decode<uint8_t>(literal_r);
+                text.push_back(c);
+            }
+        }
+
+        auto outs = output.as_stream();
+        for(uint8_t c : text) outs << c;
     }
 };
 
-}}
+} //ns
 
 #endif
