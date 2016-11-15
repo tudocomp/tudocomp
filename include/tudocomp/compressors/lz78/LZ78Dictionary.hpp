@@ -45,7 +45,8 @@
 #include <utility>
 #include <vector>
 
-namespace lz78_dictionary {
+namespace tdc {
+namespace lz78 {
 
 /// Type used to store and retrieve codes.
 using CodeType = std::uint32_t;
@@ -212,6 +213,6 @@ public:
     }
 };
 
-}
+}} //ns
 
 #endif

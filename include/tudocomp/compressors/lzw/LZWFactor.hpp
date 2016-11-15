@@ -6,7 +6,6 @@ namespace lzw {
 
 using Factor = uint32_t;
 
-}
-}
+}} //ns
 
 #endif

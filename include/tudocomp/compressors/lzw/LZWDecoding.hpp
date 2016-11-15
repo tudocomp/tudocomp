@@ -1,15 +1,14 @@
 #ifndef _INCLUDED_LZW_DECODE_HPP_
 #define _INCLUDED_LZW_DECODE_HPP_
 
-#include <tudocomp/lzw/Factor.hpp>
-#include <tudocomp/lz78/dictionary.hpp>
 #include <tudocomp/util.hpp>
+#include <tudocomp/compressors/lz78/LZ78Dictionary.hpp>
+#include <tudocomp/compressors/lzw/LZWFactor.hpp>
 
 namespace tdc {
-
 namespace lzw {
 
-using lz78_dictionary::CodeType;
+using lz78::CodeType;
 
 template<class F>
 void decode_step(F next_code_callback,
@@ -100,8 +99,6 @@ void decode_step(F next_code_callback,
         throw std::runtime_error("corrupted compressed file");
 }
 
-}
-
-}
+}} //ns
 
 #endif

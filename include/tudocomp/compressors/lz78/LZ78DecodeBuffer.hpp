@@ -1,14 +1,13 @@
 #ifndef _INCLUDED_LZ78_DECODE_BUFFER_HPP_
 #define _INCLUDED_LZ78_DECODE_BUFFER_HPP_
 
-#include <tudocomp/lz78/Factor.hpp>
+#include <tudocomp/compressors/lz78/LZ78Factor.hpp>
 
 namespace tdc {
-
 namespace lz78 {
 
 /// Helper class for decoding a stream of Lz78 rules
-class Lz78DecodeBuffer {
+class DecodeBuffer {
 private:
     std::vector<Factor> dict;
     std::vector<uint8_t> dict_walk_buf;
@@ -35,8 +34,6 @@ public:
     }
 };
 
-}
-
-}
+}} //ns
 
 #endif

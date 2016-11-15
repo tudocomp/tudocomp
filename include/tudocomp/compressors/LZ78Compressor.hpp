@@ -3,9 +3,9 @@
 
 #include <tudocomp/Compressor.hpp>
 
-#include <tudocomp/lz78/dictionary.hpp>
-#include <tudocomp/lz78/Factor.hpp>
-#include <tudocomp/lz78/Lz78DecodeBuffer.hpp>
+#include <tudocomp/compressors/lz78/LZ78DecodeBuffer.hpp>
+#include <tudocomp/compressors/lz78/LZ78Dictionary.hpp>
+#include <tudocomp/compressors/lz78/LZ78Factor.hpp>
 
 #include <tudocomp/Range.hpp>
 
@@ -14,22 +14,22 @@ namespace tdc {
 template <typename coder_t>
 class LZ78Compressor: public Compressor {
 private:
-    static inline lz78_dictionary::CodeType select_size(Env& env, string_ref name) {
+    static inline lz78::CodeType select_size(Env& env, string_ref name) {
         auto& o = env.option(name);
         if (o.as_string() == "inf") {
-            return lz78_dictionary::DMS_MAX;
+            return lz78::DMS_MAX;
         } else {
             return o.as_integer();
         }
     }
 
     /// Max dictionary size before reset
-    const lz78_dictionary::CodeType dms {lz78_dictionary::DMS_MAX};
+    const lz78::CodeType dms {lz78::DMS_MAX};
     //const CodeType dms {256 + 10};
     /// Preallocated dictionary size,
     /// picked because (sizeof(CodeType) = 4) * 1024 == 4096,
     /// which is the default page size on linux
-    const lz78_dictionary::CodeType reserve_dms {1024};
+    const lz78::CodeType reserve_dms {1024};
 
 public:
     inline LZ78Compressor(Env&& env):
@@ -58,12 +58,12 @@ public:
         uint64_t stat_factor_count = 0;
         uint64_t factor_count = 0;
 
-        lz78_dictionary::EncoderDictionary ed(lz78_dictionary::EncoderDictionary::Lz78, dms, reserve_dms);
+        lz78::EncoderDictionary ed(lz78::EncoderDictionary::Lz78, dms, reserve_dms);
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
         // Define ranges
-        lz78_dictionary::CodeType last_i {dms}; // needed for the end of the string
-        lz78_dictionary::CodeType i {dms}; // Index
+        lz78::CodeType last_i {dms}; // needed for the end of the string
+        lz78::CodeType i {dms}; // Index
         char c;
         bool rbwf {false}; // Reset Bit Width Flag
 
@@ -79,12 +79,12 @@ public:
                 stat_dict_counter_at_last_reset = dms;
             }
 
-            const lz78_dictionary::CodeType temp {i};
+            const lz78::CodeType temp {i};
 
             last_i = i;
             if ((i = ed.search_and_insert(temp, b)) == dms)
             {
-                lz78_dictionary::CodeType fact = temp;
+                lz78::CodeType fact = temp;
                 if (fact == dms) {
                     fact = 0;
                 }
@@ -103,7 +103,7 @@ public:
             }
         }
         if (i != dms) {
-            lz78_dictionary::CodeType fact = last_i;
+            lz78::CodeType fact = last_i;
             uint8_t b = c;
             if (fact == dms) {
                 fact = 0;
@@ -128,11 +128,11 @@ public:
         auto out = output.as_stream();
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
-        lz78::Lz78DecodeBuffer buf;
+        lz78::DecodeBuffer buf;
         uint64_t factor_count = 0;
 
         while (!decoder.eof()) {
-            auto index = decoder.template decode<lz78_dictionary::CodeType>(Range(factor_count));
+            auto index = decoder.template decode<lz78::CodeType>(Range(factor_count));
             auto chr = decoder.template decode<uint8_t>(literal_r);
 
             lz78::Factor entry { index, chr };
