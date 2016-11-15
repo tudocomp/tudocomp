@@ -59,11 +59,9 @@ public:
     /// \param input The input stream.
     /// \param output The output stream.
     inline virtual void compress(Input& input, Output& output) override final {
-        std::cout << "compress\n";
         chain(input, output, false, [](Input& i, Output& o, Compressor& c) {
             c.compress(i, o);
         });
-        std::cout << "compress done\n";
     }
 
     /// Decompress `inp` into `out`.
@@ -71,11 +69,9 @@ public:
     /// \param input The input stream.
     /// \param output The output stream.
     inline virtual void decompress(Input& input, Output& output) override final {
-        std::cout << "decompress\n";
         chain(input, output, true, [](Input& i, Output& o, Compressor& c) {
             c.decompress(i, o);
         });
-        std::cout << "decompress done\n";
     }
 };
 
