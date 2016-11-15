@@ -368,6 +368,7 @@ public:
             std::pair<int,int> position = *it;
             std::string symbol = symbol_list[position.second-1];
             text = text.substr(0, position.first + added_symbols) + symbol + text.substr(position.first + added_symbols , text.size());
+            added_symbols+=symbol.size();
             DLOG(INFO) << text;
             it++;
 
