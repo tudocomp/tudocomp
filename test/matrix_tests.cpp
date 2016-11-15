@@ -11,17 +11,36 @@
 using namespace tdc_algorithms;
 
 // TODO
-const std::vector<std::string> additional_tests = {};
+const std::vector<std::string> excluded_tests {
+    "chain",
+};
+const std::vector<std::string> additional_tests {
+    "chain(lz78, lzw)",
+    "chain(lz78, chain(noop, lzw))",
+};
 
 TEST(TudocompDriver, roundtrip_matrix) {
     std::cout << "[ Generating list of test cases ]\n";
 
     // Use cross product of all static arguments as base list to check
-    std::vector<std::string> test_cases;
+    std::vector<std::string> test_cases_pre_filter;
 
     for (const auto& x : REGISTRY.all_algorithms_with_static("compressor")) {
-        test_cases.push_back(x.to_string(true));
+        test_cases_pre_filter.push_back(x.to_string(true));
     }
+
+    std::vector<std::string> test_cases;
+    for (const auto& test_case: test_cases_pre_filter) {
+        if (!std::any_of(excluded_tests.begin(),
+                         excluded_tests.end(),
+                        [&](const std::string& excluded) {
+                            return test_case.find(excluded) == 0;
+                        }))
+        {
+            test_cases.push_back(test_case);
+        }
+    }
+
     for (const auto& x : additional_tests) {
         test_cases.push_back(x);
     }
