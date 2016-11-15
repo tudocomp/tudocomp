@@ -4,8 +4,6 @@
 #include <tudocomp/NoopCompressor.hpp>
 #include <tudocomp/InnerNullCompressor.hpp>
 
-#include <tudocomp/misc/LCPSuffixLinkCompressor.hpp>
-
 //compressors
 #include <tudocomp/compressors/ESACompressor.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
