@@ -7,8 +7,6 @@
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
 #include <tudocomp/lz78/Lz78BitCoder.hpp>
 
-#include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
-
 #include <tudocomp/misc/LCPSuffixLinkCompressor.hpp>
 
 //compressors
@@ -32,8 +30,6 @@ using namespace tdc;
 // Algorithm implementations
 using lz78::Lz78DebugCoder;
 using lz78::Lz78BitCoder;
-
-using lz78::lzcics::Lz78cicsCompressor;
 
 void register_algorithms(Registry& r);
 
@@ -76,9 +72,6 @@ void register_algorithms(Registry& r) {
     r.register_compressor<LZSSSlidingWindowCompressor<ASCIICoder>>();
     r.register_compressor<LZSSSlidingWindowCompressor<ByteCoder>>();
     r.register_compressor<LZSSSlidingWindowCompressor<BitOptimalCoder>>();
-
-    r.register_compressor< Lz78cicsCompressor<Lz78BitCoder> >();
-    r.register_compressor< Lz78cicsCompressor<Lz78DebugCoder> >();
 
     r.register_compressor< NoopCompressor >();
 }

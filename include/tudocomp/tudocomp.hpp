@@ -87,8 +87,6 @@ namespace lzw {
 #include <tudocomp/lz78/Lz78DebugCoder.hpp>
 #include <tudocomp/lz78/Lz78BitCoder.hpp>
 
-#include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
-
 #include <tudocomp/Range.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>
