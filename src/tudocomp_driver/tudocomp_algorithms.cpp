@@ -4,9 +4,6 @@
 #include <tudocomp/NoopCompressor.hpp>
 #include <tudocomp/InnerNullCompressor.hpp>
 
-#include <tudocomp/lz78/Lz78DebugCoder.hpp>
-#include <tudocomp/lz78/Lz78BitCoder.hpp>
-
 #include <tudocomp/misc/LCPSuffixLinkCompressor.hpp>
 
 //compressors
@@ -26,10 +23,6 @@
 namespace tdc_algorithms {
 
 using namespace tdc;
-
-// Algorithm implementations
-using lz78::Lz78DebugCoder;
-using lz78::Lz78BitCoder;
 
 void register_algorithms(Registry& r);
 

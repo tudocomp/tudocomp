@@ -5,6 +5,7 @@
 
 #include <tudocomp/lz78/dictionary.hpp>
 #include <tudocomp/lz78/Factor.hpp>
+#include <tudocomp/lz78/Lz78DecodeBuffer.hpp>
 
 #include <tudocomp/Range.hpp>
 

@@ -84,9 +84,6 @@ namespace lzw {
 #include <tudocomp/ds/LCPArray.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 
-#include <tudocomp/lz78/Lz78DebugCoder.hpp>
-#include <tudocomp/lz78/Lz78BitCoder.hpp>
-
 #include <tudocomp/Range.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>
