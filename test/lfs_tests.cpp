@@ -22,17 +22,10 @@ TEST(lfs, test) {
     std::string comp_result;
     auto compressor = tdc::create_algo<LFSCompressor>();
 
-//std::cout << "output"<< std::endl;
-  //  compressor = tdc::create_algo<LFSCompressor>();
-    //comp.compress("String", null);
-    // create the input for the test (a string constant)
     tdc::Input input("abaaabbababb$");
 
     DLOG(INFO) << "input:";
     DLOG(INFO) << "abaaabbababb$";
-    // create the output for the test (a buffer)
-    //std::vector<uint8_t> buffer;
-   // tdc::Output output(buffer);
 
 
     std::stringstream stm;
@@ -46,16 +39,24 @@ TEST(lfs, test) {
     compressor.compress(input, output);
 
     comp_result = stm.str();
+    ASSERT_EQ("\\Baa\\A\\B\\A$\\$abb\\$ab\\$", comp_result);
 
     DLOG(INFO) << "encoded:";
     DLOG(INFO) << comp_result;
+
+    std::stringstream stm2;
+    Output output2 = Output::from_stream(stm2);
+
     tdc::Input input_decompress(comp_result);
 
-    compressor.decompress(input_decompress, output);
+    compressor.decompress(input_decompress, output2);
+
+    std::string decode_result = stm2.str();
 
     // compare the expected result against the output string to determine test failure or success
     //ASSERT_EQ("abc%6%de", output_str);
-    ASSERT_TRUE(true);
+    ASSERT_EQ("abaaabbababb$", decode_result);
+    //ASSERT_TRUE(true);
 }
 
 TEST(lfs, test2) {
@@ -63,16 +64,11 @@ TEST(lfs, test2) {
     std::string comp_result;
     auto compressor = tdc::create_algo<LFSCompressor>();
 
-//std::cout << "output"<< std::endl;
-  //  compressor = tdc::create_algo<LFSCompressor>();
-    //comp.compress("String", null);
     // create the input for the test (a string constant)
     tdc::Input input("mississippi$");
     DLOG(INFO) << "input:";
     DLOG(INFO) << "mississippi$";
     // create the output for the test (a buffer)
-    //std::vector<uint8_t> buffer;
-   // tdc::Output output(buffer);
 
 
     std::stringstream stm;
@@ -91,9 +87,19 @@ TEST(lfs, test2) {
 
     tdc::Input input_decompress(comp_result);
 
-    compressor.decompress(input_decompress, output);
+    std::stringstream stm2;
+    Output output2 = Output::from_stream(stm2);
 
+
+    compressor.decompress(input_decompress, output2);
+    std::string decode_result = stm2.str();
     // compare the expected result against the output string to determine test failure or success
-    //ASSERT_EQ("abc%6%de", output_str);
     ASSERT_TRUE(true);
+
+    ASSERT_EQ("mississippi$", decode_result);
+}
+
+
+TEST(lfs, roundtrip1) {
+    test::roundtrip<LFSCompressor>("abaaabbababb", "\\Baa\\A\\B\\A\\$abb\\$ab\\$");
 }
