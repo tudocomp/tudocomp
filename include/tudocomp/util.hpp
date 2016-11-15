@@ -397,6 +397,22 @@ namespace std {
         typename _Unique_if<T>::_Known_bound
         make_unique(Args&&...) = delete;
 }
+
 /// \endcond
+//Check that p is a permutation of [0..n-1]
+
+template<class T>
+void assert_permutation(const T& p, size_t n) {
+#ifndef NDEBUG
+    for(size_t i = 0; i < n; ++i)
+    for(size_t j = 0; j < n; ++j)
+    {
+        if(i == j) continue;
+        DCHECK_NE(p[i],p[j]) << "at positions " << i << " and " << j;
+        DCHECK_LT(p[i],n);
+    }
+#endif
+}
+
 
 #endif
