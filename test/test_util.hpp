@@ -48,18 +48,6 @@ void assert_eq_sequence(const T& expected, const U& actual) {
         ASSERT_EQ(expected[i], actual[i]) << "assert_eq_sequence: failed at i=" << i;
 }
 
-//Check that p is a permutation of [0..n-1]
-template<class T>
-void assert_permutation(const T& p, size_t n) {
-    for(size_t i = 0; i < n; ++i)
-    for(size_t j = 0; j < n; ++j)
-    {
-        if(i == j) continue;
-        ASSERT_NE(p[i],p[j]) << "at positions " << i << " and " << j;
-        ASSERT_LT(p[i],n);
-    }
-}
-
 /// Temporary provides a `ostream` to write into, and returns it as a string.
 ///
 /// This is useful for testing Coder::code() and Coder::decode().

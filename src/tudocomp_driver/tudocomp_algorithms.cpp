@@ -12,6 +12,9 @@
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
 #include <tudocomp/compressors/LZSSSlidingWindowCompressor.hpp>
 #include <tudocomp/compressors/LZWCompressor.hpp>
+#include <tudocomp/compressors/EasyRLECompressor.hpp>
+#include <tudocomp/compressors/MTFCompressor.hpp>
+#include <tudocomp/compressors/BWTCompressor.hpp>
 
 //coders
 #include <tudocomp/coders/ASCIICoder.hpp>
@@ -65,6 +68,10 @@ void register_algorithms(Registry& r) {
     r.register_compressor<LZSSSlidingWindowCompressor<ASCIICoder>>();
     r.register_compressor<LZSSSlidingWindowCompressor<ByteCoder>>();
     r.register_compressor<LZSSSlidingWindowCompressor<BitOptimalCoder>>();
+
+    r.register_compressor< EasyRLECompressor<> >();
+    r.register_compressor< MTFCompressor<> >();
+    r.register_compressor< BWTCompressor<> >();
 
     r.register_compressor< NoopCompressor >();
 }

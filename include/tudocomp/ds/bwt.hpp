@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/util.hpp>
-#include "../test/test_util.hpp"
 
 namespace tdc {
 
@@ -58,8 +57,8 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	}
 
 	DLOG(INFO) << "LF: " << arr_to_debug_string(LF, bwt_length);
-	assert_permutation(LF,bwt_length);
 	DCHECK([&] () { // unique invariant of the LF mapping
+			assert_permutation(LF,bwt_length);
 			for(len_t i = 0; i < bwt_length; ++i) 
 			for(len_t j = i+1; j < bwt_length; ++j) {
 			if(bwt[i] != bwt[j]) continue;
