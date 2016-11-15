@@ -33,6 +33,13 @@ struct IntegerBaseTrait<dynamic_t>: ConstIntegerBaseTrait<dynamic_t> {
     typedef DyntDispatch Dispatch;
 };
 
+/// Custom integer type for storing values with a runtime-variable number of
+/// bits, with an maximum of 64 bits.
+///
+/// The bit with, however, is not actually stored in an instance of this type,
+/// so it behaves the same as a `uint64_t` in practice.
+///
+/// It exists to support the `GenericIntVector<dynamic_t>` specialization.
 class dynamic_t: public IntegerBase<dynamic_t> {
     uint64_t m_data;
 
