@@ -110,6 +110,7 @@ void register_algorithms(Registry& r) {
     //needs new impl: r.register_compressor< TemplatedExampleCompressor<ExampleDebugCoder> >();
     //needs new impl: r.register_compressor< TemplatedExampleCompressor<ExampleBitCoder> >();
 
+    r.register_compressor< ChainCompressor >();
     r.register_compressor< NoopCompressor >();
 }
 

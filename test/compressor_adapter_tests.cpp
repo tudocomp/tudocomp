@@ -34,6 +34,19 @@ TEST(Chain, test) {
                                     )", REGISTRY);
 }
 
+TEST(Chain, test3) {
+    test::roundtrip<ChainCompressor>("aaaaaabaaaaaabaaaaaabaaaaaab",
+                                     "'a','%','5','%','b',256,258,260,257,259,261,259,",
+                                     R"(
+                                        noop,
+                                        chain(
+                                            example_compressor,
+                                            lzw(debug)
+                                        )
+                                    )", REGISTRY);
+}
+
+
 TEST(NoopCompressor, test) {
     test::roundtrip<NoopCompressor>("abcd", "abcd");
     test::roundtrip<NoopCompressor>("äüö", "äüö");
