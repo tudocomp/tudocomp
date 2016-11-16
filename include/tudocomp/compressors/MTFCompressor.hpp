@@ -2,6 +2,8 @@
 #define MTFCOMPRESSOR_HPP
 #include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/Env.hpp>
+#include <numeric>
 
 namespace tdc {
 
@@ -21,7 +23,7 @@ value_type mtf_encode_char(const value_type v, value_type*const table, const siz
 			return i;
 		}
 	}
-	DCHECK(false) << v << " not in " << arr_to_debug_string(table,table_size); 
+	DCHECK(false) << v << " not in " << arr_to_debug_string(table,table_size);
 	return 0;
 }
 
@@ -45,7 +47,7 @@ void mtf_encode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
 	static constexpr size_t table_size = std::numeric_limits<value_type>::max();
 	value_type table[table_size];
 	std::iota(table, table+table_size, 0);
-	
+
 	char_type c;
 	while(is.get(c)) {
 		os << mtf_encode_char(static_cast<value_type>(c), table, table_size);
@@ -74,7 +76,7 @@ void mtf_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
 // 	std::stringstream ss;
 // 	u(is, ss);
 // 	v
-// 	
+//
 // }
 
 
@@ -85,7 +87,7 @@ public:
         Meta m("compressor", "mtf", "Move To Front Compressor");
         return m;
     }
-    inline MTFCompressor(Env&& env) 
+    inline MTFCompressor(Env&& env)
 		: Compressor(std::move(env)) {
     }
 
