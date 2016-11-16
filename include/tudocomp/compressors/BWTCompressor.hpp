@@ -6,6 +6,7 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/bwt.hpp>
 #include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/util.hpp>
 
 namespace tdc {
 
@@ -27,9 +28,12 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto ostream = output.as_stream();
         auto in = input.as_view();
+		in.ensure_null_terminator();
 
         TextDS<> t(in);
-		const len_t input_size = t.size()+1;
+		DLOG(INFO) << vec_to_debug_string(t);
+		DLOG(INFO) << vec_to_debug_string(t.require_sa());
+		const len_t input_size = t.size();
 
         env().begin_stat_phase("Construct Text DS");
         t.require(TextDS<>::SA);

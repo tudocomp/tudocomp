@@ -68,13 +68,14 @@ void test_bwt(const std::string& str, textds_t& t) {
 template<class textds_t>
 void test_sa(const std::string& str, textds_t& t) {
     auto& sa = t.require_sa();
+	const size_t size = t.size();
 
-    ASSERT_EQ(sa.size(), str.length()+1); //length
-    assert_permutation(sa, str.length()+1); //permutation
-    ASSERT_EQ(sa[0], str.length()); //first element is $
+    ASSERT_EQ(sa.size(), size); //length
+    assert_permutation(sa, size); //permutation
+    ASSERT_EQ(sa[0], size-1); //first element is $
 
     //lexicographic order
-    for(size_t i = 1; i < t.size()+1; i++) {
+    for(size_t i = 1; i < size; i++) {
         ASSERT_GE(t[sa[i]], t[sa[i-1]]);
 		ASSERT_LT(str.substr(sa[i-1]), str.substr(sa[i]));
 		ASSERT_LT(View(str,sa[i-1]), View(str,sa[i]));
@@ -153,7 +154,7 @@ void test_all_ds(const std::string& str, textds_t& t) {
 
 
 void test_lcpsada(const std::string&,TextDS<>& t) {
-	lcp_sada<TextDS<>,SuffixArray<TextDS<>>> lcp;
+	lcp_sada<TextDS<>> lcp;
 	lcp.construct(t);
 	std::cout << lcp.size() << std::endl;
 	assert_eq_sequence(lcp, t.require_lcp());
@@ -173,7 +174,11 @@ class RunTestDS {
 	void operator()(const std::string& str) {
 		VLOG(2) << "str = \"" << str << "\"" << " size: " << str.length();
 		Input input(str);
-		textds_t t(input.as_view());
+		InputView in = input.as_view();
+		in.ensure_null_terminator();
+		DCHECK_EQ(str.length()+1, in.size());
+		textds_t t(in);
+		DCHECK_EQ(str.length()+1, t.size());
 		m_testfunc(str, t);
 	}
 };

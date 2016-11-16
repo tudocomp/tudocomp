@@ -8,12 +8,11 @@ template<typename T>
 class InverseSuffixArray;
 template<typename T>
 class PhiArray;
-template<typename T, typename sa_t, typename select_t>
-class lcp_sada;
-template<typename T>
-class LCPArray;
 
-template<template<typename> class lcp_t, template<typename> class isa_t>
+struct LCPArray;
+template<typename select_t = sdsl::select_support_mcl<1,1>> struct LCPSada;
+
+template<class lcp_t, template<typename> class isa_t>
 class TextDS;
 
 

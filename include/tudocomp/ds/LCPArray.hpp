@@ -11,7 +11,7 @@ constexpr int bits = 0;
 typedef size_t len_t;
 
 template<class T>
-class LCPArray {
+class lcp_array {
     typedef sdsl::int_vector<bits> iv_t;
 
 public:
@@ -25,11 +25,11 @@ private:
         const auto& n = sa.size();
 		m_max = *std::max_element(plcp.begin(),plcp.end());
 		m_lcp = iv_t(n, 0, bits_for(m_max));
-		for(len_t i = 1; i < n; i++) { //TODO: start at 0, see line 149
+		for(len_t i = 0; i < n; i++) { //TODO: start at 0, see line 149
 			DCHECK_LT(sa[i], n);
 			m_lcp[i] = plcp[sa[i]];
 		}
-		for(size_t i = 1; i < m_lcp.size(); ++i) { //TODO: start at 0, see line 149
+		for(size_t i = 0; i < m_lcp.size(); ++i) { //TODO: start at 0, see line 149
 			DCHECK_EQ(m_lcp[i], plcp[sa[i]]);
 		}
 	}
@@ -39,7 +39,7 @@ private:
         const auto& n = sa.size();
 		m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
         m_lcp = iv_t(n);
-		for(len_t i = 1; i < n; i++) { //TODO: start at 0, see line 149
+		for(len_t i = 0; i < n; i++) { //TODO: start at 0, see line 149
 			m_lcp[i] = plcp[sa[i]];
 		}
 	}
@@ -77,11 +77,10 @@ public:
 
 template<
 typename T,
-typename sa_t,
 typename select_t = sdsl::select_support_mcl<1,1>>
 class lcp_sada {
     typedef sdsl::int_vector<bits> iv_t;
-	const sa_t* sa;
+	const typename T::sa_t* sa;
 	sdsl::bit_vector bv;
 	std::unique_ptr<select_t> s;
 	public:
@@ -103,8 +102,21 @@ class lcp_sada {
 };
 
 
+#define DEFINE_PARAMETER_CLASS(name, ...) struct name {                  \
+    template<typename TDS>                                              \
+    using construct_t = __VA_ARGS__;                                    \
+                                                                        \
+    template<typename TDS, typename... Args>                            \
+    inline static construct_t<TDS> construct(TDS& td, Args&&... args) { \
+        return construct_t<TDS>(td, std::forward<Args>(args)...);       \
+    }                                                                   \
+}
 
+DEFINE_PARAMETER_CLASS(LCPArray, lcp_array<TDS>);
+template<typename select_t>
+DEFINE_PARAMETER_CLASS(LCPSada, lcp_sada<TDS, select_t>);
 
+#undef DEFINE_PARAMETER_CLASS
 
 }//ns
 #include <tudocomp/ds/SuffixArray.hpp>
@@ -176,29 +188,29 @@ sdsl::int_vector<> create_plcp_naive(const lcp_t& lcp, const isa_t& isa) {
 }
 }
 
-template<typename T, typename sa_t, typename select_t>
-inline len_t lcp_sada<T,sa_t,select_t>::operator[](len_t i) const {
+template<typename T, typename select_t>
+inline len_t lcp_sada<T,select_t>::operator[](len_t i) const {
 	if(size() == 1) return 0;
 	const len_t idx = (*sa)[i];
 	return s->select(idx+1) - 2*idx;
 }
 
-template<typename T, typename sa_t, typename select_t>
-inline void lcp_sada<T,sa_t,select_t>::construct(T& t) {
+template<typename T, typename select_t>
+inline void lcp_sada<T,select_t>::construct(T& t) {
 	sa = &t.require_sa();
-	//iv_t plcp(LCP::phi_algorithm(t)); // use this when the phi algo works!
-	iv_t plcp(LCP::create_plcp_naive(t.require_lcp(),t.require_isa()));
+	iv_t plcp(LCP::phi_algorithm(t)); // use this when the phi algo works!
+	//iv_t plcp(LCP::create_plcp_naive(t.require_lcp(),t.require_isa()));
 	bv = LCP::construct_lcp_sada(plcp);
 	s = std::unique_ptr<select_t>(new select_t(&bv)); 
 }
 
-template<typename T, typename sa_t, typename select_t>
-inline len_t lcp_sada<T,sa_t,select_t>::size() const {
+template<typename T, typename select_t>
+inline len_t lcp_sada<T,select_t>::size() const {
 	return sa->size();
 }
 
 template<class T>
-inline void LCPArray<T>::construct(T& t) {
+inline void lcp_array<T>::construct(T& t) {
 	iv_t plcp(LCP::phi_algorithm(t));
 	construct_lcp_array(plcp, t.require_sa());
 }

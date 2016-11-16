@@ -299,6 +299,7 @@ namespace io {
     /// \sa View.
     class InputView: InputViewInternal, public View {
         friend class Input;
+		bool terminal_null_ensured = false;
 
         inline InputView(InputViewInternal&& mem):
             InputViewInternal(std::move(mem)),
@@ -322,7 +323,9 @@ namespace io {
         inline void ensure_null_terminator() {
             m_variant->ensure_null_terminator();
             (View&) *this = m_variant->view();
+			terminal_null_ensured = true;
         }
+		bool is_terminal_null_ensured() const { return terminal_null_ensured; }
     };
 
     inline InputView Input::Memory::as_view() {

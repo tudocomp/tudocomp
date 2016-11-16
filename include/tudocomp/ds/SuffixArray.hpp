@@ -48,30 +48,23 @@ namespace tdc {
 template<class T>
 void SuffixArray<T>::construct(T& t) {
 	const size_t len = t.size();
+	DCHECK_EQ(t[len-1],0); 
 
-	//TODO:  t.text(); should do the job?
-	uint8_t* copy = new uint8_t[len + 1];
-	for(size_t i = 0; i < len; i++) {
-		copy[i] = t[i];
-	}
-	copy[len] = 0;
 
 	//TODO: with int32_t we can only create SA for texts less than 4GB
 	// should be divsufsort64
 
 	//Use divsufsort to construct
-	int32_t *sa = new int32_t[len + 1];
-	divsufsort(copy, sa, len + 1);
-
-	delete[] copy;
+	int32_t *sa = new int32_t[len];
+	divsufsort(t.text(), sa, len);
 
 	//Bit compress using SDSL
-	size_t w = bits_for(len + 1);
-	m_sa = iv_t(len + 1, 0, w);
+	const size_t w = bits_for(len);
+	m_sa = iv_t(len, 0, w);
 
-	for(size_t i = 0; i < len + 1; i++) {
+	for(size_t i = 0; i < len; i++) {
 		m_sa[i]  = sa[i];
-        DCHECK_LT(m_sa[i], len+1);
+        DCHECK_LT(m_sa[i], len);
 	}
 
 	delete[] sa;

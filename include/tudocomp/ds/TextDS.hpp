@@ -19,7 +19,7 @@ using io::InputView;
 
 /// Manages text related data structures.
 template<
-	template<typename> class lcp_tt = LCPArray, 
+	class lcp_tt = LCPSada<>, 
     template<typename> class isa_tt = InverseSuffixArray>
 class TextDS {
 
@@ -30,7 +30,7 @@ public:
     static const uint64_t Phi = 0x04;
     static const uint64_t LCP = 0x08;
 	typedef TextDS<lcp_tt,isa_tt> this_t;
-	typedef lcp_tt<this_t> lcp_t;
+	typedef typename lcp_tt::template construct_t<this_t> lcp_t;
 	typedef isa_tt<this_t> isa_t;
 	typedef SuffixArray<this_t> sa_t;
 	typedef PhiArray<this_t> phi_t;
@@ -39,19 +39,23 @@ private:
     size_t m_size;
     const value_type* m_text;
 
-    std::unique_ptr<sa_t>        m_sa;
-    std::unique_ptr<isa_t> m_isa;
-    std::unique_ptr<phi_t>           m_phi;
-    std::unique_ptr<lcp_t>              m_lcp;
+	std::unique_ptr<sa_t>  m_sa;
+	std::unique_ptr<isa_t> m_isa;
+	std::unique_ptr<phi_t> m_phi;
+	std::unique_ptr<lcp_t> m_lcp;
 
 public:
     inline TextDS(const InputView& input)
         : m_size(input.size()), m_text((const value_type*)input.data())
     {
+		if(!input.is_terminal_null_ensured()) 
+		 	throw std::logic_error("Terminal Null is not ensured. Please invoke the method ensure_null_terminator() on your input before creating TextDS");
     }
 
     inline TextDS(const InputView& input, uint64_t flags) : TextDS(input)
     {
+		if(!input.is_terminal_null_ensured()) 
+		 	throw std::logic_error("Terminal Null is not ensured. Please invoke the method ensure_null_terminator() on your input before creating TextDS");
         require(flags);
     }
 
@@ -166,7 +170,7 @@ public:
 namespace tdc {
 
 template<
-	template<typename> class lcp_tt, 
+	class lcp_tt, 
     template<typename> class isa_tt>
 inline void TextDS<lcp_tt,isa_tt>::print(std::ostream& out, size_t base) {
 	size_t w = std::max(6UL, (size_t)std::log10((double)m_size) + 1);
@@ -202,7 +206,7 @@ inline void TextDS<lcp_tt,isa_tt>::print(std::ostream& out, size_t base) {
 }
 
 template<
-	template<typename> class lcp_tt, 
+	class lcp_tt, 
     template<typename> class isa_tt>
 const SuffixArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_sa() {
 	if(!m_sa) {
@@ -213,7 +217,7 @@ const SuffixArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_sa() {
 }
 
 template<
-	template<typename> class lcp_tt, 
+	class lcp_tt, 
     template<typename> class isa_tt>
 const PhiArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_phi() {
 	if(!m_phi) {
@@ -225,7 +229,7 @@ const PhiArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_phi() {
 }
 
 template<
-	template<typename> class lcp_tt, 
+	class lcp_tt, 
     template<typename> class isa_tt>
 const isa_tt<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_isa() {
 	if(!m_isa) {
@@ -236,10 +240,9 @@ const isa_tt<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_isa() {
 	return *m_isa;
 }
 
-template<
-	template<typename> class lcp_tt, 
+template<class lcp_tt, 
     template<typename> class isa_tt>
-const lcp_tt<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_lcp() {
+const typename TextDS<lcp_tt,isa_tt>::lcp_t& TextDS<lcp_tt,isa_tt>::require_lcp() {
 	if(!m_lcp) {
 		m_lcp = std::unique_ptr<lcp_t>(new lcp_t());
 		m_lcp->construct(*this);

@@ -36,6 +36,7 @@ public:
 
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
+		in.ensure_null_terminator();
         text_t text(in);
 
         // read options

@@ -43,6 +43,7 @@ public:
 
     inline virtual void compress(Input& input, Output& output) override {
         auto view = input.as_view();
+		view.ensure_null_terminator();
 
         // Construct text data structures
         env().begin_stat_phase("Construct SA, ISA and LCP");
