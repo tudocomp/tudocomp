@@ -18,6 +18,7 @@
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp>
+#include <tudocomp/coders/VariantCoder.hpp>
 
 #include <tudocomp/example/ExampleCompressor.hpp>
 
@@ -62,6 +63,9 @@ void register_algorithms(Registry& r) {
     r.register_compressor<LZSSLCPCompressor<ASCIICoder>>();
     r.register_compressor<LZSSLCPCompressor<ByteCoder>>();
     r.register_compressor<LZSSLCPCompressor<BitOptimalCoder>>();
+
+    // [!] causes infinite loop in tdc::Registry::all_algorithms_with_static
+    // r.register_compressor<LZSSLCPCompressor<VariantCoder<ASCIICoder, ByteCoder>>>();
 
     r.register_compressor<LZSSSlidingWindowCompressor<ASCIICoder>>();
     r.register_compressor<LZSSSlidingWindowCompressor<ByteCoder>>();
