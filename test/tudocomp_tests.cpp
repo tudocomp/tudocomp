@@ -590,7 +590,8 @@ TEST(IO, bits) {
     std::stringstream ss_out;
 
     {
-        BitOStream out(ss_out);
+        Output output(ss_out);
+        BitOStream out(output);
         out.write_bit(0);                   //0
         out.write_bit(1);                   //1
         out.write_int(-1, 2);               //11
@@ -605,8 +606,8 @@ TEST(IO, bits) {
 
     //basic input test
     {
-        std::stringstream ss_in(result);
-        BitIStream in(ss_in);
+        Input input(result);
+        BitIStream in(input);
 
         ASSERT_EQ(in.read_int<uint32_t>(24), 0x76F433U);
         ASSERT_TRUE(in.eof());
@@ -614,8 +615,8 @@ TEST(IO, bits) {
 
     //advanced input test
     {
-        std::stringstream ss_in(result);
-        BitIStream in(ss_in);
+        Input input(result);
+        BitIStream in(input);
 
         ASSERT_EQ(in.read_bit(), 0);
         ASSERT_EQ(in.read_bit(), 1);
@@ -632,17 +633,23 @@ TEST(IO, bits_eof) {
     // bit stream until EOF and ensure exactly i bits have been read
     for(size_t i = 0; i < 100; i++) {
         // write i bits
-        std::ostringstream result;
+        std::string result;
         {
-            BitOStream out(result);
-            for(size_t k = i; k; k--) out.write_bit(1);
+            std::ostringstream ss_result;
+            Output output(ss_result);
+            {
+                BitOStream out(output);
+                for(size_t k = i; k; k--) out.write_bit(1);
+            }
+            result = ss_result.str();
         }
 
         // read bits until EOF
         size_t n = 0;
         {
-            std::istringstream is(result.str());
-            BitIStream in(is);
+            Input input(result);
+            BitIStream in(input);
+            ASSERT_EQ(i == 0, in.eof());
             for(; !in.eof(); n++) ASSERT_EQ(1, in.read_bit());
         }
 

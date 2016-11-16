@@ -26,14 +26,26 @@ using namespace tdc;
 using namespace tdc_algorithms;
 
 TEST(Chain, test) {
-    /*test::roundtrip<ChainCompressor>("aaaaaabaaaaaabaaaaaabaaaaaab",
-                                     "'a','.','5','.','b',256,258,260,257,259,261,259,",
+    test::roundtrip<ChainCompressor>("aaaaaabaaaaaabaaaaaabaaaaaab",
+                                     View("97:97:49:52:58:98:256:258:260:262:259:261:257:266:0:\0", 53),
                                      R"(
-                                        templated_example_compressor(
-                                            debug(escape_symbol='.'),
-                                        ), lzw(debug),
-                                    )", REGISTRY);*/
+                                        rle(ascii),
+                                        lzw(ascii),
+                                    )", REGISTRY);
 }
+
+TEST(Chain, test3) {
+    test::roundtrip<ChainCompressor>("aaaaaabaaaaaabaaaaaabaaaaaab",
+                                     View("97:97:49:52:58:98:256:258:260:262:259:261:257:266:0:\0", 53),
+                                     R"(
+                                        noop,
+                                        chain(
+                                            rle(ascii),
+                                            lzw(ascii)
+                                        )
+                                    )", REGISTRY);
+}
+
 
 TEST(NoopCompressor, test) {
     test::roundtrip<NoopCompressor>("abcd", "abcd");

@@ -5,12 +5,10 @@
 #include <iostream>
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/lz78/dictionary.hpp>
+#include <tudocomp/compressors/lz78/LZ78Dictionary.hpp>
 
 namespace tdc {
 namespace lz78 {
-
-using lz78_dictionary::CodeType;
 
 /// A lz78 dictonary entry
 struct Factor {
@@ -33,7 +31,6 @@ inline bool operator!= (const Factor& left, const Factor& right) {
         || left.chr != right.chr;
 }
 
-}
-}
+}} //ns
 
 #endif

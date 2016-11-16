@@ -55,7 +55,7 @@ public:
     inline std::unique_ptr<Compressor> select_algorithm_or_exit(const AlgorithmValue& algo) const;
     inline std::unique_ptr<Compressor> select_algorithm_or_exit(string_ref text) const;
     inline static Registry with_all_from(std::function<void(Registry&)> f);
-    inline std::string generate_doc_string();
+    inline std::string generate_doc_string() const;
     /// \endcond
 };
 

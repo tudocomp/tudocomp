@@ -4,19 +4,13 @@
 #include <tudocomp/NoopCompressor.hpp>
 #include <tudocomp/InnerNullCompressor.hpp>
 
-#include <tudocomp/lz78/Lz78DebugCoder.hpp>
-#include <tudocomp/lz78/Lz78BitCoder.hpp>
-
-#include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
-
-#include <tudocomp/misc/LCPSuffixLinkCompressor.hpp>
-
 //compressors
 #include <tudocomp/compressors/ESACompressor.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
 #include <tudocomp/compressors/LZSSSlidingWindowCompressor.hpp>
 #include <tudocomp/compressors/LZWCompressor.hpp>
+#include <tudocomp/compressors/RunLengthEncoder.hpp>
 #include <tudocomp/compressors/EasyRLECompressor.hpp>
 #include <tudocomp/compressors/MTFCompressor.hpp>
 #include <tudocomp/compressors/BWTCompressor.hpp>
@@ -25,18 +19,11 @@
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp>
-
-#include <tudocomp/example/ExampleCompressor.hpp>
+#include <tudocomp/coders/VariantCoder.hpp>
 
 namespace tdc_algorithms {
 
 using namespace tdc;
-
-// Algorithm implementations
-using lz78::Lz78DebugCoder;
-using lz78::Lz78BitCoder;
-
-using lz78::lzcics::Lz78cicsCompressor;
 
 void register_algorithms(Registry& r);
 
@@ -76,17 +63,22 @@ void register_algorithms(Registry& r) {
     r.register_compressor<LZSSLCPCompressor<ByteCoder>>();
     r.register_compressor<LZSSLCPCompressor<BitOptimalCoder>>();
 
+    // [!] causes infinite loop in tdc::Registry::all_algorithms_with_static
+    // r.register_compressor<LZSSLCPCompressor<VariantCoder<ASCIICoder, ByteCoder>>>();
+
     r.register_compressor<LZSSSlidingWindowCompressor<ASCIICoder>>();
     r.register_compressor<LZSSSlidingWindowCompressor<ByteCoder>>();
     r.register_compressor<LZSSSlidingWindowCompressor<BitOptimalCoder>>();
 
-    r.register_compressor< Lz78cicsCompressor<Lz78BitCoder> >();
-    r.register_compressor< Lz78cicsCompressor<Lz78DebugCoder> >();
+    r.register_compressor<RunLengthEncoder<ASCIICoder>>();
+    r.register_compressor<RunLengthEncoder<ByteCoder>>();
+    r.register_compressor<RunLengthEncoder<BitOptimalCoder>>();
 
     r.register_compressor< EasyRLECompressor<> >();
     r.register_compressor< MTFCompressor<> >();
     r.register_compressor< BWTCompressor<> >();
 
+    r.register_compressor< ChainCompressor >();
     r.register_compressor< NoopCompressor >();
 }
 

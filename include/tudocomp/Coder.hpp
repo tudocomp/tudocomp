@@ -10,17 +10,12 @@ namespace tdc {
 /*abstract*/
 class Encoder : public Algorithm {
 
-private:
-    io::OutputStream m_outs;
-
 protected:
-    std::unique_ptr<BitOStream> m_out;
+    std::shared_ptr<BitOStream> m_out;
 
 public:
-    inline Encoder(Env&& env, Output& out)
-        : Algorithm(std::move(env)), m_outs(out.as_stream()) {
-
-        m_out = std::make_unique<BitOStream>(m_outs);
+    inline Encoder(Env&& env, std::shared_ptr<BitOStream> out)
+        : Algorithm(std::move(env)), m_out(out) {
     }
 
     inline ~Encoder() {
@@ -31,26 +26,37 @@ public:
     }
 };
 
+#define ENCODER_CTOR(env, out, literals)                                   \
+        template<typename literals_t>                                      \
+        inline Encoder(Env&& env, Output& out, const literals_t& literals) \
+             : Encoder(std::move(env),                                     \
+                      std::make_shared<BitOStream>(out), literals) {}      \
+        template<typename literals_t>                                      \
+        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, const literals_t& literals) \
+            : tdc::Encoder(std::move(env), out)
+
 /*abstract*/
 class Decoder : public Algorithm {
 
-private:
-    io::InputStream m_ins;
-
 protected:
-    std::unique_ptr<BitIStream> m_in;
+    std::shared_ptr<BitIStream> m_in;
 
 public:
-    inline Decoder(Env&& env, Input& in)
-        : Algorithm(std::move(env)), m_ins(in.as_stream()) {
-
-        m_in = std::make_unique<BitIStream>(m_ins);
+    inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
+        : Algorithm(std::move(env)), m_in(in) {
     }
 
     inline bool eof() const {
         return m_in->eof();
     }
 };
+
+#define DECODER_CTOR(env, in)                                \
+        inline Decoder(Env&& env, Input& in)                 \
+             : Decoder(std::move(env),                       \
+                       std::make_shared<BitIStream>(in)) {}  \
+        inline Decoder(Env&& env, std::shared_ptr<BitIStream> in) \
+            : tdc::Decoder(std::move(env), in)
 
 }
 

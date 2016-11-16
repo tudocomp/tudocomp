@@ -84,15 +84,11 @@ namespace lzw {
 #include <tudocomp/ds/LCPArray.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 
-#include <tudocomp/lz78/Lz78DebugCoder.hpp>
-#include <tudocomp/lz78/Lz78BitCoder.hpp>
-
-#include <tudocomp/lz78/lzcics/Lz78cicsCompressor.hpp>
-
 #include <tudocomp/Range.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp>
+#include <tudocomp/coders/VariantCoder.hpp>
 #include <tudocomp/compressors/ESACompressor.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
