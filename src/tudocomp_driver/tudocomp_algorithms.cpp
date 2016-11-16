@@ -75,6 +75,7 @@ void register_algorithms(Registry& r) {
     r.register_compressor< MTFCompressor<> >();
     r.register_compressor< BWTCompressor<> >();
 
+    r.register_compressor< ChainCompressor >();
     r.register_compressor< NoopCompressor >();
 }
 

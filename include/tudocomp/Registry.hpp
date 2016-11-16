@@ -109,7 +109,7 @@ inline Registry Registry::with_all_from(std::function<void(Registry&)> f) {
     return r;
 }
 
-inline std::string Registry::generate_doc_string() {
+inline std::string Registry::generate_doc_string() const {
     auto print = [](std::vector<decl::Algorithm>& x, size_t iden) {
         std::vector<std::string> cells;
 
@@ -163,7 +163,7 @@ inline std::unique_ptr<Compressor> Registry::select_algorithm_or_exit(const Algo
 
         auto& constructor = m_data->m_compressors[static_only_evald_algo];
 
-        auto registry = Registry();
+        auto registry = *this;
 
         return constructor(Env(env, env->algo_value(), registry));
     } else {
