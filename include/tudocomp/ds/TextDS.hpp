@@ -19,7 +19,7 @@ using io::InputView;
 
 /// Manages text related data structures.
 template<
-	class lcp_tt = LCPSada<>, 
+	class lcp_tt = LCPArray, 
     template<typename> class isa_tt = InverseSuffixArray>
 class TextDS {
 
