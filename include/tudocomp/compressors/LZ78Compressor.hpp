@@ -8,6 +8,7 @@
 #include <tudocomp/compressors/lz78/LZ78Factor.hpp>
 
 #include <tudocomp/Range.hpp>
+#include <tudocomp/coders/BitOptimalCoder.hpp> //default
 
 namespace tdc {
 
@@ -43,7 +44,7 @@ public:
                "`dict_size` has to either be \"inf\", or a positive integer,\n"
                "and determines the maximum size of the backing storage of\n"
                "the dictionary before it gets reset.");
-        m.option("coder").templated<coder_t>();
+        m.option("coder").templated<coder_t, BitOptimalCoder>();
         m.option("dict_size").dynamic("inf");
         return m;
     }

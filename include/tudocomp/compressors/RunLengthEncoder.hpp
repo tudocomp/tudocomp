@@ -15,8 +15,8 @@ private:
 public:
     inline static Meta meta() {
         Meta m("compressor", "rle", "Run-length encoding");
-        m.option("min_run").dynamic("3");
         m.option("coder").templated<coder_t>();
+        m.option("min_run").dynamic("3");
         return m;
     }
 
@@ -57,7 +57,6 @@ public:
                     coder.encode(run_char, literal_r);
 
                     if(flip) {
-                        coder.encode(run_char, literal_r);
                         coder.encode(false, bit_r);
                     }
 

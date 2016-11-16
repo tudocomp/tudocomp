@@ -28,22 +28,22 @@ TEST(TudocompDriver, algorithm_header) {
     std::string text = "asdfghjklöä";
     bool abort = false;
     // Without header
-    roundtrip("lz78(debug)", "_header_test_0", text, true, abort);
+    roundtrip("lz78(ascii)", "_header_test_0", text, true, abort);
 
     // With header
-    roundtrip("lz78(debug)", "_header_test_1", text, false, abort);
+    roundtrip("lz78(ascii)", "_header_test_1", text, false, abort);
 
     ASSERT_FALSE(abort);
 
     std::string text0 = read_test_file(roundtrip_comp_file_name(
-        "lz78(debug)", "_header_test_0"));
+        "lz78(ascii)", "_header_test_0"));
 
-    ASSERT_TRUE(text0.find('(') == 0);
+    ASSERT_FALSE(text0.find("lz78(ascii)%") == 0);
 
     std::string text1 = read_test_file(roundtrip_comp_file_name(
-        "lz78(debug)", "_header_test_1"));
+        "lz78(ascii)", "_header_test_1"));
 
-    ASSERT_TRUE(text1.find("lz78(debug)%(") == 0);
+    ASSERT_TRUE(text1.find("lz78(ascii)%") == 0);
 
 }
 
