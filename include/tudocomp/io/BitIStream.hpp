@@ -14,7 +14,7 @@ namespace io {
 /// The current byte in the underlying input stream is buffered and processed
 /// bitwise using another cursor.
 class BitIStream {
-    std::istream* m_stream;
+    InputStream m_stream;
 
     uint8_t m_current, m_next;
 
@@ -30,14 +30,14 @@ class BitIStream {
         m_cursor = MSB;
 
         char c;
-        if(m_stream->get(c)) {
+        if(m_stream.get(c)) {
             m_next = c;
 
-            if(m_stream->get(c)) {
+            if(m_stream.get(c)) {
                 /*DLOG(INFO) << "read_next: ...";*/
 
                 // stream still going
-                m_stream->unget();
+                m_stream.unget();
             } else {
                 // stream over after next, do some checks
                 m_final_bits = c;
@@ -65,11 +65,9 @@ public:
     /// \brief Constructs a bitwise input stream.
     ///
     /// \param input The underlying input stream.
-    inline BitIStream(std::istream& input)
-        : m_stream(&input) {
-
+    inline BitIStream(InputStream&& input) : m_stream(std::move(input)) {
         char c;
-        if(m_stream->get(c)) {
+        if(m_stream.get(c)) {
             m_is_final = false;
             m_next = c;
 
@@ -79,6 +77,12 @@ public:
             m_is_final = true;
             m_final_bits = 0;
         }
+    }
+
+    /// \brief Constructs a bitwise input stream.
+    ///
+    /// \param input The underlying input.
+    inline BitIStream(Input& input) : BitIStream(input.as_stream()) {
     }
 
     /// \brief Reads the next single bit from the input.
@@ -144,12 +148,6 @@ public:
         } while(has_next);
 
         return T(value);
-    }
-
-    /// \brief Provides access to the underlying input stream.
-    /// \return A reference to the underlying input stream.
-    inline std::istream& stream() {
-        return *m_stream;
     }
 
     /// TODO document

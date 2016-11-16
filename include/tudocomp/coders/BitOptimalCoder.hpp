@@ -17,10 +17,7 @@ public:
 
     class Encoder : public tdc::Encoder {
     public:
-        template<typename literals_t>
-        inline Encoder(Env&& env, Output& out, const literals_t& literals)
-            : tdc::Encoder(std::move(env), out) {
-        }
+        ENCODER_CTOR(env, out, literals) {}
 
         template<typename value_t>
         inline void encode(value_t v, const Range& r) {
@@ -34,7 +31,7 @@ public:
 
     class Decoder : public tdc::Decoder {
     public:
-        inline Decoder(Env&& env, Input& in) : tdc::Decoder(std::move(env), in) {}
+        DECODER_CTOR(env, in) {}
 
         template<typename value_t>
         inline value_t decode(const Range& r) {

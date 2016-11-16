@@ -14,7 +14,8 @@ namespace io {
 /// Bits are written into a buffer byte, which is written to the output when
 /// it is either filled or when a flush is explicitly requested.
 class BitOStream {
-    std::ostream* m_stream;
+    OutputStream m_stream;
+
     bool m_dirty;
     uint8_t m_next;
     int m_cursor;
@@ -29,7 +30,7 @@ class BitOStream {
 
     inline void write_next() {
         if (m_dirty) {
-            m_stream->put(char(m_next));
+            m_stream.put(char(m_next));
             reset();
         }
     }
@@ -38,8 +39,14 @@ public:
     /// \brief Constructs a bitwise output stream.
     ///
     /// \param output The underlying output stream.
-    inline BitOStream(std::ostream& output) : m_stream(&output) {
+    inline BitOStream(OutputStream&& output) : m_stream(std::move(output)) {
         reset();
+    }
+
+    /// \brief Constructs a bitwise output stream.
+    ///
+    /// \param output The underlying output.
+    inline BitOStream(Output& output) : BitOStream(output.as_stream()) {
     }
 
     ~BitOStream() {
@@ -109,25 +116,7 @@ public:
 
     /// \brief TODO document - also: deprecated?
     inline void flush() {
-        write_next();
-    }
-
-    /// \brief Writes a sequence of bytes to the output.
-    ///
-    /// Before the sequence is written, the current buffer byte will be
-    /// flushed to the output (see \c flush).
-    ///
-    /// \param bytes The pointer to the byte sequence to write.
-    /// \param len The length of the byte sequence.
-    inline void write_bytes_aligned(const char* bytes, size_t len) {
-        write_next();
-        m_stream->write(bytes, len);
-    }
-
-    /// \brief Provides access to the underlying output stream.
-    /// \return A reference to the underlying output stream.
-    inline std::ostream& stream() {
-        return *m_stream;
+        //TODO DEPRECATED write_next();
     }
 };
 
