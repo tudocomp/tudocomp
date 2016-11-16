@@ -21,8 +21,6 @@
 #include <tudocomp/coders/BitOptimalCoder.hpp>
 #include <tudocomp/coders/VariantCoder.hpp>
 
-#include <tudocomp/example/ExampleCompressor.hpp>
-
 namespace tdc_algorithms {
 
 using namespace tdc;
