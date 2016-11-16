@@ -113,11 +113,6 @@ public:
             write_int(current, b);
         } while(v > 0);
     }
-
-    /// \brief TODO document - also: deprecated?
-    inline void flush() {
-        //TODO DEPRECATED write_next();
-    }
 };
 
 }}
