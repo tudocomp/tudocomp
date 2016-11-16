@@ -633,18 +633,23 @@ TEST(IO, bits_eof) {
     // bit stream until EOF and ensure exactly i bits have been read
     for(size_t i = 0; i < 100; i++) {
         // write i bits
-        std::ostringstream result;
+        std::string result;
         {
-            Output output(result);
-            BitOStream out(output);
-            for(size_t k = i; k; k--) out.write_bit(1);
+            std::ostringstream ss_result;
+            Output output(ss_result);
+            {
+                BitOStream out(output);
+                for(size_t k = i; k; k--) out.write_bit(1);
+            }
+            result = ss_result.str();
         }
 
         // read bits until EOF
         size_t n = 0;
         {
-            Input input(result.str());
+            Input input(result);
             BitIStream in(input);
+            ASSERT_EQ(i == 0, in.eof());
             for(; !in.eof(); n++) ASSERT_EQ(1, in.read_bit());
         }
 
