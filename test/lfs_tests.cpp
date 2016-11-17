@@ -2,7 +2,7 @@
 
 #include <tudocomp/lfs/LFSCompressor.hpp>
 
-#include <tudocomp/example/ExampleCompressor.hpp>
+//#include <tudocomp/example/ExampleCompressor.hpp>
 
 #include "gtest/gtest.h"
 
