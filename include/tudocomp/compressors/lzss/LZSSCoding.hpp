@@ -12,14 +12,23 @@ namespace tdc {
 namespace lzss {
 
 template<typename coder_t, typename text_t>
-inline void encode_text(coder_t& coder, const text_t& text, const FactorBuffer& factors) {
+inline void encode_text(coder_t& coder,
+                        const text_t& text,
+                        const FactorBuffer& factors,
+                        bool discard_null_terminator = true) {
     assert(factors.is_sorted());
 
+    auto n = text.size();
+
+    if(discard_null_terminator && text[n-1] == 0) {
+        --n; // discard null terminator
+    }
+
     // encode text size
-    coder.encode(text.size(), size_r);
+    coder.encode(n, size_r);
 
     // define ranges
-    Range text_r(text.size());
+    Range text_r(n);
 
     size_t p = 0;
     for(size_t i = 0; i < factors.size(); i++) {
@@ -41,7 +50,7 @@ inline void encode_text(coder_t& coder, const text_t& text, const FactorBuffer& 
         p += f.len;
     }
 
-    while(p < text.size())  {
+    while(p < n)  {
         uint8_t c = text[p++];
 
         // encode symbol
