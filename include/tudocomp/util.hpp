@@ -412,6 +412,19 @@ void assert_permutation(const T& p, size_t n) {
         DCHECK_LT(p[i],n);
     }
 }
+/** Checks whether p is a permutation that maps to the range [from,to) instead of [0..n)
+ */
+template<class T>
+void assert_permutation_range(const T& p, size_t n,size_t from, size_t to) {
+    for(size_t i = 0; i < n; ++i)
+    for(size_t j = 0; j < n; ++j)
+    {
+        if(i == j) continue;
+        DCHECK_NE(p[i],p[j]) << "at positions " << i << " and " << j;
+        DCHECK_GE(p[i],from);
+        DCHECK_LT(p[i],to);
+    }
+}
 #else
 template<class T> void assert_permutation(const T&, size_t) {}
 #endif

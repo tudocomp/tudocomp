@@ -4,6 +4,7 @@
 #include <climits>
 #include <cstdint>
 #include <iostream>
+#include <tudocomp/io/Output.hpp>
 
 namespace tdc {
 namespace io {
