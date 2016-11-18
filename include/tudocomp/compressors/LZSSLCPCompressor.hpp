@@ -55,51 +55,57 @@ public:
         auto& lcp = text.require_lcp();
 
         // Factorize
-        len_t len = text.size();
+        const len_t text_length = text.size();
         lzss::FactorBuffer factors;
 
         env().begin_stat_phase("Factorize");
         len_t fact_min = 3; //factor threshold
 
-        for(size_t i = 0; i < len;) {
+        for(size_t i = 0; i+1 < text_length;) { // we omit T[text_length-1] since we assume that it is the \0 byte!
             //get SA position for suffix i
-            size_t h = isa[i];
+            const size_t& cur_pos = isa[i];
+			DCHECK_NE(cur_pos,0); // isa[i] == 0 <=> T[i] = 0
 
+			//compute naively PSV
             //search "upwards" in LCP array
             //include current, exclude last
-            size_t p1 = lcp[h];
-            ssize_t h1 = h - 1;
-            if (p1 > 0) {
-                while (h1 >= 0 && sa[h1] > sa[h]) {
-                    p1 = std::min(p1, size_t(lcp[h1--]));
+            size_t psv_lcp = lcp[cur_pos];
+            ssize_t psv_pos = cur_pos - 1;
+            if (psv_lcp > 0) {
+                while (psv_pos >= 0 && sa[psv_pos] > sa[cur_pos]) {
+                    psv_lcp = std::min<size_t>(psv_lcp, lcp[psv_pos--]);
                 }
             }
 
+			//compute naively NSV, TODO: use NSV data structure
             //search "downwards" in LCP array
             //exclude current, include last
-            size_t p2 = 0;
-            size_t h2 = h + 1;
-            if (h2 < len) {
-                p2 = SSIZE_MAX;
+            size_t nsv_lcp = 0;
+            size_t nsv_pos = cur_pos + 1;
+            if (nsv_pos < text_length) {
+                nsv_lcp = SSIZE_MAX;
                 do {
-                    p2 = std::min(p2, size_t(lcp[h2]));
-                    if (sa[h2] < sa[h]) {
+                    nsv_lcp = std::min<size_t>(nsv_lcp, lcp[nsv_pos]);
+                    if (sa[nsv_pos] < sa[cur_pos]) {
                         break;
                     }
-                } while (++h2 < len);
+                } while (++nsv_pos < text_length);
 
-                if (h2 >= len) {
-                    p2 = 0;
+                if (nsv_pos >= text_length) {
+                    nsv_lcp = 0;
                 }
             }
 
             //select maximum
-            size_t p = std::max(p1, p2);
-            if (p >= fact_min) {
+            const size_t& max_lcp = std::max(psv_lcp, nsv_lcp);
+            if(max_lcp >= fact_min) {
+				const ssize_t& max_pos = max_lcp == psv_lcp ? psv_pos : nsv_pos;
+				DCHECK_LT(max_pos, text_length);
+				DCHECK_GE(max_pos, 0);
                 // new factor
-                factors.push_back(lzss::Factor(i, sa[p == p1 ? h1 : h2], p));
+                factors.push_back(lzss::Factor(i, sa[max_pos], max_lcp));
 
-                i += p; //advance
+                i += max_lcp; //advance
             } else {
                 ++i; //advance
             }
