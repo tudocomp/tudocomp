@@ -217,6 +217,8 @@ public:
         //start_position=0;
         //if no more terminals, write rest of text
         while( pos<(int)t.size()){
+
+            coder.encode(t[pos],literal_r);
             output_string+=t[pos++];
         }
 
