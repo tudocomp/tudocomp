@@ -45,6 +45,7 @@ public:
         auto ostream = output.as_stream();
         //creating lcp and sa
         auto in = input.as_view();
+        in.ensure_null_terminator();
         TextDS<> t(in);
         t.require(TextDS<>::SA | TextDS<>::LCP);
         auto& sa_t = t.require_sa();
