@@ -1,6 +1,6 @@
 //Test the longest first substitution
 
-#include <tudocomp/lfs/LFSCompressor.hpp>
+#include <tudocomp/compressors/lfs/LFSCompressor.hpp>
 
 //#include <tudocomp/example/ExampleCompressor.hpp>
 
@@ -16,11 +16,12 @@
 #include "tudocomp_test_util.hpp"
 
 using tdc::LFSCompressor;
+using namespace tdc;
 
 TEST(lfs, test) {
 
     std::string comp_result;
-    auto compressor = tdc::create_algo<LFSCompressor>();
+    auto compressor = tdc::create_algo<LFSCompressor<ASCIICoder>>();
 
     tdc::Input input("abaaabbababb$");
 
@@ -56,14 +57,15 @@ TEST(lfs, test) {
 
     // compare the expected result against the output string to determine test failure or success
     //ASSERT_EQ("abc%6%de", output_str);
-    ASSERT_EQ("abaaabbababb$", decode_result.substr(0, decode_result.length()-1));
+    //.substr(0, decode_result.length()-1)
+    ASSERT_EQ("abaaabbababb$", decode_result);
     //ASSERT_TRUE(true);
 }
 
 TEST(lfs, test2) {
 
     std::string comp_result;
-    auto compressor = tdc::create_algo<LFSCompressor>();
+    auto compressor = tdc::create_algo<LFSCompressor<ASCIICoder>>();
 
     // create the input for the test (a string constant)
     tdc::Input input("mississippi$");
@@ -96,10 +98,10 @@ TEST(lfs, test2) {
     std::string decode_result = stm2.str();
     // compare the expected result against the output string to determine test failure or success
 
-    ASSERT_EQ("mississippi$", decode_result.substr(0, decode_result.length()-1));
+    ASSERT_EQ("mississippi$", decode_result);
 }
 
 
 TEST(lfs, roundtrip1) {
-    test::roundtrip<LFSCompressor>("abaaabbababb", "\\Baa\\A\\B\\A\0\\$abb\\$ab\\$");
+    test::roundtrip<LFSCompressor<ASCIICoder>>("abaaabbababb", "\\Baa\\A\\B\\A\0\\$abb\\$ab\\$");
 }

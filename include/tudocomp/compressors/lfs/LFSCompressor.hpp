@@ -17,10 +17,13 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/SuffixArray.hpp>
 
+#include <tudocomp/tudocomp.hpp>
+
 //#include <sdsl/suffixtrees.hpp>
 
 namespace tdc {
 
+template<typename coder_t>
 class LFSCompressor : public Compressor {
 private:
 
@@ -28,6 +31,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "longest_first_substitution_compressor",
             "This is an implementation of the longest first substitution compression scheme.");
+        m.option("coder").templated<coder_t>();
         return m;
     }
 
@@ -41,8 +45,19 @@ public:
 
     }
     inline virtual void compress(Input& input, Output& output) override {
+
+        // Kodierer instanziieren
+        typename coder_t::Encoder coder(
+                    env().env_for_option("coder"), // Environment für den Kodierer //.env_for_option("coder")
+                                                   // (könnte z.B. Optionen haben)
+                    output,                        // Die zu verwendende Ausgabe
+                    NoLiterals());                 // Kein Literal-Iterator
+                                                   // (erkläre ich nochmal)
+
+                // [!] Alle Ausgaben sollten nun über den Kodierer laufen
+
         DLOG(INFO) << "compress lfs";
-        auto ostream = output.as_stream();
+        //auto ostream = output.as_stream();
         //creating lcp and sa
         auto in = input.as_view();
         in.ensure_null_terminator();
@@ -186,12 +201,16 @@ public:
             while(pos< start_position){
                 //get original text, because no symbol...
                 output_string+=t[pos];
+                coder.encode(t[pos], literal_r);
                 pos++;
             }
 
             //write symbol number
             output_string += '\\';
             output_string += (char) (64+symbol_number);
+            //try coder
+            coder.encode('\\', literal_r);
+            coder.encode((64+symbol_number), literal_r);
             pos += symbol_length;
 
         }
@@ -203,9 +222,11 @@ public:
 
         DLOG(INFO) << "output string: ";
         DLOG(INFO) << output_string ;
-        ostream << output_string;
-        ostream << "\\$";
+        //ostream << output_string;
+        //ostream << "\\$";
 
+        coder.encode('\\',literal_r);
+        coder.encode('$',literal_r);
         DLOG(INFO) << "dictionary: ";
 
 
@@ -215,8 +236,13 @@ public:
         while(it != dictionary.end()){
 
             DLOG(INFO) <<  (char) (65+rule++)<< " -> " << *it;
-            ostream << *it;
-            ostream << "\\$";
+            for(char c : *it){
+                coder.encode(c,literal_r);
+            }
+            //ostream << *it;
+            //ostream << "\\$";
+            coder.encode('\\',literal_r);
+            coder.encode('$',literal_r);
             it++;
         }
 
