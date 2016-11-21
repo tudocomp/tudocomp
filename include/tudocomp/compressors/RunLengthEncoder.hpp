@@ -2,6 +2,7 @@
 #define _INCLUDED_RUN_LENGTH_ENCODER_HPP
 
 #include <tudocomp/util.hpp>
+#include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 
 namespace tdc {

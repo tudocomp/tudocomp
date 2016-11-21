@@ -1,6 +1,9 @@
 #ifndef HUFFMANCODER_HPP
 #define HUFFMANCODER_HPP
 
+#include <numeric>
+
+#include <tudocomp/Env.hpp>
 #include <tudocomp/Coder.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/Range.hpp>
