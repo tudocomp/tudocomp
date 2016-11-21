@@ -50,8 +50,8 @@ private:
             return Literal { uint8_t((*m_view)[m_index]), m_index };
         }
 
-        inline bool operator!= (const end_iterator& other) const {
-            return m_index >= m_view->size();
+        inline bool operator!= (const end_iterator&) const {
+            return m_index < m_view->size();
         }
 
         inline iterator& operator++() {
@@ -70,6 +70,9 @@ public:
     inline end_iterator end() const {
         return end_iterator();
     }
+	inline bool empty() const {
+		return m_view->empty();
+	}
 };
 
 }

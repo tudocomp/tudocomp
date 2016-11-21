@@ -21,6 +21,7 @@
 #include <tudocomp/coders/ByteCoder.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp>
 #include <tudocomp/coders/VariantCoder.hpp>
+#include <tudocomp/coders/HuffmanCoder.hpp>
 
 namespace tdc_algorithms {
 
@@ -43,6 +44,7 @@ void register_algorithms(Registry& r) {
     r.register_compressor<LiteralEncoder<ASCIICoder>>();
     r.register_compressor<LiteralEncoder<ByteCoder>>();
     r.register_compressor<LiteralEncoder<BitOptimalCoder>>();
+    r.register_compressor<LiteralEncoder<HuffmanCoder>>();
 
     r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, ASCIICoder>>();
     r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, ByteCoder>>();
