@@ -1,6 +1,9 @@
 #ifndef HUFFMANCODER_HPP
 #define HUFFMANCODER_HPP
 
+#include <numeric>
+
+#include <tudocomp/Env.hpp>
 #include <tudocomp/Coder.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/Range.hpp>
@@ -99,7 +102,7 @@ namespace huff {
 	 * @param C @see count_alphabet
 	 * @param map_from_effective maps from the effective alphabet to the full alphabet
 	 * @param alphabet_size the size of the effective alphabet
-	 * 
+	 *
 	 **/
 	uint8_t* gen_codelengths(const len_t*const C, const uliteral_t*const map_from_effective, const size_t alphabet_size) {
 		size_t A[2*alphabet_size];
@@ -131,7 +134,7 @@ namespace huff {
 			A[h+1] = A[m1] + A[m2]; // create a new parent node
 			A[h] = h + 1;
 			A[m1] = A[m2] = h + 1; //parent pointer
-			std::push_heap(A, A+h+1, comp); 
+			std::push_heap(A, A+h+1, comp);
 		}
 
 		A[1] = 0;
@@ -156,7 +159,7 @@ namespace huff {
 			VLOG(2) << "Char " << map_from_effective[i] << " : " << codelengths[i];
 		}
 
-		DCHECK([&] () 
+		DCHECK([&] ()
 		{// invariants
 			// check that more frequent keywords get shorter codelengthss
 			for(size_t i=0; i < alphabet_size; ++i) {
@@ -176,7 +179,7 @@ namespace huff {
 				{
 					sum += 2ULL<<(max_el - A[alphabet_size+i]);
 				}
-				DCHECK_EQ(sum, 2ULL<<max_el); 
+				DCHECK_EQ(sum, 2ULL<<max_el);
 			}
 			return true;
 		}());
@@ -240,10 +243,10 @@ namespace huff {
 		const uliteral_t* ordered_map_from_effective; //! stores a map from the effective alphabet to the full alphabet, sorted by the length of the codewords
 		const size_t alphabet_size; //! stores the size of the effective alphabet
 
-		/** Given a codelength l, nums returns the number of codewords with the given length. 
+		/** Given a codelength l, nums returns the number of codewords with the given length.
 		 * numl starts with index 0, i.e., numl[l] returns the codewords with length l+1 !
 		 */
-		const uliteral_t*const numl; 
+		const uliteral_t*const numl;
 		const uint8_t longest; //! how long is the longest codeword?
 
 		~huffmantable() { //! all members of the huffmantable are created dynamically
@@ -265,8 +268,8 @@ namespace huff {
 				const size_t _alphabet_size,
 				const uliteral_t*const _numl,
 				const uint8_t _longest)
-			: huffmantable{_ordered_map_from_effective,_alphabet_size, _numl, _longest}, 
-			codewords(_codewords), 
+			: huffmantable{_ordered_map_from_effective,_alphabet_size, _numl, _longest},
+			codewords(_codewords),
 			ordered_codelengths(_ordered_codelengths)
 			{}  
 		const size_t*const codewords; //! the codeword of each character of the effective alphabet
@@ -477,7 +480,7 @@ namespace huff {
 		size_t*const codeword_order = new size_t[alphabet_size];
 		std::iota(codeword_order,codeword_order+alphabet_size,0);
 		std::sort(codeword_order,codeword_order+alphabet_size, [&] (const uliteral_t& i, const uliteral_t& j) { return codelengths[i] < codelengths[j]; });
-		
+
 		const uint8_t longest = *std::max_element(codelengths, codelengths+alphabet_size);
 
 		// the ordered variants are all sorted by the codelengths, (instead of by character values)
