@@ -2,6 +2,7 @@
 #define EASYRLECOMPRESSOR_HPP
 #include <tudocomp/util.hpp>
 #include <tudocomp/util/vbyte.hpp>
+#include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 
 namespace tdc {
