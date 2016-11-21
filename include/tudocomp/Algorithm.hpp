@@ -57,6 +57,7 @@ class Meta {
     std::string m_type;
     std::string m_name;
     std::string m_docs;
+    bool        m_add_null_terminator;
 
     std::vector<decl::Arg> m_options;
 
@@ -90,6 +91,7 @@ public:
         m_type(type),
         m_name(name),
         m_docs(doc),
+        m_add_null_terminator(false),
         m_static_args(ast::Value(std::string(name), {}))
     {
     }
@@ -244,6 +246,10 @@ public:
         return m_type;
     }
 
+    /// \brief Indicates that this Algorithm requires a terminator symbol in Input.
+    inline void needs_sentinel_terminator() {
+        m_add_null_terminator = true;
+    }
 };
 
 inline void gather_types(eval::AlgorithmTypes& target,
