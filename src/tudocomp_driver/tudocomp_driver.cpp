@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 
     google::InitGoogleLogging(argv[0]);
 	google::SetUsageMessage("This tool compresses and decompresses files");
-	if(argc == 1 || strcmp(argv[1],"-h") == 0) {
+	if(argc == 1 || strcmp(argv[1],"-h") == 0 || strcmp(argv[1],"--help") == 0 || strcmp(argv[1],"-help") == 0) {
 //		google::ShowUsageWithFlagsRestrict(argv[0], __FILE__); //shortcut
 		std::vector<google::CommandLineFlagInfo> info;
 		google::GetAllFlags(&info);
