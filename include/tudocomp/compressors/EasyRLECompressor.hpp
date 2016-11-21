@@ -12,7 +12,7 @@ namespace tdc {
  * encoded in vbyte coding.
  */
 template<class char_type>
-void rle_encode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os) {
+void rle_encode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os, size_t offset = 0) {
 	char_type prev;
 	if(!is.get(prev)) return;
 	os << prev;
@@ -22,7 +22,7 @@ void rle_encode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
 			size_t run = 0;
 			while(is.peek() == c) { ++run; is.get(); }
 			os << c;
-			write_vbyte(os, run);
+			write_vbyte(os, run+offset);
 		} else {
 			os << c;
 		}
@@ -33,14 +33,14 @@ void rle_encode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
  * Decodes a run length encoded stream
  */
 template<class char_type>
-void rle_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os) {
+void rle_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os, size_t offset = 0) {
 	char_type prev;
 	if(!is.get(prev)) return;
 	os << prev;
 	char_type c;
 	while(is.get(c)) {
 		if(prev == c) {
-			size_t run = read_vbyte<size_t>(is);
+			size_t run = read_vbyte<size_t>(is)-offset;
 			while(run-- > 0) { os << c; }
 		}
 		os << c;
@@ -53,21 +53,23 @@ class EasyRLECompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "easyrle", "Easy Run Length Encoding Compressor");
+        m.option("offset").dynamic("0");
         return m;
     }
+	const size_t m_offset;
     inline EasyRLECompressor(Env&& env) 
-		: Compressor(std::move(env)) {
+		: Compressor(std::move(env)), m_offset(this->env().option("offset").as_integer()) {
     }
 
     inline virtual void compress(Input& input, Output& output) override {
 		auto is = input.as_stream();
 		auto os = output.as_stream();
-		rle_encode(is,os);
+		rle_encode(is,os,m_offset);
 	}
     inline virtual void decompress(Input& input, Output& output) override {
 		auto is = input.as_stream();
 		auto os = output.as_stream();
-		rle_decode(is,os);
+		rle_decode(is,os,m_offset);
 	}
 };
 
