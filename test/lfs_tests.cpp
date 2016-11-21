@@ -32,6 +32,8 @@ void run_coder_test(const std::string compression_string) {
 
         c.compress(dummy_input, output);
         compressed=stm.str();
+        DLOG(INFO) << "compressed:";
+        DLOG(INFO) << compressed;
     }
     // decompress
     {
@@ -75,24 +77,31 @@ void run_coder_test_to_file(const std::string filename, const std::string compre
 }
 
 
-TEST(lfs, as_stream){
-     run_coder_test<BitOptimalCoder>("mississippi$");
-
-    run_coder_test<ASCIICoder>("mississippi$");
+TEST(lfs, as_stream_aba){
 
      run_coder_test<BitOptimalCoder>("abaaabbababb$");
 
     run_coder_test<ASCIICoder>("abaaabbababb$");
 }
 
-TEST(lfs, as_file){
-     run_coder_test_to_file<BitOptimalCoder>("out.bits", "mississippi$");
 
-    run_coder_test_to_file<ASCIICoder>("out.ascii", "mississippi$");
+TEST(lfs, as_stream_mis){
+     run_coder_test<BitOptimalCoder>("mississippi$");
+
+    run_coder_test<ASCIICoder>("mississippi$");
+}
+
+TEST(lfs, as_file_aba){
 
      run_coder_test_to_file<BitOptimalCoder>("out2.bits", "abaaabbababb$");
 
     run_coder_test_to_file<ASCIICoder>("out2.ascii", "abaaabbababb$");
+}
+
+TEST(lfs, as_file_mis){
+     run_coder_test_to_file<BitOptimalCoder>("out.bits", "mississippi$");
+
+    run_coder_test_to_file<ASCIICoder>("out.ascii", "mississippi$");
 }
 
 //doesnt work anymore

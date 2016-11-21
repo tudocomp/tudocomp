@@ -172,37 +172,30 @@ public:
                     }
                     int length_of_symbol = top.first;
                     std::tuple<int,int,int> symbol(*it, non_terminal_symbol_number, length_of_symbol);
-                   // DLOG(INFO) << "added symbol: " << non_terminal_symbol_number << " at pos " << *it;
                     non_terminal_symbols.push(symbol);
                 }
                 dictionary.push_back(substring);
-               // DLOG(INFO) << "added rule:";
-               // DLOG(INFO) << (char) (64+non_terminal_symbol_number) << " -> " << substring;
                 non_terminal_symbol_number++;
             }
         }
 
 
-        std::string output_string ="";
-        DLOG(INFO) << "dictionary: ";
+        //std::string output_string ="";
+        //DLOG(INFO) << "dictionary: ";
 
 
         auto it = dictionary.begin();
 
-        int rule =0;
+        // encode dictionary:
         while(it != dictionary.end()){
             //first length of non terminal symbol
             std::string symbol = *it;
             coder.encode(symbol.length(),literal_r);
 
-            DLOG(INFO) <<  (char) (65+rule++)<< " -> " << *it;
+           // DLOG(INFO) <<  (char) (65+rule++)<< " -> " << *it;
             for(char c : *it){
                 coder.encode(c,literal_r);
             }
-            //ostream << *it;
-            //ostream << "\\$";
-            //coder.encode('\\',literal_r);
-            //coder.encode('$',literal_r);
             it++;
         }
         coder.encode(0,literal_r);
@@ -221,18 +214,15 @@ public:
 
             while(pos< start_position){
                 //get original text, because no symbol...
-                output_string+=t[pos];
+                //output_string+=t[pos];
                 coder.encode(0, bit_r);
                 coder.encode(t[pos], literal_r);
                 pos++;
             }
 
             //write symbol number
-            output_string += '\\';
-            output_string += (char) (64+symbol_number);
+
             //try coder
-            //coder.encode('\\', literal_r);
-            //coder.encode((64+symbol_number), literal_r);
             coder.encode(1, bit_r);
             coder.encode(symbol_number, literal_r);
             pos += symbol_length;
@@ -244,19 +234,10 @@ public:
 
             coder.encode(0, bit_r);
             coder.encode(t[pos], literal_r);
-            output_string+=t[pos++];
+            pos++;
         }
 
-        DLOG(INFO) << "output string: ";
-        DLOG(INFO) << output_string ;
-        //ostream << output_string;
-        //ostream << "\\$";
-
-        //coder.encode('\\',literal_r);
-        //coder.encode('$',literal_r);
-
-
-
+        DLOG(INFO) << "compression with lfs done";
 
     }
 
@@ -312,74 +293,6 @@ public:
                 end_of_text = true;
             }
         }
-
-
-       // auto ostream = output.as_stream();
-        //ostream << output_string;
-        //return;
-
-
-        //std::vector<std::pair<int,int>> symbol_positions;// = new std::vector<std::pair<int,int>>;
-        //auto istream = input.as_stream();
-        //auto in = input.as_stream();
-        //std::string text;
-        //char cur_char;
-        //bool escape=false;
-        //bool dict = false;
-        //char escape_symbol = '\\';
-        //char dollar_symbol = '$';
-        //std::string symbol;
-
-        /*
-        std::vector<std::string> symbol_list;// = new std::vector<std::string>;
-        while(in.get(cur_char)){
-            if(dict){
-                if(cur_char != escape_symbol ){
-                    symbol += cur_char;
-                } else {
-                    //symbol ends...
-
-                    symbol_list.push_back(symbol);
-                    // DLOG(INFO) << "symobl: " << symbol << " symbol number: " << symbol_list.size();
-                    symbol="";
-                    in.get(cur_char);
-                }
-            } else
-            if(!escape){
-                escape=false;
-                if(cur_char != escape_symbol ){
-                    text += cur_char;
-                } else {
-                    escape = true;
-                }
-            } else {
-                escape=false;
-                if(cur_char == dollar_symbol){
-                  //  DLOG(INFO) << text;
-                    dict=true;
-                } else {
-                    std::pair<int,int> pair (text.length(), cur_char-64);
-                    symbol_positions.push_back(pair);
-                  //  DLOG(INFO) << "non terminal symbol at: " << text.length() << " symbol: " << cur_char-64;
-                }
-
-            }
-
-        }
-        int added_symbols=0;
-        auto it = symbol_positions.begin();
-        while(it!= symbol_positions.end()){
-            std::pair<int,int> position = *it;
-            std::string symbol = symbol_list[position.second-1];
-            text = text.substr(0, position.first + added_symbols) + symbol + text.substr(position.first + added_symbols , text.size());
-            added_symbols+=symbol.size();
-           // DLOG(INFO) << text;
-            it++;
-
-        }
-        DLOG(INFO) << text;
-        auto ostream = output.as_stream();
-        ostream << text;*/
     }
 
 };
