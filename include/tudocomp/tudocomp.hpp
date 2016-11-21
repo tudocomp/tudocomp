@@ -89,6 +89,7 @@ namespace lzw {
 #include <tudocomp/coders/ByteCoder.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp>
 #include <tudocomp/coders/VariantCoder.hpp>
+#include <tudocomp/LiteralEncoder.hpp>
 #include <tudocomp/compressors/ESACompressor.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>

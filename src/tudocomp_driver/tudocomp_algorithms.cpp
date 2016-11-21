@@ -3,6 +3,7 @@
 #include <tudocomp/ChainCompressor.hpp>
 #include <tudocomp/NoopCompressor.hpp>
 #include <tudocomp/InnerNullCompressor.hpp>
+#include <tudocomp/LiteralEncoder.hpp>
 
 //compressors
 #include <tudocomp/compressors/ESACompressor.hpp>
@@ -38,6 +39,10 @@ void register_algorithms(Registry& r) {
     // Because the tudocomp_driver has to select the algorithm
     // at runtime, we need to explicitly register all possible
     // template instances
+
+    r.register_compressor<LiteralEncoder<ASCIICoder>>();
+    r.register_compressor<LiteralEncoder<ByteCoder>>();
+    r.register_compressor<LiteralEncoder<BitOptimalCoder>>();
 
     r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, ASCIICoder>>();
     r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, ByteCoder>>();
