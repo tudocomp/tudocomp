@@ -56,7 +56,7 @@ public:
         Meta m("compressor", "easyrle", "Easy Run Length Encoding Compressor");
         return m;
     }
-    inline EasyRLECompressor(Env&& env) 
+    inline EasyRLECompressor(Env&& env)
 		: Compressor(std::move(env)) {
     }
 
