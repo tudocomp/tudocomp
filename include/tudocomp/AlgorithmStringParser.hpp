@@ -484,15 +484,18 @@ namespace tdc {
             std::string m_name;
             std::vector<Arg> m_arguments;
             std::string m_doc;
+            bool m_add_null_terminator;
 
         public:
 
             inline Algorithm(std::string&& name,
                              std::vector<Arg>&& args,
-                             std::string&& doc):
+                             std::string&& doc,
+                             bool add_null_terminator):
                 m_name(std::move(name)),
                 m_arguments(std::move(args)),
-                m_doc(std::move(doc)) {}
+                m_doc(std::move(doc)),
+                m_add_null_terminator(add_null_terminator) {}
 
             inline const std::string& name() const {
                 return m_name;
@@ -508,6 +511,11 @@ namespace tdc {
             inline const std::string& doc() const {
                 return m_doc;
             }
+
+            inline bool add_null_terminator() {
+                return m_add_null_terminator;
+            }
+
             inline std::string to_string(bool omit_type = false) const;
 
             friend inline bool operator==(const Algorithm &lhs, const Algorithm &rhs);
@@ -670,7 +678,8 @@ namespace tdc {
 
             return Algorithm(std::move(v.invokation_name()),
                              std::move(args),
-                             std::move(doc)
+                             std::move(doc),
+                             false
             );
         }
 

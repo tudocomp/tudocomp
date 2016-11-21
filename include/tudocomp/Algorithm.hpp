@@ -210,7 +210,8 @@ public:
         return decl::Algorithm(
             std::move(m_name),
             std::move(m_options),
-            std::move(m_docs)
+            std::move(m_docs),
+            m_add_null_terminator
         );
     }
 
