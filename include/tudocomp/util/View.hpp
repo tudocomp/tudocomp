@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <cstring>
 #include <glog/logging.h>
+#include <tudocomp/def.hpp>
 
 namespace tdc {
 
@@ -24,7 +25,7 @@ namespace tdc {
 ///
 /// Creating/Copying/Modifying a View will not copy any of the data it points at.
 class View {
-    const uint8_t* m_data;
+    const uliteral_t* m_data;
     size_t   m_size;
 
     inline void bound_check(size_t pos) const {
@@ -41,7 +42,7 @@ class View {
 public:
     // Type members
 
-    using value_type             = uint8_t;
+    using value_type             = uliteral_t;
     using size_type              = std::size_t;
     using difference_type        = std::ptrdiff_t;
     using const_reference        = const value_type&;

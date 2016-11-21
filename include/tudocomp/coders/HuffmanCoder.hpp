@@ -10,22 +10,9 @@
 #ifndef NDEBUG
 #include <bitset>
 #endif//NDEBUG
+#include <tudocomp/def.hpp>
 
 namespace tdc {
-
-
-#if defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(__clang__)
-	#define tdc_likely(x)	__builtin_expect(x, 1)
-	#define tdc_unlikely(x)  __builtin_expect(x, 0)
-	#define tdc_warn_unused_result  __attribute__((warn_unused_result))
-#else
-	#define tdc_likely(x)	x
-	#define tdc_unlikely(x)  x
-	#define tdc_warn_unused_result
-#endif
-	typedef size_t len_t; // length type for text positions of the input
-	typedef char literal_t; // data type of the alphabet
-	typedef std::make_unsigned<literal_t>::type uliteral_t; // unsigned data type of the alphabet
 
 namespace huff {
 
@@ -50,16 +37,14 @@ namespace huff {
 	}
 	template<class T>
 	len_t* count_alphabet_literals(const T& input) {
-		typedef std::make_unsigned<literal_t>::type value_type;
-		constexpr size_t max_literal = std::numeric_limits<value_type>::max();
-		len_t* C { new len_t[max_literal+1] };
-		std::memset(C, 0, sizeof(len_t)*(max_literal+1));
+		len_t* C { new len_t[uliteral_max+1] };
+		std::memset(C, 0, sizeof(len_t)*(uliteral_max+1));
 
 		for(auto it = input.begin(); it != input.end(); ++it) {
 			literal_t c = (*it).c;
-			DCHECK_LT(static_cast<value_type>(c), max_literal+1);
-			DCHECK_LT(C[static_cast<value_type>(c)], std::numeric_limits<len_t>::max());
-			++C[static_cast<value_type>(c)];
+			DCHECK_LT(static_cast<uliteral_t>(c), uliteral_max+1);
+			DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_t>::max());
+			++C[static_cast<uliteral_t>(c)];
 		}
 		return C;
 	}
@@ -67,8 +52,7 @@ namespace huff {
 	 *  @param C @see count_alphabet
 	 */
 	size_t effective_alphabet_size(const len_t* C) {
-		constexpr size_t max_literal = std::numeric_limits<uliteral_t>::max();
-		return std::count_if(C, C+max_literal+1, [] (const len_t& i) { return i != 0; }); // size of the effective alphabet
+		return std::count_if(C, C+uliteral_max+1, [] (const len_t& i) { return i != 0; }); // size of the effective alphabet
 	}
 
 	/**
@@ -78,10 +62,9 @@ namespace huff {
 	 * @param C @see count_alphabet
 	 */
 	uliteral_t* gen_effective_alphabet(const size_t*const C, const size_t alphabet_size) {
-		constexpr size_t max_literal = std::numeric_limits<uliteral_t>::max();
 		uliteral_t* map_from_effective { new uliteral_t[alphabet_size] };
 		size_t j = 0;
-		for(size_t i = 0; i <= max_literal; ++i) {
+		for(size_t i = 0; i <= uliteral_max; ++i) {
 			if(C[i] == 0) continue;
 			DCHECK_LT(j, alphabet_size);
 			map_from_effective[j++] = i;
@@ -89,7 +72,7 @@ namespace huff {
 		DCHECK_EQ(j, alphabet_size);
 		for(size_t i = 0; i < alphabet_size; ++i) {
 //		  DCHECK_NE(map_from_effective[i],0);
-			DCHECK_LE(map_from_effective[i], max_literal);
+			DCHECK_LE(map_from_effective[i], uliteral_max);
 			DCHECK_NE(C[map_from_effective[i]],0);
 		}
 		return map_from_effective;
@@ -107,7 +90,7 @@ namespace huff {
 	uint8_t* gen_codelengths(const len_t*const C, const uliteral_t*const map_from_effective, const size_t alphabet_size) {
 		size_t A[2*alphabet_size];
 		for(size_t i=0; i < alphabet_size; i++) {
-			VLOG(2) << "Char " << map_from_effective[i] << " : " << size_t(C[map_from_effective[i]]);
+			tdc_debug(VLOG(2) << "Char " << map_from_effective[i] << " : " << size_t(C[map_from_effective[i]]));
 			A[alphabet_size+i] = C[map_from_effective[i]];
 			A[i] = alphabet_size+i;
 		}
@@ -117,7 +100,7 @@ namespace huff {
 		DCHECK_LE(A[A[0]], A[A[1]]);
 		assert_permutation_offset<size_t*>(A,alphabet_size,alphabet_size);
 
-		VLOG(2) << "A: "<<arr_to_debug_string(A,2*alphabet_size);
+		tdc_debug(VLOG(2) << "A: "<<arr_to_debug_string(A,2*alphabet_size));
 
 
 		size_t h = alphabet_size-1;
@@ -156,7 +139,7 @@ namespace huff {
 		for (size_t i=0; i < alphabet_size; i++) {
 			DCHECK_LE(A[alphabet_size+i], 64); // the latter representation allows only codewords of length at most 64 bits
 			codelengths[i] = A[alphabet_size+i];
-			VLOG(2) << "Char " << map_from_effective[i] << " : " << codelengths[i];
+			tdc_debug(VLOG(2) << "Char " << map_from_effective[i] << " : " << codelengths[i]);
 		}
 
 		DCHECK([&] ()
@@ -233,7 +216,7 @@ namespace huff {
 			DCHECK_LE(ordered_codelengths[i], longest);
 			DCHECK_GT(ordered_codelengths[i], 0);
 			codewords[i] = firstcode[ordered_codelengths[i]-1]++;
-			VLOG(2) << "codeword " << i << " : " << std::bitset<64>(codewords[i]) << ", length " << ordered_codelengths[i];
+			tdc_debug(VLOG(2) << "codeword " << i << " : " << std::bitset<64>(codewords[i]) << ", length " << ordered_codelengths[i]);
 		}
 		delete [] firstcode;
 		return codewords;
@@ -314,15 +297,13 @@ namespace huff {
 	/** maps from the full alphabet to the effective alphabet
 	 */
 	uint8_t* gen_ordered_map_to_effective(const uint8_t*const ordered_map_from_effective, const size_t alphabet_size) {
-			typedef uint8_t value_type;
-			constexpr size_t max_literal = std::numeric_limits<value_type>::max();
-			uint8_t* map_to_effective = new uint8_t[max_literal];
+			uint8_t* map_to_effective = new uint8_t[uliteral_max];
 			std::memset(map_to_effective, 0, sizeof(map_to_effective)*sizeof(uint8_t));
 			for(size_t i = 0; i < alphabet_size; ++i) {
 				map_to_effective[ordered_map_from_effective[i]] = i;
 			}
-			VLOG(2) << "ordered_map_from_effective : " << arr_to_debug_string(ordered_map_from_effective, alphabet_size);
-			VLOG(2) << "map_to_effective : " << arr_to_debug_string(map_to_effective, max_literal);
+			tdc_debug(VLOG(2) << "ordered_map_from_effective : " << arr_to_debug_string(ordered_map_from_effective, alphabet_size));
+			tdc_debug(VLOG(2) << "map_to_effective : " << arr_to_debug_string(map_to_effective, uliteral_max));
 			return map_to_effective;
 	}
 
@@ -338,11 +319,11 @@ namespace huff {
 			const size_t alphabet_size,
 			const size_t*const codewords
 			) {
-		const size_t char_value = static_cast<std::make_unsigned<literal_t>::type>(input);
+		const size_t char_value = static_cast<uliteral_t>(input);
 		const uint8_t& effective_char = ordered_map_to_effective[char_value];
 		DCHECK_LT(effective_char, alphabet_size);
 		os.write_int(codewords[effective_char], ordered_codelengths[effective_char]);
-		VLOG(2) << " codeword " << codewords[effective_char] << " length " << ordered_codelengths[effective_char];
+		tdc_debug(VLOG(2) << " codeword " << codewords[effective_char] << " length " << ordered_codelengths[effective_char]);
 	}
 
 
@@ -350,7 +331,7 @@ namespace huff {
 	 * Encodes a stream storing input_length characters
 	 */
 	void huffman_encode(
-			std::istream& input,
+			std::basic_istream<literal_t>& input,
 			tdc::io::BitOStream& os,
 			const size_t input_length,
 			const uint8_t*const ordered_map_from_effective,
@@ -364,14 +345,9 @@ namespace huff {
 
 			{//now writing
 				os.write_compressed_int<size_t>(input_length);
-				char c;
+				literal_t c;
 				while(input.get(c)) {
 					huffman_encode(c, os, ordered_codelengths, ordered_map_to_effective, alphabet_size, codewords);
-					// const size_t char_value = static_cast<std::make_unsigned<std::string::value_type>::type>(c);
-					// const uint8_t& effective_char = map_to_effective[char_value];
-					// DCHECK_LT(effective_char, alphabet_size);
-					// os.write_int(codewords[effective_char], ordered_codelengths[effective_char]);
-					// VLOG(2) << " codeword " << codewords[effective_char] << " length " << ordered_codelengths[effective_char];
 				}
 			}
 			delete [] ordered_map_to_effective;
@@ -395,8 +371,8 @@ namespace huff {
 				if(ordered_codelengths[i-1] < ordered_codelengths[i])
 					accum_length[ordered_codelengths[i]-1] = i;
 			}
-			VLOG(2) << "ordered_codelengths : " << arr_to_debug_string(ordered_codelengths, alphabet_size);
-			VLOG(2) << "accum_length : " << arr_to_debug_string(accum_length, longest);
+			tdc_debug(VLOG(2) << "ordered_codelengths : " << arr_to_debug_string(ordered_codelengths, alphabet_size));
+			tdc_debug(VLOG(2) << "accum_length : " << arr_to_debug_string(accum_length, longest));
 			return accum_length;
 	}
 	literal_t huffman_decode(
@@ -413,7 +389,7 @@ namespace huff {
 			value = (value<<1) + is.read_bit();
 			++length;
 		} while(value < firstcodes[length-1]);
-		VLOG(2) << " codeword " << value << " length " << length;
+		tdc_debug(VLOG(2) << " codeword " << value << " length " << length);
 		--length;
 //	  DCHECK_LT(accum_length[length]+ (value - firstcodes[length]), alphabet_size);
 		return ordered_map_from_effective[accum_length[length]+ (value - firstcodes[length]) ];
@@ -422,11 +398,9 @@ namespace huff {
 	}
 
 
-
-
 	void huffman_decode(
 			tdc::io::BitIStream& is,
-			std::ostream& output,
+			std::basic_ostream<literal_t>& output,
 			const uliteral_t*const ordered_map_from_effective,
 			const uint8_t*const ordered_codelengths,
 			const size_t alphabet_size,
@@ -438,7 +412,7 @@ namespace huff {
 			const size_t text_length = is.read_compressed_int<size_t>();
 			DCHECK_GT(text_length, 0);
 			const size_t*const firstcodes = gen_first_codes(numl, longest);
-			VLOG(2) << "firstcodes : " << arr_to_debug_string(firstcodes, longest);
+			tdc_debug(VLOG(2) << "firstcodes : " << arr_to_debug_string(firstcodes, longest));
 			size_t num_chars_read = 0;
 			while(true) {
 				output << huffman_decode(is, ordered_map_from_effective, accum_length, firstcodes);

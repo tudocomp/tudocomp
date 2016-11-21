@@ -15,7 +15,7 @@ namespace tdc {
 template<class char_type>
 void rle_encode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os, size_t offset = 0) {
 	char_type prev;
-	if(!is.get(prev)) return;
+	if(tdc_unlikely(!is.get(prev))) return;
 	os << prev;
 	char_type c;
 	while(is.get(c)) {
@@ -36,7 +36,7 @@ void rle_encode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
 template<class char_type>
 void rle_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os, size_t offset = 0) {
 	char_type prev;
-	if(!is.get(prev)) return;
+	if(tdc_unlikely(!is.get(prev))) return;
 	os << prev;
 	char_type c;
 	while(is.get(c)) {
@@ -49,7 +49,6 @@ void rle_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
 	}
 }
 
-template<typename len_t = uint32_t>
 class EasyRLECompressor : public Compressor {
 public:
     inline static Meta meta() {

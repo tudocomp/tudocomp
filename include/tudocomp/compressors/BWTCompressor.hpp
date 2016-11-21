@@ -10,7 +10,6 @@
 
 namespace tdc {
 
-template<typename len_t = uint32_t>
 class BWTCompressor : public Compressor {
 
 private:
@@ -48,8 +47,8 @@ public:
         auto in = input.as_view();
         auto ostream = output.as_stream();
 
-		bwt::char_t* decoded_string = bwt::decode_bwt(in);
-		if(decoded_string == nullptr) {
+		uliteral_t* decoded_string = bwt::decode_bwt(in);
+		if(tdc_unlikely(decoded_string == nullptr)) {
 			return;
 		}
 		ostream << decoded_string;

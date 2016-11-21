@@ -81,9 +81,9 @@ void register_algorithms(Registry& r) {
     r.register_compressor<RunLengthEncoder<ByteCoder>>();
     r.register_compressor<RunLengthEncoder<BitOptimalCoder>>();
 
-    r.register_compressor< EasyRLECompressor<> >();
-    r.register_compressor< MTFCompressor<> >();
-    r.register_compressor< BWTCompressor<> >();
+    r.register_compressor< EasyRLECompressor>();
+    r.register_compressor< MTFCompressor>();
+    r.register_compressor< BWTCompressor>();
 
     r.register_compressor< ChainCompressor >();
     r.register_compressor< NoopCompressor >();
