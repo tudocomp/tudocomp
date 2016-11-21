@@ -184,7 +184,28 @@ public:
 
 
         std::string output_string ="";
+        DLOG(INFO) << "dictionary: ";
 
+
+        auto it = dictionary.begin();
+
+        int rule =0;
+        while(it != dictionary.end()){
+            //first length of non terminal symbol
+            std::string symbol = *it;
+            coder.encode(symbol.length(),literal_r);
+
+            DLOG(INFO) <<  (char) (65+rule++)<< " -> " << *it;
+            for(char c : *it){
+                coder.encode(c,literal_r);
+            }
+            //ostream << *it;
+            //ostream << "\\$";
+            //coder.encode('\\',literal_r);
+            //coder.encode('$',literal_r);
+            it++;
+        }
+        coder.encode(0,literal_r);
 
         //encode string
         int pos = 0;
@@ -201,6 +222,7 @@ public:
             while(pos< start_position){
                 //get original text, because no symbol...
                 output_string+=t[pos];
+                coder.encode(0, bit_r);
                 coder.encode(t[pos], literal_r);
                 pos++;
             }
@@ -209,8 +231,10 @@ public:
             output_string += '\\';
             output_string += (char) (64+symbol_number);
             //try coder
-            coder.encode('\\', literal_r);
-            coder.encode((64+symbol_number), literal_r);
+            //coder.encode('\\', literal_r);
+            //coder.encode((64+symbol_number), literal_r);
+            coder.encode(1, bit_r);
+            coder.encode(symbol_number, literal_r);
             pos += symbol_length;
 
         }
@@ -218,7 +242,8 @@ public:
         //if no more terminals, write rest of text
         while( pos<(int)t.size()){
 
-            coder.encode(t[pos],literal_r);
+            coder.encode(0, bit_r);
+            coder.encode(t[pos], literal_r);
             output_string+=t[pos++];
         }
 
@@ -227,26 +252,9 @@ public:
         //ostream << output_string;
         //ostream << "\\$";
 
-        coder.encode('\\',literal_r);
-        coder.encode('$',literal_r);
-        DLOG(INFO) << "dictionary: ";
+        //coder.encode('\\',literal_r);
+        //coder.encode('$',literal_r);
 
-
-        auto it = dictionary.begin();
-
-        int rule =0;
-        while(it != dictionary.end()){
-
-            DLOG(INFO) <<  (char) (65+rule++)<< " -> " << *it;
-            for(char c : *it){
-                coder.encode(c,literal_r);
-            }
-            //ostream << *it;
-            //ostream << "\\$";
-            coder.encode('\\',literal_r);
-            coder.encode('$',literal_r);
-            it++;
-        }
 
 
 
@@ -255,16 +263,74 @@ public:
     inline virtual void decompress(Input& input, Output& output) override {
         DLOG(INFO) << "decompress lfs";
 
-        std::vector<std::pair<int,int>> symbol_positions;// = new std::vector<std::pair<int,int>>;
+
+
+        typename coder_t::Decoder decoder(
+                    env().env_for_option("coder"), // Environment
+                    input);                        // Eingabe
+
+        std::vector<std::string> dictionary;
+        bool reading_dictionary=true;
+        int length_of_symbol;
+        std::string non_terminal_symbol;
+        while(reading_dictionary){
+            char c1 = decoder.template decode<char>(literal_r); // Dekodiere Literal
+            length_of_symbol = (int) c1;
+            non_terminal_symbol ="";
+            for(int i =0; i< length_of_symbol;i++){
+                c1 = decoder.template decode<char>(literal_r);
+                non_terminal_symbol += c1;
+            }
+            if(length_of_symbol<=0) {
+                reading_dictionary=false;
+            }
+            dictionary.push_back(non_terminal_symbol);
+        }
+
+        auto ostream = output.as_stream();
+        //std::string output_string;
+        bool end_of_text = false;
+        while(!end_of_text){
+            //decode bit
+            bool bit1 = decoder.template decode<bool>(bit_r);
+            char c1;
+            // if bit = 0 its a literal
+            if(!bit1){
+                c1 = decoder.template decode<char>(literal_r); // Dekodiere Literal
+
+                ostream << c1;
+            } else {
+            //else its a non-terminal
+                c1 = decoder.template decode<char>(literal_r); // Dekodiere Literal
+
+                int symbol_number = (int) c1;
+
+                ostream << dictionary.at(symbol_number-1);
+            }
+
+            if(c1 == 0x0) {
+                end_of_text = true;
+            }
+        }
+
+
+       // auto ostream = output.as_stream();
+        //ostream << output_string;
+        //return;
+
+
+        //std::vector<std::pair<int,int>> symbol_positions;// = new std::vector<std::pair<int,int>>;
         //auto istream = input.as_stream();
-        auto in = input.as_stream();
-        std::string text;
-        char cur_char;
-        bool escape=false;
-        bool dict = false;
-        char escape_symbol = '\\';
-        char dollar_symbol = '$';
-        std::string symbol;
+        //auto in = input.as_stream();
+        //std::string text;
+        //char cur_char;
+        //bool escape=false;
+        //bool dict = false;
+        //char escape_symbol = '\\';
+        //char dollar_symbol = '$';
+        //std::string symbol;
+
+        /*
         std::vector<std::string> symbol_list;// = new std::vector<std::string>;
         while(in.get(cur_char)){
             if(dict){
@@ -313,7 +379,7 @@ public:
         }
         DLOG(INFO) << text;
         auto ostream = output.as_stream();
-        ostream << text;
+        ostream << text;*/
     }
 
 };

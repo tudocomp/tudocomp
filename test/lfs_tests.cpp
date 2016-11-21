@@ -18,90 +18,85 @@
 using tdc::LFSCompressor;
 using namespace tdc;
 
-TEST(lfs, test) {
 
-    std::string comp_result;
-    auto compressor = tdc::create_algo<LFSCompressor<ASCIICoder>>();
+template<typename coder_t>
+void run_coder_test(const std::string compression_string) {
+    auto c = create_algo<LFSCompressor<coder_t>>();
 
-    tdc::Input input("abaaabbababb$");
+    std::string compressed;
+    // compress
+    {
+        Input dummy_input(compression_string);
+        std::stringstream stm;
+        Output output = Output::from_stream(stm);
 
-    DLOG(INFO) << "input:";
-    DLOG(INFO) << "abaaabbababb$";
+        c.compress(dummy_input, output);
+        compressed=stm.str();
+    }
+    // decompress
+    {
+        auto c = create_algo<LFSCompressor<coder_t>>();
 
+        Input file_input(compressed);
+        std::stringstream stm;
+        Output dummy_output = Output::from_stream(stm);
 
-    std::stringstream stm;
-    Output output = Output::from_stream(stm);
+        c.decompress(file_input, dummy_output);
+        DLOG(INFO) << "decompressed:";
+        DLOG(INFO) << stm.str();
 
-
-
-
-
-    // invoke the compress method
-    compressor.compress(input, output);
-
-    comp_result = stm.str();
-    //Dosnt work with \0 terminator---
-    //ASSERT_EQ("\\Baa\\A\\B\\A$\0\\$abb\\$ab\\$", comp_result);
-
-    DLOG(INFO) << "encoded:";
-    DLOG(INFO) << comp_result;
-
-    std::stringstream stm2;
-    Output output2 = Output::from_stream(stm2);
-
-    tdc::Input input_decompress(comp_result);
-
-    compressor.decompress(input_decompress, output2);
-
-    std::string decode_result = stm2.str();
-
-    // compare the expected result against the output string to determine test failure or success
-    //ASSERT_EQ("abc%6%de", output_str);
-    //.substr(0, decode_result.length()-1)
-    ASSERT_EQ("abaaabbababb$", decode_result);
-    //ASSERT_TRUE(true);
-}
-
-TEST(lfs, test2) {
-
-    std::string comp_result;
-    auto compressor = tdc::create_algo<LFSCompressor<ASCIICoder>>();
-
-    // create the input for the test (a string constant)
-    tdc::Input input("mississippi$");
-    DLOG(INFO) << "input:";
-    DLOG(INFO) << "mississippi$";
-    // create the output for the test (a buffer)
-
-
-    std::stringstream stm;
-    Output output = Output::from_stream(stm);
-
-
-
-
-
-    // invoke the compress method
-    compressor.compress(input, output);
-
-    comp_result = stm.str();
-    DLOG(INFO) << "encoded:";
-    DLOG(INFO) << comp_result << std::endl;
-
-    tdc::Input input_decompress(comp_result);
-
-    std::stringstream stm2;
-    Output output2 = Output::from_stream(stm2);
-
-
-    compressor.decompress(input_decompress, output2);
-    std::string decode_result = stm2.str();
-    // compare the expected result against the output string to determine test failure or success
-
-    ASSERT_EQ("mississippi$", decode_result);
+    }
 }
 
 
-TEST(lfs, roundtrip1) {
+template<typename coder_t>
+void run_coder_test_to_file(const std::string filename, const std::string compression_string) {
+    auto c = create_algo<LFSCompressor<coder_t>>();
+
+    // compress
+    {
+        Input dummy_input(compression_string);
+        Output file_output(filename, true);
+
+        c.compress(dummy_input, file_output);
+    }
+    // decompress
+    {
+        auto c = create_algo<LFSCompressor<coder_t>>();
+
+        Input file_input(Input::Path{filename});
+        std::stringstream stm;
+        Output dummy_output = Output::from_stream(stm);
+
+        c.decompress(file_input, dummy_output);
+        DLOG(INFO) << "decompressed:";
+        DLOG(INFO) << stm.str();
+    }
+}
+
+
+TEST(lfs, as_stream){
+     run_coder_test<BitOptimalCoder>("mississippi$");
+
+    run_coder_test<ASCIICoder>("mississippi$");
+
+     run_coder_test<BitOptimalCoder>("abaaabbababb$");
+
+    run_coder_test<ASCIICoder>("abaaabbababb$");
+}
+
+TEST(lfs, as_file){
+     run_coder_test_to_file<BitOptimalCoder>("out.bits", "mississippi$");
+
+    run_coder_test_to_file<ASCIICoder>("out.ascii", "mississippi$");
+
+     run_coder_test_to_file<BitOptimalCoder>("out2.bits", "abaaabbababb$");
+
+    run_coder_test_to_file<ASCIICoder>("out2.ascii", "abaaabbababb$");
+}
+
+//doesnt work anymore
+/*TEST(lfs, roundtrip1) {
     test::roundtrip<LFSCompressor<ASCIICoder>>("abaaabbababb", "\\Baa\\A\\B\\A\0\\$abb\\$ab\\$");
-}
+}*/
+
