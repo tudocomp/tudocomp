@@ -103,31 +103,31 @@ TEST(lfs, as_stream_aba){
 
      run_coder_test<BitOptimalCoder>("abaaabbababb$");
 
-    run_coder_test<ASCIICoder>("abaaabbababb$");
+     run_coder_test<ASCIICoder>("abaaabbababb$");
 }
 
 
 TEST(lfs, as_stream_mis){
-     run_coder_test<BitOptimalCoder>("mississippi$");
+    // run_coder_test<BitOptimalCoder>("mississippi$");
 
-    run_coder_test<ASCIICoder>("mississippi$");
+   // run_coder_test<ASCIICoder>("mississippi$");
 }
 
 TEST(lfs, as_file_aba){
 
-     run_coder_test_to_file<BitOptimalCoder>("out2.bits", "abaaabbababb$");
+    // run_coder_test_to_file<BitOptimalCoder>("out2.bits", "abaaabbababb$");
 
-    run_coder_test_to_file<ASCIICoder>("out2.ascii", "abaaabbababb$");
+   // run_coder_test_to_file<ASCIICoder>("out2.ascii", "abaaabbababb$");
 }
 
 TEST(lfs, as_file_mis){
-     run_coder_test_to_file<BitOptimalCoder>("out.bits", "mississippi$");
+    // run_coder_test_to_file<BitOptimalCoder>("out.bits", "mississippi$");
 
-    run_coder_test_to_file<ASCIICoder>("out.ascii", "mississippi$");
+  //  run_coder_test_to_file<ASCIICoder>("out.ascii", "mississippi$");
 }
 
 TEST(lfs, large_file){
-    compress_and_decompress_file<BitOptimalCoder>("sources.1MB");
+    compress_and_decompress_file<BitOptimalCoder>("sources.10MB");
 }
 
 
