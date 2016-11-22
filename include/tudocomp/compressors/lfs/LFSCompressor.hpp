@@ -114,32 +114,36 @@ public:
         //the first in pair is position, the seconds the number of the non terminal symbol
 
         DLOG(INFO) << "computing lrfs";
-        std::priority_queue<std::tuple<int,int,int>, std::vector<std::tuple<int,int,int>>, std::greater<std::tuple<int,int,int>> > non_terminal_symbols;
+        //std::priority_queue<std::tuple<int,int,int>, std::vector<std::tuple<int,int,int>>, std::greater<std::tuple<int,int,int>> > non_terminal_symbols;
+
+        std::vector<std::tuple<int,int,int>> non_terminal_symbols;
         int non_terminal_symbol_number = 0;
         while(!pq.empty()){
             std::pair<int,int> top = pq.top();
             pq.pop();
 
-            //computing substring to be replaced
-            std::string substring;
-            int offset = sa_t[top.second-1];
-            for(int k = 0; k<top.first;k++){
-                substring += t[offset+k];
-            }
+
 
            // DLOG(INFO) << substring;
             //detect all starting positions of this string using the sa and lcp:
             std::vector<int> starting_positions;
 
-            starting_positions.push_back(sa_t[top.second]);
+            if(non_terminals[sa_t[top.second]] == 0){
+                starting_positions.push_back(sa_t[top.second]);
+            }
+            //starting_positions.push_back(sa_t[top.second]);
             int i = top.second;
             while(i>=0 && ((int) lcp_t[i])>=top.first){
-                starting_positions.push_back(sa_t[i-1]);
+                if(non_terminals[sa_t[i-1]] == 0){
+                    starting_positions.push_back(sa_t[i-1]);
+                }
                 i--;
             }
             i = top.second+1;
             while(i< (int)lcp_t.size() &&((int)  lcp_t[i])>=top.first){
-                starting_positions.push_back(sa_t[i]);
+                if(non_terminals[sa_t[i]] == 0){
+                    starting_positions.push_back(sa_t[i]);
+                }
                 i++;
             }
             std::sort(starting_positions.begin(), starting_positions.end());
@@ -188,6 +192,12 @@ public:
 
 
             if(selected_starting_positions.size()>=2){
+                //computing substring to be replaced
+                std::string substring;
+                int offset = sa_t[top.second-1];
+                for(int k = 0; k<top.first;k++){
+                    substring += t[offset+k];
+                }
                 //DLOG(INFO) << "viable lrf, add symbol";
                 for (std::vector<int>::iterator it=selected_starting_positions.begin(); it!=selected_starting_positions.end(); ++it){
                     for(int k = 0; k<top.first; k++){
@@ -195,13 +205,15 @@ public:
                     }
                     int length_of_symbol = top.first;
                     std::tuple<int,int,int> symbol(*it, non_terminal_symbol_number, length_of_symbol);
-                    non_terminal_symbols.push(symbol);
+                    non_terminal_symbols.push_back(symbol);
                 }
                 //DLOG(INFO) <<substring;
                 dictionary.push_back(substring);
                 non_terminal_symbol_number++;
             }
         }
+
+        std::make_heap(non_terminal_symbols.begin(), non_terminal_symbols.end(), std::greater<std::tuple<int,int,int>>());
 
 
         //std::string output_string ="";
@@ -239,13 +251,17 @@ public:
         int start_position;
         int symbol_number ;
         int symbol_length;
-        while(!non_terminal_symbols.empty()){
-            std::tuple<int,int,int> next_position = non_terminal_symbols.top();
+        //int i=0;  &&i<10 i++;
+        while(!non_terminal_symbols.empty() ){
+
+            std::tuple<int,int,int> next_position = non_terminal_symbols.front();
+
             start_position = std::get<0>(next_position);
             symbol_number =std::get<1>(next_position);
             symbol_length = std::get<2>(next_position);
-            non_terminal_symbols.pop();
 
+            std::pop_heap(non_terminal_symbols.begin(),non_terminal_symbols.end(), std::greater<std::tuple<int,int,int>>());
+            non_terminal_symbols.pop_back();
             while(pos< start_position){
                 //get original text, because no symbol...
                 //output_string+=t[pos];
