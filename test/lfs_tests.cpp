@@ -2,8 +2,6 @@
 
 #include <tudocomp/compressors/lfs/LFSCompressor.hpp>
 
-//#include <tudocomp/example/ExampleCompressor.hpp>
-
 #include "gtest/gtest.h"
 
 #include <tudocomp/Algorithm.hpp>
@@ -95,6 +93,7 @@ void compress_and_decompress_file(const std::string filename) {
         Output file_output(filename+".decomp", true);
 
         c.decompress(file_input, file_output);
+        DLOG(INFO) << "decompressed";
 
     }
 }
