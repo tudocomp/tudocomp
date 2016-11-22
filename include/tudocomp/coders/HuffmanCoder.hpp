@@ -142,7 +142,7 @@ namespace huff {
 			tdc_debug(VLOG(2) << "Char " << map_from_effective[i] << " : " << codelengths[i]);
 		}
 
-		DCHECK([&] ()
+		tdc_hdebug(
 		{// invariants
 			// check that more frequent keywords get shorter codelengthss
 			for(size_t i=0; i < alphabet_size; ++i) {
@@ -165,7 +165,7 @@ namespace huff {
 				DCHECK_EQ(sum, 2ULL<<max_el);
 			}
 			return true;
-		}());
+		});
 
 		return codelengths;
 	}
@@ -549,14 +549,21 @@ public:
 				delete [] ordered_map_to_effective;
 			}
 		}
+		//fallback
+        template<typename value_t>
+        inline void encode(value_t v, const Range&) {
+			m_out->write_int(static_cast<uliteral_t>(v),8*sizeof(value_t));
+        }
 
-		inline void encode(literal_t v, const LiteralRange&) {
+        template<typename value_t>
+		inline void encode(value_t v, const LiteralRange&) {
 			DCHECK_NE(m_table.alphabet_size,0);
 			if(tdc_unlikely(m_table.alphabet_size == 1))
 				m_out->write_int(static_cast<uliteral_t>(v),8*sizeof(uliteral_t));
 			else
 				huff::huffman_encode(v, *m_out, m_table.ordered_codelengths, ordered_map_to_effective, m_table.alphabet_size, m_table.codewords);
 		}
+
 	};
 
 	class Decoder : public tdc::Decoder {
@@ -587,10 +594,16 @@ public:
 		}
 
 		template<typename value_t>
-		inline value_t decode(const Range&) {
+		inline value_t decode(const LiteralRange&) {
 			if(tdc_unlikely(ordered_map_from_effective == nullptr))
 				return m_in->read_int<uliteral_t>();
 			return huff::huffman_decode(*m_in, ordered_map_from_effective, accum_length, firstcodes);
+		}
+
+		//fallback
+		template<typename value_t>
+		inline value_t decode(const Range&) {
+			return m_in->read_int<value_t>();
 		}
 
 	};

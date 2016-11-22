@@ -401,7 +401,7 @@ namespace std {
 /// \endcond
 //Check that p is a permutation of [0..n-1]
 
-#ifndef NDEBUG
+#if defined(DEBUG) && !defined(NDEBUG) //functions that cost more than constant time to check
 template<class T>
 void assert_permutation(const T& p, size_t n) {
     for(size_t i = 0; i < n; ++i)

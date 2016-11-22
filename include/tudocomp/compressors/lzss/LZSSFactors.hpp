@@ -45,7 +45,7 @@ public:
         return m_sorted;
     }
 
-    inline void sort() {
+    inline void sort() { //TODO: use radix sort
         if(!m_sorted) {
             std::sort(m_factors.begin(), m_factors.end(),
                 [](const Factor& a, const Factor& b) -> bool { return a.pos < b.pos; });

@@ -18,7 +18,16 @@ namespace tdc {
 #define tdc_debug(x) 
 #else
 #define tdc_debug(x) x
+#ifdef DEBUG
+#define tdc_hdebug(x) x
+#else
+#define tdc_hdebug(x) 
+#endif//DEBUG
+#endif//NDEBUG
+#ifndef tdc_hdebug
+#define tdc_hdebug(x)
 #endif
+
 
 	typedef size_t len_t; // length type for text positions of the input
 	typedef char literal_t; // data type of the alphabet

@@ -66,6 +66,7 @@ public:
     inline text_end_iterator end() const {
         return text_end_iterator();
     }
+	bool empty() const { return m_factors->empty(); }
 };
 
 class StreamLiterals {

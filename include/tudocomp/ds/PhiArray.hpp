@@ -47,22 +47,10 @@ public:
 namespace tdc {
 
 template<class T>
-bool check_permutation(const T& p, size_t n) {
-    for(size_t i = 0; i < n; ++i)
-    for(size_t j = 0; j < n; ++j)
-    {
-        if(i == j) continue;
-        DCHECK_NE(p[i],p[j]) << "at position" << i << " and " << j;
-        DCHECK_LT(p[i],n);
-    }
-    return true;
-}
-
-template<class T>
 inline void PhiArray<T>::construct(T& t) {
 	auto& sa = t.require_sa();
 	auto n = sa.size();
-    DCHECK(check_permutation(sa,n));
+    assert_permutation(sa,n);
 
 	m_phi = iv_t(n, 0, bits_for(n));
 	for(size_t i = 1, prev = sa[0]; i < n; i++) {
@@ -70,7 +58,7 @@ inline void PhiArray<T>::construct(T& t) {
 		prev = sa[i];
 	}
     m_phi[sa[0]] = sa[n-1];
-    DCHECK(check_permutation(m_phi,n));
+    assert_permutation(m_phi,n);
 
 }
 
