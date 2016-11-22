@@ -57,29 +57,45 @@ uint64_t calc_alphabet_size(const T& t) {
     return c.getNumItems();
 }
 
+template<class T>
+bool no_adjacent_identical(const T& t) {
+    for(size_t i = 1; i < t.size(); i++) {
+        if (t[i] == t[i - 1]) return false;
+    }
+    return true;
+}
+
+uint64_t label(uint64_t left, uint64_t right) {
+    auto diff = left ^ right;
+
+    //std::cout << "l: " << std::setbase(2) << left << "\n";
+    //std::cout << "r: " << std::setbase(2) << right << "\n";
+    //std::cout << "d: " << std::setbase(2) << diff << "\n";
+    //std::cout << "\n";
+
+
+    DCHECK(diff != 0);
+
+    auto l = __builtin_ctz(diff);
+
+    auto bit = [](uint8_t l, uint64_t v) {
+        // TODO: test
+        return (v >> l) & 1;
+    };
+
+    // form label(A[i])
+    return 2*l + bit(l, right);
+};
+
 template<class F>
 inline void handle_meta_block_2(View A,
                                 uint64_t alphabet_size,
                                 std::vector<uint8_t>& buf,
                                 F debug_push_meta_block) {
+    debug_push_meta_block(3, A.substr(0, iter_log(alphabet_size)));
+    debug_push_meta_block(2, A.substr(iter_log(alphabet_size)));
     buf.clear();
     buf.insert(buf.cbegin(), A.cbegin(), A.cend());
-
-    auto calc_label = [](uint64_t left, uint64_t right) {
-        auto diff = left ^ right;
-
-        DCHECK(diff != 0);
-
-        auto l = __builtin_ctz(diff);
-
-        auto bit = [](uint8_t l, uint64_t v) {
-            // TODO: test
-            return (v >> l) & 1;
-        };
-
-        // form label(A[i])
-        return 2*l + bit(l, right);
-    };
 
     std::cout << vec_to_debug_string(buf) << "\n";
 
@@ -89,7 +105,7 @@ inline void handle_meta_block_2(View A,
         for (size_t i = start + 1; i < buf.size(); i++) {
             auto left  = buf[i - 1];
             auto right = buf[i];
-            buf[i] = calc_label(left, right);
+            buf[i] = label(left, right);
         }
 
         // TODO: This is for debuging - no label for this location
@@ -100,10 +116,12 @@ inline void handle_meta_block_2(View A,
         std::cout << vec_to_debug_string(buf) << "\n";
     }
 
-    A = View(buf).substr(start);
-    std::cout << vec_to_debug_string(A) << "\n";
+    {
+        auto A_ = View(buf).substr(start);
+        std::cout << vec_to_debug_string(A_) << "\n";
 
-    DCHECK(calc_alphabet_size(A) <= 6);
+        DCHECK(calc_alphabet_size(A_) <= 6);
+    }
 
     // TODO: This would benefit from a general, mutable, slice type
 
@@ -141,8 +159,25 @@ inline void handle_meta_block_2(View A,
                 }
             }
         }
-        std::cout << vec_to_debug_string(A) << "\n";
+
+        auto A_ = View(buf).substr(start);
+        std::cout << vec_to_debug_string(A_) << "\n";
     }
+
+    {
+        auto A_ = View(buf).substr(start);
+        DCHECK(calc_alphabet_size(A_) <= 3);
+        DCHECK(no_adjacent_identical(A_));
+    }
+}
+
+template<class F>
+inline void handle_meta_block_13(uint type,
+                                 View A,
+                                 uint64_t alphabet_size,
+                                 std::vector<uint8_t>& buf,
+                                 F debug_push_meta_block) {
+    debug_push_meta_block(type, A);
 }
 
 public:
@@ -161,10 +196,12 @@ public:
         size_t alphabet_size = 256;
 
         std::vector<MetaBlock> meta_blocks;
+        std::vector<uint8_t> buf;
+        std::vector<View> blocks;
 
         {
-            auto push_meta_block = [&](size_t type, size_t from, size_t to) {
-                meta_blocks.push_back(MetaBlock { type, in.substr(from, to) });
+            auto push_meta_block = [&](size_t type, View A) {
+                meta_blocks.push_back(MetaBlock { type, A });
             };
 
             size_t i = 0;
@@ -175,7 +212,9 @@ public:
                     i++;
                 }
                 if ((i - type_1_start) > 0) {
-                    push_meta_block(1, type_1_start, i + 1);
+                    View A = in.substr(type_1_start, i + 1);
+                    handle_meta_block_13(1, A, alphabet_size, buf, push_meta_block);
+                    std::cout << "---\n";
                     i++;
                 }
 
@@ -189,34 +228,21 @@ public:
                 }
                 size_t type_23_len = i - type_23_start;
                 if (type_23_len > 0) {
+                    View A = in.substr(type_23_start, i);
+
                     if (type_23_len >= iter_log(alphabet_size)) {
-                        push_meta_block(2, type_23_start, i);
+                        //push_meta_block(2, A);
+                        handle_meta_block_2(A, alphabet_size, buf, push_meta_block);
+                        std::cout << "---\n";
                     } else {
-                        push_meta_block(3, type_23_start, i);
+                        handle_meta_block_13(3, A, alphabet_size, buf, push_meta_block);
+                        std::cout << "---\n";
                     }
                 }
             }
 
             meta_blocks_debug(meta_blocks, in);
         }
-
-        std::vector<View> blocks;
-
-        std::vector<uint8_t> buf;
-
-        for (auto& meta_block : meta_blocks) {
-            View A = meta_block.view;
-
-            if (meta_block.type == 2) {
-                handle_meta_block_2(A, alphabet_size, buf, [](){});
-            } else {
-
-            }
-
-            std::cout << "---\n";
-        }
-
-
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
