@@ -40,7 +40,7 @@ public:
 
     inline RePairCompressor(Env&& env) : Compressor(std::move(env)) {}
 
-    virtual void compress(Input& input, Output& out) override {
+    virtual void compress(Input& input, Output& output) override {
         const sym_t sigma = 256; //TODO
 
         // prepare editable text
@@ -58,7 +58,7 @@ public:
         }
 
         // compute RePair grammar
-        sdsl::bit_vector b(n, 1);
+        sdsl::bit_vector b(n, 1); // if b[i] = 0, there is no more symbol at i
         std::vector<digram_t> grammar;
 
         do {
@@ -67,7 +67,7 @@ public:
             size_t max_count = 0;
 
             {
-                std::map<digram_t, size_t> count;
+                std::map<digram_t, size_t> count; // TODO: anything better?
 
                 size_t i = 0;
                 while(i < n - 1) {
@@ -120,7 +120,7 @@ public:
             } else {
                 break; // done
             }
-        } while(true); //TODO
+        } while(true);
 
         // debug
         {
@@ -144,6 +144,40 @@ public:
             }
 
             DLOG(INFO) << "S -> " << start.str();
+        }
+
+
+        // instantiate encoder
+        typename coder_t::Encoder coder(env().env_for_option("coder"),
+            output, NoLiterals()); // TODO literator
+
+        // encode amount of grammar rules
+        coder.encode(grammar.size(), size_r);
+
+        // lambda for encoding symbols
+        auto encode_sym = [&](sym_t x, const Range& r) {
+            if(x < sigma) {
+                coder.encode(0, bit_r);
+                coder.encode(x, literal_r);
+            } else {
+                coder.encode(1, bit_r);
+                coder.encode(x - sigma, r);
+            }
+        };
+
+        // encode grammar rules
+        for(size_t i = 0; i < grammar.size(); i++) {
+            digram_t di = grammar[i];
+
+            Range grammar_r(i);
+            encode_sym(left(di), grammar_r);
+            encode_sym(right(di), grammar_r);
+        }
+
+        // encode compressed text (start rule)
+        Range grammar_r(grammar.size());
+        for(size_t i = 0; i < n; i++) {
+            if(b[i]) encode_sym(text[i], grammar_r);
         }
 
         // clean up
