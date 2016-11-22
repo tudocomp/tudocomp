@@ -74,16 +74,16 @@ public:
         auto& lcp_t = t.require_lcp();
 
         // iterate over lcp array, add indexes with non overlapping prefix length greater than 2 to pq
-        std::priority_queue<std::pair<int,int>> pq;
+        std::priority_queue<std::pair<uint,uint>> pq;
         //std::vector<std::string> dictionary;
 
         //vector of position, length
-        std::vector<std::pair<int,int>> dictionary;
+        std::vector<std::pair<uint,uint>> dictionary;
 
         DLOG(INFO) << "iterate over lcp";
-        int dif ;
-        int factor_length;
-        for(uint i = 1; i<lcp_t.size(); i++){
+        uint dif ;
+        uint factor_length;
+        for(int i = 1; (uint)i<lcp_t.size(); i++){
 
             if(lcp_t[i] >= min_lcp_length){
                 //compute length of non-overlapping factor:
@@ -103,7 +103,7 @@ public:
                 }
                 //second is position in suffix array
                 //first is length of common prefix
-                std::pair<int,int> pair (factor_length, i);
+                std::pair<uint,uint> pair (factor_length,(uint) i);
                 if(factor_length>1){
 
                   //  DLOG(INFO) << "found lrf";
@@ -120,10 +120,10 @@ public:
         DLOG(INFO) << "computing lrfs";
         //std::priority_queue<std::tuple<int,int,int>, std::vector<std::tuple<int,int,int>>, std::greater<std::tuple<int,int,int>> > non_terminal_symbols;
 
-        std::vector<std::tuple<int,int,int>> non_terminal_symbols;
-        int non_terminal_symbol_number = 0;
+        std::vector<std::tuple<uint,uint,uint>> non_terminal_symbols;
+        uint non_terminal_symbol_number = 0;
         while(!pq.empty()){
-            std::pair<int,int> top = pq.top();
+            std::pair<uint,uint> top = pq.top();
             pq.pop();
 
             if(non_terminals[sa_t[top.second]] == 1 || non_terminals[sa_t[top.second-1]] == 1){
@@ -131,19 +131,19 @@ public:
             }
 
             //detect all starting positions of this string using the sa and lcp:
-            std::vector<int> starting_positions;
+            std::vector<uint> starting_positions;
 
             starting_positions.push_back(sa_t[top.second]);
 
-            int i = top.second;
-            while(i>=0 && ((int) lcp_t[i])>=top.first){
+            uint i = top.second;
+            while(i>=0 && ( lcp_t[i])>=top.first){
                 if(non_terminals[sa_t[i-1]] == 0){
                     starting_positions.push_back(sa_t[i-1]);
                 }
                 i--;
             }
             i = top.second+1;
-            while(i< (int)lcp_t.size() &&((int)  lcp_t[i])>=top.first){
+            while(i< lcp_t.size() &&(  lcp_t[i])>=top.first){
                 if(non_terminals[sa_t[i]] == 0){
                     starting_positions.push_back(sa_t[i]);
                 }
@@ -153,13 +153,13 @@ public:
             //DLOG(INFO) << "starting positions: " << starting_positions.size();
 
             //select occurences greedily non-overlapping:
-            std::vector<int> selected_starting_positions;
+            std::vector<uint> selected_starting_positions;
             selected_starting_positions.reserve(starting_positions.size());
 
             int last =  0-top.first-1;
-            int current;
+            uint current;
             //selected_starting_positions.push_back(last);
-            for (std::vector<int>::iterator it=starting_positions.begin(); it!=starting_positions.end(); ++it){
+            for (std::vector<uint>::iterator it=starting_positions.begin(); it!=starting_positions.end(); ++it){
 
                 current = *it;
 
@@ -174,11 +174,11 @@ public:
             //now ceck in bitvector viable starting positions
             // there is no 1 bit on the corresponding positions
 
-            std::vector<int>::iterator it=selected_starting_positions.begin();
+            std::vector<uint>::iterator it=selected_starting_positions.begin();
 
             while(it!=selected_starting_positions.end()){
                 bool non_viable = false;
-                for(int k = 0; k<top.first; k++){
+                for(uint k = 0; k<top.first; k++){
                     if(non_terminals[*it+k]==1){
                         non_viable=true;
                         break;
@@ -194,15 +194,15 @@ public:
 
             if(selected_starting_positions.size()>=2){
                 //computing substring to be replaced
-                int offset = sa_t[top.second-1];
-                std::pair<int,int> substring(offset, top.first);
-                for (std::vector<int>::iterator it=selected_starting_positions.begin(); it!=selected_starting_positions.end(); ++it){
-                    for(int k = 0; k<top.first; k++){
+                uint offset = sa_t[top.second-1];
+                std::pair<uint,uint> substring(offset, top.first);
+                for (std::vector<uint>::iterator it=selected_starting_positions.begin(); it!=selected_starting_positions.end(); ++it){
+                    for(uint k = 0; k<top.first; k++){
                         non_terminals[*it+k]=1;
                     }
 
-                    int length_of_symbol = top.first;
-                    std::tuple<int,int,int> symbol(*it, non_terminal_symbol_number, length_of_symbol);
+                    uint length_of_symbol = top.first;
+                    std::tuple<uint,uint,uint> symbol(*it, non_terminal_symbol_number, length_of_symbol);
                     non_terminal_symbols.push_back(symbol);
                 }
                 dictionary.push_back(substring);
@@ -210,7 +210,7 @@ public:
             }
         }
 
-        std::make_heap(non_terminal_symbols.begin(), non_terminal_symbols.end(), std::greater<std::tuple<int,int,int>>());
+        std::make_heap(non_terminal_symbols.begin(), non_terminal_symbols.end(), std::greater<std::tuple<uint,uint,uint>>());
 
 
 
@@ -218,22 +218,22 @@ public:
 
         DLOG(INFO) << "dictionary size: " << dictionary.size();
         Range dict_r(0, dictionary.size());
-        coder.encode(dictionary.size(),uint16_r);
+        coder.encode(dictionary.size(),uint32_r);
 
 
         // encode dictionary:
         if(dictionary.size() >=1 ){
             auto it = dictionary.begin();
-            std::pair<int,int> symbol = *it;
+            std::pair<uint,uint> symbol = *it;
             Range slength_r (0, symbol.second);
-            coder.encode(symbol.second,uint16_r);
+            coder.encode(symbol.second,uint32_r);
 
              while(it != dictionary.end()){
             //first length of non terminal symbol
             symbol = *it;
             coder.encode(symbol.second,slength_r);
 
-            for(int k = 0; k<symbol.second; k++){
+            for(uint k = 0; k<symbol.second; k++){
                 coder.encode(t[symbol.first + k],literal_r);
             }
                 it++;
@@ -241,27 +241,27 @@ public:
 
              coder.encode(0,slength_r);
         } else {
-            coder.encode(1,uint16_r);
+            coder.encode(1,uint32_r);
 
             Range min_range (0,1);
             coder.encode(0,min_range);
         }
         DLOG(INFO) << "encoding string";
         //encode string
-        int pos = 0;
-        int start_position;
-        int symbol_number ;
-        int symbol_length;
+        uint pos = 0;
+        uint start_position;
+        uint symbol_number ;
+        uint symbol_length;
         //int i=0;  &&i<10 i++;
         while(!non_terminal_symbols.empty() ){
 
-            std::tuple<int,int,int> next_position = non_terminal_symbols.front();
+            std::tuple<uint,uint,uint> next_position = non_terminal_symbols.front();
 
             start_position = std::get<0>(next_position);
             symbol_number =std::get<1>(next_position);
             symbol_length = std::get<2>(next_position);
 
-            std::pop_heap(non_terminal_symbols.begin(),non_terminal_symbols.end(), std::greater<std::tuple<int,int,int>>());
+            std::pop_heap(non_terminal_symbols.begin(),non_terminal_symbols.end(), std::greater<std::tuple<uint,uint,uint>>());
             non_terminal_symbols.pop_back();
             while(pos< start_position){
                 //get original text, because no symbol...
@@ -283,7 +283,7 @@ public:
         //if no more terminals, write rest of text
         //one pos less, because ensure_null_ending adds a symbol
         //TODO!!
-        while( pos<(int)t.size()-1){
+        while( pos<t.size()-1){
 
             coder.encode(0, bit_r);
             coder.encode(t[pos], literal_r);
@@ -305,18 +305,18 @@ public:
 
         std::vector<std::string> dictionary;
         bool reading_dictionary=true;
-        int dictionary_size = decoder.template decode<int>(uint16_r);
+        uint dictionary_size = decoder.template decode<uint>(uint32_r);
 
-        int slength = decoder.template decode<int>(uint16_r);
+        uint slength = decoder.template decode<uint>(uint32_r);
 
         Range dictionary_r (0, dictionary_size);
         Range slength_r (0, slength);
 
-        int length_of_symbol;
+        uint length_of_symbol;
         std::string non_terminal_symbol;
         DLOG(INFO) << "reading dictionary";
         while(reading_dictionary){;
-            length_of_symbol = decoder.template decode<int>(slength_r); // Dekodiere Literal
+            length_of_symbol = decoder.template decode<uint>(slength_r); // Dekodiere Literal
             //length_of_symbol = (int) length;
             non_terminal_symbol ="";
 
@@ -324,7 +324,7 @@ public:
             if(length_of_symbol<=0) {
                 reading_dictionary=false;
             } else {
-                for(int i =0; i< length_of_symbol;i++){
+                for(uint i =0; i< length_of_symbol;i++){
                     c1 = decoder.template decode<char>(literal_r);
                     non_terminal_symbol += c1;
                 }
@@ -341,7 +341,7 @@ public:
             //decode bit
             bool bit1 = decoder.template decode<bool>(bit_r);
             char c1;
-            int symbol_number;
+            uint symbol_number;
             // if bit = 0 its a literal
             if(!bit1){
                 c1 = decoder.template decode<char>(literal_r); // Dekodiere Literal
@@ -349,7 +349,7 @@ public:
                 ostream << c1;
             } else {
             //else its a non-terminal
-                symbol_number = decoder.template decode<int>(dictionary_r); // Dekodiere Literal
+                symbol_number = decoder.template decode<uint>(dictionary_r); // Dekodiere Literal
 
                 //int symbol_number = (int) c1;
 
