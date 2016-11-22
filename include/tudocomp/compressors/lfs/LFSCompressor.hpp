@@ -26,6 +26,7 @@ namespace tdc {
 template<typename coder_t>
 class LFSCompressor : public Compressor {
 private:
+    typedef TextDS<> text_t;
 
 public:
     inline static Meta meta() {
@@ -62,9 +63,10 @@ public:
         DLOG(INFO) << "reading input";
         auto in = input.as_view();
         in.ensure_null_terminator();
-        TextDS<> t(in);
+        //TextDS<> t(in);
+        text_t t(in);
         DLOG(INFO) << "building sa and lcp";
-        t.require(TextDS<>::SA | TextDS<>::LCP);
+        t.require(text_t::SA | text_t::ISA | text_t::LCP);
 
         DLOG(INFO) << "done building sa and lcp";
         auto& sa_t = t.require_sa();
@@ -111,7 +113,6 @@ public:
         std::priority_queue<std::tuple<int,int,int>, std::vector<std::tuple<int,int,int>>, std::greater<std::tuple<int,int,int>> > non_terminal_symbols;
         int non_terminal_symbol_number = 1;
         while(!pq.empty()){
-            DLOG(INFO) << "popping lrf";
             std::pair<int,int> top = pq.top();
             pq.pop();
 
@@ -137,7 +138,6 @@ public:
             }
             std::sort(starting_positions.begin(), starting_positions.end());
 
-            DLOG(INFO) << "select occurences lrf";
             //select occurences greedily non-overlapping:
             std::vector<int> selected_starting_positions;
             selected_starting_positions.reserve(starting_positions.size());
@@ -154,7 +154,6 @@ public:
                 last = current;
             }
 
-            DLOG(INFO) << "checking bitvector lrf";
 
             //now ceck in bitvector viable starting positions
             // there is no 1 bit on the corresponding positions

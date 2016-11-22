@@ -128,7 +128,7 @@ TEST(lfs, as_file_mis){
 }
 
 TEST(lfs, large_file){
-    compress_and_decompress_file<BitOptimalCoder>("sources.5KB");
+    compress_and_decompress_file<BitOptimalCoder>("sources.1MB");
 }
 
 
