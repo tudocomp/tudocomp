@@ -21,7 +21,7 @@ private:
     const lcp_t* m_lcp;
 
     //undefined suffix
-    size_t m_undef;
+    const size_t m_undef; // == m_sa->size()
 
     //linked list
     size_t m_first; //linked list head (maximum LCP)
@@ -42,7 +42,7 @@ private:
     /// Lookup the LCP index.
     inline size_t lookup_lcp_index(size_t lcp) const {
         //DLOG(INFO) << "lookup_lcp_index(" << lcp << ")";
-        DCHECK(lcp <= m_lcp_index.size());
+        DCHECK_LE(lcp, m_lcp_index.size());
 
         size_t result = m_undef;
         while(lcp > 0 && result == m_undef) {
@@ -55,10 +55,9 @@ private:
 public:
     /// Constructor
     inline MaxLCPSuffixList(const sa_t& sa, const lcp_t& lcp, size_t min_lcp)
-        : m_sa(&sa), m_lcp(&lcp) {
-
-        size_t n = sa.size();
-        m_undef = n;
+        : m_sa(&sa), m_lcp(&lcp), m_undef(m_sa->size())
+	{
+        const size_t& n = sa.size();
 
         //Initialize doubly linked list
         m_first = m_undef;
@@ -72,7 +71,7 @@ public:
         m_suffix_contained = sdsl::bit_vector(n, 0);
 
         //Construct list
-        for (size_t i = 0; i < n; i++) {
+        for (size_t i = 1; i < n; i++) {
             if (lcp[i] >= min_lcp) {
                 insert(i);
             }

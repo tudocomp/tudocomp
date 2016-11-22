@@ -42,7 +42,7 @@ public:
 
         sdsl::bit_vector marked(n, 0);
 
-        while(i < n) {
+        while(i+1 < n) { // we skip text position T[n] == 0
             size_t s = isa[i];
             size_t l = lcp[s];
             if(l >= threshold) {
