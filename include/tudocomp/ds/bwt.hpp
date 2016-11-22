@@ -25,6 +25,7 @@ inline typename text_t::value_type bwt(const text_t& text, const sa_t& sa, const
  */
 template<typename bwt_t>
 len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
+	DLOG(INFO) << "Computing LF";
 	if(bwt_length == 0) return nullptr;
 	len_t C[uliteral_max+1] { 0 }; // alphabet counter
 	for(auto& c : bwt) { 
@@ -33,9 +34,10 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 		}
 	}
 	for(size_t i = 1; i < uliteral_max; ++i) {
+		DCHECK_LT(static_cast<size_t>(C[i]),bwt.size()+1 -  C[i-1]);
 		C[i] += C[i-1];
 	}
-	DLOG(INFO) << "C: " << arr_to_debug_string(C,uliteral_max);
+	tdc_debug(VLOG(2) << "C: " << arr_to_debug_string(C,uliteral_max));
 	DCHECK_EQ(C[0],0); // no character preceeds 0
 	DCHECK_EQ(C[1],1); // there is exactly only one '\0' byte
 
@@ -46,7 +48,7 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 		++C[literal2int(bwt[i])];
 	}
 
-	DLOG(INFO) << "LF: " << arr_to_debug_string(LF, bwt_length);
+	tdc_debug(VLOG(2) << "LF: " << arr_to_debug_string(LF, bwt_length));
 	DCHECK([&] () { // unique invariant of the LF mapping
 			assert_permutation(LF,bwt_length);
 			for(len_t i = 0; i < bwt_length; ++i) 
@@ -57,6 +59,7 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 			return true;
 			}());
 
+	DLOG(INFO) << "Finished Computing LF";
 	return LF;
 }
 
@@ -75,7 +78,7 @@ uliteral_t* decode_bwt(const bwt_t& bwt) {
 		decoded_string[0] = 0;
 		return decoded_string;
 	}
-	len_t*const LF { compute_LF(bwt, bwt_length) };
+	const len_t*const LF { compute_LF(bwt, bwt_length) };
 
 	uliteral_t*const decoded_string = new uliteral_t[bwt_length];
 	decoded_string[bwt_length-1] = 0;
