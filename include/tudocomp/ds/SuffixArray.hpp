@@ -9,6 +9,7 @@
 
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
+#include <tudocomp/def.hpp>
 #include "forward.hpp"
 namespace tdc {
 
@@ -45,6 +46,18 @@ public:
 }//ns
 namespace tdc {
 
+namespace sa {
+
+	inline int32_t suffix_sort(const uint8_t* T, int32_t* SA, int32_t n) {
+		return divsufsort(T,SA,n);
+	}
+	inline int32_t suffix_sort(const uint8_t* T, int64_t* SA, int64_t n) {
+		return divsufsort64(T,SA,n);
+	}
+
+}
+
+
 template<class T>
 void SuffixArray<T>::construct(T& t) {
 	const size_t len = t.size();
@@ -55,8 +68,9 @@ void SuffixArray<T>::construct(T& t) {
 	// should be divsufsort64
 
 	//Use divsufsort to construct
-	int32_t *sa = new int32_t[len];
-	divsufsort(t.text(), sa, len);
+	typedef std::make_signed<len_t>::type sufsort_t;
+	sufsort_t *sa = new sufsort_t[len];
+	sa::suffix_sort(t.text(), sa, len);
 
 	//Bit compress using SDSL
 	const size_t w = bits_for(len);
