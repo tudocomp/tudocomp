@@ -95,6 +95,7 @@ namespace lzw {
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
 #include <tudocomp/compressors/LZSSSlidingWindowCompressor.hpp>
 #include <tudocomp/compressors/LZWCompressor.hpp>
+#include <tudocomp/compressors/RePairCompressor.hpp>
 #include <tudocomp/compressors/RunLengthEncoder.hpp>
 
 #endif
