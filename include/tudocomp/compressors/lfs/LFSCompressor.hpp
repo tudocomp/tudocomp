@@ -41,7 +41,7 @@ public:
     {
         // ...
 
-        DLOG(INFO) << "Compressor instantiated"<< std::endl;
+        DLOG(INFO) << "Compressor instantiated";
 
     }
     inline virtual void compress(Input& input, Output& output) override {
@@ -59,6 +59,7 @@ public:
         DLOG(INFO) << "compress lfs";
         //auto ostream = output.as_stream();
         //creating lcp and sa
+        DLOG(INFO) << "building sa and lcp";
         auto in = input.as_view();
         in.ensure_null_terminator();
         TextDS<> t(in);
@@ -68,8 +69,9 @@ public:
 
         // iterate over lcp array, add indexes with non overlapping prefix length greater than 2 to pq
         std::priority_queue<std::pair<int,int>> pq;
-        std::list<std::string> dictionary;
+        std::vector<std::string> dictionary;
 
+        DLOG(INFO) << "iterate over lcp";
         int dif ;
         int factor_length;
         for(uint i = 1; i<lcp_t.size(); i++){
@@ -101,6 +103,8 @@ public:
         sdsl::bit_vector non_terminals(sa_t.size(), 0);
         //Pq for the non-terminal symbols
         //the first in pair is position, the seconds the number of the non terminal symbol
+
+        DLOG(INFO) << "computing lrfs";
         std::priority_queue<std::tuple<int,int,int>, std::vector<std::tuple<int,int,int>>, std::greater<std::tuple<int,int,int>> > non_terminal_symbols;
         int non_terminal_symbol_number = 1;
         while(!pq.empty()){
@@ -183,7 +187,7 @@ public:
         //std::string output_string ="";
         //DLOG(INFO) << "dictionary: ";
 
-
+        DLOG(INFO) << "encoding dictionary";
         auto it = dictionary.begin();
 
         // encode dictionary:
@@ -199,7 +203,7 @@ public:
             it++;
         }
         coder.encode(0,literal_r);
-
+        DLOG(INFO) << "encoding string";
         //encode string
         int pos = 0;
         int start_position;

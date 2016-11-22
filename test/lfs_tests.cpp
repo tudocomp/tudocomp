@@ -76,6 +76,29 @@ void run_coder_test_to_file(const std::string filename, const std::string compre
     }
 }
 
+template<typename coder_t>
+void compress_and_decompress_file(const std::string filename) {
+    auto c = create_algo<LFSCompressor<coder_t>>();
+
+    // compress
+    {
+        Input file_input(Input::Path{filename});
+        Output file_output(filename+".lfs", true);
+
+        c.compress(file_input, file_output);
+    }
+    // decompress
+    {
+        auto c = create_algo<LFSCompressor<coder_t>>();
+
+        Input file_input(Input::Path{filename+".lfs"});
+        Output file_output(filename+".decomp", true);
+
+        c.decompress(file_input, file_output);
+
+    }
+}
+
 
 TEST(lfs, as_stream_aba){
 
@@ -104,8 +127,8 @@ TEST(lfs, as_file_mis){
     run_coder_test_to_file<ASCIICoder>("out.ascii", "mississippi$");
 }
 
-//doesnt work anymore
-/*TEST(lfs, roundtrip1) {
-    test::roundtrip<LFSCompressor<ASCIICoder>>("abaaabbababb", "\\Baa\\A\\B\\A\0\\$abb\\$ab\\$");
-}*/
+TEST(lfs, large_file){
+    //compress_and_decompress_file<BitOptimalCoder>("sources.10MB");
+}
+
 
