@@ -22,8 +22,9 @@ public:
     inline bool operator!= (const NoLiterals& other) const {
         return false; //always equal
     }
+	bool empty() const { return true; }
 
-    inline NoLiterals& operator++() {
+    inline NoLiterals& operator++() const {
         assert(false);
     }
 
