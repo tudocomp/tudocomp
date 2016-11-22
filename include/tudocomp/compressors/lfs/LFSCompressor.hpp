@@ -59,11 +59,14 @@ public:
         DLOG(INFO) << "compress lfs";
         //auto ostream = output.as_stream();
         //creating lcp and sa
-        DLOG(INFO) << "building sa and lcp";
+        DLOG(INFO) << "reading input";
         auto in = input.as_view();
         in.ensure_null_terminator();
         TextDS<> t(in);
+        DLOG(INFO) << "building sa and lcp";
         t.require(TextDS<>::SA | TextDS<>::LCP);
+
+        DLOG(INFO) << "done building sa and lcp";
         auto& sa_t = t.require_sa();
         auto& lcp_t = t.require_lcp();
 
@@ -108,7 +111,7 @@ public:
         std::priority_queue<std::tuple<int,int,int>, std::vector<std::tuple<int,int,int>>, std::greater<std::tuple<int,int,int>> > non_terminal_symbols;
         int non_terminal_symbol_number = 1;
         while(!pq.empty()){
-
+            DLOG(INFO) << "popping lrf";
             std::pair<int,int> top = pq.top();
             pq.pop();
 
@@ -134,24 +137,31 @@ public:
             }
             std::sort(starting_positions.begin(), starting_positions.end());
 
+            DLOG(INFO) << "select occurences lrf";
             //select occurences greedily non-overlapping:
+            std::vector<int> selected_starting_positions;
+            selected_starting_positions.reserve(starting_positions.size());
+
             int last =  starting_positions.front();
             int current;
+            selected_starting_positions.push_back(last);
             for (std::vector<int>::iterator it=starting_positions.begin()+1; it!=starting_positions.end(); ++it){
 
                 current = *it;
                 if(last+top.first>current){
-                    it = starting_positions.erase(it);
+                    selected_starting_positions.push_back(current);
                 }
                 last = current;
             }
 
+            DLOG(INFO) << "checking bitvector lrf";
+
             //now ceck in bitvector viable starting positions
             // there is no 1 bit on the corresponding positions
 
-            std::vector<int>::iterator it=starting_positions.begin();
+            std::vector<int>::iterator it=selected_starting_positions.begin();
 
-            while(it!=starting_positions.end()){
+            while(it!=selected_starting_positions.end()){
                 bool non_viable = false;
                 for(int k = 0; k<top.first; k++){
                     if(non_terminals[*it+k]==1){
@@ -160,7 +170,7 @@ public:
                     }
                 }
                 if(non_viable){
-                    it = starting_positions.erase(it);
+                    it = selected_starting_positions.erase(it);
                 } else {
                     it++;
                 }
@@ -168,9 +178,10 @@ public:
             //if the factor is still repeating, make the corresponding positions unviable
 
 
-            if(starting_positions.size()>=2){
 
-                for (std::vector<int>::iterator it=starting_positions.begin(); it!=starting_positions.end(); ++it){
+            if(selected_starting_positions.size()>=2){
+                DLOG(INFO) << "viable lrf, add symbol";
+                for (std::vector<int>::iterator it=selected_starting_positions.begin(); it!=selected_starting_positions.end(); ++it){
                     for(int k = 0; k<top.first; k++){
                         non_terminals[*it+k]=1;
                     }
