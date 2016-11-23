@@ -552,7 +552,7 @@ public:
 		//fallback
         template<typename value_t>
         inline void encode(value_t v, const Range&) {
-			m_out->write_int(static_cast<uliteral_t>(v),8*sizeof(value_t));
+			m_out->write_int(v);
         }
 
         template<typename value_t>
