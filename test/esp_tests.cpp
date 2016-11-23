@@ -6,6 +6,12 @@
 using namespace tdc;
 
 TEST(ESP, test) {
+    std::vector<uint8_t> small_alpha = "abcabageheadbag"_v;
+    //for (auto& e : small_alpha) { e -= 'a'; }
+
+    // TODO: factor out recution code to be paramtric over
+    // alphabet size
+
     std::vector<View> cases {
         "0000dkasxxxcsdacjzsbkhvfaghskcbsaaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa",
         "aaaaa",
@@ -24,6 +30,7 @@ TEST(ESP, test) {
         "asdf",
         "asdfg",
         "asdfgh",
+        small_alpha,
     };
 
     for (auto& c : cases) {
@@ -37,5 +44,4 @@ TEST(ESP, test) {
 
         std::cout << "\n";
     }
-
 }

@@ -4,8 +4,11 @@
 #include <tudocomp/util.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/ds/GenericIntVector.hpp>
 
 namespace tdc {
+
+using int_vector::GenericIntVector;
 
 class EspCompressor: public Compressor {
 
@@ -87,6 +90,51 @@ uint64_t label(uint64_t left, uint64_t right) {
     return 2*l + bit(l, right);
 };
 
+template<class T, class F>
+void for_neigbors(T& t, F f) {
+    for (size_t i = 0; i < t.size(); i++) {
+        typename T::value_type neighbors[2];
+        uint8_t neighbor_len = 0;
+
+        if (i == 0 && i == t.size() - 1) {
+            neighbor_len = 0;
+        } else if (i == 0) {
+            neighbor_len = 1;
+            neighbors[0] = t[i + 1];
+        } else if (i == t.size() - 1) {
+            neighbor_len = 1;
+            neighbors[0] = t[i - 1];
+        } else {
+            neighbor_len = 2;
+            neighbors[0] = t[i - 1];
+            neighbors[1] = t[i + 1];
+        }
+
+        f(i, neighbors, neighbor_len);
+    }
+}
+
+template<class T>
+bool check_landmarks(const T& t) {
+    size_t last = 0;
+    size_t i = 0;
+    for(; i < t.size(); i++) {
+        if (t[i] == 1u) {
+            if (i > 2) return false;
+            last = i;
+            i++;
+            break;
+        }
+    }
+    for(; i < t.size(); i++) {
+        if (t[i] == 1u) {
+            if ((i - last) > 3 || (i - last) < 2) return false;
+            last = i;
+        }
+    }
+    return true;
+}
+
 template<class F>
 inline void handle_meta_block_2(View A,
                                 uint64_t alphabet_size,
@@ -97,78 +145,93 @@ inline void handle_meta_block_2(View A,
     buf.clear();
     buf.insert(buf.cbegin(), A.cbegin(), A.cend());
 
-    std::cout << vec_to_debug_string(buf) << "\n";
-
-    size_t start = 0;
+    std::cout << "  " << vec_to_debug_string(buf) << "\n";
+    std::cout << "  " << "Reduce to 6:\n";
 
     for (uint shrink_i = 0; shrink_i < iter_log(alphabet_size); shrink_i++) {
-        for (size_t i = start + 1; i < buf.size(); i++) {
+        for (size_t i = 1; i < buf.size(); i++) {
             auto left  = buf[i - 1];
             auto right = buf[i];
-            buf[i] = label(left, right);
+            buf[i - 1] = label(left, right);
         }
+        buf.pop_back();
 
-        // TODO: This is for debuging - no label for this location
-        buf[start] = -1;
-
-        start++;
-
-        std::cout << vec_to_debug_string(buf) << "\n";
+        std::cout << "  " << vec_to_debug_string(buf) << "\n";
     }
 
-    {
-        auto A_ = View(buf).substr(start);
-        std::cout << vec_to_debug_string(A_) << "\n";
+    DCHECK(calc_alphabet_size(buf) <= 6);
 
-        DCHECK(calc_alphabet_size(A_) <= 6);
-    }
+    std::cout << "  " << "Reduce to 3:\n";
 
     // TODO: This would benefit from a general, mutable, slice type
 
     // final pass: reduce to alphabet 3
     for(uint to_replace = 3; to_replace < 6; to_replace++) {
-        for (size_t i = start; i < buf.size(); i++) {
-            if (buf[i] == to_replace) {
-                uint64_t neighbors[2];
-                uint8_t neighbor_len = 0;
-
-                if (i == start && i == buf.size() - 1) {
-                    neighbor_len = 0;
-                } else if (i == start) {
-                    neighbor_len = 1;
-                    neighbors[0] = buf[i + 1];
-                } else if (i == buf.size() - 1) {
-                    neighbor_len = 1;
-                    neighbors[0] = buf[i - 1];
-                } else {
-                    neighbor_len = 2;
-                    neighbors[0] = buf[i - 1];
-                    neighbors[1] = buf[i + 1];
-                }
-
-                buf[i] = 0;
+        for_neigbors(buf, [&](size_t i, uint8_t neighbors[], uint8_t neighbor_len) {
+            auto& e = buf[i];
+            if (e == to_replace) {
+                e = 0;
                 for (uint8_t j = 0; j < neighbor_len; j++) {
-                    if (neighbors[j] == buf[i]) {
-                        buf[i]++;
+                    if (neighbors[j] == e) {
+                        e++;
                     }
                 }
                 for (uint8_t j = 0; j < neighbor_len; j++) {
-                    if (neighbors[j] == buf[i]) {
-                        buf[i]++;
+                    if (neighbors[j] == e) {
+                        e++;
                     }
                 }
             }
+        });
+
+        std::cout << "  " << vec_to_debug_string(buf) << "\n";
+    }
+
+    DCHECK(calc_alphabet_size(buf) <= 3);
+    DCHECK(no_adjacent_identical(buf));
+
+    // find landmarks:
+
+    // TODO: Maybe store in high bits of buf to reduce memory?
+    // buf gets reduced to 2 bit values anyway, and stays around long enough
+    GenericIntVector<uint_t<1>> landmarks(buf.size());
+
+    for_neigbors(buf, [&](size_t i, uint8_t neighbors[], uint8_t neighbor_len) {
+        bool is_high_landmark = true;
+        for (uint8_t j = 0; j < neighbor_len; j++) {
+            if (neighbors[j] > buf[i]) {
+                is_high_landmark = false;
+            }
         }
+        if (is_high_landmark) {
+            landmarks[i] = 1;
+        }
+    });
 
-        auto A_ = View(buf).substr(start);
-        std::cout << vec_to_debug_string(A_) << "\n";
-    }
+    std::cout << "  High Landmarks:\n";
+    std::cout << "  " << vec_to_debug_string(landmarks) << "\n";
 
-    {
-        auto A_ = View(buf).substr(start);
-        DCHECK(calc_alphabet_size(A_) <= 3);
-        DCHECK(no_adjacent_identical(A_));
-    }
+    for_neigbors(buf, [&](size_t i, uint8_t neighbors[], uint8_t neighbor_len) {
+        bool is_low_landmark = true;
+        for (uint8_t j = 0; j < neighbor_len; j++) {
+            if (neighbors[j] < buf[i]) {
+                is_low_landmark = false;
+            }
+        }
+        if (is_low_landmark) {
+            if (   (!(i > 0)              || (landmarks[i - 1] == 0u))
+                && (!(i < buf.size() - 1) || (landmarks[i + 1] == 0u))
+            ) {
+                landmarks[i] = 1;
+            }
+        }
+    });
+
+    std::cout << "  High and Low Landmarks:\n";
+    std::cout << "  " << vec_to_debug_string(landmarks) << "\n";
+
+    DCHECK(check_landmarks(landmarks));
+
 }
 
 template<class F>
@@ -214,7 +277,7 @@ public:
                 if ((i - type_1_start) > 0) {
                     View A = in.substr(type_1_start, i + 1);
                     handle_meta_block_13(1, A, alphabet_size, buf, push_meta_block);
-                    std::cout << "---\n";
+                    std::cout << "  ---\n";
                     i++;
                 }
 
@@ -231,16 +294,16 @@ public:
                     View A = in.substr(type_23_start, i);
 
                     if (type_23_len >= iter_log(alphabet_size)) {
-                        //push_meta_block(2, A);
                         handle_meta_block_2(A, alphabet_size, buf, push_meta_block);
-                        std::cout << "---\n";
+                        std::cout << "  ---\n";
                     } else {
                         handle_meta_block_13(3, A, alphabet_size, buf, push_meta_block);
-                        std::cout << "---\n";
+                        std::cout << "  ---\n";
                     }
                 }
             }
 
+            std::cout << "Final meta blocks:\n";
             meta_blocks_debug(meta_blocks, in);
         }
     }
