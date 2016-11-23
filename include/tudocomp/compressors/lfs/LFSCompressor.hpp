@@ -83,7 +83,7 @@ public:
 
                 // [!] Alle Ausgaben sollten nun über den Kodierer laufen
 
-        uint min_lcp_length = 4;
+        uint min_lrf_length = 4;
         DLOG(INFO) << "compress lfs";
         //auto ostream = output.as_stream();
         //creating lcp and sa
@@ -111,7 +111,7 @@ public:
         uint factor_length;
         for(int i = 1; (uint)i<lcp_t.size(); i++){
 
-            if(lcp_t[i] >= min_lcp_length){
+            if(lcp_t[i] >= min_lrf_length){
                 //compute length of non-overlapping factor:
 
                 if(sa_t[i-1] > sa_t[i]){
@@ -151,7 +151,7 @@ public:
             std::pair<uint,uint> top = pq.top();
             pq.pop();
 
-            if(non_terminals[sa_t[top.second]] == 1 || non_terminals[sa_t[top.second-1]] == 1){
+            if(non_terminals[sa_t[top.second]] == 1 || non_terminals[sa_t[top.second-1]] == 1 || non_terminals[sa_t[top.second]+top.first-1] == 1){
                 continue;
             }
 
@@ -160,60 +160,55 @@ public:
 
             starting_positions.push_back(sa_t[top.second]);
 
+
+
+            // and ceck in bitvector viable starting positions
+            // there is no 1 bit on the corresponding positions
+            // it suffices to check start and end position, because lrf can only be same length and shorter
             uint i = top.second;
             while(i>=0 && ( lcp_t[i])>=top.first){
-                if(non_terminals[sa_t[i-1]] == 0){
+                if(non_terminals[sa_t[i-1]] == 0 && non_terminals[sa_t[i-1]+top.first-1] == 0){
                     starting_positions.push_back(sa_t[i-1]);
                 }
                 i--;
             }
             i = top.second+1;
-            while(i< lcp_t.size() &&(  lcp_t[i])>=top.first){
-                if(non_terminals[sa_t[i]] == 0){
+            while(i< lcp_t.size() &&  lcp_t[i]>=top.first){
+                if(non_terminals[sa_t[i]] == 0 && non_terminals[sa_t[i]+top.first-1] == 0){
                     starting_positions.push_back(sa_t[i]);
                 }
                 i++;
             }
 
-            std::vector<uint>::iterator it=starting_positions.begin();
-
-            while(it!=starting_positions.end()){
-                uint pos_begin= *it;
-                uint pos_end = *it + top.first -1;
-                if(non_terminals[pos_begin] == 1 || non_terminals[pos_end]){
-                    it = starting_positions.erase(it);
-                }
-                else {
-                    it++;
-                }
-            }
-
-
-            std::vector<uint> selected_starting_positions = select_starting_positions(starting_positions, top.first);
 
 
 
-            //now ceck in bitvector viable starting positions
-            // there is no 1 bit on the corresponding positions
+
 
 
             //if the factor is still repeating, make the corresponding positions unviable
 
-            if(selected_starting_positions.size()>=2){
+            if(starting_positions.size()>=2){
+                std::vector<uint> selected_starting_positions = select_starting_positions(starting_positions, top.first);
                 //computing substring to be replaced
-                uint offset = sa_t[top.second-1];
-                std::pair<uint,uint> longest_repeating_factor(offset, top.first);
-                for (std::vector<uint>::iterator it=selected_starting_positions.begin(); it!=selected_starting_positions.end(); ++it){
-                    for(uint k = 0; k<top.first; k++){
-                        non_terminals[*it+k]=1;
-                    }
+                if(selected_starting_positions.size()>=2){
 
-                    uint length_of_symbol = top.first;
-                    std::tuple<uint,uint,uint> symbol(*it, non_terminal_symbol_number, length_of_symbol);
-                    non_terminal_symbols.push_back(symbol);
+
+
+                    uint offset = sa_t[top.second-1];
+                    std::pair<uint,uint> longest_repeating_factor(offset, top.first);
+                    for (std::vector<uint>::iterator it=selected_starting_positions.begin(); it!=selected_starting_positions.end(); ++it){
+                        for(uint k = 0; k<top.first; k++){
+                            non_terminals[*it+k]=1;
+                        }
+
+                        uint length_of_symbol = top.first;
+                        std::tuple<uint,uint,uint> symbol(*it, non_terminal_symbol_number, length_of_symbol);
+                        non_terminal_symbols.push_back(symbol);
+                    }
+                    dictionary.push_back(longest_repeating_factor);
+                    non_terminal_symbol_number++;
                 }
-                dictionary.push_back(longest_repeating_factor);
-                non_terminal_symbol_number++;
             }
         }
 
@@ -223,11 +218,6 @@ public:
 
         // encode dictionary:
         DLOG(INFO) << "encoding dictionary";
-
-
-
-        // encode dictionary:#
-
         coder.encode(dictionary.size(),uint32_r);
         // encode dictionary:
         if(dictionary.size() >=1 ){
@@ -292,7 +282,6 @@ public:
             pos += symbol_length;
 
         }
-        //start_position=0;
         //if no more terminals, write rest of text
         //one pos less, because ensure_null_ending adds a symbol
         //TODO!!
