@@ -26,13 +26,16 @@ struct MetaBlock {
     View view;
 };
 
-void meta_blocks_debug(const std::vector<MetaBlock> meta_blocks, View in) {
+bool meta_blocks_debug(const std::vector<MetaBlock> meta_blocks, View in) {
+    std::cout << "\nMeta blocks:\n";
+
+    bool ok = false;
     {
         std::stringstream ss;
         for (auto& mb : meta_blocks) {
             ss << mb.view;
         }
-        DCHECK(ss.str() == std::string(in));
+        ok = (ss.str() == std::string(in));
     }
 
     std::cout << "|";
@@ -49,15 +52,19 @@ void meta_blocks_debug(const std::vector<MetaBlock> meta_blocks, View in) {
         std::cout << mb.view << "|";
     }
     std::cout << "\n";
+    return ok;
 }
 
-void blocks_debug(const std::vector<View> blocks, View in) {
+bool blocks_debug(const std::vector<View> blocks, View in) {
+    std::cout << "\nBlocks:\n";
+
+    bool ok = false;
     {
         std::stringstream ss;
         for (auto& b : blocks) {
             ss << b;
         }
-        DCHECK(ss.str() == std::string(in));
+        ok = (ss.str() == std::string(in));
     }
 
     std::cout << "|";
@@ -73,6 +80,7 @@ void blocks_debug(const std::vector<View> blocks, View in) {
         std::cout << b << "|";
     }
     std::cout << "\n";
+    return ok;
 }
 
 template<class T>
@@ -449,16 +457,14 @@ public:
                 std::cout << "  ---\n";
             };
 
-            std::cout << "\nFinal Meta blocks:\n";
-            meta_blocks_debug(meta_blocks, in);
+            DCHECK(meta_blocks_debug(meta_blocks, in));
 
             for (auto mb : meta_blocks) {
                 real_meta_block(mb.type, mb.view);
             }
         }
 
-        std::cout << "\nFinal blocks:\n";
-        blocks_debug(blocks, in);
+        DCHECK(blocks_debug(blocks, in));
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
