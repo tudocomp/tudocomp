@@ -1,6 +1,7 @@
 #ifndef _INCLUDED_RANGE_HPP
 #define _INCLUDED_RANGE_HPP
 
+#include <tudocomp/def.hpp>
 #include <limits>
 
 namespace tdc {
@@ -31,8 +32,10 @@ namespace tdc {
         //inline uint64_t max() const { return t_max; }
     };
 
+    class LiteralRange : public TypeRange<uliteral_t> {};
+    class LengthRange  : public TypeRange<len_t> {};
+
     using BitRange = FixedRange<0, 1>;
-    using LiteralRange = FixedRange<0, 255>;
 
     const TypeRange<uint64_t> uint64_r;
     const TypeRange<uint32_t> uint32_r;
@@ -41,6 +44,7 @@ namespace tdc {
     const TypeRange<size_t>   size_r;
     const BitRange bit_r;
     const LiteralRange literal_r;
+    const LengthRange len_r;
 }
 
 #endif
