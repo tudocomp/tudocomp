@@ -64,6 +64,7 @@ namespace lzw {
 #include <glog/logging.h>
 #include <sdsl/int_vector.hpp>
 
+#include <tudocomp/def.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
 
