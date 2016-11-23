@@ -28,6 +28,32 @@ class LFSCompressor : public Compressor {
 private:
     typedef TextDS<> text_t;
 
+
+
+
+    inline virtual std::vector<uint> select_starting_positions(std::vector<uint> starting_positions, uint length){
+        std::vector<uint> selected_starting_positions;
+        std::sort(starting_positions.begin(), starting_positions.end());
+        //select occurences greedily non-overlapping:
+        selected_starting_positions.reserve(starting_positions.size());
+
+        int last =  0-length-1;
+        uint current;
+        for (std::vector<uint>::iterator it=starting_positions.begin(); it!=starting_positions.end(); ++it){
+
+            current = *it;
+
+            //DLOG(INFO) << "checking starting position: " << current << " length: " << top.first << "last " << last;
+            if(!(last+length>current)){
+                selected_starting_positions.push_back(current);
+            }
+            last = current;
+        }
+        return selected_starting_positions;
+    }
+
+
+
 public:
     inline static Meta meta() {
         Meta m("compressor", "longest_first_substitution_compressor",
@@ -118,7 +144,6 @@ public:
         //the first in pair is position, the seconds the number of the non terminal symbol
 
         DLOG(INFO) << "computing lrfs";
-        //std::priority_queue<std::tuple<int,int,int>, std::vector<std::tuple<int,int,int>>, std::greater<std::tuple<int,int,int>> > non_terminal_symbols;
 
         std::vector<std::tuple<uint,uint,uint>> non_terminal_symbols;
         uint non_terminal_symbol_number = 0;
@@ -149,53 +174,35 @@ public:
                 }
                 i++;
             }
-            std::sort(starting_positions.begin(), starting_positions.end());
-            //DLOG(INFO) << "starting positions: " << starting_positions.size();
 
-            //select occurences greedily non-overlapping:
-            std::vector<uint> selected_starting_positions;
-            selected_starting_positions.reserve(starting_positions.size());
+            std::vector<uint>::iterator it=starting_positions.begin();
 
-            int last =  0-top.first-1;
-            uint current;
-            //selected_starting_positions.push_back(last);
-            for (std::vector<uint>::iterator it=starting_positions.begin(); it!=starting_positions.end(); ++it){
-
-                current = *it;
-
-                //DLOG(INFO) << "checking starting position: " << current << " length: " << top.first << "last " << last;
-                if(!(last+top.first>current)){
-                    selected_starting_positions.push_back(current);
+            while(it!=starting_positions.end()){
+                uint pos_begin= *it;
+                uint pos_end = *it + top.first -1;
+                if(non_terminals[pos_begin] == 1 || non_terminals[pos_end]){
+                    it = starting_positions.erase(it);
                 }
-                last = current;
+                else {
+                    it++;
+                }
             }
-           // DLOG(INFO) << "selected starting positions: " << selected_starting_positions.size();
+
+
+            std::vector<uint> selected_starting_positions = select_starting_positions(starting_positions, top.first);
+
+
 
             //now ceck in bitvector viable starting positions
             // there is no 1 bit on the corresponding positions
 
-            std::vector<uint>::iterator it=selected_starting_positions.begin();
 
-            while(it!=selected_starting_positions.end()){
-                bool non_viable = false;
-                for(uint k = 0; k<top.first; k++){
-                    if(non_terminals[*it+k]==1){
-                        non_viable=true;
-                        break;
-                    }
-                }
-                if(non_viable){
-                    it = selected_starting_positions.erase(it);
-                } else {
-                    it++;
-                }
-            }
             //if the factor is still repeating, make the corresponding positions unviable
 
             if(selected_starting_positions.size()>=2){
                 //computing substring to be replaced
                 uint offset = sa_t[top.second-1];
-                std::pair<uint,uint> substring(offset, top.first);
+                std::pair<uint,uint> longest_repeating_factor(offset, top.first);
                 for (std::vector<uint>::iterator it=selected_starting_positions.begin(); it!=selected_starting_positions.end(); ++it){
                     for(uint k = 0; k<top.first; k++){
                         non_terminals[*it+k]=1;
@@ -205,7 +212,7 @@ public:
                     std::tuple<uint,uint,uint> symbol(*it, non_terminal_symbol_number, length_of_symbol);
                     non_terminal_symbols.push_back(symbol);
                 }
-                dictionary.push_back(substring);
+                dictionary.push_back(longest_repeating_factor);
                 non_terminal_symbol_number++;
             }
         }
@@ -214,13 +221,14 @@ public:
 
 
 
+        // encode dictionary:
         DLOG(INFO) << "encoding dictionary";
 
-        DLOG(INFO) << "dictionary size: " << dictionary.size();
-        Range dict_r(0, dictionary.size());
+
+
+        // encode dictionary:#
+
         coder.encode(dictionary.size(),uint32_r);
-
-
         // encode dictionary:
         if(dictionary.size() >=1 ){
             auto it = dictionary.begin();
@@ -246,6 +254,11 @@ public:
             Range min_range (0,1);
             coder.encode(0,min_range);
         }
+
+
+        DLOG(INFO) << "dictionary size: " << dictionary.size();
+        Range dict_r(0, dictionary.size());
+
         DLOG(INFO) << "encoding string";
         //encode string
         uint pos = 0;
