@@ -33,23 +33,17 @@ private:
         return sym_t(di);
     }
 
-    template<typename text_t, typename bv_t>
+    template<typename text_t>
     class Literals {
     private:
         const text_t* m_text;
         len_t         m_text_size;
-        const bv_t*   m_bv;
+        const len_t*  m_next;
         len_t         m_pos;
 
-        void skip_removed() {
-            while(m_pos < m_text_size && !(*m_bv)[m_pos]) ++m_pos;
-        }
-
     public:
-        inline Literals(const text_t& text, len_t text_size, const bv_t& bv)
-            : m_text(&text), m_text_size(text_size), m_bv(&bv), m_pos(0) {
-
-            skip_removed();
+        inline Literals(const text_t& text, len_t text_size, const len_t* next)
+            : m_text(&text), m_text_size(text_size), m_next(next), m_pos(0) {
         }
 
         inline bool has_next() const {
@@ -60,8 +54,7 @@ private:
             assert(has_next());
 
             auto l = Literal { uliteral_t((*m_text)[m_pos]), m_pos };
-            ++m_pos;
-            skip_removed();
+            m_pos = m_next[m_pos];
             return l;
         }
     };
@@ -84,19 +77,22 @@ public:
         // prepare editable text
         len_t n;
         sym_t *text;
+        len_t *next;
 
         {
             auto view = input.as_view();
             n = view.size();
             text = new sym_t[n];
+            next = new len_t[n];
 
             for(size_t i = 0; i < n; i++) {
                 text[i] = view[i];
+                next[i] = i + 1;
             }
         }
 
         // compute RePair grammar
-        sdsl::bit_vector b(n, 1); // if b[i] = 0, there is no more symbol at i
+        //sdsl::bit_vector b(n, 1); // if b[i] = 0, there is no more symbol at i
         grammar_t grammar;
 
         size_t num_replaced = 0;
@@ -111,8 +107,7 @@ public:
 
                 size_t i = 0;
                 while(i < n - 1) {
-                    size_t j = i + 1;
-                    while(j < n && !b[j]) ++j; // find next unreplaced symbol
+                    size_t j = next[i];
                     if(j >= n) break; // break if at end
 
                     digram_t di = digram(text[i], text[j]);
@@ -143,20 +138,19 @@ public:
 
                 size_t i = 0;
                 while(i < n - 1) {
-                    size_t j = i + 1;
-                    while(j < n && !b[j]) ++j; // find next unremoved symbol
+                    size_t j = next[i];
                     if(j >= n) break; // break if at end
 
                     digram_t di = digram(text[i], text[j]);
                     if(di == max) {
                         text[i] = new_sym; // replace symbol at i by new symbol
-                        b[j] = 0; // j was removed
+                        next[i] = next[j];
+
                         ++num_replaced;
                     }
 
                     // advance
-                    i = j;
-                    while(i < n - 1 && !b[i]) ++i;
+                    i = next[i];
                 }
             } else {
                 break; // done
@@ -164,7 +158,8 @@ public:
         } while(grammar.size() < max_rules);
 
         // debug
-        /*{
+        /*
+        {
             DLOG(INFO) << "grammar:";
             for(size_t i = 0; i < grammar.size(); i++) {
                 digram_t di = grammar[i];
@@ -177,22 +172,21 @@ public:
             }
 
             std::ostringstream start;
-            for(size_t i = 0; i < n; i++) {
-                if(b[i]) {
-                    sym_t x = text[i];
-                    start << uint8_t((x < sigma) ? x : ('A' + x - sigma));
-                }
+            for(size_t i = 0; i < n; i = next[i]) {
+                sym_t x = text[i];
+                start << uint8_t((x < sigma) ? x : ('A' + x - sigma));
             }
 
             DLOG(INFO) << "S -> " << start.str();
-        }*/
+        }
+        */
 
         env().log_stat("grammar", grammar.size());
         env().log_stat("replaced", num_replaced);
 
         // instantiate encoder
         typename coder_t::Encoder coder(env().env_for_option("coder"),
-            output, Literals<sym_t*, sdsl::bit_vector>(text, n, b));
+            output, Literals<sym_t*>(text, n, next));
 
         // encode amount of grammar rules
         coder.encode(grammar.size(), len_r);
@@ -219,8 +213,8 @@ public:
 
         // encode compressed text (start rule)
         Range grammar_r(grammar.size());
-        for(size_t i = 0; i < n; i++) {
-            if(b[i]) encode_sym(text[i], grammar_r);
+        for(size_t i = 0; i < n; i = next[i]) {
+            encode_sym(text[i], grammar_r);
         }
 
         // clean up
