@@ -103,7 +103,8 @@ public:
             size_t max_count = 0;
 
             {
-                std::map<digram_t, size_t> count; // TODO: anything better?
+                std::unordered_map<digram_t, size_t> count;
+                // TODO: probably not optimal, but twice as fast as std::map
 
                 size_t i = 0;
                 while(i < n - 1) {
