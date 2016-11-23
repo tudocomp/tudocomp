@@ -6,16 +6,17 @@
 #include <tudocomp/Compressor.hpp>
 
 #include <tudocomp/io.hpp>
-#include <chrono>
-#include <thread>
+//#include <chrono>
+//#include <thread>
+#include <queue>
 
-//#include <iostream>
-#include <sdsl/lcp.hpp>
-#include <sdsl/suffix_arrays.hpp>
-#include <sdsl/bit_vectors.hpp>
+#include <iostream>
+//#include <sdsl/lcp.hpp>
+//#include <sdsl/suffix_arrays.hpp>
+//#include <sdsl/bit_vectors.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
-#include <tudocomp/ds/SuffixArray.hpp>
+//#include <tudocomp/ds/SuffixArray.hpp>
 
 #include <tudocomp/tudocomp.hpp>
 
@@ -37,17 +38,18 @@ private:
         //select occurences greedily non-overlapping:
         selected_starting_positions.reserve(starting_positions.size());
 
-        int last =  0-length-1;
+        int last =  0-length;
         uint current;
         for (std::vector<uint>::iterator it=starting_positions.begin(); it!=starting_positions.end(); ++it){
 
             current = *it;
-
             //DLOG(INFO) << "checking starting position: " << current << " length: " << top.first << "last " << last;
-            if(!(last+length>current)){
+            if(last+length <= current){
                 selected_starting_positions.push_back(current);
+                last = current;
+
             }
-            last = current;
+
         }
         return selected_starting_positions;
     }
@@ -83,7 +85,7 @@ public:
 
                 // [!] Alle Ausgaben sollten nun über den Kodierer laufen
 
-        uint min_lrf_length = 4;
+        uint min_lrf_length = 5;
         DLOG(INFO) << "compress lfs";
         //auto ostream = output.as_stream();
         //creating lcp and sa
@@ -146,6 +148,7 @@ public:
         DLOG(INFO) << "computing lrfs";
 
         std::vector<std::tuple<uint,uint,uint>> non_terminal_symbols;
+        non_terminal_symbols.reserve(pq.size());
         uint non_terminal_symbol_number = 0;
         while(!pq.empty()){
             std::pair<uint,uint> top = pq.top();
@@ -211,7 +214,7 @@ public:
                 }
             }
         }
-
+        DLOG(INFO) << "sorting occurences";
         std::make_heap(non_terminal_symbols.begin(), non_terminal_symbols.end(), std::greater<std::tuple<uint,uint,uint>>());
 
 
