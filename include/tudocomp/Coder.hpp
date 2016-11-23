@@ -28,11 +28,11 @@ public:
 
 #define ENCODER_CTOR(env, out, literals)                                   \
         template<typename literals_t>                                      \
-        inline Encoder(Env&& env, Output& out, const literals_t& literals) \
+        inline Encoder(Env&& env, Output& out, literals_t&& literals) \
              : Encoder(std::move(env),                                     \
-                      std::make_shared<BitOStream>(out), literals) {}      \
+                      std::make_shared<BitOStream>(out), std::move(literals)) {}      \
         template<typename literals_t>                                      \
-        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, const literals_t& literals) \
+        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals) \
             : tdc::Encoder(std::move(env), out)
 
 /*abstract*/

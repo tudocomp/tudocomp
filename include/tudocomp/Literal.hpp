@@ -14,66 +14,29 @@ struct Literal {
 class NoLiterals {
 public:
     inline NoLiterals() {}
-
-    inline Literal operator*() const {
-        assert(false);
-    }
-
-    inline bool operator!= (const NoLiterals& other) const {
-        return false; //always equal
-    }
-	bool empty() const { return true; }
-
-    inline NoLiterals& operator++() const {
-        assert(false);
-    }
-
-    inline const NoLiterals& begin() const { return *this; }
-    inline const NoLiterals& end() const { return *this; }
+    inline bool has_next() const { return false; }
+    inline Literal next() { assert(false); }
 };
 
 class ViewLiterals {
 private:
     const View* m_view;
-
-    class end_iterator {};
-
-    class iterator {
-    private:
-        const View* m_view;
-        size_t m_index;
-
-    public:
-        inline iterator(const View& view) : m_view(&view), m_index(0) {
-        }
-
-        inline Literal operator*() const {
-            return Literal { uint8_t((*m_view)[m_index]), m_index };
-        }
-
-        inline bool operator!= (const end_iterator&) const {
-            return m_index < m_view->size();
-        }
-
-        inline iterator& operator++() {
-            ++m_index;
-            return *this;
-        }
-    };
+    size_t m_index;
 
 public:
-    inline ViewLiterals(const View& view) : m_view(&view) {}
-
-    inline iterator begin() const {
-        return iterator(*m_view);
+    inline ViewLiterals(const View& view) : m_view(&view), m_index(0) {
     }
 
-    inline end_iterator end() const {
-        return end_iterator();
+    inline bool has_next() const {
+        return m_index < m_view->size();
     }
-	inline bool empty() const {
-		return m_view->empty();
-	}
+
+    inline Literal next() {
+        assert(has_next());
+
+        auto i = m_index++;
+        return Literal { uint8_t((*m_view)[i]), i };
+    }
 };
 
 }

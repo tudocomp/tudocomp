@@ -16,7 +16,7 @@ namespace tdc {
 
 namespace huff {
 
-	/** 
+	/**
 	 * Counts the number of different elements in a sequence
 	 * @param input a sequence of integer values whose maximum number should be low (at most 1<<16).
 	 * @return storing for each character of the full alphabet whether it exists in a given input text (value > 0 -> existing, value = 0 -> non-existing)
@@ -36,12 +36,12 @@ namespace huff {
 		return C;
 	}
 	template<class T>
-	len_t* count_alphabet_literals(const T& input) {
+	len_t* count_alphabet_literals(T&& input) {
 		len_t* C { new len_t[uliteral_max+1] };
 		std::memset(C, 0, sizeof(len_t)*(uliteral_max+1));
 
-		for(auto it = input.begin(); it != input.end(); ++it) {
-			literal_t c = (*it).c;
+        while(input.has_next()) {
+			literal_t c = input.next().c;
 			DCHECK_LT(static_cast<uliteral_t>(c), uliteral_max+1);
 			DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_t>::max());
 			++C[static_cast<uliteral_t>(c)];
@@ -254,7 +254,7 @@ namespace huff {
 			: huffmantable{_ordered_map_from_effective,_alphabet_size, _numl, _longest},
 			codewords(_codewords),
 			ordered_codelengths(_ordered_codelengths)
-			{}  
+			{}
 		const size_t*const codewords; //! the codeword of each character of the effective alphabet
 		const uint8_t*const ordered_codelengths; //! stores the codelength of the codeword of each character of the effective alphabet, sorted by the length of the codewords
 		~extended_huffmantable() { //! all members of the huffmantable are created dynamically
@@ -408,7 +408,7 @@ namespace huff {
 			const uint8_t longest) {
 
 			const size_t*const accum_length { gen_accum_length(ordered_codelengths, alphabet_size, longest) };
-		
+
 			const size_t text_length = is.read_compressed_int<size_t>();
 			DCHECK_GT(text_length, 0);
 			const size_t*const firstcodes = gen_first_codes(numl, longest);
@@ -523,19 +523,19 @@ public:
 	const huff::extended_huffmantable m_table;
 	const uint8_t*const ordered_map_to_effective;
 	public:
-		ENCODER_CTOR(env, out, literals) 
-			, m_table{ [&] () { 
-				if(tdc_unlikely(literals.empty())) return huff::extended_huffmantable { nullptr, nullptr, nullptr, 0, nullptr, 0 };
-				const size_t*const C = huff::count_alphabet_literals(literals);
+		ENCODER_CTOR(env, out, literals)
+			, m_table{ [&] () {
+				if(tdc_likely(!literals.has_next())) return huff::extended_huffmantable { nullptr, nullptr, nullptr, 0, nullptr, 0 };
+				const size_t*const C = huff::count_alphabet_literals(std::move(literals));
 				const size_t alphabet_size = huff::effective_alphabet_size(C);
 				if(tdc_unlikely(alphabet_size == 1)) {
 					delete [] C;
 					return huff::extended_huffmantable { nullptr, nullptr, nullptr, 1, nullptr, 0 };
 				}
-				return huff::gen_huffmantable(huff::count_alphabet_literals(literals));
+				return huff::gen_huffmantable(C);
 			}() }
 			, ordered_map_to_effective { m_table.codewords == nullptr ? nullptr : huff::gen_ordered_map_to_effective(m_table.ordered_map_from_effective, m_table.alphabet_size) }
-		{ 
+		{
 			if(tdc_unlikely(m_table.alphabet_size <= 1)) {
 				m_out->write_bit(0);
 			}
@@ -567,7 +567,7 @@ public:
 	};
 
 	class Decoder : public tdc::Decoder {
-		const uliteral_t* ordered_map_from_effective; 
+		const uliteral_t* ordered_map_from_effective;
 		const size_t* accum_length;
 		const size_t* firstcodes;
 	public:
