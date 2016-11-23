@@ -65,9 +65,10 @@ public:
 
         while (is.get(c)) {
 			lz78::factorid_t child = ed.search_and_insert(node, static_cast<uliteral_t>(c));
+			std::cout << " child " << child << " #factor " << factor_count << " size " << ed.size() << " node " << node << std::endl;
 
 
-			if(child == 0) {
+			if(node != 0 && child == 0) {
                 coder.encode(node, Range(factor_count + uliteral_max + 1));
                 stat_factor_count++;
                 factor_count++;
@@ -85,8 +86,10 @@ public:
 			}
         }
 
+		std::cout << "LZW: " << node << std::endl;
 		// take care of left-overs. We do not assume that the stream has a sentinel
-        if(node != 0) {
+//        if(node != static_cast<uliteral_t>(c)) {
+         if(node != 0 || factor_count > 0) {
             //coder.encode_fact(i);
             coder.encode(node, Range(factor_count + uliteral_max + 1)); //LZW
             stat_factor_count++;

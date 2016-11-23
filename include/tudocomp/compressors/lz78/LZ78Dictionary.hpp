@@ -138,7 +138,7 @@ public:
     {
         // If we add a new node, its index will be equal to the current size
         // of the dictionary, so just keep it around beforehand.
-        const factorid_t newleaf_id = position_to_index(first_child.size());
+        const factorid_t newleaf_id = first_child.size();
 
 
 		if(m_lzw_mode && parent == 0) return c;
@@ -151,7 +151,7 @@ public:
 		if(first_child[parent] == 0) {
 			first_child[parent] = newleaf_id;
 		} else {
-        	factorid_t node = index_to_position(first_child[parent]);
+        	factorid_t node = first_child[parent];
             while(true) { // search the binary tree
                 if(c < literal[node]) {
                     if (left_sibling[node] == 0) {
@@ -159,7 +159,7 @@ public:
                         break;
                     }
                     else
-						node = index_to_position(left_sibling[node]);
+						node = left_sibling[node];
                 }
                 else if (c > literal[node]) {
                     if (right_sibling[node] == 0) {
@@ -167,10 +167,10 @@ public:
                         break;
                     }
                     else
-                        node = index_to_position(right_sibling[node]);
+                        node = right_sibling[node];
                 }
                 else /* c == literal[node] -> node is the node we want to find */ {
-                    return position_to_index(node);
+                    return node;
                 }
             }
 		}
@@ -180,19 +180,6 @@ public:
 		literal.push_back(c);
         return 0;
     }
-
-	inline factorid_t index_to_position(const factorid_t& id) const {
-		return id;
-		// if(m_lzw_mode) return id;
-		// DCHECK_GE(id,1);
-		// return id-1;
-	}
-
-	inline factorid_t position_to_index(const factorid_t& id) const {
-		return id;
-		// if(m_lzw_mode) return id;
-		// 	return id+1;
-		}
 
     ///
     /// @brief Returns the number of dictionary entries.
