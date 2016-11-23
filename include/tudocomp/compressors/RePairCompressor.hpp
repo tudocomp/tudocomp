@@ -70,12 +70,17 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "repair", "Re-Pair compression");
         m.option("coder").templated<coder_t, BitOptimalCoder>();
+        m.option("max_rules").dynamic("0");
         return m;
     }
 
     inline RePairCompressor(Env&& env) : Compressor(std::move(env)) {}
 
     virtual void compress(Input& input, Output& output) override {
+        // options
+        size_t max_rules = env().option("max_rules").as_integer();
+        if(max_rules == 0) max_rules = SIZE_MAX;
+
         // prepare editable text
         len_t n;
         sym_t *text;
@@ -93,6 +98,8 @@ public:
         // compute RePair grammar
         sdsl::bit_vector b(n, 1); // if b[i] = 0, there is no more symbol at i
         grammar_t grammar;
+
+        size_t num_replaced = 0;
 
         do {
             // count digrams
@@ -144,6 +151,7 @@ public:
                     if(di == max) {
                         text[i] = new_sym; // replace symbol at i by new symbol
                         b[j] = 0; // j was removed
+                        ++num_replaced;
                     }
 
                     // advance
@@ -153,7 +161,7 @@ public:
             } else {
                 break; // done
             }
-        } while(true);
+        } while(grammar.size() < max_rules);
 
         // debug
         /*{
@@ -178,6 +186,9 @@ public:
 
             DLOG(INFO) << "S -> " << start.str();
         }*/
+
+        env().log_stat("grammar", grammar.size());
+        env().log_stat("replaced", num_replaced);
 
         // instantiate encoder
         typename coder_t::Encoder coder(env().env_for_option("coder"),
