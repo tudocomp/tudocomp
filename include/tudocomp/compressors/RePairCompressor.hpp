@@ -1,8 +1,6 @@
 #ifndef _INCLUDED_RE_PAIR_COMPRESSOR_HPP_
 #define _INCLUDED_RE_PAIR_COMPRESSOR_HPP_
 
-#include <sdsl/int_vector.hpp>
-
 #include <tudocomp/Compressor.hpp>
 
 #include <tudocomp/Range.hpp>
@@ -77,7 +75,7 @@ public:
         // prepare editable text
         len_t n;
         sym_t *text;
-        len_t *next;
+        len_t *next; //TODO use an int vector of required bit width
 
         {
             auto view = input.as_view();
@@ -92,7 +90,6 @@ public:
         }
 
         // compute RePair grammar
-        //sdsl::bit_vector b(n, 1); // if b[i] = 0, there is no more symbol at i
         grammar_t grammar;
 
         size_t num_replaced = 0;
@@ -132,10 +129,6 @@ public:
             if(max_count > 1) {
                 sym_t new_sym = sigma + grammar.size();
                 grammar.push_back(max);
-
-                /*DLOG(INFO) << "most common digram is " << std::hex << max <<
-                    " (count = " << max_count << ")" <<
-                    ", introducing new symbol " << uint8_t('A' + new_sym - sigma);*/
 
                 size_t i = 0;
                 while(i < n - 1) {
