@@ -51,6 +51,30 @@ void meta_blocks_debug(const std::vector<MetaBlock> meta_blocks, View in) {
     std::cout << "\n";
 }
 
+void blocks_debug(const std::vector<View> blocks, View in) {
+    {
+        std::stringstream ss;
+        for (auto& b : blocks) {
+            ss << b;
+        }
+        //CHECK(ss.str() == std::string(in));
+    }
+
+    std::cout << "|";
+    for (auto& b : blocks) {
+        size_t w = b.size();
+        std::cout << std::setw(w) << "";
+        std::cout << "|";
+    }
+    std::cout << "\n";
+
+    std::cout << "|";
+    for (auto& b : blocks) {
+        std::cout << b << "|";
+    }
+    std::cout << "\n";
+}
+
 template<class T>
 uint64_t calc_alphabet_size(const T& t) {
     Counter<typename T::value_type> c;
@@ -120,7 +144,7 @@ bool check_landmarks(const T& t) {
     size_t i = 0;
     for(; i < t.size(); i++) {
         if (t[i] == 1u) {
-            if (i > 2) return false;
+            if (i > 1) return false;
             last = i;
             i++;
             break;
@@ -135,13 +159,15 @@ bool check_landmarks(const T& t) {
     return true;
 }
 
-template<class F>
+template<class F, class G>
 inline void handle_meta_block_2(View A,
                                 uint64_t alphabet_size,
                                 std::vector<uint8_t>& buf,
-                                F debug_push_meta_block) {
-    debug_push_meta_block(3, A.substr(0, iter_log(alphabet_size)));
-    debug_push_meta_block(2, A.substr(iter_log(alphabet_size)));
+                                F debug_push_meta_block,
+                                G push_block) {
+    auto type_3_prefix = iter_log(alphabet_size);
+    debug_push_meta_block(3, A.substr(0, type_3_prefix));
+    debug_push_meta_block(2, A.substr(type_3_prefix));
     buf.clear();
     buf.insert(buf.cbegin(), A.cbegin(), A.cend());
 
@@ -232,15 +258,72 @@ inline void handle_meta_block_2(View A,
 
     DCHECK(check_landmarks(landmarks));
 
+    // assign blocks
+
+    /*
+    size_t last = 0;
+    // we can cut iteration time in half by making use of the 2-3
+    // difference between each landmark
+    for(size_t i = 0; i < landmarks.size(); i += 2) {
+        if (landmarks[i] == 0u) {
+            i++;
+        }
+        DCHECK(i < landmarks.size());
+        DCHECK(landmarks[i] == 1u);
+
+        last = i;
+    }
+
+    */
+
+    // TODO: An abstraction for iterating while
+    // having special setup/teardown sections
+    // for the first N and last M elements, as well if the array is only O long
+
+    // TODO: debug only
+    std::vector<size_t> debug_landmark_assoc(buf.size());
+
+    size_t last_closes_landmark = 0;
+    for (size_t i = 1; i < buf.size(); i++) {
+        if (landmarks[i] == 1u) {
+            last_closes_landmark = i;
+        }
+        debug_landmark_assoc[i - 1] = last_closes_landmark;
+    }
+    if (debug_landmark_assoc.size() > 0) {
+        debug_landmark_assoc.back() = last_closes_landmark;
+    }
+
+    std::cout << "  Block-Landmark Assignment:\n";
+    std::cout << "  " << vec_to_debug_string(debug_landmark_assoc) << "\n";
+
+    if (debug_landmark_assoc.size() > 0) {
+        auto block_range = [&](size_t a, size_t b) {
+            std::cout << a << " - " << b << "\n";
+            push_block(A.substr(type_3_prefix).substr(a, b));
+        };
+
+        size_t last_pos = 0;
+        for(size_t i = 0; i < debug_landmark_assoc.size() - 1; i++) {
+            if (debug_landmark_assoc[i] != debug_landmark_assoc[i + 1]) {
+                block_range(last_pos, i + 1);
+                last_pos = i + 1;
+            }
+        }
+        block_range(last_pos, debug_landmark_assoc.size());
+    }
+
 }
 
-template<class F>
+template<class F, class G>
 inline void handle_meta_block_13(uint type,
                                  View A,
                                  uint64_t alphabet_size,
                                  std::vector<uint8_t>& buf,
-                                 F debug_push_meta_block) {
+                                 F debug_push_meta_block,
+                                 G push_block) {
     debug_push_meta_block(type, A);
+
 }
 
 public:
@@ -259,12 +342,17 @@ public:
         size_t alphabet_size = 256;
 
         std::vector<MetaBlock> meta_blocks;
-        std::vector<uint8_t> buf;
         std::vector<View> blocks;
 
         {
+            std::vector<uint8_t> buf;
+
             auto push_meta_block = [&](size_t type, View A) {
                 meta_blocks.push_back(MetaBlock { type, A });
+            };
+
+            auto push_block = [&](View A) {
+                blocks.push_back(A);
             };
 
             size_t i = 0;
@@ -276,7 +364,7 @@ public:
                 }
                 if ((i - type_1_start) > 0) {
                     View A = in.substr(type_1_start, i + 1);
-                    handle_meta_block_13(1, A, alphabet_size, buf, push_meta_block);
+                    handle_meta_block_13(1, A, alphabet_size, buf, push_meta_block, push_block);
                     std::cout << "  ---\n";
                     i++;
                 }
@@ -294,18 +382,21 @@ public:
                     View A = in.substr(type_23_start, i);
 
                     if (type_23_len >= iter_log(alphabet_size)) {
-                        handle_meta_block_2(A, alphabet_size, buf, push_meta_block);
+                        handle_meta_block_2(A, alphabet_size, buf, push_meta_block, push_block);
                         std::cout << "  ---\n";
                     } else {
-                        handle_meta_block_13(3, A, alphabet_size, buf, push_meta_block);
+                        handle_meta_block_13(3, A, alphabet_size, buf, push_meta_block, push_block);
                         std::cout << "  ---\n";
                     }
                 }
             }
-
-            std::cout << "Final meta blocks:\n";
-            meta_blocks_debug(meta_blocks, in);
         }
+
+        std::cout << "\nFinal meta blocks:\n";
+        meta_blocks_debug(meta_blocks, in);
+
+        std::cout << "\nFinal blocks:\n";
+        blocks_debug(blocks, in);
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
