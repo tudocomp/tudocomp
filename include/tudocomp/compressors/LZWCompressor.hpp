@@ -52,10 +52,10 @@ public:
 
         // Stats
         env().begin_stat_phase("LZW Compression");
-        uint64_t stat_dictionary_resets = 0;
-        uint64_t stat_dict_counter_at_last_reset = 0;
-        uint64_t stat_factor_count = 0;
-        uint64_t factor_count = 0;
+        len_t stat_dictionary_resets = 0;
+        len_t stat_dict_counter_at_last_reset = 0;
+        len_t stat_factor_count = 0;
+        len_t factor_count = 0;
 
         lz78::EncoderDictionary ed(lz78::EncoderDictionary::Lzw, dms, reserve_dms);
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
@@ -65,7 +65,7 @@ public:
         bool rbwf {false}; // Reset Bit Width Flag
 
         while (is.get(c)) {
-            uint8_t b = c;
+            uliteral_t b = c;
 
             // dictionary's maximum size was reached
             if (ed.size() == dms)
@@ -113,7 +113,7 @@ public:
         auto out = output.as_stream();
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
-        uint64_t counter = 0;
+        len_t counter = 0;
         lzw::decode_step([&](lz78::CodeType& entry, bool reset, bool &file_corrupted) -> lzw::Factor {
             if (reset) {
                 counter = 0;
@@ -123,7 +123,7 @@ public:
                 return false;
             }
 
-            lzw::Factor factor(decoder.template decode<uint64_t>(Range(counter + 256)));
+            lzw::Factor factor(decoder.template decode<len_t>(Range(counter + 256)));
             counter++;
             entry = factor;
             return true;

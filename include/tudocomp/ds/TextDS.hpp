@@ -19,7 +19,7 @@ using io::InputView;
 
 /// Manages text related data structures.
 template<
-	class lcp_tt = LCPArray, 
+	class lcp_tt = LCPArray,
     template<typename> class isa_tt = InverseSuffixArray>
 class TextDS {
 
@@ -44,17 +44,37 @@ private:
 	std::unique_ptr<phi_t> m_phi;
 	std::unique_ptr<lcp_t> m_lcp;
 
+    class Literals {
+    protected:
+        const this_t* m_text;
+        size_t m_pos;
+
+    public:
+        inline Literals(const this_t& text) : m_text(&text), m_pos(0) {}
+
+        inline bool has_next() const {
+            return m_pos < m_text->size();
+        }
+
+        inline Literal next() {
+            assert(has_next());
+
+            auto i = m_pos++;
+            return {(*m_text)[i], i};
+        }
+    };
+
 public:
     inline TextDS(const InputView& input)
         : m_size(input.size()), m_text((const value_type*)input.data())
     {
-		if(!input.is_terminal_null_ensured()) 
+		if(!input.is_terminal_null_ensured())
 		 	throw std::logic_error("Terminal Null is not ensured. Please invoke the method ensure_null_terminator() on your input before creating TextDS");
     }
 
     inline TextDS(const InputView& input, uint64_t flags) : TextDS(input)
     {
-		if(!input.is_terminal_null_ensured()) 
+		if(!input.is_terminal_null_ensured())
 		 	throw std::logic_error("Terminal Null is not ensured. Please invoke the method ensure_null_terminator() on your input before creating TextDS");
         require(flags);
     }
@@ -126,37 +146,8 @@ public:
     /// Prints the constructed tables.
     inline void print(std::ostream& out, size_t base = 0);
 
-    class LiteralIterator {
-    protected:
-        const this_t* m_text;
-        size_t m_pos;
-
-    public:
-        inline LiteralIterator(const this_t& text, size_t pos) : m_text(&text), m_pos(pos) {}
-
-        inline Literal operator*() const {
-            assert(m_pos < m_text->size());
-            return {(*m_text)[m_pos], m_pos};
-        }
-
-        inline bool operator!= (const LiteralIterator& other) const {
-            return (m_text != other.m_text || m_pos != other.m_pos);
-        }
-
-        inline LiteralIterator& operator++() {
-            assert(m_pos < m_text->size());            
-
-            m_pos++;
-            return *this;
-        }
-    };
-
-    inline LiteralIterator begin() const {
+    inline Literals literals() const {
         return iterator(*this, 0);
-    }
-
-    inline LiteralIterator end() const {
-        return iterator(*this, size());
     }
 };
 
@@ -170,7 +161,7 @@ public:
 namespace tdc {
 
 template<
-	class lcp_tt, 
+	class lcp_tt,
     template<typename> class isa_tt>
 inline void TextDS<lcp_tt,isa_tt>::print(std::ostream& out, size_t base) {
 	size_t w = std::max(6UL, (size_t)std::log10((double)m_size) + 1);
@@ -206,7 +197,7 @@ inline void TextDS<lcp_tt,isa_tt>::print(std::ostream& out, size_t base) {
 }
 
 template<
-	class lcp_tt, 
+	class lcp_tt,
     template<typename> class isa_tt>
 const SuffixArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_sa() {
 	if(!m_sa) {
@@ -217,7 +208,7 @@ const SuffixArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_sa() {
 }
 
 template<
-	class lcp_tt, 
+	class lcp_tt,
     template<typename> class isa_tt>
 const PhiArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_phi() {
 	if(!m_phi) {
@@ -229,7 +220,7 @@ const PhiArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_phi() {
 }
 
 template<
-	class lcp_tt, 
+	class lcp_tt,
     template<typename> class isa_tt>
 const isa_tt<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_isa() {
 	if(!m_isa) {
@@ -240,7 +231,7 @@ const isa_tt<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_isa() {
 	return *m_isa;
 }
 
-template<class lcp_tt, 
+template<class lcp_tt,
     template<typename> class isa_tt>
 const typename TextDS<lcp_tt,isa_tt>::lcp_t& TextDS<lcp_tt,isa_tt>::require_lcp() {
 	if(!m_lcp) {

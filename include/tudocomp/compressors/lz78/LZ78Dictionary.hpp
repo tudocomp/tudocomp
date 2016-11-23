@@ -44,12 +44,13 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <tudocomp/def.hpp>
 
 namespace tdc {
 namespace lz78 {
 
 /// Type used to store and retrieve codes.
-using CodeType = std::uint32_t;
+using CodeType = len_t;
 
 /// Maximum legal dictionary size.
 const CodeType DMS_MAX = std::numeric_limits<CodeType>::max();
@@ -72,7 +73,7 @@ class EncoderDictionary {
         /// @brief Default constructor.
         /// @param c    byte that the Node will contain
         ///
-        explicit Node(uint8_t c, CodeType dms):
+        explicit Node(uliteral_t c, CodeType dms):
             first(dms), left(dms), right(dms), c(c)
         {
         }
@@ -80,7 +81,7 @@ class EncoderDictionary {
         CodeType    first;  ///< Code of first child string.
         CodeType    left;   ///< Code of child node with byte < `c`.
         CodeType    right;  ///< Code of child node with byte > `c`.
-        uint8_t     c;      ///< Byte.
+        uliteral_t  c;      ///< Byte.
     } __attribute__((packed));
 
     CodeType m_dms;
@@ -112,8 +113,8 @@ public:
     {
         vn.clear();
 
-        const long int minc = std::numeric_limits<uint8_t>::min();
-        const long int maxc = std::numeric_limits<uint8_t>::max();
+        const long int minc = std::numeric_limits<uliteral_t>::min();
+        const long int maxc = std::numeric_limits<uliteral_t>::max();
 
         if (m_lzw_mode) {
             // In lzw mode there are pre allocated
@@ -137,7 +138,7 @@ public:
     /// @return The index of the pair, if it was found.
     /// @retval m_dms    if the pair wasn't found
     ///
-    CodeType search_and_insert(CodeType i, uint8_t c)
+    CodeType search_and_insert(CodeType i, uliteral_t c)
     {
         // If we add a new node, its index will be equal to the current size
         // of the dictionary, so just keep it around beforehand.

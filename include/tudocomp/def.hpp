@@ -15,13 +15,13 @@ namespace tdc {
 	#define tdc_warn_unused_result
 #endif
 #ifdef NDEBUG
-#define tdc_debug(x) 
+#define tdc_debug(x)
 #else
 #define tdc_debug(x) x
 #ifdef DEBUG
 #define tdc_hdebug(x) x
 #else
-#define tdc_hdebug(x) 
+#define tdc_hdebug(x)
 #endif//DEBUG
 #endif//NDEBUG
 #ifndef tdc_hdebug

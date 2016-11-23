@@ -13,7 +13,7 @@ namespace lz78 {
 /// A lz78 dictonary entry
 struct Factor {
     CodeType index;
-    uint8_t chr;
+    uliteral_t chr;
 };
 
 inline std::ostream& operator<< (std::ostream& stream, const Factor& rule) {

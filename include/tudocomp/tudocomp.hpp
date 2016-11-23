@@ -64,6 +64,7 @@ namespace lzw {
 #include <glog/logging.h>
 #include <sdsl/int_vector.hpp>
 
+#include <tudocomp/def.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
 
@@ -88,6 +89,7 @@ namespace lzw {
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp>
+#include <tudocomp/coders/HuffmanCoder.hpp>
 #include <tudocomp/coders/VariantCoder.hpp>
 #include <tudocomp/LiteralEncoder.hpp>
 #include <tudocomp/compressors/ESACompressor.hpp>

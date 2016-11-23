@@ -7,6 +7,8 @@ run_test(rle_test       DEPS ${BASIC_DEPS})
 run_test(mtf_test       DEPS ${BASIC_DEPS})
 run_test(huff_test      DEPS ${BASIC_DEPS})
 
+run_test(lzss_test      DEPS ${BASIC_DEPS})
+
 run_test(tudocomp_tests DEPS ${BASIC_DEPS})
 run_test(ds_tests       DEPS ${BASIC_DEPS})
 run_test(generic_int_vector_tests DEPS ${BASIC_DEPS})
