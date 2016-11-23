@@ -13,7 +13,7 @@ class TextLiterals {
 private:
     const text_t* m_text;
     const FactorBuffer* m_factors;
-    size_t m_pos;
+    len_t m_pos;
     size_t m_next_factor;
 
     inline void skip_factors() {
@@ -36,47 +36,10 @@ public:
     inline Literal next() {
         assert(has_next());
 
-        Literal l = {(*m_text)[m_pos], m_pos};
+        Literal l = {uliteral_t((*m_text)[m_pos]), len_t(m_pos)};
 
         ++m_pos; skip_factors();
         return l;
-    }
-};
-
-class StreamLiterals {
-private:
-    std::istream* m_stream;
-    const FactorBuffer* m_factors;
-    size_t m_next_factor;
-
-    inline void skip_factors() {
-        while(!m_stream->eof() &&
-            m_next_factor < m_factors->size() &&
-            size_t(m_stream->tellg()) == (*m_factors)[m_next_factor].pos) {
-
-            m_stream->seekg(
-                (*m_factors)[m_next_factor++].len,
-                std::ios_base::cur); // skip len characters
-        }
-    }
-
-public:
-    inline StreamLiterals(std::istream& stream, const FactorBuffer& factors)
-        : m_stream(&stream), m_factors(&factors) {
-
-        skip_factors();
-    }
-
-    inline bool has_next() const {
-        return !m_stream->eof();
-    }
-
-    inline Literal next() {
-        assert(has_next());
-
-        size_t pos = m_stream->tellg();
-        uliteral_t c = m_stream->get();
-        return Literal{ c, pos };
     }
 };
 
