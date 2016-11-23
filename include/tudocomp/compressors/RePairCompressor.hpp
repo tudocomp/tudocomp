@@ -247,6 +247,7 @@ public:
         env().log_stat("text_nonterms", num_text_nonterminals);
 
         // clean up
+        delete[] next;
         delete[] text;
     }
 
