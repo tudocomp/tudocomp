@@ -75,7 +75,7 @@ public:
         assert(has_next());
 
         size_t pos = m_stream->tellg();
-        uint8_t c = m_stream->get();
+        uliteral_t c = m_stream->get();
         return Literal{ c, pos };
     }
 };

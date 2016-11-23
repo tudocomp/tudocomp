@@ -2,13 +2,14 @@
 #define _INCLUDED_LITERAL_HPP_
 
 #include <cassert>
+#include <tudocomp/def.hpp>
 #include <tudocomp/util/View.hpp>
 
 namespace tdc {
 
 struct Literal {
-    uint8_t c;
-    size_t pos;
+    uliteral_t c;
+    len_t pos;
 };
 
 class NoLiterals {
@@ -21,7 +22,7 @@ public:
 class ViewLiterals {
 private:
     const View* m_view;
-    size_t m_index;
+    len_t m_index;
 
 public:
     inline ViewLiterals(const View& view) : m_view(&view), m_index(0) {
@@ -35,7 +36,7 @@ public:
         assert(has_next());
 
         auto i = m_index++;
-        return Literal { uint8_t((*m_view)[i]), i };
+        return Literal { uliteral_t((*m_view)[i]), i };
     }
 };
 

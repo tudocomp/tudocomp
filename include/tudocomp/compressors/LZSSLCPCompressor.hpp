@@ -19,12 +19,10 @@ namespace tdc {
 
 /// Computes the LZ77 factorization of the input using its suffix array and
 /// LCP table.
-template<typename coder_t, typename len_t = uint32_t>
+template<typename coder_t>
 class LZSSLCPCompressor : public Compressor {
 
 private:
-    const TypeRange<len_t> len_r = TypeRange<len_t>();
-
     typedef TextDS<> text_t;
 
 public:
@@ -61,7 +59,7 @@ public:
         env().begin_stat_phase("Factorize");
         len_t fact_min = 3; //factor threshold
 
-        for(size_t i = 0; i+1 < text_length;) { // we omit T[text_length-1] since we assume that it is the \0 byte!
+        for(len_t i = 0; i+1 < text_length;) { // we omit T[text_length-1] since we assume that it is the \0 byte!
             //get SA position for suffix i
             const size_t& cur_pos = isa[i];
 			DCHECK_NE(cur_pos,0); // isa[i] == 0 <=> T[i] = 0

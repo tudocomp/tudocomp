@@ -15,22 +15,22 @@ void decode_step(F next_code_callback,
                  std::ostream& out,
                  const CodeType dms,
                  const CodeType reserve_dms) {
-    std::vector<std::pair<CodeType, uint8_t>> dictionary;
+    std::vector<std::pair<CodeType, uliteral_t>> dictionary;
 
     // "named" lambda function, used to reset the dictionary to its initial contents
     const auto reset_dictionary = [&] {
         dictionary.clear();
         dictionary.reserve(reserve_dms);
 
-        const long int minc = std::numeric_limits<uint8_t>::min();
-        const long int maxc = std::numeric_limits<uint8_t>::max();
+        const long int minc = std::numeric_limits<uliteral_t>::min();
+        const long int maxc = std::numeric_limits<uliteral_t>::max();
 
         for (long int c = minc; c <= maxc; ++c)
-            dictionary.push_back({dms, static_cast<uint8_t> (c)});
+            dictionary.push_back({dms, static_cast<uliteral_t> (c)});
     };
 
-    const auto rebuild_string = [&](CodeType k) -> const std::vector<uint8_t> * {
-        static std::vector<uint8_t> s; // String
+    const auto rebuild_string = [&](CodeType k) -> const std::vector<uliteral_t> * {
+        static std::vector<uliteral_t> s; // String
 
         s.clear();
 
@@ -76,7 +76,7 @@ void decode_step(F next_code_callback,
             throw std::runtime_error(s.str());
         }
 
-        const std::vector<uint8_t> *s; // String
+        const std::vector<uliteral_t> *s; // String
 
         if (k == dictionary.size())
         {

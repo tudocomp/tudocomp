@@ -1,18 +1,15 @@
 #ifndef _INCLUDED_RUN_LENGTH_ENCODER_HPP
 #define _INCLUDED_RUN_LENGTH_ENCODER_HPP
 
+#include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 
 namespace tdc {
 
-template<typename coder_t, typename len_t = uint32_t>
+template<typename coder_t>
 class RunLengthEncoder : public Compressor {
-
-private:
-    const TypeRange<len_t> len_r = TypeRange<len_t>();
-
 public:
     inline static Meta meta() {
         Meta m("compressor", "rle", "Run-length encoding");
@@ -33,7 +30,7 @@ public:
 
         // define working variables
         len_t min_run = env().option("min_run").as_integer();
-        uint8_t run_char;
+        uliteral_t run_char;
         len_t run_length = 0;
 
         // writes the current run to the output stream
@@ -67,7 +64,7 @@ public:
         };
 
         // process input
-        for(uint8_t c : ins) {
+        for(auto c : ins) {
             if(run_length > 0 && c == run_char) {
                 run_length++;
             } else {
@@ -90,10 +87,10 @@ public:
 
         // decode
         bool flip = false;
-        uint8_t run_char;
+        uliteral_t run_char;
 
         while(!decoder.eof()) {
-            uint8_t c = decoder.template decode<uint8_t>(literal_r);
+            auto c = decoder.template decode<uliteral_t>(literal_r);
             outs << c;
 
             if(flip && c == run_char) {

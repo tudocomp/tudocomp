@@ -54,10 +54,10 @@ public:
 
         // Stats
         env().begin_stat_phase("Lz78 compression");
-        uint64_t stat_dictionary_resets = 0;
-        uint64_t stat_dict_counter_at_last_reset = 0;
-        uint64_t stat_factor_count = 0;
-        uint64_t factor_count = 0;
+        len_t stat_dictionary_resets = 0;
+        len_t stat_dict_counter_at_last_reset = 0;
+        len_t stat_factor_count = 0;
+        len_t factor_count = 0;
 
         lz78::EncoderDictionary ed(lz78::EncoderDictionary::Lz78, dms, reserve_dms);
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
@@ -69,7 +69,7 @@ public:
         bool rbwf {false}; // Reset Bit Width Flag
 
         while (is.get(c)) {
-            uint8_t b = c;
+            uliteral_t b = c;
 
             // dictionary's maximum size was reached
             if (ed.size() == dms)
@@ -105,7 +105,7 @@ public:
         }
         if (i != dms) {
             lz78::CodeType fact = last_i;
-            uint8_t b = c;
+            uliteral_t b = c;
             if (fact == dms) {
                 fact = 0;
             }
@@ -130,11 +130,11 @@ public:
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
         lz78::DecodeBuffer buf;
-        uint64_t factor_count = 0;
+        len_t factor_count = 0;
 
         while (!decoder.eof()) {
             auto index = decoder.template decode<lz78::CodeType>(Range(factor_count));
-            auto chr = decoder.template decode<uint8_t>(literal_r);
+            auto chr = decoder.template decode<uliteral_t>(literal_r);
 
             lz78::Factor entry { index, chr };
 

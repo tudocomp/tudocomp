@@ -9,9 +9,9 @@ namespace lzss {
 
 class Factor {
 public:
-    size_t pos, src, len;
+    len_t pos, src, len;
 
-    inline Factor(size_t fpos, size_t fsrc, size_t flen)
+    inline Factor(len_t fpos, len_t fsrc, len_t flen)
         : pos(fpos), src(fsrc), len(flen) {
     }
 };

@@ -10,14 +10,14 @@ namespace lz78 {
 class DecodeBuffer {
 private:
     std::vector<Factor> dict;
-    std::vector<uint8_t> dict_walk_buf;
+    std::vector<uliteral_t> dict_walk_buf;
 
 public:
     inline void decode(Factor entry, std::ostream& out) {
         dict.push_back(entry);
 
-        size_t index = entry.index;
-        uint8_t chr = entry.chr;
+        len_t index = entry.index;
+        uliteral_t chr = entry.chr;
 
         dict_walk_buf.clear();
 

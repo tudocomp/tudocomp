@@ -93,7 +93,7 @@ public:
             } else {
                 // encode literal
                 coder.encode(0, bit_r);
-                coder.encode(buf[ahead], literal_r);
+                coder.encode(uliteral_t(buf[ahead]), literal_r);
 
                 advance = 1;
             }
@@ -121,7 +121,7 @@ public:
     inline virtual void decompress(Input& input, Output& output) override {
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
-        std::vector<uint8_t> text;
+        std::vector<uliteral_t> text;
         while(!decoder.eof()) {
             bool is_factor = decoder.template decode<bool>(bit_r);
             if(is_factor) {
@@ -134,7 +134,7 @@ public:
                     text.push_back(text[fsrc+i]);
                 }
             } else {
-                uint8_t c = decoder.template decode<uint8_t>(literal_r);
+                auto c = decoder.template decode<uliteral_t>(literal_r);
                 text.push_back(c);
             }
         }

@@ -25,7 +25,7 @@ inline void encode_text(coder_t& coder,
     }
 
     // encode text size
-    coder.encode(n, size_r);
+    coder.encode(n, len_r);
 
     // define ranges
     Range text_r(n);
@@ -35,7 +35,7 @@ inline void encode_text(coder_t& coder,
         const Factor& f = factors[i];
 
         while(p < f.pos) {
-            uint8_t c = text[p++];
+            auto c = text[p++];
 
             // encode symbol
             coder.encode(0, bit_r);
@@ -51,7 +51,7 @@ inline void encode_text(coder_t& coder,
     }
 
     while(p < n)  {
-        uint8_t c = text[p++];
+        auto c = text[p++];
 
         // encode symbol
         coder.encode(0, bit_r);
@@ -65,7 +65,7 @@ inline void encode_text(coder_t& coder,
 template<typename coder_t, typename dcb_strategy_t>
 inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
     // decode text range
-    size_t text_len = decoder.template decode<size_t>(size_r);
+    auto text_len = decoder.template decode<len_t>(len_r);
     Range text_r(text_len);
 
     // init decode buffer
@@ -75,12 +75,12 @@ inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
     while(!decoder.eof()) {
         bool is_factor = decoder.template decode<bool>(bit_r);
         if(is_factor) {
-            size_t src = decoder.template decode<size_t>(text_r);
-            size_t len = decoder.template decode<size_t>(text_r);
+            auto src = decoder.template decode<len_t>(text_r);
+            auto len = decoder.template decode<len_t>(text_r);
 
             buffer.defact(src, len);
         } else {
-            uint8_t c = decoder.template decode<uint8_t>(literal_r);
+            auto c = decoder.template decode<uliteral_t>(literal_r);
             buffer.decode(c);
         }
     }
