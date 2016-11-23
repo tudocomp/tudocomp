@@ -182,7 +182,7 @@ public:
         }
         */
 
-        env().log_stat("grammar", grammar.size());
+        env().log_stat("rules", grammar.size());
         env().log_stat("replaced", num_replaced);
 
         // instantiate encoder
@@ -204,19 +204,47 @@ public:
         };
 
         // encode grammar rules
+        size_t num_grammar_terminals = 0;
+        size_t num_grammar_nonterminals = 0;
+
         for(size_t i = 0; i < grammar.size(); i++) {
             digram_t di = grammar[i];
 
             Range grammar_r(i);
-            encode_sym(left(di), grammar_r);
-            encode_sym(right(di), grammar_r);
+
+            // statistics
+            sym_t l = left(di);
+            if(l < sigma) ++num_grammar_terminals;
+            else ++num_grammar_nonterminals;
+
+            sym_t r = right(di);
+            if(r < sigma) ++num_grammar_terminals;
+            else ++num_grammar_nonterminals;
+
+            encode_sym(l, grammar_r);
+            encode_sym(r, grammar_r);
         }
 
+        env().log_stat("grammar_terms", num_grammar_terminals);
+        env().log_stat("grammar_nonterms", num_grammar_nonterminals);
+
         // encode compressed text (start rule)
+        size_t num_text_terminals = 0;
+        size_t num_text_nonterminals = 0;
+
         Range grammar_r(grammar.size());
         for(size_t i = 0; i < n; i = next[i]) {
+            sym_t x = text[i];
+
+            // statistics
+            if(x < sigma) ++num_text_terminals;
+            else ++num_text_nonterminals;
+
             encode_sym(text[i], grammar_r);
         }
+
+        env().log_stat("text_terms", num_text_terminals);
+        env().log_stat("text_nonterms", num_text_nonterminals);
 
         // clean up
         delete[] text;
