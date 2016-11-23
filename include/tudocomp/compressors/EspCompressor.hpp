@@ -32,7 +32,7 @@ void meta_blocks_debug(const std::vector<MetaBlock> meta_blocks, View in) {
         for (auto& mb : meta_blocks) {
             ss << mb.view;
         }
-        CHECK(ss.str() == std::string(in));
+        DCHECK(ss.str() == std::string(in));
     }
 
     std::cout << "|";
@@ -57,7 +57,7 @@ void blocks_debug(const std::vector<View> blocks, View in) {
         for (auto& b : blocks) {
             ss << b;
         }
-        //CHECK(ss.str() == std::string(in));
+        DCHECK(ss.str() == std::string(in));
     }
 
     std::cout << "|";
@@ -159,15 +159,15 @@ bool check_landmarks(const T& t) {
     return true;
 }
 
-template<class F, class G>
+// NB: Thuis assumes iter_log(alphabet_size) valid bytes before A
+template<class G>
 inline void handle_meta_block_2(View A,
                                 uint64_t alphabet_size,
                                 std::vector<uint8_t>& buf,
-                                F debug_push_meta_block,
                                 G push_block) {
+    DCHECK(A.size() > 0);
     auto type_3_prefix = iter_log(alphabet_size);
-    debug_push_meta_block(3, A.substr(0, type_3_prefix));
-    debug_push_meta_block(2, A.substr(type_3_prefix));
+    A = View(A.data() - type_3_prefix, A.size() + type_3_prefix);
     buf.clear();
     buf.insert(buf.cbegin(), A.cbegin(), A.cend());
 
@@ -299,7 +299,7 @@ inline void handle_meta_block_2(View A,
 
     if (debug_landmark_assoc.size() > 0) {
         auto block_range = [&](size_t a, size_t b) {
-            std::cout << a << " - " << b << "\n";
+            //std::cout << a << " - " << b << "\n";
             push_block(A.substr(type_3_prefix).substr(a, b));
         };
 
@@ -315,15 +315,28 @@ inline void handle_meta_block_2(View A,
 
 }
 
-template<class F, class G>
-inline void handle_meta_block_13(uint type,
-                                 View A,
-                                 uint64_t alphabet_size,
-                                 std::vector<uint8_t>& buf,
-                                 F debug_push_meta_block,
+template<class G>
+inline void handle_meta_block_13(View A,
                                  G push_block) {
-    debug_push_meta_block(type, A);
+    while (true) {
+        auto s = A.size();
+        DCHECK(s > 1);
 
+        if (s == 2) {
+            push_block(A);
+            return;
+        } else if (s == 3) {
+            push_block(A);
+            return;
+        } else if (s == 4) {
+            push_block(A.substr(0, 2));
+            push_block(A.substr(2));
+            return;
+        } else {
+            push_block(A.substr(0, 3));
+            A = A.substr(3);
+        }
+    }
 }
 
 public:
@@ -338,25 +351,59 @@ public:
 
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
+        DCHECK(in.size() > 0 /* 0-byte input not covered by paper */);
 
         size_t alphabet_size = 256;
 
-        std::vector<MetaBlock> meta_blocks;
         std::vector<View> blocks;
 
         {
-            std::vector<uint8_t> buf;
+            std::vector<MetaBlock> meta_blocks;
 
-            auto push_meta_block = [&](size_t type, View A) {
-                meta_blocks.push_back(MetaBlock { type, A });
-            };
+            std::vector<uint8_t> buf;
 
             auto push_block = [&](View A) {
                 blocks.push_back(A);
             };
 
-            size_t i = 0;
+            auto type_23_prefix = iter_log(alphabet_size);
 
+            // Merge length-one-block with adjacent one
+            auto middle_meta_block = [&](uint8_t type, View A) {
+                // Attach to right meta block if not attached to left one
+                if (meta_blocks.size() > 0 && meta_blocks.back().view.size() == 1) {
+                    meta_blocks.pop_back();
+                    A = View(A.data() - 1, A.size() + 1);
+                }
+
+                // Attach to left meta block before attempting to attach to right one
+                if (type != 2 && A.size() == 1) {
+                    if (meta_blocks.size() > 0 && meta_blocks.back().type == 1) {
+                        auto& v = meta_blocks.back().view;
+                        v = View(v.data(), v.size() + 1);
+                    } else {
+                        meta_blocks.push_back(MetaBlock { type, A });
+                    }
+                } else {
+                    meta_blocks.push_back(MetaBlock { type, A });
+                }
+            };
+
+            // Split long into short and long
+            auto initial_meta_block = [&](uint8_t type, View A) {
+                if (type == 2) {
+                    middle_meta_block(3, A.substr(0, type_23_prefix));
+                    A = A.substr(type_23_prefix);
+                    if (A.size() > 0) {
+                        middle_meta_block(2, A);
+                    }
+                } else {
+                    middle_meta_block(type, A);
+                }
+            };
+
+            // Split into repeating, long and short
+            size_t i = 0;
             while(i < in.size()) {
                 auto type_1_start = i;
                 while ((i < (in.size() - 1)) && (in[i] == in[i + 1])) {
@@ -364,8 +411,9 @@ public:
                 }
                 if ((i - type_1_start) > 0) {
                     View A = in.substr(type_1_start, i + 1);
-                    handle_meta_block_13(1, A, alphabet_size, buf, push_meta_block, push_block);
-                    std::cout << "  ---\n";
+                    {
+                        initial_meta_block(1, A);
+                    }
                     i++;
                 }
 
@@ -382,18 +430,32 @@ public:
                     View A = in.substr(type_23_start, i);
 
                     if (type_23_len >= iter_log(alphabet_size)) {
-                        handle_meta_block_2(A, alphabet_size, buf, push_meta_block, push_block);
-                        std::cout << "  ---\n";
+                        initial_meta_block(2, A);
                     } else {
-                        handle_meta_block_13(3, A, alphabet_size, buf, push_meta_block, push_block);
-                        std::cout << "  ---\n";
+                        initial_meta_block(3, A);
                     }
                 }
             }
-        }
 
-        std::cout << "\nFinal meta blocks:\n";
-        meta_blocks_debug(meta_blocks, in);
+            // Final processing, without any more meta block splitting
+            auto real_meta_block = [&](uint8_t type, View A) {
+                if (type == 2) {
+                    handle_meta_block_2(A, alphabet_size, buf, push_block);
+                } else {
+                    DCHECK(A.size() > 1 /* 1-byte input not covered by paper */);
+                    handle_meta_block_13(A, push_block);
+                }
+
+                std::cout << "  ---\n";
+            };
+
+            std::cout << "\nFinal Meta blocks:\n";
+            meta_blocks_debug(meta_blocks, in);
+
+            for (auto mb : meta_blocks) {
+                real_meta_block(mb.type, mb.view);
+            }
+        }
 
         std::cout << "\nFinal blocks:\n";
         blocks_debug(blocks, in);
