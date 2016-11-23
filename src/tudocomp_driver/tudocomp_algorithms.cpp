@@ -11,6 +11,7 @@
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
 #include <tudocomp/compressors/LZSSSlidingWindowCompressor.hpp>
 #include <tudocomp/compressors/LZWCompressor.hpp>
+#include <tudocomp/compressors/RePairCompressor.hpp>
 #include <tudocomp/compressors/RunLengthEncoder.hpp>
 #include <tudocomp/compressors/EasyRLECompressor.hpp>
 #include <tudocomp/compressors/MTFCompressor.hpp>
@@ -40,6 +41,11 @@ void register_algorithms(Registry& r) {
     // Because the tudocomp_driver has to select the algorithm
     // at runtime, we need to explicitly register all possible
     // template instances
+
+    r.register_compressor<RePairCompressor<ASCIICoder>>();
+    r.register_compressor<RePairCompressor<ByteCoder>>();
+    r.register_compressor<RePairCompressor<BitOptimalCoder>>();
+    r.register_compressor<RePairCompressor<HuffmanCoder>>();
 
     r.register_compressor<LiteralEncoder<ASCIICoder>>();
     r.register_compressor<LiteralEncoder<ByteCoder>>();
