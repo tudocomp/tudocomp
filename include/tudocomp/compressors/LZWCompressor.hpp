@@ -24,7 +24,7 @@ private:
     }
 
     /// Max dictionary size before reset
-    const lz78::CodeType dms {lz78::DMS_MAX};
+    const lz78::CodeType m_dict_max_size {lz78::DMS_MAX};
     //const CodeType dms {256 + 10};
     /// Preallocated dictionary size,
     /// picked because (sizeof(CodeType) = 4) * 1024 == 4096,
@@ -33,7 +33,7 @@ private:
 public:
     inline LZWCompressor(Env&& env):
         Compressor(std::move(env)),
-        dms(select_size(this->env(), "dict_size"))
+        m_dict_max_size(select_size(this->env(), "dict_size"))
     {}
 
     inline static Meta meta() {
@@ -57,45 +57,38 @@ public:
         uint64_t stat_factor_count = 0;
         uint64_t factor_count = 0;
 
-        lz78::EncoderDictionary ed(lz78::EncoderDictionary::Lzw, dms, reserve_dms);
+        lz78::EncoderDictionary ed(lz78::EncoderDictionary::Lzw, 0, reserve_dms);
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
-        lz78::CodeType i {dms}; // Index
+        lz78::factorid_t node {0}; // LZ78 node
         char c;
-        bool rbwf {false}; // Reset Bit Width Flag
 
         while (is.get(c)) {
-            uint8_t b = c;
+			lz78::factorid_t child = ed.search_and_insert(node, static_cast<uliteral_t>(c));
 
-            // dictionary's maximum size was reached
-            if (ed.size() == dms)
-            {
-                ed.reset();
-                rbwf = true;
-                stat_dictionary_resets++;
-                stat_dict_counter_at_last_reset = dms;
-            }
 
-            const lz78::CodeType temp {i};
-
-            if ((i = ed.search_and_insert(temp, b)) == dms)
-            {
-                coder.encode(temp, Range(factor_count + 256));
-                //coder.encode_fact(temp);
+			if(child == 0) {
+                coder.encode(node, Range(factor_count + uliteral_max + 1));
                 stat_factor_count++;
                 factor_count++;
-                i = b;
-            }
-
-            if (rbwf)
-            {
-                factor_count = 0; //coder.dictionary_reset();
-                rbwf = false;
-            }
+				DCHECK_EQ(factor_count+uliteral_max+1, ed.size());
+                node = static_cast<uliteral_t>(c); //LZW
+				// dictionary's maximum size was reached
+				if(ed.size() == m_dict_max_size) {
+					ed.reset();
+					factor_count = 0; //coder.dictionary_reset();
+					stat_dictionary_resets++;
+					stat_dict_counter_at_last_reset = m_dict_max_size;
+				}
+			} else { // traverse further
+				node = child;
+			}
         }
-        if (i != dms) {
+
+		// take care of left-overs. We do not assume that the stream has a sentinel
+        if(node != 0) {
             //coder.encode_fact(i);
-            coder.encode(i, Range(factor_count + 256));
+            coder.encode(node, Range(factor_count + uliteral_max + 1)); //LZW
             stat_factor_count++;
             factor_count++;
         }
@@ -114,6 +107,7 @@ public:
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
         uint64_t counter = 0;
+		
         lzw::decode_step([&](lz78::CodeType& entry, bool reset, bool &file_corrupted) -> lzw::Factor {
             if (reset) {
                 counter = 0;
@@ -127,7 +121,7 @@ public:
             counter++;
             entry = factor;
             return true;
-        }, out, dms, reserve_dms);
+        }, out, m_dict_max_size, reserve_dms);
     }
 
 };
