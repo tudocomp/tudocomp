@@ -55,15 +55,11 @@ private:
 public:
     inline LZ78Compressor(Env&& env):
         Compressor(std::move(env)),
-        m_dict_max_size(select_size(this->env(), "dict_size"))
+        m_dict_max_size(env.option("dict_size").as_integer())
     {}
 
     inline static Meta meta() {
-        Meta m("compressor", "lz78",
-               "Lempel-Ziv 78\n\n"
-               "`dict_size` has to either be \"inf\", or a positive integer,\n"
-               "and determines the maximum size of the backing storage of\n"
-               "the dictionary before it gets reset.");
+        Meta m("compressor", "lz78", "Lempel-Ziv 78\n\n" LZ78_DICT_SIZE_DESC);
         m.option("coder").templated<coder_t, BitOptimalCoder>();
         m.option("dict_size").dynamic("inf");
         return m;

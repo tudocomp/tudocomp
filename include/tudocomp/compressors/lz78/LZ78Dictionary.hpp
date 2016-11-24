@@ -54,6 +54,10 @@ static constexpr factorid_t undef_id = std::numeric_limits<factorid_t>::max();
 /// Maximum legal dictionary size.
  const factorid_t DMS_MAX = std::numeric_limits<factorid_t>::max(); //TODO
 
+#define LZ78_DICT_SIZE_DESC \
+			"`dict_size` has to either be 0 (unlimited), or a positive integer,\n" \
+			"and determines the maximum size of the backing storage of\n" \
+			"the dictionary before it gets reset." 
 ///
 /// @brief Encoder's custom dictionary type.
 ///

@@ -14,31 +14,17 @@ namespace tdc {
 template<typename coder_t>
 class LZWCompressor: public Compressor {
 private:
-    static inline lz78::CodeType select_size(Env& env, string_ref name) {
-        auto& o = env.option(name);
-        if (o.as_string() == "inf") {
-            return 0;
-        } else {
-            return o.as_integer();
-        }
-    }
-
-    /// Max dictionary size before reset
-    const lz78::CodeType m_dict_max_size {0};
+    const lz78::CodeType m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
 public:
     inline LZWCompressor(Env&& env):
         Compressor(std::move(env)),
-        m_dict_max_size(select_size(this->env(), "dict_size"))
+        m_dict_max_size(env.option("dict_size").as_integer())
     {}
 
     inline static Meta meta() {
-        Meta m("compressor", "lzw",
-               "Lempel-Ziv-Welch\n\n"
-               "`dict_size` has to either be \"inf\", or a positive integer,\n"
-               "and determines the maximum size of the backing storage of\n"
-               "the dictionary before it gets reset.");
+        Meta m("compressor", "lzw", "Lempel-Ziv-Welch\n\n" LZ78_DICT_SIZE_DESC);
         m.option("coder").templated<coder_t, BitOptimalCoder>();
-        m.option("dict_size").dynamic("inf");
+        m.option("dict_size").dynamic("0");
         return m;
     }
 
@@ -128,7 +114,7 @@ public:
                 return false;
             }
 
-            lzw::Factor factor(decoder.template decode<uint64_t>(Range(counter + 256)));
+            lzw::Factor factor(decoder.template decode<uint64_t>(Range(counter + uliteral_max + 1)));
             counter++;
             entry = factor;
             return true;
