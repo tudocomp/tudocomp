@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <cstring>
 #include <glog/logging.h>
+#include <functional>
 
 #include <tudocomp/pre_header/GenericViewBase.hpp>
 
@@ -549,6 +550,30 @@ inline ConstGenericView<uint8_t> operator "" _v(const char* str, size_t n)
 
 using ByteView = ConstGenericView<uint8_t>;
 
+}
+
+namespace std {
+    template<class T>
+    struct hash<tdc::GenericView<T>> {
+        size_t operator()(const tdc::GenericView<T>& x) const {
+            return hash<tdc::ConstGenericView<T>>()(x);
+        }
+    };
+}
+
+namespace std {
+    template<class T>
+    struct hash<tdc::ConstGenericView<T>>
+    {
+        size_t operator()(const tdc::ConstGenericView<T>& x) const {
+            std::size_t seed;
+            std::hash<T> hasher;
+            for (const auto& v : x) {
+                seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            }
+            return seed;
+        }
+    };
 }
 
 #endif

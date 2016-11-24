@@ -231,7 +231,6 @@ public:
     inline static bool op_greater_eq(const GenericViewBase<T, const T*>& lhs, const GenericViewBase<T, const T*>& rhs) {
         return !(op_less(lhs, rhs));
     }
-
 };
 
 template<class T, class Q>
