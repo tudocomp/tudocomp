@@ -101,8 +101,8 @@ public:
         auto& sa_t = t.require_sa();
         auto& lcp_t = t.require_lcp();
 
-        // iterate over lcp array, add indexes with non overlapping prefix length greater than 2 to pq
-        std::priority_queue<std::pair<uint,uint>> pq;
+        // iterate over lcp array, add indexes with non overlapping prefix length greater than 2 to vector
+        std::vector<std::pair<uint,uint>> lrf_occurences;
         //std::vector<std::string> dictionary;
 
         //vector of position, length
@@ -135,7 +135,7 @@ public:
                 if(factor_length>1){
 
                   //  DLOG(INFO) << "found lrf";
-                    pq.push(pair);
+                    lrf_occurences.push_back(pair);
                 }
             }
         }
@@ -147,14 +147,16 @@ public:
 
         DLOG(INFO) << "computing lrfs";
 
-        std::vector<std::tuple<uint,uint,uint>> non_terminal_symbols;
-        non_terminal_symbols.reserve(pq.size());
-        uint non_terminal_symbol_number = 0;
-        while(!pq.empty()){
-            std::pair<uint,uint> top = pq.top();
-            pq.pop();
+        std::sort(lrf_occurences.begin(),lrf_occurences.end());
 
-            if(non_terminals[sa_t[top.second]] == 1 || non_terminals[sa_t[top.second-1]] == 1 || non_terminals[sa_t[top.second]+top.first-1] == 1){
+        std::vector<std::tuple<uint,uint,uint>> non_terminal_symbols;
+        non_terminal_symbols.reserve(lrf_occurences.size());
+        uint non_terminal_symbol_number = 0;
+        while(!lrf_occurences.empty()){
+            std::pair<uint,uint> top = lrf_occurences.back();
+            lrf_occurences.pop_back();
+
+            if(non_terminals[sa_t[top.second]] == 1 || non_terminals[sa_t[top.second-1]] == 1 || non_terminals[sa_t[top.second]+top.first-1] == 1 || non_terminals[sa_t[top.second-1]+top.first-1] == 1){
                 continue;
             }
 
