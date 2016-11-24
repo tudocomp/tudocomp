@@ -7,6 +7,7 @@
 #include <tudocomp/compressors/lzw/LZWDecoding.hpp>
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
 
+#include <tudocomp/Range.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp> //default
 
 namespace tdc {
@@ -14,7 +15,7 @@ namespace tdc {
 template<typename coder_t>
 class LZWCompressor: public Compressor {
 private:
-    const lz78::CodeType m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
+    const lz78::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
 public:
     inline LZWCompressor(Env&& env):
         Compressor(std::move(env)),
@@ -41,7 +42,7 @@ public:
 
 
 
-        lz78::EncoderDictionary dict(lz78::EncoderDictionary::Lzw, reserved_size);
+        lz78::EncoderDictionary dict(reserved_size);
 		auto reset_dict = [&dict] () {
 			dict.clear();
 			for(size_t i = 0; i < uliteral_max+1; ++i) {
@@ -54,9 +55,11 @@ public:
 
         lz78::factorid_t node {lz78::undef_id}; // LZ78 node
         char c;
+		if(!is.get(c)) return;
+		node = static_cast<uliteral_t>(c);
 
-        while (is.get(c)) {
-			lz78::factorid_t child = dict.search_and_insert(node, static_cast<uliteral_t>(c));
+		while(is.get(c)) {
+			lz78::factorid_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
 			tdc_debug(VLOG(2) << " child " << child << " #factor " << factor_count << " size " << dict.size() << " node " << node);
 
 
@@ -81,19 +84,14 @@ public:
 
 		DLOG(INFO) << "End node id of LZW parsing " << node;
 		// take care of left-overs. We do not assume that the stream has a sentinel
-//        if(node != static_cast<uliteral_t>(c)) {
-         if(node != lz78::undef_id) {
-            //coder.encode_fact(i);
-            coder.encode(node, Range(factor_count + uliteral_max + 1)); //LZW
-            stat_factor_count++;
-            factor_count++;
-        }
+		DCHECK_NE(node, lz78::undef_id);
+		coder.encode(node, Range(factor_count + uliteral_max + 1)); //LZW
+		stat_factor_count++;
+		factor_count++;
 
         env().log_stat("factor_count", stat_factor_count);
-        env().log_stat("dictionary_reset_counter",
-                       stat_dictionary_resets);
-        env().log_stat("max_factor_counter",
-                       stat_dict_counter_at_last_reset);
+        env().log_stat("dictionary_reset_counter", stat_dictionary_resets);
+        env().log_stat("max_factor_counter", stat_dict_counter_at_last_reset);
         env().end_stat_phase();
     }
 
@@ -105,7 +103,8 @@ public:
 
         uint64_t counter = 0;
 		
-        lzw::decode_step([&](lz78::CodeType& entry, bool reset, bool &file_corrupted) -> lzw::Factor {
+		//TODO file_corrupted not used!
+        lzw::decode_step([&](lz78::factorid_t& entry, bool reset, bool &file_corrupted) -> lzw::Factor {
             if (reset) {
                 counter = 0;
             }

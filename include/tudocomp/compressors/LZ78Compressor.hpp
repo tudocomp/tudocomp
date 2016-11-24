@@ -76,7 +76,7 @@ public:
         uint64_t stat_factor_count = 0;
         uint64_t factor_count = 0;
 
-        lz78::EncoderDictionary dict(lz78::EncoderDictionary::Lz78, reserved_size);
+        lz78::EncoderDictionary dict(reserved_size);
 		auto reset_dict = [&dict] () {
 			dict.clear();
 			const lz78::factorid_t node = dict.add_rootnode(0);
@@ -92,7 +92,7 @@ public:
         char c;
 
         while (is.get(c)) {
-			lz78::factorid_t child = dict.search_and_insert(node, static_cast<uliteral_t>(c));
+			lz78::factorid_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
 			if(child == lz78::undef_id) {
                 coder.encode(node, Range(factor_count));
                 coder.encode(static_cast<uliteral_t>(c), literal_r);
@@ -117,7 +117,7 @@ public:
         if(node != 0) {
             coder.encode(parent, Range(factor_count));
             coder.encode(c, literal_r);
-			DCHECK_EQ(dict.search_and_insert(parent, static_cast<uliteral_t>(c)), node);
+			DCHECK_EQ(dict.find_or_insert(parent, static_cast<uliteral_t>(c)), node);
             factor_count++;
             stat_factor_count++;
         }
