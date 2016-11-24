@@ -450,6 +450,23 @@ inline std::vector<ConstGenericView<T>> partition(ConstGenericView<T> in, size_t
     return blocks;
 }
 
+template<class T>
+inline std::unordered_map<ConstGenericView<T>, uint64_t> block_label(
+    const std::vector<ConstGenericView<T>>& blocks
+) {
+    uint64_t counter = 0;
+    std::unordered_map<ConstGenericView<T>, uint64_t> map;
+
+    for (const auto& block: blocks) {
+        if (map.count(block) == 0) {
+            map[block] = counter;
+            counter++;
+        }
+    }
+
+    return map;
+}
+
 class EspCompressor: public Compressor {
 
 public:
@@ -466,8 +483,13 @@ public:
         auto in = input.as_view();
         DCHECK(in.size() > 0 /* 0-byte input not covered by paper */);
         size_t alphabet_size = 256;
-        std::vector<View> blocks = partition(in, alphabet_size);
+        // initial
+        auto blocks = partition(in, alphabet_size);
         DCHECK(blocks_debug(blocks, in));
+
+        auto labels = block_label(blocks);
+
+
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
