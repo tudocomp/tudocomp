@@ -188,10 +188,10 @@ public:
         // lambda for encoding symbols
         auto encode_sym = [&](sym_t x, const Range& r) {
             if(x < sigma) {
-                coder.encode(0, bit_r);
+                coder.encode(false, bit_r);
                 coder.encode(x, literal_r);
             } else {
-                coder.encode(1, bit_r);
+                coder.encode(true, bit_r);
                 coder.encode(x - sigma, r);
             }
         };
