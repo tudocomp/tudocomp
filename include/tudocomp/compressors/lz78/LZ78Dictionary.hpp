@@ -1,216 +1,119 @@
 #ifndef LZ78_DICTIONARY_H
 #define LZ78_DICTIONARY_H
 
-///
-/// @file
-/// @author Julius Pettersson
-/// @copyright MIT/Expat License.
-/// @brief LZW file compressor
-/// @version 6
-/// @remarks This version borrows heavily from Juha Nieminen's work.
-///
-/// This is the C++11 implementation of a Lempel-Ziv-Welch single-file command-line compressor.
-/// It was written with Doxygen comments.
-///
-/// It has been heavily adapted such that the dictionary search can be used
-/// for both lz78 and lzw compressors
-///
-/// @see http://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Welch
-/// @see http://marknelson.us/2011/11/08/lzw-revisited/
-/// @see http://www.cs.duke.edu/csed/curious/compression/lzw.html
-/// @see http://warp.povusers.org/EfficientLZW/index.html
-/// @see http://en.cppreference.com/
-/// @see http://www.doxygen.org/
-///
-/// @remarks DF: the data file
-/// @remarks EF: the encoded file
-///
+/**
+ * LZ78 Trie Implementation 
+ * based on Julius Pettersson (MIT/Expat License.) and Juha Nieminen's work.
+ * @see http://www.cplusplus.com/articles/iL18T05o/
+**/
 
-#include <algorithm>
-#include <array>
-#include <climits>
+#include <limits>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib>
-#include <exception>
-#include <fstream>
-#include <ios>
-#include <iostream>
-#include <istream>
-#include <limits>
-#include <memory>
-#include <ostream>
-#include <stdexcept>
-#include <string>
-#include <utility>
 #include <vector>
 #include <tudocomp/def.hpp>
+#include <tudocomp/compressors/lz78/LZ78common.hpp>
 
 namespace tdc {
 namespace lz78 {
 
-/// Type used to store and retrieve codes.
-using CodeType = len_t;
-
-/// Maximum legal dictionary size.
-const CodeType DMS_MAX = std::numeric_limits<CodeType>::max();
-
-///
-/// @brief Encoder's custom dictionary type.
-///
 class EncoderDictionary {
-    struct Node;
 
-    /// Vector of nodes on top of which the binary search tree is implemented.
-    std::vector<Node> vn;
-
-    ///
-    /// @brief Binary search tree node.
-    ///
-    struct Node {
-
-        ///
-        /// @brief Default constructor.
-        /// @param c    byte that the Node will contain
-        ///
-        explicit Node(uliteral_t c, CodeType dms):
-            first(dms), left(dms), right(dms), c(c)
-        {
-        }
-
-        CodeType    first;  ///< Code of first child string.
-        CodeType    left;   ///< Code of child node with byte < `c`.
-        CodeType    right;  ///< Code of child node with byte > `c`.
-        uliteral_t  c;      ///< Byte.
-    } __attribute__((packed));
-
-    CodeType m_dms;
-    CodeType m_reserve_dms;
-    bool m_lzw_mode;
+	/*
+	 * The trie is not stored in standard form. Each node stores the pointer to its first child (first as first come first served).
+	 * The other children are stored in left_sibling/right_sibling of the first child (structured as a binary tree where the first child is the root, and the binary tree is sorted by the character of the trie edge)
+	 */
+	std::vector<factorid_t> first_child;
+	std::vector<factorid_t> left_sibling;
+	std::vector<factorid_t> right_sibling;
+	std::vector<literal_t> literal;
 
 public:
-
-    enum LzMode {
-        Lz78,
-        Lzw,
-    };
-
-    ///
-    /// @brief Default constructor.
-    /// @details It builds the `initials` cheat sheet.
-    ///
-    EncoderDictionary(LzMode mode, CodeType dms, CodeType reserve_dms):
-        m_dms(dms), m_reserve_dms(reserve_dms), m_lzw_mode(mode == Lzw)
-    {
-        vn.reserve(reserve_dms);
-        reset();
+    EncoderDictionary(factorid_t reserve = 0) {
+		if(reserve > 0) {
+			first_child.reserve(reserve);
+			left_sibling.reserve(reserve);
+			right_sibling.reserve(reserve);
+			literal.reserve(reserve);
+		}
     }
 
-    ///
-    /// @brief Resets dictionary to its initial contents.
-    ///
-    void reset()
+	/**
+	 * The dictionary can store multiple root nodes
+	 * For LZ78, we use a root node with the id = 0.
+	 * For LZW, we add for each possible literal value a root node.
+	 * The compressor has to add these nodes.
+	 */
+	factorid_t add_rootnode(uliteral_t c) {
+        first_child.push_back(undef_id);
+		left_sibling.push_back(undef_id);
+		right_sibling.push_back(undef_id);
+		literal.push_back(c);
+		return first_child.size();
+	}
+	/**
+	 * Erases the contents of the dictionary.
+	 * Used by compressors with limited dictionary size.
+	 */
+	void clear() {
+        first_child.clear();
+		left_sibling.clear();
+		right_sibling.clear();
+		literal.clear();
+
+	}
+
+    /** Searches a pair (`parent`, `c`). If there is no node below `parent` on an edge labeled with `c`, a new leaf of the `parent` will be constructed.
+      * @param parent  the parent node's id
+      * @param c       the edge label to follow
+      * @return the index of the respective child, if it was found.
+      * @retval undef_id   if a new leaf was inserted
+      **/
+    factorid_t find_or_insert(const factorid_t& parent, uint8_t c)
     {
-        vn.clear();
+        const factorid_t newleaf_id = first_child.size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
-        const long int minc = std::numeric_limits<uliteral_t>::min();
-        const long int maxc = std::numeric_limits<uliteral_t>::max();
+		DCHECK_LT(parent, first_child.size());
+		
 
-        if (m_lzw_mode) {
-            // In lzw mode there are pre allocated
-            // dictionary entries for each possible byte value.
-            for (long int c = minc; c <= maxc; ++c) {
-                vn.push_back(Node(c, m_dms));
-            }
-        } else {
-            // In lz78 mode the dictionary would start out empty,
-            // but we need a root node for the intrinsic tree structure
-            // to be able to actually add dictionary entries, so
-            // add a dummy node.
-            vn.push_back(Node('-', m_dms)); // dummy root node
-        }
-    }
-
-    ///
-    /// @brief Searches for a pair (`i`, `c`) and inserts the pair if it wasn't found.
-    /// @param i                code to search for
-    /// @param c                attached byte to search for
-    /// @return The index of the pair, if it was found.
-    /// @retval m_dms    if the pair wasn't found
-    ///
-    CodeType search_and_insert(CodeType i, uliteral_t c)
-    {
-        // If we add a new node, its index will be equal to the current size
-        // of the dictionary, so just keep it around beforehand.
-        const CodeType vn_size = vn.size();
-
-        if (i == m_dms) {
-            // i == dms indicates that we only search for a single byte,
-            // without any prefix.
-            if (m_lzw_mode) {
-                // In lzw mode, this means just returning one of the first 256
-                // dictionary positions directly
-                return c;
-            } else {
-                // In lz78 mode, we need to search for the byte regularly
-                // under the root node.
-                // TODO: It might simplify the code somewhat to use 0
-                //       as special value in general, rather than dms.
-                i = 0;
-            }
-        }
-
-        // Starting at the end of the prefix string indicated by i,
-        // walk the embedded linked list of child nodes
-        // until there either is a match, or a empty place to insert:
-
-        CodeType ci = vn[i].first;
-
-        if (ci != m_dms) {
-            // if vn[i] had children already,
-            // walk the binary tree spanned up between them
-            // until the char has been found, or there is a
-            // empty place for it to be inserted in.
-            while (true) {
-                if (c < vn[ci].c)
-                {
-                    if (vn[ci].left == m_dms)
-                    {
-                        vn[ci].left = vn_size;
+		if(first_child[parent] == undef_id) {
+			first_child[parent] = newleaf_id;
+		} else {
+        	factorid_t node = first_child[parent];
+            while(true) { // search the binary tree stored in parent (following left/right siblings)
+                if(c < literal[node]) {
+                    if (left_sibling[node] == undef_id) {
+                        left_sibling[node] = newleaf_id;
                         break;
                     }
                     else
-                        ci = vn[ci].left;
+						node = left_sibling[node];
                 }
-                else if (c > vn[ci].c) {
-                    if (vn[ci].right == m_dms)
-                    {
-                        vn[ci].right = vn_size;
+                else if (c > literal[node]) {
+                    if (right_sibling[node] == undef_id) {
+                        right_sibling[node] = newleaf_id;
                         break;
                     }
                     else
-                        ci = vn[ci].right;
+                        node = right_sibling[node];
                 }
-                else /* c == vn[ci].c */ {
-                    return ci;
+                else /* c == literal[node] -> node is the node we want to find */ {
+                    return node;
                 }
             }
-        } else {
-            // if the trie node vn[i] had no children yet, add the first one
-            vn[i].first = vn_size;
-        }
-
-        auto n = Node(c, m_dms);
-        vn.push_back(n);
-        return m_dms;
+		}
+        first_child.push_back(undef_id);
+		left_sibling.push_back(undef_id);
+		right_sibling.push_back(undef_id);
+		literal.push_back(c);
+        return undef_id;
     }
 
-    ///
-    /// @brief Returns the number of dictionary entries.
-    ///
-    std::vector<Node>::size_type size() const
-    {
-        return vn.size();
+	/**
+	 * Returns the number of entries, plus the number of rootnodes
+	 */
+    factorid_t size() const {
+        return first_child.size();
     }
 };
 

@@ -8,7 +8,7 @@
 namespace tdc {
 namespace lzw {
 
-using lz78::CodeType;
+using CodeType = lz78::factorid_t;
 
 template<class F>
 void decode_step(F next_code_callback,

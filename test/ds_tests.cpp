@@ -52,7 +52,7 @@ void test_bwt(const std::string& str, textds_t& t) {
 	for(size_t i = 0; i < input_size; ++i) {
 		bwt.push_back(bwt::bwt(str,sa,i));
 	}      
-	bwt::char_t* decoded_string = bwt::decode_bwt(bwt);
+	uliteral_t* decoded_string = bwt::decode_bwt(bwt);
 	if(decoded_string == nullptr) {
 		ASSERT_EQ(str.length(), 0);
 		return;

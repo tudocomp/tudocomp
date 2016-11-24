@@ -38,12 +38,12 @@ inline void encode_text(coder_t& coder,
             auto c = text[p++];
 
             // encode symbol
-            coder.encode(0, bit_r);
+            coder.encode(false, bit_r);
             coder.encode(c, literal_r);
         }
 
         // encode factor
-        coder.encode(1, bit_r);
+        coder.encode(true, bit_r);
         coder.encode(f.src, text_r);
         coder.encode(f.len, text_r);
 
@@ -54,7 +54,7 @@ inline void encode_text(coder_t& coder,
         auto c = text[p++];
 
         // encode symbol
-        coder.encode(0, bit_r);
+        coder.encode(false, bit_r);
         coder.encode(c, literal_r);
     }
 
