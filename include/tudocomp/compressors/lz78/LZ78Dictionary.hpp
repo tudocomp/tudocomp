@@ -82,22 +82,41 @@ public:
     /// @brief Default constructor.
     /// @details It builds the `initials` cheat sheet.
     ///
-    EncoderDictionary(LzMode mode, factorid_t dms, factorid_t reserve):
-        m_lzw_mode(mode == Lzw)
+    EncoderDictionary(LzMode mode, factorid_t reserve = 0)
+		: m_lzw_mode(mode == Lzw)
     {
-		DCHECK_EQ(dms, 0);
-        first_child.reserve(reserve);
-		left_sibling.reserve(reserve);
-		right_sibling.reserve(reserve);
-		literal.reserve(reserve);
-        reset();
+		if(reserve > 0) {
+			first_child.reserve(reserve);
+			left_sibling.reserve(reserve);
+			right_sibling.reserve(reserve);
+			literal.reserve(reserve);
+		}
+//        reset();
     }
+
+	factorid_t add_rootnode(uliteral_t c) {
+        first_child.push_back(undef_id);
+		left_sibling.push_back(undef_id);
+		right_sibling.push_back(undef_id);
+		literal.push_back(c);
+		return first_child.size();
+	}
+
+
+	void clear() {
+        first_child.clear();
+		left_sibling.clear();
+		right_sibling.clear();
+		literal.clear();
+
+	}
 
     ///
     /// @brief Resets dictionary to its initial contents.
     ///
     void reset()
     {
+		DCHECK(false);
         first_child.clear();
 		left_sibling.clear();
 		right_sibling.clear();

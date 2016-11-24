@@ -80,7 +80,14 @@ public:
         uint64_t stat_factor_count = 0;
         uint64_t factor_count = 0;
 
-        lz78::EncoderDictionary dict(lz78::EncoderDictionary::Lz78, 0, reserved_size);
+        lz78::EncoderDictionary dict(lz78::EncoderDictionary::Lz78, reserved_size);
+		auto reset_dict = [&dict] () {
+			dict.clear();
+			const lz78::factorid_t node = dict.add_rootnode(0);
+			DCHECK_EQ(node, dict.size());
+		};
+		reset_dict();
+
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
         // Define ranges
@@ -99,7 +106,7 @@ public:
 				DCHECK_EQ(factor_count+1, dict.size());
 				// dictionary's maximum size was reached
 				if(tdc_unlikely(dict.size() == m_dict_max_size)) { // if m_dict_max_size == 0 this will never happen
-					dict.reset();
+					reset_dict();
 					factor_count = 0; //coder.dictionary_reset();
 					stat_dictionary_resets++;
 					stat_dict_counter_at_last_reset = m_dict_max_size;
