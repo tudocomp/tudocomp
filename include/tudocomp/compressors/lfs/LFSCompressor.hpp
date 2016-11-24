@@ -217,7 +217,8 @@ public:
             }
         }
         DLOG(INFO) << "sorting occurences";
-        std::make_heap(non_terminal_symbols.begin(), non_terminal_symbols.end(), std::greater<std::tuple<uint,uint,uint>>());
+        //, std::greater<std::tuple<uint,uint,uint>>()
+        std::sort(non_terminal_symbols.begin(), non_terminal_symbols.end());
 
 
 
@@ -261,16 +262,17 @@ public:
         uint symbol_number ;
         uint symbol_length;
         //int i=0;  &&i<10 i++;
-        while(!non_terminal_symbols.empty() ){
+        for(auto it = non_terminal_symbols.begin(); it!= non_terminal_symbols.end(); it++){
+        //while(!non_terminal_symbols.empty() ){
 
-            std::tuple<uint,uint,uint> next_position = non_terminal_symbols.front();
+            std::tuple<uint,uint,uint> next_position = *it;
 
             start_position = std::get<0>(next_position);
             symbol_number =std::get<1>(next_position);
             symbol_length = std::get<2>(next_position);
 
-            std::pop_heap(non_terminal_symbols.begin(),non_terminal_symbols.end(), std::greater<std::tuple<uint,uint,uint>>());
-            non_terminal_symbols.pop_back();
+            //std::pop_heap(non_terminal_symbols.begin(),non_terminal_symbols.end(), std::greater<std::tuple<uint,uint,uint>>());
+            //non_terminal_symbols.pop_back();
             while(pos< start_position){
                 //get original text, because no symbol...
                 //output_string+=t[pos];
