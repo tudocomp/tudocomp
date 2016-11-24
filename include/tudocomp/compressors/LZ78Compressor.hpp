@@ -90,7 +90,7 @@ public:
 
         while (is.get(c)) {
 			lz78::factorid_t child = dict.search_and_insert(node, static_cast<uliteral_t>(c));
-			if(child == 0) {
+			if(child == lz78::undef_id) {
                 coder.encode(node, Range(factor_count));
                 coder.encode(static_cast<uliteral_t>(c), literal_r);
                 factor_count++;

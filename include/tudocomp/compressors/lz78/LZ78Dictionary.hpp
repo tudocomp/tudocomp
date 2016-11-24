@@ -49,6 +49,7 @@ namespace lz78 {
 /// Type used to store and retrieve codes.
 using factorid_t = std::uint32_t;
 using CodeType = std::uint32_t; // TODO
+static constexpr factorid_t undef_id = std::numeric_limits<factorid_t>::max();
 
 /// Maximum legal dictionary size.
  const factorid_t DMS_MAX = std::numeric_limits<factorid_t>::max(); //TODO
@@ -106,16 +107,16 @@ public:
         // const long int maxc = std::numeric_limits<uint8_t>::max();
         //
         if (m_lzw_mode) {
-			first_child.resize(uliteral_max+1);
-			left_sibling.resize(uliteral_max+1);
-			right_sibling.resize(uliteral_max+1);
+			first_child.resize(uliteral_max+1,undef_id);
+			left_sibling.resize(uliteral_max+1,undef_id);
+			right_sibling.resize(uliteral_max+1,undef_id);
 			literal.resize(uliteral_max+1);
 			std::iota(literal.begin(),literal.end(),0);
 		}
 		else {
-        first_child.push_back(0);
-		left_sibling.push_back(0);
-		right_sibling.push_back(0);
+        first_child.push_back(undef_id);
+		left_sibling.push_back(undef_id);
+		right_sibling.push_back(undef_id);
 		literal.push_back(0);
 		}
         // } else {
@@ -140,21 +141,21 @@ public:
         // of the dictionary, so just keep it around beforehand.
         const factorid_t newleaf_id = first_child.size();
 
-
-		if(m_lzw_mode && parent == 0) return c;
+		if(m_lzw_mode && parent == undef_id) return c;
+		DCHECK_LT(parent, first_child.size());
 		
 
         // Starting at the end of the prefix string indicated by i,
         // walk the embedded linked list of child nodes
         // until there either is a match, or a empty place to insert:
 
-		if(first_child[parent] == 0) {
+		if(first_child[parent] == undef_id) {
 			first_child[parent] = newleaf_id;
 		} else {
         	factorid_t node = first_child[parent];
             while(true) { // search the binary tree
                 if(c < literal[node]) {
-                    if (left_sibling[node] == 0) {
+                    if (left_sibling[node] == undef_id) {
                         left_sibling[node] = newleaf_id;
                         break;
                     }
@@ -162,7 +163,7 @@ public:
 						node = left_sibling[node];
                 }
                 else if (c > literal[node]) {
-                    if (right_sibling[node] == 0) {
+                    if (right_sibling[node] == undef_id) {
                         right_sibling[node] = newleaf_id;
                         break;
                     }
@@ -174,11 +175,11 @@ public:
                 }
             }
 		}
-        first_child.push_back(0);
-		left_sibling.push_back(0);
-		right_sibling.push_back(0);
+        first_child.push_back(undef_id);
+		left_sibling.push_back(undef_id);
+		right_sibling.push_back(undef_id);
 		literal.push_back(c);
-        return 0;
+        return undef_id;
     }
 
     ///

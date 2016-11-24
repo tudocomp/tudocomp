@@ -60,15 +60,15 @@ public:
         lz78::EncoderDictionary ed(lz78::EncoderDictionary::Lzw, 0, reserve_dms);
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
-        lz78::factorid_t node {0}; // LZ78 node
+        lz78::factorid_t node {lz78::undef_id}; // LZ78 node
         char c;
 
         while (is.get(c)) {
 			lz78::factorid_t child = ed.search_and_insert(node, static_cast<uliteral_t>(c));
-			std::cout << " child " << child << " #factor " << factor_count << " size " << ed.size() << " node " << node << std::endl;
+//			std::cout << " child " << child << " #factor " << factor_count << " size " << ed.size() << " node " << node << std::endl;
 
 
-			if(node != 0 && child == 0) {
+			if(child == lz78::undef_id) {
                 coder.encode(node, Range(factor_count + uliteral_max + 1));
                 stat_factor_count++;
                 factor_count++;
@@ -86,7 +86,7 @@ public:
 			}
         }
 
-		std::cout << "LZW: " << node << std::endl;
+		//std::cout << "LZW: " << node << std::endl;
 		// take care of left-overs. We do not assume that the stream has a sentinel
 //        if(node != static_cast<uliteral_t>(c)) {
          if(node != 0 || factor_count > 0) {
