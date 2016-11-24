@@ -85,14 +85,14 @@ public:
 
             if(fnum > 0) {
                 // encode factor
-                coder.encode(1, bit_r);
+                coder.encode(true, bit_r);
                 coder.encode(fpos - fsrc, Range(fpos)); //delta
                 coder.encode(fnum, Range(m_window));
 
                 advance = fnum;
             } else {
                 // encode literal
-                coder.encode(0, bit_r);
+                coder.encode(false, bit_r);
                 coder.encode(uliteral_t(buf[ahead]), literal_r);
 
                 advance = 1;
