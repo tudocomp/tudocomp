@@ -7,6 +7,7 @@
 #include <tudocomp/compressors/lzw/LZWDecoding.hpp>
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
 
+#include <tudocomp/Range.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp> //default
 
 namespace tdc {
@@ -14,40 +15,22 @@ namespace tdc {
 template<typename coder_t>
 class LZWCompressor: public Compressor {
 private:
-    static inline lz78::CodeType select_size(Env& env, string_ref name) {
-        auto& o = env.option(name);
-        if (o.as_string() == "inf") {
-            return lz78::DMS_MAX;
-        } else {
-            return o.as_integer();
-        }
-    }
-
-    /// Max dictionary size before reset
-    const lz78::CodeType dms {lz78::DMS_MAX};
-    //const CodeType dms {256 + 10};
-    /// Preallocated dictionary size,
-    /// picked because (sizeof(CodeType) = 4) * 1024 == 4096,
-    /// which is the default page size on linux
-    const lz78::CodeType reserve_dms {1024};
+    const lz78::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
 public:
     inline LZWCompressor(Env&& env):
         Compressor(std::move(env)),
-        dms(select_size(this->env(), "dict_size"))
+        m_dict_max_size(env.option("dict_size").as_integer())
     {}
 
     inline static Meta meta() {
-        Meta m("compressor", "lzw",
-               "Lempel-Ziv-Welch\n\n"
-               "`dict_size` has to either be \"inf\", or a positive integer,\n"
-               "and determines the maximum size of the backing storage of\n"
-               "the dictionary before it gets reset.");
+        Meta m("compressor", "lzw", "Lempel-Ziv-Welch\n\n" LZ78_DICT_SIZE_DESC);
         m.option("coder").templated<coder_t, BitOptimalCoder>();
-        m.option("dict_size").dynamic("inf");
+        m.option("dict_size").dynamic("0");
         return m;
     }
 
     virtual void compress(Input& input, Output& out) override {
+		const size_t reserved_size = isqrt(input.size())*2;
         auto is = input.as_stream();
 
         // Stats
@@ -57,64 +40,71 @@ public:
         len_t stat_factor_count = 0;
         len_t factor_count = 0;
 
-        lz78::EncoderDictionary ed(lz78::EncoderDictionary::Lzw, dms, reserve_dms);
+
+
+        lz78::EncoderDictionary dict(reserved_size);
+		auto reset_dict = [&dict] () {
+			dict.clear();
+			for(size_t i = 0; i < uliteral_max+1; ++i) {
+				const lz78::factorid_t node = dict.add_rootnode(i);
+				DCHECK_EQ(node, dict.size());
+			}
+		};
+		reset_dict();
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
-        lz78::CodeType i {dms}; // Index
+        lz78::factorid_t node {lz78::undef_id}; // LZ78 node
         char c;
-        bool rbwf {false}; // Reset Bit Width Flag
+		if(!is.get(c)) return;
+		node = static_cast<uliteral_t>(c);
 
-        while (is.get(c)) {
-            uliteral_t b = c;
+		while(is.get(c)) {
+			lz78::factorid_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
+			tdc_debug(VLOG(2) << " child " << child << " #factor " << factor_count << " size " << dict.size() << " node " << node);
 
-            // dictionary's maximum size was reached
-            if (ed.size() == dms)
-            {
-                ed.reset();
-                rbwf = true;
-                stat_dictionary_resets++;
-                stat_dict_counter_at_last_reset = dms;
-            }
 
-            const lz78::CodeType temp {i};
-
-            if ((i = ed.search_and_insert(temp, b)) == dms)
-            {
-                coder.encode(temp, Range(factor_count + 256));
-                //coder.encode_fact(temp);
+			if(child == lz78::undef_id) {
+                coder.encode(node, Range(factor_count + uliteral_max + 1));
                 stat_factor_count++;
                 factor_count++;
-                i = b;
-            }
+				DCHECK_EQ(factor_count+uliteral_max+1, dict.size());
+                node = static_cast<uliteral_t>(c); //LZW
+				// dictionary's maximum size was reached
+				if(dict.size() == m_dict_max_size) { 
+					DCHECK_GT(dict.size(),0);
+					reset_dict();
+					factor_count = 0; //coder.dictionary_reset();
+					stat_dictionary_resets++;
+					stat_dict_counter_at_last_reset = m_dict_max_size;
+				}
+			} else { // traverse further
+				node = child;
+			}
+        }
 
-            if (rbwf)
-            {
-                factor_count = 0; //coder.dictionary_reset();
-                rbwf = false;
-            }
-        }
-        if (i != dms) {
-            //coder.encode_fact(i);
-            coder.encode(i, Range(factor_count + 256));
-            stat_factor_count++;
-            factor_count++;
-        }
+		DLOG(INFO) << "End node id of LZW parsing " << node;
+		// take care of left-overs. We do not assume that the stream has a sentinel
+		DCHECK_NE(node, lz78::undef_id);
+		coder.encode(node, Range(factor_count + uliteral_max + 1)); //LZW
+		stat_factor_count++;
+		factor_count++;
 
         env().log_stat("factor_count", stat_factor_count);
-        env().log_stat("dictionary_reset_counter",
-                       stat_dictionary_resets);
-        env().log_stat("max_factor_counter",
-                       stat_dict_counter_at_last_reset);
+        env().log_stat("dictionary_reset_counter", stat_dictionary_resets);
+        env().log_stat("max_factor_counter", stat_dict_counter_at_last_reset);
         env().end_stat_phase();
     }
 
     virtual void decompress(Input& input, Output& output) override final {
-        //TODO C::decode(in, out, dms, reserve_dms);
+		const size_t reserved_size = input.size();
+        //TODO C::decode(in, out, dms, reserved_size);
         auto out = output.as_stream();
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
         len_t counter = 0;
-        lzw::decode_step([&](lz78::CodeType& entry, bool reset, bool &file_corrupted) -> lzw::Factor {
+		
+		//TODO file_corrupted not used!
+        lzw::decode_step([&](lz78::factorid_t& entry, bool reset, bool &file_corrupted) -> lzw::Factor {
             if (reset) {
                 counter = 0;
             }
@@ -123,11 +113,11 @@ public:
                 return false;
             }
 
-            lzw::Factor factor(decoder.template decode<len_t>(Range(counter + 256)));
+            lzw::Factor factor(decoder.template decode<len_t>(Range(counter + uliteral_max + 1)));
             counter++;
             entry = factor;
             return true;
-        }, out, dms, reserve_dms);
+        }, out, m_dict_max_size == 0 ? lz78::DMS_MAX : m_dict_max_size, reserved_size);
     }
 
 };

@@ -3,53 +3,70 @@
 
 #include <tudocomp/Compressor.hpp>
 
-#include <tudocomp/compressors/lz78/LZ78DecodeBuffer.hpp>
 #include <tudocomp/compressors/lz78/LZ78Dictionary.hpp>
-#include <tudocomp/compressors/lz78/LZ78Factor.hpp>
 
 #include <tudocomp/Range.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp> //default
 
 namespace tdc {
 
+	namespace lz78 {
+		class Decompressor {
+			std::vector<lz78::factorid_t> indices;
+			std::vector<uliteral_t> literals;
+
+			public:
+			inline void decompress(lz78::factorid_t index, uliteral_t literal, std::ostream& out) {
+				indices.push_back(index);
+				literals.push_back(literal);
+				std::vector<uliteral_t> buffer;
+
+				while(index != 0) {
+					buffer.push_back(literal);
+					literal = literals[index - 1];
+					index = indices[index - 1];
+				}
+
+				out << literal;
+				for(size_t i = buffer.size(); i > 0; i--) {
+					out << buffer[i - 1];
+				}
+			}
+
+		};
+	}//ns
+
+
 template <typename coder_t>
 class LZ78Compressor: public Compressor {
 private:
-    static inline lz78::CodeType select_size(Env& env, string_ref name) {
+    static inline lz78::factorid_t select_size(Env& env, string_ref name) {
         auto& o = env.option(name);
         if (o.as_string() == "inf") {
-            return lz78::DMS_MAX;
+            return 0;
         } else {
             return o.as_integer();
         }
     }
 
     /// Max dictionary size before reset
-    const lz78::CodeType dms {lz78::DMS_MAX};
-    //const CodeType dms {256 + 10};
-    /// Preallocated dictionary size,
-    /// picked because (sizeof(CodeType) = 4) * 1024 == 4096,
-    /// which is the default page size on linux
-    const lz78::CodeType reserve_dms {1024};
+    const lz78::factorid_t m_dict_max_size {0};
 
 public:
     inline LZ78Compressor(Env&& env):
         Compressor(std::move(env)),
-        dms(select_size(this->env(), "dict_size"))
+        m_dict_max_size(env.option("dict_size").as_integer())
     {}
 
     inline static Meta meta() {
-        Meta m("compressor", "lz78",
-               "Lempel-Ziv 78\n\n"
-               "`dict_size` has to either be \"inf\", or a positive integer,\n"
-               "and determines the maximum size of the backing storage of\n"
-               "the dictionary before it gets reset.");
+        Meta m("compressor", "lz78", "Lempel-Ziv 78\n\n" LZ78_DICT_SIZE_DESC);
         m.option("coder").templated<coder_t, BitOptimalCoder>();
         m.option("dict_size").dynamic("inf");
         return m;
     }
 
     virtual void compress(Input& input, Output& out) override {
+		const size_t reserved_size = isqrt(input.size())*2;
         auto is = input.as_stream();
 
         // Stats
@@ -59,58 +76,48 @@ public:
         len_t stat_factor_count = 0;
         len_t factor_count = 0;
 
-        lz78::EncoderDictionary ed(lz78::EncoderDictionary::Lz78, dms, reserve_dms);
+        lz78::EncoderDictionary dict(reserved_size);
+		auto reset_dict = [&dict] () {
+			dict.clear();
+			const lz78::factorid_t node = dict.add_rootnode(0);
+			DCHECK_EQ(node, dict.size());
+		};
+		reset_dict();
+
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
         // Define ranges
-        lz78::CodeType last_i {dms}; // needed for the end of the string
-        lz78::CodeType i {dms}; // Index
+        lz78::factorid_t node {0}; // LZ78 node
+        lz78::factorid_t parent {0}; // parent of node, needed for the last factor
         char c;
-        bool rbwf {false}; // Reset Bit Width Flag
 
         while (is.get(c)) {
-            uliteral_t b = c;
-
-            // dictionary's maximum size was reached
-            if (ed.size() == dms)
-            {
-                ed.reset();
-                rbwf = true;
-                stat_dictionary_resets++;
-                stat_dict_counter_at_last_reset = dms;
-            }
-
-            const lz78::CodeType temp {i};
-
-            last_i = i;
-            if ((i = ed.search_and_insert(temp, b)) == dms)
-            {
-                lz78::CodeType fact = temp;
-                if (fact == dms) {
-                    fact = 0;
-                }
-                //coder.encode_fact(Factor { fact, b });
-                coder.encode(fact, Range(factor_count));
-                coder.encode(b, literal_r);
+			lz78::factorid_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
+			if(child == lz78::undef_id) {
+                coder.encode(node, Range(factor_count));
+                coder.encode(static_cast<uliteral_t>(c), literal_r);
                 factor_count++;
                 stat_factor_count++;
-                i = dms;
-            }
-
-            if (rbwf)
-            {
-                factor_count = 0; //coder.dictionary_reset();
-                rbwf = false;
-            }
+				parent = node = 0; // return to the root
+				DCHECK_EQ(factor_count+1, dict.size());
+				// dictionary's maximum size was reached
+				if(tdc_unlikely(dict.size() == m_dict_max_size)) { // if m_dict_max_size == 0 this will never happen
+					reset_dict();
+					factor_count = 0; //coder.dictionary_reset();
+					stat_dictionary_resets++;
+					stat_dict_counter_at_last_reset = m_dict_max_size;
+				}
+			} else { // traverse further
+				parent = node;
+				node = child;
+			}
         }
-        if (i != dms) {
-            lz78::CodeType fact = last_i;
-            uliteral_t b = c;
-            if (fact == dms) {
-                fact = 0;
-            }
-            coder.encode(fact, Range(factor_count));
-            coder.encode(b, literal_r);
+
+		// take care of left-overs. We do not assume that the stream has a sentinel
+        if(node != 0) {
+            coder.encode(parent, Range(factor_count));
+            coder.encode(c, literal_r);
+			DCHECK_EQ(dict.find_or_insert(parent, static_cast<uliteral_t>(c)), node);
             factor_count++;
             stat_factor_count++;
         }
@@ -129,16 +136,13 @@ public:
         auto out = output.as_stream();
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
-        lz78::DecodeBuffer buf;
-        len_t factor_count = 0;
+        lz78::Decompressor decomp;
+        uint64_t factor_count = 0;
 
         while (!decoder.eof()) {
-            auto index = decoder.template decode<lz78::CodeType>(Range(factor_count));
-            auto chr = decoder.template decode<uliteral_t>(literal_r);
-
-            lz78::Factor entry { index, chr };
-
-            buf.decode(entry, out);
+			const lz78::factorid_t index = decoder.template decode<lz78::factorid_t>(Range(factor_count));
+            const uliteral_t chr = decoder.template decode<uliteral_t>(literal_r);
+			decomp.decompress(index, chr, out);
             factor_count++;
         }
 
@@ -147,6 +151,6 @@ public:
 
 };
 
-}
 
+}//ns
 #endif
