@@ -152,61 +152,103 @@ public:
     }
 
     template<class U>
-    friend bool operator==(const GenericView<U>& lhs, const GenericView<U>& rhs);
-    template<class U>
-    friend bool operator!=(const GenericView<U>& lhs, const GenericView<U>& rhs);
-    template<class U>
-    friend bool operator<(const GenericView<U>& lhs, const GenericView<U>& rhs);
-    template<class U>
-    friend bool operator<=(const GenericView<U>& lhs, const GenericView<U>& rhs);
-    template<class U>
-    friend bool operator>(const GenericView<U>& lhs, const GenericView<U>& rhs);
-    template<class U>
-    friend bool operator>=(const GenericView<U>& lhs, const GenericView<U>& rhs);
-    template<class U>
     friend void swap(GenericView<U>& lhs, GenericView<U>& rhs);
 };
-
-template<class T>
-bool operator==(const GenericView<T>& lhs, const GenericView<T>& rhs) {
-    using Super = typename GenericView<T>::Super;
-    return (const Super&) lhs == (const Super&) rhs;
-}
-
-template<class T>
-bool operator!=(const GenericView<T>& lhs, const GenericView<T>& rhs) {
-    using Super = typename GenericView<T>::Super;
-    return (const Super&) lhs != (const Super&) rhs;
-}
-
-template<class T>
-bool operator<(const GenericView<T>& lhs, const GenericView<T>& rhs) {
-    using Super = typename GenericView<T>::Super;
-    return (const Super&) lhs < (const Super&) rhs;
-}
-
-template<class T>
-bool operator<=(const GenericView<T>& lhs, const GenericView<T>& rhs) {
-    using Super = typename GenericView<T>::Super;
-    return (const Super&) lhs <= (const Super&) rhs;
-}
-
-template<class T>
-bool operator>(const GenericView<T>& lhs, const GenericView<T>& rhs) {
-    using Super = typename GenericView<T>::Super;
-    return (const Super&) lhs > (const Super&) rhs;
-}
-
-template<class T>
-bool operator>=(const GenericView<T>& lhs, const GenericView<T>& rhs) {
-    using Super = typename GenericView<T>::Super;
-    return (const Super&) lhs >= (const Super&) rhs;
-}
 
 template<class T>
 void swap(GenericView<T>& lhs, GenericView<T>& rhs) {
     using Super = typename GenericView<T>::Super;
     return swap((Super&) lhs, (Super&) rhs);
+}
+
+template<class T>
+bool operator==(const GenericView<T>& lhs, const ConstGenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) == ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator!=(const GenericView<T>& lhs, const ConstGenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) != ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator<(const GenericView<T>& lhs, const ConstGenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) < ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator<=(const GenericView<T>& lhs, const ConstGenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) <= ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator>(const GenericView<T>& lhs, const ConstGenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) > ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator>=(const GenericView<T>& lhs, const ConstGenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) >= ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator==(const ConstGenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) == ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator!=(const ConstGenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) != ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator<(const ConstGenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) < ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator<=(const ConstGenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) <= ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator>(const ConstGenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) > ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator>=(const ConstGenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) >= ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator==(const GenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) == ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator!=(const GenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) != ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator<(const GenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) < ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator<=(const GenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) <= ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator>(const GenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) > ConstGenericView<T>(rhs);
+}
+
+template<class T>
+bool operator>=(const GenericView<T>& lhs, const GenericView<T>& rhs) {
+    return ConstGenericView<T>(lhs) >= ConstGenericView<T>(rhs);
 }
 
 /// A const view into a slice of memory.
@@ -316,38 +358,32 @@ public:
 
 template<class T>
 bool operator==(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    using Super = typename ConstGenericView<T>::Super;
-    return (const Super&) lhs == (const Super&) rhs;
+    return ConstGenericView<T>::Super::op_eq(lhs, rhs);
 }
 
 template<class T>
 bool operator!=(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    using Super = typename ConstGenericView<T>::Super;
-    return (const Super&) lhs != (const Super&) rhs;
+    return ConstGenericView<T>::Super::op_not_eq(lhs, rhs);
 }
 
 template<class T>
 bool operator<(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    using Super = typename ConstGenericView<T>::Super;
-    return (const Super&) lhs < (const Super&) rhs;
+    return ConstGenericView<T>::Super::op_less(lhs, rhs);
 }
 
 template<class T>
 bool operator<=(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    using Super = typename ConstGenericView<T>::Super;
-    return (const Super&) lhs <= (const Super&) rhs;
+    return ConstGenericView<T>::Super::op_less_eq(lhs, rhs);
 }
 
 template<class T>
 bool operator>(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    using Super = typename ConstGenericView<T>::Super;
-    return (const Super&) lhs > (const Super&) rhs;
+    return ConstGenericView<T>::Super::op_greater(lhs, rhs);
 }
 
 template<class T>
 bool operator>=(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    using Super = typename ConstGenericView<T>::Super;
-    return (const Super&) lhs >= (const Super&) rhs;
+    return ConstGenericView<T>::Super::op_greater_eq(lhs, rhs);
 }
 
 template<class T>
@@ -355,8 +391,6 @@ void swap(ConstGenericView<T>& lhs, ConstGenericView<T>& rhs) {
     using Super = typename ConstGenericView<T>::Super;
     return swap((Super&) lhs, (Super&) rhs);
 }
-
-using ByteView = ConstGenericView<uint8_t>;
 
 /// A const view into a slice of memory.
 ///
@@ -448,19 +482,14 @@ public:
     }
 
     template<class U>
-    friend bool operator==(const ConstGenericView<U>& lhs, const ConstGenericView<U>& rhs);
-    template<class U>
-    friend bool operator!=(const ConstGenericView<U>& lhs, const ConstGenericView<U>& rhs);
-    template<class U>
-    friend bool operator<(const ConstGenericView<U>& lhs, const ConstGenericView<U>& rhs);
-    template<class U>
-    friend bool operator<=(const ConstGenericView<U>& lhs, const ConstGenericView<U>& rhs);
-    template<class U>
-    friend bool operator>(const ConstGenericView<U>& lhs, const ConstGenericView<U>& rhs);
-    template<class U>
-    friend bool operator>=(const ConstGenericView<U>& lhs, const ConstGenericView<U>& rhs);
-    template<class U>
     friend void swap(ConstGenericView<U>& lhs, ConstGenericView<U>& rhs);
+
+    friend bool operator==(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs);
+    friend bool operator!=(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs);
+    friend bool operator<(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs);
+    friend bool operator<=(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs);
+    friend bool operator>(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs);
+    friend bool operator>=(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs);
 
     // string extensions
 
@@ -484,15 +513,41 @@ public:
     }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const ByteView& v) {
+inline bool operator==(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs) {
+    return ConstGenericView<uint8_t>::Super::op_eq(lhs, rhs);
+}
+
+inline bool operator!=(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs) {
+    return ConstGenericView<uint8_t>::Super::op_not_eq(lhs, rhs);
+}
+
+inline bool operator<(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs) {
+    return ConstGenericView<uint8_t>::Super::op_less(lhs, rhs);
+}
+
+inline bool operator<=(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs) {
+    return ConstGenericView<uint8_t>::Super::op_less_eq(lhs, rhs);
+}
+
+inline bool operator>(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs) {
+    return ConstGenericView<uint8_t>::Super::op_greater(lhs, rhs);
+}
+
+inline bool operator>=(const ConstGenericView<uint8_t>& lhs, const ConstGenericView<uint8_t>& rhs) {
+    return ConstGenericView<uint8_t>::Super::op_greater_eq(lhs, rhs);
+}
+
+inline std::ostream& operator<<(std::ostream& os, const ConstGenericView<uint8_t>& v) {
     os.write((const char*) v.data(), v.size());
     return os;
 }
 
-inline ByteView operator "" _bv(const char* str, size_t n)
+inline ConstGenericView<uint8_t> operator "" _v(const char* str, size_t n)
 {
-    return ByteView(str, n);
+    return ConstGenericView<uint8_t>(str, n);
 }
+
+using ByteView = ConstGenericView<uint8_t>;
 
 }
 

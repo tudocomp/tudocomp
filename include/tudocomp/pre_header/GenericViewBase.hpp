@@ -26,6 +26,7 @@ class GenericViewBase {
 public:
 
     friend class GenericViewBase<T, const T*>;
+    friend class GenericViewBase<T, T*>;
 
     using value_type             = T;
     using const_reference        = const T&;
@@ -190,7 +191,7 @@ public:
 
     inline bool starts_with(const GenericViewBase<T, const T*>& x) const {
         GenericViewBase<T, const T*> y(m_data, m_size);
-        return (x.size() <= y.size()) && (y.substr(0, x.size()) == x);
+        return (x.size() <= y.size()) && op_eq(y.substr(0, x.size()), x);
     }
 
     inline bool ends_with(const T& c) const {
@@ -199,58 +200,42 @@ public:
 
     inline bool ends_with(const GenericViewBase<T, const T*>& x) const {
         GenericViewBase<T, const T*> y(m_data, m_size);
-        return (x.size() <= y.size()) && (y.substr(size() - x.size()) == x);
+        return (x.size() <= y.size()) && op_eq(y.substr(size() - x.size()), x);
     }
 
     template<class U, class Q>
-    friend bool operator==(const GenericViewBase<U, Q>& lhs, const GenericViewBase<U, Q>& rhs);
-    template<class U, class Q>
-    friend bool operator!=(const GenericViewBase<U, Q>& lhs, const GenericViewBase<U, Q>& rhs);
-    template<class U, class Q>
-    friend bool operator<(const GenericViewBase<U, Q>& lhs, const GenericViewBase<U, Q>& rhs);
-    template<class U, class Q>
-    friend bool operator<=(const GenericViewBase<U, Q>& lhs, const GenericViewBase<U, Q>& rhs);
-    template<class U, class Q>
-    friend bool operator>(const GenericViewBase<U, Q>& lhs, const GenericViewBase<U, Q>& rhs);
-    template<class U, class Q>
-    friend bool operator>=(const GenericViewBase<U, Q>& lhs, const GenericViewBase<U, Q>& rhs);
-    template<class U, class Q>
     friend void swap(GenericViewBase<U, Q>& lhs, GenericViewBase<U, Q>& rhs);
+
+
+    inline static bool op_eq(const GenericViewBase<T, const T*>& lhs, const GenericViewBase<T, const T*>& rhs) {
+        if (lhs.size() != rhs.size()) return false;
+        return std::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
+    }
+
+    inline static bool op_not_eq(const GenericViewBase<T, const T*>& lhs, const GenericViewBase<T, const T*>& rhs) {
+        return !(op_eq(lhs, rhs));
+    }
+
+    inline static bool op_less(const GenericViewBase<T, const T*>& lhs, const GenericViewBase<T, const T*>& rhs) {
+        return std::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
+    }
+
+    inline static bool op_less_eq(const GenericViewBase<T, const T*>& lhs, const GenericViewBase<T, const T*>& rhs) {
+        return !(op_greater(lhs, rhs));
+    }
+
+    inline static bool op_greater(const GenericViewBase<T, const T*>& lhs, const GenericViewBase<T, const T*>& rhs) {
+        return std::lexicographical_compare(rhs.cbegin(), rhs.cend(), lhs.cbegin(), lhs.cend());
+    }
+
+    inline static bool op_greater_eq(const GenericViewBase<T, const T*>& lhs, const GenericViewBase<T, const T*>& rhs) {
+        return !(op_less(lhs, rhs));
+    }
+
 };
 
-template<class T, class P>
-bool operator==(const GenericViewBase<T, P>& lhs, const GenericViewBase<T, P>& rhs) {
-    if (lhs.size() != rhs.size()) return false;
-    return std::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
-}
-
-template<class T, class P>
-bool operator!=(const GenericViewBase<T, P>& lhs, const GenericViewBase<T, P>& rhs) {
-    return !(lhs == rhs);
-}
-
-template<class T, class P>
-bool operator<(const GenericViewBase<T, P>& lhs, const GenericViewBase<T, P>& rhs) {
-    return std::lexicographical_compare(lhs.cbegin(), lhs.cend(), rhs.cbegin(), rhs.cend());
-}
-
-template<class T, class P>
-bool operator<=(const GenericViewBase<T, P>& lhs, const GenericViewBase<T, P>& rhs) {
-    return !(lhs > rhs);
-}
-
-template<class T, class P>
-bool operator>(const GenericViewBase<T, P>& lhs, const GenericViewBase<T, P>& rhs) {
-    return std::lexicographical_compare(rhs.cbegin(), rhs.cend(), lhs.cbegin(), lhs.cend());
-}
-
-template<class T, class P>
-bool operator>=(const GenericViewBase<T, P>& lhs, const GenericViewBase<T, P>& rhs) {
-    return !(lhs < rhs);
-}
-
-template<class T, class P>
-void swap(GenericViewBase<T, P>& lhs, GenericViewBase<T, P>& rhs) {
+template<class T, class Q>
+void swap(GenericViewBase<T, Q>& lhs, GenericViewBase<T, Q>& rhs) {
     lhs.swap(rhs);
 }
 

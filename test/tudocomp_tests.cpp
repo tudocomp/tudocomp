@@ -1074,7 +1074,6 @@ void view_test_template_const() {
     using std::swap;
     swap(swap1, swap2);
 
-    /*
     v == cv;
     v != cv;
     v < cv;
@@ -1088,7 +1087,7 @@ void view_test_template_const() {
     cv <= v;
     cv > v;
     cv >= v;
-    */
+
 }
 
 template<class V, class ConstV>
