@@ -10,8 +10,6 @@ namespace tdc {
 
 using int_vector::GenericIntVector;
 
-class EspCompressor: public Compressor {
-
 // Implementation that covers all of 64 bit
 // TODO: Does the Paper mean base-e or base-2 ?
 inline size_t iter_log(size_t n) {
@@ -347,6 +345,113 @@ inline void handle_meta_block_13(View A,
     }
 }
 
+template<class T>
+inline std::vector<ConstGenericView<T>> partition(ConstGenericView<T> in, size_t alphabet_size) {
+    using GView = ConstGenericView<T>;
+
+    std::vector<GView> blocks;
+    std::vector<MetaBlock> meta_blocks;
+
+    auto push_block = [&](GView A) {
+        blocks.push_back(A);
+    };
+
+    auto type_23_prefix = iter_log(alphabet_size);
+
+    // Merge length-one-block with adjacent one
+    auto middle_meta_block = [&](uint8_t type, GView A) {
+        // Attach to right meta block if not attached to left one
+        if (meta_blocks.size() > 0 && meta_blocks.back().view.size() == 1) {
+            meta_blocks.pop_back();
+            A = GView(A.data() - 1, A.size() + 1);
+        }
+
+        // Attach to left meta block before attempting to attach to right one
+        if (type != 2 && A.size() == 1) {
+            if (meta_blocks.size() > 0 && meta_blocks.back().type == 1) {
+                auto& v = meta_blocks.back().view;
+                v = GView(v.data(), v.size() + 1);
+            } else {
+                meta_blocks.push_back(MetaBlock { type, A });
+            }
+        } else {
+            meta_blocks.push_back(MetaBlock { type, A });
+        }
+    };
+
+    // Split long into short and long
+    auto initial_meta_block = [&](uint8_t type, GView A) {
+        if (type == 2) {
+            middle_meta_block(3, A.substr(0, type_23_prefix));
+            A = A.substr(type_23_prefix);
+            if (A.size() > 0) {
+                middle_meta_block(2, A);
+            }
+        } else {
+            middle_meta_block(type, A);
+        }
+    };
+
+    // Split into repeating, long and short
+    size_t i = 0;
+    while(i < in.size()) {
+        auto type_1_start = i;
+        while ((i < (in.size() - 1)) && (in[i] == in[i + 1])) {
+            i++;
+        }
+        if ((i - type_1_start) > 0) {
+            GView A = in.substr(type_1_start, i + 1);
+            {
+                initial_meta_block(1, A);
+            }
+            i++;
+        }
+
+        auto type_23_start = i;
+        while (i < (in.size() - 1) && in[i] != in[i + 1]) {
+            i++;
+        }
+
+        if (i == in.size() - 1) {
+            i++;
+        }
+        size_t type_23_len = i - type_23_start;
+        if (type_23_len > 0) {
+            GView A = in.substr(type_23_start, i);
+
+            if (type_23_len >= iter_log(alphabet_size)) {
+                initial_meta_block(2, A);
+            } else {
+                initial_meta_block(3, A);
+            }
+        }
+    }
+
+    std::vector<T> buf;
+
+    // Final processing, without any more meta block splitting
+    auto real_meta_block = [&](uint8_t type, GView A) {
+        if (type == 2) {
+            handle_meta_block_2(A, alphabet_size, buf, push_block);
+        } else {
+            DCHECK(A.size() > 1 /* 1-byte input not covered by paper */);
+            handle_meta_block_13(A, push_block);
+        }
+
+        std::cout << "  ---\n";
+    };
+
+    DCHECK(meta_blocks_debug(meta_blocks, in));
+
+    for (auto mb : meta_blocks) {
+        real_meta_block(mb.type, mb.view);
+    }
+
+    return blocks;
+}
+
+class EspCompressor: public Compressor {
+
 public:
     inline static Meta meta() {
         Meta m("compressor", "esp", "ESP based grammar compression");
@@ -360,110 +465,8 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
         DCHECK(in.size() > 0 /* 0-byte input not covered by paper */);
-
         size_t alphabet_size = 256;
-
-        std::vector<View> blocks;
-
-        {
-            std::vector<MetaBlock> meta_blocks;
-
-            std::vector<uint8_t> buf;
-
-            auto push_block = [&](View A) {
-                blocks.push_back(A);
-            };
-
-            auto type_23_prefix = iter_log(alphabet_size);
-
-            // Merge length-one-block with adjacent one
-            auto middle_meta_block = [&](uint8_t type, View A) {
-                // Attach to right meta block if not attached to left one
-                if (meta_blocks.size() > 0 && meta_blocks.back().view.size() == 1) {
-                    meta_blocks.pop_back();
-                    A = View(A.data() - 1, A.size() + 1);
-                }
-
-                // Attach to left meta block before attempting to attach to right one
-                if (type != 2 && A.size() == 1) {
-                    if (meta_blocks.size() > 0 && meta_blocks.back().type == 1) {
-                        auto& v = meta_blocks.back().view;
-                        v = View(v.data(), v.size() + 1);
-                    } else {
-                        meta_blocks.push_back(MetaBlock { type, A });
-                    }
-                } else {
-                    meta_blocks.push_back(MetaBlock { type, A });
-                }
-            };
-
-            // Split long into short and long
-            auto initial_meta_block = [&](uint8_t type, View A) {
-                if (type == 2) {
-                    middle_meta_block(3, A.substr(0, type_23_prefix));
-                    A = A.substr(type_23_prefix);
-                    if (A.size() > 0) {
-                        middle_meta_block(2, A);
-                    }
-                } else {
-                    middle_meta_block(type, A);
-                }
-            };
-
-            // Split into repeating, long and short
-            size_t i = 0;
-            while(i < in.size()) {
-                auto type_1_start = i;
-                while ((i < (in.size() - 1)) && (in[i] == in[i + 1])) {
-                    i++;
-                }
-                if ((i - type_1_start) > 0) {
-                    View A = in.substr(type_1_start, i + 1);
-                    {
-                        initial_meta_block(1, A);
-                    }
-                    i++;
-                }
-
-                auto type_23_start = i;
-                while (i < (in.size() - 1) && in[i] != in[i + 1]) {
-                    i++;
-                }
-
-                if (i == in.size() - 1) {
-                    i++;
-                }
-                size_t type_23_len = i - type_23_start;
-                if (type_23_len > 0) {
-                    View A = in.substr(type_23_start, i);
-
-                    if (type_23_len >= iter_log(alphabet_size)) {
-                        initial_meta_block(2, A);
-                    } else {
-                        initial_meta_block(3, A);
-                    }
-                }
-            }
-
-            // Final processing, without any more meta block splitting
-            auto real_meta_block = [&](uint8_t type, View A) {
-                if (type == 2) {
-                    handle_meta_block_2(A, alphabet_size, buf, push_block);
-                } else {
-                    DCHECK(A.size() > 1 /* 1-byte input not covered by paper */);
-                    handle_meta_block_13(A, push_block);
-                }
-
-                std::cout << "  ---\n";
-            };
-
-            DCHECK(meta_blocks_debug(meta_blocks, in));
-
-            for (auto mb : meta_blocks) {
-                real_meta_block(mb.type, mb.view);
-            }
-        }
-
+        std::vector<View> blocks = partition(in, alphabet_size);
         DCHECK(blocks_debug(blocks, in));
     }
 
