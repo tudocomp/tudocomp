@@ -549,11 +549,6 @@ public:
 				delete [] ordered_map_to_effective;
 			}
 		}
-		//fallback
-        template<typename value_t>
-        inline void encode(value_t v, const Range&) {
-			m_out->write_int(v);
-        }
 
         template<typename value_t>
 		inline void encode(value_t v, const LiteralRange&) {
@@ -564,6 +559,16 @@ public:
 				huff::huffman_encode(v, *m_out, m_table.ordered_codelengths, ordered_map_to_effective, m_table.alphabet_size, m_table.codewords);
 		}
 
+		//fallback
+        template<typename value_t>
+        inline void encode(value_t v, const BitRange&) {
+			m_out->write_bit(v);
+        }
+
+        template<typename value_t>
+        inline void encode(value_t v, const Range&) {
+			m_out->write_int(v);
+        }
 	};
 
 	class Decoder : public tdc::Decoder {
@@ -601,6 +606,11 @@ public:
 		}
 
 		//fallback
+		template<typename value_t>
+		inline value_t decode(const BitRange&) {
+			return value_t(m_in->read_bit());
+		}
+
 		template<typename value_t>
 		inline value_t decode(const Range&) {
 			return m_in->read_int<value_t>();
