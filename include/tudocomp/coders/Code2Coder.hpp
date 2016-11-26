@@ -58,7 +58,7 @@ public:
     public:
         ENCODER_CTOR(env, out, literals) {
             m_k     = this->env().option("kmer").as_integer();
-            assert(m_k > 1 && m_k <= max_kmer);
+            assert(m_k <= max_kmer);
 
             m_kmer = new uliteral_t[m_k];
             m_kmer_cur = 0;
@@ -70,19 +70,22 @@ public:
             while(literals.has_next()) {
                 Literal l = literals.next();
 
-                if(l.pos == last_literal_pos + 1) {
-                    if(m_kmer_cur == m_k) {
-                        for(size_t i = 0; i < m_k - 1; i++) m_kmer[i] = m_kmer[i+1];
-                        --m_kmer_cur;
+                if(m_k > 1) {
+                    // update k-mer buffer
+                    if(l.pos == last_literal_pos + 1) {
+                        if(m_kmer_cur == m_k) {
+                            for(size_t i = 0; i < m_k - 1; i++) m_kmer[i] = m_kmer[i+1];
+                            --m_kmer_cur;
+                        }
+                    } else {
+                        m_kmer_cur = 0;
                     }
-                } else {
-                    m_kmer_cur = 0;
-                }
-                m_kmer[m_kmer_cur++] = l.c;
+                    m_kmer[m_kmer_cur++] = l.c;
 
-                // count k-mer if complete
-                if(m_kmer_cur == m_k) {
-                    kmers.increase(encode_kmer(m_kmer, m_k));
+                    // count k-mer if complete
+                    if(m_kmer_cur == m_k) {
+                        kmers.increase(encode_kmer(m_kmer, m_k));
+                    }
                 }
 
                 // count single literal
@@ -93,25 +96,27 @@ public:
             }
 
             auto sigma = alphabet.getNumItems();
-            auto sigma_bits = bits_for(sigma - 1);
+            m_sigma_bits = bits_for(sigma - 1);
 
             // determine alphabet extension size (see [Dinklage, 2015])
-            size_t eta_add_bits = ((1UL << sigma_bits) == sigma) ? 1 : 2;
-            size_t eta = (1UL << (sigma_bits + eta_add_bits)) - sigma;
+            if(m_k > 1) {
+                size_t eta_add_bits = ((1UL << m_sigma_bits) == sigma) ? 1 : 2;
+                size_t eta = (1UL << (m_sigma_bits + eta_add_bits)) - sigma;
 
-            // merge eta most common k-mers into alphabet
-            /*DLOG(INFO) <<
-                "sigma0 = " << sigma <<
-                ", eta = " << eta <<
-                ", kmers = " << kmers.getNumItems();*/
-            for(auto e : kmers.getSorted()) {
-                alphabet.setCount(e.first, e.second);
-                if(--eta == 0) break; //no more than eta
+                // merge eta most common k-mers into alphabet
+                /*DLOG(INFO) <<
+                    "sigma0 = " << sigma <<
+                    ", eta = " << eta <<
+                    ", kmers = " << kmers.getNumItems();*/
+                for(auto e : kmers.getSorted()) {
+                    alphabet.setCount(e.first, e.second);
+                    if(--eta == 0) break; //no more than eta
+                }
+
+                // update sigma
+                sigma = alphabet.getNumItems();
+                m_sigma_bits = bits_for(sigma - 1);
             }
-
-            // update sigma
-            sigma = alphabet.getNumItems();
-            m_sigma_bits = bits_for(sigma - 1);
 
             // create ranking
             m_ranking  = alphabet.createRanking();
@@ -263,9 +268,13 @@ public:
     public:
         template<typename value_t>
         inline void encode(value_t v, const LiteralRange&) {
-            m_kmer[m_kmer_cur++] = uliteral_t(v);
-            if(m_kmer_cur == m_k) {
-                encode_current_kmer();
+            if(m_k > 1) {
+                m_kmer[m_kmer_cur++] = uliteral_t(v);
+                if(m_kmer_cur == m_k) {
+                    encode_current_kmer();
+                }
+            } else {
+                encode_sym(uliteral_t(v));
             }
         }
 
