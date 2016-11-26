@@ -39,21 +39,46 @@ private:
         const len_t*  m_next;
         len_t         m_pos;
 
+        std::vector<uliteral_t> m_g_literals;
+        len_t                   m_g_pos;
+
     public:
-        inline Literals(const text_t& text, len_t text_size, const len_t* next)
-            : m_text(&text), m_text_size(text_size), m_next(next), m_pos(0) {
+        inline Literals(const text_t& text,
+                        len_t text_size,
+                        const len_t* next,
+                        const grammar_t& grammar)
+            : m_text(&text), m_text_size(text_size), m_next(next),
+              m_pos(0), m_g_pos(0) {
+
+            // count literals from right side of grammar rules
+            for(digram_t di : grammar) {
+                sym_t l = left(di);
+                if(l < sigma) m_g_literals.push_back(uliteral_t(l));
+
+                sym_t r = right(di);
+                if(r < sigma) m_g_literals.push_back(uliteral_t(r));
+            }
         }
 
         inline bool has_next() const {
-            return m_pos < m_text_size;
+            return m_pos < m_text_size || m_g_pos < m_g_literals.size();
         }
 
         inline Literal next() {
             assert(has_next());
 
-            auto l = Literal { uliteral_t((*m_text)[m_pos]), m_pos };
-            m_pos = m_next[m_pos];
-            return l;
+            if(m_pos < m_text_size) {
+                // from encoded text
+                auto l = Literal { uliteral_t((*m_text)[m_pos]), m_pos };
+                m_pos = m_next[m_pos];
+                return l;
+            } else {
+                // from grammar right sides
+                auto l = Literal { m_g_literals[m_g_pos],
+                                   m_text_size + 2 * m_g_pos };
+                ++m_g_pos;
+                return l;
+            }
         }
     };
 
@@ -180,7 +205,7 @@ public:
 
         // instantiate encoder
         typename coder_t::Encoder coder(env().env_for_option("coder"),
-            output, Literals<sym_t*>(text, n, next));
+            output, Literals<sym_t*>(text, n, next, grammar));
 
         // encode amount of grammar rules
         coder.encode(grammar.size(), len_r);
@@ -266,9 +291,11 @@ public:
         auto decode_sym = [&](const Range& r) {
             bool is_nonterminal = decoder.template decode<bool>(bit_r);
             if(is_nonterminal) {
-                return sigma + decoder.template decode<sym_t>(r);
+                auto dec = decoder.template decode<sym_t>(r);
+                return sigma + dec;
             } else {
-                return decoder.template decode<sym_t>(literal_r);
+                auto dec = sym_t(decoder.template decode<uliteral_t>(literal_r));
+                return dec;
             }
         };
 
