@@ -14,10 +14,12 @@ namespace tdc {
 /// A data structure for counting occurences of values of a given type T.
 template<class T>
 class Counter {
-    
+
     std::unordered_map<T, size_t> map;
-    
+
 public:
+    typedef std::unordered_map<T, size_t> ranking_t;
+
     /// Increase the counter for the passed value by one, setting it to 1
     /// if it was not yet seen.
     void increase(const T& item) {
@@ -71,8 +73,8 @@ public:
     /// by their common-ness, with `map[0]` being hte most common one.
     ///
     /// This uses the same order as getSorted().
-    std::unordered_map<T, size_t> createRanking(size_t num = SIZE_MAX) {
-        std::unordered_map<T, size_t> r(num + 1);
+    ranking_t createRanking(size_t num = SIZE_MAX) {
+        ranking_t r(num + 1);
         size_t i = 0;
         for (auto pair : getSorted()) {
             r[pair.first] = i++;
