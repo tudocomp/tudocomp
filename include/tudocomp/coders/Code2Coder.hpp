@@ -52,6 +52,9 @@ public:
         Counter<sym_t>::ranking_t m_ranking;
         size_t m_sigma_bits;
 
+        //DEBUG
+        size_t dm_encoded_kmers;
+
     public:
         ENCODER_CTOR(env, out, literals) {
             m_k     = this->env().option("kmer").as_integer();
@@ -67,10 +70,11 @@ public:
             while(literals.has_next()) {
                 Literal l = literals.next();
 
-                // fill k-mer (TODO: ring buffer)
                 if(l.pos == last_literal_pos + 1) {
-                    for(size_t i = 0; i < m_k - 1; i++) m_kmer[i] = m_kmer[i+1];
-                    --m_kmer_cur;
+                    if(m_kmer_cur == m_k) {
+                        for(size_t i = 0; i < m_k - 1; i++) m_kmer[i] = m_kmer[i+1];
+                        --m_kmer_cur;
+                    }
                 } else {
                     m_kmer_cur = 0;
                 }
@@ -96,6 +100,10 @@ public:
             size_t eta = (1UL << (sigma_bits + eta_add_bits)) - sigma;
 
             // merge eta most common k-mers into alphabet
+            /*DLOG(INFO) <<
+                "sigma0 = " << sigma <<
+                ", eta = " << eta <<
+                ", kmers = " << kmers.getNumItems();*/
             for(auto e : kmers.getSorted()) {
                 alphabet.setCount(e.first, e.second);
                 if(--eta == 0) break; //no more than eta
@@ -116,7 +124,7 @@ public:
                     if(is_kmer(e.first)) {
                         std::ostringstream s;
                         decode_kmer(e.first, m_kmer, m_k);
-                        for(ssize_t i = m_k - 1; i >= 0; i--) s << m_kmer[i];
+                        for(size_t i = 0; i < m_k; i++) s << m_kmer[i];
                         DLOG(INFO) << "\t'" << s.str() << "' -> " << e.second;
                     } else {
                         DLOG(INFO) << "\t'" << uliteral_t(e.first) << "' -> " << e.second;
@@ -132,10 +140,14 @@ public:
 
             // reset current k-mer
             m_kmer_cur = 0;
+
+            dm_encoded_kmers = 0;
         }
 
         ~Encoder() {
             encode_current_kmer(); // remaining
+            std::cerr << "actually encoded " << m_k << "-mers: " <<
+                dm_encoded_kmers << std::endl;
 
             delete[] m_kmer;
         }
@@ -175,6 +187,7 @@ public:
                 sym_t x = encode_kmer(m_kmer, m_k);
                 if(m_ranking.find(x) != m_ranking.end()) {
                     // k-mer exists in ranking
+                    ++dm_encoded_kmers;
                     encode_sym(x);
                     m_kmer_cur = 0;
                 }
