@@ -89,6 +89,7 @@ namespace lzw {
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp>
+#include <tudocomp/coders/Code2Coder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
 #include <tudocomp/coders/VariantCoder.hpp>
 #include <tudocomp/LiteralEncoder.hpp>

@@ -21,6 +21,7 @@
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/ByteCoder.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp>
+#include <tudocomp/coders/Code2Coder.hpp>
 #include <tudocomp/coders/VariantCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
 
@@ -50,11 +51,13 @@ void register_algorithms(Registry& r) {
     r.register_compressor<LiteralEncoder<ASCIICoder>>();
     r.register_compressor<LiteralEncoder<ByteCoder>>();
     r.register_compressor<LiteralEncoder<BitOptimalCoder>>();
+    r.register_compressor<LiteralEncoder<Code2Coder>>();
     r.register_compressor<LiteralEncoder<HuffmanCoder>>();
 
     r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, ASCIICoder>>();
     r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, ByteCoder>>();
     r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, BitOptimalCoder>>();
+    r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, Code2Coder>>();
     r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, HuffmanCoder>>();
 
     r.register_compressor<ESACompressor<esacomp::ESACompBulldozer, ASCIICoder>>();
