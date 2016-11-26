@@ -46,6 +46,9 @@ public:
     private:
         size_t m_k;
 
+        uliteral_t* m_kmer;
+        size_t m_kmer_cur;
+
         Counter<sym_t>::ranking_t m_ranking;
         size_t m_sigma_bits;
 
@@ -54,9 +57,9 @@ public:
             m_k     = this->env().option("kmer").as_integer();
             assert(m_k > 1 && m_k <= max_kmer);
 
-            uliteral_t* kmer = new uliteral_t[m_k];
-            size_t last_pos = 0;
-            size_t kmer_len = 0;
+            m_kmer = new uliteral_t[m_k];
+            m_kmer_cur = 0;
+            size_t last_literal_pos = 0;
 
             Counter<sym_t> alphabet;
             Counter<sym_t> kmers;
@@ -65,49 +68,59 @@ public:
                 Literal l = literals.next();
 
                 // fill k-mer (TODO: ring buffer)
-                if(l.pos == last_pos + 1) {
-                    kmer_len = std::min(m_k, kmer_len + 1);
-                    for(auto i = m_k - 1; i > 0; i--) kmer[i] = kmer[i-1];
+                if(l.pos == last_literal_pos + 1) {
+                    for(size_t i = 0; i < m_k - 1; i++) m_kmer[i] = m_kmer[i+1];
+                    --m_kmer_cur;
                 } else {
-                    kmer_len = 1;
+                    m_kmer_cur = 0;
                 }
-                kmer[0] = l.c;
+                m_kmer[m_kmer_cur++] = l.c;
 
                 // count k-mer if complete
-                if(kmer_len == m_k) {
-                    kmers.increase(encode_kmer(kmer, m_k));
+                if(m_kmer_cur == m_k) {
+                    kmers.increase(encode_kmer(m_kmer, m_k));
                 }
 
                 // count single literal
                 alphabet.increase(sym_t(l.c));
 
                 // save position
-                last_pos = l.pos;
+                last_literal_pos = l.pos;
             }
 
+            auto sigma = alphabet.getNumItems();
+            auto sigma_bits = bits_for(sigma - 1);
+
+            // determine alphabet extension size (see [Dinklage, 2015])
+            size_t eta_add_bits = ((1UL << sigma_bits) == sigma) ? 1 : 2;
+            size_t eta = (1UL << (sigma_bits + eta_add_bits)) - sigma;
+
+            // merge eta most common k-mers into alphabet
+            for(auto e : kmers.getSorted()) {
+                alphabet.setCount(e.first, e.second);
+                if(--eta == 0) break; //no more than eta
+            }
+
+            // update sigma
+            sigma = alphabet.getNumItems();
+            m_sigma_bits = bits_for(sigma - 1);
+
+            // create ranking
             m_ranking  = alphabet.createRanking();
-
-            auto sigma = m_ranking.size();
-            m_sigma_bits = bits_for(sigma);
-
-            // TODO merge kmers into alphabet ?
 
             // debug
             /*{
                 DLOG(INFO) << "m_sigma_bits = " << m_sigma_bits;
-
                 DLOG(INFO) << "ranking:";
                 for(auto e : m_ranking) {
-                    DLOG(INFO) << "\t'" << uliteral_t(e.first) << "' -> " << e.second;
-                }
-
-                auto kmer_ranking = kmers.createRanking(); //TODO limit size
-                DLOG(INFO) << "kmer ranking:";
-                for(auto e : kmer_ranking) {
-                    std::ostringstream s;
-                    decode_kmer(e.first, kmer, m_k);
-                    for(ssize_t i = m_k - 1; i >= 0; i--) s << kmer[i];
-                    DLOG(INFO) << "\t'" << s.str() << "' -> " << e.second;
+                    if(is_kmer(e.first)) {
+                        std::ostringstream s;
+                        decode_kmer(e.first, m_kmer, m_k);
+                        for(ssize_t i = m_k - 1; i >= 0; i--) s << m_kmer[i];
+                        DLOG(INFO) << "\t'" << s.str() << "' -> " << e.second;
+                    } else {
+                        DLOG(INFO) << "\t'" << uliteral_t(e.first) << "' -> " << e.second;
+                    }
                 }
             }*/
 
@@ -117,12 +130,20 @@ public:
                 m_out->write_compressed_int(e.first);
             }
 
-            // clean up
-            delete[] kmer;
+            // reset current k-mer
+            m_kmer_cur = 0;
+        }
+
+        ~Encoder() {
+            encode_current_kmer(); // remaining
+
+            delete[] m_kmer;
         }
 
         template<typename value_t>
         inline void encode(value_t v, const Range& r) {
+            encode_current_kmer(); // k-mer interrupted
+
             // see [Dinklage, 2015]
             v -= value_t(r.min());
             if(v < 8) {
@@ -141,10 +162,28 @@ public:
             }
         }
 
-        template<typename value_t>
-        inline void encode(value_t v, const LiteralRange&) {
-            // TODO: k-mer handling
-            sym_t x = sym_t(uliteral_t(v));
+    private:
+        inline void encode_current_kmer() {
+            if(m_kmer_cur == m_k) {
+                sym_t x = encode_kmer(m_kmer, m_k);
+                if(m_ranking.find(x) != m_ranking.end()) {
+                    // k-mer exists in ranking
+                    encode_sym(x);
+                    m_kmer_cur = 0;
+                }
+            }
+
+            // encode k-mer one by one
+            if(m_kmer_cur > 0) {
+                for(size_t i = 0; i < m_kmer_cur; i++) {
+                    encode_sym(m_kmer[i]);
+                }
+
+                m_kmer_cur = 0;
+            }
+        }
+
+        inline void encode_sym(sym_t x) {
             auto r = m_ranking[x];
 
             // see [Dinklage, 2015]
@@ -199,8 +238,19 @@ public:
             }
         }
 
+    public:
+        template<typename value_t>
+        inline void encode(value_t v, const LiteralRange&) {
+            m_kmer[m_kmer_cur++] = uliteral_t(v);
+            if(m_kmer_cur == m_k) {
+                encode_current_kmer();
+            }
+        }
+
         template<typename value_t>
         inline void encode(value_t v, const BitRange&) {
+            encode_current_kmer(); // k-mer interrupted
+
             // single bit
 			m_out->write_bit(v);
         }
@@ -213,32 +263,41 @@ public:
         size_t m_sigma_bits;
         sym_t* m_inv_ranking;
 
+        uliteral_t* m_kmer;
+        size_t m_kmer_read;
+
     public:
         DECODER_CTOR(env, in) {
             m_k = this->env().option("kmer").as_integer();
 
+            m_kmer = new uliteral_t[m_k];
+            m_kmer_read = SIZE_MAX;
+
             // decode literal ranking
             auto sigma = m_in->read_compressed_int<size_t>();
 
-            m_sigma_bits = bits_for(sigma);
+            m_sigma_bits = bits_for(sigma - 1);
             m_inv_ranking = new sym_t[sigma];
 
             for(size_t rank = 0; rank < sigma; rank++) {
                 auto c = m_in->read_compressed_int<sym_t>();
 
-                //DLOG(INFO) << "decoded rank: " << rank << " -> " <<
-                //    c << ", is_kmer = " << is_kmer(c);
+                /*DLOG(INFO) << "decoded rank: " << rank << " -> " <<
+                    c << ", is_kmer = " << is_kmer(c);*/
 
                 m_inv_ranking[rank] = c;
             }
         }
 
         ~Decoder() {
+            delete[] m_kmer;
             delete[] m_inv_ranking;
         }
 
 		template<typename value_t>
 		inline value_t decode(const Range& r) {
+            m_kmer_read = SIZE_MAX; // current k-mer interrupted
+
             value_t v;
             auto x = m_in->read_int<uint8_t>(2);
             switch(x) {
@@ -255,7 +314,11 @@ public:
 
 		template<typename value_t>
 		inline value_t decode(const LiteralRange&) {
-            // TODO: k-mer handling ???
+            if(m_kmer_read < m_k) {
+                // continue reading from current k-mer
+                return value_t(m_kmer[m_kmer_read++]);
+            }
+
             size_t r;
 
             // see [Dinklage, 2015]
@@ -285,11 +348,20 @@ public:
                 }
             }
 
-            return value_t(m_inv_ranking[r]);
+            sym_t x = m_inv_ranking[r];
+            if(is_kmer(x)) {
+                decode_kmer(x, m_kmer, m_k);
+                m_kmer_read = 1;
+                return m_kmer[0];
+            } else {
+                return value_t(x);
+            }
 		}
 
 		template<typename value_t>
 		inline value_t decode(const BitRange&) {
+            m_kmer_read = SIZE_MAX; // current k-mer interrupted
+
             // single bit
 			return value_t(m_in->read_bit());
 		}
