@@ -144,21 +144,28 @@ public:
         inline void encode(value_t v, const Range& r) {
             encode_current_kmer(); // k-mer interrupted
 
-            // see [Dinklage, 2015]
             v -= value_t(r.min());
-            if(v < 8) {
-                m_out->write_int(0, 2);
-                m_out->write_int(v, 3);
-            } else if(v < 16) {
-                m_out->write_int(1, 2);
-                m_out->write_int(v - value_t(8), 3);
-            } else if(v < 32) {
-                m_out->write_int(2, 2);
-                m_out->write_int(v - value_t(16), 4);
+
+            // see [Dinklage, 2015]
+            auto delta = r.max() - r.min();
+            auto delta_bits = bits_for(delta);
+
+            if(delta_bits <= 5) {
+                m_out->write_int(v, delta_bits);
             } else {
-                m_out->write_int(3, 2);
-                m_out->write_int(v - value_t(32),
-                    bits_for(r.max() - r.min() - 32UL));
+                if(v < 8) {
+                    m_out->write_int(0, 2);
+                    m_out->write_int(v, 3);
+                } else if(v < 16) {
+                    m_out->write_int(1, 2);
+                    m_out->write_int(v - value_t(8), 3);
+                } else if(v < 32) {
+                    m_out->write_int(2, 2);
+                    m_out->write_int(v - value_t(16), 4);
+                } else {
+                    m_out->write_int(3, 2);
+                    m_out->write_int(v - value_t(32UL), bits_for(delta - 32UL));
+                }
             }
         }
 
@@ -187,7 +194,9 @@ public:
             auto r = m_ranking[x];
 
             // see [Dinklage, 2015]
-            if(m_sigma_bits < 6) {
+            if(m_sigma_bits < 4) {
+                m_out->write_int(r, m_sigma_bits);
+            } else if(m_sigma_bits < 6) {
                 if(r < 4) {
                     m_out->write_bit(0);
                     m_out->write_int(r, 2);
@@ -298,15 +307,23 @@ public:
 		inline value_t decode(const Range& r) {
             m_kmer_read = SIZE_MAX; // current k-mer interrupted
 
+            auto delta = r.max() - r.min();
+            auto delta_bits = bits_for(delta);
+
             value_t v;
-            auto x = m_in->read_int<uint8_t>(2);
-            switch(x) {
-                case 0: v = m_in->read_int<value_t>(3); break;
-                case 1: v = value_t(8) + m_in->read_int<value_t>(3); break;
-                case 2: v = value_t(16) + m_in->read_int<value_t>(4); break;
-                case 3: v = value_t(32) + m_in->read_int<value_t>(
-                                            bits_for(r.max() - r.min() - 32UL));
-                        break;
+
+            if(delta_bits <= 5) {
+                v = m_in->read_int<value_t>(delta_bits);
+            } else {
+                auto x = m_in->read_int<uint8_t>(2);
+                switch(x) {
+                    case 0: v = m_in->read_int<value_t>(3); break;
+                    case 1: v = value_t(8) + m_in->read_int<value_t>(3); break;
+                    case 2: v = value_t(16) + m_in->read_int<value_t>(4); break;
+                    case 3: v = value_t(32) + m_in->read_int<value_t>(
+                                                bits_for(r.max() - r.min() - 32UL));
+                            break;
+                }
             }
 
             return v + value_t(r.min());
@@ -322,7 +339,9 @@ public:
             size_t r;
 
             // see [Dinklage, 2015]
-            if(m_sigma_bits < 6) {
+            if(m_sigma_bits < 4) {
+                r = m_in->read_int<size_t>(m_sigma_bits);
+            } else if(m_sigma_bits < 6) {
                 auto b = m_in->read_bit();
                 if(b == 0) r = m_in->read_int<size_t>(2);
                 else       r = m_in->read_int<size_t>(m_sigma_bits);
