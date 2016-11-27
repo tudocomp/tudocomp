@@ -41,11 +41,11 @@ inline void encode_text(coder_t& coder,
 
     // define ranges
     Range text_r(n);
-    Range flen_r(flen_min, flen_max);
+    MinDistributedRange flen_r(flen_min, flen_max);
     Range fdist_r(fdist_max);
 
-    std::cerr << "flen_r = [" << flen_min << "," << flen_max << "]" << std::endl;
-    std::cerr << "fdist_max = " << fdist_max << std::endl;
+    //std::cerr << "flen_r = [" << flen_min << "," << flen_max << "]" << std::endl;
+    //std::cerr << "fdist_max = " << fdist_max << std::endl;
 
     // encode ranges
     coder.encode(n, len_r);
@@ -74,7 +74,11 @@ inline void encode_text(coder_t& coder,
         p += f.len;
     }
 
-    if(p < n) coder.encode(n - p, fdist_r);
+    if(p < n) {
+        coder.encode(true, bit_r);
+        coder.encode(n - p, fdist_r);
+    }
+
     while(p < n)  {
         // encode symbol
         coder.encode(text[p++], literal_r);
@@ -93,7 +97,7 @@ inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
     // decode shortest and longest factor
     auto flen_min = decoder.template decode<len_t>(text_r);
     auto flen_max = decoder.template decode<len_t>(text_r);
-    Range flen_r(flen_min, flen_max);
+    MinDistributedRange flen_r(flen_min, flen_max);
 
     // decode longest distance between factors
     auto fdist_max = decoder.template decode<len_t>(text_r);
@@ -107,8 +111,8 @@ inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
         len_t num;
 
         auto b = decoder.template decode<bool>(bit_r);
-        if(b) decoder.template decode<len_t>(fdist_r);
-        else num = 0;
+        if(b) num = decoder.template decode<len_t>(fdist_r);
+        else  num = 0;
 
         // decode characters
         while(num--) {
