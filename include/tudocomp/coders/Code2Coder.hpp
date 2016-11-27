@@ -76,8 +76,6 @@ public:
             return s.str();
         }
 
-        size_t dm_encoded_kmers;
-
     public:
         ENCODER_CTOR(env, out, literals) {
             m_k     = this->env().option("kmer").as_integer();
@@ -163,15 +161,11 @@ public:
 
             // reset current k-mer
             m_kmer_cur = 0;
-
-            dm_encoded_kmers = 0;
         }
 
         ~Encoder() {
+            // flush
             flush_kmer();
-
-            std::cerr << "actually encoded " << m_k << "-mers: " <<
-                dm_encoded_kmers << std::endl;
 
             // clean up
             delete[] m_kmer;
@@ -261,7 +255,6 @@ public:
                 sym_t x = compile_kmer(m_kmer, m_k);
                 if(m_ranking.find(x) != m_ranking.end()) {
                     // current k-mer exists in ranking
-                    ++dm_encoded_kmers;
                     encode_sym(x);
                     m_kmer_cur = 0; // reset
                 }
