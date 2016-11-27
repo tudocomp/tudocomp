@@ -14,6 +14,13 @@ namespace tdc {
         inline Range(size_t min, size_t max) : m_min(min), m_max(max) {}
         inline size_t min() const { return m_min; }
         inline size_t max() const { return m_max; }
+        inline size_t delta() const { return m_max - m_min; }
+    };
+
+    class MinDistributedRange : public Range {
+    public:
+        inline MinDistributedRange(size_t max) : Range(0, max) {}
+        inline MinDistributedRange(size_t min, size_t max) : Range(min, max) {}
     };
 
     template<typename T>
