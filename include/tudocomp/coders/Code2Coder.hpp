@@ -17,19 +17,19 @@ private:
         return (x & kmer_mask) == kmer_mask;
     }
 
-    static inline sym_t encode_kmer(const uliteral_t* kmer, size_t k) {
+    static inline sym_t compile_kmer(const uliteral_t* kmer, size_t k) {
         sym_t kmer_sym = 0;
 
         for(size_t i = 0; i < k; i++) {
-            kmer_sym |= (kmer[i] << (8 * i));
+            kmer_sym |= (sym_t(kmer[k-1-i]) << 8UL * i);
         }
 
         return kmer_sym | kmer_mask;
     }
 
-    static inline void decode_kmer(sym_t x, uliteral_t* kmer, size_t k) {
+    static inline void decompile_kmer(sym_t x, uliteral_t* kmer, size_t k) {
         for(size_t i = 0; i < k; i++) {
-            kmer[i] = (x >> (8 * i)) & 0xFF;
+            kmer[k-1-i] = (x >> 8UL * i) & 0xFFUL;
         }
     }
 
@@ -52,7 +52,30 @@ public:
         Counter<sym_t>::ranking_t m_ranking;
         size_t m_sigma_bits;
 
+        inline bool kmer_full() {
+            return m_kmer_cur == m_k;
+        }
+
+        inline bool kmer_roll(uliteral_t c, uliteral_t& out) {
+            bool roll_out = kmer_full();
+            if(roll_out) {
+                out = m_kmer[0];
+
+                for(size_t i = 0; i < m_k - 1; i++) m_kmer[i] = m_kmer[i+1];
+                --m_kmer_cur;
+            }
+
+            m_kmer[m_kmer_cur++] = c;
+            return roll_out;
+        }
+
         //DEBUG
+        inline std::string kmer_str() {
+            std::ostringstream s;
+            for(size_t i = 0; i < m_k; i++) s << m_kmer[i];
+            return s.str();
+        }
+
         size_t dm_encoded_kmers;
 
     public:
@@ -72,19 +95,20 @@ public:
 
                 if(m_k > 1) {
                     // update k-mer buffer
-                    if(l.pos == last_literal_pos + 1) {
-                        if(m_kmer_cur == m_k) {
-                            for(size_t i = 0; i < m_k - 1; i++) m_kmer[i] = m_kmer[i+1];
-                            --m_kmer_cur;
-                        }
-                    } else {
-                        m_kmer_cur = 0;
+                    if(l.pos != last_literal_pos + 1) {
+                        m_kmer_cur = 0; //reset
                     }
-                    m_kmer[m_kmer_cur++] = l.c;
+
+                    uliteral_t out;
+                    kmer_roll(l.c, out);
 
                     // count k-mer if complete
-                    if(m_kmer_cur == m_k) {
-                        kmers.increase(encode_kmer(m_kmer, m_k));
+                    if(kmer_full()) {
+                        auto x = compile_kmer(m_kmer, m_k);
+                        //DLOG(INFO) << "count k-mer: " << kmer_str() <<
+                        //    " => 0x" << std::hex << x;
+
+                        kmers.increase(x);
                     }
                 }
 
@@ -126,14 +150,8 @@ public:
                 DLOG(INFO) << "m_sigma_bits = " << m_sigma_bits;
                 DLOG(INFO) << "ranking:";
                 for(auto e : m_ranking) {
-                    if(is_kmer(e.first)) {
-                        std::ostringstream s;
-                        decode_kmer(e.first, m_kmer, m_k);
-                        for(size_t i = 0; i < m_k; i++) s << m_kmer[i];
-                        DLOG(INFO) << "\t'" << s.str() << "' -> " << e.second;
-                    } else {
-                        DLOG(INFO) << "\t'" << uliteral_t(e.first) << "' -> " << e.second;
-                    }
+                    DLOG(INFO) << "\t'" << std::hex << e.first << "' -> " <<
+                        std::dec << e.second << ", is_kmer = " << is_kmer(e.first);
                 }
             }*/
 
@@ -150,66 +168,29 @@ public:
         }
 
         ~Encoder() {
-            encode_current_kmer(); // remaining
+            flush_kmer();
+
             std::cerr << "actually encoded " << m_k << "-mers: " <<
                 dm_encoded_kmers << std::endl;
 
+            // clean up
             delete[] m_kmer;
         }
 
-        template<typename value_t>
-        inline void encode(value_t v, const Range& r) {
-            encode_current_kmer(); // k-mer interrupted
-
-            v -= value_t(r.min());
-
-            // see [Dinklage, 2015]
-            auto delta = r.max() - r.min();
-            auto delta_bits = bits_for(delta);
-
-            if(delta_bits <= 5) {
-                m_out->write_int(v, delta_bits);
-            } else {
-                if(v < 8) {
-                    m_out->write_int(0, 2);
-                    m_out->write_int(v, 3);
-                } else if(v < 16) {
-                    m_out->write_int(1, 2);
-                    m_out->write_int(v - value_t(8), 3);
-                } else if(v < 32) {
-                    m_out->write_int(2, 2);
-                    m_out->write_int(v - value_t(16), 4);
-                } else {
-                    m_out->write_int(3, 2);
-                    m_out->write_int(v - value_t(32UL), bits_for(delta - 32UL));
-                }
-            }
-        }
-
     private:
-        inline void encode_current_kmer() {
-            if(m_kmer_cur == m_k) {
-                sym_t x = encode_kmer(m_kmer, m_k);
-                if(m_ranking.find(x) != m_ranking.end()) {
-                    // k-mer exists in ranking
-                    ++dm_encoded_kmers;
-                    encode_sym(x);
-                    m_kmer_cur = 0;
-                }
+        inline void flush_kmer() {
+            // encode literals in k-mer buffer
+            for(size_t i = 0; i < m_kmer_cur; i++) {
+                encode_sym(sym_t(m_kmer[i]));
             }
 
-            // encode k-mer one by one
-            if(m_kmer_cur > 0) {
-                for(size_t i = 0; i < m_kmer_cur; i++) {
-                    encode_sym(m_kmer[i]);
-                }
-
-                m_kmer_cur = 0;
-            }
+            // reset current k-mer
+            m_kmer_cur = 0;
         }
 
         inline void encode_sym(sym_t x) {
             auto r = m_ranking[x];
+            //DLOG(INFO) << "encode_sym(0x" << std::hex << x << "), r = " << std::dec << r;
 
             // see [Dinklage, 2015]
             if(m_sigma_bits < 4) {
@@ -268,21 +249,61 @@ public:
     public:
         template<typename value_t>
         inline void encode(value_t v, const LiteralRange&) {
-            if(m_k > 1) {
-                m_kmer[m_kmer_cur++] = uliteral_t(v);
-                if(m_kmer_cur == m_k) {
-                    encode_current_kmer();
+            auto c = uliteral_t(v);
+
+            uliteral_t out = 0;
+            if(kmer_roll(c, out)) {
+                // encode rolled out character
+                encode_sym(sym_t(out));
+            }
+
+            if(kmer_full()) {
+                sym_t x = compile_kmer(m_kmer, m_k);
+                if(m_ranking.find(x) != m_ranking.end()) {
+                    // current k-mer exists in ranking
+                    ++dm_encoded_kmers;
+                    encode_sym(x);
+                    m_kmer_cur = 0; // reset
                 }
+            }
+        }
+
+        template<typename value_t>
+        inline void encode(value_t v, const Range& r) {
+            flush_kmer(); // k-mer interrupted
+            m_out->write_int(v - r.min(), bits_for(r.delta()));
+        }
+
+        template<typename value_t>
+        inline void encode(value_t v, const MinDistributedRange& r) {
+            flush_kmer(); // k-mer interrupted
+
+            // see [Dinklage, 2015]
+            v -= r.min();
+            auto bits = bits_for(r.delta());
+
+            if(bits <= 5) {
+                m_out->write_int(v, bits);
             } else {
-                encode_sym(uliteral_t(v));
+                if(v < 8) {
+                    m_out->write_int(0, 2);
+                    m_out->write_int(v, 3);
+                } else if(v < 16) {
+                    m_out->write_int(1, 2);
+                    m_out->write_int(v - value_t(8), 3);
+                } else if(v < 32) {
+                    m_out->write_int(2, 2);
+                    m_out->write_int(v - value_t(16), 4);
+                } else {
+                    m_out->write_int(3, 2);
+                    m_out->write_int(v, bits);
+                }
             }
         }
 
         template<typename value_t>
         inline void encode(value_t v, const BitRange&) {
-            encode_current_kmer(); // k-mer interrupted
-
-            // single bit
+            flush_kmer(); // k-mer interrupted
 			m_out->write_bit(v);
         }
     };
@@ -297,12 +318,16 @@ public:
         uliteral_t* m_kmer;
         size_t m_kmer_read;
 
+        inline void reset_kmer() {
+            m_kmer_read = SIZE_MAX;
+        }
+
     public:
         DECODER_CTOR(env, in) {
             m_k = this->env().option("kmer").as_integer();
 
             m_kmer = new uliteral_t[m_k];
-            m_kmer_read = SIZE_MAX;
+            reset_kmer();
 
             // decode literal ranking
             auto sigma = m_in->read_compressed_int<size_t>();
@@ -313,8 +338,8 @@ public:
             for(size_t rank = 0; rank < sigma; rank++) {
                 auto c = m_in->read_compressed_int<sym_t>();
 
-                /*DLOG(INFO) << "decoded rank: " << rank << " -> " <<
-                    c << ", is_kmer = " << is_kmer(c);*/
+                //DLOG(INFO) << "decoded rank: " << rank << " -> " <<
+                //    std::hex << c << ", is_kmer = " << is_kmer(c);
 
                 m_inv_ranking[rank] = c;
             }
@@ -325,31 +350,15 @@ public:
             delete[] m_inv_ranking;
         }
 
-		template<typename value_t>
-		inline value_t decode(const Range& r) {
-            m_kmer_read = SIZE_MAX; // current k-mer interrupted
-
-            auto delta = r.max() - r.min();
-            auto delta_bits = bits_for(delta);
-
-            value_t v;
-
-            if(delta_bits <= 5) {
-                v = m_in->read_int<value_t>(delta_bits);
+        inline bool eof() const {
+            if(m_kmer_read < m_k) {
+                // still decoding a k-mer
+                return false;
             } else {
-                auto x = m_in->read_int<uint8_t>(2);
-                switch(x) {
-                    case 0: v = m_in->read_int<value_t>(3); break;
-                    case 1: v = value_t(8) + m_in->read_int<value_t>(3); break;
-                    case 2: v = value_t(16) + m_in->read_int<value_t>(4); break;
-                    case 3: v = value_t(32) + m_in->read_int<value_t>(
-                                                bits_for(r.max() - r.min() - 32UL));
-                            break;
-                }
+                // check if stream is over
+                return tdc::Decoder::m_in->eof();
             }
-
-            return v + value_t(r.min());
-		}
+        }
 
 		template<typename value_t>
 		inline value_t decode(const LiteralRange&) {
@@ -358,7 +367,7 @@ public:
                 return value_t(m_kmer[m_kmer_read++]);
             }
 
-            size_t r;
+            size_t r = 0;
 
             // see [Dinklage, 2015]
             if(m_sigma_bits < 4) {
@@ -389,9 +398,11 @@ public:
                 }
             }
 
-            sym_t x = m_inv_ranking[r];
+            auto x = m_inv_ranking[r];
+            //DLOG(INFO) << "decoded 0x" << std::hex << x << " from r = " << std::dec << r;
+
             if(is_kmer(x)) {
-                decode_kmer(x, m_kmer, m_k);
+                decompile_kmer(x, m_kmer, m_k);
                 m_kmer_read = 1;
                 return m_kmer[0];
             } else {
@@ -400,10 +411,36 @@ public:
 		}
 
 		template<typename value_t>
-		inline value_t decode(const BitRange&) {
-            m_kmer_read = SIZE_MAX; // current k-mer interrupted
+		inline value_t decode(const Range& r) {
+            reset_kmer(); // current k-mer interrupted
+            return m_in->read_int<value_t>(bits_for(r.delta()));
+        }
 
-            // single bit
+		template<typename value_t>
+		inline value_t decode(const MinDistributedRange& r) {
+            reset_kmer(); // current k-mer interrupted
+
+            auto bits = bits_for(r.delta());
+            value_t v = 0;
+
+            if(bits <= 5) {
+                v = m_in->read_int<value_t>(bits);
+            } else {
+                auto x = m_in->read_int<uint8_t>(2);
+                switch(x) {
+                    case 0: v = m_in->read_int<value_t>(3); break;
+                    case 1: v = value_t(8) + m_in->read_int<value_t>(3); break;
+                    case 2: v = value_t(16) + m_in->read_int<value_t>(4); break;
+                    case 3: v = m_in->read_int<value_t>(bits); break;
+                }
+            }
+
+            return v + value_t(r.min());
+		}
+
+		template<typename value_t>
+		inline value_t decode(const BitRange&) {
+            reset_kmer(); // current k-mer interrupted
 			return value_t(m_in->read_bit());
 		}
     };
