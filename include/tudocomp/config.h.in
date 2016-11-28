@@ -1,1 +1,6 @@
+#ifndef CONFIG_H_IN
+#define CONFIG_H_IN
+
 #cmakedefine JUDY_H_AVAILABLE 1
+
+#endif /* CONFIG_H_IN */

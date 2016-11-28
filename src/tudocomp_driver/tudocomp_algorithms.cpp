@@ -1,3 +1,4 @@
+#include <tudocomp/config.h>
 #include <tudocomp_driver/Registry.hpp>
 
 #include <tudocomp/ChainCompressor.hpp>
