@@ -51,7 +51,7 @@ namespace huff {
     /** Computes an array that maps from the effective alphabet to the full alphabet.
      *  @param C @see count_alphabet
      */
-    size_t effective_alphabet_size(const len_t* C) {
+    inline size_t effective_alphabet_size(const len_t* C) {
         return std::count_if(C, C+uliteral_max+1, [] (const len_t& i) { return i != 0; }); // size of the effective alphabet
     }
 
@@ -61,7 +61,7 @@ namespace huff {
      * @param C storing for each character of the full alphabet whether it exists in a given input text (value > 0 -> existing, value = 0 -> non-existing)
      * @param C @see count_alphabet
      */
-    uliteral_t* gen_effective_alphabet(const size_t*const C, const size_t alphabet_size) {
+    inline uliteral_t* gen_effective_alphabet(const size_t*const C, const size_t alphabet_size) {
         uliteral_t* map_from_effective { new uliteral_t[alphabet_size] };
         size_t j = 0;
         for(size_t i = 0; i <= uliteral_max; ++i) {
@@ -87,7 +87,7 @@ namespace huff {
      * @param alphabet_size the size of the effective alphabet
      *
      **/
-    uint8_t* gen_codelengths(const len_t*const C, const uliteral_t*const map_from_effective, const size_t alphabet_size) {
+    inline uint8_t* gen_codelengths(const len_t*const C, const uliteral_t*const map_from_effective, const size_t alphabet_size) {
         size_t A[2*alphabet_size];
         for(size_t i=0; i < alphabet_size; i++) {
             tdc_debug(VLOG(2) << "Char " << map_from_effective[i] << " : " << size_t(C[map_from_effective[i]]));
@@ -175,7 +175,7 @@ namespace huff {
 
     /** Generates the numl array (@see huffmantable). This function is called before decoding Huffman-encoded text.
      */
-    uliteral_t* gen_numl(const uint8_t*const ordered_codelengths, const size_t alphabet_size, const uint8_t longest) {
+    inline uliteral_t* gen_numl(const uint8_t*const ordered_codelengths, const size_t alphabet_size, const uint8_t longest) {
         DCHECK_EQ(longest, *std::max_element(ordered_codelengths, ordered_codelengths+alphabet_size));
         DCHECK_GT(longest,0);
 
@@ -194,7 +194,7 @@ namespace huff {
     /**
      * The returned array stores for each codeword length the smallest codeword of the respective length.
      */
-    size_t* gen_first_codes(const uliteral_t*const numl, const size_t longest) {
+    inline size_t* gen_first_codes(const uliteral_t*const numl, const size_t longest) {
         size_t* firstcode = new size_t[longest];
         firstcode[longest-1] = 0;
         for(size_t i = longest-1; i > 0; --i)
@@ -204,7 +204,7 @@ namespace huff {
 
     /** Generates all codewords. Called before encoding a text.
      */
-    size_t* gen_codewords(const uint8_t*const ordered_codelengths, const size_t alphabet_size, const uliteral_t*const numl, const uint8_t longest) {
+    inline size_t* gen_codewords(const uint8_t*const ordered_codelengths, const size_t alphabet_size, const uliteral_t*const numl, const uint8_t longest) {
         DCHECK_EQ(longest, *std::max_element(ordered_codelengths, ordered_codelengths+alphabet_size));
         DCHECK_GT(longest,0);
 
@@ -266,7 +266,7 @@ namespace huff {
     /**
      * Encodes the Huffman table needed to decode Huffman-encoded text.
      */
-    void huffmantable_encode(tdc::io::BitOStream& os, const huffmantable& table) {
+    inline void huffmantable_encode(tdc::io::BitOStream& os, const huffmantable& table) {
         os.write_compressed_int(table.longest);
         for(size_t i = 0; i < table.longest; ++i) {
             os.write_compressed_int(table.numl[i]);
@@ -280,7 +280,7 @@ namespace huff {
     /**
      * Decodes the Huffman table needed to decode Huffman-encoded text.
      */
-    huffmantable huffmantable_decode(tdc::io::BitIStream& in) {
+    inline huffmantable huffmantable_decode(tdc::io::BitIStream& in) {
         const uint8_t longest = in.read_compressed_int<uint8_t>();
         uliteral_t*const numl { new uliteral_t[longest] };
         for(size_t i = 0; i < longest; ++i) {
@@ -296,7 +296,7 @@ namespace huff {
 
     /** maps from the full alphabet to the effective alphabet
      */
-    uint8_t* gen_ordered_map_to_effective(const uint8_t*const ordered_map_from_effective, const size_t alphabet_size) {
+    inline uint8_t* gen_ordered_map_to_effective(const uint8_t*const ordered_map_from_effective, const size_t alphabet_size) {
             uint8_t* map_to_effective = new uint8_t[uliteral_max];
             std::memset(map_to_effective, 0xff, sizeof(map_to_effective)*sizeof(uint8_t));
             for(size_t i = 0; i < alphabet_size; ++i) {
@@ -330,7 +330,7 @@ namespace huff {
     /**
      * Encodes a stream storing input_length characters
      */
-    void huffman_encode(
+    inline void huffman_encode(
             std::basic_istream<literal_t>& input,
             tdc::io::BitOStream& os,
             const size_t input_length,
@@ -375,7 +375,7 @@ namespace huff {
             tdc_debug(VLOG(2) << "prefix_sum_lengths : " << arr_to_debug_string(prefix_sum_lengths, longest));
             return prefix_sum_lengths;
     }
-    literal_t huffman_decode(
+    inline literal_t huffman_decode(
             tdc::io::BitIStream& is,
             const uliteral_t*const ordered_map_from_effective,
             const size_t*const prefix_sum_lengths,
@@ -398,7 +398,7 @@ namespace huff {
     }
 
 
-    void huffman_decode(
+    inline void huffman_decode(
             tdc::io::BitIStream& is,
             std::basic_ostream<literal_t>& output,
             const uliteral_t*const ordered_map_from_effective,
@@ -424,7 +424,7 @@ namespace huff {
 
     /** Computes the lengths of all codewords of the Huffman code. Needed to decode a Huffman-encoded text.
      */
-    uint8_t* gen_ordered_codelength(const size_t alphabet_size, const uliteral_t*const numl, const size_t longest) {
+    inline uint8_t* gen_ordered_codelength(const size_t alphabet_size, const uliteral_t*const numl, const size_t longest) {
         uint8_t* ordered_codelengths { new uint8_t[alphabet_size] };
         for(size_t i = 0,k=0; i < longest; ++i) {
             for(size_t j = 0; j < numl[i]; ++j) {
@@ -440,7 +440,7 @@ namespace huff {
      * @attention Deletes the input array C!
      * @attention C must contain at least two non-zero values
      */
-    extended_huffmantable gen_huffmantable(const len_t*const C) {
+    inline extended_huffmantable gen_huffmantable(const len_t*const C) {
         const size_t alphabet_size = effective_alphabet_size(C);
         DCHECK_GT(alphabet_size,0);
 
@@ -474,12 +474,12 @@ namespace huff {
         return { ordered_map_from_effective, codewords, ordered_codelengths, alphabet_size, numl, longest };
     }
 
-    extended_huffmantable gen_huffmantable(const std::string& text) {
+    inline extended_huffmantable gen_huffmantable(const std::string& text) {
         const len_t*const C { count_alphabet(text) };
         return gen_huffmantable(C);
     }
 
-    void encode(tdc::io::Input& input, tdc::io::Output& output) {
+    inline void encode(tdc::io::Input& input, tdc::io::Output& output) {
         tdc::io::BitOStream bit_os{output};
         tdc::io::Input input2 = input; // TODO: could be nicer, instead of copying we only need a view and a stream of the same data
         View iview = input.as_view();
@@ -490,7 +490,7 @@ namespace huff {
         huffman_encode(is, bit_os, input2.size(), table.ordered_map_from_effective, table.ordered_codelengths, table.alphabet_size, table.codewords);
     }
 
-    void decode(tdc::io::Input& input, tdc::io::Output& output) {
+    inline void decode(tdc::io::Input& input, tdc::io::Output& output) {
         tdc::io::BitIStream bit_is{input};
         huffmantable table = huffmantable_decode(bit_is);
         const uint8_t*const ordered_codelengths = gen_ordered_codelength(table.alphabet_size, table.numl, table.longest);
