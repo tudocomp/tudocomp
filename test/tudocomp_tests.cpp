@@ -265,8 +265,8 @@ TEST(Input, ensure_null_term) {
 
     {
         Input i(View(a).substr(0, 3));
+        i.escape_and_terminate();
         auto x = i.as_view();
-        x.ensure_null_terminator();
         ASSERT_NE(x, b);
         ASSERT_EQ(x, c);
     }
@@ -275,8 +275,8 @@ TEST(Input, ensure_null_term) {
     {
         Input i(View(a).substr(0, 3));
         Input i2 = std::move(i);
+        i2.escape_and_terminate();
         auto x = i2.as_view();
-        x.ensure_null_terminator();
         ASSERT_NE(x, b);
         ASSERT_EQ(x, c);
     }
@@ -286,14 +286,13 @@ TEST(Input, ensure_null_term) {
         Input i(View(a).substr(0, 3));
 
         Input i2 = i;
+        i2.escape_and_terminate();
 
         auto x = i2.as_view();
-        x.ensure_null_terminator();
         ASSERT_NE(x, b);
         ASSERT_EQ(x, c);
 
         auto y = i.as_view();
-        y.ensure_null_terminator();
         ASSERT_NE(y, b);
         ASSERT_EQ(y, c);
     }
@@ -303,7 +302,6 @@ TEST(Input, ensure_null_term) {
         Input i(View(a).substr(0, 3));
         {
             auto x = i.as_view();
-            x.ensure_null_terminator();
             ASSERT_NE(x, b);
             ASSERT_EQ(x, c);
         }
@@ -311,18 +309,9 @@ TEST(Input, ensure_null_term) {
             auto x = i.as_view();
             ASSERT_EQ(x, ""_v);
         }
+        i.escape_and_terminate();
         {
             auto x = i.as_view();
-            x.ensure_null_terminator();
-            ASSERT_EQ(x, "\0"_v);
-        }
-        {
-            auto x = i.as_view();
-            ASSERT_EQ(x, ""_v);
-        }
-        {
-            auto x = i.as_view();
-            x.ensure_null_terminator();
             ASSERT_EQ(x, "\0"_v);
         }
     }
@@ -435,7 +424,7 @@ namespace input_nte_matrix {
         {
             Input i = i_bak;
             auto x = i.as_view();
-            x.ensure_null_terminator();
+            i.escape_and_terminate();
             ASSERT_NE(x, b);
             ASSERT_EQ(x, c);
         }
@@ -443,14 +432,13 @@ namespace input_nte_matrix {
         {
             Input i = i_bak;
             Input i2 = i;
+            i2.escape_and_terminate();
 
             auto x = i2.as_view();
-            x.ensure_null_terminator();
             ASSERT_NE(x, b);
             ASSERT_EQ(x, c);
 
             auto y = i.as_view();
-            y.ensure_null_terminator();
             ASSERT_NE(y, b);
             ASSERT_EQ(y, c);
         }
@@ -459,26 +447,16 @@ namespace input_nte_matrix {
             Input i = i_bak;
             {
                 auto x = i.as_view();
-                x.ensure_null_terminator();
+                ASSERT_EQ(x, ""_v);
+            }
+            i.escape_and_terminate();
+            {
+                auto x = i.as_view();
                 ASSERT_NE(x, b);
                 ASSERT_EQ(x, c);
             }
             {
                 auto x = i.as_view();
-                ASSERT_EQ(x, ""_v);
-            }
-            {
-                auto x = i.as_view();
-                x.ensure_null_terminator();
-                ASSERT_EQ(x, "\0"_v);
-            }
-            {
-                auto x = i.as_view();
-                ASSERT_EQ(x, ""_v);
-            }
-            {
-                auto x = i.as_view();
-                x.ensure_null_terminator();
                 ASSERT_EQ(x, "\0"_v);
             }
         }

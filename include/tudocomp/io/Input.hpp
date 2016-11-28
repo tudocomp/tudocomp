@@ -42,7 +42,8 @@ namespace io {
 
         inline void escape_and_terminate() {
             if (!m_is_escaped) {
-                throw std::runtime_error("TODO");
+                // TODO: Actually escape
+                //throw std::runtime_error("TODO");
             }
         }
 
@@ -256,7 +257,6 @@ namespace io {
         /// \cond INTERNAL
         inline void escape_and_terminate() {
             m_escape_and_terminate = true;
-            throw std::runtime_error("TODO");
         }
         /// \endcond
 
@@ -267,7 +267,6 @@ namespace io {
         struct Variant {
             inline virtual ~Variant() {}
             virtual View view() = 0;
-            virtual void ensure_null_terminator() = 0;
         };
 
         struct Memory: Variant {
@@ -281,10 +280,6 @@ namespace io {
             inline View view() override {
                 return m_view;
             }
-
-            inline virtual void ensure_null_terminator() override {
-                throw std::runtime_error("REMOVE");
-            }
         };
         struct File: Variant {
             EscapableBuf buffer;
@@ -294,10 +289,6 @@ namespace io {
 
             inline View view() override {
                 return buffer.view();
-            }
-
-            inline virtual void ensure_null_terminator() override {
-                throw std::runtime_error("REMOVE");
             }
         };
 
@@ -339,25 +330,12 @@ namespace io {
 
         /// Default constructor (deleted).
         inline InputView() = delete;
-
-        /// Ensures that that this View is terminated with a null byte.
-        ///
-        /// Depending on internal Input source, this might involve
-        /// a (re)allocation of a buffer for the input data.
-        inline void ensure_null_terminator() {
-            throw std::runtime_error("REMOVE");
-        }
-        bool is_terminal_null_ensured() const {
-            throw std::runtime_error("REMOVE");
-        }
     };
 
     inline InputView Input::Memory::as_view(bool escape_and_terminate) {
         EscapableBuf buf;
 
         if (escape_and_terminate) {
-            throw std::runtime_error("TODO");
-
             if (m_owned.is_empty()) {
                 buf = EscapableBuf(m_view);
             } else {
