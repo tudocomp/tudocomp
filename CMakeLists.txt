@@ -31,6 +31,11 @@ find_or_download_package(Glog GLOG glog)
 find_or_download_package(SDSL SDSL sdsl)
 find_or_download_package(GFlags GFLAGS gflags)
 
+include(FindJudy)
+
+CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h)
+
+
 #include(sdsl)
 include(rust)
 

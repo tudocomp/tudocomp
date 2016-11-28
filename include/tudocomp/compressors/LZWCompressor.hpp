@@ -3,7 +3,8 @@
 
 #include <tudocomp/Compressor.hpp>
 
-#include <tudocomp/compressors/lz78/LZ78Dictionary.hpp>
+#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
+
 #include <tudocomp/compressors/lzw/LZWDecoding.hpp>
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
 
@@ -12,7 +13,7 @@
 
 namespace tdc {
 
-template<typename coder_t>
+template<typename coder_t, typename dict_t>
 class LZWCompressor: public Compressor {
 private:
     const lz78::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
@@ -25,6 +26,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lzw", "Lempel-Ziv-Welch\n\n" LZ78_DICT_SIZE_DESC);
         m.option("coder").templated<coder_t, BitOptimalCoder>();
+        m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>();
         m.option("dict_size").dynamic("0");
         return m;
     }
@@ -42,7 +44,7 @@ public:
 
 
 
-        lz78::EncoderDictionary dict(reserved_size);
+        dict_t dict(env().env_for_option("lz78trie"), reserved_size);
 		auto reset_dict = [&dict] () {
 			dict.clear();
 			for(size_t i = 0; i < uliteral_max+1; ++i) {

@@ -1,5 +1,5 @@
-#ifndef LZ78_DICTIONARY_H
-#define LZ78_DICTIONARY_H
+#ifndef TERNARYTRIE_HPP
+#define TERNARYTRIE_HPP
 
 /**
  * LZ78 Trie Implementation 
@@ -7,17 +7,14 @@
  * @see http://www.cplusplus.com/articles/iL18T05o/
 **/
 
-#include <limits>
-#include <cstddef>
-#include <cstdint>
 #include <vector>
-#include <tudocomp/def.hpp>
-#include <tudocomp/compressors/lz78/LZ78common.hpp>
+#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 namespace tdc {
 namespace lz78 {
 
-class EncoderDictionary {
+class TernaryTrie : public Algorithm, public LZ78Trie {
 
 	/*
 	 * The trie is not stored in standard form. Each node stores the pointer to its first child (first as first come first served).
@@ -29,7 +26,11 @@ class EncoderDictionary {
 	std::vector<literal_t> literal;
 
 public:
-    EncoderDictionary(factorid_t reserve = 0) {
+    inline static Meta meta() {
+        Meta m("lz78trie", "ternary", "Lempel-Ziv 78 Ternary Trie");
+		return m;
+	}
+    TernaryTrie(Env&& env, factorid_t reserve = 0) : Algorithm(std::move(env)) {
 		if(reserve > 0) {
 			first_child.reserve(reserve);
 			left_sibling.reserve(reserve);
@@ -38,24 +39,15 @@ public:
 		}
     }
 
-	/**
-	 * The dictionary can store multiple root nodes
-	 * For LZ78, we use a root node with the id = 0.
-	 * For LZW, we add for each possible literal value a root node.
-	 * The compressor has to add these nodes.
-	 */
-	factorid_t add_rootnode(uliteral_t c) {
+	factorid_t add_rootnode(uliteral_t c) override {
         first_child.push_back(undef_id);
 		left_sibling.push_back(undef_id);
 		right_sibling.push_back(undef_id);
 		literal.push_back(c);
-		return first_child.size();
+		return size();
 	}
-	/**
-	 * Erases the contents of the dictionary.
-	 * Used by compressors with limited dictionary size.
-	 */
-	void clear() {
+
+	void clear() override {
         first_child.clear();
 		left_sibling.clear();
 		right_sibling.clear();
@@ -63,17 +55,10 @@ public:
 
 	}
 
-    /** Searches a pair (`parent`, `c`). If there is no node below `parent` on an edge labeled with `c`, a new leaf of the `parent` will be constructed.
-      * @param parent  the parent node's id
-      * @param c       the edge label to follow
-      * @return the index of the respective child, if it was found.
-      * @retval undef_id   if a new leaf was inserted
-      **/
-    factorid_t find_or_insert(const factorid_t& parent, uint8_t c)
-    {
-        const factorid_t newleaf_id = first_child.size(); //! if we add a new node, its index will be equal to the current size of the dictionary
+    factorid_t find_or_insert(const factorid_t& parent, uliteral_t c) override {
+        const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
-		DCHECK_LT(parent, first_child.size());
+		DCHECK_LT(parent, size());
 		
 
 		if(first_child[parent] == undef_id) {
@@ -109,14 +94,11 @@ public:
         return undef_id;
     }
 
-	/**
-	 * Returns the number of entries, plus the number of rootnodes
-	 */
-    factorid_t size() const {
+    factorid_t size() const override {
         return first_child.size();
     }
 };
 
 }} //ns
 
-#endif
+#endif /* TERNARYTRIE_HPP */

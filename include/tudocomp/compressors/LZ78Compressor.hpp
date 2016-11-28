@@ -3,7 +3,7 @@
 
 #include <tudocomp/Compressor.hpp>
 
-#include <tudocomp/compressors/lz78/LZ78Dictionary.hpp>
+#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
 
 #include <tudocomp/Range.hpp>
 #include <tudocomp/coders/BitOptimalCoder.hpp> //default
@@ -37,7 +37,7 @@ namespace tdc {
 	}//ns
 
 
-template <typename coder_t>
+template <typename coder_t, typename dict_t>
 class LZ78Compressor: public Compressor {
 private:
     static inline lz78::factorid_t select_size(Env& env, string_ref name) {
@@ -61,6 +61,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lz78", "Lempel-Ziv 78\n\n" LZ78_DICT_SIZE_DESC);
         m.option("coder").templated<coder_t, BitOptimalCoder>();
+        m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>();
         m.option("dict_size").dynamic("inf");
         return m;
     }
@@ -76,7 +77,8 @@ public:
         len_t stat_factor_count = 0;
         len_t factor_count = 0;
 
-        lz78::EncoderDictionary dict(reserved_size);
+        dict_t dict(env().env_for_option("lz78trie"), reserved_size);
+
 		auto reset_dict = [&dict] () {
 			dict.clear();
 			const lz78::factorid_t node = dict.add_rootnode(0);
