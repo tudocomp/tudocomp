@@ -63,19 +63,27 @@ private:
             return {(*m_text)[i], i};
         }
     };
+private:
+    inline static void null_check(View view) {
+        if(!view.ends_with(uint8_t(0))){
+             throw std::logic_error(
+                 "Input is not 0 terminated! Please make sure you declare "
+                 "the compressor calling this with "
+                 "`m.needs_sentinel_terminator()` in its `meta()` function."
+            );
+        }
+    }
 
 public:
-    inline TextDS(const InputView& input)
+    inline TextDS(const View& input)
         : m_size(input.size()), m_text((const value_type*)input.data())
     {
-        if(!input.is_terminal_null_ensured())
-             throw std::logic_error("Terminal Null is not ensured. Please invoke the method ensure_null_terminator() on your input before creating TextDS");
+        null_check(input);
     }
 
     inline TextDS(const InputView& input, uint64_t flags) : TextDS(input)
     {
-        if(!input.is_terminal_null_ensured())
-             throw std::logic_error("Terminal Null is not ensured. Please invoke the method ensure_null_terminator() on your input before creating TextDS");
+        null_check(input);
         require(flags);
     }
 
