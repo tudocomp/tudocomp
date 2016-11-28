@@ -4,6 +4,7 @@
 #include <tudocomp/io.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/Literal.hpp>
+#include <tudocomp/Range.hpp>
 
 namespace tdc {
 
@@ -20,6 +21,16 @@ public:
 
     inline ~Encoder() {
         finalize();
+    }
+
+    template<typename value_t>
+    inline void encode(value_t v, const Range& r) {
+        m_out->write_int(v - r.min(), bits_for(r.max() - r.min()));
+    }
+
+    template<typename value_t>
+    inline void encode(value_t v, const BitRange&) {
+        m_out->write_bit(v);
     }
 
     inline void finalize() {
@@ -48,6 +59,17 @@ public:
 
     inline bool eof() const {
         return m_in->eof();
+    }
+
+    template<typename value_t>
+    inline value_t decode(const Range& r) {
+        return value_t(r.min()) +
+               m_in->read_int<value_t>(bits_for(r.max() - r.min()));
+    }
+
+    template<typename value_t>
+    inline value_t decode(const BitRange&) {
+        return value_t(m_in->read_bit());
     }
 };
 

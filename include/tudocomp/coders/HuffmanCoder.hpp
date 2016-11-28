@@ -550,6 +550,8 @@ public:
             }
         }
 
+        using tdc::Encoder::encode; // default encoding as fallback
+
         template<typename value_t>
         inline void encode(value_t v, const LiteralRange&) {
             DCHECK_NE(m_table.alphabet_size,0);
@@ -557,17 +559,6 @@ public:
                 m_out->write_int(static_cast<uliteral_t>(v),8*sizeof(uliteral_t));
             else
                 huff::huffman_encode(v, *m_out, m_table.ordered_codelengths, ordered_map_to_effective, m_table.alphabet_size, m_table.codewords);
-        }
-
-        //fallback
-        template<typename value_t>
-        inline void encode(value_t v, const BitRange&) {
-            m_out->write_bit(v);
-        }
-
-        template<typename value_t>
-        inline void encode(value_t v, const Range&) {
-            m_out->write_int(v);
         }
     };
 
@@ -598,24 +589,14 @@ public:
             firstcodes = huff::gen_first_codes(table.numl, table.longest);
         }
 
+        using tdc::Decoder::decode; // default decoding as fallback
+
         template<typename value_t>
         inline value_t decode(const LiteralRange&) {
             if(tdc_unlikely(ordered_map_from_effective == nullptr))
                 return m_in->read_int<uliteral_t>();
             return huff::huffman_decode(*m_in, ordered_map_from_effective, prefix_sum_lengths, firstcodes);
         }
-
-        //fallback
-        template<typename value_t>
-        inline value_t decode(const BitRange&) {
-            return value_t(m_in->read_bit());
-        }
-
-        template<typename value_t>
-        inline value_t decode(const Range&) {
-            return m_in->read_int<value_t>();
-        }
-
     };
 };
 
