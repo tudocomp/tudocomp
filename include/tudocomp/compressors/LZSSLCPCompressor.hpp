@@ -29,6 +29,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lzss_lcp", "LZSS Factorization using LCP");
         m.option("coder").templated<coder_t>();
+        m.needs_sentinel_terminator();
         return m;
     }
 
@@ -41,7 +42,7 @@ public:
 
     inline virtual void compress(Input& input, Output& output) override {
         auto view = input.as_view();
-		view.ensure_null_terminator();
+        DCHECK(view.ends_with(uint8_t(0)));
 
         // Construct text data structures
         env().begin_stat_phase("Construct SA, ISA and LCP");
@@ -117,8 +118,7 @@ public:
         typename coder_t::Encoder coder(env().env_for_option("coder"),
             output, lzss::TextLiterals<text_t>(text, factors));
 
-        lzss::encode_text(coder, text, factors,
-            view.is_terminal_null_ensured()); //TODO is this correct?
+        lzss::encode_text(coder, text, factors, false); //TODO is this correct?
     }
 
     inline virtual void decompress(Input& input, Output& output) override {

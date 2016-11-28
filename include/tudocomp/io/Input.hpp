@@ -44,6 +44,8 @@ namespace io {
             if (!m_is_escaped) {
                 // TODO: Actually escape
                 //throw std::runtime_error("TODO");
+                m_data->push_back(0);
+                m_is_escaped = true;
             }
         }
 
