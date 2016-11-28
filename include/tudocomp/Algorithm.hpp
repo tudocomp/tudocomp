@@ -256,6 +256,7 @@ public:
 inline void gather_types(eval::AlgorithmTypes& target,
                          Meta&& meta)
 {
+    // get vector for the current type
     auto& target_type_algos = target[meta.type()];
 
     // Create decl::Algorithm value here
@@ -265,8 +266,14 @@ inline void gather_types(eval::AlgorithmTypes& target,
     bool found = false;
     for (auto& already_seen_algo : target_type_algos) {
         if (already_seen_algo.name() == decl_value.name()) {
-            // TODO: Nice error
-            CHECK(already_seen_algo == decl_value);
+            if (already_seen_algo != decl_value) {
+                std::stringstream ss;
+                ss << "Attempting to register the same algorithm twice";
+                ss << " with differing details:";
+                ss << " new: " << decl_value;
+                ss << " existing: " << already_seen_algo;
+                throw std::runtime_error(ss.str());
+            }
 
             found = true;
             break;

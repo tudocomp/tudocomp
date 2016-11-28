@@ -932,6 +932,7 @@ namespace tdc {
             auto& v_signature = *found;
 
             // Prepare return value
+            bool r_needs_null_term = v_signature.add_null_terminator();
             std::string r_name = v_signature.name();
             std::vector<pattern::Arg> r_static_args;
             AlgorithmValue::ArgumentMap r_dynamic_args;
@@ -1071,7 +1072,8 @@ namespace tdc {
             return OptionValue(AlgorithmValue(
                 std::move(r_name),
                 std::move(r_dynamic_args),
-                std::move(tmp)));
+                std::move(tmp),
+                r_needs_null_term));
         }
 
         inline OptionValue cl_eval(ast::Value&& v,
