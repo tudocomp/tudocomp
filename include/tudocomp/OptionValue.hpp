@@ -69,6 +69,7 @@ public:
 
     inline bool is_algorithm() const;
     inline const AlgorithmValue& as_algorithm() const;
+    inline AlgorithmValue to_algorithm() &&;
     inline const std::string& as_string() const;
     inline uint64_t as_integer() const;
     inline bool as_bool() const;
@@ -148,9 +149,15 @@ inline bool OptionValue::is_algorithm() const {
     return !m_is_value;
 }
 inline const AlgorithmValue& OptionValue::as_algorithm() const {
-    CHECK(!m_is_value);
+    CHECK(is_algorithm());
     return m_value_or_algorithm;
 }
+
+inline AlgorithmValue OptionValue::to_algorithm() && {
+    CHECK(is_algorithm());
+    return std::move(m_value_or_algorithm);
+}
+
 inline const std::string& OptionValue::as_string() const {
     CHECK(m_is_value);
     return m_value_or_algorithm.m_name;

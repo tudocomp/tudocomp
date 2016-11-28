@@ -53,7 +53,7 @@ public:
     inline std::vector<pattern::Algorithm> all_algorithms_with_static(View type) const;
     inline std::vector<pattern::Algorithm> check_for_undefined_compressors();
     inline std::unique_ptr<Compressor> select_algorithm_or_exit(const AlgorithmValue& algo) const;
-    inline std::unique_ptr<Compressor> select_algorithm_or_exit(string_ref text) const;
+    inline AlgorithmValue parse_algorithm_id(string_ref text) const;
     inline static Registry with_all_from(std::function<void(Registry&)> f);
     inline std::string generate_doc_string() const;
     /// \endcond

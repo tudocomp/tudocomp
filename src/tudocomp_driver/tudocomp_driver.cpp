@@ -89,30 +89,30 @@ int main(int argc, char** argv)
     using namespace tdc_algorithms;
 
     google::InitGoogleLogging(argv[0]);
-	google::SetUsageMessage("This tool compresses and decompresses files");
-	if(argc == 1 || strcmp(argv[1],"-h") == 0 || strcmp(argv[1],"--help") == 0 || strcmp(argv[1],"-help") == 0) {
-//		google::ShowUsageWithFlagsRestrict(argv[0], __FILE__); //shortcut
-		std::vector<google::CommandLineFlagInfo> info;
-		google::GetAllFlags(&info);
+    google::SetUsageMessage("This tool compresses and decompresses files");
+    if(argc == 1 || strcmp(argv[1],"-h") == 0 || strcmp(argv[1],"--help") == 0 || strcmp(argv[1],"-help") == 0) {
+//        google::ShowUsageWithFlagsRestrict(argv[0], __FILE__); //shortcut
+        std::vector<google::CommandLineFlagInfo> info;
+        google::GetAllFlags(&info);
 
-		std::cout << argv[0] << " [options] {file to compress/decompress}" << std::endl;
-		std::cout << "You need to provide at least an algorithm and a source (a file) to compress/decompress." << std::endl << std::endl;
-		std::cout 
-			<< std::setw(20) << std::setiosflags(std::ios::left) << "Parameter" 
-			<< std::setw(10) << "Type" 
-			<< std::setw(20) << "Default"
-			<< "Description" << std::endl;
-		std::cout << std::endl;
-		 for(auto it = info.cbegin(); it != info.cend(); ++it) {
-			 if(it->filename != __FILE__) continue;
-			 	std::cout 
-					<< std::setw(20) << std::setiosflags(std::ios::left)<< (std::string("--")+ it->name) 
-					<< std::setw(10) << it->type 
-					<< std::setw(20) << (std::string("(") + it->default_value + ")") 
-					<< it->description << std::endl;
-		 }
-		return 0;
-	}
+        std::cout << argv[0] << " [options] {file to compress/decompress}" << std::endl;
+        std::cout << "You need to provide at least an algorithm and a source (a file) to compress/decompress." << std::endl << std::endl;
+        std::cout
+            << std::setw(20) << std::setiosflags(std::ios::left) << "Parameter"
+            << std::setw(10) << "Type"
+            << std::setw(20) << "Default"
+            << "Description" << std::endl;
+        std::cout << std::endl;
+         for(auto it = info.cbegin(); it != info.cend(); ++it) {
+             if(it->filename != __FILE__) continue;
+                 std::cout
+                    << std::setw(20) << std::setiosflags(std::ios::left)<< (std::string("--")+ it->name)
+                    << std::setw(10) << it->type
+                    << std::setw(20) << (std::string("(") + it->default_value + ")")
+                    << it->description << std::endl;
+         }
+        return 0;
+    }
 
     int first_cmd_arg = google::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -142,14 +142,20 @@ int main(int argc, char** argv)
 
         bool do_raw = FLAGS_raw;
 
-        std::string algorithm_id;
-        std::unique_ptr<Compressor> algo;
+        struct {
+            std::string id_string;
+            std::unique_ptr<Compressor> compressor;
+            bool needs_sentinel_terminator;
+        } selection;
 
         if (do_raw || do_compress) {
-            algorithm_id = FLAGS_algorithm;
+            selection.id_string = FLAGS_algorithm;
 
-            algo = registry.select_algorithm_or_exit(algorithm_id);
-            algorithm_env = algo->env().root();
+            auto av = registry.parse_algorithm_id(selection.id_string);
+            selection.needs_sentinel_terminator = av.needs_sentinel_terminator();
+            selection.compressor = registry.select_algorithm_or_exit(av);
+
+            algorithm_env = selection.compressor->env().root();
         }
 
         /////////////////////////////////////////////////////////////////////////
@@ -233,16 +239,16 @@ int main(int argc, char** argv)
                 }
 
                 if (!do_raw) {
-                    CHECK(algorithm_id.find('%') == std::string::npos);
+                    CHECK(selection.id_string.find('%') == std::string::npos);
 
                     auto o_stream = out.as_stream();
-                    o_stream << algorithm_id << '%';
+                    o_stream << selection.id_string << '%';
                 }
 
                 algorithm_env->restart_stats("Compress");
                 setup_time = clk::now();
 
-                algo->compress(inp, out);
+                selection.compressor->compress(inp, out);
 
                 comp_time = clk::now();
             } else {
@@ -269,16 +275,18 @@ int main(int argc, char** argv)
                     if (err) {
                         exit("Input did not have an algorithm header!");
                     }
-                    algorithm_id = std::move(algorithm_header);
+                    selection.id_string = std::move(algorithm_header);
 
-                    algo = registry.select_algorithm_or_exit(algorithm_id);
-                    algorithm_env = algo->env().root();
+                    auto av = registry.parse_algorithm_id(selection.id_string);
+
+                    selection.compressor = registry.select_algorithm_or_exit(av);
+                    algorithm_env = selection.compressor->env().root();
                 }
 
                 setup_time = clk::now();
 
                 algorithm_env->restart_stats("Decompress");
-                algo->decompress(inp, out);
+                selection.compressor->decompress(inp, out);
 
                 comp_time = clk::now();
             }
@@ -292,7 +300,7 @@ int main(int argc, char** argv)
             auto comp_duration = comp_time - setup_time;
             auto end_duration = end_time - comp_time;
             std::cout << "---------------\n";
-            std::cout << "Config: " << algorithm_id << std::endl;
+            std::cout << "Config: " << selection.id_string << std::endl;
             std::cout << "---------------\n";
             auto inp_size = 0;
             if (use_stdin) {

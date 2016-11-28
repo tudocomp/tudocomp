@@ -176,14 +176,14 @@ inline std::unique_ptr<Compressor> Registry::select_algorithm_or_exit(const Algo
     }
 }
 
-inline std::unique_ptr<Compressor> Registry::select_algorithm_or_exit(string_ref text) const {
+inline AlgorithmValue Registry::parse_algorithm_id(string_ref text) const {
     ast::Parser p { text };
     auto parsed_algo = p.parse_value();
     auto options = eval::cl_eval(std::move(parsed_algo),
                                     "compressor",
                                     m_data->m_algorithms);
 
-    return select_algorithm_or_exit(options.as_algorithm());
+    return std::move(options).to_algorithm();
 }
 
 }
