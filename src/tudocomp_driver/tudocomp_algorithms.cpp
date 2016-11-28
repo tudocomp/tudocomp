@@ -24,6 +24,17 @@
 #include <tudocomp/coders/VariantCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
 
+
+//lz78 tries
+#ifdef JUDY_H_AVAILABLE
+	#include <tudocomp/compressors/lz78/JudyTrie.hpp>
+#endif
+#include <tudocomp/compressors/lz78/HashTrie.hpp>
+#include <tudocomp/compressors/lz78/BinaryTrie.hpp>
+#include <tudocomp/compressors/lz78/BinarySortedTrie.hpp>
+#include <tudocomp/compressors/lz78/MyHashTrie.hpp>
+
+
 namespace tdc_algorithms {
 
 using namespace tdc;
@@ -41,6 +52,55 @@ void register_algorithms(Registry& r) {
     // Because the tudocomp_driver has to select the algorithm
     // at runtime, we need to explicitly register all possible
     // template instances
+
+//LZ78
+
+    r.register_compressor<LZ78Compressor<ASCIICoder     , lz78::BinarySortedTrie>>();
+    r.register_compressor<LZ78Compressor<ByteCoder      , lz78::BinarySortedTrie>>();
+    r.register_compressor<LZ78Compressor<BitOptimalCoder, lz78::BinarySortedTrie>>();
+    r.register_compressor<LZWCompressor <ASCIICoder     , lz78::BinarySortedTrie>>();
+    r.register_compressor<LZWCompressor <ByteCoder      , lz78::BinarySortedTrie>>();
+    r.register_compressor<LZWCompressor <BitOptimalCoder, lz78::BinarySortedTrie>>();
+	
+    r.register_compressor<LZ78Compressor<ASCIICoder     , lz78::MyHashTrie>>();
+    r.register_compressor<LZ78Compressor<ByteCoder      , lz78::MyHashTrie>>();
+    r.register_compressor<LZ78Compressor<BitOptimalCoder, lz78::MyHashTrie>>();
+    r.register_compressor<LZWCompressor <ASCIICoder     , lz78::MyHashTrie>>();
+    r.register_compressor<LZWCompressor <ByteCoder      , lz78::MyHashTrie>>();
+    r.register_compressor<LZWCompressor <BitOptimalCoder, lz78::MyHashTrie>>();
+	
+#ifdef JUDY_H_AVAILABLE
+    r.register_compressor<LZ78Compressor<ASCIICoder     , lz78::JudyTrie>>();
+    r.register_compressor<LZ78Compressor<ByteCoder      , lz78::JudyTrie>>();
+    r.register_compressor<LZ78Compressor<BitOptimalCoder, lz78::JudyTrie>>();
+    r.register_compressor<LZWCompressor <ASCIICoder     , lz78::JudyTrie>>();
+    r.register_compressor<LZWCompressor <ByteCoder      , lz78::JudyTrie>>();
+    r.register_compressor<LZWCompressor <BitOptimalCoder, lz78::JudyTrie>>();
+#endif
+
+
+    r.register_compressor<LZ78Compressor<ASCIICoder     , lz78::TernaryTrie>>();
+    r.register_compressor<LZ78Compressor<ByteCoder      , lz78::TernaryTrie>>();
+    r.register_compressor<LZ78Compressor<BitOptimalCoder, lz78::TernaryTrie>>();
+    r.register_compressor<LZWCompressor <ASCIICoder     , lz78::TernaryTrie>>();
+    r.register_compressor<LZWCompressor <ByteCoder      , lz78::TernaryTrie>>();
+    r.register_compressor<LZWCompressor <BitOptimalCoder, lz78::TernaryTrie>>();
+
+    r.register_compressor<LZ78Compressor<ASCIICoder     , lz78::HashTrie>>();
+    r.register_compressor<LZ78Compressor<ByteCoder      , lz78::HashTrie>>();
+    r.register_compressor<LZ78Compressor<BitOptimalCoder, lz78::HashTrie>>();
+    r.register_compressor<LZWCompressor <ASCIICoder     , lz78::HashTrie>>();
+    r.register_compressor<LZWCompressor <ByteCoder      , lz78::HashTrie>>();
+    r.register_compressor<LZWCompressor <BitOptimalCoder, lz78::HashTrie>>();
+
+    r.register_compressor<LZ78Compressor<ASCIICoder     , lz78::BinaryTrie>>();
+    r.register_compressor<LZ78Compressor<ByteCoder      , lz78::BinaryTrie>>();
+    r.register_compressor<LZ78Compressor<BitOptimalCoder, lz78::BinaryTrie>>();
+    r.register_compressor<LZWCompressor <ASCIICoder     , lz78::BinaryTrie>>();
+    r.register_compressor<LZWCompressor <ByteCoder      , lz78::BinaryTrie>>();
+    r.register_compressor<LZWCompressor <BitOptimalCoder, lz78::BinaryTrie>>();
+
+
 
     r.register_compressor<RePairCompressor<ASCIICoder>>();
     r.register_compressor<RePairCompressor<ByteCoder>>();
@@ -66,16 +126,6 @@ void register_algorithms(Registry& r) {
     r.register_compressor<ESACompressor<esacomp::ESACompNaive, ByteCoder>>();
     r.register_compressor<ESACompressor<esacomp::ESACompNaive, BitOptimalCoder>>();
     r.register_compressor<ESACompressor<esacomp::ESACompNaive, HuffmanCoder>>();
-
-    r.register_compressor<LZ78Compressor<ASCIICoder>>();
-    r.register_compressor<LZ78Compressor<ByteCoder>>();
-    r.register_compressor<LZ78Compressor<BitOptimalCoder>>();
-    r.register_compressor<LZ78Compressor<HuffmanCoder>>();
-
-    r.register_compressor<LZWCompressor<ASCIICoder>>();
-    r.register_compressor<LZWCompressor<ByteCoder>>();
-    r.register_compressor<LZWCompressor<BitOptimalCoder>>();
-    r.register_compressor<LZWCompressor<HuffmanCoder>>();
 
     r.register_compressor<LZSSLCPCompressor<ASCIICoder>>();
     r.register_compressor<LZSSLCPCompressor<ByteCoder>>();
