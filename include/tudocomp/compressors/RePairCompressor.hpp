@@ -4,7 +4,7 @@
 #include <tudocomp/Compressor.hpp>
 
 #include <tudocomp/Range.hpp>
-#include <tudocomp/coders/BitOptimalCoder.hpp> //default
+#include <tudocomp/coders/BitCoder.hpp> //default
 
 #include <tudocomp/util/Counter.hpp>
 
@@ -85,7 +85,7 @@ private:
 public:
     inline static Meta meta() {
         Meta m("compressor", "repair", "Re-Pair compression");
-        m.option("coder").templated<coder_t, BitOptimalCoder>();
+        m.option("coder").templated<coder_t, BitCoder>();
         m.option("max_rules").dynamic("0");
         return m;
     }

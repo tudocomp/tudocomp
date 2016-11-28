@@ -9,7 +9,7 @@
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
 
 #include <tudocomp/Range.hpp>
-#include <tudocomp/coders/BitOptimalCoder.hpp> //default
+#include <tudocomp/coders/BitCoder.hpp> //default
 
 namespace tdc {
 
@@ -25,7 +25,7 @@ public:
 
     inline static Meta meta() {
         Meta m("compressor", "lzw", "Lempel-Ziv-Welch\n\n" LZ78_DICT_SIZE_DESC);
-        m.option("coder").templated<coder_t, BitOptimalCoder>();
+        m.option("coder").templated<coder_t, BitCoder>();
         m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>();
         m.option("dict_size").dynamic("0");
         return m;
@@ -72,7 +72,7 @@ public:
 				DCHECK_EQ(factor_count+uliteral_max+1, dict.size());
                 node = static_cast<uliteral_t>(c); //LZW
 				// dictionary's maximum size was reached
-				if(dict.size() == m_dict_max_size) { 
+				if(dict.size() == m_dict_max_size) {
 					DCHECK_GT(dict.size(),0);
 					reset_dict();
 					factor_count = 0; //coder.dictionary_reset();
@@ -104,7 +104,7 @@ public:
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
         len_t counter = 0;
-		
+
 		//TODO file_corrupted not used!
         lzw::decode_step([&](lz78::factorid_t& entry, bool reset, bool &file_corrupted) -> lzw::Factor {
             if (reset) {
