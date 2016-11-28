@@ -30,7 +30,7 @@ public:
 
         // define working variables
         len_t min_run = env().option("min_run").as_integer();
-        uliteral_t run_char;
+        uliteral_t run_char = 0;
         len_t run_length = 0;
 
         // writes the current run to the output stream
@@ -65,11 +65,12 @@ public:
 
         // process input
         for(auto c : ins) {
-            if(run_length > 0 && c == run_char) {
+            auto x = uliteral_t(c); // cast to unsigned!
+            if(run_length > 0 && x == run_char) {
                 run_length++;
             } else {
                 emit_run();
-                run_char = c;
+                run_char = x;
                 run_length = 1;
             }
         }
