@@ -248,6 +248,10 @@ int main(int argc, char** argv)
                 algorithm_env->restart_stats("Compress");
                 setup_time = clk::now();
 
+                if (selection.needs_sentinel_terminator) {
+                    inp.escape_and_terminate();
+                }
+
                 selection.compressor->compress(inp, out);
 
                 comp_time = clk::now();

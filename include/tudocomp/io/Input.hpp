@@ -219,6 +219,12 @@ namespace io {
             return m_data->size();
         }
 
+        /// \cond INTERNAL
+        inline void escape_and_terminate() {
+            throw std::runtime_error("TODO");
+        }
+        /// \endcond
+
     };
 
     /// \cond INTERNAL
