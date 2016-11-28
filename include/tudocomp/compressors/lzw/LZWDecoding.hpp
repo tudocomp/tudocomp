@@ -2,7 +2,7 @@
 #define _INCLUDED_LZW_DECODE_HPP_
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/compressors/lz78/LZ78Dictionary.hpp>
+#include <tudocomp/compressors/lz78/LZ78common.hpp>
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
 
 namespace tdc {

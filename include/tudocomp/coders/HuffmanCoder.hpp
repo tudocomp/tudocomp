@@ -298,7 +298,7 @@ namespace huff {
 	 */
 	uint8_t* gen_ordered_map_to_effective(const uint8_t*const ordered_map_from_effective, const size_t alphabet_size) {
 			uint8_t* map_to_effective = new uint8_t[uliteral_max];
-			std::memset(map_to_effective, 0, sizeof(map_to_effective)*sizeof(uint8_t));
+			std::memset(map_to_effective, 0xff, sizeof(map_to_effective)*sizeof(uint8_t));
 			for(size_t i = 0; i < alphabet_size; ++i) {
 				map_to_effective[ordered_map_from_effective[i]] = i;
 			}
@@ -355,30 +355,30 @@ namespace huff {
 
 
 	/**
-	 * accum_length stores for each different codeword length the first entry of the codeword with this length in codewords
+	 * prefix_sum_lengths stores for each different codeword length the first entry of the codeword with this length in codewords
 	 * Needed for decoding Huffman code
 	 */
-	inline size_t* gen_accum_length(
+	inline size_t* gen_prefix_sum_lengths(
 			const uint8_t*const ordered_codelengths,
 			const size_t alphabet_size,
 			const uint8_t longest) {
-			size_t*const accum_length = new size_t[longest];
+			size_t*const prefix_sum_lengths = new size_t[longest];
 #ifndef NDDEBUG
-			std::fill(accum_length,accum_length+longest,std::numeric_limits<size_t>::max());
+			std::fill(prefix_sum_lengths,prefix_sum_lengths+longest,std::numeric_limits<size_t>::max());
 #endif
-			accum_length[ordered_codelengths[0]-1] = 0;
+			prefix_sum_lengths[ordered_codelengths[0]-1] = 0;
 			for(size_t i = 1; i < alphabet_size; ++i) {
 				if(ordered_codelengths[i-1] < ordered_codelengths[i])
-					accum_length[ordered_codelengths[i]-1] = i;
+					prefix_sum_lengths[ordered_codelengths[i]-1] = i;
 			}
 			tdc_debug(VLOG(2) << "ordered_codelengths : " << arr_to_debug_string(ordered_codelengths, alphabet_size));
-			tdc_debug(VLOG(2) << "accum_length : " << arr_to_debug_string(accum_length, longest));
-			return accum_length;
+			tdc_debug(VLOG(2) << "prefix_sum_lengths : " << arr_to_debug_string(prefix_sum_lengths, longest));
+			return prefix_sum_lengths;
 	}
 	literal_t huffman_decode(
 			tdc::io::BitIStream& is,
 			const uliteral_t*const ordered_map_from_effective,
-			const size_t*const accum_length,
+			const size_t*const prefix_sum_lengths,
 			const size_t*const firstcodes
 			) {
 		DCHECK(!is.eof());
@@ -391,8 +391,8 @@ namespace huff {
 		} while(value < firstcodes[length-1]);
 		tdc_debug(VLOG(2) << " codeword " << value << " length " << length);
 		--length;
-//	  DCHECK_LT(accum_length[length]+ (value - firstcodes[length]), alphabet_size);
-		return ordered_map_from_effective[accum_length[length]+ (value - firstcodes[length]) ];
+//	  DCHECK_LT(prefix_sum_lengths[length]+ (value - firstcodes[length]), alphabet_size);
+		return ordered_map_from_effective[prefix_sum_lengths[length]+ (value - firstcodes[length]) ];
 
 
 	}
@@ -407,7 +407,7 @@ namespace huff {
 			const uliteral_t*const numl,
 			const uint8_t longest) {
 
-			const size_t*const accum_length { gen_accum_length(ordered_codelengths, alphabet_size, longest) };
+			const size_t*const prefix_sum_lengths { gen_prefix_sum_lengths(ordered_codelengths, alphabet_size, longest) };
 
 			const size_t text_length = is.read_compressed_int<size_t>();
 			DCHECK_GT(text_length, 0);
@@ -415,7 +415,7 @@ namespace huff {
 			tdc_debug(VLOG(2) << "firstcodes : " << arr_to_debug_string(firstcodes, longest));
 			size_t num_chars_read = 0;
 			while(true) {
-				output << huffman_decode(is, ordered_map_from_effective, accum_length, firstcodes);
+				output << huffman_decode(is, ordered_map_from_effective, prefix_sum_lengths, firstcodes);
 				++num_chars_read;
 				if(num_chars_read == text_length) break;
 			}
@@ -573,13 +573,13 @@ public:
 
 	class Decoder : public tdc::Decoder {
 		const uliteral_t* ordered_map_from_effective;
-		const size_t* accum_length;
+		const size_t* prefix_sum_lengths;
 		const size_t* firstcodes;
 	public:
 		~Decoder() {
 			if(tdc_likely(ordered_map_from_effective != nullptr)) {
 				delete [] ordered_map_from_effective;
-				delete [] accum_length;
+				delete [] prefix_sum_lengths;
 				delete [] firstcodes;
 			}
 		}
@@ -593,7 +593,7 @@ public:
 			ordered_map_from_effective = table.ordered_map_from_effective;
 			table.ordered_map_from_effective = nullptr;
 			const uint8_t*const ordered_codelengths { huff::gen_ordered_codelength(table.alphabet_size, table.numl, table.longest) };
-			accum_length = huff::gen_accum_length(ordered_codelengths, table.alphabet_size, table.longest);
+			prefix_sum_lengths = huff::gen_prefix_sum_lengths(ordered_codelengths, table.alphabet_size, table.longest);
 			delete [] ordered_codelengths;
 			firstcodes = huff::gen_first_codes(table.numl, table.longest);
 		}
@@ -602,7 +602,7 @@ public:
 		inline value_t decode(const LiteralRange&) {
 			if(tdc_unlikely(ordered_map_from_effective == nullptr))
 				return m_in->read_int<uliteral_t>();
-			return huff::huffman_decode(*m_in, ordered_map_from_effective, accum_length, firstcodes);
+			return huff::huffman_decode(*m_in, ordered_map_from_effective, prefix_sum_lengths, firstcodes);
 		}
 
 		//fallback
