@@ -15,6 +15,7 @@ const std::vector<std::string> excluded_tests {
     "chain",
 };
 const std::vector<std::string> additional_tests {
+	"chain(chain(chain(chain(easyrle(\"1\"),bwt()),mtf()),easyrle()),encode(huff))"
     "chain(lz78, lzw)",
     "chain(lz78, chain(noop, lzw))",
 };
