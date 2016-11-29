@@ -1,38 +1,5 @@
-#include <tudocomp/config.h>
+#include <tudocomp/tudocomp.hpp>
 #include <tudocomp_driver/Registry.hpp>
-
-#include <tudocomp/ChainCompressor.hpp>
-#include <tudocomp/NoopCompressor.hpp>
-#include <tudocomp/InnerNullCompressor.hpp>
-#include <tudocomp/LiteralEncoder.hpp>
-
-//compressors
-#include <tudocomp/compressors/ESACompressor.hpp>
-#include <tudocomp/compressors/LZ78Compressor.hpp>
-#include <tudocomp/compressors/LZSSLCPCompressor.hpp>
-#include <tudocomp/compressors/LZSSSlidingWindowCompressor.hpp>
-#include <tudocomp/compressors/LZWCompressor.hpp>
-#include <tudocomp/compressors/RePairCompressor.hpp>
-#include <tudocomp/compressors/RunLengthEncoder.hpp>
-#include <tudocomp/compressors/EasyRLECompressor.hpp>
-#include <tudocomp/compressors/MTFCompressor.hpp>
-#include <tudocomp/compressors/BWTCompressor.hpp>
-
-//coders
-#include <tudocomp/coders/ASCIICoder.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
-#include <tudocomp/coders/Code2Coder.hpp>
-#include <tudocomp/coders/VariantCoder.hpp>
-#include <tudocomp/coders/HuffmanCoder.hpp>
-
-//lz78 tries
-#ifdef JUDY_H_AVAILABLE
-	#include <tudocomp/compressors/lz78/JudyTrie.hpp>
-#endif
-#include <tudocomp/compressors/lz78/HashTrie.hpp>
-#include <tudocomp/compressors/lz78/BinaryTrie.hpp>
-#include <tudocomp/compressors/lz78/BinarySortedTrie.hpp>
-#include <tudocomp/compressors/lz78/MyHashTrie.hpp>
 
 namespace tdc_algorithms {
 
@@ -43,6 +10,34 @@ void register_algorithms(Registry& r);
 // One global instance for the registry
 Registry REGISTRY = Registry::with_all_from(register_algorithms);
 
+#define REGISTER_WITH_ONLINE_CODERS(C) \
+    r.register_compressor<C<ASCIICoder>>();\
+    r.register_compressor<C<BitCoder>>();\
+    r.register_compressor<C<EliasGammaCoder>>();\
+    r.register_compressor<C<EliasDeltaCoder>>();
+
+#define REGISTER_WITH_ONLINE_CODERS_M(C,T) \
+    r.register_compressor<C<ASCIICoder, T>>();\
+    r.register_compressor<C<BitCoder, T>>();\
+    r.register_compressor<C<EliasGammaCoder, T>>();\
+    r.register_compressor<C<EliasDeltaCoder, T>>();
+
+#define REGISTER_WITH_OFFLINE_CODERS(C) \
+    r.register_compressor<C<Code2Coder>>();\
+    r.register_compressor<C<HuffmanCoder>>();
+
+#define REGISTER_WITH_OFFLINE_CODERS_M(C,T) \
+    r.register_compressor<C<Code2Coder, T>>();\
+    r.register_compressor<C<HuffmanCoder, T>>();
+
+#define REGISTER_WITH_ALL_CODERS(C) \
+    REGISTER_WITH_ONLINE_CODERS(C);\
+    REGISTER_WITH_OFFLINE_CODERS(C);
+
+#define REGISTER_WITH_ALL_CODERS_M(C,T) \
+    REGISTER_WITH_ONLINE_CODERS_M(C,T);\
+    REGISTER_WITH_OFFLINE_CODERS_M(C,T);
+
 // All compression and encoding algorithms exposed by the command
 // line interface.
 void register_algorithms(Registry& r) {
@@ -52,73 +47,35 @@ void register_algorithms(Registry& r) {
     // at runtime, we need to explicitly register all possible
     // template instances
 
-    r.register_compressor<LZ78Compressor<ASCIICoder, lz78::BinarySortedTrie>>();
-    r.register_compressor<LZ78Compressor<BitCoder, lz78::BinarySortedTrie>>();
-    r.register_compressor<LZWCompressor <ASCIICoder, lz78::BinarySortedTrie>>();
-    r.register_compressor<LZWCompressor <BitCoder, lz78::BinarySortedTrie>>();
+    REGISTER_WITH_ALL_CODERS(LiteralEncoder);
 
-    r.register_compressor<LZ78Compressor<ASCIICoder, lz78::MyHashTrie>>();
-    r.register_compressor<LZ78Compressor<BitCoder, lz78::MyHashTrie>>();
-    r.register_compressor<LZWCompressor <ASCIICoder, lz78::MyHashTrie>>();
-    r.register_compressor<LZWCompressor <BitCoder, lz78::MyHashTrie>>();
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::BinarySortedTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::BinaryTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::HashTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::MyHashTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::TernaryTrie);
+
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::BinarySortedTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::BinaryTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::HashTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::MyHashTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::TernaryTrie);
 
 #ifdef JUDY_H_AVAILABLE
-    r.register_compressor<LZ78Compressor<ASCIICoder, lz78::JudyTrie>>();
-    r.register_compressor<LZ78Compressor<BitCoder, lz78::JudyTrie>>();
-    r.register_compressor<LZWCompressor <ASCIICoder, lz78::JudyTrie>>();
-    r.register_compressor<LZWCompressor <BitCoder, lz78::JudyTrie>>();
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::JudyTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::JudyTrie);
 #endif
 
-    r.register_compressor<LZ78Compressor<ASCIICoder, lz78::TernaryTrie>>();
-    r.register_compressor<LZ78Compressor<BitCoder, lz78::TernaryTrie>>();
-    r.register_compressor<LZWCompressor <ASCIICoder, lz78::TernaryTrie>>();
-    r.register_compressor<LZWCompressor <BitCoder, lz78::TernaryTrie>>();
+    REGISTER_WITH_ALL_CODERS(RePairCompressor);
 
-    r.register_compressor<LZ78Compressor<ASCIICoder, lz78::HashTrie>>();
-    r.register_compressor<LZ78Compressor<BitCoder, lz78::HashTrie>>();
-    r.register_compressor<LZWCompressor <ASCIICoder, lz78::HashTrie>>();
-    r.register_compressor<LZWCompressor <BitCoder, lz78::HashTrie>>();
+    REGISTER_WITH_ALL_CODERS(LZSSLCPCompressor);
 
-    r.register_compressor<LZ78Compressor<ASCIICoder, lz78::BinaryTrie>>();
-    r.register_compressor<LZ78Compressor<BitCoder, lz78::BinaryTrie>>();
-    r.register_compressor<LZWCompressor <ASCIICoder, lz78::BinaryTrie>>();
-    r.register_compressor<LZWCompressor <BitCoder, lz78::BinaryTrie>>();
+    REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompMaxLCP);
+    REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompBulldozer);
+    REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompNaive);
 
-    r.register_compressor<RePairCompressor<ASCIICoder>>();
-    r.register_compressor<RePairCompressor<BitCoder>>();
-    r.register_compressor<RePairCompressor<Code2Coder>>();
-    r.register_compressor<RePairCompressor<HuffmanCoder>>();
-
-    r.register_compressor<LiteralEncoder<ASCIICoder>>();
-    r.register_compressor<LiteralEncoder<BitCoder>>();
-    r.register_compressor<LiteralEncoder<Code2Coder>>();
-    r.register_compressor<LiteralEncoder<HuffmanCoder>>();
-
-    r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, ASCIICoder>>();
-    r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, BitCoder>>();
-    r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, Code2Coder>>();
-    r.register_compressor<ESACompressor<esacomp::ESACompMaxLCP, HuffmanCoder>>();
-
-    r.register_compressor<ESACompressor<esacomp::ESACompBulldozer, ASCIICoder>>();
-    r.register_compressor<ESACompressor<esacomp::ESACompBulldozer, BitCoder>>();
-    r.register_compressor<ESACompressor<esacomp::ESACompBulldozer, Code2Coder>>();
-    r.register_compressor<ESACompressor<esacomp::ESACompBulldozer, HuffmanCoder>>();
-
-    r.register_compressor<ESACompressor<esacomp::ESACompNaive, ASCIICoder>>();
-    r.register_compressor<ESACompressor<esacomp::ESACompNaive, BitCoder>>();
-    r.register_compressor<ESACompressor<esacomp::ESACompNaive, Code2Coder>>();
-    r.register_compressor<ESACompressor<esacomp::ESACompNaive, HuffmanCoder>>();
-
-    r.register_compressor<LZSSLCPCompressor<ASCIICoder>>();
-    r.register_compressor<LZSSLCPCompressor<BitCoder>>();
-    r.register_compressor<LZSSLCPCompressor<Code2Coder>>();
-    r.register_compressor<LZSSLCPCompressor<HuffmanCoder>>();
-
-    r.register_compressor<LZSSSlidingWindowCompressor<ASCIICoder>>();
-    r.register_compressor<LZSSSlidingWindowCompressor<BitCoder>>();
-
-    r.register_compressor<RunLengthEncoder<ASCIICoder>>();
-    r.register_compressor<RunLengthEncoder<BitCoder>>();
+    REGISTER_WITH_ONLINE_CODERS(LZSSSlidingWindowCompressor);
+    REGISTER_WITH_ONLINE_CODERS(RunLengthEncoder);
 
     r.register_compressor<EasyRLECompressor>();
     r.register_compressor<MTFCompressor>();

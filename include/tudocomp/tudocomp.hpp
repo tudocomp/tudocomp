@@ -64,16 +64,19 @@ namespace lzw {
 #include <glog/logging.h>
 #include <sdsl/int_vector.hpp>
 
+#include <tudocomp/config.h>
 #include <tudocomp/def.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/ChainCompressor.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Registry.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
+
+#include <tudocomp/ChainCompressor.hpp>
+#include <tudocomp/NoopCompressor.hpp>
 
 #include <tudocomp/util/Counter.hpp>
 #include <tudocomp/util/DecodeBuffer.hpp>
@@ -89,16 +92,29 @@ namespace lzw {
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/BitCoder.hpp>
 #include <tudocomp/coders/Code2Coder.hpp>
+#include <tudocomp/coders/EliasGammaCoder.hpp>
+#include <tudocomp/coders/EliasDeltaCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
 #include <tudocomp/coders/VariantCoder.hpp>
 #include <tudocomp/LiteralEncoder.hpp>
+#include <tudocomp/compressors/BWTCompressor.hpp>
+#include <tudocomp/compressors/EasyRLECompressor.hpp>
 #include <tudocomp/compressors/ESACompressor.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
 #include <tudocomp/compressors/LZSSSlidingWindowCompressor.hpp>
 #include <tudocomp/compressors/LZWCompressor.hpp>
+#include <tudocomp/compressors/MTFCompressor.hpp>
 #include <tudocomp/compressors/RePairCompressor.hpp>
 #include <tudocomp/compressors/RunLengthEncoder.hpp>
+
+#ifdef JUDY_H_AVAILABLE
+	#include <tudocomp/compressors/lz78/JudyTrie.hpp>
+#endif
+#include <tudocomp/compressors/lz78/HashTrie.hpp>
+#include <tudocomp/compressors/lz78/BinaryTrie.hpp>
+#include <tudocomp/compressors/lz78/BinarySortedTrie.hpp>
+#include <tudocomp/compressors/lz78/MyHashTrie.hpp>
 
 #endif
 

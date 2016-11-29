@@ -17,7 +17,7 @@ namespace tdc {
 
 /// Factorizes the input by finding redundant phrases in a re-ordered version
 /// of the LCP table.
-template<typename strategy_t, typename coder_t>
+template<typename coder_t, typename strategy_t>
 class ESACompressor : public Compressor {
 private:
     typedef TextDS<> text_t;
