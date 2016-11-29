@@ -51,6 +51,8 @@ TEST(TudocompDriver, roundtrip_matrix) {
     }
     std::cout << "[ Start roundtrip tests ]\n";
 
+    std::vector<Error> errors;
+
     for (auto& algo : test_cases) {
         int counter = 0;
         bool abort = false;
@@ -63,10 +65,38 @@ TEST(TudocompDriver, roundtrip_matrix) {
             std::string n = "_" + ss.str();
             counter++;
 
-            roundtrip(algo, n, text, true, abort);
+            auto e = roundtrip(algo, n, text, true, abort);
+            if (e.has_error) {
+                errors.push_back(e);
+            }
         });
         if (abort) {
             break;
         }
     }
+
+    for (auto& e : errors) {
+        std::cout << "\n";
+        std::cout << "[ ERROR: " << e.test << " ]\n";
+        std::cout << e.message << "\n";
+        if (e.text != e.roundtrip_text) {
+            auto escaped_text = format_escape(e.text);
+            auto escaped_roundtrip_text = format_escape(e.roundtrip_text);
+            std::cout << "expected:\n";
+            std::cout << "  " << escaped_text << "\n";
+            std::cout << "actual:\n";
+            std::cout << "  " << escaped_roundtrip_text << "\n";
+            std::cout << "diff:\n";
+            std::cout << "  " << format_diff(e.text, e.roundtrip_text) << "\n";
+        }
+        std::cout << format_std_outputs({
+            "compress stdout", e.compress_stdout,
+            "decompress stdout", e.decompress_stdout,
+        });
+
+
+        std::cout << "\n";
+    }
+
+    ASSERT_TRUE(errors.empty());
 }
