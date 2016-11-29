@@ -132,7 +132,7 @@ namespace io {
         friend class InputView;
 
         std::unique_ptr<Variant> m_data;
-        bool m_escape_and_terminate;
+        bool m_escape_and_terminate = false;
 
     public:
         /// \brief Represents a file path.
@@ -146,8 +146,7 @@ namespace io {
 
         /// \brief Constructs an empty input.
         inline Input():
-            m_data(std::make_unique<Memory>(""_v, EscapableBuf())),
-            m_escape_and_terminate(false) {}
+            m_data(std::make_unique<Memory>(""_v, EscapableBuf())) {}
 
         /// \brief Constructs an input from another input, retaining its
         /// internal state ("cursor").
@@ -174,14 +173,14 @@ namespace io {
         /// \brief Constructs an input reading from a string in memory.
         ///
         /// \param buf The input string.
-        Input(const string_ref buf):
+        Input(const string_ref& buf):
             m_data(std::make_unique<Memory>(buf, EscapableBuf())) {}
 
         /// \brief Constructs an input reading from the specified byte buffer.
         ///
         /// \param buf The input byte buffer.
         Input(const std::vector<uint8_t>& buf):
-            Input(View(buf)) {}
+            Input(string_ref(buf)) {}
 
         /// \brief Constructs an input reading from a stream.
         ///

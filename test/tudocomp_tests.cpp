@@ -284,9 +284,9 @@ TEST(Input, ensure_null_term) {
 
     {
         Input i(View(a).substr(0, 3));
+        i.escape_and_terminate();
 
         Input i2 = i;
-        i2.escape_and_terminate();
 
         auto x = i2.as_view();
         ASSERT_NE(x, b);
@@ -300,16 +300,13 @@ TEST(Input, ensure_null_term) {
 
     {
         Input i(View(a).substr(0, 3));
+
+        i.escape_and_terminate();
         {
             auto x = i.as_view();
             ASSERT_NE(x, b);
             ASSERT_EQ(x, c);
         }
-        {
-            auto x = i.as_view();
-            ASSERT_EQ(x, ""_v);
-        }
-        i.escape_and_terminate();
         {
             auto x = i.as_view();
             ASSERT_EQ(x, "\0"_v);
@@ -423,16 +420,16 @@ namespace input_nte_matrix {
         }
         {
             Input i = i_bak;
-            auto x = i.as_view();
             i.escape_and_terminate();
+            auto x = i.as_view();
             ASSERT_NE(x, b);
             ASSERT_EQ(x, c);
         }
 
         {
             Input i = i_bak;
+            i.escape_and_terminate();
             Input i2 = i;
-            i2.escape_and_terminate();
 
             auto x = i2.as_view();
             ASSERT_NE(x, b);
@@ -445,10 +442,6 @@ namespace input_nte_matrix {
 
         {
             Input i = i_bak;
-            {
-                auto x = i.as_view();
-                ASSERT_EQ(x, ""_v);
-            }
             i.escape_and_terminate();
             {
                 auto x = i.as_view();
