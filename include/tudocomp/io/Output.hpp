@@ -10,10 +10,10 @@
 #include <vector>
 
 #include <tudocomp/io/BackInsertStream.hpp>
+#include <tudocomp/io/NullEscapingUtil.hpp>
 
 namespace tdc {
 namespace io {
-
     class OutputStream;
 
     /// \brief An abstraction layer for algorithm output.
@@ -25,7 +25,7 @@ namespace io {
         class Variant {
         public:
             virtual ~Variant() {}
-            virtual OutputStream as_stream() = 0;
+            virtual OutputStream as_stream(bool unescape) = 0;
         };
 
         class Memory: public Variant {
@@ -34,7 +34,7 @@ namespace io {
         public:
             Memory(std::vector<uint8_t>* buffer): m_buffer(buffer) {}
 
-            inline OutputStream as_stream() override;
+            inline OutputStream as_stream(bool unescape) override;
         };
         class File: public Variant {
             std::string m_path;
@@ -44,7 +44,7 @@ namespace io {
             File(std::string path, bool overwrite):
                 m_path(path), m_overwrite(overwrite) {}
 
-            inline OutputStream as_stream() override;
+            inline OutputStream as_stream(bool unescape) override;
         };
         class Stream: public Variant {
             std::ostream* m_stream;
@@ -52,7 +52,7 @@ namespace io {
         public:
             Stream(std::ostream* stream): m_stream(stream) {}
 
-            inline OutputStream as_stream() override;
+            inline OutputStream as_stream(bool unescape) override;
         };
 
         std::unique_ptr<Variant> m_data;
@@ -221,14 +221,28 @@ namespace io {
     class OutputStream: OutputStreamInternal, public std::ostream {
         friend class Output;
 
-        inline OutputStream(OutputStreamInternal&& mem):
+        std::unique_ptr<UnescapeBuffer> m_unescaper;
+
+        inline OutputStream(OutputStreamInternal&& mem, bool unescape):
             OutputStreamInternal(std::move(mem)),
-            std::ostream(m_variant->stream().rdbuf()) {}
+            std::ostream(m_variant->stream().rdbuf())
+        {
+            if (unescape) {
+                m_unescaper = std::make_unique<UnescapeBuffer>(m_variant->stream());
+                rdbuf(&*m_unescaper);
+            }
+        }
     public:
         /// \brief Move constructor.
         inline OutputStream(OutputStream&& mem):
             OutputStreamInternal(std::move(mem)),
-            std::ostream(mem.rdbuf()) {}
+            std::ostream(mem.rdbuf()),
+            m_unescaper(std::move(mem.m_unescaper))
+        {
+            if (m_unescaper) {
+                DCHECK(uint64_t(rdbuf()) == uint64_t(&*m_unescaper));
+            }
+        }
 
         /// \brief Copy constructor (deleted).
         inline OutputStream(const OutputStream& other) = delete;
@@ -237,35 +251,38 @@ namespace io {
         inline OutputStream() = delete;
     };
 
-    inline OutputStream Output::Memory::as_stream() {
+    inline OutputStream Output::Memory::as_stream(bool unescape) {
         return OutputStream {
             OutputStream::Memory {
                 BackInsertStream { *m_buffer }
-            }
+            },
+            unescape
         };
     }
 
-    inline OutputStream Output::File::as_stream() {
+    inline OutputStream Output::File::as_stream(bool unescape) {
         auto overwrite = m_overwrite;
         m_overwrite = false;
         return OutputStream {
             OutputStream::File {
                 std::string(m_path),
                 overwrite,
-            }
+            },
+            unescape
         };
     }
 
-    inline OutputStream Output::Stream::as_stream() {
+    inline OutputStream Output::Stream::as_stream(bool unescape) {
         return OutputStream {
             OutputStream::Stream {
                 m_stream
-            }
+            },
+            unescape
         };
     }
 
     inline OutputStream Output::as_stream() {
-        return m_data->as_stream();
+        return m_data->as_stream(m_unescape_and_trim);
     }
 
 }}
