@@ -85,7 +85,6 @@ namespace io {
     };
 
     class UnescapeBuffer: public std::streambuf {
-
     private:
         std::ostream* m_stream;
         bool saw_escape = false;

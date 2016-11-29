@@ -42,6 +42,9 @@ public:
 
             bool needs_sentinel = av.needs_sentinel_terminator();
 
+            // TODO: Debug!
+            needs_sentinel = true;
+
             auto compressor = create_algo_with_registry_dynamic(
                 env().registry(), av);
 
