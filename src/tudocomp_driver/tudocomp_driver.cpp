@@ -245,15 +245,13 @@ int main(int argc, char** argv)
                     o_stream << selection.id_string << '%';
                 }
 
-                algorithm_env->restart_stats("Compress");
-                setup_time = clk::now();
-
                 if (selection.needs_sentinel_terminator) {
                     inp.escape_and_terminate();
                 }
 
+                algorithm_env->restart_stats("Compress");
+                setup_time = clk::now();
                 selection.compressor->compress(inp, out);
-
                 comp_time = clk::now();
             } else {
                 if (!do_raw) {
@@ -287,11 +285,13 @@ int main(int argc, char** argv)
                     algorithm_env = selection.compressor->env().root();
                 }
 
-                setup_time = clk::now();
+                if (selection.needs_sentinel_terminator) {
+                    out.unescape_and_trim();
+                }
 
                 algorithm_env->restart_stats("Decompress");
+                setup_time = clk::now();
                 selection.compressor->decompress(inp, out);
-
                 comp_time = clk::now();
             }
         }
