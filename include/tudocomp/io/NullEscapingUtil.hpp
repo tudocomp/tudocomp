@@ -40,15 +40,38 @@ namespace io {
             auto& v = *m_data;
 
             if (!m_is_escaped) {
+                size_t old_size = v.size();
                 size_t new_size = v.size();
 
                 for (auto b : v) {
-                    if (b == 0 || b == "")
+                    if (b == 0 || b == NULL_ESCAPE_ESCAPE_BYTE) {
+                        new_size++;
+                    }
                 }
 
+                v.resize(new_size);
 
-                // TODO: Actually escape
-                //throw std::runtime_error("TODO");
+                auto start = v.begin();
+                auto mid = v.begin() + old_size;
+                auto end = v.begin() + new_size;
+
+                while(start != end) {
+                    --mid;
+                    --end;
+
+                    if (*mid == 0) {
+                        *end = NULL_ESCAPE_REPLACEMENT_BYTE;
+                        --end;
+                        *end = NULL_ESCAPE_ESCAPE_BYTE;
+                    } else if (*mid == NULL_ESCAPE_ESCAPE_BYTE) {
+                        *end = NULL_ESCAPE_ESCAPE_BYTE;
+                        --end;
+                        *end = NULL_ESCAPE_ESCAPE_BYTE;
+                    } else {
+                        *end = *mid;
+                    }
+                }
+
                 v.push_back(0);
                 m_is_escaped = true;
             }

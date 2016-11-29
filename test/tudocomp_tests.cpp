@@ -522,7 +522,7 @@ TEST(Input, escaping_view) {
     Input i("\0\x01\xff\xfe\0"_v);
     i.escape_and_terminate();
     auto v = i.as_view();
-    ASSERT_EQ(View(v), "\0\x01\xff\xfe\0\0"_v);
+    ASSERT_EQ(View(v), "\xff\xfe\x01\xff\xff\xfe\xff\xfe\0"_v);
 }
 
 TEST(Input, escaping_stream) {
