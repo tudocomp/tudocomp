@@ -518,6 +518,22 @@ namespace input_nte_matrix {
 
 }
 
+TEST(Input, escaping_view) {
+    Input i("\0\x01\xff\xfe\0"_v);
+    i.escape_and_terminate();
+    auto v = i.as_view();
+    ASSERT_EQ(View(v), "\0\x01\xff\xfe\0\0"_v);
+}
+
+TEST(Input, escaping_stream) {
+    Input i("\0\x01\xff\xfe\0"_v);
+    i.escape_and_terminate();
+    auto s = i.as_stream();
+    std::stringstream ss;
+    ss << s.rdbuf();
+    ASSERT_EQ(ss.str(), "\0\x01\xff\xfe\0"_v);
+}
+
 TEST(Output, memory) {
     std::vector<uint8_t> vec;
 

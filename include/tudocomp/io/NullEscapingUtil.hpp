@@ -13,6 +13,9 @@ namespace tdc {
 namespace io {
     /// \cond INTERNAL
 
+    const uint8_t NULL_ESCAPE_ESCAPE_BYTE = 255;
+    const uint8_t NULL_ESCAPE_REPLACEMENT_BYTE = 254;
+
     class EscapableBuf {
         std::shared_ptr<std::vector<uint8_t>> m_data;
         bool m_is_escaped;
@@ -34,10 +37,19 @@ namespace io {
             m_is_escaped(other.m_is_escaped) {}
 
         inline void escape_and_terminate() {
+            auto& v = *m_data;
+
             if (!m_is_escaped) {
+                size_t new_size = v.size();
+
+                for (auto b : v) {
+                    if (b == 0 || b == "")
+                }
+
+
                 // TODO: Actually escape
                 //throw std::runtime_error("TODO");
-                m_data->push_back(0);
+                v.push_back(0);
                 m_is_escaped = true;
             }
         }
