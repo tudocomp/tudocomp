@@ -199,6 +199,7 @@ namespace io {
         /// \brief Move assignment operator.
         Input& operator=(Input&& other) {
             m_data = std::move(other.m_data);
+            m_escape_and_terminate = other.m_escape_and_terminate;
             return *this;
         }
 

@@ -56,6 +56,7 @@ namespace io {
         };
 
         std::unique_ptr<Variant> m_data;
+        bool m_unescape_and_trim = false;
 
         friend class OutputStream;
 
@@ -65,7 +66,8 @@ namespace io {
 
         /// \brief Move constructor.
         inline Output(Output&& other):
-            m_data(std::move(other.m_data)) {}
+            m_data(std::move(other.m_data)),
+            m_unescape_and_trim(other.m_unescape_and_trim) {}
 
         /// \brief Constructs a file output writing to the file at the given
         /// path.
@@ -91,6 +93,7 @@ namespace io {
         /// \brief Move assignment operator.
         inline Output& operator=(Output&& other) {
             m_data = std::move(other.m_data);
+            m_unescape_and_trim = other.m_unescape_and_trim;
             return *this;
         }
 
@@ -123,6 +126,12 @@ namespace io {
 
         /// \brief Creates a stream that allows for character-wise output.
         inline OutputStream as_stream();
+
+        /// \cond INTERNAL
+        inline void unescape_and_trim() {
+            m_unescape_and_trim = true;
+        }
+        /// \endcond
     };
 
     /// \cond INTERNAL
