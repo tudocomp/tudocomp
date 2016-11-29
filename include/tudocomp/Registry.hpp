@@ -158,9 +158,6 @@ inline std::string Registry::generate_doc_string() const {
 inline std::unique_ptr<Compressor> Registry::select_algorithm_or_exit(const AlgorithmValue& algo) const {
     auto& static_only_evald_algo = algo.static_selection();
 
-    std::cout << "NEEDS SENTINEL: " <<
-        (algo.needs_sentinel_terminator() ? "true\n" : "false\n");
-
     if (m_data->m_compressors.count(static_only_evald_algo) > 0) {
         auto env = std::make_shared<EnvRoot>(AlgorithmValue(algo));
 
