@@ -547,6 +547,32 @@ TEST(Output, unescaping) {
     ASSERT_EQ(View(buf), "\0\x01\xff\xfe\0"_v);
 }
 
+TEST(Input, escaping_view_not) {
+    Input i("\0\x01\xff\xfe\0"_v);
+    auto v = i.as_view();
+    ASSERT_EQ(View(v), "\0\x01\xff\xfe\0"_v);
+}
+
+TEST(Input, escaping_stream_not) {
+    Input i("\0\x01\xff\xfe\0"_v);
+    auto s = i.as_stream();
+    std::stringstream ss;
+    ss << s.rdbuf();
+    ASSERT_EQ(ss.str(), "\0\x01\xff\xfe\0"_v);
+}
+
+TEST(Output, unescaping_not) {
+    auto r = "\xff\xfe\x01\xff\xff\xfe\xff\xfe\0"_v;
+
+    std::vector<uint8_t> buf;
+    {
+        Output o(buf);
+        auto s = o.as_stream();
+        s.write((const char*) r.data(), r.size());
+    }
+    ASSERT_EQ(View(buf), "\xff\xfe\x01\xff\xff\xfe\xff\xfe\0"_v);
+}
+
 TEST(Output, memory) {
     std::vector<uint8_t> vec;
 
