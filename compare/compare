@@ -1,0 +1,68 @@
+#!/bin/bash
+TIME=/usr/bin/time
+FILES=files
+
+# Check input
+if [ -z "$1" ]; then
+    echo "Usage: compare <suite-file>"
+    exit 1
+fi
+
+if [ ! -f $1 ]; then
+    echo "Suite file not found: $1"
+    exit 1
+fi
+
+# Execute command suite
+FILENAMES=`ls $FILES`
+for F in $FILENAMES; do
+
+IN=files/$F
+INSZ=`du -b $IN | cut -f 1`
+
+echo
+echo "$IN ($INSZ bytes) ..."
+echo
+printf "%16s | %10s | %10s | %8s | %10s | %10s\n" "" "C Time" "C Memory" "C Rate" "D Time" "D Memory"
+printf "=%.0s" {1..80}
+echo
+
+while read LINE; do
+    # parse compressor info
+    IFS=";" read -r NAME CCMD EXT DCMD <<< "$LINE"
+
+    # determine output file
+    OUT=$IN$EXT
+
+    # compress
+
+    printf "%16s" $NAME
+    STAT=`$TIME -f "%U;%M" $CCMD $IN 2>&1`
+    IFS=";" read -r TM MEM <<< "$STAT"
+
+    # print runtime and memory usage
+    printf " | %#8.2f s | %8d K" $TM $MEM
+
+    if [ -f $OUT ]; then
+        # calculate compression rate
+        OUTSZ=`du -b $OUT  | cut -f 1`
+        RATE=`echo 100*$OUTSZ/$INSZ | bc -l`
+
+        # print name and compression rate
+        printf " | %8.4f%%" $RATE
+
+        # decompress
+        STAT=`$TIME -f "%U;%M" $DCMD $OUT 2>&1`
+        IFS=";" read -r TM MEM <<< "$STAT"
+
+        # print runtime and memory usage
+        printf " | %#8.2f s | %8d K\n" $TM $MEM
+
+        # get rid of output file if it still exists
+        rm -f $OU
+    else
+        # output file doesn't exist
+        echo "|%7s" "ERR"
+    fi
+done <$1 # suite
+done # files
