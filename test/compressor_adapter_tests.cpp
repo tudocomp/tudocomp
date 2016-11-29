@@ -25,18 +25,44 @@
 using namespace tdc;
 using namespace tdc_algorithms;
 
-TEST(Chain, test) {
+TEST(Chain, test0) {
+    test::roundtrip<RunLengthEncoder<ASCIICoder>>("aaaaaabaaaaaabaaaaaabaaaaaab",
+                                     "aa14:baa14:baa14:baa14:b\0"_v,
+                                     R"(
+                                         ascii
+                                    )", REGISTRY);
+}
+
+TEST(Chain, test1) {
     test::roundtrip<ChainCompressor>("aaaaaabaaaaaabaaaaaabaaaaaab",
-                                     View("97:97:49:52:58:98:256:258:260:262:259:261:257:266:0:\0", 53),
+                                     "aa14:baa14:baa14:baa14:b\0"_v,
+                                     R"(
+                                        noop,
+                                        rle(ascii),
+                                    )", REGISTRY);
+}
+
+TEST(Chain, test2) {
+    test::roundtrip<ChainCompressor>("aaaaaabaaaaaabaaaaaabaaaaaab",
+                                     "aa14:baa14:baa14:baa14:b\0"_v,
+                                     R"(
+                                        rle(ascii),
+                                        noop,
+                                    )", REGISTRY);
+}
+
+TEST(Chain, test3) {
+    test::roundtrip<ChainCompressor>("aaaaaabaaaaaabaaaaaabaaaaaab",
+                                     "97:97:49:52:58:98:256:258:260:262:259:261:257:266:0:\0"_v,
                                      R"(
                                         rle(ascii),
                                         lzw(ascii),
                                     )", REGISTRY);
 }
 
-TEST(Chain, test3) {
+TEST(Chain, test4) {
     test::roundtrip<ChainCompressor>("aaaaaabaaaaaabaaaaaabaaaaaab",
-                                     View("97:97:49:52:58:98:256:258:260:262:259:261:257:266:0:\0", 53),
+                                     "97:97:49:52:58:98:256:258:260:262:259:261:257:266:0:\0"_v,
                                      R"(
                                         noop,
                                         chain(
