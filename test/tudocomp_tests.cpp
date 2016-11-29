@@ -534,6 +534,19 @@ TEST(Input, escaping_stream) {
     ASSERT_EQ(ss.str(), "\0\x01\xff\xfe\0"_v);
 }
 
+TEST(Output, unescaping) {
+    auto r = "\xff\xfe\x01\xff\xff\xfe\xff\xfe\0"_v;
+
+    std::vector<uint8_t> buf;
+    {
+        Output o(buf);
+        o.unescape_and_trim();
+        auto s = o.as_stream();
+        s.write((const char*) r.data(), r.size());
+    }
+    ASSERT_EQ(View(buf), "\0\x01\xff\xfe\0"_v);
+}
+
 TEST(Output, memory) {
     std::vector<uint8_t> vec;
 

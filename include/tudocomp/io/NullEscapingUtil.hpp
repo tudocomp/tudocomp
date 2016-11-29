@@ -88,27 +88,27 @@ namespace io {
 
     private:
         std::ostream* m_stream;
-        std::array<int, 2> m_push_buffer { EOF, EOF };
+        bool saw_escape = false;
 
-        inline void push_unescape(int c) {
-            if (c == 0 || c == EOF) {
-                // nothing
+        inline void push_unescape(uint8_t c) {
+            auto f = [&](uint8_t d){
+                m_stream->put(d);
+            };
+
+            if (saw_escape) {
+                saw_escape = false;
+                if (c == NULL_ESCAPE_REPLACEMENT_BYTE) {
+                    f(0);
+                } else {
+                    f(NULL_ESCAPE_ESCAPE_BYTE);
+                }
+            } else if (c == NULL_ESCAPE_ESCAPE_BYTE) {
+                saw_escape = true;
+            } else if (c == 0) {
+                // drop it
             } else {
-                m_stream->put(c);
+                f(c);
             }
-
-            /*if (m_push_buffer[1] != EOF) {
-                m_stream->put(m_push_buffer[1]);
-            }
-
-            m_push_buffer[1] = m_push_buffer[0];
-            m_push_buffer[0] = c;*/
-
-
-
-
-
-
         }
 
     public:
@@ -120,7 +120,7 @@ namespace io {
 
     protected:
         inline virtual int overflow(int ch) override {
-            push_unescape(ch);
+            push_unescape(uint8_t(char(ch)));
             return ch;
         }
 
