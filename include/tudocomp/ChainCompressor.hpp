@@ -37,10 +37,15 @@ public:
         auto run = [&](Input& i, Output& o, string_ref option) {
             auto& option_value = env().option(option);
             DCHECK(option_value.is_algorithm());
-            auto compressor = create_algo_with_registry_dynamic(
-                env().registry(), option_value.as_algorithm());
 
-            f(i, o, *compressor);
+            auto av = option_value.as_algorithm();
+
+            bool needs_sentinel = av.needs_sentinel_terminator();
+
+            auto compressor = create_algo_with_registry_dynamic(
+                env().registry(), av);
+
+            f(i, o, *compressor, needs_sentinel);
         };
 
         std::vector<uint8_t> between_buf;
@@ -59,7 +64,8 @@ public:
     /// \param input The input stream.
     /// \param output The output stream.
     inline virtual void compress(Input& input, Output& output) override final {
-        chain(input, output, false, [](Input& i, Output& o, Compressor& c) {
+        chain(input, output, false, [](Input& i, Output& o, Compressor& c, bool needs_sentinel) {
+            i.escape_and_terminate();
             c.compress(i, o);
         });
     }
@@ -69,7 +75,8 @@ public:
     /// \param input The input stream.
     /// \param output The output stream.
     inline virtual void decompress(Input& input, Output& output) override final {
-        chain(input, output, true, [](Input& i, Output& o, Compressor& c) {
+        chain(input, output, true, [](Input& i, Output& o, Compressor& c, bool needs_sentinel) {
+            o.unescape_and_trim();
             c.decompress(i, o);
         });
     }
