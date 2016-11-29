@@ -1,4 +1,27 @@
 
+std::string shell_escape(const std::string& s) {
+    //std::cout << "\n\nescape\n" << s << "\nto\n";
+    std::stringstream ss;
+
+    ss << "\"";
+
+    for (auto c : s) {
+        if (c == '"') {
+            ss << "\\\"";
+        } else {
+            ss << c;
+        }
+    }
+
+    ss << "\"";
+
+    auto r = ss.str();
+
+    //std::cout << r << "\n\n";
+
+    return r;
+}
+
 std::string driver(std::string args) {
     using namespace std;
 
@@ -133,11 +156,11 @@ Error roundtrip(std::string algo,
         std::string out = test_file_path(comp_file);
         std::string cmd;
         if (use_raw) {
-            cmd = "--raw --algorithm \"" + algo + "\""
-                + " --output \"" + out + "\" \"" + in + "\"";
+            cmd = "--raw --algorithm " + shell_escape(algo)
+                + " --output " + shell_escape(out) + " " + shell_escape(in);
         } else {
-            cmd = "--algorithm \"" + algo + "\""
-                + " --output \"" + out + "\" \"" + in + "\"";
+            cmd = "--algorithm " + shell_escape(algo)
+                + " --output " + shell_escape(out) + " " + shell_escape(in);
         }
         current.compress_cmd = cmd;
         comp_out = driver(cmd);
@@ -163,10 +186,10 @@ Error roundtrip(std::string algo,
         std::string out = test_file_path(decomp_file);
         std::string cmd;
         if (use_raw) {
-            cmd = "--raw --decompress --algorithm \"" + algo + "\""
-                + " --output \"" + out + "\" \"" + in + "\"";
+            cmd = "--raw --decompress --algorithm " + shell_escape(algo)
+                + " --output " + shell_escape(out) + " " + shell_escape(in);
         } else {
-            cmd = "--decompress --output \"" + out + "\" \"" + in + "\"";
+            cmd = "--decompress --output " + shell_escape(out) + " " + shell_escape(in);
         }
         current.decompress_cmd = cmd;
         decomp_out = driver(cmd);
@@ -194,20 +217,6 @@ Error roundtrip(std::string algo,
             current.message = "compression - decompression roundtrip did not preserve the same string";
             current.text = text;
             current.roundtrip_text = read_text;
-
-            /*
-            assert_eq_strings(text, read_text);
-            std::string diff;
-            for(size_t i = 0; i < std::max(text.size(), read_text.size()); i++) {
-                if (i < std::min(text.size(), read_text.size())
-                    && text[i] == read_text[i]
-                ) {
-                    diff.push_back('-');
-                } else {
-                    diff.push_back('#');
-                }
-            }
-            std::cout << "Diff:     \"" << diff << "\"\n";*/
 
             //abort = true;
             std::cout << "ERR\n";
