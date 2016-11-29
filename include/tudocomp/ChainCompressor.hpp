@@ -65,7 +65,9 @@ public:
     /// \param output The output stream.
     inline virtual void compress(Input& input, Output& output) override final {
         chain(input, output, false, [](Input& i, Output& o, Compressor& c, bool needs_sentinel) {
-            i.escape_and_terminate();
+            if (needs_sentinel) {
+                i.escape_and_terminate();
+            }
             c.compress(i, o);
         });
     }
@@ -76,7 +78,9 @@ public:
     /// \param output The output stream.
     inline virtual void decompress(Input& input, Output& output) override final {
         chain(input, output, true, [](Input& i, Output& o, Compressor& c, bool needs_sentinel) {
-            o.unescape_and_trim();
+            if (needs_sentinel) {
+                o.unescape_and_trim();
+            }
             c.decompress(i, o);
         });
     }
