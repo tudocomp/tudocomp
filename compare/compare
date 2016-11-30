@@ -1,14 +1,18 @@
 #!/bin/bash
-TIME=/usr/bin/time
 FILES=files
+TMP=/tmp
+STORE=$TMP/compare.store
+TIME=/usr/bin/time
+
+SUITE=$1
 
 # Check input
-if [ -z "$1" ]; then
+if [ -z "$SUITE" ]; then
     echo "Usage: compare <suite-file>"
     exit 1
 fi
 
-if [ ! -f $1 ]; then
+if [ ! -f $SUITE ]; then
     echo "Suite file not found: $1"
     exit 1
 fi
@@ -23,46 +27,75 @@ INSZ=`du -b $IN | cut -f 1`
 echo
 echo "$IN ($INSZ bytes) ..."
 echo
-printf "%16s | %10s | %10s | %8s | %10s | %10s\n" "" "C Time" "C Memory" "C Rate" "D Time" "D Memory"
+printf "%16s | %10s | %10s | %9s | %10s | %10s\n" "" "C Time" "C Memory" "C Rate" "D Time" "D Memory"
 printf "=%.0s" {1..80}
 echo
 
 while read LINE; do
     # parse compressor info
-    IFS=";" read -r NAME CCMD EXT DCMD <<< "$LINE"
+    IFS=";" read -r NAME MODE EXT CCMD DCMD <<< "$LINE"
 
-    # determine output file
-    OUT=$IN$EXT
+    if [ -z "$NAME" -o -z "$EXT" -o -z "$CCMD" -o -z "$DCMD" ]; then
+        printf "%80s\n" "(incomplete command info in suite)"
+        continue
+    fi
+
+    # determine output file and delete it if it still exists
+    OUT=$TMP/$F$EXT
+    rm -f $OUT
+
+    # specify command
+    CCMD=${CCMD/@IN/$IN}
+    CCMD=${CCMD/@OUT/$OUT}
+    DCMD=${DCMD/@IN/$OUT}
+
+    # print name
+    printf "%16s" $NAME
 
     # compress
+    if [ "$MODE" == "stdout" ]; then
+        $TIME -f "%U;%M" -o $STORE $CCMD >$OUT 2>/dev/null
+        OK=$?
+    else
+        $TIME -f "%U;%M" -o $STORE $CCMD >/dev/null 2>&1
+        OK=$?
+    fi
 
-    printf "%16s" $NAME
-    STAT=`$TIME -f "%U;%M" $CCMD $IN 2>&1`
-    IFS=";" read -r TM MEM <<< "$STAT"
+    if [ $OK -ne 0 ]; then
+        printf " |%62s\n" "(compress error)"
+        continue
+    fi
+
+    IFS=";" read -r TM MEM < $STORE
 
     # print runtime and memory usage
     printf " | %#8.2f s | %8d K" $TM $MEM
 
-    if [ -f $OUT ]; then
-        # calculate compression rate
-        OUTSZ=`du -b $OUT  | cut -f 1`
-        RATE=`echo 100*$OUTSZ/$INSZ | bc -l`
-
-        # print name and compression rate
-        printf " | %8.4f%%" $RATE
-
-        # decompress
-        STAT=`$TIME -f "%U;%M" $DCMD $OUT 2>&1`
-        IFS=";" read -r TM MEM <<< "$STAT"
-
-        # print runtime and memory usage
-        printf " | %#8.2f s | %8d K\n" $TM $MEM
-
-        # get rid of output file if it still exists
-        rm -f $OU
-    else
-        # output file doesn't exist
-        echo "|%7s" "ERR"
+    if [ ! -f $OUT ]; then
+        printf " |%36s\n" "($OUT not found)"
+        continue
     fi
-done <$1 # suite
+
+    # calculate compression rate
+    OUTSZ=`du -b $OUT  | cut -f 1`
+    RATE=`echo 100*$OUTSZ/$INSZ | bc -l`
+
+    # print name and compression rate
+    printf " | %8.4f%%" $RATE
+
+    # decompress
+    $TIME -f "%U;%M" -o $STORE $DCMD >/dev/null 2>&1
+    OK=$?
+
+    if [ $OK -ne 0 ]; then
+        printf " |%24s\n" "(decompress error)"
+        continue
+    fi
+
+    IFS=";" read -r TM MEM < $STORE
+
+    # print runtime and memory usage
+    printf " | %#8.2f s | %8d K\n" $TM $MEM
+
+done < $1 # suite
 done # files

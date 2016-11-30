@@ -1,2 +1,2 @@
-bzip2;bzip2 -9 -f -k;.bz2;bzip2 -d -f
-gzip;gzip -9 -f -k;.gz;gzip -d -f
+bzip2;stdout;.bz2;bzip2 -9 -f -c @IN;bzip2 -d -f -c @IN
+gzip;stdout;.gz;gzip -9 -f -c @IN;gzip -d -f -c @IN
