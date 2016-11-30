@@ -526,12 +526,18 @@ TEST(Input, escaping_view) {
 }
 
 TEST(Input, escaping_stream) {
-    Input i("\0\x01\xff\xfe\0"_v);
-    i.escape_and_terminate();
-    auto s = i.as_stream();
-    std::stringstream ss;
-    ss << s.rdbuf();
-    ASSERT_EQ(ss.str(), "\0\x01\xff\xfe\0"_v);
+    bool threw = false;
+    try {
+        Input i("\0\x01\xff\xfe\0"_v);
+        i.escape_and_terminate();
+        auto s = i.as_stream();
+        std::stringstream ss;
+        ss << s.rdbuf();
+        ASSERT_EQ(ss.str(), "\0\x01\xff\xfe\0"_v);
+    } catch (std::runtime_error e) {
+        threw = true;
+    }
+    ASSERT_TRUE(threw);
 }
 
 TEST(Output, unescaping) {

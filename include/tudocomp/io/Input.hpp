@@ -499,6 +499,10 @@ namespace io {
     }
 
     inline InputStream Input::as_stream() {
+        if (m_escape_and_terminate) {
+            throw std::runtime_error(
+                "Creating a stream to an Input that requires termination with a sentinel value is not supported");
+        }
         return m_data->as_stream();
     }
 
