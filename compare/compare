@@ -1,5 +1,6 @@
 #!/bin/bash
 FILES=files
+COMPRESSORS=compressors
 TMP=/tmp
 STORE=$TMP/compare.store
 TIME=/usr/bin/time
@@ -21,7 +22,7 @@ fi
 FILENAMES=`ls $FILES`
 for F in $FILENAMES; do
 
-IN=files/$F
+export IN=files/$F
 INSZ=`du -b $IN | cut -f 1`
 
 echo
@@ -32,47 +33,67 @@ printf "=%.0s" {1..80}
 echo
 
 while read LINE; do
-    # parse compressor info
-    IFS=";" read -r NAME MODE EXT CCMD DCMD <<< "$LINE"
+    if [[ ${LINE:0:1} == "#" ]]; then
+        continue
+    fi
 
-    if [ -z "$NAME" -o -z "$EXT" -o -z "$CCMD" -o -z "$DCMD" ]; then
-        printf "%80s\n" "(incomplete command info in suite)"
+    # parse suite
+    IFS=";" read -r NAME EXT CMD CARGS DARGS <<< "$LINE"
+
+    if [ -z "$NAME" -o -z "$EXT" -o -z "$CMD" ]; then
+        printf "%80s\n" "(invalid entry in suite)"
+        continue
+    fi
+
+    CCMD=$COMPRESSORS/${CMD}_c
+    DCMD=$COMPRESSORS/${CMD}_d
+
+    export CARGS
+    export DARGS
+
+    if [ ! -f $CCMD ]; then
+        printf "%80s\n" "(no compressor found for '$CMD')"
+        continue
+    elif [ ! -f $DCMD ]; then
+        printf "%80s\n" "(no decompressor found for '$CMD')"
         continue
     fi
 
     # determine output file and delete it if it still exists
-    OUT=$TMP/$F$EXT
+    export OUT=$TMP/$F$EXT
     rm -f $OUT
 
-    # specify command
-    CCMD=${CCMD/@IN/$IN}
-    CCMD=${CCMD/@OUT/$OUT}
-    DCMD=${DCMD/@IN/$OUT}
+    # remove already decompressed file if exists
+    rm -f $TMP/$F
 
     # print name
-    printf "%16s" $NAME
+    printf "%16s | compressing ..." "$NAME"
 
     # compress
-    if [ "$MODE" == "stdout" ]; then
-        $TIME -f "%U;%M" -o $STORE $CCMD >$OUT 2>/dev/null
-        OK=$?
-    else
-        $TIME -f "%U;%M" -o $STORE $CCMD >/dev/null 2>&1
-        OK=$?
-    fi
+    $TIME -f "%U;%M" -o $STORE $CCMD >/dev/null 2>&1
+    OK=$?
 
-    if [ $OK -ne 0 ]; then
-        printf " |%62s\n" "(compress error)"
+    echo -en "\033[15D" # move cursor left
+
+    if [ $OK -eq 130 ]; then
+        echo -en "\033[2D" # move cursor left
+        printf "%61s\n" "(cancelled)"
+        continue
+    elif [ $OK -eq 127 ]; then
+        printf "%61s\n" "(not installed)"
+        continue
+    elif [ $OK -ne 0 ]; then
+        printf "%61s\n" "(compress error $OK)"
         continue
     fi
 
     IFS=";" read -r TM MEM < $STORE
 
     # print runtime and memory usage
-    printf " | %#8.2f s | %8d K" $TM $MEM
+    printf "%#8.2f s | %8d K | " $TM $MEM
 
     if [ ! -f $OUT ]; then
-        printf " |%36s\n" "($OUT not found)"
+        printf "%35s\n" "($OUT not found)"
         continue
     fi
 
@@ -81,21 +102,31 @@ while read LINE; do
     RATE=`echo 100*$OUTSZ/$INSZ | bc -l`
 
     # print name and compression rate
-    printf " | %8.4f%%" $RATE
+    printf "%8.4f%% | " $RATE
 
     # decompress
-    $TIME -f "%U;%M" -o $STORE $DCMD >/dev/null 2>&1
+    printf "decompressing ..."
+
+    $TIME -f "%U;%M" -o $STORE $DCMD $OUT /dev/null $DARGS >/dev/null 2>&1
     OK=$?
 
-    if [ $OK -ne 0 ]; then
-        printf " |%24s\n" "(decompress error)"
+    echo -en "\033[17D" # move cursor left
+
+    if [ $OK -eq 130 ]; then
+        echo -en "\033[2D" # move cursor left
+        printf "%23s\n" "(cancelled)"
+        continue
+    elif [ $OK -ne 0 ]; then
+        printf "%23s\n" "(decompress error $OK)"
         continue
     fi
 
     IFS=";" read -r TM MEM < $STORE
 
     # print runtime and memory usage
-    printf " | %#8.2f s | %8d K\n" $TM $MEM
+    printf "%#8.2f s | %8d K\n" $TM $MEM
 
 done < $1 # suite
 done # files
+
+echo

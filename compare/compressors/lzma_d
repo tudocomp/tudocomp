@@ -1,0 +1,1 @@
+lzma -d $DARGS -f -c $OUT >/dev/null

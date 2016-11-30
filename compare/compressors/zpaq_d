@@ -1,0 +1,1 @@
+cd `dirname $OUT` && zpaq ${CARGS}x $OUT

@@ -1,0 +1,1 @@
+xz -z $CARGS -f -c $IN >$OUT
