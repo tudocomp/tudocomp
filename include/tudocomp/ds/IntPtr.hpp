@@ -455,6 +455,19 @@ namespace int_vector {
     static_assert(sizeof(GenericIntPtr<ConstIntPtr<uint_t<40>>, uint_t<40>>) <= (sizeof(void*) * 2),
                   "make sure this is reasonably small");
 }
+
+template<class T>
+using IntRef = int_vector::IntRef<T>;
+
+template<class T>
+using ConstIntRef = int_vector::ConstIntRef<T>;
+
+template<class T>
+using IntPtr = int_vector::IntPtr<T>;
+
+template<class T>
+using ConstIntPtr = int_vector::ConstIntPtr<T>;
+
 }
 
 #endif

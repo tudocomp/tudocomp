@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include <tudocomp/ds/GenericIntVector.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/util/IntegerBase.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 
@@ -263,12 +263,10 @@ void generic_int_vector_ptr_template() {
 }
 
 TEST(generic_int_vector, int_ptr) {
-    using namespace int_vector;
     generic_int_vector_ptr_template<IntPtr<uint_t<32>>, uint_t<32>>();
 }
 
 TEST(generic_int_vector, const_int_ptr) {
-    using namespace int_vector;
     generic_int_vector_ptr_template_const<ConstIntPtr<uint_t<32>>>();
 }
 

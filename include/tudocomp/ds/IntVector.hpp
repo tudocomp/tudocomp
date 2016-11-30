@@ -16,7 +16,7 @@
 #include <utility>
 #include <climits>
 
-#include <tudocomp/ds/GenericIntPtr.hpp>
+#include <tudocomp/ds/IntPtr.hpp>
 #include <tudocomp/ds/BitPackingVector.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/dynamic_t.hpp>
@@ -556,6 +556,9 @@ namespace int_vector {
     }
 
 }
+
+template<class T>
+using IntVector = int_vector::GenericIntVector<T>;
 
 }
 

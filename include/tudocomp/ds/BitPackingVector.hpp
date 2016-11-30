@@ -16,7 +16,7 @@
 #include <utility>
 #include <climits>
 
-#include <tudocomp/ds/GenericIntPtr.hpp>
+#include <tudocomp/ds/IntPtr.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/dynamic_t.hpp>
 #include <tudocomp/util/IntegerBase.hpp>
@@ -644,6 +644,10 @@ namespace int_vector {
         x.swap(y);
     }
 }
+
+template<class T>
+using BitPackingVector = int_vector::BitPackingVector<T>;
+
 }
 
 #endif
