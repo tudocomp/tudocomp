@@ -251,8 +251,15 @@ public:
     inline void needs_sentinel_terminator() {
         m_add_null_terminator = true;
     }
+
+    /// \cond INTERNAL
+    inline bool is_needs_sentinel_terminator() {
+        return m_add_null_terminator;
+    }
+    /// \endcond
 };
 
+/// \cond INTERNAL
 inline void gather_types(eval::AlgorithmTypes& target,
                          Meta&& meta)
 {
@@ -294,6 +301,7 @@ inline void gather_types(eval::AlgorithmTypes& target,
         gather_types(target, std::move(meta));
     }
 }
+/// \endcond
 
 }
 
