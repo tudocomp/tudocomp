@@ -43,7 +43,7 @@ namespace int_vector {
      */
 
     template<class T, class X = void>
-    struct GenericIntVectorTrait {
+    struct IntVectorTrait {
         typedef typename std::vector<T>::value_type             value_type;
 
         typedef typename std::vector<T>::reference              reference;
@@ -99,7 +99,7 @@ namespace int_vector {
     };
 
     template<>
-    struct GenericIntVectorTrait<dynamic_t> {
+    struct IntVectorTrait<dynamic_t> {
         typedef typename BitPackingVector<dynamic_t>::value_type             value_type;
 
         typedef typename BitPackingVector<dynamic_t>::reference              reference;
@@ -154,7 +154,7 @@ namespace int_vector {
     };
 
     template<size_t N>
-    struct GenericIntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) != 0>::type> {
+    struct IntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) != 0>::type> {
         typedef typename BitPackingVector<uint_t<N>>::value_type             value_type;
 
         typedef typename BitPackingVector<uint_t<N>>::reference              reference;
@@ -215,8 +215,8 @@ namespace int_vector {
     ///
     /// Only divergences are the following specializations:
     ///
-    /// - `GenericIntVector<uint_t<N>>` where `N % 8 != 0`
-    /// - `GenericIntVector<dynamic_t>`
+    /// - `IntVector<uint_t<N>>` where `N % 8 != 0`
+    /// - `IntVector<dynamic_t>`
     ///
     /// In both cases, the bits of each integer will be packed efficiently next
     /// to each other, as opposed to the padding introduced if stored
@@ -226,63 +226,63 @@ namespace int_vector {
     /// runtime, in all other cases the corresponding methods will throw.
     // TODO ^ Could just not offer the methods for the non-dynamic case
     template<class T>
-    class GenericIntVector {
+    class IntVector {
         // TODO: Add custom allocator support
     public:
-        typedef typename GenericIntVectorTrait<T>::value_type             value_type;
-        typedef typename GenericIntVectorTrait<T>::reference              reference;
-        typedef typename GenericIntVectorTrait<T>::const_reference        const_reference;
-        typedef typename GenericIntVectorTrait<T>::pointer                pointer;
-        typedef typename GenericIntVectorTrait<T>::const_pointer          const_pointer;
-        typedef typename GenericIntVectorTrait<T>::iterator               iterator;
-        typedef typename GenericIntVectorTrait<T>::const_iterator         const_iterator;
-        typedef typename GenericIntVectorTrait<T>::reverse_iterator       reverse_iterator;
-        typedef typename GenericIntVectorTrait<T>::const_reverse_iterator const_reverse_iterator;
-        typedef typename GenericIntVectorTrait<T>::difference_type        difference_type;
-        typedef typename GenericIntVectorTrait<T>::size_type              size_type;
+        typedef typename IntVectorTrait<T>::value_type             value_type;
+        typedef typename IntVectorTrait<T>::reference              reference;
+        typedef typename IntVectorTrait<T>::const_reference        const_reference;
+        typedef typename IntVectorTrait<T>::pointer                pointer;
+        typedef typename IntVectorTrait<T>::const_pointer          const_pointer;
+        typedef typename IntVectorTrait<T>::iterator               iterator;
+        typedef typename IntVectorTrait<T>::const_iterator         const_iterator;
+        typedef typename IntVectorTrait<T>::reverse_iterator       reverse_iterator;
+        typedef typename IntVectorTrait<T>::const_reverse_iterator const_reverse_iterator;
+        typedef typename IntVectorTrait<T>::difference_type        difference_type;
+        typedef typename IntVectorTrait<T>::size_type              size_type;
 
         /// The element type of the internal data buffer accessed with data()
-        typedef typename GenericIntVectorTrait<T>::internal_data_type     internal_data_type;
+        typedef typename IntVectorTrait<T>::internal_data_type     internal_data_type;
 
         static constexpr ElementStorageMode element_storage_mode() {
-            return GenericIntVectorTrait<T>::element_storage_mode();
+            return IntVectorTrait<T>::element_storage_mode();
         }
     private:
-        typename GenericIntVectorTrait<T>::backing_data m_data;
+        typename IntVectorTrait<T>::backing_data m_data;
     public:
         // default
-        inline explicit GenericIntVector() {}
+        inline explicit IntVector() {}
 
         // fill
-        explicit GenericIntVector(size_type n): m_data(n) {}
-        inline GenericIntVector(size_type n, const value_type& val): m_data(n, val) {}
-        inline GenericIntVector(size_type n, const value_type& val, uint8_t width):
-            m_data(GenericIntVectorTrait<T>::with_width(n, val, width)) {}
+        explicit IntVector(size_type n): m_data(n) {}
+        inline IntVector(size_type n, const value_type& val): m_data(n, val) {}
+        inline IntVector(size_type n, const value_type& val, uint8_t width):
+            m_data(IntVectorTrait<T>::with_width(n, val, width)) {}
 
         // range
         template <class InputIterator>
-        inline GenericIntVector(InputIterator first, InputIterator last): m_data(first, last) {}
+        inline IntVector(InputIterator first, InputIterator last): m_data(first, last) {}
 
         // copy
-        inline GenericIntVector(const GenericIntVector& other): m_data(other.m_data) {}
+        inline IntVector(const IntVector& other): m_data(other.m_data) {}
 
         // move
-        inline GenericIntVector(GenericIntVector&& other): m_data(std::move(other.m_data)) {}
+        inline IntVector(IntVector&& other): m_data(std::move(other.m_data)) {}
 
         // initializer list
-        inline GenericIntVector(std::initializer_list<value_type> il): m_data(il) {}
+        inline IntVector(std::initializer_list<value_type> il): m_data(il) {}
 
-        inline GenericIntVector& operator=(const GenericIntVector& other) {
+        inline IntVector& operator=(const IntVector& other) {
             m_data = other.m_data;
             return *this;
         }
 
-        inline GenericIntVector& operator=(GenericIntVector&& other) {
+        inline IntVector& operator=(IntVector&& other) {
             m_data = std::move(other.m_data);
             return *this;
         }
 
-        inline GenericIntVector& operator=(std::initializer_list<value_type> il) {
+        inline IntVector& operator=(std::initializer_list<value_type> il) {
             m_data = il;
             return *this;
         }
@@ -340,7 +340,7 @@ namespace int_vector {
         }
 
         inline uint64_t bit_size() const {
-            return GenericIntVectorTrait<T>::bit_size(m_data);
+            return IntVectorTrait<T>::bit_size(m_data);
         }
 
         inline size_type max_size() const {
@@ -348,11 +348,11 @@ namespace int_vector {
         }
 
         inline uint8_t width() const {
-            return GenericIntVectorTrait<T>::width(m_data);
+            return IntVectorTrait<T>::width(m_data);
         }
 
         inline void width(uint8_t w) {
-            GenericIntVectorTrait<T>::width(m_data, w);
+            IntVectorTrait<T>::width(m_data, w);
         }
 
         inline void resize(size_type n) {
@@ -364,7 +364,7 @@ namespace int_vector {
         }
 
         inline void resize(size_type n, const value_type& val, uint8_t w) {
-            GenericIntVectorTrait<T>::resize(m_data, n, val, w);
+            IntVectorTrait<T>::resize(m_data, n, val, w);
         }
 
         inline size_type capacity() const {
@@ -372,7 +372,7 @@ namespace int_vector {
         }
 
         inline uint64_t bit_capacity() const {
-            return GenericIntVectorTrait<T>::bit_capacity(m_data);
+            return IntVectorTrait<T>::bit_capacity(m_data);
         }
 
         inline bool empty() const {
@@ -384,7 +384,7 @@ namespace int_vector {
         }
 
         inline void bit_reserve(uint64_t n) {
-            GenericIntVectorTrait<T>::bit_reserve(m_data, n);
+            IntVectorTrait<T>::bit_reserve(m_data, n);
         }
 
         inline void shrink_to_fit() {
@@ -485,7 +485,7 @@ namespace int_vector {
             return m_data.erase(first, last);
         }
 
-        inline void swap(GenericIntVector& other) {
+        inline void swap(IntVector& other) {
             m_data.swap(other.m_data);
         }
 
@@ -504,53 +504,53 @@ namespace int_vector {
         }
 
         template<class U>
-        friend bool operator==(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        friend bool operator==(const IntVector<U>& lhs, const IntVector<U>& rhs);
         template<class U>
-        friend bool operator!=(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        friend bool operator!=(const IntVector<U>& lhs, const IntVector<U>& rhs);
         template<class U>
-        friend bool operator<(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        friend bool operator<(const IntVector<U>& lhs, const IntVector<U>& rhs);
         template<class U>
-        friend bool operator<=(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        friend bool operator<=(const IntVector<U>& lhs, const IntVector<U>& rhs);
         template<class U>
-        friend bool operator>(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        friend bool operator>(const IntVector<U>& lhs, const IntVector<U>& rhs);
         template<class U>
-        friend bool operator>=(const GenericIntVector<U>& lhs, const GenericIntVector<U>& rhs);
+        friend bool operator>=(const IntVector<U>& lhs, const IntVector<U>& rhs);
         template<class U>
-        friend void swap(GenericIntVector<U>& lhs, GenericIntVector<U>& rhs);
+        friend void swap(IntVector<U>& lhs, IntVector<U>& rhs);
     };
 
     template<class T>
-    bool operator==(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+    bool operator==(const IntVector<T>& lhs, const IntVector<T>& rhs) {
         return lhs.m_data == rhs.m_data;
     }
 
     template<class T>
-    bool operator!=(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+    bool operator!=(const IntVector<T>& lhs, const IntVector<T>& rhs) {
         return lhs.m_data != rhs.m_data;
     }
 
     template<class T>
-    bool operator<(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+    bool operator<(const IntVector<T>& lhs, const IntVector<T>& rhs) {
         return lhs.m_data < rhs.m_data;
     }
 
     template<class T>
-    bool operator<=(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+    bool operator<=(const IntVector<T>& lhs, const IntVector<T>& rhs) {
         return lhs.m_data <= rhs.m_data;
     }
 
     template<class T>
-    bool operator>(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+    bool operator>(const IntVector<T>& lhs, const IntVector<T>& rhs) {
         return lhs.m_data > rhs.m_data;
     }
 
     template<class T>
-    bool operator>=(const GenericIntVector<T>& lhs, const GenericIntVector<T>& rhs) {
+    bool operator>=(const IntVector<T>& lhs, const IntVector<T>& rhs) {
         return lhs.m_data >= rhs.m_data;
     }
 
     template<class T>
-    void swap(GenericIntVector<T>& lhs, GenericIntVector<T>& rhs) {
+    void swap(IntVector<T>& lhs, IntVector<T>& rhs) {
         using std::swap;
         swap(lhs.m_data, rhs.m_data);
     }
@@ -558,7 +558,7 @@ namespace int_vector {
 }
 
 template<class T>
-using IntVector = int_vector::GenericIntVector<T>;
+using IntVector = int_vector::IntVector<T>;
 
 }
 

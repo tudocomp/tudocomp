@@ -320,7 +320,7 @@ namespace int_vector {
         inline void range_check(size_type n) const {
             if (n >= size()) {
                 std::stringstream ss;
-                ss << "Out-of-range access of GenericIntVector: index is ";
+                ss << "Out-of-range access of IntVector: index is ";
                 ss << n;
                 ss << ", size() is ";
                 ss << size();
