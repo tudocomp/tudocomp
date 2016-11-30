@@ -6,16 +6,14 @@
 
 #include <gtest/gtest.h>
 
+#include <tudocomp/tudocomp.hpp>
+
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/util/DecodeBuffer.hpp>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
-
-#include <tudocomp/ChainCompressor.hpp>
-#include <tudocomp/InnerNullCompressor.hpp>
-#include <tudocomp/NoopCompressor.hpp>
 
 #include <tudocomp_driver/Registry.hpp>
 
@@ -30,7 +28,7 @@ public:
     inline static Meta meta() {
         Meta m ("compressor", "noop_null", "");
         m.needs_sentinel_terminator();
-        m.option("mode").dynamic("stream");
+        m.option("mode").dynamic("view");
         m.option("debug").dynamic("false");
         return m;
     }
@@ -187,31 +185,14 @@ TEST(NoopCompressor, test) {
     test::roundtrip<NoopCompressor>("\xff\0"_v, "\xff\0"_v);
 }
 
-TEST(InnerNullCompressor, noop) {
-    test::roundtrip<InnerNullCompressor>("abcd",
-                                         "abcd",
-                                         R"(
-                                            noop
-                                        )", REGISTRY);
+TEST(NoopEscapingCompressor, noop) {
+    test::roundtrip<NoopEscapingCompressor>("abcd", "abcd\0"_v);
 }
 
-TEST(InnerNullCompressor, escaping) {
-    test::roundtrip<InnerNullCompressor>("ab\xff!"_v,
-                                         "ab\xff\xff!"_v,
-                                         R"(
-                                            noop
-                                        )", REGISTRY);
-    test::roundtrip<InnerNullCompressor>("ab\x00!"_v,
-                                         "ab\xff\xfe!"_v,
-                                         R"(
-                                            noop
-                                        )", REGISTRY);
-    test::roundtrip<InnerNullCompressor>("ab\xfe!"_v,
-                                         "ab\xfe!"_v,
-                                         R"(
-                                            noop
-                                        )", REGISTRY);
-
+TEST(NoopEscapingCompressor, escaping) {
+    test::roundtrip<NoopEscapingCompressor>("ab\xff!"_v, "ab\xff\xff!\0"_v);
+    test::roundtrip<NoopEscapingCompressor>("ab\x00!"_v, "ab\xff\xfe!\0"_v);
+    test::roundtrip<NoopEscapingCompressor>("ab\xfe!"_v, "ab\xfe!\0"_v);
 
     std::vector<uint8_t> a {
         0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,
@@ -250,12 +231,9 @@ TEST(InnerNullCompressor, escaping) {
         208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223,
         224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,
         240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254,
-        255, 255
+        255, 255,
+        0
     };
 
-    test::roundtrip<InnerNullCompressor>(View(a),
-                                         View(b),
-                                         R"(
-                                            noop
-                                        )", REGISTRY);
+    test::roundtrip<NoopEscapingCompressor>(View(a), View(b));
 }

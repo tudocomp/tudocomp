@@ -75,8 +75,9 @@ namespace lzw {
 #include <tudocomp/Registry.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
 
-#include <tudocomp/ChainCompressor.hpp>
-#include <tudocomp/NoopCompressor.hpp>
+#include <tudocomp/compressors/LiteralEncoder.hpp>
+#include <tudocomp/compressors/NoopCompressor.hpp>
+#include <tudocomp/compressors/ChainCompressor.hpp>
 
 #include <tudocomp/util/Counter.hpp>
 #include <tudocomp/util/DecodeBuffer.hpp>
@@ -96,7 +97,7 @@ namespace lzw {
 #include <tudocomp/coders/EliasDeltaCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
 #include <tudocomp/coders/VariantCoder.hpp>
-#include <tudocomp/LiteralEncoder.hpp>
+
 #include <tudocomp/compressors/BWTCompressor.hpp>
 #include <tudocomp/compressors/EasyRLECompressor.hpp>
 #include <tudocomp/compressors/ESACompressor.hpp>
