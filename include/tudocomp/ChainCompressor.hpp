@@ -42,6 +42,10 @@ public:
 
             bool needs_sentinel = av.needs_sentinel_terminator();
 
+            std::cout << "\n";
+            std::cout << "Algo: " << av.name() << "\n";
+            std::cout << "Needs sentinel: " << (needs_sentinel ? "true" : "false") << "\n";
+
             // TODO: Debug!
             //needs_sentinel = true;
 
@@ -52,16 +56,18 @@ public:
         };
 
         std::vector<uint8_t> between_buf;
+        std::cout << "Before chain\n";
         {
             Output between(between_buf);
             run(input, between, first_algo);
         }
         // TODO: Debug!
-        //std::cout << vec_to_debug_string(between_buf) << "\n";
+        std::cout << "Between chains: " << vec_to_debug_string(between_buf) << "\n";
         {
             Input between(between_buf);
             run(between, output, second_algo);
         }
+        std::cout << "After chain\n";
     }
 
     /// Compress `inp` into `out`.
