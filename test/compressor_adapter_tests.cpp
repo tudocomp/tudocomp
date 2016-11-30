@@ -25,6 +25,76 @@
 using namespace tdc;
 using namespace tdc_algorithms;
 
+class NoopEscapingCompressor: public Compressor {
+public:
+    inline static Meta meta() {
+        Meta m ("compressor", "noop_null", "");
+        m.needs_sentinel_terminator();
+        m.option("mode").dynamic("stream");
+        m.option("debug").dynamic("false");
+        return m;
+    }
+
+    inline NoopEscapingCompressor(Env&& env):
+        Compressor(std::move(env)) {}
+
+
+    inline virtual void compress(Input& i, Output& o) override final {
+        auto os = o.as_stream();
+
+        if (env().option("mode").as_string() == "stream") {
+            auto is = i.as_stream();
+            if (env().option("debug").as_bool()) {
+                std::stringstream ss;
+                ss << is.rdbuf();
+                std::string txt = ss.str();
+                DLOG(INFO) << vec_to_debug_string(txt);
+                os << txt;
+            } else {
+                os << is.rdbuf();
+            }
+        } else {
+            auto iv = i.as_view();
+            if (env().option("debug").as_bool()) {
+                DLOG(INFO) << vec_to_debug_string(iv);
+                os << iv;
+            } else {
+                os << iv;
+            }
+        }
+    }
+
+    inline virtual void decompress(Input& i, Output& o) override final {
+        auto os = o.as_stream();
+
+        if (env().option("mode").as_string() == "stream") {
+            auto is = i.as_stream();
+            if (env().option("debug").as_bool()) {
+                std::stringstream ss;
+                ss << is.rdbuf();
+                std::string txt = ss.str();
+                DLOG(INFO) << vec_to_debug_string(txt);
+                os << txt;
+            } else {
+                os << is.rdbuf();
+            }
+        } else {
+            auto iv = i.as_view();
+            if (env().option("debug").as_bool()) {
+                DLOG(INFO) << vec_to_debug_string(iv);
+                os << iv;
+            } else {
+                os << iv;
+            }
+        }
+    }
+};
+
+TEST(A, a) {
+    FLAGS_logtostderr = 0;
+    REGISTRY.register_compressor<NoopEscapingCompressor>();
+}
+
 TEST(Chain, test0) {
     test::roundtrip<RunLengthEncoder<ASCIICoder>>("aaaaaabaaaaaabaaaaaabaaaaaab",
                                      "aa14:baa14:baa14:baa14:b\0"_v,
@@ -72,12 +142,49 @@ TEST(Chain, test4) {
                                     )", REGISTRY);
 }
 
+const View CHAIN_STRING = "abcd"_v;
+const View CHAIN_STRING_NULL = "abcd\0"_v;
+
+TEST(ChainNull, stream_noop) {
+    test::roundtrip<NoopCompressor>(CHAIN_STRING, CHAIN_STRING,
+        R"('stream', true)", REGISTRY);
+}
+
+TEST(ChainNull, view_noop) {
+    test::roundtrip<NoopCompressor>(CHAIN_STRING, CHAIN_STRING,
+        R"('view', true)", REGISTRY);
+}
+
+TEST(ChainNull, view_noop_null) {
+    test::roundtrip<NoopEscapingCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
+        R"('view', true)", REGISTRY);
+}
+
+TEST(ChainNull, stream_chain_noop_noop) {
+    test::roundtrip<ChainCompressor>(CHAIN_STRING, CHAIN_STRING,
+        R"(noop('stream', true), noop('stream', true))", REGISTRY);
+}
+
+TEST(ChainNull, view_chain_noop_noop) {
+    test::roundtrip<ChainCompressor>(CHAIN_STRING, CHAIN_STRING,
+        R"(noop('view', true), noop('view', true))", REGISTRY);
+}
+
+TEST(ChainNull, view_chain_noop_null_noop) {
+    test::roundtrip<ChainCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
+        R"(noop_null('view', true), noop('view', true))", REGISTRY);
+}
+
+TEST(ChainNull, view_chain_noop_noop_null) {
+    test::roundtrip<ChainCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
+        R"(noop('view', true), noop_null('view', true))", REGISTRY);
+}
 
 TEST(NoopCompressor, test) {
     test::roundtrip<NoopCompressor>("abcd", "abcd");
     test::roundtrip<NoopCompressor>("äüö", "äüö");
-    test::roundtrip<NoopCompressor>(std::string("\0\xff"_v), std::string("\0\xff"_v));
-    test::roundtrip<NoopCompressor>(std::string("\xff\0"_v), std::string("\xff\0"_v));
+    test::roundtrip<NoopCompressor>("\0\xff"_v, "\0\xff"_v);
+    test::roundtrip<NoopCompressor>("\xff\0"_v, "\xff\0"_v);
 }
 
 TEST(InnerNullCompressor, noop) {

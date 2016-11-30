@@ -51,6 +51,10 @@ namespace test {
 
                 auto compressor = create_algo_with_registry<C>(options, m_registry);
 
+                if (C::meta().is_needs_sentinel_terminator()) {
+                    decoded_out.unescape_and_trim();
+                }
+
                 compressor.decompress(text_in, decoded_out);
             }
             std::string decompressed_text {
@@ -67,6 +71,10 @@ namespace test {
                 Output decoded_out = Output::from_memory(decompressed_bytes);
 
                 auto compressor = create_algo_with_registry<C>(options, m_registry);
+
+                if (C::meta().is_needs_sentinel_terminator()) {
+                    decoded_out.unescape_and_trim();
+                }
 
                 compressor.decompress(text_in, decoded_out);
             }
@@ -97,7 +105,9 @@ namespace test {
                 Output encoded_out = Output::from_memory(encoded_buffer);
 
                 auto compressor = create_algo_with_registry<C>(m_options, m_registry);
-
+                if (C::meta().is_needs_sentinel_terminator()) {
+                    text_in.escape_and_terminate();
+                }
                 compressor.compress(text_in, encoded_out);
             }
             std::string s(encoded_buffer.begin(), encoded_buffer.end());
