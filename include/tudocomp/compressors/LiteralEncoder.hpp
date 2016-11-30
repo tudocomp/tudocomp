@@ -33,7 +33,7 @@ public:
     }
 
     inline virtual void decompress(Input& input, Output& output) override final {
-        auto ostream = output.as_stream();        
+        auto ostream = output.as_stream();
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
         while(!decoder.eof()) {
