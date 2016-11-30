@@ -1110,3 +1110,36 @@ TEST(Algorithm, meta) {
         }
     });
 }
+
+struct EscapingComp: public Compressor {
+    static Meta meta() {
+        Meta m("compressor", "esc_test");
+        m.needs_sentinel_terminator();
+        return m;
+    }
+
+    using Compressor::Compressor;
+
+    virtual void compress(Input& i, Output& o) {}
+    virtual void decompress(Input& i, Output& o) {}
+};
+
+TEST(Escaping, option_value_direct) {
+    ASSERT_TRUE(EscapingComp::meta().is_needs_sentinel_terminator());
+}
+
+TEST(Escaping, option_value_indirect) {
+    Registry r;
+    r.register_compressor<EscapingComp>();
+    auto av = r.parse_algorithm_id("esc_test");
+    ASSERT_TRUE(av.needs_sentinel_terminator());
+}
+
+TEST(Escaping, option_value_indirect_copy) {
+    Registry r;
+    r.register_compressor<EscapingComp>();
+    AlgorithmValue av = r.parse_algorithm_id("esc_test");
+    AlgorithmValue av2("", {}, nullptr, false);
+    av2 = std::move(av);
+    ASSERT_TRUE(av2.needs_sentinel_terminator());
+}

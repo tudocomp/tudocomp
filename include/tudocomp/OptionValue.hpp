@@ -121,6 +121,7 @@ inline AlgorithmValue& AlgorithmValue::operator=(AlgorithmValue&& other) {
     this->m_name = std::move(other.m_name);
     this->m_arguments = std::move(other.m_arguments);
     this->m_static_selection = std::move(other.m_static_selection);
+    this->m_needs_sentinel = std::move(other.m_needs_sentinel);
     return *this;
 }
 inline bool AlgorithmValue::needs_sentinel_terminator() const {
