@@ -74,16 +74,18 @@ public:
         m_mb(std::make_unique<membuf>(membuf { begin, size })),
         m_stream(std::unique_ptr<std::istream>(new std::istream(&*m_mb))) {}
 
-    ViewStream(const ViewStream& other):
+    inline ViewStream(View view): ViewStream((char*) view.data(), view.size()) {}
+
+    inline ViewStream(const ViewStream& other):
         ViewStream(other.m_begin, other.m_size) {}
 
-    ViewStream(ViewStream&& other):
+    inline ViewStream(ViewStream&& other):
         m_begin(other.m_begin),
         m_size(other.m_size),
         m_mb(std::move(other.m_mb)),
         m_stream(std::move(other.m_stream)) {}
 
-    std::istream& stream() {
+    inline std::istream& stream() {
         return *m_stream;
     }
 };

@@ -3,6 +3,7 @@
 
 #include <numeric>
 
+#include <tudocomp/tudocomp.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Coder.hpp>
 #include <tudocomp/util.hpp>
@@ -481,13 +482,13 @@ namespace huff {
 
     inline void encode(tdc::io::Input& input, tdc::io::Output& output) {
         tdc::io::BitOStream bit_os{output};
-        tdc::io::Input input2 = input; // TODO: could be nicer, instead of copying we only need a view and a stream of the same data
         View iview = input.as_view();
         const len_t*const C { count_alphabet(iview) };
         extended_huffmantable table = gen_huffmantable(C);
         huffmantable_encode(bit_os, table);
-        auto is = input2.as_stream();
-        huffman_encode(is, bit_os, input2.size(), table.ordered_map_from_effective, table.ordered_codelengths, table.alphabet_size, table.codewords);
+        io::ViewStream view_stream(iview);
+        auto& is = view_stream.stream();
+        huffman_encode(is, bit_os, iview.size(), table.ordered_map_from_effective, table.ordered_codelengths, table.alphabet_size, table.codewords);
     }
 
     inline void decode(tdc::io::Input& input, tdc::io::Output& output) {
