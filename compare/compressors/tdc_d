@@ -1,0 +1,1 @@
+../build/tudocomp_driver --decompress --usestdout $DARGS $OUT

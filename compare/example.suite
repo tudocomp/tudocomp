@@ -1,3 +1,4 @@
+tdc/huffman;.tdc.huff;tdc;--algorithm=encode(huff);
 gzip -1;.gz;gzip;-1;
 gzip -9;.gz;gzip;-9;
 bzip2 -1;.bz2;bzip2;-1;
