@@ -90,7 +90,9 @@ TEST(TudocompDriver, roundtrip_matrix) {
             std::cout << "  " << format_diff(e.text, e.roundtrip_text) << "\n";
         }
         std::cout << format_std_outputs({
+            "compress command", e.compress_cmd,
             "compress stdout", e.compress_stdout,
+            "decompress command", e.compress_cmd,
             "decompress stdout", e.decompress_stdout,
         });
 
