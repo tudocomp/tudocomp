@@ -43,7 +43,7 @@ public:
             bool needs_sentinel = av.needs_sentinel_terminator();
 
             // TODO: Debug!
-            needs_sentinel = true;
+            //needs_sentinel = true;
 
             auto compressor = create_algo_with_registry_dynamic(
                 env().registry(), av);
@@ -56,6 +56,8 @@ public:
             Output between(between_buf);
             run(input, between, first_algo);
         }
+        // TODO: Debug!
+        //std::cout << vec_to_debug_string(between_buf) << "\n";
         {
             Input between(between_buf);
             run(between, output, second_algo);
