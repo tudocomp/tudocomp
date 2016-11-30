@@ -76,28 +76,26 @@ TEST(TudocompDriver, roundtrip_matrix) {
     }
 
     for (auto& e : errors) {
-        std::cout << "\n";
-        std::cout << "[ ERROR: " << e.test << " ]\n";
-        std::cout << e.message << "\n";
+        std::cout << "# [ERROR] ############################################################\n";
+        std::cout << "  " << e.message << "\n";
+        std::cout << "  in: " << e.test << "\n";
         if (e.text != e.roundtrip_text) {
             auto escaped_text = format_escape(e.text);
             auto escaped_roundtrip_text = format_escape(e.roundtrip_text);
-            std::cout << "expected:\n";
+            std::cout << "  expected:\n";
             std::cout << "  " << escaped_text << "\n";
-            std::cout << "actual:\n";
+            std::cout << "  actual:\n";
             std::cout << "  " << escaped_roundtrip_text << "\n";
-            std::cout << "diff:\n";
+            std::cout << "  diff:\n";
             std::cout << "  " << format_diff(e.text, e.roundtrip_text) << "\n";
         }
-        std::cout << format_std_outputs({
+        std::cout << indent_lines(format_std_outputs({
             "compress command", e.compress_cmd,
             "compress stdout", e.compress_stdout,
-            "decompress command", e.compress_cmd,
+            "decompress command", e.decompress_cmd,
             "decompress stdout", e.decompress_stdout,
-        });
-
-
-        std::cout << "\n";
+        }), 2) << "\n";
+        std::cout << "######################################################################\n";
     }
 
     ASSERT_TRUE(errors.empty());
