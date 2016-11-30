@@ -10,9 +10,9 @@
 
 #include <sys/stat.h>
 
-#include <tudocomp/util/View.hpp>
+#include <tudocomp/tudocomp.hpp>
 
-using tdc::View;
+using namespace tdc;
 
 // TODO: Actually specialize the 3 kinds
 
@@ -81,65 +81,66 @@ std::vector<uint8_t> ostream_to_bytes(Lambda f) {
 /// of different strings testing common corner cases and unicode input.
 template<class F>
 void test_roundtrip_batch(F f) {
-    f("abcdebcdeabc");
-    f("a");
-    f("");
+    f("abcdebcdeabc"_v);
+    f("a"_v);
+    f(""_v);
 
-    f("aaaaaaaaa"); \
-    f("banana"); \
-    f("ananas"); \
-    f("abcdefgh#defgh_abcde"); \
+    f("aaaaaaaaa"_v); \
+    f("banana"_v); \
+    f("ananas"_v); \
+    f("abcdefgh#defgh_abcde"_v); \
 
-    f("abcdebcdeabcd");
-    f("foobar");
-    f("abcabcabcabc");
+    f("abcdebcdeabcd"_v);
+    f("foobar"_v);
+    f("abcabcabcabc"_v);
 
-    f("abc abc  abc");
+    f("abc abc  abc"_v);
 
-    f("abaaabbababb");
+    f("abaaabbababb"_v);
 
     f(
         "asdfasctjkcbweasbebvtiwetwcnbwbbqnqxernqzezwuqwezuet"
         "qcrnzxbneqebwcbqwicbqcbtnqweqxcbwuexcbzqwezcqbwecqbw"
-        "dassdasdfzdfgfsdfsdgfducezctzqwebctuiqwiiqcbnzcebzqc");
+        "dassdasdfzdfgfsdfsdgfducezctzqwebctuiqwiiqcbnzcebzqc"_v);
 
-    f("ประเทศไทย中华Việt Nam");
+    f("ประเทศไทย中华Việt Nam"_v);
 
     f(
         "Lorem ipsum dolor sit amet, sea ut etiam solet salut"
         "andi, sint complectitur et his, ad salutandi imperdi"
-        "et gubergren per mei.");
+        "et gubergren per mei."_v);
 
     f(
         "Лорэм атоморюм ут хаж, эа граэки емпыдит ёудёкабет "
         "мэль, декам дежпютатионй про ты. Нэ ёужто жэмпэр"
-        " жкрибэнтур векж, незл коррюмпит.");
+        " жкрибэнтур векж, незл коррюмпит."_v);
 
     f(
         "報チ申猛あち涙境ワセ周兵いわ郵入せすをだ漏告されて話巡わッき"
         "や間紙あいきり諤止テヘエラ鳥提フ健2銀稿97傷エ映田ヒマ役請多"
         "暫械ゅにうて。関国ヘフヲオ場三をおか小都供セクヲ前俳著ゅ向深"
         "まも月10言スひす胆集ヌヱナ賀提63劇とやぽ生牟56詰ひめつそ総愛"
-        "ス院攻せいまて報当アラノ日府ラのがし。");
+        "ス院攻せいまて報当アラノ日府ラのがし。"_v);
 
     f(
         "Εαμ ανσιλλαε περισυλα συαφιθαθε εξ, δυο ιδ ρεβυμ σομ"
         "μοδο. Φυγιθ ηομερω ιυς ατ, ει αυδιρε ινθελλεγαμ νες."
         " Ρεκυε ωμνιυμ μανδαμυς κυο εα. Αδμοδυμ σωνσεκυαθ υθ "
         "φιξ, εσθ ετ πρωβατυς συαφιθαθε ραθιονιβυς, ταντας αυ"
-        "διαμ ινστρυσθιορ ει σεα.");
+        "διαμ ινστρυσθιορ ει σεα."_v);
 
-    f("struct Foo { uint8_t bar }");
+    f("struct Foo { uint8_t bar }"_v);
 
-    f("ABBCBCABA");
+    f("ABBCBCABA"_v);
 
-    f("abcabca");
+    f("abcabca"_v);
 
-    f("abbbbbbbbbbcbbbbbbbbbb");
+    f("abbbbbbbbbbcbbbbbbbbbb"_v);
 
-    std::vector<uint8_t> bytes_escaped {
-        255, 254,
-              1,   2,  3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,
+    //f("abc\0"_v);
+
+    std::vector<uint8_t> all_bytes {
+        0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,
         16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
         32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
         48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,
@@ -154,34 +155,32 @@ void test_roundtrip_batch(F f) {
         192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207,
         208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223,
         224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,
-        240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254,
-        255, 255
+        240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255,
     };
 
-    // TODO: Make compressors work with this
-    //f(View(bytes_escaped));
+    //f(View(all_bytes));
 }
 
 #include <tudocomp/util/Generators.hpp>
 template<class F>
 void test_on_string_generators(F func, size_t n) {
-	for(size_t i = 0; i < n; ++i) { 
-		std::string s = fibonacci_word(i); 
-		func(s); 
-	} 
-	for(size_t i = 0; i < n; ++i) { 
-		std::string s = thue_morse_word(i); 
-		func(s); 
-	} 
-	for(size_t i = 0; i < n; ++i) { 
-		std::string s = run_rich(i); 
-		func(s); 
-	} 
-	for(size_t i = 2; i < n; ++i) { 
-		for(size_t j = 0; j < 2+50/(i+1); ++j) { 
-			std::string s = random_uniform(1<<i,Ranges::numbers,j); 
-			func(s); 
-		} 
+	for(size_t i = 0; i < n; ++i) {
+		std::string s = fibonacci_word(i);
+		func(s);
+	}
+	for(size_t i = 0; i < n; ++i) {
+		std::string s = thue_morse_word(i);
+		func(s);
+	}
+	for(size_t i = 0; i < n; ++i) {
+		std::string s = run_rich(i);
+		func(s);
+	}
+	for(size_t i = 2; i < n; ++i) {
+		for(size_t j = 0; j < 2+50/(i+1); ++j) {
+			std::string s = random_uniform(1<<i,Ranges::numbers,j);
+			func(s);
+		}
 	}
 }
 
