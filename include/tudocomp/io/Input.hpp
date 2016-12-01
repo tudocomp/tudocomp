@@ -14,10 +14,10 @@
 
 #include <tudocomp/io/IOUtil.hpp>
 #include <tudocomp/io/ViewStream.hpp>
+#include <tudocomp/io/NullEscapingUtil.hpp>
 
 namespace tdc {
 namespace io {
-
     class InputView;
     class InputStream;
 
@@ -33,20 +33,17 @@ namespace io {
         struct Variant {
             virtual ~Variant() {}
             virtual std::unique_ptr<Variant> virtual_copy() = 0;
-            virtual InputView as_view() = 0;
+            virtual InputView as_view(bool escape_and_terminate) = 0;
             virtual InputStream as_stream() = 0;
             virtual size_t size() = 0;
-            virtual bool has_hidden_null_terminator() = 0;
+            virtual EscapableBuf buffer() = 0;
         };
 
         struct Memory: Variant {
             View m_view;
-            std::shared_ptr<std::vector<uint8_t>> m_owned;
+            EscapableBuf m_owned;
 
-            Memory(View view):
-                m_view(view) {}
-
-            Memory(View view, std::shared_ptr<std::vector<uint8_t>> owned):
+            Memory(View view, const EscapableBuf& owned):
                 m_view(view),
                 m_owned(owned) {}
 
@@ -58,13 +55,11 @@ namespace io {
                 return std::make_unique<Memory>(*this);
             }
 
-            inline InputView as_view() override;
+            inline InputView as_view(bool escape_and_terminate) override;
             inline InputStream as_stream() override;
             inline size_t size() override;
-            inline bool has_hidden_null_terminator() override {
-                // The slice has a hidden null character after its end
-                // if it points into m_owned and ends one before its end
-                return m_owned && ((m_view.data() + m_view.size()) == &m_owned->back());
+            inline EscapableBuf buffer() override {
+                return m_owned;
             }
         };
         struct File: Variant {
@@ -84,11 +79,11 @@ namespace io {
                 return std::make_unique<File>(*this);
             }
 
-            inline InputView as_view() override;
+            inline InputView as_view(bool escape_and_terminate) override;
             inline InputStream as_stream() override;
             inline size_t size() override;
-            inline bool has_hidden_null_terminator() override {
-                return false;
+            inline EscapableBuf buffer() override {
+                return EscapableBuf();
             }
         };
 
@@ -97,6 +92,7 @@ namespace io {
         friend class InputView;
 
         std::unique_ptr<Variant> m_data;
+        bool m_escape_and_terminate = false;
 
     public:
         /// \brief Represents a file path.
@@ -110,7 +106,7 @@ namespace io {
 
         /// \brief Constructs an empty input.
         inline Input():
-            m_data(std::make_unique<Memory>(""_v)) {}
+            m_data(std::make_unique<Memory>(""_v, EscapableBuf())) {}
 
         /// \brief Constructs an input from another input, retaining its
         /// internal state ("cursor").
@@ -119,11 +115,13 @@ namespace io {
         ///
         /// \param other The input to copy.
         inline Input(const Input& other):
-            m_data(other.m_data->virtual_copy()) {}
+            m_data(other.m_data->virtual_copy()),
+            m_escape_and_terminate(other.m_escape_and_terminate) {}
 
         /// \brief Move constructor.
         inline Input(Input&& other):
-            m_data(std::move(other.m_data)) {}
+            m_data(std::move(other.m_data)),
+            m_escape_and_terminate(other.m_escape_and_terminate) {}
 
         /// \brief Constructs a file input reading from the file at the given
         /// path.
@@ -132,17 +130,17 @@ namespace io {
         Input(Input::Path&& path):
             m_data(std::make_unique<File>(std::move(path.path), 0)) {}
 
+        /// \brief Constructs an input reading from a string in memory.
+        ///
+        /// \param buf The input string.
+        Input(const string_ref& buf):
+            m_data(std::make_unique<Memory>(buf, EscapableBuf())) {}
+
         /// \brief Constructs an input reading from the specified byte buffer.
         ///
         /// \param buf The input byte buffer.
         Input(const std::vector<uint8_t>& buf):
-            m_data(std::make_unique<Memory>(buf)) {}
-
-        /// \brief Constructs an input reading from a string in memory.
-        ///
-        /// \param buf The input string.
-        Input(const string_ref buf):
-            m_data(std::make_unique<Memory>(buf)) {}
+            Input(string_ref(buf)) {}
 
         /// \brief Constructs an input reading from a stream.
         ///
@@ -152,17 +150,16 @@ namespace io {
         Input(std::istream& stream) {
             auto buf = io::read_stream_to_stl_byte_container<
                 std::vector<uint8_t>>(stream);
-            buf.push_back(0);
+            auto owned = EscapableBuf(std::move(buf));
+            auto view = owned.view();
 
-            View data(buf.data(), buf.size() - 1);
-            auto owned = std::make_shared<std::vector<uint8_t>>(std::move(buf));
-
-            m_data = std::make_unique<Memory>(data, owned);
+            m_data = std::make_unique<Memory>(view, owned);
         }
 
         /// \brief Move assignment operator.
         Input& operator=(Input&& other) {
             m_data = std::move(other.m_data);
+            m_escape_and_terminate = other.m_escape_and_terminate;
             return *this;
         }
 
@@ -219,6 +216,12 @@ namespace io {
             return m_data->size();
         }
 
+        /// \cond INTERNAL
+        inline void escape_and_terminate() {
+            m_escape_and_terminate = true;
+        }
+        /// \endcond
+
     };
 
     /// \cond INTERNAL
@@ -226,53 +229,28 @@ namespace io {
         struct Variant {
             inline virtual ~Variant() {}
             virtual View view() = 0;
-            virtual void ensure_null_terminator() = 0;
         };
 
         struct Memory: Variant {
             View m_view;
-            bool m_view_has_hidden_null_terminator;
-            std::unique_ptr<std::vector<uint8_t>> m_owned;
+            EscapableBuf m_owned;
 
-            inline Memory(View view, bool has_hidden_null_terminator = false):
+            inline Memory(View view, const EscapableBuf& owned):
                 m_view(view),
-                m_view_has_hidden_null_terminator(has_hidden_null_terminator) {}
+                m_owned(owned) {}
 
             inline View view() override {
                 return m_view;
             }
-
-            inline virtual void ensure_null_terminator() override {
-                if (m_view_has_hidden_null_terminator) {
-                    m_view = View(m_view.data(), m_view.size() + 1);
-                } else if ((m_view.size() == 0) || (m_view.back() != 0)) {
-                    m_owned = std::make_unique<std::vector<uint8_t>>();
-                    auto& v = *m_owned;
-                    v.reserve(m_view.size() + 1);
-                    for (uint8_t byte : m_view) {
-                        v.push_back(byte);
-                    }
-                    v.push_back(0);
-                    m_view = *m_owned;
-                }
-            }
         };
         struct File: Variant {
-            std::vector<uint8_t> buffer;
-            size_t m_null_skip = 1;
+            EscapableBuf buffer;
 
-            inline File(std::vector<uint8_t>&& buffer_):
+            inline File(EscapableBuf buffer_):
                 buffer(std::move(buffer_)) {}
 
             inline View view() override {
-                return View {
-                    buffer.data(),
-                    buffer.size() - m_null_skip
-                };
-            }
-
-            inline virtual void ensure_null_terminator() override {
-                m_null_skip = 0;
+                return buffer.view();
             }
         };
 
@@ -299,7 +277,6 @@ namespace io {
     /// \sa View.
     class InputView: InputViewInternal, public View {
         friend class Input;
-		bool terminal_null_ensured = false;
 
         inline InputView(InputViewInternal&& mem):
             InputViewInternal(std::move(mem)),
@@ -315,49 +292,55 @@ namespace io {
 
         /// Default constructor (deleted).
         inline InputView() = delete;
-
-        /// Ensures that that this View is terminated with a null byte.
-        ///
-        /// Depending on internal Input source, this might involve
-        /// a (re)allocation of a buffer for the input data.
-        inline void ensure_null_terminator() {
-            m_variant->ensure_null_terminator();
-            (View&) *this = m_variant->view();
-			terminal_null_ensured = true;
-        }
-		bool is_terminal_null_ensured() const { return terminal_null_ensured; }
     };
 
-    inline InputView Input::Memory::as_view() {
-        Input::Memory mem2 = *this;
+    inline InputView Input::Memory::as_view(bool escape_and_terminate) {
+        EscapableBuf buf;
+
+        if (escape_and_terminate) {
+            if (m_owned.is_empty()) {
+                buf = EscapableBuf(m_view);
+            } else {
+                buf = m_owned;
+            }
+
+            buf.escape_and_terminate();
+            m_view = buf.view();
+        }
+
+        View old_view = m_view;
 
         // advance view into memory by its whole length
         m_view = m_view.substr(m_view.size());
 
         return InputView {
-            InputView::Memory { mem2.m_view }
+            InputView::Memory(old_view, buf)
         };
     }
 
-    inline InputView Input::File::as_view() {
+    inline InputView Input::File::as_view(bool escape_and_terminate) {
         // read file into buffer starting at current offset
         auto buf = read_file_to_stl_byte_container<
-            std::vector<uint8_t>>(path, offset, true);
+            std::vector<uint8_t>>(path, offset);
 
         // We read the whole file, so skip it on next read.
-        // `size - 1` because of the null terminator that
-        // does not exist in the file.
-        offset += buf.size() - 1;
+        offset += buf.size();
+
+        EscapableBuf buf2 = std::move(buf);
+
+        if (escape_and_terminate) {
+            buf2.escape_and_terminate();
+        }
 
         return InputView {
             InputView::File {
-                std::move(buf)
+                std::move(buf2)
             }
         };
     }
 
     inline InputView Input::as_view() {
-        return m_data->as_view();
+        return m_data->as_view(m_escape_and_terminate);
     }
 
     /// \cond INTERNAL
@@ -425,6 +408,9 @@ namespace io {
                 s.seekg(offset, std::ios::beg);
                 m_start_pos = s.tellg();
                 m_offset_back_ref = offset_back_ref;
+                if (!*m_stream) {
+                    throw tdc_input_file_not_found_error(m_path);
+                }
             }
 
             File(File&& other) {
@@ -516,6 +502,10 @@ namespace io {
     }
 
     inline InputStream Input::as_stream() {
+        if (m_escape_and_terminate) {
+            throw std::runtime_error(
+                "Creating a stream to an Input that requires termination with a sentinel value is not supported");
+        }
         return m_data->as_stream();
     }
 

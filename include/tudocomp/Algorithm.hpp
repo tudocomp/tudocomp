@@ -57,6 +57,7 @@ class Meta {
     std::string m_type;
     std::string m_name;
     std::string m_docs;
+    bool        m_add_null_terminator;
 
     std::vector<decl::Arg> m_options;
 
@@ -90,6 +91,7 @@ public:
         m_type(type),
         m_name(name),
         m_docs(doc),
+        m_add_null_terminator(false),
         m_static_args(ast::Value(std::string(name), {}))
     {
     }
@@ -208,7 +210,8 @@ public:
         return decl::Algorithm(
             std::move(m_name),
             std::move(m_options),
-            std::move(m_docs)
+            std::move(m_docs),
+            m_add_null_terminator
         );
     }
 
@@ -244,11 +247,23 @@ public:
         return m_type;
     }
 
+    /// \brief Indicates that this Algorithm requires a terminator symbol in Input.
+    inline void needs_sentinel_terminator() {
+        m_add_null_terminator = true;
+    }
+
+    /// \cond INTERNAL
+    inline bool is_needs_sentinel_terminator() {
+        return m_add_null_terminator;
+    }
+    /// \endcond
 };
 
+/// \cond INTERNAL
 inline void gather_types(eval::AlgorithmTypes& target,
                          Meta&& meta)
 {
+    // get vector for the current type
     auto& target_type_algos = target[meta.type()];
 
     // Create decl::Algorithm value here
@@ -258,8 +273,14 @@ inline void gather_types(eval::AlgorithmTypes& target,
     bool found = false;
     for (auto& already_seen_algo : target_type_algos) {
         if (already_seen_algo.name() == decl_value.name()) {
-            // TODO: Nice error
-            CHECK(already_seen_algo == decl_value);
+            if (already_seen_algo != decl_value) {
+                std::stringstream ss;
+                ss << "Attempting to register the same algorithm twice";
+                ss << " with differing details:";
+                ss << " new: " << decl_value;
+                ss << " existing: " << already_seen_algo;
+                throw std::runtime_error(ss.str());
+            }
 
             found = true;
             break;
@@ -280,6 +301,7 @@ inline void gather_types(eval::AlgorithmTypes& target,
         gather_types(target, std::move(meta));
     }
 }
+/// \endcond
 
 }
 

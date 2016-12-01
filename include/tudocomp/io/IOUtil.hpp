@@ -12,6 +12,14 @@ namespace io {
 
 // TODO: Error handling
 
+inline std::runtime_error tdc_input_file_not_found_error(const std::string& path) {
+    return std::runtime_error(std::string("input file ") + path + " does not exist");
+}
+
+inline std::runtime_error tdc_output_file_not_found_error(const std::string& path) {
+    return std::runtime_error(std::string("output file ") + path + " can not be created/accessed");
+}
+
 template<class T>
 T read_bytes(std::istream& inp, size_t bytes = sizeof(T)) {
     char c;
@@ -39,10 +47,9 @@ void read_bytes_to_vec(std::istream& inp, T& vec, size_t bytes) {
 
 template<class T>
 T read_file_to_stl_byte_container(std::string& filename,
-                                  size_t offset = 0,
-                                  bool null_term = false) {
+                                  size_t offset = 0) {
     std::ifstream in(filename, std::ios::in | std::ios::binary);
-    if (in) {
+    if (bool(in)) {
         T contents;
 
         // first, determine length from offset to end of file
@@ -53,25 +60,17 @@ T read_file_to_stl_byte_container(std::string& filename,
         auto len = end - start;
 
         // use length to allocate a single buffer for the file
-        if (null_term) {
-            contents.resize(len + 1, 0);
-        } else {
-            contents.resize(len);
-        }
+        contents.resize(len);
 
         // set position back to the start position at offset
         in.seekg(offset, std::ios::beg);
 
         // read file into contents without reallocating
-        if (null_term) {
-            in.read((char*)&contents[0], contents.size() - 1);
-        } else {
-            in.read((char*)&contents[0], contents.size());
-        }
+        in.read((char*)&contents[0], contents.size());
         in.close();
         return(contents);
     }
-    throw(errno);
+    throw tdc_input_file_not_found_error(filename);
 }
 
 template<class T, class S>

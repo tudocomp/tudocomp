@@ -5,8 +5,8 @@
 
 #include <tudocomp/Range.hpp>
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
-
-#include <tudocomp/util/DecodeBuffer.hpp>
+#include <tudocomp/compressors/lzss/LZSSDecodeBackBuffer.hpp>
+#include <tudocomp/compressors/lzss/LZSSDecodeForwardBuffer.hpp>
 
 namespace tdc {
 namespace lzss {
@@ -14,14 +14,10 @@ namespace lzss {
 template<typename coder_t, typename text_t>
 inline void encode_text(coder_t& coder,
                         const text_t& text,
-                        const FactorBuffer& factors,
-                        bool discard_null_terminator = true) {
+                        const FactorBuffer& factors) {
     assert(factors.is_sorted());
 
     auto n = text.size();
-    if(discard_null_terminator && text[n-1] == 0) {
-        --n; // discard null terminator
-    }
 
     // determine longest and shortest factor
     auto flen_min = factors.shortest_factor();
@@ -43,9 +39,6 @@ inline void encode_text(coder_t& coder,
     Range text_r(n);
     MinDistributedRange flen_r(flen_min, flen_max);
     Range fdist_r(fdist_max);
-
-    //std::cerr << "flen_r = [" << flen_min << "," << flen_max << "]" << std::endl;
-    //std::cerr << "fdist_max = " << fdist_max << std::endl;
 
     // encode ranges
     coder.encode(n, len_r);
@@ -88,7 +81,7 @@ inline void encode_text(coder_t& coder,
     coder.finalize();
 }
 
-template<typename coder_t, typename dcb_strategy_t>
+template<typename coder_t, typename decode_buffer_t>
 inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
     // decode text range
     auto text_len = decoder.template decode<len_t>(len_r);
@@ -104,7 +97,7 @@ inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
     Range fdist_r(fdist_max);
 
     // init decode buffer
-    DecodeBuffer<dcb_strategy_t> buffer(text_len);
+    decode_buffer_t buffer(text_len);
 
     // decode
     while(!decoder.eof()) {
@@ -117,7 +110,7 @@ inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
         // decode characters
         while(num--) {
             auto c = decoder.template decode<uliteral_t>(literal_r);
-            buffer.decode(c);
+            buffer.decode_literal(c);
         }
 
         if(!decoder.eof()) {
@@ -125,7 +118,7 @@ inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
             auto src = decoder.template decode<len_t>(text_r);
             auto len = decoder.template decode<len_t>(flen_r);
 
-            buffer.defact(src, len);
+            buffer.decode_factor(src, len);
         }
     }
 
@@ -136,9 +129,9 @@ inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
 template<typename coder_t>
 inline void decode_text(coder_t& decoder, std::ostream& outs, bool allow_forward = false) {
     if(allow_forward) {
-        decode_text_internal<coder_t, DCBStrategyRetargetArray>(decoder, outs);
+        decode_text_internal<coder_t, DecodeForwardBuffer>(decoder, outs);
     } else {
-        decode_text_internal<coder_t, DCBStrategyNone>(decoder, outs);
+        decode_text_internal<coder_t, DecodeBackBuffer>(decoder, outs);
     }
 }
 

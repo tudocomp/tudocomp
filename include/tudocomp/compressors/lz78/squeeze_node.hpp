@@ -15,13 +15,13 @@ typedef NODE_T node_t;
 	#define ALPHABET_BITS (sizeof(literal_t)*8)
 #endif //TODO alphabet_bits -> effective alphabet size
 
-factorid_t get_id(node_t data) {
+inline factorid_t get_id(node_t data) {
 	return data>>ALPHABET_BITS;
 }
-literal_t get_letter(node_t data) {
+inline literal_t get_letter(node_t data) {
 	return static_cast<char>(data & 0xff); //TODO 0xff hard coded
 }
-node_t create_node(factorid_t id, uliteral_t c) {
+inline node_t create_node(factorid_t id, uliteral_t c) {
 	return (static_cast<uint64_t>(id)<<ALPHABET_BITS) + static_cast<uint64_t>(c);
 }
 #undef ALPHABET_BITS

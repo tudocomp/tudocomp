@@ -51,7 +51,7 @@ void test_bwt(const std::string& str, textds_t& t) {
 	std::vector<char> bwt;
 	for(size_t i = 0; i < input_size; ++i) {
 		bwt.push_back(bwt::bwt(str,sa,i));
-	}      
+	}
 	uliteral_t* decoded_string = bwt::decode_bwt(bwt);
 	if(decoded_string == nullptr) {
 		ASSERT_EQ(str.length(), 0);
@@ -168,14 +168,14 @@ template<class textds_t>
 class RunTestDS {
 	void (*m_testfunc)(const std::string&, textds_t&);
 	public:
-	RunTestDS(void (*testfunc)(const std::string&, textds_t&)) 
+	RunTestDS(void (*testfunc)(const std::string&, textds_t&))
 		: m_testfunc(testfunc) {}
 
 	void operator()(const std::string& str) {
 		VLOG(2) << "str = \"" << str << "\"" << " size: " << str.length();
 		Input input(str);
+        input.escape_and_terminate();
 		InputView in = input.as_view();
-		in.ensure_null_terminator();
 		DCHECK_EQ(str.length()+1, in.size());
 		textds_t t(in);
 		DCHECK_EQ(str.length()+1, t.size());
@@ -186,7 +186,7 @@ class RunTestDS {
 #define TEST_DS_STRINGCOLLECTION(func) \
 	RunTestDS<TextDS<>> runner(test_sa); \
 	test_roundtrip_batch(runner); \
-	test_on_string_generators(runner,11); 
+	test_on_string_generators(runner,11);
 TEST(ds, lcpsada)     { TEST_DS_STRINGCOLLECTION(test_lcpsada); }
 TEST(ds, SA)          { TEST_DS_STRINGCOLLECTION(test_sa); }
 TEST(ds, ISA)         { TEST_DS_STRINGCOLLECTION(test_isa); }

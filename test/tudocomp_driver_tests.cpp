@@ -127,7 +127,8 @@ TEST(Registry, decl) {
 TEST(Registry, lookup) {
     using namespace tdc_algorithms;
     Registry& r = REGISTRY;
-    auto c = r.select_algorithm_or_exit("lz78(dict_size = \"100\")");
+    auto av = r.parse_algorithm_id("lz78(dict_size = \"100\")");
+    auto c = r.select_algorithm_or_exit(av);
 }
 
 TEST(Registry, dynamic_options) {
@@ -177,7 +178,8 @@ TEST(Registry, dynamic_options) {
 
     r.register_compressor<MyCompressor>();
 
-    auto c = r.select_algorithm_or_exit("foo(x, \"qwerty\")");
+    auto av = r.parse_algorithm_id("foo(x, \"qwerty\")");
+    auto c = r.select_algorithm_or_exit(av);
     std::vector<uint8_t> data;
     Output out(data);
     Input inp("test");

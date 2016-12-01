@@ -38,16 +38,19 @@ private:
     // Aways valid!
     std::unique_ptr<pattern::Algorithm> m_static_selection;
     friend class OptionValue;
+    bool m_needs_sentinel;
 public:
     inline ~AlgorithmValue();
     inline AlgorithmValue(const AlgorithmValue& other);
     inline AlgorithmValue(AlgorithmValue&& other);
     inline AlgorithmValue(std::string&& name,
                           ArgumentMap&& arguments,
-                          std::unique_ptr<pattern::Algorithm>&& static_selection);
+                          std::unique_ptr<pattern::Algorithm>&& static_selection,
+                          bool needs_sentinel);
 
     inline const std::string& name() const;
     inline const ArgumentMap& arguments() const;
+    inline bool needs_sentinel_terminator() const;
     inline const pattern::Algorithm& static_selection() const;
     inline AlgorithmValue& operator=(AlgorithmValue&& other);
 };
@@ -66,6 +69,7 @@ public:
 
     inline bool is_algorithm() const;
     inline const AlgorithmValue& as_algorithm() const;
+    inline AlgorithmValue to_algorithm() &&;
     inline const std::string& as_string() const;
     inline uint64_t as_integer() const;
     inline bool as_bool() const;
@@ -78,7 +82,8 @@ inline AlgorithmValue::~AlgorithmValue() {}
 
 inline AlgorithmValue::AlgorithmValue(const AlgorithmValue& other):
     m_name(other.m_name),
-    m_arguments(other.m_arguments)
+    m_arguments(other.m_arguments),
+    m_needs_sentinel(other.m_needs_sentinel)
 {
     if (other.m_static_selection != nullptr) {
         m_static_selection = std::make_unique<pattern::Algorithm>(
@@ -89,14 +94,18 @@ inline AlgorithmValue::AlgorithmValue(const AlgorithmValue& other):
 inline AlgorithmValue::AlgorithmValue(AlgorithmValue&& other):
     m_name(std::move(other.m_name)),
     m_arguments(std::move(other.m_arguments)),
-    m_static_selection(std::move(other.m_static_selection)) {}
+    m_static_selection(std::move(other.m_static_selection)),
+    m_needs_sentinel(other.m_needs_sentinel) {}
 
 inline AlgorithmValue::AlgorithmValue(std::string&& name,
                         ArgumentMap&& arguments,
-                        std::unique_ptr<pattern::Algorithm>&& static_selection):
+                        std::unique_ptr<pattern::Algorithm>&& static_selection,
+                        bool needs_sentinel
+                                     ):
     m_name(std::move(name)),
     m_arguments(std::move(arguments)),
-    m_static_selection(std::move(static_selection)) {}
+    m_static_selection(std::move(static_selection)),
+    m_needs_sentinel(needs_sentinel) {}
 
 inline const std::string& AlgorithmValue::name() const {
     return m_name;
@@ -112,7 +121,11 @@ inline AlgorithmValue& AlgorithmValue::operator=(AlgorithmValue&& other) {
     this->m_name = std::move(other.m_name);
     this->m_arguments = std::move(other.m_arguments);
     this->m_static_selection = std::move(other.m_static_selection);
+    this->m_needs_sentinel = std::move(other.m_needs_sentinel);
     return *this;
+}
+inline bool AlgorithmValue::needs_sentinel_terminator() const {
+    return m_needs_sentinel;
 }
 
 inline OptionValue::~OptionValue() {}
@@ -120,7 +133,7 @@ inline OptionValue::~OptionValue() {}
 inline OptionValue::OptionValue(): OptionValue("") {}
 inline OptionValue::OptionValue(std::string&& value):
     m_is_value(true),
-    m_value_or_algorithm(AlgorithmValue(std::move(value), {}, std::make_unique<pattern::Algorithm>())) {}
+    m_value_or_algorithm(AlgorithmValue(std::move(value), {}, std::make_unique<pattern::Algorithm>(), false)) {}
 inline OptionValue::OptionValue(AlgorithmValue&& algorithm):
     m_is_value(false),
     m_value_or_algorithm(std::move(algorithm)) {}
@@ -137,9 +150,15 @@ inline bool OptionValue::is_algorithm() const {
     return !m_is_value;
 }
 inline const AlgorithmValue& OptionValue::as_algorithm() const {
-    CHECK(!m_is_value);
+    CHECK(is_algorithm());
     return m_value_or_algorithm;
 }
+
+inline AlgorithmValue OptionValue::to_algorithm() && {
+    CHECK(is_algorithm());
+    return std::move(m_value_or_algorithm);
+}
+
 inline const std::string& OptionValue::as_string() const {
     CHECK(m_is_value);
     return m_value_or_algorithm.m_name;

@@ -62,7 +62,7 @@ public:
         size_t pos = 0;
         bool eof = false;
         while(ahead < buf.size()) {
-            size_t fpos, fsrc, fnum = 0;
+            size_t fpos = 0, fsrc = 0, fnum = 0;
 
             //walk back buffer
             for(size_t k = (ahead > m_window ? ahead - m_window : 0); k < ahead; k++) {

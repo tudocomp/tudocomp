@@ -16,7 +16,7 @@
 #include <utility>
 #include <climits>
 
-#include <tudocomp/ds/GenericIntPtr.hpp>
+#include <tudocomp/ds/IntPtr.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/dynamic_t.hpp>
 #include <tudocomp/util/IntegerBase.hpp>
@@ -320,7 +320,7 @@ namespace int_vector {
         inline void range_check(size_type n) const {
             if (n >= size()) {
                 std::stringstream ss;
-                ss << "Out-of-range access of GenericIntVector: index is ";
+                ss << "Out-of-range access of IntVector: index is ";
                 ss << n;
                 ss << ", size() is ";
                 ss << size();
@@ -644,6 +644,10 @@ namespace int_vector {
         x.swap(y);
     }
 }
+
+template<class T>
+using BitPackingVector = int_vector::BitPackingVector<T>;
+
 }
 
 #endif

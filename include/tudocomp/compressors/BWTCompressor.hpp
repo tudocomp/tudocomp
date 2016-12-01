@@ -18,6 +18,7 @@ private:
 public:
     inline static Meta meta() {
         Meta m("compressor", "bwt", "BWT Compressor");
+        m.needs_sentinel_terminator();
         return m;
     }
 
@@ -27,9 +28,9 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto ostream = output.as_stream();
         auto in = input.as_view();
-		in.ensure_null_terminator();
+        DCHECK(in.ends_with(uint8_t(0)));
 
-        TextDS<> t(in);
+        TextDS<> t(in, env());
 		tdc_debug(VLOG(2) << vec_to_debug_string(t));
 		const len_t input_size = t.size();
 

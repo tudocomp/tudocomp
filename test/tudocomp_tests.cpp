@@ -9,7 +9,6 @@
 #include <tudocomp/tudocomp.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
-#include <tudocomp/util/DecodeBuffer.hpp>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
@@ -265,8 +264,8 @@ TEST(Input, ensure_null_term) {
 
     {
         Input i(View(a).substr(0, 3));
+        i.escape_and_terminate();
         auto x = i.as_view();
-        x.ensure_null_terminator();
         ASSERT_NE(x, b);
         ASSERT_EQ(x, c);
     }
@@ -275,8 +274,8 @@ TEST(Input, ensure_null_term) {
     {
         Input i(View(a).substr(0, 3));
         Input i2 = std::move(i);
+        i2.escape_and_terminate();
         auto x = i2.as_view();
-        x.ensure_null_terminator();
         ASSERT_NE(x, b);
         ASSERT_EQ(x, c);
     }
@@ -284,16 +283,15 @@ TEST(Input, ensure_null_term) {
 
     {
         Input i(View(a).substr(0, 3));
+        i.escape_and_terminate();
 
         Input i2 = i;
 
         auto x = i2.as_view();
-        x.ensure_null_terminator();
         ASSERT_NE(x, b);
         ASSERT_EQ(x, c);
 
         auto y = i.as_view();
-        y.ensure_null_terminator();
         ASSERT_NE(y, b);
         ASSERT_EQ(y, c);
     }
@@ -301,28 +299,15 @@ TEST(Input, ensure_null_term) {
 
     {
         Input i(View(a).substr(0, 3));
+
+        i.escape_and_terminate();
         {
             auto x = i.as_view();
-            x.ensure_null_terminator();
             ASSERT_NE(x, b);
             ASSERT_EQ(x, c);
         }
         {
             auto x = i.as_view();
-            ASSERT_EQ(x, ""_v);
-        }
-        {
-            auto x = i.as_view();
-            x.ensure_null_terminator();
-            ASSERT_EQ(x, "\0"_v);
-        }
-        {
-            auto x = i.as_view();
-            ASSERT_EQ(x, ""_v);
-        }
-        {
-            auto x = i.as_view();
-            x.ensure_null_terminator();
             ASSERT_EQ(x, "\0"_v);
         }
     }
@@ -434,51 +419,36 @@ namespace input_nte_matrix {
         }
         {
             Input i = i_bak;
+            i.escape_and_terminate();
             auto x = i.as_view();
-            x.ensure_null_terminator();
             ASSERT_NE(x, b);
             ASSERT_EQ(x, c);
         }
 
         {
             Input i = i_bak;
+            i.escape_and_terminate();
             Input i2 = i;
 
             auto x = i2.as_view();
-            x.ensure_null_terminator();
             ASSERT_NE(x, b);
             ASSERT_EQ(x, c);
 
             auto y = i.as_view();
-            y.ensure_null_terminator();
             ASSERT_NE(y, b);
             ASSERT_EQ(y, c);
         }
 
         {
             Input i = i_bak;
+            i.escape_and_terminate();
             {
                 auto x = i.as_view();
-                x.ensure_null_terminator();
                 ASSERT_NE(x, b);
                 ASSERT_EQ(x, c);
             }
             {
                 auto x = i.as_view();
-                ASSERT_EQ(x, ""_v);
-            }
-            {
-                auto x = i.as_view();
-                x.ensure_null_terminator();
-                ASSERT_EQ(x, "\0"_v);
-            }
-            {
-                auto x = i.as_view();
-                ASSERT_EQ(x, ""_v);
-            }
-            {
-                auto x = i.as_view();
-                x.ensure_null_terminator();
                 ASSERT_EQ(x, "\0"_v);
             }
         }
@@ -547,6 +517,67 @@ namespace input_nte_matrix {
 
 }
 
+TEST(Input, escaping_view) {
+    Input i("\0\x01\xff\xfe\0"_v);
+    i.escape_and_terminate();
+    auto v = i.as_view();
+    ASSERT_EQ(View(v), "\xff\xfe\x01\xff\xff\xfe\xff\xfe\0"_v);
+}
+
+TEST(Input, escaping_stream) {
+    bool threw = false;
+    try {
+        Input i("\0\x01\xff\xfe\0"_v);
+        i.escape_and_terminate();
+        auto s = i.as_stream();
+        std::stringstream ss;
+        ss << s.rdbuf();
+        ASSERT_EQ(ss.str(), "\0\x01\xff\xfe\0"_v);
+    } catch (std::runtime_error e) {
+        threw = true;
+    }
+    ASSERT_TRUE(threw);
+}
+
+TEST(Output, unescaping) {
+    auto r = "\xff\xfe\x01\xff\xff\xfe\xff\xfe\0"_v;
+
+    std::vector<uint8_t> buf;
+    {
+        Output o(buf);
+        o.unescape_and_trim();
+        auto s = o.as_stream();
+        s.write((const char*) r.data(), r.size());
+    }
+    ASSERT_EQ(View(buf), "\0\x01\xff\xfe\0"_v);
+}
+
+TEST(Input, escaping_view_not) {
+    Input i("\0\x01\xff\xfe\0"_v);
+    auto v = i.as_view();
+    ASSERT_EQ(View(v), "\0\x01\xff\xfe\0"_v);
+}
+
+TEST(Input, escaping_stream_not) {
+    Input i("\0\x01\xff\xfe\0"_v);
+    auto s = i.as_stream();
+    std::stringstream ss;
+    ss << s.rdbuf();
+    ASSERT_EQ(ss.str(), "\0\x01\xff\xfe\0"_v);
+}
+
+TEST(Output, unescaping_not) {
+    auto r = "\xff\xfe\x01\xff\xff\xfe\xff\xfe\0"_v;
+
+    std::vector<uint8_t> buf;
+    {
+        Output o(buf);
+        auto s = o.as_stream();
+        s.write((const char*) r.data(), r.size());
+    }
+    ASSERT_EQ(View(buf), "\xff\xfe\x01\xff\xff\xfe\xff\xfe\0"_v);
+}
+
 TEST(Output, memory) {
     std::vector<uint8_t> vec;
 
@@ -584,6 +615,42 @@ TEST(Output, stream) {
     }
 
     ASSERT_EQ(ss.str(), "abc");
+}
+
+TEST(Input, file_not_exists_stream) {
+    bool threw = false;
+    try {
+        Input ft = Input::from_path("asdfgh.txt");
+        ft.as_stream();
+    } catch (std::runtime_error& e) {
+        ASSERT_EQ(View(e.what()), "input file asdfgh.txt does not exist");
+        threw = true;
+    }
+    ASSERT_TRUE(threw);
+}
+
+TEST(Input, file_not_exists_view) {
+    bool threw = false;
+    try {
+        Input ft = Input::from_path("asdfgh.txt");
+        ft.as_view();
+    } catch (std::runtime_error& e) {
+        ASSERT_EQ(View(e.what()), "input file asdfgh.txt does not exist");
+        threw = true;
+    }
+    ASSERT_TRUE(threw);
+}
+
+TEST(Output, file_not_exists_view) {
+    bool threw = false;
+    try {
+        Output ft = Output::from_path("asdfgh/out.txt");
+        ft.as_stream();
+    } catch (std::runtime_error& e) {
+        ASSERT_EQ(View(e.what()), "output file asdfgh/out.txt can not be created/accessed");
+        threw = true;
+    }
+    ASSERT_TRUE(threw);
 }
 
 TEST(IO, bits) {
@@ -655,55 +722,6 @@ TEST(IO, bits_eof) {
 
         ASSERT_EQ(i, n);
     }
-}
-
-TEST(DecodeBuffer, cbstrategy_none) {
-
-
-    DecodeBuffer<DCBStrategyNone> buffer(12);
-    buffer.decode('b');
-    buffer.decode('a');
-    buffer.decode('n');
-    buffer.defact(1, 3);
-    buffer.defact(0, 6);
-
-    std::stringstream ss;
-    buffer.write_to(ss);
-
-    ASSERT_EQ("bananabanana", ss.str());
-
-}
-
-TEST(DecodeBuffer, cbstrategy_map) {
-
-    DecodeBuffer<DCBStrategyMap> buffer(12);
-    buffer.decode('b');
-    buffer.defact(3, 3);
-    buffer.decode('n');
-    buffer.decode('a');
-    buffer.defact(0, 6);
-
-    std::stringstream ss;
-    buffer.write_to(ss);
-
-    ASSERT_EQ("bananabanana", ss.str());
-
-}
-
-TEST(DecodeBuffer, cbstrategy_array) {
-
-    DecodeBuffer<DCBStrategyRetargetArray> buffer(12);
-    buffer.decode('b');
-    buffer.defact(3, 3);
-    buffer.decode('n');
-    buffer.decode('a');
-    buffer.defact(0, 6);
-
-    std::stringstream ss;
-    buffer.write_to(ss);
-
-    ASSERT_EQ("bananabanana", ss.str());
-
 }
 
 TEST(View, construction) {
@@ -1083,4 +1101,37 @@ TEST(Algorithm, meta) {
             ASSERT_EQ(dyn, "quxqux");
         }
     });
+}
+
+struct EscapingComp: public Compressor {
+    static Meta meta() {
+        Meta m("compressor", "esc_test");
+        m.needs_sentinel_terminator();
+        return m;
+    }
+
+    using Compressor::Compressor;
+
+    virtual void compress(Input& i, Output& o) {}
+    virtual void decompress(Input& i, Output& o) {}
+};
+
+TEST(Escaping, option_value_direct) {
+    ASSERT_TRUE(EscapingComp::meta().is_needs_sentinel_terminator());
+}
+
+TEST(Escaping, option_value_indirect) {
+    Registry r;
+    r.register_compressor<EscapingComp>();
+    auto av = r.parse_algorithm_id("esc_test");
+    ASSERT_TRUE(av.needs_sentinel_terminator());
+}
+
+TEST(Escaping, option_value_indirect_copy) {
+    Registry r;
+    r.register_compressor<EscapingComp>();
+    AlgorithmValue av = r.parse_algorithm_id("esc_test");
+    AlgorithmValue av2("", {}, nullptr, false);
+    av2 = std::move(av);
+    ASSERT_TRUE(av2.needs_sentinel_terminator());
 }

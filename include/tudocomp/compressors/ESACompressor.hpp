@@ -28,6 +28,7 @@ public:
         m.option("coder").templated<coder_t>();
         m.option("strategy").templated<strategy_t, esacomp::ESACompMaxLCP>();
         m.option("threshold").dynamic("6");
+        m.needs_sentinel_terminator();
         return m;
     }
 
@@ -36,8 +37,8 @@ public:
 
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
-		in.ensure_null_terminator();
-        text_t text(in);
+        DCHECK(in.ends_with(uint8_t(0)));
+        text_t text(in, env());
 
         // read options
         size_t threshold = env().option("threshold").as_integer(); //factor threshold
@@ -67,8 +68,7 @@ public:
         typename coder_t::Encoder coder(env().env_for_option("coder"),
             output, lzss::TextLiterals<text_t>(text, factors));
 
-        lzss::encode_text(coder, text, factors,
-            in.is_terminal_null_ensured()); //TODO is this correct?
+        lzss::encode_text(coder, text, factors); //TODO is this correct?
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
