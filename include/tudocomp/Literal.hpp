@@ -16,7 +16,7 @@ class NoLiterals {
 public:
     inline NoLiterals() {}
     inline bool has_next() const { return false; }
-    inline Literal next() { assert(false); }
+    inline Literal next() { assert(false); return Literal{0, 0}; }
 };
 
 class ViewLiterals {

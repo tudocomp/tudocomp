@@ -88,7 +88,7 @@ public:
 
         // decode
         bool flip = false;
-        uliteral_t run_char;
+        uliteral_t run_char = 0;
 
         while(!decoder.eof()) {
             auto c = decoder.template decode<uliteral_t>(literal_r);
