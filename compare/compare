@@ -79,16 +79,13 @@ while read LINE; do
     rm -f $TMP/$F
 
     # print name
-    printf "%16s | compressing ..." "$NAME"
+    printf "%16s | " "$NAME"
 
     # compress
     $TIME -f "%U;%M" -o $STORE $CCMD >/dev/null 2>&1
     OK=$?
 
-    echo -en "\033[15D" # move cursor left
-
     if [ $OK -eq 130 ]; then
-        echo -en "\033[2D" # move cursor left
         printf "%61s\n" "(cancelled)"
         exit 130
     elif [ $OK -eq 127 ]; then
@@ -117,15 +114,10 @@ while read LINE; do
     printf "%8.4f%% | " $RATE
 
     # decompress
-    printf "decompressing ..."
-
     $TIME -f "%U;%M" -o $STORE $DCMD $OUT /dev/null $DARGS >/dev/null 2>&1
     OK=$?
 
-    echo -en "\033[17D" # move cursor left
-
     if [ $OK -eq 130 ]; then
-        echo -en "\033[2D" # move cursor left
         printf "%23s\n" "(cancelled)"
         exit 130
     elif [ $OK -ne 0 ]; then
