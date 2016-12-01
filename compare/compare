@@ -1,29 +1,36 @@
 #!/bin/bash
-FILES=files
 COMPRESSORS=compressors
 TMP=/tmp
 STORE=$TMP/compare.store
 TIME=/usr/bin/time
 
-SUITE=$1
+# Settings
+export LC_NUMERIC=C
 
 # Check input
-if [ -z "$SUITE" ]; then
-    echo "Usage: compare <suite-file>"
+if [ -z "$1" -o -z "$2" ]; then
+    echo "Usage: compare <suite> <files ...>"
     exit 1
 fi
 
+# Check suite
+SUITE=$1
 if [ ! -f $SUITE ]; then
     echo "Suite file not found: $1"
     exit 1
 fi
 
 # Execute command suite
-FILENAMES=`ls $FILES`
-for F in $FILENAMES; do
+FILES=${@:2}
+for F in $FILES; do
 
-export IN=files/$F
-INSZ=`du -b $IN | cut -f 1`
+if [ ! -f $F ]; then
+    echo "Input file not found: $F"
+    continue
+fi
+
+export IN=$F
+INSZ=`stat -c %s $IN`
 
 echo
 echo "$IN ($INSZ bytes) ..."
@@ -60,7 +67,8 @@ while read LINE; do
     fi
 
     # determine output file and delete it if it still exists
-    export OUT=$TMP/$F$EXT
+    export OUT=$TMP/`basename $IN`$EXT
+
     rm -f $OUT
 
     # remove already decompressed file if exists
@@ -78,7 +86,7 @@ while read LINE; do
     if [ $OK -eq 130 ]; then
         echo -en "\033[2D" # move cursor left
         printf "%61s\n" "(cancelled)"
-        continue
+        exit 130
     elif [ $OK -eq 127 ]; then
         printf "%61s\n" "(not installed)"
         continue
@@ -115,7 +123,7 @@ while read LINE; do
     if [ $OK -eq 130 ]; then
         echo -en "\033[2D" # move cursor left
         printf "%23s\n" "(cancelled)"
-        continue
+        exit 130
     elif [ $OK -ne 0 ]; then
         printf "%23s\n" "(decompress error $OK)"
         continue
