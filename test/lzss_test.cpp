@@ -141,13 +141,55 @@ TEST(lzss, decode_back_buffer) {
     ASSERT_EQ("bananabanana", ss.str());
 }
 
-TEST(lzss, decode_forward_buffer) {
-    lzss::DecodeForwardBuffer buffer(12);
+TEST(lzss, decode_forward_chain_buffer_chain) {
+    lzss::DecodeForwardChainBuffer buffer(12);
     buffer.decode_literal('b');
     buffer.decode_factor(3, 3);
     buffer.decode_literal('n');
     buffer.decode_literal('a');
     buffer.decode_factor(0, 6);
+
+    std::stringstream ss;
+    buffer.write_to(ss);
+
+    ASSERT_EQ("bananabanana", ss.str());
+}
+
+TEST(lzss, decode_forward_chain_buffer_mult) {
+    lzss::DecodeForwardChainBuffer buffer(12);
+    buffer.decode_factor(6, 6);
+    buffer.decode_literal('b');
+    buffer.decode_factor(9, 3);
+    buffer.decode_literal('n');
+    buffer.decode_literal('a');
+
+    std::stringstream ss;
+    buffer.write_to(ss);
+
+    ASSERT_EQ("bananabanana", ss.str());
+}
+
+TEST(lzss, decode_forward_lm_buffer_chain) {
+    lzss::DecodeForwardListMapBuffer buffer(12);
+    buffer.decode_literal('b');
+    buffer.decode_factor(3, 3);
+    buffer.decode_literal('n');
+    buffer.decode_literal('a');
+    buffer.decode_factor(0, 6);
+
+    std::stringstream ss;
+    buffer.write_to(ss);
+
+    ASSERT_EQ("bananabanana", ss.str());
+}
+
+TEST(lzss, decode_forward_lm_buffer_mult) {
+    lzss::DecodeForwardListMapBuffer buffer(12);
+    buffer.decode_factor(6, 6);
+    buffer.decode_literal('b');
+    buffer.decode_factor(9, 3);
+    buffer.decode_literal('n');
+    buffer.decode_literal('a');
 
     std::stringstream ss;
     buffer.write_to(ss);
