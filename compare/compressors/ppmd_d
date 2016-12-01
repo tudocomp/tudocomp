@@ -1,1 +1,1 @@
-cd `dirname $OUT` && ppmd d $DARGS -s $OUT
+cd `dirname $IN` && ppmd d -s -f$OUT $DARGS $IN

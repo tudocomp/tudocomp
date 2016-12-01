@@ -29,14 +29,15 @@ if [ ! -f $F ]; then
     continue
 fi
 
-export IN=$F
-INSZ=`stat -c %s $IN`
+FNAME=`basename $F`
+INSZ=`stat -c %s $F`
+MD5=`md5sum $F | awk '{print $1}'`
 
 echo
-echo "$IN ($INSZ bytes) ..."
+echo "$F ($INSZ bytes, md5=$MD5) ..."
 echo
-printf "%16s | %10s | %10s | %9s | %10s | %10s\n" "" "C Time" "C Memory" "C Rate" "D Time" "D Memory"
-printf "=%.0s" {1..80}
+printf "%28s | %10s | %10s | %10s | %10s | %10s | %4s\n" "Compressor" "C Time" "C Memory" "C Rate" "D Time" "D Memory" "MD5"
+printf "=%.0s" {1..100}
 echo
 
 while read LINE; do
@@ -70,29 +71,32 @@ while read LINE; do
         continue
     fi
 
-    # determine output file and delete it if it still exists
-    export OUT=$TMP/`basename $IN`$EXT
+    # determine input and output files
+    ORIGINAL=$F
+    COMPRESSED=$TMP/$FNAME$EXT
+    DECOMPRESSED=$TMP/$FNAME
 
-    rm -f $OUT
-
-    # remove already decompressed file if exists
-    rm -f $TMP/$F
+    # delete output files if they already exist
+    rm -f $COMPRESSED
+    rm -f $DECOMPRESSED
 
     # print name
-    printf "%16s | " "$NAME"
+    printf "%28s | " "$NAME"
 
     # compress
+    export IN=$ORIGINAL
+    export OUT=$COMPRESSED
     $TIME -f "%U;%M" -o $STORE $CCMD >/dev/null 2>&1
     OK=$?
 
     if [ $OK -eq 130 ]; then
-        printf "%61s\n" "(cancelled)"
+        echo
         exit 130
     elif [ $OK -eq 127 ]; then
-        printf "%61s\n" "(not installed)"
+        echo "(not installed)"
         continue
     elif [ $OK -ne 0 ]; then
-        printf "%61s\n" "(compress error $OK)"
+        echo "(compress error $OK)"
         continue
     fi
 
@@ -102,7 +106,7 @@ while read LINE; do
     printf "%#8.2f s | %8d K | " $TM $MEM
 
     if [ ! -f $OUT ]; then
-        printf "%35s\n" "($OUT not found)"
+        echo "($OUT not found)"
         continue
     fi
 
@@ -111,24 +115,39 @@ while read LINE; do
     RATE=`echo 100*$OUTSZ/$INSZ | bc -l`
 
     # print name and compression rate
-    printf "%8.4f%% | " $RATE
+    printf "%9.4f%% | " $RATE
 
     # decompress
+    export IN=$COMPRESSED
+    export OUT=$DECOMPRESSED
     $TIME -f "%U;%M" -o $STORE $DCMD $OUT /dev/null $DARGS >/dev/null 2>&1
     OK=$?
 
     if [ $OK -eq 130 ]; then
-        printf "%23s\n" "(cancelled)"
+        echo
         exit 130
     elif [ $OK -ne 0 ]; then
-        printf "%23s\n" "(decompress error $OK)"
+        echo "(decompress error $OK)"
         continue
     fi
 
     IFS=";" read -r TM MEM < $STORE
 
     # print runtime and memory usage
-    printf "%#8.2f s | %8d K\n" $TM $MEM
+    printf "%#8.2f s | %8d K | " $TM $MEM
+
+    # perform MD5 check of decompressed file
+    if [ ! -f $DECOMPRESSED ]; then
+        printf "%4s\n" "FNF" # file not found
+        continue
+    fi
+
+    DMD5=`md5sum $DECOMPRESSED | awk '{print $1}'`
+    if [ "$DMD5" == "$MD5" ]; then
+        printf "%4s\n" "OK"
+    else
+        printf "%4s\n" "ERR"
+    fi
 
 done < $1 # suite
 done # files

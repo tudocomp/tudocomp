@@ -1,1 +1,1 @@
-gzip $DARGS -d -f -c $OUT >/dev/null
+gzip $DARGS -d -f -c $IN >$OUT

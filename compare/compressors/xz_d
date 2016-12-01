@@ -1,1 +1,1 @@
-xz -d $DARGS -f -c $OUT >/dev/null
+xz -d $DARGS -f -c $IN >$OUT

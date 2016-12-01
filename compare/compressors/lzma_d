@@ -1,1 +1,1 @@
-lzma -d $DARGS -f -c $OUT >/dev/null
+lzma -d $DARGS -f -c $IN >$OUT
