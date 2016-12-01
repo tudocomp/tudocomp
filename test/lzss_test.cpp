@@ -126,3 +126,31 @@ TEST(lzss, text_literals_factors_end) {
 
     lzss_text_literals_factors(literals, ref_literals, ref_positions);
 }
+
+TEST(lzss, decode_back_buffer) {
+    lzss::DecodeBackBuffer buffer(12);
+    buffer.decode_literal('b');
+    buffer.decode_literal('a');
+    buffer.decode_literal('n');
+    buffer.decode_factor(1, 3);
+    buffer.decode_factor(0, 6);
+
+    std::stringstream ss;
+    buffer.write_to(ss);
+
+    ASSERT_EQ("bananabanana", ss.str());
+}
+
+TEST(lzss, decode_forward_buffer) {
+    lzss::DecodeForwardBuffer buffer(12);
+    buffer.decode_literal('b');
+    buffer.decode_factor(3, 3);
+    buffer.decode_literal('n');
+    buffer.decode_literal('a');
+    buffer.decode_factor(0, 6);
+
+    std::stringstream ss;
+    buffer.write_to(ss);
+
+    ASSERT_EQ("bananabanana", ss.str());
+}

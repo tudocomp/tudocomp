@@ -9,7 +9,6 @@
 #include <tudocomp/tudocomp.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
-#include <tudocomp/util/DecodeBuffer.hpp>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
@@ -723,55 +722,6 @@ TEST(IO, bits_eof) {
 
         ASSERT_EQ(i, n);
     }
-}
-
-TEST(DecodeBuffer, cbstrategy_none) {
-
-
-    DecodeBuffer<DCBStrategyNone> buffer(12);
-    buffer.decode('b');
-    buffer.decode('a');
-    buffer.decode('n');
-    buffer.defact(1, 3);
-    buffer.defact(0, 6);
-
-    std::stringstream ss;
-    buffer.write_to(ss);
-
-    ASSERT_EQ("bananabanana", ss.str());
-
-}
-
-TEST(DecodeBuffer, cbstrategy_map) {
-
-    DecodeBuffer<DCBStrategyMap> buffer(12);
-    buffer.decode('b');
-    buffer.defact(3, 3);
-    buffer.decode('n');
-    buffer.decode('a');
-    buffer.defact(0, 6);
-
-    std::stringstream ss;
-    buffer.write_to(ss);
-
-    ASSERT_EQ("bananabanana", ss.str());
-
-}
-
-TEST(DecodeBuffer, cbstrategy_array) {
-
-    DecodeBuffer<DCBStrategyRetargetArray> buffer(12);
-    buffer.decode('b');
-    buffer.defact(3, 3);
-    buffer.decode('n');
-    buffer.decode('a');
-    buffer.defact(0, 6);
-
-    std::stringstream ss;
-    buffer.write_to(ss);
-
-    ASSERT_EQ("bananabanana", ss.str());
-
 }
 
 TEST(View, construction) {

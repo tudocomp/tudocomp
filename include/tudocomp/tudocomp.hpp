@@ -80,7 +80,6 @@ namespace lzw {
 #include <tudocomp/compressors/ChainCompressor.hpp>
 
 #include <tudocomp/util/Counter.hpp>
-#include <tudocomp/util/DecodeBuffer.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/SuffixArray.hpp>

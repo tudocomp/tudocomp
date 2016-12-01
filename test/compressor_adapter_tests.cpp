@@ -10,7 +10,6 @@
 
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
-#include <tudocomp/util/DecodeBuffer.hpp>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
