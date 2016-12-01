@@ -40,6 +40,10 @@ printf "=%.0s" {1..80}
 echo
 
 while read LINE; do
+    # skip empty lines and comments
+    if [ -z "$LINE" ]; then
+        continue
+    fi
     if [[ ${LINE:0:1} == "#" ]]; then
         continue
     fi
