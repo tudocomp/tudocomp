@@ -6,12 +6,11 @@
 
 #include <sdsl/int_vector.hpp>
 
-
-
 #include <tudocomp/io.hpp>
 #include "forward.hpp"
 
 #include <tudocomp/Literal.hpp>
+#include <tudocomp/Env.hpp>
 
 namespace tdc {
 
@@ -22,7 +21,6 @@ template<
     class lcp_tt = LCPArray,
     template<typename> class isa_tt = InverseSuffixArray>
 class TextDS {
-
 public:
     typedef uint8_t value_type;
     static const uint64_t SA = 0x01;
@@ -36,8 +34,24 @@ public:
     typedef PhiArray<this_t> phi_t;
 
 private:
-    size_t m_size;
-    const value_type* m_text;
+    class OptionalEnv {
+        Env* m_env;
+    public:
+        inline OptionalEnv(Env* env): m_env(env) {}
+        inline void begin_stat_phase(string_ref name) {
+            if (m_env != nullptr) {
+                m_env->begin_stat_phase(name);
+            }
+        }
+        inline void end_stat_phase() {
+            if (m_env != nullptr) {
+                m_env->end_stat_phase();
+            }
+        }
+    };
+
+    View m_text;
+    OptionalEnv m_env;
 
     std::unique_ptr<sa_t>  m_sa;
     std::unique_ptr<isa_t> m_isa;
@@ -75,14 +89,20 @@ private:
     }
 
 public:
-    inline TextDS(const View& input)
-        : m_size(input.size()), m_text((const value_type*)input.data())
-    {
+    inline TextDS(const View& input) : m_text(input), m_env(nullptr) {
         null_check(input);
     }
 
-    inline TextDS(const InputView& input, uint64_t flags) : TextDS(input)
-    {
+    inline TextDS(const View& input, uint64_t flags): TextDS(input) {
+        null_check(input);
+        require(flags);
+    }
+
+    inline TextDS(const View& input, Env& env): m_text(input), m_env(&env) {
+        null_check(input);
+    }
+
+    inline TextDS(const View& input, Env& env, uint64_t flags): TextDS(input, env) {
         null_check(input);
         require(flags);
     }
@@ -143,12 +163,12 @@ public:
 
     /// Provides access to the input text.
     inline const value_type* text() const {
-        return m_text;
+        return m_text.data();
     }
 
     /// Returns the size of the input text.
     inline size_t size() const {
-        return m_size;
+        return m_text.size();
     }
 
     /// Prints the constructed tables.
@@ -172,7 +192,7 @@ template<
     class lcp_tt,
     template<typename> class isa_tt>
 inline void TextDS<lcp_tt,isa_tt>::print(std::ostream& out, size_t base) {
-    size_t w = std::max(6UL, (size_t)std::log10((double)m_size) + 1);
+    size_t w = std::max(6UL, (size_t)std::log10((double)size()) + 1);
     out << std::setfill(' ');
 
     //Heading
@@ -194,7 +214,7 @@ inline void TextDS<lcp_tt,isa_tt>::print(std::ostream& out, size_t base) {
 
     //Body
     out << std::setfill(' ');
-    for(size_t i = 0; i < m_size + 1; i++) {
+    for(size_t i = 0; i < size() + 1; i++) {
         out << std::setw(w) << (i + base) << " | ";
         if(m_sa) out << std::setw(w) << ((*m_sa)[i] + base) << " | ";
         if(m_isa) out << std::setw(w) << ((*m_isa)[i] + base) << " | ";
@@ -209,8 +229,10 @@ template<
     template<typename> class isa_tt>
 const SuffixArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_sa() {
     if(!m_sa) {
-        m_sa = std::unique_ptr<sa_t>(new sa_t());
+        m_env.begin_stat_phase("construct suffix array");
+        m_sa = std::make_unique<sa_t>();
         m_sa->construct(*this);
+        m_env.end_stat_phase();
     }
     return *m_sa;
 }
@@ -220,8 +242,10 @@ template<
     template<typename> class isa_tt>
 const PhiArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_phi() {
     if(!m_phi) {
-        m_phi = std::unique_ptr<phi_t>(new phi_t());
+        m_env.begin_stat_phase("construct phi array");
+        m_phi = std::make_unique<phi_t>();
         m_phi->construct(*this);
+        m_env.end_stat_phase();
     }
 
     return *m_phi;
@@ -232,8 +256,10 @@ template<
     template<typename> class isa_tt>
 const isa_tt<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_isa() {
     if(!m_isa) {
-        m_isa = std::unique_ptr<isa_t>(new isa_t());
+        m_env.begin_stat_phase("construct inverse suffix array");
+        m_isa = std::make_unique<isa_t>();
         m_isa->construct(*this);
+        m_env.end_stat_phase();
     }
 
     return *m_isa;
@@ -243,8 +269,10 @@ template<class lcp_tt,
     template<typename> class isa_tt>
 const typename TextDS<lcp_tt,isa_tt>::lcp_t& TextDS<lcp_tt,isa_tt>::require_lcp() {
     if(!m_lcp) {
-        m_lcp = std::unique_ptr<lcp_t>(new lcp_t());
+        m_env.begin_stat_phase("construct lcp array");
+        m_lcp = std::make_unique<lcp_t>();
         m_lcp->construct(*this);
+        m_env.end_stat_phase();
     }
     return *m_lcp;
 }

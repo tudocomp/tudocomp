@@ -30,7 +30,7 @@ public:
         auto in = input.as_view();
         DCHECK(in.ends_with(uint8_t(0)));
 
-        TextDS<> t(in);
+        TextDS<> t(in, env());
 		tdc_debug(VLOG(2) << vec_to_debug_string(t));
 		const len_t input_size = t.size();
 

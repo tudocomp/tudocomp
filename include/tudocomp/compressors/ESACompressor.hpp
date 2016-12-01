@@ -38,7 +38,7 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
         DCHECK(in.ends_with(uint8_t(0)));
-        text_t text(in);
+        text_t text(in, env());
 
         // read options
         size_t threshold = env().option("threshold").as_integer(); //factor threshold

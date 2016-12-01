@@ -46,7 +46,7 @@ public:
 
         // Construct text data structures
         env().begin_stat_phase("Construct SA, ISA and LCP");
-        text_t text(view, text_t::SA | text_t::ISA | text_t::LCP);
+        text_t text(view, env(), text_t::SA | text_t::ISA | text_t::LCP);
         env().end_stat_phase();
 
         auto& sa = text.require_sa();
