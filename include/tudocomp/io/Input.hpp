@@ -408,6 +408,9 @@ namespace io {
                 s.seekg(offset, std::ios::beg);
                 m_start_pos = s.tellg();
                 m_offset_back_ref = offset_back_ref;
+                if (!*m_stream) {
+                    throw tdc_input_file_not_found_error(m_path);
+                }
             }
 
             File(File&& other) {

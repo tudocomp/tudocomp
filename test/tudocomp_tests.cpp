@@ -618,6 +618,42 @@ TEST(Output, stream) {
     ASSERT_EQ(ss.str(), "abc");
 }
 
+TEST(Input, file_not_exists_stream) {
+    bool threw = false;
+    try {
+        Input ft = Input::from_path("asdfgh.txt");
+        ft.as_stream();
+    } catch (std::runtime_error& e) {
+        ASSERT_EQ(View(e.what()), "input file asdfgh.txt does not exist");
+        threw = true;
+    }
+    ASSERT_TRUE(threw);
+}
+
+TEST(Input, file_not_exists_view) {
+    bool threw = false;
+    try {
+        Input ft = Input::from_path("asdfgh.txt");
+        ft.as_view();
+    } catch (std::runtime_error& e) {
+        ASSERT_EQ(View(e.what()), "input file asdfgh.txt does not exist");
+        threw = true;
+    }
+    ASSERT_TRUE(threw);
+}
+
+TEST(Output, file_not_exists_view) {
+    bool threw = false;
+    try {
+        Output ft = Output::from_path("asdfgh/out.txt");
+        ft.as_stream();
+    } catch (std::runtime_error& e) {
+        ASSERT_EQ(View(e.what()), "output file asdfgh/out.txt can not be created/accessed");
+        threw = true;
+    }
+    ASSERT_TRUE(threw);
+}
+
 TEST(IO, bits) {
     std::stringstream ss_out;
 

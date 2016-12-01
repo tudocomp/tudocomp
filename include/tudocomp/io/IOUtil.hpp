@@ -12,6 +12,14 @@ namespace io {
 
 // TODO: Error handling
 
+inline std::runtime_error tdc_input_file_not_found_error(const std::string& path) {
+    return std::runtime_error(std::string("input file ") + path + " does not exist");
+}
+
+inline std::runtime_error tdc_output_file_not_found_error(const std::string& path) {
+    return std::runtime_error(std::string("output file ") + path + " can not be created/accessed");
+}
+
 template<class T>
 T read_bytes(std::istream& inp, size_t bytes = sizeof(T)) {
     char c;
@@ -41,7 +49,7 @@ template<class T>
 T read_file_to_stl_byte_container(std::string& filename,
                                   size_t offset = 0) {
     std::ifstream in(filename, std::ios::in | std::ios::binary);
-    if (in) {
+    if (bool(in)) {
         T contents;
 
         // first, determine length from offset to end of file
@@ -62,7 +70,7 @@ T read_file_to_stl_byte_container(std::string& filename,
         in.close();
         return(contents);
     }
-    throw(errno);
+    throw tdc_input_file_not_found_error(filename);
 }
 
 template<class T, class S>

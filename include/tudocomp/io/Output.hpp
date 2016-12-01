@@ -187,6 +187,9 @@ namespace io {
                     m_stream = std::make_unique<std::ofstream>(m_path,
                         std::ios::out | std::ios::binary | std::ios::app);
                 }
+                if (!*m_stream) {
+                    throw tdc_output_file_not_found_error(m_path);
+                }
             }
 
             inline File(std::unique_ptr<std::ofstream>&& s) {
