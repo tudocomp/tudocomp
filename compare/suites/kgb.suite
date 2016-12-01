@@ -1,0 +1,6 @@
+# Compare suite for KGB with various settings
+
+#title;extension;compressor;compression args;decompression args
+kgb -1;.kgb;kgb;-1;
+kgb (default);.kgb;kgb;;
+kgb -9;.kgb;kgb;-9;

@@ -1,4 +1,6 @@
-tdc/huffman;.tdc.huff;tdc;--algorithm=encode(huff);
+# Compare suite for several standard compressors
+
+#title;extension;compressor;compression args;decompression args
 gzip -1;.gz;gzip;-1;
 gzip -9;.gz;gzip;-9;
 bzip2 -1;.bz2;bzip2;-1;
@@ -6,5 +8,3 @@ bzip2 -9;.bz2;bzip2;-9;
 lzma;.lzma;lzma;;
 xz;.xz;xz;;
 ppmd;.pmd;ppmd;;
-zpaq;.zpaq;zpaq;;
-kgb;.kgb;kgb;;
