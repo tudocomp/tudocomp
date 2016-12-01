@@ -1,5 +1,5 @@
-#ifndef _INCLUDED_DECODE_FORWARD_BUFFER_HPP_
-#define _INCLUDED_DECODE_FORWARD_BUFFER_HPP_
+#ifndef _INCLUDED_DECODE_FORWARD_CHAIN_BUFFER_HPP_
+#define _INCLUDED_DECODE_FORWARD_CHAIN_BUFFER_HPP_
 
 #include <vector>
 #include <sdsl/int_vector.hpp>
@@ -8,7 +8,7 @@
 namespace tdc {
 namespace lzss {
 
-class DecodeForwardBuffer {
+class DecodeForwardChainBuffer {
 
 private:
     std::vector<uliteral_t> m_buffer;
@@ -30,7 +30,7 @@ private:
     }
 
 public:
-    inline DecodeForwardBuffer(len_t size) : m_cursor(0) {
+    inline DecodeForwardChainBuffer(len_t size) : m_cursor(0) {
         m_buffer.resize(size, 0);
         m_fwd.resize(size, LEN_MAX);
         m_decoded = sdsl::bit_vector(size, 0);
