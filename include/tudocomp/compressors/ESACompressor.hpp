@@ -68,7 +68,7 @@ public:
         typename coder_t::Encoder coder(env().env_for_option("coder"),
             output, lzss::TextLiterals<text_t>(text, factors));
 
-        lzss::encode_text(coder, text, factors, false); //TODO is this correct?
+        lzss::encode_text(coder, text, factors); //TODO is this correct?
     }
 
     inline virtual void decompress(Input& input, Output& output) override {

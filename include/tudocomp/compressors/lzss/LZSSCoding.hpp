@@ -14,14 +14,10 @@ namespace lzss {
 template<typename coder_t, typename text_t>
 inline void encode_text(coder_t& coder,
                         const text_t& text,
-                        const FactorBuffer& factors,
-                        bool discard_null_terminator = true) {
+                        const FactorBuffer& factors) {
     assert(factors.is_sorted());
 
     auto n = text.size();
-    if(discard_null_terminator && text[n-1] == 0) {
-        --n; // discard null terminator
-    }
 
     // determine longest and shortest factor
     auto flen_min = factors.shortest_factor();
