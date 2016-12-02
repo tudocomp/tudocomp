@@ -560,6 +560,8 @@ namespace int_vector {
 template<class T>
 using IntVector = int_vector::IntVector<T>;
 
+using BitVector = IntVector<uint_t<1>>;
+
 }
 
 #endif
