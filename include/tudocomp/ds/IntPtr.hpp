@@ -35,7 +35,7 @@ namespace tdc {
         class ConstIntPtr;
     }
 
-template<class MB>
+template<class MB, class For>
 struct RefDispatch {
     typedef MB SelfMaxBit;
 
@@ -55,49 +55,69 @@ struct RefDispatch {
     }
 };
 
+template<class MB>
+struct RefDispatch<MB, uint_t<1>> {
+    typedef MB SelfMaxBit;
+
+    template<class Ref, class V>
+    inline static void assign(Ref& self, V v) {
+        auto& p = *self.m_ptr.m_ptr;
+        const auto o = self.m_ptr.m_bit_offset;
+        const auto mask = uint64_t(1) << o;
+
+        v &= 1;
+        p &= (~mask);
+        p |= (uint64_t(v) << o);
+    };
+
+    template<class Ref, class R>
+    inline static R cast_for_op(const Ref& self) {
+        const auto p = *self.m_ptr.m_ptr;
+        const auto o = self.m_ptr.m_bit_offset;
+        const auto mask = uint64_t(1) << o;
+
+        return (p & mask) != 0;
+    }
+};
+
 template<size_t N>
 struct ConstIntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
-    typedef RefDispatch<uint32_t> Dispatch;
+    typedef RefDispatch<uint32_t, uint_t<N>> Dispatch;
 };
-
 template<size_t N>
 struct IntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
-    typedef RefDispatch<uint32_t> Dispatch;
+    typedef RefDispatch<uint32_t, uint_t<N>> Dispatch;
 };
-
 template<size_t N>
 struct ConstIntegerBaseTrait<int_vector::ConstIntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
-    typedef RefDispatch<uint32_t> Dispatch;
+    typedef RefDispatch<uint32_t, uint_t<N>> Dispatch;
 };
 
 template<size_t N>
 struct ConstIntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
-    typedef RefDispatch<uint64_t> Dispatch;
+    typedef RefDispatch<uint64_t, uint_t<N>> Dispatch;
 };
-
 template<size_t N>
 struct IntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
-    typedef RefDispatch<uint64_t> Dispatch;
+    typedef RefDispatch<uint64_t, uint_t<N>> Dispatch;
 };
-
 template<size_t N>
 struct ConstIntegerBaseTrait<int_vector::ConstIntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
-    typedef RefDispatch<uint64_t> Dispatch;
+    typedef RefDispatch<uint64_t, uint_t<N>> Dispatch;
 };
+
 
 template<>
 struct ConstIntegerBaseTrait<int_vector::IntRef<dynamic_t>> {
-    typedef RefDispatch<uint64_t> Dispatch;
+    typedef RefDispatch<uint64_t, dynamic_t> Dispatch;
 };
-
 template<>
 struct IntegerBaseTrait<int_vector::IntRef<dynamic_t>> {
-    typedef RefDispatch<uint64_t> Dispatch;
+    typedef RefDispatch<uint64_t, dynamic_t> Dispatch;
 };
-
 template<>
 struct ConstIntegerBaseTrait<int_vector::ConstIntRef<dynamic_t>> {
-    typedef RefDispatch<uint64_t> Dispatch;
+    typedef RefDispatch<uint64_t, dynamic_t> Dispatch;
 };
 }
 
@@ -215,8 +235,8 @@ namespace int_vector {
         friend class IntegerBaseTrait<IntRef<T>>;
         friend class ConstIntegerBaseTrait<IntRef<T>>;
         friend class ConstIntegerBaseTrait<ConstIntRef<T>>;
-        friend class RefDispatch<uint32_t>;
-        friend class RefDispatch<uint64_t>;
+        friend class RefDispatch<uint32_t, T>;
+        friend class RefDispatch<uint64_t, T>;
 
     public:
         GenericIntPtr():
@@ -337,8 +357,8 @@ namespace int_vector {
         friend class IntegerBaseTrait<IntRef<T>>;
         friend class ConstIntegerBaseTrait<IntRef<T>>;
         friend class ConstIntegerBaseTrait<ConstIntRef<T>>;
-        friend class RefDispatch<uint32_t>;
-        friend class RefDispatch<uint64_t>;
+        friend class RefDispatch<uint32_t, T>;
+        friend class RefDispatch<uint64_t, T>;
 
         Ptr m_ptr;
     public:
