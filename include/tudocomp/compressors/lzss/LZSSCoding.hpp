@@ -8,6 +8,7 @@
 #include <tudocomp/compressors/lzss/LZSSDecodeBackBuffer.hpp>
 #include <tudocomp/compressors/lzss/LZSSDecodeForwardChainBuffer.hpp>
 #include <tudocomp/compressors/lzss/LZSSDecodeForwardListMapBuffer.hpp>
+#include <tudocomp/compressors/lzss/LZSSDecodeForwardQueueListBuffer.hpp>
 
 namespace tdc {
 namespace lzss {
@@ -123,6 +124,9 @@ inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
         }
     }
 
+    // log stats
+    decoder.env().log_stat("longest_chain", buffer.longest_chain());
+
     // write decoded text
     buffer.write_to(outs);
 }
@@ -130,7 +134,7 @@ inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
 template<typename coder_t>
 inline void decode_text(coder_t& decoder, std::ostream& outs, bool allow_forward = false) {
     if(allow_forward) {
-        decode_text_internal<coder_t, DecodeForwardListMapBuffer>(decoder, outs);
+        decode_text_internal<coder_t, DecodeForwardQueueListBuffer>(decoder, outs);
     } else {
         decode_text_internal<coder_t, DecodeBackBuffer>(decoder, outs);
     }

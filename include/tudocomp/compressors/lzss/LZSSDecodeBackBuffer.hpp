@@ -27,6 +27,10 @@ public:
         while(num--) m_buffer[m_cursor++] = m_buffer[pos++];
     }
 
+    inline len_t longest_chain() const {
+        return 0;
+    }
+
     inline void write_to(std::ostream& out) {
         for(auto c : m_buffer) out << c;
     }
