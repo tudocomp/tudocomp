@@ -175,9 +175,6 @@ namespace io {
                 return *m_stream;
             }
 
-            inline File(const File& other): File(std::string(other.m_path)) {
-            }
-
             inline File(std::string&& path, bool overwrite = false) {
                 m_path = path;
                 if (overwrite) {
@@ -192,13 +189,12 @@ namespace io {
                 }
             }
 
-            inline File(std::unique_ptr<std::ofstream>&& s) {
-                m_stream = std::move(s);
-            }
+            inline File(const File& other):
+                File(std::string(other.m_path)) {}
 
-            inline File(File&& other) {
-                m_stream = std::move(other.m_stream);
-            }
+            inline File(File&& other):
+                m_path(std::move(other.m_path)),
+                m_stream(std::move(other.m_stream)) {}
         };
 
         std::unique_ptr<Variant> m_variant;

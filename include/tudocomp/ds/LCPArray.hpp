@@ -98,7 +98,7 @@ class lcp_sada {
 		}
 		return max;
 	}
-	
+
 };
 
 
@@ -171,7 +171,7 @@ namespace LCP {
 		}
 		return plcp;
 	}
-	
+
 	// delete this method when the phi-algo works!
 template<class lcp_t, class isa_t>
 sdsl::int_vector<> create_plcp_naive(const lcp_t& lcp, const isa_t& isa) {
@@ -201,7 +201,7 @@ inline void lcp_sada<T,select_t>::construct(T& t) {
 	iv_t plcp(LCP::phi_algorithm(t)); // use this when the phi algo works!
 	//iv_t plcp(LCP::create_plcp_naive(t.require_lcp(),t.require_isa()));
 	bv = LCP::construct_lcp_sada(plcp);
-	s = std::unique_ptr<select_t>(new select_t(&bv)); 
+	s = std::unique_ptr<select_t>(new select_t(&bv));
 }
 
 template<typename T, typename select_t>

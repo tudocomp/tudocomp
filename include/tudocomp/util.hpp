@@ -104,6 +104,16 @@ std::string vec_as_lossy_string(const T& s, size_t start = 0,
     return ss.str();
 }
 
+inline void debug_print_uint64_t(uint64_t v) {
+    for(int i = 0; i < 64; i++) {
+        if (i > 0 && i % 8 == 0) {
+            std::cout << " ";
+        }
+        std::cout << int((v >> (63 - i)) & 1);
+    }
+    std::cout << "\n";
+}
+
 /// \brief Reads digits from the input stream (\c 0 to \c 9) until a non-digit
 /// character is reached and parses them as an integer.
 ///
@@ -431,7 +441,7 @@ template<class T> inline void assert_permutation_offset(const T&, size_t,size_t)
 #endif
 
 
-/*  
+/*
  *	Square root by abacus algorithm, Martin Guy @ UKC, June 1985.
  *	From a book on programming abaci by Mr C. Woo.
  *  and from https://en.wikipedia.org/wiki/Methods_of_computing_square_roots
@@ -440,11 +450,11 @@ template<class int_t>
 int_t isqrt(int_t num) {
     int_t res = 0;
     int_t bit = 1ULL << (sizeof(int_t)-2); // The second-to-top bit is set: 1 << 30 for 32 bits
- 
+
     // "bit" starts at the highest power of four <= the argument.
     while (bit > num)
         bit >>= 2;
-        
+
     while (bit != 0) {
         if (num >= res + bit) {
             num -= res + bit;

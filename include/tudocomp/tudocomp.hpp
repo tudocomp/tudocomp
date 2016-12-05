@@ -87,6 +87,8 @@ namespace lzw {
 #include <tudocomp/ds/PhiArray.hpp>
 #include <tudocomp/ds/LCPArray.hpp>
 #include <tudocomp/ds/uint_t.hpp>
+#include <tudocomp/ds/dynamic_t.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
 #include <tudocomp/Range.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>

@@ -14,8 +14,6 @@
 
 namespace tdc {
 
-using io::InputView;
-
 /// Manages text related data structures.
 template<
     class lcp_tt = LCPArray,

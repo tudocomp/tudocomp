@@ -27,6 +27,35 @@
 
 namespace tdc {
 namespace int_vector {
+    template<class T, class U, class V, class X = void>
+    struct ConversionHelper {
+    };
+
+    template<class T, class U, class V>
+    struct ConversionHelper<T, U, V, typename std::enable_if<(
+        std::is_convertible<T, V>::value
+    )>::type> {
+        inline static V convert(const T& t) {
+            return t;
+        }
+    };
+
+    template<class T, class U, class V>
+    struct ConversionHelper<T, U, V, typename std::enable_if<(
+        !std::is_convertible<T, V>::value
+        && std::is_convertible<T, U>::value
+        && std::is_convertible<U, V>::value
+    )>::type> {
+        inline static V convert(const T& t) {
+            return U(t);
+        }
+    };
+
+    template<class T, class U, class V>
+    inline V conversion_helper(const T& t) {
+        return ConversionHelper<T, U, V>::convert(t);
+    }
+
     /*
      * TODO:
      o constructor for int width
@@ -391,20 +420,24 @@ namespace int_vector {
             m_data.shrink_to_fit();
         }
 
-        inline reference operator[](size_type n) {
-            return m_data[n];
+        template<class Idx>
+        inline reference operator[](const Idx& n) {
+            return m_data[conversion_helper<Idx, value_type, size_type>(n)];
         }
 
-        inline const_reference operator[](size_type n) const {
-            return m_data[n];
+        template<class Idx>
+        inline const_reference operator[](const Idx& n) const {
+            return m_data[conversion_helper<Idx, value_type, size_type>(n)];
         }
 
-        inline reference at(size_type n) {
-            return m_data.at(n);
+        template<class Idx>
+        inline reference at(const Idx& n) {
+            return m_data.at(conversion_helper<Idx, value_type, size_type>(n));
         }
 
-        inline const_reference at(size_type n) const {
-            return m_data.at(n);
+        template<class Idx>
+        inline const_reference at(const Idx& n) const {
+            return m_data.at(conversion_helper<Idx, value_type, size_type>(n));
         }
 
         inline reference front() {
@@ -559,6 +592,8 @@ namespace int_vector {
 
 template<class T>
 using IntVector = int_vector::IntVector<T>;
+
+using BitVector = IntVector<uint_t<1>>;
 
 }
 
