@@ -8,6 +8,8 @@ std::string shell_escape(const std::string& s) {
     for (auto c : s) {
         if (c == '"') {
             ss << "\\\"";
+        } else if (c == '\\') {
+            ss << "\\\\";
         } else {
             ss << c;
         }
