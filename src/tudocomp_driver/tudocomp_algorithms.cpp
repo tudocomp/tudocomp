@@ -73,6 +73,7 @@ void register_algorithms(Registry& r) {
     REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompMaxLCP);
     REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompBulldozer);
     REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompNaive);
+    REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::LazyList);
 
     REGISTER_WITH_ONLINE_CODERS(LZSSSlidingWindowCompressor);
     REGISTER_WITH_ONLINE_CODERS(RunLengthEncoder);
