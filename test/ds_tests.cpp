@@ -10,6 +10,7 @@
 #include "test_util.hpp"
 
 using namespace tdc;
+using io::InputView;
 
 size_t longest_common_extension(const std::string& text, size_t a, size_t b) {
 	DCHECK_NE(a,b);
