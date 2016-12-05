@@ -4,10 +4,7 @@
 #include <tudocomp/util.hpp>
 #include "forward.hpp"
 
-
 namespace tdc {
-
-using io::InputView;
 
 template<class T>
 class PhiArray {

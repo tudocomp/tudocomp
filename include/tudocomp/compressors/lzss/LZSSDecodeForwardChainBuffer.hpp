@@ -4,6 +4,7 @@
 #include <vector>
 #include <sdsl/int_vector.hpp>
 #include <tudocomp/def.hpp>
+#include <sdsl/int_vector.hpp>
 
 namespace tdc {
 namespace lzss {
