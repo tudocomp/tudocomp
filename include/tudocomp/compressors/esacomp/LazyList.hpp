@@ -51,9 +51,12 @@ public:
                 }
                 return ret; }());
         env().end_stat_phase();
+        env().begin_stat_phase("Computing Factors");
+        env().begin_stat_phase(std::string{"At MaxLCP Value "} + std::to_string(lcpp->max_lcp()) );
         for(size_t maxlcp = lcpp->max_lcp(); maxlcp >= threshold; --maxlcp) {
             if(maxlcp % (cand_length/20) == 0) {
-                env().begin_stat_phase(std::string{"Exchange MaxLCP Value "} + std::to_string(maxlcp) );
+                env().end_stat_phase();
+                env().begin_stat_phase(std::string{"At MaxLCP Value "} + std::to_string(maxlcp) );
             }
             std::vector<len_t>& candcol = cand[maxlcp-threshold]; // select the vector specific to the LCP-value
             for(size_t i = 0; i < candcol.size(); ++i) {
@@ -85,17 +88,17 @@ public:
                     lcp[ind_suffix] = std::min<len_t>(k+1, lcp[ind_suffix]);
                 }
                 if(maxlcp % (cand_length/20) == 0) {
-                    env().log_stat("cur num of factors", factors.size());
+                    env().log_stat("num factors", factors.size());
                 }
 
             }
-            if(maxlcp % (cand_length/20) == 0) {
-                env().end_stat_phase();
-            }
+            // if(maxlcp % (cand_length/20) == 0) {
+            // 	env().end_stat_phase();
+            // }
             candcol.clear();
-
-
         }
+        env().end_stat_phase();
+        env().end_stat_phase();
         delete [] cand;
     }
 };
