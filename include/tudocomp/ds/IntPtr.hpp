@@ -147,8 +147,7 @@ namespace int_vector {
     typedef uint64_t DynamicIntValueType;
 
     template<class T>
-    struct IntPtrTrait {
-    };
+    struct IntPtrTrait {};
 
     template<size_t N>
     struct IntPtrTrait<ConstIntPtr<uint_t<N>>> {
@@ -162,7 +161,7 @@ namespace int_vector {
             Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
                 m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
             inline uint8_t data_bit_size() const { return N; }
-            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) {
+            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
                 return Data(ptr, offset, this->data_bit_size());
             }
         };
@@ -183,6 +182,9 @@ namespace int_vector {
             inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
                 return Data(ptr, offset, this->data_bit_size());
             }
+            inline operator typename IntPtrTrait<ConstIntPtr<uint_t<N>>>::Data() const {
+                return typename IntPtrTrait<ConstIntPtr<uint_t<N>>>::Data(m_ptr, m_bit_offset, 0);
+            }
         };
     };
 
@@ -198,7 +200,7 @@ namespace int_vector {
             Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
                 m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
             inline uint8_t data_bit_size() const { return m_bit_size; }
-            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) {
+            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
                 return Data(ptr, offset, this->data_bit_size());
             }
         };
@@ -216,8 +218,11 @@ namespace int_vector {
             Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
                 m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
             inline uint8_t data_bit_size() const { return m_bit_size; }
-            inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
+            inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) const {
                 return Data(ptr, offset, this->data_bit_size());
+            }
+            inline operator typename IntPtrTrait<ConstIntPtr<dynamic_t>>::Data() const {
+                return typename IntPtrTrait<ConstIntPtr<dynamic_t>>::Data(m_ptr, m_bit_offset, m_bit_size);
             }
         };
     };
@@ -347,6 +352,10 @@ namespace int_vector {
 
         inline IntRef<T> operator*();
         inline IntRef<T> operator[](size_t i);
+
+        inline operator ConstIntPtr<T>() const {
+            return ConstIntPtr<T>(typename IntPtrTrait<ConstIntPtr<T>>::Data((const typename IntPtrTrait<IntPtr<T>>::Data&) *this));
+        }
     };
 
     template<class Self, class Ptr, class T>
@@ -371,6 +380,23 @@ namespace int_vector {
             return bits::read_int(m_ptr.m_ptr, m_ptr.m_bit_offset, this->m_ptr.data_bit_size());
         }
 
+    };
+
+    template<class T>
+    class ConstIntRef:
+        public GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>,
+        public ConstIntegerBaseCombiner<
+            ConstIntegerBaseWithSelf<ConstIntRef<T>>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, uint32_t>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, int>,
+            ConstIntegerBaseWith64<ConstIntRef<T>, uint64_t>,
+            ConstIntegerBaseWith64<ConstIntRef<T>, T>
+        > {
+    public:
+        inline ConstIntRef() = delete;
+        explicit ConstIntRef(const ConstIntPtr<T>& ptr): GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>::GenericIntRef(ptr) {}
+
+        inline ConstIntPtr<T> operator&() { return this->m_ptr; }
     };
 
     template<class T>
@@ -403,23 +429,10 @@ namespace int_vector {
         inline IntRef& operator=(const ConstIntRef<T>& other);
 
         inline IntPtr<T> operator&() { return this->m_ptr; }
-    };
 
-    template<class T>
-    class ConstIntRef:
-        public GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>,
-        public ConstIntegerBaseCombiner<
-            ConstIntegerBaseWithSelf<ConstIntRef<T>>,
-            ConstIntegerBaseWith32<ConstIntRef<T>, uint32_t>,
-            ConstIntegerBaseWith32<ConstIntRef<T>, int>,
-            ConstIntegerBaseWith64<ConstIntRef<T>, uint64_t>,
-            ConstIntegerBaseWith64<ConstIntRef<T>, T>
-        > {
-    public:
-        inline ConstIntRef() = delete;
-        explicit ConstIntRef(const ConstIntPtr<T>& ptr): GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>::GenericIntRef(ptr) {}
-
-        inline ConstIntPtr<T> operator&() { return this->m_ptr; }
+        inline operator ConstIntRef<T>() const {
+            return ConstIntRef<T>(this->m_ptr);
+        }
     };
 
     template<class T>

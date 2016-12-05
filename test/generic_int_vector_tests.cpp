@@ -1004,6 +1004,22 @@ void generic_int_vector_template() {
     auto ptr = &ref_ptr[1];
 
     ASSERT_EQ(*ptr, (T(2)));
+
+    using reference_t = typename IntVector<T>::reference;
+    using const_reference_t = typename IntVector<T>::const_reference;
+    using pointer_t = typename IntVector<T>::pointer;
+    using const_pointer_t = typename IntVector<T>::const_pointer;
+
+    IntVector<T> const_conv_1 { 1 };
+    reference_t const_conv_1_ref = const_conv_1[0];
+    pointer_t const_conv_1_ptr = &const_conv_1[0];
+    const const_reference_t const_conv_1_const_ref = const_conv_1_ref;
+    const const_pointer_t const_conv_1_const_ptr = const_conv_1_ptr;
+    const const_reference_t const_conv_2_const_ref = const_conv_1[0];
+    const const_pointer_t const_conv_2_const_ptr = &const_conv_1[0];
+
+    ASSERT_EQ(const_conv_1_const_ref, const_conv_2_const_ref);
+    ASSERT_EQ(const_conv_1_const_ptr, const_conv_2_const_ptr);
 }
 
 // TODO: Test constness of operations
