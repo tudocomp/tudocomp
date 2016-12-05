@@ -1,18 +1,18 @@
-#ifndef _INCLUDED_DECODE_FORWARD_LM_BUFFER_HPP_
-#define _INCLUDED_DECODE_FORWARD_LM_BUFFER_HPP_
+#ifndef _INCLUDED_DECODE_FORWARD_QL_BUFFER_HPP_
+#define _INCLUDED_DECODE_FORWARD_QL_BUFFER_HPP_
 
-#include <map>
+#include <vector>
 #include <sdsl/int_vector.hpp>
 #include <tudocomp/def.hpp>
 
 namespace tdc {
 namespace lzss {
 
-class DecodeForwardListMapBuffer {
+class DecodeForwardQueueListBuffer {
 
 private:
     std::vector<uliteral_t> m_buffer;
-    std::unordered_map<len_t, len_t> m_fwd;
+    std::vector<std::vector<len_t>> m_fwd;
     sdsl::bit_vector m_decoded;
 
     len_t m_cursor;
@@ -26,23 +26,20 @@ private:
         m_buffer[pos] = c;
         m_decoded[pos] = 1;
 
-        auto it = m_fwd.find(pos);
-        if(it != m_fwd.end()) {
-            for(auto fwd : it->second) {
-                decode_literal_at(fwd, c); // recursion
-            }
-
-            m_fwd.erase(pos);
+        for(auto fwd : m_fwd[pos]) {
+            decode_literal_at(fwd, c); // recursion
         }
+        m_fwd[pos].clear();
 
         --m_current_chain;
     }
 
 public:
-    inline DecodeForwardListMapBuffer(len_t size)
+    inline DecodeForwardQueueListBuffer(len_t size)
         : m_cursor(0), m_longest_chain(0), m_current_chain(0) {
 
         m_buffer.resize(size, 0);
+        m_fwd.resize(size, std::vector<len_t>());
         m_decoded = sdsl::bit_vector(size, 0);
     }
 
