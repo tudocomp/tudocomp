@@ -141,8 +141,9 @@ TEST(lzss, decode_back_buffer) {
     ASSERT_EQ("bananabanana", ss.str());
 }
 
-TEST(lzss, decode_forward_chain_buffer_chain) {
-    lzss::DecodeForwardChainBuffer buffer(12);
+template<typename T>
+void test_forward_decode_buffer_chain() {
+    T buffer(12);
     buffer.decode_literal('b');
     buffer.decode_factor(3, 3);
     buffer.decode_literal('n');
@@ -155,8 +156,9 @@ TEST(lzss, decode_forward_chain_buffer_chain) {
     ASSERT_EQ("bananabanana", ss.str());
 }
 
-TEST(lzss, decode_forward_chain_buffer_mult) {
-    lzss::DecodeForwardChainBuffer buffer(12);
+template<typename T>
+void test_forward_decode_buffer_multiref() {
+    T buffer(12);
     buffer.decode_factor(6, 6);
     buffer.decode_literal('b');
     buffer.decode_factor(9, 3);
@@ -167,32 +169,36 @@ TEST(lzss, decode_forward_chain_buffer_mult) {
     buffer.write_to(ss);
 
     ASSERT_EQ("bananabanana", ss.str());
+}
+
+TEST(lzss, decode_forward_chain_buffer_chain) {
+    test_forward_decode_buffer_chain<lzss::DecodeForwardChainBuffer>();
+}
+
+TEST(lzss, decode_forward_chain_buffer_multiref) {
+    test_forward_decode_buffer_multiref<lzss::DecodeForwardChainBuffer>();
 }
 
 TEST(lzss, decode_forward_lm_buffer_chain) {
-    lzss::DecodeForwardListMapBuffer buffer(12);
-    buffer.decode_literal('b');
-    buffer.decode_factor(3, 3);
-    buffer.decode_literal('n');
-    buffer.decode_literal('a');
-    buffer.decode_factor(0, 6);
-
-    std::stringstream ss;
-    buffer.write_to(ss);
-
-    ASSERT_EQ("bananabanana", ss.str());
+    test_forward_decode_buffer_chain<lzss::DecodeForwardListMapBuffer>();
 }
 
-TEST(lzss, decode_forward_lm_buffer_mult) {
-    lzss::DecodeForwardListMapBuffer buffer(12);
-    buffer.decode_factor(6, 6);
-    buffer.decode_literal('b');
-    buffer.decode_factor(9, 3);
-    buffer.decode_literal('n');
-    buffer.decode_literal('a');
+TEST(lzss, decode_forward_lm_buffer_multiref) {
+    test_forward_decode_buffer_multiref<lzss::DecodeForwardListMapBuffer>();
+}
 
-    std::stringstream ss;
-    buffer.write_to(ss);
+TEST(lzss, decode_forward_mm_buffer_chain) {
+    test_forward_decode_buffer_chain<lzss::DecodeForwardMultimapBuffer>();
+}
 
-    ASSERT_EQ("bananabanana", ss.str());
+TEST(lzss, decode_forward_mm_buffer_multiref) {
+    test_forward_decode_buffer_multiref<lzss::DecodeForwardMultimapBuffer>();
+}
+
+TEST(lzss, decode_forward_ql_buffer_chain) {
+    test_forward_decode_buffer_chain<lzss::DecodeForwardQueueListBuffer>();
+}
+
+TEST(lzss, decode_forward_ql_buffer_multiref) {
+    test_forward_decode_buffer_multiref<lzss::DecodeForwardQueueListBuffer>();
 }
