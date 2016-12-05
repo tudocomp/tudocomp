@@ -16,19 +16,29 @@ private:
     sdsl::bit_vector m_decoded;
 
     len_t m_cursor;
+    len_t m_longest_chain;
 
     inline void decode_literal_at(len_t pos, uliteral_t c) {
         m_buffer[pos] = c;
         m_decoded[pos] = 1;
 
+        len_t chain = 0;
         for(auto it = m_fwd.find(pos); it != m_fwd.end(); it = m_fwd.find(pos)) {
-            decode_literal_at(it->second, c);
+            m_buffer[it->second] = c;
+            m_decoded[it->second] = 1;
+
             m_fwd.erase(it);
+
+            ++chain;
         }
+
+        m_longest_chain = std::max(m_longest_chain, chain);
     }
 
 public:
-    inline DecodeForwardMultimapBuffer(len_t size) : m_cursor(0) {
+    inline DecodeForwardMultimapBuffer(len_t size)
+        : m_cursor(0), m_longest_chain(0) {
+
         m_buffer.resize(size, 0);
         m_decoded = sdsl::bit_vector(size, 0);
     }
@@ -48,6 +58,10 @@ public:
 
             ++m_cursor;
         }
+    }
+
+    inline len_t longest_chain() const {
+        return m_longest_chain;
     }
 
     inline void write_to(std::ostream& out) {

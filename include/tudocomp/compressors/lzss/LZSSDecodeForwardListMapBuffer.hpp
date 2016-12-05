@@ -1,6 +1,7 @@
 #ifndef _INCLUDED_DECODE_FORWARD_LM_BUFFER_HPP_
 #define _INCLUDED_DECODE_FORWARD_LM_BUFFER_HPP_
 
+#include <vector>
 #include <map>
 #include <sdsl/int_vector.hpp>
 #include <tudocomp/def.hpp>
@@ -12,7 +13,7 @@ class DecodeForwardListMapBuffer {
 
 private:
     std::vector<uliteral_t> m_buffer;
-    std::unordered_map<len_t, len_t> m_fwd;
+    std::unordered_map<len_t, std::vector<len_t>> m_fwd;
     sdsl::bit_vector m_decoded;
 
     len_t m_cursor;
