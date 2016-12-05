@@ -73,24 +73,51 @@ public:
     inline uint_t(const uint_t& i): m_data(i.m_data) {}
     inline uint_t& operator=(const uint_t& b) { m_data = b.m_data; return *this; }
 
-    // 64 bit conversions
-    inline uint_t(uint64_t i): m_data(i) {}
-    inline uint_t& operator=(uint64_t data) { m_data = data; return *this; }
-    inline operator uint64_t() const { return m_data; }
+    // conversions for all fundamental char types
+    inline uint_t(unsigned char i): m_data(i) {}
+    inline uint_t& operator=(unsigned char data) { m_data = data; return *this; }
+    inline operator unsigned char() const { return m_data; }
 
-    // 32 bit conversions
-    inline uint_t(uint32_t i): m_data(i) {}
-    inline uint_t& operator=(uint32_t data) { m_data = data; return *this; }
-    inline operator uint32_t() const { return m_data; }
+    inline uint_t(signed char i): m_data(i) {}
+    inline uint_t& operator=(signed char data) { m_data = data; return *this; }
+    inline operator signed char() const { return m_data; }
 
-    // compatibility with unsuffixed integer literals
+    inline uint_t(char i): m_data(i) {}
+    inline uint_t& operator=(char data) { m_data = data; return *this; }
+    inline operator char() const { return m_data; }
+
+    // conversions for all fundamental integer types
+    inline uint_t(unsigned int i): m_data(i) {}
+    inline uint_t& operator=(unsigned int data) { m_data = data; return *this; }
+    inline operator unsigned int() const { return m_data; }
+
+    inline uint_t(unsigned short int i): m_data(i) {}
+    inline uint_t& operator=(unsigned short int data) { m_data = data; return *this; }
+    inline operator unsigned short int() const { return m_data; }
+
+    inline uint_t(unsigned long int i): m_data(i) {}
+    inline uint_t& operator=(unsigned long int data) { m_data = data; return *this; }
+    inline operator unsigned long int() const { return m_data; }
+
+    inline uint_t(unsigned long long int i): m_data(i) {}
+    inline uint_t& operator=(unsigned long long int data) { m_data = data; return *this; }
+    inline operator unsigned long long int() const { return m_data; }
+
     inline uint_t(int i): m_data(i) {}
     inline uint_t& operator=(int data) { m_data = data; return *this; }
     inline operator int() const { return m_data; }
 
-    // To enable interop with gtest
-    inline operator long long int() const { return m_data; }
+    inline uint_t(short int i): m_data(i) {}
+    inline uint_t& operator=(short int data) { m_data = data; return *this; }
+    inline operator short int() const { return m_data; }
 
+    inline uint_t(long int i): m_data(i) {}
+    inline uint_t& operator=(long int data) { m_data = data; return *this; }
+    inline operator long int() const { return m_data; }
+
+    inline uint_t(long long int i): m_data(i) {}
+    inline uint_t& operator=(long long int data) { m_data = data; return *this; }
+    inline operator long long int() const { return m_data; }
 } __attribute__((packed));
 
 static_assert(sizeof(uint_t<8>)  == 1, "sanity check");

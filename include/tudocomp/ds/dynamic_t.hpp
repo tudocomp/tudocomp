@@ -53,24 +53,51 @@ public:
     inline dynamic_t(const dynamic_t& i): m_data(i.m_data) {}
     inline dynamic_t& operator=(const dynamic_t& b) { m_data = b.m_data; return *this; }
 
-    // 64 bit conversions
-    inline dynamic_t(uint64_t i): m_data(i) {}
-    inline dynamic_t& operator=(uint64_t data) { m_data = data; return *this; }
-    inline operator uint64_t() const { return m_data; }
+    // conversions for all fundamental char types
+    inline dynamic_t(unsigned char i): m_data(i) {}
+    inline dynamic_t& operator=(unsigned char data) { m_data = data; return *this; }
+    inline operator unsigned char() const { return m_data; }
 
-    // 32 bit conversions
-    inline dynamic_t(uint32_t i): m_data(i) {}
-    inline dynamic_t& operator=(uint32_t data) { m_data = data; return *this; }
-    inline operator uint32_t() const { return m_data; }
+    inline dynamic_t(signed char i): m_data(i) {}
+    inline dynamic_t& operator=(signed char data) { m_data = data; return *this; }
+    inline operator signed char() const { return m_data; }
 
-    // compatibility with unsuffixed integer literals
+    inline dynamic_t(char i): m_data(i) {}
+    inline dynamic_t& operator=(char data) { m_data = data; return *this; }
+    inline operator char() const { return m_data; }
+
+    // conversions for all fundamental integer types
+    inline dynamic_t(unsigned int i): m_data(i) {}
+    inline dynamic_t& operator=(unsigned int data) { m_data = data; return *this; }
+    inline operator unsigned int() const { return m_data; }
+
+    inline dynamic_t(unsigned short int i): m_data(i) {}
+    inline dynamic_t& operator=(unsigned short int data) { m_data = data; return *this; }
+    inline operator unsigned short int() const { return m_data; }
+
+    inline dynamic_t(unsigned long int i): m_data(i) {}
+    inline dynamic_t& operator=(unsigned long int data) { m_data = data; return *this; }
+    inline operator unsigned long int() const { return m_data; }
+
+    inline dynamic_t(unsigned long long int i): m_data(i) {}
+    inline dynamic_t& operator=(unsigned long long int data) { m_data = data; return *this; }
+    inline operator unsigned long long int() const { return m_data; }
+
     inline dynamic_t(int i): m_data(i) {}
     inline dynamic_t& operator=(int data) { m_data = data; return *this; }
     inline operator int() const { return m_data; }
 
-    // To enable interop with gtest
-    inline operator long long int() const { return m_data; }
+    inline dynamic_t(short int i): m_data(i) {}
+    inline dynamic_t& operator=(short int data) { m_data = data; return *this; }
+    inline operator short int() const { return m_data; }
 
+    inline dynamic_t(long int i): m_data(i) {}
+    inline dynamic_t& operator=(long int data) { m_data = data; return *this; }
+    inline operator long int() const { return m_data; }
+
+    inline dynamic_t(long long int i): m_data(i) {}
+    inline dynamic_t& operator=(long long int data) { m_data = data; return *this; }
+    inline operator long long int() const { return m_data; }
 } __attribute__((packed));
 
 }
