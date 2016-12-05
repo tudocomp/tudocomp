@@ -100,6 +100,10 @@ public:
     inline operator long long int() const { return m_data; }
 } __attribute__((packed));
 
+inline std::ostream& operator<<(std::ostream& os, const dynamic_t& v) {
+    return os << uint64_t(v);
+}
+
 }
 
 #endif /* UINT_T_HPP */

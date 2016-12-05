@@ -120,6 +120,11 @@ public:
     inline operator long long int() const { return m_data; }
 } __attribute__((packed));
 
+template<size_t N>
+inline std::ostream& operator<<(std::ostream& os, const uint_t<N>& v) {
+    return os << uint64_t(v);
+}
+
 static_assert(sizeof(uint_t<8>)  == 1, "sanity check");
 static_assert(sizeof(uint_t<16>) == 2, "sanity check");
 static_assert(sizeof(uint_t<24>) == 3, "sanity check");
