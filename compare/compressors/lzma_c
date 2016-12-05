@@ -1,0 +1,1 @@
+lzma -z $CARGS -f -c $IN >$OUT

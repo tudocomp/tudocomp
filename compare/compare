@@ -1,0 +1,155 @@
+#!/bin/bash
+COMPRESSORS=compressors
+TMP=/tmp
+STORE=$TMP/compare.store
+TIME=/usr/bin/time
+
+# Settings
+export LC_NUMERIC=C
+
+# Check input
+if [ -z "$1" -o -z "$2" ]; then
+    echo "Usage: compare <suite> <files ...>"
+    exit 1
+fi
+
+# Check suite
+SUITE=$1
+if [ ! -f $SUITE ]; then
+    echo "Suite file not found: $1"
+    exit 1
+fi
+
+# Execute command suite
+FILES=${@:2}
+for F in $FILES; do
+
+if [ ! -f $F ]; then
+    echo "Input file not found: $F"
+    continue
+fi
+
+FNAME=`basename $F`
+INSZ=`stat -c %s $F`
+MD5=`md5sum $F | awk '{print $1}'`
+
+echo
+echo "$F ($INSZ bytes, md5=$MD5) ..."
+echo
+printf "%28s | %10s | %10s | %10s | %10s | %10s | %4s\n" "Compressor" "C Time" "C Memory" "C Rate" "D Time" "D Memory" "MD5"
+printf "=%.0s" {1..100}
+echo
+
+while read LINE; do
+    # skip empty lines and comments
+    if [ -z "$LINE" ]; then
+        continue
+    fi
+    if [[ ${LINE:0:1} == "#" ]]; then
+        continue
+    fi
+
+    # parse suite
+    IFS=";" read -r NAME EXT CMD CARGS DARGS <<< "$LINE"
+
+    if [ -z "$NAME" -o -z "$EXT" -o -z "$CMD" ]; then
+        printf "%80s\n" "(invalid entry in suite)"
+        continue
+    fi
+
+    CCMD=$COMPRESSORS/${CMD}_c
+    DCMD=$COMPRESSORS/${CMD}_d
+
+    export CARGS
+    export DARGS
+
+    if [ ! -f $CCMD ]; then
+        printf "%80s\n" "(no compressor found for '$CMD')"
+        continue
+    elif [ ! -f $DCMD ]; then
+        printf "%80s\n" "(no decompressor found for '$CMD')"
+        continue
+    fi
+
+    # determine input and output files
+    ORIGINAL=$F
+    COMPRESSED=$TMP/$FNAME$EXT
+    DECOMPRESSED=$TMP/$FNAME
+
+    # delete output files if they already exist
+    rm -f $COMPRESSED
+    rm -f $DECOMPRESSED
+
+    # print name
+    printf "%28s | " "$NAME"
+
+    # compress
+    export IN=$ORIGINAL
+    export OUT=$COMPRESSED
+    $TIME -f "%U;%M" -o $STORE $CCMD >/dev/null 2>&1
+    OK=$?
+
+    if [ $OK -eq 130 ]; then
+        echo
+        exit 130
+    elif [ $OK -eq 127 ]; then
+        echo "(not installed)"
+        continue
+    elif [ $OK -ne 0 ]; then
+        echo "(compress error $OK)"
+        continue
+    fi
+
+    IFS=";" read -r TM MEM < $STORE
+
+    # print runtime and memory usage
+    printf "%#8.2f s | %8d K | " $TM $MEM
+
+    if [ ! -f $OUT ]; then
+        echo "($OUT not found)"
+        continue
+    fi
+
+    # calculate compression rate
+    OUTSZ=`du -b $OUT  | cut -f 1`
+    RATE=`echo 100*$OUTSZ/$INSZ | bc -l`
+
+    # print name and compression rate
+    printf "%9.4f%% | " $RATE
+
+    # decompress
+    export IN=$COMPRESSED
+    export OUT=$DECOMPRESSED
+    $TIME -f "%U;%M" -o $STORE $DCMD $OUT /dev/null $DARGS >/dev/null 2>&1
+    OK=$?
+
+    if [ $OK -eq 130 ]; then
+        echo
+        exit 130
+    elif [ $OK -ne 0 ]; then
+        echo "(decompress error $OK)"
+        continue
+    fi
+
+    IFS=";" read -r TM MEM < $STORE
+
+    # print runtime and memory usage
+    printf "%#8.2f s | %8d K | " $TM $MEM
+
+    # perform MD5 check of decompressed file
+    if [ ! -f $DECOMPRESSED ]; then
+        printf "%4s\n" "FNF" # file not found
+        continue
+    fi
+
+    DMD5=`md5sum $DECOMPRESSED | awk '{print $1}'`
+    if [ "$DMD5" == "$MD5" ]; then
+        printf "%4s\n" "OK"
+    else
+        printf "%4s\n" "ERR"
+    fi
+
+done < $1 # suite
+done # files
+
+echo
