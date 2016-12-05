@@ -29,7 +29,8 @@ std::string driver(std::string args) {
     char buff[512];
     std::stringstream ss;
 
-    const std::string cmd = "./src/tudocomp_driver/tudocomp_driver " + args + " 2>&1";
+    const std::string cmd_base = "./src/tudocomp_driver/tudocomp_driver " + args + " 2>&1";
+    const std::string cmd = std::string("sh -c ") + shell_escape(cmd_base) + " 2>&1";
 
     if(!(in = popen(cmd.data(), "r"))) {
         throw std::runtime_error("Error executing " + cmd);
