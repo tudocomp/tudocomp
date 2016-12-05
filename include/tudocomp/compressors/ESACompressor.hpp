@@ -10,6 +10,7 @@
 #include <tudocomp/compressors/esacomp/ESACompMaxLCP.hpp>
 #include <tudocomp/compressors/esacomp/ESACompBulldozer.hpp>
 #include <tudocomp/compressors/esacomp/ESACompNaive.hpp>
+#include <tudocomp/compressors/esacomp/LazyList.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 
