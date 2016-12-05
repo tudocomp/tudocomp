@@ -33,6 +33,33 @@ namespace tdc {
         class IntPtr;
         template<class T>
         class ConstIntPtr;
+
+        template<class Self>
+        inline void write_int(uint64_t* word, uint64_t x, uint8_t offset, const uint8_t len) {
+            sdsl::bits::write_int(word, x, offset, len);
+        }
+        template<>
+        inline void write_int<uint_t<1>>(uint64_t* word, uint64_t v, uint8_t o, const uint8_t len) {
+            auto& p = *word;
+            const auto mask = uint64_t(1) << o;
+
+            v &= 1;
+            p &= (~mask);
+            p |= (uint64_t(v) << o);
+        }
+
+        template<class Self>
+        inline uint64_t read_int(const uint64_t* word, uint8_t offset, const uint8_t len) {
+            return sdsl::bits::read_int(word, offset, len);
+        }
+
+        template<>
+        inline uint64_t read_int<uint_t<1>>(const uint64_t* word, uint8_t o, const uint8_t len) {
+            const auto p = *word;
+            const auto mask = uint64_t(1) << o;
+
+            return (p & mask) != 0;
+        }
     }
 
 template<class MB, class For>
@@ -41,42 +68,17 @@ struct RefDispatch {
 
     template<class Ref, class V>
     inline static void assign(Ref& self, V v) {
-        sdsl::bits::write_int(self.m_ptr.m_ptr,
-                              v,
-                              self.m_ptr.m_bit_offset,
-                              self.m_ptr.data_bit_size());
+        int_vector::write_int<For>(self.m_ptr.m_ptr,
+                                   v,
+                                   self.m_ptr.m_bit_offset,
+                                   self.m_ptr.data_bit_size());
     };
 
     template<class Ref, class R>
     inline static R cast_for_op(const Ref& self) {
-        return sdsl::bits::read_int(self.m_ptr.m_ptr,
-                                    self.m_ptr.m_bit_offset,
-                                    self.m_ptr.data_bit_size());
-    }
-};
-
-template<class MB>
-struct RefDispatch<MB, uint_t<1>> {
-    typedef MB SelfMaxBit;
-
-    template<class Ref, class V>
-    inline static void assign(Ref& self, V v) {
-        auto& p = *self.m_ptr.m_ptr;
-        const auto o = self.m_ptr.m_bit_offset;
-        const auto mask = uint64_t(1) << o;
-
-        v &= 1;
-        p &= (~mask);
-        p |= (uint64_t(v) << o);
-    };
-
-    template<class Ref, class R>
-    inline static R cast_for_op(const Ref& self) {
-        const auto p = *self.m_ptr.m_ptr;
-        const auto o = self.m_ptr.m_bit_offset;
-        const auto mask = uint64_t(1) << o;
-
-        return (p & mask) != 0;
+        return int_vector::read_int<For>(self.m_ptr.m_ptr,
+                                         self.m_ptr.m_bit_offset,
+                                         self.m_ptr.data_bit_size());
     }
 };
 
@@ -377,7 +379,7 @@ namespace int_vector {
         explicit GenericIntRef(const Ptr& ptr): m_ptr(ptr) {}
 
         operator value_type() const {
-            return bits::read_int(m_ptr.m_ptr, m_ptr.m_bit_offset, this->m_ptr.data_bit_size());
+            return read_int<T>(m_ptr.m_ptr, m_ptr.m_bit_offset, this->m_ptr.data_bit_size());
         }
 
     };
@@ -416,9 +418,9 @@ namespace int_vector {
         explicit IntRef(const IntPtr<T>& ptr): GenericIntRef<IntRef<T>, IntPtr<T>, T>::GenericIntRef(ptr) {}
 
         inline IntRef& operator=(value_type other) {
-            bits::write_int(this->m_ptr.m_ptr, other,
-                            this->m_ptr.m_bit_offset,
-                            this->m_ptr.data_bit_size());
+            write_int<T>(this->m_ptr.m_ptr, other,
+                         this->m_ptr.m_bit_offset,
+                         this->m_ptr.data_bit_size());
             return *this;
         };
 
