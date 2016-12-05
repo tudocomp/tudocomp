@@ -17,27 +17,26 @@ private:
 
     len_t m_cursor;
     len_t m_longest_chain;
+    len_t m_current_chain;
 
     inline void decode_literal_at(len_t pos, uliteral_t c) {
+        ++m_current_chain;
+        m_longest_chain = std::max(m_longest_chain, m_current_chain);
+
         m_buffer[pos] = c;
         m_decoded[pos] = 1;
 
-        len_t chain = 0;
         for(auto it = m_fwd.find(pos); it != m_fwd.end(); it = m_fwd.find(pos)) {
-            m_buffer[it->second] = c;
-            m_decoded[it->second] = 1;
-
+            decode_literal_at(it->second, c); // recursion
             m_fwd.erase(it);
-
-            ++chain;
         }
 
-        m_longest_chain = std::max(m_longest_chain, chain);
+        --m_current_chain;
     }
 
 public:
     inline DecodeForwardMultimapBuffer(len_t size)
-        : m_cursor(0), m_longest_chain(0) {
+        : m_cursor(0), m_longest_chain(0), m_current_chain(0) {
 
         m_buffer.resize(size, 0);
         m_decoded = sdsl::bit_vector(size, 0);

@@ -135,7 +135,7 @@ inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
 template<typename coder_t>
 inline void decode_text(coder_t& decoder, std::ostream& outs, bool allow_forward = false) {
     if(allow_forward) {
-        decode_text_internal<coder_t, DecodeForwardQueueListBuffer>(decoder, outs);
+        decode_text_internal<coder_t, DecodeForwardMultimapBuffer>(decoder, outs);
     } else {
         decode_text_internal<coder_t, DecodeBackBuffer>(decoder, outs);
     }
