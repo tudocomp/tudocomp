@@ -37,6 +37,7 @@ public:
         auto lcpp = text.release_lcp();
         auto& lcp = lcpp->data();
 
+        if(lcpp->max_lcp()+1 <= threshold) return; // nothing to factorize
         const size_t cand_length = lcpp->max_lcp()+1-threshold;
         std::vector<len_t>* cand = new std::vector<len_t>[cand_length];
         env().begin_stat_phase("Fill candidates");
@@ -54,9 +55,10 @@ public:
         env().begin_stat_phase("Computing Factors");
         env().begin_stat_phase(std::string{"At MaxLCP Value "} + std::to_string(lcpp->max_lcp()) );
         for(size_t maxlcp = lcpp->max_lcp(); maxlcp >= threshold; --maxlcp) {
-            if(maxlcp % (cand_length/20) == 0) {
+            if(maxlcp % ((cand_length+20)/20) == 0) {
                 env().end_stat_phase();
                 env().begin_stat_phase(std::string{"At MaxLCP Value "} + std::to_string(maxlcp) );
+                env().log_stat("num factors", factors.size());
             }
             std::vector<len_t>& candcol = cand[maxlcp-threshold]; // select the vector specific to the LCP-value
             for(size_t i = 0; i < candcol.size(); ++i) {
@@ -87,14 +89,8 @@ public:
                     const len_t& ind_suffix = isa[pos_suffix];
                     lcp[ind_suffix] = std::min<len_t>(k+1, lcp[ind_suffix]);
                 }
-                if(maxlcp % (cand_length/20) == 0) {
-                    env().log_stat("num factors", factors.size());
-                }
 
             }
-            // if(maxlcp % (cand_length/20) == 0) {
-            // 	env().end_stat_phase();
-            // }
             candcol.clear();
         }
         env().end_stat_phase();
