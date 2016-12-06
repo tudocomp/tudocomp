@@ -1,26 +1,18 @@
 #ifndef _INCLUDED_LFS_COMPRESSOR_HPP_
 #define _INCLUDED_LFS_COMPRESSOR_HPP_
 
-//#include <tudocomp/tudocomp.hpp>
+
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/Compressor.hpp>
 
 #include <tudocomp/io.hpp>
-//#include <chrono>
-//#include <thread>
-#include <queue>
 
 #include <iostream>
-//#include <sdsl/lcp.hpp>
-//#include <sdsl/suffix_arrays.hpp>
-//#include <sdsl/bit_vectors.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
-//#include <tudocomp/ds/SuffixArray.hpp>
 
 #include <tudocomp/tudocomp.hpp>
 
-//#include <sdsl/suffixtrees.hpp>
 
 namespace tdc {
 
@@ -60,6 +52,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "longest_first_substitution_compressor",
             "This is an implementation of the longest first substitution compression scheme.");
+        m.needs_sentinel_terminator();
         m.option("coder").templated<coder_t>();
         return m;
     }
@@ -68,8 +61,6 @@ public:
     inline LFSCompressor(Env&& env):
         Compressor(std::move(env))
     {
-        // ...
-
         DLOG(INFO) << "Compressor instantiated";
 
     }
@@ -91,7 +82,8 @@ public:
         //creating lcp and sa
         DLOG(INFO) << "reading input";
         auto in = input.as_view();
-        in.ensure_null_terminator();
+        //in.ensure_null_terminator();
+
         //TextDS<> t(in);
         text_t t(in);
         DLOG(INFO) << "building sa and lcp";
@@ -221,16 +213,17 @@ public:
         std::sort(non_terminal_symbols.begin(), non_terminal_symbols.end());
 
 
+        Range intrange (0, UINT_MAX);//uint32_r
 
         // encode dictionary:
         DLOG(INFO) << "encoding dictionary";
-        coder.encode(dictionary.size(),uint32_r);
+        coder.encode(dictionary.size(),intrange);//uint32_r
         // encode dictionary:
         if(dictionary.size() >=1 ){
             auto it = dictionary.begin();
             std::pair<uint,uint> symbol = *it;
             Range slength_r (0, symbol.second);
-            coder.encode(symbol.second,uint32_r);
+            coder.encode(symbol.second,intrange);//uint32_r
 
              while(it != dictionary.end()){
             //first length of non terminal symbol
@@ -245,7 +238,7 @@ public:
 
              coder.encode(0,slength_r);
         } else {
-            coder.encode(1,uint32_r);
+            coder.encode(1,intrange);
 
             Range min_range (0,1);
             coder.encode(0,min_range);
@@ -306,7 +299,7 @@ public:
     inline virtual void decompress(Input& input, Output& output) override {
         DLOG(INFO) << "decompress lfs";
 
-
+        Range intrange (0, UINT_MAX);//uint32_r
 
         typename coder_t::Decoder decoder(
                     env().env_for_option("coder"), // Environment
@@ -314,9 +307,9 @@ public:
 
         std::vector<std::string> dictionary;
         bool reading_dictionary=true;
-        uint dictionary_size = decoder.template decode<uint>(uint32_r);
+        uint dictionary_size = decoder.template decode<uint>(intrange);
 
-        uint slength = decoder.template decode<uint>(uint32_r);
+        uint slength = decoder.template decode<uint>(intrange);
 
         Range dictionary_r (0, dictionary_size);
         Range slength_r (0, slength);

@@ -101,7 +101,7 @@ void compress_and_decompress_file(const std::string filename) {
 
 TEST(lfs, as_stream_aba){
 
-     run_coder_test<BitOptimalCoder>("abaaabbababb$");
+     run_coder_test<BitCoder>("abaaabbababb$");
 
      run_coder_test<ASCIICoder>("abaaabbababb$");
 }
@@ -127,7 +127,7 @@ TEST(lfs, as_file_mis){
 }
 
 TEST(lfs, large_file){
-    compress_and_decompress_file<BitOptimalCoder>("sources.10MB");
+    compress_and_decompress_file<BitCoder>("sources.10MB");
 }
 
 
