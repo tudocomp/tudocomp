@@ -148,7 +148,7 @@ int main(int argc, char** argv)
             bool needs_sentinel_terminator;
         } selection;
 
-        if (do_raw || do_compress) {
+        if (!FLAGS_algorithm.empty()) {
             selection.id_string = FLAGS_algorithm;
 
             auto av = registry.parse_algorithm_id(selection.id_string);
@@ -254,7 +254,8 @@ int main(int argc, char** argv)
                 selection.compressor->compress(inp, out);
                 comp_time = clk::now();
             } else {
-                if (!do_raw) {
+                if ((!do_raw) && (selection.id_string.empty())) {
+                    DLOG(INFO) << "Using header id string\n";
                     auto i_stream = inp.as_stream();
                     std::string algorithm_header;
 
@@ -282,7 +283,10 @@ int main(int argc, char** argv)
                     auto av = registry.parse_algorithm_id(selection.id_string);
 
                     selection.compressor = registry.select_algorithm_or_exit(av);
+                    selection.needs_sentinel_terminator = av.needs_sentinel_terminator();
                     algorithm_env = selection.compressor->env().root();
+                } else {
+                    DLOG(INFO) << "Using given id string\n";
                 }
 
                 if (selection.needs_sentinel_terminator) {
