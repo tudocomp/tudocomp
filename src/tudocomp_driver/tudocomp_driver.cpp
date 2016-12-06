@@ -119,8 +119,6 @@ int main(int argc, char** argv)
     try {
         validate_flag_combination();
 
-        std::shared_ptr<EnvRoot> algorithm_env;
-
         // Set up algorithms
         Registry& registry = REGISTRY;
 
@@ -142,20 +140,54 @@ int main(int argc, char** argv)
 
         bool do_raw = FLAGS_raw;
 
-        struct {
-            std::string id_string;
-            std::unique_ptr<Compressor> compressor;
-            bool needs_sentinel_terminator;
-        } selection;
+        class Selection {
+            std::string m_id_string;
+            std::unique_ptr<Compressor> m_compressor;
+            bool m_needs_sentinel_terminator;
+            std::shared_ptr<EnvRoot> m_algorithm_env;
+        public:
+            Selection():
+                m_id_string(),
+                m_compressor(),
+                m_needs_sentinel_terminator(false),
+                m_algorithm_env() {}
+            Selection(std::string&& id_string,
+                      std::unique_ptr<Compressor>&& compressor,
+                      bool needs_sentinel_terminator,
+                      std::shared_ptr<EnvRoot>&& algorithm_env):
+                m_id_string(std::move(id_string)),
+                m_compressor(std::move(compressor)),
+                m_needs_sentinel_terminator(needs_sentinel_terminator),
+                m_algorithm_env(std::move(algorithm_env)) {}
+            const std::string& id_string() const {
+                return m_id_string;
+            }
+            Compressor& compressor() {
+                return *m_compressor;
+            }
+            bool needs_sentinel_terminator() const {
+                return m_needs_sentinel_terminator;
+            }
+            const std::shared_ptr<EnvRoot>& algorithm_env() const {
+                return m_algorithm_env;
+            }
+        };
+        Selection selection;
 
         if (!FLAGS_algorithm.empty()) {
-            selection.id_string = FLAGS_algorithm;
+            auto id_string = FLAGS_algorithm;
 
-            auto av = registry.parse_algorithm_id(selection.id_string);
-            selection.needs_sentinel_terminator = av.needs_sentinel_terminator();
-            selection.compressor = registry.select_algorithm_or_exit(av);
+            auto av = registry.parse_algorithm_id(id_string);
+            auto needs_sentinel_terminator = av.needs_sentinel_terminator();
+            auto compressor = registry.select_algorithm_or_exit(av);
+            auto algorithm_env = compressor->env().root();
 
-            algorithm_env = selection.compressor->env().root();
+            selection = Selection {
+                std::move(id_string),
+                std::move(compressor),
+                needs_sentinel_terminator,
+                std::move(algorithm_env),
+            };
         }
 
         /////////////////////////////////////////////////////////////////////////
@@ -239,22 +271,22 @@ int main(int argc, char** argv)
                 }
 
                 if (!do_raw) {
-                    CHECK(selection.id_string.find('%') == std::string::npos);
+                    CHECK(selection.id_string().find('%') == std::string::npos);
 
                     auto o_stream = out.as_stream();
-                    o_stream << selection.id_string << '%';
+                    o_stream << selection.id_string() << '%';
                 }
 
-                if (selection.needs_sentinel_terminator) {
+                if (selection.needs_sentinel_terminator()) {
                     inp.escape_and_terminate();
                 }
 
-                algorithm_env->restart_stats("Compress");
+                selection.algorithm_env()->restart_stats("Compress");
                 setup_time = clk::now();
-                selection.compressor->compress(inp, out);
+                selection.compressor().compress(inp, out);
                 comp_time = clk::now();
             } else {
-                if ((!do_raw) && (selection.id_string.empty())) {
+                if ((!do_raw) && (selection.id_string().empty())) {
                     DLOG(INFO) << "Using header id string\n";
                     auto i_stream = inp.as_stream();
                     std::string algorithm_header;
@@ -278,29 +310,35 @@ int main(int argc, char** argv)
                     if (err) {
                         exit("Input did not have an algorithm header!");
                     }
-                    selection.id_string = std::move(algorithm_header);
 
-                    auto av = registry.parse_algorithm_id(selection.id_string);
+                    auto id_string = std::move(algorithm_header);
+                    auto av = registry.parse_algorithm_id(id_string);
+                    auto compressor = registry.select_algorithm_or_exit(av);
+                    auto needs_sentinel_terminator = av.needs_sentinel_terminator();
+                    auto algorithm_env = compressor->env().root();
 
-                    selection.compressor = registry.select_algorithm_or_exit(av);
-                    selection.needs_sentinel_terminator = av.needs_sentinel_terminator();
-                    algorithm_env = selection.compressor->env().root();
+                    selection = Selection {
+                        std::move(id_string),
+                        std::move(compressor),
+                        needs_sentinel_terminator,
+                        std::move(algorithm_env),
+                    };
                 } else {
                     DLOG(INFO) << "Using given id string\n";
                 }
 
-                if (selection.needs_sentinel_terminator) {
+                if (selection.needs_sentinel_terminator()) {
                     out.unescape_and_trim();
                 }
 
-                algorithm_env->restart_stats("Decompress");
+                selection.algorithm_env()->restart_stats("Decompress");
                 setup_time = clk::now();
-                selection.compressor->decompress(inp, out);
+                selection.compressor().decompress(inp, out);
                 comp_time = clk::now();
             }
         }
 
-        auto algo_stats = algorithm_env->finish_stats();
+        auto algo_stats = selection.algorithm_env()->finish_stats();
         end_time = clk::now();
 
         if (print_stats) {
@@ -308,7 +346,7 @@ int main(int argc, char** argv)
             auto comp_duration = comp_time - setup_time;
             auto end_duration = end_time - comp_time;
             std::cout << "---------------\n";
-            std::cout << "Config: " << selection.id_string << std::endl;
+            std::cout << "Config: " << selection.id_string() << std::endl;
             std::cout << "---------------\n";
             auto inp_size = 0;
             if (use_stdin) {
