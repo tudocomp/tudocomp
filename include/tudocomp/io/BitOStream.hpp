@@ -4,6 +4,7 @@
 #include <climits>
 #include <cstdint>
 #include <iostream>
+#include <tudocomp/util.hpp>
 #include <tudocomp/io/Output.hpp>
 
 namespace tdc {
@@ -88,6 +89,27 @@ public:
         for (int i = bits - 1; i >= 0; i--) {
             write_bit((value & T(T(1) << i)) != T(0));
         }
+    }
+
+    template<typename value_t>
+    inline void write_unary(value_t v) {
+        while(v--) {
+            write_bit(0);
+        }
+
+        write_bit(1);
+    }
+
+    template<typename value_t>
+    inline void write_elias_gamma(value_t v) {
+        write_unary(bits_for(v));
+        write_int(v, bits_for(v));
+    }
+
+    template<typename value_t>
+    inline void write_elias_delta(value_t v) {
+        write_elias_gamma(bits_for(v));
+        write_int(v, bits_for(v));
     }
 
     /// \brief Writes a compressed integer to the input.

@@ -22,7 +22,7 @@ public:
 
         template<typename value_t>
         inline void encode(value_t v, const Range&) {
-            encode_elias_delta(v);
+            m_out->write_elias_delta(v);
         }
     };
 
@@ -34,7 +34,7 @@ public:
 
         template<typename value_t>
         inline value_t decode(const Range&) {
-            return decode_elias_delta<value_t>();
+            return m_in->read_elias_delta<value_t>();
         }
     };
 };

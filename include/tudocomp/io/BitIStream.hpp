@@ -4,6 +4,7 @@
 #include <climits>
 #include <cstdint>
 #include <iostream>
+#include <tudocomp/util.hpp>
 
 namespace tdc {
 namespace io {
@@ -115,13 +116,32 @@ public:
     /// \return The integer value of the next \c amount bits in MSB first
     ///         order.
     template<class T>
-    T read_int(size_t amount = sizeof(T) * CHAR_BIT) {
+    inline T read_int(size_t amount = sizeof(T) * CHAR_BIT) {
         T value = 0;
         for(size_t i = 0; i < amount; i++) {
             value <<= 1;
             value |= read_bit();
         }
         return value;
+    }
+
+    template<typename value_t>
+    inline value_t read_unary() {
+        value_t v = 0;
+        while(!read_bit()) ++v;
+        return v;
+    }
+
+    template<typename value_t>
+    inline value_t read_elias_gamma() {
+        auto bits = read_unary<size_t>();
+        return read_int<value_t>(bits);
+    }
+
+    template<typename value_t>
+    inline value_t read_elias_delta() {
+        auto bits = read_elias_gamma<size_t>();
+        return read_int<value_t>(bits);
     }
 
     /// \brief Reads a compressed integer from the input.
