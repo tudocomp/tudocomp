@@ -134,11 +134,10 @@ int main(int argc, char** argv)
         int alphabet_size = 0;
 
         bool do_compress = !FLAGS_decompress;
+        bool do_raw = FLAGS_raw;
 
         /////////////////////////////////////////////////////////////////////////
         // Select algorithm
-
-        bool do_raw = FLAGS_raw;
 
         class Selection {
             std::string m_id_string;
@@ -286,10 +285,16 @@ int main(int argc, char** argv)
                 selection.compressor().compress(inp, out);
                 comp_time = clk::now();
             } else {
-                if ((!do_raw) && (selection.id_string().empty())) {
-                    DLOG(INFO) << "Using header id string\n";
+                // 3 cases
+                // --decompress                   : read and use header
+                // --decompress --algorithm       : read but ignore header
+                // --decompress --raw --algorithm : no header
+
+                std::string algorithm_header;
+
+                if (!do_raw) {
+                    // read header
                     auto i_stream = inp.as_stream();
-                    std::string algorithm_header;
 
                     char c;
                     size_t sanity_size_check = 0;
@@ -310,6 +315,13 @@ int main(int argc, char** argv)
                     if (err) {
                         exit("Input did not have an algorithm header!");
                     }
+                }
+
+                if (!do_raw && !selection.id_string().empty()) {
+                    DLOG(INFO) << "Ignoring header " << algorithm_header
+                        << " and using manually given " << selection.id_string();
+                } else if (!do_raw) {
+                    DLOG(INFO) << "Using header id string " << algorithm_header;
 
                     auto id_string = std::move(algorithm_header);
                     auto av = registry.parse_algorithm_id(id_string);
@@ -324,7 +336,7 @@ int main(int argc, char** argv)
                         std::move(algorithm_env),
                     };
                 } else {
-                    DLOG(INFO) << "Using given id string\n";
+                    DLOG(INFO) << "Using manually given " << selection.id_string();
                 }
 
                 if (selection.needs_sentinel_terminator()) {
