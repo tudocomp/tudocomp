@@ -13,12 +13,16 @@
 
 #include <tudocomp/ds/TextDS.hpp>
 
+#include <tudocomp/io/BitIStream.hpp>
+#include <tudocomp/io/BitOStream.hpp>
+
+
 //#include <tudocomp/tudocomp.hpp>
 
 
 namespace tdc {
 
-template<typename coder_t>
+template<typename literal_coder_t, typename len_coder_t>
 class LFSCompressor : public Compressor {
 private:
     typedef TextDS<> text_t;
@@ -54,7 +58,8 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "longest_first_substitution_compressor",
             "This is an implementation of the longest first substitution compression scheme.");
-        m.option("coder").templated<coder_t>();
+        m.option("lit_coder").templated<literal_coder_t>();
+        m.option("len_coder").templated<len_coder_t>();
         m.needs_sentinel_terminator();
         return m;
     }
@@ -68,15 +73,6 @@ public:
     }
     inline virtual void compress(Input& input, Output& output) override {
 
-        // Kodierer instanziieren
-        typename coder_t::Encoder coder(
-                    env().env_for_option("coder"), // Environment für den Kodierer //.env_for_option("coder")
-                                                   // (könnte z.B. Optionen haben)
-                    output,                        // Die zu verwendende Ausgabe
-                    NoLiterals());                 // Kein Literal-Iterator
-                                                   // (erkläre ich nochmal)
-
-                // [!] Alle Ausgaben sollten nun über den Kodierer laufen
 
         uint min_lrf_length = 5;
         DLOG(INFO) << "compress lfs";
@@ -86,27 +82,23 @@ public:
         auto in = input.as_view();
         //in.ensure_null_terminator();
 
-
         //TextDS<> t(in);
         text_t t(in);
         DLOG(INFO) << "building sa and lcp";
         t.require(text_t::SA | text_t::ISA | text_t::LCP);
 
-        DLOG(INFO) << "done building sa and lcp";
+        //DLOG(INFO) << "done building sa and lcp";
         auto& sa_t = t.require_sa();
         auto& lcp_t = t.require_lcp();
 
-        // iterate over lcp array, add indexes with non overlapping prefix length greater than 2 to vector
+        // iterate over lcp array, add indexes with non overlapping prefix length greater than min_lrf_length to vector
         std::vector<std::pair<uint,uint>> lrf_occurences;
-        //std::vector<std::string> dictionary;
 
-        //vector of position, length
-        std::vector<std::pair<uint,uint>> dictionary;
 
         DLOG(INFO) << "iterate over lcp";
         uint dif ;
         uint factor_length;
-        for(int i = 1; (uint)i<lcp_t.size(); i++){
+        for(uint i = 1; i<lcp_t.size(); i++){
 
             if(lcp_t[i] >= min_lrf_length){
                 //compute length of non-overlapping factor:
@@ -126,8 +118,8 @@ public:
                 }
                 //second is position in suffix array
                 //first is length of common prefix
-                std::pair<uint,uint> pair (factor_length,(uint) i);
-                if(factor_length>1){
+                std::pair<uint,uint> pair (factor_length, i);
+                if(factor_length>=min_lrf_length){
 
                   //  DLOG(INFO) << "found lrf";
                     lrf_occurences.push_back(pair);
@@ -141,6 +133,9 @@ public:
         //the first in pair is position, the seconds the number of the non terminal symbol
 
         DLOG(INFO) << "computing lrfs";
+
+        //vector of text position, length
+        std::vector<std::pair<uint,uint>> dictionary;
 
         std::sort(lrf_occurences.begin(),lrf_occurences.end());
 
@@ -216,36 +211,92 @@ public:
         std::sort(non_terminal_symbols.begin(), non_terminal_symbols.end());
 
 
-        Range intrange (0, UINT_MAX);//uint32_r
+
+
 
         // encode dictionary:
-        DLOG(INFO) << "encoding dictionary";
-        coder.encode(dictionary.size(),intrange);//uint32_r
-        // encode dictionary:
+        DLOG(INFO) << "encoding dictionary symbol sizes ";
+
+        std::shared_ptr<BitOStream> bitout = std::make_shared<BitOStream>(output);
+        typename literal_coder_t::Encoder lit_coder(
+            env().env_for_option("lit_coder"),
+            bitout,
+            NoLiterals()
+        );
+        typename len_coder_t::Encoder len_coder(
+            env().env_for_option("len_coder"),
+            bitout,
+            NoLiterals()
+        );
+
+        auto it = dictionary.begin();
+        //range int_r (0,MAX_INT);
+
+        Range intrange (0, UINT_MAX);//uint32_r
+        if(dictionary.size() >=1 ){
+
+            std::pair<uint,uint> symbol = *it;
+            uint last_length=symbol.second;
+            Range s_length_r (0,last_length);
+
+            DLOG(INFO) <<"first length: " <<last_length;
+           // bitout->write_elias_delta<uint>(last_length);
+            len_coder.encode(last_length,intrange);
+            it++;
+
+            while (it != dictionary.end()){
+                symbol=*it;
+
+                //bitout->write_elias_gamma<uint>(last_length-symbol.second);
+                len_coder.encode(last_length-symbol.second,s_length_r);
+                last_length=symbol.second;
+                it++;
+
+            }
+            DLOG(INFO) <<"last length: " <<last_length;
+            len_coder.encode(symbol.second,s_length_r);
+            //bitout->write_elias_gamma<uint>(symbol.second);
+        }else {
+            len_coder.encode(0,intrange);
+            //bitout->write_elias_delta<uint>(0);
+
+        }
+
+
+        //
+
+        //coder.encode(dictionary.size(),intrange);//uint32_r
+
+        DLOG(INFO) << "encoding dictionary symbols";
+        // encode dictionary strings:
         if(dictionary.size() >=1 ){
             auto it = dictionary.begin();
-            std::pair<uint,uint> symbol = *it;
-            Range slength_r (0, symbol.second);
-            coder.encode(symbol.second,intrange);//uint32_r
+            std::pair<uint,uint> symbol;// = *it;
+            //Range slength_r (0, symbol.second);
+            //coder.encode(symbol.second,intrange);//uint32_r
 
              while(it != dictionary.end()){
             //first length of non terminal symbol
-            symbol = *it;
-            coder.encode(symbol.second,slength_r);
+                symbol = *it;
+                //coder.encode(symbol.second,slength_r);
 
-            for(uint k = 0; k<symbol.second; k++){
-                coder.encode(t[symbol.first + k],literal_r);
-            }
+                for(uint k = 0; k<symbol.second; k++){
+                    lit_coder.encode(t[symbol.first + k],literal_r);
+                }
                 it++;
             }
 
-             coder.encode(0,slength_r);
-        } else {
-            coder.encode(1,intrange);
+             DLOG(INFO) << "last symbol " << t[symbol.first]+t[symbol.first + 1] << " length: " << symbol.second ;
 
-            Range min_range (0,1);
-            coder.encode(0,min_range);
+            // coder.encode(0,slength_r);
+        } else {
+            //lit_coder.encode(1,intrange);
+
+           // Range min_range (0,1);
+           // coder.encode(0,min_range);
         }
+
+
 
 
         DLOG(INFO) << "dictionary size: " << dictionary.size();
@@ -257,9 +308,10 @@ public:
         uint start_position;
         uint symbol_number ;
         uint symbol_length;
-        //int i=0;  &&i<10 i++;
+        bool first = true;
+        bool first_char = true;
         for(auto it = non_terminal_symbols.begin(); it!= non_terminal_symbols.end(); it++){
-        //while(!non_terminal_symbols.empty() ){
+
 
             std::tuple<uint,uint,uint> next_position = *it;
 
@@ -267,20 +319,29 @@ public:
             symbol_number =std::get<1>(next_position);
             symbol_length = std::get<2>(next_position);
 
-            //std::pop_heap(non_terminal_symbols.begin(),non_terminal_symbols.end(), std::greater<std::tuple<uint,uint,uint>>());
-            //non_terminal_symbols.pop_back();
             while(pos< start_position){
                 //get original text, because no symbol...
-                //output_string+=t[pos];
-                coder.encode(0, bit_r);
-                coder.encode(t[pos], literal_r);
+                lit_coder.encode(0, bit_r);
+                lit_coder.encode(t[pos], literal_r);
+
+                if(first_char){
+                    DLOG(INFO)<< "first char: " << t[pos] << "at pos " << pos;
+                    first_char=false;
+                }
                 pos++;
             }
 
             //write symbol number
 
-            coder.encode(1, bit_r);
-            coder.encode(symbol_number, dict_r);
+            lit_coder.encode(1, bit_r);
+            lit_coder.encode(symbol_number, dict_r);
+            if(first){
+                DLOG(INFO)<< "first symbol: " << symbol_number << " with length " << dictionary.at(symbol_number).second;
+                first=false;
+            }
+            if(symbol_number > dictionary.size()){
+                DLOG(INFO)<<"too large symbol: " << symbol_number;
+            }
 
             pos += symbol_length;
 
@@ -290,8 +351,8 @@ public:
         //TODO!!
         while( pos<t.size()-1){
 
-            coder.encode(0, bit_r);
-            coder.encode(t[pos], literal_r);
+            lit_coder.encode(0, bit_r);
+            lit_coder.encode(t[pos], literal_r);
             pos++;
         }
 
@@ -302,63 +363,101 @@ public:
     inline virtual void decompress(Input& input, Output& output) override {
         DLOG(INFO) << "decompress lfs";
 
-        Range intrange (0, UINT_MAX);//uint32_r
 
-        typename coder_t::Decoder decoder(
+        //BitIStream bitin (input);
+        std::shared_ptr<BitIStream> bitin = std::make_shared<BitIStream>(input);
+
+        typename literal_coder_t::Decoder lit_decoder(
+            env().env_for_option("lit_coder"),
+            bitin
+        );
+        typename len_coder_t::Decoder len_decoder(
+            env().env_for_option("len_coder"),
+            bitin
+        );
+        //Range slength_r (0, slength);
+        /*typename coder_t::Decoder decoder(
                     env().env_for_option("coder"), // Environment
-                    input);                        // Eingabe
+                    bitin);
+*/
+        Range int_r (0,UINT_MAX);
+
+        uint symbol_length = len_decoder.template decode<uint>(int_r);
+                //bitin->read_elias_delta<uint>();
+        DLOG(INFO)<< symbol_length;
+        Range slength_r (0, symbol_length);
+        std::vector<uint> dict_lengths;
+        dict_lengths.reserve(symbol_length);
+        dict_lengths.push_back(symbol_length);
+        while(symbol_length>0){
+
+            uint current_delta = len_decoder.template decode<uint>(slength_r);
+            symbol_length-=current_delta;
+            dict_lengths.push_back(symbol_length);
+        }
+        dict_lengths.pop_back();
+
+        DLOG(INFO)<< "dictionary size "<<dict_lengths.size();
+
 
         std::vector<std::string> dictionary;
-        bool reading_dictionary=true;
-        uint dictionary_size = decoder.template decode<uint>(intrange);
+        uint dictionary_size = dict_lengths.size();// = decoder.template decode<uint>(intrange);
 
-        uint slength = decoder.template decode<uint>(intrange);
+        //uint slength = decoder.template decode<uint>(intrange);
 
         Range dictionary_r (0, dictionary_size);
-        Range slength_r (0, slength);
+
 
         uint length_of_symbol;
         std::string non_terminal_symbol;
         DLOG(INFO) << "reading dictionary";
-        while(reading_dictionary){;
-            length_of_symbol = decoder.template decode<uint>(slength_r); // Dekodiere Literal
-            //length_of_symbol = (int) length;
+        for(uint i = 0; i< dict_lengths.size();i++){
             non_terminal_symbol ="";
-
             char c1;
-            if(length_of_symbol<=0) {
-                reading_dictionary=false;
-            } else {
-                for(uint i =0; i< length_of_symbol;i++){
-                    c1 = decoder.template decode<char>(literal_r);
-                    non_terminal_symbol += c1;
-                }
-                dictionary.push_back(non_terminal_symbol);
+            length_of_symbol=dict_lengths[i];
+            for(uint i =0; i< length_of_symbol;i++){
+                c1 = lit_decoder.template decode<char>(literal_r);
+                non_terminal_symbol += c1;
             }
+            dictionary.push_back(non_terminal_symbol);
         }
+        DLOG(INFO)<< "last symbol "<<non_terminal_symbol << " length: " << non_terminal_symbol.size();
 
         DLOG(INFO) << "reading string";
         auto ostream = output.as_stream();
-        //std::string output_string;
-       // bool end_of_text = false;
+        bool first = true;
+        bool first_char = true;
 
-        while(!decoder.eof()){
+        while(!lit_decoder.eof()){
             //decode bit
-            bool bit1 = decoder.template decode<bool>(bit_r);
+            bool bit1 = lit_decoder.template decode<bool>(bit_r);
             char c1;
             uint symbol_number;
             // if bit = 0 its a literal
             if(!bit1){
-                c1 = decoder.template decode<char>(literal_r); // Dekodiere Literal
+                c1 = lit_decoder.template decode<char>(literal_r); // Dekodiere Literal
 
                 ostream << c1;
+                if(first_char){
+                    DLOG(INFO)<< "first char: " << c1;
+                    first_char=false;
+                }
             } else {
             //else its a non-terminal
-                symbol_number = decoder.template decode<uint>(dictionary_r); // Dekodiere Literal
+                symbol_number = lit_decoder.template decode<uint>(dictionary_r); // Dekodiere Literal
+                if(first){
+                    DLOG(INFO)<< "first symbol: " << symbol_number;
+                    first=false;
+                }
 
                 //int symbol_number = (int) c1;
+                if(symbol_number < dictionary.size()){
 
-                ostream << dictionary.at(symbol_number);
+                    ostream << dictionary.at(symbol_number);
+                } else {
+                   // DLOG(INFO)<< "too large symbol: " << symbol_number;
+                }
+
             }
         }
     }
