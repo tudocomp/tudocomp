@@ -5,13 +5,13 @@
 #include <glog/logging.h>
 #include <cstdlib>
 
-#include "test_util.hpp"
 #include <tudocomp_driver/Registry.hpp>
-#include "tudocomp_driver_util.hpp"
+
+#include "test/util.hpp"
+#include "test/driver_util.hpp"
 
 using namespace tdc_algorithms;
 
-// TODO
 const std::vector<std::string> EXCLUDED_TESTS {
     "chain",
 };
@@ -20,23 +20,6 @@ const std::vector<std::string> ADDITIONAL_TESTS {
     "chain(lz78, lzw)",
     "chain(lz78, chain(noop, lzw))",
 };
-
-std::vector<std::string> parse_scsv(const std::string& s) {
-    std::vector<std::string> r;
-    std::string remaining = s;
-
-    while(!remaining.empty()) {
-        auto next = remaining.find(";");
-        r.push_back(remaining.substr(0, next));
-        if (next == std::string::npos) {
-            remaining = "";
-        } else {
-            remaining = remaining.substr(next + 1);
-        }
-    }
-
-    return r;
-}
 
 TEST(TudocompDriver, roundtrip_matrix) {
     std::cout << "[ Generating list of test cases ]\n";
@@ -61,14 +44,14 @@ TEST(TudocompDriver, roundtrip_matrix) {
         test_cases_pre_filter.push_back(x.to_string(true));
     }
 
-    for (auto x : parse_scsv(env_exclude)) {
+    for (auto x : driver_test::parse_scsv(env_exclude)) {
         excluded_tests.push_back(x);
     }
-    for (auto x : parse_scsv(env_pattern)) {
+    for (auto x : driver_test::parse_scsv(env_pattern)) {
         pattern_tests.push_back(x);
         has_pattern_tests = true;
     }
-    for (auto x : parse_scsv(env_additional)) {
+    for (auto x : driver_test::parse_scsv(env_additional)) {
         additional_tests.push_back(x);
     }
 
@@ -99,12 +82,12 @@ TEST(TudocompDriver, roundtrip_matrix) {
     }
     std::cout << "[ Start roundtrip tests ]\n";
 
-    std::vector<Error> errors;
+    std::vector<driver_test::Error> errors;
 
     for (auto& algo : test_cases) {
         int counter = 0;
         bool abort = false;
-        test_roundtrip_batch([&](std::string text) {
+        test::roundtrip_batch([&](std::string text) {
             if (abort) {
                 return;
             }
@@ -113,7 +96,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
             std::string n = "_" + ss.str();
             counter++;
 
-            auto e = roundtrip(algo, n, text, true, abort);
+            auto e = driver_test::roundtrip(algo, n, text, true, abort);
             if (e.has_error) {
                 errors.push_back(e);
             }
@@ -128,16 +111,16 @@ TEST(TudocompDriver, roundtrip_matrix) {
         std::cout << "  " << e.message << "\n";
         std::cout << "  in: " << e.test << "\n";
         if (e.text != e.roundtrip_text) {
-            auto escaped_text = format_escape(e.text);
-            auto escaped_roundtrip_text = format_escape(e.roundtrip_text);
+            auto escaped_text = driver_test::format_escape(e.text);
+            auto escaped_roundtrip_text = driver_test::format_escape(e.roundtrip_text);
             std::cout << "  expected:\n";
             std::cout << "  " << escaped_text << "\n";
             std::cout << "  actual:\n";
             std::cout << "  " << escaped_roundtrip_text << "\n";
             std::cout << "  diff:\n";
-            std::cout << "  " << format_diff(e.text, e.roundtrip_text) << "\n";
+            std::cout << "  " << driver_test::format_diff(e.text, e.roundtrip_text) << "\n";
         }
-        std::cout << indent_lines(format_std_outputs({
+        std::cout << indent_lines(driver_test::format_std_outputs({
             "compress command", e.compress_cmd,
             "compress stdout", e.compress_stdout,
             "decompress command", e.decompress_cmd,

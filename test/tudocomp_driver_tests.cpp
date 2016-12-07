@@ -6,16 +6,16 @@
 
 #include <tudocomp/util.hpp>
 
-#include "test_util.hpp"
 #include <tudocomp_driver/Registry.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
 
-#include "tudocomp_driver_util.hpp"
+#include "test/util.hpp"
+#include "test/driver_util.hpp"
 
 TEST(TudocompDriver, list) {
     // Test that we got at some output with --list
 
-    auto list = driver("--list");
+    auto list = driver_test::driver("--list");
 
     std::cout << list;
 
@@ -28,19 +28,19 @@ TEST(TudocompDriver, algorithm_header) {
     std::string text = "asdfghjklöä";
     bool abort = false;
     // Without header
-    roundtrip("lz78(ascii)", "_header_test_0", text, true, abort);
+    driver_test::roundtrip("lz78(ascii)", "_header_test_0", text, true, abort);
 
     // With header
-    roundtrip("lz78(ascii)", "_header_test_1", text, false, abort);
+    driver_test::roundtrip("lz78(ascii)", "_header_test_1", text, false, abort);
 
     ASSERT_FALSE(abort);
 
-    std::string text0 = read_test_file(roundtrip_comp_file_name(
+    std::string text0 = test::read_test_file(driver_test::roundtrip_comp_file_name(
         "lz78(ascii)", "_header_test_0"));
 
     ASSERT_FALSE(text0.find("lz78(ascii)%") == 0);
 
-    std::string text1 = read_test_file(roundtrip_comp_file_name(
+    std::string text1 = test::read_test_file(driver_test::roundtrip_comp_file_name(
         "lz78(ascii)", "_header_test_1"));
 
     ASSERT_TRUE(text1.find("lz78(ascii)%") == 0);

@@ -1,4 +1,4 @@
-include(test_driver.cmake)
+include(test/testsuite.cmake)
 
 list(APPEND BASIC_DEPS malloc_count tudocomp)
 

@@ -114,7 +114,7 @@ endmacro()
 macro(run_test test_target)
 generic_run_test(
     ${test_target}
-    "test_driver.cpp"
+    "test/test_driver.cpp"
     gtest
     check
     build_check
@@ -126,7 +126,7 @@ endmacro()
 macro(run_bench test_target)
 generic_run_test(
     ${test_target}
-    "bench_driver.cpp"
+    "test/bench_driver.cpp"
     benchpress
     bench
     build_bench

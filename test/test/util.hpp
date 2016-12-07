@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <string>
+#include <memory>
 
 #include <glog/logging.h>
 #include <gtest/gtest.h>
@@ -11,8 +13,17 @@
 #include <sys/stat.h>
 
 #include <tudocomp/tudocomp.hpp>
+#include <tudocomp/Env.hpp>
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/Algorithm.hpp>
+#include <tudocomp/AlgorithmStringParser.hpp>
+#include <tudocomp/Registry.hpp>
+#include <tudocomp/io.hpp>
+#include <tudocomp/util/View.hpp>
 
 using namespace tdc;
+
+namespace test {
 
 // TODO: Actually specialize the 3 kinds
 
@@ -80,7 +91,7 @@ std::vector<uint8_t> ostream_to_bytes(Lambda f) {
 /// Call the given function with a number
 /// of different strings testing common corner cases and unicode input.
 template<class F>
-void test_roundtrip_batch(F f) {
+void roundtrip_batch(F f) {
     f("abcdebcdeabc"_v);
     f("a"_v);
     f(""_v);
@@ -163,28 +174,26 @@ void test_roundtrip_batch(F f) {
 
 #include <tudocomp/util/Generators.hpp>
 template<class F>
-void test_on_string_generators(F func, size_t n) {
-	for(size_t i = 0; i < n; ++i) {
-		std::string s = fibonacci_word(i);
-		func(s);
-	}
-	for(size_t i = 0; i < n; ++i) {
-		std::string s = thue_morse_word(i);
-		func(s);
-	}
-	for(size_t i = 0; i < n; ++i) {
-		std::string s = run_rich(i);
-		func(s);
-	}
-	for(size_t i = 2; i < n; ++i) {
-		for(size_t j = 0; j < 2+50/(i+1); ++j) {
-			std::string s = random_uniform(1<<i,Ranges::numbers,j);
-			func(s);
-		}
-	}
+void on_string_generators(F func, size_t n) {
+    for(size_t i = 0; i < n; ++i) {
+        std::string s = fibonacci_word(i);
+        func(s);
+    }
+    for(size_t i = 0; i < n; ++i) {
+        std::string s = thue_morse_word(i);
+        func(s);
+    }
+    for(size_t i = 0; i < n; ++i) {
+        std::string s = run_rich(i);
+        func(s);
+    }
+    for(size_t i = 2; i < n; ++i) {
+        for(size_t j = 0; j < 2+50/(i+1); ++j) {
+            std::string s = random_uniform(1<<i,Ranges::numbers,j);
+            func(s);
+        }
+    }
 }
-
-
 
 const std::string TEST_FILE_PATH = "test_files";
 
@@ -264,6 +273,141 @@ inline std::vector<uint8_t> pack_integers(std::vector<uint64_t> ints) {
     }
 
     return bits;
+}
+
+    template<class C>
+    struct CompressResult {
+    private:
+        Registry m_registry;
+    public:
+        std::vector<uint8_t> bytes;
+        std::string str;
+        std::string orginal_text;
+        std::string options;
+
+        CompressResult(const Registry& registry,
+                       std::vector<uint8_t>&& p_bytes,
+                       std::string&& p_str,
+                       std::string&& p_original,
+                       std::string&& p_options):
+            m_registry(registry),
+            bytes(std::move(p_bytes)),
+            str(std::move(p_str)),
+            orginal_text(std::move(p_original)),
+            options(std::move(p_options)) {}
+
+        void assert_decompress() {
+            std::vector<uint8_t> decoded_buffer;
+            {
+                Input text_in = Input::from_memory(bytes);
+                Output decoded_out = Output::from_memory(decoded_buffer);
+
+                auto compressor = create_algo_with_registry<C>(options, m_registry);
+
+                if (C::meta().is_needs_sentinel_terminator()) {
+                    decoded_out.unescape_and_trim();
+                }
+
+                compressor.decompress(text_in, decoded_out);
+            }
+            std::string decompressed_text {
+                decoded_buffer.begin(),
+                decoded_buffer.end(),
+            };
+            ASSERT_EQ(orginal_text, decompressed_text);
+        }
+
+        void assert_decompress_bytes() {
+            std::vector<uint8_t> decompressed_bytes;
+            {
+                Input text_in = Input::from_memory(bytes);
+                Output decoded_out = Output::from_memory(decompressed_bytes);
+
+                auto compressor = create_algo_with_registry<C>(options, m_registry);
+
+                if (C::meta().is_needs_sentinel_terminator()) {
+                    decoded_out.unescape_and_trim();
+                }
+
+                compressor.decompress(text_in, decoded_out);
+            }
+            std::vector<uint8_t> orginal_bytes {
+                orginal_text.begin(),
+                orginal_text.end(),
+            };
+            ASSERT_EQ(orginal_bytes, decompressed_bytes);
+        }
+    };
+
+    template<class C>
+    class RoundTrip {
+        std::string m_options;
+        Registry m_registry;
+    public:
+        inline RoundTrip(const std::string& options = "",
+                         const Registry& registry = Registry()):
+            m_options(options),
+            m_registry(registry)
+        {
+        }
+
+        CompressResult<C> compress(string_ref text) {
+            std::vector<uint8_t> encoded_buffer;
+            {
+                Input text_in = Input::from_memory(text);
+                Output encoded_out = Output::from_memory(encoded_buffer);
+
+                auto compressor = create_algo_with_registry<C>(m_options, m_registry);
+                if (C::meta().is_needs_sentinel_terminator()) {
+                    text_in.escape_and_terminate();
+                }
+                compressor.compress(text_in, encoded_out);
+            }
+            std::string s(encoded_buffer.begin(), encoded_buffer.end());
+            return CompressResult<C> {
+                m_registry,
+                std::move(encoded_buffer),
+                std::move(s),
+                std::string(text),
+                std::string(m_options),
+            };
+        }
+    };
+
+    template<class T>
+    inline CompressResult<T> compress(string_ref text,
+                                      const std::string& options = "",
+                                      const Registry& registry = Registry()) {
+        return RoundTrip<T>(options, registry).compress(text);
+    }
+
+    template<class T>
+    inline void roundtrip(string_ref original_text,
+                          string_ref expected_compressed_text = "",
+                          const std::string& options = "",
+                          const Registry& registry = Registry()) {
+        auto e = RoundTrip<T>(options, registry).compress(original_text);
+        auto& compressed_text = e.str;
+
+        if(expected_compressed_text.size() > 0)
+        ASSERT_EQ(std::string(expected_compressed_text), compressed_text);
+
+        e.assert_decompress();
+    }
+
+    template<class T>
+    inline void roundtrip(string_ref original_text,
+                          const std::vector<uint8_t>& expected_compressed_text,
+                          const std::string& options = "",
+                          const Registry& registry = Registry()) {
+        auto e = RoundTrip<T>(options, registry).compress(original_text);
+        auto& compressed_text = e.bytes;
+
+        ASSERT_EQ(expected_compressed_text, compressed_text);
+
+        e.assert_decompress_bytes();
+    }
+
 }
 
 #endif

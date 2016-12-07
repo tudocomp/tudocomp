@@ -7,7 +7,7 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/bwt.hpp>
-#include "test_util.hpp"
+#include "test/util.hpp"
 
 using namespace tdc;
 using io::InputView;
@@ -158,7 +158,7 @@ void test_lcpsada(const std::string&,TextDS<>& t) {
 	lcp_sada<TextDS<>> lcp;
 	lcp.construct(t);
 	std::cout << lcp.size() << std::endl;
-	assert_eq_sequence(lcp, t.require_lcp());
+	test::assert_eq_sequence(lcp, t.require_lcp());
 }
 
 
@@ -186,8 +186,8 @@ class RunTestDS {
 
 #define TEST_DS_STRINGCOLLECTION(func) \
 	RunTestDS<TextDS<>> runner(test_sa); \
-	test_roundtrip_batch(runner); \
-	test_on_string_generators(runner,11);
+	test::roundtrip_batch(runner); \
+	test::on_string_generators(runner,11);
 TEST(ds, lcpsada)     { TEST_DS_STRINGCOLLECTION(test_lcpsada); }
 TEST(ds, SA)          { TEST_DS_STRINGCOLLECTION(test_sa); }
 TEST(ds, ISA)         { TEST_DS_STRINGCOLLECTION(test_isa); }

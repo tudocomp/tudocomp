@@ -1,5 +1,5 @@
 #include "tudocomp/compressors/EasyRLECompressor.hpp"
-#include "test_util.hpp"
+#include "test/util.hpp"
 #include <gtest/gtest.h>
 
 using namespace tdc;
@@ -16,5 +16,5 @@ void test_rle(const std::string& input) {
 
 TEST(RLE, string_test) {
 	std::function<void(std::string&)> func(test_rle);
-	test_on_string_generators(func,20);
+	test::on_string_generators(func,20);
 }
