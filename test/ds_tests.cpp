@@ -174,8 +174,7 @@ class RunTestDS {
 
 	void operator()(const std::string& str) {
 		VLOG(2) << "str = \"" << str << "\"" << " size: " << str.length();
-		Input input(str);
-        input.escape_and_terminate();
+		test::TestInput input = test::compress_input(str);
 		InputView in = input.as_view();
 		DCHECK_EQ(str.length()+1, in.size());
 		textds_t t(in);
