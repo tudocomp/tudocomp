@@ -2,16 +2,18 @@
 #define _INCLUDED_LFS_COMPRESSOR_HPP_
 
 
-#include <tudocomp/Algorithm.hpp>
+
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/Range.hpp>
+#include <tudocomp/util.hpp>
 
 #include <tudocomp/io.hpp>
 
-#include <iostream>
+//#include <iostream>
 
 #include <tudocomp/ds/TextDS.hpp>
 
-#include <tudocomp/tudocomp.hpp>
+//#include <tudocomp/tudocomp.hpp>
 
 
 namespace tdc {
@@ -52,8 +54,8 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "longest_first_substitution_compressor",
             "This is an implementation of the longest first substitution compression scheme.");
-        m.needs_sentinel_terminator();
         m.option("coder").templated<coder_t>();
+        m.needs_sentinel_terminator();
         return m;
     }
 
