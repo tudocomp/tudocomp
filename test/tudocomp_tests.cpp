@@ -1134,3 +1134,34 @@ TEST(Escaping, option_value_indirect_copy) {
     av2 = std::move(av);
     ASSERT_TRUE(av2.needs_sentinel_terminator());
 }
+
+TEST(Test, TestInputCompression) {
+    test::TestInput i = test::compress_input("abcd"_v);
+    ASSERT_EQ(i.as_view(), "abcd\0"_v);
+}
+
+TEST(Test, TestOutputCompression) {
+    test::TestOutput o = test::compress_output();
+    o.as_stream() << "abcd\0"_v;
+    ASSERT_EQ(o.result(), "abcd\0"_v);
+}
+
+TEST(Test, TestInputDecompression) {
+    test::TestInput i = test::decompress_input("abcd\0"_v);
+    ASSERT_EQ(i.as_view(), "abcd\0"_v);
+}
+
+TEST(Test, TestOutputDecompression) {
+    test::TestOutput o = test::decompress_output();
+    o.as_stream() << "abcd\0"_v;
+    ASSERT_EQ(o.result(), "abcd"_v);
+}
+
+TEST(Test, TestInputOutputInheritance) {
+    auto x = create_algo<MyCompressor<MySubAlgo>>("", "test");
+
+    auto i = test::compress_input("asdf");
+    auto o = test::compress_output();
+
+    x.compress(i, o);
+}

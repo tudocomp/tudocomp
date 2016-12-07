@@ -408,6 +408,44 @@ inline void roundtrip(string_ref original_text,
     e.assert_decompress_bytes();
 }
 
+class TestInput: public Input {
+public:
+    inline TestInput(string_ref text, bool sentinel): Input(text) {
+        if (sentinel) {
+            this->escape_and_terminate();
+        }
+    }
+};
+
+class TestOutput: std::vector<uint8_t>, public Output {
+public:
+    inline TestOutput(bool sentinel): std::vector<uint8_t>(),
+        Output(static_cast<std::vector<uint8_t>&>(*this))
+    {
+        if (sentinel) {
+            this->unescape_and_trim();
+        }
+    }
+
+    inline string_ref result() { return *this; }
+};
+
+TestInput compress_input(string_ref text) {
+    return TestInput(text, true);
+}
+
+TestInput decompress_input(string_ref text) {
+    return TestInput(text, false);
+}
+
+TestOutput compress_output() {
+    return TestOutput(false);
+}
+
+TestOutput decompress_output() {
+    return TestOutput(true);
+}
+
 }
 
 #endif
