@@ -49,7 +49,7 @@ add_subdirectory(src)
 add_subdirectory(test)
 
 # Huge optional corpus of text files for comparisons
-add_subdirectory(etc/datasets)
+add_subdirectory(compare)
 
 # Docs
 add_subdirectory(docs)

@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# check command line
+if [ -z "$1" ]; then
+    echo "Usage: get_datasets <dir>"
+    exit 1
+fi
+
+if [ ! -d "$1" ]; then
+    echo "Not a directory: $1"
+    exit 1
+fi
+
+OUT=${1%/}
+
+# Pizza&Chili Corpus text collection
+OUT_PNC=$OUT/pizza_chili
+mkdir -p $OUT_PNC
+
+PNC_URL="http://pizzachili.dcc.uchile.cl/texts"
+PNC_TEXTS="code/sources music/pitches protein/proteins dna/dna nlang/english xml/dblp.xml"
+PNC_PREFIXES="200 100 50 10 1"
+
+for T in $PNC_TEXTS; do
+
+    # download base file if necessary
+    F=$OUT_PNC/`basename $T`
+    if [ ! -f $F ]; then
+        URL=$PNC_URL/$T.gz
+
+        wget -c -P $OUT_PNC $PNC_URL/$T.gz
+        gzip -d $F.gz
+    fi
+
+    # generate prefixes
+    if [ -f $F ]; then
+        F_MB=$((`stat -c %s $F`/1024/1024))
+
+        for S in $PNC_PREFIXES; do
+            if [ $F_MB -ge $S ]; then
+                FP=${F}.${S}MB
+                if [ ! -f $FP ]; then
+                    echo "$F -> $FP"
+                    cat $F | dd count=${S}K bs=1K > $FP
+                fi
+            fi
+        done
+    fi
+
+done
+
