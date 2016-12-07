@@ -24,36 +24,7 @@ const std::vector<std::string> ADDITIONAL_TESTS {
 TEST(TudocompDriver, roundtrip_matrix) {
     std::cout << "[ Generating list of test cases ]\n";
 
-    std::vector<std::string> excluded_tests = EXCLUDED_TESTS;
-    std::vector<std::string> additional_tests = ADDITIONAL_TESTS;
-    std::vector<std::string> pattern_tests;
-    bool has_pattern_tests = false;
-
-    auto env_exclude_p = std::getenv("MATRIX_EXCLUDE");
-    auto env_additional_p = std::getenv("MATRIX_ADDITIONAL");
-    auto env_pattern_p = std::getenv("MATRIX_PATTERN");
-
-    std::string env_exclude = (env_exclude_p != nullptr) ? env_exclude_p : "";
-    std::string env_additional = (env_additional_p != nullptr) ? env_additional_p : "";
-    std::string env_pattern = (env_pattern_p != nullptr) ? env_pattern_p : "";
-
-    // Use cross product of all static arguments as base list to check
-    std::vector<std::string> test_cases_pre_filter;
-
-    for (const auto& x : REGISTRY.all_algorithms_with_static("compressor")) {
-        test_cases_pre_filter.push_back(x.to_string(true));
-    }
-
-    for (auto x : driver_test::parse_scsv(env_exclude)) {
-        excluded_tests.push_back(x);
-    }
-    for (auto x : driver_test::parse_scsv(env_pattern)) {
-        pattern_tests.push_back(x);
-        has_pattern_tests = true;
-    }
-    for (auto x : driver_test::parse_scsv(env_additional)) {
-        additional_tests.push_back(x);
-    }
+    std::vector<std::string> test_cases;
 
     auto test_cases_contains = [](const std::string test_case,
                                   const std::vector<std::string>& vs) {
@@ -64,17 +35,73 @@ TEST(TudocompDriver, roundtrip_matrix) {
                            });
     };
 
-    std::vector<std::string> test_cases;
-    for (const auto& test_case: test_cases_pre_filter) {
-        if (!test_cases_contains(test_case, excluded_tests)
-            && (!has_pattern_tests || test_cases_contains(test_case, pattern_tests))
-        ) {
-            test_cases.push_back(test_case);
+    // stage 1: automatically generated list of tests
+    {
+        for (const auto& x : REGISTRY.all_algorithms_with_static("compressor")) {
+            test_cases.push_back(x.to_string(true));
         }
     }
+    // stage 2: build-in exclude and additional
+    {
+        std::vector<std::string> test_cases_filtered;
 
-    for (const auto& x : additional_tests) {
-        test_cases.push_back(x);
+        for (auto& x : test_cases) {
+            if (!test_cases_contains(x, EXCLUDED_TESTS)) {
+                test_cases_filtered.push_back(x);
+            }
+        }
+
+        for (auto& x : ADDITIONAL_TESTS) {
+            test_cases_filtered.push_back(x);
+        }
+
+        test_cases = test_cases_filtered;
+    }
+
+    // stage 3: environment exclude and additional
+    {
+        auto env_exclude_p = std::getenv("MATRIX_EXCLUDE");
+        auto env_additional_p = std::getenv("MATRIX_ADDITIONAL");
+
+        std::string env_exclude = (env_exclude_p != nullptr) ? env_exclude_p : "";
+        std::string env_additional = (env_additional_p != nullptr) ? env_additional_p : "";
+
+        std::vector<std::string> excluded_tests = driver_test::parse_scsv(env_exclude);
+        std::vector<std::string> additional_tests = driver_test::parse_scsv(env_additional);
+
+        std::vector<std::string> test_cases_filtered;
+
+        for (auto& x : test_cases) {
+            if (!test_cases_contains(x, excluded_tests)) {
+                test_cases_filtered.push_back(x);
+            }
+        }
+
+        for (auto& x : additional_tests) {
+            test_cases_filtered.push_back(x);
+        }
+
+        test_cases = test_cases_filtered;
+    }
+
+    // stage 4: pattern filter
+    {
+        auto env_pattern_p = std::getenv("MATRIX_PATTERN");
+        std::string env_pattern = (env_pattern_p != nullptr) ? env_pattern_p : "";
+
+        std::vector<std::string> pattern_tests = driver_test::parse_scsv(env_pattern);
+
+        if (!pattern_tests.empty()) {
+            std::vector<std::string> test_cases_filtered;
+
+            for(auto& x : test_cases) {
+                if (test_cases_contains(x, pattern_tests)) {
+                    test_cases_filtered.push_back(x);
+                }
+            }
+
+            test_cases = test_cases_filtered;
+        }
     }
 
     for (auto& e : test_cases) {
