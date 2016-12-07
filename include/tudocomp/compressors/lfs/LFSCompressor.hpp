@@ -86,6 +86,7 @@ public:
         auto in = input.as_view();
         //in.ensure_null_terminator();
 
+
         //TextDS<> t(in);
         text_t t(in);
         DLOG(INFO) << "building sa and lcp";

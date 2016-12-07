@@ -25,6 +25,7 @@ void run_coder_test(const std::string compression_string) {
     // compress
     {
         Input dummy_input(compression_string);
+        dummy_input.escape_and_terminate();
         std::stringstream stm;
         Output output = Output::from_stream(stm);
 
@@ -65,6 +66,8 @@ void run_coder_test_to_file(const std::string filename, const std::string compre
         auto c = create_algo<LFSCompressor<coder_t>>();
 
         Input file_input(Input::Path{filename});
+
+        file_input.escape_and_terminate();
         std::stringstream stm;
         Output dummy_output = Output::from_stream(stm);
 
@@ -81,6 +84,7 @@ void compress_and_decompress_file(const std::string filename) {
     // compress
     {
         Input file_input(Input::Path{filename});
+        file_input.escape_and_terminate();
         Output file_output(filename+".lfs", true);
 
         c.compress(file_input, file_output);
