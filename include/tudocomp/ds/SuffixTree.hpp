@@ -17,11 +17,26 @@ class SuffixTree{
 
 private:
     STNode* root;
+    STNode* last_node;
     std::string Text;
     uint last_symbol;
 public:
     SuffixTree(){
         root = new STNode();
+    }
+
+    inline void add_char(char c){
+        Text += c;
+
+    }
+    inline void add_string(std::string input){
+        for(int i = 0; i<input.length();i++){
+            add_char(input[i]);
+        }
+    }
+
+    inline std::string get_text(){
+        return Text;
     }
 
 

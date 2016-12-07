@@ -16,14 +16,15 @@ class STNode{
 
 
 private:
-    std::map<char, STEdge> child_nodes;
-    STNode* suffix_link;
-public:
     struct STEdge {
         uint start;
         uint end;
         STNode* child;
     };
+    std::map<char, STEdge> child_nodes;
+    STNode* suffix_link;
+public:
+
     STNode(){
         suffix_link = this;
     }
