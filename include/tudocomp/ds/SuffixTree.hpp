@@ -2,19 +2,21 @@
 #define _INCLUDED_DS_SUFFIX_TREE_HPP
 
 #include <string>
+#include <map>
 
 //#include <tudocomp/ds/SuffixTreeNode.hpp>
 //#include <tudocomp/ds/SuffixTreeEdge.hpp>
 
 
-#include "SuffixTreeEdge.hpp"
+//#include "SuffixTreeEdge.hpp"
 #include "SuffixTreeNode.hpp"
 
-
+namespace tdc {
+using namespace tdc;
 class SuffixTree{
 
 private:
-    STNode root;
+    STNode* root;
     std::string Text;
     uint last_symbol;
 public:
@@ -24,6 +26,8 @@ public:
 
 
 };
+
+}
 
 
 //represents Edges between Nodes
