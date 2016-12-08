@@ -13,7 +13,6 @@ function(find_or_download_package package package_found_prefix target_name)
         "INTERFACE_INCLUDE_DIRECTORIES" "${${package_found_prefix}_INCLUDE_DIRS}"
     )
     foreach(sublib_target_dep ${${package_found_prefix}_CMAKE_DEP})
-        add_dependencies(${target_name} ${sublib_target_dep})
     endforeach()
 
     foreach(sublib ${${package_found_prefix}_LIBRARIES})

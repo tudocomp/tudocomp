@@ -6,10 +6,10 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/lzss/LZSSDecodeBackBuffer.hpp>
-#include <tudocomp/compressors/lzss/LZSSDecodeForwardChainBuffer.hpp>
-#include <tudocomp/compressors/lzss/LZSSDecodeForwardMultimapBuffer.hpp>
-#include <tudocomp/compressors/lzss/LZSSDecodeForwardListMapBuffer.hpp>
-#include <tudocomp/compressors/lzss/LZSSDecodeForwardQueueListBuffer.hpp>
+//#include <tudocomp/compressors/lzss/LZSSDecodeForwardChainBuffer.hpp>
+//#include <tudocomp/compressors/lzss/LZSSDecodeForwardMultimapBuffer.hpp>
+//#include <tudocomp/compressors/lzss/LZSSDecodeForwardListMapBuffer.hpp>
+//#include <tudocomp/compressors/lzss/LZSSDecodeForwardQueueListBuffer.hpp>
 
 namespace tdc {
 namespace lzss {
@@ -85,7 +85,7 @@ inline void encode_text(coder_t& coder,
 }
 
 template<typename coder_t, typename decode_buffer_t>
-inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
+inline void decode_text(coder_t& decoder, std::ostream& outs) {
     // decode text range
     auto text_len = decoder.template decode<len_t>(len_r);
     Range text_r(text_len);
@@ -132,14 +132,17 @@ inline void decode_text_internal(coder_t& decoder, std::ostream& outs) {
     buffer.write_to(outs);
 }
 
-template<typename coder_t>
-inline void decode_text(coder_t& decoder, std::ostream& outs, bool allow_forward = false) {
-    if(allow_forward) {
-        decode_text_internal<coder_t, DecodeForwardMultimapBuffer>(decoder, outs);
-    } else {
-        decode_text_internal<coder_t, DecodeBackBuffer>(decoder, outs);
-    }
-}
+// template<typename coder_t>
+// inline void decode_text(coder_t& decoder, std::ostream& outs, bool allow_forward = false) {
+//     if(allow_forward) {
+// //        decode_text_internal<coder_t, DecodeForwardListMapBuffer>(decoder, outs);
+//         //decode_text_internal<coder_t, SuccinctListBuffer>(decoder, outs);
+//         decode_text_internal<coder_t, DecodeForwardQueueListBuffer>(decoder, outs);
+//         //decode_text_internal<coder_t, DecodeForwardMultimapBuffer>(decoder, outs);
+//     } else {
+//         decode_text_internal<coder_t, DecodeBackBuffer>(decoder, outs);
+//     }
+// }
 
 }} //ns
 

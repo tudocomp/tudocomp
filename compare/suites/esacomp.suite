@@ -3,6 +3,8 @@
 #title;extension;compressor;compression args;decompression args
 
 # Strategy: max_lcp, Encoding: code2
+lz78;.tdc;tdc;--algorithm=lz78;
+lzss;.tdc;tdc;--algorithm=lzss(ascii);
 esacomp(code2,max_lcp, 4);.tdc;tdc;--algorithm=esacomp(code2,max_lcp,'4');
 esacomp(code2,max_lcp, 5);.tdc;tdc;--algorithm=esacomp(code2,max_lcp,'5');
 esacomp(code2,max_lcp, 6);.tdc;tdc;--algorithm=esacomp(code2,max_lcp,'6');
@@ -17,3 +19,17 @@ esacomp(code2,max_lcp,21);.tdc;tdc;--algorithm=esacomp(code2,max_lcp,'21');
 esacomp(code2,max_lcp,22);.tdc;tdc;--algorithm=esacomp(code2,max_lcp,'22');
 esacomp(code2,max_lcp,23);.tdc;tdc;--algorithm=esacomp(code2,max_lcp,'23');
 esacomp(code2,max_lcp,24);.tdc;tdc;--algorithm=esacomp(code2,max_lcp,'24');
+esacomp(code2,lazy_list, 4);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'4');
+esacomp(code2,lazy_list, 5);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'5');
+esacomp(code2,lazy_list, 6);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'6');
+esacomp(code2,lazy_list, 7);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'7');
+esacomp(code2,lazy_list, 8);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'8');
+esacomp(code2,lazy_list, 9);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'9');
+esacomp(code2,lazy_list,10);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'10');
+esacomp(code2,lazy_list,11);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'11');
+esacomp(code2,lazy_list,12);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'12');
+esacomp(code2,lazy_list,20);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'20');
+esacomp(code2,lazy_list,21);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'21');
+esacomp(code2,lazy_list,22);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'22');
+esacomp(code2,lazy_list,23);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'23');
+esacomp(code2,lazy_list,24);.tdc;tdc;--algorithm=esacomp(code2,lazy_list,'24');
