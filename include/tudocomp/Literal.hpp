@@ -21,22 +21,22 @@ public:
 
 class ViewLiterals {
 private:
-    const View* m_view;
+    View m_view;
     len_t m_index;
 
 public:
-    inline ViewLiterals(const View& view) : m_view(&view), m_index(0) {
+    inline ViewLiterals(View view) : m_view(view), m_index(0) {
     }
 
     inline bool has_next() const {
-        return m_index < m_view->size();
+        return m_index < m_view.size();
     }
 
     inline Literal next() {
         assert(has_next());
 
         auto i = m_index++;
-        return Literal { uliteral_t((*m_view)[i]), i };
+        return Literal { uliteral_t(m_view[i]), i };
     }
 };
 
