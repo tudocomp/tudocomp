@@ -88,8 +88,11 @@ namespace io {
     private:
         std::ostream* m_stream;
         bool saw_escape = false;
+        bool saw_null_term = false;
 
         inline void push_unescape(uint8_t c) {
+            saw_null_term = false;
+
             auto f = [&](uint8_t d){
                 m_stream->put(d);
             };
@@ -105,6 +108,7 @@ namespace io {
                 saw_escape = true;
             } else if (c == 0) {
                 // drop it
+                saw_null_term = true;
             } else {
                 f(c);
             }
@@ -115,6 +119,7 @@ namespace io {
         }
 
         inline virtual ~UnescapeBuffer() {
+            DCHECK(saw_null_term);
         }
 
     protected:

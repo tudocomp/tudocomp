@@ -55,7 +55,7 @@ public:
 			return;
 		}
         env().begin_stat_phase("Output Text");
-		ostream << decoded_string;
+		ostream << decoded_string << '\0';
 		delete [] decoded_string;
         env().end_stat_phase();
     }

@@ -16,8 +16,7 @@
 
 #include <tudocomp_driver/Registry.hpp>
 
-#include "test_util.hpp"
-#include "tudocomp_test_util.hpp"
+#include "test/util.hpp"
 
 using namespace tdc;
 using namespace tdc_algorithms;

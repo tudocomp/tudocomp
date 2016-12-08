@@ -15,11 +15,11 @@ void test_huffmantable_storing(const std::string& text) {
 		tdc::io::BitOStream bit_os(out);
 		huffmantable_encode(bit_os, table);
 	}
-	
+
 		tdc::io::Input in(ss);
 		tdc::io::BitIStream bit_in(in);
 		huffmantable tab2 = huffmantable_decode(bit_in);
-	
+
 	DCHECK_EQ(table.longest, tab2.longest);
 	DCHECK_EQ(table.alphabet_size, tab2.alphabet_size);
 	for(size_t i = 0; i < table.longest; ++i) {
@@ -91,10 +91,10 @@ void test_huff(const std::string& text) {
 	DCHECK_EQ(text, sback.str());
 }
 
-#include "test_util.hpp"
+#include "test/util.hpp"
 TEST(huffman, stringgenerators) {
 	std::function<void(std::string&)> func(test_huff);
-	test_on_string_generators(func,20);
+	test::on_string_generators(func,20);
 }
 
 
@@ -102,30 +102,30 @@ TEST(huffman, stringgenerators) {
 // TEST(Sandbox, example) {
 //
 // 	{
-// 		std::string s = thue_morse_word(10); 
+// 		std::string s = thue_morse_word(10);
 // 		// tdc::io::Input input(s);
 // 		// auto iview = input.as_view();
 // 		// auto iview2 = input.as_view();
 // 		// DCHECK_EQ(iview.size(), iview2.size());
-// 		test(s); 
+// 		test(s);
 // 	}
-// 	// for(size_t i = 8; i < n; ++i) { 
+// 	// for(size_t i = 8; i < n; ++i) {
 // 	// 	std::cout << "String " << i << std::endl;
-// 	// 	std::string s = thue_morse_word(i); 
-// 	// 	test(s); 
-// 	// } 
+// 	// 	std::string s = thue_morse_word(i);
+// 	// 	test(s);
+// 	// }
 // 	size_t n = 100;
-// 	for(size_t i = 2; i < n; ++i) { 
-// 	 	for(size_t j = 0; j < i; ++j) { 
-// 	 		std::string s = random_uniform(2*i,Ranges::numbers,j); 
+// 	for(size_t i = 2; i < n; ++i) {
+// 	 	for(size_t j = 0; j < i; ++j) {
+// 	 		std::string s = random_uniform(2*i,Ranges::numbers,j);
 // 			DLOG(INFO) << "i = " << i << " j = " << j;
 // 				test(s);
 // 		}
 // 	}
 // 	n=20;
-// 	for(size_t i = 2; i < n; ++i) { 
-// 	 	for(size_t j = 0; j < 2+50/(i+1); ++j) { 
-// 	 		std::string s = random_uniform(1<<i,Ranges::numbers,j); 
+// 	for(size_t i = 2; i < n; ++i) {
+// 	 	for(size_t j = 0; j < 2+50/(i+1); ++j) {
+// 	 		std::string s = random_uniform(1<<i,Ranges::numbers,j);
 // 			DLOG(INFO) << "i = " << i << " j = " << j;
 // 				test(s);
 // 		}

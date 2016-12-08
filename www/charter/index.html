@@ -16,7 +16,7 @@
     <!-- Chrome currently doesn't support SVG favicons -->
     <link rel="icon" type="image/png" href="../tudocomp-icon.png">
 </head>
-<body>
+<body onload="load()">
     <header>
         <h1><i class="fa fa-bar-chart"></i> Charter</h1>
     </header>
@@ -89,9 +89,6 @@
         </div>
     </section>
     <footer id="footer">
-        <div id="sample">
-            Example JSON sets for testing: <button onclick="loadJSONfromURL('data.kjv.json')">data.kjv.json</a>
-        </div>
     </footer>
 </div>
 </body>

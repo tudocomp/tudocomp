@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <tudocomp/util/vbyte.hpp>
-#include "test_util.hpp"
+#include "test/util.hpp"
 
 using namespace tdc;
 
@@ -29,5 +29,5 @@ TEST(VByte, heavy) {
 	for(size_t i = 0; i < 1ULL<<10; ++i) {
 		DCHECK_EQ(read_vbyte<size_t>(ss), i) << ", contents of buffer: " << vec_to_debug_string(ss.str());
 	}
-	
+
 }

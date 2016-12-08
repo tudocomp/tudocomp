@@ -13,20 +13,19 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
 
-#include "test_util.hpp"
-#include "tudocomp_test_util.hpp"
+#include "test/util.hpp"
 
 using namespace tdc;
 using namespace tdc::io;
 
 TEST(Test, test_file) {
-    ASSERT_EQ(test_file_path("test.txt"), "test_files/test.txt");
-    write_test_file("test.txt", "foobar");
-    ASSERT_EQ(read_test_file("test.txt"), "foobar");
+    ASSERT_EQ(test::test_file_path("test.txt"), "test_files/test.txt");
+    test::write_test_file("test.txt", "foobar");
+    ASSERT_EQ(test::read_test_file("test.txt"), "foobar");
 
     std::string err;
     try {
-        read_test_file("not_test.txt");
+        test::read_test_file("not_test.txt");
     } catch (std::runtime_error e) {
         err = e.what();
     }
@@ -34,9 +33,9 @@ TEST(Test, test_file) {
 }
 
 TEST(Test, test_file_null) {
-    write_test_file("test_nte.txt", "foo\0bar\0"_v);
-    ASSERT_EQ(read_test_file("test_nte.txt"), "foo\0bar\0"_v);
-    ASSERT_NE(read_test_file("test_nte.txt"), "foo");
+    test::write_test_file("test_nte.txt", "foo\0bar\0"_v);
+    ASSERT_EQ(test::read_test_file("test_nte.txt"), "foo\0bar\0"_v);
+    ASSERT_NE(test::read_test_file("test_nte.txt"), "foo");
 }
 
 TEST(View, string_conv_null) {
@@ -88,18 +87,18 @@ TEST(Util, bytes_for) {
 }
 
 TEST(Util, pack_integers) {
-    ASSERT_EQ(pack_integers({
+    ASSERT_EQ(test::pack_integers({
         0b1111, 4,
         0b1001, 4,
     }), (std::vector<uint8_t> {
         0b11111001
     }));
-    ASSERT_EQ(pack_integers({
+    ASSERT_EQ(test::pack_integers({
         0b1111, 2,
     }), (std::vector<uint8_t> {
         0b11000000
     }));
-    ASSERT_EQ(pack_integers({
+    ASSERT_EQ(test::pack_integers({
         0b111, 3,
         0b1101, 4,
         0b11001, 5,
@@ -109,12 +108,12 @@ TEST(Util, pack_integers) {
         0b10011100,
         0b01000000,
     }));
-    ASSERT_EQ(pack_integers({
+    ASSERT_EQ(test::pack_integers({
         0b001000, 6,
     }), (std::vector<uint8_t> {
         0b00100000,
     }));
-    ASSERT_EQ(pack_integers({
+    ASSERT_EQ(test::pack_integers({
         0b001000, 6,
         0b001100001, 9,
         0b001100010, 9
@@ -123,7 +122,7 @@ TEST(Util, pack_integers) {
         0b11000010,
         0b01100010,
     }));
-    ASSERT_EQ(pack_integers({
+    ASSERT_EQ(test::pack_integers({
         9, 64,
     }), (std::vector<uint8_t> {
         0,0,0,0,0,0,0,9
@@ -179,17 +178,17 @@ std::string fn(std::string suffix) {
 }
 
 TEST(Input, file) {
-    write_test_file(fn("short.txt"), "abc");
+    test::write_test_file(fn("short.txt"), "abc");
 
     {
-        Input inp = Input::from_path(test_file_path(fn("short.txt")));
+        Input inp = Input::from_path(test::test_file_path(fn("short.txt")));
         auto ref = inp.as_view();
 
         ASSERT_EQ(ref, "abc");
     }
 
     {
-        Input inp = Input::from_path(test_file_path(fn("short.txt")));
+        Input inp = Input::from_path(test::test_file_path(fn("short.txt")));
         auto stream = inp.as_stream();
 
         std::string s;
@@ -230,8 +229,8 @@ TEST(Input, stream_moving_mem) {
 }
 
 TEST(Input, stream_moving_file) {
-    write_test_file(fn("stream_moving.txt"), "abcde");
-    Input i = Input::from_path(test_file_path(fn("stream_moving.txt")));
+    test::write_test_file(fn("stream_moving.txt"), "abcde");
+    Input i = Input::from_path(test::test_file_path(fn("stream_moving.txt")));
     stream_moving(i);
 }
 
@@ -347,8 +346,8 @@ namespace input_nte_matrix {
         basename = ss.str() + ".txt";
         //std::cout << " basename after: " << basename << "\n";
 
-        write_test_file(basename, i);
-        return Input::Path { test_file_path(basename) };
+        test::write_test_file(basename, i);
+        return Input::Path { test::test_file_path(basename) };
     }
 
     template<class T>
@@ -593,7 +592,7 @@ TEST(Output, memory) {
 }
 
 TEST(Output, file) {
-    Output out = Output::from_path(test_file_path(fn("short_out.txt")), true);
+    Output out = Output::from_path(test::test_file_path(fn("short_out.txt")), true);
 
     {
         auto stream = out.as_stream();
@@ -601,7 +600,7 @@ TEST(Output, file) {
         stream << "abc";
     }
 
-    ASSERT_EQ(read_test_file(fn("short_out.txt")), "abc");
+    ASSERT_EQ(test::read_test_file(fn("short_out.txt")), "abc");
 }
 
 TEST(Output, stream) {
@@ -1134,4 +1133,49 @@ TEST(Escaping, option_value_indirect_copy) {
     AlgorithmValue av2("", {}, nullptr, false);
     av2 = std::move(av);
     ASSERT_TRUE(av2.needs_sentinel_terminator());
+}
+
+TEST(Test, TestInputCompression) {
+    test::TestInput i = test::compress_input("abcd"_v);
+    ASSERT_EQ(i.as_view(), "abcd\0"_v);
+}
+
+TEST(Test, TestOutputCompression) {
+    test::TestOutput o = test::compress_output();
+    o.as_stream() << "abcd\0"_v;
+    ASSERT_EQ(o.result(), "abcd\0"_v);
+}
+
+TEST(Test, TestInputDecompression) {
+    test::TestInput i = test::decompress_input("abcd\0"_v);
+    ASSERT_EQ(i.as_view(), "abcd\0"_v);
+}
+
+TEST(Test, TestOutputDecompression) {
+    test::TestOutput o = test::decompress_output();
+    o.as_stream() << "abcd\0"_v;
+    ASSERT_EQ(o.result(), "abcd"_v);
+}
+
+TEST(Test, TestInputCompressionFile) {
+    test::write_test_file("TestInputCompressionFile.txt", "abcd");
+    auto p = test::test_file_path("TestInputCompressionFile.txt");
+    test::TestInput i = test::compress_input_file(p);
+    ASSERT_EQ(i.as_view(), "abcd\0"_v);
+}
+
+TEST(Test, TestInputDecompressionFile) {
+    test::write_test_file("TestInputDecompressionFile.txt", "abcd\0"_v);
+    auto p = test::test_file_path("TestInputDecompressionFile.txt");
+    test::TestInput i = test::decompress_input_file(p);
+    ASSERT_EQ(i.as_view(), "abcd\0"_v);
+}
+
+TEST(Test, TestInputOutputInheritance) {
+    auto x = create_algo<MyCompressor<MySubAlgo>>("", "test");
+
+    auto i = test::compress_input("asdf");
+    auto o = test::compress_output();
+
+    x.compress(i, o);
 }

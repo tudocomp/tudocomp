@@ -48,8 +48,8 @@ add_subdirectory(src)
 # Unit tests for everything in src
 add_subdirectory(test)
 
-# Huge optional corpus of text files for comparisons
-add_subdirectory(compare)
+# etc
+add_subdirectory(etc)
 
 # Docs
 add_subdirectory(docs)

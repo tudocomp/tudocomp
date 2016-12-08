@@ -1,3 +1,32 @@
+#ifndef TEST_DRIVER_UTIL_H
+#define TEST_DRIVER_UTIL_H
+
+#include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <memory>
+
+#include <glog/logging.h>
+#include <gtest/gtest.h>
+
+#include <sys/stat.h>
+
+#include <tudocomp/tudocomp.hpp>
+#include <tudocomp/Env.hpp>
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/Algorithm.hpp>
+#include <tudocomp/AlgorithmStringParser.hpp>
+#include <tudocomp/Registry.hpp>
+#include <tudocomp/io.hpp>
+#include <tudocomp/util/View.hpp>
+
+#include "util.hpp"
+
+using namespace tdc;
+
+namespace driver_test {
+using namespace test;
 
 std::string shell_escape(const std::string& s) {
     //std::cout << "\n\nescape\n" << s << "\nto\n";
@@ -45,6 +74,7 @@ std::string driver(std::string args) {
 
     return ss.str();
 }
+
 
 std::string roundtrip_in_file_name(std::string algo,
                                    std::string name_addition) {
@@ -128,10 +158,10 @@ struct Error {
 };
 
 Error roundtrip(std::string algo,
-               std::string name_addition,
-               std::string text,
-               bool use_raw,
-               bool& abort)
+                std::string name_addition,
+                std::string text,
+                bool use_raw,
+                bool& abort)
 {
     Error current { false };
 
@@ -179,6 +209,11 @@ Error roundtrip(std::string algo,
         current.message = "compression did not produce output";
         current.test = in_file + " -> " + comp_file;
         std::cout << "ERR\n";
+
+        if (View(current.compress_stdout).starts_with("Error: No implementation found for algorithm"_v)) {
+            abort = true;
+        }
+
         return current;
     }
 
@@ -230,3 +265,24 @@ Error roundtrip(std::string algo,
 
     return current;
 }
+
+std::vector<std::string> parse_scsv(const std::string& s) {
+    std::vector<std::string> r;
+    std::string remaining = s;
+
+    while(!remaining.empty()) {
+        auto next = remaining.find(";");
+        r.push_back(remaining.substr(0, next));
+        if (next == std::string::npos) {
+            remaining = "";
+        } else {
+            remaining = remaining.substr(next + 1);
+        }
+    }
+
+    return r;
+}
+
+}
+
+#endif

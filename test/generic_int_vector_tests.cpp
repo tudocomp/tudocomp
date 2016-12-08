@@ -7,7 +7,7 @@
 #include <tudocomp/util/IntegerBase.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 
-#include "test_util.hpp"
+#include "test/util.hpp"
 
 using namespace tdc;
 

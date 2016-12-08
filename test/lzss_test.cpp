@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <tudocomp/tudocomp.hpp>
+
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
@@ -132,7 +134,7 @@ TEST(lzss, text_literals_factors_end) {
 }
 
 TEST(lzss, decode_back_buffer) {
-    lzss::DecodeBackBuffer buffer(12);
+    lzss::DecodeBackBuffer buffer = create_algo<lzss::DecodeBackBuffer>("", 12);
     buffer.decode_literal('b');
     buffer.decode_literal('a');
     buffer.decode_literal('n');
@@ -147,12 +149,13 @@ TEST(lzss, decode_back_buffer) {
 
 template<typename T>
 void test_forward_decode_buffer_chain() {
-    T buffer(12);
+    T buffer = create_algo<T>("", 12);
     buffer.decode_literal('b');
     buffer.decode_factor(3, 3);
     buffer.decode_literal('n');
     buffer.decode_literal('a');
     buffer.decode_factor(0, 6);
+    buffer.decode_eagerly();
 
     std::stringstream ss;
     buffer.write_to(ss);
@@ -162,12 +165,13 @@ void test_forward_decode_buffer_chain() {
 
 template<typename T>
 void test_forward_decode_buffer_multiref() {
-    T buffer(12);
+    T buffer = create_algo<T>("", 12);
     buffer.decode_factor(6, 6);
     buffer.decode_literal('b');
     buffer.decode_factor(9, 3);
     buffer.decode_literal('n');
     buffer.decode_literal('a');
+    buffer.decode_eagerly();
 
     std::stringstream ss;
     buffer.write_to(ss);
