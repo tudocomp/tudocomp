@@ -47,7 +47,7 @@ exportImage.onload = function() {
 };
 
 d3.select("#options button.close").on("click", function() {
-    d3.select("#json")[0][0].value = "";
+    // d3.select("#json")[0][0].value = "";
     d3.select("#dropzone-wrapper").style("display", "block");
     d3.select("#footer").style("display", "block");
     d3.select("#chart").style("display", "none");
@@ -131,6 +131,8 @@ d3.select("#json-load").on("click", function() {
 
 var load = function() {
     if(window.location.search) {
-        loadJSON(atob(window.location.search.substr(1)));
+        var json = atob(window.location.search.substr(1));
+        d3.select("#json")[0][0].value = json;
+        loadJSON(json);
     }
 };
