@@ -16,9 +16,9 @@ const std::vector<std::string> EXCLUDED_TESTS {
     "chain",
 };
 const std::vector<std::string> ADDITIONAL_TESTS {
-    "chain(chain(chain(chain(easyrle(\"1\"),bwt()),mtf()),easyrle()),encode(huff))",
-    "chain(lz78, lzw)",
-    "chain(lz78, chain(noop, lzw))",
+    // "chain(chain(chain(chain(easyrle(\"1\"),bwt()),mtf()),easyrle()),encode(huff))",
+    // "chain(lz78, lzw)",
+    // "chain(lz78, chain(noop, lzw))",
 };
 
 std::vector<std::string> parse_scsv(const std::string& s) {

@@ -14,7 +14,7 @@ public:
     inline Factor(len_t fpos, len_t fsrc, len_t flen)
         : pos(fpos), src(fsrc), len(flen) {
     }
-};
+}  __attribute__((__packed__));
 
 class FactorBuffer {
 private:
