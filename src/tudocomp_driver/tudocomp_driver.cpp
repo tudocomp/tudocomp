@@ -407,7 +407,7 @@ int main(int argc, char** argv)
 
             std::cout << "---------------\n";
             std::cout << "Algorithm Stats:\n";
-            algo_stats.to_json(std::cout); //TODO text output
+            algo_stats.to_json().str(std::cout);
             std::cout << "\n";
             std::cout << "---------------\n";
             print_time("startup", setup_duration);

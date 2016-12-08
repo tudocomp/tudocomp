@@ -2,6 +2,7 @@
 #define _INCLUDED_JSON_HPP_
 
 #include <map>
+#include <memory>
 #include <sstream>
 
 namespace tdc {
