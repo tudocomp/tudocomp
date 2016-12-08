@@ -433,28 +433,46 @@ public:
     inline string_ref result() { return *this; }
 };
 
+/// Creates an instance of an `tdc::Input` to be used with `Compressor::compress()`.
+///
+/// It will contain the bytes given by `text`.
 TestInput compress_input(string_ref text) {
     return TestInput(text, true);
 }
 
-TestInput decompress_input(string_ref text) {
-    return TestInput(text, false);
-}
-
-TestOutput compress_output() {
-    return TestOutput(false);
-}
-
-TestOutput decompress_output() {
-    return TestOutput(true);
-}
-
+/// Creates an instance of an `tdc::Input` to be used with `Compressor::compress()`.
+///
+/// It will contain the bytes contained in the file at `path`.
 TestInput compress_input_file(string_ref path) {
     return TestInput(Input::Path{std::string(path)}, true);
 }
 
+/// Creates an instance of an `tdc::Output` to be used with `Compressor::compress()`.
+///
+/// The bytes output to it are accessible with the `.result()` accessor.
+TestOutput compress_output() {
+    return TestOutput(false);
+}
+
+/// Creates an instance of an `tdc::Input` to be used with `Compressor::decompress()`.
+///
+/// It will contain the bytes given by `text`.
+TestInput decompress_input(string_ref text) {
+    return TestInput(text, false);
+}
+
+/// Creates an instance of an `tdc::Input` to be used with `Compressor::decompress()`.
+///
+/// It will contain the bytes contained in the file at `path`.
 TestInput decompress_input_file(string_ref path) {
     return TestInput(Input::Path{std::string(path)}, false);
+}
+
+/// Creates an instance of an `tdc::Output` to be used with `Compressor::decompress()`.
+///
+/// The bytes output to it are accessible with the `.result()` accessor.
+TestOutput decompress_output() {
+    return TestOutput(true);
 }
 
 }
