@@ -119,7 +119,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
                 return;
             }
             std::stringstream ss;
-            ss << counter;
+            ss << std::setw(2) << std::setfill('0') << counter;
             std::string n = "_" + ss.str();
             counter++;
 
