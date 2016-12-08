@@ -209,6 +209,11 @@ Error roundtrip(std::string algo,
         current.message = "compression did not produce output";
         current.test = in_file + " -> " + comp_file;
         std::cout << "ERR\n";
+
+        if (View(current.compress_stdout).starts_with("Error: No implementation found for algorithm"_v)) {
+            abort = true;
+        }
+
         return current;
     }
 

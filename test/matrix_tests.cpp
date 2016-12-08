@@ -128,9 +128,6 @@ TEST(TudocompDriver, roundtrip_matrix) {
                 errors.push_back(e);
             }
         });
-        if (abort) {
-            break;
-        }
     }
 
     for (auto& e : errors) {
