@@ -32,10 +32,10 @@ inline uint8_t bits_hi(uint64_t x) {
 struct SizeManagerPow2 {
 	static inline len_t get_min_size(const len_t& hint) {
 		return 1ULL<<bits_hi(hint); //	or	return nark::__hsm_stl_next_prime(hint);
-	}	
+	}
 	static inline len_t mod_tablesize(const len_t& index, const len_t& tablesize) {
 		return index & (tablesize-1);
-	}	
+	}
 };
 
 template<class key_t>
@@ -130,7 +130,7 @@ class MyHash {
 		delete [] m_keys;
 		delete [] m_values;
 	}
-	void reserve(len_t hint) { 
+	void reserve(len_t hint) {
 		const auto size = m_sizeman.get_min_size(hint);
 		if(m_entries > 0) {
 			const size_t oldsize = m_size;
@@ -213,11 +213,11 @@ class MyHash {
 #ifdef USE_KNUTH_ORDERED //we used the reverse ordered of knuth since we insert values in ascending order
 			if(m_keys[tablepos] > value.first) {
 				std::swap(value.first,m_keys[tablepos]); // put value into m_data[tablepos], kicking the stored value in the table out
-				std::swap(value.second,m_values[tablepos]); 
+				std::swap(value.second,m_values[tablepos]);
 				hash = m_sizeman.mod_tablesize(m_h(value.first), table_size());
 				m_probe.init(value.first);
 			}
-			
+
 #endif
 			++i; //collision
 			tablepos = m_sizeman.mod_tablesize(m_probe.template get<SizeManager>(i, tablepos, hash, table_size()), table_size());
@@ -233,11 +233,14 @@ class MyHash {
 };
 
 
-class MyHashTrie : public Algorithm, public LZ78Trie {
-
+class MyHashTrie : public Algorithm, public LZ78Trie<factorid_t> {
+    using node_t = ::tdc::lz78::node_t;
 	MyHash<node_t,factorid_t,MixHasher,std::equal_to<node_t>,LinearProber<node_t>> table;
 
 public:
+    using search_pos_t = factorid_t;
+    using trie_interface_node_t = typename LZ78Trie<factorid_t>::node_t;
+
     inline static Meta meta() {
         Meta m("lz78trie", "myhash", "Lempel-Ziv 78 MyHash Trie");
 		return m;
@@ -249,17 +252,22 @@ public:
 		}
     }
 
-	factorid_t add_rootnode(uliteral_t c) override {
+	trie_interface_node_t add_rootnode(uliteral_t c) override {
 		table.insert(std::make_pair<node_t,factorid_t>(create_node(0, c), size()));
-		return size();
+		return size() - 1;
 	}
+
+    trie_interface_node_t get_rootnode(uliteral_t c) override {
+        return c;
+    }
 
 	void clear() override {
 //		table.clear();
 
 	}
 
-    factorid_t find_or_insert(const factorid_t& parent, uliteral_t c) override {
+    trie_interface_node_t find_or_insert(const trie_interface_node_t& parent_w, uliteral_t c) override {
+        auto parent = parent_w.factorid();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
 		auto ret = table.insert(std::make_pair(create_node(parent,c), newleaf_id));

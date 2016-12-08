@@ -117,6 +117,7 @@ namespace lzw {
 #include <tudocomp/compressors/lz78/BinaryTrie.hpp>
 #include <tudocomp/compressors/lz78/BinarySortedTrie.hpp>
 #include <tudocomp/compressors/lz78/MyHashTrie.hpp>
+#include <tudocomp/compressors/lz78/CedarTrie.hpp>
 
 #endif
 

@@ -2,7 +2,7 @@
 #define TERNARYTRIE_HPP
 
 /**
- * LZ78 Trie Implementation 
+ * LZ78 Trie Implementation
  * based on Julius Pettersson (MIT/Expat License.) and Juha Nieminen's work.
  * @see http://www.cplusplus.com/articles/iL18T05o/
 **/
@@ -14,7 +14,7 @@
 namespace tdc {
 namespace lz78 {
 
-class TernaryTrie : public Algorithm, public LZ78Trie {
+class TernaryTrie : public Algorithm, public LZ78Trie<factorid_t> {
 
 	/*
 	 * The trie is not stored in standard form. Each node stores the pointer to its first child (first as first come first served).
@@ -39,13 +39,17 @@ public:
 		}
     }
 
-	factorid_t add_rootnode(uliteral_t c) override {
+	node_t add_rootnode(uliteral_t c) override {
         first_child.push_back(undef_id);
 		left_sibling.push_back(undef_id);
 		right_sibling.push_back(undef_id);
 		literal.push_back(c);
-		return size();
+		return size() - 1;
 	}
+
+    node_t get_rootnode(uliteral_t c) override {
+        return c;
+    }
 
 	void clear() override {
         first_child.clear();
@@ -55,11 +59,13 @@ public:
 
 	}
 
-    factorid_t find_or_insert(const factorid_t& parent, uliteral_t c) override {
+    node_t find_or_insert(const node_t& parent_w, uliteral_t c) override {
+        auto parent = parent_w.factorid();
+
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
 		DCHECK_LT(parent, size());
-		
+
 
 		if(first_child[parent] == undef_id) {
 			first_child[parent] = newleaf_id;

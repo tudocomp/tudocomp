@@ -9,16 +9,19 @@
 namespace tdc {
 namespace lz78 {
 
-class BinaryTrie : public Algorithm, public LZ78Trie {
+class BinaryTrie : public Algorithm, public LZ78Trie<factorid_t> {
 
 	/*
 	 * The trie is not stored in standard form. Each node stores the pointer to its first child and a pointer to its next sibling (first as first come first served)
 	 */
 	std::vector<factorid_t> first_child;
 	std::vector<factorid_t> next_sibling;
-	std::vector<literal_t> literal;
+	std::vector<uliteral_t> literal;
 
 public:
+    using search_pos_t = factorid_t;
+
+
     inline static Meta meta() {
         Meta m("lz78trie", "binary", "Lempel-Ziv 78 Binary Trie");
 		return m;
@@ -31,12 +34,16 @@ public:
 		}
     }
 
-	factorid_t add_rootnode(uliteral_t c) override {
+	node_t add_rootnode(uliteral_t c) override {
         first_child.push_back(undef_id);
 		next_sibling.push_back(undef_id);
 		literal.push_back(c);
-		return size();
+		return size() - 1;
 	}
+
+    node_t get_rootnode(uliteral_t c) override {
+        return c;
+    }
 
 	void clear() override {
         first_child.clear();
@@ -45,11 +52,13 @@ public:
 
 	}
 
-    factorid_t find_or_insert(const factorid_t& parent, uliteral_t c) override {
+    node_t find_or_insert(const node_t& parent_w, uliteral_t c) override {
+        DLOG(INFO) << "c: " << int(c);
+        auto parent = parent_w.factorid();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
 		DCHECK_LT(parent, size());
-		
+
 
 		if(first_child[parent] == undef_id) {
 			first_child[parent] = newleaf_id;
