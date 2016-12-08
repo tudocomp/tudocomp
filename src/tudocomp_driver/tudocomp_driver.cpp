@@ -14,6 +14,7 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/io/IOUtil.hpp>
+#include <tudocomp/util/Json.hpp>
 #include <tudocomp_driver/Registry.hpp>
 
 /*namespace validate {
@@ -131,8 +132,6 @@ int main(int argc, char** argv)
         }
 
         bool print_stats = FLAGS_stats;
-        int alphabet_size = 0;
-
         bool do_compress = !FLAGS_decompress;
         bool do_raw = FLAGS_raw;
 
@@ -265,10 +264,6 @@ int main(int argc, char** argv)
             // call into actual library
 
             if (do_compress) {
-                if (print_stats) {
-                    alphabet_size = 0; // count_alphabet_size(inp_vec);
-                }
-
                 if (!do_raw) {
                     CHECK(selection.id_string().find('%') == std::string::npos);
 
@@ -357,63 +352,29 @@ int main(int argc, char** argv)
             auto setup_duration = setup_time - start_time;
             auto comp_duration = comp_time - setup_time;
             auto end_duration = end_time - comp_time;
-            std::cout << "---------------\n";
-            std::cout << "Config: " << selection.id_string() << std::endl;
-            std::cout << "---------------\n";
-            auto inp_size = 0;
-            if (use_stdin) {
-                std::cout << "input: <stdin>\n";
-                std::cout << "input size: ? B\n";
-            } else {
-                inp_size = io::read_file_size(file);
-                std::cout << "input: "<<file<<"\n";
-                std::cout << "input size: "<<inp_size<<" B\n";
-            }
-            std::cout << "alphabet size: " << alphabet_size << "\n";
 
-            auto out_size = 0;
-            if (use_stdout) {
-                std::cout << "output: <stdout>\n";
-                std::cout << "output size: ? B\n";
-            } else {
-                out_size = io::read_file_size(ofile);
-                std::cout << "output: "<<ofile<<"\n";
-                std::cout << "output size: "<<out_size<<" B\n";
-            }
-            std::cout << "---------------\n";
-            if (inp_size != 0) {
-                std::cout << "compress rate: "<<(double(out_size)/double(inp_size) * 100)<<"%\n";
-            }
+            size_t in_size  = use_stdin  ? 0 : io::read_file_size(file);
+            size_t out_size = use_stdout ? 0 : io::read_file_size(ofile);
 
-            auto print_time = [] (std::string s, decltype(setup_duration)& t) {
-                std::chrono::seconds sec(1);
-                std::chrono::milliseconds milsec(1);
-                std::chrono::microseconds micsec(1);
-                using dur = std::chrono::duration<float>;
-                using mildur = std::chrono::duration<float, std::milli>;
-                using micdur = std::chrono::duration<float, std::micro>;
+            json::Object meta;
+            meta.set("startTime",
+                std::chrono::duration_cast<std::chrono::seconds>(
+                    start_time.time_since_epoch()).count());
 
-                if (t < milsec) {
-                    auto ct = std::chrono::duration_cast<micdur>(t).count();
-                    std::cout << s <<" time: "<< ct << " µs\n";
-                } else if (t < sec) {
-                    auto ct = std::chrono::duration_cast<mildur>(t).count();
-                    std::cout << s <<" time: "<< ct << " ms\n";
-                } else {
-                    auto ct = std::chrono::duration_cast<dur>(t).count();
-                    std::cout << s <<" time: "<< ct << " s\n";
-                }
-            };
+            meta.set("config", selection.id_string());
+            meta.set("input", use_stdin ? "<stdin>" : file);
+            meta.set("inputSize", in_size);
+            meta.set("output", use_stdout ? "<stdin>" : file);
+            meta.set("outputSize", out_size);
+            meta.set("rate", (use_stdin || use_stdout) ? 0.0 :
+                double(out_size) / double(in_size));
 
-            std::cout << "---------------\n";
-            std::cout << "Algorithm Stats:\n";
-            algo_stats.to_json().str(std::cout);
-            std::cout << "\n";
-            std::cout << "---------------\n";
-            print_time("startup", setup_duration);
-            print_time("compression", comp_duration);
-            print_time("teardown", end_duration);
-            std::cout << "---------------\n";
+            json::Object stats;
+            stats.set("meta", meta);
+            stats.set("stats", algo_stats.to_json());
+
+            stats.str(std::cout);
+            std::cout << std::endl;
         }
     } catch (std::exception& e) {
         std::cout << "Error: " << e.what() << '\n';
