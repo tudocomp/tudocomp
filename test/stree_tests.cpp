@@ -34,9 +34,13 @@ TEST(stree, st_node_test){
     ASSERT_EQ(a_node->suffix_link,b_node);
 
 
+    tdc::SuffixTree::STNode* abc_node = a_node->child_nodes['c'];
+    tdc::SuffixTree::STNode* bc_node = b_node->child_nodes['c'];
+
+    ASSERT_EQ(abc_node->suffix_link,bc_node);
 
 
-    for(char c : {'a','b','c','d','x','$'}){//'d'
+    /*for(char c : {'a','b','c','d','x','$'}){//'d'
 
         tdc::SuffixTree::STNode* x = root->child_nodes[c];
         uint x_start = x->start;
@@ -61,8 +65,8 @@ TEST(stree, st_node_test){
         DLOG(INFO) <<"sizeof childnodes "<< c<<": "<< x->child_nodes.size();
         DLOG(INFO) << "subst of "<< x_start<< "  " << x_end;
         DLOG(INFO) << "subst of "<< c<< ": "<< stree->get_string_of_edge(x);
-    }
+    }*/
 
     //ASSERT_FALSE(false);
-    ASSERT_TRUE(true);
+    //ASSERT_TRUE(true);
 }
