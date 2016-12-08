@@ -125,7 +125,7 @@ public:
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
         auto outs = output.as_stream();
 
-        lzss::decode_text(decoder, outs);
+        lzss::decode_text<typename coder_t::Decoder, lzss::DecodeBackBuffer>(decoder, outs);
     }
 };
 

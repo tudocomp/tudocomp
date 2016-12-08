@@ -134,7 +134,8 @@ TEST(lzss, text_literals_factors_end) {
 }
 
 TEST(lzss, decode_back_buffer) {
-    lzss::DecodeBackBuffer buffer = create_algo<lzss::DecodeBackBuffer>("", 12);
+    //lzss::DecodeBackBuffer buffer = create_algo<lzss::DecodeBackBuffer>("", 12);
+    lzss::DecodeBackBuffer buffer(12);
     buffer.decode_literal('b');
     buffer.decode_literal('a');
     buffer.decode_literal('n');

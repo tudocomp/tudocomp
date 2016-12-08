@@ -47,29 +47,31 @@ void register_algorithms(Registry& r) {
     // at runtime, we need to explicitly register all possible
     // template instances
 
-    // REGISTER_WITH_ALL_CODERS(LiteralEncoder);
-    //
-    // REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::BinarySortedTrie);
-    // REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::BinaryTrie);
-    // REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::HashTrie);
-    // REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::MyHashTrie);
-    // REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::TernaryTrie);
-    //
-    // REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::BinarySortedTrie);
-    // REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::BinaryTrie);
-    // REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::HashTrie);
-    // REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::MyHashTrie);
-    // REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::TernaryTrie);
-    //
-// #ifdef JUDY_H_AVAILABLE
-//     REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::JudyTrie);
-//     REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::JudyTrie);
-// #endif
+    REGISTER_WITH_ALL_CODERS(LiteralEncoder);
 
-    // REGISTER_WITH_ALL_CODERS(RePairCompressor);
-    //
-    // REGISTER_WITH_ALL_CODERS(LZSSLCPCompressor);
-    r.register_compressor<ESACompressor<Code2Coder, esacomp::ESACompMaxLCP, esa::MultimapBuffer>>();
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::BinarySortedTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::BinaryTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::HashTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::MyHashTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::TernaryTrie);
+
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::BinarySortedTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::BinaryTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::HashTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::MyHashTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::TernaryTrie);
+
+#ifdef JUDY_H_AVAILABLE
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::JudyTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::JudyTrie);
+#endif
+
+    REGISTER_WITH_ALL_CODERS(RePairCompressor);
+
+    REGISTER_WITH_ALL_CODERS(LZSSLCPCompressor);
+
+
+r.register_compressor<ESACompressor<Code2Coder, esacomp::ESACompMaxLCP, esa::MultimapBuffer>>();
     r.register_compressor<ESACompressor<Code2Coder, esacomp::LazyList,      esa::MultimapBuffer>>();
     r.register_compressor<ESACompressor<Code2Coder, esacomp::ESACompMaxLCP, esa::SuccinctListBuffer>>();
     r.register_compressor<ESACompressor<Code2Coder, esacomp::LazyList,      esa::SuccinctListBuffer>>();
@@ -82,20 +84,23 @@ void register_algorithms(Registry& r) {
     r.register_compressor<ESACompressor<ASCIICoder, esacomp::LazyList,      esa::SuccinctListBuffer>>();
     r.register_compressor<ESACompressor<ASCIICoder, esacomp::ESACompMaxLCP, esa::DecodeForwardQueueListBuffer>>();
     r.register_compressor<ESACompressor<ASCIICoder, esacomp::LazyList,      esa::DecodeForwardQueueListBuffer>>();
-//    REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompMaxLCP, lzss::SuccinctListBuffer );
+
+
+    // REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompMaxLCP);
     // REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompBulldozer);
     // REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompNaive);
- //	REGISTER_WITH_ALL_CODERS_M(ESACompressor, (esacomp::LazyList, lzss::SuccinctListBuffer) );
-    //
-    // REGISTER_WITH_ONLINE_CODERS(LZSSSlidingWindowCompressor);
-    // REGISTER_WITH_ONLINE_CODERS(RunLengthEncoder);
-    //
-    // r.register_compressor<EasyRLECompressor>();
-    // r.register_compressor<MTFCompressor>();
-    // r.register_compressor<BWTCompressor>();
-    //
-    // r.register_compressor<ChainCompressor>();
-    // r.register_compressor<NoopCompressor>();
+    // REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::LazyList);
+
+    REGISTER_WITH_ONLINE_CODERS(LZSSSlidingWindowCompressor);
+    REGISTER_WITH_ONLINE_CODERS(RunLengthEncoder);
+
+    r.register_compressor<EasyRLECompressor>();
+    r.register_compressor<MTFCompressor>();
+    r.register_compressor<BWTCompressor>();
+
+    r.register_compressor<ChainCompressor>();
+    r.register_compressor<NoopCompressor>();
 }
 
 }
+

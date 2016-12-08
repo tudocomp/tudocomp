@@ -8,22 +8,16 @@
 namespace tdc {
 namespace lzss {
 
-class DecodeBackBuffer: public Algorithm {
+class DecodeBackBuffer{
 
 private:
     std::vector<uliteral_t> m_buffer;
     len_t m_cursor;
 
 public:
-    inline static Meta meta() {
-        Meta m("esadec", "DecodeBackBuffer");
-        return m;
 
-    }
-
-    inline DecodeBackBuffer(Env&& env, len_t size):
-        Algorithm(std::move(env)),
-        m_cursor(0)
+    inline DecodeBackBuffer(len_t size)
+		: m_cursor(0)
     {
         m_buffer.resize(size, 0);
     }
