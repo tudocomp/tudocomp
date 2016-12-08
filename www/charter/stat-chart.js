@@ -87,6 +87,8 @@ var convert = function(x, memOff, level) {
 };
 
 var drawChart = function(raw) {
+    raw = raw.stats; // FIXME: quick compatibility fix, discarding meta info
+
     app.raw = raw;
     app.data = [];
     app.groups = [];
@@ -375,7 +377,7 @@ var printPhase = function(parentElem, d) {
 var printDataTable = function() {
     var data = d3.select("#data-content");
     data.html("");
-    
+
     printPhase(data, app.root);
 };
 
