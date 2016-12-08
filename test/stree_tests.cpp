@@ -10,25 +10,33 @@
 //#include "tudocomp/ds/SuffixTreeNode.hpp"
 
 //using namespace tdc;
+using tdc::SuffixTree;
 
 TEST(stree, st_node_test){
+    //tdc::SuffixTree*
     tdc::SuffixTree* stree = new tdc::SuffixTree();
 
-    stree->add_char('h');
+    //stree->add_char('h');
 
-    stree->add_string("ello world");
-    stree->add_char('!');
-    ASSERT_EQ(stree->get_text(), "hello world!");
+    stree->add_string("abcabxabcd");
+    //stree->add_char('!');
+    ASSERT_EQ(stree->get_text(), "abcabxabcd");
 
     tdc::SuffixTree::STNode* root = stree->get_root();
     DLOG(INFO) <<"sizeof childnodes root "<< root->child_nodes.size();
-    auto it = root->child_nodes.begin();
-    while(it != root->child_nodes.end()){
-        auto pair = *it;
-        SuffixTree::STEdge* edge = pair.second;
-        DLOG(INFO)<< pair.first <<" " <<edge->end;
-        it++;
+    //check sanity of STREE
+    for(char c : "abcdx"){
+
+        tdc::SuffixTree::STNode* x = root->child_nodes[c];
+        uint x_start = x->start;
+        uint x_end = x->end;
+        if(x_end==0){
+            x_end=10;
+        }
+        DLOG(INFO) <<"sizeof childnodes "<< c<<": "<< x->child_nodes.size();
+        DLOG(INFO) << "subst of "<< c<< ": "<< stree->get_text().substr(x_start, x_end);
     }
+
 
     ASSERT_FALSE(false);
     ASSERT_TRUE(true);
