@@ -11,7 +11,7 @@ namespace esa {
 
 constexpr len_t undef_len = std::numeric_limits<len_t>::max();
 class SuccinctListBuffer : public Algorithm {
-    public:
+public:
     inline static Meta meta() {
         Meta m("esadec", "SuccinctListBuffer");
         return m;
@@ -36,6 +36,9 @@ private:
 
     const len_t m_size;
 
+    // Would be uneeded if manual new/delete where not used
+    bool m_is_empty = false;
+
     inline void decode_literal_at(len_t pos, uliteral_t c) {
         ++m_current_chain;
         m_longest_chain = std::max(m_longest_chain, m_current_chain);
@@ -58,12 +61,26 @@ private:
     }
 
 public:
+    SuccinctListBuffer(SuccinctListBuffer&& other):
+        Algorithm(std::move(*this)),
+        m_buffer(std::move(other.m_buffer)),
+        m_fwd(std::move(other.m_fwd)),
+        m_cursor(std::move(other.m_cursor)),
+        m_longest_chain(std::move(other.m_longest_chain)),
+        m_current_chain(std::move(other.m_current_chain)),
+        m_size(std::move(other.m_size))
+    {
+        other.m_is_empty = true;
+    }
+
     ~SuccinctListBuffer() {
-        for(size_t i = 0; i < m_size; ++i) {
-            if(m_fwd[i] == nullptr) continue;
-            delete [] m_fwd[i];
+        if (!m_is_empty) {
+            for(size_t i = 0; i < m_size; ++i) {
+                if(m_fwd[i] == nullptr) continue;
+                delete [] m_fwd[i];
+            }
+            delete [] m_fwd;
         }
-        delete [] m_fwd;
     }
     inline SuccinctListBuffer(Env&& env, len_t size)
         : Algorithm(std::move(env)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_size(size) {
