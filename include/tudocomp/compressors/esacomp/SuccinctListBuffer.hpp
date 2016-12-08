@@ -5,11 +5,11 @@
 #include <sdsl/int_vector.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
+#include <tudocomp/compressors/esacomp/DecodeQueueListBuffer.hpp>
 
 namespace tdc {
 namespace esa {
 
-constexpr len_t undef_len = std::numeric_limits<len_t>::max();
 class SuccinctListBuffer : public Algorithm {
 public:
     inline static Meta meta() {
