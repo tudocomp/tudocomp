@@ -233,13 +233,11 @@ inline void create_test_directory() {
     mkdir(TEST_FILE_PATH.c_str(), 0777);
 }
 
-inline void write_test_file(const std::string& filename, const std::string& text) {
+inline void write_test_file(const std::string& filename, string_ref text) {
     create_test_directory();
     std::ofstream fout(test_file_path(filename));
     if(fout) {
-        for (char c : text) {
-            fout.put(c);
-        }
+        fout << text;
         fout.close();
     }
 }
@@ -415,6 +413,11 @@ public:
             this->escape_and_terminate();
         }
     }
+    inline TestInput(Input::Path&& path, bool sentinel): Input(std::move(path)) {
+        if (sentinel) {
+            this->escape_and_terminate();
+        }
+    }
 };
 
 class TestOutput: std::vector<uint8_t>, public Output {
@@ -444,6 +447,14 @@ TestOutput compress_output() {
 
 TestOutput decompress_output() {
     return TestOutput(true);
+}
+
+TestInput compress_input_file(string_ref path) {
+    return TestInput(Input::Path{std::string(path)}, true);
+}
+
+TestInput decompress_input_file(string_ref path) {
+    return TestInput(Input::Path{std::string(path)}, false);
 }
 
 }

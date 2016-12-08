@@ -1157,6 +1157,20 @@ TEST(Test, TestOutputDecompression) {
     ASSERT_EQ(o.result(), "abcd"_v);
 }
 
+TEST(Test, TestInputCompressionFile) {
+    test::write_test_file("TestInputCompressionFile.txt", "abcd");
+    auto p = test::test_file_path("TestInputCompressionFile.txt");
+    test::TestInput i = test::compress_input_file(p);
+    ASSERT_EQ(i.as_view(), "abcd\0"_v);
+}
+
+TEST(Test, TestInputDecompressionFile) {
+    test::write_test_file("TestInputDecompressionFile.txt", "abcd\0"_v);
+    auto p = test::test_file_path("TestInputDecompressionFile.txt");
+    test::TestInput i = test::decompress_input_file(p);
+    ASSERT_EQ(i.as_view(), "abcd\0"_v);
+}
+
 TEST(Test, TestInputOutputInheritance) {
     auto x = create_algo<MyCompressor<MySubAlgo>>("", "test");
 
