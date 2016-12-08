@@ -47,7 +47,7 @@ private:
                 if(bucket[i] == undef_len) break;
                 decode_literal_at(bucket[i], c); // recursion
             }
-            m_fwd[pos] = nullptr;
+            m_fwd[pos].reset();
         }
 
         --m_current_chain;
@@ -59,6 +59,7 @@ public:
 
         m_buffer.resize(size, 0);
         m_fwd = std::make_unique<std::unique_ptr<len_t[]>[]>(size);
+        std::fill(m_fwd.get(), m_fwd.get() + size,nullptr);
         m_decoded = sdsl::bit_vector(size, 0);
     }
 
