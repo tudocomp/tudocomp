@@ -18,12 +18,25 @@ TEST(stree, st_node_test){
 
 //abcabxabcd$
     stree->add_string("abcabxabcd$");
-   // ASSERT_EQ(stree->get_text(), "abcabxabcd$");
+    ASSERT_EQ(stree->get_text(), "abcabxabcd$");
 
     tdc::SuffixTree::STNode* root = stree->get_root();
-    DLOG(INFO) <<"sizeof childnodes root "<< root->child_nodes.size();
+    ASSERT_EQ(6, root->child_nodes.size());
     //check sanity of STREE
-   for(char c : {'a','b','c','d','x','$'}){//'d'
+    tdc::SuffixTree::STNode* a_node = root->child_nodes['a'];
+    ASSERT_EQ(2,a_node->child_nodes.size());
+    ASSERT_EQ("ab", stree->get_string_of_edge(a_node));
+
+
+    tdc::SuffixTree::STNode* b_node = root->child_nodes['b'];
+
+    //sl of a_ndoe should point at b_node:
+    ASSERT_EQ(a_node->suffix_link,b_node);
+
+
+
+
+    for(char c : {'a','b','c','d','x','$'}){//'d'
 
         tdc::SuffixTree::STNode* x = root->child_nodes[c];
         uint x_start = x->start;
