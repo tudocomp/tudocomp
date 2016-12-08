@@ -7,6 +7,7 @@
 //from: http://stackoverflow.com/questions/9452701/ukkonens-suffix-tree-algorithm-in-plain-english/9513423#9513423
 #include <string>
 #include <map>
+#include <vector>
 namespace tdc {
 using namespace tdc;
 
@@ -14,11 +15,15 @@ class SuffixTree{
 public:
     struct STNode;
 private:
+
+    std::vector<STNode*> leaves;
+
     //root node
     STNode* root;
 
     //text added to st
     std::string Text;
+    uint suffix;
     uint pos;
 
     //number of suffixes to be added;
@@ -75,6 +80,7 @@ public:
         pos=0;
         Text="";
         remainder=0;
+        suffix=0;
 
 
         root = new STNode(0);
@@ -113,8 +119,9 @@ public:
 
                 STNode* new_leaf = new STNode(pos-1);
                 active_node->child_nodes[active_edge] = new_leaf;
-                new_leaf->suffix=pos-1;
+                new_leaf->suffix=suffix++;
 
+                leaves.push_back(new_leaf);
                 add_sl(active_node);
 
             } else {
@@ -140,15 +147,13 @@ public:
                 STNode* split = new STNode(next->start, next->start+active_length-1);
                 active_node->child_nodes[active_edge] = split;
                 STNode* leaf = new STNode(pos-1);
-                leaf->suffix=pos-1;
-                //leaf->suffix_link=active_node;
-                //last_added_sl->suffix_link = leaf;
+                leaf->suffix=suffix++;
                 split->child_nodes[c] = leaf;
 
                 next->start=next->start + active_length;
                 split->child_nodes[Text[next->start]] = next;
-                //split->suffix_link=next;
                 add_sl(split);
+                leaves.push_back(leaf);
             }
             remainder--;
             if(active_node==root && active_length>0){
@@ -192,6 +197,10 @@ public:
             output+=Text[i];
         }
         return output;
+    }
+
+    inline std::vector<STNode*> get_leaves(){
+        return leaves;
     }
 
 

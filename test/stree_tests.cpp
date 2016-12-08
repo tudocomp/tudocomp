@@ -40,6 +40,13 @@ TEST(stree, st_node_test){
     ASSERT_EQ(abc_node->suffix_link,bc_node);
 
 
+    std::vector<tdc::SuffixTree::STNode*> leaves = stree->get_leaves();
+
+    for(int i =0; i<leaves.size(); i++){
+        DLOG(INFO)<<stree->get_text().substr(leaves[i]->suffix);
+    }
+
+
     /*for(char c : {'a','b','c','d','x','$'}){//'d'
 
         tdc::SuffixTree::STNode* x = root->child_nodes[c];
