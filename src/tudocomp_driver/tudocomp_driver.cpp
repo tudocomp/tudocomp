@@ -371,7 +371,7 @@ int main(int argc, char** argv)
 
             json::Object stats;
             stats.set("meta", meta);
-            stats.set("stats", algo_stats.to_json());
+            stats.set("data", algo_stats.to_json());
 
             stats.str(std::cout);
             std::cout << std::endl;

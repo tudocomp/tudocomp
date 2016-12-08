@@ -87,7 +87,7 @@ var convert = function(x, memOff, level) {
 };
 
 var drawChart = function(raw) {
-    raw = raw.stats; // FIXME: quick compatibility fix, discarding meta info
+    if(raw.meta) raw = raw.data; // FIXME: quick compatibility fix, discarding meta info
 
     app.raw = raw;
     app.data = [];
