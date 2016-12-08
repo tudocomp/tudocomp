@@ -1,7 +1,7 @@
 
 #include "gtest/gtest.h"
 
-#include "tudocomp_test_util.hpp"
+#include "test/util.hpp"
 
 #include "tudocomp/ds/SuffixTree.hpp"
 
@@ -16,16 +16,14 @@ TEST(stree, st_node_test){
     //tdc::SuffixTree*
     tdc::SuffixTree* stree = new tdc::SuffixTree();
 
-    //stree->add_char('h');
 
     stree->add_string("abcabxabcd");
-    //stree->add_char('!');
     ASSERT_EQ(stree->get_text(), "abcabxabcd");
 
     tdc::SuffixTree::STNode* root = stree->get_root();
     DLOG(INFO) <<"sizeof childnodes root "<< root->child_nodes.size();
     //check sanity of STREE
-    for(char c : "abcdx"){
+    for(char c : {'a','b','c','d','x'}){
 
         tdc::SuffixTree::STNode* x = root->child_nodes[c];
         uint x_start = x->start;
@@ -38,6 +36,6 @@ TEST(stree, st_node_test){
     }
 
 
-    ASSERT_FALSE(false);
+    //ASSERT_FALSE(false);
     ASSERT_TRUE(true);
 }

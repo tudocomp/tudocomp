@@ -11,7 +11,7 @@
 #include <chrono>
 #include <thread>
 
-#include "tudocomp_test_util.hpp"
+#include "test/util.hpp"
 
 using tdc::LFSCompressor;
 using namespace tdc;
@@ -24,29 +24,24 @@ void run_coder_test(const std::string compression_string) {
     std::string compressed;
     // compress
     {
-        Input dummy_input(compression_string);
-        dummy_input.escape_and_terminate();
-        std::stringstream stm;
-        Output output = Output::from_stream(stm);
+        test::TestInput dummy_input = test::compress_input(compression_string);
+        test::TestOutput output = test::compress_output();
 
         c.compress(dummy_input, output);
-        compressed=stm.str();
-        DLOG(INFO) << "compressed:";
-        DLOG(INFO) << compressed;
+        compressed=output.result();
+
     }
     // decompress
     {
-        auto c = create_algo<LFSCompressor<lit_coder_t, len_coder_t>>();
 
-        Input file_input(compressed);
-        std::stringstream stm;
-        Output dummy_output = Output::from_stream(stm);
+        test::TestInput input = test::decompress_input(compressed);
+        test::TestOutput output = test::decompress_output();
 
-        c.decompress(file_input, dummy_output);
-        DLOG(INFO) << "decompressed:";
-        DLOG(INFO) << stm.str();
+        c.decompress(input, output);
 
+        compressed=output.result();
     }
+    ASSERT_EQ(compression_string, compressed);
 }
 
 
@@ -56,24 +51,22 @@ void run_coder_test_to_file(const std::string filename, const std::string compre
 
     // compress
     {
-        Input dummy_input(compression_string);
+        test::TestInput dummy_input = test::compress_input(compression_string);
         Output file_output(filename, true);
 
         c.compress(dummy_input, file_output);
     }
     // decompress
     {
-        auto c = create_algo<LFSCompressor<lit_coder_t, len_coder_t>>();
+        //auto c = create_algo<LFSCompressor<lit_coder_t, len_coder_t>>();
 
-        Input file_input(Input::Path{filename});
+        test::TestInput file_input = test::decompress_input_file(filename);
 
-        file_input.escape_and_terminate();
-        std::stringstream stm;
-        Output dummy_output = Output::from_stream(stm);
+       // std::stringstream stm;
+       // Output dummy_output = Output::from_stream(stm);
+        test::TestOutput output = test::compress_output();
 
-        c.decompress(file_input, dummy_output);
-        DLOG(INFO) << "decompressed:";
-        DLOG(INFO) << stm.str();
+        c.decompress(file_input, output);
     }
 }
 
@@ -83,17 +76,17 @@ void compress_and_decompress_file(const std::string filename) {
 
     // compress
     {
-        Input file_input(Input::Path{filename});
-        file_input.escape_and_terminate();
+        test::TestInput file_input= test::compress_input_file(filename);
+        //file_input.escape_and_terminate();
         Output file_output(filename+".lfs", true);
 
         c.compress(file_input, file_output);
     }
     // decompress
     {
-        auto c = create_algo<LFSCompressor<lit_coder_t, len_coder_t>>();
+        //auto c = create_algo<LFSCompressor<lit_coder_t, len_coder_t>>();
 
-        Input file_input(Input::Path{filename+".lfs"});
+        test::TestInput file_input = test::decompress_input_file(filename+".lfs");
         Output file_output(filename+".decomp", true);
 
         c.decompress(file_input, file_output);
@@ -105,16 +98,16 @@ void compress_and_decompress_file(const std::string filename) {
 
 TEST(lfs, as_stream_aba){
 
-    // run_coder_test<BitCoder>("abaaabbababb$");
+     run_coder_test<BitCoder,EliasGammaCoder>("abaaabbababb$");
 
-    // run_coder_test<ASCIICoder>("abaaabbababb$");
+     run_coder_test<ASCIICoder,ASCIICoder>("abaaabbababb$");
 }
 
 
 TEST(lfs, as_stream_mis){
-    // run_coder_test<BitOptimalCoder>("mississippi$");
+     run_coder_test<BitCoder,EliasGammaCoder>("mississippi$");
 
-   // run_coder_test<ASCIICoder>("mississippi$");
+    run_coder_test<ASCIICoder,EliasGammaCoder>("mississippi$");
 }
 
 TEST(lfs, as_file_aba){

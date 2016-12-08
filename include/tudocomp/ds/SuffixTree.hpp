@@ -29,7 +29,7 @@ private:
 
 
     //saves last added node
-    STNode* last_added;
+    STNode* last_added_leaf;
 
 
     //computes edge length:
@@ -51,12 +51,12 @@ public:
         // child nodes
         std::map<char, STNode*> child_nodes;
         //suffix link
-        struct STNode* suffix_link;
+        STNode* suffix_link;
         //suffix represented by this node, if leaf
         uint suffix;
 
         //constructor. e=0
-        STNode(uint s, uint e = 0) : start(s), end (e){ suffix_link=0;}
+        STNode(uint s, uint e = 0) : start(s), end (e){ suffix_link=NULL;}
 
 
     };
@@ -74,6 +74,14 @@ public:
         active_node=root;
         active_length=0;
 
+        last_added_leaf=root;
+
+    }
+    ~SuffixTree(){
+        root=NULL;
+
+        active_node=root;
+        last_added_leaf=root;
     }
 
     inline void add_char(char c){
@@ -90,12 +98,13 @@ public:
                 //insert new leaf
                 //DLOG(INFO)<<"inserting new leaf rule 1: " << c;
 
-                STNode* new_leaf = new STNode(text_length);
+                STNode* new_leaf = new STNode(text_length-1);
                 active_node->child_nodes[active_edge] = new_leaf;
-                new_leaf->suffix_link = active_node;
+                new_leaf->suffix_link = last_added_leaf;
                 new_leaf->suffix=text_length;
+                last_added_leaf=new_leaf;
             } else {
-                DLOG(INFO)<<"already " << c;
+                //DLOG(INFO)<<"already " << c;
                 STNode* next = active_node->child_nodes[active_edge];
                 //if the active length is greater than the edge length:
                 //switch active node to that
@@ -117,9 +126,11 @@ public:
                 //now split edge if the correct edge is found
                 STNode* split = new STNode(next->start, next->start+active_length);
                 active_node->child_nodes[active_edge] = split;
-                STNode* leaf = new STNode(text_length);
-                DLOG(INFO)<<"inserting new leaf rule 2: " << c;
+                STNode* leaf = new STNode(text_length-1);
+                //DLOG(INFO)<<"inserting new leaf rule 2: " << c;
                 leaf->suffix=text_length;
+                leaf->suffix_link=active_node;
+                last_added_leaf->suffix_link = leaf;
                 split->child_nodes[c] = leaf;
                 next->start+=active_length;
                 split->child_nodes[Text[next->start]] = next;
@@ -131,7 +142,7 @@ public:
                 active_length--;
                 active_edge = Text[text_length-remainder];
             }else {
-                if(active_node->suffix_link != 0){
+                if(active_node->suffix_link != NULL){
 
                     //DLOG(INFO)<<"setting active node sl";
                     active_node = active_node->suffix_link;
@@ -146,7 +157,7 @@ public:
 
     }
     inline void add_string(std::string input){
-        for(int i = 0; i<input.length();i++){
+        for(uint i = 0; i<input.length();i++){
             add_char(input[i]);
         }
     }
@@ -165,10 +176,6 @@ public:
 };
 
 }
-
-
-//represents Edges between Nodes
-//start and end end are the corresponding start and end of the factor of this edge
 
 
 #endif // _INCLUDED_DS_SUFFIX_TREE_HPP
