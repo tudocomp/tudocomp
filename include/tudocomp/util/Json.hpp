@@ -30,7 +30,7 @@ private:
     T m_value;
 
 public:
-    TValue(const T& value) : m_value(value) {};
+    inline TValue(const T& value) : m_value(value) {};
 
     virtual inline void str(
         std::ostream& s, unsigned int level = 0) const override {
@@ -39,14 +39,40 @@ public:
     }
 };
 
+const char        quote_char = '\"';
+const std::string quote_escape = "\\\"";
+
 template<>
 inline void TValue<char>::str(std::ostream& s, unsigned int level) const {
-    s << '\"' << m_value << '\"';
+    s << quote_char;
+
+    if(m_value == quote_char) {
+        s << quote_escape;
+    } else {
+        s << m_value;
+    }
+
+    s << quote_char;
 }
 
 template<>
+inline TValue<std::string>::TValue(const std::string& value) {
+    m_value = std::string(value);
+
+    // escape quote character
+    size_t pos = 0;
+    for(size_t x = m_value.find(quote_char);
+        x != std::string::npos;
+        x = m_value.find(quote_char, pos)) {
+
+        m_value.replace(x, 1, quote_escape);
+        pos = x+2;
+    }
+};
+
+template<>
 inline void TValue<std::string>::str(std::ostream& s, unsigned int level) const {
-    s << '\"' << m_value << '\"';
+    s << quote_char << m_value << quote_char;
 }
 
 class Object;
