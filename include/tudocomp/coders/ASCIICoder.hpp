@@ -46,7 +46,7 @@ public:
         inline value_t decode(const Range& r) {
             std::ostringstream os;
             for(uint8_t c = m_in->read_int<uint8_t>();
-                c != ':';
+                c >= '0' && c <= '9';
                 c = m_in->read_int<uint8_t>()) {
 
                 os << c;
