@@ -15,6 +15,7 @@ var memUnits = ["bytes", "KiB", "MiB", "GiB"];
 var app = {
     // Data
     raw: null,
+    meta: null,
     data: [],
     groups: [],
     root: null,
@@ -86,10 +87,27 @@ var convert = function(x, memOff, level) {
     return ds;
 };
 
-var drawChart = function(raw) {
-    if(raw.meta) raw = raw.data; // FIXME: quick compatibility fix, discarding meta info
+var printMeta = function(meta) {
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    app.raw = raw;
+    var date = new Date(meta.startTime * 1000);
+    var year = date.getFullYear();
+    var month = months[date.getMonth()];
+    var day = date.getDate();
+    var hours = date.getHours();
+    var minutes = "0" + date.getMinutes();
+    var seconds = "0" + date.getSeconds();
+
+    d3.select("#meta td.timestamp").text(month + " " + day + ", " + year + " - " + hours + ":" + minutes.substr(-2) + ":" + seconds.substr(-2));
+    d3.select("#meta td.config").text(meta.config);
+    d3.select("#meta td.input").text(meta.input);
+    d3.select("#meta td.input-size").text(formatMem(meta.inputSize));
+    d3.select("#meta td.output").text(meta.output);
+    d3.select("#meta td.output-size").text(formatMem(meta.outputSize));
+    d3.select("#meta td.rate").text(formatPercent(meta.rate));
+}
+
+var drawChart = function(raw) {
     app.data = [];
     app.groups = [];
 
@@ -404,10 +422,6 @@ var fillStatTable = function(d, e) {
     }
 }
 
-var redrawChart = function() {
-    drawChart(app.raw);
-}
-
 // Formatting functions
 var formatTime = function(ms) {
     return app.tScale(ms).toFixed(3) + " " + app.tUnit;
@@ -511,10 +525,23 @@ var setZoom = function(zoom) {
     updateZoomText(zoom);
 }
 
+var redrawChart = function() {
+    drawChart(app.raw);
+    if(app.meta) printMeta(app.meta);
+}
+
 var loadJSON = function(json) {
     d3.select("#json-error").style("display", "none");
     try {
-        drawChart(JSON.parse(json));
+        var x = JSON.parse(json);
+        if(x.meta) {
+            app.raw = x.data;
+            app.meta = x.meta;
+        } else {
+            app.raw = x;
+        }
+
+        redrawChart();
     } catch(err) {
         d3.select("#json-error-message").text(err.message);
         d3.select("#json-error").style("display", "block");

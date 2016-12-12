@@ -232,7 +232,6 @@ button {
     margin-left: 20%;
     width: 60%;
 
-    margin-top: 2rem;
     margin-bottom: 2rem;
 
     text-align: left;
@@ -242,6 +241,7 @@ button {
 #data h1 {
     margin: 0;
     margin-bottom: 1rem;
+    margin-top: 2rem;
 
     border-bottom: 2px solid #AAA;
 
@@ -290,6 +290,10 @@ button {
 
     border: 2px solid #AAA;
     border-collapse: collapse;
+}
+
+#data #meta table {
+    margin-left: 0;
 }
 
 #data table th, #data table td {
