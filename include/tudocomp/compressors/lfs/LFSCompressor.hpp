@@ -76,11 +76,9 @@ public:
 
         uint min_lrf_length = 5;
         DLOG(INFO) << "compress lfs";
-        //auto ostream = output.as_stream();
         //creating lcp and sa
         DLOG(INFO) << "reading input";
         auto in = input.as_view();
-        //in.ensure_null_terminator();
 
         //TextDS<> t(in);
         text_t t(in);

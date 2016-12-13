@@ -8,6 +8,9 @@
 #include <string>
 #include <map>
 #include <vector>
+
+
+#include <tudocomp/io.hpp>
 namespace tdc {
 using namespace tdc;
 
@@ -169,6 +172,15 @@ public:
         }
     }
 
+    inline void add_input(Input& input){
+        auto iview  = input.as_view();
+        for (uint i = 0; i < iview.size(); i++) {
+            uint8_t c = iview[i];
+            add_char(c);
+            // ...
+        }
+    }
+
     inline std::string get_text(){
         return Text;
     }
@@ -186,6 +198,15 @@ public:
         return leaves;
     }
 
+    inline void print_tree(std::ostream& out, STNode* node, std::string depth){
+        auto it = node->child_nodes.begin();
+        while (it != node->child_nodes.end()){
+            std::pair<char, STNode*> child = *it;
+            out<< depth << "edge: " << get_string_of_edge(child.second) << std::endl;
+            print_tree(out, child.second, depth+"  ");
+            it++;
+        }
+    }
 
 
 };

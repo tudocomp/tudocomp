@@ -10,11 +10,14 @@
 //#include "tudocomp/ds/SuffixTreeNode.hpp"
 
 //using namespace tdc;
-using tdc::SuffixTree;
+//using tdc::SuffixTree;
+namespace tdc {
+//namespace SuffixTree {
+
 
 TEST(stree, st_node_test){
     //tdc::SuffixTree*
-    tdc::SuffixTree* stree = new tdc::SuffixTree();
+    SuffixTree* stree = new SuffixTree();
 
 //abcabxabcd$
     stree->add_string("abcabxabcd$");
@@ -47,6 +50,8 @@ TEST(stree, st_node_test){
         //DLOG(INFO)<<stree->get_text().substr(i);
         DLOG(INFO)<<"edge label of leaf " <<i << ": "<< stree->get_string_of_edge(leaf);
     }
+
+    stree->print_tree(DLOG(INFO), root,"");
 
 
     tdc::SuffixTree::STNode* check;
@@ -139,3 +144,39 @@ TEST(stree, st_node_test){
 
 
 }
+
+TEST(stree, st_file_test_1mb){
+    Input file_input("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.$");
+    //file_input.escape_and_terminate();
+    tdc::SuffixTree* stree = new tdc::SuffixTree();
+
+//abcabxabcd$
+    stree->add_input(file_input);
+
+    tdc::SuffixTree::STNode* root = stree->get_root();
+    DLOG(INFO) << "child nodes root: " <<root->child_nodes.size();
+
+
+
+    //stree->print_tree(DLOG(INFO), root, "");
+
+    auto it = root->child_nodes.begin();
+    while (it != root->child_nodes.end()){
+        std::pair<char, tdc::SuffixTree::STNode*> child = *it;
+        DLOG(INFO)<< "edge: " << stree->get_string_of_edge(child.second) << std::endl;
+        it++;
+    }
+
+
+    // size of leaves shoudl correspond to length of text
+    auto leaves = stree->get_leaves();
+
+
+    DLOG(INFO) << "leaf nodes: " <<leaves.size();
+
+
+}
+
+}
+
+//}
