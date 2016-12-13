@@ -9,54 +9,44 @@
 //#include "tudocomp/ds/SuffixTreeEdge.hpp"
 //#include "tudocomp/ds/SuffixTreeNode.hpp"
 
-//using namespace tdc;
-//using tdc::SuffixTree;
 namespace tdc {
 //namespace SuffixTree {
 
+SuffixTree* build_suffix_tree(Input& input){
+    input.escape_and_terminate();
+    tdc::SuffixTree* stree = new tdc::SuffixTree();
+    stree->append_input(input);
+    return stree;
+}
+
 
 TEST(stree, st_node_test){
-    //tdc::SuffixTree*
     SuffixTree* stree = new SuffixTree();
-
-//abcabxabcd$
-    stree->add_string("abcabxabcd$");
+    stree->append_string("abcabxabcd$");
     ASSERT_EQ(stree->get_text(), "abcabxabcd$");
 
-    tdc::SuffixTree::STNode* root = stree->get_root();
+    SuffixTree::STNode* root = stree->get_root();
     ASSERT_EQ(6, root->child_nodes.size());
     //check sanity of STREE
-    tdc::SuffixTree::STNode* a_node = root->child_nodes['a'];
+    SuffixTree::STNode* a_node = root->child_nodes['a'];
     ASSERT_EQ(2,a_node->child_nodes.size());
     ASSERT_EQ("ab", stree->get_string_of_edge(a_node));
 
 
-    tdc::SuffixTree::STNode* b_node = root->child_nodes['b'];
+    SuffixTree::STNode* b_node = root->child_nodes['b'];
 
     //sl of a_ndoe should point at b_node:
     ASSERT_EQ(a_node->suffix_link,b_node);
 
 
-    tdc::SuffixTree::STNode* abc_node = a_node->child_nodes['c'];
-    tdc::SuffixTree::STNode* bc_node = b_node->child_nodes['c'];
+    SuffixTree::STNode* abc_node = a_node->child_nodes['c'];
+    SuffixTree::STNode* bc_node = b_node->child_nodes['c'];
 
     ASSERT_EQ(abc_node->suffix_link,bc_node);
 
-
-    std::vector<tdc::SuffixTree::STNode*> leaves = stree->get_leaves();
-    tdc::SuffixTree::STNode* leaf;
-    for(uint i =0; i<leaves.size(); i++){
-        leaf = leaves.at(i);
-        //DLOG(INFO)<<stree->get_text().substr(i);
-        DLOG(INFO)<<"edge label of leaf " <<i << ": "<< stree->get_string_of_edge(leaf);
-    }
-
-    stree->print_tree(DLOG(INFO), root,"");
-
-
-    tdc::SuffixTree::STNode* check;
-    tdc::SuffixTree::STNode* check_l;
-    tdc::SuffixTree::STNode* check_r;
+    SuffixTree::STNode* check;
+    SuffixTree::STNode* check_l;
+    SuffixTree::STNode* check_r;
     //check $
     check =root->child_nodes['$'];
     ASSERT_EQ("$", stree->get_string_of_edge(check));
@@ -145,7 +135,14 @@ TEST(stree, st_node_test){
 
 }
 
-TEST(stree, st_input_test){
+TEST(stree, st_input_test_small){
+    Input file_input("abcabxabcd$abcabxabcd$abcabxabcd$abcabxabcd$");
+    SuffixTree* stree = build_suffix_tree(file_input);
+    auto leaves = stree->get_leaves();
+    ASSERT_EQ(stree->get_text().size(), leaves.size());
+}
+
+TEST(stree, st_input_test_large){
     Input file_input("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod "
                      "tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At "
                      "vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, "
@@ -154,77 +151,75 @@ TEST(stree, st_input_test){
                      "dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo "
                      "dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem "
                      "ipsum dolor sit amet.$");
-    file_input.escape_and_terminate();
-    tdc::SuffixTree* stree = new tdc::SuffixTree();
-    stree->add_input(file_input);
-
-    tdc::SuffixTree::STNode* root = stree->get_root();
-    DLOG(INFO) << "child nodes root: " <<root->child_nodes.size();
-
-
-
-    //stree->print_tree(DLOG(INFO), root, "");
-
-    auto it = root->child_nodes.begin();
-    while (it != root->child_nodes.end()){
-        std::pair<char, tdc::SuffixTree::STNode*> child = *it;
-        DLOG(INFO)<< "edge: " << stree->get_string_of_edge(child.second) << std::endl;
-        it++;
-    }//*/
-
-
-    // size of leaves shoudl correspond to length of text
+    SuffixTree* stree = build_suffix_tree(file_input);
     auto leaves = stree->get_leaves();
-
-
-    DLOG(INFO) << "leaf nodes: " <<leaves.size();
-
+    ASSERT_EQ(stree->get_text().size(), leaves.size());
 
 }
 
-TEST(stree, st_file_test_1mb){
-    Input file_input = Input(Input::Path{"english.1MB"});
-    /*Input file_input("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod "
+
+TEST(stree, st_constructor_tests){
+    Input input ("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod "
                      "tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At "
                      "vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, "
                      "no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet,"
                      " consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et "
                      "dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo "
                      "dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem "
-                     "ipsum dolor sit amet.$");*/
-    file_input.escape_and_terminate();
-    tdc::SuffixTree* stree = new tdc::SuffixTree();
+                     "ipsum dolor sit amet.$");
 
-//abcabxabcd$
-    stree->add_input(file_input);
-    //stree->add_char('');
-
-    tdc::SuffixTree::STNode* root = stree->get_root();
-    DLOG(INFO) << "child nodes root: " <<root->child_nodes.size();
+    SuffixTree stree (input);
+    auto leaves = stree.get_leaves();
+    ASSERT_EQ(stree.get_text().size(), leaves.size());
 
 
+    std::string str_in = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod "
+                         "tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At "
+                         "vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, "
+                         "no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet,"
+                         " consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et "
+                         "dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo "
+                         "dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem "
+                         "ipsum dolor sit amet.$";
+    SuffixTree stree_str (str_in);
 
-    //stree->print_tree(DLOG(INFO), root, "");
+    leaves = stree_str.get_leaves();
+    ASSERT_EQ(stree_str.get_text().size(), leaves.size());
+}
 
-    /*auto it = root->child_nodes.begin();
-    while (it != root->child_nodes.end()){
-        std::pair<char, tdc::SuffixTree::STNode*> child = *it;
-        DLOG(INFO)<< "edge: " << stree->get_string_of_edge(child.second) << std::endl;
-        it++;
-    }//*/
-
-
-    // size of leaves shoudl correspond to length of text
+/*/
+TEST(stree, st_file_test_1mb_english){
+    Input file_input = Input(Input::Path{"english.1MB"});
+    SuffixTree* stree = build_suffix_tree(file_input);
     auto leaves = stree->get_leaves();
+    ASSERT_EQ(stree->get_text().size(), leaves.size());
 
+}
 
-    DLOG(INFO) << "leaf nodes: " <<leaves.size();
+TEST(stree, st_file_test_1mb_sources){
+    Input file_input = Input(Input::Path{"sources.1MB"});
+    SuffixTree* stree = build_suffix_tree(file_input);
+    auto leaves = stree->get_leaves();
+    ASSERT_EQ(stree->get_text().size(), leaves.size());
+
+}
+TEST(stree, st_file_test_10mb_english){
+    Input file_input = Input(Input::Path{"english.10MB"});
+    SuffixTree* stree = build_suffix_tree(file_input);
+    auto leaves = stree->get_leaves();
+    ASSERT_EQ(stree->get_text().size(), leaves.size());
+
+}
+
+TEST(stree, st_file_test_10mb_sources){
+    Input file_input = Input(Input::Path{"sources.10MB"});
+    SuffixTree* stree = build_suffix_tree(file_input);
+    auto leaves = stree->get_leaves();
+    ASSERT_EQ(stree->get_text().size(), leaves.size());
+
+} // */
+
 
 
 }
 
-
-
-}
-
-//}

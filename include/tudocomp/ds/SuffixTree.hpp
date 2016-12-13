@@ -26,7 +26,7 @@ private:
 
     //text added to st
     std::string Text;
-    uint pos;
+    int pos;
 
     //number of suffixes to be added;
     uint remainder;
@@ -45,9 +45,9 @@ private:
     uint edge_length(STNode* node){
 
         if(node->end == 0){
-            return pos - node->start;
+            return pos - node->start+1;
         } else {
-            return node->end - node->start +1;
+            return node->end - node->start;
         }
     }
     void add_sl(STNode* node){
@@ -77,7 +77,7 @@ public:
     //constructor
     SuffixTree(){
         //no Text is read
-        pos=0;
+        pos=-1;
         Text="";
         remainder=0;
 
@@ -98,8 +98,9 @@ public:
         last_added_sl=root;
     }
 
+private:
     inline void add_char(char c){
-        Text += c;
+        //Text += c;
         pos++;
         remainder++;
         last_added_sl=root;
@@ -115,7 +116,7 @@ public:
             auto next_it = active_node->child_nodes.find(active_edge);
             if(next_it==active_node->child_nodes.end()){
                 //insert new leaf
-                STNode* new_leaf = new STNode(pos-1);
+                STNode* new_leaf = new STNode(pos);
                 active_node->child_nodes[active_edge] = new_leaf;
                 leaves.push_back(new_leaf);
                 add_sl(active_node);
@@ -124,6 +125,7 @@ public:
                 STNode* next = active_node->child_nodes[active_edge];
                 //if the active length is greater than the edge length:
                 //switch active node to that
+                //walk down
                 if(active_length>= edge_length(next)){
                     active_node = next;
                     active_length -= edge_length(next);
@@ -140,9 +142,9 @@ public:
 
                 //now split edge if the edge is found
 
-                STNode* split = new STNode(next->start, next->start+active_length-1);
+                STNode* split = new STNode(next->start, next->start+active_length);
                 active_node->child_nodes[active_edge] = split;
-                STNode* leaf = new STNode(pos-1);
+                STNode* leaf = new STNode(pos);
                 split->child_nodes[c] = leaf;
 
                 next->start=next->start + active_length;
@@ -153,7 +155,7 @@ public:
             remainder--;
             if(active_node==root && active_length>0){
                 active_length--;
-                active_edge = Text[pos-remainder];
+                active_edge = Text[pos-remainder+1];
             }else {
                 if(active_node->suffix_link != NULL){
                     active_node = active_node->suffix_link;
@@ -165,20 +167,28 @@ public:
         }
 
     }
-    inline void add_string(std::string input){
+public:
+    inline void append_char(char c){
+
+        Text +=c;
+        add_char(c);
+    }
+
+    inline void append_string(std::string input){
+        Text += input;
         leaves.reserve(leaves.size()+input.size());
         for(uint i = 0; i<input.length();i++){
             add_char(input[i]);
         }
     }
 
-    inline void add_input(Input& input){
+    inline void append_input(Input& input){
         auto iview  = input.as_view();
-        DLOG(INFO)<<"adding size: " << iview.size();
+        leaves.reserve(leaves.size()+iview.size());
+        Text += iview;
         for (uint i = 0; i < iview.size(); i++) {
             uint8_t c = iview[i];
             add_char(c);
-            // ...
         }
     }
 
@@ -207,6 +217,14 @@ public:
             print_tree(out, child.second, depth+"  ");
             it++;
         }
+    }
+
+    SuffixTree(Input& input) : SuffixTree(){
+        append_input(input);
+    }
+
+    SuffixTree(std::string input) :  SuffixTree(){
+        append_string(input);
     }
 
 
