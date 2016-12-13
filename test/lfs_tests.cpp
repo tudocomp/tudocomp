@@ -123,8 +123,20 @@ TEST(lfs, as_file_mis){
   //  run_coder_test_to_file<ASCIICoder>("out.ascii", "mississippi$");
 }
 
-TEST(lfs, large_file){
+TEST(lfs, file_sources_1mb){
     compress_and_decompress_file<BitCoder, EliasGammaCoder>("sources.1MB");
+}
+
+TEST(lfs, file_sources_10mb){
+    compress_and_decompress_file<BitCoder, EliasGammaCoder>("sources.10MB");
+}
+
+TEST(lfs, file_english_1mb){
+    compress_and_decompress_file<BitCoder, EliasGammaCoder>("english.1MB");
+}
+
+TEST(lfs, file_english_10mb){
+    compress_and_decompress_file<BitCoder, EliasGammaCoder>("english.10MB");
 }
 
 
