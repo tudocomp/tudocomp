@@ -9,6 +9,7 @@
 
 #include <tudocomp/compressors/esacomp/strategies/BulldozerStrategy.hpp>
 #include <tudocomp/compressors/esacomp/strategies/LazyListStrategy.hpp>
+#include <tudocomp/compressors/esacomp/strategies/MaxHeapStrategy.hpp>
 #include <tudocomp/compressors/esacomp/strategies/MaxLCPStrategy.hpp>
 #include <tudocomp/compressors/esacomp/strategies/NaiveStrategy.hpp>
 
@@ -94,8 +95,8 @@ public:
         Meta m("compressor", "esacomp");
         m.option("coder").templated<coder_t>();
         m.option("strategy").templated<strategy_t, esacomp::MaxLCPStrategy>();
+        m.option("threshold").dynamic("3");
         m.option("esadec").templated<dec_t, esacomp::MultimapBuffer>();
-        m.option("threshold").dynamic("6");
         m.needs_sentinel_terminator();
         return m;
     }

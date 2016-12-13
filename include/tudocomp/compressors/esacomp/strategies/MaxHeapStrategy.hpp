@@ -1,0 +1,94 @@
+#ifndef _INCLUDED_ESACOMP_MAX_HEAP_HPP_
+#define _INCLUDED_ESACOMP_MAX_HEAP_HPP_
+
+#include <tudocomp/Algorithm.hpp>
+#include <tudocomp/ds/TextDS.hpp>
+
+#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
+#include <tudocomp/compressors/esacomp/MaxLCPHeap.hpp>
+
+namespace tdc {
+namespace esacomp {
+
+/// Implements the original "Max LCP" selection strategy for ESAComp.
+///
+/// This strategy constructs a deque containing suffix array entries sorted
+/// by their LCP length. The entry with the maximum LCP is selected and
+/// overlapping suffices are removed from the deque.
+///
+/// This was the original naive approach in "Textkompression mithilfe von
+/// Enhanced Suffix Arrays" (BA thesis, Patrick Dinklage, 2015).
+class MaxHeapStrategy : public Algorithm {
+private:
+    typedef TextDS<> text_t;
+
+public:
+    inline static Meta meta() {
+        Meta m("esacomp_strategy", "heap");
+        return m;
+    }
+
+    using Algorithm::Algorithm; //import constructor
+
+    inline void factorize(text_t& text,
+                   size_t threshold,
+                   lzss::FactorBuffer& factors) {
+
+        auto& sa = text.require_sa();
+        auto& isa = text.require_isa();
+
+        text.require_lcp();
+        auto _lcp = text.release_lcp();
+        auto& lcp = _lcp->data();
+
+        env().begin_stat_phase("Construct MaxLCPHeap");
+        MaxLCPHeap<text_t::sa_t, text_t::lcp_t> heap(sa, *_lcp, threshold);
+        env().log_stat("entries", heap.size());
+        env().end_stat_phase();
+
+        //Factorize
+        env().begin_stat_phase("Process MaxLCPHeap");
+
+        while(heap.size() > 0) {
+            //get suffix with longest LCP
+            size_t m = heap.get_max();
+
+            //generate factor
+            size_t fpos = sa[m];
+            size_t fsrc = sa[m-1];
+            size_t flen = lcp[m];
+
+            factors.push_back(lzss::Factor(fpos, fsrc, flen));
+
+            //remove overlapped entries
+            for(size_t k = 0; k < flen; k++) {
+                heap.remove(isa[fpos + k]);
+            }
+
+            //correct intersecting entries
+            for(size_t k = 0; k < flen && fpos > k; k++) {
+                size_t s = fpos - k - 1;
+                size_t i = isa[s];
+                if(heap.contains(i)) {
+                    if(s + lcp[i] > fpos) {
+                        size_t l = fpos - s;
+                        lcp[i] = l;
+
+                        if(l >= threshold) {
+                            heap.decrease_key(i);
+                        } else {
+                            heap.remove(i);
+                        }
+                    }
+                }
+            }
+        }
+
+        env().end_stat_phase();
+    }
+};
+
+}}
+
+#endif
+
