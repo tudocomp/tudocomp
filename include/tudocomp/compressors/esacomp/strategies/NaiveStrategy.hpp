@@ -16,7 +16,7 @@ namespace esacomp {
 /// A very naive selection strategy for ESAComp.
 ///
 /// TODO: Describe
-class ESACompNaive : public Algorithm {
+class NaiveStrategy : public Algorithm {
 private:
     typedef TextDS<> text_t;
 
@@ -24,7 +24,7 @@ public:
     using Algorithm::Algorithm;
 
     inline static Meta meta() {
-        Meta m("esacomp_strategy", "bulldozer2");
+        Meta m("esacomp_strategy", "naive");
         return m;
     }
 

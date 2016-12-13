@@ -14,7 +14,7 @@ namespace esacomp {
 /// Implements the "Bulldozer" selection strategy for ESAComp.
 ///
 /// TODO: Describe
-class ESACompBulldozer : public Algorithm {
+class BulldozerStrategy : public Algorithm {
 private:
     typedef TextDS<> text_t;
 

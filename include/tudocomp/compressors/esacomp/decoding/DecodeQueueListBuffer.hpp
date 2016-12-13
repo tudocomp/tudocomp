@@ -7,7 +7,7 @@
 #include <tudocomp/Algorithm.hpp>
 
 namespace tdc {
-namespace esa {
+namespace esacomp {
 
 constexpr len_t undef_len = std::numeric_limits<len_t>::max();
 class DecodeForwardQueueListBuffer : public Algorithm {

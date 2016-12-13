@@ -6,9 +6,9 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
-#include <tudocomp/compressors/esacomp/SuccinctListBuffer.hpp>
-#include <tudocomp/compressors/esacomp/DecodeQueueListBuffer.hpp>
-#include <tudocomp/compressors/esacomp/MultiMapBuffer.hpp>
+#include <tudocomp/compressors/esacomp/decoding/SuccinctListBuffer.hpp>
+#include <tudocomp/compressors/esacomp/decoding/DecodeQueueListBuffer.hpp>
+#include <tudocomp/compressors/esacomp/decoding/MultiMapBuffer.hpp>
 
 using namespace tdc;
 
@@ -181,25 +181,25 @@ void test_forward_decode_buffer_multiref() {
 }
 
 TEST(lzss, decode_forward_lm_buffer_chain) {
-    test_forward_decode_buffer_chain<esa::SuccinctListBuffer>();
+    test_forward_decode_buffer_chain<esacomp::SuccinctListBuffer>();
 }
 
 TEST(lzss, decode_forward_lm_buffer_multiref) {
-    test_forward_decode_buffer_multiref<esa::SuccinctListBuffer>();
+    test_forward_decode_buffer_multiref<esacomp::SuccinctListBuffer>();
 }
 
 TEST(lzss, decode_forward_mm_buffer_chain) {
-    test_forward_decode_buffer_chain<esa::MultimapBuffer>();
+    test_forward_decode_buffer_chain<esacomp::MultimapBuffer>();
 }
 
 TEST(lzss, decode_forward_mm_buffer_multiref) {
-    test_forward_decode_buffer_multiref<esa::MultimapBuffer>();
+    test_forward_decode_buffer_multiref<esacomp::MultimapBuffer>();
 }
 
 TEST(lzss, decode_forward_ql_buffer_chain) {
-    test_forward_decode_buffer_chain<esa::DecodeForwardQueueListBuffer>();
+    test_forward_decode_buffer_chain<esacomp::DecodeForwardQueueListBuffer>();
 }
 
 TEST(lzss, decode_forward_ql_buffer_multiref) {
-    test_forward_decode_buffer_multiref<esa::DecodeForwardQueueListBuffer>();
+    test_forward_decode_buffer_multiref<esacomp::DecodeForwardQueueListBuffer>();
 }

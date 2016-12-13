@@ -71,25 +71,19 @@ void register_algorithms(Registry& r) {
     REGISTER_WITH_ALL_CODERS(LZSSLCPCompressor);
 
 
-r.register_compressor<ESACompressor<Code2Coder, esacomp::ESACompMaxLCP, esa::MultimapBuffer>>();
-    r.register_compressor<ESACompressor<Code2Coder, esacomp::LazyList,      esa::MultimapBuffer>>();
-    r.register_compressor<ESACompressor<Code2Coder, esacomp::ESACompMaxLCP, esa::SuccinctListBuffer>>();
-    r.register_compressor<ESACompressor<Code2Coder, esacomp::LazyList,      esa::SuccinctListBuffer>>();
-    r.register_compressor<ESACompressor<Code2Coder, esacomp::ESACompMaxLCP, esa::DecodeForwardQueueListBuffer>>();
-    r.register_compressor<ESACompressor<Code2Coder, esacomp::LazyList,      esa::DecodeForwardQueueListBuffer>>();
+    r.register_compressor<ESACompressor<Code2Coder, esacomp::MaxLCPStrategy,   esacomp::MultimapBuffer>>();
+    r.register_compressor<ESACompressor<Code2Coder, esacomp::LazyListStrategy, esacomp::MultimapBuffer>>();
+    r.register_compressor<ESACompressor<Code2Coder, esacomp::MaxLCPStrategy,   esacomp::SuccinctListBuffer>>();
+    r.register_compressor<ESACompressor<Code2Coder, esacomp::LazyListStrategy, esacomp::SuccinctListBuffer>>();
+    r.register_compressor<ESACompressor<Code2Coder, esacomp::MaxLCPStrategy,   esacomp::DecodeForwardQueueListBuffer>>();
+    r.register_compressor<ESACompressor<Code2Coder, esacomp::LazyListStrategy, esacomp::DecodeForwardQueueListBuffer>>();
 
-    r.register_compressor<ESACompressor<ASCIICoder, esacomp::ESACompMaxLCP, esa::MultimapBuffer>>();
-    r.register_compressor<ESACompressor<ASCIICoder, esacomp::LazyList,      esa::MultimapBuffer>>();
-    r.register_compressor<ESACompressor<ASCIICoder, esacomp::ESACompMaxLCP, esa::SuccinctListBuffer>>();
-    r.register_compressor<ESACompressor<ASCIICoder, esacomp::LazyList,      esa::SuccinctListBuffer>>();
-    r.register_compressor<ESACompressor<ASCIICoder, esacomp::ESACompMaxLCP, esa::DecodeForwardQueueListBuffer>>();
-    r.register_compressor<ESACompressor<ASCIICoder, esacomp::LazyList,      esa::DecodeForwardQueueListBuffer>>();
-
-
-    // REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompMaxLCP);
-    // REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompBulldozer);
-    // REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::ESACompNaive);
-    // REGISTER_WITH_ALL_CODERS_M(ESACompressor, esacomp::LazyList);
+    r.register_compressor<ESACompressor<ASCIICoder, esacomp::MaxLCPStrategy,   esacomp::MultimapBuffer>>();
+    r.register_compressor<ESACompressor<ASCIICoder, esacomp::LazyListStrategy, esacomp::MultimapBuffer>>();
+    r.register_compressor<ESACompressor<ASCIICoder, esacomp::MaxLCPStrategy,   esacomp::SuccinctListBuffer>>();
+    r.register_compressor<ESACompressor<ASCIICoder, esacomp::LazyListStrategy, esacomp::SuccinctListBuffer>>();
+    r.register_compressor<ESACompressor<ASCIICoder, esacomp::MaxLCPStrategy,   esacomp::DecodeForwardQueueListBuffer>>();
+    r.register_compressor<ESACompressor<ASCIICoder, esacomp::LazyListStrategy, esacomp::DecodeForwardQueueListBuffer>>();
 
     REGISTER_WITH_ONLINE_CODERS(LZSSSlidingWindowCompressor);
     REGISTER_WITH_ONLINE_CODERS(RunLengthEncoder);

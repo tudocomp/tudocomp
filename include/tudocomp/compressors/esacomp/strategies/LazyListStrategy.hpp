@@ -17,7 +17,7 @@ namespace esacomp {
  * Instead, we check for every element whether it got already deleted/its key got decreased
  * In the latter case, we push it down to the respective array
  */
-class LazyList : public Algorithm {
+class LazyListStrategy : public Algorithm {
 private:
     typedef TextDS<> text_t;
 

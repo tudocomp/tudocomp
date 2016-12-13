@@ -18,7 +18,7 @@ namespace esacomp {
 ///
 /// This was the original naive approach in "Textkompression mithilfe von
 /// Enhanced Suffix Arrays" (BA thesis, Patrick Dinklage, 2015).
-class ESACompMaxLCP : public Algorithm {
+class MaxLCPStrategy : public Algorithm {
 private:
     typedef TextDS<> text_t;
 

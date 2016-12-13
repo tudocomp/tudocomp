@@ -5,10 +5,10 @@
 #include <sdsl/int_vector.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
-#include <tudocomp/compressors/esacomp/DecodeQueueListBuffer.hpp>
+#include <tudocomp/compressors/esacomp/decoding/DecodeQueueListBuffer.hpp>
 
 namespace tdc {
-namespace esa {
+namespace esacomp {
 
 class SuccinctListBuffer : public Algorithm {
 public:

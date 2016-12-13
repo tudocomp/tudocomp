@@ -6,7 +6,7 @@
 #include <sdsl/int_vector.hpp>
 
 namespace tdc {
-namespace esa {
+namespace esacomp {
 
 class MultimapBuffer : public Algorithm {
     public:

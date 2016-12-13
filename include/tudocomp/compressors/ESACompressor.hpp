@@ -7,18 +7,19 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
-#include <tudocomp/compressors/esacomp/ESACompMaxLCP.hpp>
-#include <tudocomp/compressors/esacomp/ESACompBulldozer.hpp>
-#include <tudocomp/compressors/esacomp/ESACompNaive.hpp>
-#include <tudocomp/compressors/esacomp/LazyList.hpp>
+#include <tudocomp/compressors/esacomp/strategies/BulldozerStrategy.hpp>
+#include <tudocomp/compressors/esacomp/strategies/LazyListStrategy.hpp>
+#include <tudocomp/compressors/esacomp/strategies/MaxLCPStrategy.hpp>
+#include <tudocomp/compressors/esacomp/strategies/NaiveStrategy.hpp>
+
+#include <tudocomp/compressors/esacomp/decoding/SuccinctListBuffer.hpp>
+#include <tudocomp/compressors/esacomp/decoding/DecodeQueueListBuffer.hpp>
+#include <tudocomp/compressors/esacomp/decoding/MultiMapBuffer.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
-#include <tudocomp/compressors/esacomp/SuccinctListBuffer.hpp>
-#include <tudocomp/compressors/esacomp/DecodeQueueListBuffer.hpp>
-#include <tudocomp/compressors/esacomp/MultiMapBuffer.hpp>
 
 namespace tdc {
-namespace esa {
+namespace esacomp {
 
 template<typename coder_t, typename decode_buffer_t>
 inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs) {
@@ -92,8 +93,8 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "esacomp");
         m.option("coder").templated<coder_t>();
-        m.option("strategy").templated<strategy_t, esacomp::ESACompMaxLCP>();
-        m.option("esadec").templated<dec_t, esa::MultimapBuffer>();
+        m.option("strategy").templated<strategy_t, esacomp::MaxLCPStrategy>();
+        m.option("esadec").templated<dec_t, esacomp::MultimapBuffer>();
         m.option("threshold").dynamic("6");
         m.needs_sentinel_terminator();
         return m;
@@ -148,7 +149,7 @@ public:
         // if(lazy == 0)
         // 	lzss::decode_text_internal<coder_t, dec_t>(decoder, outs);
         // else
-        esa::decode_text_internal<typename coder_t::Decoder, dec_t>(env().env_for_option("esadec"), decoder, outs);
+        esacomp::decode_text_internal<typename coder_t::Decoder, dec_t>(env().env_for_option("esadec"), decoder, outs);
     }
 };
 
