@@ -145,12 +145,17 @@ TEST(stree, st_node_test){
 
 }
 
-TEST(stree, st_file_test_1mb){
-    Input file_input("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.$");
-    //file_input.escape_and_terminate();
+TEST(stree, st_input_test){
+    Input file_input("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod "
+                     "tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At "
+                     "vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, "
+                     "no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet,"
+                     " consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et "
+                     "dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo "
+                     "dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem "
+                     "ipsum dolor sit amet.$");
+    file_input.escape_and_terminate();
     tdc::SuffixTree* stree = new tdc::SuffixTree();
-
-//abcabxabcd$
     stree->add_input(file_input);
 
     tdc::SuffixTree::STNode* root = stree->get_root();
@@ -165,7 +170,7 @@ TEST(stree, st_file_test_1mb){
         std::pair<char, tdc::SuffixTree::STNode*> child = *it;
         DLOG(INFO)<< "edge: " << stree->get_string_of_edge(child.second) << std::endl;
         it++;
-    }
+    }//*/
 
 
     // size of leaves shoudl correspond to length of text
@@ -176,6 +181,49 @@ TEST(stree, st_file_test_1mb){
 
 
 }
+
+TEST(stree, st_file_test_1mb){
+    Input file_input = Input(Input::Path{"english.1MB"});
+    /*Input file_input("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod "
+                     "tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At "
+                     "vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, "
+                     "no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet,"
+                     " consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et "
+                     "dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo "
+                     "dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem "
+                     "ipsum dolor sit amet.$");*/
+    file_input.escape_and_terminate();
+    tdc::SuffixTree* stree = new tdc::SuffixTree();
+
+//abcabxabcd$
+    stree->add_input(file_input);
+    //stree->add_char('');
+
+    tdc::SuffixTree::STNode* root = stree->get_root();
+    DLOG(INFO) << "child nodes root: " <<root->child_nodes.size();
+
+
+
+    //stree->print_tree(DLOG(INFO), root, "");
+
+    /*auto it = root->child_nodes.begin();
+    while (it != root->child_nodes.end()){
+        std::pair<char, tdc::SuffixTree::STNode*> child = *it;
+        DLOG(INFO)<< "edge: " << stree->get_string_of_edge(child.second) << std::endl;
+        it++;
+    }//*/
+
+
+    // size of leaves shoudl correspond to length of text
+    auto leaves = stree->get_leaves();
+
+
+    DLOG(INFO) << "leaf nodes: " <<leaves.size();
+
+
+}
+
+
 
 }
 

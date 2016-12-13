@@ -174,6 +174,7 @@ public:
 
     inline void add_input(Input& input){
         auto iview  = input.as_view();
+        DLOG(INFO)<<"adding size: " << iview.size();
         for (uint i = 0; i < iview.size(); i++) {
             uint8_t c = iview[i];
             add_char(c);
