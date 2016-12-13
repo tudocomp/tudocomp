@@ -23,7 +23,6 @@ private:
 
     //text added to st
     std::string Text;
-    uint suffix;
     uint pos;
 
     //number of suffixes to be added;
@@ -66,8 +65,6 @@ public:
         std::map<char, STNode*> child_nodes;
         //suffix link
         STNode* suffix_link;
-        //suffix represented by this node, if leaf
-        uint suffix;
 
         //constructor. e=0
         STNode(uint s, uint e = 0) : start(s), end (e){ suffix_link=NULL;}
@@ -80,7 +77,6 @@ public:
         pos=0;
         Text="";
         remainder=0;
-        suffix=0;
 
 
         root = new STNode(0);
@@ -116,11 +112,8 @@ public:
             auto next_it = active_node->child_nodes.find(active_edge);
             if(next_it==active_node->child_nodes.end()){
                 //insert new leaf
-
                 STNode* new_leaf = new STNode(pos-1);
                 active_node->child_nodes[active_edge] = new_leaf;
-                new_leaf->suffix=suffix++;
-
                 leaves.push_back(new_leaf);
                 add_sl(active_node);
 
@@ -147,7 +140,6 @@ public:
                 STNode* split = new STNode(next->start, next->start+active_length-1);
                 active_node->child_nodes[active_edge] = split;
                 STNode* leaf = new STNode(pos-1);
-                leaf->suffix=suffix++;
                 split->child_nodes[c] = leaf;
 
                 next->start=next->start + active_length;
@@ -171,6 +163,7 @@ public:
 
     }
     inline void add_string(std::string input){
+        leaves.reserve(leaves.size()+input.size());
         for(uint i = 0; i<input.length();i++){
             add_char(input[i]);
         }
@@ -186,17 +179,7 @@ public:
     }
 
     inline std::string get_string_of_edge(STNode* node){
-        std::string output ="";
-        uint e;
-        if(node->end==0){
-            e=pos;
-        } else {
-            e = node->end;
-        }
-        for(uint i = node->start;i<=e;i++){
-            output+=Text[i];
-        }
-        return output;
+        return Text.substr(node->start, edge_length(node));
     }
 
     inline std::vector<STNode*> get_leaves(){

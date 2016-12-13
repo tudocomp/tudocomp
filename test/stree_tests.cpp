@@ -41,39 +41,101 @@ TEST(stree, st_node_test){
 
 
     std::vector<tdc::SuffixTree::STNode*> leaves = stree->get_leaves();
-
-    for(int i =0; i<leaves.size(); i++){
-        DLOG(INFO)<<stree->get_text().substr(leaves[i]->suffix);
+    tdc::SuffixTree::STNode* leaf;
+    for(uint i =0; i<leaves.size(); i++){
+        leaf = leaves.at(i);
+        //DLOG(INFO)<<stree->get_text().substr(i);
+        DLOG(INFO)<<"edge label of leaf " <<i << ": "<< stree->get_string_of_edge(leaf);
     }
 
 
-    /*for(char c : {'a','b','c','d','x','$'}){//'d'
+    tdc::SuffixTree::STNode* check;
+    tdc::SuffixTree::STNode* check_l;
+    tdc::SuffixTree::STNode* check_r;
+    //check $
+    check =root->child_nodes['$'];
+    ASSERT_EQ("$", stree->get_string_of_edge(check));
 
-        tdc::SuffixTree::STNode* x = root->child_nodes[c];
-        uint x_start = x->start;
-        uint x_end = x->end;
-        if(x_end==0){
-            x_end=10;
-        }
-        DLOG(INFO) <<"sizeof childnodes "<< c<<": "<< x->child_nodes.size();
-        DLOG(INFO) << "subst of "<< x_start<< "  " << x_end;
-        DLOG(INFO) << "subst of "<< c<< ": "<< stree->get_string_of_edge(x);
-    }
-   tdc::SuffixTree::STNode* a = root->child_nodes['a'];
+    ////////////////////////////////////////////////
+    //check a
 
-   for(char c : {'c','x'}){//'d'
+    check =root->child_nodes['a'];
+    ASSERT_EQ("ab", stree->get_string_of_edge(check));
+    ASSERT_EQ(2, check->child_nodes.size());
 
-        tdc::SuffixTree::STNode* x = a->child_nodes[c];
-        uint x_start = x->start;
-        uint x_end = x->end;
-        if(x_end==0){
-            x_end=10;
-        }
-        DLOG(INFO) <<"sizeof childnodes "<< c<<": "<< x->child_nodes.size();
-        DLOG(INFO) << "subst of "<< x_start<< "  " << x_end;
-        DLOG(INFO) << "subst of "<< c<< ": "<< stree->get_string_of_edge(x);
-    }*/
+    //check children of a
 
-    //ASSERT_FALSE(false);
-    //ASSERT_TRUE(true);
+    check_l=check->child_nodes['c'];
+    check_r=check->child_nodes['x'];
+
+    ASSERT_EQ("c", stree->get_string_of_edge(check_l));
+    ASSERT_EQ("xabcd$", stree->get_string_of_edge(check_r));
+
+    // check children of c of a:
+    check = check_l;
+
+    check_l=check->child_nodes['a'];
+    check_r=check->child_nodes['d'];
+
+    ASSERT_EQ("abxabcd$", stree->get_string_of_edge(check_l));
+    ASSERT_EQ("d$", stree->get_string_of_edge(check_r));
+
+    ////////////////////////////////////////////////
+    //check b of root:
+
+    check =root->child_nodes['b'];
+
+    ASSERT_EQ("b", stree->get_string_of_edge(check));
+    ASSERT_EQ(2, check->child_nodes.size());
+
+    //check children of b
+
+    check_l=check->child_nodes['c'];
+    check_r=check->child_nodes['x'];
+
+    ASSERT_EQ("c", stree->get_string_of_edge(check_l));
+    ASSERT_EQ("xabcd$", stree->get_string_of_edge(check_r));
+
+    // check children of c of b:
+    check = check_l;
+
+    check_l=check->child_nodes['a'];
+    check_r=check->child_nodes['d'];
+
+    ASSERT_EQ("abxabcd$", stree->get_string_of_edge(check_l));
+    ASSERT_EQ("d$", stree->get_string_of_edge(check_r));
+
+    ////////////////////////////////////////////////
+    //check c of root:
+
+    check =root->child_nodes['c'];
+
+    ASSERT_EQ("c", stree->get_string_of_edge(check));
+    ASSERT_EQ(2, check->child_nodes.size());
+
+    //check children of c
+
+    check_l=check->child_nodes['a'];
+    check_r=check->child_nodes['d'];
+
+    ASSERT_EQ("abxabcd$", stree->get_string_of_edge(check_l));
+    ASSERT_EQ("d$", stree->get_string_of_edge(check_r));
+
+    ////////////////////////////////////////////////
+    //check d of root:
+
+    check =root->child_nodes['d'];
+
+    ASSERT_EQ("d$", stree->get_string_of_edge(check));
+    ASSERT_EQ(0, check->child_nodes.size());
+
+    ////////////////////////////////////////////////
+    //check x of root:
+
+    check =root->child_nodes['x'];
+
+    ASSERT_EQ("xabcd$", stree->get_string_of_edge(check));
+    ASSERT_EQ(0, check->child_nodes.size());
+
+
 }
