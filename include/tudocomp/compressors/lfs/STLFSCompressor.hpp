@@ -1,6 +1,8 @@
 #ifndef _INCLUDED_ST_LFS_COMPRESSOR_HPP_
 #define _INCLUDED_ST_LFS_COMPRESSOR_HPP_
 
+#include <tudocomp/ds/SuffixTree.hpp>
+
 
 
 #include <tudocomp/Compressor.hpp>
@@ -16,6 +18,7 @@
 #include <tudocomp/io/BitIStream.hpp>
 #include <tudocomp/io/BitOStream.hpp>
 
+#include <utility>
 
 //#include <tudocomp/tudocomp.hpp>
 
@@ -26,6 +29,7 @@ template<typename literal_coder_t, typename len_coder_t>
 class STLFSCompressor : public Compressor {
 private:
 
+    typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
 
 
     inline virtual std::vector<uint> select_starting_positions(std::vector<uint> starting_positions, uint length){
@@ -50,6 +54,23 @@ private:
         return selected_starting_positions;
     }
 
+    inline virtual string_depth_vector compute_string_depth(SuffixTree::STNode* node, uint str_depth, SuffixTree* stree){
+        string_depth_vector node_list;
+        if(str_depth>0){
+            node_list.push_back(std::make_pair(str_depth, node));
+        }
+
+        auto it = node->child_nodes.begin();
+        while (it != node->child_nodes.end()){
+            auto child = *it;
+            uint child_depth = (str_depth+stree->edge_length(child.second));
+            string_depth_vector child_list = compute_string_depth(child.second,child_depth, stree);
+            node_list.insert(node_list.end(), child_list.begin(), child_list.end());
+            it++;
+        }
+        return node_list;
+    }
+
 
 
 public:
@@ -63,7 +84,7 @@ public:
     }
 
 
-    inline ESALFSCompressor(Env&& env):
+    inline STLFSCompressor(Env&& env):
         Compressor(std::move(env))
     {
         DLOG(INFO) << "Compressor instantiated";
@@ -71,9 +92,19 @@ public:
     }
     inline virtual void compress(Input& input, Output& output) override {
 
+        //build suffixtree
+        DLOG(INFO)<<"build suffixtree";
+        SuffixTree stree(input);
+        //compute string depth of st:
+        string_depth_vector nl = compute_string_depth(stree.get_root(),0, &stree);
+
+        std::sort(nl.begin(), nl.end());
+
+
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
+        return;
         DLOG(INFO) << "decompress lfs";
         std::shared_ptr<BitIStream> bitin = std::make_shared<BitIStream>(input);
 

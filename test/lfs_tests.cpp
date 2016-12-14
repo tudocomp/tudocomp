@@ -1,6 +1,7 @@
 //Test the longest first substitution
 
 #include <tudocomp/compressors/lfs/ESALFSCompressor.hpp>
+#include <tudocomp/compressors/lfs/STLFSCompressor.hpp>
 
 #include "gtest/gtest.h"
 
@@ -18,8 +19,35 @@ using namespace tdc;
 
 
 template<typename lit_coder_t, typename len_coder_t>
-void run_coder_test(const std::string compression_string) {
+void run_coder_test_esa(const std::string compression_string) {
     auto c = create_algo<ESALFSCompressor<lit_coder_t, len_coder_t>>();
+
+    std::string compressed;
+    // compress
+    {
+        test::TestInput dummy_input = test::compress_input(compression_string);
+        test::TestOutput output = test::compress_output();
+
+        c.compress(dummy_input, output);
+        compressed=output.result();
+
+    }
+    // decompress
+    {
+
+        test::TestInput input = test::decompress_input(compressed);
+        test::TestOutput output = test::decompress_output();
+
+        c.decompress(input, output);
+
+        compressed=output.result();
+    }
+    ASSERT_EQ(compression_string, compressed);
+}
+
+template<typename lit_coder_t, typename len_coder_t>
+void run_coder_test_st(const std::string compression_string) {
+    auto c = create_algo<STLFSCompressor<lit_coder_t, len_coder_t>>();
 
     std::string compressed;
     // compress
@@ -93,6 +121,10 @@ void compress_and_decompress_file(const std::string filename, std::string extens
         DLOG(INFO) << "decompressed";
 
     }
+}
+
+TEST(stlfs, as_stream_aba){
+    run_coder_test_st<BitCoder,EliasGammaCoder>("abcabxabcd$");
 }
 
 

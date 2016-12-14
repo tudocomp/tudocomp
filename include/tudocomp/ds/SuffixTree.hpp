@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <tuple>
 
 
 #include <tudocomp/io.hpp>
@@ -40,16 +41,6 @@ private:
     //saves last added node
     STNode* last_added_sl;
 
-
-    //computes edge length:
-    uint edge_length(STNode* node){
-
-        if(node->end == 0){
-            return pos - node->start+1;
-        } else {
-            return node->end - node->start;
-        }
-    }
     void add_sl(STNode* node){
 
         if(last_added_sl != root) {
@@ -59,18 +50,37 @@ private:
     }
 
 public:
+
+
+    //computes edge length:
+    uint edge_length(STNode* node){
+        if(node->start==-1){
+            return 0;
+        }
+
+        if(node->end == 0){
+            return pos - node->start+1;
+        } else {
+            return node->end - node->start;
+        }
+    }
     struct STNode{
 
         //represents the edge leading to this node
-        uint start;
-        uint end;
+        int start;
+        int end;
         // child nodes
         std::map<char, STNode*> child_nodes;
         //suffix link
         STNode* suffix_link;
 
         //constructor. e=0
-        STNode(uint s, uint e = 0) : start(s), end (e){ suffix_link=NULL;}
+        STNode(int s, int e = 0) : start(s), end (e){ suffix_link=NULL; card_bp=0;}
+
+        // needed for lfs, corresponds to triple
+        uint min_bp;
+        uint max_bp;
+        uint card_bp;
 
 
     };
@@ -82,7 +92,7 @@ public:
         remainder=0;
 
 
-        root = new STNode(0);
+        root = new STNode(-1);
 
         //active start node is root
         active_node=root;
