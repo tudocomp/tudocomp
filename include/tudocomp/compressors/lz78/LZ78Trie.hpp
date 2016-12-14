@@ -29,9 +29,7 @@ public:
     TrieNode(): TrieNode(0) {}
 
     inline const factorid_t& factorid() const { return m_factorid_and_search_pos; }
-    inline factorid_t& factorid() { return m_factorid_and_search_pos; }
     inline const factorid_t& search_pos() const { return m_factorid_and_search_pos; }
-    inline bool is_factorid_undefined() { return false; }
 };
 
 #define LZ78_DICT_SIZE_DESC \

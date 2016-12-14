@@ -27,15 +27,13 @@ class TrieNode<CedarSearchPos> {
 public:
     TrieNode(const factorid_t& factorid, const CedarSearchPos& search_pos):
         m_factorid(factorid),
-        m_search_pos(search_pos) {}
+        m_search_pos(search_pos) {
+            //DCHECK(factorid != CEDAR_NO_VALUE && factorid != CEDAR_NO_PATH);
+        }
     TrieNode(): TrieNode(0, CedarSearchPos { 0 }) {}
 
     inline const factorid_t& factorid() const { return m_factorid; }
-    inline factorid_t& factorid() { return m_factorid; }
     inline const CedarSearchPos& search_pos() const { return m_search_pos; }
-    inline bool is_factorid_undefined() const {
-        return factorid() == CEDAR_NO_VALUE || factorid() == CEDAR_NO_PATH;
-    }
 };
 
 class LzwRootSearchPosMap {
