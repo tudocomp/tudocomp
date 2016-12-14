@@ -54,12 +54,14 @@ void register_algorithms(Registry& r) {
     REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::HashTrie);
     REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::MyHashTrie);
     REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::TernaryTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::CedarTrie);
 
     REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::BinarySortedTrie);
     REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::BinaryTrie);
     REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::HashTrie);
     REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::MyHashTrie);
     REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::TernaryTrie);
+    REGISTER_WITH_ONLINE_CODERS_M(LZWCompressor, lz78::CedarTrie);
 
 #ifdef JUDY_H_AVAILABLE
     REGISTER_WITH_ONLINE_CODERS_M(LZ78Compressor, lz78::JudyTrie);
