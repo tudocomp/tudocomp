@@ -28,6 +28,7 @@ private:
     //text added to st
     std::string Text;
     int pos;
+    uint suffix;
 
     //number of suffixes to be added;
     uint remainder;
@@ -69,6 +70,9 @@ public:
         //represents the edge leading to this node
         int start;
         int end;
+
+        //suffix if leaf
+        uint suffix;
         // child nodes
         std::map<char, STNode*> child_nodes;
         //suffix link
@@ -90,6 +94,7 @@ public:
         pos=-1;
         Text="";
         remainder=0;
+        suffix=0;
 
 
         root = new STNode(-1);
@@ -129,6 +134,7 @@ private:
                 STNode* new_leaf = new STNode(pos);
                 active_node->child_nodes[active_edge] = new_leaf;
                 leaves.push_back(new_leaf);
+                new_leaf->suffix=suffix++;
                 add_sl(active_node);
 
             } else {
@@ -155,6 +161,7 @@ private:
                 STNode* split = new STNode(next->start, next->start+active_length);
                 active_node->child_nodes[active_edge] = split;
                 STNode* leaf = new STNode(pos);
+                leaf->suffix=suffix++;
                 split->child_nodes[c] = leaf;
 
                 next->start=next->start + active_length;

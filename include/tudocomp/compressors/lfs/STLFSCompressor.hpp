@@ -75,36 +75,37 @@ private:
     }
 
     inline virtual void compute_triple(SuffixTree::STNode* node){
-        uint min;
-        uint max;
-        uint card = 0;
-        //add all min begins and maxi begins of children to begins
-        auto it = node->child_nodes.begin();
-        uint min_child;
-        uint max_child;
-        while (it != node->child_nodes.end()){
-            auto child = *it;
-            min_child = child.second->min_bp;
-            max_child = child.second->max_bp;
 
 
-            if(min > min_child){
-                min = min_child;
-            }
-            if(max < max_child){
-                max = max_child;
-            }
-            card +=child.second->card_bp;
-
-            it++;
-        }
-
-        //if card still = 0, its a leaf
-        if(card == 0){
-            node->min_bp=node->start;
-            node->max_bp=node->start;
+        //if no childs, its a leaf
+        if(node->child_nodes.size()==0){
+            node->min_bp=node->suffix;
+            node->max_bp=node->suffix;
             node->card_bp=1;
         } else {
+            uint min=stree.get_text().size();
+            uint max=0;
+            uint card = 0;
+            //add all min begins and maxi begins of children to begins
+            auto it = node->child_nodes.begin();
+            uint min_child;
+            uint max_child;
+            while (it != node->child_nodes.end()){
+                auto child = *it;
+                min_child = child.second->min_bp;
+                max_child = child.second->max_bp;
+
+
+                if(min > min_child){
+                    min = min_child;
+                }
+                if(max < max_child){
+                    max = max_child;
+                }
+                card +=child.second->card_bp;
+
+                it++;
+            }
             node->card_bp=card;
             node->min_bp = min;
             node->max_bp= max;
@@ -153,11 +154,15 @@ public:
             }
             compute_triple(pair.second);
             if(pair.second->card_bp>=2){
-                //its a reapting factor, compute
-                DLOG(INFO)<<"reapting factor";
+                //compute if overlapping:
+                if(pair.second->min_bp+pair.first <= pair.second->max_bp){
 
-                DLOG(INFO)<<pair.first;
-                DLOG(INFO)<<stree.get_string_of_edge(pair.second);
+                    //its a reapting factor, compute
+                    DLOG(INFO)<<"reapting factor " << pair.second->min_bp << " " << pair.second->max_bp;
+
+                    DLOG(INFO)<<"length: "<<pair.first;
+                }
+
             }
 
 
