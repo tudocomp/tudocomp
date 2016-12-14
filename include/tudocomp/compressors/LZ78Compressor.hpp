@@ -84,8 +84,8 @@ public:
         auto reset_dict = [&dict] () {
             dict.clear();
             node_t node = dict.add_rootnode(0);
-            DCHECK_EQ(node.factorid(), dict.size() - 1);
-            DCHECK_EQ(node.factorid(), 0);
+            DCHECK_EQ(node.id(), dict.size() - 1);
+            DCHECK_EQ(node.id(), 0);
         };
         reset_dict();
 
@@ -94,20 +94,20 @@ public:
         // Define ranges
         node_t node = dict.get_rootnode(0);
         node_t parent = node; // parent of node, needed for the last factor
-        DCHECK_EQ(node.factorid(), 0);
-        DCHECK_EQ(parent.factorid(), 0);
+        DCHECK_EQ(node.id(), 0);
+        DCHECK_EQ(parent.id(), 0);
 
         char c;
         while (is.get(c)) {
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
-            if(child.factorid() == lz78::undef_id) {
-                coder.encode(node.factorid(), Range(factor_count));
+            if(child.id() == lz78::undef_id) {
+                coder.encode(node.id(), Range(factor_count));
                 coder.encode(static_cast<uliteral_t>(c), literal_r);
                 factor_count++;
                 stat_factor_count++;
                 parent = node = dict.get_rootnode(0); // return to the root
-                DCHECK_EQ(node.factorid(), 0);
-                DCHECK_EQ(parent.factorid(), 0);
+                DCHECK_EQ(node.id(), 0);
+                DCHECK_EQ(parent.id(), 0);
                 DCHECK_EQ(factor_count+1, dict.size());
                 // dictionary's maximum size was reached
                 if(tdc_unlikely(dict.size() == m_dict_max_size)) { // if m_dict_max_size == 0 this will never happen
@@ -124,10 +124,10 @@ public:
         }
 
         // take care of left-overs. We do not assume that the stream has a sentinel
-        if(node.factorid() != 0) {
-            coder.encode(parent.factorid(), Range(factor_count));
+        if(node.id() != 0) {
+            coder.encode(parent.id(), Range(factor_count));
             coder.encode(c, literal_r);
-            DCHECK_EQ(dict.find_or_insert(parent, static_cast<uliteral_t>(c)).factorid(), node.factorid());
+            DCHECK_EQ(dict.find_or_insert(parent, static_cast<uliteral_t>(c)).id(), node.id());
             factor_count++;
             stat_factor_count++;
         }

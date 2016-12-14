@@ -50,9 +50,9 @@ public:
             std::stringstream ss;
 			for(size_t i = 0; i < uliteral_max+1; ++i) {
 				const node_t node = dict.add_rootnode(i);
-				DCHECK_EQ(node.factorid(), dict.size() - 1);
-                DCHECK_EQ(node.factorid(), i);
-                ss << node.factorid() << ", ";
+				DCHECK_EQ(node.id(), dict.size() - 1);
+                DCHECK_EQ(node.id(), i);
+                ss << node.id() << ", ";
 			}
 		};
 		reset_dict();
@@ -66,10 +66,10 @@ public:
 
 		while(is.get(c)) {
 			node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
-			tdc_debug(VLOG(2) << " child " << child.factorid() << " #factor " << factor_count << " size " << dict.size() << " node " << node.factorid());
+			tdc_debug(VLOG(2) << " child " << child.id() << " #factor " << factor_count << " size " << dict.size() << " node " << node.id());
 
-			if(child.factorid() == lz78::undef_id) {
-                coder.encode(node.factorid(), Range(factor_count + uliteral_max + 1));
+			if(child.id() == lz78::undef_id) {
+                coder.encode(node.id(), Range(factor_count + uliteral_max + 1));
                 stat_factor_count++;
                 factor_count++;
 				DCHECK_EQ(factor_count+uliteral_max+1, dict.size());
@@ -87,10 +87,10 @@ public:
 			}
         }
 
-		DLOG(INFO) << "End node id of LZW parsing " << node.factorid();
+		DLOG(INFO) << "End node id of LZW parsing " << node.id();
 		// take care of left-overs. We do not assume that the stream has a sentinel
-		DCHECK_NE(node.factorid(), lz78::undef_id);
-		coder.encode(node.factorid(), Range(factor_count + uliteral_max + 1)); //LZW
+		DCHECK_NE(node.id(), lz78::undef_id);
+		coder.encode(node.id(), Range(factor_count + uliteral_max + 1)); //LZW
 		stat_factor_count++;
 		factor_count++;
 

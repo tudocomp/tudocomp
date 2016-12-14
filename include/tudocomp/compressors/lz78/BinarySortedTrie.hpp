@@ -56,7 +56,7 @@ public:
 	}
 
     node_t find_or_insert(const node_t& parent_w, uliteral_t c) override {
-        auto parent = parent_w.factorid();
+        auto parent = parent_w.id();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
 		DCHECK_LT(parent, size());

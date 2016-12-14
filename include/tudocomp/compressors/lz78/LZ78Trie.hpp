@@ -22,14 +22,14 @@ class TrieNode {
 /// Return type of find_or_insert
 template<>
 class TrieNode<factorid_t> {
-    factorid_t m_factorid_and_search_pos;
+    factorid_t m_id_and_search_pos;
 public:
-    TrieNode(const factorid_t& factorid_and_search_pos):
-        m_factorid_and_search_pos(factorid_and_search_pos){}
+    TrieNode(const factorid_t& id_and_search_pos):
+        m_id_and_search_pos(id_and_search_pos){}
     TrieNode(): TrieNode(0) {}
 
-    inline const factorid_t& factorid() const { return m_factorid_and_search_pos; }
-    inline const factorid_t& search_pos() const { return m_factorid_and_search_pos; }
+    inline const factorid_t& id() const { return m_id_and_search_pos; }
+    inline const factorid_t& search_pos() const { return m_id_and_search_pos; }
 };
 
 #define LZ78_DICT_SIZE_DESC \

@@ -22,17 +22,17 @@ struct CedarSearchPos {
 
 template<>
 class TrieNode<CedarSearchPos> {
-    factorid_t m_factorid;
+    factorid_t m_id;
     CedarSearchPos m_search_pos;
 public:
-    TrieNode(const factorid_t& factorid, const CedarSearchPos& search_pos):
-        m_factorid(factorid),
+    TrieNode(const factorid_t& id, const CedarSearchPos& search_pos):
+        m_id(id),
         m_search_pos(search_pos) {
-            //DCHECK(factorid != CEDAR_NO_VALUE && factorid != CEDAR_NO_PATH);
+            //DCHECK(id != CEDAR_NO_VALUE && id != CEDAR_NO_PATH);
         }
     TrieNode(): TrieNode(0, CedarSearchPos { 0 }) {}
 
-    inline const factorid_t& factorid() const { return m_factorid; }
+    inline const factorid_t& id() const { return m_id; }
     inline const CedarSearchPos& search_pos() const { return m_search_pos; }
 };
 
@@ -229,7 +229,7 @@ public:
         DLOG(INFO) << "add rootnode "
             << "char: " << int(c)
             << ", factor id: "
-            << r.factorid() << ", from: "
+            << r.id() << ", from: "
             << r.search_pos().from;
         print();
         */
@@ -254,7 +254,7 @@ public:
         DLOG(INFO) << "find or insert "
             << "char: " << int(c)
             << ", factor id: "
-            << parent.factorid() << ", from: "
+            << parent.id() << ", from: "
             << parent.search_pos().from;
         */
         if (c == 0) {
