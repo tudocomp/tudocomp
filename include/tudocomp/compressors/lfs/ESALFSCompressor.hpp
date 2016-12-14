@@ -1,5 +1,5 @@
-#ifndef _INCLUDED_LFS_COMPRESSOR_HPP_
-#define _INCLUDED_LFS_COMPRESSOR_HPP_
+#ifndef _INCLUDED_ESA_LFS_COMPRESSOR_HPP_
+#define _INCLUDED_ESA_LFS_COMPRESSOR_HPP_
 
 
 
@@ -23,7 +23,7 @@
 namespace tdc {
 
 template<typename literal_coder_t, typename len_coder_t>
-class LFSCompressor : public Compressor {
+class ESALFSCompressor : public Compressor {
 private:
     typedef TextDS<> text_t;
 
@@ -65,7 +65,7 @@ public:
     }
 
 
-    inline LFSCompressor(Env&& env):
+    inline ESALFSCompressor(Env&& env):
         Compressor(std::move(env))
     {
         DLOG(INFO) << "Compressor instantiated";

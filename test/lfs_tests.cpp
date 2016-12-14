@@ -1,6 +1,6 @@
 //Test the longest first substitution
 
-#include <tudocomp/compressors/lfs/LFSCompressor.hpp>
+#include <tudocomp/compressors/lfs/ESALFSCompressor.hpp>
 
 #include "gtest/gtest.h"
 
@@ -13,13 +13,13 @@
 
 #include "test/util.hpp"
 
-using tdc::LFSCompressor;
+using tdc::ESALFSCompressor;
 using namespace tdc;
 
 
 template<typename lit_coder_t, typename len_coder_t>
 void run_coder_test(const std::string compression_string) {
-    auto c = create_algo<LFSCompressor<lit_coder_t, len_coder_t>>();
+    auto c = create_algo<ESALFSCompressor<lit_coder_t, len_coder_t>>();
 
     std::string compressed;
     // compress
@@ -47,7 +47,7 @@ void run_coder_test(const std::string compression_string) {
 
 template<typename lit_coder_t, typename len_coder_t>
 void run_coder_test_to_file(const std::string filename, const std::string compression_string) {
-    auto c = create_algo<LFSCompressor<lit_coder_t, len_coder_t>>();
+    auto c = create_algo<ESALFSCompressor<lit_coder_t, len_coder_t>>();
 
     // compress
     {
@@ -71,14 +71,14 @@ void run_coder_test_to_file(const std::string filename, const std::string compre
 }
 
 template<typename lit_coder_t, typename len_coder_t>
-void compress_and_decompress_file(const std::string filename) {
-    auto c = create_algo<LFSCompressor<lit_coder_t, len_coder_t> >();
+void compress_and_decompress_file(const std::string filename, std::string extension) {
+    auto c = create_algo<ESALFSCompressor<lit_coder_t, len_coder_t> >();
 
     // compress
     {
         test::TestInput file_input= test::compress_input_file(filename);
         //file_input.escape_and_terminate();
-        Output file_output(filename+".lfs", true);
+        Output file_output(filename+"."+extension, true);
 
         c.compress(file_input, file_output);
     }
@@ -86,7 +86,7 @@ void compress_and_decompress_file(const std::string filename) {
     {
         //auto c = create_algo<LFSCompressor<lit_coder_t, len_coder_t>>();
 
-        test::TestInput file_input = test::decompress_input_file(filename+".lfs");
+        test::TestInput file_input = test::decompress_input_file(filename+"."+extension);
         Output file_output(filename+".decomp", true);
 
         c.decompress(file_input, file_output);
@@ -123,20 +123,20 @@ TEST(lfs, as_file_mis){
   //  run_coder_test_to_file<ASCIICoder>("out.ascii", "mississippi$");
 }
 
-TEST(lfs, file_sources_1mb){
-    compress_and_decompress_file<BitCoder, EliasGammaCoder>("sources.1MB");
+TEST(lfs, file_sources_1mb_eg){
+    compress_and_decompress_file<BitCoder, BitCoder>("sources.1MB", "lfs.bc");
 }
 
-TEST(lfs, file_sources_10mb){
-    compress_and_decompress_file<BitCoder, EliasGammaCoder>("sources.10MB");
+TEST(lfs, file_sources_10mb_eg){
+    compress_and_decompress_file<BitCoder, BitCoder>("sources.10MB", "lfs.bc");
 }
 
 TEST(lfs, file_english_1mb){
-    compress_and_decompress_file<BitCoder, EliasGammaCoder>("english.1MB");
+    compress_and_decompress_file<BitCoder, BitCoder>("english.1MB", "lfs.bc");
 }
 
 TEST(lfs, file_english_10mb){
-    compress_and_decompress_file<BitCoder, EliasGammaCoder>("english.10MB");
+    compress_and_decompress_file<BitCoder, BitCoder>("english.10MB", "lfs.bc");
 }
 
 
