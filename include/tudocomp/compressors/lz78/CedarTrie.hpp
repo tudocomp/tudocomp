@@ -172,7 +172,6 @@ class CedarTrie: public Algorithm, public LZ78Trie<CedarSearchPos> {
     }
 
     inline void print() {
-        return; // Disabled, but useful for debugging
         DLOG(INFO) << "\n";
         _print(0, 0);
         DLOG(INFO) << "\n";
@@ -228,12 +227,14 @@ public:
         }
         auto r = node_t(ids, search_pos);
         m_roots.set(c, search_pos);
+        /*
         DLOG(INFO) << "add rootnode "
             << "char: " << int(c)
             << ", factor id: "
             << r.factorid() << ", from: "
             << r.search_pos().from;
         print();
+        */
         return r;
     }
 
@@ -251,25 +252,25 @@ public:
 
     inline node_t find_or_insert(const node_t& parent, uliteral_t c) override final {
         node_t r;
+        /*
         DLOG(INFO) << "find or insert "
             << "char: " << int(c)
             << ", factor id: "
             << parent.factorid() << ", from: "
             << parent.search_pos().from;
+        */
         if (c == 0) {
             auto r1 = _find_or_insert(parent, NULL_ESCAPE_ESCAPE_BYTE, false);
             auto r2 = _find_or_insert(r1, NULL_ESCAPE_REPLACEMENT_BYTE, true);
-            //r2.factorid() = 0;
             r = r2;
         } else if (c == NULL_ESCAPE_ESCAPE_BYTE) {
             auto r1 = _find_or_insert(parent, NULL_ESCAPE_ESCAPE_BYTE, false);
             auto r2 = _find_or_insert(r1, NULL_ESCAPE_ESCAPE_BYTE, true);
-            //r2.factorid() = NULL_ESCAPE_ESCAPE_BYTE;
             r = r2;
         } else {
             r = _find_or_insert(parent, c, true);
         }
-        print();
+        //print();
         return r;
     }
 

@@ -86,32 +86,30 @@ public:
             node_t node = dict.add_rootnode(0);
             DCHECK_EQ(node.factorid(), dict.size() - 1);
             DCHECK_EQ(node.factorid(), 0);
-            DLOG(INFO) << "initial add: " << node.factorid();
         };
         reset_dict();
 
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
         // Define ranges
-        node_t node = dict.get_rootnode(0); // LZ78 node
+        node_t node = dict.get_rootnode(0);
         node_t parent = node; // parent of node, needed for the last factor
-        char c;
+        DCHECK_EQ(node.factorid(), 0);
+        DCHECK_EQ(parent.factorid(), 0);
 
-        DLOG(INFO) << "dict size: " << dict.size();
+        char c;
         while (is.get(c)) {
-            DLOG(INFO) << "char: " << int(c);
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
-            DLOG(INFO) << "child: " << child.factorid();
             if(child.factorid() == lz78::undef_id) {
-                DLOG(INFO) << "encode(" << node.factorid() << ", " << int(c) << ")";
                 coder.encode(node.factorid(), Range(factor_count));
                 coder.encode(static_cast<uliteral_t>(c), literal_r);
                 factor_count++;
                 stat_factor_count++;
                 parent = node = dict.get_rootnode(0); // return to the root
+                DCHECK_EQ(node.factorid(), 0);
+                DCHECK_EQ(parent.factorid(), 0);
                 DCHECK_EQ(factor_count+1, dict.size());
                 // dictionary's maximum size was reached
-                DLOG(INFO) << "dict size: " << dict.size();
                 if(tdc_unlikely(dict.size() == m_dict_max_size)) { // if m_dict_max_size == 0 this will never happen
                     DCHECK(false); // broken right now
                     reset_dict();
@@ -123,7 +121,6 @@ public:
                 parent = node;
                 node = child;
             }
-            DLOG(INFO) << "dict size: " << dict.size();
         }
 
         // take care of left-overs. We do not assume that the stream has a sentinel

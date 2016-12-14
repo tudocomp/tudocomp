@@ -54,7 +54,6 @@ public:
                 DCHECK_EQ(node.factorid(), i);
                 ss << node.factorid() << ", ";
 			}
-			DLOG(INFO) << "initial add: " << ss.str();
 		};
 		reset_dict();
 
@@ -64,7 +63,6 @@ public:
 		if(!is.get(c)) return;
 
 		node_t node = dict.get_rootnode(static_cast<uliteral_t>(c));
-        DLOG(INFO) << "initial node: " << node.factorid();
 
 		while(is.get(c)) {
 			node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
