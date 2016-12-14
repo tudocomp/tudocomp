@@ -19,9 +19,6 @@ class BinaryTrie : public Algorithm, public LZ78Trie<factorid_t> {
 	std::vector<uliteral_t> literal;
 
 public:
-    using search_pos_t = factorid_t;
-
-
     inline static Meta meta() {
         Meta m("lz78trie", "binary", "Lempel-Ziv 78 Binary Trie");
 		return m;

@@ -281,4 +281,4 @@ public:
 
 }} //ns
 
-#endif /* BINARYTRIE_HPP */
+#endif /* TDC_CEDARTRIE_HPP */

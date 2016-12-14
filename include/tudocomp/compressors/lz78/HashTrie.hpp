@@ -14,8 +14,6 @@ class HashTrie : public Algorithm, public LZ78Trie<factorid_t> {
 	std::unordered_map<squeze_node_t, factorid_t> table;
 
 public:
-    using node_t = typename LZ78Trie<factorid_t>::node_t;
-
     inline static Meta meta() {
         Meta m("lz78trie", "hash", "Lempel-Ziv 78 Hash Trie");
 		return m;

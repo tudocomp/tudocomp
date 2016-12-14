@@ -42,8 +42,7 @@ public:
 template<typename search_pos>
 class LZ78Trie {
 public:
-    using search_pos_t = search_pos;
-    using node_t = TrieNode<search_pos_t>;
+    using node_t = TrieNode<search_pos>;
 protected:
 
 	/**

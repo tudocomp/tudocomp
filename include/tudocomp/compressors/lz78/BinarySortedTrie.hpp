@@ -18,8 +18,6 @@ class BinarySortedTrie : public Algorithm, public LZ78Trie<factorid_t> {
 	std::vector<literal_t> literal;
 
 public:
-    using search_pos_t = factorid_t;
-
     inline static Meta meta() {
         Meta m("lz78trie", "binarysorted", "Lempel-Ziv 78 Sorted Binary Trie");
 		return m;

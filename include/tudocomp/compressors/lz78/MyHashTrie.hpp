@@ -238,8 +238,6 @@ class MyHashTrie : public Algorithm, public LZ78Trie<factorid_t> {
 	MyHash<squeeze_node_t,factorid_t,MixHasher,std::equal_to<squeeze_node_t>,LinearProber<squeeze_node_t>> table;
 
 public:
-    using node_t = typename LZ78Trie<factorid_t>::node_t;
-
     inline static Meta meta() {
         Meta m("lz78trie", "myhash", "Lempel-Ziv 78 MyHash Trie");
 		return m;
