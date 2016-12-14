@@ -13,8 +13,8 @@ namespace lz78 {
 using cedar_factorid_t = lz78::factorid_t;
 using cedar_t = cedar::da<cedar_factorid_t>;
 
-cedar_factorid_t CEDAR_NO_VALUE = static_cast<cedar_factorid_t>(cedar_t::error_code::CEDAR_NO_VALUE);
-cedar_factorid_t CEDAR_NO_PATH = static_cast<cedar_factorid_t>(cedar_t::error_code::CEDAR_NO_PATH);
+const cedar_factorid_t CEDAR_NO_VALUE = static_cast<cedar_factorid_t>(cedar_t::error_code::CEDAR_NO_VALUE);
+const cedar_factorid_t CEDAR_NO_PATH = static_cast<cedar_factorid_t>(cedar_t::error_code::CEDAR_NO_PATH);
 
 struct CedarSearchPos {
     size_t from;
@@ -55,7 +55,7 @@ public:
 
 using io::NULL_ESCAPE_ESCAPE_BYTE;
 using io::NULL_ESCAPE_REPLACEMENT_BYTE;
-cedar_factorid_t HIDDEN_ESCAPE_ID = -3; // NOTE: May not be -1 or -2
+const cedar_factorid_t HIDDEN_ESCAPE_ID = -3; // NOTE: May not be -1 or -2
 
 class CedarTrie: public Algorithm, public LZ78Trie<CedarSearchPos> {
     // unique_ptr only needed for reassignment

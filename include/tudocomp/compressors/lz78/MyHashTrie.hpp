@@ -234,12 +234,11 @@ class MyHash {
 
 
 class MyHashTrie : public Algorithm, public LZ78Trie<factorid_t> {
-    using node_t = ::tdc::lz78::node_t;
-	MyHash<node_t,factorid_t,MixHasher,std::equal_to<node_t>,LinearProber<node_t>> table;
+    using squeeze_node_t = ::tdc::lz78::node_t;
+	MyHash<squeeze_node_t,factorid_t,MixHasher,std::equal_to<squeeze_node_t>,LinearProber<squeeze_node_t>> table;
 
 public:
-    using search_pos_t = factorid_t;
-    using trie_interface_node_t = typename LZ78Trie<factorid_t>::node_t;
+    using node_t = typename LZ78Trie<factorid_t>::node_t;
 
     inline static Meta meta() {
         Meta m("lz78trie", "myhash", "Lempel-Ziv 78 MyHash Trie");
@@ -252,12 +251,12 @@ public:
 		}
     }
 
-	trie_interface_node_t add_rootnode(uliteral_t c) override {
-		table.insert(std::make_pair<node_t,factorid_t>(create_node(0, c), size()));
+	node_t add_rootnode(uliteral_t c) override {
+		table.insert(std::make_pair<squeeze_node_t,factorid_t>(create_node(0, c), size()));
 		return size() - 1;
 	}
 
-    trie_interface_node_t get_rootnode(uliteral_t c) override {
+    node_t get_rootnode(uliteral_t c) override {
         return c;
     }
 
@@ -266,7 +265,7 @@ public:
 
 	}
 
-    trie_interface_node_t find_or_insert(const trie_interface_node_t& parent_w, uliteral_t c) override {
+    node_t find_or_insert(const node_t& parent_w, uliteral_t c) override {
         auto parent = parent_w.factorid();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 

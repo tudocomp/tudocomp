@@ -10,11 +10,11 @@ namespace tdc {
 namespace lz78 {
 
 class HashTrie : public Algorithm, public LZ78Trie<factorid_t> {
-    using node_t = ::tdc::lz78::node_t;
-	std::unordered_map<node_t, factorid_t> table;
+    using squeze_node_t = ::tdc::lz78::node_t;
+	std::unordered_map<squeze_node_t, factorid_t> table;
 
 public:
-    using trie_interface_node_t = typename LZ78Trie<factorid_t>::node_t;
+    using node_t = typename LZ78Trie<factorid_t>::node_t;
 
     inline static Meta meta() {
         Meta m("lz78trie", "hash", "Lempel-Ziv 78 Hash Trie");
@@ -27,12 +27,12 @@ public:
 		}
     }
 
-	trie_interface_node_t add_rootnode(uliteral_t c) override {
-		table.insert(std::make_pair<node_t,factorid_t>(create_node(0, c), size()));
+	node_t add_rootnode(uliteral_t c) override {
+		table.insert(std::make_pair<squeze_node_t,factorid_t>(create_node(0, c), size()));
 		return size() - 1;
 	}
 
-    trie_interface_node_t get_rootnode(uliteral_t c) override {
+    node_t get_rootnode(uliteral_t c) override {
         return c;
     }
 
@@ -41,7 +41,7 @@ public:
 
 	}
 
-    trie_interface_node_t find_or_insert(const trie_interface_node_t& parent_w, uliteral_t c) override {
+    node_t find_or_insert(const node_t& parent_w, uliteral_t c) override {
         auto parent = parent_w.factorid();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
