@@ -100,6 +100,14 @@ public:
 
         std::sort(nl.begin(), nl.end());
 
+        auto it = nl.end();
+        while (it != nl.begin()){
+            auto pair = *it;
+            DLOG(INFO)<<pair.first;
+
+            it--;
+        }
+
 
     }
 
