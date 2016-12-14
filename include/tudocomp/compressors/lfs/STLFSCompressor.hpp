@@ -28,6 +28,8 @@ namespace tdc {
 template<typename literal_coder_t, typename len_coder_t>
 class STLFSCompressor : public Compressor {
 private:
+    SuffixTree stree;
+    uint min_lrf;
 
     typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
 
@@ -54,21 +56,60 @@ private:
         return selected_starting_positions;
     }
 
-    inline virtual string_depth_vector compute_string_depth(SuffixTree::STNode* node, uint str_depth, SuffixTree* stree){
-        string_depth_vector node_list;
+    inline virtual void compute_string_depth(SuffixTree::STNode* node, uint str_depth, string_depth_vector* node_list){
+
         if(str_depth>0){
-            node_list.push_back(std::make_pair(str_depth, node));
+
+            node_list->push_back(std::make_pair(str_depth, node));
         }
 
         auto it = node->child_nodes.begin();
         while (it != node->child_nodes.end()){
             auto child = *it;
-            uint child_depth = (str_depth+stree->edge_length(child.second));
-            string_depth_vector child_list = compute_string_depth(child.second,child_depth, stree);
-            node_list.insert(node_list.end(), child_list.begin(), child_list.end());
+            uint child_depth = (str_depth+stree.edge_length(child.second));
+            compute_string_depth( child.second, child_depth, node_list);
+            //string_depth_vector child_list =
+            //node_list.insert(node_list->end(), child_list.begin(), child_list.end());
             it++;
         }
-        return node_list;
+    }
+
+    inline virtual void compute_triple(SuffixTree::STNode* node){
+        uint min;
+        uint max;
+        uint card = 0;
+        //add all min begins and maxi begins of children to begins
+        auto it = node->child_nodes.begin();
+        uint min_child;
+        uint max_child;
+        while (it != node->child_nodes.end()){
+            auto child = *it;
+            min_child = child.second->min_bp;
+            max_child = child.second->max_bp;
+
+
+            if(min > min_child){
+                min = min_child;
+            }
+            if(max < max_child){
+                max = max_child;
+            }
+            card +=child.second->card_bp;
+
+            it++;
+        }
+
+        //if card still = 0, its a leaf
+        if(card == 0){
+            node->min_bp=node->start;
+            node->max_bp=node->start;
+            node->card_bp=1;
+        } else {
+            node->card_bp=card;
+            node->min_bp = min;
+            node->max_bp= max;
+
+        }
     }
 
 
@@ -87,6 +128,8 @@ public:
     inline STLFSCompressor(Env&& env):
         Compressor(std::move(env))
     {
+        stree=SuffixTree();
+        min_lrf=2;
         DLOG(INFO) << "Compressor instantiated";
 
     }
@@ -94,18 +137,30 @@ public:
 
         //build suffixtree
         DLOG(INFO)<<"build suffixtree";
-        SuffixTree stree(input);
+        stree.append_input(input);
         //compute string depth of st:
-        string_depth_vector nl = compute_string_depth(stree.get_root(),0, &stree);
+        string_depth_vector nl;
+        compute_string_depth(stree.get_root(),0, &nl);
 
         std::sort(nl.begin(), nl.end());
 
         auto it = nl.end();
         while (it != nl.begin()){
-            auto pair = *it;
-            DLOG(INFO)<<pair.first;
-
             it--;
+            auto pair = *it;
+            if(pair.first<min_lrf){
+                break;
+            }
+            compute_triple(pair.second);
+            if(pair.second->card_bp>=2){
+                //its a reapting factor, compute
+                DLOG(INFO)<<"reapting factor";
+
+                DLOG(INFO)<<pair.first;
+                DLOG(INFO)<<stree.get_string_of_edge(pair.second);
+            }
+
+
         }
 
 
