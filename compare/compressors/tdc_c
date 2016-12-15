@@ -1,1 +1,2 @@
-./tudocomp_driver $CARGS --output=$OUT --force $IN
+# please install tudocomp_driver by creating a symlink called "tdc" in the PATH
+tdc $CARGS --output=$OUT --force $IN

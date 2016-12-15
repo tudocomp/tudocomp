@@ -364,7 +364,7 @@ int main(int argc, char** argv)
             meta.set("config", selection.id_string());
             meta.set("input", use_stdin ? "<stdin>" : file);
             meta.set("inputSize", in_size);
-            meta.set("output", use_stdout ? "<stdin>" : file);
+            meta.set("output", use_stdout ? "<stdin>" : ofile);
             meta.set("outputSize", out_size);
             meta.set("rate", (use_stdin || use_stdout) ? 0.0 :
                 double(out_size) / double(in_size));
