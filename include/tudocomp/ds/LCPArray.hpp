@@ -21,28 +21,31 @@ private:
 	len_t m_max;
 
     template <typename sa_t, int U = bits, typename std::enable_if<U == 0,int>::type = 0>
-	inline void construct_lcp_array(const iv_t& plcp, const sa_t& sa) {
+	inline void construct_lcp_array(iv_t& plcp, const sa_t& sa) {
         const auto& n = sa.size();
+		plcp[sa[0]] = 0;
 		m_max = *std::max_element(plcp.begin(),plcp.end());
 		m_lcp = iv_t(n, 0, bits_for(m_max));
 		for(len_t i = 0; i < n; i++) { //TODO: start at 0, see line 149
 			DCHECK_LT(sa[i], n);
 			m_lcp[i] = plcp[sa[i]];
 		}
+		tdc_hdebug(
 		for(size_t i = 0; i < m_lcp.size(); ++i) { //TODO: start at 0, see line 149
 			DCHECK_EQ(m_lcp[i], plcp[sa[i]]);
-		}
+		})
 	}
 
-    template <typename sa_t, int U = bits, typename std::enable_if<U != 0,int>::type = 0>
-	inline void construct_lcp_array(const iv_t& plcp, const sa_t& sa) {
-        const auto& n = sa.size();
-		m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
-        m_lcp = iv_t(n);
-		for(len_t i = 0; i < n; i++) { //TODO: start at 0, see line 149
-			m_lcp[i] = plcp[sa[i]];
-		}
-	}
+    // template <typename sa_t, int U = bits, typename std::enable_if<U != 0,int>::type = 0>
+	// inline void construct_lcp_array(const iv_t& plcp, const sa_t& sa) {
+    //     const auto& n = sa.size();
+	// 	// m_max = bits_for(*std::max_element(plcp.begin(),plcp.end()));
+    //     m_lcp = iv_t(n);
+	// 	for(len_t i = 0; i < n; i++) { //TODO: start at 0, see line 149
+	// 		m_lcp[i] = plcp[sa[i]];
+	// 	}
+	// 	m_max = *std::max_element(m_lcp.begin()+1,m_lcp.end());
+	// }
 
 
 public:

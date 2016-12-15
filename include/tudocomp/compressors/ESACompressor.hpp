@@ -131,14 +131,17 @@ public:
             env().end_stat_phase();
         }
 
+        env().begin_stat_phase("Sorting Factors");
         // sort factors
         factors.sort();
+        env().end_stat_phase();
+        env().begin_stat_phase("Encode Factors");
 
         // encode
-        typename coder_t::Encoder coder(env().env_for_option("coder"),
-            output, lzss::TextLiterals<text_t>(text, factors));
+        typename coder_t::Encoder coder(env().env_for_option("coder"), output, lzss::TextLiterals<text_t>(text, factors));
 
         lzss::encode_text(coder, text, factors); //TODO is this correct?
+        env().end_stat_phase();
     }
 
     inline virtual void decompress(Input& input, Output& output) override {

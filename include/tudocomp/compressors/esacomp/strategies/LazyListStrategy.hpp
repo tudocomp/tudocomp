@@ -38,6 +38,7 @@ public:
         auto lcpp = text.release_lcp();
         auto& lcp = lcpp->data();
 
+        env().log_stat("maxlcp", lcpp->max_lcp());
         if(lcpp->max_lcp()+1 <= threshold) return; // nothing to factorize
         const size_t cand_length = lcpp->max_lcp()+1-threshold;
         std::vector<len_t>* cand = new std::vector<len_t>[cand_length];
