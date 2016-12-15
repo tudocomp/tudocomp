@@ -594,5 +594,7 @@ using IntVector = int_vector::IntVector<T>;
 
 using BitVector = IntVector<uint_t<1>>;
 
+using DynamicIntVector = IntVector<dynamic_t>;
+
 }
 
