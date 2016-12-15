@@ -18,14 +18,14 @@ namespace tdc {
 namespace lz78 {
 
 
-class JudyTrie : public Algorithm, public LZ78Trie {
+class JudyTrie : public Algorithm, public LZ78Trie<factorid_t> {
 
 	Pvoid_t m_dict; // judy array
 	size_t m_size;
 
 	factorid_t& find(const node_t& node) {
 		void* pvalue;
-		JLI(pvalue, m_dict, node); //lookup node in dict, store value in pvalue
+		JLI(pvalue, m_dict, node.id()); //lookup node in dict, store value in pvalue
 		DCHECK_NE(pvalue, PJERR);
 		return *reinterpret_cast<factorid_t*>(pvalue);
 	}
@@ -42,7 +42,11 @@ public:
 	{
     }
 
-	factorid_t add_rootnode(uliteral_t c) override {
+    node_t get_rootnode(uliteral_t c) override {
+        return create_node(0,c);
+    }
+
+	node_t add_rootnode(uliteral_t c) override {
 		DCHECK_EQ(find(create_node(0, c)), 0);
 		find(create_node(0, c)) = size();
 		++m_size;
@@ -57,8 +61,8 @@ public:
 		m_size = 0; 
 	}
 
-    factorid_t find_or_insert(const factorid_t& parent, uliteral_t c) override {
-		const node_t node = create_node(parent, c);
+    node_t find_or_insert(const node_t& parent, uliteral_t c) override {
+		const node_t node = create_node(parent.id(), c);
 
 		factorid_t& id = find(node);
 

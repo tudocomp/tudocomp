@@ -13,8 +13,9 @@
 #include <tudocomp/compressors/esacomp/strategies/MaxLCPStrategy.hpp>
 #include <tudocomp/compressors/esacomp/strategies/NaiveStrategy.hpp>
 
-#include <tudocomp/compressors/esacomp/decoding/SuccinctListBuffer.hpp>
 #include <tudocomp/compressors/esacomp/decoding/DecodeQueueListBuffer.hpp>
+#include <tudocomp/compressors/esacomp/decoding/SuccinctListBuffer.hpp>
+#include <tudocomp/compressors/esacomp/decoding/MarvinBuffer.hpp>
 #include <tudocomp/compressors/esacomp/decoding/MultiMapBuffer.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
@@ -96,7 +97,7 @@ public:
         m.option("coder").templated<coder_t>();
         m.option("strategy").templated<strategy_t, esacomp::MaxLCPStrategy>();
         m.option("threshold").dynamic("3");
-        m.option("esadec").templated<dec_t, esacomp::MultimapBuffer>();
+        m.option("esadec").templated<dec_t, esacomp::SuccinctListBuffer>();
         m.needs_sentinel_terminator();
         return m;
     }

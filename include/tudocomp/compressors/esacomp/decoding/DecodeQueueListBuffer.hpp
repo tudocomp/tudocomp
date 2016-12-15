@@ -11,11 +11,10 @@ namespace esacomp {
 
 constexpr len_t undef_len = std::numeric_limits<len_t>::max();
 class DecodeForwardQueueListBuffer : public Algorithm {
-public:
+    public:
     inline static Meta meta() {
         Meta m("esadec", "QueueListBuffer");
         return m;
-
     }
     inline void decode_lazy() const {
     }
@@ -24,42 +23,39 @@ public:
 
 private:
     std::vector<uliteral_t> m_buffer;
-    std::unique_ptr<std::unique_ptr<len_t[]>[]> m_fwd;
+    std::vector<std::vector<len_t>> m_fwd;
     sdsl::bit_vector m_decoded;
 
     len_t m_cursor;
+
+    //stats:
     len_t m_longest_chain;
     len_t m_current_chain;
-
-    const len_t m_size;
+    len_t m_max_depth;
 
     inline void decode_literal_at(len_t pos, uliteral_t c) {
         ++m_current_chain;
         m_longest_chain = std::max(m_longest_chain, m_current_chain);
+        m_max_depth = std::max(m_max_depth, m_fwd[pos].size());
 
         m_buffer[pos] = c;
         m_decoded[pos] = 1;
 
-        if(m_fwd[pos] != nullptr) {
-            const std::unique_ptr<len_t[]>& bucket = m_fwd[pos];
-            for(size_t i = 1; i < bucket[0]; ++i) {
-                //len_t i = (dynamic_t)fwd;
-                if(bucket[i] == undef_len) break;
-                decode_literal_at(bucket[i], c); // recursion
-            }
-            m_fwd[pos].reset();
+        for(auto fwd : m_fwd[pos]) {
+            decode_literal_at(fwd, c); // recursion
         }
+        std::vector<len_t>().swap(m_fwd[pos]); // forces vector to drop to capacity 0
+//        m_fwd[pos].clear();
 
         --m_current_chain;
     }
 
 public:
     inline DecodeForwardQueueListBuffer(Env&& env, len_t size)
-        : Algorithm(std::move(env)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_size(size) {
+        : Algorithm(std::move(env)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_max_depth(0) {
 
         m_buffer.resize(size, 0);
-        m_fwd = std::make_unique<std::unique_ptr<len_t[]>[]>(size);
-        std::fill(m_fwd.get(), m_fwd.get() + size,nullptr);
+        m_fwd.resize(size, std::vector<len_t>());
         m_decoded = sdsl::bit_vector(size, 0);
     }
 
@@ -73,39 +69,7 @@ public:
             if(m_decoded[src]) {
                 decode_literal_at(m_cursor, m_buffer[src]);
             } else {
-                std::unique_ptr<len_t[]>& bucket = m_fwd[src];
-                if(bucket == nullptr) {
-                    m_fwd[src] = std::make_unique<len_t[]>(2);
-                    DCHECK(m_fwd[src] == bucket);
-                    std::fill(bucket.get(), bucket.get() + 2, undef_len);
-                    bucket[0] = 2;
-                    //m_fwd[src] = new vector_t(0,0, bits_for(m_size));
-                }
-                { // m_fwd[src]->push_back(m_cursor);
-                    len_t i = 1;
-                    while(i < bucket[0]) {
-                        if(bucket[i] == undef_len) break;
-                        ++i;
-                    }
-                    if(i == bucket[0]) {
-                        DCHECK(m_fwd[src] == bucket);
-                        bucket[0] = ++m_fwd[src][0]; //(bucket[0]*16)/10+1;
-
-                        // It is incorrect to use realloc with new/delete
-                        // allocated pointers
-                        // https://isocpp.org/wiki/faq/freestore-mgmt#realloc-and-renew
-                        //
-                        // We will just assume it works though...
-
-                        len_t* p = bucket.release();
-                        auto new_size = sizeof(len_t) * bucket[0];
-                        p = (len_t*) std::realloc(p, new_size);
-                        bucket.reset(p);
-
-                        DCHECK(m_fwd[src] == bucket);
-                    }
-                    bucket[i] = m_cursor;
-                }
+                m_fwd[src].push_back(m_cursor);
             }
 
             ++m_cursor;
