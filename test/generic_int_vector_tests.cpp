@@ -1253,3 +1253,63 @@ TEST(generic_int_vector_trait_template, N7) {
 TEST(generic_int_vector_trait_template, N1) {
     generic_int_vector_trait_template<1>();
 }
+
+template<typename iv_t>
+void iv_access_autocast_const(const iv_t& v) {
+    char            c = v[0]; ASSERT_EQ(1, c);
+    short int      si = v[0]; ASSERT_EQ(1, si);
+    int             i = v[0]; ASSERT_EQ(1, i);
+    long int       li = v[0]; ASSERT_EQ(1, li);
+    long long int lli = v[0]; ASSERT_EQ(1, lli);
+
+    unsigned char            uc = v[0]; ASSERT_EQ(1, uc);
+    unsigned short int      usi = v[0]; ASSERT_EQ(1, usi);
+    unsigned int             ui = v[0]; ASSERT_EQ(1, ui);
+    unsigned long int       uli = v[0]; ASSERT_EQ(1, uli);
+    unsigned long long int ulli = v[0]; ASSERT_EQ(1, ulli);
+}
+
+template<typename iv_t>
+void iv_access_autocast_nonconst(iv_t& v) {
+    char            c = v[0]; ASSERT_EQ(1, c);
+    short int      si = v[0]; ASSERT_EQ(1, si);
+    int             i = v[0]; ASSERT_EQ(1, i);
+    long int       li = v[0]; ASSERT_EQ(1, li);
+    long long int lli = v[0]; ASSERT_EQ(1, lli);
+
+    unsigned char            uc = v[0]; ASSERT_EQ(1, uc);
+    unsigned short int      usi = v[0]; ASSERT_EQ(1, usi);
+    unsigned int             ui = v[0]; ASSERT_EQ(1, ui);
+    unsigned long int       uli = v[0]; ASSERT_EQ(1, uli);
+    unsigned long long int ulli = v[0]; ASSERT_EQ(1, ulli);
+}
+
+template<size_t width>
+void iv_access_autocast_uint() {
+    IntVector<uint_t<width>> iv(1, 0);
+    iv_access_autocast_const(iv);
+    iv_access_autocast_nonconst(iv);
+}
+
+TEST(generic_int_vector_application, access_uint_autocast) {
+    iv_access_autocast_uint<1>();
+    iv_access_autocast_uint<2>();
+    iv_access_autocast_uint<3>();
+    iv_access_autocast_uint<4>();
+    iv_access_autocast_uint<8>();
+    iv_access_autocast_uint<16>();
+    iv_access_autocast_uint<24>();
+    iv_access_autocast_uint<32>();
+    iv_access_autocast_uint<35>();
+    iv_access_autocast_uint<40>();
+    iv_access_autocast_uint<48>();
+    iv_access_autocast_uint<56>();
+    iv_access_autocast_uint<40>();
+    iv_access_autocast_uint<64>();
+}
+
+TEST(generic_int_vector_application, access_dynamic_autocast) {
+    IntVector<dynamic_t> iv(1, 0, 6);
+    iv_access_autocast_const(iv);
+    iv_access_autocast_nonconst(iv);
+}
