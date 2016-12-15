@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_DS_TEXTDS_HPP
-#define _INCLUDED_DS_TEXTDS_HPP
+#pragma once
 
 #include <cmath>
 #include <ostream>
@@ -282,6 +281,4 @@ const typename TextDS<lcp_tt,isa_tt>::lcp_t& TextDS<lcp_tt,isa_tt>::require_lcp(
 //typedef TextDS<lcp_sada<TextDS<lcp_sada,InverseSuffixArray>, InverseSuffixArray<TextDS<lcp_sada,InverseSuffixArray>> TextDSI;
 typedef TextDS<LCPArray, InverseSuffixArray> TextDSI;
 }//ns
-
-#endif
 

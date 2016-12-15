@@ -1,5 +1,5 @@
-#ifndef MTFCOMPRESSOR_HPP
-#define MTFCOMPRESSOR_HPP
+#pragma once
+
 #include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Env.hpp>
@@ -92,4 +92,4 @@ public:
 
 
 }//ns
-#endif /* MTFCOMPRESSOR_HPP */
+

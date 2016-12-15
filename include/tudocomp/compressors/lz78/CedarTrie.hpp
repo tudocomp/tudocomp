@@ -1,5 +1,4 @@
-#ifndef TDC_CEDARTRIE_HPP
-#define TDC_CEDARTRIE_HPP
+#pragma once
 
 #include <vector>
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
@@ -279,4 +278,3 @@ public:
 
 }} //ns
 
-#endif /* TDC_CEDARTRIE_HPP */

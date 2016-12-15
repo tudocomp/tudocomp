@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_IOUTIL_HPP
-#define _INCLUDED_IOUTIL_HPP
+#pragma once
 
 #include <fstream>
 #include <iostream>
@@ -97,4 +96,3 @@ inline size_t read_file_size(std::string& file) {
 }
 }
 
-#endif

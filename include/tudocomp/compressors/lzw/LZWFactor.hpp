@@ -1,5 +1,4 @@
-#ifndef LZW_FACTOR_H
-#define LZW_FACTOR_H
+#pragma once
 
 #include <tudocomp/def.hpp>
 
@@ -10,4 +9,3 @@ using Factor = len_t;
 
 }} //ns
 
-#endif

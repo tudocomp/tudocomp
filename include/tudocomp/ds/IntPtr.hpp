@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_GENERIC_INT_PTR_H
-#define TUDOCOMP_GENERIC_INT_PTR_H
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -505,4 +504,3 @@ using ConstIntPtr = int_vector::ConstIntPtr<T>;
 
 }
 
-#endif

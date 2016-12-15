@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_MAX_LCP_HEAP_HPP_
-#define _INCLUDED_MAX_LCP_HEAP_HPP_
+#pragma once
 
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
@@ -174,4 +173,3 @@ private:
 
 }} //ns
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_ESACOMP_MAX_LCP_HPP_
-#define _INCLUDED_ESACOMP_MAX_LCP_HPP_
+#pragma once
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/TextDS.hpp>
@@ -92,5 +91,4 @@ public:
 
 }}
 
-#endif
-
+#pragma once

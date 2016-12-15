@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_RUN_LENGTH_ENCODER_HPP
-#define _INCLUDED_RUN_LENGTH_ENCODER_HPP
+#pragma once
 
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
@@ -111,4 +110,3 @@ public:
 
 }
 
-#endif

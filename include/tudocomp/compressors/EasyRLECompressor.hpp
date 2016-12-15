@@ -1,5 +1,5 @@
-#ifndef EASYRLECOMPRESSOR_HPP
-#define EASYRLECOMPRESSOR_HPP
+#pragma once
+
 #include <tudocomp/util.hpp>
 #include <tudocomp/util/vbyte.hpp>
 #include <tudocomp/Env.hpp>
@@ -75,4 +75,4 @@ public:
 
 
 }//ns
-#endif /* EASYRLECOMPRESSOR_HPP */
+

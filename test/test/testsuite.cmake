@@ -57,6 +57,8 @@ macro(generic_run_test test_target
         ${TEST_TARGET_DEPS}
     )
 
+    cotire(${test_target}_testrunner)
+
     # Runs the test and generates a stamp file on success.
     add_custom_command(
         OUTPUT

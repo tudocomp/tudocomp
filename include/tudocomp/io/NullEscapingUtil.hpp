@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_NULL_ESCAPING_UTIL_HPP
-#define _INCLUDED_NULL_ESCAPING_UTIL_HPP
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -138,4 +137,3 @@ namespace io {
 
 }}
 
-#endif

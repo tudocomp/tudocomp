@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_DS_LCP_ARRAY_HPP
-#define _INCLUDED_DS_LCP_ARRAY_HPP
+#pragma once
 
 #include <tudocomp/util.hpp>
 #include <sdsl/select_support_mcl.hpp> // for the select data structure
@@ -228,6 +227,4 @@ inline void lcp_array<T>::construct(T& t) {
 }
 
 }
-
-#endif
 

@@ -4,8 +4,7 @@
     This header also contains the Doxygen documentation of the main namespaces.
 */
 
-#ifndef _INCLUDED_TUDOCOMP_HPP
-#define _INCLUDED_TUDOCOMP_HPP
+#pragma once
 
 /// \brief Contains the text compression and encoding framework.
 ///
@@ -80,6 +79,7 @@ namespace lzw {
 #include <tudocomp/compressors/ChainCompressor.hpp>
 
 #include <tudocomp/util/Counter.hpp>
+#include <tudocomp/util/Json.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/SuffixArray.hpp>
@@ -118,6 +118,4 @@ namespace lzw {
 #include <tudocomp/compressors/lz78/BinarySortedTrie.hpp>
 #include <tudocomp/compressors/lz78/MyHashTrie.hpp>
 #include <tudocomp/compressors/lz78/CedarTrie.hpp>
-
-#endif
 

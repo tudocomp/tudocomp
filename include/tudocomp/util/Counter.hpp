@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_COUNTER_HPP_
-#define _INCLUDED_COUNTER_HPP_
+#pragma once
 
 #include <algorithm>
 #include <cstdint>
@@ -88,4 +87,3 @@ public:
 
 }
 
-#endif

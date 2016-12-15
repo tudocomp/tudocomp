@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_INTEGER_OPERATOR_BASE_H
-#define TUDOCOMP_INTEGER_OPERATOR_BASE_H
+#pragma once
 
 namespace tdc {
 
@@ -330,4 +329,3 @@ using IntegerBase = IntegerBaseCombiner<
 
 }
 
-#endif

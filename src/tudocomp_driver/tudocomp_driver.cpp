@@ -17,20 +17,11 @@
 #include <tudocomp/util/Json.hpp>
 #include <tudocomp_driver/Registry.hpp>
 
-/*namespace validate {
-  static bool algorithm(const char* flagname, int32 value) {
-    if (value > 0 && value < 32768)   // value is ok
-      return true;
-    printf("Invalid value for --%s: %d\n", flagname, (int)value);
-    return false;
-  }
-  static const bool algorithm_dummy = RegisterFlagValidator(&FLAGS_algorithm, &algorithm);
-}*/
-
 DEFINE_string(algorithm, "", "Algorithm to use for (de)compression. See --list for a complete list of them.");
 DEFINE_bool(decompress, false, "Decompress input instead of compressing it.");
 DEFINE_string(output, "", "Choose output filename instead the the default generated one of <input>.tdc or stdout.");
-DEFINE_bool(stats, false, "Print statistics to stdout.");
+DEFINE_bool(stats, false, "Print JSON statistics to stdout.");
+DEFINE_string(title, "Untitled", "The title for the tracked statistics.");
 DEFINE_bool(force, false, "Overwrite output even if it exists.");
 DEFINE_bool(list, false, "List all compression algorithms supported by this tool.");
 DEFINE_bool(raw, false, "Do not emit an header into the output file when compressing.");
@@ -95,6 +86,7 @@ int main(int argc, char** argv)
 //        google::ShowUsageWithFlagsRestrict(argv[0], __FILE__); //shortcut
         std::vector<google::CommandLineFlagInfo> info;
         google::GetAllFlags(&info);
+        DLOG(INFO) << "--stats " << FLAGS_stats;
 
         std::cout << argv[0] << " [options] {file to compress/decompress}" << std::endl;
         std::cout << "You need to provide at least an algorithm and a source (a file) to compress/decompress." << std::endl << std::endl;
@@ -357,6 +349,7 @@ int main(int argc, char** argv)
             size_t out_size = use_stdout ? 0 : io::read_file_size(ofile);
 
             json::Object meta;
+            meta.set("title", FLAGS_title);
             meta.set("startTime",
                 std::chrono::duration_cast<std::chrono::seconds>(
                     start_time.time_since_epoch()).count());

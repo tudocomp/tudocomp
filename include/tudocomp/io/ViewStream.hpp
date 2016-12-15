@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_VIEW_STREAM_HPP
-#define _INCLUDED_VIEW_STREAM_HPP
+#pragma once
 
 #include <iostream>
 #include <memory>
@@ -93,6 +92,4 @@ public:
 /// \endcond
 
 }}
-
-#endif
 

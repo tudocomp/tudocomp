@@ -1,11 +1,4 @@
-/*
-    This is a sample implementation for an online coder. In the future, this
-    will be replaced by a reference implementation of the original LZSS
-    algorithm.
-*/
-
-#ifndef _INCLUDED_LZ77SS_SLIDING_WINDOW_COMPRESSOR_HPP
-#define _INCLUDED_LZ77SS_SLIDING_WINDOW_COMPRESSOR_HPP
+#pragma once
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Literal.hpp>
@@ -146,4 +139,3 @@ public:
 
 } //ns
 
-#endif

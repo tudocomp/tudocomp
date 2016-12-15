@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_ASCII_CODER_HPP_
-#define _INCLUDED_ASCII_CODER_HPP_
+#pragma once
 
 #include <sstream>
 #include <tudocomp/Coder.hpp>
@@ -75,4 +74,3 @@ public:
 
 }
 
-#endif

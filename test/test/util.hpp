@@ -1,5 +1,4 @@
-#ifndef TEST_UTIL_H
-#define TEST_UTIL_H
+#pragma once
 
 #include <cstdint>
 #include <fstream>
@@ -477,4 +476,3 @@ TestOutput decompress_output() {
 
 }
 
-#endif

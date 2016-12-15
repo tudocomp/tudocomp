@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_VIEW_H
-#define TUDOCOMP_VIEW_H
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -315,4 +314,3 @@ using string_ref = View;
 
 }
 
-#endif

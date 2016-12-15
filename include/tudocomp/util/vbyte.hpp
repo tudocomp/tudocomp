@@ -1,5 +1,5 @@
-#ifndef VBYTE_HPP
-#define VBYTE_HPP
+#pragma once
+
 #include <tudocomp/util.hpp>
 
 namespace tdc {
@@ -38,4 +38,4 @@ inline void write_vbyte(std::ostream& os, int_t v) {
 
 
 }//ns
-#endif /* VBYTE_HPP */
+

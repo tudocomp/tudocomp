@@ -1,5 +1,4 @@
-#ifndef LZ78TRIE_HPP
-#define LZ78TRIE_HPP
+#pragma once
 
 #include <limits>
 #include <cstddef>
@@ -80,4 +79,3 @@ protected:
 
 }}//ns
 
-#endif /* LZ78TRIE_HPP */

@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_UTIL_H
-#define TUDOCOMP_UTIL_H
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -467,4 +466,3 @@ int_t isqrt(int_t num) {
     return res;
 }
 
-#endif

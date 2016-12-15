@@ -1,5 +1,5 @@
-#ifndef FORWARD_HH
-#define FORWARD_HH
+#pragma once
+
 namespace tdc {
 
 template<typename T>
@@ -17,4 +17,4 @@ class TextDS;
 
 
 }//ns
-#endif /* FORWARD_HH */
+

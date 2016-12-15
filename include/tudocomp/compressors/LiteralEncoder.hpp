@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_LITERAL_ENCODER_HPP_
-#define _INCLUDED_LITERAL_ENCODER_HPP_
+#pragma once
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Env.hpp>
@@ -44,4 +43,3 @@ public:
 
 }
 
-#endif

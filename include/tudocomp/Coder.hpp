@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_CODER_HPP_
-#define _INCLUDED_CODER_HPP_
+#pragma once
 
 #include <tudocomp/io.hpp>
 #include <tudocomp/Algorithm.hpp>
@@ -82,4 +81,3 @@ public:
 
 }
 
-#endif

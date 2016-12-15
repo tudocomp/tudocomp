@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_COMPRESSOR_HPP_
-#define _INCLUDED_COMPRESSOR_HPP_
+#pragma once
 
 #include <functional>
 #include <memory>
@@ -33,4 +32,3 @@ using CompressorConstructor = std::function<std::unique_ptr<Compressor>(Env&&)>;
 
 }
 
-#endif

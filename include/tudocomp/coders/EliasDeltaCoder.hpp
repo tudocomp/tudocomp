@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_ELIAS_DELTA_CODER_HPP
-#define _INCLUDED_ELIAS_DELTA_CODER_HPP
+#pragma once
 
 #include <tudocomp/Coder.hpp>
 
@@ -41,4 +40,3 @@ public:
 
 }
 
-#endif

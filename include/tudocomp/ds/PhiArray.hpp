@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_DS_PHI_ARRAY_HPP
-#define _INCLUDED_DS_PHI_ARRAY_HPP
+#pragma once
 
 #include <tudocomp/util.hpp>
 #include "forward.hpp"
@@ -60,6 +59,4 @@ inline void PhiArray<T>::construct(T& t) {
 }
 
 }
-
-#endif
 

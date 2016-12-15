@@ -1,5 +1,4 @@
-#ifndef MYHASHTRIE_HPP
-#define MYHASHTRIE_HPP
+#pragma once
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/compressors/lz78/LZ78common.hpp>
@@ -279,4 +278,3 @@ public:
 
 }} //ns
 
-#endif /* MYHASHTRIE_HPP */

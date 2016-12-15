@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_GENERIC_INT_VECTOR_H
-#define TUDOCOMP_GENERIC_INT_VECTOR_H
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -597,4 +596,3 @@ using BitVector = IntVector<uint_t<1>>;
 
 }
 
-#endif

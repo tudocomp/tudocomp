@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_VARIANT_CODER_HPP_
-#define _INCLUDED_VARIANT_CODER_HPP_
+#pragma once
 
 #include <tudocomp/Coder.hpp>
 
@@ -73,4 +72,3 @@ public:
 
 }
 
-#endif

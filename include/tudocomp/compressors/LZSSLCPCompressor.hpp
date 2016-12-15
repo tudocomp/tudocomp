@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_LZSS_LCP_COMPRESSOR_HPP_
-#define _INCLUDED_LZSS_LCP_COMPRESSOR_HPP_
+#pragma once
 
 #include <algorithm>
 #include <functional>
@@ -131,4 +130,3 @@ public:
 
 }
 
-#endif

@@ -10,3 +10,6 @@ target_link_libraries(
 
     tudocomp
 )
+
+cotire(malloc_count)
+

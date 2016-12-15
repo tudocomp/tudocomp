@@ -1,5 +1,4 @@
-#ifndef TERNARYTRIE_HPP
-#define TERNARYTRIE_HPP
+#pragma once
 
 /**
  * LZ78 Trie Implementation
@@ -107,4 +106,3 @@ public:
 
 }} //ns
 
-#endif /* TERNARYTRIE_HPP */

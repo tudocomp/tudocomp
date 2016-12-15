@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_LZ78_COMPRESSOR_HPP_
-#define _INCLUDED_LZ78_COMPRESSOR_HPP_
+#pragma once
 
 #include <tudocomp/Compressor.hpp>
 
@@ -163,4 +162,4 @@ public:
 
 
 }//ns
-#endif
+

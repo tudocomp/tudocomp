@@ -1,5 +1,5 @@
-#ifndef DEF_HPP
-#define DEF_HPP
+#pragma once
+
 #include <cstddef>
 #include <limits>
 #include <type_traits>
@@ -50,4 +50,4 @@ namespace tdc {
 
 
 }
-#endif /* DEF_HPP */
+

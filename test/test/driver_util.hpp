@@ -1,5 +1,4 @@
-#ifndef TEST_DRIVER_UTIL_H
-#define TEST_DRIVER_UTIL_H
+#pragma once
 
 #include <cstdint>
 #include <fstream>
@@ -285,4 +284,3 @@ std::vector<std::string> parse_scsv(const std::string& s) {
 
 }
 
-#endif

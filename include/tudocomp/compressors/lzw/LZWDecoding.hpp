@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_LZW_DECODE_HPP_
-#define _INCLUDED_LZW_DECODE_HPP_
+#pragma once
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/compressors/lz78/LZ78common.hpp>
@@ -101,4 +100,3 @@ void decode_step(F next_code_callback,
 
 }} //ns
 
-#endif

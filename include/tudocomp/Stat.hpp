@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_STAT_HPP_
-#define _INCLUDED_STAT_HPP_
+#pragma once
 
 #include <malloc_count/malloc_count.hpp>
 #include <list>
@@ -120,6 +119,4 @@ public:
 };
 
 }
-
-#endif
 

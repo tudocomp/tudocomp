@@ -1,5 +1,4 @@
-#ifndef LAZYLIST_HPP
-#define LAZYLIST_HPP
+#pragma once
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/TextDS.hpp>
@@ -102,6 +101,4 @@ public:
 };
 
 }}
-
-#endif /* LAZYLIST_HPP */
 

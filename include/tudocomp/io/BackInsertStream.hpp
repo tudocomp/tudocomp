@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_BACK_INSERT_STREAM_HPP
-#define _INCLUDED_BACK_INSERT_STREAM_HPP
+#pragma once
 
 #include <iostream>
 #include <memory>
@@ -53,6 +52,4 @@ public:
 /// \endcond
 
 }}
-
-#endif
 

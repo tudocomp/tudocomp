@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_FORWARD_ENV_HPP_
-#define _INCLUDED_FORWARD_ENV_HPP_
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -135,4 +134,3 @@ public:
 
 }
 
-#endif

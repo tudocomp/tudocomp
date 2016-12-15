@@ -1,5 +1,4 @@
-#ifndef DYNAMIC_T_HPP
-#define DYNAMIC_T_HPP
+#pragma once
 
 #include <tudocomp/util/IntegerBase.hpp>
 
@@ -106,4 +105,3 @@ inline std::ostream& operator<<(std::ostream& os, const dynamic_t& v) {
 
 }
 
-#endif /* UINT_T_HPP */

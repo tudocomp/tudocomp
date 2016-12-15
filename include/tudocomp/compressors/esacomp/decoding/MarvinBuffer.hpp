@@ -1,5 +1,4 @@
-#ifndef MARVINBUFFER_HPP
-#define MARVINBUFFER_HPP
+#pragma once
 
 #include <vector>
 #include <sdsl/int_vector.hpp>
@@ -122,4 +121,3 @@ public:
 
 }} //ns
 
-#endif /* MARVINBUFFER_HPP */

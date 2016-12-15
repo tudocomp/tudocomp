@@ -1,5 +1,4 @@
-#ifndef SUCCINCTLISTBUFFER_HPPESA
-#define SUCCINCTLISTBUFFER_HPPESA
+#pragma once
 
 #include <vector>
 #include <sdsl/int_vector.hpp>
@@ -139,4 +138,3 @@ public:
 
 }} //ns
 
-#endif /* SUCCINCTLISTBUFFER_HPP */

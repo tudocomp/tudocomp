@@ -1,5 +1,4 @@
-#ifndef DECODEQUEUELISTBUFFER_HPP
-#define DECODEQUEUELISTBUFFER_HPP
+#pragma once
 
 #include <vector>
 #include <sdsl/int_vector.hpp>
@@ -87,4 +86,3 @@ public:
 
 }} //ns
 
-#endif /* DECODEQUEUELISTBUFFER_HPP */

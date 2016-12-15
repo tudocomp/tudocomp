@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_IO_HANDLE_H
-#define TUDOCOMP_IO_HANDLE_H
+#pragma once
 
 #include <tudocomp/io/Input.hpp>
 #include <tudocomp/io/Output.hpp>
@@ -17,4 +16,3 @@ using BitOStream = io::BitOStream;
 
 }
 
-#endif

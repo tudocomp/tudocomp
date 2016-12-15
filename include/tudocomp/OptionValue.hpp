@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_OPTION_VALUE_HPP
-#define _INCLUDED_OPTION_VALUE_HPP
+#pragma once
 
 #include <map>
 #include <set>
@@ -186,4 +185,4 @@ inline OptionValue& OptionValue::operator=(OptionValue&& other) {
 
 
 }
-#endif
+

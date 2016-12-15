@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_LZSS_CODING_HPP_
-#define _INCLUDED_LZSS_CODING_HPP_
+#pragma once
 
 #include <cassert>
 
@@ -146,4 +145,3 @@ inline void decode_text(coder_t& decoder, std::ostream& outs) {
 
 }} //ns
 
-#endif
