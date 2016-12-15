@@ -98,6 +98,9 @@ var printMeta = function(meta) {
     var minutes = "0" + date.getMinutes();
     var seconds = "0" + date.getSeconds();
 
+    if(!meta.title) meta.title = "Untitled";
+
+    d3.select("#data h1.title").text(meta.title);
     d3.select("#meta td.timestamp").text(month + " " + day + ", " + year + " - " + hours + ":" + minutes.substr(-2) + ":" + seconds.substr(-2));
     d3.select("#meta td.config").text(meta.config);
     d3.select("#meta td.input").text(meta.input);

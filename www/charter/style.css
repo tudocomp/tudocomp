@@ -292,6 +292,14 @@ button {
     border-collapse: collapse;
 }
 
+#data #meta h2 {
+    font-size: 1rem;
+    font-weight: bold;
+
+    margin: 0 0 0.5rem 0;
+    padding-left: 1rem;
+}
+
 #data #meta table {
     margin-left: 0;
 }
