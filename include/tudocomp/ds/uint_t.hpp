@@ -1,5 +1,4 @@
-#ifndef UINT_T_HPP
-#define UINT_T_HPP
+#pragma once
 
 #include <tudocomp/util/IntegerBase.hpp>
 
@@ -153,4 +152,3 @@ static_assert(sizeof(uint_t<57>) == 8, "sanity check");
 
 }
 
-#endif /* UINT_T_HPP */

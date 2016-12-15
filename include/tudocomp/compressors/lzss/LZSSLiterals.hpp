@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_LZSS_LITERALS_HPP_
-#define _INCLUDED_LZSS_LITERALS_HPP_
+#pragma once
 
 #include <istream>
 #include <tudocomp/Literal.hpp>
@@ -45,4 +44,3 @@ public:
 
 }} //ns
 
-#endif

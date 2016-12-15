@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_CHAIN_COMPRESSOR_HPP_
-#define _INCLUDED_CHAIN_COMPRESSOR_HPP_
+#pragma once
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Env.hpp>
@@ -89,4 +88,3 @@ public:
 
 }
 
-#endif

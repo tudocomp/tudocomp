@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_ALGORITHMS_REGISTRY_H
-#define TUDOCOMP_ALGORITHMS_REGISTRY_H
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -54,4 +53,3 @@ void register_algorithms(Registry& registry);
 
 }
 
-#endif

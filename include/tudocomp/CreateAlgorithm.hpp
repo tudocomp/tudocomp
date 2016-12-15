@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_CREATE_ALGO_HPP_
-#define _INCLUDED_CREATE_ALGO_HPP_
+#pragma once
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Registry.hpp>
@@ -77,4 +76,4 @@ T create_algo() {
 }
 
 }
-#endif
+

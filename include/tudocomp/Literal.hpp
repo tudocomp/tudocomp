@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_LITERAL_HPP_
-#define _INCLUDED_LITERAL_HPP_
+#pragma once
 
 #include <cassert>
 #include <tudocomp/def.hpp>
@@ -41,6 +40,4 @@ public:
 };
 
 }
-
-#endif
 

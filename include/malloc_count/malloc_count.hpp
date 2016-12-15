@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_MALLOC_COUNT_HPP_
-#define _INCLUDED_MALLOC_COUNT_HPP_
+#pragma once
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -60,6 +59,4 @@ extern "C" void* __libc_realloc(void*, size_t);
 #endif
 
 /// \endcond
-
-#endif
 

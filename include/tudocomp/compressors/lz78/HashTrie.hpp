@@ -1,5 +1,4 @@
-#ifndef HASHTRIE_HPP
-#define HASHTRIE_HPP
+#pragma once
 
 #include <unordered_map>
 #include <tudocomp/Algorithm.hpp>
@@ -55,4 +54,3 @@ public:
 
 }} //ns
 
-#endif /* HASHTRIE_HPP */

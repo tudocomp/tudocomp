@@ -1,5 +1,4 @@
-#ifndef SQUEEZE_NODE_HPP
-#define SQUEEZE_NODE_HPP
+#pragma once
 
 namespace tdc {
 namespace lz78 {
@@ -28,4 +27,3 @@ inline node_t create_node(factorid_t id, uliteral_t c) {
 
 }}//ns
 
-#endif /* SQUEEZE_NODE_HPP */

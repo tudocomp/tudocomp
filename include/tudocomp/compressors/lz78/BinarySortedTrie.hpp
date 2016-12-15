@@ -1,6 +1,4 @@
-#ifndef BINARYSORTEDTRIE_HPP
-#define BINARYSORTEDTRIE_HPP
-
+#pragma once
 
 #include <vector>
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
@@ -96,4 +94,3 @@ public:
 
 }} //ns
 
-#endif /* BINARYSORTEDTRIE_HPP */

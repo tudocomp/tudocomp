@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_LZSS_FACTORS_HPP_
-#define _INCLUDED_LZSS_FACTORS_HPP_
+#pragma once
 
 #include <tuple>
 #include <sdsl/int_vector.hpp>
@@ -75,4 +74,3 @@ public:
 
 }} //ns
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_OUTPUT_HPP
-#define _INCLUDED_OUTPUT_HPP
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -285,6 +284,4 @@ namespace io {
     }
 
 }}
-
-#endif
 

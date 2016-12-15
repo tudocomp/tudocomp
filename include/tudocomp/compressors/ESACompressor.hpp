@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_ESA_COMPRESSOR_HPP_
-#define _INCLUDED_ESA_COMPRESSOR_HPP_
+#pragma once
 
 #include <tudocomp/util.hpp>
 
@@ -157,4 +156,3 @@ public:
 
 }
 
-#endif

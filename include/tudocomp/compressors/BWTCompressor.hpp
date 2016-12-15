@@ -1,6 +1,4 @@
-#ifndef BWTCOMPRESSOR_HPP
-#define BWTCOMPRESSOR_HPP
-
+#pragma once
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
@@ -62,4 +60,4 @@ public:
 };
 
 }//ns
-#endif /* BWTCOMPRESSOR_HPP */
+

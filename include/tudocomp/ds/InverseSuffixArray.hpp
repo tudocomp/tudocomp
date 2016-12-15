@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_DS_INVERSE_SUFFIX_ARRAY_HPP
-#define _INCLUDED_DS_INVERSE_SUFFIX_ARRAY_HPP
+#pragma once
 
 #include <tudocomp/util.hpp>
 #include "forward.hpp"
@@ -57,6 +56,4 @@ inline void InverseSuffixArray<T>::construct(T& t) {
 }
 
 }
-
-#endif
 

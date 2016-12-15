@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_BIT_ISTREAM_HPP
-#define _INCLUDED_BIT_ISTREAM_HPP
+#pragma once
 
 #include <climits>
 #include <cstdint>
@@ -177,6 +176,4 @@ public:
 };
 
 }}
-
-#endif
 

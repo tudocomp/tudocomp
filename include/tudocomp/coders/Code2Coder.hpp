@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_CODE2_CODER_HPP
-#define _INCLUDED_CODE2_CODER_HPP
+#pragma once
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/Coder.hpp>
@@ -441,4 +440,3 @@ public:
 
 }
 
-#endif

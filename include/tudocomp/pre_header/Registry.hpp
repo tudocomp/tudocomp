@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_FORWARD_REGISTRY_HPP_
-#define _INCLUDED_FORWARD_REGISTRY_HPP_
+#pragma once
 
 #include <tudocomp/AlgorithmStringParser.hpp>
 
@@ -63,4 +62,3 @@ inline std::unique_ptr<Registry> make_ptr_copy_of_registry(const Registry& regis
 
 }
 
-#endif

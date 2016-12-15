@@ -1,5 +1,4 @@
-#ifndef GENERATORS_HPP
-#define GENERATORS_HPP
+#pragma once
 
 #include <random>
 #include <string>
@@ -81,4 +80,3 @@ std::string run_rich(size_t n) {
 	return t3;
 }
 
-#endif /* GENERATORS_HPP */

@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_VEC_STREAM_BUF_HPP
-#define _INCLUDED_VEC_STREAM_BUF_HPP
+#pragma once
 
 #include <streambuf>
 #include <vector>
@@ -40,6 +39,4 @@ protected:
 /// \endcond
 
 }}
-
-#endif
 

@@ -1,5 +1,4 @@
-#ifndef MULTIMAPBUFFER_HPP
-#define MULTIMAPBUFFER_HPP
+#pragma once
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/def.hpp>
@@ -142,4 +141,4 @@ public:
 
 
 }}//ns
-#endif /* MULTIMAPBUFFER_HPP */
+

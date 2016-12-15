@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_INPUT_HPP
-#define _INCLUDED_INPUT_HPP
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -518,6 +517,4 @@ namespace io {
     }
 
 }}
-
-#endif
 

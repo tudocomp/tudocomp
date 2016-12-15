@@ -1,5 +1,4 @@
-#ifndef HUFFMANCODER_HPP
-#define HUFFMANCODER_HPP
+#pragma once
 
 #include <numeric>
 
@@ -603,4 +602,4 @@ public:
 
 
 }//ns
-#endif /* HUFFMANCODER_HPP */
+

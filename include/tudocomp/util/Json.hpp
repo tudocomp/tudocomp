@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_JSON_HPP_
-#define _INCLUDED_JSON_HPP_
+#pragma once
 
 #include <map>
 #include <memory>
@@ -154,4 +153,3 @@ inline void Array::add(const Object& value) {
 
 }} //ns
 
-#endif

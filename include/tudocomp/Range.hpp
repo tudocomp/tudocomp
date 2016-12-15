@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_RANGE_HPP
-#define _INCLUDED_RANGE_HPP
+#pragma once
 
 #include <tudocomp/def.hpp>
 #include <limits>
@@ -45,6 +44,4 @@ namespace tdc {
     const LiteralRange literal_r;
     const LengthRange len_r;
 }
-
-#endif
 

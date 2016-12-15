@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_DECODE_BACK_BUFFER_HPP_
-#define _INCLUDED_DECODE_BACK_BUFFER_HPP_
+#pragma once
 
 #include <ostream>
 #include <vector>
@@ -41,4 +40,3 @@ public:
 
 }} //ns
 
-#endif

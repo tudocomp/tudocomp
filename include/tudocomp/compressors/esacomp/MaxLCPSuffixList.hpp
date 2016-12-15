@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_MAX_LCP_SUFFIX_LIST_HPP_
-#define _INCLUDED_MAX_LCP_SUFFIX_LIST_HPP_
+#pragma once
 
 #include <sdsl/int_vector.hpp>
 #include <tudocomp/util.hpp>
@@ -183,4 +182,3 @@ public:
 
 }} //ns
 
-#endif

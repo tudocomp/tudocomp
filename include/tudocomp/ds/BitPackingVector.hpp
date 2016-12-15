@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_BIT_PACKING_VECTOR_H
-#define TUDOCOMP_BIT_PACKING_VECTOR_H
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -650,4 +649,3 @@ using BitPackingVector = int_vector::BitPackingVector<T>;
 
 }
 
-#endif

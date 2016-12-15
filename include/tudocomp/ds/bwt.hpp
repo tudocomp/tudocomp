@@ -1,5 +1,5 @@
-#ifndef BWT_HPP
-#define BWT_HPP
+#pragma once
+
 #include <cstdint>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/util.hpp>
@@ -93,4 +93,4 @@ uliteral_t* decode_bwt(const bwt_t& bwt) {
 }
 
 }}//ns
-#endif /* BWT_HPP */
+

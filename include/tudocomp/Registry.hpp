@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_REGISTRY_H
-#define TUDOCOMP_REGISTRY_H
+#pragma once
 
 #include <tudocomp/pre_header/Registry.hpp>
 #include <tudocomp/pre_header/Env.hpp>
@@ -185,4 +184,3 @@ inline AlgorithmValue Registry::parse_algorithm_id(string_ref text) const {
 
 }
 
-#endif

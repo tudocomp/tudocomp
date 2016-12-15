@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_ESACOMP_BULLDOZER_HPP_
-#define _INCLUDED_ESACOMP_BULLDOZER_HPP_
+#pragma once
 
 #include <vector>
 
@@ -114,6 +113,4 @@ public:
 };
 
 }}
-
-#endif
 

@@ -1,8 +1,7 @@
 // cedar -- C++ implementation of Efficiently-updatable Double ARray trie
 //  $Id: cedar.h 1814 2014-05-07 03:42:04Z ynaga $
 // Copyright (c) 2009-2014 Naoki Yoshinaga <ynaga@tkl.iis.u-tokyo.ac.jp>
-#ifndef CEDAR_H
-#define CEDAR_H
+#pragma once
 
 #include <cstdio>
 #include <cstdlib>
@@ -676,4 +675,4 @@ namespace cedar {
     }
   };
 }
-#endif
+

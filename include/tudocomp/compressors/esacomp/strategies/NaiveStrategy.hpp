@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_ESACOMP_NAIVE_HPP_
-#define _INCLUDED_ESACOMP_NAIVE_HPP_
+#pragma once
 
 #include <vector>
 
@@ -76,6 +75,4 @@ public:
 };
 
 }}
-
-#endif
 

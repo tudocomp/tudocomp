@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_ALGORITHM_HPP_
-#define _INCLUDED_ALGORITHM_HPP_
+#pragma once
 
 #include <tudocomp/AlgorithmStringParser.hpp>
 #include <tudocomp/pre_header/Env.hpp>
@@ -305,4 +304,3 @@ inline void gather_types(eval::AlgorithmTypes& target,
 
 }
 
-#endif

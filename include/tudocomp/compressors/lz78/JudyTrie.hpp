@@ -1,5 +1,5 @@
-#ifndef JUDYTRIE_HPP
-#define JUDYTRIE_HPP
+#pragma once
+
 #include <tudocomp/config.h>
 #ifdef JUDY_H_AVAILABLE
 
@@ -83,4 +83,4 @@ public:
 }} //ns
 
 #endif// JUDY_H_AVAILABLE
-#endif /* JUDYTRIE_HPP */
+

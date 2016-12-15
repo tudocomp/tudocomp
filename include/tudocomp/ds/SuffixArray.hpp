@@ -1,6 +1,4 @@
-#ifndef _INCLUDED_DS_SUFFIX_ARRAY_HPP
-#define _INCLUDED_DS_SUFFIX_ARRAY_HPP
-
+#pragma once
 
 #include <divsufsort.h>
 #include <divsufsort64.h>
@@ -85,6 +83,4 @@ void SuffixArray<T>::construct(T& t) {
 }
 
 }//ns
-
-#endif
 

@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_ENV_HPP
-#define _INCLUDED_ENV_HPP
+#pragma once
 
 #include <tudocomp/pre_header/Registry.hpp>
 #include <tudocomp/pre_header/Env.hpp>
@@ -123,4 +122,4 @@ inline void Env::log_stat(const std::string& name, const T& value) {
 }
 
 }
-#endif
+

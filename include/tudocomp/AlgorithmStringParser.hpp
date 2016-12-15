@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_DRIVER_ALGORITHM_PARSER
-#define TUDOCOMP_DRIVER_ALGORITHM_PARSER
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -1098,4 +1097,3 @@ namespace tdc {
     /// \endcond
 }
 
-#endif
