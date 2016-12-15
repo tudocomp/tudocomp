@@ -28,6 +28,10 @@ namespace tdc {
 #define tdc_hdebug(x)
 #endif
 
+// do we want to log with env?
+#define tdc_stats(x) x
+// we do not want to log with env:
+//#define tdc_stats(x) false
 
 	typedef size_t len_t; // length type for text positions of the input
 	typedef char literal_t; // data type of the alphabet

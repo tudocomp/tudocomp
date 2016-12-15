@@ -3,6 +3,7 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/def.hpp>
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/esacomp/MaxLCPSuffixList.hpp>
@@ -55,7 +56,7 @@ public:
         env().begin_stat_phase("Computing Factors");
         env().begin_stat_phase(std::string{"At MaxLCP Value "} + std::to_string(lcpp->max_lcp()) );
         for(size_t maxlcp = lcpp->max_lcp(); maxlcp >= threshold; --maxlcp) {
-            if(maxlcp % ((cand_length+20)/20) == 0) {
+            if(tdc_stats(maxlcp < 4 || ((maxlcp ^ (1UL<<(bits_for(maxlcp)-1))) == 0))) { // only log at lcp-values that are a power of two or less than 4
                 env().end_stat_phase();
                 env().begin_stat_phase(std::string{"At MaxLCP Value "} + std::to_string(maxlcp) );
                 env().log_stat("num factors", factors.size());
