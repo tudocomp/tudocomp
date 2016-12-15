@@ -23,6 +23,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=${CXX_STANDARD}")
 # Global dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
 
+# Cotire
+include(cotire)
+
+# Finders
 include(FindPythonModule)
 include(find_or_download_package)
 
