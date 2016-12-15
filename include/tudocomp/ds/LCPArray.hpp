@@ -151,6 +151,7 @@ namespace LCP {
 	inline static iv_t phi_algorithm(T& t) {
         t.require_phi();
 		std::unique_ptr<PhiArray<T>> phi(std::move(t.release_phi()));
+		t.env().begin_stat_phase("Phi-Algorithm");
         size_t n = phi->size();
 
 		iv_t plcp(std::move(phi->data()));
@@ -169,6 +170,7 @@ namespace LCP {
 				--l;
 			}
 		}
+		t.env().end_stat_phase();
 		return plcp;
 	}
 
@@ -199,9 +201,14 @@ template<typename T, typename select_t>
 inline void lcp_sada<T,select_t>::construct(T& t) {
 	sa = &t.require_sa();
 	iv_t plcp(LCP::phi_algorithm(t)); // use this when the phi algo works!
+	t.env().end_stat_phase();
 	//iv_t plcp(LCP::create_plcp_naive(t.require_lcp(),t.require_isa()));
+	t.env().begin_stat_phase("Build Sada Bit Vector");
 	bv = LCP::construct_lcp_sada(plcp);
+	t.env().end_stat_phase();
+	t.env().begin_stat_phase("Build Select on Bit Vector");
 	s = std::unique_ptr<select_t>(new select_t(&bv));
+	t.env().end_stat_phase();
 }
 
 template<typename T, typename select_t>
@@ -212,7 +219,9 @@ inline len_t lcp_sada<T,select_t>::size() const {
 template<class T>
 inline void lcp_array<T>::construct(T& t) {
 	iv_t plcp(LCP::phi_algorithm(t));
+	t.env().begin_stat_phase("Build LCP Array");
 	construct_lcp_array(plcp, t.require_sa());
+	t.env().end_stat_phase();
 }
 
 }

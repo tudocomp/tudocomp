@@ -87,6 +87,10 @@ private:
     }
 
 public:
+    OptionalEnv env() {
+		return m_env;
+	}
+
     inline TextDS(const View& input) : m_text(input), m_env(nullptr) {
         null_check(input);
     }
