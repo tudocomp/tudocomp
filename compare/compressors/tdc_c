@@ -1,1 +1,1 @@
-echo ../release/tudocomp_driver $CARGS --output=$OUT --force $IN
+./tudocomp_driver $CARGS --output=$OUT --force $IN
