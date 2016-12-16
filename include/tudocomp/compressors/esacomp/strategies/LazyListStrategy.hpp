@@ -93,6 +93,7 @@ public:
 
             }
             candcol.clear();
+			candcol.shrink_to_fit();
         }
         env().end_stat_phase();
         env().end_stat_phase();
