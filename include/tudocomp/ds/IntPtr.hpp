@@ -359,6 +359,18 @@ namespace int_vector {
         }
     };
 
+    template<typename T>
+    class GenericIntRefAutocast {
+    public:
+        using autocast_type = T;
+    };
+
+    // specialization for dynamic_t
+    template<> class GenericIntRefAutocast<dynamic_t> {
+    public:
+        using autocast_type = uint64_t;
+    };
+
     template<class Self, class Ptr, class T>
     class GenericIntRef {
     protected:
@@ -372,13 +384,15 @@ namespace int_vector {
 
         Ptr m_ptr;
     public:
-        typedef T value_type;
+        using value_type = T;
+        using autocast_type = typename GenericIntRefAutocast<T>::autocast_type;
 
         inline GenericIntRef() = delete;
         explicit GenericIntRef(const Ptr& ptr): m_ptr(ptr) {}
 
-        operator value_type() const {
-            return read_int<T>(m_ptr.m_ptr, m_ptr.m_bit_offset, this->m_ptr.data_bit_size());
+        operator autocast_type() const {
+            return read_int<autocast_type>(
+                m_ptr.m_ptr, m_ptr.m_bit_offset, this->m_ptr.data_bit_size());
         }
 
     };
@@ -412,6 +426,7 @@ namespace int_vector {
         > {
     public:
         using typename GenericIntRef<IntRef<T>, IntPtr<T>, T>::value_type;
+        using autocast_type = typename GenericIntRefAutocast<T>::autocast_type;
 
         inline IntRef() = delete;
         explicit IntRef(const IntPtr<T>& ptr): GenericIntRef<IntRef<T>, IntPtr<T>, T>::GenericIntRef(ptr) {}
@@ -424,7 +439,7 @@ namespace int_vector {
         };
 
         inline IntRef& operator=(const IntRef& other) {
-            return operator=(value_type(other.operator value_type()));
+            return operator=(value_type(other.operator autocast_type()));
         };
 
         inline IntRef& operator=(const ConstIntRef<T>& other);
@@ -503,4 +518,3 @@ template<class T>
 using ConstIntPtr = int_vector::ConstIntPtr<T>;
 
 }
-

@@ -1284,32 +1284,8 @@ void iv_access_autocast_nonconst(iv_t& v) {
     unsigned long long int ulli = v[0]; ASSERT_EQ(1, ulli);
 }
 
-template<size_t width>
-void iv_access_autocast_uint() {
-    IntVector<uint_t<width>> iv(1, 0);
-    iv_access_autocast_const(iv);
-    iv_access_autocast_nonconst(iv);
-}
-
-TEST(generic_int_vector_application, access_uint_autocast) {
-    iv_access_autocast_uint<1>();
-    iv_access_autocast_uint<2>();
-    iv_access_autocast_uint<3>();
-    iv_access_autocast_uint<4>();
-    iv_access_autocast_uint<8>();
-    iv_access_autocast_uint<16>();
-    iv_access_autocast_uint<24>();
-    iv_access_autocast_uint<32>();
-    iv_access_autocast_uint<35>();
-    iv_access_autocast_uint<40>();
-    iv_access_autocast_uint<48>();
-    iv_access_autocast_uint<56>();
-    iv_access_autocast_uint<40>();
-    iv_access_autocast_uint<64>();
-}
-
 TEST(generic_int_vector_application, access_dynamic_autocast) {
-    IntVector<dynamic_t> iv(1, 0, 6);
+    IntVector<dynamic_t> iv(1, 1, 6);
     iv_access_autocast_const(iv);
     iv_access_autocast_nonconst(iv);
 }
