@@ -59,12 +59,8 @@ public:
         }
 
         m_heap = DynamicIntVector(num_entries, 0, bits_for(n-1));
-        //m_heap.resize(num_entries - 1);
-
         m_undef = num_entries;
-        //m_pos.resize(lcp.size(), m_undef);
         m_pos = DynamicIntVector(n, m_undef, bits_for(m_undef));
-        //for(size_t i = 0; i < n; i++) m_pos[i] = m_undef;
 
         //Construct heap
         for(size_t i = 1; i < n; i++) {
