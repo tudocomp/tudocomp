@@ -41,7 +41,7 @@ public:
         auto& lcp = _lcp->data();
 
         env().begin_stat_phase("Construct MaxLCPHeap");
-        MaxLCPHeap<text_t::sa_t, text_t::lcp_t> heap(sa, *_lcp, threshold);
+        MaxLCPHeap<text_t::lcp_t> heap(*_lcp, threshold);
         env().log_stat("entries", heap.size());
         env().end_stat_phase();
 

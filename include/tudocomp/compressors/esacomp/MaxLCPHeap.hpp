@@ -6,7 +6,7 @@
 namespace tdc {
 namespace esacomp {
 
-template<class sa_t, class lcp_t>
+template<class lcp_t>
 class MaxLCPHeap {
 
 private:
@@ -29,18 +29,17 @@ private:
     }
 
     // data backend
-    const sa_t* m_sa;
     const lcp_t* m_lcp;
 
-    // undefined suffix
-    const size_t m_undef;
+    // undefined position in heap
+    size_t m_undef;
 
     // heap
     size_t m_size;
-    std::vector<len_t> m_heap;
+    DynamicIntVector m_heap;
 
     // back mapping
-    std::vector<size_t> m_pos;
+    DynamicIntVector m_pos;
 
     inline void put(size_t pos, len_t i) {
         m_heap[pos] = i;
@@ -49,17 +48,27 @@ private:
 
 public:
     /// Constructor
-    inline MaxLCPHeap(const sa_t& sa, const lcp_t& lcp, size_t min_lcp)
-        : m_sa(&sa), m_lcp(&lcp), m_undef(m_sa->size()), m_size(0)
+    inline MaxLCPHeap(const lcp_t& lcp, size_t min_lcp)
+        : m_lcp(&lcp), m_size(0)
 	{
-        m_heap.resize(sa.size()); // TODO: better approximation?
-        m_pos.resize(sa.size(), m_undef);
+        auto n = lcp.size();
+
+        size_t num_entries = 0;
+        for(size_t i = 1; i < n; i++) {
+            if(lcp[i] >= min_lcp) ++num_entries;
+        }
+
+        m_heap = DynamicIntVector(num_entries, 0, bits_for(n-1));
+        //m_heap.resize(num_entries - 1);
+
+        m_undef = num_entries;
+        //m_pos.resize(lcp.size(), m_undef);
+        m_pos = DynamicIntVector(n, m_undef, bits_for(m_undef));
+        //for(size_t i = 0; i < n; i++) m_pos[i] = m_undef;
 
         //Construct heap
-        for(size_t i = 1; i < lcp.size(); i++) {
-            if(lcp[i] >= min_lcp) {
-                insert(i);
-            }
+        for(size_t i = 1; i < n; i++) {
+            if(lcp[i] >= min_lcp) insert(i);
         }
     }
 
@@ -75,8 +84,6 @@ public:
         }
 
         put(pos, i);
-
-        DCHECK(is_valid());
     }
 
 private:
@@ -130,7 +137,6 @@ public:
         }
 
         m_pos[i] = m_undef; // i was removed
-        DCHECK(is_valid());
     }
 
     /// Decrease key on array item with index i.
@@ -140,7 +146,6 @@ public:
             // perlocate item down, starting at its current position
             perlocate_down(pos, i);
         }
-        DCHECK(is_valid());
     }
 
     /// Checks whether or not suffix array entry i is contained in this heap.
@@ -158,8 +163,7 @@ public:
         return m_heap[0];
     }
 
-private:
-    // debug
+    // for tests?
     inline bool is_valid() const {
         for(size_t i = 0; i < m_size; i++) {
             auto lcp_i = (*m_lcp)[m_heap[i]];
