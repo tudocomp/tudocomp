@@ -51,9 +51,9 @@ namespace io {
                 new_size++; // 0 terminator
                 DCHECK_GE(new_size, old_size + 1);
 
-                // Note: This will still peak here
+                // NB: The reserve call is neccessary to get an exact reallocation.
+                v.reserve(new_size);
                 v.resize(new_size);
-                v.shrink_to_fit();
                 v.back() = 0;
 
                 // check that the used vector implementation is actually sane
