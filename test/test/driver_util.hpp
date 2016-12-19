@@ -74,18 +74,27 @@ std::string driver(std::string args) {
     return ss.str();
 }
 
+std::string roundtrip_in_file_name_ending() {
+    return ".txt";
+}
+std::string roundtrip_comp_file_name_ending() {
+    return ".tdc";
+}
+std::string roundtrip_decomp_file_name_ending() {
+    return ".decomp.txt";
+}
 
 std::string roundtrip_in_file_name(std::string algo,
                                    std::string name_addition) {
-    return algo + name_addition + ".txt";
+    return algo + name_addition + roundtrip_in_file_name_ending();
 }
 std::string roundtrip_comp_file_name(std::string algo,
                                    std::string name_addition) {
-    return algo + name_addition + ".tdc";
+    return algo + name_addition + roundtrip_comp_file_name_ending();
 }
 std::string roundtrip_decomp_file_name(std::string algo,
                                    std::string name_addition) {
-    return algo + name_addition + ".decomp.txt";
+    return algo + name_addition + roundtrip_decomp_file_name_ending();
 }
 
 std::string format_std_outputs(const std::vector<std::string>& v) {
@@ -164,12 +173,16 @@ Error roundtrip(std::string algo,
 {
     Error current { false };
 
-    std::string in_file   = roundtrip_in_file_name(algo, name_addition);
-    std::string comp_file = roundtrip_comp_file_name(algo, name_addition);
-    std::string decomp_file  = roundtrip_decomp_file_name(algo, name_addition);
+    std::string in_file     = roundtrip_in_file_name(algo, name_addition);
+    std::string comp_file   = roundtrip_comp_file_name(algo, name_addition);
+    std::string decomp_file = roundtrip_decomp_file_name(algo, name_addition);
+
+    std::string in_file_s     = roundtrip_in_file_name("*", name_addition);
+    std::string comp_file_s   = roundtrip_comp_file_name("*", name_addition);
+    std::string decomp_file_s = roundtrip_decomp_file_name("*", name_addition);
 
     //std::cout << "Roundtrip with\n";
-    std::cout << in_file << " -> ";
+    std::cout << algo << ":    " << in_file_s << "  ->  ";
     std::cout.flush();
 
     remove_test_file(in_file);
@@ -197,7 +210,7 @@ Error roundtrip(std::string algo,
         comp_out = driver(cmd);
     }
 
-    std::cout << comp_file << " -> ";
+    std::cout << comp_file_s << "  ->  ";
     std::cout.flush();
 
     bool compressed_file_exists = test_file_exists(comp_file);
@@ -231,7 +244,7 @@ Error roundtrip(std::string algo,
         decomp_out = driver(cmd);
     }
 
-    std::cout << decomp_file << " ... ";
+    std::cout << decomp_file_s << " ... ";
     std::cout.flush();
 
     bool decompressed_file_exists = test_file_exists(decomp_file);
