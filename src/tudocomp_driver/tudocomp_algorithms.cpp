@@ -72,10 +72,11 @@ void register_algorithms(Registry& r) {
 
     REGISTER_WITH_ALL_CODERS(LZSSLCPCompressor);
 
-
+    /*
     r.register_compressor<ESACompressor<Code2Coder, esacomp::MaxHeapStrategy,  esacomp::MarvinBuffer>>();
     r.register_compressor<ESACompressor<Code2Coder, esacomp::MaxLCPStrategy,   esacomp::MarvinBuffer>>();
     r.register_compressor<ESACompressor<Code2Coder, esacomp::LazyListStrategy, esacomp::MarvinBuffer>>();
+    */
     r.register_compressor<ESACompressor<Code2Coder, esacomp::MaxHeapStrategy,  esacomp::MultimapBuffer>>();
     r.register_compressor<ESACompressor<Code2Coder, esacomp::MaxLCPStrategy,   esacomp::MultimapBuffer>>();
     r.register_compressor<ESACompressor<Code2Coder, esacomp::LazyListStrategy, esacomp::MultimapBuffer>>();
@@ -86,9 +87,11 @@ void register_algorithms(Registry& r) {
     r.register_compressor<ESACompressor<Code2Coder, esacomp::MaxLCPStrategy,   esacomp::DecodeForwardQueueListBuffer>>();
     r.register_compressor<ESACompressor<Code2Coder, esacomp::LazyListStrategy, esacomp::DecodeForwardQueueListBuffer>>();
 
+    /*
     r.register_compressor<ESACompressor<ASCIICoder, esacomp::MaxHeapStrategy,  esacomp::MarvinBuffer>>();
     r.register_compressor<ESACompressor<ASCIICoder, esacomp::MaxLCPStrategy,   esacomp::MarvinBuffer>>();
     r.register_compressor<ESACompressor<ASCIICoder, esacomp::LazyListStrategy, esacomp::MarvinBuffer>>();
+    */
     r.register_compressor<ESACompressor<ASCIICoder, esacomp::MaxHeapStrategy,  esacomp::MultimapBuffer>>();
     r.register_compressor<ESACompressor<ASCIICoder, esacomp::MaxLCPStrategy,   esacomp::MultimapBuffer>>();
     r.register_compressor<ESACompressor<ASCIICoder, esacomp::LazyListStrategy, esacomp::MultimapBuffer>>();
