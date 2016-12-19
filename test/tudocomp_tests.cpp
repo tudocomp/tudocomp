@@ -1008,13 +1008,13 @@ TEST(Algorithm, meta) {
         auto x = Compressor::meta();
         auto y = std::move(x).build_def();
         ASSERT_EQ(y.to_string(),
-                  R"(my(sub: static sub_t = sub2(y: string = "y"), dyn: string = "foobar", bool_val: string = "true"))");
+                  R"(my(sub: static sub_t = sub2(y = "y"), dyn: string = "foobar", bool_val: string = "true"))");
     }
     {
         auto x = Compressor::meta();
-        auto y = std::move(x).build_ast_value();
+        auto y = std::move(x).build_ast_value_for_default();
         ASSERT_EQ(y.to_string(),
-                  R"(my(sub: static sub_t = sub2(y: string = "y"), dyn: string = "foobar", bool_val: string = "true"))");
+                  R"(my(sub = sub2(y = "y"), dyn = "foobar", bool_val = "true"))");
     }
     auto f = [](const std::string& options, std::function<void(OptionValue&)> g) {
         auto x = Compressor::meta();
@@ -1178,4 +1178,42 @@ TEST(Test, TestInputOutputInheritance) {
     auto o = test::compress_output();
 
     x.compress(i, o);
+}
+
+template<class A, class B>
+struct KeywordlessEvalOrderBug: public Compressor {
+    inline static Meta meta() {
+        Meta y("compressor", "eval_order_bug");
+        y.option("sub1").templated<A, MySubAlgo>();
+        y.option("dyn").dynamic("foobar");
+        y.option("sub2").templated<B, MySubAlgo2>();
+        return y;
+    }
+
+    KeywordlessEvalOrderBug(Env&& env): Compressor(std::move(env)){}
+
+    inline virtual void decompress(Input& input, Output& output) {
+    }
+
+    inline virtual void compress(Input& input, Output& output) {
+        auto a = env().option("sub1").as_algorithm();
+        auto b = env().option("dyn").as_string();
+        auto c = env().option("sub2").as_algorithm();
+    }
+};
+
+TEST(KeywordlessEvalOrder, test) {
+    auto x1 = create_algo<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
+    Registry r;
+    r.register_compressor<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
+    r.parse_algorithm_id("eval_order_bug(sub1 = sub1(x = 'x'), dyn = 'foobar', sub2 = sub2(y = 'y'))");
+    r.parse_algorithm_id("eval_order_bug(sub1 = sub1, dyn = 'foobar', sub2 = sub2)");
+    r.parse_algorithm_id("eval_order_bug(sub1 = sub1, dyn = 'foobar')");
+    r.parse_algorithm_id("eval_order_bug(sub1 = sub1)");
+    r.parse_algorithm_id("eval_order_bug");
+    r.parse_algorithm_id("eval_order_bug(sub1(x = 'x'), 'foobar', sub2(y = 'y'))");
+    r.parse_algorithm_id("eval_order_bug(sub1, 'foobar', sub2)");
+    r.parse_algorithm_id("eval_order_bug(sub1, 'foobar')");
+    r.parse_algorithm_id("eval_order_bug(sub1)");
+    r.parse_algorithm_id("eval_order_bug");
 }

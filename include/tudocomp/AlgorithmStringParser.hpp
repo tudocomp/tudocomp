@@ -818,8 +818,12 @@ namespace tdc {
             std::string, std::vector<decl::Algorithm>>;
 
         inline void check_string_not_string(ast::Value& v) {
-            // TODO: Nice error
-            CHECK(!v.is_invokation());
+            if (v.is_invokation()) {
+                std::stringstream ss;
+                ss << "option parser: ";
+                ss << "trying to evaluate " << v << " as a string";
+                throw std::runtime_error(ss.str());
+            }
         }
 
         inline void check_static_override_fits_to_be_evaled_algo(
@@ -840,6 +844,20 @@ namespace tdc {
                    << arg.type()
                    << "' has not been assigned an value";
                 throw std::runtime_error(ss.str());
+            }
+            if (arg_value.is_invokation()) {
+                if (std::any_of(arg_value.invokation_arguments().begin(),
+                                arg_value.invokation_arguments().end(),
+                                [](ast::Arg& arg) -> bool {
+                                    return arg.has_type(); }))
+                {
+                    std::stringstream ss;
+                    ss << "option parser: ";
+                    ss << "argument '" << arg.name() << "' of type '"
+                    << arg.type()
+                    << "' has has types in its expression form: " << arg_value;
+                    throw std::runtime_error(ss.str());
+                }
             }
         }
 
@@ -945,8 +963,8 @@ namespace tdc {
                 bool positional_ok = true;
                 size_t i = 0;
                 for (auto& unevaluated_arg : v.invokation_arguments()) {
-                    // TODO: Nice error
-                    CHECK(!unevaluated_arg.has_type());
+                    // Sanity check, should be caught from outer recursive call
+                    DCHECK(!unevaluated_arg.has_type());
 
                     // find argument name for each position in the
                     // unevaluated argument list
@@ -1068,11 +1086,13 @@ namespace tdc {
                     std::string(r_name),
                     std::move(r_static_args));
 
-            return OptionValue(AlgorithmValue(
+            auto fr = OptionValue(AlgorithmValue(
                 std::move(r_name),
                 std::move(r_dynamic_args),
                 std::move(tmp),
                 r_needs_null_term));
+
+            return fr;
         }
 
         inline OptionValue cl_eval(ast::Value&& v,

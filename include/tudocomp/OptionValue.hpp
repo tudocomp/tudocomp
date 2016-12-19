@@ -17,6 +17,8 @@ namespace tdc {
 // Forward declaration to be used by the parser
 namespace pattern {
     class Algorithm;
+
+    inline std::ostream& operator<<(std::ostream&, const Algorithm&);
 }
 
 //DIY lexical cast
@@ -54,6 +56,8 @@ public:
     inline AlgorithmValue& operator=(AlgorithmValue&& other);
 };
 
+inline std::ostream& operator<<(std::ostream& os, const AlgorithmValue& av);
+
 class OptionValue {
     bool m_is_value;
     AlgorithmValue m_value_or_algorithm;
@@ -76,6 +80,8 @@ public:
     inline T as() const;
     inline OptionValue& operator=(OptionValue&& other);
 };
+
+inline std::ostream& operator<<(std::ostream& os, const OptionValue& ov);
 
 inline AlgorithmValue::~AlgorithmValue() {}
 
@@ -183,6 +189,25 @@ inline OptionValue& OptionValue::operator=(OptionValue&& other) {
     return *this;
 }
 
+inline std::ostream& operator<<(std::ostream& os, const AlgorithmValue& av) {
+    os << av.name() << " {";
+
+    for (auto& e : av.arguments()) {
+        os << e.first << " : " << e.second << ", ";
+    }
+
+    return os << "; sentinel: " << av.needs_sentinel_terminator()
+        << ", static_selection: " << av.static_selection()
+        << "}";
+}
+
+inline std::ostream& operator<<(std::ostream& os, const OptionValue& ov) {
+    if (!ov.is_algorithm()) {
+        return os << "string:" << ov.as_string();
+    } else {
+        return os << ov.as_algorithm();
+    }
+}
 
 }
 

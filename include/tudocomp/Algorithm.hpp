@@ -144,16 +144,21 @@ public:
         template<class T, class D>
         inline void templated() {
             templated<T>();
+
+            std::string t_type = m_meta.m_options.back().type();
             m_meta.m_options.pop_back();
 
             Meta sub_meta = D::meta();
+            std::string d_type = sub_meta.m_type;
             m_meta.m_sub_metas.push_back(sub_meta);
+
+            DCHECK_EQ(t_type, d_type);
 
             m_meta.m_options.push_back(decl::Arg(
                 std::string(m_argument_name),
                 true,
                 std::move(sub_meta.m_type),
-                std::move(sub_meta).build_ast_value()
+                std::move(sub_meta).build_ast_value_for_default()
             ));
         }
 
@@ -214,13 +219,11 @@ public:
         );
     }
 
-    inline ast::Value build_ast_value() && {
+    inline ast::Value build_ast_value_for_default() && {
         std::vector<ast::Arg> options;
         for (auto& arg : m_options) {
             options.push_back(ast::Arg(
                 arg.name(),
-                arg.is_static(),
-                arg.type(),
                 std::move(arg.default_value())
             ));
         }

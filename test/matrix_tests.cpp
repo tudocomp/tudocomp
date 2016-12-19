@@ -38,7 +38,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
     // stage 1: automatically generated list of tests
     {
         for (const auto& x : REGISTRY.all_algorithms_with_static("compressor")) {
-            test_cases.push_back(x.to_string(true));
+            test_cases.push_back(x.to_string());
         }
     }
     // stage 2: build-in exclude and additional
