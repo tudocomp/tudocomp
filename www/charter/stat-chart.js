@@ -431,7 +431,13 @@ var formatTime = function(ms) {
 };
 
 var formatMem = function(mem) {
-    return app.memScale(mem).toFixed(2) + " " + app.memUnit;
+    var u = 0;
+    while(u < memUnits.length && Math.abs(mem) > 1024) {
+        mem /= 1024.0;
+        u++;
+    }
+
+    return (u > 0 ? mem.toFixed(2) : mem.toString()) + " " + memUnits[u];
 }
 
 var formatPercent = function(pct) {
