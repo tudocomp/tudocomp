@@ -39,7 +39,7 @@ namespace io {
             auto& v = *m_data;
 
             if (!m_is_escaped) {
-                size_t old_size = v.size();
+                const size_t old_size = v.size();
                 size_t new_size = v.size();
 
                 for (auto b : v) {
@@ -48,11 +48,20 @@ namespace io {
                     }
                 }
 
+                new_size++; // 0 terminator
+                DCHECK_GE(new_size, old_size + 1);
+
+                // Note: This will still peak here
                 v.resize(new_size);
+                v.shrink_to_fit();
+                v.back() = 0;
+
+                // check that the used vector implementation is actually sane
+                DCHECK_EQ(v.capacity(), new_size);
 
                 auto start = v.begin();
                 auto mid = v.begin() + old_size;
-                auto end = v.begin() + new_size;
+                auto end = v.begin() + new_size - 1;
 
                 while(start != end) {
                     --mid;
@@ -71,7 +80,7 @@ namespace io {
                     }
                 }
 
-                v.push_back(0);
+                DCHECK_EQ(v.back(), 0);
                 m_is_escaped = true;
             }
         }
