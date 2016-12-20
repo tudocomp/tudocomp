@@ -25,7 +25,7 @@ private:
 
 public:
     inline FactorBuffer() : m_sorted(true),
-                            m_shortest_factor(SIZE_MAX),
+                            m_shortest_factor(LEN_MAX),
                             m_longest_factor(0)
     {
     }

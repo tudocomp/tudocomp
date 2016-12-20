@@ -143,6 +143,11 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
     return more;
 }
 
+/// \brief Computes the highest set bit in an integer variable
+inline uint_fast8_t bits_hi(uint64_t x) {
+	return x == 0 ? 0 : 64 - __builtin_clzll(x);
+}
+
 /// \brief Computes the number of bits required to store the given integer
 /// value.
 ///
@@ -158,12 +163,8 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
 /// \param n The integer to be stored.
 /// \return The amount of bits required to store the value (guaranteed to be
 /// greater than zero).
-inline size_t bits_for(size_t n) {
-    if(n == 0) {
-        return 1U;
-    } else {
-        return sdsl::bits::hi(n) + 1; //TODO get rid of SDSL dependency
-    }
+inline uint_fast8_t bits_for(size_t n) {
+    return n == 0 ? 1U : bits_hi(n);
 }
 
 /// \brief Performs an integer division with the result rounded up to the
@@ -193,7 +194,7 @@ inline size_t idiv_ceil(size_t a, size_t b) {
 /// \param n The integer to be stored.
 /// \return The amount of bits required to store the value (guaranteed to be
 /// greater than zero).
-inline size_t bytes_for(size_t n) {
+inline uint_fast8_t bytes_for(size_t n) {
     return idiv_ceil(bits_for(n), 8U);
 }
 

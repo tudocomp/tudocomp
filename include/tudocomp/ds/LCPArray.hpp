@@ -7,7 +7,6 @@
 namespace tdc {
 
 constexpr int bits = 0;
-typedef size_t len_t;
 
 template<class T>
 class lcp_array {

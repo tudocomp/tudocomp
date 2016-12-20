@@ -35,7 +35,7 @@ private:
     inline void decode_literal_at(len_t pos, uliteral_t c) {
         ++m_current_chain;
         m_longest_chain = std::max(m_longest_chain, m_current_chain);
-        m_max_depth = std::max(m_max_depth, m_fwd[pos].size());
+        m_max_depth = std::max<len_t>(m_max_depth, m_fwd[pos].size());
 
         m_buffer[pos] = c;
         m_decoded[pos] = 1;
