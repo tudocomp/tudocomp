@@ -36,48 +36,6 @@ namespace libdivsufsort {
 
 // all below is adapted from ssort.c
 
-#if (SS_BLOCKSIZE == 0) || (SS_INSERTIONSORT_THRESHOLD < SS_BLOCKSIZE)
-
-inline
-saint_t
-ss_ilg(saidx_t n) {
-#if SS_BLOCKSIZE == 0
-# if defined(BUILD_DIVSUFSORT64)
-  return (n >> 32) ?
-          ((n >> 48) ?
-            ((n >> 56) ?
-              56 + lg_table[(n >> 56) & 0xff] :
-              48 + lg_table[(n >> 48) & 0xff]) :
-            ((n >> 40) ?
-              40 + lg_table[(n >> 40) & 0xff] :
-              32 + lg_table[(n >> 32) & 0xff])) :
-          ((n & 0xffff0000) ?
-            ((n & 0xff000000) ?
-              24 + lg_table[(n >> 24) & 0xff] :
-              16 + lg_table[(n >> 16) & 0xff]) :
-            ((n & 0x0000ff00) ?
-               8 + lg_table[(n >>  8) & 0xff] :
-               0 + lg_table[(n >>  0) & 0xff]));
-# else
-  return (n & 0xffff0000) ?
-          ((n & 0xff000000) ?
-            24 + lg_table[(n >> 24) & 0xff] :
-            16 + lg_table[(n >> 16) & 0xff]) :
-          ((n & 0x0000ff00) ?
-             8 + lg_table[(n >>  8) & 0xff] :
-             0 + lg_table[(n >>  0) & 0xff]);
-# endif
-#elif SS_BLOCKSIZE < 256
-  return lg_table[n];
-#else
-  return (n & 0xff00) ?
-          8 + lg_table[(n >> 8) & 0xff] :
-          0 + lg_table[(n >> 0) & 0xff];
-#endif
-}
-
-#endif /* (SS_BLOCKSIZE == 0) || (SS_INSERTIONSORT_THRESHOLD < SS_BLOCKSIZE) */
-
 #if SS_BLOCKSIZE != 0
 
 const saint_t sqq_table[256] = {
@@ -315,7 +273,7 @@ ss_mintrosort(const sauchar_t *T, const saidx_t *PA,
   saint_t limit;
   saint_t v, x = 0;
 
-  for(ssize = 0, limit = ss_ilg(last - first);;) {
+  for(ssize = 0, limit = ilg<saidx_t>(last - first);;) {
 
     if((last - first) <= SS_INSERTIONSORT_THRESHOLD) {
 #if 1 < SS_INSERTIONSORT_THRESHOLD
@@ -341,16 +299,16 @@ ss_mintrosort(const sauchar_t *T, const saidx_t *PA,
       if((a - first) <= (last - a)) {
         if(1 < (a - first)) {
           STACK_PUSH(a, last, depth, -1);
-          last = a, depth += 1, limit = ss_ilg(a - first);
+          last = a, depth += 1, limit = ilg<saidx_t>(a - first);
         } else {
           first = a, limit = -1;
         }
       } else {
         if(1 < (last - a)) {
-          STACK_PUSH(first, a, depth + 1, ss_ilg(a - first));
+          STACK_PUSH(first, a, depth + 1, ilg<saidx_t>(a - first));
           first = a, limit = -1;
         } else {
-          last = a, depth += 1, limit = ss_ilg(a - first);
+          last = a, depth += 1, limit = ilg<saidx_t>(a - first);
         }
       }
       continue;
@@ -397,38 +355,38 @@ ss_mintrosort(const sauchar_t *T, const saidx_t *PA,
 
       if((a - first) <= (last - c)) {
         if((last - c) <= (c - b)) {
-          STACK_PUSH(b, c, depth + 1, ss_ilg(c - b));
+          STACK_PUSH(b, c, depth + 1, ilg<saidx_t>(c - b));
           STACK_PUSH(c, last, depth, limit);
           last = a;
         } else if((a - first) <= (c - b)) {
           STACK_PUSH(c, last, depth, limit);
-          STACK_PUSH(b, c, depth + 1, ss_ilg(c - b));
+          STACK_PUSH(b, c, depth + 1, ilg<saidx_t>(c - b));
           last = a;
         } else {
           STACK_PUSH(c, last, depth, limit);
           STACK_PUSH(first, a, depth, limit);
-          first = b, last = c, depth += 1, limit = ss_ilg(c - b);
+          first = b, last = c, depth += 1, limit = ilg<saidx_t>(c - b);
         }
       } else {
         if((a - first) <= (c - b)) {
-          STACK_PUSH(b, c, depth + 1, ss_ilg(c - b));
+          STACK_PUSH(b, c, depth + 1, ilg<saidx_t>(c - b));
           STACK_PUSH(first, a, depth, limit);
           first = c;
         } else if((last - c) <= (c - b)) {
           STACK_PUSH(first, a, depth, limit);
-          STACK_PUSH(b, c, depth + 1, ss_ilg(c - b));
+          STACK_PUSH(b, c, depth + 1, ilg<saidx_t>(c - b));
           first = c;
         } else {
           STACK_PUSH(first, a, depth, limit);
           STACK_PUSH(c, last, depth, limit);
-          first = b, last = c, depth += 1, limit = ss_ilg(c - b);
+          first = b, last = c, depth += 1, limit = ilg<saidx_t>(c - b);
         }
       }
     } else {
       limit += 1;
       if(Td[PA[*first] - 1] < v) {
         first = ss_partition(PA, first, last, depth);
-        limit = ss_ilg(last - first);
+        limit = ilg<saidx_t>(last - first);
       }
       depth += 1;
     }

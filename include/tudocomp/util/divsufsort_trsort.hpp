@@ -34,38 +34,6 @@
 namespace tdc {
 namespace libdivsufsort {
 
-// all below is adapted from trsort.c
-inline
-saint_t
-tr_ilg(saidx_t n) {
-#if defined(BUILD_DIVSUFSORT64)
-  return (n >> 32) ?
-          ((n >> 48) ?
-            ((n >> 56) ?
-              56 + lg_table[(n >> 56) & 0xff] :
-              48 + lg_table[(n >> 48) & 0xff]) :
-            ((n >> 40) ?
-              40 + lg_table[(n >> 40) & 0xff] :
-              32 + lg_table[(n >> 32) & 0xff])) :
-          ((n & 0xffff0000) ?
-            ((n & 0xff000000) ?
-              24 + lg_table[(n >> 24) & 0xff] :
-              16 + lg_table[(n >> 16) & 0xff]) :
-            ((n & 0x0000ff00) ?
-               8 + lg_table[(n >>  8) & 0xff] :
-               0 + lg_table[(n >>  0) & 0xff]));
-#else
-  return (n & 0xffff0000) ?
-          ((n & 0xff000000) ?
-            24 + lg_table[(n >> 24) & 0xff] :
-            16 + lg_table[(n >> 16) & 0xff]) :
-          ((n & 0x0000ff00) ?
-             8 + lg_table[(n >>  8) & 0xff] :
-             0 + lg_table[(n >>  0) & 0xff]);
-#endif
-}
-
-
 /*---------------------------------------------------------------------------*/
 
 /* Simple insertionsort for small size groups. */
@@ -331,7 +299,7 @@ tr_introsort(saidx_t *ISA, const saidx_t *ISAd,
   saint_t limit, next;
   saint_t ssize, trlink = -1;
 
-  for(ssize = 0, limit = tr_ilg(last - first);;) {
+  for(ssize = 0, limit = ilg<saidx_t>(last - first);;) {
 
     if(limit < 0) {
       if(limit == -1) {
@@ -354,19 +322,19 @@ tr_introsort(saidx_t *ISA, const saidx_t *ISAd,
         }
         if((a - first) <= (last - b)) {
           if(1 < (a - first)) {
-            STACK_PUSH5(ISAd, b, last, tr_ilg(last - b), trlink);
-            last = a, limit = tr_ilg(a - first);
+            STACK_PUSH5(ISAd, b, last, ilg<saidx_t>(last - b), trlink);
+            last = a, limit = ilg<saidx_t>(a - first);
           } else if(1 < (last - b)) {
-            first = b, limit = tr_ilg(last - b);
+            first = b, limit = ilg<saidx_t>(last - b);
           } else {
             STACK_POP5(ISAd, first, last, limit, trlink);
           }
         } else {
           if(1 < (last - b)) {
-            STACK_PUSH5(ISAd, first, a, tr_ilg(a - first), trlink);
-            first = b, limit = tr_ilg(last - b);
+            STACK_PUSH5(ISAd, first, a, ilg<saidx_t>(a - first), trlink);
+            first = b, limit = ilg<saidx_t>(last - b);
           } else if(1 < (a - first)) {
-            last = a, limit = tr_ilg(a - first);
+            last = a, limit = ilg<saidx_t>(a - first);
           } else {
             STACK_POP5(ISAd, first, last, limit, trlink);
           }
@@ -390,7 +358,7 @@ tr_introsort(saidx_t *ISA, const saidx_t *ISAd,
         }
         if(first < last) {
           a = first; do { *a = ~*a; } while(*++a < 0);
-          next = (ISA[*a] != ISAd[*a]) ? tr_ilg(a - first + 1) : -1;
+          next = (ISA[*a] != ISAd[*a]) ? ilg<saidx_t>(a - first + 1) : -1;
           if(++a < last) { for(b = first, v = a - SA - 1; b < a; ++b) { ISA[*b] = v; } }
 
           /* push */
@@ -444,7 +412,7 @@ tr_introsort(saidx_t *ISA, const saidx_t *ISAd,
     /* partition */
     tr_partition(ISAd, first, first + 1, last, &a, &b, v);
     if((last - first) != (b - a)) {
-      next = (ISA[*a] != v) ? tr_ilg(b - a) : -1;
+      next = (ISA[*a] != v) ? ilg<saidx_t>(b - a) : -1;
 
       /* update ranks */
       for(c = first, v = a - SA - 1; c < a; ++c) { ISA[*c] = v; }
@@ -529,7 +497,7 @@ tr_introsort(saidx_t *ISA, const saidx_t *ISAd,
       }
     } else {
       if(trbudget_check(budget, last - first)) {
-        limit = tr_ilg(last - first), ISAd += incr;
+        limit = ilg<saidx_t>(last - first), ISAd += incr;
       } else {
         if(0 <= trlink) { stack[trlink].d = -1; }
         STACK_POP5(ISAd, first, last, limit, trlink);
@@ -553,8 +521,8 @@ trsort(saidx_t *ISA, saidx_t *SA, saidx_t n, saidx_t depth) {
   trbudget_t budget;
   saidx_t t, skip, unsorted;
 
-  trbudget_init(&budget, tr_ilg(n) * 2 / 3, n);
-/*  trbudget_init(&budget, tr_ilg(n) * 3 / 4, n); */
+  trbudget_init(&budget, ilg<saidx_t>(n) * 2 / 3, n);
+/*  trbudget_init(&budget, tr_ilg<saidx_t>(n) * 3 / 4, n); */
   for(ISAd = ISA + depth; -n < *SA; ISAd += ISAd - ISA) {
     first = SA;
     skip = 0;
