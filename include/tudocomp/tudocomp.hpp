@@ -109,6 +109,7 @@ namespace lzw {
 #include <tudocomp/compressors/MTFCompressor.hpp>
 #include <tudocomp/compressors/RePairCompressor.hpp>
 #include <tudocomp/compressors/RunLengthEncoder.hpp>
+#include <tudocomp/compressors/LZ78UCompressor.hpp>
 
 #ifdef JUDY_H_AVAILABLE
 	#include <tudocomp/compressors/lz78/JudyTrie.hpp>
