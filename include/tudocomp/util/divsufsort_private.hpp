@@ -61,18 +61,18 @@ namespace libdivsufsort {
 #endif
 /* minstacksize = log(SS_BLOCKSIZE) / log(3) * 2 */
 #if SS_BLOCKSIZE == 0
-const size_t SS_MISORT_STACKSIZE = divsufsort64 ? 96 : 64;
+const ssize_t SS_MISORT_STACKSIZE = divsufsort64 ? 96 : 64;
 #elif SS_BLOCKSIZE <= 4096
 # define SS_MISORT_STACKSIZE (16)
 #else
 # define SS_MISORT_STACKSIZE (24)
 #endif
 
-const size_t SS_SMERGE_STACKSIZE = divsufsort64 ? 64 : 32;
+const ssize_t SS_SMERGE_STACKSIZE = divsufsort64 ? 64 : 32;
 
 /* for trsort.c */
 #define TR_INSERTIONSORT_THRESHOLD (8)
-const size_t TR_STACKSIZE = divsufsort64 ? 96 : 64;
+const ssize_t TR_STACKSIZE = divsufsort64 ? 96 : 64;
 
 /*- Macros -*/
 #ifndef SWAP
