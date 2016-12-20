@@ -79,7 +79,7 @@ public:
     inline MultimapBuffer(Env&& env, len_t size)
         : Algorithm(std::move(env)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_lazy(this->env().option("lazy").as_integer())
     {
-
+		m_fwd.max_load_factor(0.8);
         m_buffer.resize(size, 0);
         m_decoded = sdsl::bit_vector(size, 0);
     }
@@ -116,6 +116,8 @@ public:
 
     inline void decode_eagerly() {
         const len_t factors = m_source_pos.size();
+		env().log_stat("factors", factors);
+        env().begin_stat_phase("Decoding Factors");
         for(len_t j = 0; j < factors; ++j) {
             const len_t& target_position = m_target_pos[j];
             const len_t& source_position = m_source_pos[j];
@@ -127,7 +129,15 @@ public:
                     m_fwd.emplace(source_position+i, target_position+i);
                 }
             }
+			if(tdc_stats((j+1) % (factors/5) == 0 )) {
+				env().log_stat("hash table size", m_fwd.bucket_count());
+				env().log_stat("hash table entries", m_fwd.size());
+
+				env().end_stat_phase();
+        		env().begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
+			}
         }
+		env().end_stat_phase();
     }
 
     inline len_t longest_chain() const {

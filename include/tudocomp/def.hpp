@@ -33,7 +33,8 @@ namespace tdc {
 // we do not want to log with env:
 //#define tdc_stats(x) false
 
-	typedef size_t len_t; // length type for text positions of the input
+	//typedef size_t len_t; // length type for text positions of the input
+	typedef uint32_t len_t; // length type for text positions of the input
 	typedef char literal_t; // data type of the alphabet
 	typedef std::make_unsigned<literal_t>::type uliteral_t; // unsigned data type of the alphabet
 	constexpr size_t uliteral_max = std::numeric_limits<uliteral_t>::max(); // the maximum value an input character can have

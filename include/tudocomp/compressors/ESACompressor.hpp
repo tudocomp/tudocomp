@@ -14,8 +14,9 @@
 
 #include <tudocomp/compressors/esacomp/decoding/DecodeQueueListBuffer.hpp>
 #include <tudocomp/compressors/esacomp/decoding/SuccinctListBuffer.hpp>
-#include <tudocomp/compressors/esacomp/decoding/MarvinBuffer.hpp>
+// #include <tudocomp/compressors/esacomp/decoding/MarvinBuffer.hpp>
 #include <tudocomp/compressors/esacomp/decoding/MultiMapBuffer.hpp>
+#include <tudocomp/compressors/esacomp/decoding/MyMapBuffer.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 
@@ -71,13 +72,11 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
    decoder.env().end_stat_phase();
    decoder.env().begin_stat_phase("Eagerly EsaComp-Decoding");
     buffer.decode_eagerly();
-    
-
-    // log stats
     decoder.env().log_stat("longest_chain", buffer.longest_chain());
-
-    // write decoded text
+   decoder.env().end_stat_phase();
+   decoder.env().begin_stat_phase("Outputting text");
     buffer.write_to(outs);
+   decoder.env().end_stat_phase();
    decoder.env().end_stat_phase();
 }
 
@@ -95,8 +94,8 @@ public:
         Meta m("compressor", "esacomp");
         m.option("coder").templated<coder_t>();
         m.option("strategy").templated<strategy_t, esacomp::MaxLCPStrategy>();
-        m.option("threshold").dynamic("3");
         m.option("esadec").templated<dec_t, esacomp::SuccinctListBuffer>();
+        m.option("threshold").dynamic("3");
         m.needs_sentinel_terminator();
         return m;
     }

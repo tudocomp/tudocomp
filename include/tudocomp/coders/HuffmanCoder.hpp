@@ -51,7 +51,7 @@ namespace huff {
     /** Computes an array that maps from the effective alphabet to the full alphabet.
      *  @param C @see count_alphabet
      */
-    inline size_t effective_alphabet_size(const len_t* C) {
+    inline len_t effective_alphabet_size(const len_t* C) {
         return std::count_if(C, C+uliteral_max+1, [] (const len_t& i) { return i != 0; }); // size of the effective alphabet
     }
 
@@ -61,7 +61,7 @@ namespace huff {
      * @param C storing for each character of the full alphabet whether it exists in a given input text (value > 0 -> existing, value = 0 -> non-existing)
      * @param C @see count_alphabet
      */
-    inline uliteral_t* gen_effective_alphabet(const size_t*const C, const size_t alphabet_size) {
+    inline uliteral_t* gen_effective_alphabet(const len_t*const C, const size_t alphabet_size) {
         uliteral_t* map_from_effective { new uliteral_t[alphabet_size] };
         size_t j = 0;
         for(size_t i = 0; i <= uliteral_max; ++i) {
@@ -526,8 +526,8 @@ public:
         ENCODER_CTOR(env, out, literals)
             , m_table{ [&] () {
                 if(tdc_likely(!literals.has_next())) return huff::extended_huffmantable { nullptr, nullptr, nullptr, 0, nullptr, 0 };
-                const size_t*const C = huff::count_alphabet_literals(std::move(literals));
-                const size_t alphabet_size = huff::effective_alphabet_size(C);
+                const len_t*const C = huff::count_alphabet_literals(std::move(literals));
+                const len_t alphabet_size = huff::effective_alphabet_size(C);
                 if(tdc_unlikely(alphabet_size == 1)) {
                     delete [] C;
                     return huff::extended_huffmantable { nullptr, nullptr, nullptr, 1, nullptr, 0 };
