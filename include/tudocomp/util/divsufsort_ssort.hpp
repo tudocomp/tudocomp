@@ -697,14 +697,14 @@ ss_swapmerge(const sauchar_t *T, const saidx_t *PA,
 /*- Function -*/
 
 /* Substring sort */
-inline void
-sssort(const sauchar_t *T, const saidx_t *PA,
-       saidx_t *first, saidx_t *last,
-       saidx_t *buf, saidx_t bufsize,
+template<typename buffer_t>
+inline void sssort(const sauchar_t *T, buffer_t& B, saidx_t PA,
+       saidx_t first, saidx_t last,
+       saidx_t buf, saidx_t bufsize,
        saidx_t depth, saidx_t n, saint_t lastsuffix) {
-  saidx_t *a;
+  saidx_t a;
 #if SS_BLOCKSIZE != 0
-  saidx_t *b, *middle, *curbuf;
+  saidx_t b, middle, curbuf;
   saidx_t j, k, curbufsize, limit;
 #endif
   saidx_t i;
@@ -712,7 +712,8 @@ sssort(const sauchar_t *T, const saidx_t *PA,
   if(lastsuffix != 0) { ++first; }
 
 #if SS_BLOCKSIZE == 0
-  ss_mintrosort(T, PA, first, last, depth);
+  //TODO: pass indices
+  ss_mintrosort(T, B + PA, B + first, B + last, B + depth);
 #else
   if((bufsize < SS_BLOCKSIZE) &&
       (bufsize < (last - first)) &&
@@ -724,47 +725,57 @@ sssort(const sauchar_t *T, const saidx_t *PA,
   }
   for(a = first, i = 0; SS_BLOCKSIZE < (middle - a); a += SS_BLOCKSIZE, ++i) {
 #if SS_INSERTIONSORT_THRESHOLD < SS_BLOCKSIZE
-    ss_mintrosort(T, PA, a, a + SS_BLOCKSIZE, depth);
+    //TODO: pass indices
+    ss_mintrosort(T, B + PA, B + a, B + a + SS_BLOCKSIZE, depth);
 #elif 1 < SS_BLOCKSIZE
-    ss_insertionsort(T, PA, a, a + SS_BLOCKSIZE, depth);
+    //TODO: pass indices
+    ss_insertionsort(T, B + PA, B + a, B + a + SS_BLOCKSIZE, depth);
 #endif
     curbufsize = last - (a + SS_BLOCKSIZE);
     curbuf = a + SS_BLOCKSIZE;
     if(curbufsize <= bufsize) { curbufsize = bufsize, curbuf = buf; }
     for(b = a, k = SS_BLOCKSIZE, j = i; j & 1; b -= k, k <<= 1, j >>= 1) {
-      ss_swapmerge(T, PA, b - k, b, b + k, curbuf, curbufsize, depth);
+      //TODO: pass indices
+      ss_swapmerge(T, B + PA, B + b - k, B + b, B + b + k, B + curbuf, curbufsize, depth);
     }
   }
 #if SS_INSERTIONSORT_THRESHOLD < SS_BLOCKSIZE
-  ss_mintrosort(T, PA, a, middle, depth);
+  //TODO: pass indices
+  ss_mintrosort(T, B + PA, B + a, B + middle, depth);
 #elif 1 < SS_BLOCKSIZE
-  ss_insertionsort(T, PA, a, middle, depth);
+  //TODO: pass indices
+  ss_insertionsort(T, B + PA, B + a, B + middle, depth);
 #endif
   for(k = SS_BLOCKSIZE; i != 0; k <<= 1, i >>= 1) {
     if(i & 1) {
-      ss_swapmerge(T, PA, a - k, a, middle, buf, bufsize, depth);
+      //TODO: pass indices
+      ss_swapmerge(T, B + PA, B + a - k, B + a, B + middle, B + buf, bufsize, depth);
       a -= k;
     }
   }
   if(limit != 0) {
 #if SS_INSERTIONSORT_THRESHOLD < SS_BLOCKSIZE
-    ss_mintrosort(T, PA, middle, last, depth);
+    //TODO: pass indices
+    ss_mintrosort(T, B + PA, B + middle, B + last, depth);
 #elif 1 < SS_BLOCKSIZE
-    ss_insertionsort(T, PA, middle, last, depth);
+    //TODO: pass indices
+    ss_insertionsort(T, B + PA, B + middle, B + last, depth);
 #endif
-    ss_inplacemerge(T, PA, first, middle, last, depth);
+    //TODO: pass indices
+    ss_inplacemerge(T, B + PA, B + first, B + middle, B + last, depth);
   }
 #endif
 
   if(lastsuffix != 0) {
     /* Insert last type B* suffix. */
-    saidx_t PAi[2]; PAi[0] = PA[*(first - 1)], PAi[1] = n - 2;
-    for(a = first, i = *(first - 1);
-        (a < last) && ((*a < 0) || (0 < ss_compare(T, &(PAi[0]), PA + *a, depth)));
+    saidx_t PAi[2]; PAi[0] = B[PA + B[first - 1]], PAi[1] = n - 2;
+    for(a = first, i = B[first - 1];
+        //TODO: pass indices
+        (a < last) && ((B[a] < 0) || (0 < ss_compare(T, &(PAi[0]), B + PA + B[a], depth)));
         ++a) {
-      *(a - 1) = *a;
+      B[a - 1] = B[a];
     }
-    *(a - 1) = i;
+    B[a - 1] = i;
   }
 }
 
