@@ -250,6 +250,7 @@ inline saint_t divsufsort(const sauchar_t* T, saidx_t *SA, saidx_t n) {
 
 } //ns divsufsort
 
+using libdivsufsort::saidx_t;
 using libdivsufsort::divsufsort;
 
 } //ns tdc
