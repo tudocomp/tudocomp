@@ -48,9 +48,11 @@ public:
 
         auto T = input.as_view();
 
-        TextDS<> ds { T, env(), TextDS<>::ISA };
+        TextDS<> ds { T, env(), TextDS<>::ISA | TextDS<>::SA };
         auto isa_p = ds.release_isa();
         auto& ISA = *isa_p;
+        auto sa_p = ds.release_sa();
+        auto& SA = *sa_p;
 
         cst_t::cst_t backing_cst;
         {
@@ -76,9 +78,15 @@ public:
         // tx: a a a b a b a a a b a a b a b a $
         // sn:         5         10        15  16
 
-        auto lambda = [&ST, &pos, &T](const node_type& l1, const node_type& l2) -> View {
+        auto label = [&](const node_type& v) -> size_t {
+            assert(ST.cst.is_leaf(v));
+            // count the leaves left to leaf v
+            return SA[ST.cst.bp_rank_10(v)];
+        };
+
+        auto lambda = [&ST, &pos, &T, &label](const node_type& l1, const node_type& l2) -> View {
             auto offset_node = ST.cst.leftmost_leaf(l2);
-            size_t offset = ST.cst.sn(offset_node);
+            size_t offset = label(offset_node);
 
             size_t depth1 = ST.str_depth(l1);
             size_t depth2 = ST.str_depth(l2);
