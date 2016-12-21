@@ -15,7 +15,7 @@ namespace tdc {
  * the pseudocode in the LZCICS-paper and the C++ code
  */
 struct STLz78u {
-    using cst_t = cst_sada_light<csa_sada_light<>, bp_support_sadaM<>>;
+    using cst_t = cst_sada<>;
     using node_type = cst_t::node_type;
 
 	const cst_t& cst; //! sdsl suffix tree
@@ -44,27 +44,7 @@ struct STLz78u {
 		DLOG(INFO) << "LevelAnc of node " << node << " on depth " << depth << " is " << cst.bp_support.level_anc(node, cst.node_depth(node)-depth) << std::endl;
 		return cst.bp_support.level_anc(node, cst.node_depth(node)-depth);
 	}
-	/**
-	 * Returns how many preceding silbings node has.
-     * node must be a direct child of the root.
-	 */
-    cst_t::size_type root_child_rank(const cst_t::node_type& node) const {
-        return cst.bp_support.root_child_rank(node);
-    }
-	// cst_t::node_type leaf(const cst_t::node_type& node, const cst_t::size_type number)const {
-	// 	return cst.select_leaf(number+1+cst.lb(node));
-	// }
-	// cst_t::node_type child(const cst_t::node_type& node, const cst_t::size_type number)const {
-	// 	return cst.select_child(node, number);
-	// }
-	char head(const cst_t::node_type& node)const {
-		//TODO: Test if this assert works!
-		DLOG(INFO) << "child: " << root_child_rank(level_anc(node,1)) << std::endl;
-		DLOG(INFO) << "Edge: " << (int) cst.csa.comp2char[root_child_rank(level_anc(node,1))]  << std::endl;
-		//assert( cst.edge(level_anc(node,1), 1) ==
-		//		cst.csa.comp2char[root_child_rank(level_anc(node,1))] );
-		return cst.csa.comp2char[root_child_rank(level_anc(node,1))];
-	}
+
 	/*
 	 * Given a leaf node, we select the leaf whose label is the label of node plus one.
 	 */
@@ -95,16 +75,7 @@ struct STLz78u {
 	 * Returns the length of the label read from the edges on the path from the root to node
 	 */
 	cst_t::size_type str_depth(const cst_t::node_type& node)const{
-		assert(!cst.is_leaf(node)); // we do not support leaves
-		auto la = cst.leftmost_leaf(cst.select_child(node, 1));
-		auto lb = cst.leftmost_leaf(cst.select_child(node, 2));
-		size_t m = 0;
-		while(head(la) == head(lb)) {
-			la = next_leaf(la);
-			lb = next_leaf(lb);
-			++m;
-		}
-		//assert(m == cst.depth(node));
+		auto m = cst.depth(node);
 		DLOG(INFO) << "Depth of " << node  << " is " << m << std::endl;
 		return m;
 	}
