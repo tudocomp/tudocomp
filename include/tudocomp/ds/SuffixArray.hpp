@@ -50,7 +50,7 @@ void SuffixArray<T>::construct(T& t) {
 	DCHECK_EQ(t[len-1],0);
 
 	//Use divsufsort to construct
-	saidx_t *sa = new saidx_t[len];
+	std::vector<saidx_t> sa(len);
 	divsufsort(t.text(), sa, len);
 
 	//Bit compress using SDSL
@@ -61,8 +61,6 @@ void SuffixArray<T>::construct(T& t) {
 		m_sa[i]  = sa[i];
         DCHECK_LT(m_sa[i], len);
 	}
-
-	delete[] sa;
 }
 
 }//ns
