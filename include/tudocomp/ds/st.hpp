@@ -20,14 +20,13 @@ struct STLz78u {
 
 	const cst_t& cst; //! sdsl suffix tree
 	const cst_t::node_type root; //! the root node of the suffix tree
-	const cst_t::size_type alpha; //! the \alpha-th leaf in the suffix tree has label 1
+
 	const rank_support_v5<1> m_bp_rank1; //! rank the one bits in the BP
 	const size_t internal_nodes; //! number of internal nodes
 
 	STLz78u(const cst_t& _cst)
 		: cst(_cst)
 		, root(cst.root())
-		, alpha(cst.csa.alpha())
 		, m_bp_rank1(&cst.bp)
 		, internal_nodes(m_bp_rank1.rank(m_bp_rank1.size()) - cst.bp_rank_10.rank(m_bp_rank1.size()))
 	{
@@ -65,12 +64,6 @@ struct STLz78u {
 		//assert( cst.edge(level_anc(node,1), 1) ==
 		//		cst.csa.comp2char[root_child_rank(level_anc(node,1))] );
 		return cst.csa.comp2char[root_child_rank(level_anc(node,1))];
-	}
-	/**
-	 * Return the leaf corresponding to the suffix starting at position 0, i.e., the leaf with the longest string-depth
-	 */
-	cst_t::node_type smallest_leaf()const {
-		return cst.select_leaf(alpha+1);
 	}
 	/*
 	 * Given a leaf node, we select the leaf whose label is the label of node plus one.
