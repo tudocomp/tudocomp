@@ -8,11 +8,14 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
+#include <tudocomp/ds/st.hpp>
+#include <tudocomp/ds/st_util.hpp>
+
 namespace tdc {
 
 class LZ78UCompressor: public Compressor {
 private:
-    using cst_t = sdsl::cst_sada<>;
+    using cst_t = STLz78u;
     using node_type = cst_t::node_type;
 
     static inline lz78::factorid_t select_size(Env& env, string_ref name) {
@@ -49,7 +52,7 @@ public:
         auto isa_p = ds.release_isa();
         auto& ISA = *isa_p;
 
-        cst_t ST;
+        cst_t::cst_t backing_cst;
         {
             env().begin_stat_phase("construct suffix tree");
 
@@ -57,14 +60,15 @@ public:
             std::string bad_copy_1 = T.substr(0, T.size() - 1);
             std::cout << vec_to_debug_string(bad_copy_1) << "\n";
 
-            construct_im(ST, bad_copy_1, 1);
+            construct_im(backing_cst, bad_copy_1, 1);
 
             env().end_stat_phase();
         }
+        cst_t ST = cst_t(backing_cst);
 
         std::vector<size_t> R;
-        R.reserve(ST.nodes());
-        R.resize(ST.nodes());
+        R.reserve(backing_cst.nodes());
+        R.resize(backing_cst.nodes());
 
         size_t pos = 1;
         size_t z = 0;
@@ -73,21 +77,20 @@ public:
         // sn:         5         10        15  16
 
         auto lambda = [&ST, &pos, &T](const node_type& l1, const node_type& l2) -> View {
-            //auto size1 = ST.depth(l1);
-            //auto size2 = ST.depth(l2);
-            auto offset1 = T.size() - ST.depth(l1);
-            auto offset2 = T.size() - ST.depth(l2);
+            auto offset_node = ST.cst.leftmost_leaf(l2);
+            size_t offset = ST.cst.sn(offset_node);
 
-            std::cout << "pos: " << pos << " lambda: " << offset1 << " vs " << offset2 << "\n";
+            size_t depth1 = ST.str_depth(l1);
+            size_t depth2 = ST.str_depth(l2);
 
-            //auto offset1 = ST.sn(l1);
-            //auto offset2 = ST.sn(l2);
+            size_t start = offset + depth1;
+            size_t end = offset + depth2;
 
-            if (offset1 < offset2) {
-                return T.substr(offset1, offset2);
-            } else {
-                throw std::runtime_error("asdf");
-            }
+            auto v = T.substr(start, end);
+
+            std::cout << "pos: " << pos << " lambda(" << start << ", " << end << "): " << v << "\n";
+
+            return v;
         };
 
         auto parent = [&ST](const node_type& n) {
@@ -95,11 +98,11 @@ public:
         };
 
         auto leaf_select = [&ST](const size_t& pos) {
-            return ST.select_leaf(pos);
+            return ST.cst.select_leaf(pos);
         };
 
         auto level_anc = [&ST](const node_type& n, size_t d) {
-            return ST.sl(n, d);
+            return ST.level_anc(n, d);
         };
 
         while (pos <= T.size()) {
