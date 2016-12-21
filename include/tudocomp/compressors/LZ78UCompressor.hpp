@@ -46,7 +46,8 @@ public:
     virtual void compress(Input& input, Output& out) override {
         env().begin_stat_phase("lz78u");
 
-        auto T = input.as_view();
+        auto iview = input.as_view();
+        View T = iview;
 
         TextDS<> ds { T, env(), TextDS<>::ISA};
         auto isa_p = ds.release_isa();
@@ -118,7 +119,7 @@ public:
                 pos++;
             } else {
                 size_t d = 1;
-                while (level_anc(l, d) != 0) {
+                while (R[level_anc(l, d)] != 0) {
                     d++;
                     pos += lambda(level_anc(l, d - 1), level_anc(l, d)).size();
                 }
