@@ -124,7 +124,7 @@ note:
 
     /* Construct the inverse suffix array of type B* suffixes using trsort. */
     // TODO: pass indices instead of pointer math
-    trsort(SA + ISAb, SA, m, 1);
+    trsort(SA, ISAb, 0, m, 1);
 
     /* Set the sorted order of tyoe B* suffixes. */
     for(i = n - 1, j = m, c0 = T[n - 1]; 0 <= i;) {

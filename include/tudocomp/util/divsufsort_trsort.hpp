@@ -37,59 +37,57 @@ namespace libdivsufsort {
 /*---------------------------------------------------------------------------*/
 
 /* Simple insertionsort for small size groups. */
-inline
-void
-tr_insertionsort(const saidx_t *ISAd, saidx_t *first, saidx_t *last) {
-  saidx_t *a, *b;
+template<typename buffer_t>
+inline void tr_insertionsort(buffer_t& B, const saidx_t ISAd, saidx_t first, saidx_t last) {
+  saidx_t a, b;
   saidx_t t, r;
 
   for(a = first + 1; a < last; ++a) {
-    for(t = *a, b = a - 1; 0 > (r = ISAd[t] - ISAd[*b]);) {
-      do { *(b + 1) = *b; } while((first <= --b) && (*b < 0));
+    for(t = B[a], b = a - 1; 0 > (r = B[ISAd + t] - B[ISAd + B[b]]);) {
+      do { B[b + 1] = B[b]; } while((first <= --b) && (B[b] < 0));
       if(b < first) { break; }
     }
-    if(r == 0) { *b = ~*b; }
-    *(b + 1) = t;
+    if(r == 0) { B[b] = ~B[b]; }
+    B[b + 1] = t;
   }
 }
 
 
 /*---------------------------------------------------------------------------*/
 
-inline
-void
-tr_fixdown(const saidx_t *ISAd, saidx_t *SA, saidx_t i, saidx_t size) {
+template<typename buffer_t>
+inline void tr_fixdown(buffer_t& B, const saidx_t ISAd, saidx_t SA, saidx_t i, saidx_t size) {
   saidx_t j, k;
   saidx_t v;
   saidx_t c, d, e;
 
-  for(v = SA[i], c = ISAd[v]; (j = 2 * i + 1) < size; SA[i] = SA[k], i = k) {
-    d = ISAd[SA[k = j++]];
-    if(d < (e = ISAd[SA[j]])) { k = j; d = e; }
+  for(v = B[SA + i], c = B[ISAd + v]; (j = 2 * i + 1) < size; B[SA + i] = B[SA + k], i = k) {
+    k = j++;
+    d = B[ISAd + B[SA + k]];
+    if(d < (e = B[ISAd + B[SA + j]])) { k = j; d = e; }
     if(d <= c) { break; }
   }
-  SA[i] = v;
+  B[SA + i] = v;
 }
 
 /* Simple top-down heapsort. */
-inline
-void
-tr_heapsort(const saidx_t *ISAd, saidx_t *SA, saidx_t size) {
+template<typename buffer_t>
+inline void tr_heapsort(buffer_t& B, const saidx_t ISAd, saidx_t SA, saidx_t size) {
   saidx_t i, m;
   saidx_t t;
 
   m = size;
   if((size % 2) == 0) {
     m--;
-    if(ISAd[SA[m / 2]] < ISAd[SA[m]]) { SWAP(SA[m], SA[m / 2]); }
+    if(B[ISAd + B[SA + m / 2]] < B[ISAd + B[SA + m]]) { SWAP(B[SA + m], B[SA + m / 2]); }
   }
 
-  for(i = m / 2 - 1; 0 <= i; --i) { tr_fixdown(ISAd, SA, i, m); }
-  if((size % 2) == 0) { SWAP(SA[0], SA[m]); tr_fixdown(ISAd, SA, 0, m); }
+  for(i = m / 2 - 1; 0 <= i; --i) { tr_fixdown(B, ISAd, SA, i, m); }
+  if((size % 2) == 0) { SWAP(B[SA + 0], B[SA + m]); tr_fixdown(B, ISAd, SA, 0, m); }
   for(i = m - 1; 0 < i; --i) {
-    t = SA[0], SA[0] = SA[i];
-    tr_fixdown(ISAd, SA, 0, i);
-    SA[i] = t;
+    t = B[SA + 0], B[SA + 0] = B[SA + i];
+    tr_fixdown(B, ISAd, SA, 0, i);
+    B[SA + i] = t;
   }
 }
 
@@ -97,38 +95,35 @@ tr_heapsort(const saidx_t *ISAd, saidx_t *SA, saidx_t size) {
 /*---------------------------------------------------------------------------*/
 
 /* Returns the median of three elements. */
-inline
-saidx_t *
-tr_median3(const saidx_t *ISAd, saidx_t *v1, saidx_t *v2, saidx_t *v3) {
-  saidx_t *t;
-  if(ISAd[*v1] > ISAd[*v2]) { SWAP(v1, v2); }
-  if(ISAd[*v2] > ISAd[*v3]) {
-    if(ISAd[*v1] > ISAd[*v3]) { return v1; }
+template<typename buffer_t>
+inline saidx_t tr_median3(buffer_t& B, const saidx_t ISAd, saidx_t v1, saidx_t v2, saidx_t v3) {
+  saidx_t t;
+  if(B[ISAd + B[v1]] > B[ISAd + B[v2]]) { SWAP(v1, v2); }
+  if(B[ISAd + B[v2]] > B[ISAd + B[v3]]) {
+    if(B[ISAd + B[v1]] > B[ISAd + B[v3]]) { return v1; }
     else { return v3; }
   }
   return v2;
 }
 
 /* Returns the median of five elements. */
-inline
-saidx_t *
-tr_median5(const saidx_t *ISAd,
-           saidx_t *v1, saidx_t *v2, saidx_t *v3, saidx_t *v4, saidx_t *v5) {
-  saidx_t *t;
-  if(ISAd[*v2] > ISAd[*v3]) { SWAP(v2, v3); }
-  if(ISAd[*v4] > ISAd[*v5]) { SWAP(v4, v5); }
-  if(ISAd[*v2] > ISAd[*v4]) { SWAP(v2, v4); SWAP(v3, v5); }
-  if(ISAd[*v1] > ISAd[*v3]) { SWAP(v1, v3); }
-  if(ISAd[*v1] > ISAd[*v4]) { SWAP(v1, v4); SWAP(v3, v5); }
-  if(ISAd[*v3] > ISAd[*v4]) { return v4; }
+template<typename buffer_t>
+inline saidx_t tr_median5(buffer_t& B, const saidx_t ISAd,
+           saidx_t v1, saidx_t v2, saidx_t v3, saidx_t v4, saidx_t v5) {
+  saidx_t t;
+  if(B[ISAd + B[v2]] > B[ISAd + B[v3]]) { SWAP(v2, v3); }
+  if(B[ISAd + B[v4]] > B[ISAd + B[v5]]) { SWAP(v4, v5); }
+  if(B[ISAd + B[v2]] > B[ISAd + B[v4]]) { SWAP(v2, v4); SWAP(v3, v5); }
+  if(B[ISAd + B[v1]] > B[ISAd + B[v3]]) { SWAP(v1, v3); }
+  if(B[ISAd + B[v1]] > B[ISAd + B[v4]]) { SWAP(v1, v4); SWAP(v3, v5); }
+  if(B[ISAd + B[v3]] > B[ISAd + B[v4]]) { return v4; }
   return v3;
 }
 
 /* Returns the pivot element. */
-inline
-saidx_t *
-tr_pivot(const saidx_t *ISAd, saidx_t *first, saidx_t *last) {
-  saidx_t *middle;
+template<typename buffer_t>
+inline saidx_t tr_pivot(buffer_t& B, const saidx_t ISAd, saidx_t first, saidx_t last) {
+  saidx_t middle;
   saidx_t t;
 
   t = last - first;
@@ -136,17 +131,17 @@ tr_pivot(const saidx_t *ISAd, saidx_t *first, saidx_t *last) {
 
   if(t <= 512) {
     if(t <= 32) {
-      return tr_median3(ISAd, first, middle, last - 1);
+      return tr_median3(B, ISAd, first, middle, last - 1);
     } else {
       t >>= 2;
-      return tr_median5(ISAd, first, first + t, middle, last - 1 - t, last - 1);
+      return tr_median5(B, ISAd, first, first + t, middle, last - 1 - t, last - 1);
     }
   }
   t >>= 3;
-  first  = tr_median3(ISAd, first, first + t, first + (t << 1));
-  middle = tr_median3(ISAd, middle - t, middle, middle + t);
-  last   = tr_median3(ISAd, last - 1 - (t << 1), last - 1 - t, last - 1);
-  return tr_median3(ISAd, first, middle, last);
+  first  = tr_median3(B, ISAd, first, first + t, first + (t << 1));
+  middle = tr_median3(B, ISAd, middle - t, middle, middle + t);
+  last   = tr_median3(B, ISAd, last - 1 - (t << 1), last - 1 - t, last - 1);
+  return tr_median3(B, ISAd, first, middle, last);
 }
 
 
@@ -160,16 +155,12 @@ struct _trbudget_t {
   saidx_t count;
 };
 
-inline
-void
-trbudget_init(trbudget_t *budget, saidx_t chance, saidx_t incval) {
+inline void trbudget_init(trbudget_t *budget, saidx_t chance, saidx_t incval) {
   budget->chance = chance;
   budget->remain = budget->incval = incval;
 }
 
-inline
-saint_t
-trbudget_check(trbudget_t *budget, saidx_t size) {
+inline saint_t trbudget_check(trbudget_t *budget, saidx_t size) {
   if(size <= budget->remain) { budget->remain -= size; return 1; }
   if(budget->chance == 0) { budget->count += size; return 0; }
   budget->remain += budget->incval - size;
@@ -180,119 +171,115 @@ trbudget_check(trbudget_t *budget, saidx_t size) {
 
 /*---------------------------------------------------------------------------*/
 
-inline
-void
-tr_partition(const saidx_t *ISAd,
-             saidx_t *first, saidx_t *middle, saidx_t *last,
-             saidx_t **pa, saidx_t **pb, saidx_t v) {
-  saidx_t *a, *b, *c, *d, *e, *f;
+template<typename buffer_t>
+inline void tr_partition(buffer_t& B, const saidx_t ISAd,
+             saidx_t first, saidx_t middle, saidx_t last,
+             saidx_t *pa, saidx_t *pb, saidx_t v) {
+  saidx_t a, b, c, d, e, f;
   saidx_t t, s;
   saidx_t x = 0;
 
-  for(b = middle - 1; (++b < last) && ((x = ISAd[*b]) == v);) { }
+  for(b = middle - 1; (++b < last) && ((x = B[ISAd + B[b]]) == v);) { }
   if(((a = b) < last) && (x < v)) {
-    for(; (++b < last) && ((x = ISAd[*b]) <= v);) {
-      if(x == v) { SWAP(*b, *a); ++a; }
+    for(; (++b < last) && ((x = B[ISAd + B[b]]) <= v);) {
+      if(x == v) { SWAP(B[b], B[a]); ++a; }
     }
   }
-  for(c = last; (b < --c) && ((x = ISAd[*c]) == v);) { }
+  for(c = last; (b < --c) && ((x = B[ISAd + B[c]]) == v);) { }
   if((b < (d = c)) && (x > v)) {
-    for(; (b < --c) && ((x = ISAd[*c]) >= v);) {
-      if(x == v) { SWAP(*c, *d); --d; }
+    for(; (b < --c) && ((x = B[ISAd + B[c]]) >= v);) {
+      if(x == v) { SWAP(B[c], B[d]); --d; }
     }
   }
   for(; b < c;) {
-    SWAP(*b, *c);
-    for(; (++b < c) && ((x = ISAd[*b]) <= v);) {
-      if(x == v) { SWAP(*b, *a); ++a; }
+    SWAP(B[b], B[c]);
+    for(; (++b < c) && ((x = B[ISAd + B[b]]) <= v);) {
+      if(x == v) { SWAP(B[b], B[a]); ++a; }
     }
-    for(; (b < --c) && ((x = ISAd[*c]) >= v);) {
-      if(x == v) { SWAP(*c, *d); --d; }
+    for(; (b < --c) && ((x = B[ISAd + B[c]]) >= v);) {
+      if(x == v) { SWAP(B[c], B[d]); --d; }
     }
   }
 
   if(a <= d) {
     c = b - 1;
     if((s = a - first) > (t = b - a)) { s = t; }
-    for(e = first, f = b - s; 0 < s; --s, ++e, ++f) { SWAP(*e, *f); }
+    for(e = first, f = b - s; 0 < s; --s, ++e, ++f) { SWAP(B[e], B[f]); }
     if((s = d - c) > (t = last - d - 1)) { s = t; }
-    for(e = b, f = last - s; 0 < s; --s, ++e, ++f) { SWAP(*e, *f); }
+    for(e = b, f = last - s; 0 < s; --s, ++e, ++f) { SWAP(B[e], B[f]); }
     first += (b - a), last -= (d - c);
   }
   *pa = first, *pb = last;
 }
 
-inline
-void
-tr_copy(saidx_t *ISA, const saidx_t *SA,
-        saidx_t *first, saidx_t *a, saidx_t *b, saidx_t *last,
+template<typename buffer_t>
+inline void tr_copy(buffer_t& B, saidx_t ISA, const saidx_t SA,
+        saidx_t first, saidx_t a, saidx_t b, saidx_t last,
         saidx_t depth) {
   /* sort suffixes of middle partition
      by using sorted order of suffixes of left and right partition. */
-  saidx_t *c, *d, *e;
+  saidx_t c, d, e;
   saidx_t s, v;
 
   v = b - SA - 1;
   for(c = first, d = a - 1; c <= d; ++c) {
-    if((0 <= (s = *c - depth)) && (ISA[s] == v)) {
-      *++d = s;
-      ISA[s] = d - SA;
+    if((0 <= (s = B[c] - depth)) && (B[ISA + s] == v)) {
+      B[++d] = s;
+      B[ISA + s] = d - SA;
     }
   }
   for(c = last - 1, e = d + 1, d = b; e < d; --c) {
-    if((0 <= (s = *c - depth)) && (ISA[s] == v)) {
-      *--d = s;
-      ISA[s] = d - SA;
+    if((0 <= (s = B[c] - depth)) && (B[ISA + s] == v)) {
+      B[--d] = s;
+      B[ISA + s] = d - SA;
     }
   }
 }
 
-inline
-void
-tr_partialcopy(saidx_t *ISA, const saidx_t *SA,
-               saidx_t *first, saidx_t *a, saidx_t *b, saidx_t *last,
+template<typename buffer_t>
+inline void tr_partialcopy(buffer_t& B, saidx_t ISA, const saidx_t SA,
+               saidx_t first, saidx_t a, saidx_t b, saidx_t last,
                saidx_t depth) {
-  saidx_t *c, *d, *e;
+  saidx_t c, d, e;
   saidx_t s, v;
   saidx_t rank, lastrank, newrank = -1;
 
   v = b - SA - 1;
   lastrank = -1;
   for(c = first, d = a - 1; c <= d; ++c) {
-    if((0 <= (s = *c - depth)) && (ISA[s] == v)) {
-      *++d = s;
-      rank = ISA[s + depth];
+    if((0 <= (s = B[c] - depth)) && (B[ISA + s] == v)) {
+      B[++d] = s;
+      rank = B[ISA + s + depth];
       if(lastrank != rank) { lastrank = rank; newrank = d - SA; }
-      ISA[s] = newrank;
+      B[ISA + s] = newrank;
     }
   }
 
   lastrank = -1;
   for(e = d; first <= e; --e) {
-    rank = ISA[*e];
+    rank = B[ISA + B[e]];
     if(lastrank != rank) { lastrank = rank; newrank = e - SA; }
-    if(newrank != rank) { ISA[*e] = newrank; }
+    if(newrank != rank) { B[ISA + B[e]] = newrank; }
   }
 
   lastrank = -1;
   for(c = last - 1, e = d + 1, d = b; e < d; --c) {
-    if((0 <= (s = *c - depth)) && (ISA[s] == v)) {
-      *--d = s;
-      rank = ISA[s + depth];
+    if((0 <= (s = B[c] - depth)) && (B[ISA + s] == v)) {
+      B[--d] = s;
+      rank = B[ISA + s + depth];
       if(lastrank != rank) { lastrank = rank; newrank = d - SA; }
-      ISA[s] = newrank;
+      B[ISA + s] = newrank;
     }
   }
 }
 
-inline
-void
-tr_introsort(saidx_t *ISA, const saidx_t *ISAd,
-             saidx_t *SA, saidx_t *first, saidx_t *last,
+template<typename buffer_t>
+inline void tr_introsort(buffer_t& B, saidx_t ISA, saidx_t ISAd,
+             saidx_t SA, saidx_t first, saidx_t last,
              trbudget_t *budget) {
 #define STACK_SIZE TR_STACKSIZE
-  struct { const saidx_t *a; saidx_t *b, *c; saint_t d, e; }stack[STACK_SIZE];
-  saidx_t *a, *b, *c;
+  struct { saidx_t a, b, c; saint_t d, e; }stack[STACK_SIZE];
+  saidx_t a, b, c;
   saidx_t t;
   saidx_t v, x = 0;
   saidx_t incr = ISAd - ISA;
@@ -304,19 +291,19 @@ tr_introsort(saidx_t *ISA, const saidx_t *ISAd,
     if(limit < 0) {
       if(limit == -1) {
         /* tandem repeat partition */
-        tr_partition(ISAd - incr, first, first, last, &a, &b, last - SA - 1);
+        tr_partition(B, ISAd - incr, first, first, last, &a, &b, last - SA - 1);
 
         /* update ranks */
         if(a < last) {
-          for(c = first, v = a - SA - 1; c < a; ++c) { ISA[*c] = v; }
+          for(c = first, v = a - SA - 1; c < a; ++c) { B[ISA + B[c]] = v; }
         }
         if(b < last) {
-          for(c = a, v = b - SA - 1; c < b; ++c) { ISA[*c] = v; }
+          for(c = a, v = b - SA - 1; c < b; ++c) { B[ISA + B[c]] = v; }
         }
 
         /* push */
         if(1 < (b - a)) {
-          STACK_PUSH5(NULL, a, b, 0, 0);
+          STACK_PUSH5(-1, a, b, 0, 0); //TODO: is -1 instead of NULL good?
           STACK_PUSH5(ISAd - incr, first, last, -2, trlink);
           trlink = ssize - 2;
         }
@@ -343,23 +330,23 @@ tr_introsort(saidx_t *ISA, const saidx_t *ISAd,
         /* tandem repeat copy */
         a = stack[--ssize].b, b = stack[ssize].c;
         if(stack[ssize].d == 0) {
-          tr_copy(ISA, SA, first, a, b, last, ISAd - ISA);
+          tr_copy(B, ISA, SA, first, a, b, last, ISAd - ISA);
         } else {
           if(0 <= trlink) { stack[trlink].d = -1; }
-          tr_partialcopy(ISA, SA, first, a, b, last, ISAd - ISA);
+          tr_partialcopy(B, ISA, SA, first, a, b, last, ISAd - ISA);
         }
         STACK_POP5(ISAd, first, last, limit, trlink);
       } else {
         /* sorted partition */
-        if(0 <= *first) {
+        if(0 <= B[first]) {
           a = first;
-          do { ISA[*a] = a - SA; } while((++a < last) && (0 <= *a));
+          do { B[ISA + B[a]] = a - SA; } while((++a < last) && (0 <= B[a]));
           first = a;
         }
         if(first < last) {
-          a = first; do { *a = ~*a; } while(*++a < 0);
-          next = (ISA[*a] != ISAd[*a]) ? ilg<saidx_t>(a - first + 1) : -1;
-          if(++a < last) { for(b = first, v = a - SA - 1; b < a; ++b) { ISA[*b] = v; } }
+          a = first; do { B[a] = ~B[a]; } while(B[++a] < 0);
+          next = (B[ISA + B[a]] != B[ISAd + B[a]]) ? ilg<saidx_t>(a - first + 1) : -1;
+          if(++a < last) { for(b = first, v = a - SA - 1; b < a; ++b) { B[ISA + B[b]] = v; } }
 
           /* push */
           if(trbudget_check(budget, a - first)) {
@@ -390,33 +377,33 @@ tr_introsort(saidx_t *ISA, const saidx_t *ISAd,
     }
 
     if((last - first) <= TR_INSERTIONSORT_THRESHOLD) {
-      tr_insertionsort(ISAd, first, last);
+      tr_insertionsort(B, ISAd, first, last);
       limit = -3;
       continue;
     }
 
     if(limit-- == 0) {
-      tr_heapsort(ISAd, first, last - first);
+      tr_heapsort(B, ISAd, first, last - first);
       for(a = last - 1; first < a; a = b) {
-        for(x = ISAd[*a], b = a - 1; (first <= b) && (ISAd[*b] == x); --b) { *b = ~*b; }
+        for(x = B[ISAd + B[a]], b = a - 1; (first <= b) && (B[ISAd + B[b]] == x); --b) { B[b] = ~B[b]; }
       }
       limit = -3;
       continue;
     }
 
     /* choose pivot */
-    a = tr_pivot(ISAd, first, last);
-    SWAP(*first, *a);
-    v = ISAd[*first];
+    a = tr_pivot(B, ISAd, first, last);
+    SWAP(B[first], B[a]);
+    v = B[ISAd + B[first]];
 
     /* partition */
-    tr_partition(ISAd, first, first + 1, last, &a, &b, v);
+    tr_partition(B, ISAd, first, first + 1, last, &a, &b, v);
     if((last - first) != (b - a)) {
-      next = (ISA[*a] != v) ? ilg<saidx_t>(b - a) : -1;
+      next = (B[ISA + B[a]] != v) ? ilg<saidx_t>(b - a) : -1;
 
       /* update ranks */
-      for(c = first, v = a - SA - 1; c < a; ++c) { ISA[*c] = v; }
-      if(b < last) { for(c = a, v = b - SA - 1; c < b; ++c) { ISA[*c] = v; } }
+      for(c = first, v = a - SA - 1; c < a; ++c) { B[ISA + B[c]] = v; }
+      if(b < last) { for(c = a, v = b - SA - 1; c < b; ++c) { B[ISA + B[c]] = v; } }
 
       /* push */
       if((1 < (b - a)) && (trbudget_check(budget, b - a))) {
@@ -514,27 +501,26 @@ tr_introsort(saidx_t *ISA, const saidx_t *ISAd,
 /*- Function -*/
 
 /* Tandem repeat sort */
-inline void
-trsort(saidx_t *ISA, saidx_t *SA, saidx_t n, saidx_t depth) {
-  saidx_t *ISAd;
-  saidx_t *first, *last;
+template<typename buffer_t>
+inline void trsort(buffer_t& B, saidx_t ISA, saidx_t SA, saidx_t n, saidx_t depth) {
+  saidx_t ISAd;
+  saidx_t first, last;
   trbudget_t budget;
   saidx_t t, skip, unsorted;
 
   trbudget_init(&budget, ilg<saidx_t>(n) * 2 / 3, n);
-/*  trbudget_init(&budget, tr_ilg<saidx_t>(n) * 3 / 4, n); */
-  for(ISAd = ISA + depth; -n < *SA; ISAd += ISAd - ISA) {
+  for(ISAd = ISA + depth; -n < B[SA]; ISAd += ISAd - ISA) {
     first = SA;
     skip = 0;
     unsorted = 0;
     do {
-      if((t = *first) < 0) { first -= t; skip += t; }
+      if((t = B[first]) < 0) { first -= t; skip += t; }
       else {
-        if(skip != 0) { *(first + skip) = skip; skip = 0; }
-        last = SA + ISA[t] + 1;
+        if(skip != 0) { B[first + skip] = skip; skip = 0; }
+        last = SA + B[ISA + t] + 1;
         if(1 < (last - first)) {
           budget.count = 0;
-          tr_introsort(ISA, ISAd, SA, first, last, &budget);
+          tr_introsort(B, ISA, ISAd, SA, first, last, &budget);
           if(budget.count != 0) { unsorted += budget.count; }
           else { skip = first - last; }
         } else if((last - first) == 1) {
@@ -543,7 +529,7 @@ trsort(saidx_t *ISA, saidx_t *SA, saidx_t n, saidx_t depth) {
         first = last;
       }
     } while(first < (SA + n));
-    if(skip != 0) { *(first + skip) = skip; }
+    if(skip != 0) { B[first + skip] = skip; }
     if(unsorted == 0) { break; }
   }
 }
