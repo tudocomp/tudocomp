@@ -16,7 +16,7 @@ inline std::string file_get_contents(const std::string& filename) {
 }
 
 //get suffix tree for text
-inline tdc::STLz78u suffix_tree(const std::string& text, tdc::STLz78u::cst_t& cst) {
+inline tdc::SuffixTree suffix_tree(const std::string& text, tdc::SuffixTree::cst_t& cst) {
 	construct_im(cst, text, 1);
-    return tdc::STLz78u(cst);
+    return tdc::SuffixTree(cst);
 }
