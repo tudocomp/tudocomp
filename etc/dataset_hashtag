@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# HashTag Datasets, see http://acube.di.unipi.it/datasets/
+OUT_PNC=$OUT/hashtag
+
+PNC_URL="http://acube.di.unipi.it/repo"
+PNC_TEXTS="he-graph/graph/he-graph.txt.gz he-graph/relatedness/pairs.tsv he-graph/classification/crowdflower.tsv"
+PNC_PREFIXES="200 100 50 10 1"

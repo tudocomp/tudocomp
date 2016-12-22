@@ -31,23 +31,29 @@ OUT_TMP=$OUT/tmp
 mkdir -p $OUT_TMP
 
 for T in $PNC_TEXTS; do
+    # filename of download file
+    F_TMP=$OUT_TMP/`basename $T`
+
+    # filename for final dataset file
+    # removes .gz endings for files that need to be decompressed
+    if [[ $F_TMP == *.gz ]]; then
+        F=$OUT_PNC/`basename $T .gz`
+    else
+        F=$OUT_PNC/`basename $T`
+    fi
 
     # download base file if necessary
-    F=$OUT_PNC/`basename $T`
-    F_TMP=$OUT_TMP/`basename $T`
     if [ ! -f $F ]; then
         # make sure we don't get partial downloads by preventing the
         # script from executing further
         set -e
 
-        if [ $PNC_FORMAT == gz ]; then
-            URL=$PNC_URL/$T.gz
-            wget -c -P $OUT_TMP $URL
-            gzip -d $F_TMP.gz
-        fi
-        if [ $PNC_FORMAT == plain ]; then
-            URL=$PNC_URL/$T
-            wget -c -P $OUT_TMP $URL
+        URL=$PNC_URL/$T
+        wget -c -P $OUT_TMP $URL
+
+        if [[ $F_TMP == *.gz ]]; then
+            gzip -d $F_TMP
+            F_TMP=$OUT_TMP/`basename $T .gz`
         fi
 
         mv $F_TMP $F

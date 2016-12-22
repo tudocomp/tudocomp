@@ -4,6 +4,5 @@
 OUT_PNC=$OUT/tagme
 
 PNC_URL="http://acube.di.unipi.it/repo"
-PNC_TEXTS="wiki-annot30 wiki-disamb30"
+PNC_TEXTS="wiki-annot30.gz wiki-disamb30.gz"
 PNC_PREFIXES="200 100 50 10 1"
-PNC_FORMAT=gz

@@ -6,4 +6,3 @@ OUT_PNC=$OUT/gerdaq
 PNC_URL="https://raw.githubusercontent.com/marcocor/bat-framework/master/src/main/resources/datasets/gerdaq_1.0"
 PNC_TEXTS="/gerdaq_devel.xml gerdaq_test.xml gerdaq_trainingA.xml gerdaq_trainingB.xml"
 PNC_PREFIXES="200 100 50 10 1"
-PNC_FORMAT=plain
