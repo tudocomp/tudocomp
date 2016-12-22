@@ -113,9 +113,9 @@ public:
     inline void require(uint64_t flags) {
         //Step 1: construct
         if(flags & SA) require_sa();
-        if(flags & ISA) require_isa();
         if(flags & Phi) require_phi();
         if(flags & LCP) require_lcp();
+        if(flags & ISA) require_isa();
 
         //Step 2: release unwanted (may have been constructed beforehand)
         if(!(flags & SA)) release_sa();
