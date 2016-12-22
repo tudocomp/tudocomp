@@ -49,9 +49,10 @@ public:
         auto iview = input.as_view();
         View T = iview;
 
-        TextDS<> ds { T, env(), TextDS<>::ISA};
+        /*TextDS<> ds { T, env(), TextDS<>::ISA};
         auto isa_p = ds.release_isa();
         auto& ISA = *isa_p;
+*/
 
         cst_t::cst_t backing_cst;
         {
@@ -71,7 +72,7 @@ public:
         R.reserve(backing_cst.nodes());
         R.resize(backing_cst.nodes());
 
-        size_t pos = 1;
+        size_t pos = 0;
         size_t z = 0;
 
         // tx: a a a b a b a a a b a a b a b a $
@@ -81,15 +82,33 @@ public:
             return ST.cst.sn(v);
         };
 
-        auto lambda = [&ST, &pos, &T, &label](const node_type& l1, const node_type& l2) -> View {
-            auto offset_node = ST.cst.leftmost_leaf(l2);
-            size_t offset = label(offset_node);
+
+
+        auto parent = [&ST](const node_type& n) {
+            return ST.parent(n);
+        };
+
+        auto leaf_select = [&ST](const size_t& pos) {
+            return ST.cst.select_leaf(pos + 1);
+        };
+
+        auto level_anc = [&ST](const node_type& n, size_t d) {
+            return ST.level_anc(n, d);
+        };
+
+        while (pos <= T.size()) {
+            //auto l = leaf_select(ISA[pos]);
+            //DCHECK_EQ(ISA[pos], ST.cst.csa.isa[pos]);
+            const auto l = leaf_select(ST.cst.csa.isa[pos]);
+            const len_t leaflabel = pos;
+        auto lambda = [&ST, &pos, &T, &leaflabel](const node_type& l1, const node_type& l2) -> View {
+            //auto offset_node = ST.cst.leftmost_leaf(l2);
 
             size_t depth1 = ST.str_depth(l1);
             size_t depth2 = ST.str_depth(l2);
 
-            size_t start = offset + depth1;
-            size_t end = offset + depth2;
+            size_t start = leaflabel + depth1;
+            size_t end = leaflabel + depth2;
 
             auto v = T.substr(start, end);
 
@@ -98,20 +117,7 @@ public:
             return v;
         };
 
-        auto parent = [&ST](const node_type& n) {
-            return ST.parent(n);
-        };
 
-        auto leaf_select = [&ST](const size_t& pos) {
-            return ST.cst.select_leaf(pos);
-        };
-
-        auto level_anc = [&ST](const node_type& n, size_t d) {
-            return ST.level_anc(n, d);
-        };
-
-        while (pos <= T.size()) {
-            auto l = leaf_select(ISA[pos]);
 
             if (R[parent(l)] != 0) {
                 std::cout << "out l c: " << int(lambda(parent(l), l)[0]) << "\n";
@@ -129,7 +135,7 @@ public:
 
                 std::cout << "out m s: " << vec_to_debug_string(lambda(parent(node), node)) << "\n";
                 std::cout << "out m r: " << int(R[parent(node)]) << "\n";
-                pos += lambda(parent(node), node).size();
+                //pos += lambda(parent(node), node).size();
             }
         }
 
