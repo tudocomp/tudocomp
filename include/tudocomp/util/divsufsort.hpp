@@ -33,6 +33,8 @@
 #include <tudocomp/util/divsufsort_ssort.hpp>
 #include <tudocomp/util/divsufsort_trsort.hpp>
 
+#include <tudocomp/ds/IntVector.hpp>
+
 namespace tdc {
 namespace libdivsufsort {
 
@@ -223,6 +225,101 @@ inline void construct_SA(
   }
 }
 
+// Wrapper for buffers with unsigned value types
+template<typename buffer_t>
+class BufferWrapper {
+private:
+    buffer_t& m_buffer;
+
+    class Accessor {
+    private:
+        buffer_t& m_buffer;
+        saidx_t m_index;
+
+    public:
+        inline Accessor(buffer_t& buffer, saidx_t i) : m_buffer(buffer), m_index(i) {}
+        inline operator saidx_t() { return saidx_t(m_buffer[m_index]); }
+        inline Accessor& operator=(saidx_t v) { m_buffer[m_index] = v; return *this; }
+
+        inline Accessor& operator=(const Accessor& other) {
+            m_buffer[m_index] = other.m_buffer[other.m_index];
+            return *this;
+        }
+    };
+
+public:
+    BufferWrapper(buffer_t& buffer) : m_buffer(buffer) {}
+    inline Accessor operator[](saidx_t i) { return Accessor(m_buffer, i); }
+};
+
+// special accessor for DynamicIntVector, where sign casts are not that simple
+template<>
+class BufferWrapper<DynamicIntVector>::Accessor {
+    private:
+        DynamicIntVector& m_buffer;
+        saidx_t m_index;
+
+        // upper value bounds for bit width
+        const uint64_t m_upper, m_upper_signed;
+
+        inline saidx_t to_signed(uint64_t v) {
+            return (v >= m_upper_signed) ? -(m_upper - v) : v;
+        }
+
+        inline uint64_t to_unsigned(saidx_t v) {
+            return (v < 0) ? (m_upper + v) : v;
+        }
+
+    public:
+        inline Accessor(DynamicIntVector& buffer, saidx_t i)
+            : m_buffer(buffer), m_index(i),
+              m_upper(1ULL << buffer.width()),
+              m_upper_signed(m_upper >> 1ULL)
+        {
+        }
+
+        inline operator saidx_t() { return to_signed(m_buffer[m_index]); }
+        inline Accessor& operator=(saidx_t v) { m_buffer[m_index] = to_unsigned(v); return *this; }
+
+        inline Accessor& operator=(const Accessor& other) {
+            m_buffer[m_index] = other.m_buffer[other.m_index];
+            return *this;
+        }
+};
+
+// the actual divsufsort execution
+template<typename buffer_t>
+inline void divsufsort_run(
+    const sauchar_t* T, buffer_t& SA,
+    saidx_t *bucket_A, saidx_t *bucket_B, saidx_t n) {
+
+    // sign check
+    SA[0] = -1; DCHECK(SA[0] < 0) << "only signed integer buffers are supported";
+
+    saidx_t m = sort_typeBstar(T, SA, bucket_A, bucket_B, n);
+    construct_SA(T, SA, bucket_A, bucket_B, n, m);
+}
+
+// specialize for len_t vectors
+template<>
+inline void divsufsort_run<std::vector<len_t>>(
+    const sauchar_t* T, std::vector<len_t>& SA,
+    saidx_t *bucket_A, saidx_t *bucket_B, saidx_t n) {
+
+    BufferWrapper<std::vector<len_t>> wrapSA(SA);
+    divsufsort_run(T, wrapSA, bucket_A, bucket_B, n);
+}
+
+// specialize for DynamicIntVector
+template<>
+inline void divsufsort_run<DynamicIntVector>(
+    const sauchar_t* T, DynamicIntVector& SA,
+    saidx_t *bucket_A, saidx_t *bucket_B, saidx_t n) {
+
+    BufferWrapper<DynamicIntVector> wrapSA(SA);
+    divsufsort_run(T, wrapSA, bucket_A, bucket_B, n);
+}
+
 // from divsufsort.c
 template<typename buffer_t>
 inline saint_t divsufsort(const sauchar_t* T, buffer_t& SA, saidx_t n) {
@@ -236,16 +333,12 @@ inline saint_t divsufsort(const sauchar_t* T, buffer_t& SA, saidx_t n) {
   else if(n == 1) { SA[0] = 0; return 0; }
   else if(n == 2) { m = (T[0] < T[1]); SA[m ^ 1] = 0, SA[m] = 1; return 0; }
 
-  // signed test
-  SA[0] = -1; DCHECK(SA[0] < 0) << "unsigned integer buffers are not supported";
-
   bucket_A = new saidx_t[BUCKET_A_SIZE];
   bucket_B = new saidx_t[BUCKET_B_SIZE];
 
   /* Suffixsort. */
   if((bucket_A != NULL) && (bucket_B != NULL)) {
-      m = sort_typeBstar(T, SA, bucket_A, bucket_B, n);
-      construct_SA(T, SA, bucket_A, bucket_B, n, m);
+      divsufsort_run(T, SA, bucket_A, bucket_B, n);
   } else {
       err = -2;
   }
