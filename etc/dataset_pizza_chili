@@ -1,8 +1,15 @@
 #!/bin/bash
 
 # Pizza&Chili Corpus text collection
-OUT_PNC=$OUT/pizza_chili
+OUT_DIR=pizza_chili
+PREFIX_SIZES="200 100 50 10 1"
 
-PNC_URL="http://pizzachili.dcc.uchile.cl/texts"
-PNC_TEXTS="code/sources.gz music/pitches.gz protein/proteins.gz dna/dna.gz nlang/english.gz xml/dblp.xml.gz"
-PNC_PREFIXES="200 100 50 10 1"
+URL="http://pizzachili.dcc.uchile.cl/texts"
+URLS=(
+    "$URL/code/sources.gz"
+    "$URL/music/pitches.gz"
+    "$URL/protein/proteins.gz"
+    "$URL/dna/dna.gz"
+    "$URL/nlang/english.gz"
+    "$URL/xml/dblp.xml.gz"
+)

@@ -1,11 +1,10 @@
 #!/bin/bash
 
 # TagMyNews Datasets, see http://acube.di.unipi.it/datasets/
-OUT_PNC=$OUT/tagmynews
+OUT_DIR=tagmynews
+PREFIX_SIZES="200 100 50 10 1"
 
-# not included atm because it has a non-single-texfile format:
-#http://jwebpro.sourceforge.net/data-web-snippets.tar.gz
-
-PNC_URL="http://acube.di.unipi.it/repo"
-PNC_TEXTS="news.gz"
-PNC_PREFIXES="200 100 50 10 1"
+URLS=(
+    "http://acube.di.unipi.it/repo/news.gz"
+    "http://jwebpro.sourceforge.net/data-web-snippets.tar.gz"
+)

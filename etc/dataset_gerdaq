@@ -1,8 +1,13 @@
 #!/bin/bash
 
 # GERDAQ Datasets, see http://acube.di.unipi.it/datasets/
-OUT_PNC=$OUT/gerdaq
+OUT_DIR=gerdaq
+PREFIX_SIZES="200 100 50 10 1"
 
-PNC_URL="https://raw.githubusercontent.com/marcocor/bat-framework/master/src/main/resources/datasets/gerdaq_1.0"
-PNC_TEXTS="/gerdaq_devel.xml gerdaq_test.xml gerdaq_trainingA.xml gerdaq_trainingB.xml"
-PNC_PREFIXES="200 100 50 10 1"
+URL="https://raw.githubusercontent.com/marcocor/bat-framework/master/src/main/resources/datasets/gerdaq_1.0"
+URLS=(
+    "$URL/gerdaq_devel.xml"
+    "$URL/gerdaq_test.xml"
+    "$URL/gerdaq_trainingA.xml"
+    "$URL/gerdaq_trainingB.xml"
+)

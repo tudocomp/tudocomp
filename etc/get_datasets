@@ -11,6 +11,10 @@ if [ -z "$2" ]; then
     exit 1
 fi
 
+if [ ! -e "$1" ]; then
+    mkdir -p $1
+fi
+
 if [ ! -d "$1" ]; then
     echo "Not a directory: $1"
     exit 1
@@ -25,12 +29,13 @@ OUT=${1%/}
 
 source "$2"
 
+OUT_PNC=$OUT/$OUT_DIR
 mkdir -p $OUT_PNC
 
 OUT_TMP=$OUT/tmp
 mkdir -p $OUT_TMP
 
-for T in $PNC_TEXTS; do
+for T in ${URLS[@]}; do
     # filename of download file
     F_TMP=$OUT_TMP/`basename $T`
 
@@ -48,8 +53,7 @@ for T in $PNC_TEXTS; do
         # script from executing further
         set -e
 
-        URL=$PNC_URL/$T
-        wget -c -P $OUT_TMP $URL
+        wget -c -P $OUT_TMP $T
 
         # decompress .gz files
         if [[ $F_TMP == *.gz ]]; then
@@ -65,7 +69,7 @@ for T in $PNC_TEXTS; do
     if [ -f $F ]; then
         F_MB=$((`stat -c %s $F`/1024/1024))
 
-        for S in $PNC_PREFIXES; do
+        for S in $PREFIX_SIZES; do
             if [ $F_MB -ge $S ]; then
                 FP=${F}.${S}MB
                 if [ ! -f $FP ]; then
