@@ -10,6 +10,7 @@ endmacro(dataset_target)
 
 dataset_target(pizza_chili)
 dataset_target(tagme)
+dataset_target(gerdaq)
 
 # Don't build this automatically
 set_target_properties(datasets PROPERTIES EXCLUDE_FROM_ALL true)

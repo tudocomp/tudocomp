@@ -27,15 +27,31 @@ source "$2"
 
 mkdir -p $OUT_PNC
 
+OUT_TMP=$OUT/tmp
+mkdir -p $OUT_TMP
+
 for T in $PNC_TEXTS; do
 
     # download base file if necessary
     F=$OUT_PNC/`basename $T`
+    F_TMP=$OUT_TMP/`basename $T`
     if [ ! -f $F ]; then
-        URL=$PNC_URL/$T.gz
+        # make sure we don't get partial downloads by preventing the
+        # script from executing further
+        set -e
 
-        wget -c -P $OUT_PNC $PNC_URL/$T.gz
-        gzip -d $F.gz
+        if [ $PNC_FORMAT == gz ]; then
+            URL=$PNC_URL/$T.gz
+            wget -c -P $OUT_TMP $URL
+            gzip -d $F_TMP.gz
+        fi
+        if [ $PNC_FORMAT == plain ]; then
+            URL=$PNC_URL/$T
+            wget -c -P $OUT_TMP $URL
+        fi
+
+        mv $F_TMP $F
+        set +e
     fi
 
     # generate prefixes

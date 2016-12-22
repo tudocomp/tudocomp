@@ -6,3 +6,4 @@ OUT_PNC=$OUT/pizza_chili
 PNC_URL="http://pizzachili.dcc.uchile.cl/texts"
 PNC_TEXTS="code/sources music/pitches protein/proteins dna/dna nlang/english xml/dblp.xml"
 PNC_PREFIXES="200 100 50 10 1"
+PNC_FORMAT=gz

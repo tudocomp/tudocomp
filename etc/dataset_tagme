@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# TAGME Datasets
+# TAGME Datasets, see http://acube.di.unipi.it/datasets/
 OUT_PNC=$OUT/tagme
 
 PNC_URL="http://acube.di.unipi.it/repo"
 PNC_TEXTS="wiki-annot30 wiki-disamb30"
 PNC_PREFIXES="200 100 50 10 1"
+PNC_FORMAT=gz
