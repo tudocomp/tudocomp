@@ -236,6 +236,9 @@ inline saint_t divsufsort(const sauchar_t* T, buffer_t& SA, saidx_t n) {
   else if(n == 1) { SA[0] = 0; return 0; }
   else if(n == 2) { m = (T[0] < T[1]); SA[m ^ 1] = 0, SA[m] = 1; return 0; }
 
+  // signed test
+  SA[0] = -1; DCHECK(SA[0] < 0) << "unsigned integer buffers are not supported";
+
   bucket_A = new saidx_t[BUCKET_A_SIZE];
   bucket_B = new saidx_t[BUCKET_B_SIZE];
 
