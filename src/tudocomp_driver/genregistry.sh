@@ -43,7 +43,7 @@ esa_coder=(
 )
 
 function ex {
-	local -a 'arr=("${!'"$1"'[@]}")' 
+	local -a 'arr=("${!'"$1"'[@]}")'
 	local ins="$1"'[arg]'
 	for arg in ${arr[@]}; do
 		echo "${!ins}"
@@ -75,7 +75,7 @@ else
 	regr '' $@ |
 	while read line; do
 		echo "  r.register_compressor<$compressor<${line:1}>>();"
-	done 
+	done
 fi
 echo ''
 }
