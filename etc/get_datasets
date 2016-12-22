@@ -51,6 +51,7 @@ for T in $PNC_TEXTS; do
         URL=$PNC_URL/$T
         wget -c -P $OUT_TMP $URL
 
+        # decompress .gz files
         if [[ $F_TMP == *.gz ]]; then
             gzip -d $F_TMP
             F_TMP=$OUT_TMP/`basename $T .gz`
