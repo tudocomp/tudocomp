@@ -1,5 +1,9 @@
 add_custom_target(datasets
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get_datasets ${CMAKE_CURRENT_SOURCE_DIR}/datasets
+    DEPENDS datasets_pizza_chili
+)
+
+add_custom_target(datasets_pizza_chili
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get_datasets_pizza_chili ${CMAKE_CURRENT_SOURCE_DIR}/datasets
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
