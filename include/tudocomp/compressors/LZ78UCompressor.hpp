@@ -49,9 +49,7 @@ public:
         }
         SuffixTree ST(backing_cst);
 
-        std::vector<size_t> R;
-        R.reserve(backing_cst.nodes());
-        R.resize(backing_cst.nodes());
+		len_t* R = new len_t[ST.internal_nodes];
 
         len_t pos = 0;
         len_t z = 0;
@@ -66,37 +64,19 @@ public:
             const len_t leaflabel = pos;
 			std::cout << "Selecting leaf " << l << " with label " << leaflabel << std::endl;
 
-			auto lambda = [&ST, &T, &leaflabel](const node_type& a, const node_type& b) -> View {
-				std::cout << "calling lambda(" << a << ", " << b << ") " << std::endl;
-				//auto offset_node = ST.cst.leftmost_leaf(l2);
-				DCHECK_EQ(ST.parent(b), a);
-
-				size_t depth1 = ST.str_depth(a);
-				size_t depth2 = ST.str_depth(b);
-
-				size_t start = leaflabel + depth1;
-				size_t end = leaflabel + depth2;
-
-				auto v = T.substr(start, end);
-
-				std::cout << "extracted T[" << start << ", " << end << "]: " << v << " of size " << v.size() << "\n";
-
-				return v;
-			};
-
 			std::cout << "Checking parent " << ST.parent(l) << " with R[parent] = " << R[ST.nid(ST.parent(l))] << std::endl;
             if(ST.parent(l) == ST.root || R[ST.nid(ST.parent(l))] != 0) {
-				DCHECK_EQ(T[pos + ST.str_depth(ST.parent(l))], lambda(ST.parent(l), l)[0]);
-                std::cout << "out l c: " << int(lambda(ST.parent(l), l)[0]) << "\n";
+//				DCHECK_EQ(T[pos + ST.str_depth(ST.parent(l))], lambda(ST.parent(l), l)[0]);
+                std::cout << "out l c: " << int(T[pos + ST.str_depth(ST.parent(l))]) << "\n";
                 std::cout << "out l r: " << int(0) << "\n";
 				++pos;
 				++z;
 				continue;
 			} 
-			size_t d = 1;
+			len_t d = 1;
 			node_t parent = ST.root;
 			node_t node = ST.level_anc(l, d);
-			while (R[ST.nid(node)] != 0) {
+			while(R[ST.nid(node)] != 0) {
 				//					DCHECK_EQ(lambda(parent, node).size(), ST.str_depth(node) - ST.str_depth(parent));
 				//                  pos += lambda(parent, node).size();
 				pos += ST.str_depth(node) - ST.str_depth(parent);
@@ -107,12 +87,15 @@ public:
 			R[ST.nid(node)] = ++z;
 			std::cout << "Setting R[" << node << "] to " << z << std::endl;
 
-			const auto& str = lambda(parent, node);
+			std::cout << "Extracting substring for nodes (" << parent << ", " << node << ") " << std::endl;
+			const auto& str = T.substr(leaflabel + ST.str_depth(parent), leaflabel + ST.str_depth(node));
+			std::cout << "extracted T[" << (leaflabel + ST.str_depth(parent)) << ", " << (leaflabel + ST.str_depth(node)) << "]: " << str << " of size " << str.size() << "\n";
 
 			std::cout << "out m s: " << vec_to_debug_string(str) << "\n";
 			std::cout << "out m r: " << int(R[ST.nid(ST.parent(node))]) << "\n";
 			pos += str.size();
         }
+		delete [] R;
 
         env().end_stat_phase();
     }
