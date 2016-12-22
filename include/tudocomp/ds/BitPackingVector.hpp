@@ -166,6 +166,7 @@ namespace int_vector {
             BitPackingVector()
         {
             this->set_width_raw(width);
+            this->bit_reserve(n * width);
             this->resize(n, val);
         }
 
@@ -517,6 +518,7 @@ namespace int_vector {
         }
 
         inline void width(uint8_t w) {
+            this->bit_reserve(this->size() * w);
             this->resize(this->size(), 0, w);
         }
 

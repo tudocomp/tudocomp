@@ -1215,6 +1215,7 @@ TEST(generic_int_vector, dynamic_t_extra) {
     e.bit_reserve(1024);
     ASSERT_GE(e.bit_capacity(), 1024);
 
+    e.reserve(5, 10);
 }
 
 template<size_t N>
