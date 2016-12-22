@@ -1,13 +1,12 @@
 #pragma once
 
-#include <sdsl/int_vector.hpp>
-
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/def.hpp>
 #include "forward.hpp"
 
 #include <tudocomp/util/divsufsort.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
 
@@ -15,7 +14,7 @@ template<class T>
 class SuffixArray {
 
 public:
-    typedef sdsl::int_vector<> iv_t;
+    typedef DynamicIntVector iv_t;
 
 private:
     iv_t m_sa;
@@ -30,11 +29,11 @@ public:
         return m_sa;
     }
 
-    inline iv_t::value_type operator[](iv_t::size_type i) const {
+    inline len_t operator[](size_t i) const {
         return m_sa[i];
     }
 
-    inline iv_t::size_type size() const {
+    inline size_t size() const {
         return m_sa.size();
     }
 
@@ -49,18 +48,15 @@ void SuffixArray<T>::construct(T& t) {
 	const size_t len = t.size();
 	DCHECK_EQ(t[len-1],0);
 
+    //Allocate
+    const size_t w = bits_for(len);
+	m_sa = iv_t(len, 0, w + 1); //divsufsort needs one additional bit for signs
+
 	//Use divsufsort to construct
-	std::vector<saidx_t> sa(len);
-	divsufsort(t.text(), sa, len);
+	divsufsort(t.text(), m_sa, len);
 
-	//Bit compress using SDSL
-	const size_t w = bits_for(len);
-	m_sa = iv_t(len, 0, w);
-
-	for(size_t i = 0; i < len; i++) {
-		m_sa[i]  = sa[i];
-        DCHECK_LT(m_sa[i], len);
-	}
+    //Shrink to required width
+    m_sa.width(w);
 }
 
 }//ns
