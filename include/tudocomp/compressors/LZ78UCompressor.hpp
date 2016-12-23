@@ -71,7 +71,7 @@ public:
             if(ST.parent(l) == ST.root || R[ST.nid(ST.parent(l))] != 0) {
 //				DCHECK_EQ(T[pos + ST.str_depth(ST.parent(l))], lambda(ST.parent(l), l)[0]);
                 std::cout << "out l c: " << int(T[pos + ST.str_depth(ST.parent(l))]) << "\n";
-                std::cout << "out l r: " << int(0) << "\n";
+                std::cout << "out l r: " << int(R[ST.nid(ST.parent(l))]) << "\n";
 				++pos;
 				++z;
 				continue;
