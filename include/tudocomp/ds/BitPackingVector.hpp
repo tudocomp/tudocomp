@@ -152,6 +152,7 @@ namespace int_vector {
             this->m_real_size = n;
             size_t converted_size = bits2backing(elem2bits(this->m_real_size));
             this->m_vec = std::vector<internal_data_type>(converted_size);
+            DCHECK_EQ(converted_size, this->m_vec.capacity());
         }
         inline BitPackingVector(size_type n, const value_type& val): BitPackingVector(n) {
             auto ptr = this->m_vec.data();
@@ -166,8 +167,10 @@ namespace int_vector {
             BitPackingVector()
         {
             this->set_width_raw(width);
-            this->bit_reserve(n * width);
+            this->reserve(n);
             this->resize(n, val);
+            DCHECK_EQ(this->m_vec.size(), bits2backing(elem2bits(n)));
+            DCHECK_EQ(this->m_vec.size(), this->m_vec.capacity());
         }
 
         template <class InputIterator>
@@ -588,6 +591,10 @@ namespace int_vector {
 
         inline void bit_reserve(uint64_t n) {
             this->m_vec.reserve(bits2backing(n));
+        }
+
+        inline void reserve(uint64_t n, uint8_t w) {
+            this->bit_reserve(n * w);
         }
     };
 
