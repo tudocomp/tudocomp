@@ -8,8 +8,8 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
-#include <tudocomp/ds/st.hpp>
-#include <tudocomp/ds/st_util.hpp>
+#include <tudocomp/ds/SuffixTree.hpp>
+//#include <tudocomp/ds/st_util.hpp>
 
 namespace tdc {
 
