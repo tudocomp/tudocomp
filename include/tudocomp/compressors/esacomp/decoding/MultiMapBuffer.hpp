@@ -131,7 +131,7 @@ public:
                 }
             }
 			tdc_stats(max_size = std::max(max_size, m_fwd.bucket_count()));
-			if(tdc_stats((j+1) % (factors/5) == 0 )) {
+			if(tdc_stats((j+1) % ((factors+5)/5) == 0 )) {
 				env().log_stat("hash table size", m_fwd.bucket_count());
 				env().log_stat("hash table entries", m_fwd.size());
 
