@@ -13,6 +13,7 @@ dataset_target(tagme)
 dataset_target(tagmynews)
 dataset_target(gerdaq)
 dataset_target(hashtag)
+dataset_target(wiki)
 
 # Don't build this automatically
 set_target_properties(datasets PROPERTIES EXCLUDE_FROM_ALL true)

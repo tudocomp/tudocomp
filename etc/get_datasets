@@ -29,12 +29,13 @@ OUT=${1%/}
 
 source "$2"
 
-OUT_PNC=$OUT/$OUT_DIR
-mkdir -p $OUT_PNC
+OUT_SELF=$OUT/$OUT_DIR
+mkdir -p $OUT_SELF
 
 OUT_TMP=$OUT/tmp
 mkdir -p $OUT_TMP
 
+# Plain or compressed file sources
 for T in ${URLS[@]}; do
     # filename of download file
     F_TMP=$OUT_TMP/`basename $T`
@@ -42,9 +43,9 @@ for T in ${URLS[@]}; do
     # filename for final dataset file
     # removes .gz endings for files that need to be decompressed
     if [[ $F_TMP == *.gz ]]; then
-        F=$OUT_PNC/`basename $T .gz`
+        F=$OUT_SELF/`basename $T .gz`
     else
-        F=$OUT_PNC/`basename $T`
+        F=$OUT_SELF/`basename $T`
     fi
 
     # download base file if necessary
@@ -80,4 +81,28 @@ for T in ${URLS[@]}; do
         done
     fi
 
+done
+
+# Wikipedia sources
+WIKI_EXTRACT=./WikiExtractor.py
+
+WIKI_LANGS="en"
+WIKI_TIME="2016-01-01T00:00:00Z"
+WIKI_ARTS_DIR=wikipedia
+
+for((n=0;n<${#WIKI[@]};n+=2)); do
+    L=${WIKI[$n]}
+    L_FILE=${WIKI[(($n + 1))]}
+    echo "lang: $L, file: $L_FILE"
+    F=$OUT_SELF/$L_FILE
+    F_TMP=$OUT_TMP/$L_FILE
+
+    if [ ! -f $F ]; then
+        WIKI_ARTS_FILE=$WIKI_ARTS_DIR/$L_FILE
+        WIKI_ARTS_HEX=`cat $WIKI_ARTS_FILE | hexdump -v -e '/1 "%02x"' | sed 's/\(..\)/%\1/g'`
+
+        curl -d "" "https://$L.wikipedia.org/wiki/Special:Export?pages=$WIKI_ARTS_HEX&offset=$WIKI_TIME&limit=1" > $F_TMP.xml
+        $WIKI_EXTRACT --no-templates --no-doc --no-title -o - $F_TMP.xml > $F
+        rm $F_TMP.xml
+    fi
 done
