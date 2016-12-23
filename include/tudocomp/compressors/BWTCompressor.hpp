@@ -20,8 +20,7 @@ public:
         return m;
     }
 
-    inline BWTCompressor(Env&& env) : Compressor(std::move(env)) {
-    }
+    using Compressor::Compressor;
 
     inline virtual void compress(Input& input, Output& output) override {
         auto ostream = output.as_stream();
