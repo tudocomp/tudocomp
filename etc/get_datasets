@@ -35,6 +35,23 @@ mkdir -p $OUT_SELF
 OUT_TMP=$OUT/tmp
 mkdir -p $OUT_TMP
 
+function gen_prefix {
+    F=$1
+    if [ -f $F ]; then
+        F_MB=$((`stat -c %s $F`/1024/1024))
+
+        for S in $PREFIX_SIZES; do
+            if [ $F_MB -ge $S ]; then
+                FP=${F}.${S}MB
+                if [ ! -f $FP ]; then
+                    echo "$F -> $FP"
+                    cat $F | dd count=${S}K bs=1K > $FP
+                fi
+            fi
+        done
+    fi
+}
+
 # Plain or compressed file sources
 for T in ${URLS[@]}; do
     # filename of download file
@@ -67,19 +84,7 @@ for T in ${URLS[@]}; do
     fi
 
     # generate prefixes
-    if [ -f $F ]; then
-        F_MB=$((`stat -c %s $F`/1024/1024))
-
-        for S in $PREFIX_SIZES; do
-            if [ $F_MB -ge $S ]; then
-                FP=${F}.${S}MB
-                if [ ! -f $FP ]; then
-                    echo "$F -> $FP"
-                    cat $F | dd count=${S}K bs=1K > $FP
-                fi
-            fi
-        done
-    fi
+    gen_prefix $F
 
 done
 
@@ -105,4 +110,7 @@ for((n=0;n<${#WIKI[@]};n+=2)); do
         $WIKI_EXTRACT --no-templates --no-doc --no-title -o - $F_TMP.xml > $F
         rm $F_TMP.xml
     fi
+
+    # generate prefixes
+    gen_prefix $F
 done
