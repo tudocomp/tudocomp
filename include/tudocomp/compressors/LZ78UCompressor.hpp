@@ -49,7 +49,10 @@ public:
         }
         SuffixTree ST(backing_cst);
 
-		len_t* R = new len_t[ST.internal_nodes];
+		const size_t max_z = T.size() * bits_for(ST.cst.csa.sigma) / bits_for(T.size());
+		env().log_stat("max z", max_z);
+
+		sdsl::int_vector<> R(ST.internal_nodes,0,bits_for(max_z));
 
         len_t pos = 0;
         len_t z = 0;
@@ -95,7 +98,6 @@ public:
 			std::cout << "out m r: " << int(R[ST.nid(ST.parent(node))]) << "\n";
 			pos += str.size();
         }
-		delete [] R;
 
         env().end_stat_phase();
     }
