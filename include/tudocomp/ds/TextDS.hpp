@@ -215,7 +215,7 @@ inline void TextDS<lcp_tt,isa_tt>::print(std::ostream& out, size_t base) {
 
     //Body
     out << std::setfill(' ');
-    for(size_t i = 0; i < size() + 1; i++) {
+    for(size_t i = 0; i < size(); i++) {
         out << std::setw(w) << (i + base) << " | ";
         if(m_sa) out << std::setw(w) << ((*m_sa)[i] + base) << " | ";
         if(m_isa) out << std::setw(w) << ((*m_isa)[i] + base) << " | ";
