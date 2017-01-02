@@ -128,8 +128,8 @@ for((n=0;n<${#WIKI[@]};n+=2)); do
         done
 
         # Concatenate all articles
-        cat "$OUT_TMP/$L_FILE"".split"* > "$OUT_TMP/$L_FILE"
-        rm "$OUT_TMP/$L_FILE"".split"*
+        cat "$OUT_TMP/$L_FILE"".split"*".exported" > "$OUT_TMP/$L_FILE"
+        rm "$OUT_TMP/$L_FILE"".split"*".exported"
         mv "$OUT_TMP/$L_FILE" $F
     fi
 
