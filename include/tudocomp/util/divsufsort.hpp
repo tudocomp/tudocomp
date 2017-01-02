@@ -238,8 +238,6 @@ inline void divsufsort_run(
     construct_SA(T, SA, bucket_A, bucket_B, n, m);
 }
 
-//TODO: re-enable when pointer arithmetics are removed again
-/*
 // specialize for len_t vectors
 template<>
 inline void divsufsort_run<std::vector<len_t>>(
@@ -259,7 +257,6 @@ inline void divsufsort_run<DynamicIntVector>(
     BufferWrapper<DynamicIntVector> wrapSA(SA);
     divsufsort_run(T, wrapSA, bucket_A, bucket_B, n);
 }
-*/
 
 // from divsufsort.c
 template<typename buffer_t>
