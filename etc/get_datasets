@@ -98,6 +98,9 @@ WIKI_EXTRACT=./WikiExtractor.py
 WIKI_TIME="2016-01-01T00:00:00Z"
 WIKI_ARTS_DIR=wikipedia
 
+# How many articles to fetch at once
+WIKI_CHUNK_SIZE=100
+
 function wiki_export {
     WIKI_ARTS_HEX=`cat $2 | hexdump -v -e '/1 "%02x"' | sed 's/\(..\)/%\1/g'`
 
@@ -115,7 +118,7 @@ for((n=0;n<${#WIKI[@]};n+=2)); do
 
     if [ ! -f $F ]; then
         # Split up list of articles into a number of files with fixed amount of lines
-        split -d -l 50 -a 3 $WIKI_ARTS_FILE "$OUT_TMP/$L_FILE"".split"
+        split -d -l $WIKI_CHUNK_SIZE -a 3 $WIKI_ARTS_FILE "$OUT_TMP/$L_FILE"".split"
         for split_file in "$OUT_TMP/$L_FILE"".split"*; do
             wiki_export $L $split_file $split_file.xml
             rm $split_file
