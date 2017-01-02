@@ -52,6 +52,10 @@ function gen_prefix {
     fi
 }
 
+function abs_path {
+    echo "$(cd "$(dirname "$1")"; pwd)/$(basename "$1")"
+}
+
 # Plain or compressed file sources
 for T in ${URLS[@]}; do
     # filename of download file
@@ -94,6 +98,12 @@ WIKI_EXTRACT=./WikiExtractor.py
 WIKI_TIME="2016-01-01T00:00:00Z"
 WIKI_ARTS_DIR=wikipedia
 
+function wiki_export {
+    WIKI_ARTS_HEX=`cat $2 | hexdump -v -e '/1 "%02x"' | sed 's/\(..\)/%\1/g'`
+
+    curl -d "" "https://$1.wikipedia.org/wiki/Special:Export?pages=$WIKI_ARTS_HEX&offset=$WIKI_TIME&limit=1" > $3
+}
+
 for((n=0;n<${#WIKI[@]};n+=2)); do
     L=${WIKI[$n]}
     L_FILE=${WIKI[(($n + 1))]}
@@ -101,13 +111,23 @@ for((n=0;n<${#WIKI[@]};n+=2)); do
     F=$OUT_SELF/$L_FILE
     F_TMP=$OUT_TMP/$L_FILE
 
-    if [ ! -f $F ]; then
-        WIKI_ARTS_FILE=$WIKI_ARTS_DIR/$L_FILE
-        WIKI_ARTS_HEX=`cat $WIKI_ARTS_FILE | hexdump -v -e '/1 "%02x"' | sed 's/\(..\)/%\1/g'`
+    WIKI_ARTS_FILE=$WIKI_ARTS_DIR/$L_FILE
 
-        curl -d "" "https://$L.wikipedia.org/wiki/Special:Export?pages=$WIKI_ARTS_HEX&offset=$WIKI_TIME&limit=1" > $F_TMP.xml
-        $WIKI_EXTRACT --no-templates --no-doc --no-title -o - $F_TMP.xml > $F
-        rm $F_TMP.xml
+    if [ ! -f $F ]; then
+        # Split up list of articles into a number of files with fixed amount of lines
+        split -d -l 50 -a 3 $WIKI_ARTS_FILE "$OUT_TMP/$L_FILE"".split"
+        for split_file in "$OUT_TMP/$L_FILE"".split"*; do
+            wiki_export $L $split_file $split_file.xml
+            rm $split_file
+
+            $WIKI_EXTRACT --no-templates --no-doc --no-title -o - $split_file.xml > $split_file.exported
+            rm $split_file.xml
+        done
+
+        # Concatenate all articles
+        cat "$OUT_TMP/$L_FILE"".split"* > "$OUT_TMP/$L_FILE"
+        rm "$OUT_TMP/$L_FILE"".split"*
+        mv "$OUT_TMP/$L_FILE" $F
     fi
 
     # generate prefixes
