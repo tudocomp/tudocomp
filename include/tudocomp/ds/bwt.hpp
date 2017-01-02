@@ -10,10 +10,10 @@ namespace tdc {
 	namespace bwt {
 		static_assert(std::is_same<View::value_type, uliteral_t>::value, "View::value_type and uliteral_t must be the same");
 
-/** 
+/**
  * Computes the value BWT[i] of a text T given its suffix array SA
  * Runs in O(1) time since BWT[i] = SA[(T[i]-1) mod |SA|]
- */ 
+ */
 template<typename text_t, typename sa_t>
 inline typename text_t::value_type bwt(const text_t& text, const sa_t& sa, const size_t i) {
 	return (sa[i] == 0) ? text[sa.size()-1] : text[sa[i]-1];
@@ -28,9 +28,9 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	DLOG(INFO) << "Computing LF";
 	if(bwt_length == 0) return nullptr;
 	len_t C[uliteral_max+1] { 0 }; // alphabet counter
-	for(auto& c : bwt) { 
+	for(auto& c : bwt) {
 		if(literal2int(c) != uliteral_max) {
-			++C[literal2int(c)+1]; 
+			++C[literal2int(c)+1];
 		}
 	}
 	for(size_t i = 1; i < uliteral_max; ++i) {
@@ -51,7 +51,7 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	tdc_debug(VLOG(2) << "LF: " << arr_to_debug_string(LF, bwt_length));
 	DCHECK([&] () { // unique invariant of the LF mapping
 			assert_permutation(LF,bwt_length);
-			for(len_t i = 0; i < bwt_length; ++i) 
+			for(len_t i = 0; i < bwt_length; ++i)
 			for(len_t j = i+1; j < bwt_length; ++j) {
 			if(bwt[i] != bwt[j]) continue;
 			DCHECK_LT(LF[i], LF[j]);

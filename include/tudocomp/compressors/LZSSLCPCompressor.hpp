@@ -18,16 +18,13 @@ namespace tdc {
 
 /// Computes the LZ77 factorization of the input using its suffix array and
 /// LCP table.
-template<typename coder_t>
+template<typename coder_t, typename text_t = TextDS<>>
 class LZSSLCPCompressor : public Compressor {
-
-private:
-    typedef TextDS<> text_t;
-
 public:
     inline static Meta meta() {
         Meta m("compressor", "lzss_lcp", "LZSS Factorization using LCP");
         m.option("coder").templated<coder_t>();
+        m.option("textds").templated<text_t, TextDS<>>();
         m.needs_sentinel_terminator();
         return m;
     }
@@ -45,7 +42,10 @@ public:
 
         // Construct text data structures
         env().begin_stat_phase("Construct SA, ISA and LCP");
-        text_t text(view, env(), text_t::SA | text_t::ISA | text_t::LCP);
+
+        text_t text(env().env_for_option("textds"), view,
+                    text_t::SA | text_t::ISA | text_t::LCP);
+
         env().end_stat_phase();
 
         auto& sa = text.require_sa();

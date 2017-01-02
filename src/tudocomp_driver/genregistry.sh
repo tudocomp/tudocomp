@@ -24,7 +24,7 @@ lz78_trie=(
     lz78::TernaryTrie
     lz78::CedarTrie
 )
-grep -q '^#define JUDY_H_AVAILABLE 1' ../../include/tudocomp/config.h && lz78_trie+=(lz78::JudyTrie)
+grep -q '^#define JUDY_H_AVAILABLE 1' ../../../include/tudocomp/config.h && lz78_trie+=(lz78::JudyTrie)
 
 esa_strat=(
     esacomp::MaxHeapStrategy
@@ -71,6 +71,8 @@ local compressor="$1"
 shift
 if [[ $# -eq 0 ]]; then
 	echo "  r.register_compressor<$compressor>();"
+elif [[ "$@" == "_" ]]; then
+    echo "  r.register_compressor<$compressor<>>();"
 else
 	regr '' $@ |
 	while read line; do
@@ -110,7 +112,7 @@ reg LZSSSlidingWindowCompressor online_coder
 reg RunLengthEncoder            online_coder
 reg EasyRLECompressor
 reg MTFCompressor
-reg BWTCompressor
+reg BWTCompressor               _
 reg ChainCompressor
 reg NoopCompressor
 

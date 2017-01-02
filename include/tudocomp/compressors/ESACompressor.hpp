@@ -84,17 +84,15 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
 
 /// Factorizes the input by finding redundant phrases in a re-ordered version
 /// of the LCP table.
-template<typename coder_t, typename strategy_t, typename dec_t>
+template<typename coder_t, typename strategy_t, typename dec_t, typename text_t = TextDS<>>
 class ESACompressor : public Compressor {
-private:
-    typedef TextDS<> text_t;
-
 public:
     inline static Meta meta() {
         Meta m("compressor", "esacomp");
         m.option("coder").templated<coder_t>();
         m.option("strategy").templated<strategy_t, esacomp::MaxLCPStrategy>();
         m.option("esadec").templated<dec_t, esacomp::SuccinctListBuffer>();
+        m.option("textds").templated<text_t, TextDS<>>();
         m.option("threshold").dynamic("3");
         m.needs_sentinel_terminator();
         return m;
@@ -106,7 +104,7 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
         DCHECK(in.ends_with(uint8_t(0)));
-        text_t text(in, env());
+        text_t text(env().env_for_option("textds"), in);
 
         // read options
         size_t threshold = env().option("threshold").as_integer(); //factor threshold

@@ -82,10 +82,6 @@ namespace lzw {
 #include <tudocomp/util/Json.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
-#include <tudocomp/ds/SuffixArray.hpp>
-#include <tudocomp/ds/InverseSuffixArray.hpp>
-#include <tudocomp/ds/PhiArray.hpp>
-#include <tudocomp/ds/LCPArray.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/dynamic_t.hpp>
 #include <tudocomp/ds/IntVector.hpp>

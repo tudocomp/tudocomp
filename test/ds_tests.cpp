@@ -7,6 +7,7 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/bwt.hpp>
+#include <tudocomp/CreateAlgorithm.hpp>
 #include "test/util.hpp"
 
 using namespace tdc;
@@ -97,20 +98,6 @@ void test_isa(const std::string& str, textds_t& t) {
 }
 
 template<class textds_t>
-void test_phi(const std::string& str, textds_t& t) {
-    auto& phi = t.require_phi();
-    auto& sa  = t.require_sa(); //request afterwards!
-
-    ASSERT_EQ(phi.size(), sa.size()); //length
-    assert_permutation(phi, phi.size()); //permutation
-
-    //correctness
-	for(size_t i = 0; i < sa.size(); ++i) {
-		ASSERT_EQ(phi[sa[(i+1) % sa.size()]], sa[i]);
-	}
-}
-
-template<class textds_t>
 void test_lcp(const std::string& str, textds_t& t) {
     auto& lcp = t.require_lcp();
     auto& sa  = t.require_sa(); //request afterwards!
@@ -124,46 +111,12 @@ void test_lcp(const std::string& str, textds_t& t) {
 }
 
 template<class textds_t>
-void test_lcp_naive(const std::string& str, textds_t& t) {
-    auto& sa = t.require_sa();
-    auto& isa = t.require_isa();
-
-    const sdsl::int_vector<> lcp_naive(create_lcp_naive(str,sa));
-	const auto plcp = LCP::phi_algorithm(t);
-	const auto plcp_naive = create_plcp_naive(lcp_naive, isa);
-	//assert_eq_sequence(plcp, plcp_naive);
-
-    auto& lcp = t.require_lcp();
-	//assert_eq_sequence(lcp, lcp_naive);
-    ASSERT_EQ(lcp.size(), sa.size()); //length
-	for(size_t i = 1; i < lcp.size(); ++i) {
-		ASSERT_EQ(lcp_naive[i], plcp_naive[sa[i]]) << "for i=" << i;
-		ASSERT_EQ(lcp[i], plcp[sa[i]]) << "for i=" << i;
-		ASSERT_EQ(lcp[i], plcp_naive[sa[i]]) << "for i=" << i;
-	}
-}
-
-template<class textds_t>
 void test_all_ds(const std::string& str, textds_t& t) {
-	test_bwt(str,t);
     test_sa(str, t);
-    test_isa(str, t);
-    test_phi(str, t);
+    test_bwt(str,t);
     test_lcp(str, t);
-    test_lcp_naive(str, t);
+    test_isa(str, t);
 }
-
-
-void test_lcpsada(const std::string&,TextDS<>& t) {
-	lcp_sada<TextDS<>> lcp;
-	lcp.construct(t);
-	std::cout << lcp.size() << std::endl;
-	test::assert_eq_sequence(lcp, t.require_lcp());
-}
-
-
-
-
 
 template<class textds_t>
 class RunTestDS {
@@ -177,21 +130,20 @@ class RunTestDS {
 		test::TestInput input = test::compress_input(str);
 		InputView in = input.as_view();
 		DCHECK_EQ(str.length()+1, in.size());
-		textds_t t(in);
+		textds_t t = create_algo<textds_t>("", in);
 		DCHECK_EQ(str.length()+1, t.size());
 		m_testfunc(str, t);
 	}
 };
 
 #define TEST_DS_STRINGCOLLECTION(func) \
-	RunTestDS<TextDS<>> runner(test_sa); \
+	RunTestDS<TextDS<>> runner(func); \
 	test::roundtrip_batch(runner); \
 	test::on_string_generators(runner,11);
-TEST(ds, lcpsada)     { TEST_DS_STRINGCOLLECTION(test_lcpsada); }
 TEST(ds, SA)          { TEST_DS_STRINGCOLLECTION(test_sa); }
-TEST(ds, ISA)         { TEST_DS_STRINGCOLLECTION(test_isa); }
-TEST(ds, Phi)         { TEST_DS_STRINGCOLLECTION(test_phi); }
+TEST(ds, BWT)         { TEST_DS_STRINGCOLLECTION(test_bwt); }
 TEST(ds, LCP)         { TEST_DS_STRINGCOLLECTION(test_lcp); }
+TEST(ds, ISA)         { TEST_DS_STRINGCOLLECTION(test_isa); }
 TEST(ds, Integration) { TEST_DS_STRINGCOLLECTION(test_all_ds); }
 #undef TEST_DS_STRINGCOLLECTION
 
