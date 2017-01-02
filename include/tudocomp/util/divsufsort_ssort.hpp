@@ -92,7 +92,8 @@ ss_isqrt(saidx_t x) {
 /* Compares two suffixes. */
 template<typename buffer_t1, typename buffer_t2>
 inline saint_t ss_compare(const sauchar_t *T,
-           buffer_t1& B1, buffer_t2& B2, const saidx_t p1, const saidx_t p2,
+           buffer_t1& B1, saidx_t p1,
+           buffer_t2& B2, saidx_t p2,
            saidx_t depth) {
   const sauchar_t *U1, *U2, *U1n, *U2n;
 
@@ -109,17 +110,12 @@ inline saint_t ss_compare(const sauchar_t *T,
         (U2 < U2n ? -1 : 0);
 }
 
-template<typename buffer_t>
-inline saint_t ss_compare(const sauchar_t *T,
-           buffer_t& B, const saidx_t p1, const saidx_t p2,
-           saidx_t depth) {
-    return ss_compare(T, B, B, p1, p2, depth);
-}
 
 /*---------------------------------------------------------------------------*/
 
 #if (SS_BLOCKSIZE != 1) && (SS_INSERTIONSORT_THRESHOLD != 1)
 
+/* Insertionsort for small size groups */
 /* Insertionsort for small size groups */
 template<typename buffer_t>
 inline void ss_insertionsort(const sauchar_t *T, buffer_t& B, const saidx_t PA,
@@ -129,7 +125,7 @@ inline void ss_insertionsort(const sauchar_t *T, buffer_t& B, const saidx_t PA,
   saint_t r;
 
   for(i = last - 2; first <= i; --i) {
-    for(t = B[i], j = i + 1; 0 < (r = ss_compare(T, B, PA + t, PA + B[j], depth));) {
+    for(t = B[i], j = i + 1; 0 < (r = ss_compare(T, B, PA + t, B, PA + B[j], depth));) {
       do { B[j - 1] = B[j]; } while((++j < last) && (B[j] < 0));
       if(last <= j) { break; }
     }
@@ -466,7 +462,7 @@ inline void ss_inplacemerge(const sauchar_t *T, buffer_t& B, const saidx_t PA,
         0 < len;
         len = half, half >>= 1) {
       b = a + half;
-      q = ss_compare(T, B, PA + ((0 <= B[b]) ? B[b] : ~B[b]), p, depth);
+      q = ss_compare(T, B, PA + ((0 <= B[b]) ? B[b] : ~B[b]), B, p, depth);
       if(q < 0) {
         a = b + 1;
         half -= (len & 1) ^ 1;
@@ -487,12 +483,11 @@ inline void ss_inplacemerge(const sauchar_t *T, buffer_t& B, const saidx_t PA,
   }
 }
 
-
 /*---------------------------------------------------------------------------*/
 
 /* Merge-forward with internal buffer. */
 template<typename buffer_t>
-inline void ss_mergeforward(const sauchar_t *T, buffer_t& B, const saidx_t PA,
+inline void ss_mergeforward(const sauchar_t *T, buffer_t& B, saidx_t PA,
                 saidx_t first, saidx_t middle, saidx_t last,
                 saidx_t buf, saidx_t depth) {
   saidx_t a, b, c, bufend;
@@ -500,11 +495,10 @@ inline void ss_mergeforward(const sauchar_t *T, buffer_t& B, const saidx_t PA,
   saint_t r;
 
   bufend = buf + (middle - first) - 1;
-
   ss_blockswap(B, buf, first, middle - first);
 
   for(t = B[a = first], b = buf, c = middle;;) {
-    r = ss_compare(T, B, PA + B[b], PA + B[c], depth);
+    r = ss_compare(T, B, PA + B[b], B, PA + B[c], depth);
     if(r < 0) {
       do {
         B[a++] = B[b];
@@ -542,7 +536,7 @@ inline void ss_mergeforward(const sauchar_t *T, buffer_t& B, const saidx_t PA,
 
 /* Merge-backward with internal buffer. */
 template<typename buffer_t>
-inline void ss_mergebackward(const sauchar_t *T, buffer_t& B, const saidx_t PA,
+inline void ss_mergebackward(const sauchar_t *T, buffer_t& B, saidx_t PA,
                  saidx_t first, saidx_t middle, saidx_t last,
                  saidx_t buf, saidx_t depth) {
   saidx_t p1, p2;
@@ -552,23 +546,22 @@ inline void ss_mergebackward(const sauchar_t *T, buffer_t& B, const saidx_t PA,
   saint_t x;
 
   bufend = buf + (last - middle) - 1;
-
   ss_blockswap(B, buf, middle, last - middle);
 
   x = 0;
-  if(B[bufend] < 0)     { p1 = PA + ~B[bufend]; x |= 1; }
+  if(B[bufend] < 0)       { p1 = PA + ~B[bufend]; x |= 1; }
   else                  { p1 = PA +  B[bufend]; }
   if(B[middle - 1] < 0) { p2 = PA + ~B[middle - 1]; x |= 2; }
   else                  { p2 = PA +  B[middle - 1]; }
   for(t = B[a = last - 1], b = bufend, c = middle - 1;;) {
-    r = ss_compare(T, B, p1, p2, depth);
+    r = ss_compare(T, B, p1, B, p2, depth);
     if(0 < r) {
       if(x & 1) { do { B[a--] = B[b], B[b--] = B[a]; } while(B[b] < 0); x ^= 1; }
       B[a--] = B[b];
       if(b <= buf) { B[buf] = t; break; }
       B[b--] = B[a];
       if(B[b] < 0) { p1 = PA + ~B[b]; x |= 1; }
-      else         { p1 = PA +  B[b]; }
+      else       { p1 = PA +  B[b]; }
     } else if(r < 0) {
       if(x & 2) { do { B[a--] = B[c], B[c--] = B[a]; } while(B[c] < 0); x ^= 2; }
       B[a--] = B[c], B[c--] = B[a];
@@ -578,7 +571,7 @@ inline void ss_mergebackward(const sauchar_t *T, buffer_t& B, const saidx_t PA,
         break;
       }
       if(B[c] < 0) { p2 = PA + ~B[c]; x |= 2; }
-      else       { p2 = PA +  B[c]; }
+      else         { p2 = PA +  B[c]; }
     } else {
       if(x & 1) { do { B[a--] = B[b], B[b--] = B[a]; } while(B[b] < 0); x ^= 1; }
       B[a--] = ~B[b];
@@ -601,7 +594,7 @@ inline void ss_mergebackward(const sauchar_t *T, buffer_t& B, const saidx_t PA,
 
 /* D&C based merge. */
 template<typename buffer_t>
-inline void ss_swapmerge(const sauchar_t *T, buffer_t& B, const saidx_t PA,
+inline void ss_swapmerge(const sauchar_t *T, buffer_t& B, saidx_t PA,
              saidx_t first, saidx_t middle, saidx_t last,
              saidx_t buf, saidx_t bufsize, saidx_t depth) {
 #define STACK_SIZE SS_SMERGE_STACKSIZE
@@ -609,10 +602,10 @@ inline void ss_swapmerge(const sauchar_t *T, buffer_t& B, const saidx_t PA,
 #define MERGE_CHECK(a, b, c)\
   do {\
     if(((c) & 1) ||\
-       (((c) & 2) && (ss_compare(T, B, PA + GETIDX(B[(a) - 1]), PA + B[a], depth) == 0))) {\
+       (((c) & 2) && (ss_compare(T, B, PA + GETIDX(B[(a) - 1]), B, PA + B[a], depth) == 0))) {\
       B[a] = ~B[a];\
     }\
-    if(((c) & 4) && ((ss_compare(T, B, PA + GETIDX(B[(b) - 1]), PA + B[b], depth) == 0))) {\
+    if(((c) & 4) && ((ss_compare(T, B, PA + GETIDX(B[(b) - 1]), B, PA + B[b], depth) == 0))) {\
       B[b] = ~B[b];\
     }\
   } while(0)
@@ -645,7 +638,7 @@ inline void ss_swapmerge(const sauchar_t *T, buffer_t& B, const saidx_t PA,
         0 < len;
         len = half, half >>= 1) {
       if(ss_compare(T, B, PA + GETIDX(B[middle + m + half]),
-                          PA + GETIDX(B[middle - m - half - 1]), depth) < 0) {
+                       B, PA + GETIDX(B[middle - m - half - 1]), depth) < 0) {
         m += half + 1;
         half -= (len & 1) ^ 1;
       }
@@ -675,7 +668,7 @@ inline void ss_swapmerge(const sauchar_t *T, buffer_t& B, const saidx_t PA,
         first = r, middle = rm, check = (next & 3) | (check & 4);
       }
     } else {
-      if(ss_compare(T, B, PA + GETIDX(B[middle - 1]), PA + B[middle], depth) == 0) {
+      if(ss_compare(T, B, PA + GETIDX(B[middle - 1]), B, PA + B[middle], depth) == 0) {
         B[middle] = ~B[middle];
       }
       MERGE_CHECK(first, last, check);
@@ -694,7 +687,7 @@ inline void ss_swapmerge(const sauchar_t *T, buffer_t& B, const saidx_t PA,
 
 /* Substring sort */
 template<typename buffer_t>
-inline void sssort(const sauchar_t *T, buffer_t& B, const saidx_t PA,
+inline void sssort(const sauchar_t *T, buffer_t& B, saidx_t PA,
        saidx_t first, saidx_t last,
        saidx_t buf, saidx_t bufsize,
        saidx_t depth, saidx_t n, saint_t lastsuffix) {
@@ -722,7 +715,7 @@ inline void sssort(const sauchar_t *T, buffer_t& B, const saidx_t PA,
 #if SS_INSERTIONSORT_THRESHOLD < SS_BLOCKSIZE
     ss_mintrosort(T, B, PA, a, a + SS_BLOCKSIZE, depth);
 #elif 1 < SS_BLOCKSIZE
-    ss_insertionsort(T, B, PA, a, a + SS_BLOCKSIZE, depth);
+    ss_insertionsort(T, PA, a, a + SS_BLOCKSIZE, depth);
 #endif
     curbufsize = last - (a + SS_BLOCKSIZE);
     curbuf = a + SS_BLOCKSIZE;
@@ -734,7 +727,7 @@ inline void sssort(const sauchar_t *T, buffer_t& B, const saidx_t PA,
 #if SS_INSERTIONSORT_THRESHOLD < SS_BLOCKSIZE
   ss_mintrosort(T, B, PA, a, middle, depth);
 #elif 1 < SS_BLOCKSIZE
-  ss_insertionsort(T, B, PA, a, middle, depth);
+  ss_insertionsort(T, PA, a, middle, depth);
 #endif
   for(k = SS_BLOCKSIZE; i != 0; k <<= 1, i >>= 1) {
     if(i & 1) {
@@ -754,9 +747,9 @@ inline void sssort(const sauchar_t *T, buffer_t& B, const saidx_t PA,
 
   if(lastsuffix != 0) {
     /* Insert last type B* suffix. */
-    saidx_t PAi[2]; PAi[0] = B[PA + B[first - 1]], PAi[1] = n - 2;
+    saidx_t PAi[2]; PAi[0] = B[PA+B[first - 1]], PAi[1] = n - 2;
     for(a = first, i = B[first - 1];
-        (a < last) && ((B[a] < 0) || (0 < ss_compare(T, B, PAi, PA + B[a], 0, depth)));
+        (a < last) && ((B[a] < 0) || (0 < ss_compare(T, PAi, 0, B, PA + B[a], depth)));
         ++a) {
       B[a - 1] = B[a];
     }
