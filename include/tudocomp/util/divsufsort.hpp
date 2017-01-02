@@ -106,8 +106,8 @@ note:
       for(c1 = ALPHABET_SIZE - 1; c0 < c1; j = i, --c1) {
         i = BUCKET_BSTAR(c0, c1);
         if(1 < (j - i)) {
-          sssort(T, SA + PAb, SA + i, SA + j,
-                 SA + buf, bufsize, 2, n, SA[i] == (m - 1));
+          sssort(T, SA, PAb, i, j,
+                 buf, bufsize, 2, n, SA[i] == (m - 1));
         }
       }
     }
