@@ -91,7 +91,6 @@ done
 # Wikipedia sources
 WIKI_EXTRACT=./WikiExtractor.py
 
-WIKI_LANGS="en"
 WIKI_TIME="2016-01-01T00:00:00Z"
 WIKI_ARTS_DIR=wikipedia
 
