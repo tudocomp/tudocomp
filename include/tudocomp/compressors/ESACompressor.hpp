@@ -14,6 +14,7 @@
 
 #include <tudocomp/compressors/esacomp/decoding/DecodeQueueListBuffer.hpp>
 #include <tudocomp/compressors/esacomp/decoding/SuccinctListBuffer.hpp>
+#include <tudocomp/compressors/esacomp/decoding/LazySuccinctListBuffer.hpp>
 // #include <tudocomp/compressors/esacomp/decoding/MarvinBuffer.hpp>
 #include <tudocomp/compressors/esacomp/decoding/MultiMapBuffer.hpp>
 #include <tudocomp/compressors/esacomp/decoding/MyMapBuffer.hpp>

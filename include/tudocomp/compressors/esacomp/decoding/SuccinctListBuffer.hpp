@@ -40,7 +40,6 @@ private:
         if(m_fwd[pos] != nullptr) {
             const len_t*const& bucket = m_fwd[pos];
             for(size_t i = 1; i < bucket[0]; ++i) {
-                if(bucket[i] == undef_len) break;
                 decode_literal_at(bucket[i], c); // recursion
             }
             delete [] m_fwd[pos];

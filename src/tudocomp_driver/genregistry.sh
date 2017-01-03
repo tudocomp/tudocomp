@@ -35,6 +35,7 @@ esa_buffer=(
     esacomp::MyMapBuffer
     esacomp::MultimapBuffer
     esacomp::SuccinctListBuffer
+    esacomp::LazySuccinctListBuffer
     esacomp::DecodeForwardQueueListBuffer
 )
 esa_coder=(
