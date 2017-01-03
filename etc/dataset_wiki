@@ -7,4 +7,5 @@ PREFIX_SIZES="200 100 50 10 1"
 WIKI=(
     # language, article file
     en articles_en.txt
+    en all_vital.txt
 )
