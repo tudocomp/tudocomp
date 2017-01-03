@@ -129,18 +129,15 @@ class LazySuccinctListBuffer : public Algorithm {
 public:
     inline static Meta meta() {
         Meta m("esadec", "LazySuccinctListBuffer");
+        m.option("lazy").dynamic("0");
         return m;
 
     }
     inline void decode_lazy() {
-        const len_t factors = m_source_pos.size();
-        for(len_t j = 0; j < factors; ++j) {
-            const len_t& target_position = m_target_pos[j];
-            const len_t& source_position = m_source_pos[j];
-            const len_t& factor_length = m_length[j];
-            for(len_t i = 0; i < factor_length; ++i) {
-				m_buffer[target_position+i] = m_buffer[source_position+i];
-            }
+        size_t lazy = m_lazy;
+        while(lazy > 0) {
+            decode_lazy_();
+            --lazy;
         }
     }
     inline void decode_eagerly() {
@@ -152,6 +149,18 @@ public:
     }
 
 private:
+    inline void decode_lazy_() {
+        const len_t factors = m_source_pos.size();
+        for(len_t j = 0; j < factors; ++j) {
+            const len_t& target_position = m_target_pos[j];
+            const len_t& source_position = m_source_pos[j];
+            const len_t& factor_length = m_length[j];
+            for(len_t i = 0; i < factor_length; ++i) {
+				m_buffer[target_position+i] = m_buffer[source_position+i];
+            }
+        }
+    }
+    const size_t m_lazy; // number of lazy rounds
 
     len_t m_cursor;
 
@@ -166,17 +175,19 @@ private:
 	tdc_stats(len_t m_longest_chain = 0);
 
 public:
-    LazySuccinctListBuffer(LazySuccinctListBuffer&& other):
-        Algorithm(std::move(*this)),
-        m_cursor(std::move(other.m_cursor)),
-        m_buffer(std::move(other.m_buffer))
-    {
-    }
+    LazySuccinctListBuffer(LazySuccinctListBuffer&& other)
+        : Algorithm(std::move(*this))
+		, m_lazy(std::move(other.m_lazy))
+        , m_cursor(std::move(other.m_cursor))
+        , m_buffer(std::move(other.m_buffer))
+    { }
 
     inline LazySuccinctListBuffer(Env&& env, len_t size)
-        : Algorithm(std::move(env)), m_cursor(0), m_buffer(size,0) {
-
-    }
+        : Algorithm(std::move(env))
+		, m_lazy(this->env().option("lazy").as_integer())
+		, m_cursor(0)
+		, m_buffer(size,0) 
+	{ }
 
     inline void decode_literal(uliteral_t c) {
         m_buffer[m_cursor++] = c;
