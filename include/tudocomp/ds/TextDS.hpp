@@ -34,6 +34,7 @@ public:
     static const dsflags_t PLCP = 0x10;
 
     using value_type = uliteral_t;
+
     using sa_type = sa_t;
     using phi_type = phi_t;
     using plcp_type = plcp_t;
@@ -41,14 +42,17 @@ public:
     using isa_type = isa_t;
 
 private:
+    using this_t = TextDS<sa_t, phi_t, plcp_t, lcp_t, isa_t>;
+
     View m_text;
-    dsflags_t m_ds;
 
     std::unique_ptr<sa_t>  m_sa;
     std::unique_ptr<phi_t> m_phi;
     std::unique_ptr<plcp_t> m_plcp;
     std::unique_ptr<lcp_t> m_lcp;
     std::unique_ptr<isa_t> m_isa;
+
+    dsflags_t m_ds_requested;
 
     template<typename ds_t>
     inline std::unique_ptr<ds_t> construct_ds(const std::string& option) {
@@ -61,16 +65,14 @@ private:
 
     template<typename ds_t>
     inline const ds_t& require_ds(
-        std::unique_ptr<ds_t>& p, dsflags_t flag, const std::string& option) {
+        std::unique_ptr<ds_t>& p, const std::string& option) {
 
-        m_ds |= flag;
         if(!p) p = construct_ds<ds_t>(option);
         return *p;
     }
 
     template<typename ds_t>
     inline std::unique_ptr<ds_t> release_ds(std::unique_ptr<ds_t>& p, dsflags_t flag) {
-        m_ds &= ~flag;
         return std::move(p);
     }
 
@@ -79,7 +81,7 @@ private:
         std::unique_ptr<ds_t>& p, dsflags_t flag, const std::string& option) {
 
         if(!p) p = construct_ds<ds_t>(option);
-        if(m_ds & flag) {
+        if(m_ds_requested & flag) {
             // data structure is requested, return a copy of the data
             return p->copy();
         } else {
@@ -103,7 +105,7 @@ public:
 
     inline TextDS(Env&& env, const View& text)
         : Algorithm(std::move(env)),
-          m_text(text), m_ds(0) {
+          m_text(text), m_ds_requested(0) {
 
         if(!m_text.ends_with(uint8_t(0))){
              throw std::logic_error(
@@ -120,11 +122,11 @@ public:
         require(flags);
     }
 
-    inline const sa_t& require_sa() { return require_ds(m_sa, SA, "sa"); }
-    inline const phi_t& require_phi() { return require_ds(m_phi, PHI, "phi"); }
-    inline const plcp_t& require_plcp() { return require_ds(m_plcp, PLCP, "plcp"); }
-    inline const lcp_t& require_lcp() { return require_ds(m_lcp, LCP, "lcp"); }
-    inline const isa_t& require_isa() { return require_ds(m_isa, ISA, "isa"); }
+    inline const sa_t& require_sa() { return require_ds(m_sa, "sa"); }
+    inline const phi_t& require_phi() { return require_ds(m_phi, "phi"); }
+    inline const plcp_t& require_plcp() { return require_ds(m_plcp, "plcp"); }
+    inline const lcp_t& require_lcp() { return require_ds(m_lcp, "lcp"); }
+    inline const isa_t& require_isa() { return require_ds(m_isa, "isa"); }
 
     inline std::unique_ptr<typename sa_t::data_type> inplace_sa() {
         return inplace_ds(m_sa, SA, "sa");
@@ -148,22 +150,24 @@ public:
     inline std::unique_ptr<lcp_t> release_lcp() { return release_ds(m_lcp, LCP); }
     inline std::unique_ptr<isa_t> release_isa() { return release_ds(m_isa, ISA); }
 
-    inline void require(dsflags_t flags) {
-        // construct requested structures
-        if(flags & SA) require_sa();
-        if(flags & PHI) require_phi();
-        if(flags & PLCP) require_plcp();
-        if(flags & LCP) require_lcp();
-        if(flags & ISA) require_isa();
-
+    inline void release_unneeded() {
         // release unrequested structures
-        if(!(flags & SA)) release_sa();
-        if(!(flags & PHI)) release_phi();
-        if(!(flags & PLCP)) release_plcp();
-        if(!(flags & LCP)) release_lcp();
-        if(!(flags & ISA)) release_isa();
+        if(!(m_ds_requested & SA)) release_sa();
+        if(!(m_ds_requested & PHI)) release_phi();
+        if(!(m_ds_requested & PLCP)) release_plcp();
+        if(!(m_ds_requested & LCP)) release_lcp();
+        if(!(m_ds_requested & ISA)) release_isa();
+    }
 
-        m_ds = flags;
+    inline void require(dsflags_t flags) {
+        m_ds_requested = flags;
+
+        // construct requested structures
+        if(flags & SA)   { require_sa();   release_unneeded(); }
+        if(flags & PHI)  { require_phi();  release_unneeded(); }
+        if(flags & PLCP) { require_plcp(); release_unneeded(); }
+        if(flags & LCP)  { require_lcp();  release_unneeded(); }
+        if(flags & ISA)  { require_isa();  release_unneeded(); }
 
         // TODO: bit-compress structures afterwards
     }
