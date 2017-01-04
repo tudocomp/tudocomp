@@ -5,23 +5,16 @@
 namespace tdc {
 
 class ArrayDS : public Algorithm {
-public:
-    using iv_t = DynamicIntVector;
-
 protected:
+    using iv_t = DynamicIntVector;
     std::unique_ptr<iv_t> m_data;
 
 public:
+    using data_type = iv_t;
     using Algorithm::Algorithm;
 
-    inline iv_t& data() {
-        DCHECK(m_data);
-        return *m_data;
-    }
-
-    inline const iv_t& data() const {
-        DCHECK(m_data);
-        return *m_data;
+    inline std::unique_ptr<iv_t> relinquish() {
+        return std::move(m_data);
     }
 
     inline len_t operator[](size_t i) const {

@@ -53,7 +53,7 @@ private:
 
 public:
     /// Constructor
-    inline MaxLCPSuffixList(const sa_t& sa, const lcp_t& lcp, size_t min_lcp)
+    inline MaxLCPSuffixList(const sa_t& sa, const lcp_t& lcp, size_t min_lcp, size_t max_lcp)
         : m_sa(&sa), m_lcp(&lcp), m_undef(m_sa->size())
 	{
         const size_t& n = sa.size();
@@ -64,7 +64,7 @@ public:
         m_prev = sdsl::int_vector<>(n, m_undef, bits_for(m_undef));
         m_next = sdsl::int_vector<>(n, m_undef, bits_for(m_undef));
 
-        m_lcp_index = sdsl::int_vector<>(lcp.max_lcp(), m_undef, bits_for(m_undef));
+        m_lcp_index = sdsl::int_vector<>(max_lcp, m_undef, bits_for(m_undef));
 
         //Initialize suffix reference map
         m_suffix_contained = sdsl::bit_vector(n, 0);
