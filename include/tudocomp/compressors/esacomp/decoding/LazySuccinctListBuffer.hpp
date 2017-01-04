@@ -141,11 +141,15 @@ public:
         }
     }
     inline void decode_eagerly() {
-		env().begin_stat_phase("Initialize Bit Vector");
-		LazyDecoder decoder(this->env(),m_buffer);
+		{
+			env().begin_stat_phase("Initialize Bit Vector");
+			LazyDecoder decoder(this->env(),m_buffer);
+			env().end_stat_phase();
+			decoder.decode(m_target_pos, m_source_pos, m_length);
+			tdc_stats(m_longest_chain = decoder.longest_chain());
+			env().begin_stat_phase("Destructor LazyDecoder");
+		}
 		env().end_stat_phase();
-		decoder.decode(m_target_pos, m_source_pos, m_length);
-		tdc_stats(m_longest_chain = decoder.longest_chain());
     }
 
 private:
