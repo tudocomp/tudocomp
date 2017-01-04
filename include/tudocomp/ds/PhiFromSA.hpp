@@ -25,13 +25,13 @@ public:
         // Construct Phi Array
         env().begin_stat_phase("Construct Phi Array");
 
-        m_data = iv_t(n, 0, w);
+        m_data = std::make_unique<iv_t>(n, 0, w);
 
         for(len_t i = 1, prev = sa[0]; i < n; i++) {
-            m_data[sa[i]] = prev;
+            (*m_data)[sa[i]] = prev;
             prev = sa[i];
         }
-        m_data[sa[0]] = sa[n-1];
+        (*m_data)[sa[0]] = sa[n-1];
 
         env().end_stat_phase();
     }

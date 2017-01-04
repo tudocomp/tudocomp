@@ -29,13 +29,13 @@ public:
         // Compute LCP array
         env().begin_stat_phase("Construct LCP Array");
 
-        m_data = iv_t(n, 0, w);
+        m_data = std::make_unique<iv_t>(n, 0, w);
         m_max = 0;
-        m_data[0] = 0;
+        (*m_data)[0] = 0;
 		for(len_t i = 1; i < n; i++) {
             const len_t x = plcp[sa[i]];
             m_max = std::max(x, m_max);
-			m_data[i] = x;
+			(*m_data)[i] = x;
 		}
 
         env().end_stat_phase();

@@ -22,13 +22,15 @@ public:
         // Allocate
         const size_t n = t.size();
         const size_t w = bits_for(n);
-        m_data = iv_t(n, 0, w + 1); //divsufsort needs one additional bit for signs
+
+        //divsufsort needs one additional bit for signs
+        m_data = std::make_unique<iv_t>(n, 0, w + 1);
 
         // Use divsufsort to construct
-        divsufsort(t.text(), m_data, n);
+        divsufsort(t.text(), *m_data, n);
 
         // Shrink to required width
-        m_data.width(w);
+        m_data->width(w);
 
         env().end_stat_phase();
     }

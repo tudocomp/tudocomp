@@ -132,6 +132,8 @@ public:
         if(!(flags & PLCP)) release_plcp();
         if(!(flags & LCP)) release_lcp();
         if(!(flags & ISA)) release_isa();
+
+        // TODO: bit-compress structures afterwards
     }
 
     /// Accesses the input text at position i.

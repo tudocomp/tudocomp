@@ -24,11 +24,11 @@ public:
         // Allocate
         const size_t n = t.size();
         const size_t w = bits_for(n);
-        m_data = iv_t(n, 0, w);
+        m_data = std::make_unique<iv_t>(n, 0, w);
 
         // Construct
         for(len_t i = 0; i < n; i++) {
-            m_data[sa[i]] = i;
+            (*m_data)[sa[i]] = i;
         }
 
         env().end_stat_phase();

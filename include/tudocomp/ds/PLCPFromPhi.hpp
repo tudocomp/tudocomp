@@ -23,14 +23,15 @@ public:
         const size_t w = bits_for(n);
 
         // Use Phi algorithm to compute PLCP array
+        // TODO: in place of Phi array?
         env().begin_stat_phase("Construct PLCP Array");
 
-        m_data = iv_t(n, 0, w);
+        m_data = std::make_unique<iv_t>(n, 0, w);
 
         for(len_t i = 0, l = 0; i < n - 1; ++i) {
 			const len_t phii = phi[i];
 			while(t[i+l] == t[phii+l]) ++l;
-			m_data[i] = l;
+			(*m_data)[i] = l;
 			if(l) --l;
 		}
 
