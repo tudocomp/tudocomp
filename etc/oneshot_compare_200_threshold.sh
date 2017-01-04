@@ -7,7 +7,7 @@ trap "exit" INT
 
 TDC=./tudocomp_driver
 TIME=/usr/bin/time
-SIZE=1MB
+SIZE=200MB
 
 shopt -s globstar
 for dataset in ../etc/datasets/**; do
@@ -22,7 +22,7 @@ for dataset in ../etc/datasets/**; do
             CMD="${TDC} --force --output=${OUT} --algorithm=${algo} $dataset"
 
             if [[ $i == 1 ]]; then
-                echo $CMD
+                #echo $CMD
                 echo "threshold;in_size;out_size;ratio;time;mem;cmd"
             fi
 
