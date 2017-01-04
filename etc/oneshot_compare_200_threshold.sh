@@ -1,29 +1,39 @@
 #!/bin/bash
 
-exec > >(tee -i logfile.txt)
+exec > >(tee -i log_`date -Is`.txt)
 exec 2>&1
 
-TMP_SUITE=tmp.suite
-COMPARE_CMD=./compare
+trap "exit" INT
 
-for i in `seq 1 40`; do
-    cmd="esacomp(code2, threshold=$i);.tdc;tdc;--algorithm=esacomp(coder=code2,threshold='$i');"
-    echo $cmd
-done > $TMP_SUITE
-
-cat $TMP_SUITE
+TDC=./tudocomp_driver
+TIME=/usr/bin/time
+SIZE=1MB
 
 shopt -s globstar
-
-ln -s ../build/tudocomp_driver ./tdc
-export PATH=$PATH:`pwd`
-echo $PATH
-
 for dataset in ../etc/datasets/**; do
-    if [[ $dataset == *.200MB ]]; then
+    if [[ $dataset == *.$SIZE ]]; then
+        echo
         echo $dataset
-    fi
-done | xargs $COMPARE_CMD $TMP_SUITE
+        for i in `seq 1 40`; do
+            algo="esacomp(coder=code2,threshold='$i')"
 
-rm ./tdc
-rm $TMP_SUITE
+            mkdir -p /tmp/$USER
+            OUT=/tmp/$USER/`basename $dataset`_${i}.tdc
+            CMD="${TDC} --force --output=${OUT} --algorithm=${algo} $dataset"
+
+            if [[ $i == 1 ]]; then
+                echo $CMD
+                echo "threshold;in_size;out_size;ratio;time;mem;cmd"
+            fi
+
+            TIME_S=`$TIME -f "%U;%M" $CMD 2>&1`
+
+            IN_SIZE=`stat --printf="%s" $dataset`
+            OUT_SIZE=`stat --printf="%s" $OUT`
+            RATIO=`bc <<< "scale=5; $OUT_SIZE * 100 / $IN_SIZE"`
+
+            #echo $CMD
+            printf "%s;%s;%s;%s;%s;%s\n" $i $IN_SIZE $OUT_SIZE $RATIO $TIME_S "$CMD"
+        done
+    fi
+done
