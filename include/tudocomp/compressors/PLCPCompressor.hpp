@@ -98,13 +98,16 @@ public:
 		//TODO: currently does not strictly replace the longest factors
 		for(len_t i = 0; i < pois.size(); ++i) {
 
-			const len_t& target_position = pois[i];
-			len_t factor_length = plcp[target_position];
-			if(factor_length == 0) continue;
+			const len_t target_position = pois[i];
+			const len_t factor_length = plcp[target_position];
+			if(factor_length < threshold) continue;
 			DCHECK_NE(isa[target_position],0);
 			//create next factor
 			const len_t source_position = sa[isa[pois[i]]-1];
-			factors.push_back( { target_position, source_position, factor_length } );
+			DCHECK_LT(target_position, text.size());
+			DCHECK_LT(source_position, text.size());
+			DCHECK_LT(factor_length, text.size());
+			factors.push_back(lzss::Factor { target_position, source_position, factor_length } );
 
 			for(len_t i = target_position; i < target_position+factor_length; ++i) { // erase
 				plcp[i] = 0;
@@ -122,16 +125,18 @@ public:
 
 			// add new element, probably resizing and resorting the array of POIs
 			const len_t next_target_position = target_position+factor_length;
-			if(next_target_position < text.size() && plcp[next_target_position] > threshold) { 
+			if(next_target_position < text.size() && plcp[next_target_position] > threshold) {
+				pois.push_back(next_target_position);
 				if(pois.capacity() == pois.size()) {
 					IntVector<len_t> newpois;
-					newpois.reserve(2*pois.size()-i);
-					std::copy(pois.begin()+i+1, pois.end(), std::back_inserter(newpois));
+					newpois.reserve(2*pois.size());
+					for(len_t j = i+1; j < pois.size(); ++j) {
+						if(plcp[pois[j]] > threshold) { newpois.push_back(j); }
+					}
 					pois.swap(newpois);
+					std::sort(pois.begin(), pois.end(), [&plcp] (const len_t& a, const len_t& b) { return plcp[a] > plcp[b]; });
+					i=0;
 				}
-				pois.push_back(next_target_position);
-				std::sort(pois.begin(), pois.end(), [&plcp] (const len_t& a, const len_t& b) { return plcp[a] > plcp[b]; });
-				i=0;
 			}
 		}
 		env().end_stat_phase();
