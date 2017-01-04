@@ -4,11 +4,11 @@
 
 namespace tdc {
 
-/// Constructs the inverse suffix array using the suffix array.
-class ISASimple : public ArrayDS {
+/// Constructs the Phi array using the suffix array.
+class PhiFromSA : public ArrayDS {
 public:
     inline static Meta meta() {
-        Meta m("isa", "simple");
+        Meta m("phi", "from_sa");
         return m;
     }
 
@@ -16,23 +16,26 @@ public:
 
     template<typename textds_t>
     inline void construct(textds_t& t) {
-        // Require Suffix Array
+        // Construct Suffix Array
         auto& sa = t.require_sa();
 
-        env().begin_stat_phase("Construct ISA");
-
-        // Allocate
         const size_t n = t.size();
         const size_t w = bits_for(n);
+
+        // Construct Phi Array
+        env().begin_stat_phase("Construct Phi Array");
+
         m_data = iv_t(n, 0, w);
 
-        // Construct
-        for(len_t i = 0; i < n; i++) {
-            m_data[sa[i]] = i;
+        for(len_t i = 1, prev = sa[0]; i < n; i++) {
+            m_data[sa[i]] = prev;
+            prev = sa[i];
         }
+        m_data[sa[0]] = sa[n-1];
 
         env().end_stat_phase();
     }
+
 };
 
 } //ns

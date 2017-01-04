@@ -5,8 +5,10 @@
 
 //Defaults
 #include <tudocomp/ds/SADivSufSort.hpp>
-#include <tudocomp/ds/ISASimple.hpp>
-#include <tudocomp/ds/LCPPhi.hpp>
+#include <tudocomp/ds/PhiFromSA.hpp>
+#include <tudocomp/ds/PLCPFromPhi.hpp>
+#include <tudocomp/ds/LCPFromPLCP.hpp>
+#include <tudocomp/ds/ISAFromSA.hpp>
 
 namespace tdc {
 
@@ -17,26 +19,35 @@ static_assert(
 /// Manages text related data structures.
 template<
     typename sa_t = SADivSufSort,
-    typename isa_t = ISASimple,
-    typename lcp_t = LCPPhi>
+    typename phi_t = PhiFromSA,
+    typename plcp_t = PLCPFromPhi,
+    typename lcp_t = LCPFromPLCP,
+    typename isa_t = ISAFromSA
+>
 class TextDS : public Algorithm {
 public:
     using dsflags_t = unsigned int;
     static const dsflags_t SA  = 0x01;
     static const dsflags_t ISA = 0x02;
     static const dsflags_t LCP = 0x04;
+    static const dsflags_t PHI = 0x08;
+    static const dsflags_t PLCP = 0x10;
 
     using value_type = uliteral_t;
     using sa_type = sa_t;
-    using isa_type = isa_t;
+    using phi_type = phi_t;
+    using plcp_type = plcp_t;
     using lcp_type = lcp_t;
+    using isa_type = isa_t;
 
 private:
     View m_text;
 
     std::unique_ptr<sa_t>  m_sa;
-    std::unique_ptr<isa_t> m_isa;
+    std::unique_ptr<phi_t> m_phi;
+    std::unique_ptr<plcp_t> m_plcp;
     std::unique_ptr<lcp_t> m_lcp;
+    std::unique_ptr<isa_t> m_isa;
 
     template<typename ds_t>
     inline std::unique_ptr<ds_t> construct_ds(const std::string& option) {
@@ -51,8 +62,10 @@ public:
     inline static Meta meta() {
         Meta m("textds", "textds");
         m.option("sa").templated<sa_t, SADivSufSort>();
-        m.option("isa").templated<isa_t, ISASimple>();
-        m.option("lcp").templated<lcp_t, LCPPhi>();
+        m.option("phi").templated<phi_t, PhiFromSA>();
+        m.option("plcp").templated<plcp_t, PLCPFromPhi>();
+        m.option("lcp").templated<lcp_t, LCPFromPLCP>();
+        m.option("isa").templated<isa_t, ISAFromSA>();
         return m;
     }
 
@@ -81,11 +94,17 @@ public:
     }
     inline std::unique_ptr<sa_t> release_sa() { return std::move(m_sa); }
 
-    inline const isa_t& require_isa() {
-        if(!m_isa) m_isa = std::move(construct_ds<isa_t>("isa"));
-        return *m_isa;
+    inline const phi_t& require_phi() {
+        if(!m_phi) m_phi = std::move(construct_ds<phi_t>("phi"));
+        return *m_phi;
     }
-    inline std::unique_ptr<isa_t> release_isa() { return std::move(m_isa); }
+    inline std::unique_ptr<phi_t> release_phi() { return std::move(m_phi); }
+
+    inline const plcp_t& require_plcp() {
+        if(!m_plcp) m_plcp = std::move(construct_ds<plcp_t>("plcp"));
+        return *m_plcp;
+    }
+    inline std::unique_ptr<plcp_t> release_plcp() { return std::move(m_plcp); }
 
     inline const lcp_t& require_lcp() {
         if(!m_lcp) m_lcp = std::move(construct_ds<lcp_t>("lcp"));
@@ -93,14 +112,24 @@ public:
     }
     inline std::unique_ptr<lcp_t> release_lcp() { return std::move(m_lcp); }
 
+    inline const isa_t& require_isa() {
+        if(!m_isa) m_isa = std::move(construct_ds<isa_t>("isa"));
+        return *m_isa;
+    }
+    inline std::unique_ptr<isa_t> release_isa() { return std::move(m_isa); }
+
     inline void require(dsflags_t flags) {
         // construct requested structures
         if(flags & SA) require_sa();
+        if(flags & PHI) require_phi();
+        if(flags & PLCP) require_plcp();
         if(flags & LCP) require_lcp();
         if(flags & ISA) require_isa();
 
         // release unrequested structures
         if(!(flags & SA)) release_sa();
+        if(!(flags & PHI)) release_phi();
+        if(!(flags & PLCP)) release_plcp();
         if(!(flags & LCP)) release_lcp();
         if(!(flags & ISA)) release_isa();
     }
@@ -121,12 +150,14 @@ public:
     }
 
     inline void print(std::ostream& out, size_t base) {
-        size_t w = std::max(6UL, (size_t)std::log10((double)size()) + 1);
+        size_t w = std::max(8UL, (size_t)std::log10((double)size()) + 1);
         out << std::setfill(' ');
 
         //Heading
         out << std::setw(w) << "i" << " | ";
         if(m_sa) out << std::setw(w) << "SA[i]" << " | ";
+        if(m_phi) out << std::setw(w) << "Phi[i]" << " | ";
+        if(m_plcp) out << std::setw(w) << "PLCP[i]" << " | ";
         if(m_lcp) out << std::setw(w) << "LCP[i]" << " | ";
         if(m_isa) out << std::setw(w) << "ISA[i]" << " | ";
         out << std::endl;
@@ -135,6 +166,8 @@ public:
         out << std::setfill('-');
         out << std::setw(w) << "" << "-|-";
         if(m_sa) out << std::setw(w) << "" << "-|-";
+        if(m_phi) out << std::setw(w) << "" << "-|-";
+        if(m_plcp) out << std::setw(w) << "" << "-|-";
         if(m_lcp) out << std::setw(w) << "" << "-|-";
         if(m_isa) out << std::setw(w) << "" << "-|-";
         out << std::endl;
@@ -144,6 +177,8 @@ public:
         for(size_t i = 0; i < size(); i++) {
             out << std::setw(w) << (i + base) << " | ";
             if(m_sa) out << std::setw(w) << ((*m_sa)[i] + base) << " | ";
+            if(m_phi) out << std::setw(w) << (*m_phi)[i] << " | ";
+            if(m_plcp) out << std::setw(w) << (*m_plcp)[i] << " | ";
             if(m_lcp) out << std::setw(w) << (*m_lcp)[i] << " | ";
             if(m_isa) out << std::setw(w) << ((*m_isa)[i] + base) << " | ";
             out << std::endl;
