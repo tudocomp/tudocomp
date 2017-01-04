@@ -98,6 +98,7 @@ namespace lzw {
 #include <tudocomp/compressors/BWTCompressor.hpp>
 #include <tudocomp/compressors/EasyRLECompressor.hpp>
 #include <tudocomp/compressors/ESACompressor.hpp>
+#include <tudocomp/compressors/PLCPCompressor.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZSSLCPCompressor.hpp>
 #include <tudocomp/compressors/LZSSSlidingWindowCompressor.hpp>

@@ -109,6 +109,7 @@ reg LZWCompressor               online_coder lz78_trie
 reg RePairCompressor            all_coder
 reg LZSSLCPCompressor           all_coder
 reg ESACompressor               esa_coder esa_strat esa_buffer
+reg PLCPCompressor              esa_coder esa_buffer
 reg LZSSSlidingWindowCompressor online_coder
 reg RunLengthEncoder            online_coder
 reg EasyRLECompressor
