@@ -77,7 +77,6 @@ public:
 		env().end_stat_phase();
 
 		env().begin_stat_phase("Construct PLCP");
-		sdsl::bit_vector replaced_positions(text.size(),0);
 		const auto& sa = text.require_sa();
 		sdsl::int_vector<> plcp = plcp::construct_phi_array<sdsl::int_vector<>>(sa);
 		env().end_stat_phase();
@@ -98,19 +97,41 @@ public:
 		const auto& isa = text.require_isa();
 		//TODO: currently does not strictly replace the longest factors
 		for(len_t i = 0; i < pois.size(); ++i) {
+
 			const len_t& target_position = pois[i];
-			if(replaced_positions[target_position]) continue;
+			len_t factor_length = plcp[target_position];
+			if(factor_length == 0) continue;
 			DCHECK_NE(isa[target_position],0);
+			//create next factor
 			const len_t source_position = sa[isa[pois[i]]-1];
-			len_t factor_length = plcp[pois[i]];
-			while(replaced_positions[target_position+factor_length-1]) --factor_length;
 			factors.push_back( { target_position, source_position, factor_length } );
-			for(len_t i = target_position; i < target_position+factor_length; ++i) {
-				replaced_positions[i] = 1;
+
+			for(len_t i = target_position; i < target_position+factor_length; ++i) { // erase
+				plcp[i] = 0;
 			}
+
+			//trim
+			{
+				const len_t max_affect = std::min(factor_length, target_position); //if pos_target is at the very beginning, we have less to scan
+				//correct intersecting entries
+				for(len_t k = 0; k < max_affect; ++k) {
+					const len_t affected_position = target_position - k - 1; DCHECK_GE(target_position, k+1);
+					plcp[affected_position] = std::min<len_t>(k+1, plcp[affected_position]);
+				}
+			}
+
+			// add new element, probably resizing and resorting the array of POIs
 			const len_t next_target_position = target_position+factor_length;
 			if(next_target_position < text.size() && plcp[next_target_position] > threshold) { 
+				if(pois.capacity() == pois.size()) {
+					IntVector<len_t> newpois;
+					newpois.reserve(2*pois.size()-i);
+					std::copy(pois.begin()+i+1, pois.end(), std::back_inserter(newpois));
+					pois.swap(newpois);
+				}
 				pois.push_back(next_target_position);
+				std::sort(pois.begin(), pois.end(), [&plcp] (const len_t& a, const len_t& b) { return plcp[a] > plcp[b]; });
+				i=0;
 			}
 		}
 		env().end_stat_phase();
