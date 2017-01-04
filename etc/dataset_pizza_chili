@@ -4,7 +4,8 @@
 OUT_DIR=pizza_chili
 PREFIX_SIZES="200 100 50 10 1"
 
-URL="http://pizzachili.dcc.uchile.cl/texts"
+#URL="http://pizzachili.dcc.uchile.cl/texts"
+URL="dacit.cs.uni-dortmund.de/datasets"
 URLS=(
     "$URL/code/sources.gz"
     "$URL/music/pitches.gz"

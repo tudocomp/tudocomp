@@ -5,6 +5,7 @@ OUT_DIR=hashtag
 PREFIX_SIZES="200 100 50 10 1"
 
 URL="http://acube.di.unipi.it/repo/he-graph"
+#URL="dacit.cs.uni-dortmund.de/datasets"
 URLS=(
     "$URL/graph/he-graph.txt.gz"
     "$URL/relatedness/pairs.tsv"

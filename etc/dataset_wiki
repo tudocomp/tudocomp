@@ -7,5 +7,9 @@ PREFIX_SIZES="200 100 50 10 1"
 WIKI=(
     # language, article file
     en articles_en.txt
-    en all_vital.txt
+    #en all_vital.txt
+)
+
+URLS=(
+    "dacit.cs.uni-dortmund.de/datasets/all_vital.txt.gz"
 )
