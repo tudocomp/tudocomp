@@ -50,7 +50,7 @@ namespace esacomp {
 			return m_rank.rank(i+1);
 		}
 
-		void decode(const IntVector<len_t>& m_target_pos, const IntVector<len_t>& m_source_pos, const IntVector<len_t>& m_length) {
+		void decode(const std::vector<len_t>& m_target_pos, const std::vector<len_t>& m_source_pos, const std::vector<len_t>& m_length) {
 			const len_t factors = m_source_pos.size();
 			m_env.log_stat("factors", factors);
 			m_env.begin_stat_phase("Decoding Factors");
@@ -129,7 +129,7 @@ class LazySuccinctListBuffer : public Algorithm {
 public:
     inline static Meta meta() {
         Meta m("esadec", "LazySuccinctListBuffer");
-        m.option("lazy").dynamic("3");
+        m.option("lazy").dynamic("0");
         return m;
 
     }
@@ -155,83 +155,14 @@ public:
 private:
     inline void decode_lazy_() {
         const len_t factors = m_source_pos.size();
-		IntVector<len_t> empty_factors;
         for(len_t j = 0; j < factors; ++j) {
-           len_t& factor_length = m_length[j];
-		   if(factor_length == 0) {
-			   if(empty_factors.size() < 100)
-				   empty_factors.push_back(j);
-			   continue;
-		   }
-           len_t& target_position = m_target_pos[j];
-           len_t& source_position = m_source_pos[j];
-			{//drop the suffix of a factor that got successfully decoded
-				len_t i;
-				for(i = factor_length; i > 0; --i) {
-					if(m_buffer[source_position+i-1] ==0) { break; }
-					DCHECK_LT(target_position+i-1, m_buffer.size());
-					DCHECK_LT(source_position+i-1, m_buffer.size());
-					m_buffer[target_position+i-1] = m_buffer[source_position+i-1];
-				}
-				factor_length=i;
-			}
-			{//drop the prefix of a factor that got successfully decoded
-				len_t i;
-				for(i = 0; i < factor_length; ++i) {
-					if(m_buffer[source_position+i] ==0) { break; }
-					m_buffer[target_position+i] = m_buffer[source_position+i];
-					DCHECK_LT(target_position+i, m_buffer.size());
-					DCHECK_LT(source_position+i, m_buffer.size());
-				}
-				target_position+=i;
-				source_position+=i;
-				factor_length-=i;
-			}
-		   if(factor_length == 0) {
-			   if(empty_factors.size() < 100)
-				   empty_factors.push_back(j);
-			   continue;
-		   }
-
-
-		   auto add_factor = [&] (const len_t target, const len_t source, const len_t length) -> bool {
-			   if(empty_factors.empty()) return false;
-			   const len_t& el = empty_factors.back();
-			   DCHECK_LT(source, m_buffer.size());
-			   DCHECK_LT(target, m_buffer.size());
-			   DCHECK_LT(target+length, m_buffer.size());
-			   DCHECK_LT(source+length, m_buffer.size());
-			   m_target_pos[el] = target;
-			   m_source_pos[el] =source;
-			   m_length[el] = length;
-			   empty_factors.pop_back();
-			   return true;
-		   };
-
-		   len_t new_factor_length = 0;
-		   for(len_t i = 0; i < factor_length; ++i) {
-		      const len_t src_pos = source_position+i;
-		      const len_t tgt_pos = target_position+i;
-		      if(m_buffer[src_pos]) {
-		   	   m_buffer[tgt_pos] = m_buffer[src_pos];
-		   	   if(new_factor_length > 0) {
-		   		   if(add_factor(tgt_pos-new_factor_length, src_pos-new_factor_length, new_factor_length)) {
-		   			   new_factor_length = 0;
-		   		   } else { ++new_factor_length; } // if we cannot create a new factor we have to prolong the old one no matter what
-		   	   }
-		      }
-		      else ++new_factor_length;
-		   }
-		   if(new_factor_length > 0) {
-			   target_position += factor_length-new_factor_length;
-			   source_position += factor_length-new_factor_length;
-			   factor_length = new_factor_length;
-		   }  else {
-			   factor_length = 0;
-			   if(empty_factors.size() < 100)
-				   empty_factors.push_back(j);
-		   }
-
+            const len_t& target_position = m_target_pos[j];
+            const len_t& source_position = m_source_pos[j];
+            const len_t& factor_length = m_length[j];
+            for(len_t i = 0; i < factor_length; ++i) {
+				DCHECK(m_buffer[source_position+i] == 0 && m_buffer[target_position+i] == 0);
+				m_buffer[target_position+i] = m_buffer[source_position+i];
+            }
         }
     }
     const size_t m_lazy; // number of lazy rounds
@@ -241,9 +172,9 @@ private:
 	IntVector<uliteral_t> m_buffer;
 
     //storing factors
-    IntVector<len_t> m_target_pos;
-    IntVector<len_t> m_source_pos;
-    IntVector<len_t> m_length;
+    std::vector<len_t> m_target_pos;
+    std::vector<len_t> m_source_pos;
+    std::vector<len_t> m_length;
 
 
 	tdc_stats(len_t m_longest_chain = 0);
@@ -268,37 +199,21 @@ public:
 		DCHECK(c != 0 || m_cursor == m_buffer.size()); // we assume that the text to restore does not contain a NULL-byte but at its very end
     }
 
-	/**
-	 * We splice all factors into factors that we cannot decode (yet), and store them in the three vectors
-	 */
     inline void decode_factor(const len_t source_position, const len_t factor_length) {
-		len_t new_factor_length = 0;
-		
-		auto add_factor = [&] (const len_t target, const len_t source, const len_t length) {
-			DCHECK_LT(source, m_buffer.size());
-			DCHECK_LT(target, m_buffer.size());
-			DCHECK_LT(target+length, m_buffer.size());
-			DCHECK_LT(source+length, m_buffer.size());
-			m_target_pos.push_back(target);
-			m_source_pos.push_back(source);
-			m_length.push_back(length);
-		};
-
+        bool factor_stored = false;
         for(len_t i = 0; i < factor_length; ++i) {
-			const len_t src_pos = source_position+i;
-			if(m_buffer[src_pos]) {
-				m_buffer[m_cursor] = m_buffer[src_pos];
-				if(new_factor_length > 0) {
-					add_factor(m_cursor-new_factor_length, src_pos-new_factor_length, new_factor_length);
-					new_factor_length = 0;
-				} 
-			}
-			else ++new_factor_length;
-           ++m_cursor;
-		}
-		if(new_factor_length > 0) {
-			add_factor(m_cursor-new_factor_length, source_position+factor_length-new_factor_length, new_factor_length);
-		}
+            const len_t src_pos = source_position+i;
+            if(m_buffer[src_pos]) {
+                m_buffer[m_cursor] = m_buffer[src_pos];
+            }
+            else if(factor_stored == false) {
+                factor_stored = true;
+                m_target_pos.push_back(m_cursor);
+                m_source_pos.push_back(src_pos);
+                m_length.push_back(factor_length-i);
+            }
+            ++m_cursor;
+        }
     }
 
     inline len_t longest_chain() const {
