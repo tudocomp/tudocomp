@@ -3,6 +3,8 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
+#include <tudocomp/ds/CompressMode.hpp>
+
 //Defaults
 #include <tudocomp/ds/SADivSufSort.hpp>
 #include <tudocomp/ds/PhiFromSA.hpp>
@@ -33,6 +35,8 @@ public:
     static const dsflags_t PHI = 0x08;
     static const dsflags_t PLCP = 0x10;
 
+    static constexpr CompressMode cm_default = CompressMode::direct;
+
     using value_type = uliteral_t;
 
     using sa_type = sa_t;
@@ -55,19 +59,19 @@ private:
     dsflags_t m_ds_requested;
 
     template<typename ds_t>
-    inline std::unique_ptr<ds_t> construct_ds(const std::string& option) {
+    inline std::unique_ptr<ds_t> construct_ds(const std::string& option, CompressMode cm) {
         std::unique_ptr<ds_t> ds = std::make_unique<ds_t>(
             env().env_for_option(option));
 
-        ds->construct(*this);
+        ds->construct(*this, cm);
         return ds;
     }
 
     template<typename ds_t>
     inline const ds_t& require_ds(
-        std::unique_ptr<ds_t>& p, const std::string& option) {
+        std::unique_ptr<ds_t>& p, const std::string& option, CompressMode cm) {
 
-        if(!p) p = construct_ds<ds_t>(option);
+        if(!p) p = construct_ds<ds_t>(option, cm);
         return *p;
     }
 
@@ -78,9 +82,9 @@ private:
 
     template<typename ds_t>
     inline std::unique_ptr<typename ds_t::data_type> inplace_ds(
-        std::unique_ptr<ds_t>& p, dsflags_t flag, const std::string& option) {
+        std::unique_ptr<ds_t>& p, dsflags_t flag, const std::string& option, CompressMode cm) {
 
-        if(!p) p = construct_ds<ds_t>(option);
+        if(!p) p = construct_ds<ds_t>(option, cm);
         if(m_ds_requested & flag) {
             // data structure is requested, return a copy of the data
             return p->copy();
@@ -116,33 +120,58 @@ public:
         }
     }
 
-    inline TextDS(Env&& env, const View& text, dsflags_t flags)
+    inline TextDS(Env&& env, const View& text, dsflags_t flags, CompressMode cm = cm_default)
         : TextDS(std::move(env), text) {
 
-        require(flags);
+        require(flags, cm);
     }
 
-    inline const sa_t& require_sa() { return require_ds(m_sa, "sa"); }
-    inline const phi_t& require_phi() { return require_ds(m_phi, "phi"); }
-    inline const plcp_t& require_plcp() { return require_ds(m_plcp, "plcp"); }
-    inline const lcp_t& require_lcp() { return require_ds(m_lcp, "lcp"); }
-    inline const isa_t& require_isa() { return require_ds(m_isa, "isa"); }
+    // require methods
 
-    inline std::unique_ptr<typename sa_t::data_type> inplace_sa() {
-        return inplace_ds(m_sa, SA, "sa");
+    inline const sa_t& require_sa(CompressMode cm = cm_default) {
+        return require_ds(m_sa, "sa", cm);
     }
-    inline std::unique_ptr<typename phi_t::data_type> inplace_phi() {
-        return inplace_ds(m_phi, PHI, "phi");
+    inline const phi_t& require_phi(CompressMode cm = cm_default) {
+        return require_ds(m_phi, "phi", cm);
     }
-    inline std::unique_ptr<typename plcp_t::data_type> inplace_plcp() {
-        return inplace_ds(m_plcp, PLCP, "plcp");
+    inline const plcp_t& require_plcp(CompressMode cm = cm_default) {
+        return require_ds(m_plcp, "plcp", cm);
     }
-    inline std::unique_ptr<typename lcp_t::data_type> inplace_lcp() {
-        return inplace_ds(m_lcp, LCP, "lcp");
+    inline const lcp_t& require_lcp(CompressMode cm = cm_default) {
+        return require_ds(m_lcp, "lcp", cm);
     }
-    inline std::unique_ptr<typename isa_t::data_type> inplace_isa() {
-        return inplace_ds(m_isa, ISA, "isa");
+    inline const isa_t& require_isa(CompressMode cm = cm_default) {
+        return require_ds(m_isa, "isa", cm);
     }
+
+    // inplace methods
+
+    inline std::unique_ptr<typename sa_t::data_type> inplace_sa(
+        CompressMode cm = cm_default) {
+
+        return inplace_ds(m_sa, SA, "sa", cm);
+    }
+    inline std::unique_ptr<typename phi_t::data_type> inplace_phi(
+        CompressMode cm = cm_default) {
+
+        return inplace_ds(m_phi, PHI, "phi", cm);
+    }
+    inline std::unique_ptr<typename plcp_t::data_type> inplace_plcp(
+        CompressMode cm = cm_default) {
+        return inplace_ds(m_plcp, PLCP, "plcp", cm);
+    }
+    inline std::unique_ptr<typename lcp_t::data_type> inplace_lcp(
+        CompressMode cm = cm_default) {
+
+        return inplace_ds(m_lcp, LCP, "lcp", cm);
+    }
+    inline std::unique_ptr<typename isa_t::data_type> inplace_isa(
+        CompressMode cm = cm_default) {
+
+        return inplace_ds(m_isa, ISA, "isa", cm);
+    }
+
+    // release methods
 
     inline std::unique_ptr<sa_t> release_sa() { return release_ds(m_sa, SA); }
     inline std::unique_ptr<phi_t> release_phi() { return release_ds(m_phi, PHI); }
@@ -150,6 +179,7 @@ public:
     inline std::unique_ptr<lcp_t> release_lcp() { return release_ds(m_lcp, LCP); }
     inline std::unique_ptr<isa_t> release_isa() { return release_ds(m_isa, ISA); }
 
+private:
     inline void release_unneeded() {
         // release unrequested structures
         if(!(m_ds_requested & SA)) release_sa();
@@ -159,17 +189,29 @@ public:
         if(!(m_ds_requested & ISA)) release_isa();
     }
 
-    inline void require(dsflags_t flags) {
+public:
+    inline void require(dsflags_t flags, CompressMode cm = cm_default) {
         m_ds_requested = flags;
 
         // construct requested structures
-        if(flags & SA)   { require_sa();   release_unneeded(); }
-        if(flags & PHI)  { require_phi();  release_unneeded(); }
-        if(flags & PLCP) { require_plcp(); release_unneeded(); }
-        if(flags & LCP)  { require_lcp();  release_unneeded(); }
-        if(flags & ISA)  { require_isa();  release_unneeded(); }
+        CompressMode cm_construct = (cm == CompressMode::direct) ?
+                                                    cm : CompressMode::none;
 
-        // TODO: bit-compress structures afterwards
+        if(flags & SA)   { require_sa(cm_construct);   release_unneeded(); }
+        if(flags & PHI)  { require_phi(cm_construct);  release_unneeded(); }
+        if(flags & PLCP) { require_plcp(cm_construct); release_unneeded(); }
+        if(flags & LCP)  { require_lcp(cm_construct);  release_unneeded(); }
+        if(flags & ISA)  { require_isa(cm_construct);  release_unneeded(); }
+
+        if(cm == CompressMode::delayed) {
+            env().begin_stat_phase("Compress data structures");
+            if(m_sa) m_sa->compress();
+            if(m_phi) m_phi->compress();
+            if(m_plcp) m_plcp->compress();
+            if(m_lcp) m_lcp->compress();
+            if(m_isa) m_isa->compress();
+            env().end_stat_phase();
+        }
     }
 
     /// Accesses the input text at position i.

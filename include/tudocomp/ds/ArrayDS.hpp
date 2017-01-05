@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tudocomp/ds/IntVector.hpp>
+#include <tudocomp/util.hpp>
 
 namespace tdc {
 
