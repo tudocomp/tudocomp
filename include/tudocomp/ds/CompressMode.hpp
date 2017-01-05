@@ -15,6 +15,13 @@ namespace tdc {
         /// Data structures are constructed directly in compressed space
         /// (slower construction, but smaller memory usage).
         direct = 2,
+
+        /// Automatically select compress mode, internal use in TextDS only
+        select = 255,
     };
+
+    inline CompressMode cm_select(CompressMode in, CompressMode sel) {
+        return in == CompressMode::select ? sel : in;
+    }
 
 }

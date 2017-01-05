@@ -35,8 +35,6 @@ public:
     static const dsflags_t PHI = 0x08;
     static const dsflags_t PLCP = 0x10;
 
-    static constexpr CompressMode cm_default = CompressMode::direct;
-
     using value_type = uliteral_t;
 
     using sa_type = sa_t;
@@ -57,13 +55,14 @@ private:
     std::unique_ptr<isa_t> m_isa;
 
     dsflags_t m_ds_requested;
+    CompressMode m_cm;
 
     template<typename ds_t>
     inline std::unique_ptr<ds_t> construct_ds(const std::string& option, CompressMode cm) {
         std::unique_ptr<ds_t> ds = std::make_unique<ds_t>(
             env().env_for_option(option));
 
-        ds->construct(*this, cm);
+        ds->construct(*this, cm_select(cm, m_cm));
         return ds;
     }
 
@@ -71,7 +70,7 @@ private:
     inline const ds_t& require_ds(
         std::unique_ptr<ds_t>& p, const std::string& option, CompressMode cm) {
 
-        if(!p) p = construct_ds<ds_t>(option, cm);
+        if(!p) p = construct_ds<ds_t>(option, cm_select(cm, m_cm));
         return *p;
     }
 
@@ -84,7 +83,7 @@ private:
     inline std::unique_ptr<typename ds_t::data_type> inplace_ds(
         std::unique_ptr<ds_t>& p, dsflags_t flag, const std::string& option, CompressMode cm) {
 
-        if(!p) p = construct_ds<ds_t>(option, cm);
+        if(!p) p = construct_ds<ds_t>(option, cm_select(cm, m_cm));
         if(m_ds_requested & flag) {
             // data structure is requested, return a copy of the data
             return p->copy();
@@ -104,6 +103,7 @@ public:
         m.option("plcp").templated<plcp_t, PLCPFromPhi>();
         m.option("lcp").templated<lcp_t, LCPFromPLCP>();
         m.option("isa").templated<isa_t, ISAFromSA>();
+        m.option("compress").dynamic("delayed");
         return m;
     }
 
@@ -118,9 +118,18 @@ public:
                  "`m.needs_sentinel_terminator()` in its `meta()` function."
             );
         }
+
+        auto& cm_str = this->env().option("compress").as_string();
+        if(cm_str == "delayed") {
+            m_cm = CompressMode::delayed;
+        } else if(cm_str == "direct") {
+            m_cm = CompressMode::direct;
+        } else {
+            m_cm = CompressMode::none;
+        }
     }
 
-    inline TextDS(Env&& env, const View& text, dsflags_t flags, CompressMode cm = cm_default)
+    inline TextDS(Env&& env, const View& text, dsflags_t flags, CompressMode cm = CompressMode::select)
         : TextDS(std::move(env), text) {
 
         require(flags, cm);
@@ -128,45 +137,45 @@ public:
 
     // require methods
 
-    inline const sa_t& require_sa(CompressMode cm = cm_default) {
+    inline const sa_t& require_sa(CompressMode cm = CompressMode::select) {
         return require_ds(m_sa, "sa", cm);
     }
-    inline const phi_t& require_phi(CompressMode cm = cm_default) {
+    inline const phi_t& require_phi(CompressMode cm = CompressMode::select) {
         return require_ds(m_phi, "phi", cm);
     }
-    inline const plcp_t& require_plcp(CompressMode cm = cm_default) {
+    inline const plcp_t& require_plcp(CompressMode cm = CompressMode::select) {
         return require_ds(m_plcp, "plcp", cm);
     }
-    inline const lcp_t& require_lcp(CompressMode cm = cm_default) {
+    inline const lcp_t& require_lcp(CompressMode cm = CompressMode::select) {
         return require_ds(m_lcp, "lcp", cm);
     }
-    inline const isa_t& require_isa(CompressMode cm = cm_default) {
+    inline const isa_t& require_isa(CompressMode cm = CompressMode::select) {
         return require_ds(m_isa, "isa", cm);
     }
 
     // inplace methods
 
     inline std::unique_ptr<typename sa_t::data_type> inplace_sa(
-        CompressMode cm = cm_default) {
+        CompressMode cm = CompressMode::select) {
 
         return inplace_ds(m_sa, SA, "sa", cm);
     }
     inline std::unique_ptr<typename phi_t::data_type> inplace_phi(
-        CompressMode cm = cm_default) {
+        CompressMode cm = CompressMode::select) {
 
         return inplace_ds(m_phi, PHI, "phi", cm);
     }
     inline std::unique_ptr<typename plcp_t::data_type> inplace_plcp(
-        CompressMode cm = cm_default) {
+        CompressMode cm = CompressMode::select) {
         return inplace_ds(m_plcp, PLCP, "plcp", cm);
     }
     inline std::unique_ptr<typename lcp_t::data_type> inplace_lcp(
-        CompressMode cm = cm_default) {
+        CompressMode cm = CompressMode::select) {
 
         return inplace_ds(m_lcp, LCP, "lcp", cm);
     }
     inline std::unique_ptr<typename isa_t::data_type> inplace_isa(
-        CompressMode cm = cm_default) {
+        CompressMode cm = CompressMode::select) {
 
         return inplace_ds(m_isa, ISA, "isa", cm);
     }
@@ -190,10 +199,11 @@ private:
     }
 
 public:
-    inline void require(dsflags_t flags, CompressMode cm = cm_default) {
+    inline void require(dsflags_t flags, CompressMode cm = CompressMode::select) {
         m_ds_requested = flags;
 
         // construct requested structures
+        cm = cm_select(cm, m_cm);
         CompressMode cm_construct = (cm == CompressMode::direct) ?
                                                     cm : CompressMode::none;
 
