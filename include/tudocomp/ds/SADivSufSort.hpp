@@ -14,11 +14,11 @@ public:
         return m;
     }
 
-    using ArrayDS::ArrayDS;
-
     template<typename textds_t>
-    inline void construct(const textds_t& t, CompressMode cm) {
-        env().begin_stat_phase("Construct SA");
+    inline SADivSufSort(Env&& env, const textds_t& t, CompressMode cm)
+        : ArrayDS(std::move(env)) {
+
+        this->env().begin_stat_phase("Construct SA");
 
         // Allocate
         const size_t n = t.size();
@@ -35,9 +35,9 @@ public:
             compress();
         }
 
-        env().log_stat("bit_width", size_t(m_data->width()));
-        env().log_stat("size", m_data->bit_size() / 8);
-        env().end_stat_phase();
+        this->env().log_stat("bit_width", size_t(m_data->width()));
+        this->env().log_stat("size", m_data->bit_size() / 8);
+        this->env().end_stat_phase();
     }
 
     void compress() {
