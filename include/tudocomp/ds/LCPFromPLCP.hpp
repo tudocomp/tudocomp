@@ -55,6 +55,7 @@ public:
     void compress() {
         DCHECK(m_data);
         m_data->width(bits_for(m_max));
+        m_data->shrink_to_fit();
     }
 };
 
