@@ -174,18 +174,25 @@ void roundtrip_batch(F f) {
 #include <tudocomp/util/Generators.hpp>
 template<class F>
 void on_string_generators(F func, size_t n) {
+    VLOG(1) << "fibonacci_word ...";
     for(size_t i = 0; i < n; ++i) {
         std::string s = fibonacci_word(i);
         func(s);
     }
+
+    VLOG(1) << "thue_morse_word ...";
     for(size_t i = 0; i < n; ++i) {
         std::string s = thue_morse_word(i);
         func(s);
     }
+
+    VLOG(1) << "rich ...";
     for(size_t i = 0; i < n; ++i) {
         std::string s = run_rich(i);
         func(s);
     }
+
+    VLOG(1) << "random ...";
     for(size_t i = 2; i < n; ++i) {
         for(size_t j = 0; j < 2+50/(i+1); ++j) {
             std::string s = random_uniform(1<<i,Ranges::numbers,j);

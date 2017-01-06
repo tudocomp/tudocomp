@@ -25,7 +25,7 @@ inline typename text_t::value_type bwt(const text_t& text, const sa_t& sa, const
  */
 template<typename bwt_t>
 len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
-	DLOG(INFO) << "Computing LF";
+	VLOG(2) << "Computing LF";
 	if(bwt_length == 0) return nullptr;
 	len_t C[uliteral_max+1] { 0 }; // alphabet counter
 	for(auto& c : bwt) {
@@ -59,7 +59,7 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 			return true;
 			}());
 
-	DLOG(INFO) << "Finished Computing LF";
+	VLOG(2) << "Finished Computing LF";
 	return LF;
 }
 
@@ -71,7 +71,7 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 template<typename bwt_t>
 uliteral_t* decode_bwt(const bwt_t& bwt) {
 	const size_t bwt_length = bwt.size();
-	DLOG(INFO) << "InputSize: " << bwt_length;
+	VLOG(2) << "InputSize: " << bwt_length;
 	if(tdc_unlikely(bwt.empty())) return nullptr;
 	if(tdc_unlikely(bwt_length == 1)) { // since there has to be a zero in each string, a string of length 1 is equal to '\0'
 		uliteral_t*const decoded_string { new uliteral_t[1] };
