@@ -13,14 +13,14 @@ public:
         return m;
     }
 
-    using ArrayDS::ArrayDS;
-
     template<typename textds_t>
-    inline void construct(textds_t& t, CompressMode cm) {
+    inline ISAFromSA(Env&& env, textds_t& t, CompressMode cm)
+            : ArrayDS(std::move(env)) {
+
         // Require Suffix Array
         auto& sa = t.require_sa(cm);
 
-        env().begin_stat_phase("Construct ISA");
+        this->env().begin_stat_phase("Construct ISA");
 
         // Allocate
         const size_t n = t.size();
@@ -35,9 +35,9 @@ public:
 
         if(cm == CompressMode::delayed) compress();
 
-        env().log_stat("bit_width", size_t(m_data->width()));
-        env().log_stat("size", m_data->bit_size() / 8);
-        env().end_stat_phase();
+        this->env().log_stat("bit_width", size_t(m_data->width()));
+        this->env().log_stat("size", m_data->bit_size() / 8);
+        this->env().end_stat_phase();
     }
 
     void compress() {

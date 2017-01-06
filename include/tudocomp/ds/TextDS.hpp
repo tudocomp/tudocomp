@@ -59,11 +59,10 @@ private:
 
     template<typename ds_t>
     inline std::unique_ptr<ds_t> construct_ds(const std::string& option, CompressMode cm) {
-        std::unique_ptr<ds_t> ds = std::make_unique<ds_t>(
-            env().env_for_option(option));
-
-        ds->construct(*this, cm_select(cm, m_cm));
-        return ds;
+        return std::make_unique<ds_t>(
+                    env().env_for_option(option),
+                    *this,
+                    cm_select(cm, m_cm));
     }
 
     template<typename ds_t>

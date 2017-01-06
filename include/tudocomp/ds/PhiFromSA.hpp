@@ -13,10 +13,10 @@ public:
         return m;
     }
 
-    using ArrayDS::ArrayDS;
-
     template<typename textds_t>
-    inline void construct(textds_t& t, CompressMode cm) {
+    inline PhiFromSA(Env&& env, textds_t& t, CompressMode cm)
+            : ArrayDS(std::move(env)) {
+
         // Construct Suffix Array
         auto& sa = t.require_sa(cm);
 
@@ -24,7 +24,7 @@ public:
         const size_t w = bits_for(n);
 
         // Construct Phi Array
-        env().begin_stat_phase("Construct Phi Array");
+        this->env().begin_stat_phase("Construct Phi Array");
 
         m_data = std::make_unique<iv_t>(n, 0,
             (cm == CompressMode::direct) ? w : LEN_BITS);
@@ -37,9 +37,9 @@ public:
 
         if(cm == CompressMode::delayed) compress();
 
-        env().log_stat("bit_width", size_t(m_data->width()));
-        env().log_stat("size", m_data->bit_size() / 8);
-        env().end_stat_phase();
+        this->env().log_stat("bit_width", size_t(m_data->width()));
+        this->env().log_stat("size", m_data->bit_size() / 8);
+        this->env().end_stat_phase();
     }
 
     void compress() {
