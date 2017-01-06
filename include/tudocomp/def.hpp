@@ -39,6 +39,7 @@ namespace tdc {
 	typedef std::make_unsigned<literal_t>::type uliteral_t; // unsigned data type of the alphabet
 	constexpr size_t uliteral_max = std::numeric_limits<uliteral_t>::max(); // the maximum value an input character can have
 	constexpr size_t LEN_MAX = std::numeric_limits<len_t>::max(); // the maximum value an input character can have
+    constexpr size_t LEN_BITS = 8 * sizeof(len_t);
 
 	template<class T>
 	inline size_t literal2int(const T& c) {

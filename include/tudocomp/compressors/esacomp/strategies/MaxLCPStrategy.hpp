@@ -37,11 +37,12 @@ public:
         auto& isa = text.require_isa();
 
         text.require_lcp();
-        auto _lcp = text.release_lcp();
-        auto& lcp = _lcp->data();
+        auto lcpp = text.release_lcp();
+        auto lcp_datap = lcpp->relinquish();
+        auto& lcp = *lcp_datap;
 
         env().begin_stat_phase("Construct MaxLCPSuffixList");
-        MaxLCPSuffixList<text_t::lcp_type> list(*_lcp, threshold);
+        MaxLCPSuffixList<text_t::lcp_type::data_type> list(lcp, threshold, lcpp->max_lcp());
         env().log_stat("entries", list.size());
         env().end_stat_phase();
 
