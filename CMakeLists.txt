@@ -25,6 +25,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemod
 
 # Cotire
 include(cotire)
+set (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1)
 
 # Finders
 include(FindPythonModule)
@@ -62,3 +63,32 @@ add_subdirectory(docs)
 add_subdirectory(www)
 
 include(compare_workspace)
+
+
+
+
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp
+	COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/genregistry.sh ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
+	COMMENT "Generating tudocomp_algorithms.cpp and tudocomp.hpp..."
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/genregistry.sh ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
+)
+
+add_library(
+    tudocomp_algorithms
+	${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp
+)
+
+target_link_libraries(
+    tudocomp_algorithms
+
+    malloc_count
+    tudocomp
+    glog
+    sdsl
+)
+
+cotire(tudocomp_algorithms)
+
+
+
+

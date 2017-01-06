@@ -1,13 +1,15 @@
 #pragma once
 
 #include <tudocomp/Compressor.hpp>
-
-#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
-
+#include <tudocomp/compressors/lz78/LZ78common.hpp>
 #include <tudocomp/Range.hpp>
-#include <tudocomp/coders/BitCoder.hpp> //default
 
 namespace tdc {
+
+	class BitCoder;
+	namespace lz78 {
+		class TernaryTrie;
+	}
 
     namespace lz78 {
         class Decompressor {

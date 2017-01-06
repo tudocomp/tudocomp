@@ -2,27 +2,18 @@
 
 #include <tudocomp/util.hpp>
 
+#include <tudocomp/Compressor.hpp>
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
-#include <tudocomp/compressors/esacomp/strategies/BulldozerStrategy.hpp>
-#include <tudocomp/compressors/esacomp/strategies/LazyListStrategy.hpp>
-#include <tudocomp/compressors/esacomp/strategies/MaxHeapStrategy.hpp>
-#include <tudocomp/compressors/esacomp/strategies/MaxLCPStrategy.hpp>
-#include <tudocomp/compressors/esacomp/strategies/NaiveStrategy.hpp>
-
-#include <tudocomp/compressors/esacomp/decoding/DecodeQueueListBuffer.hpp>
-#include <tudocomp/compressors/esacomp/decoding/SuccinctListBuffer.hpp>
-#include <tudocomp/compressors/esacomp/decoding/LazySuccinctListBuffer.hpp>
-// #include <tudocomp/compressors/esacomp/decoding/MarvinBuffer.hpp>
-#include <tudocomp/compressors/esacomp/decoding/MultiMapBuffer.hpp>
-#include <tudocomp/compressors/esacomp/decoding/MyMapBuffer.hpp>
-
 #include <tudocomp/ds/TextDS.hpp>
+
 
 namespace tdc {
 namespace esacomp {
+class MaxLCPStrategy;
+class SuccinctListBuffer;
 
 template<typename coder_t, typename decode_buffer_t>
 inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs) {

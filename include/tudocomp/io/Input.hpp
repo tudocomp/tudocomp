@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 #include <iterator>
+#include <memory>
 
 #include <tudocomp/util.hpp>
 
