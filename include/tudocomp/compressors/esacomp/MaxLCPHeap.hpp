@@ -88,8 +88,8 @@ private:
 
         perlocation_dir_t dir = NONE;
         do {
-            auto lcp_lc = (lc(pos) < m_size) ? (*m_lcp)[m_heap[lc(pos)]] : 0;
-            auto lcp_rc = (rc(pos) < m_size) ? (*m_lcp)[m_heap[rc(pos)]] : 0;
+            len_t lcp_lc = (lc(pos) < m_size) ? (*m_lcp)[m_heap[lc(pos)]] : 0;
+            len_t lcp_rc = (rc(pos) < m_size) ? (*m_lcp)[m_heap[rc(pos)]] : 0;
 
             // find perlocation direction
             if(lcp_k < lcp_lc && lcp_k < lcp_rc) {

@@ -37,11 +37,12 @@ public:
         auto& isa = text.require_isa();
 
         text.require_lcp();
-        auto _lcp = text.release_lcp();
-        auto& lcp = _lcp->data();
+        auto lcpp = text.release_lcp();
+        auto lcp_datap = lcpp->relinquish();
+        auto& lcp = *lcp_datap;
 
         env().begin_stat_phase("Construct MaxLCPHeap");
-        MaxLCPHeap<text_t::lcp_type> heap(*_lcp, threshold);
+        MaxLCPHeap<text_t::lcp_type::data_type> heap(lcp, threshold);
         env().log_stat("entries", heap.size());
         env().end_stat_phase();
 
