@@ -19,6 +19,7 @@
 #include <tudocomp/Registry.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util/View.hpp>
+#include <tudocomp/CreateAlgorithm.hpp>
 
 using namespace tdc;
 

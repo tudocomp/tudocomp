@@ -5,8 +5,9 @@
 #include <utility>
 
 #include <gtest/gtest.h>
+#include <glog/logging.h>
 
-#include <tudocomp/tudocomp.hpp>
+#include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/util/View.hpp>
