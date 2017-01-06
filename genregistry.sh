@@ -132,19 +132,19 @@ void register_algorithms(Registry& r) {
 EOF
 
 reg PLCPCompressor              compressors/PLCPCompressor.hpp esa_coder esa_buffer
-# reg RunLengthEncoder            compressors/RunLengthEncoder.hpp online_coder
-# reg LiteralEncoder              compressors/LiteralEncoder.hpp all_coder
-# reg LZ78Compressor              compressors/LZ78Compressor.hpp online_coder lz78_trie
-# reg LZWCompressor               compressors/LZWCompressor.hpp online_coder lz78_trie
-# reg RePairCompressor            compressors/RePairCompressor.hpp all_coder
-# reg LZSSLCPCompressor           compressors/LZSSLCPCompressor.hpp all_coder
-# reg ESACompressor               compressors/ESACompressor.hpp esa_coder esa_strat esa_buffer
-# reg LZSSSlidingWindowCompressor compressors/LZSSSlidingWindowCompressor.hpp online_coder
-# reg EasyRLECompressor           compressors/EasyRLECompressor.hpp 
-# reg MTFCompressor               compressors/MTFCompressor.hpp 
-# reg BWTCompressor               compressors/BWTCompressor.hpp _
-# reg ChainCompressor             compressors/ChainCompressor.hpp 
-# reg NoopCompressor              compressors/NoopCompressor.hpp 
+reg RunLengthEncoder            compressors/RunLengthEncoder.hpp online_coder
+reg LiteralEncoder              compressors/LiteralEncoder.hpp all_coder
+reg LZ78Compressor              compressors/LZ78Compressor.hpp online_coder lz78_trie
+reg LZWCompressor               compressors/LZWCompressor.hpp online_coder lz78_trie
+reg RePairCompressor            compressors/RePairCompressor.hpp all_coder
+reg LZSSLCPCompressor           compressors/LZSSLCPCompressor.hpp all_coder
+reg ESACompressor               compressors/ESACompressor.hpp esa_coder esa_strat esa_buffer
+reg LZSSSlidingWindowCompressor compressors/LZSSSlidingWindowCompressor.hpp online_coder
+reg EasyRLECompressor           compressors/EasyRLECompressor.hpp 
+reg MTFCompressor               compressors/MTFCompressor.hpp 
+reg BWTCompressor               compressors/BWTCompressor.hpp _
+reg ChainCompressor             compressors/ChainCompressor.hpp 
+reg NoopCompressor              compressors/NoopCompressor.hpp 
 
 
 cat <<EOF
