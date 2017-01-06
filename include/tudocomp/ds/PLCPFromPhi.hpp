@@ -16,17 +16,17 @@ public:
         return m;
     }
 
-    using ArrayDS::ArrayDS;
-
     template<typename textds_t>
-    inline void construct(textds_t& t, CompressMode cm) {
+    inline PLCPFromPhi(Env&& env, textds_t& t, CompressMode cm)
+            : ArrayDS(std::move(env)) {
+
         const size_t n = t.size();
 
         // Construct Phi and attempt to work in-place
         m_data = t.inplace_phi(cm);
 
         // Use Phi algorithm to compute PLCP array
-        env().begin_stat_phase("Construct PLCP Array");
+        this->env().begin_stat_phase("Construct PLCP Array");
 
         m_max = 0;
         for(len_t i = 0, l = 0; i < n - 1; ++i) {
@@ -41,9 +41,9 @@ public:
             compress();
         }
 
-        env().log_stat("bit_width", size_t(m_data->width()));
-        env().log_stat("size", m_data->bit_size() / 8);
-        env().end_stat_phase();
+        this->env().log_stat("bit_width", size_t(m_data->width()));
+        this->env().log_stat("size", m_data->bit_size() / 8);
+        this->env().end_stat_phase();
     }
 
 	inline len_t max_lcp() const {

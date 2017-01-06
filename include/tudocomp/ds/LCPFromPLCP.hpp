@@ -16,10 +16,10 @@ public:
         return m;
     }
 
-    using ArrayDS::ArrayDS;
-
     template<typename textds_t>
-    inline void construct(textds_t& t, CompressMode cm) {
+    inline LCPFromPLCP(Env&& env, textds_t& t, CompressMode cm)
+            : ArrayDS(std::move(env)) {
+
         // Construct Suffix Array and PLCP Array
         auto& sa = t.require_sa(cm);
         auto& plcp = t.require_plcp(cm);
@@ -27,7 +27,7 @@ public:
         const size_t n = t.size();
 
         // Compute LCP array
-        env().begin_stat_phase("Construct LCP Array");
+        this->env().begin_stat_phase("Construct LCP Array");
 
         m_max = plcp.max_lcp();
         const size_t w = bits_for(m_max);
@@ -43,9 +43,9 @@ public:
 
         if(cm == CompressMode::delayed) compress();
 
-        env().log_stat("bit_width", size_t(m_data->width()));
-        env().log_stat("size", m_data->bit_size() / 8);
-        env().end_stat_phase();
+        this->env().log_stat("bit_width", size_t(m_data->width()));
+        this->env().log_stat("size", m_data->bit_size() / 8);
+        this->env().end_stat_phase();
     }
 
 	inline len_t max_lcp() const {
