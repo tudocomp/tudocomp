@@ -41,7 +41,7 @@ public:
         auto& lcp = _lcp->data();
 
         env().begin_stat_phase("Construct MaxLCPSuffixList");
-        MaxLCPSuffixList<text_t::sa_type, text_t::lcp_type> list(sa, *_lcp, threshold);
+        MaxLCPSuffixList<text_t::lcp_type> list(*_lcp, threshold);
         env().log_stat("entries", list.size());
         env().end_stat_phase();
 

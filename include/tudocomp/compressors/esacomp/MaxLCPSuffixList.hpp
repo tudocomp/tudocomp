@@ -11,16 +11,15 @@ namespace esacomp {
 ///
 /// Addition and removal are achieved in near-constant time.
 /// (Dinklage, 2015).
-template<class sa_t, class lcp_t>
+template<class lcp_t>
 class MaxLCPSuffixList {
 
 private:
     //data backend
-    const sa_t* m_sa;
     const lcp_t* m_lcp;
 
     //undefined suffix
-    const size_t m_undef; // == m_sa->size()
+    const size_t m_undef; // == m_lcp->size()
 
     //linked list
     size_t m_first; //linked list head (maximum LCP)
@@ -53,10 +52,10 @@ private:
 
 public:
     /// Constructor
-    inline MaxLCPSuffixList(const sa_t& sa, const lcp_t& lcp, size_t min_lcp)
-        : m_sa(&sa), m_lcp(&lcp), m_undef(m_sa->size())
+    inline MaxLCPSuffixList(const lcp_t& lcp, size_t min_lcp)
+        : m_lcp(&lcp), m_undef(m_lcp->size())
 	{
-        const size_t& n = sa.size();
+        const size_t& n = lcp.size();
 
         //Initialize doubly linked list
         m_first = m_undef;
