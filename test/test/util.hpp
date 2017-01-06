@@ -11,7 +11,8 @@
 
 #include <sys/stat.h>
 
-#include <tudocomp/tudocomp.hpp>
+//#include <tudocomp/tudocomp.hpp>
+#include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
@@ -19,7 +20,6 @@
 #include <tudocomp/Registry.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util/View.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 
 using namespace tdc;
 
