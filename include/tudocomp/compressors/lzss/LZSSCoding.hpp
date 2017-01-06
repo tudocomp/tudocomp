@@ -55,6 +55,8 @@ inline void encode_text(coder_t& coder,
         if(factors[i].pos == p) coder.encode(false, bit_r);
         else {
             coder.encode(true, bit_r);
+
+            DCHECK_LE(p, factors[i].pos);
             coder.encode(factors[i].pos - p, fdist_r);
         }
 
@@ -63,6 +65,7 @@ inline void encode_text(coder_t& coder,
         }
 
         // encode factor
+        DCHECK_LT(f.src + f.len, n);
         coder.encode(f.src, text_r);
         coder.encode(f.len, flen_r);
 
