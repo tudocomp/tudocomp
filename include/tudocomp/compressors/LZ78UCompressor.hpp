@@ -66,9 +66,10 @@ public:
         len_t factor_count = 0;
 
         auto encode_factor_string = [&](View slice, typename coder_t::Encoder& coder) {
-            for (auto c: slice) {
+            for (auto c : slice) {
                 coder.encode(c, literal_r);
             }
+            coder.encode(0, literal_r);
         };
 
         auto output = [&](View slice, size_t ref) {

@@ -23,6 +23,6 @@ TEST(Lz78U, test) {
 
     c.compress(i, o);
 
-    ASSERT_EQ(o.result(), "a0:a1:ba0:a3:ba1:ba5:\0"_v);
+    ASSERT_EQ(o.result(), "a\0""0:a\0""1:ba\0""0:a\0""3:ba\0""1:ba\0""5:\0"_v);
 
 }
