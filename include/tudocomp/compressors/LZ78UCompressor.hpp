@@ -64,8 +64,9 @@ public:
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
         auto output = [&](View slice, size_t ref) {
-            std::cout << "out m s: " << vec_to_debug_string(slice) << "\n";
-            std::cout << "out m r: " << int(ref) << "\n";
+            std::cout << "out m (s,r): ("
+                << vec_to_debug_string(slice)
+                << ", " << int(ref) << ")\n";
 
             for (auto c: slice) {
                 coder.encode(c, literal_r);
@@ -77,9 +78,9 @@ public:
         while(pos < T.size() - 1) {
             const node_t l = ST.select_leaf(ST.cst.csa.isa[pos]);
             const len_t leaflabel = pos;
-            std::cout << "Selecting leaf " << l << " with label " << leaflabel << std::endl;
+            //std::cout << "Selecting leaf " << l << " with label " << leaflabel << std::endl;
 
-            std::cout << "Checking parent " << ST.parent(l) << " with R[parent] = " << R[ST.nid(ST.parent(l))] << std::endl;
+            //std::cout << "Checking parent " << ST.parent(l) << " with R[parent] = " << R[ST.nid(ST.parent(l))] << std::endl;
             if(ST.parent(l) == ST.root || R[ST.nid(ST.parent(l))] != 0) {
 //                DCHECK_EQ(T[pos + ST.str_depth(ST.parent(l))], lambda(ST.parent(l), l)[0]);
 
@@ -99,14 +100,14 @@ public:
                 pos += ST.str_depth(node) - ST.str_depth(parent);
                 parent = node;
                 node = ST.level_anc(l, ++d);
-                std::cout << "pos : " << pos << std::endl;
+                //std::cout << "pos : " << pos << std::endl;
             }
             R[ST.nid(node)] = ++z;
-            std::cout << "Setting R[" << node << "] to " << z << std::endl;
+            //std::cout << "Setting R[" << node << "] to " << z << std::endl;
 
-            std::cout << "Extracting substring for nodes (" << parent << ", " << node << ") " << std::endl;
+            //std::cout << "Extracting substring for nodes (" << parent << ", " << node << ") " << std::endl;
             const auto& str = T.substr(leaflabel + ST.str_depth(parent), leaflabel + ST.str_depth(node));
-            std::cout << "extracted T[" << (leaflabel + ST.str_depth(parent)) << ", " << (leaflabel + ST.str_depth(node)) << "]: " << str << " of size " << str.size() << "\n";
+            //std::cout << "extracted T[" << (leaflabel + ST.str_depth(parent)) << ", " << (leaflabel + ST.str_depth(node)) << "]: " << str << " of size " << str.size() << "\n";
 
             output(str, R[ST.nid(ST.parent(node))]);
 
