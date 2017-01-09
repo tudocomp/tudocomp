@@ -63,15 +63,23 @@ public:
 
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
+        len_t factor_count = 0;
+
+        auto encode_factor_string = [&](View slice, typename coder_t::Encoder& coder) {
+            for (auto c: slice) {
+                coder.encode(c, literal_r);
+            }
+        };
+
         auto output = [&](View slice, size_t ref) {
             std::cout << "out m (s,r): ("
                 << vec_to_debug_string(slice)
                 << ", " << int(ref) << ")\n";
 
-            for (auto c: slice) {
-                coder.encode(c, literal_r);
-            }
-            coder.encode(ref, len_r);
+            encode_factor_string(slice, coder);
+            coder.encode(ref, Range(factor_count));
+
+            factor_count++;
         };
 
         // Skip the trailing 0
