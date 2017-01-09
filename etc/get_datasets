@@ -62,9 +62,11 @@ for T in ${URLS[@]}; do
     F_TMP=$OUT_TMP/`basename $T`
 
     # filename for final dataset file
-    # removes .gz endings for files that need to be decompressed
+    # removes compressed file endings for files that need to be decompressed
     if [[ $F_TMP == *.gz ]]; then
         F=$OUT_SELF/`basename $T .gz`
+    elif [[ $F_TMP == *.7z ]]; then
+        F=$OUT_SELF/`basename $T .7z`
     else
         F=$OUT_SELF/`basename $T`
     fi
@@ -77,10 +79,13 @@ for T in ${URLS[@]}; do
 
         wget -c -P $OUT_TMP $T
 
-        # decompress .gz files
+        # decompress compressed files
         if [[ $F_TMP == *.gz ]]; then
             gzip -d $F_TMP
             F_TMP=$OUT_TMP/`basename $T .gz`
+        elif [[ $F_TMP == *.7z ]]; then
+            7z e -o$OUT_TMP $F_TMP
+            F_TMP=$OUT_TMP/`basename $T .7z`
         fi
 
         mv $F_TMP $F

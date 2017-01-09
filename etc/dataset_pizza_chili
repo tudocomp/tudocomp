@@ -13,4 +13,5 @@ URLS=(
     "$URL/dna/dna.gz"
     "$URL/nlang/english.gz"
     "$URL/xml/dblp.xml.gz"
+    "$URL/pc-pseudo-real/english.001.2.7z"
 )
