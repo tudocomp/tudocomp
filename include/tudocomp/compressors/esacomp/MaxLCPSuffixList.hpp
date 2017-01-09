@@ -173,7 +173,7 @@ public:
     }
 
     /// Get first item (suffix array index with highest LCP)
-    inline size_t first() const {
+    inline size_t get_max() const {
         DCHECK(m_size > 0);
         return m_first;
     }

@@ -51,7 +51,7 @@ public:
 
         while(list.size() > 0) {
             //get suffix with longest LCP
-            size_t m = list.first();
+            size_t m = list.get_max();
 
             //generate factor
             size_t fpos = sa[m];

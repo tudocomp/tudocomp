@@ -2,6 +2,7 @@
 
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
 namespace esacomp {
@@ -48,7 +49,7 @@ private:
 
 public:
     /// Constructor
-    inline MaxLCPHeap(const lcp_t& lcp, size_t min_lcp)
+    inline MaxLCPHeap(const lcp_t& lcp, size_t min_lcp, size_t max_lcp)
         : m_lcp(&lcp), m_size(0)
 	{
         auto n = lcp.size();
