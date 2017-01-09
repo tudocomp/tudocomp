@@ -9,7 +9,6 @@
     <link rel="icon" type="image/svg+xml" href="../tudocomp-icon.svg">
     <!-- Chrome currently doesn't support SVG favicons -->
     <link rel="icon" type="image/png" href="../tudocomp-icon.png">
-    <script src="w3data.js"></script>
 </head>
 <body>
     <header>
@@ -25,14 +24,11 @@
             </div>
 
             <h1>Table of Contents</h1> <!-- Pandoc seems to be missing this -->
-            <div w3-include-html="_content.html"></div>
+            @CONTENT@
         </div>
     </section>
     <footer>
     </footer>
-    <script>
-        w3IncludeHTML();
-    </script>
 </body>
 </html>
 

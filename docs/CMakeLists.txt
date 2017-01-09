@@ -17,16 +17,22 @@ if(PANDOC_FOUND)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md @ONLY)
 
     add_custom_target(docs-main-html
+
         # convert markdown doc to html
         COMMAND GHCRTS=-V0 ${PANDOC_COMMAND} -s --toc -t html
-            -o ${MAIN_HTML_OUT_DIR}/_content.html
+            -o ${CMAKE_CURRENT_BINARY_DIR}/_content.html
             ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md
 
         # copy html framework
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/html ${MAIN_HTML_OUT_DIR}
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/media ${MAIN_HTML_OUT_DIR}/media
 
-        WORKING_DIRECTORY ${MAIN_LATEX_OUT_DIR}
+        # insert contents into HTML page
+        COMMAND ${CMAKE_COMMAND} -DOUTPUT=${MAIN_HTML_OUT_DIR}/index.html
+                                 -DINPUT=${CMAKE_CURRENT_BINARY_DIR}/_content.html
+                                 -P ${CMAKE_SOURCE_DIR}/cmakemodules/InsertFile.cmake
+
+        WORKING_DIRECTORY ${MAIN_HTML_OUT_DIR}
         COMMENT "Generating main html documentation" VERBATIM
     )
 
