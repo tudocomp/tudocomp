@@ -29,7 +29,7 @@ OUT=${1%/}
 
 source "$2"
 
-OUT_SELF=$OUT/$OUT_DIR
+OUT_SELF=${OUT}
 mkdir -p $OUT_SELF
 
 OUT_TMP=$OUT/tmp
@@ -64,11 +64,11 @@ for T in ${URLS[@]}; do
     # filename for final dataset file
     # removes compressed file endings for files that need to be decompressed
     if [[ $F_TMP == *.gz ]]; then
-        F=$OUT_SELF/`basename $T .gz`
+        F=$OUT_SELF/${OUT_DIR}_`basename $T .gz`
     elif [[ $F_TMP == *.7z ]]; then
-        F=$OUT_SELF/`basename $T .7z`
+        F=$OUT_SELF/${OUT_DIR}_`basename $T .7z`
     else
-        F=$OUT_SELF/`basename $T`
+        F=$OUT_SELF/${OUT_DIR}_`basename $T`
     fi
 
     # download base file if necessary
@@ -85,6 +85,7 @@ for T in ${URLS[@]}; do
             F_TMP=$OUT_TMP/`basename $T .gz`
         elif [[ $F_TMP == *.7z ]]; then
             7z e -o$OUT_TMP $F_TMP
+            rm $F_TMP
             F_TMP=$OUT_TMP/`basename $T .7z`
         fi
 
@@ -116,7 +117,7 @@ for((n=0;n<${#WIKI[@]};n+=2)); do
     L=${WIKI[$n]}
     L_FILE=${WIKI[(($n + 1))]}
     echo "lang: $L, file: $L_FILE"
-    F=$OUT_SELF/$L_FILE
+    F=$OUT_SELF/${OUT_DIR}_$L_FILE
     F_TMP=$OUT_TMP/$L_FILE
 
     WIKI_ARTS_FILE=$WIKI_ARTS_DIR/$L_FILE
