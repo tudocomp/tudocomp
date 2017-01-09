@@ -61,10 +61,20 @@ public:
 
         typedef SuffixTree::node_type node_t;
 
-        // tx: a a a b a b a a a b a a b a b a $
-        // sn:         5         10        15  16
+        typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
 
-        while(pos < T.size()) {
+        auto output = [&](View slice, size_t ref) {
+            std::cout << "out m s: " << vec_to_debug_string(slice) << "\n";
+            std::cout << "out m r: " << int(ref) << "\n";
+
+            for (auto c: slice) {
+                coder.encode(c, literal_r);
+            }
+            coder.encode(ref, len_r);
+        };
+
+        // Skip the trailing 0
+        while(pos < T.size() - 1) {
             const node_t l = ST.select_leaf(ST.cst.csa.isa[pos]);
             const len_t leaflabel = pos;
             std::cout << "Selecting leaf " << l << " with label " << leaflabel << std::endl;
@@ -72,8 +82,10 @@ public:
             std::cout << "Checking parent " << ST.parent(l) << " with R[parent] = " << R[ST.nid(ST.parent(l))] << std::endl;
             if(ST.parent(l) == ST.root || R[ST.nid(ST.parent(l))] != 0) {
 //                DCHECK_EQ(T[pos + ST.str_depth(ST.parent(l))], lambda(ST.parent(l), l)[0]);
-                std::cout << "out l c: " << int(T[pos + ST.str_depth(ST.parent(l))]) << "\n";
-                std::cout << "out l r: " << int(R[ST.nid(ST.parent(l))]) << "\n";
+
+                auto i = pos + ST.str_depth(ST.parent(l));
+                output(T.substr(i, i + 1), R[ST.nid(ST.parent(l))]);
+
                 ++pos;
                 ++z;
                 continue;
@@ -96,8 +108,8 @@ public:
             const auto& str = T.substr(leaflabel + ST.str_depth(parent), leaflabel + ST.str_depth(node));
             std::cout << "extracted T[" << (leaflabel + ST.str_depth(parent)) << ", " << (leaflabel + ST.str_depth(node)) << "]: " << str << " of size " << str.size() << "\n";
 
-            std::cout << "out m s: " << vec_to_debug_string(str) << "\n";
-            std::cout << "out m r: " << int(R[ST.nid(ST.parent(node))]) << "\n";
+            output(str, R[ST.nid(ST.parent(node))]);
+
             pos += str.size();
         }
 
