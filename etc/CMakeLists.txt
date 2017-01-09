@@ -11,7 +11,7 @@ endmacro(dataset_target)
 dataset_target(pizza_chili)
 dataset_target(tagme)
 dataset_target(tagmynews)
-dataset_target(hashtag)
+#dataset_target(hashtag)
 dataset_target(wiki)
 
 # Don't build this automatically
