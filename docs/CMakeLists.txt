@@ -2,7 +2,7 @@
 find_package(LATEX COMPONENTS PDFLATEX)
 find_package(Pandoc)
 
-if(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
+if(PANDOC_FOUND)
 
     include(${CMAKE_CURRENT_SOURCE_DIR}/DocumentationVars.txt)
 
@@ -18,7 +18,7 @@ if(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
 
     add_custom_target(docs-main-html
         # convert markdown doc to html
-        COMMAND ${PANDOC_COMMAND} -s --toc -t html
+        COMMAND GHCRTS=-V0 ${PANDOC_COMMAND} -s --toc -t html
             -o ${MAIN_HTML_OUT_DIR}/_content.html
             ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md
 
@@ -30,33 +30,44 @@ if(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
         COMMENT "Generating main html documentation" VERBATIM
     )
 
-    add_custom_target(docs-main-pdf
-        # convert markdown doc to tex
-        COMMAND ${PANDOC_COMMAND} -t latex
-            -o ${MAIN_LATEX_OUT_DIR}/_content.tex
-            ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md
+    if(LATEX_PDFLATEX_FOUND)
 
-        # copy tex framework
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/latex ${MAIN_LATEX_OUT_DIR}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/media ${MAIN_LATEX_OUT_DIR}/media
+        add_custom_target(docs-main-pdf
+            # convert markdown doc to tex
+            COMMAND ${PANDOC_COMMAND} -t latex
+                -o ${MAIN_LATEX_OUT_DIR}/_content.tex
+                ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md
 
-        # build pdf
-        COMMAND ${PDFLATEX_COMPILER} -synctex=1 -interaction=nonstopmode main.tex #pass 1
-        COMMAND ${PDFLATEX_COMPILER} -synctex=1 -interaction=nonstopmode main.tex #pass 2
-        # move it to output directory
-        COMMAND ${CMAKE_COMMAND} -E rename ${MAIN_LATEX_OUT_DIR}/main.pdf ${CMAKE_CURRENT_BINARY_DIR}/Documentation.pdf
+            # copy tex framework
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/latex ${MAIN_LATEX_OUT_DIR}
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/media ${MAIN_LATEX_OUT_DIR}/media
 
-        #
-        WORKING_DIRECTORY ${MAIN_LATEX_OUT_DIR}
-        COMMENT "Generating main pdf documentation" VERBATIM
-    )
+            # build pdf
+            COMMAND ${PDFLATEX_COMPILER} -synctex=1 -interaction=nonstopmode main.tex #pass 1
+            COMMAND ${PDFLATEX_COMPILER} -synctex=1 -interaction=nonstopmode main.tex #pass 2
+            # move it to output directory
+            COMMAND ${CMAKE_COMMAND} -E rename ${MAIN_LATEX_OUT_DIR}/main.pdf ${CMAKE_CURRENT_BINARY_DIR}/Documentation.pdf
 
-    add_custom_target(docs-main
-        COMMENT "Generating main documentation" VERBATIM
-        DEPENDS docs-main-html docs-main-pdf
-    )
+            #
+            WORKING_DIRECTORY ${MAIN_LATEX_OUT_DIR}
+            COMMENT "Generating main pdf documentation" VERBATIM
+        )
 
-endif(PANDOC_FOUND AND LATEX_PDFLATEX_FOUND)
+        add_custom_target(docs-main
+            COMMENT "Generating main documentation" VERBATIM
+            DEPENDS docs-main-html docs-main-pdf
+        )
+
+    else(LATEX_PDFLATEX_FOUND)
+
+        add_custom_target(docs-main
+            COMMENT "Generating main documentation (PDF unavailable)" VERBATIM
+            DEPENDS docs-main-html
+        )
+
+    endif(LATEX_PDFLATEX_FOUND)
+
+endif(PANDOC_FOUND)
 
 # docs-doxygen target - builds the Doxygen documentation
 find_package(Doxygen)
