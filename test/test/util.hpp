@@ -22,6 +22,8 @@
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/util/Generators.hpp>
 
+#include <tudocomp/util/Generators.hpp>
+
 using namespace tdc;
 
 namespace test {
