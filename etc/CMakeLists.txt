@@ -9,6 +9,7 @@ macro(dataset_target dataset_name)
 endmacro(dataset_target)
 
 dataset_target(pizza_chili)
+dataset_target(pizza_chili_pseudo_real)
 dataset_target(tagme)
 dataset_target(tagmynews)
 #dataset_target(hashtag)
