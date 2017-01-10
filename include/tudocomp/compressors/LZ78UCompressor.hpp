@@ -13,6 +13,93 @@
 
 namespace tdc {
 
+// TODO: Define factorid for lz78u uniformly
+
+namespace lz78u {
+    class Decompressor {
+        std::vector<lz78::factorid_t> indices;
+        std::vector<uliteral_t> literal_strings;
+        std::vector<size_t> start_literal_strings;
+
+        std::vector<uliteral_t> buffer;
+
+        View literals_of(size_t i) const {
+            View ls = literal_strings;
+
+            size_t start = start_literal_strings[i];
+            size_t end = 0;
+            if ((i + 1) < start_literal_strings.size()) {
+                end = start_literal_strings[i + 1];
+            } else {
+                end = ls.size();
+            }
+
+            std::cout << "start: " << start << ", end: " << end << "\n";
+            std::cout << "literal_strings: " << ls << "\n";
+
+            auto r1 = ls;
+            DCHECK_LT(start, end);
+            auto len = end - start;
+            std::cout << "len: " << len << "\n";
+            for (size_t xi = start; xi < start+len; xi++) {
+                std::cout << int(ls[xi]) << "\n";
+            }
+            //View r2 = r1.substr(start, len);
+            View r2 = View(&r1[start], len);
+
+            std::cout << "slice r: " << vec_to_debug_string(r2) << "\n";
+
+            return r2;
+        }
+
+        public:
+        inline void decompress(lz78::factorid_t index, View literals, std::ostream& out) {
+            indices.push_back(index);
+            start_literal_strings.push_back(literal_strings.size());
+            for (auto c : literals) {
+                literal_strings.push_back(c);
+            }
+
+            std::cout << "indices:         " << vec_to_debug_string(indices) << "\n";
+            std::cout << "start lit str:   " << vec_to_debug_string(start_literal_strings) << "\n";
+            std::cout << "literal_strings: " << vec_to_debug_string(literal_strings) << "\n";
+
+            buffer.clear();
+
+            while(true) {
+                std::cout << "a " << index << "\n";
+                std::cout << "a " << vec_to_debug_string(buffer) << "\n";
+                std::cout << "a " << vec_to_debug_string(literals) << "\n\n";
+
+                auto inv_old_size = buffer.size();
+                for (size_t i = 0; i < literals.size(); i++) {
+                    buffer.push_back(literals[literals.size() - i - 1]);
+                }
+
+                DCHECK_GT(literals.size(), 0);
+                DCHECK_EQ(inv_old_size + literals.size(), buffer.size());
+
+                if (index == 0) {
+                    break;
+                }
+                literals = literals_of(index - 1);
+                index = indices[index - 1];
+                std::cout << "b " << index << "\n";
+                std::cout << "b " << vec_to_debug_string(buffer) << "\n";
+                std::cout << "b " << vec_to_debug_string(literals) << "\n\n";
+            }
+
+            std::cout << "reconstructed: " << vec_to_debug_string(buffer) << "\n\n";
+
+            for(size_t i = 0; i < buffer.size(); i++) {
+                out << buffer[buffer.size() - i - 1];
+            }
+        }
+
+    };
+}
+
+
 template<typename coder_t>
 class LZ78UCompressor: public Compressor {
 private:
@@ -77,8 +164,8 @@ public:
                 << vec_to_debug_string(slice)
                 << ", " << int(ref) << ")\n";
 
-            encode_factor_string(slice, coder);
             coder.encode(ref, Range(factor_count));
+            encode_factor_string(slice, coder);
 
             factor_count++;
         };
@@ -127,7 +214,37 @@ public:
     }
 
     virtual void decompress(Input& input, Output& output) override final {
+        auto out = output.as_stream();
+        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
+        uint64_t factor_count = 0;
+
+        lz78u::Decompressor decomp;
+        std::vector<uliteral_t> buf;
+
+        while (!decoder.eof()) {
+            const lz78::factorid_t index = decoder.template decode<lz78::factorid_t>(Range(factor_count));
+
+            buf.clear();
+            while (true) {
+                const uliteral_t chr = decoder.template decode<uliteral_t>(literal_r);
+                if (chr == '\0') {
+                    break;
+                }
+                buf.push_back(chr);
+            }
+
+            std::cout << "in m (s,r): ("
+                << vec_to_debug_string(View(buf))
+                << ", " << int(index) << ")\n";
+
+            decomp.decompress(index, buf, out);
+
+            factor_count++;
+        }
+
+        out << '\0';
+        out.flush();
     }
 
 };

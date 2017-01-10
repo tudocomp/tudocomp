@@ -23,6 +23,13 @@ TEST(Lz78U, test) {
 
     c.compress(i, o);
 
-    ASSERT_EQ(o.result(), "a\0""0:a\0""1:ba\0""0:a\0""3:ba\0""1:ba\0""5:\0"_v);
+    ASSERT_EQ(o.result(), "0:a\0""1:a\0""0:ba\0""3:a\0""1:ba\0""5:ba\0""\0"_v);
 
+}
+
+TEST(Lz78U, roundtrip) {
+    test::roundtrip<LZ78UCompressor<ASCIICoder>>(
+        "aaababaaabaababa"_v,
+        "0:a\0""1:a\0""0:ba\0""3:a\0""1:ba\0""5:ba\0""\0"_v
+    );
 }
