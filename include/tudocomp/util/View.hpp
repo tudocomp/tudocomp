@@ -192,6 +192,9 @@ public:
 
     /// Construct a new View that is a sub view into the current one.
     ///
+    /// The returned view will be a "from-to" slice,
+    /// and cover the bytes starting at `from` and ending at `to`.
+    ///
     /// Passing `npos` to `to` will create a slice until the end of the View
     ///
     /// # Example
@@ -207,6 +210,27 @@ public:
         DCHECK(to <= size());
 
         return View(&(*this)[from], to - from);
+    }
+
+    /// Construct a new View that is a sub view into the current one.
+    ///
+    /// The returned view will be a "position-length" slice,
+    /// and cover the bytes starting at `pos` and ending at `pos + len`.
+    ///
+    /// Passing `npos` to `len` will create a slice until the end of the View
+    ///
+    /// This method covers the same basic operation as `slice()`, but
+    /// mirrors the semantic of `std::string::substr`.
+    ///
+    /// # Example
+    ///
+    /// `View("abcd").substr(1, 2) == View("bc")`
+    inline View substr(size_type pos, size_type len = npos) const {
+        if (len == npos) {
+            len = m_size - pos;
+        }
+
+        return slice(pos, pos + len);
     }
 
     // Modifiers
