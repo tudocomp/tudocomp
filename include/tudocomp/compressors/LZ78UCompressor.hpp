@@ -45,9 +45,9 @@ namespace lz78u {
                 literal_strings.push_back(c);
             }
 
-            std::cout << "indices:         " << vec_to_debug_string(indices) << "\n";
-            std::cout << "start lit str:   " << vec_to_debug_string(start_literal_strings) << "\n";
-            std::cout << "literal_strings: " << vec_to_debug_string(literal_strings) << "\n";
+            std::cout << "    indices:         " << vec_to_debug_string(indices) << "\n";
+            std::cout << "    start lit str:   " << vec_to_debug_string(start_literal_strings) << "\n";
+            std::cout << "    literal_strings: " << vec_to_debug_string(literal_strings) << "\n";
 
             buffer.clear();
 
@@ -67,11 +67,9 @@ namespace lz78u {
                 index = indices[index - 1];
             }
 
-            std::cout << "reconstructed: " << vec_to_debug_string(buffer) << "\n\n";
-
-            for(size_t i = 0; i < buffer.size(); i++) {
-                out << buffer[buffer.size() - i - 1];
-            }
+            std::reverse(buffer.begin(), buffer.end());
+            std::cout << "    reconstructed: " << vec_to_debug_string(buffer) << "\n";
+            out << View(buffer);
         }
 
     };
@@ -98,7 +96,7 @@ public:
 
     virtual void compress(Input& input, Output& out) override {
         env().begin_stat_phase("lz78u");
-        std::cout << "START\n";
+        std::cout << "START COMPRESS\n";
 
         auto iview = input.as_view();
         View T = iview;
@@ -109,7 +107,7 @@ public:
 
             // TODO: Specialize sdsl template for less alloc here
             std::string bad_copy_1 = T.slice(0, T.size() - 1);
-            std::cout << vec_to_debug_string(bad_copy_1) << "\n";
+            std::cout << "text: " << vec_to_debug_string(bad_copy_1) << "\n";
 
             construct_im(backing_cst, bad_copy_1, 1);
 
@@ -195,6 +193,7 @@ public:
     }
 
     virtual void decompress(Input& input, Output& output) override final {
+        std::cout << "START DECOMPRESS\n";
         auto out = output.as_stream();
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 

@@ -27,11 +27,14 @@ TEST(Lz78U, test) {
 
 }
 
-TEST(Lz78U, roundtrip) {
+TEST(Lz78U, roundtrip1) {
     test::roundtrip<LZ78UCompressor<ASCIICoder>>(
         "aaababaaabaababa"_v,
         "0:a\0""1:a\0""0:ba\0""3:a\0""1:ba\0""5:ba\0""\0"_v
     );
+}
+
+TEST(Lz78U, roundtrip2) {
     test::roundtrip<LZ78UCompressor<ASCIICoder>>(
         "abcdebcdeabc"_v,
         ""_v
