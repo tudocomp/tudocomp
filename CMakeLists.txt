@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.0.2)
 project (tudocomp)
 
-string(TIMESTAMP CURRENT_REVISION "%Y.%m.%d.%H%M")
-set(VERSION "0.${CURRENT_REVISION}")
+if(NOT VERSION)
+    string(TIMESTAMP DATE "%y%m%d")
+    set(VERSION "0.${DATE}-$ENV{USER}${VERSION_SUFFIX}")
+endif(NOT VERSION)
+
+message("VERSION = ${VERSION}")
 
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "4.9")
     message(FATAL_ERROR "g++ version 4.9 or greater required!")
