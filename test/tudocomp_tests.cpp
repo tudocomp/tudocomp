@@ -912,6 +912,41 @@ TEST(View, slicing) {
     ASSERT_EQ(f, "b");
 }
 
+TEST(View, substring) {
+    View a("abc");
+    ASSERT_EQ(a.size(), 3u);
+    ASSERT_EQ(a, "abc");
+
+    View b = a.substr(0, 3);
+    ASSERT_EQ(b.size(), 3u);
+    ASSERT_EQ(b, "abc");
+
+    View c = a.substr(0);
+    ASSERT_EQ(c.size(), 3u);
+    ASSERT_EQ(c, "abc");
+
+    View d = a.substr(2);
+    ASSERT_EQ(d.size(), 1u);
+    ASSERT_EQ(d, "c");
+
+    View e = a.substr(2, 1);
+    ASSERT_EQ(e.size(), 1u);
+    ASSERT_EQ(e, "c");
+
+    View f = a.substr(1, 1);
+    ASSERT_EQ(f.size(), 1u);
+    ASSERT_EQ(f, "b");
+}
+
+TEST(View, slice_vs_substr) {
+    View a("abcde");
+
+    ASSERT_EQ(a.slice(0), a.substr(0));
+    ASSERT_EQ(a.slice(3), a.substr(3));
+
+    ASSERT_EQ(a.slice(0, 3), a.substr(0, 3));
+    ASSERT_EQ(a.slice(3, 5), a.substr(3, 2));
+}
 
 TEST(View, string_predicates) {
     View a("abc");
