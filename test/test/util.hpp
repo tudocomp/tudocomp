@@ -20,6 +20,7 @@
 #include <tudocomp/Registry.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util/View.hpp>
+#include <tudocomp/util/Generators.hpp>
 
 using namespace tdc;
 
@@ -172,7 +173,6 @@ void roundtrip_batch(F f) {
     //f(View(all_bytes));
 }
 
-#include <tudocomp/util/Generators.hpp>
 template<class F>
 void on_string_generators(F func, size_t n) {
     VLOG(1) << "fibonacci_word ...";
