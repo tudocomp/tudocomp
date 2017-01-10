@@ -34,22 +34,7 @@ namespace lz78u {
                 end = ls.size();
             }
 
-            std::cout << "start: " << start << ", end: " << end << "\n";
-            std::cout << "literal_strings: " << ls << "\n";
-
-            auto r1 = ls;
-            DCHECK_LT(start, end);
-            auto len = end - start;
-            std::cout << "len: " << len << "\n";
-            for (size_t xi = start; xi < start+len; xi++) {
-                std::cout << int(ls[xi]) << "\n";
-            }
-            //View r2 = r1.slice(start, len);
-            View r2 = View(&r1[start], len);
-
-            std::cout << "slice r: " << vec_to_debug_string(r2) << "\n";
-
-            return r2;
+            return ls.slice(start, end);
         }
 
         public:
@@ -67,10 +52,6 @@ namespace lz78u {
             buffer.clear();
 
             while(true) {
-                std::cout << "a " << index << "\n";
-                std::cout << "a " << vec_to_debug_string(buffer) << "\n";
-                std::cout << "a " << vec_to_debug_string(literals) << "\n\n";
-
                 auto inv_old_size = buffer.size();
                 for (size_t i = 0; i < literals.size(); i++) {
                     buffer.push_back(literals[literals.size() - i - 1]);
@@ -84,9 +65,6 @@ namespace lz78u {
                 }
                 literals = literals_of(index - 1);
                 index = indices[index - 1];
-                std::cout << "b " << index << "\n";
-                std::cout << "b " << vec_to_debug_string(buffer) << "\n";
-                std::cout << "b " << vec_to_debug_string(literals) << "\n\n";
             }
 
             std::cout << "reconstructed: " << vec_to_debug_string(buffer) << "\n\n";
