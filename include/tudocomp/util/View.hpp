@@ -192,12 +192,12 @@ public:
 
     /// Construct a new View that is a sub view into the current one.
     ///
-    /// Passing `npos` to `to` will create a substr until the end of the View
+    /// Passing `npos` to `to` will create a slice until the end of the View
     ///
     /// # Example
     ///
-    /// `View("abcd").substr(1, 3) == View("bc")`
-    inline View substr(size_type from, size_type to = npos) const {
+    /// `View("abcd").slice(1, 3) == View("bc")`
+    inline View slice(size_type from, size_type to = npos) const {
         if (to == npos) {
             to = m_size;
         }
@@ -231,12 +231,12 @@ public:
 
     /// Removes the first `n` elements from the View
     inline void remove_prefix(size_type n) {
-        *this = substr(n);
+        *this = slice(n);
     }
 
     /// Removes the last `n` elements from the View
     inline void remove_suffix(size_type n) {
-        *this = substr(0, m_size - n);
+        *this = slice(0, m_size - n);
     }
 
     // string predicates
@@ -297,12 +297,12 @@ inline std::ostream& operator<<(std::ostream& os, const View& v) {
 
 inline bool View::starts_with(const View& x) const {
     return (x.size() <= size())
-        && (substr(0, x.size()) == x);
+        && (slice(0, x.size()) == x);
 }
 
 inline bool View::ends_with(const View& x) const {
     return (x.size() <= size())
-        && (substr(size() - x.size()) == x);
+        && (slice(size() - x.size()) == x);
 }
 
 inline View operator "" _v(const char* str, size_t n)

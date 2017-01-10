@@ -311,7 +311,7 @@ namespace io {
         View old_view = m_view;
 
         // advance view into memory by its whole length
-        m_view = m_view.substr(m_view.size());
+        m_view = m_view.slice(m_view.size());
 
         return InputView {
             InputView::Memory(old_view, buf)
@@ -381,7 +381,7 @@ namespace io {
             virtual ~Memory() {
                 if (!m_is_empty) {
                     size_t len = size_t(m_stream.stream().tellg()) - m_start_pos;
-                    m_offset_back_ref->m_view = m_offset_back_ref->m_view.substr(len);
+                    m_offset_back_ref->m_view = m_offset_back_ref->m_view.slice(len);
                 }
             }
             std::istream& stream() override {

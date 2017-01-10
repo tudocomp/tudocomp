@@ -387,7 +387,7 @@ namespace tdc {
                     // char is valid in an IDENT
                     m_cursor++;
                 } else {
-                    return m_text.substr(ident_start, m_cursor);
+                    return m_text.slice(ident_start, m_cursor);
                 }
             }
             for (; m_cursor < m_text.size(); m_cursor++) {
@@ -402,7 +402,7 @@ namespace tdc {
                     break;
                 }
             }
-            return m_text.substr(ident_start, m_cursor);
+            return m_text.slice(ident_start, m_cursor);
         }
         inline void Parser::parse_whitespace() {
             if (!has_next()) {
@@ -447,7 +447,7 @@ namespace tdc {
                     m_cursor++;
                 }
                 if (end >= start) {
-                    return m_text.substr(start, end);
+                    return m_text.slice(start, end);
                 }
             }
             error(std::string("Expected ") + delim);
@@ -455,7 +455,7 @@ namespace tdc {
         }
         inline bool Parser::parse_keyword(View keyword) {
             parse_whitespace();
-            if (m_text.substr(m_cursor).starts_with(keyword)) {
+            if (m_text.slice(m_cursor).starts_with(keyword)) {
                 m_cursor += keyword.size();
                 return true;
             }

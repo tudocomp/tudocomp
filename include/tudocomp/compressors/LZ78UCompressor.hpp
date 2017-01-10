@@ -44,7 +44,7 @@ namespace lz78u {
             for (size_t xi = start; xi < start+len; xi++) {
                 std::cout << int(ls[xi]) << "\n";
             }
-            //View r2 = r1.substr(start, len);
+            //View r2 = r1.slice(start, len);
             View r2 = View(&r1[start], len);
 
             std::cout << "slice r: " << vec_to_debug_string(r2) << "\n";
@@ -129,7 +129,7 @@ public:
             env().begin_stat_phase("construct suffix tree");
 
             // TODO: Specialize sdsl template for less alloc here
-            std::string bad_copy_1 = T.substr(0, T.size() - 1);
+            std::string bad_copy_1 = T.slice(0, T.size() - 1);
             std::cout << vec_to_debug_string(bad_copy_1) << "\n";
 
             construct_im(backing_cst, bad_copy_1, 1);
@@ -181,7 +181,7 @@ public:
 //                DCHECK_EQ(T[pos + ST.str_depth(ST.parent(l))], lambda(ST.parent(l), l)[0]);
 
                 auto i = pos + ST.str_depth(ST.parent(l));
-                output(T.substr(i, i + 1), R[ST.nid(ST.parent(l))]);
+                output(T.slice(i, i + 1), R[ST.nid(ST.parent(l))]);
 
                 ++pos;
                 ++z;
@@ -202,7 +202,7 @@ public:
             //std::cout << "Setting R[" << node << "] to " << z << std::endl;
 
             //std::cout << "Extracting substring for nodes (" << parent << ", " << node << ") " << std::endl;
-            const auto& str = T.substr(leaflabel + ST.str_depth(parent), leaflabel + ST.str_depth(node));
+            const auto& str = T.slice(leaflabel + ST.str_depth(parent), leaflabel + ST.str_depth(node));
             //std::cout << "extracted T[" << (leaflabel + ST.str_depth(parent)) << ", " << (leaflabel + ST.str_depth(node)) << "]: " << str << " of size " << str.size() << "\n";
 
             output(str, R[ST.nid(ST.parent(node))]);
