@@ -98,6 +98,7 @@ public:
 
     virtual void compress(Input& input, Output& out) override {
         env().begin_stat_phase("lz78u");
+        std::cout << "START\n";
 
         auto iview = input.as_view();
         View T = iview;
@@ -138,7 +139,7 @@ public:
         };
 
         auto output = [&](View slice, size_t ref) {
-            std::cout << "out m (s,r): ("
+            std::cout << "out (s,r): ("
                 << vec_to_debug_string(slice)
                 << ", " << int(ref) << ")\n";
 
@@ -159,6 +160,7 @@ public:
 //                DCHECK_EQ(T[pos + ST.str_depth(ST.parent(l))], lambda(ST.parent(l), l)[0]);
 
                 auto i = pos + ST.str_depth(ST.parent(l));
+                std::cout << "out char:  ";
                 output(T.slice(i, i + 1), R[ST.nid(ST.parent(l))]);
 
                 ++pos;
@@ -183,6 +185,7 @@ public:
             const auto& str = T.slice(leaflabel + ST.str_depth(parent), leaflabel + ST.str_depth(node));
             //std::cout << "extracted T[" << (leaflabel + ST.str_depth(parent)) << ", " << (leaflabel + ST.str_depth(node)) << "]: " << str << " of size " << str.size() << "\n";
 
+            std::cout << "out slice: ";
             output(str, R[ST.nid(ST.parent(node))]);
 
             pos += str.size();

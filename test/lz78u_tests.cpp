@@ -32,4 +32,8 @@ TEST(Lz78U, roundtrip) {
         "aaababaaabaababa"_v,
         "0:a\0""1:a\0""0:ba\0""3:a\0""1:ba\0""5:ba\0""\0"_v
     );
+    test::roundtrip<LZ78UCompressor<ASCIICoder>>(
+        "abcdebcdeabc"_v,
+        ""_v
+    );
 }
