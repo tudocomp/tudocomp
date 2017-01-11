@@ -26,6 +26,8 @@ endif()
 # TODO: Add --pedantic and fix issues
 # TODO: Actually add -Wall -Wextra -Werror -pedantic
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=${CXX_STANDARD}")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Og -g -Wall -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined -std=${CXX_STANDARD}")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -O0 -g -Wall -fno-omit-frame-pointer -std=${CXX_STANDARD}")
 
 # Global dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
