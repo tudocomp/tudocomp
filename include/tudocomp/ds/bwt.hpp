@@ -10,10 +10,10 @@ namespace tdc {
 	namespace bwt {
 		static_assert(std::is_same<View::value_type, uliteral_t>::value, "View::value_type and uliteral_t must be the same");
 
-/** 
+/**
  * Computes the value BWT[i] of a text T given its suffix array SA
  * Runs in O(1) time since BWT[i] = SA[(T[i]-1) mod |SA|]
- */ 
+ */
 template<typename text_t, typename sa_t>
 inline typename text_t::value_type bwt(const text_t& text, const sa_t& sa, const size_t i) {
 	return (sa[i] == 0) ? text[sa.size()-1] : text[sa[i]-1];
@@ -25,12 +25,12 @@ inline typename text_t::value_type bwt(const text_t& text, const sa_t& sa, const
  */
 template<typename bwt_t>
 len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
-	DLOG(INFO) << "Computing LF";
+	VLOG(2) << "Computing LF";
 	if(bwt_length == 0) return nullptr;
 	len_t C[uliteral_max+1] { 0 }; // alphabet counter
-	for(auto& c : bwt) { 
+	for(auto& c : bwt) {
 		if(literal2int(c) != uliteral_max) {
-			++C[literal2int(c)+1]; 
+			++C[literal2int(c)+1];
 		}
 	}
 	for(size_t i = 1; i < uliteral_max; ++i) {
@@ -51,7 +51,7 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	tdc_debug(VLOG(2) << "LF: " << arr_to_debug_string(LF, bwt_length));
 	DCHECK([&] () { // unique invariant of the LF mapping
 			assert_permutation(LF,bwt_length);
-			for(len_t i = 0; i < bwt_length; ++i) 
+			for(len_t i = 0; i < bwt_length; ++i)
 			for(len_t j = i+1; j < bwt_length; ++j) {
 			if(bwt[i] != bwt[j]) continue;
 			DCHECK_LT(LF[i], LF[j]);
@@ -59,7 +59,7 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 			return true;
 			}());
 
-	DLOG(INFO) << "Finished Computing LF";
+	VLOG(2) << "Finished Computing LF";
 	return LF;
 }
 
@@ -71,7 +71,7 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 template<typename bwt_t>
 uliteral_t* decode_bwt(const bwt_t& bwt) {
 	const size_t bwt_length = bwt.size();
-	DLOG(INFO) << "InputSize: " << bwt_length;
+	VLOG(2) << "InputSize: " << bwt_length;
 	if(tdc_unlikely(bwt.empty())) return nullptr;
 	if(tdc_unlikely(bwt_length == 1)) { // since there has to be a zero in each string, a string of length 1 is equal to '\0'
 		uliteral_t*const decoded_string { new uliteral_t[1] };

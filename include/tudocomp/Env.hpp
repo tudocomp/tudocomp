@@ -14,7 +14,7 @@ inline Stat& EnvRoot::stat_current() {
 }
 
 inline void EnvRoot::begin_stat_phase(const std::string& name) {
-    DLOG(INFO) << "begin phase \"" << name << "\"";
+    VLOG(2) << "begin phase \"" << name << "\"";
 
     m_stat_stack.push(Stat(name));
     Stat& stat = m_stat_stack.top();
@@ -25,7 +25,7 @@ inline void EnvRoot::end_stat_phase() {
     DCHECK(!m_stat_stack.empty());
 
     Stat& stat_ref = m_stat_stack.top();
-    DLOG(INFO) << "end phase \"" << stat_ref.title() << "\"";
+    VLOG(2) << "end phase \"" << stat_ref.title() << "\"";
 
     stat_ref.end();
 
@@ -55,7 +55,7 @@ inline void EnvRoot::restart_stats(const std::string& root_name) {
 
 template<class T>
 inline void EnvRoot::log_stat(const std::string& name, const T& value) {
-    DLOG(INFO) << "stat: " << name << " = " << value;
+    VLOG(2) << "stat: " << name << " = " << value;
     stat_current().add_stat(name, value);
 }
 

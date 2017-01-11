@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Pizza&Chili Corpus text collection
+OUT_DIR=pc
+PREFIX_SIZES="200 100 50 10 1"
+
+#URL="http://pizzachili.dcc.uchile.cl/texts"
+URL="dacit.cs.uni-dortmund.de/datasets"
+URLS=(
+    "$URL/code/sources.gz"
+    "$URL/music/pitches.gz"
+    "$URL/protein/proteins.gz"
+    "$URL/dna/dna.gz"
+    "$URL/nlang/english.gz"
+    "$URL/xml/dblp.xml.gz"
+)

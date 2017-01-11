@@ -2,6 +2,7 @@
 
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
 namespace esacomp {
@@ -48,7 +49,7 @@ private:
 
 public:
     /// Constructor
-    inline MaxLCPHeap(const lcp_t& lcp, size_t min_lcp)
+    inline MaxLCPHeap(const lcp_t& lcp, size_t min_lcp, size_t max_lcp)
         : m_lcp(&lcp), m_size(0)
 	{
         auto n = lcp.size();
@@ -88,8 +89,8 @@ private:
 
         perlocation_dir_t dir = NONE;
         do {
-            auto lcp_lc = (lc(pos) < m_size) ? (*m_lcp)[m_heap[lc(pos)]] : 0;
-            auto lcp_rc = (rc(pos) < m_size) ? (*m_lcp)[m_heap[rc(pos)]] : 0;
+            len_t lcp_lc = (lc(pos) < m_size) ? (*m_lcp)[m_heap[lc(pos)]] : 0;
+            len_t lcp_rc = (rc(pos) < m_size) ? (*m_lcp)[m_heap[rc(pos)]] : 0;
 
             // find perlocation direction
             if(lcp_k < lcp_lc && lcp_k < lcp_rc) {

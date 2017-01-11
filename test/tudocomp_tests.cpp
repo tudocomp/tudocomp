@@ -5,8 +5,9 @@
 #include <utility>
 
 #include <gtest/gtest.h>
+#include <glog/logging.h>
 
-#include <tudocomp/tudocomp.hpp>
+#include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/util/View.hpp>
@@ -253,7 +254,7 @@ TEST(Input, ensure_null_term) {
     std::vector<uint8_t> c  { 96, 97, 98, 0 };
 
     {
-        Input i(View(a).substr(0, 3));
+        Input i(View(a).slice(0, 3));
         auto x = i.as_view();
         std::vector<uint8_t> y = x;
         ASSERT_EQ(y, b);
@@ -262,7 +263,7 @@ TEST(Input, ensure_null_term) {
     ASSERT_EQ(a, a2);
 
     {
-        Input i(View(a).substr(0, 3));
+        Input i(View(a).slice(0, 3));
         i.escape_and_terminate();
         auto x = i.as_view();
         ASSERT_NE(x, b);
@@ -271,7 +272,7 @@ TEST(Input, ensure_null_term) {
     ASSERT_EQ(a, a2);
 
     {
-        Input i(View(a).substr(0, 3));
+        Input i(View(a).slice(0, 3));
         Input i2 = std::move(i);
         i2.escape_and_terminate();
         auto x = i2.as_view();
@@ -281,7 +282,7 @@ TEST(Input, ensure_null_term) {
     ASSERT_EQ(a, a2);
 
     {
-        Input i(View(a).substr(0, 3));
+        Input i(View(a).slice(0, 3));
         i.escape_and_terminate();
 
         Input i2 = i;
@@ -297,7 +298,7 @@ TEST(Input, ensure_null_term) {
     ASSERT_EQ(a, a2);
 
     {
-        Input i(View(a).substr(0, 3));
+        Input i(View(a).slice(0, 3));
 
         i.escape_and_terminate();
         {
@@ -317,7 +318,7 @@ namespace input_nte_matrix {
     using Path = Input::Path;
 
     std::vector<uint8_t>       slice_buf       { 97,  98,  99, 100, 101, 102 };
-    const View                 slice           = View(slice_buf).substr(0, 3);
+    const View                 slice           = View(slice_buf).slice(0, 3);
     const std::vector<uint8_t> o_slice         { 97,  98,  99  };
 
     template<class T, class CStrat>
@@ -890,6 +891,32 @@ TEST(View, slicing) {
     ASSERT_EQ(a.size(), 3u);
     ASSERT_EQ(a, "abc");
 
+    View b = a.slice(0, 3);
+    ASSERT_EQ(b.size(), 3u);
+    ASSERT_EQ(b, "abc");
+
+    View c = a.slice(0);
+    ASSERT_EQ(c.size(), 3u);
+    ASSERT_EQ(c, "abc");
+
+    View d = a.slice(2);
+    ASSERT_EQ(d.size(), 1u);
+    ASSERT_EQ(d, "c");
+
+    View e = a.slice(2, 3);
+    ASSERT_EQ(e.size(), 1u);
+    ASSERT_EQ(e, "c");
+
+    View f = a.slice(1, 2);
+    ASSERT_EQ(f.size(), 1u);
+    ASSERT_EQ(f, "b");
+}
+
+TEST(View, substring) {
+    View a("abc");
+    ASSERT_EQ(a.size(), 3u);
+    ASSERT_EQ(a, "abc");
+
     View b = a.substr(0, 3);
     ASSERT_EQ(b.size(), 3u);
     ASSERT_EQ(b, "abc");
@@ -902,15 +929,24 @@ TEST(View, slicing) {
     ASSERT_EQ(d.size(), 1u);
     ASSERT_EQ(d, "c");
 
-    View e = a.substr(2, 3);
+    View e = a.substr(2, 1);
     ASSERT_EQ(e.size(), 1u);
     ASSERT_EQ(e, "c");
 
-    View f = a.substr(1, 2);
+    View f = a.substr(1, 1);
     ASSERT_EQ(f.size(), 1u);
     ASSERT_EQ(f, "b");
 }
 
+TEST(View, slice_vs_substr) {
+    View a("abcde");
+
+    ASSERT_EQ(a.slice(0), a.substr(0));
+    ASSERT_EQ(a.slice(3), a.substr(3));
+
+    ASSERT_EQ(a.slice(0, 3), a.substr(0, 3));
+    ASSERT_EQ(a.slice(3, 5), a.substr(3, 2));
+}
 
 TEST(View, string_predicates) {
     View a("abc");

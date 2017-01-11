@@ -32,6 +32,9 @@
 #include <tudocomp/util/divsufsort_private.hpp>
 #include <tudocomp/util/divsufsort_ssort.hpp>
 #include <tudocomp/util/divsufsort_trsort.hpp>
+#include <tudocomp/util/divsufsort_bufwrapper.hpp>
+
+#include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
 namespace libdivsufsort {
@@ -103,7 +106,7 @@ note:
       for(c1 = ALPHABET_SIZE - 1; c0 < c1; j = i, --c1) {
         i = BUCKET_BSTAR(c0, c1);
         if(1 < (j - i)) {
-          sssort(T, SA, PAb, i,  j,
+          sssort(T, SA, PAb, i, j,
                  buf, bufsize, 2, n, SA[i] == (m - 1));
         }
       }
@@ -123,7 +126,6 @@ note:
     }
 
     /* Construct the inverse suffix array of type B* suffixes using trsort. */
-    // TODO: pass indices instead of pointer math
     trsort(SA, ISAb, 0, m, 1);
 
     /* Set the sorted order of tyoe B* suffixes. */
@@ -223,6 +225,39 @@ inline void construct_SA(
   }
 }
 
+// the actual divsufsort execution
+template<typename buffer_t>
+inline void divsufsort_run(
+    const sauchar_t* T, buffer_t& SA,
+    saidx_t *bucket_A, saidx_t *bucket_B, saidx_t n) {
+
+    // sign check
+    SA[0] = -1; DCHECK(SA[0] < 0) << "only signed integer buffers are supported";
+
+    saidx_t m = sort_typeBstar(T, SA, bucket_A, bucket_B, n);
+    construct_SA(T, SA, bucket_A, bucket_B, n, m);
+}
+
+// specialize for len_t vectors
+template<>
+inline void divsufsort_run<std::vector<len_t>>(
+    const sauchar_t* T, std::vector<len_t>& SA,
+    saidx_t *bucket_A, saidx_t *bucket_B, saidx_t n) {
+
+    BufferWrapper<std::vector<len_t>> wrapSA(SA);
+    divsufsort_run(T, wrapSA, bucket_A, bucket_B, n);
+}
+
+// specialize for DynamicIntVector
+template<>
+inline void divsufsort_run<DynamicIntVector>(
+    const sauchar_t* T, DynamicIntVector& SA,
+    saidx_t *bucket_A, saidx_t *bucket_B, saidx_t n) {
+
+    BufferWrapper<DynamicIntVector> wrapSA(SA);
+    divsufsort_run(T, wrapSA, bucket_A, bucket_B, n);
+}
+
 // from divsufsort.c
 template<typename buffer_t>
 inline saint_t divsufsort(const sauchar_t* T, buffer_t& SA, saidx_t n) {
@@ -241,8 +276,7 @@ inline saint_t divsufsort(const sauchar_t* T, buffer_t& SA, saidx_t n) {
 
   /* Suffixsort. */
   if((bucket_A != NULL) && (bucket_B != NULL)) {
-      m = sort_typeBstar(T, SA, bucket_A, bucket_B, n);
-      construct_SA(T, SA, bucket_A, bucket_B, n, m);
+      divsufsort_run(T, SA, bucket_A, bucket_B, n);
   } else {
       err = -2;
   }

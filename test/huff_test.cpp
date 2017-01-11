@@ -3,7 +3,7 @@
 #include <cstring>
 #include <bitset>
 #include <algorithm>
-#include "tudocomp/coders/HuffmanCoder.hpp"
+#include <tudocomp/coders/HuffmanCoder.hpp>
 
 void test_huffmantable_storing(const std::string& text) {
 	using namespace tdc::huff;

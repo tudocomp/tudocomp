@@ -2,15 +2,18 @@
 
 #include <tudocomp/Compressor.hpp>
 
-#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
-
 #include <tudocomp/compressors/lzw/LZWDecoding.hpp>
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
 
 #include <tudocomp/Range.hpp>
-#include <tudocomp/coders/BitCoder.hpp> //default
+#include <tudocomp/Coder.hpp>
 
 namespace tdc {
+
+	class BitCoder;
+	namespace lz78 {
+		class TernaryTrie;
+	}
 
 template<typename coder_t, typename dict_t>
 class LZWCompressor: public Compressor {

@@ -383,16 +383,45 @@ namespace int_vector {
             IntVectorTrait<T>::width(m_data, w);
         }
 
+    private:
+        static const bool do_resize_check = false;
+
+        /// Check that the capacity does not grow during the operation F
+        ///
+        /// If this fails you need to add an reserve() call before the resize()
+        /// call
+        template<typename F>
+        void check_for_growth(F f) {
+            auto old_cap = this->capacity();
+            f();
+            auto new_cap = this->capacity();
+
+            if (do_resize_check) {
+                DCHECK_EQ(old_cap, new_cap)
+                    << "\nresize() call grew the capacity!"
+                    << "\nThis does not cause a single reallocation, but dynamical growth"
+                    " with overallocation!"
+                    << "\nConsider calling reserve() beforehand.";
+            }
+        }
+    public:
+
         inline void resize(size_type n) {
-            m_data.resize(n);
+            check_for_growth([&]() {
+                m_data.resize(n);
+            });
         }
 
         inline void resize(size_type n, const value_type& val) {
-            m_data.resize(n, val);
+            check_for_growth([&]() {
+                m_data.resize(n, val);
+            });
         }
 
         inline void resize(size_type n, const value_type& val, uint8_t w) {
-            IntVectorTrait<T>::resize(m_data, n, val, w);
+            check_for_growth([&]() {
+                IntVectorTrait<T>::resize(m_data, n, val, w);
+            });
         }
 
         inline size_type capacity() const {
@@ -409,6 +438,10 @@ namespace int_vector {
 
         inline void reserve(size_type n) {
             m_data.reserve(n);
+        }
+
+        inline void reserve(size_type n, uint8_t w) {
+            IntVectorTrait<T>::bit_reserve(m_data, n * w);
         }
 
         inline void bit_reserve(uint64_t n) {

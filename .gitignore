@@ -1,5 +1,6 @@
 /build
 include/tudocomp/config.h
+include/tudocomp/tudocomp.hpp
 Cargo.lock
 *~
 .~lock.*

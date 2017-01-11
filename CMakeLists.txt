@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.0.2)
 project (tudocomp)
 
+if(NOT VERSION)
+    string(TIMESTAMP DATE "%y%m%d")
+    set(VERSION "0.${DATE}-$ENV{USER}${VERSION_SUFFIX}")
+endif(NOT VERSION)
+
+message("VERSION = ${VERSION}")
+
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "4.9")
     message(FATAL_ERROR "g++ version 4.9 or greater required!")
 endif()
@@ -19,7 +26,7 @@ endif()
 # TODO: Add --pedantic and fix issues
 # TODO: Actually add -Wall -Wextra -Werror -pedantic
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Og -g -Wall -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined -std=${CXX_STANDARD}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Og -g -Wall -fno-omit-frame-pointer -std=${CXX_STANDARD}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -O0 -g -Wall -fno-omit-frame-pointer -std=${CXX_STANDARD}")
 
 # Global dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
@@ -64,3 +71,32 @@ add_subdirectory(docs)
 add_subdirectory(www)
 
 include(compare_workspace)
+
+
+
+
+add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp
+	COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/genregistry.sh ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
+	COMMENT "Generating tudocomp_algorithms.cpp and tudocomp.hpp..."
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/genregistry.sh ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
+)
+
+add_library(
+    tudocomp_algorithms
+	${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp
+)
+
+target_link_libraries(
+    tudocomp_algorithms
+
+    malloc_count
+    tudocomp
+    glog
+    sdsl
+)
+
+cotire(tudocomp_algorithms)
+
+
+
+

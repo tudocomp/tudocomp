@@ -1,160 +1,226 @@
 #pragma once
 
-#include <cmath>
-#include <ostream>
+#include <tudocomp/Algorithm.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
-#include <sdsl/int_vector.hpp>
+#include <tudocomp/ds/CompressMode.hpp>
 
-#include <tudocomp/io.hpp>
-#include "forward.hpp"
-
-#include <tudocomp/Literal.hpp>
-#include <tudocomp/Env.hpp>
+//Defaults
+#include <tudocomp/ds/SADivSufSort.hpp>
+#include <tudocomp/ds/PhiFromSA.hpp>
+#include <tudocomp/ds/PLCPFromPhi.hpp>
+#include <tudocomp/ds/LCPFromPLCP.hpp>
+#include <tudocomp/ds/ISAFromSA.hpp>
 
 namespace tdc {
 
+static_assert(
+    std::is_same<View::value_type, uliteral_t>::value,
+    "View::value_type and uliteral_t must be the same");
+
 /// Manages text related data structures.
 template<
-    class lcp_tt = LCPArray,
-    template<typename> class isa_tt = InverseSuffixArray>
-class TextDS {
+    typename sa_t = SADivSufSort,
+    typename phi_t = PhiFromSA,
+    typename plcp_t = PLCPFromPhi,
+    typename lcp_t = LCPFromPLCP,
+    typename isa_t = ISAFromSA
+>
+class TextDS : public Algorithm {
 public:
-    typedef uint8_t value_type;
-    static const uint64_t SA = 0x01;
-    static const uint64_t ISA = 0x02;
-    static const uint64_t Phi = 0x04;
-    static const uint64_t LCP = 0x08;
-    typedef TextDS<lcp_tt,isa_tt> this_t;
-    typedef typename lcp_tt::template construct_t<this_t> lcp_t;
-    typedef isa_tt<this_t> isa_t;
-    typedef SuffixArray<this_t> sa_t;
-    typedef PhiArray<this_t> phi_t;
+    using dsflags_t = unsigned int;
+    static const dsflags_t SA  = 0x01;
+    static const dsflags_t ISA = 0x02;
+    static const dsflags_t LCP = 0x04;
+    static const dsflags_t PHI = 0x08;
+    static const dsflags_t PLCP = 0x10;
+
+    using value_type = uliteral_t;
+
+    using sa_type = sa_t;
+    using phi_type = phi_t;
+    using plcp_type = plcp_t;
+    using lcp_type = lcp_t;
+    using isa_type = isa_t;
 
 private:
-    class OptionalEnv {
-        Env* m_env;
-    public:
-        inline OptionalEnv(Env* env): m_env(env) {}
-        inline void begin_stat_phase(string_ref name) {
-            if (m_env != nullptr) {
-                m_env->begin_stat_phase(name);
-            }
-        }
-        inline void end_stat_phase() {
-            if (m_env != nullptr) {
-                m_env->end_stat_phase();
-            }
-        }
-    };
+    using this_t = TextDS<sa_t, phi_t, plcp_t, lcp_t, isa_t>;
 
     View m_text;
-    OptionalEnv m_env;
 
     std::unique_ptr<sa_t>  m_sa;
-    std::unique_ptr<isa_t> m_isa;
     std::unique_ptr<phi_t> m_phi;
+    std::unique_ptr<plcp_t> m_plcp;
     std::unique_ptr<lcp_t> m_lcp;
+    std::unique_ptr<isa_t> m_isa;
 
-    class Literals {
-    protected:
-        const this_t* m_text;
-        size_t m_pos;
+    dsflags_t m_ds_requested;
+    CompressMode m_cm;
 
-    public:
-        inline Literals(const this_t& text) : m_text(&text), m_pos(0) {}
+    template<typename ds_t>
+    inline std::unique_ptr<ds_t> construct_ds(const std::string& option, CompressMode cm) {
+        return std::make_unique<ds_t>(
+                    env().env_for_option(option),
+                    *this,
+                    cm_select(cm, m_cm));
+    }
 
-        inline bool has_next() const {
-            return m_pos < m_text->size();
+    template<typename ds_t>
+    inline const ds_t& require_ds(
+        std::unique_ptr<ds_t>& p, const std::string& option, CompressMode cm) {
+
+        if(!p) p = construct_ds<ds_t>(option, cm_select(cm, m_cm));
+        return *p;
+    }
+
+    template<typename ds_t>
+    inline std::unique_ptr<ds_t> release_ds(std::unique_ptr<ds_t>& p, dsflags_t flag) {
+        return std::move(p);
+    }
+
+    template<typename ds_t>
+    inline std::unique_ptr<typename ds_t::data_type> inplace_ds(
+        std::unique_ptr<ds_t>& p, dsflags_t flag, const std::string& option, CompressMode cm) {
+
+        if(!p) p = construct_ds<ds_t>(option, cm_select(cm, m_cm));
+        if(m_ds_requested & flag) {
+            // data structure is requested, return a copy of the data
+            return p->copy();
+        } else {
+            // relinquish data and discard ds
+            auto data = p->relinquish();
+            p.reset(nullptr);
+            return std::move(data);
         }
+    }
 
-        inline Literal next() {
-            assert(has_next());
+public:
+    inline static Meta meta() {
+        Meta m("textds", "textds");
+        m.option("sa").templated<sa_t, SADivSufSort>();
+        m.option("phi").templated<phi_t, PhiFromSA>();
+        m.option("plcp").templated<plcp_t, PLCPFromPhi>();
+        m.option("lcp").templated<lcp_t, LCPFromPLCP>();
+        m.option("isa").templated<isa_t, ISAFromSA>();
+        m.option("compress").dynamic("delayed");
+        return m;
+    }
 
-            auto i = m_pos++;
-            return {(*m_text)[i], i};
-        }
-    };
-private:
-    inline static void null_check(View view) {
-        if(!view.ends_with(uint8_t(0))){
+    inline TextDS(Env&& env, const View& text)
+        : Algorithm(std::move(env)),
+          m_text(text), m_ds_requested(0) {
+
+        if(!m_text.ends_with(uint8_t(0))){
              throw std::logic_error(
-                 "Input is not 0 terminated! Please make sure you declare "
+                 "Input has no sentinel! Please make sure you declare "
                  "the compressor calling this with "
                  "`m.needs_sentinel_terminator()` in its `meta()` function."
             );
         }
+
+        auto& cm_str = this->env().option("compress").as_string();
+        if(cm_str == "delayed") {
+            m_cm = CompressMode::delayed;
+        } else if(cm_str == "direct") {
+            m_cm = CompressMode::direct;
+        } else {
+            m_cm = CompressMode::none;
+        }
+    }
+
+    inline TextDS(Env&& env, const View& text, dsflags_t flags, CompressMode cm = CompressMode::select)
+        : TextDS(std::move(env), text) {
+
+        require(flags, cm);
+    }
+
+    // require methods
+
+    inline const sa_t& require_sa(CompressMode cm = CompressMode::select) {
+        return require_ds(m_sa, "sa", cm);
+    }
+    inline const phi_t& require_phi(CompressMode cm = CompressMode::select) {
+        return require_ds(m_phi, "phi", cm);
+    }
+    inline const plcp_t& require_plcp(CompressMode cm = CompressMode::select) {
+        return require_ds(m_plcp, "plcp", cm);
+    }
+    inline const lcp_t& require_lcp(CompressMode cm = CompressMode::select) {
+        return require_ds(m_lcp, "lcp", cm);
+    }
+    inline const isa_t& require_isa(CompressMode cm = CompressMode::select) {
+        return require_ds(m_isa, "isa", cm);
+    }
+
+    // inplace methods
+
+    inline std::unique_ptr<typename sa_t::data_type> inplace_sa(
+        CompressMode cm = CompressMode::select) {
+
+        return inplace_ds(m_sa, SA, "sa", cm);
+    }
+    inline std::unique_ptr<typename phi_t::data_type> inplace_phi(
+        CompressMode cm = CompressMode::select) {
+
+        return inplace_ds(m_phi, PHI, "phi", cm);
+    }
+    inline std::unique_ptr<typename plcp_t::data_type> inplace_plcp(
+        CompressMode cm = CompressMode::select) {
+        return inplace_ds(m_plcp, PLCP, "plcp", cm);
+    }
+    inline std::unique_ptr<typename lcp_t::data_type> inplace_lcp(
+        CompressMode cm = CompressMode::select) {
+
+        return inplace_ds(m_lcp, LCP, "lcp", cm);
+    }
+    inline std::unique_ptr<typename isa_t::data_type> inplace_isa(
+        CompressMode cm = CompressMode::select) {
+
+        return inplace_ds(m_isa, ISA, "isa", cm);
+    }
+
+    // release methods
+
+    inline std::unique_ptr<sa_t> release_sa() { return release_ds(m_sa, SA); }
+    inline std::unique_ptr<phi_t> release_phi() { return release_ds(m_phi, PHI); }
+    inline std::unique_ptr<plcp_t> release_plcp() { return release_ds(m_plcp, PLCP); }
+    inline std::unique_ptr<lcp_t> release_lcp() { return release_ds(m_lcp, LCP); }
+    inline std::unique_ptr<isa_t> release_isa() { return release_ds(m_isa, ISA); }
+
+private:
+    inline void release_unneeded() {
+        // release unrequested structures
+        if(!(m_ds_requested & SA)) release_sa();
+        if(!(m_ds_requested & PHI)) release_phi();
+        if(!(m_ds_requested & PLCP)) release_plcp();
+        if(!(m_ds_requested & LCP)) release_lcp();
+        if(!(m_ds_requested & ISA)) release_isa();
     }
 
 public:
-    OptionalEnv env() {
-		return m_env;
-	}
+    inline void require(dsflags_t flags, CompressMode cm = CompressMode::select) {
+        m_ds_requested = flags;
 
-    inline TextDS(const View& input) : m_text(input), m_env(nullptr) {
-        null_check(input);
-    }
+        // construct requested structures
+        cm = cm_select(cm, m_cm);
+        CompressMode cm_construct = (cm == CompressMode::direct) ?
+                                                    cm : CompressMode::none;
 
-    inline TextDS(const View& input, uint64_t flags): TextDS(input) {
-        null_check(input);
-        require(flags);
-    }
+        if(flags & SA)   { require_sa(cm_construct);   release_unneeded(); }
+        if(flags & PHI)  { require_phi(cm_construct);  release_unneeded(); }
+        if(flags & PLCP) { require_plcp(cm_construct); release_unneeded(); }
+        if(flags & LCP)  { require_lcp(cm_construct);  release_unneeded(); }
+        if(flags & ISA)  { require_isa(cm_construct);  release_unneeded(); }
 
-    inline TextDS(const View& input, Env& env): m_text(input), m_env(&env) {
-        null_check(input);
-    }
-
-    inline TextDS(const View& input, Env& env, uint64_t flags): TextDS(input, env) {
-        null_check(input);
-        require(flags);
-    }
-
-    /// Constructs the required data structures as denoted by the given flags
-    /// and releases all unwanted ones in a second step.
-    inline void require(uint64_t flags) {
-        //Step 1: construct
-        if(flags & SA) require_sa();
-        if(flags & ISA) require_isa();
-        if(flags & Phi) require_phi();
-        if(flags & LCP) require_lcp();
-
-        //Step 2: release unwanted (may have been constructed beforehand)
-        if(!(flags & SA)) release_sa();
-        if(!(flags & ISA)) release_isa();
-        if(!(flags & Phi)) release_phi();
-        if(!(flags & LCP)) release_lcp();
-    }
-
-    /// Requires the Suffix Array to be constructed if not already present.
-    inline const sa_t& require_sa();
-
-    /// Requires the Phi Array to be constructed if not already present.
-    inline const phi_t& require_phi();
-
-    /// Requires the Inverse Suffix Array to be constructed if not already present.
-    inline const isa_t& require_isa();
-
-    /// Requires the LCP Array to be constructed if not already present.
-    inline const lcp_t& require_lcp();
-
-
-    /// Releases the suffix array if present.
-    inline std::unique_ptr<sa_t> release_sa() {
-        return std::move(m_sa);
-    }
-
-    /// Releases the inverse suffix array array if present.
-    inline std::unique_ptr<isa_t> release_isa() {
-        return std::move(m_isa);
-    }
-
-    /// Releases the Phi array if present.
-    inline std::unique_ptr<phi_t> release_phi() {
-        return std::move(m_phi);
-    }
-
-    /// Releases the LCP array if present.
-    inline std::unique_ptr<lcp_t> release_lcp() {
-        return std::move(m_lcp);
+        if(cm == CompressMode::delayed) {
+            env().begin_stat_phase("Compress data structures");
+            if(m_sa) m_sa->compress();
+            if(m_phi) m_phi->compress();
+            if(m_plcp) m_plcp->compress();
+            if(m_lcp) m_lcp->compress();
+            if(m_isa) m_isa->compress();
+            env().end_stat_phase();
+        }
     }
 
     /// Accesses the input text at position i.
@@ -162,7 +228,7 @@ public:
         return m_text[i];
     }
 
-    /// Provides access to the input text.
+    /// Provides direct access to the input text.
     inline const value_type* text() const {
         return m_text.data();
     }
@@ -172,113 +238,41 @@ public:
         return m_text.size();
     }
 
-    /// Prints the constructed tables.
-    inline void print(std::ostream& out, size_t base = 0);
+    inline void print(std::ostream& out, size_t base) {
+        size_t w = std::max(8UL, (size_t)std::log10((double)size()) + 1);
+        out << std::setfill(' ');
 
-    inline Literals literals() const {
-        return iterator(*this, 0);
+        //Heading
+        out << std::setw(w) << "i" << " | ";
+        if(m_sa) out << std::setw(w) << "SA[i]" << " | ";
+        if(m_phi) out << std::setw(w) << "Phi[i]" << " | ";
+        if(m_plcp) out << std::setw(w) << "PLCP[i]" << " | ";
+        if(m_lcp) out << std::setw(w) << "LCP[i]" << " | ";
+        if(m_isa) out << std::setw(w) << "ISA[i]" << " | ";
+        out << std::endl;
+
+        //Separator
+        out << std::setfill('-');
+        out << std::setw(w) << "" << "-|-";
+        if(m_sa) out << std::setw(w) << "" << "-|-";
+        if(m_phi) out << std::setw(w) << "" << "-|-";
+        if(m_plcp) out << std::setw(w) << "" << "-|-";
+        if(m_lcp) out << std::setw(w) << "" << "-|-";
+        if(m_isa) out << std::setw(w) << "" << "-|-";
+        out << std::endl;
+
+        //Body
+        out << std::setfill(' ');
+        for(size_t i = 0; i < size(); i++) {
+            out << std::setw(w) << (i + base) << " | ";
+            if(m_sa) out << std::setw(w) << ((*m_sa)[i] + base) << " | ";
+            if(m_phi) out << std::setw(w) << (*m_phi)[i] << " | ";
+            if(m_plcp) out << std::setw(w) << (*m_plcp)[i] << " | ";
+            if(m_lcp) out << std::setw(w) << (*m_lcp)[i] << " | ";
+            if(m_isa) out << std::setw(w) << ((*m_isa)[i] + base) << " | ";
+            out << std::endl;
+        }
     }
 };
 
-}//ns
-
-#include <tudocomp/ds/SuffixArray.hpp>
-#include <tudocomp/ds/InverseSuffixArray.hpp>
-#include <tudocomp/ds/PhiArray.hpp>
-#include <tudocomp/ds/LCPArray.hpp>
-
-namespace tdc {
-
-template<
-    class lcp_tt,
-    template<typename> class isa_tt>
-inline void TextDS<lcp_tt,isa_tt>::print(std::ostream& out, size_t base) {
-    size_t w = std::max(6UL, (size_t)std::log10((double)size()) + 1);
-    out << std::setfill(' ');
-
-    //Heading
-    out << std::setw(w) << "i" << " | ";
-    if(m_sa) out << std::setw(w) << "SA[i]" << " | ";
-    if(m_isa) out << std::setw(w) << "ISA[i]" << " | ";
-    if(m_phi) out << std::setw(w) << "Phi[i]" << " | ";
-    if(m_lcp) out << std::setw(w) << "LCP[i]" << " | ";
-    out << std::endl;
-
-    //Separator
-    out << std::setfill('-');
-    out << std::setw(w) << "" << "-|-";
-    if(m_sa) out << std::setw(w) << "" << "-|-";
-    if(m_isa) out << std::setw(w) << "" << "-|-";
-    if(m_phi) out << std::setw(w) << "" << "-|-";
-    if(m_lcp) out << std::setw(w) << "" << "-|-";
-    out << std::endl;
-
-    //Body
-    out << std::setfill(' ');
-    for(size_t i = 0; i < size() + 1; i++) {
-        out << std::setw(w) << (i + base) << " | ";
-        if(m_sa) out << std::setw(w) << ((*m_sa)[i] + base) << " | ";
-        if(m_isa) out << std::setw(w) << ((*m_isa)[i] + base) << " | ";
-        if(m_phi) out << std::setw(w) << ((*m_phi)[i] + base) << " | ";
-        if(m_lcp) out << std::setw(w) << (*m_lcp)[i] << " | ";
-        out << std::endl;
-    }
-}
-
-template<
-    class lcp_tt,
-    template<typename> class isa_tt>
-const SuffixArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_sa() {
-    if(!m_sa) {
-        m_env.begin_stat_phase("construct suffix array");
-        m_sa = std::make_unique<sa_t>();
-        m_sa->construct(*this);
-        m_env.end_stat_phase();
-    }
-    return *m_sa;
-}
-
-template<
-    class lcp_tt,
-    template<typename> class isa_tt>
-const PhiArray<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_phi() {
-    if(!m_phi) {
-        m_env.begin_stat_phase("construct phi array");
-        m_phi = std::make_unique<phi_t>();
-        m_phi->construct(*this);
-        m_env.end_stat_phase();
-    }
-
-    return *m_phi;
-}
-
-template<
-    class lcp_tt,
-    template<typename> class isa_tt>
-const isa_tt<TextDS<lcp_tt,isa_tt>>& TextDS<lcp_tt,isa_tt>::require_isa() {
-    if(!m_isa) {
-        m_env.begin_stat_phase("construct inverse suffix array");
-        m_isa = std::make_unique<isa_t>();
-        m_isa->construct(*this);
-        m_env.end_stat_phase();
-    }
-
-    return *m_isa;
-}
-
-template<class lcp_tt,
-    template<typename> class isa_tt>
-const typename TextDS<lcp_tt,isa_tt>::lcp_t& TextDS<lcp_tt,isa_tt>::require_lcp() {
-    if(!m_lcp) {
-        m_env.begin_stat_phase("construct lcp array");
-        m_lcp = std::make_unique<lcp_t>();
-        m_lcp->construct(*this);
-        m_env.end_stat_phase();
-    }
-    return *m_lcp;
-}
-
-//typedef TextDS<lcp_sada<TextDS<lcp_sada,InverseSuffixArray>, InverseSuffixArray<TextDS<lcp_sada,InverseSuffixArray>> TextDSI;
-typedef TextDS<LCPArray, InverseSuffixArray> TextDSI;
-}//ns
-
+} //ns

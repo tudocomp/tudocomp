@@ -1,20 +1,3 @@
-add_library(
-    tudocomp_algorithms
-
-    tudocomp_algorithms.cpp
-)
-
-target_link_libraries(
-    tudocomp_algorithms
-
-    malloc_count
-    tudocomp
-    glog
-    sdsl
-)
-
-cotire(tudocomp_algorithms)
-
 add_executable(
     tudocomp_driver
 
@@ -35,4 +18,3 @@ cotire(tudocomp_driver)
 
 add_custom_command(TARGET tudocomp_driver POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_driver ${CMAKE_BINARY_DIR})
-

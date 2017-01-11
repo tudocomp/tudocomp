@@ -2,7 +2,6 @@
 
 #include <numeric>
 
-#include <tudocomp/tudocomp.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Coder.hpp>
 #include <tudocomp/util.hpp>

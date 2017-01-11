@@ -1,7 +1,15 @@
 
-#include "tudocomp/tudocomp.hpp"
 #include "test/util.hpp"
 #include <gtest/gtest.h>
+#include <tudocomp/CreateAlgorithm.hpp>
+#include <tudocomp/Literal.hpp>
+#include <tudocomp/compressors/LZ78Compressor.hpp>
+#include <tudocomp/compressors/LZWCompressor.hpp>
+#include <tudocomp/compressors/lz78/BinaryTrie.hpp>
+#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
+#include <tudocomp/compressors/lz78/CedarTrie.hpp>
+#include <tudocomp/coders/ASCIICoder.hpp>
+#include <tudocomp/coders/BitCoder.hpp>
 
 struct InputOutput {
     View in;

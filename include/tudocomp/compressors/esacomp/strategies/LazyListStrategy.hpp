@@ -35,7 +35,8 @@ public:
         auto& isa = text.require_isa();
 
         auto lcpp = text.release_lcp();
-        auto& lcp = lcpp->data();
+        auto lcp_datap = lcpp->relinquish();
+        auto& lcp = *lcp_datap;
 
         env().log_stat("maxlcp", lcpp->max_lcp());
         if(lcpp->max_lcp()+1 <= threshold) return; // nothing to factorize
@@ -46,9 +47,9 @@ public:
             if(lcp[i] < threshold) continue;
             cand[lcp[i]-threshold].push_back(i);
         }
-        env().log_stat("entries", [&] () { 
-                size_t ret = 0; 
-                for(size_t i = 0; i < cand_length; ++i) {  
+        env().log_stat("entries", [&] () {
+                size_t ret = 0;
+                for(size_t i = 0; i < cand_length; ++i) {
                     ret += cand[i].size();
                 }
                 return ret; }());

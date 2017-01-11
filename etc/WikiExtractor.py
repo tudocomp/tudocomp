@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 # =============================================================================
@@ -599,7 +599,7 @@ class Extractor(object):
         res += self.transform1(wikitext[cur:])
         return res
 
-        
+
     def transform1(self, text):
         """Transform text not containing <nowiki>"""
         if Extractor.expand_templates:
@@ -1342,7 +1342,7 @@ def string_find(args):
         return source.find(pattern, start) + 1 # lua is 1-based
     else:
         return (re.compile(pattern).search(source, start) or -1) + 1
-        
+
 # ----------------------------------------------------------------------
 # Module:Roman
 # http://en.wikipedia.org/w/index.php?title=Module:Roman
@@ -1352,11 +1352,11 @@ def string_find(args):
 def roman_main(args):
     """Convert first arg to roman numeral if <= 5000 else :return: second arg."""
     num = int(float(args.get('1')))
- 
+
     # Return a message for numbers too big to be expressed in Roman numerals.
     if 0 > num or num >= 5000:
         return args.get('2', 'N/A')
- 
+
     def toRoman(n, romanNumeralMap):
         """convert integer to Roman numeral"""
         result = ""
@@ -1371,7 +1371,7 @@ def roman_main(args):
         (1000, "M"),
         (900, "CM"), (500, "D"), (400, "CD"), (100, "C"),
         (90, "XC"), (50, "L"), (40, "XL"), (10, "X"),
-        (9, "IX"), (5, "V"), (4, "IV"), (1, "I") 
+        (9, "IX"), (5, "V"), (4, "IV"), (1, "I")
     )
     return toRoman(num, smallRomans)
 
@@ -2896,7 +2896,7 @@ def reduce_process(output_queue, spool_length,
         output = sys.stdout if PY2 else sys.stdout.buffer
         if file_compress:
             logging.warn("writing to stdout, so no output compression (use an external tool)")
-    
+
     interval_start = default_timer()
     # FIXME: use a heap
     spool = {}        # collected pages

@@ -113,6 +113,7 @@ public:
             --lazy;
         }
     }
+	tdc_stats(size_t max_size = 0);
 
     inline void decode_eagerly() {
         const len_t factors = m_source_pos.size();
@@ -129,7 +130,8 @@ public:
                     m_fwd.emplace(source_position+i, target_position+i);
                 }
             }
-			if(tdc_stats((j+1) % (factors/5) == 0 )) {
+			tdc_stats(max_size = std::max(max_size, m_fwd.bucket_count()));
+			if(tdc_stats((j+1) % ((factors+5)/5) == 0 )) {
 				env().log_stat("hash table size", m_fwd.bucket_count());
 				env().log_stat("hash table entries", m_fwd.size());
 
@@ -137,6 +139,7 @@ public:
         		env().begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
 			}
         }
+		env().log_stat("hash table max size", max_size);
 		env().end_stat_phase();
     }
 
