@@ -58,7 +58,6 @@ namespace lz78u {
                     buffer.push_back(literals[literals.size() - i - 1]);
                 }
 
-                DCHECK_GT(literals.size(), 0);
                 DCHECK_EQ(inv_old_size + literals.size(), buffer.size());
 
                 if (index == 0) {
@@ -137,12 +136,15 @@ public:
             coder.encode(0, literal_r);
         };
 
-        auto output = [&](const View& slice, size_t ref) {
-			char c = slice[0];
+        auto output = [&](View slice, size_t ref) {
+            // if trailing 0, remove
+            if (slice.back() == 0) {
+                slice = slice.substr(0, slice.size() - 1);
+            }
 
             std::cout << "out (s,r): ("
                 << vec_to_debug_string(slice)
-                << ", " << int(ref) << ")" << c << std::endl;
+                << ", " << int(ref) << ")" << std::endl;
 
             coder.encode(ref, Range(factor_count));
             encode_factor_string(slice, coder);
