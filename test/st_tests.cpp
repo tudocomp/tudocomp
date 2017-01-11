@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <sdsl/cst_sada.hpp>
-#include <tudocomp/ds/SuffixTree.hpp>
+#include <tudocomp/compressors/lz78u/SuffixTree.hpp>
 #include "test/util.hpp"
 
 using namespace tdc;
@@ -17,7 +17,7 @@ void test_strdepth(const std::string& str) {
 	}
 }
 
-TEST(SuffixTree, strdepth)     { 
+TEST(SuffixTree, strdepth)     {
 	test::roundtrip_batch(test_strdepth);
 	test::on_string_generators(test_strdepth,11);
 }

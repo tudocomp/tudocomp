@@ -8,7 +8,7 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
-#include <tudocomp/ds/SuffixTree.hpp>
+#include "lz78u/SuffixTree.hpp"
 //#include <tudocomp/ds/st_util.hpp>
 #include <tudocomp/compressors/lz78/LZ78common.hpp>
 

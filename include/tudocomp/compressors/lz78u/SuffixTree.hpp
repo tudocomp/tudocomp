@@ -195,4 +195,3 @@ inline void reset_bitvector(bit_vector& bv) { //! resets a bit-vector, clearing 
 	};
 
 }//ns
-
