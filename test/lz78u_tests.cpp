@@ -15,7 +15,7 @@ std::ostream& operator<<(std::ostream& os, const InputOutput& v) {
 using namespace tdc;
 
 TEST(Lz78U, test) {
-    auto c = create_algo<LZ78UCompressor<ASCIICoder>>();
+    auto c = create_algo<LZ78UCompressor<ASCIICoder, lz78u::AsciiNt>>();
 
     //auto i = test::compress_input("asd\0asdfgsdf"_v);
     auto i = test::compress_input("aaababaaabaababa"_v);
@@ -28,14 +28,14 @@ TEST(Lz78U, test) {
 }
 
 TEST(Lz78U, roundtrip1) {
-    test::roundtrip<LZ78UCompressor<ASCIICoder>>(
+    test::roundtrip<LZ78UCompressor<ASCIICoder, lz78u::AsciiNt>>(
         "aaababaaabaababa"_v,
         "0:a\0""1:a\0""0:ba\0""3:a\0""1:ba\0""5:ba\0""\0"_v
     );
 }
 
 TEST(Lz78U, roundtrip2) {
-    test::roundtrip<LZ78UCompressor<ASCIICoder>>(
+    test::roundtrip<LZ78UCompressor<ASCIICoder, lz78u::AsciiNt>>(
         "abcdebcdeabc"_v,
         ""_v
     );

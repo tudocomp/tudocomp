@@ -8,9 +8,10 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
-#include "lz78u/SuffixTree.hpp"
-//#include <tudocomp/ds/st_util.hpp>
 #include <tudocomp/compressors/lz78/LZ78common.hpp>
+
+#include "lz78u/SuffixTree.hpp"
+#include "lz78u/StringCoders.hpp"
 
 namespace tdc {
 
@@ -76,7 +77,7 @@ namespace lz78u {
 }
 
 
-template<typename coder_t>
+template<typename coder_t, typename string_coder_t>
 class LZ78UCompressor: public Compressor {
 private:
     using node_type = SuffixTree::node_type;
@@ -89,6 +90,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lz78u", "Lempel-Ziv 78 U\n\n" );
         m.option("coder").templated<coder_t, ASCIICoder>();
+        m.option("string_coder").templated<string_coder_t, lz78u::AsciiNt>();
         // m.option("dict_size").dynamic("inf");
         m.needs_sentinel_terminator();
         return m;
