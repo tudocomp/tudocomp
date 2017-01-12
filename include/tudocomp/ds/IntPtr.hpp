@@ -371,6 +371,12 @@ namespace int_vector {
         using autocast_type = uint64_t;
     };
 
+    // specialization for uint_t<N>
+    template<size_t bits> class GenericIntRefAutocast<uint_t<bits>> {
+    public:
+        using autocast_type = uint64_t;
+    };
+
     template<class Self, class Ptr, class T>
     class GenericIntRef {
     protected:
