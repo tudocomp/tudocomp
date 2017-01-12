@@ -34,6 +34,10 @@ public:
 
     inline void finalize() {
     }
+
+    inline const std::shared_ptr<BitOStream>& stream() {
+        return m_out;
+    }
 };
 
 #define ENCODER_CTOR(env, out, literals)                                   \
@@ -69,6 +73,10 @@ public:
     template<typename value_t>
     inline value_t decode(const BitRange&) {
         return value_t(m_in->read_bit());
+    }
+
+    inline const std::shared_ptr<BitIStream>& stream() {
+        return m_in;
     }
 };
 

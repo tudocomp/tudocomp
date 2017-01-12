@@ -128,15 +128,9 @@ public:
         typedef SuffixTree::node_type node_t;
 
         typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
+        typename string_coder_t::Encoder string_coder(env().env_for_option("string_coder"), coder.stream());
 
         len_t factor_count = 0;
-
-        auto encode_factor_string = [&](const View& slice, typename coder_t::Encoder& coder) {
-            for (auto c : slice) {
-                coder.encode(c, literal_r);
-            }
-            coder.encode(0, literal_r);
-        };
 
         auto output = [&](View slice, size_t ref) {
             // if trailing 0, remove
@@ -149,7 +143,7 @@ public:
                 << ", " << int(ref) << ")" << std::endl;
 
             coder.encode(ref, Range(factor_count));
-            encode_factor_string(slice, coder);
+            string_coder.encode(slice);
 
             factor_count++;
         };
@@ -204,6 +198,7 @@ public:
         std::cout << "START DECOMPRESS\n";
         auto out = output.as_stream();
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+        typename string_coder_t::Decoder string_coder(env().env_for_option("string_coder"), decoder.stream());
 
         uint64_t factor_count = 0;
 
@@ -214,13 +209,7 @@ public:
             const lz78::factorid_t index = decoder.template decode<lz78::factorid_t>(Range(factor_count));
 
             buf.clear();
-            while (true) {
-                const uliteral_t chr = decoder.template decode<uliteral_t>(literal_r);
-                if (chr == '\0') {
-                    break;
-                }
-                buf.push_back(chr);
-            }
+            string_coder.decode(buf);
 
             std::cout << "in m (s,r): ("
                 << vec_to_debug_string(View(buf))
