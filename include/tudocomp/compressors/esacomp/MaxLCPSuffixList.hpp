@@ -76,6 +76,7 @@ public:
         }
     }
 
+private:
     /// Insert suffix array item with index i.
     inline void insert(size_t i) {
         DCHECK(i < m_undef && !m_suffix_contained[i]);
@@ -122,6 +123,7 @@ public:
         ++m_size;
     }
 
+public:
     /// Remove suffix array item with index i.
     inline void remove(size_t i) {
         DCHECK(i < m_undef && m_suffix_contained[i]);
@@ -155,6 +157,12 @@ public:
         //update info
         m_suffix_contained[i] = 0;
         --m_size;
+    }
+
+    /// Decrease key on array item with index i.
+    inline void decrease_key(len_t i) {
+        remove(i);
+        insert(i);
     }
 
     /// Checks whether or not suffix array entry i is contained in this list.

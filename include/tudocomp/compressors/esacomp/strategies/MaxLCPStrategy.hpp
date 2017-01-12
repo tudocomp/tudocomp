@@ -74,12 +74,13 @@ public:
                 size_t i = isa[s];
                 if(list.contains(i)) {
                     if(s + lcp[i] > fpos) {
-                        list.remove(i);
-
                         size_t l = fpos - s;
                         lcp[i] = l;
+
                         if(l >= threshold) {
-                            list.insert(i);
+                            list.decrease_key(i);
+                        } else {
+                            list.remove(i);
                         }
                     }
                 }
