@@ -101,27 +101,29 @@ void test_max_lcp_order_dec_key(const size_t n, const size_t seed) {
 //typedef void (*testfuc_t)(const size_t, const size_t);
 
 template<typename testfunc_t>
-void test_run(testfunc_t f, const size_t n, const size_t seed) {
-    VLOG(1) << "n = " << n << ", seed = " << seed;
+void test_run(testfunc_t f) {
     for(size_t i = 0; i < NUM_TESTS; i++) {
-        VLOG(2) << "run " << (i+1) << " of " << NUM_TESTS << " ..."; // for tests with LARGE sets
+        size_t n = gen_size(rglobal);
+        size_t seed = gen_seed(rglobal);
+        VLOG(1) << "n = " << n << ", seed = " << seed;
+        VLOG(2) << "(run " << (i+1) << " of " << NUM_TESTS << ")"; // for tests with LARGE sets
         f(n, seed);
     }
 }
 
 TEST(MaxLCP, heap_remove_only) {
-    test_run(test_max_lcp_order_remove_only<esacomp::MaxLCPHeap<vec>>, gen_size(rglobal), gen_seed(rglobal));
+    test_run(test_max_lcp_order_remove_only<esacomp::MaxLCPHeap<vec>>);
 }
 
 TEST(MaxLCP, list_remove_only) {
-    test_run(test_max_lcp_order_remove_only<esacomp::MaxLCPSuffixList<vec>>, gen_size(rglobal), gen_seed(rglobal));
+    test_run(test_max_lcp_order_remove_only<esacomp::MaxLCPSuffixList<vec>>);
 }
 
 TEST(MaxLCP, heap_dec_key) {
-    test_run(test_max_lcp_order_dec_key<esacomp::MaxLCPHeap<vec>>, gen_size(rglobal), gen_seed(rglobal));
+    test_run(test_max_lcp_order_dec_key<esacomp::MaxLCPHeap<vec>>);
 }
 
 TEST(MaxLCP, list_dec_key) {
-    test_run(test_max_lcp_order_dec_key<esacomp::MaxLCPSuffixList<vec>>, gen_size(rglobal), gen_seed(rglobal));
+    test_run(test_max_lcp_order_dec_key<esacomp::MaxLCPSuffixList<vec>>);
 }
 
