@@ -11,7 +11,7 @@
 #include <tudocomp/compressors/lz78/LZ78common.hpp>
 
 #include "lz78u/SuffixTree.hpp"
-#include "lz78u/StringCoders.hpp"
+#include "lz78u/AsciiNtStringCoder.hpp"
 
 namespace tdc {
 
