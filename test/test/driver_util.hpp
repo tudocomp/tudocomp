@@ -11,7 +11,6 @@
 
 #include <sys/stat.h>
 
-#include <tudocomp/tudocomp.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>

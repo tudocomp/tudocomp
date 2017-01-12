@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include <tudocomp/tudocomp.hpp>
-
+#include <tudocomp/Compressor.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
+
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
