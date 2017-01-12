@@ -43,7 +43,7 @@ void test_heap_remove_only(const size_t n, const size_t seed) {
     generate_lcp(n, seed, lcp, max_lcp);
 
     VLOG(2) << "  Inserting ...";
-    esacomp::ArrayMaxHeap<vec> ds(lcp, n, n);
+    ArrayMaxHeap<vec> ds(lcp, n, n);
     for(size_t i = 1; i < n; i++) ds.insert(i);
 
     // test size
@@ -70,7 +70,7 @@ void test_heap_dec_key(const size_t n, const size_t seed) {
     generate_lcp(n, seed, lcp, max_lcp);
 
     VLOG(2) << "  Inserting ...";
-    esacomp::ArrayMaxHeap<vec> ds(lcp, n, n);
+    ArrayMaxHeap<vec> ds(lcp, n, n);
     for(size_t i = 1; i < n; i++) ds.insert(i);
 
     // test size

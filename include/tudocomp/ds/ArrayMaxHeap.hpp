@@ -5,7 +5,6 @@
 #include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
-namespace esacomp {
 
 template<class array_t>
 class ArrayMaxHeap {
@@ -173,5 +172,5 @@ public:
     }
 };
 
-}} //ns
+} //ns
 
