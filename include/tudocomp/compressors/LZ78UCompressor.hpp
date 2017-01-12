@@ -11,7 +11,7 @@
 #include <tudocomp/compressors/lz78/LZ78common.hpp>
 
 #include "lz78u/SuffixTree.hpp"
-#include "lz78u/AsciiNtStringCoder.hpp"
+#include "lz78u/HuffmanStringCoder.hpp"
 
 namespace tdc {
 
@@ -90,7 +90,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lz78u", "Lempel-Ziv 78 U\n\n" );
         m.option("coder").templated<coder_t, ASCIICoder>();
-        m.option("string_coder").templated<string_coder_t, lz78u::AsciiNt>();
+        m.option("string_coder").templated<string_coder_t, lz78u::HuffmanStringCoder>();
         // m.option("dict_size").dynamic("inf");
         m.needs_sentinel_terminator();
         return m;
@@ -152,13 +152,10 @@ public:
         while(pos < T.size() - 1) {
             const node_t l = ST.select_leaf(ST.cst.csa.isa[pos]);
             const len_t leaflabel = pos;
-            //std::cout << "Selecting leaf " << l << " with label " << leaflabel << std::endl;
 
-            //std::cout << "Checking parent " << ST.parent(l) << " with R[parent] = " << R[ST.nid(ST.parent(l))] << std::endl;
             if(ST.parent(l) == ST.root || R[ST.nid(ST.parent(l))] != 0) {
-//                DCHECK_EQ(T[pos + ST.str_depth(ST.parent(l))], lambda(ST.parent(l), l)[0]);
-
                 const len_t parent_strdepth = ST.str_depth(ST.parent(l));
+
                 std::cout << "out leaf: [" << (pos+parent_strdepth)  << ","<< (pos + parent_strdepth + 1) << "] ";
                 output(T.slice(pos+parent_strdepth, pos + parent_strdepth + 1), R[ST.nid(ST.parent(l))]);
 
@@ -166,23 +163,20 @@ public:
                 ++z;
                 continue;
             }
+
             len_t d = 1;
             node_t parent = ST.root;
             node_t node = ST.level_anc(l, d);
+
             while(R[ST.nid(node)] != 0) {
-                //                    DCHECK_EQ(lambda(parent, node).size(), ST.str_depth(node) - ST.str_depth(parent));
-                //                  pos += lambda(parent, node).size();
                 pos += ST.str_depth(node) - ST.str_depth(parent); // TODO: move outwards!
                 parent = node;
                 node = ST.level_anc(l, ++d);
-                //std::cout << "pos : " << pos << std::endl;
             }
-            R[ST.nid(node)] = ++z;
-            //std::cout << "Setting R[" << node << "] to " << z << std::endl;
 
-            //std::cout << "Extracting substring for nodes (" << parent << ", " << node << ") " << std::endl;
+            R[ST.nid(node)] = ++z;
+
             const auto& str = T.slice(leaflabel + ST.str_depth(parent), leaflabel + ST.str_depth(node));
-            //std::cout << "extracted T[" << (leaflabel + ST.str_depth(parent)) << ", " << (leaflabel + ST.str_depth(node)) << "]: " << str << " of size " << str.size() << "\n";
 
             std::cout << "out slice: [ "<< (leaflabel + ST.str_depth(parent)) << ", "<< (leaflabel + ST.str_depth(node))<< " ] ";
             output(str, R[ST.nid(ST.parent(node))]);

@@ -5,7 +5,7 @@
 namespace tdc {
 namespace lz78u {
 
-class AsciiNt: public Algorithm {
+class AsciiNtStringCoder: public Algorithm {
 public:
     using Algorithm::Algorithm;
 
