@@ -4,15 +4,15 @@
 #include <sdsl/int_vector.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
-#include <tudocomp/compressors/esacomp/decoding/DecodeQueueListBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
 class SuccinctListBuffer : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("esadec", "SuccinctListBuffer");
+        Meta m("lcpdec", "SuccinctListBuffer");
         return m;
 
     }

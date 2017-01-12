@@ -7,9 +7,9 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
-/// Implements the original "Max LCP" selection strategy for ESAComp.
+/// Implements the original "Max LCP" selection strategy for LCPComp.
 ///
 /// This strategy constructs a deque containing suffix array entries sorted
 /// by their LCP length. The entry with the maximum LCP is selected and
@@ -23,7 +23,7 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("esacomp_strategy", "heap");
+        Meta m("lcpcomp_strategy", "heap");
         return m;
     }
 

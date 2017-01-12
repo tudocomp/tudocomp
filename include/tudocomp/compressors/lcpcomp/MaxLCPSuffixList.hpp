@@ -4,7 +4,7 @@
 #include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
 /// Provides constant-time access to the suffix in a suffix array
 /// with the longest correspondig lcp table entry.

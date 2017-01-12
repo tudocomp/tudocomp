@@ -8,9 +8,9 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
-/// Implements the "Bulldozer" selection strategy for ESAComp.
+/// Implements the "Bulldozer" selection strategy for LCPComp.
 ///
 /// TODO: Describe
 class BulldozerStrategy : public Algorithm {
@@ -35,7 +35,7 @@ public:
     using Algorithm::Algorithm; //import constructor
 
     inline static Meta meta() {
-        Meta m("esacomp_strategy", "bulldozer");
+        Meta m("lcpcomp_strategy", "bulldozer");
         return m;
     }
 

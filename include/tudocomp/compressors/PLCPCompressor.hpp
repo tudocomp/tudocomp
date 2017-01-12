@@ -3,7 +3,7 @@
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/compressors/ESACompressor.hpp>
+#include <tudocomp/compressors/LCPCompressor.hpp>
 
 
 namespace tdc {
@@ -229,7 +229,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "plcpcomp");
         m.option("coder").templated<coder_t>();
-        m.option("esadec").templated<dec_t, esacomp::SuccinctListBuffer>();
+        m.option("lcpdec").templated<dec_t, lcpcomp::SuccinctListBuffer>();
         m.option("textds").templated<text_t, TextDS<>>();
         m.option("threshold").dynamic("3");
         m.needs_sentinel_terminator();
@@ -344,7 +344,7 @@ public:
         // if(lazy == 0)
         // 	lzss::decode_text_internal<coder_t, dec_t>(decoder, outs);
         // else
-        esacomp::decode_text_internal<typename coder_t::Decoder, dec_t>(env().env_for_option("esadec"), decoder, outs);
+        lcpcomp::decode_text_internal<typename coder_t::Decoder, dec_t>(env().env_for_option("lcpdec"), decoder, outs);
     }
 };
 

@@ -30,19 +30,19 @@ lz78_trie=(
 )
 grep -q '^#define JUDY_H_AVAILABLE 1' "$3" && lz78_trie+=(lz78::JudyTrie compressors/lz78/JudyTrie.hpp)
 
-esa_strat=(
-    esacomp::MaxHeapStrategy compressors/esacomp/strategies/MaxHeapStrategy.hpp
-    esacomp::MaxLCPStrategy compressors/esacomp/strategies/MaxLCPStrategy.hpp
-    esacomp::LazyListStrategy compressors/esacomp/strategies/LazyListStrategy.hpp
+lcpc_strat=(
+    lcpcomp::MaxHeapStrategy compressors/lcpcomp/strategies/MaxHeapStrategy.hpp
+    lcpcomp::MaxLCPStrategy compressors/lcpcomp/strategies/MaxLCPStrategy.hpp
+    lcpcomp::LazyListStrategy compressors/lcpcomp/strategies/LazyListStrategy.hpp
 )
-esa_buffer=(
-    esacomp::MyMapBuffer compressors/esacomp/decoding/MyMapBuffer.hpp
-    esacomp::MultimapBuffer compressors/esacomp/decoding/MultiMapBuffer.hpp
-    esacomp::SuccinctListBuffer compressors/esacomp/decoding/SuccinctListBuffer.hpp
-    esacomp::LazySuccinctListBuffer compressors/esacomp/decoding/LazySuccinctListBuffer.hpp
-    esacomp::DecodeForwardQueueListBuffer compressors/esacomp/decoding/DecodeQueueListBuffer.hpp
+lcpc_buffer=(
+    lcpcomp::MyMapBuffer compressors/lcpcomp/decoding/MyMapBuffer.hpp
+    lcpcomp::MultimapBuffer compressors/lcpcomp/decoding/MultiMapBuffer.hpp
+    lcpcomp::SuccinctListBuffer compressors/lcpcomp/decoding/SuccinctListBuffer.hpp
+    lcpcomp::LazySuccinctListBuffer compressors/lcpcomp/decoding/LazySuccinctListBuffer.hpp
+    lcpcomp::DecodeForwardQueueListBuffer compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp
 )
-esa_coder=(
+lcpc_coder=(
     ASCIICoder coders/ASCIICoder.hpp
     Code2Coder coders/Code2Coder.hpp
 )
@@ -131,14 +131,14 @@ void register_algorithms(Registry& r) {
 
 EOF
 
-reg PLCPCompressor              compressors/PLCPCompressor.hpp esa_coder esa_buffer
+reg PLCPCompressor              compressors/PLCPCompressor.hpp lcpc_coder lcpc_buffer
 reg RunLengthEncoder            compressors/RunLengthEncoder.hpp online_coder
 reg LiteralEncoder              compressors/LiteralEncoder.hpp all_coder
 reg LZ78Compressor              compressors/LZ78Compressor.hpp online_coder lz78_trie
 reg LZWCompressor               compressors/LZWCompressor.hpp online_coder lz78_trie
 reg RePairCompressor            compressors/RePairCompressor.hpp all_coder
 reg LZSSLCPCompressor           compressors/LZSSLCPCompressor.hpp all_coder
-reg ESACompressor               compressors/ESACompressor.hpp esa_coder esa_strat esa_buffer
+reg LCPCompressor               compressors/LCPCompressor.hpp lcpc_coder lcpc_strat lcpc_buffer
 reg LZSSSlidingWindowCompressor compressors/LZSSSlidingWindowCompressor.hpp online_coder
 reg EasyRLECompressor           compressors/EasyRLECompressor.hpp 
 reg MTFCompressor               compressors/MTFCompressor.hpp 

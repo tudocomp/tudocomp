@@ -10,9 +10,9 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
-/// A very naive selection strategy for ESAComp.
+/// A very naive selection strategy for LCPComp.
 ///
 /// TODO: Describe
 class NaiveStrategy : public Algorithm {
@@ -23,7 +23,7 @@ public:
     using Algorithm::Algorithm;
 
     inline static Meta meta() {
-        Meta m("esacomp_strategy", "naive");
+        Meta m("lcpcomp_strategy", "naive");
         return m;
     }
 

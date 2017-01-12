@@ -5,12 +5,12 @@
 #include <sdsl/int_vector.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
 class MultimapBuffer : public Algorithm {
     public:
     inline static Meta meta() {
-        Meta m("esadec", "MultimapListBuffer");
+        Meta m("lcpdec", "MultimapListBuffer");
         m.option("lazy").dynamic("0");
         return m;
     }

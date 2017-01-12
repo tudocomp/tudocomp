@@ -11,7 +11,7 @@
 
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 class MaxLCPStrategy;
 class SuccinctListBuffer;
 
@@ -59,10 +59,10 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
         }
     }
    decoder.env().end_stat_phase();
-   decoder.env().begin_stat_phase("Lazy EsaComp-Decoding");
+   decoder.env().begin_stat_phase("Lazy LCPComp-Decoding");
     buffer.decode_lazy();
    decoder.env().end_stat_phase();
-   decoder.env().begin_stat_phase("Eagerly EsaComp-Decoding");
+   decoder.env().begin_stat_phase("Eagerly LCPComp-Decoding");
     buffer.decode_eagerly();
     decoder.env().log_stat("longest_chain", buffer.longest_chain());
    decoder.env().end_stat_phase();
@@ -77,13 +77,13 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
 /// Factorizes the input by finding redundant phrases in a re-ordered version
 /// of the LCP table.
 template<typename coder_t, typename strategy_t, typename dec_t, typename text_t = TextDS<>>
-class ESACompressor : public Compressor {
+class LCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "esacomp");
+        Meta m("compressor", "lcpcomp");
         m.option("coder").templated<coder_t>();
-        m.option("strategy").templated<strategy_t, esacomp::MaxLCPStrategy>();
-        m.option("esadec").templated<dec_t, esacomp::SuccinctListBuffer>();
+        m.option("strategy").templated<strategy_t, lcpcomp::MaxLCPStrategy>();
+        m.option("lcpdec").templated<dec_t, lcpcomp::SuccinctListBuffer>();
         m.option("textds").templated<text_t, TextDS<>>();
         m.option("threshold").dynamic("3");
         m.needs_sentinel_terminator();
@@ -91,7 +91,7 @@ public:
     }
 
     /// Construct the class with an environment.
-    inline ESACompressor(Env&& env) : Compressor(std::move(env)) {}
+    inline LCPCompressor(Env&& env) : Compressor(std::move(env)) {}
 
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
@@ -142,7 +142,7 @@ public:
         // if(lazy == 0)
         // 	lzss::decode_text_internal<coder_t, dec_t>(decoder, outs);
         // else
-        esacomp::decode_text_internal<typename coder_t::Decoder, dec_t>(env().env_for_option("esadec"), decoder, outs);
+        lcpcomp::decode_text_internal<typename coder_t::Decoder, dec_t>(env().env_for_option("lcpdec"), decoder, outs);
     }
 };
 

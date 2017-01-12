@@ -6,12 +6,12 @@
 #include <tudocomp/Algorithm.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
 class MarvinBuffer : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("esadec", "Marvin");
+        Meta m("lcpdec", "Marvin");
         return m;
 
     }

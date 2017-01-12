@@ -5,10 +5,10 @@
 #include <tudocomp/def.hpp>
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
-#include <tudocomp/compressors/esacomp/MaxLCPSuffixList.hpp>
+#include <tudocomp/compressors/lcpcomp/MaxLCPSuffixList.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
 /**
  * Creates arrays instead of an LCP-heap
@@ -23,7 +23,7 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("esacomp_strategy", "lazy_list");
+        Meta m("lcpcomp_strategy", "lazy_list");
         return m;
     }
 

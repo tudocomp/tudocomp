@@ -4,7 +4,7 @@
 #include <random>
 
 #include <tudocomp/ds/ArrayMaxHeap.hpp>
-#include <tudocomp/compressors/esacomp/MaxLCPSuffixList.hpp>
+#include <tudocomp/compressors/lcpcomp/MaxLCPSuffixList.hpp>
 #include "test/util.hpp"
 
 using namespace tdc;
@@ -104,7 +104,7 @@ void test_list_remove_only(const size_t n, const size_t seed) {
     generate_lcp(n, seed, lcp, max_lcp);
 
     VLOG(2) << "  Inserting ...";
-    esacomp::MaxLCPSuffixList<vec> ds(lcp, MIN_POSSIBLE_LCP, max_lcp);
+    lcpcomp::MaxLCPSuffixList<vec> ds(lcp, MIN_POSSIBLE_LCP, max_lcp);
 
     // test size
     ASSERT_EQ(n-1, ds.size());
@@ -130,7 +130,7 @@ void test_list_dec_key(const size_t n, const size_t seed) {
     generate_lcp(n, seed, lcp, max_lcp);
 
     VLOG(2) << "  Inserting ...";
-    esacomp::MaxLCPSuffixList<vec> ds(lcp, MIN_POSSIBLE_LCP, max_lcp);
+    lcpcomp::MaxLCPSuffixList<vec> ds(lcp, MIN_POSSIBLE_LCP, max_lcp);
 
     // test size
     ASSERT_EQ(n-1, ds.size());
