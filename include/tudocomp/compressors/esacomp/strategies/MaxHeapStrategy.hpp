@@ -2,9 +2,9 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/ArrayMaxHeap.hpp>
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
-#include <tudocomp/compressors/esacomp/MaxLCPHeap.hpp>
 
 namespace tdc {
 namespace esacomp {
@@ -30,7 +30,7 @@ public:
     using Algorithm::Algorithm; //import constructor
 
     inline void factorize(text_t& text,
-                   size_t threshold,
+                   const size_t threshold,
                    lzss::FactorBuffer& factors) {
 
         auto& sa = text.require_sa();
@@ -42,7 +42,19 @@ public:
         auto& lcp = *lcp_datap;
 
         env().begin_stat_phase("Construct MaxLCPHeap");
-        MaxLCPHeap<text_t::lcp_type::data_type> heap(lcp, threshold, lcpp->max_lcp());
+
+        // Count relevant LCP entries
+        size_t heap_size = 0;
+        for(size_t i = 1; i < lcp.size(); i++) {
+            if(lcp[i] >= threshold) ++heap_size;
+        }
+
+        // Construct heap
+        ArrayMaxHeap<text_t::lcp_type::data_type> heap(lcp, lcp.size(), heap_size);
+        for(size_t i = 1; i < lcp.size(); i++) {
+            if(lcp[i] >= threshold) heap.insert(i);
+        }
+
         env().log_stat("entries", heap.size());
         env().end_stat_phase();
 
@@ -72,10 +84,8 @@ public:
                 if(heap.contains(i)) {
                     if(s + lcp[i] > fpos) {
                         size_t l = fpos - s;
-                        lcp[i] = l;
-
                         if(l >= threshold) {
-                            heap.decrease_key(i);
+                            heap.decrease_key(i, l);
                         } else {
                             heap.remove(i);
                         }

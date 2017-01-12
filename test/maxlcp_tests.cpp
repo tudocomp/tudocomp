@@ -3,7 +3,7 @@
 
 #include <random>
 
-#include <tudocomp/compressors/esacomp/MaxLCPHeap.hpp>
+#include <tudocomp/ds/ArrayMaxHeap.hpp>
 #include <tudocomp/compressors/esacomp/MaxLCPSuffixList.hpp>
 #include "test/util.hpp"
 
@@ -36,15 +36,15 @@ void generate_lcp(const size_t n, const size_t seed, vec& out_lcp, size_t& out_m
     out_max = *std::max_element(out_lcp.begin(), out_lcp.end());
 }
 
-template<typename ds_t>
-void test_max_lcp_order_remove_only(const size_t n, const size_t seed) {
+void test_heap_remove_only(const size_t n, const size_t seed) {
     // generate
     VLOG(2) << "  Generating ...";
     vec lcp; size_t max_lcp;
     generate_lcp(n, seed, lcp, max_lcp);
 
     VLOG(2) << "  Inserting ...";
-    ds_t ds(lcp, MIN_POSSIBLE_LCP, max_lcp);
+    esacomp::ArrayMaxHeap<vec> ds(lcp, n, n);
+    for(size_t i = 1; i < n; i++) ds.insert(i);
 
     // test size
     ASSERT_EQ(n-1, ds.size());
@@ -63,15 +63,74 @@ void test_max_lcp_order_remove_only(const size_t n, const size_t seed) {
     }
 }
 
-template<typename ds_t>
-void test_max_lcp_order_dec_key(const size_t n, const size_t seed) {
+void test_heap_dec_key(const size_t n, const size_t seed) {
     // generate
     VLOG(2) << "  Generating ...";
     vec lcp; size_t max_lcp;
     generate_lcp(n, seed, lcp, max_lcp);
 
     VLOG(2) << "  Inserting ...";
-    ds_t ds(lcp, MIN_POSSIBLE_LCP, max_lcp);
+    esacomp::ArrayMaxHeap<vec> ds(lcp, n, n);
+    for(size_t i = 1; i < n; i++) ds.insert(i);
+
+    // test size
+    ASSERT_EQ(n-1, ds.size());
+
+    // test item order, call decrease key for every second item
+    VLOG(2) << "  Testing ...";
+    size_t last = ds.get_max();
+    ds.remove(last);
+
+    bool dec_key = true;
+    while(ds.size()) {
+        size_t m = ds.get_max();
+        ASSERT_GE(lcp[last], lcp[m]) << "n = " << n << ", seed = " << seed;
+
+        if(dec_key && lcp[m] > MIN_POSSIBLE_LCP) {
+            ds.decrease_key(m, lcp[m] - 1);
+            last = ds.get_max();
+        } else {
+            ds.remove(m);
+            last = m;
+        }
+        dec_key = !dec_key; // flip
+    }
+}
+
+void test_list_remove_only(const size_t n, const size_t seed) {
+    // generate
+    VLOG(2) << "  Generating ...";
+    vec lcp; size_t max_lcp;
+    generate_lcp(n, seed, lcp, max_lcp);
+
+    VLOG(2) << "  Inserting ...";
+    esacomp::MaxLCPSuffixList<vec> ds(lcp, MIN_POSSIBLE_LCP, max_lcp);
+
+    // test size
+    ASSERT_EQ(n-1, ds.size());
+
+    // test item order, removing one by one
+    VLOG(2) << "  Testing ...";
+    size_t last = ds.get_max();
+    ds.remove(last);
+
+    while(ds.size()) {
+        size_t m = ds.get_max();
+        ASSERT_GE(lcp[last], lcp[m]) << "n = " << n << ", seed = " << seed;
+
+        ds.remove(m);
+        last = m;
+    }
+}
+
+void test_list_dec_key(const size_t n, const size_t seed) {
+    // generate
+    VLOG(2) << "  Generating ...";
+    vec lcp; size_t max_lcp;
+    generate_lcp(n, seed, lcp, max_lcp);
+
+    VLOG(2) << "  Inserting ...";
+    esacomp::MaxLCPSuffixList<vec> ds(lcp, MIN_POSSIBLE_LCP, max_lcp);
 
     // test size
     ASSERT_EQ(n-1, ds.size());
@@ -98,8 +157,6 @@ void test_max_lcp_order_dec_key(const size_t n, const size_t seed) {
     }
 }
 
-//typedef void (*testfuc_t)(const size_t, const size_t);
-
 template<typename testfunc_t>
 void test_run(testfunc_t f) {
     for(size_t i = 0; i < NUM_TESTS; i++) {
@@ -112,18 +169,18 @@ void test_run(testfunc_t f) {
 }
 
 TEST(MaxLCP, heap_remove_only) {
-    test_run(test_max_lcp_order_remove_only<esacomp::MaxLCPHeap<vec>>);
+    test_run(test_heap_remove_only);
 }
 
 TEST(MaxLCP, list_remove_only) {
-    test_run(test_max_lcp_order_remove_only<esacomp::MaxLCPSuffixList<vec>>);
+    test_run(test_list_remove_only);
 }
 
 TEST(MaxLCP, heap_dec_key) {
-    test_run(test_max_lcp_order_dec_key<esacomp::MaxLCPHeap<vec>>);
+    test_run(test_heap_dec_key);
 }
 
 TEST(MaxLCP, list_dec_key) {
-    test_run(test_max_lcp_order_dec_key<esacomp::MaxLCPSuffixList<vec>>);
+    test_run(test_list_dec_key);
 }
 
