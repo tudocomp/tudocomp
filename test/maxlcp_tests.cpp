@@ -146,8 +146,7 @@ void test_list_dec_key(const size_t n, const size_t seed) {
         ASSERT_GE(lcp[last], lcp[m]) << "n = " << n << ", seed = " << seed;
 
         if(dec_key && lcp[m] > MIN_POSSIBLE_LCP) {
-            lcp[m] = lcp[m] - 1;
-            ds.decrease_key(m);
+            ds.decrease_key(m, lcp[m] - 1);
             last = ds.get_max();
         } else {
             ds.remove(m);

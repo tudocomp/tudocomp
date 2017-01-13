@@ -16,7 +16,7 @@ class MaxLCPSuffixList {
 
 private:
     //data backend
-    const lcp_t* m_lcp;
+    lcp_t* m_lcp;
 
     //undefined suffix
     const size_t m_undef; // == m_lcp->size()
@@ -51,7 +51,7 @@ private:
 
 public:
     /// Constructor
-    inline MaxLCPSuffixList(const lcp_t& lcp, size_t min_lcp, size_t max_lcp)
+    inline MaxLCPSuffixList(lcp_t& lcp, size_t min_lcp, size_t max_lcp)
         : m_lcp(&lcp), m_undef(m_lcp->size())
 	{
         const size_t& n = lcp.size();
@@ -159,8 +159,10 @@ public:
     }
 
     /// Decrease key on array item with index i.
-    inline void decrease_key(len_t i) {
+    template<typename T>
+    inline void decrease_key(len_t i, T value) {
         remove(i);
+        (*m_lcp)[i] = value;
         insert(i);
     }
 
