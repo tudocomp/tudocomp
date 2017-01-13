@@ -129,6 +129,7 @@ var drawChart = function(raw) {
     app.root = convert(raw, raw.memOff, -1);
 
     // Define dimensions
+    var groupBracketHeight = 15;
     var groupLevelMax = d3.max(app.groups, function(g) { return g.level; });
     var groupLevelIndent = function(level) {
         return (groupLevelMax - level) * 30;
@@ -142,7 +143,7 @@ var drawChart = function(raw) {
     };
 
     if(app.options.drawGroups && app.groups.length > 0) {
-        margin.top += groupLevelIndent(-1);
+        margin.top += groupLevelIndent(-1) + groupBracketHeight;
     }
 
     if(app.options.drawLegend) {
@@ -283,38 +284,43 @@ var drawChart = function(raw) {
 
         group.append("text")
             .attr("x", function(d) { return app.timeToPx(d.tDuration / 2); })
-            .attr("y", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
-            .attr("dy", "-12")
+            .attr("y", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level) - groupBracketHeight; })
+            .attr("dy", "-3")
             .style("font-weight", "bold")
             .style("text-anchor", "middle")
             .text(function(d) { return d.title; });
 
+        group.append("path")
+            .attr("d", function(d) {
+                // draw curly brace
+                var x1 = 0;
+                var x2 = app.timeToPx(d.tDuration);
+                var y = app.memToPx(d.memPeak) - groupLevelIndent(d.level);
+
+                var w = x2 - x1;
+                var w4 = w/4;
+                var h = groupBracketHeight;
+                var h2 = h/2;
+                var h4 = h/4;
+
+                return "M " + x1 + " " + y +
+                " q 0 " + (-h2) + ", " + w4 + " " + (-h2) +
+                " q " + w4 + " 0, " + w4 + " " + (-h2) +
+                " q 0 " + h2 + ", " + w4 + " " + h2 +
+                " q " + w4 + " 0, " + w4 + " " + h2;
+            })
+            .style("fill", "none")
+            .style("stroke", "black")
+            .style("stroke-width", "1.5");
+
         group.append("line")
-            .attr("x1", "0")
-            .attr("x2", "0")
-            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
+            .attr("x1", 0)
+            .attr("x2", 0)
+            .attr("y1", function(d) { return app.memToPx(d.memPeak); })
             .attr("y2", app.chartHeight);
-
-        group.append("line")
-            .attr("x1", function(d) { return app.timeToPx(d.tDuration); })
-            .attr("x2", function(d) { return app.timeToPx(d.tDuration); })
-            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
-            .attr("y2", app.chartHeight);
-
-        group.append("line")
-            .attr("x1", "0")
-            .attr("x2", function(d) { return app.timeToPx(d.tDuration); })
-            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
-            .attr("y2", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); });
-
-        group.append("line")
-            .attr("x1", function(d) { return app.timeToPx(d.tDuration / 2); })
-            .attr("x2", function(d) { return app.timeToPx(d.tDuration / 2); })
-            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level) - 10; })
-            .attr("y2", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); });
 
         group.selectAll("line")
-            .style("stroke", "rgba(0, 0, 0, 0.75)")
+            .style("stroke", "rgba(0,0,0,0.25)")
             .style("stroke-width", "1")
             .style("stroke-dasharray", "5,2");
     }
