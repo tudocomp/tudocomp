@@ -33,6 +33,11 @@ public:
                    const size_t threshold,
                    lzss::FactorBuffer& factors) {
 
+		// Construct SA, ISA and LCP
+		env().begin_stat_phase("Construct text ds");
+		text.require(text_t::SA | text_t::ISA | text_t::LCP);
+		env().end_stat_phase();
+
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
 
