@@ -540,6 +540,7 @@ var redrawChart = function() {
 }
 
 var loadJSON = function(json) {
+    d3.select("#json")[0][0].value = json;
     d3.select("#json-error").style("display", "none");
     try {
         var x = JSON.parse(json);
