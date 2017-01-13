@@ -47,8 +47,8 @@ esa_coder=(
     Code2Coder coders/Code2Coder.hpp
 )
 lz78u_string_coder=(
-    lz78u::AsciiNtStringCoder compressors/lz78u/AsciiNtStringCoder.hpp
-    lz78u::HuffmanStringCoder compressors/lz78u/HuffmanStringCoder.hpp
+    ASCIICoder coders/ASCIICoder.hpp
+    HuffmanCoder coders/HuffmanCoder.hpp
 )
 
 function ex {

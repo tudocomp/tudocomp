@@ -11,13 +11,60 @@
 #include <tudocomp/compressors/lz78/LZ78common.hpp>
 
 #include "lz78u/SuffixTree.hpp"
-#include "lz78u/HuffmanStringCoder.hpp"
 
 namespace tdc {
 
 // TODO: Define factorid for lz78u uniformly
 
 namespace lz78u {
+    template<typename coder_t>
+    class StringCoder {
+    public:
+        class Encoder {
+            Env m_env;
+            std::shared_ptr<BitOStream> m_out;
+            std::vector<uliteral_t> m_lit_buffer;
+        public:
+            inline Encoder(Env&& env, const std::shared_ptr<BitOStream>& out):
+                m_env(std::move(env)), m_out(out) {}
+
+            inline void encode(View str) {
+                for (auto c : str) {
+                    m_lit_buffer.push_back(c);
+                    //m_out->write_int<uliteral_t>(c);
+                }
+                m_lit_buffer.push_back(0);
+                //m_out->write_int<uliteral_t>(0);
+            }
+
+            inline void finalize() {
+                  ViewLiterals vl(m_lit_buffer);
+                typename coder_t::Encoder hcoder(std::move(m_env), m_out, vl);
+            }
+        };
+
+        class Decoder {
+            std::shared_ptr<BitIStream> m_in;
+        public:
+            inline Decoder(Env&& env, const std::shared_ptr<BitIStream>& in):
+                Algorithm(std::move(env)), m_in(in) {}
+
+            inline void decode(std::vector<uliteral_t>& buffer) {
+                while (true) {
+                    const uliteral_t chr = m_in->read_int<uliteral_t>();
+                    if (chr == '\0') {
+                        break;
+                    }
+                    buffer.push_back(chr);
+                }
+            }
+
+            inline void finalize() {
+            }
+        };
+    };
+
+
     class Decompressor {
         std::vector<lz78::factorid_t> indices;
         std::vector<uliteral_t> literal_strings;
@@ -82,6 +129,12 @@ class LZ78UCompressor: public Compressor {
 private:
     using node_type = SuffixTree::node_type;
 
+    using Encoder = typename coder_t::Encoder;
+    using Decoder = typename coder_t::Decoder;
+
+    using StringEncoder = typename lz78u::StringCoder<string_coder_t>::Encoder;
+    using StringDecoder = typename lz78u::StringCoder<string_coder_t>::Decoder;
+
 public:
     inline LZ78UCompressor(Env&& env):
         Compressor(std::move(env))
@@ -90,7 +143,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lz78u", "Lempel-Ziv 78 U\n\n" );
         m.option("coder").templated<coder_t, ASCIICoder>();
-        m.option("string_coder").templated<string_coder_t, lz78u::HuffmanStringCoder>();
+        m.option("string_coder").templated<string_coder_t, HuffmanCoder>();
         // m.option("dict_size").dynamic("inf");
         m.needs_sentinel_terminator();
         return m;
@@ -127,8 +180,8 @@ public:
 
         typedef SuffixTree::node_type node_t;
 
-        typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
-        typename string_coder_t::Encoder string_coder(env().env_for_option("string_coder"), coder.stream());
+        Encoder coder(env().env_for_option("coder"), out, NoLiterals());
+        StringEncoder string_coder(env().env_for_option("string_coder"), coder.stream());
 
         len_t factor_count = 0;
 
@@ -184,6 +237,7 @@ public:
             pos += str.size();
 
         }
+        string_coder.finalize();
 
         env().end_stat_phase();
     }
@@ -191,8 +245,8 @@ public:
     virtual void decompress(Input& input, Output& output) override final {
         std::cout << "START DECOMPRESS\n";
         auto out = output.as_stream();
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
-        typename string_coder_t::Decoder string_coder(env().env_for_option("string_coder"), decoder.stream());
+        Decoder decoder(env().env_for_option("coder"), input);
+        StringDecoder string_coder(env().env_for_option("string_coder"), decoder.stream());
 
         uint64_t factor_count = 0;
 
@@ -213,6 +267,7 @@ public:
 
             factor_count++;
         }
+        string_coder.finalize();
 
         out << '\0';
         out.flush();
