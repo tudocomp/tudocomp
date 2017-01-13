@@ -10,6 +10,9 @@ var colors = [
     "#90EE90", //lightgreen
 ];
 
+var grayColor = "#CCC";
+var grayFontColor = "#888";
+
 /*
     Shade color by percentage.
     Source: http://stackoverflow.com/questions/5560248 (shadeColor2 by Pimp Trizkit)
@@ -241,18 +244,6 @@ var drawChart = function(raw) {
             .attr("fill", function(d) { return shadeColor(d.color, -0.25); });
     }
 
-    /*if(app.options.drawOffsets) {
-        bar.append("line")
-            .attr("class", "memoff")
-            .attr("x1", "0")
-            .attr("x2", function(d) { return app.timeToPx(d.tDuration); })
-            .attr("y1", function(d) { return app.memToPx(d.memOff); })
-            .attr("y2", function(d) { return app.memToPx(d.memOff); })
-            .style("stroke", "rgba(0, 0, 0, 0.25)")
-            .style("stroke-width", "1")
-            .style("stroke-dasharray", "2,2");
-    }*/
-
     // Draw legend
     if(app.options.drawLegend) {
         var legend = chart.selectAll("g.legend")
@@ -264,7 +255,7 @@ var drawChart = function(raw) {
                     });
 
         legend.append("rect")
-            .attr("fill", function(d) { return d.color; })
+            .attr("fill", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? grayColor : d.color; })
             .attr("x", "0")
             .attr("y", function(d, i) { return (i * 1.5) + "em" })
             .attr("width", "1em")
@@ -275,7 +266,9 @@ var drawChart = function(raw) {
             .attr("y", function(d, i) { return (i * 1.5) + "em" })
             .attr("dy", "1em")
             .text(function(d) { return d.title; })
-            .style("font-style", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? "italic" : "normal"; });
+            .style("fill", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? grayFontColor : "inherit"; })
+            .style("font-style", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? "italic" : "normal"; })
+            .style("text-decoration", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? "line-through" : "none"; });
     }
 
     // Draw groups
@@ -397,9 +390,10 @@ var drawChart = function(raw) {
 var printPhase = function(parentElem, d) {
     var phaseNode = parentElem.insert("div").attr("class", "phase");
 
+    var shortPhase = (app.timeToPx(d.tDuration) < 1.0);
     var titleNode = phaseNode.insert("div")
         .attr("class", "title " + ((d.sub.length > 0) ? "group" : "leaf"))
-        .style("border-left-color", d.color)
+        .style("border-left-color", shortPhase ? grayColor : d.color)
         .text(d.title);
 
     var e = phaseNode.insert("div")
