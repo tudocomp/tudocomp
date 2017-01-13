@@ -1,14 +1,23 @@
 var colors = [
-    "steelblue",
-    "tomato",
-    "orange",
-    "darkseagreen",
-    "slateblue",
-    "rosybrown",
-    "hotpink",
-    "plum",
-    "lightgreen",
+    "#4682B4", // steelblue
+    "#FF6347", // tomato
+    "#FFA500", // orange
+    "#8FBC8F", // darkseagreen
+    "#6A5ACD", // slateblue
+    "#BC8F8F", // rosybrown
+    "#FF69B4", // hotpink
+    "#DDA0DD", // plum
+    "#90EE90", //lightgreen
 ];
+
+/*
+    Shade color by percentage.
+    Source: http://stackoverflow.com/questions/5560248 (shadeColor2 by Pimp Trizkit)
+*/
+function shadeColor(color, percent) {
+    var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
+    return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+}
 
 var memUnits = ["bytes", "KiB", "MiB", "GiB"];
 
@@ -212,6 +221,7 @@ var drawChart = function(raw) {
             return "translate(" + app.timeToPx(d.tStart) + ",0)";
          });
 
+    // Main bar
     bar.append("rect")
         .attr("class", "mem")
         .attr("x", "0")
@@ -220,7 +230,18 @@ var drawChart = function(raw) {
         .attr("height", function(d) { return app.chartHeight - app.memToPx(d.memPeak); })
         .attr("fill", function(d) { return d.color; });
 
+    // Offset bar
     if(app.options.drawOffsets) {
+        bar.append("rect")
+            .attr("class", "mem")
+            .attr("x", "0")
+            .attr("y", function(d) { return app.memToPx(d.memOff); })
+            .attr("width", function(d) { return app.timeToPx(d.tDuration); })
+            .attr("height", function(d) { return app.chartHeight - app.memToPx(d.memOff); })
+            .attr("fill", function(d) { return shadeColor(d.color, -0.25); });
+    }
+
+    /*if(app.options.drawOffsets) {
         bar.append("line")
             .attr("class", "memoff")
             .attr("x1", "0")
@@ -230,7 +251,7 @@ var drawChart = function(raw) {
             .style("stroke", "rgba(0, 0, 0, 0.25)")
             .style("stroke-width", "1")
             .style("stroke-dasharray", "2,2");
-    }
+    }*/
 
     // Draw legend
     if(app.options.drawLegend) {
