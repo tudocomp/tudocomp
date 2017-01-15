@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Pizza&Chili Corpus text collection
-OUT_DIR=pc
+OUT_DIR=cc
 PREFIX_SIZES="200 100 50 10 1"
 
 #URL="http://pizzachili.dcc.uchile.cl/texts"
