@@ -18,24 +18,18 @@ def config_match(pattern):
             return True
     return False
 
-offline_coder = [
-    ("Code2Coder",   "coders/Code2Coder.hpp",   []),
-    ("HuffmanCoder", "coders/HuffmanCoder.hpp", []),
-]
 
-online_coder = [
+context_free_coder = [
     ("ASCIICoder",      "coders/ASCIICoder.hpp",      []),
     ("BitCoder",        "coders/BitCoder.hpp",        []),
     ("EliasGammaCoder", "coders/EliasGammaCoder.hpp", []),
     ("EliasDeltaCoder", "coders/EliasDeltaCoder.hpp", []),
 ]
 
-lcpc_coder = [
-    ("ASCIICoder", "coders/ASCIICoder.hpp", []),
-    ("Code2Coder", "coders/Code2Coder.hpp", []),
+coder = context_free_coder + [
+    ("Code2Coder",   "coders/Code2Coder.hpp",   []),
+    ("HuffmanCoder", "coders/HuffmanCoder.hpp", []),
 ]
-
-all_coder = online_coder + offline_coder
 
 lz78_trie = [
     ("lz78::BinarySortedTrie", "compressors/lz78/BinarySortedTrie.hpp", []),
@@ -66,20 +60,25 @@ lcpc_buffer = [
     ("lcpcomp::MultimapBuffer",               "compressors/lcpcomp/decoding/MultiMapBuffer.hpp",         []),
 ]
 
+lcpc_coder = [
+    ("ASCIICoder", "coders/ASCIICoder.hpp", []),
+    ("Code2Coder", "coders/Code2Coder.hpp", []),
+]
+
 compressors = [
-    ("RunLengthEncoder",            "compressors/RunLengthEncoder.hpp",            [online_coder]),
-    ("LiteralEncoder",              "compressors/LiteralEncoder.hpp",              [all_coder]),
-    ("LZ78Compressor",              "compressors/LZ78Compressor.hpp",              [online_coder, lz78_trie]),
-    ("LZWCompressor",               "compressors/LZWCompressor.hpp",               [online_coder, lz78_trie]),
-    ("RePairCompressor",            "compressors/RePairCompressor.hpp",            [all_coder]),
-    ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [all_coder]),
+    ("RunLengthEncoder",            "compressors/RunLengthEncoder.hpp",            [context_free_coder]),
+    ("LiteralEncoder",              "compressors/LiteralEncoder.hpp",              [coder]),
+    ("LZ78Compressor",              "compressors/LZ78Compressor.hpp",              [context_free_coder, lz78_trie]),
+    ("LZWCompressor",               "compressors/LZWCompressor.hpp",               [context_free_coder, lz78_trie]),
+    ("RePairCompressor",            "compressors/RePairCompressor.hpp",            [coder]),
+    ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [coder]),
     ("LCPCompressor",               "compressors/LCPCompressor.hpp",               [lcpc_coder, lcpc_strat, lcpc_buffer]),
-    ("LZSSSlidingWindowCompressor", "compressors/LZSSSlidingWindowCompressor.hpp", [online_coder]),
+    ("LZSSSlidingWindowCompressor", "compressors/LZSSSlidingWindowCompressor.hpp", [context_free_coder]),
     ("EasyRLECompressor",           "compressors/EasyRLECompressor.hpp",           []),
     ("MTFCompressor",               "compressors/MTFCompressor.hpp",               []),
-    #("BWTCompressor",               "compressors/BWTCompressor.hpp" _
     ("ChainCompressor",             "compressors/ChainCompressor.hpp",             []),
     ("NoopCompressor",              "compressors/NoopCompressor.hpp",              []),
+    #("BWTCompressor",               "compressors/BWTCompressor.hpp" _
 ]
 
 # Generates carthesian product of template params
@@ -192,16 +191,12 @@ namespace lzw {
 }//ns tdc
 '''
 
-#print(algorithms_cpp_template)
-
 # Output tudocomp.hpp
 def gen_tudocomp_hpp():
     tudocomp_hpp = tudocomp_hpp_template + "\n"
     for header in sorted(gather_header(compressors)):
         tudocomp_hpp += str.format("#include <tudocomp/{}>\n", header)
     return tudocomp_hpp
-
-#print(gen_tudocomp_hpp())
 
 # Output algorithm.cpp
 def gen_algorithm_cpp():
