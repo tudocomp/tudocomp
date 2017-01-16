@@ -68,7 +68,7 @@ public:
 
 		while(is.get(c)) {
 			node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
-			tdc_debug(VLOG(2) << " child " << child.id() << " #factor " << factor_count << " size " << dict.size() << " node " << node.id());
+			DVLOG(2) << " child " << child.id() << " #factor " << factor_count << " size " << dict.size() << " node " << node.id();
 
 			if(child.id() == lz78::undef_id) {
                 coder.encode(node.id(), Range(factor_count + uliteral_max + 1));
