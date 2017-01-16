@@ -19,7 +19,8 @@ if(PANDOC_FOUND)
     add_custom_target(docs-main-html
 
         # convert markdown doc to html
-        COMMAND GHCRTS=-V0 ${PANDOC_COMMAND} -s --toc -t html
+        COMMAND GHCRTS=-V0 ${PANDOC_COMMAND} -t html --toc
+            --template=${CMAKE_CURRENT_SOURCE_DIR}/pandoc_template.html
             -o ${CMAKE_CURRENT_BINARY_DIR}/_content.html
             ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md
 

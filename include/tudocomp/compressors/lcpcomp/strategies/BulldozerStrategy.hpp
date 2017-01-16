@@ -8,9 +8,9 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
-/// Implements the "Bulldozer" selection strategy for ESAComp.
+/// Implements the "Bulldozer" selection strategy for LCPComp.
 ///
 /// TODO: Describe
 class BulldozerStrategy : public Algorithm {
@@ -35,13 +35,18 @@ public:
     using Algorithm::Algorithm; //import constructor
 
     inline static Meta meta() {
-        Meta m("esacomp_strategy", "bulldozer");
+        Meta m("lcpcomp_strategy", "bulldozer");
         return m;
     }
 
     inline void factorize(text_t& text,
                    size_t threshold,
                    lzss::FactorBuffer& factors) {
+
+		// Construct SA, ISA and LCP
+		env().begin_stat_phase("Construct text ds");
+		text.require(text_t::SA | text_t::ISA | text_t::LCP);
+		env().end_stat_phase();
 
         auto& sa = text.require_sa();
         auto& lcp = text.require_lcp();
@@ -55,8 +60,8 @@ public:
         std::vector<Interval> intervals;
         for(size_t i = 1; i < sa.size(); i++) {
             if(lcp[i] >= threshold) {
-                intervals.push_back(Interval{sa[i], sa[i-1], lcp[i]});
-                intervals.push_back(Interval{sa[i-1], sa[i], lcp[i]});
+                intervals.emplace_back(sa[i], sa[i-1], lcp[i]);
+                intervals.emplace_back(sa[i-1], sa[i], lcp[i]);
             }
         }
 
@@ -88,7 +93,7 @@ public:
                 }
 
                 if(l >= threshold) {
-                    factors.push_back(lzss::Factor(x->p, x->q, l));
+                    factors.emplace_back(x->p, x->q, l);
 
                     //mark source positions as "unreplaceable"
                     for(size_t k = 0; k < l; k++) {

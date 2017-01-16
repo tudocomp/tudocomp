@@ -1,10 +1,10 @@
 #pragma once
 
-#include <sdsl/int_vector.hpp>
 #include <tudocomp/util.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
 /// Provides constant-time access to the suffix in a suffix array
 /// with the longest correspondig lcp table entry.
@@ -16,7 +16,7 @@ class MaxLCPSuffixList {
 
 private:
     //data backend
-    const lcp_t* m_lcp;
+    lcp_t* m_lcp;
 
     //undefined suffix
     const size_t m_undef; // == m_lcp->size()
@@ -25,14 +25,13 @@ private:
     size_t m_first; //linked list head (maximum LCP)
     size_t m_last; //linked list tail (current minimum LCP)
 
-    sdsl::int_vector<> m_prev;
-    sdsl::int_vector<> m_next;
+    DynamicIntVector m_prev, m_next;
 
     //LCP index
-    sdsl::int_vector<> m_lcp_index;
+    DynamicIntVector m_lcp_index;
 
     //Suffix membership list
-    sdsl::bit_vector m_suffix_contained;
+    BitVector m_suffix_contained;
 
     //Entry counter
     size_t m_size = 0;
@@ -52,7 +51,7 @@ private:
 
 public:
     /// Constructor
-    inline MaxLCPSuffixList(const lcp_t& lcp, size_t min_lcp, size_t max_lcp)
+    inline MaxLCPSuffixList(lcp_t& lcp, size_t min_lcp, size_t max_lcp)
         : m_lcp(&lcp), m_undef(m_lcp->size())
 	{
         const size_t& n = lcp.size();
@@ -60,13 +59,13 @@ public:
         //Initialize doubly linked list
         m_first = m_undef;
         m_last = m_undef;
-        m_prev = sdsl::int_vector<>(n, m_undef, bits_for(m_undef));
-        m_next = sdsl::int_vector<>(n, m_undef, bits_for(m_undef));
+        m_prev = DynamicIntVector(n, m_undef, bits_for(m_undef));
+        m_next = DynamicIntVector(n, m_undef, bits_for(m_undef));
 
-        m_lcp_index = sdsl::int_vector<>(max_lcp, m_undef, bits_for(m_undef));
+        m_lcp_index = DynamicIntVector(max_lcp, m_undef, bits_for(m_undef));
 
         //Initialize suffix reference map
-        m_suffix_contained = sdsl::bit_vector(n, 0);
+        m_suffix_contained = BitVector(n, 0);
 
         //Construct list
         for (size_t i = 1; i < n; i++) {
@@ -76,6 +75,7 @@ public:
         }
     }
 
+private:
     /// Insert suffix array item with index i.
     inline void insert(size_t i) {
         DCHECK(i < m_undef && !m_suffix_contained[i]);
@@ -122,6 +122,7 @@ public:
         ++m_size;
     }
 
+public:
     /// Remove suffix array item with index i.
     inline void remove(size_t i) {
         DCHECK(i < m_undef && m_suffix_contained[i]);
@@ -155,6 +156,14 @@ public:
         //update info
         m_suffix_contained[i] = 0;
         --m_size;
+    }
+
+    /// Decrease key on array item with index i.
+    template<typename T>
+    inline void decrease_key(len_t i, T value) {
+        remove(i);
+        (*m_lcp)[i] = value;
+        insert(i);
     }
 
     /// Checks whether or not suffix array entry i is contained in this list.

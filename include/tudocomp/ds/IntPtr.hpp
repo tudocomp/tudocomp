@@ -365,12 +365,6 @@ namespace int_vector {
         using autocast_type = T;
     };
 
-    // specialization for dynamic_t
-    template<> class GenericIntRefAutocast<dynamic_t> {
-    public:
-        using autocast_type = uint64_t;
-    };
-
     template<class Self, class Ptr, class T>
     class GenericIntRef {
     protected:
@@ -503,6 +497,18 @@ namespace int_vector {
 
     static_assert(sizeof(GenericIntPtr<ConstIntPtr<uint_t<40>>, uint_t<40>>) <= (sizeof(void*) * 2),
                   "make sure this is reasonably small");
+
+    // specializations for dynamic_t
+    template<> class GenericIntRefAutocast<dynamic_t> {
+    public:
+        using autocast_type = uint64_t;
+    };
+
+    // specializations for uint_t<1>
+    template<> class GenericIntRefAutocast<uint_t<1>> {
+    public:
+        using autocast_type = bool;
+    };
 }
 
 template<class T>

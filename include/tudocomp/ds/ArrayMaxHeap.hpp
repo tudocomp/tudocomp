@@ -5,10 +5,9 @@
 #include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
-namespace esacomp {
 
-template<class lcp_t>
-class MaxLCPHeap {
+template<class array_t>
+class ArrayMaxHeap {
 
 private:
     enum perlocation_dir_t {
@@ -29,8 +28,8 @@ private:
         return (i-1)/2;
     }
 
-    // data backend
-    const lcp_t* m_lcp;
+    // the array
+    array_t* m_array;
 
     // undefined position in heap
     size_t m_undef;
@@ -49,33 +48,31 @@ private:
 
 public:
     /// Constructor
-    inline MaxLCPHeap(const lcp_t& lcp, size_t min_lcp, size_t max_lcp)
-        : m_lcp(&lcp), m_size(0)
+    inline ArrayMaxHeap(array_t& array, const size_t array_size, const size_t heap_size)
+        : m_array(&array), m_size(0)
 	{
-        auto n = lcp.size();
-
-        size_t num_entries = 0;
+        /*size_t num_entries = 0;
         for(size_t i = 1; i < n; i++) {
             if(lcp[i] >= min_lcp) ++num_entries;
-        }
+        }*/
 
-        m_heap = DynamicIntVector(num_entries, 0, bits_for(n-1));
-        m_undef = num_entries;
-        m_pos = DynamicIntVector(n, m_undef, bits_for(m_undef));
+        m_heap = DynamicIntVector(heap_size, 0, bits_for(array_size-1));
+        m_undef = heap_size;
+        m_pos = DynamicIntVector(array_size, m_undef, bits_for(m_undef));
 
         //Construct heap
-        for(size_t i = 1; i < n; i++) {
+        /*for(size_t i = 1; i < n; i++) {
             if(lcp[i] >= min_lcp) insert(i);
-        }
+        }*/
     }
 
-    /// Insert suffix array item with index i.
+    /// Insert array item with index i into heap.
     inline void insert(len_t i) {
         size_t pos = m_size++;
 
         // perlocate up
-        auto lcp_i = (*m_lcp)[i];
-        while(pos > 0 && lcp_i > (*m_lcp)[m_heap[parent(pos)]]) {
+        auto lcp_i = (*m_array)[i];
+        while(pos > 0 && lcp_i > (*m_array)[m_heap[parent(pos)]]) {
             put(pos, m_heap[parent(pos)]);
             pos = parent(pos);
         }
@@ -85,12 +82,12 @@ public:
 
 private:
     inline void perlocate_down(size_t pos, len_t k) {
-        auto lcp_k = (*m_lcp)[k];
+        auto lcp_k = (*m_array)[k];
 
         perlocation_dir_t dir = NONE;
         do {
-            len_t lcp_lc = (lc(pos) < m_size) ? (*m_lcp)[m_heap[lc(pos)]] : 0;
-            len_t lcp_rc = (rc(pos) < m_size) ? (*m_lcp)[m_heap[rc(pos)]] : 0;
+            len_t lcp_lc = (lc(pos) < m_size) ? (*m_array)[m_heap[lc(pos)]] : 0;
+            len_t lcp_rc = (rc(pos) < m_size) ? (*m_array)[m_heap[rc(pos)]] : 0;
 
             // find perlocation direction
             if(lcp_k < lcp_lc && lcp_k < lcp_rc) {
@@ -122,7 +119,7 @@ private:
     }
 
 public:
-    /// Remove suffix array item with index i.
+    /// Remove array item with index i from heap.
     inline void remove(len_t i) {
         auto pos = m_pos[i];
         if(pos != m_undef) {
@@ -137,7 +134,10 @@ public:
     }
 
     /// Decrease key on array item with index i.
-    inline void decrease_key(len_t i) {
+    template<typename T>
+    inline void decrease_key(len_t i, T value) {
+        (*m_array)[i] = value;
+
         auto pos = m_pos[i];
         if(pos != m_undef) {
             // perlocate item down, starting at its current position
@@ -145,7 +145,7 @@ public:
         }
     }
 
-    /// Checks whether or not suffix array entry i is contained in this heap.
+    /// Checks whether or not array item i is contained in this heap.
     inline bool contains(len_t i) const {
         return m_pos[i] != m_undef;
     }
@@ -155,7 +155,7 @@ public:
         return m_size;
     }
 
-    /// Get first item (suffix array index with highest LCP)
+    /// Get first item (index of array item with highest value)
     inline size_t get_max() const {
         return m_heap[0];
     }
@@ -163,14 +163,14 @@ public:
     // for tests?
     inline bool is_valid() const {
         for(size_t i = 0; i < m_size; i++) {
-            auto lcp_i = (*m_lcp)[m_heap[i]];
-            if(lc(i) < m_size) DCHECK(lcp_i >= (*m_lcp)[m_heap[lc(i)]]);
-            if(rc(i) < m_size) DCHECK(lcp_i >= (*m_lcp)[m_heap[rc(i)]]);
+            auto lcp_i = (*m_array)[m_heap[i]];
+            if(lc(i) < m_size) DCHECK(lcp_i >= (*m_array)[m_heap[lc(i)]]);
+            if(rc(i) < m_size) DCHECK(lcp_i >= (*m_array)[m_heap[rc(i)]]);
         }
 
         return true;
     }
 };
 
-}} //ns
+} //ns
 

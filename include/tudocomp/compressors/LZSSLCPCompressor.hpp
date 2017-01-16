@@ -101,7 +101,7 @@ public:
 				DCHECK_LT(max_pos, text_length);
 				DCHECK_GE(max_pos, 0);
                 // new factor
-                factors.push_back(lzss::Factor(i, sa[max_pos], max_lcp));
+                factors.emplace_back(i, sa[max_pos], max_lcp);
 
                 i += max_lcp; //advance
             } else {

@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
 
-#include <tudocomp/tudocomp.hpp>
-
+#include <tudocomp/Compressor.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
+
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
-#include <tudocomp/compressors/esacomp/decoding/SuccinctListBuffer.hpp>
-#include <tudocomp/compressors/esacomp/decoding/DecodeQueueListBuffer.hpp>
-#include <tudocomp/compressors/esacomp/decoding/MultiMapBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/decoding/SuccinctListBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/decoding/MultiMapBuffer.hpp>
 
 using namespace tdc;
 
@@ -182,25 +182,25 @@ void test_forward_decode_buffer_multiref() {
 }
 
 TEST(lzss, decode_forward_lm_buffer_chain) {
-    test_forward_decode_buffer_chain<esacomp::SuccinctListBuffer>();
+    test_forward_decode_buffer_chain<lcpcomp::SuccinctListBuffer>();
 }
 
 TEST(lzss, decode_forward_lm_buffer_multiref) {
-    test_forward_decode_buffer_multiref<esacomp::SuccinctListBuffer>();
+    test_forward_decode_buffer_multiref<lcpcomp::SuccinctListBuffer>();
 }
 
 TEST(lzss, decode_forward_mm_buffer_chain) {
-    test_forward_decode_buffer_chain<esacomp::MultimapBuffer>();
+    test_forward_decode_buffer_chain<lcpcomp::MultimapBuffer>();
 }
 
 TEST(lzss, decode_forward_mm_buffer_multiref) {
-    test_forward_decode_buffer_multiref<esacomp::MultimapBuffer>();
+    test_forward_decode_buffer_multiref<lcpcomp::MultimapBuffer>();
 }
 
 TEST(lzss, decode_forward_ql_buffer_chain) {
-    test_forward_decode_buffer_chain<esacomp::DecodeForwardQueueListBuffer>();
+    test_forward_decode_buffer_chain<lcpcomp::DecodeForwardQueueListBuffer>();
 }
 
 TEST(lzss, decode_forward_ql_buffer_multiref) {
-    test_forward_decode_buffer_multiref<esacomp::DecodeForwardQueueListBuffer>();
+    test_forward_decode_buffer_multiref<lcpcomp::DecodeForwardQueueListBuffer>();
 }

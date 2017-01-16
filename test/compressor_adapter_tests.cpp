@@ -6,13 +6,20 @@
 
 #include <gtest/gtest.h>
 
-#include <tudocomp/tudocomp.hpp>
-
+#include <tudocomp/def.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/util/View.hpp>
-#include <tudocomp/Compressor.hpp>
+
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/Literal.hpp>
+#include <tudocomp/Range.hpp>
+
+#include <tudocomp/compressors/ChainCompressor.hpp>
+#include <tudocomp/compressors/NoopCompressor.hpp>
+#include <tudocomp/compressors/RunLengthEncoder.hpp>
+#include <tudocomp/coders/ASCIICoder.hpp>
 
 #include <tudocomp_driver/Registry.hpp>
 

@@ -5,10 +5,10 @@
 #include <tudocomp/def.hpp>
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
-#include <tudocomp/compressors/esacomp/MaxLCPSuffixList.hpp>
+#include <tudocomp/compressors/lcpcomp/MaxLCPSuffixList.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
 /**
  * Creates arrays instead of an LCP-heap
@@ -23,13 +23,18 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("esacomp_strategy", "lazy_list");
+        Meta m("lcpcomp_strategy", "lazy_list");
         return m;
     }
 
     using Algorithm::Algorithm; //import constructor
 
     inline void factorize(text_t& text, size_t threshold, lzss::FactorBuffer& factors) {
+
+		// Construct SA, ISA and LCP
+		env().begin_stat_phase("Construct text ds");
+		text.require(text_t::SA | text_t::ISA | text_t::LCP);
+		env().end_stat_phase();
 
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
@@ -77,7 +82,7 @@ public:
                 const len_t pos_source = sa[index-1];
                 const len_t factor_length = lcp[index];
 
-                factors.push_back(lzss::Factor { pos_target, pos_source, factor_length });
+                factors.emplace_back(pos_target, pos_source, factor_length);
 
                 //erase suffixes on the replaced area
                 for(size_t k = 0; k < factor_length; ++k) {

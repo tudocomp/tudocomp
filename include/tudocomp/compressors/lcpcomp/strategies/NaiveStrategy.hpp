@@ -10,9 +10,9 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
-/// A very naive selection strategy for ESAComp.
+/// A very naive selection strategy for LCPComp.
 ///
 /// TODO: Describe
 class NaiveStrategy : public Algorithm {
@@ -23,13 +23,18 @@ public:
     using Algorithm::Algorithm;
 
     inline static Meta meta() {
-        Meta m("esacomp_strategy", "naive");
+        Meta m("lcpcomp_strategy", "naive");
         return m;
     }
 
     inline void factorize(text_t& text,
                    size_t threshold,
                    lzss::FactorBuffer& factors) {
+
+		// Construct SA, ISA and LCP
+		env().begin_stat_phase("Construct text ds");
+		text.require(text_t::SA | text_t::ISA | text_t::LCP);
+		env().end_stat_phase();
 
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
@@ -57,7 +62,7 @@ public:
                 if(available) {
                     //introduce factor
                     size_t src = sa[s - 1];
-                    factors.push_back(lzss::Factor(i, src, l));
+                    factors.emplace_back(i, src, l);
 
                     //mark source positions
                     for(size_t k = 0; k < l; k++) {

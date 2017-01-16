@@ -6,7 +6,7 @@
 #include <tudocomp/util/Hash.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
  
 
 template <class Key, class Value,
@@ -176,7 +176,7 @@ class MyHash {
 class MyMapBuffer : public Algorithm {
     public:
     inline static Meta meta() {
-        Meta m("esadec", "MyMap");
+        Meta m("lcpdec", "MyMap");
         m.option("lazy").dynamic("0");
         return m;
     }

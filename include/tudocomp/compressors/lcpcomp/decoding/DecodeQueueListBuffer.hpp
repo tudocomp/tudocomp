@@ -6,13 +6,13 @@
 #include <tudocomp/Algorithm.hpp>
 
 namespace tdc {
-namespace esacomp {
+namespace lcpcomp {
 
 constexpr len_t undef_len = std::numeric_limits<len_t>::max();
 class DecodeForwardQueueListBuffer : public Algorithm {
     public:
     inline static Meta meta() {
-        Meta m("esadec", "QueueListBuffer");
+        Meta m("lcpdec", "QueueListBuffer");
         return m;
     }
     inline void decode_lazy() const {

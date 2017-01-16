@@ -1,14 +1,26 @@
 var colors = [
-    "steelblue",
-    "tomato",
-    "orange",
-    "darkseagreen",
-    "slateblue",
-    "rosybrown",
-    "hotpink",
-    "plum",
-    "lightgreen",
+    "#4682B4", // steelblue
+    "#FF6347", // tomato
+    "#FFA500", // orange
+    "#8FBC8F", // darkseagreen
+    "#6A5ACD", // slateblue
+    "#BC8F8F", // rosybrown
+    "#FF69B4", // hotpink
+    "#DDA0DD", // plum
+    "#90EE90", //lightgreen
 ];
+
+var grayColor = "#CCC";
+var grayFontColor = "#888";
+
+/*
+    Shade color by percentage.
+    Source: http://stackoverflow.com/questions/5560248 (shadeColor2 by Pimp Trizkit)
+*/
+function shadeColor(color, percent) {
+    var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
+    return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+}
 
 var memUnits = ["bytes", "KiB", "MiB", "GiB"];
 
@@ -117,6 +129,7 @@ var drawChart = function(raw) {
     app.root = convert(raw, raw.memOff, -1);
 
     // Define dimensions
+    var groupBracketHeight = 15;
     var groupLevelMax = d3.max(app.groups, function(g) { return g.level; });
     var groupLevelIndent = function(level) {
         return (groupLevelMax - level) * 30;
@@ -130,7 +143,7 @@ var drawChart = function(raw) {
     };
 
     if(app.options.drawGroups && app.groups.length > 0) {
-        margin.top += groupLevelIndent(-1);
+        margin.top += groupLevelIndent(-1) + groupBracketHeight;
     }
 
     if(app.options.drawLegend) {
@@ -212,6 +225,7 @@ var drawChart = function(raw) {
             return "translate(" + app.timeToPx(d.tStart) + ",0)";
          });
 
+    // Main bar
     bar.append("rect")
         .attr("class", "mem")
         .attr("x", "0")
@@ -220,16 +234,15 @@ var drawChart = function(raw) {
         .attr("height", function(d) { return app.chartHeight - app.memToPx(d.memPeak); })
         .attr("fill", function(d) { return d.color; });
 
+    // Offset bar
     if(app.options.drawOffsets) {
-        bar.append("line")
-            .attr("class", "memoff")
-            .attr("x1", "0")
-            .attr("x2", function(d) { return app.timeToPx(d.tDuration); })
-            .attr("y1", function(d) { return app.memToPx(d.memOff); })
-            .attr("y2", function(d) { return app.memToPx(d.memOff); })
-            .style("stroke", "rgba(0, 0, 0, 0.25)")
-            .style("stroke-width", "1")
-            .style("stroke-dasharray", "2,2");
+        bar.append("rect")
+            .attr("class", "mem")
+            .attr("x", "0")
+            .attr("y", function(d) { return app.memToPx(d.memOff); })
+            .attr("width", function(d) { return app.timeToPx(d.tDuration); })
+            .attr("height", function(d) { return app.chartHeight - app.memToPx(d.memOff); })
+            .attr("fill", function(d) { return shadeColor(d.color, -0.25); });
     }
 
     // Draw legend
@@ -243,7 +256,7 @@ var drawChart = function(raw) {
                     });
 
         legend.append("rect")
-            .attr("fill", function(d) { return d.color; })
+            .attr("fill", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? grayColor : d.color; })
             .attr("x", "0")
             .attr("y", function(d, i) { return (i * 1.5) + "em" })
             .attr("width", "1em")
@@ -254,7 +267,9 @@ var drawChart = function(raw) {
             .attr("y", function(d, i) { return (i * 1.5) + "em" })
             .attr("dy", "1em")
             .text(function(d) { return d.title; })
-            .style("font-style", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? "italic" : "normal"; });
+            .style("fill", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? grayFontColor : "inherit"; })
+            .style("font-style", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? "italic" : "normal"; })
+            .style("text-decoration", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? "line-through" : "none"; });
     }
 
     // Draw groups
@@ -269,38 +284,43 @@ var drawChart = function(raw) {
 
         group.append("text")
             .attr("x", function(d) { return app.timeToPx(d.tDuration / 2); })
-            .attr("y", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
-            .attr("dy", "-12")
+            .attr("y", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level) - groupBracketHeight; })
+            .attr("dy", "-3")
             .style("font-weight", "bold")
             .style("text-anchor", "middle")
             .text(function(d) { return d.title; });
 
+        group.append("path")
+            .attr("d", function(d) {
+                // draw curly brace
+                var x1 = 0;
+                var x2 = app.timeToPx(d.tDuration);
+                var y = app.memToPx(d.memPeak) - groupLevelIndent(d.level);
+
+                var w = x2 - x1;
+                var w4 = w/4;
+                var h = groupBracketHeight;
+                var h2 = h/2;
+                var h4 = h/4;
+
+                return "M " + x1 + " " + y +
+                " q 0 " + (-h2) + ", " + w4 + " " + (-h2) +
+                " q " + w4 + " 0, " + w4 + " " + (-h2) +
+                " q 0 " + h2 + ", " + w4 + " " + h2 +
+                " q " + w4 + " 0, " + w4 + " " + h2;
+            })
+            .style("fill", "none")
+            .style("stroke", "black")
+            .style("stroke-width", "1.5");
+
         group.append("line")
-            .attr("x1", "0")
-            .attr("x2", "0")
-            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
+            .attr("x1", 0)
+            .attr("x2", 0)
+            .attr("y1", function(d) { return app.memToPx(d.memPeak); })
             .attr("y2", app.chartHeight);
-
-        group.append("line")
-            .attr("x1", function(d) { return app.timeToPx(d.tDuration); })
-            .attr("x2", function(d) { return app.timeToPx(d.tDuration); })
-            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
-            .attr("y2", app.chartHeight);
-
-        group.append("line")
-            .attr("x1", "0")
-            .attr("x2", function(d) { return app.timeToPx(d.tDuration); })
-            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
-            .attr("y2", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); });
-
-        group.append("line")
-            .attr("x1", function(d) { return app.timeToPx(d.tDuration / 2); })
-            .attr("x2", function(d) { return app.timeToPx(d.tDuration / 2); })
-            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level) - 10; })
-            .attr("y2", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); });
 
         group.selectAll("line")
-            .style("stroke", "rgba(0, 0, 0, 0.75)")
+            .style("stroke", "rgba(0,0,0,0.25)")
             .style("stroke-width", "1")
             .style("stroke-dasharray", "5,2");
     }
@@ -376,9 +396,10 @@ var drawChart = function(raw) {
 var printPhase = function(parentElem, d) {
     var phaseNode = parentElem.insert("div").attr("class", "phase");
 
+    var shortPhase = (app.timeToPx(d.tDuration) < 1.0);
     var titleNode = phaseNode.insert("div")
         .attr("class", "title " + ((d.sub.length > 0) ? "group" : "leaf"))
-        .style("border-left-color", d.color)
+        .style("border-left-color", shortPhase ? grayColor : d.color)
         .text(d.title);
 
     var e = phaseNode.insert("div")
@@ -540,6 +561,7 @@ var redrawChart = function() {
 }
 
 var loadJSON = function(json) {
+    d3.select("#json")[0][0].value = json;
     d3.select("#json-error").style("display", "none");
     try {
         var x = JSON.parse(json);

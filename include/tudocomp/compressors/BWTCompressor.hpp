@@ -30,12 +30,12 @@ public:
         DCHECK(in.ends_with(uint8_t(0)));
 
         text_t t(env().env_for_option("textds"), in);
-		tdc_debug(VLOG(2) << vec_to_debug_string(t));
+		DVLOG(2) << vec_to_debug_string(t);
 		const len_t input_size = t.size();
 
         env().begin_stat_phase("Construct Text DS");
         t.require(text_t::SA);
-		tdc_debug(VLOG(2) << vec_to_debug_string(t.require_sa()));
+		DVLOG(2) << vec_to_debug_string(t.require_sa());
         env().end_stat_phase();
         const auto& sa = t.require_sa();
         for(size_t i = 0; i < input_size; ++i) {
