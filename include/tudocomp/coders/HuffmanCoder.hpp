@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bitset>
 #include <numeric>
 
 #include <tudocomp/Env.hpp>
