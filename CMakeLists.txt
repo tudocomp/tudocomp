@@ -81,9 +81,9 @@ include(compare_workspace)
 
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp
-	COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/genregistry.sh ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
-	COMMENT "Generating tudocomp_algorithms.cpp and tudocomp.hpp..."
-	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/genregistry.sh ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/etc/genregistry.py ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
+    COMMENT "Generating tudocomp_algorithms.cpp and tudocomp.hpp..."
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/etc/genregistry.py ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
 )
 
 add_library(
