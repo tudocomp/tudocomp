@@ -63,7 +63,7 @@ public:
             size_t fsrc = sa[m-1];
             size_t flen = lcp[m];
 
-            factors.push_back(lzss::Factor(fpos, fsrc, flen));
+            factors.emplace_back(fpos, fsrc, flen);
 
             //remove overlapped entries
             for(size_t k = 0; k < flen; k++) {

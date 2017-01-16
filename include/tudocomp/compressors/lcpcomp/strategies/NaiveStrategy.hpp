@@ -62,7 +62,7 @@ public:
                 if(available) {
                     //introduce factor
                     size_t src = sa[s - 1];
-                    factors.push_back(lzss::Factor(i, src, l));
+                    factors.emplace_back(i, src, l);
 
                     //mark source positions
                     for(size_t k = 0; k < l; k++) {

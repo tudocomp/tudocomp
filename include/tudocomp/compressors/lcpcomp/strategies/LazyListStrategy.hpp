@@ -82,7 +82,7 @@ public:
                 const len_t pos_source = sa[index-1];
                 const len_t factor_length = lcp[index];
 
-                factors.push_back(lzss::Factor { pos_target, pos_source, factor_length });
+                factors.emplace_back(pos_target, pos_source, factor_length);
 
                 //erase suffixes on the replaced area
                 for(size_t k = 0; k < factor_length; ++k) {

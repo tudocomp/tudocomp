@@ -60,8 +60,8 @@ public:
         std::vector<Interval> intervals;
         for(size_t i = 1; i < sa.size(); i++) {
             if(lcp[i] >= threshold) {
-                intervals.push_back(Interval{sa[i], sa[i-1], lcp[i]});
-                intervals.push_back(Interval{sa[i-1], sa[i], lcp[i]});
+                intervals.emplace_back(sa[i], sa[i-1], lcp[i]);
+                intervals.emplace_back(sa[i-1], sa[i], lcp[i]);
             }
         }
 
@@ -93,7 +93,7 @@ public:
                 }
 
                 if(l >= threshold) {
-                    factors.push_back(lzss::Factor(x->p, x->q, l));
+                    factors.emplace_back(x->p, x->q, l);
 
                     //mark source positions as "unreplaceable"
                     for(size_t k = 0; k < l; k++) {

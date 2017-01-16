@@ -56,7 +56,7 @@ public:
 					const len_t factor_length = plcp[target_position]; 
 					DCHECK_LT(target_position+factor_length,n);
 					const len_t source_position = sa[isa[target_position]-1];
-					factors.push_back(lzss::Factor(i, source_position, factor_length));
+					factors.emplace_back(i, source_position, factor_length);
 					for(size_t k = 0; k < factor_length; ++k) {
 						plcp[target_position + k] = 0;
 					}

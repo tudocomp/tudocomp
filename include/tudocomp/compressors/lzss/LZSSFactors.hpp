@@ -30,12 +30,12 @@ public:
     {
     }
 
-    inline void push_back(Factor f) {
-        m_sorted = m_sorted && (m_factors.empty() || f.pos >= m_factors.back().pos);
-        m_factors.push_back(f);
+    inline void emplace_back(len_t fpos, len_t fsrc, len_t flen) {
+        m_sorted = m_sorted && (m_factors.empty() || fpos >= m_factors.back().pos);
+        m_factors.emplace_back(fpos, fsrc, flen);
 
-        m_shortest_factor = std::min(m_shortest_factor, f.len);
-        m_longest_factor = std::max(m_longest_factor, f.len);
+        m_shortest_factor = std::min(m_shortest_factor, flen);
+        m_longest_factor = std::max(m_longest_factor, flen);
     }
 
     inline const Factor& operator[](size_t i) const {

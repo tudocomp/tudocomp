@@ -75,7 +75,7 @@ public:
 				DCHECK_LT(target_position+factor_length,n);
 				const len_t source_position = sa[isa[target_position]-1];
 				DCHECK_GE(factor_length, threshold);
-				factors.push_back(lzss::Factor(target_position, source_position, factor_length));
+				factors.emplace_back(target_position, source_position, factor_length);
 				DCHECK([&] ()  {
 						factors.sort();
 						for(size_t i = 0; i+1 < factors.size(); ++i) {
