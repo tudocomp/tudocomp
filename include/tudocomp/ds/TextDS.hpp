@@ -209,16 +209,14 @@ public:
         if(flags & SA)   { require_sa(cm_construct);   release_unneeded(); }
         if(flags & PHI)  { require_phi(cm_construct);  release_unneeded(); }
         if(flags & PLCP) { require_plcp(cm_construct); release_unneeded(); }
-        if(flags & LCP)  { require_lcp(cm_construct);  release_unneeded(); }
-        if(flags & ISA)  { require_isa(cm_construct);  release_unneeded(); }
+        if(flags & LCP)  { require_lcp(cm); release_unneeded(); }
+        if(flags & ISA)  { require_isa(cm); release_unneeded(); }
 
         if(cm == CompressMode::delayed) {
             env().begin_stat_phase("Compress data structures");
             if(m_sa) m_sa->compress();
             if(m_phi) m_phi->compress();
             if(m_plcp) m_plcp->compress();
-            if(m_lcp) m_lcp->compress();
-            if(m_isa) m_isa->compress();
             env().end_stat_phase();
         }
     }
