@@ -99,7 +99,7 @@ public:
         text_t text(env().env_for_option("textds"), in);
 
         // read options
-        size_t threshold = env().option("threshold").as_integer(); //factor threshold
+        const len_t threshold = env().option("threshold").as_integer(); //factor threshold
         lzss::FactorBuffer factors;
 
         {

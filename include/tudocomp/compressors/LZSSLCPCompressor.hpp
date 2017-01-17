@@ -25,6 +25,7 @@ public:
         Meta m("compressor", "lzss_lcp", "LZSS Factorization using LCP");
         m.option("coder").templated<coder_t>();
         m.option("textds").templated<text_t, TextDS<>>();
+        m.option("threshold").dynamic("3");
         m.needs_sentinel_terminator();
         return m;
     }
@@ -57,7 +58,7 @@ public:
         lzss::FactorBuffer factors;
 
         env().begin_stat_phase("Factorize");
-        len_t fact_min = 3; //factor threshold
+        const len_t threshold = env().option("threshold").as_integer(); //factor threshold
 
         for(len_t i = 0; i+1 < text_length;) { // we omit T[text_length-1] since we assume that it is the \0 byte!
             //get SA position for suffix i
@@ -96,7 +97,7 @@ public:
 
             //select maximum
             const size_t& max_lcp = std::max(psv_lcp, nsv_lcp);
-            if(max_lcp >= fact_min) {
+            if(max_lcp >= threshold) {
 				const ssize_t& max_pos = max_lcp == psv_lcp ? psv_pos : nsv_pos;
 				DCHECK_LT(max_pos, text_length);
 				DCHECK_GE(max_pos, 0);
@@ -109,7 +110,7 @@ public:
             }
         }
 
-        env().log_stat("threshold", fact_min);
+        env().log_stat("threshold", threshold);
         env().log_stat("factors", factors.size());
         env().end_stat_phase();
 
