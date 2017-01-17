@@ -1,0 +1,83 @@
+#pragma once
+
+#include "pre_header.hpp"
+
+namespace tdc {
+namespace lz78u {
+
+
+class StreamingStrategy: public Algorithm {
+public:
+    using Algorithm::Algorithm;
+
+    inline static Meta meta() {
+        Meta m("lz78u_strategy", "streaming");
+        return m;
+    }
+
+    template<typename ref_coder_t, typename string_coder_t>
+    class Compression: public Algorithm {
+        typename string_coder_t::Encoder  m_string_coder;
+        typename ref_coder_t::Encoder     m_ref_coder;
+    public:
+        inline Compression(Env&& env,
+                           Env&& ref_env,
+                           Env&& string_env,
+                           std::shared_ptr<BitOStream> out):
+            Algorithm(std::move(env)),
+            m_string_coder(std::move(ref_env), out, NoLiterals()),
+            m_ref_coder(std::move(ref_env), out, NoLiterals()) {}
+
+        inline void encode(Factor fact, size_t ref_range) {
+            m_ref_coder.encode(fact.ref, Range(ref_range));
+
+            for (auto c : fact.string) {
+                m_string_coder.encode(c, literal_r);
+            }
+            m_string_coder.encode(0, literal_r);
+        }
+    };
+
+    template<typename ref_coder_t, typename string_coder_t>
+    class Decompression: public Algorithm {
+        typename string_coder_t::Decoder  m_string_coder;
+        typename ref_coder_t::Decoder     m_ref_coder;
+
+        std::vector<uliteral_t> m_buf;
+
+    public:
+        inline Decompression(Env&& env,
+                             Env&& ref_env,
+                             Env&& string_env,
+                             std::shared_ptr<BitIStream> in):
+            Algorithm(std::move(env)),
+            m_string_coder(std::move(ref_env), in),
+            m_ref_coder(std::move(ref_env), in) {}
+
+        inline Factor decode(size_t ref_range) {
+            auto ref = m_ref_coder.template decode<size_t>(Range(ref_range));
+
+            m_buf.clear();
+            while (true) {
+                auto c = m_string_coder.template decode<uliteral_t>(literal_r);
+                if (c == 0) {
+                    break;
+                }
+                m_buf.push_back(c);
+            }
+
+            return Factor {
+                m_buf,
+                ref
+            };
+        }
+
+        inline bool eof() {
+            return m_string_coder.eof();
+        }
+    };
+};
+
+
+}
+}
