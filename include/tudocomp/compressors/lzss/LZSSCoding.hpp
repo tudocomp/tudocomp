@@ -81,9 +81,6 @@ inline void encode_text(coder_t& coder,
         // encode symbol
         coder.encode(text[p++], literal_r);
     }
-
-    // finalize
-    coder.finalize();
 }
 
 template<typename coder_t, typename decode_buffer_t>
