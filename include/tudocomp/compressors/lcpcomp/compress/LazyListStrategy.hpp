@@ -23,7 +23,7 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_strategy", "lazy_list");
+        Meta m("lcpcomp_comp", "lazy_list");
         return m;
     }
 

@@ -5,7 +5,7 @@
 #include <sdsl/rank_support.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
-#include <tudocomp/compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp>
+//#include <tudocomp/compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp>
 #include <algorithm>
 
 namespace tdc {
@@ -130,7 +130,7 @@ namespace lcpcomp {
 class LazySuccinctListBuffer : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpdec", "LazySuccinctListBuffer");
+        Meta m("lcpcomp_dec", "LazySuccinctListBuffer");
         m.option("lazy").dynamic("0");
         return m;
 

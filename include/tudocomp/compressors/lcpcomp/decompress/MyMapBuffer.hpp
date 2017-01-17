@@ -176,7 +176,7 @@ class MyHash {
 class MyMapBuffer : public Algorithm {
     public:
     inline static Meta meta() {
-        Meta m("lcpdec", "MyMap");
+        Meta m("lcpcomp_dec", "MyMap");
         m.option("lazy").dynamic("0");
         return m;
     }

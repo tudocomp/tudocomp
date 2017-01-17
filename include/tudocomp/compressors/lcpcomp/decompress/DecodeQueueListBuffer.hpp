@@ -12,7 +12,7 @@ constexpr len_t undef_len = std::numeric_limits<len_t>::max();
 class DecodeForwardQueueListBuffer : public Algorithm {
     public:
     inline static Meta meta() {
-        Meta m("lcpdec", "QueueListBuffer");
+        Meta m("lcpcomp_dec", "QueueListBuffer");
         return m;
     }
     inline void decode_lazy() const {

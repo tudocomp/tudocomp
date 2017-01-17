@@ -35,7 +35,7 @@ public:
     using Algorithm::Algorithm; //import constructor
 
     inline static Meta meta() {
-        Meta m("lcpcomp_strategy", "bulldozer");
+        Meta m("lcpcomp_comp", "bulldozer");
         return m;
     }
 

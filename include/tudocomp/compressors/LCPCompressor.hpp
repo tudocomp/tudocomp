@@ -82,8 +82,8 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lcpcomp");
         m.option("coder").templated<coder_t>();
-        m.option("strategy").templated<strategy_t, lcpcomp::MaxLCPStrategy>();
-        m.option("lcpdec").templated<dec_t, lcpcomp::SuccinctListBuffer>();
+        m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>();
+        m.option("dec").templated<dec_t, lcpcomp::SuccinctListBuffer>();
         m.option("textds").templated<text_t, TextDS<>>();
         m.option("threshold").dynamic("3");
         m.needs_sentinel_terminator();
@@ -106,7 +106,7 @@ public:
             // Factorize
             env().begin_stat_phase("Factorize using strategy");
 
-            strategy_t strategy(env().env_for_option("strategy"));
+            strategy_t strategy(env().env_for_option("comp"));
             strategy.factorize(text, threshold, factors);
 
             env().log_stat("threshold", threshold);
@@ -137,7 +137,7 @@ public:
         // if(lazy == 0)
         // 	lzss::decode_text_internal<coder_t, dec_t>(decoder, outs);
         // else
-        lcpcomp::decode_text_internal<typename coder_t::Decoder, dec_t>(env().env_for_option("lcpdec"), decoder, outs);
+        lcpcomp::decode_text_internal<typename coder_t::Decoder, dec_t>(env().env_for_option("dec"), decoder, outs);
     }
 };
 
