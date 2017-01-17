@@ -66,14 +66,14 @@ lcpc_coder = [
 ]
 
 lz78u_strategy = [
-    ("StreamingStrategy", "compressors/lz78u/StreamingStrategy.hpp", []),
+    ("lz78u::StreamingStrategy", "compressors/lz78u/StreamingStrategy.hpp", []),
 ]
 
 compressors = [
     ("RunLengthEncoder",            "compressors/RunLengthEncoder.hpp",            [context_free_coder]),
     ("LiteralEncoder",              "compressors/LiteralEncoder.hpp",              [coder]),
     ("LZ78Compressor",              "compressors/LZ78Compressor.hpp",              [context_free_coder, lz78_trie]),
-    ("LZ78Compressor",              "compressors/LZ78UCompressor.hpp",             [lz78u_strategy, context_free_coder, context_free_coder]),
+    ("LZ78UCompressor",             "compressors/LZ78UCompressor.hpp",             [lz78u_strategy, context_free_coder, context_free_coder]),
     ("LZWCompressor",               "compressors/LZWCompressor.hpp",               [context_free_coder, lz78_trie]),
     ("RePairCompressor",            "compressors/RePairCompressor.hpp",            [coder]),
     ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [coder]),
