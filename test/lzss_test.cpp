@@ -7,9 +7,9 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
-#include <tudocomp/compressors/lcpcomp/decoding/SuccinctListBuffer.hpp>
-#include <tudocomp/compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp>
-#include <tudocomp/compressors/lcpcomp/decoding/MultiMapBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/decompress/SuccinctListBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/decompress/MultiMapBuffer.hpp>
 
 using namespace tdc;
 
