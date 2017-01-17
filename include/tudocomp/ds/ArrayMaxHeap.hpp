@@ -170,6 +170,9 @@ public:
 
         return true;
     }
+    inline len_t key(len_t value) const {
+        return (*m_array)[value];
+    }
 };
 
 } //ns
