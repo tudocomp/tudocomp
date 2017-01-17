@@ -142,8 +142,9 @@ namespace huff {
             DVLOG(2) << "Char " << map_from_effective[i] << " : " << codelengths[i];
         }
 
-        tdc_hdebug(
-        {// invariants
+        IF_PARANOID({
+            // invariants
+
             // check that more frequent keywords get shorter codelengthss
             for(size_t i=0; i < alphabet_size; ++i) {
                 for(size_t j=i+1; j < alphabet_size; ++j) {
@@ -164,8 +165,7 @@ namespace huff {
                 }
                 DCHECK_EQ(sum, 2ULL<<max_el);
             }
-            return true;
-        });
+        })
 
         return codelengths;
     }
