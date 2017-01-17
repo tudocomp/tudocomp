@@ -64,7 +64,7 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
    decoder.env().end_stat_phase();
    decoder.env().begin_stat_phase("Eagerly LCPComp-Decoding");
     buffer.decode_eagerly();
-    decoder.env().log_stat("longest_chain", buffer.longest_chain());
+    IF_STATS(decoder.env().log_stat("longest_chain", buffer.longest_chain()));
    decoder.env().end_stat_phase();
    decoder.env().begin_stat_phase("Outputting text");
     buffer.write_to(outs);

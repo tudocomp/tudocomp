@@ -62,11 +62,13 @@ public:
         env().begin_stat_phase("Computing Factors");
         env().begin_stat_phase(std::string{"At MaxLCP Value "} + std::to_string(lcpp->max_lcp()) );
         for(size_t maxlcp = lcpp->max_lcp(); maxlcp >= threshold; --maxlcp) {
-            if(tdc_stats(maxlcp < 4 || ((maxlcp ^ (1UL<<(bits_for(maxlcp)-1))) == 0))) { // only log at lcp-values that are a power of two or less than 4
-                env().end_stat_phase();
-                env().begin_stat_phase(std::string{"At MaxLCP Value "} + std::to_string(maxlcp) );
-                env().log_stat("num factors", factors.size());
-            }
+            IF_STATS({
+                if(maxlcp < 4 || ((maxlcp ^ (1UL<<(bits_for(maxlcp)-1))) == 0)) { // only log at lcp-values that are a power of two or less than 4
+                    env().end_stat_phase();
+                    env().begin_stat_phase(std::string{"At MaxLCP Value "} + std::to_string(maxlcp) );
+                    env().log_stat("num factors", factors.size());
+                }
+            })
             std::vector<len_t>& candcol = cand[maxlcp-threshold]; // select the vector specific to the LCP-value
             for(size_t i = 0; i < candcol.size(); ++i) {
                 const len_t& index = candcol[i];
