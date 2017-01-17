@@ -32,7 +32,7 @@ public:
     inline void factorize(text_t& text, size_t threshold, lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
-		env().begin_stat_phase("Construct text ds");
+		env().begin_stat_phase("Construct Index Data Structures");
 		text.require(text_t::SA | text_t::ISA | text_t::LCP);
 		env().end_stat_phase();
 
@@ -59,17 +59,18 @@ public:
                 }
                 return ret; }());
         env().end_stat_phase();
-        env().begin_stat_phase("Computing Factors");
-        env().begin_stat_phase(std::string{"At MaxLCP Value "} + std::to_string(lcpp->max_lcp()) );
+        env().begin_stat_phase("Compute Factors");
+        env().begin_stat_phase(std::string{"Factors at max. LCP value "} + std::to_string(lcpp->max_lcp()) );
         for(size_t maxlcp = lcpp->max_lcp(); maxlcp >= threshold; --maxlcp) {
             IF_STATS({
-                if(maxlcp < 4 || ((maxlcp ^ (1UL<<(bits_for(maxlcp)-1))) == 0)) { // only log at lcp-values that are a power of two or less than 4
+					const len_t maxlcpbits = bits_for(maxlcp-threshold);
+                if( ((maxlcpbits ^ (1UL<<(bits_for(maxlcpbits)-1))) == 0) && (( (maxlcp-threshold) ^ (1UL<<(maxlcpbits-1))) == 0)) { // only log at certain LCP values
                     env().end_stat_phase();
-                    env().begin_stat_phase(std::string{"At MaxLCP Value "} + std::to_string(maxlcp) );
+                    env().begin_stat_phase(std::string{"Factors at max. LCP value "} + std::to_string(maxlcp) );
                     env().log_stat("num factors", factors.size());
                 }
             })
-            std::vector<len_t>& candcol = cand[maxlcp-threshold]; // select the vector specific to the LCP-value
+            std::vector<len_t>& candcol = cand[maxlcp-threshold]; // select the vector specific to the LCP value
             for(size_t i = 0; i < candcol.size(); ++i) {
                 const len_t& index = candcol[i];
                 const auto& lcp_value = lcp[index];

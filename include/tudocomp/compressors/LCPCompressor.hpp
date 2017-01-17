@@ -82,8 +82,10 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lcpcomp");
         m.option("coder").templated<coder_t>();
-        m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>();
-        m.option("dec").templated<dec_t, lcpcomp::SuccinctListBuffer>();
+        // m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>(); uncomment if bug 18527 is fixed
+        // m.option("dec").templated<dec_t, lcpcomp::SuccinctListBuffer>(); 
+        m.option("comp").templated<strategy_t>();
+        m.option("dec").templated<dec_t>();
         m.option("textds").templated<text_t, TextDS<>>();
         m.option("threshold").dynamic("3");
         m.needs_sentinel_terminator();
@@ -104,7 +106,7 @@ public:
 
         {
             // Factorize
-            env().begin_stat_phase("Factorize using strategy");
+            env().begin_stat_phase("Factorize");
 
             strategy_t strategy(env().env_for_option("comp"));
             strategy.factorize(text, threshold, factors);
