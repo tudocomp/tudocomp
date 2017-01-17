@@ -18,10 +18,6 @@ public:
         : Algorithm(std::move(env)), m_out(out) {
     }
 
-    inline ~Encoder() {
-        finalize();
-    }
-
     template<typename value_t>
     inline void encode(value_t v, const Range& r) {
         m_out->write_int(v - r.min(), bits_for(r.max() - r.min()));
@@ -30,9 +26,6 @@ public:
     template<typename value_t>
     inline void encode(value_t v, const BitRange&) {
         m_out->write_bit(v);
-    }
-
-    inline void finalize() {
     }
 
     inline const std::shared_ptr<BitOStream>& stream() {
