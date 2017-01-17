@@ -44,7 +44,7 @@ namespace malloc_count {
 
 #pragma message("malloc overrides are not supported on Cygwin.")
 
-#else
+#elif !defined(STATS_DISABLED)
 
 void* malloc(size_t size) {
     using namespace malloc_count;

@@ -64,7 +64,7 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
    decoder.env().end_stat_phase();
    decoder.env().begin_stat_phase("Eagerly LCPComp-Decoding");
     buffer.decode_eagerly();
-    decoder.env().log_stat("longest_chain", buffer.longest_chain());
+    IF_STATS(decoder.env().log_stat("longest_chain", buffer.longest_chain()));
    decoder.env().end_stat_phase();
    decoder.env().begin_stat_phase("Outputting text");
     buffer.write_to(outs);
@@ -82,8 +82,10 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lcpcomp");
         m.option("coder").templated<coder_t>();
-        m.option("strategy").templated<strategy_t, lcpcomp::MaxLCPStrategy>();
-        m.option("lcpdec").templated<dec_t, lcpcomp::SuccinctListBuffer>();
+        // m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>(); uncomment if bug 18527 is fixed
+        // m.option("dec").templated<dec_t, lcpcomp::SuccinctListBuffer>(); 
+        m.option("comp").templated<strategy_t>();
+        m.option("dec").templated<dec_t>();
         m.option("textds").templated<text_t, TextDS<>>();
         m.option("threshold").dynamic("3");
         m.needs_sentinel_terminator();
@@ -99,14 +101,14 @@ public:
         text_t text(env().env_for_option("textds"), in);
 
         // read options
-        size_t threshold = env().option("threshold").as_integer(); //factor threshold
+        const len_t threshold = env().option("threshold").as_integer(); //factor threshold
         lzss::FactorBuffer factors;
 
         {
             // Factorize
-            env().begin_stat_phase("Factorize using strategy");
+            env().begin_stat_phase("Factorize");
 
-            strategy_t strategy(env().env_for_option("strategy"));
+            strategy_t strategy(env().env_for_option("comp"));
             strategy.factorize(text, threshold, factors);
 
             env().log_stat("threshold", threshold);
@@ -137,7 +139,7 @@ public:
         // if(lazy == 0)
         // 	lzss::decode_text_internal<coder_t, dec_t>(decoder, outs);
         // else
-        lcpcomp::decode_text_internal<typename coder_t::Decoder, dec_t>(env().env_for_option("lcpdec"), decoder, outs);
+        lcpcomp::decode_text_internal<typename coder_t::Decoder, dec_t>(env().env_for_option("dec"), decoder, outs);
     }
 };
 

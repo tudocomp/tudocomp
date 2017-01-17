@@ -2,9 +2,9 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/ArrayMaxHeap.hpp>
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
-#include <tudocomp/compressors/lcpcomp/MaxLCPSuffixList.hpp>
 
 namespace tdc {
 namespace lcpcomp {
@@ -17,20 +17,20 @@ namespace lcpcomp {
 ///
 /// This was the original naive approach in "Textkompression mithilfe von
 /// Enhanced Suffix Arrays" (BA thesis, Patrick Dinklage, 2015).
-class MaxLCPStrategy : public Algorithm {
+class MaxHeapStrategy : public Algorithm {
 private:
     typedef TextDS<> text_t;
 
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_strategy", "max_lcp");
+        Meta m("lcpcomp_comp", "heap");
         return m;
     }
 
     using Algorithm::Algorithm; //import constructor
 
     inline void factorize(text_t& text,
-                   size_t threshold,
+                   const size_t threshold,
                    lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
@@ -46,17 +46,29 @@ public:
         auto lcp_datap = lcpp->relinquish();
         auto& lcp = *lcp_datap;
 
-        env().begin_stat_phase("Construct MaxLCPSuffixList");
-        MaxLCPSuffixList<text_t::lcp_type::data_type> list(lcp, threshold, lcpp->max_lcp());
-        env().log_stat("entries", list.size());
+        env().begin_stat_phase("Construct MaxLCPHeap");
+
+        // Count relevant LCP entries
+        size_t heap_size = 0;
+        for(size_t i = 1; i < lcp.size(); i++) {
+            if(lcp[i] >= threshold) ++heap_size;
+        }
+
+        // Construct heap
+        ArrayMaxHeap<text_t::lcp_type::data_type> heap(lcp, lcp.size(), heap_size);
+        for(size_t i = 1; i < lcp.size(); i++) {
+            if(lcp[i] >= threshold) heap.insert(i);
+        }
+
+        env().log_stat("entries", heap.size());
         env().end_stat_phase();
 
         //Factorize
-        env().begin_stat_phase("Process MaxLCPSuffixList");
+        env().begin_stat_phase("Process MaxLCPHeap");
 
-        while(list.size() > 0) {
+        while(heap.size() > 0) {
             //get suffix with longest LCP
-            size_t m = list.get_max();
+            size_t m = heap.get_max();
 
             //generate factor
             size_t fpos = sa[m];
@@ -67,23 +79,20 @@ public:
 
             //remove overlapped entries
             for(size_t k = 0; k < flen; k++) {
-                size_t i = isa[fpos + k];
-                if(list.contains(i)) {
-                    list.remove(i);
-                }
+                heap.remove(isa[fpos + k]);
             }
 
             //correct intersecting entries
             for(size_t k = 0; k < flen && fpos > k; k++) {
                 size_t s = fpos - k - 1;
                 size_t i = isa[s];
-                if(list.contains(i)) {
+                if(heap.contains(i)) {
                     if(s + lcp[i] > fpos) {
                         size_t l = fpos - s;
                         if(l >= threshold) {
-                            list.decrease_key(i, l);
+                            heap.decrease_key(i, l);
                         } else {
-                            list.remove(i);
+                            heap.remove(i);
                         }
                     }
                 }

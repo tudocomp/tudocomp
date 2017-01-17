@@ -20,6 +20,7 @@ public:
         Meta m("compressor", "lzss", "Lempel-Ziv-Storer-Szymanski (Sliding Window)");
         m.option("coder").templated<coder_t>();
         m.option("window").dynamic("16");
+        m.option("threshold").dynamic("3");
         return m;
     }
 
@@ -50,7 +51,8 @@ public:
         }
 
         //factorize
-        size_t fact_min = 3; //factor threshold
+        const len_t threshold = env().option("threshold").as_integer(); //factor threshold
+        env().log_stat("threshold", threshold);
 
         size_t pos = 0;
         bool eof = false;
@@ -66,7 +68,7 @@ public:
                 }
 
                 //factorize if longer than one already found
-                if(j >= fact_min && j > fnum) {
+                if(j >= threshold && j > fnum) {
                     fpos = buf_off + ahead;
                     fsrc = buf_off + k;
                     fnum = j;

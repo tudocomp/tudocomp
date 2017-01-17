@@ -28,7 +28,7 @@ TEST(lzss, factor_buffer_sorted) {
     lzss::FactorBuffer buf;
 
     for(size_t i = 0; i < n; i++) {
-        buf.push_back(lzss::Factor(i, i + n, n + 1 - i));
+        buf.emplace_back(i, i + n, n + 1 - i);
     }
 
     ASSERT_FALSE(buf.empty());
@@ -42,7 +42,7 @@ TEST(lzss, factor_buffer_sort) {
     lzss::FactorBuffer buf;
 
     for(size_t i = n; i > 0; i--) {
-        buf.push_back(lzss::Factor(n + i, 2 * n + i, 2 * n - i));
+        buf.emplace_back(n + i, 2 * n + i, 2 * n - i);
     }
 
     ASSERT_FALSE(buf.is_sorted());
@@ -94,9 +94,9 @@ TEST(lzss, text_literals_factors_middle) {
     const len_t ref_positions[] = {0,3,8,9,13};
 
     lzss::FactorBuffer factors;
-    factors.push_back(lzss::Factor(1, text.length(), 2));
-    factors.push_back(lzss::Factor(4, text.length(), 4));
-    factors.push_back(lzss::Factor(10, text.length(), 3));
+    factors.emplace_back(1, text.length(), 2);
+    factors.emplace_back(4, text.length(), 4);
+    factors.emplace_back(10, text.length(), 3);
 
     lzss::TextLiterals<std::string> literals(text, factors);
 
@@ -109,9 +109,9 @@ TEST(lzss, text_literals_factors_begin) {
     const len_t ref_positions[] = {3,6,7,10,11};
 
     lzss::FactorBuffer factors;
-    factors.push_back(lzss::Factor(0, text.length(), 3));
-    factors.push_back(lzss::Factor(4, text.length(), 2));
-    factors.push_back(lzss::Factor(8, text.length(), 2));
+    factors.emplace_back(0, text.length(), 3);
+    factors.emplace_back(4, text.length(), 2);
+    factors.emplace_back(8, text.length(), 2);
 
     lzss::TextLiterals<std::string> literals(text, factors);
 
@@ -124,10 +124,10 @@ TEST(lzss, text_literals_factors_end) {
     const len_t ref_positions[] = {0,4,7,8,11};
 
     lzss::FactorBuffer factors;
-    factors.push_back(lzss::Factor(1, text.length(), 3));
-    factors.push_back(lzss::Factor(5, text.length(), 2));
-    factors.push_back(lzss::Factor(9, text.length(), 2));
-    factors.push_back(lzss::Factor(12, text.length(), 2));
+    factors.emplace_back(1, text.length(), 3);
+    factors.emplace_back(5, text.length(), 2);
+    factors.emplace_back(9, text.length(), 2);
+    factors.emplace_back(12, text.length(), 2);
 
     lzss::TextLiterals<std::string> literals(text, factors);
 

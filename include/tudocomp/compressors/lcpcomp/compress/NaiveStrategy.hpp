@@ -23,7 +23,7 @@ public:
     using Algorithm::Algorithm;
 
     inline static Meta meta() {
-        Meta m("lcpcomp_strategy", "naive");
+        Meta m("lcpcomp_comp", "naive");
         return m;
     }
 

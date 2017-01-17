@@ -14,30 +14,34 @@ inline Stat& EnvRoot::stat_current() {
 }
 
 inline void EnvRoot::begin_stat_phase(const std::string& name) {
-    DVLOG(1) << "begin phase \"" << name << "\"";
+    IF_STATS({
+        DVLOG(1) << "begin phase \"" << name << "\"";
 
-    m_stat_stack.push(Stat(name));
-    Stat& stat = m_stat_stack.top();
-    stat.begin();
+        m_stat_stack.push(Stat(name));
+        Stat& stat = m_stat_stack.top();
+        stat.begin();
+    })
 }
 
 inline void EnvRoot::end_stat_phase() {
-    DCHECK(!m_stat_stack.empty());
+    IF_STATS({
+        DCHECK(!m_stat_stack.empty());
 
-    Stat& stat_ref = m_stat_stack.top();
-    DVLOG(1) << "end phase \"" << stat_ref.title() << "\"";
+        Stat& stat_ref = m_stat_stack.top();
+        DVLOG(1) << "end phase \"" << stat_ref.title() << "\"";
 
-    stat_ref.end();
+        stat_ref.end();
 
-    Stat stat = stat_ref; //copy
-    m_stat_stack.pop();
+        Stat stat = stat_ref; //copy
+        m_stat_stack.pop();
 
-    if(!m_stat_stack.empty()) {
-        Stat& parent = m_stat_stack.top();
-        parent.add_sub(stat);
-    } else {
-        m_stat_root = stat;
-    }
+        if(!m_stat_stack.empty()) {
+            Stat& parent = m_stat_stack.top();
+            parent.add_sub(stat);
+        } else {
+            m_stat_root = stat;
+        }
+    })
 }
 
 inline StatGuard EnvRoot::stat_phase(const std::string& name) {
@@ -46,9 +50,11 @@ inline StatGuard EnvRoot::stat_phase(const std::string& name) {
 }
 
 inline Stat& EnvRoot::finish_stats() {
-    while(!m_stat_stack.empty()) {
-        end_stat_phase();
-    }
+    IF_STATS({
+        while(!m_stat_stack.empty()) {
+            end_stat_phase();
+        }
+    })
 
     return m_stat_root;
 }
@@ -60,8 +66,10 @@ inline void EnvRoot::restart_stats(const std::string& root_name) {
 
 template<class T>
 inline void EnvRoot::log_stat(const std::string& name, const T& value) {
-    DVLOG(1) << "stat: " << name << " = " << value;
-    stat_current().add_stat(name, value);
+    IF_STATS({
+        DVLOG(1) << "stat: " << name << " = " << value;
+        stat_current().add_stat(name, value);
+    })
 }
 
 inline Env::Env(Env&& other):
@@ -106,11 +114,11 @@ inline const OptionValue& Env::option(const std::string& option) const {
 }
 
 inline void Env::begin_stat_phase(const std::string& name) {
-    m_root->begin_stat_phase(name); //delegate
+    IF_STATS(m_root->begin_stat_phase(name)); //delegate
 }
 
 inline void Env::end_stat_phase() {
-    m_root->end_stat_phase(); //delegate
+    IF_STATS(m_root->end_stat_phase()); //delegate
 }
 
 inline StatGuard Env::stat_phase(const std::string& name) {
@@ -128,7 +136,7 @@ inline void Env::restart_stats(const std::string& root_name) {
 
 template<class T>
 inline void Env::log_stat(const std::string& name, const T& value) {
-    m_root->log_stat(name, value);
+    IF_STATS(m_root->log_stat(name, value));
 }
 
 }

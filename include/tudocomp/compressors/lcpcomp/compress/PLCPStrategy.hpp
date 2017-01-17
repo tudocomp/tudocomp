@@ -24,7 +24,7 @@ public:
     using Algorithm::Algorithm;
 
     inline static Meta meta() {
-        Meta m("lcpcomp_strategy", "plcp");
+        Meta m("lcpcomp_comp", "plcp");
         return m;
     }
 

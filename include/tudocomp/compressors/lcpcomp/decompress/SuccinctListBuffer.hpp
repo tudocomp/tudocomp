@@ -4,7 +4,7 @@
 #include <sdsl/int_vector.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
-#include <tudocomp/compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp>
+//#include <tudocomp/compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp>
 
 namespace tdc {
 namespace lcpcomp {
@@ -12,7 +12,7 @@ namespace lcpcomp {
 class SuccinctListBuffer : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpdec", "SuccinctListBuffer");
+        Meta m("lcpcomp_dec", "SuccinctListBuffer");
         return m;
 
     }
@@ -25,14 +25,14 @@ private:
     len_t** m_fwd;
 
     len_t m_cursor;
-    tdc_stats(len_t m_longest_chain);
-    tdc_stats(len_t m_current_chain);
+    IF_STATS(len_t m_longest_chain);
+    IF_STATS(len_t m_current_chain);
 
     IntVector<uliteral_t> m_buffer;
 
     inline void decode_literal_at(len_t pos, uliteral_t c) {
-		tdc_stats(++m_current_chain);
-        tdc_stats(m_longest_chain = std::max(m_longest_chain, m_current_chain));
+		IF_STATS(++m_current_chain);
+        IF_STATS(m_longest_chain = std::max(m_longest_chain, m_current_chain));
 
         m_buffer[pos] = c;
 		DCHECK(c != 0 || pos == m_buffer.size()-1); // we assume that the text to restore does not contain a NULL-byte but at its very end
@@ -46,7 +46,7 @@ private:
             m_fwd[pos] = nullptr;
         }
 
-        tdc_stats(--m_current_chain);
+        IF_STATS(--m_current_chain);
     }
 
 public:
@@ -54,10 +54,11 @@ public:
         Algorithm(std::move(*this)),
         m_fwd(std::move(other.m_fwd)),
         m_cursor(std::move(other.m_cursor)),
-        m_longest_chain(std::move(other.m_longest_chain)),
-        m_current_chain(std::move(other.m_current_chain)),
         m_buffer(std::move(other.m_buffer))
     {
+        IF_STATS(m_longest_chain = std::move(other.m_longest_chain));
+        IF_STATS(m_current_chain = std::move(other.m_current_chain));
+
         other.m_fwd = nullptr;
     }
 
@@ -71,7 +72,10 @@ public:
         }
     }
     inline SuccinctListBuffer(Env&& env, len_t size)
-        : Algorithm(std::move(env)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_buffer(size,0) {
+        : Algorithm(std::move(env)), m_cursor(0), m_buffer(size,0) {
+
+        IF_STATS(m_longest_chain = 0);
+        IF_STATS(m_current_chain = 0);
 
         m_fwd = new len_t*[size];
         std::fill(m_fwd,m_fwd+size,nullptr);
@@ -80,7 +84,6 @@ public:
     inline void decode_literal(uliteral_t c) {
         decode_literal_at(m_cursor++, c);
     }
-
 
     inline void decode_factor(len_t pos, len_t num) {
         for(len_t i = 0; i < num; i++) {
@@ -107,9 +110,10 @@ public:
         }
     }
 
+    IF_STATS(
     inline len_t longest_chain() const {
         return m_longest_chain;
-    }
+    })
 
     inline void write_to(std::ostream& out) const {
         for(auto c : m_buffer) out << c;

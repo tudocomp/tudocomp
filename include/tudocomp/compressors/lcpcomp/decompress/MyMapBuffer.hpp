@@ -176,7 +176,7 @@ class MyHash {
 class MyMapBuffer : public Algorithm {
     public:
     inline static Meta meta() {
-        Meta m("lcpdec", "MyMap");
+        Meta m("lcpcomp_dec", "MyMap");
         m.option("lazy").dynamic("0");
         return m;
     }
@@ -286,13 +286,16 @@ public:
                     m_fwd.insert(source_position+i, target_position+i);
                 }
             }
-			if(tdc_stats((j+1) % (factors/5) == 0 )) {
-				env().log_stat("hash table size", m_fwd.size());
-				env().log_stat("hash table entries", m_fwd.entries);
-				env().log_stat("hash table deletions", m_fwd.m_deleted);
-				env().end_stat_phase();
-        		env().begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
-			}
+
+            IF_STATS({
+			    if((j+1) % (factors/5) == 0 ) {
+				    env().log_stat("hash table size", m_fwd.size());
+				    env().log_stat("hash table entries", m_fwd.entries);
+				    env().log_stat("hash table deletions", m_fwd.m_deleted);
+				    env().end_stat_phase();
+            		env().begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
+			    }
+            })
         }
 		env().end_stat_phase();
     }

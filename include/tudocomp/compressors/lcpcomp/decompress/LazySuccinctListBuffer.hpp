@@ -5,7 +5,7 @@
 #include <sdsl/rank_support.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
-#include <tudocomp/compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp>
+//#include <tudocomp/compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp>
 #include <algorithm>
 
 namespace tdc {
@@ -20,9 +20,8 @@ namespace lcpcomp {
 		const len_t m_empty_entries;
 		len_t**const m_fwd = nullptr;
 
-		tdc_stats(len_t m_longest_chain = 0);
-		tdc_stats(len_t m_current_chain = 0);
-
+		IF_STATS(len_t m_longest_chain = 0);
+		IF_STATS(len_t m_current_chain = 0);
 
 		public:
 		LazyDecoder(Env& env, IntVector<uliteral_t>& buffer)
@@ -77,16 +76,19 @@ namespace lcpcomp {
 					}
 
 				}
-				if(tdc_stats((j+1) % ((factors+5)/5) == 0 )) {
-					m_env.end_stat_phase();
-					m_env.begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
-				}
+
+                IF_STATS({
+				    if((j+1) % ((factors+5)/5) == 0 ) {
+					    m_env.end_stat_phase();
+					    m_env.begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
+				    }
+                })
 			}
 			m_env.end_stat_phase();
 		}
     inline void decode_literal_at(len_t pos, uliteral_t c) {
-		tdc_stats(++m_current_chain);
-        tdc_stats(m_longest_chain = std::max(m_longest_chain, m_current_chain));
+		IF_STATS(++m_current_chain);
+        IF_STATS(m_longest_chain = std::max(m_longest_chain, m_current_chain));
 
 		DCHECK(m_buffer[pos] == 0 || m_buffer[pos] == c) << "would write " << c << " to mbuffer[" << pos << "] = " << m_buffer[pos];
         m_buffer[pos] = c;
@@ -105,12 +107,13 @@ namespace lcpcomp {
 			}
 		}
 
-        tdc_stats(--m_current_chain);
+        IF_STATS(--m_current_chain);
     }
 
+    IF_STATS(
     inline len_t longest_chain() const {
         return m_longest_chain;
-    }
+    })
 
 	~LazyDecoder() {
 		DCHECK(m_fwd != nullptr);
@@ -127,12 +130,14 @@ namespace lcpcomp {
 class LazySuccinctListBuffer : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpdec", "LazySuccinctListBuffer");
+        Meta m("lcpcomp_dec", "LazySuccinctListBuffer");
         m.option("lazy").dynamic("0");
         return m;
 
     }
     inline void decode_lazy() {
+		env().log_stat("remaining factors", m_target_pos.size());
+		env().log_stat("lazy value", m_lazy);
         size_t lazy = m_lazy;
         while(lazy > 0) {
             decode_lazy_();
@@ -145,7 +150,7 @@ public:
 			LazyDecoder decoder(this->env(),m_buffer);
 			env().end_stat_phase();
 			decoder.decode(m_target_pos, m_source_pos, m_length);
-			tdc_stats(m_longest_chain = decoder.longest_chain());
+			IF_STATS(m_longest_chain = decoder.longest_chain());
 			env().begin_stat_phase("Destructor LazyDecoder");
 		}
 		env().end_stat_phase();
@@ -159,7 +164,7 @@ private:
             const len_t& source_position = m_source_pos[j];
             const len_t& factor_length = m_length[j];
             for(len_t i = 0; i < factor_length; ++i) {
-				DCHECK(m_buffer[source_position+i] == 0 && m_buffer[target_position+i] == 0);
+				//DCHECK(m_buffer[source_position+i] == 0 && m_buffer[target_position+i] == 0);
 				m_buffer[target_position+i] = m_buffer[source_position+i];
             }
         }
@@ -175,8 +180,7 @@ private:
     std::vector<len_t> m_source_pos;
     std::vector<len_t> m_length;
 
-
-	tdc_stats(len_t m_longest_chain = 0);
+	IF_STATS(len_t m_longest_chain = 0);
 
 public:
     LazySuccinctListBuffer(LazySuccinctListBuffer&& other)
@@ -215,9 +219,10 @@ public:
         }
     }
 
+    IF_STATS(
     inline len_t longest_chain() const {
         return m_longest_chain;
-    }
+    })
 
     inline void write_to(std::ostream& out) const {
         for(auto c : m_buffer) out << c;

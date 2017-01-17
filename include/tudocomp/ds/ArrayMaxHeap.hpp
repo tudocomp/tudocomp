@@ -51,19 +51,9 @@ public:
     inline ArrayMaxHeap(array_t& array, const size_t array_size, const size_t heap_size)
         : m_array(&array), m_size(0)
 	{
-        /*size_t num_entries = 0;
-        for(size_t i = 1; i < n; i++) {
-            if(lcp[i] >= min_lcp) ++num_entries;
-        }*/
-
         m_heap = DynamicIntVector(heap_size, 0, bits_for(array_size-1));
         m_undef = heap_size;
         m_pos = DynamicIntVector(array_size, m_undef, bits_for(m_undef));
-
-        //Construct heap
-        /*for(size_t i = 1; i < n; i++) {
-            if(lcp[i] >= min_lcp) insert(i);
-        }*/
     }
 
     /// Insert array item with index i into heap.
@@ -78,6 +68,8 @@ public:
         }
 
         put(pos, i);
+
+        IF_PARANOID(check_heap_condition());
     }
 
 private:
@@ -131,6 +123,8 @@ public:
         }
 
         m_pos[i] = m_undef; // i was removed
+
+        IF_PARANOID(check_heap_condition());
     }
 
     /// Decrease key on array item with index i.
@@ -143,6 +137,8 @@ public:
             // perlocate item down, starting at its current position
             perlocate_down(pos, i);
         }
+
+        IF_PARANOID(check_heap_condition());
     }
 
     /// Checks whether or not array item i is contained in this heap.
@@ -160,16 +156,19 @@ public:
         return m_heap[0];
     }
 
-    // for tests?
-    inline bool is_valid() const {
-        for(size_t i = 0; i < m_size; i++) {
-            auto lcp_i = (*m_array)[m_heap[i]];
-            if(lc(i) < m_size) DCHECK(lcp_i >= (*m_array)[m_heap[lc(i)]]);
-            if(rc(i) < m_size) DCHECK(lcp_i >= (*m_array)[m_heap[rc(i)]]);
-        }
-
-        return true;
+    inline len_t key(len_t value) const {
+        return (*m_array)[value];
     }
+
+    // for tests?
+    IF_DEBUG(
+    inline void check_heap_condition() const {
+        for(size_t i = 0; i < m_size; i++) {
+            auto value = (*m_array)[m_heap[i]];
+            if(lc(i) < m_size) DCHECK(value >= (*m_array)[m_heap[lc(i)]]);
+            if(rc(i) < m_size) DCHECK(value >= (*m_array)[m_heap[rc(i)]]);
+        }
+    })
 };
 
 } //ns

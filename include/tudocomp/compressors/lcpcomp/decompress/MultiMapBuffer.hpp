@@ -10,7 +10,7 @@ namespace lcpcomp {
 class MultimapBuffer : public Algorithm {
     public:
     inline static Meta meta() {
-        Meta m("lcpdec", "MultimapListBuffer");
+        Meta m("lcpcomp_dec", "MultimapListBuffer");
         m.option("lazy").dynamic("0");
         return m;
     }
@@ -113,7 +113,7 @@ public:
             --lazy;
         }
     }
-	tdc_stats(size_t max_size = 0);
+	IF_STATS(size_t max_size = 0);
 
     inline void decode_eagerly() {
         const len_t factors = m_source_pos.size();
@@ -130,16 +130,18 @@ public:
                     m_fwd.emplace(source_position+i, target_position+i);
                 }
             }
-			tdc_stats(max_size = std::max(max_size, m_fwd.bucket_count()));
-			if(tdc_stats((j+1) % ((factors+5)/5) == 0 )) {
-				env().log_stat("hash table size", m_fwd.bucket_count());
-				env().log_stat("hash table entries", m_fwd.size());
+			IF_STATS({
+                max_size = std::max(max_size, m_fwd.bucket_count());
+			    if((j+1) % ((factors+5)/5) == 0 ) {
+				    env().log_stat("hash table size", m_fwd.bucket_count());
+				    env().log_stat("hash table entries", m_fwd.size());
 
-				env().end_stat_phase();
-        		env().begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
-			}
+				    env().end_stat_phase();
+            		env().begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
+			    }
+            })
         }
-		env().log_stat("hash table max size", max_size);
+		IF_STATS(env().log_stat("hash table max size", max_size));
 		env().end_stat_phase();
     }
 

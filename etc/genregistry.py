@@ -45,19 +45,19 @@ if config_match("^#define JUDY_H_AVAILABLE 1"): lz78_trie += [
 ]
 
 lcpc_strat = [
-    ("lcpcomp::MaxHeapStrategy",  "compressors/lcpcomp/strategies/MaxHeapStrategy.hpp",   []),
-    ("lcpcomp::MaxLCPStrategy",   "compressors/lcpcomp/strategies/MaxLCPStrategy.hpp",    []),
-    ("lcpcomp::LazyListStrategy", "compressors/lcpcomp/strategies/LazyListStrategy.hpp",  []),
-    ("lcpcomp::PLCPStrategy",     "compressors/lcpcomp/strategies/PLCPStrategy.hpp",      []),
-    ("lcpcomp::PLCPPeaksStrategy","compressors/lcpcomp/strategies/PLCPPeaksStrategy.hpp", []),
+    ("lcpcomp::MaxHeapStrategy",  "compressors/lcpcomp/compress/MaxHeapStrategy.hpp",   []),
+    ("lcpcomp::MaxLCPStrategy",   "compressors/lcpcomp/compress/MaxLCPStrategy.hpp",    []),
+    ("lcpcomp::LazyListStrategy", "compressors/lcpcomp/compress/LazyListStrategy.hpp",  []),
+    ("lcpcomp::PLCPStrategy",     "compressors/lcpcomp/compress/PLCPStrategy.hpp",      []),
+    ("lcpcomp::PLCPPeaksStrategy","compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp", []),
 ]
 
 lcpc_buffer = [
-    ("lcpcomp::LazySuccinctListBuffer",       "compressors/lcpcomp/decoding/LazySuccinctListBuffer.hpp", []),
-    ("lcpcomp::DecodeForwardQueueListBuffer", "compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp",  []),
-    ("lcpcomp::SuccinctListBuffer",           "compressors/lcpcomp/decoding/SuccinctListBuffer.hpp",     []),
-    ("lcpcomp::MyMapBuffer",                  "compressors/lcpcomp/decoding/MyMapBuffer.hpp",            []),
-    ("lcpcomp::MultimapBuffer",               "compressors/lcpcomp/decoding/MultiMapBuffer.hpp",         []),
+    ("lcpcomp::LazySuccinctListBuffer",       "compressors/lcpcomp/decompress/LazySuccinctListBuffer.hpp", []),
+    ("lcpcomp::DecodeForwardQueueListBuffer", "compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp",  []),
+    ("lcpcomp::SuccinctListBuffer",           "compressors/lcpcomp/decompress/SuccinctListBuffer.hpp",     []),
+    ("lcpcomp::MyMapBuffer",                  "compressors/lcpcomp/decompress/MyMapBuffer.hpp",            []),
+    ("lcpcomp::MultimapBuffer",               "compressors/lcpcomp/decompress/MultiMapBuffer.hpp",         []),
 ]
 
 lcpc_coder = [

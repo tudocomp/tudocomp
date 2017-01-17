@@ -26,12 +26,21 @@ endif()
 # TODO: Add --pedantic and fix issues
 # TODO: Actually add -Wall -Wextra -Werror -pedantic
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=${CXX_STANDARD}")
-
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=${CXX_STANDARD}")
-##set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -Og -g -Wall -fsanitize=address -fno-omit-frame-pointer -fsanitize=undefined -std=${CXX_STANDARD}")
-##set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb -O0 -g -Wall -fno-omit-frame-pointer -std=${CXX_STANDARD}")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb -DDEBUG")
+
+# Paranoid debugging
+IF(CMAKE_BUILD_TYPE STREQUAL "Debug" AND DEFINED(PARANOID))
+    message("[CAUTION] Paranoid debugging is active!")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DPARANOID")
+endif(CMAKE_BUILD_TYPE STREQUAL "Debug" AND DEFINED(PARANOID)) 
+
+# Disable statistics tracking
+if(${STATS_DISABLED})
+    message("[CAUTION] Statistic tracking is disabled!")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DSTATS_DISABLED")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSTATS_DISABLED")
+endif(${STATS_DISABLED})
 
 # Global dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
@@ -81,9 +90,9 @@ include(compare_workspace)
 
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/etc/genregistry.py ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
-    COMMENT "Generating tudocomp_algorithms.cpp and tudocomp.hpp..."
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/etc/genregistry.py ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
+	COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/etc/genregistry.py ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
+	COMMENT "Generating tudocomp_algorithms.cpp and tudocomp.hpp..."
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/etc/genregistry.py ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
 )
 
 add_library(
