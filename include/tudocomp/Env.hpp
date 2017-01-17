@@ -40,6 +40,11 @@ inline void EnvRoot::end_stat_phase() {
     }
 }
 
+inline StatGuard EnvRoot::stat_phase(const std::string& name) {
+    begin_stat_phase(name);
+    return StatGuard(*this);
+}
+
 inline Stat& EnvRoot::finish_stats() {
     while(!m_stat_stack.empty()) {
         end_stat_phase();
@@ -106,6 +111,11 @@ inline void Env::begin_stat_phase(const std::string& name) {
 
 inline void Env::end_stat_phase() {
     m_root->end_stat_phase(); //delegate
+}
+
+inline StatGuard Env::stat_phase(const std::string& name) {
+    begin_stat_phase(name);
+    return StatGuard(*m_root);
 }
 
 inline Stat& Env::finish_stats() {

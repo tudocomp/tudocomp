@@ -29,6 +29,22 @@ namespace tdc {
 class Registry;
 inline std::unique_ptr<Registry> make_ptr_copy_of_registry(const Registry& registry);
 
+class EnvRoot;
+class Env;
+
+class StatGuard {
+    friend class EnvRoot;
+    friend class Env;
+
+    EnvRoot* m_env_root;
+    bool m_is_done = false;
+    inline StatGuard(EnvRoot& root):
+        m_env_root(&root) {}
+public:
+    void end();
+    ~StatGuard();
+};
+
 class EnvRoot {
 private:
     std::unique_ptr<AlgorithmValue> m_algo_value;
@@ -63,6 +79,11 @@ public:
     /// Ends the current statistics phase.
     inline void end_stat_phase();
 
+    /// Begins a new statistics phase
+    ///
+    /// The phase ends if the returned guard gets destroyed.
+    inline StatGuard stat_phase(const std::string& name);
+
     /// Ends all current statistics phases and returns the root.
     inline Stat& finish_stats();
 
@@ -73,6 +94,17 @@ public:
     template<class T>
     inline void log_stat(const std::string& name, const T& value);
 };
+
+inline void StatGuard::end() {
+    if (m_is_done) return;
+
+    m_env_root->end_stat_phase();
+
+    m_is_done = true;
+}
+inline StatGuard::~StatGuard() {
+    end();
+}
 
 /// Local environment for a compression/encoding/decompression call.
 ///
@@ -113,6 +145,11 @@ public:
 
     /// Ends the current statistics phase.
     inline void end_stat_phase();
+
+    /// Begins a new statistics phase
+    ///
+    /// The phase ends if the returned guard gets destroyed.
+    inline StatGuard stat_phase(const std::string& name);
 
     /// Ends all current statistics phases and returns the root.
     inline Stat& finish_stats();
