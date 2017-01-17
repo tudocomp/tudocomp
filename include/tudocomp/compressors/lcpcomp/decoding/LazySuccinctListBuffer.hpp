@@ -133,6 +133,8 @@ public:
 
     }
     inline void decode_lazy() {
+		env().log_stat("remaining factors", m_target_pos.size());
+		env().log_stat("lazy value", m_lazy);
         size_t lazy = m_lazy;
         while(lazy > 0) {
             decode_lazy_();
@@ -159,7 +161,7 @@ private:
             const len_t& source_position = m_source_pos[j];
             const len_t& factor_length = m_length[j];
             for(len_t i = 0; i < factor_length; ++i) {
-				DCHECK(m_buffer[source_position+i] == 0 && m_buffer[target_position+i] == 0);
+				//DCHECK(m_buffer[source_position+i] == 0 && m_buffer[target_position+i] == 0);
 				m_buffer[target_position+i] = m_buffer[source_position+i];
             }
         }
