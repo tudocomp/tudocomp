@@ -38,6 +38,12 @@ class View {
         }
     }
 
+    inline void debug_bound_check(size_t pos) const {
+#ifdef DEBUG
+        bound_check(pos);
+#endif
+    }
+
 public:
     // Type members
 
@@ -112,9 +118,7 @@ public:
     ///
     /// This method is bounds checked in debug builds
     inline const_reference operator[](size_type pos) const {
-#ifdef DEBUG
-        bound_check(pos);
-#endif
+        debug_bound_check(pos);
         return m_data[pos];
     }
 
