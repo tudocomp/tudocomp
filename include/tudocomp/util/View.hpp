@@ -146,7 +146,7 @@ public:
 
     /// End of iterator
     inline const_iterator end() const {
-        return &(*this)[m_size];
+        return m_data + m_size;
     }
     /// End of const iterator
     inline const_iterator cend() const {
@@ -209,7 +209,7 @@ public:
         DCHECK_LE(from, size());
         DCHECK_LE(to, size());
 
-        return View(&(*this)[from], to - from);
+        return View(m_data + from, to - from);
     }
 
     /// Construct a new View that is a sub view into the current one.
