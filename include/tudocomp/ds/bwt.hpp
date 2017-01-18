@@ -27,23 +27,23 @@ template<typename bwt_t>
 len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	DVLOG(2) << "Computing LF";
 	if(bwt_length == 0) return nullptr;
-	len_t C[uliteral_max+1] { 0 }; // alphabet counter
+	len_t C[ULITERAL_MAX+1] { 0 }; // alphabet counter
 	for(auto& c : bwt) {
-		if(literal2int(c) != uliteral_max) {
+		if(literal2int(c) != ULITERAL_MAX) {
 			++C[literal2int(c)+1];
 		}
 	}
-	for(size_t i = 1; i < uliteral_max; ++i) {
+	for(size_t i = 1; i < ULITERAL_MAX; ++i) {
 		DCHECK_LT(static_cast<size_t>(C[i]),bwt.size()+1 -  C[i-1]);
 		C[i] += C[i-1];
 	}
-	DVLOG(2) << "C: " << arr_to_debug_string(C,uliteral_max);
+	DVLOG(2) << "C: " << arr_to_debug_string(C,ULITERAL_MAX);
 	DCHECK_EQ(C[0],0); // no character preceeds 0
 	DCHECK_EQ(C[1],1); // there is exactly only one '\0' byte
 
 	len_t* LF { new len_t[bwt_length] };
 	for(len_t i = 0; i < bwt_length; ++i) {
-		DCHECK_LE(literal2int(bwt[i]), uliteral_max);
+		DCHECK_LE(literal2int(bwt[i]), ULITERAL_MAX);
 		LF[i] = C[literal2int(bwt[i])];
 		++C[literal2int(bwt[i])];
 	}

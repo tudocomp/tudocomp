@@ -69,7 +69,7 @@ namespace tdc {
 	typedef std::make_unsigned<literal_t>::type uliteral_t;
 
     /// The maximum value of \ref uliteral_t.
-	constexpr size_t uliteral_max = std::numeric_limits<uliteral_t>::max();
+	constexpr size_t ULITERAL_MAX = std::numeric_limits<uliteral_t>::max();
 
     /// Converts a literal to an unsigned integer value.
     ///
