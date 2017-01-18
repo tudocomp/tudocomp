@@ -77,7 +77,7 @@ namespace lz78u {
     };
 }
 
-template<typename strategy_t, typename ref_coder_t, typename string_coder_t>
+template<typename strategy_t, typename ref_coder_t>
 class LZ78UCompressor: public Compressor {
 private:
     using node_type = SuffixTree::node_type;
@@ -85,13 +85,10 @@ private:
     using RefEncoder = typename ref_coder_t::Encoder;
     using RefDecoder = typename ref_coder_t::Decoder;
 
-    using StringEncoder = typename string_coder_t::Encoder;
-    using StringDecoder = typename string_coder_t::Decoder;
-
     using CompressionStrat
-        = typename strategy_t::template Compression<RefEncoder, StringEncoder>;
+        = typename strategy_t::template Compression<RefEncoder>;
     using DecompressionStrat
-        = typename strategy_t::template Decompression<RefDecoder, StringDecoder>;
+        = typename strategy_t::template Decompression<RefDecoder>;
 
 public:
     inline LZ78UCompressor(Env&& env):
@@ -102,7 +99,6 @@ public:
         Meta m("compressor", "lz78u", "Lempel-Ziv 78 U\n\n" );
         m.option("strategy").templated<strategy_t>();
         m.option("coder").templated<ref_coder_t>();
-        m.option("string_coder").templated<string_coder_t>();
         // m.option("dict_size").dynamic("inf");
         m.needs_sentinel_terminator();
         return m;
@@ -140,7 +136,6 @@ public:
         CompressionStrat strategy {
             env().env_for_option("strategy"),
             env().env_for_option("coder"),
-            env().env_for_option("string_coder"),
             std::make_shared<BitOStream>(out)
         };
 
@@ -209,7 +204,6 @@ public:
             DecompressionStrat strategy {
                 env().env_for_option("strategy"),
                 env().env_for_option("coder"),
-                env().env_for_option("string_coder"),
                 std::make_shared<BitIStream>(input)
             };
 

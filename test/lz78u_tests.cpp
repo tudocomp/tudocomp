@@ -16,14 +16,14 @@ using namespace tdc;
 using namespace lz78u;
 
 TEST(Lz78U, roundtrip1) {
-    test::roundtrip<LZ78UCompressor<StreamingStrategy, ASCIICoder, ASCIICoder>>(
+    test::roundtrip<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
         "aaababaaabaababa"_v,
         "0:a\0""1:a\0""0:ba\0""3:a\0""1:ba\0""5:ba\0""\0"_v
     );
 }
 
 TEST(Lz78U, roundtrip2) {
-    test::roundtrip<LZ78UCompressor<StreamingStrategy, ASCIICoder, ASCIICoder>>(
+    test::roundtrip<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
         "abcdebcdeabc"_v,
         "0:abc\0""0:de\0""0:bc\0""2:a\0""3:\0""\0"_v
     );

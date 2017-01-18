@@ -54,8 +54,9 @@ with open(filename, 'rb') as f:
                 pass
             else:
                 #print("O : ", uri)
-                sys.stdout.buffer.write(content)
-                ascii_length += content_length
+                if content.find(0) == -1:
+                    sys.stdout.buffer.write(content)
+                    ascii_length += content_length
         else:
             sys.exit(1)
 

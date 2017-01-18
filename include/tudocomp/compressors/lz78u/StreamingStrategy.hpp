@@ -5,27 +5,27 @@
 namespace tdc {
 namespace lz78u {
 
-
+template<typename string_coder_t>
 class StreamingStrategy: public Algorithm {
 public:
     using Algorithm::Algorithm;
 
     inline static Meta meta() {
         Meta m("lz78u_strategy", "streaming");
+        m.option("string_coder").templated<string_coder_t>();
         return m;
     }
 
-    template<typename ref_coder_t, typename string_coder_t>
+    template<typename ref_coder_t>
     class Compression: public Algorithm {
         typename string_coder_t::Encoder  m_string_coder;
         typename ref_coder_t::Encoder     m_ref_coder;
     public:
         inline Compression(Env&& env,
                            Env&& ref_env,
-                           Env&& string_env,
                            std::shared_ptr<BitOStream> out):
             Algorithm(std::move(env)),
-            m_string_coder(std::move(ref_env), out, NoLiterals()),
+            m_string_coder(std::move(this->env().env_for_option("string_coder")), out, NoLiterals()),
             m_ref_coder(std::move(ref_env), out, NoLiterals()) {}
 
         inline void encode(Factor fact, size_t ref_range) {
@@ -38,7 +38,7 @@ public:
         }
     };
 
-    template<typename ref_coder_t, typename string_coder_t>
+    template<typename ref_coder_t>
     class Decompression: public Algorithm {
         typename string_coder_t::Decoder  m_string_coder;
         typename ref_coder_t::Decoder     m_ref_coder;
@@ -48,10 +48,9 @@ public:
     public:
         inline Decompression(Env&& env,
                              Env&& ref_env,
-                             Env&& string_env,
                              std::shared_ptr<BitIStream> in):
             Algorithm(std::move(env)),
-            m_string_coder(std::move(ref_env), in),
+            m_string_coder(std::move(this->env().env_for_option("string_coder")), in),
             m_ref_coder(std::move(ref_env), in) {}
 
         inline Factor decode(size_t ref_range) {
