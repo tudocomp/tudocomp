@@ -19,7 +19,6 @@ public:
     }
 
     inline ~Encoder() {
-        finalize();
     }
 
     template<typename value_t>
@@ -30,9 +29,6 @@ public:
     template<typename value_t>
     inline void encode(value_t v, const BitRange&) {
         m_out->write_bit(v);
-    }
-
-    inline void finalize() {
     }
 };
 

@@ -133,8 +133,6 @@ public:
             stat_factor_count++;
         }
 
-        coder.finalize();
-
         env().log_stat("factor_count", stat_factor_count);
         env().log_stat("dictionary_reset_counter",
                        stat_dictionary_resets);

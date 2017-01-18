@@ -58,6 +58,8 @@ public:
 
     /// Insert array item with index i into heap.
     inline void insert(len_t i) {
+        DCHECK_EQ(m_pos[i], m_undef) << "trying to insert an item that's already in the heap";
+
         size_t pos = m_size++;
 
         // perlocate up
@@ -69,7 +71,10 @@ public:
 
         put(pos, i);
 
-        IF_PARANOID(check_heap_condition());
+        IF_PARANOID({
+            DVLOG(2) << "checking heap after insert (size = " << m_size << ")";
+            check_heap_condition();
+        })
     }
 
 private:
@@ -114,17 +119,20 @@ public:
     /// Remove array item with index i from heap.
     inline void remove(len_t i) {
         auto pos = m_pos[i];
-        if(pos != m_undef) {
+        if(pos != m_undef) { // never mind if it's not in the heap
             // get last element in heap
             auto k = m_heap[--m_size];
 
             // perlocate it down, starting at the former position of i
             perlocate_down(pos, k);
+
+            m_pos[i] = m_undef; // i was removed
         }
 
-        m_pos[i] = m_undef; // i was removed
-
-        IF_PARANOID(check_heap_condition());
+        IF_PARANOID({
+            DVLOG(2) << "checking heap after remove (size = " << m_size << ")";
+            check_heap_condition();
+        })
     }
 
     /// Decrease key on array item with index i.
@@ -133,12 +141,17 @@ public:
         (*m_array)[i] = value;
 
         auto pos = m_pos[i];
+        DCHECK_NE(pos, m_undef) << "trying to decrease_key on an item that's not in the heap";
+
         if(pos != m_undef) {
             // perlocate item down, starting at its current position
             perlocate_down(pos, i);
         }
 
-        IF_PARANOID(check_heap_condition());
+        IF_PARANOID({
+            DVLOG(2) << "checking heap after decrease_key (size = " << m_size << ")";
+            check_heap_condition();
+        })
     }
 
     /// Checks whether or not array item i is contained in this heap.
@@ -165,8 +178,10 @@ public:
     inline void check_heap_condition() const {
         for(size_t i = 0; i < m_size; i++) {
             auto value = (*m_array)[m_heap[i]];
-            if(lc(i) < m_size) DCHECK(value >= (*m_array)[m_heap[lc(i)]]);
-            if(rc(i) < m_size) DCHECK(value >= (*m_array)[m_heap[rc(i)]]);
+            if(lc(i) < m_size) DCHECK(value >= (*m_array)[m_heap[lc(i)]])
+                << "heap condition violated for a left child";
+            if(rc(i) < m_size) DCHECK(value >= (*m_array)[m_heap[rc(i)]])
+                << "heap condition violated for a right child";
         }
     })
 };
