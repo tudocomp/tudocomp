@@ -7,7 +7,6 @@
 
 #include <tudocomp/util/Json.hpp>
 
-/// \brief Contains the runtime statistics interface \ref Stat.
 namespace tdc {
 
 class Stat {

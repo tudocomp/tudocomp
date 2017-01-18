@@ -1,11 +1,5 @@
 #pragma once
 
-/**
- * LZ78 Trie Implementation
- * based on Julius Pettersson (MIT/Expat License.) and Juha Nieminen's work.
- * @see http://www.cplusplus.com/articles/iL18T05o/
-**/
-
 #include <vector>
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 #include <tudocomp/Algorithm.hpp>
@@ -13,6 +7,11 @@
 namespace tdc {
 namespace lz78 {
 
+/// \brief LZ78 Trie Implementation
+/// based on Julius Pettersson (MIT/Expat License.) and Juha Nieminen's work.
+///
+/// \sa http://www.cplusplus.com/articles/iL18T05o/
+///
 class TernaryTrie : public Algorithm, public LZ78Trie<factorid_t> {
 
 	/*

@@ -3,12 +3,6 @@
 #include <tudocomp/config.h>
 #ifdef JUDY_H_AVAILABLE
 
-/**
- * LZ78 Trie Implementation 
- * based on Julius Pettersson (MIT/Expat License.) and Juha Nieminen's work.
- * @see http://www.cplusplus.com/articles/iL18T05o/
-**/
-
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 #include <tudocomp/compressors/lz78/squeeze_node.hpp>
@@ -17,7 +11,11 @@
 namespace tdc {
 namespace lz78 {
 
-
+/// \brief LZ78 Trie Implementation
+/// based on Julius Pettersson (MIT/Expat License.) and Juha Nieminen's work.
+///
+/// \sa http://www.cplusplus.com/articles/iL18T05o/
+///
 class JudyTrie : public Algorithm, public LZ78Trie<factorid_t> {
 
 	Pvoid_t m_dict; // judy array
@@ -35,9 +33,9 @@ public:
         Meta m("lz78trie", "judy", "Lempel-Ziv 78 Judy Array");
 		return m;
 	}
-    JudyTrie(Env&& env, factorid_t = 0) 
+    JudyTrie(Env&& env, factorid_t = 0)
 		: Algorithm(std::move(env))
-	    , m_dict(static_cast<Pvoid_t>(nullptr))	
+	    , m_dict(static_cast<Pvoid_t>(nullptr))
 	    , m_size(0)
 	{
     }
@@ -58,7 +56,7 @@ public:
 			int i;
 			JLFA(i, m_dict);
 		}
-		m_size = 0; 
+		m_size = 0;
 	}
 
     node_t find_or_insert(const node_t& parent, uliteral_t c) override {

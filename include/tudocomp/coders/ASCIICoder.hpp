@@ -5,15 +5,27 @@
 
 namespace tdc {
 
+/// \brief Defines data encoding to and decoding from a stream of ASCII
+///        characters.
+///
+/// Literals are encoded by their character representation, bits are
+/// encoded using either the character \e 0 or \e 1 and integers are
+/// encoded as their string representations, terminated by the \e :
+/// character.
 class ASCIICoder : public Algorithm {
 public:
+    /// \brief Yields the coder's meta information.
+    /// \sa Meta
     inline static Meta meta() {
         Meta m("coder", "ascii", "Simple ASCII encoding");
         return m;
     }
 
+    /// \cond DELETED
     ASCIICoder() = delete;
+    /// \endcond
 
+    /// \brief Encodes data to an ASCII character stream.
     class Encoder : public tdc::Encoder {
     public:
         ENCODER_CTOR(env, out, literals) {}
@@ -37,6 +49,7 @@ public:
         }
     };
 
+    /// \brief Decodes data from an ASCII character stream.
     class Decoder : public tdc::Decoder {
     public:
         DECODER_CTOR(env, in) {}
