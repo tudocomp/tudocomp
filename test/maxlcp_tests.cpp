@@ -11,19 +11,21 @@ using namespace tdc;
 
 using vec = std::vector<size_t>;
 
-constexpr size_t MIN_POSSIBLE_LCP = 2;
-constexpr size_t MAX_POSSIBLE_LCP = 65536;
-
 std::default_random_engine rglobal;
 std::uniform_int_distribution<size_t> gen_seed(0, SIZE_MAX);
+std::uniform_int_distribution<size_t> gen_dice(1, 6);
 
 // small test
-constexpr size_t NUM_TESTS = 1000;
-std::uniform_int_distribution<size_t> gen_size(200, 250);
+constexpr size_t MIN_POSSIBLE_LCP = 2;
+constexpr size_t MAX_POSSIBLE_LCP = 2048;
+constexpr size_t NUM_TESTS = 100;
+std::uniform_int_distribution<size_t> gen_size(1000, 2500);
 
 // LARGE test
+//constexpr size_t MIN_POSSIBLE_LCP = 2;
+//constexpr size_t MAX_POSSIBLE_LCP = 65536;
 //constexpr size_t NUM_TESTS = 10;
-//std::uniform_int_distribution<size_t> gen_size(200000000, 250000000);
+//std::uniform_int_distribution<size_t> gen_size(200000, 250000);
 
 void generate_lcp(const size_t n, const size_t seed, vec& out_lcp, size_t& out_max) {
     // generate dataset
@@ -34,6 +36,47 @@ void generate_lcp(const size_t n, const size_t seed, vec& out_lcp, size_t& out_m
     out_lcp[0] = 0; // invariant
     for(size_t i = 1; i < out_lcp.size(); i++) out_lcp[i] = dist(rnd);
     out_max = *std::max_element(out_lcp.begin(), out_lcp.end());
+}
+
+template<typename ds_t>
+void test_remove_only(const size_t n, const size_t seed, ds_t& ds, vec& lcp) {
+    // test item order, removing one by one
+    VLOG(2) << "  Testing ...";
+    size_t last = ds.get_max();
+    ds.remove(last);
+
+    while(ds.size()) {
+        size_t m = ds.get_max();
+        ASSERT_GE(lcp[last], lcp[m]) << "n = " << n << ", seed = " << seed;
+
+        ds.remove(m);
+        last = m;
+    }
+}
+
+template<typename ds_t>
+void test_dec_key(const size_t n, const size_t seed, ds_t& ds, vec& lcp) {
+    // test item order, call decrease key for random items by random amounts
+    VLOG(2) << "  Testing ...";
+    size_t last = ds.get_max();
+    ds.remove(last);
+
+    std::default_random_engine rnd(seed);
+    while(ds.size()) {
+        size_t m = ds.get_max();
+        ASSERT_GE(lcp[last], lcp[m]) << "n = " << n << ", seed = " << seed;
+
+        if(lcp[m] > MIN_POSSIBLE_LCP && gen_dice(rnd) <= 3) {
+            // decrease key
+            size_t amt = std::min(gen_dice(rnd), lcp[m] - MIN_POSSIBLE_LCP);
+            ds.decrease_key(m, lcp[m] - amt);
+            last = ds.get_max();
+        } else {
+            // remove
+            ds.remove(m);
+            last = m;
+        }
+    }
 }
 
 void test_heap_remove_only(const size_t n, const size_t seed) {
@@ -49,18 +92,8 @@ void test_heap_remove_only(const size_t n, const size_t seed) {
     // test size
     ASSERT_EQ(n-1, ds.size());
 
-    // test item order, removing one by one
-    VLOG(2) << "  Testing ...";
-    size_t last = ds.get_max();
-    ds.remove(last);
-
-    while(ds.size()) {
-        size_t m = ds.get_max();
-        ASSERT_GE(lcp[last], lcp[m]) << "n = " << n << ", seed = " << seed;
-
-        ds.remove(m);
-        last = m;
-    }
+    // test
+    test_remove_only(n, seed, ds, lcp);
 }
 
 void test_heap_dec_key(const size_t n, const size_t seed) {
@@ -76,25 +109,8 @@ void test_heap_dec_key(const size_t n, const size_t seed) {
     // test size
     ASSERT_EQ(n-1, ds.size());
 
-    // test item order, call decrease key for every second item
-    VLOG(2) << "  Testing ...";
-    size_t last = ds.get_max();
-    ds.remove(last);
-
-    bool dec_key = true;
-    while(ds.size()) {
-        size_t m = ds.get_max();
-        ASSERT_GE(lcp[last], lcp[m]) << "n = " << n << ", seed = " << seed;
-
-        if(dec_key && lcp[m] > MIN_POSSIBLE_LCP) {
-            ds.decrease_key(m, lcp[m] - 1);
-            last = ds.get_max();
-        } else {
-            ds.remove(m);
-            last = m;
-        }
-        dec_key = !dec_key; // flip
-    }
+    // test
+    test_dec_key(n, seed, ds, lcp);
 }
 
 void test_list_remove_only(const size_t n, const size_t seed) {
@@ -109,18 +125,8 @@ void test_list_remove_only(const size_t n, const size_t seed) {
     // test size
     ASSERT_EQ(n-1, ds.size());
 
-    // test item order, removing one by one
-    VLOG(2) << "  Testing ...";
-    size_t last = ds.get_max();
-    ds.remove(last);
-
-    while(ds.size()) {
-        size_t m = ds.get_max();
-        ASSERT_GE(lcp[last], lcp[m]) << "n = " << n << ", seed = " << seed;
-
-        ds.remove(m);
-        last = m;
-    }
+    // test
+    test_remove_only(n, seed, ds, lcp);
 }
 
 void test_list_dec_key(const size_t n, const size_t seed) {
@@ -135,25 +141,8 @@ void test_list_dec_key(const size_t n, const size_t seed) {
     // test size
     ASSERT_EQ(n-1, ds.size());
 
-    // test item order, call decrease key for every second item
-    VLOG(2) << "  Testing ...";
-    size_t last = ds.get_max();
-    ds.remove(last);
-
-    bool dec_key = true;
-    while(ds.size()) {
-        size_t m = ds.get_max();
-        ASSERT_GE(lcp[last], lcp[m]) << "n = " << n << ", seed = " << seed;
-
-        if(dec_key && lcp[m] > MIN_POSSIBLE_LCP) {
-            ds.decrease_key(m, lcp[m] - 1);
-            last = ds.get_max();
-        } else {
-            ds.remove(m);
-            last = m;
-        }
-        dec_key = !dec_key; // flip
-    }
+    // test
+    test_dec_key(n, seed, ds, lcp);
 }
 
 template<typename testfunc_t>
