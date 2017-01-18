@@ -44,6 +44,7 @@ public:
         size_t ahead = 0; //marks the index in the buffer at which the back buffer ends and the ahead buffer begins
         char c;
 
+        env().begin_stat_phase("Factorize");
         //initially fill the buffer
         size_t buf_off = 0;
         while(buf.size() < 2 * m_window && ins.get(c)) {
@@ -111,6 +112,7 @@ public:
                 }
             }
         }
+        env().end_stat_phase();
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
