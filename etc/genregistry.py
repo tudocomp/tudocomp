@@ -174,20 +174,28 @@ namespace lzw {
 
 # Generates carthesian product of template params
 def gen_list(ls):
-    def gen_product(ls):
-        l = []
-        for element in itertools.product(*ls):
-            l += [gen_list(element)]
-        return l
+    def expand_deps(algorithm):
+        name = algorithm[0]
+        deps = algorithm[2]
 
-    l = []
-    for e in ls:
-        for prod in gen_product(e[2]):
-            if len(prod) == 0:
-                l += [str.format("{}", e[0])]
+        deps_lists = [gen_list(x) for x in deps]
+        deps_lists_prod = itertools.product(*deps_lists)
+
+        return_list = []
+        for deps_tuple in deps_lists_prod:
+            if len(deps_tuple) == 0:
+                return_list += [str.format("{}", name)]
             else:
-                l += [str.format("{}<{}>", e[0], ",".join(prod))]
-    return l
+                return_list += [str.format("{}<{}>", name, ",".join(deps_tuple))]
+
+        assert len(return_list) != 0
+
+        return return_list
+
+    return_list = []
+    for algorithm in ls:
+        return_list += expand_deps(algorithm)
+    return return_list
 
 # Generates list of all includes
 def gather_header(ls):
