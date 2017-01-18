@@ -141,7 +141,7 @@ public:
 
     /// Begin of iterator
     inline const_iterator begin() const {
-        return &(*this)[0];
+        return m_data;
     }
     /// Begin of const iterator
     inline const_iterator cbegin() const {
