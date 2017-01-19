@@ -281,6 +281,39 @@ inline std::vector<uint8_t> pack_integers(std::vector<uint64_t> ints) {
     return bits;
 }
 
+using PacketIntegers = std::vector<uint64_t>;
+void assert_eq_binary(string_ref actual, PacketIntegers expected) {
+    auto out = test::pack_integers(expected);
+    if (actual != out) {
+        auto print_bits = [&](string_ref s) -> std::string {
+            std::stringstream ss;
+
+            // iterate over bits
+
+            size_t packed_i = 0;
+            size_t last_packed_i = 0;
+
+            for (uint64_t i = 0; i < s.size() * 8; i++) {
+                if (packed_i < expected.size() && i == last_packed_i + expected[packed_i + 1]) {
+                    ss << " ";
+                    last_packed_i = i;
+                    packed_i += 2;
+                }
+
+                uint8_t c = s[i / 8];
+                ss << ((c >> (8 - (i % 8) - 1)) & 1);
+            }
+
+            return ss.str();
+        };
+
+        FAIL()
+            << "      Expected: " << print_bits(actual) << "\n"
+            << "To be equal to: " << print_bits(out);
+
+    }
+}
+
 template<class C>
 struct CompressResult {
 private:
