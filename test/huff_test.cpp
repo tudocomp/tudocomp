@@ -1,3 +1,4 @@
+#include "test/util.hpp"
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 #include <cstring>
@@ -20,17 +21,17 @@ void test_huffmantable_storing(const std::string& text) {
 		tdc::io::BitIStream bit_in(in);
 		huffmantable tab2 = huffmantable_decode(bit_in);
 
-	DCHECK_EQ(table.longest, tab2.longest);
-	DCHECK_EQ(table.alphabet_size, tab2.alphabet_size);
+	ASSERT_EQ(table.longest, tab2.longest);
+	ASSERT_EQ(table.alphabet_size, tab2.alphabet_size);
 	for(size_t i = 0; i < table.longest; ++i) {
-		DCHECK_EQ(table.numl[i], tab2.numl[i]);
+		ASSERT_EQ(table.numl[i], tab2.numl[i]);
 	}
 	for(size_t i = 0; i < table.alphabet_size; ++i) {
-		DCHECK_EQ(table.ordered_map_from_effective[i], tab2.ordered_map_from_effective[i]);
+		ASSERT_EQ(table.ordered_map_from_effective[i], tab2.ordered_map_from_effective[i]);
 	}
 	const uint8_t*const ordered_codelengths2 = gen_ordered_codelength(table.alphabet_size, table.numl, table.longest);
 	for(size_t i = 0; i < table.alphabet_size; ++i) {
-		DCHECK_EQ(ordered_codelengths2[i], table.ordered_codelengths[i]);
+		ASSERT_EQ(ordered_codelengths2[i], table.ordered_codelengths[i]);
 	}
 	delete [] ordered_codelengths2;
 }
@@ -66,6 +67,7 @@ void test_huffmantable_coding(const std::string& text) {
 			table.longest);
 	}
 	ASSERT_EQ(input.str(), text);
+    ASSERT_EQ(input.str().size(), text.size());
 }
 
 void test_huff(const std::string& text) {
@@ -88,10 +90,11 @@ void test_huff(const std::string& text) {
 		tdc::io::Output out(sback);
 		decode(in, out);
 	}
-	DCHECK_EQ(text, sback.str());
+	auto sbacks = sback.str();
+	ASSERT_EQ(text, sbacks);
+    ASSERT_EQ(text.size(), sbacks.size());
 }
 
-#include "test/util.hpp"
 TEST(huffman, stringgenerators) {
 	std::function<void(std::string&)> func(test_huff);
 	test::on_string_generators(func,20);
@@ -132,3 +135,15 @@ TEST(huffman, stringgenerators) {
 // 	}
 //
 // }
+
+TEST(huff, nullbyte) {
+    test_huff("hel\0lo"_v);
+    test_huff("hello\0"_v);
+    test_huff("hello\0\0\0"_v);
+}
+
+TEST(Coder, binary_output) {
+    //auto v = "abcabacba"_v;
+    //test::TestOutput o(false);
+    //auto coder = tdc::create_algo<HuffmanCoder::Encoder>("", o, ViewLiterals(v));
+}
