@@ -67,6 +67,7 @@ lcpc_coder = [
 
 lz78u_strategy = [
     ("lz78u::StreamingStrategy", "compressors/lz78u/StreamingStrategy.hpp", [context_free_coder]),
+    ("lz78u::BufferingStrategy", "compressors/lz78u/BufferingStrategy.hpp", [context_free_coder]),
 ]
 
 compressors = [

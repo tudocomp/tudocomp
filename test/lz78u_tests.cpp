@@ -28,17 +28,25 @@ TEST(Lz78U, roundtrip2) {
         "0:abc\0""0:de\0""0:bc\0""2:a\0""3:\0""\0"_v
     );
 }
-/*
+
 TEST(Lz78U, roundtrip3) {
-    test::roundtrip<LZ78UCompressor<ASCIICoder, lz78u::StringCoder<HuffmanCoder>>>(
+    test::roundtrip<LZ78UCompressor<BufferingStrategy<HuffmanCoder>, ASCIICoder>>(
         "aaababaaabaababa"_v,
-        ""_v
+        // a0a0ba0a0ba0ba0
+        // aaaaaa 000000 bbb
+        //
+        test::pack_integers({
+            0b01, 2,
+            0b1,  1,
+            '0',  8,
+            ':',  8,
+        })
     );
 }
 
 TEST(Lz78U, roundtrip4) {
-    test::roundtrip<LZ78UCompressor<ASCIICoder, lz78u::StringCoder<HuffmanCoder>>>(
+    test::roundtrip<LZ78UCompressor<BufferingStrategy<HuffmanCoder>, ASCIICoder>>(
         "abcdebcdeabc"_v,
-        ""_v
+        "a"_v
     );
-}*/
+}
