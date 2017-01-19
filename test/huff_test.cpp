@@ -150,7 +150,7 @@ void test_binary_out(string_ref in, std::vector<uint64_t> packed_ints_out) {
         typename HuffmanCoder::Encoder coder(std::move(env), o, ViewLiterals(v));
 
         for (auto c : v) {
-            //coder.encode(c, literal_r);
+            coder.encode(c, literal_r);
         }
     }
     auto res = o.result();
@@ -160,61 +160,83 @@ void test_binary_out(string_ref in, std::vector<uint64_t> packed_ints_out) {
 TEST(Coder, binary_output) {
     test_binary_out("abcabacba"_v, {
         // leading 1 bit to signify start of header
-        0b1,       1,
+        0b1,        1,
 
         // compressed int, table.longest == 2
-        0b0,       1,
-        0b0000010, 7, // == 2
+        0b0,        1,
+        0b0000010,  7, // == 2
 
         // compressed int, numl[0]
-        0b0,       1,
-        0b0000001, 7, // == 1
+        0b0,        1,
+        0b0000001,  7, // == 1
 
         // compressed int, numl[1]
-        0b0,       1,
-        0b0000010, 7, // == 2
+        0b0,        1,
+        0b0000010,  7, // == 2
 
         // compressed int, alphabet_size
-        0b0,       1,
-        0b0000011, 7, // == 3
+        0b0,        1,
+        0b0000011,  7, // == 3
 
         // characters
         0b01100001, 8, // == 97 == 'a'
         0b01100010, 8, // == 98 == 'b'
         0b01100011, 8, // == 99 == 'c'
 
+        // huffman encoded symbols
+        0b1,        1, // a
+        0b00,       2, // b
+        0b01,       2, // c
+        0b1,        1, // a
+        0b00,       2, // b
+        0b1,        1, // a
+        0b01,       2, // c
+        0b00,       2, // b
+        0b1,        1, // a
+
         // BitOStream termination
-        0b0000001, 7, // 1 valid bit at the end
+        0b000000111, 9,
     });
 }
 
 TEST(Coder, binary_output_null) {
-    test_binary_out("ab\0""aba\0""ba"_v, {
+    test_binary_out("ab\0aba\0ba"_v, {
         // leading 1 bit to signify start of header
-        0b1,       1,
+        0b1,        1,
 
         // compressed int, table.longest == 2
-        0b0,       1,
-        0b0000010, 7, // == 2
+        0b0,        1,
+        0b0000010,  7, // == 2
 
         // compressed int, numl[0]
-        0b0,       1,
-        0b0000001, 7, // == 1
+        0b0,        1,
+        0b0000001,  7, // == 1
 
         // compressed int, numl[1]
-        0b0,       1,
-        0b0000010, 7, // == 2
+        0b0,        1,
+        0b0000010,  7, // == 2
 
         // compressed int, alphabet_size
-        0b0,       1,
-        0b0000011, 7, // == 3
+        0b0,        1,
+        0b0000011,  7, // == 3
 
         // characters
-        0b01100001, 8, // == 97 == 'a'
-        0b01100010, 8, // == 98 == 'b'
-        0b00000000, 8, // == 0 == '\0'
+        0b01100001,  8, // == 97 == 'a'
+        0b00000000,  8, // == 0 == '\0'
+        0b01100010,  8, // == 98 == 'b'
+
+        // huffman encoded symbols
+        0b1,        1, // a
+        0b01,       2, // b
+        0b00,       2, // 0
+        0b1,        1, // a
+        0b01,       2, // b
+        0b1,        1, // a
+        0b00,       2, // 0
+        0b01,       2, // b
+        0b1,        1, // a
 
         // BitOStream termination
-        0b0000001, 7, // 1 valid bit at the end
+        0b000000111, 9,
     });
 }

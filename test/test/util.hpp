@@ -285,7 +285,7 @@ using PacketIntegers = std::vector<uint64_t>;
 void assert_eq_binary(string_ref actual, PacketIntegers expected) {
     auto out = test::pack_integers(expected);
     if (actual != out) {
-        auto print_bits = [&](string_ref s) -> std::string {
+        auto print_bits = [&expected](string_ref s, bool byte_units = false) -> std::string {
             std::stringstream ss;
 
             // iterate over bits
@@ -294,22 +294,29 @@ void assert_eq_binary(string_ref actual, PacketIntegers expected) {
             size_t last_packed_i = 0;
 
             for (uint64_t i = 0; i < s.size() * 8; i++) {
-                if (packed_i < expected.size() && i == last_packed_i + expected[packed_i + 1]) {
+                if (!byte_units && packed_i < expected.size() && i == last_packed_i + expected[packed_i + 1]) {
                     ss << " ";
                     last_packed_i = i;
                     packed_i += 2;
+                } else if (byte_units && i > 0 && i % 8 == 0) {
+                    ss << " ";
                 }
 
                 uint8_t c = s[i / 8];
-                ss << ((c >> (8 - (i % 8) - 1)) & 1);
+                ss << int((c >> (8 - (i % 8) - 1)) & 1);
             }
 
             return ss.str();
         };
 
         FAIL()
-            << "      Expected: " << print_bits(actual) << "\n"
-            << "To be equal to: " << print_bits(out);
+            << "      Expected: " << "<decompression result>" << "\n"
+            << "      Which is: " << print_bits(actual)       << "\n"
+            << "To be equal to: " << "<should-be value>"      << "\n"
+            << "      Which is: " << print_bits(out)          << "\n"
+            << "\n"
+            << "      As Bytes: " << print_bits(actual, true) << "\n"
+            << "            Vs: " << print_bits(out, true);
 
     }
 }
