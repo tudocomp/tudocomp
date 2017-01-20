@@ -338,3 +338,97 @@ TEST(Coder, binary_output_null_3) {
 
     }, true);
 }
+
+TEST(Coder, binary_output_null_4) {
+    test_binary_out("babacbabacbacba"_v, {
+        0b1,        1,
+        0b00000010, 8, // 2 codeword lengths
+        0b00000001, 8, // 1 of 1
+        0b00000010, 8, // 2 of 2
+        0b00000011, 8, // 3 characters:
+        'a',        8, // => 0b1
+        'b',        8, // => 0b00
+        'c',        8, // => 0b01
+
+        // 1. tuple
+        0b00,       2,
+        0b1,        1,
+
+        // 2. tuple
+        0b00,       2,
+        0b1,        1,
+
+        // 3. tuple
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // 4. tuple
+        0b00,       2,
+        0b1,        1,
+
+        // 5. tuple
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // 6. tuple
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // BitOStream term
+        0b0000001,  7,
+
+    });
+}
+
+TEST(Coder, binary_output_null_5) {
+    test_binary_out("babacbabacbacba"_v, {
+        0b1,        1,
+        0b00000010, 8, // 2 codeword lengths
+        0b00000001, 8, // 1 of 1
+        0b00000010, 8, // 2 of 2
+        0b00000011, 8, // 3 characters:
+        'a',        8, // => 0b1
+        'b',        8, // => 0b00
+        'c',        8, // => 0b01
+
+        // 1. tuple
+        0b01010101, 8,
+        0b00,       2,
+        0b1,        1,
+
+        // 2. tuple
+        0b01010101, 8,
+        0b00,       2,
+        0b1,        1,
+
+        // 3. tuple
+        0b01010101, 8,
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // 4. tuple
+        0b01010101, 8,
+        0b00,       2,
+        0b1,        1,
+
+        // 5. tuple
+        0b01010101, 8,
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // 6. tuple
+        0b01010101, 8,
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // BitOStream term
+        0b0000001,  7,
+
+    }, true);
+}
