@@ -240,3 +240,47 @@ TEST(Coder, binary_output_null) {
         0b000000111, 9,
     });
 }
+
+TEST(Coder, binary_output_null_2) {
+    test_binary_out("a\0a\0ba\0a\0ba\0ba\0"_v, {
+        0b1,        1,
+        0b00000010, 8, // 2 codeword lengths
+        0b00000001, 8, // 1 of 1
+        0b00000010, 8, // 2 of 2
+        0b00000011, 8, // 3 characters:
+        '\0',       8, // => 0b1
+        'a',        8, // => 0b00
+        'b',        8, // => 0b01
+
+        // 1. tuple
+        0b00,       2,
+        0b1,        1,
+
+        // 2. tuple
+        0b00,       2,
+        0b1,        1,
+
+        // 3. tuple
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // 4. tuple
+        0b00,       2,
+        0b1,        1,
+
+        // 5. tuple
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // 6. tuple
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // BitOStream term
+        0b0000001,  7,
+
+    });
+}

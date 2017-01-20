@@ -138,20 +138,6 @@ std::string format_escape(const std::string& s) {
     return ss.str();
 }
 
-std::string format_diff(const std::string& a, const std::string& b) {
-    std::string diff;
-    for(size_t i = 0; i < std::max(a.size(), b.size()); i++) {
-        if (i < std::min(a.size(), b.size())
-            && a[i] == b[i]
-        ) {
-            diff.push_back('-');
-        } else {
-            diff.push_back('#');
-        }
-    }
-    return diff;
-}
-
 struct Error {
     bool has_error;
     std::string test;

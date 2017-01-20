@@ -281,6 +281,38 @@ inline std::vector<uint8_t> pack_integers(std::vector<uint64_t> ints) {
     return bits;
 }
 
+std::string format_diff(const std::string& a, const std::string& b) {
+    std::string diff;
+    for(size_t i = 0; i < std::max(a.size(), b.size()); i++) {
+        if (i < std::min(a.size(), b.size())
+            && a[i] == b[i]
+        ) {
+            diff.push_back('-');
+        } else {
+            diff.push_back('#');
+        }
+    }
+    return diff;
+}
+
+std::string format_diff_bin(const std::string& a, const std::string& b) {
+    std::string diff;
+    for(size_t i = 0; i < std::max(a.size(), b.size()); i++) {
+        if (i < std::min(a.size(), b.size())
+            && a[i] == ' ' && b[i] == ' '
+        ) {
+            diff.push_back(' ');
+        } else if (i < std::min(a.size(), b.size())
+            && a[i] == b[i]
+        ) {
+            diff.push_back('-');
+        } else {
+            diff.push_back('#');
+        }
+    }
+    return diff;
+}
+
 using PacketIntegers = std::vector<uint64_t>;
 void assert_eq_binary(string_ref actual, PacketIntegers expected) {
     auto out = test::pack_integers(expected);
@@ -309,15 +341,22 @@ void assert_eq_binary(string_ref actual, PacketIntegers expected) {
             return ss.str();
         };
 
-        FAIL()
-            << "      Expected: " << "<decompression result>" << "\n"
-            << "      Which is: " << print_bits(actual)       << "\n"
-            << "To be equal to: " << "<should-be value>"      << "\n"
-            << "      Which is: " << print_bits(out)          << "\n"
-            << "\n"
-            << "      As Bytes: " << print_bits(actual, true) << "\n"
-            << "            Vs: " << print_bits(out, true);
+        auto p_is = print_bits(actual);
+        auto p_should = print_bits(out);
+        auto p_diff = format_diff_bin(p_is, p_should);
 
+        auto p_is_b = print_bits(actual, true);
+        auto p_should_b = print_bits(out, true);
+        auto p_diff_b = format_diff_bin(p_is_b, p_should_b);
+
+        FAIL()
+            << "Should Be: " << p_should   << "\n"
+            << "       Is: " << p_is       << "\n"
+            << "     Diff: " << p_diff     << "\n"
+            << "As Bytes:"                 << "\n"
+            << "Should Be: " << p_should_b << "\n"
+            << "       Is: " << p_is_b     << "\n"
+            << "     Diff: " << p_diff_b   << "\n";
     }
 }
 
@@ -450,6 +489,19 @@ inline void roundtrip(string_ref original_text,
     auto& compressed_text = e.bytes;
 
     ASSERT_EQ(expected_compressed_text, compressed_text);
+
+    e.assert_decompress_bytes();
+}
+
+template<class T>
+inline void roundtrip_binary(string_ref original_text,
+                            const std::vector<uint64_t>& expected_compressed_text_packed_ints,
+                            const std::string& options = "",
+                            const Registry& registry = Registry()) {
+    auto e = RoundTrip<T>(options, registry).compress(original_text);
+    auto& compressed_text = e.bytes;
+
+    assert_eq_binary(compressed_text, expected_compressed_text_packed_ints);
 
     e.assert_decompress_bytes();
 }
