@@ -50,6 +50,7 @@ public:
     /// \cond INTERNAL
     // Create the list of all possible static-argument-type combinations
     inline std::vector<pattern::Algorithm> all_algorithms_with_static(View type) const;
+    inline std::vector<pattern::Algorithm> all_algorithms_with_static_internal(View type) const;
     inline std::vector<pattern::Algorithm> check_for_undefined_compressors();
     inline std::unique_ptr<Compressor> select_algorithm_or_exit(const AlgorithmValue& algo) const;
     inline AlgorithmValue parse_algorithm_id(string_ref text) const;
