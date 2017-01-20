@@ -142,14 +142,18 @@ TEST(huff, nullbyte) {
     test_huff("hello\0\0\0"_v);
 }
 
-void test_binary_out(string_ref in, std::vector<uint64_t> packed_ints_out) {
+void test_binary_out(string_ref in, std::vector<uint64_t> packed_ints_out, bool interleave = false) {
     auto v = in;
     test::TestOutput o(false);
     {
         auto env = tdc::builder<HuffmanCoder>().env();
-        typename HuffmanCoder::Encoder coder(std::move(env), o, ViewLiterals(v));
+        std::shared_ptr<BitOStream> bo = std::make_shared<BitOStream>(o);
+        typename HuffmanCoder::Encoder coder(std::move(env), bo, ViewLiterals(v));
 
         for (auto c : v) {
+            if (interleave) {
+                bo->write_int<uliteral_t>(0b01010101, 8);
+            }
             coder.encode(c, literal_r);
         }
     }
@@ -283,4 +287,54 @@ TEST(Coder, binary_output_null_2) {
         0b0000001,  7,
 
     });
+}
+
+TEST(Coder, binary_output_null_3) {
+    test_binary_out("a\0a\0ba\0a\0ba\0ba\0"_v, {
+        0b1,        1,
+        0b00000010, 8, // 2 codeword lengths
+        0b00000001, 8, // 1 of 1
+        0b00000010, 8, // 2 of 2
+        0b00000011, 8, // 3 characters:
+        '\0',       8, // => 0b1
+        'a',        8, // => 0b00
+        'b',        8, // => 0b01
+
+        // 1. tuple
+        0b01010101, 8,
+        0b00,       2,
+        0b1,        1,
+
+        // 2. tuple
+        0b01010101, 8,
+        0b00,       2,
+        0b1,        1,
+
+        // 3. tuple
+        0b01010101, 8,
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // 4. tuple
+        0b01010101, 8,
+        0b00,       2,
+        0b1,        1,
+
+        // 5. tuple
+        0b01010101, 8,
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // 6. tuple
+        0b01010101, 8,
+        0b01,       2,
+        0b00,       2,
+        0b1,        1,
+
+        // BitOStream term
+        0b0000001,  7,
+
+    }, true);
 }
