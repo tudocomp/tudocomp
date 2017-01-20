@@ -134,7 +134,7 @@ public:
 
     /// The backing memory location
     inline const uint8_t* data() const {
-        return &front();
+        return m_data;
     }
 
     // Iterators
