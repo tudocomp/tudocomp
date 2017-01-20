@@ -6,7 +6,14 @@
 
 namespace tdc {
 
-template<class array_t>
+/// \brief Represents a binary max heap backed by an external array of keys.
+///
+/// The max heap induces an order on the indices of the key array it is
+/// backed by. The first element of the heap is the index of the largest item
+/// in the key array.
+///
+/// \tparam array_t The key array type. Must support the `[]` operator.
+template<typename array_t>
 class ArrayMaxHeap {
 
 private:
@@ -47,7 +54,14 @@ private:
     }
 
 public:
-    /// Constructor
+    /// \brief Default constructor.
+    ///
+    /// Note that the constructor will not insert any items into the heap and
+    /// serves merely for initialization.
+    ///
+    /// \param array The array of keys sorted by this heap.
+    /// \param array_size The size of the key array.
+    /// \param heap_size The maximum amount of items stored in the heap.
     inline ArrayMaxHeap(array_t& array, const size_t array_size, const size_t heap_size)
         : m_array(&array), m_size(0)
 	{
@@ -56,7 +70,10 @@ public:
         m_pos = DynamicIntVector(array_size, m_undef, bits_for(m_undef));
     }
 
-    /// Insert array item with index i into heap.
+    /// \brief Inserts an item into the heap.
+    ///
+    /// \param i The index of the item in the key array. The key is retrieved
+    ///          from there.
     inline void insert(len_t i) {
         DCHECK_EQ(m_pos[i], m_undef) << "trying to insert an item that's already in the heap";
 
@@ -116,7 +133,10 @@ private:
     }
 
 public:
-    /// Remove array item with index i from heap.
+    /// \brief Removes an item from the heap.
+    ///
+    /// \param i The index of the item in the key array. The key is retrieved
+    ///          from there.
     inline void remove(len_t i) {
         auto pos = m_pos[i];
         if(pos != m_undef) { // never mind if it's not in the heap
@@ -135,9 +155,14 @@ public:
         })
     }
 
-    /// Decrease key on array item with index i.
-    template<typename T>
-    inline void decrease_key(len_t i, T value) {
+    /// \brief Decreases the key of item in the heap.
+    ///
+    /// \tparam key_t the key type.
+    /// \param i The index of the item in the key array. The key is retrieved
+    ///          from there.
+    /// \param value The new key value.
+    template<typename key_t>
+    inline void decrease_key(len_t i, key_t value) {
         (*m_array)[i] = value;
 
         auto pos = m_pos[i];
@@ -154,23 +179,32 @@ public:
         })
     }
 
-    /// Checks whether or not array item i is contained in this heap.
+    /// \brief Checks whether or not an item is contained in this heap.
+    ///
+    /// \param i The index of the item in the key array.
+    /// \return \e true if the item is contained in the heap, \e false otherwise.
     inline bool contains(len_t i) const {
         return m_pos[i] != m_undef;
     }
 
-    /// Get number of contained entries.
+    /// \brief Yields the number of items currently stored in the heap.
+    /// \return The number of items currently stored in the heap.
     inline size_t size() const {
         return m_size;
     }
 
-    /// Get first item (index of array item with highest value)
+    /// \brief Gets the first (maximum) item from the heap.
+    /// \return The index in the key array that points to the largest key.
     inline size_t get_max() const {
         return m_heap[0];
     }
 
-    inline len_t key(len_t value) const {
-        return (*m_array)[value];
+    /// \brief Gets an item's key.
+    ///
+    /// \param i The index of the item in the key array.
+    /// \return The item's key, retrieved from the key array.
+    inline len_t key(len_t i) const {
+        return (*m_array)[i];
     }
 
     // for tests?

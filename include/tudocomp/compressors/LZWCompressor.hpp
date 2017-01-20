@@ -50,7 +50,7 @@ public:
 		auto reset_dict = [&dict] () {
 			dict.clear();
             std::stringstream ss;
-			for(size_t i = 0; i < uliteral_max+1; ++i) {
+			for(size_t i = 0; i < ULITERAL_MAX+1; ++i) {
 				const node_t node = dict.add_rootnode(i);
 				DCHECK_EQ(node.id(), dict.size() - 1);
                 DCHECK_EQ(node.id(), i);
@@ -71,10 +71,10 @@ public:
 			DVLOG(2) << " child " << child.id() << " #factor " << factor_count << " size " << dict.size() << " node " << node.id();
 
 			if(child.id() == lz78::undef_id) {
-                coder.encode(node.id(), Range(factor_count + uliteral_max + 1));
+                coder.encode(node.id(), Range(factor_count + ULITERAL_MAX + 1));
                 stat_factor_count++;
                 factor_count++;
-				DCHECK_EQ(factor_count+uliteral_max+1, dict.size());
+				DCHECK_EQ(factor_count+ULITERAL_MAX+1, dict.size());
                 node = dict.get_rootnode(static_cast<uliteral_t>(c));
 				// dictionary's maximum size was reached
 				if(dict.size() == m_dict_max_size) {
@@ -92,7 +92,7 @@ public:
 		DLOG(INFO) << "End node id of LZW parsing " << node.id();
 		// take care of left-overs. We do not assume that the stream has a sentinel
 		DCHECK_NE(node.id(), lz78::undef_id);
-		coder.encode(node.id(), Range(factor_count + uliteral_max + 1)); //LZW
+		coder.encode(node.id(), Range(factor_count + ULITERAL_MAX + 1)); //LZW
 		stat_factor_count++;
 		factor_count++;
 
@@ -120,7 +120,7 @@ public:
                 return false;
             }
 
-            lzw::Factor factor(decoder.template decode<len_t>(Range(counter + uliteral_max + 1)));
+            lzw::Factor factor(decoder.template decode<len_t>(Range(counter + ULITERAL_MAX + 1)));
             counter++;
             entry = factor;
             return true;

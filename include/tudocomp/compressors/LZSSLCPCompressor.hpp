@@ -113,6 +113,7 @@ public:
         env().log_stat("threshold", threshold);
         env().log_stat("factors", factors.size());
         env().end_stat_phase();
+        env().log_stat("factors", factors.size());
 
         // encode
         typename coder_t::Encoder coder(env().env_for_option("coder"),

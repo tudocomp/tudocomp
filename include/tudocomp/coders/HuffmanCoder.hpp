@@ -37,12 +37,12 @@ namespace huff {
     }
     template<class T>
     len_t* count_alphabet_literals(T&& input) {
-        len_t* C { new len_t[uliteral_max+1] };
-        std::memset(C, 0, sizeof(len_t)*(uliteral_max+1));
+        len_t* C { new len_t[ULITERAL_MAX+1] };
+        std::memset(C, 0, sizeof(len_t)*(ULITERAL_MAX+1));
 
         while(input.has_next()) {
             literal_t c = input.next().c;
-            DCHECK_LT(static_cast<uliteral_t>(c), uliteral_max+1);
+            DCHECK_LT(static_cast<uliteral_t>(c), ULITERAL_MAX+1);
             DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_t>::max());
             ++C[static_cast<uliteral_t>(c)];
         }
@@ -52,7 +52,7 @@ namespace huff {
      *  @param C @see count_alphabet
      */
     inline len_t effective_alphabet_size(const len_t* C) {
-        return std::count_if(C, C+uliteral_max+1, [] (const len_t& i) { return i != 0; }); // size of the effective alphabet
+        return std::count_if(C, C+ULITERAL_MAX+1, [] (const len_t& i) { return i != 0; }); // size of the effective alphabet
     }
 
     /**
@@ -64,7 +64,7 @@ namespace huff {
     inline uliteral_t* gen_effective_alphabet(const len_t*const C, const size_t alphabet_size) {
         uliteral_t* map_from_effective { new uliteral_t[alphabet_size] };
         size_t j = 0;
-        for(size_t i = 0; i <= uliteral_max; ++i) {
+        for(size_t i = 0; i <= ULITERAL_MAX; ++i) {
             if(C[i] == 0) continue;
             DCHECK_LT(j, alphabet_size);
             map_from_effective[j++] = i;
@@ -72,7 +72,7 @@ namespace huff {
         DCHECK_EQ(j, alphabet_size);
         for(size_t i = 0; i < alphabet_size; ++i) {
 //          DCHECK_NE(map_from_effective[i],0);
-            DCHECK_LE(map_from_effective[i], uliteral_max);
+            DCHECK_LE(map_from_effective[i], ULITERAL_MAX);
             DCHECK_NE(C[map_from_effective[i]],0);
         }
         return map_from_effective;
@@ -297,13 +297,13 @@ namespace huff {
     /** maps from the full alphabet to the effective alphabet
      */
     inline uint8_t* gen_ordered_map_to_effective(const uint8_t*const ordered_map_from_effective, const size_t alphabet_size) {
-            uint8_t* map_to_effective = new uint8_t[uliteral_max];
+            uint8_t* map_to_effective = new uint8_t[ULITERAL_MAX];
             std::memset(map_to_effective, 0xff, sizeof(map_to_effective)*sizeof(uint8_t));
             for(size_t i = 0; i < alphabet_size; ++i) {
                 map_to_effective[ordered_map_from_effective[i]] = i;
             }
             DVLOG(2) << "ordered_map_from_effective : " << arr_to_debug_string(ordered_map_from_effective, alphabet_size);
-            DVLOG(2) << "map_to_effective : " << arr_to_debug_string(map_to_effective, uliteral_max);
+            DVLOG(2) << "map_to_effective : " << arr_to_debug_string(map_to_effective, ULITERAL_MAX);
             return map_to_effective;
     }
 

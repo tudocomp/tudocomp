@@ -18,8 +18,9 @@ namespace tdc {
 class Algorithm {
     Env m_env;
 public:
-    /// \brief Default constructor (deleted).
+    /// \cond DELETED
     inline Algorithm() = delete;
+    /// \endcond
 
     /// \brief Instantiates an algorithm in the specified environment.
     ///

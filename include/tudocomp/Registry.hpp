@@ -30,7 +30,7 @@ inline const eval::AlgorithmTypes& Registry::algorithm_map() const {
     return m_data->m_algorithms;
 }
 
-inline std::vector<pattern::Algorithm> Registry::all_algorithms_with_static(View type) const {
+inline std::vector<pattern::Algorithm> Registry::all_algorithms_with_static_internal(View type) const {
     std::vector<pattern::Algorithm> r;
 
     using AlgorithmArgs = std::vector<pattern::Arg>;
@@ -46,7 +46,7 @@ inline std::vector<pattern::Algorithm> Registry::all_algorithms_with_static(View
             bool is_static = arg.is_static();
             if (is_static) {
                 std::vector<AlgorithmArgs> arg_variations;
-                for(auto arg : all_algorithms_with_static(arg_type)) {
+                for(auto arg : all_algorithms_with_static_internal(arg_type)) {
                     arg_variations.push_back(AlgorithmArgs {
                         pattern::Arg {
                             std::string(arg_name),
@@ -90,6 +90,18 @@ inline std::vector<pattern::Algorithm> Registry::all_algorithms_with_static(View
     }
 
     return r;
+}
+
+inline std::vector<pattern::Algorithm> Registry::all_algorithms_with_static(View type) const {
+    std::vector<pattern::Algorithm> filtered_r;
+
+    for (auto x : all_algorithms_with_static_internal(type)) {
+        if (m_data->m_compressors.count(x) > 0) {
+            filtered_r.push_back(std::move(x));
+        }
+    }
+
+    return filtered_r;
 }
 
 inline std::vector<pattern::Algorithm> Registry::check_for_undefined_compressors() {

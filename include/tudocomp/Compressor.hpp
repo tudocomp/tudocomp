@@ -9,26 +9,36 @@
 
 namespace tdc {
 
-/// Interface for a general compressor.
+/// \brief Base for data compressors.
+///
+/// A \e compressor defines the two operations \e compress and \e decompress.
+/// The \e compress operation transforms an input into a different
+/// representation with the goal of reducing the required memory. The
+/// \e decompress operation restores the original input from such a
+/// representation.
 class Compressor: public Algorithm {
 public:
-    /// Construct the class with an environment.
+    /// \brief Construct the compressor with an environment.
+    ///
+    /// \param env The algorithm's environment.
     inline Compressor(Env&& env): Algorithm(std::move(env)) {}
 
-    /// Compress `inp` into `out`.
+    /// \brief Compress the given input to the given output.
     ///
-    /// \param inp The input stream.
-    /// \param out The output stream.
+    /// \param input The input.
+    /// \param output The output.
     virtual void compress(Input& input, Output& output) = 0;
 
-    /// Decompress `inp` into `out`.
+    /// \brief Decompress the given input to the given output.
     ///
-    /// \param inp The input stream.
-    /// \param out The output stream.
+    /// \param input The input.
+    /// \param output The output.
     virtual void decompress(Input& input, Output& output) = 0;
 };
 
+/// \cond INTERNAL
 using CompressorConstructor = std::function<std::unique_ptr<Compressor>(Env&&)>;
+/// \endcond
 
 }
 
