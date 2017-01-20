@@ -150,11 +150,16 @@ void test_binary_out(string_ref in, std::vector<uint64_t> packed_ints_out, bool 
         std::shared_ptr<BitOStream> bo = std::make_shared<BitOStream>(o);
         typename HuffmanCoder::Encoder coder(std::move(env), bo, ViewLiterals(v));
 
+        bool was_zero = true;
         for (auto c : v) {
-            if (interleave) {
+            if (was_zero && interleave) {
                 bo->write_int<uliteral_t>(0b01010101, 8);
+                was_zero = false;
             }
             coder.encode(c, literal_r);
+            if (c == 0) {
+                was_zero = true;
+            }
         }
     }
     auto res = o.result();
@@ -299,100 +304,6 @@ TEST(Coder, binary_output_null_3) {
         '\0',       8, // => 0b1
         'a',        8, // => 0b00
         'b',        8, // => 0b01
-
-        // 1. tuple
-        0b01010101, 8,
-        0b00,       2,
-        0b1,        1,
-
-        // 2. tuple
-        0b01010101, 8,
-        0b00,       2,
-        0b1,        1,
-
-        // 3. tuple
-        0b01010101, 8,
-        0b01,       2,
-        0b00,       2,
-        0b1,        1,
-
-        // 4. tuple
-        0b01010101, 8,
-        0b00,       2,
-        0b1,        1,
-
-        // 5. tuple
-        0b01010101, 8,
-        0b01,       2,
-        0b00,       2,
-        0b1,        1,
-
-        // 6. tuple
-        0b01010101, 8,
-        0b01,       2,
-        0b00,       2,
-        0b1,        1,
-
-        // BitOStream term
-        0b0000001,  7,
-
-    }, true);
-}
-
-TEST(Coder, binary_output_null_4) {
-    test_binary_out("babacbabacbacba"_v, {
-        0b1,        1,
-        0b00000010, 8, // 2 codeword lengths
-        0b00000001, 8, // 1 of 1
-        0b00000010, 8, // 2 of 2
-        0b00000011, 8, // 3 characters:
-        'a',        8, // => 0b1
-        'b',        8, // => 0b00
-        'c',        8, // => 0b01
-
-        // 1. tuple
-        0b00,       2,
-        0b1,        1,
-
-        // 2. tuple
-        0b00,       2,
-        0b1,        1,
-
-        // 3. tuple
-        0b01,       2,
-        0b00,       2,
-        0b1,        1,
-
-        // 4. tuple
-        0b00,       2,
-        0b1,        1,
-
-        // 5. tuple
-        0b01,       2,
-        0b00,       2,
-        0b1,        1,
-
-        // 6. tuple
-        0b01,       2,
-        0b00,       2,
-        0b1,        1,
-
-        // BitOStream term
-        0b0000001,  7,
-
-    });
-}
-
-TEST(Coder, binary_output_null_5) {
-    test_binary_out("babacbabacbacba"_v, {
-        0b1,        1,
-        0b00000010, 8, // 2 codeword lengths
-        0b00000001, 8, // 1 of 1
-        0b00000010, 8, // 2 of 2
-        0b00000011, 8, // 3 characters:
-        'a',        8, // => 0b1
-        'b',        8, // => 0b00
-        'c',        8, // => 0b01
 
         // 1. tuple
         0b01010101, 8,
