@@ -28,9 +28,9 @@ inline void EnvRoot::end_stat_phase() {
         DCHECK(!m_stat_stack.empty());
 
         Stat& stat_ref = m_stat_stack.top();
-        DVLOG(1) << "end phase \"" << stat_ref.title() << "\"";
-
         stat_ref.end();
+
+        DVLOG(1) << "end phase \"" << stat_ref.title() << "\"";
 
         Stat stat = stat_ref; //copy
         m_stat_stack.pop();
