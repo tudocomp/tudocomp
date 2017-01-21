@@ -48,9 +48,9 @@ namespace lz78u {
                 literal_strings.push_back(c);
             }
 
-            std::cout << "    indices:         " << vec_to_debug_string(indices) << "\n";
-            std::cout << "    start lit str:   " << vec_to_debug_string(start_literal_strings) << "\n";
-            std::cout << "    literal_strings: " << vec_to_debug_string(literal_strings) << "\n";
+            //std::cout << "    indices:         " << vec_to_debug_string(indices) << "\n";
+            //std::cout << "    start lit str:   " << vec_to_debug_string(start_literal_strings) << "\n";
+            //std::cout << "    literal_strings: " << vec_to_debug_string(literal_strings) << "\n";
 
             buffer.clear();
 
@@ -70,7 +70,7 @@ namespace lz78u {
             }
 
             std::reverse(buffer.begin(), buffer.end());
-            std::cout << "    reconstructed: " << vec_to_debug_string(buffer) << "\n";
+            //std::cout << "    reconstructed: " << vec_to_debug_string(buffer) << "\n";
             out << View(buffer);
         }
 
@@ -106,7 +106,7 @@ public:
 
     virtual void compress(Input& input, Output& out) override {
         auto phase1 = env().stat_phase("lz78u");
-        std::cout << "START COMPRESS\n";
+        //std::cout << "START COMPRESS\n";
 
         auto iview = input.as_view();
         View T = iview;
@@ -117,7 +117,7 @@ public:
 
             // TODO: Specialize sdsl template for less alloc here
             std::string bad_copy_1 = T.slice(0, T.size() - 1);
-            std::cout << "text: " << vec_to_debug_string(bad_copy_1) << "\n";
+            //std::cout << "text: " << vec_to_debug_string(bad_copy_1) << "\n";
 
             construct_im(backing_cst, bad_copy_1, 1);
         }
@@ -149,9 +149,11 @@ public:
                 slice = slice.substr(0, slice.size() - 1);
             }
 
+            /*
             std::cout << "out (s,r): ("
                 << vec_to_debug_string(slice)
                 << ", " << int(ref) << ")" << std::endl;
+            */
 
             strategy.encode(lz78u::Factor { slice, ref }, factor_count);
 
@@ -166,7 +168,7 @@ public:
             if(ST.parent(l) == ST.root || R[ST.nid(ST.parent(l))] != 0) {
                 const len_t parent_strdepth = ST.str_depth(ST.parent(l));
 
-                std::cout << "out leaf: [" << (pos+parent_strdepth)  << ","<< (pos + parent_strdepth + 1) << "] ";
+                //std::cout << "out leaf: [" << (pos+parent_strdepth)  << ","<< (pos + parent_strdepth + 1) << "] ";
                 output(T.slice(pos+parent_strdepth, pos + parent_strdepth + 1), R[ST.nid(ST.parent(l))]);
 
                 pos += parent_strdepth+1;
@@ -188,7 +190,7 @@ public:
 
             const auto& str = T.slice(leaflabel + ST.str_depth(parent), leaflabel + ST.str_depth(node));
 
-            std::cout << "out slice: [ "<< (leaflabel + ST.str_depth(parent)) << ", "<< (leaflabel + ST.str_depth(node))<< " ] ";
+            //std::cout << "out slice: [ "<< (leaflabel + ST.str_depth(parent)) << ", "<< (leaflabel + ST.str_depth(node))<< " ] ";
             output(str, R[ST.nid(ST.parent(node))]);
 
             pos += str.size();
@@ -197,7 +199,7 @@ public:
     }
 
     virtual void decompress(Input& input, Output& output) override final {
-        std::cout << "START DECOMPRESS\n";
+        //std::cout << "START DECOMPRESS\n";
         auto out = output.as_stream();
 
         {
@@ -214,9 +216,11 @@ public:
             while (!strategy.eof()) {
                 auto factor = strategy.decode(factor_count);
 
+                /*
                 std::cout << "in m (s,r): ("
                     << vec_to_debug_string(factor.string)
                     << ", " << int(factor.ref) << ")\n";
+                */
 
                 decomp.decompress(factor.ref, factor.string, out);
 
