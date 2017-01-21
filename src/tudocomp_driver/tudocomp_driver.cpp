@@ -8,25 +8,15 @@
 #include <string>
 #include <vector>
 
-#include <gflags/gflags.h>
 #include <glog/logging.h>
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/io/IOUtil.hpp>
 #include <tudocomp/util/Json.hpp>
-#include <tudocomp_driver/Registry.hpp>
 
-DEFINE_string(algorithm, "", "Algorithm to use for (de)compression. See --list for a complete list of them.");
-DEFINE_bool(decompress, false, "Decompress input instead of compressing it.");
-DEFINE_string(output, "", "Choose output filename instead the the default generated one of <input>.tdc or stdout.");
-DEFINE_bool(stats, false, "Print JSON statistics to stdout.");
-DEFINE_string(title, "Untitled", "The title for the tracked statistics.");
-DEFINE_bool(force, false, "Overwrite output even if it exists.");
-DEFINE_bool(list, false, "List all compression algorithms supported by this tool.");
-DEFINE_bool(raw, false, "Do not emit an header into the output file when compressing.");
-DEFINE_bool(usestdin, false, "Read from stdin instead of trying to open a file.");
-DEFINE_bool(usestdout, false, "Output to stdout instead of writing to a file");
+#include <tudocomp_driver/Options.hpp>
+#include <tudocomp_driver/Registry.hpp>
 
 namespace tdc_driver {
 
@@ -40,16 +30,17 @@ static void exit(std::string msg) {
     throw std::runtime_error(msg);
 }
 
-static void validate_flag_combination() {
+static void validate_flag_combination(const Options& options) {
     auto err = [](std::string s) {
         exit(s);
     };
 
-    if (!FLAGS_list) {
-        if (!FLAGS_decompress && (std::string(FLAGS_algorithm) == "")) {
+    if (!options.list) {
+        if (!options.decompress && options.algorithm.empty()) {
             err("Need to give an algorithm for compression");
         }
-        if (FLAGS_decompress && FLAGS_raw && (std::string(FLAGS_algorithm) == "")) {
+
+        if (options.decompress && options.raw && options.algorithm.empty()) {
             err("Need to give an algorithm for raw decompression");
         }
     }
@@ -81,51 +72,48 @@ int main(int argc, char** argv)
     using namespace tdc_algorithms;
 
     google::InitGoogleLogging(argv[0]);
-    google::SetUsageMessage("This tool compresses and decompresses files");
-    if(argc == 1 || strcmp(argv[1],"-h") == 0 || strcmp(argv[1],"--help") == 0 || strcmp(argv[1],"-help") == 0) {
-//        google::ShowUsageWithFlagsRestrict(argv[0], __FILE__); //shortcut
-        std::vector<google::CommandLineFlagInfo> info;
-        google::GetAllFlags(&info);
-        DLOG(INFO) << "--stats " << FLAGS_stats;
 
-        std::cout << argv[0] << " [options] {file to compress/decompress}" << std::endl;
-        std::cout << "You need to provide at least an algorithm and a source (a file) to compress/decompress." << std::endl << std::endl;
-        std::cout
-            << std::setw(20) << std::setiosflags(std::ios::left) << "Parameter"
-            << std::setw(10) << "Type"
-            << std::setw(20) << "Default"
-            << "Description" << std::endl;
-        std::cout << std::endl;
-         for(auto it = info.cbegin(); it != info.cend(); ++it) {
-             if(it->filename != __FILE__) continue;
-                 std::cout
-                    << std::setw(20) << std::setiosflags(std::ios::left)<< (std::string("--")+ it->name)
-                    << std::setw(10) << it->type
-                    << std::setw(20) << (std::string("(") + it->default_value + ")")
-                    << it->description << std::endl;
-         }
+    // Parse command line options
+    if(argc == 1) {
+        // don't do anything when any unknown options have been passed
+        std::cerr << "No options given." << std::endl;
+        std::cerr <<
+            "Try '" << argv[0] << " --help' for more information." << std::endl;
+
+        return 1;
+    }
+
+    Options options(argc, argv);
+
+    if(options.unknown_options) {
+        // don't do anything when any unknown options have been passed
+        std::cerr <<
+            "Try '" << argv[0] << " --help' for more information." << std::endl;
+
+        return 1;
+    }
+
+    if(options.help) {
+        Options::print_usage(std::string(argv[0]), std::cout);
         return 0;
     }
 
-    int first_cmd_arg = google::ParseCommandLineFlags(&argc, &argv, true);
-
     try {
-        validate_flag_combination();
+        validate_flag_combination(options);
 
         // Set up algorithms
         Registry& registry = REGISTRY;
 
-        if (FLAGS_list) {
+        if (options.list) {
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
             std::cout << registry.generate_doc_string();
-
             return 0;
         }
 
-        bool print_stats = FLAGS_stats;
-        bool do_compress = !FLAGS_decompress;
-        bool do_raw = FLAGS_raw;
+        bool print_stats = options.stats;
+        bool do_compress = !options.decompress;
+        bool do_raw = options.raw;
 
         /////////////////////////////////////////////////////////////////////////
         // Select algorithm
@@ -164,8 +152,8 @@ int main(int argc, char** argv)
         };
         Selection selection;
 
-        if (!FLAGS_algorithm.empty()) {
-            auto id_string = FLAGS_algorithm;
+        if (!options.algorithm.empty()) {
+            auto id_string = options.algorithm;
 
             auto av = registry.parse_algorithm_id(id_string);
             auto needs_sentinel_terminator = av.needs_sentinel_terminator();
@@ -185,29 +173,31 @@ int main(int argc, char** argv)
 
         std::string file;
 
-        if ((!FLAGS_usestdin) && (first_cmd_arg < argc)) {
-            file = argv[first_cmd_arg];
-            if (!fexists(file)) {
-                std::cerr << "input file " << file << " does not exist\n";
+        if(!options.stdin) {
+            if (!options.remaining.empty()) {
+                file = options.remaining[0];
+                if (!fexists(file)) {
+                    std::cerr << "input file " << file << " does not exist\n";
+                    return 1;
+                }
+            } else {
+                std::cerr << "No input file given\n";
                 return 1;
             }
-        } else if (!FLAGS_usestdin) {
-            std::cerr << "No input file given\n";
-            return 1;
         }
 
-        bool use_stdin = FLAGS_usestdin;
+        bool use_stdin = options.stdin;
 
         /////////////////////////////////////////////////////////////////////////
         // Select where the output goes to
 
         std::string ofile;
-        bool use_stdout = FLAGS_usestdout;
-        bool use_explict_output = std::string(FLAGS_output) != "" ;
+        bool use_stdout = options.stdout;
+        bool use_explict_output = !options.output.empty();
 
         if (use_explict_output) {
             // Output to manually specifed file
-            ofile = FLAGS_output;
+            ofile = options.output;
         } else if (!use_stdin && do_compress) {
             // Output to a automatically determined file
             ofile = file + "." + COMPRESSED_FILE_ENDING;
@@ -244,7 +234,7 @@ int main(int argc, char** argv)
                 out = Output::from_stream(std::cout);
             } else {
                 // Output to specified file
-                bool force = FLAGS_force;
+                bool force = options.force;
                 if (!check_for_file_already_exist(ofile, force)) {
                     return 1;
                 } else {
@@ -349,7 +339,7 @@ int main(int argc, char** argv)
             size_t out_size = use_stdout ? 0 : io::read_file_size(ofile);
 
             json::Object meta;
-            meta.set("title", FLAGS_title);
+            meta.set("title", options.stats_title);
             meta.set("startTime",
                 std::chrono::duration_cast<std::chrono::seconds>(
                     start_time.time_since_epoch()).count());

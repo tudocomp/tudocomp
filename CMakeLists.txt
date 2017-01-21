@@ -56,7 +56,6 @@ include(find_or_download_package)
 # Usage: find_or_download_package(PACKAGE_NAME, FOUND_FLAG_PREFIX, TARGET_PREFIX)
 find_or_download_package(Glog GLOG glog)
 find_or_download_package(SDSL SDSL sdsl)
-find_or_download_package(GFlags GFLAGS gflags)
 
 include(FindJudy)
 
