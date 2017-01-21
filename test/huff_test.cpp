@@ -142,32 +142,8 @@ TEST(huff, nullbyte) {
     test_huff("hello\0\0\0"_v);
 }
 
-void test_binary_out(string_ref in, std::vector<uint64_t> packed_ints_out, bool interleave = false) {
-    auto v = in;
-    test::TestOutput o(false);
-    {
-        auto env = tdc::builder<HuffmanCoder>().env();
-        std::shared_ptr<BitOStream> bo = std::make_shared<BitOStream>(o);
-        typename HuffmanCoder::Encoder coder(std::move(env), bo, ViewLiterals(v));
-
-        bool was_zero = true;
-        for (auto c : v) {
-            if (was_zero && interleave) {
-                bo->write_int<uliteral_t>(0b01010101, 8);
-                was_zero = false;
-            }
-            coder.encode(c, literal_r);
-            if (c == 0) {
-                was_zero = true;
-            }
-        }
-    }
-    auto res = o.result();
-    test::assert_eq_binary(res, packed_ints_out);
-}
-
 TEST(Coder, binary_output) {
-    test_binary_out("abcabacba"_v, {
+    test::test_binary_out<HuffmanCoder>("abcabacba"_v, {
         // leading 1 bit to signify start of header
         0b1,        1,
 
@@ -209,7 +185,7 @@ TEST(Coder, binary_output) {
 }
 
 TEST(Coder, binary_output_null) {
-    test_binary_out("ab\0aba\0ba"_v, {
+    test::test_binary_out<HuffmanCoder>("ab\0aba\0ba"_v, {
         // leading 1 bit to signify start of header
         0b1,        1,
 
@@ -251,7 +227,7 @@ TEST(Coder, binary_output_null) {
 }
 
 TEST(Coder, binary_output_null_2) {
-    test_binary_out("a\0a\0ba\0a\0ba\0ba\0"_v, {
+    test::test_binary_out<HuffmanCoder>("a\0a\0ba\0a\0ba\0ba\0"_v, {
         0b1,        1,
         0b00000010, 8, // 2 codeword lengths
         0b00000001, 8, // 1 of 1
@@ -295,7 +271,7 @@ TEST(Coder, binary_output_null_2) {
 }
 
 TEST(Coder, binary_output_null_3) {
-    test_binary_out("a\0a\0ba\0a\0ba\0ba\0"_v, {
+    test::test_binary_out<HuffmanCoder>("a\0a\0ba\0a\0ba\0ba\0"_v, {
         0b1,        1,
         0b00000010, 8, // 2 codeword lengths
         0b00000001, 8, // 1 of 1

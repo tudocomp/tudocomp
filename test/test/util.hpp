@@ -20,8 +20,8 @@
 #include <tudocomp/io.hpp>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/util/Generators.hpp>
-
-#include <tudocomp/util/Generators.hpp>
+#include <tudocomp/Literal.hpp>
+#include <tudocomp/Range.hpp>
 
 using namespace tdc;
 
@@ -573,6 +573,34 @@ TestInput decompress_input_file(string_ref path) {
 /// The bytes output to it are accessible with the `.result()` accessor.
 TestOutput decompress_output() {
     return TestOutput(true);
+}
+
+
+template<typename Coder>
+void test_binary_out(string_ref in, std::vector<uint64_t> packed_ints_out, bool interleave = false) {
+    using namespace tdc;
+
+    auto v = in;
+    test::TestOutput o(false);
+    {
+        auto env = tdc::builder<Coder>().env();
+        std::shared_ptr<BitOStream> bo = std::make_shared<BitOStream>(o);
+        typename Coder::Encoder coder(std::move(env), bo, ViewLiterals(v));
+
+        bool was_zero = true;
+        for (auto c : v) {
+            if (was_zero && interleave) {
+                bo->write_int<uliteral_t>(0b01010101, 8);
+                was_zero = false;
+            }
+            coder.encode(c, literal_r);
+            if (c == 0) {
+                was_zero = true;
+            }
+        }
+    }
+    auto res = o.result();
+    test::assert_eq_binary(res, packed_ints_out);
 }
 
 }
