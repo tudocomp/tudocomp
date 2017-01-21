@@ -148,6 +148,7 @@ struct Error {
     std::string decompress_stdout;
     std::string text;
     std::string roundtrip_text;
+    std::string algo;
 };
 
 Error roundtrip(std::string algo,
@@ -157,6 +158,7 @@ Error roundtrip(std::string algo,
                 bool& abort)
 {
     Error current { false };
+    current.algo = algo;
 
     std::string in_file     = roundtrip_in_file_name(algo, name_addition);
     std::string comp_file   = roundtrip_comp_file_name(algo, name_addition);
