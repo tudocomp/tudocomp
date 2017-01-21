@@ -74,6 +74,10 @@ lz78u_strategy = [
     ("lz78u::BufferingStrategy", "compressors/lz78u/BufferingStrategy.hpp", [tmp_lz78u_string_coder]),
 ]
 
+textds = [
+    ("TextDS<>", "ds/TextDS.hpp", [])
+]
+
 compressors = [
     ("RunLengthEncoder",            "compressors/RunLengthEncoder.hpp",            [context_free_coder]),
     ("LiteralEncoder",              "compressors/LiteralEncoder.hpp",              [coder]),
@@ -81,16 +85,14 @@ compressors = [
     ("LZ78UCompressor",             "compressors/LZ78UCompressor.hpp",             [lz78u_strategy, context_free_coder]),
     ("LZWCompressor",               "compressors/LZWCompressor.hpp",               [context_free_coder, lz78_trie]),
     ("RePairCompressor",            "compressors/RePairCompressor.hpp",            [coder]),
-    ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [coder]),
-    ("LCPCompressor",               "compressors/LCPCompressor.hpp",               [lcpc_coder, lcpc_strat, lcpc_buffer]),
+    ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [coder, textds]),
+    ("LCPCompressor",               "compressors/LCPCompressor.hpp",               [lcpc_coder, lcpc_strat, lcpc_buffer, textds]),
     ("LZSSSlidingWindowCompressor", "compressors/LZSSSlidingWindowCompressor.hpp", [context_free_coder]),
     ("EasyRLECompressor",           "compressors/EasyRLECompressor.hpp",           []),
     ("MTFCompressor",               "compressors/MTFCompressor.hpp",               []),
     ("ChainCompressor",             "compressors/ChainCompressor.hpp",             []),
     ("NoopCompressor",              "compressors/NoopCompressor.hpp",              []),
-
-    # TODO: Not sure what the original _ in the bash script did
-    #("BWTCompressor",               "compressors/BWTCompressor.hpp" _
+    ("BWTCompressor",               "compressors/BWTCompressor.hpp",               [textds]),
 ]
 
 algorithms_cpp_template = '''
