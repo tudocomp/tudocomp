@@ -52,6 +52,10 @@ public:
     inline void encode(value_t v, const BitRange& r) {
         m_out->write_bit(v);
     }
+
+    inline const std::shared_ptr<BitOStream>& stream() {
+        return m_out;
+    }
 };
 
 /// \brief Defines constructors for clases inheriting from \ref tdc::Encoder.
@@ -121,6 +125,10 @@ public:
     template<typename value_t>
     inline value_t decode(const BitRange& r) {
         return value_t(m_in->read_bit());
+    }
+
+    inline const std::shared_ptr<BitIStream>& stream() {
+        return m_in;
     }
 };
 

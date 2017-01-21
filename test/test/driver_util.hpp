@@ -138,20 +138,6 @@ std::string format_escape(const std::string& s) {
     return ss.str();
 }
 
-std::string format_diff(const std::string& a, const std::string& b) {
-    std::string diff;
-    for(size_t i = 0; i < std::max(a.size(), b.size()); i++) {
-        if (i < std::min(a.size(), b.size())
-            && a[i] == b[i]
-        ) {
-            diff.push_back('-');
-        } else {
-            diff.push_back('#');
-        }
-    }
-    return diff;
-}
-
 struct Error {
     bool has_error;
     std::string test;
@@ -162,6 +148,7 @@ struct Error {
     std::string decompress_stdout;
     std::string text;
     std::string roundtrip_text;
+    std::string algo;
 };
 
 Error roundtrip(std::string algo,
@@ -171,6 +158,7 @@ Error roundtrip(std::string algo,
                 bool& abort)
 {
     Error current { false };
+    current.algo = algo;
 
     std::string in_file     = roundtrip_in_file_name(algo, name_addition);
     std::string comp_file   = roundtrip_comp_file_name(algo, name_addition);

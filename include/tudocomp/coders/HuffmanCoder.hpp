@@ -312,7 +312,7 @@ namespace huff {
      * Encodes a single literal
      */
     inline void huffman_encode(
-            literal_t input,
+            uliteral_t input,
             tdc::io::BitOStream& os,
             const uint8_t*const ordered_codelengths,
             const uint8_t*const ordered_map_to_effective,
@@ -323,7 +323,7 @@ namespace huff {
         const uint8_t& effective_char = ordered_map_to_effective[char_value];
         DCHECK_LT(effective_char, alphabet_size);
         os.write_int(codewords[effective_char], ordered_codelengths[effective_char]);
-        DVLOG(2) << " codeword " << codewords[effective_char] << " length " << ordered_codelengths[effective_char];
+        DVLOG(2) << " codeword " << codewords[effective_char] << " length " << int(ordered_codelengths[effective_char]);
     }
 
 

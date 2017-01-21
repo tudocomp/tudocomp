@@ -3,6 +3,7 @@
 #include <random>
 #include <string>
 #include <cmath>
+#include <limits>
 
 namespace Ranges {
 	std::pair<size_t,size_t> numbers(48,57);

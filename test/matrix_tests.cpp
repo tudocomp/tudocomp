@@ -152,6 +152,17 @@ TEST(TudocompDriver, roundtrip_matrix) {
         }), 2) << "\n";
         std::cout << "######################################################################\n";
     }
+    std::cout << "# [TL;DR - this failed] ##############################################\n";
+    std::list<std::string> short_errs;
+    for (auto& e : errors) {
+        short_errs.push_back(e.algo);
+    }
+
+    short_errs.unique();
+
+    for (auto& e : short_errs) {
+        std::cout << e << "\n";
+    }
 
     ASSERT_TRUE(errors.empty());
 }

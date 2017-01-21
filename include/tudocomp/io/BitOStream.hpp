@@ -115,8 +115,11 @@ public:
     ///
     /// The \e compressed form of an integer \c n is achieved by splitting
     /// up the bit representation of \c n in blocks of width \c b. For each
-    /// non-zero block (in little endian order), a 1-bit and the block itself
-    /// is written. The compressed integer is finally terminated by a 0-bit.
+    /// non-zero block (in little endian order), a bit flag and the block itself
+    /// is written.
+    ///
+    /// The flag is set to 1 if there is another block after the current one,
+    /// and otherwise set to 0 to mark the block as the last one.
     ///
     /// \tparam The integer type to write.
     /// \param v The integer to write.

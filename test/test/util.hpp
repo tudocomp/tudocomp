@@ -20,6 +20,8 @@
 #include <tudocomp/io.hpp>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/util/Generators.hpp>
+#include <tudocomp/Literal.hpp>
+#include <tudocomp/Range.hpp>
 
 using namespace tdc;
 
@@ -279,6 +281,85 @@ inline std::vector<uint8_t> pack_integers(std::vector<uint64_t> ints) {
     return bits;
 }
 
+std::string format_diff(const std::string& a, const std::string& b) {
+    std::string diff;
+    for(size_t i = 0; i < std::max(a.size(), b.size()); i++) {
+        if (i < std::min(a.size(), b.size())
+            && a[i] == b[i]
+        ) {
+            diff.push_back('-');
+        } else {
+            diff.push_back('#');
+        }
+    }
+    return diff;
+}
+
+std::string format_diff_bin(const std::string& a, const std::string& b) {
+    std::string diff;
+    for(size_t i = 0; i < std::max(a.size(), b.size()); i++) {
+        if (i < std::min(a.size(), b.size())
+            && a[i] == ' ' && b[i] == ' '
+        ) {
+            diff.push_back(' ');
+        } else if (i < std::min(a.size(), b.size())
+            && a[i] == b[i]
+        ) {
+            diff.push_back('-');
+        } else {
+            diff.push_back('#');
+        }
+    }
+    return diff;
+}
+
+using PacketIntegers = std::vector<uint64_t>;
+void assert_eq_binary(string_ref actual, PacketIntegers expected) {
+    auto out = test::pack_integers(expected);
+    if (actual != out) {
+        auto print_bits = [&expected](string_ref s, bool byte_units = false) -> std::string {
+            std::stringstream ss;
+
+            // iterate over bits
+
+            size_t packed_i = 0;
+            size_t last_packed_i = 0;
+
+            for (uint64_t i = 0; i < s.size() * 8; i++) {
+                if (!byte_units && packed_i < expected.size() && i == last_packed_i + expected[packed_i + 1]) {
+                    ss << " ";
+                    last_packed_i = i;
+                    packed_i += 2;
+                } else if (byte_units && i > 0 && i % 8 == 0) {
+                    ss << " ";
+                }
+
+                uint8_t c = s[i / 8];
+                ss << int((c >> (8 - (i % 8) - 1)) & 1);
+            }
+
+            return ss.str();
+        };
+
+        auto p_is = print_bits(actual);
+        auto p_should = print_bits(out);
+        auto p_diff = format_diff_bin(p_is, p_should);
+
+        auto p_is_b = print_bits(actual, true);
+        auto p_should_b = print_bits(out, true);
+        auto p_diff_b = format_diff_bin(p_is_b, p_should_b);
+
+        FAIL()
+            << "Should Be: " << p_should   << "\n"
+            << "       Is: " << p_is       << "\n"
+            << "     Diff: " << p_diff     << "\n"
+            << "As Bytes:"                 << "\n"
+            << "Should Be: " << p_should_b << "\n"
+            << "       Is: " << p_is_b     << "\n"
+            << "     Diff: " << p_diff_b   << "\n";
+    }
+}
+
 template<class C>
 struct CompressResult {
 private:
@@ -412,6 +493,19 @@ inline void roundtrip(string_ref original_text,
     e.assert_decompress_bytes();
 }
 
+template<class T>
+inline void roundtrip_binary(string_ref original_text,
+                            const std::vector<uint64_t>& expected_compressed_text_packed_ints,
+                            const std::string& options = "",
+                            const Registry& registry = Registry()) {
+    auto e = RoundTrip<T>(options, registry).compress(original_text);
+    auto& compressed_text = e.bytes;
+
+    assert_eq_binary(compressed_text, expected_compressed_text_packed_ints);
+
+    e.assert_decompress_bytes();
+}
+
 class TestInput: public Input {
 public:
     inline TestInput(string_ref text, bool sentinel): Input(text) {
@@ -479,6 +573,34 @@ TestInput decompress_input_file(string_ref path) {
 /// The bytes output to it are accessible with the `.result()` accessor.
 TestOutput decompress_output() {
     return TestOutput(true);
+}
+
+
+template<typename Coder>
+void test_binary_out(string_ref in, std::vector<uint64_t> packed_ints_out, bool interleave = false) {
+    using namespace tdc;
+
+    auto v = in;
+    test::TestOutput o(false);
+    {
+        auto env = tdc::builder<Coder>().env();
+        std::shared_ptr<BitOStream> bo = std::make_shared<BitOStream>(o);
+        typename Coder::Encoder coder(std::move(env), bo, ViewLiterals(v));
+
+        bool was_zero = true;
+        for (auto c : v) {
+            if (was_zero && interleave) {
+                bo->write_int<uliteral_t>(0b01010101, 8);
+                was_zero = false;
+            }
+            coder.encode(c, literal_r);
+            if (c == 0) {
+                was_zero = true;
+            }
+        }
+    }
+    auto res = o.result();
+    test::assert_eq_binary(res, packed_ints_out);
 }
 
 }

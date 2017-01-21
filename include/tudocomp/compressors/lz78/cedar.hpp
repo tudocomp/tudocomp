@@ -305,9 +305,9 @@ namespace cedar {
     }
     const void* array () const { return _array; }
     void clear (const bool reuse = true) {
-      if (_array && ! _no_delete) std::free (_array); _array = 0;
-      if (_ninfo) std::free (_ninfo); _ninfo = 0;
-      if (_block) std::free (_block); _block = 0;
+      if (_array && ! _no_delete) { std::free (_array); _array = 0; }
+      if (_ninfo) { std::free (_ninfo); _ninfo = 0; }
+      if (_block) { std::free (_block); _block = 0; }
       _bheadF = _bheadC = _bheadO = _capacity = _size = 0; // *
       if (reuse) _initialize ();
       _no_delete = false;
