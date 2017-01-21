@@ -26,9 +26,13 @@ context_free_coder = [
     ("EliasDeltaCoder", "coders/EliasDeltaCoder.hpp", []),
 ]
 
-coder = context_free_coder + [
-    ("Code2Coder",   "coders/Code2Coder.hpp",   []),
+# TODO: Fix bad interaction between code2 and lz78u code and remove this distinction
+tmp_lz78u_string_coder = context_free_coder + [
     ("HuffmanCoder", "coders/HuffmanCoder.hpp", []),
+]
+
+coder = tmp_lz78u_string_coder + [
+    ("Code2Coder",   "coders/Code2Coder.hpp",   []),
 ]
 
 lz78_trie = [
@@ -67,7 +71,7 @@ lcpc_coder = [
 
 lz78u_strategy = [
     ("lz78u::StreamingStrategy", "compressors/lz78u/StreamingStrategy.hpp", [context_free_coder]),
-    ("lz78u::BufferingStrategy", "compressors/lz78u/BufferingStrategy.hpp", [coder]),
+    ("lz78u::BufferingStrategy", "compressors/lz78u/BufferingStrategy.hpp", [tmp_lz78u_string_coder]),
 ]
 
 compressors = [
