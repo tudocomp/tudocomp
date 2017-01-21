@@ -19,13 +19,80 @@ inline size_t iter_log(size_t n) {
     return 4;
 }
 
-struct MetaBlock {
+template<class T>
+struct LabeledBlock {
     size_t type;
-    View view;
+    ConstGenericView<T> view;
 };
 
-bool meta_blocks_debug(const std::vector<MetaBlock> meta_blocks, View in) {
-    std::cout << "\nMeta blocks:\n";
+void print_labeled_blocks(const std::vector<LabeledBlock<uint8_t>>& labeled_blocks) {
+    std::cout << "|";
+    for (auto& mb : labeled_blocks) {
+        size_t w = mb.view.size();
+
+        if (w <= 2) {
+            std::cout << std::right << std::setw(w) << mb.type;
+        } else {
+            w /= 2;
+            std::cout << std::setw(w) << "";
+            std::cout << std::left << std::setw(mb.view.size() - w) << mb.type;
+        }
+
+        std::cout << "|";
+    }
+    std::cout << "\n";
+
+    std::cout << "|";
+    for (auto& mb : labeled_blocks) {
+        std::cout << mb.view << "|";
+    }
+    std::cout << "\n";
+}
+
+template<class T>
+void print_labeled_blocks2(const std::vector<LabeledBlock<T>>& labeled_blocks) {
+    std::vector<std::string> fragments;
+    for (auto& mb : labeled_blocks) {
+        std::stringstream ss;
+        bool first = true;
+        ss << " ";
+        for (auto e : mb.view) {
+            if (!first) {
+                ss << ", ";
+            }
+            ss << e;
+            first = false;
+        }
+        ss << " ";
+        fragments.push_back(ss.str());
+    }
+
+    std::cout << "|";
+    for (size_t i = 0; i < labeled_blocks.size(); i++) {
+        size_t w = fragments[i].size();
+        auto& mb = labeled_blocks[i];
+
+        if (w <= 2) {
+            std::cout << std::right << std::setw(w) << mb.type;
+        } else {
+            w /= 2;
+            std::cout << std::setw(w) << "";
+            std::cout << std::left << std::setw(fragments[i].size() - w) << mb.type;
+        }
+
+        std::cout << "|";
+    }
+    std::cout << "\n";
+
+    std::cout << "|";
+    for (size_t i = 0; i < labeled_blocks.size(); i++) {
+        std::cout << fragments[i] << "|";
+    }
+    std::cout << "\n";
+}
+
+bool initial_labeled_blocks_debug(const std::vector<LabeledBlock<uint8_t>> meta_blocks, View in) {
+    std::cout << "\nLabeled blocks:\n";
 
     bool ok = false;
     {
@@ -36,48 +103,8 @@ bool meta_blocks_debug(const std::vector<MetaBlock> meta_blocks, View in) {
         ok = (ss.str() == std::string(in));
     }
 
-    std::cout << "|";
-    for (auto& mb : meta_blocks) {
-        size_t w = mb.view.size() / 2;
-        std::cout << std::setw(w) << "";
-        std::cout << std::left << std::setw(mb.view.size() - w) << mb.type;
-        std::cout << "|";
-    }
-    std::cout << "\n";
+    print_labeled_blocks(meta_blocks);
 
-    std::cout << "|";
-    for (auto& mb : meta_blocks) {
-        std::cout << mb.view << "|";
-    }
-    std::cout << "\n";
-    return ok;
-}
-
-bool blocks_debug(const std::vector<View> blocks, View in) {
-    std::cout << "\nBlocks:\n";
-
-    bool ok = false;
-    {
-        std::stringstream ss;
-        for (auto& b : blocks) {
-            ss << b;
-        }
-        ok = (ss.str() == std::string(in));
-    }
-
-    std::cout << "|";
-    for (auto& b : blocks) {
-        size_t w = b.size();
-        std::cout << std::setw(w) << "";
-        std::cout << "|";
-    }
-    std::cout << "\n";
-
-    std::cout << "|";
-    for (auto& b : blocks) {
-        std::cout << b << "|";
-    }
-    std::cout << "\n";
     return ok;
 }
 
@@ -166,14 +193,14 @@ bool check_landmarks(const T& t) {
 }
 
 // NB: Thuis assumes iter_log(alphabet_size) valid bytes before A
-template<class G>
-inline void handle_meta_block_2(View A,
+template<class T, class G>
+inline void handle_meta_block_2(ConstGenericView<T> A,
                                 uint64_t alphabet_size,
-                                std::vector<uint8_t>& buf,
+                                std::vector<T>& buf,
                                 G push_block) {
     DCHECK(A.size() > 0);
     auto type_3_prefix = iter_log(alphabet_size);
-    A = View(A.data() - type_3_prefix, A.size() + type_3_prefix);
+    A = ConstGenericView<T>(A.data() - type_3_prefix, A.size() + type_3_prefix);
     buf.clear();
     buf.insert(buf.cbegin(), A.cbegin(), A.cend());
 
@@ -199,7 +226,7 @@ inline void handle_meta_block_2(View A,
 
     // final pass: reduce to alphabet 3
     for(uint to_replace = 3; to_replace < 6; to_replace++) {
-        for_neigbors(buf, [&](size_t i, uint8_t neighbors[], uint8_t neighbor_len) {
+        for_neigbors(buf, [&](size_t i, T neighbors[], uint8_t neighbor_len) {
             auto& e = buf[i];
             if (e == to_replace) {
                 e = 0;
@@ -228,7 +255,7 @@ inline void handle_meta_block_2(View A,
     // buf gets reduced to 2 bit values anyway, and stays around long enough
     GenericIntVector<uint_t<1>> landmarks(buf.size());
 
-    for_neigbors(buf, [&](size_t i, uint8_t neighbors[], uint8_t neighbor_len) {
+    for_neigbors(buf, [&](size_t i, T neighbors[], uint8_t neighbor_len) {
         bool is_high_landmark = true;
         for (uint8_t j = 0; j < neighbor_len; j++) {
             if (neighbors[j] > buf[i]) {
@@ -243,7 +270,7 @@ inline void handle_meta_block_2(View A,
     std::cout << "  High Landmarks:\n";
     std::cout << "  " << vec_to_debug_string(landmarks) << "\n";
 
-    for_neigbors(buf, [&](size_t i, uint8_t neighbors[], uint8_t neighbor_len) {
+    for_neigbors(buf, [&](size_t i, T neighbors[], uint8_t neighbor_len) {
         bool is_low_landmark = true;
         for (uint8_t j = 0; j < neighbor_len; j++) {
             if (neighbors[j] < buf[i]) {
@@ -321,12 +348,15 @@ inline void handle_meta_block_2(View A,
 
 }
 
-template<class G>
-inline void handle_meta_block_13(View A,
+template<class T, class G>
+inline void handle_meta_block_13(ConstGenericView<T> A,
                                  G push_block) {
     while (true) {
         auto s = A.size();
-        DCHECK(s > 1);
+
+        // TODO: Decide how to handle
+        // DCHECK(s > 1);
+        if (s == 1) { push_block(A); return; }
 
         if (s == 2) {
             push_block(A);
@@ -350,7 +380,7 @@ inline std::vector<ConstGenericView<T>> partition(ConstGenericView<T> in, size_t
     using GView = ConstGenericView<T>;
 
     std::vector<GView> blocks;
-    std::vector<MetaBlock> meta_blocks;
+    std::vector<LabeledBlock<T>> meta_blocks;
 
     auto push_block = [&](GView A) {
         blocks.push_back(A);
@@ -372,10 +402,10 @@ inline std::vector<ConstGenericView<T>> partition(ConstGenericView<T> in, size_t
                 auto& v = meta_blocks.back().view;
                 v = GView(v.data(), v.size() + 1);
             } else {
-                meta_blocks.push_back(MetaBlock { type, A });
+                meta_blocks.push_back(LabeledBlock<T> { type, A });
             }
         } else {
-            meta_blocks.push_back(MetaBlock { type, A });
+            meta_blocks.push_back(LabeledBlock<T> { type, A });
         }
     };
 
@@ -434,14 +464,15 @@ inline std::vector<ConstGenericView<T>> partition(ConstGenericView<T> in, size_t
         if (type == 2) {
             handle_meta_block_2(A, alphabet_size, buf, push_block);
         } else {
-            DCHECK(A.size() > 1 /* 1-byte input not covered by paper */);
+            // TODO: Decide how to handle
+            // DCHECK(A.size() > 1 /* 1-byte input not covered by paper */);
             handle_meta_block_13(A, push_block);
         }
 
         std::cout << "  ---\n";
     };
 
-    DCHECK(meta_blocks_debug(meta_blocks, in));
+    //DCHECK(initial_labeled_blocks_debug(meta_blocks, in));
 
     for (auto mb : meta_blocks) {
         real_meta_block(mb.type, mb.view);
@@ -451,9 +482,32 @@ inline std::vector<ConstGenericView<T>> partition(ConstGenericView<T> in, size_t
 }
 
 template<class T>
-inline std::unordered_map<ConstGenericView<T>, uint64_t> block_label(
-    const std::vector<ConstGenericView<T>>& blocks
-) {
+struct BlockLabelVec {
+    std::vector<LabeledBlock<T>> vec;
+    uint64_t alphabet_size;
+};
+
+template<class T>
+BlockLabelVec<T> labeled_partition(ConstGenericView<T> in, size_t alphabet_size){
+    auto blocks = partition(in, alphabet_size);
+    auto labels = block_label(blocks);
+
+    std::vector<LabeledBlock<T>> final_labels;
+    for (auto block : blocks) {
+        final_labels.push_back(LabeledBlock<T> { labels.map[block], block });
+    }
+
+    return BlockLabelVec<T> { final_labels, labels.alphabet_size };
+}
+
+template<class T>
+struct BlockLabelMap {
+    std::unordered_map<ConstGenericView<T>, uint64_t> map;
+    uint64_t alphabet_size;
+};
+
+template<class T>
+inline BlockLabelMap<T> block_label(const std::vector<ConstGenericView<T>>& blocks) {
     uint64_t counter = 0;
     std::unordered_map<ConstGenericView<T>, uint64_t> map;
 
@@ -464,7 +518,7 @@ inline std::unordered_map<ConstGenericView<T>, uint64_t> block_label(
         }
     }
 
-    return map;
+    return BlockLabelMap<T> { map, counter };
 }
 
 class EspCompressor: public Compressor {
@@ -482,14 +536,35 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
         DCHECK(in.size() > 0 /* 0-byte input not covered by paper */);
-        size_t alphabet_size = 256;
-        // initial
-        auto blocks = partition(in, alphabet_size);
-        DCHECK(blocks_debug(blocks, in));
 
-        auto labels = block_label(blocks);
+        if (input.size() == 1) {
+            std::cout << "done 0\n";
+        } else {
+            // initial
+            std::cout << "\n>>> PARTITION 0 <<<\n";
+            size_t alphabet_size = 256;
+            auto labeled_blocks = labeled_partition(in, alphabet_size);
+            DCHECK(initial_labeled_blocks_debug(labeled_blocks.vec, in));
+            std::cout << "\n>>> PARTITION 1 <<<\n";
 
+            std::vector<size_t> new_string;
+            for (auto& e : labeled_blocks.vec) {
+                new_string.push_back(e.type);
+            }
 
+            if (new_string.size() == 1) {
+                std::cout << "done 1\n";
+            } else {
+                auto new_alphabet_size = labeled_blocks.alphabet_size;
+                std::cout << "New alphabet size: " << new_alphabet_size << "\n";
+                auto new_labeled_blocks = labeled_partition<size_t>(new_string, new_alphabet_size);
+                print_labeled_blocks2(new_labeled_blocks.vec);
+            }
+
+            while (false) {
+
+            }
+        }
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
