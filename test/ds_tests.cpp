@@ -82,7 +82,7 @@ void test_sa(const std::string& str, textds_t& t) {
     for(size_t i = 1; i < size; i++) {
         ASSERT_GE(t[sa[i]], t[sa[i-1]]);
 		ASSERT_LT(str.substr(sa[i-1]), str.substr(sa[i]));
-		ASSERT_LT(View(str,sa[i-1]), View(str,sa[i]));
+		ASSERT_LT(View(str).substr(sa[i-1]), View(str).substr(sa[i]));
     }
 }
 

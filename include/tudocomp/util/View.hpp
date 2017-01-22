@@ -78,10 +78,6 @@ public:
     inline View(const std::string& other):
         View((const uint8_t*) other.data(), other.size()) {}
 
-    /// Construct a View equal to the (offset)-th suffix of other
-    inline View(const View& other, size_t offset):
-        View((const uint8_t*) other.data()+offset, other.size()-offset) { DCHECK_LE(offset, other.size()); }
-
     /// Construct a View pointing at a C-style null terminated string.
     ///
     /// Can be used to construct from a string literal
