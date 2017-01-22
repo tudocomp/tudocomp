@@ -217,7 +217,6 @@ int main(int argc, char** argv)
         clk::time_point end_time;
 
         {
-            std::vector<uint8_t> stream_buffer;
             Input inp;
 
             if (use_stdin) {

@@ -150,6 +150,7 @@ namespace io {
         Input(std::istream& stream) {
             auto buf = io::read_stream_to_stl_byte_container<
                 std::vector<uint8_t>>(stream);
+            buf.shrink_to_fit();
             auto owned = EscapableBuf(std::move(buf));
             auto view = owned.view();
 
