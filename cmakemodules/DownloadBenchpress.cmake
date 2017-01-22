@@ -6,6 +6,9 @@ ExternalProject_Add(
 )
 ExternalProject_Get_Property(benchpress_external source_dir install_dir)
 
+# Only build on demand
+set_target_properties(benchpress_external PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
 file(MAKE_DIRECTORY "${install_dir}/include")
 
 set(${package_found_prefix}_CMAKE_DEP benchpress_external)

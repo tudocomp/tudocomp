@@ -6,6 +6,9 @@ ExternalProject_Add(
 )
 ExternalProject_Get_Property(gtest_external source_dir install_dir)
 
+# Only build on demand
+set_target_properties(gtest_external PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
 # Add thread support
 find_package(Threads REQUIRED)
 set_target_properties(gtest_external PROPERTIES
