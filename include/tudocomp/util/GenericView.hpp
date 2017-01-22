@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_GENERIC_VIEW_H
-#define TUDOCOMP_GENERIC_VIEW_H
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -35,6 +34,8 @@ class GenericView: GenericViewBase<T, T*> {
     using Super = GenericViewBase<T, T*>;
     inline GenericView(const Super& other): Super::GenericViewBase(other) {}
 public:
+    // Type members
+
     using value_type             = typename Super::value_type;
     using reference              = T&;
     using const_reference        = typename Super::const_reference;
@@ -47,7 +48,11 @@ public:
     using difference_type        = typename Super::difference_type;
     using size_type              = typename Super::size_type;
 
+    // static value members
+
     static const size_type npos  = Super::npos;
+
+    // Constructors
 
     /// Construct a empty View
     inline GenericView(): Super::GenericViewBase() {}
@@ -133,8 +138,12 @@ public:
 
     using Super::clear;
 
-    inline GenericView substr(size_type from, size_type to = npos) const {
-        return Super::substr(from, to);
+    inline GenericView substr(size_type pos, size_type len = npos) const {
+        return Super::substr(pos, len);
+    }
+
+    inline GenericView slice(size_type from, size_type to = npos) const {
+        return Super::slice(from, to);
     }
 
     using Super::remove_prefix;
@@ -322,8 +331,12 @@ public:
 
     using Super::clear;
 
-    inline ConstGenericView substr(size_type from, size_type to = npos) const {
-        return ConstGenericView(Super::substr(from, to));
+    inline ConstGenericView substr(size_type pos, size_type len = npos) const {
+        return ConstGenericView(Super::substr(pos, len));
+    }
+
+    inline ConstGenericView slice(size_type from, size_type to = npos) const {
+        return ConstGenericView(Super::slice(from, to));
     }
 
     using Super::remove_prefix;
@@ -463,8 +476,12 @@ public:
 
     using Super::clear;
 
-    inline ConstGenericView substr(size_type from, size_type to = npos) const {
-        return ConstGenericView(Super::substr(from, to));
+    inline ConstGenericView substr(size_type pos, size_type len = npos) const {
+        return ConstGenericView(Super::substr(pos, len));
+    }
+
+    inline ConstGenericView slice(size_type from, size_type to = npos) const {
+        return ConstGenericView(Super::slice(from, to));
     }
 
     using Super::remove_prefix;
@@ -548,8 +565,6 @@ inline ConstGenericView<uint8_t> operator "" _v(const char* str, size_t n)
     return ConstGenericView<uint8_t>(str, n);
 }
 
-using ByteView = ConstGenericView<uint8_t>;
-
 }
 
 namespace std {
@@ -575,5 +590,3 @@ namespace std {
         }
     };
 }
-
-#endif

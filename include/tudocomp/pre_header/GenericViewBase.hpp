@@ -1,5 +1,4 @@
-#ifndef TUDOCOMP_GENERIC_VIEW_BASE_H
-#define TUDOCOMP_GENERIC_VIEW_BASE_H
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -165,7 +164,7 @@ public:
         m_size = 0;
     }
 
-    inline GenericViewBase substr(size_type from, size_type to = npos) const {
+    inline GenericViewBase slice(size_type from, size_type to = npos) const {
         if (to == npos) {
             to = m_size;
         }
@@ -177,12 +176,20 @@ public:
         return GenericViewBase(m_data + from, to - from);
     }
 
+    inline GenericViewBase substr(size_type pos, size_type len = npos) const {
+        if (len == npos) {
+            len = m_size - pos;
+        }
+
+        return slice(pos, pos + len);
+    }
+
     inline void remove_prefix(size_type n) {
-        *this = substr(n);
+        *this = slice(n);
     }
 
     inline void remove_suffix(size_type n) {
-        *this = substr(0, m_size - n);
+        *this = slice(0, m_size - n);
     }
 
     inline bool starts_with(const T& c) const {
@@ -191,7 +198,7 @@ public:
 
     inline bool starts_with(const GenericViewBase<T, const T*>& x) const {
         GenericViewBase<T, const T*> y(m_data, m_size);
-        return (x.size() <= y.size()) && op_eq(y.substr(0, x.size()), x);
+        return (x.size() <= y.size()) && op_eq(y.slice(0, x.size()), x);
     }
 
     inline bool ends_with(const T& c) const {
@@ -200,7 +207,7 @@ public:
 
     inline bool ends_with(const GenericViewBase<T, const T*>& x) const {
         GenericViewBase<T, const T*> y(m_data, m_size);
-        return (x.size() <= y.size()) && op_eq(y.substr(size() - x.size()), x);
+        return (x.size() <= y.size()) && op_eq(y.slice(size() - x.size()), x);
     }
 
     template<class U, class Q>
@@ -241,5 +248,3 @@ void swap(GenericViewBase<T, Q>& lhs, GenericViewBase<T, Q>& rhs) {
 /// \endcond
 
 }
-
-#endif

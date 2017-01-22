@@ -19,9 +19,8 @@
 
 namespace tdc {
 
+using ByteView = ConstGenericView<uint8_t>;
 using View = ByteView;
 using string_ref = View;
 
 }
-
-
