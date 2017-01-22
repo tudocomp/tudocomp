@@ -4,12 +4,16 @@ import re
 import sys
 import itertools
 
-if not len(sys.argv[1:]) == 4:
-    print(str.format("Usage {} [tudocomp_algorithms.cpp] [tudocomp.hpp] [config.h] [selection]", sys.argv[0]))
+if not len(sys.argv[1:]) == 3:
+    print(str.format("Usage {} [config.h] [selection] [outfile]", sys.argv[0]))
     sys.exit(1)
 
+config_path = sys.argv[1]
+selection = sys.argv[2]
+outfile = sys.argv[3]
+
 def config_match(pattern):
-    textfile = open(sys.argv[3], 'r')
+    textfile = open(config_path, 'r')
     filetext = textfile.read()
     textfile.close()
     pattern = re.compile(pattern)
@@ -17,7 +21,6 @@ def config_match(pattern):
         for match in re.finditer(pattern, line):
             return True
     return False
-
 
 context_free_coder = [
     ("ASCIICoder",      "coders/ASCIICoder.hpp",      []),
@@ -228,12 +231,12 @@ def gen_algorithm_cpp():
         l += [str.format("    r.register_compressor<{}>();", line)]
     return algorithms_cpp.replace("$COMPRESSORS", "\n".join(l)) + "\n"
 
-if sys.argv[4] == "tudocomp.hpp":
-    file2 = open(sys.argv[2], 'w+')
+if selection == "tudocomp.hpp":
+    file2 = open(outfile, 'w+')
     file2.write(gen_tudocomp_hpp())
     file2.close()
-elif sys.argv[4] == "tudocomp_algorithms.cpp":
-    file1 = open(sys.argv[1], 'w+')
+elif selection == "tudocomp_algorithms.cpp":
+    file1 = open(outfile, 'w+')
     file1.write(gen_algorithm_cpp())
     file1.close()
 else:
