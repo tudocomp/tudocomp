@@ -4,8 +4,8 @@ import re
 import sys
 import itertools
 
-if not len(sys.argv[1:]) == 3:
-    print(str.format("Usage {} [tudocomp_algorithms.cpp] [tudocomp.hpp] [config.h]", sys.argv[0]))
+if not len(sys.argv[1:]) == 4:
+    print(str.format("Usage {} [tudocomp_algorithms.cpp] [tudocomp.hpp] [config.h] [selection]", sys.argv[0]))
     sys.exit(1)
 
 def config_match(pattern):
@@ -228,11 +228,13 @@ def gen_algorithm_cpp():
         l += [str.format("    r.register_compressor<{}>();", line)]
     return algorithms_cpp.replace("$COMPRESSORS", "\n".join(l)) + "\n"
 
-
-file1 = open(sys.argv[1], 'w+')
-file1.write(gen_algorithm_cpp())
-file1.close()
-
-file2 = open(sys.argv[2], 'w+')
-file2.write(gen_tudocomp_hpp())
-file2.close()
+if sys.argv[4] == "tudocomp.hpp":
+    file2 = open(sys.argv[2], 'w+')
+    file2.write(gen_tudocomp_hpp())
+    file2.close()
+elif sys.argv[4] == "tudocomp_algorithms.cpp":
+    file1 = open(sys.argv[1], 'w+')
+    file1.write(gen_algorithm_cpp())
+    file1.close()
+else:
+    sys.exit(1)

@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include <tudocomp/util/vbyte.hpp>
+#include "tudocomp/tudocomp.hpp"
+
 #include "test/util.hpp"
 
 using namespace tdc;

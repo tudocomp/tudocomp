@@ -89,7 +89,12 @@ include(compare_workspace)
 
 add_library(
     tudocomp_algorithms
-	${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp
+    ${CMAKE_BINARY_DIR}/tudocomp_algorithms.cpp
+)
+
+add_dependencies(
+    tudocomp_algorithms
+    generate_tudocomp_hpp
 )
 
 target_link_libraries(
