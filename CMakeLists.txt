@@ -59,8 +59,10 @@ find_or_download_package(SDSL SDSL sdsl)
 
 include(FindJudy)
 
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h)
+# Generate source files
+include(generate_tudocomp_sources)
 
+#### All major project targets ####
 
 #include(sdsl)
 include(rust)
@@ -85,15 +87,6 @@ add_subdirectory(www)
 
 include(compare_workspace)
 
-
-
-
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp
-	COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/etc/genregistry.py ${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/tudocomp.hpp ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
-	COMMENT "Generating tudocomp_algorithms.cpp and tudocomp.hpp..."
-	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/etc/genregistry.py ${CMAKE_CURRENT_SOURCE_DIR}/include/tudocomp/config.h
-)
-
 add_library(
     tudocomp_algorithms
 	${CMAKE_CURRENT_BINARY_DIR}/tudocomp_algorithms.cpp
@@ -109,7 +102,3 @@ target_link_libraries(
 )
 
 cotire(tudocomp_algorithms)
-
-
-
-
