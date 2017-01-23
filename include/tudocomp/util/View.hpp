@@ -193,7 +193,8 @@ public:
     /// Construct a new View that is a sub view into the current one.
     ///
     /// The returned view will be a "from-to" slice,
-    /// and cover the bytes starting at `from` and ending at `to`.
+    /// and cover the bytes starting at `from` and ending *just before* `to`.
+	/// T.slice(a,b) gives T[a..b-1]
     ///
     /// Passing `npos` to `to` will create a slice until the end of the View
     ///
