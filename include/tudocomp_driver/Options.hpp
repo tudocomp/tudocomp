@@ -15,6 +15,7 @@ constexpr option OPTIONS[] = {
     {"algorithm",  required_argument, nullptr, 'a'},
     {"decompress", no_argument,       nullptr, 'd'},
     {"force",      no_argument,       nullptr, 'f'},
+    {"generator",  required_argument, nullptr, 'g'},
     {"help",       no_argument,       nullptr, OPT_HELP},
     {"list",       no_argument,       nullptr, 'l'},
     {"output",     required_argument, nullptr, 'o'},
@@ -67,6 +68,13 @@ public:
         out << right << setw(W_SF) << "-f" << ", "
             << left << setw(W_LF) << "--force"
             << "overwrite output file if it exists"
+            << endl;
+
+        // -g, --generator
+        out << right << setw(W_SF) << "-g" << ", "
+            << left << setw(W_LF) << "--generator=GENERATOR"
+            << "generate the input using GENERATOR"
+            << endl << setw(W_INDENT) << "" << "(use -l for more information)"
             << endl;
 
         // -l, --list
@@ -124,6 +132,7 @@ private:
     std::string m_output;
     bool m_force;
     bool m_stdin, m_stdout;
+    std::string m_generator;
 
     bool m_raw;
     bool m_decompress;
@@ -146,7 +155,7 @@ public:
         m_stats(false)
     {
         int c, option_index = 0;
-        while((c = getopt_long(argc, argv, "a:dflo:s::",
+        while((c = getopt_long(argc, argv, "a:dfg:lo:s::",
             OPTIONS, &option_index)) != -1) {
 
             switch(c) {
@@ -160,6 +169,10 @@ public:
 
                 case 'f': // --force
                     m_force = true;
+                    break;
+
+                case 'g': // --generator=<optarg>
+                    m_generator = std::string(optarg);
                     break;
 
                 case 'l': // --list
@@ -220,6 +233,7 @@ public:
     const bool& force = m_force;
     const bool& stdin = m_stdin;
     const bool& stdout = m_stdout;
+    const std::string& generator = m_generator;
 
     const bool& raw = m_raw;
     const bool& decompress = m_decompress;
