@@ -109,7 +109,7 @@ public:
         auto phase1 = env().stat_phase("lz78u");
         //std::cout << "START COMPRESS\n";
         const len_t threshold = env().option("threshold").as_integer(); //factor threshold
-		env().log_stat("threshold", threshold);
+        env().log_stat("threshold", threshold);
 
         auto iview = input.as_view();
         View T = iview;
@@ -148,72 +148,72 @@ public:
 
         auto output = [&](len_t begin, len_t end, size_t ref) { // end is the position after the substring, i.e., T[begin..e] where e= end-1
             // if trailing 0, remove
-			while(T[end-1] == 0) --end;
+            while(T[end-1] == 0) --end;
             strategy.encode(lz78u::Factor { T.slice(begin,end), ref }, factor_count);
             factor_count++;
 
-			// factorize the factor label if the label is above the threshold
-			if(end-begin >= threshold ) { 
-				std::vector<len_t> refs; // stores either referred indices or characters
-				std::vector<bool> is_ref; // stores whether refs stores at a position a index or a character
-				for(len_t pos = begin; pos < end;) { // similar to the normal LZ78U factorization, but does not introduce new factor ids
-					const node_t leaf = ST.select_leaf(ST.cst.csa.isa[pos]);
-					len_t d = 1;
-					node_t parent = ST.root;
-					node_t node = ST.level_anc(leaf, d);
-					while(!ST.cst.is_leaf(node) && R[ST.nid(node)] != 0) {
-						parent = node;
-						node = ST.level_anc(leaf, ++d);
-					} // not a good feature: We lost the factor ids of the leaves, since R only stores the IDs of internal nodes
-					DCHECK_NE(parent, ST.root);
-					const len_t depth = ST.str_depth(parent); 
-					// if the largest factor is not large enough, we only store the current character and move one text position to the right
-					if(depth < threshold) { 
-						refs.push_back(T[pos]);
-						is_ref.push_back(false); // the current ref is a plain character
-						++pos;
-					} else {
-						refs.push_back(R[ST.nid(parent)]);
-						is_ref.push_back(true); // the current ref is a real ref
-						pos += depth;
-						// taking the last factor can make the string larger than intended, so we have to store a cut-value at the last position
-						if(pos >= end) {
-							refs.push_back(pos-end); // we do not store in is_ref something such that we know later that the last value is a cutting value
-						}
-					}
-				}
+            // factorize the factor label if the label is above the threshold
+            if(end-begin >= threshold ) {
+                std::vector<len_t> refs; // stores either referred indices or characters
+                std::vector<bool> is_ref; // stores whether refs stores at a position a index or a character
+                for(len_t pos = begin; pos < end;) { // similar to the normal LZ78U factorization, but does not introduce new factor ids
+                    const node_t leaf = ST.select_leaf(ST.cst.csa.isa[pos]);
+                    len_t d = 1;
+                    node_t parent = ST.root;
+                    node_t node = ST.level_anc(leaf, d);
+                    while(!ST.cst.is_leaf(node) && R[ST.nid(node)] != 0) {
+                        parent = node;
+                        node = ST.level_anc(leaf, ++d);
+                    } // not a good feature: We lost the factor ids of the leaves, since R only stores the IDs of internal nodes
+                    DCHECK_NE(parent, ST.root);
+                    const len_t depth = ST.str_depth(parent);
+                    // if the largest factor is not large enough, we only store the current character and move one text position to the right
+                    if(depth < threshold) {
+                        refs.push_back(T[pos]);
+                        is_ref.push_back(false); // the current ref is a plain character
+                        ++pos;
+                    } else {
+                        refs.push_back(R[ST.nid(parent)]);
+                        is_ref.push_back(true); // the current ref is a real ref
+                        pos += depth;
+                        // taking the last factor can make the string larger than intended, so we have to store a cut-value at the last position
+                        if(pos >= end) {
+                            refs.push_back(pos-end); // we do not store in is_ref something such that we know later that the last value is a cutting value
+                        }
+                    }
+                }
 
-				// trying to rebuild the factorized string label
-				std::string rebuilt;
-				for(len_t i = 0; i < refs.size(); ++i) {
-					if(!is_ref[i]) {
-						rebuilt.push_back(refs[i]);
-						continue;
-					}
-					DCHECK_NE(refs[i],0);
-					for(auto it = ST.cst.begin(); it != ST.cst.end(); ++it) { // we have to query the inverse of R -> this takes time!
-						if(ST.cst.is_leaf(*it)) continue;
-						if(R[ST.nid(*it)] == refs[i]) { // if we found the right factor in the suffix tree, we can decode the factor
-							const node_t node = *it;
-							const len_t suffix_number = ST.cst.sn(ST.cst.leftmost_leaf(node));
-							const len_t depth = ST.str_depth(node);
-							rebuilt += T.slice(suffix_number, suffix_number + depth);
-							DCHECK_EQ(T.slice(begin, begin+rebuilt.size()), rebuilt);
-							break;
-						}
-					}
-					if(i+2 == refs.size() && is_ref.size() < refs.size()) { // there is an offset at the last position of refs
-						while(refs[i+1] > 0) {
-							rebuilt.pop_back();
-							--refs[i+1];
-						}
-						break;
-					}
-				}
-				DCHECK_EQ(rebuilt.size(), end-begin);
-				DCHECK_EQ(rebuilt, T.slice(begin,end));
-			
-			}
+                // trying to rebuild the factorized string label
+                std::string rebuilt;
+                for(len_t i = 0; i < refs.size(); ++i) {
+                    if(!is_ref[i]) {
+                        rebuilt.push_back(refs[i]);
+                        continue;
+                    }
+                    DCHECK_NE(refs[i],0);
+                    for(auto it = ST.cst.begin(); it != ST.cst.end(); ++it) { // we have to query the inverse of R -> this takes time!
+                        if(ST.cst.is_leaf(*it)) continue;
+                        if(R[ST.nid(*it)] == refs[i]) { // if we found the right factor in the suffix tree, we can decode the factor
+                            const node_t node = *it;
+                            const len_t suffix_number = ST.cst.sn(ST.cst.leftmost_leaf(node));
+                            const len_t depth = ST.str_depth(node);
+                            rebuilt += T.slice(suffix_number, suffix_number + depth);
+                            DCHECK_EQ(T.slice(begin, begin+rebuilt.size()), rebuilt);
+                            break;
+                        }
+                    }
+                    if(i+2 == refs.size() && is_ref.size() < refs.size()) { // there is an offset at the last position of refs
+                        while(refs[i+1] > 0) {
+                            rebuilt.pop_back();
+                            --refs[i+1];
+                        }
+                        break;
+                    }
+                }
+                DCHECK_EQ(rebuilt.size(), end-begin);
+                DCHECK_EQ(rebuilt, T.slice(begin,end));
+
+            }
         };
 
         // Skip the trailing 0
@@ -241,13 +241,13 @@ public:
                 parent = node;
                 node = ST.level_anc(l, ++d);
             }
-			pos += ST.str_depth(parent);
+            pos += ST.str_depth(parent);
 
             R[ST.nid(node)] = ++z;
 
             // const auto& str = T.slice(leaflabel + ST.str_depth(parent), leaflabel + ST.str_depth(node));
-			const len_t begin = leaflabel + ST.str_depth(parent);
-			const len_t end = leaflabel + ST.str_depth(node);
+            const len_t begin = leaflabel + ST.str_depth(parent);
+            const len_t end = leaflabel + ST.str_depth(node);
 
             //std::cout << "out slice: [ "<< (leaflabel + ST.str_depth(parent)) << ", "<< (leaflabel + ST.str_depth(node))<< " ] ";
             output(begin,end, R[ST.nid(ST.parent(node))]);
