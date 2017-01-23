@@ -1,0 +1,25 @@
+#pragma once
+
+#include <functional>
+#include <memory>
+
+#include <tudocomp/pre_header/Registry.hpp>
+#include <tudocomp/pre_header/Env.hpp>
+#include <tudocomp/Algorithm.hpp>
+
+namespace tdc {
+
+/// \brief Base for string generators.
+class Generator : public Algorithm {
+public:
+    using Algorithm::Algorithm;
+
+    virtual std::string generate() = 0;
+};
+
+/// \cond INTERNAL
+using GeneratorConstructor = std::function<std::unique_ptr<Generator>(Env&&)>;
+/// \endcond
+
+}
+
