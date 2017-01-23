@@ -155,9 +155,9 @@ int main(int argc, char** argv)
         if (!options.algorithm.empty()) {
             auto id_string = options.algorithm;
 
-            auto av = registry.parse_algorithm_id(id_string);
+            auto av = registry.parse_algorithm_id(id_string, "compressor");
             auto needs_sentinel_terminator = av.needs_sentinel_terminator();
-            auto compressor = registry.select_algorithm_or_exit(av);
+            auto compressor = registry.select_compressor_or_exit(av);
             auto algorithm_env = compressor->env().root();
 
             selection = Selection {
@@ -173,7 +173,14 @@ int main(int argc, char** argv)
 
         std::string file;
 
-        if(!options.stdin) {
+        if(!options.generator.empty()) {
+            auto av = registry.parse_algorithm_id(options.generator, "generator");
+            auto generator = registry.select_generator_or_exit(av);
+            //auto algorithm_env = generator->env().root();
+
+            std::cout << generator->generate() << std::endl;
+            return 0;
+        } else if(!options.stdin) {
             if (!options.remaining.empty()) {
                 file = options.remaining[0];
                 if (!fexists(file)) {
@@ -300,8 +307,8 @@ int main(int argc, char** argv)
                     DLOG(INFO) << "Using header id string " << algorithm_header;
 
                     auto id_string = std::move(algorithm_header);
-                    auto av = registry.parse_algorithm_id(id_string);
-                    auto compressor = registry.select_algorithm_or_exit(av);
+                    auto av = registry.parse_algorithm_id(id_string, "compressor");
+                    auto compressor = registry.select_compressor_or_exit(av);
                     auto needs_sentinel_terminator = av.needs_sentinel_terminator();
                     auto algorithm_env = compressor->env().root();
 

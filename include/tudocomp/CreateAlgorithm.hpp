@@ -88,7 +88,7 @@ Builder<T> builder() {
 inline std::unique_ptr<Compressor> create_algo_with_registry_dynamic(
         const Registry& registry,
         const AlgorithmValue& algorithm_value) {
-    return registry.select_algorithm_or_exit(algorithm_value);
+    return registry.select_compressor_or_exit(algorithm_value);
 }
 
 template<class T, class... Args>

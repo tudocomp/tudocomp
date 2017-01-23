@@ -22,6 +22,23 @@ inline void Registry::register_compressor() {
     };
 }
 
+template<class T>
+inline void Registry::register_generator() {
+    auto meta = T::meta();
+
+    ast::Value s = std::move(meta).build_static_args_ast_value();
+
+    gather_types(m_data->m_algorithms, std::move(meta));
+
+    auto static_s
+        = eval::pattern_eval(std::move(s), "generator", m_data->m_algorithms);
+
+    CHECK(m_data->m_generators.count(static_s) == 0); // Don't register twice...
+    m_data->m_generators[std::move(static_s)] = [](Env&& env) {
+        return std::make_unique<T>(std::move(env));
+    };
+}
+
 inline eval::AlgorithmTypes& Registry::algorithm_map() {
     return m_data->m_algorithms;
 }
@@ -163,10 +180,12 @@ inline std::string Registry::generate_doc_string() const {
         ss << print(x.second, 4) << "\n\n";
     }
 
+    //TODO: generators
+
     return ss.str();
 }
 
-inline std::unique_ptr<Compressor> Registry::select_algorithm_or_exit(const AlgorithmValue& algo) const {
+inline std::unique_ptr<Compressor> Registry::select_compressor_or_exit(const AlgorithmValue& algo) const {
     auto& static_only_evald_algo = algo.static_selection();
 
     if (m_data->m_compressors.count(static_only_evald_algo) > 0) {
@@ -178,17 +197,35 @@ inline std::unique_ptr<Compressor> Registry::select_algorithm_or_exit(const Algo
 
         return constructor(Env(env, env->algo_value(), registry));
     } else {
-        throw std::runtime_error("No implementation found for algorithm "
+        throw std::runtime_error("No implementation found for compressor "
         + static_only_evald_algo.to_string()
         );
     }
 }
 
-inline AlgorithmValue Registry::parse_algorithm_id(string_ref text) const {
+inline std::unique_ptr<Generator> Registry::select_generator_or_exit(const AlgorithmValue& algo) const {
+    auto& static_only_evald_algo = algo.static_selection();
+
+    if (m_data->m_generators.count(static_only_evald_algo) > 0) {
+        auto env = std::make_shared<EnvRoot>(AlgorithmValue(algo));
+
+        auto& constructor = m_data->m_generators[static_only_evald_algo];
+
+        auto registry = *this;
+
+        return constructor(Env(env, env->algo_value(), registry));
+    } else {
+        throw std::runtime_error("No implementation found for generator "
+        + static_only_evald_algo.to_string()
+        );
+    }
+}
+
+inline AlgorithmValue Registry::parse_algorithm_id(string_ref text, string_ref type) const {
     ast::Parser p { text };
     auto parsed_algo = p.parse_value();
     auto options = eval::cl_eval(std::move(parsed_algo),
-                                    "compressor",
+                                    type,
                                     m_data->m_algorithms);
 
     return std::move(options).to_algorithm();
