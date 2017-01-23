@@ -59,6 +59,10 @@ public:
 
             for (size_t i = 0; i < m_refs.size(); i++) {
                 ref_coder.encode(m_refs[i], Range(m_ref_ranges[i]));
+
+                bool is_over_threshold = true;
+                m_out->write_bit(is_over_threshold);
+
                 while (true) {
                     string_coder.encode(m_strings[strings_i], literal_r);
                     if (m_strings[strings_i] == 0) {
@@ -77,17 +81,22 @@ public:
         typename string_coder_t::Decoder  m_string_coder;
 
         std::vector<uliteral_t> m_buf;
-
+        std::shared_ptr<BitIStream> m_in;
     public:
         inline Decompression(Env&& env,
                              Env&& ref_env,
                              std::shared_ptr<BitIStream> in):
             Algorithm(std::move(env)),
             m_ref_coder(std::move(ref_env), in),
-            m_string_coder(std::move(this->env().env_for_option("string_coder")), in) {}
+            m_string_coder(std::move(this->env().env_for_option("string_coder")), in),
+            m_in(in) {}
 
         inline Factor decode(size_t ref_range) {
             auto ref = m_ref_coder.template decode<size_t>(Range(ref_range));
+
+            bool is_over_threshold = false;
+            is_over_threshold = m_in->read_bit();
+            DCHECK(is_over_threshold);
 
             m_buf.clear();
             while (true) {

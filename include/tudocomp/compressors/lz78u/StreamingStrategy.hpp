@@ -20,16 +20,22 @@ public:
     class Compression: public Algorithm {
         typename ref_coder_t::Encoder     m_ref_coder;
         typename string_coder_t::Encoder  m_string_coder;
+
+        std::shared_ptr<BitOStream> m_out;
     public:
         inline Compression(Env&& env,
                            Env&& ref_env,
                            std::shared_ptr<BitOStream> out):
             Algorithm(std::move(env)),
             m_ref_coder(std::move(ref_env), out, NoLiterals()),
-            m_string_coder(std::move(this->env().env_for_option("string_coder")), out, NoLiterals()) {}
+            m_string_coder(std::move(this->env().env_for_option("string_coder")), out, NoLiterals()),
+            m_out(out) {}
 
         inline void encode(Factor fact, size_t ref_range) {
             m_ref_coder.encode(fact.ref, Range(ref_range));
+
+            bool is_over_threshold = true;
+            m_out->write_bit(is_over_threshold);
 
             for (auto c : fact.string) {
                 m_string_coder.encode(c, literal_r);
@@ -44,17 +50,22 @@ public:
         typename string_coder_t::Decoder  m_string_coder;
 
         std::vector<uliteral_t> m_buf;
-
+        std::shared_ptr<BitIStream> m_in;
     public:
         inline Decompression(Env&& env,
                              Env&& ref_env,
                              std::shared_ptr<BitIStream> in):
             Algorithm(std::move(env)),
             m_ref_coder(std::move(ref_env), in),
-            m_string_coder(std::move(this->env().env_for_option("string_coder")), in) {}
+            m_string_coder(std::move(this->env().env_for_option("string_coder")), in),
+            m_in(in) {}
 
         inline Factor decode(size_t ref_range) {
             auto ref = m_ref_coder.template decode<size_t>(Range(ref_range));
+
+            bool is_over_threshold = false;
+            is_over_threshold = m_in->read_bit();
+            DCHECK(is_over_threshold);
 
             m_buf.clear();
             while (true) {
