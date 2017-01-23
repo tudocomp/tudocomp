@@ -18,7 +18,11 @@ else
     printf "0.%s.%s-modified (uncommited changes based on %s)" $DATE $COMMITNO $COMMITREV
 fi`
 
-cat << EOF > $1
+TMP_VERSION=$(mktemp -t "$(basename "$1").XXXXXX")
+
+trap "rm -f $TMP_VERSION" EXIT
+
+cat << EOF > $TMP_VERSION
 #pragma once
 #include <string>
 
@@ -26,3 +30,9 @@ namespace tdc {
     const std::string VERSION = "$VERSION";
 }
 EOF
+
+if cmp --silent $1 $TMP_VERSION; then
+    rm $TMP_VERSION
+else
+    cp $TMP_VERSION $1
+fi
