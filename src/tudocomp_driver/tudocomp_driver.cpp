@@ -14,6 +14,7 @@
 #include <tudocomp/io.hpp>
 #include <tudocomp/io/IOUtil.hpp>
 #include <tudocomp/util/Json.hpp>
+#include <tudocomp/version.hpp>
 
 #include <tudocomp_driver/Options.hpp>
 #include <tudocomp_driver/Registry.hpp>
@@ -95,6 +96,11 @@ int main(int argc, char** argv)
 
     if(options.help) {
         Options::print_usage(std::string(argv[0]), std::cout);
+        return 0;
+    }
+
+    if(options.version) {
+        std::cout << tdc::VERSION << "\n";
         return 0;
     }
 

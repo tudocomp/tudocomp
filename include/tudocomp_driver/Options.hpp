@@ -19,6 +19,7 @@ constexpr option OPTIONS[] = {
     {"list",       no_argument,       nullptr, 'l'},
     {"output",     required_argument, nullptr, 'o'},
     {"stats",      optional_argument, nullptr, 's'},
+    {"version",    no_argument,       nullptr, 'v'},
     {"raw",        no_argument,       nullptr, OPT_RAW},
     {"usestdin",   no_argument,       nullptr, OPT_STDIN},
     {"usestdout",  no_argument,       nullptr, OPT_STDOUT},
@@ -110,6 +111,12 @@ public:
             << left << setw(W_LF) << "--usestdout"
             << "use stdout for input"
             << endl;
+
+        // -v, --version
+        out << right << setw(W_SF) << "-v" << ", "
+            << left << setw(W_LF) << "--version"
+            << "print the version number of this build"
+            << endl;
     }
 
 private:
@@ -117,6 +124,7 @@ private:
     bool m_unknown_options;
 
     bool m_help;
+    bool m_version;
     bool m_list;
 
     std::string m_algorithm;
@@ -134,9 +142,15 @@ private:
     std::vector<std::string> m_remaining;
 
 public:
+    // The reference-based accessors will
+    // get invalidated in case of a move or copy, so forbid them
+    Options(const Options& other) = delete;
+    Options(Options&& other) = delete;
+
     inline Options(int argc, char **argv) :
         m_unknown_options(false),
         m_help(false),
+        m_version(false),
         m_list(false),
         m_force(false),
         m_stdin(false),
@@ -164,6 +178,10 @@ public:
 
                 case 'l': // --list
                     m_list = true;
+                    break;
+
+                case 'v': // --version
+                    m_version = true;
                     break;
 
                 case 'o': // --output=<optarg>
@@ -212,6 +230,7 @@ public:
     const bool& unknown_options = m_unknown_options;
 
     const bool& help = m_help;
+    const bool& version = m_version;
     const bool& list = m_list;
 
     const std::string& algorithm = m_algorithm;
