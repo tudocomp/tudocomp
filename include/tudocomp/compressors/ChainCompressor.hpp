@@ -41,7 +41,7 @@ public:
 
             bool needs_sentinel = av.needs_sentinel_terminator();
 
-            std::cout << "dynamic creation of" << av.name() << "\n";
+            DVLOG(1) << "dynamic creation of" << av.name() << "\n";
             auto compressor = create_algo_with_registry_dynamic(
                 env().registry(), av);
 

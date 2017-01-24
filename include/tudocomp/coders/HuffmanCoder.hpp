@@ -7,9 +7,6 @@
 #include <tudocomp/Coder.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/Range.hpp>
-#ifndef NDEBUG
-#include <bitset>
-#endif//NDEBUG
 #include <tudocomp/def.hpp>
 
 namespace tdc {
@@ -169,9 +166,6 @@ namespace huff {
 
         return codelengths;
     }
-
-
-
 
     /** Generates the numl array (@see huffmantable). This function is called before decoding Huffman-encoded text.
      */

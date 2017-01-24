@@ -19,7 +19,10 @@
 #include <tudocomp/Registry.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util/View.hpp>
-#include <tudocomp/util/Generators.hpp>
+#include <tudocomp/generators/FibonacciGenerator.hpp>
+#include <tudocomp/generators/RandomUniformGenerator.hpp>
+#include <tudocomp/generators/RunRichGenerator.hpp>
+#include <tudocomp/generators/ThueMorseGenerator.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
 
@@ -178,26 +181,26 @@ template<class F>
 void on_string_generators(F func, size_t n) {
     VLOG(1) << "fibonacci_word ...";
     for(size_t i = 0; i < n; ++i) {
-        std::string s = fibonacci_word(i);
+        std::string s = FibonacciGenerator::generate(i);
         func(s);
     }
 
     VLOG(1) << "thue_morse_word ...";
     for(size_t i = 0; i < n; ++i) {
-        std::string s = thue_morse_word(i);
+        std::string s = ThueMorseGenerator::generate(i);
         func(s);
     }
 
     VLOG(1) << "rich ...";
     for(size_t i = 0; i < n; ++i) {
-        std::string s = run_rich(i);
+        std::string s = RunRichGenerator::generate(i);
         func(s);
     }
 
     VLOG(1) << "random ...";
     for(size_t i = 2; i < n; ++i) {
         for(size_t j = 0; j < 2+50/(i+1); ++j) {
-            std::string s = random_uniform(1<<i,Ranges::numbers,j);
+            std::string s = RandomUniformGenerator::generate(1<<i, j);
             func(s);
         }
     }
