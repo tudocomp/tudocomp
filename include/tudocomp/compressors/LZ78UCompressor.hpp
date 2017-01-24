@@ -142,15 +142,11 @@ public:
             std::make_shared<BitOStream>(out)
         };
 
-        /// TODO further down!
-
         len_t factor_count = 0;
 
         auto output = [&](len_t begin, len_t end, size_t ref) { // end is the position after the substring, i.e., T[begin..e] where e= end-1
             // if trailing 0, remove
             while(T[end-1] == 0) --end;
-            strategy.encode(lz78u::Factor { T.slice(begin,end), ref }, factor_count);
-            factor_count++;
 
             // factorize the factor label if the label is above the threshold
             if(end-begin >= threshold ) {
@@ -183,6 +179,7 @@ public:
                     }
                 }
 
+                /*
                 // trying to rebuild the factorized string label
                 std::string rebuilt;
                 for(len_t i = 0; i < refs.size(); ++i) {
@@ -213,7 +210,12 @@ public:
                 DCHECK_EQ(rebuilt.size(), end-begin);
                 DCHECK_EQ(rebuilt, T.slice(begin,end));
 
+                */
+
+            } else {
+                strategy.encode(lz78u::Factor { T.slice(begin,end), ref }, factor_count);
             }
+            factor_count++;
         };
 
         // Skip the trailing 0
