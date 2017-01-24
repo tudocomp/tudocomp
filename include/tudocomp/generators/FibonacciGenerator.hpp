@@ -4,7 +4,8 @@
 
 namespace tdc {
 
-class FibonacciWordGenerator : public Generator {
+/// Generates the n-th Fibonacci word.
+class FibonacciGenerator : public Generator {
 
 public:
     inline static Meta meta() {

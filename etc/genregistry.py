@@ -99,7 +99,10 @@ compressors = [
 ]
 
 generators = [
-    ("FibonacciWordGenerator", "generators/FibonacciWordGenerator.hpp", []),
+    ("FibonacciGenerator",     "generators/FibonacciGenerator.hpp", []),
+    ("ThueMorseGenerator",     "generators/ThueMorseGenerator.hpp", []),
+    ("RandomUniformGenerator", "generators/RandomUniformGenerator.hpp", []),
+    ("RunRichGenerator",       "generators/RunRichGenerator.hpp", []),
 ]
 
 algorithms_cpp_template = '''
