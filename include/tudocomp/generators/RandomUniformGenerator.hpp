@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <tudocomp/Generator.hpp>
 
 namespace tdc {
