@@ -37,10 +37,14 @@ public:
             << setw(11) << "FILE" << "(1)" << endl;
         out << setw(7) << "or: " << cmd << " [OPTION] "
             << setw(11) << "--usestdin" << "(2)" << endl;
+        out << setw(7) << "or: " << cmd << " [OPTION] "
+            << setw(11) << "-g GENERATOR" << "(3)" << endl;
 
         // Brief description
         out << endl;
-        out << "Compresses or decompresses a file (1) or input received via stdin (2)." << endl;
+        out << "Compresses or decompresses a file (1), an input received via stdin (2) or a" << endl;
+        out << "generated string (3). Depending on the selected input, an output (either a" << endl;
+        out << "file or stdout) may need to be specified." << endl;
 
         // Options
         out << endl;
