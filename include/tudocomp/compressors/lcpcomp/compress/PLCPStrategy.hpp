@@ -1,4 +1,5 @@
 #pragma once
+#include <tudocomp/config.h>
 
 #include <vector>
 
@@ -9,7 +10,9 @@
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/ds/ArrayMaxHeap.hpp>
+#ifdef Boost_FOUND
 #include <boost/heap/pairing_heap.hpp>
+#endif
 
 namespace tdc {
 namespace lcpcomp {
@@ -30,6 +33,7 @@ public:
         return m;
     }
 
+#ifdef Boost_FOUND
     inline void factorize(text_t& text,
                    size_t threshold,
                    lzss::FactorBuffer& factors) {
@@ -127,6 +131,12 @@ public:
 		}
         env().end_stat_phase();
     }
+#else//Boost_FOUND
+    inline void factorize(text_t&, size_t, lzss::FactorBuffer& ) {
+#warning "plcpcomp is a dummy without boost"
+	}
+#endif//Boost_FOUND
+
 };
 
 }}//ns
