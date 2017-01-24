@@ -20,6 +20,10 @@
 
 #include <utility>
 
+#include <set>
+#include <string>
+#include <vector>
+
 //#include <tudocomp/tudocomp.hpp>
 
 
@@ -34,15 +38,14 @@ private:
     typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
 
 
-    inline virtual std::vector<uint> select_starting_positions(std::vector<uint> starting_positions, uint length){
+    inline virtual std::vector<uint> select_starting_positions(std::set<uint> starting_positions, uint length){
         std::vector<uint> selected_starting_positions;
-        std::sort(starting_positions.begin(), starting_positions.end());
         //select occurences greedily non-overlapping:
         selected_starting_positions.reserve(starting_positions.size());
 
         int last =  0-length;
         uint current;
-        for (std::vector<uint>::iterator it=starting_positions.begin(); it!=starting_positions.end(); ++it){
+        for (auto it=starting_positions.begin(); it!=starting_positions.end(); ++it){
 
             current = *it;
             //DLOG(INFO) << "checking starting position: " << current << " length: " << top.first << "last " << last;
@@ -74,9 +77,10 @@ private:
         }
     }
 
-    inline virtual void compute_triple(SuffixTree::STNode* node){
+    //returns all bp of corresponding factor
+    inline virtual std::set<uint> compute_triple(SuffixTree::STNode* node){
 
-
+        std::set<uint> beggining_positions;
         //if no childs, its a leaf
         if(node->child_nodes.size()==0){
             node->min_bp=node->suffix;
@@ -95,6 +99,9 @@ private:
                 min_child = child.second->min_bp;
                 max_child = child.second->max_bp;
 
+                beggining_positions.insert(min_child);
+
+                beggining_positions.insert(max_child);
 
                 if(min > min_child){
                     min = min_child;
@@ -111,6 +118,7 @@ private:
             node->max_bp= max;
 
         }
+        return beggining_positions;
     }
 
 
@@ -138,7 +146,12 @@ public:
 
         //build suffixtree
         DLOG(INFO)<<"build suffixtree";
+
         stree.append_input(input);
+
+        std::string text = stree.get_text();
+
+        DLOG(INFO)<< text << std::endl;
         //compute string depth of st:
         string_depth_vector nl;
         compute_string_depth(stree.get_root(),0, &nl);
@@ -152,15 +165,30 @@ public:
             if(pair.first<min_lrf){
                 break;
             }
-            compute_triple(pair.second);
+            std::set<uint> begining_pos = compute_triple(pair.second);
             if(pair.second->card_bp>=2){
                 //compute if overlapping:
                 if(pair.second->min_bp+pair.first <= pair.second->max_bp){
 
                     //its a reapting factor, compute
-                    DLOG(INFO)<<"reapting factor " << pair.second->min_bp << " " << pair.second->max_bp;
+                    DLOG(INFO)<<"reapting factor:  \"" << text.substr( pair.second->min_bp, pair.first)<<"\"" ;
 
                     DLOG(INFO)<<"length: "<<pair.first;
+                    //min and mac of all children are all BPs of LRF
+                    auto it = begining_pos.begin();
+                    DLOG(INFO) << "beginning positions: " << std::endl;
+                    while(it!= begining_pos.end()){
+                        DLOG(INFO) << *it;
+                        it++;
+                    }
+
+                    std::vector<uint> selected_pos = select_starting_positions(begining_pos, pair.first);
+                    DLOG(INFO) << "selected beginning positions: " << std::endl;
+                    for(auto it = selected_pos.begin(); it != selected_pos.end(); it++){
+                         DLOG(INFO) << *it;
+                    }
+
+
                 }
 
             }

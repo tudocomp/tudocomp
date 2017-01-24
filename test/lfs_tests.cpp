@@ -124,7 +124,7 @@ void compress_and_decompress_file(const std::string filename, std::string extens
 }
 
 TEST(stlfs, as_stream_aba){
-    run_coder_test_st<BitCoder,EliasGammaCoder>("abaaabbababb$");
+    run_coder_test_st<BitCoder,EliasGammaCoder>("ababaabbababb$");
 }
 
 
