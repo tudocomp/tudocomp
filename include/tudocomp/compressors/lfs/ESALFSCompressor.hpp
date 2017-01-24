@@ -15,6 +15,13 @@
 
 #include <tudocomp/io/BitIStream.hpp>
 #include <tudocomp/io/BitOStream.hpp>
+//#include <sdsl/bit_vectors.hpp>
+
+
+#include <tudocomp/ds/IntVector.hpp>
+
+
+#include <tudocomp/Literal.hpp>
 
 
 //#include <tudocomp/tudocomp.hpp>
@@ -120,7 +127,7 @@ public:
         }
 
         // Pop PQ, Select occurences of suffix, check if contains replaced symbols
-        sdsl::bit_vector non_terminals(sa_t.size(), 0);
+        BitVector non_terminals(sa_t.size(), 0);
         //Pq for the non-terminal symbols
         //the first in pair is position, the seconds the number of the non terminal symbol
 
