@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/Generator.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
 
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>

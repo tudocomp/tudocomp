@@ -21,6 +21,7 @@
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/Generator.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
