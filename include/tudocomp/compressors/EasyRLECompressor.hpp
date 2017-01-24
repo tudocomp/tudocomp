@@ -53,11 +53,11 @@ class EasyRLECompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "easyrle", "Easy Run Length Encoding Compressor");
-        m.option("offset").dynamic("0");
+        m.option("offset").dynamic(0);
         return m;
     }
 	const size_t m_offset;
-    inline EasyRLECompressor(Env&& env) 
+    inline EasyRLECompressor(Env&& env)
 		: Compressor(std::move(env)), m_offset(this->env().option("offset").as_integer()) {
     }
 

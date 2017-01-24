@@ -131,7 +131,7 @@ class LazySuccinctListBuffer : public Algorithm {
 public:
     inline static Meta meta() {
         Meta m("lcpcomp_dec", "LazySuccinctListBuffer");
-        m.option("lazy").dynamic("0");
+        m.option("lazy").dynamic(0);
         return m;
 
     }
@@ -194,7 +194,7 @@ public:
         : Algorithm(std::move(env))
 		, m_lazy(this->env().option("lazy").as_integer())
 		, m_cursor(0)
-		, m_buffer(size,0) 
+		, m_buffer(size,0)
 	{ }
 
     inline void decode_literal(uliteral_t c) {

@@ -35,7 +35,7 @@ private:
 public:
     inline static Meta meta() {
         Meta m("coder", "code2", "Encoding conforming [Dinklage, 2015]");
-        m.option("kmer").dynamic("3");
+        m.option("kmer").dynamic(3);
         return m;
     }
 

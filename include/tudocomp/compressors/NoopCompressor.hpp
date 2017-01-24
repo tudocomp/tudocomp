@@ -11,7 +11,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "noop");
         m.option("mode").dynamic("stream");
-        m.option("debug").dynamic("false");
+        m.option("debug").dynamic(false);
         return m;
     }
 

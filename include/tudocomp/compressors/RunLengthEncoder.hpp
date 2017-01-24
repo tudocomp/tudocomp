@@ -13,7 +13,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "rle", "Run-length encoding");
         m.option("coder").templated<coder_t>();
-        m.option("min_run").dynamic("3");
+        m.option("min_run").dynamic(3);
         return m;
     }
 
