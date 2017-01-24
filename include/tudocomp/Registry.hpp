@@ -180,8 +180,6 @@ inline std::string Registry::generate_doc_string() const {
         ss << print(x.second, 4) << "\n\n";
     }
 
-    //TODO: generators
-
     return ss.str();
 }
 
@@ -221,7 +219,9 @@ inline std::unique_ptr<Generator> Registry::select_generator_or_exit(const Algor
     }
 }
 
-inline AlgorithmValue Registry::parse_algorithm_id(string_ref text, string_ref type) const {
+inline AlgorithmValue Registry::parse_algorithm_id(
+    string_ref text, string_ref type = "compressor") const {
+
     ast::Parser p { text };
     auto parsed_algo = p.parse_value();
     auto options = eval::cl_eval(std::move(parsed_algo),
