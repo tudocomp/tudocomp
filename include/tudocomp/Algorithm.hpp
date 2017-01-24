@@ -3,6 +3,7 @@
 #include <tudocomp/AlgorithmStringParser.hpp>
 #include <tudocomp/pre_header/Env.hpp>
 #include <tudocomp/io.hpp>
+#include <tudocomp/util.hpp>
 #include <functional>
 #include <memory>
 
@@ -178,17 +179,45 @@ public:
 
         /// \brief Declares that this option accepts values of a simple type
         ///        that can be parsed from a string (e.g. integers).
-        ///default_vaue
-        ///        default value.
-        inline void dynamic(const std::string& default_vaue) {
+        /// \param default_value the default value for the option.
+        inline void dynamic(const std::string& default_value) {
             m_meta.check_arg(m_argument_name);
             m_meta.m_options.push_back(decl::Arg(
                 std::string(m_argument_name),
                 false,
                 "string",
-                ast::Value(std::string(default_vaue))
+                ast::Value(std::string(default_value))
             ));
         }
+
+        /// \cond INTERNAL
+        //yes, this is necessary
+        inline void dynamic(const char* default_value) {
+            dynamic(std::string(default_value));
+        }
+        /// \endcond
+
+        /// \brief Declares that this option accepts values of a simple type
+        ///        that can be parsed from a string (e.g. integers).
+        /// \param default_value the default value for the option.
+        inline void dynamic(bool default_value) {
+            dynamic(default_value ? "true" : "false");
+        }
+
+        /// \brief Declares that this option accepts values of a simple type
+        ///        that can be parsed from a string (e.g. integers).
+        /// \param default_value the default value for the option.
+        inline void dynamic(int default_value) { dynamic(to_str(default_value)); }
+
+        /// \brief Declares that this option accepts values of a simple type
+        ///        that can be parsed from a string (e.g. integers).
+        /// \param default_value the default value for the option.
+        inline void dynamic(float default_value) { dynamic(to_str(default_value)); }
+
+        /// \brief Declares that this option accepts values of a simple type
+        ///        that can be parsed from a string (e.g. integers).
+        /// \param default_value the default value for the option.
+        inline void dynamic(double default_value) { dynamic(to_str(default_value)); }
 
         /// \brief Declares that this option accepts values of a arbitrary
         ///        Compressor type, dispatched at runtime.

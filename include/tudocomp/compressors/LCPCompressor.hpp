@@ -83,11 +83,11 @@ public:
         Meta m("compressor", "lcpcomp");
         m.option("coder").templated<coder_t>();
         // m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>(); uncomment if bug 18527 is fixed
-        // m.option("dec").templated<dec_t, lcpcomp::SuccinctListBuffer>(); 
+        // m.option("dec").templated<dec_t, lcpcomp::SuccinctListBuffer>();
         m.option("comp").templated<strategy_t>();
         m.option("dec").templated<dec_t>();
         m.option("textds").templated<text_t, TextDS<>>();
-        m.option("threshold").dynamic("3");
+        m.option("threshold").dynamic(3);
         m.needs_sentinel_terminator();
         return m;
     }
