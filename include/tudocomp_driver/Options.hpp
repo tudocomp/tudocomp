@@ -173,7 +173,7 @@ public:
         m_stats(false)
     {
         int c, option_index = 0;
-        while((c = getopt_long(argc, argv, "a:dfg:lo:s::",
+        while((c = getopt_long(argc, argv, "a:dfg:lo:s::v",
             OPTIONS, &option_index)) != -1) {
 
             switch(c) {
