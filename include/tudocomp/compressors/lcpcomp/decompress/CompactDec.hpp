@@ -4,15 +4,22 @@
 #include <sdsl/int_vector.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
-//#include <tudocomp/compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 namespace tdc {
 namespace lcpcomp {
 
-class SuccinctListBuffer : public Algorithm {
+/**
+ * Decodes lcpcomp compressed data as described in the paper.
+ * It creates an array of dynamic arrays. Each dynamic array stores in
+ * the first element its size. On appending a new element, the dynamic array
+ * gets resized by one (instead of doubling). This helps to keep the memory footprint low.
+ * It can be faster than @class ScanDec if its "scans"-value too small.
+ */
+class CompactDec : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_dec", "SuccinctListBuffer");
+        Meta m("lcpcomp_dec", "compact");
         return m;
 
     }
@@ -50,7 +57,7 @@ private:
     }
 
 public:
-    SuccinctListBuffer(SuccinctListBuffer&& other):
+    CompactDec(CompactDec&& other):
         Algorithm(std::move(*this)),
         m_fwd(std::move(other.m_fwd)),
         m_cursor(std::move(other.m_cursor)),
@@ -62,7 +69,7 @@ public:
         other.m_fwd = nullptr;
     }
 
-    ~SuccinctListBuffer() {
+    ~CompactDec() {
         if(m_fwd != nullptr) {
             for(size_t i = 0; i < m_buffer.size(); ++i) {
                 if(m_fwd[i] == nullptr) continue;
@@ -71,7 +78,7 @@ public:
             delete [] m_fwd;
         }
     }
-    inline SuccinctListBuffer(Env&& env, len_t size)
+    inline CompactDec(Env&& env, len_t size)
         : Algorithm(std::move(env)), m_cursor(0), m_buffer(size,0) {
 
         IF_STATS(m_longest_chain = 0);

@@ -54,15 +54,15 @@ if config_match("^#define JUDY_H_AVAILABLE 1"): lz78_trie += [
 lcpc_strat = [
     ("lcpcomp::MaxHeapStrategy",  "compressors/lcpcomp/compress/MaxHeapStrategy.hpp",   []),
     ("lcpcomp::MaxLCPStrategy",   "compressors/lcpcomp/compress/MaxLCPStrategy.hpp",    []),
-    ("lcpcomp::LazyListStrategy", "compressors/lcpcomp/compress/LazyListStrategy.hpp",  []),
+    ("lcpcomp::ArraysComp", "compressors/lcpcomp/compress/ArraysComp.hpp",  []),
     ("lcpcomp::PLCPStrategy",     "compressors/lcpcomp/compress/PLCPStrategy.hpp",      []),
     ("lcpcomp::PLCPPeaksStrategy","compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp", []),
 ]
 
 lcpc_buffer = [
-    ("lcpcomp::LazySuccinctListBuffer",       "compressors/lcpcomp/decompress/LazySuccinctListBuffer.hpp", []),
+    ("lcpcomp::ScanDec",       "compressors/lcpcomp/decompress/ScanDec.hpp", []),
     ("lcpcomp::DecodeForwardQueueListBuffer", "compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp",  []),
-    ("lcpcomp::SuccinctListBuffer",           "compressors/lcpcomp/decompress/SuccinctListBuffer.hpp",     []),
+    ("lcpcomp::CompactDec",           "compressors/lcpcomp/decompress/CompactDec.hpp",     []),
     ("lcpcomp::MyMapBuffer",                  "compressors/lcpcomp/decompress/MyMapBuffer.hpp",            []),
     ("lcpcomp::MultimapBuffer",               "compressors/lcpcomp/decompress/MultiMapBuffer.hpp",         []),
 ]
