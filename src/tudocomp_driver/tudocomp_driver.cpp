@@ -110,6 +110,10 @@ int main(int argc, char** argv) {
         }
 
         // select input
+        if(!options.stdin && options.generator.empty() && options.remaining.empty()) {
+            return bad_usage(cmd, "missing generator, input file or standard input");
+        }
+
         if(!ternary_xor(
             options.stdin, !options.generator.empty(), !options.remaining.empty())) {
 
@@ -127,11 +131,9 @@ int main(int argc, char** argv) {
                 // file
                 file = options.remaining[0];
                 if(!file_exists(file)) {
-                    std::cerr << "input file not found" << std::endl;
+                    std::cerr << "input file not found: " << file << std::endl;
                     return 1;
                 }
-            } else {
-                return bad_usage(cmd, "missing generator, input file or standard input");
             }
         }
 
@@ -149,14 +151,15 @@ int main(int argc, char** argv) {
         if(!options.stdout) {
             if(!options.output.empty()) {
                 ofile = options.output;
-            } else if(!options.remaining.empty()) {
+            } else if(do_compress && !options.remaining.empty()) {
                 ofile = file + "." + COMPRESSED_FILE_ENDING;
-                if(file_exists(ofile) && !options.force) {
-                    std::cerr << "output file already exists" << std::endl;
-                    return 1;
-                }
             } else {
                 return bad_usage(cmd, "missing output file or standard output");
+            }
+
+            if(file_exists(ofile) && !options.force) {
+                std::cerr << "output file already exists: " << ofile << std::endl;
+                return 1;
             }
         }
 
