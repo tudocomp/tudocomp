@@ -43,6 +43,33 @@ public:
             m_strings.push_back(0);
         }
 
+        class Callback {
+            Compression* m_comp;
+            friend class Compression;
+        public:
+            void encode_below_threshold(View str) {
+
+            }
+
+            void encode_above_threshold() {
+
+            }
+
+            void encode_above_threshold_char() {
+
+            }
+
+            void encode_above_threshold_ref() {
+
+            }
+        };
+
+        template<typename F>
+        inline void encode_nested(size_t ref, size_t ref_range, F f) {
+            m_ref_coder.encode(ref, Range(ref_range));
+            f(Callback(this));
+        }
+
         inline ~Compression() {
             typename ref_coder_t::Encoder ref_coder {
                 std::move(m_ref_env),

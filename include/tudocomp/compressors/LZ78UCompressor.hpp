@@ -213,8 +213,15 @@ public:
                 */
 
             } else {
-                strategy.encode(lz78u::Factor { T.slice(begin,end), ref }, factor_count);
+                //strategy.encode(lz78u::Factor { T.slice(begin,end), ref }, factor_count);
             }
+
+
+            using Cb = typename CompressionStrat::Callback;
+            strategy.encode_nested(ref, factor_count, [&](Cb c) {
+                c.encode_below_threshold(T.slice(begin,end));
+            });
+
             factor_count++;
         };
 
