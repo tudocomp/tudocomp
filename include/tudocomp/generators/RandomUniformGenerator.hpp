@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <random>
 #include <tudocomp/Generator.hpp>
 
 namespace tdc {
