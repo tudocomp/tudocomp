@@ -14,12 +14,8 @@ public:
         return m;
     }
 
-    using Generator::Generator;
-
-    inline virtual std::string generate() override {
-        size_t n = env().option("n").as_integer();
-
-	    if(n == 1) return "b";
+    inline static std::string generate(size_t n) {
+        if(n == 1) return "b";
 	    if(n == 2) return "a";
 
 	    std::string vold = "b";
@@ -37,6 +33,12 @@ public:
 	    DCHECK_LE(old.length(), std::pow(1.62, n));
 	    DCHECK_LE(vold.length(), std::pow(1.62, n-1));
 	    return old;
+    }
+
+    using Generator::Generator;
+
+    inline virtual std::string generate() override {
+        return generate(env().option("n").as_integer());
     }
 };
 

@@ -16,10 +16,7 @@ public:
         return m;
     }
 
-    using Generator::Generator;
-
-    inline virtual std::string generate() override {
-        size_t n = env().option("n").as_integer();
+    inline static std::string generate(size_t n) {
         CHECK_LT(n, 64) << "too long!"; // exception?
 
         if(n == 0) return "0";
@@ -35,6 +32,12 @@ public:
 
         DCHECK_LE(a.length(), 1ULL << n);
         return a;
+    }
+
+    using Generator::Generator;
+
+    inline virtual std::string generate() override {
+        return generate(env().option("n").as_integer());
     }
 };
 

@@ -15,11 +15,7 @@ public:
         return m;
     }
 
-    using Generator::Generator;
-
-    inline virtual std::string generate() override {
-        size_t n = env().option("n").as_integer();
-
+    inline static std::string generate(size_t n) {
         std::string t0 = "0110101101001011010",
             t1 = "0110101101001",
             t2 = "01101011010010110101101",
@@ -38,6 +34,12 @@ public:
         }
 
         return t3;
+    }
+
+    using Generator::Generator;
+
+    inline virtual std::string generate() override {
+        return generate(env().option("n").as_integer());
     }
 };
 

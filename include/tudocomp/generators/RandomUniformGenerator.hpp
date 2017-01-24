@@ -18,19 +18,14 @@ public:
     inline static Meta meta() {
         Meta m("generator", "random", "Generates random strings.");
         m.option("length").dynamic();
+        m.option("seed").dynamic("0");
         m.option("min").dynamic("48");
         m.option("max").dynamic("57");
-        m.option("seed").dynamic("0");
         return m;
     }
 
-    using Generator::Generator;
-
-    inline virtual std::string generate() override {
-        size_t length = env().option("length").as_integer();
-        size_t min = env().option("min").as_integer();
-        size_t max = env().option("max").as_integer();
-        size_t seed = env().option("seed").as_integer();
+    inline static std::string generate(
+        size_t length, size_t seed = 0, size_t min = 48, size_t max = 57) {
 
         if(min > max) std::swap(min, max);
         if(!seed) seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -44,6 +39,16 @@ public:
         }
 
         return s;
+    }
+
+    using Generator::Generator;
+
+    inline virtual std::string generate() override {
+        return generate(
+            env().option("length").as_integer(),
+            env().option("seed").as_integer(),
+            env().option("min").as_integer(),
+            env().option("max").as_integer());
     }
 };
 
