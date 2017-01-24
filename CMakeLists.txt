@@ -27,7 +27,7 @@ endif()
 # TODO: Actually add -Wall -Wextra -Werror -pedantic
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=${CXX_STANDARD}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG -fkeep-inline-functions")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG")
 
 find_package(Boost)
 
