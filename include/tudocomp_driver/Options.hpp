@@ -15,10 +15,12 @@ constexpr option OPTIONS[] = {
     {"algorithm",  required_argument, nullptr, 'a'},
     {"decompress", no_argument,       nullptr, 'd'},
     {"force",      no_argument,       nullptr, 'f'},
+    {"generator",  required_argument, nullptr, 'g'},
     {"help",       no_argument,       nullptr, OPT_HELP},
     {"list",       no_argument,       nullptr, 'l'},
     {"output",     required_argument, nullptr, 'o'},
     {"stats",      optional_argument, nullptr, 's'},
+    {"version",    no_argument,       nullptr, 'v'},
     {"raw",        no_argument,       nullptr, OPT_RAW},
     {"usestdin",   no_argument,       nullptr, OPT_STDIN},
     {"usestdout",  no_argument,       nullptr, OPT_STDOUT},
@@ -36,10 +38,14 @@ public:
             << setw(11) << "FILE" << "(1)" << endl;
         out << setw(7) << "or: " << cmd << " [OPTION] "
             << setw(11) << "--usestdin" << "(2)" << endl;
+        out << setw(7) << "or: " << cmd << " [OPTION] "
+            << setw(11) << "-g GENERATOR" << "(3)" << endl;
 
         // Brief description
         out << endl;
-        out << "Compresses or decompresses a file (1) or input received via stdin (2)." << endl;
+        out << "Compresses or decompresses a file (1), an input received via stdin (2) or a" << endl;
+        out << "generated string (3). Depending on the selected input, an output (either a" << endl;
+        out << "file or stdout) may need to be specified." << endl;
 
         // Options
         out << endl;
@@ -67,6 +73,13 @@ public:
         out << right << setw(W_SF) << "-f" << ", "
             << left << setw(W_LF) << "--force"
             << "overwrite output file if it exists"
+            << endl;
+
+        // -g, --generator
+        out << right << setw(W_SF) << "-g" << ", "
+            << left << setw(W_LF) << "--generator=GENERATOR"
+            << "generate the input using GENERATOR"
+            << endl << setw(W_INDENT) << "" << "(use -l for more information)"
             << endl;
 
         // -l, --list
@@ -110,6 +123,12 @@ public:
             << left << setw(W_LF) << "--usestdout"
             << "use stdout for input"
             << endl;
+
+        // -v, --version
+        out << right << setw(W_SF) << "-v" << ", "
+            << left << setw(W_LF) << "--version"
+            << "print the version number of this build"
+            << endl;
     }
 
 private:
@@ -117,6 +136,7 @@ private:
     bool m_unknown_options;
 
     bool m_help;
+    bool m_version;
     bool m_list;
 
     std::string m_algorithm;
@@ -124,6 +144,7 @@ private:
     std::string m_output;
     bool m_force;
     bool m_stdin, m_stdout;
+    std::string m_generator;
 
     bool m_raw;
     bool m_decompress;
@@ -134,9 +155,15 @@ private:
     std::vector<std::string> m_remaining;
 
 public:
+    // The reference-based accessors will
+    // get invalidated in case of a move or copy, so forbid them
+    Options(const Options& other) = delete;
+    Options(Options&& other) = delete;
+
     inline Options(int argc, char **argv) :
         m_unknown_options(false),
         m_help(false),
+        m_version(false),
         m_list(false),
         m_force(false),
         m_stdin(false),
@@ -146,7 +173,7 @@ public:
         m_stats(false)
     {
         int c, option_index = 0;
-        while((c = getopt_long(argc, argv, "a:dflo:s::",
+        while((c = getopt_long(argc, argv, "a:dfg:lo:s::v",
             OPTIONS, &option_index)) != -1) {
 
             switch(c) {
@@ -162,8 +189,16 @@ public:
                     m_force = true;
                     break;
 
+                case 'g': // --generator=<optarg>
+                    m_generator = std::string(optarg);
+                    break;
+
                 case 'l': // --list
                     m_list = true;
+                    break;
+
+                case 'v': // --version
+                    m_version = true;
                     break;
 
                 case 'o': // --output=<optarg>
@@ -212,6 +247,7 @@ public:
     const bool& unknown_options = m_unknown_options;
 
     const bool& help = m_help;
+    const bool& version = m_version;
     const bool& list = m_list;
 
     const std::string& algorithm = m_algorithm;
@@ -220,6 +256,7 @@ public:
     const bool& force = m_force;
     const bool& stdin = m_stdin;
     const bool& stdout = m_stdout;
+    const std::string& generator = m_generator;
 
     const bool& raw = m_raw;
     const bool& decompress = m_decompress;

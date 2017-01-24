@@ -26,7 +26,7 @@ endif()
 # TODO: Add --pedantic and fix issues
 # TODO: Actually add -Wall -Wextra -Werror -pedantic
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=${CXX_STANDARD}")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -ggdb -DDEBUG")
 
 # Paranoid debugging

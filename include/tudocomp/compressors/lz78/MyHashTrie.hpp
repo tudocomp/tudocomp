@@ -137,7 +137,9 @@ class MyHash {
 			tablepos = m_sizeman.mod_tablesize(m_probe.template get<SizeManager>(i, tablepos, hash, table_size()), table_size());
 			DCHECK_LT(i, table_size()) << "Hash table is full!";
 #ifdef CHECKCOLLISIONS
-			if(old_size != table_size()) std::cout << "myhash size " << table_size() << std::endl;
+			if(old_size != table_size()) {
+                DVLOG(1) << "myhash size " << table_size() << std::endl;
+            }
 			old_size = table_size();
 			++collisions;
 #endif

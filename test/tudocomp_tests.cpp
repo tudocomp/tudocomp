@@ -16,6 +16,15 @@
 
 #include "test/util.hpp"
 
+// Test that DEBUG and NDEBUG are defined correctly
+#if defined(DEBUG) && defined(NDEBUG)
+#error Both DEBUG and NDEBUG are defined!
+#endif
+
+#if !defined(DEBUG) && !defined(NDEBUG)
+#error Neither DEBUG nor NDEBUG are defined!
+#endif
+
 using namespace tdc;
 using namespace tdc::io;
 

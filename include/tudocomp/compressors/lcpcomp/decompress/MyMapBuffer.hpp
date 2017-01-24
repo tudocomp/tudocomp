@@ -7,7 +7,7 @@
 
 namespace tdc {
 namespace lcpcomp {
- 
+
 
 template <class Key, class Value,
           class HashFcn = std::hash<Key>,
@@ -35,14 +35,14 @@ class MyHash {
 #endif
 
 	MyHash() : m_size(initial_size), m_keys(new key_t[initial_size]), m_values(new value_t[initial_size]), m_removed(initial_size,0), m_deleted(0) {
-		std::fill(m_values, m_values+m_size, empty_val); 
-		std::fill(m_keys, m_keys+m_size, empty_val); 
+		std::fill(m_values, m_values+m_size, empty_val);
+		std::fill(m_keys, m_keys+m_size, empty_val);
 	}
 	~MyHash() {
 		delete [] m_keys;
 		delete [] m_values;
 	}
-	void reserve(len_t hint) { 
+	void reserve(len_t hint) {
 		const auto size = m_sizeman.get_min_size(hint);
 		if(entries > 0) {
 			const size_t oldsize = m_size;
@@ -51,8 +51,8 @@ class MyHash {
 			// value_t* values = new value_t[m_size];
 			key_t* keys = (key_t*) malloc(sizeof(key_t)*m_size);
 			value_t* values = (value_t*) malloc(sizeof(value_t)*m_size);
-			std::fill(values, values+m_size, empty_val); 
-			std::fill(keys, keys+m_size, empty_val); 
+			std::fill(values, values+m_size, empty_val);
+			std::fill(keys, keys+m_size, empty_val);
 //			for(size_t i = 0; i < m_size; ++i) values[i] = 0;
 //			memset(values, 0, sizeof(value_t)*size);
 			std::swap(m_values,values);
@@ -64,7 +64,7 @@ class MyHash {
 			for(len_t i = 0; i < oldsize; ++i) {
 				if(removed[i]) continue;
 				if(values[i] == empty_val) continue;
-				//auto ret = 
+				//auto ret =
 				insert(std::move(keys[i]), std::move(values[i]));
 				//DCHECK_EQ(ret.second, true); // no duplicates
 			}
@@ -76,9 +76,9 @@ class MyHash {
 			m_values = (value_t*) realloc(m_values, sizeof(value_t) * m_size);
 			//memset(m_values, 0, sizeof(value_t)*size);
 //			for(size_t i = 0; i < m_size; ++i) m_values[i] = empty_val;
-			std::fill(m_values, m_values+m_size, empty_val); 
+			std::fill(m_values, m_values+m_size, empty_val);
 			m_keys = (key_t*) realloc(m_keys, sizeof(key_t) * m_size);
-			std::fill(m_keys, m_keys+m_size, empty_val); 
+			std::fill(m_keys, m_keys+m_size, empty_val);
 			m_removed.resize(m_size); // hopefully filled with zeros
 			//m_removed.resize(m_size, 0);
 		}
@@ -145,21 +145,23 @@ class MyHash {
 //#ifdef USE_KNUTH_ORDERED //we used the reverse ordered of knuth since we insert values in ascending order
 			if(m_keys[tablepos] > key) {
 				std::swap(key,m_keys[tablepos]); // put value into m_data[tablepos], kicking the stored value in the table out
-				std::swap(value,m_values[tablepos]); 
-				{//std::swap(removed,m_removed[tablepos]); 
+				std::swap(value,m_values[tablepos]);
+				{//std::swap(removed,m_removed[tablepos]);
 					bool tmp = m_removed[tablepos];
 					m_removed[tablepos] = removed;
 					removed = tmp;
 				}
 				// hash = m_sizeman.mod_tablesize(m_h(key), size());
 			}
-			
+
 //#endif
 			++i; //collision
 			tablepos = m_sizeman.mod_tablesize(tablepos+1, size());
 			DCHECK_LT(i, size());// << "Hash table is full!";
 #ifdef CHECKCOLLISIONS
-			if(old_size != size()) std::cout << "myhash size " << size() << std::endl;
+			if(old_size != size()) {
+                DVLOG(1) << "myhash size " << size() << std::endl;
+            }
 			old_size = size();
 			++collisions;
 #endif
