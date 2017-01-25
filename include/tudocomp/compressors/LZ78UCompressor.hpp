@@ -42,10 +42,6 @@ namespace lz78u {
             return ls.slice(start, end);
         }
 
-        inline void output_str(View str, std::ostream& out) {
-            out << str;
-        }
-
         inline void decompress(lz78::factorid_t index, View literals, std::ostream& out) {
             indices.push_back(index);
             start_literal_strings.push_back(literal_strings.size());
@@ -76,7 +72,7 @@ namespace lz78u {
 
             std::reverse(buffer.begin(), buffer.end());
             //std::cout << "    reconstructed: " << vec_to_debug_string(buffer) << "\n";
-            output_str(buffer, out);
+            out << buffer;
         }
 
     };
@@ -218,6 +214,8 @@ public:
             factor_count++;
         };
 
+        DVLOG(2) << "[ compress ]";
+
         // Skip the trailing 0
         while(pos < T.size() - 1) {
             const node_t l = ST.select_leaf(ST.cst.csa.isa[pos]);
@@ -268,6 +266,7 @@ public:
 
     virtual void decompress(Input& input, Output& output) override final {
         //std::cout << "START DECOMPRESS\n";
+        DVLOG(2) << "[ decompress ]";
         auto out = output.as_stream();
 
         {
@@ -285,10 +284,13 @@ public:
 
             while (!strategy.eof()) {
                 auto ref = strategy.decode_ref(Range(factor_count));
+                DVLOG(2) << "decode ref: " << ref;
                 bool not_factorized = strategy.decode_sep();
+                DVLOG(2) << "decode sep: " << int(not_factorized);
 
                 if (not_factorized) {
                     auto str = strategy.decode_str();
+                    DVLOG(2) << "decode str: '" << str << "\\0'";
                     decomp.decompress(ref, str, out);
                 } else {
                     // rebuild the factorized string label
@@ -296,22 +298,27 @@ public:
 
                     while (true) {
                         bool is_sub_char = !strategy.decode_sep();
+                        DVLOG(2) << "decode sep: " << int(!is_sub_char);
 
                         if (is_sub_char) {
                             auto sub_chr = strategy.decode_char();
+                            DVLOG(2) << "decode chr: " << int(sub_chr);
 
                             rebuilt_buffer.push_back(sub_chr);
                         } else {
                             auto sub_ref = strategy.decode_ref(Range(factor_count));
+                            DVLOG(2) << "decode ref: " << sub_ref;
+
                             if (sub_ref == 0) {
                                 // found a cut-value
                                 auto cut = strategy.decode_ref(len_r);
+                                DVLOG(2) << "decode special ref: " << cut;
                                 while (cut > 0) {
                                     rebuilt_buffer.pop_back();
                                     --cut;
                                 }
                             } else {
-                                auto s = decomp.literals_of(sub_ref - 1);
+                                auto s = decomp.literals_of(sub_ref);
                                 for (auto c : s) {
                                     rebuilt_buffer.push_back(c);
                                 }
@@ -319,10 +326,11 @@ public:
                         }
 
                         if (rebuilt_buffer.size() > 0 && rebuilt_buffer.back() == 0) {
+                            rebuilt_buffer.pop_back();
                             break;
                         }
                     }
-                    decomp.output_str(rebuilt_buffer, out);
+                    decomp.decompress(ref, rebuilt_buffer, out);
                 }
 
                 /*
