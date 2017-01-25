@@ -3,20 +3,10 @@
 
 #include <tudocomp/tudocomp.hpp>
 
-struct InputOutput {
-    View in;
-    View out;
-};
-
-std::ostream& operator<<(std::ostream& os, const InputOutput& v) {
-    return os << v.in << " : " << v.out;
-}
-
 using namespace tdc;
 using namespace lz78u;
 
-
-TEST(Lz78U, roundtrip2) {
+TEST(Lz78U, roundtrip1) {
     test::roundtrip_binary<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
         "abcdebcdeabc"_v, {
             '0', 8,
@@ -57,7 +47,7 @@ TEST(Lz78U, roundtrip2) {
     );
 }
 
-TEST(Lz78U, roundtrip1) {
+TEST(Lz78U, roundtrip2) {
     test::roundtrip_binary<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
         "aaababaaabaababa"_v, {
             '0', 8,

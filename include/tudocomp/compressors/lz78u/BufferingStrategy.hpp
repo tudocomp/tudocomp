@@ -43,31 +43,20 @@ public:
             m_strings.push_back(0);
         }
 
-        class Callback {
-            Compression* m_comp;
-            friend class Compression;
-        public:
-            void encode_below_threshold(View str) {
+        inline void encode_ref(size_t ref, size_t ref_range) {
 
-            }
+        }
 
-            void encode_above_threshold() {
+        inline void encode_str(View str) {
 
-            }
+        }
 
-            void encode_above_threshold_char() {
+        inline void encode_sep(bool val) {
 
-            }
+        }
 
-            void encode_above_threshold_ref() {
+        inline void encode_char(uliteral_t c) {
 
-            }
-        };
-
-        template<typename F>
-        inline void encode_nested(size_t ref, size_t ref_range, F f) {
-            m_ref_coder.encode(ref, Range(ref_range));
-            f(Callback(this));
         }
 
         inline ~Compression() {
@@ -87,8 +76,7 @@ public:
             for (size_t i = 0; i < m_refs.size(); i++) {
                 ref_coder.encode(m_refs[i], Range(m_ref_ranges[i]));
 
-                bool is_over_threshold = true;
-                m_out->write_bit(is_over_threshold);
+                m_out->write_bit(!OVER_THRESHOLD_FLAG);
 
                 while (true) {
                     string_coder.encode(m_strings[strings_i], literal_r);
@@ -117,6 +105,22 @@ public:
             m_ref_coder(std::move(ref_env), in),
             m_string_coder(std::move(this->env().env_for_option("string_coder")), in),
             m_in(in) {}
+
+        inline size_t decode_ref(size_t ref_range) {
+            return 0;
+        }
+
+        inline uliteral_t decode_char() {
+            return 0;
+        }
+
+        inline View decode_str() {
+            return "";
+        }
+
+        inline bool decode_sep() {
+            return false;
+        }
 
         inline Factor decode(size_t ref_range) {
             auto ref = m_ref_coder.template decode<size_t>(Range(ref_range));

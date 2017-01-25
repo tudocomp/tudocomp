@@ -216,11 +216,11 @@ public:
                 //strategy.encode(lz78u::Factor { T.slice(begin,end), ref }, factor_count);
             }
 
+            strategy.encode_ref(ref, factor_count);
+            strategy.encode_sep(true);
+            strategy.encode_str(T.slice(begin,end));
 
-            using Cb = typename CompressionStrat::Callback;
-            strategy.encode_nested(ref, factor_count, [&](Cb c) {
-                c.encode_below_threshold(T.slice(begin,end));
-            });
+            //strategy.encode(lz78u::Factor { T.slice(begin,end), ref }, factor_count);
 
             factor_count++;
         };
@@ -282,7 +282,10 @@ public:
             lz78u::Decompressor decomp;
 
             while (!strategy.eof()) {
-                auto factor = strategy.decode(factor_count);
+                auto ref = strategy.decode_ref(factor_count);
+                auto bit = strategy.decode_sep();
+                DCHECK(bit == true);
+                auto str = strategy.decode_str();
 
                 /*
                 std::cout << "in m (s,r): ("
@@ -290,7 +293,7 @@ public:
                     << ", " << int(factor.ref) << ")\n";
                 */
 
-                decomp.decompress(factor.ref, factor.string, out);
+                decomp.decompress(ref, str, out);
 
                 factor_count++;
             }

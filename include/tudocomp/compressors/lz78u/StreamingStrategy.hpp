@@ -22,6 +22,7 @@ public:
         typename string_coder_t::Encoder  m_string_coder;
 
         std::shared_ptr<BitOStream> m_out;
+
     public:
         inline Compression(Env&& env,
                            Env&& ref_env,
@@ -31,43 +32,23 @@ public:
             m_string_coder(std::move(this->env().env_for_option("string_coder")), out, NoLiterals()),
             m_out(out) {}
 
-        inline void encode(Factor fact, size_t ref_range) {
-            m_ref_coder.encode(fact.ref, Range(ref_range));
-
-            bool is_over_threshold = true;
-            m_out->write_bit(is_over_threshold);
-
-            for (auto c : fact.string) {
-                m_string_coder.encode(c, literal_r);
-            }
-            m_string_coder.encode(0, literal_r);
+        inline void encode_ref(size_t ref, size_t ref_range) {
+            m_ref_coder.encode(ref, Range(ref_range));
         }
 
-        class Callback {
-            Compression* m_comp;
-            friend class Compression;
-        public:
-            void encode_below_threshold(View str) {
+        inline void encode_char(uliteral_t c) {
+            m_string_coder.encode(c, literal_r);
+        }
 
+        inline void encode_str(View str) {
+            for (auto c : str) {
+                encode_char(c);
             }
+            encode_char(0);
+        }
 
-            void encode_above_threshold() {
-
-            }
-
-            void encode_above_threshold_char() {
-
-            }
-
-            void encode_above_threshold_ref() {
-
-            }
-        };
-
-        template<typename F>
-        inline void encode_nested(size_t ref, size_t ref_range, F f) {
-            m_ref_coder.encode(ref, Range(ref_range));
-            f(Callback(this));
+        inline void encode_sep(bool val) {
+            m_out->write_bit(val);
         }
     };
 
@@ -87,26 +68,28 @@ public:
             m_string_coder(std::move(this->env().env_for_option("string_coder")), in),
             m_in(in) {}
 
-        inline Factor decode(size_t ref_range) {
-            auto ref = m_ref_coder.template decode<size_t>(Range(ref_range));
+        inline size_t decode_ref(size_t ref_range) {
+            return m_ref_coder.template decode<size_t>(Range(ref_range));
+        }
 
-            bool is_over_threshold = false;
-            is_over_threshold = m_in->read_bit();
-            DCHECK(is_over_threshold);
+        inline uliteral_t decode_char() {
+            return m_string_coder.template decode<uliteral_t>(literal_r);
+        }
 
+        inline View decode_str() {
             m_buf.clear();
             while (true) {
-                auto c = m_string_coder.template decode<uliteral_t>(literal_r);
+                auto c = decode_char();
                 if (c == 0) {
                     break;
                 }
                 m_buf.push_back(c);
             }
+            return m_buf;
+        }
 
-            return Factor {
-                m_buf,
-                ref
-            };
+        inline bool decode_sep() {
+            return m_in->read_bit();
         }
 
         inline bool eof() {
