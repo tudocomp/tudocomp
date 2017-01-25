@@ -1,4 +1,5 @@
 #pragma once
+//#define Boost_FOUND 1
 #include <tudocomp/config.h>
 
 #include <vector>
@@ -59,13 +60,16 @@ public:
 			len_t no;
 			Poi(len_t _pos, len_t _lcp, len_t _no) : pos(_pos), lcp(_lcp), no(_no) {}
 			bool operator<(const Poi& o) const {
-				return o.lcp < this->lcp;
+				DCHECK_NE(o.pos, this->pos);
+				if(o.lcp == this->lcp) return this->pos > o.pos;
+				return this->lcp < o.lcp;
 			}
 		};
 
 		boost::heap::pairing_heap<Poi> heap;
 		std::vector<boost::heap::pairing_heap<Poi>::handle_type> handles;
 
+		IF_STATS(len_t max_heap_size = 0);
 
 		// std::stack<poi> pois; // text positions of interest, i.e., starting positions of factors we want to replace
 
@@ -81,11 +85,15 @@ public:
 				continue;
 			}
 			if(i - lastpos > lastpos_lcp || i+1 == n) {
+				IF_DEBUG(bool first = true);
+				IF_STATS(max_heap_size = std::max<len_t>(max_heap_size, heap.size()));
+				DCHECK_EQ(heap.size(), handles.size());
 				while(!heap.empty()) {
 					const Poi& top = heap.top();
 					const len_t source_position = sa[isa[top.pos]-1];
 					factors.emplace_back(top.pos, source_position, top.lcp);
 					const len_t next_pos = top.pos; // store top
+					IF_DEBUG(if(first) DCHECK_EQ(top.pos, lastpos); first = false;)
 
 					for(len_t i = top.no+1; i < handles.size(); ++i) {
 						if( handles[i].node_ == nullptr) continue;
@@ -111,7 +119,7 @@ public:
 								it->node_ = nullptr;
 							} else {
 								poi.lcp = next_pos - poi.pos - 1;
-								heap.increase(*it);
+								heap.decrease(*it);
 
 							}
 							//	continue; //!TODO
@@ -123,12 +131,13 @@ public:
 				--i;
 				continue;
 			}
-			if(plcp[i] < lastpos_lcp) continue;
+			if(plcp[i] <= lastpos_lcp) continue;
 			DCHECK_LE(threshold, plcp[i]);
 			handles.emplace_back(heap.emplace(i,plcp[i], handles.size()));
 			lastpos = i;
 			lastpos_lcp = plcp[lastpos];
 		}
+        IF_STATS(env().log_stat("max heap size", max_heap_size));
         env().end_stat_phase();
     }
 #else//Boost_FOUND
