@@ -32,11 +32,13 @@ public:
             m_string_coder(std::move(this->env().env_for_option("string_coder")), out, NoLiterals()),
             m_out(out) {}
 
-        inline void encode_ref(size_t ref, size_t ref_range) {
-            m_ref_coder.encode(ref, Range(ref_range));
+        inline void encode_ref(size_t ref, Range ref_range) {
+            DVLOG(2) << "encode ref: " << ref;
+            m_ref_coder.encode(ref, ref_range);
         }
 
         inline void encode_char(uliteral_t c) {
+            DVLOG(2) << "encode char: " << int(c);
             m_string_coder.encode(c, literal_r);
         }
 
@@ -48,6 +50,7 @@ public:
         }
 
         inline void encode_sep(bool val) {
+            DVLOG(2) << "encode sep: " << int(val == 1);
             m_out->write_bit(val);
         }
     };
@@ -68,8 +71,8 @@ public:
             m_string_coder(std::move(this->env().env_for_option("string_coder")), in),
             m_in(in) {}
 
-        inline size_t decode_ref(size_t ref_range) {
-            return m_ref_coder.template decode<size_t>(Range(ref_range));
+        inline size_t decode_ref(Range ref_range) {
+            return m_ref_coder.template decode<size_t>(ref_range);
         }
 
         inline uliteral_t decode_char() {

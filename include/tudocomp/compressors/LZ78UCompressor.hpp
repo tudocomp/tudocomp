@@ -26,7 +26,9 @@ namespace lz78u {
 
         std::vector<uliteral_t> buffer;
 
-        View literals_of(size_t i) const {
+        public:
+
+        inline View literals_of(size_t i) const {
             View ls = literal_strings;
 
             size_t start = start_literal_strings[i];
@@ -40,7 +42,10 @@ namespace lz78u {
             return ls.slice(start, end);
         }
 
-        public:
+        inline void output_str(View str, std::ostream& out) {
+            out << str;
+        }
+
         inline void decompress(lz78::factorid_t index, View literals, std::ostream& out) {
             indices.push_back(index);
             start_literal_strings.push_back(literal_strings.size());
@@ -71,7 +76,7 @@ namespace lz78u {
 
             std::reverse(buffer.begin(), buffer.end());
             //std::cout << "    reconstructed: " << vec_to_debug_string(buffer) << "\n";
-            out << View(buffer);
+            output_str(buffer, out);
         }
 
     };
@@ -144,15 +149,26 @@ public:
 
         len_t factor_count = 0;
 
-        auto output = [&](len_t begin, len_t end, size_t ref) { // end is the position after the substring, i.e., T[begin..e] where e= end-1
+        // `begin` and `end` denote a half-open range [begin, end)
+        // of characters of the input string
+        auto output = [&](len_t begin, len_t end, size_t ref) {
             // if trailing 0, remove
             while(T[end-1] == 0) --end;
 
+            // First, encode the reference
+            DVLOG(2) << "reference";
+            strategy.encode_ref(ref, Range(factor_count));
+
             // factorize the factor label if the label is above the threshold
-            if(end-begin >= threshold ) {
-                std::vector<len_t> refs; // stores either referred indices or characters
-                std::vector<bool> is_ref; // stores whether refs stores at a position a index or a character
-                for(len_t pos = begin; pos < end;) { // similar to the normal LZ78U factorization, but does not introduce new factor ids
+            if (end-begin >= threshold) {
+                DVLOG(2) << "factorized";
+
+                // indicate that this is a factorized string
+                strategy.encode_sep(false);
+
+                for(len_t pos = begin; pos < end;) {
+                    // similar to the normal LZ78U factorization, but does not introduce new factor ids
+
                     const node_t leaf = ST.select_leaf(ST.cst.csa.isa[pos]);
                     len_t d = 1;
                     node_t parent = ST.root;
@@ -165,62 +181,36 @@ public:
                     const len_t depth = ST.str_depth(parent);
                     // if the largest factor is not large enough, we only store the current character and move one text position to the right
                     if(depth < threshold) {
-                        refs.push_back(T[pos]);
-                        is_ref.push_back(false); // the current ref is a plain character
+                        DVLOG(2) << "sub char";
+                        strategy.encode_sep(false);
+                        strategy.encode_char(T[pos]);
                         ++pos;
                     } else {
-                        refs.push_back(R[ST.nid(parent)]);
-                        is_ref.push_back(true); // the current ref is a real ref
+                        DVLOG(2) << "sub ref";
+                        strategy.encode_sep(true);
+                        strategy.encode_ref(R[ST.nid(parent)], Range(factor_count));
                         pos += depth;
                         // taking the last factor can make the string larger than intended, so we have to store a cut-value at the last position
                         if(pos >= end) {
-                            refs.push_back(pos-end); // we do not store in is_ref something such that we know later that the last value is a cutting value
+                            // TODO: Is this encoding efficient enough?
+
+                            // 0 factors would not appear here, so use 0 as a escape
+                            // char to indicate that a cut-value follows
+                            DVLOG(2) << "special sub ref";
+                            strategy.encode_sep(true);
+                            strategy.encode_ref(0, Range(factor_count));
+                            strategy.encode_ref(pos-end, len_r);
                         }
                     }
                 }
-
-                /*
-                // trying to rebuild the factorized string label
-                std::string rebuilt;
-                for(len_t i = 0; i < refs.size(); ++i) {
-                    if(!is_ref[i]) {
-                        rebuilt.push_back(refs[i]);
-                        continue;
-                    }
-                    DCHECK_NE(refs[i],0);
-                    for(auto it = ST.cst.begin(); it != ST.cst.end(); ++it) { // we have to query the inverse of R -> this takes time!
-                        if(ST.cst.is_leaf(*it)) continue;
-                        if(R[ST.nid(*it)] == refs[i]) { // if we found the right factor in the suffix tree, we can decode the factor
-                            const node_t node = *it;
-                            const len_t suffix_number = ST.cst.sn(ST.cst.leftmost_leaf(node));
-                            const len_t depth = ST.str_depth(node);
-                            rebuilt += T.slice(suffix_number, suffix_number + depth);
-                            DCHECK_EQ(T.slice(begin, begin+rebuilt.size()), rebuilt);
-                            break;
-                        }
-                    }
-                    if(i+2 == refs.size() && is_ref.size() < refs.size()) { // there is an offset at the last position of refs
-                        while(refs[i+1] > 0) {
-                            rebuilt.pop_back();
-                            --refs[i+1];
-                        }
-                        break;
-                    }
-                }
-                DCHECK_EQ(rebuilt.size(), end-begin);
-                DCHECK_EQ(rebuilt, T.slice(begin,end));
-
-                */
-
             } else {
-                //strategy.encode(lz78u::Factor { T.slice(begin,end), ref }, factor_count);
+                // else just output the string as a whole
+
+                // indicate that this is not a factorized string
+                DVLOG(2) << "plain";
+                strategy.encode_sep(true);
+                strategy.encode_str(T.slice(begin,end));
             }
-
-            strategy.encode_ref(ref, factor_count);
-            strategy.encode_sep(true);
-            strategy.encode_str(T.slice(begin,end));
-
-            //strategy.encode(lz78u::Factor { T.slice(begin,end), ref }, factor_count);
 
             factor_count++;
         };
@@ -281,19 +271,55 @@ public:
 
             lz78u::Decompressor decomp;
 
+            std::vector<uliteral_t> rebuilt_buffer;
+
             while (!strategy.eof()) {
-                auto ref = strategy.decode_ref(factor_count);
-                auto bit = strategy.decode_sep();
-                DCHECK(bit == true);
-                auto str = strategy.decode_str();
+                auto ref = strategy.decode_ref(Range(factor_count));
+                bool not_factorized = strategy.decode_sep();
+
+                if (not_factorized) {
+                    auto str = strategy.decode_str();
+                    decomp.decompress(ref, str, out);
+                } else {
+                    // rebuild the factorized string label
+                    rebuilt_buffer.clear();
+
+                    while (true) {
+                        bool is_sub_char = !strategy.decode_sep();
+
+                        if (is_sub_char) {
+                            auto sub_chr = strategy.decode_char();
+
+                            rebuilt_buffer.push_back(sub_chr);
+                        } else {
+                            auto sub_ref = strategy.decode_ref(Range(factor_count));
+                            if (sub_ref == 0) {
+                                // found a cut-value
+                                auto cut = strategy.decode_ref(len_r);
+                                while (cut > 0) {
+                                    rebuilt_buffer.pop_back();
+                                    --cut;
+                                }
+                            } else {
+                                auto s = decomp.literals_of(sub_ref - 1);
+                                for (auto c : s) {
+                                    rebuilt_buffer.push_back(c);
+                                }
+                            }
+                        }
+
+                        if (rebuilt_buffer.size() > 0 && rebuilt_buffer.back() == 0) {
+                            break;
+                        }
+                    }
+                    decomp.output_str(rebuilt_buffer, out);
+                }
 
                 /*
                 std::cout << "in m (s,r): ("
                     << vec_to_debug_string(factor.string)
                     << ", " << int(factor.ref) << ")\n";
                 */
-
-                decomp.decompress(ref, str, out);
 
                 factor_count++;
             }

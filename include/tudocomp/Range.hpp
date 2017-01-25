@@ -6,7 +6,8 @@
 namespace tdc {
     class Range {
     private:
-        size_t m_min, m_max;
+        size_t m_min;
+        size_t m_max;
 
     public:
         inline Range(size_t max) : m_min(0), m_max(max) {}

@@ -28,5 +28,4 @@ add_custom_target(
         generate_version
 )
 
-
 include_directories(${CMAKE_BINARY_DIR}/include)

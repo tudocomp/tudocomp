@@ -22,7 +22,7 @@ public:
         std::shared_ptr<BitOStream> m_out;
 
         // TODO Optimization: Replace with something that just stores the increment points
-        std::vector<size_t> m_ref_ranges;
+        std::vector<Range> m_ref_ranges;
         // TODO Optimization: Replace with variable bit width
         std::vector<size_t> m_refs;
         // TODO Optimization: Replace with bitvector
@@ -42,7 +42,7 @@ public:
             m_ref_env(std::move(ref_env)),
             m_out(out) {}
 
-        inline void encode_ref(size_t ref, size_t ref_range) {
+        inline void encode_ref(size_t ref, Range ref_range) {
             m_refs.push_back(ref);
             m_ref_ranges.push_back(ref_range);
             m_stream.push_back(0);
@@ -87,7 +87,7 @@ public:
                     case 0: {
                         auto ref = *(refs_i++);
                         auto ref_range = *(ref_ranges_i++);
-                        ref_coder.encode(ref, Range(ref_range));
+                        ref_coder.encode(ref, ref_range);
 
                         break;
                     }
@@ -129,8 +129,8 @@ public:
             m_string_coder(std::move(this->env().env_for_option("string_coder")), in),
             m_in(in) {}
 
-        inline size_t decode_ref(size_t ref_range) {
-            return m_ref_coder.template decode<size_t>(Range(ref_range));
+        inline size_t decode_ref(Range ref_range) {
+            return m_ref_coder.template decode<size_t>(ref_range);
         }
 
         inline uliteral_t decode_char() {
