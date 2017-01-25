@@ -202,6 +202,10 @@ public:
                         }
                     }
                 }
+                // all char sequencens in a factor need to be 0 terminated
+                DVLOG(2) << "sub char term";
+                strategy.encode_sep(false);
+                strategy.encode_char(0);
             } else {
                 // else just output the string as a whole
 
