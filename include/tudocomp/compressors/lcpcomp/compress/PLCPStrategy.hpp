@@ -1,4 +1,6 @@
 #pragma once
+//#define Boost_FOUND 1
+#include <tudocomp/config.h>
 
 #include <vector>
 
@@ -9,9 +11,13 @@
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/ds/ArrayMaxHeap.hpp>
+#ifdef Boost_FOUND
+#include <boost/heap/pairing_heap.hpp>
+#endif
 
 namespace tdc {
 namespace lcpcomp {
+
 
 /// A very naive selection strategy for LCPComp.
 ///
@@ -28,6 +34,7 @@ public:
         return m;
     }
 
+#ifdef Boost_FOUND
     inline void factorize(text_t& text,
                    size_t threshold,
                    lzss::FactorBuffer& factors) {
@@ -36,6 +43,7 @@ public:
 		env().begin_stat_phase("Construct text ds");
 		text.require(text_t::SA | text_t::ISA | text_t::PLCP);
 		env().end_stat_phase();
+		env().begin_stat_phase("Search Peaks");
 
         const auto& sa = text.require_sa();
         const auto& isa = text.require_isa();
@@ -46,71 +54,98 @@ public:
 
         const len_t n = sa.size();
 
-        env().begin_stat_phase("Construct MaxLCPHeap");
- 
-		// compute number of max. entries of the heap
-		len_t peaks = 0;
-		for(len_t i = 0; i+1 < n; ++i) {
-			if( (i == 0 || plcp[i] > plcp[i-1]) && plcp[i] >= threshold) {
-				++peaks;
+		struct Poi {
+			len_t pos;
+			len_t lcp;
+			len_t no;
+			Poi(len_t _pos, len_t _lcp, len_t _no) : pos(_pos), lcp(_lcp), no(_no) {}
+			bool operator<(const Poi& o) const {
+				DCHECK_NE(o.pos, this->pos);
+				if(o.lcp == this->lcp) return this->pos > o.pos;
+				return this->lcp < o.lcp;
 			}
-		}
-        // Construct heap
-        ArrayMaxHeap<text_t::lcp_type::data_type> heap(plcp, plcp.size(), peaks);
+		};
+
+		boost::heap::pairing_heap<Poi> heap;
+		std::vector<boost::heap::pairing_heap<Poi>::handle_type> handles;
+
+		IF_STATS(len_t max_heap_size = 0);
+
+		// std::stack<poi> pois; // text positions of interest, i.e., starting positions of factors we want to replace
+
+		len_t lastpos = 0;
+		len_t lastpos_lcp = 0;
 		for(len_t i = 0; i+1 < n; ++i) {
-			if( (i == 0 || plcp[i] > plcp[i-1]) && plcp[i] >= threshold) {
-				heap.insert(i);	
-			}
-		}
-        env().log_stat("entries", peaks);
-        env().end_stat_phase();
-
-        //Factorize
-        env().begin_stat_phase("Process MaxLCPHeap");
-
-		while(heap.size() > 0) {
-			const len_t target_position = heap.get_max();
-			const len_t factor_length = plcp[target_position]; 
-			DCHECK_NE(isa[target_position], 0);
-				DCHECK_LT(target_position+factor_length,n);
-				const len_t source_position = sa[isa[target_position]-1];
-				DCHECK_GE(factor_length, threshold);
-				factors.emplace_back(target_position, source_position, factor_length);
-				DCHECK([&] ()  {
-						factors.sort();
-						for(size_t i = 0; i+1 < factors.size(); ++i) {
-							DCHECK_LE(factors[i].pos + factors[i].len, factors[i+1].pos);
-						}
-						return true;
-						}());
-				for(size_t k = 0; k < factor_length; ++k) {
-					plcp[target_position + k] = 0;
-	                heap.remove(target_position + k);
+			if(heap.empty()) {
+				if(plcp[i] >= threshold) {
+					handles.emplace_back(heap.emplace(i,plcp[i], handles.size()));
+					lastpos = i;
+					lastpos_lcp = plcp[lastpos];
 				}
-				const len_t aff_length = std::min(factor_length+1, target_position); //! is setting factor_length to factor_length+1 the right thing?
-				for(size_t k = 0; k < aff_length; ++k) {
-					const len_t aff_position = target_position - k - 1;
-					if(target_position < aff_position + plcp[aff_position]) {
-						const len_t aff_lcp = target_position - aff_position;
-						plcp[aff_position] = aff_lcp;
-						if(heap.contains(aff_position)) {
-							if(aff_lcp >= threshold) {
-								heap.decrease_key(aff_position, aff_lcp);
-							} else {
-								heap.remove(aff_position);
-							}
-							
+				continue;
+			}
+			if(i - lastpos > lastpos_lcp || i+1 == n) {
+				IF_DEBUG(bool first = true);
+				IF_STATS(max_heap_size = std::max<len_t>(max_heap_size, heap.size()));
+				DCHECK_EQ(heap.size(), handles.size());
+				while(!heap.empty()) {
+					const Poi& top = heap.top();
+					const len_t source_position = sa[isa[top.pos]-1];
+					factors.emplace_back(top.pos, source_position, top.lcp);
+					const len_t next_pos = top.pos; // store top
+					IF_DEBUG(if(first) DCHECK_EQ(top.pos, lastpos); first = false;)
+
+					for(len_t i = top.no+1; i < handles.size(); ++i) {
+						if( handles[i].node_ == nullptr) continue;
+						const Poi& poi = *(handles[i]);
+						DCHECK_LT(next_pos, poi.pos);
+						if(poi.pos < next_pos+top.lcp) {
+							heap.erase(handles[i]);
+							handles[i].node_ = nullptr;
 						}
+						//else { break; } // !TODO
+					}
+					handles[top.no].node_ = nullptr;
+					heap.pop(); // top now gets erased
+
+					for(auto it = handles.rbegin(); it != handles.rend(); ++it) {
+						if( (*it).node_ == nullptr) continue;
+						Poi& poi = (*(*it));
+						if(poi.pos > next_pos)  continue;
+						const len_t newlcp = next_pos - poi.pos - 1;
+						if(newlcp < poi.lcp) {
+							if(newlcp < threshold) {
+								heap.erase(*it);
+								it->node_ = nullptr;
+							} else {
+								poi.lcp = next_pos - poi.pos - 1;
+								heap.decrease(*it);
+
+							}
+							//	continue; //!TODO
+						}
+						//break; // !TODO
 					}
 				}
-				const len_t next_target_position = target_position+factor_length;
-				if(next_target_position+1 < text.size() && plcp[next_target_position] >= threshold && !heap.contains(next_target_position)) {
-					heap.insert(next_target_position);
-				}
+				handles.clear();
+				--i;
+				continue;
 			}
-
+			if(plcp[i] <= lastpos_lcp) continue;
+			DCHECK_LE(threshold, plcp[i]);
+			handles.emplace_back(heap.emplace(i,plcp[i], handles.size()));
+			lastpos = i;
+			lastpos_lcp = plcp[lastpos];
+		}
+        IF_STATS(env().log_stat("max heap size", max_heap_size));
         env().end_stat_phase();
     }
+#else//Boost_FOUND
+    inline void factorize(text_t&, size_t, lzss::FactorBuffer& ) {
+#warning "plcpcomp is a dummy without boost"
+	}
+#endif//Boost_FOUND
+
 };
 
 }}//ns

@@ -59,14 +59,14 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
         }
     }
    decoder.env().end_stat_phase();
-   decoder.env().begin_stat_phase("Lazy LCPComp-Decoding");
+   decoder.env().begin_stat_phase("Scan Decoding");
     buffer.decode_lazy();
    decoder.env().end_stat_phase();
-   decoder.env().begin_stat_phase("Eagerly LCPComp-Decoding");
+   decoder.env().begin_stat_phase("Eager Decoding");
     buffer.decode_eagerly();
     IF_STATS(decoder.env().log_stat("longest_chain", buffer.longest_chain()));
    decoder.env().end_stat_phase();
-   decoder.env().begin_stat_phase("Outputting text");
+   decoder.env().begin_stat_phase("Output Text");
     buffer.write_to(outs);
    decoder.env().end_stat_phase();
    decoder.env().end_stat_phase();

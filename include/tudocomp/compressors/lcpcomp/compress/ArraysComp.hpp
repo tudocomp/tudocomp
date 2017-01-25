@@ -17,13 +17,13 @@ namespace lcpcomp {
  * Instead, we check for every element whether it got already deleted/its key got decreased
  * In the latter case, we push it down to the respective array
  */
-class LazyListStrategy : public Algorithm {
+class ArraysComp : public Algorithm {
 private:
     typedef TextDS<> text_t;
 
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_comp", "lazy_list");
+        Meta m("lcpcomp_comp", "arrays");
         return m;
     }
 
