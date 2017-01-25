@@ -27,8 +27,14 @@ namespace lz78u {
         std::vector<uliteral_t> buffer;
 
         public:
-
-        inline View literals_of(size_t i) const {
+        inline lz78::factorid_t ref_at(lz78::factorid_t index) const {
+            DCHECK_NE(index, 0);
+            size_t i = index - 1;
+            return indices[i];
+        }
+        inline View str_at(lz78::factorid_t index) const {
+            DCHECK_NE(index, 0);
+            size_t i = index - 1;
             View ls = literal_strings;
 
             size_t start = start_literal_strings[i];
@@ -66,8 +72,8 @@ namespace lz78u {
                 if (index == 0) {
                     break;
                 }
-                literals = literals_of(index - 1);
-                index = indices[index - 1];
+                literals = str_at(index);
+                index = ref_at(index);
             }
 
             std::reverse(buffer.begin(), buffer.end());
@@ -284,13 +290,20 @@ public:
 
             while (!strategy.eof()) {
                 auto ref = strategy.decode_ref(Range(factor_count));
+                DVLOG(2) << "";
                 DVLOG(2) << "decode ref: " << ref;
+                DVLOG(2) << "";
                 bool not_factorized = strategy.decode_sep();
                 DVLOG(2) << "decode sep: " << int(not_factorized);
 
                 if (not_factorized) {
                     auto str = strategy.decode_str();
                     DVLOG(2) << "decode str: '" << str << "\\0'";
+                    DVLOG(2) << "  ...'"
+                        << ((ref > 0) ? decomp.str_at(ref) : ""_v)
+                        << "' '"
+                        << str
+                        << "'";
                     decomp.decompress(ref, str, out);
                 } else {
                     // rebuild the factorized string label
@@ -318,10 +331,24 @@ public:
                                     --cut;
                                 }
                             } else {
-                                auto s = decomp.literals_of(sub_ref);
-                                for (auto c : s) {
-                                    rebuilt_buffer.push_back(c);
-                                }
+                                size_t prev_r = sub_ref;
+                                size_t old_end = rebuilt_buffer.size();
+
+                                // push the chars in reverse order
+                                // to allow efficient appending of prefixes
+                                do {
+                                    View s = decomp.str_at(prev_r);
+                                    prev_r = decomp.ref_at(prev_r);
+
+                                    for (size_t j = 0; j < s.size(); j++) {
+                                        rebuilt_buffer.push_back(s[s.size() - j - 1]);
+                                    }
+                                } while (prev_r != 0);
+                                DCHECK_EQ(prev_r, 0);
+
+                                // reverse suffix containing the new string fragment
+                                std::reverse(rebuilt_buffer.begin() + old_end,
+                                             rebuilt_buffer.end());
                             }
                         }
 
@@ -330,6 +357,11 @@ public:
                             break;
                         }
                     }
+                    DVLOG(2) << "USED!";
+                    DVLOG(2) << "  ...'"
+                        << ((ref > 0) ? decomp.str_at(ref) : ""_v)
+                        << "' '"
+                        << rebuilt_buffer << "'";
                     decomp.decompress(ref, rebuilt_buffer, out);
                 }
 

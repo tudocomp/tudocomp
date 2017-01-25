@@ -98,6 +98,18 @@ TEST(Lz78U, roundtrip2) {
     );
 }
 
+TEST(Lz78U, roundtrip4) {
+    test::roundtrip_binary<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
+        "abcabcabcabc"_v, {}
+    );
+}
+
+TEST(Lz78U, roundtrip5) {
+    test::roundtrip_binary<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
+        " solet salutandi, salutandi "_v, {}
+    );
+}
+
 TEST(Lz78U, roundtrip3) {
     test::roundtrip_binary<LZ78UCompressor<BufferingStrategy<HuffmanCoder>, ASCIICoder>>(
         "aaababaaabaababa"_v,

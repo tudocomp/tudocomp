@@ -38,7 +38,7 @@ public:
         }
 
         inline void encode_char(uliteral_t c) {
-            DVLOG(2) << "encode char: " << int(c);
+            DVLOG(2) << "encode char: '" << c << "' (" << int(c) << ")";
             m_string_coder.encode(c, literal_r);
         }
 
