@@ -177,7 +177,6 @@ public:
                         parent = node;
                         node = ST.level_anc(leaf, ++d);
                     } // not a good feature: We lost the factor ids of the leaves, since R only stores the IDs of internal nodes
-                    DCHECK_NE(parent, ST.root);
                     const len_t depth = ST.str_depth(parent);
                     // if the largest factor is not large enough, we only store the current character and move one text position to the right
                     if(depth < threshold) {
@@ -242,7 +241,6 @@ public:
             }
             pos += ST.str_depth(parent);
 
-            R[ST.nid(node)] = ++z;
 
             // const auto& str = T.slice(leaflabel + ST.str_depth(parent), leaflabel + ST.str_depth(node));
             const len_t begin = leaflabel + ST.str_depth(parent);
@@ -250,6 +248,7 @@ public:
 
             //std::cout << "out slice: [ "<< (leaflabel + ST.str_depth(parent)) << ", "<< (leaflabel + ST.str_depth(node))<< " ] ";
             output(begin,end, R[ST.nid(ST.parent(node))]);
+            R[ST.nid(node)] = ++z;
 
             pos += end - begin;
 
