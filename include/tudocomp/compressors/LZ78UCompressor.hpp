@@ -190,7 +190,7 @@ public:
                         strategy.encode_ref(R[ST.nid(parent)], Range(factor_count));
                         pos += depth;
                         // taking the last factor can make the string larger than intended, so we have to store a cut-value at the last position
-                        if(pos >= end) {
+                        if(pos > end) {
                             // TODO: Is this encoding efficient enough?
 
                             // 0 factors would not appear here, so use 0 as a escape
