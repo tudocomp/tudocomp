@@ -223,10 +223,15 @@ public:
                 const len_t parent_strdepth = ST.str_depth(ST.parent(l));
 
                 //std::cout << "out leaf: [" << (pos+parent_strdepth)  << ","<< (pos + parent_strdepth + 1) << "] ";
-                output(pos+parent_strdepth, pos + parent_strdepth + 1, R[ST.nid(ST.parent(l))]);
+                output(pos + parent_strdepth,
+                       pos + parent_strdepth + 1,
+                       R[ST.nid(ST.parent(l))]);
 
                 pos += parent_strdepth+1;
                 ++z;
+
+                DCHECK_EQ(z, factor_count);
+
                 continue;
             }
 
@@ -247,11 +252,13 @@ public:
             const len_t end = leaflabel + ST.str_depth(node);
 
             //std::cout << "out slice: [ "<< (leaflabel + ST.str_depth(parent)) << ", "<< (leaflabel + ST.str_depth(node))<< " ] ";
-            output(begin,end, R[ST.nid(ST.parent(node))]);
+            output(begin,
+                   end,
+                   R[ST.nid(ST.parent(node))]);
             R[ST.nid(node)] = ++z;
 
             pos += end - begin;
-
+            DCHECK_EQ(z, factor_count);
         }
     }
 
