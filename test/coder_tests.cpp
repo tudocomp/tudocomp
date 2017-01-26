@@ -69,6 +69,8 @@ void test_bits() {
 template<typename coder_t>
 void test_int(size_t n = 93) {
     // Encode Fibonacci series using fixed and dynamic ranges
+    MinDistributedRange min_r(1, n); const size_t mod = n / 9;
+
     std::stringstream ss;
     {
         Output out(ss);
@@ -80,6 +82,7 @@ void test_int(size_t n = 93) {
             coder.encode(b, size_r);
             coder.encode(b, Range(b));
             coder.encode(b, Range(a, b));
+            coder.encode(1 + (b % mod), min_r);
             t = b; b += a; a = t;
         }
     }
@@ -99,6 +102,8 @@ void test_int(size_t n = 93) {
                 << "a=" << a << ", b=" << b;
             ASSERT_EQ(b, decoder.template decode<uint64_t>(Range(a, b)))
                 << "a=" << a << ", b=" << b;
+            ASSERT_EQ(1 + (b % mod), decoder.template decode<size_t>(min_r))
+                << "b=" << b;
 
             t = b; b += a; a = t; ++i;
         }
@@ -140,7 +145,8 @@ template<typename coder_t>
 void test_mixed() {
     // Generate a fibonacci word and use it as test subject
     const std::string word = FibonacciGenerator::generate(24);
-    Range atoz_r = Range('a', 'z');
+    Range atoz_r('a', 'z');
+    MinDistributedRange atoz_min_r('a', 'z');
 
     // Encode string
     std::stringstream ss;
@@ -152,6 +158,7 @@ void test_mixed() {
             coder.encode(word[i] == 'a', bit_r);
             coder.encode(i, size_r);
             coder.encode(word[i], literal_r);
+            coder.encode(size_t(word[i]), atoz_min_r);
             coder.encode(size_t(word[i]), atoz_r);
         }
     }
@@ -167,6 +174,7 @@ void test_mixed() {
             ASSERT_EQ(word[i] == 'a', decoder.template decode<bool>(bit_r));
             ASSERT_EQ(i, decoder.template decode<size_t>(size_r));
             ASSERT_EQ(word[i], decoder.template decode<uliteral_t>(literal_r));
+            ASSERT_EQ(size_t(word[i]), decoder.template decode<size_t>(atoz_min_r));
             ASSERT_EQ(size_t(word[i]), decoder.template decode<size_t>(atoz_r));
             ++i;
         }
