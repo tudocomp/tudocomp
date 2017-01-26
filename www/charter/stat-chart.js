@@ -320,7 +320,13 @@ var drawChart = function(raw) {
         group.append("line")
             .attr("x1", 0)
             .attr("x2", 0)
-            .attr("y1", function(d) { return app.memToPx(d.memPeak); })
+            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
+            .attr("y2", app.chartHeight);
+
+        group.append("line")
+            .attr("x1", function(d) { return app.timeToPx(d.tDuration); })
+            .attr("x2", function(d) { return app.timeToPx(d.tDuration); })
+            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
             .attr("y2", app.chartHeight);
 
         group.selectAll("line")
