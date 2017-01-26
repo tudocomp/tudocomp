@@ -1,13 +1,17 @@
 var colors = [
     "#4682B4", // steelblue
     "#FF6347", // tomato
-    "#FFA500", // orange
+    "#FF8C00", // darkorange
     "#8FBC8F", // darkseagreen
     "#6A5ACD", // slateblue
     "#BC8F8F", // rosybrown
     "#FF69B4", // hotpink
     "#DDA0DD", // plum
-    "#90EE90", //lightgreen
+    "#90EE90", // lightgreen
+    "#708090", // slategrey
+    "#FFD700", // gold
+    "#CD853F", // peru
+    "#9ACD32", // yellowgreen
 ];
 
 var grayColor = "#CCC";
@@ -252,20 +256,20 @@ var drawChart = function(raw) {
                     .append("g")
                     .attr("class", "legend")
                     .attr("transform", function(d) {
-                        return "translate(" + (app.x.range()[1] + 1) + ",0)";
+                        return "translate(" + (app.x.range()[1] + 5) + ",0)";
                     });
 
         legend.append("rect")
             .attr("fill", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? grayColor : d.color; })
             .attr("x", "0")
-            .attr("y", function(d, i) { return (i * 1.5) + "em" })
+            .attr("y", function(d, i) { return (i * 1.35) + "em" })
             .attr("width", "1em")
             .attr("height", "1em");
 
         legend.append("text")
-            .attr("x", "1.25em")
-            .attr("y", function(d, i) { return (i * 1.5) + "em" })
-            .attr("dy", "1em")
+            .attr("x", "1.15em")
+            .attr("y", function(d, i) { return (i * 1.35) + "em" })
+            .attr("dy", "0.85em")
             .text(function(d) { return d.title; })
             .style("fill", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? grayFontColor : "inherit"; })
             .style("font-style", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? "italic" : "normal"; })
