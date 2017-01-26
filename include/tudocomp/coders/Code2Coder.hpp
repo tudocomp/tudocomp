@@ -405,7 +405,7 @@ public:
 		template<typename value_t>
 		inline value_t decode(const Range& r) {
             reset_kmer(); // current k-mer interrupted
-            return m_in->read_int<value_t>(bits_for(r.delta()));
+            return m_in->read_int<value_t>(bits_for(r.delta())) + value_t(r.min());
         }
 
 		template<typename value_t>
