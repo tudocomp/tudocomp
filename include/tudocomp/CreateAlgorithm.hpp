@@ -132,7 +132,7 @@ T create_algo() {
 }
 
 /// \brief Creates a context free environment with a certain set of options.
-Env create_env(Meta&& meta, const std::string& options = "") {
+inline Env create_env(Meta&& meta, const std::string& options = "") {
     auto fixed_static_args = std::move(meta).build_static_args_ast_value();
 
     auto padded_options = meta.name() + "(" + options + ")";
@@ -157,10 +157,6 @@ Env create_env(Meta&& meta, const std::string& options = "") {
     Env env(env_root, env_root->algo_value(), Registry());
 
     return env;
-}
-
-Env create_env() {
-    return create_env(Meta("unknown", "unnamed"));
 }
 
 }
