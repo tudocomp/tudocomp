@@ -131,7 +131,15 @@ T create_algo() {
     return create_algo<T>("");
 }
 
-/// \brief Creates a context free environment with a certain set of options.
+/// \brief Creates an environment.
+///
+/// The environment will be created based on arbitrary \ref tdc::Meta
+/// information of an algorithm that may or not really exist. No registry
+/// is used to verify.
+///
+/// \param meta the meta information to use to create the environment.
+/// \param options algorithm options to set in the environment.
+/// \return the newly created environment.
 inline Env create_env(Meta&& meta, const std::string& options = "") {
     auto fixed_static_args = std::move(meta).build_static_args_ast_value();
 
