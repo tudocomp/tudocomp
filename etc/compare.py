@@ -22,7 +22,7 @@ if not os.access(sourcefilename, os.R_OK):
     quit()
 
 
-numIterations=1
+numIterations=10
 print("Number of iterations: ", numIterations)
 
 compressor_pairs = [
@@ -32,21 +32,20 @@ compressor_pairs = [
         #second input flag, if STDIN, then 1
         #third is program name
         #other parameters are program arguments
-       ('gzip -1'  , [1 , 1 , "gzip"  , "-aoe1"] , [1 , 1 , 'gzip'  , '-d']) ,
+       ('lz78u(t=5,huff)',['--output','','./tdc','-a','lz78u(threshold=5,strategy=buffering(huff),coder=bit)','--force'], ['--output','','./tdc', '--decompress']),
+       ('lcpcomp(t=5,arrays,scans(a=25))',['--output','','./tdc','-a','lcpcomp(coder=code2,threshold="5",comp=arrays,dec=scan("25"))','--force'], ['--output','','./tdc', '--decompress']),
+       ('lzss_lcp(t=5,bit)'  , ['--output' , '' , './tdc' , '-a' , 'lzss_lcp(coder=bit,theshold=5)' , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
+       ('code2' , ['--output' , '' , './tdc' , '-a' , 'encode(code2)' , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
+       ('huff'  , ['--output' , '' , './tdc' , '-a' , 'encode(huff)'  , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
+       ('lzw(ternary)'   , ['--output' , '' , './tdc' , '-a' , 'lzw(coder=bit,lz78trie=ternary)'           , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
+       ('lz78(ternary)'  , ['--output' , '' , './tdc' , '-a' , 'lz78(coder=bit,lz78trie=ternary)'          , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
+       ('bwtzip',['--output','','./tdc','-a','chain(chain(chain(bwt,easyrle),mtf),encode(huff))','--force'], ['--output','','./tdc', '--decompress']),
        ('gzip -1'  , [1 , 1 , "gzip"  , "-1"] , [1 , 1 , 'gzip'  , '-d']) ,
        ('gzip -9'  , [1 , 1 , "gzip"  , "-9"] , [1 , 1 , 'gzip'  , '-d']) ,
        ('bzip2 -1' , [1 , 1 , "bzip2" , "-1"] , [1 , 1 , 'bzip2' , '-d']) ,
        ('bzip2 -9' , [1 , 1 , "bzip2" , "-9"] , [1 , 1 , 'bzip2' , '-d']) ,
        ('lzma -1'  , [1 , 1 , "lzma"  , "-1"] , [1 , 1 , 'lzma'  , '-d']) ,
        ('lzma -9'  , [1 , 1 , "lzma"  , "-9"] , [1 , 1 , 'lzma'  , '-d']) ,
-       ('lcp(t=5,arrays,scans=25)',['--output','','./tdc','-a','lcpcomp(code2,threshold="5",comp=arrays,dec=scan("25"))','--force'], ['--output','','./tdc', '--decompress']),
-       ('bwtzip',['--output','','./tdc','-a','chain(chain(chain(bwt,easyrle),mtf),encode(huff))','--force'], ['--output','','./tdc', '--decompress']),
-       ('lzss'  , ['--output' , '' , './tdc' , '-a' , 'lzss_lcp(bit)' , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
-       ('code2' , ['--output' , '' , './tdc' , '-a' , 'encode(code2)' , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
-       ('huff'  , ['--output' , '' , './tdc' , '-a' , 'encode(huff)'  , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
-       ('lzw'   , ['--output' , '' , './tdc' , '-a' , 'lzw'           , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
-       ('lz78'  , ['--output' , '' , './tdc' , '-a' , 'lz78'          , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
-       ('lz78u',['--output','','./tdc','-a','lz78u(buffering(huff),bit)','--force'], ['--output','','./tdc', '--decompress']),
        # ([1,1,'gz9',"gzip", "-9"],
        # ([1,1,'bz9',"bzip2","-9"],
        # (['a','', '7z', '7z'],
@@ -101,6 +100,7 @@ def run_compress(compressor,infilename,outfilename):
         else:
             args=args+[compressor[1],infilename]
         t = time.time()
+        #subprocess.call(args, stdout=logfile, stderr=logfile) 
         subprocess.check_call(args, stdout=logfile, stderr=logfile) 
         elapsed_time = time.time() - t
         return(elapsed_time)
@@ -127,11 +127,13 @@ sourcefilehash=hashlib.sha256(open(sourcefilename, 'rb').read()).hexdigest()
 sourcefilesize=os.path.getsize(sourcefilename)
 
 
+maxnicknamelength = len(max(compressor_pairs,key=lambda p: len(p[0]))[0] )+2
+
 print("%s (%s, sha256=%s)" % (sourcefilename, memsize(sourcefilesize), sourcefilehash))
 
 print()
-print("%28s | %10s | %10s | %10s | %10s | %10s | %3s |" % ("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"))
-print('-'*104)
+print(("%"+ str(maxnicknamelength) + "s | %10s | %10s | %10s | %10s | %10s | %3s |") % ("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"))
+print('-'*(maxnicknamelength+5*10+6*3+3+2))
 
 logfilename=tempfile.mktemp()
 decompressedfilename=tempfile.mktemp()
@@ -139,7 +141,7 @@ outfilename=tempfile.mktemp()
 try:
     with open(logfilename,"wb") as logfile:
         for (nickname,compressor,decompressor) in compressor_pairs:
-            print("%28s |" % nickname, end='',flush=True) #print nickname
+            print(("%"+ str(maxnicknamelength) +"s |") % nickname, end='',flush=True) #print nickname
             comp_time=measure_time(compressor,sourcefilename, outfilename)
             print("%11s |" % timesize(comp_time), end='',flush=True) #print time
             comp_mem=measure_mem(compressor, sourcefilename, outfilename)
