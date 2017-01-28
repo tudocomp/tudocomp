@@ -131,5 +131,41 @@ T create_algo() {
     return create_algo<T>("");
 }
 
+/// \brief Creates an environment.
+///
+/// The environment will be created based on arbitrary \ref tdc::Meta
+/// information of an algorithm that may or not really exist. No registry
+/// is used to verify.
+///
+/// \param meta the meta information to use to create the environment.
+/// \param options algorithm options to set in the environment.
+/// \return the newly created environment.
+inline Env create_env(Meta&& meta, const std::string& options = "") {
+    auto fixed_static_args = std::move(meta).build_static_args_ast_value();
+
+    auto padded_options = meta.name() + "(" + options + ")";
+    auto meta_type = meta.type();
+
+    eval::AlgorithmTypes types;
+    gather_types(types, {
+        std::move(meta)
+    });
+
+    ast::Parser p { padded_options };
+
+    auto evald_algo = eval::cl_eval(
+        p.parse_value(),
+        meta_type,
+        types,
+        std::move(fixed_static_args)
+    );
+
+    auto evaluated_options = evald_algo.as_algorithm();
+    auto env_root = std::make_shared<EnvRoot>(std::move(evaluated_options));
+    Env env(env_root, env_root->algo_value(), Registry());
+
+    return env;
+}
+
 }
 
