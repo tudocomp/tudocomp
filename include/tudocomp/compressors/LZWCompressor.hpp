@@ -31,7 +31,7 @@ public:
         Meta m("compressor", "lzw", "Lempel-Ziv-Welch\n\n" LZ78_DICT_SIZE_DESC);
         m.option("coder").templated<coder_t, BitCoder>();
         m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>();
-        m.option("dict_size").dynamic("0");
+        m.option("dict_size").dynamic(0);
         return m;
     }
 

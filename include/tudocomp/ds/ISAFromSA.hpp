@@ -33,17 +33,24 @@ public:
             (*m_data)[sa[i]] = i;
         }
 
-        if(cm == CompressMode::delayed) compress();
-
         this->env().log_stat("bit_width", size_t(m_data->width()));
         this->env().log_stat("size", m_data->bit_size() / 8);
         this->env().end_stat_phase();
+
+        if(cm == CompressMode::delayed) compress();
     }
 
     void compress() {
         DCHECK(m_data);
+
+        env().begin_stat_phase("Compress ISA");
+
         m_data->width(bits_for(m_data->size()));
         m_data->shrink_to_fit();
+
+        env().log_stat("bit_width", size_t(m_data->width()));
+        env().log_stat("size", m_data->bit_size() / 8);
+        env().end_stat_phase();
     }
 };
 

@@ -5,14 +5,22 @@
 #include <sdsl/rank_support.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
-//#include <tudocomp/compressors/lcpcomp/decoding/DecodeQueueListBuffer.hpp>
+#include <tudocomp/Algorithm.hpp>
 #include <algorithm>
 
 namespace tdc {
 namespace lcpcomp {
 
 
-	class LazyDecoder {
+	/**
+	 * Finishes the process of decoding started by @class ScanDec
+	 * It allocates an array for all not-yet decoded positions such that
+	 * it can store in that positions all positions still waiting of that position
+	 * to get decompressed.
+	 * The not-yet decoded positions are marked in a bit vector with rank-support
+	 * such that we can map from text position to positions in the array.
+	 */
+	class EagerScanDec {
 		Env& m_env;
 		IntVector<uliteral_t>& m_buffer;
 		const sdsl::bit_vector m_bv;
@@ -24,7 +32,7 @@ namespace lcpcomp {
 		IF_STATS(len_t m_current_chain = 0);
 
 		public:
-		LazyDecoder(Env& env, IntVector<uliteral_t>& buffer)
+		EagerScanDec(Env& env, IntVector<uliteral_t>& buffer)
 			: m_env(env)
 			, m_buffer { buffer }
 			, m_bv ( [&buffer] () -> sdsl::bit_vector {
@@ -115,7 +123,7 @@ namespace lcpcomp {
         return m_longest_chain;
     })
 
-	~LazyDecoder() {
+	~EagerScanDec() {
 		DCHECK(m_fwd != nullptr);
 		for(size_t i = 0; i < m_empty_entries; ++i) {
 			if(m_fwd[i] == nullptr) continue;
@@ -127,18 +135,23 @@ namespace lcpcomp {
 
 	};
 
-class LazySuccinctListBuffer : public Algorithm {
+	/**
+	 * Runs a number of scans of the factors.
+	 * In each scan, it tries to decode all factors.
+	 * Factors that got fully decoded are dropped.
+	 */
+class ScanDec : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_dec", "LazySuccinctListBuffer");
-        m.option("lazy").dynamic("0");
+        Meta m("lcpcomp_dec", "scan");
+        m.option("scans").dynamic(0);
         return m;
 
     }
     inline void decode_lazy() {
 		env().log_stat("remaining factors", m_target_pos.size());
-		env().log_stat("lazy value", m_lazy);
-        size_t lazy = m_lazy;
+		env().log_stat("scans", m_scans);
+        size_t lazy = m_scans;
         while(lazy > 0) {
             decode_lazy_();
             --lazy;
@@ -147,11 +160,11 @@ public:
     inline void decode_eagerly() {
 		{
 			env().begin_stat_phase("Initialize Bit Vector");
-			LazyDecoder decoder(this->env(),m_buffer);
+			EagerScanDec decoder(this->env(),m_buffer);
 			env().end_stat_phase();
 			decoder.decode(m_target_pos, m_source_pos, m_length);
 			IF_STATS(m_longest_chain = decoder.longest_chain());
-			env().begin_stat_phase("Destructor LazyDecoder");
+			env().begin_stat_phase("Destructor ScanDec");
 		}
 		env().end_stat_phase();
     }
@@ -169,7 +182,7 @@ private:
             }
         }
     }
-    const size_t m_lazy; // number of lazy rounds
+    const size_t m_scans; // number of scan rounds
 
     len_t m_cursor;
 
@@ -183,18 +196,18 @@ private:
 	IF_STATS(len_t m_longest_chain = 0);
 
 public:
-    LazySuccinctListBuffer(LazySuccinctListBuffer&& other)
+    ScanDec(ScanDec&& other)
         : Algorithm(std::move(*this))
-		, m_lazy(std::move(other.m_lazy))
+		, m_scans(std::move(other.m_scans))
         , m_cursor(std::move(other.m_cursor))
         , m_buffer(std::move(other.m_buffer))
     { }
 
-    inline LazySuccinctListBuffer(Env&& env, len_t size)
+    inline ScanDec(Env&& env, len_t size)
         : Algorithm(std::move(env))
-		, m_lazy(this->env().option("lazy").as_integer())
+		, m_scans(this->env().option("scans").as_integer())
 		, m_cursor(0)
-		, m_buffer(size,0) 
+		, m_buffer(size,0)
 	{ }
 
     inline void decode_literal(uliteral_t c) {

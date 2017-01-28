@@ -16,6 +16,10 @@ namespace tdc {
         /// (slower construction, but smaller memory usage).
         direct = 2,
 
+        /// Special mode that will cause no compression at all during
+        /// construction, internal use in TextDS only
+        coherent_delayed = 254,
+
         /// Automatically select compress mode, internal use in TextDS only
         select = 255,
     };

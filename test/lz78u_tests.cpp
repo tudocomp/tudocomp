@@ -3,30 +3,110 @@
 
 #include <tudocomp/tudocomp.hpp>
 
-struct InputOutput {
-    View in;
-    View out;
-};
-
-std::ostream& operator<<(std::ostream& os, const InputOutput& v) {
-    return os << v.in << " : " << v.out;
-}
-
 using namespace tdc;
 using namespace lz78u;
 
+TEST(Lz78U, roundtrip1) {
+    test::roundtrip_binary<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
+        "abcdebcdeabc"_v, {
+            '0', 8,
+            ':', 8,
+             0 , 1,
+                 0 , 1,
+                'a', 8,
+                 0 , 1,
+                'b', 8,
+                 0 , 1,
+                'c', 8,
+                 0 , 1,
+                 0 , 8,
 
-TEST(Lz78U, roundtrip2) {
-    test::roundtrip<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
-        "abcdebcdeabc"_v,
-        "0:abc\0""0:de\0""0:bc\0""2:a\0""3:\0""\0"_v
+            '0', 8,
+            ':', 8,
+             1 , 1,
+            'd', 8,
+            'e', 8,
+             0 , 8,
+
+            '0', 8,
+            ':', 8,
+             1 , 1,
+            'b', 8,
+            'c', 8,
+             0 , 8,
+
+            '2', 8,
+            ':', 8,
+             1 , 1,
+            'a', 8,
+             0 , 8,
+
+            '3', 8,
+            ':', 8,
+             1 , 1,
+             0 , 8,
+
+             1 , 7,
+        }
     );
 }
 
-TEST(Lz78U, roundtrip1) {
-    test::roundtrip<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
-        "aaababaaabaababa"_v,
-        "0:a\0""1:a\0""0:ba\0""3:a\0""1:ba\0""5:ba\0""\0"_v
+TEST(Lz78U, roundtrip2) {
+    test::roundtrip_binary<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
+        "aaababaaabaababa"_v, {
+            '0', 8,
+            ':', 8,
+             1 , 1,
+            'a', 8,
+             0 , 8,
+
+            '1', 8,
+            ':', 8,
+             1 , 1,
+            'a', 8,
+             0 , 8,
+
+            '0', 8,
+            ':', 8,
+             1 , 1,
+            'b', 8,
+            'a', 8,
+             0 , 8,
+
+            '3', 8,
+            ':', 8,
+             1 , 1,
+            'a', 8,
+             0 , 8,
+
+            '1', 8,
+            ':', 8,
+             1 , 1,
+            'b', 8,
+            'a', 8,
+             0 , 8,
+
+            '5', 8,
+            ':', 8,
+             1 , 1,
+            'b', 8,
+            'a', 8,
+             0 , 8,
+
+             6 ,10,
+        }
+    );
+}
+
+TEST(Lz78U, roundtrip4) {
+    test::roundtrip_binary<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
+        "abcabcabcabc"_v, {}
+    );
+}
+
+TEST(Lz78U, roundtrip5) {
+    test::roundtrip_binary<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
+        " solet salutandi, salutandi "_v, {}
     );
 }
 
@@ -49,18 +129,21 @@ TEST(Lz78U, roundtrip3) {
             // 1. tuple
             '0',        8,
             ':',        8,
+            0b1,        1,
             0b00,       2,
             0b1,        1,
 
             // 2. tuple
             '1',        8,
             ':',        8,
+            0b1,        1,
             0b00,       2,
             0b1,        1,
 
             // 3. tuple
             '0',        8,
             ':',        8,
+            0b1,        1,
             0b01,       2,
             0b00,       2,
             0b1,        1,
@@ -68,12 +151,14 @@ TEST(Lz78U, roundtrip3) {
             // 4. tuple
             '3',        8,
             ':',        8,
+            0b1,        1,
             0b00,       2,
             0b1,        1,
 
             // 5. tuple
             '1',        8,
             ':',        8,
+            0b1,        1,
             0b01,       2,
             0b00,       2,
             0b1,        1,
@@ -81,19 +166,13 @@ TEST(Lz78U, roundtrip3) {
             // 6. tuple
             '5',        8,
             ':',        8,
+            0b1,        1,
             0b01,       2,
             0b00,       2,
             0b1,        1,
 
             // terminator
-            0b0000001,  7,
+            0b000000111,9,
         }
     );
 }
-
-/*TEST(Lz78U, roundtrip4) {
-    test::roundtrip<LZ78UCompressor<BufferingStrategy<HuffmanCoder>, ASCIICoder>>(
-        "abcdebcdeabc"_v,
-        "a"_v
-    );
-}*/

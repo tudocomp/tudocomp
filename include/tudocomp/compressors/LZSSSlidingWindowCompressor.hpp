@@ -19,8 +19,8 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lzss", "Lempel-Ziv-Storer-Szymanski (Sliding Window)");
         m.option("coder").templated<coder_t>();
-        m.option("window").dynamic("16");
-        m.option("threshold").dynamic("3");
+        m.option("window").dynamic(16);
+        m.option("threshold").dynamic(3);
         return m;
     }
 

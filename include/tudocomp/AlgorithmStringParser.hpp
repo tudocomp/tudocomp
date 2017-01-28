@@ -265,6 +265,22 @@ namespace tdc {
             inline void error_ident() {
                 error("Expected an identifier");
             }
+
+            typedef bool (*acceptor)(char c);
+
+            template<char acc>
+            static inline bool accept_char(char c) {
+                return (c == acc);
+            }
+
+            static inline bool accept_numeric(char c) {
+                //yes, very lenient
+                return (c == '-') || (c == '.') || (c >= '0' && c <= '9');
+            }
+
+            static inline bool accept_non_numeric(char c) {
+                return !accept_numeric(c);
+            }
         public:
             inline Parser(View text): m_text(text), m_cursor(0) {}
 
@@ -273,9 +289,10 @@ namespace tdc {
             inline Arg parse_arg();
             inline View parse_ident();
             inline void parse_whitespace();
-            inline bool parse_char(char c);
-            inline bool peek_char(char c);
-            inline std::string parse_string(char delim);
+            inline bool parse_char(acceptor accept);
+            inline bool peek_char(acceptor accept);
+            inline std::string parse_string(
+                acceptor delim, const std::string& help, bool enclose = true);
             inline bool parse_keyword(View keyword);
             inline View expect_ident();
         };
@@ -288,11 +305,14 @@ namespace tdc {
             parse_whitespace();
 
             if (already_parsed_ident.size() == 0) {
-                if (peek_char('"')) {
-                    return Value(parse_string('"'));
+                if (peek_char(accept_char<'"'>)) {
+                    return Value(parse_string(accept_char<'"'>, "\""));
                 }
-                if (peek_char('\'')) {
-                    return Value(parse_string('\''));
+                if (peek_char(accept_char<'\''>)) {
+                    return Value(parse_string(accept_char<'\''>, "'"));
+                }
+                if (peek_char(accept_numeric)) {
+                    return Value(parse_string(accept_non_numeric, "non-numeric", false));
                 }
             }
 
@@ -312,13 +332,13 @@ namespace tdc {
             std::vector<Arg> args;
             bool first = true;
             parse_whitespace();
-            if (parse_char('(')) {
+            if (parse_char(accept_char<'('>)) {
                 while(true) {
                     parse_whitespace();
-                    if (parse_char(')')) {
+                    if (parse_char(accept_char<')'>)) {
                         break;
-                    } else if (first || parse_char(',')) {
-                        if (parse_char(')')) {
+                    } else if (first || parse_char(accept_char<','>)) {
+                        if (parse_char(accept_char<')'>)) {
                             // allow trailling commas
                             break;
                         }
@@ -342,7 +362,7 @@ namespace tdc {
             bool is_static = false;
             View type_ident("");
 
-            if (ident.size() > 0 && parse_char(':')) {
+            if (ident.size() > 0 && parse_char(accept_char<':'>)) {
                 is_static = parse_keyword("static");
                 type_ident = expect_ident();
                 has_type = true;
@@ -351,7 +371,7 @@ namespace tdc {
             bool has_keyword = false;
             View keyword_ident("");
 
-            if (ident.size() > 0 && parse_char('=')) {
+            if (ident.size() > 0 && parse_char(accept_char<'='>)) {
                 keyword_ident = ident;
                 ident.clear();
                 has_keyword = true;
@@ -416,33 +436,39 @@ namespace tdc {
                 m_cursor++;
             }
         }
-        inline bool Parser::parse_char(char c) {
-            bool r = peek_char(c);
+        inline bool Parser::parse_char(acceptor accept) {
+            bool r = peek_char(accept);
             if (r) {
                 m_cursor++;
             }
             return r;
         }
-        inline bool Parser::peek_char(char c) {
+        inline bool Parser::peek_char(acceptor accept) {
             if (!has_next()) {
                 return false;
             }
             parse_whitespace();
-            if (m_text[m_cursor] == c) {
-                return true;
-            }
-            return false;
+            return accept(m_text[m_cursor]);
         }
-        inline std::string Parser::parse_string(char delim) {
+        inline std::string Parser::parse_string(
+            acceptor delim, const std::string& help, bool enclose) {
+
             size_t start;
             size_t end;
-            if (parse_char(delim)) {
+            if (!enclose || parse_char(delim)) {
                 start = m_cursor;
                 end = start - 1;
                 while(has_next()) {
-                    if (parse_char(delim)) {
-                        end = m_cursor - 1;
-                        break;
+                    if(enclose) {
+                        if (parse_char(delim)) {
+                            end = m_cursor - 1;
+                            break;
+                        }
+                    } else {
+                        if(peek_char(delim)) {
+                            end = m_cursor;
+                            break;
+                        }
                     }
                     m_cursor++;
                 }
@@ -450,7 +476,7 @@ namespace tdc {
                     return m_text.slice(start, end);
                 }
             }
-            error(std::string("Expected ") + delim);
+            error(std::string("Expected ") + help);
             return "";
         }
         inline bool Parser::parse_keyword(View keyword) {

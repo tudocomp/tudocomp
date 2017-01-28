@@ -41,11 +41,11 @@ public:
 			(*m_data)[i] = x;
 		}
 
-        if(cm == CompressMode::delayed) compress();
-
         this->env().log_stat("bit_width", size_t(m_data->width()));
         this->env().log_stat("size", m_data->bit_size() / 8);
         this->env().end_stat_phase();
+
+        if(cm == CompressMode::delayed) compress();
     }
 
 	inline len_t max_lcp() const {
@@ -54,8 +54,15 @@ public:
 
     void compress() {
         DCHECK(m_data);
+
+        env().begin_stat_phase("Compress LCP Array");
+
         m_data->width(bits_for(m_max));
         m_data->shrink_to_fit();
+
+        env().log_stat("bit_width", size_t(m_data->width()));
+        env().log_stat("size", m_data->bit_size() / 8);
+        env().end_stat_phase();
     }
 };
 

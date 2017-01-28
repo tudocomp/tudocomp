@@ -8,7 +8,7 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
-#include <tudocomp/compressors/lcpcomp/decompress/SuccinctListBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/decompress/CompactDec.hpp>
 #include <tudocomp/compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp>
 #include <tudocomp/compressors/lcpcomp/decompress/MultiMapBuffer.hpp>
 
@@ -183,11 +183,11 @@ void test_forward_decode_buffer_multiref() {
 }
 
 TEST(lzss, decode_forward_lm_buffer_chain) {
-    test_forward_decode_buffer_chain<lcpcomp::SuccinctListBuffer>();
+    test_forward_decode_buffer_chain<lcpcomp::CompactDec>();
 }
 
 TEST(lzss, decode_forward_lm_buffer_multiref) {
-    test_forward_decode_buffer_multiref<lcpcomp::SuccinctListBuffer>();
+    test_forward_decode_buffer_multiref<lcpcomp::CompactDec>();
 }
 
 TEST(lzss, decode_forward_mm_buffer_chain) {

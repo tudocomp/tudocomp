@@ -201,23 +201,47 @@ public:
     inline void require(dsflags_t flags, CompressMode cm = CompressMode::select) {
         m_ds_requested = flags;
 
+        // TODO: we need something like a dependency graph here
+
         // construct requested structures
-        cm = cm_select(cm, m_cm);
-        CompressMode cm_construct = (cm == CompressMode::direct) ?
-                                                    cm : CompressMode::none;
+        cm = cm_select(cm,(m_cm == CompressMode::delayed ?
+                                        CompressMode::coherent_delayed : m_cm));
 
-        if(flags & SA)   { require_sa(cm_construct);   release_unneeded(); }
-        if(flags & PHI)  { require_phi(cm_construct);  release_unneeded(); }
-        if(flags & PLCP) { require_plcp(cm_construct); release_unneeded(); }
-        if(flags & LCP)  { require_lcp(cm); release_unneeded(); }
-        if(flags & ISA)  { require_isa(cm); release_unneeded(); }
 
-        if(cm == CompressMode::delayed) {
-            env().begin_stat_phase("Compress data structures");
+        // Construct SA (don't compress yet)
+        if(flags & SA) { require_sa(cm); release_unneeded(); }
+
+        // Construct Phi (don't compress yet)
+        if(flags & PHI) { require_phi(cm); release_unneeded(); }
+
+        // Construct PLCP and compress if LCP is not requested
+        if(flags & PLCP) {
+            require_plcp(cm);
+            release_unneeded();
+            if(cm == CompressMode::coherent_delayed && !(flags & LCP)) {
+                m_plcp->compress();
+            }
+        }
+
+        // Construct and compress LCP
+        if(flags & LCP)  {
+            require_lcp(cm);
+            release_unneeded();
+            if(cm == CompressMode::coherent_delayed) m_lcp->compress();
+        }
+
+        // Construct and compress ISA
+        if(flags & ISA)  {
+            require_isa(cm);
+            release_unneeded();
+            if(cm == CompressMode::coherent_delayed) m_isa->compress();
+        }
+
+        // Compress data structures that had dependencies
+        if(cm == CompressMode::coherent_delayed) {
             if(m_sa) m_sa->compress();
             if(m_phi) m_phi->compress();
             if(m_plcp) m_plcp->compress();
-            env().end_stat_phase();
         }
     }
 

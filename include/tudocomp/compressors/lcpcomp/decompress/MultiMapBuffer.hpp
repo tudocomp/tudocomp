@@ -11,7 +11,7 @@ class MultimapBuffer : public Algorithm {
     public:
     inline static Meta meta() {
         Meta m("lcpcomp_dec", "MultimapListBuffer");
-        m.option("lazy").dynamic("0");
+        m.option("lazy").dynamic(0);
         return m;
     }
 

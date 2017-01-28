@@ -59,14 +59,14 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
         }
     }
    decoder.env().end_stat_phase();
-   decoder.env().begin_stat_phase("Lazy LCPComp-Decoding");
+   decoder.env().begin_stat_phase("Scan Decoding");
     buffer.decode_lazy();
    decoder.env().end_stat_phase();
-   decoder.env().begin_stat_phase("Eagerly LCPComp-Decoding");
+   decoder.env().begin_stat_phase("Eager Decoding");
     buffer.decode_eagerly();
     IF_STATS(decoder.env().log_stat("longest_chain", buffer.longest_chain()));
    decoder.env().end_stat_phase();
-   decoder.env().begin_stat_phase("Outputting text");
+   decoder.env().begin_stat_phase("Output Text");
     buffer.write_to(outs);
    decoder.env().end_stat_phase();
    decoder.env().end_stat_phase();
@@ -83,11 +83,11 @@ public:
         Meta m("compressor", "lcpcomp");
         m.option("coder").templated<coder_t>();
         // m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>(); uncomment if bug 18527 is fixed
-        // m.option("dec").templated<dec_t, lcpcomp::SuccinctListBuffer>(); 
+        // m.option("dec").templated<dec_t, lcpcomp::SuccinctListBuffer>();
         m.option("comp").templated<strategy_t>();
         m.option("dec").templated<dec_t>();
         m.option("textds").templated<text_t, TextDS<>>();
-        m.option("threshold").dynamic("3");
+        m.option("threshold").dynamic(3);
         m.needs_sentinel_terminator();
         return m;
     }

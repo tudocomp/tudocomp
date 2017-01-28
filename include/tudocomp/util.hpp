@@ -104,6 +104,17 @@ std::string vec_as_lossy_string(const T& s, size_t start = 0,
     return ss.str();
 }
 
+/// \brief Represent a value as a string.
+/// \tparam T the value type.
+/// \param v the value to convert.
+/// \return the string representation of the given value.
+template<typename T>
+inline std::string to_str(const T& v) {
+    std::stringstream ss;
+    ss << v;
+    return ss.str();
+}
+
 inline void debug_print_uint64_t(uint64_t v) {
     for(int i = 0; i < 64; i++) {
         if (i > 0 && i % 8 == 0) {

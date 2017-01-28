@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <random>
 #include <tudocomp/Generator.hpp>
 
 namespace tdc {
@@ -19,14 +20,14 @@ public:
     inline static Meta meta() {
         Meta m("generator", "random", "Generates random strings.");
         m.option("length").dynamic();
-        m.option("seed").dynamic("0");
-        m.option("min").dynamic("48");
-        m.option("max").dynamic("57");
+        m.option("seed").dynamic(0);
+        m.option("min").dynamic('0');
+        m.option("max").dynamic('9');
         return m;
     }
 
     inline static std::string generate(
-        size_t length, size_t seed = 0, size_t min = 48, size_t max = 57) {
+        size_t length, size_t seed = 0, size_t min = '0', size_t max = '9') {
 
         if(min > max) std::swap(min, max);
         if(!seed) seed = std::chrono::system_clock::now().time_since_epoch().count();

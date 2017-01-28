@@ -25,7 +25,7 @@ public:
         Meta m("compressor", "lzss_lcp", "LZSS Factorization using LCP");
         m.option("coder").templated<coder_t>();
         m.option("textds").templated<text_t, TextDS<>>();
-        m.option("threshold").dynamic("3");
+        m.option("threshold").dynamic(3);
         m.needs_sentinel_terminator();
         return m;
     }

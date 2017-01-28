@@ -485,12 +485,13 @@ inline void roundtrip(string_ref original_text,
 
 template<class T>
 inline void roundtrip(string_ref original_text,
-                        const std::vector<uint8_t>& expected_compressed_text,
+                        const std::vector<uint8_t>& expected_compressed_text = {},
                         const std::string& options = "",
                         const Registry& registry = Registry()) {
     auto e = RoundTrip<T>(options, registry).compress(original_text);
     auto& compressed_text = e.bytes;
 
+    if(expected_compressed_text.size() > 0)
     ASSERT_EQ(expected_compressed_text, compressed_text);
 
     e.assert_decompress_bytes();
@@ -498,12 +499,13 @@ inline void roundtrip(string_ref original_text,
 
 template<class T>
 inline void roundtrip_binary(string_ref original_text,
-                            const std::vector<uint64_t>& expected_compressed_text_packed_ints,
+                            const std::vector<uint64_t>& expected_compressed_text_packed_ints = {},
                             const std::string& options = "",
                             const Registry& registry = Registry()) {
     auto e = RoundTrip<T>(options, registry).compress(original_text);
     auto& compressed_text = e.bytes;
 
+    if(expected_compressed_text_packed_ints.size() > 0)
     assert_eq_binary(compressed_text, expected_compressed_text_packed_ints);
 
     e.assert_decompress_bytes();

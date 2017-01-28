@@ -21,9 +21,18 @@ public:
         Env m_ref_env;
         std::shared_ptr<BitOStream> m_out;
 
+        // TODO Optimization: Replace with something that just stores the increment points
+        std::vector<Range> m_ref_ranges;
+        // TODO Optimization: Replace with variable bit width
         std::vector<size_t> m_refs;
-        std::vector<size_t> m_ref_ranges;
-        std::vector<uliteral_t> m_strings;
+        // TODO Optimization: Replace with bitvector
+        std::vector<bool> m_seps;
+        std::vector<uliteral_t> m_chars;
+
+        // TODO Optimization: Replace with 2-bit vector, or remove completely
+        // by hardcoding the encoding scheme in the strategy
+        // TODO Optimization: Encode "encode_str" case more compactly by using single code?
+        std::vector<uint8_t> m_stream;
 
     public:
         inline Compression(Env&& env,
@@ -33,14 +42,27 @@ public:
             m_ref_env(std::move(ref_env)),
             m_out(out) {}
 
-        inline void encode(Factor fact, size_t ref_range) {
-            m_refs.push_back(fact.ref);
+        inline void encode_ref(size_t ref, Range ref_range) {
+            m_refs.push_back(ref);
             m_ref_ranges.push_back(ref_range);
-            //std::cout << "encode: " << vec_to_debug_string(fact.string) << "\n";
-            for (auto c : fact.string) {
-                m_strings.push_back(c);
+            m_stream.push_back(0);
+        }
+
+        inline void encode_sep(bool val) {
+            m_seps.push_back(val);
+            m_stream.push_back(1);
+        }
+
+        inline void encode_char(uliteral_t c) {
+            m_chars.push_back(c);
+            m_stream.push_back(2);
+        }
+
+        inline void encode_str(View str) {
+            for (auto c : str) {
+                encode_char(c);
             }
-            m_strings.push_back(0);
+            encode_char(0);
         }
 
         inline ~Compression() {
@@ -52,22 +74,42 @@ public:
             typename string_coder_t::Encoder string_coder {
                 std::move(this->env().env_for_option("string_coder")),
                 m_out,
-                ViewLiterals(m_strings)
+                ViewLiterals(m_chars)
             };
 
-            size_t strings_i = 0;
+            auto refs_i = m_refs.begin();
+            auto ref_ranges_i = m_ref_ranges.begin();
+            auto seps_i = m_seps.begin();
+            auto chars_i = m_chars.begin();
 
-            for (size_t i = 0; i < m_refs.size(); i++) {
-                ref_coder.encode(m_refs[i], Range(m_ref_ranges[i]));
-                while (true) {
-                    string_coder.encode(m_strings[strings_i], literal_r);
-                    if (m_strings[strings_i] == 0) {
-                        strings_i++;
+            for (auto kind : m_stream) {
+                switch (kind) {
+                    case 0: {
+                        auto ref = *(refs_i++);
+                        auto ref_range = *(ref_ranges_i++);
+                        ref_coder.encode(ref, ref_range);
+
                         break;
                     }
-                    strings_i++;
+                    case 1: {
+                        auto sep = *(seps_i++);
+                        m_out->write_bit(sep);
+
+                        break;
+                    }
+                    case 2: {
+                        auto chr = *(chars_i++);
+                        string_coder.encode(chr, literal_r);
+
+                        break;
+                    }
                 }
             }
+
+            DCHECK(refs_i == m_refs.end());
+            DCHECK(ref_ranges_i == m_ref_ranges.end());
+            DCHECK(seps_i == m_seps.end());
+            DCHECK(chars_i == m_chars.end());
         }
     };
 
@@ -77,39 +119,42 @@ public:
         typename string_coder_t::Decoder  m_string_coder;
 
         std::vector<uliteral_t> m_buf;
-
+        std::shared_ptr<BitIStream> m_in;
     public:
         inline Decompression(Env&& env,
                              Env&& ref_env,
                              std::shared_ptr<BitIStream> in):
             Algorithm(std::move(env)),
             m_ref_coder(std::move(ref_env), in),
-            m_string_coder(std::move(this->env().env_for_option("string_coder")), in) {}
+            m_string_coder(std::move(this->env().env_for_option("string_coder")), in),
+            m_in(in) {}
 
-        inline Factor decode(size_t ref_range) {
-            auto ref = m_ref_coder.template decode<size_t>(Range(ref_range));
+        inline size_t decode_ref(Range ref_range) {
+            return m_ref_coder.template decode<size_t>(ref_range);
+        }
 
+        inline uliteral_t decode_char() {
+            return m_string_coder.template decode<uliteral_t>(literal_r);
+        }
+
+        inline View decode_str() {
             m_buf.clear();
             while (true) {
-                auto c = m_string_coder.template decode<uliteral_t>(literal_r);
+                auto c = decode_char();
                 if (c == 0) {
                     break;
                 }
                 m_buf.push_back(c);
             }
+            return m_buf;
+        }
 
-            return Factor {
-                m_buf,
-                ref
-            };
+        inline bool decode_sep() {
+            return m_in->read_bit();
         }
 
         inline bool eof() {
             return m_ref_coder.eof();
-        }
-
-        inline ~Decompression() {
-
         }
     };
 };
