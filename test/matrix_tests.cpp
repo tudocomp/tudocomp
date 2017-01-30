@@ -109,28 +109,11 @@ TEST(TudocompDriver, roundtrip_matrix) {
     }
     std::cout << "[ Start roundtrip tests ]\n";
 
+    bool early_error = std::getenv("MATRIX_EARLY_ERROR") != nullptr;
+
     std::vector<driver_test::Error> errors;
 
-    for (auto& algo : test_cases) {
-        int counter = 0;
-        bool abort = false;
-        test::roundtrip_batch([&](std::string text) {
-            if (abort) {
-                return;
-            }
-            std::stringstream ss;
-            ss << std::setw(2) << std::setfill('0') << counter;
-            std::string n = "_" + ss.str();
-            counter++;
-
-            auto e = driver_test::roundtrip(algo, n, text, true, abort);
-            if (e.has_error) {
-                errors.push_back(e);
-            }
-        });
-    }
-
-    for (auto& e : errors) {
+    auto print_error = [](driver_test::Error& e) {
         std::cout << "# [ERROR] ############################################################\n";
         std::cout << "  " << e.message << "\n";
         std::cout << "  in: " << e.test << "\n";
@@ -151,6 +134,33 @@ TEST(TudocompDriver, roundtrip_matrix) {
             "decompress stdout", e.decompress_stdout,
         }), 2) << "\n";
         std::cout << "######################################################################\n";
+    };
+
+    for (auto& algo : test_cases) {
+        int counter = 0;
+        bool abort = false;
+        test::roundtrip_batch([&](std::string text) {
+            if (abort) {
+                return;
+            }
+            std::stringstream ss;
+            ss << std::setw(2) << std::setfill('0') << counter;
+            std::string n = "_" + ss.str();
+            counter++;
+
+            auto e = driver_test::roundtrip(algo, n, text, true, abort);
+            if (e.has_error) {
+                if (early_error) {
+                    print_error(e);
+                } else {
+                    errors.push_back(e);
+                }
+            }
+        });
+    }
+
+    for (auto& e : errors) {
+        print_error(e);
     }
     if (!errors.empty()) {
         std::cout << "# [TL;DR - this failed] ##############################################\n";
