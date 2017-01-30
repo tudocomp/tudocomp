@@ -364,6 +364,7 @@ namespace tdc {
 
             if (ident.size() > 0 && parse_char(accept_char<':'>)) {
                 is_static = parse_keyword("static");
+                throw std::runtime_error("should not be reached anymore");
                 type_ident = expect_ident();
                 has_type = true;
             }
