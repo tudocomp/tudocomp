@@ -286,6 +286,7 @@ namespace tdc {
 
             inline bool has_next();
             inline Value parse_value(View already_parsed_ident = View(""));
+            inline Value parse_single_value(View already_parsed_ident = View(""));
             inline Arg parse_arg();
             inline View parse_ident();
             inline void parse_whitespace();
@@ -301,7 +302,7 @@ namespace tdc {
             return m_cursor < m_text.size();
         }
 
-        inline Value Parser::parse_value(View already_parsed_ident) {
+        inline Value Parser::parse_single_value(View already_parsed_ident) {
             parse_whitespace();
 
             if (already_parsed_ident.size() == 0) {
@@ -353,6 +354,19 @@ namespace tdc {
             return Value(value_name, std::move(args));
 
         }
+
+        inline Value Parser::parse_value(View already_parsed_ident) {
+            Value val1 = parse_single_value(already_parsed_ident);
+            while (parse_char(accept_char<':'>)) {
+                Value val2 = parse_single_value();
+                val1 = Value("chain", {
+                    Arg(std::move(val1)),
+                    Arg(std::move(val2)),
+                });
+            }
+            return val1;
+        }
+
         inline Arg Parser::parse_arg() {
             //return Arg(Value("test"));
 

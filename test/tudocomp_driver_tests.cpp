@@ -204,3 +204,27 @@ TEST(TudocompDriver, all_compressors_defined) {
         EXPECT_FALSE(has_undefined_compressors) << ss.str();
     }
 }
+
+TEST(Registry, chain_sugar) {
+    using namespace tdc_algorithms;
+    using ast::Value;
+    using ast::Arg;
+    auto cmp = [](std::string sa, std::string sb) {
+        ast::Parser p { sa };
+        Value a = p.parse_value();
+        ASSERT_EQ(a.to_string(), sb);
+    };
+
+    cmp("foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = 3), q)",
+        "foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = \"3\"), q)");
+    cmp("foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = 3), q):algo2",
+        "chain("
+            "foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = \"3\"), q)"
+            ", algo2)");
+    cmp("foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = 3), q):algo2:algo3('asdf')",
+        "chain("
+            "chain("
+                "foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = \"3\"), q)"
+                ", algo2)"
+        ", algo3(\"asdf\"))");
+}
