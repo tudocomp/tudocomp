@@ -6,7 +6,7 @@
 
 namespace tdc {
 
-class Code2Coder : public Algorithm {
+class SLECoder : public Algorithm {
 private:
     typedef size_t sym_t;
     static const size_t max_kmer = sizeof(sym_t) - 1;
@@ -34,12 +34,12 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("coder", "code2", "Encoding conforming [Dinklage, 2015]");
+        Meta m("coder", "sle", "Static low entropy encoding conforming [Dinklage, 2015]");
         m.option("kmer").dynamic(3);
         return m;
     }
 
-    Code2Coder() = delete;
+    SLECoder() = delete;
 
     class Encoder : public tdc::Encoder {
     private:

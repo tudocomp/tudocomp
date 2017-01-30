@@ -29,13 +29,13 @@ context_free_coder = [
     ("EliasDeltaCoder", "coders/EliasDeltaCoder.hpp", []),
 ]
 
-# TODO: Fix bad interaction between code2 and lz78u code and remove this distinction
+# TODO: Fix bad interaction between sle and lz78u code and remove this distinction
 tmp_lz78u_string_coder = context_free_coder + [
     ("HuffmanCoder", "coders/HuffmanCoder.hpp", []),
 ]
 
 coder = tmp_lz78u_string_coder + [
-    ("Code2Coder",   "coders/Code2Coder.hpp",   []),
+    ("SLECoder",   "coders/SLECoder.hpp",   []),
 ]
 
 lz78_trie = [
@@ -69,7 +69,7 @@ lcpc_buffer = [
 
 lcpc_coder = [
     ("ASCIICoder", "coders/ASCIICoder.hpp", []),
-    ("Code2Coder", "coders/Code2Coder.hpp", []),
+    ("SLECoder", "coders/SLECoder.hpp", []),
 ]
 
 lz78u_strategy = [
