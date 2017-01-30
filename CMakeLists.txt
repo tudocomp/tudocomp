@@ -67,7 +67,6 @@ include(generate_tudocomp_sources)
 #### All major project targets ####
 
 #include(sdsl)
-include(rust)
 
 # Add include directory to include searches
 include_directories(include)
@@ -86,8 +85,6 @@ add_subdirectory(docs)
 
 # Web
 add_subdirectory(www)
-
-include(compare_workspace)
 
 add_library(
     tudocomp_algorithms

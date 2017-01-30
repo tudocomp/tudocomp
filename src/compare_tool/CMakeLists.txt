@@ -1,1 +1,0 @@
-add_cargo_executable(compare_tool)
