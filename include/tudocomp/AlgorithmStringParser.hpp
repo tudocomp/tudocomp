@@ -362,13 +362,6 @@ namespace tdc {
             bool is_static = false;
             View type_ident("");
 
-            if (ident.size() > 0 && parse_char(accept_char<':'>)) {
-                is_static = parse_keyword("static");
-                throw std::runtime_error("should not be reached anymore");
-                type_ident = expect_ident();
-                has_type = true;
-            }
-
             bool has_keyword = false;
             View keyword_ident("");
 
@@ -667,48 +660,6 @@ namespace tdc {
             }
             return ss.str();
         }
-
-        inline Algorithm from_ast(ast::Value&& v, std::string&& doc) {
-            CHECK(v.is_invokation());
-            std::vector<Arg> args;
-            for (auto& arg : v.invokation_arguments()) {
-                // Two cases:
-
-                if (arg.has_type() && arg.has_keyword()) {
-                    args.push_back(Arg(
-                        std::move(arg.keyword()),
-                        arg.type_is_static(),
-                        std::move(arg.type()),
-                        std::move(arg.value())
-                    ));
-                } else if (arg.has_type()
-                    && arg.value().is_invokation()
-                    && arg.value().invokation_arguments().size() == 0)
-                {
-                    args.push_back(Arg(
-                        std::move(arg.value().invokation_name()),
-                        arg.type_is_static(),
-                        std::move(arg.type())
-                    ));
-                } else {
-                    throw std::runtime_error("Declaration needs to be of the form ident: type = default or ident: type");
-                }
-
-                // value: type
-
-                // ident: type = value
-
-                //arg.push_back(Arg);
-                // TODO
-            }
-
-            return Algorithm(std::move(v.invokation_name()),
-                             std::move(args),
-                             std::move(doc),
-                             false
-            );
-        }
-
     }
 
     namespace pattern {
