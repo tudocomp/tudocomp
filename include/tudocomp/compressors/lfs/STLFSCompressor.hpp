@@ -77,6 +77,37 @@ private:
         }
     }
 
+    inline virtual void update_tree(uint length, std::vector<uint> selected_positions){
+        for(auto it = selected_positions.begin();it!= selected_positions.end();it++){
+            uint current_pos = *it;
+            uint text_length = stree.get_text().length();
+            uint pos = std::max((uint)1, current_pos-length);
+            uint end = std::min(text_length, current_pos + length -1);
+
+
+            for(uint i = pos; i<end;i++){
+                //find first node such that v.pathlen > length
+
+                uint walked_length = 0;
+                SuffixTree::STNode * current_node = stree.get_root();
+                while (walked_length <= length){
+                    char c = stree.get_text()[pos+walked_length];
+                    DLOG(INFO) << c;
+                    current_node = current_node->child_nodes[c];
+                    walked_length += stree.edge_length(current_node);
+                    DLOG(INFO) << "walked length: "<< walked_length;
+
+                }
+
+
+
+
+
+            }
+        }
+
+    }
+
     //returns all bp of corresponding factor
     inline virtual std::set<uint> compute_triple(SuffixTree::STNode* node){
 
@@ -183,10 +214,9 @@ public:
                     }
 
                     std::vector<uint> selected_pos = select_starting_positions(begining_pos, pair.first);
-                    DLOG(INFO) << "selected beginning positions: " << std::endl;
-                    for(auto it = selected_pos.begin(); it != selected_pos.end(); it++){
-                         DLOG(INFO) << *it;
-                    }
+                   // DLOG(INFO) << "selected beginning positions: " << std::endl;
+
+                    update_tree(pair.first, selected_pos);
 
                     //
 
