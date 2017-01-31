@@ -1,4 +1,4 @@
-#include "tudocomp/compressors/EasyRLECompressor.hpp"
+#include "tudocomp/compressors/RunLengthEncoder.hpp"
 #include "test/util.hpp"
 #include <gtest/gtest.h>
 

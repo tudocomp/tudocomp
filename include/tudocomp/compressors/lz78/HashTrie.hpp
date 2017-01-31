@@ -2,7 +2,7 @@
 
 #include <unordered_map>
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/compressors/lz78/LZ78common.hpp>
+#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 #include <tudocomp/compressors/lz78/squeeze_node.hpp>
 
 namespace tdc {

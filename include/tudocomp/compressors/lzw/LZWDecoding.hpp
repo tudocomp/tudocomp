@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/compressors/lz78/LZ78common.hpp>
+#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
 
 namespace tdc {

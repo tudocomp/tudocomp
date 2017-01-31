@@ -1,112 +1,78 @@
 #pragma once
 
-#include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
+#include <tudocomp/util/vbyte.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 
 namespace tdc {
 
-template<typename coder_t>
+/**
+ * Encode a byte-stream with run length encoding
+ * each run of the same character is substituted with two occurrences of the same character and the length of the run minus two,
+ * encoded in vbyte coding.
+ */
+template<class char_type>
+void rle_encode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os, size_t offset = 0) {
+	char_type prev;
+	if(tdc_unlikely(!is.get(prev))) return;
+	os << prev;
+	char_type c;
+	while(is.get(c)) {
+		if(prev == c) {
+			size_t run = 0;
+			while(is.peek() == c) { ++run; is.get(); }
+			os << c;
+			write_vbyte(os, run+offset);
+		} else {
+			os << c;
+		}
+		prev = c;
+	}
+}
+/**
+ * Decodes a run length encoded stream
+ */
+template<class char_type>
+void rle_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os, size_t offset = 0) {
+	char_type prev;
+	if(tdc_unlikely(!is.get(prev))) return;
+	os << prev;
+	char_type c;
+	while(is.get(c)) {
+		if(prev == c) {
+			size_t run = read_vbyte<size_t>(is)-offset;
+			while(run-- > 0) { os << c; }
+		}
+		os << c;
+		prev = c;
+	}
+}
+
 class RunLengthEncoder : public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "rle", "Run-length encoding");
-        m.option("coder").templated<coder_t>();
-        m.option("min_run").dynamic(3);
+        Meta m("compressor", "rle", "Run Length Encoding Compressor");
+        m.option("offset").dynamic(0);
         return m;
     }
-
-    inline RunLengthEncoder(Env&& env) : Compressor(std::move(env)) {
+	const size_t m_offset;
+    inline RunLengthEncoder(Env&& env)
+		: Compressor(std::move(env)), m_offset(this->env().option("offset").as_integer()) {
     }
 
     inline virtual void compress(Input& input, Output& output) override {
-        // setup I/O
-        auto ins = input.as_stream();
-
-        // instantiate coder
-        typename coder_t::Encoder coder(env().env_for_option("coder"), output, NoLiterals()); //TODO: literal iterator for input streams
-
-        // define working variables
-        len_t min_run = env().option("min_run").as_integer();
-        uliteral_t run_char = 0;
-        len_t run_length = 0;
-
-        // writes the current run to the output stream
-        auto emit_run = [&]() {
-            if (run_length >= min_run) {
-                // encode the character twice
-                coder.encode(run_char, literal_r);
-                coder.encode(run_char, literal_r);
-
-                // encode run length
-                coder.encode(true, bit_r); // yes, this is an encoded run
-                coder.encode(run_length - 2U, len_r);
-
-                // reset
-                run_length = 0;
-            } else if(run_length > 0) {
-                // write the whole run
-                // each two characters, encode a zero bit to indicate that this
-                // is no encoded run
-                bool flip = false;
-                while(run_length--) {
-                    coder.encode(run_char, literal_r);
-
-                    if(flip) {
-                        coder.encode(false, bit_r);
-                    }
-
-                    flip = !flip;
-                }
-            }
-        };
-
-        // process input
-        for(auto c : ins) {
-            auto x = uliteral_t(c); // cast to unsigned!
-            if(run_length > 0 && x == run_char) {
-                run_length++;
-            } else {
-                emit_run();
-                run_char = x;
-                run_length = 1;
-            }
-        }
-
-        // emit final run
-        emit_run();
-    }
-
+		auto is = input.as_stream();
+		auto os = output.as_stream();
+		rle_encode(is,os,m_offset);
+	}
     inline virtual void decompress(Input& input, Output& output) override {
-        // setup I/O
-        auto outs = output.as_stream();
-
-        // instantiate decoder
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
-
-        // decode
-        bool flip = false;
-        uliteral_t run_char = 0;
-
-        while(!decoder.eof()) {
-            auto c = decoder.template decode<uliteral_t>(literal_r);
-            outs << c;
-
-            if(flip && c == run_char) {
-                flip = false;
-                bool is_run = decoder.template decode<bool>(bit_r);
-                if(is_run) {
-                    len_t run_length = decoder.template decode<len_t>(len_r);
-                    while(run_length--) outs << c; // repeat
-                }
-            } else {
-                flip = true;
-                run_char = c;
-            }
-        }
-    }
+		auto is = input.as_stream();
+		auto os = output.as_stream();
+		rle_decode(is,os,m_offset);
+	}
 };
 
-}
+
+}//ns
 
