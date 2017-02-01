@@ -10,10 +10,10 @@
 #include <tudocomp/generators/ThueMorseGenerator.hpp>
 
 #include <tudocomp/coders/ASCIICoder.hpp>
-#include <tudocomp/coders/Code2Coder.hpp>
 #include <tudocomp/coders/EliasDeltaCoder.hpp>
 #include <tudocomp/coders/EliasGammaCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
+#include <tudocomp/coders/SLECoder.hpp>
 
 using namespace tdc;
 
@@ -189,11 +189,11 @@ TEST(coder, ascii_int) { test_int<ASCIICoder>(); }
 TEST(coder, ascii_str) { test_str<ASCIICoder>(); }
 TEST(coder, ascii_mixed) { test_mixed<ASCIICoder>(); }
 
-TEST(coder, code2_mt) { test_mt<Code2Coder>(); }
-TEST(coder, code2_bits) { test_bits<Code2Coder>(); }
-TEST(coder, code2_int) { test_int<Code2Coder>(); }
-TEST(coder, code2_str) { test_str<Code2Coder>(); }
-TEST(coder, code2_mixed) { test_mixed<Code2Coder>(); }
+TEST(coder, sle_mt) { test_mt<SLECoder>(); }
+TEST(coder, sle_bits) { test_bits<SLECoder>(); }
+TEST(coder, sle_int) { test_int<SLECoder>(); }
+TEST(coder, sle_str) { test_str<SLECoder>(); }
+TEST(coder, sle_mixed) { test_mixed<SLECoder>(); }
 
 TEST(coder, delta_mt) { test_mt<EliasDeltaCoder>(); }
 TEST(coder, delta_bits) { test_bits<EliasDeltaCoder>(); }

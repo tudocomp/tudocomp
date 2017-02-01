@@ -51,8 +51,8 @@ TEST(Registry, smoketest) {
     using namespace tdc_algorithms;
     using ast::Value;
     using ast::Arg;
-    ast::Parser p { "foo(abc, def=ghi, x : static y = z, "
-                    "jkl=mno(p, q=\"1\"), q:r)" };
+    ast::Parser p { "foo(abc, def=ghi, x = z, "
+                    "jkl=mno(p, q=\"1\"), q)" };
 
     Value a = p.parse_value();
 
@@ -71,10 +71,7 @@ TEST(Registry, smoketest) {
         ASSERT_EQ(b[1].value().invokation_name(), "ghi");
 
         ASSERT_TRUE(b[2].has_keyword());
-        ASSERT_TRUE(b[2].has_type());
-        ASSERT_TRUE(b[2].type_is_static());
         ASSERT_EQ(b[2].keyword(), "x");
-        ASSERT_EQ(b[2].type(), "y");
         ASSERT_EQ(b[2].value().invokation_name(), "z");
 
         ASSERT_TRUE(b[3].has_keyword());
@@ -90,20 +87,21 @@ TEST(Registry, smoketest) {
             ASSERT_EQ(c[1].value().string_value(), "1");
 
         ASSERT_FALSE(b[4].has_keyword());
-        ASSERT_TRUE(b[4].has_type());
         ASSERT_EQ(b[4].value().invokation_name(), "q");
-        ASSERT_EQ(b[4].type(), "r");
 }
 
 TEST(Registry, decl) {
     using namespace tdc_algorithms;
-    ast::Parser p {
-        "foo(a: b, c: d = e, f: static g)"
+    decl::Algorithm b {
+        "foo",
+        {
+            decl::Arg("a", false, "b"),
+            decl::Arg("c", false, "d", ast::Value("e", {})),
+            decl::Arg("f", true, "g"),
+        },
+        "blub",
+        true,
     };
-
-    ast::Value a = p.parse_value();
-
-    decl::Algorithm b = decl::from_ast(std::move(a), "blub");
 
     ASSERT_EQ(b.name(), "foo");
     ASSERT_EQ(b.arguments().size(), 3);
@@ -121,6 +119,8 @@ TEST(Registry, decl) {
     ASSERT_EQ(b.arguments()[2].name(), "f");
     ASSERT_EQ(b.arguments()[2].type(), "g");
     ASSERT_TRUE(b.arguments()[2].is_static());
+    ASSERT_EQ(b.doc(), "blub");
+    ASSERT_EQ(b.add_null_terminator(), true);
 
 }
 
@@ -203,4 +203,28 @@ TEST(TudocompDriver, all_compressors_defined) {
         }
         EXPECT_FALSE(has_undefined_compressors) << ss.str();
     }
+}
+
+TEST(Registry, chain_sugar) {
+    using namespace tdc_algorithms;
+    using ast::Value;
+    using ast::Arg;
+    auto cmp = [](std::string sa, std::string sb) {
+        ast::Parser p { sa };
+        Value a = p.parse_value();
+        ASSERT_EQ(a.to_string(), sb);
+    };
+
+    cmp("foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = 3), q)",
+        "foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = \"3\"), q)");
+    cmp("foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = 3), q):algo2",
+        "chain("
+            "foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = \"3\"), q)"
+            ", algo2)");
+    cmp("foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = 3), q):algo2:algo3('asdf')",
+        "chain("
+            "chain("
+                "foo(abc, def = ghi, x = z, jkl = mno(p, q = \"1\", x = \"3\"), q)"
+                ", algo2)"
+        ", algo3(\"asdf\"))");
 }

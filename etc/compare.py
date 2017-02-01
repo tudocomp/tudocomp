@@ -33,9 +33,9 @@ compressor_pairs = [
         #third is program name
         #other parameters are program arguments
        ('lz78u(t=5,huff)',['--output','','./tdc','-a','lz78u(threshold=5,strategy=buffering(huff),coder=bit)','--force'], ['--output','','./tdc', '--decompress']),
-       ('lcpcomp(t=5,arrays,scans(a=25))',['--output','','./tdc','-a','lcpcomp(coder=code2,threshold="5",comp=arrays,dec=scan("25"))','--force'], ['--output','','./tdc', '--decompress']),
+       ('lcpcomp(t=5,arrays,scans(a=25))',['--output','','./tdc','-a','lcpcomp(coder=sle,threshold="5",comp=arrays,dec=scan("25"))','--force'], ['--output','','./tdc', '--decompress']),
        ('lzss_lcp(t=5,bit)'  , ['--output' , '' , './tdc' , '-a' , 'lzss_lcp(coder=bit,theshold=5)' , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
-       ('code2' , ['--output' , '' , './tdc' , '-a' , 'encode(code2)' , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
+       ('sle' , ['--output' , '' , './tdc' , '-a' , 'encode(sle)' , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
        ('huff'  , ['--output' , '' , './tdc' , '-a' , 'encode(huff)'  , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
        ('lzw(ternary)'   , ['--output' , '' , './tdc' , '-a' , 'lzw(coder=bit,lz78trie=ternary)'           , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
        ('lz78(ternary)'  , ['--output' , '' , './tdc' , '-a' , 'lz78(coder=bit,lz78trie=ternary)'          , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,

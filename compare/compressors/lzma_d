@@ -1,1 +1,0 @@
-lzma -d $DARGS -f -c $IN >$OUT

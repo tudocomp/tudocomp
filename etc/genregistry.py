@@ -29,13 +29,13 @@ context_free_coder = [
     ("EliasDeltaCoder", "coders/EliasDeltaCoder.hpp", []),
 ]
 
-# TODO: Fix bad interaction between code2 and lz78u code and remove this distinction
+# TODO: Fix bad interaction between sle and lz78u code and remove this distinction
 tmp_lz78u_string_coder = context_free_coder + [
     ("HuffmanCoder", "coders/HuffmanCoder.hpp", []),
 ]
 
 coder = tmp_lz78u_string_coder + [
-    ("Code2Coder",   "coders/Code2Coder.hpp",   []),
+    ("SLECoder",   "coders/SLECoder.hpp",   []),
 ]
 
 lz78_trie = [
@@ -69,7 +69,7 @@ lcpc_buffer = [
 
 lcpc_coder = [
     ("ASCIICoder", "coders/ASCIICoder.hpp", []),
-    ("Code2Coder", "coders/Code2Coder.hpp", []),
+    ("SLECoder", "coders/SLECoder.hpp", []),
 ]
 
 lz78u_strategy = [
@@ -82,7 +82,7 @@ textds = [
 ]
 
 compressors = [
-    ("RunLengthEncoder",            "compressors/RunLengthEncoder.hpp",            [context_free_coder]),
+    ("RunLengthEncoder",            "compressors/RunLengthEncoder.hpp",            []),
     ("LiteralEncoder",              "compressors/LiteralEncoder.hpp",              [coder]),
     ("LZ78Compressor",              "compressors/LZ78Compressor.hpp",              [context_free_coder, lz78_trie]),
     ("LZ78UCompressor",             "compressors/LZ78UCompressor.hpp",             [lz78u_strategy, context_free_coder]),
@@ -91,7 +91,6 @@ compressors = [
     ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [coder, textds]),
     ("LCPCompressor",               "compressors/LCPCompressor.hpp",               [lcpc_coder, lcpc_strat, lcpc_buffer, textds]),
     ("LZSSSlidingWindowCompressor", "compressors/LZSSSlidingWindowCompressor.hpp", [context_free_coder]),
-    ("EasyRLECompressor",           "compressors/EasyRLECompressor.hpp",           []),
     ("MTFCompressor",               "compressors/MTFCompressor.hpp",               []),
     ("ChainCompressor",             "compressors/ChainCompressor.hpp",             []),
     ("NoopCompressor",              "compressors/NoopCompressor.hpp",              []),
