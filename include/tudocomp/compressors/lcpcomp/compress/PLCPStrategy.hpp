@@ -76,15 +76,16 @@ public:
 		len_t lastpos = 0;
 		len_t lastpos_lcp = 0;
 		for(len_t i = 0; i+1 < n; ++i) {
+			const len_t plcp_i = plcp[i];
 			if(heap.empty()) {
-				if(plcp[i] >= threshold) {
-					handles.emplace_back(heap.emplace(i,plcp[i], handles.size()));
+				if(plcp_i >= threshold) {
+					handles.emplace_back(heap.emplace(i, plcp_i, handles.size()));
 					lastpos = i;
 					lastpos_lcp = plcp[lastpos];
 				}
 				continue;
 			}
-			if(i - lastpos > lastpos_lcp || i+1 == n) {
+			if(i - lastpos >= lastpos_lcp || i+1 == n) {
 				IF_DEBUG(bool first = true);
 				IF_STATS(max_heap_size = std::max<len_t>(max_heap_size, heap.size()));
 				DCHECK_EQ(heap.size(), handles.size());
@@ -92,16 +93,33 @@ public:
 					const Poi& top = heap.top();
 					const len_t source_position = sa[isa[top.pos]-1];
 					factors.emplace_back(top.pos, source_position, top.lcp);
-					const len_t next_pos = top.pos; // store top
+					const len_t next_pos = top.pos; // store top, this is the current position that gets factorized
 					IF_DEBUG(if(first) DCHECK_EQ(top.pos, lastpos); first = false;)
 
-					for(len_t i = top.no+1; i < handles.size(); ++i) {
+					for(len_t i = top.no+1; i < handles.size(); ++i) { // erase all right peaks that got substituted
 						if( handles[i].node_ == nullptr) continue;
-						const Poi& poi = *(handles[i]);
+						const Poi poi = *(handles[i]);
 						DCHECK_LT(next_pos, poi.pos);
-						if(poi.pos < next_pos+top.lcp) {
+						if(poi.pos < next_pos+top.lcp) { 
 							heap.erase(handles[i]);
 							handles[i].node_ = nullptr;
+							if(poi.lcp + poi.pos > next_pos+top.lcp) {
+								bool has_overlapping = false; // number of peaks that cover the area of peak we are going to delete, but go on to the right -> we do not have to create a new peak if there is one
+								for(len_t j = i+1; j < handles.size(); ++j) {
+									if( handles[j].node_ == nullptr) continue;
+									const Poi poi_cand = *(handles[j]);
+									if(poi_cand.pos > poi.lcp + poi.pos) break;
+									if(poi_cand.pos+poi_cand.lcp <= next_pos+top.lcp) continue;
+									has_overlapping = true;
+									break;
+								}
+								if(!has_overlapping) { // a new, but small peak emerged that was not covered by the peak poi
+									const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
+									if(remaining_lcp >= threshold) {
+										handles[i] = heap.emplace(next_pos+top.lcp, remaining_lcp, i);
+									}
+								}
+							}
 						}
 						//else { break; } // !TODO
 					}
@@ -131,7 +149,8 @@ public:
 				--i;
 				continue;
 			}
-			if(plcp[i] <= lastpos_lcp) continue;
+			DCHECK_EQ(plcp_i, plcp[i]);
+			if(plcp_i <= lastpos_lcp) continue;
 			DCHECK_LE(threshold, plcp[i]);
 			handles.emplace_back(heap.emplace(i,plcp[i], handles.size()));
 			lastpos = i;
