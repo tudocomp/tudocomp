@@ -52,8 +52,8 @@ if config_match("^#define JUDY_H_AVAILABLE 1"): lz78_trie += [
 ]
 
 lcpc_strat = [
-    ("lcpcomp::MaxHeapStrategy",  "compressors/lcpcomp/compress/MaxHeapStrategy.hpp",   []),
-    ("lcpcomp::MaxLCPStrategy",   "compressors/lcpcomp/compress/MaxLCPStrategy.hpp",    []),
+    ("lcpcomp::BoostHeap",  "compressors/lcpcomp/compress/BoostHeap.hpp",   []),
+    # ("lcpcomp::MaxLCPStrategy",   "compressors/lcpcomp/compress/MaxLCPStrategy.hpp",    []),
     ("lcpcomp::ArraysComp", "compressors/lcpcomp/compress/ArraysComp.hpp",  []),
     ("lcpcomp::PLCPStrategy",     "compressors/lcpcomp/compress/PLCPStrategy.hpp",      []),
     ("lcpcomp::PLCPPeaksStrategy","compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp", []),
@@ -82,19 +82,19 @@ textds = [
 ]
 
 compressors = [
-    ("RunLengthEncoder",            "compressors/RunLengthEncoder.hpp",            []),
-    ("LiteralEncoder",              "compressors/LiteralEncoder.hpp",              [coder]),
-    ("LZ78Compressor",              "compressors/LZ78Compressor.hpp",              [context_free_coder, lz78_trie]),
-    ("LZ78UCompressor",             "compressors/LZ78UCompressor.hpp",             [lz78u_strategy, context_free_coder]),
-    ("LZWCompressor",               "compressors/LZWCompressor.hpp",               [context_free_coder, lz78_trie]),
-    ("RePairCompressor",            "compressors/RePairCompressor.hpp",            [coder]),
-    ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [coder, textds]),
+    # ("RunLengthEncoder",            "compressors/RunLengthEncoder.hpp",            []),
+    # ("LiteralEncoder",              "compressors/LiteralEncoder.hpp",              [coder]),
+    # ("LZ78Compressor",              "compressors/LZ78Compressor.hpp",              [context_free_coder, lz78_trie]),
+    # ("LZ78UCompressor",             "compressors/LZ78UCompressor.hpp",             [lz78u_strategy, context_free_coder]),
+    # ("LZWCompressor",               "compressors/LZWCompressor.hpp",               [context_free_coder, lz78_trie]),
+    # ("RePairCompressor",            "compressors/RePairCompressor.hpp",            [coder]),
+    # ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [coder, textds]),
     ("LCPCompressor",               "compressors/LCPCompressor.hpp",               [lcpc_coder, lcpc_strat, lcpc_buffer, textds]),
-    ("LZSSSlidingWindowCompressor", "compressors/LZSSSlidingWindowCompressor.hpp", [context_free_coder]),
-    ("MTFCompressor",               "compressors/MTFCompressor.hpp",               []),
-    ("ChainCompressor",             "compressors/ChainCompressor.hpp",             []),
-    ("NoopCompressor",              "compressors/NoopCompressor.hpp",              []),
-    ("BWTCompressor",               "compressors/BWTCompressor.hpp",               [textds]),
+    # ("LZSSSlidingWindowCompressor", "compressors/LZSSSlidingWindowCompressor.hpp", [context_free_coder]),
+    # ("MTFCompressor",               "compressors/MTFCompressor.hpp",               []),
+    # ("ChainCompressor",             "compressors/ChainCompressor.hpp",             []),
+    # ("NoopCompressor",              "compressors/NoopCompressor.hpp",              []),
+    # ("BWTCompressor",               "compressors/BWTCompressor.hpp",               [textds]),
 ]
 
 generators = [
