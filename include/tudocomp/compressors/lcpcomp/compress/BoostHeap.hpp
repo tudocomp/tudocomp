@@ -48,16 +48,19 @@ public:
 
 		struct LCPCompare {
 			using lcp_t = decltype(lcp);
+			using sa_t = decltype(sa); //`text_t::isa_type;
 			lcp_t& m_lcp;
-			LCPCompare(lcp_t& lcp) : m_lcp(lcp) {}
+			sa_t& m_sa;
+			LCPCompare(lcp_t& lcp_, sa_t& sa_) : m_lcp(lcp_), m_sa(sa_) {}
 
 			bool operator()(const len_t i, const len_t j) const {
+				if(m_lcp[i] == m_lcp[j]) return m_sa[i] > m_sa[j];
 				return m_lcp[i] < m_lcp[j];
 			}
 
 		};
 
-		LCPCompare comp(lcp);
+		LCPCompare comp(lcp,sa);
 
         env().begin_stat_phase("Construct MaxLCPHeap");
 		boost::heap::pairing_heap<len_t,boost::heap::compare<LCPCompare>> heap(comp);
