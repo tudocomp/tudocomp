@@ -130,13 +130,13 @@ public:
 						if( (*it).node_ == nullptr) continue;
 						Poi& poi = (*(*it));
 						if(poi.pos > next_pos)  continue;
-						const len_t newlcp = next_pos - poi.pos - 1;
+						const len_t newlcp = next_pos - poi.pos;
 						if(newlcp < poi.lcp) {
 							if(newlcp < threshold) {
 								heap.erase(*it);
 								it->node_ = nullptr;
 							} else {
-								poi.lcp = next_pos - poi.pos - 1;
+								poi.lcp = newlcp;
 								heap.decrease(*it);
 
 							}
