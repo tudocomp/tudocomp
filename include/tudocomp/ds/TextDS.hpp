@@ -121,10 +121,10 @@ public:
         auto& cm_str = this->env().option("compress").as_string();
         if(cm_str == "delayed") {
             m_cm = CompressMode::delayed;
-        } else if(cm_str == "direct") {
-            m_cm = CompressMode::direct;
+        } else if(cm_str == "compressed") {
+            m_cm = CompressMode::compressed;
         } else {
-            m_cm = CompressMode::none;
+            m_cm = CompressMode::plain;
         }
     }
 

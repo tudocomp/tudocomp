@@ -41,7 +41,7 @@ public:
         this->env().log_stat("size", m_data->bit_size() / 8);
         this->env().end_stat_phase();
 
-        if(cm == CompressMode::direct || cm == CompressMode::delayed) {
+        if(cm == CompressMode::compressed || cm == CompressMode::delayed) {
             compress();
         }
     }

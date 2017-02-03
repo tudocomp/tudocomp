@@ -2,21 +2,21 @@
 
 namespace tdc {
 
-    /// Defines when data structures are compressed.
+    /// Defines when data structures are bit-compressed.
     enum CompressMode {
-        /// Data structures aren't compressed
+        /// Data structures are not bit-compressed at all
         /// (fastest, but highest memory usage).
-        none = 0,
+        plain = 0,
 
-        /// Data structures are compressed after they have been constructed
+        /// Data structures are bit-compressed after they have been constructed
         /// (fast construction, but possibly high memory peak).
         delayed = 1,
 
-        /// Data structures are constructed directly in compressed space
+        /// Data structures are constructed directly in bit-compressed space
         /// (slower construction, but smaller memory usage).
-        direct = 2,
+        compressed = 2,
 
-        /// Special mode that will cause no compression at all during
+        /// Special mode that will cause no bit-compression at all during
         /// construction, internal use in TextDS only
         coherent_delayed = 254,
 

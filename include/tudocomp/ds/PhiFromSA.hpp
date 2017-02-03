@@ -27,7 +27,7 @@ public:
         this->env().begin_stat_phase("Construct Phi Array");
 
         m_data = std::make_unique<iv_t>(n, 0,
-            (cm == CompressMode::direct) ? w : LEN_BITS);
+            (cm == CompressMode::compressed) ? w : LEN_BITS);
 
         for(len_t i = 1, prev = sa[0]; i < n; i++) {
             (*m_data)[sa[i]] = prev;

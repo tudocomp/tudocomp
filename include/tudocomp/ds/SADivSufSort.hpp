@@ -26,7 +26,7 @@ public:
 
         // divsufsort needs one additional bit for signs
         m_data = std::make_unique<iv_t>(n, 0,
-            (cm == CompressMode::direct) ? w + 1 : LEN_BITS);
+            (cm == CompressMode::compressed) ? w + 1 : LEN_BITS);
 
         // Use divsufsort to construct
         divsufsort(t.text(), *m_data, n);
@@ -35,7 +35,7 @@ public:
         this->env().log_stat("size", m_data->bit_size() / 8);
         this->env().end_stat_phase();
 
-        if(cm == CompressMode::direct || cm == CompressMode::delayed) {
+        if(cm == CompressMode::compressed || cm == CompressMode::delayed) {
             compress();
         }
     }
