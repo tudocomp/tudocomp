@@ -96,32 +96,63 @@ public:
 					const len_t next_pos = top.pos; // store top, this is the current position that gets factorized
 					IF_DEBUG(if(first) DCHECK_EQ(top.pos, lastpos); first = false;)
 
-					for(len_t i = top.no+1; i < handles.size(); ++i) { // erase all right peaks that got substituted
-						if( handles[i].node_ == nullptr) continue;
-						const Poi poi = *(handles[i]);
-						DCHECK_LT(next_pos, poi.pos);
-						if(poi.pos < next_pos+top.lcp) { 
-							heap.erase(handles[i]);
-							handles[i].node_ = nullptr;
-							if(poi.lcp + poi.pos > next_pos+top.lcp) {
-								bool has_overlapping = false; // number of peaks that cover the area of peak we are going to delete, but go on to the right -> we do not have to create a new peak if there is one
-								for(len_t j = i+1; j < handles.size(); ++j) {
-									if( handles[j].node_ == nullptr) continue;
-									const Poi poi_cand = *(handles[j]);
-									if(poi_cand.pos > poi.lcp + poi.pos) break;
-									if(poi_cand.pos+poi_cand.lcp <= next_pos+top.lcp) continue;
-									has_overlapping = true;
-									break;
-								}
-								if(!has_overlapping) { // a new, but small peak emerged that was not covered by the peak poi
+					{
+						len_t newlcp_peak = 0; // a new peak can emerge at top.pos+top.lcp
+						bool peak_exists = false;
+						if(top.pos+top.lcp < i) 
+						for(len_t j = top.no+1; j < handles.size(); ++j) { // erase all right peaks that got substituted
+							if( handles[j].node_ == nullptr) continue;
+							const Poi poi = *(handles[j]);
+							DCHECK_LT(next_pos, poi.pos);
+							if(poi.pos < next_pos+top.lcp) { 
+								heap.erase(handles[j]);
+								handles[j].node_ = nullptr;
+								if(poi.lcp + poi.pos > next_pos+top.lcp) {
 									const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
-									if(remaining_lcp >= threshold) {
-										handles[i] = heap.emplace(next_pos+top.lcp, remaining_lcp, i);
-									}
+									newlcp_peak = std::max(remaining_lcp, newlcp_peak);
+									// bool has_overlapping = false; // number of peaks that cover the area of peak we are going to delete, but go on to the right -> we do not have to create a new peak if there is one
+									// for(len_t j = i+1; j < handles.size(); ++j) {
+									// 	if( handles[j].node_ == nullptr) continue;
+									// 	const Poi poi_cand = *(handles[j]);
+									// 	if(poi_cand.pos > poi.lcp + poi.pos) break;
+									// 	if(poi_cand.pos+poi_cand.lcp <= next_pos+top.lcp) continue;
+									// 	has_overlapping = true;
+									// 	break;
+									// }
+									// if(!has_overlapping) { // a new, but small peak emerged that was not covered by the peak poi
+									// 	const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
+									// 	if(remaining_lcp >= threshold) {
+									// 		handles[i] = heap.emplace(next_pos+top.lcp, remaining_lcp, i);
+									// 	}
+									// }
+									// break!
 								}
-							}
+							} else if( poi.pos == next_pos+top.lcp) { peak_exists=true; }
+							//else { break; } // !TODO
 						}
-						//else { break; } // !TODO
+						if(peak_exists) {  //TODO: DEBUG
+									for(len_t j = top.no+1; j < handles.size(); ++j) { 
+										if( handles[j].node_ == nullptr) continue;
+										const Poi& poi = *(handles[j]);
+										if(poi.pos == next_pos+top.lcp) {
+											DCHECK_LE(newlcp_peak, poi.lcp);
+											break;
+										}
+									}
+							// DCHECK_LE(newlcp_peak, [&] () -> len_t {
+							// 		for(len_t j = top.no+1; j < handles.size(); ++j) { 
+							// 			const Poi& poi = *(handles[j]);
+							// 			if(poi.pos == next_pos+top.lcp) { return poi.lcp; }
+							// 		}
+							// 		return (len_t)0;
+							// 	}());
+						}
+						if(!peak_exists && newlcp_peak >= threshold) {
+							len_t j = top.no+1;
+							DCHECK(handles[j].node_ == nullptr);
+							handles[j] = heap.emplace(next_pos+top.lcp, newlcp_peak, j);
+						}
+						
 					}
 					handles[top.no].node_ = nullptr;
 					heap.pop(); // top now gets erased
