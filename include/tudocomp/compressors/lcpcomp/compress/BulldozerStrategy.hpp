@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
@@ -81,7 +82,7 @@ public:
 
         //marker
         env().begin_stat_phase("Process intervals");
-        sdsl::bit_vector marked(n);
+        BitVector marked(n);
 
         auto x = intervals.begin();
         while(x != intervals.end()) {

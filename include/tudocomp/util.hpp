@@ -15,8 +15,6 @@
 
 #include <tudocomp/util/View.hpp>
 
-#include <sdsl/bits.hpp>
-
 namespace tdc {
 
 /// \brief Builds the string representation of a vector of byte values,
