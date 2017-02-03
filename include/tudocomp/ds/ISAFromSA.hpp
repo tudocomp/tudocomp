@@ -26,7 +26,7 @@ public:
         const size_t n = t.size();
         const size_t w = bits_for(n);
         m_data = std::make_unique<iv_t>(n, 0,
-            (cm == CompressMode::direct) ? w : LEN_BITS);
+            (cm == CompressMode::compressed) ? w : LEN_BITS);
 
         // Construct
         for(len_t i = 0; i < n; i++) {

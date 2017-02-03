@@ -834,7 +834,7 @@ namespace tdc {
                 ss << "option parser: ";
                 ss << "argument '" << arg.name() << "' of type '"
                    << arg.type()
-                   << "' has not been assigned an value";
+                   << "' has not been assigned a value";
                 throw std::runtime_error(ss.str());
             }
             if (arg_value.is_invokation()) {
@@ -853,7 +853,7 @@ namespace tdc {
             }
         }
 
-        inline void check_2(decl::Algorithm* found,
+        inline void check_algorithm_known(decl::Algorithm* found,
                             ast::Value& v,
                             std::vector<decl::Algorithm> candidates) {
             if (found == nullptr) {
@@ -871,36 +871,18 @@ namespace tdc {
             }
         }
 
-        inline void check_3(ast::Value& v) {
+        inline void check_argument_defined(const View& arg, const decl::Algorithm& algo) {
+            for (auto& signature_arg : algo.arguments()) {
+                if(arg == signature_arg.name()) return; // found
+            }
 
-        }
+            // not found
+            std::stringstream ss;
 
-        inline void check_4(ast::Value& v) {
-
-        }
-
-        inline void check_5(ast::Value& v) {
-
-        }
-
-        inline void check_6(ast::Value& v) {
-
-        }
-
-        inline void check_7(ast::Value& v) {
-
-        }
-
-        inline void check_8(ast::Value& v) {
-
-        }
-
-        inline void check_9(ast::Value& v) {
-
-        }
-
-        inline void check_10(ast::Value& v) {
-
+            ss << "option parser: ";
+            ss << "unknown option '" << arg << "' for ";
+            ss << "algorithm '" << algo.name() << "'.";
+            throw std::runtime_error(ss.str());
         }
 
         inline OptionValue eval(ast::Value&& v,
@@ -935,7 +917,7 @@ namespace tdc {
                    found = &candidate;
                 }
             }
-            check_2(found, v, candidates);
+            check_algorithm_known(found, v, candidates);
 
             // Signature found, evaluate by walking v and signature
             auto& v_signature = *found;
@@ -978,6 +960,7 @@ namespace tdc {
                         argument_name = unevaluated_arg.keyword();
                     }
 
+                    check_argument_defined(argument_name, v_signature);
                     v_argument_names.push_back(argument_name);
                 }
             }

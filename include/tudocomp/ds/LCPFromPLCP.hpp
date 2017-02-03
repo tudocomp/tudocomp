@@ -33,7 +33,7 @@ public:
         const size_t w = bits_for(m_max);
 
         m_data = std::make_unique<iv_t>(n, 0,
-            (cm == CompressMode::direct) ? w : LEN_BITS);
+            (cm == CompressMode::compressed) ? w : LEN_BITS);
 
         (*m_data)[0] = 0;
 		for(len_t i = 1; i < n; i++) {
