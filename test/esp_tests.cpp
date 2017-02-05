@@ -1,6 +1,6 @@
 #include "tudocomp/tudocomp.hpp"
 #include "tudocomp/compressors/EspCompressor.hpp"
-#include "test_util.hpp"
+#include "test/util.hpp"
 #include <gtest/gtest.h>
 
 using namespace tdc;

@@ -1,14 +1,13 @@
-#ifndef _INCLUDED_ESP_COMPRESSOR_HPP
-#define _INCLUDED_ESP_COMPRESSOR_HPP
+#pragma once
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/ds/GenericIntVector.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
 
-using int_vector::GenericIntVector;
+using int_vector::IntVector;
 
 // Implementation that covers all of 64 bit
 // TODO: Does the Paper mean base-e or base-2 ?
@@ -253,7 +252,7 @@ inline void handle_meta_block_2(ConstGenericView<T> A,
 
     // TODO: Maybe store in high bits of buf to reduce memory?
     // buf gets reduced to 2 bit values anyway, and stays around long enough
-    GenericIntVector<uint_t<1>> landmarks(buf.size());
+    IntVector<uint_t<1>> landmarks(buf.size());
 
     for_neigbors(buf, [&](size_t i, T neighbors[], uint8_t neighbor_len) {
         bool is_high_landmark = true;
@@ -333,7 +332,7 @@ inline void handle_meta_block_2(ConstGenericView<T> A,
     if (debug_landmark_assoc.size() > 0) {
         auto block_range = [&](size_t a, size_t b) {
             //std::cout << a << " - " << b << "\n";
-            push_block(A.substr(type_3_prefix).substr(a, b));
+            push_block(A.slice(type_3_prefix).slice(a, b));
         };
 
         size_t last_pos = 0;
@@ -365,12 +364,12 @@ inline void handle_meta_block_13(ConstGenericView<T> A,
             push_block(A);
             return;
         } else if (s == 4) {
-            push_block(A.substr(0, 2));
-            push_block(A.substr(2));
+            push_block(A.slice(0, 2));
+            push_block(A.slice(2));
             return;
         } else {
-            push_block(A.substr(0, 3));
-            A = A.substr(3);
+            push_block(A.slice(0, 3));
+            A = A.slice(3);
         }
     }
 }
@@ -412,8 +411,8 @@ inline std::vector<ConstGenericView<T>> partition(ConstGenericView<T> in, size_t
     // Split long into short and long
     auto initial_meta_block = [&](uint8_t type, GView A) {
         if (type == 2) {
-            middle_meta_block(3, A.substr(0, type_23_prefix));
-            A = A.substr(type_23_prefix);
+            middle_meta_block(3, A.slice(0, type_23_prefix));
+            A = A.slice(type_23_prefix);
             if (A.size() > 0) {
                 middle_meta_block(2, A);
             }
@@ -430,7 +429,7 @@ inline std::vector<ConstGenericView<T>> partition(ConstGenericView<T> in, size_t
             i++;
         }
         if ((i - type_1_start) > 0) {
-            GView A = in.substr(type_1_start, i + 1);
+            GView A = in.slice(type_1_start, i + 1);
             {
                 initial_meta_block(1, A);
             }
@@ -447,7 +446,7 @@ inline std::vector<ConstGenericView<T>> partition(ConstGenericView<T> in, size_t
         }
         size_t type_23_len = i - type_23_start;
         if (type_23_len > 0) {
-            GView A = in.substr(type_23_start, i);
+            GView A = in.slice(type_23_start, i);
 
             if (type_23_len >= iter_log(alphabet_size)) {
                 initial_meta_block(2, A);
@@ -573,5 +572,3 @@ public:
 };
 
 }
-
-#endif
