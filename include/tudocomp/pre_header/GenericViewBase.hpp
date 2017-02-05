@@ -20,10 +20,7 @@ namespace tdc {
 
 template<class T, class P>
 class GenericViewBase {
-    // TODO: Hack, fix sometime
-    //protected:
-public:
-
+protected:
     friend class GenericViewBase<T, const T*>;
     friend class GenericViewBase<T, T*>;
 

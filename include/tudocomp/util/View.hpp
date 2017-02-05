@@ -15,7 +15,9 @@
 #include <glog/logging.h>
 #include <tudocomp/def.hpp>
 
+#include <tudocomp/util/GenericConstView.hpp>
 #include <tudocomp/util/GenericView.hpp>
+#include <tudocomp/util/GenericConstU8View.hpp>
 
 namespace tdc {
 
