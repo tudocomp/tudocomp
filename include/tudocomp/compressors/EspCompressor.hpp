@@ -7,6 +7,18 @@
 
 namespace tdc {
 
+/*
+
+Paramters:
+- treatment of with-1 metablocks
+- repeating metablock large or small
+       [aaa|sdfgh|aaa]
+    vs [aa|asdfgha|aa}
+- Tests for cases
+    [aa|bababa] vs [a|abababa], eg "aabababababababaa"
+
+*/
+
 using int_vector::IntVector;
 
 // Implementation that covers all of 64 bit
@@ -90,19 +102,23 @@ void print_labeled_blocks2(const std::vector<LabeledBlock<T>>& labeled_blocks) {
     std::cout << "\n";
 }
 
-bool initial_labeled_blocks_debug(const std::vector<LabeledBlock<uint8_t>> meta_blocks, View in) {
+template<class T>
+bool initial_labeled_blocks_debug(const std::vector<LabeledBlock<T>> meta_blocks,
+                                  ConstGenericView<T> in) {
     std::cout << "\nLabeled blocks:\n";
 
     bool ok = false;
     {
-        std::stringstream ss;
+        std::vector<T> ss;
         for (auto& mb : meta_blocks) {
-            ss << mb.view;
+            for (auto& e : mb.view) {
+                ss.push_back(e);
+            }
         }
-        ok = (ss.str() == std::string(in));
+        ok = (ConstGenericView<T>(ss) == in);
     }
 
-    print_labeled_blocks(meta_blocks);
+    print_labeled_blocks2(meta_blocks);
 
     return ok;
 }
@@ -354,7 +370,7 @@ inline void handle_meta_block_13(ConstGenericView<T> A,
         auto s = A.size();
 
         // TODO: Decide how to handle
-        // DCHECK(s > 1);
+        DCHECK(s > 1);
         if (s == 1) { push_block(A); return; }
 
         if (s == 2) {
@@ -464,7 +480,7 @@ inline std::vector<ConstGenericView<T>> partition(ConstGenericView<T> in, size_t
             handle_meta_block_2(A, alphabet_size, buf, push_block);
         } else {
             // TODO: Decide how to handle
-            // DCHECK(A.size() > 1 /* 1-byte input not covered by paper */);
+            DCHECK(A.size() > 1 /* 1-byte input not covered by paper */);
             handle_meta_block_13(A, push_block);
         }
 
@@ -533,9 +549,34 @@ public:
     using Compressor::Compressor;
 
     inline virtual void compress(Input& input, Output& output) override {
-        auto in = input.as_view();
-        DCHECK(in.size() > 0 /* 0-byte input not covered by paper */);
+        const size_t input_size = input.size();
+        DCHECK(input_size > 0 /* 0-byte input not covered by paper */);
 
+        auto in = input.as_stream();
+        std::vector<size_t> work_buf;
+
+        work_buf.reserve(input_size);
+
+        for (auto b : in) {
+            work_buf.push_back(b);
+        }
+
+        DCHECK_EQ(work_buf.size(), input_size);
+
+        size_t alphabet_size = 256;
+        size_t iteration = 0;
+        while(work_buf.size() > 1) {
+            std::cout << "\n>>> PARTITION "<< iteration <<" <<<\n";
+            auto labeled_blocks = labeled_partition<size_t>(work_buf, alphabet_size);
+            DCHECK(initial_labeled_blocks_debug(labeled_blocks.vec,
+                                                ConstGenericView<size_t>(work_buf)));
+
+
+            break;
+            iteration++;
+        }
+
+        /*
         if (input.size() == 1) {
             std::cout << "done 0\n";
         } else {
@@ -563,7 +604,7 @@ public:
             while (false) {
 
             }
-        }
+        }*/
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
