@@ -16,8 +16,6 @@
 
 namespace tdc {
 
-/// \cond INTERNAL
-
 template<class T, class P>
 class GenericViewBase {
 protected:
@@ -241,7 +239,5 @@ template<class T, class Q>
 void swap(GenericViewBase<T, Q>& lhs, GenericViewBase<T, Q>& rhs) {
     lhs.swap(rhs);
 }
-
-/// \endcond
 
 }

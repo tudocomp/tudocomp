@@ -64,7 +64,9 @@ public:
         Super::GenericViewBase(other.data(), other.size()) {}
 
     /// Construct a vector with the contents of this View
-    using Super::operator std::vector<T>;
+    inline operator std::vector<T>() const {
+        return Super::operator std::vector<T>();
+    }
 
     using Super::begin;
     using Super::end;
