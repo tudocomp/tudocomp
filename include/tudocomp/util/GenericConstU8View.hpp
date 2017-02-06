@@ -45,7 +45,8 @@ public:
     static const size_type npos  = Super::npos;
 
     /// Construct a empty View
-    inline ConstGenericView(): Super::GenericViewBase() {}
+    inline ConstGenericView():
+        Super::GenericViewBase() {}
 
     /// Construct a View pointing at `len` elements starting from `data`
     inline ConstGenericView(const uliteral_t* data, size_t len):
@@ -148,7 +149,7 @@ public:
     }
 
     /// The backing memory location
-    inline const uliteral_t* data() const {
+    inline const value_type* data() const noexcept {
         return Super::data();
     }
 
@@ -230,7 +231,7 @@ public:
         return Super::ends_with(other);
     }
 
-    /// Returns `true` if the View end with the sequence of literals
+    /// Returns `true` if the View ends with the sequence of literals
     /// contained in `other`.
     inline bool ends_with(const ConstGenericView<uliteral_t>& other) const {
         return Super::ends_with(other);

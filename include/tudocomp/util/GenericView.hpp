@@ -48,15 +48,18 @@ public:
 
     // static value members
 
+    /// Sentinel value indicating a index at the end of the view.
     static const size_type npos  = Super::npos;
 
     // Constructors
 
     /// Construct a empty View
-    inline GenericView(): Super::GenericViewBase() {}
+    inline GenericView():
+        Super::GenericViewBase() {}
 
     /// Construct a View pointing at `len` elements starting from `data`
-    inline GenericView(T* data, size_t len): Super::GenericViewBase(data, len) {}
+    inline GenericView(T* data, size_t len):
+        Super::GenericViewBase(data, len) {}
 
     /// Construct a View as a copy of `other`
     inline GenericView(const GenericView& other):
@@ -67,95 +70,228 @@ public:
         Super::GenericViewBase(other.data(), other.size()) {}
 
     /// Construct a vector with the contents of this View
-    using Super::operator std::vector<T>;
+    inline operator std::vector<T>() const {
+        return Super::operator std::vector<T>();
+    }
 
-    using Super::begin;
+    /// Begin of iterator
+    inline const_iterator begin() const {
+        return Super::begin();
+    }
+
+    /// Begin of iterator
     inline iterator begin() {
         return this->m_data;
     }
 
-    using Super::end;
+    /// End of iterator
+    inline const_iterator end() const {
+        return Super::end();
+    }
+
+    /// End of iterator
     inline iterator end() {
         return this->m_data + this->m_size;
     }
 
-    using Super::rbegin;
+    /// Begin of reverse iterator
+    inline const_reverse_iterator rbegin() const {
+        return Super::rbegin();
+    }
+
+    /// Begin of reverse iterator
     inline reverse_iterator rbegin() {
         return std::reverse_iterator<iterator>(end());
     }
 
-    using Super::rend;
+    /// End of reverse iterator
+    inline const_reverse_iterator rend() const {
+        return Super::rend();
+    }
+
+    /// End of reverse iterator
     inline reverse_iterator rend() {
         return std::reverse_iterator<iterator>(begin());
     }
 
-    using Super::cbegin;
-    using Super::cend;
-    using Super::crbegin;
-    using Super::crend;
+    /// Begin of const iterator
+    inline const_iterator cbegin() const {
+        return Super::cbegin();
+    }
 
-    using Super::size;
-    using Super::max_size;
-    using Super::empty;
+    /// End of const iterator
+    inline const_iterator cend() const {
+        return Super::cend();
+    }
 
-    using Super::operator[];
+    /// Begin of const reverse iterator
+    inline const_reverse_iterator crbegin() const {
+        return Super::crbegin();
+    }
+
+    /// End of const reverse iterator
+    inline const_reverse_iterator crend() const {
+        return Super::crend();
+    }
+
+    /// Returns size of the View
+    inline size_type size() const {
+        return Super::size();
+    }
+
+    /// Returns max size of the View. Always the same as `size()`
+    inline size_type max_size() const {
+        return Super::max_size();
+    }
+
+    /// Returns `true` if empty
+    inline bool empty() const {
+        return Super::empty();
+    }
+
+    /// Access the element at `pos`
+    ///
+    /// This method is bounds checked in debug builds
+    inline const_reference operator[](size_type pos) const {
+        return Super::operator[](pos);
+    }
+
+    /// Access the element at `pos`
+    ///
+    /// This method is bounds checked in debug builds
     inline reference operator[](size_type n) {
         Super::debug_bound_check(n);
         return this->m_data[n];
     }
 
-    using Super::at;
+    /// Access the element at `pos`
+    ///
+    /// This method is always bounds checked
+    inline const_reference at(size_type pos) const {
+        return Super::at(pos);
+    }
+
+    /// Access the element at `pos`
+    ///
+    /// This method is always bounds checked
     inline reference at(size_type n) {
         Super::bound_check(n);
         return this->m_data[n];
     }
 
-    using Super::front;
+    /// Access the first element
+    inline const_reference front() const {
+        return Super::front();
+    }
+
+    /// Access the first element
     inline reference front() {
         Super::debug_bound_check(0);
         return this->m_data[0];
     }
 
-    using Super::back;
+    /// Access the last element
+    inline const_reference back() const {
+        return Super::back();
+    }
+
+    /// Access the last element
     inline reference back() {
         Super::debug_bound_check(size() - 1);
         return this->m_data[size() - 1];
     }
 
-    using Super::data;
+    /// The backing memory location
+    inline const value_type* data() const noexcept {
+        return Super::data();
+    }
+
+    /// The backing memory location
     inline value_type* data() noexcept {
         return this->m_data;
     }
 
-    using Super::pop_back;
-    using Super::pop_front;
+    /// Remove the last element from the View.
+    inline void pop_back() {
+        Super::pop_back();
+    }
 
+    /// Remove the first element from the View.
+    inline void pop_front() {
+        Super::pop_front();
+    }
+
+    /// Swap two Views
     inline void swap(GenericView& other) {
         Super::swap(other);
     }
 
-    using Super::clear;
+    /// Sets the size to 0
+    inline void clear() {
+        Super::clear();
+    }
 
+    /// Construct a new View that is a sub view into the current one.
+    ///
+    /// The returned view will be a "position-length" slice,
+    /// and cover the bytes starting at `pos` and ending at `pos + len`.
+    ///
+    /// Passing `npos` to `len` will create a slice until the end of the View
+    ///
+    /// This method covers the same basic operation as `slice()`, but
+    /// mirrors the semantic of `std::string::substr`.
+    ///
+    /// # Example
+    ///
+    /// `View("abcd").substr(1, 2) == View("bc")`
     inline GenericView substr(size_type pos, size_type len = npos) const {
         return Super::substr(pos, len);
     }
 
+    /// Construct a new View that is a sub view into the current one.
+    ///
+    /// The returned view will be a "from-to" slice,
+    /// and cover the bytes starting at `from` and ending *just before* `to`.
+	/// T.slice(a,b) gives T[a..b-1]
+    ///
+    /// Passing `npos` to `to` will create a slice until the end of the View
+    ///
+    /// # Example
+    ///
+    /// `View("abcd").slice(1, 3) == View("bc")`
     inline GenericView slice(size_type from, size_type to = npos) const {
         return Super::slice(from, to);
     }
 
-    using Super::remove_prefix;
-    using Super::remove_suffix;
+    /// Removes the first `n` elements from the View
+    inline void remove_prefix(size_type n) {
+        return Super::remove_prefix(n);
+    }
+
+    /// Removes the last `n` elements from the View
+    inline void remove_suffix(size_type n) {
+        return Super::remove_suffix(n);
+    }
+
+    /// Returns `true` if the View starts with the literal `other`
     inline bool starts_with(const T& other) const {
         return Super::starts_with(other);
     }
-    inline bool starts_with(const ConstGenericView<T> other) const {
+
+    /// Returns `true` if the View starts with the sequence of literals
+    /// contained in `other`.
+    inline bool starts_with(const ConstGenericView<T>& other) const {
         return Super::starts_with(other);
     }
+
+    /// Returns `true` if the View ends with the literal `other`
     inline bool ends_with(const T& other) const {
         return Super::ends_with(other);
     }
-    inline bool ends_with(const ConstGenericView<T> other) const {
+
+    /// Returns `true` if the View ends with the sequence of literals
+    /// contained in `other`.
+    inline bool ends_with(const ConstGenericView<T>& other) const {
         return Super::ends_with(other);
     }
 
