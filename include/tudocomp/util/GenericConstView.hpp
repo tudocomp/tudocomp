@@ -24,8 +24,8 @@ class GenericView;
 
 /// A const view into a slice of memory.
 ///
-/// This is an abstraction around a pointer to `T` and a size,
-/// and represents N elements of memory starting at that pointer.
+/// This is an abstraction around a const pointer to `T` and a size,
+/// and represents N elements consecutive in memory.
 ///
 /// Creating/Copying/Modifying a View will not copy any of the data it points at.
 /// Its API mostly mirrors that of a `std::vector<T>`.
