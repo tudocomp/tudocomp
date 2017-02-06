@@ -239,12 +239,18 @@ public:
     template<class U>
     friend void swap(ConstGenericView<U>& lhs, ConstGenericView<U>& rhs);
 
-    friend bool operator==(const ConstGenericView<uliteral_t>& lhs, const ConstGenericView<uliteral_t>& rhs);
-    friend bool operator!=(const ConstGenericView<uliteral_t>& lhs, const ConstGenericView<uliteral_t>& rhs);
-    friend bool operator<(const ConstGenericView<uliteral_t>& lhs, const ConstGenericView<uliteral_t>& rhs);
-    friend bool operator<=(const ConstGenericView<uliteral_t>& lhs, const ConstGenericView<uliteral_t>& rhs);
-    friend bool operator>(const ConstGenericView<uliteral_t>& lhs, const ConstGenericView<uliteral_t>& rhs);
-    friend bool operator>=(const ConstGenericView<uliteral_t>& lhs, const ConstGenericView<uliteral_t>& rhs);
+    friend bool operator==(const ConstGenericView<uliteral_t>& lhs,
+                           const ConstGenericView<uliteral_t>& rhs);
+    friend bool operator!=(const ConstGenericView<uliteral_t>& lhs,
+                           const ConstGenericView<uliteral_t>& rhs);
+    friend bool operator<(const ConstGenericView<uliteral_t>& lhs,
+                          const ConstGenericView<uliteral_t>& rhs);
+    friend bool operator<=(const ConstGenericView<uliteral_t>& lhs,
+                           const ConstGenericView<uliteral_t>& rhs);
+    friend bool operator>(const ConstGenericView<uliteral_t>& lhs,
+                          const ConstGenericView<uliteral_t>& rhs);
+    friend bool operator>=(const ConstGenericView<uliteral_t>& lhs,
+                           const ConstGenericView<uliteral_t>& rhs);
 
     // string extensions
 
