@@ -186,7 +186,7 @@ public:
 
     /// Access the first element
     inline reference front() {
-        Super::debug_bound_check(0);
+        Super::debug_bound_check_not_empty();
         return this->m_data[0];
     }
 
@@ -197,7 +197,7 @@ public:
 
     /// Access the last element
     inline reference back() {
-        Super::debug_bound_check(size() - 1);
+        Super::debug_bound_check_not_empty();
         return this->m_data[size() - 1];
     }
 

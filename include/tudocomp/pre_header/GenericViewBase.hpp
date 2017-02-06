@@ -14,6 +14,8 @@
 #include <cstring>
 #include <glog/logging.h>
 
+#include <tudocomp/def.hpp>
+
 namespace tdc {
 
 template<class T, class P>
@@ -46,10 +48,22 @@ protected:
         }
     }
 
+    inline void bound_check_not_empty() const {
+        if (empty()) {
+            std::stringstream ss;
+            ss << "accessing element in empty view with bounds [0, ";
+            ss << m_size;
+            ss << ")";
+            throw std::out_of_range(ss.str());
+        }
+    }
+
     inline void debug_bound_check(size_t pos) const {
-#ifdef DEBUG
-        bound_check(pos);
-#endif
+        IF_DEBUG(bound_check(pos));
+    }
+
+    inline void debug_bound_check_not_empty() const {
+        IF_DEBUG(bound_check_not_empty());
     }
 
     inline GenericViewBase(P data, size_t size): m_data(data), m_size(size) {}
@@ -127,12 +141,12 @@ protected:
     }
 
     inline const_reference front() const {
-        debug_bound_check(0);
+        debug_bound_check_not_empty();
         return m_data[0];
     }
 
     inline const_reference back() const {
-        debug_bound_check(size() - 1);
+        debug_bound_check_not_empty();
         return m_data[size() - 1];
     }
 
@@ -141,10 +155,12 @@ protected:
     }
 
     inline void pop_back() {
+        debug_bound_check_not_empty();
         m_size--;
     }
 
     inline void pop_front() {
+        debug_bound_check_not_empty();
         m_data++;
         m_size--;
     }
