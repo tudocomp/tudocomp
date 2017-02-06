@@ -9,8 +9,6 @@ if(PANDOC_FOUND)
     set(MAIN_LATEX_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/latex)
     set(MAIN_HTML_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/html)
 
-    set(PANDOC_COMMAND ${PANDOC_BIN} -f markdown)
-
     file(MAKE_DIRECTORY ${MAIN_LATEX_OUT_DIR})
     file(MAKE_DIRECTORY ${MAIN_HTML_OUT_DIR})
 
@@ -19,7 +17,7 @@ if(PANDOC_FOUND)
     add_custom_target(docs-main-html
 
         # convert markdown doc to html
-        COMMAND GHCRTS=-V0 ${PANDOC_COMMAND} -t html --toc
+        COMMAND ${PANDOC_BIN} -f markdown -t html --toc
             --template=${CMAKE_CURRENT_SOURCE_DIR}/pandoc_template.html
             -o ${CMAKE_CURRENT_BINARY_DIR}/_content.html
             ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md
@@ -41,7 +39,7 @@ if(PANDOC_FOUND)
 
         add_custom_target(docs-main-pdf
             # convert markdown doc to tex
-            COMMAND ${PANDOC_COMMAND} -t latex
+            COMMAND ${PANDOC_BIN} -f markdown -t latex
                 -o ${MAIN_LATEX_OUT_DIR}/_content.tex
                 ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md
 
