@@ -54,6 +54,10 @@ section#content {
     background-color: white;
 }
 
+section#content.padded {
+    padding: 2rem;
+}
+
 #dashboard {
     padding-top: 1rem;
     padding-bottom: 2rem;
