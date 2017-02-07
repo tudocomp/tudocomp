@@ -18,6 +18,9 @@
 #include <tudocomp/io/BitIStream.hpp>
 #include <tudocomp/io/BitOStream.hpp>
 
+
+#include <tudocomp/ds/IntVector.hpp>
+
 #include <utility>
 
 #include <set>
@@ -34,6 +37,8 @@ class STLFSCompressor : public Compressor {
 private:
     SuffixTree stree;
     uint min_lrf;
+
+    BitVector dead_positions;
 
     typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
 
@@ -97,6 +102,13 @@ private:
                     walked_length += stree.edge_length(current_node);
                     DLOG(INFO) << "walked length: "<< walked_length;
 
+                }
+                //delete leaf pos[i], maintain  triple
+                if(walked_length + i > current_pos  && !dead_positions[i]){
+                    DLOG(INFO)<<"its not dead an longer than current pos";
+                } else {
+                    dead_positions[i] = 1;
+                    DLOG(INFO)<<"positions marked dead";
                 }
 
 
@@ -178,7 +190,16 @@ public:
         //build suffixtree
         DLOG(INFO)<<"build suffixtree";
 
+
+        //auto in = input.as_view();
+
+        //BitVector
+        dead_positions = BitVector(input.size(), 0);
+        DLOG(INFO)<< "dead_positions.size(): "<<dead_positions.size();
+        //
+
         stree.append_input(input);
+
 
         std::string text = stree.get_text();
 
