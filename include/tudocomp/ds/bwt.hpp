@@ -16,7 +16,7 @@ namespace tdc {
  */
 template<typename text_t, typename sa_t>
 inline typename text_t::value_type bwt(const text_t& text, const sa_t& sa, const size_t i) {
-	return (sa[i] == 0) ? text[sa.size()-1] : text[sa[i]-1];
+	return (sa[i] == 0u) ? text[sa.size()-1] : text[sa[i]-1];
 }
 
 /**

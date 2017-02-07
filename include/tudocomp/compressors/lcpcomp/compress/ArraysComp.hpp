@@ -39,13 +39,11 @@ public:
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
 
-        auto lcpp = text.release_lcp();
-        auto lcp_datap = lcpp->relinquish();
-        auto& lcp = *lcp_datap;
+        auto lcp = text.release_lcp();
 
-        env().log_stat("maxlcp", lcpp->max_lcp());
-        if(lcpp->max_lcp()+1 <= threshold) return; // nothing to factorize
-        const size_t cand_length = lcpp->max_lcp()+1-threshold;
+        env().log_stat("maxlcp", lcp.max_lcp());
+        if(lcp.max_lcp()+1 <= threshold) return; // nothing to factorize
+        const size_t cand_length = lcp.max_lcp()+1-threshold;
         std::vector<len_t>* cand = new std::vector<len_t>[cand_length];
         env().begin_stat_phase("Fill candidates");
         for(size_t i = 1; i < sa.size(); ++i) {
@@ -60,8 +58,8 @@ public:
                 return ret; }());
         env().end_stat_phase();
         env().begin_stat_phase("Compute Factors");
-        env().begin_stat_phase(std::string{"Factors at max. LCP value "} + std::to_string(lcpp->max_lcp()) );
-        for(size_t maxlcp = lcpp->max_lcp(); maxlcp >= threshold; --maxlcp) {
+        env().begin_stat_phase(std::string{"Factors at max. LCP value "} + std::to_string(lcp.max_lcp()) );
+        for(size_t maxlcp = lcp.max_lcp(); maxlcp >= threshold; --maxlcp) {
             IF_STATS({
 					const len_t maxlcpbits = bits_for(maxlcp-threshold);
                 if( ((maxlcpbits ^ (1UL<<(bits_for(maxlcpbits)-1))) == 0) && (( (maxlcp-threshold) ^ (1UL<<(maxlcpbits-1))) == 0)) { // only log at certain LCP values

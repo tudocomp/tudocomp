@@ -40,9 +40,7 @@ public:
         const auto& sa = text.require_sa();
         const auto& isa = text.require_isa();
 
-        auto lcpp = text.release_plcp();
-        auto lcp_datap = lcpp->relinquish();
-        auto& plcp = *lcp_datap;
+        auto plcp = text.release_plcp();
 
         //
         const size_t n = sa.size();
@@ -50,9 +48,9 @@ public:
 		len_t last_replacement_pos = 0;
 		for(len_t i = 0; i+1 < n; ) {
 			if( (i == last_replacement_pos || plcp[i] > plcp[i-1]) && plcp[i] > plcp[i+1] && plcp[i] >= threshold) {
-				DCHECK_NE(isa[i], 0);
+				DCHECK_NE(isa[i], 0u);
 				const len_t& target_position = i;
-				const len_t factor_length = plcp[target_position]; 
+				const len_t factor_length = plcp[target_position];
 				DCHECK_LT(target_position+factor_length,n);
 				const len_t source_position = sa[isa[target_position]-1];
 				factors.emplace_back(i, source_position, factor_length);
