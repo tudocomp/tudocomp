@@ -76,15 +76,16 @@ public:
 		len_t lastpos = 0;
 		len_t lastpos_lcp = 0;
 		for(len_t i = 0; i+1 < n; ++i) {
+			const len_t plcp_i = plcp[i];
 			if(heap.empty()) {
-				if(plcp[i] >= threshold) {
-					handles.emplace_back(heap.emplace(i,plcp[i], handles.size()));
+				if(plcp_i >= threshold) {
+					handles.emplace_back(heap.emplace(i, plcp_i, handles.size()));
 					lastpos = i;
 					lastpos_lcp = plcp[lastpos];
 				}
 				continue;
 			}
-			if(i - lastpos > lastpos_lcp || i+1 == n) {
+			if(i - lastpos >= lastpos_lcp || tdc_unlikely(i+1 == n)) {
 				IF_DEBUG(bool first = true);
 				IF_STATS(max_heap_size = std::max<len_t>(max_heap_size, heap.size()));
 				DCHECK_EQ(heap.size(), handles.size());
@@ -92,18 +93,47 @@ public:
 					const Poi& top = heap.top();
 					const len_t source_position = sa[isa[top.pos]-1];
 					factors.emplace_back(top.pos, source_position, top.lcp);
-					const len_t next_pos = top.pos; // store top
+					const len_t next_pos = top.pos; // store top, this is the current position that gets factorized
 					IF_DEBUG(if(first) DCHECK_EQ(top.pos, lastpos); first = false;)
 
-					for(len_t i = top.no+1; i < handles.size(); ++i) {
-						if( handles[i].node_ == nullptr) continue;
-						const Poi& poi = *(handles[i]);
-						DCHECK_LT(next_pos, poi.pos);
-						if(poi.pos < next_pos+top.lcp) {
-							heap.erase(handles[i]);
-							handles[i].node_ = nullptr;
+					{
+						len_t newlcp_peak = 0; // a new peak can emerge at top.pos+top.lcp
+						bool peak_exists = false;
+						if(top.pos+top.lcp < i) 
+						for(len_t j = top.no+1; j < handles.size(); ++j) { // erase all right peaks that got substituted
+							if( handles[j].node_ == nullptr) continue;
+							const Poi poi = *(handles[j]);
+							DCHECK_LT(next_pos, poi.pos);
+							if(poi.pos < next_pos+top.lcp) { 
+								heap.erase(handles[j]);
+								handles[j].node_ = nullptr;
+								if(poi.lcp + poi.pos > next_pos+top.lcp) {
+									const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
+									DCHECK_NE(remaining_lcp,0);
+									if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak); 
+									newlcp_peak = std::max(remaining_lcp, newlcp_peak);
+								}
+							} else if( poi.pos == next_pos+top.lcp) { peak_exists=true; }
+							else { break; }  // only for performance
 						}
-						//else { break; } // !TODO
+#ifdef DEBUG
+						if(peak_exists) {  //TODO: DEBUG
+							for(len_t j = top.no+1; j < handles.size(); ++j) { 
+								if( handles[j].node_ == nullptr) continue;
+								const Poi& poi = *(handles[j]);
+								if(poi.pos == next_pos+top.lcp) {
+									DCHECK_LE(newlcp_peak, poi.lcp);
+									break;
+								}
+							}
+						}
+#endif
+						if(!peak_exists && newlcp_peak >= threshold) {
+							len_t j = top.no+1;
+							DCHECK(handles[j].node_ == nullptr);
+							handles[j] = heap.emplace(next_pos+top.lcp, newlcp_peak, j);
+						}
+						
 					}
 					handles[top.no].node_ = nullptr;
 					heap.pop(); // top now gets erased
@@ -112,26 +142,27 @@ public:
 						if( (*it).node_ == nullptr) continue;
 						Poi& poi = (*(*it));
 						if(poi.pos > next_pos)  continue;
-						const len_t newlcp = next_pos - poi.pos - 1;
+						const len_t newlcp = next_pos - poi.pos;
 						if(newlcp < poi.lcp) {
 							if(newlcp < threshold) {
 								heap.erase(*it);
 								it->node_ = nullptr;
 							} else {
-								poi.lcp = next_pos - poi.pos - 1;
+								poi.lcp = newlcp;
 								heap.decrease(*it);
 
 							}
-							//	continue; //!TODO
+						} else {
+							break;
 						}
-						//break; // !TODO
 					}
 				}
 				handles.clear();
 				--i;
 				continue;
 			}
-			if(plcp[i] <= lastpos_lcp) continue;
+			DCHECK_EQ(plcp_i, plcp[i]);
+			if(plcp_i <= lastpos_lcp) continue;
 			DCHECK_LE(threshold, plcp[i]);
 			handles.emplace_back(heap.emplace(i,plcp[i], handles.size()));
 			lastpos = i;
