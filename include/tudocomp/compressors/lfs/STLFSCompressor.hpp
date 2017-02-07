@@ -26,6 +26,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <tuple>
 
 //#include <tudocomp/tudocomp.hpp>
 
@@ -41,6 +42,12 @@ private:
     BitVector dead_positions;
 
     typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
+
+    //
+    //(position in text, non_terminal_symbol_number, length_of_symbol);
+    typedef std::tuple<uint,uint,uint> non_term;
+    typedef std::vector<non_term> non_terminal_symbols;
+    //
 
 
     inline virtual std::vector<uint> select_starting_positions(std::set<uint> starting_positions, uint length){
@@ -83,17 +90,21 @@ private:
     }
 
     inline virtual void update_tree(uint length, std::vector<uint> selected_positions){
+        //foreach occpos \in gso do
         for(auto it = selected_positions.begin();it!= selected_positions.end();it++){
-            uint current_pos = *it;
+            uint occpos = *it;
             uint text_length = stree.get_text().length();
-            uint pos = std::max((uint)1, current_pos-length);
-            uint end = std::min(text_length, current_pos + length -1);
+            uint pos = std::max((uint)1, occpos-length);
+            uint end = std::min(text_length, occpos + length -1);
 
 
-            for(uint i = pos; i<end;i++){
-                //find first node such that v.pathlen > length
+            //line 2!
+            //uint pos = pos
+            for(; pos<end;pos++){
+                //3: find first node such that v.pathlen > length
 
                 uint walked_length = 0;
+                //current node = v
                 SuffixTree::STNode * current_node = stree.get_root();
                 while (walked_length <= length){
                     char c = stree.get_text()[pos+walked_length];
@@ -103,19 +114,22 @@ private:
                     DLOG(INFO) << "walked length: "<< walked_length;
 
                 }
-                //delete leaf pos[i], maintain  triple
-                if(walked_length + i > current_pos  && !dead_positions[i]){
-                    DLOG(INFO)<<"its not dead an longer than current pos";
-                } else {
-                    dead_positions[i] = 1;
-                    DLOG(INFO)<<"positions marked dead";
+                //4: delete leaf pos[i], maintain  triple
+
+                //5:
+                if(pos < occpos  && !dead_positions[pos]){
+                    DLOG(INFO)<<"find/create node s, recreate leaf (TODO)";
+                    //6-8 here
                 }
-
-
-
-
-
+                //9:
+                if(pos>occpos) {
+                    //w[i] = dot?
+                    // mark dead pos
+                    dead_positions[pos] = 1;
+                    DLOG(INFO)<<"positions marked dead: "<<pos;
+                }
             }
+            //10: w[occpos] = non_term
         }
 
     }
@@ -187,16 +201,29 @@ public:
     }
     inline virtual void compress(Input& input, Output& output) override {
 
+        //BitVector
+        dead_positions = BitVector(input.size(), 0);
+        DLOG(INFO)<< "dead_positions.size(): "<<dead_positions.size();
+
         //build suffixtree
         DLOG(INFO)<<"build suffixtree";
 
 
         //auto in = input.as_view();
 
-        //BitVector
-        dead_positions = BitVector(input.size(), 0);
-        DLOG(INFO)<< "dead_positions.size(): "<<dead_positions.size();
+
+        //vector of text position, length
+        std::vector<std::pair<uint,uint>> rules;
+
+
+
         //
+        //std::tuple<uint,uint,uint> symbol(*it, non_terminal_symbol_number, length_of_symbol);
+        //
+
+        std::vector<std::tuple<uint,uint,uint>> non_terminal_symbols;
+
+
 
         stree.append_input(input);
 

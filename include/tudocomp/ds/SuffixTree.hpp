@@ -86,6 +86,8 @@ public:
         uint max_bp;
         uint card_bp;
 
+        bool deleted_node = false;
+
 
     };
     //constructor
