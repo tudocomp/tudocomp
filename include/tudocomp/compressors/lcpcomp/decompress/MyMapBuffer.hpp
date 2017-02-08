@@ -290,7 +290,7 @@ public:
             }
 
             IF_STATS({
-			    if((j+1) % (factors/5) == 0 ) {
+			    if((factors > 5) && ((j+1) % (factors/5) == 0)) {
 				    env().log_stat("hash table size", m_fwd.size());
 				    env().log_stat("hash table entries", m_fwd.entries);
 				    env().log_stat("hash table deletions", m_fwd.m_deleted);
