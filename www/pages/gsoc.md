@@ -8,7 +8,7 @@ low-level programming, string data structures, algorithm engineering.
 We welcome everybody (not just students) to take part in the tudocomp framework by participating at one of the listed projects.
 
 Please have a look at the [http://tudocomp.org](tudocomp homepage) to get a glimpse on what is this framework all about.
-Also, tudocomp's sourcecode is publicly available at github.
+Also, tudocomp's sourcecode is publicly available at [https://github.com/tudocomp/tudocomp](github).
 
 ## General Info
 
@@ -47,7 +47,7 @@ Here is the general GSoC 2017 timeline, with important _hard_ deadlines for all 
 ## Project Plan
 Project planning is necessary to structure how and when which parts of a project have to be done.
 The first step of starting a project is to set up a detailed project plan.
-The plan can be realized with tickets boundled in milestones, and a Gantt diagram.
+The plan can be realized with tickets bundled in milestones, and a Gantt diagram.
 The project plan includes intermediate and secondary goals and deliveries with clear deadlines, 
 as well as reasonable goals for midterm evaluation. 
 Add slack times for the time ranges were you might not be available.
@@ -87,7 +87,7 @@ of occurrences is a natural choice.
 
 Given the suffix array and the longest common prefix array, 
 we can find the number of occurrences of a substring in the text by looking at both arrays.
-A naive approach would store all substrings of a certain length occurring at least twice in a priority queue, with its cost fuction value as its key.
+A naive approach would store all substrings of a certain length occurring at least twice in a priority queue, with its cost function value as its key.
 We take the root (i.e., the best substring w.r.t.\ the cost function) from the heap, substitute its occurrences and update the suffix array and longest common prefix array.
 There is a similar method called ``greedy off-line textual substitution'' that considers all non-overlapping occurrences.
 
@@ -202,7 +202,7 @@ The GUI can be programmed, for instance, in Qt oder gtkmm.
 *Category*: GUI
 
 <!---
-### Try to detect text type, and use appropiate compressor.
+### Try to detect text type, and use appropriate compressor.
 Modify existing 
 Neutronal Network Detetects 
 *Category* Machine Learning
