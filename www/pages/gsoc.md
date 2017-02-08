@@ -7,8 +7,8 @@ For all these projects, participating students should be interested in data comp
 low-level programming, string data structures, algorithm engineering.
 We welcome everybody (not just students) to take part in the tudocomp framework by participating at one of the listed projects.
 
-Please have a look at the [http://tudocomp.org](tudocomp homepage) to get a glimpse on what is this framework all about.
-Also, tudocomp's sourcecode is publicly available at [https://github.com/tudocomp/tudocomp](github).
+Please have a look at the [tudocomp homepage](http://tudocomp.org) to get a glimpse on what is this framework all about.
+Also, tudocomp's sourcecode is publicly available at [github](https://github.com/tudocomp/tudocomp).
 
 ## General Info
 
@@ -36,14 +36,14 @@ For communication:
 - send an email on a regular basis for discussions
 - keep an up-to-date diary about the current state of your project. 
   The dairy should show how the project evolves and progresses. 
-- give regularly feedback to the community over the [https://mailman.tu-dortmund.de/mailman/listinfo/tudocomp.cs](mailing list)
+- give regularly feedback to the community over the [mailing list](https://mailman.tu-dortmund.de/mailman/listinfo/tudocomp.cs)
 - if needed, ask your mentors about further communication channels, e.g., instant messengers like Skype.
 
 We advocate anybody to fork the project, and start their own implementation of compression algorithms.
 
 ## GSoC Timeline
 
-Here is the general GSoC 2017 timeline, with important _hard_ deadlines for all projects: [https://developers.google.com/open-source/gsoc/timeline]()
+The [general GSoC 2017 timeline](https://developers.google.com/open-source/gsoc/timeline) has important _hard_ deadlines for all projects.
 
 ## Project Plan
 Project planning is necessary to structure how and when which parts of a project have to be done.
@@ -62,7 +62,7 @@ Your diary has to be updated on a regular basis (e.g., what problems have occurr
 
 The following collection consists of our project ideas we propose for GSoC 2017.
 If you have further project ideas and/or want to discuss some of our proposed projects please contact us by email (tudocomp.cs@lists.tu-dortmund.de). 
-You can also subscribe and follow the discussions on the [https://mailman.tu-dortmund.de/mailman/listinfo/tudocomp.cs](mailing list) to see what is going on. 
+You can also subscribe and follow the discussions on the [mailing list](https://mailman.tu-dortmund.de/mailman/listinfo/tudocomp.cs) to see what is going on. 
 
 
 ### Review of Coding Strategies
@@ -73,9 +73,9 @@ all codings with respect to their compression ratio and compression/decompressio
 
 *References:*
 
- - [https://www.dcc.uchile.cl/~gnavarro/ps/ir06.pdf](ETDC for natural language text compression)
- - [https://arxiv.org/pdf/1311.2540.pdf](Asymmetric Numeral Systems)
- - [https://github.com/Cyan4973/FiniteStateEntropy](FSE Encoder)
+ - [ETDC for natural language text compression](https://www.dcc.uchile.cl/~gnavarro/ps/ir06.pdf)
+ - [Asymmetric Numeral Systems](https://arxiv.org/pdf/1311.2540.pdf)
+ - [FSE Encoder](https://github.com/Cyan4973/FiniteStateEntropy)
 
 *Category*: Encodings
 
@@ -97,11 +97,11 @@ There is a similar method called ``greedy off-line textual substitution'' that c
 
 References
 
- - [http://ieeexplore.ieee.org/iel5/5/19320/00892709.pdf](Off-line compression by greedy textual substitution)
- - [http://link.springer.com/article/10.1007/BF01955046](Data structures and algorithms for the string statistics problem)
+ - [Off-line compression by greedy textual substitution](http://ieeexplore.ieee.org/iel5/5/19320/00892709.pdf)
+ - [Data structures and algorithms for the string statistics problem](http://link.springer.com/article/10.1007/BF01955046)
 
 ### Clever Tie Breaking for lcpcomp
-Our compressor [https://github.com/tudocomp/tudocomp/blob/public/include/tudocomp/compressors/LCPCompressor.hpp](lcpcomp) (implemented in tudocomp) is a 
+Our compressor [lcpcomp](https://github.com/tudocomp/tudocomp/blob/public/include/tudocomp/compressors/LCPCompressor.hpp) (implemented in tudocomp) is a 
 longest-first greedy compression algorithm.
 Given multiple longest substrings, there is no strict tie breaking rule that states which longest substring to choose.
 The focus of this project is to enhance the lcpcomp compressors with a heuristic for which substring lcpcomp should choose.
@@ -110,10 +110,10 @@ decompression speed.
 
 *References*
 
- - this problem is similar to a [http://link.springer.com/chapter/10.1007/978-3-642-82456-2_11](semi-greedy variant of LZ77)
+ - this problem is similar to a [semi-greedy variant of LZ77](http://link.springer.com/chapter/10.1007/978-3-642-82456-2_11)
 
-## k-maxsat for lcpcomp
-Decompressing an [https://github.com/tudocomp/tudocomp/blob/public/include/tudocomp/compressors/LCPCompressor.hpp](lcpcomp) compressed file is a heavy task with respect to time.
+### k-maxsat for lcpcomp
+Decompressing an [lcpcomp](https://github.com/tudocomp/tudocomp/blob/public/include/tudocomp/compressors/LCPCompressor.hpp) compressed file is a heavy task with respect to time.
 That is because references of lcpcomp can be nested, i.e., a reference can refer to a substring that got replaced with another reference.
 The nesting of references can form long dependency chains that need to be resolved before the actual decompression can take place.
 This project focuses on a modification of the compression strategy, where we want to check whether it is possible to cirumvent the 
@@ -136,18 +136,18 @@ The aim of this project is to implement a new encoding algorithm, and to measure
 
 *References*
 
- - [http://ceur-ws.org/Vol-567/paper14.pdf](Fast Fibonacci Encoding Algorithm)
- - [https://github.com/simongog/sdsl-lite/tree/master/include/sdsl/coder_fibonacci.hpp](Fibonacci Coder of the SDSL)
+ - [Fast Fibonacci Encoding Algorithm](http://ceur-ws.org/Vol-567/paper14.pdf)
+ - [Fibonacci Coder of the SDSL](https://github.com/simongog/sdsl-lite/tree/master/include/sdsl/coder_fibonacci.hpp)
 
 
 ### LZ78 with a Compact Hash Table
-Our [https://github.com/tudocomp/tudocomp/blob/public/include/tudocomp/compressors/LZ78Compressor.hpp](LZ78 compressor) 
+Our [LZ78 compressor](https://github.com/tudocomp/tudocomp/blob/public/include/tudocomp/compressors/LZ78Compressor.hpp) 
 can utilize different Lempel-Ziv-78 tries like a binary trie, a ternary trie, or a trie based on a hash table.
 The latter is the faster, but yet heaviest trie implementation.
 In the light of compact hash tables, we wonder whether we can drop the memory footprint of hash table implementations
 while still being very fast.
 
- - [https://arxiv.org/abs/1208.0290](Don't Thrash: How to Cache Your Hash on Flash)
+ - [Don't Thrash: How to Cache Your Hash on Flash](https://arxiv.org/abs/1208.0290)
 
 *Category*: Compressor, Hashing
 
@@ -159,9 +159,10 @@ Yet, there is no a powerful and easy-to-use tool that covers a majority of the m
 The aim of this project is to produce a JavaScript written web platform that interactively visualizes the most commonly used data structures
 like suffix arrays, longest common prefix array, etc., with respect to text compression.
 
-References
- - [http://www.shino.ecei.tohoku.ac.jp/stringology/](Shinohara's Online Encyclopedia of Strings)
- - [https://github.com/koeppl/strinalyze](Strinalze - Analyze a string or a sequence of generated strings)
+*References*
+
+ - [Shinohara's Online Encyclopedia of Strings](http://www.shino.ecei.tohoku.ac.jp/stringology/)
+ - [Strinalze - Analyze a string or a sequence of generated strings](https://github.com/koeppl/strinalyze)
 
 *Category*: Visualization
 
@@ -174,7 +175,7 @@ This project's aim is to adapt the 7z format for the tudocomp command line tool.
 
 *References*
 
- - [http://www.7-zip.org](7zip)
+ - [7zip](http://www.7-zip.org)
 
 
 ### GUI file archiver
