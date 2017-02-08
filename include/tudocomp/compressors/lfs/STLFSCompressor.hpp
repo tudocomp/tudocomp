@@ -95,26 +95,35 @@ private:
             uint occpos = *it;
             uint text_length = stree.get_text().length();
             uint pos = std::max((uint)1, occpos-length);
-            uint end = std::min(text_length, occpos + length -1);
-
+            uint end = std::min(text_length, occpos + length);//maybe -1
+                DLOG(INFO)<<"occpos: "<<occpos;
 
             //line 2!
             //uint pos = pos
             for(; pos<end;pos++){
                 //3: find first node such that v.pathlen > length
+                DLOG(INFO)<<"fixiung suffix: "<<pos;
 
                 uint walked_length = 0;
                 //current node = v
                 SuffixTree::STNode * current_node = stree.get_root();
                 while (walked_length <= length){
                     char c = stree.get_text()[pos+walked_length];
-                    DLOG(INFO) << c;
+                   // DLOG(INFO) << c;
                     current_node = current_node->child_nodes[c];
                     walked_length += stree.edge_length(current_node);
-                    DLOG(INFO) << "walked length: "<< walked_length;
+                   // DLOG(INFO) << "walked length: "<< walked_length;
 
                 }
                 //4: delete leaf pos[i], maintain  triple
+                if(current_node->min_bp == pos){
+                    current_node->min_bp = current_node->max_bp;
+                    current_node->card_bp = current_node->card_bp-1;
+                }
+                if(current_node->max_bp == pos){
+                    current_node->max_bp = current_node->min_bp;
+                    current_node->card_bp = current_node->card_bp-1;
+                }
 
                 //5:
                 if(pos < occpos  && !dead_positions[pos]){
@@ -130,6 +139,10 @@ private:
                 }
             }
             //10: w[occpos] = non_term
+
+            dead_positions[occpos] = 1;
+
+            DLOG(INFO)<<"positions marked dead: "<<occpos;
         }
 
     }
@@ -155,18 +168,22 @@ private:
                 auto child = *it;
                 min_child = child.second->min_bp;
                 max_child = child.second->max_bp;
+                if(child.second->card_bp>0){
 
-                beggining_positions.insert(min_child);
+                    beggining_positions.insert(min_child);
 
-                beggining_positions.insert(max_child);
+                    beggining_positions.insert(max_child);
 
-                if(min > min_child){
-                    min = min_child;
+                    if(min > min_child){
+                        min = min_child;
+                    }
+                    if(max < max_child){
+                        max = max_child;
+                    }
+                    card +=child.second->card_bp;
+
                 }
-                if(max < max_child){
-                    max = max_child;
-                }
-                card +=child.second->card_bp;
+
 
                 it++;
             }
