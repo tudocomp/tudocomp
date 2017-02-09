@@ -25,7 +25,7 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_comp", "heap");
+        Meta m("lcpcomp_comp", "bheap");
         return m;
     }
 
