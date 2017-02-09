@@ -26,7 +26,7 @@ class BWTComp : public Compressor {
 };
 /////////////////////////////////
 
-TEST(Bwt, test) {
+TEST(SEA17, Bwt) {
     auto i = test::compress_input("aaababaaabaababa");
     auto o = test::compress_output();
     auto c = tdc::builder<BWTComp>().instance();
@@ -67,8 +67,67 @@ class MaxHeapStrategy : public Algorithm {
       else heap.remove(i);
 }}}}}};
 /////////////////////////////////
-TEST(MaxHeap, test) {
+TEST(SEA17, MaxHeap) {
     auto text_ds = builder<TextDS<>>().instance("abc\0"_v);
     auto maxheap = builder<MaxHeapStrategy<TextDS<>>>().instance();
     maxheap.factorize(text_ds, 1);
+}
+/////////////////////////////////
+void factorize(TextDS<>& T, SuffixTree& ST, std::function<void(int begin, int end, int ref)> output){
+ typedef SuffixTree::node_type node_t;
+ sdsl::int_vector<> R(ST.internal_nodes,0,bits_for(T.size() * bits_for(ST.cst.csa.sigma) / bits_for(T.size())));
+ int pos = 0, z = 0;
+ while(pos < T.size() - 1) {
+  node_t l = ST.select_leaf(ST.cst.csa.isa[pos]);
+  int leaflabel = pos;
+  if(ST.parent(l) == ST.root || R[ST.nid(ST.parent(l))] != 0) {
+   int parent_strdepth = ST.str_depth(ST.parent(l));
+   output(pos + parent_strdepth, pos + parent_strdepth + 1, R[ST.nid(ST.parent(l))]);
+   pos += parent_strdepth+1;
+   ++z;
+   continue;
+  }
+  int d = 1;
+  node_t parent = ST.root;
+  node_t node = ST.level_anc(l, d);
+  while(R[ST.nid(node)] != 0) {
+   parent = node;
+   node = ST.level_anc(l, ++d);
+  }
+  pos += ST.str_depth(parent);
+  int begin = leaflabel + ST.str_depth(parent);
+  int end = leaflabel + ST.str_depth(node);
+  output(begin, end, R[ST.nid(ST.parent(node))]);
+  R[ST.nid(node)] = ++z;
+  pos += end - begin;
+ }
+}
+/////////////////////////////////
+TEST(SEA17, factorize) {
+    auto T = "aaababaaabaababa\0"_v;
+    auto text_ds = builder<TextDS<>>().instance(T);
+    std::vector<int> v;
+    auto f = [&](int begin, int end, int ref) {
+        v.push_back(begin);
+        v.push_back(end);
+        v.push_back(ref);
+    };
+    SuffixTree::cst_t backing_cst;
+    {
+        std::string bad_copy_1 = T.slice(0, T.size() - 1);
+        construct_im(backing_cst, bad_copy_1, 1);
+    }
+    SuffixTree ST(backing_cst);
+
+    factorize(text_ds, ST,f);
+
+    ASSERT_EQ(v, (std::vector<int> {
+        0,   1,   0,
+        2,   3,   1,
+        3,   5,   0,
+        7,   8,   3,
+        9,  11,   1,
+        14, 16,   5,
+        // 16, 17,   0,
+    }));
 }
