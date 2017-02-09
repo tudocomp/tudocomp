@@ -6,7 +6,7 @@
 namespace tdc {
 
 /// \brief Base for data structures that use an integer array as a storage.
-class ArrayDS : public Algorithm {
+class ArrayDS: public Algorithm {
 protected:
     /// \brief The type of integer array to use as storage.
     using iv_t = DynamicIntVector;
