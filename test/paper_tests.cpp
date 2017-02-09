@@ -25,7 +25,6 @@ class BWTComp : public Compressor {
   void decompress(Input&, Output&){/*[...]*/}
 };
 /////////////////////////////////
-
 TEST(SEA17, Bwt) {
     auto i = test::compress_input("aaababaaabaababa");
     auto o = test::compress_output();
@@ -41,7 +40,7 @@ class MaxHeapStrategy : public Algorithm {
   Meta m("lcpcomp_strategy", "heap");
   return m; }
  using Algorithm::Algorithm;
- void create_factor(int pos, int src, int len){ /* [...] */ }
+ void create_factor(int pos,int src,int len);
  void factorize(text_t& text, const int t) {
   text.require(text_t::SA | text_t::ISA | text_t::LCP);
   auto& sa = text.require_sa();
@@ -52,7 +51,8 @@ class MaxHeapStrategy : public Algorithm {
   for(int i = 1; i < lcp.size(); ++i)
    if(lcp[i] >= t) heap.insert(i);
   while(heap.size() > 0) {
-   int m = heap.top(), fpos = sa[m], fsrc = sa[m-1], flen = heap.key(m);
+   int m = heap.top(), fpos = sa[m],
+       fsrc = sa[m-1], flen = heap.key(m);
    create_factor(fpos, fsrc, flen);
    for(int k=0; k < flen; k++)
     heap.remove(isa[fpos + k]);
@@ -67,6 +67,9 @@ class MaxHeapStrategy : public Algorithm {
       else heap.remove(i);
 }}}}}};
 /////////////////////////////////
+template<class T>
+void MaxHeapStrategy<T>::create_factor(int pos, int src, int len){ /* [...] */ }
+
 TEST(SEA17, MaxHeap) {
     auto text_ds = builder<TextDS<>>().instance("abc\0"_v);
     auto maxheap = builder<MaxHeapStrategy<TextDS<>>>().instance();
