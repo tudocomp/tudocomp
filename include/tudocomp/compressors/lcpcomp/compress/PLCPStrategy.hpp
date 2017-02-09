@@ -217,7 +217,7 @@ public:
     using Algorithm::Algorithm;
 
     inline static Meta meta() {
-        Meta m("lcpcomp_comp", "plcp");
+        Meta m("lcpcomp_comp", "plcp", "compressor using PLCP array");
         return m;
     }
 
