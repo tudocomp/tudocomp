@@ -144,7 +144,7 @@ public:
         typedef SuffixTree::node_type node_t;
 
         CompressionStrat strategy {
-            env().env_for_option("strategy"),
+            env().env_for_option("comp"),
             env().env_for_option("coder"),
             std::make_shared<BitOStream>(out)
         };
