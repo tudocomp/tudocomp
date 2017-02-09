@@ -183,7 +183,7 @@ The tudocomp framework provides only a command line tool as an interface to the 
 An end-user friendly GUI application can be beneficient for addressing command line antipathetic users.
 The GUI should provide the selection of multiple files/directories and an easy way to 
 assemble a custom compression pipeline. 
-The GUI can be programmed, for instance, in Qt oder gtkmm.
+The GUI can be programmed, for instance, in Qt or gtkmm.
 
 *Category*: GUI
 
