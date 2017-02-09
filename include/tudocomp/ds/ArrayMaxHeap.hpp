@@ -211,6 +211,12 @@ public:
         return m_heap[0];
     }
 
+    /// \brief Gets the top (first, maximum) item from the heap.
+    /// \return The index in the key array that points to the largest key.
+    inline size_t top() const {
+        return get_max();
+    }
+
     /// \brief Gets an item's key.
     ///
     /// \param i The index of the item in the key array.
