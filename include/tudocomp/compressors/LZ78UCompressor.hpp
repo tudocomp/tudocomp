@@ -277,7 +277,7 @@ public:
 
         {
             DecompressionStrat strategy {
-                env().env_for_option("strategy"),
+                env().env_for_option("comp"),
                 env().env_for_option("coder"),
                 std::make_shared<BitIStream>(input)
             };
