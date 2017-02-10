@@ -136,7 +136,7 @@ For building the documentation, the following tools are required:
 
 ## Command-line application
 
-The executable `tudocomp_driver` is the command-line application that bundles
+The executable `tdc` is the command-line application that bundles
 all registered algorithms. It provides a fast and easy way to compress and
 decompress a file with a specified chain of compressors.
 
@@ -157,8 +157,7 @@ point.
 
 ## License
 
-The framework is published under the
-[GNU General Public License, Version 3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+The framework is published under the [Apache License 2.0Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
 # Tutorial
 
@@ -176,7 +175,7 @@ discussed:
 - Adding options to select different behavior
 - Making a compressor modular by using sub algorithms and templated options
 - Registering a compressor in the registry
-- Using the `tudocomp_driver` command-line application with the newly
+- Using the `tdc` command-line application with the newly
   implemented compressor
 - Using the `compare_tool` for benchmarking the compressor against other
   compressors for different inputs
@@ -1138,13 +1137,13 @@ with the command line tool.
 
 The "Driver" (named this way because it serves as an user interface that
 drives the underlying tudocomp library) can be compiled with `make tudocomp_driver`.
-The executable of the driver is stored in `build/src/tudocomp_driver/tudocomp_driver` (after compilation).
+The executable of the driver is stored in `build/tdc` (after compilation).
 
 As a first step after building it, we can verify that the new compressors
 exists by listing all known algorithms:
 
 ~~~
-.../build> ./src/tudocomp_driver/tudocomp_driver --list
+.../build> ./tdc --list
 This build supports the following algorithms:
 
   [Compression algorithms]
@@ -1178,7 +1177,7 @@ a quick test, we use an already existing file in the build
 directory, the `CMakeCache.txt`:
 
 ~~~
-.../build> ./src/tudocomp_driver/tudocomp_driver -algorithm "example_compressor" CMakeCache.txt -output ./cache.tdc -stats
+.../build> ./tdc -algorithm "example_compressor" CMakeCache.txt -output ./cache.tdc -stats
 ~~~
 
 This will create a compressed file `cache.tdc` in the current directory, and

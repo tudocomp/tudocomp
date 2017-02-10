@@ -38,6 +38,8 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(Pandoc DEFAULT_MSG PANDOC_BIN)
 MARK_AS_ADVANCED(PANDOC_BIN)
 
 If    (PANDOC_FOUND)
+    set(PANDOC_BIN GHCRTS=-V0 ${PANDOC_BIN})
+
 	Macro    (Pandoc_MdToHtml var_command fileSrc fileDst title)
 		Set("${var_command}"
 				"${PANDOC_BIN}"

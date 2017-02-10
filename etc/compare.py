@@ -22,7 +22,7 @@ if not os.access(sourcefilename, os.R_OK):
     quit()
 
 
-numIterations=10
+numIterations=1
 print("Number of iterations: ", numIterations)
 
 compressor_pairs = [
@@ -32,14 +32,15 @@ compressor_pairs = [
         #second input flag, if STDIN, then 1
         #third is program name
         #other parameters are program arguments
-       ('lz78u(t=5,huff)',['--output','','./tdc','-a','lz78u(threshold=5,strategy=buffering(huff),coder=bit)','--force'], ['--output','','./tdc', '--decompress']),
+       ('bwtzip',['--output','','./tdc','-a','chain(chain(chain(bwt,rle),mtf),encode(huff))','--force'], ['--output','','./tdc', '--decompress']),
        ('lcpcomp(t=5,arrays,scans(a=25))',['--output','','./tdc','-a','lcpcomp(coder=sle,threshold="5",comp=arrays,dec=scan("25"))','--force'], ['--output','','./tdc', '--decompress']),
-       ('lzss_lcp(t=5,bit)'  , ['--output' , '' , './tdc' , '-a' , 'lzss_lcp(coder=bit,theshold=5)' , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
+       ('lzss_lcp(t=5,bit)'  , ['--output' , '' , './tdc' , '-a' , 'lzss_lcp(coder=bit,threshold=5)' , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
+       ('lz78u(t=5,huff)',['--output','','./tdc','-a','lz78u(coder=bit,threshold=5,comp=buffering(huff))','--force'], ['--output','','./tdc', '--decompress']),
+       ('lcpcomp(t=5,heap,compact)',['--output','','./tdc','-a','lcpcomp(coder=sle,threshold="5",comp=heap,dec=compact)','--force'], ['--output','','./tdc', '--decompress']),
        ('sle' , ['--output' , '' , './tdc' , '-a' , 'encode(sle)' , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
        ('huff'  , ['--output' , '' , './tdc' , '-a' , 'encode(huff)'  , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
        ('lzw(ternary)'   , ['--output' , '' , './tdc' , '-a' , 'lzw(coder=bit,lz78trie=ternary)'           , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
        ('lz78(ternary)'  , ['--output' , '' , './tdc' , '-a' , 'lz78(coder=bit,lz78trie=ternary)'          , '--force'] , ['--output' , '' , './tdc' , '--decompress']) ,
-       ('bwtzip',['--output','','./tdc','-a','chain(chain(chain(bwt,easyrle),mtf),encode(huff))','--force'], ['--output','','./tdc', '--decompress']),
        ('gzip -1'  , [1 , 1 , "gzip"  , "-1"] , [1 , 1 , 'gzip'  , '-d']) ,
        ('gzip -9'  , [1 , 1 , "gzip"  , "-9"] , [1 , 1 , 'gzip'  , '-d']) ,
        ('bzip2 -1' , [1 , 1 , "bzip2" , "-1"] , [1 , 1 , 'bzip2' , '-d']) ,

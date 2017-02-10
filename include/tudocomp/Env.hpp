@@ -103,7 +103,10 @@ inline void Env::error(const std::string& msg) {
 }
 
 inline Env Env::env_for_option(const std::string& option) {
-    CHECK(algo().arguments().count(option) > 0);
+    CHECK(algo().arguments().count(option) > 0)
+        << "env_for_option(): There is no option '"
+        << option
+        << "'";
     auto& a = algo().arguments().at(option).as_algorithm();
 
     return Env(m_root, a, registry());

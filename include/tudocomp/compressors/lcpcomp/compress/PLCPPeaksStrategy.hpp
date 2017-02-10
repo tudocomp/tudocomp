@@ -23,7 +23,7 @@ public:
     using Algorithm::Algorithm;
 
     inline static Meta meta() {
-        Meta m("lcpcomp_comp", "plcppeaks");
+        Meta m("lcpcomp_comp", "plcppeaks", "using peaks of PLCP array");
         return m;
     }
 

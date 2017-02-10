@@ -13,9 +13,15 @@ COMMITNO=$(git rev-list --count HEAD)
 COMMITREV=$(git show HEAD | head -n 1 | cut -c8-)
 
 VERSION=`if [ -z "$WORKINGSETCHANGES" ]; then
-    printf "0.%s.%s (%s)" $DATE $COMMITNO $COMMITREV
+    printf "0.%s.%s" $DATE $COMMITNO
 else
-    printf "0.%s.%s-modified (uncommited changes based on %s)" $DATE $COMMITNO $COMMITREV
+    printf "0.%s.%s-modified" $DATE $COMMITNO
+fi`
+
+VERSION_LONG=`if [ -z "$WORKINGSETCHANGES" ]; then
+    printf "%s (%s)" $VERSION $COMMITREV
+else
+    printf "%s (uncommited changes based on %s)" $VERSION $COMMITREV
 fi`
 
 TMP_VERSION=$(mktemp -t "$(basename "$1").XXXXXX")
@@ -27,7 +33,7 @@ cat << EOF > $TMP_VERSION
 #include <string>
 
 namespace tdc {
-    const std::string VERSION = "$VERSION";
+    const std::string VERSION = "$VERSION_LONG";
 }
 EOF
 
