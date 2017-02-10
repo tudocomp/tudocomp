@@ -20,7 +20,7 @@ if(PANDOC_FOUND)
     foreach(PAGE ${PAGES})
         get_filename_component(PAGENAME ${PAGE} NAME_WE)
         add_custom_command(TARGET www POST_BUILD
-            COMMAND ${PANDOC_BIN} -f markdown -t html
+            COMMAND ${PANDOC_BIN} -f markdown -t html --toc
                 --template=${CMAKE_CURRENT_SOURCE_DIR}/pages/pandoc_template.html
                 -o ${WWW_OUT_DIR}/${PAGENAME}.html
                 ${PAGE}

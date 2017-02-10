@@ -54,8 +54,15 @@ section#content {
     background-color: white;
 }
 
-section#content.padded {
-    padding: 2rem;
+#page {
+    padding: 2rem 0 2rem 0;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#page h2 {
+    border-bottom: 2px solid #CCC;
 }
 
 #dashboard {
