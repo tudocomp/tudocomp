@@ -2,9 +2,8 @@
 
 #include <vector>
 
-#include <sdsl/int_vector.hpp>
-
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
@@ -44,7 +43,7 @@ public:
         size_t n = sa.size();
         size_t i = 0;
 
-        sdsl::bit_vector marked(n, 0);
+        BitVector marked(n, 0);
 
         while(i+1 < n) { // we skip text position T[n] == 0
             size_t s = isa[i];

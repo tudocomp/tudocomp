@@ -1,8 +1,8 @@
 #pragma once
 
-#include <tudocomp/Algorithm.hpp>
 #include <tudocomp/def.hpp>
-#include <sdsl/int_vector.hpp>
+#include <tudocomp/Algorithm.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
 namespace lcpcomp {
@@ -18,7 +18,7 @@ class MultimapBuffer : public Algorithm {
 private:
     std::vector<uliteral_t> m_buffer;
     std::unordered_multimap<len_t, len_t> m_fwd;
-    sdsl::bit_vector m_decoded;
+    BitVector m_decoded;
 
     len_t m_cursor;
     len_t m_longest_chain;
@@ -81,7 +81,7 @@ public:
     {
 		m_fwd.max_load_factor(0.8);
         m_buffer.resize(size, 0);
-        m_decoded = sdsl::bit_vector(size, 0);
+        m_decoded = BitVector(size, 0);
     }
 
     inline void decode_literal(uliteral_t c) {

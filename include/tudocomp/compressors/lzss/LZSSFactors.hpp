@@ -1,7 +1,6 @@
 #pragma once
 
 #include <tuple>
-#include <sdsl/int_vector.hpp>
 
 namespace tdc {
 namespace lzss {
