@@ -121,7 +121,7 @@ proposed projects please contact us via
 [mailing list](https://mailman.tu-dortmund.de/mailman/listinfo/tudocomp.cs) and
 follow the discussions to see what is going on. 
 
-### Review of Coding Strategies
+### 1. Review of Coding Strategies
 
 *tudocomp* currently provides only a canonical Huffman coder and a customized
 static low entropy coder.
@@ -139,7 +139,7 @@ all codings with respect to their compression ratio and coding/decoding time.
 
 *Category*: Encoding
 
-### The AreaComp Compression Algorithm
+### 2. The AreaComp Compression Algorithm
 
 The idea of AreaComp is to substitute frequent large substrings of a text.
 We search for the substring that maximizes the value of a cost function. The
@@ -165,7 +165,7 @@ occurrences.
  - [Off-line compression by greedy textual substitution](http://ieeexplore.ieee.org/iel5/5/19320/00892709.pdf)
  - [Data structures and algorithms for the string statistics problem](http://link.springer.com/article/10.1007/BF01955046)
 
-### Clever Tie Breaking for lcpcomp
+### 3. Clever Tie Breaking for lcpcomp
 
 Our compressor [lcpcomp](https://github.com/tudocomp/tudocomp/blob/public/include/tudocomp/compressors/LCPCompressor.hpp)
 (implemented in *tudocomp*) is a  longest-first greedy compression algorithm.
@@ -183,7 +183,7 @@ decompression speed.
 
  - This problem is similar to a [semi-greedy variant of LZ77](http://link.springer.com/chapter/10.1007/978-3-642-82456-2_11).
 
-### k-maxsat for lcpcomp
+### 4. k-maxsat for lcpcomp
 
 Decompressing an [lcpcomp](https://github.com/tudocomp/tudocomp/blob/public/include/tudocomp/compressors/LCPCompressor.hpp)
 compressed file is a heavy task with respect to time. That is because references
@@ -208,7 +208,7 @@ problem to prevent long dependency chains.
    the MaxEkSat-Problem
 
 
-### Efficient Integer Coders
+### 5. Efficient Integer Coders
 
 The aim of this project is to implement and evaluate a fast Fibonacci encoding
 algorithm.
@@ -227,7 +227,7 @@ measure its speed and compare to currently avaiable Fibonacci coders.
  - [Fibonacci Coder of the SDSL](https://github.com/simongog/sdsl-lite/tree/master/include/sdsl/coder_fibonacci.hpp)
 
 
-### LZ78 with a Compact Hash Table
+### 6. LZ78 with a Compact Hash Table
 
 Our [LZ78 compressor](https://github.com/tudocomp/tudocomp/blob/public/include/tudocomp/compressors/LZ78Compressor.hpp) 
 can utilize different Lempel-Ziv-78 tries, e.g. a binary trie, a ternary trie,
@@ -243,7 +243,7 @@ hash table based LZ78 trie.
 
 *Category*: Compression, Hashing
 
-### Web Application for Visual String Analysis
+### 7. Web Application for Visual String Analysis
 
 While working with lossless compression algorithms on texts, we often experience
 the lack of tools that visualize text index data structures.
@@ -264,7 +264,7 @@ to text compression.
 
 *Category*: Visualization, Web Development
 
-### 7zip-compatible Output Format
+### 8. 7zip-compatible Output Format
 
 To improve the usability of the *tudocomp* framework, we want the tudocomp
 output format to become compatible to 7zip. The `7z` format supports various
@@ -281,7 +281,7 @@ tool.
  - [7zip](http://www.7-zip.org)
 
 
-### Graphical User Interface
+### 9. Graphical User Interface
 
 The *tudocomp* framework provides only a command-line tool as an interface to
 the end user. An graphical user interface would benefit the project for

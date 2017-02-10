@@ -65,6 +65,27 @@ section#content {
     border-bottom: 2px solid #CCC;
 }
 
+#page table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 2px solid #888;
+}
+
+#page th, #page td {
+    padding: 0.25rem;
+    border-left: 1px dotted #888;
+}
+
+#page th {
+    text-align: center;
+    border-bottom: 2px solid #888;
+    background-color: #DDD;
+}
+
+#page tr {
+    border-top: 1px dotted #888;
+}
+
 #dashboard {
     padding-top: 1rem;
     padding-bottom: 2rem;
