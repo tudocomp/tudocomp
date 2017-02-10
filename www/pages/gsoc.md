@@ -105,7 +105,7 @@ to add slack times for the time ranges in which you might not be available.
 
 While working on a project, the project plan should indicate where you are at
 the moment, i.e., what has and has not yet been done at any point of time. In
-case  your time management drifts apart from what you expected from the project
+case your time management drifts apart from what you expected from the project
 plan, you should get in touch with your mentors.
 
 Keep a diary, documenting your project's evolution and progress and what
@@ -216,8 +216,8 @@ algorithm.
 Fibonacci coding is a universal code that represents integers succinctly. The
 coding splits an integer into summands that are Fibonacci words. Although the
 coding achieves a very compact representation, its decoding is slow. In this
-project, the encoding shall be implemented an benchmarked in *tudocomp*, i-e.,
-measure its speed and compare to currently avaiable Fibonacci coders.
+project, the encoding shall be implemented and benchmarked in *tudocomp*, i.e.,
+the goal is to measure its speed and compare to currently avaiable Fibonacci coders.
 
 *Category*: Encodings
 
@@ -230,14 +230,14 @@ measure its speed and compare to currently avaiable Fibonacci coders.
 ### 6. LZ78 with a Compact Hash Table
 
 Our [LZ78 compressor](https://github.com/tudocomp/tudocomp/blob/public/include/tudocomp/compressors/LZ78Compressor.hpp) 
-can utilize different Lempel-Ziv-78 tries, e.g. a binary trie, a ternary trie,
+can utilize different Lempel-Ziv-78 tries, e.g., a binary trie, a ternary trie,
 or a trie based on a hash table. The latter is the fastest, but heaviest trie
 implementation.
 
 In the light of compact hash tables, we wonder whether we can drop the memory
 footprint of hash table implementations while still being very fast. The goal
-of this project is to research on this topic and develop a new, more efficient
-hash table based LZ78 trie.
+of this project is to research on this topic and develop a new, memory-efficient
+LZ78 trie based on a compact hash table.
 
  - [Don't Thrash: How to Cache Your Hash on Flash](https://arxiv.org/abs/1208.0290)
 
@@ -260,7 +260,7 @@ to text compression.
 *References*:
 
  - [Shinohara's Online Encyclopedia of Strings](http://www.shino.ecei.tohoku.ac.jp/stringology/)
- - [Strinalze - Analyze a string or a sequence of generated strings](https://github.com/koeppl/strinalyze)
+ - [Strinalyze - Analyze a string or a sequence of generated strings](https://github.com/koeppl/strinalyze)
 
 *Category*: Visualization, Web Development
 
@@ -283,14 +283,14 @@ tool.
 
 ### 9. Graphical User Interface
 
-The *tudocomp* framework provides only a command-line tool as an interface to
+The *tudocomp* framework provides only a command line tool as an interface to
 the end user. An graphical user interface would benefit the project for
-addressing users with antipathies to command-line tools.
+addressing users with antipathies to command line tools.
 
 The GUI should provide the selection of multiple files/directories and an easy
 way to assemble a custom compression pipeline using what is available in
 *tudocomp*. It should be as platform independent as possible and usable on any
-platform on which *tudocomp* supports.
+platform supported by *tudocomp*.
 
 The GUI can be developed, for instance, using a framework like Qt.
 
