@@ -225,41 +225,12 @@ TEST(Esp, new_split) {
     };
 
     {
-        std::vector<size_t> block_sizes;
-        size_t bsi = 0;
-        auto sb = s;
-
-        std::vector<size_t> scratchpad;
-        esp::Context ctx {
+        esp::Context<decltype(s)> ctx {
             256,
-            &scratchpad
+            s,
         };
 
         std::cout << "             [" << s << "]\n";
-
-        while (sb.size() > 0) {
-            auto old_bs = block_sizes.size();
-            esp::split(sb, block_sizes, ctx);
-            auto new_count = block_sizes.size() - old_bs;
-            DCHECK_NE(new_count, 0);
-            for (size_t i = 0; i < new_count; i++) {
-                auto l = block_sizes[bsi];
-                auto front_cut = sb.substr(0, l);
-                auto back_cut = sb.substr(l);
-
-                auto n = s.size() - (back_cut.size() + front_cut.size());
-
-                std::cout << "block: " << l << ", ";
-                std::cout << std::setw(n) << "";
-                std::cout << "[" << front_cut;
-                std::cout << "] [" << back_cut;
-                std::cout << "]\n";
-
-                sb = back_cut;
-                bsi++;
-                DCHECK_GE(l, 2);
-                DCHECK_LE(l, 3);
-            }
-        }
+        esp::split(s, ctx);
     }
 }

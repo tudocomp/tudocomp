@@ -217,6 +217,7 @@ namespace esp {
         auto type_3_prefix = iter_log(alphabet_size);
         A = ConstGenericView<T>(A.data() - type_3_prefix, A.size() + type_3_prefix);
         buf.clear();
+        buf.reserve(A.cend() - A.cbegin());
         buf.insert(buf.cbegin(), A.cbegin(), A.cend());
 
         std::cout << "  " << vec_to_debug_string(buf) << "\n";
@@ -537,9 +538,46 @@ namespace esp {
         return BlockLabelVec<T> { final_labels, labels.alphabet_size };
     }
 
+    template<typename Source>
     struct Context {
         size_t alphabet_size;
-        std::vector<size_t>* scratchpad;
+        std::vector<size_t> scratchpad;
+        Source s;
+        Source sb;
+        size_t i = 0;
+        size_t last_i = 0;
+
+        Context(size_t as, Source src):
+            alphabet_size(as),
+            scratchpad(),
+            s(src),
+            sb(src),
+            i(0),
+            last_i(0)
+        {}
+
+        void push_back(size_t l, size_t type) {
+            auto front_cut = sb.substr(0, l);
+            auto back_cut = sb.substr(l);
+
+            auto n = s.size() - (back_cut.size() + front_cut.size());
+
+            std::cout << "mblock " << type << ": ";
+            std::cout << std::setw(n) << "";
+            std::cout << "[" << front_cut;
+            std::cout << "] [" << back_cut;
+            std::cout << "]\n";
+
+            sb = back_cut;
+            i += l;
+            //DCHECK_GE(l, 2);
+            //DCHECK_LE(l, 3);
+        }
+
+        void check_advanced(size_t len) {
+            DCHECK_EQ(i - last_i, len);
+            last_i = i;
+        }
     };
 
 }
