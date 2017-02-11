@@ -73,12 +73,20 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
     auto type_3_prefix_len = std::min(iter_log(ctx.alphabet_size),
                                       A.size());
 
+    // Prevent size 1 for suffix
+    if (ADJUST_SIZE_1_BLOCK_2_SUFFIX && type_3_prefix_len + 1 == A.size()) {
+        type_3_prefix_len++;
+    }
+
     // Handle non-m2 prefix
     {
         auto type_3_prefix = A.substr(0, type_3_prefix_len);
         eager_mb13(type_3_prefix, ctx, 3);
         if (type_3_prefix_len == A.size()) { return; }
     }
+
+    auto type_2_suffix_size = src.size() - type_3_prefix_len;
+    DCHECK_GE(type_2_suffix_size, 2);
 
     // Prepare scratchpad buffer
     auto& buf = ctx.scratchpad;
@@ -90,11 +98,11 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
     // This reduces the size by `iter_log(alphabet_size) == type_3_prefix_len`
     // the alphabet to size 6.
     {
-        IF_DEBUG(
+        IF_DEBUG(if (ctx.print_mb2_trace) {
             std::cout << "  " << "Initial:" << "\n";
             std::cout << "  " << vec_to_debug_string(buf) << "\n";
             std::cout << "  " << "Reduce to 6:\n";
-        )
+        })
         for (uint shrink_i = 0; shrink_i < type_3_prefix_len; shrink_i++) {
             for (size_t i = 1; i < buf.size(); i++) {
                 auto left  = buf[i - 1];
@@ -103,9 +111,9 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
             }
             buf.pop_back();
 
-            IF_DEBUG(
+            IF_DEBUG(if (ctx.print_mb2_trace) {
                 std::cout << "  " << vec_to_debug_string(buf) << "\n";
-            )
+            })
         }
         IF_DEBUG(
             DCHECK(calc_alphabet_size(buf) <= 6);
@@ -114,9 +122,9 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
 
     // Reduce further to alphabet 3
     {
-        IF_DEBUG(
+        IF_DEBUG(if (ctx.print_mb2_trace) {
             std::cout << "  " << "Reduce to 3:\n";
-        )
+        })
 
         // TODO: This would benefit from a general, mutable, slice type
 
@@ -131,9 +139,9 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
                 }
             });
 
-            IF_DEBUG(
+            IF_DEBUG(if (ctx.print_mb2_trace) {
                 std::cout << "  " << vec_to_debug_string(buf) << "\n";
-            )
+            })
         }
 
         IF_DEBUG(
@@ -160,10 +168,10 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
             }
         });
 
-        IF_DEBUG(
+        IF_DEBUG(if (ctx.print_mb2_trace) {
             std::cout << "  High Landmarks:\n";
             std::cout << "  " << vec_to_debug_string(landmarks) << "\n";
-        )
+        })
 
         for_neigbors2(buf, [&](size_t i, ConstGenericView<size_t> neighbors) {
             bool is_low_landmark = true;
@@ -174,6 +182,7 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
             }
             // if there is a large enough landmark-less gap, mark it as well
             if (is_low_landmark) {
+                //if (i > 0 && i < buf.size() - 1)
                 if (   (!(i > 0)              || (landmarks[i - 1] == 0u))
                     && (!(i < buf.size() - 1) || (landmarks[i + 1] == 0u))
                 ) {
@@ -182,80 +191,87 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
             }
         });
 
-        IF_DEBUG(
+        IF_DEBUG(if (ctx.print_mb2_trace) {
             std::cout << "  High and Low Landmarks:\n";
             std::cout << "  " << vec_to_debug_string(landmarks) << "\n";
-        )
+        })
 
         IF_DEBUG(
-            DCHECK(check_landmarks(landmarks));
+            DCHECK(check_landmarks(landmarks, true));
         )
 
         // Split at landmarks
 
         // TODO: Make not need puffer
-        std::vector<size_t> debug_landmark_assoc(buf.size());
-
-        size_t last_closes_landmark = 0;
-        for (size_t i = 1; i < buf.size(); i++) {
-            if (landmarks[i] == 1u) {
-                last_closes_landmark = i;
-            }
-            debug_landmark_assoc[i - 1] = last_closes_landmark;
-        }
-        if (debug_landmark_assoc.size() > 0) {
-            debug_landmark_assoc.back() = last_closes_landmark;
-        }
-
         IF_DEBUG(
-            std::cout << "  Block-Landmark Assignment:\n";
-            std::cout << "  " << vec_to_debug_string(debug_landmark_assoc) << "\n";
+            std::vector<size_t> debug_landmark_assoc(buf.size());
+            size_t debug_landmark_counter = 2;
         )
 
-        if (debug_landmark_assoc.size() > 0) {
-            auto block_range = [&](size_t a, size_t b) {
-                ctx.push_back(b - a, 2);
-            };
+        landmark_spanner(
+            landmarks.size(),
+            [&](size_t i) {
+                return landmarks[i] == 1;
+            }, [&](size_t left, size_t right) {
+                ctx.push_back(right - left + 1, 2);
+                IF_DEBUG(
+                    for (size_t j = left; j <= right; j++) {
+                        debug_landmark_assoc[j] = debug_landmark_counter;
+                    }
+                    debug_landmark_counter++;
+                )
+            },
+            TIE_TO_RIGHT
+        );
 
-            size_t last_pos = 0;
-            for(size_t i = 0; i < debug_landmark_assoc.size() - 1; i++) {
-                if (debug_landmark_assoc[i] != debug_landmark_assoc[i + 1]) {
-                    block_range(last_pos, i + 1);
-                    last_pos = i + 1;
-                }
-            }
-            block_range(last_pos, debug_landmark_assoc.size());
-        }
+        IF_DEBUG(if (ctx.print_mb2_trace) {
+            std::cout << "  Block-Landmark Assignment New:\n";
+            std::cout << "  " << vec_to_debug_string(debug_landmark_assoc) << "\n";
+        })
     }
 
-    ctx.check_advanced(src.size() - type_3_prefix_len);
+    ctx.check_advanced(type_2_suffix_size);
+}
+
+template<typename Source, typename F>
+inline size_t split_where(const Source& src, size_t i, bool max, F f) {
+    for(size_t j = i; j < src.size() - 1; j++) {
+        if (!f(src[j], src[j + 1])) {
+            return j + (max ? 1 : 0);
+        }
+    }
+    return src.size();
 }
 
 template<typename Source>
 inline void split(const Source& src, Context<Source>& ctx) {
     // Split up the input into metablocks of type 2 or 1/3
     for (size_t i = 0; i < src.size();) {
-        // Scan for repeating
-        for (size_t j = i; j < src.size() - 1; j++) {
-            if ((j == src.size() - 2) || (src[j] != src[j + 1])) {
-                eager_mb13(src.slice(i, j), ctx, 1);
-                i = j;
-                break;
-            }
-        }
+        size_t j;
 
         // Scan for non-repeating
-        for (size_t j = i; j < src.size() - 1; j++) {
-            if ((j == src.size() - 2) || (src[j] == src[j + 1])) {
-                eager_mb2(src.slice(i, j + 1), ctx);
-                i = j + 1;
-                break;
-            }
+        // NB: First to not find a size-1 repeating prefix
+        j = split_where(src, i, !MAXIMIZE_REPEATING,
+                        [](size_t a, size_t b){ return a != b; });
+        if(j != i) {
+            auto s = src.slice(i, j);
+            IF_DEBUG(if (ctx.print_mb_trace) {
+                std::cout << std::setw(13 + i) << "" << "[" << s << "]\n";
+            })
+            eager_mb2(s, ctx);
+            i = j;
         }
 
-        if (i == src.size() - 1) {
-            ctx.push_back(1, 4);
-            i++;
+        // Scan for repeating
+        j = split_where(src, i, MAXIMIZE_REPEATING,
+                        [](size_t a, size_t b){ return a == b; });
+        if(j != i) {
+            auto s = src.slice(i, j);
+            IF_DEBUG(if (ctx.print_mb_trace) {
+                std::cout << std::setw(13 + i) << "" << "[" << s << "]\n";
+            })
+            eager_mb13(s, ctx, 1);
+            i = j;
         }
     }
 }

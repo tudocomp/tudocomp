@@ -7,6 +7,15 @@
 
 namespace tdc {
 namespace esp {
+    // wether to maximize or minimize repeating meta blocks
+    const bool MAXIMIZE_REPEATING = true;
+
+    // Wether to tie landmark-blocks to the right or to the left
+    const bool TIE_TO_RIGHT = true;
+
+    // Wether to detect block 2 suffixes of size 1 and merge them to the type 3 prefix
+    const bool ADJUST_SIZE_1_BLOCK_2_SUFFIX = true;
+
     /*
 
     Paramters:
@@ -187,7 +196,8 @@ namespace esp {
     }
 
     template<class T>
-    bool check_landmarks(const T& t) {
+    bool check_landmarks(const T& t, bool allow_long = false) {
+        if (allow_long) return true;
         size_t last = 0;
         size_t i = 0;
         for(; i < t.size(); i++) {
@@ -546,6 +556,8 @@ namespace esp {
         Source sb;
         size_t i = 0;
         size_t last_i = 0;
+        bool print_mb_trace = true;
+        bool print_mb2_trace = true;
 
         Context(size_t as, Source src):
             alphabet_size(as),
@@ -562,16 +574,19 @@ namespace esp {
 
             auto n = s.size() - (back_cut.size() + front_cut.size());
 
-            std::cout << "mblock " << type << ": ";
-            std::cout << std::setw(n) << "";
-            std::cout << "[" << front_cut;
-            std::cout << "] [" << back_cut;
-            std::cout << "]\n";
+            IF_DEBUG(if (print_mb_trace) {
+                std::cout << "mblock " << type << ": ";
+                std::cout << std::setw(n) << "";
+                std::cout << "[" << front_cut;
+                std::cout << "] [" << back_cut;
+                std::cout << "]\n";
+            })
 
             sb = back_cut;
             i += l;
-            //DCHECK_GE(l, 2);
-            //DCHECK_LE(l, 3);
+            if (l < 2 || l > 3) std::cout << "ERR!\n";
+            DCHECK_GE(l, 2);
+            DCHECK_LE(l, 3);
         }
 
         void check_advanced(size_t len) {
@@ -579,6 +594,101 @@ namespace esp {
             last_i = i;
         }
     };
+
+    template<typename LmPred, typename SpanPush>
+    void landmark_spanner(size_t size,
+                          LmPred pred,
+                          SpanPush push,
+                          bool tie) {
+        struct Block {
+            size_t left;
+            size_t right;
+            inline size_t size() { return right - left + 1; }
+        };
+        std::array<Block, 3> blocks {{
+            {0, 0},
+            {0, 0},
+            {0, 0},
+        }};
+        uint8_t bi = 0;
+
+        for(size_t i = 0; i < size; i++) {
+            if (pred(i)) {
+                blocks[2].left  = (i == 0)        ? (i) : (i - 1);
+                blocks[2].right = (i == size - 1) ? (i) : (i + 1);
+                /*std::cout <<
+                    "i: " << i << ", "
+                    "old: (" << left << ", " << right << "), "
+                    "new: (" << new_left << ", " << new_right << ")\n";*/
+
+                if (bi > 0) {
+                    // Adjust overlap of adjacent landmarks
+                    if (blocks[2].left == blocks[1].right) {
+                        if (tie) {
+                            blocks[1].right--;
+                        } else {
+                            blocks[2].left++;
+                        }
+                    }
+
+                    // Adjust edge cases to prevent size-1 blocks
+                    // [1] [333] -> [22] [22]
+                    // [1] [22] -> [333]
+                    if (bi > 1) {
+                        if (blocks[0].size() == 1) {
+                            if (blocks[1].size() == 3) {
+                                blocks[0].right++;
+                                blocks[1].left++;
+                            } else {
+                                blocks[1].left--;
+                                bi = 1;
+                            }
+                        }
+                    }
+                }
+
+                if (bi == 0) {
+                    bi = 1;
+                } else if (bi == 1) {
+                    bi = 2;
+                } else {
+                    push(blocks[0].left, blocks[0].right);
+                }
+                for (size_t j = 0; j < 2; j++) {
+                    blocks[j] = blocks[j + 1];
+                }
+            }
+        }
+        if (bi == 1) {
+            // entered once, one unused block
+            push(blocks[1].left, blocks[1].right);
+
+        } else if (bi == 2) {
+            // entered many, two unused blocks
+            auto& a = blocks[0];
+            auto& b = blocks[1];
+
+            if (a.size() == 1 || b.size() == 1) {
+                // Adjust edge cases to prevent size-1 blocks
+                // [1] [333] -> [22] [22]
+                // [1] [22] -> [333]
+                if (a.size() + b.size() == 4) {
+                    a.right = a.left + 1;
+                    b.left = b.right - 1;
+
+                    push(a.left, a.right);
+                    push(b.left, b.right);
+                } else {
+                    a.right = b.right;
+                    push(a.left, a.right);
+                }
+            } else {
+                push(a.left, a.right);
+                push(b.left, b.right);
+            }
+        }
+    }
+
 
 }
 }

@@ -234,3 +234,107 @@ TEST(Esp, new_split) {
         esp::split(s, ctx);
     }
 }
+
+void landmark_spanner_test(std::vector<int> landmarks,
+                           std::vector<std::array<size_t, 2>> should_spans,
+                           bool tie) {
+    std::vector<std::array<size_t, 2>> spans;
+    esp::landmark_spanner(landmarks.size(),
+                          [&](size_t i) { return landmarks[i] == 1; },
+                          [&](size_t i, size_t j) {
+                                spans.push_back({i, j});
+                          },
+                          tie);
+
+    ASSERT_EQ(spans, should_spans);
+}
+
+TEST(Esp, landmark_spanner_1) {
+    landmark_spanner_test(
+        { 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1 },
+        {
+            {0, 2},
+            {3, 5},
+            {6, 7},
+            {8, 9},
+            {10, 11},
+        },
+        true
+    );
+}
+
+TEST(Esp, landmark_spanner_2) {
+    landmark_spanner_test(
+        { 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1 },
+        {
+            {0, 1},
+            {2, 3},
+            {4, 5},
+            {6, 8},
+            {9, 11},
+        },
+        false
+    );
+}
+
+TEST(Esp, landmark_spanner_3) {
+    landmark_spanner_test({ 1, 0 }, {{0, 1}}, false);
+    landmark_spanner_test({ 1, 0 }, {{0, 1}}, true);
+}
+TEST(Esp, landmark_spanner_4) {
+    landmark_spanner_test({ 0, 1 }, {{0, 1}}, false);
+    landmark_spanner_test({ 0, 1 }, {{0, 1}}, true);
+}
+TEST(Esp, landmark_spanner_5) {
+    landmark_spanner_test({ 0, 1, 0 }, {{0, 2}}, false);
+    landmark_spanner_test({ 0, 1, 0 }, {{0, 2}}, true);
+}
+TEST(Esp, landmark_spanner_6) {
+    landmark_spanner_test({ 1, 0, 1 }, {{0, 2}}, false);
+    landmark_spanner_test({ 1, 0, 1 }, {{0, 2}}, true);
+}
+TEST(Esp, landmark_spanner_7) {
+    landmark_spanner_test({ 1, 0, 1, 0 }, {{0, 1}, {2, 3}}, false);
+    landmark_spanner_test({ 1, 0, 1, 0 }, {{0, 1}, {2, 3}}, true);
+}
+TEST(Esp, landmark_spanner_8) {
+    landmark_spanner_test({ 1, 0, 0, 1 }, {{0, 1}, {2, 3}}, false);
+    landmark_spanner_test({ 1, 0, 0, 1 }, {{0, 1}, {2, 3}}, true);
+}
+TEST(Esp, landmark_spanner_9) {
+    landmark_spanner_test({ 0, 1, 0, 1 }, {{0, 1}, {2, 3}}, false);
+    landmark_spanner_test({ 0, 1, 0, 1 }, {{0, 1}, {2, 3}}, true);
+}
+TEST(Esp, landmark_spanner_10) {
+    landmark_spanner_test({ 0, 1, 0, 1, 0 }, {{0, 2}, {3, 4}}, false);
+    landmark_spanner_test({ 0, 1, 0, 1, 0 }, {{0, 1}, {2, 4}}, true);
+}
+TEST(Esp, landmark_spanner_11) {
+    landmark_spanner_test({ 0, 1, 0, 0, 1 }, {{0, 2}, {3, 4}}, false);
+    landmark_spanner_test({ 0, 1, 0, 0, 1 }, {{0, 2}, {3, 4}}, true);
+}
+TEST(Esp, landmark_spanner_12) {
+    landmark_spanner_test({ 1, 0, 0, 1, 0 }, {{0, 1}, {2, 4}}, false);
+    landmark_spanner_test({ 1, 0, 0, 1, 0 }, {{0, 1}, {2, 4}}, true);
+}
+TEST(Esp, landmark_spanner_13) {
+    landmark_spanner_test({ 1, 0, 1, 0, 1 }, {{0, 1}, {2, 4}}, false);
+    landmark_spanner_test({ 1, 0, 1, 0, 1 }, {{0, 2}, {3, 4}}, true);
+}
+
+TEST(Esp, new_split_2) {
+    auto s {
+        "adkcbbackscfaaaaafaaaa"_v
+    };
+
+    {
+        esp::Context<decltype(s)> ctx {
+            256,
+            s,
+        };
+        ctx.print_mb2_trace = false;
+
+        std::cout << "             [" << s << "]\n";
+        esp::split(s, ctx);
+    }
+}
