@@ -13,9 +13,6 @@ namespace esp {
     // Wether to tie landmark-blocks to the right or to the left
     const bool TIE_TO_RIGHT = true;
 
-    // Wether to detect block 2 suffixes of size 1 and merge them to the type 3 prefix
-    const bool ADJUST_SIZE_1_BLOCK_2_SUFFIX = true;
-
     /*
 
     Paramters:
@@ -554,7 +551,44 @@ namespace esp {
     };
 
     void adjust_blocks(std::vector<TypedBlock>& blocks) {
+        if (blocks.size() < 2) return;
 
+        size_t read_i = 0;
+        size_t write_i = 0;
+        for (; read_i < blocks.size() - 1; write_i++, read_i++) {
+            auto a = blocks[read_i];
+            auto b = blocks[read_i + 1];
+
+            // Adjustment checks:
+
+            // MB2 landmarks:
+            if (a.type == 2 && b.type == 2) {
+                if (a.len == 1 || b.len == 1) {
+                    if (a.len + b.len == 4) {
+                        // [_] [___] -> [__] [__]
+                        a.len = 2;
+                        b.len = 2;
+                        blocks[write_i] = a;
+                        blocks[write_i + 1] = b;
+                        continue;
+                    } else if (a.len + b.len == 3) {
+                        // [_] [__] -> [___]
+                        a.len = 3;
+                        blocks[write_i] = a;
+                        read_i++;
+                        continue;
+                    } else {
+                        DCHECK(false) << "this should not happen";
+                    }
+                }
+            }
+
+            blocks[write_i] = blocks[read_i];
+        }
+
+        for (size_t diff = write_i; diff < read_i; diff++) {
+            blocks.pop_back();
+        }
     }
 
     template<typename Source>
@@ -645,14 +679,13 @@ namespace esp {
         std::array<Block, 3> blocks {{
             {0, 0},
             {0, 0},
-            {0, 0},
         }};
         uint8_t bi = 0;
 
         for(size_t i = 0; i < size; i++) {
             if (pred(i)) {
-                blocks[2].left  = (i == 0)        ? (i) : (i - 1);
-                blocks[2].right = (i == size - 1) ? (i) : (i + 1);
+                blocks[1].left  = (i == 0)        ? (i) : (i - 1);
+                blocks[1].right = (i == size - 1) ? (i) : (i + 1);
                 /*std::cout <<
                     "i: " << i << ", "
                     "old: (" << left << ", " << right << "), "
@@ -660,69 +693,28 @@ namespace esp {
 
                 if (bi > 0) {
                     // Adjust overlap of adjacent landmarks
-                    if (blocks[2].left == blocks[1].right) {
+                    if (blocks[1].left == blocks[0].right) {
                         if (tie) {
-                            blocks[1].right--;
+                            blocks[0].right--;
                         } else {
-                            blocks[2].left++;
-                        }
-                    }
-
-                    // Adjust edge cases to prevent size-1 blocks
-                    // [1] [333] -> [22] [22]
-                    // [1] [22] -> [333]
-                    if (bi > 1) {
-                        if (blocks[0].size() == 1) {
-                            if (blocks[1].size() == 3) {
-                                blocks[0].right++;
-                                blocks[1].left++;
-                            } else {
-                                blocks[1].left--;
-                                bi = 1;
-                            }
+                            blocks[1].left++;
                         }
                     }
                 }
 
                 if (bi == 0) {
                     bi = 1;
-                } else if (bi == 1) {
-                    bi = 2;
                 } else {
                     push(blocks[0].left, blocks[0].right);
                 }
-                for (size_t j = 0; j < 2; j++) {
+                for (size_t j = 0; j < 1; j++) {
                     blocks[j] = blocks[j + 1];
                 }
             }
         }
         if (bi == 1) {
-            // entered once, one unused block
+            // entered at least once, one unused block
             push(blocks[1].left, blocks[1].right);
-
-        } else if (bi == 2) {
-            // entered many, two unused blocks
-            auto& a = blocks[0];
-            auto& b = blocks[1];
-
-            if (a.size() == 1 || b.size() == 1) {
-                // Adjust edge cases to prevent size-1 blocks
-                // [1] [333] -> [22] [22]
-                // [1] [22] -> [333]
-                if (a.size() + b.size() == 4) {
-                    a.right = a.left + 1;
-                    b.left = b.right - 1;
-
-                    push(a.left, a.right);
-                    push(b.left, b.right);
-                } else {
-                    a.right = b.right;
-                    push(a.left, a.right);
-                }
-            } else {
-                push(a.left, a.right);
-                push(b.left, b.right);
-            }
         }
     }
 

@@ -219,25 +219,6 @@ TEST(OffsetOp, test) {
 
 }
 
-void split_test(string_ref s) {
-    esp::Context<decltype(s)> ctx {
-        256,
-        s,
-    };
-    ctx.print_mb2_trace = false;
-
-    std::cout << "             [" << s << "]\n";
-    esp::split(s, ctx);
-    std::cout << "\n[Adjusted]:\n\n";
-    ctx.adjusted_blocks();
-}
-
-TEST(Esp, new_split) {
-    split_test(
-        "0000dkasxxxcsdacjzsbkhvfaghskcbsaaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v
-    );
-}
-
 void landmark_spanner_test(std::vector<int> landmarks,
                            std::vector<std::array<size_t, 2>> should_spans,
                            bool tie) {
@@ -249,7 +230,7 @@ void landmark_spanner_test(std::vector<int> landmarks,
                           },
                           tie);
 
-    ASSERT_EQ(spans, should_spans);
+    ASSERT_EQ(should_spans, spans) << "Unadjusted spans don't match";
 }
 
 void landmark_spanner_test_adj(std::vector<int> landmarks,
@@ -268,6 +249,8 @@ void landmark_spanner_test_adj(std::vector<int> landmarks,
         v.push_back(esp::TypedBlock{span[1] - span[0] + 1, 2});
     }
 
+    esp::adjust_blocks(v);
+
     spans.clear();
     size_t i = 0;
     for (auto b : v) {
@@ -275,11 +258,23 @@ void landmark_spanner_test_adj(std::vector<int> landmarks,
         i += b.len;
     }
 
-    ASSERT_EQ(spans, should_spans);
+    ASSERT_EQ(should_spans, spans) << "Adjusted spans don't match";
 }
 
 TEST(Esp, landmark_spanner_1) {
     landmark_spanner_test(
+        { 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1 },
+        {
+            {0, 0},
+            {1, 2},
+            {3, 5},
+            {6, 7},
+            {8, 9},
+            {10, 11},
+        },
+        true
+    );
+    landmark_spanner_test_adj(
         { 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1 },
         {
             {0, 2},
@@ -294,6 +289,18 @@ TEST(Esp, landmark_spanner_1) {
 
 TEST(Esp, landmark_spanner_2) {
     landmark_spanner_test(
+        { 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1 },
+        {
+            {0, 1},
+            {2, 3},
+            {4, 5},
+            {6, 8},
+            {9, 10},
+            {11, 11},
+        },
+        false
+    );
+    landmark_spanner_test_adj(
         { 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1 },
         {
             {0, 1},
@@ -325,14 +332,14 @@ TEST(Esp, landmark_spanner_5) {
     landmark_spanner_test_adj({ 0, 1, 0 }, {{0, 2}}, true);
 }
 TEST(Esp, landmark_spanner_6) {
-    landmark_spanner_test({ 1, 0, 1 }, {{0, 2}}, false);
-    landmark_spanner_test({ 1, 0, 1 }, {{0, 2}}, true);
+    landmark_spanner_test({ 1, 0, 1 }, {{0, 1}, {2, 2}}, false);
+    landmark_spanner_test({ 1, 0, 1 }, {{0, 0}, {1, 2}}, true);
     landmark_spanner_test_adj({ 1, 0, 1 }, {{0, 2}}, false);
     landmark_spanner_test_adj({ 1, 0, 1 }, {{0, 2}}, true);
 }
 TEST(Esp, landmark_spanner_7) {
     landmark_spanner_test({ 1, 0, 1, 0 }, {{0, 1}, {2, 3}}, false);
-    landmark_spanner_test({ 1, 0, 1, 0 }, {{0, 1}, {2, 3}}, true);
+    landmark_spanner_test({ 1, 0, 1, 0 }, {{0, 0}, {1, 3}}, true);
     landmark_spanner_test_adj({ 1, 0, 1, 0 }, {{0, 1}, {2, 3}}, false);
     landmark_spanner_test_adj({ 1, 0, 1, 0 }, {{0, 1}, {2, 3}}, true);
 }
@@ -343,7 +350,7 @@ TEST(Esp, landmark_spanner_8) {
     landmark_spanner_test_adj({ 1, 0, 0, 1 }, {{0, 1}, {2, 3}}, true);
 }
 TEST(Esp, landmark_spanner_9) {
-    landmark_spanner_test({ 0, 1, 0, 1 }, {{0, 1}, {2, 3}}, false);
+    landmark_spanner_test({ 0, 1, 0, 1 }, {{0, 2}, {3, 3}}, false);
     landmark_spanner_test({ 0, 1, 0, 1 }, {{0, 1}, {2, 3}}, true);
     landmark_spanner_test_adj({ 0, 1, 0, 1 }, {{0, 1}, {2, 3}}, false);
     landmark_spanner_test_adj({ 0, 1, 0, 1 }, {{0, 1}, {2, 3}}, true);
@@ -367,10 +374,30 @@ TEST(Esp, landmark_spanner_12) {
     landmark_spanner_test_adj({ 1, 0, 0, 1, 0 }, {{0, 1}, {2, 4}}, true);
 }
 TEST(Esp, landmark_spanner_13) {
-    landmark_spanner_test({ 1, 0, 1, 0, 1 }, {{0, 1}, {2, 4}}, false);
-    landmark_spanner_test({ 1, 0, 1, 0, 1 }, {{0, 2}, {3, 4}}, true);
+    landmark_spanner_test({ 1, 0, 1, 0, 1 }, {{0, 1}, {2, 3}, {4, 4}}, false);
+    landmark_spanner_test({ 1, 0, 1, 0, 1 }, {{0, 0}, {1, 2}, {3, 4}}, true);
     landmark_spanner_test_adj({ 1, 0, 1, 0, 1 }, {{0, 1}, {2, 4}}, false);
     landmark_spanner_test_adj({ 1, 0, 1, 0, 1 }, {{0, 2}, {3, 4}}, true);
+}
+
+
+void split_test(string_ref s) {
+    esp::Context<decltype(s)> ctx {
+        256,
+        s,
+    };
+    ctx.print_mb2_trace = false;
+
+    std::cout << "             [" << s << "]\n";
+    esp::split(s, ctx);
+    std::cout << "\n[Adjusted]:\n\n";
+    ctx.adjusted_blocks();
+}
+
+TEST(Esp, new_split) {
+    split_test(
+        "0000dkasxxxcsdacjzsbkhvfaghskcbsaaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v
+    );
 }
 
 TEST(Esp, new_split_2) {

@@ -73,11 +73,6 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
     auto type_3_prefix_len = std::min(iter_log(ctx.alphabet_size),
                                       A.size());
 
-    // Prevent size 1 for suffix
-    if (ADJUST_SIZE_1_BLOCK_2_SUFFIX && type_3_prefix_len + 1 == A.size()) {
-        type_3_prefix_len++;
-    }
-
     // Handle non-m2 prefix
     {
         auto type_3_prefix = A.substr(0, type_3_prefix_len);
@@ -86,7 +81,6 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
     }
 
     auto type_2_suffix_size = src.size() - type_3_prefix_len;
-    DCHECK_GE(type_2_suffix_size, 2);
 
     // Prepare scratchpad buffer
     auto& buf = ctx.scratchpad;
