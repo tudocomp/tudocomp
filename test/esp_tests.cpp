@@ -219,20 +219,23 @@ TEST(OffsetOp, test) {
 
 }
 
-TEST(Esp, new_split) {
-    auto s {
-        "0000dkasxxxcsdacjzsbkhvfaghskcbsaaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v
+void split_test(string_ref s) {
+    esp::Context<decltype(s)> ctx {
+        256,
+        s,
     };
+    ctx.print_mb2_trace = false;
 
-    {
-        esp::Context<decltype(s)> ctx {
-            256,
-            s,
-        };
+    std::cout << "             [" << s << "]\n";
+    esp::split(s, ctx);
+    std::cout << "\n[Adjusted]:\n\n";
+    ctx.adjusted_blocks();
+}
 
-        std::cout << "             [" << s << "]\n";
-        esp::split(s, ctx);
-    }
+TEST(Esp, new_split) {
+    split_test(
+        "0000dkasxxxcsdacjzsbkhvfaghskcbsaaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v
+    );
 }
 
 void landmark_spanner_test(std::vector<int> landmarks,
@@ -245,6 +248,32 @@ void landmark_spanner_test(std::vector<int> landmarks,
                                 spans.push_back({i, j});
                           },
                           tie);
+
+    ASSERT_EQ(spans, should_spans);
+}
+
+void landmark_spanner_test_adj(std::vector<int> landmarks,
+                               std::vector<std::array<size_t, 2>> should_spans,
+                               bool tie) {
+    std::vector<std::array<size_t, 2>> spans;
+    esp::landmark_spanner(landmarks.size(),
+                          [&](size_t i) { return landmarks[i] == 1; },
+                          [&](size_t i, size_t j) {
+                                spans.push_back({i, j});
+                          },
+                          tie);
+
+    std::vector<esp::TypedBlock> v;
+    for(auto span : spans) {
+        v.push_back(esp::TypedBlock{span[1] - span[0] + 1, 2});
+    }
+
+    spans.clear();
+    size_t i = 0;
+    for (auto b : v) {
+        spans.push_back({ i, i + b.len - 1});
+        i += b.len;
+    }
 
     ASSERT_EQ(spans, should_spans);
 }
@@ -280,61 +309,70 @@ TEST(Esp, landmark_spanner_2) {
 TEST(Esp, landmark_spanner_3) {
     landmark_spanner_test({ 1, 0 }, {{0, 1}}, false);
     landmark_spanner_test({ 1, 0 }, {{0, 1}}, true);
+    landmark_spanner_test_adj({ 1, 0 }, {{0, 1}}, false);
+    landmark_spanner_test_adj({ 1, 0 }, {{0, 1}}, true);
 }
 TEST(Esp, landmark_spanner_4) {
     landmark_spanner_test({ 0, 1 }, {{0, 1}}, false);
     landmark_spanner_test({ 0, 1 }, {{0, 1}}, true);
+    landmark_spanner_test_adj({ 0, 1 }, {{0, 1}}, false);
+    landmark_spanner_test_adj({ 0, 1 }, {{0, 1}}, true);
 }
 TEST(Esp, landmark_spanner_5) {
     landmark_spanner_test({ 0, 1, 0 }, {{0, 2}}, false);
     landmark_spanner_test({ 0, 1, 0 }, {{0, 2}}, true);
+    landmark_spanner_test_adj({ 0, 1, 0 }, {{0, 2}}, false);
+    landmark_spanner_test_adj({ 0, 1, 0 }, {{0, 2}}, true);
 }
 TEST(Esp, landmark_spanner_6) {
     landmark_spanner_test({ 1, 0, 1 }, {{0, 2}}, false);
     landmark_spanner_test({ 1, 0, 1 }, {{0, 2}}, true);
+    landmark_spanner_test_adj({ 1, 0, 1 }, {{0, 2}}, false);
+    landmark_spanner_test_adj({ 1, 0, 1 }, {{0, 2}}, true);
 }
 TEST(Esp, landmark_spanner_7) {
     landmark_spanner_test({ 1, 0, 1, 0 }, {{0, 1}, {2, 3}}, false);
     landmark_spanner_test({ 1, 0, 1, 0 }, {{0, 1}, {2, 3}}, true);
+    landmark_spanner_test_adj({ 1, 0, 1, 0 }, {{0, 1}, {2, 3}}, false);
+    landmark_spanner_test_adj({ 1, 0, 1, 0 }, {{0, 1}, {2, 3}}, true);
 }
 TEST(Esp, landmark_spanner_8) {
     landmark_spanner_test({ 1, 0, 0, 1 }, {{0, 1}, {2, 3}}, false);
     landmark_spanner_test({ 1, 0, 0, 1 }, {{0, 1}, {2, 3}}, true);
+    landmark_spanner_test_adj({ 1, 0, 0, 1 }, {{0, 1}, {2, 3}}, false);
+    landmark_spanner_test_adj({ 1, 0, 0, 1 }, {{0, 1}, {2, 3}}, true);
 }
 TEST(Esp, landmark_spanner_9) {
     landmark_spanner_test({ 0, 1, 0, 1 }, {{0, 1}, {2, 3}}, false);
     landmark_spanner_test({ 0, 1, 0, 1 }, {{0, 1}, {2, 3}}, true);
+    landmark_spanner_test_adj({ 0, 1, 0, 1 }, {{0, 1}, {2, 3}}, false);
+    landmark_spanner_test_adj({ 0, 1, 0, 1 }, {{0, 1}, {2, 3}}, true);
 }
 TEST(Esp, landmark_spanner_10) {
     landmark_spanner_test({ 0, 1, 0, 1, 0 }, {{0, 2}, {3, 4}}, false);
     landmark_spanner_test({ 0, 1, 0, 1, 0 }, {{0, 1}, {2, 4}}, true);
+    landmark_spanner_test_adj({ 0, 1, 0, 1, 0 }, {{0, 2}, {3, 4}}, false);
+    landmark_spanner_test_adj({ 0, 1, 0, 1, 0 }, {{0, 1}, {2, 4}}, true);
 }
 TEST(Esp, landmark_spanner_11) {
     landmark_spanner_test({ 0, 1, 0, 0, 1 }, {{0, 2}, {3, 4}}, false);
     landmark_spanner_test({ 0, 1, 0, 0, 1 }, {{0, 2}, {3, 4}}, true);
+    landmark_spanner_test_adj({ 0, 1, 0, 0, 1 }, {{0, 2}, {3, 4}}, false);
+    landmark_spanner_test_adj({ 0, 1, 0, 0, 1 }, {{0, 2}, {3, 4}}, true);
 }
 TEST(Esp, landmark_spanner_12) {
     landmark_spanner_test({ 1, 0, 0, 1, 0 }, {{0, 1}, {2, 4}}, false);
     landmark_spanner_test({ 1, 0, 0, 1, 0 }, {{0, 1}, {2, 4}}, true);
+    landmark_spanner_test_adj({ 1, 0, 0, 1, 0 }, {{0, 1}, {2, 4}}, false);
+    landmark_spanner_test_adj({ 1, 0, 0, 1, 0 }, {{0, 1}, {2, 4}}, true);
 }
 TEST(Esp, landmark_spanner_13) {
     landmark_spanner_test({ 1, 0, 1, 0, 1 }, {{0, 1}, {2, 4}}, false);
     landmark_spanner_test({ 1, 0, 1, 0, 1 }, {{0, 2}, {3, 4}}, true);
+    landmark_spanner_test_adj({ 1, 0, 1, 0, 1 }, {{0, 1}, {2, 4}}, false);
+    landmark_spanner_test_adj({ 1, 0, 1, 0, 1 }, {{0, 2}, {3, 4}}, true);
 }
 
 TEST(Esp, new_split_2) {
-    auto s {
-        "adkcbbackscfaaaaafaaaa"_v
-    };
-
-    {
-        esp::Context<decltype(s)> ctx {
-            256,
-            s,
-        };
-        ctx.print_mb2_trace = false;
-
-        std::cout << "             [" << s << "]\n";
-        esp::split(s, ctx);
-    }
+    split_test("adkcbbackscfaaaaafaaaa"_v);
 }

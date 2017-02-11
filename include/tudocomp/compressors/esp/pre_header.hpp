@@ -548,6 +548,15 @@ namespace esp {
         return BlockLabelVec<T> { final_labels, labels.alphabet_size };
     }
 
+    struct TypedBlock {
+        uint8_t len;
+        uint8_t type;
+    };
+
+    void adjust_blocks(std::vector<TypedBlock>& blocks) {
+
+    }
+
     template<typename Source>
     struct Context {
         size_t alphabet_size;
@@ -559,6 +568,8 @@ namespace esp {
         bool print_mb_trace = true;
         bool print_mb2_trace = true;
 
+        std::vector<TypedBlock> block_buffer;
+
         Context(size_t as, Source src):
             alphabet_size(as),
             scratchpad(),
@@ -568,7 +579,11 @@ namespace esp {
             last_i(0)
         {}
 
-        void push_back(size_t l, size_t type) {
+        void reset_debug_print() {
+            sb = s;
+        }
+
+        void print_cut(size_t l, size_t type) {
             auto front_cut = sb.substr(0, l);
             auto back_cut = sb.substr(l);
 
@@ -583,15 +598,37 @@ namespace esp {
             })
 
             sb = back_cut;
+
+            if (l < 2 || l > 3) std::cout << "Needs adjustment!\n";
+        }
+
+        void print_all() {
+            reset_debug_print();
+            for (auto& b : block_buffer) {
+                print_cut(b.len, b.type);
+            }
+        }
+
+        void push_back(size_t l, size_t type) {
+            print_cut(l, type);
             i += l;
-            if (l < 2 || l > 3) std::cout << "ERR!\n";
-            DCHECK_GE(l, 2);
-            DCHECK_LE(l, 3);
+            block_buffer.push_back(TypedBlock { l, type });
         }
 
         void check_advanced(size_t len) {
             DCHECK_EQ(i - last_i, len);
             last_i = i;
+        }
+
+        std::vector<TypedBlock>& adjusted_blocks() {
+            adjust_blocks(block_buffer);
+
+            print_all();
+            for (auto& b: block_buffer) {
+                DCHECK_GE(b.len, 2);
+                DCHECK_LE(b.len, 3);
+            }
+            return block_buffer;
         }
     };
 
