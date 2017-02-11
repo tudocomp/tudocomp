@@ -561,18 +561,18 @@ namespace esp {
 
             // Adjustment checks:
 
-            // MB2 landmarks:
+            // MB2: landmarks edge cases
             if (a.type == 2 && b.type == 2) {
                 if (a.len == 1 || b.len == 1) {
                     if (a.len + b.len == 4) {
-                        // [_] [___] -> [__] [__]
+                        // Merge [_] [___] -> [__] [__]
                         a.len = 2;
                         b.len = 2;
                         blocks[write_i] = a;
                         blocks[write_i + 1] = b;
                         continue;
                     } else if (a.len + b.len == 3) {
-                        // [_] [__] -> [___]
+                        // Merge [_] [__] -> [___]
                         a.len = 3;
                         blocks[write_i] = a;
                         read_i++;
@@ -580,6 +580,28 @@ namespace esp {
                     } else {
                         DCHECK(false) << "this should not happen";
                     }
+                }
+            }
+
+            // MB2: Short suffix.
+            // Merge to the left.
+            if (a.type == 3 && b.type == 2 && b.len == 1) {
+                if (a.len == 3) {
+                    // Merge [___] [_] -> [__] [__]
+                    a.len = 2;
+                    b.len = 2;
+                    b.type = 3;
+                    blocks[write_i] = a;
+                    blocks[write_i + 1] = b;
+                    continue;
+                } else if (a.len == 2) {
+                    // Merge [__] [_] -> [___]
+                    a.len = 3;
+                    blocks[write_i] = a;
+                    read_i++;
+                    continue;
+                } else {
+                    DCHECK(false) << "this should not happen";
                 }
             }
 
