@@ -545,6 +545,41 @@ namespace esp {
         return BlockLabelVec<T> { final_labels, labels.alphabet_size };
     }
 
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+
+    template<typename T>
+    class DebugPrint {
+        ConstGenericView<T> m_view;
+        size_t m_alpha;
+    public:
+        inline DebugPrint(ConstGenericView<T> v, size_t alpha):
+            m_view(v), m_alpha(alpha) {}
+        template<typename U>
+        friend std::ostream& operator<<(std::ostream&, const DebugPrint<U>&);
+    };
+    template<typename T>
+    inline std::ostream& operator<<(std::ostream& o, const DebugPrint<T>& d) {
+        if (d.m_alpha == 256) {
+            o << "[";
+            for (auto c: d.m_view) {
+                o << char(uint8_t(c));
+            }
+            o << "]";
+            return o;
+        } else {
+            return o << vec_to_debug_string(d.m_view);
+        }
+    }
+    template<typename T>
+    DebugPrint<T> debug_p(ConstGenericView<T> v, size_t alpha) {
+        return DebugPrint<T>(v, alpha);
+    }
+
     struct TypedBlock {
         uint8_t len;
         uint8_t type;
@@ -590,12 +625,54 @@ namespace esp {
                     // Merge [___] [_] -> [__] [__]
                     a.len = 2;
                     b.len = 2;
-                    b.type = 3;
+                    b.type = 3; // TODO: Mixed type?
                     blocks[write_i] = a;
                     blocks[write_i + 1] = b;
                     continue;
                 } else if (a.len == 2) {
                     // Merge [__] [_] -> [___]
+                    a.len = 3;
+                    blocks[write_i] = a;
+                    read_i++;
+                    continue;
+                } else {
+                    DCHECK(false) << "this should not happen";
+                }
+            }
+
+            // MB3: single char case.
+            // Merge to repeating on the left, or else right
+            // TODO: Make decision parametric?
+            if (a.type == 1 && b.type == 3 && b.len == 1) {
+                if (a.len == 3) {
+                    // Merge [___] [_] -> [__] [__]
+                    a.len = 2;
+                    b.len = 2;
+                    b.type = 1; // TODO: Mixed type?
+                    blocks[write_i] = a;
+                    blocks[write_i + 1] = b;
+                    continue;
+                } else if (a.len == 2) {
+                    // Merge [__] [_] -> [___]
+                    a.len = 3;
+                    blocks[write_i] = a;
+                    read_i++;
+                    continue;
+                } else {
+                    DCHECK(false) << "this should not happen";
+                }
+            }
+            if (a.type == 3 && b.type == 1 && a.len == 1) {
+                if (b.len == 3) {
+                    // Merge [_] [___] -> [__] [__]
+                    a.len = 2;
+                    b.len = 2;
+                    a.type = 1; // TODO: Mixed type?
+                    blocks[write_i] = a;
+                    blocks[write_i + 1] = b;
+                    continue;
+                } else if (b.len == 2) {
+                    // Merge [_] [__] -> [___]
                     a.len = 3;
                     blocks[write_i] = a;
                     read_i++;
@@ -648,9 +725,10 @@ namespace esp {
             IF_DEBUG(if (print_mb_trace) {
                 std::cout << "mblock " << type << ": ";
                 std::cout << std::setw(n) << "";
-                std::cout << "[" << front_cut;
-                std::cout << "] [" << back_cut;
-                std::cout << "]\n";
+                std::cout << debug_p(front_cut, alphabet_size);
+                std::cout << " ";
+                std::cout << debug_p(back_cut, alphabet_size);
+                std::cout << "\n";
             })
 
             sb = back_cut;
@@ -668,7 +746,7 @@ namespace esp {
         void push_back(size_t l, size_t type) {
             print_cut(l, type);
             i += l;
-            block_buffer.push_back(TypedBlock { l, type });
+            block_buffer.push_back(TypedBlock { uint8_t(l), uint8_t(type) });
         }
 
         void check_advanced(size_t len) {
@@ -739,7 +817,5 @@ namespace esp {
             push(blocks[1].left, blocks[1].right);
         }
     }
-
-
 }
 }

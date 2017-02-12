@@ -205,7 +205,7 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
         landmark_spanner(
             landmarks.size(),
             [&](size_t i) {
-                return landmarks[i] == 1;
+                return landmarks[i] == uint_t<1>(1);
             }, [&](size_t left, size_t right) {
                 ctx.push_back(right - left + 1, 2);
                 IF_DEBUG(
@@ -250,7 +250,9 @@ inline void split(const Source& src, Context<Source>& ctx) {
         if(j != i) {
             auto s = src.slice(i, j);
             IF_DEBUG(if (ctx.print_mb_trace) {
-                std::cout << std::setw(13 + i) << "" << "[" << s << "]\n";
+                std::cout << std::setw(13 + i) << ""
+                    << debug_p(s, ctx.alphabet_size)
+                    << "\n";
             })
             eager_mb2(s, ctx);
             i = j;
@@ -262,7 +264,9 @@ inline void split(const Source& src, Context<Source>& ctx) {
         if(j != i) {
             auto s = src.slice(i, j);
             IF_DEBUG(if (ctx.print_mb_trace) {
-                std::cout << std::setw(13 + i) << "" << "[" << s << "]\n";
+                std::cout << std::setw(13 + i) << ""
+                    << debug_p(s, ctx.alphabet_size)
+                    << "\n";
             })
             eager_mb13(s, ctx, 1);
             i = j;
