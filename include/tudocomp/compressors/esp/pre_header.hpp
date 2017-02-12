@@ -561,6 +561,13 @@ namespace esp {
             m_view(v), m_alpha(alpha) {}
         template<typename U>
         friend std::ostream& operator<<(std::ostream&, const DebugPrint<U>&);
+        size_t char_mult() {
+            if (m_alpha == 256) {
+                return 1;
+            } else {
+                return 4;
+            }
+        }
     };
     template<typename T>
     inline std::ostream& operator<<(std::ostream& o, const DebugPrint<T>& d) {
@@ -572,7 +579,7 @@ namespace esp {
             o << "]";
             return o;
         } else {
-            return o << vec_to_debug_string(d.m_view);
+            return o << vec_to_debug_string(d.m_view, 2);
         }
     }
     template<typename T>
@@ -584,105 +591,114 @@ namespace esp {
         uint8_t len;
         uint8_t type;
     };
+    bool operator==(const TypedBlock& a, const TypedBlock& b) {
+        return a.len == b.len && a.type == b.type;
+    }
+    std::ostream& operator<<(std::ostream& o, const TypedBlock& b) {
+        return o << "{ len: " << int(b.len) << ", type: " << int(b.type) << " }";
+    }
 
     void adjust_blocks(std::vector<TypedBlock>& blocks) {
         if (blocks.size() < 2) return;
 
+        auto debug_print = [&]() {
+            std::vector<size_t> debug;
+            for (auto x : blocks) {
+                debug.push_back(x.len);
+            }
+            std::cout << "All: " << vec_to_debug_string(debug) << "\n";
+        };
+
         size_t read_i = 0;
         size_t write_i = 0;
-        for (; read_i < blocks.size() - 1; write_i++, read_i++) {
+        for (; read_i < blocks.size(); write_i++, read_i++) {
+            std::cout << "loop: read_i = "
+                << read_i << ", write_i = "
+                << write_i << "\n";
+
+            if (read_i == blocks.size() - 1) {
+                blocks[write_i] = blocks[read_i];
+                continue;
+            }
+
             auto a = blocks[read_i];
             auto b = blocks[read_i + 1];
+
+            debug_print();
+
+            auto merge = [&](size_t new_type) {
+                bool drop = false;
+                std::cout << "Adjusting "
+                    << "a(" << int(a.len)  << ", " << int(a.type) << ")"
+                    << ", "
+                    << "b(" << int(b.len)  << ", " << int(b.type) << ")"
+                    << " to ";
+                if (a.len + b.len == 4) {
+                    // Merge [_] [___] -> [__] [__]
+
+                    a.len = 2;
+                    b.len = 2;
+                    a.type = new_type;
+                    b.type = new_type;
+                    blocks[write_i] = a;
+                    blocks[write_i + 1] = b;
+                } else if (a.len + b.len == 3) {
+                    // Merge [_] [__] -> [___]
+                    a.len = 3;
+                    a.type = new_type;
+                    blocks[write_i] = a;
+                    read_i++;
+                    drop = true;
+                } else {
+                    DCHECK(false) << "this should not happen";
+                }
+                std::cout
+                    << "a(" << int(a.len)  << ", " << int(a.type) << ")";
+                if (!drop)
+                std::cout
+                    << ", "
+                    << "b(" << int(b.len)  << ", " << int(b.type) << ")";
+                std::cout << "\n";
+            };
 
             // Adjustment checks:
 
             // MB2: landmarks edge cases
             if (a.type == 2 && b.type == 2) {
                 if (a.len == 1 || b.len == 1) {
-                    if (a.len + b.len == 4) {
-                        // Merge [_] [___] -> [__] [__]
-                        a.len = 2;
-                        b.len = 2;
-                        blocks[write_i] = a;
-                        blocks[write_i + 1] = b;
-                        continue;
-                    } else if (a.len + b.len == 3) {
-                        // Merge [_] [__] -> [___]
-                        a.len = 3;
-                        blocks[write_i] = a;
-                        read_i++;
-                        continue;
-                    } else {
-                        DCHECK(false) << "this should not happen";
-                    }
+                    merge(2);
+                    std::cout << "loop done c: read_i = " << read_i << ", write_i = " << write_i << "\n";
+                    continue;
                 }
             }
 
             // MB2: Short suffix.
             // Merge to the left.
             if (a.type == 3 && b.type == 2 && b.len == 1) {
-                if (a.len == 3) {
-                    // Merge [___] [_] -> [__] [__]
-                    a.len = 2;
-                    b.len = 2;
-                    b.type = 3; // TODO: Mixed type?
-                    blocks[write_i] = a;
-                    blocks[write_i + 1] = b;
-                    continue;
-                } else if (a.len == 2) {
-                    // Merge [__] [_] -> [___]
-                    a.len = 3;
-                    blocks[write_i] = a;
-                    read_i++;
-                    continue;
-                } else {
-                    DCHECK(false) << "this should not happen";
-                }
+                merge(3);
+                std::cout << "loop done c: read_i = " << read_i << ", write_i = " << write_i << "\n";
+                continue;
             }
 
             // MB3: single char case.
             // Merge to repeating on the left, or else right
             // TODO: Make decision parametric?
             if (a.type == 1 && b.type == 3 && b.len == 1) {
-                if (a.len == 3) {
-                    // Merge [___] [_] -> [__] [__]
-                    a.len = 2;
-                    b.len = 2;
-                    b.type = 1; // TODO: Mixed type?
-                    blocks[write_i] = a;
-                    blocks[write_i + 1] = b;
-                    continue;
-                } else if (a.len == 2) {
-                    // Merge [__] [_] -> [___]
-                    a.len = 3;
-                    blocks[write_i] = a;
-                    read_i++;
-                    continue;
-                } else {
-                    DCHECK(false) << "this should not happen";
-                }
-            }
-            if (a.type == 3 && b.type == 1 && a.len == 1) {
-                if (b.len == 3) {
-                    // Merge [_] [___] -> [__] [__]
-                    a.len = 2;
-                    b.len = 2;
-                    a.type = 1; // TODO: Mixed type?
-                    blocks[write_i] = a;
-                    blocks[write_i + 1] = b;
-                    continue;
-                } else if (b.len == 2) {
-                    // Merge [_] [__] -> [___]
-                    a.len = 3;
-                    blocks[write_i] = a;
-                    read_i++;
-                    continue;
-                } else {
-                    DCHECK(false) << "this should not happen";
-                }
+                merge(1);
+                std::cout << "loop done c: read_i = " << read_i << ", write_i = " << write_i << "\n";
+                continue;
             }
 
+            if (a.type == 3 && b.type == 1 && a.len == 1) {
+                merge(1);
+                std::cout << "loop done c: read_i = " << read_i << ", write_i = " << write_i << "\n";
+                continue;
+            }
+
+            std::cout << "Nothing\n";
+
             blocks[write_i] = blocks[read_i];
+            std::cout << "loop done n: read_i = " << read_i << ", write_i = " << write_i << "\n";
         }
 
         for (size_t diff = write_i; diff < read_i; diff++) {
@@ -722,6 +738,7 @@ namespace esp {
             auto back_cut = sb.substr(l);
 
             auto n = s.size() - (back_cut.size() + front_cut.size());
+            n *= debug_p(sb, alphabet_size).char_mult();
 
             IF_DEBUG(if (doit && print_mb_trace) {
                 std::cout << "mblock " << type << ": ";

@@ -451,8 +451,29 @@ TEST(Esp, new_split_13) {
     split_test("aaaaaaf"_v);
 }
 
+void test_adjust_blocks(std::vector<esp::TypedBlock> a,
+                        std::vector<esp::TypedBlock> b) {
+    adjust_blocks(a);
+    ASSERT_EQ(a, b);
+}
+
+
+TEST(Esp, adjust_block_1) {
+    test_adjust_blocks(
+        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 3, 2 } },
+        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 3, 2 } }
+    );
+}
+
+TEST(Esp, adjust_block_2) {
+    test_adjust_blocks(
+        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 1, 2 }, esp::TypedBlock { 2, 2 } },
+        { esp::TypedBlock { 3, 3 }, esp::TypedBlock { 3, 2 } }
+    );
+}
+/*
 TEST(Esp, tree_reducer) {
     esp::TreeReducer tr;
     tr.reduce("0000dkasxxxcsdacjzsbkhvfaghskcbs"
               "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa");
-}
+}*/
