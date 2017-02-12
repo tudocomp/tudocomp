@@ -249,7 +249,7 @@ inline void split(const Source& src, Context<Source>& ctx) {
                         [](size_t a, size_t b){ return a != b; });
         if(j != i) {
             auto s = src.slice(i, j);
-            IF_DEBUG(if (ctx.print_mb_trace) {
+            IF_DEBUG(if (!ctx.print_only_adjusted && ctx.print_mb_trace) {
                 std::cout << std::setw(13 + i) << ""
                     << debug_p(s, ctx.alphabet_size)
                     << "\n";
@@ -263,7 +263,7 @@ inline void split(const Source& src, Context<Source>& ctx) {
                         [](size_t a, size_t b){ return a == b; });
         if(j != i) {
             auto s = src.slice(i, j);
-            IF_DEBUG(if (ctx.print_mb_trace) {
+            IF_DEBUG(if (!ctx.print_only_adjusted && ctx.print_mb_trace) {
                 std::cout << std::setw(13 + i) << ""
                     << debug_p(s, ctx.alphabet_size)
                     << "\n";

@@ -700,6 +700,7 @@ namespace esp {
         size_t last_i = 0;
         bool print_mb_trace = true;
         bool print_mb2_trace = true;
+        bool print_only_adjusted = false;
 
         std::vector<TypedBlock> block_buffer;
 
@@ -716,35 +717,34 @@ namespace esp {
             sb = s;
         }
 
-        void print_cut(size_t l, size_t type) {
+        void print_cut(size_t l, size_t type, bool doit) {
             auto front_cut = sb.substr(0, l);
             auto back_cut = sb.substr(l);
 
             auto n = s.size() - (back_cut.size() + front_cut.size());
 
-            IF_DEBUG(if (print_mb_trace) {
+            IF_DEBUG(if (doit && print_mb_trace) {
                 std::cout << "mblock " << type << ": ";
                 std::cout << std::setw(n) << "";
                 std::cout << debug_p(front_cut, alphabet_size);
                 std::cout << " ";
                 std::cout << debug_p(back_cut, alphabet_size);
                 std::cout << "\n";
+                if (l < 2 || l > 3) std::cout << "Needs adjustment!\n";
             })
 
             sb = back_cut;
-
-            if (l < 2 || l > 3) std::cout << "Needs adjustment!\n";
         }
 
-        void print_all() {
+        void print_all(bool doit) {
             reset_debug_print();
             for (auto& b : block_buffer) {
-                print_cut(b.len, b.type);
+                print_cut(b.len, b.type, doit);
             }
         }
 
         void push_back(size_t l, size_t type) {
-            print_cut(l, type);
+            print_cut(l, type, !print_only_adjusted);
             i += l;
             block_buffer.push_back(TypedBlock { uint8_t(l), uint8_t(type) });
         }
@@ -757,7 +757,7 @@ namespace esp {
         std::vector<TypedBlock>& adjusted_blocks() {
             adjust_blocks(block_buffer);
 
-            print_all();
+            print_all(true);
             for (auto& b: block_buffer) {
                 DCHECK_GE(b.len, 2);
                 DCHECK_LE(b.len, 3);
