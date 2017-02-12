@@ -43,35 +43,6 @@ public:
         const auto& sa = text.require_sa();
         const auto& isa = text.require_isa();
 
-		// TESTS
-        // auto lcpp = text.release_plcp();
-        // auto lcp_datap = lcpp->relinquish();
-        // auto& plcp = *lcp_datap;
-        //
-		// {
-		// 	typedef std::remove_reference<decltype(sa)>::type sa_t;
-		// 	typedef DynamicIntVector phi_t;
-		// 	phi_t phi { construct_phi_array<phi_t,sa_t>(sa) };
-		// 	phi_algorithm(phi, text); 
-		// 	for(size_t i = 0; i < plcp.size()-1; ++i) {
-		// 		DCHECK_EQ(plcp[i], phi[i]);
-		// 	}
-		// }
-        //
-        //
-		// auto lcp = construct_lcp_sada(env(), sa, text);
-		// for(size_t i = 0; i < plcp.size()-1; ++i) {
-		// 	DCHECK_EQ(plcp[i], lcp.plcp(i));
-		// }
-		// // for(size_t i = 0; i < plcp.size()-1; ++i) {
-		// // 	DCHECK_EQ(plcp[i], lcp.naive_plcp(i));
-		// // }
-		// LCPForwardIterator pplcp { (construct_plcp_bitvector(env(), sa, text)) };
-		// // for(size_t i = 0; i < plcp.size()-1; ++i) {
-		// // 	DCHECK_EQ(plcp[i], pplcp());
-		// // 	pplcp.advance();
-		// // }
-
 		LCPForwardIterator pplcp { (construct_plcp_bitvector(env(), sa, text)) };
         const len_t n = sa.size();
 

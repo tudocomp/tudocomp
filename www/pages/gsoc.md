@@ -42,6 +42,7 @@ are interested in any of the following projects, please also read the
  1. [7zip-compatible Output Format](#7zip-compatible-output-format)
     (Interoperability)
  1. [Graphical User Interface](#graphical-user-interface) (GUI Development)
+ 1. [Variants of LZ78U](#variants-of-lz78u) (Compression)
 
 ## General Information
 
@@ -295,6 +296,19 @@ platform supported by *tudocomp*.
 The GUI can be developed, for instance, using a framework like Qt.
 
 *Category*: GUI Development
+
+### 10. Variants of LZ78U 
+Our [LZ78U compressor](https://github.com/tudocomp/tudocomp/blob/public/include/tudocomp/compressors/LZ78UCompressor.hpp) 
+currently uses the class `cst_sada` of the SDSL-lite library to build a suffix tree.
+Alternative suffix tree consruction data structures could be faster/memory friendlier.
+
+Another interesting promlem is how the factorization of the factor labels of the LZ78U should be done.
+Currently, we partition an LZ78U factor label in characters and former LZ78U factors, greedily chosen from left to right.
+The factorization of a factor label does not introduce new LZ78U factors.
+If it would, then there is a need for the nested/recursive factorization of factor labels created during the
+factorization of a factor label. It could be that this improves the compression ratio.
+
+*Category*: Compression
 
 <!---
 ### Try to detect text type, and use appropriate compressor.
