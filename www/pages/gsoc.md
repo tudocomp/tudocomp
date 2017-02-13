@@ -39,7 +39,7 @@ are interested in any of the following projects, please also read the
     (Compression, Hashing)
  1. [Web Application for Visual String Analysis](#web-application-for-visual-string-analysis)
     (Visualization, Web Development)
- 1. [7zip-compatible Output Format](#7zip-compatible-output-format)
+ 1. [7zip-compatible Output Format](#zip-compatible-output-format)
     (Interoperability)
  1. [Graphical User Interface](#graphical-user-interface) (GUI Development)
 
