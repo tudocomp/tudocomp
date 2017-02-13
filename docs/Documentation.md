@@ -80,7 +80,57 @@ implementation.
 
 # Features
 
->> *TODO*: We should probably have something like a feature overview.
+* Flexible template-based interface for algorithms (e.g. compressors or integer
+  encoders)
+    * Registry for easy exposition to the `tdc` command-line tool
+    * Definition of parameters that can be passed (e.g. via the command-line)
+    * On-the-fly population of template parameters for easy exchangability
+      of strategies and other modules (also via the command-line)
+* Simple interface for compressors
+* Powerful interface for integer encoders
+    * Possibility to receive context information from compressors, such as
+      integer value ranges or the input alphabet, for more efficient encoding
+      capabilities
+* Arbitrary-width integer vectors and bit vectors
+* Bitwise I/O
+* Measurement of running time and heap allocation in freely definable and
+  nestable code phases
+    * `malloc` override
+    * Export of statistics to JSON
+    * Visualization of exported statistics in a web application
+    * Export of charts to `png` or `svg`
+      ([InkScape](https://inkscape.org/)-compatible and LaTeX-friendly)
+* Implementations of text data structures, including
+    * Suffix array (using `divsufsort`) and inverse
+    * LCP array and its pre-stages (Phi array and permuted LCP)
+    * Burrows-Wheeler transform and LF table
+    * Optional bit-compression either during or after construction
+* Implementations of various integer encoders, including:
+    * Binary and unary encoding
+    * Elias-Gamma and -Delta encoding
+    * VByte coding
+    * Huffman coding
+    * Human-readable ASCII representation for debugging purposes
+    * Custom static low-entropy encoding (SLE)
+* Implementations of various compression algorithms, including:
+    * LZ77 using a sliding window or the LCP array
+    * LZ78 with exchangeable trie structure
+    * Run-length encoding
+    * Custom variants of LZ77 (lcpcomp) and LZ78 (LZ78U)
+* Utilities for swift unit test implementation
+* String generators for testing and benchmarking purposes
+    * Random strings with uniform character distribution
+    * Fibonacci words
+    * Thue-Morse strings
+    * Run-Rich strings (Matsubara et al.)
+* Scripts for downloading a selected
+  [text corpus collection](http://tudocomp.org/text-collection.html) for testing
+  and benchmarking purposes
+* Tools to compare running time, heap memory usage and compression ratio of
+  different compressor suites (*tudocomp* as well as third-party) on a freely
+  definable set of inputs
+
+>>> *TODO*: Add references to our SEA17 paper once it is published.
 
 # Usage
 
