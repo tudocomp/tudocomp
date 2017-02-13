@@ -62,4 +62,4 @@ fi
 
 # Log ccache usage for debugging reasons
 ccache -s > ccache.post.txt
-diff -y -W 100 ccache.pre.txt ccache.post.txt
+diff -y -W 100 ccache.pre.txt ccache.post.txt || true
