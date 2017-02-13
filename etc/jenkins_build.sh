@@ -14,6 +14,7 @@ mkdir build -p
 cd build
 
 export TDC_ALLWAYS_DOWNLOAD=1
+export CCACHE_SLOPPINESS=file_macro,time_macros,include_file_mtime,include_file_ctime,pch_defines
 
 if [[ "$1" == "website" ]]; then
     make website
