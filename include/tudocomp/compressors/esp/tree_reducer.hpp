@@ -62,7 +62,7 @@ namespace esp {
         a2_t n2;
         a3_t n3;
 
-        size_t counter = 0;
+        size_t counter = 1;
 
         size_t add(in_t v) {
             size_t* r;
@@ -78,7 +78,7 @@ namespace esp {
                 *r = counter++;
             }
 
-            return *r;
+            return *r - 1;
         }
     };
 
@@ -88,7 +88,7 @@ namespace esp {
         std::vector<size_t> string;
     };
 
-    std::vector<Round> generate_grammar(string_ref input) {
+    std::vector<Round> generate_grammar_rounds(string_ref input) {
         std::vector<Round> rounds;
 
         // Initialize initial round
@@ -156,6 +156,30 @@ namespace esp {
         }
 
         return std::move(rounds);
+    }
+
+    std::vector<std::vector<size_t>> generate_grammar(const std::vector<Round>& rs) {
+        size_t offset = 0;
+        std::vector<std::vector<size_t>> ret;
+        for (auto& r: rs) {
+            ret.resize(offset + r.gr.counter - 1);
+
+            for (auto& k: r.gr.n2) {
+                auto& a = k.first.m_data;
+                std::vector<size_t> v(a.begin(), a.end());
+                DCHECK(ret[offset + k.second - 1].empty());
+                ret[offset + k.second - 1] = std::move(v);
+            }
+            for (auto& k: r.gr.n3) {
+                auto& a = k.first.m_data;
+                std::vector<size_t> v(a.begin(), a.end());
+                DCHECK(ret[offset + k.second - 1].empty());
+                ret[offset + k.second - 1] = std::move(v);
+            }
+
+            offset += r.gr.counter - 1;
+        }
+        return std::move(ret);
     }
 
 }

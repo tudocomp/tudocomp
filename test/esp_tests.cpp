@@ -473,8 +473,14 @@ TEST(Esp, adjust_block_2) {
 }
 
 TEST(Esp, tree_reducer) {
-    esp::generate_grammar(
+    auto r = esp::generate_grammar_rounds(
         "0000dkasxxxcsdacjzsbkhvfaghskcbs"
         "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"
     );
+
+    auto s = esp::generate_grammar(r);
+
+    for (size_t i = 0; i < s.size(); i++) {
+        std::cout << i << " -> " << vec_to_debug_string(s[i]) << "\n";
+    }
 }
