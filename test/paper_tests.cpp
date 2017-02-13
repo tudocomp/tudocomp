@@ -45,8 +45,7 @@ class MaxHeapStrategy : public Algorithm {
   text.require(text_t::SA | text_t::ISA | text_t::LCP);
   auto& sa = text.require_sa();
   auto& isa = text.require_isa();
-  auto lcpp = text.release_lcp()->relinquish();
-  auto& lcp = *lcpp;
+  auto lcp = text.release_lcp();
   ArrayMaxHeap<typename text_t::lcp_type::data_type> heap(lcp, lcp.size(), lcp.size());
   for(int i = 1; i < lcp.size(); ++i)
    if(lcp[i] >= t) heap.insert(i);

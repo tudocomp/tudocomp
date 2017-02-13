@@ -152,6 +152,9 @@ section#content {
 }
 
 footer {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+    text-align: right;
 }
 
 @media only screen and (max-device-width: 800px) {
