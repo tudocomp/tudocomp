@@ -602,18 +602,9 @@ namespace esp {
         if (blocks.size() < 2) return;
 
         auto adjust_pass = [&](auto f) {
-            auto debug_print = [&]() {
-                std::vector<size_t> debug;
-                for (auto x : blocks) {
-                    debug.push_back(x.len);
-                }
-                std::cout << "All: " << vec_to_debug_string(debug) << "\n";
-            };
-
             size_t read_i = 0;
             size_t write_i = 0;
             for (; read_i < blocks.size();read_i++, write_i++) {
-                debug_print();
                 auto a = blocks[read_i];
                 if (read_i == blocks.size() - 1) {
                     blocks[write_i] = a;
@@ -622,12 +613,6 @@ namespace esp {
                     auto b = blocks[read_i + 1];
 
                     auto merge = [&](size_t new_type) {
-                        bool drop = false;
-                        std::cout << "Adjusting "
-                            << "a(" << int(a.len)  << ", " << int(a.type) << ")"
-                            << ", "
-                            << "b(" << int(b.len)  << ", " << int(b.type) << ")"
-                            << " to ";
                         if (a.len + b.len == 4) {
                             // Merge [_] [___] -> [__] [__]
 
@@ -644,16 +629,16 @@ namespace esp {
                             blocks[write_i] = a;
                             blocks[write_i + 1] = TypedBlock { 0, 0 };
                             read_i++;
+                        } else if (a.len + b.len == 2) {
+                            // Merge [_] [_] -> [__]
+                            a.len = 2;
+                            a.type = new_type;
+                            blocks[write_i] = a;
+                            blocks[write_i + 1] = TypedBlock { 0, 0 };
+                            read_i++;
                         } else {
                             DCHECK(false) << "this should not happen";
                         }
-                        std::cout
-                            << "a(" << int(a.len)  << ", " << int(a.type) << ")";
-                        if (!drop)
-                        std::cout
-                            << ", "
-                            << "b(" << int(b.len)  << ", " << int(b.type) << ")";
-                        std::cout << "\n";
                     };
 
                     // Adjustment checks:

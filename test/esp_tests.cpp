@@ -473,7 +473,8 @@ TEST(Esp, adjust_block_2) {
 }
 
 TEST(Esp, tree_reducer) {
-    esp::TreeReducer tr;
-    tr.reduce("0000dkasxxxcsdacjzsbkhvfaghskcbs"
-              "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa");
+    esp::generate_grammar(
+        "0000dkasxxxcsdacjzsbkhvfaghskcbs"
+        "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"
+    );
 }
