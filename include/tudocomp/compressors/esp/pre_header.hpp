@@ -601,109 +601,95 @@ namespace esp {
     void adjust_blocks(std::vector<TypedBlock>& blocks) {
         if (blocks.size() < 2) return;
 
-        auto debug_print = [&]() {
-            std::vector<size_t> debug;
-            for (auto x : blocks) {
-                debug.push_back(x.len);
-            }
-            std::cout << "All: " << vec_to_debug_string(debug) << "\n";
-        };
-
-        size_t read_i = 0;
-        size_t write_i = 0;
-        for (; read_i < blocks.size(); write_i++, read_i++) {
-            std::cout << "loop: read_i = "
-                << read_i << ", write_i = "
-                << write_i << "\n";
-
-            if (read_i == blocks.size() - 1) {
-                blocks[write_i] = blocks[read_i];
-                continue;
-            }
-
-            auto a = blocks[read_i];
-            auto b = blocks[read_i + 1];
-
-            debug_print();
-
-            auto merge = [&](size_t new_type) {
-                bool drop = false;
-                std::cout << "Adjusting "
-                    << "a(" << int(a.len)  << ", " << int(a.type) << ")"
-                    << ", "
-                    << "b(" << int(b.len)  << ", " << int(b.type) << ")"
-                    << " to ";
-                if (a.len + b.len == 4) {
-                    // Merge [_] [___] -> [__] [__]
-
-                    a.len = 2;
-                    b.len = 2;
-                    a.type = new_type;
-                    b.type = new_type;
-                    blocks[write_i] = a;
-                    blocks[write_i + 1] = b;
-                } else if (a.len + b.len == 3) {
-                    // Merge [_] [__] -> [___]
-                    a.len = 3;
-                    a.type = new_type;
-                    blocks[write_i] = a;
-                    read_i++;
-                    drop = true;
-                } else {
-                    DCHECK(false) << "this should not happen";
+        auto adjust_pass = [&](auto f) {
+            auto debug_print = [&]() {
+                std::vector<size_t> debug;
+                for (auto x : blocks) {
+                    debug.push_back(x.len);
                 }
-                std::cout
-                    << "a(" << int(a.len)  << ", " << int(a.type) << ")";
-                if (!drop)
-                std::cout
-                    << ", "
-                    << "b(" << int(b.len)  << ", " << int(b.type) << ")";
-                std::cout << "\n";
+                std::cout << "All: " << vec_to_debug_string(debug) << "\n";
             };
 
-            // Adjustment checks:
+            size_t read_i = 0;
+            size_t write_i = 0;
+            for (; read_i < blocks.size();read_i++, write_i++) {
+                debug_print();
+                auto a = blocks[read_i];
+                if (read_i == blocks.size() - 1) {
+                    blocks[write_i] = a;
+                    break;
+                } else {
+                    auto b = blocks[read_i + 1];
 
-            // MB2: landmarks edge cases
-            if (a.type == 2 && b.type == 2) {
-                if (a.len == 1 || b.len == 1) {
-                    merge(2);
-                    std::cout << "loop done c: read_i = " << read_i << ", write_i = " << write_i << "\n";
-                    continue;
+                    auto merge = [&](size_t new_type) {
+                        bool drop = false;
+                        std::cout << "Adjusting "
+                            << "a(" << int(a.len)  << ", " << int(a.type) << ")"
+                            << ", "
+                            << "b(" << int(b.len)  << ", " << int(b.type) << ")"
+                            << " to ";
+                        if (a.len + b.len == 4) {
+                            // Merge [_] [___] -> [__] [__]
+
+                            a.len = 2;
+                            b.len = 2;
+                            a.type = new_type;
+                            b.type = new_type;
+                            blocks[write_i] = a;
+                            blocks[write_i + 1] = b;
+                        } else if (a.len + b.len == 3) {
+                            // Merge [_] [__] -> [___]
+                            a.len = 3;
+                            a.type = new_type;
+                            blocks[write_i] = a;
+                            blocks[write_i + 1] = TypedBlock { 0, 0 };
+                            read_i++;
+                        } else {
+                            DCHECK(false) << "this should not happen";
+                        }
+                        std::cout
+                            << "a(" << int(a.len)  << ", " << int(a.type) << ")";
+                        if (!drop)
+                        std::cout
+                            << ", "
+                            << "b(" << int(b.len)  << ", " << int(b.type) << ")";
+                        std::cout << "\n";
+                    };
+
+                    // Adjustment checks:
+
+                    size_t new_type = -1;
+                    if (f(a, b, new_type)) {
+                        merge(new_type);
+                    } else {
+                        blocks[write_i] = a;
+                    }
                 }
             }
 
-            // MB2: Short suffix.
-            // Merge to the left.
-            if (a.type == 3 && b.type == 2 && b.len == 1) {
-                merge(3);
-                std::cout << "loop done c: read_i = " << read_i << ", write_i = " << write_i << "\n";
-                continue;
+            for (size_t diff = write_i; diff < read_i; diff++) {
+                blocks.pop_back();
             }
 
-            // MB3: single char case.
-            // Merge to repeating on the left, or else right
-            // TODO: Make decision parametric?
-            if (a.type == 1 && b.type == 3 && b.len == 1) {
-                merge(1);
-                std::cout << "loop done c: read_i = " << read_i << ", write_i = " << write_i << "\n";
-                continue;
-            }
+        };
 
-            if (a.type == 3 && b.type == 1 && a.len == 1) {
-                merge(1);
-                std::cout << "loop done c: read_i = " << read_i << ", write_i = " << write_i << "\n";
-                continue;
-            }
+        adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
+            new_type = 2;
+            return (a.type == 2 && b.type == 2) && (a.len == 1 || b.len == 1);
+        });
+        adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
+            new_type = 3;
+            return a.type == 3 && b.type == 2 && b.len == 1;
+        });
+        adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
+            new_type = 1;
+            return a.type == 1 && b.type == 3 && b.len == 1;
+        });
+        adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
+            new_type = 1;
+            return a.type == 3 && b.type == 1 && a.len == 1;
+        });
 
-            std::cout << "Nothing\n";
-
-            blocks[write_i] = blocks[read_i];
-            std::cout << "loop done n: read_i = " << read_i << ", write_i = " << write_i << "\n";
-        }
-
-        for (size_t diff = write_i; diff < read_i; diff++) {
-            blocks.pop_back();
-        }
     }
 
     template<typename Source>

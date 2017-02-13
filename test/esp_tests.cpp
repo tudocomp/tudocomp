@@ -468,12 +468,12 @@ TEST(Esp, adjust_block_1) {
 TEST(Esp, adjust_block_2) {
     test_adjust_blocks(
         { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 1, 2 }, esp::TypedBlock { 2, 2 } },
-        { esp::TypedBlock { 3, 3 }, esp::TypedBlock { 3, 2 } }
+        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 3, 2 } }
     );
 }
-/*
+
 TEST(Esp, tree_reducer) {
     esp::TreeReducer tr;
     tr.reduce("0000dkasxxxcsdacjzsbkhvfaghskcbs"
               "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa");
-}*/
+}
