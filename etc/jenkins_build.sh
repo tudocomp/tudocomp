@@ -55,3 +55,5 @@ else
         exit 1
     fi
 fi
+
+ccache -s
