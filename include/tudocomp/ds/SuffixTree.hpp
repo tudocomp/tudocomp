@@ -85,6 +85,7 @@ public:
         uint min_bp;
         uint max_bp;
         uint card_bp;
+        bool computed = false;
 
         bool deleted_node = false;
 

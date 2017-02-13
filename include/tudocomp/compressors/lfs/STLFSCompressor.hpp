@@ -96,7 +96,17 @@ private:
             uint text_length = stree.get_text().length();
             uint pos = std::max((uint)0, occpos-length);
             uint end = std::min(text_length, occpos + length);//maybe -1
-                DLOG(INFO)<<"occpos: "<<occpos;
+            DLOG(INFO)<<"occpos: "<<occpos;
+
+
+            uint walked_length = 0;
+            //current node = v
+            SuffixTree::STNode * current_node = stree.get_root();
+
+
+
+            SuffixTree::STNode * last_node= current_node;
+            uint last_walked_length = 0;
 
             //line 2!
             //uint pos = pos
@@ -104,13 +114,15 @@ private:
                 //3: find first node such that v.pathlen > length
                 DLOG(INFO)<<"fixiung suffix: "<<pos;
 
-                uint walked_length = 0;
-                //current node = v
-                SuffixTree::STNode * current_node = stree.get_root();
                 bool notfound = false;
                 while (walked_length <= length){
                     char c = stree.get_text()[pos+walked_length];
                    // DLOG(INFO) << c;
+                    if(pos < occpos && walked_length<= occpos - pos){
+                        last_node = current_node;
+                        last_walked_length = walked_length;
+                    }
+
                     current_node = current_node->child_nodes[c];
                     walked_length += stree.edge_length(current_node);
                    // DLOG(INFO) << "walked length: "<< walked_length;
@@ -129,11 +141,15 @@ private:
                         current_node->max_bp = current_node->min_bp;
                         current_node->card_bp = current_node->card_bp-1;
                     }
+                    current_node->computed=true;
                 }
 
                 //5:
                 if(pos < occpos  && !dead_positions[pos]){
-                    DLOG(INFO)<<"find/create node s, recreate leaf (TODO)";
+                    DLOG(INFO)<<"find/create node s, recreate leaf (TODO) last walked length: " << last_walked_length;
+                    DLOG(INFO)<< "walked length: "<< walked_length;
+                    //current node = r
+                    //last node = s
                     //6-8 here
                 }
                 //9:
@@ -142,6 +158,11 @@ private:
                     // mark dead pos
                     dead_positions[pos] = 1;
                     DLOG(INFO)<<"positions marked dead: "<<pos;
+                }
+
+                if(last_node != stree.get_root()){
+                    current_node = last_node->suffix_link;
+                    walked_length = last_walked_length-1;
                 }
             }
             //10: w[occpos] = non_term
@@ -157,11 +178,17 @@ private:
     inline virtual std::set<uint> compute_triple(SuffixTree::STNode* node){
 
         std::set<uint> beggining_positions;
+        //already computed
+        if(node->computed){
+            return beggining_positions;
+
+        }
         //if no childs, its a leaf
         if(node->child_nodes.size()==0){
             node->min_bp=node->suffix;
             node->max_bp=node->suffix;
             node->card_bp=1;
+
         } else {
             uint min=stree.get_text().size();
             uint max=0;
@@ -196,6 +223,7 @@ private:
             node->card_bp=card;
             node->min_bp = min;
             node->max_bp= max;
+            node->computed = true;
 
         }
         return beggining_positions;
