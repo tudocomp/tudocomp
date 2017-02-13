@@ -1,7 +1,7 @@
 # Abstract
 
-The **T**echnical **U**niversity of **DO**rtmund **COMP**ression Framework
-(*tudocomp*) is a lossless compression framework with the aim to support and
+The **T**echnical **U**niversity of **DO**rtmund **COMP**ression Framework,
+*tudocomp*, is a lossless compression framework with the aim to support and
 facilitate the implementation of novel compression algorithms. It already
 comprises a range of standard data compression and encoding algorithms. These
 can be mixed and parameterized with the following uses in mind:
@@ -18,72 +18,65 @@ This way, the user can mix and match algorithms to find the optimal compression
 strategy for a given input. The framework gives this opportunity while creating
 as little performance overhead as possible.
 
-## Compressor Families
+## Compressors and Coders
 
-The *compressor families* form the topmost abstraction level in the framework.
-Every compression or encoding algorithm belongs to a certain family.
+*Compressors*, in terms of this framework, transform an input sequence (of
+bytes or characters) and write the result to an output. Each compressor is also
+required to implement a *decompressor* that can restore the original input
+losslessly from the compressed output. Apart from this, there are no strict
+rules as to *what* kind of transformation of the input occurs.
 
-For instance, the compressor family *lzss* (named after
-*Lempel-Ziv-Storer-Szymanski*) contains various compressors that factorize the
-input resulting in symbols and the produced Lempel-Ziv factors. This output can
-then be passed to different encoders specialized for LZSS-type factors to get a
-binary encoded compressed file.
+*Coders* serve for encoding primitve data types into a bit sequence with limited
+context (contrary to compressors, which may randomly access the entire
+input sequence). To this end, coders conceptually form the end of a compression
+chain by producing the final output bit sequence. A coder may receive additional
+information by a compressor in order to be able to encode data more efficiently
+(e.g. value ranges for bit-optimal encoding or even an alphabet distribution for
+low-entropy encoding). Analogously to compressors, every coder must be
+accompanied by a matching *decoder*.
 
-## Compressors and Modularity
+By design, a *coder* can also be used as a compressor.
 
-A *compressor*, in terms of this framework, transforms an input sequence and
-writes the result to an output. A compressor is the entry point for the driver
-application.
+## Modularity
 
-Each compressor family has to implement a *decompressor* that can restore the
-original input losslessly from a compressed output. Apart from that, there are
-no strict rules as to *what* kind of transformation of the input occurs. In that
-sense, an *encoder* is also a compressor.
+Compressors and coders form a subset of our concept of *algorithms*. Any
+non-trivial type to be exposed to users by *tudocomp* shall be seen as an
+algorithm.
 
-Compressors and encoders are implemented in a *modular* way. They are
-interchangeable and can be chained (ie the output of one becomes the input of
-another).
+Algorithms shall be implemented in a *modular* way. Modules shall be
+interchangeable, so any task or subtask may be approached using different
+strategies.
 
-For instance, a factor-based conpressor consists of three main modules:
+For instance, picture a compression algorithm that consists of more than one
+step to achieve its compression or decompression. If each step could be seen as
+a module that may solve its sub-task in different ways, it qualifies for
+modularization.
 
-1. A *factorizer* that produces factors,
-2. a *factor encoder* that encodes these factors, and
-3. a *raw symbol encoder* that encodes the remaining, unfactorized input.
+To achieve this kind of modularity, the use of C++'s meta programming features
+(namely templates) is heavily encouraged. *tudocomp* is designed in a way that
+allows template parameters to be populated seemingly at runtime.
 
-In this example, the factorizer divides the input into factors that refer to
-substrings of the input. The encoders then encode the factors and any
-unfactorized substrings in an independent manner (e.g. human readable or
-bit-optimal).
+## Compression Chains
 
-For each of these tasks, there can be different strategies. For instance, the
-input can be factorized using a classic online sliding window approach, but one
-can also think of using a data structure that works offline and requires the
-entire input, such as the suffix array.
+Compressors and coders can be chained so that the output of one becomes the
+input of another.
 
-Encoders can use myriad representations for the information they encode (e.g.
-fixed-width integers, Huffman codes) which may work better or worse for
-different types of inputs.
-
-Each of these factorization or encoding strategies can have different
-sub-strategies in their own right. The goal of this framework is to modularize
-compression and encoding algorithms as much as possible into strategies.
-
-The produced output must contain all information necessary for the respective
-decompressor (or decoder) to restore the original input losslessly.
-
-## Library and Driver
+## Library and Command-Line
 
 The framework consists of two major components: the compression *library*
-(*tudocomp*) and the command-line application, called the *driver*. The library
-contains the core interfaces and provides implementations of various
-compressors; the driver makes them available in form of an executable that can
-be used from the command-line.
+(often used synonymously with *tudocomp* in this document) and the command-line
+application (`tdc`).
 
-The driver uses a *registry* of compressors, which acts as the link between the
-driver and the library. The library is a fully functional standalone library
-such that third party applications can make use of the provided compressors.
+The library contains the core interfaces and provides implementations for
+various compression algorithms. It is fully functional for use in third-party
+applications.
 
->> *TODO*: Create a data flow diagram for a whole compression cycle.
+Using `tdc` (the commmand-line application), *tudocomp*'s implementations can
+be invoked from a shell.
+
+The interface between *tudocomp* and `tdc` is the *registry*. Every registered
+algorithm is exposed to `tdc` with a unique identifier specified by its
+implementation.
 
 # Features
 
