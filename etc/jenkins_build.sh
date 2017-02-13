@@ -16,6 +16,9 @@ cd build
 export TDC_ALLWAYS_DOWNLOAD=1
 export CCACHE_SLOPPINESS=file_macro,time_macros,include_file_mtime,include_file_ctime,pch_defines
 
+# Log ccache usage for debugging reasons
+ccache -s > ccache.pre.txt
+
 if [[ "$1" == "website" ]]; then
     make website
 else
@@ -57,4 +60,6 @@ else
     fi
 fi
 
-ccache -s
+# Log ccache usage for debugging reasons
+ccache -s > ccache.post.txt
+diff -y -W 100 ccache.pre.txt ccache.post.txt
