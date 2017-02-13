@@ -15,6 +15,7 @@ cd build
 
 export TDC_ALLWAYS_DOWNLOAD=1
 export CCACHE_SLOPPINESS=file_macro,time_macros,include_file_mtime,include_file_ctime,pch_defines
+export CCACHE_MAXSIZE=10G
 
 # Log ccache usage for debugging reasons
 ccache -s > ccache.pre.txt
