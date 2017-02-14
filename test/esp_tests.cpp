@@ -472,15 +472,25 @@ TEST(Esp, adjust_block_2) {
     );
 }
 
-TEST(Esp, tree_reducer) {
-    auto r = esp::generate_grammar_rounds(
-        "0000dkasxxxcsdacjzsbkhvfaghskcbs"
-        "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"
-    );
+TEST(Esp, tree_reducer_roundtrip) {
+    auto s = "0000dkasxxxcsdacjzsbkhvfaghskcbs"
+             "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v;
 
-    auto s = esp::generate_grammar(r);
+    auto r = esp::generate_grammar_rounds(s);
 
-    for (size_t i = 0; i < s.size(); i++) {
-        std::cout << i << " -> " << vec_to_debug_string(s[i]) << "\n";
+    std::cout << "\n[Complete Grammar]:\n\n";
+    auto r2 = esp::generate_grammar(r);
+    for (size_t i = 0; i < r2.size(); i++) {
+        std::cout
+            << i << ": "
+            << i + esp::GRAMMAR_PD_ELLIDED_PREFIX
+            << " -> " << vec_to_debug_string(r2[i]) << "\n";
     }
+
+    auto s2 = esp::derive_text(r2);
+
+    std::cout << "\n[Derived String]:\n\n";
+    std::cout << s2 << "\n";
+
+    ASSERT_EQ(s, s2);
 }

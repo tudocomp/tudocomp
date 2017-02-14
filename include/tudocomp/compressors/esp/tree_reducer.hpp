@@ -158,28 +158,53 @@ namespace esp {
         return std::move(rounds);
     }
 
+    size_t GRAMMAR_PD_ELLIDED_PREFIX = 256;
+
     std::vector<std::vector<size_t>> generate_grammar(const std::vector<Round>& rs) {
-        size_t offset = 0;
+        size_t offset = 256;
+        size_t prev_offset = 0;
         std::vector<std::vector<size_t>> ret;
         for (auto& r: rs) {
-            ret.resize(offset + r.gr.counter - 1);
+            ret.resize(offset - GRAMMAR_PD_ELLIDED_PREFIX + r.gr.counter - 1);
 
-            for (auto& k: r.gr.n2) {
-                auto& a = k.first.m_data;
-                std::vector<size_t> v(a.begin(), a.end());
-                DCHECK(ret[offset + k.second - 1].empty());
-                ret[offset + k.second - 1] = std::move(v);
-            }
-            for (auto& k: r.gr.n3) {
-                auto& a = k.first.m_data;
-                std::vector<size_t> v(a.begin(), a.end());
-                DCHECK(ret[offset + k.second - 1].empty());
-                ret[offset + k.second - 1] = std::move(v);
-            }
+            auto doit = [&](auto& n) {
+                for (auto& k: n) {
+                    auto& a = k.first.m_data;
+                    std::vector<size_t> v(a.begin(), a.end());
+                    for (auto& e : v) {
+                        e += (prev_offset);
+                    }
 
+                    auto& er = ret[offset - GRAMMAR_PD_ELLIDED_PREFIX + k.second - 1];
+                    DCHECK(er.empty());
+                    er = std::move(v);
+                }
+            };
+
+            doit(r.gr.n2);
+            doit(r.gr.n3);
+            prev_offset = offset;
             offset += r.gr.counter - 1;
         }
         return std::move(ret);
+    }
+
+    void derive_text_rec(const std::vector<std::vector<size_t>>& rules,
+                         std::ostream& o,
+                         size_t rule) {
+        if (rule < 256) {
+            o << char(rule);
+        } else for (auto r : rules[rule - GRAMMAR_PD_ELLIDED_PREFIX]) {
+            derive_text_rec(rules, o, r);
+        }
+    }
+
+    std::string derive_text(const std::vector<std::vector<size_t>>& rules) {
+        std::stringstream ss;
+
+        derive_text_rec(rules, ss, rules.size() - 1 + GRAMMAR_PD_ELLIDED_PREFIX);
+
+        return ss.str();
     }
 
 }
