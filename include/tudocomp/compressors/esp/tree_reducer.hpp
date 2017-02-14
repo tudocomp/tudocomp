@@ -5,6 +5,7 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
+#include <tudocomp/util/View.hpp>
 #include <tudocomp/compressors/esp/pre_header.hpp>
 #include <tudocomp/compressors/esp/meta_blocks.hpp>
 
@@ -42,8 +43,8 @@ namespace std {
     struct hash<tdc::esp::Array<N>>
     {
         size_t operator()(const tdc::esp::Array<N>& x) const {
-            return std::hash<ConstGenericView<size_t>>()(
-                ConstGenericView<size_t> {
+            return std::hash<tdc::ConstGenericView<size_t>>()(
+                tdc::ConstGenericView<size_t> {
                     x.m_data.data(),
                     x.m_data.size()
                 });
@@ -88,7 +89,8 @@ namespace esp {
         std::vector<size_t> string;
     };
 
-    std::vector<Round> generate_grammar_rounds(string_ref input) {
+    std::vector<Round> generate_grammar_rounds(string_ref input,
+                                               bool silent = false) {
         std::vector<Round> rounds;
 
         // Initialize initial round
@@ -106,11 +108,11 @@ namespace esp {
         }
 
         for(size_t n = 0;; n++) {
-            std::cout << "\n[Round " << n << "]:\n\n";
+            if (!silent) std::cout << "\n[Round " << n << "]:\n\n";
             Round& r = rounds.back();
 
             if (r.string.size() == 1) {
-                std::cout << "Done\n";
+                if (!silent) std::cout << "Done\n";
                 break;
             }
 
@@ -121,26 +123,32 @@ namespace esp {
                 r.alphabet,
                 in,
             };
-            ctx.print_mb2_trace = false;
-            ctx.print_only_adjusted = true;
+            if (!silent) {
+                ctx.print_mb2_trace = false;
+                ctx.print_only_adjusted = true;
+            } else {
+                ctx.print_mb2_trace = false;
+                ctx.print_only_adjusted = true;
+                ctx.print_mb_trace = false;
+            }
 
             esp::split(in, ctx);
-            std::cout << "[Adjusted]:\n";
+            if (!silent) std::cout << "[Adjusted]:\n";
             const auto& v = ctx.adjusted_blocks();
 
-            std::cout << "\n[Rules]:\n";
+            if (!silent) std::cout << "\n[Rules]:\n";
 
             {
                 in_t s = in;
                 for (auto e : v) {
                     auto slice = s.slice(0, e.len);
                     s = s.slice(e.len);
-                    std::cout <<  "  "
+                    if (!silent) std::cout <<  "  "
                         << debug_p(slice, r.alphabet);
 
                     auto rule_name = r.gr.add(slice);
                     new_layer.push_back(rule_name);
-                    std::cout << " -> " << rule_name << "\n";
+                    if (!silent) std::cout << " -> " << rule_name << "\n";
                 }
             }
             new_layer.shrink_to_fit();
