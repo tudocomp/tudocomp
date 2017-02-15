@@ -1,0 +1,277 @@
+{
+    "data": {
+        "memFinal": -5576,
+        "memOff": 0,
+        "memPeak": 3315579466,
+        "stats": [],
+        "sub": [{
+            "memFinal": 1669330151,
+            "memOff": 209716471,
+            "memPeak": 3105862995,
+            "stats": [{
+                "key": "maxlcp",
+                "value": 987770
+            },{
+                "key": "threshold",
+                "value": 5
+            },{
+                "key": "factors",
+                "value": 11405635
+            }],
+            "sub": [{
+                "memFinal": 1992293828,
+                "memOff": 104,
+                "memPeak": 2936012602,
+                "stats": [],
+                "sub": [{
+                    "memFinal": 838860703,
+                    "memOff": 248,
+                    "memPeak": 839124032,
+                    "stats": [{
+                        "key": "bit_width",
+                        "value": 32
+                    },{
+                        "key": "size",
+                        "value": 838860820
+                    }],
+                    "sub": [],
+                    "timeEnd": 277554638,
+                    "timeStart": 277487206,
+                    "title": "Construct SA"
+                },{
+                    "memFinal": 838860703,
+                    "memOff": 838861557,
+                    "memPeak": 838860898,
+                    "stats": [{
+                        "key": "bit_width",
+                        "value": 32
+                    },{
+                        "key": "size",
+                        "value": 838860820
+                    }],
+                    "sub": [],
+                    "timeEnd": 277561272,
+                    "timeStart": 277554638,
+                    "title": "Construct Phi Array"
+                },{
+                    "memFinal": -161,
+                    "memOff": 1677722061,
+                    "memPeak": 34,
+                    "stats": [{
+                        "key": "bit_width",
+                        "value": 32
+                    },{
+                        "key": "size",
+                        "value": 838860820
+                    }],
+                    "sub": [],
+                    "timeEnd": 277565350,
+                    "timeStart": 277561272,
+                    "title": "Construct PLCP Array"
+                },{
+                    "memFinal": 838860703,
+                    "memOff": 1677721851,
+                    "memPeak": 838860898,
+                    "stats": [{
+                        "key": "bit_width",
+                        "value": 32
+                    },{
+                        "key": "size",
+                        "value": 838860820
+                    }],
+                    "sub": [],
+                    "timeEnd": 277571670,
+                    "timeStart": 277565350,
+                    "title": "Construct LCP Array"
+                },{
+                    "memFinal": -314572969,
+                    "memOff": 1677721481,
+                    "memPeak": 524288016,
+                    "stats": [{
+                        "key": "bit_width",
+                        "value": 20
+                    },{
+                        "key": "size",
+                        "value": 524288012
+                    }],
+                    "sub": [],
+                    "timeEnd": 277572136,
+                    "timeStart": 277571672,
+                    "title": "Compress LCP Array"
+                },{
+                    "memFinal": 838860703,
+                    "memOff": 1363148730,
+                    "memPeak": 838860898,
+                    "stats": [{
+                        "key": "bit_width",
+                        "value": 32
+                    },{
+                        "key": "size",
+                        "value": 838860820
+                    }],
+                    "sub": [],
+                    "timeEnd": 277577526,
+                    "timeStart": 277572136,
+                    "title": "Construct ISA"
+                },{
+                    "memFinal": -104857761,
+                    "memOff": 2202009378,
+                    "memPeak": 734003224,
+                    "stats": [{
+                        "key": "bit_width",
+                        "value": 28
+                    },{
+                        "key": "size",
+                        "value": 734003217
+                    }],
+                    "sub": [],
+                    "timeEnd": 277578045,
+                    "timeStart": 277577526,
+                    "title": "Compress ISA"
+                },{
+                    "memFinal": -104857761,
+                    "memOff": 2097151621,
+                    "memPeak": 734003224,
+                    "stats": [{
+                        "key": "bit_width",
+                        "value": 28
+                    },{
+                        "key": "size",
+                        "value": 734003217
+                    }],
+                    "sub": [],
+                    "timeEnd": 277578637,
+                    "timeStart": 277578045,
+                    "title": "Compress SA"
+                }],
+                "timeEnd": 277578637,
+                "timeStart": 277487206,
+                "title": "Construct Index Data Structures"
+            },{
+                "memFinal": 1088362976,
+                "memOff": 2015999131,
+                "memPeak": 1089863864,
+                "stats": [{
+                    "key": "entries",
+                    "value": 207564672
+                }],
+                "sub": [],
+                "timeEnd": 277580743,
+                "timeStart": 277578639,
+                "title": "Fill candidates"
+            },{
+                "memFinal": -887036462,
+                "memOff": 3104362131,
+                "memPeak": 159,
+                "stats": [],
+                "sub": [{
+                    "memFinal": -47729231,
+                    "memOff": 108,
+                    "memPeak": 0,
+                    "stats": [],
+                    "sub": [],
+                    "timeEnd": 277581748,
+                    "timeStart": 277580743,
+                    "title": "Factors at max. LCP value 987770"
+                },{
+                    "memFinal": -189976682,
+                    "memOff": -47729016,
+                    "memPeak": 6,
+                    "stats": [{
+                        "key": "num factors",
+                        "value": 175
+                    }],
+                    "sub": [],
+                    "timeEnd": 277583545,
+                    "timeStart": 277581748,
+                    "title": "Factors at max. LCP value 32773"
+                },{
+                    "memFinal": -95682664,
+                    "memOff": -237705609,
+                    "memPeak": 88866712,
+                    "stats": [{
+                        "key": "num factors",
+                        "value": 17299
+                    }],
+                    "sub": [],
+                    "timeEnd": 277589563,
+                    "timeStart": 277583545,
+                    "title": "Factors at max. LCP value 133"
+                },{
+                    "memFinal": -419430503,
+                    "memOff": -333388185,
+                    "memPeak": 33554329,
+                    "stats": [{
+                        "key": "num factors",
+                        "value": 5477854
+                    }],
+                    "sub": [],
+                    "timeEnd": 277592935,
+                    "timeStart": 277589563,
+                    "title": "Factors at max. LCP value 13"
+                },{
+                    "memFinal": -33554534,
+                    "memOff": -752818601,
+                    "memPeak": 67108762,
+                    "stats": [{
+                        "key": "num factors",
+                        "value": 9488665
+                    }],
+                    "sub": [],
+                    "timeEnd": 277593324,
+                    "timeStart": 277592935,
+                    "title": "Factors at max. LCP value 7"
+                },{
+                    "memFinal": -100663398,
+                    "memOff": -786373048,
+                    "memPeak": 10,
+                    "stats": [{
+                        "key": "num factors",
+                        "value": 10101519
+                    }],
+                    "sub": [],
+                    "timeEnd": 277593988,
+                    "timeStart": 277593324,
+                    "title": "Factors at max. LCP value 6"
+                }],
+                "timeEnd": 277593988,
+                "timeStart": 277580743,
+                "title": "Compute Factors"
+            }],
+            "timeEnd": 277593990,
+            "timeStart": 277487206,
+            "title": "Factorize"
+        },{
+            "memFinal": 0,
+            "memOff": 1879044294,
+            "memPeak": 0,
+            "stats": [],
+            "sub": [],
+            "timeEnd": 277594770,
+            "timeStart": 277593990,
+            "title": "Sorting Factors"
+        },{
+            "memFinal": 48315,
+            "memOff": 1879044333,
+            "memPeak": 3026353,
+            "stats": [],
+            "sub": [],
+            "timeEnd": 277597598,
+            "timeStart": 277594770,
+            "title": "Encode Factors"
+        }],
+        "timeEnd": 277597601,
+        "timeStart": 277486992,
+        "title": "Compress"
+    },
+    "meta": {
+        "config": "lcpcomp(coder=sle,threshold=5,comp=arrays,dec=scan(25))",
+        "input": "datasets/pc_english.200MB",
+        "inputSize": 209715200,
+        "output": "datasets/pc_english.200MB.tdc",
+        "outputSize": 58009480,
+        "rate": 0.276611,
+        "startTime": 1486135862,
+        "title": ""
+    }
+}

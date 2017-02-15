@@ -31,7 +31,7 @@ public:
 
     using Algorithm::Algorithm; //import constructor
 
-    inline void factorize(text_t& text, const size_t threshold, lzss::FactorBuffer& factors) { 
+    inline void factorize(text_t& text, const size_t threshold, lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
 		env().begin_stat_phase("Construct text ds");
@@ -42,9 +42,7 @@ public:
         auto& isa = text.require_isa();
 
         text.require_lcp();
-        auto lcpp = text.release_lcp();
-        auto lcp_datap = lcpp->relinquish();
-        auto& lcp = *lcp_datap;
+        auto lcp = text.release_lcp();
 
 		struct LCPCompare {
 			using lcp_t = decltype(lcp);

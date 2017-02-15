@@ -74,12 +74,18 @@ private:
     }
 
     template<typename ds_t>
-    inline std::unique_ptr<ds_t> release_ds(std::unique_ptr<ds_t>& p, dsflags_t flag) {
-        return std::move(p);
+    inline void discard_ds(std::unique_ptr<ds_t>& p, dsflags_t flag) {
+        p.reset(nullptr);
     }
 
     template<typename ds_t>
-    inline std::unique_ptr<typename ds_t::data_type> inplace_ds(
+    inline ds_t release_ds(std::unique_ptr<ds_t>& p, dsflags_t flag, string_ref err_msg) {
+        DCHECK(p) << "TextDS did not contain a " << err_msg;
+        return std::move(*p);
+    }
+
+    template<typename ds_t>
+    inline typename ds_t::data_type inplace_ds(
         std::unique_ptr<ds_t>& p, dsflags_t flag, const std::string& option, CompressMode cm) {
 
         if(!p) p = construct_ds<ds_t>(option, cm_select(cm, m_cm));
@@ -154,26 +160,27 @@ public:
 
     // inplace methods
 
-    inline std::unique_ptr<typename sa_t::data_type> inplace_sa(
+    inline typename sa_t::data_type inplace_sa(
         CompressMode cm = CompressMode::select) {
 
         return inplace_ds(m_sa, SA, "sa", cm);
     }
-    inline std::unique_ptr<typename phi_t::data_type> inplace_phi(
+    inline typename phi_t::data_type inplace_phi(
         CompressMode cm = CompressMode::select) {
 
         return inplace_ds(m_phi, PHI, "phi", cm);
     }
-    inline std::unique_ptr<typename plcp_t::data_type> inplace_plcp(
+    inline typename plcp_t::data_type inplace_plcp(
         CompressMode cm = CompressMode::select) {
+
         return inplace_ds(m_plcp, PLCP, "plcp", cm);
     }
-    inline std::unique_ptr<typename lcp_t::data_type> inplace_lcp(
+    inline typename lcp_t::data_type inplace_lcp(
         CompressMode cm = CompressMode::select) {
 
         return inplace_ds(m_lcp, LCP, "lcp", cm);
     }
-    inline std::unique_ptr<typename isa_t::data_type> inplace_isa(
+    inline typename isa_t::data_type inplace_isa(
         CompressMode cm = CompressMode::select) {
 
         return inplace_ds(m_isa, ISA, "isa", cm);
@@ -181,20 +188,46 @@ public:
 
     // release methods
 
-    inline std::unique_ptr<sa_t> release_sa() { return release_ds(m_sa, SA); }
-    inline std::unique_ptr<phi_t> release_phi() { return release_ds(m_phi, PHI); }
-    inline std::unique_ptr<plcp_t> release_plcp() { return release_ds(m_plcp, PLCP); }
-    inline std::unique_ptr<lcp_t> release_lcp() { return release_ds(m_lcp, LCP); }
-    inline std::unique_ptr<isa_t> release_isa() { return release_ds(m_isa, ISA); }
+    inline sa_t release_sa() {
+        return release_ds(m_sa, SA, "SA");
+    }
+    inline phi_t release_phi() {
+        return release_ds(m_phi, PHI, "PHI");
+    }
+    inline plcp_t release_plcp() {
+        return release_ds(m_plcp, PLCP, "PLCP");
+    }
+    inline lcp_t release_lcp() {
+        return release_ds(m_lcp, LCP, "LCP");
+    }
+    inline isa_t release_isa() {
+        return release_ds(m_isa, ISA, "ISA");
+    }
 
 private:
-    inline void release_unneeded() {
-        // release unrequested structures
-        if(!(m_ds_requested & SA)) release_sa();
-        if(!(m_ds_requested & PHI)) release_phi();
-        if(!(m_ds_requested & PLCP)) release_plcp();
-        if(!(m_ds_requested & LCP)) release_lcp();
-        if(!(m_ds_requested & ISA)) release_isa();
+    inline void discard_sa() {
+        discard_ds(m_sa, SA);
+    }
+    inline void discard_phi() {
+        discard_ds(m_phi, PHI);
+    }
+    inline void discard_plcp() {
+        discard_ds(m_plcp, PLCP);
+    }
+    inline void discard_lcp() {
+        discard_ds(m_lcp, LCP);
+    }
+    inline void discard_isa() {
+        discard_ds(m_isa, ISA);
+    }
+
+    inline void discard_unneeded() {
+        // discard unrequested structures
+        if(!(m_ds_requested & SA)) discard_sa();
+        if(!(m_ds_requested & PHI)) discard_phi();
+        if(!(m_ds_requested & PLCP)) discard_plcp();
+        if(!(m_ds_requested & LCP)) discard_lcp();
+        if(!(m_ds_requested & ISA)) discard_isa();
     }
 
 public:
@@ -209,15 +242,15 @@ public:
 
 
         // Construct SA (don't compress yet)
-        if(flags & SA) { require_sa(cm); release_unneeded(); }
+        if(flags & SA) { require_sa(cm); discard_unneeded(); }
 
         // Construct Phi (don't compress yet)
-        if(flags & PHI) { require_phi(cm); release_unneeded(); }
+        if(flags & PHI) { require_phi(cm); discard_unneeded(); }
 
         // Construct PLCP and compress if LCP is not requested
         if(flags & PLCP) {
             require_plcp(cm);
-            release_unneeded();
+            discard_unneeded();
             if(cm == CompressMode::coherent_delayed && !(flags & LCP)) {
                 m_plcp->compress();
             }
@@ -226,14 +259,14 @@ public:
         // Construct and compress LCP
         if(flags & LCP)  {
             require_lcp(cm);
-            release_unneeded();
+            discard_unneeded();
             if(cm == CompressMode::coherent_delayed) m_lcp->compress();
         }
 
         // Construct and compress ISA
         if(flags & ISA)  {
             require_isa(cm);
-            release_unneeded();
+            discard_unneeded();
             if(cm == CompressMode::coherent_delayed) m_isa->compress();
         }
 

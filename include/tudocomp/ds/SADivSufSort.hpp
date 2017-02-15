@@ -7,7 +7,7 @@
 namespace tdc {
 
 /// Constructs the suffix array using divsufsort.
-class SADivSufSort : public ArrayDS {
+class SADivSufSort: public Algorithm, public ArrayDS {
 public:
     inline static Meta meta() {
         Meta m("sa", "divsufsort");
@@ -16,7 +16,7 @@ public:
 
     template<typename textds_t>
     inline SADivSufSort(Env&& env, const textds_t& t, CompressMode cm)
-        : ArrayDS(std::move(env)) {
+        : Algorithm(std::move(env)) {
 
         this->env().begin_stat_phase("Construct SA");
 
@@ -25,14 +25,13 @@ public:
         const size_t w = bits_for(n);
 
         // divsufsort needs one additional bit for signs
-        m_data = std::make_unique<iv_t>(n, 0,
-            (cm == CompressMode::compressed) ? w + 1 : LEN_BITS);
+        set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w + 1 : LEN_BITS));
 
         // Use divsufsort to construct
-        divsufsort(t.text(), *m_data, n);
+        divsufsort(t.text(), (iv_t&) *this, n);
 
-        this->env().log_stat("bit_width", size_t(m_data->width()));
-        this->env().log_stat("size", m_data->bit_size() / 8);
+        this->env().log_stat("bit_width", size_t(width()));
+        this->env().log_stat("size", bit_size() / 8);
         this->env().end_stat_phase();
 
         if(cm == CompressMode::compressed || cm == CompressMode::delayed) {
@@ -41,15 +40,15 @@ public:
     }
 
     void compress() {
-        DCHECK(m_data);
+        debug_check_array_is_initialized();
 
         env().begin_stat_phase("Compress SA");
 
-        m_data->width(bits_for(m_data->size()));
-        m_data->shrink_to_fit();
+        width(bits_for(size()));
+        shrink_to_fit();
 
-        env().log_stat("bit_width", size_t(m_data->width()));
-        env().log_stat("size", m_data->bit_size() / 8);
+        env().log_stat("bit_width", size_t(width()));
+        env().log_stat("size", bit_size() / 8);
         env().end_stat_phase();
     }
 };

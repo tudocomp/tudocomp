@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.0.2)
 project (tudocomp)
 
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+endif(CCACHE_FOUND)
+
 if(NOT VERSION)
     string(TIMESTAMP DATE "%y%m%d")
     set(VERSION "0.${DATE}-$ENV{USER}${VERSION_SUFFIX}")
