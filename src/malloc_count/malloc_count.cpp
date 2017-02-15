@@ -38,6 +38,29 @@ namespace malloc_count {
     void resume_phase() {
         paused = false;
     }
+
+    inline bool is_managed(block_header_t* block) {
+        return (block->magic == MEMBLOCK_MAGIC);
+    }
+
+    inline void count_malloc(size_t size) {
+        if(!paused && pcur >= 0) {
+            for(int i = 0; i <= pcur; i++) {
+                pstack[i].mem_current += size;
+                if(pstack[i].mem_current > pstack[i].mem_peak) {
+                    pstack[i].mem_peak = pstack[i].mem_current;
+                }
+            }
+        }
+    }
+
+    inline void count_free(size_t size) {
+        if(!paused && pcur >= 0) {
+            for(int i = 0; i <= pcur; i++) {
+                pstack[i].mem_current -= size;
+            }
+        }
+    }
 }
 
 #ifdef __CYGWIN__
@@ -58,14 +81,7 @@ void* malloc(size_t size) {
     block->phase_id = (paused || pcur < 0) ? NO_PHASE_ID : pstack[pcur].id;
     block->size = size;
 
-    if(!paused && pcur >= 0) {
-        for(int i = 0; i <= pcur; i++) {
-            pstack[i].mem_current += size;
-            if(pstack[i].mem_current > pstack[i].mem_peak) {
-                pstack[i].mem_peak = pstack[i].mem_current;
-            }
-        }
-    }
+    count_malloc(size);
 
     return (char*)ptr + sizeof(block_header_t);
 }
@@ -76,15 +92,8 @@ void free(void* ptr) {
     if(!ptr) return;
 
     auto block = (block_header_t*)((char*)ptr - sizeof(block_header_t));
-    if(block->magic == MEMBLOCK_MAGIC) {
-        if(!paused && pcur >= 0 /*&& block->phase_id >= pstack[0].id*/) {
-            for(int i = 0; i <= pcur; i++) {
-                //if(block->phase_id >= pstack[i].id) {
-                    pstack[i].mem_current -= block->size;
-                //}
-            }
-        }
-
+    if(is_managed(block)) {
+        count_free(block->size);
         __libc_free(block);
     } else {
         __libc_free(ptr);
@@ -101,11 +110,20 @@ void* realloc(void* ptr, size_t size) {
         return malloc(size);
     } else {
         auto block = (block_header_t*)((char*)ptr - sizeof(block_header_t));
-        if(block->magic == MEMBLOCK_MAGIC) {
-            void* ptr2 = malloc(size);
-            memcpy(ptr2, ptr, std::min(size, block->size));
-            free(ptr);
-            return ptr2;
+        if(is_managed(block)) {
+            auto old_phase_id = block->phase_id;
+
+            void *new_ptr = __libc_realloc(block, size + sizeof(block_header_t));
+
+            auto new_block = (block_header_t*)new_ptr;
+            new_block->magic = MEMBLOCK_MAGIC; // just making sure
+            new_block->phase_id = old_phase_id; //TODO: update to current phase?
+            new_block->size = size;
+            
+            count_free(block->size);
+            count_malloc(size);
+
+            return (char*)new_ptr + sizeof(block_header_t);
         } else {
             return __libc_realloc(ptr, size);
         }
