@@ -131,7 +131,19 @@ d3.select("#json-load").on("click", function() {
 
 var load = function() {
     if(window.location.search) {
-        var json = atob(window.location.search.substr(1));
-        loadJSON(json);
+        var x = window.location.search.indexOf('=');
+        if(x >= 0) {
+            var param = window.location.search.substr(1, x-1);
+            var value = window.location.search.substr(x+1);
+
+            if(param == 'data') {
+                // expect base64 string as value
+                loadJSON(atob(value));
+            } else if(param == 'example') {
+                // use example file
+                loadJSONfromURL("examples/" + value)
+            }
+        }
     }
 };
+
