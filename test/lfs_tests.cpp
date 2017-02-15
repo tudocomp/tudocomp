@@ -58,10 +58,13 @@ void run_coder_test_st(const std::string compression_string) {
         c.compress(dummy_input, output);
         compressed=output.result();
 
+        DLOG(INFO)<<compressed;
+
     }
     // decompress
     {
 
+        DLOG(INFO)<<"decompressing";
         test::TestInput input = test::decompress_input(compressed);
         test::TestOutput output = test::decompress_output();
 

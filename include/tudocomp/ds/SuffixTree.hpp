@@ -87,7 +87,7 @@ public:
         uint card_bp;
         bool computed = false;
 
-        bool deleted_node = false;
+        bool deleted = false;
 
 
     };
@@ -227,6 +227,10 @@ public:
 
     inline std::vector<STNode*> get_leaves(){
         return leaves;
+    }
+
+    inline STNode* get_leaf(uint position){
+        return leaves.at(position);
     }
 
     inline void print_tree(std::ostream& out, STNode* node, std::string depth){

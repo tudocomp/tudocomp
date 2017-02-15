@@ -61,7 +61,8 @@ private:
 
             current = *it;
             //DLOG(INFO) << "checking starting position: " << current << " length: " << top.first << "last " << last;
-            if(last+length <= current){
+            if(last+length <= current && !dead_positions[current]){
+
                 selected_starting_positions.push_back(current);
                 last = current;
 
@@ -149,7 +150,17 @@ private:
                     DLOG(INFO)<<"find/create node s, recreate leaf (TODO) last walked length: " << last_walked_length;
                     DLOG(INFO)<< "walked length: "<< walked_length;
                     //current node = r
+                    SuffixTree::STNode* leaf = stree.get_leaf(pos);
+                    leaf->deleted = true;
                     //last node = s
+                    if(last_walked_length==length){
+                        //found s
+                    } else {
+                        //create node s
+                        int split = length - last_walked_length;
+                        DLOG(INFO) << "Split after: "<<split;
+
+                    }
                     //6-8 here
                 }
                 //9:
@@ -179,7 +190,7 @@ private:
 
         std::set<uint> beggining_positions;
         //already computed
-        if(node->computed){
+        if(node->computed || node->deleted){
             return beggining_positions;
 
         }
@@ -201,7 +212,7 @@ private:
                 auto child = *it;
                 min_child = child.second->min_bp;
                 max_child = child.second->max_bp;
-                if(child.second->card_bp>0){
+                if(child.second->card_bp>0 && !(child.second->deleted)){
 
                     beggining_positions.insert(min_child);
 
@@ -279,14 +290,15 @@ public:
         stree.append_input(input);
 
 
-        std::string text = stree.get_text();
+        std::string t = stree.get_text();
 
-        DLOG(INFO)<< text << std::endl;
+        DLOG(INFO)<< t << std::endl;
         //compute string depth of st:
         string_depth_vector nl;
         compute_string_depth(stree.get_root(),0, &nl);
 
         std::sort(nl.begin(), nl.end());
+        uint nts_number =0;
 
         auto it = nl.end();
         while (it != nl.begin()){
@@ -301,7 +313,7 @@ public:
                 if(pair.second->min_bp+pair.first <= pair.second->max_bp){
 
                     //its a reapting factor, compute
-                    DLOG(INFO)<<"reapting factor:  \"" << text.substr( pair.second->min_bp, pair.first)<<"\"" ;
+                    DLOG(INFO)<<"reapting factor:  \"" << t.substr( pair.second->min_bp, pair.first)<<"\"" ;
 
                     DLOG(INFO)<<"length: "<<pair.first;
                     //min and mac of all children are all BPs of LRF
@@ -314,8 +326,27 @@ public:
 
                     std::vector<uint> selected_pos = select_starting_positions(begining_pos, pair.first);
                    // DLOG(INFO) << "selected beginning positions: " << std::endl;
+                    if(selected_pos.size()>=2){
 
-                    update_tree(pair.first, selected_pos);
+                        update_tree(pair.first, selected_pos);
+
+                        //vector of text position, length
+                        std::pair<uint,uint> rule = std::make_pair(selected_pos.at(0), pair.first);
+
+                        rules.push_back(rule);
+
+                        //iterate over selected pos, add non terminal symbols
+                        for(auto it = selected_pos.begin(); it != selected_pos.end(); it++){
+                            //(position in text, non_terminal_symbol_number, length_of_symbol);
+                            //typedef std::tuple<uint,uint,uint> non_term;
+                            non_term nts = std::make_tuple(*it, nts_number, pair.first);
+                            non_terminal_symbols.push_back(nts);
+                            //typedef std::vector<non_term> non_terminal_symbols;
+                        }
+                        nts_number++;
+
+                    }
+
 
                     //
 
@@ -327,11 +358,130 @@ public:
 
         }
 
+        DLOG(INFO)<<"number of rules: " << rules.size();
+        DLOG(INFO)<<"number of nts: "<< non_terminal_symbols.size();
+
+        //now encode
+
+        DLOG(INFO) << "sorting occurences";
+        //, std::greater<std::tuple<uint,uint,uint>>()
+        std::sort(non_terminal_symbols.begin(), non_terminal_symbols.end());
+
+
+
+
+
+        // encode dictionary:
+        DLOG(INFO) << "encoding dictionary symbol sizes ";
+
+        std::shared_ptr<BitOStream> bitout = std::make_shared<BitOStream>(output);
+        typename literal_coder_t::Encoder lit_coder(
+            env().env_for_option("lit_coder"),
+            bitout,
+            NoLiterals()
+        );
+        typename len_coder_t::Encoder len_coder(
+            env().env_for_option("len_coder"),
+            bitout,
+            NoLiterals()
+        );
+
+        auto it_dict = rules.begin();
+        //range int_r (0,MAX_INT);
+
+        Range intrange (0, UINT_MAX);//uint32_r
+        if(rules.size() >=1 ){
+
+            std::pair<uint,uint> symbol = *it_dict;
+            uint last_length=symbol.second;
+            Range s_length_r (0,last_length);
+            len_coder.encode(last_length,intrange);
+            it_dict++;
+
+            while (it_dict != rules.end()){
+                symbol=*it_dict;
+                len_coder.encode(last_length-symbol.second,s_length_r);
+                last_length=symbol.second;
+                it_dict++;
+
+            }
+            len_coder.encode(symbol.second,s_length_r);
+        }else {
+            len_coder.encode(0,intrange);
+
+        }
+
+
+        DLOG(INFO) << "encoding dictionary symbols";
+        // encode dictionary strings:
+        if(rules.size() >=1 ){
+            auto it = rules.begin();
+            std::pair<uint,uint> symbol;// = *it;
+            //Range slength_r (0, symbol.second);
+            //coder.encode(symbol.second,intrange);//uint32_r
+
+             while(it != rules.end()){
+            //first length of non terminal symbol
+                symbol = *it;
+                //coder.encode(symbol.second,slength_r);
+
+                for(uint k = 0; k<symbol.second; k++){
+                    lit_coder.encode(t[symbol.first + k],literal_r);
+                }
+                it++;
+            }
+        }
+
+        Range dict_r(0, rules.size());
+        //encode string
+        uint pos = 0;
+        uint start_position;
+        uint symbol_number ;
+        uint symbol_length;
+        bool first_char = true;
+        for(auto it = non_terminal_symbols.begin(); it!= non_terminal_symbols.end(); it++){
+
+
+            std::tuple<uint,uint,uint> next_position = *it;
+
+            start_position = std::get<0>(next_position);
+            symbol_number =std::get<1>(next_position);
+            symbol_length = std::get<2>(next_position);
+
+            while(pos< start_position){
+                //get original text, because no symbol...
+                lit_coder.encode(0, bit_r);
+                lit_coder.encode(t[pos], literal_r);
+
+                if(first_char){
+                    first_char=false;
+                }
+                pos++;
+            }
+
+            //write symbol number
+
+            lit_coder.encode(1, bit_r);
+            lit_coder.encode(symbol_number, dict_r);
+
+            pos += symbol_length;
+
+        }
+        //if no more terminals, write rest of text
+        //one pos less, because ensure_null_ending adds a symbol
+        while( pos<t.size()){
+
+            lit_coder.encode(0, bit_r);
+            lit_coder.encode(t[pos], literal_r);
+            pos++;
+        }
+
+        DLOG(INFO) << "compression with lfs done";
+
 
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        return;
         DLOG(INFO) << "decompress lfs";
         std::shared_ptr<BitIStream> bitin = std::make_shared<BitIStream>(input);
 
@@ -377,6 +527,7 @@ public:
             }
             dictionary.push_back(non_terminal_symbol);
         }
+        DLOG(INFO)<<"number of rules: " <<dictionary.size();
         auto ostream = output.as_stream();
 
         while(!lit_decoder.eof()){
@@ -387,6 +538,7 @@ public:
             // if bit = 0 its a literal
             if(!bit1){
                 c1 = lit_decoder.template decode<char>(literal_r); // Dekodiere Literal
+                DLOG(INFO)<<c1;
 
                 ostream << c1;
             } else {
