@@ -95,14 +95,16 @@ private:
         for(auto it = selected_positions.begin();it!= selected_positions.end();it++){
             uint occpos = *it;
             uint text_length = stree.get_text().length();
-            uint pos = 0;
+            uint pos = occpos;//should be zero
+            /*
             if(occpos >= length){
                 pos = occpos-length;
             }
+            */
             //uint pos = std::max((uint)0, occpos-length);
             uint end = std::min(text_length, occpos + length);//maybe -1
-            DLOG(INFO)<<"occpos: "<<occpos;
-            DLOG(INFO)<<"fixing suffix "<<pos<<" to " << end;
+            //DLOG(INFO)<<"occpos: "<<occpos;
+            //DLOG(INFO)<<"fixing suffix "<<pos<<" to " << end;
 
 
            // uint walked_length = 0;
@@ -118,7 +120,7 @@ private:
             //uint pos = pos
             for(; pos<end;pos++){
                 //3: find first node such that v.pathlen > length
-                DLOG(INFO)<<"fixiung suffix: "<<pos;
+               // DLOG(INFO)<<"fixiung suffix: "<<pos;
                 /*
                 bool notfound = false;
 
@@ -175,7 +177,7 @@ private:
                     //w[i] = dot?
                     // mark dead pos
                     dead_positions[pos] = 1;
-                    DLOG(INFO)<<"positions marked dead: "<<pos;
+                    //DLOG(INFO)<<"positions marked dead: "<<pos;
                 }
 
                // if(last_node != stree.get_root()){
@@ -187,7 +189,7 @@ private:
 
             dead_positions[occpos] = 1;
 
-            DLOG(INFO)<<"positions marked dead: "<<occpos;
+            //DLOG(INFO)<<"positions marked dead: "<<occpos;
         }
 
     }
@@ -272,7 +274,7 @@ public:
 
         //BitVector
         dead_positions = BitVector(input.size(), 0);
-        DLOG(INFO)<< "dead_positions.size(): "<<dead_positions.size();
+        //DLOG(INFO)<< "dead_positions.size(): "<<dead_positions.size();
 
         //build suffixtree
         DLOG(INFO)<<"build suffixtree";
@@ -296,17 +298,21 @@ public:
 
         stree.append_input(input);
 
+        DLOG(INFO)<<"computing string depth";
+
 
         std::string t = stree.get_text();
 
-        DLOG(INFO)<< t << std::endl;
+        //DLOG(INFO)<< t << std::endl;
         //compute string depth of st:
         string_depth_vector nl;
         compute_string_depth(stree.get_root(),0, &nl);
+        DLOG(INFO)<<"sorting nodes";
 
         std::sort(nl.begin(), nl.end());
         uint nts_number =0;
 
+        DLOG(INFO)<<"done. computing lrfs";
         auto it = nl.end();
         while (it != nl.begin()){
             it--;
@@ -315,22 +321,22 @@ public:
                 break;
             }
             std::set<uint> begining_pos = compute_triple(pair.second);
-            DLOG(INFO)<<"computing: \"" << t.substr( pair.second->min_bp, pair.first)<<"\"";
+           // DLOG(INFO)<<"computing: \"" << t.substr( pair.second->min_bp, pair.first)<<"\"";
             if(pair.second->card_bp>=2){
                 //compute if overlapping:
                 if(pair.second->min_bp+pair.first <= pair.second->max_bp){
 
                     //its a reapting factor, compute
-                    DLOG(INFO)<<"reapting factor:  \"" << t.substr( pair.second->min_bp, pair.first)<<"\"" ;
+                   // DLOG(INFO)<<"reapting factor:  \"" << t.substr( pair.second->min_bp, pair.first)<<"\"" ;
 
-                    DLOG(INFO)<<"length: "<<pair.first;
+                   // DLOG(INFO)<<"length: "<<pair.first;
                     //min and mac of all children are all BPs of LRF
-                    auto it = begining_pos.begin();
-                    DLOG(INFO) << "beginning positions: " << std::endl;
+                   // auto it = begining_pos.begin();
+                   /* DLOG(INFO) << "beginning positions: " << std::endl;
                     while(it!= begining_pos.end()){
                         DLOG(INFO) << *it;
                         it++;
-                    }
+                    }*/
 
                     std::vector<uint> selected_pos = select_starting_positions(begining_pos, pair.first);
                    // DLOG(INFO) << "selected beginning positions: " << std::endl;

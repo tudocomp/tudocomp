@@ -123,10 +123,42 @@ void compress_and_decompress_file(const std::string filename, std::string extens
     }
 }
 
+template<typename lit_coder_t, typename len_coder_t>
+void compress_and_decompress_file_st(const std::string filename, std::string extension) {
+    auto c = create_algo<STLFSCompressor<lit_coder_t, len_coder_t> >();
+
+    // compress
+    {
+        test::TestInput file_input= test::compress_input_file(filename);
+        //file_input.escape_and_terminate();
+        Output file_output(filename+"."+extension, true);
+
+        c.compress(file_input, file_output);
+    }
+    // decompress
+    {
+        //auto c = create_algo<LFSCompressor<lit_coder_t, len_coder_t>>();
+
+        test::TestInput file_input = test::decompress_input_file(filename+"."+extension);
+        Output file_output(filename+".decomp", true);
+
+        c.decompress(file_input, file_output);
+        DLOG(INFO) << "decompressed";
+
+    }
+}
+
 TEST(stlfs, as_stream_aba){
     run_coder_test_st<BitCoder,EliasGammaCoder>("abaaabbababb$");
 }
 
+TEST(stlfs, as_stream_mis){
+    run_coder_test_st<BitCoder,EliasGammaCoder>("mississippi$");
+}
+
+TEST(stlfs, file_english_1mb_eg){
+    compress_and_decompress_file_st<BitCoder, BitCoder>("english.1MB", "stlfs");
+}
 
 TEST(lfs, as_stream_aba){
 
@@ -164,7 +196,7 @@ TEST(lfs, file_sources_10mb_eg){
 }
 
 TEST(lfs, file_english_1mb){
-    //compress_and_decompress_file<BitCoder, BitCoder>("english.1MB", "lfs.bc");
+    compress_and_decompress_file<BitCoder, BitCoder>("english.1MB", "esalfs.bc");
 }
 
 TEST(lfs, file_english_10mb){

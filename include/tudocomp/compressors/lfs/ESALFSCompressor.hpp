@@ -29,10 +29,10 @@
 
 namespace tdc {
 
-template<typename literal_coder_t, typename len_coder_t>
+template<typename literal_coder_t, typename len_coder_t, typename text_t = TextDS<> >
 class ESALFSCompressor : public Compressor {
 private:
-    typedef TextDS<> text_t;
+    //typedef TextDS<> text_t;
 
 
 
@@ -67,6 +67,7 @@ public:
             "This is an implementation of the longest first substitution compression scheme.");
         m.option("lit_coder").templated<literal_coder_t>();
         m.option("len_coder").templated<len_coder_t>();
+        m.option("textds").templated<text_t, TextDS<>>();
         m.needs_sentinel_terminator();
         return m;
     }
@@ -86,7 +87,9 @@ public:
         auto in = input.as_view();
 
         //TextDS<> t(in);
-        text_t t(in);
+
+        text_t t(env().env_for_option("textds"), in);
+       // text_t t(env, in);
         DLOG(INFO) << "building sa and lcp";
         t.require(text_t::SA | text_t::ISA | text_t::LCP);
         auto& sa_t = t.require_sa();
