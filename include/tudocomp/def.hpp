@@ -8,10 +8,10 @@
 #if defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(__clang__)
     /// Provides a hint to the compiler that `x` is expected to resolve to
     /// \e true.
-	#define tdc_likely(x)	__builtin_expect(x, 1)
+	#define tdc_likely(x)	__builtin_expect((x) != 0, 1)
     /// Provides a hint to the compiler that `x` is expected to resolve to
     /// \e false.
-	#define tdc_unlikely(x)  __builtin_expect(x, 0)
+	#define tdc_unlikely(x)  __builtin_expect((x) != 0, 0)
 #else
     /// Provides a hint to the compiler that `x` is expected to resolve to
     /// \e true.
