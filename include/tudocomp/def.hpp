@@ -4,6 +4,8 @@
 #include <limits>
 #include <type_traits>
 
+#include <tudocomp/ds/uint_t.hpp>
+
 // assertions
 #if defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(__clang__)
     /// Provides a hint to the compiler that `x` is expected to resolve to
