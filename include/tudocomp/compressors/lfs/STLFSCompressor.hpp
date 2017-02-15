@@ -61,7 +61,7 @@ private:
 
             current = *it;
             //DLOG(INFO) << "checking starting position: " << current << " length: " << top.first << "last " << last;
-            if(last+length <= current && !dead_positions[current]){
+            if(last+length <= current && !dead_positions[current] && !dead_positions[current+length-1]){
 
                 selected_starting_positions.push_back(current);
                 last = current;
@@ -95,27 +95,33 @@ private:
         for(auto it = selected_positions.begin();it!= selected_positions.end();it++){
             uint occpos = *it;
             uint text_length = stree.get_text().length();
-            uint pos = std::max((uint)0, occpos-length);
+            uint pos = 0;
+            if(occpos >= length){
+                pos = occpos-length;
+            }
+            //uint pos = std::max((uint)0, occpos-length);
             uint end = std::min(text_length, occpos + length);//maybe -1
             DLOG(INFO)<<"occpos: "<<occpos;
+            DLOG(INFO)<<"fixing suffix "<<pos<<" to " << end;
 
 
-            uint walked_length = 0;
+           // uint walked_length = 0;
             //current node = v
-            SuffixTree::STNode * current_node = stree.get_root();
+            //SuffixTree::STNode * current_node = stree.get_root();
 
 
 
-            SuffixTree::STNode * last_node= current_node;
-            uint last_walked_length = 0;
+            //SuffixTree::STNode * last_node= current_node;
+            //uint last_walked_length = 0;
 
             //line 2!
             //uint pos = pos
             for(; pos<end;pos++){
                 //3: find first node such that v.pathlen > length
                 DLOG(INFO)<<"fixiung suffix: "<<pos;
-
+                /*
                 bool notfound = false;
+
                 while (walked_length <= length){
                     char c = stree.get_text()[pos+walked_length];
                    // DLOG(INFO) << c;
@@ -163,6 +169,7 @@ private:
                     }
                     //6-8 here
                 }
+                */
                 //9:
                 if(pos>occpos) {
                     //w[i] = dot?
@@ -171,10 +178,10 @@ private:
                     DLOG(INFO)<<"positions marked dead: "<<pos;
                 }
 
-                if(last_node != stree.get_root()){
-                    current_node = last_node->suffix_link;
-                    walked_length = last_walked_length-1;
-                }
+               // if(last_node != stree.get_root()){
+                   // current_node = last_node->suffix_link;
+                   // walked_length = last_walked_length-1;
+               // }
             }
             //10: w[occpos] = non_term
 
@@ -190,7 +197,7 @@ private:
 
         std::set<uint> beggining_positions;
         //already computed
-        if(node->computed || node->deleted){
+        if(node->deleted){
             return beggining_positions;
 
         }
@@ -308,6 +315,7 @@ public:
                 break;
             }
             std::set<uint> begining_pos = compute_triple(pair.second);
+            DLOG(INFO)<<"computing: \"" << t.substr( pair.second->min_bp, pair.first)<<"\"";
             if(pair.second->card_bp>=2){
                 //compute if overlapping:
                 if(pair.second->min_bp+pair.first <= pair.second->max_bp){
@@ -538,7 +546,6 @@ public:
             // if bit = 0 its a literal
             if(!bit1){
                 c1 = lit_decoder.template decode<char>(literal_r); // Dekodiere Literal
-                DLOG(INFO)<<c1;
 
                 ostream << c1;
             } else {
