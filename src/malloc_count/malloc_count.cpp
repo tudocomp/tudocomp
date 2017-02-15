@@ -1,8 +1,13 @@
 #include <malloc_count/malloc_count.hpp>
 
 namespace malloc_count {
-    #define NO_PHASE_ID 0
     #define PHASE_STACK_SIZE 16
+
+    #define MEMBLOCK_MAGIC 0xFEDCBA9876543210
+    struct block_header_t {
+        size_t magic;
+        size_t size;
+    };
 
     size_t next_phase_id = 1;
 
@@ -78,7 +83,6 @@ void* malloc(size_t size) {
 
     auto block = (block_header_t*)ptr;
     block->magic = MEMBLOCK_MAGIC;
-    block->phase_id = (paused || pcur < 0) ? NO_PHASE_ID : pstack[pcur].id;
     block->size = size;
 
     count_malloc(size);
@@ -111,13 +115,10 @@ void* realloc(void* ptr, size_t size) {
     } else {
         auto block = (block_header_t*)((char*)ptr - sizeof(block_header_t));
         if(is_managed(block)) {
-            auto old_phase_id = block->phase_id;
-
             void *new_ptr = __libc_realloc(block, size + sizeof(block_header_t));
 
             auto new_block = (block_header_t*)new_ptr;
             new_block->magic = MEMBLOCK_MAGIC; // just making sure
-            new_block->phase_id = old_phase_id; //TODO: update to current phase?
             new_block->size = size;
             
             count_free(block->size);
