@@ -3,6 +3,7 @@
 #include <tudocomp/util/IntegerBase.hpp>
 
 #include <cstdint>
+#include <cmath>
 
 namespace tdc {
 
@@ -70,15 +71,15 @@ public:
 
     // copying
     constexpr uint_t(const uint_t& i): m_data(i.m_data) {}
-    constexpr uint_t& operator=(const uint_t& b) { m_data = b.m_data; return *this; }
+    inline uint_t& operator=(const uint_t& b) { m_data = b.m_data; return *this; }
 
     // conversions for all fundamental char types
     constexpr uint_t(unsigned char i): m_data(i) {}
-    constexpr uint_t& operator=(unsigned char data) { m_data = data; return *this; }
+    inline uint_t& operator=(unsigned char data) { m_data = data; return *this; }
     constexpr operator unsigned char() const { return m_data; }
 
     constexpr uint_t(signed char i): m_data(i) {}
-    constexpr uint_t& operator=(signed char data) { m_data = data; return *this; }
+    inline uint_t& operator=(signed char data) { m_data = data; return *this; }
     constexpr operator signed char() const { return m_data; }
 
     constexpr uint_t(char i): m_data(i) {}
@@ -87,35 +88,35 @@ public:
 
     // conversions for all fundamental integer types
     constexpr uint_t(unsigned int i): m_data(i) {}
-    constexpr uint_t& operator=(unsigned int data) { m_data = data; return *this; }
+    inline uint_t& operator=(unsigned int data) { m_data = data; return *this; }
     constexpr operator unsigned int() const { return m_data; }
 
     constexpr uint_t(unsigned short int i): m_data(i) {}
-    constexpr uint_t& operator=(unsigned short int data) { m_data = data; return *this; }
+    inline uint_t& operator=(unsigned short int data) { m_data = data; return *this; }
     constexpr operator unsigned short int() const { return m_data; }
 
     constexpr uint_t(unsigned long int i): m_data(i) {}
-    constexpr uint_t& operator=(unsigned long int data) { m_data = data; return *this; }
+    inline uint_t& operator=(unsigned long int data) { m_data = data; return *this; }
     constexpr operator unsigned long int() const { return m_data; }
 
     constexpr uint_t(unsigned long long int i): m_data(i) {}
-    constexpr uint_t& operator=(unsigned long long int data) { m_data = data; return *this; }
+    inline uint_t& operator=(unsigned long long int data) { m_data = data; return *this; }
     constexpr operator unsigned long long int() const { return m_data; }
 
     constexpr uint_t(int i): m_data(i) {}
-    constexpr uint_t& operator=(int data) { m_data = data; return *this; }
+    inline uint_t& operator=(int data) { m_data = data; return *this; }
     constexpr operator int() const { return m_data; }
 
     constexpr uint_t(short int i): m_data(i) {}
-    constexpr uint_t& operator=(short int data) { m_data = data; return *this; }
+    inline uint_t& operator=(short int data) { m_data = data; return *this; }
     constexpr operator short int() const { return m_data; }
 
     constexpr uint_t(long int i): m_data(i) {}
-    constexpr uint_t& operator=(long int data) { m_data = data; return *this; }
+    inline uint_t& operator=(long int data) { m_data = data; return *this; }
     constexpr operator long int() const { return m_data; }
 
     constexpr uint_t(long long int i): m_data(i) {}
-    constexpr uint_t& operator=(long long int data) { m_data = data; return *this; }
+    inline uint_t& operator=(long long int data) { m_data = data; return *this; }
     constexpr operator long long int() const { return m_data; }
 } __attribute__((packed));
 
