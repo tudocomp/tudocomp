@@ -170,6 +170,10 @@ namespace esp {
     /// REFACTOR: ONE GLOBAL HASHMAP STRUCTURE WITH GLOBAL ARRAY INDICE CONTENTS
     /// SUBTRACT DOWN TO LAYER_INDEX MANUALLY WHERE NEEDED
     ///
+    /// NEW GOAL
+    ///
+    /// direct hashmap -> slp conversion, with push-to-end and
+    /// remembering original start symbol
 
     bool MAKE_BINARY = true;
     size_t GRAMMAR_PD_ELLIDED_PREFIX = 256;
@@ -225,6 +229,96 @@ namespace esp {
         return std::move(ret);
     }
 
+    struct SLP {
+        std::vector<std::array<size_t, 2>> rules;
+        size_t root_rule;
+    };
+
+    // TODO: Either ellided-256 alphabet, or compressed included alphabet
+
+    SLP generate_grammar_alt(const std::vector<Round>& rs) {
+        size_t size2 = 0;
+        size_t size3 = 0;
+        for (auto& r: rs) {
+            size2 += r.gr.n2.size();
+            size3 += r.gr.n3.size();
+        }
+
+        std::cout << "size2: " << size2 << "\n";
+        std::cout << "size3: " << size3 << "\n";
+
+        std::vector<std::array<size_t, 2>> ret;
+        ret.reserve(size2 + 2 * size3);
+        ret.resize(size2 + 2 * size3, std::array<size_t, 2>{{ 0,0 }});
+
+        size_t i3 = size2 + size3;
+
+        size_t counter_offset = 256;
+        size_t prev_counter_offset = 0;
+
+        size_t last_idx = 0;
+
+        size_t debug_round = 0;
+        for (auto& r: rs) {
+            auto doit = [&](auto& n) {
+                for (auto& kv: n) {
+                    const auto& key = kv.first;
+                    const auto& val = kv.second - 1;
+
+                    size_t rule_idx = counter_offset + val;
+                    size_t store_idx = rule_idx - 256;
+
+                    last_idx = rule_idx;
+
+                    std::cout << "round(" << debug_round << "): "
+                        << "rule_idx: " << rule_idx
+                        << ", store_idx: " << store_idx
+                        << "\n";
+
+                    DCHECK_EQ(ret.at(store_idx).at(0), 0);
+                    DCHECK_EQ(ret.at(store_idx).at(1), 0);
+
+                    if (key.m_data.size() == 2) {
+                        std::cout << "store to 2 idx " << store_idx << "\n";
+
+                        ret[store_idx][0] = key.m_data[0] + prev_counter_offset;
+                        ret[store_idx][1] = key.m_data[1] + prev_counter_offset;
+                    } else if (key.m_data.size() == 3) {
+                        std::cout << "store to 2 idx " << store_idx << "\n";
+                        ret[store_idx][0] = i3 + 256;
+                        ret[store_idx][1] = key.m_data[2] + prev_counter_offset;
+
+                        std::cout << "store to 3 idx " << i3 << "\n";
+                        ret[i3][0] = key.m_data[0] + prev_counter_offset;
+                        ret[i3][1] = key.m_data[1] + prev_counter_offset;
+
+                        i3++;
+                    } else {
+                        DCHECK(false);
+                    }
+
+                    DCHECK_NE(ret.at(store_idx).at(0), 0);
+                    DCHECK_NE(ret.at(store_idx).at(1), 0);
+                }
+            };
+
+            doit(r.gr.n2);
+            doit(r.gr.n3);
+            prev_counter_offset = counter_offset;
+            counter_offset += r.gr.counter - 1;
+
+            debug_round++;
+        }
+
+        DCHECK_EQ(counter_offset, size2 + size3 + 256);
+        DCHECK_EQ(i3, ret.size());
+
+        return SLP {
+            std::move(ret),
+            last_idx
+        };
+    }
+
     void derive_text_rec(const std::vector<std::vector<size_t>>& rules,
                          std::ostream& o,
                          size_t rule) {
@@ -243,6 +337,23 @@ namespace esp {
         return ss.str();
     }
 
+    void derive_text_rec_alt(const SLP& slp,
+                         std::ostream& o,
+                         size_t rule) {
+        if (rule < 256) {
+            o << char(rule);
+        } else for (auto r : slp.rules[rule - 256]) {
+            derive_text_rec_alt(slp, o, r);
+        }
+    }
+
+    std::string derive_text_alt(const SLP& slp) {
+        std::stringstream ss;
+
+        derive_text_rec_alt(slp, ss, slp.root_rule);
+
+        return ss.str();
+    }
 
 }
 }

@@ -452,6 +452,33 @@ TEST(Esp, tree_reducer_roundtrip) {
     ASSERT_EQ(s, s2);
 }
 
+TEST(Esp, tree_reducer_roundtrip_alt) {
+    auto s = "0000dkasxxxcsdacjzsbkhvfaghskcbs"
+             "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v;
+
+    auto r = esp::generate_grammar_rounds(s);
+
+    std::cout << "\n[Complete Grammar]:\n\n";
+    auto slp = esp::generate_grammar_alt(r);
+    for (size_t i = 0; i < slp.rules.size(); i++) {
+        std::cout
+            << i << ": "
+            << i + esp::GRAMMAR_PD_ELLIDED_PREFIX
+            << " -> (" << slp.rules[i][0] << ", " << slp.rules[i][1] << ")\n";
+    }
+
+    std::cout << "start rule: " << slp.root_rule << "\n";
+
+    auto s2 = esp::derive_text_alt(slp);
+
+    std::cout << "\n[Derived String]:\n\n";
+    std::cout << s2 << "\n";
+
+    ASSERT_EQ(s, s2);
+
+}
+
+/*
 TEST(ESP, test) {
     // TODO: ensure ESP code is parametric over input alphabet size and format
 
@@ -480,4 +507,4 @@ TEST(ESP, test) {
     for (auto& c : cases) {
         test::roundtrip<EspCompressor>(c, "");
     }
-}
+}*/
