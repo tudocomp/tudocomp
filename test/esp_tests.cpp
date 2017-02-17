@@ -429,14 +429,14 @@ TEST(Esp, adjust_block_2) {
     );
 }
 
-TEST(Esp, tree_reducer_roundtrip_alt) {
+TEST(Esp, tree_reducer_roundtrip) {
     auto s = "0000dkasxxxcsdacjzsbkhvfaghskcbs"
              "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v;
 
     auto r = esp::generate_grammar_rounds(s);
 
     std::cout << "\n[Complete Grammar]:\n\n";
-    auto slp = esp::generate_grammar_alt(r);
+    auto slp = esp::generate_grammar(r);
     for (size_t i = 0; i < slp.rules.size(); i++) {
         std::cout
             << i << ": "
@@ -446,7 +446,7 @@ TEST(Esp, tree_reducer_roundtrip_alt) {
 
     std::cout << "start rule: " << slp.root_rule << "\n";
 
-    auto s2 = esp::derive_text_alt(slp);
+    auto s2 = esp::derive_text(slp);
 
     std::cout << "\n[Derived String]:\n\n";
     std::cout << s2 << "\n";

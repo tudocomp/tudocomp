@@ -184,7 +184,7 @@ namespace esp {
 
     // TODO: Either ellided-256 alphabet, or compressed included alphabet
 
-    SLP generate_grammar_alt(const std::vector<Round>& rs) {
+    SLP generate_grammar(const std::vector<Round>& rs) {
         size_t size2 = 0;
         size_t size3 = 0;
         for (auto& r: rs) {
@@ -267,20 +267,20 @@ namespace esp {
         };
     }
 
-    void derive_text_rec_alt(const SLP& slp,
+    void derive_text_rec(const SLP& slp,
                          std::ostream& o,
                          size_t rule) {
         if (rule < 256) {
             o << char(rule);
         } else for (auto r : slp.rules[rule - 256]) {
-            derive_text_rec_alt(slp, o, r);
+            derive_text_rec(slp, o, r);
         }
     }
 
-    std::string derive_text_alt(const SLP& slp) {
+    std::string derive_text(const SLP& slp) {
         std::stringstream ss;
 
-        derive_text_rec_alt(slp, ss, slp.root_rule);
+        derive_text_rec(slp, ss, slp.root_rule);
 
         return ss.str();
     }

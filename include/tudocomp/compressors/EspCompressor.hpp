@@ -28,7 +28,7 @@ public:
 
         auto p1 = env().stat_phase("ESP Compressor");
 
-        std::vector<std::vector<size_t>> g;
+        SLP g;
 
         {
             auto p2 = env().stat_phase("Input");
@@ -39,7 +39,7 @@ public:
             p3.end();
 
             auto p4 = env().stat_phase("Transform Grammar");
-                //g = generate_grammar(r);
+                g = generate_grammar(r);
             p4.end();
         }
 
