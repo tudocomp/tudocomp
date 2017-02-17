@@ -175,6 +175,7 @@ namespace esp {
     /// direct hashmap -> slp conversion, with push-to-end and
     /// remembering original start symbol
 
+    // TODO: Fix to work with = 0
     size_t GRAMMAR_PD_ELLIDED_PREFIX = 256;
 
     struct SLP {
@@ -192,16 +193,16 @@ namespace esp {
             size3 += r.gr.n3.size();
         }
 
-        std::cout << "size2: " << size2 << "\n";
-        std::cout << "size3: " << size3 << "\n";
-
         std::vector<std::array<size_t, 2>> ret;
-        ret.reserve(size2 + 2 * size3);
-        ret.resize(size2 + 2 * size3, std::array<size_t, 2>{{ 0,0 }});
+
+        size_t vector_size =
+            size2 + 2 * size3 + (256 - GRAMMAR_PD_ELLIDED_PREFIX);
+        ret.reserve(vector_size);
+        ret.resize(vector_size, std::array<size_t, 2>{{ 0,0 }});
 
         size_t i3 = size2 + size3;
 
-        size_t counter_offset = 256;
+        size_t counter_offset = GRAMMAR_PD_ELLIDED_PREFIX;
         size_t prev_counter_offset = 0;
 
         size_t last_idx = 0;
@@ -214,29 +215,20 @@ namespace esp {
                     const auto& val = kv.second - 1;
 
                     size_t rule_idx = counter_offset + val;
-                    size_t store_idx = rule_idx - 256;
+                    size_t store_idx = rule_idx - GRAMMAR_PD_ELLIDED_PREFIX;
 
                     last_idx = rule_idx;
-
-                    std::cout << "round(" << debug_round << "): "
-                        << "rule_idx: " << rule_idx
-                        << ", store_idx: " << store_idx
-                        << "\n";
 
                     DCHECK_EQ(ret.at(store_idx).at(0), 0);
                     DCHECK_EQ(ret.at(store_idx).at(1), 0);
 
                     if (key.m_data.size() == 2) {
-                        std::cout << "store to 2 idx " << store_idx << "\n";
-
                         ret[store_idx][0] = key.m_data[0] + prev_counter_offset;
                         ret[store_idx][1] = key.m_data[1] + prev_counter_offset;
                     } else if (key.m_data.size() == 3) {
-                        std::cout << "store to 2 idx " << store_idx << "\n";
-                        ret[store_idx][0] = i3 + 256;
+                        ret[store_idx][0] = i3 + GRAMMAR_PD_ELLIDED_PREFIX;
                         ret[store_idx][1] = key.m_data[2] + prev_counter_offset;
 
-                        std::cout << "store to 3 idx " << i3 << "\n";
                         ret[i3][0] = key.m_data[0] + prev_counter_offset;
                         ret[i3][1] = key.m_data[1] + prev_counter_offset;
 
@@ -258,7 +250,7 @@ namespace esp {
             debug_round++;
         }
 
-        DCHECK_EQ(counter_offset, size2 + size3 + 256);
+        DCHECK_EQ(counter_offset, size2 + size3 + GRAMMAR_PD_ELLIDED_PREFIX);
         DCHECK_EQ(i3, ret.size());
 
         return SLP {
@@ -272,7 +264,7 @@ namespace esp {
                          size_t rule) {
         if (rule < 256) {
             o << char(rule);
-        } else for (auto r : slp.rules[rule - 256]) {
+        } else for (auto r : slp.rules[rule - GRAMMAR_PD_ELLIDED_PREFIX]) {
             derive_text_rec(slp, o, r);
         }
     }
