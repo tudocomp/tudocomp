@@ -166,7 +166,30 @@ namespace esp {
         return std::move(rounds);
     }
 
+    ///
+    /// REFACTOR: ONE GLOBAL HASHMAP STRUCTURE WITH GLOBAL ARRAY INDICE CONTENTS
+    /// SUBTRACT DOWN TO LAYER_INDEX MANUALLY WHERE NEEDED
+    ///
+
+    bool MAKE_BINARY = true;
     size_t GRAMMAR_PD_ELLIDED_PREFIX = 256;
+
+    void make_binary(std::vector<std::vector<size_t>>& rules) {
+        for (size_t i = 0; i < rules.size(); i++) {
+            if (rules[i].size() == 3) {
+                auto char1 = rules[i][0];
+                auto char2 = rules[i][1];
+                auto char3 = rules[i][2];
+
+                auto new_rule = rules.size() + GRAMMAR_PD_ELLIDED_PREFIX;
+                rules.push_back(std::vector<size_t> { char1, char2 });
+
+                rules[i].clear();
+                rules[i].push_back(new_rule);
+                rules[i].push_back(char3);
+            }
+        }
+    }
 
     std::vector<std::vector<size_t>> generate_grammar(const std::vector<Round>& rs) {
         size_t offset = 256;
@@ -194,6 +217,11 @@ namespace esp {
             prev_offset = offset;
             offset += r.gr.counter - 1;
         }
+
+        if (MAKE_BINARY) {
+            make_binary(ret);
+        }
+
         return std::move(ret);
     }
 
@@ -214,6 +242,7 @@ namespace esp {
 
         return ss.str();
     }
+
 
 }
 }
