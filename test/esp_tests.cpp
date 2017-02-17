@@ -455,7 +455,6 @@ TEST(Esp, tree_reducer_roundtrip) {
 
 }
 
-/*
 TEST(ESP, test) {
     // TODO: ensure ESP code is parametric over input alphabet size and format
 
@@ -482,6 +481,7 @@ TEST(ESP, test) {
     };
 
     for (auto& c : cases) {
+        std::cout << "---------------------\n";
         test::roundtrip<EspCompressor>(c, "");
     }
-}*/
+}
