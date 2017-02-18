@@ -62,7 +62,7 @@ public:
 
         // Write rules
         for (auto& rule : slp.rules) {
-            std::cout << "OUT: " << vec_to_debug_string(rule) << "\n";
+            //std::cout << "OUT: " << vec_to_debug_string(rule) << "\n";
             DCHECK_LE(rule[0], max_val);
             DCHECK_LE(rule[1], max_val);
             bout.write_int(rule[0], bit_width);
@@ -86,7 +86,7 @@ public:
             auto b = bin.read_int<size_t>(bit_width);
             auto array = std::array<size_t, 2>{{ a, b, }};
 
-            std::cout << "IN:  " << vec_to_debug_string(array) << "\n";
+            //std::cout << "IN:  " << vec_to_debug_string(array) << "\n";
 
             slp.rules.push_back(array);
         }

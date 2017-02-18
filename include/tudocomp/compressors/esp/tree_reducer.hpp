@@ -89,9 +89,15 @@ namespace esp {
         std::vector<size_t> string;
     };
 
-    std::vector<Round> generate_grammar_rounds(string_ref input,
-                                               bool silent = false) {
+    struct Rounds {
         std::vector<Round> rounds;
+        size_t root_rule;
+    };
+
+    Rounds generate_grammar_rounds(string_ref input,
+                                   bool silent = false) {
+        std::vector<Round> rounds;
+        size_t root_rule = 0;
 
         // Initialize initial round
         {
@@ -113,6 +119,7 @@ namespace esp {
 
             if (r.string.size() == 1) {
                 if (!silent) std::cout << "Done\n";
+                root_rule = r.string[0];
                 break;
             }
 
@@ -163,7 +170,10 @@ namespace esp {
             }
         }
 
-        return std::move(rounds);
+        return Rounds {
+            std::move(rounds),
+            root_rule,
+        };
     }
 
     ///
@@ -185,7 +195,8 @@ namespace esp {
 
     // TODO: Either ellided-256 alphabet, or compressed included alphabet
 
-    SLP generate_grammar(const std::vector<Round>& rs) {
+    SLP generate_grammar(const Rounds& rds) {
+        auto& rs = rds.rounds;
         size_t size2 = 0;
         size_t size3 = 0;
         for (auto& r: rs) {
@@ -205,7 +216,7 @@ namespace esp {
         size_t counter_offset = GRAMMAR_PD_ELLIDED_PREFIX;
         size_t prev_counter_offset = 0;
 
-        size_t last_idx = 0;
+        size_t last_idx = rds.root_rule;
 
         size_t debug_round = 0;
         for (auto& r: rs) {
