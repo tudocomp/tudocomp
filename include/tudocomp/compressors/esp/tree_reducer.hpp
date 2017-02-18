@@ -92,12 +92,14 @@ namespace esp {
     struct Rounds {
         std::vector<Round> rounds;
         size_t root_rule;
+        bool empty = false;
     };
 
     Rounds generate_grammar_rounds(string_ref input,
                                    bool silent = false) {
         std::vector<Round> rounds;
         size_t root_rule = 0;
+        bool empty = false;
 
         // Initialize initial round
         {
@@ -117,6 +119,10 @@ namespace esp {
             if (!silent) std::cout << "\n[Round " << n << "]:\n\n";
             Round& r = rounds.back();
 
+            if (r.string.size() == 0) {
+                empty = true;
+                break;
+            }
             if (r.string.size() == 1) {
                 if (!silent) std::cout << "Done\n";
                 root_rule = r.string[0];
@@ -170,9 +176,11 @@ namespace esp {
             }
         }
 
+        std::cout << "empty: " << int(empty) << ", root_rule: " << int(root_rule) << "\n";
         return Rounds {
             std::move(rounds),
             root_rule,
+            empty,
         };
     }
 
@@ -191,12 +199,15 @@ namespace esp {
     struct SLP {
         std::vector<std::array<size_t, 2>> rules;
         size_t root_rule;
+        bool empty = false;
     };
 
     // TODO: Either ellided-256 alphabet, or compressed included alphabet
 
     SLP generate_grammar(const Rounds& rds) {
         auto& rs = rds.rounds;
+        bool empty = rds.empty;
+
         size_t size2 = 0;
         size_t size3 = 0;
         for (auto& r: rs) {
@@ -264,9 +275,11 @@ namespace esp {
         DCHECK_EQ(counter_offset, size2 + size3 + GRAMMAR_PD_ELLIDED_PREFIX);
         DCHECK_EQ(i3, ret.size());
 
+        std::cout << "empty: " << int(empty) << ", root_rule: " << int(last_idx) << "\n";
         return SLP {
             std::move(ret),
-            last_idx
+            last_idx,
+            empty,
         };
     }
 

@@ -55,8 +55,17 @@ public:
         // Write header
         // bit width
         DCHECK_GE(bit_width, 1);
-        DCHECK_LE(bit_width, 64);
-        bout.write_int(bit_width - 1, 6);
+        DCHECK_LE(bit_width, 63); // 64-bit sizes are
+                                  // restricted to 63 or less in practice
+
+        if (slp.empty) {
+            bit_width = 0;
+            DCHECK(slp.rules.empty());
+            DCHECK_EQ(slp.root_rule, 0);
+        }
+
+        bout.write_int(bit_width, 6);
+
         // root rule
         bout.write_int(slp.root_rule, bit_width);
 
@@ -72,7 +81,10 @@ public:
 
     inline virtual void decompress(Input& input, Output& output) override {
         BitIStream bin(input.as_stream());
-        auto bit_width = bin.read_int<size_t>(6) + 1;
+
+        auto bit_width = bin.read_int<size_t>(6);
+        bool empty = (bit_width == 0);
+
         auto root_rule = bin.read_int<size_t>(bit_width);
 
         std::cout << "in:  Root rule: " << root_rule << "\n";
@@ -92,8 +104,12 @@ public:
         }
 
         auto out = output.as_stream();
-        auto s = esp::derive_text(slp);
-        out << s;
+        if (!empty) {
+            auto s = esp::derive_text(slp);
+            out << s;
+        } else {
+            out << ""_v;
+        }
     }
 };
 

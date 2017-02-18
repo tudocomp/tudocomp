@@ -478,6 +478,7 @@ TEST(ESP, test) {
         "asdfg",
         "asdfgh",
         "abcabageheadbag",
+        "",
     };
 
     for (auto& c : cases) {
