@@ -274,6 +274,14 @@ namespace esp {
             sb = s;
         }
 
+        void check_sizes(string_ref errmsg) {
+            size_t full_size = 0;
+            for (auto& b : block_buffer) {
+                full_size += b.len;
+            }
+            DCHECK_EQ(full_size, s.size()) << errmsg;
+        }
+
         void print_cut(size_t l, size_t type, bool doit) {
             auto front_cut = sb.substr(0, l);
             auto back_cut = sb.substr(l);
@@ -313,7 +321,16 @@ namespace esp {
         }
 
         std::vector<TypedBlock>& adjusted_blocks() {
+            check_sizes("pre adjust");
+            auto copy = block_buffer;
             adjust_blocks(block_buffer);
+
+            for (auto& e : copy) std::cout << int(e.len);
+            std::cout << "\n";
+            for (auto& e : block_buffer) std::cout << int(e.len);
+            std::cout << "\n";
+
+            check_sizes("post adjust");
 
             print_all(true);
             for (auto& b: block_buffer) {
