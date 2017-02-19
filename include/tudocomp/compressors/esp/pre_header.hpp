@@ -254,16 +254,15 @@ namespace esp {
     void adjust_blocks(std::vector<TypedBlock>& blocks) {
         if (blocks.size() < 2) return;
 
-        std::vector<TypedBlock> replace;
-
         auto adjust2 = [&](auto f) {
             FixedVector<TypedBlock, 3> queue;
-            auto block_iter = blocks.begin();
+            auto read_it = blocks.begin();
+            auto write_it = blocks.begin();
 
             auto fill = [&]() {
-                while ((!queue.full()) && (block_iter != blocks.end())) {
-                    queue.push_back(std::move(*block_iter));
-                    block_iter++;
+                while ((!queue.full()) && (read_it != blocks.end())) {
+                    queue.push_back(std::move(*read_it));
+                    ++read_it;
                 }
             };
 
@@ -281,7 +280,13 @@ namespace esp {
                 //nice_block_lengths(queue.view(), std::cout) << "\n";
 
                 auto e = queue.pop_front();
-                replace.push_back(e);
+                *write_it = e;
+                ++write_it;
+            }
+
+            size_t diff = read_it - write_it;
+            for (size_t i = 0; i < diff; i++) {
+                blocks.pop_back();
             }
         };
 
@@ -341,8 +346,6 @@ namespace esp {
             return true;
 
         });
-
-        blocks.swap(replace);
     }
 
     template<typename Source>
