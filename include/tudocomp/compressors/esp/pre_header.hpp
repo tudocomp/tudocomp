@@ -168,64 +168,182 @@ namespace esp {
         return o << "{ len: " << int(b.len) << ", type: " << int(b.type) << " }";
     }
 
+    template<typename T, size_t N>
+    class FixedVector {
+        std::array<T, N> m_array;
+        size_t m_size = 0;
+    public:
+        inline FixedVector() {}
+        inline void push_back(T&& t) {
+            DCHECK_LT(m_size, N);
+            m_array[m_size] = std::move(t);
+            m_size++;
+        }
+        inline T pop_back() {
+            DCHECK_GT(m_size, 0);
+            m_size--;
+            return std::move(m_array[m_size]);
+        }
+        inline T pop_front() {
+            DCHECK_GT(m_size, 0);
+            auto e = std::move(m_array[0]);
+
+            for(size_t i = 0; i < m_size - 1; i++) {
+                m_array[i] = m_array[i + 1];
+            }
+            m_size--;
+
+            return std::move(e);
+        }
+        inline bool full() {
+            return m_size == N;
+        }
+        inline GenericView<T> view() {
+            return GenericView<T> { m_array.data(), m_size };
+        }
+    };
+
+    std::ostream& nice_block_lengths(GenericView<TypedBlock> tbs, std::ostream& o) {
+        for (auto& tb: tbs) {
+            if (tb.len == 1) {
+                o << "[" << int(tb.type) << "]";
+            } else if (tb.len == 2) {
+                o << "[  " << int(tb.type) << " ]";
+            } else if (tb.len == 3) {
+                o << "[   " << int(tb.type) << "   ]";
+            } else {
+                o << "<Err: " << tb <<  ">";
+            }
+        }
+        return o;
+    }
+
+    bool needs_merge(const TypedBlock& a) {
+        return a.len == 1;
+    };
+
+    bool needs_merge(const TypedBlock& a, const TypedBlock& b) {
+        return a.len == 1 || b.len == 1;
+    };
+
+    size_t merge(TypedBlock& a, TypedBlock& b, size_t type) {
+        if (a.len + b.len == 2) {
+            a.len = 2;
+            b.len = 2;
+            a.type = type;
+            b.type = type;
+            return 1;
+        } else if (a.len + b.len == 3) {
+            a.len = 3;
+            b.len = 3;
+            a.type = type;
+            b.type = type;
+            return 1;
+        } else if (a.len + b.len == 4) {
+            a.len = 2;
+            b.len = 2;
+            a.type = type;
+            b.type = type;
+            return 2;
+        } else {
+            DCHECK(false) << "should never happen";
+            return 0;
+        }
+    };
+
     void adjust_blocks(std::vector<TypedBlock>& blocks) {
         if (blocks.size() < 2) return;
 
-        auto adjust_pass = [&](auto f) {
-            size_t read_i = 0;
-            size_t write_i = 0;
-            for (; read_i < blocks.size(); read_i++, write_i++) {
-                auto a = blocks[read_i];
-                if (read_i == blocks.size() - 1) {
-                    blocks[write_i] = a;
-                    break;
-                } else {
-                    auto b = blocks[read_i + 1];
+        std::vector<TypedBlock> replace;
 
-                    auto merge = [&](size_t new_type) {
-                        if (a.len + b.len == 4) {
-                            // Merge [_] [___] -> [__] [__]
-                            a.len = 2;
-                            b.len = 2;
-                            a.type = new_type;
-                            b.type = new_type;
-                            blocks[write_i] = a;
-                            blocks[write_i + 1] = b;
-                        } else if (a.len + b.len == 3) {
-                            // Merge [_] [__] -> [___]
-                            a.len = 3;
-                            a.type = new_type;
-                            blocks[write_i] = a;
-                            blocks[write_i + 1] = TypedBlock { 0, 0 };
-                            read_i++;
-                        } else if (a.len + b.len == 2) {
-                            // Merge [_] [_] -> [__]
-                            a.len = 2;
-                            a.type = new_type;
-                            blocks[write_i] = a;
-                            blocks[write_i + 1] = TypedBlock { 0, 0 };
-                            read_i++;
-                        } else {
-                            DCHECK(false) << "this should not happen";
-                        }
-                    };
+        auto adjust2 = [&](auto f) {
+            FixedVector<TypedBlock, 3> queue;
+            auto block_iter = blocks.begin();
 
-                    // Adjustment checks:
+            auto fill = [&]() {
+                while ((!queue.full()) && (block_iter != blocks.end())) {
+                    queue.push_back(std::move(*block_iter));
+                    block_iter++;
+                }
+            };
 
-                    size_t new_type = -1;
-                    if (f(a, b, new_type)) {
-                        merge(new_type);
-                    } else {
-                        blocks[write_i] = a;
-                    }
+            fill();
+            while(queue.view().size() > 0) {
+                std::cout << "Adjust loop:\n";
+
+                std::cout << "    before:    ";
+                nice_block_lengths(queue.view(), std::cout) << "\n";
+                do {
+                    fill();
+                    std::cout << "    loop fill: ";
+                    nice_block_lengths(queue.view(), std::cout) << "\n";
+                } while(f(queue));
+                std::cout << "    after:     ";
+                nice_block_lengths(queue.view(), std::cout) << "\n";
+
+                auto e = queue.pop_front();
+                replace.push_back(e);
+            }
+        };
+
+        adjust2([](auto& vec) {
+            auto v = vec.view();
+
+            bool has_one = false;
+            for (auto& e : v) {
+                if (e.len == 1) {
+                    has_one = true;
                 }
             }
 
-            for (size_t diff = write_i; diff < read_i; diff++) {
-                blocks.pop_back();
+            if (!has_one) return false;
+
+            if (v.size() == 3) {
+                auto& a = v[1];
+                auto& b = v[2];
+
+                if (needs_merge(a, b) && a.type == 2 && b.type == 2) {
+                    if (merge(a, b, 2) == 1) {
+                        vec.pop_back();
+                    }
+                    return true;
+                }
+            }
+            if (v.size() >= 2) {
+                auto& a = v[0];
+                auto& b = v[1];
+
+                if (needs_merge(a, b) && a.type == 2 && b.type == 2) {
+                    if (merge(a, b, 2) == 1) {
+                        vec.pop_front();
+                    }
+                    return true;
+                }
+                if (needs_merge(a, b) && a.type == 3) {
+                    if (merge(a, b, 3) == 1) {
+                        vec.pop_front();
+                    }
+                    return true;
+                }
+                if (needs_merge(a, b) && (a.type == 1 || b.type == 1)) {
+                    if (merge(a, b, 1) == 1) {
+                        vec.pop_front();
+                    }
+                    return true;
+                }
             }
 
-        };
+            // We did all we could do do far
+            if (v.size() > 0 && v[0].len > 1) {
+                return false;
+            }
+
+            DCHECK(false) << "should not be reached";
+            return true;
+
+        });
+
+        blocks.swap(replace);
 
         /*{
             // TODO: Use custom TYbedBlock for this
@@ -258,10 +376,13 @@ namespace esp {
             };
         }*/
 
+        /*
+        // landmark artefacts
         adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
             new_type = 2;
             return (a.type == 2 && b.type == 2) && (a.len == 1 || b.len == 1);
         });
+        // too short metablocks artefacts
         adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
             new_type = 3;
             return a.type == 3 && b.type == 2 && b.len == 1;
@@ -273,7 +394,9 @@ namespace esp {
         adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
             new_type = 1;
             return a.type == 3 && b.type == 1 && a.len == 1;
-        });
+        });*/
+
+
 
     }
 
