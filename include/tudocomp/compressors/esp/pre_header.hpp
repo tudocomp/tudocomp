@@ -269,17 +269,16 @@ namespace esp {
 
             fill();
             while(queue.view().size() > 0) {
-                std::cout << "Adjust loop:\n";
-
-                std::cout << "    before:    ";
-                nice_block_lengths(queue.view(), std::cout) << "\n";
+                // std::cout << "Adjust loop:\n";
+                // std::cout << "    before:    ";
+                // nice_block_lengths(queue.view(), std::cout) << "\n";
                 do {
                     fill();
-                    std::cout << "    loop fill: ";
-                    nice_block_lengths(queue.view(), std::cout) << "\n";
+                    //std::cout << "    loop fill: ";
+                    //nice_block_lengths(queue.view(), std::cout) << "\n";
                 } while(f(queue));
-                std::cout << "    after:     ";
-                nice_block_lengths(queue.view(), std::cout) << "\n";
+                //std::cout << "    after:     ";
+                //nice_block_lengths(queue.view(), std::cout) << "\n";
 
                 auto e = queue.pop_front();
                 replace.push_back(e);
@@ -344,60 +343,6 @@ namespace esp {
         });
 
         blocks.swap(replace);
-
-        /*{
-            // TODO: Use custom TYbedBlock for this
-            TypedBlock ignore {254, 254};
-            TypedBlock drop   {255, 255};
-
-            std::vector<
-                std::pair<
-                    std::array<TypedBlock, 3>,
-                    std::array<TypedBlock, 3>
-                >
-            > patterns {
-                {{ignore, {1, 2}, {1, 2}}, {ignore, {2, 2}, drop  }},
-                {{ignore, {1, 2}, {2, 2}}, {ignore, {3, 2}, drop  }},
-                {{ignore, {1, 2}, {3, 2}}, {ignore, {2, 2}, {2, 2}}},
-                {{{2, 2}, {1, 2}, ignore}, {{3, 2}, drop  , ignore}},
-                {{{3, 2}, {1, 2}, ignore}, {{2, 2}, {2, 2}, ignore}},
-
-                {{{1, 3}, {1, 2}, ignore}, {{2, 3}, drop,   ignore}},
-                {{{2, 3}, {1, 2}, ignore}, {{3, 3}, drop,   ignore}},
-                {{{3, 3}, {1, 2}, ignore}, {{2, 3}, {2, 3}, ignore}},
-
-                {{{1, 1}, {1, 3}, ignore}, {{2, 1}, drop,   ignore}},
-                {{{2, 1}, {1, 3}, ignore}, {{3, 1}, drop,   ignore}},
-                {{{3, 1}, {1, 3}, ignore}, {{2, 1}, {2, 1}, ignore}},
-
-                {{ignore, {1, 3}, {1, 1}}, {ignore, {2, 1}, drop  }},
-                {{ignore, {1, 3}, {2, 1}}, {ignore, {3, 1}, drop  }},
-                {{ignore, {1, 3}, {3, 1}}, {ignore, {2, 1}, {2, 1}}},
-            };
-        }*/
-
-        /*
-        // landmark artefacts
-        adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
-            new_type = 2;
-            return (a.type == 2 && b.type == 2) && (a.len == 1 || b.len == 1);
-        });
-        // too short metablocks artefacts
-        adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
-            new_type = 3;
-            return a.type == 3 && b.type == 2 && b.len == 1;
-        });
-        adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
-            new_type = 1;
-            return a.type == 1 && b.type == 3 && b.len == 1;
-        });
-        adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
-            new_type = 1;
-            return a.type == 3 && b.type == 1 && a.len == 1;
-        });*/
-
-
-
     }
 
     template<typename Source>
@@ -436,9 +381,6 @@ namespace esp {
         }
 
         void print_cut(size_t l, size_t type, bool doit) {
-            std::cout << "sb: " << vec_to_debug_string(sb) << "\n";
-            std::cout << "l: " << int(l) << "\n";
-
             auto front_cut = sb.substr(0, l);
             auto back_cut = sb.substr(l);
 
@@ -478,14 +420,7 @@ namespace esp {
 
         std::vector<TypedBlock>& adjusted_blocks() {
             check_sizes("pre adjust");
-            auto copy = block_buffer;
             adjust_blocks(block_buffer);
-
-            for (auto& e : copy) std::cout << int(e.len);
-            std::cout << "\n";
-            for (auto& e : block_buffer) std::cout << int(e.len);
-            std::cout << "\n";
-
             check_sizes("post adjust");
 
             print_all(true);

@@ -11,7 +11,7 @@
 namespace tdc {
 
 class EspCompressor: public Compressor {
-    static const bool SILENT = false;
+    static const bool SILENT = true;
 
 public:
     inline static Meta meta() {
