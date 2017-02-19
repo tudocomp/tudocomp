@@ -174,7 +174,7 @@ namespace esp {
         auto adjust_pass = [&](auto f) {
             size_t read_i = 0;
             size_t write_i = 0;
-            for (; read_i < blocks.size();read_i++, write_i++) {
+            for (; read_i < blocks.size(); read_i++, write_i++) {
                 auto a = blocks[read_i];
                 if (read_i == blocks.size() - 1) {
                     blocks[write_i] = a;
@@ -185,7 +185,6 @@ namespace esp {
                     auto merge = [&](size_t new_type) {
                         if (a.len + b.len == 4) {
                             // Merge [_] [___] -> [__] [__]
-
                             a.len = 2;
                             b.len = 2;
                             a.type = new_type;
@@ -227,6 +226,37 @@ namespace esp {
             }
 
         };
+
+        /*{
+            // TODO: Use custom TYbedBlock for this
+            TypedBlock ignore {254, 254};
+            TypedBlock drop   {255, 255};
+
+            std::vector<
+                std::pair<
+                    std::array<TypedBlock, 3>,
+                    std::array<TypedBlock, 3>
+                >
+            > patterns {
+                {{ignore, {1, 2}, {1, 2}}, {ignore, {2, 2}, drop  }},
+                {{ignore, {1, 2}, {2, 2}}, {ignore, {3, 2}, drop  }},
+                {{ignore, {1, 2}, {3, 2}}, {ignore, {2, 2}, {2, 2}}},
+                {{{2, 2}, {1, 2}, ignore}, {{3, 2}, drop  , ignore}},
+                {{{3, 2}, {1, 2}, ignore}, {{2, 2}, {2, 2}, ignore}},
+
+                {{{1, 3}, {1, 2}, ignore}, {{2, 3}, drop,   ignore}},
+                {{{2, 3}, {1, 2}, ignore}, {{3, 3}, drop,   ignore}},
+                {{{3, 3}, {1, 2}, ignore}, {{2, 3}, {2, 3}, ignore}},
+
+                {{{1, 1}, {1, 3}, ignore}, {{2, 1}, drop,   ignore}},
+                {{{2, 1}, {1, 3}, ignore}, {{3, 1}, drop,   ignore}},
+                {{{3, 1}, {1, 3}, ignore}, {{2, 1}, {2, 1}, ignore}},
+
+                {{ignore, {1, 3}, {1, 1}}, {ignore, {2, 1}, drop  }},
+                {{ignore, {1, 3}, {2, 1}}, {ignore, {3, 1}, drop  }},
+                {{ignore, {1, 3}, {3, 1}}, {ignore, {2, 1}, {2, 1}}},
+            };
+        }*/
 
         adjust_pass([](auto& a, auto& b, auto& new_type) -> bool {
             new_type = 2;
@@ -283,6 +313,9 @@ namespace esp {
         }
 
         void print_cut(size_t l, size_t type, bool doit) {
+            std::cout << "sb: " << vec_to_debug_string(sb) << "\n";
+            std::cout << "l: " << int(l) << "\n";
+
             auto front_cut = sb.substr(0, l);
             auto back_cut = sb.substr(l);
 
