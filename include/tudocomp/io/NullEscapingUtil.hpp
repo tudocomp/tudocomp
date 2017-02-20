@@ -85,7 +85,7 @@ namespace io {
             }
         }
 
-        inline bool is_empty() { return !bool(m_data); }
+        inline bool is_empty() const { return !bool(m_data); }
 
         inline View view() const {
             return *m_data;

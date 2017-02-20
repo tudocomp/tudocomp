@@ -32,15 +32,15 @@ namespace io {
     class Input {
         struct Variant {
             virtual ~Variant() {}
-            virtual std::unique_ptr<Variant> virtual_copy() = 0;
-            virtual InputView as_view(bool escape_and_terminate) = 0;
-            virtual InputStream as_stream() = 0;
-            virtual size_t size() = 0;
-            virtual EscapableBuf buffer() = 0;
+            virtual std::unique_ptr<Variant> virtual_copy() const = 0;
+            virtual InputView as_view(bool escape_and_terminate) const = 0;
+            virtual InputStream as_stream() const = 0;
+            virtual size_t size() const = 0;
+            virtual EscapableBuf buffer() const = 0;
         };
 
         struct Memory: Variant {
-            View m_view;
+            mutable View m_view;
             EscapableBuf m_owned;
 
             Memory(View view, const EscapableBuf& owned):
@@ -51,14 +51,14 @@ namespace io {
                 m_view(other.m_view),
                 m_owned(other.m_owned) {}
 
-            std::unique_ptr<Variant> virtual_copy() override {
+            std::unique_ptr<Variant> virtual_copy() const override {
                 return std::make_unique<Memory>(*this);
             }
 
-            inline InputView as_view(bool escape_and_terminate) override;
-            inline InputStream as_stream() override;
-            inline size_t size() override;
-            inline EscapableBuf buffer() override {
+            inline InputView as_view(bool escape_and_terminate) const override;
+            inline InputStream as_stream() const override;
+            inline size_t size() const override;
+            inline EscapableBuf buffer() const override {
                 return m_owned;
             }
         };
@@ -75,14 +75,14 @@ namespace io {
                 path(other.path),
                 offset(other.offset) {}
 
-            std::unique_ptr<Variant> virtual_copy() override {
+            std::unique_ptr<Variant> virtual_copy() const override {
                 return std::make_unique<File>(*this);
             }
 
-            inline InputView as_view(bool escape_and_terminate) override;
-            inline InputStream as_stream() override;
-            inline size_t size() override;
-            inline EscapableBuf buffer() override {
+            inline InputView as_view(bool escape_and_terminate) const override;
+            inline InputStream as_stream() const override;
+            inline size_t size() const override;
+            inline EscapableBuf buffer() const override {
                 return EscapableBuf();
             }
         };
@@ -202,18 +202,18 @@ namespace io {
         /// will be fully read in order to provide the view.
         ///
         /// \return A random access view on the input.
-        inline InputView as_view();
+        inline InputView as_view() const;
 
         /// \brief Creates a stream that allows for character-wise reading of
         /// the input.
         ///
         /// \return A character stream for the input.
-        inline InputStream as_stream();
+        inline InputStream as_stream() const;
 
         /// \brief Yields the total amount of characters in the input.
         ///
         /// \return The total amount of characters in the input.
-        inline size_t size() {
+        inline size_t size() const {
             return m_data->size();
         }
 
@@ -229,7 +229,7 @@ namespace io {
     class InputViewInternal {
         struct Variant {
             inline virtual ~Variant() {}
-            virtual View view() = 0;
+            virtual View view() const = 0;
         };
 
         struct Memory: Variant {
@@ -240,7 +240,7 @@ namespace io {
                 m_view(view),
                 m_owned(owned) {}
 
-            inline View view() override {
+            inline View view() const override {
                 return m_view;
             }
         };
@@ -250,7 +250,7 @@ namespace io {
             inline File(EscapableBuf buffer_):
                 buffer(std::move(buffer_)) {}
 
-            inline View view() override {
+            inline View view() const override {
                 return buffer.view();
             }
         };
@@ -295,7 +295,7 @@ namespace io {
         inline InputView() = delete;
     };
 
-    inline InputView Input::Memory::as_view(bool escape_and_terminate) {
+    inline InputView Input::Memory::as_view(bool escape_and_terminate) const {
         EscapableBuf buf;
 
         if (escape_and_terminate) {
@@ -312,20 +312,20 @@ namespace io {
         View old_view = m_view;
 
         // advance view into memory by its whole length
-        m_view = m_view.slice(m_view.size());
+        //m_view = m_view.slice(m_view.size());
 
         return InputView {
             InputView::Memory(old_view, buf)
         };
     }
 
-    inline InputView Input::File::as_view(bool escape_and_terminate) {
+    inline InputView Input::File::as_view(bool escape_and_terminate) const {
         // read file into buffer starting at current offset
         auto buf = read_file_to_stl_byte_container<
             std::vector<uint8_t>>(path, offset);
 
         // We read the whole file, so skip it on next read.
-        offset += buf.size();
+        //offset += buf.size();
 
         EscapableBuf buf2 = std::move(buf);
 
@@ -340,7 +340,7 @@ namespace io {
         };
     }
 
-    inline InputView Input::as_view() {
+    inline InputView Input::as_view() const {
         return m_data->as_view(m_escape_and_terminate);
     }
 
@@ -355,7 +355,7 @@ namespace io {
         class Memory: public InputStreamInternal::Variant {
             ViewStream m_stream;
 
-            Input::Memory* m_offset_back_ref;
+            const Input::Memory* m_offset_back_ref;
             size_t m_start_pos;
 
             bool m_is_empty = false;
@@ -373,7 +373,7 @@ namespace io {
                 other.m_is_empty = true;
             }
 
-            Memory(ViewStream&& stream, Input::Memory* offset_back_ref):
+            Memory(ViewStream&& stream, const Input::Memory* offset_back_ref):
                 m_stream(std::move(stream))
             {
                 m_offset_back_ref = offset_back_ref;
@@ -392,7 +392,7 @@ namespace io {
         class File: public InputStreamInternal::Variant {
             std::string m_path;
             std::unique_ptr<std::ifstream> m_stream;
-            Input::File* m_offset_back_ref;
+            const Input::File* m_offset_back_ref;
             size_t m_start_pos;
 
             friend class InputStreamInternal;
@@ -400,7 +400,7 @@ namespace io {
             File(const File& other) = delete;
             File() = delete;
 
-            File(std::string&& path, Input::File* offset_back_ref, size_t offset):
+            File(std::string&& path, const Input::File* offset_back_ref, size_t offset):
                 m_path(std::move(path)),
                 m_stream(std::make_unique<std::ifstream>(
                     m_path, std::ios::in | std::ios::binary))
@@ -428,7 +428,7 @@ namespace io {
             virtual ~File() {
                 if (m_stream) {
                     auto len = size_t(stream().tellg()) - m_start_pos;
-                    m_offset_back_ref->offset += len;
+                    //m_offset_back_ref->offset += len;
                 }
             }
 
@@ -480,7 +480,7 @@ namespace io {
         }
     };
 
-    inline InputStream Input::Memory::as_stream() {
+    inline InputStream Input::Memory::as_stream() const {
         return InputStream {
             InputStream::Memory {
                 ViewStream {
@@ -492,7 +492,7 @@ namespace io {
         };
     }
 
-    inline InputStream Input::File::as_stream() {
+    inline InputStream Input::File::as_stream() const {
         return InputStream {
             InputStream::File {
                 std::string(path),
@@ -502,7 +502,7 @@ namespace io {
         };
     }
 
-    inline InputStream Input::as_stream() {
+    inline InputStream Input::as_stream() const {
         if (m_escape_and_terminate) {
             throw std::runtime_error(
                 "Creating a stream to an Input that requires termination with a sentinel value is not supported");
@@ -510,11 +510,11 @@ namespace io {
         return m_data->as_stream();
     }
 
-    inline size_t Input::Memory::size() {
+    inline size_t Input::Memory::size() const {
         return m_view.size();
     }
 
-    inline size_t Input::File::size() {
+    inline size_t Input::File::size() const {
         return read_file_size(path) - offset;
     }
 
