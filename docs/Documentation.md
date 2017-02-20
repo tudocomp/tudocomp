@@ -108,32 +108,6 @@ overrides of `malloc`, `free` etc. for the heap memory usage counters,
 The [Doxygen documentation](@URL_DOXYGEN@) provides an overview of the available
 compression and encoding implementations as well as the framework's full API.
 
-### Dependencies {#dependencies}
-
-The framework is built using [CMake](https://cmake.org) (2.8 or later).
-It is written in `C++11` with GNU extensions and has been tested with the `gcc`
-compiler family (version 4.9.2 or later) and `clang` (version 3.5.2 or later).
-
-It has the following external dependencies:
-
-* [SDSL](https://github.com/simongog/sdsl-lite)
-  (2.1 or later).
-* [Gflags](https://gflags.github.io/gflags) (2.1.2 or later).
-* [Google Logging (glog)](https://github.com/google/glog) (0.34 or later).
-
-Additionally, the tests require
-[Google Test](https://github.com/google/googletest) (1.7.0 or later).
-
-The CMake build scripts will either find the external dependencies on the build
-system, or automatically download and build them from their official
-repositories in case they cannot be found.
-
-For building the documentation, the following tools are required:
-
-* LATEX (specifically the `pdflatex` component)
-* [Doxygen](http://doxygen.org) (1.8 or later).
-* [Pandoc](http://pandoc.org) (1.16 or later).
-
 ## Command-line application
 
 The executable `tdc` is the command-line application that bundles
@@ -144,20 +118,6 @@ Every registered compression or encoding algorithm will be listed in the help
 output of the application when passing the `--list` argument.
 
 >> *TODO*: Maybe add a small example here.
-
-## Building on Windows
-
-On Windows, the framework can be built in a [Cygwin](https://www.cygwin.com/)
-environment. `mingw` and Microsoft Visual Studio are *not* supported at this
-point.
-
-> *Note:* In a *Cygwin* environment, due to its nature of not allowing overrides
-          of `malloc` and friends, the `malloc_count` module is not functional,
-          ie. memory heap allocation cannot be measured.
-
-## License
-
-The framework is published under the [Apache License 2.0Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
 # Tutorial
 
