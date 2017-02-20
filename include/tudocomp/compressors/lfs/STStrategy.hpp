@@ -30,7 +30,7 @@
 
 namespace tdc {
 
-//template<typename literal_coder_t, typename len_coder_t >
+template<uint min_lrf = 2 >
 class STStrategy : public Algorithm {
 private:
 
@@ -48,7 +48,6 @@ private:
 
 
     SuffixTree stree;
-    uint min_lrf;
 
     BitVector dead_positions;
 
@@ -198,7 +197,7 @@ public:
        // stree.append_input(in);
 
         DLOG(INFO)<<"computing string depth";
-        min_lrf=2;
+        //min_lrf=2;
 
         //std::string t = stree.get_text();
 
@@ -273,6 +272,10 @@ public:
 
 
         }
+
+        DLOG(INFO) << "sorting occurences";
+        //, std::greater<std::tuple<uint,uint,uint>>()
+        std::sort(nts_symbols.begin(), nts_symbols.end());
         DLOG(INFO)<<"dict size: "<<dictionary.size();
         DLOG(INFO)<<"symbols:"<<nts_symbols.size();
 

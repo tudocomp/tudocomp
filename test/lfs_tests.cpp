@@ -6,6 +6,8 @@
 #include <tudocomp/compressors/lfs/LFSCompressor.hpp>
 #include <tudocomp/compressors/lfs/STStrategy.hpp>
 
+#include <tudocomp/compressors/lfs/ESAStrategy.hpp>
+
 #include "gtest/gtest.h"
 
 #include <tudocomp/Algorithm.hpp>
@@ -165,10 +167,38 @@ TEST(stlfs, file_english_1mb_eg){
 
 
 TEST(lfs, st_strat){
-        auto c = create_algo<lfs::LFSCompressor<BitCoder, BitCoder, STStrategy> >();
+        auto c = create_algo<lfs::LFSCompressor<BitCoder, BitCoder, STStrategy<> > >();
 
         // compress
-        std::string compression_string = "ababababbbababba$";
+        std::string compression_string = "abaaabbababb$";
+        std::string compressed;
+        // compress
+        {
+            test::TestInput dummy_input = test::compress_input(compression_string);
+            test::TestOutput output = test::compress_output();
+
+            c.compress(dummy_input, output);
+            compressed=output.result();
+
+        }
+        // decompress
+        {
+
+            test::TestInput input = test::decompress_input(compressed);
+            test::TestOutput output = test::decompress_output();
+
+            c.decompress(input, output);
+
+            compressed=output.result();
+        }
+        ASSERT_EQ(compression_string, compressed);
+}
+
+TEST(lfs, esa_strat){
+        auto c = create_algo<lfs::LFSCompressor<BitCoder, BitCoder, ESAStrategy<> > >();
+
+        // compress
+        std::string compression_string = "abaaabbababb$";
         std::string compressed;
         // compress
         {

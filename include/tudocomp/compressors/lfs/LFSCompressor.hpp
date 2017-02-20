@@ -30,7 +30,7 @@ namespace lfs {
 
 
 
-class STStrategy;
+//class STStrategy;
 
 template<typename literal_coder_t, typename len_coder_t, typename strategy_t >
 class LFSCompressor : public Compressor {
@@ -52,7 +52,7 @@ public:
             "This is an implementation of the longest first substitution compression scheme.");
         m.option("lit_coder").templated<literal_coder_t>();
         m.option("len_coder").templated<len_coder_t>();
-        m.option("sts").templated<strategy_t>();
+        m.option("strat").templated<strategy_t>();
         m.needs_sentinel_terminator();
         return m;
     }
@@ -73,10 +73,8 @@ public:
         auto in = input.as_view();
 
         //
-        strategy_t strategy(env().env_for_option("sts"));
+        strategy_t strategy(env().env_for_option("strat"));
 
-
-        DLOG(INFO)<<"text size: "<<in.size();
 
         //compute dictionary and nts.
         strategy.compute_rules(in, dictionary, nts_symbols);
@@ -183,7 +181,6 @@ public:
 
         }
         //if no more terminals, write rest of text
-        //one pos less, because ensure_null_ending adds a symbol
         while( pos<in.size()){
 
             lit_coder.encode(0, bit_r);
@@ -241,6 +238,8 @@ public:
             }
             dictionary.push_back(non_terminal_symbol);
         }
+
+        DLOG(INFO)<<"read  dictionary!";
         auto ostream = output.as_stream();
 
         while(!lit_decoder.eof()){
@@ -266,6 +265,7 @@ public:
 
             }
         }
+        ostream<<(char)0;
     }
 
 };
