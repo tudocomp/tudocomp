@@ -235,7 +235,7 @@ int main(int argc, char** argv) {
             Input inp;
             if (options.stdin) { // input from stdin
                 inp = Input(std::cin);
-                in_size = 0;
+                in_size = inp.size();
             } else if(generator) { // input from generated string
                 generated = generator->generate();
                 inp = Input(generated);
@@ -367,7 +367,7 @@ int main(int argc, char** argv) {
             meta.set("input", options.stdin ? "<stdin>" :
                               (generator ? options.generator : file));
             meta.set("inputSize", in_size);
-            meta.set("output", options.stdout ? "<stdin>" : ofile);
+            meta.set("output", options.stdout ? "<stdout>" : ofile);
             meta.set("outputSize", out_size);
             meta.set("rate", (in_size == 0) ? 0.0 :
                 double(out_size) / double(in_size));
