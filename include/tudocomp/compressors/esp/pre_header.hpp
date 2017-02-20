@@ -1,5 +1,7 @@
 #pragma once
 
+#include <unordered_set>
+
 #include <tudocomp/util.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
@@ -40,11 +42,11 @@ namespace esp {
 
     template<class T>
     uint64_t calc_alphabet_size(const T& t) {
-        std::bitset<256> bs;
-        for (uint8_t v : t) {
-            bs.set(v, true);
+        std::unordered_set<size_t> alpha;
+        for (const auto& v : t) {
+            alpha.insert(v);
         }
-        return bs.count();
+        return alpha.size();
     }
 
     template<class T>
