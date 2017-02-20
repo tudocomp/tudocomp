@@ -32,13 +32,12 @@ namespace esp {
     // Implementation that covers all of 64 bit
     // TODO: Does the Paper mean base-e or base-2 ?
     inline size_t iter_log(size_t n) {
-        size_t o = 1;
-        if (n < 3) return 1 + o;
-        if (n < 16) return 2 + o;
-        if (n < 3814280) return 3 + o;
-        return 4 + o;
+        if (n < 7) return 0;
+        if (n < 9) return 1;
+        if (n < 17) return 2;
+        if (n < 257) return 3;
+        return 4;
     }
-
 
     template<class T>
     uint64_t calc_alphabet_size(const T& t) {
