@@ -52,7 +52,7 @@ public:
             "This is an implementation of the longest first substitution compression scheme.");
         m.option("lit_coder").templated<literal_coder_t>();
         m.option("len_coder").templated<len_coder_t>();
-        m.option("sts").templated<strategy_t, lfs::STStrategy>;
+        m.option("sts").templated<strategy_t>();
         m.needs_sentinel_terminator();
         return m;
     }
@@ -66,17 +66,23 @@ public:
     }
     inline virtual void compress(Input& input, Output& output) override {
 
-        non_terminal_symbols nts_smybols;
-        rules dictionary;
+        non_terminal_symbols nts_symbols = non_terminal_symbols();
+        rules dictionary = rules();
 
 
         auto in = input.as_view();
 
         //
-        strategy_t strategy(env().env_for_option("comp"));
+        strategy_t strategy(env().env_for_option("sts"));
+
+
+        DLOG(INFO)<<"text size: "<<in.size();
 
         //compute dictionary and nts.
-        strategy.compute_rules(in, dictionary, nts_smybols);
+        strategy.compute_rules(in, dictionary, nts_symbols);
+
+        DLOG(INFO)<<"dict size: "<<dictionary.size();
+        DLOG(INFO)<<"symbols:"<<nts_symbols.size();
 
 
 
@@ -148,7 +154,7 @@ public:
         uint symbol_number ;
         uint symbol_length;
         bool first_char = true;
-        for(auto it = nts_smybols.begin(); it!= nts_smybols.end(); it++){
+        for(auto it = nts_symbols.begin(); it!= nts_symbols.end(); it++){
 
 
             std::tuple<uint,uint,uint> next_position = *it;
@@ -178,7 +184,7 @@ public:
         }
         //if no more terminals, write rest of text
         //one pos less, because ensure_null_ending adds a symbol
-        while( pos<in.size()-1){
+        while( pos<in.size()){
 
             lit_coder.encode(0, bit_r);
             lit_coder.encode(in[pos], literal_r);

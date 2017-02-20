@@ -179,12 +179,12 @@ public:
     using Algorithm::Algorithm; //import constructor
 
     inline static Meta meta() {
-        Meta m("lfs_comp_sts", "Suffix Tree Variant");
+        Meta m("lfs_comp_sts", "suffix_tree_strat");
         return m;
     }
 
 
-    inline void compute_rules(const io::InputView & input, rules & dictionary, non_terminal_symbols & nts_smbols){
+    inline void compute_rules(const io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
         //BitVector
         dead_positions = BitVector(input.size(), 0);
         //DLOG(INFO)<< "dead_positions.size(): "<<dead_positions.size();
@@ -198,7 +198,7 @@ public:
        // stree.append_input(in);
 
         DLOG(INFO)<<"computing string depth";
-
+        min_lrf=2;
 
         //std::string t = stree.get_text();
 
@@ -207,6 +207,8 @@ public:
         string_depth_vector nl;
         compute_string_depth(stree.get_root(),0, &nl);
         DLOG(INFO)<<"sorting nodes";
+
+        DLOG(INFO)<<"number of nodes: "<<nl.size();
 
         std::sort(nl.begin(), nl.end());
         uint nts_number =0;
@@ -247,13 +249,14 @@ public:
                         std::pair<uint,uint> rule = std::make_pair(selected_pos.at(0), pair.first);
 
                         dictionary.push_back(rule);
+                        DLOG(INFO)<<"added rule";
 
                         //iterate over selected pos, add non terminal symbols
                         for(auto it = selected_pos.begin(); it != selected_pos.end(); it++){
                             //(position in text, non_terminal_symbol_number, length_of_symbol);
                             //typedef std::tuple<uint,uint,uint> non_term;
                             non_term nts = std::make_tuple(*it, nts_number, pair.first);
-                            nts_smbols.push_back(nts);
+                            nts_symbols.push_back(nts);
                             //typedef std::vector<non_term> non_terminal_symbols;
                         }
                         nts_number++;
@@ -270,6 +273,8 @@ public:
 
 
         }
+        DLOG(INFO)<<"dict size: "<<dictionary.size();
+        DLOG(INFO)<<"symbols:"<<nts_symbols.size();
 
     }
 };
