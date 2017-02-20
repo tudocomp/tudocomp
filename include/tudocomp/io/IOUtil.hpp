@@ -46,19 +46,23 @@ void read_bytes_to_vec(std::istream& inp, T& vec, size_t bytes) {
 
 template<class T>
 T read_file_to_stl_byte_container(const std::string& filename,
-                                  size_t offset = 0) {
+                                  size_t offset = 0,
+                                  size_t len = -1) {
     std::ifstream in(filename, std::ios::in | std::ios::binary);
     if (bool(in)) {
         T contents;
 
-        // first, determine length from offset to end of file
-        in.seekg(offset, std::ios::beg);
-        auto start = in.tellg();
-        in.seekg(0, std::ios::end);
-        auto end = in.tellg();
-        auto len = end - start;
+        // if needed, determine length from offset to end of file
+        if (len == size_t(-1)) {
+            in.seekg(offset, std::ios::beg);
+            auto start = in.tellg();
+            in.seekg(0, std::ios::end);
+            auto end = in.tellg();
+            len = end - start;
+        }
 
         // use length to allocate a single buffer for the file
+        contents.reserve(len);
         contents.resize(len);
 
         // set position back to the start position at offset
@@ -83,12 +87,12 @@ T read_stream_to_stl_byte_container(S& stream) {
 }
 
 inline size_t read_file_size(const std::string& file) {
-    std::ifstream t(file);
-    if (t) {
-        t.seekg(0, std::ios::end);
-        return t.tellg();
+    std::ifstream in(file, std::ios::in | std::ios::binary);
+    if (bool(in)) {
+        in.seekg(0, std::ios::end);
+        return in.tellg();
     }
-    throw(errno);
+    throw tdc_input_file_not_found_error(file);
 }
 
 /// \endcond

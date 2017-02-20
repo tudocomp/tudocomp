@@ -278,28 +278,32 @@ int main(int argc, char** argv) {
                 std::string algorithm_header;
 
                 if (!options.raw) {
-                    // read header
-                    auto i_stream = inp.as_stream();
+                    {
+                        // read header
+                        auto i_stream = inp.as_stream();
 
-                    char c;
-                    size_t sanity_size_check = 0;
-                    bool err = false;
-                    while (i_stream.get(c)) {
-                        err = false;
-                        if (sanity_size_check > 1023) {
+                        char c;
+                        size_t sanity_size_check = 0;
+                        bool err = false;
+                        while (i_stream.get(c)) {
+                            err = false;
+                            if (sanity_size_check > 1023) {
+                                err = true;
+                                break;
+                            } else if (c == '%') {
+                                break;
+                            } else {
+                                algorithm_header.push_back(c);
+                            }
+                            sanity_size_check++;
                             err = true;
-                            break;
-                        } else if (c == '%') {
-                            break;
-                        } else {
-                            algorithm_header.push_back(c);
                         }
-                        sanity_size_check++;
-                        err = true;
+                        if (err) {
+                            exit("Input did not have an algorithm header!");
+                        }
                     }
-                    if (err) {
-                        exit("Input did not have an algorithm header!");
-                    }
+                    // Slice off the header
+                    inp = inp.slice(algorithm_header.size() + 1, inp.size());
                 }
 
                 if (!options.raw && !selection.id_string().empty()) {

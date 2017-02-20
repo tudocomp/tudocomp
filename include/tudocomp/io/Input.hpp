@@ -37,6 +37,7 @@ namespace io {
             virtual InputStream as_stream() const = 0;
             virtual size_t size() const = 0;
             virtual EscapableBuf buffer() const = 0;
+            virtual void slice_inplace(size_t from, size_t to) = 0;
         };
 
         struct Memory: Variant {
@@ -61,19 +62,25 @@ namespace io {
             inline EscapableBuf buffer() const override {
                 return m_owned;
             }
+            inline void slice_inplace(size_t from, size_t to) override {
+                m_view = m_view.slice(from, to);
+            }
         };
         struct File: Variant {
             std::string path;
             size_t offset;
+            size_t len;
 
-            File(std::string path, size_t offset) {
+            File(const std::string& path, size_t offset, size_t len) {
                 this->path = path;
                 this->offset = offset;
+                this->len = len;
             }
 
             File(const File& other):
                 path(other.path),
-                offset(other.offset) {}
+                offset(other.offset),
+                len(other.len) {}
 
             std::unique_ptr<Variant> virtual_copy() const override {
                 return std::make_unique<File>(*this);
@@ -84,6 +91,13 @@ namespace io {
             inline size_t size() const override;
             inline EscapableBuf buffer() const override {
                 return EscapableBuf();
+            }
+            inline void slice_inplace(size_t from, size_t to) override {
+                DCHECK_LE(from, to);
+                offset += from;
+                auto old_len = len;
+                len = (to - from);
+                DCHECK_LE(len, old_len);
             }
         };
 
@@ -128,7 +142,9 @@ namespace io {
         ///
         /// \param path The path to the input file.
         Input(Input::Path&& path):
-            m_data(std::make_unique<File>(std::move(path.path), 0)) {}
+            m_data(std::make_unique<File>(path.path,
+                                          0,
+                                          read_file_size(path.path))) {}
 
         /// \brief Constructs an input reading from a string in memory.
         ///
@@ -221,8 +237,13 @@ namespace io {
         inline void escape_and_terminate() {
             m_escape_and_terminate = true;
         }
-        /// \endcond
 
+        inline Input slice(size_t from, size_t to) const {
+            Input i = *this;
+            i.m_data->slice_inplace(from, to);
+            return i;
+        }
+        /// \endcond
     };
 
     /// \cond INTERNAL
@@ -322,7 +343,7 @@ namespace io {
     inline InputView Input::File::as_view(bool escape_and_terminate) const {
         // read file into buffer starting at current offset
         auto buf = read_file_to_stl_byte_container<
-            std::vector<uint8_t>>(path, offset);
+            std::vector<uint8_t>>(path, offset, len);
 
         // We read the whole file, so skip it on next read.
         //offset += buf.size();
@@ -427,7 +448,7 @@ namespace io {
 
             virtual ~File() {
                 if (m_stream) {
-                    auto len = size_t(stream().tellg()) - m_start_pos;
+                    //auto len = size_t(stream().tellg()) - m_start_pos;
                     //m_offset_back_ref->offset += len;
                 }
             }
