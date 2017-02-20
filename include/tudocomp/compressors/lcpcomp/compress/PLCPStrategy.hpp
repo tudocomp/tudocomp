@@ -48,6 +48,39 @@ class IntegerFileArray {
 	size_t size() const { return m_size/sizeof(int_t); }
 };
 
+// /** Transforms a suffix array SA of size n not storing the entry for the delimiter $
+//  * to a suffix array storing this delimiter by
+//  * setting SA'[0] = n, and SA'[i] = SA[i+1]
+// **/
+// template<class int_t>
+// class SAFileArray {
+// 	IntegerFileArray<int_t> m_data;
+// 	public:
+// 	SAFileArray(const char*const filename) : m_data(filename) {}
+// 	int_t operator[](size_t i) {
+// 		if(i == 0) return m_data.size();
+// 		return m_data[i+1];
+// 	
+// 	}
+// 	size_t size() const { return m_data.size()+1; }
+// };
+//
+// /** Transforms an inverse suffix array ISA of size n not storing the entry for the delimiter $
+//  * to an inverse suffix array storing this delimiter by
+//  * setting ISA'[i] = i+1, and SA'[n] = SA[0]
+// **/
+// template<class int_t>
+// class ISAFileArray {
+// 	IntegerFileArray<int_t> m_data;
+// 	public:
+// 	ISAFileArray(const char*const filename) : m_data(filename) {}
+// 	int_t operator[](size_t i) {
+// 		if(i == m_data.size()) return 0;
+// 		return m_data[i]+1;
+// 	}
+// 	size_t size() const { return m_data.size()+1; }
+// };
+
 template<class int_t>
 class IntegerFileForwardIterator {
 	const size_t m_size;
@@ -171,6 +204,51 @@ class RefDiskStrategy {
 	}
 };
 
+class PLCPFileForwardIterator {
+	std::ifstream m_is;
+	
+	uint64_t m_chunk = 0; // current data chunk
+	len_t m_idx = 0; // current select parameter
+	len_t m_block = 0; // block index
+	len_t m_blockrank = 0; //number of ones up to previous block
+	uint_fast8_t m_ones; // number of ones in the current block `m_block`
+
+	void read_chunk() {
+		m_is.read(reinterpret_cast<char*>(&m_chunk), sizeof(decltype(m_chunk)));
+		m_ones = sdsl::bits::cnt(m_chunk);
+	}
+
+	public:
+	static constexpr const len_t eof = -1;
+	PLCPFileForwardIterator(const char* filepath) 
+		: m_is(filepath) 
+	{
+		read_chunk();
+	}
+
+	len_t index() const { return m_idx; }
+	bool has_next() const {
+		return m_is;
+	}
+
+	len_t next_select() {
+		while(m_blockrank+m_ones < m_idx+1) {
+			if(!m_is) {break;}
+			++m_block;
+			m_blockrank += m_ones;
+			read_chunk();
+		}
+		DCHECK_GE(m_blockrank+m_ones, m_idx+1);
+		return 64*m_block + sdsl::bits::sel(m_chunk, m_idx+1-m_blockrank);
+	}
+	len_t operator()() {
+		const len_t ret = next_select() - 2*m_idx;
+		return ret;
+	}
+	void advance() {
+		++m_idx;
+	}
+};
 
 
 /// A very naive selection strategy for LCPComp.
@@ -316,41 +394,76 @@ public:
 		}
 
 
-    inline void factorize(text_t& text,
-                   size_t threshold,
-                   lzss::FactorBuffer& refs) {
-
-		// Construct SA, ISA and LCP
-		env().begin_stat_phase("Construct index ds");
-		text.require(text_t::SA | text_t::ISA);
-
-        const auto& sa = text.require_sa();
-        const auto& isa = text.require_isa();
-		//RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
-		RefRAMStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
-		LCPForwardIterator pplcp { (construct_plcp_bitvector(env(), sa, text)) };
-		compute_references(text.size(), refStrategy, pplcp, threshold);
-		env().begin_stat_phase("Compute References");
-		refStrategy.factorize(refs);
-        env().end_stat_phase();
-    }
-
     // inline void factorize(text_t& text,
     //                size_t threshold,
     //                lzss::FactorBuffer& refs) {
-	// 	env().begin_stat_phase("Load index ds");
-	// 	IntegerFileArray<uint_t<40>> sa             ("/bighome/workspace/compreSuite/tudocomp/datasets/pc_english.200MB.sa5");
-	// 	IntegerFileArray<uint_t<40>> isa            ("/bighome/workspace/compreSuite/tudocomp/datasets/pc_english.200MB.isa5");
-	// 	IntegerFileForwardIterator<uint_t<40>> pplcp("/bighome/workspace/compreSuite/tudocomp/datasets/pc_english.200MB.plcp5");
-	// 	DCHECK_EQ(sa.size(), text.size());
     //
-	// 	RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
+	// 	// Construct SA, ISA and LCP
+	// 	env().begin_stat_phase("Construct index ds");
+	// 	text.require(text_t::SA | text_t::ISA);
+    //
+    //     const auto& sa = text.require_sa();
+    //     const auto& isa = text.require_isa();
+	// 	//RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
+	// 	RefRAMStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
+	// 	LCPForwardIterator pplcp { (construct_plcp_bitvector(env(), sa, text)) };
 	// 	compute_references(text.size(), refStrategy, pplcp, threshold);
 	// 	env().begin_stat_phase("Compute References");
 	// 	refStrategy.factorize(refs);
     //     env().end_stat_phase();
-    //
     // }
+
+    inline void factorize(text_t& text,
+                   size_t threshold,
+                   lzss::FactorBuffer& refs) {
+		env().begin_stat_phase("Load index ds");
+//		const std::string textfilename  = "/bighome/workspace/compreSuite/tudocomp/datasets/abracadabra.0";
+		const std::string textfilename  = "/bighome/workspace/compreSuite/tudocomp/datasets/cc_commoncrawl.ascii.10MB.0";
+		IntegerFileArray<uint_t<40>> sa  ((textfilename + ".sa5").c_str());
+		IntegerFileArray<uint_t<40>> isa ((textfilename + ".isa5").c_str());
+		// SAFileArray<uint_t<40>> sa((textfilename + ".sa5").c_str());
+		// ISAFileArray<uint_t<40>> isa((textfilename + ".isa5").c_str());
+		//IntegerFileForwardIterator<uint_t<40>> pplcp("/bighome/workspace/compreSuite/tudocomp/datasets/pc_english.200MB.plcp5");
+		DCHECK_EQ(sa.size(), text.size());
+
+//IF_DEBUG({
+		{
+	 	env().begin_stat_phase("Construct index ds");
+		text.require(text_t::SA | text_t::ISA | text_t::PLCP);
+
+        const auto& tsa = text.require_sa();
+        const auto& tisa = text.require_isa();
+        const auto& plcp = text.require_plcp();
+		PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
+		for(size_t i = 0; i < sa.size(); ++i) {
+		DCHECK_EQ(sa.size(),tsa.size());
+		DCHECK_EQ(sa[i], (uint64_t)tsa[i]);
+		}
+		DCHECK_EQ(isa.size(),tisa.size());
+		for(size_t i = 0; i < isa.size(); ++i) {
+		DCHECK_EQ(isa[i], (uint64_t)tisa[i]);
+		}
+		for(size_t i = 0; i < plcp.size()-1; ++i) {
+		DCHECK_EQ(pplcp(),(uint64_t) plcp[i]);
+		pplcp.advance();
+		}
+        env().end_stat_phase();
+	 	env().begin_stat_phase("Check");
+
+
+        env().end_stat_phase();
+		}
+//		})//DEBUG
+
+		PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
+
+		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
+		compute_references(text.size()-1, refStrategy, pplcp, threshold);
+		env().begin_stat_phase("Compute References");
+		refStrategy.factorize(refs);
+        env().end_stat_phase();
+
+    }
 
 
 };
