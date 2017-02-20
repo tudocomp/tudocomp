@@ -1,43 +1,18 @@
 #pragma once
 
-
-
-#include <tudocomp/Compressor.hpp>
-#include <tudocomp/util.hpp>
 #include <vector>
 #include <tuple>
 
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/util.hpp>
 #include <tudocomp/io.hpp>
 
-
-#include <tudocomp/io/BitIStream.hpp>
-#include <tudocomp/io/BitOStream.hpp>
-//#include <sdsl/bit_vectors.hpp>
-
-
-#include <tudocomp/ds/IntVector.hpp>
-
-
-#include <tudocomp/Literal.hpp>
-
 #include <tudocomp/compressors/lfs/EncodeStrategy.hpp>
-
-
 #include <tudocomp/coders/BitCoder.hpp>
-
-
-
-
-
-//#include <tudocomp/tudocomp.hpp>
 
 
 namespace tdc {
 namespace lfs {
-
-
-
-//class STStrategy;
 
 template<typename comp_strategy_t , typename coding_strat_t = EncodeStrategy<BitCoder, BitCoder> >
 class LFSCompressor : public Compressor {
@@ -49,8 +24,6 @@ private:
 
 
 public:
-
-
 
     inline static Meta meta() {
         Meta m("compressor", "lfs_comp",
@@ -66,19 +39,13 @@ public:
         Compressor(std::move(env))
     {
         DLOG(INFO) << "Compressor instantiated";
-
-        //strategy = strategy_t(env().env_for_option("coding_strat"));
-
     }
     inline virtual void compress(Input& input, Output& output) override {
 
         non_terminal_symbols nts_symbols = non_terminal_symbols();
         rules dictionary = rules();
-
-
         auto in = input.as_view();
 
-        //
         comp_strategy_t strategy(env().env_for_option("computing_strat"));
 
 

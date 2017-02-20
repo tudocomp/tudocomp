@@ -119,9 +119,8 @@ public:
         while(!lrf_occurences.empty()){
             std::pair<uint,uint> top = lrf_occurences.back();
             lrf_occurences.pop_back();
-            uint one = 1;
 
-            if(dead_positions[sa_t[top.second]] == one || dead_positions[sa_t[top.second-1]] ==one || dead_positions[sa_t[top.second]+top.first-1] == one || dead_positions[sa_t[top.second-1]+top.first-1] == one){
+            if(dead_positions[sa_t[top.second]] || dead_positions[sa_t[top.second-1]] || dead_positions[sa_t[top.second]+top.first-1] || dead_positions[sa_t[top.second-1]+top.first-1]){
                 continue;
             }
 

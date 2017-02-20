@@ -211,8 +211,6 @@ public:
             }
             dictionary.push_back(non_terminal_symbol);
         }
-
-        DLOG(INFO)<<"read  dictionary!";
         auto ostream = output.as_stream();
 
         while(!lit_decoder.eof()){
@@ -238,6 +236,7 @@ public:
 
             }
         }
+        //at last, stream eof
         ostream<<(char)0;
     }
 

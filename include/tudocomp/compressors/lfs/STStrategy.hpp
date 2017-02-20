@@ -243,11 +243,7 @@ public:
         }
 
         DLOG(INFO) << "sorting occurences";
-        //, std::greater<std::tuple<uint,uint,uint>>()
         std::sort(nts_symbols.begin(), nts_symbols.end());
-        DLOG(INFO)<<"dict size: "<<dictionary.size();
-        DLOG(INFO)<<"symbols:"<<nts_symbols.size();
-
     }
 };
 }
