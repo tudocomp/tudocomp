@@ -3,6 +3,9 @@
 #include <tudocomp/compressors/lfs/ESALFSCompressor.hpp>
 #include <tudocomp/compressors/lfs/STLFSCompressor.hpp>
 
+#include <tudocomp/compressors/lfs/LFSCompressor.hpp>
+#include <tudocomp/compressors/lfs/STStrategy.hpp>
+
 #include "gtest/gtest.h"
 
 #include <tudocomp/Algorithm.hpp>
@@ -149,16 +152,46 @@ void compress_and_decompress_file_st(const std::string filename, std::string ext
 }
 
 TEST(stlfs, as_stream_aba){
-    run_coder_test_st<BitCoder,EliasGammaCoder>("abaaabbababb$");
+  //  run_coder_test_st<BitCoder,EliasGammaCoder>("abaaabbababb$");
 }
 
 TEST(stlfs, as_stream_mis){
-    run_coder_test_st<BitCoder,EliasGammaCoder>("mississippi$");
+  //  run_coder_test_st<BitCoder,EliasGammaCoder>("mississippi$");
 }
 
 TEST(stlfs, file_english_1mb_eg){
-    compress_and_decompress_file_st<BitCoder, BitCoder>("english.1MB", "stlfs");
+   // compress_and_decompress_file_st<BitCoder, BitCoder>("english.1MB", "stlfs");
 }
+
+
+TEST(lfs, st_strat){
+        auto c = create_algo<lfs::LFSCompressor<BitCoder, BitCoder, STStrategy> >();
+
+        // compress
+        std::string compression_string = "ababababbbababba$";
+        std::string compressed;
+        // compress
+        {
+            test::TestInput dummy_input = test::compress_input(compression_string);
+            test::TestOutput output = test::compress_output();
+
+            c.compress(dummy_input, output);
+            compressed=output.result();
+
+        }
+        // decompress
+        {
+
+            test::TestInput input = test::decompress_input(compressed);
+            test::TestOutput output = test::decompress_output();
+
+            c.decompress(input, output);
+
+            compressed=output.result();
+        }
+        ASSERT_EQ(compression_string, compressed);
+}
+
 
 TEST(lfs, as_stream_aba){
 
@@ -196,7 +229,7 @@ TEST(lfs, file_sources_10mb_eg){
 }
 
 TEST(lfs, file_english_1mb){
-    compress_and_decompress_file<BitCoder, BitCoder>("english.1MB", "esalfs.bc");
+    //compress_and_decompress_file<BitCoder, BitCoder>("english.1MB", "esalfs.bc");
 }
 
 TEST(lfs, file_english_10mb){

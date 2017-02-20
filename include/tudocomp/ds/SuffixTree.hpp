@@ -12,6 +12,8 @@
 
 
 #include <tudocomp/io.hpp>
+
+
 namespace tdc {
 using namespace tdc;
 
@@ -204,10 +206,14 @@ public:
 
     inline void append_input(Input& input){
         auto iview  = input.as_view();
-        leaves.reserve(leaves.size()+iview.size());
-        Text += iview;
-        for (uint i = 0; i < iview.size(); i++) {
-            uint8_t c = iview[i];
+        append_input(iview);
+    }
+
+    inline void append_input(io::InputView & input){
+        leaves.reserve(leaves.size()+input.size());
+        Text += input;
+        for (uint i = 0; i < input.size(); i++) {
+            uint8_t c = input[i];
             add_char(c);
         }
     }
@@ -244,6 +250,10 @@ public:
     }
 
     SuffixTree(Input& input) : SuffixTree(){
+        append_input(input);
+    }
+
+    SuffixTree(io::InputView & input) : SuffixTree(){
         append_input(input);
     }
 

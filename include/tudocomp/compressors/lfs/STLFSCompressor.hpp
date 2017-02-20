@@ -280,7 +280,7 @@ public:
         DLOG(INFO)<<"build suffixtree";
 
 
-        //auto in = input.as_view();
+        auto in = input.as_view();
 
 
         //vector of text position, length
@@ -296,7 +296,7 @@ public:
 
 
 
-        stree.append_input(input);
+        stree.append_input(in);
 
         DLOG(INFO)<<"computing string depth";
 
