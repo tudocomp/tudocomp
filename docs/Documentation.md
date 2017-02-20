@@ -80,6 +80,8 @@ implementation.
 
 # Features
 
+*tudocomp* includes the following set of features:
+
 * Flexible template-based interface for algorithms (e.g. compressors or integer
   encoders)
     * Registry for easy exposition to the `tdc` command-line tool
@@ -130,34 +132,31 @@ implementation.
   different compressor suites (*tudocomp* as well as third-party) on a freely
   definable set of inputs
 
->>> *TODO*: Add references to our SEA17 paper once it is published.
-
 # Usage
 
-## Library
+This section describes the usage of *tudocomp* as a `C++` library and as a
+command-line tool, respectively.
 
-The library comes as a set of `C++` headers where most of the implementations
-are inlined.
+## Building
 
-Development of new compression or encoding algorithms is intended to take place
-within *tudocomp*'s repository itself. In order to use *tudocomp* as a library
-for a third-party application, the custom `malloc_count` module, which includes
-overrides of `malloc`, `free` etc. for the heap memory usage counters,
-(`libmalloc_count.a`) needs to be linked.
-
->> *TODO*: We should probably rename our `malloc_count` module to avoid
-           confusion.
-
-The [Doxygen documentation](@URL_DOXYGEN@) provides an overview of the available
-compression and encoding implementations as well as the framework's full API.
-
-### Dependencies {#dependencies}
-
-The framework is built using [CMake](https://cmake.org) (2.8 or later).
+The framework is built using [CMake](https://cmake.org) (3.0.2 or later).
 It is written in `C++11` with GNU extensions and has been tested with the `gcc`
 compiler family (version 4.9.2 or later) and `clang` (version 3.5.2 or later).
+The build process requires a [Python](https://www.python.org/) interpreter
+(3 or later) to be installed on the system (`py` scripts are invoked directly).
 
-It has the following external dependencies:
+When these requirements are met, the following chain of commands on a clean
+clone of the project suffices to build *tudocomp*:
+
+~~~
+$ mkdir build && cd build
+$ cmake ..
+$ make
+~~~
+
+### Dependencies
+
+*tudocomp* has the following external dependencies:
 
 * [SDSL](https://github.com/simongog/sdsl-lite)
   (2.1 or later).
@@ -167,44 +166,79 @@ It has the following external dependencies:
 Additionally, the tests require
 [Google Test](https://github.com/google/googletest) (1.7.0 or later).
 
-The CMake build scripts will either find the external dependencies on the build
-system, or automatically download and build them from their official
-repositories in case they cannot be found.
+The CMake build process will either find the external dependencies on the build
+system if they have been properly installed, or automatically download and build
+them from their official repositories in case they cannot be found.
 
 For building the documentation, the following tools are required:
 
-* LATEX (specifically the `pdflatex` component)
+* [LaTeX](http://www.latex-project.org) (specifically the `pdflatex` component)
 * [Doxygen](http://doxygen.org) (1.8 or later).
 * [Pandoc](http://pandoc.org) (1.16 or later).
 
-## Command-line application
+### Windows Support
 
-The executable `tdc` is the command-line application that bundles
-all registered algorithms. It provides a fast and easy way to compress and
-decompress a file with a specified chain of compressors.
+We highly recommend users of Windows 10 or later to use the
+[Bash on Ubuntu on Windows](https://msdn.microsoft.com/en-us/commandline/wsl/about).
 
-Every registered compression or encoding algorithm will be listed in the help
-output of the application when passing the `--list` argument.
+That being said, *tudocomp* has no explicit support for Windows. However, the
+project can be built in a [Cygwin](https://www.cygwin.com/) environment with a
+limited feature set. Cygwin does not allow overrides of `malloc`, therefore the
+heap allocation counter cannot work and statistics tracking becomes largely
+nonfunctional.
 
->> *TODO*: Maybe add a small example here.
+## Command-line Tool
 
-## Building on Windows
+The executable `tdc` is the command-line application that bundles all
+compression, encoding and other algorithms contained in *tudocomp*. It provides
+a fast and easy way to compress and decompress a file with a specified
+compressor or chain of compressors.
 
-On Windows, the framework can be built in a [Cygwin](https://www.cygwin.com/)
-environment. `mingw` and Microsoft Visual Studio are *not* supported at this
-point.
+It contains a common help output that can be accessed by passing `--help`.
+Furthermore, the aforementioned set of algorithms that are available for use
+via the command-line can be listed by passing `--list`.
 
-> *Note:* In a *Cygwin* environment, due to its nature of not allowing overrides
-          of `malloc` and friends, the `malloc_count` module is not functional,
-          ie. memory heap allocation cannot be measured.
+The following are typical ways to use `tdc` and should give an idea about how to
+use it. The example is using a simple LZ77 compressor and human readable
+encoding.
+
+Compress `file.txt`, write to `file.txt.tdc`:
+: `$ tdc -a "lzss(coder=ascii)" file.txt`
+
+Compress to a specific output file, overwrite if it exists:
+: `$ tdc -a "lzss(coder=ascii)" file.txt -fo out.tdc`
+
+Decompress a compressed file, print to stdout:
+: `$ tdc -d out.tdc --usestdout`
+
+Decompress using a specific decompressor, print to stdout:
+: `$ tdc -d -a "encode(coder=ascii)" --stdout`
+
+Print the 10^th^ Fibonacci word to stdout:
+: `$ tdc -g "fib(10)" --usestdout`
+
+Compress the 10^th^ Fibonacci word, print to stdout without header:
+: `$ tdc -g "fib(10)" -a "lzss(coder=ascii)" --raw --usestdout`
+
+## Library
+
+The library part of *tudocomp* is generated as the `libtudocomp_algorithms.a`
+artifact that can be used for static linking. Using this and the headers
+(located in the `include` directory tree), *tudocomp* can be used as an external
+library in third-party applications.
+
+The [Doxygen documentation](@URL_DOXYGEN@) provides an overview of the
+framework's full API, including the contained compression and encoding
+implementations.
 
 ## License
 
-The framework is published under the [Apache License 2.0Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+The framework is published under the
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 # Tutorial
 
-This chapter provides a guided tour through the implementation of a compressor,
+This section provides a guided tour through the implementation of a compressor,
 spanning much of the framework's functionality. The following topics will be
 discussed:
 
@@ -302,7 +336,7 @@ makes development more convenient as well.
 Before going into the details of compressor implementation, this section will
 present one of the framework's core components in its I/O abstractions.
 
-As described in the [Philosophy](#philosophy) chapter, (de)compression, by means
+As described in the [Philosophy](#philosophy) section, (de)compression, by means
 of this framework, processes data by reading from an input and writing to an
 output. The framework provides an abstraction for this in the two classes
 [`Input`](@URL_DOXYGEN_INPUT@) and [`Output`](@URL_DOXYGEN_OUTPUT@). Both hide
@@ -751,7 +785,7 @@ executes the example test suite.
 ### Implementing unit tests
 
 The following snippet provides a simple unit test for the `ExampleCompressor`
-from the previous chapter, the run-length encoder:
+from the previous section, the run-length encoder:
 
 ~~~ { .cpp }
 // [/test/example_tests.cpp]
@@ -1164,88 +1198,6 @@ registered explicitly.
 Once registered, the example compressors are available in the command-line
 application and will be listed in the help output. They are also part of the
 matrix test when invoking the `check` make target.
-
-## The Driver
-
->> *TODO*: Do we need this section? A usage example should be provided
-           in the Usage section. Once registered, a self-made compressor can
-           be used in exactly the same way.
-
->> XXX
-
-After integrating a compressor into the registry, we can start using it
-with the command line tool.
-
-The "Driver" (named this way because it serves as an user interface that
-drives the underlying tudocomp library) can be compiled with `make tudocomp_driver`.
-The executable of the driver is stored in `build/tdc` (after compilation).
-
-As a first step after building it, we can verify that the new compressors
-exists by listing all known algorithms:
-
-~~~
-.../build> ./tdc --list
-This build supports the following algorithms:
-
-  [Compression algorithms]
-  -------------------------------------------------------------------------------------------------------------------------------
-  | ...                                                            | ...                                                        |
-  -------------------------------------------------------------------------------------------------------------------------------
-  | example_compressor(escape_symbol = "%", debug_sleep = "false") | This is an example compressor.                             |
-  |   where `escape_symbol` is one of [string],                    |                                                            |
-  |         `debug_sleep` is one of [string]                       |                                                            |
-  -------------------------------------------------------------------------------------------------------------------------------
-  | templated_example_compressor(encoder, debug_sleep = "false")   | This is a templated example compressor.                    |
-  |   where `encoder` is one of [example_coder],                   |                                                            |
-  |         `debug_sleep` is one of [string]                       |                                                            |
-  -------------------------------------------------------------------------------------------------------------------------------
-
-  [Argument types]
-    [example_coder]
-    -----------------------------------------------------------------------------------------------------------
-    | debug(escape_symbol = "%")                 | This is an example debug coder, encoding human readable.   |
-    |   where `escape_symbol` is one of [string] |                                                            |
-    -----------------------------------------------------------------------------------------------------------
-    | bit(escape_byte = "255")                   | This is an example bit coder, encoding as a binary integer.|
-    |   where `escape_byte` is one of [string]   |                                                            |
-    -----------------------------------------------------------------------------------------------------------
-
-  ...
-~~~
-
-Next we will compress something with the tool. Since this is
-a quick test, we use an already existing file in the build
-directory, the `CMakeCache.txt`:
-
-~~~
-.../build> ./tdc -algorithm "example_compressor" CMakeCache.txt -output ./cache.tdc -stats
-~~~
-
-This will create a compressed file `cache.tdc` in the current directory, and
-print some statistics to the command line, including the JSON data that
-can be pasted into the previously mentioned web visualizer.
-
-> *Note*: The tool will prevent accidental overwrites if a file with the
-output filename already exists. To bypass this security mechanism, and hence allow overwriting,
-the `-force` option has to be used.
-
-The stat output will likely show a very small compression effect, if any at
-all. But the file format contains a few sections decorated with
-comments containing repeats of the same character.
-If you look at the contents of `cache.tdc`, say with `cat cache.tdc | less`, you should be able to see some
-encoding sequences in the file.
-
-As a point of reference, on the authors' machine it only resulted in a 1% reduction, with 4 actual run length replacements.
-
-For a last check, we can see if the decompression works as well:
-
-~~~
-.../build> ./src/tudocomp_driver/tudocomp_driver -decompress cache.tdc -output cache.orig.txt
-.../build> diff -s CMakeCache.txt cache.orig.txt
-Files CMakeCache.txt and cache.orig.txt are identical
-~~~
-
-... which seems to be the case.
 
 ## The Comparison Tool
 

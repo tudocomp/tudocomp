@@ -28,7 +28,7 @@ a:hover {
 
 em {
     font-style: normal;
-    font-weight: bold;
+    font-weight: 600;
 }
 
 table {
@@ -151,6 +151,24 @@ section#content > div {
 
 #content p {
     padding-left: 1rem;
+}
+
+#content dt {
+    margin-left: 1rem;
+}
+
+#content dt::before{
+    content: '\279C\20';
+    font-size: 1.25rem;
+}
+
+#content dd {
+    margin-left: 2.5rem;
+    margin-top: 0.5rem;
+}
+
+#content dd + dt {
+    margin-top: 1rem;
 }
 
 #content .figure {
