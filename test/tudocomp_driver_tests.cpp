@@ -28,10 +28,10 @@ TEST(TudocompDriver, algorithm_header) {
     std::string text = "asdfghjklöä";
     bool abort = false;
     // Without header
-    driver_test::roundtrip("lz78(ascii)", "_header_test_0", text, true, abort);
+    driver_test::roundtrip("lz78(ascii)", "_header_test_0", text, true, abort, true).check();
 
     // With header
-    driver_test::roundtrip("lz78(ascii)", "_header_test_1", text, false, abort);
+    driver_test::roundtrip("lz78(ascii)", "_header_test_1", text, false, abort, true).check();
 
     ASSERT_FALSE(abort);
 

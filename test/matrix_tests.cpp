@@ -113,28 +113,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
 
     std::vector<driver_test::Error> errors;
 
-    auto print_error = [](driver_test::Error& e) {
-        std::cout << "# [ERROR] ############################################################\n";
-        std::cout << "  " << e.message << "\n";
-        std::cout << "  in: " << e.test << "\n";
-        if (e.text != e.roundtrip_text) {
-            auto escaped_text = driver_test::format_escape(e.text);
-            auto escaped_roundtrip_text = driver_test::format_escape(e.roundtrip_text);
-            std::cout << "  expected:\n";
-            std::cout << "  " << escaped_text << "\n";
-            std::cout << "  actual:\n";
-            std::cout << "  " << escaped_roundtrip_text << "\n";
-            std::cout << "  diff:\n";
-            std::cout << "  " << driver_test::format_diff(e.text, e.roundtrip_text) << "\n";
-        }
-        std::cout << indent_lines(driver_test::format_std_outputs({
-            "compress command", e.compress_cmd,
-            "compress stdout", e.compress_stdout,
-            "decompress command", e.decompress_cmd,
-            "decompress stdout", e.decompress_stdout,
-        }), 2) << "\n";
-        std::cout << "######################################################################\n";
-    };
+    bool saw_errors = false;
 
     for (auto& algo : test_cases) {
         int counter = 0;
@@ -150,8 +129,9 @@ TEST(TudocompDriver, roundtrip_matrix) {
 
             auto e = driver_test::roundtrip(algo, n, text, true, abort);
             if (e.has_error) {
+                saw_errors = true;
                 if (early_error) {
-                    print_error(e);
+                    e.print_error();
                 } else {
                     errors.push_back(e);
                 }
@@ -160,7 +140,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
     }
 
     for (auto& e : errors) {
-        print_error(e);
+        e.print_error();
     }
     if (!errors.empty()) {
         std::cout << "# [TL;DR - this failed] ##############################################\n";
@@ -176,5 +156,5 @@ TEST(TudocompDriver, roundtrip_matrix) {
         std::cout << e << "\n";
     }
 
-    ASSERT_TRUE(errors.empty());
+    ASSERT_FALSE(saw_errors);
 }
