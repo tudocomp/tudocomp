@@ -1,31 +1,14 @@
 #pragma once
-#pragma once
 
-
-
-#include <tudocomp/Compressor.hpp>
-#include <tudocomp/Range.hpp>
-#include <tudocomp/util.hpp>
 #include <vector>
 #include <tuple>
 
+#include <tudocomp/util.hpp>
 #include <tudocomp/io.hpp>
-
-
-#include <tudocomp/io/BitIStream.hpp>
-#include <tudocomp/io/BitOStream.hpp>
-//#include <sdsl/bit_vectors.hpp>
-
-
 #include <tudocomp/ds/IntVector.hpp>
-
-
 #include <tudocomp/Algorithm.hpp>
 
-#include <tudocomp/Literal.hpp>
 
-
-//#include <tudocomp/tudocomp.hpp>
 
 
 namespace tdc {
@@ -35,15 +18,8 @@ class STStrategy : public Algorithm {
 private:
 
     //(position in text, non_terminal_symbol_number, length_of_symbol);
-    //typedef std::tuple<uint,uint,uint> non_term;
-  //  typedef std::vector<non_term> non_terminal_symbols;
-
-   // typedef std::vector<std::pair<uint,uint>> rules;
-
-    //(position in text, non_terminal_symbol_number, length_of_symbol);
     typedef std::tuple<uint,uint,uint> non_term;
     typedef std::vector<non_term> non_terminal_symbols;
-
     typedef std::vector<std::pair<uint,uint>> rules;
 
 
@@ -52,12 +28,6 @@ private:
     BitVector dead_positions;
 
     typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
-
-    //
-    //(position in text, non_terminal_symbol_number, length_of_symbol);
-   // typedef std::tuple<uint,uint,uint> non_term;
-   // typedef std::vector<non_term> non_terminal_symbols;
-    //
 
 
     inline virtual std::vector<uint> select_starting_positions(std::set<uint> starting_positions, uint length){
@@ -248,7 +218,6 @@ public:
                         std::pair<uint,uint> rule = std::make_pair(selected_pos.at(0), pair.first);
 
                         dictionary.push_back(rule);
-                        DLOG(INFO)<<"added rule";
 
                         //iterate over selected pos, add non terminal symbols
                         for(auto it = selected_pos.begin(); it != selected_pos.end(); it++){

@@ -1,35 +1,13 @@
 #pragma once
 
-
-
-#include <tudocomp/Compressor.hpp>
-#include <tudocomp/Range.hpp>
 #include <tudocomp/util.hpp>
-#include <vector>
-#include <tuple>
-
 #include <tudocomp/io.hpp>
-
-
-#include <tudocomp/io/BitIStream.hpp>
-#include <tudocomp/io/BitOStream.hpp>
-
-
 #include <tudocomp/ds/IntVector.hpp>
-
-
-
-
-
 #include <tudocomp/ds/TextDS.hpp>
-
 #include <tudocomp/Algorithm.hpp>
 
-#include <tudocomp/Literal.hpp>
-
-
-//#include <tudocomp/tudocomp.hpp>
-
+#include <vector>
+#include <tuple>
 
 namespace tdc {
 
@@ -38,25 +16,11 @@ class ESAStrategy : public Algorithm {
 private:
 
     //(position in text, non_terminal_symbol_number, length_of_symbol);
-    //typedef std::tuple<uint,uint,uint> non_term;
-  //  typedef std::vector<non_term> non_terminal_symbols;
-
-   // typedef std::vector<std::pair<uint,uint>> rules;
-
-    //(position in text, non_terminal_symbol_number, length_of_symbol);
     typedef std::tuple<uint,uint,uint> non_term;
     typedef std::vector<non_term> non_terminal_symbols;
-
     typedef std::vector<std::pair<uint,uint>> rules;
 
-    //uint min_lrf;
-
     BitVector dead_positions;
-
-    //typedef TextDS<> text_t;
-
-
-
 
     inline virtual std::vector<uint> select_starting_positions(std::vector<uint> starting_positions, uint length){
         std::vector<uint> selected_starting_positions;
@@ -155,8 +119,9 @@ public:
         while(!lrf_occurences.empty()){
             std::pair<uint,uint> top = lrf_occurences.back();
             lrf_occurences.pop_back();
+            uint one = 1;
 
-            if(dead_positions[sa_t[top.second]] == 1 || dead_positions[sa_t[top.second-1]] == 1 || dead_positions[sa_t[top.second]+top.first-1] == 1 || dead_positions[sa_t[top.second-1]+top.first-1] == 1){
+            if(dead_positions[sa_t[top.second]] == one || dead_positions[sa_t[top.second-1]] ==one || dead_positions[sa_t[top.second]+top.first-1] == one || dead_positions[sa_t[top.second-1]+top.first-1] == one){
                 continue;
             }
 
@@ -171,15 +136,16 @@ public:
             // there is no 1 bit on the corresponding positions
             // it suffices to check start and end position, because lrf can only be same length and shorter
             uint i = top.second;
+            uint zero =0;
             while(i>=0 && ( lcp_t[i])>=top.first){
-                if(dead_positions[sa_t[i-1]] == 0 && dead_positions[sa_t[i-1]+top.first-1] == 0){
+                if(dead_positions[sa_t[i-1]] == zero && dead_positions[sa_t[i-1]+top.first-1] == zero){
                     starting_positions.push_back(sa_t[i-1]);
                 }
                 i--;
             }
             i = top.second+1;
             while(i< lcp_t.size() &&  lcp_t[i]>=top.first){
-                if(dead_positions[sa_t[i]] == 0 && dead_positions[sa_t[i]+top.first-1] == 0){
+                if(dead_positions[sa_t[i]] == zero && dead_positions[sa_t[i]+top.first-1] == zero){
                     starting_positions.push_back(sa_t[i]);
                 }
                 i++;
@@ -212,8 +178,6 @@ public:
         DLOG(INFO) << "sorting occurences";
         //, std::greater<std::tuple<uint,uint,uint>>()
         std::sort(nts_symbols.begin(), nts_symbols.end());
-        DLOG(INFO)<<"dict size: "<<dictionary.size();
-        DLOG(INFO)<<"symbols:"<<nts_symbols.size();
 
     }
 };
