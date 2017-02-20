@@ -45,7 +45,7 @@ void read_bytes_to_vec(std::istream& inp, T& vec, size_t bytes) {
 }
 
 template<class T>
-T read_file_to_stl_byte_container(std::string& filename,
+T read_file_to_stl_byte_container(const std::string& filename,
                                   size_t offset = 0) {
     std::ifstream in(filename, std::ios::in | std::ios::binary);
     if (bool(in)) {
@@ -82,7 +82,7 @@ T read_stream_to_stl_byte_container(S& stream) {
     return(vector);
 }
 
-inline size_t read_file_size(std::string& file) {
+inline size_t read_file_size(const std::string& file) {
     std::ifstream t(file);
     if (t) {
         t.seekg(0, std::ios::end);
