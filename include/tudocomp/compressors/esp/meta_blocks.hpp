@@ -110,7 +110,7 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
             })
         }
         IF_DEBUG(
-            DCHECK(calc_alphabet_size(buf) <= 6);
+            DCHECK_LE(calc_alphabet_size(buf), 6);
         )
     }
 

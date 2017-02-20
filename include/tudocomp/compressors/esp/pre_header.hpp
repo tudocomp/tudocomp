@@ -30,20 +30,21 @@ namespace esp {
     // Implementation that covers all of 64 bit
     // TODO: Does the Paper mean base-e or base-2 ?
     inline size_t iter_log(size_t n) {
-        if (n < 3) return 1;
-        if (n < 16) return 2;
-        if (n < 3814280) return 3;
-        return 4;
+        size_t o = 1;
+        if (n < 3) return 1 + o;
+        if (n < 16) return 2 + o;
+        if (n < 3814280) return 3 + o;
+        return 4 + o;
     }
 
 
     template<class T>
     uint64_t calc_alphabet_size(const T& t) {
-        Counter<typename T::value_type> c;
-        for (auto v : t) {
-            c.increase(v);
+        std::bitset<256> bs;
+        for (uint8_t v : t) {
+            bs.set(v, true);
         }
-        return c.getNumItems();
+        return bs.count();
     }
 
     template<class T>
@@ -359,6 +360,7 @@ namespace esp {
         bool print_mb_trace = true;
         bool print_mb2_trace = true;
         bool print_only_adjusted = false;
+        bool print_bulk_text = false;
 
         std::vector<TypedBlock> block_buffer;
 
@@ -392,10 +394,10 @@ namespace esp {
 
             IF_DEBUG(if (doit && print_mb_trace) {
                 std::cout << "mblock " << type << ": ";
-                std::cout << std::setw(n) << "";
+                if (print_bulk_text) std::cout << std::setw(n) << "";
                 std::cout << debug_p(front_cut, alphabet_size);
-                std::cout << " ";
-                std::cout << debug_p(back_cut, alphabet_size);
+                if (print_bulk_text) std::cout << " ";
+                if (print_bulk_text) std::cout << debug_p(back_cut, alphabet_size);
                 std::cout << "\n";
                 if (l < 2 || l > 3) std::cout << "Needs adjustment!\n";
             })
