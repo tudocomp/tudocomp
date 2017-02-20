@@ -14,6 +14,7 @@
 #include <tudocomp/util/GenericView.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/io/MMapHandle.hpp>
 
 #include "test/util.hpp"
 
@@ -1440,4 +1441,14 @@ TEST(KeywordlessEvalOrder, test) {
     r.parse_algorithm_id("eval_order_bug(sub1, 'foobar')");
     r.parse_algorithm_id("eval_order_bug(sub1)");
     r.parse_algorithm_id("eval_order_bug");
+}
+
+TEST(MMapHandle, test1) {
+    auto s = "asdkfjkasldlasdkflhkasddklashldasldkjalskdd"_v;
+    test::write_test_file("mmap1.txt", s);
+    auto path = test::test_file_path("mmap1.txt");
+
+    MMapHandle mmap { path };
+
+    ASSERT_EQ(mmap.view(), s);
 }
