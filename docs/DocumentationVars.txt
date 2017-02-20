@@ -1,6 +1,5 @@
-set(URL_TUDOCOMP  http://dacit.cs.uni-dortmund.de/tudocomp)
-set(URL_DOXYGEN   ${URL_TUDOCOMP}/doxygen)
-set(URL_CHARTER   ${URL_TUDOCOMP}/doxygen)
+set(URL_DOXYGEN ${URL_TUDOCOMP}/doxygen)
+set(URL_CHARTER ${URL_TUDOCOMP}/charter)
 
 set(URL_DOXYGEN_TDC ${URL_DOXYGEN}/namespacetdc.html)
 
