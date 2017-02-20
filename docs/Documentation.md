@@ -248,14 +248,14 @@ classes or methods can be found in the [Doxygen documentation](@URL_DOXYGEN@).
 
 *tudocomp* provides an abstraction for handling input from different kinds of
 sources and output to different kinds of targets. These are straightforwardly
-named  [`Input`](@URL_DOXYGEN_INPUT@) and [`Output`](@URL_DOXYGEN_OUTPUT@). Both
+named  [`Input`](@DX_INPUT@) and [`Output`](@DX_OUTPUT@). Both
 hide the actual source or target of the data (e.g. a file or memory buffer).
 
 This section will describe their usage briefly along with some examples.
 
 ### Reading an Input
 
-An [`Input`](@URL_DOXYGEN_INPUT@) can be created from different data sources:
+An [`Input`](@DX_INPUT@) can be created from different data sources:
 
 * a memory pointer (e.g. a string literal),
 * a byte buffer (`std::vector<uint8_t>`),
@@ -293,8 +293,8 @@ The input can be accessed in two conceptually different ways:
    bytes (the concept of offline algorithms).
 
 The choice is done by acquiring the respective handle using either the
-[`as_stream`](@URL_DOXYGEN_INPUT_ASSTREAM@) or the
-[`as_view`](@URL_DOXYGEN_INPUT_ASVIEW@) function. The stream object returned by
+[`as_stream`](@DX_INPUT_ASSTREAM@) or the
+[`as_view`](@DX_INPUT_ASVIEW@) function. The stream object returned by
 `as_stream` conforms to the `std::istream` interface and also provides iterator
 access. The object returned by `as_view` provides the indexed access `[]`
 operator for and the function `size()` to return the amount of bytes available
@@ -322,7 +322,7 @@ Note how `istream2` is created as a copy of `istream`. This way, `istream2`
 points at the same stream position as `istream` at the time the copy is created.
 It can be used as a "rewind" point for use independently of `istream`.
 
-The type [`uliteral_t`](@URL_DOXYGEN_ULITERAL_T@) is one of *tudocomp*'s core
+The type [`uliteral_t`](@DX_ULITERAL_T@) is one of *tudocomp*'s core
 types and shall be used for single characters.
 
 In contrast, The following code snippet demonstrates using an input as a view:
@@ -350,12 +350,12 @@ for (len_t i = iview.size() - 1; i >= 0; i--) {
 Note that copies and sub-views are shallow, ie. they point to the same memory
 location as the original view and thus have the same content.
 
-The type [`len_t`](@URL_DOXYGEN_LEN_T@) is another one of *tudocomp*'s core
+The type [`len_t`](@DX_LEN_T@) is another one of *tudocomp*'s core
 types and shall be used for lengths and indices.
 
 ### Producing an Output
 
-An [`Output`](@URL_DOXYGEN_OUTPUT@) can be created for different data sinks:
+An [`Output`](@DX_OUTPUT@) can be created for different data sinks:
 
 * a byte buffer (`std::vector<uint8_t>`),
 * a file or
@@ -376,7 +376,7 @@ Output output_to_stream(std::cout); // to stdout
 ~~~
 
 An output has to be generated sequentially and thus only provides a stream
-interface via the [`as_stream`](@URL_DOXYGEN_OUTPUT_ASSTREAM@) function. The
+interface via the [`as_stream`](@DX_OUTPUT_ASSTREAM@) function. The
 following code snippet demonstrates this by copying an entire input to an
 output:
 
@@ -392,14 +392,14 @@ for(uliteral_t c : istream) {
 
 ### Bitwise I/O
 
-The framework provides the classes [`BitIStream`](@URL_DOXYGEN_BITISTREAM@) and
-[`BitOStream`](@URL_DOXYGEN_BITOSTREAM@) for bitwise input and output. They are
+The framework provides the classes [`BitIStream`](@DX_BITISTREAM@) and
+[`BitOStream`](@DX_BITOSTREAM@) for bitwise input and output. They are
 wrappers around `std::istream` and `std::ostream`, respectively, and provide
 functionality to read or write single bits or fixed-width (MSBF order) integers
 from their underlying stream.
 
-Single bits are written using [`write_bit`](@URL_DOXYGEN_BITOSTREAM_WRITE_BIT@),
-integers using [`write_int`](@URL_DOXYGEN_BITOSTREAM_WRITE_INT@).
+Single bits are written using [`write_bit`](@DX_BITOSTREAM_WRITE_BIT@),
+integers using [`write_int`](@DX_BITOSTREAM_WRITE_INT@).
 
 The following example performs several bitwise write operations on an output:
 
@@ -424,12 +424,12 @@ obits.write_int(b); // write the value 27 using 8*sizeof(uint8_t) bits (8)
 } // end of scope, write EOF sequence and destroy bit output stream
 ~~~
 
-There is important logic in the [destructor](@URL_DOXYGEN_BITOSTREAM_DTOR@) of
+There is important logic in the [destructor](@DX_BITOSTREAM_DTOR@) of
 `BitOStream`: Since the stream writes bits to an underlying byte stream, it
 needs to write a few extra bits at the end of the stream in order to indicate
 the end for an eventual bit input stream.
 
-Note how [`write_int`](@URL_DOXYGEN_BITOSTREAM_WRITE_INT@) will use the default
+Note how [`write_int`](@DX_BITOSTREAM_WRITE_INT@) will use the default
 size of the passed integer's type if no bit width is explicitly passed in the
 second argument.
 
@@ -445,7 +445,7 @@ uint8_t  a = ibits.read_int<uint8_t>(5); // read a 5-bit integer into a uint8_t
 uint16_t b = ibits.read_int<uint16_t>;   // read a 16-bit integer
 ~~~
 
-Note how [`read_int`](@URL_DOXYGEN_BITISTREAM_READ_INT@) requires a template
+Note how [`read_int`](@DX_BITISTREAM_READ_INT@) requires a template
 parameter in order to "know" into which data type the read integer will be
 stored and perform the respective conversion. If no bit width is given, the
 default size of the data type will be used.
@@ -453,17 +453,17 @@ default size of the data type will be used.
 Beyond writing single bits and fixed-width integers, the bit I/O features some
 basic integer encodings:
 
-* Unary code ([`write_unary`](@URL_DOXYGEN_BITOSTREAM_WRITE_UNARY@) / 
-  [`read_unary`](@URL_DOXYGEN_BITISTREAM_READ_UNARY@))
+* Unary code ([`write_unary`](@DX_BITOSTREAM_WRITE_UNARY@) / 
+  [`read_unary`](@DX_BITISTREAM_READ_UNARY@))
 * Elias gamma code
-  ([`write_elias_gamma`](@URL_DOXYGEN_BITOSTREAM_WRITE_GAMMA@) /
-  [`read_elias_gamma`](@URL_DOXYGEN_BITISTREAM_READ_GAMMA@))
+  ([`write_elias_gamma`](@DX_BITOSTREAM_WRITE_GAMMA@) /
+  [`read_elias_gamma`](@DX_BITISTREAM_READ_GAMMA@))
 * Elias delta code
-  ([`write_elias_delta`](@URL_DOXYGEN_BITOSTREAM_WRITE_DELTA@) /
-  [`read_elias_delta`](@URL_DOXYGEN_BITISTREAM_READ_DELTA@))
+  ([`write_elias_delta`](@DX_BITOSTREAM_WRITE_DELTA@) /
+  [`read_elias_delta`](@DX_BITISTREAM_READ_DELTA@))
 * Compressed integers
-  ([`write_compressed_int`](@URL_DOXYGEN_BITOSTREAM_WRITE_VBYTE@) /
-  [`read_compressed_int`](@URL_DOXYGEN_BITISTREAM_READ_VBYTE@))
+  ([`write_compressed_int`](@DX_BITOSTREAM_WRITE_VBYTE@) /
+  [`read_compressed_int`](@DX_BITISTREAM_READ_VBYTE@))
 
 # Old Tutorial
 
@@ -477,7 +477,7 @@ repository in the `/include/tudocomp/example/` directory.
 
 ### Implementing the Compressor interface
 
-Any compressor needs to implement the [`Compressor`](@URL_DOXYGEN_COMPRESSOR@)
+Any compressor needs to implement the [`Compressor`](@DX_COMPRESSOR@)
 interface. A complete implementation consists of
 
 * a constructor accepting an rvalue reference to an environment
@@ -491,7 +491,7 @@ interface. A complete implementation consists of
 Note that while the latter (`meta()`) is not strictly defined in the
 `Compressor` class, it is required due to the nature of templated construction.
 
-The class [`Env`](@URL_DOXYGEN_ENV@) represents the compressor's runtime environment.
+The class [`Env`](@DX_ENV@) represents the compressor's runtime environment.
 It provides access to runtime options as well as the framework's statistics
 tracking functionality. A compressor conceptually owns[^cpp11-ownership] its
 environment, therefore the constructor takes an rvalue reference to it. The
@@ -501,7 +501,7 @@ reference should always be delegated down to the base constructor
 [^cpp11-ownership]: This refers to the C++11 ownership semantics, ie. a
 `unique_ptr<Env>` is stored internally.
 
-A [`Meta`](@URL_DOXYGEN_META@) object contains information about an algorithm
+A [`Meta`](@DX_META@) object contains information about an algorithm
 (e.g. compressors) such as its name and type. This information is used by the
 generic algorithm constructor `create_algo`, which will be explained below, as
 well as for the registry of the command-line application.
@@ -543,7 +543,7 @@ public:
 #endif
 ~~~
 
-The [`tdc`](@URL_DOXYGEN_TDC@) namespace contains most of the core types
+The [`tdc`](@DX_TDC@) namespace contains most of the core types
 required for implementing compressors, including the `Compressor` interface
 and the `Env` and `Meta` types.
 
@@ -747,9 +747,9 @@ TEST(example, compress) {
 }
 ~~~
 
-*tudocomp* provides the [`create_algo`](@URL_DOXYGEN_CREATEALGO@) function
+*tudocomp* provides the [`create_algo`](@DX_CREATEALGO@) function
 template that properly instantiates compressors (or more precisely: any class
-inheriting from [`Algorithm`](@URL_DOXYGEN_ALGORITHM@)). In this example, the
+inheriting from [`Algorithm`](@DX_ALGORITHM@)). In this example, the
 compressor's input is created from a string constant and the output is linked to
 a byte buffer that will be filled. After invoking `compress`, the output is
 tested against the expected result.
@@ -804,8 +804,8 @@ amount of dynamically allocated memory (e.h. via `malloc` or `new`) over the
 course of a compression or decompression run.
 
 This functionality is accessible via a compressor's *environment* (represented
-by the [`Env`](@URL_DOXYGEN_ENV@) class), which can be retrieved using the
-[`env()`](@URL_DOXYGEN_ALGORITH_ENV@) function.
+by the [`Env`](@DX_ENV@) class), which can be retrieved using the
+[`env()`](@DX_ALGORITH_ENV@) function.
 
 Runtime statistics are tracked in *phases*, ie. the running time and memory
 peak can be measured for individual stages during a compression run. These
@@ -823,8 +823,8 @@ The measured data can be retrieved as JSON for visualization in the
 
 Making use of the statistics tracking functions is as easy as sorrounding
 single phases with calls to the
-[`begin_stat_phase`](@URL_DOXYGEN_ENV_BEGINSTATPHASE@) and
-[`end_stat_phase`](@URL_DOXYGEN_ENV_ENDSTATPHASE@) functions like so:
+[`begin_stat_phase`](@DX_ENV_BEGINSTATPHASE@) and
+[`end_stat_phase`](@DX_ENV_ENDSTATPHASE@) functions like so:
 
 ~~~ { .cpp }
 env().begin_stat_phase("Phase 1");
@@ -848,7 +848,7 @@ env().end_stat_phase();
           the phase is finished.
 
 During any phase, custom statistics can be logged using the
-[`log_stat`](@URL_DOXYGEN_ENV_LOGSTAT@) method like so:
+[`log_stat`](@DX_ENV_LOGSTAT@) method like so:
 
 ~~~ { .cpp }
 env().log_stat("A statistic", 147);
@@ -859,9 +859,9 @@ env().log_stat("Another statistic", 0.5);
    for `bool` and `std::string` should be added at least.
 
 Statistic tracking is concluded using the
-[`finish_stats`](@URL_DOXYGEN_ENV_FINISHSTATS@) function, which yields a
-reference to a [`Stat`](@URL_DOXYGEN_STAT@) object. The JSON can be written to a
-stream or retrieved as a string using its [`to_json`](@URL_DOXYGEN_STAT_TOJSON@)
+[`finish_stats`](@DX_ENV_FINISHSTATS@) function, which yields a
+reference to a [`Stat`](@DX_STAT@) object. The JSON can be written to a
+stream or retrieved as a string using its [`to_json`](@DX_STAT_TOJSON@)
 function overloads:
 
 ~~~ { .cpp }
@@ -916,7 +916,7 @@ Dynamic options are options that accept values of any type that can be parsed
 from a string representation (because options passed from a command-line, for
 instance, are generally in string representation). For primitive types such
 as booleans or integers, parsers are predefined in the
-[`OptionValue`](@URL_DOXYGEN_OPTIONVALUE@) class.
+[`OptionValue`](@DX_OPTIONVALUE@) class.
 
 In the following examples, two dynamic options are introduced to the
 [run-length encoder](#example-run-length-encoding) example in the `Compressor`'s
@@ -937,8 +937,8 @@ inline static Meta meta() {
 }
 ~~~
 
-The `Meta`'s [`option`](@URL_DOXYGEN_META_OPTION@) method introduces a new
-option. Using [`dynamic`](@URL_DOXYGEN_OPTIONBUILDER_DYNAMIC@), this option
+The `Meta`'s [`option`](@DX_META_OPTION@) method introduces a new
+option. Using [`dynamic`](@DX_OPTIONBUILDER_DYNAMIC@), this option
 is declared a dynamic option with the specified default value. The default value
 is used when the option's value was not explicitly passed (ie. via the command
 line).
@@ -967,8 +967,8 @@ auto emit_run = [&]() {
 ~~~
 
 Note how options are accessible via the environment's
-[`option`](@URL_DOXYGEN_ENV_OPTION@) function, which returns the corresponding
-[`OptionValue`](@URL_DOXYGEN_OPTIONVALUE@) object.
+[`option`](@DX_ENV_OPTION@) function, which returns the corresponding
+[`OptionValue`](@DX_OPTIONVALUE@) object.
 
 > *Exercise*: Modify the decompression of the run-length encoder so that it
               uses the `rle_symbol` option as well.
@@ -1045,7 +1045,7 @@ encoder. The function `emit_run` has been removed, instead the type `encoder_t`
 is expected to declare `emit_run` accepting two parameters: the character and
 the length of the run. This way, the actual encoding has been made *modular*.
 
-The function [`env_for_option`](@URL_DOXYGEN_ENV_ENVFOROPTION@) is used to
+The function [`env_for_option`](@DX_ENV_ENVFOROPTION@) is used to
 create an environment from the current environment's `"encoder"` option.
 `encoder_t` accepts this in its constructor and get nested options from it.
 
@@ -1109,7 +1109,7 @@ test::roundtrip<TemplatedExampleCompressor<ExampleRunEmitter>>
 ## The Registry
 
 In order to make a compressor available for the driver application, it needs
-to be registered in the driver's [`Registry`](@URL_DOXYGEN_REGISTRY@).
+to be registered in the driver's [`Registry`](@DX_REGISTRY@).
 
 This is currently possible only by editing the source code file
 `src/tudocomp_driver/tudocmp_algorithms.cpp`. Adding the necessary includes and
