@@ -205,10 +205,9 @@ section#content > div {
 }
 
 #content blockquote p {
-    background-color: #DDD;
+    background-color: #DFD;
 
-    border-left: 4px solid #AAA;
-    font-style: italic;
+    border-left: 4px solid #686;
 
     padding: 0.5rem;
 }
@@ -218,6 +217,23 @@ section#content > div {
 
     border: 3px solid blue;
     border-radius: 0.5rem;
+}
+
+/* Hacky captions for code blocks */
+#content pre + blockquote p {
+    border: 0;
+    margin: 0.25rem 0 0 0;
+    padding: 0;
+
+    background-color: transparent;
+    text-align: right;
+
+    font-size: 0.85rem;
+}
+
+#content pre + blockquote p code {
+    background-color: transparent;
+    font-weight: bold;
 }
 
 #content ol {

@@ -244,7 +244,10 @@ This section provides a guided tour through some of the core features of
 Please note that more detailed information about the use of specific
 classes or methods can be found in the [Doxygen documentation](@URL_DOXYGEN@).
 
->> *TODO*: All snippets should work in a sandbox test, mention that here.
+> *Hint*: Most code snippets can be seen "in action" in the file
+  `test/doc_snippets.cpp`, which can be used as a reference. The respective
+  identifier is printed below the respective code snippet. The snippets are
+  implemented as unit tests and can be executed using `make doc_snippets`.
 
 ## Input and Output
 
@@ -269,7 +272,7 @@ constructor:
 
 ~~~ {.cpp}
 // Create an Input from a string literal
-Input input_from_memory("This is the input data");
+Input input_from_string("This is the input text");
 
 // Create an Input from a given byte buffer (std::vector<uint8_t>)
 Input input_from_buffer(buffer);
@@ -319,6 +322,7 @@ while(istream2.get(c)) {
     // ...
 }
 ~~~
+> Snippet: `input_stream`
 
 Note how `istream2` is created as a copy of `istream`. This way, `istream2`
 points at the same stream position as `istream` at the time the copy is created.
@@ -344,11 +348,12 @@ auto sub_view = iview.substr(1, 5);
 ASSERT_EQ("ooba", sub_view); // assertion for the sub-view's contents
 
 // iterate over the whole view character-wise in reverse order
-for (len_t i = iview.size() - 1; i >= 0; i--) {
-    uliteral_t c = iview[i];
+for (len_t i = iview.size(); i > 0; i--) {
+    uliteral_t c = iview[i-1];
     // ...
 }
 ~~~
+> Snippet: `input_view`
 
 Note that copies and sub-views are shallow, ie. they point to the same memory
 location as the original view and thus have the same content.
@@ -394,6 +399,7 @@ for(uliteral_t c : istream) {
     ostream << c;
 }
 ~~~
+> Snippet: `output_stream`
 
 ### Bitwise I/O
 
@@ -409,9 +415,8 @@ integers using [`write_int`](@DX_BITOSTREAM_WRITE_INT@).
 The following example performs several bitwise write operations on an output:
 
 ~~~ {.cpp}
-auto ostream = output.as_stream(); // retrieve an output stream
 {
-BitOStream obits(ostream); //construct the bitwise output stream
+BitOStream obits(output); //construct the bitwise output stream
 
 obits.write_bit(0);     // write a single unset bit
 obits.write_bit(1);     // write a single set bit
@@ -428,6 +433,7 @@ obits.write_int(b); // write the value 27 using 8*sizeof(uint8_t) bits (8)
 
 } // end of scope, write EOF sequence and destroy bit output stream
 ~~~
+> Snippet: `bit_output`
 
 There is important logic in the [destructor](@DX_BITOSTREAM_DTOR@) of
 `BitOStream`: Since the stream writes bits to an underlying byte stream, it
@@ -441,14 +447,14 @@ second argument.
 The following example performs several bitwise read operations from an input:
 
 ~~~ {.cpp}
-auto istream = input.as_stream(); // retrieve an input stream
-BitIStream ibits(istream); // construct the bitwise input stream
+BitIStream ibits(input); // construct the bitwise input stream
 
 bool bit = ibits.read_bit(); // read a single bit
 
 uint8_t  a = ibits.read_int<uint8_t>(5); // read a 5-bit integer into a uint8_t
-uint16_t b = ibits.read_int<uint16_t>;   // read a 16-bit integer
+uint16_t b = ibits.read_int<uint16_t>(); // read a 16-bit integer
 ~~~
+> Snippet: `bit_input`
 
 Note how [`read_int`](@DX_BITISTREAM_READ_INT@) requires a template
 parameter in order to "know" into which data type the read integer will be
@@ -527,6 +533,7 @@ BitVector bv(32);
 // mark all multiples of 3
 for(len_t i = 0; i < 32; i++) bv[i] = ((iv4[i] % 3) == 0);
 ~~~
+> Snippet: `iv_static`
 
 This example also demonstrates how `IntVector` is implemented in a fully
 STL-compatible way.
@@ -556,6 +563,7 @@ auto max_bits = bits_for(fib.back());
 fib.width(max_bits);
 fib.shrink_to_fit();
 ~~~
+> Snippet: `iv_dynamic`
 
 Upon termination of this example, the vector will have a bit width of 13,
 which is the amount of bits required to store the 20^th^ Fibonacci number
@@ -567,7 +575,8 @@ amount of bits by computing the rounded-up binary logarithm. In the
 the bit width of values within the `DynamicIntVector` can be altered at
 runtime. In order to achieve bit-compression, because the integer vector is
 internally backed by an array of 64-bit integers, a call to
-[`shrink_to_fit`](@DX_INTVECTOR_STF@) is necessary.
+[`shrink_to_fit`](@DX_INTVECTOR_STF@) is necessary in order to actually shrink
+the vector's capacity.
 
 # Old Tutorial
 

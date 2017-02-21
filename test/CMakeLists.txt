@@ -2,6 +2,8 @@ include(test/testsuite.cmake)
 
 list(APPEND BASIC_DEPS malloc_count tudocomp)
 
+run_test(doc_snippets   DEPS ${BASIC_DEPS})
+
 run_test(vbyte_test     DEPS ${BASIC_DEPS})
 run_test(rle_test       DEPS ${BASIC_DEPS})
 run_test(mtf_test       DEPS ${BASIC_DEPS})
