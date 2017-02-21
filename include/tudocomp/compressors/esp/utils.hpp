@@ -73,31 +73,6 @@ namespace esp {
         return alpha.size();
     }
 
-    // TODO remove
-    template<class T, class F>
-    void for_neigbors(T& t, F f) {
-        for (size_t i = 0; i < t.size(); i++) {
-            typename T::value_type neighbors[2];
-            uint8_t neighbor_len = 0;
-
-            if (i == 0 && i == t.size() - 1) {
-                neighbor_len = 0;
-            } else if (i == 0) {
-                neighbor_len = 1;
-                neighbors[0] = t[i + 1];
-            } else if (i == t.size() - 1) {
-                neighbor_len = 1;
-                neighbors[0] = t[i - 1];
-            } else {
-                neighbor_len = 2;
-                neighbors[0] = t[i - 1];
-                neighbors[1] = t[i + 1];
-            }
-
-            f(i, neighbors, neighbor_len);
-        }
-    }
-
     template<class T>
     bool no_adjacent_identical(const T& t) {
         for(size_t i = 1; i < t.size(); i++) {
