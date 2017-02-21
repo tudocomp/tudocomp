@@ -1,10 +1,8 @@
 #include "tudocomp/tudocomp.hpp"
-#include "tudocomp/compressors/EspCompressor.hpp"
 #include "test/util.hpp"
 #include <gtest/gtest.h>
 
-#include <tudocomp/compressors/esp/meta_blocks.hpp>
-#include <tudocomp/compressors/esp/tree_reducer.hpp>
+#include "tudocomp/compressors/EspCompressor.hpp"
 
 using namespace tdc;
 
@@ -433,10 +431,12 @@ TEST(Esp, tree_reducer_roundtrip) {
     auto s = "0000dkasxxxcsdacjzsbkhvfaghskcbs"
              "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v;
 
-    auto r = esp::generate_grammar_rounds(s);
+    esp::EspContext esp;
+
+    auto r = esp.generate_grammar_rounds(s);
 
     std::cout << "\n[Complete Grammar]:\n\n";
-    auto slp = esp::generate_grammar(r);
+    auto slp = esp.generate_grammar(r);
     for (size_t i = 0; i < slp.rules.size(); i++) {
         std::cout
             << i << ": "
@@ -446,7 +446,7 @@ TEST(Esp, tree_reducer_roundtrip) {
 
     std::cout << "start rule: " << slp.root_rule << "\n";
 
-    auto s2 = esp::derive_text(slp);
+    auto s2 = slp.derive_text_s();
 
     std::cout << "\n[Derived String]:\n\n";
     std::cout << s2 << "\n";

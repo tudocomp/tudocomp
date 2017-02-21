@@ -4,9 +4,7 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/IntVector.hpp>
-#include <tudocomp/compressors/esp/pre_header.hpp>
-#include <tudocomp/compressors/esp/meta_blocks.hpp>
-#include <tudocomp/compressors/esp/tree_reducer.hpp>
+#include <tudocomp/compressors/esp/EspContextImpl.hpp>
 
 namespace tdc {
 
@@ -28,6 +26,7 @@ public:
 
         auto p1 = env().stat_phase("ESP Compressor");
 
+        EspContext context;
         SLP slp;
 
         {
@@ -35,11 +34,11 @@ public:
             auto in = input.as_view();
 
             auto p3 = env().stat_phase("ESP Algorithm");
-                auto r = generate_grammar_rounds(in, SILENT);
+                auto r = context.generate_grammar_rounds(in, SILENT);
             p3.end();
 
             auto p4 = env().stat_phase("Generate SLP from Hashmaps");
-                slp = generate_grammar(r);
+                slp = context.generate_grammar(r);
             p4.end();
         }
 
@@ -105,8 +104,7 @@ public:
 
         auto out = output.as_stream();
         if (!empty) {
-            auto s = esp::derive_text(slp);
-            out << s;
+            slp.derive_text(out);
         } else {
             out << ""_v;
         }

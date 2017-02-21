@@ -5,7 +5,9 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
-#include <tudocomp/compressors/esp/pre_header.hpp>
+#include <tudocomp/compressors/esp/landmarks.hpp>
+#include <tudocomp/compressors/esp/utils.hpp>
+#include <tudocomp/compressors/esp/esp_math.hpp>
 
 namespace tdc {
 namespace esp {
@@ -215,7 +217,7 @@ inline void eager_mb2(const Source& src, Context<Source>& ctx) {
                     debug_landmark_counter++;
                 )
             },
-            TIE_TO_RIGHT
+            ctx.behavior_landmarks_tie_to_right
         );
 
         IF_DEBUG(if (ctx.print_mb2_trace) {
@@ -245,7 +247,7 @@ inline void split(const Source& src, Context<Source>& ctx) {
 
         // Scan for non-repeating
         // NB: First to not find a size-1 repeating prefix
-        j = split_where(src, i, !MAXIMIZE_REPEATING,
+        j = split_where(src, i, !ctx.behavior_metablocks_maximimze_repeating,
                         [](size_t a, size_t b){ return a != b; });
         if(j != i) {
             auto s = src.slice(i, j);
@@ -259,7 +261,7 @@ inline void split(const Source& src, Context<Source>& ctx) {
         }
 
         // Scan for repeating
-        j = split_where(src, i, MAXIMIZE_REPEATING,
+        j = split_where(src, i, ctx.behavior_metablocks_maximimze_repeating,
                         [](size_t a, size_t b){ return a == b; });
         if(j != i) {
             auto s = src.slice(i, j);
