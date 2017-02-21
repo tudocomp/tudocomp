@@ -324,6 +324,8 @@ Note how `istream2` is created as a copy of `istream`. This way, `istream2`
 points at the same stream position as `istream` at the time the copy is created.
 It can be used as a "rewind" point for use independently of `istream`.
 
+>> *TODO*: InputStream copy ctor is deleted...
+
 The type [`uliteral_t`](@DX_ULITERAL_T@) is one of *tudocomp*'s core
 types and shall be used for single characters.
 
@@ -334,13 +336,12 @@ auto iview = input.as_view(); //retrieve an input view
 auto iview2 = iview; // create a shallow copy of the view
 
 // compare the view's content against a certain string
-// the CHECK macro is Google Logging's "assert"
-CHECK_EQ("foobar", iview);
+ASSERT_EQ("foobar", iview);
 
 // create a sub-view for a range within the main view
-auto sub_view = iview.substr(1, 5); 
+auto sub_view = iview.substr(1, 5);
 
-CHECK_EQ("ooba", sub_view); // assertion for the sub-view's contents
+ASSERT_EQ("ooba", sub_view); // assertion for the sub-view's contents
 
 // iterate over the whole view character-wise in reverse order
 for (len_t i = iview.size() - 1; i >= 0; i--) {
@@ -351,6 +352,8 @@ for (len_t i = iview.size() - 1; i >= 0; i--) {
 
 Note that copies and sub-views are shallow, ie. they point to the same memory
 location as the original view and thus have the same content.
+
+>> *TODO*: InputView copy ctor is deleted...
 
 The type [`len_t`](@DX_LEN_T@) is another one of *tudocomp*'s core
 types and shall be used for lengths and indices.
@@ -455,7 +458,7 @@ default size of the data type will be used.
 Beyond writing single bits and fixed-width integers, the bit I/O features some
 basic integer encodings:
 
-* Unary code ([`write_unary`](@DX_BITOSTREAM_WRITE_UNARY@) / 
+* Unary code ([`write_unary`](@DX_BITOSTREAM_WRITE_UNARY@) /
   [`read_unary`](@DX_BITISTREAM_READ_UNARY@))
 * Elias gamma code
   ([`write_elias_gamma`](@DX_BITOSTREAM_WRITE_GAMMA@) /
@@ -516,7 +519,7 @@ std::iota(iv4.begin(), iv4.end(), 0);
 LOG(INFO) << "Size of iv4 in bits: " << iv4.bit_size();
 
 // demonstrate overflow
-CHECK_EQ(iv4[0], iv4[16]);
+ASSERT_EQ(iv4[0], iv4[16]);
 
 // reserve an additional bit vector with 32 entries
 BitVector bv(32);
