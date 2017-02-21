@@ -7,6 +7,7 @@
 #include <tudocomp/io.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/ds/SuffixTree.hpp>
 
 
 
@@ -149,7 +150,7 @@ public:
     using Algorithm::Algorithm; //import constructor
 
     inline static Meta meta() {
-        Meta m("lfs_comp_sts", "suffix_tree_strat");
+        Meta m("lfs_comp", "st");
         return m;
     }
 

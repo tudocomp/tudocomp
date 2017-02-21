@@ -26,6 +26,7 @@
 #include <tudocomp/Algorithm.hpp>
 
 #include <tudocomp/Literal.hpp>
+#include <tudocomp/coders/BitCoder.hpp>
 
 
 //#include <tudocomp/tudocomp.hpp>
@@ -48,8 +49,8 @@ public:
 
     inline static Meta meta() {
         Meta m("lfs_comp_enc", "lfs_enocde_strat");
-        m.option("lfs_lit_coder").templated<literal_coder_t>();
-        m.option("lfs_len_coder").templated<len_coder_t>();
+        m.option("lfs_lit_coder").templated<literal_coder_t, BitCoder>();
+        m.option("lfs_len_coder").templated<len_coder_t, BitCoder>();
         return m;
     }
 

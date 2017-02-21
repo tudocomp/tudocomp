@@ -29,7 +29,7 @@ public:
         Meta m("compressor", "lfs_comp",
             "This is an implementation of the longest first substitution compression scheme.");
         m.option("computing_strat").templated<comp_strategy_t>();
-        m.option("coding_strat").templated<coding_strat_t>();
+        m.option("coding_strat").templated<coding_strat_t, EncodeStrategy<BitCoder, BitCoder> >();
         m.needs_sentinel_terminator();
         return m;
     }

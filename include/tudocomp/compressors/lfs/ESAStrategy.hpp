@@ -49,7 +49,7 @@ public:
     using Algorithm::Algorithm; //import constructor
 
     inline static Meta meta() {
-        Meta m("lfs_comp_esas", "esa_strat");
+        Meta m("lfs_comp", "esa");
 
         m.option("textds").templated<text_t, TextDS<>>();
         return m;
