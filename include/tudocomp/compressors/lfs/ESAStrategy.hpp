@@ -10,6 +10,7 @@
 #include <tuple>
 
 namespace tdc {
+namespace lfs {
 
 template<typename text_t = TextDS<> , uint min_lrf = 2>
 class ESAStrategy : public Algorithm {
@@ -181,4 +182,4 @@ public:
     }
 };
 }
-
+}

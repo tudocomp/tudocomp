@@ -15,7 +15,6 @@
 
 
 namespace tdc {
-using namespace tdc;
 
 class SuffixTree{
 public:

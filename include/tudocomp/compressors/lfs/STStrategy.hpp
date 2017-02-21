@@ -12,6 +12,7 @@
 
 
 namespace tdc {
+namespace lfs {
 
 template<uint min_lrf = 2 >
 class STStrategy : public Algorithm {
@@ -248,3 +249,4 @@ public:
 };
 }
 
+}

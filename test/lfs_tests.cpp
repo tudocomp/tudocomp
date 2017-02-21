@@ -167,7 +167,7 @@ TEST(stlfs, file_english_1mb_eg){
 
 
 TEST(lfs, st_strat){
-        auto c = create_algo<lfs::LFSCompressor< STStrategy<> > >();
+        auto c = create_algo<lfs::LFSCompressor< lfs::STStrategy<> > >();
 
         // compress
         std::string compression_string = "abaaabbababb$";
@@ -195,7 +195,7 @@ TEST(lfs, st_strat){
 }
 
 TEST(lfs, esa_strat){
-        auto c = create_algo<lfs::LFSCompressor< ESAStrategy<> > >();
+        auto c = create_algo<lfs::LFSCompressor< lfs::ESAStrategy<> > >();
 
         // compress
         std::string compression_string = "abaaabbababb$";
