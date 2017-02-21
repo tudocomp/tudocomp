@@ -8,12 +8,13 @@
 #include <tudocomp/compressors/esp/landmarks.hpp>
 #include <tudocomp/compressors/esp/utils.hpp>
 #include <tudocomp/compressors/esp/esp_math.hpp>
+#include <tudocomp/compressors/esp/RoundContext.hpp>
 
 namespace tdc {
 namespace esp {
 
 template<typename Source>
-inline void eager_mb13(const Source& src, Context<Source>& ctx, size_t t) {
+inline void eager_mb13(const Source& src, RoundContext<Source>& ctx, size_t t) {
     [&]() {
         size_t j = src.size();
         for (size_t i = 0; i < j;) {
@@ -69,7 +70,7 @@ void for_neigbors2(T& t, F f) {
 }
 
 template<typename Source>
-inline void eager_mb2(const Source& src, Context<Source>& ctx) {
+inline void eager_mb2(const Source& src, RoundContext<Source>& ctx) {
     auto A = src;
     DCHECK(A.size() > 0);
     auto type_3_prefix_len = std::min(iter_log(ctx.alphabet_size),
@@ -240,7 +241,7 @@ inline size_t split_where(const Source& src, size_t i, bool max, F f) {
 }
 
 template<typename Source>
-inline void split(const Source& src, Context<Source>& ctx) {
+inline void split(const Source& src, RoundContext<Source>& ctx) {
     // Split up the input into metablocks of type 2 or 1/3
     for (size_t i = 0; i < src.size();) {
         size_t j;

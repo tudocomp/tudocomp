@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tudocomp/compressors/esp/EspContext.hpp>
-#include <tudocomp/compressors/esp/Context.hpp>
+#include <tudocomp/compressors/esp/RoundContext.hpp>
 #include <tudocomp/compressors/esp/meta_blocks.hpp>
 
 #include <tudocomp/compressors/esp/utils.hpp>
@@ -44,7 +44,8 @@ namespace tdc {namespace esp {
             in_t in = r.string;
             std::vector<size_t> new_layer;
 
-            esp::Context<in_t> ctx {
+            esp::RoundContext<in_t> ctx {
+                *this,
                 r.alphabet,
                 in,
             };

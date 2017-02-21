@@ -340,7 +340,9 @@ TEST(Esp, landmark_spanner_13) {
 
 
 void split_test(string_ref s) {
-    esp::Context<decltype(s)> ctx {
+    esp::EspContext esp;
+    esp::RoundContext<decltype(s)> ctx {
+        esp,
         256,
         s,
     };

@@ -7,6 +7,8 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
+#include <tudocomp/compressors/esp/TypedBlock.hpp>
+
 namespace tdc {
 namespace esp {
     //[debugging]///////////////////////////////////////////////////////////////
