@@ -115,13 +115,14 @@ void* realloc(void* ptr, size_t size) {
     } else {
         auto block = (block_header_t*)((char*)ptr - sizeof(block_header_t));
         if(is_managed(block)) {
+            size_t old_size = block->size;
             void *new_ptr = __libc_realloc(block, size + sizeof(block_header_t));
 
             auto new_block = (block_header_t*)new_ptr;
             new_block->magic = MEMBLOCK_MAGIC; // just making sure
             new_block->size = size;
-            
-            count_free(block->size);
+
+            count_free(old_size);
             count_malloc(size);
 
             return (char*)new_ptr + sizeof(block_header_t);
