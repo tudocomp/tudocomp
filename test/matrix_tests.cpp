@@ -127,7 +127,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
             std::string n = "_" + ss.str();
             counter++;
 
-            auto e = driver_test::roundtrip(algo, n, text, true, abort);
+            auto e = driver_test::roundtrip(algo, n, text, true, abort, true);
             if (e.has_error) {
                 saw_errors = true;
                 if (early_error) {
