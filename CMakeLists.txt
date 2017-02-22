@@ -112,3 +112,10 @@ target_link_libraries(
 )
 
 cotire(tudocomp_algorithms)
+
+
+MESSAGE( STATUS "Built Type: " ${CMAKE_BUILD_TYPE} )
+MESSAGE( STATUS "CXX Flags: " ${CMAKE_CXX_FLAGS} )
+MESSAGE( STATUS "[Optional] Judy Array: " ${JUDY_H_AVAILABLE} )
+MESSAGE( STATUS "[Optional] Boost: " ${Boost_FOUND} )
+
