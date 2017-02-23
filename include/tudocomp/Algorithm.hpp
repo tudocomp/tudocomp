@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
 #include <tudocomp/pre_header/Env.hpp>
 #include <tudocomp/io.hpp>
@@ -58,7 +59,7 @@ class Meta {
     std::string m_type;
     std::string m_name;
     std::string m_docs;
-    bool        m_add_null_terminator;
+    ds::InputRestrictionAndFlags m_ds_flags;
 
     std::vector<decl::Arg> m_options;
 
@@ -92,7 +93,7 @@ public:
         m_type(type),
         m_name(name),
         m_docs(doc),
-        m_add_null_terminator(false),
+        m_ds_flags(),
         m_static_args(ast::Value(std::string(name), {}))
     {
     }
@@ -245,7 +246,7 @@ public:
             std::move(m_name),
             std::move(m_options),
             std::move(m_docs),
-            m_add_null_terminator
+            m_ds_flags
         );
     }
 
@@ -279,14 +280,21 @@ public:
         return m_type;
     }
 
-    /// \brief Indicates that this Algorithm requires a terminator symbol in Input.
-    inline void needs_sentinel_terminator() {
-        m_add_null_terminator = true;
+    /// \brief Indicates that this Algorithm uses the TextDS class.
+    template<typename text_t>
+    inline void uses_textds(ds::dsflags_t flags) {
+        ds::InputRestrictionAndFlags r(text_t::common_restrictions(flags),
+                                       flags);
+
+        // TODO: propagate r through everything
+        // Then: Input and Outpout in change to functional
+
+        m_ds_flags = r;
     }
 
     /// \cond INTERNAL
-    inline bool is_needs_sentinel_terminator() {
-        return m_add_null_terminator;
+    inline ds::InputRestrictionAndFlags textds_flags() {
+        return m_ds_flags;
     }
     /// \endcond
 };

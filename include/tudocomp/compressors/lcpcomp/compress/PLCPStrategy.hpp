@@ -32,6 +32,10 @@ public:
         return m;
     }
 
+    inline static ds::dsflags_t textds_flags() {
+        return text_t::SA | text_t::ISA;
+    }
+
     inline void factorize(text_t& text,
                    size_t threshold,
                    lzss::FactorBuffer& factors) {
@@ -95,18 +99,18 @@ public:
 					{
 						len_t newlcp_peak = 0; // a new peak can emerge at top.pos+top.lcp
 						bool peak_exists = false;
-						if(top.pos+top.lcp < i) 
+						if(top.pos+top.lcp < i)
 						for(len_t j = top.no+1; j < handles.size(); ++j) { // erase all right peaks that got substituted
 							if( handles[j].node_ == nullptr) continue;
 							const Poi poi = *(handles[j]);
 							DCHECK_LT(next_pos, poi.pos);
-							if(poi.pos < next_pos+top.lcp) { 
+							if(poi.pos < next_pos+top.lcp) {
 								heap.erase(handles[j]);
 								handles[j].node_ = nullptr;
 								if(poi.lcp + poi.pos > next_pos+top.lcp) {
 									const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
 									DCHECK_NE(remaining_lcp,0);
-									if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak); 
+									if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak);
 									newlcp_peak = std::max(remaining_lcp, newlcp_peak);
 								}
 							} else if( poi.pos == next_pos+top.lcp) { peak_exists=true; }
@@ -114,7 +118,7 @@ public:
 						}
 #ifdef DEBUG
 						if(peak_exists) {  //TODO: DEBUG
-							for(len_t j = top.no+1; j < handles.size(); ++j) { 
+							for(len_t j = top.no+1; j < handles.size(); ++j) {
 								if( handles[j].node_ == nullptr) continue;
 								const Poi& poi = *(handles[j]);
 								if(poi.pos == next_pos+top.lcp) {
@@ -129,7 +133,7 @@ public:
 							DCHECK(handles[j].node_ == nullptr);
 							handles[j] = heap.emplace(next_pos+top.lcp, newlcp_peak, j);
 						}
-						
+
 					}
 					handles[top.no].node_ = nullptr;
 					heap.pop(); // top now gets erased

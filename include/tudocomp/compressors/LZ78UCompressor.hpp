@@ -108,7 +108,7 @@ public:
         m.option("coder").templated<ref_coder_t>();
         m.option("threshold").dynamic("3");
         // m.option("dict_size").dynamic("inf");
-        m.needs_sentinel_terminator();
+        m.uses_textds<TextDS<>>(ds::SA); // HACK to get around missing null term
         return m;
     }
 

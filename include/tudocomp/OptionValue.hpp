@@ -10,6 +10,7 @@
 
 #include <glog/logging.h>
 
+#include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/util.hpp>
 
 namespace tdc {
@@ -39,7 +40,7 @@ private:
     // Aways valid!
     std::unique_ptr<pattern::Algorithm> m_static_selection;
     friend class OptionValue;
-    bool m_needs_sentinel;
+    ds::InputRestrictionAndFlags m_ds_flags;
 public:
     inline ~AlgorithmValue();
     inline AlgorithmValue(const AlgorithmValue& other);
@@ -47,11 +48,11 @@ public:
     inline AlgorithmValue(std::string&& name,
                           ArgumentMap&& arguments,
                           std::unique_ptr<pattern::Algorithm>&& static_selection,
-                          bool needs_sentinel);
+                          ds::InputRestrictionAndFlags flags);
 
     inline const std::string& name() const;
     inline const ArgumentMap& arguments() const;
-    inline bool needs_sentinel_terminator() const;
+    inline ds::InputRestrictionAndFlags textds_flags() const;
     inline const pattern::Algorithm& static_selection() const;
     inline AlgorithmValue& operator=(AlgorithmValue&& other);
 };
@@ -88,7 +89,7 @@ inline AlgorithmValue::~AlgorithmValue() {}
 inline AlgorithmValue::AlgorithmValue(const AlgorithmValue& other):
     m_name(other.m_name),
     m_arguments(other.m_arguments),
-    m_needs_sentinel(other.m_needs_sentinel)
+    m_ds_flags(other.m_ds_flags)
 {
     if (other.m_static_selection != nullptr) {
         m_static_selection = std::make_unique<pattern::Algorithm>(
@@ -100,17 +101,16 @@ inline AlgorithmValue::AlgorithmValue(AlgorithmValue&& other):
     m_name(std::move(other.m_name)),
     m_arguments(std::move(other.m_arguments)),
     m_static_selection(std::move(other.m_static_selection)),
-    m_needs_sentinel(other.m_needs_sentinel) {}
+    m_ds_flags(other.m_ds_flags) {}
 
 inline AlgorithmValue::AlgorithmValue(std::string&& name,
                         ArgumentMap&& arguments,
                         std::unique_ptr<pattern::Algorithm>&& static_selection,
-                        bool needs_sentinel
-                                     ):
+                        ds::InputRestrictionAndFlags flags):
     m_name(std::move(name)),
     m_arguments(std::move(arguments)),
     m_static_selection(std::move(static_selection)),
-    m_needs_sentinel(needs_sentinel) {}
+    m_ds_flags(flags) {}
 
 inline const std::string& AlgorithmValue::name() const {
     return m_name;
@@ -126,11 +126,11 @@ inline AlgorithmValue& AlgorithmValue::operator=(AlgorithmValue&& other) {
     this->m_name = std::move(other.m_name);
     this->m_arguments = std::move(other.m_arguments);
     this->m_static_selection = std::move(other.m_static_selection);
-    this->m_needs_sentinel = std::move(other.m_needs_sentinel);
+    this->m_ds_flags = std::move(other.m_ds_flags);
     return *this;
 }
-inline bool AlgorithmValue::needs_sentinel_terminator() const {
-    return m_needs_sentinel;
+inline ds::InputRestrictionAndFlags AlgorithmValue::textds_flags() const {
+    return m_ds_flags;
 }
 
 inline OptionValue::~OptionValue() {}
@@ -138,7 +138,7 @@ inline OptionValue::~OptionValue() {}
 inline OptionValue::OptionValue(): OptionValue("") {}
 inline OptionValue::OptionValue(std::string&& value):
     m_is_value(true),
-    m_value_or_algorithm(AlgorithmValue(std::move(value), {}, std::make_unique<pattern::Algorithm>(), false)) {}
+    m_value_or_algorithm(AlgorithmValue(std::move(value), {}, std::make_unique<pattern::Algorithm>(), ds::InputRestrictionAndFlags())) {}
 inline OptionValue::OptionValue(AlgorithmValue&& algorithm):
     m_is_value(false),
     m_value_or_algorithm(std::move(algorithm)) {}
@@ -196,14 +196,14 @@ inline std::ostream& operator<<(std::ostream& os, const AlgorithmValue& av) {
         os << e.first << " : " << e.second << ", ";
     }
 
-    return os << "; sentinel: " << av.needs_sentinel_terminator()
+    return os << "; ds_flags: " << av.textds_flags()
         << ", static_selection: " << av.static_selection()
         << "}";
 }
 
 inline std::ostream& operator<<(std::ostream& os, const OptionValue& ov) {
     if (!ov.is_algorithm()) {
-        return os << "string:" << ov.as_string();
+        return os << "string: " << ov.as_string();
     } else {
         return os << ov.as_algorithm();
     }

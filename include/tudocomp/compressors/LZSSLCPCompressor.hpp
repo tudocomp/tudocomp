@@ -26,7 +26,7 @@ public:
         m.option("coder").templated<coder_t>();
         m.option("textds").templated<text_t, TextDS<>>();
         m.option("threshold").dynamic(3);
-        m.needs_sentinel_terminator();
+        m.uses_textds<text_t>(text_t::SA | text_t::ISA | text_t::LCP);
         return m;
     }
 

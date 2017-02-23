@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/ArrayDS.hpp>
 #include <tudocomp/util/divsufsort.hpp>
@@ -12,6 +13,13 @@ public:
     inline static Meta meta() {
         Meta m("sa", "divsufsort");
         return m;
+    }
+
+    inline static ds::InputRestriction restrictions() {
+        return ds::InputRestriction {
+            { 0 },
+            true
+        };
     }
 
     template<typename textds_t>

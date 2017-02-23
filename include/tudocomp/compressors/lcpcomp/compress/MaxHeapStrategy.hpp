@@ -27,6 +27,10 @@ public:
         return m;
     }
 
+    inline static ds::dsflags_t textds_flags() {
+        return text_t::SA | text_t::ISA | text_t::LCP;
+    }
+
     using Algorithm::Algorithm; //import constructor
 
     inline void factorize(text_t& text,

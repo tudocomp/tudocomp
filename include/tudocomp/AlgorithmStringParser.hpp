@@ -20,6 +20,7 @@
 
 #include <glog/logging.h>
 
+#include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/OptionValue.hpp>
 #include <tudocomp/util.hpp>
 
@@ -517,18 +518,18 @@ namespace tdc {
             std::string m_name;
             std::vector<Arg> m_arguments;
             std::string m_doc;
-            bool m_add_null_terminator;
+            ds::InputRestrictionAndFlags m_ds_flags;
 
         public:
 
             inline Algorithm(std::string&& name,
                              std::vector<Arg>&& args,
                              std::string&& doc,
-                             bool add_null_terminator):
+                             ds::InputRestrictionAndFlags flags):
                 m_name(std::move(name)),
                 m_arguments(std::move(args)),
                 m_doc(std::move(doc)),
-                m_add_null_terminator(add_null_terminator) {}
+                m_ds_flags(flags) {}
 
             inline const std::string& name() const {
                 return m_name;
@@ -545,8 +546,8 @@ namespace tdc {
                 return m_doc;
             }
 
-            inline bool add_null_terminator() {
-                return m_add_null_terminator;
+            inline ds::InputRestrictionAndFlags textds_flags() {
+                return m_ds_flags;
             }
 
             inline std::string to_string(bool omit_type = false) const;
@@ -923,7 +924,7 @@ namespace tdc {
             auto& v_signature = *found;
 
             // Prepare return value
-            bool r_needs_null_term = v_signature.add_null_terminator();
+            ds::InputRestrictionAndFlags r_ds_flags = v_signature.textds_flags();
             std::string r_name = v_signature.name();
             std::vector<pattern::Arg> r_static_args;
             AlgorithmValue::ArgumentMap r_dynamic_args;
@@ -1065,7 +1066,7 @@ namespace tdc {
                 std::move(r_name),
                 std::move(r_dynamic_args),
                 std::move(tmp),
-                r_needs_null_term));
+                r_ds_flags));
 
             return fr;
         }
