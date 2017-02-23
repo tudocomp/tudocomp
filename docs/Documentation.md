@@ -174,7 +174,7 @@ For building the documentation, the following tools are required:
 
 * [LaTeX](http://www.latex-project.org) (specifically the `pdflatex` component)
 * [Doxygen](http://doxygen.org) (1.8 or later).
-* [Pandoc](http://pandoc.org) (1.16 or later).
+* [Pandoc](http://pandoc.org) (1.19 or later).
 
 ### Windows Support
 
@@ -307,7 +307,7 @@ on the input.
 
 The following code snippet demonstrates using a given input as a view:
 
-~~~ { .cpp }
+~~~ { .cpp caption="input_stream" }
 auto istream = input.as_stream(); // retrieve an input stream
 auto istream2 = istream; // create a second stream as a "rewind" position
 
@@ -322,7 +322,6 @@ while(istream2.get(c)) {
     // ...
 }
 ~~~
-> Snippet: `input_stream`
 
 Note how `istream2` is created as a copy of `istream`. This way, `istream2`
 points at the same stream position as `istream` at the time the copy is created.
@@ -335,7 +334,7 @@ types and shall be used for single characters.
 
 In contrast, The following code snippet demonstrates using an input as a view:
 
-~~~ { .cpp }
+~~~ { .cpp caption="input_view" }
 auto iview = input.as_view(); //retrieve an input view
 auto iview2 = iview; // create a shallow copy of the view
 
@@ -353,7 +352,6 @@ for (len_t i = iview.size(); i > 0; i--) {
     // ...
 }
 ~~~
-> Snippet: `input_view`
 
 Note that copies and sub-views are shallow, ie. they point to the same memory
 location as the original view and thus have the same content.
@@ -390,7 +388,7 @@ interface via the [`as_stream`](@DX_OUTPUT_ASSTREAM@) function. The
 following code snippet demonstrates this by copying an entire input to an
 output:
 
-~~~ { .cpp }
+~~~ { .cpp caption="output_stream" }
 auto istream = input.as_stream(); // retrieve the input stream
 auto ostream = output.as_stream(); // retrieve the output stream
 
@@ -399,7 +397,6 @@ for(uliteral_t c : istream) {
     ostream << c;
 }
 ~~~
-> Snippet: `output_stream`
 
 ### Bitwise I/O
 
@@ -414,7 +411,7 @@ integers using [`write_int`](@DX_BITOSTREAM_WRITE_INT@).
 
 The following example performs several bitwise write operations on an output:
 
-~~~ {.cpp}
+~~~ {.cpp caption="bit_output"}
 {
 BitOStream obits(output); //construct the bitwise output stream
 
@@ -433,7 +430,6 @@ obits.write_int(b); // write the value 27 using 8*sizeof(uint8_t) bits (8)
 
 } // end of scope, write EOF sequence and destroy bit output stream
 ~~~
-> Snippet: `bit_output`
 
 There is important logic in the [destructor](@DX_BITOSTREAM_DTOR@) of
 `BitOStream`: Since the stream writes bits to an underlying byte stream, it
@@ -446,7 +442,7 @@ second argument.
 
 The following example performs several bitwise read operations from an input:
 
-~~~ {.cpp}
+~~~ {.cpp caption="bit_input"}
 BitIStream ibits(input); // construct the bitwise input stream
 
 bool bit = ibits.read_bit(); // read a single bit
@@ -454,7 +450,6 @@ bool bit = ibits.read_bit(); // read a single bit
 uint8_t  a = ibits.read_int<uint8_t>(5); // read a 5-bit integer into a uint8_t
 uint16_t b = ibits.read_int<uint16_t>(); // read a 16-bit integer
 ~~~
-> Snippet: `bit_input`
 
 Note how [`read_int`](@DX_BITISTREAM_READ_INT@) requires a template
 parameter in order to "know" into which data type the read integer will be
@@ -514,7 +509,7 @@ Dynamic:
 
 The following example illustrates the use of `IntVector` in a static way:
 
-~~~ {.cpp}
+~~~ {.cpp caption="iv_static"}
 // reserve a vector of 32 4-bit integers (initialized as zero)
 IntVector<uint_t<4>> iv4(32);
 
@@ -533,7 +528,6 @@ BitVector bv(32);
 // mark all multiples of 3
 for(len_t i = 0; i < 32; i++) bv[i] = ((iv4[i] % 3) == 0);
 ~~~
-> Snippet: `iv_static`
 
 This example also demonstrates how `IntVector` is implemented in a fully
 STL-compatible way.
@@ -545,7 +539,7 @@ Note how arbitrary-width integers overflow in the expected fashion: `iv4[16]`
 
 The following is an example for the usage of `DynamicIntVector`:
 
-~~~ {.cpp}
+~~~ {.cpp snippet="iv_dynamic"}
 // reserve a vector for 20 integer values (initialized as zero)
 // default to a width of 32 bits per value
 DynamicIntVector fib(20, 0, 32);
@@ -563,7 +557,6 @@ auto max_bits = bits_for(fib.back());
 fib.width(max_bits);
 fib.shrink_to_fit();
 ~~~
-> Snippet: `iv_dynamic`
 
 Upon termination of this example, the vector will have a bit width of 13,
 which is the amount of bits required to store the 20^th^ Fibonacci number

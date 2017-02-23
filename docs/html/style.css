@@ -76,6 +76,20 @@ a code {
     font-weight: bold;
 }
 
+.sourceCode[caption]:after {
+    display: block;
+
+    color: #444;
+
+    text-align: right;
+    padding: 0.25rem 0 0.25rem 0;
+
+    font-family: "Source Code Pro", monospace;
+    font-size: 85%;
+
+    content: '\27A4\20' attr(caption);
+}
+
 header {
     height: 4rem;
 
@@ -217,23 +231,6 @@ section#content > div {
 
     border: 3px solid blue;
     border-radius: 0.5rem;
-}
-
-/* Hacky captions for code blocks */
-#content pre + blockquote p {
-    border: 0;
-    margin: 0.25rem 0 0 0;
-    padding: 0;
-
-    background-color: transparent;
-    text-align: right;
-
-    font-size: 0.85rem;
-}
-
-#content pre + blockquote p code {
-    background-color: transparent;
-    font-weight: bold;
 }
 
 #content ol {
