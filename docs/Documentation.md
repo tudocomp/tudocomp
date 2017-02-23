@@ -539,7 +539,7 @@ Note how arbitrary-width integers overflow in the expected fashion: `iv4[16]`
 
 The following is an example for the usage of `DynamicIntVector`:
 
-~~~ {.cpp snippet="iv_dynamic"}
+~~~ {.cpp caption="iv_dynamic"}
 // reserve a vector for 20 integer values (initialized as zero)
 // default to a width of 32 bits per value
 DynamicIntVector fib(20, 0, 32);
@@ -570,6 +570,100 @@ runtime. In order to achieve bit-compression, because the integer vector is
 internally backed by an array of 64-bit integers, a call to
 [`shrink_to_fit`](@DX_INTVECTOR_STF@) is necessary in order to actually shrink
 the vector's capacity.
+
+## Algorithms
+
+The [`Algorithm`](@DX_ALGORITHM@) class plays a central role in *tudocomp* as
+it provides the base for the modular system of compressors, coders and other
+classes - they all inherit from `Algorithm`.
+
+This section introduces the core mechanisms one needs to understand in order
+to properly implement algorithms.
+
+### Meta Information
+
+Any `Algorithm` implementation needs to provide meta information about itself in
+the form of a  [`Meta`](@DX_META@) object. For this, inheriting (non-abstract)
+classes are expected to expose a static function called `meta`. The following is
+a minimal example:
+
+~~~ {.cpp caption="algorithm_impl"}
+inline static Meta meta() {
+    Meta m("undisclosed", "my_algorithm", "An example algorithm");
+    return m;
+}
+~~~
+
+The [constructor](@DX_META_CTOR@) takes three parameters:
+
+1. The algorithm's type
+1. The unique identifier for the algorithm
+1. A brief human-readable description of the algorithm
+
+These parameters are used by the algorithm registry, which is explained further
+in the [respective section](#the-algorithm-registry) below. For now, it is
+enough to understand that this information is later exposed to the command-line
+application.
+
+### Environment
+
+When instantiated, an algorithm receives an environment object
+([`Env`](@DX_ENV@)) via its [constructor](@DX_ALGORITHM_CTOR@). The environment
+provides access to algorithm options as explained below, as well as other
+*tudocomp* features like the [runtime statistics](#runtime-statistics).
+
+The environment is retrieved using the [`env`](@DX_ALGORITHM_ENV@) function.
+
+### Options
+
+Algorithms can accept optional parameters, or arguments. These can be passed via
+the command-line or when instantiating an algorithm.
+
+Options are declared in the algorithm's `Meta` object using the
+[`option`](@DX_META_OPTION@) function like in the following example:
+
+~~~ {.cpp caption="algorithm_impl"}
+inline static Meta meta() {
+    Meta m("undisclosed", "my_algorithm", "An example algorithm");
+    m.option("param1").dynamic("default_value");
+    m.option("numeric").dynamic(147);
+    return m;
+}
+~~~
+
+As visible in this example, options have basic type features. Only
+[`dynamic`](@DX_OPTIONBUILDER_DYNAMIC@) options are shown here, which can be
+seen as options with primitive data attached to them (e.g. a string or a numeric
+value).
+
+At runtime, options can be accessed via the algorithm's environment:
+
+~~~ {.cpp caption="algorithm_impl"}
+auto param1 = env().option("param1").as_string();
+auto numeric = env().option("numeric").as_integer();
+~~~
+
+Because option values can be passed via the command-line, they are per se
+typeless. Using the conversion functions provided by the
+[`OptionValue`](@DX_OPTIONVALUE@) class, they can be cast to the required type
+(in the example: [`as_string`](@DX_OPTIONVALUE_ASSTRING@) and
+[`as_integer`](@DX_OPTIONVALUE_ASINTEGER@)).
+
+### Strategies
+
+>> *TODO*
+
+### Instantiating Algorithms
+
+>> *TODO*
+
+### The Algorithm Registry
+
+>> *TODO*
+
+## Runtime Statistics
+
+>> *TODO*
 
 # Old Tutorial
 
@@ -1015,163 +1109,6 @@ via the command-line when invoking the driver application.
 The framework knows two different types of runtime options, *dynamic* options
 and *templated* options. The options that an algorithm takes are defined in
 its meta information object.
-
-### Dynamic Options
-
-Dynamic options are options that accept values of any type that can be parsed
-from a string representation (because options passed from a command-line, for
-instance, are generally in string representation). For primitive types such
-as booleans or integers, parsers are predefined in the
-[`OptionValue`](@DX_OPTIONVALUE@) class.
-
-In the following examples, two dynamic options are introduced to the
-[run-length encoder](#example-run-length-encoding) example in the `Compressor`'s
-meta information object. The `minimum_run` option will determine the minimum
-length of a run before it is encoded (3 by default), while the `rle_symbol`
-option defines the separation symbol used to use for encoding runs.
-
-~~~ {.cpp}
-inline static Meta meta() {
-    Meta m("compressor", "example_compressor",
-           "This is an example compressor.");
-
-    //Define options
-    m.option("minimum_run").dynamic("3");
-    m.option("rle_symbol").dynamic("%");
-
-    return m;
-}
-~~~
-
-The `Meta`'s [`option`](@DX_META_OPTION@) method introduces a new
-option. Using [`dynamic`](@DX_OPTIONBUILDER_DYNAMIC@), this option
-is declared a dynamic option with the specified default value. The default value
-is used when the option's value was not explicitly passed (ie. via the command
-line).
-
-In the following snippet, these options are used to alter the actual run-length
-encoding done by the `emit_run` function:
-
-~~~ {.cpp}
-// read the option values
-auto minimum_run = env().option("minimum_run").as_integer();
-auto rle_symbol = env().option("rle_symbol").as_string();
-
-// writes the current run to the output stream
-auto emit_run = [&]() {
-    if (counter >= minimum_run) {
-        // if the run exceeds the minimum amount of characters,
-        // encode the run using using the RLE symbol syntax
-        ostream << last << rle_symbol << counter << rle_symbol;
-    } else {
-        // otherwise, do not encode and emit the whole run
-        for (size_t i = 0; i <= counter; i++) {
-            ostream << last;
-        }
-    }
-};
-~~~
-
-Note how options are accessible via the environment's
-[`option`](@DX_ENV_OPTION@) function, which returns the corresponding
-[`OptionValue`](@DX_OPTIONVALUE@) object.
-
-> *Exercise*: Modify the decompression of the run-length encoder so that it
-              uses the `rle_symbol` option as well.
-
-### Templated Options
-
-Since algorithms are meant to be modular, the framework provides functionality
-to pass a sub-algorithm as an option of the main algorithm, which the main
-algorithm then instantiates at runtime. This is done using templated options.
-
-The following example declares the main algorithm,
-`TemplatedExampleCompressor`, with a template parameter `encoder_t` and the
-corresponding templated option:
-
-~~~ {.cpp}
-template <typename encoder_t>
-class TemplatedExampleCompressor : public Compressor {
-public:
-    inline static Meta meta() {
-        Meta m("compressor", "example_compressor",
-               "This is an example compressor.");
-
-        //Define options
-        m.option("encoder").templated<encoder_t>();
-
-        return m;
-    }
-
-    // ...
-};
-~~~
-
-The following snippet shows an alternative implementation of the
-[run-length encoder](#example-run-length-encoding)'s `compress` function using
-the templated option:
-
-~~~ {.cpp}
-inline virtual void compress(Input& input, Output& output) override {
-    auto istream = input.as_stream(); // retrieve the input stream
-    auto ostream = output.as_stream(); // retrieve the output stream
-
-    char current; // stores the current character read from the input
-    char last; //stores the character that preceded the current character
-    size_t counter = 0; // counts the length of the run of the current character
-
-    // create the encoder
-    encoder_t encoder(env().env_for_option("encoder"));
-
-    // retrieve the first character on the stream
-    if (istream.get(last)) {
-        // continue reading from the stream
-        while(istream.get(current)) {
-            if (current == last) {
-                // increase length of the current run
-                counter++;
-            } else {
-                // emit the previous run
-                encoder.emit_run(last, counter);
-
-                // continue reading from the stream, starting a new run
-                last = current;
-                counter = 0;
-            }
-        }
-
-        // emit the final run
-        encoder.emit_run(last, counter);
-    }
-}
-~~~
-
-Note how in this example, the template type `encoder_t` is used to create an
-encoder. The function `emit_run` has been removed, instead the type `encoder_t`
-is expected to declare `emit_run` accepting two parameters: the character and
-the length of the run. This way, the actual encoding has been made *modular*.
-
-The function [`env_for_option`](@DX_ENV_ENVFOROPTION@) is used to
-create an environment from the current environment's `"encoder"` option.
-`encoder_t` accepts this in its constructor and get nested options from it.
-
-For instance, `encoder_t` could accept the dynamic options `minimum_run` and
-`rle_symbol` and encode a run like in the previous section. However, as long as
-`encoder_t` provides the `emit_run` function, it could use any arbitrary
-strategy to encode the run. In either scenario, the `decompress` method would
-have to use the sub-algorithm as well in order to decode the runs correctly.
-
-> *Exercise*: Implement an encoder `ExampleRunEmitter` for the
-              `TemplatedExampleCompressor`.
-
-> *Exercise*: Implement the `decompress` function for the
-              `TemplatedExampleCompressor` using the given encoder type (hint:
-               add a `decode_run` function to the encoder).
-
-> *Example*: A full example of the `TemplatedExampleCompressor` is available in
-             the `include/tudocomp/example` directory in the framework's
-             repository. Most of the framework's compressor implementations
-             follow this scheme and can be viewn as advanced examples as well.
 
 ### Unit Testing with Options
 

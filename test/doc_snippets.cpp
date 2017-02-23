@@ -168,3 +168,30 @@ SNIPPET(iv_dynamic) {
 
     ASSERT_EQ(260, fib.bit_size());
 }
+
+SNIPPET(algorithm_impl) {
+    class MyAlgorithm : public Algorithm {
+    public:
+        inline static Meta meta() {
+            Meta m("undisclosed", "my_algorithm", "An example algorithm");
+            m.option("param1").dynamic("default_value");
+            m.option("numeric").dynamic(147);
+            return m;
+        }
+
+        inline MyAlgorithm(Env&& env) : Algorithm(std::move(env)) {
+        }
+
+        inline void execute() {
+            auto param1 = env().option("param1").as_string();
+            auto numeric = env().option("numeric").as_integer();
+
+            ASSERT_EQ("default_value", param1);
+            ASSERT_EQ(777, numeric);
+        }
+    };
+
+    auto my_algo = create_algo<MyAlgorithm>("numeric=777");
+    my_algo.execute();
+}
+
