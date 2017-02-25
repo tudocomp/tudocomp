@@ -82,5 +82,29 @@ namespace esp {
         }
         return true;
     }
+
+    template<class T, class F>
+    void do_for_neighbors(T& t, F f) {
+        for (size_t i = 0; i < t.size(); i++) {
+            std::array<typename T::value_type, 2> neighbors;
+            uint8_t neighbor_len = 0;
+
+            if (i == 0 && i == t.size() - 1) {
+                neighbor_len = 0;
+            } else if (i == 0) {
+                neighbor_len = 1;
+                neighbors[0] = t[i + 1];
+            } else if (i == t.size() - 1) {
+                neighbor_len = 1;
+                neighbors[0] = t[i - 1];
+            } else {
+                neighbor_len = 2;
+                neighbors[0] = t[i - 1];
+                neighbors[1] = t[i + 1];
+            }
+
+            f(i, ConstGenericView<typename T::value_type>(neighbors.data(), neighbor_len));
+        }
+    }
 }
 }

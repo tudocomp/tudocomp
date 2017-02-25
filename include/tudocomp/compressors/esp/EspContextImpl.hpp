@@ -7,17 +7,16 @@
 #include <tudocomp/compressors/esp/utils.hpp>
 
 namespace tdc {namespace esp {
-    Rounds EspContext::generate_grammar_rounds(string_ref input,
-                                               bool silent = false) {
+    Rounds EspContext::generate_grammar_rounds(string_ref input) {
         std::vector<Round> rounds;
-        size_t root_rule = 0;
+        size_t root_node = 0;
         bool empty = false;
 
         // Initialize initial round
         {
             Round round0 {
                 GrammarRules(),
-                256,
+                256, // TODO: Calc actual alphabet size
                 std::vector<size_t>(),
             };
             round0.string.reserve(input.size());
@@ -28,71 +27,65 @@ namespace tdc {namespace esp {
         }
 
         for(size_t n = 0;; n++) {
-            if (!silent) std::cout << "\n[Round " << n << "]:\n\n";
             Round& r = rounds.back();
-
-            if (r.string.size() == 0) {
-                empty = true;
-                break;
-            }
-            if (r.string.size() == 1) {
-                if (!silent) std::cout << "Done\n";
-                root_rule = r.string[0];
-                break;
-            }
-
             in_t in = r.string;
-            std::vector<size_t> new_layer;
 
             esp::RoundContext<in_t> ctx {
-                *this,
                 r.alphabet,
                 in,
+                behavior_metablocks_maximimze_repeating,
+                behavior_landmarks_tie_to_right,
+                debug.round(),
             };
-            if (!silent) {
-                ctx.print_mb2_trace = false;
-                ctx.print_only_adjusted = true;
-            } else {
-                ctx.print_mb2_trace = false;
-                ctx.print_only_adjusted = true;
-                ctx.print_mb_trace = false;
+
+            ctx.debug.init(n, in, r.alphabet);
+
+            if (in.size() == 0) {
+                empty = true;
+                ctx.debug.last_round(0, true);
+                break;
+            }
+            if (in.size() == 1) {
+                root_node = in[0];
+                ctx.debug.last_round(root_node, false);
+                break;
             }
 
-            esp::split(in, ctx);
-            if (!silent) std::cout << "[Adjusted]:\n";
+            std::vector<size_t> new_layer;
+
+            ctx.split(in);
+
             const auto& v = ctx.adjusted_blocks();
 
-            if (!silent) std::cout << "\n[Rules]:\n";
-
+            ctx.debug.slice_symbol_map_start();
             {
                 in_t s = in;
                 for (auto e : v) {
                     auto slice = s.slice(0, e.len);
                     s = s.slice(e.len);
-                    if (!silent) std::cout <<  "  "
-                        << debug_p(slice, r.alphabet);
-
                     auto rule_name = r.gr.add(slice);
+
+                    ctx.debug.slice_symbol_map(slice, rule_name);
+
                     new_layer.push_back(rule_name);
-                    if (!silent) std::cout << " -> " << rule_name << "\n";
                 }
             }
+            // TODO: Preallocate based on number of rules
             new_layer.shrink_to_fit();
 
             // Prepare next round
             {
                 rounds.push_back(Round {
                     GrammarRules(),
-                    r.gr.counter,
+                    r.gr.counter - 1,
                     std::move(new_layer),
                 });
             }
         }
 
-        std::cout << "empty: " << int(empty) << ", root_rule: " << int(root_rule) << "\n";
         return Rounds {
             std::move(rounds),
-            root_rule,
+            root_node,
             empty,
         };
     }
@@ -131,7 +124,7 @@ namespace tdc {namespace esp {
         size_t counter_offset = GRAMMAR_PD_ELLIDED_PREFIX;
         size_t prev_counter_offset = 0;
 
-        size_t last_idx = rds.root_rule;
+        size_t last_idx = rds.root_node;
 
         size_t debug_round = 0;
         for (auto& r: rs) {
@@ -179,7 +172,7 @@ namespace tdc {namespace esp {
         DCHECK_EQ(counter_offset, size2 + size3 + GRAMMAR_PD_ELLIDED_PREFIX);
         DCHECK_EQ(i3, ret.size());
 
-        std::cout << "empty: " << int(empty) << ", root_rule: " << int(last_idx) << "\n";
+        debug.generate_grammar(empty, last_idx);
         return SLP {
             std::move(ret),
             last_idx,

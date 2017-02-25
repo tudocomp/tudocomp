@@ -340,16 +340,16 @@ TEST(Esp, landmark_spanner_13) {
 
 
 void split_test(string_ref s) {
-    esp::EspContext esp;
     esp::RoundContext<decltype(s)> ctx {
-        esp,
         256,
         s,
+        true, // max repeating meta blocks
+        true, // tie to right (or left?)
+        esp::DebugRoundContext(std::cout, true, true),
     };
-    ctx.print_mb2_trace = false;
 
     std::cout << "             [" << s << "]\n";
-    esp::split(s, ctx);
+    ctx.split(s);
     std::cout << "\n[Adjusted]:\n\n";
     ctx.adjusted_blocks();
 }
@@ -433,7 +433,10 @@ TEST(Esp, tree_reducer_roundtrip) {
     auto s = "0000dkasxxxcsdacjzsbkhvfaghskcbs"
              "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v;
 
-    esp::EspContext esp;
+    esp::EspContext esp {
+        nullptr, // no env
+        false,   // not silent
+    };
 
     auto r = esp.generate_grammar_rounds(s);
 

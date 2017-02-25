@@ -5,12 +5,11 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/compressors/esp/EspContextImpl.hpp>
+#include <tudocomp/compressors/esp/RoundContextImpl.hpp>
 
 namespace tdc {
 
 class EspCompressor: public Compressor {
-    static const bool SILENT = false;
-
 public:
     inline static Meta meta() {
         Meta m("compressor", "esp", "ESP based grammar compression");
@@ -26,15 +25,17 @@ public:
 
         auto p1 = env().stat_phase("ESP Compressor");
 
-        EspContext context;
+        EspContext context { &env(), false };
         SLP slp;
 
         {
             auto p2 = env().stat_phase("Input");
             auto in = input.as_view();
 
+            context.debug.input_string(in);
+
             auto p3 = env().stat_phase("ESP Algorithm");
-                auto r = context.generate_grammar_rounds(in, SILENT);
+                auto r = context.generate_grammar_rounds(in);
             p3.end();
 
             auto p4 = env().stat_phase("Generate SLP from Hashmaps");
@@ -42,13 +43,11 @@ public:
             p4.end();
         }
 
+        context.debug.encode_start();
         auto max_val = slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX - 1;
-        std::cout << "OUT: max value: " << max_val << "\n";
-
         auto bit_width = bits_for(max_val);
-        std::cout << "OUT: bits: " << int(bit_width) << "\n";
-
-        std::cout << "OUT: Root rule: " << slp.root_rule << "\n";
+        context.debug.encode_max_value(max_val, bit_width);
+        context.debug.encode_root_node(slp.root_rule);
 
         BitOStream bout(output.as_stream());
         // Write header
@@ -69,13 +68,16 @@ public:
         bout.write_int(slp.root_rule, bit_width);
 
         // Write rules
+        context.debug.encode_rule_start();
         for (auto& rule : slp.rules) {
-            //std::cout << "OUT: " << vec_to_debug_string(rule) << "\n";
+            context.debug.encode_rule(rule);
             DCHECK_LE(rule[0], max_val);
             DCHECK_LE(rule[1], max_val);
             bout.write_int(rule[0], bit_width);
             bout.write_int(rule[1], bit_width);
         }
+
+        context.debug.print_all();
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
@@ -86,7 +88,7 @@ public:
 
         auto root_rule = bin.read_int<size_t>(bit_width);
 
-        std::cout << "in:  Root rule: " << root_rule << "\n";
+        //std::cout << "in:  Root rule: " << root_rule << "\n";
 
         esp::SLP slp;
         slp.root_rule = root_rule;
