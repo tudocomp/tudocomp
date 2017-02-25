@@ -12,6 +12,6 @@ namespace tdc {namespace esp {
     struct Rounds {
         std::vector<Round> rounds;
         size_t root_node;
-        bool empty = false;
+        bool empty = true;
     };
 }}

@@ -11,8 +11,16 @@ namespace tdc {namespace esp {
 
     struct SLP {
         std::vector<std::array<size_t, 2>> rules;
-        size_t root_rule;
-        bool empty = false;
+        size_t root_rule = 0;
+        bool empty = true;
+
+        inline SLP() {}
+        inline SLP(std::vector<std::array<size_t, 2>>&& r,
+                   size_t root,
+                   bool e):
+            rules(std::move(r)),
+            root_rule(root),
+            empty(e) {}
 
         inline void derive_text_rec(std::ostream& o, size_t rule) const {
             if (rule < 256) {
@@ -23,7 +31,9 @@ namespace tdc {namespace esp {
         }
 
         inline std::ostream& derive_text(std::ostream& o) const {
-            derive_text_rec(o, root_rule);
+            if (!empty) {
+                derive_text_rec(o, root_rule);
+            }
             return o;
         }
 

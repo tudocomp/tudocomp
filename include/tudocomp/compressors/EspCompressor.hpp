@@ -91,6 +91,7 @@ public:
         //std::cout << "in:  Root rule: " << root_rule << "\n";
 
         esp::SLP slp;
+        slp.empty = empty;
         slp.root_rule = root_rule;
         slp.rules.reserve(std::pow(2, bit_width)); // TODO: Make more exact
 
