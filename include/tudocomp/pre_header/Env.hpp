@@ -22,6 +22,7 @@
 
 #include <glog/logging.h>
 
+#include <tudocomp/def.hpp>
 #include <tudocomp/Stat.hpp>
 
 namespace tdc {
@@ -170,4 +171,3 @@ public:
 };
 
 }
-

@@ -9,10 +9,7 @@ using namespace sdsl;
 
 //template<class bp_support = sdsl::bp_support_sada<> >
 namespace tdc {
-
-
-
-
+namespace lz78u {
 
 /**
  * This is a wrapper class around the sdsl-lite library to get a easier translation between
@@ -194,4 +191,4 @@ inline void reset_bitvector(bit_vector& bv) { //! resets a bit-vector, clearing 
 	}
 	};
 
-}//ns
+}}//ns

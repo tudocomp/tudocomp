@@ -87,7 +87,7 @@ namespace lz78u {
 template<typename strategy_t, typename ref_coder_t>
 class LZ78UCompressor: public Compressor {
 private:
-    using node_type = SuffixTree::node_type;
+    using node_type = lz78u::SuffixTree::node_type;
 
     using RefEncoder = typename ref_coder_t::Encoder;
     using RefDecoder = typename ref_coder_t::Decoder;
@@ -121,7 +121,7 @@ public:
         auto iview = input.as_view();
         View T = iview;
 
-        SuffixTree::cst_t backing_cst;
+        lz78u::SuffixTree::cst_t backing_cst;
         {
             auto phase2 = env().stat_phase("construct suffix tree");
 
@@ -131,7 +131,7 @@ public:
 
             construct_im(backing_cst, bad_copy_1, 1);
         }
-        SuffixTree ST(backing_cst);
+        lz78u::SuffixTree ST(backing_cst);
 
         const size_t max_z = T.size() * bits_for(ST.cst.csa.sigma) / bits_for(T.size());
         env().log_stat("max z", max_z);
@@ -141,7 +141,7 @@ public:
         len_t pos = 0;
         len_t z = 0;
 
-        typedef SuffixTree::node_type node_t;
+        typedef lz78u::SuffixTree::node_type node_t;
 
         CompressionStrat strategy {
             env().env_for_option("comp"),

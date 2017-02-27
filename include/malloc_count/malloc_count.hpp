@@ -11,8 +11,6 @@
 #include <ctime>
 #include <cstdint>
 
-#define MEMBLOCK_MAGIC 0xFEDCBA9876543210
-
 using ulong = unsigned long;
 
 /// \cond INTERNAL
@@ -36,12 +34,6 @@ namespace malloc_count {
         ssize_t mem_off;
         ssize_t mem_current;
         ssize_t mem_peak;
-    };
-
-    struct block_header_t {
-        size_t magic;
-        size_t phase_id;
-        size_t size;
     };
 
     void begin_phase();
