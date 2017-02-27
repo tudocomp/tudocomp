@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.0.2)
 project (tudocomp)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
+endif(NOT CMAKE_BUILD_TYPE)
+
 if(NOT VERSION)
     string(TIMESTAMP DATE "%y%m%d")
     set(VERSION "0.${DATE}-$ENV{USER}${VERSION_SUFFIX}")
