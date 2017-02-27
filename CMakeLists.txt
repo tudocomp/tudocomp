@@ -7,6 +7,10 @@ if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif(CCACHE_FOUND)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
+endif(NOT CMAKE_BUILD_TYPE)
+
 if(NOT VERSION)
     string(TIMESTAMP DATE "%y%m%d")
     set(VERSION "0.${DATE}-$ENV{USER}${VERSION_SUFFIX}")
