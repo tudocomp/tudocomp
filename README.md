@@ -11,8 +11,6 @@ can be mixed and parameterized with the following uses in mind:
 * Detailed benchmarking and comparison of compression and encoding algorithms.
 * Easy integration of new algorithm implementations.
 
-# Philosophy
-
 The framework offers a solid and extensible base for new implementations. Its
 design is focused on modularity and interchangeability.
 This way, the user can combine algorithms to find the optimal compression
@@ -20,9 +18,9 @@ strategy for a given input. The framework gives this opportunity while creating
 as little performance overhead as possible.
 
 
-# Dependencies {#dependencies}
+# Dependencies
 
-The framework is built using [CMake](https://cmake.org) (2.8 or later).
+The framework is built using [CMake](https://cmake.org) (3.0.2 or later).
 It is written in `C++11` with GNU extensions and has been tested with the `gcc`
 compiler family (version 4.9.2 or later) and `clang` (version 3.5.2 or later).
 
