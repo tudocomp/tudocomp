@@ -1,6 +1,7 @@
-#include "tudocomp/compressors/RunLengthEncoder.hpp"
-#include "test/util.hpp"
 #include <gtest/gtest.h>
+
+#include "test/util.hpp"
+#include <tudocomp/compressors/RunLengthEncoder.hpp>
 
 using namespace tdc;
 

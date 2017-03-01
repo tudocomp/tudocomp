@@ -96,9 +96,9 @@ compressors = [
     ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [coder, textds]),
     ("LZSSSlidingWindowCompressor", "compressors/LZSSSlidingWindowCompressor.hpp", [context_free_coder]),
     ("MTFCompressor",               "compressors/MTFCompressor.hpp",               []),
-    ("ChainCompressor",             "compressors/ChainCompressor.hpp",             []),
     ("NoopCompressor",              "compressors/NoopCompressor.hpp",              []),
     ("BWTCompressor",               "compressors/BWTCompressor.hpp",               [textds]),
+    ("ChainCompressor",             "../tudocomp_driver/ChainCompressor.hpp",      []),
 ]
 
 generators = [
@@ -117,14 +117,20 @@ namespace tdc_algorithms {
 
 using namespace tdc;
 
-void register_algorithms(Registry& r);
+void register_compressors(Registry<Compressor>& r);
+void register_generators(Registry<Generator>& r);
 
 // One global instance for the registry
-Registry REGISTRY = Registry::with_all_from(register_algorithms);
+Registry<Compressor> COMPRESSOR_REGISTRY = Registry<Compressor>::with_all_from(register_compressors, "compressor");
+Registry<Generator> GENERATOR_REGISTRY = Registry<Generator>::with_all_from(register_generators, "generator");
 
-void register_algorithms(Registry& r) {
+void register_compressors(Registry<Compressor>& r) {
 $COMPRESSORS
-}//function register_algorithms
+}//function register_compressors
+
+void register_generators(Registry<Generator>& r) {
+$GENERATORS
+}//function register_generators
 
 }//ns
 '''
@@ -236,13 +242,17 @@ def gen_tudocomp_hpp():
 # Output algorithm.cpp
 def gen_algorithm_cpp():
     algorithms_cpp = algorithms_cpp_template
-    l = []
+    l_compressors = []
     for line in gen_list(compressors):
-        l += [str.format("    r.register_compressor<{}>();", line)]
-    for line in gen_list(generators):
-        l += [str.format("    r.register_generator<{}>();", line)]
+        l_compressors += [str.format("    r.register_algorithm<{}>();", line)]
 
-    return algorithms_cpp.replace("$COMPRESSORS", "\n".join(l)) + "\n"
+    l_generators = []
+    for line in gen_list(generators):
+        l_generators += [str.format("    r.register_algorithm<{}>();", line)]
+
+    return algorithms_cpp.replace(
+                "$COMPRESSORS", "\n".join(l_compressors)).replace(
+                "$GENERATORS", "\n".join(l_generators))+ "\n"
 
 if selection == "tudocomp.hpp":
     file2 = open(outfile, 'w+')

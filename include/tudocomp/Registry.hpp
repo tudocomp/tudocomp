@@ -5,8 +5,9 @@
 
 namespace tdc {
 
-template<class T>
-inline void Registry::register_compressor() {
+template<typename algorithm_t>
+template<typename T>
+inline void Registry<algorithm_t>::register_algorithm() {
     auto meta = T::meta();
 
     ast::Value s = std::move(meta).build_static_args_ast_value();
@@ -14,40 +15,26 @@ inline void Registry::register_compressor() {
     gather_types(m_data->m_algorithms, std::move(meta));
 
     auto static_s
-        = eval::pattern_eval(std::move(s), "compressor", m_data->m_algorithms);
+        = eval::pattern_eval(std::move(s), m_root_type, m_data->m_algorithms);
 
-    CHECK(m_data->m_compressors.count(static_s) == 0); // Don't register twice...
-    m_data->m_compressors[std::move(static_s)] = [](Env&& env) {
+    CHECK(m_data->m_registered.count(static_s) == 0); // Don't register twice...
+    m_data->m_registered[std::move(static_s)] = [](Env&& env) {
         return std::make_unique<T>(std::move(env));
     };
 }
 
-template<class T>
-inline void Registry::register_generator() {
-    auto meta = T::meta();
-
-    ast::Value s = std::move(meta).build_static_args_ast_value();
-
-    gather_types(m_data->m_algorithms, std::move(meta));
-
-    auto static_s
-        = eval::pattern_eval(std::move(s), "generator", m_data->m_algorithms);
-
-    CHECK(m_data->m_generators.count(static_s) == 0); // Don't register twice...
-    m_data->m_generators[std::move(static_s)] = [](Env&& env) {
-        return std::make_unique<T>(std::move(env));
-    };
-}
-
-inline eval::AlgorithmTypes& Registry::algorithm_map() {
+template<typename algorithm_t>
+inline eval::AlgorithmTypes& Registry<algorithm_t>::algorithm_map() {
     return m_data->m_algorithms;
 }
 
-inline const eval::AlgorithmTypes& Registry::algorithm_map() const {
+template<typename algorithm_t>
+inline const eval::AlgorithmTypes& Registry<algorithm_t>::algorithm_map() const {
     return m_data->m_algorithms;
 }
 
-inline std::vector<pattern::Algorithm> Registry::all_algorithms_with_static_internal(View type) const {
+template<typename algorithm_t>
+inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_with_static_internal(View type) const {
     std::vector<pattern::Algorithm> r;
 
     using AlgorithmArgs = std::vector<pattern::Arg>;
@@ -109,11 +96,12 @@ inline std::vector<pattern::Algorithm> Registry::all_algorithms_with_static_inte
     return r;
 }
 
-inline std::vector<pattern::Algorithm> Registry::all_algorithms_with_static(View type) const {
+template<typename algorithm_t>
+inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_with_static(View type) const {
     std::vector<pattern::Algorithm> filtered_r;
 
     for (auto x : all_algorithms_with_static_internal(type)) {
-        if (m_data->m_compressors.count(x) > 0) {
+        if (m_data->m_registered.count(x) > 0) {
             filtered_r.push_back(std::move(x));
         }
     }
@@ -121,23 +109,26 @@ inline std::vector<pattern::Algorithm> Registry::all_algorithms_with_static(View
     return filtered_r;
 }
 
-inline std::vector<pattern::Algorithm> Registry::check_for_undefined_compressors() {
+template<typename algorithm_t>
+inline std::vector<pattern::Algorithm> Registry<algorithm_t>::check_for_undefined_algorithms() {
     std::vector<pattern::Algorithm> r;
-    for (auto& s : all_algorithms_with_static("compressor")) {
-        if (m_data->m_compressors.count(s) == 0) {
+    for (auto& s : all_algorithms_with_static(m_root_type)) {
+        if (m_data->m_registered.count(s) == 0) {
             r.push_back(s);
         }
     }
     return r;
 }
 
-inline Registry Registry::with_all_from(std::function<void(Registry&)> f) {
-    Registry r;
+template<typename algorithm_t>
+inline Registry<algorithm_t> Registry<algorithm_t>::with_all_from(std::function<void(Registry&)> f, const std::string& root_type) {
+    Registry r(root_type);
     f(r);
     return r;
 }
 
-inline std::string Registry::generate_doc_string() const {
+template<typename algorithm_t>
+inline std::string Registry<algorithm_t>::generate_doc_string() const {
     auto print = [](std::vector<decl::Algorithm>& x, size_t iden) {
         std::vector<std::string> cells;
 
@@ -169,11 +160,11 @@ inline std::string Registry::generate_doc_string() const {
     std::stringstream ss;
 
     ss << "  [Compression algorithms]\n";
-    ss << print(m_data->m_algorithms["compressor"], 2) << "\n\n";
+    ss << print(m_data->m_algorithms[m_root_type], 2) << "\n\n";
 
     ss << "  [Argument types]\n";
     for (auto& x : m_data->m_algorithms) {
-        if (x.first == "compressor") {
+        if (x.first == m_root_type) {
             continue;
         }
         ss << "    [" << x.first << "]\n";
@@ -183,49 +174,31 @@ inline std::string Registry::generate_doc_string() const {
     return ss.str();
 }
 
-inline std::unique_ptr<Compressor> Registry::select_compressor_or_exit(const AlgorithmValue& algo) const {
+template<typename algorithm_t>
+inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(const AlgorithmValue& algo) const {
     auto& static_only_evald_algo = algo.static_selection();
 
-    if (m_data->m_compressors.count(static_only_evald_algo) > 0) {
+    if (m_data->m_registered.count(static_only_evald_algo) > 0) {
         auto env = std::make_shared<EnvRoot>(AlgorithmValue(algo));
 
-        auto& constructor = m_data->m_compressors[static_only_evald_algo];
+        auto& constructor = m_data->m_registered[static_only_evald_algo];
 
-        auto registry = *this;
-
-        return constructor(Env(env, env->algo_value(), registry));
+        return constructor(Env(env, env->algo_value()));
     } else {
-        throw std::runtime_error("No implementation found for compressor "
+        throw std::runtime_error("No implementation found for " + m_root_type + " "
         + static_only_evald_algo.to_string()
         );
     }
 }
 
-inline std::unique_ptr<Generator> Registry::select_generator_or_exit(const AlgorithmValue& algo) const {
-    auto& static_only_evald_algo = algo.static_selection();
-
-    if (m_data->m_generators.count(static_only_evald_algo) > 0) {
-        auto env = std::make_shared<EnvRoot>(AlgorithmValue(algo));
-
-        auto& constructor = m_data->m_generators[static_only_evald_algo];
-
-        auto registry = *this;
-
-        return constructor(Env(env, env->algo_value(), registry));
-    } else {
-        throw std::runtime_error("No implementation found for generator "
-        + static_only_evald_algo.to_string()
-        );
-    }
-}
-
-inline AlgorithmValue Registry::parse_algorithm_id(
-    string_ref text, string_ref type = "compressor") const {
+template<typename algorithm_t>
+inline AlgorithmValue Registry<algorithm_t>::parse_algorithm_id(
+    string_ref text) const {
 
     ast::Parser p { text };
     auto parsed_algo = p.parse_value();
     auto options = eval::cl_eval(std::move(parsed_algo),
-                                    type,
+                                    m_root_type,
                                     m_data->m_algorithms);
 
     return std::move(options).to_algorithm();
