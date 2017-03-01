@@ -763,206 +763,44 @@ the need of fixed typing:
    to be registered at the top level. This could be replaced by a template
    parameter - see [#18948](https://projekte.itmc.tu-dortmund.de/issues/18948).
 
+## Compressors
+
+>> *TODO*: Describe interface, point out how compressors are particularly
+   algorithms as described before, mention "magic", provide usage example.
+
+## Coders
+
+>> *TODO*: Describe interface, literal iterators, ranges and interleaving.
+
+## String Generators
+
+>> *TODO*: Describe interface and provide usage example.
+
+## Text Data Structures
+
+>> *TODO*: Describe *NEW* TextDS [#18910](https://projekte.itmc.tu-dortmund.de/issues/18910)
+
 ## Runtime Statistics
 
->> *TODO*
+>> *TODO*: Describe phases, JSON output, charter application.
+
+## Unit Tests
+
+>> *TODO*: Describe unit test helpers.
+
+## Text Corpus Collection
+
+>> *TODO*: Describe download targets and refer to info page.
+
+## The Comparison Tool
+
+>> *TODO*: Describe usage.
 
 # Old Tutorial
 
 >> *TODO*: This will probably disappear entirely.
 
-## A Simple Compressor
-
-This section presents the steps necessary to implement a simple compressor. The
-implementation that is developed here is available in the framework's
-repository in the `/include/tudocomp/example/` directory.
-
-### Implementing the Compressor interface
-
-Any compressor needs to implement the [`Compressor`](@DX_COMPRESSOR@)
-interface. A complete implementation consists of
-
-* a constructor accepting an rvalue reference to an environment
-  (`Env&&`),
-* implementations of the `compress` and `decompress` functions (so that the
-  output of `compress`, when passed as the input of `decompress`, will be
-  transformed back to the original input of `compress`),
-* a static function `meta()` that yields a `Meta` information
-  object about the compressor.
-
-Note that while the latter (`meta()`) is not strictly defined in the
-`Compressor` class, it is required due to the nature of templated construction.
-
-The class [`Env`](@DX_ENV@) represents the compressor's runtime environment.
-It provides access to runtime options as well as the framework's statistics
-tracking functionality. A compressor conceptually owns[^cpp11-ownership] its
-environment, therefore the constructor takes an rvalue reference to it. The
-reference should always be delegated down to the base constructor
-(using `std::move`).
-
-[^cpp11-ownership]: This refers to the C++11 ownership semantics, ie. a
-`unique_ptr<Env>` is stored internally.
-
-A [`Meta`](@DX_META@) object contains information about an algorithm
-(e.g. compressors) such as its name and type. This information is used by the
-generic algorithm constructor `create_algo`, which will be explained below, as
-well as for the registry of the command-line application.
-
-The following example header (`/include/tudocomp/example/ExampleCompressor.hpp`)
-contains a minimal `Compressor` implementation named `ExampleCompressor`:
-
-~~~ { .cpp }
-// [/include/tudocomp/example/ExampleCompressor.hpp]
-
-#ifndef _INCLUDED_EXAMPLE_COMPRESSOR_HPP_
-#define _INCLUDED_EXAMPLE_COMPRESSOR_HPP_
-
-#include <tudocomp/tudocomp.hpp>
-
-namespace tdc {
-
-class ExampleCompressor : public Compressor {
-public:
-    inline static Meta meta() {
-        Meta m("compressor", "example_compressor",
-               "This is an example compressor.");
-
-        return m;
-    }
-
-    inline ExampleCompressor(Env&& env) : Compressor(std::move(env)) {
-    }
-
-    inline virtual void compress(Input& input, Output& output) override {
-    }
-
-    inline virtual void decompress(Input& input, Output& output) override {
-    }
-};
-
-}
-
-#endif
-~~~
-
-The [`tdc`](@DX_TDC@) namespace contains most of the core types
-required for implementing compressors, including the `Compressor` interface
-and the `Env` and `Meta` types.
-
-The `Meta` object returned by `meta()` contains the following information:
-
-* The algorithm type (in this case, a `"compressor"`),
-* the algorithm's identifier (for shell compatibility, this should not contain
-  any spaces or special characters) and
-* a brief description of the algorithm (which is be displayed in the
-  command-line help output).
-
-### Example: Run-Length Encoding
-
-The following example implements the `compress` method so that it yields a
-run-length encoding of the input. In run-length encoding, sequences (runs)
-of the same character are replaced by one single occurence, followed by the
-length of the run.
-
-For example, the input `"abcccccccde"`, which contains a run of seven `c`
-characters, is encoded as `"abc%6%de"`, where `%6%` designates that the
-preceding character is repeated six times. This way, the original input can be
-restored from the encoded string.
-
-~~~ { .cpp }
-inline virtual void compress(Input& input, Output& output) override {
-    auto istream = input.as_stream(); // retrieve the input stream
-    auto ostream = output.as_stream(); // retrieve the output stream
-
-    char current; // stores the current character read from the input
-    char last; //stores the character that preceded the current character
-    size_t counter = 0; // counts the length of the run of the current character
-
-    // writes the current run to the output stream
-    auto emit_run = [&]() {
-        if (counter > 3) {
-            // if the run exceeds 3 characters, encode the run using the %% syntax
-            ostream << last << '%' << counter << '%';
-        } else {
-            // otherwise, do not encode and emit the whole run
-            for (size_t i = 0; i <= counter; i++) {
-                ostream << last;
-            }
-        }
-    };
-
-    // retrieve the first character on the stream
-    if (istream.get(last)) {
-        // continue reading from the stream
-        while(istream.get(current)) {
-            if (current == last) {
-                // increase length of the current run
-                counter++;
-            } else {
-                // emit the previous run
-                emit_run();
-
-                // continue reading from the stream, starting a new run
-                last = current;
-                counter = 0;
-            }
-        }
-
-        // emit the final run
-        emit_run();
-    }
-}
-~~~
-
-The decoding is handled by the `decompress` method as follows. It attempts to
-find patterns of the form `c%n%` and writes the character `c` to the output
-`n` times. Any character not part of such a pattern will simply be copied to
-the output.
-
-~~~ { .cpp }
-inline virtual void decompress(Input& input, Output& output) override {
-    auto iview = input.as_view(); // retrieve the input as a view (merely for educational reasons)
-    auto ostream = output.as_stream(); // retrieve the output stream
-
-    char last = '?'; // stores the last character read before a "%n%" pattern is encountered
-
-    // process the input
-    for (size_t i = 0; i < iview.size(); i++) {
-        if (iview[i] == '%') {
-            // after encountering the '%' chracter, parse the following characters
-            // as a decimal number until the next '%' is encountered
-            size_t counter = 0;
-            for (i++; i < iview.size(); i++) {
-                if (iview[i] == '%') {
-                    // conclusion of the "%n%" pattern
-                    break;
-                } else {
-                    // naive decimal number parser
-                    counter *= 10;
-                    counter += (iview[i] - '0');
-                }
-            }
-
-            // repeat the previous character according to the parsed length
-            for (size_t x = 0; x < counter; x++) {
-                ostream << last;
-            }
-        } else {
-            // output any character not part of a "c%n%" pattern and continue reading
-            ostream << iview[i];
-            last = iview[i];
-        }
-    }
-}
-~~~
-
-Note that this implementation will obviously not work if the original input
-contained the `%` character. It merely serves as an example.
-
-> *Exercise*: Implement the `decompress` method using the input as stream
-rather than a view.
-
-### Magic
+## Magic
 
 In order to identify what compressor has been used to produce a compressed
 output, the driver application can prepend a unique identifier
@@ -1200,80 +1038,4 @@ displayed as a tooltip when the mouse is moved over its bar in the diagram.
 
 The Charter provides several options to customize the chart, as well as
 exporting it as either a vector graphic (`svg`) or an image file (`png`).
-
-## Options
-
-In *tudocomp*, algorithms can take runtime *options* that may alter their
-behaviour (e.g. the minimum length of a run before it is replaced in the
-run-length code example above). These options can be passed, for instance,
-via the command-line when invoking the driver application.
-
-The framework knows two different types of runtime options, *dynamic* options
-and *templated* options. The options that an algorithm takes are defined in
-its meta information object.
-
-### Unit Testing with Options
-
->> *TODO*: `test::roundtrip` is not in Doxygen!
-
-In the [Unit Tests](#unit-tests) section, the [`test::roundtrip`](about:blank)
-method was introduced for testing a compression cycle. In another overload,
-additionally to the input and expected encoding, options can be passed as a
-third argument like so:
-
-~~~ {.cpp}
-TEST(example, roundtrip_options) {
-    using namespace tdc;
-
-    // Test with options
-    test::roundtrip<ExampleCompressor>("abcccccccde", "abc#6#de",  "minimum_run = '6', rle_symbol = '#'");
-    test::roundtrip<ExampleCompressor>("abccccccde",  "abccccccde", "minimum_run = '6', rle_symbol = '#'");
-
-    // Test defaults
-    test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de");
-
-    // Test partially with defaults
-    test::roundtrip<ExampleCompressor>("abcccccccde", "abc%6%de",  "minimum_run = '6'");
-    test::roundtrip<ExampleCompressor>("abccccccde",  "abccccccde", "minimum_run = '6'");
-    test::roundtrip<ExampleCompressor>("abccccde",    "abc#3#de",  "rle_symbol = '#'");
-    test::roundtrip<ExampleCompressor>("abcccde",     "abcccde",   "rle_symbol = '#'");
-}
-~~~
-
-Note how options that are not passed will take their default values.
-
-Dynamic options are passed following the simple `name = value` syntax, separated
-by `,`. Options for nested algorithms are grouped in brackets (`(` and `)`). The
-following example shows this for the `TemplatedExampleCompressor`:
-
-~~~ {.cpp}
-test::roundtrip<TemplatedExampleCompressor<ExampleRunEmitter>>
-    ("abcccccccde", "abc#6#de",  "encoder(minimum_run = '6', rle_symbol = '#')");
-~~~
-
-## The Registry
-
-In order to make a compressor available for the driver application, it needs
-to be registered in the driver's [`Registry`](@DX_REGISTRY@).
-
-This is currently possible only by editing the source code file
-`src/tudocomp_driver/tudocmp_algorithms.cpp`. Adding the necessary includes and
-following lines to the body of the `register_algorithms` function will register
-the example compressors:
-
-~~~ {.cpp}
-r.register_compressor<ExampleCompressor>();
-r.register_compressor<TemplatedExampleCompressor<ExampleRunEmitter>>();
-~~~
-
-Note how modular compressors with sub algorithms need every possible combination
-registered explicitly.
-
-Once registered, the example compressors are available in the command-line
-application and will be listed in the help output. They are also part of the
-matrix test when invoking the `check` make target.
-
-## The Comparison Tool
-
->> *TODO*
 
