@@ -244,10 +244,11 @@ This section provides a guided tour through some of the core features of
 Please note that more detailed information about the use of specific
 classes or methods can be found in the [Doxygen documentation](@URL_DOXYGEN@).
 
-> *Hint*: Most code snippets can be seen "in action" in the file
-  `test/doc_snippets.cpp`, which can be used as a reference. The respective
-  identifier is printed below the respective code snippet. The snippets are
-  implemented as unit tests and can be executed using `make doc_snippets`.
+> *Hint*: Most code snippets can be seen "in action" in the directory
+  `test/doc_snippets`. These can be used as a reference. The source code file
+  name is printed below the respective code snippet. Note that the snippets are
+  implemented as unit tests, while this document will only show the didactically
+  relevant parts.
 
 ## Input and Output
 
@@ -307,7 +308,7 @@ on the input.
 
 The following code snippet demonstrates using a given input as a view:
 
-~~~ { .cpp caption="input_stream" }
+~~~ { .cpp caption="io.cpp" }
 auto istream = input.as_stream(); // retrieve an input stream
 auto istream2 = istream; // create a second stream as a "rewind" position
 
@@ -334,7 +335,7 @@ types and shall be used for single characters.
 
 In contrast, The following code snippet demonstrates using an input as a view:
 
-~~~ { .cpp caption="input_view" }
+~~~ { .cpp caption="io.cpp" }
 auto iview = input.as_view(); //retrieve an input view
 auto iview2 = iview; // create a shallow copy of the view
 
@@ -388,7 +389,7 @@ interface via the [`as_stream`](@DX_OUTPUT_ASSTREAM@) function. The
 following code snippet demonstrates this by copying an entire input to an
 output:
 
-~~~ { .cpp caption="output_stream" }
+~~~ { .cpp caption="io.cpp" }
 auto istream = input.as_stream(); // retrieve the input stream
 auto ostream = output.as_stream(); // retrieve the output stream
 
@@ -411,7 +412,7 @@ integers using [`write_int`](@DX_BITOSTREAM_WRITE_INT@).
 
 The following example performs several bitwise write operations on an output:
 
-~~~ {.cpp caption="bit_output"}
+~~~ {.cpp caption="bit_io.cpp"}
 {
 BitOStream obits(output); //construct the bitwise output stream
 
@@ -442,7 +443,7 @@ second argument.
 
 The following example performs several bitwise read operations from an input:
 
-~~~ {.cpp caption="bit_input"}
+~~~ {.cpp caption="bit_io.cpp"}
 BitIStream ibits(input); // construct the bitwise input stream
 
 bool bit = ibits.read_bit(); // read a single bit
@@ -509,7 +510,7 @@ Dynamic:
 
 The following example illustrates the use of `IntVector` in a static way:
 
-~~~ {.cpp caption="iv_static"}
+~~~ {.cpp caption="int_vector.cpp"}
 // reserve a vector of 32 4-bit integers (initialized as zero)
 IntVector<uint_t<4>> iv4(32);
 
@@ -539,7 +540,7 @@ Note how arbitrary-width integers overflow in the expected fashion: `iv4[16]`
 
 The following is an example for the usage of `DynamicIntVector`:
 
-~~~ {.cpp caption="iv_dynamic"}
+~~~ {.cpp caption="int_vector.cpp"}
 // reserve a vector for 20 integer values (initialized as zero)
 // default to a width of 32 bits per value
 DynamicIntVector fib(20, 0, 32);
@@ -587,7 +588,7 @@ the form of a  [`Meta`](@DX_META@) object. For this, inheriting (non-abstract)
 classes are expected to expose a static function called `meta`. The following is
 a minimal example:
 
-~~~ {.cpp caption="algorithm_impl"}
+~~~ {.cpp caption="algorithm_impl.cpp"}
 inline static Meta meta() {
     Meta m("undisclosed", "my_algorithm", "An example algorithm");
     return m;
@@ -622,7 +623,7 @@ the command-line or when instantiating an algorithm.
 Options are declared in the algorithm's `Meta` object using the
 [`option`](@DX_META_OPTION@) function like in the following example:
 
-~~~ {.cpp caption="algorithm_impl"}
+~~~ {.cpp caption="algorithm_impl.cpp"}
 inline static Meta meta() {
     Meta m("undisclosed", "my_algorithm", "An example algorithm");
     m.option("param1").dynamic("default_value");
@@ -638,7 +639,7 @@ value).
 
 At runtime, options can be accessed via the algorithm's environment:
 
-~~~ {.cpp caption="algorithm_impl"}
+~~~ {.cpp caption="algorithm_impl.cpp"}
 auto param1 = env().option("param1").as_string();
 auto numeric = env().option("numeric").as_integer();
 ~~~
