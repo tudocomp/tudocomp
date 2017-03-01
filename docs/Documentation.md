@@ -306,29 +306,16 @@ access. The object returned by `as_view` provides the indexed access `[]`
 operator for and the function `size()` to return the amount of bytes available
 on the input.
 
-The following code snippet demonstrates using a given input as a view:
+The following code snippet demonstrates using a given input as a stream:
 
 ~~~ { .cpp caption="io.cpp" }
 auto istream = input.as_stream(); // retrieve an input stream
-auto istream2 = istream; // create a second stream as a "rewind" position
 
 // read the input character-wise using a C++11 range-based for loop
 for(uliteral_t c : istream) {
     // ...
 }
-
-// read the input character-wise using the std::istream interface
-char c;
-while(istream2.get(c)) {
-    // ...
-}
 ~~~
-
-Note how `istream2` is created as a copy of `istream`. This way, `istream2`
-points at the same stream position as `istream` at the time the copy is created.
-It can be used as a "rewind" point for use independently of `istream`.
-
->> *TODO*: InputStream copy ctor is deleted...
 
 The type [`uliteral_t`](@DX_ULITERAL_T@) is one of *tudocomp*'s core
 types and shall be used for single characters.
@@ -337,7 +324,6 @@ In contrast, The following code snippet demonstrates using an input as a view:
 
 ~~~ { .cpp caption="io.cpp" }
 auto iview = input.as_view(); //retrieve an input view
-auto iview2 = iview; // create a shallow copy of the view
 
 // compare the view's content against a certain string
 ASSERT_EQ("foobar", iview);
@@ -353,11 +339,6 @@ for (len_t i = iview.size(); i > 0; i--) {
     // ...
 }
 ~~~
-
-Note that copies and sub-views are shallow, ie. they point to the same memory
-location as the original view and thus have the same content.
-
->> *TODO*: InputView copy ctor is deleted...
 
 The type [`len_t`](@DX_LEN_T@) is another one of *tudocomp*'s core
 types and shall be used for lengths and indices.
