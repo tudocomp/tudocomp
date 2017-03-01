@@ -608,7 +608,7 @@ Options are declared in the algorithm's `Meta` object using the
 inline static Meta meta() {
     Meta m("undisclosed", "my_algorithm", "An example algorithm");
     m.option("param1").dynamic("default_value");
-    m.option("numeric").dynamic(147);
+    m.option("number").dynamic(147);
     return m;
 }
 ~~~
@@ -621,8 +621,9 @@ value).
 At runtime, options can be accessed via the algorithm's environment:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
-auto param1 = env().option("param1").as_string();
-auto numeric = env().option("numeric").as_integer();
+// read options
+auto& param1 = env().option("param1").as_string();
+auto number = env().option("number").as_integer();
 ~~~
 
 Because option values can be passed via the command-line, they are per se
@@ -633,15 +634,134 @@ typeless. Using the conversion functions provided by the
 
 ### Strategies
 
->> *TODO*
+The true power of *tudocomp*'s modularity comes from the ability to declare
+and pass strategies (or "sub algorithms") as algorithm options.
+
+Assuming the algorithm implementation has been declared with a template
+parameter `strategy_t`, the following declares it as an option in the `meta`
+function:
+
+~~~ {.cpp caption="algorithm_impl.cpp"}
+m.option("strategy").templated<strategy_t>();
+~~~
+
+The function [`templated`](@DX_OPTIONBUILDER_TEMPLATED@) determines that the
+option named "strategy" can be assigned with an object of the template type. It
+is expected that substitued types also inherit from `Algorithm` and provide a
+`Meta` object.
+
+>> *TODO*: Describe type connection once
+   [#18854](https://projekte.itmc.tu-dortmund.de/issues/18854) is resolved.
+
+Consider the following example function for the algorithm:
+
+~~~ {.cpp caption="algorithm_impl.cpp"}
+inline int execute() {
+    // read number option as an integer
+    auto number = env().option("number").as_integer();
+
+    // instantiate strategy with sub environment
+    strategy_t strategy(env().env_for_option("strategy"));
+
+    // use strategy to determine result
+    return strategy.result(number);
+}
+~~~
+
+This function creates an instance of the template algorithm `strategy_t`. The
+instance receives a new environment, ie., the strategy can accept options of its
+own (example provded in the following section). The strategy is then used to
+compute a result value using a `result` function, that receives the "number"
+option as a parameter.
 
 ### Instantiating Algorithms
 
->> *TODO*
+Consider the following two strategies that both implement the `result` function
+as required by the example from the previous section:
+
+~~~ {.cpp caption="algorithm_impl.cpp"}
+// Strategy to compute the square of the input parameter
+class SquareStrategy : public Algorithm {
+public:
+    inline static Meta meta() {
+        // define the algorithm's meta information
+        Meta m("my_strategy_t", "sqr", "Computes the square");
+        return m;
+    }
+
+    using Algorithm::Algorithm; // inherit the default constructor
+
+    inline int result(int x) {
+        return x * x;
+    }
+};
+
+// Strategy to compute the product of the input parameter and another number
+class MultiplyStrategy : public Algorithm {
+public:
+    inline static Meta meta() {
+        // define the algorithm's meta information
+        Meta m("my_strategy_t", "mul", "Computes a product");
+        m.option("factor").dynamic(); // no default
+        return m;
+    }
+
+    using Algorithm::Algorithm; // inherit the default constructor
+
+    inline int result(int x) {
+        return x * env().option("factor").as_integer();
+    }
+};
+~~~
+
+Note how both strategies inherit from `Algorithm` and provide a `Meta` object.
+`SquareStrategy` implements a simple `result` function that squares the input
+parameter, while `MultiplyStrategy` accepts another option named "factor", that
+is read and multiplied by the inpt parameter to compute the result.
+
+The following example creates instances of the main algorithm from the previous
+section (called `MyAlgorithm`) with each of the strategies and computes the
+result values:
+
+~~~ {.cpp caption="algorithm_impl.cpp"}
+// Execute the algorithm with the square strategy
+auto algo_sqr  = create_algo<MyAlgorithm<SquareStrategy>>("number=7");
+algo_sqr.execute(); // the result is 49
+
+// Execute the algorithm with the multiply strategy
+auto algo_mul5 = create_algo<MyAlgorithm<MultiplyStrategy>>("number=7, strategy=mul(factor=5)");
+algo_mul5.execute(); // the result is 35
+~~~
+
+[`create_algo`](@DX_CREATEALGO@) takes an algorithm type as a template
+parameter, in this case `MyAlgorithm` populated with the respective strategies.
+The string parameter contains the command-line options to be passed to the
+algorithm.
+
+For `SquareStrategy`, the "number" option is simply set to 7, ie.
+the result of `execute` using this strategy will be 7 * 7 = 49.
+
+For `MultiplyStrategy`, note how the "strategy" option is assigned the value of
+`mul(factor=5)`. A recursion takes place here: `mul` is the identifier of the
+`MultiplyStrategy` as exposed by its `Meta` information. It accepts the "factor"
+option, which is assigned the number 5. Thus, the result of `execute` in this
+case will be 7 * 5 = 35.
 
 ### The Algorithm Registry
 
->> *TODO*
+The ability of passing algorithms as command-line strings becomes most
+interesting when a [`Registry`](@DX_REGISTRY@) for algorithms gets added to the
+mix. Note how in the previous section's example, `create_algo` is called with
+fixed template types. A registry can be used to map string identifiers to actual
+types to obscure fixed typing.
+
+The following example creates a `Registry` and registers the example algorithm
+with the two strategies. It is then used to instantiate both versions without
+the need of fixed typing:
+
+>> *TODO*: `Registry` currently only allows `Compressor` or `Generator` types
+   to be registered at the top level. This could be replaced by a template
+   parameter - see [#18948](https://projekte.itmc.tu-dortmund.de/issues/18948).
 
 ## Runtime Statistics
 
