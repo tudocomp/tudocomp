@@ -764,14 +764,34 @@ the need of fixed typing:
    to be registered at the top level. This could be replaced by a template
    parameter - see [#18948](https://projekte.itmc.tu-dortmund.de/issues/18948).
 
-## Compressors
-
->> *TODO*: Describe interface, point out how compressors are particularly
-   algorithms as described before, mention "magic", provide usage example.
-
 ## Coders
 
 >> *TODO*: Describe interface, literal iterators, ranges and interleaving.
+
+## Compressors
+
+As stated before in the [philosophy](#compressors-and-coders) section,
+compressors transform an input into an output that can be losslessly restored
+to the original input.
+
+On a code level, the (abstract) [`Compressor`](@DX_COMPRESSOR@) class serves
+as the foundation for compression algorithm implementations. It declares the
+two functions [`compress`](@DX_COMPRESSOR_COMPRESS@) and
+[`decompress`](@DX_COMPRESSOR_DECOMPRESS@) with the same signature: both
+receive an `Input` to read from and an `Output` to write to (see
+[Input and Output](#input-and-output) section). In a single compression cycle
+the output produced by `decompress` must match the input received by `compress`.
+
+Compressors also inherit from `Algorithm` (see [Algorithms](#algorithms)
+section, ie., they must provide a meta information object, they own an
+environment to accept options, and they can be implemented in a modular way
+using strategies for certain sub-tasks (most commonly, encoding is done using a
+[Coder](#coders) as a strategy).
+
+
+
+>> *TODO*: Describe interface, point out how compressors are particularly
+   algorithms as described before, mention "magic", provide usage example.
 
 ## String Generators
 
