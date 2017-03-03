@@ -85,5 +85,15 @@ public:
     };
 };
 
+template<>
+inline void ASCIICoder::Encoder::encode<uliteral_t>(uliteral_t v, const Range& r) {
+    encode(size_t(v), r);
+}
+
+template<>
+inline uliteral_t ASCIICoder::Decoder::decode<uliteral_t>(const Range& r) {
+    return uliteral_t(decode<size_t>(r));
+}
+
 }
 
