@@ -118,7 +118,8 @@ implementation.
     * LZ77 using a sliding window or the LCP array
     * LZ78 with exchangeable trie structure
     * Run-length encoding
-    * Custom variants of LZ77 (lcpcomp) and LZ78 (LZ78U)
+    * Custom variants of LZ77 (lcpcomp) and LZ78 (LZ78U) (see
+      [here](http://dkppl.de/static/bin/paper/sea2017.pdf))
 * Utilities for swift unit test implementation
 * String generators for testing and benchmarking purposes
     * Random strings with uniform character distribution
