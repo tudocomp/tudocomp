@@ -768,6 +768,18 @@ the need of fixed typing:
 
 >> *TODO*: Describe interface, literal iterators, ranges and interleaving.
 
+### Literal Iterators
+
+>> *TODO*
+
+### Ranges
+
+>> *TODO*
+
+### Available Coders
+
+>> *TODO*
+
 ## Compressors
 
 As stated before in the [philosophy](#compressors-and-coders) section,
@@ -776,7 +788,7 @@ to the original input.
 
 On a code level, the (abstract) [`Compressor`](@DX_COMPRESSOR@) class serves
 as the foundation for compression algorithm implementations. It declares the
-two functions [`compress`](@DX_COMPRESSOR_COMPRESS@) and
+two virtual functions [`compress`](@DX_COMPRESSOR_COMPRESS@) and
 [`decompress`](@DX_COMPRESSOR_DECOMPRESS@) with the same signature: both
 receive an `Input` to read from and an `Output` to write to (see
 [Input and Output](#input-and-output) section). In a single compression cycle
@@ -785,13 +797,102 @@ the output produced by `decompress` must match the input received by `compress`.
 Compressors also inherit from `Algorithm` (see [Algorithms](#algorithms)
 section, ie., they must provide a meta information object, they own an
 environment to accept options, and they can be implemented in a modular way
-using strategies for certain sub-tasks (most commonly, encoding is done using a
-[Coder](#coders) as a strategy).
+using strategies for certain sub-task. For instance, most commonly, encoding is
+done using a [Coder](#coders) as a strategy.
 
+The following code example provides a simple compressor implementation that uses
+an encoding strategy.
 
+~~~ {.cpp caption="compressor_impl.cpp"}
+// Implement a simple compressor
+template<typename coder_t>
+class MyCompressor : public Compressor {
+public:
+    inline static Meta meta() {
+        Meta m("compressor", "my_compressor", "An example compressor");
+        m.option("coder").templated<coder_t>();
+        return m;
+    }
 
->> *TODO*: Describe interface, point out how compressors are particularly
-   algorithms as described before, mention "magic", provide usage example.
+    using Compressor::Compressor;
+
+    virtual void compress(Input& input, Output& output) override {
+        // retrieve random access on the input
+        auto view = input.as_view();
+        
+        // find the lexicographically smallest and largest characters
+        uliteral_t c_min = ULITERAL_MAX;
+        uliteral_t c_max = 0;
+
+        for(uliteral_t c : view) {
+            c_min = std::min(c_min, c);
+            c_max = std::max(c_max, c);
+        }
+
+        // instantiate the encoder using the whole input alphabet
+        typename coder_t::Encoder coder(
+            env().env_for_option("coder"), output, ViewLiterals(view));
+
+        // encode the smallest and largest characters
+        coder.encode(c_min, uliteral_r);
+        coder.encode(c_max, uliteral_r);
+
+        // define the range for all occuring characters
+        Range occ_r(c_max - c_min);
+
+        // encode text
+        for(uliteral_t c : view) {
+            coder.encode(c - c_min, occ_r);
+        }
+    }
+
+    /* decompress - see source file */
+};
+~~~
+
+The presented compression algorithm is very simple:
+
+1. Determine the lexicographically smallest and largest characters `c_min` and
+   `c_max` in the input text (using a simple linear scan).
+1. Instantiate an encoder for the whole input alphabet (`ViewLiterals`).
+1. Store `c_min` and `c_max` to the output by encoding them using the literal
+   range `uliteral_r`.
+1. Define a range that covers values from 0 to `c_max - c_min` as a hint for
+   the encoder.
+1. Encode only the difference `c - c_min` between each character `c` from the
+   input and the smallest one, `c_min`, using the previously defined range.
+
+Note that this simple type of compression could as well be implemented as a
+coder (because it only requires the input alphabet as a context), but it
+already shows the two typical major phases of a compression routine:
+
+Firstly, it scans the input - possibly multiple times - and stores information
+about how to compress the text (in this case by determining the alphabet
+bounds). Secondly, the input is encoded to a compressed output using that
+information (in this case by shrinking the character values to the minimally
+required interval).
+
+The decompression simply reverses this by first decoding `c_min` and `c_max`,
+then decoding character by character using the same range that was used in the
+compression.
+
+The meta information declares the compression algorithm's type as `compressor`.
+This is important for the command-line application, which considers algorithms
+of this type only for exposition.
+
+### Available Compressors
+
+Out of the box, *tudocomp* currently implements a set of compressors including:
+
+* Lempel-Ziv based compressors (LZ77, LZ78 and variants)
+* Grammar-based compressors (RePair)
+* A bzip chain (Burrows-Wheeler transform, move-to-front and run-length coding)
+
+These compressors are implemented in a modular way, making sub-task solvers
+reusable and allowing for swift development of alternative strategies.
+
+A full list can be found in the inheritance diagram for the
+[`Compressor`](@DX_COMPRESSOR@) class' API reference.
 
 ## String Generators
 
@@ -799,7 +900,8 @@ using strategies for certain sub-tasks (most commonly, encoding is done using a
 
 ## Text Data Structures
 
->> *TODO*: Describe *NEW* TextDS [#18910](https://projekte.itmc.tu-dortmund.de/issues/18910)
+>> *TODO*: Describe *NEW* TextDS
+   [#18910](https://projekte.itmc.tu-dortmund.de/issues/18910)
 
 ## Runtime Statistics
 

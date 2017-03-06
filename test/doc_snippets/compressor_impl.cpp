@@ -50,7 +50,7 @@ public:
         coder.encode(c_max, uliteral_r);
 
         // define the range for all occuring characters
-        Range occ_r(c_max);
+        Range occ_r(c_max - c_min);
 
         // encode text
         for(uliteral_t c : view) {
@@ -71,7 +71,7 @@ public:
         auto c_max = decoder.template decode<uliteral_t>(uliteral_r);
 
         // define the range for all occuring characters
-        Range occ_r(c_max);
+        Range occ_r(c_max - c_min);
 
         // decode text
         while(!decoder.eof()) {
