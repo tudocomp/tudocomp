@@ -766,13 +766,59 @@ the need of fixed typing:
 
 ## Coders
 
->> *TODO*: Describe interface, literal iterators, ranges and interleaving.
+Coders serve for encoding primitve data types into a bit sequence with limited
+context. This is contrary to compressors, which may have random access the
+entire input sequence.
+
+They only have a limited context that is determined by a controlling entity -
+most commonly a compressor. This context consists of *value ranges* and
+information on the *input alphabet*.
+
+While compressors should provide as much context information as possible, it is
+up to the coder to actually make use of it or only parts of it.
+
+### Ranges
+
+The [`Range`](@DX_RANGE@) class serves as a representation of value ranges, ie.,
+a minimum and a maximum value. Having information on the range that a certain
+value is contained in can help to encode the value in an efficient manner,
+namely using less bits.
+
+For example, if a value *x* should be encoded and it is known to that
+*1024 <= x < 1088*, the coder could make use of this information in various
+ways:
+
+* Encode only the difference *d~x~ = x - 1024*.
+* Encode the difference using only 6 bits (because *d~x~ < 64* holds).
+* If it is also known that *x* tends to be distributed towards the minimum
+  value, use variable-width encoding for *d~x~*.
+* ...
+
+*tudocomp* provides several classes of ranges that should be used as precisely
+as possible in order to provide the best possible context information to coders:
+
+| Class                                  | Description                                             |
+| -------------------------------------- | ------------------------------------------------------- |
+| [`Range`](@DX_RANGE@)                  | A simple min-max-range with no particular distribution. |
+| [`MinDistributedRange`](@DX_MINRANGE@) | Values tend to be distributed towards the minimum.      |
+| [`BitRange`](@DX_BITRANGE@)            | Values are either *0* or *1*.                           |
+| [`TypeRange<T>`](@DX_TYPERANGE@)       | Values are of a certain integer type `T`.               |
+| [`LiteralRange`](@DX_LITRANGE@)        | Values are literals (of type `uliteral_t`, see below).  |
+
+For literals, that is, characters of the input alphabet (commonly represented
+using the [`uliteral_t`](@DX_ULITERAL_T@) type), `LiteralRange` / `uliteral_r`
+serves a special purpose and should be favored. The following section on literal
+iterators will provide more information.
+
+*tudocomp* also predefines global instances for some fixed common ranges:
+[`uliteral_r`](@DX_ULITERAL_R@) for `LiteralRange`, [`len_r`](@DX_LEN_R@) for
+`TypeRange<len_t>` and [`bit_r`](@DX_BIT_R@) for `BitRange`.
 
 ### Literal Iterators
 
 >> *TODO*
 
-### Ranges
+### The Coder Interface
 
 >> *TODO*
 
@@ -782,9 +828,12 @@ the need of fixed typing:
 
 ## Compressors
 
-As stated before in the [philosophy](#compressors-and-coders) section,
-compressors transform an input into an output that can be losslessly restored
-to the original input.
+Compressors transform an input into an output that can be losslessly restored
+to the original input. What conceptually separates them from Coders is that
+compressors may have random access on the entire input and use this to find
+information on how to achieve compression. Apart from being able to use
+properties of the input for compression, they can build a context for one or
+multiple coders to in order to encode single values efficiently.
 
 On a code level, the (abstract) [`Compressor`](@DX_COMPRESSOR@) class serves
 as the foundation for compression algorithm implementations. It declares the
