@@ -31,7 +31,7 @@ private:
     }
 
     template<typename text_t>
-    class Literals {
+    class Literals : LiteralIterator {
     private:
         const text_t* m_text;
         len_t         m_text_size;
