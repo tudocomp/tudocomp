@@ -28,7 +28,7 @@ public:
     /// \brief Encodes data to an ASCII character stream.
     class Encoder : public tdc::Encoder {
     public:
-        ENCODER_CTOR(env, out, literals) {}
+        using tdc::Encoder::Encoder;
 
         template<typename value_t>
         inline void encode(value_t v, const Range& r) {
@@ -52,7 +52,7 @@ public:
     /// \brief Decodes data from an ASCII character stream.
     class Decoder : public tdc::Decoder {
     public:
-        DECODER_CTOR(env, in) {}
+        using tdc::Decoder::Decoder;
 
         template<typename value_t>
         inline value_t decode(const Range& r) {

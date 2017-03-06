@@ -76,7 +76,10 @@ public:
         }
 
     public:
-        ENCODER_CTOR(env, out, literals) {
+        template<typename literals_t>
+        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
+            : tdc::Encoder(std::move(env), out, literals) {
+
             m_k     = this->env().option("kmer").as_integer();
             assert(m_k <= max_kmer);
 
@@ -160,6 +163,11 @@ public:
 
             // reset current k-mer
             m_kmer_cur = 0;
+        }
+
+        template<typename literals_t>
+        inline Encoder(Env&& env, Output& out, literals_t&& literals)
+            : Encoder(std::move(env), std::make_shared<BitOStream>(out), literals) {
         }
 
         ~Encoder() {
@@ -315,7 +323,8 @@ public:
         }
 
     public:
-        DECODER_CTOR(env, in) {
+        inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
+            : tdc::Decoder(std::move(env), in) {
             m_k = this->env().option("kmer").as_integer();
 
             m_kmer = new uliteral_t[m_k];
@@ -335,6 +344,10 @@ public:
 
                 m_inv_ranking[rank] = c;
             }
+        }
+
+        inline Decoder(Env&& env, Input& in)
+            : Decoder(std::move(env), std::make_shared<BitIStream>(in)) {
         }
 
         ~Decoder() {
