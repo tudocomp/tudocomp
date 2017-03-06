@@ -5,12 +5,6 @@
 namespace tdc {
 
 class Env;
-class Compressor;
-using CompressorConstructor = std::function<std::unique_ptr<Compressor>(Env&&)>;
-
-class Generator;
-using GeneratorConstructor = std::function<std::unique_ptr<Generator>(Env&&)>;
-
 
 /// \brief A registry for algorithms to be made available in the driver
 ///        application.
@@ -19,14 +13,17 @@ using GeneratorConstructor = std::function<std::unique_ptr<Generator>(Env&&)>;
 /// to be registered in the application's main registry. This is done in
 /// the \ref register_algorithms step. Any registered algorithm will also
 /// be listed in the utility's help message.
+template<typename algorithm_t>
 class Registry {
+    typedef std::function<std::unique_ptr<algorithm_t>(Env&&)> constructor_t;
+
     struct RegistryData {
         eval::AlgorithmTypes m_algorithms;
-        std::map<pattern::Algorithm, CompressorConstructor> m_compressors;
-        std::map<pattern::Algorithm, GeneratorConstructor>  m_generators;
+        std::map<pattern::Algorithm, constructor_t> m_registered;
     };
 
     std::shared_ptr<RegistryData> m_data;
+    std::string m_root_type;
 
     /// \cond INTERNAL
     friend class AlgorithmTypeBuilder;
@@ -34,30 +31,19 @@ class Registry {
     /// \endcond
 
 public:
-    inline Registry():
-        m_data(std::make_shared<RegistryData>()) {}
+    inline Registry(const std::string& root_type = "any"):
+        m_data(std::make_shared<RegistryData>()), m_root_type(root_type) {}
 
-    /// \brief Registers a \ref tdc::Compressor.
+    /// \brief Registers an \ref tdc::Algorithm.
     ///
-    /// Note that the compressor type \c T needs to implement a static function
+    /// Note that the algorithm type \c T needs to implement a static function
     /// called \c meta() that returns a \ref tdc::Meta information object.
     /// This meta information is used to automatically generate the
     /// documentation for the driver application's help message.
     ///
-    /// \tparam T The compressor to register.
-    template<class T>
-    void register_compressor();
-
-    /// \brief Registers a \ref tdc::Generator.
-    ///
-    /// Note that the generator type \c T needs to implement a static function
-    /// called \c meta() that returns a \ref tdc::Meta information object.
-    /// This meta information is used to automatically generate the
-    /// documentation for the driver application's help message.
-    ///
-    /// \tparam T The generator to register.
-    template<class T>
-    void register_generator();
+    /// \tparam T The algorithm to register.
+    template<typename T>
+    void register_algorithm();
 
     inline eval::AlgorithmTypes& algorithm_map();
     inline const eval::AlgorithmTypes& algorithm_map() const;
@@ -66,16 +52,13 @@ public:
     // Create the list of all possible static-argument-type combinations
     inline std::vector<pattern::Algorithm> all_algorithms_with_static(View type) const;
     inline std::vector<pattern::Algorithm> all_algorithms_with_static_internal(View type) const;
-    inline std::vector<pattern::Algorithm> check_for_undefined_compressors();
-    inline std::unique_ptr<Compressor> select_compressor_or_exit(const AlgorithmValue& algo) const;
-    inline std::unique_ptr<Generator> select_generator_or_exit(const AlgorithmValue& algo) const;
-    inline AlgorithmValue parse_algorithm_id(string_ref text, string_ref type) const;
-    inline static Registry with_all_from(std::function<void(Registry&)> f);
+    inline std::vector<pattern::Algorithm> check_for_undefined_algorithms();
+    inline std::unique_ptr<algorithm_t> select_algorithm(const AlgorithmValue& algo) const;
+    inline AlgorithmValue parse_algorithm_id(string_ref text) const;
+    inline static Registry<algorithm_t> with_all_from(std::function<void(Registry<algorithm_t>&)> f, const std::string& root_type);
     inline std::string generate_doc_string() const;
     /// \endcond
 };
-
-inline std::unique_ptr<Registry> make_ptr_copy_of_registry(const Registry& registry);
 
 }
 

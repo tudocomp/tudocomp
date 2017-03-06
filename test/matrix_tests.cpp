@@ -5,6 +5,8 @@
 #include <glog/logging.h>
 #include <cstdlib>
 
+#include <tudocomp/AlgorithmStringParser.hpp>
+#include <tudocomp/Env.hpp>
 #include <tudocomp_driver/Registry.hpp>
 
 #include "test/util.hpp"
@@ -37,7 +39,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
 
     // stage 1: automatically generated list of tests
     {
-        for (const auto& x : REGISTRY.all_algorithms_with_static("compressor")) {
+        for (const auto& x : COMPRESSOR_REGISTRY.all_algorithms_with_static("compressor")) {
             test_cases.push_back(x.to_string());
         }
     }

@@ -7,13 +7,13 @@
 #include <gtest/gtest.h>
 #include <glog/logging.h>
 
-#include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/util/GenericView.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/CreateAlgorithm.hpp>
 
 #include "test/util.hpp"
 
@@ -1344,15 +1344,15 @@ TEST(Escaping, option_value_direct) {
 }
 
 TEST(Escaping, option_value_indirect) {
-    Registry r;
-    r.register_compressor<EscapingComp>();
+    Registry<Compressor> r("compressor");
+    r.register_algorithm<EscapingComp>();
     auto av = r.parse_algorithm_id("esc_test");
     ASSERT_TRUE(av.needs_sentinel_terminator());
 }
 
 TEST(Escaping, option_value_indirect_copy) {
-    Registry r;
-    r.register_compressor<EscapingComp>();
+    Registry<Compressor> r("compressor");
+    r.register_algorithm<EscapingComp>();
     AlgorithmValue av = r.parse_algorithm_id("esc_test");
     AlgorithmValue av2("", {}, nullptr, false);
     av2 = std::move(av);
@@ -1428,8 +1428,8 @@ struct KeywordlessEvalOrderBug: public Compressor {
 
 TEST(KeywordlessEvalOrder, test) {
     auto x1 = create_algo<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
-    Registry r;
-    r.register_compressor<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
+    Registry<Compressor> r("compressor");
+    r.register_algorithm<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
     r.parse_algorithm_id("eval_order_bug(sub1 = sub1(x = 'x'), dyn = 'foobar', sub2 = sub2(y = 'y'))");
     r.parse_algorithm_id("eval_order_bug(sub1 = sub1, dyn = 'foobar', sub2 = sub2)");
     r.parse_algorithm_id("eval_order_bug(sub1 = sub1, dyn = 'foobar')");

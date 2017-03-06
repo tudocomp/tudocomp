@@ -86,12 +86,13 @@ int main(int argc, char** argv) {
 
     try {
         // load registry
-        const Registry& registry = REGISTRY;
+        const Registry<Compressor>& compressor_registry = COMPRESSOR_REGISTRY;
+        const Registry<Generator>& generator_registry = GENERATOR_REGISTRY;
 
         if (options.list) {
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
-            std::cout << registry.generate_doc_string();
+            std::cout << compressor_registry.generate_doc_string();
             return 0;
         }
 
@@ -131,8 +132,8 @@ int main(int argc, char** argv) {
 
         if(!options.stdin) {
             if(!options.generator.empty()) {
-                auto av = registry.parse_algorithm_id(options.generator, "generator");
-                generator = registry.select_generator_or_exit(av);
+                auto av = generator_registry.parse_algorithm_id(options.generator);
+                generator = generator_registry.select_algorithm(av);
             } else if(!options.remaining.empty()) {
                 // file
                 file = options.remaining[0];
@@ -210,9 +211,9 @@ int main(int argc, char** argv) {
         if (!options.algorithm.empty()) {
             auto id_string = options.algorithm;
 
-            auto av = registry.parse_algorithm_id(id_string, "compressor");
+            auto av = compressor_registry.parse_algorithm_id(id_string);
             auto needs_sentinel_terminator = av.needs_sentinel_terminator();
-            auto compressor = registry.select_compressor_or_exit(av);
+            auto compressor = compressor_registry.select_algorithm(av);
             auto algorithm_env = compressor->env().root();
 
             selection = Selection {
@@ -309,8 +310,8 @@ int main(int argc, char** argv) {
                     DLOG(INFO) << "Using header id string " << algorithm_header;
 
                     auto id_string = std::move(algorithm_header);
-                    auto av = registry.parse_algorithm_id(id_string, "compressor");
-                    auto compressor = registry.select_compressor_or_exit(av);
+                    auto av = compressor_registry.parse_algorithm_id(id_string);
+                    auto compressor = compressor_registry.select_algorithm(av);
                     auto needs_sentinel_terminator = av.needs_sentinel_terminator();
                     auto algorithm_env = compressor->env().root();
 

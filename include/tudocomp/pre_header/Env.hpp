@@ -27,9 +27,6 @@
 
 namespace tdc {
 
-class Registry;
-inline std::unique_ptr<Registry> make_ptr_copy_of_registry(const Registry& registry);
-
 class EnvRoot;
 class Env;
 
@@ -114,7 +111,6 @@ inline StatGuard::~StatGuard() {
 class Env {
     std::shared_ptr<EnvRoot> m_root;
     AlgorithmValue m_node;
-    std::unique_ptr<Registry> m_registry;
 
     inline const AlgorithmValue& algo() const;
 
@@ -123,13 +119,10 @@ public:
     inline Env(const Env& other) = delete;
     inline Env(Env&& other);
     inline Env(std::shared_ptr<EnvRoot> root,
-               const AlgorithmValue& node,
-               const Registry& registry);
+               const AlgorithmValue& node);
     inline ~Env();
 
     inline std::shared_ptr<EnvRoot>& root();
-
-    inline const Registry& registry() const;
 
     /// Log an error and end the current operation
     inline void error(const std::string& msg);

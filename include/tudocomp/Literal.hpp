@@ -21,8 +21,11 @@ struct Literal {
     len_t pos;
 };
 
+class LiteralIterator {
+};
+
 /// \brief An empty literal iterator that yields no literals whatsoever.
-class NoLiterals {
+class NoLiterals : LiteralIterator {
 public:
     /// \brief Constructor.
     inline NoLiterals() {}
@@ -38,7 +41,7 @@ public:
 };
 
 /// \brief A literal iterator that yields every character from a \ref View.
-class ViewLiterals {
+class ViewLiterals : LiteralIterator {
 private:
     View m_view;
     len_t m_index;
