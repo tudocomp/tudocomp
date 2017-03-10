@@ -42,5 +42,15 @@ namespace tdc {namespace esp {
             derive_text(ss);
             return ss.str();
         }
+
+        // Returns idx of node n
+        inline size_t node_idx(size_t n) const {
+            DCHECK_GE(n, GRAMMAR_PD_ELLIDED_PREFIX);
+            return n - GRAMMAR_PD_ELLIDED_PREFIX;
+        }
+
+        inline const std::array<size_t, 2>& node(size_t n) const {
+            return rules.at(node_idx(n));
+        }
     };
 }}

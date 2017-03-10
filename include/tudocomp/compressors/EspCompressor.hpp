@@ -25,7 +25,7 @@ public:
 
         auto p1 = env().stat_phase("ESP Compressor");
 
-        EspContext context { &env(), false };
+        EspContext context { &env(), true };
         SLP slp;
 
         {
