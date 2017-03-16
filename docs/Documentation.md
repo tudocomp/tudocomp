@@ -816,7 +816,38 @@ iterators will provide more information.
 
 ### Literal Iterators
 
->> *TODO*
+Another useful piece of context information for coders may be about the input
+alphabet, that is, the characters or bytes (henceforth called "literals") that
+occur and where they occur. This information can be used for low-entropy coding,
+with the most prominent example being Huffman codes.
+
+In order to provide coders with information on the input literals, *tudocomp*
+offers the concept of a [`LiteralIterator`](@DX_LITERATOR@). The literal
+iterator must define the two functions [`has_next`](@DX_LITERATOR_HASNEXT@)
+and [`next`](@DX_LITERATOR_NEXT@) to navigate over the input literals. The
+latter yields [`Literal`](@DX_LITERAL@) objects, which contain an observed
+literal as well as a position at which it occurs.
+
+The most simple form of a literal iterator would report every literal from the
+input in sequential order along with their position. For example, for the input
+text `"aba"`, it would yield the following Literal objects (represented as
+tuples of literal and position of occurence: `(a,1)`, `(b,2)`, `(a,3)`. This
+most simple behavior is implemented in the [`ViewLiterals`](@DX_VIEW_LITERALS@)
+class.
+
+However, there are situations where this does not correspond to the literal
+occurences of an already processed input. A simple example is the LZ77
+factorization of a text: Some literals have been replaced by factors and would,
+if still counted, distort the distribution of literals for a Huffman encoding.
+Therefore, the literal iterator that a LZ77 compressor passes to its encoder
+would skip any literal that has been replaced by a factor, in order to allow for
+a better low-entropy encoding afterwards. This commonly results in more complex
+implementations of the aforementioned functions `has_next` and `next`.
+
+For some scenarios, especially during development, the
+[`NoLiterals`](@DX_NO_LITERALS@) iterator can be used to give no input alphabet
+information to the coder at all. Note that low-entropy encoders, which may rely
+on this information, may not be compatible with this.
 
 ### The Coder Interface
 
