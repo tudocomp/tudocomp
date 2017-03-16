@@ -163,6 +163,14 @@ section#content > div {
     font-weight: bold;
 }
 
+#content h4 {
+    margin: 2rem 0 0.5rem 0;
+    padding-left: 1rem;
+
+    font-size: 1.0rem;
+    font-weight: bold;
+}
+
 #content p {
     padding-left: 1rem;
 }

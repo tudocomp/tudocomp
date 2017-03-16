@@ -851,11 +851,146 @@ on this information, may not be compatible with this.
 
 ### The Coder Interface
 
->> *TODO*
+*tudocomp* does not provide a central base for coders, but separates their
+functionality by providing an [`Encoder`](@DX_ENCODER@) and a
+[`Decoder`](@DX_DECODER@) class.
+
+It is expected that for any encoder, there is a corresponding decoder that
+restores the original output. In order to enforce this, encoder and decoder
+implementations are typically encapsulated in an outer `Coder` class that
+inheirty from `Algorithm`. This design pattern allows for separation of encoding
+and decoding functionality while retaining the ability to instantiate both from
+a template type (ie. the outer class).
+
+Apart from this concept, encoders and decoders are simple classes that declare
+the function templates [`encode`](@DX_ENCODER_ENCODE@) and
+[`decode`](@DX_DECODER_DECODE@), respectively. Their template parameters are
+generally expected to be numeric types.
+
+Both `encode` and `decode` accept a `Range` as an argument. As discussed in the
+[`Ranges`](#ranges) section above, the range information can be used to encode a
+given value in a more efficient manner. The following example uses the range
+in order to perform a binary encoding of the given value:
+
+~~~ {.cpp caption="coder_impl.cpp"}
+template<typename value_t>
+inline void encode(value_t v, const Range& r) {
+    // Compute the amount of bits required to store a value of range r
+    auto delta_bits = bits_for(r.delta());
+
+    // Encode the value as binary using the computed amount of bits
+    v -= r.min();
+    m_out->write_int(v, delta_bits);
+}
+~~~
+
+The range's [`delta`](@DX_RANGE_DELTA@) is a convenience function that yields
+the difference between the range's [`max`](@DX_RANGE_MAX@) and
+[`min`](@DX_RANGE_MIN@) functions. In the example, the amount of bits required
+to store `delta` as binary is computed using the already known function
+[`bits_for`](@DX_BITS_FOR@). Then, only the difference between the passed value
+and the range's minimum value is actually encoded.
+
+The corresponding decoding function would be implemented in the following way:
+
+~~~ {.cpp caption="coder_impl.cpp"}
+template<typename value_t>
+inline value_t decode(const Range& r) {
+    // Compute the amount of bits required to store a value of range r
+    auto delta_bits = bits_for(r.delta());
+
+    // Decode the value from binary reading the computed amount of bits
+    value_t v = m_in->read_int<value_t>(delta_bits);
+    v += r.min();
+    return v;
+}
+~~~
+
+Again, the amount of bits for the range's delta is computed and the difference
+of the stored value and the minimum is decoded. In a final step, naturally,
+the range's minimum has to be added back in order to restore the original value.
+
+Note that the decoder relies on its controller (e.g. a compressor) to provide
+the correct range information. In order for the above example to work, the same
+range has to be used to encode and decode each value.
+
+#### Range Overloads
+
+In order to realize a different behavior for different types of ranges (as
+presented in the [`Ranges`](#ranges) section), overloads of `encode` and
+`decode` are used. These overloads only differ to the default signature in that
+they accept more specialized Range objects. The following example realizes
+an ASCII encoding for single bits, as identified by the
+[`BitRange`](@DX_BITRANGE@):
+
+~~~ {.cpp caption="coder_impl.cpp"}
+template<typename value_t>
+inline void encode(value_t v, const BitRange& r) {
+    // Encode single bits as ASCII
+    m_out->write_int(v ? '1' : '0');
+}
+~~~
+
+The same idea works with decoding:
+
+~~~ {.cpp caption="coder_impl.cpp"}
+template<typename value_t>
+inline value_t decode(const BitRange& r) {
+    // Decode an ASCII character and compare against '0'
+    uint8_t b = m_in->read_int<uint8_t>();
+    return (b != '0');
+}
+~~~
+
+Note that there is *no* virtual inheritance, and therefore no polymorphism,
+between the different range types. This may be a pitfall when trying to
+introduce new range types. Also note that the default `Encoder` and `Decoder`
+implementations provide overloads for the default `Range` (which do binary
+coding like above) as well as `BitRange` (which writes single bits).
+
+#### Using Literal Iterators
+
+Encoders accept a literal iterator (see
+[Literal Iterators](#literal-iterators)) via their
+[`constructor`](@DX_ENCODER_CTOR@). The following simple example uses the
+literal iterator to count the amount of occurences of each possible literal
+(0 to 255) in the input:
+
+~~~ {.cpp caption="coder_impl.cpp"}
+// count occurences of each literal
+std::memset(m_occ, 0, 256);
+
+while(literals.has_next()) {
+    Literal l = literals.next();
+    ++m_occ[l.c];
+}
+~~~
+
+### Interleaved Coding
+
+In order to achieve better (smaller) results, multiple encoders could be used
+for different scenarios. For example, when encoding a LZ78 factorization, one
+could use binary coding for a factor ID, and Huffman coding for the appended
+literal. This is called interleaved coding, since both encoders would write to
+the same bit output stream.
+
+Interleaved coding is currently *not fully supported* by *tudocomp*. The issue
+here is that coders may "absorb" a certain amount of literals before deciding
+what to encode (e.g. run-length encoders). When a different encoder writes
+values in the meantime, the output may be corrupted.
+
+A solution for this issue is planned for the near future.
 
 ### Available Coders
 
->> *TODO*
+Out of the box, *tudocomp* currently implements a set of coders, including:
+
+* Human readable coding (ASCII, for debugging purposes)
+* Binary coding
+* Low-entropy coding, including Elias and Huffman code
+
+A full list can be found in the inheritance diagram for the
+[`Encoder`](@DX_ENCODER@) class' API reference.
 
 ## Compressors
 
@@ -962,7 +1097,7 @@ of this type only for exposition.
 
 ### Available Compressors
 
-Out of the box, *tudocomp* currently implements a set of compressors including:
+Out of the box, *tudocomp* currently implements a set of compressors, including:
 
 * Lempel-Ziv based compressors (LZ77, LZ78 and variants)
 * Grammar-based compressors (RePair)
