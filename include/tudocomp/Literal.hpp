@@ -22,14 +22,6 @@ struct Literal {
 };
 
 class LiteralIterator {
-};
-
-/// \brief An empty literal iterator that yields no literals whatsoever.
-class NoLiterals : LiteralIterator {
-public:
-    /// \brief Constructor.
-    inline NoLiterals() {}
-
     /// \brief Tests whether there are more literals in the stream.
     /// \return \e true if there are more literals in the stream, \e false
     ///         otherwise.
@@ -38,6 +30,10 @@ public:
     /// \brief Yields the next literal from the stream.
     /// \return The next literal from the stream.
     inline Literal next() { assert(false); return Literal{0, 0}; }
+};
+
+/// \brief An empty literal iterator that yields no literals whatsoever.
+class NoLiterals : LiteralIterator {
 };
 
 /// \brief A literal iterator that yields every character from a \ref View.
