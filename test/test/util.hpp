@@ -470,8 +470,8 @@ inline CompressResult<T> compress(string_ref text,
 }
 
 template<class T>
-inline void roundtrip(string_ref original_text,
-                        string_ref expected_compressed_text = "",
+inline void roundtrip_ex(string_ref original_text,
+                        string_ref expected_compressed_text,
                         const std::string& options = "",
                         const Registry<Compressor>& registry = Registry<Compressor>("compressor")) {
     auto e = RoundTrip<T>(options, registry).compress(original_text);
@@ -484,17 +484,8 @@ inline void roundtrip(string_ref original_text,
 }
 
 template<class T>
-inline void roundtrip(string_ref original_text,
-                        const std::vector<uint8_t>& expected_compressed_text = {},
-                        const std::string& options = "",
-                        const Registry<Compressor>& registry = Registry<Compressor>("compressor")) {
-    auto e = RoundTrip<T>(options, registry).compress(original_text);
-    auto& compressed_text = e.bytes;
-
-    if(expected_compressed_text.size() > 0)
-    ASSERT_EQ(expected_compressed_text, compressed_text);
-
-    e.assert_decompress_bytes();
+inline void roundtrip(string_ref original_text) {
+    roundtrip_ex<T>(original_text, "");
 }
 
 template<class T>
