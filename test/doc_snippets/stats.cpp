@@ -59,6 +59,6 @@ TEST(stats, example) {
     env.end_stat_phase();
 
     // Conclude tracking and print JSON to stdout
-    env.finish_stats().to_json().str(/*std::cout - uncomment me*/);
+    env.finish_stats().to_json().str(std::cout);
 }
 

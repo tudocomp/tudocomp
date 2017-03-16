@@ -85,8 +85,20 @@ TEST(doc_compressor_impl, cycle) {
     const std::string example = "aaabbaabab";
 
     // Run compression cycles using different encoders
-    test::roundtrip<MyCompressor<ASCIICoder>>(example, "");
-    test::roundtrip<MyCompressor<BitCoder>>(example, "");
-    test::roundtrip<MyCompressor<EliasDeltaCoder>>(example, "");
+    test::roundtrip<MyCompressor<ASCIICoder>>(example);
+    test::roundtrip<MyCompressor<BitCoder>>(example);
+    test::roundtrip<MyCompressor<EliasDeltaCoder>>(example);
+}
+
+TEST(doc_compressor_impl, helpers) {
+    // perform border case compression tests using different encoders
+    test::roundtrip_batch(test::roundtrip<MyCompressor<ASCIICoder>>);
+    test::roundtrip_batch(test::roundtrip<MyCompressor<BitCoder>>);
+    test::roundtrip_batch(test::roundtrip<MyCompressor<EliasDeltaCoder>>);
+
+    // perform compression tests on generated strings using different encoders
+    test::on_string_generators(test::roundtrip<MyCompressor<EliasDeltaCoder>>, 15);
+    test::on_string_generators(test::roundtrip<MyCompressor<BitCoder>>, 15);
+    test::on_string_generators(test::roundtrip<MyCompressor<ASCIICoder>>, 15);
 }
 
