@@ -21,6 +21,7 @@ export CCACHE_MAXSIZE=10G
 ccache -s > ccache.pre.txt
 
 if [[ "$1" == "website" ]]; then
+    cmake -DVERSION_SUFFIX=-$BUILD_NUMBER -DCMAKE_BUILD_TYPE=Release ..
     make website
 else
     if [[ "$optimization_target" == "Release" ]]; then
