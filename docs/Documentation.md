@@ -1112,6 +1112,15 @@ reusable and allowing for swift development of alternative strategies.
 A full list can be found in the inheritance diagram for the
 [`Compressor`](@DX_COMPRESSOR@) class' API reference.
 
+### Magic
+
+For decompression, it is important to identify what compressor has been used to
+produce a compressed output - often called a "magic" keyword.
+
+It is intended by *tudocomp* that this is *not* the responsibility of a
+compressor to prepend this information to the output, but it is the application
+that has to take care of this.
+
 ## String Generators
 
 >> *TODO*: Describe interface and provide usage example.
@@ -1248,14 +1257,6 @@ exporting it as either a vector graphic (`svg`) or an image file (`png`).
 # Old Tutorial
 
 >> *TODO*: This will probably disappear entirely.
-
-## Magic
-
-In order to identify what compressor has been used to produce a compressed
-output, the driver application can prepend a unique identifier
-(*magic keyword*) to the output.
-
-It is important to note that this is *not* the responsibility of the compressor.
 
 ## Unit Tests
 
