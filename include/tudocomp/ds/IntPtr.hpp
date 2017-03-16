@@ -238,11 +238,11 @@ namespace int_vector {
         friend class GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>;
         friend class IntRef<T>;
         friend class ConstIntRef<T>;
-        friend class IntegerBaseTrait<IntRef<T>>;
-        friend class ConstIntegerBaseTrait<IntRef<T>>;
-        friend class ConstIntegerBaseTrait<ConstIntRef<T>>;
-        friend class RefDispatch<uint32_t, T>;
-        friend class RefDispatch<uint64_t, T>;
+        friend struct IntegerBaseTrait<IntRef<T>>;
+        friend struct ConstIntegerBaseTrait<IntRef<T>>;
+        friend struct ConstIntegerBaseTrait<ConstIntRef<T>>;
+        friend struct RefDispatch<uint32_t, T>;
+        friend struct RefDispatch<uint64_t, T>;
 
     public:
         GenericIntPtr():
@@ -370,11 +370,11 @@ namespace int_vector {
     protected:
         friend class IntPtr<T>;
         friend class ConstIntPtr<T>;
-        friend class IntegerBaseTrait<IntRef<T>>;
-        friend class ConstIntegerBaseTrait<IntRef<T>>;
-        friend class ConstIntegerBaseTrait<ConstIntRef<T>>;
-        friend class RefDispatch<uint32_t, T>;
-        friend class RefDispatch<uint64_t, T>;
+        friend struct IntegerBaseTrait<IntRef<T>>;
+        friend struct ConstIntegerBaseTrait<IntRef<T>>;
+        friend struct ConstIntegerBaseTrait<ConstIntRef<T>>;
+        friend struct RefDispatch<uint32_t, T>;
+        friend struct RefDispatch<uint64_t, T>;
 
         Ptr m_ptr;
     public:

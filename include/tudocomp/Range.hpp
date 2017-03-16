@@ -92,9 +92,9 @@ namespace tdc {
     const BitRange bit_r;
 
     /// \brief Global predefined reange for literals.
-    const LiteralRange literal_r;
+    /*const*/ LiteralRange literal_r;
 
     /// \brief Global predefined range for `len_t`.
-    const LengthRange len_r;
+    /*const*/ LengthRange len_r;
 }
 

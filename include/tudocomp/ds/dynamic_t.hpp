@@ -42,7 +42,7 @@ struct IntegerBaseTrait<dynamic_t>: ConstIntegerBaseTrait<dynamic_t> {
 class dynamic_t: public IntegerBase<dynamic_t> {
     uint64_t m_data;
 
-    friend class DyntDispatch;
+    friend struct DyntDispatch;
 
 public:
     dynamic_t(): m_data(0) {}

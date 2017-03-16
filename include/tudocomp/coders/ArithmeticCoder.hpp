@@ -47,9 +47,9 @@ public:
         len_t*const C;
 
         ulong lower_bound=0;
-        ulong upper_bound=UINT64_MAX;
+        ulong upper_bound=std::numeric_limits<ulong>::max();
 
-        int literal_counter;
+        int literal_counter = 0;
 
         template<class T>
         len_t* count_alphabet_literals(T&& input) {
@@ -75,9 +75,9 @@ public:
         inline void setNewBounds(value_t v) {
             ulong range = upper_bound-lower_bound;
             CHECK_NE(lower_bound,upper_bound);
-            upper_bound=lower_bound+range*(C[v]/C[ULITERAL_MAX]);
+            upper_bound=lower_bound+range/C[ULITERAL_MAX]*C[v];
             if(v != 0) {
-                lower_bound=lower_bound+range*(C[v-1]/C[ULITERAL_MAX]);
+                lower_bound=lower_bound+range/C[ULITERAL_MAX]*C[v-1];
             }
 
         }
@@ -134,19 +134,44 @@ public:
 
     };
 
-    /// \brief Decodes data from an ASCII character stream.
+    /// \brief Decodes data from an Arithmetic character stream.
     class Decoder : public tdc::Decoder {
+    private:
+
+
+
     public:
         DECODER_CTOR(env, in) {}
 
         template<typename value_t>
         inline value_t decode(const Range& r) {
             std::ostringstream os;
-            for(uint8_t c = m_in->read_int<uint8_t>();
-                c >= '0' && c <= '9';
-                c = m_in->read_int<uint8_t>()) {
 
-                os << c;
+            ulong code = m_in->read_int<uint8_t>();
+            std::vector<std::pair<literal_t ,int> > literals;
+            while(!m_in->eof()) {
+                literal_t c = m_in->read_int<literal_t>();
+                ulong val = m_in->read_int<ulong>();
+            }
+
+            ulong lower_bound = 0;
+            ulong upper_bound = std::numeric_limits<ulong>::max();
+
+            int literal_count = literals.back().second;
+
+            char lastChar = 0;
+            while(lastChar != 3) {
+                ulong range = upper_bound - lower_bound;
+                ulong interval_lower_bound = lower_bound;
+                for(std::pair<literal_t, int> pair : literals) {
+                    upper_bound = lower_bound + range/literal_count*pair.second;
+                    if(code < upper_bound) {
+                        os << pair.first;
+                        lower_bound = interval_lower_bound;
+                        break;
+                    }
+                    interval_lower_bound = pair.second+1;
+                }
             }
 
             std::string s = os.str();
@@ -156,22 +181,9 @@ public:
             is >> v;
             return v;
         }
-
-        template<typename value_t>
-        inline value_t decode(const LiteralRange& r) {
-            return value_t(m_in->read_int<uint8_t>());
-        }
-
-        template<typename value_t>
-        inline value_t decode(const BitRange& r) {
-            uint8_t b = m_in->read_int<uint8_t>();
-            return (b != '0');
-        }
     };
 };
 
 }
-
-
 
 #endif // ARITHMETICCODER_H

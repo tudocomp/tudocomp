@@ -292,7 +292,7 @@ public:
     using T::operator <<=;
 
     using IntegerBaseCombiner<Ts...>::operator +=;
-    using IntegerBaseCombiner<Ts...>::operator +=;
+//    using IntegerBaseCombiner<Ts...>::operator +=;
     using IntegerBaseCombiner<Ts...>::operator -=;
     using IntegerBaseCombiner<Ts...>::operator *=;
     using IntegerBaseCombiner<Ts...>::operator /=;
