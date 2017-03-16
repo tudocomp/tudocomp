@@ -45,9 +45,9 @@ add_custom_target(website-docs
 # Copy Doxygen API reference
 add_custom_target(website-doxygen
     DEPENDS www docs-doxygen    
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${WWW_DOCUMENTATION_DIR}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${WWW_DOXYGEN_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${DOCS_BINARY_DIR}/main/html ${WWW_DOCUMENTATION_DIR}
+        ${DOCS_BINARY_DIR}/doxygen/html ${WWW_DOXYGEN_DIR}
 )
 
 # website - Builds the website
