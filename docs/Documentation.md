@@ -188,6 +188,9 @@ limited feature set. Cygwin does not allow overrides of `malloc`, therefore the
 heap allocation counter cannot work and statistics tracking becomes largely
 nonfunctional.
 
+>> *TODO*: Check if `valgrind` works in Ubuntu on Windows, since system memory
+   reporting via `free` or `top` does not.
+
 ## Command-line Tool
 
 The executable `tdc` is the command-line application that bundles all
