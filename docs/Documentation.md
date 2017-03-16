@@ -1123,7 +1123,115 @@ A full list can be found in the inheritance diagram for the
 
 ## Runtime Statistics
 
->> *TODO*: Describe phases, JSON output, charter application.
+*tudocomp* provides functionality to measure the running time and the amount of
+dynamically allocated memory (e.h. via `malloc` or `new`) over the application
+lifetime. This functionality is accessible via an algorithm's environment (see
+[Environment](#environment) section).
+
+Recall at this point the restrictions when trying to use these features in a
+Windows enviroment (see [Windows Support](#windows-support)).
+
+Runtime statistics are tracked in *phases*, ie. the running time and memory
+peak can be measured for individual stages during an algorithm's run. These
+phases may be nested, ie., a phase can consist of multiple other phases. When
+a top-level algorithm is instantiated (e.g. using `create_algo`) it will
+automatically enter a *root phase*.
+
+The measured data can be retrieved in a JSON representation in order to
+visualize it using the [*tudocomp Charter*](#charter-web-application) or to
+process in a third-party application.
+
+Making use of the statistics tracking functions is as easy as sorrounding
+single phases with calls to the
+[`begin_stat_phase`](@DX_ENV_BEGINSTATPHASE@) and
+[`end_stat_phase`](@DX_ENV_ENDSTATPHASE@) functions. Any code within a phase
+is subject to time and memory measurement.
+
+To that regard, in order to receive meaningful results, each phase should
+"clean up" properly, ie. it should free any memory that is no longer needed
+after the phase is finished. This can be easily achieved by making proper use of
+scopes, to name one example.
+
+The following example runs through a few different phases with different
+processing times (realized using sleep) and memory allocations (realized using
+simple allocs).
+
+~~~ { .cpp caption="stats.cpp" }
+    // Phase 1
+    env.begin_stat_phase("Phase 1");
+    {
+        char* alloc1 = new char[2048];
+        std::this_thread::sleep_for(ms(30));
+        delete[] alloc1;
+    }
+    env.end_stat_phase();
+
+    // Phase 2
+    env.begin_stat_phase("Phase 2");
+    {
+        char* alloc2 = new char[3072];
+
+        // Phase 2.1
+        env.begin_stat_phase("Phase 2.1");
+        {
+            std::this_thread::sleep_for(ms(30));
+            env.log_stat("A statistic", 147);
+            env.log_stat("Another statistic", 0.5);
+        }
+        env.end_stat_phase();
+
+        // Phase 2.2
+        env.begin_stat_phase("Phase 2.2");
+        {
+            char* alloc2_2 = new char[1024];
+            std::this_thread::sleep_for(ms(40));
+            delete[] alloc2_2;
+        }
+        env.end_stat_phase();
+
+        delete[] alloc2;
+    }
+    env.end_stat_phase();
+
+    // Conclude tracking and print JSON to stdout
+    env.finish_stats().to_json().str(std::cout);
+~~~
+
+During any phase, custom statistics can be logged using the
+[`log_stat`](@DX_ENV_LOGSTAT@) method.
+
+As seen in the last line, statistics tracking is concluded using the
+[`finish_stats`](@DX_ENV_FINISHSTATS@) function, which yields a reference to a
+[`Stat`](@DX_STAT@) object. The JSON representation can be retrieved using its
+[`to_json`](@DX_STAT_TOJSON@) function. For the above example, the following
+JSON output is produced:
+
+>> TODO: Fix [#18315](https://projekte.itmc.tu-dortmund.de/issues/18315), then
+   execute example.
+
+### Charter Web Application
+
+The [tudocomp Charter](@URL_CHARTER@) is a JavaScript-based web application
+that visualizes the statistics JSON output. Based on the data, it plots a
+bar chart that displays the single phases of the compression run with their
+running time on the X axis and their peak heap memory usage on the Y axis.
+
+![A diagram plotted by the Charter.](media/charter_diagram.png)
+
+>> TODO: Update to match the code example
+
+The shaded area within a phase bar visualizes the *memory offset* of the phase,
+ie., how much memory was already allocated at the beginning of the phase. Ergo,
+the top border of the bar displays the global, application-wide memory peak
+during the phase, while the phase's local memory peak is the difference between
+the whole and the shaded area.
+
+This information is explicitly printed in table view below the diagram. This is
+also where custom statistics are printed. The table view of a phase will also be
+displayed as a tooltip when the mouse is moved over its bar in the diagram.
+
+The Charter provides several options to customize the chart, as well as
+exporting it as either a vector graphic (`svg`) or an image file (`png`).
 
 ## Unit Tests
 
@@ -1277,106 +1385,4 @@ TEST(example, roundtrip_bytes) {
 
 >> *TODO*: We need to consider if the term *roundtrip* should be replaced by
    something more meaningful.
-
-## Runtime Statistics
-
-*tudocomp* provides functionality to measure the running time and the peak
-amount of dynamically allocated memory (e.h. via `malloc` or `new`) over the
-course of a compression or decompression run.
-
-This functionality is accessible via a compressor's *environment* (represented
-by the [`Env`](@DX_ENV@) class), which can be retrieved using the
-[`env()`](@DX_ALGORITH_ENV@) function.
-
-Runtime statistics are tracked in *phases*, ie. the running time and memory
-peak can be measured for individual stages during a compression run. These
-phases may be nested, ie. a phase can consist of multiple other phases. When
-a compressor is instantiated (using `create_algo`) it will automatically enter
-a *root phase*.
-
-The measured data can be retrieved as JSON for visualization in the
-[*tudocomp Charter*](#charter-web-application) or processing in a third-party application.
-
-> *Note:* In a *Cygwin* environment, due to its nature of not allowing overrides
-          of `malloc` and friends, memory allocation cannot be measured.
-
-### Usage
-
-Making use of the statistics tracking functions is as easy as sorrounding
-single phases with calls to the
-[`begin_stat_phase`](@DX_ENV_BEGINSTATPHASE@) and
-[`end_stat_phase`](@DX_ENV_ENDSTATPHASE@) functions like so:
-
-~~~ { .cpp }
-env().begin_stat_phase("Phase 1");
-    // ... Phase 1
-env().end_stat_phase();
-env().begin_stat_phase("Phase 2");
-    // ... Phase 2
-    env().begin_stat_phase("Phase 2.1");
-        // ... Phase 2.1, part of Phase 2
-    env().end_stat_phase();
-    // ... Phase 2
-    env().begin_stat_phase("Phase 2.2");
-        // ... Phase 2.2, part of Phase 2
-    env().end_stat_phase();
-    // ... Phase 2
-env().end_stat_phase();
-~~~
-
-> *Note*: In order to receive meaningful results, each phase should "clean up"
-          properly, ie. it should free any memory that is no longer needed after
-          the phase is finished.
-
-During any phase, custom statistics can be logged using the
-[`log_stat`](@DX_ENV_LOGSTAT@) method like so:
-
-~~~ { .cpp }
-env().log_stat("A statistic", 147);
-env().log_stat("Another statistic", 0.5);
-~~~
-
->> *TODO*: Currently, there are only overloads for integer types. Overloads
-   for `bool` and `std::string` should be added at least.
-
-Statistic tracking is concluded using the
-[`finish_stats`](@DX_ENV_FINISHSTATS@) function, which yields a
-reference to a [`Stat`](@DX_STAT@) object. The JSON can be written to a
-stream or retrieved as a string using its [`to_json`](@DX_STAT_TOJSON@)
-function overloads:
-
-~~~ { .cpp }
-// finish statistics
-auto& stats = compressor.env().finish_stats();
-
-// print JSON to a stream directly
-stats.to_json(std::cout);
-
-// retrieve JSON as string
-std::string json = stats.to_json();
-~~~
-
-### Charter Web Application
-
-The [tudocomp Charter](@URL_CHARTER@) is a JavaScript-based web application
-that visualizes the statistics JSON output. Based on the data, it plots a
-bar chart that displays the single phases of the compression run with their
-running time on the X axis and their peak heap memory usage on the Y axis.
-
-![A diagram plotted by the Charter.](media/charter_diagram.png)
-
-The dashed line within a phase bar displays the *memory offset* of the phase,
-ie. how much memory was already allocated at the beginning of the phase. Ergo,
-the top border of the bar displays the global, application-wide memory peak
-during the phase, while the phase's local memory peak is the difference between
-the top and the dashed line.
-
-This information is explicitly printed in table view below the diagram. This is
-also where custom statistics are printed. The table view of a phase will also be
-displayed as a tooltip when the mouse is moved over its bar in the diagram.
-
-![The table view of a statistics phase.](media/charter_table.png)
-
-The Charter provides several options to customize the chart, as well as
-exporting it as either a vector graphic (`svg`) or an image file (`png`).
 
