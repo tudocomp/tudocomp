@@ -22,6 +22,7 @@ struct Literal {
 };
 
 class LiteralIterator {
+public:
     /// \brief Tests whether there are more literals in the stream.
     /// \return \e true if there are more literals in the stream, \e false
     ///         otherwise.
