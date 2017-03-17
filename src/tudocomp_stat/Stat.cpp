@@ -1,4 +1,3 @@
-#include <tudocomp_stat/malloc.hpp>
 #include <tudocomp_stat/Stat.hpp>
 
 using tdc::Stat;

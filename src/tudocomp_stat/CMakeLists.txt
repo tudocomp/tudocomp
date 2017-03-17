@@ -5,11 +5,4 @@ add_library(
     malloc.cpp
 )
 
-target_link_libraries(
-    tudocomp_stat
-
-    tudocomp
-)
-
 cotire(tudocomp_stat)
-
