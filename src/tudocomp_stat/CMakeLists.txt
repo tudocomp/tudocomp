@@ -2,7 +2,7 @@ add_library(
     tudocomp_stat
 
     malloc.cpp
-    Stat.cpp
+    StatPhase.cpp
 )
 
 target_link_libraries(

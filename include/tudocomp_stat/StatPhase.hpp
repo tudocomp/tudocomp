@@ -7,9 +7,9 @@
 
 namespace tdc {
 
-class Stat {
+class StatPhase {
 private:
-    static Stat* s_current;
+    static StatPhase* s_current;
 
     inline static unsigned long current_time_millis() {
         timespec t;
@@ -19,7 +19,7 @@ private:
     }
 
     class Data {
-        friend class Stat;
+        friend class StatPhase;
 
     public:
         static constexpr size_t STR_BUFFER_SIZE = 64;
@@ -124,7 +124,7 @@ private:
         }
     };
 
-    Stat* m_parent;
+    StatPhase* m_parent;
     Data* m_data;
 
     bool  m_track_memory;
@@ -171,7 +171,7 @@ public:
         }
     }
 
-    inline Stat(const char* title) {
+    inline StatPhase(const char* title) {
         m_parent = s_current;
 
         if(m_parent) m_parent->m_track_memory = false;
@@ -191,7 +191,7 @@ public:
         m_track_memory = true;
     }
 
-    ~Stat() {
+    ~StatPhase() {
         // finish
         m_track_memory = false;
         m_data->time_end = current_time_millis();
