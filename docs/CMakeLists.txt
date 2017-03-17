@@ -3,16 +3,16 @@ find_package(LATEX COMPONENTS PDFLATEX)
 find_package(Pandoc)
 
 if(PANDOC_FOUND)
-
-    include(${CMAKE_CURRENT_SOURCE_DIR}/DocumentationVars.txt)
-
     set(MAIN_LATEX_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/latex)
     set(MAIN_HTML_OUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/main/html)
 
     file(MAKE_DIRECTORY ${MAIN_LATEX_OUT_DIR})
     file(MAKE_DIRECTORY ${MAIN_HTML_OUT_DIR})
 
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md @ONLY)
+    # Process documentation for HTML
+    set(URL_TUDOCOMP "..") # relative to doc page
+    include(${CMAKE_CURRENT_SOURCE_DIR}/DocumentationVars.txt)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.html.md @ONLY)
 
     add_custom_target(docs-main-html
 
@@ -20,7 +20,7 @@ if(PANDOC_FOUND)
         COMMAND ${PANDOC_BIN} -f markdown -t html --toc
             --template=${CMAKE_CURRENT_SOURCE_DIR}/pandoc_template.html
             -o ${CMAKE_CURRENT_BINARY_DIR}/_content.html
-            ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md
+            ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.html.md
 
         # copy html framework
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/html ${MAIN_HTML_OUT_DIR}
@@ -36,12 +36,15 @@ if(PANDOC_FOUND)
     )
 
     if(LATEX_PDFLATEX_FOUND)
+        set(URL_TUDOCOMP "http://tudocomp.org") # absolute URL
+        include(${CMAKE_CURRENT_SOURCE_DIR}/DocumentationVars.txt)
+        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Documentation.md ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.pdf.md @ONLY)
 
         add_custom_target(docs-main-pdf
             # convert markdown doc to tex
             COMMAND ${PANDOC_BIN} -f markdown -t latex
                 -o ${MAIN_LATEX_OUT_DIR}/_content.tex
-                ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.md
+                ${CMAKE_CURRENT_BINARY_DIR}/Documentation.processed.pdf.md
 
             # copy tex framework
             COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/latex ${MAIN_LATEX_OUT_DIR}

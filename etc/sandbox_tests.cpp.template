@@ -1,8 +1,11 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
+#include <tudocomp/tudocomp.hpp>
+
+using namespace tdc;
+
 TEST(Sandbox, example) {
     /* implement your quick tests here! */
     ASSERT_TRUE(true);
 }
-
