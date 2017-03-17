@@ -1,9 +1,6 @@
 #include <tudocomp_stat/malloc.hpp>
-#include <tudocomp_stat/Stat.hpp>
 
 #include <cstring>
-
-using tdc::Stat;
 
 #ifdef __CYGWIN__
 

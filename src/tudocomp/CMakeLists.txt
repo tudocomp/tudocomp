@@ -9,6 +9,7 @@ target_link_libraries(
 
     INTERFACE
 
+    tudocomp_stat
     glog
     sdsl
 )
