@@ -158,17 +158,11 @@ private:
 
 public:
     inline static void track_alloc(size_t bytes) {
-        if(s_current && s_current->m_track_memory) {
-            printf("[%s] alloc: %zu\n", s_current->m_data->title, bytes);
-            s_current->track_alloc_internal(bytes);
-        }
+        if(s_current) s_current->track_alloc_internal(bytes);
     }
 
     inline static void track_free(size_t bytes) {
-        if(s_current && s_current->m_track_memory) {
-            printf("[%s]  free: %zu\n", s_current->m_data->title, bytes);
-            s_current->track_free_internal(bytes);
-        }
+        if(s_current) s_current->track_free_internal(bytes);
     }
 
     inline StatPhase(const char* title) {
