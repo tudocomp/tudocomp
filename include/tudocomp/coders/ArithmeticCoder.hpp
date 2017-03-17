@@ -35,22 +35,14 @@ public:
     /// \brief Encodes data to an ASCII character stream.
     class Encoder : public tdc::Encoder {
     private:
-        //        std::map<value_t ,int> map;
-        //        template<typename value_t, typename container_t>
-        //        std::map<value_t, int> count_dict(const container_t& cont) {
-        //            std::map<value_t, int> dict;
-
-        //            for(const value_t &v:cont) {
-        //               dict[v]++;
-        //            }
-        //            return dict;
-        //        }
         len_t*const C;
 
         ulong lower_bound=0;
         ulong upper_bound=std::numeric_limits<ulong>::max();
+        uliteral_t codebook_size=0;
 
-        int literal_counter = 0;
+        len_t literal_counter = 0;
+        ulong min_range=std::numeric_limits<len_t>::max();
 
         template<class T>
         len_t* count_alphabet_literals(T&& input) {
@@ -63,58 +55,95 @@ public:
                 DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_t>::max());
                 ++C[static_cast<uliteral_t>(c)];
             }
-            ++C[3]; //End of Text is appended by the algorithm!
+            //++C[3]; //End of Text is appended by the algorithm!
 
             return C;
         }
 
         void build_intervals(len_t *const c) {
-            for(int i=1; i<=ULITERAL_MAX; i++) {
+
+            if(c[0]) {
+                codebook_size++;
+            }
+            len_t min=std::numeric_limits<len_t>::max();
+            for(ulong i=1; i<=ULITERAL_MAX; i++) {
+                if(c[i]!=0) {
+                    codebook_size++;
+                    min=std::min(min,c[i]);
+                }
                 c[i] = c[i] + c[i-1];
             }
+            min_range=c[ULITERAL_MAX-1]/min+1;
         }
 
         template<typename value_t>
         inline void setNewBounds(value_t v) {
             ulong range = upper_bound-lower_bound;
-            CHECK_NE(lower_bound,upper_bound);
-            upper_bound=lower_bound+range/C[ULITERAL_MAX]*C[(int) v];
+            if(range<min_range){
+                writeCode(lower_bound);
+                lower_bound=0;
+                upper_bound=std::numeric_limits<ulong>::max();
+                range = upper_bound-lower_bound;
+            }
+            DCHECK_NE(lower_bound,upper_bound);
+
+            const ulong literal_count = C[ULITERAL_MAX];
+
+            const ulong offset = range <= literal_count ? (range*C[(int) v])/literal_count : (range/literal_count)*C[(int) v];
+            const ulong offset_lower = range <= literal_count ? (range*C[(int) v-1])/literal_count : (range/literal_count)*C[(int) v-1];
+            upper_bound=lower_bound+offset;
             if(v != 0) {
-                lower_bound=lower_bound+range/C[ULITERAL_MAX]*C[(int) v-1];
+                lower_bound=lower_bound+offset_lower;
             }
 
         }
 
-        void postProcessing() {
-            int counter=0;
-            while(upper_bound!=lower_bound) {
-                counter++;
-                upper_bound>>=1;
-                lower_bound>>=1;
-            }
-            lower_bound <<= 1;
-            lower_bound += 1;
-            lower_bound <<= counter-1;
+        inline void writeCodebook() {
+            //write codebook size in outstream
+            m_out->write_int((uliteral_t) codebook_size);
 
-            m_out->write_int(lower_bound);
             if(C[0]!=0) {
                 m_out->write_int(literal_t(0));
                 m_out->write_int(C[0]);
             }
-            for(int i=1; i<=ULITERAL_MAX;i++) {
+            for(ulong i=1; i<=ULITERAL_MAX;i++) {
                 if(C[i]!=C[i-1]) {
                     m_out->write_int((literal_t) i);
                     m_out->write_int(C[i]);
                 }
 
             }
-
-
         }
+
+        inline void writeCode(ulong code){
+            m_out->write_int(code);
+        }
+
+        void postProcessing() {
+//            int counter=0;
+//            while(upper_bound!=lower_bound) {
+//                counter++;
+//                upper_bound>>=1;
+//                lower_bound>>=1;
+//            }
+//            lower_bound <<= 1;
+//            lower_bound += 1;
+//            lower_bound <<= counter-1;
+
+            writeCode(lower_bound);
+            m_out->write_int(std::numeric_limits<ulong>::max());
+        }
+
     public:
         ENCODER_CTOR(env, out, literals),
         C(count_alphabet_literals(std::move(literals))) {
             build_intervals(C);
+            writeCodebook();
+        }
+
+        ~Encoder() {
+
+            delete C;
         }
 
         template<typename value_t>
@@ -124,73 +153,100 @@ public:
 
             //minus 1 because of End-of-text which is not in input-string, but counted in dictionary
             if(literal_counter==C[ULITERAL_MAX] -1){
-                v=3;
-                setNewBounds(v);
+              //  v=3;
+              //  setNewBounds(v);
                 postProcessing();
             }
         }
+
     };
 
     /// \brief Decodes data from an Arithmetic character stream.
     class Decoder : public tdc::Decoder {
     private:
+        std::pair<literal_t ,int>* literals;
+        std::string decoded;
+        uliteral_t codebook_size;
+        ulong literal_counter=0;
+        ulong literals_read = 0;
+        ulong min_range=std::numeric_limits<ulong>::max();
 
-
-
-    public:
-        DECODER_CTOR(env, in) {}
-
-        template<typename value_t>
-        inline value_t decode(const Range& r) {
-            std::ostringstream os;
-
-            //read code
-            ulong code = m_in->read_int<ulong>();
-
-            //read and parse dictionary
-            std::vector<std::pair<literal_t ,int> > literals;
-            while(!m_in->eof()) {
-                literal_t c = m_in->read_int<literal_t>();
-                int val = m_in->read_int<int>();
-                literals.push_back(std::pair<literal_t, int>(c, val));
-            }
-
+        void decode(ulong code) {
             ulong lower_bound = 0;
             ulong upper_bound = std::numeric_limits<ulong>::max();
-
-            CHECK_NE(0, literals.size());
-
+            std::ostringstream os;
             //count of characters in stream
-            int literal_count = literals.back().second;
+            int literal_count = literals[codebook_size -1].second;
 
-            char lastChar = 0;
-            while(lastChar != 3) {
-                const ulong range = upper_bound - lower_bound;
+            ulong range = upper_bound - lower_bound;
+            while(min_range<=range && literal_counter<literal_count) {
+                range = upper_bound - lower_bound;
                 ulong interval_lower_bound = lower_bound;
-                for(const std::pair<literal_t, int> pair : literals) {
-                    upper_bound = lower_bound + range/literal_count*pair.second;
+                for(int i = 0; i < codebook_size ; i++) { //const std::pair<literal_t, int> pair : literals) {
+                    const std::pair<literal_t, int>& pair=literals[i];
+                    const ulong offset = range <= literal_count ? range*pair.second/literal_count : range/literal_count*pair.second;
+                    upper_bound = lower_bound + offset;
                     if(code < upper_bound) {
-                        lastChar = pair.first;
-                        os << lastChar;
+                        os << pair.first;
                         lower_bound = interval_lower_bound;
                         break;
                     }
                     interval_lower_bound = upper_bound;
+
+                }
+                literal_counter++;
+            }
+
+            decoded = os.str();
+            literals_read = 0;
+        }
+
+    public:
+        DECODER_CTOR(env, in) {
+            //read codebook size
+            codebook_size = m_in->read_int<uliteral_t>();
+            literals = new std::pair<literal_t, int>[codebook_size];
+
+
+            //read and parse dictionary
+            literal_t c = m_in->read_int<literal_t>();
+            int val = m_in->read_int<int>();
+            int min = val;
+            literals[0]=std::pair<literal_t, int>(c, val);
+
+            for (int i =1; i<codebook_size; i++) {
+                literal_t c = m_in->read_int<literal_t>();
+                int val = m_in->read_int<int>();
+                min = std::min(min, val-literals[i-1].second);
+                literals[i]=std::pair<literal_t, int>(c, val);
+            }
+
+            min_range=literals[codebook_size-1].second/min+1;
+        }
+
+
+        ~Decoder() {
+            delete literals;
+        }
+
+        template<typename value_t>
+        inline value_t decode(const Range& r) {
+            //read code
+            if(!decoded.size()) {
+                ulong code = m_in->read_int<ulong>();
+                decode(code);
+            }
+            value_t val = decoded[literals_read++];
+
+            if(literals_read == decoded.size()) {
+                ulong code = m_in->read_int<ulong>();
+                if(code!=std::numeric_limits<ulong>::max()) {
+                    decode(code);
                 }
             }
 
-            std::string s = os.str();
 
-            value_t v;
-            std::istringstream is(s);
-            is >> v;
-
-            std::cout << s <<std::endl;
-            std::cout << os <<std::endl;
-            std::cout << is <<std::endl;
-            std::cout << v <<std::endl;
-
-            return v;
+            return val;
         }
     };
 };

@@ -27,7 +27,6 @@ context_free_coder = [
     ("BitCoder",        "coders/BitCoder.hpp",        []),
     ("EliasGammaCoder", "coders/EliasGammaCoder.hpp", []),
     ("EliasDeltaCoder", "coders/EliasDeltaCoder.hpp", []),
-    ("ArithmeticCoder", "coders/ArithmeticCoder.hpp", []),
 ]
 
 # TODO: Fix bad interaction between sle and lz78u code and remove this distinction
@@ -37,7 +36,10 @@ tmp_lz78u_string_coder = context_free_coder + [
 
 coder = tmp_lz78u_string_coder + [
     ("SLECoder",   "coders/SLECoder.hpp",   []),
+] + [
+    ("ArithmeticCoder", "coders/ArithmeticCoder.hpp", []),
 ]
+
 
 lz78_trie = [
     ("lz78::BinarySortedTrie", "compressors/lz78/BinarySortedTrie.hpp", []),
