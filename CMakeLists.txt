@@ -109,7 +109,7 @@ add_dependencies(
 target_link_libraries(
     tudocomp_algorithms
 
-    malloc_count
+    tudocomp_stat
     tudocomp
     glog
     sdsl

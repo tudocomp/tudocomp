@@ -1,6 +1,6 @@
 include(test/testsuite.cmake)
 
-list(APPEND BASIC_DEPS malloc_count tudocomp)
+list(APPEND BASIC_DEPS tudocomp_stat tudocomp)
 
 run_doc_snippet(io                  DEPS ${BASIC_DEPS})
 run_doc_snippet(bit_io              DEPS ${BASIC_DEPS})

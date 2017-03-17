@@ -1,3 +1,3 @@
-add_subdirectory(malloc_count)
+add_subdirectory(tudocomp_stat)
 add_subdirectory(tudocomp)
 add_subdirectory(tudocomp_driver)
