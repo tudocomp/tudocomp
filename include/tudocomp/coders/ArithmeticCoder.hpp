@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <tudocomp/Coder.hpp>
+#include <iostream>
 
 namespace tdc {
 
@@ -62,6 +63,8 @@ public:
                 DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_t>::max());
                 ++C[static_cast<uliteral_t>(c)];
             }
+            ++C[3]; //End of Text is appended by the algorithm!
+
             return C;
         }
 
@@ -75,9 +78,9 @@ public:
         inline void setNewBounds(value_t v) {
             ulong range = upper_bound-lower_bound;
             CHECK_NE(lower_bound,upper_bound);
-            upper_bound=lower_bound+range/C[ULITERAL_MAX]*C[v];
+            upper_bound=lower_bound+range/C[ULITERAL_MAX]*C[(int) v];
             if(v != 0) {
-                lower_bound=lower_bound+range/C[ULITERAL_MAX]*C[v-1];
+                lower_bound=lower_bound+range/C[ULITERAL_MAX]*C[(int) v-1];
             }
 
         }
@@ -86,20 +89,21 @@ public:
             int counter=0;
             while(upper_bound!=lower_bound) {
                 counter++;
-                upper_bound>>1;
-                lower_bound>>1;
+                upper_bound>>=1;
+                lower_bound>>=1;
             }
-            lower_bound<<1+1;
-            lower_bound<<counter-1;
+            lower_bound <<= 1;
+            lower_bound += 1;
+            lower_bound <<= counter-1;
 
             m_out->write_int(lower_bound);
             if(C[0]!=0) {
-                m_out->write_int(0);
+                m_out->write_int(literal_t(0));
                 m_out->write_int(C[0]);
             }
             for(int i=1; i<=ULITERAL_MAX;i++) {
                 if(C[i]!=C[i-1]) {
-                    m_out->write_int(i);
+                    m_out->write_int((literal_t) i);
                     m_out->write_int(C[i]);
                 }
 
@@ -113,25 +117,18 @@ public:
             build_intervals(C);
         }
 
-
         template<typename value_t>
         inline void encode(value_t v, const Range& r) {
             literal_counter++;
             setNewBounds(v);
 
-            if(literal_counter==C[ULITERAL_MAX]){
+            //minus 1 because of End-of-text which is not in input-string, but counted in dictionary
+            if(literal_counter==C[ULITERAL_MAX] -1){
                 v=3;
                 setNewBounds(v);
                 postProcessing();
             }
-
-
         }
-
-
-
-
-
     };
 
     /// \brief Decodes data from an Arithmetic character stream.
@@ -147,30 +144,38 @@ public:
         inline value_t decode(const Range& r) {
             std::ostringstream os;
 
-            ulong code = m_in->read_int<uint8_t>();
+            //read code
+            ulong code = m_in->read_int<ulong>();
+
+            //read and parse dictionary
             std::vector<std::pair<literal_t ,int> > literals;
             while(!m_in->eof()) {
                 literal_t c = m_in->read_int<literal_t>();
-                ulong val = m_in->read_int<ulong>();
+                int val = m_in->read_int<int>();
+                literals.push_back(std::pair<literal_t, int>(c, val));
             }
 
             ulong lower_bound = 0;
             ulong upper_bound = std::numeric_limits<ulong>::max();
 
+            CHECK_NE(0, literals.size());
+
+            //count of characters in stream
             int literal_count = literals.back().second;
 
             char lastChar = 0;
             while(lastChar != 3) {
-                ulong range = upper_bound - lower_bound;
+                const ulong range = upper_bound - lower_bound;
                 ulong interval_lower_bound = lower_bound;
-                for(std::pair<literal_t, int> pair : literals) {
+                for(const std::pair<literal_t, int> pair : literals) {
                     upper_bound = lower_bound + range/literal_count*pair.second;
                     if(code < upper_bound) {
-                        os << pair.first;
+                        lastChar = pair.first;
+                        os << lastChar;
                         lower_bound = interval_lower_bound;
                         break;
                     }
-                    interval_lower_bound = pair.second+1;
+                    interval_lower_bound = upper_bound;
                 }
             }
 
@@ -179,6 +184,12 @@ public:
             value_t v;
             std::istringstream is(s);
             is >> v;
+
+            std::cout << s <<std::endl;
+            std::cout << os <<std::endl;
+            std::cout << is <<std::endl;
+            std::cout << v <<std::endl;
+
             return v;
         }
     };
