@@ -72,14 +72,14 @@ private:
         if(m_track_memory) {
             m_data.mem_current += bytes;
             m_data.mem_peak = std::max(m_data.mem_peak, m_data.mem_current);
-            if(m_parent) m_parent->track_alloc(bytes);
+            if(m_parent) m_parent->track_alloc_internal(bytes);
         }
     }
 
     inline void track_free_internal(size_t bytes) {
         if(m_track_memory) {
             m_data.mem_current -= bytes;
-            if(m_parent) m_parent->track_free(bytes);
+            if(m_parent) m_parent->track_free_internal(bytes);
         }
     }
 
