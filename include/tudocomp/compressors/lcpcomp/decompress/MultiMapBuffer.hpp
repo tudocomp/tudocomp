@@ -134,17 +134,17 @@ public:
                     m_fwd.emplace(source_position+i, target_position+i);
                 }
             }
-            //TODO: implement StatPhase.split
-			/*IF_STATS({
+			IF_STATS({
                 max_size = std::max(max_size, m_fwd.bucket_count());
 			    if((j+1) % ((factors+5)/5) == 0 ) {
-				    env().log_stat("hash table size", m_fwd.bucket_count());
-				    env().log_stat("hash table entries", m_fwd.size());
+				    phase.log_stat("hash table size", m_fwd.bucket_count());
+				    phase.log_stat("hash table entries", m_fwd.size());
 
-				    env().end_stat_phase();
-            		env().begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
+				    phase.split(
+                        (std::string("Decoding Factors at position ")
+                         + std::to_string(target_position)).c_str());
 			    }
-            })*/
+            })
         }
 		IF_STATS(phase.log_stat("hash table max size", max_size));
     }

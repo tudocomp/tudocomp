@@ -88,13 +88,13 @@ namespace lcpcomp {
 
 				}
 
-                //TODO: implement StatPhase.split
-                /*IF_STATS({
+                IF_STATS({
 				    if((j+1) % ((factors+5)/5) == 0 ) {
-					    m_env.end_stat_phase();
-					    m_env.begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
+					    phase.split(
+                            (std::string("Decoding Factors at position ")
+                            + std::to_string(target_position)).c_str());
 				    }
-                })*/
+                })
 			}
 		}
     inline void decode_literal_at(len_t pos, uliteral_t c) {

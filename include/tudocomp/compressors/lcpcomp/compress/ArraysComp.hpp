@@ -65,17 +65,18 @@ public:
 
         { StatPhase compute_factors_phase("Compute Factors");
 
-        //TODO: StatPhase needs a "split" function
-        //env().begin_stat_phase(std::string{"Factors at max. LCP value "} + std::to_string(lcp.max_lcp()) );
+        StatPhase phase(
+            (std::string{"Factors at max. LCP value "} + std::to_string(lcp.max_lcp())).c_str());
+
         for(size_t maxlcp = lcp.max_lcp(); maxlcp >= threshold; --maxlcp) {
-            /*IF_STATS({
-					const len_t maxlcpbits = bits_for(maxlcp-threshold);
+            IF_STATS({
+                const len_t maxlcpbits = bits_for(maxlcp-threshold);
                 if( ((maxlcpbits ^ (1UL<<(bits_for(maxlcpbits)-1))) == 0) && (( (maxlcp-threshold) ^ (1UL<<(maxlcpbits-1))) == 0)) { // only log at certain LCP values
-                    env().end_stat_phase();
-                    env().begin_stat_phase(std::string{"Factors at max. LCP value "} + std::to_string(maxlcp) );
-                    env().log_stat("num factors", factors.size());
+                    phase.split(
+                        (std::string{"Factors at max. LCP value "} + std::to_string(maxlcp)).c_str());
+                    phase.log_stat("num factors", factors.size());
                 }
-            })*/
+            })
             std::vector<len_t>& candcol = cand[maxlcp-threshold]; // select the vector specific to the LCP value
             for(size_t i = 0; i < candcol.size(); ++i) {
                 const len_t& index = candcol[i];
@@ -110,8 +111,7 @@ public:
             candcol.clear();
 			candcol.shrink_to_fit();
         }
-        //env().end_stat_phase();
-        } //compute_factors_phase
+        } //phase
         delete [] cand;
     }
 };

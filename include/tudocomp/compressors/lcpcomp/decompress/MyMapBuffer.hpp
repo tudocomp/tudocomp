@@ -293,16 +293,16 @@ public:
                 }
             }
 
-            //TODO: implement StatPhase.split
-            /*IF_STATS({
+            IF_STATS({
 			    if((factors > 5) && ((j+1) % (factors/5) == 0)) {
-				    env().log_stat("hash table size", m_fwd.size());
-				    env().log_stat("hash table entries", m_fwd.entries);
-				    env().log_stat("hash table deletions", m_fwd.m_deleted);
-				    env().end_stat_phase();
-            		env().begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
+				    phase.log_stat("hash table size", m_fwd.size());
+				    phase.log_stat("hash table entries", m_fwd.entries);
+				    phase.log_stat("hash table deletions", m_fwd.m_deleted);
+            		phase.split(
+                        std::string("Decoding Factors at position " +
+                            std::to_string(target_position)).c_str());
 			    }
-            })*/
+            })
         }
     }
 
