@@ -38,8 +38,7 @@ private:
             }
         };
 
-    public: //TODO private
-
+    private:
         char title[STR_BUFFER_SIZE];
 
         unsigned long time_start;
