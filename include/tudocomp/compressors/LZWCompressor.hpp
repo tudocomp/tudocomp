@@ -8,6 +8,8 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/Coder.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 	class BitCoder;
@@ -40,7 +42,7 @@ public:
         auto is = input.as_stream();
 
         // Stats
-        env().begin_stat_phase("LZW Compression");
+        StatPhase phase("LZW Compression");
         len_t stat_dictionary_resets = 0;
         len_t stat_dict_counter_at_last_reset = 0;
         len_t stat_factor_count = 0;
@@ -96,10 +98,9 @@ public:
 		stat_factor_count++;
 		factor_count++;
 
-        env().log_stat("factor_count", stat_factor_count);
-        env().log_stat("dictionary_reset_counter", stat_dictionary_resets);
-        env().log_stat("max_factor_counter", stat_dict_counter_at_last_reset);
-        env().end_stat_phase();
+        phase.log_stat("factor_count", stat_factor_count);
+        phase.log_stat("dictionary_reset_counter", stat_dictionary_resets);
+        phase.log_stat("max_factor_counter", stat_dict_counter_at_last_reset);
     }
 
     virtual void decompress(Input& input, Output& output) override final {

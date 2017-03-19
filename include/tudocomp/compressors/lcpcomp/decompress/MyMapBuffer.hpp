@@ -5,6 +5,8 @@
 #include <sdsl/int_vector.hpp>
 #include <tudocomp/util/Hash.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -274,9 +276,11 @@ public:
     }
 
     inline void decode_eagerly() {
+        StatPhase phase("Decoding factors");
+
         const len_t factors = m_source_pos.size();
-		env().log_stat("factors", factors);
-        env().begin_stat_phase("Decoding Factors");
+		phase.log_stat("factors", factors);
+
         for(len_t j = 0; j < factors; ++j) {
             const len_t& target_position = m_target_pos[j];
             const len_t& source_position = m_source_pos[j];
@@ -289,7 +293,8 @@ public:
                 }
             }
 
-            IF_STATS({
+            //TODO: implement StatPhase.split
+            /*IF_STATS({
 			    if((factors > 5) && ((j+1) % (factors/5) == 0)) {
 				    env().log_stat("hash table size", m_fwd.size());
 				    env().log_stat("hash table entries", m_fwd.entries);
@@ -297,9 +302,8 @@ public:
 				    env().end_stat_phase();
             		env().begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
 			    }
-            })
+            })*/
         }
-		env().end_stat_phase();
     }
 
 

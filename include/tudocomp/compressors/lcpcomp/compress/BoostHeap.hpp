@@ -7,6 +7,8 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <boost/heap/pairing_heap.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -34,9 +36,9 @@ public:
     inline void factorize(text_t& text, const size_t threshold, lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
-		env().begin_stat_phase("Construct text ds");
-		text.require(text_t::SA | text_t::ISA | text_t::LCP);
-		env().end_stat_phase();
+        StatPhase::wrap("Construct text ds", [&]{
+            text.require(text_t::SA | text_t::ISA | text_t::LCP);
+        });
 
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
@@ -58,23 +60,23 @@ public:
 
 		};
 
-		LCPCompare comp(lcp,sa);
+        auto heap = StatPhase::wrap("Construct MaxLCPHeap", [&](StatPhase& phase){
+            LCPCompare comp(lcp,sa);
+            boost::heap::pairing_heap<len_t,boost::heap::compare<LCPCompare>> heap(comp);
+            std::vector<decltype(heap)::handle_type> handles(lcp.size());
 
-        env().begin_stat_phase("Construct MaxLCPHeap");
-		boost::heap::pairing_heap<len_t,boost::heap::compare<LCPCompare>> heap(comp);
-		std::vector<decltype(heap)::handle_type> handles(lcp.size());
+            handles[0].node_ = nullptr;
+            for(size_t i = 1; i < lcp.size(); ++i) {
+                if(lcp[i] >= threshold) handles[i] = heap.emplace(i);
+                else handles[i].node_ = nullptr;
+            }
 
-		handles[0].node_ = nullptr;
-        for(size_t i = 1; i < lcp.size(); ++i) {
-            if(lcp[i] >= threshold) handles[i] = heap.emplace(i);
-			else handles[i].node_ = nullptr;
-        }
-
-        env().log_stat("entries", heap.size());
-        env().end_stat_phase();
+            phase.log_stat("entries", heap.size());
+            return heap;
+        });
 
         //Factorize
-        env().begin_stat_phase("Process MaxLCPHeap");
+        { StatPhase phase("Process MaxLCPHeap");
 
         while(heap.size() > 0) {
             //get suffix with longest LCP
@@ -114,8 +116,7 @@ public:
             }
         }
 
-        env().end_stat_phase();
-
+        }//phase
     }
 };
 

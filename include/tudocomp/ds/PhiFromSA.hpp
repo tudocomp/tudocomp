@@ -3,6 +3,8 @@
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/ArrayDS.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 /// Constructs the Phi array using the suffix array.
@@ -23,20 +25,19 @@ public:
         const size_t n = t.size();
         const size_t w = bits_for(n);
 
-        // Construct Phi Array
-        this->env().begin_stat_phase("Construct Phi Array");
+        StatPhase::wrap("Construct Phi Array", [&](StatPhase& phase) {
+            // Construct Phi Array
+            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : LEN_BITS));
 
-        set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : LEN_BITS));
+            for(len_t i = 1, prev = sa[0]; i < n; i++) {
+                (*this)[sa[i]] = prev;
+                prev = sa[i];
+            }
+            (*this)[sa[0]] = sa[n-1];
 
-        for(len_t i = 1, prev = sa[0]; i < n; i++) {
-            (*this)[sa[i]] = prev;
-            prev = sa[i];
-        }
-        (*this)[sa[0]] = sa[n-1];
-
-        this->env().log_stat("bit_width", size_t(width()));
-        this->env().log_stat("size", bit_size() / 8);
-        this->env().end_stat_phase();
+            phase.log_stat("bit_width", size_t(width()));
+            phase.log_stat("size", bit_size() / 8);
+        });
 
         if(cm == CompressMode::delayed) compress();
     }
@@ -44,14 +45,13 @@ public:
     void compress() {
         debug_check_array_is_initialized();
 
-        env().begin_stat_phase("Compress Phi Array");
+        StatPhase::wrap("Compress Phi Array", [this](StatPhase& phase) {
+            width(bits_for(size()));
+            shrink_to_fit();
 
-        width(bits_for(size()));
-        shrink_to_fit();
-
-        env().log_stat("bit_width", size_t(width()));
-        env().log_stat("size", bit_size() / 8);
-        env().end_stat_phase();
+            phase.log_stat("bit_width", size_t(width()));
+            phase.log_stat("size", bit_size() / 8);
+        });
     }
 };
 

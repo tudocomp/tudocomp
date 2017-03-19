@@ -8,6 +8,8 @@
 #include <tudocomp/Algorithm.hpp>
 #include <algorithm>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -57,9 +59,10 @@ namespace lcpcomp {
 		}
 
 		void decode(const std::vector<len_t>& m_target_pos, const std::vector<len_t>& m_source_pos, const std::vector<len_t>& m_length) {
+            StatPhase phase("Decoding Factors");
 			const len_t factors = m_source_pos.size();
-			m_env.log_stat("factors", factors);
-			m_env.begin_stat_phase("Decoding Factors");
+			phase.log_stat("factors", factors);
+
 			for(len_t j = 0; j < factors; ++j) {
 				const len_t& target_position = m_target_pos[j];
 				const len_t& source_position = m_source_pos[j];
@@ -85,14 +88,14 @@ namespace lcpcomp {
 
 				}
 
-                IF_STATS({
+                //TODO: implement StatPhase.split
+                /*IF_STATS({
 				    if((j+1) % ((factors+5)/5) == 0 ) {
 					    m_env.end_stat_phase();
 					    m_env.begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
 				    }
-                })
+                })*/
 			}
-			m_env.end_stat_phase();
 		}
     inline void decode_literal_at(len_t pos, uliteral_t c) {
 		IF_STATS(++m_current_chain);
@@ -149,8 +152,8 @@ public:
 
     }
     inline void decode_lazy() {
-		env().log_stat("remaining factors", m_target_pos.size());
-		env().log_stat("scans", m_scans);
+		StatPhase::current_log_stat("remaining factors", m_target_pos.size());
+		StatPhase::current_log_stat("scans", m_scans);
         size_t lazy = m_scans;
         while(lazy > 0) {
             decode_lazy_();
@@ -158,15 +161,16 @@ public:
         }
     }
     inline void decode_eagerly() {
-		{
-			env().begin_stat_phase("Initialize Bit Vector");
-			EagerScanDec decoder(this->env(),m_buffer);
-			env().end_stat_phase();
-			decoder.decode(m_target_pos, m_source_pos, m_length);
-			IF_STATS(m_longest_chain = decoder.longest_chain());
-			env().begin_stat_phase("Destructor ScanDec");
-		}
-		env().end_stat_phase();
+        EagerScanDec* decoder = StatPhase::wrap("Initialize Bit Vector", [&]{
+            return new EagerScanDec(this->env(),m_buffer);
+        });
+
+        decoder->decode(m_target_pos, m_source_pos, m_length);
+        IF_STATS(m_longest_chain = decoder->longest_chain());
+
+        StatPhase::wrap("Destructor ScanDec", [&]{
+            delete decoder;
+        });
     }
 
 private:

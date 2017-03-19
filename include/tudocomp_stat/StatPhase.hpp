@@ -181,6 +181,11 @@ public:
         if(s_current) s_current->track_free_internal(bytes);
     }
 
+    template<typename T>
+    inline static void current_log_stat(const char* key, const T& value) {
+        if(s_current) s_current->log_stat(key, value);
+    }
+
     inline StatPhase(const char* title) {
         m_parent = s_current;
 
@@ -225,11 +230,12 @@ public:
         m_track_memory = true;
     }
 
-    inline void to_json(std::ostream& out) {
+    inline json::Object to_json() {
         m_data->time_end = current_time_millis();
         m_track_memory = false;
-        m_data->to_json().str(out);
+        json::Object obj = m_data->to_json(); //m_data->to_json().str(out);
         m_track_memory = true;
+        return obj;
     }
 };
 

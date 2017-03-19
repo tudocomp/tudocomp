@@ -6,6 +6,8 @@
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -34,33 +36,33 @@ public:
                    lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
-		env().begin_stat_phase("Construct text ds");
-		text.require(text_t::SA | text_t::ISA | text_t::LCP);
-		env().end_stat_phase();
+        StatPhase::wrap("Construct text ds", [&]{
+            text.require(text_t::SA | text_t::ISA | text_t::LCP);
+        });
 
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
         auto lcp = text.release_lcp();
 
-        env().begin_stat_phase("Construct MaxLCPHeap");
+        auto heap = StatPhase::wrap("Construct MaxLCPHeap", [&](StatPhase& phase){
+            // Count relevant LCP entries
+            size_t heap_size = 0;
+            for(size_t i = 1; i < lcp.size(); i++) {
+                if(lcp[i] >= threshold) ++heap_size;
+            }
 
-        // Count relevant LCP entries
-        size_t heap_size = 0;
-        for(size_t i = 1; i < lcp.size(); i++) {
-            if(lcp[i] >= threshold) ++heap_size;
-        }
+            // Construct heap
+            ArrayMaxHeap<text_t::lcp_type::data_type> heap(lcp, lcp.size(), heap_size);
+            for(size_t i = 1; i < lcp.size(); i++) {
+                if(lcp[i] >= threshold) heap.insert(i);
+            }
 
-        // Construct heap
-        ArrayMaxHeap<text_t::lcp_type::data_type> heap(lcp, lcp.size(), heap_size);
-        for(size_t i = 1; i < lcp.size(); i++) {
-            if(lcp[i] >= threshold) heap.insert(i);
-        }
-
-        env().log_stat("entries", heap.size());
-        env().end_stat_phase();
+            phase.log_stat("entries", heap.size());
+            return heap;
+        });
 
         //Factorize
-        env().begin_stat_phase("Process MaxLCPHeap");
+        { StatPhase phase("Process MaxLCPHeap");
 
         while(heap.size() > 0) {
             //get suffix with longest LCP
@@ -95,7 +97,7 @@ public:
             }
         }
 
-        env().end_stat_phase();
+        }//phase
     }
 };
 

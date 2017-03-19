@@ -9,6 +9,8 @@
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -32,10 +34,11 @@ public:
                    lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
-		env().begin_stat_phase("Construct text ds");
-		text.require(text_t::SA | text_t::ISA | text_t::PLCP);
-		env().end_stat_phase();
-		env().begin_stat_phase("Search Peaks");
+        StatPhase::wrap("Construct text ds", [&]{
+            text.require(text_t::SA | text_t::ISA | text_t::PLCP);
+        });
+
+		{ StatPhase phase("Search Peaks");
 
         const auto& sa = text.require_sa();
         const auto& isa = text.require_isa();
@@ -72,7 +75,8 @@ public:
 				++i;
 			}
 		}
-		env().end_stat_phase();
+
+        }//phase
     }
 };
 

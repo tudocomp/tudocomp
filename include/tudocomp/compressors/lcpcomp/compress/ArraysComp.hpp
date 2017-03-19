@@ -7,6 +7,8 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/lcpcomp/MaxLCPSuffixList.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -32,42 +34,48 @@ public:
     inline void factorize(text_t& text, size_t threshold, lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
-		env().begin_stat_phase("Construct Index Data Structures");
-		text.require(text_t::SA | text_t::ISA | text_t::LCP);
-		env().end_stat_phase();
+        auto lcp = StatPhase::wrap("Construct Index Data Structures", [&](StatPhase& phase) {
+            text.require(text_t::SA | text_t::ISA | text_t::LCP);
+
+            auto lcp = text.release_lcp();
+            phase.log_stat("maxlcp", lcp.max_lcp());
+            return lcp;
+        });
 
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
 
-        auto lcp = text.release_lcp();
-
-        env().log_stat("maxlcp", lcp.max_lcp());
         if(lcp.max_lcp()+1 <= threshold) return; // nothing to factorize
         const size_t cand_length = lcp.max_lcp()+1-threshold;
         std::vector<len_t>* cand = new std::vector<len_t>[cand_length];
-        env().begin_stat_phase("Fill candidates");
-        for(size_t i = 1; i < sa.size(); ++i) {
-            if(lcp[i] < threshold) continue;
-            cand[lcp[i]-threshold].push_back(i);
-        }
-        env().log_stat("entries", [&] () {
-                size_t ret = 0;
-                for(size_t i = 0; i < cand_length; ++i) {
-                    ret += cand[i].size();
-                }
-                return ret; }());
-        env().end_stat_phase();
-        env().begin_stat_phase("Compute Factors");
-        env().begin_stat_phase(std::string{"Factors at max. LCP value "} + std::to_string(lcp.max_lcp()) );
+
+        StatPhase::wrap("Fill candidates", [&](StatPhase& phase){
+            for(size_t i = 1; i < sa.size(); ++i) {
+                if(lcp[i] < threshold) continue;
+                cand[lcp[i]-threshold].push_back(i);
+            }
+
+            phase.log_stat("entries", [&] () {
+                    size_t ret = 0;
+                    for(size_t i = 0; i < cand_length; ++i) {
+                        ret += cand[i].size();
+                    }
+                    return ret; }());
+        });
+
+        { StatPhase compute_factors_phase("Compute Factors");
+
+        //TODO: StatPhase needs a "split" function
+        //env().begin_stat_phase(std::string{"Factors at max. LCP value "} + std::to_string(lcp.max_lcp()) );
         for(size_t maxlcp = lcp.max_lcp(); maxlcp >= threshold; --maxlcp) {
-            IF_STATS({
+            /*IF_STATS({
 					const len_t maxlcpbits = bits_for(maxlcp-threshold);
                 if( ((maxlcpbits ^ (1UL<<(bits_for(maxlcpbits)-1))) == 0) && (( (maxlcp-threshold) ^ (1UL<<(maxlcpbits-1))) == 0)) { // only log at certain LCP values
                     env().end_stat_phase();
                     env().begin_stat_phase(std::string{"Factors at max. LCP value "} + std::to_string(maxlcp) );
                     env().log_stat("num factors", factors.size());
                 }
-            })
+            })*/
             std::vector<len_t>& candcol = cand[maxlcp-threshold]; // select the vector specific to the LCP value
             for(size_t i = 0; i < candcol.size(); ++i) {
                 const len_t& index = candcol[i];
@@ -102,8 +110,8 @@ public:
             candcol.clear();
 			candcol.shrink_to_fit();
         }
-        env().end_stat_phase();
-        env().end_stat_phase();
+        //env().end_stat_phase();
+        } //compute_factors_phase
         delete [] cand;
     }
 };

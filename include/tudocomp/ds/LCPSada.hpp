@@ -5,6 +5,8 @@
 #include <tudocomp/ds/IntVector.hpp>
 #include <sdsl/select_support_mcl.hpp> // for the select data structure
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 
@@ -43,7 +45,7 @@ inline void phi_algorithm(phi_t& phi, const text_t& text) {
 		DCHECK_LT(i+l, n);
 		DCHECK_LT(phii+l, n);
 		DCHECK_NE(i, phii);
-		while(text[i+l] == text[phii+l]) { 
+		while(text[i+l] == text[phii+l]) {
 			l++;
 			DCHECK_LT(i+l, n);
 			DCHECK_LT(phii+l, n);
@@ -66,7 +68,7 @@ class LCPSada {
 	const sdsl::bit_vector m_bv;
 	const select_t m_select;
 	public:
-	LCPSada(const sa_t& sa, const sdsl::bit_vector&& bv) 
+	LCPSada(const sa_t& sa, const sdsl::bit_vector&& bv)
 		: m_sa(sa)
 		, m_bv(bv)
 		, m_select(&m_bv)
@@ -112,7 +114,7 @@ class LCPSada {
 
 class LCPForwardIterator {
 	sdsl::bit_vector m_bv;
-	
+
 	len_t m_idx = 0; // current select parameter
 	len_t m_block = 0; // block index
 	len_t m_blockrank = 0; //number of ones up to previous block
@@ -171,26 +173,28 @@ inline static sdsl::bit_vector construct_plcp_bitvector(const plcp_t& plcp) {
 template<class sa_t, class text_t, class select_t = sdsl::select_support_mcl<1,1>>
 sdsl::bit_vector construct_plcp_bitvector(Env& env, const sa_t& sa, const text_t& text) {
 	typedef DynamicIntVector phi_t;
-	env.begin_stat_phase("Construct Phi Array");
-	phi_t phi { construct_phi_array<phi_t,sa_t>(sa) };
-	env.end_stat_phase();
-	env.begin_stat_phase("Phi-Algorithm");
-	phi_algorithm(phi, text); 
-	env.end_stat_phase();
-	env.begin_stat_phase("Build Sada Bit Vector");
-	auto ret = construct_plcp_bitvector(phi);
-	env.log_stat("bit vector length", ret.bit_size());
-	env.end_stat_phase();
-	return ret;
+
+    phi_t phi = StatPhase::wrap("Construct Phi Array", [&]{
+        return construct_phi_array<phi_t,sa_t>(sa);
+    });
+
+    StatPhase::wrap("Phi-Algorithm", [&]{
+        phi_algorithm(phi, text);
+    });
+
+    return StatPhase::wrap("Build Sada Bit Vector", [&](StatPhase& phase){
+        auto ret = construct_plcp_bitvector(phi);
+        phase.log_stat("bit vector length", ret.bit_size());
+        return ret;
+    });
 }
-	
+
 template<class sa_t, class text_t, class select_t = sdsl::select_support_mcl<1,1>>
 LCPSada<sa_t,select_t> construct_lcp_sada(Env& env, const sa_t& sa, const text_t& text) {
-	sdsl::bit_vector bv = construct_plcp_bitvector(env, sa, text);
-	env.begin_stat_phase("Build Select on Bit Vector");
-	auto ret = LCPSada<sa_t,select_t> { sa, std::move(bv) };
-	env.end_stat_phase();
-	return ret;
+    return StatPhase::wrap("Build Select on Bit Vector", [&]{
+        sdsl::bit_vector bv = construct_plcp_bitvector(env, sa, text);
+        return LCPSada<sa_t,select_t> { sa, std::move(bv) };
+    });
 }
 
 }//ns

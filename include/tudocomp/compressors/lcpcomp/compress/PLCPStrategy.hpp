@@ -12,6 +12,8 @@
 #include <tudocomp/ds/LCPSada.hpp>
 #include <boost/heap/pairing_heap.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -37,17 +39,17 @@ public:
                    lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
-		env().begin_stat_phase("Construct index ds");
-		text.require(text_t::SA | text_t::ISA);
+        auto pplcp = StatPhase::wrap("Construct index ds", [&]{
+            text.require(text_t::SA | text_t::ISA);
+            const auto& sa = text.require_sa();
+            return LCPForwardIterator { (construct_plcp_bitvector(env(), sa, text)) };
+        });
 
         const auto& sa = text.require_sa();
         const auto& isa = text.require_isa();
-
-		LCPForwardIterator pplcp { (construct_plcp_bitvector(env(), sa, text)) };
         const len_t n = sa.size();
 
-		env().end_stat_phase();
-		env().begin_stat_phase("Search Peaks");
+		{ StatPhase phase("Search Peaks");
 
 		struct Poi {
 			len_t pos;
@@ -95,18 +97,18 @@ public:
 					{
 						len_t newlcp_peak = 0; // a new peak can emerge at top.pos+top.lcp
 						bool peak_exists = false;
-						if(top.pos+top.lcp < i) 
+						if(top.pos+top.lcp < i)
 						for(len_t j = top.no+1; j < handles.size(); ++j) { // erase all right peaks that got substituted
 							if( handles[j].node_ == nullptr) continue;
 							const Poi poi = *(handles[j]);
 							DCHECK_LT(next_pos, poi.pos);
-							if(poi.pos < next_pos+top.lcp) { 
+							if(poi.pos < next_pos+top.lcp) {
 								heap.erase(handles[j]);
 								handles[j].node_ = nullptr;
 								if(poi.lcp + poi.pos > next_pos+top.lcp) {
 									const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
 									DCHECK_NE(remaining_lcp,0);
-									if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak); 
+									if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak);
 									newlcp_peak = std::max(remaining_lcp, newlcp_peak);
 								}
 							} else if( poi.pos == next_pos+top.lcp) { peak_exists=true; }
@@ -114,7 +116,7 @@ public:
 						}
 #ifdef DEBUG
 						if(peak_exists) {  //TODO: DEBUG
-							for(len_t j = top.no+1; j < handles.size(); ++j) { 
+							for(len_t j = top.no+1; j < handles.size(); ++j) {
 								if( handles[j].node_ == nullptr) continue;
 								const Poi& poi = *(handles[j]);
 								if(poi.pos == next_pos+top.lcp) {
@@ -129,7 +131,7 @@ public:
 							DCHECK(handles[j].node_ == nullptr);
 							handles[j] = heap.emplace(next_pos+top.lcp, newlcp_peak, j);
 						}
-						
+
 					}
 					handles[top.no].node_ = nullptr;
 					heap.pop(); // top now gets erased
@@ -166,8 +168,9 @@ public:
 //			DCHECK_EQ(plcp[lastpos], plcp_i);
 			lastpos_lcp = plcp_i;
 		}
-        IF_STATS(env().log_stat("max heap size", max_heap_size));
-        env().end_stat_phase();
+        IF_STATS(phase.log_stat("max heap size", max_heap_size));
+
+        }//phase
     }
 
 };

@@ -3,6 +3,8 @@
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/ArrayDS.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 /// Constructs the PLCP array using the phi array.
@@ -25,21 +27,20 @@ public:
         // Construct Phi and attempt to work in-place
         set_array(t.inplace_phi(cm));
 
-        // Use Phi algorithm to compute PLCP array
-        this->env().begin_stat_phase("Construct PLCP Array");
+        StatPhase::wrap("Construct Phi Array", [&](StatPhase& phase) {
+            // Use Phi algorithm to compute PLCP array
+            m_max = 0;
+            for(len_t i = 0, l = 0; i < n - 1; ++i) {
+                const len_t phii = (*this)[i];
+                while(t[i+l] == t[phii+l]) ++l;
+                m_max = std::max(m_max, l);
+                (*this)[i] = l;
+                if(l) --l;
+            }
 
-        m_max = 0;
-        for(len_t i = 0, l = 0; i < n - 1; ++i) {
-			const len_t phii = (*this)[i];
-			while(t[i+l] == t[phii+l]) ++l;
-            m_max = std::max(m_max, l);
-			(*this)[i] = l;
-			if(l) --l;
-		}
-
-        this->env().log_stat("bit_width", size_t(width()));
-        this->env().log_stat("size", bit_size() / 8);
-        this->env().end_stat_phase();
+            phase.log_stat("bit_width", size_t(width()));
+            phase.log_stat("size", bit_size() / 8);
+        });
 
         if(cm == CompressMode::compressed || cm == CompressMode::delayed) {
             compress();
@@ -53,14 +54,13 @@ public:
     void compress() {
         debug_check_array_is_initialized();
 
-        env().begin_stat_phase("Compress PLCP Array");
+        StatPhase::wrap("Compress PLCP Array", [this](StatPhase& phase) {
+            width(bits_for(m_max));
+            shrink_to_fit();
 
-        width(bits_for(m_max));
-        shrink_to_fit();
-
-        env().log_stat("bit_width", size_t(width()));
-        env().log_stat("size", bit_size() / 8);
-        env().end_stat_phase();
+            phase.log_stat("bit_width", size_t(width()));
+            phase.log_stat("size", bit_size() / 8);
+        });
     }
 };
 

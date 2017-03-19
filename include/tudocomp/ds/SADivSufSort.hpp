@@ -4,6 +4,8 @@
 #include <tudocomp/ds/ArrayDS.hpp>
 #include <tudocomp/util/divsufsort.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 /// Constructs the suffix array using divsufsort.
@@ -18,21 +20,20 @@ public:
     inline SADivSufSort(Env&& env, const textds_t& t, CompressMode cm)
         : Algorithm(std::move(env)) {
 
-        this->env().begin_stat_phase("Construct SA");
+        StatPhase::wrap("Construct SA", [&](StatPhase& phase) {
+            // Allocate
+            const size_t n = t.size();
+            const size_t w = bits_for(n);
 
-        // Allocate
-        const size_t n = t.size();
-        const size_t w = bits_for(n);
+            // divsufsort needs one additional bit for signs
+            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w + 1 : LEN_BITS));
 
-        // divsufsort needs one additional bit for signs
-        set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w + 1 : LEN_BITS));
+            // Use divsufsort to construct
+            divsufsort(t.text(), (iv_t&) *this, n);
 
-        // Use divsufsort to construct
-        divsufsort(t.text(), (iv_t&) *this, n);
-
-        this->env().log_stat("bit_width", size_t(width()));
-        this->env().log_stat("size", bit_size() / 8);
-        this->env().end_stat_phase();
+            phase.log_stat("bit_width", size_t(width()));
+            phase.log_stat("size", bit_size() / 8);
+        });
 
         if(cm == CompressMode::compressed || cm == CompressMode::delayed) {
             compress();
@@ -42,14 +43,13 @@ public:
     void compress() {
         debug_check_array_is_initialized();
 
-        env().begin_stat_phase("Compress SA");
+        StatPhase::wrap("Compress SA", [this](StatPhase& phase) {
+            width(bits_for(size()));
+            shrink_to_fit();
 
-        width(bits_for(size()));
-        shrink_to_fit();
-
-        env().log_stat("bit_width", size_t(width()));
-        env().log_stat("size", bit_size() / 8);
-        env().end_stat_phase();
+            phase.log_stat("bit_width", size_t(width()));
+            phase.log_stat("size", bit_size() / 8);
+        });
     }
 };
 

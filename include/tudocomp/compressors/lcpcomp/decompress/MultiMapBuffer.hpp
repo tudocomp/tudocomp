@@ -4,6 +4,8 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -113,12 +115,14 @@ public:
             --lazy;
         }
     }
-	IF_STATS(size_t max_size = 0);
 
     inline void decode_eagerly() {
         const len_t factors = m_source_pos.size();
-		env().log_stat("factors", factors);
-        env().begin_stat_phase("Decoding Factors");
+		StatPhase phase("Decoding Factors");
+        phase.log_stat("factors", factors);
+
+        IF_STATS(size_t max_size = 0);
+
         for(len_t j = 0; j < factors; ++j) {
             const len_t& target_position = m_target_pos[j];
             const len_t& source_position = m_source_pos[j];
@@ -130,7 +134,8 @@ public:
                     m_fwd.emplace(source_position+i, target_position+i);
                 }
             }
-			IF_STATS({
+            //TODO: implement StatPhase.split
+			/*IF_STATS({
                 max_size = std::max(max_size, m_fwd.bucket_count());
 			    if((j+1) % ((factors+5)/5) == 0 ) {
 				    env().log_stat("hash table size", m_fwd.bucket_count());
@@ -139,10 +144,9 @@ public:
 				    env().end_stat_phase();
             		env().begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
 			    }
-            })
+            })*/
         }
-		IF_STATS(env().log_stat("hash table max size", max_size));
-		env().end_stat_phase();
+		IF_STATS(phase.log_stat("hash table max size", max_size));
     }
 
     inline len_t longest_chain() const {

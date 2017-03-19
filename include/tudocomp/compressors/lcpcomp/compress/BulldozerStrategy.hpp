@@ -8,6 +8,8 @@
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -45,9 +47,9 @@ public:
                    lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
-		env().begin_stat_phase("Construct text ds");
-		text.require(text_t::SA | text_t::ISA | text_t::LCP);
-		env().end_stat_phase();
+        StatPhase::wrap("Construct text ds", [&]{
+            text.require(text_t::SA | text_t::ISA | text_t::LCP);
+        });
 
         auto& sa = text.require_sa();
         auto& lcp = text.require_lcp();
@@ -56,23 +58,23 @@ public:
         size_t n = sa.size();
 
         //induce intervals
-        env().begin_stat_phase("Induce intervals");
-
         std::vector<Interval> intervals;
-        for(size_t i = 1; i < sa.size(); i++) {
-            if(lcp[i] >= threshold) {
-                intervals.emplace_back(sa[i], sa[i-1], lcp[i]);
-                intervals.emplace_back(sa[i-1], sa[i], lcp[i]);
+        StatPhase::wrap("Induce intervals", [&](StatPhase& phase){
+            std::vector<Interval> intervals;
+            for(size_t i = 1; i < sa.size(); i++) {
+                if(lcp[i] >= threshold) {
+                    intervals.emplace_back(sa[i], sa[i-1], lcp[i]);
+                    intervals.emplace_back(sa[i-1], sa[i], lcp[i]);
+                }
             }
-        }
 
-        env().log_stat("numIntervals", intervals.size());
-        env().end_stat_phase();
+            phase.log_stat("numIntervals", intervals.size());
+        });
 
         //sort
-        env().begin_stat_phase("Sort intervals");
-        std::sort(intervals.begin(), intervals.end(), IntervalComparator());
-        env().end_stat_phase();
+        StatPhase::wrap("Sort intervals", [&]{
+            std::sort(intervals.begin(), intervals.end(), IntervalComparator());
+        });
 
         //debug output
         /*DLOG(INFO) << "Intervals:";
@@ -81,7 +83,7 @@ public:
         }*/
 
         //marker
-        env().begin_stat_phase("Process intervals");
+        { StatPhase phase("Process Intervals");
         BitVector marked(n);
 
         auto x = intervals.begin();
@@ -114,7 +116,7 @@ public:
             ++x;
         }
 
-        env().end_stat_phase();
+        } //phase
     }
 };
 

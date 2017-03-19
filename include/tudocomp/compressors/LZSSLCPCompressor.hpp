@@ -14,6 +14,8 @@
 
 #include <tudocomp/ds/TextDS.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 /// Computes the LZ77 factorization of the input using its suffix array and
@@ -42,12 +44,10 @@ public:
         DCHECK(view.ends_with(uint8_t(0)));
 
         // Construct text data structures
-        env().begin_stat_phase("Construct SA, ISA and LCP");
-
-        text_t text(env().env_for_option("textds"), view,
+        text_t text = StatPhase::wrap("Construct Text DS", [&]{
+            return text_t(env().env_for_option("textds"), view,
                     text_t::SA | text_t::ISA | text_t::LCP);
-
-        env().end_stat_phase();
+        });
 
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
@@ -57,7 +57,7 @@ public:
         const len_t text_length = text.size();
         lzss::FactorBuffer factors;
 
-        env().begin_stat_phase("Factorize");
+        { StatPhase phase("Factorize");
         const len_t threshold = env().option("threshold").as_integer(); //factor threshold
 
         for(len_t i = 0; i+1 < text_length;) { // we omit T[text_length-1] since we assume that it is the \0 byte!
@@ -110,10 +110,9 @@ public:
             }
         }
 
-        env().log_stat("threshold", threshold);
-        env().log_stat("factors", factors.size());
-        env().end_stat_phase();
-        env().log_stat("factors", factors.size());
+        phase.log_stat("threshold", threshold);
+        phase.log_stat("factors", factors.size());
+        } // phase
 
         // encode
         typename coder_t::Encoder coder(env().env_for_option("coder"),
