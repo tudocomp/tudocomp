@@ -185,7 +185,8 @@ public:
         if(s_current) s_current->log_stat(key, value);
     }
 
-    inline StatPhase(const char* title) {
+private:
+    inline void init(const char* title) {
         m_parent = s_current;
 
         if(m_parent) m_parent->m_track_memory = false;
@@ -193,21 +194,17 @@ public:
         if(m_parent) m_parent->m_track_memory = true;
         strncpy(m_data->title, title, Data::STR_BUFFER_SIZE);
 
-        s_current = this;
-        m_track_memory = true;
-
         m_data->mem_off = m_parent ? m_parent->m_data->mem_current : 0;
         m_data->mem_current = 0;
         m_data->mem_peak = 0;
 
         m_data->time_end = 0;
         m_data->time_start = current_time_millis();
-        m_track_memory = true;
+
+        s_current = this;
     }
 
-    ~StatPhase() {
-        // finish
-        m_track_memory = false;
+    inline void finish() {
         m_data->time_end = current_time_millis();
 
         if(m_parent) {
@@ -216,10 +213,35 @@ public:
         } else {
             // if this was the root, delete data
             delete m_data;
+            m_data = nullptr;
         }
 
         // pop parent
         s_current = m_parent;
+    }
+
+public:
+    inline StatPhase(const char* title) {
+        m_track_memory = false;
+        init(title);
+        m_track_memory = true;
+    }
+
+    ~StatPhase() {
+        m_track_memory = false;
+        finish();
+    }
+
+    inline void split(const char* new_title) {
+        m_track_memory = false;
+
+        finish();
+        Data* old_data = m_data;
+
+        init(new_title);
+        if(old_data) m_data->mem_off = old_data->mem_current;
+
+        m_track_memory = true;
     }
 
     template<typename T>
