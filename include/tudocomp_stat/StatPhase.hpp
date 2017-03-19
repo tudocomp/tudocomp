@@ -131,7 +131,7 @@ private:
 
     inline void append_child(Data* data) {
         if(m_data->first_child) {
-            Data* last = data->first_child;
+            Data* last = m_data->first_child;
             while(last->next_sibling) {
                 last = last->next_sibling;
             }
@@ -157,6 +157,22 @@ private:
     }
 
 public:
+    template<typename F>
+    inline static auto wrap(const char* title, F func) ->
+        typename std::result_of<F(StatPhase&)>::type {
+
+        StatPhase phase(title);
+        return func(phase);
+    }
+
+    template<typename F>
+    inline static auto wrap(const char* title, F func) ->
+        typename std::result_of<F()>::type {
+
+        StatPhase phase(title);
+        return func();
+    }
+
     inline static void track_alloc(size_t bytes) {
         if(s_current) s_current->track_alloc_internal(bytes);
     }
