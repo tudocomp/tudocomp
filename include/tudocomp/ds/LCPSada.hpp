@@ -182,9 +182,9 @@ sdsl::bit_vector construct_plcp_bitvector(Env& env, const sa_t& sa, const text_t
         phi_algorithm(phi, text);
     });
 
-    return StatPhase::wrap("Build Sada Bit Vector", [&](StatPhase& phase){
+    return StatPhase::wrap("Build Sada Bit Vector", [&]{
         auto ret = construct_plcp_bitvector(phi);
-        phase.log_stat("bit vector length", ret.bit_size());
+        StatPhase::log("bit vector length", ret.bit_size());
         return ret;
     });
 }

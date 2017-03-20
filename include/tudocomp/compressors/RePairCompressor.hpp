@@ -201,8 +201,8 @@ public:
         }
         */
 
-        StatPhase::current_log_stat("rules", grammar.size());
-        StatPhase::current_log_stat("replaced", num_replaced);
+        StatPhase::log("rules", grammar.size());
+        StatPhase::log("replaced", num_replaced);
 
         // instantiate encoder
         typename coder_t::Encoder coder(env().env_for_option("coder"),
@@ -244,8 +244,8 @@ public:
             encode_sym(r, grammar_r);
         }
 
-        StatPhase::current_log_stat("grammar_terms", num_grammar_terminals);
-        StatPhase::current_log_stat("grammar_nonterms", num_grammar_nonterminals);
+        StatPhase::log("grammar_terms", num_grammar_terminals);
+        StatPhase::log("grammar_nonterms", num_grammar_nonterminals);
 
         // encode compressed text (start rule)
         size_t num_text_terminals = 0;
@@ -262,8 +262,8 @@ public:
             encode_sym(text[i], grammar_r);
         }
 
-        StatPhase::current_log_stat("text_terms", num_text_terminals);
-        StatPhase::current_log_stat("text_nonterms", num_text_nonterminals);
+        StatPhase::log("text_terms", num_text_terminals);
+        StatPhase::log("text_nonterms", num_text_nonterminals);
 
         // clean up
         delete[] next;

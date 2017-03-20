@@ -59,7 +59,7 @@ public:
 
         //induce intervals
         std::vector<Interval> intervals;
-        StatPhase::wrap("Induce intervals", [&](StatPhase& phase){
+        StatPhase::wrap("Induce intervals", [&]{
             std::vector<Interval> intervals;
             for(size_t i = 1; i < sa.size(); i++) {
                 if(lcp[i] >= threshold) {
@@ -68,7 +68,7 @@ public:
                 }
             }
 
-            phase.log_stat("numIntervals", intervals.size());
+            StatPhase::log("numIntervals", intervals.size());
         });
 
         //sort
@@ -83,40 +83,39 @@ public:
         }*/
 
         //marker
-        { StatPhase phase("Process Intervals");
-        BitVector marked(n);
+        StatPhase::wrap("Process Intervals", [&]{
+            BitVector marked(n);
 
-        auto x = intervals.begin();
-        while(x != intervals.end()) {
-            if(!marked[x->q]) {
-                //find maximum amount of consecutive unmarked positions
-                size_t l = 1;
-                while(l < x->l && x->q + l < n && !marked[x->q + l]) {
-                    ++l;
-                }
-
-                if(l >= threshold) {
-                    factors.emplace_back(x->p, x->q, l);
-
-                    //mark source positions as "unreplaceable"
-                    for(size_t k = 0; k < l; k++) {
-                        marked[x->p + k] = 1;
+            auto x = intervals.begin();
+            while(x != intervals.end()) {
+                if(!marked[x->q]) {
+                    //find maximum amount of consecutive unmarked positions
+                    size_t l = 1;
+                    while(l < x->l && x->q + l < n && !marked[x->q + l]) {
+                        ++l;
                     }
 
-                    //jump to next available interval
-                    size_t p = x->p;
-                    do {
-                        ++x;
-                    } while(x != intervals.end() && x->p < p + l);
+                    if(l >= threshold) {
+                        factors.emplace_back(x->p, x->q, l);
 
-                    continue;
+                        //mark source positions as "unreplaceable"
+                        for(size_t k = 0; k < l; k++) {
+                            marked[x->p + k] = 1;
+                        }
+
+                        //jump to next available interval
+                        size_t p = x->p;
+                        do {
+                            ++x;
+                        } while(x != intervals.end() && x->p < p + l);
+
+                        continue;
+                    }
                 }
+
+                ++x;
             }
-
-            ++x;
-        }
-
-        } //phase
+        });
     }
 };
 

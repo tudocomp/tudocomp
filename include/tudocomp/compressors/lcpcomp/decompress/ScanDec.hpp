@@ -152,8 +152,8 @@ public:
 
     }
     inline void decode_lazy() {
-		StatPhase::current_log_stat("remaining factors", m_target_pos.size());
-		StatPhase::current_log_stat("scans", m_scans);
+		StatPhase::log("remaining factors", m_target_pos.size());
+		StatPhase::log("scans", m_scans);
         size_t lazy = m_scans;
         while(lazy > 0) {
             decode_lazy_();

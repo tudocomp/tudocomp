@@ -124,15 +124,13 @@ public:
         View T = iview;
 
         lz78u::SuffixTree::cst_t backing_cst;
-        {
-            StatPhase phase2("construct suffix tree");
-
+        StatPhase::wrap("construct suffix tree", [&]{
             // TODO: Specialize sdsl template for less alloc here
             std::string bad_copy_1 = T.slice(0, T.size() - 1);
             //std::cout << "text: " << vec_to_debug_string(bad_copy_1) << "\n";
 
             construct_im(backing_cst, bad_copy_1, 1);
-        }
+        });
         lz78u::SuffixTree ST(backing_cst);
 
         const size_t max_z = T.size() * bits_for(ST.cst.csa.sigma) / bits_for(T.size());

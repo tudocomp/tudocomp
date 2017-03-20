@@ -25,7 +25,7 @@ public:
         const size_t n = t.size();
         const size_t w = bits_for(n);
 
-        StatPhase::wrap("Construct Phi Array", [&](StatPhase& phase) {
+        StatPhase::wrap("Construct Phi Array", [&]{
             // Construct Phi Array
             set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : LEN_BITS));
 
@@ -35,8 +35,8 @@ public:
             }
             (*this)[sa[0]] = sa[n-1];
 
-            phase.log_stat("bit_width", size_t(width()));
-            phase.log_stat("size", bit_size() / 8);
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
         });
 
         if(cm == CompressMode::delayed) compress();
@@ -45,12 +45,12 @@ public:
     void compress() {
         debug_check_array_is_initialized();
 
-        StatPhase::wrap("Compress Phi Array", [this](StatPhase& phase) {
+        StatPhase::wrap("Compress Phi Array", [this]{
             width(bits_for(size()));
             shrink_to_fit();
 
-            phase.log_stat("bit_width", size_t(width()));
-            phase.log_stat("size", bit_size() / 8);
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
         });
     }
 };

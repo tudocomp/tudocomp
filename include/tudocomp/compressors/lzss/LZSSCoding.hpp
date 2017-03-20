@@ -133,7 +133,7 @@ inline void decode_text(coder_t& decoder, std::ostream& outs) {
     }
 
     // log stats
-    StatPhase::current_log_stat("longest_chain", buffer.longest_chain());
+    StatPhase::log("longest_chain", buffer.longest_chain());
 
     // write decoded text
     buffer.write_to(outs);

@@ -22,7 +22,7 @@ public:
         // Require Suffix Array
         auto& sa = t.require_sa(cm);
 
-        StatPhase::wrap("Construct ISA", [&](StatPhase& phase) {
+        StatPhase::wrap("Construct ISA", [&]{
             // Allocate
             const size_t n = t.size();
             const size_t w = bits_for(n);
@@ -33,8 +33,8 @@ public:
                 (*this)[sa[i]] = i;
             }
 
-            phase.log_stat("bit_width", size_t(width()));
-            phase.log_stat("size", bit_size() / 8);
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
         });
 
         if(cm == CompressMode::delayed) compress();
@@ -43,12 +43,12 @@ public:
     void compress() {
         debug_check_array_is_initialized();
 
-        StatPhase::wrap("Compress ISA", [this](StatPhase& phase) {
+        StatPhase::wrap("Compress ISA", [this]{
             width(bits_for(size()));
             shrink_to_fit();
 
-            phase.log_stat("bit_width", size_t(width()));
-            phase.log_stat("size", bit_size() / 8);
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
         });
     }
 };

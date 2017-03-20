@@ -27,7 +27,7 @@ public:
         // Construct Phi and attempt to work in-place
         set_array(t.inplace_phi(cm));
 
-        StatPhase::wrap("Construct Phi Array", [&](StatPhase& phase) {
+        StatPhase::wrap("Construct Phi Array", [&]{
             // Use Phi algorithm to compute PLCP array
             m_max = 0;
             for(len_t i = 0, l = 0; i < n - 1; ++i) {
@@ -38,8 +38,8 @@ public:
                 if(l) --l;
             }
 
-            phase.log_stat("bit_width", size_t(width()));
-            phase.log_stat("size", bit_size() / 8);
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
         });
 
         if(cm == CompressMode::compressed || cm == CompressMode::delayed) {
@@ -54,12 +54,12 @@ public:
     void compress() {
         debug_check_array_is_initialized();
 
-        StatPhase::wrap("Compress PLCP Array", [this](StatPhase& phase) {
+        StatPhase::wrap("Compress PLCP Array", [this]{
             width(bits_for(m_max));
             shrink_to_fit();
 
-            phase.log_stat("bit_width", size_t(width()));
-            phase.log_stat("size", bit_size() / 8);
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
         });
     }
 };

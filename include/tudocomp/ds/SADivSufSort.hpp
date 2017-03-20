@@ -20,7 +20,7 @@ public:
     inline SADivSufSort(Env&& env, const textds_t& t, CompressMode cm)
         : Algorithm(std::move(env)) {
 
-        StatPhase::wrap("Construct SA", [&](StatPhase& phase) {
+        StatPhase::wrap("Construct SA", [&]{
             // Allocate
             const size_t n = t.size();
             const size_t w = bits_for(n);
@@ -31,8 +31,8 @@ public:
             // Use divsufsort to construct
             divsufsort(t.text(), (iv_t&) *this, n);
 
-            phase.log_stat("bit_width", size_t(width()));
-            phase.log_stat("size", bit_size() / 8);
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
         });
 
         if(cm == CompressMode::compressed || cm == CompressMode::delayed) {
@@ -43,12 +43,12 @@ public:
     void compress() {
         debug_check_array_is_initialized();
 
-        StatPhase::wrap("Compress SA", [this](StatPhase& phase) {
+        StatPhase::wrap("Compress SA", [this]{
             width(bits_for(size()));
             shrink_to_fit();
 
-            phase.log_stat("bit_width", size_t(width()));
-            phase.log_stat("size", bit_size() / 8);
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
         });
     }
 };

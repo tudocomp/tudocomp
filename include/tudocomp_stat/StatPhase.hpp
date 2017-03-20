@@ -157,37 +157,6 @@ private:
         }
     }
 
-public:
-    template<typename F>
-    inline static auto wrap(const char* title, F func) ->
-        typename std::result_of<F(StatPhase&)>::type {
-
-        StatPhase phase(title);
-        return func(phase);
-    }
-
-    template<typename F>
-    inline static auto wrap(const char* title, F func) ->
-        typename std::result_of<F()>::type {
-
-        StatPhase phase(title);
-        return func();
-    }
-
-    inline static void track_alloc(size_t bytes) {
-        if(s_current) s_current->track_alloc_internal(bytes);
-    }
-
-    inline static void track_free(size_t bytes) {
-        if(s_current) s_current->track_free_internal(bytes);
-    }
-
-    template<typename T>
-    inline static void current_log_stat(const char* key, const T& value) {
-        if(s_current) s_current->log_stat(key, value);
-    }
-
-private:
     inline void init(const char* title) {
         m_parent = s_current;
 
@@ -223,6 +192,35 @@ private:
     }
 
 public:
+    template<typename F>
+    inline static auto wrap(const char* title, F func) ->
+        typename std::result_of<F(StatPhase&)>::type {
+
+        StatPhase phase(title);
+        return func(phase);
+    }
+
+    template<typename F>
+    inline static auto wrap(const char* title, F func) ->
+        typename std::result_of<F()>::type {
+
+        StatPhase phase(title);
+        return func();
+    }
+
+    inline static void track_alloc(size_t bytes) {
+        if(s_current) s_current->track_alloc_internal(bytes);
+    }
+
+    inline static void track_free(size_t bytes) {
+        if(s_current) s_current->track_free_internal(bytes);
+    }
+
+    template<typename T>
+    inline static void log(const char* key, const T& value) {
+        if(s_current) s_current->log(key, value);
+    }
+
     inline StatPhase(const char* title) {
         m_track_memory = false;
         init(title);

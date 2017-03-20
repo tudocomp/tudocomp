@@ -63,7 +63,7 @@ public:
         using heap_type = boost::heap::pairing_heap<len_t,boost::heap::compare<LCPCompare>>;
         using handle_type = typename heap_type::handle_type;
 
-        auto pair = StatPhase::wrap("Construct MaxLCPHeap", [&](StatPhase& phase){
+        auto pair = StatPhase::wrap("Construct MaxLCPHeap", [&]{
             LCPCompare comp(lcp,sa);
 
             heap_type heap(comp);
@@ -75,55 +75,53 @@ public:
                 else handles[i].node_ = nullptr;
             }
 
-            phase.log_stat("entries", heap.size());
+            StatPhase::log("entries", heap.size());
             return std::pair<heap_type, std::vector<handle_type>>(heap, handles);
         });
 
-        auto& heap = pair.first;
-        auto& handles = pair.second;
-
         //Factorize
-        { StatPhase phase("Process MaxLCPHeap");
+        StatPhase::wrap("Process MaxLCPHeap", [&]{
+            auto& heap = pair.first;
+            auto& handles = pair.second;
 
-        while(heap.size() > 0) {
-            //get suffix with longest LCP
-            const len_t& m = heap.top();
+            while(heap.size() > 0) {
+                //get suffix with longest LCP
+                const len_t& m = heap.top();
 
-            //generate factor
-            const len_t fpos = sa[m];
-            const len_t fsrc = sa[m-1];
-            const len_t flen = lcp[m];
+                //generate factor
+                const len_t fpos = sa[m];
+                const len_t fsrc = sa[m-1];
+                const len_t flen = lcp[m];
 
-            factors.emplace_back(fpos, fsrc, flen);
+                factors.emplace_back(fpos, fsrc, flen);
 
-            //remove overlapped entries
-            for(size_t k = 0; k < flen; k++) {
-                const len_t pos = isa[fpos + k];
-				if(handles[pos].node_ == nullptr) continue;
-                heap.erase(handles[pos]);
-				handles[pos].node_ = nullptr;
-            }
+                //remove overlapped entries
+                for(size_t k = 0; k < flen; k++) {
+                    const len_t pos = isa[fpos + k];
+				    if(handles[pos].node_ == nullptr) continue;
+                    heap.erase(handles[pos]);
+				    handles[pos].node_ = nullptr;
+                }
 
-            //correct intersecting entries
-            for(size_t k = 0; k < flen && fpos > k; k++) {
-                size_t s = fpos - k - 1;
-                size_t i = isa[s];
-				if(handles[i].node_ != nullptr) {
-                    if(s + lcp[i] > fpos) {
-                        size_t l = fpos - s;
-                        if(l >= threshold) {
-							lcp[i] = l;
-							heap.decrease(handles[i]);
-                        } else {
-							heap.erase(handles[i]);
-							handles[i].node_ = nullptr;
+                //correct intersecting entries
+                for(size_t k = 0; k < flen && fpos > k; k++) {
+                    size_t s = fpos - k - 1;
+                    size_t i = isa[s];
+				    if(handles[i].node_ != nullptr) {
+                        if(s + lcp[i] > fpos) {
+                            size_t l = fpos - s;
+                            if(l >= threshold) {
+							    lcp[i] = l;
+							    heap.decrease(handles[i]);
+                            } else {
+							    heap.erase(handles[i]);
+							    handles[i].node_ = nullptr;
+                            }
                         }
                     }
                 }
             }
-        }
-
-        }//phase
+        });
     }
 };
 

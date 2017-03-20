@@ -44,7 +44,7 @@ public:
         auto& isa = text.require_isa();
         auto lcp = text.release_lcp();
 
-        auto heap = StatPhase::wrap("Construct MaxLCPHeap", [&](StatPhase& phase){
+        auto heap = StatPhase::wrap("Construct MaxLCPHeap", [&]{
             // Count relevant LCP entries
             size_t heap_size = 0;
             for(size_t i = 1; i < lcp.size(); i++) {
@@ -57,47 +57,45 @@ public:
                 if(lcp[i] >= threshold) heap.insert(i);
             }
 
-            phase.log_stat("entries", heap.size());
+            StatPhase::log("entries", heap.size());
             return heap;
         });
 
         //Factorize
-        { StatPhase phase("Process MaxLCPHeap");
+        StatPhase::wrap("Process MaxLCPHeap", [&]{
+            while(heap.size() > 0) {
+                //get suffix with longest LCP
+                size_t m = heap.get_max();
 
-        while(heap.size() > 0) {
-            //get suffix with longest LCP
-            size_t m = heap.get_max();
+                //generate factor
+                size_t fpos = sa[m];
+                size_t fsrc = sa[m-1];
+                size_t flen = lcp[m];
 
-            //generate factor
-            size_t fpos = sa[m];
-            size_t fsrc = sa[m-1];
-            size_t flen = lcp[m];
+                factors.emplace_back(fpos, fsrc, flen);
 
-            factors.emplace_back(fpos, fsrc, flen);
+                //remove overlapped entries
+                for(size_t k = 0; k < flen; k++) {
+                    heap.remove(isa[fpos + k]);
+                }
 
-            //remove overlapped entries
-            for(size_t k = 0; k < flen; k++) {
-                heap.remove(isa[fpos + k]);
-            }
-
-            //correct intersecting entries
-            for(size_t k = 0; k < flen && fpos > k; k++) {
-                size_t s = fpos - k - 1;
-                size_t i = isa[s];
-                if(heap.contains(i)) {
-                    if(s + lcp[i] > fpos) {
-                        size_t l = fpos - s;
-                        if(l >= threshold) {
-                            heap.decrease_key(i, l);
-                        } else {
-                            heap.remove(i);
+                //correct intersecting entries
+                for(size_t k = 0; k < flen && fpos > k; k++) {
+                    size_t s = fpos - k - 1;
+                    size_t i = isa[s];
+                    if(heap.contains(i)) {
+                        if(s + lcp[i] > fpos) {
+                            size_t l = fpos - s;
+                            if(l >= threshold) {
+                                heap.decrease_key(i, l);
+                            } else {
+                                heap.remove(i);
+                            }
                         }
                     }
                 }
             }
-        }
-
-        }//phase
+        });
     }
 };
 

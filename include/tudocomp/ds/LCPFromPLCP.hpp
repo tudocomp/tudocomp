@@ -28,7 +28,7 @@ public:
 
         const size_t n = t.size();
 
-        StatPhase::wrap("Construct LCP Array", [&](StatPhase& phase) {
+        StatPhase::wrap("Construct LCP Array", [&]{
             // Compute LCP array
             m_max = plcp.max_lcp();
             const size_t w = bits_for(m_max);
@@ -41,8 +41,8 @@ public:
                 (*this)[i] = x;
             }
 
-            phase.log_stat("bit_width", size_t(width()));
-            phase.log_stat("size", bit_size() / 8);
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
         });
 
         if(cm == CompressMode::delayed) compress();
@@ -55,12 +55,12 @@ public:
     void compress() {
         debug_check_array_is_initialized();
 
-        StatPhase::wrap("Compress LCP Array", [this](StatPhase& phase) {
+        StatPhase::wrap("Compress LCP Array", [this]{
             width(bits_for(m_max));
             shrink_to_fit();
 
-            phase.log_stat("bit_width", size_t(width()));
-            phase.log_stat("size", bit_size() / 8);
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
         });
     }
 };

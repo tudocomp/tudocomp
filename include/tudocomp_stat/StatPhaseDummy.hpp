@@ -37,7 +37,7 @@ public:
     }
 
     template<typename T>
-    inline static void current_log_stat(const char* key, const T& value) {
+    inline static void log(const char* key, const T& value) {
     }
 
     inline StatPhaseDummy(const char* title) {

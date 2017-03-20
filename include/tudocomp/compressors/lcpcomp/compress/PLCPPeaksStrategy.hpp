@@ -38,45 +38,43 @@ public:
             text.require(text_t::SA | text_t::ISA | text_t::PLCP);
         });
 
-		{ StatPhase phase("Search Peaks");
+		StatPhase::wrap("Search Peaks", [&]{
+            const auto& sa = text.require_sa();
+            const auto& isa = text.require_isa();
 
-        const auto& sa = text.require_sa();
-        const auto& isa = text.require_isa();
+            auto plcp = text.release_plcp();
 
-        auto plcp = text.release_plcp();
+            //
+            const size_t n = sa.size();
 
-        //
-        const size_t n = sa.size();
-
-		len_t last_replacement_pos = 0;
-		for(len_t i = 0; i+1 < n; ) {
-			if( (i == last_replacement_pos || plcp[i] > plcp[i-1]) && plcp[i] > plcp[i+1] && plcp[i] >= threshold) {
-				DCHECK_NE(isa[i], 0u);
-				const len_t& target_position = i;
-				const len_t factor_length = plcp[target_position];
-				DCHECK_LT(target_position+factor_length,n);
-				const len_t source_position = sa[isa[target_position]-1];
-				factors.emplace_back(i, source_position, factor_length);
-				// for(size_t k = 0; k < factor_length; ++k) {
-				// 	plcp[target_position + k] = 0;
-				// }
-				// const len_t affected_length = std::min(factor_length, target_position);
-				// for(size_t k = 0; k < affected_length; ++k) {
-				// 	const len_t affected_position = target_position - k - 1;
-				// 	if(target_position < affected_position + plcp[affected_position]) {
-				// 		const len_t affected_length = target_position - affected_position;
-				// 		plcp[affected_position] = affected_length;
-				// 	}
-				// }
-				i+= factor_length;
-				last_replacement_pos = i-1;
-			}
-			else {
-				++i;
-			}
-		}
-
-        }//phase
+		    len_t last_replacement_pos = 0;
+		    for(len_t i = 0; i+1 < n; ) {
+			    if( (i == last_replacement_pos || plcp[i] > plcp[i-1]) && plcp[i] > plcp[i+1] && plcp[i] >= threshold) {
+				    DCHECK_NE(isa[i], 0u);
+				    const len_t& target_position = i;
+				    const len_t factor_length = plcp[target_position];
+				    DCHECK_LT(target_position+factor_length,n);
+				    const len_t source_position = sa[isa[target_position]-1];
+				    factors.emplace_back(i, source_position, factor_length);
+				    // for(size_t k = 0; k < factor_length; ++k) {
+				    // 	plcp[target_position + k] = 0;
+				    // }
+				    // const len_t affected_length = std::min(factor_length, target_position);
+				    // for(size_t k = 0; k < affected_length; ++k) {
+				    // 	const len_t affected_position = target_position - k - 1;
+				    // 	if(target_position < affected_position + plcp[affected_position]) {
+				    // 		const len_t affected_length = target_position - affected_position;
+				    // 		plcp[affected_position] = affected_length;
+				    // 	}
+				    // }
+				    i+= factor_length;
+				    last_replacement_pos = i-1;
+			    }
+			    else {
+				    ++i;
+			    }
+		    }
+        });
     }
 };
 

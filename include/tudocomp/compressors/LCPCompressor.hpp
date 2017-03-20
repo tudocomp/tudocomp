@@ -27,47 +27,46 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
     // init decode buffer
     decode_buffer_t  buffer(std::move(env), text_len);
 
-    { StatPhase phase("Starting Decoding");
+    StatPhase::wrap("Starting Decoding", [&]{
+        Range text_r(text_len);
 
-    Range text_r(text_len);
+        // decode shortest and longest factor
+        auto flen_min = decoder.template decode<len_t>(text_r);
+        auto flen_max = decoder.template decode<len_t>(text_r);
+        MinDistributedRange flen_r(flen_min, flen_max);
 
-    // decode shortest and longest factor
-    auto flen_min = decoder.template decode<len_t>(text_r);
-    auto flen_max = decoder.template decode<len_t>(text_r);
-    MinDistributedRange flen_r(flen_min, flen_max);
+        // decode longest distance between factors
+        auto fdist_max = decoder.template decode<len_t>(text_r);
+        Range fdist_r(fdist_max);
 
-    // decode longest distance between factors
-    auto fdist_max = decoder.template decode<len_t>(text_r);
-    Range fdist_r(fdist_max);
+        // decode
+        while(!decoder.eof()) {
+            len_t num;
 
-    // decode
-    while(!decoder.eof()) {
-        len_t num;
+            auto b = decoder.template decode<bool>(bit_r);
+            if(b) num = decoder.template decode<len_t>(fdist_r);
+            else  num = 0;
 
-        auto b = decoder.template decode<bool>(bit_r);
-        if(b) num = decoder.template decode<len_t>(fdist_r);
-        else  num = 0;
+            // decode characters
+            while(num--) {
+                auto c = decoder.template decode<uliteral_t>(literal_r);
+                buffer.decode_literal(c);
+            }
 
-        // decode characters
-        while(num--) {
-            auto c = decoder.template decode<uliteral_t>(literal_r);
-            buffer.decode_literal(c);
+            if(!decoder.eof()) {
+                //decode factor
+                auto src = decoder.template decode<len_t>(text_r);
+                auto len = decoder.template decode<len_t>(flen_r);
+
+                buffer.decode_factor(src, len);
+            }
         }
-
-        if(!decoder.eof()) {
-            //decode factor
-            auto src = decoder.template decode<len_t>(text_r);
-            auto len = decoder.template decode<len_t>(flen_r);
-
-            buffer.decode_factor(src, len);
-        }
-    }
-    } //phase
+    });
 
     StatPhase::wrap("Scan Decoding", [&]{ buffer.decode_lazy(); });
-    StatPhase::wrap("Eager Decoding", [&](StatPhase& phase){
+    StatPhase::wrap("Eager Decoding", [&]{
         buffer.decode_eagerly();
-        IF_STATS(phase.log_stat("longest_chain", buffer.longest_chain()));
+        IF_STATS(StatPhase::log("longest_chain", buffer.longest_chain()));
     });
     StatPhase::wrap("Output Text", [&]{ buffer.write_to(outs); });
 }
@@ -102,13 +101,13 @@ public:
         const len_t threshold = env().option("threshold").as_integer(); //factor threshold
         lzss::FactorBuffer factors;
 
-        StatPhase::wrap("Factorize", [&](StatPhase& phase) {
+        StatPhase::wrap("Factorize", [&]{
             // Factorize
             strategy_t strategy(env().env_for_option("comp"));
             strategy.factorize(text, threshold, factors);
 
-            phase.log_stat("threshold", threshold);
-            phase.log_stat("factors", factors.size());
+            StatPhase::log("threshold", threshold);
+            StatPhase::log("factors", factors.size());
         });
 
         // sort factors
