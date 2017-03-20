@@ -3,9 +3,12 @@
 #include <cstring>
 #include <ctime>
 
+#include <tudocomp_stat/StatPhaseDummy.hpp>
 #include <tudocomp_stat/Json.hpp>
 
 namespace tdc {
+
+#ifndef STATS_DISABLED
 
 class StatPhase {
 private:
@@ -38,7 +41,6 @@ private:
             }
         };
 
-    private:
         char title[STR_BUFFER_SIZE];
 
         unsigned long time_start;
@@ -227,7 +229,7 @@ public:
         m_track_memory = true;
     }
 
-    ~StatPhase() {
+    inline ~StatPhase() {
         m_track_memory = false;
         finish();
     }
@@ -259,5 +261,11 @@ public:
         return obj;
     }
 };
+
+#else
+
+using StatPhase = StatPhaseDummy;
+
+#endif
 
 }
