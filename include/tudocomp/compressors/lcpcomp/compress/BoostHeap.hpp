@@ -60,10 +60,14 @@ public:
 
 		};
 
-        auto heap = StatPhase::wrap("Construct MaxLCPHeap", [&](StatPhase& phase){
+        using heap_type = boost::heap::pairing_heap<len_t,boost::heap::compare<LCPCompare>>;
+        using handle_type = typename heap_type::handle_type;
+
+        auto pair = StatPhase::wrap("Construct MaxLCPHeap", [&](StatPhase& phase){
             LCPCompare comp(lcp,sa);
-            boost::heap::pairing_heap<len_t,boost::heap::compare<LCPCompare>> heap(comp);
-            std::vector<decltype(heap)::handle_type> handles(lcp.size());
+
+            heap_type heap(comp);
+            std::vector<handle_type> handles(lcp.size());
 
             handles[0].node_ = nullptr;
             for(size_t i = 1; i < lcp.size(); ++i) {
@@ -72,8 +76,11 @@ public:
             }
 
             phase.log_stat("entries", heap.size());
-            return heap;
+            return std::pair<heap_type, std::vector<handle_type>>(heap, handles);
         });
+
+        auto& heap = pair.first;
+        auto& handles = pair.second;
 
         //Factorize
         { StatPhase phase("Process MaxLCPHeap");
