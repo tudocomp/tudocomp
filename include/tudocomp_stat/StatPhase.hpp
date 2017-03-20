@@ -2,6 +2,8 @@
 
 #include <cstring>
 #include <ctime>
+#include <string>
+#include <iostream>
 
 #include <tudocomp_stat/PhaseData.hpp>
 #include <tudocomp_stat/StatPhaseDummy.hpp>
@@ -126,6 +128,9 @@ public:
         m_track_memory = true;
     }
 
+    inline StatPhase(const std::string& str) : StatPhase(str.c_str()) {
+    }
+
     inline ~StatPhase() {
         m_track_memory = false;
         finish();
@@ -138,9 +143,15 @@ public:
         PhaseData* old_data = m_data;
 
         init(new_title);
-        if(old_data) m_data->mem_off = old_data->mem_current;
+        if(old_data) {
+            m_data->mem_off = old_data->mem_off + old_data->mem_current;
+        }
 
         m_track_memory = true;
+    }
+
+    inline void split(const std::string& new_title) {
+        split(new_title.c_str());
     }
 
     template<typename T>
