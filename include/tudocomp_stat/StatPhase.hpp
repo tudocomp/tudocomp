@@ -3,12 +3,15 @@
 #include <cstring>
 #include <ctime>
 
+#include <tudocomp_stat/PhaseData.hpp>
 #include <tudocomp_stat/StatPhaseDummy.hpp>
 #include <tudocomp_stat/Json.hpp>
 
-namespace tdc {
-
 #ifndef STATS_DISABLED
+
+#include <tudocomp_stat/PhaseData.hpp>
+
+namespace tdc {
 
 class StatPhase {
 private:
@@ -21,118 +24,14 @@ private:
         return t.tv_sec * 1000L + t.tv_nsec / 1000000L;
     }
 
-    class Data {
-        friend class StatPhase;
-
-    public:
-        static constexpr size_t STR_BUFFER_SIZE = 64;
-
-    private:
-        struct keyval {
-            keyval* next;
-            char key[STR_BUFFER_SIZE];
-            char val[STR_BUFFER_SIZE];
-
-            inline keyval() : next(nullptr) {
-            }
-
-            ~keyval() {
-                if(next) delete next;
-            }
-        };
-
-        char title[STR_BUFFER_SIZE];
-
-        unsigned long time_start;
-        unsigned long time_end;
-        ssize_t mem_off;
-        ssize_t mem_current;
-        ssize_t mem_peak;
-
-        keyval* first_stat;
-
-        Data* first_child;
-        Data* next_sibling;
-
-        inline Data()
-            : first_stat(nullptr),
-              first_child(nullptr),
-              next_sibling(nullptr) {
-        }
-
-        ~Data() {
-            if(first_stat) delete first_stat;
-            if(first_child) delete first_child;
-            if(next_sibling) delete next_sibling;
-        }
-
-        template<typename T>
-        inline void log_stat(const char* key, const T& value) {
-            keyval* kv = new keyval();
-
-            {
-                json::TValue<T> t(value);
-                std::stringstream ss;
-                t.str(ss);
-
-                strncpy(kv->key, key, STR_BUFFER_SIZE);
-                strncpy(kv->val, ss.str().c_str(), STR_BUFFER_SIZE);
-            }
-
-            if(first_stat) {
-                keyval* last = first_stat;
-                while(last->next) {
-                    last = last->next;
-                }
-                last->next = kv;
-            } else {
-                first_stat = kv;
-            }
-        }
-
-    public:
-        inline json::Object to_json() const {
-            json::Object obj;
-            obj.set("title",     title);
-            obj.set("timeStart", time_start);
-            obj.set("timeEnd",   time_end);
-            obj.set("memOff",    mem_off);
-            obj.set("memPeak",   mem_peak);
-            obj.set("memFinal",  mem_current);
-
-            json::Array stats;
-            keyval* kv = first_stat;
-            while(kv) {
-                json::Object pair;
-                pair.set("key", std::string(kv->key));
-                pair.set("value", std::string(kv->val));
-                stats.add(pair);
-                kv = kv->next;
-            }
-            obj.set("stats", stats);
-
-            json::Array sub;
-
-            Data* child = first_child;
-            while(child) {
-                sub.add(child->to_json());
-                child = child->next_sibling;
-            }
-
-            obj.set("sub", sub);
-
-            return obj;
-        }
-    };
-
     StatPhase* m_parent;
-    Data* m_data;
+    PhaseData* m_data;
 
     bool  m_track_memory;
 
-    inline void append_child(Data* data) {
+    inline void append_child(PhaseData* data) {
         if(m_data->first_child) {
-            Data* last = m_data->first_child;
+            PhaseData* last = m_data->first_child;
             while(last->next_sibling) {
                 last = last->next_sibling;
             }
@@ -161,9 +60,9 @@ private:
         m_parent = s_current;
 
         if(m_parent) m_parent->m_track_memory = false;
-        m_data = new Data();
+        m_data = new PhaseData();
         if(m_parent) m_parent->m_track_memory = true;
-        strncpy(m_data->title, title, Data::STR_BUFFER_SIZE);
+        m_data->title(title);
 
         m_data->mem_off = m_parent ? m_parent->m_data->mem_current : 0;
         m_data->mem_current = 0;
@@ -236,7 +135,7 @@ public:
         m_track_memory = false;
 
         finish();
-        Data* old_data = m_data;
+        PhaseData* old_data = m_data;
 
         init(new_title);
         if(old_data) m_data->mem_off = old_data->mem_current;
@@ -260,10 +159,15 @@ public:
     }
 };
 
+}
+
 #else
 
-using StatPhase = StatPhaseDummy;
+namespace tdc {
+
+    using StatPhase = StatPhaseDummy;
+
+}
 
 #endif
 
-}
