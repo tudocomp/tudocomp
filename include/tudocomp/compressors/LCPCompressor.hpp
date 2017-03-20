@@ -67,7 +67,7 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
     StatPhase::wrap("Scan Decoding", [&]{ buffer.decode_lazy(); });
     StatPhase::wrap("Eager Decoding", [&](StatPhase& phase){
         buffer.decode_eagerly();
-        phase.log_stat("longest_chain", buffer.longest_chain());
+        IF_STATS(phase.log_stat("longest_chain", buffer.longest_chain()));
     });
     StatPhase::wrap("Output Text", [&]{ buffer.write_to(outs); });
 }
