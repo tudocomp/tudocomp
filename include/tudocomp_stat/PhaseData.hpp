@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <tudocomp_stat/Json.hpp>
 
 /// \cond INTERNAL
@@ -61,14 +62,8 @@ public:
     inline void log_stat(const char* key, const T& value) {
         keyval* kv = new keyval();
 
-        {
-            json::TValue<T> t(value);
-            std::stringstream ss;
-            t.str(ss);
-
-            strncpy(kv->key, key, STR_BUFFER_SIZE);
-            strncpy(kv->val, ss.str().c_str(), STR_BUFFER_SIZE);
-        }
+        strncpy(kv->key, key, STR_BUFFER_SIZE);
+        strncpy(kv->val, std::to_string(value).c_str(), STR_BUFFER_SIZE);
 
         if(first_stat) {
             keyval* last = first_stat;

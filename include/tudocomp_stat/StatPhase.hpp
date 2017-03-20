@@ -3,7 +3,6 @@
 #include <cstring>
 #include <ctime>
 #include <string>
-#include <iostream>
 
 #include <tudocomp_stat/PhaseData.hpp>
 #include <tudocomp_stat/StatPhaseDummy.hpp>
@@ -164,7 +163,7 @@ public:
     inline json::Object to_json() {
         m_data->time_end = current_time_millis();
         m_track_memory = false;
-        json::Object obj = m_data->to_json(); //m_data->to_json().str(out);
+        json::Object obj = m_data->to_json();
         m_track_memory = true;
         return obj;
     }
