@@ -91,8 +91,8 @@ namespace lcpcomp {
                 IF_STATS({
 				    if((j+1) % ((factors+5)/5) == 0 ) {
 					    phase.split(
-                            (std::string("Decoding Factors at position ")
-                            + std::to_string(target_position)).c_str());
+                            std::string("Decoding Factors at position ")
+                            + std::to_string(target_position));
 				    }
                 })
 			}

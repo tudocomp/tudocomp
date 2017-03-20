@@ -64,15 +64,15 @@ public:
         });
 
         StatPhase::wrap("Compute Factors", [&]{
-            StatPhase phase(
-                (std::string{"Factors at max. LCP value "} + std::to_string(lcp.max_lcp())).c_str());
+            StatPhase phase(std::string{"Factors at max. LCP value "}
+                + std::to_string(lcp.max_lcp()));
 
             for(size_t maxlcp = lcp.max_lcp(); maxlcp >= threshold; --maxlcp) {
                 IF_STATS({
                     const len_t maxlcpbits = bits_for(maxlcp-threshold);
                     if( ((maxlcpbits ^ (1UL<<(bits_for(maxlcpbits)-1))) == 0) && (( (maxlcp-threshold) ^ (1UL<<(maxlcpbits-1))) == 0)) { // only log at certain LCP values
-                        phase.split(
-                            (std::string{"Factors at max. LCP value "} + std::to_string(maxlcp)).c_str());
+                        phase.split(std::string{"Factors at max. LCP value "}
+                            + std::to_string(maxlcp));
                         phase.log_stat("num factors", factors.size());
                     }
                 })

@@ -141,8 +141,8 @@ public:
 				    phase.log_stat("hash table entries", m_fwd.size());
 
 				    phase.split(
-                        (std::string("Decoding Factors at position ")
-                         + std::to_string(target_position)).c_str());
+                        std::string("Decoding Factors at position ")
+                         + std::to_string(target_position));
 			    }
             })
         }
