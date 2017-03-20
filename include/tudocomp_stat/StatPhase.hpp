@@ -117,7 +117,7 @@ public:
 
     template<typename T>
     inline static void log(const char* key, const T& value) {
-        if(s_current) s_current->log(key, value);
+        if(s_current) s_current->log_stat(key, value);
     }
 
     inline StatPhase(const char* title) {
