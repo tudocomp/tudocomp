@@ -8,7 +8,7 @@
 namespace tdc {
 
 // same public interface as StatPhase, but doesn't do anything
-// used for STATS_DISABLED and when no current phase exists
+// used for STATS_DISABLED
 class StatPhaseDummy {
 private:
     inline StatPhaseDummy() {
@@ -43,10 +43,16 @@ public:
     inline StatPhaseDummy(const char* title) {
     }
 
+    inline StatPhaseDummy(const std::string& title) {
+    }
+
     inline ~StatPhaseDummy() {
     }
 
     inline void split(const char* new_title) {
+    }
+
+    inline void split(const std::string& new_title) {
     }
 
     template<typename T>

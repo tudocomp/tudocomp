@@ -4,8 +4,6 @@
 #include <ctime>
 #include <string>
 
-#include <tudocomp_stat/PhaseData.hpp>
-#include <tudocomp_stat/StatPhaseDummy.hpp>
 #include <tudocomp_stat/Json.hpp>
 
 #ifndef STATS_DISABLED
@@ -172,6 +170,8 @@ public:
 }
 
 #else
+
+#include <tudocomp_stat/StatPhaseDummy.hpp>
 
 namespace tdc {
 
