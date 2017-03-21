@@ -619,10 +619,8 @@ application.
 
 When instantiated, an algorithm receives an environment object
 ([`Env`](@DX_ENV@)) via its [constructor](@DX_ALGORITHM_CTOR@). The environment
-provides access to algorithm options as explained below, as well as other
-*tudocomp* features like the [runtime statistics](#runtime-statistics).
-
-The environment is retrieved using the [`env`](@DX_ALGORITHM_ENV@) function.
+provides access to algorithm options as explained below. It is retrieved using
+the [`env`](@DX_ALGORITHM_ENV@) function.
 
 ### Options
 
@@ -1205,8 +1203,7 @@ that has to take care of this.
 
 *tudocomp* provides functionality to measure the running time and the amount of
 dynamically allocated memory (e.h. via `malloc` or `new`) over the application
-lifetime. This functionality is accessible via an algorithm's environment (see
-[Environment](#environment) section).
+lifetime.
 
 Recall at this point the restrictions when trying to use these features in a
 Windows enviroment (see [Windows Support](#windows-support)).
@@ -1214,80 +1211,157 @@ Windows enviroment (see [Windows Support](#windows-support)).
 Runtime statistics are tracked in *phases*, ie. the running time and memory
 peak can be measured for individual stages during an algorithm's run. These
 phases may be nested, ie., a phase can consist of multiple other phases. When
-a top-level algorithm is instantiated (e.g. using `create_algo`) it will
-automatically enter a *root phase*.
+using the *tudocomp* command-line tool, a root phase is automatically started
+immediately before the selected algorithm starts.
 
 The measured data can be retrieved in a JSON representation in order to
 visualize it using the [*tudocomp Charter*](#charter-web-application) or to
 process in a third-party application.
 
-Making use of the statistics tracking functions is as easy as sorrounding
-single phases with calls to the
-[`begin_stat_phase`](@DX_ENV_BEGINSTATPHASE@) and
-[`end_stat_phase`](@DX_ENV_ENDSTATPHASE@) functions. Any code within a phase
-is subject to time and memory measurement.
+Statistics tracking is implemented by the [`StatPhase`](@DX_STATPHASE@) class.
+By creating a `StatPhase` object, a new phase is started. The
+[constructor](@DX_STATPHASE_CTOR@) accepts the phase's title as a string. The
+phase ends either when the object is destroyed (e.g. when it runs out of scope)
+or when the phase is split (see below). Any code executed within a phase is
+subject to time and memory measurement.
 
-To that regard, in order to receive meaningful results, each phase should
-"clean up" properly, ie. it should free any memory that is no longer needed
-after the phase is finished. This can be easily achieved by making proper use of
-scopes, to name one example.
+In order to receive meaningful results, each phase should "clean up" properly,
+ie., it should free any memory that is no longer needed after the phase is
+finished. This can be achieved using scopes, but the `StatPhase` class also
+offers a way to enforce clean phase-based programming using the
+[`StatPhase::wrap`](@DX_STATPHASE_WRAP@) functor. It receives a lambda that
+implements the phase and is allowed to return a result to the outer program
+flow.
 
 The following example runs through a few different phases with different
-processing times (realized using sleep) and memory allocations (realized using
-simple allocs).
+processing times and memory allocations (for demonstration purposes, this is
+realized using sleeping and simply array allocations):
 
 ~~~ { .cpp caption="stats.cpp" }
-    // Phase 1
-    env.begin_stat_phase("Phase 1");
-    {
-        char* alloc1 = new char[2048];
-        std::this_thread::sleep_for(ms(30));
-        delete[] alloc1;
-    }
-    env.end_stat_phase();
+StatPhase root("Root");
 
-    // Phase 2
-    env.begin_stat_phase("Phase 2");
-    {
-        char* alloc2 = new char[3072];
+// Phase 1
+StatPhase::wrap("Phase 1", []{
+    char* alloc1 = new char[2048];
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    delete[] alloc1;
+});
 
-        // Phase 2.1
-        env.begin_stat_phase("Phase 2.1");
-        {
-            std::this_thread::sleep_for(ms(30));
-            env.log_stat("A statistic", 147);
-            env.log_stat("Another statistic", 0.5);
-        }
-        env.end_stat_phase();
+// Phase 2
+StatPhase::wrap("Phase 2", []{
+    char* alloc2 = new char[3072];
 
-        // Phase 2.2
-        env.begin_stat_phase("Phase 2.2");
-        {
-            char* alloc2_2 = new char[1024];
-            std::this_thread::sleep_for(ms(40));
-            delete[] alloc2_2;
-        }
-        env.end_stat_phase();
+    // Phase 2.1
+    StatPhase::wrap("Phase 2.1", []{
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
 
-        delete[] alloc2;
-    }
-    env.end_stat_phase();
+        StatPhase::log("A statistic", 147);
+        StatPhase::log("Another statistic", 0.5);
+    });
 
-    // Conclude tracking and print JSON to stdout
-    env.finish_stats().to_json().str(std::cout);
+    // Phase 2.2
+    StatPhase::wrap("Phase 2.2", []{
+        char* alloc2_2 = new char[1024];
+        std::this_thread::sleep_for(std::chrono::milliseconds(40));
+        delete[] alloc2_2;
+    });
+
+    delete[] alloc2;
+});
+
+// Print data in JSON representation to stdout
+root.to_json().str(std::cout);
 ~~~
 
 During any phase, custom statistics can be logged using the
-[`log_stat`](@DX_ENV_LOGSTAT@) method.
+[`StatPhase::log`](@DX_STATPHASE_LOG@) method.
 
-As seen in the last line, statistics tracking is concluded using the
-[`finish_stats`](@DX_ENV_FINISHSTATS@) function, which yields a reference to a
-[`Stat`](@DX_STAT@) object. The JSON representation can be retrieved using its
-[`to_json`](@DX_STAT_TOJSON@) function. For the above example, the following
-JSON output is produced:
+As seen in the last line, the JSON representation of the measured data can be
+retrieved using the [`to_json`](@DX_STATPHASE_TOJSON@) function. For the above
+example, the following JSON output is produced:
 
->> TODO: Fix [#18315](https://projekte.itmc.tu-dortmund.de/issues/18315), then
-   execute example.
+~~~ { .json }
+{
+    "memFinal": 0,
+    "memOff": 0,
+    "memPeak": 4096,
+    "stats": [],
+    "sub": [{
+        "memFinal": 0,
+        "memOff": 0,
+        "memPeak": 2048,
+        "stats": [],
+        "sub": [],
+        "timeEnd": 3330592,
+        "timeStart": 3330562,
+        "title": "Phase 1"
+    },{
+        "memFinal": 0,
+        "memOff": 0,
+        "memPeak": 4096,
+        "stats": [],
+        "sub": [{
+            "memFinal": 0,
+            "memOff": 3072,
+            "memPeak": 0,
+            "stats": [{
+                "key": "A statistic",
+                "value": "147"
+            },{
+                "key": "Another statistic",
+                "value": "0.500000"
+            }],
+            "sub": [],
+            "timeEnd": 3330623,
+            "timeStart": 3330592,
+            "title": "Phase 2.1"
+        },{
+            "memFinal": 0,
+            "memOff": 3072,
+            "memPeak": 1024,
+            "stats": [],
+            "sub": [],
+            "timeEnd": 3330663,
+            "timeStart": 3330623,
+            "title": "Phase 2.2"
+        }],
+        "timeEnd": 3330663,
+        "timeStart": 3330592,
+        "title": "Phase 2"
+    }],
+    "timeEnd": 3330663,
+    "timeStart": 3330562,
+    "title": "Root"
+}
+~~~
+
+In some cases, phases of an algorithm compute complex results and would make it
+complicated to express them in a single lambda return statement. In other use
+cases, one may want to end a phase and begin a new phase within loop iterations
+in order to visualize progress.
+
+For these purposes, a phase can be "split" using the
+[`split`](@DX_STATPHASE_SPLIT@) function. Splitting causes the current phase
+to end and a new phase to begin immediately. The following example demonstrates
+phase splitting:
+
+~~~ { .cpp caption="stats.cpp" }
+// Phase 3 (splitting)
+StatPhase::wrap("Phase 3", []{
+    // Phase 3.1 yields a complex result
+    StatPhase sub_phase("Phase 3.1");
+    
+    char* result_part_1 = new char[1024];
+    char* result_part_2 = new char[2048];
+    std::this_thread::sleep_for(std::chrono::milliseconds(40));
+
+    // Phase 3.2 may use the result
+    sub_phase.split("Phase 3.2");
+    delete[] result_part_2;
+    delete[] result_part_1;
+    std::this_thread::sleep_for(std::chrono::milliseconds(60));
+});
+~~~
 
 ### Charter Web Application
 
@@ -1296,15 +1370,17 @@ that visualizes the statistics JSON output. Based on the data, it plots a
 bar chart that displays the single phases of the compression run with their
 running time on the X axis and their peak heap memory usage on the Y axis.
 
+The following figure shows the diagram corresponding from the JSON snippet
+from the previous section.
+
 ![A diagram plotted by the Charter.](media/charter_diagram.png)
 
->> TODO: Update to match the code example
-
-The shaded area within a phase bar visualizes the *memory offset* of the phase,
-ie., how much memory was already allocated at the beginning of the phase. Ergo,
-the top border of the bar displays the global, application-wide memory peak
-during the phase, while the phase's local memory peak is the difference between
-the whole and the shaded area.
+Observe the bar corresponding to Phase 2.2: The shaded area within the phase bar
+visualizes the *memory offset* of the phase, ie., how much memory was already
+allocated at the beginning of the phase. Alas, the top border of the bar
+displays the global, application-wide memory peak during the phase, while the
+phase's local memory peak is the difference between the whole and the shaded
+area.
 
 This information is explicitly printed in table view below the diagram. This is
 also where custom statistics are printed. The table view of a phase will also be

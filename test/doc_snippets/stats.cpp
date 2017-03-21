@@ -50,28 +50,23 @@ TEST(stats, example) {
         delete[] alloc2;
     });
 
-    // Phase 3.X (looping)
+    // Phase 3 (splitting)
     StatPhase::wrap("Phase 3", []{
-        IntVector<uint32_t> vec(512, 0);
+        // Phase 3.1 yields a complex result
+        StatPhase sub_phase("Phase 3.1");
         
-        StatPhase sub_phase("Init");
-        int count = 0;
-        while(!vec.empty()) {
-            vec.pop_back();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        char* result_part_1 = new char[1024];
+        char* result_part_2 = new char[2048];
+        std::this_thread::sleep_for(std::chrono::milliseconds(40));
 
-            if((++count % 128) == 0) {
-                vec.shrink_to_fit();
-
-                if(!vec.empty()) {
-                    sub_phase.split(std::string("@") + std::to_string(vec.size()));
-                    sub_phase.log_stat("remaining", vec.size());
-                }
-            }
-        };
+        // Phase 3.2 may use the result
+        sub_phase.split("Phase 3.2");
+        delete[] result_part_2;
+        delete[] result_part_1;
+        std::this_thread::sleep_for(std::chrono::milliseconds(60));
     });
 
-    // Conclude tracking and print JSON to stdout
+    // Print data in JSON representation to stdout
     root.to_json().str(std::cout);
 }
 
