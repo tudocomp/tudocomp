@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <cstdint>
 #include <iostream>
+#include <list>
 #include <gtest/gtest.h>
 #include <glog/logging.h>
 #include <cstdlib>
