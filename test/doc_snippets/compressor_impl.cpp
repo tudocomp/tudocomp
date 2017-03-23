@@ -10,7 +10,10 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#include <tudocomp/tudocomp.hpp>
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/coders/ASCIICoder.hpp>
+#include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/EliasDeltaCoder.hpp>
 
 #include "../test/util.hpp"
 

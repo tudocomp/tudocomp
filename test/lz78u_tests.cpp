@@ -1,7 +1,11 @@
 #include "test/util.hpp"
 #include <gtest/gtest.h>
 
-#include <tudocomp/tudocomp.hpp>
+#include <tudocomp/compressors/LZ78UCompressor.hpp>
+#include <tudocomp/compressors/lz78u/BufferingStrategy.hpp>
+#include <tudocomp/compressors/lz78u/StreamingStrategy.hpp>
+#include <tudocomp/coders/ASCIICoder.hpp>
+#include <tudocomp/coders/HuffmanCoder.hpp>
 
 using namespace tdc;
 using namespace lz78u;

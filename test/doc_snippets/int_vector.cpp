@@ -10,7 +10,9 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#include <tudocomp/tudocomp.hpp>
+#include <tudocomp/def.hpp>
+#include <tudocomp/util.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
 using namespace tdc;
 

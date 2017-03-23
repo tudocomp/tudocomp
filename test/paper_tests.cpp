@@ -1,11 +1,15 @@
 #include "gtest/gtest.h"
 #include "test/util.hpp"
 
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/ds/ArrayMaxHeap.hpp>
+#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/compressors/lz78u/SuffixTree.hpp>
+
 //m.option("textds").templated<text_t, TextDS<>>();
 //template<typename text_t>
 
 /////////////////////////////////
-#include <tudocomp/tudocomp.hpp>
 class BWTComp : public Compressor {
   public: static Meta meta() {
     Meta m("compressor", "bwt");
