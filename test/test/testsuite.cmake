@@ -51,10 +51,6 @@ macro(generic_run_test test_target test_file
         ${driver}
         ${test_file}
     )
-    add_dependencies(
-        ${test_target}_testrunner
-        generate_tudocomp_hpp
-    )
     target_link_libraries(${test_target}_testrunner
         glog
         ${driver_dep}

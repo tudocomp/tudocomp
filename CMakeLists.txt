@@ -101,11 +101,6 @@ add_library(
     ${CMAKE_BINARY_DIR}/tudocomp_algorithms.cpp
 )
 
-add_dependencies(
-    tudocomp_algorithms
-    generate_tudocomp_hpp
-)
-
 target_link_libraries(
     tudocomp_algorithms
 
