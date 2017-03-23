@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <sdsl/int_vector.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/Algorithm.hpp>

@@ -3,12 +3,13 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Registry.hpp>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/Compressor.hpp>
 
 namespace tdc {
 
-template<typename T>
+template<typename T, typename registry_root_t = T>
 class Builder {
-    Registry m_registry;
+    Registry<registry_root_t> m_registry;
     std::string m_options;
 public:
     inline Builder() {}
@@ -21,7 +22,7 @@ public:
 
 
     /// Sets a registry to be used for dynamic type lookups during instantiation.
-    inline Builder& registry(const Registry& reg) {
+    inline Builder& registry(const Registry<registry_root_t>& reg) {
         m_registry = reg;
         return *this;
     }
@@ -51,7 +52,7 @@ public:
         auto evaluated_options = evald_algo.as_algorithm();
 
         auto env_root = std::make_shared<EnvRoot>(std::move(evaluated_options));
-        Env env(env_root, env_root->algo_value(), m_registry);
+        Env env(env_root, env_root->algo_value());
 
         return env;
     }
@@ -78,24 +79,24 @@ public:
 ///
 /// \tparam T The Algorithm type.
 /// \return The algorithm builder instance.
-template<typename T>
-Builder<T> builder() {
-    return Builder<T>();
+template<typename T, typename registry_root_t = T>
+Builder<T, registry_root_t> builder() {
+    return Builder<T, registry_root_t>();
 }
 
 
 /// \cond INTERNAL
 inline std::unique_ptr<Compressor> create_algo_with_registry_dynamic(
-        const Registry& registry,
+        const Registry<Compressor>& registry,
         const AlgorithmValue& algorithm_value) {
-    return registry.select_compressor_or_exit(algorithm_value);
+    return registry.select_algorithm(algorithm_value);
 }
 
-template<class T, class... Args>
+template<typename T, typename registry_root_t, typename... Args>
 T create_algo_with_registry(const std::string& options,
-                            const Registry& registry,
+                            const Registry<registry_root_t>& registry,
                             Args&&... args) {
-    return builder<T>()
+    return builder<T, registry_root_t>()
         .registry(registry)
         .options(options)
         .instance(std::forward<Args>(args)...);
@@ -115,7 +116,7 @@ T create_algo_with_registry(const std::string& options,
 /// \return The created algorithm instance.
 template<class T, class... Args>
 T create_algo(const std::string& options, Args&&... args) {
-    return create_algo_with_registry<T>(options, Registry(), std::forward<Args>(args)...);
+    return create_algo_with_registry<T>(options, Registry<T>(), std::forward<Args>(args)...);
 }
 
 /// \brief Template for easy algorithm instantiation.
@@ -162,7 +163,7 @@ inline Env create_env(Meta&& meta, const std::string& options = "") {
 
     auto evaluated_options = evald_algo.as_algorithm();
     auto env_root = std::make_shared<EnvRoot>(std::move(evaluated_options));
-    Env env(env_root, env_root->algo_value(), Registry());
+    Env env(env_root, env_root->algo_value());
 
     return env;
 }

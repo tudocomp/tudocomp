@@ -1,6 +1,16 @@
 cmake_minimum_required(VERSION 3.0.2)
 project (tudocomp)
 
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+endif(CCACHE_FOUND)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
+endif(NOT CMAKE_BUILD_TYPE)
+
 if(NOT VERSION)
     string(TIMESTAMP DATE "%y%m%d")
     set(VERSION "0.${DATE}-$ENV{USER}${VERSION_SUFFIX}")
@@ -49,7 +59,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemod
 
 # Cotire
 include(cotire)
-set (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1)
+set (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1000)
 
 # Finders
 include(FindPythonModule)
@@ -99,10 +109,17 @@ add_dependencies(
 target_link_libraries(
     tudocomp_algorithms
 
-    malloc_count
+    tudocomp_stat
     tudocomp
     glog
     sdsl
 )
 
 cotire(tudocomp_algorithms)
+
+
+MESSAGE( STATUS "Built Type: " ${CMAKE_BUILD_TYPE} )
+MESSAGE( STATUS "CXX Flags: " ${CMAKE_CXX_FLAGS} )
+MESSAGE( STATUS "[Optional] Judy Array: " ${JUDY_H_AVAILABLE} )
+MESSAGE( STATUS "[Optional] Boost: " ${Boost_FOUND} )
+

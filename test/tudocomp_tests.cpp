@@ -7,12 +7,13 @@
 #include <gtest/gtest.h>
 #include <glog/logging.h>
 
-#include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/util/View.hpp>
+#include <tudocomp/util/GenericView.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/CreateAlgorithm.hpp>
 
 #include "test/util.hpp"
 
@@ -981,6 +982,184 @@ TEST(View, literal) {
     ASSERT_EQ("a\0"_v.back(), 0);
 }
 
+template<class V, class ConstV>
+void view_test_template_const() {
+    using T = typename V::value_type;
+
+    const V v;
+    const ConstV cv;
+
+    T data1[3] = { 0, 1, 2 };
+    const V constr1 { &data1[0], 3 };
+
+    const V copy1 { constr1 };
+
+    const ConstV copy2 { copy1 };
+
+    std::vector<T> data2 { 1, 2, 3 };
+    const V copy3 { data2 };
+
+    std::vector<T> copy4 = constr1;
+
+    std::vector<T> data3 { 3, 4, 5 };
+    const V v2 { data3 };
+    const ConstV cv2 { data3 };
+
+    ConstV cv3;
+    cv3 = v2;
+    cv3 = cv2;
+
+    v.begin();
+    v.end();
+    v.rbegin();
+    v.rend();
+    v.cbegin();
+    v.cend();
+    v.crbegin();
+    v.crend();
+
+    v.size();
+    v.max_size();
+    v.empty();
+
+    copy1[0];
+    copy1.at(0);
+
+    copy1.front();
+    copy1.back();
+    copy1.data();
+
+    V pop_copy { data2 };
+    V swap_copy { data2 };
+
+    pop_copy.pop_back();
+    pop_copy.pop_front();
+
+    pop_copy.swap(swap_copy);
+    pop_copy.clear();
+
+    const V slice_copy { data2 };
+    const V slice1 = slice_copy.substr(0);
+    const V slice2 = slice_copy.substr(0, 1);
+    slice1.empty();
+    slice2.empty();
+
+    pop_copy.remove_prefix(0);
+    pop_copy.remove_suffix(0);
+
+    const ConstV substr_copy1 { slice_copy };
+
+    substr_copy1.starts_with(v);
+    substr_copy1.ends_with(v);
+
+    const V substr_copy2 { slice_copy };
+
+    substr_copy2.starts_with(v);
+    substr_copy2.ends_with(v);
+    substr_copy2.starts_with(cv);
+    substr_copy2.ends_with(cv);
+    substr_copy2.starts_with(0);
+    substr_copy2.ends_with(0);
+
+    v == v;
+    v != v;
+    v < v;
+    v <= v;
+    v > v;
+    v >= v;
+
+    V swap1;
+    V swap2;
+
+    using std::swap;
+    swap(swap1, swap2);
+
+    v == cv;
+    v != cv;
+    v < cv;
+    v <= cv;
+    v > cv;
+    v >= cv;
+
+    cv == v;
+    cv != v;
+    cv < v;
+    cv <= v;
+    cv > v;
+    cv >= v;
+
+}
+
+template<class V, class ConstV>
+void view_test_template() {
+    using T = typename V::value_type;
+
+    V v;
+    const ConstV cv;
+
+    std::vector<T> data { 1, 2, 3 };
+    V copy1 { data };
+
+    {
+        auto a = copy1.begin();       *a = 0;
+        auto b = copy1.end();    --b; *b = 0;
+        auto c = copy1.rbegin();      *c = 0;
+        auto d = copy1.rend();   --d; *d = 0;
+    }
+
+    copy1[0] = 0;
+    copy1.at(0) = 0;
+    copy1.front() = 0;
+    copy1.back() = 0;
+    *copy1.data() = 0;
+
+}
+
+template<class V, class ConstV>
+void view_test_template_const_8() {
+    const V v;
+    const ConstV cv;
+
+    std::string data1 { "abc" };
+    const V copy1 { data1 };
+
+    const char* data2 = "abc";
+    const V copy2 { data2 };
+    const V copy3 { data2, 1 };
+
+    std::string copy4 = copy1;
+
+}
+
+template<class T>
+void view_test_template_simple() {
+    view_test_template_const<ConstGenericView<T>, ConstGenericView<T>>();
+    view_test_template_const<     GenericView<T>, ConstGenericView<T>>();
+    view_test_template<           GenericView<T>, ConstGenericView<T>>();
+}
+
+template<>
+void view_test_template_simple<uint8_t>() {
+    using T = uint8_t;
+    view_test_template_const<ConstGenericView<T>, ConstGenericView<T>>();
+    view_test_template_const<     GenericView<T>, ConstGenericView<T>>();
+    view_test_template<           GenericView<T>, ConstGenericView<T>>();
+    view_test_template_const_8<ConstGenericView<T>, ConstGenericView<T>>();
+}
+
+TEST(GenericView, template_8) {
+    view_test_template_simple<uint8_t>();
+}
+TEST(GenericView, template_16) {
+    view_test_template_simple<uint16_t>();
+}
+TEST(GenericView, template_32) {
+    view_test_template_simple<uint32_t>();
+}
+TEST(GenericView, template_64) {
+    view_test_template_simple<uint64_t>();
+}
+
 struct MySubAlgo: Algorithm {
     MySubAlgo(Env&& e): Algorithm(std::move(e)) {}
 
@@ -1165,15 +1344,15 @@ TEST(Escaping, option_value_direct) {
 }
 
 TEST(Escaping, option_value_indirect) {
-    Registry r;
-    r.register_compressor<EscapingComp>();
+    Registry<Compressor> r("compressor");
+    r.register_algorithm<EscapingComp>();
     auto av = r.parse_algorithm_id("esc_test");
     ASSERT_TRUE(av.needs_sentinel_terminator());
 }
 
 TEST(Escaping, option_value_indirect_copy) {
-    Registry r;
-    r.register_compressor<EscapingComp>();
+    Registry<Compressor> r("compressor");
+    r.register_algorithm<EscapingComp>();
     AlgorithmValue av = r.parse_algorithm_id("esc_test");
     AlgorithmValue av2("", {}, nullptr, false);
     av2 = std::move(av);
@@ -1249,8 +1428,8 @@ struct KeywordlessEvalOrderBug: public Compressor {
 
 TEST(KeywordlessEvalOrder, test) {
     auto x1 = create_algo<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
-    Registry r;
-    r.register_compressor<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
+    Registry<Compressor> r("compressor");
+    r.register_algorithm<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
     r.parse_algorithm_id("eval_order_bug(sub1 = sub1(x = 'x'), dyn = 'foobar', sub2 = sub2(y = 'y'))");
     r.parse_algorithm_id("eval_order_bug(sub1 = sub1, dyn = 'foobar', sub2 = sub2)");
     r.parse_algorithm_id("eval_order_bug(sub1 = sub1, dyn = 'foobar')");

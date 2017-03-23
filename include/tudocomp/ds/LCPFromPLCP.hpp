@@ -3,10 +3,12 @@
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/ArrayDS.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 /// Constructs the LCP array using the Phi algorithm.
-class LCPFromPLCP : public ArrayDS {
+class LCPFromPLCP: public Algorithm, public ArrayDS {
 private:
     len_t m_max;
 
@@ -18,7 +20,7 @@ public:
 
     template<typename textds_t>
     inline LCPFromPLCP(Env&& env, textds_t& t, CompressMode cm)
-            : ArrayDS(std::move(env)) {
+            : Algorithm(std::move(env)) {
 
         // Construct Suffix Array and PLCP Array
         auto& sa = t.require_sa(cm);
@@ -26,24 +28,22 @@ public:
 
         const size_t n = t.size();
 
-        // Compute LCP array
-        this->env().begin_stat_phase("Construct LCP Array");
+        StatPhase::wrap("Construct LCP Array", [&]{
+            // Compute LCP array
+            m_max = plcp.max_lcp();
+            const size_t w = bits_for(m_max);
 
-        m_max = plcp.max_lcp();
-        const size_t w = bits_for(m_max);
+            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : LEN_BITS));
 
-        m_data = std::make_unique<iv_t>(n, 0,
-            (cm == CompressMode::direct) ? w : LEN_BITS);
+            (*this)[0] = 0;
+            for(len_t i = 1; i < n; i++) {
+                const len_t x = plcp[sa[i]];
+                (*this)[i] = x;
+            }
 
-        (*m_data)[0] = 0;
-		for(len_t i = 1; i < n; i++) {
-            const len_t x = plcp[sa[i]];
-			(*m_data)[i] = x;
-		}
-
-        this->env().log_stat("bit_width", size_t(m_data->width()));
-        this->env().log_stat("size", m_data->bit_size() / 8);
-        this->env().end_stat_phase();
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
+        });
 
         if(cm == CompressMode::delayed) compress();
     }
@@ -53,16 +53,15 @@ public:
 	}
 
     void compress() {
-        DCHECK(m_data);
+        debug_check_array_is_initialized();
 
-        env().begin_stat_phase("Compress LCP Array");
+        StatPhase::wrap("Compress LCP Array", [this]{
+            width(bits_for(m_max));
+            shrink_to_fit();
 
-        m_data->width(bits_for(m_max));
-        m_data->shrink_to_fit();
-
-        env().log_stat("bit_width", size_t(m_data->width()));
-        env().log_stat("size", m_data->bit_size() / 8);
-        env().end_stat_phase();
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
+        });
     }
 };
 

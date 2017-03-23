@@ -43,14 +43,13 @@ namespace tdc_algorithms {
 using namespace tdc;
 
 /// \cond INTERNAL
-extern Registry REGISTRY;
-/// \endcond
+extern Registry<Compressor> COMPRESSOR_REGISTRY;
+extern Registry<Generator>  GENERATOR_REGISTRY;
 
-/// \brief Called when the driver application compiles its list of available
-///        algorithms.
-///
-/// \param registry The application's registry.
-void register_algorithms(Registry& registry);
+void register_compressors(Registry<Compressor>&);
+void register_generators(Registry<Generator>&);
+
+/// \endcond
 
 }
 

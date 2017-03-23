@@ -113,9 +113,21 @@ private:
             } else if(lcp_k < lcp_rc) {
                 // go to the right
                 dir = RIGHT;
-            } else {
+            }
+            else if(lcp_k == lcp_lc && lcp_k == lcp_rc) {
+                // both children are larger, pick the smallest
+                dir = (lc(pos) < rc(pos)) ? LEFT : RIGHT;
+            } else if(lcp_k == lcp_lc && k > lc(pos)) {
+                // go to the left
+                dir = LEFT;
+            } else if(lcp_k == lcp_rc && k > rc(pos)) {
+                // go to the right
+                dir = RIGHT;
+            }
+			else {
                 dir = NONE;
             }
+		
 
             // go down if necessary
             if(dir == LEFT) {
@@ -197,6 +209,12 @@ public:
     /// \return The index in the key array that points to the largest key.
     inline size_t get_max() const {
         return m_heap[0];
+    }
+
+    /// \brief Gets the top (first, maximum) item from the heap.
+    /// \return The index in the key array that points to the largest key.
+    inline size_t top() const {
+        return get_max();
     }
 
     /// \brief Gets an item's key.

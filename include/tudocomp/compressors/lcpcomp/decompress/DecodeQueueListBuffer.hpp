@@ -1,9 +1,9 @@
 #pragma once
 
 #include <vector>
-#include <sdsl/int_vector.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
 namespace lcpcomp {
@@ -23,7 +23,7 @@ class DecodeForwardQueueListBuffer : public Algorithm {
 private:
     std::vector<uliteral_t> m_buffer;
     std::vector<std::vector<len_t>> m_fwd;
-    sdsl::bit_vector m_decoded;
+    BitVector m_decoded;
 
     len_t m_cursor;
 
@@ -55,7 +55,7 @@ public:
 
         m_buffer.resize(size, 0);
         m_fwd.resize(size, std::vector<len_t>());
-        m_decoded = sdsl::bit_vector(size, 0);
+        m_decoded = BitVector(size, 0);
     }
 
     inline void decode_literal(uliteral_t c) {

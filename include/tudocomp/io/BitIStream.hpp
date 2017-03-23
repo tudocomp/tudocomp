@@ -132,6 +132,23 @@ public:
     }
 
     template<typename value_t>
+    inline value_t read_ternary() {
+        size_t mod = read_int<size_t>(2);
+        value_t v = 0;
+        if(mod < 3) {
+            size_t b = 1;
+            do {
+                v += mod * b;
+                b *= 3;
+                mod = read_int<size_t>(2);
+            } while(mod != 3);
+
+            ++v;
+        }
+        return v;
+    }
+
+    template<typename value_t>
     inline value_t read_elias_gamma() {
         auto bits = read_unary<size_t>();
         return read_int<value_t>(bits);

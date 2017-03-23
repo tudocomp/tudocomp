@@ -1,8 +1,10 @@
 #pragma once
 
-#include <tudocomp/Algorithm.hpp>
 #include <tudocomp/def.hpp>
-#include <sdsl/int_vector.hpp>
+#include <tudocomp/Algorithm.hpp>
+#include <tudocomp/ds/IntVector.hpp>
+
+#include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 namespace lcpcomp {
@@ -18,7 +20,7 @@ class MultimapBuffer : public Algorithm {
 private:
     std::vector<uliteral_t> m_buffer;
     std::unordered_multimap<len_t, len_t> m_fwd;
-    sdsl::bit_vector m_decoded;
+    BitVector m_decoded;
 
     len_t m_cursor;
     len_t m_longest_chain;
@@ -81,7 +83,7 @@ public:
     {
 		m_fwd.max_load_factor(0.8);
         m_buffer.resize(size, 0);
-        m_decoded = sdsl::bit_vector(size, 0);
+        m_decoded = BitVector(size, 0);
     }
 
     inline void decode_literal(uliteral_t c) {
@@ -113,12 +115,14 @@ public:
             --lazy;
         }
     }
-	IF_STATS(size_t max_size = 0);
 
     inline void decode_eagerly() {
         const len_t factors = m_source_pos.size();
-		env().log_stat("factors", factors);
-        env().begin_stat_phase("Decoding Factors");
+		StatPhase phase("Decoding Factors");
+        phase.log_stat("factors", factors);
+
+        IF_STATS(size_t max_size = 0);
+
         for(len_t j = 0; j < factors; ++j) {
             const len_t& target_position = m_target_pos[j];
             const len_t& source_position = m_source_pos[j];
@@ -133,16 +137,16 @@ public:
 			IF_STATS({
                 max_size = std::max(max_size, m_fwd.bucket_count());
 			    if((j+1) % ((factors+5)/5) == 0 ) {
-				    env().log_stat("hash table size", m_fwd.bucket_count());
-				    env().log_stat("hash table entries", m_fwd.size());
+				    phase.log_stat("hash table size", m_fwd.bucket_count());
+				    phase.log_stat("hash table entries", m_fwd.size());
 
-				    env().end_stat_phase();
-            		env().begin_stat_phase("Decoding Factors at position " + std::to_string(target_position));
+				    phase.split(
+                        std::string("Decoding Factors at position ")
+                         + std::to_string(target_position));
 			    }
             })
         }
-		IF_STATS(env().log_stat("hash table max size", max_size));
-		env().end_stat_phase();
+		IF_STATS(phase.log_stat("hash table max size", max_size));
     }
 
     inline len_t longest_chain() const {

@@ -145,6 +145,10 @@ public:
         level_indent(s, level);
         s << '}';
     }
+
+    inline std::string str() const {
+        return Value::str();
+    }
 };
 
 inline void Array::add(const Object& value) {
@@ -152,4 +156,3 @@ inline void Array::add(const Object& value) {
 }
 
 }} //ns
-

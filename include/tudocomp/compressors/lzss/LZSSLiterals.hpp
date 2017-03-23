@@ -8,7 +8,7 @@ namespace tdc {
 namespace lzss {
 
 template<typename text_t>
-class TextLiterals {
+class TextLiterals : LiteralIterator {
 private:
     const text_t* m_text;
     const FactorBuffer* m_factors;

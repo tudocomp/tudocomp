@@ -13,11 +13,13 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/io/IOUtil.hpp>
-#include <tudocomp/util/Json.hpp>
 #include <tudocomp/version.hpp>
 
 #include <tudocomp_driver/Options.hpp>
 #include <tudocomp_driver/Registry.hpp>
+
+#include <tudocomp_stat/Json.hpp>
+#include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc_driver {
 
@@ -86,12 +88,13 @@ int main(int argc, char** argv) {
 
     try {
         // load registry
-        const Registry& registry = REGISTRY;
+        const Registry<Compressor>& compressor_registry = COMPRESSOR_REGISTRY;
+        const Registry<Generator>& generator_registry = GENERATOR_REGISTRY;
 
         if (options.list) {
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
-            std::cout << registry.generate_doc_string();
+            std::cout << compressor_registry.generate_doc_string();
             return 0;
         }
 
@@ -131,8 +134,8 @@ int main(int argc, char** argv) {
 
         if(!options.stdin) {
             if(!options.generator.empty()) {
-                auto av = registry.parse_algorithm_id(options.generator, "generator");
-                generator = registry.select_generator_or_exit(av);
+                auto av = generator_registry.parse_algorithm_id(options.generator);
+                generator = generator_registry.select_algorithm(av);
             } else if(!options.remaining.empty()) {
                 // file
                 file = options.remaining[0];
@@ -210,9 +213,9 @@ int main(int argc, char** argv) {
         if (!options.algorithm.empty()) {
             auto id_string = options.algorithm;
 
-            auto av = registry.parse_algorithm_id(id_string, "compressor");
+            auto av = compressor_registry.parse_algorithm_id(id_string);
             auto needs_sentinel_terminator = av.needs_sentinel_terminator();
-            auto compressor = registry.select_compressor_or_exit(av);
+            auto compressor = compressor_registry.select_algorithm(av);
             auto algorithm_env = compressor->env().root();
 
             selection = Selection {
@@ -230,6 +233,8 @@ int main(int argc, char** argv) {
         clk::time_point setup_time;
         clk::time_point comp_time;
         clk::time_point end_time;
+
+        StatPhase root("root");
 
         {
             Input inp;
@@ -265,7 +270,8 @@ int main(int argc, char** argv) {
                     inp.escape_and_terminate();
                 }
 
-                selection.algorithm_env()->restart_stats("Compress");
+                //TODO: split?
+                //selection.algorithm_env()->restart_stats("Compress");
                 setup_time = clk::now();
                 selection.compressor().compress(inp, out);
                 comp_time = clk::now();
@@ -309,8 +315,8 @@ int main(int argc, char** argv) {
                     DLOG(INFO) << "Using header id string " << algorithm_header;
 
                     auto id_string = std::move(algorithm_header);
-                    auto av = registry.parse_algorithm_id(id_string, "compressor");
-                    auto compressor = registry.select_compressor_or_exit(av);
+                    auto av = compressor_registry.parse_algorithm_id(id_string);
+                    auto compressor = compressor_registry.select_algorithm(av);
                     auto needs_sentinel_terminator = av.needs_sentinel_terminator();
                     auto algorithm_env = compressor->env().root();
 
@@ -328,7 +334,8 @@ int main(int argc, char** argv) {
                     out.unescape_and_trim();
                 }
 
-                selection.algorithm_env()->restart_stats("Decompress");
+                //TODO: split?
+                //selection.algorithm_env()->restart_stats("Decompress");
                 setup_time = clk::now();
                 selection.compressor().decompress(inp, out);
                 comp_time = clk::now();
@@ -349,7 +356,7 @@ int main(int argc, char** argv) {
         end_time = clk::now();
 
         if (options.stats) {
-            auto algo_stats = selection.algorithm_env()->finish_stats();
+            auto algo_stats = root.to_json();
 
             auto setup_duration = setup_time - start_time;
             auto comp_duration = comp_time - setup_time;
@@ -374,7 +381,7 @@ int main(int argc, char** argv) {
 
             json::Object stats;
             stats.set("meta", meta);
-            stats.set("data", algo_stats.to_json());
+            stats.set("data", algo_stats);
 
             stats.str(std::cout);
             std::cout << std::endl;

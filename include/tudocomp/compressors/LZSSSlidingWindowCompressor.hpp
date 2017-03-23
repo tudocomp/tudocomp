@@ -5,6 +5,8 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/util.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 /// Computes the LZ77 factorization of the input by moving a sliding window
@@ -44,7 +46,8 @@ public:
         size_t ahead = 0; //marks the index in the buffer at which the back buffer ends and the ahead buffer begins
         char c;
 
-        env().begin_stat_phase("Factorize");
+        StatPhase phase("Factorize");
+
         //initially fill the buffer
         size_t buf_off = 0;
         while(buf.size() < 2 * m_window && ins.get(c)) {
@@ -53,7 +56,7 @@ public:
 
         //factorize
         const len_t threshold = env().option("threshold").as_integer(); //factor threshold
-        env().log_stat("threshold", threshold);
+        phase.log_stat("threshold", threshold);
 
         size_t pos = 0;
         bool eof = false;
@@ -112,7 +115,6 @@ public:
                 }
             }
         }
-        env().end_stat_phase();
     }
 
     inline virtual void decompress(Input& input, Output& output) override {

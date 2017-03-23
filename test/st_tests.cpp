@@ -5,6 +5,7 @@
 #include "test/util.hpp"
 
 using namespace tdc;
+using namespace tdc::lz78u;
 
 void test_strdepth(const std::string& str) {
 	if(str.length() == 0) return;

@@ -10,6 +10,8 @@
 //#include <tudocomp/compressors/lzss/LZSSDecodeForwardListMapBuffer.hpp>
 //#include <tudocomp/compressors/lzss/LZSSDecodeForwardQueueListBuffer.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lzss {
 
@@ -48,18 +50,24 @@ inline void encode_text(coder_t& coder,
     coder.encode(flen_max, text_r);
     coder.encode(fdist_max, text_r);
 
+    // walk over factors
     size_t p = 0;
     for(size_t i = 0; i < factors.size(); i++) {
         const Factor& f = factors[i];
 
-        if(factors[i].pos == p) coder.encode(false, bit_r);
-        else {
+        if(factors[i].pos == p) {
+            // cursor reached factor i, encode 0-bit
+            coder.encode(false, bit_r);
+        } else {
+            // cursor did not yet reach factor i, encode 1-bit
             coder.encode(true, bit_r);
 
+            // also encode amount of literals until factor i
             DCHECK_LE(p, factors[i].pos);
             coder.encode(factors[i].pos - p, fdist_r);
         }
 
+        // encode literals until cursor reaches factor i
         while(p < f.pos) {
             coder.encode(text[p++], literal_r);
         }
@@ -125,7 +133,7 @@ inline void decode_text(coder_t& decoder, std::ostream& outs) {
     }
 
     // log stats
-    decoder.env().log_stat("longest_chain", buffer.longest_chain());
+    StatPhase::log("longest_chain", buffer.longest_chain());
 
     // write decoded text
     buffer.write_to(outs);

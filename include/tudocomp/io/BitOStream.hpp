@@ -100,6 +100,18 @@ public:
     }
 
     template<typename value_t>
+    inline void write_ternary(value_t v) {
+        if(v) {
+            --v;
+            do {
+                write_int(v % 3, 2); // 0 -> 00, 1 -> 01, 2 -> 10
+                v /= 3;
+            } while(v);
+        }
+        write_int(3, 2); // terminator -> 11
+    }
+
+    template<typename value_t>
     inline void write_elias_gamma(value_t v) {
         write_unary(bits_for(v));
         write_int(v, bits_for(v));

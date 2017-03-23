@@ -55,9 +55,13 @@ lcpc_strat = [
     ("lcpcomp::MaxHeapStrategy",  "compressors/lcpcomp/compress/MaxHeapStrategy.hpp",   []),
     ("lcpcomp::MaxLCPStrategy",   "compressors/lcpcomp/compress/MaxLCPStrategy.hpp",    []),
     ("lcpcomp::ArraysComp", "compressors/lcpcomp/compress/ArraysComp.hpp",  []),
-    ("lcpcomp::PLCPStrategy",     "compressors/lcpcomp/compress/PLCPStrategy.hpp",      []),
     ("lcpcomp::PLCPPeaksStrategy","compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp", []),
 ]
+
+if config_match("^#define Boost_FOUND 1"): lcpc_strat += [
+    ("lcpcomp::BoostHeap",  "compressors/lcpcomp/compress/BoostHeap.hpp",   []),
+    ("lcpcomp::PLCPStrategy",     "compressors/lcpcomp/compress/PLCPStrategy.hpp",      [])
+    ]
 
 lcpc_buffer = [
     ("lcpcomp::ScanDec",       "compressors/lcpcomp/decompress/ScanDec.hpp", []),
@@ -82,19 +86,19 @@ textds = [
 ]
 
 compressors = [
+    ("LCPCompressor",               "compressors/LCPCompressor.hpp",               [lcpc_coder, lcpc_strat, lcpc_buffer, textds]),
+    ("LZ78UCompressor",             "compressors/LZ78UCompressor.hpp",             [lz78u_strategy, context_free_coder]),
     ("RunLengthEncoder",            "compressors/RunLengthEncoder.hpp",            []),
     ("LiteralEncoder",              "compressors/LiteralEncoder.hpp",              [coder]),
     ("LZ78Compressor",              "compressors/LZ78Compressor.hpp",              [context_free_coder, lz78_trie]),
-    ("LZ78UCompressor",             "compressors/LZ78UCompressor.hpp",             [lz78u_strategy, context_free_coder]),
     ("LZWCompressor",               "compressors/LZWCompressor.hpp",               [context_free_coder, lz78_trie]),
     ("RePairCompressor",            "compressors/RePairCompressor.hpp",            [coder]),
     ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [coder, textds]),
-    ("LCPCompressor",               "compressors/LCPCompressor.hpp",               [lcpc_coder, lcpc_strat, lcpc_buffer, textds]),
     ("LZSSSlidingWindowCompressor", "compressors/LZSSSlidingWindowCompressor.hpp", [context_free_coder]),
     ("MTFCompressor",               "compressors/MTFCompressor.hpp",               []),
-    ("ChainCompressor",             "compressors/ChainCompressor.hpp",             []),
     ("NoopCompressor",              "compressors/NoopCompressor.hpp",              []),
     ("BWTCompressor",               "compressors/BWTCompressor.hpp",               [textds]),
+    ("ChainCompressor",             "../tudocomp_driver/ChainCompressor.hpp",      []),
 ]
 
 generators = [
@@ -113,14 +117,20 @@ namespace tdc_algorithms {
 
 using namespace tdc;
 
-void register_algorithms(Registry& r);
+void register_compressors(Registry<Compressor>& r);
+void register_generators(Registry<Generator>& r);
 
 // One global instance for the registry
-Registry REGISTRY = Registry::with_all_from(register_algorithms);
+Registry<Compressor> COMPRESSOR_REGISTRY = Registry<Compressor>::with_all_from(register_compressors, "compressor");
+Registry<Generator> GENERATOR_REGISTRY = Registry<Generator>::with_all_from(register_generators, "generator");
 
-void register_algorithms(Registry& r) {
+void register_compressors(Registry<Compressor>& r) {
 $COMPRESSORS
-}//function register_algorithms
+}//function register_compressors
+
+void register_generators(Registry<Generator>& r) {
+$GENERATORS
+}//function register_generators
 
 }//ns
 '''
@@ -232,13 +242,17 @@ def gen_tudocomp_hpp():
 # Output algorithm.cpp
 def gen_algorithm_cpp():
     algorithms_cpp = algorithms_cpp_template
-    l = []
+    l_compressors = []
     for line in gen_list(compressors):
-        l += [str.format("    r.register_compressor<{}>();", line)]
-    for line in gen_list(generators):
-        l += [str.format("    r.register_generator<{}>();", line)]
+        l_compressors += [str.format("    r.register_algorithm<{}>();", line)]
 
-    return algorithms_cpp.replace("$COMPRESSORS", "\n".join(l)) + "\n"
+    l_generators = []
+    for line in gen_list(generators):
+        l_generators += [str.format("    r.register_algorithm<{}>();", line)]
+
+    return algorithms_cpp.replace(
+                "$COMPRESSORS", "\n".join(l_compressors)).replace(
+                "$GENERATORS", "\n".join(l_generators))+ "\n"
 
 if selection == "tudocomp.hpp":
     file2 = open(outfile, 'w+')

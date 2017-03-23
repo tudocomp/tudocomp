@@ -2,9 +2,8 @@
 
 #include <vector>
 
-#include <sdsl/int_vector.hpp>
-
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
@@ -32,9 +31,7 @@ public:
                    lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
-		env().begin_stat_phase("Construct text ds");
-		text.require(text_t::SA | text_t::ISA | text_t::LCP);
-		env().end_stat_phase();
+        text.require(text_t::SA | text_t::ISA | text_t::LCP);
 
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
@@ -44,7 +41,7 @@ public:
         size_t n = sa.size();
         size_t i = 0;
 
-        sdsl::bit_vector marked(n, 0);
+        BitVector marked(n, 0);
 
         while(i+1 < n) { // we skip text position T[n] == 0
             size_t s = isa[i];

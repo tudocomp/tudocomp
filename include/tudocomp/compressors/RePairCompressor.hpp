@@ -7,6 +7,8 @@
 
 #include <tudocomp/util/Counter.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 template <typename coder_t>
@@ -31,7 +33,7 @@ private:
     }
 
     template<typename text_t>
-    class Literals {
+    class Literals : LiteralIterator {
     private:
         const text_t* m_text;
         len_t         m_text_size;
@@ -199,8 +201,8 @@ public:
         }
         */
 
-        env().log_stat("rules", grammar.size());
-        env().log_stat("replaced", num_replaced);
+        StatPhase::log("rules", grammar.size());
+        StatPhase::log("replaced", num_replaced);
 
         // instantiate encoder
         typename coder_t::Encoder coder(env().env_for_option("coder"),
@@ -242,8 +244,8 @@ public:
             encode_sym(r, grammar_r);
         }
 
-        env().log_stat("grammar_terms", num_grammar_terminals);
-        env().log_stat("grammar_nonterms", num_grammar_nonterminals);
+        StatPhase::log("grammar_terms", num_grammar_terminals);
+        StatPhase::log("grammar_nonterms", num_grammar_nonterminals);
 
         // encode compressed text (start rule)
         size_t num_text_terminals = 0;
@@ -260,8 +262,8 @@ public:
             encode_sym(text[i], grammar_r);
         }
 
-        env().log_stat("text_terms", num_text_terminals);
-        env().log_stat("text_nonterms", num_text_nonterminals);
+        StatPhase::log("text_terms", num_text_terminals);
+        StatPhase::log("text_nonterms", num_text_nonterminals);
 
         // clean up
         delete[] next;

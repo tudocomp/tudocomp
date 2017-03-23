@@ -6,50 +6,59 @@
 namespace tdc {
 
 /// \brief Base for data structures that use an integer array as a storage.
-class ArrayDS : public Algorithm {
-protected:
+class ArrayDS: public DynamicIntVector {
+public:
     /// \brief The type of integer array to use as storage.
     using iv_t = DynamicIntVector;
 
-    /// \brief The integer array used as storage.
-    std::unique_ptr<iv_t> m_data;
+protected:
+    IF_DEBUG(
+        /// Debug check to ensure the vector has not been moved out.
+        bool m_is_initialized = false;
+    )
 
+    inline void debug_check_array_is_initialized() const {
+        IF_DEBUG(
+            DCHECK(m_is_initialized);
+        )
+    }
+
+    inline void set_array(iv_t&& iv) {
+        (iv_t&)(*this) = std::move(iv);
+        IF_DEBUG(m_is_initialized = true;)
+    }
 public:
+    inline ArrayDS() {}
+    inline ArrayDS(const ArrayDS& other) = delete;
+    inline ArrayDS(ArrayDS&& other): DynamicIntVector(std::move(other)){
+        IF_DEBUG(m_is_initialized = other.m_is_initialized;)
+    }
+    inline ArrayDS& operator=(ArrayDS&& other) {
+        set_array(std::move(other));
+        IF_DEBUG(m_is_initialized = other.m_is_initialized;)
+        return *this;
+    }
+
     /// \brief The data structure's data type.
     using data_type = iv_t;
-
-    using Algorithm::Algorithm;
 
     /// \brief Forces the data structure to relinquish its data storage.
     ///
     /// This is done by moving the ownership of the storage to the caller.
     /// After this operation, the data structure will behave as if it was
-    /// uninitialized.
-    inline std::unique_ptr<iv_t> relinquish() {
-        DCHECK(m_data);
-        return std::move(m_data);
+    /// empty, and may throw debug assertions on access.
+    inline iv_t relinquish() {
+        debug_check_array_is_initialized();
+        IF_DEBUG(m_is_initialized = false;)
+        return std::move(static_cast<iv_t&>(*this));
     }
 
     /// \brief Creates a copy of the data structure's storage.
-    inline std::unique_ptr<iv_t> copy() {
-        DCHECK(m_data);
-        return std::make_unique<iv_t>(*m_data);
+    inline iv_t copy() const {
+        debug_check_array_is_initialized();
+        return iv_t(*this);
     }
 
-    /// \brief Accesses an element in the data structure.
-    ///
-    /// \param i The index of the element to access.
-    inline len_t operator[](size_t i) const {
-        DCHECK(m_data);
-        return (*m_data)[i];
-    }
-
-    /// \brief Yields the number of elements stored in this data structure.
-    /// \return The number of elements stored in this data structure.
-    inline size_t size() const {
-        DCHECK(m_data);
-        return m_data->size();
-    }
 };
 
 } //ns
