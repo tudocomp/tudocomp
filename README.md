@@ -1,7 +1,7 @@
 tudocomp
 ========
 
-The **T**echnical **U**niversity of **DO**rtmund **COMP**ression Framework
+The Technical University of DOrtmund COMPression Framework
 (*tudocomp*) is a lossless compression framework with the aim to support and
 facilitate the implementation of novel compression algorithms. It already
 comprises a range of standard data compression and encoding algorithms. These
@@ -17,12 +17,13 @@ This way, the user can combine algorithms to find the optimal compression
 strategy for a given input. The framework gives this opportunity while creating
 as little performance overhead as possible.
 
-
 # Dependencies
 
-The framework is built using [CMake](https://cmake.org) (3.0.2 or later).
+*tudocomp* is built using [CMake](https://cmake.org) (3.0.2 or later).
 It is written in `C++11` with GNU extensions and has been tested with the `gcc`
 compiler family (version 4.9.2 or later) and `clang` (version 3.5.2 or later).
+The build process requires a [Python](https://www.python.org/) interpreter
+(3 or later) to be installed on the system (`py` scripts are invoked directly).
 
 It has the following external dependencies:
 
@@ -34,26 +35,29 @@ It has the following external dependencies:
 Additionally, the tests require
 [Google Test](https://github.com/google/googletest) (1.7.0 or later).
 
-The CMake build scripts will either find the external dependencies on the build
-system, or automatically download and build them from their official
-repositories in case they cannot be found.
+The CMake build process will either find the external dependencies on the build
+system if they have been properly installed, or automatically download and build
+them from their official repositories in case they cannot be found.
 
 For building the documentation, the following tools are required:
 
-* LaTeX (specifically the `pdflatex` component)
+* [LaTeX](http://www.latex-project.org) (specifically the `pdflatex` component)
 * [Doxygen](http://doxygen.org) (1.8 or later).
-* [Pandoc](http://pandoc.org) (1.16 or later).
+* [Pandoc](http://pandoc.org) (1.19 or later).
 
-## Building on Windows
+## Windows Support
 
-On Windows, the framework can be built in a [Cygwin](https://www.cygwin.com/)
-environment. `mingw` and Microsoft Visual Studio are *not* supported at this
-point.
+We highly recommend users of Windows 10 or later to use the
+[Bash on Ubuntu on Windows](https://msdn.microsoft.com/en-us/commandline/wsl/about).
 
-> *Note:* In a *Cygwin* environment, due to its nature of not allowing overrides
-          of `malloc` and friends, the `malloc_count` module is not functional,
-          i.e., memory heap allocations cannot be measured.
+That being said, *tudocomp* has no explicit support for Windows. However, the
+project can be built in a [Cygwin](https://www.cygwin.com/) environment with a
+limited feature set. Cygwin does not allow overrides of `malloc`, therefore the
+heap allocation counter cannot work and statistics tracking becomes largely
+nonfunctional.
 
 # License
 
-The framework is published under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+The framework is published under the
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
