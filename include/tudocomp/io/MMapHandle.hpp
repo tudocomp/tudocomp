@@ -20,7 +20,7 @@ namespace io {
         View m_map;
         int m_fd;
 
-        inline size_t getFilesize(const char* filename) {
+        inline size_t get_filesize(const char* filename) {
             struct stat st;
             stat(filename, &st);
             return st.st_size;
@@ -32,7 +32,7 @@ namespace io {
         }
     public:
         inline MMapHandle(const std::string& path) {
-            size_t filesize = getFilesize(path.c_str());
+            size_t filesize = get_filesize(path.c_str());
             //Open file
             int fd = open(path.c_str(), O_RDONLY);
             CHECK(fd != -1);

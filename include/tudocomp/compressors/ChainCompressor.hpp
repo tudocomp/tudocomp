@@ -68,7 +68,7 @@ public:
         chain(input, output, false, [](Input& i,
                                        Output& o,
                                        Compressor& c,
-                                       ds::InputRestrictionAndFlags flags) {
+                                       ds::InputRestrictionsAndFlags flags) {
             // TODO !!!!!!!!!!
             //if (needs_sentinel) {
                 //i.escape_and_terminate();
@@ -85,7 +85,7 @@ public:
         chain(input, output, true, [](Input& i,
                                       Output& o,
                                       Compressor& c,
-                                      ds::InputRestrictionAndFlags flags) {
+                                      ds::InputRestrictionsAndFlags flags) {
             // TODO !!!!!!!!!!
             //if (needs_sentinel) {
                 //o.unescape_and_trim();

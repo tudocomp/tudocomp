@@ -17,8 +17,8 @@ public:
         return m;
     }
 
-    inline static ds::InputRestriction restrictions() {
-        return ds::InputRestriction {};
+    inline static ds::InputRestrictions restrictions() {
+        return ds::InputRestrictions {};
     }
 
     template<typename textds_t>

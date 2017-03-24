@@ -44,6 +44,15 @@ void read_bytes_to_vec(std::istream& inp, T& vec, size_t bytes) {
     }
 }
 
+inline std::ifstream create_tdc_ifstream(const char* filename, size_t offset) {
+    std::ifstream in(filename, std::ios::in | std::ios::binary);
+    if (bool(in)) {
+        in.seekg(offset, std::ios::beg);
+        return in;
+    }
+    throw tdc_input_file_not_found_error(filename);
+}
+
 template<class T>
 T read_file_to_stl_byte_container(const std::string& filename,
                                   size_t offset = 0,

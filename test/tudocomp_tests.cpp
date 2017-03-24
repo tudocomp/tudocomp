@@ -15,6 +15,7 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/io/MMapHandle.hpp>
+#include <tudocomp/ds/TextDS.hpp>
 
 #include "test/util.hpp"
 
@@ -222,9 +223,9 @@ void stream_moving(Input& i) {
     }
     {
         InputStream s4 = i.as_stream();
-        ASSERT_EQ(s4.get(), 'd');
+        ASSERT_EQ(s4.get(), 'a');
         InputStream s5(std::move(s4));
-        ASSERT_EQ(s5.get(), 'e');
+        ASSERT_EQ(s5.get(), 'b');
     }
 }
 
@@ -275,7 +276,7 @@ TEST(Input, ensure_null_term) {
 
     {
         Input i(View(a).slice(0, 3));
-        i.escape_and_terminate();
+        i = Input(i, InputRestrictions({0}, true));
         auto x = i.as_view();
         ASSERT_NE(x, b);
         ASSERT_EQ(x, c);
@@ -285,7 +286,7 @@ TEST(Input, ensure_null_term) {
     {
         Input i(View(a).slice(0, 3));
         Input i2 = std::move(i);
-        i2.escape_and_terminate();
+        i2 = Input(i2, InputRestrictions({0}, true));
         auto x = i2.as_view();
         ASSERT_NE(x, b);
         ASSERT_EQ(x, c);
@@ -294,7 +295,7 @@ TEST(Input, ensure_null_term) {
 
     {
         Input i(View(a).slice(0, 3));
-        i.escape_and_terminate();
+        i = Input(i, InputRestrictions({0}, true));
 
         Input i2 = i;
 
@@ -311,7 +312,7 @@ TEST(Input, ensure_null_term) {
     {
         Input i(View(a).slice(0, 3));
 
-        i.escape_and_terminate();
+        i = Input(i, InputRestrictions({0}, true));
         {
             auto x = i.as_view();
             ASSERT_NE(x, b);
@@ -319,14 +320,15 @@ TEST(Input, ensure_null_term) {
         }
         {
             auto x = i.as_view();
-            ASSERT_EQ(x, "\0"_v);
+            ASSERT_NE(x, b);
+            ASSERT_EQ(x, c);
         }
     }
     ASSERT_EQ(a, a2);
 }
 
 namespace input_nte_matrix {
-    using Path = Input::Path;
+    using Path = io::Path;
 
     std::vector<uint8_t>       slice_buf       { 97,  98,  99, 100, 101, 102 };
     const View                 slice           = View(slice_buf).slice(0, 3);
@@ -348,7 +350,7 @@ namespace input_nte_matrix {
         return i;
     }
 
-    Input::Path file(View i) {
+    io::Path file(View i) {
         std::hash<std::string> hasher;
 
         std::string basename = std::string("matrix_test_file_path") + std::string(i);
@@ -359,7 +361,7 @@ namespace input_nte_matrix {
         //std::cout << " basename after: " << basename << "\n";
 
         test::write_test_file(basename, i);
-        return Input::Path { test::test_file_path(basename) };
+        return io::Path { test::test_file_path(basename) };
     }
 
     template<class T>
@@ -430,7 +432,7 @@ namespace input_nte_matrix {
         }
         {
             Input i = i_bak;
-            i.escape_and_terminate();
+            i = Input(i, InputRestrictions({0}, true));
             auto x = i.as_view();
             ASSERT_NE(x, b);
             ASSERT_EQ(x, c);
@@ -438,7 +440,7 @@ namespace input_nte_matrix {
 
         {
             Input i = i_bak;
-            i.escape_and_terminate();
+            i = Input(i, InputRestrictions({0}, true));
             Input i2 = i;
 
             auto x = i2.as_view();
@@ -452,7 +454,7 @@ namespace input_nte_matrix {
 
         {
             Input i = i_bak;
-            i.escape_and_terminate();
+            i = Input(i, InputRestrictions({0}, true));
             {
                 auto x = i.as_view();
                 ASSERT_NE(x, b);
@@ -460,7 +462,8 @@ namespace input_nte_matrix {
             }
             {
                 auto x = i.as_view();
-                ASSERT_EQ(x, "\0"_v);
+                ASSERT_NE(x, b);
+                ASSERT_EQ(x, c);
             }
         }
 
@@ -530,24 +533,18 @@ namespace input_nte_matrix {
 
 TEST(Input, escaping_view) {
     Input i("\0\x01\xff\xfe\0"_v);
-    i.escape_and_terminate();
+    i = Input(i, InputRestrictions({0}, true));
     auto v = i.as_view();
     ASSERT_EQ(View(v), "\xff\xfe\x01\xff\xff\xfe\xff\xfe\0"_v);
 }
 
 TEST(Input, escaping_stream) {
-    bool threw = false;
-    try {
-        Input i("\0\x01\xff\xfe\0"_v);
-        i.escape_and_terminate();
-        auto s = i.as_stream();
-        std::stringstream ss;
-        ss << s.rdbuf();
-        ASSERT_EQ(ss.str(), "\0\x01\xff\xfe\0"_v);
-    } catch (std::runtime_error e) {
-        threw = true;
-    }
-    ASSERT_TRUE(threw);
+    Input i("\0\x01\xff\xfe\0"_v);
+    i = Input(i, InputRestrictions({0}, true));
+    auto s = i.as_stream();
+    std::stringstream ss;
+    ss << s.rdbuf();
+    ASSERT_EQ(ss.str(), "\xff\xfe\x01\xff\xff\xfe\xff\xfe\0"_v);
 }
 
 TEST(Output, unescaping) {
@@ -556,7 +553,7 @@ TEST(Output, unescaping) {
     std::vector<uint8_t> buf;
     {
         Output o(buf);
-        o.unescape_and_trim();
+        o = Output(o, InputRestrictions({0}, true));
         auto s = o.as_stream();
         s.write((const char*) r.data(), r.size());
     }
@@ -604,7 +601,7 @@ TEST(Output, memory) {
 }
 
 TEST(Output, file) {
-    Output out = Output::from_path(test::test_file_path(fn("short_out.txt")), true);
+    Output out = Output::from_path(io::Path(test::test_file_path(fn("short_out.txt"))), true);
 
     {
         auto stream = out.as_stream();
@@ -655,7 +652,7 @@ TEST(Input, file_not_exists_view) {
 TEST(Output, file_not_exists_view) {
     bool threw = false;
     try {
-        Output ft = Output::from_path("asdfgh/out.txt");
+        Output ft = Output::from_path(io::Path("asdfgh/out.txt"));
         ft.as_stream();
     } catch (std::runtime_error& e) {
         ASSERT_EQ(View(e.what()), "output file asdfgh/out.txt can not be created/accessed");
@@ -1330,7 +1327,7 @@ TEST(Algorithm, meta) {
 struct EscapingComp: public Compressor {
     static Meta meta() {
         Meta m("compressor", "esc_test");
-        m.needs_sentinel_terminator();
+        m.uses_textds<TextDS<>>(ds::SA);
         return m;
     }
 
@@ -1341,23 +1338,45 @@ struct EscapingComp: public Compressor {
 };
 
 TEST(Escaping, option_value_direct) {
-    ASSERT_TRUE(EscapingComp::meta().is_needs_sentinel_terminator());
+    ASSERT_EQ(
+        EscapingComp::meta().textds_flags(),
+        (ds::InputRestrictionsAndFlags {
+            io::InputRestrictions({0}, true),
+            ds::SA
+        })
+    );
 }
 
 TEST(Escaping, option_value_indirect) {
     Registry r;
     r.register_compressor<EscapingComp>();
     auto av = r.parse_algorithm_id("esc_test");
-    ASSERT_TRUE(av.needs_sentinel_terminator());
+
+    ASSERT_EQ(
+        av.textds_flags(),
+        (ds::InputRestrictionsAndFlags {
+            io::InputRestrictions({0}, true),
+            ds::SA
+        })
+    );
 }
 
 TEST(Escaping, option_value_indirect_copy) {
     Registry r;
     r.register_compressor<EscapingComp>();
     AlgorithmValue av = r.parse_algorithm_id("esc_test");
-    AlgorithmValue av2("", {}, nullptr, false);
+    AlgorithmValue av2("", {}, nullptr, (ds::InputRestrictionsAndFlags {
+            io::InputRestrictions({0}, true),
+            ds::SA
+        }));
     av2 = std::move(av);
-    ASSERT_TRUE(av2.needs_sentinel_terminator());
+    ASSERT_EQ(
+        av2.textds_flags(),
+        (ds::InputRestrictionsAndFlags {
+            io::InputRestrictions({0}, true),
+            ds::SA
+        })
+    );
 }
 
 TEST(Test, TestInputCompression) {

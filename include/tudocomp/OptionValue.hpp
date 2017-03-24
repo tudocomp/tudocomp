@@ -40,7 +40,7 @@ private:
     // Aways valid!
     std::unique_ptr<pattern::Algorithm> m_static_selection;
     friend class OptionValue;
-    ds::InputRestrictionAndFlags m_ds_flags;
+    ds::InputRestrictionsAndFlags m_ds_flags;
 public:
     inline ~AlgorithmValue();
     inline AlgorithmValue(const AlgorithmValue& other);
@@ -48,11 +48,11 @@ public:
     inline AlgorithmValue(std::string&& name,
                           ArgumentMap&& arguments,
                           std::unique_ptr<pattern::Algorithm>&& static_selection,
-                          ds::InputRestrictionAndFlags flags);
+                          ds::InputRestrictionsAndFlags flags);
 
     inline const std::string& name() const;
     inline const ArgumentMap& arguments() const;
-    inline ds::InputRestrictionAndFlags textds_flags() const;
+    inline ds::InputRestrictionsAndFlags textds_flags() const;
     inline const pattern::Algorithm& static_selection() const;
     inline AlgorithmValue& operator=(AlgorithmValue&& other);
 };
@@ -106,7 +106,7 @@ inline AlgorithmValue::AlgorithmValue(AlgorithmValue&& other):
 inline AlgorithmValue::AlgorithmValue(std::string&& name,
                         ArgumentMap&& arguments,
                         std::unique_ptr<pattern::Algorithm>&& static_selection,
-                        ds::InputRestrictionAndFlags flags):
+                        ds::InputRestrictionsAndFlags flags):
     m_name(std::move(name)),
     m_arguments(std::move(arguments)),
     m_static_selection(std::move(static_selection)),
@@ -129,7 +129,7 @@ inline AlgorithmValue& AlgorithmValue::operator=(AlgorithmValue&& other) {
     this->m_ds_flags = std::move(other.m_ds_flags);
     return *this;
 }
-inline ds::InputRestrictionAndFlags AlgorithmValue::textds_flags() const {
+inline ds::InputRestrictionsAndFlags AlgorithmValue::textds_flags() const {
     return m_ds_flags;
 }
 
@@ -138,7 +138,7 @@ inline OptionValue::~OptionValue() {}
 inline OptionValue::OptionValue(): OptionValue("") {}
 inline OptionValue::OptionValue(std::string&& value):
     m_is_value(true),
-    m_value_or_algorithm(AlgorithmValue(std::move(value), {}, std::make_unique<pattern::Algorithm>(), ds::InputRestrictionAndFlags())) {}
+    m_value_or_algorithm(AlgorithmValue(std::move(value), {}, std::make_unique<pattern::Algorithm>(), ds::InputRestrictionsAndFlags())) {}
 inline OptionValue::OptionValue(AlgorithmValue&& algorithm):
     m_is_value(false),
     m_value_or_algorithm(std::move(algorithm)) {}

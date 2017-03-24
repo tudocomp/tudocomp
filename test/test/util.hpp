@@ -25,6 +25,7 @@
 #include <tudocomp/generators/ThueMorseGenerator.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
+#include <tudocomp/io/Path.hpp>
 
 using namespace tdc;
 
@@ -393,7 +394,9 @@ public:
             auto compressor = create_algo_with_registry<C>(options, m_registry);
 
             if (C::meta().is_needs_sentinel_terminator()) {
-                decoded_out.unescape_and_trim();
+                // TODO
+                DCHECK(false);
+                //decoded_out.unescape_and_trim();
             }
 
             compressor.decompress(text_in, decoded_out);
@@ -413,8 +416,8 @@ public:
 
             auto compressor = create_algo_with_registry<C>(options, m_registry);
 
-            if (C::meta().is_needs_sentinel_terminator()) {
-                decoded_out.unescape_and_trim();
+            if (C::meta().textds_flags().has_restrictions()) {
+                decoded_out = Output(decoded_out, C::meta().textds_flags());
             }
 
             compressor.decompress(text_in, decoded_out);
@@ -446,8 +449,9 @@ public:
             Output encoded_out = Output::from_memory(encoded_buffer);
 
             auto compressor = create_algo_with_registry<C>(m_options, m_registry);
-            if (C::meta().is_needs_sentinel_terminator()) {
-                text_in.escape_and_terminate();
+
+            if (C::meta().textds_flags().has_restrictions()) {
+                text_in = Input(text_in, C::meta().textds_flags());
             }
             compressor.compress(text_in, encoded_out);
         }
@@ -515,12 +519,12 @@ class TestInput: public Input {
 public:
     inline TestInput(string_ref text, bool sentinel): Input(text) {
         if (sentinel) {
-            this->escape_and_terminate();
+            ((Input&) *this) = Input(*this, io::InputRestrictions({0}, true));
         }
     }
-    inline TestInput(Input::Path&& path, bool sentinel): Input(std::move(path)) {
+    inline TestInput(io::Path&& path, bool sentinel): Input(std::move(path)) {
         if (sentinel) {
-            this->escape_and_terminate();
+            ((Input&) *this) = Input(*this, io::InputRestrictions({0}, true));
         }
     }
 };
@@ -531,7 +535,7 @@ public:
         Output(static_cast<std::vector<uint8_t>&>(*this))
     {
         if (sentinel) {
-            this->unescape_and_trim();
+            ((Output&) *this) = Output(*this, io::InputRestrictions({0}, true));
         }
     }
 
@@ -549,7 +553,7 @@ TestInput compress_input(string_ref text) {
 ///
 /// It will contain the bytes contained in the file at `path`.
 TestInput compress_input_file(string_ref path) {
-    return TestInput(Input::Path{std::string(path)}, true);
+    return TestInput(io::Path{std::string(path)}, true);
 }
 
 /// Creates an instance of an `tdc::Output` to be used with `Compressor::compress()`.
@@ -570,7 +574,7 @@ TestInput decompress_input(string_ref text) {
 ///
 /// It will contain the bytes contained in the file at `path`.
 TestInput decompress_input_file(string_ref path) {
-    return TestInput(Input::Path{std::string(path)}, false);
+    return TestInput(io::Path{std::string(path)}, false);
 }
 
 /// Creates an instance of an `tdc::Output` to be used with `Compressor::decompress()`.

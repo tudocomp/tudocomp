@@ -518,14 +518,14 @@ namespace tdc {
             std::string m_name;
             std::vector<Arg> m_arguments;
             std::string m_doc;
-            ds::InputRestrictionAndFlags m_ds_flags;
+            ds::InputRestrictionsAndFlags m_ds_flags;
 
         public:
 
             inline Algorithm(std::string&& name,
                              std::vector<Arg>&& args,
                              std::string&& doc,
-                             ds::InputRestrictionAndFlags flags):
+                             ds::InputRestrictionsAndFlags flags):
                 m_name(std::move(name)),
                 m_arguments(std::move(args)),
                 m_doc(std::move(doc)),
@@ -546,7 +546,7 @@ namespace tdc {
                 return m_doc;
             }
 
-            inline ds::InputRestrictionAndFlags textds_flags() {
+            inline ds::InputRestrictionsAndFlags textds_flags() {
                 return m_ds_flags;
             }
 
@@ -924,7 +924,7 @@ namespace tdc {
             auto& v_signature = *found;
 
             // Prepare return value
-            ds::InputRestrictionAndFlags r_ds_flags = v_signature.textds_flags();
+            ds::InputRestrictionsAndFlags r_ds_flags = v_signature.textds_flags();
             std::string r_name = v_signature.name();
             std::vector<pattern::Arg> r_static_args;
             AlgorithmValue::ArgumentMap r_dynamic_args;

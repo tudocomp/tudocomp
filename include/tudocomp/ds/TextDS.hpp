@@ -44,8 +44,8 @@ public:
     using lcp_type = lcp_t;
     using isa_type = isa_t;
 
-    inline static ds::InputRestriction common_restrictions(dsflags_t flags) {
-        ds::InputRestriction rest;
+    inline static ds::InputRestrictions common_restrictions(dsflags_t flags) {
+        ds::InputRestrictions rest;
 
         if (flags & SA)   rest |= sa_type::restrictions();
         if (flags & ISA)  rest |= isa_type::restrictions();

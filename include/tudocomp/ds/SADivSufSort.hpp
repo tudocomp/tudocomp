@@ -15,8 +15,8 @@ public:
         return m;
     }
 
-    inline static ds::InputRestriction restrictions() {
-        return ds::InputRestriction {
+    inline static ds::InputRestrictions restrictions() {
+        return ds::InputRestrictions {
             { 0 },
             true
         };

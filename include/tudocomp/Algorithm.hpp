@@ -59,7 +59,7 @@ class Meta {
     std::string m_type;
     std::string m_name;
     std::string m_docs;
-    ds::InputRestrictionAndFlags m_ds_flags;
+    ds::InputRestrictionsAndFlags m_ds_flags;
 
     std::vector<decl::Arg> m_options;
 
@@ -283,17 +283,13 @@ public:
     /// \brief Indicates that this Algorithm uses the TextDS class.
     template<typename text_t>
     inline void uses_textds(ds::dsflags_t flags) {
-        ds::InputRestrictionAndFlags r(text_t::common_restrictions(flags),
+        ds::InputRestrictionsAndFlags r(text_t::common_restrictions(flags),
                                        flags);
-
-        // TODO: propagate r through everything
-        // Then: Input and Outpout in change to functional
-
         m_ds_flags = r;
     }
 
     /// \cond INTERNAL
-    inline ds::InputRestrictionAndFlags textds_flags() {
+    inline ds::InputRestrictionsAndFlags textds_flags() {
         return m_ds_flags;
     }
     /// \endcond
