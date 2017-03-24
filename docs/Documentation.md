@@ -1192,7 +1192,57 @@ that has to take care of this.
 
 ## String Generators
 
->> *TODO*: Describe interface and provide usage example.
+String generators are used to generate input strings via the command-line (as
+described in the [Command-line Tool](#command-line-tool) section) or for unit
+tests, to name some examples.
+
+They are based on the [`Generator`](@DX_GENERATOR@) class, which inherits from
+`Algorithm` (see [Algorithms](#algorithms)) and only need to implement the
+[`generate`](@DX_GENERATOR_GENERATE@) function.
+
+In order to allow for convenient use within *tudocomp*, the actual generation
+should be implemented in a static function that receives all parameters directly
+instead of relying on an environment.
+
+The following class fully implements a string generator that simply repeats an
+optional character an optional amount of times:
+
+~~~ {.cpp caption="generator_impl.cpp"}
+class MyGenerator : public Generator {
+public:
+    inline static Meta meta() {
+        Meta m("generator", "my_compressor", "An example compressor");
+        m.option("length").dynamic();
+        m.option("char").dynamic('a');
+        return m;
+    }
+
+    inline static std::string generate(size_t length, char c) {
+        return std::string(length, c);
+    }
+
+    using Generator::Generator;
+
+    inline virtual std::string generate() override {
+        return generate(
+            env().option("length").as_integer(),
+            env().option("char").as_integer());
+    }
+};
+~~~
+
+### Available String Generators
+
+Out of the box, *tudocomp* currently implements a set of string generators,
+including:
+
+* Random strings with uniform character distribution
+* Fibonacci words
+* Thue-Morse strings
+* Run-Rich strings (Matsubara et al.)
+
+A full list can be found in the inheritance diagram for the
+[`Generator`](@DX_GENERATOR@) class' API reference.
 
 ## Text Data Structures
 
