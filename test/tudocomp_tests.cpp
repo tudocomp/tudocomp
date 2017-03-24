@@ -1467,7 +1467,7 @@ TEST(MMapHandle, test1) {
     test::write_test_file("mmap1.txt", s);
     auto path = test::test_file_path("mmap1.txt");
 
-    MMapHandle mmap { path };
+    const MMap mmap { path, MMap::Mode::Read, s.size() };
 
     ASSERT_EQ(mmap.view(), s);
 }

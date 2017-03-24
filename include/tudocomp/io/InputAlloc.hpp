@@ -62,76 +62,80 @@ namespace tdc {namespace io {
                 }
             }
 
-            // Check for partial matches in the cache that can be sliced
-            // into
-            for (auto& eptr : selection) {
-                auto& e = **eptr;
-                if (e.restrictions() == restrictions) {
-                    if (e.from() <= from && e.to() >= to) {
-                        View v = e.view();
-
-                        auto from_diff = from - e.from();
-                        auto len = to - from;
-
-                        v = v.substr(from_diff, len);
-
-                        std::cout << "#! Reslicing existing allocation\n";
-                        return create_buffer([&]() {
-                            return RestrictedBuffer(
-                                InputSource(v),
-                                0,
-                                RestrictedBuffer::npos,
-                                restrictions,
-                                std::make_shared<InputAllocChunkHandleKeepalive>(
-                                    *eptr
-                                )
-                            );
-                        });
-                    }
-                }
-            }
-
-            // Finally check for unowned allocations that can be reused
-            // instead of creating a new allocation
-            for (auto& eptr : selection) {
-                auto& e = **eptr;
-                if (eptr->unique() && !(e.restrictions() == restrictions)) {
-                    if (e.from() <= from && e.to() >= to) {
-                        auto removed_eptr = InputAllocChunkHandle();
-                        eptr->swap(removed_eptr);
-
-                        RestrictedBuffer buffer = std::move(*removed_eptr);
-
-                        std::cout << "Existing restriction: " << buffer.restrictions() << "\n";
-                        std::cout << "New      restriction: " << restrictions << "\n";
-
-                        auto buffer2 = RestrictedBuffer::restrict(
-                            std::move(buffer), from, to, restrictions);
-
-                        std::cout << "#! Reusing existing allocation\n";
-                        return create_buffer([&]() {
-                            return std::move(buffer2);
-                        });
-                    }
-                }
-            }
-
+            // If src is a stream that got already created once, we need to
+            // do something more complicted.
             if (src.is_stream() && !selection.empty()) {
-                std::cerr << "[Err]: This should not be reached in normal situations\n";
-                std::cerr << "This from/to:     " << from << ", " << to << "\n";
-                std::cerr << "This restriction: " << restrictions << "\n";
-
-                std::cerr << "Existing allocations:\n";
+                // Check for partial matches in the cache that can be sliced
+                // into
                 for (auto& eptr : selection) {
-                    if (*eptr) {
-                        auto& e = **eptr;
-                        std::cerr << "  from/to:     " << e.from() << ", " << e.to() << "\n";
-                        std::cerr << "  restriction: " << e.restrictions() << "\n";
-                        std::cerr << "  use count:   " << eptr->use_count() << "\n";
+                    auto& e = **eptr;
+                    if (e.restrictions() == restrictions) {
+                        if (e.from() <= from && e.to() >= to) {
+                            View v = e.view();
+
+                            auto from_diff = from - e.from();
+                            auto len = to - from;
+
+                            v = v.substr(from_diff, len);
+
+                            std::cout << "#! Reslicing existing allocation\n";
+                            return create_buffer([&]() {
+                                return RestrictedBuffer(
+                                    InputSource(v),
+                                    0,
+                                    RestrictedBuffer::npos,
+                                    restrictions,
+                                    std::make_shared<InputAllocChunkHandleKeepalive>(
+                                        *eptr
+                                    )
+                                );
+                            });
+                        }
                     }
                 }
 
-                DCHECK(false) << "needs to do special handling";
+                // Finally check for unowned allocations that can be reused
+                // instead of creating a new allocation
+                for (auto& eptr : selection) {
+                    auto& e = **eptr;
+                    if (eptr->unique() && !(e.restrictions() == restrictions)) {
+                        if (e.from() <= from && e.to() >= to) {
+                            auto removed_eptr = InputAllocChunkHandle();
+                            eptr->swap(removed_eptr);
+
+                            RestrictedBuffer buffer = std::move(*removed_eptr);
+
+                            std::cout << "Existing restriction: " << buffer.restrictions() << "\n";
+                            std::cout << "New      restriction: " << restrictions << "\n";
+
+                            auto buffer2 = RestrictedBuffer::restrict(
+                                std::move(buffer), from, to, restrictions);
+
+                            std::cout << "#! Reusing existing allocation\n";
+                            return create_buffer([&]() {
+                                return std::move(buffer2);
+                            });
+                        }
+                    }
+                }
+
+                if (!selection.empty()) {
+                    std::cerr << "[Err]: This should not be reached in normal situations\n";
+                    std::cerr << "This from/to:     " << from << ", " << to << "\n";
+                    std::cerr << "This restriction: " << restrictions << "\n";
+
+                    std::cerr << "Existing allocations:\n";
+                    for (auto& eptr : selection) {
+                        if (*eptr) {
+                            auto& e = **eptr;
+                            std::cerr << "  from/to:     " << e.from() << ", " << e.to() << "\n";
+                            std::cerr << "  restriction: " << e.restrictions() << "\n";
+                            std::cerr << "  use count:   " << eptr->use_count() << "\n";
+                        }
+                    }
+
+                    DCHECK(false) << "needs to do special handling";
+                }
             }
 
             //std::cout << "#! Creating new allocation\n";

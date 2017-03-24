@@ -3,8 +3,6 @@
 #include <tudocomp/ds/TextDSFlags.hpp>
 
 namespace tdc {namespace io {
-    // TODO Use FixedVectors for the impl
-
     // All bytes that can be used for escaping.
     // As a heuristic, this contains all illigal bytes in the utf8
     // unicode encoding to prevent uneccessary escaping for text inputs
