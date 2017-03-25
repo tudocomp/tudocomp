@@ -103,11 +103,11 @@ private:
 public:
     inline static Meta meta() {
         Meta m("textds", "textds");
-        m.option("sa").templated<sa_t, SADivSufSort>();
-        m.option("phi").templated<phi_t, PhiFromSA>();
-        m.option("plcp").templated<plcp_t, PLCPFromPhi>();
-        m.option("lcp").templated<lcp_t, LCPFromPLCP>();
-        m.option("isa").templated<isa_t, ISAFromSA>();
+        m.option("sa").templated<sa_t, SADivSufSort>("sa");
+        m.option("phi").templated<phi_t, PhiFromSA>("phi");
+        m.option("plcp").templated<plcp_t, PLCPFromPhi>("plcp");
+        m.option("lcp").templated<lcp_t, LCPFromPLCP>("lcp");
+        m.option("isa").templated<isa_t, ISAFromSA>("isa");
         m.option("compress").dynamic("delayed");
         return m;
     }

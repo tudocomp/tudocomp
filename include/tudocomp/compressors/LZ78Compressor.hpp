@@ -65,8 +65,8 @@ public:
 
     inline static Meta meta() {
         Meta m("compressor", "lz78", "Lempel-Ziv 78\n\n" LZ78_DICT_SIZE_DESC);
-        m.option("coder").templated<coder_t, BitCoder>();
-        m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>();
+        m.option("coder").templated<coder_t, BitCoder>("coder");
+        m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>("lz78trie");
         m.option("dict_size").dynamic("inf");
         return m;
     }
