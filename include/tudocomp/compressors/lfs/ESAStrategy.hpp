@@ -67,6 +67,7 @@ public:
         auto& lcp_t = t.require_lcp();
 
         //min_lrf=2;
+        StatPhase::wrap("computing lrf occurences", [&]{
 
         // iterate over lcp array, add indexes with non overlapping prefix length greater than min_lrf_length to vector
         std::vector<std::pair<uint,uint>> lrf_occurences;
@@ -113,6 +114,8 @@ public:
         //std::vector<std::pair<uint,uint>> dictionary;
 
         std::sort(lrf_occurences.begin(),lrf_occurences.end());
+
+        StatPhase::wrap("computing non-overlapping", [&]{
 
         //std::vector<std::tuple<uint,uint,uint>> nts_symbols;
         nts_symbols.reserve(lrf_occurences.size());
@@ -175,9 +178,16 @@ public:
                 }
             }
         }
+
+        });
+        });
+
+        StatPhase::wrap("sorting lrf occurences", [&]{
         DLOG(INFO) << "sorting occurences";
         //, std::greater<std::tuple<uint,uint,uint>>()
         std::sort(nts_symbols.begin(), nts_symbols.end());
+
+        });
 
     }
 };

@@ -163,8 +163,10 @@ public:
         //build suffixtree
         DLOG(INFO)<<"build suffixtree";
 
-        stree = SuffixTree(input);
 
+        StatPhase::wrap("Constructing ST", [&]{
+        stree = SuffixTree(input);
+        });
 
        // stree.append_input(in);
 
@@ -176,7 +178,11 @@ public:
         //DLOG(INFO)<< t << std::endl;
         //compute string depth of st:
         string_depth_vector nl;
+
+        StatPhase::wrap("Computing String Depth", [&]{
         compute_string_depth(stree.get_root(),0, &nl);
+        });
+
         DLOG(INFO)<<"sorting nodes";
 
         DLOG(INFO)<<"number of nodes: "<<nl.size();
@@ -185,6 +191,8 @@ public:
         uint nts_number =0;
 
         DLOG(INFO)<<"done. computing lrfs";
+
+        StatPhase::wrap("Computing LRF Occs", [&]{
         auto it = nl.end();
         while (it != nl.begin()){
             it--;
@@ -243,6 +251,7 @@ public:
 
 
         }
+        });
 
         DLOG(INFO) << "sorting occurences";
         std::sort(nts_symbols.begin(), nts_symbols.end());

@@ -11,6 +11,9 @@
 #include <tudocomp/coders/BitCoder.hpp>
 
 
+
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lfs {
 
@@ -41,24 +44,42 @@ public:
         DLOG(INFO) << "Compressor instantiated";
     }
     inline virtual void compress(Input& input, Output& output) override {
+       // StatPhase root("lfs compress");
+
+        StatPhase::wrap("lfs compressor", [&]{
+
 
         non_terminal_symbols nts_symbols = non_terminal_symbols();
         rules dictionary = rules();
         auto in = input.as_view();
 
-        comp_strategy_t strategy(env().env_for_option("computing_strat"));
 
 
+       // StatPhase strat("computing lrfs");
+            comp_strategy_t strategy(env().env_for_option("computing_strat"));
+
+        StatPhase::wrap("computing lrfs", [&]{
         //compute dictionary and nts.
         strategy.compute_rules(in, dictionary, nts_symbols);
 
         DLOG(INFO)<<"dict size: "<<dictionary.size();
         DLOG(INFO)<<"symbols:"<<nts_symbols.size();
+        });
 
 
+        StatPhase::wrap("encoding input", [&]{
+
+        //StatPhase encode("encoding input");
         coding_strat_t coding_strategy(env().env_for_option("coding_strat"));
 
         coding_strategy.encode(in,output, dictionary, nts_symbols);
+
+        });
+
+        // Print data in JSON representation to stdout
+        //root.to_json().str(std::cout);
+
+        });
 
 
     }
