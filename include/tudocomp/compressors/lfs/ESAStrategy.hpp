@@ -72,6 +72,7 @@ public:
         // iterate over lcp array, add indexes with non overlapping prefix length greater than min_lrf_length to vector
         std::vector<std::pair<uint,uint>> lrf_occurences;
 
+        StatPhase::wrap("computing lrf occs", [&]{
 
         DLOG(INFO) << "iterate over lcp";
         uint dif ;
@@ -81,19 +82,24 @@ public:
             if(lcp_t[i] >= min_lrf){
                 //compute length of non-overlapping factor:
 
-                if(sa_t[i-1] > sa_t[i]){
-                    dif =  sa_t[i-1] - sa_t[i];
-                } else {
-                    dif =  sa_t[i] - sa_t[i-1];
+                dif = abs(sa_t[i-1] - sa_t[i]);
+                factor_length = lcp_t[i];
+                factor_length = std::min(factor_length, dif);
+
+                //maybe greater non-overlapping factor possible with smaller suffix?
+                int j =i-1;
+                uint alt_dif;
+                while(j>0 && lcp_t[j]>factor_length ){
+                    alt_dif = abs(sa_t[j] - sa_t[i]);
+                    if(alt_dif>dif){
+                        dif = alt_dif;
+                    }
+                    j--;
+
+
                 }
                 factor_length = lcp_t[i];
-
-
-                if(dif < factor_length) {
-                    factor_length = dif;
-                } else {
-
-                }
+                factor_length = std::min(factor_length, dif);
                 //second is position in suffix array
                 //first is length of common prefix
                 std::pair<uint,uint> pair (factor_length, i);
@@ -103,8 +109,9 @@ public:
             }
         }
 
-        // Pop PQ, Select occurences of suffix, check if contains replaced symbols
-        dead_positions = BitVector(input.size(), 0);
+        });
+
+
         //Pq for the non-terminal symbols
         //the first in pair is position, the seconds the number of the non terminal symbol
 
@@ -112,10 +119,15 @@ public:
 
         //vector of text position, length
         //std::vector<std::pair<uint,uint>> dictionary;
+        StatPhase::wrap("sorting lrf occs", [&]{
 
         std::sort(lrf_occurences.begin(),lrf_occurences.end());
+        });
 
-        StatPhase::wrap("computing non-overlapping", [&]{
+        StatPhase::wrap("selecting occs", [&]{
+
+            // Pop PQ, Select occurences of suffix, check if contains replaced symbols
+        dead_positions = BitVector(input.size(), 0);
 
         //std::vector<std::tuple<uint,uint,uint>> nts_symbols;
         nts_symbols.reserve(lrf_occurences.size());
@@ -182,8 +194,8 @@ public:
         });
         });
 
-        StatPhase::wrap("sorting lrf occurences", [&]{
-        DLOG(INFO) << "sorting occurences";
+        StatPhase::wrap("sorting symbols", [&]{
+        DLOG(INFO) << "sorting symbols";
         //, std::greater<std::tuple<uint,uint,uint>>()
         std::sort(nts_symbols.begin(), nts_symbols.end());
 
