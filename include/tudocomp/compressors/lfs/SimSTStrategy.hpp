@@ -5,9 +5,9 @@
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/io.hpp>
-#include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/ds/SuffixTree.hpp>
+
+#include <sdsl/cst_sct3.hpp>
 
 
 
@@ -16,7 +16,7 @@ namespace tdc {
 namespace lfs {
 
 template<uint min_lrf = 2 >
-class STStrategy : public Algorithm {
+class SimSTStrategy : public Algorithm {
 private:
 
     //(position in text, non_terminal_symbol_number, length_of_symbol);
@@ -25,7 +25,10 @@ private:
     typedef std::vector<std::pair<uint,uint>> rules;
 
 
-    SuffixTree stree;
+
+    typedef sdsl::cst_sct3<> cst_t;
+    cst_t stree;
+    /**
 
     BitVector dead_positions;
 
@@ -144,23 +147,21 @@ private:
         }
         return beggining_positions;
     }
+    **/
 
 public:
 
     using Algorithm::Algorithm; //import constructor
 
     inline static Meta meta() {
-        Meta m("lfs_comp", "st");
+        Meta m("lfs_comp", "sim_st");
         return m;
     }
 
 
-    inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
-
-
-        //auto input = in.as_view();
+    inline void compute_rules(const io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
         //BitVector
-        dead_positions = BitVector(input.size(), 0);
+       // dead_positions = BitVector(input.size(), 0);
         //DLOG(INFO)<< "dead_positions.size(): "<<dead_positions.size();
 
         //build suffixtree
@@ -168,18 +169,28 @@ public:
 
 
         StatPhase::wrap("Constructing ST", [&]{
-        stree = SuffixTree(input);
+             sdsl::construct_im(stree, "input", 1);
         });
 
        // stree.append_input(in);
 
         DLOG(INFO)<<"computing string depth";
+
+
+        typedef sdsl::cst_bfs_iterator<cst_t> iterator;
+            iterator begin = iterator(&stree, stree.root());
+            iterator end   = iterator(&stree, stree.root(), true, true);
+
+            for (iterator it = begin; it != end; ++it) {
+                std::cout << stree.depth(*it) << "-[" << stree.lb(*it) << "," << stree.rb(*it) << "]" << std::endl;
+            }
         //min_lrf=2;
 
         //std::string t = stree.get_text();
 
         //DLOG(INFO)<< t << std::endl;
         //compute string depth of st:
+        /**
         string_depth_vector nl;
 
         StatPhase::wrap("Computing String Depth", [&]{
@@ -215,11 +226,11 @@ public:
                    // DLOG(INFO)<<"length: "<<pair.first;
                     //min and mac of all children are all BPs of LRF
                    // auto it = begining_pos.begin();
-                   /* DLOG(INFO) << "beginning positions: " << std::endl;
-                    while(it!= begining_pos.end()){
-                        DLOG(INFO) << *it;
-                        it++;
-                    }*/
+                   // DLOG(INFO) << "beginning positions: " << std::endl;
+                    //while(it!= begining_pos.end()){
+                    //    DLOG(INFO) << *it;
+                  //      it++;
+                  //  }
 
                     std::vector<uint> selected_pos = select_starting_positions(begining_pos, pair.first);
                    // DLOG(INFO) << "selected beginning positions: " << std::endl;
@@ -258,6 +269,8 @@ public:
 
         DLOG(INFO) << "sorting occurences";
         std::sort(nts_symbols.begin(), nts_symbols.end());
+
+        **/
     }
 };
 }

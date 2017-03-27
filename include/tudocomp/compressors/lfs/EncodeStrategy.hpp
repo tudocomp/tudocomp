@@ -33,6 +33,7 @@
 
 
 namespace tdc {
+namespace lfs {
 
 template<typename literal_coder_t, typename len_coder_t >
 class EncodeStrategy : public Algorithm {
@@ -56,6 +57,7 @@ public:
 
 
     inline void encode(io::InputView & in, Output & output, rules & dictionary, non_terminal_symbols & nts_symbols){
+        //const auto in = input.as_view();
 
         // encode dictionary:
         DLOG(INFO) << "encoding dictionary symbol sizes ";
@@ -244,5 +246,6 @@ public:
 
 
 };
+}
 }
 

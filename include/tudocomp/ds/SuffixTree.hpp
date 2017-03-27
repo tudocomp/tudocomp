@@ -1,5 +1,4 @@
-#ifndef _INCLUDED_DS_SUFFIX_TREE_HPP
-#define _INCLUDED_DS_SUFFIX_TREE_HPP
+#pragma once
 
 //Original Implementation::
 // https://gist.github.com/makagonov/f7ed8ce729da72621b321f0ab547debb
@@ -264,7 +263,4 @@ public:
 };
 
 }
-
-
-#endif // _INCLUDED_DS_SUFFIX_TREE_HPP
 

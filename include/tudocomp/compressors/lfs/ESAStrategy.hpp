@@ -56,10 +56,13 @@ public:
     }
 
 
-    inline void compute_rules(const io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
+    inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
 
 //env().env_for_option("textds"),
-        text_t t(env().env_for_option("textds"),input);
+        //const auto input = in.as_view();
+
+
+        text_t t(env().env_for_option("textds"), input);
        // text_t t(env, in);
         DLOG(INFO) << "building sa and lcp";
         t.require(text_t::SA | text_t::ISA | text_t::LCP);
@@ -127,7 +130,7 @@ public:
         StatPhase::wrap("selecting occs", [&]{
 
             // Pop PQ, Select occurences of suffix, check if contains replaced symbols
-        dead_positions = BitVector(input.size(), 0);
+        dead_positions = BitVector(t.size(), 0);
 
         //std::vector<std::tuple<uint,uint,uint>> nts_symbols;
         nts_symbols.reserve(lrf_occurences.size());

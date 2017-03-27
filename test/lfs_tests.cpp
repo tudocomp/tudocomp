@@ -8,6 +8,10 @@
 
 #include <tudocomp/compressors/lfs/ESAStrategy.hpp>
 
+#include <tudocomp/compressors/lfs/SimSTStrategy.hpp>
+
+#include <tudocomp/compressors/lfs/EncodeStrategy.hpp>
+
 #include "gtest/gtest.h"
 
 #include <tudocomp/Algorithm.hpp>
@@ -18,6 +22,11 @@
 #include <thread>
 
 #include "test/util.hpp"
+
+#include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/EliasGammaCoder.hpp>
+#include <tudocomp/coders/EliasDeltaCoder.hpp>
+#include <tudocomp/coders/ASCIICoder.hpp>
 
 using tdc::ESALFSCompressor;
 using namespace tdc;
@@ -167,7 +176,7 @@ TEST(stlfs, file_english_1mb_eg){
 
 
 TEST(lfs, st_strat){
-        auto c = create_algo<lfs::LFSCompressor< lfs::STStrategy<> > >();
+        auto c = create_algo<lfs::LFSCompressor< lfs::STStrategy<> , lfs::EncodeStrategy< tdc::ASCIICoder, tdc::ASCIICoder> > >();
 
         // compress
         std::string compression_string = "abaaabbababb$";
@@ -182,6 +191,38 @@ TEST(lfs, st_strat){
 
         }
         // decompress
+
+        std::cout << compressed << std::endl;
+        {
+
+            test::TestInput input = test::decompress_input(compressed);
+            test::TestOutput output = test::decompress_output();
+
+            c.decompress(input, output);
+
+            compressed=output.result();
+        }
+        ASSERT_EQ(compression_string, compressed);
+}
+
+TEST(lfs, sim_st_strat){
+        auto c = create_algo<lfs::LFSCompressor< lfs::SimSTStrategy<> > >();
+
+        // compress
+        std::string compression_string = "abaaabbababb$";
+        std::string compressed;
+        // compress
+        {
+            test::TestInput dummy_input = test::compress_input(compression_string);
+            test::TestOutput output = test::compress_output();
+
+            c.compress(dummy_input, output);
+            compressed=output.result();
+
+        }
+        // decompress
+
+        std::cout << compressed << std::endl;
         {
 
             test::TestInput input = test::decompress_input(compressed);
@@ -195,7 +236,7 @@ TEST(lfs, st_strat){
 }
 
 TEST(lfs, esa_strat){
-        auto c = create_algo<lfs::LFSCompressor< lfs::ESAStrategy<> > >();
+        auto c = create_algo<lfs::LFSCompressor< lfs::ESAStrategy<>  , lfs::EncodeStrategy< tdc::ASCIICoder, tdc::ASCIICoder>> >();
 
         // compress
         std::string compression_string = "abaaabbababb$";
@@ -210,6 +251,8 @@ TEST(lfs, esa_strat){
 
         }
         // decompress
+
+        std::cout << compressed << std::endl;
         {
 
             test::TestInput input = test::decompress_input(compressed);
