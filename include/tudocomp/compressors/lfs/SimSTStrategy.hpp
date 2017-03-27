@@ -159,7 +159,7 @@ public:
     }
 
 
-    inline void compute_rules(const io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
+    inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
         //BitVector
        // dead_positions = BitVector(input.size(), 0);
         //DLOG(INFO)<< "dead_positions.size(): "<<dead_positions.size();
@@ -169,21 +169,24 @@ public:
 
 
         StatPhase::wrap("Constructing ST", [&]{
-             sdsl::construct_im(stree, "input", 1);
+             sdsl::construct_im(stree, (const char*) input.data(), 1);
         });
 
        // stree.append_input(in);
 
         DLOG(INFO)<<"computing string depth";
 
-
+/*
         typedef sdsl::cst_bfs_iterator<cst_t> iterator;
             iterator begin = iterator(&stree, stree.root());
             iterator end   = iterator(&stree, stree.root(), true, true);
 
             for (iterator it = begin; it != end; ++it) {
-                std::cout << stree.depth(*it) << "-[" << stree.lb(*it) << "," << stree.rb(*it) << "]" << std::endl;
+                std::cout << stree.depth(*it) << "-[" << stree.lb(*it) << "," << stree.rb(*it) << "]  sa lb:" << stree.csa[stree.lb(*it)] <<std::endl;
+                std::cout << "si leaf:"<< stree.is_leaf(*it) << std::endl;
             }
+
+            */
         //min_lrf=2;
 
         //std::string t = stree.get_text();

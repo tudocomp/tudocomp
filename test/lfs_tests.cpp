@@ -192,7 +192,6 @@ TEST(lfs, st_strat){
         }
         // decompress
 
-        std::cout << compressed << std::endl;
         {
 
             test::TestInput input = test::decompress_input(compressed);
@@ -222,7 +221,6 @@ TEST(lfs, sim_st_strat){
         }
         // decompress
 
-        std::cout << compressed << std::endl;
         {
 
             test::TestInput input = test::decompress_input(compressed);
@@ -252,7 +250,6 @@ TEST(lfs, esa_strat){
         }
         // decompress
 
-        std::cout << compressed << std::endl;
         {
 
             test::TestInput input = test::decompress_input(compressed);

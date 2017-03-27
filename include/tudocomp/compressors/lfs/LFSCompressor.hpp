@@ -63,8 +63,8 @@ public:
                 strategy.compute_rules( in, dictionary, nts_symbols);
 
             //DLOG(INFO)
-                std::cout<<"dict size: "<<dictionary.size() << std::endl;
-                std::cout<<"symbols:"<<nts_symbols.size()<< std::endl;
+                DLOG(INFO)<<"dict size: "<<dictionary.size() << std::endl;
+                DLOG(INFO)<<"symbols:"<<nts_symbols.size()<< std::endl;
             });
 
 

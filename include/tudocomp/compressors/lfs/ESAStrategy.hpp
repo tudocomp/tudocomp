@@ -65,7 +65,10 @@ public:
         text_t t(env().env_for_option("textds"), input);
        // text_t t(env, in);
         DLOG(INFO) << "building sa and lcp";
-        t.require(text_t::SA | text_t::ISA | text_t::LCP);
+        StatPhase::wrap("computing sa and lcp", [&]{
+
+            t.require(text_t::SA | text_t::ISA | text_t::LCP);
+        });
         auto& sa_t = t.require_sa();
         auto& lcp_t = t.require_lcp();
 
