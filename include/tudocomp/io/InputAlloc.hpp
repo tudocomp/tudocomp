@@ -28,39 +28,22 @@ namespace tdc {namespace io {
             InputAllocChunkHandle m_handle;
         };
 
-    public:
-        inline InputAllocChunkHandle find_or_construct(
+        inline InputAllocChunkHandle create_stream(
             const InputSource& src,
             size_t from,
             size_t to,
-            InputRestrictions restrictions) const
-        {
-            auto pred = [&](const InputSource& e) -> bool {
-                return e == src;
-            };
+            InputRestrictions restrictions,
+            std::vector<InputAllocChunkHandle*>& selection
+        ) const {
+            auto full_buffer = create_buffer([&]() {
+                return RestrictedBuffer(src, 0, RestrictedBuffer::npos, restrictions);
+            });
 
-            std::vector<InputAllocChunkHandle*> selection;
-            for (auto& eptr : *m_ptr) {
-                if (eptr) {
-                    auto& e = *eptr;
-                    std::cout << "#! Looked at cached value\n";
-                    if (pred(e.source())) {
-                        selection.push_back(&eptr);
-                        std::cout << "#! Possible cached value\n";
-                    }
-                }
+            if (from == 0 && to == RestrictedBuffer::npos) {
+                return std::move(full_buffer);
             }
 
-            // Check for exact matches in the cache
-            for (auto& eptr : selection) {
-                auto& iac = **eptr;
-                auto& e = iac;
-                std::cout << "#! Finding existing allocation\n";
-                if (e.from() == from && e.to() == to && e.restrictions() == restrictions) {
-                    std::cout << "#! FOUND existing allocation\n";
-                    return *eptr;
-                }
-            }
+            DCHECK(false) << "early oops";
 
             // If src is a stream that got already created once, we need to
             // do something more complicted.
@@ -138,13 +121,59 @@ namespace tdc {namespace io {
                 }
             }
 
-            //std::cout << "#! Creating new allocation\n";
-            return create_buffer([&]() {
-                return RestrictedBuffer(src, from, to, restrictions);
-            });
+            DCHECK(false) << "Whoops";
         }
 
-        inline InputAllocHandle():
-            m_ptr(std::make_shared<InputAlloc>()) {}
+    public:
+        inline InputAllocChunkHandle find_or_construct(
+            const InputSource& src,
+            size_t from,
+            size_t to,
+            InputRestrictions restrictions) const
+        {
+            auto pred = [&](const InputSource& e) -> bool {
+                return e == src;
+            };
+
+            std::vector<InputAllocChunkHandle*> selection;
+            for (auto& eptr : *m_ptr) {
+                if (eptr) {
+                    auto& e = *eptr;
+                    std::cout << "#! Looked at cached value\n";
+                    if (pred(e.source())) {
+                        selection.push_back(&eptr);
+                        std::cout << "#! Possible cached value\n";
+                    }
+                }
+            }
+
+            // Check for exact matches in the cache
+            for (auto& eptr : selection) {
+                auto& iac = **eptr;
+                auto& e = iac;
+                std::cout << "#! Finding existing allocation\n";
+                if (e.from() == from && e.to() == to && e.restrictions() == restrictions) {
+                    std::cout << "#! FOUND existing allocation\n";
+                    return *eptr;
+                }
+            }
+
+            // Else we need to allocate a buffer:
+            if (src.is_stream()) {
+                // Streams source are complicated,
+                // because wen need to rember the first allocation rather
+                // that creating them anew as needed
+
+                return create_stream(src, from, to, restrictions, selection);
+            } else {
+                // File or View sources can be created arbitrarily:
+
+                return create_buffer([&]() {
+                    return RestrictedBuffer(src, from, to, restrictions);
+                });
+            }
+        }
+
+        inline InputAllocHandle(): m_ptr(std::make_shared<InputAlloc>()) {}
     };
 }}

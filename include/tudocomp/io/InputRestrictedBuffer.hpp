@@ -109,10 +109,6 @@ namespace tdc {namespace io {
         }
 
         inline void init() {
-            if (m_source.is_stream()) {
-                DCHECK_EQ(m_from, 0);
-            }
-
             if (m_source.is_view()) {
                 View s;
                 if (m_to == npos) {
@@ -192,6 +188,9 @@ namespace tdc {namespace io {
                     m_restricted_data = m_map.view().slice(m_mmap_page_offset);
                 }
             } else if (m_source.is_stream()) {
+                DCHECK_EQ(m_from, 0);
+                DCHECK_EQ(m_to, npos);
+
                 // Start with a typical page size to not realloc as often
                 // for small inputs
                 size_t capacity = pagesize();
@@ -226,6 +225,7 @@ namespace tdc {namespace io {
                                 break;
                             } else {
                                 *ptr = uint8_t(c);
+                                std::cout << "write char '" << char(c) << "'\n";
                                 ++ptr;
                                 ++size;
                                 extra_size += fast_escape_map.lookup_flag(uint8_t(c));
@@ -239,6 +239,7 @@ namespace tdc {namespace io {
                     }
 
                     // Throw away overallocation
+                    std::cout << "Size, extra size: " << size << ", " << extra_size << "\n";
                     m_map.remap(size + extra_size);
 
                     m_unrestricted_size = size;

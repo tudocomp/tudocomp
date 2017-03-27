@@ -15,6 +15,45 @@
 using namespace tdc;
 using namespace tdc::io;
 
+TEST(AAAMmap, test) {
+    auto ps = pagesize();
+
+    std::vector<uint8_t> test_vec;
+    test_vec.reserve(ps * 2);
+    test_vec.resize(ps * 2);
+
+    for(auto& e : test_vec) {
+        e = 42;
+    }
+
+    std::vector<uint8_t> test_vec2;
+    test_vec2.reserve(ps * 1);
+    test_vec2.resize(ps * 1);
+
+    auto basename = "mmap_overalloc_test";
+
+    test::write_test_file(basename, test_vec);
+    auto path = test::test_file_path(basename);
+
+    {
+        MMap map { path, MMap::Mode::ReadWrite, ps * 3 };
+
+        DCHECK_EQ(map.view().slice(0, ps * 2), View(test_vec));
+        DCHECK_EQ(map.view().slice(ps * 2), View(test_vec2));
+        std::cout << "ReadWrite mode OK\n";
+    }
+
+    {
+        const MMap map { path, MMap::Mode::Read, ps * 3 };
+
+        DCHECK_EQ(map.view().slice(0, ps * 2), View(test_vec));
+        DCHECK_EQ(map.view().slice(ps * 2), View(test_vec2));
+        std::cout << "Read mode OK\n";
+    }
+
+    DCHECK(false);
+}
+
 const View STREAMBUF_ORIGINAL    = "test\x00\x00\xff\xfe""abcd"_v;
 const View STREAMBUF_NTE         = "test\x00\x00\xff\xfe""abcd\0"_v;
 const View STREAMBUF_ESCAPED_NTE = "test\xfe\xc0\xfe\xc0\xfe\xc1\xfe\xfe""abcd\0"_v;
@@ -155,6 +194,21 @@ static const std::vector<TestString> direct_cases {
         STREAMBUF_ESCAPED_NTE,
         InputRestrictions { { 0, 0xff }, true },
     },
+    TestString {
+        ""_v,
+        ""_v,
+        InputRestrictions { { }, false },
+    },
+    TestString {
+        ""_v,
+        ""_v,
+        InputRestrictions { { }, true },
+    },
+    TestString {
+        ""_v,
+        ""_v,
+        InputRestrictions { { 0, 0xff }, true },
+    },
 };
 
 struct SplitTestString {
@@ -289,7 +343,7 @@ void input_equal(const Input& i, const View& str) {
         auto is = vec_to_debug_string(View(x), 3);
         auto should_be = vec_to_debug_string(str, 3);
         ASSERT_EQ(is, should_be);
-        std::cout << "    View Ok\n";
+        //std::cout << "    View Ok\n";
     }
     {
         auto x = i.as_stream();
@@ -299,7 +353,7 @@ void input_equal(const Input& i, const View& str) {
         auto is = vec_to_debug_string(ss.str(), 3);
         auto should_be = vec_to_debug_string(str, 3);
         ASSERT_EQ(is, should_be);
-        std::cout << "    Stream Ok\n";
+        //std::cout << "    Stream Ok\n";
     }
 }
 

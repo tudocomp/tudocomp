@@ -17,19 +17,31 @@ namespace tdc {namespace io {
     ///
     /// Can either be a file mapping or an anonymous mapping.
     class MMap {
-    public:
+        static constexpr const void* EMPTY = "";
+
         enum class State {
             Unmapped,
             Shared,
             Private
         };
 
+        inline static size_t adj_size(size_t v) {
+            return std::max(size_t(1), v);
+        }
+
+        inline static void check_error(void* ptr, string_ref descr) {
+            if (ptr == MAP_FAILED) {
+                perror("MMap error");
+            }
+            CHECK(ptr != MAP_FAILED) << "Error at " << descr;
+        }
+    public:
         enum class Mode {
             Read,
             ReadWrite
         };
     private:
-        uint8_t* m_ptr   = nullptr;
+        uint8_t* m_ptr   = (uint8_t*) EMPTY;
         size_t   m_size  = 0;
         int      m_fd    = -1;
 
@@ -57,6 +69,11 @@ namespace tdc {namespace io {
              size_t size,
              size_t offset = 0)
         {
+            m_mode = mode;
+            m_size = size;
+
+            //size_t file_size = read_file_size(path);
+
             // Open file for memory map
             m_fd = open(path.c_str(), O_RDONLY);
             CHECK(m_fd != -1) << "Error at opening file";
@@ -66,7 +83,7 @@ namespace tdc {namespace io {
             int mmap_prot;
             int mmap_flags;
 
-            if (mode == Mode::ReadWrite) {
+            if (m_mode == Mode::ReadWrite) {
                 mmap_prot = PROT_READ | PROT_WRITE;
                 mmap_flags = MAP_PRIVATE;
                 m_state = State::Private;
@@ -75,41 +92,39 @@ namespace tdc {namespace io {
                 mmap_flags = MAP_SHARED;
                 m_state = State::Shared;
             }
-            m_mode = mode;
-            m_size = size;
 
             DCHECK(is_offset_valid(offset));
 
             void* ptr = mmap(NULL,
-                             m_size,
+                             adj_size(m_size),
                              mmap_prot,
                              mmap_flags,
                              m_fd,
                              offset);
-            CHECK(ptr != MAP_FAILED) << "Error at mapping file into memory";
+            check_error(ptr, "mapping file into memory");
 
             m_ptr = (uint8_t*) ptr;
         }
 
         inline MMap(size_t size)
         {
+            m_mode = Mode::ReadWrite;
+            m_size = size;
+
             int mmap_prot = PROT_READ | PROT_WRITE;;
             int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
-            m_size = size;
-
             void* ptr = mmap(NULL,
-                             m_size,
+                             adj_size(m_size),
                              mmap_prot,
                              mmap_flags,
                              -1,
                              0);
-            CHECK(ptr != MAP_FAILED) << "Error at creating anon. memory map";
+            check_error(ptr, "creating anon. memory map");
 
             m_ptr = (uint8_t*) ptr;
             m_fd = -1;
 
-            m_mode = Mode::ReadWrite;
             m_state = State::Private;
         }
 
@@ -118,8 +133,10 @@ namespace tdc {namespace io {
             DCHECK(m_state == State::Private);
             DCHECK(m_fd == -1);
 
-            auto p = mremap(m_ptr, m_size, new_size, MREMAP_MAYMOVE);
-            CHECK(p != MAP_FAILED) << "Error at remapping memory";
+            auto p = mremap(m_ptr, adj_size(m_size), adj_size(new_size), MREMAP_MAYMOVE);
+            std::cout << "old size: " << m_size << "\n";
+            std::cout << "new size: " << new_size << "\n";
+            check_error(p, "remapping memory");
 
             m_ptr = (uint8_t*) p;
             m_size =  new_size;
@@ -149,6 +166,8 @@ namespace tdc {namespace io {
             m_mode  = other.m_mode;
 
             other.m_state = State::Unmapped;
+            other.m_ptr = (uint8_t*) EMPTY;
+            other.m_size = 0;
             other.m_fd = -1;
         }
     public:
@@ -163,9 +182,9 @@ namespace tdc {namespace io {
 
         ~MMap() {
             if (m_state != State::Unmapped) {
-                DCHECK(m_ptr != nullptr);
+                DCHECK(m_ptr != EMPTY);
 
-                int rc = munmap(m_ptr, m_size);
+                int rc = munmap(m_ptr, adj_size(m_size));
                 CHECK(rc == 0) << "Error at unmapping";
 
                 if (m_fd != -1) {
