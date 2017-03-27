@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include <tudocomp/util/View.hpp>
+#include <tudocomp/io/IOUtil.hpp>
 
 namespace tdc {namespace io {
     inline size_t pagesize() {
@@ -29,7 +30,7 @@ namespace tdc {namespace io {
             return std::max(size_t(1), v);
         }
 
-        inline static void check_error(void* ptr, string_ref descr) {
+        inline static void check_mmap_error(void* ptr, string_ref descr) {
             if (ptr == MAP_FAILED) {
                 perror("MMap error");
             }
@@ -72,38 +73,69 @@ namespace tdc {namespace io {
             m_mode = mode;
             m_size = size;
 
-            //size_t file_size = read_file_size(path);
+            DCHECK(is_offset_valid(offset))
+                << "Offset must be page aligned, use MMap::next_valid_offset() to ensure this.";
+
+            size_t file_size = read_file_size(path);
+            bool needs_to_overallocate =
+                (offset + m_size) > file_size;
 
             // Open file for memory map
             m_fd = open(path.c_str(), O_RDONLY);
             CHECK(m_fd != -1) << "Error at opening file";
 
-            // Map into memory
-
             int mmap_prot;
             int mmap_flags;
 
-            if (m_mode == Mode::ReadWrite) {
-                mmap_prot = PROT_READ | PROT_WRITE;
-                mmap_flags = MAP_PRIVATE;
-                m_state = State::Private;
+            if (!needs_to_overallocate) {
+                // Map file directly into memory
+
+                if (m_mode == Mode::ReadWrite) {
+                    mmap_prot = PROT_READ | PROT_WRITE;
+                    mmap_flags = MAP_PRIVATE;
+                    m_state = State::Private;
+                } else {
+                    mmap_prot = PROT_READ;
+                    mmap_flags = MAP_SHARED;
+                    m_state = State::Shared;
+                }
+
+                void* ptr = mmap(NULL,
+                                adj_size(m_size),
+                                mmap_prot,
+                                mmap_flags,
+                                m_fd,
+                                offset);
+                check_mmap_error(ptr, "mapping file into memory");
+
+                m_ptr = (uint8_t*) ptr;
             } else {
-                mmap_prot = PROT_READ;
-                mmap_flags = MAP_SHARED;
-                m_state = State::Shared;
+                // Allocate memory and copy file into it
+
+                auto file_fd = m_fd;
+
+                *this = MMap(m_size);
+
+                // seek to offset
+                {
+                    auto ret = lseek(file_fd, offset, SEEK_SET);
+                    if (ret == -1) {
+                        perror("Seeking fd");
+                    }
+                    CHECK(ret != -1);
+                }
+
+                // copy data
+                {
+                    auto ret = read(file_fd, m_ptr, m_size);
+                    if (ret == -1) {
+                        perror("Reading fd into mapped memory");
+                    }
+                    CHECK(ret != -1);
+                }
+
+                close(file_fd);
             }
-
-            DCHECK(is_offset_valid(offset));
-
-            void* ptr = mmap(NULL,
-                             adj_size(m_size),
-                             mmap_prot,
-                             mmap_flags,
-                             m_fd,
-                             offset);
-            check_error(ptr, "mapping file into memory");
-
-            m_ptr = (uint8_t*) ptr;
         }
 
         inline MMap(size_t size)
@@ -111,7 +143,7 @@ namespace tdc {namespace io {
             m_mode = Mode::ReadWrite;
             m_size = size;
 
-            int mmap_prot = PROT_READ | PROT_WRITE;;
+            int mmap_prot = PROT_READ | PROT_WRITE;
             int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
             void* ptr = mmap(NULL,
@@ -120,7 +152,7 @@ namespace tdc {namespace io {
                              mmap_flags,
                              -1,
                              0);
-            check_error(ptr, "creating anon. memory map");
+            check_mmap_error(ptr, "creating anon. memory map");
 
             m_ptr = (uint8_t*) ptr;
             m_fd = -1;
@@ -136,7 +168,7 @@ namespace tdc {namespace io {
             auto p = mremap(m_ptr, adj_size(m_size), adj_size(new_size), MREMAP_MAYMOVE);
             std::cout << "old size: " << m_size << "\n";
             std::cout << "new size: " << new_size << "\n";
-            check_error(p, "remapping memory");
+            check_mmap_error(p, "remapping memory");
 
             m_ptr = (uint8_t*) p;
             m_size =  new_size;

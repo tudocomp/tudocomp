@@ -50,8 +50,6 @@ TEST(AAAMmap, test) {
         DCHECK_EQ(map.view().slice(ps * 2), View(test_vec2));
         std::cout << "Read mode OK\n";
     }
-
-    DCHECK(false);
 }
 
 const View STREAMBUF_ORIGINAL    = "test\x00\x00\xff\xfe""abcd"_v;
@@ -201,12 +199,12 @@ static const std::vector<TestString> direct_cases {
     },
     TestString {
         ""_v,
-        ""_v,
+        "\0"_v,
         InputRestrictions { { }, true },
     },
     TestString {
         ""_v,
-        ""_v,
+        "\0"_v,
         InputRestrictions { { 0, 0xff }, true },
     },
 };

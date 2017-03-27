@@ -130,6 +130,7 @@ namespace tdc {namespace io {
                         GenericView<uint8_t> target = m_map.view();
                         size_t noff = m_restrictions.null_terminate()? 1 : 0;
                         escape_with_iters(s.cbegin(), s.cend(), target.end() - noff, true);
+                        // For null termination, a trailing byte is implicit 0
                     }
 
                     m_restricted_data = m_map.view();
@@ -165,13 +166,7 @@ namespace tdc {namespace io {
 
                 size_t map_size = m_unrestricted_size + extra_size + m_mmap_page_offset;
 
-                if (extra_size == 1 && m_restrictions.null_terminate()) {
-                    // Null termination happens by adding the implicit 0 at the end
-                    m_map = MMap(path, MMap::Mode::Read, map_size, aligned_offset);
-
-                    const auto& m = m_map;
-                    m_restricted_data = m.view().slice(m_mmap_page_offset);
-                } else if (m_restrictions.has_no_restrictions()) {
+                if (m_restrictions.has_no_restrictions()) {
                     m_map = MMap(path, MMap::Mode::Read, map_size, aligned_offset);
 
                     const auto& m = m_map;
@@ -185,6 +180,10 @@ namespace tdc {namespace io {
                     uint8_t* end_file_data   = begin_file_data      + m_unrestricted_size;
                     uint8_t* end_data        = end_file_data        + extra_size - noff;
                     escape_with_iters(begin_file_data, end_file_data, end_data);
+                    if (m_restrictions.null_terminate() && (*end_data != 0)) {
+                        // ensure the last valid byte is actually 0 if using null termination
+                        *end_data = 0;
+                    }
                     m_restricted_data = m_map.view().slice(m_mmap_page_offset);
                 }
             } else if (m_source.is_stream()) {
@@ -225,7 +224,6 @@ namespace tdc {namespace io {
                                 break;
                             } else {
                                 *ptr = uint8_t(c);
-                                std::cout << "write char '" << char(c) << "'\n";
                                 ++ptr;
                                 ++size;
                                 extra_size += fast_escape_map.lookup_flag(uint8_t(c));
@@ -240,6 +238,8 @@ namespace tdc {namespace io {
 
                     // Throw away overallocation
                     std::cout << "Size, extra size: " << size << ", " << extra_size << "\n";
+                    // For null termination,
+                    // a trailing unwritten byte is automatically 0
                     m_map.remap(size + extra_size);
 
                     m_unrestricted_size = size;
