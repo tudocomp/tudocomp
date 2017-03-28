@@ -35,19 +35,21 @@ TEST(AAAMmap, test) {
     test::write_test_file(basename, test_vec);
     auto path = test::test_file_path(basename);
 
-    {
-        MMap map { path, MMap::Mode::ReadWrite, ps * 3 };
+    // Given file [..42|..42], create [____[..42| ..0] buffer view into it
 
-        DCHECK_EQ(map.view().slice(0, ps * 2), View(test_vec));
-        DCHECK_EQ(map.view().slice(ps * 2), View(test_vec2));
+    {
+        MMap map { path, MMap::Mode::ReadWrite, ps * 2, ps };
+
+        DCHECK_EQ(map.view().slice(0, ps), View(test_vec).slice(ps));
+        DCHECK_EQ(map.view().slice(ps), View(test_vec2));
         std::cout << "ReadWrite mode OK\n";
     }
 
     {
-        const MMap map { path, MMap::Mode::Read, ps * 3 };
+        const MMap map { path, MMap::Mode::Read, ps * 2, ps };
 
-        DCHECK_EQ(map.view().slice(0, ps * 2), View(test_vec));
-        DCHECK_EQ(map.view().slice(ps * 2), View(test_vec2));
+        DCHECK_EQ(map.view().slice(0, ps), View(test_vec).slice(ps));
+        DCHECK_EQ(map.view().slice(ps), View(test_vec2));
         std::cout << "Read mode OK\n";
     }
 }
