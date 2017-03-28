@@ -15,11 +15,6 @@
 #include <tudocomp/io/EscapeMap.hpp>
 
 namespace tdc {namespace io {
-    class RestrictedBufferSourceKeepalive {
-    public:
-        virtual ~RestrictedBufferSourceKeepalive() {}
-    };
-
     class RestrictedBuffer {
     public:
         static const size_t npos = -1;
@@ -38,9 +33,15 @@ namespace tdc {namespace io {
 
         // mmap needs to be page aligned, so for file mappings
         // we need to store a offset
+        //
+        // Effectivley this means that for a given mmap in instance in this class,
+        // instead of
+        // |-----------input--------------|
+        // [          [from_______to]     ]
+        // it stores
+        // |-----------input--------------|
+        // [   [offset|from_______to]     ]
         size_t m_mmap_page_offset = 0;
-
-        std::shared_ptr<RestrictedBufferSourceKeepalive> m_keepalive;
 
         template<typename I, typename J>
         inline void escape_with_iters(I read_begin, I read_end, J write_end, bool do_copy = false) {
@@ -258,12 +259,18 @@ namespace tdc {namespace io {
             }
         }
 
+        // Change the restrictions on a stream restricted buffer
         inline static RestrictedBuffer unrestrict(RestrictedBuffer&& other) {
+            if (other.restrictions().has_no_restrictions()) {
+                return std::move(other);
+            }
+            DCHECK(other.restrictions().has_restrictions());
+            DCHECK(other.source().is_stream());
+            DCHECK(other.m_mmap_page_offset == 0);
+
             auto x = std::move(other);
 
             auto r = x.m_restrictions;
-
-            auto restricted_data_offset = x.m_mmap_page_offset;
 
             std::cout << "Old restrictions: " << r << "\n";
             auto start = x.m_map.view().begin();
@@ -271,7 +278,7 @@ namespace tdc {namespace io {
 
             FastUnescapeMap fast_unescape_map { EscapeMap(r) };
 
-            auto read_p = start + restricted_data_offset;
+            auto read_p = start;
             auto write_p = start;
 
             size_t debug_counter = 0;
@@ -305,123 +312,75 @@ namespace tdc {namespace io {
             return x;
         }
 
-    public:
+        // Change the restrictions on a stream restricted buffer
         inline static RestrictedBuffer restrict(RestrictedBuffer&& other,
-                                                size_t from,
-                                                size_t to,
                                                 const io::InputRestrictions& restrictions) {
-            // This function currently only works under these conditions:
-            DCHECK(other.m_from <= from);
-            DCHECK(to <= other.m_to);
-
-            if (other.m_restrictions.has_restrictions()) {
-                other = unrestrict(std::move(other));
-
-                if (restrictions == other.m_restrictions) {
-                    return std::move(other);
-                }
+            if (other.restrictions() == restrictions) {
+                return std::move(other);
             }
+            DCHECK(other.restrictions().has_no_restrictions());
+            DCHECK(other.source().is_stream());
+            DCHECK(other.m_mmap_page_offset == 0);
 
-            DCHECK(!(restrictions == other.m_restrictions));
-            DCHECK(other.m_restrictions.has_no_restrictions());
+            size_t old_size;
+            size_t extra_size;
 
-            if (other.m_source.is_stream()) {
-                // TODO: Throw this out since it throws away the stream data
-                //       together with the slicing.
-
-                // Special path
-
-                // Allocation is owned already, and has no
-                // restrictions on the data.
-                // Need to find out extra size and remap.
-
-                // NB: We keep the original prefix of the data around
-                // as an optimization for the algorithm
-                // that does the escaping.
-                // This can be changed in case this ever becomes a performance
-                // concern.
-
+            // Calculate needed extra size:
+            {
                 View s = other.view();
-
-                // Existing allocation:
-                // [page offset|from...to]
-
-                // Figure out new slice sizes:
-                auto from_diff = from - other.from();
-                size_t len = 0;
-                if (to == npos) {
-                    len = s.size() - from_diff;
-                } else {
-                    len = to - from;
-                }
-
-                s = s.substr(from_diff, len);
-
                 other.m_restrictions = restrictions;
-
-                // Extra size of subslice:
-                size_t extra_size = other.extra_size_needed_due_restrictions(
+                extra_size = other.extra_size_needed_due_restrictions(
                     s.cbegin(), s.cend(), s.size()
                 );
-
-                auto discarded_suffix = other.view().size() - (from_diff + len);
-
-                size_t new_mm_size = 0;
-                auto old_size = other.m_map.view().size();
-
-                if (discarded_suffix < extra_size) {
-                    new_mm_size = old_size + (extra_size - discarded_suffix);
-                } else {
-                    new_mm_size = old_size - (discarded_suffix - extra_size);
-                }
-
-                other.m_map.remap(new_mm_size);
-                other.m_restricted_data = other.m_map.view();
-
-                other.m_from = from;
-                other.m_to = to;
-
-                other.m_unrestricted_size = len;
-                other.m_mmap_page_offset = from_diff;
-
-                {
-                    size_t noff = other.m_restrictions.null_terminate()? 1 : 0;
-
-                    uint8_t* start = other.m_map.view().begin() + from_diff;
-                    uint8_t* old_end = start + len;
-                    uint8_t* new_end = start + len + extra_size - noff;
-
-                    other.escape_with_iters(start, old_end, new_end);
-                    if (other.m_restrictions.null_terminate()) {
-                        new_end[1] = 0;
-                    }
-
-                    DCHECK_EQ(new_end + 1, other.m_map.view().end());
-                }
-
-                return std::move(other);
-            } else { // if (other.m_source.is_file() || other.m_source.is_view()) {
-                // Normal path, because reusing the allocation
-                // will be similarly costly to recreating it
-                auto src = other.m_source;
-                {
-                    auto dropme = std::move(other);
-                }
-                return RestrictedBuffer(src, from, to, restrictions);
+                old_size = s.size();
             }
+
+            // If nothing about the actual data changed
+            // return it as is
+            if (extra_size == 0) {
+                return std::move(other);
+            }
+
+            // Else remap and expand the data by escaping:
+
+            other.m_map.remap(old_size + extra_size);
+            other.m_restricted_data = other.m_map.view();
+
+            {
+                size_t noff = other.m_restrictions.null_terminate()? 1 : 0;
+
+                uint8_t* start = other.m_map.view().begin();
+                uint8_t* old_end = start + old_size;
+                uint8_t* new_end = start + old_size + extra_size - noff;
+
+                other.escape_with_iters(start, old_end, new_end);
+                if (other.m_restrictions.null_terminate()) {
+                    *new_end = 0;
+                }
+
+                DCHECK_EQ(new_end + 1, other.m_map.view().end());
+            }
+
+            return std::move(other);
+        }
+
+    public:
+        inline static RestrictedBuffer change_restrictions(
+            RestrictedBuffer&& other,
+            const io::InputRestrictions& restrictions)
+        {
+            auto buf = unrestrict(std::move(other));
+            return restrict(std::move(buf), restrictions);
         }
 
         inline RestrictedBuffer(const InputSource& src,
                                 size_t from,
                                 size_t to,
-                                io::InputRestrictions restrictions,
-                                std::shared_ptr<RestrictedBufferSourceKeepalive> keepalive
-                                  = std::shared_ptr<RestrictedBufferSourceKeepalive>()):
+                                io::InputRestrictions restrictions):
             m_from(from),
             m_to(to),
             m_restrictions(restrictions),
-            m_source(src),
-            m_keepalive(keepalive)
+            m_source(src)
         {
             init();
         }
@@ -431,7 +390,6 @@ namespace tdc {namespace io {
         inline const InputRestrictions& restrictions() const { return m_restrictions; }
         inline const InputSource& source() const { return m_source; }
 
-        inline size_t size() const { return m_restricted_data.size(); }
         inline size_t unrestricted_size() const { return m_unrestricted_size; }
         inline View view() const { return m_restricted_data; }
 

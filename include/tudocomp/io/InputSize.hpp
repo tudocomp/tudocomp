@@ -36,7 +36,7 @@ namespace tdc {namespace io {
             if(escaped_size_unknown()) {
                 auto p = alloc().find_or_construct(
                     InputSource(source().stream()), from(), to(), restrictions());
-                set_escaped_size(p->size());
+                set_escaped_size(p->view().size());
             }
 
         }
