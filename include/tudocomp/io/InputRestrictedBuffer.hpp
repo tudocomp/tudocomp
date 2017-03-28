@@ -22,10 +22,6 @@ namespace tdc {namespace io {
         MMap m_map;
         View m_restricted_data;
 
-        // Both relative to entire original input data:
-        size_t                m_from = 0;
-        size_t                m_to = npos;
-
         io::InputRestrictions m_restrictions;
         InputSource m_source;
 
@@ -109,7 +105,7 @@ namespace tdc {namespace io {
             return extra;
         }
 
-        inline void init() {
+        inline void init(size_t m_from, size_t m_to) {
             if (m_source.is_view()) {
                 View s;
                 if (m_to == npos) {
@@ -377,12 +373,10 @@ namespace tdc {namespace io {
                                 size_t from,
                                 size_t to,
                                 io::InputRestrictions restrictions):
-            m_from(from),
-            m_to(to),
             m_restrictions(restrictions),
             m_source(src)
         {
-            init();
+            init(from, to);
         }
 
         inline const InputRestrictions& restrictions() const { return m_restrictions; }
