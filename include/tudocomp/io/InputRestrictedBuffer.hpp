@@ -257,11 +257,11 @@ namespace tdc {namespace io {
 
         // Change the restrictions on a stream restricted buffer
         inline static RestrictedBuffer unrestrict(RestrictedBuffer&& other) {
+            DCHECK(other.source().is_stream());
             if (other.restrictions().has_no_restrictions()) {
                 return std::move(other);
             }
             DCHECK(other.restrictions().has_restrictions());
-            DCHECK(other.source().is_stream());
             DCHECK(other.m_mmap_page_offset == 0);
 
             auto x = std::move(other);
@@ -311,11 +311,11 @@ namespace tdc {namespace io {
         // Change the restrictions on a stream restricted buffer
         inline static RestrictedBuffer restrict(RestrictedBuffer&& other,
                                                 const io::InputRestrictions& restrictions) {
+            DCHECK(other.source().is_stream());
             if (other.restrictions() == restrictions) {
                 return std::move(other);
             }
             DCHECK(other.restrictions().has_no_restrictions());
-            DCHECK(other.source().is_stream());
             DCHECK(other.m_mmap_page_offset == 0);
 
             size_t old_size;
@@ -361,10 +361,10 @@ namespace tdc {namespace io {
         }
 
     public:
-        inline static RestrictedBuffer change_restrictions(
-            RestrictedBuffer&& other,
-            const io::InputRestrictions& restrictions)
+        inline RestrictedBuffer change_restrictions(
+            const io::InputRestrictions& restrictions) &&
         {
+            auto& other = *this;
             auto buf = unrestrict(std::move(other));
             return restrict(std::move(buf), restrictions);
         }

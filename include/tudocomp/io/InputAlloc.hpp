@@ -146,7 +146,7 @@ namespace tdc {namespace io {
 
                 parent = create_buffer([&]() {
                     return InputAllocChunkOwned {
-                        RestrictedBuffer::change_restrictions(std::move(buf), restrictions),
+                        std::move(buf).change_restrictions(restrictions),
                         f,
                         t,
                     };
