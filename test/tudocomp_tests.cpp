@@ -373,8 +373,6 @@ namespace input_nte_matrix {
         i_nte_mod(target_input);
 
         i_out_compare(target_input, o);
-        i_out_compare(target_input, "");
-
     }
 
     template<class T>
@@ -388,11 +386,9 @@ namespace input_nte_matrix {
             i_nte_mod(source_input);
             target_input = source_input;
             i_out_compare(source_input, o);
-            i_out_compare(source_input, "");
         }
 
         i_out_compare(target_input, o);
-        i_out_compare(target_input, "");
     }
 
     template<class T>
@@ -408,7 +404,6 @@ namespace input_nte_matrix {
         }
 
         i_out_compare(target_input, o);
-        i_out_compare(target_input, "");
     }
 
     void out_view(Input& i_, View o) {
@@ -425,8 +420,7 @@ namespace input_nte_matrix {
 
         {
             Input i = i_bak;
-            auto x = i.as_view();
-            std::vector<uint8_t> y = x;
+            std::vector<uint8_t> y = i.as_view();
             ASSERT_EQ(y, b);
             ASSERT_NE(y, c);
         }
