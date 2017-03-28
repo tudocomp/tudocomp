@@ -25,8 +25,6 @@ namespace tdc {namespace io {
         io::InputRestrictions m_restrictions;
         InputSource m_source;
 
-        size_t m_unrestricted_size = 0;
-
         // mmap needs to be page aligned, so for file mappings
         // we need to store a offset
         //
@@ -114,8 +112,6 @@ namespace tdc {namespace io {
                     s = m_source.view().slice(m_from, m_to);
                 }
 
-                m_unrestricted_size = s.size();
-
                 size_t extra_size = extra_size_needed_due_restrictions(
                     s.cbegin(), s.cend(), s.size());
 
@@ -137,10 +133,11 @@ namespace tdc {namespace io {
             } else if (m_source.is_file()) {
                 // iterate file to check for escapeable bytes and also null
 
+                size_t unrestricted_size;
                 if (m_to == npos) {
-                    m_unrestricted_size = read_file_size(m_source.file()) - m_from;
+                    unrestricted_size = read_file_size(m_source.file()) - m_from;
                 } else {
-                    m_unrestricted_size = m_to - m_from;
+                    unrestricted_size = m_to - m_from;
                 }
 
                 auto path = m_source.file();
@@ -153,7 +150,7 @@ namespace tdc {namespace io {
                     std::istream_iterator<char> begin (ifs);
                     std::istream_iterator<char> end;
                     extra_size = extra_size_needed_due_restrictions(
-                        begin, end, m_unrestricted_size);
+                        begin, end, unrestricted_size);
                 }
 
                 size_t aligned_offset = MMap::next_valid_offset(m_from);
@@ -161,7 +158,7 @@ namespace tdc {namespace io {
 
                 DCHECK_EQ(aligned_offset + m_mmap_page_offset, m_from);
 
-                size_t map_size = m_unrestricted_size + extra_size + m_mmap_page_offset;
+                size_t map_size = unrestricted_size + extra_size + m_mmap_page_offset;
 
                 if (m_restrictions.has_no_restrictions()) {
                     m_map = MMap(path, MMap::Mode::Read, map_size, aligned_offset);
@@ -174,7 +171,7 @@ namespace tdc {namespace io {
                     size_t noff = m_restrictions.null_terminate()? 1 : 0;
 
                     uint8_t* begin_file_data = m_map.view().begin() + m_mmap_page_offset;
-                    uint8_t* end_file_data   = begin_file_data      + m_unrestricted_size;
+                    uint8_t* end_file_data   = begin_file_data      + unrestricted_size;
                     uint8_t* end_data        = end_file_data        + extra_size - noff;
                     escape_with_iters(begin_file_data, end_file_data, end_data);
                     if (m_restrictions.null_terminate() && (*end_data != 0)) {
@@ -239,7 +236,6 @@ namespace tdc {namespace io {
                     // a trailing unwritten byte is automatically 0
                     m_map.remap(size + extra_size);
 
-                    m_unrestricted_size = size;
                     m_restricted_data = m_map.view();
                 }
 
@@ -277,8 +273,6 @@ namespace tdc {namespace io {
             auto read_p = start;
             auto write_p = start;
 
-            size_t debug_counter = 0;
-
             size_t noff = x.m_restrictions.null_terminate()? 1 : 0;
 
             auto data_end = end - noff;
@@ -292,11 +286,7 @@ namespace tdc {namespace io {
                 }
                 ++read_p;
                 ++write_p;
-
-                ++debug_counter;
             }
-
-            DCHECK_EQ(debug_counter, x.m_unrestricted_size);
 
             auto old_size = x.m_map.view().size();
             auto reduced_size = (read_p - write_p) + noff;
