@@ -579,7 +579,28 @@ struct OutDirect {
 struct OutDriverSplit {
     template<typename OutTrgt>
     static void doit() {
-        ASSERT_TRUE(false);
+        for (const auto& tests: driver_split_cases) {
+            OutTrgt out0 { tests.outer_str };
+            Output out1 = out0.output();
+            {
+                auto out2 = out1.as_stream();
+                out2 << tests.prefix_str;
+            }
+            out1 = Output(out1, tests.inner.restrictions);
+            {
+                auto out2 = out1.as_stream();
+                out2 << tests.inner.escaped_str;
+            }
+
+            auto res = out0.result();
+
+            ASSERT_EQ(vec_to_debug_string(res),
+                      vec_to_debug_string(tests.outer_str));
+
+            std::cout << "OK: "
+                << vec_to_debug_string(tests.outer_str)
+                << "\n";
+        }
     }
 };
 
