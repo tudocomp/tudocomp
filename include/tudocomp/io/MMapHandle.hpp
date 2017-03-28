@@ -127,11 +127,19 @@ namespace tdc {namespace io {
 
                 // copy data
                 {
-                    auto ret = read(file_fd, m_ptr, m_size);
-                    if (ret == -1) {
-                        perror("Reading fd into mapped memory");
+                    auto ptr = m_ptr;
+                    auto size = file_size - offset;
+
+                    while (size > 0) {
+                        auto ret = read(file_fd, ptr, size);
+                        if (ret == -1) {
+                            perror("Reading fd into mapped memory");
+                        }
+                        CHECK(ret >= 0);
+                        size -= ret;
+                        ptr += ret;
                     }
-                    CHECK(ret != -1);
+
                 }
 
                 close(file_fd);
