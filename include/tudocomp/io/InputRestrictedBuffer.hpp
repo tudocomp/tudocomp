@@ -385,12 +385,9 @@ namespace tdc {namespace io {
             init();
         }
 
-        inline size_t from() const { return m_from; }
-        inline size_t to() const { return m_to; }
         inline const InputRestrictions& restrictions() const { return m_restrictions; }
         inline const InputSource& source() const { return m_source; }
 
-        inline size_t unrestricted_size() const { return m_unrestricted_size; }
         inline View view() const { return m_restricted_data; }
 
         inline RestrictedBuffer() = delete;

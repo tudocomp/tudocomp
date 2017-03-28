@@ -257,6 +257,46 @@ static const std::vector<SplitTestString> driver_split_cases {
             InputRestrictions { { 0, 0xff }, true },
         },
     },
+    SplitTestString {
+        "yasdvat\0r"_v,
+        "yasdvat\0r"_v,
+        9,
+        TestString {
+            ""_v,
+            ""_v,
+            InputRestrictions(),
+        },
+    },
+    SplitTestString {
+        "yasdvat\0r"_v,
+        "yasdvat\0r"_v,
+        9,
+        TestString {
+            ""_v,
+            "\0"_v,
+            InputRestrictions { {}, true },
+        },
+    },
+    SplitTestString {
+        "yasdvat\0r"_v,
+        "yasdvat\0r"_v,
+        9,
+        TestString {
+            ""_v,
+            "\0"_v,
+            InputRestrictions { { 0 }, true },
+        },
+    },
+    SplitTestString {
+        "yasdvat\0r"_v,
+        "yasdvat\0r"_v,
+        9,
+        TestString {
+            ""_v,
+            "\0"_v,
+            InputRestrictions { { 0, 0xff }, true },
+        },
+    },
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -539,7 +579,7 @@ struct OutDirect {
 struct OutDriverSplit {
     template<typename OutTrgt>
     static void doit() {
-
+        ASSERT_TRUE(false);
     }
 };
 

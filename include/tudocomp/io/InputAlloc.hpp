@@ -4,10 +4,19 @@
 
 namespace tdc {namespace io {
     class InputAllocChunk {
+        size_t m_from;
+        size_t m_to;
     public:
+        inline InputAllocChunk(size_t from, size_t to):
+            m_from(from), m_to(to) {}
+        inline size_t from() const {
+            return m_from;
+        }
+        inline size_t to() const {
+            return m_to;
+        }
+
         inline virtual ~InputAllocChunk() {}
-        virtual size_t from() const = 0;
-        virtual size_t to() const = 0;
         virtual const InputRestrictions& restrictions() const = 0;
         virtual const InputSource& source() const = 0;
         virtual View view() const = 0;
@@ -16,15 +25,11 @@ namespace tdc {namespace io {
 
     class InputAllocChunkOwned: public InputAllocChunk {
         RestrictedBuffer m_buffer;
+
     public:
-        InputAllocChunkOwned(RestrictedBuffer&& buffer):
+        InputAllocChunkOwned(RestrictedBuffer&& buffer, size_t from, size_t to):
+            InputAllocChunk(from, to),
             m_buffer(std::move(buffer)) {}
-        inline virtual size_t from() const {
-            return m_buffer.from();
-        }
-        inline virtual size_t to() const {
-            return m_buffer.to();
-        }
         inline virtual const InputRestrictions& restrictions() const {
             return m_buffer.restrictions();
         }
@@ -41,8 +46,6 @@ namespace tdc {namespace io {
 
     class InputAllocChunkReferenced: public InputAllocChunk {
         View m_view;
-        size_t m_from;
-        size_t m_to;
         std::shared_ptr<InputAllocChunk> m_parent;
     public:
         inline InputAllocChunkReferenced(
@@ -51,16 +54,9 @@ namespace tdc {namespace io {
             size_t to,
             const std::shared_ptr<InputAllocChunk>& parent
         ):
+            InputAllocChunk(from, to),
             m_view(view),
-            m_from(from),
-            m_to(to),
             m_parent(parent) {}
-        inline virtual size_t from() const {
-            return m_from;
-        }
-        inline virtual size_t to() const {
-            return m_to;
-        }
         inline virtual const InputRestrictions& restrictions() const {
             return m_parent->restrictions();
         }
@@ -83,8 +79,7 @@ namespace tdc {namespace io {
 
         template<typename F>
         inline InputAllocChunkHandle create_buffer(F f) const {
-            auto new_alloc = std::make_shared<InputAllocChunkOwned>(
-                InputAllocChunkOwned { f() });
+            auto new_alloc = std::make_shared<InputAllocChunkOwned>(f());
 
             m_ptr->push_back(new_alloc);
             return m_ptr->back();
@@ -130,7 +125,11 @@ namespace tdc {namespace io {
             if (!parent) {
                 // Create a parent
                 parent = create_buffer([&]() {
-                    return RestrictedBuffer(src, 0, RestrictedBuffer::npos, restrictions);
+                    return InputAllocChunkOwned {
+                        RestrictedBuffer(src, 0, RestrictedBuffer::npos, restrictions),
+                        0,
+                        RestrictedBuffer::npos,
+                    };
                 });
                 needs_restriction_change = false;
                 is_unique = true;
@@ -140,10 +139,17 @@ namespace tdc {namespace io {
 
             // change restrictions if needed
             if (needs_restriction_change /* && is_unique */) {
+                auto f = parent->from();
+                auto t = parent->to();
+
                 auto buf = std::move(*parent).unwrap();
 
                 parent = create_buffer([&]() {
-                    return RestrictedBuffer::change_restrictions(std::move(buf), restrictions);
+                    return InputAllocChunkOwned {
+                        RestrictedBuffer::change_restrictions(std::move(buf), restrictions),
+                        f,
+                        t,
+                    };
                 });
             }
 
@@ -250,7 +256,11 @@ namespace tdc {namespace io {
                 // File or View sources can be created arbitrarily:
 
                 return create_buffer([&]() {
-                    return RestrictedBuffer(src, from, to, restrictions);
+                    return InputAllocChunkOwned {
+                        RestrictedBuffer(src, from, to, restrictions),
+                        from,
+                        to,
+                    };
                 });
             }
         }
