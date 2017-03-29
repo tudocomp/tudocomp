@@ -44,7 +44,6 @@ namespace tdc {namespace io {
     private:
         uint8_t* m_ptr   = (uint8_t*) EMPTY;
         size_t   m_size  = 0;
-        int      m_fd    = -1;
 
         State    m_state = State::Unmapped;
         Mode     m_mode  = Mode::Read;
@@ -81,8 +80,8 @@ namespace tdc {namespace io {
                 (offset + m_size) > file_size;
 
             // Open file for memory map
-            m_fd = open(path.c_str(), O_RDONLY);
-            CHECK(m_fd != -1) << "Error at opening file";
+            auto fd = open(path.c_str(), O_RDONLY);
+            CHECK(fd != -1) << "Error at opening file";
 
             int mmap_prot;
             int mmap_flags;
@@ -104,7 +103,7 @@ namespace tdc {namespace io {
                                 adj_size(m_size),
                                 mmap_prot,
                                 mmap_flags,
-                                m_fd,
+                                fd,
                                 offset);
                 check_mmap_error(ptr, "mapping file into memory");
 
@@ -112,13 +111,11 @@ namespace tdc {namespace io {
             } else {
                 // Allocate memory and copy file into it
 
-                auto file_fd = m_fd;
-
                 *this = MMap(m_size);
 
                 // seek to offset
                 {
-                    auto ret = lseek(file_fd, offset, SEEK_SET);
+                    auto ret = lseek(fd, offset, SEEK_SET);
                     if (ret == -1) {
                         perror("Seeking fd");
                     }
@@ -131,7 +128,7 @@ namespace tdc {namespace io {
                     auto size = file_size - offset;
 
                     while (size > 0) {
-                        auto ret = read(file_fd, ptr, size);
+                        auto ret = read(fd, ptr, size);
                         if (ret == -1) {
                             perror("Reading fd into mapped memory");
                         }
@@ -141,9 +138,8 @@ namespace tdc {namespace io {
                     }
 
                 }
-
-                close(file_fd);
             }
+            close(fd);
         }
 
         inline MMap(size_t size)
@@ -163,7 +159,6 @@ namespace tdc {namespace io {
             check_mmap_error(ptr, "creating anon. memory map");
 
             m_ptr = (uint8_t*) ptr;
-            m_fd = -1;
 
             m_state = State::Private;
         }
@@ -171,7 +166,6 @@ namespace tdc {namespace io {
         inline void remap(size_t new_size) {
             DCHECK(m_mode == Mode::ReadWrite);
             DCHECK(m_state == State::Private);
-            DCHECK(m_fd == -1);
 
             auto p = mremap(m_ptr, adj_size(m_size), adj_size(new_size), MREMAP_MAYMOVE);
             std::cout << "old size: " << m_size << "\n";
@@ -200,7 +194,6 @@ namespace tdc {namespace io {
         inline void move_from(MMap&& other) {
             m_ptr   = other.m_ptr;
             m_size  = other.m_size;
-            m_fd    = other.m_fd;
 
             m_state = other.m_state;
             m_mode  = other.m_mode;
@@ -208,7 +201,6 @@ namespace tdc {namespace io {
             other.m_state = State::Unmapped;
             other.m_ptr = (uint8_t*) EMPTY;
             other.m_size = 0;
-            other.m_fd = -1;
         }
     public:
         inline MMap(MMap&& other) {
@@ -226,13 +218,6 @@ namespace tdc {namespace io {
 
                 int rc = munmap(m_ptr, adj_size(m_size));
                 CHECK(rc == 0) << "Error at unmapping";
-
-                if (m_fd != -1) {
-                    close(m_fd);
-                    m_fd = -1;
-                }
-            } else {
-                DCHECK(m_fd == -1);
             }
         }
     };
