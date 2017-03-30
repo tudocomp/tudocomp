@@ -10,17 +10,23 @@ import statistics
 import hashlib
 import tempfile
 
-
-
 if len(sys.argv) < 2:
     print("Usage: ", sys.argv[0], " [file-to-compress]")
     quit()
 
 sourcefilename = sys.argv[1]
 if not os.access(sourcefilename, os.R_OK):
-    print("File ", sourcefilename, " not readible")
+    print("ERROR: Input file not found or not readable:", sourcefilename)
     quit()
 
+# Check that valgrind is available for memory measurement
+try:
+    subprocess.check_call("valgrind --version")
+    mem_available = True
+except:
+    mem_available = False
+    print("WARNING: valgrind not found - memory measurement unavailable.")
+    print()
 
 numIterations=1
 print("Number of iterations: ", numIterations)
@@ -75,7 +81,7 @@ def timesize(num, suffix='s'):
             num /= 60
             return "%3.1f%s" % (num, 'min')
         elif(num > 3600):
-            num /= 3600 
+            num /= 3600
             return "%3.1f%s" % (num, 'h')
 
 
@@ -86,7 +92,8 @@ def run_compress(compressor,infilename,outfilename):
         with open(outfilename,"wb") as outfile, open(infilename,"rb") as infile:
             args=compressor[2:]
             t = time.time()
-            subprocess.check_call(args, stdin=infile, stdout=outfile, stderr=logfile) 
+
+            subprocess.check_call(args, stdin=infile, stdout=outfile, stderr=logfile)
             #subprocess.call(args, stdin=infile, stdout=outfile, stderr=logfile)  # do not break on error
             elapsed_time = time.time() - t
         return(elapsed_time)
@@ -101,8 +108,9 @@ def run_compress(compressor,infilename,outfilename):
         else:
             args=args+[compressor[1],infilename]
         t = time.time()
-        #subprocess.call(args, stdout=logfile, stderr=logfile) 
-        subprocess.check_call(args, stdout=logfile, stderr=logfile) 
+        #subprocess.call(args, stdout=logfile, stderr=logfile)
+        subprocess.check_call(args, stdout=logfile, stderr=logfile)
+
         elapsed_time = time.time() - t
         return(elapsed_time)
 
@@ -133,39 +141,74 @@ maxnicknamelength = len(max(compressor_pairs,key=lambda p: len(p[0]))[0] )+2
 print("%s (%s, sha256=%s)" % (sourcefilename, memsize(sourcefilesize), sourcefilehash))
 
 print()
-print(("%"+ str(maxnicknamelength) + "s | %10s | %10s | %10s | %10s | %10s | %3s |") % ("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"))
-print('-'*(maxnicknamelength+5*10+6*3+3+2))
+print(("%"+ str(maxnicknamelength) + "s | %10s | %10s | %10s | %10s | %10s | %4s |") % ("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"))
+print('-'*(maxnicknamelength+5*10+6*3+4+2))
 
 logfilename=tempfile.mktemp()
 decompressedfilename=tempfile.mktemp()
 outfilename=tempfile.mktemp()
+
+def print_column(content, format="%11s", sep="|"):
+    print((format + " " + sep) % content, end='',flush=True)
+
 try:
     with open(logfilename,"wb") as logfile:
         for (nickname,compressor,decompressor) in compressor_pairs:
-            print(("%"+ str(maxnicknamelength) +"s |") % nickname, end='',flush=True) #print nickname
-            comp_time=measure_time(compressor,sourcefilename, outfilename)
-            print("%11s |" % timesize(comp_time), end='',flush=True) #print time
-            comp_mem=measure_mem(compressor, sourcefilename, outfilename)
-            print("%11s |" % memsize(comp_mem), end='',flush=True) #print memory
+            # nickname
+            print(("%"+ str(maxnicknamelength) +"s |") % nickname, end='',flush=True)
+
+            # compress time
+            try:
+                comp_time=measure_time(compressor,sourcefilename, outfilename)
+                print_column(timesize(comp_time))
+            except FileNotFoundError as e:
+                print_column("(ERR)", sep=">")
+                print(" " + e.strerror)
+                continue
+
+            # compress memory
+            if mem_available:
+                comp_mem=measure_mem(compressor, sourcefilename, outfilename)
+                print_column(memsize(comp_mem))
+            else:
+                print_column("(N/A)")
+
+            # compress rate
             outputsize=os.path.getsize(outfilename)
-            print("%10.4f%% |" % (100*float(outputsize)/float(sourcefilesize)),end='',flush=True)
+            print_column(100*float(outputsize) / float(sourcefilesize), format="%10.4f%%")
+
+            # decompress time
             dec_time=measure_time(decompressor, outfilename, decompressedfilename)
-            print("%11s |" % timesize(dec_time), end='',flush=True) #print time
-            dec_mem=measure_mem(decompressor,  outfilename, decompressedfilename)
-            print("%11s |" % memsize(dec_mem), end='',flush=True) #print memory
+            print_column(timesize(dec_time))
+
+            # decompress memory
+            if mem_available:
+                dec_mem=measure_mem(decompressor,  outfilename, decompressedfilename)
+                print_column(memsize(dec_mem))
+            else:
+                print_column("(N/A)")
+
+            # decompress check
             decompressedhash=hashlib.sha256(open(decompressedfilename, 'rb').read()).hexdigest()
             if decompressedhash != sourcefilehash:
-                print("%11s |" % decompressedhash, end='',flush=True) #print memory
+                #does a hash really help upon failure?
+                #print("%11s |" % decompressedhash, end='',flush=True)
+                print_column("FAIL", format="%5s")
             else:
-                print("%4s |" % 'OK', end='',flush=True) #print memory
-            print('')
+                print_column("OK", format="%5s")
+
+            # EOL
+            print()
 except:
     print()
-    print("Unexpected error:", sys.exc_info()[0])
+    print("ERROR:", sys.exc_info()[0])
+    print(sys.exc_info()[1])
 
 with open(logfilename, 'r') as fin: print(fin.read())
-os.unlink(logfilename)
-os.unlink(decompressedfilename)
-os.unlink(outfilename)
+os.remove(logfilename)
 
+if os.path.exists(decompressedfilename):
+    os.remove(decompressedfilename)
 
+if os.path.exists(outfilename):
+    os.remove(outfilename)
