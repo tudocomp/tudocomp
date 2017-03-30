@@ -354,9 +354,13 @@ namespace tdc {namespace io {
         inline RestrictedBuffer change_restrictions(
             const io::InputRestrictions& restrictions) &&
         {
+            std::cout << "changing restrictions:\n";
+            std::cout << "  old size:" << view().size() << "\n";
             auto& other = *this;
             auto buf = unrestrict(std::move(other));
-            return restrict(std::move(buf), restrictions);
+            auto r = restrict(std::move(buf), restrictions);
+            std::cout << "  new size:" << r.view().size() << "\n";
+            return r;
         }
 
         inline RestrictedBuffer(const InputSource& src,

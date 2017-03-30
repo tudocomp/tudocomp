@@ -173,6 +173,9 @@ namespace tdc {namespace io {
             }
 
             // TODO: Create sub object pointing into parent
+            // TODO: PROBLEM: Can not point into parent if null term needed
+
+            std::cerr << "FIX THIS ISSUE\n";
 
             size_t escaped_from = 0;
             size_t escaped_to = 0;
@@ -216,6 +219,9 @@ namespace tdc {namespace io {
 
             std::cout << "Current from: " << from << ", to: " << to << "\n";
             std::cout << "Escaped from: " << escaped_from << ", to: " << escaped_to << "\n";
+            std::cout << "Parent from:  " << parent->from() << "\n";
+            std::cout << "Parent to:    " << parent->to() << "\n";
+            std::cout << "Parent slice: " << parent->view().size() << "\n";
 
             return create_ref(InputAllocChunkReferenced {
                 parent->view().slice(escaped_from, escaped_to),
@@ -311,4 +317,19 @@ namespace tdc {namespace io {
             DCHECK(m_ptr);
         }
     };
+
+    inline void unregister_alloc_chunk_handle(InputAllocChunkHandle handle) {
+        if (handle) {
+            // If its a stream root handle then we keep if
+
+            if (handle->source().is_stream()) {
+                if (handle->from() == 0 && handle->to() == RestrictedBuffer::npos) {
+                    return;
+                }
+            }
+
+            auto tmp = InputAllocHandle(handle->alloc());
+            tmp.remove(handle);
+        }
+    }
 }}
