@@ -413,6 +413,25 @@ struct Direct {
     }
 };
 
+struct DirectSize {
+    template<typename InpSrc>
+    static void doit() {
+        for (auto& tests : direct_cases) {
+            std::cout << "Case: " << vec_to_debug_string(tests.in_str) << "\n";
+            InpSrc x { tests.in_str };
+            Input i = x.input();
+
+            ASSERT_EQ(i.size(), tests.in_str.size());
+            i = Input(i, tests.restrictions);
+            std::cerr << "escaped str: " << vec_to_debug_string(tests.escaped_str) << "\n";
+            ASSERT_EQ(i.size(), tests.escaped_str.size());
+
+            input_equal(i, tests.escaped_str);
+            std::cout << "Ok:   " << vec_to_debug_string(tests.escaped_str) << "\n\n";
+        }
+    }
+};
+
 struct DriverSplit {
     template<typename InpSrc>
     static void doit() {
@@ -449,6 +468,47 @@ struct DriverSplit {
     }
 };
 
+struct DriverSplitSize {
+    template<typename InpSrc>
+    static void doit() {
+        for (auto& tests : driver_split_cases) {
+            std::cout << "Case: " << vec_to_debug_string(tests.outer_str) << "\n";
+            InpSrc x { tests.outer_str };
+            Input i = x.input();
+            ASSERT_EQ(i.size(), tests.outer_str.size());
+
+            size_t actual_p;
+            {
+                auto s = i.as_stream();
+                size_t c = 0;
+                auto b = s.begin();
+                auto e = s.end();
+                std::vector<uint8_t> p;
+                while(c < tests.prefix && b != e) {
+                    p.push_back(*b);
+                    ++b;
+                    ++c;
+                }
+                actual_p = c;
+                ASSERT_EQ(View(p), tests.prefix_str);
+                std::cout << "Ok prefix: " << vec_to_debug_string(p) << "\n";
+            }
+
+            {
+                Input sub_i = Input(i, actual_p);
+                ASSERT_EQ(sub_i.size(), tests.inner.in_str.size());
+
+                sub_i = Input(sub_i, tests.inner.restrictions);
+                ASSERT_EQ(sub_i.size(), tests.inner.escaped_str.size());
+
+                input_equal(sub_i, tests.inner.escaped_str);
+            }
+
+            std::cout << "Ok slice: " << vec_to_debug_string(tests.inner.escaped_str) << "\n\n";
+        }
+    }
+};
+
 template<typename InpSrc, typename Splitting>
 void i_matrix_test() {
     Splitting::template doit<InpSrc>();
@@ -471,6 +531,25 @@ TEST(InputMatrix, FileSrc_DriverSplit) {
 }
 TEST(InputMatrix, StreamSrc_DriverSplit) {
     i_matrix_test<StreamSrc, DriverSplit>();
+}
+
+TEST(InputMatrix, ViewSrc_DirectSize) {
+    i_matrix_test<ViewSrc, DirectSize>();
+}
+TEST(InputMatrix, FileSrc_DirectSize) {
+    i_matrix_test<FileSrc, DirectSize>();
+}
+TEST(InputMatrix, StreamSrc_DirectSize) {
+    i_matrix_test<StreamSrc, DirectSize>();
+}
+TEST(InputMatrix, ViewSrc_DriverSplitSize) {
+    i_matrix_test<ViewSrc, DriverSplitSize>();
+}
+TEST(InputMatrix, FileSrc_DriverSplitSize) {
+    i_matrix_test<FileSrc, DriverSplitSize>();
+}
+TEST(InputMatrix, StreamSrc_DriverSplitSize) {
+    i_matrix_test<StreamSrc, DriverSplitSize>();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

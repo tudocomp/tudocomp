@@ -50,10 +50,12 @@ namespace tdc {namespace io {
                            size_t to): Variant(other) {
                 m_from = from;
                 m_to = to;
+                m_escaped_size_cache = npos;
             }
             inline Variant(const Variant& other,
                            const InputRestrictions& restrictions): Variant(other) {
                 m_input_restrictions = restrictions;
+                m_escaped_size_cache = npos;
             }
         public:
             inline Variant(const InputSource& src): m_source(src) {}

@@ -12,7 +12,14 @@ namespace tdc {namespace io {
                 if(restrictions().has_no_restrictions()) {
                     set_escaped_size(actual_to - from());
                 } else {
-                    DCHECK(false) << "Not yet implemented; needs efficient size calculation";
+                    auto strm = as_stream();
+                    size_t i = 0;
+                    char c;
+                    while (strm.get(c)) {
+                        ++i;
+                    }
+
+                    set_escaped_size(i);
                 }
             }
 
@@ -26,13 +33,18 @@ namespace tdc {namespace io {
                 if(restrictions().has_no_restrictions()) {
                     set_escaped_size(actual_to - from());
                 } else {
-                    DCHECK(false) << "Not yet implemented; needs efficient size calculation";
+                    auto strm = as_stream();
+                    size_t i = 0;
+                    char c;
+                    while (strm.get(c)) {
+                        ++i;
+                    }
+
+                    set_escaped_size(i);
                 }
             }
 
         } else if (source().is_stream()) {
-
-            DCHECK(false) << "not done yet";
             if(escaped_size_unknown()) {
                 auto p = alloc().find_or_construct(
                     InputSource(source().stream()), from(), to(), restrictions());

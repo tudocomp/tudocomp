@@ -144,7 +144,8 @@ namespace tdc {namespace io {
         // for both file and memory
 
         if (source().is_file()) {
-            DCHECK(to_unknown());
+            DCHECK(to_unknown())
+                << "TODO: Can not yet slice the trailing end of a stream";
 
             return InputStream {
                 InputStreamInternal {

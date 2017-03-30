@@ -174,7 +174,7 @@ namespace tdc {namespace io {
                     uint8_t* end_file_data   = begin_file_data      + unrestricted_size;
                     uint8_t* end_data        = end_file_data        + extra_size - noff;
                     escape_with_iters(begin_file_data, end_file_data, end_data);
-                    if (m_restrictions.null_terminate() && (*end_data != 0)) {
+                    if (m_restrictions.null_terminate()) {
                         // ensure the last valid byte is actually 0 if using null termination
                         *end_data = 0;
                     }
@@ -335,16 +335,16 @@ namespace tdc {namespace io {
             {
                 size_t noff = other.m_restrictions.null_terminate()? 1 : 0;
 
-                uint8_t* start = other.m_map.view().begin();
-                uint8_t* old_end = start + old_size;
-                uint8_t* new_end = start + old_size + extra_size - noff;
+                uint8_t* start   = other.m_map.view().begin();
+                uint8_t* old_end = start   + old_size;
+                uint8_t* new_end = old_end + extra_size - noff;
 
                 other.escape_with_iters(start, old_end, new_end);
                 if (other.m_restrictions.null_terminate()) {
                     *new_end = 0;
                 }
 
-                DCHECK_EQ(new_end + 1, other.m_map.view().end());
+                DCHECK_EQ(new_end + noff, other.m_map.view().end());
             }
 
             return std::move(other);
