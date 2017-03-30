@@ -33,6 +33,14 @@ namespace tdc {namespace io {
 
             inline Memory(const Memory& other) = delete;
             inline Memory() = delete;
+
+            inline ~Memory() {
+                if (m_handle) {
+                    auto ttmp = m_handle->alloc();
+                    auto tmp = InputAllocHandle(ttmp);
+                    tmp.remove(m_handle);
+                }
+            }
         };
         class File: public InputStreamInternal::Variant {
             std::string m_path;

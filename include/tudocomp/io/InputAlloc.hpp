@@ -3,17 +3,28 @@
 #include <tudocomp/io/InputRestrictedBuffer.hpp>
 
 namespace tdc {namespace io {
+
+    class InputAllocChunk;
+    using InputAllocChunkHandle = std::shared_ptr<InputAllocChunk>;
+    using InputAlloc = std::vector<InputAllocChunkHandle>;
+
     class InputAllocChunk {
         size_t m_from;
         size_t m_to;
+        std::weak_ptr<InputAlloc> m_alloc;
     public:
-        inline InputAllocChunk(size_t from, size_t to):
-            m_from(from), m_to(to) {}
+        inline InputAllocChunk(size_t from, size_t to, std::weak_ptr<InputAlloc> alloc):
+            m_from(from), m_to(to), m_alloc(alloc) {
+                DCHECK(m_alloc.lock());
+            }
         inline size_t from() const {
             return m_from;
         }
         inline size_t to() const {
             return m_to;
+        }
+        inline std::weak_ptr<InputAlloc> alloc() const {
+            return m_alloc;
         }
 
         inline virtual ~InputAllocChunk() {}
@@ -27,8 +38,11 @@ namespace tdc {namespace io {
         RestrictedBuffer m_buffer;
 
     public:
-        InputAllocChunkOwned(RestrictedBuffer&& buffer, size_t from, size_t to):
-            InputAllocChunk(from, to),
+        InputAllocChunkOwned(RestrictedBuffer&& buffer,
+                             size_t from,
+                             size_t to,
+                             std::weak_ptr<InputAlloc> alloc):
+            InputAllocChunk(from, to, alloc),
             m_buffer(std::move(buffer)) {}
         inline virtual const InputRestrictions& restrictions() const {
             return m_buffer.restrictions();
@@ -54,7 +68,7 @@ namespace tdc {namespace io {
             size_t to,
             const std::shared_ptr<InputAllocChunk>& parent
         ):
-            InputAllocChunk(from, to),
+            InputAllocChunk(from, to, parent->alloc()),
             m_view(view),
             m_parent(parent) {}
         inline virtual const InputRestrictions& restrictions() const {
@@ -71,15 +85,13 @@ namespace tdc {namespace io {
         }
     };
 
-    using InputAllocChunkHandle = std::shared_ptr<InputAllocChunk>;
-    using InputAlloc = std::vector<InputAllocChunkHandle>;
-
     class InputAllocHandle {
         std::shared_ptr<InputAlloc> m_ptr;
 
         template<typename F>
         inline InputAllocChunkHandle create_buffer(F f) const {
-            auto new_alloc = std::make_shared<InputAllocChunkOwned>(f());
+            DCHECK(m_ptr);
+            auto new_alloc = std::make_shared<InputAllocChunkOwned>(f(m_ptr));
 
             m_ptr->push_back(new_alloc);
             return m_ptr->back();
@@ -124,11 +136,12 @@ namespace tdc {namespace io {
 
             if (!parent) {
                 // Create a parent
-                parent = create_buffer([&]() {
+                parent = create_buffer([&](std::weak_ptr<InputAlloc> ptr) {
                     return InputAllocChunkOwned {
                         RestrictedBuffer(src, 0, RestrictedBuffer::npos, restrictions),
                         0,
                         RestrictedBuffer::npos,
+                        ptr,
                     };
                 });
                 needs_restriction_change = false;
@@ -144,11 +157,12 @@ namespace tdc {namespace io {
 
                 auto buf = std::move(*parent).unwrap();
 
-                parent = create_buffer([&]() {
+                parent = create_buffer([&](std::weak_ptr<InputAlloc> ptr) {
                     return InputAllocChunkOwned {
                         std::move(buf).change_restrictions(restrictions),
                         f,
                         t,
+                        ptr,
                     };
                 });
             }
@@ -255,16 +269,46 @@ namespace tdc {namespace io {
             } else {
                 // File or View sources can be created arbitrarily:
 
-                return create_buffer([&]() {
+                return create_buffer([&](std::weak_ptr<InputAlloc> ptr) {
                     return InputAllocChunkOwned {
                         RestrictedBuffer(src, from, to, restrictions),
                         from,
                         to,
+                        ptr,
                     };
                 });
             }
         }
 
+        inline void cleanup_empty() {
+            auto& vec = *m_ptr;
+
+            InputAlloc new_vec;
+
+            for (auto p : vec) {
+                if (p) {
+                    new_vec.push_back(p);
+                }
+            }
+
+            vec = new_vec;
+        }
+
+        inline void remove(InputAllocChunkHandle handle) {
+            for (auto& ptr : *m_ptr) {
+                if (ptr == handle) {
+                    ptr.reset();
+                }
+            }
+            cleanup_empty();
+        }
+
         inline InputAllocHandle(): m_ptr(std::make_shared<InputAlloc>()) {}
+        inline InputAllocHandle(std::weak_ptr<InputAlloc> weak) {
+            DCHECK(!weak.expired());
+            std::cerr << "All ok\n";
+            m_ptr = weak.lock();
+            DCHECK(m_ptr);
+        }
     };
 }}
