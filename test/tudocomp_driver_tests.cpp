@@ -100,7 +100,7 @@ TEST(Registry, decl) {
             decl::Arg("f", true, "g"),
         },
         "blub",
-        true,
+        tdc::ds::InputRestrictionsAndFlags(tdc::io::InputRestrictions({ 0 }, true), tdc::ds::SA),
     };
 
     ASSERT_EQ(b.name(), "foo");
@@ -120,7 +120,7 @@ TEST(Registry, decl) {
     ASSERT_EQ(b.arguments()[2].type(), "g");
     ASSERT_TRUE(b.arguments()[2].is_static());
     ASSERT_EQ(b.doc(), "blub");
-    ASSERT_EQ(b.add_null_terminator(), true);
+    ASSERT_EQ(b.textds_flags(), tdc::ds::InputRestrictionsAndFlags(tdc::io::InputRestrictions({ 0 }, true), tdc::ds::SA));
 
 }
 
