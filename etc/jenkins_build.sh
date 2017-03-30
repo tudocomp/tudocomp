@@ -21,10 +21,7 @@ export CCACHE_MAXSIZE=10G
 ccache -s > ccache.pre.txt
 
 if [[ "$1" == "website" ]]; then
-    # Generate public version string based on Jenkins build
-    PUBLIC_VERSION="0.1.$BUILD_NUMBER (jenkins build $BUILD_ID)"
-
-    cmake -DVERSION=$PUBLIC_VERSION -DCMAKE_BUILD_TYPE=Release ..
+    cmake -DCMAKE_BUILD_TYPE=Release ..
     make website
 else
     if [[ "$optimization_target" == "Release" ]]; then
