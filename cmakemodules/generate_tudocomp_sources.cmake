@@ -11,7 +11,7 @@ add_custom_command(
 
 add_custom_target(
     generate_version
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/etc/genversion.sh ${CMAKE_BINARY_DIR}/include/tudocomp/version.hpp
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/etc/genversion.sh ${CMAKE_BINARY_DIR}/include/tudocomp/version.hpp ${VERSION}
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/etc/genversion.sh
 )
 

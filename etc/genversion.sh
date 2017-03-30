@@ -4,25 +4,33 @@ die () {
     exit 1
 }
 
-[ "$#" -eq 1 ] || die "usage: $0 [version.hpp]"
+[ $# -ge 1 ] || die "usage: $0 [version.hpp] [VERSION]"
 
 WORKINGSETCHANGES=$(git status --porcelain | grep -Pv "^\?\?")
 
 DATE=$(date "+%Y.%m")
 COMMITNO=$(git rev-list --count HEAD)
-COMMITREV=$(git show HEAD | head -n 1 | cut -c8-)
+COMMITREV=$(git show --abbrev-commit HEAD | head -n 1 | cut -c8-)
 
-VERSION=`if [ -z "$WORKINGSETCHANGES" ]; then
-    printf "0.%s.%s" $DATE $COMMITNO
-else
-    printf "0.%s.%s-modified" $DATE $COMMITNO
-fi`
+if [ -z "$2" ]; then
 
-VERSION_LONG=`if [ -z "$WORKINGSETCHANGES" ]; then
-    printf "%s (%s)" $VERSION $COMMITREV
+    VERSION=`if [ -z "$WORKINGSETCHANGES" ]; then
+        printf "0.%s.%s" $DATE $COMMITNO
+    else
+        printf "0.%s.%s-modified" $DATE $COMMITNO
+    fi`
+
+    VERSION_LONG=`if [ -z "$WORKINGSETCHANGES" ]; then
+        printf "%s (%s)" $VERSION $COMMITREV
+    else
+        printf "%s (uncommited changes based on %s)" $VERSION $COMMITREV
+    fi`
+
 else
-    printf "%s (uncommited changes based on %s)" $VERSION $COMMITREV
-fi`
+
+    VERSION_LONG=$2
+
+fi
 
 TMP_VERSION=$(mktemp -t "$(basename "$1").XXXXXX")
 
