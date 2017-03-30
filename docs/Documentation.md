@@ -186,8 +186,14 @@ limited feature set. Cygwin does not allow overrides of `malloc`, therefore the
 heap allocation counter cannot work and statistics tracking becomes largely
 nonfunctional.
 
->> *TODO*: Check if `valgrind` works in Ubuntu on Windows, since system memory
-   reporting via `free` or `top` does not.
+Note that [the comparison tool](#the-comparison-tool) relies on `valgrind`,
+which is not functional in the Bash on Ubuntu on Windows[^windows-valgrind].
+Therefore, memory measurement in the comparison tool is unavailable in this
+environment.
+
+[^windows-valgrind]: `valgrind` reportedly fails starting in Bash on Ubuntu on
+Windows. The issue has been filed officially
+[here](https://github.com/Microsoft/BashOnWindows/issues/1295).
 
 ## Command-line Tool
 
@@ -1057,7 +1063,7 @@ public:
     virtual void compress(Input& input, Output& output) override {
         // retrieve random access on the input
         auto view = input.as_view();
-        
+
         // find the lexicographically smallest and largest characters
         uliteral_t c_min = ULITERAL_MAX;
         uliteral_t c_max = 0;
@@ -1398,7 +1404,7 @@ phase splitting:
 StatPhase::wrap("Phase 3", []{
     // Phase 3.1 yields a complex result
     StatPhase sub_phase("Phase 3.1");
-    
+
     char* result_part_1 = new char[1024];
     char* result_part_2 = new char[2048];
     std::this_thread::sleep_for(std::chrono::milliseconds(40));
@@ -1503,5 +1509,7 @@ shell.
 
 ## The Comparison Tool
 
->> *TODO*: Describe usage.
+Recall at this point the restrictions when using the comparison tool in a
+Windows enviroment (see [Windows Support](#windows-support)).
 
+>> *TODO*: Describe usage.
