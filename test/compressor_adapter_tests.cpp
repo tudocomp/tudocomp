@@ -21,6 +21,8 @@
 #include <tudocomp/compressors/RunLengthEncoder.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
 
+#include <tudocomp/ds/TextDS.hpp>
+
 #include <tudocomp_driver/Registry.hpp>
 
 #include "test/util.hpp"
@@ -32,7 +34,7 @@ class NoopEscapingCompressor: public Compressor {
 public:
     inline static Meta meta() {
         Meta m ("compressor", "noop_null", "");
-        m.needs_sentinel_terminator();
+        m.uses_textds<TextDS<>>(ds::SA);
         m.option("mode").dynamic("view");
         m.option("debug").dynamic("false");
         return m;

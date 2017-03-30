@@ -69,11 +69,13 @@ public:
                                        Output& o,
                                        Compressor& c,
                                        ds::InputRestrictionsAndFlags flags) {
-            // TODO !!!!!!!!!!
-            //if (needs_sentinel) {
-                //i.escape_and_terminate();
-            //}
-            c.compress(i, o);
+            bool res = flags.has_restrictions();
+            if (res) {
+                auto i2 = Input(i, flags);
+                c.compress(i2, o);
+            } else {
+                c.compress(i, o);
+            }
         });
     }
 
@@ -86,11 +88,13 @@ public:
                                       Output& o,
                                       Compressor& c,
                                       ds::InputRestrictionsAndFlags flags) {
-            // TODO !!!!!!!!!!
-            //if (needs_sentinel) {
-                //o.unescape_and_trim();
-            //}
-            c.decompress(i, o);
+            bool res = flags.has_restrictions();
+            if (res) {
+                auto o2 = Output(o, flags);
+                c.decompress(i, o2);
+            } else {
+                c.decompress(i, o);
+            }
         });
     }
 };

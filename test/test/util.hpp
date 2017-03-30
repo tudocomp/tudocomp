@@ -393,10 +393,8 @@ public:
 
             auto compressor = create_algo_with_registry<C>(options, m_registry);
 
-            if (C::meta().is_needs_sentinel_terminator()) {
-                // TODO
-                DCHECK(false);
-                //decoded_out.unescape_and_trim();
+            if (C::meta().textds_flags().has_restrictions()) {
+                decoded_out = Output(decoded_out, C::meta().textds_flags());
             }
 
             compressor.decompress(text_in, decoded_out);
