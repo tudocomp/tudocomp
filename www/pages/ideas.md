@@ -1,4 +1,4 @@
-# Project Ideas - Google Summer of Code 2017
+# Project Ideas
 
 We maintain a list of medium size projects on this page.
 
@@ -7,7 +7,7 @@ novel compression algorithms for *tudocomp*. They range from projects targeted
 at "nice-to-heave" features to projects related to scientific research in the
 field of data compression.
 
-For all these projects, participating students should be interested in data
+For all these projects, contributors should be interested in data
 compression in general, as well as in at least in one of the following fields
 in particular: 
 
@@ -87,11 +87,6 @@ concerns that you may have.
 We invite anybody to join and start working on their own implementation of
 compression algorithms.
 
-### GSoC Timeline
-
-The [general GSoC 2017 timeline](https://developers.google.com/open-source/gsoc/timeline)
-has important _hard_ deadlines for all projects.
-
 ### Project Plan
 
 Project planning is necessary to structure how and when parts of a project have
@@ -113,10 +108,10 @@ Keep a diary, documenting your project's evolution and progress and what
 issues you faced, solved or could not solve, as well as what tasks you were able
 to finish in time and what is behind schedule.
 
-## GSoC 2017 Project Ideas
+## Project Ideas
 
-The following is a collection of our project ideas that we propose for
-GSoC 2017. If you have further project ideas and/or want to discuss some of our
+The following is a collection of our project ideas. 
+If you have further project ideas and/or want to discuss some of our
 proposed projects please contact us via
 [e-mail](mailto:tudocomp.cs@lists.tu-dortmund.de). Feel free to subscribe to our
 [mailing list](https://mailman.tu-dortmund.de/mailman/listinfo/tudocomp.cs) and

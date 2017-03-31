@@ -2,6 +2,7 @@
 
 #include <tudocomp/io.hpp>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/Env.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
 
@@ -19,10 +20,29 @@ protected:
 public:
     /// \brief Constructor.
     ///
+    /// \tparam literals_t The literal iterator type.
+    ///
     /// \param env The algorithm's environment.
     /// \param out The bit stream to write to.
-    inline Encoder(Env&& env, std::shared_ptr<BitOStream> out)
+    /// \param literals The literal iterator.
+    template<typename literals_t>
+    inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
         : Algorithm(std::move(env)), m_out(out) {
+    }
+
+    /// \brief Convenience constructor.
+    ///
+    /// \tparam literals_t The literal iterator type.
+    ///
+    /// \param env The algorithm's environment.
+    /// \param out The output to write to.
+    /// \param literals The literal iterator.
+    template<typename literals_t>
+    inline Encoder(Env&& env, Output& out, literals_t&& literals)
+        : Encoder(
+            std::move(env),
+            std::make_shared<BitOStream>(out),
+            literals) {
     }
 
     /// \brief Encodes an arbitrary-range integer value.
@@ -58,23 +78,6 @@ public:
     }
 };
 
-/// \brief Defines constructors for clases inheriting from \ref tdc::Encoder.
-///
-/// This includes a convenience constructor that automatically opens a
-/// bit output stream on a \ref tdc::Output.
-///
-/// \param env The variable name for the environment.
-/// \param out The variable name for the bit output stream.
-/// \param literals The variable name for the literal iterator.
-#define ENCODER_CTOR(env, out, literals)                                   \
-        template<typename literals_t>                                      \
-        inline Encoder(Env&& env, Output& out, literals_t&& literals) \
-             : Encoder(std::move(env),                                     \
-                      std::make_shared<BitOStream>(out), std::move(literals)) {}      \
-        template<typename literals_t>                                      \
-        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals) \
-            : tdc::Encoder(std::move(env), out)
-
 /// \brief Base for data decoders.
 ///
 /// Used for decoding integer values from a certain bit representation.
@@ -91,6 +94,14 @@ public:
     /// \param in The bit stream to read from.
     inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
         : Algorithm(std::move(env)), m_in(in) {
+    }
+
+    /// \brief Convenience constructor.
+    ///
+    /// \param env The algorithm's environment.
+    /// \param in The input to read from.
+    inline Decoder(Env&& env, Input& in)
+        : Decoder(std::move(env), std::make_shared<BitIStream>(in)) {
     }
 
     /// \brief Tests whether the end of the bit input stream has been reached.

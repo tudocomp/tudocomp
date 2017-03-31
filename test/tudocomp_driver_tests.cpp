@@ -6,8 +6,9 @@
 
 #include <tudocomp/util.hpp>
 
-#include <tudocomp_driver/Registry.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
+#include <tudocomp/Env.hpp>
+#include <tudocomp_driver/Registry.hpp>
 
 #include "test/util.hpp"
 #include "test/driver_util.hpp"
@@ -126,17 +127,19 @@ TEST(Registry, decl) {
 
 TEST(Registry, lookup) {
     using namespace tdc_algorithms;
-    Registry& r = REGISTRY;
-    auto av = r.parse_algorithm_id("lz78(dict_size = \"100\")");
-    auto c = r.select_compressor_or_exit(av);
-    auto av2 = r.parse_algorithm_id("fib(n = \"10\")", "generator");
-    auto g = r.select_generator_or_exit(av2);
+    Registry<Compressor>& cr = COMPRESSOR_REGISTRY;
+    auto av = cr.parse_algorithm_id("lz78(dict_size = \"100\")");
+    auto c = cr.select_algorithm(av);
+
+    Registry<Generator>& gr = GENERATOR_REGISTRY;
+    auto av2 = gr.parse_algorithm_id("fib(n = \"10\")");
+    auto g = gr.select_algorithm(av2);
 }
 
 TEST(Registry, dynamic_options) {
     using namespace tdc_algorithms;
 
-    Registry& r = REGISTRY;
+    Registry<Compressor>& r = COMPRESSOR_REGISTRY;
 
     struct MySub {
         inline static Meta meta() {
@@ -178,10 +181,10 @@ TEST(Registry, dynamic_options) {
         }
     };
 
-    r.register_compressor<MyCompressor>();
+    r.register_algorithm<MyCompressor>();
 
     auto av = r.parse_algorithm_id("foo(x, \"qwerty\")");
-    auto c = r.select_compressor_or_exit(av);
+    auto c = r.select_algorithm(av);
     std::vector<uint8_t> data;
     Output out(data);
     Input inp("test");
@@ -193,8 +196,8 @@ TEST(Registry, dynamic_options) {
 TEST(TudocompDriver, all_compressors_defined) {
     using namespace tdc_algorithms;
 
-    Registry& r = REGISTRY;
-    auto s = r.check_for_undefined_compressors();
+    Registry<Compressor>& r = COMPRESSOR_REGISTRY;
+    auto s = r.check_for_undefined_algorithms();
     bool has_undefined_compressors = s.size() > 0;
     if (has_undefined_compressors) {
         std::stringstream ss;

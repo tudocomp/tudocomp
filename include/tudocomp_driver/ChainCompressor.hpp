@@ -2,8 +2,10 @@
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Env.hpp>
+#include <tudocomp/Registry.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
+#include <tudocomp_driver/Registry.hpp>
 #include <vector>
 #include <memory>
 
@@ -43,7 +45,7 @@ public:
 
             DVLOG(1) << "dynamic creation of" << av.name() << "\n";
             auto compressor = create_algo_with_registry_dynamic(
-                env().registry(), av);
+                tdc_algorithms::COMPRESSOR_REGISTRY, av);
 
             f(i, o, *compressor, textds_flags);
         };

@@ -7,6 +7,8 @@
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <boost/heap/pairing_heap.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -38,9 +40,9 @@ public:
     inline void factorize(text_t& text, const size_t threshold, lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
-		env().begin_stat_phase("Construct text ds");
-		text.require(text_t::SA | text_t::ISA | text_t::LCP);
-		env().end_stat_phase();
+        StatPhase::wrap("Construct text ds", [&]{
+            text.require(text_t::SA | text_t::ISA | text_t::LCP);
+        });
 
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
@@ -64,7 +66,8 @@ public:
 
 		LCPCompare comp(lcp,sa);
 
-        env().begin_stat_phase("Construct MaxLCPHeap");
+        StatPhase phase("Construct MaxLCPHeap");
+    
 		boost::heap::pairing_heap<len_t,boost::heap::compare<LCPCompare>> heap(comp);
 		std::vector<decltype(heap)::handle_type> handles(lcp.size());
 
@@ -74,11 +77,8 @@ public:
 			else handles[i].node_ = nullptr;
         }
 
-        env().log_stat("entries", heap.size());
-        env().end_stat_phase();
-
         //Factorize
-        env().begin_stat_phase("Process MaxLCPHeap");
+        phase.split("Process MaxLCPHeap");
 
         while(heap.size() > 0) {
             //get suffix with longest LCP
@@ -94,32 +94,29 @@ public:
             //remove overlapped entries
             for(size_t k = 0; k < flen; k++) {
                 const len_t pos = isa[fpos + k];
-				if(handles[pos].node_ == nullptr) continue;
+			    if(handles[pos].node_ == nullptr) continue;
                 heap.erase(handles[pos]);
-				handles[pos].node_ = nullptr;
+			    handles[pos].node_ = nullptr;
             }
 
             //correct intersecting entries
             for(size_t k = 0; k < flen && fpos > k; k++) {
                 size_t s = fpos - k - 1;
                 size_t i = isa[s];
-				if(handles[i].node_ != nullptr) {
+			    if(handles[i].node_ != nullptr) {
                     if(s + lcp[i] > fpos) {
                         size_t l = fpos - s;
                         if(l >= threshold) {
-							lcp[i] = l;
-							heap.decrease(handles[i]);
+						    lcp[i] = l;
+						    heap.decrease(handles[i]);
                         } else {
-							heap.erase(handles[i]);
-							handles[i].node_ = nullptr;
+						    heap.erase(handles[i]);
+						    handles[i].node_ = nullptr;
                         }
                     }
                 }
             }
         }
-
-        env().end_stat_phase();
-
     }
 };
 

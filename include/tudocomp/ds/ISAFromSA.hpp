@@ -4,6 +4,8 @@
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/ArrayDS.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 /// Constructs the inverse suffix array using the suffix array.
@@ -25,21 +27,20 @@ public:
         // Require Suffix Array
         auto& sa = t.require_sa(cm);
 
-        this->env().begin_stat_phase("Construct ISA");
+        StatPhase::wrap("Construct ISA", [&]{
+            // Allocate
+            const size_t n = t.size();
+            const size_t w = bits_for(n);
+            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : LEN_BITS));
 
-        // Allocate
-        const size_t n = t.size();
-        const size_t w = bits_for(n);
-        set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : LEN_BITS));
+            // Construct
+            for(len_t i = 0; i < n; i++) {
+                (*this)[sa[i]] = i;
+            }
 
-        // Construct
-        for(len_t i = 0; i < n; i++) {
-            (*this)[sa[i]] = i;
-        }
-
-        this->env().log_stat("bit_width", size_t(width()));
-        this->env().log_stat("size", bit_size() / 8);
-        this->env().end_stat_phase();
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
+        });
 
         if(cm == CompressMode::delayed) compress();
     }
@@ -47,14 +48,13 @@ public:
     void compress() {
         debug_check_array_is_initialized();
 
-        env().begin_stat_phase("Compress ISA");
+        StatPhase::wrap("Compress ISA", [this]{
+            width(bits_for(size()));
+            shrink_to_fit();
 
-        width(bits_for(size()));
-        shrink_to_fit();
-
-        env().log_stat("bit_width", size_t(width()));
-        env().log_stat("size", bit_size() / 8);
-        env().end_stat_phase();
+            StatPhase::log("bit_width", size_t(width()));
+            StatPhase::log("size", bit_size() / 8);
+        });
     }
 };
 

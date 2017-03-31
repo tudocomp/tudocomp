@@ -28,7 +28,7 @@ a:hover {
 
 em {
     font-style: normal;
-    font-weight: bold;
+    font-weight: 600;
 }
 
 table {
@@ -74,6 +74,20 @@ code {
 
 a code {
     font-weight: bold;
+}
+
+.sourceCode[caption]:after {
+    display: block;
+
+    color: #444;
+
+    text-align: right;
+    padding: 0.25rem 0 0.25rem 0;
+
+    font-family: "Source Code Pro", monospace;
+    font-size: 85%;
+
+    content: '\27A4\20' attr(caption);
 }
 
 header {
@@ -149,8 +163,34 @@ section#content > div {
     font-weight: bold;
 }
 
+#content h4 {
+    margin: 2rem 0 0.5rem 0;
+    padding-left: 1rem;
+
+    font-size: 1.0rem;
+    font-weight: bold;
+}
+
 #content p {
     padding-left: 1rem;
+}
+
+#content dt {
+    margin-left: 1rem;
+}
+
+#content dt::before{
+    content: '\279C\20';
+    font-size: 1.25rem;
+}
+
+#content dd {
+    margin-left: 2.5rem;
+    margin-top: 0.5rem;
+}
+
+#content dd + dt {
+    margin-top: 1rem;
 }
 
 #content .figure {
@@ -187,10 +227,9 @@ section#content > div {
 }
 
 #content blockquote p {
-    background-color: #DDD;
+    background-color: #DFD;
 
-    border-left: 4px solid #AAA;
-    font-style: italic;
+    border-left: 4px solid #686;
 
     padding: 0.5rem;
 }

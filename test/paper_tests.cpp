@@ -1,11 +1,15 @@
 #include "gtest/gtest.h"
 #include "test/util.hpp"
 
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/ds/ArrayMaxHeap.hpp>
+#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/compressors/lz78u/SuffixTree.hpp>
+
 //m.option("textds").templated<text_t, TextDS<>>();
 //template<typename text_t>
 
 /////////////////////////////////
-#include <tudocomp/tudocomp.hpp>
 class BWTComp : public Compressor {
   public: static Meta meta() {
     Meta m("compressor", "bwt");
@@ -75,6 +79,8 @@ TEST(SEA17, MaxHeap) {
     maxheap.factorize(text_ds, 1);
 }
 /////////////////////////////////
+using namespace tdc::lz78u;
+
 void factorize(TextDS<>& T, SuffixTree& ST, std::function<void(int begin, int end, int ref)> output){
  typedef SuffixTree::node_type node_t;
  sdsl::int_vector<> R(ST.internal_nodes,0,bits_for(T.size() * bits_for(ST.cst.csa.sigma) / bits_for(T.size())));

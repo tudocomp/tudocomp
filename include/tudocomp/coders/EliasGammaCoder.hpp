@@ -15,8 +15,7 @@ public:
 
     class Encoder : public tdc::Encoder {
     public:
-        ENCODER_CTOR(env, out, literals) {}
-
+        using tdc::Encoder::Encoder;
         using tdc::Encoder::encode;
 
         template<typename value_t>
@@ -27,8 +26,7 @@ public:
 
     class Decoder : public tdc::Decoder {
     public:
-        DECODER_CTOR(env, in) {}
-
+        using tdc::Decoder::Decoder;
         using tdc::Decoder::decode;
 
         template<typename value_t>
