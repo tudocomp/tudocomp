@@ -26,11 +26,11 @@ parser.add_argument('files', metavar='FILE', type=str, nargs='+',
 
 args = parser.parse_args()
 
-# Ensure that the input file exists
-sourcefilename = args.files[0] # TODO: allow multiple input files
-if not os.access(sourcefilename, os.R_OK):
-    print("ERROR: Input file not found or not readable:", sourcefilename)
-    quit()
+# Ensure that the input files are readable
+for srcfname in args.files:
+    if not os.access(srcfname, os.R_OK):
+        print("ERROR: Input file not found or not readable:", srcfname)
+        quit()
 
 # Check that valgrind is available for memory measurement
 try:
@@ -136,7 +136,7 @@ def timesize(num, suffix='s'):
             return "%3.1f%s" % (num, 'h')
 
 def run_exec(x, infilename, outfilename):
-    args = x.args
+    args = list(x.args)
 
     # Delete existing output file
     if os.path.exists(outfilename):
@@ -195,80 +195,80 @@ def measure_mem(x, infilename, outfilename):
     os.remove(massiffilename)
     return(maxmem)
 
-
-sourcefilehash=hashlib.sha256(open(sourcefilename, 'rb').read()).hexdigest()
-sourcefilesize=os.path.getsize(sourcefilename)
-
 maxnicknamelength = len(max(suite, key=lambda p: len(p.name))[0] ) + 3
 
 print("Number of iterations per file: ", args.iterations)
 
-print()
-print("%s (%s, sha256=%s)" % (sourcefilename, memsize(sourcefilesize), sourcefilehash))
+for srcfname in args.files:
+    srchash = hashlib.sha256(open(srcfname, 'rb').read()).hexdigest()
+    srcsize = os.path.getsize(srcfname)
 
-print()
-print(("%"+ str(maxnicknamelength) + "s | %10s | %10s | %10s | %10s | %10s | %4s |") % ("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"))
-print('-'*(maxnicknamelength+5*10+6*3+4+2))
-
-logfilename=tempfile.mktemp()
-decompressedfilename=tempfile.mktemp()
-outfilename=tempfile.mktemp()
-
-def print_column(content, format="%11s", sep="|"):
-    print((format + " " + sep) % content, end='',flush=True)
-
-try:
-    with open(logfilename,"wb") as logfile:
-        for c in suite:
-            # nickname
-            print_column(c.name, "%"+ str(maxnicknamelength) +"s")
-
-            # compress time
-            try:
-                comp_time=measure_time(c.compress, sourcefilename, outfilename)
-                print_column(timesize(comp_time))
-            except FileNotFoundError as e:
-                print_column("(ERR)", sep=">")
-                print(" " + e.strerror)
-                continue
-
-            # compress memory
-            if mem_available:
-                comp_mem=measure_mem(c.compress, sourcefilename, outfilename)
-                print_column(memsize(comp_mem))
-            else:
-                print_column("(N/A)")
-
-            # compress rate
-            outputsize=os.path.getsize(outfilename)
-            print_column(100*float(outputsize) / float(sourcefilesize), format="%10.4f%%")
-
-            # decompress time
-            dec_time=measure_time(c.decompress, outfilename, decompressedfilename)
-            print_column(timesize(dec_time))
-
-            # decompress memory
-            if mem_available:
-                dec_mem=measure_mem(c.decompress, outfilename, decompressedfilename)
-                print_column(memsize(dec_mem))
-            else:
-                print_column("(N/A)")
-
-            # decompress check
-            decompressedhash=hashlib.sha256(open(decompressedfilename, 'rb').read()).hexdigest()
-            if decompressedhash != sourcefilehash:
-                #does a hash really help upon failure?
-                #print("%11s |" % decompressedhash, end='',flush=True)
-                print_column("FAIL", format="%5s")
-            else:
-                print_column("OK", format="%5s")
-
-            # EOL
-            print()
-except:
     print()
-    print("ERROR:", sys.exc_info()[0])
-    print(sys.exc_info()[1])
+    print("File: %s (%s, sha256=%s)" % (srcfname, memsize(srcsize), srchash))
+
+    print()
+    print(("%"+ str(maxnicknamelength) + "s | %10s | %10s | %10s | %10s | %10s | %4s |") % ("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"))
+    print('-'*(maxnicknamelength+5*10+6*3+4+2))
+
+    logfilename = tempfile.mktemp()
+    decompressedfilename = tempfile.mktemp()
+    outfilename = tempfile.mktemp()
+
+    def print_column(content, format="%11s", sep="|"):
+        print((format + " " + sep) % content, end='',flush=True)
+
+    try:
+        with open(logfilename,"wb") as logfile:
+            for c in suite:
+                # nickname
+                print_column(c.name, "%"+ str(maxnicknamelength) +"s")
+
+                # compress time
+                try:
+                    comp_time=measure_time(c.compress, srcfname, outfilename)
+                    print_column(timesize(comp_time))
+                except FileNotFoundError as e:
+                    print_column("(ERR)", sep=">")
+                    print(" " + e.strerror)
+                    continue
+
+                # compress memory
+                if mem_available:
+                    comp_mem=measure_mem(c.compress, srcfname, outfilename)
+                    print_column(memsize(comp_mem))
+                else:
+                    print_column("(N/A)")
+
+                # compress rate
+                outputsize=os.path.getsize(outfilename)
+                print_column(100*float(outputsize) / float(srcsize), format="%10.4f%%")
+
+                # decompress time
+                dec_time = measure_time(c.decompress, outfilename, decompressedfilename)
+                print_column(timesize(dec_time))
+
+                # decompress memory
+                if mem_available:
+                    dec_mem = measure_mem(c.decompress, outfilename, decompressedfilename)
+                    print_column(memsize(dec_mem))
+                else:
+                    print_column("(N/A)")
+
+                # decompress check
+                decompressedhash = hashlib.sha256(
+                    open(decompressedfilename, 'rb').read()).hexdigest()
+
+                if decompressedhash != srchash:
+                    print_column("FAIL", format="%5s")
+                else:
+                    print_column("OK", format="%5s")
+
+                # EOL
+                print()
+    except:
+        print()
+        print("ERROR:", sys.exc_info()[0])
+        print(sys.exc_info()[1])
 
 with open(logfilename, 'r') as fin: print(fin.read())
 os.remove(logfilename)
