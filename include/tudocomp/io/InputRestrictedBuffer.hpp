@@ -150,10 +150,6 @@ namespace tdc {namespace io {
                     std::istreambuf_iterator<char> begin (ifs);
                     std::istreambuf_iterator<char> end;
 
-                    std::cout << "unrestricted size: " << unrestricted_size << "\n";
-                    std::cout << "m_from:            " << m_from << "\n";
-                    std::cout << "m_to:              " << m_to << "\n";
-
                     extra_size = extra_size_needed_due_restrictions(
                         begin, end, unrestricted_size);
                 }
@@ -236,7 +232,6 @@ namespace tdc {namespace io {
                     }
 
                     // Throw away overallocation
-                    std::cout << "Size, extra size: " << size << ", " << extra_size << "\n";
                     // For null termination,
                     // a trailing unwritten byte is automatically 0
                     m_map.remap(size + extra_size);
@@ -269,7 +264,6 @@ namespace tdc {namespace io {
 
             auto r = x.m_restrictions;
 
-            std::cout << "Old restrictions: " << r << "\n";
             auto start = x.m_map.view().begin();
             auto end   = x.m_map.view().end();
 
@@ -359,12 +353,9 @@ namespace tdc {namespace io {
         inline RestrictedBuffer change_restrictions(
             const io::InputRestrictions& restrictions) &&
         {
-            std::cout << "changing restrictions:\n";
-            std::cout << "  old size:" << view().size() << "\n";
             auto& other = *this;
             auto buf = unrestrict(std::move(other));
             auto r = restrict(std::move(buf), restrictions);
-            std::cout << "  new size:" << r.view().size() << "\n";
             return r;
         }
 

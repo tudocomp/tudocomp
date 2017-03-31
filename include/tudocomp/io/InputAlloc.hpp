@@ -58,7 +58,7 @@ namespace tdc {namespace io {
             return std::move(m_buffer);
         }
         inline virtual void debug_print_content() const {
-            std::cout << "  buf:  " << m_buffer.view().size() << "\n";
+            DVLOG(2) << "  buf:  " << m_buffer.view().size() << "\n";
         }
     };
 
@@ -88,7 +88,7 @@ namespace tdc {namespace io {
             throw std::runtime_error("This is only a view");
         }
         inline virtual void debug_print_content() const {
-            std::cout << "  parent: " << std::hex << size_t(&*m_parent) << std::dec << "\n";
+            DVLOG(2) << "  parent: " << std::hex << size_t(&*m_parent) << std::dec << "\n";
         }
     };
 
@@ -98,22 +98,22 @@ namespace tdc {namespace io {
         inline void debug_print_content() const {
             auto& vec = *m_ptr;
 
-            std::cout << "Alloc registry:\n";
+            DVLOG(2) << "Alloc registry:\n";
             for (auto& e : vec) {
                 DCHECK(e);
                 auto& ee = *e;
-                std::cout << "  self: " << std::hex << size_t(&ee) << std::dec << "\n";
-                std::cout << "  kind: " << ee.source() << "\n";
-                std::cout << "  from: " << ee.from() << "\n";
+                DVLOG(2) << "  self: " << std::hex << size_t(&ee) << std::dec << "\n";
+                DVLOG(2) << "  kind: " << ee.source() << "\n";
+                DVLOG(2) << "  from: " << ee.from() << "\n";
                 if (ee.to() == RestrictedBuffer::npos) {
-                    std::cout << "  to:   <npos>" << "\n";
+                    DVLOG(2) << "  to:   <npos>" << "\n";
                 } else {
-                    std::cout << "  to:   " << ee.to() << "\n";
+                    DVLOG(2) << "  to:   " << ee.to() << "\n";
                 }
-                std::cout << "  rest: " << ee.restrictions() << "\n";
-                std::cout << "  refs: " << e.use_count() << "\n";
+                DVLOG(2) << "  rest: " << ee.restrictions() << "\n";
+                DVLOG(2) << "  refs: " << e.use_count() << "\n";
                 ee.debug_print_content();
-                std::cout << "\n";
+                DVLOG(2) << "\n";
             }
         }
 
@@ -173,7 +173,7 @@ namespace tdc {namespace io {
                 parent_ptr = &(m_ptr->back());
             }
 
-            std::cout << "After parent create:\n";
+            DVLOG(2) << "After parent create:\n";
             debug_print_content();
 
             // If there is one, but it differs in restrictions,
@@ -195,7 +195,7 @@ namespace tdc {namespace io {
                 );
             }
 
-            std::cout << "After parent restrict:\n";
+            DVLOG(2) << "After parent restrict:\n";
             debug_print_content();
 
             // If the whole range is requested, return parent directly
@@ -251,13 +251,7 @@ namespace tdc {namespace io {
                 }
             }
 
-            std::cout << "Current from: " << from << ", to: " << to << "\n";
-            std::cout << "Escaped from: " << escaped_from << ", to: " << escaped_to << "\n";
-            std::cout << "Parent from:  " << parent->from() << "\n";
-            std::cout << "Parent to:    " << parent->to() << "\n";
-            std::cout << "Parent slice: " << parent->view().size() << "\n";
-
-            std::cout << "After ref create:\n";
+            DVLOG(2) << "After ref create:\n";
             return create_ref(InputAllocChunkReferenced {
                 parent->view().slice(escaped_from, escaped_to),
                 from,
@@ -281,10 +275,8 @@ namespace tdc {namespace io {
             for (auto& eptr : *m_ptr) {
                 if (eptr) {
                     auto& e = *eptr;
-                    std::cout << "#! Looked at cached value\n";
                     if (pred(e.source())) {
                         selection.push_back(&eptr);
-                        std::cout << "#! Possible cached value\n";
                     }
                 }
             }
@@ -293,9 +285,7 @@ namespace tdc {namespace io {
             for (auto& eptr : selection) {
                 auto& iac = **eptr;
                 auto& e = iac;
-                std::cout << "#! Finding existing allocation\n";
                 if (e.from() == from && e.to() == to && e.restrictions() == restrictions) {
-                    std::cout << "#! FOUND existing allocation\n";
                     return *eptr;
                 }
             }
@@ -347,7 +337,6 @@ namespace tdc {namespace io {
         inline InputAllocHandle(): m_ptr(std::make_shared<InputAlloc>()) {}
         inline InputAllocHandle(std::weak_ptr<InputAlloc> weak) {
             DCHECK(!weak.expired());
-            std::cerr << "All ok\n";
             m_ptr = weak.lock();
             DCHECK(m_ptr);
         }

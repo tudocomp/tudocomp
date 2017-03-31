@@ -168,8 +168,6 @@ namespace tdc {namespace io {
             DCHECK(m_state == State::Private);
 
             auto p = mremap(m_ptr, adj_size(m_size), adj_size(new_size), MREMAP_MAYMOVE);
-            std::cout << "old size: " << m_size << "\n";
-            std::cout << "new size: " << new_size << "\n";
             check_mmap_error(p, "remapping memory");
 
             m_ptr = (uint8_t*) p;
