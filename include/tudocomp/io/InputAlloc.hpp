@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tudocomp/io/InputRestrictedBuffer.hpp>
+#include <tudocomp/io/RestrictedBuffer.hpp>
 
 /// \cond INTERNAL
 namespace tdc {namespace io {
