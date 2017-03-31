@@ -41,9 +41,6 @@ except:
     print("WARNING: valgrind not found - memory measurement unavailable.")
     print()
 
-# Define number of iterations
-print("Number of iterations: ", args.iterations)
-
 # Program execution definition
 StdOut = 0
 StdIn  = 0
@@ -65,26 +62,54 @@ def StdCompressor(name, binary, cflags=[], dflags=[]):
         decompress = Exec(args=[binary] + dflags, inp=StdIn, outp=StdOut))
 
 # Define suite
-# TODO: read from file
-suite = [
-    # tudocomp examples
-    Tudocomp(name='bwtzip',                          algorithm='bwt:rle:mtf:encode(huff)'),
-    Tudocomp(name='lcpcomp(t=5,arrays,scans(a=25))', algorithm='lcpcomp(coder=sle,threshold=5,comp=arrays,dec=scan(25))'),
-    Tudocomp(name='lzss_lcp(t=5,bit)',               algorithm='lzss_lcp(coder=bit,threshold=5)'),
-    Tudocomp(name='lz78u(t=5,huff)',                 algorithm='lz78u(coder=bit,threshold=5,comp=buffering(huff))'),
-    Tudocomp(name='lcpcomp(t=5,heap,compact)',       algorithm='lcpcomp(coder=sle,threshold="5",comp=heap,dec=compact)'),
-    Tudocomp(name='sle',                             algorithm='encode(sle)'),
-    Tudocomp(name='huff',                            algorithm='encode(huff)'),
-    Tudocomp(name='lzw(ternary)',                    algorithm='lzw(coder=bit,lz78trie=ternary)'),
-    Tudocomp(name='lz78(ternary)',                   algorithm='lz78(coder=bit,lz78trie=ternary)'),
-    # Some standard Linux compressors
-    StdCompressor(name='gzip -1',  binary='gzip',  cflags=['-1'], dflags=['-d']),
-    StdCompressor(name='gzip -9',  binary='gzip',  cflags=['-9'], dflags=['-d']),
-    StdCompressor(name='bzip2 -1', binary='bzip2', cflags=['-1'], dflags=['-d']),
-    StdCompressor(name='bzip2 -9', binary='bzip2', cflags=['-9'], dflags=['-d']),
-    StdCompressor(name='lzma -1',  binary='lzma',  cflags=['-1'], dflags=['-d']),
-    StdCompressor(name='lzma -9',  binary='lzma',  cflags=['-9'], dflags=['-d']),
+if args.suite:
+    # Evaluate suite as Python
+    try:
+        with open(args.suite, "r") as f:
+            suite = eval(f.read())
+
+        # sanity checks
+        if not type(suite) is list:
+            raise(Exception(
+                "Suite evaluated to " + str(type(suite)) +
+                ", but should be a list of CompressorPair objects"))
+
+        if len(suite) == 0:
+            raise(Exception("Suite is empty"))
+
+        for c in suite:
+            if not isinstance(c, CompressorPair):
+                raise(Exception("Suite must only contain CompressorPair objects" +
+                    ", found " + str(type(c))))
+    except:
+        print("ERROR: Failed to load suite '" + args.suite + "'")
+        print(sys.exc_info()[1])
+        quit()
+
+    print("Using suite '" + args.suite + "'")
+
+else:
+    # default
+    suite = [
+        # tudocomp examples
+        Tudocomp(name='bwtzip',                          algorithm='bwt:rle:mtf:encode(huff)'),
+        Tudocomp(name='lcpcomp(t=5,arrays,scans(a=25))', algorithm='lcpcomp(coder=sle,threshold=5,comp=arrays,dec=scan(25))'),
+        Tudocomp(name='lzss_lcp(t=5,bit)',               algorithm='lzss_lcp(coder=bit,threshold=5)'),
+        Tudocomp(name='lz78u(t=5,huff)',                 algorithm='lz78u(coder=bit,threshold=5,comp=buffering(huff))'),
+        Tudocomp(name='lcpcomp(t=5,heap,compact)',       algorithm='lcpcomp(coder=sle,threshold="5",comp=heap,dec=compact)'),
+        Tudocomp(name='sle',                             algorithm='encode(sle)'),
+        Tudocomp(name='huff',                            algorithm='encode(huff)'),
+        Tudocomp(name='lzw(ternary)',                    algorithm='lzw(coder=bit,lz78trie=ternary)'),
+        Tudocomp(name='lz78(ternary)',                   algorithm='lz78(coder=bit,lz78trie=ternary)'),
+        # Some standard Linux compressors
+        StdCompressor(name='gzip -1',  binary='gzip',  cflags=['-1'], dflags=['-d']),
+        StdCompressor(name='gzip -9',  binary='gzip',  cflags=['-9'], dflags=['-d']),
+        StdCompressor(name='bzip2 -1', binary='bzip2', cflags=['-1'], dflags=['-d']),
+        StdCompressor(name='bzip2 -9', binary='bzip2', cflags=['-9'], dflags=['-d']),
+        StdCompressor(name='lzma -1',  binary='lzma',  cflags=['-1'], dflags=['-d']),
+        StdCompressor(name='lzma -9',  binary='lzma',  cflags=['-9'], dflags=['-d']),
     ]
+    print("Using built-in default suite")
 
 def memsize(num, suffix='B'):
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
@@ -176,6 +201,9 @@ sourcefilesize=os.path.getsize(sourcefilename)
 
 maxnicknamelength = len(max(suite, key=lambda p: len(p.name))[0] ) + 3
 
+print("Number of iterations per file: ", args.iterations)
+
+print()
 print("%s (%s, sha256=%s)" % (sourcefilename, memsize(sourcefilesize), sourcefilehash))
 
 print()
