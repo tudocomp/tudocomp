@@ -38,7 +38,6 @@ try:
     mem_available = True
 except:
     mem_available = False
-    print(sys.exc_info())
     print("WARNING: valgrind not found - memory measurement unavailable.")
     print()
 
