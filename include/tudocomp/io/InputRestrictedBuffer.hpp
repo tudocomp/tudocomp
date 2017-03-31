@@ -147,8 +147,13 @@ namespace tdc {namespace io {
                 {
                     auto ifs = create_tdc_ifstream(c_path, m_from);
 
-                    std::istream_iterator<char> begin (ifs);
-                    std::istream_iterator<char> end;
+                    std::istreambuf_iterator<char> begin (ifs);
+                    std::istreambuf_iterator<char> end;
+
+                    std::cout << "unrestricted size: " << unrestricted_size << "\n";
+                    std::cout << "m_from:            " << m_from << "\n";
+                    std::cout << "m_to:              " << m_to << "\n";
+
                     extra_size = extra_size_needed_due_restrictions(
                         begin, end, unrestricted_size);
                 }
