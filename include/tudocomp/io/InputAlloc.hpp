@@ -146,77 +146,71 @@ namespace tdc {namespace io {
             InputRestrictions restrictions,
             std::vector<InputAllocChunkHandle*>& selection
         ) const {
+            InputAllocChunkHandle* parent_ptr = nullptr;
 
-            InputAllocChunkHandle parent;
-            bool needs_restriction_change = false;
-            bool is_unique = false;
-
-            // Check if there is a 0 ... npos parent already,
-            // and try to pick the one with matching restrictions
-            for (auto& eptr : selection) {
-                auto& e = **eptr;
-                if (e.from() == 0 && e.to() == RestrictedBuffer::npos) {
-                    if (e.restrictions() == restrictions) {
-                        needs_restriction_change = false;
-                        is_unique = eptr->unique();
-                        parent = *eptr;
-                        break;
-                    } else {
-                        needs_restriction_change = true;
-                        is_unique = eptr->unique();
-                        parent = *eptr;
-                    }
+            // Try to find the one full copy of the stream we should maximally have
+            for (auto ch_ptr : selection)  {
+                auto& ch = *ch_ptr;
+                if (ch->from() == 0 && ch->to() == RestrictedBuffer::npos) {
+                    parent_ptr = ch_ptr;
+                    break;
                 }
             }
 
-            if (!parent) {
-                // Create a parent
-                parent = create_buffer([&](std::weak_ptr<InputAlloc> ptr) {
+            // If there isn't one yet, create it.
+            if (parent_ptr == nullptr) {
+                create_buffer([&](std::weak_ptr<InputAlloc> ptr) {
                     return InputAllocChunkOwned {
-                        RestrictedBuffer(src, 0, RestrictedBuffer::npos, restrictions),
+                        RestrictedBuffer(src,
+                                         0,
+                                         RestrictedBuffer::npos,
+                                         restrictions),
                         0,
                         RestrictedBuffer::npos,
                         ptr,
                     };
                 });
-                needs_restriction_change = false;
-                is_unique = true;
+                parent_ptr = &(m_ptr->back());
             }
 
-            CHECK(is_unique) << "TODO: Copy non-unique cached value";
+            std::cout << "After parent create:\n";
+            debug_print_content();
 
-            // change restrictions if needed
-            if (needs_restriction_change /* && is_unique */) {
-                auto f = parent->from();
-                auto t = parent->to();
+            // If there is one, but it differs in restrictions,
+            // ensure its unique and change the restrictions
+            auto& parent = *parent_ptr;
+            if (!(parent->restrictions() == restrictions)) {
+                CHECK(parent.unique())
+                    << "Attempt to access stream `Input` in a way "
+                    << "that would need to create a copy of the data.";
 
                 auto buf = std::move(*parent).unwrap();
-
-                parent = create_buffer([&](std::weak_ptr<InputAlloc> ptr) {
-                    return InputAllocChunkOwned {
+                parent = std::make_unique<InputAllocChunkOwned>(
+                    InputAllocChunkOwned {
                         std::move(buf).change_restrictions(restrictions),
-                        f,
-                        t,
-                        ptr,
-                    };
-                });
+                        0,
+                        RestrictedBuffer::npos,
+                        m_ptr,
+                    }
+                );
             }
 
-            // If this is all we need, return it directly
+            std::cout << "After parent restrict:\n";
+            debug_print_content();
+
+            // If the whole range is requested, return parent directly
             if (from == 0 && to == RestrictedBuffer::npos) {
-                return std::move(parent);
+                return parent;
             }
 
-            // TODO: Create sub object pointing into parent
-            // TODO: PROBLEM: Can not point into parent if null term needed
+            // Else create a slice into it.
 
-            std::cerr << "FIX THIS ISSUE\n";
-
+            // First, calculate offset in escaoed buffer:
             size_t escaped_from = 0;
             size_t escaped_to = 0;
 
             {
-                if(parent->restrictions().has_no_restrictions()) {
+                if(parent->restrictions().has_no_escape_restrictions()) {
                     escaped_from = from;
                     escaped_to = to;
                 } else {
@@ -250,6 +244,11 @@ namespace tdc {namespace io {
                         escaped_to = RestrictedBuffer::npos;
                     }
                 }
+
+                if (restrictions.null_terminate()) {
+                    CHECK(escaped_to == RestrictedBuffer::npos)
+                        << "Can not yet slice while adding a null terminator";
+                }
             }
 
             std::cout << "Current from: " << from << ", to: " << to << "\n";
@@ -258,6 +257,7 @@ namespace tdc {namespace io {
             std::cout << "Parent to:    " << parent->to() << "\n";
             std::cout << "Parent slice: " << parent->view().size() << "\n";
 
+            std::cout << "After ref create:\n";
             return create_ref(InputAllocChunkReferenced {
                 parent->view().slice(escaped_from, escaped_to),
                 from,
@@ -355,7 +355,7 @@ namespace tdc {namespace io {
 
     inline void unregister_alloc_chunk_handle(InputAllocChunkHandle handle) {
         if (handle) {
-            // If its a stream root handle then we keep if
+            // If its a stream root handle then we keep it
 
             if (handle->source().is_stream()) {
                 if (handle->from() == 0 && handle->to() == RestrictedBuffer::npos) {
