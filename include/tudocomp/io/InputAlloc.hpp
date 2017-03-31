@@ -2,12 +2,24 @@
 
 #include <tudocomp/io/InputRestrictedBuffer.hpp>
 
+/// \cond INTERNAL
 namespace tdc {namespace io {
+    /// Collection of types for storing all needed allocations
+    /// of input data done by a collection of related Input Instances.
+    ///
+    /// The basic idea is that of a pool of existing allocations
+    /// shared through a shared_ptr in the background,
+    /// and used for lookups each time an allocations needs to be accessed.
 
     class InputAllocChunk;
     using InputAllocChunkHandle = std::shared_ptr<InputAllocChunk>;
     using InputAlloc = std::vector<InputAllocChunkHandle>;
 
+    /// Abstract interface for an allocation
+    /// from input positions `from` to `to`.
+    ///
+    /// The data contained in it is not the original one,
+    /// but modified according to the InputRestrictions instance used.
     class InputAllocChunk {
         size_t m_from;
         size_t m_to;
@@ -35,6 +47,7 @@ namespace tdc {namespace io {
         virtual void debug_print_content() const = 0;
     };
 
+    /// Allocation where the data is backed by an actual owned buffer.
     class InputAllocChunkOwned: public InputAllocChunk {
         RestrictedBuffer m_buffer;
 
@@ -62,6 +75,8 @@ namespace tdc {namespace io {
         }
     };
 
+    /// Allocation where the data is just a view into
+    /// another allocation
     class InputAllocChunkReferenced: public InputAllocChunk {
         View m_view;
         std::shared_ptr<InputAllocChunk> m_parent;
@@ -92,6 +107,7 @@ namespace tdc {namespace io {
         }
     };
 
+    /// Copyable handle for a list of active allocations.
     class InputAllocHandle {
         std::shared_ptr<InputAlloc> m_ptr;
 
@@ -260,7 +276,30 @@ namespace tdc {namespace io {
             });
         }
 
+        inline void cleanup_empty() {
+            auto& vec = *m_ptr;
+
+            InputAlloc new_vec;
+
+            for (auto p : vec) {
+                if (p) {
+                    new_vec.push_back(p);
+                }
+            }
+
+            vec = new_vec;
+        }
+
+        inline void remove(InputAllocChunkHandle handle) {
+            for (auto& ptr : *m_ptr) {
+                if (ptr == handle) {
+                    ptr.reset();
+                }
+            }
+            cleanup_empty();
+        }
     public:
+        /// Lookup or create a allocation
         inline InputAllocChunkHandle find_or_construct(
             const InputSource& src,
             size_t from,
@@ -311,37 +350,21 @@ namespace tdc {namespace io {
             }
         }
 
-        inline void cleanup_empty() {
-            auto& vec = *m_ptr;
-
-            InputAlloc new_vec;
-
-            for (auto p : vec) {
-                if (p) {
-                    new_vec.push_back(p);
-                }
-            }
-
-            vec = new_vec;
-        }
-
-        inline void remove(InputAllocChunkHandle handle) {
-            for (auto& ptr : *m_ptr) {
-                if (ptr == handle) {
-                    ptr.reset();
-                }
-            }
-            cleanup_empty();
-        }
-
         inline InputAllocHandle(): m_ptr(std::make_shared<InputAlloc>()) {}
         inline InputAllocHandle(std::weak_ptr<InputAlloc> weak) {
             DCHECK(!weak.expired());
             m_ptr = weak.lock();
             DCHECK(m_ptr);
         }
+
+        friend void unregister_alloc_chunk_handle(InputAllocChunkHandle handle);
     };
 
+    /// Unregister a allocation from the pool again to free memory.
+    ///
+    /// This will leave the buffer for a input stream intact,
+    /// as it is the only one that can not be recreated at a latter point
+    /// in time.
     inline void unregister_alloc_chunk_handle(InputAllocChunkHandle handle) {
         if (handle) {
             // If its a stream root handle then we keep it
@@ -357,3 +380,4 @@ namespace tdc {namespace io {
         }
     }
 }}
+/// \endcond

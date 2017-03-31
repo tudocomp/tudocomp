@@ -213,7 +213,7 @@ int main(int argc, char** argv) {
         if (!options.algorithm.empty()) {
             auto id_string = options.algorithm;
 
-            auto av = compressor_registry.parse_algorithm_id(id_string, "compressor");
+            auto av = compressor_registry.parse_algorithm_id(id_string);
             auto input_restrictions = av.textds_flags();
             auto compressor = compressor_registry.select_algorithm(av);
             auto algorithm_env = compressor->env().root();

@@ -3,6 +3,13 @@
 #include<tudocomp/io/EscapeMap.hpp>
 
 namespace tdc {namespace io {
+    // TODO: Make these adapters use buffers to reduce
+    // virtual call overhead.
+
+    /// Adapter class over a `std::ostream` that
+    /// reverse the escaping and null termination
+    /// of data written to it according
+    /// to the provided input restrictions.
     class RestrictedOStreamBuf: public std::streambuf {
     private:
         std::ostream* m_stream;
@@ -55,7 +62,7 @@ namespace tdc {namespace io {
 
     public:
         inline RestrictedOStreamBuf(std::ostream& stream,
-                                    InputRestrictions restrictions):
+                                    const InputRestrictions& restrictions):
             m_stream(&stream),
             m_fast_unescape_map(EscapeMap(restrictions)) {}
 
@@ -81,6 +88,9 @@ namespace tdc {namespace io {
         }
     };
 
+    /// Adapter class over a `std::istream` that
+    /// escapes and null terminates the data read from it
+    /// according to the provided input restrictions.
     class RestrictedIStreamBuf: public std::streambuf {
     private:
         std::istream* m_stream;

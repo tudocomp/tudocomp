@@ -10,13 +10,17 @@
 #include <tudocomp/io/IOUtil.hpp>
 
 namespace tdc {namespace io {
+    /// \cond INTERNAL
     inline size_t pagesize() {
         return sysconf(_SC_PAGESIZE);
     }
+    /// \cond INTERNAL
 
     /// A handle for a memory map.
     ///
-    /// Can either be a file mapping or an anonymous mapping.
+    /// Can either be a file mapping or an anonymous mapping,
+    /// depending on the constructors called and
+    /// the desired access mode.
     class MMap {
         static constexpr const void* EMPTY = "";
 
@@ -62,8 +66,14 @@ namespace tdc {namespace io {
             return ok;
         }
 
+        /// Create a empty memory map.
         inline MMap() { /* field default values are fine already */ }
 
+        /// Create a memory map of length `size` with a prefix initalized by
+        /// the contents of a file from offset `offset`.
+        ///
+        /// If `size` does not exceed the original files size, and mode
+        /// is set to read-only, this does a direct shared file mapping.
         inline MMap(const std::string& path,
              Mode mode,
              size_t size,
@@ -142,6 +152,7 @@ namespace tdc {namespace io {
             close(fd);
         }
 
+        /// Create a memory map of length `size`.
         inline MMap(size_t size)
         {
             m_mode = Mode::ReadWrite;
@@ -163,6 +174,9 @@ namespace tdc {namespace io {
             m_state = State::Private;
         }
 
+        /// Changes the size of this mapping.
+        ///
+        /// Only works if the mapping is in read-write mode.
         inline void remap(size_t new_size) {
             DCHECK(m_mode == Mode::ReadWrite);
             DCHECK(m_state == State::Private);

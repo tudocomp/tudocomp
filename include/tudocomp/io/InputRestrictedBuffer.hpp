@@ -14,7 +14,9 @@
 #include <tudocomp/io/IOUtil.hpp>
 #include <tudocomp/io/EscapeMap.hpp>
 
+/// \cond INTERNAL
 namespace tdc {namespace io {
+    /// Efficient memory buffer for input data that has input restrictions.
     class RestrictedBuffer {
     public:
         static const size_t npos = -1;
@@ -251,7 +253,7 @@ namespace tdc {namespace io {
             }
         }
 
-        // Change the restrictions on a stream restricted buffer
+        /// Change the restrictions on a stream restricted buffer
         inline static RestrictedBuffer unrestrict(RestrictedBuffer&& other) {
             DCHECK(other.source().is_stream());
             if (other.restrictions().has_no_restrictions()) {
@@ -297,7 +299,7 @@ namespace tdc {namespace io {
             return x;
         }
 
-        // Change the restrictions on a stream restricted buffer
+        /// Change the restrictions on a stream restricted buffer
         inline static RestrictedBuffer restrict(RestrictedBuffer&& other,
                                                 const io::InputRestrictions& restrictions) {
             DCHECK(other.source().is_stream());
@@ -350,6 +352,8 @@ namespace tdc {namespace io {
         }
 
     public:
+        /// Converts a instance of this in a instance with different
+        /// input restrictions as cheaply as possible.
         inline RestrictedBuffer change_restrictions(
             const io::InputRestrictions& restrictions) &&
         {
@@ -378,3 +382,4 @@ namespace tdc {namespace io {
     };
 
 }}
+/// \endcond

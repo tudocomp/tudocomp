@@ -10,6 +10,8 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
+#include <numeric>
+
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/ds/IntVector.hpp>

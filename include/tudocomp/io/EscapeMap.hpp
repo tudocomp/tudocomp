@@ -119,7 +119,7 @@ namespace tdc {namespace io {
             return m_escape_map_flag[i];
         }
 
-        inline uint8_t lookup_flag_bool(size_t i) const {
+        inline bool lookup_flag_bool(size_t i) const {
             return lookup_flag(i) != 0;
         }
 

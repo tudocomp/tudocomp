@@ -5,6 +5,10 @@
 #include <tudocomp/util/View.hpp>
 
 namespace tdc {namespace io {
+    /// Class that stores the source of input data.
+    ///
+    /// This can store either the path of a file, a view into memory,
+    /// or a pointer to a `std::istream`.
     class InputSource {
     public:
         enum class Content {
@@ -35,9 +39,20 @@ namespace tdc {namespace io {
         inline bool is_stream() const { return m_content == Content::Stream; }
         inline bool is_file() const { return m_content == Content::File; }
 
-        inline const View& view()        const { return m_view; }
-        inline std::istream* stream()    const { return m_stream; }
-        inline const std::string& file() const { return m_path; }
+        inline const View& view() const {
+            DCHECK(is_view());
+            return m_view;
+        }
+
+        inline std::istream* stream() const {
+            DCHECK(is_stream());
+            return m_stream;
+        }
+
+        inline const std::string& file() const {
+            DCHECK(is_file());
+            return m_path;
+        }
     };
 
     inline bool operator==(const InputSource& lhs, const InputSource& rhs) {
@@ -50,7 +65,9 @@ namespace tdc {namespace io {
 
     inline std::ostream& operator<<(std::ostream& o, const InputSource& v) {
         if (v.is_view()) {
-            return o << "{ view:   " << std::hex << size_t(v.view().data()) << std::dec << " }";
+            return o << "{ view:   " << std::hex << size_t(v.view().data()) << std::dec
+                     << " with len " << v.view().size()
+                     << " }";
         }
         if (v.is_stream()) {
             return o << "{ stream: " << std::hex << size_t(v.stream()) << std::dec << " }";

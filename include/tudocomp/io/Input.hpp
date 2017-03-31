@@ -30,9 +30,15 @@ namespace tdc {namespace io {
     /// access on all of the input, it requires the entire input to be stored
     /// in memory. Streaming, on the other hand, is used for character-wise
     /// reading without the ability to rewind (online).
+    ///
+    /// Copying or otherwise manipulating instances of this class is cheap,
+    /// since this class does not contain the input data itself, only
+    /// information on how to access it.
     class Input {
     public:
+        /// \cond INTERNAL
         static constexpr size_t npos = -1;
+        /// \endcond
     private:
         class Variant {
             InputSource m_source;
@@ -192,8 +198,11 @@ namespace tdc {namespace io {
 
         /// \brief Provides a view on the input that allows for random access.
         ///
-        /// This will store the entire input in memory, ie a file or stream
-        /// will be fully read in order to provide the view.
+        /// This might have to allocate a copy of the data into memory
+        /// depending on its source or on data restrictions placed on it.
+        ///
+        /// For example, if your source is a `istream` it will
+        /// generally have to create a copy.
         ///
         /// \return A random access view on the input.
         inline InputView as_view() const;
@@ -201,10 +210,24 @@ namespace tdc {namespace io {
         /// \brief Creates a stream that allows for character-wise reading of
         /// the input.
         ///
+        /// This might have to allocate a copy of the data into memory
+        /// depending on its source or on data restrictions placed on it.
+        ///
+        /// For example, if your source is a `istream` it will
+        /// generally have to create a copy to allow calling this method
+        /// multiple times.
+        ///
         /// \return A character stream for the input.
         inline InputStream as_stream() const;
 
         /// \brief Yields the total amount of characters in the input.
+        ///
+        /// This might have to allocate a copy of the data into memory
+        /// depending on its source or on data restrictions placed on it.
+        ///
+        /// For example, if your source is a `istream` it will
+        /// generally have to create a copy to allow calling this method
+        /// multiple times.
         ///
         /// \return The total amount of characters in the input.
         inline size_t size() const {
@@ -212,11 +235,16 @@ namespace tdc {namespace io {
         }
 
         /// \cond INTERNAL
-        /// Slice constructor
+        /// Slice constructor.
+        ///
+        /// Creates a Input that exposes only the data in `from` to `to`.
         inline Input(const Input& other, size_t from, size_t to = npos):
             m_data(other.m_data->slice(from, to)) {}
 
-        /// Restrict constructor
+        /// Restrict constructor.
+        ///
+        /// Creates a Input with additional input restrictions.
+        /// (chars that need to be escaped, etc.)
         inline Input(const Input& other, const InputRestrictions& restrictions):
             m_data(other.m_data->restrict(restrictions)) {}
         /// \endcond

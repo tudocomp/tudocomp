@@ -3,17 +3,21 @@
 #include <tudocomp/util.hpp>
 
 namespace tdc {namespace io {
+    /// Describes a set of restrictions placed on input data.
+    ///
+    /// Restrictions include illigal bytes in the input (called escape bytes here),
+    /// and wether the input needs to be null terminated.
     class InputRestrictions {
         std::vector<uint8_t> m_escape_bytes;
         bool m_null_terminate;
 
-    inline void sort_and_dedup() {
-        std::sort(m_escape_bytes.begin(), m_escape_bytes.end());
-        m_escape_bytes.erase(std::unique(m_escape_bytes.begin(), m_escape_bytes.end()), m_escape_bytes.end());
-    }
+        inline void sort_and_dedup() {
+            std::sort(m_escape_bytes.begin(), m_escape_bytes.end());
+            m_escape_bytes.erase(std::unique(m_escape_bytes.begin(), m_escape_bytes.end()), m_escape_bytes.end());
+        }
 
-    friend inline InputRestrictions operator|(const InputRestrictions& a,
-                                              const InputRestrictions& b);
+        friend inline InputRestrictions operator|(const InputRestrictions& a,
+                                                  const InputRestrictions& b);
 
     public:
         inline InputRestrictions(const std::vector<uint8_t>& escape_bytes = {},
@@ -46,13 +50,6 @@ namespace tdc {namespace io {
         inline bool has_restrictions() const {
             return !has_no_restrictions();
         }
-
-        inline bool contains(uint8_t byte) const {
-            for (uint8_t e: m_escape_bytes) {
-                if (e == byte) return true;
-            }
-            return false;
-        };
     };
 
     inline std::ostream& operator<<(std::ostream& o,
@@ -63,6 +60,7 @@ namespace tdc {namespace io {
         return o;
     }
 
+    /// Merges two InpuTrestrictions to a combined set of restrictions.
     inline InputRestrictions operator|(const InputRestrictions& a, const InputRestrictions& b) {
         // Yes, kind of overkill here...
 
@@ -81,6 +79,7 @@ namespace tdc {namespace io {
         return r;
     }
 
+    /// Merges two InpuTrestrictions to a combined set of restrictions.
     inline InputRestrictions& operator|=(InputRestrictions& a, const InputRestrictions& b) {
         a = a | b;
         return a;
@@ -90,5 +89,10 @@ namespace tdc {namespace io {
                            const InputRestrictions& rhs) {
         return lhs.escape_bytes() == rhs.escape_bytes()
             && lhs.null_terminate() == rhs.null_terminate();
+    }
+
+    inline bool operator!=(const InputRestrictions& lhs,
+                           const InputRestrictions& rhs) {
+        return !(lhs == rhs);
     }
 }}
