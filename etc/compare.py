@@ -21,10 +21,12 @@ if not os.access(sourcefilename, os.R_OK):
 
 # Check that valgrind is available for memory measurement
 try:
-    subprocess.check_call("valgrind --version")
+    devnull = subprocess.DEVNULL
+    subprocess.check_call(["valgrind", "--version"], stdout=devnull, stderr=devnull)
     mem_available = True
 except:
     mem_available = False
+    print(sys.exc_info())
     print("WARNING: valgrind not found - memory measurement unavailable.")
     print()
 
