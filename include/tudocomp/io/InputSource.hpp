@@ -47,4 +47,17 @@ namespace tdc {namespace io {
             && lhs.m_path == rhs.m_path
             && lhs.m_stream == rhs.m_stream;
     };
+
+    inline std::ostream& operator<<(std::ostream& o, const InputSource& v) {
+        if (v.is_view()) {
+            return o << "{ view:   " << std::hex << size_t(v.view().data()) << std::dec << " }";
+        }
+        if (v.is_stream()) {
+            return o << "{ stream: " << std::hex << size_t(v.stream()) << std::dec << " }";
+        }
+        if (v.is_file()) {
+            return o << "{ file:   " << v.file() << " }";
+        }
+        return o;
+    }
 }}

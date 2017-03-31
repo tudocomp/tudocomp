@@ -16,6 +16,10 @@ namespace tdc {namespace io {
 
         inline InputViewInternal(const InputAllocChunkHandle& handle):
             m_handle(handle) {}
+
+        inline ~InputViewInternal() {
+            unregister_alloc_chunk_handle(m_handle);
+        }
     };
     /// \endcond
 

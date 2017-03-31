@@ -32,6 +32,7 @@ namespace tdc {namespace io {
         virtual const InputSource& source() const = 0;
         virtual View view() const = 0;
         virtual RestrictedBuffer unwrap() && = 0;
+        virtual void debug_print_content() const = 0;
     };
 
     class InputAllocChunkOwned: public InputAllocChunk {
@@ -55,6 +56,9 @@ namespace tdc {namespace io {
         }
         inline virtual RestrictedBuffer unwrap() && {
             return std::move(m_buffer);
+        }
+        inline virtual void debug_print_content() const {
+            std::cout << "  buf:  " << m_buffer.view().size() << "\n";
         }
     };
 
@@ -83,24 +87,55 @@ namespace tdc {namespace io {
         inline virtual RestrictedBuffer unwrap() && {
             throw std::runtime_error("This is only a view");
         }
+        inline virtual void debug_print_content() const {
+            std::cout << "  parent: " << std::hex << size_t(&*m_parent) << std::dec << "\n";
+        }
     };
 
     class InputAllocHandle {
         std::shared_ptr<InputAlloc> m_ptr;
 
+        inline void debug_print_content() const {
+            auto& vec = *m_ptr;
+
+            std::cout << "Alloc registry:\n";
+            for (auto& e : vec) {
+                DCHECK(e);
+                auto& ee = *e;
+                std::cout << "  self: " << std::hex << size_t(&ee) << std::dec << "\n";
+                std::cout << "  kind: " << ee.source() << "\n";
+                std::cout << "  from: " << ee.from() << "\n";
+                if (ee.to() == RestrictedBuffer::npos) {
+                    std::cout << "  to:   <npos>" << "\n";
+                } else {
+                    std::cout << "  to:   " << ee.to() << "\n";
+                }
+                std::cout << "  rest: " << ee.restrictions() << "\n";
+                std::cout << "  refs: " << e.use_count() << "\n";
+                ee.debug_print_content();
+                std::cout << "\n";
+            }
+        }
+
         template<typename F>
         inline InputAllocChunkHandle create_buffer(F f) const {
             DCHECK(m_ptr);
-            auto new_alloc = std::make_shared<InputAllocChunkOwned>(f(m_ptr));
+            {
+                auto new_alloc = std::make_shared<InputAllocChunkOwned>(f(m_ptr));
+                m_ptr->push_back(new_alloc);
+            }
 
-            m_ptr->push_back(new_alloc);
+            debug_print_content();
             return m_ptr->back();
         }
 
         inline InputAllocChunkHandle create_ref(InputAllocChunkReferenced&& v) const {
-            auto new_alloc = std::make_shared<InputAllocChunkReferenced>(std::move(v));
+            {
+                auto new_alloc = std::make_shared<InputAllocChunkReferenced>(std::move(v));
+                m_ptr->push_back(new_alloc);
+            }
 
-            m_ptr->push_back(new_alloc);
+            debug_print_content();
             return m_ptr->back();
         }
 

@@ -49,6 +49,7 @@ namespace tdc {namespace io {
                 auto p = alloc().find_or_construct(
                     InputSource(source().stream()), from(), to(), restrictions());
                 set_escaped_size(p->view().size());
+                unregister_alloc_chunk_handle(p);
             }
 
         }
