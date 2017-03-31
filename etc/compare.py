@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import argparse
 import collections
 import hashlib
 import itertools
@@ -11,14 +12,22 @@ import subprocess
 import tempfile
 import time
 
-# Usage
-if len(sys.argv) < 2:
-    print("Usage: ", sys.argv[0], " [file-to-compress]")
-    quit()
+# Argument parser
+parser = argparse.ArgumentParser(description="""
+    Compare running times and memory usage of a set of compressors.
+""")
+
+parser.add_argument('--suite', '-s', type=str, default='',
+                    help='the comparison suite to execute')
+parser.add_argument('--iterations', '-n', type=int, default=1,
+                    help='the amount of iterations for each input file')
+parser.add_argument('files', metavar='FILE', type=str, nargs='+',
+                    help='the input files to use for comparison')
+
+args = parser.parse_args()
 
 # Ensure that the input file exists
-# TODO: allow multiple input files
-sourcefilename = sys.argv[1]
+sourcefilename = args.files[0] # TODO: allow multiple input files
 if not os.access(sourcefilename, os.R_OK):
     print("ERROR: Input file not found or not readable:", sourcefilename)
     quit()
@@ -34,9 +43,7 @@ except:
     print()
 
 # Define number of iterations
-# TODO: make customizable via command-line
-numIterations=1
-print("Number of iterations: ", numIterations)
+print("Number of iterations: ", args.iterations)
 
 # Program execution definition
 StdOut = 0
@@ -142,7 +149,7 @@ def run_exec(x, infilename, outfilename):
 
 def measure_time(x, infilename, outfilename):
     t=[]
-    for _ in range(0, numIterations):
+    for _ in range(0, args.iterations):
         t = t + [run_exec(x, infilename, outfilename)]
 
     return(statistics.median(t))
