@@ -1,0 +1,9 @@
+[
+# gzip -1
+StdCompressor(name='gzip',
+    binary='gzip', cflags=['-1'], dflags=['-d']),
+
+# tudocomp with LZSS/LCP and Huffman
+Tudocomp(name='tdc_lzss_lcp_huff',
+    algorithm='lzss_lcp(threshold=20,coder=huff)'),
+]

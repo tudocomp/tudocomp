@@ -1509,7 +1509,125 @@ shell.
 
 ## The Comparison Tool
 
-Recall at this point the restrictions when using the comparison tool in a
-Windows enviroment (see [Windows Support](#windows-support)).
+*tudocomp* contains a utility to compare running time, memory usage and
+compression rate for a range of compressors, called the comparison tool. It
+comes in the form of a Python 3 script located at `etc/compare.py`. Note that
+it prints a usage description when passing the `--help` parameter.
 
->> *TODO*: Describe usage.
+The tool uses `valgrind` to measure the memory actually used by a process.
+Therefore, recall at this point the restrictions when using it in a Windows
+enviroment (see [Windows Support](#windows-support)).
+
+The comparison tool will perform the following steps for each input file and
+each compressor defined in the comparison suite (more details on suites
+follows further below):
+
+1. Compress the input file and measure the compressor's running time
+1. Compress the input file while measuring the compressor's memory usage
+1. Compute the compression rate (size of output file divided by the input file's
+   size).
+1. Decompress the output file and measure the decompressor's running time
+1. Decompress the output file while measuring the decompressor's memory usage
+1. Compare the decompressor's output against the original input file
+
+Memory measurement via `valgrind` slows the process down significantly, which
+is why the compressor / decompressor is executed twice in order to measure time
+and memory, respectively.  In case `valgrind` is unavailable, memory measurement
+will not take place.
+
+The gathered data is printed as a table like in the following example:
+
+~~~
+File: datasets/pc_dna.1MB (1.0MiB, sha256=b668b098927d32c5a239aef82dba6d45a034a205e64bf153810a5fe6f88fe196)
+
+ Compressor |   C Time |  C Memory |    C Rate |   D Time |  D Memory |  chk |
+------------------------------------------------------------------------------
+    gzip -1 |   33.0ms |    6.6MiB |  32.4776% |   22.5ms |    6.6MiB |   OK |
+    gzip -9 |  711.0ms |    6.6MiB |  27.2440% |   10.2ms |    6.6MiB |   OK |
+   bzip2 -1 |  123.5ms |    9.3MiB |  26.6178% |   51.9ms |    8.7MiB |   OK |
+   bzip2 -9 |  124.4ms |   15.4MiB |  26.1772% |   58.7ms |   11.7MiB |   OK |
+    lzma -1 |  120.3ms |   23.3MiB |  28.8488% |   30.9ms |   15.8MiB |   OK |
+    lzma -9 |  763.0ms |  687.8MiB |  24.7587% |   26.5ms |   78.8MiB |   OK |
+~~~
+
+The columns have the following meaning:
+
+* *Compressor*: display name of the compressor as defined in the comparison
+  suite (see below)
+* *C Time*: running time of the compressor
+* *C Memory*: memory usage of the compressor
+* *C Rate*: compression rate (output size divided by input size)
+* *D Time*: running time of the decompressor
+* *D Memory*: memory usage of the decompressor
+* *chk*: `OK` if the decompessed file equals the original file (tested by
+  comparing their respective SHA256 hashes), otherwise `FAIL`
+
+Multiple iterations can be performed per file (by passing the `-n` parameter).
+In this case, the respective median values of all iterations will be printed.
+
+### Comparison Suites
+
+A comparison suite defines a range of compressor pairs to be compared. A
+compressor pair consists of a display name for the tabular output, as well as
+information on how to invoke the compressor and decompressor on a command-line
+level (ie. command, arguments, and how input / output is passed to them).
+
+Technically speaking, a suite must be a valid Python statement that resolves to
+a list of `CompressorPair` objects. These are (named) tuples of a string
+(the display name) and two `Exec` objects that define the command-line interface
+for the compressor and decompressor, respectively. To that end, `Exec` contains
+the command-line to execute as well as means to pass input and output file
+information.
+
+The following example defines a small suite for comparing `gzip` against
+a *tudocomp* implementation of LZ77 with subsequent Huffman coding:
+
+~~~ { .py caption="compare_example.suite" }
+[
+# gzip -1
+CompressorPair(name = 'gzip',
+    compress   = Exec(args=['gzip', '-1'], inp=StdIn, outp=StdOut),
+    decompress = Exec(args=['gzip', '-d'], inp=StdIn, outp=StdOut)),
+
+# tudocomp with LZSS/LCP and Huffman
+CompressorPair(name = 'tdc_lzss_lcp_huff',
+    compress   = Exec(args=['./tdc', '-a', 'lzss_lcp(threshold=20,coder=huff)'],
+                      outp='--output'),
+    decompress = Exec(args=['./tdc', '-d'], outp='--output'))
+]
+~~~
+
+As noted above, an `Exec` object contains the basic command-line to invoke a
+compressor or decompressor as a string list in the `args` parameter. The
+parameters `inp` and `outp` define how input and output files are passed to the
+application. They have the following possible states (values):
+
+* If `outp` equals `StdOut`, it is expected that the application prints its
+  output to the standard output stream. In this case, the comparison tool pipes
+  it into a file.
+* Similarly, when `inp` equals `StdIn`, the input file is piped into the
+  application via standard input.
+* In case of a string value, it is used as an additional command-line parameter
+  followed by the file name (e.g. for `--output` in the example above,
+  `--output FILENAME` is appended to the command-line).
+* If unset (`None`), only the file name is appended to the command-line.
+
+The two helper functions `Tudocomp` and `StdCompressor` facilitate the
+definition of *tudocomp* command-lines and the standard Linux compressors,
+which read from stdin and write to stdout. They can be used to abbreviate the
+suite from the example above to the following:
+
+~~~ { .py caption="compare_example2.suite" }
+[
+# gzip -1
+StdCompressor(name='gzip',
+    binary='gzip', cflags=['-1'], dflags=['-d']),
+
+# tudocomp with LZSS/LCP and Huffman
+Tudocomp(name='tdc_lzss_lcp_huff',
+    algorithm='lzss_lcp(threshold=20,coder=huff)'),
+]
+~~~
+
+Note that by default, the *tudocomp* binary is expected at `./tdc`, therefore
+the comparison tool should be run from a build directory.
