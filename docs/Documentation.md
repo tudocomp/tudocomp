@@ -1260,7 +1260,7 @@ dynamically allocated memory (e.h. via `malloc` or `new`) over the application
 lifetime.
 
 Recall at this point the restrictions when trying to use these features in a
-Windows enviroment (see [Windows Support](#windows-support)).
+Windows environment (see [Windows Support](#windows-support)).
 
 Runtime statistics are tracked in *phases*, ie. the running time and memory
 peak can be measured for individual stages during an algorithm's run. These
@@ -1516,7 +1516,7 @@ it prints a usage description when passing the `--help` parameter.
 
 The tool uses `valgrind` to measure the memory actually used by a process.
 Therefore, recall at this point the restrictions when using it in a Windows
-enviroment (see [Windows Support](#windows-support)).
+environment (see [Windows Support](#windows-support)).
 
 The comparison tool will perform the following steps for each input file and
 each compressor defined in the comparison suite (more details on suites
