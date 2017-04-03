@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <tuple>
+#include <array>
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/io.hpp>
@@ -188,6 +189,84 @@ public:
 
             */
         //min_lrf=2;
+        for(int i = 0; i< stree.size(); i++){
+            std::cout << i << "; ";
+        }
+        std::cout<<std::endl;
+        for(int i = 0; i< stree.size(); i++){
+            std::cout << stree.csa[i] << "; ";
+        }
+        std::cout<<std::endl;
+
+        //array of vectors for bins of nodes with string depth
+        std::vector<std::vector<int> > bins;
+        bins.resize(stree.size()+1);
+        //std::fill(bins.begin(), bins.end(), std::vector<int>(5));
+        std::cout << "size of tree: "<< stree.size()<<std::endl;
+
+
+        typedef sdsl::cst_bottom_up_const_forward_iterator<sdsl::cst_sct3<> > iterator;
+            iterator begin = stree.begin_bottom_up();
+            iterator end   = stree.end_bottom_up();
+
+            for (iterator it = begin; it != end; ++it) {
+               // std::cout << stree.depth(*it) << "-[" << stree.lb(*it) << "," << stree.rb(*it) << "]  sa lb:" << stree.csa[stree.lb(*it)] <<std::endl;
+               // std::cout << "si leaf:"<< stree.is_leaf(*it) << std::endl;
+
+                bins[stree.depth(*it)].push_back(stree.id(*it));
+            }
+
+        for(int i = bins.size()-1; i>=0; i--){
+            auto bin_it = bins[i].begin();
+            std::cout<< "string depth: "<<i<<std::endl;
+            while (bin_it!= bins[i].end()){
+               // std::cout<< *bin_it << std::endl;
+
+                auto node = stree.inv_id(*bin_it);
+               // std::cout << stree.depth(node) << "-[" << stree.lb(node) << "," << stree.rb(node) << "]  sa lb:" << stree.csa[stree.lb(node)] <<std::endl;
+                std::cout<< "factor: ";
+                uint offset = stree.csa[stree.lb(node)];
+                for(uint c = 0; c<i; c++){
+                    std::cout << input[c+offset];
+                }
+                std::cout<<std::endl;
+
+                std::cout<<"left leaf: " << stree.csa[stree.lb(stree.leftmost_leaf(node))]<<
+                           " right leaf: " << stree.csa[stree.lb(stree.rightmost_leaf(node))] <<
+                           " size: "<< stree.size(node)<<
+                           std::endl;
+
+                bin_it++;
+
+                //iterate over corresponding sa and find min and max
+                offset = stree.lb(node);
+                int min = stree.csa[offset];
+                int max = stree.csa[offset];
+                int min_pos = offset;
+                int max_pos = offset;
+                for(int c = 0;c<stree.size(node); c++){
+                    int val = stree.csa[c+offset];
+                    if(min > val){
+                        min = val;
+                        min_pos = offset+c;
+                    }
+                    if(max < val){
+                        max = val;
+                        max_pos = offset+c;
+                    }
+
+
+                }
+                int dif = max -min;
+                std::cout<< "first: " << min<< " last: "<<max<<" dif: " << dif << std::endl;
+
+            }
+
+        }
+
+
+
+
 
         //std::string t = stree.get_text();
 
