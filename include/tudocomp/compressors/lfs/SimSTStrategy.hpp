@@ -70,9 +70,6 @@ public:
 
 
     inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
-        //BitVector
-       // dead_positions = BitVector(input.size(), 0);
-        //DLOG(INFO)<< "dead_positions.size(): "<<dead_positions.size();
 
         //build suffixtree
         DLOG(INFO)<<"build suffixtree";
@@ -87,7 +84,6 @@ public:
              sdsl::construct_im(stree, (const char*) input.data(), 1);
         });
 
-       // stree.append_input(in);
 
         DLOG(INFO)<<"computing string depth";
 
@@ -103,50 +99,23 @@ public:
             iterator end   = iterator(&stree, stree.root(), true, true);
 
             for (iterator it = begin; it != end; ++it) {
-                //std::cout << stree.depth(*it) << "-[" << stree.lb(*it) << "," << stree.rb(*it) << "]  id:" << stree.id(*it) <<std::endl;
-                //std::cout << "si leaf:"<< stree.is_leaf(*it) << std::endl;
                 bins[stree.depth(*it)].push_back(stree.id(*it));
                 node_counter++;
             }
 
 
-        //min_lrf=2;
-        for(int i = 0; i< stree.size(); i++){
-            std::cout << i << "; ";
-        }
-        std::cout<<std::endl;
-        for(int i = 0; i< stree.size(); i++){
-            std::cout << stree.csa[i] << "; ";
-        }
-        std::cout<<std::endl;
-
-
-        //std::fill(bins.begin(), bins.end(), std::vector<int>(5));
-        std::cout << "size of tree: "<< stree.size()<<  " nodes: " << node_counter << std::endl;
 
 
         uint nts_number =0;
 
         for(int i = bins.size()-1; i>=min_lrf; i--){
             auto bin_it = bins[i].begin();
-            std::cout<< "string depth: "<<i<<std::endl;
             while (bin_it!= bins[i].end()){
-               // std::cout<< *bin_it << std::endl;
 
                 auto node = stree.inv_id(*bin_it);
-               // std::cout << stree.depth(node) << "-[" << stree.lb(node) << "," << stree.rb(node) << "]  sa lb:" << stree.csa[stree.lb(node)] <<std::endl;
-                std::cout<< "factor: ";
+
                 uint offset = stree.csa[stree.lb(node)];
                 uint fac_length = stree.depth(node);
-                for(uint c = 0; c<i; c++){
-                    std::cout << input[c+offset];
-                }
-                std::cout<<std::endl;
-
-                std::cout<<"left leaf: " << stree.csa[stree.lb(stree.leftmost_leaf(node))]<<
-                           " right leaf: " << stree.csa[stree.lb(stree.rightmost_leaf(node))] <<
-                           " size: "<< stree.size(node)<<
-                           std::endl;
 
                 bin_it++;
 
@@ -174,7 +143,6 @@ public:
 
                     }
                     int dif = max -min;
-                    std::cout<< "first: " << min<< " last: "<<max<<" dif: " << dif << std::endl;
                     if(dif < stree.depth(node)){
                         continue;
                     }
@@ -217,11 +185,8 @@ public:
 
         }
 
-
         DLOG(INFO) << "sorting occurences";
         std::sort(nts_symbols.begin(), nts_symbols.end());
-
-
 
     }
 };
