@@ -81,6 +81,8 @@ public:
         dead_positions = BitVector(input.size(), 0);
 
 
+
+
         StatPhase::wrap("Constructing ST", [&]{
              sdsl::construct_im(stree, (const char*) input.data(), 1);
         });
@@ -123,6 +125,7 @@ public:
         std::cout << "size of tree: "<< stree.size()<<  " nodes: " << node_counter << std::endl;
 
 
+        uint nts_number =0;
 
         for(int i = bins.size()-1; i>=min_lrf; i--){
             auto bin_it = bins[i].begin();
@@ -134,6 +137,7 @@ public:
                // std::cout << stree.depth(node) << "-[" << stree.lb(node) << "," << stree.rb(node) << "]  sa lb:" << stree.csa[stree.lb(node)] <<std::endl;
                 std::cout<< "factor: ";
                 uint offset = stree.csa[stree.lb(node)];
+                uint fac_length = stree.depth(node);
                 for(uint c = 0; c<i; c++){
                     std::cout << input[c+offset];
                 }
@@ -171,18 +175,51 @@ public:
                     }
                     int dif = max -min;
                     std::cout<< "first: " << min<< " last: "<<max<<" dif: " << dif << std::endl;
+                    if(dif < stree.depth(node)){
+                        continue;
+                    }
+
+                    std::sort(beginning_positions.begin(), beginning_positions.end());
 
 
                     //Add new rule
 
+
+
                     //and add new non-terminal symbols
                     std::vector<int> selected_bp = select_starting_positions(beginning_positions, stree.depth(node));
+                    if(! (selected_bp.size() >=2) ){
+                        continue;
+                    }
+
+                    //vector of text position, length
+                    std::pair<uint,uint> rule = std::make_pair(selected_bp.at(0), fac_length);
+
+
+                    dictionary.push_back(rule);
+
+                    //iterate over selected pos, add non terminal symbols
+                    for(auto bp_it = selected_bp.begin(); bp_it != selected_bp.end(); bp_it++){
+                        //(position in text, non_terminal_symbol_number, length_of_symbol);
+                        //typedef std::tuple<uint,uint,uint> non_term;
+                        non_term nts = std::make_tuple(*bp_it, nts_number, fac_length);
+                        nts_symbols.push_back(nts);
+                        //typedef std::vector<non_term> non_terminal_symbols;
+                        //mark as used
+                        for(int pos = 0; pos<=fac_length;pos++){
+                            dead_positions[pos+ *bp_it] = 1;
+                        }
+                    }
+                    nts_number++;
                 }
 
             }
 
         }
 
+
+        DLOG(INFO) << "sorting occurences";
+        std::sort(nts_symbols.begin(), nts_symbols.end());
 
 
 
