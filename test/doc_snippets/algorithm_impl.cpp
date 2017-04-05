@@ -33,7 +33,7 @@ public:
         Meta m("example", "my_algorithm", "An example algorithm");
         m.option("param1").dynamic("default_value");
         m.option("number").dynamic(147);
-        m.option("strategy").templated<strategy_t>(); // TODO: Ticket #18854
+        m.option("strategy").templated<strategy_t>("my_strategy_t");
         return m;
     }
 

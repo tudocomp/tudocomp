@@ -688,7 +688,7 @@ parameter `strategy_t`, the following declares it as an option in the `meta`
 function:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
-m.option("strategy").templated<strategy_t>();
+m.option("strategy").templated<strategy_t>("my_strategy_t");
 ~~~
 
 The function [`templated`](@DX_OPTIONBUILDER_TEMPLATED@) determines that the
@@ -696,8 +696,9 @@ option named "strategy" can be assigned with an object of the template type. It
 is expected that substitued types also inherit from `Algorithm` and provide a
 `Meta` object.
 
->> *TODO*: Describe type connection once
-   [#18854](https://projekte.itmc.tu-dortmund.de/issues/18854) is resolved.
+The additional constraint, `"my_strategy_t"`, requires strategy algorithm to be
+of type "my_strategy_t". This corresponds to an Algorithm's type as reported by
+its `Meta` object.
 
 Consider the following example function for the algorithm:
 
@@ -761,6 +762,9 @@ public:
 ~~~
 
 Note how both strategies inherit from `Algorithm` and provide a `Meta` object.
+Both are of type `my_strategy_t` as required by the "strategy" option of the
+main algorithm.
+
 `SquareStrategy` implements a simple `result` function that squares the input
 parameter, while `MultiplyStrategy` accepts another option named "factor", that
 is read and multiplied by the inpt parameter to compute the result.
