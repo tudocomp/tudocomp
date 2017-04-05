@@ -12,23 +12,32 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
+#include <tudocomp/Registry.hpp>
 
 using namespace tdc;
 
+// Base class, merely required for the Registry example
+class MyAlgorithmBase : public Algorithm {
+public:
+    using Algorithm::Algorithm; // inherit the default constructor
+
+    virtual int execute() = 0;
+};
+
 // Implement an Algorithm with a strategy
 template<typename strategy_t>
-class MyAlgorithm : public Algorithm {
+class MyAlgorithm : public MyAlgorithmBase {
 public:
     inline static Meta meta() {
         // define the algorithm's meta information
-        Meta m("undisclosed", "my_algorithm", "An example algorithm");
+        Meta m("example", "my_algorithm", "An example algorithm");
         m.option("param1").dynamic("default_value");
         m.option("number").dynamic(147);
         m.option("strategy").templated<strategy_t>(); // TODO: Ticket #18854
         return m;
     }
 
-    using Algorithm::Algorithm; // inherit the default constructor
+    using MyAlgorithmBase::MyAlgorithmBase; // inherit the default constructor
 
     inline const std::string& param1() {
         // read param1 option as a string
@@ -36,7 +45,7 @@ public:
         return param1;
     }
 
-    inline int execute() {
+    inline virtual int execute() override {
         // read number option as an integer
         auto number = env().option("number").as_integer();
 
@@ -96,6 +105,21 @@ TEST(doc_algorithm_impl, algo_instantiate) {
 }
 
 TEST(doc_algorithm_impl, algo_registry) {
-    // meh
+    // Create a registry for algorithms of type "example"
+    Registry<MyAlgorithmBase> registry("example");
+
+    // Register two specializations of the algorithm
+    registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
+    registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
+
+    // Execute the algorithm with the square strategy
+    auto av_sqr = registry.parse_algorithm_id("my_algorithm(number=5, strategy=sqr)");
+    auto algo_sqr = registry.select_algorithm(av_sqr);
+    ASSERT_EQ(25, algo_sqr->execute());
+
+    // Execute the algorithm with the multiply strategy
+    auto av_mul = registry.parse_algorithm_id("my_algorithm(number=5, strategy=mul(8))");
+    auto algo_mul = registry.select_algorithm(av_mul);
+    ASSERT_EQ(40, algo_mul->execute());
 }
 

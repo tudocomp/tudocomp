@@ -603,7 +603,7 @@ a minimal example:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
 inline static Meta meta() {
-    Meta m("undisclosed", "my_algorithm", "An example algorithm");
+    Meta m("example", "my_algorithm", "An example algorithm");
     return m;
 }
 ~~~
@@ -636,7 +636,7 @@ Options are declared in the algorithm's `Meta` object using the
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
 inline static Meta meta() {
-    Meta m("undisclosed", "my_algorithm", "An example algorithm");
+    Meta m("example", "my_algorithm", "An example algorithm");
     m.option("param1").dynamic("default_value");
     m.option("number").dynamic(147);
     return m;
@@ -686,7 +686,7 @@ is expected that substitued types also inherit from `Algorithm` and provide a
 Consider the following example function for the algorithm:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
-inline int execute() {
+inline virtual int execute() override {
     // read number option as an integer
     auto number = env().option("number").as_integer();
 
@@ -785,13 +785,33 @@ mix. Note how in the previous section's example, `create_algo` is called with
 fixed template types. A registry can be used to map string identifiers to actual
 types to obscure fixed typing.
 
-The following example creates a `Registry` and registers the example algorithm
+The following example creates a registry and registers the example algorithm
 with the two strategies. It is then used to instantiate both versions without
 the need of fixed typing:
 
->> *TODO*: `Registry` currently only allows `Compressor` or `Generator` types
-   to be registered at the top level. This could be replaced by a template
-   parameter - see [#18948](https://projekte.itmc.tu-dortmund.de/issues/18948).
+~~~ {.cpp caption="algorithm_impl.cpp"}
+// Create a registry for algorithms of type "example"
+Registry<MyAlgorithmBase> registry("example");
+
+// Register two specializations of the algorithm
+registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
+registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
+
+// Execute the algorithm with the square strategy
+auto av_sqr = registry.parse_algorithm_id("my_algorithm(number=5, strategy=sqr)");
+auto algo_sqr = registry.select_algorithm(av_sqr);
+algo_sqr->execute(); // the result is 25
+
+// Execute the algorithm with the multiply strategy
+auto av_mul = registry.parse_algorithm_id("my_algorithm(number=5, strategy=mul(8))");
+auto algo_mul = registry.select_algorithm(av_mul);
+algo_mul->execute(); // the result is 40
+~~~
+
+Note that for this example, the interface `MyAlgorithmBase` was introduced,
+which `MyAlgorithm` inherits from. It merely declares the virtual function
+`execute`. The additional layer of abstraction is necessary only for use as a
+template parameter for the `Registry` class in this example.
 
 ## Coders
 
