@@ -55,6 +55,7 @@ public:
     inline std::vector<pattern::Algorithm> check_for_undefined_algorithms();
     inline std::unique_ptr<algorithm_t> select_algorithm(const AlgorithmValue& algo) const;
     inline AlgorithmValue parse_algorithm_id(string_ref text) const;
+    inline std::unique_ptr<algorithm_t> select(const std::string& text) const;
     inline static Registry<algorithm_t> with_all_from(std::function<void(Registry<algorithm_t>&)> f, const std::string& root_type);
     inline std::string generate_doc_string() const;
     /// \endcond

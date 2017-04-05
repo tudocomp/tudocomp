@@ -134,8 +134,7 @@ int main(int argc, char** argv) {
 
         if(!options.stdin) {
             if(!options.generator.empty()) {
-                auto av = generator_registry.parse_algorithm_id(options.generator);
-                generator = generator_registry.select_algorithm(av);
+                generator = generator_registry.select(options.generator);
             } else if(!options.remaining.empty()) {
                 // file
                 file = options.remaining[0];

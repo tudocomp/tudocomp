@@ -113,13 +113,11 @@ TEST(doc_algorithm_impl, algo_registry) {
     registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
 
     // Execute the algorithm with the square strategy
-    auto av_sqr = registry.parse_algorithm_id("my_algorithm(number=5, strategy=sqr)");
-    auto algo_sqr = registry.select_algorithm(av_sqr);
+    auto algo_sqr = registry.select("my_algorithm(number=5, strategy=sqr)");
     ASSERT_EQ(25, algo_sqr->execute());
 
     // Execute the algorithm with the multiply strategy
-    auto av_mul = registry.parse_algorithm_id("my_algorithm(number=5, strategy=mul(8))");
-    auto algo_mul = registry.select_algorithm(av_mul);
+    auto algo_mul = registry.select("my_algorithm(number=5, strategy=mul(8))");
     ASSERT_EQ(40, algo_mul->execute());
 }
 
