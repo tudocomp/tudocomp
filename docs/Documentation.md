@@ -1092,7 +1092,7 @@ class MyCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "my_compressor", "An example compressor");
-        m.option("coder").templated<coder_t>();
+        m.option("coder").templated<coder_t>("coder");
         return m;
     }
 

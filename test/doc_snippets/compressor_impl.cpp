@@ -25,7 +25,7 @@ class MyCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "my_compressor", "An example compressor");
-        m.option("coder").templated<coder_t>();
+        m.option("coder").templated<coder_t>("coder");
         return m;
     }
 
@@ -34,7 +34,7 @@ public:
     virtual void compress(Input& input, Output& output) override {
         // retrieve random access on the input
         auto view = input.as_view();
-        
+
         // find the lexicographically smallest and largest characters
         uliteral_t c_min = ULITERAL_MAX;
         uliteral_t c_max = 0;
