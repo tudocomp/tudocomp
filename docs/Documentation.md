@@ -151,6 +151,16 @@ $ cmake ..
 $ make
 ~~~
 
+Note that *tudocomp* is configured for a debug build by default. The build
+type can be changed by passing the `CMAKE_BUILD_TYPE` corresponding parameter
+to CMake:
+
+* Debug build (default): `cmake -DCMAKE_BUILD_TYPE=Debug ..`
+* Release build: `cmake -DCMAKE_BUILD_TYPE=Release ..`
+
+For benchmarking purposes, the Release configuration is heavily recommended, as
+it will tell the compiler to perform numerous optimizations.
+
 ### Dependencies
 
 *tudocomp* has the following external dependencies:
