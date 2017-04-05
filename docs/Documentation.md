@@ -56,10 +56,8 @@ To achieve this kind of modularity, the use of C++'s meta programming features
 (namely templates) is heavily encouraged. *tudocomp* is designed in a way that
 allows template parameters to be populated seemingly at runtime.
 
-## Compression Chains
-
-Compressors and coders can be chained so that the output of one becomes the
-input of another.
+Furthermore, compressors and coders can be chained so that the output of one
+becomes the input of another.
 
 ## Library and Command-Line
 
@@ -227,6 +225,14 @@ Print the 10^th^ Fibonacci word to stdout:
 
 Compress the 10^th^ Fibonacci word, print to stdout without header:
 : `$ tdc -g "fib(10)" -a "lzss(coder=ascii)" --raw --usestdout`
+
+#### Chaining
+
+Compressors and coders can be chained so that the output of one becomes the
+input of another.
+
+Chain the Burrows-Wheeler transform of a file into run-length, move-to-front and Huffman coding:
+: `$ tdc -a "bwt:rle:mtf:encode(huff)" file.txt`
 
 ## Library
 
