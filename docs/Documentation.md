@@ -1286,11 +1286,6 @@ including:
 A full list can be found in the inheritance diagram for the
 [`Generator`](@DX_GENERATOR@) class' API reference.
 
-## Text Data Structures
-
->> *TODO*: Describe *NEW* TextDS
-   [#18910](https://projekte.itmc.tu-dortmund.de/issues/18910)
-
 ## Runtime Statistics
 
 *tudocomp* provides functionality to measure the running time and the amount of
