@@ -1184,7 +1184,7 @@ template<class A>
 struct MyCompressor: public Compressor {
     inline static Meta meta() {
         Meta y("compressor", "my");
-        y.option("sub").templated<A, MySubAlgo2>();
+        y.option("sub").templated<A, MySubAlgo2>("sub_t");
         y.option("dyn").dynamic("foobar");
         y.option("bool_val").dynamic("true");
         return y;
@@ -1408,9 +1408,9 @@ template<class A, class B>
 struct KeywordlessEvalOrderBug: public Compressor {
     inline static Meta meta() {
         Meta y("compressor", "eval_order_bug");
-        y.option("sub1").templated<A, MySubAlgo>();
+        y.option("sub1").templated<A, MySubAlgo>("sub_t");
         y.option("dyn").dynamic("foobar");
-        y.option("sub2").templated<B, MySubAlgo2>();
+        y.option("sub2").templated<B, MySubAlgo2>("sub_t");
         return y;
     }
 
