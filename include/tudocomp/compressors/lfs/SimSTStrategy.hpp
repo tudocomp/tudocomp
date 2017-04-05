@@ -29,7 +29,7 @@ private:
         selected_starting_positions.reserve(starting_positions.size());
 
         int last =  0-length;
-        uint current;
+        int current;
         for (auto it=starting_positions.begin(); it!=starting_positions.end(); ++it){
 
             current = *it;
@@ -108,7 +108,7 @@ public:
 
         uint nts_number =0;
 
-        for(int i = bins.size()-1; i>=min_lrf; i--){
+        for(uint i = bins.size()-1; i>=min_lrf; i--){
             auto bin_it = bins[i].begin();
             while (bin_it!= bins[i].end()){
 
@@ -125,24 +125,24 @@ public:
                     offset = stree.lb(node);
                     int min = stree.csa[offset];
                     int max = stree.csa[offset];
-                    int min_pos = offset;
-                    int max_pos = offset;
+                    //int min_pos = offset;
+                    //int max_pos = offset;
                     std::vector<int> beginning_positions;
-                    for(int c = 0;c<stree.size(node); c++){
+                    for(uint c = 0;c<stree.size(node); c++){
                         int val = stree.csa[c+offset];
                         beginning_positions.push_back(val);
                         if(min > val){
                             min = val;
-                            min_pos = offset+c;
+                         //   min_pos = offset+c;
                         }
                         if(max < val){
                             max = val;
-                            max_pos = offset+c;
+                          //  max_pos = offset+c;
                         }
 
 
                     }
-                    int dif = max -min;
+                    uint dif = max -min;
                     if(dif < stree.depth(node)){
                         continue;
                     }
@@ -174,7 +174,7 @@ public:
                         nts_symbols.push_back(nts);
                         //typedef std::vector<non_term> non_terminal_symbols;
                         //mark as used
-                        for(int pos = 0; pos<=fac_length;pos++){
+                        for(uint pos = 0; pos<=fac_length;pos++){
                             dead_positions[pos+ *bp_it] = 1;
                         }
                     }
