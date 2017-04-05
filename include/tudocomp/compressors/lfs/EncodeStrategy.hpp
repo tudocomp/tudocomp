@@ -50,8 +50,8 @@ public:
 
     inline static Meta meta() {
         Meta m("lfs_comp_enc", "lfs_enocde_strat");
-        m.option("lfs_lit_coder").templated<literal_coder_t, BitCoder>();
-        m.option("lfs_len_coder").templated<len_coder_t, BitCoder>();
+        m.option("lfs_lit_coder").templated<literal_coder_t, BitCoder>("lfs_lit_coder");
+        m.option("lfs_len_coder").templated<len_coder_t, BitCoder>("lfs_len_coder");
         return m;
     }
 

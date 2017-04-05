@@ -51,7 +51,7 @@ public:
     inline static Meta meta() {
         Meta m("lfs_comp", "esa");
 
-        m.option("textds").templated<text_t, TextDS<>>();
+        m.option("textds").templated<text_t, TextDS<>>("textds");
         return m;
     }
 
