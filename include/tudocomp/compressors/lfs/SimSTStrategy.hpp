@@ -11,7 +11,13 @@
 
 #include <tudocomp/ds/IntVector.hpp>
 
-#include <sdsl/cst_sct3.hpp>
+
+//#include <sdsl/suffixarrays.hpp>
+
+#include <sdsl/suffix_trees.hpp>
+//#include <sdsl/suffix_arrays.hpp>
+//#include <sdsl/csa_bitcompressed.hpp>
+//#include <sdsl/csa_uncompressed.hpp>
 
 
 
@@ -52,7 +58,8 @@ private:
 
 
 
-    typedef sdsl::cst_sct3<> cst_t;
+    //sdsl::t_csa sa =sdsl::csa_uncompressed<>
+    typedef sdsl::cst_sct3< sdsl::csa_bitcompressed<> > cst_t;
     cst_t stree;
 
 
