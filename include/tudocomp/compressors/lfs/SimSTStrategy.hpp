@@ -78,6 +78,7 @@ public:
         dead_positions = BitVector(input.size(), 0);
 
 
+        typedef sdsl::bp_interval<long unsigned int> node_type;
 
 
         StatPhase::wrap("Constructing ST", [&]{
@@ -85,108 +86,119 @@ public:
         });
 
 
-        DLOG(INFO)<<"computing string depth";
 
+        StatPhase::wrap("Computing LRF", [&]{
 
-        //array of vectors for bins of nodes with string depth
-        std::vector<std::vector<int> > bins;
-        bins.resize(stree.size()+1);
+            //array of vectors for bins of nodes with string depth
+            std::vector<std::vector<node_type> > bins;
+            bins.resize(stree.size()+1);
 
-        uint node_counter = 0;
+            uint node_counter = 0;
 
-        typedef sdsl::cst_bfs_iterator<cst_t> iterator;
+            typedef sdsl::cst_bfs_iterator<cst_t> iterator;
             iterator begin = iterator(&stree, stree.root());
             iterator end   = iterator(&stree, stree.root(), true, true);
 
-            for (iterator it = begin; it != end; ++it) {
-                bins[stree.depth(*it)].push_back(stree.id(*it));
-                node_counter++;
-            }
+            StatPhase::wrap("Iterate over ST", [&]{
+
+                for (iterator it = begin; it != end; ++it) {
+                    bins[stree.depth(*it)].push_back(*it);
+                    node_counter++;
+                }
+            });
 
 
 
 
-        uint nts_number =0;
+            uint nts_number =0;
+            StatPhase::wrap("Iterate over Node Bins", [&]{
 
-        for(uint i = bins.size()-1; i>=min_lrf; i--){
-            auto bin_it = bins[i].begin();
-            while (bin_it!= bins[i].end()){
+                for(uint i = bins.size()-1; i>=min_lrf; i--){
+                    auto bin_it = bins[i].begin();
+                    while (bin_it!= bins[i].end()){
 
-                auto node = stree.inv_id(*bin_it);
+                        node_type node = *bin_it;
 
-                uint offset = stree.csa[stree.lb(node)];
-                uint fac_length = stree.depth(node);
+                        uint offset = stree.csa[stree.lb(node)];
+                        uint fac_length = stree.depth(node);
 
-                bin_it++;
+                        bin_it++;
 
-                if(stree.size(node)>=2){
+                        if(stree.size(node)>=2){
 
-                    //iterate over corresponding sa and find min and max
-                    offset = stree.lb(node);
-                    int min = stree.csa[offset];
-                    int max = stree.csa[offset];
-                    //int min_pos = offset;
-                    //int max_pos = offset;
-                    std::vector<int> beginning_positions;
-                    for(uint c = 0;c<stree.size(node); c++){
-                        int val = stree.csa[c+offset];
-                        beginning_positions.push_back(val);
-                        if(min > val){
-                            min = val;
-                         //   min_pos = offset+c;
+                            //iterate over corresponding sa and find min and max
+                            offset = stree.lb(node);
+                            int min = stree.csa[offset];
+                            int max = stree.csa[offset];
+                            //int min_pos = offset;
+                            //int max_pos = offset;
+                            std::vector<int> beginning_positions;
+                            for(uint c = 0;c<stree.size(node); c++){
+                                int val = stree.csa[c+offset];
+                                beginning_positions.push_back(val);
+                                if(min > val){
+                                    min = val;
+                                    //   min_pos = offset+c;
+                                }
+                                if(max < val){
+                                    max = val;
+                                    //  max_pos = offset+c;
+                                }
+
+
+                            }
+                            uint dif = max -min;
+                            if(dif < stree.depth(node)){
+                                continue;
+                            }
+
+                            std::sort(beginning_positions.begin(), beginning_positions.end());
+
+
+                            //Add new rule
+
+
+
+                            //and add new non-terminal symbols
+                            std::vector<int> selected_bp = select_starting_positions(beginning_positions, stree.depth(node));
+                            if(! (selected_bp.size() >=2) ){
+                                continue;
+                            }
+
+                            //vector of text position, length
+                            std::pair<uint,uint> rule = std::make_pair(selected_bp.at(0), fac_length);
+
+
+                            dictionary.push_back(rule);
+
+                            //iterate over selected pos, add non terminal symbols
+                            for(auto bp_it = selected_bp.begin(); bp_it != selected_bp.end(); bp_it++){
+                                //(position in text, non_terminal_symbol_number, length_of_symbol);
+                                //typedef std::tuple<uint,uint,uint> non_term;
+                                non_term nts = std::make_tuple(*bp_it, nts_number, fac_length);
+                                nts_symbols.push_back(nts);
+                                //typedef std::vector<non_term> non_terminal_symbols;
+                                //mark as used
+                                for(uint pos = 0; pos<=fac_length;pos++){
+                                    dead_positions[pos+ *bp_it] = 1;
+                                }
+                            }
+                            nts_number++;
                         }
-                        if(max < val){
-                            max = val;
-                          //  max_pos = offset+c;
-                        }
-
 
                     }
-                    uint dif = max -min;
-                    if(dif < stree.depth(node)){
-                        continue;
-                    }
 
-                    std::sort(beginning_positions.begin(), beginning_positions.end());
-
-
-                    //Add new rule
-
-
-
-                    //and add new non-terminal symbols
-                    std::vector<int> selected_bp = select_starting_positions(beginning_positions, stree.depth(node));
-                    if(! (selected_bp.size() >=2) ){
-                        continue;
-                    }
-
-                    //vector of text position, length
-                    std::pair<uint,uint> rule = std::make_pair(selected_bp.at(0), fac_length);
-
-
-                    dictionary.push_back(rule);
-
-                    //iterate over selected pos, add non terminal symbols
-                    for(auto bp_it = selected_bp.begin(); bp_it != selected_bp.end(); bp_it++){
-                        //(position in text, non_terminal_symbol_number, length_of_symbol);
-                        //typedef std::tuple<uint,uint,uint> non_term;
-                        non_term nts = std::make_tuple(*bp_it, nts_number, fac_length);
-                        nts_symbols.push_back(nts);
-                        //typedef std::vector<non_term> non_terminal_symbols;
-                        //mark as used
-                        for(uint pos = 0; pos<=fac_length;pos++){
-                            dead_positions[pos+ *bp_it] = 1;
-                        }
-                    }
-                    nts_number++;
                 }
 
-            }
+            });
+        });
 
-        }
+        StatPhase::wrap("Sorting occurences", [&]{
 
-        DLOG(INFO) << "sorting occurences";
-        std::sort(nts_symbols.begin(), nts_symbols.end());
+            DLOG(INFO) << "sorting occurences";
+            std::sort(nts_symbols.begin(), nts_symbols.end());
+
+        });
 
     }
 };
