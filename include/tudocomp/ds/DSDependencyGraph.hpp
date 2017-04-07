@@ -11,6 +11,35 @@
 
 namespace tdc {
 
+/// \brief Implements a dependency graph for data structures and provides
+///        functionality for memory peak efficient construction.
+///
+/// A data structure is "relevant" iff it has either been requested by the
+/// client or if it is required for a requested data structure to be
+/// constructed. Non-relevant data structures are called "side products".
+///
+/// The graph contains a node for each relevant data structure. In each node,
+/// we store a pointer to the provider, a "cost" value and a "degree" value.
+///
+/// There is an edge from node A to node B iff B requires A for construction.
+///
+/// The cost of a node equals its in-degree added to the cumulated costs of
+/// its required data structures. The out-degree of a node is simply called
+/// "degree".
+///
+/// The construction process consists of two phases: request and evaluation.
+///
+/// In the request phase, requested data structures are inserted to the graph
+/// along with their requirements (recursively). They are then connected to a
+/// virtual terminal node entitled CONSTRUCT.
+///
+/// In the evaluation phase, starting with CONSTRUCT, each ingoing edge is
+/// followed in cost order and the respective data structure is constructed.
+/// After this, the degree of each node on the requirement path is decreased by
+/// one. For any non-requested node whose degree reaches zero, the corresponding
+/// data structure can be discarded. Side products (produced data structured
+/// that have no corresponding node in the graph) are discarded immediately.
+///
 template<typename manager_t>
 class DSDependencyGraph {
 private:
