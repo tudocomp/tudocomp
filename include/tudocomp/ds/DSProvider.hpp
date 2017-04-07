@@ -6,24 +6,17 @@
 #include <tudocomp/Env.hpp>
 
 #include <tudocomp/ds/CompressMode.hpp>
+#include <tudocomp/ds/DSDef.hpp>
 
 namespace tdc {
 
-class TextDS; //fwd
+class DSManager; //fwd
 
 /// Abstract base for text data structure providesr.
-class TextDSProvider : public Algorithm {
-protected:
-    const TextDS* m_ds;
-
+class DSProvider : public Algorithm {
 public:
-    using dsid_t = int;
-    using dsid_list_t = std::vector<dsid_t>;
-
     /// Constructor.
-    inline TextDSProvider(Env&& env, const TextDS& ds)
-        : Algorithm(std::move(env)), m_ds(&ds) {
-    }
+    using Algorithm::Algorithm;
 
     /// Gets the id list of the data structures required by this algorithm.
     virtual dsid_list_t requirements() const = 0;

@@ -25,6 +25,7 @@ run_test(lzss_test      DEPS ${BASIC_DEPS})
 
 run_test(tudocomp_tests DEPS ${BASIC_DEPS})
 run_test(ds_tests       DEPS ${BASIC_DEPS})
+run_test(new_ds_tests   DEPS ${BASIC_DEPS})
 run_test(lcpsada_tests  DEPS ${BASIC_DEPS})
 run_test(generic_int_vector_tests DEPS ${BASIC_DEPS})
 
