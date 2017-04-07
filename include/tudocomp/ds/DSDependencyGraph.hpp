@@ -134,10 +134,18 @@ public:
     inline void construct_requested() {
         DLOG(INFO) << "construct_requested";
         for(auto node : m_construct) {
+            // recursively construct
             construct(node);
+
+            // recursively decrease degree
             decrease(node);
 
-            // TODO: also discard "side products"
+            // discard side products
+            for(auto prod : node->provider->products()) {
+                if(!find(prod)) {
+                    DLOG(INFO) << "discard side product (" << ds::name_for(prod) << ")";
+                }
+            }
         }
 
         // clean up
