@@ -34,11 +34,13 @@ namespace tdc {
 /// virtual terminal node entitled CONSTRUCT.
 ///
 /// In the evaluation phase, starting with CONSTRUCT, each ingoing edge is
-/// followed in cost order and the respective data structure is constructed.
-/// After this, the degree of each node on the requirement path is decreased by
-/// one. For any non-requested node whose degree reaches zero, the corresponding
-/// data structure can be discarded. Side products (produced data structured
-/// that have no corresponding node in the graph) are discarded immediately.
+/// followed in cost order and the respective data structure is constructed
+/// recursively.
+/// After each of these steps, the degree of each node on the requirement path
+/// is decreased by one. For any non-requested node whose degree reaches zero,
+/// the corresponding data structure is discarded. Side products (produced data
+/// structures that have no corresponding node in the graph) are discarded
+/// immediately.
 ///
 template<typename manager_t>
 class DSDependencyGraph {
