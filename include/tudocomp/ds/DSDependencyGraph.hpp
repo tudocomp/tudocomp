@@ -17,22 +17,22 @@ private:
     struct Node; //fwd
     using NodePtr = std::shared_ptr<Node>;
 
+    struct ConstructionOrder {
+        inline bool operator()(const NodePtr& a, const NodePtr& b) const {
+            // highest cost means construct first
+            return a->cost > b->cost;
+        }
+    };
+
     struct Node {
         dsid_t      dsid;
         DSProvider* provider;
 
         size_t      cost;
-        std::set<NodePtr> dependencies;
+        std::set<NodePtr, ConstructionOrder> dependencies;
 
         inline Node(dsid_t _id, DSProvider* _prov)
             : dsid(_id), provider(_prov), cost(0) {
-        }
-    };
-
-    struct ConstructionOrder {
-        inline bool operator()(const NodePtr& a, const NodePtr& b) const {
-            // highest cost means construct first
-            return a->cost > b->cost;
         }
     };
 
@@ -81,8 +81,18 @@ private:
         }
     }
 
+    inline void construct(NodePtr node) {
+        // construct dependencies first (in cost order)
+        for(auto dep : node->dependencies) {
+            construct(dep);
+        }
+
+        // construct
+        DLOG(INFO) << "construct (" << ds::name_for(node->dsid) << "), cost = " << node->cost;
+    }
+
 public:
-    inline void insert_requested(dsid_t id) {
+    inline void request(dsid_t id) {
         NodePtr node = find(id);
         if(!node) {
             // insert new node
@@ -95,10 +105,10 @@ public:
         m_construct.insert(node);
     }
 
-    inline void construct() {
-        DLOG(INFO) << "construct";
+    inline void construct_requested() {
+        DLOG(INFO) << "construct_requested";
         for(auto node : m_construct) {
-            DLOG(INFO) << "cost(" << ds::name_for(node->dsid) << ") = " << node->cost;
+            construct(node);
         }
     }
 };

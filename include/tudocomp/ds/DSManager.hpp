@@ -90,10 +90,10 @@ public:
         
         DSDependencyGraph<this_t> g(*this);
         for(auto id : requested_ds) {
-            g.insert_requested(id);
+            g.request(id);
         }
 
-        g.construct();
+        g.construct_requested();
     }
 
     const View& input = m_input;
