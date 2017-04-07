@@ -92,6 +92,8 @@ public:
         for(auto id : requested_ds) {
             g.insert_requested(id);
         }
+
+        g.construct();
     }
 
     const View& input = m_input;

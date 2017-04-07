@@ -21,16 +21,24 @@ private:
         dsid_t      dsid;
         DSProvider* provider;
 
+        size_t      cost;
         std::set<NodePtr> dependencies;
 
         inline Node(dsid_t _id, DSProvider* _prov)
-            : dsid(_id), provider(_prov) {
+            : dsid(_id), provider(_prov), cost(0) {
+        }
+    };
+
+    struct ConstructionOrder {
+        inline bool operator()(const NodePtr& a, const NodePtr& b) const {
+            // highest cost means construct first
+            return a->cost > b->cost;
         }
     };
 
     manager_t* m_manager;
     std::map<dsid_t, NodePtr> m_nodes;
-    std::set<NodePtr> m_construct;
+    std::set<NodePtr, ConstructionOrder> m_construct;
 
 public:
     inline DSDependencyGraph(manager_t& manager) : m_manager(&manager) {
@@ -67,6 +75,9 @@ private:
             // create edge (req, node)
             DLOG(INFO) << "edge: (" << ds::name_for(req_id) << ") -> (" << ds::name_for(node->dsid) << ")";
             node->dependencies.insert(req);
+
+            // update cost (in degree + sum cost of all dependency costs)
+            node->cost += 1 + req->cost;
         }
     }
 
@@ -82,6 +93,13 @@ public:
         // connect to "construct" node
         DLOG(INFO) << "edge: (" << ds::name_for(id) << ") -> (CONSTRUCT)";
         m_construct.insert(node);
+    }
+
+    inline void construct() {
+        DLOG(INFO) << "construct";
+        for(auto node : m_construct) {
+            DLOG(INFO) << "cost(" << ds::name_for(node->dsid) << ") = " << node->cost;
+        }
     }
 };
 
