@@ -12,6 +12,7 @@
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/DSDef.hpp>
 #include <tudocomp/ds/DSProvider.hpp>
+#include <tudocomp/ds/DSDependencyGraph.hpp>
 
 namespace tdc {
 
@@ -27,22 +28,6 @@ class DSManager : public Algorithm {
     CompressMode m_cm;
 
     std::map<dsid_t, DSProvider*> m_providers;
-
-public: //private:
-    void register_provider(DSProvider& p) {
-        DLOG(INFO) << "register_provider";
-        for(auto prod : p.products()) {
-            DLOG(INFO) << "  produces " << prod;
-            auto it = m_providers.find(prod);
-            if(it != m_providers.end()) {
-                throw std::logic_error(
-                    std::string("There is already a provider for text ds ") +
-                    std::to_string(prod));
-            } else {
-                m_providers.emplace(prod, &p);
-            }
-        }
-    }
 
 public:
     inline static Meta meta() {
@@ -72,21 +57,41 @@ public:
         }
     }
 
-private:
-    DSProvider& get_provider(dsid_t id) {
+public: //private:
+    void register_provider(DSProvider& p) {
+        DLOG(INFO) << "register_provider";
+        for(auto prod : p.products()) {
+            DLOG(INFO) << "    produces " << ds::name_for(prod);
+            auto it = m_providers.find(prod);
+            if(it != m_providers.end()) {
+                throw std::logic_error(
+                    std::string("There is already a provider for text ds ") +
+                    ds::name_for(prod));
+            } else {
+                m_providers.emplace(prod, &p);
+            }
+        }
+    }
+
+public:
+    inline DSProvider& get_provider(dsid_t id) {
         auto it = m_providers.find(id);
         if(it != m_providers.end()) {
             return *(it->second);
         } else {
             throw std::logic_error(
                 std::string("No provider available for text ds ") +
-                std::to_string(id));
+                ds::name_for(id));
         }
     }
 
-public:
-    void construct(const dsid_list_t& ds) {
-        //TODO
+    inline void construct(const dsid_list_t& requested_ds) {
+        DLOG(INFO) << "create dependency graph";
+        
+        DSDependencyGraph<this_t> g(*this);
+        for(auto id : requested_ds) {
+            g.insert_requested(id);
+        }
     }
 
     const View& input = m_input;
