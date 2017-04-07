@@ -28,11 +28,24 @@ private:
         dsid_t      dsid;
         DSProvider* provider;
 
-        size_t      cost;
+        bool requested;
+
+        // cost = in degree + sum of costs of all dependencies
+        // used to determine processing order
+        size_t cost;
         std::set<NodePtr, ConstructionOrder> dependencies;
 
+        // out degree
+        // used to determine when the data structure can be discarded
+        size_t degree;
+
         inline Node(dsid_t _id, DSProvider* _prov)
-            : dsid(_id), provider(_prov), cost(0) {
+            : dsid(_id),
+              provider(_prov),
+              requested(false),
+              cost(0),
+              degree(0)
+        {
         }
     };
 
@@ -74,10 +87,22 @@ private:
 
             // create edge (req, node)
             DLOG(INFO) << "edge: (" << ds::name_for(req_id) << ") -> (" << ds::name_for(node->dsid) << ")";
+            req->degree++;
             node->dependencies.insert(req);
 
             // update cost (in degree + sum cost of all dependency costs)
             node->cost += 1 + req->cost;
+        }
+    }
+
+    inline void decrease(NodePtr node) {
+        if(--node->degree == 0 && !node->requested) {
+            // if node was not requested, discard data structure
+            DLOG(INFO) << "discard (" << ds::name_for(node->dsid) << ")";
+        }
+
+        for(auto dep : node->dependencies) {
+            decrease(dep);
         }
     }
 
@@ -103,13 +128,21 @@ public:
         // connect to "construct" node
         DLOG(INFO) << "edge: (" << ds::name_for(id) << ") -> (CONSTRUCT)";
         m_construct.insert(node);
+        node->requested = true;
     }
 
     inline void construct_requested() {
         DLOG(INFO) << "construct_requested";
         for(auto node : m_construct) {
             construct(node);
+            decrease(node);
+
+            // TODO: also discard "side products"
         }
+
+        // clean up
+        m_construct.clear();
+        m_nodes.clear();
     }
 };
 
