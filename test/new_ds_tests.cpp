@@ -25,5 +25,8 @@ TEST(Sandbox, example) {
     
     // construct ISA, LCP and SA
     dsman.construct(dsid_list_t { ds::INVERSE_SUFFIX_ARRAY, ds::LCP_ARRAY, ds::SUFFIX_ARRAY });
+
+    // get LCP array
+    auto& lcp_provider = dsman.get_provider(ds::LCP_ARRAY);
 }
 

@@ -40,32 +40,20 @@ private:
 
     template<size_t... Is>
     inline void register_providers(
-        const provider_tuple_t& tuple,
+        provider_tuple_t& tuple,
         std::index_sequence<Is...>) {
         
         register_provider(std::get<Is>(tuple)...);
     }
 
     template<typename head_t, typename... tail_t>
-    inline void register_provider(head_t head, tail_t... tail) {
+    inline void register_provider(head_t& head, tail_t&... tail) {
         // head_t is std::shared_ptr<provider_t>
         using provider_t = typename head_t::element_type;
         DLOG(INFO) << "register_provider: " << provider_t::meta().name();
 
-        // instantiate
-        //TODO: auto p = std::make_shared<provider_t>(env().env_for_option("providers", i));
-        auto p = std::make_shared<provider_t>(create_env(provider_t::meta()));
-        for(auto prod : p->products()) {
-            DLOG(INFO) << "    produces " << ds::name_for(prod);
-            auto it = m_provider_map.find(prod);
-            if(it != m_provider_map.end()) {
-                throw std::logic_error(
-                    std::string("There is already a provider for text ds ") +
-                    ds::name_for(prod));
-            } else {
-                m_provider_map.emplace(prod, p);
-            }
-        }
+        //TODO: head = std::make_shared<provider_t>(env().env_for_option("providers", i));
+        head = std::make_shared<provider_t>(create_env(provider_t::meta()));
 
         // recurse
         register_provider(tail...);
@@ -108,19 +96,41 @@ public:
         }
     }
 
-    inline ~DSManager() {
+private:
+    template<size_t... Is>
+    inline DSProvider* find_provider(
+        const dsid_t dsid,
+        const provider_tuple_t& tuple,
+        std::index_sequence<Is...>) {
+        
+        // start a variadic linear search ...
+        return find_provider(dsid, std::get<Is>(tuple)...);
+    }
+
+    template<typename head_t, typename... tail_t>
+    inline DSProvider* find_provider(const dsid_t dsid, head_t head, tail_t... tail) {
+        if(head->does_provide(dsid)) {
+            // found
+            return static_cast<DSProvider*>(head.get());
+        } else {
+            // recurse
+            return find_provider(dsid, tail...);
+        }
+    }
+
+    inline DSProvider* find_provider(const dsid_t dsid) {
+        // none found
+        throw std::logic_error(
+            std::string("No provider available for text ds ") +
+            ds::name_for(dsid));
     }
 
 public:
-    inline DSProvider& get_provider(dsid_t id) {
-        auto it = m_provider_map.find(id);
-        if(it != m_provider_map.end()) {
-            return *(it->second);
-        } else {
-            throw std::logic_error(
-                std::string("No provider available for text ds ") +
-                ds::name_for(id));
-        }
+    inline DSProvider& get_provider(dsid_t dsid) {
+        DSProvider* p = find_provider(dsid, m_providers,
+            std::make_index_sequence<std::tuple_size<provider_tuple_t>::value>());
+
+        return *p;  
     }
 
     inline void construct(const dsid_list_t& requested_ds) {

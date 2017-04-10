@@ -24,6 +24,14 @@ public:
 
     /// Gets the id list of the data structures computed by this algorithm.
     virtual dsid_list_t products() const = 0;
+
+    /// Returns true iff this provider provides the specified data structure.
+    inline bool does_provide(dsid_t what) const {
+        for(auto dsid : products()) {
+            if(dsid == what) return true;
+        }
+        return false;
+    }
 };
 
 } //ns
