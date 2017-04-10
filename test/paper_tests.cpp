@@ -51,20 +51,20 @@ class MaxHeapStrategy : public Algorithm {
   for(int i = 1; i < lcp.size(); ++i)
    if(lcp[i] >= t) heap.insert(i);
   while(heap.size() > 0) {
-   int m = heap.top(), fpos = sa[m],
-       fsrc = sa[m-1], flen = heap.key(m);
+   int i = heap.top(), fpos = sa[i],
+       fsrc = sa[i-1], flen = heap.key(i);
    create_factor(fpos, fsrc, flen);
    for(int k=0; k < flen; k++)
     heap.remove(isa[fpos + k]);
    for(int k=0; k < flen && fpos > k; k++) {
     int s = fpos - k - 1;
-    int i = isa[s];
-    if(heap.contains(i)) {
-     if(s + lcp[i] > fpos) {
+    int j = isa[s];
+    if(heap.contains(j)) {
+     if(s + lcp[j] > fpos) {
       int l = fpos - s;
       if(l >= t)
-       heap.decrease_key(i, l);
-      else heap.remove(i);
+       heap.decrease_key(j, l);
+      else heap.remove(j);
 }}}}}};
 /////////////////////////////////
 template<class T>
