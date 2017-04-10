@@ -120,17 +120,21 @@ namespace tdc {namespace io {
                                 fd,
                                 offset);
                 //check_mmap_error(ptr, "mapping file into memory");
-                if (ptr != MAP_FAILED) {
+                if (false && ptr != MAP_FAILED) {
                     m_ptr = (uint8_t*) ptr;
                     m_state = state;
                 } else {
-                    LOG(INFO) << "Mapping file into memroy failed, failing"
-                              << " back to copying into a annyonymous map";
+                    LOG(INFO) << "Mapping file into memory failed, falling"
+                              << " back to copying into a anonymous map";
                     try_next = true;
                 }
             }
 
             if (try_next || needs_to_overallocate) {
+                if (try_next) {
+                    //std::cout << "I get used\n";
+                }
+
                 // Allocate memory and copy file into it
 
                 *this = MMap(m_size);
