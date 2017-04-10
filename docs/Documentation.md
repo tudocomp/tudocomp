@@ -487,7 +487,7 @@ stored and perform the respective conversion. If no bit width is given, the
 default size of the data type will be used.
 
 Beyond writing single bits and fixed-width integers, the bit I/O features some
-basic integer encodings:
+universal integer encodings:
 
 * Unary code ([`write_unary`](@DX_BITOSTREAM_WRITE_UNARY@) /
   [`read_unary`](@DX_BITISTREAM_READ_UNARY@))
@@ -1054,7 +1054,8 @@ Out of the box, *tudocomp* currently implements a set of coders, including:
 
 * Human readable coding (ASCII, for debugging purposes)
 * Binary coding
-* Low-entropy coding, including Elias and Huffman code
+* Universal codes (e.g. Elias codes)
+* Statistic codes (e.g. Huffman code)
 
 A full list can be found in the inheritance diagram for the
 [`Encoder`](@DX_ENCODER@) class' API reference.
