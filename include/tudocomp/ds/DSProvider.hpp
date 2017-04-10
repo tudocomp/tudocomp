@@ -10,11 +10,12 @@
 
 namespace tdc {
 
-class DSManager; //fwd
-
 /// Abstract base for text data structure providesr.
 class DSProvider : public Algorithm {
 public:
+    inline virtual ~DSProvider() {
+    }
+
     /// Constructor.
     using Algorithm::Algorithm;
 

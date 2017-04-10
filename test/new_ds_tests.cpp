@@ -10,6 +10,9 @@
 
 #include <tudocomp/CreateAlgorithm.hpp>
 
+#include <memory>
+#include <tuple>
+
 using namespace tdc;
 
 TEST(Sandbox, example) {
@@ -17,21 +20,9 @@ TEST(Sandbox, example) {
     std::string input("banana\0", 7);
 
     // instantiate manager
-    DSManager dsman(create_env(DSManager::meta()), input);
+    using dsmanager_t = DSManager<DivSufSort, ISAFromSA, PhiAlgorithm, PhiFromSA>;
+    dsmanager_t dsman(create_env(dsmanager_t::meta()), input);
     
-    // create and register algorithms (TODO: automate)
-    DivSufSort divsufsort(create_env(DivSufSort::meta()));
-    dsman.register_provider(divsufsort);
-
-    ISAFromSA isa_from_sa(create_env(ISAFromSA::meta()));
-    dsman.register_provider(isa_from_sa);
-
-    PhiAlgorithm phi_algo(create_env(PhiAlgorithm::meta()));
-    dsman.register_provider(phi_algo);
-
-    PhiFromSA phi_from_sa(create_env(PhiFromSA::meta()));
-    dsman.register_provider(phi_from_sa);
-
     // construct ISA, LCP and SA
     dsman.construct(dsid_list_t { ds::INVERSE_SUFFIX_ARRAY, ds::LCP_ARRAY, ds::SUFFIX_ARRAY });
 }
