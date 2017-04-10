@@ -53,8 +53,8 @@ private:
         DLOG(INFO) << "register_provider: " << provider_t::meta().name();
 
         // instantiate
-        // TODO: env_for_option! (how?)
-        std::shared_ptr<provider_t> p = std::make_shared<provider_t>(create_env(provider_t::meta()));
+        //TODO: auto p = std::make_shared<provider_t>(env().env_for_option("providers", i));
+        auto p = std::make_shared<provider_t>(create_env(provider_t::meta()));
         for(auto prod : p->products()) {
             DLOG(INFO) << "    produces " << ds::name_for(prod);
             auto it = m_provider_map.find(prod);
@@ -79,6 +79,7 @@ public:
     inline static Meta meta() {
         Meta m("ds", "ds");
         m.option("compress").dynamic("delayed");
+        //TODO: m.option("providers").templated_array("provider")
         return m;
     }
 
