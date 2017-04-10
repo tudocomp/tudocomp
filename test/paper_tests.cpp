@@ -40,8 +40,8 @@ class MaxHeapStrategy : public Algorithm {
   Meta m("lcpcomp_strategy", "heap");
   return m; }
  using Algorithm::Algorithm;
- void create_factor(size_t pos,size_t src,size_t len);
- void factorize(text_t& text, const size_t t) {
+ void create_factor(size_t pos, size_t src, size_t len);
+ void factorize(text_t& text, size_t t) {
   text.require(text_t::SA | text_t::ISA | text_t::LCP);
   auto& sa = text.require_sa();
   auto& isa = text.require_isa();
@@ -56,7 +56,7 @@ class MaxHeapStrategy : public Algorithm {
    create_factor(fpos, fsrc, flen);
    for(size_t k=0; k < flen; k++)
     heap.remove(isa[fpos + k]);
-   for(size_t k=0; k < flen && fpos > k; k++) {
+   for(size_t k=0;k < flen && fpos > k;k++) {
     size_t s = fpos - k - 1;
     size_t j = isa[s];
     if(heap.contains(j)) {
