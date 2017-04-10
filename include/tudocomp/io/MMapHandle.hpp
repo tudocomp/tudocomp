@@ -96,17 +96,21 @@ namespace tdc {namespace io {
             int mmap_prot;
             int mmap_flags;
 
+            bool try_next = false;
+
             if (!needs_to_overallocate) {
                 // Map file directly into memory
+
+                State state;
 
                 if (m_mode == Mode::ReadWrite) {
                     mmap_prot = PROT_READ | PROT_WRITE;
                     mmap_flags = MAP_PRIVATE;
-                    m_state = State::Private;
+                    state = State::Private;
                 } else {
                     mmap_prot = PROT_READ;
                     mmap_flags = MAP_SHARED;
-                    m_state = State::Shared;
+                    state = State::Shared;
                 }
 
                 void* ptr = mmap(NULL,
@@ -115,10 +119,18 @@ namespace tdc {namespace io {
                                 mmap_flags,
                                 fd,
                                 offset);
-                check_mmap_error(ptr, "mapping file into memory");
+                //check_mmap_error(ptr, "mapping file into memory");
+                if (ptr != MAP_FAILED) {
+                    m_ptr = (uint8_t*) ptr;
+                    m_state = state;
+                } else {
+                    LOG(INFO) << "Mapping file into memroy failed, failing"
+                              << " back to copying into a annyonymous map";
+                    try_next = true;
+                }
+            }
 
-                m_ptr = (uint8_t*) ptr;
-            } else {
+            if (try_next || needs_to_overallocate) {
                 // Allocate memory and copy file into it
 
                 *this = MMap(m_size);
@@ -149,6 +161,7 @@ namespace tdc {namespace io {
 
                 }
             }
+
             close(fd);
         }
 
