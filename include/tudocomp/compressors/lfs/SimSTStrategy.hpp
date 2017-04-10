@@ -97,7 +97,9 @@ public:
         StatPhase::wrap("Computing LRF", [&]{
 
             //array of vectors for bins of nodes with string depth
-            std::vector<std::vector<node_type> > bins;
+
+            //could be node_type
+            std::vector<std::vector<uint> > bins;
             bins.resize(stree.size()+1);
 
             uint node_counter = 0;
@@ -109,7 +111,7 @@ public:
             StatPhase::wrap("Iterate over ST", [&]{
 
                 for (iterator it = begin; it != end; ++it) {
-                    bins[stree.depth(*it)].push_back(*it);
+                    bins[stree.depth(*it)].push_back(stree.id(*it));
                     node_counter++;
                 }
             });
@@ -124,7 +126,7 @@ public:
                     auto bin_it = bins[i].begin();
                     while (bin_it!= bins[i].end()){
 
-                        node_type node = *bin_it;
+                        node_type node = stree.inv_id(*bin_it);
 
                         uint offset = stree.csa[stree.lb(node)];
                         uint fac_length = stree.depth(node);
