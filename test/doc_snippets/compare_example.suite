@@ -1,0 +1,12 @@
+[
+# gzip -1
+CompressorPair(name = 'gzip',
+    compress   = Exec(args=['gzip', '-1'], inp=StdIn, outp=StdOut),
+    decompress = Exec(args=['gzip', '-d'], inp=StdIn, outp=StdOut)),
+
+# tudocomp with LZSS/LCP and Huffman
+CompressorPair(name = 'tdc_lzss_lcp_huff',
+    compress   = Exec(args=['./tdc', '-a', 'lzss_lcp(threshold=20,coder=huff)'],
+                      outp='--output'),
+    decompress = Exec(args=['./tdc', '-d'], outp='--output'))
+]

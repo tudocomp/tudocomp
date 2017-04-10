@@ -151,7 +151,7 @@ TEST(Registry, dynamic_options) {
     struct MyCompressor: public Compressor {
         inline static Meta meta() {
             Meta y("compressor", "foo");
-            y.option("a").templated<MySub>();
+            y.option("a").templated<MySub>("b");
             y.option("c").dynamic();
             y.option("d").dynamic("asdf");
             return y;

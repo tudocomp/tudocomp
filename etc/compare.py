@@ -26,11 +26,11 @@ parser.add_argument('files', metavar='FILE', type=str, nargs='+',
 
 args = parser.parse_args()
 
-# Ensure that the input file exists
-sourcefilename = args.files[0] # TODO: allow multiple input files
-if not os.access(sourcefilename, os.R_OK):
-    print("ERROR: Input file not found or not readable:", sourcefilename)
-    quit()
+# Ensure that the input files are readable
+for srcfname in args.files:
+    if not os.access(srcfname, os.R_OK):
+        print("ERROR: Input file not found or not readable:", srcfname)
+        quit()
 
 # Check that valgrind is available for memory measurement
 try:
@@ -38,12 +38,8 @@ try:
     mem_available = True
 except:
     mem_available = False
-    print(sys.exc_info())
     print("WARNING: valgrind not found - memory measurement unavailable.")
     print()
-
-# Define number of iterations
-print("Number of iterations: ", args.iterations)
 
 # Program execution definition
 StdOut = 0
@@ -66,26 +62,54 @@ def StdCompressor(name, binary, cflags=[], dflags=[]):
         decompress = Exec(args=[binary] + dflags, inp=StdIn, outp=StdOut))
 
 # Define suite
-# TODO: read from file
-suite = [
-    # tudocomp examples
-    Tudocomp(name='bwtzip',                          algorithm='bwt:rle:mtf:encode(huff)'),
-    Tudocomp(name='lcpcomp(t=5,arrays,scans(a=25))', algorithm='lcpcomp(coder=sle,threshold=5,comp=arrays,dec=scan(25))'),
-    Tudocomp(name='lzss_lcp(t=5,bit)',               algorithm='lzss_lcp(coder=bit,threshold=5)'),
-    Tudocomp(name='lz78u(t=5,huff)',                 algorithm='lz78u(coder=bit,threshold=5,comp=buffering(huff))'),
-    Tudocomp(name='lcpcomp(t=5,heap,compact)',       algorithm='lcpcomp(coder=sle,threshold="5",comp=heap,dec=compact)'),
-    Tudocomp(name='sle',                             algorithm='encode(sle)'),
-    Tudocomp(name='huff',                            algorithm='encode(huff)'),
-    Tudocomp(name='lzw(ternary)',                    algorithm='lzw(coder=bit,lz78trie=ternary)'),
-    Tudocomp(name='lz78(ternary)',                   algorithm='lz78(coder=bit,lz78trie=ternary)'),
-    # Some standard Linux compressors
-    StdCompressor(name='gzip -1',  binary='gzip',  cflags=['-1'], dflags=['-d']),
-    StdCompressor(name='gzip -9',  binary='gzip',  cflags=['-9'], dflags=['-d']),
-    StdCompressor(name='bzip2 -1', binary='bzip2', cflags=['-1'], dflags=['-d']),
-    StdCompressor(name='bzip2 -9', binary='bzip2', cflags=['-9'], dflags=['-d']),
-    StdCompressor(name='lzma -1',  binary='lzma',  cflags=['-1'], dflags=['-d']),
-    StdCompressor(name='lzma -9',  binary='lzma',  cflags=['-9'], dflags=['-d']),
+if args.suite:
+    # Evaluate suite as Python
+    try:
+        with open(args.suite, "r") as f:
+            suite = eval(f.read())
+
+        # sanity checks
+        if not type(suite) is list:
+            raise(Exception(
+                "Suite evaluated to " + str(type(suite)) +
+                ", but should be a list of CompressorPair objects"))
+
+        if len(suite) == 0:
+            raise(Exception("Suite is empty"))
+
+        for c in suite:
+            if not isinstance(c, CompressorPair):
+                raise(Exception("Suite must only contain CompressorPair objects" +
+                    ", found " + str(type(c))))
+    except:
+        print("ERROR: Failed to load suite '" + args.suite + "'")
+        print(sys.exc_info()[1])
+        quit()
+
+    print("Using suite '" + args.suite + "'")
+
+else:
+    # default
+    suite = [
+        # tudocomp examples
+        Tudocomp(name='bwtzip',                          algorithm='bwt:rle:mtf:encode(huff)'),
+        Tudocomp(name='lcpcomp(t=5,arrays,scans(a=25))', algorithm='lcpcomp(coder=sle,threshold=5,comp=arrays,dec=scan(25))'),
+        Tudocomp(name='lzss_lcp(t=5,bit)',               algorithm='lzss_lcp(coder=bit,threshold=5)'),
+        Tudocomp(name='lz78u(t=5,huff)',                 algorithm='lz78u(coder=bit,threshold=5,comp=buffering(huff))'),
+        Tudocomp(name='lcpcomp(t=5,heap,compact)',       algorithm='lcpcomp(coder=sle,threshold="5",comp=heap,dec=compact)'),
+        Tudocomp(name='sle',                             algorithm='encode(sle)'),
+        Tudocomp(name='huff',                            algorithm='encode(huff)'),
+        Tudocomp(name='lzw(ternary)',                    algorithm='lzw(coder=bit,lz78trie=ternary)'),
+        Tudocomp(name='lz78(ternary)',                   algorithm='lz78(coder=bit,lz78trie=ternary)'),
+        # Some standard Linux compressors
+        StdCompressor(name='gzip -1',  binary='gzip',  cflags=['-1'], dflags=['-d']),
+        StdCompressor(name='gzip -9',  binary='gzip',  cflags=['-9'], dflags=['-d']),
+        StdCompressor(name='bzip2 -1', binary='bzip2', cflags=['-1'], dflags=['-d']),
+        StdCompressor(name='bzip2 -9', binary='bzip2', cflags=['-9'], dflags=['-d']),
+        StdCompressor(name='lzma -1',  binary='lzma',  cflags=['-1'], dflags=['-d']),
+        StdCompressor(name='lzma -9',  binary='lzma',  cflags=['-9'], dflags=['-d']),
     ]
+    print("Using built-in default suite")
 
 def memsize(num, suffix='B'):
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
@@ -112,7 +136,7 @@ def timesize(num, suffix='s'):
             return "%3.1f%s" % (num, 'h')
 
 def run_exec(x, infilename, outfilename):
-    args = x.args
+    args = list(x.args)
 
     # Delete existing output file
     if os.path.exists(outfilename):
@@ -171,77 +195,80 @@ def measure_mem(x, infilename, outfilename):
     os.remove(massiffilename)
     return(maxmem)
 
-
-sourcefilehash=hashlib.sha256(open(sourcefilename, 'rb').read()).hexdigest()
-sourcefilesize=os.path.getsize(sourcefilename)
-
 maxnicknamelength = len(max(suite, key=lambda p: len(p.name))[0] ) + 3
 
-print("%s (%s, sha256=%s)" % (sourcefilename, memsize(sourcefilesize), sourcefilehash))
+print("Number of iterations per file: ", args.iterations)
 
-print()
-print(("%"+ str(maxnicknamelength) + "s | %10s | %10s | %10s | %10s | %10s | %4s |") % ("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"))
-print('-'*(maxnicknamelength+5*10+6*3+4+2))
+for srcfname in args.files:
+    srchash = hashlib.sha256(open(srcfname, 'rb').read()).hexdigest()
+    srcsize = os.path.getsize(srcfname)
 
-logfilename=tempfile.mktemp()
-decompressedfilename=tempfile.mktemp()
-outfilename=tempfile.mktemp()
-
-def print_column(content, format="%11s", sep="|"):
-    print((format + " " + sep) % content, end='',flush=True)
-
-try:
-    with open(logfilename,"wb") as logfile:
-        for c in suite:
-            # nickname
-            print_column(c.name, "%"+ str(maxnicknamelength) +"s")
-
-            # compress time
-            try:
-                comp_time=measure_time(c.compress, sourcefilename, outfilename)
-                print_column(timesize(comp_time))
-            except FileNotFoundError as e:
-                print_column("(ERR)", sep=">")
-                print(" " + e.strerror)
-                continue
-
-            # compress memory
-            if mem_available:
-                comp_mem=measure_mem(c.compress, sourcefilename, outfilename)
-                print_column(memsize(comp_mem))
-            else:
-                print_column("(N/A)")
-
-            # compress rate
-            outputsize=os.path.getsize(outfilename)
-            print_column(100*float(outputsize) / float(sourcefilesize), format="%10.4f%%")
-
-            # decompress time
-            dec_time=measure_time(c.decompress, outfilename, decompressedfilename)
-            print_column(timesize(dec_time))
-
-            # decompress memory
-            if mem_available:
-                dec_mem=measure_mem(c.decompress, outfilename, decompressedfilename)
-                print_column(memsize(dec_mem))
-            else:
-                print_column("(N/A)")
-
-            # decompress check
-            decompressedhash=hashlib.sha256(open(decompressedfilename, 'rb').read()).hexdigest()
-            if decompressedhash != sourcefilehash:
-                #does a hash really help upon failure?
-                #print("%11s |" % decompressedhash, end='',flush=True)
-                print_column("FAIL", format="%5s")
-            else:
-                print_column("OK", format="%5s")
-
-            # EOL
-            print()
-except:
     print()
-    print("ERROR:", sys.exc_info()[0])
-    print(sys.exc_info()[1])
+    print("File: %s (%s, sha256=%s)" % (srcfname, memsize(srcsize), srchash))
+
+    print()
+    print(("%"+ str(maxnicknamelength) + "s | %10s | %10s | %10s | %10s | %10s | %4s |") % ("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"))
+    print('-'*(maxnicknamelength+5*10+6*3+4+2))
+
+    logfilename = tempfile.mktemp()
+    decompressedfilename = tempfile.mktemp()
+    outfilename = tempfile.mktemp()
+
+    def print_column(content, format="%11s", sep="|"):
+        print((format + " " + sep) % content, end='',flush=True)
+
+    try:
+        with open(logfilename,"wb") as logfile:
+            for c in suite:
+                # nickname
+                print_column(c.name, "%"+ str(maxnicknamelength) +"s")
+
+                # compress time
+                try:
+                    comp_time=measure_time(c.compress, srcfname, outfilename)
+                    print_column(timesize(comp_time))
+                except FileNotFoundError as e:
+                    print_column("(ERR)", sep=">")
+                    print(" " + e.strerror)
+                    continue
+
+                # compress memory
+                if mem_available:
+                    comp_mem=measure_mem(c.compress, srcfname, outfilename)
+                    print_column(memsize(comp_mem))
+                else:
+                    print_column("(N/A)")
+
+                # compress rate
+                outputsize=os.path.getsize(outfilename)
+                print_column(100*float(outputsize) / float(srcsize), format="%10.4f%%")
+
+                # decompress time
+                dec_time = measure_time(c.decompress, outfilename, decompressedfilename)
+                print_column(timesize(dec_time))
+
+                # decompress memory
+                if mem_available:
+                    dec_mem = measure_mem(c.decompress, outfilename, decompressedfilename)
+                    print_column(memsize(dec_mem))
+                else:
+                    print_column("(N/A)")
+
+                # decompress check
+                decompressedhash = hashlib.sha256(
+                    open(decompressedfilename, 'rb').read()).hexdigest()
+
+                if decompressedhash != srchash:
+                    print_column("FAIL", format="%5s")
+                else:
+                    print_column("OK", format="%5s")
+
+                # EOL
+                print()
+    except:
+        print()
+        print("ERROR:", sys.exc_info()[0])
+        print(sys.exc_info()[1])
 
 with open(logfilename, 'r') as fin: print(fin.read())
 os.remove(logfilename)

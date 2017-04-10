@@ -80,10 +80,10 @@ class LCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "lcpcomp");
-        m.option("coder").templated<coder_t>();
-        m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>();
-        m.option("dec").templated<dec_t, lcpcomp::CompactDec>();
-        m.option("textds").templated<text_t, TextDS<>>();
+        m.option("coder").templated<coder_t>("coder");
+        m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>("lcpcomp_comp");
+        m.option("dec").templated<dec_t, lcpcomp::CompactDec>("lcpcomp_dec");
+        m.option("textds").templated<text_t, TextDS<>>("textds");
         m.option("threshold").dynamic(3);
         m.uses_textds<text_t>(strategy_t::textds_flags());
         return m;

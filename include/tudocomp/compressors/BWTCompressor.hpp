@@ -19,7 +19,7 @@ private:
 public:
     inline static Meta meta() {
         Meta m("compressor", "bwt", "BWT Compressor");
-        m.option("textds").templated<text_t, TextDS<>>();
+        m.option("textds").templated<text_t, TextDS<>>("textds");
         m.uses_textds<text_t>(ds::SA);
         return m;
     }

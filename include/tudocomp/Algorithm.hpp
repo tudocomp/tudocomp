@@ -114,7 +114,7 @@ public:
         ///
         /// \tparam T The Algorithm type.
         template<class T>
-        inline void templated() {
+        inline void templated(const std::string& accepted_type) {
             m_meta.check_arg(m_argument_name);
             Meta sub_meta = T::meta();
             m_meta.m_sub_metas.push_back(sub_meta);
@@ -145,8 +145,8 @@ public:
         /// \tparam D The meta information provider type. \e Must implement a
         ///           static function \ref Meta \c meta().
         template<class T, class D>
-        inline void templated() {
-            templated<T>();
+        inline void templated(const std::string& accepted_type) {
+            templated<T>(accepted_type);
 
             std::string t_type = m_meta.m_options.back().type();
             m_meta.m_options.pop_back();

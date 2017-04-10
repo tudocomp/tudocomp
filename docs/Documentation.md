@@ -56,10 +56,8 @@ To achieve this kind of modularity, the use of C++'s meta programming features
 (namely templates) is heavily encouraged. *tudocomp* is designed in a way that
 allows template parameters to be populated seemingly at runtime.
 
-## Compression Chains
-
-Compressors and coders can be chained so that the output of one becomes the
-input of another.
+Furthermore, compressors and coders can be chained so that the output of one
+becomes the input of another.
 
 ## Library and Command-Line
 
@@ -153,6 +151,16 @@ $ cmake ..
 $ make
 ~~~
 
+Note that *tudocomp* is configured for a debug build by default. The build
+type can be changed by passing the `CMAKE_BUILD_TYPE` corresponding parameter
+to CMake:
+
+* Debug build (default): `cmake -DCMAKE_BUILD_TYPE=Debug ..`
+* Release build: `cmake -DCMAKE_BUILD_TYPE=Release ..`
+
+For benchmarking purposes, the Release configuration is heavily recommended, as
+it will tell the compiler to perform numerous optimizations.
+
 ### Dependencies
 
 *tudocomp* has the following external dependencies:
@@ -227,6 +235,14 @@ Print the 10^th^ Fibonacci word to stdout:
 
 Compress the 10^th^ Fibonacci word, print to stdout without header:
 : `$ tdc -g "fib(10)" -a "lzss(coder=ascii)" --raw --usestdout`
+
+#### Chaining
+
+Compressors and coders can be chained so that the output of one becomes the
+input of another.
+
+Chain the Burrows-Wheeler transform of a file into run-length, move-to-front and Huffman coding:
+: `$ tdc -a "bwt:rle:mtf:encode(huff)" file.txt`
 
 ## Library
 
@@ -471,7 +487,7 @@ stored and perform the respective conversion. If no bit width is given, the
 default size of the data type will be used.
 
 Beyond writing single bits and fixed-width integers, the bit I/O features some
-basic integer encodings:
+universal integer encodings:
 
 * Unary code ([`write_unary`](@DX_BITOSTREAM_WRITE_UNARY@) /
   [`read_unary`](@DX_BITISTREAM_READ_UNARY@))
@@ -603,7 +619,7 @@ a minimal example:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
 inline static Meta meta() {
-    Meta m("undisclosed", "my_algorithm", "An example algorithm");
+    Meta m("example", "my_algorithm", "An example algorithm");
     return m;
 }
 ~~~
@@ -636,7 +652,7 @@ Options are declared in the algorithm's `Meta` object using the
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
 inline static Meta meta() {
-    Meta m("undisclosed", "my_algorithm", "An example algorithm");
+    Meta m("example", "my_algorithm", "An example algorithm");
     m.option("param1").dynamic("default_value");
     m.option("number").dynamic(147);
     return m;
@@ -672,7 +688,7 @@ parameter `strategy_t`, the following declares it as an option in the `meta`
 function:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
-m.option("strategy").templated<strategy_t>();
+m.option("strategy").templated<strategy_t>("my_strategy_t");
 ~~~
 
 The function [`templated`](@DX_OPTIONBUILDER_TEMPLATED@) determines that the
@@ -680,13 +696,14 @@ option named "strategy" can be assigned with an object of the template type. It
 is expected that substitued types also inherit from `Algorithm` and provide a
 `Meta` object.
 
->> *TODO*: Describe type connection once
-   [#18854](https://projekte.itmc.tu-dortmund.de/issues/18854) is resolved.
+The additional constraint, `"my_strategy_t"`, requires strategy algorithm to be
+of type "my_strategy_t". This corresponds to an Algorithm's type as reported by
+its `Meta` object.
 
 Consider the following example function for the algorithm:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
-inline int execute() {
+inline virtual int execute() override {
     // read number option as an integer
     auto number = env().option("number").as_integer();
 
@@ -745,6 +762,9 @@ public:
 ~~~
 
 Note how both strategies inherit from `Algorithm` and provide a `Meta` object.
+Both are of type `my_strategy_t` as required by the "strategy" option of the
+main algorithm.
+
 `SquareStrategy` implements a simple `result` function that squares the input
 parameter, while `MultiplyStrategy` accepts another option named "factor", that
 is read and multiplied by the inpt parameter to compute the result.
@@ -785,13 +805,31 @@ mix. Note how in the previous section's example, `create_algo` is called with
 fixed template types. A registry can be used to map string identifiers to actual
 types to obscure fixed typing.
 
-The following example creates a `Registry` and registers the example algorithm
+The following example creates a registry and registers the example algorithm
 with the two strategies. It is then used to instantiate both versions without
 the need of fixed typing:
 
->> *TODO*: `Registry` currently only allows `Compressor` or `Generator` types
-   to be registered at the top level. This could be replaced by a template
-   parameter - see [#18948](https://projekte.itmc.tu-dortmund.de/issues/18948).
+~~~ {.cpp caption="algorithm_impl.cpp"}
+// Create a registry for algorithms of type "example"
+Registry<MyAlgorithmBase> registry("example");
+
+// Register two specializations of the algorithm
+registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
+registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
+
+// Execute the algorithm with the square strategy
+auto algo_sqr = registry.select("my_algorithm(number=5, strategy=sqr)");
+algo_sqr->execute(); // the result is 25
+
+// Execute the algorithm with the multiply strategy
+auto algo_mul = registry.select("my_algorithm(number=5, strategy=mul(8))");
+algo_mul->execute(); // the result is 40
+~~~
+
+Note that for this example, the interface `MyAlgorithmBase` was introduced,
+which `MyAlgorithm` inherits from. It merely declares the virtual function
+`execute`. The additional layer of abstraction is necessary only for use as a
+template parameter for the `Registry` class in this example.
 
 ## Coders
 
@@ -1016,7 +1054,8 @@ Out of the box, *tudocomp* currently implements a set of coders, including:
 
 * Human readable coding (ASCII, for debugging purposes)
 * Binary coding
-* Low-entropy coding, including Elias and Huffman code
+* Universal codes (e.g. Elias codes)
+* Statistic codes (e.g. Huffman code)
 
 A full list can be found in the inheritance diagram for the
 [`Encoder`](@DX_ENCODER@) class' API reference.
@@ -1054,7 +1093,7 @@ class MyCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "my_compressor", "An example compressor");
-        m.option("coder").templated<coder_t>();
+        m.option("coder").templated<coder_t>("coder");
         return m;
     }
 
@@ -1247,11 +1286,6 @@ including:
 
 A full list can be found in the inheritance diagram for the
 [`Generator`](@DX_GENERATOR@) class' API reference.
-
-## Text Data Structures
-
->> *TODO*: Describe *NEW* TextDS
-   [#18910](https://projekte.itmc.tu-dortmund.de/issues/18910)
 
 ## Runtime Statistics
 
@@ -1509,7 +1543,125 @@ shell.
 
 ## The Comparison Tool
 
-Recall at this point the restrictions when using the comparison tool in a
-Windows enviroment (see [Windows Support](#windows-support)).
+*tudocomp* contains a utility to compare running time, memory usage and
+compression rate for a range of compressors, called the comparison tool. It
+comes in the form of a Python 3 script located at `etc/compare.py`. Note that
+it prints a usage description when passing the `--help` parameter.
 
->> *TODO*: Describe usage.
+The tool uses `valgrind` to measure the memory actually used by a process.
+Therefore, recall at this point the restrictions when using it in a Windows
+enviroment (see [Windows Support](#windows-support)).
+
+The comparison tool will perform the following steps for each input file and
+each compressor defined in the comparison suite (more details on suites
+follows further below):
+
+1. Compress the input file and measure the compressor's running time
+1. Compress the input file while measuring the compressor's memory usage
+1. Compute the compression rate (size of output file divided by the input file's
+   size).
+1. Decompress the output file and measure the decompressor's running time
+1. Decompress the output file while measuring the decompressor's memory usage
+1. Compare the decompressor's output against the original input file
+
+Memory measurement via `valgrind` slows the process down significantly, which
+is why the compressor / decompressor is executed twice in order to measure time
+and memory, respectively.  In case `valgrind` is unavailable, memory measurement
+will not take place.
+
+The gathered data is printed as a table like in the following example:
+
+~~~
+File: datasets/pc_dna.1MB (1.0MiB, sha256=b668b098927d32c5a239aef82dba6d45a034a205e64bf153810a5fe6f88fe196)
+
+ Compressor |   C Time |  C Memory |    C Rate |   D Time |  D Memory |  chk |
+------------------------------------------------------------------------------
+    gzip -1 |   33.0ms |    6.6MiB |  32.4776% |   22.5ms |    6.6MiB |   OK |
+    gzip -9 |  711.0ms |    6.6MiB |  27.2440% |   10.2ms |    6.6MiB |   OK |
+   bzip2 -1 |  123.5ms |    9.3MiB |  26.6178% |   51.9ms |    8.7MiB |   OK |
+   bzip2 -9 |  124.4ms |   15.4MiB |  26.1772% |   58.7ms |   11.7MiB |   OK |
+    lzma -1 |  120.3ms |   23.3MiB |  28.8488% |   30.9ms |   15.8MiB |   OK |
+    lzma -9 |  763.0ms |  687.8MiB |  24.7587% |   26.5ms |   78.8MiB |   OK |
+~~~
+
+The columns have the following meaning:
+
+* *Compressor*: display name of the compressor as defined in the comparison
+  suite (see below)
+* *C Time*: running time of the compressor
+* *C Memory*: memory usage of the compressor
+* *C Rate*: compression rate (output size divided by input size)
+* *D Time*: running time of the decompressor
+* *D Memory*: memory usage of the decompressor
+* *chk*: `OK` if the decompessed file equals the original file (tested by
+  comparing their respective SHA256 hashes), otherwise `FAIL`
+
+Multiple iterations can be performed per file (by passing the `-n` parameter).
+In this case, the respective median values of all iterations will be printed.
+
+### Comparison Suites
+
+A comparison suite defines a range of compressor pairs to be compared. A
+compressor pair consists of a display name for the tabular output, as well as
+information on how to invoke the compressor and decompressor on a command-line
+level (ie. command, arguments, and how input / output is passed to them).
+
+Technically speaking, a suite must be a valid Python statement that resolves to
+a list of `CompressorPair` objects. These are (named) tuples of a string
+(the display name) and two `Exec` objects that define the command-line interface
+for the compressor and decompressor, respectively. To that end, `Exec` contains
+the command-line to execute as well as means to pass input and output file
+information.
+
+The following example defines a small suite for comparing `gzip` against
+a *tudocomp* implementation of LZ77 with subsequent Huffman coding:
+
+~~~ { .py caption="compare_example.suite" }
+[
+# gzip -1
+CompressorPair(name = 'gzip',
+    compress   = Exec(args=['gzip', '-1'], inp=StdIn, outp=StdOut),
+    decompress = Exec(args=['gzip', '-d'], inp=StdIn, outp=StdOut)),
+
+# tudocomp with LZSS/LCP and Huffman
+CompressorPair(name = 'tdc_lzss_lcp_huff',
+    compress   = Exec(args=['./tdc', '-a', 'lzss_lcp(threshold=20,coder=huff)'],
+                      outp='--output'),
+    decompress = Exec(args=['./tdc', '-d'], outp='--output'))
+]
+~~~
+
+As noted above, an `Exec` object contains the basic command-line to invoke a
+compressor or decompressor as a string list in the `args` parameter. The
+parameters `inp` and `outp` define how input and output files are passed to the
+application. They have the following possible states (values):
+
+* If `outp` equals `StdOut`, it is expected that the application prints its
+  output to the standard output stream. In this case, the comparison tool pipes
+  it into a file.
+* Similarly, when `inp` equals `StdIn`, the input file is piped into the
+  application via standard input.
+* In case of a string value, it is used as an additional command-line parameter
+  followed by the file name (e.g. for `--output` in the example above,
+  `--output FILENAME` is appended to the command-line).
+* If unset (`None`), only the file name is appended to the command-line.
+
+The two helper functions `Tudocomp` and `StdCompressor` facilitate the
+definition of *tudocomp* command-lines and the standard Linux compressors,
+which read from stdin and write to stdout. They can be used to abbreviate the
+suite from the example above to the following:
+
+~~~ { .py caption="compare_example2.suite" }
+[
+# gzip -1
+StdCompressor(name='gzip',
+    binary='gzip', cflags=['-1'], dflags=['-d']),
+
+# tudocomp with LZSS/LCP and Huffman
+Tudocomp(name='tdc_lzss_lcp_huff',
+    algorithm='lzss_lcp(threshold=20,coder=huff)'),
+]
+~~~
+
+Note that by default, the *tudocomp* binary is expected at `./tdc`, therefore
+the comparison tool should be run from a build directory.

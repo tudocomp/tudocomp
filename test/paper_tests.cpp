@@ -13,7 +13,7 @@
 class BWTComp : public Compressor {
   public: static Meta meta() {
     Meta m("compressor", "bwt");
-    m.option("ds").templated<TextDS<>>();
+    m.option("ds").templated<TextDS<>>("textds");
     m.uses_textds<TextDS<>>(ds::SA);
     return m; }
   using Compressor::Compressor;
