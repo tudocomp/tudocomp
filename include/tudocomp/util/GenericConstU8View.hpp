@@ -32,6 +32,13 @@ class ConstGenericView<uliteral_t>: GenericViewBase<uliteral_t, const uliteral_t
     using Super = GenericViewBase<uliteral_t, const uliteral_t*>;
     inline ConstGenericView(const Super& other): Super::GenericViewBase(other) {}
     friend class GenericView<uliteral_t>;
+
+    using Super::op_eq;
+    using Super::op_not_eq;
+    using Super::op_greater;
+    using Super::op_greater_eq;
+    using Super::op_less;
+    using Super::op_less_eq;
 public:
     using value_type             = typename Super::value_type;
     using const_reference        = typename Super::const_reference;
@@ -278,32 +285,32 @@ public:
 
 inline bool operator==(const ConstGenericView<uliteral_t>& lhs,
                        const ConstGenericView<uliteral_t>& rhs) {
-    return ConstGenericView<uliteral_t>::Super::op_eq(lhs, rhs);
+    return ConstGenericView<uliteral_t>::op_eq(lhs, rhs);
 }
 
 inline bool operator!=(const ConstGenericView<uliteral_t>& lhs,
                        const ConstGenericView<uliteral_t>& rhs) {
-    return ConstGenericView<uliteral_t>::Super::op_not_eq(lhs, rhs);
+    return ConstGenericView<uliteral_t>::op_not_eq(lhs, rhs);
 }
 
 inline bool operator<(const ConstGenericView<uliteral_t>& lhs,
                       const ConstGenericView<uliteral_t>& rhs) {
-    return ConstGenericView<uliteral_t>::Super::op_less(lhs, rhs);
+    return ConstGenericView<uliteral_t>::op_less(lhs, rhs);
 }
 
 inline bool operator<=(const ConstGenericView<uliteral_t>& lhs,
                        const ConstGenericView<uliteral_t>& rhs) {
-    return ConstGenericView<uliteral_t>::Super::op_less_eq(lhs, rhs);
+    return ConstGenericView<uliteral_t>::op_less_eq(lhs, rhs);
 }
 
 inline bool operator>(const ConstGenericView<uliteral_t>& lhs,
                       const ConstGenericView<uliteral_t>& rhs) {
-    return ConstGenericView<uliteral_t>::Super::op_greater(lhs, rhs);
+    return ConstGenericView<uliteral_t>::op_greater(lhs, rhs);
 }
 
 inline bool operator>=(const ConstGenericView<uliteral_t>& lhs,
                        const ConstGenericView<uliteral_t>& rhs) {
-    return ConstGenericView<uliteral_t>::Super::op_greater_eq(lhs, rhs);
+    return ConstGenericView<uliteral_t>::op_greater_eq(lhs, rhs);
 }
 
 inline std::ostream& operator<<(std::ostream& os,
