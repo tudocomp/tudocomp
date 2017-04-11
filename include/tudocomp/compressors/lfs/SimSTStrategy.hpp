@@ -47,6 +47,18 @@ private:
 
             }
 
+            if(dead_positions[current] && !dead_positions[current+length-1]){
+                //Some replaceable lrf at beginning
+                DLOG(INFO)<< "shorter lrf possible";
+                for(int i =1; i < length; i++){
+                    if(dead_positions[current+length-i-1]){
+                        DLOG(INFO)<< "length: " << length <<" - " <<i;
+                        break;
+
+                    }
+                }
+            }
+
         }
         return selected_starting_positions;
     }
