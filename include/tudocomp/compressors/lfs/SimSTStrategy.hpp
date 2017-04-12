@@ -29,36 +29,97 @@ template<uint min_lrf = 2 >
 class SimSTStrategy : public Algorithm {
 private:
 
-    inline virtual std::vector<int> select_starting_positions(std::vector<int> starting_positions, int length){
+
+    typedef sdsl::bp_interval<long unsigned int> node_type;
+
+    //sdsl::t_csa sa =sdsl::csa_uncompressed<>
+    typedef sdsl::cst_sct3< sdsl::csa_bitcompressed<> > cst_t;
+    cst_t stree;
+
+
+    inline virtual std::vector<int> select_starting_positions(int node_id, int length){
+
+        node_type node = stree.inv_id(node_id);
+
+        uint offset = stree.csa[stree.lb(node)];
+        //uint fac_length = stree.depth(node);
+
+
+        std::vector<int> beginning_positions;
+
+        if(stree.size(node)>=2){
+
+            //iterate over corresponding sa and find min and max
+            offset = stree.lb(node);
+            int min = stree.csa[offset];
+            int max = stree.csa[offset];
+            //int min_pos = offset;
+            //int max_pos = offset;
+            for(uint c = 0;c<stree.size(node); c++){
+                int val = stree.csa[c+offset];
+                beginning_positions.push_back(val);
+
+                if(min > val){
+                    min = val;
+                    //   min_pos = offset+c;
+                }
+                if(max < val){
+                    max = val;
+                    //  max_pos = offset+c;
+                }
+
+
+            }
+            int dif = max -min;
+            if(dif < length){
+
+                return std::vector<int>();
+            }
+
+            std::sort(beginning_positions.begin(), beginning_positions.end());
+        }
+
         std::vector<int> selected_starting_positions;
         //select occurences greedily non-overlapping:
-        selected_starting_positions.reserve(starting_positions.size());
+        selected_starting_positions.reserve(beginning_positions.size());
 
         int last =  0-length;
         int current;
-        for (auto it=starting_positions.begin(); it!=starting_positions.end(); ++it){
+        int shorter_count = 0;
+        int min_shorter = length;
+        for (auto it=beginning_positions.begin(); it!=beginning_positions.end(); ++it){
 
             current = *it;
-            //DLOG(INFO) << "checking starting position: " << current << " length: " << top.first << "last " << last;
             if(last+length <= current && !dead_positions[current] && !dead_positions[current+length-1]){
+
+
 
                 selected_starting_positions.push_back(current);
                 last = current;
 
             }
 
-            if(dead_positions[current] && !dead_positions[current+length-1]){
+            if(!dead_positions[current] && dead_positions[current+length-1]){
                 //Some replaceable lrf at beginning
-                DLOG(INFO)<< "shorter lrf possible";
                 for(int i =1; i < length; i++){
-                    if(dead_positions[current+length-i-1]){
-                        DLOG(INFO)<< "length: " << length <<" - " <<i;
+                    if( ! (dead_positions[current+length-i-1]) ){
+                        min_shorter = std::min(min_shorter, i);
+                        shorter_count++;
                         break;
 
                     }
                 }
             }
 
+        }
+
+        if(shorter_count>0){
+
+
+
+            if(length-min_shorter >= (int)min_lrf){
+                bins[length-min_shorter].push_back(node_id);
+            }
         }
         return selected_starting_positions;
     }
@@ -70,13 +131,12 @@ private:
 
 
 
-    //sdsl::t_csa sa =sdsl::csa_uncompressed<>
-    typedef sdsl::cst_sct3< sdsl::csa_bitcompressed<> > cst_t;
-    cst_t stree;
 
 
     BitVector dead_positions;
 
+    //could be node_type
+    std::vector<std::vector<uint> > bins;
 
 public:
 
@@ -97,7 +157,6 @@ public:
         dead_positions = BitVector(input.size(), 0);
 
 
-        typedef sdsl::bp_interval<long unsigned int> node_type;
 
 
         StatPhase::wrap("Constructing ST", [&]{
@@ -107,11 +166,11 @@ public:
 
 
         StatPhase::wrap("Computing LRF", [&]{
+            DLOG(INFO)<<"computing lrf";
 
             //array of vectors for bins of nodes with string depth
 
-            //could be node_type
-            std::vector<std::vector<uint> > bins;
+
             bins.resize(stree.size()+1);
 
             uint node_counter = 0;
@@ -121,6 +180,7 @@ public:
             iterator end   = iterator(&stree, stree.root(), true, true);
 
             StatPhase::wrap("Iterate over ST", [&]{
+                DLOG(INFO)<<"iterate st";
 
                 for (iterator it = begin; it != end; ++it) {
                     bins[stree.depth(*it)].push_back(stree.id(*it));
@@ -133,83 +193,41 @@ public:
 
             uint nts_number =0;
             StatPhase::wrap("Iterate over Node Bins", [&]{
+                DLOG(INFO)<<"iterate node bins";
 
                 for(uint i = bins.size()-1; i>=min_lrf; i--){
                     auto bin_it = bins[i].begin();
                     while (bin_it!= bins[i].end()){
-
-                        node_type node = stree.inv_id(*bin_it);
-
-                        uint offset = stree.csa[stree.lb(node)];
-                        uint fac_length = stree.depth(node);
-
-                        bin_it++;
-
-                        if(stree.size(node)>=2){
-
-                            //iterate over corresponding sa and find min and max
-                            offset = stree.lb(node);
-                            int min = stree.csa[offset];
-                            int max = stree.csa[offset];
-                            //int min_pos = offset;
-                            //int max_pos = offset;
-                            std::vector<int> beginning_positions;
-                            for(uint c = 0;c<stree.size(node); c++){
-                                int val = stree.csa[c+offset];
-                                beginning_positions.push_back(val);
-                                if(min > val){
-                                    min = val;
-                                    //   min_pos = offset+c;
-                                }
-                                if(max < val){
-                                    max = val;
-                                    //  max_pos = offset+c;
-                                }
-
-
-                            }
-                            uint dif = max -min;
-                            if(dif < stree.depth(node)){
-                                continue;
-                            }
-
-                            std::sort(beginning_positions.begin(), beginning_positions.end());
-
-
-                            //Add new rule
-
-
-
+                           //Add new rule
                             //and add new non-terminal symbols
-                            std::vector<int> selected_bp = select_starting_positions(beginning_positions, stree.depth(node));
+                            std::vector<int> selected_bp = select_starting_positions(*bin_it, i);
                             if(! (selected_bp.size() >=2) ){
+                                bin_it++;
                                 continue;
                             }
 
                             //vector of text position, length
-                            std::pair<uint,uint> rule = std::make_pair(selected_bp.at(0), fac_length);
-
-
+                            std::pair<uint,uint> rule = std::make_pair(selected_bp.at(0), i);
                             dictionary.push_back(rule);
 
                             //iterate over selected pos, add non terminal symbols
                             for(auto bp_it = selected_bp.begin(); bp_it != selected_bp.end(); bp_it++){
                                 //(position in text, non_terminal_symbol_number, length_of_symbol);
                                 //typedef std::tuple<uint,uint,uint> non_term;
-                                non_term nts = std::make_tuple(*bp_it, nts_number, fac_length);
+                                non_term nts = std::make_tuple(*bp_it, nts_number, i);
                                 nts_symbols.push_back(nts);
                                 //typedef std::vector<non_term> non_terminal_symbols;
                                 //mark as used
-                                for(uint pos = 0; pos<=fac_length;pos++){
+                                for(uint pos = 0; pos<i;pos++){
                                     dead_positions[pos+ *bp_it] = 1;
                                 }
                             }
                             nts_number++;
+
+                            bin_it++;
+
                         }
-
                     }
-
-                }
 
             });
         });
