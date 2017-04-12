@@ -138,6 +138,12 @@ private:
     //could be node_type
     std::vector<std::vector<uint> > bins;
 
+    //vector of tuples, associates id to tuple
+    //tuple:: min_bp, max_bp, card
+    typedef std::tuple<int,int,int> n_tpl;
+    typedef std::vector< n_tpl > tuple_vector;
+    tuple_vector node_tuples;
+
 public:
 
     using Algorithm::Algorithm; //import constructor
@@ -173,6 +179,8 @@ public:
 
             bins.resize(stree.size()+1);
 
+
+
             uint node_counter = 0;
 
             typedef sdsl::cst_bfs_iterator<cst_t> iterator;
@@ -190,6 +198,7 @@ public:
 
 
 
+            node_tuples.resize(node_counter);
 
             uint nts_number =0;
             StatPhase::wrap("Iterate over Node Bins", [&]{
@@ -198,6 +207,42 @@ public:
                 for(uint i = bins.size()-1; i>=min_lrf; i--){
                     auto bin_it = bins[i].begin();
                     while (bin_it!= bins[i].end()){
+                        node_type node = stree.inv_id(*bin_it);
+                        n_tpl cur_tpl;
+                        if(stree.is_leaf(node)){
+                            int bp = stree.csa[stree.lb(node)];
+                            cur_tpl = std::make_tuple(bp,bp,1);
+                            node_tuples[*bin_it] = cur_tpl;
+
+                            //DLOG(INFO)<<"new tuple for id: "<<*bin_it<< " <"<<bp<<","<<bp<<",1>";
+
+                        }
+                        else {
+                            int min = stree.size();
+                            int max = 0;
+                            int card = 0;
+                            for (auto& child: stree.children(node)) {
+                                int child_id = stree.id(child);
+                                n_tpl child_tpl = node_tuples[child_id];
+                                min = std::min(min, std::get<0>(child_tpl));
+                                max = std::max(max, std::get<1>(child_tpl));
+                                card += std::get<2>(child_tpl);
+                            }
+
+                            cur_tpl = std::make_tuple(min,max,card);
+                            //DLOG(INFO)<<"new tuple for id: "<<*bin_it<< " <"<<min<<","<<max<<","<<card<<">";
+                            node_tuples[*bin_it] = cur_tpl;
+
+                        }
+                        //check tuple
+                        if(!(std::get<2>(cur_tpl)>=2) && !( (std::get<1>(cur_tpl) - std::get<0>(cur_tpl)) >= i )){
+
+                            bin_it++;
+                            continue;
+                        }
+                            //do this
+
+
                            //Add new rule
                             //and add new non-terminal symbols
                             std::vector<int> selected_bp = select_starting_positions(*bin_it, i);
