@@ -1,13 +1,13 @@
 #pragma once
 
+namespace std {
+
 /*
     This header simulates the std::integer_sequence as introduced in C++14.
-    Remove the std namespace part when tudocomp is adapted to C++14.
+    Remove this std namespace part when tudocomp is adapted to C++14.
 
     Source: http://www.pdimov.com/cpp2/simple_cxx11_metaprogramming.html
 */
-
-namespace std {
 
 template<class T, T... Ints> struct integer_sequence
 {
