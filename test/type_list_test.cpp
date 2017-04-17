@@ -5,37 +5,25 @@
 
 // providers
 struct A {
-    using provides = tdc::type_list::type_list<
-        /*0*/ A,
-        /*1*/ tdc::type_list::None,
-        /*2*/ A,
-        /*3*/ tdc::type_list::None,
-        /*4*/ tdc::type_list::None
-    >;
+    using provides = tdc::type_list::multimix<
+        tdc::type_list::set<0, A>::list,
+        tdc::type_list::set<2, A>::list
+    >::list;
 
     static constexpr int test_id = 0xA;
 };
 
 struct B {
-    using provides = tdc::type_list::type_list<
-        /*0*/ tdc::type_list::None,
-        /*1*/ tdc::type_list::None,
-        /*2*/ tdc::type_list::None,
-        /*3*/ B,
-        /*4*/ tdc::type_list::None
-    >;
+    using provides = tdc::type_list::set<3, B>::list;
 
     static constexpr int test_id = 0xB;
 };
 
 struct C {
-    using provides = tdc::type_list::type_list<
-        /*0*/ tdc::type_list::None,
-        /*1*/ C,
-        /*2*/ tdc::type_list::None,
-        /*3*/ tdc::type_list::None,
-        /*4*/ C
-    >;
+    using provides = tdc::type_list::multimix<
+        tdc::type_list::set<1, C>::list,
+        tdc::type_list::set<4, C>::list
+    >::list;
 
     static constexpr int test_id = 0xC;
 };

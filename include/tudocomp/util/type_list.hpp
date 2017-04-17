@@ -17,7 +17,7 @@ struct None;
 /// \brief Represents an unidentifiable, ambiguous type.
 struct Ambiguous;
 
-/// \brief Gets i-th type in a type list.
+/// \brief Gets the i-th type in a type list.
 ///
 /// The result type can be obtained via the \c type member.
 ///
@@ -54,6 +54,28 @@ template<typename T, typename... Ts>
 struct prepend<T, type_list<Ts...>> {
     using list = type_list<T, Ts...>;
 };
+
+/// \brief Produces a type list where the i-th type is the specified type
+///        and all other types are None.
+///
+/// The resulting type list can be obtained via the \c list member.
+///
+/// \tparam I  the index
+/// \tparam T  the type to set at the specified index
+template<size_t I, typename T> struct set {
+    // recursive case (I > 0):
+    // produce a type list of None and append set with I-1
+    using list = typename prepend<None, typename set<I - 1, T>::list>::list;
+};
+
+/// \cond INTERNAL
+
+// trivial case (I = 0): produce a type list of just T
+template<typename T> struct set<0, T> {
+    using list = type_list<T>;
+};
+
+/// \endcond
 
 /// \endcond
 
