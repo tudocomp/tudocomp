@@ -142,6 +142,19 @@ struct mix<type_list<None, Tail1...>, type_list<None, Tail2...>> {
     >::list;
 };
 
+// trivial case: mix empty list with a non-empty list
+template<typename Head1, typename... Tail1>
+struct mix<type_list<Head1, Tail1...>, mt> {
+    using list = typename prepend<Head1,
+        typename mix<type_list<Tail1...>, mt>::list>::list;
+};
+
+template<typename Head2, typename... Tail2>
+struct mix<mt, type_list<Head2, Tail2...>> {
+    using list = typename prepend<Head2,
+        typename mix<mt, type_list<Tail2...>>::list>::list;
+};
+
 // trivial case: mixing two empty lists yields an empty list
 template<> struct mix<mt, mt> {
     using list = mt;
