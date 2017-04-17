@@ -3,16 +3,6 @@
 
 #include <tudocomp/util/type_list.hpp>
 
-/*
-    TODO:
-    - allow "mix" of lists of different sizes
-    - sugar syntax for "provides" lists below
-      - type_list::set<I, T>
-      - creates a type list of (I-1) times None and the I-th type is T
-      - can be combined using mix in a function type_list::multiset<I..., T...>
-    - retain "source index" in a mixed type list
-*/
-
 // providers
 struct A {
     using provides = tdc::type_list::type_list<
@@ -59,7 +49,7 @@ struct manager {
         typename Providers::provides...>::list;
 
     template<dsid_t Id>
-    using get_provider = typename tdc::type_list::get_type<Id, providers>::type;
+    using get_provider = typename tdc::type_list::get<Id, providers>::type;
 };
 
 // instance

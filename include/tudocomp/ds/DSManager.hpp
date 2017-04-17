@@ -45,7 +45,7 @@ private:
 public:
     template<dsid_t dsid>
     using provider_type =
-        typename tdc::type_list::get_type<dsid, provider_type_map>::type;
+        typename tdc::type_list::get<dsid, provider_type_map>::type;
 
     inline static Meta meta() {
         Meta m("ds", "ds");

@@ -23,18 +23,18 @@ struct Ambiguous;
 ///
 /// \tparam I  the index in the type list
 /// \tparam Tl the type list in question
-template<size_t I, typename Tl> struct get_type;
+template<size_t I, typename Tl> struct get;
 
 /// \cond INTERNAL
 
 // recursive case (I > 0): cut off head and continue with I - 1
 template<size_t I, typename Head, typename... Tail>
-struct get_type<I, type_list<Head, Tail...>>
-: get_type<I - 1, type_list<Tail...>>{};
+struct get<I, type_list<Head, Tail...>>
+: get<I - 1, type_list<Tail...>>{};
 
 // trivial case (I = 0): yield head
 template<typename Head, typename... Tail>
-struct get_type<0, type_list<Head, Tail...>> {
+struct get<0, type_list<Head, Tail...>> {
     using type = Head;
 };
 /// \endcond
