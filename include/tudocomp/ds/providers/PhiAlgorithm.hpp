@@ -12,13 +12,9 @@ public:
         return m;
     }
 
-    using provides = tl::type_list<
-        /*0 = SA   */ tl::None,
-        /*1 = ISA  */ tl::None,
-        /*2 = LCP  */ PhiAlgorithm,
-        /*3 = Phi  */ tl::None,
-        /*4 = PLCP */ PhiAlgorithm
-    >;
+    using provides = tl::mix<
+        tl::set<ds::LCP_ARRAY, PhiAlgorithm>,
+        tl::set<ds::PLCP_ARRAY, PhiAlgorithm>>;
 
     using DSProvider::DSProvider;
 

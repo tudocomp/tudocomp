@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <tudocomp/util/type_list.hpp>
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/Env.hpp>

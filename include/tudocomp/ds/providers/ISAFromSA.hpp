@@ -12,13 +12,7 @@ public:
         return m;
     }
 
-    using provides = tl::type_list<
-        /*0 = SA   */ tl::None,
-        /*1 = ISA  */ ISAFromSA,
-        /*2 = LCP  */ tl::None,
-        /*3 = Phi  */ tl::None,
-        /*4 = PLCP */ tl::None
-    >;
+    using provides = tl::set<ds::INVERSE_SUFFIX_ARRAY, ISAFromSA>;
 
     using DSProvider::DSProvider;
 

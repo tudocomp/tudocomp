@@ -12,13 +12,7 @@ public:
         return m;
     }
 
-    using provides = tl::type_list<
-        /*0 = SA   */ DivSufSort,
-        /*1 = ISA  */ tl::None,
-        /*2 = LCP  */ tl::None,
-        /*3 = Phi  */ tl::None,
-        /*4 = PLCP */ tl::None
-    >;
+    using provides = tl::set<ds::SUFFIX_ARRAY, DivSufSort>;
 
     using DSProvider::DSProvider;
 

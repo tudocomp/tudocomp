@@ -8,24 +8,20 @@ using namespace tdc;
 // providers
 struct A {
     using provides = tl::multimix<
-        tl::set<0, A>::list,
-        tl::set<2, A>::list
-    >::list;
+        tl::set<0, A>, tl::set<2, A>>;
 
     static constexpr int test_id = 0xA;
 };
 
 struct B {
-    using provides = tl::set<3, B>::list;
+    using provides = tl::set<3, B>;
 
     static constexpr int test_id = 0xB;
 };
 
 struct C {
     using provides = tl::multimix<
-        tl::set<1, C>::list,
-        tl::set<4, C>::list
-    >::list;
+        tl::set<1, C>, tl::set<4, C>>;
 
     static constexpr int test_id = 0xC;
 };
@@ -35,11 +31,10 @@ using dsid_t = size_t;
 
 template<typename... Providers>
 struct manager {
-    using providers = typename tl::multimix<
-        typename Providers::provides...>::list;
+    using providers = tl::multimix<typename Providers::provides...>;
 
     template<dsid_t Id>
-    using get_provider = typename tl::get<Id, providers>::type;
+    using get_provider = tl::get<Id, providers>;
 };
 
 // instance

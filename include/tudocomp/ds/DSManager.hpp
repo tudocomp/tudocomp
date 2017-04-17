@@ -30,8 +30,7 @@ class DSManager : public Algorithm {
 private:
     using this_t = DSManager<provider_ts...>;
 
-    using provider_type_map = typename tl::multimix<
-        typename provider_ts::provides...>::list;
+    using provider_type_map = tl::multimix<typename provider_ts::provides...>;
 
     using provider_tuple_t = std::tuple<std::shared_ptr<provider_ts>...>;
     provider_tuple_t m_providers;
@@ -44,8 +43,7 @@ private:
 
 public:
     template<dsid_t dsid>
-    using provider_type =
-        typename tl::get<dsid, provider_type_map>::type;
+    using provider_type = tl::get<dsid, provider_type_map>;
 
     inline static Meta meta() {
         Meta m("ds", "ds");

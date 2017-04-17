@@ -12,13 +12,7 @@ public:
         return m;
     }
 
-    using provides = tl::type_list<
-        /*0 = SA   */ tl::None,
-        /*1 = ISA  */ tl::None,
-        /*2 = LCP  */ tl::None,
-        /*3 = Phi  */ PhiFromSA,
-        /*4 = PLCP */ tl::None
-    >;
+    using provides = tl::set<ds::PHI_ARRAY, PhiFromSA>;
 
     using DSProvider::DSProvider;
 
