@@ -17,28 +17,6 @@ struct None;
 /// \brief Represents an unidentifiable, ambiguous type.
 struct Ambiguous;
 
-/// \brief Produces a type list by prepending \ref None exactly N times.
-///
-/// This is intended for initialization of a type list with N elements.
-/// The resulting type list can be obtained via the \c list member.
-///
-/// \tparam N  the amount of \ref None items to prepend
-/// \tparam Tl the initial list (e.g. \ref mt)
-template<size_t N, typename Tl = mt> struct init;
-
-/// \cond INTERNAL
-
-// recursive case (N > 0): prepend None and continue with N - 1
-template<size_t N, typename... Ts> struct init<N, type_list<Ts...>> {
-    using list = typename init<N - 1, type_list<None, Ts...>>::list;
-};
-
-// trivial case (N = 0): "don't prepend none"
-template<typename... Ts> struct init<0, type_list<Ts...>> {
-    using list = type_list<Ts...>;
-};
-/// \endcond
-
 /// \brief Gets i-th type in a type list.
 ///
 /// The result type can be obtained via the \c type member.
@@ -76,6 +54,7 @@ template<typename T, typename... Ts>
 struct prepend<T, type_list<Ts...>> {
     using list = type_list<T, Ts...>;
 };
+
 /// \endcond
 
 /// \brief Mixes two type lists.
