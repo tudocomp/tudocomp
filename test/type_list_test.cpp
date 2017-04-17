@@ -7,6 +7,10 @@
     TODO:
     - allow "mix" of lists of different sizes
     - sugar syntax for "provides" lists below
+      - type_list::set<I, T>
+      - creates a type list of (I-1) times None and the I-th type is T
+      - can be combined using mix in a function type_list::multiset<I..., T...>
+    - retain "source index" in a mixed type list
 */
 
 // providers

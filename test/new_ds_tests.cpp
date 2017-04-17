@@ -20,13 +20,15 @@ TEST(Sandbox, example) {
     std::string input("banana\0", 7);
 
     // instantiate manager
-    using dsmanager_t = DSManager<DivSufSort, ISAFromSA, PhiAlgorithm, PhiFromSA>;
+    using dsmanager_t =
+        DSManager<DivSufSort, ISAFromSA, PhiAlgorithm, PhiFromSA>;
+
     dsmanager_t dsman(create_env(dsmanager_t::meta()), input);
-    
+
     // construct ISA, LCP and SA
-    dsman.construct(dsid_list_t { ds::INVERSE_SUFFIX_ARRAY, ds::LCP_ARRAY, ds::SUFFIX_ARRAY });
+    /*dsman.construct(dsid_list_t { ds::INVERSE_SUFFIX_ARRAY, ds::LCP_ARRAY, ds::SUFFIX_ARRAY });*/
 
     // get LCP array
-    auto& lcp_provider = dsman.get_provider(ds::LCP_ARRAY);
+    //auto& lcp_provider = dsman.get_provider(ds::LCP_ARRAY);
 }
 

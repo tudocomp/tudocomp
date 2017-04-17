@@ -12,6 +12,14 @@ public:
         return m;
     }
 
+    using provides = tdc::type_list::type_list<
+        /*0 = SA   */ tdc::type_list::None,
+        /*1 = ISA  */ tdc::type_list::None,
+        /*2 = LCP  */ tdc::type_list::None,
+        /*3 = Phi  */ PhiFromSA,
+        /*4 = PLCP */ tdc::type_list::None
+    >;
+
     using DSProvider::DSProvider;
 
     virtual dsid_list_t requirements() const override {
