@@ -3,7 +3,7 @@
 namespace tdc {
 
 /// \brief Contains meta-programming utilities for type lists.
-namespace type_list {
+namespace tl {
 
 /// \brief Meta-type for a list of types.
 template<typename... Ts> struct type_list;

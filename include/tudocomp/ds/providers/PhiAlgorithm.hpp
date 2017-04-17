@@ -12,11 +12,11 @@ public:
         return m;
     }
 
-    using provides = tdc::type_list::type_list<
-        /*0 = SA   */ tdc::type_list::None,
-        /*1 = ISA  */ tdc::type_list::None,
+    using provides = tl::type_list<
+        /*0 = SA   */ tl::None,
+        /*1 = ISA  */ tl::None,
         /*2 = LCP  */ PhiAlgorithm,
-        /*3 = Phi  */ tdc::type_list::None,
+        /*3 = Phi  */ tl::None,
         /*4 = PLCP */ PhiAlgorithm
     >;
 
