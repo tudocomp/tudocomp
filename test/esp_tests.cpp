@@ -787,3 +787,18 @@ TEST(MonotonSubseq, build_extract_layers_bbwd) {
     ASSERT_EQ(indices, (std::vector<size_t> { 3, 9, 12, 13 }));
     ASSERT_EQ(values,  (std::vector<size_t> { 8, 6, 4, 1 }));
 }
+
+TEST(MonotonSubseq, lis_corner_cases) {
+    auto rev = false;
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+
+    auto l = esp::L(sis);
+    l.rebuild(rev);
+
+    std::vector<size_t> links;
+    ASSERT_TRUE(l.lis(l.layer_size(), links));
+    ASSERT_FALSE(l.lis(l.layer_size() + 1, links));
+    ASSERT_TRUE(l.lis(l.layer_size() - 1, links));
+    ASSERT_TRUE(l.lis(1, links));
+    ASSERT_TRUE(l.lis(0, links));
+}
