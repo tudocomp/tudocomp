@@ -177,7 +177,7 @@ Said external dependencies are the following:
 Additionally, the tests require
 [Google Test](https://github.com/google/googletest) (1.7.0 or later).
 
-#### Documentation Build Requirements
+### Documentation Build Requirements
 
 For building the documentation, the following tools need to be installed:
 
@@ -197,12 +197,12 @@ heap allocation counter cannot work and statistics tracking becomes largely
 nonfunctional.
 
 Note that [the comparison tool](#the-comparison-tool) relies on `valgrind`,
-which is not functional in the Bash on Ubuntu on Windows[^windows-valgrind].
-Therefore, memory measurement in the comparison tool is unavailable in this
-environment.
+which is not functional in the Bash on Ubuntu on Windows until the
+[Windows 10 Creators Update](https://blogs.windows.com/windowsexperience/2017/04/11/whats-new-in-the-windows-10-creators-update)
+[^windows-valgrind].
 
 [^windows-valgrind]: `valgrind` reportedly fails starting in Bash on Ubuntu on
-Windows. The issue has been filed officially
+Windows before the Creators Update. The issue had been filed officially
 [here](https://github.com/Microsoft/BashOnWindows/issues/1295).
 
 ## Command-line Tool

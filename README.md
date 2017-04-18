@@ -33,7 +33,7 @@ Said external dependencies are the following:
 Additionally, the tests require
 [Google Test](https://github.com/google/googletest) (1.7.0 or later).
 
-#### Documentation Build Requirements
+## Documentation Build Requirements
 
 For building the documentation, the following tools need to be installed:
 
@@ -51,6 +51,10 @@ project can be built in a [Cygwin](https://www.cygwin.com/) environment with a
 limited feature set. Cygwin does not allow overrides of `malloc`, therefore the
 heap allocation counter cannot work and statistics tracking becomes largely
 nonfunctional.
+
+Note that [the comparison tool](#the-comparison-tool) relies on `valgrind`,
+which is not functional in the Bash on Ubuntu on Windows until the
+[Windows 10 Creators Update](https://blogs.windows.com/windowsexperience/2017/04/11/whats-new-in-the-windows-10-creators-update).
 
 # License
 
