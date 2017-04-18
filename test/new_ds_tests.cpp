@@ -43,6 +43,20 @@ TEST(Sandbox, example) {
     // instantiate manager
     dsmanager_t dsman(create_env(dsmanager_t::meta()), input);
 
+    // get providers
+    auto& sa_provider =   dsman.get_provider<ds::SUFFIX_ARRAY>();
+    auto& isa_provider =  dsman.get_provider<ds::INVERSE_SUFFIX_ARRAY>();
+    auto& phi_provider =  dsman.get_provider<ds::PHI_ARRAY>();
+    auto& lcp_provider =  dsman.get_provider<ds::LCP_ARRAY>();
+    auto& plcp_provider = dsman.get_provider<ds::PLCP_ARRAY>();
+
+    // make sure they are the right ones (at runtime)
+    ASSERT_EQ("divsufsort",    std::remove_reference<decltype(sa_provider)>::type::meta().name());
+    ASSERT_EQ("isa",           std::remove_reference<decltype(isa_provider)>::type::meta().name());
+    ASSERT_EQ("phi",           std::remove_reference<decltype(phi_provider)>::type::meta().name());
+    ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(lcp_provider)>::type::meta().name());
+    ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(plcp_provider)>::type::meta().name());
+
     // construct ISA, LCP and SA
     /*dsman.construct(dsid_list_t { ds::INVERSE_SUFFIX_ARRAY, ds::LCP_ARRAY, ds::SUFFIX_ARRAY });*/
 
