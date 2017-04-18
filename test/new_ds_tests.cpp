@@ -1,6 +1,8 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
+#include <type_traits>
+
 #include <tudocomp/ds/DSManager.hpp>
 
 #include <tudocomp/ds/providers/DivSufSort.hpp>
@@ -15,14 +17,30 @@
 
 using namespace tdc;
 
+using dsmanager_t = DSManager<DivSufSort, PhiAlgorithm, ISAFromSA, PhiFromSA>;
+
+// compile-time tests
+static_assert(std::is_same<
+        dsmanager_t::provider_type<ds::SUFFIX_ARRAY>, DivSufSort
+        >::value, "Wrong provider entry for SUFFIX_ARRAY");
+static_assert(std::is_same<
+        dsmanager_t::provider_type<ds::INVERSE_SUFFIX_ARRAY>, ISAFromSA
+        >::value, "Wrong provider entry for INVERSE_SUFFIX_ARRAY");
+static_assert(std::is_same<
+        dsmanager_t::provider_type<ds::PHI_ARRAY>, PhiFromSA
+        >::value, "Wrong provider entry for PHI_ARRAY");
+static_assert(std::is_same<
+        dsmanager_t::provider_type<ds::PLCP_ARRAY>, PhiAlgorithm
+        >::value, "Wrong provider entry for PLCP_ARRAY");
+static_assert(std::is_same<
+        dsmanager_t::provider_type<ds::LCP_ARRAY>, PhiAlgorithm
+        >::value, "Wrong provider entry for LCP_ARRAY");
+
 TEST(Sandbox, example) {
     // test input
     std::string input("banana\0", 7);
 
     // instantiate manager
-    using dsmanager_t =
-        DSManager<DivSufSort, ISAFromSA, PhiAlgorithm, PhiFromSA>;
-
     dsmanager_t dsman(create_env(dsmanager_t::meta()), input);
 
     // construct ISA, LCP and SA

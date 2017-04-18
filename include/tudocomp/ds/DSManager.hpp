@@ -13,7 +13,6 @@
 
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/DSDef.hpp>
-#include <tudocomp/ds/DSProvider.hpp>
 #include <tudocomp/ds/DSDependencyGraph.hpp>
 
 #include <tudocomp/CreateAlgorithm.hpp>
@@ -24,14 +23,37 @@ static_assert(
     std::is_same<View::value_type, uliteral_t>::value,
     "View::value_type and uliteral_t must be the same");
 
+/// \cond INTERNAL
+namespace internal {
+    // internal helper to construct provider type map
+    template<typename... Ts> struct _make_type_map;
+
+    template<typename Head, typename... Tail>
+    struct _make_type_map<Head, Tail...> {
+        using type_map = tl::mix<
+            tl::set_all<typename Head::provides, Head>,
+            typename _make_type_map<Tail...>::type_map>;
+    };
+
+    template<> struct _make_type_map<> {
+        using type_map = tl::mt;
+    };
+
+    template<typename... Ts>
+    using make_type_map = typename _make_type_map<Ts...>::type_map;
+}
+/// \endcond
+
 /// Manages data structures and construction algorithms.
 template<typename... provider_ts>
 class DSManager : public Algorithm {
 private:
     using this_t = DSManager<provider_ts...>;
 
-    using provider_type_map = tl::multimix<typename provider_ts::provides...>;
+    // a type_list that contains the provider for data structure i at index i
+    using provider_type_map = internal::make_type_map<provider_ts...>;
 
+    // the provider tuple, containing pointers to the provider instances
     using provider_tuple_t = std::tuple<std::shared_ptr<provider_ts>...>;
     provider_tuple_t m_providers;
 

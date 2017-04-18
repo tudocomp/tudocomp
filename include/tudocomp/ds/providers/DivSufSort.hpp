@@ -1,28 +1,21 @@
 #pragma once
 
-#include <tudocomp/ds/DSProvider.hpp>
+#include <tudocomp/Algorithm.hpp>
 
 namespace tdc {
 
 /// Constructs the suffix array using divsufsort.
-class DivSufSort : public DSProvider {
+class DivSufSort : public Algorithm {
 public:
     inline static Meta meta() {
         Meta m("provider", "divsufsort");
         return m;
     }
 
-    using provides = tl::set<ds::SUFFIX_ARRAY, DivSufSort>;
+    using Algorithm::Algorithm;
 
-    using DSProvider::DSProvider;
-
-    virtual dsid_list_t requirements() const override {
-        return dsid_list_t();
-    }
-
-    virtual dsid_list_t products() const override {
-        return dsid_list_t { ds::SUFFIX_ARRAY };
-    }
+    using provides = std::index_sequence<ds::SUFFIX_ARRAY>;
+    using requires = std::index_sequence<>;
 };
 
 } //ns
