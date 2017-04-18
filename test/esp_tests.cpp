@@ -802,3 +802,57 @@ TEST(MonotonSubseq, lis_corner_cases) {
     ASSERT_TRUE(l.lis(1, links));
     ASSERT_TRUE(l.lis(0, links));
 }
+
+TEST(MonotonSubseq, build_extract_remove_layers_afwd) {
+    auto rev = false;
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+
+    auto l = esp::L(sis);
+    l.rebuild(rev);
+
+    std::vector<size_t> links;
+    l.lis(l.layer_size(), links);
+
+    std::vector<size_t> indices;
+    for (auto link : links) {
+        indices.push_back(l.sindex_for_link(link));
+    }
+
+    std::vector<size_t> values;
+    for (auto index: indices) {
+        values.push_back(SUBSEQ_TEST_INPUT[index]);
+    }
+
+    l.remove_all_and_slice(links);
+
+    ASSERT_EQ(indices, (std::vector<size_t> { 4, 6, 7, 11, 12, 14 }));
+    ASSERT_EQ(values,  (std::vector<size_t> { 0, 1, 3, 4, 4, 6 }));
+    ASSERT_EQ(sis, (std::vector<size_t> { 10, 13, 0, 2, 1, 5, 8, 9, 3, 4, 6, 7, 11, 12, 14 }));
+}
+
+TEST(MonotonSubseq, build_extract_remove_layers_bbwd) {
+    auto rev = true;
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+
+    auto l = esp::L(sis);
+    l.rebuild(rev);
+
+    std::vector<size_t> links;
+    l.lis(l.layer_size(), links);
+
+    std::vector<size_t> indices;
+    for (auto link : links) {
+        indices.push_back(l.sindex_for_link(link));
+    }
+
+    std::vector<size_t> values;
+    for (auto index: indices) {
+        values.push_back(SUBSEQ_TEST_INPUT[index]);
+    }
+
+    l.remove_all_and_slice(links);
+
+    ASSERT_EQ(indices, (std::vector<size_t> { 3, 9, 12, 13 }));
+    ASSERT_EQ(values,  (std::vector<size_t> { 8, 6, 4, 1 }));
+    ASSERT_EQ(sis, (std::vector<size_t> { 4, 10, 6, 0, 2, 1, 7, 11, 5, 8, 14, 3, 9, 12, 13 }));
+}
