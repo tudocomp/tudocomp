@@ -11,7 +11,7 @@
 
 namespace tdc {
 
-/// Abstract base for text data structure providesr.
+/// Abstract base for text data structure providers.
 class DSProvider : public Algorithm {
 public:
     inline virtual ~DSProvider() {
@@ -19,12 +19,6 @@ public:
 
     /// Constructor.
     using Algorithm::Algorithm;
-
-    /// Gets the id list of the data structures required by this algorithm.
-    virtual dsid_list_t requirements() const = 0;
-
-    /// Gets the id list of the data structures computed by this algorithm.
-    virtual dsid_list_t products() const = 0;
 };
 
 } //ns
