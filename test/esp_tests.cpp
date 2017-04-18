@@ -922,3 +922,56 @@ TEST(MonotonSubseq, iterative_longer_layers_round_to_dec) {
         4, 6, 7, 11, 12, 14,
     }));
 }
+
+TEST(MonotonSubseq, iterative_longer_layers_round_to_inc_esp_encoding) {
+    auto inp = std::vector<size_t> { 0, 1, 1, 0, 4 };
+    auto actual_sis = esp::sorted_indices(inp);
+
+    auto sis = std::vector<size_t> { 0, 2, 4, 1, 3 };
+    auto sis_sizes = std::vector<size_t> { 3, 2 };
+
+    auto D_sigma = std::vector<size_t> {};
+    {
+        D_sigma.reserve(inp.size());
+        D_sigma.resize(inp.size());
+        size_t counter = 0;
+        size_t i = 0;
+        for(auto subseq_len : sis_sizes) {
+            auto end = i + subseq_len;
+            for(; i < end; i++) {
+                D_sigma[sis[i]] = counter;
+            }
+            counter++;
+        }
+    }
+
+    // create from D_sigma
+    auto D_pi = std::vector<size_t> {};
+    {
+        D_pi.reserve(inp.size());
+        D_pi.resize(inp.size());
+        for (size_t i = 0; i < actual_sis.size(); i++) {
+            D_pi[i] = D_sigma[actual_sis[i]];
+        }
+    }
+
+    // create from D_phi
+    auto D_sigma2 = std::vector<size_t> {};
+    {
+        D_sigma2.reserve(inp.size());
+        D_sigma2.resize(inp.size());
+        for (size_t i = 0; i < actual_sis.size(); i++) {
+            D_sigma2[actual_sis[i]] = D_pi[i];
+        }
+    }
+
+    ASSERT_EQ(actual_sis, (std::vector<size_t> { 0, 3, 1, 2, 4 }));
+    ASSERT_EQ(sis_sizes, (std::vector<size_t> { 3, 2 }));
+    ASSERT_EQ(sis, (std::vector<size_t> {
+        0, 2, 4,
+        1, 3,
+    }));
+    ASSERT_EQ(D_sigma, (std::vector<size_t> { 0, 1, 0, 1, 0 }));
+    ASSERT_EQ(D_pi,    (std::vector<size_t> { 0, 1, 1, 0, 0 }));
+    ASSERT_EQ(D_sigma2, (std::vector<size_t> { 0, 1, 0, 1, 0 }));
+}
