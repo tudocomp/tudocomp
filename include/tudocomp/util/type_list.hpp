@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp/util/cpp14/integer_sequence.hpp>
+
 namespace tdc {
 
 /// \brief Contains meta-programming utilities for type lists.
@@ -18,6 +20,7 @@ struct None;
 struct Ambiguous;
 
 /// \cond INTERNAL
+
 // declarations
 // see public using declarations below for descriptions
 
@@ -26,6 +29,8 @@ template<typename T, typename Tl> struct _prepend;
 template<size_t I, typename T> struct _set;
 template<typename Tl1, typename Tl2> struct _mix;
 template<typename... Tls> struct _multimix;
+template<typename Seq, typename T> struct _set_all;
+
 /// \endcond
 
 /// \brief Gets the i-th type in a type list.
@@ -37,8 +42,6 @@ using get = typename _get<I, Tl>::type;
 
 /// \brief Prepends a type to a type list.
 ///
-/// The resulting type list can be obtained via the \c list member.
-///
 /// \tparam T  the type to prepend
 /// \tparam Tl the type list to modify
 template<typename T, typename Tl>
@@ -47,8 +50,6 @@ using prepend = typename _prepend<T, Tl>::list;
 /// \brief Produces a type list where the i-th type is the specified type
 ///        and all other types are None.
 ///
-/// The resulting type list can be obtained via the \c list member.
-///
 /// \tparam I  the index
 /// \tparam T  the type to set at the specified index
 template<size_t I, typename T>
@@ -56,7 +57,7 @@ using set = typename _set<I, T>::list;
 
 /// \brief Mixes two type lists.
 ///
-/// The type lists must be equally long.
+/// The type lists may have different lengths.
 ///
 /// For each pair of types \c T1 and \c T2 in the two lists, the result list
 /// will be determined using the following rules:
@@ -74,11 +75,18 @@ using mix = typename _mix<Tl1, Tl2>::list;
 /// \brief Mixes multiple lists.
 ///
 /// Applies \ref mix to each consecutive pair of type lists.
-/// The resulting type list can be obtained via the \c list member.
 ///
 /// tparam Tls the lists to mix
 template<typename... Tls>
 using multimix = typename _multimix<Tls...>::list;
+
+/// \brief Produces a type list where the types at indices in the index sequence
+///        are the specified type and all other types are None.
+///
+/// \tparam Seq the index sequence (\c std::index_sequence)
+/// \tparam T   the type to set at the specified indices
+template<typename Seq, typename T>
+using set_all = typename _set_all<Seq, T>::list;
 
 /// \cond INTERNAL
 // implementations
@@ -174,11 +182,25 @@ struct _multimix<Tl1, Tl2, Tls...> {
     using list = multimix<mix<Tl1, Tl2>, Tls...>;
 };
 
-// trivial case:
+// multimix - trivial case:
 // multimixing one list yields the same list
 template<typename Tl>
 struct _multimix<Tl> {
     using list = Tl;
+};
+
+// set_all - recursive case
+// mix set with set_all using remaining indices
+template<size_t Head, size_t... Tail, typename T>
+struct _set_all<std::index_sequence<Head, Tail...>, T> {
+    using list = mix<set<Head, T>, set_all<std::index_sequence<Tail...>, T>>;
+};
+
+// set_all - trivial case:
+// one one index left
+template<size_t I, typename T>
+struct _set_all<std::index_sequence<I>, T> {
+    using list = set<I, T>;
 };
 
 /// \endcond

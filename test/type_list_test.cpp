@@ -7,8 +7,7 @@ using namespace tdc;
 
 // providers
 struct A {
-    using provides = tl::multimix<
-        tl::set<0, A>, tl::set<2, A>>;
+    using provides = tl::set_all<std::index_sequence<0, 2>, A>;
 
     static constexpr int test_id = 0xA;
 };
@@ -20,8 +19,7 @@ struct B {
 };
 
 struct C {
-    using provides = tl::multimix<
-        tl::set<1, C>, tl::set<4, C>>;
+    using provides = tl::set_all<std::index_sequence<1, 4>, C>;
 
     static constexpr int test_id = 0xC;
 };

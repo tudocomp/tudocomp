@@ -12,9 +12,9 @@ public:
         return m;
     }
 
-    using provides = tl::mix<
-        tl::set<ds::LCP_ARRAY, PhiAlgorithm>,
-        tl::set<ds::PLCP_ARRAY, PhiAlgorithm>>;
+    using provides = tl::set_all<
+        std::index_sequence<ds::PLCP_ARRAY, ds::LCP_ARRAY>,
+        PhiAlgorithm>;
 
     using DSProvider::DSProvider;
 
