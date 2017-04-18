@@ -163,21 +163,23 @@ it will tell the compiler to perform numerous optimizations.
 
 ### Dependencies
 
-*tudocomp* has the following external dependencies:
+*tudocomp*'s CMake build process will either find external dependencies on the
+system if they have been properly installed, or automatically download and build
+them from their official repositories in case they cannot be found. In that
+regard, a proper installation of the dependencies is not required.
+
+Said external dependencies are the following:
 
 * [SDSL](https://github.com/simongog/sdsl-lite)
   (2.1 or later).
-* [Gflags](https://gflags.github.io/gflags) (2.1.2 or later).
 * [Google Logging (glog)](https://github.com/google/glog) (0.34 or later).
 
 Additionally, the tests require
 [Google Test](https://github.com/google/googletest) (1.7.0 or later).
 
-The CMake build process will either find the external dependencies on the build
-system if they have been properly installed, or automatically download and build
-them from their official repositories in case they cannot be found.
+### Documentation Build Requirements
 
-For building the documentation, the following tools are required:
+For building the documentation, the following tools need to be installed:
 
 * [LaTeX](http://www.latex-project.org) (specifically the `pdflatex` component)
 * [Doxygen](http://doxygen.org) (1.8 or later).
@@ -195,12 +197,12 @@ heap allocation counter cannot work and statistics tracking becomes largely
 nonfunctional.
 
 Note that [the comparison tool](#the-comparison-tool) relies on `valgrind`,
-which is not functional in the Bash on Ubuntu on Windows[^windows-valgrind].
-Therefore, memory measurement in the comparison tool is unavailable in this
-environment.
+which is not functional in the Bash on Ubuntu on Windows until the
+[Windows 10 Creators Update](https://blogs.windows.com/windowsexperience/2017/04/11/whats-new-in-the-windows-10-creators-update)
+[^windows-valgrind].
 
 [^windows-valgrind]: `valgrind` reportedly fails starting in Bash on Ubuntu on
-Windows. The issue has been filed officially
+Windows before the Creators Update. The issue had been filed officially
 [here](https://github.com/Microsoft/BashOnWindows/issues/1295).
 
 ## Command-line Tool
@@ -1294,7 +1296,7 @@ dynamically allocated memory (e.h. via `malloc` or `new`) over the application
 lifetime.
 
 Recall at this point the restrictions when trying to use these features in a
-Windows enviroment (see [Windows Support](#windows-support)).
+Windows environment (see [Windows Support](#windows-support)).
 
 Runtime statistics are tracked in *phases*, ie. the running time and memory
 peak can be measured for individual stages during an algorithm's run. These
@@ -1550,7 +1552,7 @@ it prints a usage description when passing the `--help` parameter.
 
 The tool uses `valgrind` to measure the memory actually used by a process.
 Therefore, recall at this point the restrictions when using it in a Windows
-enviroment (see [Windows Support](#windows-support)).
+environment (see [Windows Support](#windows-support)).
 
 The comparison tool will perform the following steps for each input file and
 each compressor defined in the comparison suite (more details on suites
