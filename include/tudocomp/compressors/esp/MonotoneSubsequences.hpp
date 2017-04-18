@@ -163,7 +163,10 @@ namespace tdc {namespace esp {
             q.resize(k);
             if (k == 0) { return true; }
 
-            auto l = k - 1;
+            size_t l = k - 1;
+
+            q[l] = m_layers[l];
+
             while (true) {
                 if (l == 0) {
                     break;
@@ -171,14 +174,15 @@ namespace tdc {namespace esp {
                     l -= 1;
                 }
 
-                auto search_link = m_layers[l];
+                Link search_link = m_layers[l];
 
                 while (true) {
                     if (dominates(search_link, q[l + 1])) {
                         q[l] = search_link;
                         break;
                     } else {
-                        DCHECK_NE(m_linked_list[search_link], search_link);
+                        DCHECK_NE(m_linked_list[search_link], search_link)
+                            << "should always break out before this happens";
                         search_link = m_linked_list[search_link];
                     }
                 }
@@ -186,6 +190,8 @@ namespace tdc {namespace esp {
 
             // TODO: test if it gets faster by not reversing unneeded
             std::reverse(q.begin(), q.end());
+
+            return true;
         }
 
         inline void remove_all_and_slice(ConstGenericView<size_t> links) {
@@ -263,6 +269,10 @@ namespace tdc {namespace esp {
 
         inline size_t layer_size() {
             return m_layers.size();
+        }
+
+        inline Sindex sindex_for_link(Link link) {
+            return m_sindices[link];
         }
     };
 

@@ -739,3 +739,51 @@ TEST(MonotonSubseq, build_layers_bbwd) {
         {{0, 3}, {8, 1}},
     }));
 }
+
+TEST(MonotonSubseq, build_extract_layers_afwd) {
+    auto rev = false;
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+
+    auto l = esp::L(sis);
+    l.rebuild(rev);
+
+    std::vector<size_t> links;
+    l.lis(l.layer_size(), links);
+
+    std::vector<size_t> indices;
+    for (auto link : links) {
+        indices.push_back(l.sindex_for_link(link));
+    }
+
+    std::vector<size_t> values;
+    for (auto index: indices) {
+        values.push_back(SUBSEQ_TEST_INPUT[index]);
+    }
+
+    ASSERT_EQ(indices, (std::vector<size_t> { 4, 6, 7, 11, 12, 14 }));
+    ASSERT_EQ(values,  (std::vector<size_t> { 0, 1, 3, 4, 4, 6 }));
+}
+
+TEST(MonotonSubseq, build_extract_layers_bbwd) {
+    auto rev = true;
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+
+    auto l = esp::L(sis);
+    l.rebuild(rev);
+
+    std::vector<size_t> links;
+    l.lis(l.layer_size(), links);
+
+    std::vector<size_t> indices;
+    for (auto link : links) {
+        indices.push_back(l.sindex_for_link(link));
+    }
+
+    std::vector<size_t> values;
+    for (auto index: indices) {
+        values.push_back(SUBSEQ_TEST_INPUT[index]);
+    }
+
+    ASSERT_EQ(indices, (std::vector<size_t> { 3, 9, 12, 13 }));
+    ASSERT_EQ(values,  (std::vector<size_t> { 8, 6, 4, 1 }));
+}
