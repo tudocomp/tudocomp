@@ -2,9 +2,13 @@
 #include "test/util.hpp"
 #include <gtest/gtest.h>
 
-#include "tudocomp/compressors/EspCompressor.hpp"
+#include "tudocomp/compressors/esp/SLPDepSort.hpp"
 
-#include <queue>
+#include "tudocomp/compressors/esp/PlainSLPStrategy.hpp"
+#include "tudocomp/compressors/esp/SufficientSLPStrategy.hpp"
+#include "tudocomp/compressors/esp/MonotoneSubsequences.hpp"
+
+#include "tudocomp/compressors/EspCompressor.hpp"
 
 using namespace tdc;
 
@@ -462,8 +466,9 @@ TEST(Esp, tree_reducer_roundtrip) {
 
 }
 
-TEST(ESP, test) {
-    // TODO: ensure ESP code is parametric over input alphabet size and format
+template<typename T>
+void test_esp() {
+ // TODO: ensure ESP code is parametric over input alphabet size and format
 
     std::vector<string_ref> cases {
         "0000dkasxxxcsdacjzsbkhvfaghskcbsaaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa",
@@ -491,8 +496,16 @@ TEST(ESP, test) {
 
     for (auto& c : cases) {
         std::cout << "---------------------\n";
-        test::roundtrip<EspCompressor>(c, "");
+        test::roundtrip<EspCompressor<T>>(c, "");
     }
+}
+
+TEST(ESP, test_plain) {
+   test_esp<esp::PlainSLPStrategy>();
+}
+
+TEST(ESP, test_sufficient) {
+   test_esp<esp::SufficientSLPStrategy>();
 }
 
 class IBST {
@@ -523,16 +536,6 @@ void inverse_deps(const esp::SLP& slp, size_t root_node, std::vector<size_t>& in
     //std::cout << std::setw(ind) << "" << b << " -> " << root_node << "\n";
     inverse_deps(slp, b, inv, ind + 2);
 }
-
-/*void rename_rec(const esp::SLP& slp,
-                std::vector<size_t>& rename,
-                ConstGenericView<size_t> children,
-                size_t& counter) {
-    for (auto child : children) {
-        rename[child] = counter++;
-    }
-
-}*/
 
 TEST(DepSort, test) {
     esp::SLP slp;
@@ -621,83 +624,44 @@ TEST(DepSort, test) {
 
     slp_test();
 
-    //inverse_deps(slp, slp.root_rule);
-
-    // inverse
-    //std::vector<size_t> inv;
-    //inv.reserve(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX);
-    //inv.resize(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX, -1);
-    //inverse_deps(slp, slp.root_rule, inv);
-    std::vector<std::vector<size_t>> inv;
-    inv.reserve(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX);
-    inv.resize(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX);
-
-    for (size_t i = 0; i < slp.rules.size(); i++) {
-        auto node = i + esp::GRAMMAR_PD_ELLIDED_PREFIX;
-        auto left_child = slp.rules[i][0];
-            // + esp::GRAMMAR_PD_ELLIDED_PREFIX;
-
-        auto& v = inv[left_child];
-        v.push_back(node);
-    }
-
-    for (size_t i = 0; i < inv.size(); i++) {
-        if (i < 32 || i > 127) {
-            std::cout << i       << " -> " << vec_to_debug_string(inv[i]) << "\n";
-        } else {
-            std::cout << char(i) << " -> " << vec_to_debug_string(inv[i]) << "\n";
-        }
-    }
-
-    std::vector<size_t> rename;
-    rename.reserve(slp.rules.size());
-    rename.resize(slp.rules.size());
-
-    std::queue<size_t> queue;
-    for (size_t i = 0; i < 256; i++) {
-        queue.push(i);
-    }
-    size_t counter = 0;
-
-    while (!queue.empty()) {
-        auto elem = queue.front();
-        queue.pop();
-        for (auto child : inv[elem]) {
-            queue.push(child);
-        }
-
-        auto new_value = counter++;
-
-        if (elem < 256) {
-            DCHECK_EQ(elem, new_value);
-        } else {
-            auto original_idx = elem - esp::GRAMMAR_PD_ELLIDED_PREFIX;
-            auto new_idx      = new_value - esp::GRAMMAR_PD_ELLIDED_PREFIX;
-
-            rename[original_idx] = new_idx;
-        }
-
-        //std::cout << elem << ": " << new_value << "\n";
-    }
-
-    std::vector<std::array<size_t, 2>> renamed_slp;
-    renamed_slp.reserve(slp.rules.size());
-    renamed_slp.resize(slp.rules.size());
-
-    for (size_t i = 0; i < renamed_slp.size(); i++) {
-        renamed_slp[rename[i]] = slp.rules[i];
-        for (auto& e : renamed_slp[rename[i]]) {
-            if (e > 255) {
-                e = rename[e - esp::GRAMMAR_PD_ELLIDED_PREFIX] + esp::GRAMMAR_PD_ELLIDED_PREFIX;
-            }
-        }
-    }
-
-    slp.rules = std::move(renamed_slp);
-    if (slp.root_rule > 255) {
-        slp.root_rule = rename[slp.root_rule - esp::GRAMMAR_PD_ELLIDED_PREFIX] + esp::GRAMMAR_PD_ELLIDED_PREFIX;
-    }
+    esp::slp_dep_sort(slp);
 
     slp_test();
+}
 
+const std::vector<size_t> SUBSEQ_TEST_INPUT { 2, 3, 2, 8, 0, 5, 1, 3, 6, 6, 0, 4, 4, 1, 6 };
+
+TEST(MonotonSubseq, init_afwd) {
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+    std::vector<esp::Point> points;
+    for (size_t i = 0; i < sis.size(); i++) {
+        points.push_back(esp::point_coord_if_at_index(sis[i], i));
+    }
+
+    ASSERT_EQ(sis, (std::vector<size_t> {
+        4, 10, 6, 13, 0, 2, 1, 7, 11, 12, 5, 8, 9, 14, 3
+    }));
+
+    ASSERT_EQ(points, (std::vector<esp::Point> {
+        {0, 4}, {1, 10}, {2, 6}, {3, 13}, {4, 0}, {5, 2}, {6, 1}, {7, 7},
+        {8, 11}, {9, 12}, {10, 5}, {11, 8}, {12, 9}, {13, 14}, {14, 3},
+    }));
+}
+
+TEST(MonotonSubseq, init_bbwd) {
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+    std::reverse(sis.begin(), sis.end());
+    std::vector<esp::Point> points;
+    for (size_t i = 0; i < sis.size(); i++) {
+        points.push_back(esp::point_coord_if_at_index(sis[i], i));
+    }
+
+    ASSERT_EQ(sis, (std::vector<size_t> {
+        3, 14, 9, 8, 5, 12, 11, 7, 1, 2, 0, 13, 6, 10, 4,
+    }));
+
+    ASSERT_EQ(points, (std::vector<esp::Point> {
+        {0, 3}, {1, 14}, {2, 9}, {3, 8}, {4, 5}, {5, 12}, {6, 11}, {7, 7},
+        {8, 1}, {9, 2}, {10, 0}, {11, 13}, {12, 6}, {13, 10}, {14, 4},
+    }));
 }
