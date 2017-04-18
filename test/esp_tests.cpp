@@ -665,3 +665,37 @@ TEST(MonotonSubseq, init_bbwd) {
         {8, 1}, {9, 2}, {10, 0}, {11, 13}, {12, 6}, {13, 10}, {14, 4},
     }));
 }
+
+TEST(MonotonSubseq, layers_iter_afwd) {
+    auto rev = false;
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+
+    auto layers_iter = esp::LayersIterator(sis.size(), rev);
+    std::vector<esp::Point> points;
+    while (layers_iter.has_next()) {
+        points.push_back(esp::point_coord_for_link(sis, layers_iter.advance(), rev));
+    }
+    std::reverse(points.begin(), points.end());
+
+    ASSERT_EQ(points, (std::vector<esp::Point> {
+        {0, 4}, {1, 10}, {2, 6}, {3, 13}, {4, 0}, {5, 2}, {6, 1}, {7, 7},
+        {8, 11}, {9, 12}, {10, 5}, {11, 8}, {12, 9}, {13, 14}, {14, 3},
+    }));
+}
+
+TEST(MonotonSubseq, layers_iter_bbwd) {
+    auto rev = true;
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+
+    auto layers_iter = esp::LayersIterator(sis.size(), rev);
+    std::vector<esp::Point> points;
+    while (layers_iter.has_next()) {
+        points.push_back(esp::point_coord_for_link(sis, layers_iter.advance(), rev));
+    }
+    std::reverse(points.begin(), points.end());
+
+    ASSERT_EQ(points, (std::vector<esp::Point> {
+        {0, 3}, {1, 14}, {2, 9}, {3, 8}, {4, 5}, {5, 12}, {6, 11}, {7, 7},
+        {8, 1}, {9, 2}, {10, 0}, {11, 13}, {12, 6}, {13, 10}, {14, 4},
+    }));
+}
