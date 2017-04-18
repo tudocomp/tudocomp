@@ -19,27 +19,23 @@ as little performance overhead as possible.
 
 # Dependencies
 
-*tudocomp* is built using [CMake](https://cmake.org) (3.0.2 or later).
-It is written in `C++11` with GNU extensions and has been tested with the `gcc`
-compiler family (version 4.9.2 or later) and `clang` (version 3.5.2 or later).
-The build process requires a [Python](https://www.python.org/) interpreter
-(3 or later) to be installed on the system (`py` scripts are invoked directly).
+*tudocomp*'s CMake build process will either find external dependencies on the
+system if they have been properly installed, or automatically download and build
+them from their official repositories in case they cannot be found. In that
+regard, a proper installation of the dependencies is not required.
 
-It has the following external dependencies:
+Said external dependencies are the following:
 
 * [SDSL](https://github.com/simongog/sdsl-lite)
   (2.1 or later).
-* [Gflags](https://gflags.github.io/gflags) (2.1.2 or later).
 * [Google Logging (glog)](https://github.com/google/glog) (0.34 or later).
 
 Additionally, the tests require
 [Google Test](https://github.com/google/googletest) (1.7.0 or later).
 
-The CMake build process will either find the external dependencies on the build
-system if they have been properly installed, or automatically download and build
-them from their official repositories in case they cannot be found.
+#### Documentation Build Requirements
 
-For building the documentation, the following tools are required:
+For building the documentation, the following tools need to be installed:
 
 * [LaTeX](http://www.latex-project.org) (specifically the `pdflatex` component)
 * [Doxygen](http://doxygen.org) (1.8 or later).
