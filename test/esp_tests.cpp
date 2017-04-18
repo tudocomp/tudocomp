@@ -707,7 +707,7 @@ TEST(MonotonSubseq, build_layers_afwd) {
     auto l = esp::L(sis);
     l.rebuild(rev);
 
-    ASSERT_EQ(l.layer_size(), 6);
+    ASSERT_EQ(l.layers_size(), 6);
 
     auto dbg = l.to_debug_layer_points();
 
@@ -728,7 +728,7 @@ TEST(MonotonSubseq, build_layers_bbwd) {
     auto l = esp::L(sis);
     l.rebuild(rev);
 
-    ASSERT_EQ(l.layer_size(), 4);
+    ASSERT_EQ(l.layers_size(), 4);
 
     auto dbg = l.to_debug_layer_points();
 
@@ -748,7 +748,7 @@ TEST(MonotonSubseq, build_extract_layers_afwd) {
     l.rebuild(rev);
 
     std::vector<size_t> links;
-    l.lis(l.layer_size(), links);
+    l.lis(l.layers_size(), links);
 
     std::vector<size_t> indices;
     for (auto link : links) {
@@ -772,7 +772,7 @@ TEST(MonotonSubseq, build_extract_layers_bbwd) {
     l.rebuild(rev);
 
     std::vector<size_t> links;
-    l.lis(l.layer_size(), links);
+    l.lis(l.layers_size(), links);
 
     std::vector<size_t> indices;
     for (auto link : links) {
@@ -796,9 +796,9 @@ TEST(MonotonSubseq, lis_corner_cases) {
     l.rebuild(rev);
 
     std::vector<size_t> links;
-    ASSERT_TRUE(l.lis(l.layer_size(), links));
-    ASSERT_FALSE(l.lis(l.layer_size() + 1, links));
-    ASSERT_TRUE(l.lis(l.layer_size() - 1, links));
+    ASSERT_TRUE(l.lis(l.layers_size(), links));
+    ASSERT_FALSE(l.lis(l.layers_size() + 1, links));
+    ASSERT_TRUE(l.lis(l.layers_size() - 1, links));
     ASSERT_TRUE(l.lis(1, links));
     ASSERT_TRUE(l.lis(0, links));
 }
@@ -811,7 +811,7 @@ TEST(MonotonSubseq, build_extract_remove_layers_afwd) {
     l.rebuild(rev);
 
     std::vector<size_t> links;
-    l.lis(l.layer_size(), links);
+    l.lis(l.layers_size(), links);
 
     std::vector<size_t> indices;
     for (auto link : links) {
@@ -838,7 +838,7 @@ TEST(MonotonSubseq, build_extract_remove_layers_bbwd) {
     l.rebuild(rev);
 
     std::vector<size_t> links;
-    l.lis(l.layer_size(), links);
+    l.lis(l.layers_size(), links);
 
     std::vector<size_t> indices;
     for (auto link : links) {
@@ -855,4 +855,70 @@ TEST(MonotonSubseq, build_extract_remove_layers_bbwd) {
     ASSERT_EQ(indices, (std::vector<size_t> { 3, 9, 12, 13 }));
     ASSERT_EQ(values,  (std::vector<size_t> { 8, 6, 4, 1 }));
     ASSERT_EQ(sis, (std::vector<size_t> { 4, 10, 6, 0, 2, 1, 7, 11, 5, 8, 14, 3, 9, 12, 13 }));
+}
+
+TEST(MonotonSubseq, iterative_longer_layers_round_to_inc) {
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+    std::vector<size_t> sis_sizes;
+
+    {
+        auto l = esp::L(sis);
+        std::vector<esp::Link> links;
+        while (l.sindices_size() > 0) {
+            l.rebuild(false);
+            l.lis(l.layers_size(), links);
+
+            l.rebuild(true);
+            // Only run lis() if needed:
+            if (!(links.size() >= l.layers_size())) {
+                l.lis(l.layers_size(), links);
+            }
+
+            // links now contains the longer sequence
+            l.remove_all_and_slice(links);
+            sis_sizes.push_back(links.size());
+        }
+        std::reverse(sis_sizes.begin(), sis_sizes.end());
+    }
+
+    ASSERT_EQ(sis_sizes, (std::vector<size_t> { 2, 2, 5, 6 }));
+    ASSERT_EQ(sis, (std::vector<size_t> {
+        1, 3,
+        10, 13,
+        0, 2, 5, 8, 9,
+        4, 6, 7, 11, 12, 14,
+    }));
+}
+
+TEST(MonotonSubseq, iterative_longer_layers_round_to_dec) {
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+    std::vector<size_t> sis_sizes;
+
+    {
+        auto l = esp::L(sis);
+        std::vector<esp::Link> links;
+        while (l.sindices_size() > 0) {
+            l.rebuild(false);
+            l.lis(l.layers_size(), links);
+
+            l.rebuild(true);
+            // Only run lis() if needed:
+            if (!(links.size() > l.layers_size())) {
+                l.lis(l.layers_size(), links);
+            }
+
+            // links now contains the longer sequence
+            l.remove_all_and_slice(links);
+            sis_sizes.push_back(links.size());
+        }
+        std::reverse(sis_sizes.begin(), sis_sizes.end());
+    }
+
+    ASSERT_EQ(sis_sizes, (std::vector<size_t> { 2, 2, 5, 6 }));
+    ASSERT_EQ(sis, (std::vector<size_t> {
+        1, 10,
+        3, 13,
+        0, 2, 5, 8, 9,
+        4, 6, 7, 11, 12, 14,
+    }));
 }

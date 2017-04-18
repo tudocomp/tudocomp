@@ -267,12 +267,16 @@ namespace tdc {namespace esp {
             return r;
         }
 
-        inline size_t layer_size() {
+        inline size_t layers_size() {
             return m_layers.size();
         }
 
         inline Sindex sindex_for_link(Link link) {
             return m_sindices[link];
+        }
+
+        inline size_t sindices_size() {
+            return m_sindices.size();
         }
     };
 
