@@ -242,6 +242,28 @@ namespace tdc {namespace esp {
             }
         }
 
+        inline std::vector<std::vector<Point>> to_debug_layer_points() {
+            std::vector<std::vector<Point>> r;
+            for (auto link : m_layers) {
+                std::vector<Point> list;
+
+                while (true) {
+                    list.push_back(point_coord_for_link(m_sindices, link, m_reverse));
+                    if (m_linked_list[link] == link) {
+                        break;
+                    } else {
+                        link = m_linked_list[link];
+                    }
+                }
+
+                r.push_back(std::move(list));
+            }
+            return r;
+        }
+
+        inline size_t layer_size() {
+            return m_layers.size();
+        }
     };
 
     class MonotonSubsequences {

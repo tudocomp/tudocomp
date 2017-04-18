@@ -699,3 +699,43 @@ TEST(MonotonSubseq, layers_iter_bbwd) {
         {8, 1}, {9, 2}, {10, 0}, {11, 13}, {12, 6}, {13, 10}, {14, 4},
     }));
 }
+
+TEST(MonotonSubseq, build_layers_afwd) {
+    auto rev = false;
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+
+    auto l = esp::L(sis);
+    l.rebuild(rev);
+
+    ASSERT_EQ(l.layer_size(), 6);
+
+    auto dbg = l.to_debug_layer_points();
+
+    ASSERT_EQ(dbg, (std::vector<std::vector<esp::Point>> {
+        {{13, 14}, {14, 3}},
+        {{3, 13}, {9, 12}, {12, 9}},
+        {{8, 11}, {11, 8}},
+        {{1, 10}, {7, 7}, {10, 5}},
+        {{2, 6}, {5, 2}, {6, 1}},
+        {{0, 4}, {4, 0}},
+    }));
+}
+
+TEST(MonotonSubseq, build_layers_bbwd) {
+    auto rev = true;
+    auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+
+    auto l = esp::L(sis);
+    l.rebuild(rev);
+
+    ASSERT_EQ(l.layer_size(), 4);
+
+    auto dbg = l.to_debug_layer_points();
+
+    ASSERT_EQ(dbg, (std::vector<std::vector<esp::Point>> {
+        {{1, 14}, {11, 13}, {13, 10}, {14, 4}},
+        {{5, 12}, {6, 11}, {7, 7}, {12, 6}},
+        {{2, 9}, {3, 8}, {4, 5}, {9, 2}, {10, 0}},
+        {{0, 3}, {8, 1}},
+    }));
+}
