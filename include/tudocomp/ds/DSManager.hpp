@@ -103,11 +103,6 @@ private:
         // lookup registration done for T
     }
 
-    inline void construct_providers() {
-        construct_providers(std::make_index_sequence<
-            std::tuple_size<provider_tuple_t>::value>());
-    }
-
     template<size_t... Is>
     inline void construct_providers(std::index_sequence<Is...>) {
         construct_provider(std::get<Is>(m_providers)...);
@@ -157,7 +152,8 @@ public:
             );
         }
 
-        construct_providers();
+        construct_providers(std::make_index_sequence<
+            std::tuple_size<provider_tuple_t>::value>());
 
         auto& cm_str = this->env().option("compress").as_string();
         if(cm_str == "delayed") {
@@ -175,6 +171,38 @@ public:
     template<dsid_t dsid>
     inline provider_type<dsid>& get_provider() {
         return *std::get<dsid>(m_lookup);
+    }
+
+private:
+    template<size_t... Is>
+    inline const std::shared_ptr<DSProvider> _abstract_provider(
+        dsid_t dsid, std::index_sequence<Is...>) {
+
+        return _abstract_provider(dsid, std::get<Is>(m_lookup)...);
+    }
+
+    template<typename Head, typename... Tail>
+    inline const std::shared_ptr<DSProvider> _abstract_provider(
+        dsid_t dsid, const Head& head, const Tail&... tail) {
+        
+        if(dsid == 0) {
+            return head;
+        } else {
+            return _abstract_provider(dsid - 1, tail...);
+        }
+    }
+
+    inline const std::shared_ptr<DSProvider> _abstract_provider(dsid_t dsid) {
+        // the program could not have been compiled successfully
+        throw std::logic_error(
+            std::string("There is no provider for ") + ds::name_for(dsid));
+    }
+
+public:
+    inline const std::shared_ptr<DSProvider> abstract_provider(dsid_t dsid) {
+        // "runtime edition"
+        return _abstract_provider(dsid, std::make_index_sequence<
+            std::tuple_size<provider_lookup_tuple_t>::value>());
     }
 
 public:
