@@ -1061,12 +1061,12 @@ void view_test_template_const() {
     substr_copy2.starts_with(0);
     substr_copy2.ends_with(0);
 
-    v == v;
-    v != v;
-    v < v;
-    v <= v;
-    v > v;
-    v >= v;
+    ASSERT_TRUE( v == v);
+    ASSERT_FALSE(v != v);
+    ASSERT_FALSE(v <  v);
+    ASSERT_TRUE( v <= v);
+    ASSERT_FALSE(v >  v);
+    ASSERT_TRUE( v >= v);
 
     V swap1;
     V swap2;
@@ -1074,19 +1074,19 @@ void view_test_template_const() {
     using std::swap;
     swap(swap1, swap2);
 
-    v == cv;
-    v != cv;
-    v < cv;
-    v <= cv;
-    v > cv;
-    v >= cv;
+    ASSERT_TRUE( v == cv);
+    ASSERT_FALSE(v != cv);
+    ASSERT_FALSE(v <  cv);
+    ASSERT_TRUE( v <= cv);
+    ASSERT_FALSE(v >  cv);
+    ASSERT_TRUE( v >= cv);
 
-    cv == v;
-    cv != v;
-    cv < v;
-    cv <= v;
-    cv > v;
-    cv >= v;
+    ASSERT_TRUE( cv == v);
+    ASSERT_FALSE(cv != v);
+    ASSERT_FALSE(cv <  v);
+    ASSERT_TRUE( cv <= v);
+    ASSERT_FALSE(cv >  v);
+    ASSERT_TRUE( cv >= v);
 
 }
 

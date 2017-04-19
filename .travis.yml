@@ -1,36 +1,46 @@
 sudo: false
 
-language: cpp
-
 cache:
   apt: true
+  ccache: true
 
-addons:
-  apt:
-    sources:
-    - george-edison55-precise-backports
-    - ubuntu-toolchain-r-test
-    - boost-latest
-    packages:
-    - gcc-4.8
-    - g++-4.8
-    - cmake
-    - cmake-data
-    - libboost1.55-all-dev
-
-compiler:
-  - g++
-  - clang
-
-install:
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"; fi
-  - if [ "$CC" = "gcc" ]; then export CXX="gcc-4.8"; fi
-#  - mkdir my_path
-#  - cd my_path
-#  - ln -s /usr/bin/gcc-4-8 ./gcc
-#  - ln -s /usr/bin/g++-4-8 ./g++
-#  - export PATH=$PWD:$PATH
-#  - cd ..
+language: generic
+#os: osx
+matrix:
+  include:
+    - os: linux
+      env:
+        - COMPILER_NAME=gcc
+        - CXX=g++-5
+        - CC=gcc-5
+      dist: trusty
+      addons:
+        apt:
+          packages:
+            - g++-5
+            - cmake
+            - cmake-data
+            - python3
+            - python
+          sources: &sources
+            #- llvm-toolchain-precise-3.8
+            #- george-edison55-precise-backports
+            - ubuntu-toolchain-r-test
+#    - os: linux
+#      env:
+#        - COMPILER_NAME=clang
+#        - CXX=clang++-3.8
+#        - CC=clang-3.8
+#      dist: trusty
+#      addons:
+#        apt:
+#          packages:
+#            - clang-3.8
+#            - cmake
+#            - cmake-data
+#            - python3
+#            - python
+#          sources: *sources
 
 script:
-  - source .travis-build.sh
+  - ./etc/travis_build.sh

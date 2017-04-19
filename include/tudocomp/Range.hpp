@@ -77,10 +77,16 @@ namespace tdc {
     };
 
     /// \brief Represents the range of valid \ref tdc::uliteral_t values
-    class LiteralRange : public TypeRange<uliteral_t> {};
+    class LiteralRange : public TypeRange<uliteral_t> {
+    public:
+        LiteralRange(): TypeRange<uliteral_t>() {}
+    };
 
     /// \brief Represents the range of valid \ref tdc::len_t values
-    class LengthRange  : public TypeRange<len_t> {};
+    class LengthRange  : public TypeRange<len_t> {
+    public:
+        LengthRange(): TypeRange<len_t>() {}
+    };
 
     /// \brief Represents the range of bit values, ie `0` to `1`
     using BitRange = FixedRange<0, 1>;
