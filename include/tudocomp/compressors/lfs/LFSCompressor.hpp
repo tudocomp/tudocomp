@@ -11,6 +11,9 @@
 #include <tudocomp/coders/BitCoder.hpp>
 
 
+#include <tudocomp/ds/IntVector.hpp>
+
+
 
 #include <tudocomp_stat/StatPhase.hpp>
 

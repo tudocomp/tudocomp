@@ -2,64 +2,36 @@
 
 #include <vector>
 #include <tuple>
-#include <array>
 
+#include <tudocomp/Compressor.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/io.hpp>
-#include <tudocomp/Algorithm.hpp>
+
+
+#include <tudocomp/compressors/lfs/EncodeStrategy.hpp>
+#include <tudocomp/coders/BitCoder.hpp>
 
 
 #include <tudocomp/ds/IntVector.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
 
-//#include <sdsl/suffixarrays.hpp>
 
 #include <sdsl/suffix_trees.hpp>
-//#include <sdsl/suffix_arrays.hpp>
-//#include <sdsl/csa_bitcompressed.hpp>
-//#include <sdsl/csa_uncompressed.hpp>
-
-
-
 
 namespace tdc {
 namespace lfs {
 
+
 template<uint min_lrf = 2 >
-class SimSTStrategy : public Algorithm {
+class LFS2Compressor : public Compressor {
 private:
-
-
-    typedef sdsl::bp_interval<long unsigned int> node_type;
-
-    //sdsl::t_csa sa =sdsl::csa_uncompressed<>
-    typedef sdsl::cst_sct3< sdsl::csa_bitcompressed<> > cst_t;
-    cst_t stree;
-
 
     inline virtual std::vector<int> select_starting_positions(int node_id, int length){
 
         node_type node = stree.inv_id(node_id);
-
         uint offset = stree.csa[stree.lb(node)];
-        //uint fac_length = stree.depth(node);
-
-
         std::vector<int> beginning_positions;
-
-
-        //doesnt work:
-/*
-        for (auto& child: stree.children(node)) {
-            int child_id = stree.id(child);
-            n_tpl child_tpl = node_tuples[child_id];
-            beginning_positions.push_back(std::get<0>(child_tpl));
-
-            beginning_positions.push_back(std::get<1>(child_tpl));
-
-        }
-
-        std::sort(beginning_positions.begin(), beginning_positions.end());*/
 
         if(stree.size(node)>=2){
 
@@ -144,10 +116,13 @@ private:
     typedef std::vector<std::pair<uint,uint>> rules;
 
 
+    typedef sdsl::bp_interval<long unsigned int> node_type;
 
+    //sdsl::t_csa sa =sdsl::csa_uncompressed<>
+    typedef sdsl::cst_sct3< sdsl::csa_bitcompressed<> > cst_t;
+    cst_t stree;
 
-
-    BitVector dead_positions;
+    IntVector<int> subs_positions;
 
     //could be node_type
     std::vector<std::vector<uint> > bins;
@@ -158,29 +133,32 @@ private:
     typedef std::vector< n_tpl > tuple_vector;
     tuple_vector node_tuples;
 
+
 public:
 
-    using Algorithm::Algorithm; //import constructor
-
     inline static Meta meta() {
-        Meta m("lfs_comp", "sim_st");
+        Meta m("compressor", "lfs2_comp",
+            "This is an implementation of the longest first substitution compression scheme, type 2.");
+        m.needs_sentinel_terminator();
         return m;
     }
 
 
-    inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
+    inline LFS2Compressor(Env&& env):
+        Compressor(std::move(env))
+    {
+        DLOG(INFO) << "Compressor lfs2 instantiated";
+    }
+    inline virtual void compress(Input& input, Output& output) override {
+
+        auto in = input.as_view();
 
         //build suffixtree
         DLOG(INFO)<<"build suffixtree";
 
 
-        dead_positions = BitVector(input.size(), 0);
-
-
-
-
         StatPhase::wrap("Constructing ST", [&]{
-             sdsl::construct_im(stree, (const char*) input.data(), 1);
+             sdsl::construct_im(stree, (const char*) in.data(), 1);
         });
 
 
@@ -189,7 +167,6 @@ public:
             DLOG(INFO)<<"computing lrf";
 
             //array of vectors for bins of nodes with string depth
-
 
             bins.resize(stree.size()+1);
 
@@ -298,8 +275,14 @@ public:
 
         });
 
-    }
-};
-}
 
-}
+    }
+
+    inline virtual void decompress(Input& input, Output& output) override {
+
+    }
+
+};
+
+//namespaces closing
+}}
