@@ -13,7 +13,6 @@ namespace tdc {namespace esp {
         using Algorithm::Algorithm;
 
         inline void encode(EspContext& context, SLP&& slp, Output& output) const {
-
             context.debug.encode_start();
             auto max_val = slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX - 1;
             auto bit_width = bits_for(max_val);

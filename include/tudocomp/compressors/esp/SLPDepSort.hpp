@@ -27,9 +27,9 @@ namespace tdc {namespace esp {
 
         for (size_t i = 0; i < inv.size(); i++) {
             if (i < 32 || i > 127) {
-                std::cout << i       << " -> " << vec_to_debug_string(inv[i]) << "\n";
+                //std::cout << i       << " -> " << vec_to_debug_string(inv[i]) << "\n";
             } else {
-                std::cout << char(i) << " -> " << vec_to_debug_string(inv[i]) << "\n";
+                //std::cout << char(i) << " -> " << vec_to_debug_string(inv[i]) << "\n";
             }
         }
 

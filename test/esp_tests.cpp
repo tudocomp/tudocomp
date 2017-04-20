@@ -965,6 +965,21 @@ TEST(MonotonSubseq, iterative_longer_layers_round_to_inc_esp_encoding) {
         }
     }
 
+    size_t last = 0;
+    std::vector<size_t> values;
+    std::vector<size_t> B;
+    for (auto idx : actual_sis) {
+        values.push_back(inp[idx]);
+        B.push_back(inp[idx] - last);
+        last = inp[idx];
+    }
+    std::cout << vec_to_debug_string(values) << "\n";
+    std::cout << vec_to_debug_string(B) << "\n";
+    // calc b somehow
+
+    // B as rank/select dictionary storen... or not because we just need compression
+    //
+
     ASSERT_EQ(actual_sis, (std::vector<size_t> { 0, 3, 1, 2, 4 }));
     ASSERT_EQ(sis_sizes, (std::vector<size_t> { 3, 2 }));
     ASSERT_EQ(sis, (std::vector<size_t> {
