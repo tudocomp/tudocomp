@@ -930,6 +930,7 @@ TEST(MonotonSubseq, iterative_longer_layers_round_to_inc_esp_encoding) {
     auto sis = std::vector<size_t> { 0, 2, 4, 1, 3 };
     auto sis_sizes = std::vector<size_t> { 3, 2 };
 
+    // create from sorted_indices
     auto D_sigma = std::vector<size_t> {};
     {
         D_sigma.reserve(inp.size());
@@ -998,16 +999,43 @@ TEST(MonotonSubseq, final_encoding_prototype) {
         102, 290, 99, 281, 107, 120, 296, 278, 269, 258, 291, 262, 261, 279,
         302, 278, 287, 257, 289, 304, 301, 297, 309, 310, 294
     };
+
     auto sorted_indices = esp::sorted_indices(D);
+    std::cout << "sorted indices:\n" << vec_to_debug_string(sorted_indices) << "\n";
 
     {
         std::vector<size_t> tmp_sorted;
         for (auto index : sorted_indices) {
             tmp_sorted.push_back(D[index]);
         }
-        std::cout << "sorted D: " << vec_to_debug_string(tmp_sorted) << "\n";
+        std::cout << "sorted D:\n" << vec_to_debug_string(tmp_sorted) << "\n";
         std::cout << "emit unary coding B...\n";
     }
+
+    std::vector<size_t> sorted_indices_sizes;
+    {
+        auto l = esp::L(sorted_indices);
+        std::vector<esp::Link> links;
+        while (l.sindices_size() > 0) {
+            l.rebuild(false);
+            l.lis(l.layers_size(), links);
+
+            l.rebuild(true);
+            // Only run lis() if needed:
+            if (!(links.size() > l.layers_size())) {
+                l.lis(l.layers_size(), links);
+            }
+
+            // links now contains the longer sequence
+            l.remove_all_and_slice(links);
+            sorted_indices_sizes.push_back(links.size());
+        }
+        std::reverse(sorted_indices_sizes.begin(), sorted_indices_sizes.end());
+    }
+
+    std::cout << "rearanged sorted_indices:\n" << vec_to_debug_string(sorted_indices) << "\n";
+    std::cout << "layers:\n" << vec_to_debug_string(sorted_indices_sizes) << "\n";
+
 }
 
 
