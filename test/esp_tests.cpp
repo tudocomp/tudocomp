@@ -990,3 +990,25 @@ TEST(MonotonSubseq, iterative_longer_layers_round_to_inc_esp_encoding) {
     ASSERT_EQ(D_pi,    (std::vector<size_t> { 0, 1, 1, 0, 0 }));
     ASSERT_EQ(D_sigma2, (std::vector<size_t> { 0, 1, 0, 1, 0 }));
 }
+
+TEST(MonotonSubseq, final_encoding_prototype) {
+    auto D = std::vector<size_t>{
+        48, 115, 99, 97, 103, 103, 97, 107, 98, 115, 107, 98, 107, 97, 118,
+        122, 106, 107, 99, 98, 120, 256, 97, 104, 274, 115, 100, 257, 288, 99,
+        102, 290, 99, 281, 107, 120, 296, 278, 269, 258, 291, 262, 261, 279,
+        302, 278, 287, 257, 289, 304, 301, 297, 309, 310, 294
+    };
+    auto sorted_indices = esp::sorted_indices(D);
+
+    {
+        std::vector<size_t> tmp_sorted;
+        for (auto index : sorted_indices) {
+            tmp_sorted.push_back(D[index]);
+        }
+        std::cout << "sorted D: " << vec_to_debug_string(tmp_sorted) << "\n";
+        std::cout << "emit unary coding B...\n";
+    }
+}
+
+
+

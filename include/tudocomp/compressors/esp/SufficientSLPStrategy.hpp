@@ -41,14 +41,29 @@ namespace tdc {namespace esp {
             // root rule
             bout.write_int(slp.root_rule, bit_width);
 
-            // Write rules
             // ...
+            //std::vector<size_t> rules_lhs;
+            //std::vector<size_t> rules_lhs_diff;
+            //rules_lhs.push_back(e[0]);
+            //rules_lhs_diff.push_back(diff);
+            //std::cout << "emitted lhs:   " << vec_to_debug_string(rules_lhs) << "\n";
+            //std::cout << "emitted diffs: " << vec_to_debug_string(rules_lhs_diff) << "\n";
+
+            // Write rules lhs
             size_t last = 0;
             for (auto& e : slp.rules) {
                 DCHECK_LE(last, e[0]);
                 size_t diff = e[0] - last;
                 bout.write_unary(diff);
+                last = e[0];
             }
+
+            std::vector<size_t> rules_rhs;
+            rules_rhs.reserve(slp.rules.size());
+            for (auto& e : slp.rules) {
+                rules_rhs.push_back(e[1]);
+            }
+            //std::cout << "rhs: " << vec_to_debug_string(rules_rhs) << "\n";
         }
 
         inline SLP decode(Input& input) const {
@@ -65,22 +80,29 @@ namespace tdc {namespace esp {
             auto root_rule = bin.read_int<size_t>(bit_width);
 
             //std::cout << "in:  Root rule: " << root_rule << "\n";
+            //std::vector<size_t> rules_lhs_diff;
+            //rules_lhs_diff.push_back(diff);
+            //std::cout << "parsed lhs:   " << vec_to_debug_string(rules_lhs) << "\n";
+            //std::cout << "parsed diffs: " << vec_to_debug_string(rules_lhs_diff) << "\n";
 
             esp::SLP slp;
             slp.empty = empty;
             slp.root_rule = root_rule;
-            slp.rules.reserve(max_val + 1); // TODO: Make more exact
+            slp.rules.reserve(max_val + 1);
+            slp.rules.resize(max_val + 1);
 
-            std::vector<size_t> rules_lhs;
+            // Read rules lhs
             size_t last = 0;
             for(size_t i = 0; i <= max_val && !bin.eof(); i++) {
                 // ...
-                auto value = bin.read_unary<size_t>() + last;
-                last = value;
-                rules_lhs.push_back(value);
+                auto diff = bin.read_unary<size_t>();
+                last += diff;
+                slp.rules[i][0] = last;
             }
+
 
             return esp::SLP();
         }
     };
 }}
+
