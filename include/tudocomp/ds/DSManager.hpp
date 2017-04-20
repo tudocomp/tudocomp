@@ -205,28 +205,6 @@ public:
             std::tuple_size<provider_lookup_tuple_t>::value>());
     }
 
-private:
-    template<typename G>
-    inline void _create_dep_graph(G& g, std::index_sequence<>) {
-    }
-
-    template<typename G, dsid_t head, dsid_t... tail>
-    inline void _create_dep_graph(G& g, std::index_sequence<head, tail...>) {
-        g.template request<head>();
-        _create_dep_graph(g, std::index_sequence<tail...>());
-    }
-
-public:
-    template<dsid_t... ids>
-    inline void construct() {
-        DLOG(INFO) << "create dependency graph";
-        
-        DSDependencyGraph<this_t> g(*this);
-        _create_dep_graph(g, std::index_sequence<ids...>());
-
-        g.construct_requested();
-    }
-
     const View& input = m_input;
 };
 

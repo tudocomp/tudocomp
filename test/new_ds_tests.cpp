@@ -17,9 +17,9 @@
 
 using namespace tdc;
 
+// compile-time tests for DSManager
 using dsmanager_t = DSManager<DivSufSort, PhiAlgorithm, ISAFromSA, PhiFromSA>;
 
-// compile-time tests
 static_assert(std::is_same<
         dsmanager_t::provider_type<ds::SUFFIX_ARRAY>, DivSufSort
         >::value, "Wrong provider entry for SUFFIX_ARRAY");
@@ -35,6 +35,27 @@ static_assert(std::is_same<
 static_assert(std::is_same<
         dsmanager_t::provider_type<ds::LCP_ARRAY>, PhiAlgorithm
         >::value, "Wrong provider entry for LCP_ARRAY");
+
+// compile-time tests for DSDependencyGraph
+using depgraph_t = DSDependencyGraph<dsmanager_t>;
+
+static_assert(0 == depgraph_t::in_degree<ds::SUFFIX_ARRAY>(),
+    "Wrong in degree of SUFFIX_ARRAY node in dependency graph");
+static_assert(1 == depgraph_t::in_degree<ds::INVERSE_SUFFIX_ARRAY>(),
+    "Wrong in degree of INVERSE_SUFFIX_ARRAY node in dependency graph");
+static_assert(1 == depgraph_t::in_degree<ds::PHI_ARRAY>(),
+    "Wrong in degree of PHI_ARRAY node in dependency graph");
+static_assert(1 == depgraph_t::in_degree<ds::LCP_ARRAY>(),
+    "Wrong in degree of LCP_ARRAY node in dependency graph");
+
+static_assert(0 == depgraph_t::cost<ds::SUFFIX_ARRAY>(),
+    "Wrong in cost of SUFFIX_ARRAY node in dependency graph");
+static_assert(1 == depgraph_t::cost<ds::INVERSE_SUFFIX_ARRAY>(),
+    "Wrong in cost of INVERSE_SUFFIX_ARRAY node in dependency graph");
+static_assert(1 == depgraph_t::cost<ds::PHI_ARRAY>(),
+    "Wrong in cost of PHI_ARRAY node in dependency graph");
+static_assert(2 == depgraph_t::cost<ds::LCP_ARRAY>(),
+    "Wrong in cost of LCP_ARRAY node in dependency graph");
 
 TEST(Sandbox, example) {
     // test input
@@ -71,13 +92,16 @@ TEST(Sandbox, example) {
     ASSERT_EQ(p_lcp_provider.get(),  static_cast<DSProvider*>(&lcp_provider));
     ASSERT_EQ(p_plcp_provider.get(), static_cast<DSProvider*>(&plcp_provider));
 
+    // create dependency graph for some data structures
+
+
     // construct ISA, LCP and SA
-    {
+    /*{
         dsman.construct<
             ds::INVERSE_SUFFIX_ARRAY,
             ds::LCP_ARRAY,
             ds::SUFFIX_ARRAY>();
-    }
+    }*/
 
     // get LCP array
     //auto& lcp_provider = dsman.get_provider(ds::LCP_ARRAY);
