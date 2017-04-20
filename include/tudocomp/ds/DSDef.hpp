@@ -5,7 +5,7 @@
 
 namespace tdc {
 
-using dsid_t = int;
+using dsid_t = size_t;
 using dsid_list_t = std::vector<dsid_t>;
 
 namespace ds {

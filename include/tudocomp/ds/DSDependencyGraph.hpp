@@ -6,6 +6,8 @@
 #include <set>
 #include <utility>
 
+#include <tudocomp/util/cpp14/integer_sequence.hpp>
+
 #include <tudocomp/ds/DSDef.hpp>
 #include <tudocomp/ds/DSProvider.hpp>
 
@@ -56,8 +58,9 @@ private:
     };
 
     struct Node {
-        dsid_t      dsid;
-        DSProvider* provider;
+        dsid_t dsid;
+        std::shared_ptr<DSProvider> provider;
+        std::vector<dsid_t> products;
 
         bool requested;
 
@@ -70,9 +73,12 @@ private:
         // used to determine when the data structure can be discarded
         size_t degree;
 
-        inline Node(dsid_t _id, DSProvider* _prov)
+        inline Node(dsid_t _id,
+            std::shared_ptr<DSProvider>& _provider,
+            std::vector<dsid_t> _products)
             : dsid(_id),
-              provider(_prov),
+              provider(_provider),
+              products(_products),
               requested(false),
               cost(0),
               degree(0)
@@ -98,35 +104,64 @@ private:
         }
     }
 
-    NodePtr create_node(dsid_t id) {
+    template<dsid_t id>
+    inline NodePtr create_node() {
         DLOG(INFO) << "node: (" << ds::name_for(id) << ")";
-        auto& provider = m_manager->get_provider(id);
-        auto node = std::make_shared<Node>(id, &provider);
+        using provider_t = typename manager_t::template provider_type<id>;
+        auto provider = m_manager->abstract_provider(id);
+
+        auto node = std::make_shared<Node>(
+            id,
+            provider,
+            vector_from_sequence(typename provider_t::provides()));
+
         m_nodes[id] = node;
         return node;
     }
 
-    inline void insert(NodePtr node) {
-        // get required data structures
-        for(auto req_id : node->provider->requirements()) {
-            auto req = find(req_id);
-            if(!req) {
-                // create and insert recursively
-                req = create_node(req_id);
-                insert(req);
-            }
-
-            // create edge (req, node)
-            DLOG(INFO) << "edge: (" << ds::name_for(req_id) << ") -> (" << ds::name_for(node->dsid) << ")";
-            req->degree++;
-            node->dependencies.insert(req);
-
-            // update cost (in degree + sum cost of all dependency costs)
-            node->cost += 1 + req->cost;
+    template<dsid_t id>
+    inline NodePtr find_or_create() {
+        auto node = find(id);
+        if(!node) {
+            // insert new node
+            node = create_node<id>();
+            insert<id>(node);
         }
+        return node;
     }
 
-    inline void decrease(NodePtr node) {
+    template<dsid_t id>
+    inline void _insert(NodePtr& node, std::index_sequence<>) {
+        // done
+    }
+
+    template<dsid_t id, dsid_t req_id, dsid_t... req_tail>
+    inline void _insert(NodePtr& node,
+        std::index_sequence<req_id, req_tail...>) {
+
+        auto req = find_or_create<req_id>();
+
+        // create edge (req, node)
+        DLOG(INFO) << "edge: (" << ds::name_for(req_id) << ") -> ("
+                                << ds::name_for(id) << ")";
+
+        req->degree++;
+        node->dependencies.insert(req);
+
+        // update cost (in degree + sum cost of all dependency costs)
+        node->cost += 1 + req->cost;
+
+        // recurse
+        _insert<id>(node, std::index_sequence<req_tail...>());
+    }
+
+    template<dsid_t id>
+    inline void insert(NodePtr& node) {
+        using provider_t = typename manager_t::template provider_type<id>;
+        _insert<id>(node, typename provider_t::requires());
+    }
+
+    inline void decrease(NodePtr& node) {
         if(--node->degree == 0 && !node->requested) {
             // if node was not requested, discard data structure
             DLOG(INFO) << "discard (" << ds::name_for(node->dsid) << ")";
@@ -148,13 +183,9 @@ private:
     }
 
 public:
-    inline void request(dsid_t id) {
-        NodePtr node = find(id);
-        if(!node) {
-            // insert new node
-            node = create_node(id);
-            insert(node);
-        }
+    template<dsid_t id>
+    inline void request() {
+        NodePtr node = find_or_create<id>();
 
         // connect to "construct" node
         DLOG(INFO) << "edge: (" << ds::name_for(id) << ") -> (CONSTRUCT)";
@@ -172,7 +203,7 @@ public:
             decrease(node);
 
             // discard byproducts
-            for(auto prod : node->provider->products()) {
+            for(auto prod : node->products) {
                 if(!find(prod)) {
                     DLOG(INFO) << "discard byproduct (" << ds::name_for(prod) << ")";
                 }

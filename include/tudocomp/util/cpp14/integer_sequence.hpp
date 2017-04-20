@@ -1,6 +1,6 @@
 #pragma once
 
-#include <array>
+#include <vector>
 
 namespace std {
 
@@ -67,31 +67,30 @@ struct sequence_element<0, std::integer_sequence<T, Head, Tail...>> {
 };
 
 /// \cond INTERNAL
-template<typename T, size_t N>
-inline void _array_from_seq(std::array<T, N>& array, size_t,
-    std::integer_sequence<T>) {
-
+template<typename T>
+inline void _vec_from_seq(std::vector<T>& v, std::integer_sequence<T>) {
     // done
 }
 
-template<typename T, size_t N, T Head, T... Tail>
-inline void _array_from_seq(std::array<T, N>& array, size_t i,
+template<typename T, T Head, T... Tail>
+inline void _vec_from_seq(std::vector<T>& v,
     std::integer_sequence<T, Head, Tail...>) {
 
     // set and recurse
-    array[i] = Head;
-    _array_from_seq(array, i + 1, std::integer_sequence<T, Tail...>());
+    v.emplace_back(Head);
+    _vec_from_seq(v, std::integer_sequence<T, Tail...>());
 }
 /// \endcond
 
-/// create a vector for an integer sequence
+/// create a vector from an integer sequence
 template<typename T, T... Seq>
-inline std::array<T, sizeof...(Seq)> array_from_sequence(
+inline std::vector<T> vector_from_sequence(
     std::integer_sequence<T, Seq...>) {
 
-    std::array<T, sizeof...(Seq)> array;
-    _array_from_seq(array, 0, std::integer_sequence<T, Seq...>());
-    return array;
+    std::vector<T> v;
+    v.reserve(sizeof...(Seq));
+    _vec_from_seq(v, std::integer_sequence<T, Seq...>());
+    return v;
 }
 
 } // namespace tdc

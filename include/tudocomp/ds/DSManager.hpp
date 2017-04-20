@@ -175,15 +175,15 @@ public:
 
 private:
     template<size_t... Is>
-    inline const std::shared_ptr<DSProvider> _abstract_provider(
+    inline std::shared_ptr<DSProvider> _abstract_provider(
         dsid_t dsid, std::index_sequence<Is...>) {
 
         return _abstract_provider(dsid, std::get<Is>(m_lookup)...);
     }
 
     template<typename Head, typename... Tail>
-    inline const std::shared_ptr<DSProvider> _abstract_provider(
-        dsid_t dsid, const Head& head, const Tail&... tail) {
+    inline std::shared_ptr<DSProvider> _abstract_provider(
+        dsid_t dsid, Head& head, Tail&... tail) {
         
         if(dsid == 0) {
             return head;
@@ -192,29 +192,39 @@ private:
         }
     }
 
-    inline const std::shared_ptr<DSProvider> _abstract_provider(dsid_t dsid) {
+    inline std::shared_ptr<DSProvider> _abstract_provider(dsid_t dsid) {
         // the program could not have been compiled successfully
         throw std::logic_error(
             std::string("There is no provider for ") + ds::name_for(dsid));
     }
 
 public:
-    inline const std::shared_ptr<DSProvider> abstract_provider(dsid_t dsid) {
+    inline std::shared_ptr<DSProvider> abstract_provider(dsid_t dsid) {
         // "runtime edition"
         return _abstract_provider(dsid, std::make_index_sequence<
             std::tuple_size<provider_lookup_tuple_t>::value>());
     }
 
+private:
+    template<typename G>
+    inline void _create_dep_graph(G& g, std::index_sequence<>) {
+    }
+
+    template<typename G, dsid_t head, dsid_t... tail>
+    inline void _create_dep_graph(G& g, std::index_sequence<head, tail...>) {
+        g.template request<head>();
+        _create_dep_graph(g, std::index_sequence<tail...>());
+    }
+
 public:
-    inline void construct(const dsid_list_t& requested_ds) {
-        /*DLOG(INFO) << "create dependency graph";
-
+    template<dsid_t... ids>
+    inline void construct() {
+        DLOG(INFO) << "create dependency graph";
+        
         DSDependencyGraph<this_t> g(*this);
-        for(auto id : requested_ds) {
-            g.request(id);
-        }
+        _create_dep_graph(g, std::index_sequence<ids...>());
 
-        g.construct_requested();*/
+        g.construct_requested();
     }
 
     const View& input = m_input;
