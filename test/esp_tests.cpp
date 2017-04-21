@@ -913,53 +913,26 @@ TEST(MonotonSubseq, iterative_longer_layers_round_to_dec) {
     ASSERT_EQ(sis_n, (std::vector<size_t> { 0,  3, 0,  2, 1, 1, 3, 0, 0,   0, 1, 1, 1,  0, 2 }));
 }
 
-TEST(MonotonSubseq, iterative_longer_layers_round_to_inc_esp_encoding) {
+TEST(MonotonSubseq, esp_encoding_paper_example) {
     auto inp = std::vector<size_t> { 0, 1, 1, 0, 4 };
-    auto actual_sis = esp::sorted_indices(inp);
 
-    auto sis = std::vector<size_t> { 0, 2, 4, 1, 3 };
-    auto sis_sizes = std::vector<size_t> { 3, 2 };
+    auto sis = std::vector<size_t> { 0, 3, 1, 2, 4 };
+    auto Dpi = std::vector<size_t> { 0, 1, 1, 0, 0 };
 
-    // create from sorted_indices
-    auto D_sigma = std::vector<size_t> {};
+    // create from Dpi
+    auto Dsi = std::vector<size_t> {};
     {
-        D_sigma.reserve(inp.size());
-        D_sigma.resize(inp.size());
-        size_t counter = 0;
-        size_t i = 0;
-        for(auto subseq_len : sis_sizes) {
-            auto end = i + subseq_len;
-            for(; i < end; i++) {
-                D_sigma[sis[i]] = counter;
-            }
-            counter++;
-        }
-    }
-
-    // create from D_sigma
-    auto D_pi = std::vector<size_t> {};
-    {
-        D_pi.reserve(inp.size());
-        D_pi.resize(inp.size());
-        for (size_t i = 0; i < actual_sis.size(); i++) {
-            D_pi[i] = D_sigma[actual_sis[i]];
-        }
-    }
-
-    // create from D_phi
-    auto D_sigma2 = std::vector<size_t> {};
-    {
-        D_sigma2.reserve(inp.size());
-        D_sigma2.resize(inp.size());
-        for (size_t i = 0; i < actual_sis.size(); i++) {
-            D_sigma2[actual_sis[i]] = D_pi[i];
+        Dsi.reserve(inp.size());
+        Dsi.resize(inp.size());
+        for (size_t i = 0; i < sis.size(); i++) {
+            Dsi[sis[i]] = Dpi[i];
         }
     }
 
     size_t last = 0;
     std::vector<size_t> values;
     std::vector<size_t> B;
-    for (auto idx : actual_sis) {
+    for (auto idx : sis) {
         values.push_back(inp[idx]);
         B.push_back(inp[idx] - last);
         last = inp[idx];
@@ -971,18 +944,12 @@ TEST(MonotonSubseq, iterative_longer_layers_round_to_inc_esp_encoding) {
     // B as rank/select dictionary storen... or not because we just need compression
     //
 
-    ASSERT_EQ(actual_sis, (std::vector<size_t> { 0, 3, 1, 2, 4 }));
-    ASSERT_EQ(sis_sizes, (std::vector<size_t> { 3, 2 }));
-    ASSERT_EQ(sis, (std::vector<size_t> {
-        0, 2, 4,
-        1, 3,
-    }));
-    ASSERT_EQ(D_sigma, (std::vector<size_t> { 0, 1, 0, 1, 0 }));
-    ASSERT_EQ(D_pi,    (std::vector<size_t> { 0, 1, 1, 0, 0 }));
-    ASSERT_EQ(D_sigma2, (std::vector<size_t> { 0, 1, 0, 1, 0 }));
+    ASSERT_EQ(sis, (std::vector<size_t> { 0, 3, 1, 2, 4 }));
+    ASSERT_EQ(Dsi, (std::vector<size_t> { 0, 1, 0, 1, 0 }));
+    ASSERT_EQ(Dpi, (std::vector<size_t> { 0, 1, 1, 0, 0 }));
 }
 
-TEST(MonotonSubseq, final_encoding_prototype) {
+TEST(MonotonSubseq, esp_encoding_real1) {
     auto D = std::vector<size_t>{
         48, 115, 99, 97, 103, 103, 97, 107, 98, 115, 107, 98, 107, 97, 118,
         122, 106, 107, 99, 98, 120, 256, 97, 104, 274, 115, 100, 257, 288, 99,
@@ -990,7 +957,10 @@ TEST(MonotonSubseq, final_encoding_prototype) {
         302, 278, 287, 257, 289, 304, 301, 297, 309, 310, 294
     };
 
+    std::cout << "D:\n" << vec_to_debug_string(D, 3) << "\n";
+
     auto sorted_indices = esp::sorted_indices(D);
+
     std::cout << "sorted indices:\n" << vec_to_debug_string(sorted_indices) << "\n";
 
     {
@@ -1002,7 +972,7 @@ TEST(MonotonSubseq, final_encoding_prototype) {
         std::cout << "emit unary coding B...\n";
     }
 
-    std::vector<size_t> sorted_indices_sizes;
+    std::vector<size_t> Dpi;
     {
         auto l = esp::L(sorted_indices);
         std::vector<esp::Link> links;
@@ -1012,19 +982,60 @@ TEST(MonotonSubseq, final_encoding_prototype) {
 
             l.rebuild(true);
             // Only run lis() if needed:
+            // NB: Keep this > to get more decreasing tests,
+            // but change back for final code to calculate less
             if (!(links.size() > l.layers_size())) {
                 l.lis(l.layers_size(), links);
             }
 
             // links now contains the longer sequence
             l.remove_all_and_slice(links);
-            sorted_indices_sizes.push_back(links.size());
         }
-        std::reverse(sorted_indices_sizes.begin(), sorted_indices_sizes.end());
+        Dpi = std::move(l).extract();
     }
 
-    std::cout << "rearanged sorted_indices:\n" << vec_to_debug_string(sorted_indices) << "\n";
-    std::cout << "layers:\n" << vec_to_debug_string(sorted_indices_sizes) << "\n";
+
+    std::cout << "Dpi:\n" << vec_to_debug_string(Dpi, 3) << "\n";
+
+    // create from Dpi
+    auto Dsi = std::vector<size_t> {};
+    {
+        Dsi.reserve(D.size());
+        Dsi.resize(D.size());
+        for (size_t i = 0; i < D.size(); i++) {
+            Dsi[sorted_indices[i]] = Dpi[i];
+        }
+    }
+
+    std::cout << "Dsi:\n" << vec_to_debug_string(Dsi, 3) << "\n";
+
+    auto subseqs = std::vector<std::vector<size_t>>();
+    for(size_t i = 0; i < D.size(); i++) {
+        auto j = Dsi[i];
+        while (j >= subseqs.size()) {
+            subseqs.push_back({});
+        }
+        subseqs[j].push_back(D[i]);
+    }
+
+    std::cout << "Subseqs:\n";
+    for (auto& e : subseqs) {
+        std::cout << "    " << vec_to_debug_string(e) << "\n";
+    }
+
+    auto b = IntVector<uint_t<1>> {};
+    {
+        b.reserve(subseqs.size());
+        for (size_t i = 0; i < subseqs.size(); i++) {
+            if (subseqs[i].size() < 2 || subseqs[i][0] <= subseqs[i][1]) {
+                b.push_back(uint_t<1>(0));
+            } else {
+                b.push_back(uint_t<1>(1));
+            }
+        }
+    }
+
+    std::cout << "b:\n" << vec_to_debug_string(b) << "\n";
 
 }
 
