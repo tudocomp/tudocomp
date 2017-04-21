@@ -950,7 +950,7 @@ TEST(MonotonSubseq, esp_encoding_paper_example) {
 }
 
 TEST(MonotonSubseq, esp_encoding_real1) {
-    auto D = std::vector<size_t>{
+    const auto D = std::vector<size_t>{
         48, 115, 99, 97, 103, 103, 97, 107, 98, 115, 107, 98, 107, 97, 118,
         122, 106, 107, 99, 98, 120, 256, 97, 104, 274, 115, 100, 257, 288, 99,
         102, 290, 99, 281, 107, 120, 296, 278, 269, 258, 291, 262, 261, 279,
@@ -963,16 +963,17 @@ TEST(MonotonSubseq, esp_encoding_real1) {
 
     std::cout << "sorted indices:\n" << vec_to_debug_string(sorted_indices) << "\n";
 
+    std::vector<size_t> Bde;
     {
-        std::vector<size_t> tmp_sorted;
         for (auto index : sorted_indices) {
-            tmp_sorted.push_back(D[index]);
+            Bde.push_back(D[index]);
         }
-        std::cout << "sorted D:\n" << vec_to_debug_string(tmp_sorted) << "\n";
-        std::cout << "emit unary coding B...\n";
     }
+    std::cout << "sorted D:\n" << vec_to_debug_string(Bde) << "\n";
+    std::cout << "emit unary coding B...\n";
 
     std::vector<size_t> Dpi;
+    auto b = IntVector<uint_t<1>> {};
     {
         auto l = esp::L(sorted_indices);
         std::vector<esp::Link> links;
@@ -986,6 +987,9 @@ TEST(MonotonSubseq, esp_encoding_real1) {
             // but change back for final code to calculate less
             if (!(links.size() > l.layers_size())) {
                 l.lis(l.layers_size(), links);
+                b.push_back(uint_t<1>(1));
+            } else {
+                b.push_back(uint_t<1>(0));
             }
 
             // links now contains the longer sequence
@@ -1009,34 +1013,78 @@ TEST(MonotonSubseq, esp_encoding_real1) {
 
     std::cout << "Dsi:\n" << vec_to_debug_string(Dsi, 3) << "\n";
 
-    auto subseqs = std::vector<std::vector<size_t>>();
-    for(size_t i = 0; i < D.size(); i++) {
-        auto j = Dsi[i];
-        while (j >= subseqs.size()) {
-            subseqs.push_back({});
-        }
-        subseqs[j].push_back(D[i]);
-    }
-
-    std::cout << "Subseqs:\n";
-    for (auto& e : subseqs) {
-        std::cout << "    " << vec_to_debug_string(e) << "\n";
-    }
-
-    auto b = IntVector<uint_t<1>> {};
     {
-        b.reserve(subseqs.size());
-        for (size_t i = 0; i < subseqs.size(); i++) {
-            if (subseqs[i].size() < 2 || subseqs[i][0] <= subseqs[i][1]) {
-                b.push_back(uint_t<1>(0));
-            } else {
-                b.push_back(uint_t<1>(1));
+        auto subseqs = std::vector<std::vector<size_t>>();
+        for(size_t i = 0; i < D.size(); i++) {
+            auto j = Dsi[i];
+            while (j >= subseqs.size()) {
+                subseqs.push_back({});
             }
+            subseqs[j].push_back(D[i]);
+        }
+
+        std::cout << "Subseqs:\n";
+        for (auto& e : subseqs) {
+            std::cout << "    " << vec_to_debug_string(e) << "\n";
         }
     }
 
     std::cout << "b:\n" << vec_to_debug_string(b) << "\n";
 
+    // recover D
+    auto recovered_D = std::vector<size_t> {};
+    {
+        recovered_D.reserve(Dpi.size());
+        recovered_D.resize(Dpi.size());
+
+        std::vector<size_t> ss_ll;
+        ss_ll.reserve(Dpi.size());
+        ss_ll.resize(Dpi.size());
+
+        std::vector<size_t> ss_ll_front;
+        ss_ll_front.reserve(b.size());
+        ss_ll_front.resize(b.size(), size_t(-1)); // ensure there is n+1 bits space in real impl
+
+        // based in Bdecoded and Dpi we know the sorted sequence.
+        // by mapping the Dsi sequence to it we get the original D
+
+        for (size_t i = 0; i < Dpi.size(); i++) {
+            size_t list_i = Dpi[i];
+            if (ss_ll_front[list_i] == size_t(-1)) {
+                ss_ll_front[list_i] = i;
+                ss_ll[i] = i;
+            } else {
+                size_t root_node = ss_ll_front[list_i];
+                size_t root_node_next = ss_ll[root_node];
+
+                ss_ll[root_node] = i;
+                ss_ll[i] = root_node_next;
+
+                if (b[list_i] == 1) {
+                    ss_ll_front[list_i] = i;
+                }
+            }
+        }
+
+        for (size_t& link : ss_ll_front) {
+            link = ss_ll[link];
+        }
+
+        for (size_t i = 0; i < Dsi.size(); i++) {
+            size_t j = Dsi.size() - i - 1;
+
+            size_t list_i = Dsi[j];
+
+            auto front = ss_ll_front[list_i];
+            ss_ll_front[list_i] = ss_ll[front];
+
+            recovered_D[j] = Bde[front];
+        }
+    }
+
+    std::cout << "recovered_D:\n" << vec_to_debug_string(recovered_D, 3) << "\n";
+
+    ASSERT_EQ(D, recovered_D);
 }
 
 
