@@ -669,8 +669,9 @@ TEST(MonotonSubseq, init_bbwd) {
 TEST(MonotonSubseq, layers_iter_afwd) {
     auto rev = false;
     auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+    auto bv = IntVector<uint_t<1>>(sis.size());
 
-    auto layers_iter = esp::LayersIterator(sis.size(), rev);
+    auto layers_iter = esp::LayersIterator(bv, rev);
     std::vector<esp::Point> points;
     while (layers_iter.has_next()) {
         points.push_back(esp::point_coord_for_link(sis, layers_iter.advance(), rev));
@@ -686,8 +687,9 @@ TEST(MonotonSubseq, layers_iter_afwd) {
 TEST(MonotonSubseq, layers_iter_bbwd) {
     auto rev = true;
     auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
+    auto bv = IntVector<uint_t<1>>(sis.size());
 
-    auto layers_iter = esp::LayersIterator(sis.size(), rev);
+    auto layers_iter = esp::LayersIterator(bv, rev);
     std::vector<esp::Point> points;
     while (layers_iter.has_next()) {
         points.push_back(esp::point_coord_for_link(sis, layers_iter.advance(), rev));
@@ -827,7 +829,7 @@ TEST(MonotonSubseq, build_extract_remove_layers_afwd) {
 
     ASSERT_EQ(indices, (std::vector<size_t> { 4, 6, 7, 11, 12, 14 }));
     ASSERT_EQ(values,  (std::vector<size_t> { 0, 1, 3, 4, 4, 6 }));
-    ASSERT_EQ(sis, (std::vector<size_t> { 10, 13, 0, 2, 1, 5, 8, 9, 3, 4, 6, 7, 11, 12, 14 }));
+    ASSERT_EQ(sis, (std::vector<size_t> { 4, 10, 6, 13, 0, 2, 1, 7, 11, 12, 5, 8, 9, 14, 3 }));
 }
 
 TEST(MonotonSubseq, build_extract_remove_layers_bbwd) {
@@ -854,12 +856,12 @@ TEST(MonotonSubseq, build_extract_remove_layers_bbwd) {
 
     ASSERT_EQ(indices, (std::vector<size_t> { 3, 9, 12, 13 }));
     ASSERT_EQ(values,  (std::vector<size_t> { 8, 6, 4, 1 }));
-    ASSERT_EQ(sis, (std::vector<size_t> { 4, 10, 6, 0, 2, 1, 7, 11, 5, 8, 14, 3, 9, 12, 13 }));
+    ASSERT_EQ(sis, (std::vector<size_t> { 4, 10, 6, 13, 0, 2, 1, 7, 11, 12, 5, 8, 9, 14, 3 }));
 }
 
 TEST(MonotonSubseq, iterative_longer_layers_round_to_inc) {
     auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
-    std::vector<size_t> sis_sizes;
+    std::vector<size_t> sis_n;
 
     {
         auto l = esp::L(sis);
@@ -876,23 +878,17 @@ TEST(MonotonSubseq, iterative_longer_layers_round_to_inc) {
 
             // links now contains the longer sequence
             l.remove_all_and_slice(links);
-            sis_sizes.push_back(links.size());
         }
-        std::reverse(sis_sizes.begin(), sis_sizes.end());
+        sis_n = std::move(l).extract();
     }
 
-    ASSERT_EQ(sis_sizes, (std::vector<size_t> { 2, 2, 5, 6 }));
-    ASSERT_EQ(sis, (std::vector<size_t> {
-        1, 3,
-        10, 13,
-        0, 2, 5, 8, 9,
-        4, 6, 7, 11, 12, 14,
-    }));
+    ASSERT_EQ(sis,   (std::vector<size_t> { 4, 10, 6, 13, 0, 2, 1, 7, 11, 12, 5, 8, 9, 14, 3 }));
+    ASSERT_EQ(sis_n, (std::vector<size_t> { 0,  2, 0,  2, 1, 1, 3, 0, 0,   0, 1, 1, 1,  0, 3 }));
 }
 
 TEST(MonotonSubseq, iterative_longer_layers_round_to_dec) {
     auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
-    std::vector<size_t> sis_sizes;
+    std::vector<size_t> sis_n;
 
     {
         auto l = esp::L(sis);
@@ -909,18 +905,12 @@ TEST(MonotonSubseq, iterative_longer_layers_round_to_dec) {
 
             // links now contains the longer sequence
             l.remove_all_and_slice(links);
-            sis_sizes.push_back(links.size());
         }
-        std::reverse(sis_sizes.begin(), sis_sizes.end());
+        sis_n = std::move(l).extract();
     }
 
-    ASSERT_EQ(sis_sizes, (std::vector<size_t> { 2, 2, 5, 6 }));
-    ASSERT_EQ(sis, (std::vector<size_t> {
-        1, 10,
-        3, 13,
-        0, 2, 5, 8, 9,
-        4, 6, 7, 11, 12, 14,
-    }));
+    ASSERT_EQ(sis,   (std::vector<size_t> { 4, 10, 6, 13, 0, 2, 1, 7, 11, 12, 5, 8, 9, 14, 3 }));
+    ASSERT_EQ(sis_n, (std::vector<size_t> { 0,  3, 0,  2, 1, 1, 3, 0, 0,   0, 1, 1, 1,  0, 2 }));
 }
 
 TEST(MonotonSubseq, iterative_longer_layers_round_to_inc_esp_encoding) {

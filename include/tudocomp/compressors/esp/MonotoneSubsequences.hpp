@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp/ds/IntVector.hpp>
+
 namespace tdc {namespace esp {
     using Sindex = size_t;
     using Link = size_t;
@@ -46,26 +48,55 @@ namespace tdc {namespace esp {
         bool m_reverse;
         size_t m_front;
         size_t m_back;
+        IntVector<uint_t<1>>* m_skip;
+
+        inline void debug() {
+            std::cout << "front: " << m_front << ", back: " << m_back << ", bits: ";
+            std::cout << vec_to_debug_string(*m_skip) << "\n";
+        }
+
+        inline void front_skip() {
+            //std::cout << "fs: "; debug();
+            auto& skip = *m_skip;
+            while (m_front != m_back && m_front < skip.size() && skip[m_front] == uint_t<1>(1)) {
+                m_front++;
+            }
+        }
+        inline void back_skip() {
+            //std::cout << "bs: "; debug();
+            auto& skip = *m_skip;
+            while (m_front != m_back && m_back > 0 && skip[m_back - 1] == uint_t<1>(1)) {
+                m_back--;
+            }
+        }
     public:
-        inline LayersIterator(size_t sindex_len, bool reverse):
+        inline LayersIterator(IntVector<uint_t<1>>& skip, bool reverse):
             m_reverse(reverse),
             m_front(0),
-            m_back(sindex_len) {
+            m_back(skip.size()),
+            m_skip(&skip)
+        {
+            front_skip();
+            back_skip();
         }
 
         inline bool has_next() {
+            //std::cout << "hn: "; debug();
             return m_front != m_back;
         }
 
         inline Link advance() {
+            //std::cout << "av: "; debug();
+            size_t r;
             if (!m_reverse) {
-                m_back--;
-                return m_back;
+                r = --m_back;
+                back_skip();
             } else {
-                auto tmp = m_front;
-                m_front++;
-                return tmp;
+                r = m_front++;
+                front_skip();
             }
+            //std::cout << "\n";
+            return r;
         }
     };
 
@@ -92,16 +123,22 @@ namespace tdc {namespace esp {
     }
 
     class L {
-        GenericView<Sindex> m_sindices;
+        ConstGenericView<Sindex> m_sindices;
         std::vector<Link> m_linked_list;
         std::vector<Link> m_layers;
         bool m_reverse = false;
         std::vector<size_t> m_rebuild_A; // allocation cache
+        IntVector<uint_t<1>> m_removed;
+        size_t m_removed_counter = 0;
+        size_t m_remaining_size;
     public:
-        inline L(GenericView<Sindex> sindices) {
+        inline L(ConstGenericView<Sindex> sindices) {
             m_linked_list.reserve(sindices.size());
             m_linked_list.resize(sindices.size());
             m_sindices = sindices;
+            m_removed.reserve(sindices.size());
+            m_removed.resize(sindices.size());
+            m_remaining_size = sindices.size();
         }
 
         void rebuild(bool reverse) {
@@ -112,7 +149,7 @@ namespace tdc {namespace esp {
             A.push_back(size_t(-1));
             size_t l = 0;
 
-            auto layers_iter = LayersIterator(m_sindices.size(), m_reverse);
+            auto layers_iter = LayersIterator(m_removed, m_reverse);
 
             while (layers_iter.has_next()) {
                 auto link = layers_iter.advance();
@@ -195,57 +232,17 @@ namespace tdc {namespace esp {
         }
 
         inline void remove_all_and_slice(ConstGenericView<size_t> links) {
-            // Save the original indices in the now vacant linked list slots
+            // m_removed
+
+            // Mark the links as deleted
             for(auto link : links) {
-                m_linked_list[link] = m_sindices[link];
+                m_removed[link] = uint_t<1>(1);
+                m_linked_list[link] = m_removed_counter;
             }
 
-            // Check which way we need to read the links array
-            auto is_reverse = links.size() > 1 && links[0] > links[1];
-
-            // Remove the m_sindices entries
-            {
-                size_t links_i = 0;
-                size_t sii_r = 0;
-                size_t sii_w = 0;
-
-                // iterate over all sindices, skipping removed ones
-                while (sii_r < m_sindices.size()) {
-                    if (links_i < links.size()) {
-                        size_t adjusted_links_i;
-                        if (is_reverse) {
-                            adjusted_links_i = links.size() - links_i - 1;
-                        } else {
-                            adjusted_links_i = links_i;
-                        }
-                        if (sii_r == links[adjusted_links_i]) {
-                            ++sii_r;
-                            ++links_i;
-                            continue;
-                        }
-                    }
-
-                    m_sindices[sii_w] = m_sindices[sii_r];
-                    ++sii_r;
-                    ++sii_w;
-                }
-            }
-
-            // Copy sindex values back to the now vacant end of m_sindices
-            size_t offset = m_sindices.size() - links.size();
-            for(size_t i = 0; i < links.size(); i++) {
-                m_sindices[offset + i] = m_linked_list[links[i]];
-            }
-
-            // NB: could prepare linked list in a way that preserves
-            // addresses across deletion here, but leaving it in a
-            // undefined state instead since we rebuild from scratch.
-
+            m_removed_counter++;
             m_layers.clear();
-            m_sindices = m_sindices.slice(0, m_sindices.size() - links.size());
-            for (size_t i = 0; i < links.size(); i++) {
-                m_linked_list.pop_back();
-            }
+            m_remaining_size -= links.size();
         }
 
         inline std::vector<std::vector<Point>> to_debug_layer_points() {
@@ -276,7 +273,11 @@ namespace tdc {namespace esp {
         }
 
         inline size_t sindices_size() {
-            return m_sindices.size();
+            return m_remaining_size;
+        }
+
+        inline std::vector<size_t> extract() && {
+            return std::move(m_linked_list);
         }
     };
 
