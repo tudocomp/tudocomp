@@ -44,6 +44,11 @@ private:
         }
         return selected_starting_positions;
     }
+
+
+
+    //could be node_type
+    std::vector<std::vector<uint> > lcp_bins;
 public:
 
     using Algorithm::Algorithm; //import constructor
@@ -83,9 +88,17 @@ public:
         DLOG(INFO) << "iterate over lcp";
         uint dif ;
         uint factor_length;
+
+        uint max = 0;
+
         for(uint i = 1; i<lcp_t.size(); i++){
 
+
             if(lcp_t[i] >= min_lrf){
+                if(max < lcp_t[i]){
+                    max = lcp_t[i];
+                    lcp_bins.resize(max+1);
+                }
                 //compute length of non-overlapping factor:
 
                 dif = abs(sa_t[i-1] - sa_t[i]);
@@ -112,8 +125,12 @@ public:
                 if(factor_length>=min_lrf){
                     lrf_occurences.push_back(pair);
                 }
+
+                lcp_bins[factor_length].push_back(i);
             }
         }
+
+        DLOG(INFO)<<"max lcp: "<<max;
 
         });
 
@@ -138,6 +155,67 @@ public:
         //std::vector<std::tuple<uint,uint,uint>> nts_symbols;
         nts_symbols.reserve(lrf_occurences.size());
         uint non_terminal_symbol_number = 0;
+
+        for(uint lcp_len = lcp_bins.size()-1; lcp_len>= min_lrf; lcp_len--){
+            DLOG(INFO)<<"size of lrf: "  << lcp_len <<" occs: "<< lcp_bins[lcp_len].size();
+            for(auto bin_it = lcp_bins[lcp_len].begin(); bin_it!=lcp_bins[lcp_len].end(); bin_it++){
+
+                if(dead_positions[sa_t[*bin_it]] || dead_positions[sa_t[*bin_it-1]] || dead_positions[sa_t[*bin_it]+lcp_len-1] || dead_positions[sa_t[*bin_it-1]+lcp_len-1]){
+                    continue;
+                }
+
+                //detect all starting positions of this string using the sa and lcp:
+                std::vector<uint> starting_positions;
+
+                starting_positions.push_back(sa_t[*bin_it]);
+
+
+                // and ceck in bitvector viable starting positions
+                // there is no 1 bit on the corresponding positions
+                // it suffices to check start and end position, because lrf can only be same length and shorter
+                uint i = *bin_it;
+                uint zero =0;
+                while(i>=0 && ( lcp_t[i])>=lcp_len){
+                    if(dead_positions[sa_t[i-1]] == zero && dead_positions[sa_t[i-1]+lcp_len-1] == zero){
+                        starting_positions.push_back(sa_t[i-1]);
+                    }
+                    i--;
+                }
+                i = *bin_it+1;
+                while(i< lcp_t.size() &&  lcp_t[i]>=lcp_len){
+                    if(dead_positions[sa_t[i]] == zero && dead_positions[sa_t[i]+lcp_len-1] == zero){
+                        starting_positions.push_back(sa_t[i]);
+                    }
+                    i++;
+                }
+                //if the factor is still repeating, make the corresponding positions unviable
+
+                if(starting_positions.size()>=2){
+                    std::vector<uint> selected_starting_positions = select_starting_positions(starting_positions, lcp_len);
+                    //computing substring to be replaced
+                    if(selected_starting_positions.size()>=2){
+
+
+
+                        uint offset = sa_t[*bin_it];
+                        std::pair<uint,uint> longest_repeating_factor(offset, lcp_len);
+                        for (std::vector<uint>::iterator it=selected_starting_positions.begin(); it!=selected_starting_positions.end(); ++it){
+                            for(uint k = 0; k<lcp_len; k++){
+                                dead_positions[*it+k]=1;
+                            }
+
+                            uint length_of_symbol = lcp_len;
+                            std::tuple<uint,uint,uint> symbol(*it, non_terminal_symbol_number, length_of_symbol);
+                            nts_symbols.push_back(symbol);
+                        }
+                        dictionary.push_back(longest_repeating_factor);
+                        non_terminal_symbol_number++;
+                    }
+                }
+
+            }
+        }
+        /*
         while(!lrf_occurences.empty()){
             std::pair<uint,uint> top = lrf_occurences.back();
             lrf_occurences.pop_back();
@@ -195,7 +273,7 @@ public:
                     non_terminal_symbol_number++;
                 }
             }
-        }
+        }*/
 
         });
         });
