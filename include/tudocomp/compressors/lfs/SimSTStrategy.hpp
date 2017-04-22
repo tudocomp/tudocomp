@@ -132,7 +132,14 @@ private:
 
 
             if(length-min_shorter >= (int)min_lrf){
-                bins[length-min_shorter].push_back(node_id);
+                //check if parent node is shorter
+                node_type parent = stree.parent(node);
+                uint depth = stree.depth(parent);
+                if(depth < (uint)(length-min_shorter)){
+
+                    //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
+                    bins[length-min_shorter].push_back(node_id);
+                }
             }
         }
         return selected_starting_positions;

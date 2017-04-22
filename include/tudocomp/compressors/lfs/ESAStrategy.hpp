@@ -160,30 +160,31 @@ public:
             DLOG(INFO)<<"size of lrf: "  << lcp_len <<" occs: "<< lcp_bins[lcp_len].size();
             for(auto bin_it = lcp_bins[lcp_len].begin(); bin_it!=lcp_bins[lcp_len].end(); bin_it++){
 
-                if(dead_positions[sa_t[*bin_it]] || dead_positions[sa_t[*bin_it-1]] || dead_positions[sa_t[*bin_it]+lcp_len-1] || dead_positions[sa_t[*bin_it-1]+lcp_len-1]){
-                    continue;
-                }
+               // if(dead_positions[sa_t[*bin_it]] || dead_positions[sa_t[*bin_it-1]] || dead_positions[sa_t[*bin_it]+lcp_len-1] || dead_positions[sa_t[*bin_it-1]+lcp_len-1]){
+               //     continue;
+               // }
 
                 //detect all starting positions of this string using the sa and lcp:
                 std::vector<uint> starting_positions;
+                starting_positions.reserve(20);
 
-                starting_positions.push_back(sa_t[*bin_it]);
+                //starting_positions.push_back(sa_t[*bin_it]);
 
 
                 // and ceck in bitvector viable starting positions
                 // there is no 1 bit on the corresponding positions
                 // it suffices to check start and end position, because lrf can only be same length and shorter
                 uint i = *bin_it;
-                uint zero =0;
+
                 while(i>=0 && ( lcp_t[i])>=lcp_len){
-                    if(dead_positions[sa_t[i-1]] == zero && dead_positions[sa_t[i-1]+lcp_len-1] == zero){
+                    if(!dead_positions[sa_t[i-1]]  && !dead_positions[sa_t[i-1]+lcp_len-1]){
                         starting_positions.push_back(sa_t[i-1]);
                     }
                     i--;
                 }
-                i = *bin_it+1;
+                i = *bin_it;
                 while(i< lcp_t.size() &&  lcp_t[i]>=lcp_len){
-                    if(dead_positions[sa_t[i]] == zero && dead_positions[sa_t[i]+lcp_len-1] == zero){
+                    if(!dead_positions[sa_t[i]]  && !dead_positions[sa_t[i]+lcp_len-1]){
                         starting_positions.push_back(sa_t[i]);
                     }
                     i++;
@@ -215,66 +216,6 @@ public:
 
             }
         }
-        /*
-        while(!lrf_occurences.empty()){
-            std::pair<uint,uint> top = lrf_occurences.back();
-            lrf_occurences.pop_back();
-
-            if(dead_positions[sa_t[top.second]] || dead_positions[sa_t[top.second-1]] || dead_positions[sa_t[top.second]+top.first-1] || dead_positions[sa_t[top.second-1]+top.first-1]){
-                continue;
-            }
-
-            //detect all starting positions of this string using the sa and lcp:
-            std::vector<uint> starting_positions;
-
-            starting_positions.push_back(sa_t[top.second]);
-
-
-
-            // and ceck in bitvector viable starting positions
-            // there is no 1 bit on the corresponding positions
-            // it suffices to check start and end position, because lrf can only be same length and shorter
-            uint i = top.second;
-            uint zero =0;
-            while(i>=0 && ( lcp_t[i])>=top.first){
-                if(dead_positions[sa_t[i-1]] == zero && dead_positions[sa_t[i-1]+top.first-1] == zero){
-                    starting_positions.push_back(sa_t[i-1]);
-                }
-                i--;
-            }
-            i = top.second+1;
-            while(i< lcp_t.size() &&  lcp_t[i]>=top.first){
-                if(dead_positions[sa_t[i]] == zero && dead_positions[sa_t[i]+top.first-1] == zero){
-                    starting_positions.push_back(sa_t[i]);
-                }
-                i++;
-            }
-            //if the factor is still repeating, make the corresponding positions unviable
-
-            if(starting_positions.size()>=2){
-                std::vector<uint> selected_starting_positions = select_starting_positions(starting_positions, top.first);
-                //computing substring to be replaced
-                if(selected_starting_positions.size()>=2){
-
-
-
-                    uint offset = sa_t[top.second-1];
-                    std::pair<uint,uint> longest_repeating_factor(offset, top.first);
-                    for (std::vector<uint>::iterator it=selected_starting_positions.begin(); it!=selected_starting_positions.end(); ++it){
-                        for(uint k = 0; k<top.first; k++){
-                            dead_positions[*it+k]=1;
-                        }
-
-                        uint length_of_symbol = top.first;
-                        std::tuple<uint,uint,uint> symbol(*it, non_terminal_symbol_number, length_of_symbol);
-                        nts_symbols.push_back(symbol);
-                    }
-                    dictionary.push_back(longest_repeating_factor);
-                    non_terminal_symbol_number++;
-                }
-            }
-        }*/
-
         });
         });
 
