@@ -249,7 +249,7 @@ public:
 
                         }
                         //check tuple
-                        if(!(std::get<2>(cur_tpl)>=2) && !( (std::get<1>(cur_tpl) - std::get<0>(cur_tpl)) >= i )){
+                        if(!(std::get<2>(cur_tpl)>=2) && !( ((uint)(std::get<1>(cur_tpl) - std::get<0>(cur_tpl))) >= i )){
 
                             bin_it++;
                             continue;

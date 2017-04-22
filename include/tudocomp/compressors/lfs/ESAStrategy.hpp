@@ -81,7 +81,7 @@ public:
         StatPhase::wrap("computing lrf occurences", [&]{
 
         // iterate over lcp array, add indexes with non overlapping prefix length greater than min_lrf_length to vector
-        std::vector<std::pair<uint,uint>> lrf_occurences;
+        //std::vector<std::pair<uint,uint>> lrf_occurences;
 
         StatPhase::wrap("computing lrf occs", [&]{
 
@@ -121,10 +121,10 @@ public:
                 factor_length = std::min(factor_length, dif);
                 //second is position in suffix array
                 //first is length of common prefix
-                std::pair<uint,uint> pair (factor_length, i);
-                if(factor_length>=min_lrf){
-                    lrf_occurences.push_back(pair);
-                }
+               // std::pair<uint,uint> pair (factor_length, i);
+              //  if(factor_length>=min_lrf){
+               //     lrf_occurences.push_back(pair);
+               // }
 
                 lcp_bins[factor_length].push_back(i);
             }
@@ -142,10 +142,10 @@ public:
 
         //vector of text position, length
         //std::vector<std::pair<uint,uint>> dictionary;
-        StatPhase::wrap("sorting lrf occs", [&]{
+      //  StatPhase::wrap("sorting lrf occs", [&]{
 
-        std::sort(lrf_occurences.begin(),lrf_occurences.end());
-        });
+      //  std::sort(lrf_occurences.begin(),lrf_occurences.end());
+     //   });
 
         StatPhase::wrap("selecting occs", [&]{
 
@@ -153,7 +153,7 @@ public:
         dead_positions = BitVector(t.size(), 0);
 
         //std::vector<std::tuple<uint,uint,uint>> nts_symbols;
-        nts_symbols.reserve(lrf_occurences.size());
+        nts_symbols.reserve(lcp_bins.size());
         uint non_terminal_symbol_number = 0;
 
         for(uint lcp_len = lcp_bins.size()-1; lcp_len>= min_lrf; lcp_len--){
