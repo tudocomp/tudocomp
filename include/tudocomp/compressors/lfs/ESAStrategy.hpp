@@ -157,7 +157,7 @@ public:
         uint non_terminal_symbol_number = 0;
 
         for(uint lcp_len = lcp_bins.size()-1; lcp_len>= min_lrf; lcp_len--){
-            DLOG(INFO)<<"size of lrf: "  << lcp_len <<" occs: "<< lcp_bins[lcp_len].size();
+            //DLOG(INFO)<<"size of lrf: "  << lcp_len <<" occs: "<< lcp_bins[lcp_len].size();
             for(auto bin_it = lcp_bins[lcp_len].begin(); bin_it!=lcp_bins[lcp_len].end(); bin_it++){
 
                // if(dead_positions[sa_t[*bin_it]] || dead_positions[sa_t[*bin_it-1]] || dead_positions[sa_t[*bin_it]+lcp_len-1] || dead_positions[sa_t[*bin_it-1]+lcp_len-1]){
@@ -176,24 +176,46 @@ public:
                 // it suffices to check start and end position, because lrf can only be same length and shorter
                 uint i = *bin_it;
 
+                uint shorter_dif = lcp_len;
+
                 while(i>=0 && ( lcp_t[i])>=lcp_len){
                     if(!dead_positions[sa_t[i-1]]  && !dead_positions[sa_t[i-1]+lcp_len-1]){
                         starting_positions.push_back(sa_t[i-1]);
                     }
+
+                    if(!dead_positions[sa_t[i-1]] && dead_positions[sa_t[i-1]+lcp_len-1] ){
+                        //DLOG(INFO)<<"shorter lrf poss";
+                        while(!dead_positions[sa_t[i-1]+lcp_len-shorter_dif]){
+                            shorter_dif--;
+                        }
+                    }
                     i--;
+
                 }
                 i = *bin_it;
                 while(i< lcp_t.size() &&  lcp_t[i]>=lcp_len){
+
                     if(!dead_positions[sa_t[i]]  && !dead_positions[sa_t[i]+lcp_len-1]){
                         starting_positions.push_back(sa_t[i]);
                     }
+                    if(!dead_positions[sa_t[i]]   && dead_positions[sa_t[i]+lcp_len-1] ){
+                        //DLOG(INFO)<<"shorter lrf poss";
+                        while(!dead_positions[sa_t[i]+lcp_len-shorter_dif]){
+                            shorter_dif--;
+                        }
+                    }
                     i++;
                 }
+               // DLOG(INFO)<<"lrf_len: "<<lcp_len<< " shorter dif: "<< shorter_dif;
                 //if the factor is still repeating, make the corresponding positions unviable
+                if(lcp_len-shorter_dif>=min_lrf){
+                    lcp_bins[lcp_len-shorter_dif].push_back(*bin_it);
+                }
 
                 if(starting_positions.size()>=2){
                     std::vector<uint> selected_starting_positions = select_starting_positions(starting_positions, lcp_len);
                     //computing substring to be replaced
+
                     if(selected_starting_positions.size()>=2){
 
 
@@ -209,6 +231,7 @@ public:
                             std::tuple<uint,uint,uint> symbol(*it, non_terminal_symbol_number, length_of_symbol);
                             nts_symbols.push_back(symbol);
                         }
+
                         dictionary.push_back(longest_repeating_factor);
                         non_terminal_symbol_number++;
                     }
