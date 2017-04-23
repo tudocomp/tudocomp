@@ -347,8 +347,8 @@ namespace tdc {namespace esp {
         };
         auto wt_bvs = std::vector<IntVector<uint_t<1>>>();
 
-        std::cout << "v: " << vec_to_debug_string(v) << "\n";
-        std::cout << "max_char:   " << max_char << "\n";
+        //std::cout << "v: " << vec_to_debug_string(v) << "\n";
+        //std::cout << "max_char:   " << max_char << "\n";
 
         size_t wt_depth = 0;
         while (max_char) {
@@ -357,8 +357,8 @@ namespace tdc {namespace esp {
         }
         size_t alloc_size = (v.size() + 63ULL) >> 6;
 
-        std::cout << "alloc_size: " << alloc_size << "\n";
-        std::cout << "wt_depth:   " << wt_depth << "\n";
+        //std::cout << "alloc_size: " << alloc_size << "\n";
+        //std::cout << "wt_depth:   " << wt_depth << "\n";
 
         if (wt_depth == 0) {
             return std::move(wt_bvs);

@@ -84,13 +84,14 @@ namespace tdc {namespace esp {
             };
             const auto rhs = RhsAdapter { &slp };
 
+            /*
             {
                 std::vector<size_t> rules_rhs;
                 for(size_t i = 0; i < rhs.size(); i++) {
                     rules_rhs.push_back(rhs[i]);
                 }
                 std::cout << "rhs: " << vec_to_debug_string(rules_rhs) << "\n";
-            }
+            }*/
 
             // Sort rhs and create sorted indice array O(n log n)
             const auto sis = sorted_indices(rhs);
