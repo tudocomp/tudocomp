@@ -41,7 +41,7 @@ private:
 
         node_type node = stree.inv_id(node_id);
 
-        uint offset = stree.csa[stree.lb(node)];
+     //   uint offset = stree.csa[stree.lb(node)];
         //uint fac_length = stree.depth(node);
 
 
@@ -61,7 +61,7 @@ private:
 
         std::sort(beginning_positions.begin(), beginning_positions.end());*/
 
-        if(stree.size(node)>=2){
+      //  if(stree.size(node)>=2){
 
            // beginning_positions = node_begins[node_id];
 
@@ -99,12 +99,19 @@ private:
             }
             */
 
-            std::sort(beginning_positions.begin(), beginning_positions.end());
-        }
+         //   std::sort(beginning_positions.begin(), beginning_positions.end());
+       // }
 
         std::vector<int> selected_starting_positions;
+
+        std::vector<int> not_selected_starting_positions;
+        if(beginning_positions.size()<2){
+            return selected_starting_positions;
+        }
         //select occurences greedily non-overlapping:
         selected_starting_positions.reserve(beginning_positions.size());
+
+        not_selected_starting_positions.reserve(beginning_positions.size());
 
         int last =  0-length;
         int current;
@@ -120,9 +127,13 @@ private:
                 selected_starting_positions.push_back(current);
                 last = current;
 
+            } else {
+                not_selected_starting_positions.push_back(current);
             }
 
+
             if(!dead_positions[current] && dead_positions[current+length-1]){
+
                 //Some replaceable lrf at beginning
                 for(int i =1; i < length; i++){
                     if( ! (dead_positions[current+length-i-1]) ){
@@ -151,7 +162,13 @@ private:
                 }
             }
         }
-        return selected_starting_positions;
+        if(selected_starting_positions.size()>=2){
+            node_begins[node_id].assign(not_selected_starting_positions.begin(), not_selected_starting_positions.end());
+
+            return selected_starting_positions;
+        } else {
+            return std::vector<int>();
+        }
     }
 
     //(position in text, non_terminal_symbol_number, length_of_symbol);
@@ -172,7 +189,7 @@ private:
     //tuple:: min_bp, max_bp, card
     typedef std::tuple<int,int,int> n_tpl;
     typedef std::vector< n_tpl > tuple_vector;
-    tuple_vector node_tuples;
+    //tuple_vector node_tuples;
 
 
     std::vector<std::vector<uint> > node_begins;
@@ -234,7 +251,7 @@ public:
 
             node_begins.resize(node_counter);
 
-            node_tuples.resize(node_counter);
+            //node_tuples.resize(node_counter);
 
             uint nts_number =0;
             StatPhase::wrap("Iterate over Node Bins", [&]{
@@ -248,7 +265,7 @@ public:
                         if(stree.is_leaf(node)){
                             int bp = stree.csa[stree.lb(node)];
                             cur_tpl = std::make_tuple(bp,bp,1);
-                            node_tuples[*bin_it] = cur_tpl;
+                           // node_tuples[*bin_it] = cur_tpl;
 
                             node_begins[*bin_it].push_back(bp);
 
@@ -256,31 +273,42 @@ public:
 
                         }
                         else {
-                            int min = stree.size();
-                            int max = 0;
-                            int card = 0;
+                        //    int min = stree.size();
+                          //  int max = 0;
+                         //   int card = 0;
 
                             for (auto& child: stree.children(node)) {
                                 int child_id = stree.id(child);
+                                if(!node_begins[child_id].empty()){
 
-                                node_begins[*bin_it].insert(node_begins[*bin_it].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
+                                    node_begins[*bin_it].insert(node_begins[*bin_it].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
+                                }
 
+                                //delete child bp
 
-                                n_tpl child_tpl = node_tuples[child_id];
-                                min = std::min(min, std::get<0>(child_tpl));
-                                max = std::max(max, std::get<1>(child_tpl));
-                                card += std::get<2>(child_tpl);
+                                //node_begins[child_id].clear();
+
+                              //  n_tpl child_tpl = node_tuples[child_id];
+                              //  min = std::min(min, std::get<0>(child_tpl));
+                              //  max = std::max(max, std::get<1>(child_tpl));
+                              //  card += std::get<2>(child_tpl);
                             }
 
                             DLOG(INFO)<<" beginnings for id: "<< *bin_it << " count: "<<node_begins[*bin_it].size();
 
-                            cur_tpl = std::make_tuple(min,max,card);
+                          //  cur_tpl = std::make_tuple(min,max,card);
                             //DLOG(INFO)<<"new tuple for id: "<<*bin_it<< " <"<<min<<","<<max<<","<<card<<">";
-                            node_tuples[*bin_it] = cur_tpl;
+                           // node_tuples[*bin_it] = cur_tpl;
 
                         }
+                        if(node_begins[*bin_it].empty()){
+
+                            bin_it++;
+                            continue;
+                        }
+                        std::sort(node_begins[*bin_it].begin(), node_begins[*bin_it].end());
                         //check tuple
-                        if(!(std::get<2>(cur_tpl)>=2) && !( ((uint)(std::get<1>(cur_tpl) - std::get<0>(cur_tpl))) >= i )){
+                        if(!(node_begins[*bin_it].size()>=2) && !( (  (uint)( node_begins[*bin_it].back()   - node_begins[*bin_it].front() )) >= i )){
 
                             bin_it++;
                             continue;
