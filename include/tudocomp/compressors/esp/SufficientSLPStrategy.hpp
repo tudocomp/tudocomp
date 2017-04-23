@@ -117,6 +117,7 @@ namespace tdc {namespace esp {
                 b = std::move(tmp.b);
             }
             size_t b_size = b.size();
+            DCHECK_GE(b_size, 1);
 
             // Write out b and discard it
             bout.write_compressed_int(b_size);
@@ -124,12 +125,23 @@ namespace tdc {namespace esp {
                 bout.write_bit(e != 0);
             }
             std::cout << "comp b:   " << vec_to_debug_string(b) << "\n";
+
+            // Discard b
             b = IntVector<uint_t<1>> {};
 
             // transform Dpi to WT and write WT and discard WT
             {
                 auto Dpi_bvs = make_wt(Dpi, b_size - 1);
 
+                // write WT depth
+                bout.write_compressed_int(Dpi_bvs.size());
+
+                // write WT
+                for(auto& bv : Dpi_bvs) {
+                    for(uint8_t bit: bv) {
+                        bout.write_bit(bit != 0);
+                    }
+                }
             }
 
             // Create Dsi from Dpi, discard Dpi,
@@ -140,7 +152,16 @@ namespace tdc {namespace esp {
             {
                 auto Dsi_bvs = make_wt(Dsi, b_size - 1);
 
+                // write WT
+                for(auto& bv : Dsi_bvs) {
+                    for(uint8_t bit: bv) {
+                        bout.write_bit(bit != 0);
+                    }
+                }
             }
+
+            // Discard Dpi
+            Dsi = std::vector<size_t>();
 
         }
 
@@ -199,6 +220,7 @@ namespace tdc {namespace esp {
             }
             std::cout << vec_to_debug_string(sis) << "\n";
 
+            // Read b
             size_t b_size = bin.read_compressed_int<size_t>();
             auto b = IntVector<uint_t<1>> {};
             b.reserve(b_size);
@@ -207,6 +229,33 @@ namespace tdc {namespace esp {
                 b[i] = bin.read_bit();
             }
             std::cout << "decomp b: " << vec_to_debug_string(b) << "\n";
+
+            // Read WT dept
+            size_t wt_depth = bin.read_compressed_int<size_t>();
+
+            // Read Dpi WT
+            auto Dpi = std::vector<IntVector<uint_t<1>>>();
+            Dpi.reserve(wt_depth);
+            Dpi.resize(wt_depth);
+
+            for(auto& bv : Dpi) {
+                bv.reserve(sis.size());
+                for(size_t i = 0; i < sis.size(); i++) {
+                    bv.push_back(bin.read_bit());
+                }
+            }
+
+            // Read Dsi WT
+            auto Dsi = std::vector<IntVector<uint_t<1>>>();
+            Dsi.reserve(wt_depth);
+            Dsi.resize(wt_depth);
+
+            for(auto& bv : Dsi) {
+                bv.reserve(sis.size());
+                for(size_t i = 0; i < sis.size(); i++) {
+                    bv.push_back(bin.read_bit());
+                }
+            }
 
             return esp::SLP();
         }
