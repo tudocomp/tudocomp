@@ -1113,35 +1113,16 @@ TEST(MonotonSubseq, esp_encoding_real1) {
             Bde.push_back(D[index]);
         }
     }
-    //std::cout << "sorted D:\n" << vec_to_debug_string(Bde) << "\n";
+    std::cout << "sorted D:\n" << vec_to_debug_string(Bde) << "\n";
     //std::cout << "emit unary coding B...\n";
 
     std::vector<size_t> Dpi;
     auto b = IntVector<uint_t<1>> {};
     {
-        auto l = esp::L(sorted_indices);
-        std::vector<esp::Link> links;
-        while (l.sindices_size() > 0) {
-            l.rebuild(false);
-            l.lis(l.layers_size(), links);
-
-            l.rebuild(true);
-            // Only run lis() if needed:
-            // NB: Keep this > to get more decreasing tests,
-            // but change back for final code to calculate less
-            if (!(links.size() > l.layers_size())) {
-                l.lis(l.layers_size(), links);
-                b.push_back(uint_t<1>(1));
-            } else {
-                b.push_back(uint_t<1>(0));
-            }
-
-            // links now contains the longer sequence
-            l.remove_all_and_slice(links);
-        }
-        Dpi = std::move(l).extract();
+        auto tmp = esp::create_dpi_and_b_from_sorted_indices(sorted_indices);
+        Dpi = std::move(tmp.Dpi);
+        b = std::move(tmp.b);
     }
-
 
     //std::cout << "Dpi:\n" << vec_to_debug_string(Dpi, 3) << "\n";
 

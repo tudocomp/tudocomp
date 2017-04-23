@@ -2,6 +2,7 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/compressors/esp/SLPDepSort.hpp>
+#include <tudocomp/compressors/esp/MonotoneSubsequences.hpp>
 
 namespace tdc {namespace esp {
     class SufficientSLPStrategy: public Algorithm {
@@ -50,20 +51,43 @@ namespace tdc {namespace esp {
             //std::cout << "emitted diffs: " << vec_to_debug_string(rules_lhs_diff) << "\n";
 
             // Write rules lhs
-            size_t last = 0;
-            for (auto& e : slp.rules) {
-                DCHECK_LE(last, e[0]);
-                size_t diff = e[0] - last;
-                bout.write_unary(diff);
-                last = e[0];
+            {
+                size_t last = 0;
+                for (auto& e : slp.rules) {
+                    DCHECK_LE(last, e[0]);
+                    size_t diff = e[0] - last;
+                    bout.write_unary(diff);
+                    last = e[0];
+                }
             }
 
-            std::vector<size_t> rules_rhs;
-            rules_rhs.reserve(slp.rules.size());
-            for (auto& e : slp.rules) {
-                rules_rhs.push_back(e[1]);
+            struct RhsAdapter {
+                SLP* slp;
+                inline const size_t& operator[](size_t i) const {
+                    return slp->rules[i][1];
+                }
+                inline size_t size() const {
+                    return slp->rules.size();
+                }
+            };
+            const auto rhs = RhsAdapter { &slp };
+
+            // Sort rhs and create sorted indice array O(n log n)
+            const auto sis = sorted_indices(rhs);
+
+            // Write rules rhs in sorted order (B array of encoding)
+            {
+                size_t last = 0;
+                for (size_t i = 0; i < rhs.size(); i++) {
+                    auto v = rhs[sis[i]];
+                    DCHECK_LE(last, v);
+                    size_t diff = v - last;
+                    bout.write_unary(diff);
+                    last = v;
+                }
             }
-            //std::cout << "rhs: " << vec_to_debug_string(rules_rhs) << "\n";
+
+
         }
 
         inline SLP decode(Input& input) const {
@@ -88,17 +112,34 @@ namespace tdc {namespace esp {
             esp::SLP slp;
             slp.empty = empty;
             slp.root_rule = root_rule;
-            slp.rules.reserve(max_val + 1);
-            slp.rules.resize(max_val + 1);
+            size_t slp_size = (max_val + 1) - 256; // implied initial bytes
+            slp.rules.reserve(slp_size);
+            slp.rules.resize(slp_size);
 
             // Read rules lhs
-            size_t last = 0;
-            for(size_t i = 0; i <= max_val && !bin.eof(); i++) {
-                // ...
-                auto diff = bin.read_unary<size_t>();
-                last += diff;
-                slp.rules[i][0] = last;
+            {
+                size_t last = 0;
+                for(size_t i = 0; i < slp_size && !bin.eof(); i++) {
+                    // ...
+                    auto diff = bin.read_unary<size_t>();
+                    last += diff;
+                    slp.rules[i][0] = last;
+                }
             }
+            // Read rules rhs in sorted order (B array)
+            std::vector<size_t> sis;
+            sis.reserve(slp_size);
+            {
+                size_t last = 0;
+                for(size_t i = 0; i < slp_size && !bin.eof(); i++) {
+                    // ...
+                    auto diff = bin.read_unary<size_t>();
+                    last += diff;
+                    sis.push_back(last);
+                }
+            }
+            std::cout << vec_to_debug_string(sis) << "\n";
+
 
 
             return esp::SLP();

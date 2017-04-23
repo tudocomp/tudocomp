@@ -6,7 +6,8 @@ namespace tdc {namespace esp {
     using Sindex = size_t;
     using Link = size_t;
 
-    inline std::vector<Sindex> sorted_indices(ConstGenericView<size_t> input) {
+    template<typename View>
+    inline std::vector<Sindex> sorted_indices(const View& input) {
         std::vector<Sindex> sorted_indices;
         sorted_indices.reserve(input.size());
         for(size_t i = 0; i < input.size(); i++) {
@@ -276,17 +277,46 @@ namespace tdc {namespace esp {
             return m_remaining_size;
         }
 
+        // Extract the linked list vector
         inline std::vector<size_t> extract() && {
             return std::move(m_linked_list);
         }
     };
 
-    class MonotonSubsequences {
-        // TODO: Bitvectors
-        std::vector<size_t> m_sorted_indices;
-
-    public:
-
-
+    struct Dpi_and_b {
+        std::vector<size_t> Dpi;
+        IntVector<uint_t<1>> b;
     };
+
+    template<typename SortedIndices>
+    inline Dpi_and_b create_dpi_and_b_from_sorted_indices(const SortedIndices& sorted_indices) {
+        std::vector<size_t> Dpi;
+        auto b = IntVector<uint_t<1>> {};
+        {
+            auto l = esp::L(sorted_indices);
+            std::vector<esp::Link> links;
+            while (l.sindices_size() > 0) {
+                l.rebuild(false);
+                l.lis(l.layers_size(), links);
+
+                l.rebuild(true);
+                // Only run lis() if needed:
+                // NB: Keep this > to get more decreasing tests,
+                // but change back for final code to calculate less
+                if (!(links.size() > l.layers_size())) {
+                    l.lis(l.layers_size(), links);
+                    b.push_back(uint_t<1>(1));
+                } else {
+                    b.push_back(uint_t<1>(0));
+                }
+
+                // links now contains the longer sequence
+                l.remove_all_and_slice(links);
+            }
+            Dpi = std::move(l).extract();
+        }
+
+        return Dpi_and_b { std::move(Dpi), std::move(b) };
+    }
+
 }}
