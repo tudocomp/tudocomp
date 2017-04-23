@@ -140,7 +140,7 @@ namespace tdc {namespace esp {
                     size_t rule_idx = counter_offset + val;
                     size_t store_idx = rule_idx - GRAMMAR_PD_ELLIDED_PREFIX;
 
-                    last_idx = rule_idx;
+                    last_idx = std::max(rule_idx, last_idx);
 
                     DCHECK_EQ(ret.at(store_idx).at(0), 0);
                     DCHECK_EQ(ret.at(store_idx).at(1), 0);
