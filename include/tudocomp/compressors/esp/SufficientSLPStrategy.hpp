@@ -87,6 +87,31 @@ namespace tdc {namespace esp {
                 }
             }
 
+            // Create Dpi and b
+            std::vector<size_t> Dpi;
+            auto b = IntVector<uint_t<1>> {};
+            {
+                auto tmp = esp::create_dpi_and_b_from_sorted_indices(sis);
+                Dpi = std::move(tmp.Dpi);
+                b = std::move(tmp.b);
+            }
+            size_t b_size = b.size();
+
+            // Write out b and discard it
+            bout.write_compressed_int(b_size);
+            for(uint8_t e : b) {
+                bout.write_bit(e != 0);
+            }
+            std::cout << "comp b:   " << vec_to_debug_string(b) << "\n";
+            b = IntVector<uint_t<1>> {};
+
+            // transform Dpi to WT and write WT
+
+            // Create Dsi from Dpi, discard Dpi,
+            auto Dsi = esp::create_dsigma_from_dpi_and_sorted_indices(sis, Dpi);
+            Dpi = std::vector<size_t>();
+
+            // transform Dsi to WT and write WT
 
         }
 
@@ -112,6 +137,11 @@ namespace tdc {namespace esp {
             esp::SLP slp;
             slp.empty = empty;
             slp.root_rule = root_rule;
+
+            if (empty) {
+                return slp;
+            }
+
             size_t slp_size = (max_val + 1) - 256; // implied initial bytes
             slp.rules.reserve(slp_size);
             slp.rules.resize(slp_size);
@@ -140,7 +170,14 @@ namespace tdc {namespace esp {
             }
             std::cout << vec_to_debug_string(sis) << "\n";
 
-
+            size_t b_size = bin.read_compressed_int<size_t>();
+            auto b = IntVector<uint_t<1>> {};
+            b.reserve(b_size);
+            b.resize(b_size);
+            for(size_t i = 0; i < b_size; i++) {
+                b[i] = bin.read_bit();
+            }
+            std::cout << "decomp b: " << vec_to_debug_string(b) << "\n";
 
             return esp::SLP();
         }

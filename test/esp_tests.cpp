@@ -7,7 +7,6 @@
 #include "tudocomp/compressors/esp/PlainSLPStrategy.hpp"
 #include "tudocomp/compressors/esp/SufficientSLPStrategy.hpp"
 #include "tudocomp/compressors/esp/MonotoneSubsequences.hpp"
-#include "tudocomp/compressors/esp/wt_pc.hpp"
 
 #include "tudocomp/compressors/EspCompressor.hpp"
 
@@ -1127,14 +1126,7 @@ TEST(MonotonSubseq, esp_encoding_real1) {
     //std::cout << "Dpi:\n" << vec_to_debug_string(Dpi, 3) << "\n";
 
     // create from Dpi
-    auto Dsi = std::vector<size_t> {};
-    {
-        Dsi.reserve(D.size());
-        Dsi.resize(D.size());
-        for (size_t i = 0; i < D.size(); i++) {
-            Dsi[sorted_indices[i]] = Dpi[i];
-        }
-    }
+    auto Dsi = esp::create_dsigma_from_dpi_and_sorted_indices(sorted_indices, Dpi);
 
     // std::cout << "Dsi:\n" << vec_to_debug_string(Dsi, 3) << "\n";
 
@@ -1214,59 +1206,14 @@ TEST(MonotonSubseq, esp_encoding_real1) {
 
     // wavelett trees
     {
-        auto make_wt = [](const std::vector<size_t>& v, size_t max_char)
-            -> std::vector<IntVector<uint_t<1>>>
-        {
-            auto rev = [](uint64_t x) -> uint64_t {
-                x = ((x & 0x5555555555555555ULL) << 1) | ((x & 0xAAAAAAAAAAAAAAAAULL) >> 1);
-                x = ((x & 0x3333333333333333ULL) << 2) | ((x & 0xCCCCCCCCCCCCCCCCULL) >> 2);
-                x = ((x & 0x0F0F0F0F0F0F0F0FULL) << 4) | ((x & 0xF0F0F0F0F0F0F0F0ULL) >> 4);
-                x = ((x & 0x00FF00FF00FF00FFULL) << 8) | ((x & 0xFF00FF00FF00FF00ULL) >> 8);
-                x = ((x & 0x0000FFFF0000FFFFULL) <<16) | ((x & 0xFFFF0000FFFF0000ULL) >>16);
-                x = ((x & 0x00000000FFFFFFFFULL) <<32) | ((x & 0xFFFFFFFF00000000ULL) >>32);
-                return x;
-            };
-
-            size_t wt_depth = 0;
-            while (max_char) {
-                max_char >>= 1;
-                ++wt_depth;
-            }
-            size_t alloc_size = (v.size() + 63ULL) >> 6;
-
-            auto wt = wt_pc<size_t, size_t>(v, v.size(), wt_depth).get_bv();
-            auto wt_bvs = std::vector<IntVector<uint_t<1>>>();
-
-            for (size_t i = 0; i < wt.size(); i++) {
-                IntVector<uint_t<1>> tmp;
-                tmp.reserve(v.size());
-                tmp.resize(v.size());
-                auto start = tmp.data();
-                auto end = start + alloc_size;
-                auto start2 = wt[i];
-                while (start != end) {
-                    *start = rev(*start2);
-                    start++;
-                    start2++;
-                }
-
-                //std::cout << vec_to_debug_string(tmp, 1) << "\n";
-                wt_bvs.push_back(std::move(tmp));
-                delete[] wt[i];
-
-            }
-
-            return std::move(wt_bvs);
-        };
-
         //std::cout << "Dsi:\n" << vec_to_debug_string(Dsi, 1) << "\n";
-        auto Dsi_bvs = make_wt(Dsi, b.size() - 1);
+        auto Dsi_bvs = esp::make_wt(Dsi, b.size() - 1);
         auto recovered_Dsi = recover_Dxx(Dsi_bvs, Dsi.size(), b.size() - 1);
         //std::cout << vec_to_debug_string(recovered_Dsi) << "\n";
         ASSERT_EQ(Dsi, recovered_Dsi);
 
         //std::cout << "Dpi:\n" << vec_to_debug_string(Dpi, 1) << "\n";
-        auto Dpi_bvs = make_wt(Dpi, b.size() - 1);
+        auto Dpi_bvs = esp::make_wt(Dpi, b.size() - 1);
         auto recovered_Dpi = recover_Dxx(Dpi_bvs, Dsi.size(), b.size() - 1);
         //std::cout << vec_to_debug_string(recovered_Dpi) << "\n";
         ASSERT_EQ(Dpi, recovered_Dpi);
