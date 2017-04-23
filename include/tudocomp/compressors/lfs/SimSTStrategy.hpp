@@ -63,7 +63,15 @@ private:
 
         if(stree.size(node)>=2){
 
+           // beginning_positions = node_begins[node_id];
+
+            beginning_positions.assign(node_begins[node_id].begin(), node_begins[node_id].end());
+            //for(auto bp_it =node_begins[node_id].begin(); bp_it != node_begins[node_id].end(); bp_it++){
+            //    beginning_positions.push_back(*bp_it);
+            //}
+
             //iterate over corresponding sa and find min and max
+            /*
             offset = stree.lb(node);
             int min = stree.csa[offset];
             int max = stree.csa[offset];
@@ -89,6 +97,7 @@ private:
 
                 return std::vector<int>();
             }
+            */
 
             std::sort(beginning_positions.begin(), beginning_positions.end());
         }
@@ -165,6 +174,9 @@ private:
     typedef std::vector< n_tpl > tuple_vector;
     tuple_vector node_tuples;
 
+
+    std::vector<std::vector<uint> > node_begins;
+
 public:
 
     using Algorithm::Algorithm; //import constructor
@@ -202,6 +214,8 @@ public:
 
 
 
+
+
             uint node_counter = 0;
 
             typedef sdsl::cst_bfs_iterator<cst_t> iterator;
@@ -218,6 +232,7 @@ public:
             });
 
 
+            node_begins.resize(node_counter);
 
             node_tuples.resize(node_counter);
 
@@ -235,6 +250,8 @@ public:
                             cur_tpl = std::make_tuple(bp,bp,1);
                             node_tuples[*bin_it] = cur_tpl;
 
+                            node_begins[*bin_it].push_back(bp);
+
                             //DLOG(INFO)<<"new tuple for id: "<<*bin_it<< " <"<<bp<<","<<bp<<",1>";
 
                         }
@@ -242,13 +259,20 @@ public:
                             int min = stree.size();
                             int max = 0;
                             int card = 0;
+
                             for (auto& child: stree.children(node)) {
                                 int child_id = stree.id(child);
+
+                                node_begins[*bin_it].insert(node_begins[*bin_it].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
+
+
                                 n_tpl child_tpl = node_tuples[child_id];
                                 min = std::min(min, std::get<0>(child_tpl));
                                 max = std::max(max, std::get<1>(child_tpl));
                                 card += std::get<2>(child_tpl);
                             }
+
+                            DLOG(INFO)<<" beginnings for id: "<< *bin_it << " count: "<<node_begins[*bin_it].size();
 
                             cur_tpl = std::make_tuple(min,max,card);
                             //DLOG(INFO)<<"new tuple for id: "<<*bin_it<< " <"<<min<<","<<max<<","<<card<<">";

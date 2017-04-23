@@ -209,7 +209,8 @@ public:
                // DLOG(INFO)<<"lrf_len: "<<lcp_len<< " shorter dif: "<< shorter_dif;
                 //if the factor is still repeating, make the corresponding positions unviable
                 if(lcp_len-shorter_dif>=min_lrf){
-                    lcp_bins[lcp_len-shorter_dif].push_back(*bin_it);
+                    //commented because extremly slow
+                    //lcp_bins[lcp_len-shorter_dif].push_back(*bin_it);
                 }
 
                 if(starting_positions.size()>=2){
