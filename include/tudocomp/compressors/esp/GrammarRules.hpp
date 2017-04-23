@@ -22,7 +22,11 @@ namespace tdc {namespace esp {
             if (v.size() == 2) {
                 r = &n2[v];
             } else if (v.size() == 3) {
-                r = &n3[v];
+                Array<2> between;
+                between.m_data[0] = add(v.slice(0, 2));
+                between.m_data[1] = v[2];
+
+                r = &n2[between];
             } else {
                 DCHECK(false);
             }
