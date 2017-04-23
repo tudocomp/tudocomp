@@ -114,10 +114,11 @@ namespace tdc {namespace esp {
 
         std::vector<std::array<size_t, 2>> ret;
 
-        size_t vector_size =
-            size2 + 2 * size3 + (256 - GRAMMAR_PD_ELLIDED_PREFIX);
-        ret.reserve(vector_size);
-        ret.resize(vector_size, std::array<size_t, 2>{{ 0,0 }});
+        {
+            size_t vector_size = size2 + 2 * size3 + (256 - GRAMMAR_PD_ELLIDED_PREFIX);
+            ret.reserve(vector_size);
+            ret.resize(vector_size, std::array<size_t, 2>{{ 0,0 }});
+        }
 
         size_t i3 = size2 + size3;
 
@@ -128,7 +129,10 @@ namespace tdc {namespace esp {
 
         size_t debug_round = 0;
         for (auto& r: rs) {
+            const size_t i3_end = i3 + r.gr.n3.size();
+
             auto doit = [&](auto& n) {
+                // NB! Non determinism here!
                 for (auto& kv: n) {
                     const auto& key = kv.first;
                     const auto& val = kv.second - 1;
@@ -163,6 +167,7 @@ namespace tdc {namespace esp {
 
             doit(r.gr.n2);
             doit(r.gr.n3);
+            DCHECK_EQ(i3, i3_end);
             prev_counter_offset = counter_offset;
             counter_offset += r.gr.counter - 1;
 
