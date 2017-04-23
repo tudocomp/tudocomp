@@ -39,6 +39,7 @@ static_assert(std::is_same<
 // compile-time tests for DSDependencyGraph
 using depgraph_t = DSDependencyGraph<dsmanager_t>;
 
+// in_degree
 static_assert(0 == depgraph_t::in_degree<ds::SUFFIX_ARRAY>(),
     "Wrong in degree of SUFFIX_ARRAY node in dependency graph");
 static_assert(1 == depgraph_t::in_degree<ds::INVERSE_SUFFIX_ARRAY>(),
@@ -48,6 +49,7 @@ static_assert(1 == depgraph_t::in_degree<ds::PHI_ARRAY>(),
 static_assert(1 == depgraph_t::in_degree<ds::LCP_ARRAY>(),
     "Wrong in degree of LCP_ARRAY node in dependency graph");
 
+// cost
 static_assert(0 == depgraph_t::cost<ds::SUFFIX_ARRAY>(),
     "Wrong in cost of SUFFIX_ARRAY node in dependency graph");
 static_assert(1 == depgraph_t::cost<ds::INVERSE_SUFFIX_ARRAY>(),
@@ -56,6 +58,14 @@ static_assert(1 == depgraph_t::cost<ds::PHI_ARRAY>(),
     "Wrong in cost of PHI_ARRAY node in dependency graph");
 static_assert(2 == depgraph_t::cost<ds::LCP_ARRAY>(),
     "Wrong in cost of LCP_ARRAY node in dependency graph");
+
+// construction order
+static_assert(std::is_same<
+    depgraph_t::construction_order<
+        ds::SUFFIX_ARRAY, ds::INVERSE_SUFFIX_ARRAY, ds::LCP_ARRAY>,
+    std::index_sequence<
+        ds::LCP_ARRAY, ds::INVERSE_SUFFIX_ARRAY, ds::SUFFIX_ARRAY>
+>::value, "Wrong construction order");
 
 TEST(Sandbox, example) {
     // test input

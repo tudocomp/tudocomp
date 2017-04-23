@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tudocomp/util/cpp14/integer_sequence.hpp>
+#include <tudocomp/util/integer_sequence_sort.hpp>
 #include <tudocomp/ds/DSDef.hpp>
 
 namespace tdc {
@@ -43,12 +44,21 @@ private:
     template<dsid_t ds>
     using provider_t = typename manager_t::template provider_type<ds>;
 
-    // in_degree - trivial case
-    // return size of requirement list
+    // in_degree = size of requirement list
     template<dsid_t ds> struct _in_degree {
         static constexpr size_t value = provider_t<ds>::requires::size();
     };
 
+public:
+    /// \brief Returns the in-degree of a data structure node.
+    ///
+    /// \tparam ds the data structure
+    template<dsid_t ds>
+    static constexpr size_t in_degree() {
+        return _in_degree<ds>::value;
+    }
+
+private:
     // cost - decl
     template<dsid_t ds, typename req> struct _cost;
 
@@ -56,7 +66,7 @@ private:
     // add cost (recursive) of next ingoing node to cost of remainder
     template<dsid_t ds, dsid_t req_head, dsid_t... req_tail>
     struct _cost<ds, std::index_sequence<req_head, req_tail...>> {
-        static constexpr size_t value = 
+        static constexpr size_t value =
             _cost<req_head, typename provider_t<req_head>::requires>::value +
             _cost<ds, std::index_sequence<req_tail...>>::value;
     };
@@ -65,19 +75,51 @@ private:
     // return the in-degree of the node
     template<dsid_t ds>
     struct _cost<ds, std::index_sequence<>> {
-        static constexpr size_t value = _in_degree<ds>::value;
+        static constexpr size_t value = in_degree<ds>();
     };
 
 public:
-    template<dsid_t ds>
-    static constexpr size_t in_degree() {
-        return _in_degree<ds>::value;
-    }
-
+    /// \brief Returns the cost of a data structure node.
+    ///
+    /// \tparam ds the data structure
     template<dsid_t ds>
     static constexpr size_t cost() {
         return _cost<ds, typename provider_t<ds>::requires>::value;
     }
+
+private:
+    // descending comparator for costs
+    struct _cost_compare {
+        template<typename T, T A, T B>
+        static constexpr bool compare() {
+            static_assert(std::is_same<T, dsid_t>::value, "bad dsid type");
+            return cost<A>() >= cost<B>();
+        }
+    };
+
+    // computes the construction order for a set of data structures based
+    // on their costs (highest first)
+    template<typename Seq>
+    struct _construction_order {
+        using seq = is::sort_idx<Seq, _cost_compare>;
+    };
+
+public:
+    /// \brief Computes the construction order for a set of data structure
+    ///        nodes based on their costs (highest first).
+    ///
+    /// \tparam ds the data structures in question
+    template<dsid_t... ds>
+    using construction_order = typename _construction_order<
+        std::index_sequence<ds...>>::seq;
+
+    /// \brief Computes the construction order for a data structure node's
+    ///        incoming edges based on their costs (highest first).
+    ///
+    /// \tparam ds the data structure
+    template<dsid_t ds>
+    using dependency_order = typename _construction_order<
+        typename provider_t<ds>::requires>::seq;
 };
 
 } //ns
