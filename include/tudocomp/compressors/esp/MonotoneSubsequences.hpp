@@ -409,6 +409,7 @@ namespace tdc {namespace esp {
 
             size_t bit = (*m_bv)[m_start++];
             if (m_next0 != nullptr) {
+                //std::cout << bit << "->";
                 if (bit == 0) {
                     return m_next0->next();
                 } else {
@@ -416,10 +417,27 @@ namespace tdc {namespace esp {
                 }
             } else {
                 if (bit == 0) {
+                    //std::cout << bit << ": " << m_min_value << "\n";
                     DCHECK_LE(m_max_value - m_min_value, 1);
+
                     return m_min_value;
                 } else {
-                    DCHECK_EQ(m_max_value - m_min_value, 1);
+                    //std::cout << bit << ": " << m_max_value << "\n";
+
+                    if (m_max_value - m_min_value == 0) {
+                        std::cout << "!!!!!!!!!!!!!!!!!!!!!!\n";
+                    }
+
+                    /*
+                    DCHECK_EQ(m_max_value - m_min_value, 1)
+                        << "\nmin: " << m_min_value << ", "
+                        << "\nmax: " << m_max_value << ", "
+                        << "\nstart: " << m_start << ", "
+                        << "\nend:   " << m_end << ", "
+                        << "\nbs: " << vec_to_debug_string(*m_bv) << "\n"
+                        ;
+                        */
+
                     return m_max_value;
                 }
             }
@@ -435,60 +453,67 @@ namespace tdc {namespace esp {
             count = count * 2 + 1;
         }
         //std::cout << "max value: " << max_value << "\n";
-        auto iters = std::vector<WTIter>();
-        iters.reserve(count);
-        iters.resize(count);
 
-        iters[0].m_min_value = 0;
-        iters[0].m_max_value = max_value;
+        std::vector<size_t> ret;
 
-        size_t iters_i = 0;
-        for(size_t depth = 0; depth < bvs.size(); depth++) {
-            auto& layer = node_sizes.at(depth);
+        if (count > 0) {
+            DCHECK_GT(count, 0);
 
-            size_t layer_bv_offset = 0;
-            for(size_t node_i = 0; node_i < layer.size(); node_i++) {
-                size_t node_size = layer.at(node_i);
-                auto& iter = iters.at(iters_i);
+            auto iters = std::vector<WTIter>();
+            iters.reserve(count);
+            iters.resize(count);
 
-                iter.m_start = layer_bv_offset;
-                iter.m_end = iter.m_start + node_size;
-                iter.m_bv = &bvs.at(depth);
-                iter.m_depth = depth;
-                iter.m_next0 = nullptr;
-                iter.m_next1 = nullptr;
+            iters[0].m_min_value = 0;
+            iters[0].m_max_value = max_value;
 
-                if (depth < (bvs.size() - 1)) {
-                    auto& child0 = iters[iters_i * 2 + 1];
-                    auto& child1 = iters[iters_i * 2 + 2];
+            size_t iters_i = 0;
+            for(size_t depth = 0; depth < bvs.size(); depth++) {
+                auto& layer = node_sizes.at(depth);
 
-                    iter.m_next0 = &child0;
-                    iter.m_next1 = &child1;
+                size_t layer_bv_offset = 0;
+                for(size_t node_i = 0; node_i < layer.size(); node_i++) {
+                    size_t node_size = layer.at(node_i);
+                    auto& iter = iters.at(iters_i);
 
-                    size_t min = iter.m_min_value;
-                    size_t max = iter.m_max_value;
+                    iter.m_start = layer_bv_offset;
+                    iter.m_end = iter.m_start + node_size;
+                    iter.m_bv = &bvs.at(depth);
+                    iter.m_depth = depth;
+                    iter.m_next0 = nullptr;
+                    iter.m_next1 = nullptr;
 
-                    size_t mid = (max - min) / 2 + min;
+                    if (depth < (bvs.size() - 1)) {
+                        auto& child0 = iters[iters_i * 2 + 1];
+                        auto& child1 = iters[iters_i * 2 + 2];
 
-                    child0.m_min_value = min;
-                    child0.m_max_value = mid;
-                    child1.m_min_value = std::min(mid + 1, max);
-                    child1.m_max_value = max;
+                        iter.m_next0 = &child0;
+                        iter.m_next1 = &child1;
+
+                        size_t min = iter.m_min_value;
+                        size_t max = iter.m_max_value;
+
+                        size_t mid = (max - min) / 2 + min;
+
+                        child0.m_min_value = min;
+                        child0.m_max_value = mid;
+                        child1.m_min_value = std::min(mid + 1, max);
+                        child1.m_max_value = max;
+                    }
+
+                    iters_i++;
+                    layer_bv_offset += node_size;
                 }
+            }
 
-                iters_i++;
-                layer_bv_offset += node_size;
+            ret.reserve(bvs[0].size());
+            while(iters[0].has_next()) {
+                ret.push_back(iters[0].next());
+                //std::cout << "\n";
             }
         }
 
-        std::vector<size_t> tmp;
-        tmp.reserve(bvs[0].size());
-        while(iters[0].has_next()) {
-            tmp.push_back(iters[0].next());
-            //std::cout << "\n";
-        }
-        //std::cout << "!!!:\n" << vec_to_debug_string(tmp) << "\n";
-        return tmp;
+        //std::cout << "!!!:\n" << vec_to_debug_string(ret) << "\n";
+        return ret;
     }
 
     auto recover_Dxx(const std::vector<IntVector<uint_t<1>>>& bvs,
@@ -499,7 +524,7 @@ namespace tdc {namespace esp {
         size_t wt_sizes_i = 0;
         size_t sizes_sizes = 1;
 
-        for (size_t bvs_i = 0; bvs_i < (bvs.size() - 1); bvs_i++) {
+        for (size_t bvs_i = 0; (bvs_i + 1) < bvs.size(); bvs_i++) {
             auto& layer = bvs[bvs_i];
             sizes_sizes *= 2;
             auto wt_sizes_next = std::vector<size_t> {};
@@ -526,6 +551,8 @@ namespace tdc {namespace esp {
         /*for(auto& e : wt_sizes) {
             std::cout << "e: " << vec_to_debug_string(e) << "\n";
         }*/
+
+        std::cout << "ok " << __LINE__ << "\n";
 
         return extract_from_wt(wt_sizes, bvs, max_value);
     }
