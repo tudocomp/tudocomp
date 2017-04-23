@@ -69,6 +69,15 @@ using insert = typename _insert<T, Compare, Value, Seq>::seq;
 template<typename T, typename Seq, typename Compare = ascending>
 using sort = typename _sort<T, Compare, Seq>::seq;
 
+/// \brief Sorts an index sequence using insertion sort.
+///
+/// \tparam Seq the sequence to sort
+/// \tparam Compare the value comparator. Must implement a
+///         <code>static constexpr bool compare(T a, T b)</code> function that
+///         returns \c true iff a comes before b in the ordering.
+template<typename Seq, typename Compare = ascending>
+using sort_idx = typename _sort<size_t, Compare, Seq>::seq;
+
 /// \cond INTERNAL
 
 // implementations
