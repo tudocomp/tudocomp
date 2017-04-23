@@ -302,7 +302,7 @@ namespace tdc {namespace esp {
 
                 l.rebuild(true);
                 // Only run lis() if needed:
-                // NB: Keep this > to get more decreasing tests,
+                // TODO: Keep this > to get more decreasing tests,
                 // but change back for final code to calculate less
                 if (!(links.size() > l.layers_size())) {
                     l.lis(l.layers_size(), links);
@@ -345,6 +345,10 @@ namespace tdc {namespace esp {
             x = ((x & 0x00000000FFFFFFFFULL) <<32) | ((x & 0xFFFFFFFF00000000ULL) >>32);
             return x;
         };
+        auto wt_bvs = std::vector<IntVector<uint_t<1>>>();
+
+        std::cout << "v: " << vec_to_debug_string(v) << "\n";
+        std::cout << "max_char:   " << max_char << "\n";
 
         size_t wt_depth = 0;
         while (max_char) {
@@ -353,8 +357,14 @@ namespace tdc {namespace esp {
         }
         size_t alloc_size = (v.size() + 63ULL) >> 6;
 
+        std::cout << "alloc_size: " << alloc_size << "\n";
+        std::cout << "wt_depth:   " << wt_depth << "\n";
+
+        if (wt_depth == 0) {
+            return std::move(wt_bvs);
+        }
+
         auto wt = wt_pc<size_t, size_t>(v, v.size(), wt_depth).get_bv();
-        auto wt_bvs = std::vector<IntVector<uint_t<1>>>();
 
         for (size_t i = 0; i < wt.size(); i++) {
             IntVector<uint_t<1>> tmp;

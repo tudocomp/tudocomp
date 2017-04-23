@@ -42,6 +42,18 @@ namespace tdc {namespace esp {
             // root rule
             bout.write_int(slp.root_rule, bit_width);
 
+            if (slp.empty || slp.root_rule < 256) {
+                return;
+            }
+
+            /*
+            for (size_t i = 0; i < slp.rules.size(); i++) {
+                std::cout
+                    << i << ": "
+                    << i + esp::GRAMMAR_PD_ELLIDED_PREFIX
+                    << " -> (" << slp.rules[i][0] << ", " << slp.rules[i][1] << ")\n";
+            }*/
+
             // ...
             //std::vector<size_t> rules_lhs;
             //std::vector<size_t> rules_lhs_diff;
@@ -71,6 +83,14 @@ namespace tdc {namespace esp {
                 }
             };
             const auto rhs = RhsAdapter { &slp };
+
+            {
+                std::vector<size_t> rules_rhs;
+                for(size_t i = 0; i < rhs.size(); i++) {
+                    rules_rhs.push_back(rhs[i]);
+                }
+                std::cout << "rhs: " << vec_to_debug_string(rules_rhs) << "\n";
+            }
 
             // Sort rhs and create sorted indice array O(n log n)
             const auto sis = sorted_indices(rhs);
@@ -105,13 +125,21 @@ namespace tdc {namespace esp {
             std::cout << "comp b:   " << vec_to_debug_string(b) << "\n";
             b = IntVector<uint_t<1>> {};
 
-            // transform Dpi to WT and write WT
+            // transform Dpi to WT and write WT and discard WT
+            {
+                auto Dpi_bvs = make_wt(Dpi, b_size - 1);
+
+            }
 
             // Create Dsi from Dpi, discard Dpi,
             auto Dsi = esp::create_dsigma_from_dpi_and_sorted_indices(sis, Dpi);
             Dpi = std::vector<size_t>();
 
-            // transform Dsi to WT and write WT
+            // transform Dsi to WT and write WT and discard WT
+            {
+                auto Dsi_bvs = make_wt(Dsi, b_size - 1);
+
+            }
 
         }
 
@@ -138,7 +166,7 @@ namespace tdc {namespace esp {
             slp.empty = empty;
             slp.root_rule = root_rule;
 
-            if (empty) {
+            if (empty || slp.root_rule < 256) {
                 return slp;
             }
 
