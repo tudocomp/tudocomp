@@ -4,7 +4,9 @@
 
 namespace tdc {namespace esp {
     struct GrammarRules {
-        GrammarRules(size_t counter_start): counter(counter_start + 1) {}
+        GrammarRules(size_t counter_start):
+            counter(counter_start + 1),
+            m_initial_counter(counter_start + 1) {}
         using a2_t = std::unordered_map<Array<2>, size_t>;
         using a3_t = std::unordered_map<Array<3>, size_t>;
 
@@ -12,6 +14,8 @@ namespace tdc {namespace esp {
         a3_t n3;
 
         size_t counter = 1;
+
+        size_t m_initial_counter = 1;
 
         size_t add(in_t v) {
             size_t* r;
@@ -28,6 +32,10 @@ namespace tdc {namespace esp {
             }
 
             return *r - 1;
+        }
+
+        size_t rules_count() const {
+            return counter - m_initial_counter;
         }
     };
 }}

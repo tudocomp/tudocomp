@@ -15,7 +15,7 @@ namespace tdc {namespace esp {
         // Initialize initial round
         {
             Round round0 {
-                GrammarRules(0),
+                GrammarRules(256),
                 256, // TODO: Calc actual alphabet size
                 std::vector<size_t>(),
             };
@@ -63,7 +63,7 @@ namespace tdc {namespace esp {
                 for (auto e : v) {
                     auto slice = s.slice(0, e.len);
                     s = s.slice(e.len);
-                    auto rule_name = r.gr.add(slice);
+                    auto rule_name = r.gr.add(slice) - (r.gr.m_initial_counter - 1);
 
                     ctx.debug.slice_symbol_map(slice, rule_name);
 
@@ -76,8 +76,8 @@ namespace tdc {namespace esp {
             // Prepare next round
             {
                 rounds.push_back(Round {
-                    GrammarRules(0),
-                    r.gr.counter - 1,
+                    GrammarRules(r.gr.rules_count()),
+                    r.gr.rules_count(),
                     std::move(new_layer),
                 });
             }
@@ -135,7 +135,7 @@ namespace tdc {namespace esp {
                 // NB! Non determinism here!
                 for (auto& kv: n) {
                     const auto& key = kv.first;
-                    const auto& val = kv.second - 1;
+                    const auto& val = kv.second - r.gr.m_initial_counter;
 
                     size_t rule_idx = counter_offset + val;
                     size_t store_idx = rule_idx - GRAMMAR_PD_ELLIDED_PREFIX;
@@ -169,7 +169,7 @@ namespace tdc {namespace esp {
             doit(r.gr.n3);
             DCHECK_EQ(i3, i3_end);
             prev_counter_offset = counter_offset;
-            counter_offset += r.gr.counter - 1;
+            counter_offset += r.gr.rules_count();
 
             debug_round++;
         }
