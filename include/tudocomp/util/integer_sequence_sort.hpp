@@ -30,9 +30,9 @@ using prepend = typename _prepend<T, Value, Seq>::seq;
 /// The comparator returns \c true iff the first value is less than or equal
 /// to the second using the \c <= operator.
 struct ascending {
-    template<typename T>
-    static constexpr bool compare(const T& a, const T& b) {
-        return a <= b;
+    template<typename T, T A, T B>
+    static constexpr bool compare() {
+        return A <= B;
     }
 };
 
@@ -41,9 +41,9 @@ struct ascending {
 /// The comparator returns \c true iff the first value is greater than or equal
 /// to the second using the \c >= operator.
 struct descending {
-    template<typename T>
-    static constexpr bool compare(const T& a, const T& b) {
-        return a >= b;
+    template<typename T, T A, T B>
+    static constexpr bool compare() {
+        return A >= B;
     }
 };
 
@@ -53,9 +53,8 @@ struct descending {
 /// \tparam T the integer type
 /// \tparam Value the value to insert
 /// \tparam Seq the sorted integer sequence to insert into
-/// \tparam Compare the value comparator. Must implement a
-///         <code>static constexpr bool compare(T a, T b)</code> function that
-///         returns \c true iff a comes before b in the ordering.
+/// \tparam Compare the value comparator. Must implement a special \c compare
+///         function. See \ref ascending and \ref descending for examples.
 template<typename T, T Value, typename Seq, typename Compare = ascending>
 using insert = typename _insert<T, Compare, Value, Seq>::seq;
 
@@ -63,9 +62,8 @@ using insert = typename _insert<T, Compare, Value, Seq>::seq;
 ///
 /// \tparam T the integer type
 /// \tparam Seq the sequence to sort
-/// \tparam Compare the value comparator. Must implement a
-///         <code>static constexpr bool compare(T a, T b)</code> function that
-///         returns \c true iff a comes before b in the ordering.
+/// \tparam Compare the value comparator. Must implement a special \c compare
+///         function. See \ref ascending and \ref descending for examples.
 template<typename T, typename Seq, typename Compare = ascending>
 using sort = typename _sort<T, Compare, Seq>::seq;
 
@@ -91,14 +89,14 @@ struct _prepend<T, Value, std::integer_sequence<T, Seq...>> {
 // insert operation - case 1: Value <= Head
 // simply prepend Value to remaining sequence
 template<typename T, typename Compare, T Value, T Head, T... Tail>
-constexpr typename std::enable_if<Compare::compare(Value, Head),
+constexpr typename std::enable_if<Compare::template compare<T, Value, Head>(),
     std::integer_sequence<T, Value, Head, Tail...>
     >::type _insert_op();
 
 // insert operation - case 2: Value > Head
 // prepend Head to recursive application
 template<typename T, typename Compare, T Value, T Head, T... Tail>
-constexpr typename std::enable_if<!Compare::compare(Value, Head),
+constexpr typename std::enable_if<!Compare::template compare<T, Value, Head>(),
     prepend<T, Head, insert<T, Value, std::integer_sequence<T, Tail...>, Compare>>
     >::type _insert_op();
 
