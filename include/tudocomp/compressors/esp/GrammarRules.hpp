@@ -4,7 +4,7 @@
 
 namespace tdc {namespace esp {
     struct GrammarRules {
-        GrammarRules() {}
+        GrammarRules(size_t counter_start): counter(counter_start + 1) {}
         using a2_t = std::unordered_map<Array<2>, size_t>;
         using a3_t = std::unordered_map<Array<3>, size_t>;
 

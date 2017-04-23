@@ -15,7 +15,7 @@ namespace tdc {namespace esp {
         // Initialize initial round
         {
             Round round0 {
-                GrammarRules(),
+                GrammarRules(0),
                 256, // TODO: Calc actual alphabet size
                 std::vector<size_t>(),
             };
@@ -76,7 +76,7 @@ namespace tdc {namespace esp {
             // Prepare next round
             {
                 rounds.push_back(Round {
-                    GrammarRules(),
+                    GrammarRules(0),
                     r.gr.counter - 1,
                     std::move(new_layer),
                 });
