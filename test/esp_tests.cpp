@@ -950,6 +950,149 @@ TEST(MonotonSubseq, esp_encoding_paper_example) {
     ASSERT_EQ(Dpi, (std::vector<size_t> { 0, 1, 1, 0, 0 }));
 }
 
+struct WTIter {
+    size_t m_start;
+    size_t m_end;
+    const IntVector<uint_t<1>>* m_bv;
+    size_t m_depth;
+    size_t m_min_value;
+    size_t m_max_value;
+    WTIter* m_next0;
+    WTIter* m_next1;
+
+    inline bool has_next() {
+        return m_start != m_end;
+    }
+
+    inline size_t next() {
+        DCHECK(has_next());
+
+        //std::cout << "next @ depth: " << m_depth << ", pos: " << m_start << "\n";
+
+        size_t bit = (*m_bv)[m_start++];
+        if (m_next0 != nullptr) {
+            if (bit == 0) {
+                return m_next0->next();
+            } else {
+                return m_next1->next();
+            }
+        } else {
+            if (bit == 0) {
+                DCHECK_LE(m_max_value - m_min_value, 1);
+                return m_min_value;
+            } else {
+                DCHECK_EQ(m_max_value - m_min_value, 1);
+                return m_max_value;
+            }
+        }
+    }
+};
+
+auto extract_from_wt(const std::vector<std::vector<size_t>>& node_sizes,
+                     const std::vector<IntVector<uint_t<1>>>& bvs,
+                     size_t max_value) -> std::vector<size_t>
+{
+    size_t count = 0;
+    for(size_t depth = 0; depth < bvs.size(); depth++) {
+        count = count * 2 + 1;
+    }
+    //std::cout << "max value: " << max_value << "\n";
+    auto iters = std::vector<WTIter>();
+    iters.reserve(count);
+    iters.resize(count);
+
+    iters[0].m_min_value = 0;
+    iters[0].m_max_value = max_value;
+
+    size_t iters_i = 0;
+    for(size_t depth = 0; depth < bvs.size(); depth++) {
+        auto& layer = node_sizes.at(depth);
+
+        size_t layer_bv_offset = 0;
+        for(size_t node_i = 0; node_i < layer.size(); node_i++) {
+            size_t node_size = layer.at(node_i);
+            auto& iter = iters.at(iters_i);
+
+            iter.m_start = layer_bv_offset;
+            iter.m_end = iter.m_start + node_size;
+            iter.m_bv = &bvs.at(depth);
+            iter.m_depth = depth;
+            iter.m_next0 = nullptr;
+            iter.m_next1 = nullptr;
+
+            if (depth < (bvs.size() - 1)) {
+                auto& child0 = iters[iters_i * 2 + 1];
+                auto& child1 = iters[iters_i * 2 + 2];
+
+                iter.m_next0 = &child0;
+                iter.m_next1 = &child1;
+
+                size_t min = iter.m_min_value;
+                size_t max = iter.m_max_value;
+
+                size_t mid = (max - min) / 2 + min;
+
+                child0.m_min_value = min;
+                child0.m_max_value = mid;
+                child1.m_min_value = std::min(mid + 1, max);
+                child1.m_max_value = max;
+            }
+
+            iters_i++;
+            layer_bv_offset += node_size;
+        }
+    }
+
+    std::vector<size_t> tmp;
+    tmp.reserve(bvs[0].size());
+    while(iters[0].has_next()) {
+        tmp.push_back(iters[0].next());
+        //std::cout << "\n";
+    }
+    //std::cout << "!!!:\n" << vec_to_debug_string(tmp) << "\n";
+    return tmp;
+}
+
+
+auto recover_Dxx(const std::vector<IntVector<uint_t<1>>>& bvs,
+                 size_t size,
+                 size_t max_value) -> std::vector<size_t>
+{
+    auto wt_sizes = std::vector<std::vector<size_t>> { { size } };
+    size_t wt_sizes_i = 0;
+    size_t sizes_sizes = 1;
+
+    for (size_t bvs_i = 0; bvs_i < (bvs.size() - 1); bvs_i++) {
+        auto& layer = bvs[bvs_i];
+        sizes_sizes *= 2;
+        auto wt_sizes_next = std::vector<size_t> {};
+        wt_sizes_next.reserve(sizes_sizes);
+        wt_sizes_next.resize(sizes_sizes);
+        size_t wt_sizes_next_i = 0;
+
+        size_t start = 0;
+
+        for(size_t w : wt_sizes[wt_sizes_i]) {
+            for(size_t i = start; i < (start + w); i++) {
+                size_t bit = layer[i];
+
+                wt_sizes_next[wt_sizes_next_i * 2 + bit] += 1;
+            }
+            start += w;
+            wt_sizes_next_i++;
+        }
+
+        wt_sizes.push_back(std::move(wt_sizes_next));
+        wt_sizes_i++;
+    }
+
+    /*for(auto& e : wt_sizes) {
+        std::cout << "e: " << vec_to_debug_string(e) << "\n";
+    }*/
+
+    return extract_from_wt(wt_sizes, bvs, max_value);
+};
+
 TEST(MonotonSubseq, esp_encoding_real1) {
     const auto D = std::vector<size_t>{
         48, 115, 99, 97, 103, 103, 97, 107, 98, 115, 107, 98, 107, 97, 118,
@@ -1126,64 +1269,26 @@ TEST(MonotonSubseq, esp_encoding_real1) {
                     start2++;
                 }
 
-                std::cout << vec_to_debug_string(tmp, 1) << "\n";
+                //std::cout << vec_to_debug_string(tmp, 1) << "\n";
                 wt_bvs.push_back(std::move(tmp));
-                //delete[] wt[i];
+                delete[] wt[i];
 
             }
 
             return std::move(wt_bvs);
         };
 
-
-        auto recover_Dxx = [](const std::vector<IntVector<uint_t<1>>> bvs, size_t size)
-            -> std::vector<size_t>
-        {
-            auto recovered = std::vector<size_t>();
-            recovered.reserve(size);
-            recovered.resize(size);
-            auto wt_sizes = std::vector<size_t> { size };
-            size_t sizes_sizes = 1;
-
-            for (auto& layer : bvs) {
-                sizes_sizes *= 2;
-                auto wt_sizes_next = std::vector<size_t> {};
-                wt_sizes_next.reserve(sizes_sizes);
-                wt_sizes_next.resize(sizes_sizes);
-                size_t wt_sizes_next_i = 0;
-
-                size_t start = 0;
-
-                for(size_t w : wt_sizes) {
-                    for(size_t i = start; i < (start + w); i++) {
-                        size_t bit = layer[i];
-                        recovered[i] *= 2;
-                        recovered[i] += bit;
-
-                        wt_sizes_next[wt_sizes_next_i * 2 + bit] += 1;
-                    }
-                    start += w;
-                    wt_sizes_next_i++;
-                }
-
-                wt_sizes = std::move(wt_sizes_next);
-                std::cout << vec_to_debug_string(recovered) << "\n";
-            }
-
-            return recovered;
-        };
-
-
-        std::cout << "Dsi:\n" << vec_to_debug_string(Dsi, 1) << "\n";
+        //std::cout << "Dsi:\n" << vec_to_debug_string(Dsi, 1) << "\n";
         auto Dsi_bvs = make_wt(Dsi, b.size() - 1);
-        auto recovered_Dsi = recover_Dxx(Dsi_bvs, Dsi.size());
-        std::cout << vec_to_debug_string(recovered_Dsi) << "\n";
+        auto recovered_Dsi = recover_Dxx(Dsi_bvs, Dsi.size(), b.size() - 1);
+        //std::cout << vec_to_debug_string(recovered_Dsi) << "\n";
+        ASSERT_EQ(Dsi, recovered_Dsi);
 
-
-        std::cout << "Dpi:\n" << vec_to_debug_string(Dpi, 1) << "\n";
+        //std::cout << "Dpi:\n" << vec_to_debug_string(Dpi, 1) << "\n";
         auto Dpi_bvs = make_wt(Dpi, b.size() - 1);
-        auto recovered_Dpi = recover_Dxx(Dpi_bvs, Dsi.size());
-        std::cout << vec_to_debug_string(recovered_Dpi) << "\n";
+        auto recovered_Dpi = recover_Dxx(Dpi_bvs, Dsi.size(), b.size() - 1);
+        //std::cout << vec_to_debug_string(recovered_Dpi) << "\n";
+        ASSERT_EQ(Dpi, recovered_Dpi);
 
     }
 }
