@@ -2,8 +2,7 @@
 // almost all are "implemented" using static assertions
 
 #include <type_traits>
-#include <tudocomp/util/cpp14/integer_sequence.hpp>
-#include <tudocomp/util/integer_sequence_sort.hpp>
+#include <tudocomp/util/integer_sequence.hpp>
 #include <tudocomp/util/type_list.hpp>
 
 using namespace tdc;
@@ -11,13 +10,6 @@ using namespace tdc;
 // integer sequences
 using mtseq_t    = std::index_sequence<>;
 using testseq1_t = std::index_sequence<5, 2, 4, 3, 1>;
-
-// sequence_element
-static_assert(sequence_element<0, testseq1_t>::value == 5, "sequence_element");
-static_assert(sequence_element<1, testseq1_t>::value == 2, "sequence_element");
-static_assert(sequence_element<2, testseq1_t>::value == 4, "sequence_element");
-static_assert(sequence_element<3, testseq1_t>::value == 3, "sequence_element");
-static_assert(sequence_element<4, testseq1_t>::value == 1, "sequence_element");
 
 // is::prepend
 static_assert(std::is_same<
@@ -114,8 +106,7 @@ static_assert(std::is_same<
 
 TEST(variadic_tests, seq_to_vector) {
     constexpr size_t N = 10;
-    using seq_t = std::make_index_sequence<N>;
-    auto vec = vector_from_sequence(seq_t());
+    auto vec = is::to_vector(std::make_index_sequence<N>());
     for(size_t i = 0; i < N; i++) {
         ASSERT_EQ(i, vec[i]);
     }

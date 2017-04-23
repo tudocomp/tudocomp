@@ -7,7 +7,7 @@ namespace std {
 
 /*
     This header simulates the std::integer_sequence as introduced in C++14.
-    Remove this std namespace part when tudocomp is adapted to C++14.
+    Remove this file when tudocomp is adapted to C++14.
 
     Source: http://www.pdimov.com/cpp2/simple_cxx11_metaprogramming.html
 */
@@ -49,49 +49,3 @@ template<std::size_t N>
     using make_index_sequence = make_integer_sequence<std::size_t, N>;
 
 } // namespace std
-
-namespace tdc {
-
-/// Gives the ith element of a given integer sequence.
-template<size_t I, typename Seq> struct sequence_element;
-
-/// Recursive case for sequence_element: strip off the first element in
-/// the sequence and retrieve the (i-1)th element of the remaining sequence.
-template<size_t I, typename T, T Head, T... Tail>
-struct sequence_element<I, std::integer_sequence<T, Head, Tail...>>
-: sequence_element<I - 1, std::integer_sequence<T, Tail...>>{};
-
-/// Basis case for sequence_element: The first element is the one we're seeking.
-template<typename T, T Head, T... Tail>
-struct sequence_element<0, std::integer_sequence<T, Head, Tail...>> {
-    static constexpr T value = Head;
-};
-
-/// \cond INTERNAL
-template<typename T>
-inline void _vec_from_seq(std::vector<T>& v, std::integer_sequence<T>) {
-    // done
-}
-
-template<typename T, T Head, T... Tail>
-inline void _vec_from_seq(std::vector<T>& v,
-    std::integer_sequence<T, Head, Tail...>) {
-
-    // set and recurse
-    v.emplace_back(Head);
-    _vec_from_seq(v, std::integer_sequence<T, Tail...>());
-}
-/// \endcond
-
-/// create a vector from an integer sequence
-template<typename T, T... Seq>
-inline std::vector<T> vector_from_sequence(
-    std::integer_sequence<T, Seq...>) {
-
-    std::vector<T> v;
-    v.reserve(sizeof...(Seq));
-    _vec_from_seq(v, std::integer_sequence<T, Seq...>());
-    return v;
-}
-
-} // namespace tdc

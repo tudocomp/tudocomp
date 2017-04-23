@@ -3,8 +3,7 @@
 #include <map>
 #include <set>
 
-#include <tudocomp/util/cpp14/integer_sequence.hpp>
-#include <tudocomp/util/integer_sequence_sort.hpp>
+#include <tudocomp/util/integer_sequence.hpp>
 #include <tudocomp/ds/DSDef.hpp>
 #include <tudocomp/ds/CompressMode.hpp>
 

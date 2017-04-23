@@ -131,4 +131,32 @@ struct _sort<T, Compare, std::integer_sequence<T, Head, Tail...>> {
 
 /// \endcond
 
+/// \cond INTERNAL
+template<typename T>
+inline void _to_vector(std::vector<T>& v, std::integer_sequence<T>) {
+    // done
+}
+
+template<typename T, T Head, T... Tail>
+inline void _to_vector(std::vector<T>& v,
+    std::integer_sequence<T, Head, Tail...>) {
+
+    // add head and recurse
+    v.emplace_back(Head);
+    _to_vector(v, std::integer_sequence<T, Tail...>());
+}
+/// \endcond
+
+/// \brief Creates a vector from an integer sequence
+///
+/// \tparam T the integer type
+/// \tparam Seq the integer sequence
+template<typename T, T... Seq>
+inline std::vector<T> to_vector(std::integer_sequence<T, Seq...>) {
+    std::vector<T> v;
+    v.reserve(sizeof...(Seq));
+    _to_vector(v, std::integer_sequence<T, Seq...>());
+    return v;
+}
+
 }} //ns
