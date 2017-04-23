@@ -88,30 +88,12 @@ TEST(Sandbox, example) {
     ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(lcp_provider)>::type::meta().name());
     ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(plcp_provider)>::type::meta().name());
 
-    // get abstract providers (runtime version)
-    auto p_sa_provider   = dsman.abstract_provider(ds::SUFFIX_ARRAY);
-    auto p_isa_provider  = dsman.abstract_provider(ds::INVERSE_SUFFIX_ARRAY);
-    auto p_phi_provider  = dsman.abstract_provider(ds::PHI_ARRAY);
-    auto p_lcp_provider  = dsman.abstract_provider(ds::LCP_ARRAY);
-    auto p_plcp_provider = dsman.abstract_provider(ds::PLCP_ARRAY);
-
-    // make sure they are the right ones
-    ASSERT_EQ(p_sa_provider.get(),   static_cast<DSProvider*>(&sa_provider));
-    ASSERT_EQ(p_isa_provider.get(),  static_cast<DSProvider*>(&isa_provider));
-    ASSERT_EQ(p_phi_provider.get(),  static_cast<DSProvider*>(&phi_provider));
-    ASSERT_EQ(p_lcp_provider.get(),  static_cast<DSProvider*>(&lcp_provider));
-    ASSERT_EQ(p_plcp_provider.get(), static_cast<DSProvider*>(&plcp_provider));
-
-    // create dependency graph for some data structures
-
-
     // construct ISA, LCP and SA
-    /*{
-        dsman.construct<
-            ds::INVERSE_SUFFIX_ARRAY,
-            ds::LCP_ARRAY,
-            ds::SUFFIX_ARRAY>();
-    }*/
+    dsman.construct<
+        ds::INVERSE_SUFFIX_ARRAY,
+        ds::LCP_ARRAY,
+        ds::SUFFIX_ARRAY
+    >();
 
     // get LCP array
     //auto& lcp_provider = dsman.get_provider(ds::LCP_ARRAY);

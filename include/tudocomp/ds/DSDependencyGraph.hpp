@@ -1,8 +1,12 @@
 #pragma once
 
+#include <map>
+#include <set>
+
 #include <tudocomp/util/cpp14/integer_sequence.hpp>
 #include <tudocomp/util/integer_sequence_sort.hpp>
 #include <tudocomp/ds/DSDef.hpp>
+#include <tudocomp/ds/CompressMode.hpp>
 
 namespace tdc {
 
@@ -19,8 +23,9 @@ namespace tdc {
 /// There is an edge from node A to node B iff B requires A for construction.
 ///
 /// The cost of a node equals its in-degree added to the cumulated costs of
-/// its required data structures. The out-degree of a node is simply called
-/// "degree".
+/// its required data structures. The degree of a node is the amount of paths
+/// from that node to the CONSTRUCT node (see below), which is equal to its
+/// out-degree.
 ///
 /// The construction process consists of two phases: request and evaluation.
 ///
@@ -37,7 +42,9 @@ namespace tdc {
 /// structures that have no corresponding node in the graph) are discarded
 /// immediately.
 ///
-template<typename manager_t>
+/// \tparam manager_t the data structure manager's type
+/// \tparam m_construct the data structures to construct
+template<typename manager_t, dsid_t... m_construct>
 class DSDependencyGraph {
 private:
     // shortcut to provider type for a certain data structure
@@ -105,6 +112,14 @@ private:
     };
 
 public:
+    /// \brief Computes the construction order for a data structure node's
+    ///        incoming edges based on their costs (highest first).
+    ///
+    /// \tparam ds the data structure
+    template<dsid_t ds>
+    using dependency_order = typename _construction_order<
+        typename provider_t<ds>::requires>::seq;
+
     /// \brief Computes the construction order for a set of data structure
     ///        nodes based on their costs (highest first).
     ///
@@ -113,13 +128,118 @@ public:
     using construction_order = typename _construction_order<
         std::index_sequence<ds...>>::seq;
 
-    /// \brief Computes the construction order for a data structure node's
-    ///        incoming edges based on their costs (highest first).
+private:
+    manager_t* m_manager;
+    CompressMode m_cm;
+
+    std::map<dsid_t, size_t> m_degree;
+    std::set<dsid_t> m_constructed;
+
+    inline void init_degree(std::index_sequence<>) {
+        // end of a construction path
+    }
+
+    template<dsid_t Head, dsid_t... Tail>
+    inline void init_degree(std::index_sequence<Head, Tail...>) {
+        // init degree for dependencies (any order)
+        init_degree(typename provider_t<Head>::requires());
+
+        // increase degree
+        auto it = m_degree.find(Head);
+        if(it == m_degree.end()) {
+            m_degree.emplace(Head, 1);
+        } else {
+            it->second += 1;
+        }
+
+        // next
+        init_degree(std::index_sequence<Tail...>());
+    }
+
+    inline void decrease_degree(std::index_sequence<>) {
+        // end
+    }
+
+    template<dsid_t Head, dsid_t... Tail>
+    inline void decrease_degree(std::index_sequence<Head, Tail...>) {
+        auto it = m_degree.find(Head);
+        if(it == m_degree.end()) {
+            throw std::logic_error(
+                std::string("decrease degree for orphan node ") +
+                ds::name_for(Head));
+        } else if(!it->second) {
+            throw std::logic_error(
+                std::string("degree already zero for node ") +
+                ds::name_for(Head));
+        }
+
+        // decrease degree
+        if(!(--it->second)) {
+            // no longer needed
+            DLOG(INFO) << "discard: " << ds::name_for(Head);
+        }
+
+        // next
+        decrease_degree(std::index_sequence<Tail...>());
+    }
+
+    inline void discard_byproducts(std::index_sequence<>) {
+        // end
+    }
+
+    template<dsid_t Head, dsid_t... Tail>
+    inline void discard_byproducts(std::index_sequence<Head, Tail...>) {
+        if(m_degree.find(Head) == m_degree.end()) {
+            // not in the dependency graph
+            DLOG(INFO) << "discard byproduct: " << ds::name_for(Head);
+        }
+
+        // next
+        discard_byproducts(std::index_sequence<Tail...>());
+    }
+
+    inline void construct_recursive(std::index_sequence<>) {
+        // end of a construction path
+    }
+
+    template<dsid_t Head, dsid_t... Tail>
+    inline void construct_recursive(std::index_sequence<Head, Tail...>) {
+        if(m_constructed.find(Head) == m_constructed.end()) {
+            // construct dependencies
+            construct_recursive(dependency_order<Head>());
+
+            // construct
+            DLOG(INFO) << "construct: " << ds::name_for(Head);
+
+            // mark as constructed
+            m_constructed.emplace(Head);
+
+            // discard byproducts
+            discard_byproducts(typename provider_t<Head>::provides());
+
+            // decrease degree of direct dependencies
+            decrease_degree(typename provider_t<Head>::requires());
+
+            // next
+            construct_recursive(std::index_sequence<Tail...>());
+        }
+    }
+
+public:
+    /// \brief Constructs the requested data structures in memory peak
+    ///        optimized order.
     ///
-    /// \tparam ds the data structure
-    template<dsid_t ds>
-    using dependency_order = typename _construction_order<
-        typename provider_t<ds>::requires>::seq;
+    /// \param manager the data structure manager instance
+    /// \param cm the compression mode to use
+    inline DSDependencyGraph(manager_t& manager, const CompressMode cm)
+            : m_manager(&manager), m_cm(cm) {
+
+        // init degree by walking each construction path once in advance
+        init_degree(std::index_sequence<m_construct...>());
+
+        // construct data structures
+        construct_recursive(construction_order<m_construct...>());
+    }
 };
 
 } //ns

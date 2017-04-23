@@ -173,36 +173,14 @@ public:
         return *std::get<dsid>(m_lookup);
     }
 
-private:
-    template<size_t... Is>
-    inline std::shared_ptr<DSProvider> _abstract_provider(
-        dsid_t dsid, std::index_sequence<Is...>) {
-
-        return _abstract_provider(dsid, std::get<Is>(m_lookup)...);
-    }
-
-    template<typename Head, typename... Tail>
-    inline std::shared_ptr<DSProvider> _abstract_provider(
-        dsid_t dsid, Head& head, Tail&... tail) {
-        
-        if(dsid == 0) {
-            return head;
-        } else {
-            return _abstract_provider(dsid - 1, tail...);
-        }
-    }
-
-    inline std::shared_ptr<DSProvider> _abstract_provider(dsid_t dsid) {
-        // the program could not have been compiled successfully
-        throw std::logic_error(
-            std::string("There is no provider for ") + ds::name_for(dsid));
-    }
-
 public:
-    inline std::shared_ptr<DSProvider> abstract_provider(dsid_t dsid) {
-        // "runtime edition"
-        return _abstract_provider(dsid, std::make_index_sequence<
-            std::tuple_size<provider_lookup_tuple_t>::value>());
+    template<dsid_t... ds>
+    inline void construct() {
+        // build dependency graph
+        using depgraph_t = DSDependencyGraph<this_t, ds...>;
+
+        // construct
+        depgraph_t(*this, m_cm);
     }
 
     const View& input = m_input;
