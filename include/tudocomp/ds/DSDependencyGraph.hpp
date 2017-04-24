@@ -175,7 +175,8 @@ private:
         // decrease degree
         if(!(--it->second)) {
             // no longer needed
-            DLOG(INFO) << "discard: " << ds::name_for(Head);
+            //DLOG(INFO) << "discard: " << ds::name_for(Head);
+            m_manager->template get_provider<Head>().template discard<Head>();
         }
 
         // next
@@ -189,8 +190,9 @@ private:
     template<dsid_t Head, dsid_t... Tail>
     inline void discard_byproducts(std::index_sequence<Head, Tail...>) {
         if(m_degree.find(Head) == m_degree.end()) {
-            // not in the dependency graph
-            DLOG(INFO) << "discard byproduct: " << ds::name_for(Head);
+            // not in the dependency graph, ie., a byproduct
+            //DLOG(INFO) << "discard byproduct: " << ds::name_for(Head);
+            m_manager->template get_provider<Head>().template discard<Head>();
         }
 
         // next
@@ -208,7 +210,9 @@ private:
             construct_recursive(dependency_order<Head>());
 
             // construct
-            DLOG(INFO) << "construct: " << ds::name_for(Head);
+            //DLOG(INFO) << "construct: " << ds::name_for(Head);
+            m_manager->template get_provider<Head>().construct(
+                *m_manager, m_cm == CompressMode::compressed);
 
             // mark as constructed
             m_constructed.emplace(Head);
