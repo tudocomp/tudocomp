@@ -34,7 +34,7 @@ class NoopEscapingCompressor: public Compressor {
 public:
     inline static Meta meta() {
         Meta m ("compressor", "noop_null", "");
-        m.uses_textds<TextDS<>>(ds::SA);
+        m.input_restrictions(io::InputRestrictions({0}, true));
         m.option("mode").dynamic("view");
         m.option("debug").dynamic("false");
         return m;
