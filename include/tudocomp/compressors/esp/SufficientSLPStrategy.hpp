@@ -15,6 +15,7 @@ namespace tdc {namespace esp {
         using Algorithm::Algorithm;
 
         inline void encode(EspContext& context, SLP&& slp, Output& output) const {
+            /*
             std::cout << "unsorted:\n";
             for (size_t i = 0; i < slp.rules.size(); i++) {
                 std::cout
@@ -22,6 +23,7 @@ namespace tdc {namespace esp {
                     << i + esp::GRAMMAR_PD_ELLIDED_PREFIX
                     << " -> (" << slp.rules[i][0] << ", " << slp.rules[i][1] << ")\n";
             }
+            */
             slp_dep_sort(slp); // can be implemented better, and in a way that yields
                                // temporary lists for reusal
 
@@ -53,13 +55,14 @@ namespace tdc {namespace esp {
                 return;
             }
 
+            /*
             std::cout << "sorted:\n";
             for (size_t i = 0; i < slp.rules.size(); i++) {
                 std::cout
                     << i << ": "
                     << i + esp::GRAMMAR_PD_ELLIDED_PREFIX
                     << " -> (" << slp.rules[i][0] << ", " << slp.rules[i][1] << ")\n";
-            }
+            }*/
 
             // ...
             //std::vector<size_t> rules_lhs;
@@ -91,6 +94,7 @@ namespace tdc {namespace esp {
             };
             const auto rhs = RhsAdapter { &slp };
 
+            /*
             {
                 std::vector<size_t> rules_rhs;
                 for(size_t i = 0; i < rhs.size(); i++) {
@@ -98,11 +102,12 @@ namespace tdc {namespace esp {
                 }
                 std::cout << "rhs: " << vec_to_debug_string(rules_rhs) << "\n";
             }
+            */
 
             // Sort rhs and create sorted indice array O(n log n)
             const auto sis = sorted_indices(rhs);
 
-            std::cout << "sis: " << vec_to_debug_string(sis) << "\n";
+            //std::cout << "sis: " << vec_to_debug_string(sis) << "\n";
 
             // Write rules rhs in sorted order (B array of encoding)
             {
@@ -127,8 +132,8 @@ namespace tdc {namespace esp {
             size_t b_size = b.size();
             DCHECK_GE(b_size, 1);
 
-            std::cout << "Dpi: " << vec_to_debug_string(Dpi) << "\n";
-            std::cout << "b:   " << vec_to_debug_string(b) << "\n";
+            //std::cout << "Dpi: " << vec_to_debug_string(Dpi) << "\n";
+            //std::cout << "b:   " << vec_to_debug_string(b) << "\n";
 
             // Write out b and discard it
             bout.write_compressed_int(b_size);
@@ -143,22 +148,21 @@ namespace tdc {namespace esp {
 
                 // write WT depth
                 bout.write_compressed_int(Dpi_bvs.size());
-                std::cout << "wt depth write: " << Dpi_bvs.size() << "\n";
+                //std::cout << "wt depth write: " << Dpi_bvs.size() << "\n";
 
                 // write WT
                 for(auto& bv : Dpi_bvs) {
                     for(uint8_t bit: bv) {
                         bout.write_bit(bit != 0);
                     }
-                    std::cout << "Dpi bv: " << vec_to_debug_string(bv) << "\n";
+                    //std::cout << "Dpi bv: " << vec_to_debug_string(bv) << "\n";
                 }
             }
 
-            /*
             // Create Dsi from Dpi, discard Dpi,
             auto Dsi = esp::create_dsigma_from_dpi_and_sorted_indices(sis, Dpi);
 
-            std::cout << "Dsi: " << vec_to_debug_string(Dsi) << "\n";
+            //std::cout << "Dsi: " << vec_to_debug_string(Dsi) << "\n";
 
             Dpi = std::vector<size_t>();
 
@@ -177,9 +181,8 @@ namespace tdc {namespace esp {
 
             // Discard Dpi
             Dsi = std::vector<size_t>();
-            */
 
-            std::cout << "encode OK\n";
+            //std::cout << "encode OK\n";
 
         }
 
@@ -236,7 +239,7 @@ namespace tdc {namespace esp {
                     sis.push_back(last);
                 }
             }
-            std::cout << vec_to_debug_string(sis) << "\n";
+            //std::cout << vec_to_debug_string(sis) << "\n";
 
             // Read b
             size_t b_size = bin.read_compressed_int<size_t>();
@@ -246,14 +249,14 @@ namespace tdc {namespace esp {
             for(size_t i = 0; i < b_size; i++) {
                 b[i] = bin.read_bit();
             }
-            std::cout << "decomp b: " << vec_to_debug_string(b) << "\n";
-            std::cout << "ok " << __LINE__ << "\n";
+            //std::cout << "decomp b: " << vec_to_debug_string(b) << "\n";
+            //std::cout << "ok " << __LINE__ << "\n";
 
             // Read WT dept
             size_t wt_depth = bin.read_compressed_int<size_t>();
 
-            std::cout << "ok " << __LINE__ << "\n";
-            std::cout << wt_depth << "\n";
+            //std::cout << "ok " << __LINE__ << "\n";
+            //std::cout << wt_depth << "\n";
 
             // Read Dpi WT
             auto Dpi = std::vector<size_t>();
@@ -279,9 +282,8 @@ namespace tdc {namespace esp {
             }
 
             //std::cout << "ok " << __LINE__ << "\n";
-            std::cout << "Dpi: " << vec_to_debug_string(Dpi) << "\n";
+            //std::cout << "Dpi: " << vec_to_debug_string(Dpi) << "\n";
 
-            /*
             // Read Dsi WT
             auto Dsi = std::vector<size_t>();
             {
@@ -297,12 +299,11 @@ namespace tdc {namespace esp {
                     //std::cout << "Dsi bv: " << vec_to_debug_string(bv) << "\n";
                 }
 
-                Dsi = esp::recover_Dxx(Dsi_bvs, sis.size(), b_size - 1);
+                Dsi = esp::recover_Dxx(Dsi_bvs, sis.size());
             }
-            std::cout << "Dsi: " << vec_to_debug_string(Dsi) << "\n";
-            */
+            //std::cout << "Dsi: " << vec_to_debug_string(Dsi) << "\n";
 
-            std::cout << "ok " << __LINE__ << "\n";
+            //std::cout << "ok " << __LINE__ << "\n";
 
             return esp::SLP();
         }

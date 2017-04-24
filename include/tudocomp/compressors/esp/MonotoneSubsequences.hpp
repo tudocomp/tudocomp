@@ -444,7 +444,7 @@ namespace tdc {namespace esp {
         if (count > 0) {
             DCHECK_GT(count, 0);
             size_t max_value = node_sizes.back().size() * 2;
-            std::cout << "max value: " << max_value << "\n";
+            //std::cout << "max value: " << max_value << "\n";
 
             auto iters = std::vector<WTIter>();
             iters.reserve(count);
@@ -538,7 +538,7 @@ namespace tdc {namespace esp {
             std::cout << "e: " << vec_to_debug_string(e) << "\n";
         }*/
 
-        std::cout << "ok " << __LINE__ << "\n";
+        //std::cout << "ok " << __LINE__ << "\n";
 
         return extract_from_wt(wt_sizes, bvs);
     }
