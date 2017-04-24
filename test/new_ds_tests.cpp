@@ -67,12 +67,20 @@ static_assert(std::is_same<
         ds::LCP_ARRAY, ds::INVERSE_SUFFIX_ARRAY, ds::SUFFIX_ARRAY>
 >::value, "Wrong construction order");
 
-TEST(Sandbox, example) {
+// runtime tests
+TEST(DS, dev) {
     // test input
     std::string input("banana\0", 7);
 
     // instantiate manager
     dsmanager_t dsman(create_env(dsmanager_t::meta()), input);
+
+    // construct ISA, LCP and SA
+    dsman.construct<
+        ds::INVERSE_SUFFIX_ARRAY,
+        ds::LCP_ARRAY,
+        ds::SUFFIX_ARRAY
+    >();
 
     // get providers (template version)
     auto& sa_provider =   dsman.get_provider<ds::SUFFIX_ARRAY>();
@@ -87,15 +95,5 @@ TEST(Sandbox, example) {
     ASSERT_EQ("phi",           std::remove_reference<decltype(phi_provider)>::type::meta().name());
     ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(lcp_provider)>::type::meta().name());
     ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(plcp_provider)>::type::meta().name());
-
-    // construct ISA, LCP and SA
-    dsman.construct<
-        ds::INVERSE_SUFFIX_ARRAY,
-        ds::LCP_ARRAY,
-        ds::SUFFIX_ARRAY
-    >();
-
-    // get LCP array
-    //auto& lcp_provider = dsman.get_provider(ds::LCP_ARRAY);
 }
 
