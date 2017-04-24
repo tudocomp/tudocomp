@@ -14,7 +14,6 @@
 
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/DSDef.hpp>
-#include <tudocomp/ds/DSProvider.hpp>
 #include <tudocomp/ds/DSDependencyGraph.hpp>
 
 #include <tudocomp/CreateAlgorithm.hpp>
@@ -32,10 +31,6 @@ namespace internal {
 
     template<typename Head, typename... Tail>
     struct _make_type_map<Head, Tail...> {
-        // at this point, make sure all providers inherit from DSProvider
-        static_assert(std::is_base_of<DSProvider, Head>::value,
-            "Data structure providers must inherit from DSProvider");
-
         using type_map = tl::mix<
             tl::set_all<typename Head::provides, Head>,
             typename _make_type_map<Tail...>::type_map>;
