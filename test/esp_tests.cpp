@@ -1018,7 +1018,7 @@ TEST(MonotonSubseq, esp_encoding_real1) {
 
         std::vector<size_t> ss_ll_front;
         ss_ll_front.reserve(b.size());
-        ss_ll_front.resize(b.size(), size_t(-1)); // ensure there is n+1 bits space in real impl
+        ss_ll_front.resize(b.size(), size_t(-1)); // NB: ensure there is n+1 bits space in real impl
 
         // based in Bdecoded and Dpi we know the sorted sequence.
         // by mapping the Dsi sequence to it we get the original D

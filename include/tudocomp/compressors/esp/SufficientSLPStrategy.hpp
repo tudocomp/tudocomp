@@ -305,6 +305,9 @@ namespace tdc {namespace esp {
 
             //std::cout << "ok " << __LINE__ << "\n";
 
+            // Given sis, b, Dsi and Dpi, recover slp rhs
+
+
             return esp::SLP();
         }
     };
