@@ -1065,13 +1065,13 @@ TEST(MonotonSubseq, esp_encoding_real1) {
     {
         //std::cout << "Dsi:\n" << vec_to_debug_string(Dsi, 1) << "\n";
         auto Dsi_bvs = esp::make_wt(Dsi, b.size() - 1);
-        auto recovered_Dsi = esp::recover_Dxx(Dsi_bvs, Dsi.size(), b.size() - 1);
+        auto recovered_Dsi = esp::recover_Dxx(Dsi_bvs, Dsi.size());
         //std::cout << vec_to_debug_string(recovered_Dsi) << "\n";
         ASSERT_EQ(Dsi, recovered_Dsi);
 
         //std::cout << "Dpi:\n" << vec_to_debug_string(Dpi, 1) << "\n";
         auto Dpi_bvs = esp::make_wt(Dpi, b.size() - 1);
-        auto recovered_Dpi = esp::recover_Dxx(Dpi_bvs, Dsi.size(), b.size() - 1);
+        auto recovered_Dpi = esp::recover_Dxx(Dpi_bvs, Dsi.size());
         //std::cout << vec_to_debug_string(recovered_Dpi) << "\n";
         ASSERT_EQ(Dpi, recovered_Dpi);
 

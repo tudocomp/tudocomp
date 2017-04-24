@@ -275,7 +275,7 @@ namespace tdc {namespace esp {
                     //std::cout << "Dpi bv: " << vec_to_debug_string(bv) << "\n";
                 }
 
-                Dpi = esp::recover_Dxx(Dpi_bvs, sis.size(), b_size - 1);
+                Dpi = esp::recover_Dxx(Dpi_bvs, sis.size());
             }
 
             //std::cout << "ok " << __LINE__ << "\n";

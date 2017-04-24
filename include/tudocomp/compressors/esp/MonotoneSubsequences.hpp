@@ -416,48 +416,35 @@ namespace tdc {namespace esp {
                     return m_next1->next();
                 }
             } else {
+                DCHECK_EQ(m_max_value - m_min_value, 2)
+                    << "\nmin: " << m_min_value << ", "
+                    << "\nmax: " << m_max_value << ", "
+                    << "\nstart: " << m_start << ", "
+                    << "\nend:   " << m_end << ", "
+                    << "\nbs: " << vec_to_debug_string(*m_bv) << "\n";
                 if (bit == 0) {
-                    //std::cout << bit << ": " << m_min_value << "\n";
-                    DCHECK_LE(m_max_value - m_min_value, 1);
-
                     return m_min_value;
                 } else {
-                    //std::cout << bit << ": " << m_max_value << "\n";
-
-                    if (m_max_value - m_min_value == 0) {
-                        std::cout << "!!!!!!!!!!!!!!!!!!!!!!\n";
-                    }
-
-                    /*
-                    DCHECK_EQ(m_max_value - m_min_value, 1)
-                        << "\nmin: " << m_min_value << ", "
-                        << "\nmax: " << m_max_value << ", "
-                        << "\nstart: " << m_start << ", "
-                        << "\nend:   " << m_end << ", "
-                        << "\nbs: " << vec_to_debug_string(*m_bv) << "\n"
-                        ;
-                        */
-
-                    return m_max_value;
+                    return m_max_value - 1;
                 }
             }
         }
     };
 
     auto extract_from_wt(const std::vector<std::vector<size_t>>& node_sizes,
-                     const std::vector<IntVector<uint_t<1>>>& bvs,
-                     size_t max_value) -> std::vector<size_t>
+                     const std::vector<IntVector<uint_t<1>>>& bvs) -> std::vector<size_t>
     {
         size_t count = 0;
         for(size_t depth = 0; depth < bvs.size(); depth++) {
             count = count * 2 + 1;
         }
-        //std::cout << "max value: " << max_value << "\n";
 
         std::vector<size_t> ret;
 
         if (count > 0) {
             DCHECK_GT(count, 0);
+            size_t max_value = node_sizes.back().size() * 2;
+            std::cout << "max value: " << max_value << "\n";
 
             auto iters = std::vector<WTIter>();
             iters.reserve(count);
@@ -496,7 +483,7 @@ namespace tdc {namespace esp {
 
                         child0.m_min_value = min;
                         child0.m_max_value = mid;
-                        child1.m_min_value = std::min(mid + 1, max);
+                        child1.m_min_value = mid;
                         child1.m_max_value = max;
                     }
 
@@ -517,8 +504,7 @@ namespace tdc {namespace esp {
     }
 
     auto recover_Dxx(const std::vector<IntVector<uint_t<1>>>& bvs,
-                    size_t size,
-                    size_t max_value) -> std::vector<size_t>
+                    size_t size) -> std::vector<size_t>
     {
         auto wt_sizes = std::vector<std::vector<size_t>> { { size } };
         size_t wt_sizes_i = 0;
@@ -554,7 +540,7 @@ namespace tdc {namespace esp {
 
         std::cout << "ok " << __LINE__ << "\n";
 
-        return extract_from_wt(wt_sizes, bvs, max_value);
+        return extract_from_wt(wt_sizes, bvs);
     }
 
 }}
