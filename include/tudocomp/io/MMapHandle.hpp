@@ -6,6 +6,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <tudocomp_stat/malloc.hpp>
+#include <tudocomp/def.hpp>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/io/IOUtil.hpp>
 
@@ -123,6 +125,9 @@ namespace tdc {namespace io {
                 if (false && ptr != MAP_FAILED) {
                     m_ptr = (uint8_t*) ptr;
                     m_state = state;
+                    IF_STATS(if (m_state == State::Private) {
+                        malloc_callback::on_alloc(adj_size(m_size));
+                    })
                 } else {
                     LOG(INFO) << "Mapping file into memory failed, falling"
                               << " back to copying into a anonymous map";
@@ -189,6 +194,9 @@ namespace tdc {namespace io {
             m_ptr = (uint8_t*) ptr;
 
             m_state = State::Private;
+            IF_STATS(if (m_state == State::Private) {
+                malloc_callback::on_alloc(adj_size(m_size));
+            })
         }
 
         /// Changes the size of this mapping.
@@ -200,6 +208,12 @@ namespace tdc {namespace io {
 
             auto p = mremap(m_ptr, adj_size(m_size), adj_size(new_size), MREMAP_MAYMOVE);
             check_mmap_error(p, "remapping memory");
+            IF_STATS(if (m_state == State::Private) {
+                malloc_callback::on_free(adj_size(m_size));
+                malloc_callback::on_alloc(adj_size(new_size));
+                // TODO ^ handle lazy initialization better by not seemingly
+                // allocating everything
+            })
 
             m_ptr = (uint8_t*) p;
             m_size =  new_size;
@@ -247,6 +261,9 @@ namespace tdc {namespace io {
 
                 int rc = munmap(m_ptr, adj_size(m_size));
                 CHECK(rc == 0) << "Error at unmapping";
+                IF_STATS(if (m_state == State::Private) {
+                    malloc_callback::on_free(adj_size(m_size));
+                })
             }
         }
     };
