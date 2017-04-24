@@ -280,11 +280,26 @@ public:
         return m_type;
     }
 
-    /// \brief Indicates that this Algorithm uses the TextDS class.
+    /// \brief Places byte restrictions on the Input.
+    inline void input_restrictions(const io::InputRestrictions& restr) {
+        m_ds_flags |= restr;
+    }
+
+    /// \deprecated
+    /// \brief Indicates that this Algorithm requires a null terminator symbol in Input.
+    ///
+    /// All occurrences of null in the input will be escaped,
+    /// and an extra null will be appended to it.
+    inline void needs_sentinel_terminator() {
+        m_ds_flags |= io::InputRestrictions({ 0 }, true);
+    }
+
+    /// \brief Indicates that this Algorithm uses the TextDS class, and how it does.
     template<typename text_t>
     inline void uses_textds(ds::dsflags_t flags) {
-        ds::InputRestrictionsAndFlags r(text_t::common_restrictions(flags),
-                                       flags);
+        io::InputRestrictions existing = m_ds_flags;
+        ds::InputRestrictionsAndFlags r(text_t::common_restrictions(flags) | existing,
+                                        flags);
         m_ds_flags = r;
     }
 

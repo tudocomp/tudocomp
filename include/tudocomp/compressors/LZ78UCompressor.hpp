@@ -110,7 +110,7 @@ public:
         m.option("coder").templated<ref_coder_t>("coder");
         m.option("threshold").dynamic("3");
         // m.option("dict_size").dynamic("inf");
-        m.uses_textds<TextDS<>>(ds::SA); // HACK to get around missing null term
+        m.input_restrictions(io::InputRestrictions({0},true));
         return m;
     }
 
