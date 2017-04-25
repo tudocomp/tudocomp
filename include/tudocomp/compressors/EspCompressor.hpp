@@ -31,7 +31,7 @@ public:
         SLP slp;
 
         {
-            auto x = env().stat_phase("Input Phase");
+            auto x = env().stat_phase("Compress Phase");
 
             auto p2 = env().stat_phase("Creating input view");
                 auto in = input.as_view();
