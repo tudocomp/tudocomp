@@ -26,16 +26,16 @@ namespace tdc {
 /// \param s The byte vector.
 /// \return The string representation of the byte vector.
 template<class T>
-std::string vec_to_debug_string(const T& s) {
+std::string vec_to_debug_string(const T& s, size_t indent = 0) {
     std::stringstream ss;
     ss << "[";
     if (s.size() > 0) {
         for (size_t i = 0; i < s.size() - 1; i++) {
             // crazy cast needed to bring negative char values
             // into their representation as a unsigned one
-            ss << uint((unsigned char) s[i]) << ", ";
+            ss << std::setw(indent) << uint((unsigned char) s[i]) << ", ";
         }
-        ss << uint((unsigned char) s[s.size() - 1]);
+        ss << std::setw(indent) << uint((unsigned char) s[s.size() - 1]);
     }
     ss << "]";
     return ss.str();

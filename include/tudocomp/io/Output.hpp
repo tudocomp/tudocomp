@@ -8,8 +8,8 @@
 #include <utility>
 #include <vector>
 
-#include <tudocomp/io/BackInsertStream.hpp>
-#include <tudocomp/io/NullEscapingUtil.hpp>
+#include <tudocomp/io/Path.hpp>
+#include <tudocomp/io/InputRestrictions.hpp>
 
 namespace tdc {
 namespace io {
@@ -22,68 +22,102 @@ namespace io {
     /// is written to the sink character by character.
     class Output {
         class Variant {
+            InputRestrictions m_restrictions;
+        protected:
+            inline Variant(const InputRestrictions& restrictions):
+                m_restrictions(restrictions) {}
         public:
+            inline Variant() {}
+
+            inline const InputRestrictions& restrictions() const {
+                return m_restrictions;
+            }
+
             virtual ~Variant() {}
-            virtual OutputStream as_stream(bool unescape) = 0;
+            virtual std::unique_ptr<Variant> unrestrict(const InputRestrictions& rest) const = 0;
+            virtual OutputStream as_stream() const = 0;
         };
 
         class Memory: public Variant {
             std::vector<uint8_t>* m_buffer;
 
+            Memory(const Memory& other, const InputRestrictions& r):
+                Variant(r),
+                m_buffer(other.m_buffer) {}
         public:
-            Memory(std::vector<uint8_t>* buffer): m_buffer(buffer) {}
+            Memory(std::vector<uint8_t>* buffer):
+                   m_buffer(buffer) {}
 
-            inline OutputStream as_stream(bool unescape) override;
+            inline std::unique_ptr<Variant> unrestrict(const InputRestrictions& rest) const override {
+                return std::make_unique<Memory>(
+                    Memory(*this, restrictions() | rest));
+            }
+            inline OutputStream as_stream() const override;
         };
         class File: public Variant {
             std::string m_path;
-            bool m_overwrite;
+            // TODO:
+            mutable bool m_overwrite;
 
+            File(const File& other, const InputRestrictions& r):
+                Variant(r),
+                m_path(other.m_path),
+                m_overwrite(other.m_overwrite) {}
         public:
-            File(std::string path, bool overwrite):
-                m_path(path), m_overwrite(overwrite) {}
+            File(const std::string& path, bool overwrite):
+                m_path(path),
+                m_overwrite(overwrite) {}
 
-            inline OutputStream as_stream(bool unescape) override;
+            inline std::unique_ptr<Variant> unrestrict(const InputRestrictions& rest) const override {
+                return std::make_unique<File>(
+                    File(*this, restrictions() | rest));
+            }
+            inline OutputStream as_stream() const override;
         };
         class Stream: public Variant {
             std::ostream* m_stream;
 
+            Stream(const Stream& other, const InputRestrictions& r):
+                Variant(r),
+                m_stream(other.m_stream) {}
         public:
-            Stream(std::ostream* stream): m_stream(stream) {}
+            Stream(std::ostream* stream):
+                   m_stream(stream) {}
 
-            inline OutputStream as_stream(bool unescape) override;
+            inline std::unique_ptr<Variant> unrestrict(const InputRestrictions& rest) const override {
+                return std::make_unique<Stream>(
+                    Stream(*this, restrictions() | rest));
+            }
+            inline OutputStream as_stream() const override;
         };
 
         std::unique_ptr<Variant> m_data;
-        bool m_unescape_and_trim = false;
 
         friend class OutputStream;
-
     public:
         /// \brief Constructs an output to \c stdout.
         inline Output(): Output(std::cout) {}
 
         /// \brief Move constructor.
         inline Output(Output&& other):
-            m_data(std::move(other.m_data)),
-            m_unescape_and_trim(other.m_unescape_and_trim) {}
+            m_data(std::move(other.m_data)) {}
 
-        /// \brief Constructs a file output writing to the file at the given
+        /// \brief Constructs an output that appends to the file at the given
         /// path.
         ///
         /// \param path The path to the output file.
         /// \param overwrite If \c true, the file will be overwritten in case
         /// it already exists, otherwise the output will be appended to it.
-        inline Output(std::string path, bool overwrite=false):
-            m_data(std::make_unique<File>(std::move(path), overwrite)) {}
+        inline Output(const Path& path, bool overwrite=false):
+            m_data(std::make_unique<File>(std::move(path.path), overwrite)) {}
 
-        /// \brief Constructs an output to a byte buffer.
+        /// \brief Constructs an output that appends to the byte vector.
         ///
         /// \param buf The byte buffer to write to.
         inline Output(std::vector<uint8_t>& buf):
             m_data(std::make_unique<Memory>(&buf)) {}
 
-        /// \brief Constructs an output to a stream.
+        /// \brief Constructs an output that appends to the output stream.
         ///
         /// \param stream The stream to write to.
         inline Output(std::ostream& stream):
@@ -92,7 +126,6 @@ namespace io {
         /// \brief Move assignment operator.
         inline Output& operator=(Output&& other) {
             m_data = std::move(other.m_data);
-            m_unescape_and_trim = other.m_unescape_and_trim;
             return *this;
         }
 
@@ -103,8 +136,8 @@ namespace io {
         /// \param path The path to the input file.
         /// \param overwrite If \c true, the file will be overwritten in case
         /// it already exists, otherwise the output will be appended to it.
-        inline static Output from_path(std::string path, bool overwrite=false) {
-            return Output(std::move(path), overwrite);
+        inline static Output from_path(const Path& path, bool overwrite=false) {
+            return Output(path, overwrite);
         }
 
         /// \deprecated Use the respective constructor instead.
@@ -124,164 +157,16 @@ namespace io {
         }
 
         /// \brief Creates a stream that allows for character-wise output.
-        inline OutputStream as_stream();
+        inline OutputStream as_stream() const;
 
         /// \cond INTERNAL
-        inline void unescape_and_trim() {
-            m_unescape_and_trim = true;
-        }
+        /// Unrestrict constructor
+        inline Output(const Output& other, const InputRestrictions& restrictions):
+            m_data(other.m_data->unrestrict(restrictions)) {}
         /// \endcond
     };
 
-    /// \cond INTERNAL
-    class OutputStreamInternal {
-        class Variant {
-        public:
-            virtual ~Variant() {}
-            virtual std::ostream& stream() = 0;
-        };
-
-        class Memory: public Variant {
-            BackInsertStream m_stream;
-        public:
-            friend class OutputStreamInternal;
-
-            inline Memory(BackInsertStream&& stream): m_stream(stream) {}
-
-            inline std::ostream& stream() override {
-                return m_stream.stream();
-            }
-        };
-        class Stream: public Variant {
-            std::ostream* m_stream;
-        public:
-            friend class OutputStreamInternal;
-
-            inline Stream(std::ostream* stream): m_stream(stream) {}
-
-            inline std::ostream& stream() override {
-                return *m_stream;
-            }
-        };
-        class File: public Variant {
-            std::string m_path;
-            std::unique_ptr<std::ofstream> m_stream;
-
-        public:
-            friend class OutputStreamInternal;
-
-            inline std::ostream& stream() override {
-                return *m_stream;
-            }
-
-            inline File(std::string&& path, bool overwrite = false) {
-                m_path = path;
-                if (overwrite) {
-                    m_stream = std::make_unique<std::ofstream>(m_path,
-                        std::ios::out | std::ios::binary);
-                } else {
-                    m_stream = std::make_unique<std::ofstream>(m_path,
-                        std::ios::out | std::ios::binary | std::ios::app);
-                }
-                if (!*m_stream) {
-                    throw tdc_output_file_not_found_error(m_path);
-                }
-            }
-
-            inline File(const File& other):
-                File(std::string(other.m_path)) {}
-
-            inline File(File&& other):
-                m_path(std::move(other.m_path)),
-                m_stream(std::move(other.m_stream)) {}
-        };
-
-        std::unique_ptr<Variant> m_variant;
-
-        friend class Output;
-        friend class OutputStream;
-
-        inline OutputStreamInternal(OutputStreamInternal::Memory&& mem):
-            m_variant(std::make_unique<Memory>(std::move(mem))) {}
-        inline OutputStreamInternal(OutputStreamInternal::File&& s):
-            m_variant(std::make_unique<File>(std::move(s))) {}
-        inline OutputStreamInternal(OutputStreamInternal::Stream&& s):
-            m_variant(std::make_unique<Stream>(std::move(s))) {}
-        inline OutputStreamInternal(OutputStreamInternal&& other):
-            m_variant(std::move(other.m_variant)) {}
-
-        inline OutputStreamInternal(const OutputStreamInternal& other) = delete;
-        inline OutputStreamInternal() = delete;
-    };
-    /// \endcond
-
-    /// \brief Provides a character stream to the underlying output.
-    class OutputStream: OutputStreamInternal, public std::ostream {
-        friend class Output;
-
-        std::unique_ptr<UnescapeBuffer> m_unescaper;
-
-        inline OutputStream(OutputStreamInternal&& mem, bool unescape):
-            OutputStreamInternal(std::move(mem)),
-            std::ostream(m_variant->stream().rdbuf())
-        {
-            if (unescape) {
-                m_unescaper = std::make_unique<UnescapeBuffer>(m_variant->stream());
-                rdbuf(&*m_unescaper);
-            }
-        }
-    public:
-        /// \brief Move constructor.
-        inline OutputStream(OutputStream&& mem):
-            OutputStreamInternal(std::move(mem)),
-            std::ostream(mem.rdbuf()),
-            m_unescaper(std::move(mem.m_unescaper))
-        {
-            if (m_unescaper) {
-                DCHECK(uint64_t(rdbuf()) == uint64_t(&*m_unescaper));
-            }
-        }
-
-        /// \brief Copy constructor (deleted).
-        inline OutputStream(const OutputStream& other) = delete;
-
-        /// \brief Default constructor (deleted).
-        inline OutputStream() = delete;
-    };
-
-    inline OutputStream Output::Memory::as_stream(bool unescape) {
-        return OutputStream {
-            OutputStream::Memory {
-                BackInsertStream { *m_buffer }
-            },
-            unescape
-        };
-    }
-
-    inline OutputStream Output::File::as_stream(bool unescape) {
-        auto overwrite = m_overwrite;
-        m_overwrite = false;
-        return OutputStream {
-            OutputStream::File {
-                std::string(m_path),
-                overwrite,
-            },
-            unescape
-        };
-    }
-
-    inline OutputStream Output::Stream::as_stream(bool unescape) {
-        return OutputStream {
-            OutputStream::Stream {
-                m_stream
-            },
-            unescape
-        };
-    }
-
-    inline OutputStream Output::as_stream() {
-        return m_data->as_stream(m_unescape_and_trim);
-    }
-
 }}
+
+#include <tudocomp/io/OutputStream.hpp>
 

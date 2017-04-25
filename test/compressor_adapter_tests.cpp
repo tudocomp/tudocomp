@@ -20,6 +20,8 @@
 #include <tudocomp/compressors/RunLengthEncoder.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
 
+#include <tudocomp/ds/TextDS.hpp>
+
 #include <tudocomp_driver/Registry.hpp>
 #include <tudocomp_driver/ChainCompressor.hpp>
 
@@ -32,7 +34,7 @@ class NoopEscapingCompressor: public Compressor {
 public:
     inline static Meta meta() {
         Meta m ("compressor", "noop_null", "");
-        m.needs_sentinel_terminator();
+        m.input_restrictions(io::InputRestrictions({0}, true));
         m.option("mode").dynamic("view");
         m.option("debug").dynamic("false");
         return m;

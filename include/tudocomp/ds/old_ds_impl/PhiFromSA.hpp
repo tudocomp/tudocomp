@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/ArrayDS.hpp>
 
@@ -13,6 +14,10 @@ public:
     inline static Meta meta() {
         Meta m("phi", "from_sa");
         return m;
+    }
+
+    inline static ds::InputRestrictions restrictions() {
+        return ds::InputRestrictions {};
     }
 
     template<typename textds_t>
