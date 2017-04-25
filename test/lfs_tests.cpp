@@ -61,6 +61,8 @@ void run_comp(std::string compression_string) {
     ASSERT_EQ(compression_string, compressed);
 }
 
+
+/*
 template<class comp_strat>
 void run_comp_file(std::string file) {
     auto c = create_algo<tdc::lfs::LFSCompressor<comp_strat> >();
@@ -89,7 +91,7 @@ void run_comp_file(std::string file) {
 }
 
 
-
+*/
 
 TEST(lfs, st_strat){
 

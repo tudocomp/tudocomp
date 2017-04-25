@@ -39,13 +39,13 @@ private:
 
     inline virtual std::vector<int> select_starting_positions(int node_id, int length){
 
-        node_type node = stree.inv_id(node_id);
+
 
      //   uint offset = stree.csa[stree.lb(node)];
         //uint fac_length = stree.depth(node);
 
 
-        std::vector<int> beginning_positions;
+       // std::vector<int> beginning_positions;
 
 
         //doesnt work:
@@ -65,7 +65,7 @@ private:
 
            // beginning_positions = node_begins[node_id];
 
-            beginning_positions.assign(node_begins[node_id].begin(), node_begins[node_id].end());
+         //   beginning_positions.assign(node_begins[node_id].begin(), node_begins[node_id].end());
             //for(auto bp_it =node_begins[node_id].begin(); bp_it != node_begins[node_id].end(); bp_it++){
             //    beginning_positions.push_back(*bp_it);
             //}
@@ -105,19 +105,19 @@ private:
         std::vector<int> selected_starting_positions;
 
         std::vector<int> not_selected_starting_positions;
-        if(beginning_positions.size()<2){
-            return selected_starting_positions;
-        }
+       // if(beginning_positions.size()<2){
+       //     return selected_starting_positions;
+       // }
         //select occurences greedily non-overlapping:
-        selected_starting_positions.reserve(beginning_positions.size());
+        selected_starting_positions.reserve(node_begins[node_id].size());
 
-        not_selected_starting_positions.reserve(beginning_positions.size());
+        not_selected_starting_positions.reserve(node_begins[node_id].size());
 
         int last =  0-length;
         int current;
         int shorter_count = 0;
         int min_shorter = length;
-        for (auto it=beginning_positions.begin(); it!=beginning_positions.end(); ++it){
+        for (auto it=node_begins[node_id].begin(); it!=node_begins[node_id].end(); ++it){
 
             current = *it;
             if(last+length <= current && !dead_positions[current] && !dead_positions[current+length-1]){
@@ -150,9 +150,11 @@ private:
         if(shorter_count>0){
 
 
+            node_type node = stree.inv_id(node_id);
 
             if(length-min_shorter >= (int)min_lrf){
                 //check if parent node is shorter
+
                 node_type parent = stree.parent(node);
                 uint depth = stree.depth(parent);
                 if(depth < (uint)(length-min_shorter)){
@@ -286,7 +288,7 @@ public:
 
                                 //delete child bp
 
-                                //node_begins[child_id].clear();
+                                node_begins[child_id].clear();
 
                               //  n_tpl child_tpl = node_tuples[child_id];
                               //  min = std::min(min, std::get<0>(child_tpl));
@@ -294,7 +296,7 @@ public:
                               //  card += std::get<2>(child_tpl);
                             }
 
-                            DLOG(INFO)<<" beginnings for id: "<< *bin_it << " count: "<<node_begins[*bin_it].size();
+                        //    DLOG(INFO)<<" beginnings for id: "<< *bin_it << " count: "<<node_begins[*bin_it].size();
 
                           //  cur_tpl = std::make_tuple(min,max,card);
                             //DLOG(INFO)<<"new tuple for id: "<<*bin_it<< " <"<<min<<","<<max<<","<<card<<">";
