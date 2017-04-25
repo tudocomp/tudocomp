@@ -18,7 +18,7 @@ class EspCompressor: public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "esp", "ESP based grammar compression");
-        m.option("slp_strategy").templated<slp_strategy_t, esp::PlainSLPStrategy>();
+        m.option("slp_strategy").templated<slp_strategy_t, esp::PlainSLPStrategy>("slp_strategy");
         return m;
     }
 

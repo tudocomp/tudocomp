@@ -495,7 +495,7 @@ void test_esp() {
 
     for (auto& c : cases) {
         std::cout << "---------------------\n";
-        test::roundtrip<EspCompressor<T>>(c, "");
+        test::roundtrip<EspCompressor<T>>(c);
     }
 }
 
