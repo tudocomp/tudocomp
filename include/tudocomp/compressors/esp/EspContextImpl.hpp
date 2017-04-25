@@ -12,6 +12,9 @@ namespace tdc {namespace esp {
         size_t root_node = 0;
         bool empty = false;
 
+        SLP slp;
+        size_t slp_counter = 256;
+        size_t prev_slp_counter = 0;
 
         // Initialize initial round
         {
@@ -57,7 +60,7 @@ namespace tdc {namespace esp {
                 break;
             }
             if (in.size() == 1) {
-                root_node = in[0];
+                root_node = in[0] + prev_slp_counter;
                 ctx.debug.last_round(root_node, false);
                 break;
             }
@@ -88,20 +91,45 @@ namespace tdc {namespace esp {
             // TODO: Preallocate based on number of rules
             new_layer.shrink_to_fit();
 
-            // Prepare next round
+            // Append to slp array
             {
-                rounds.push_back(Round {
-                    GrammarRules(r.gr.rules_count()),
-                    r.gr.rules_count(),
-                    std::move(new_layer),
-                });
+                size_t old_slp_size = slp.rules.size();
+                size_t additional_slp_size = r.gr.rules_count();
+                size_t new_slp_size = old_slp_size + additional_slp_size;
+
+                slp.rules.reserve(new_slp_size);
+                slp.rules.resize(new_slp_size);
+
+                auto& rv = slp.rules;
+                for(auto& kv : r.gr.n2) {
+                    const auto& key = kv.first;
+                    const auto& val = kv.second - r.gr.m_initial_counter;
+
+                    size_t store_idx = slp_counter + val - 256;
+                    rv[store_idx][0] = key.m_data[0] + prev_slp_counter;
+                    rv[store_idx][1] = key.m_data[1] + prev_slp_counter;
+                }
+
+                prev_slp_counter = slp_counter;
+                slp_counter += additional_slp_size;
             }
+
+            // Prepare next round
+            rounds.push_back(Round {
+                GrammarRules(r.gr.rules_count()),
+                r.gr.rules_count(),
+                std::move(new_layer),
+            });
         }
+
+        slp.empty = empty;
+        slp.root_rule = root_node;
 
         return Rounds {
             std::move(rounds),
             root_node,
             empty,
+            slp,
         };
     }
 
@@ -155,20 +183,8 @@ namespace tdc {namespace esp {
                 DCHECK_EQ(ret.at(store_idx).at(0), 0);
                 DCHECK_EQ(ret.at(store_idx).at(1), 0);
 
-                if (key.m_data.size() == 2) {
-                    ret[store_idx][0] = key.m_data[0] + prev_counter_offset;
-                    ret[store_idx][1] = key.m_data[1] + prev_counter_offset;
-                } else if (key.m_data.size() == 3) {
-                    ret[store_idx][0] = i3 + GRAMMAR_PD_ELLIDED_PREFIX;
-                    ret[store_idx][1] = key.m_data[2] + prev_counter_offset;
-
-                    ret[i3][0] = key.m_data[0] + prev_counter_offset;
-                    ret[i3][1] = key.m_data[1] + prev_counter_offset;
-
-                    i3++;
-                } else {
-                    DCHECK(false);
-                }
+                ret[store_idx][0] = key.m_data[0] + prev_counter_offset;
+                ret[store_idx][1] = key.m_data[1] + prev_counter_offset;
 
                 DCHECK_NE(ret.at(store_idx).at(0), 0);
                 DCHECK_NE(ret.at(store_idx).at(1), 0);
@@ -184,10 +200,16 @@ namespace tdc {namespace esp {
         DCHECK_EQ(i3, ret.size());
 
         debug.generate_grammar(empty, last_idx);
-        return SLP {
+        auto slp = SLP {
             std::move(ret),
             last_idx,
             empty,
         };
+
+        DCHECK_EQ(slp.empty, rds.slp.empty);
+        DCHECK_EQ(slp.root_rule, rds.slp.root_rule);
+        DCHECK(slp.rules == rds.slp.rules);
+
+        return std::move(rds.slp);
     }
 }}
