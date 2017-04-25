@@ -11,6 +11,11 @@ using namespace tdc;
 using mtseq_t    = std::index_sequence<>;
 using testseq1_t = std::index_sequence<5, 2, 4, 3, 1>;
 
+// is::contains
+static_assert(is::contains<size_t, 5, testseq1_t>(), "is::contains");
+static_assert(is::contains<size_t, 1, testseq1_t>(), "is::contains");
+static_assert(!is::contains<size_t, 0, testseq1_t>(), "is::contains");
+
 // is::prepend
 static_assert(std::is_same<
     is::prepend<size_t, 1, mtseq_t>,

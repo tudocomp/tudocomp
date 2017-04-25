@@ -9,13 +9,33 @@ namespace is {
 
 // declarations
 
+template<typename T, T Value, typename Seq> struct _contains;
 template<typename T, T Value, typename Seq> struct _prepend;
 template<typename T, typename Compare, T Value, typename Seq> struct _insert;
 template<typename T, typename Compare, typename Seq> struct _sort;
 
 /// \endcond
 
-// prepend - decl
+/// \brief Reports whether a value is contained in an integer sequence.
+///
+/// \tparam T the integer type
+/// \tparam Value the value to look for
+/// \tparam Seq the sequence to search
+/// \return \c true iff \c Value is contained in \c Seq.
+template<typename T, T Value, typename Seq>
+constexpr bool contains() {
+    return _contains<T, Value, Seq>::value;
+};
+
+/// \brief Reports whether a value is contained in an index sequence.
+///
+/// \tparam Value the value to look for
+/// \tparam Seq the sequence to search
+/// \return \c true iff \c Value is contained in \c Seq.
+template<size_t Value, typename Seq>
+constexpr bool contains_idx() {
+    return _contains<size_t, Value, Seq>::value;
+};
 
 /// \brief Prepends a value to an integer sequence.
 ///
@@ -79,6 +99,30 @@ using sort_idx = typename _sort<size_t, Compare, Seq>::seq;
 /// \cond INTERNAL
 
 // implementations
+
+// contains - trivial case (sequence is empty)
+template<typename T, T Value>
+struct _contains<T, Value, std::integer_sequence<T>> {
+    static constexpr bool value = false;
+};
+
+// contains - SFINAE trivial case: Head equals searched Value
+template<typename T, T Value, T Head, T... Tail>
+constexpr typename std::enable_if<Value == Head, bool>::type _contains_f() {
+    return true;
+}
+
+// contains - SFINAE recursive case: search for Value in remainder
+template<typename T, T Value, T Head, T... Tail>
+constexpr typename std::enable_if<Value != Head, bool>::type _contains_f() {
+    return contains<T, Value, std::integer_sequence<T, Tail...>>();
+}
+
+// contains - standard case (sequence is not empty)
+template<typename T, T Value, T... Seq>
+struct _contains<T, Value, std::integer_sequence<T, Seq...>> {
+    static constexpr bool value = _contains_f<T, Value, Seq...>();
+};
 
 // prepend - impl
 template<typename T, T Value, T... Seq>
