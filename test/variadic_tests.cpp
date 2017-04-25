@@ -10,11 +10,18 @@ using namespace tdc;
 // integer sequences
 using mtseq_t    = std::index_sequence<>;
 using testseq1_t = std::index_sequence<5, 2, 4, 3, 1>;
+using testseq2_t = std::index_sequence<1, 2, 3, 4, 5>;
+using testseq3_t = std::index_sequence<5, 4, 3, 2, 1>;
+
+// is::max
+static_assert(is::max_idx<mtseq_t>() == 0, "is::max on empty sequence");
+static_assert(is::max_idx<testseq2_t>() == 5, "is::max");
+static_assert(is::max_idx<testseq3_t>() == 5, "is::max");
 
 // is::contains
-static_assert(is::contains<size_t, 5, testseq1_t>(), "is::contains");
-static_assert(is::contains<size_t, 1, testseq1_t>(), "is::contains");
-static_assert(!is::contains<size_t, 0, testseq1_t>(), "is::contains");
+static_assert(is::contains_idx<5, testseq1_t>(), "is::contains");
+static_assert(is::contains_idx<1, testseq1_t>(), "is::contains");
+static_assert(!is::contains_idx<0, testseq1_t>(), "is::contains");
 
 // is::prepend
 static_assert(std::is_same<
@@ -29,18 +36,18 @@ static_assert(std::is_same<
 
 // is::sort
 static_assert(std::is_same<
-    is::sort<size_t, mtseq_t>,
+    is::sort_idx<mtseq_t>,
     mtseq_t
 >::value, "is::sort on empty sequence");
 
 static_assert(std::is_same<
-    is::sort<size_t, testseq1_t, is::ascending>,
-    std::index_sequence<1, 2, 3, 4, 5>
+    is::sort_idx<testseq1_t, is::ascending>,
+    testseq2_t
 >::value, "is::sort ascending");
 
 static_assert(std::is_same<
-    is::sort<size_t, testseq1_t, is::descending>,
-    std::index_sequence<5, 4, 3, 2, 1>
+    is::sort_idx<testseq1_t, is::descending>,
+    testseq3_t
 >::value, "is::sort descending");
 
 // types and type lists

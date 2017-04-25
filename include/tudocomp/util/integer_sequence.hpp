@@ -1,5 +1,6 @@
 #pragma once
 
+#include <limits>
 #include <tudocomp/util/cpp14/integer_sequence.hpp>
 
 namespace tdc {
@@ -9,12 +10,32 @@ namespace is {
 
 // declarations
 
+template<typename T, T Current, typename Seq> struct _max;
 template<typename T, T Value, typename Seq> struct _contains;
 template<typename T, T Value, typename Seq> struct _prepend;
 template<typename T, typename Compare, T Value, typename Seq> struct _insert;
 template<typename T, typename Compare, typename Seq> struct _sort;
 
 /// \endcond
+
+/// \brief Finds the maximum in an integer sequence.
+///
+/// \tparam T the integer type
+/// \tparam Seq the sequence to search
+/// \return the maximum value in \c Seq.
+template<typename T, typename Seq>
+constexpr T max() {
+    return _max<T, std::numeric_limits<T>::min(), Seq>::value;
+};
+
+/// \brief Finds the maximum in an index sequence.
+///
+/// \tparam Seq the sequence to search
+/// \return the maximum value in \c Seq.
+template<typename Seq>
+constexpr size_t max_idx() {
+    return _max<size_t, 0, Seq>::value;
+};
 
 /// \brief Reports whether a value is contained in an integer sequence.
 ///
@@ -99,6 +120,29 @@ using sort_idx = typename _sort<size_t, Compare, Seq>::seq;
 /// \cond INTERNAL
 
 // implementations
+
+// max - trivial case (sequence is empty)
+template<typename T, T Current>
+struct _max<T, Current, std::integer_sequence<T>> {
+    static constexpr T value = Current;
+};
+
+// max - SFINAE case 1: Head > Current
+template<typename T, T Current, T Head, T... Tail>
+constexpr typename std::enable_if<(Head > Current), T>::type _max_f() {
+    return _max<T, Head, std::integer_sequence<T, Tail...>>::value;
+}
+
+// max - SFINAE case 2: Head <= Current
+template<typename T, T Current, T Head, T... Tail>
+constexpr typename std::enable_if<(Head <= Current), T>::type _max_f() {
+    return _max<T, Current, std::integer_sequence<T, Tail...>>::value;
+}
+
+template<typename T, T Current, T... Seq>
+struct _max<T, Current, std::integer_sequence<T, Seq...>> {
+    static constexpr T value = _max_f<T, Current, Seq...>();
+};
 
 // contains - trivial case (sequence is empty)
 template<typename T, T Value>
