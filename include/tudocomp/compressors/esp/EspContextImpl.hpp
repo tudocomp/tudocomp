@@ -90,6 +90,9 @@ namespace tdc {namespace esp {
             // Delete previous string
             r.string = std::vector<size_t>();
 
+            DCHECK_EQ(r.string.size(), 0);
+            DCHECK_EQ(r.string.capacity(), 0);
+
             // TODO: Preallocate based on number of rules
             new_layer.shrink_to_fit();
 
@@ -117,7 +120,11 @@ namespace tdc {namespace esp {
             }
 
             // Delete previous hashmap
+            {
+                auto discard = std::move(r.gr.n2);
+            }
             r.gr.n2 = decltype(r.gr.n2)();
+            DCHECK_EQ(r.gr.n2.size(), 0);
 
             // Prepare next round
             auto tmp = Round {
@@ -128,6 +135,8 @@ namespace tdc {namespace esp {
 
             round.reset();
             round = std::make_unique<Round>(std::move(tmp));
+
+            phase.log_stat("slp size", slp.rules.size());
         }
 
         slp.empty = empty;
