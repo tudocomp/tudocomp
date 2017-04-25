@@ -103,14 +103,20 @@ namespace tdc {namespace esp {
     };
 
     inline size_t layers_A_search(ConstGenericView<size_t> searchA, size_t piy) {
-        // TODO: Implement binary search here
-        size_t j = 0;
-        for(size_t i = 0; i < searchA.size(); i++) {
-            if (searchA[i] > piy) {
-                j = i;
+        size_t start = 0;
+        size_t end = searchA.size();
+
+        do {
+            size_t mid = (end - start) / 2 + start;
+
+            if (searchA[mid] > piy) {
+                start = mid;
+            } else {
+                end = mid;
             }
-        }
-        return j;
+        } while ((end - start) > 1);
+
+        return start;
     }
 
     inline Point point_coord_for_link(ConstGenericView<Sindex> sindices, Link link, bool reverse) {
