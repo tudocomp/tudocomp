@@ -8,10 +8,8 @@ namespace tdc {namespace esp {
             counter(counter_start + 1),
             m_initial_counter(counter_start + 1) {}
         using a2_t = std::unordered_map<Array<2>, size_t>;
-        using a3_t = std::unordered_map<Array<3>, size_t>;
 
         a2_t n2;
-        a3_t n3;
 
         size_t counter = 1;
 

@@ -121,21 +121,19 @@ namespace tdc {namespace esp {
         bool empty = rds.empty;
 
         size_t size2 = 0;
-        size_t size3 = 0;
         for (auto& r: rs) {
             size2 += r.gr.n2.size();
-            size3 += r.gr.n3.size();
         }
 
         std::vector<std::array<size_t, 2>> ret;
 
         {
-            size_t vector_size = size2 + 2 * size3 + (256 - GRAMMAR_PD_ELLIDED_PREFIX);
+            size_t vector_size = size2 + (256 - GRAMMAR_PD_ELLIDED_PREFIX);
             ret.reserve(vector_size);
             ret.resize(vector_size, std::array<size_t, 2>{{ 0,0 }});
         }
 
-        size_t i3 = size2 + size3;
+        size_t i3 = size2;
 
         size_t counter_offset = GRAMMAR_PD_ELLIDED_PREFIX;
         size_t prev_counter_offset = 0;
@@ -144,52 +142,45 @@ namespace tdc {namespace esp {
 
         size_t debug_round = 0;
         for (auto& r: rs) {
-            const size_t i3_end = i3 + r.gr.n3.size();
+            // NB! Non-determinism here!
+            for (auto& kv: r.gr.n2) {
+                const auto& key = kv.first;
+                const auto& val = kv.second - r.gr.m_initial_counter;
 
-            auto doit = [&](auto& n) {
-                // NB! Non determinism here!
-                for (auto& kv: n) {
-                    const auto& key = kv.first;
-                    const auto& val = kv.second - r.gr.m_initial_counter;
+                size_t rule_idx = counter_offset + val;
+                size_t store_idx = rule_idx - GRAMMAR_PD_ELLIDED_PREFIX;
 
-                    size_t rule_idx = counter_offset + val;
-                    size_t store_idx = rule_idx - GRAMMAR_PD_ELLIDED_PREFIX;
+                last_idx = std::max(rule_idx, last_idx);
 
-                    last_idx = std::max(rule_idx, last_idx);
+                DCHECK_EQ(ret.at(store_idx).at(0), 0);
+                DCHECK_EQ(ret.at(store_idx).at(1), 0);
 
-                    DCHECK_EQ(ret.at(store_idx).at(0), 0);
-                    DCHECK_EQ(ret.at(store_idx).at(1), 0);
+                if (key.m_data.size() == 2) {
+                    ret[store_idx][0] = key.m_data[0] + prev_counter_offset;
+                    ret[store_idx][1] = key.m_data[1] + prev_counter_offset;
+                } else if (key.m_data.size() == 3) {
+                    ret[store_idx][0] = i3 + GRAMMAR_PD_ELLIDED_PREFIX;
+                    ret[store_idx][1] = key.m_data[2] + prev_counter_offset;
 
-                    if (key.m_data.size() == 2) {
-                        ret[store_idx][0] = key.m_data[0] + prev_counter_offset;
-                        ret[store_idx][1] = key.m_data[1] + prev_counter_offset;
-                    } else if (key.m_data.size() == 3) {
-                        ret[store_idx][0] = i3 + GRAMMAR_PD_ELLIDED_PREFIX;
-                        ret[store_idx][1] = key.m_data[2] + prev_counter_offset;
+                    ret[i3][0] = key.m_data[0] + prev_counter_offset;
+                    ret[i3][1] = key.m_data[1] + prev_counter_offset;
 
-                        ret[i3][0] = key.m_data[0] + prev_counter_offset;
-                        ret[i3][1] = key.m_data[1] + prev_counter_offset;
-
-                        i3++;
-                    } else {
-                        DCHECK(false);
-                    }
-
-                    DCHECK_NE(ret.at(store_idx).at(0), 0);
-                    DCHECK_NE(ret.at(store_idx).at(1), 0);
+                    i3++;
+                } else {
+                    DCHECK(false);
                 }
-            };
 
-            doit(r.gr.n2);
-            doit(r.gr.n3);
-            DCHECK_EQ(i3, i3_end);
+                DCHECK_NE(ret.at(store_idx).at(0), 0);
+                DCHECK_NE(ret.at(store_idx).at(1), 0);
+            }
+
             prev_counter_offset = counter_offset;
             counter_offset += r.gr.rules_count();
 
             debug_round++;
         }
 
-        DCHECK_EQ(counter_offset, size2 + size3 + GRAMMAR_PD_ELLIDED_PREFIX);
+        DCHECK_EQ(counter_offset, size2 + GRAMMAR_PD_ELLIDED_PREFIX);
         DCHECK_EQ(i3, ret.size());
 
         debug.generate_grammar(empty, last_idx);
