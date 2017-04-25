@@ -23,6 +23,10 @@ public:
 
     using provides = std::index_sequence<ds::PLCP_ARRAY, ds::LCP_ARRAY>;
     using requires = std::index_sequence<ds::PHI_ARRAY>;
+    using ds_types = tl::mix<
+        tl::set<ds::PLCP_ARRAY, decltype(m_plcp)>,
+        tl::set<ds::LCP_ARRAY,  decltype(m_lcp)>
+    >;
 
     // implements concept "DSProvider"
     template<typename manager_t>
@@ -43,13 +47,8 @@ public:
     }
 
     // implements concept "DSProvider"
-    using ds_types = tl::mix<
-        tl::set<ds::PLCP_ARRAY, decltype(m_plcp)>,
-        tl::set<ds::LCP_ARRAY,  decltype(m_lcp)>
-    >;
-
-    template<dsid_t ds>
-    const tl::get<ds, ds_types>& get();
+    template<dsid_t ds> const tl::get<ds, ds_types>& get();
+    template<dsid_t ds> tl::get<ds, ds_types> relinquish();
 };
 
 template<>
@@ -60,6 +59,16 @@ const DynamicIntVector& PhiAlgorithm::get<ds::PLCP_ARRAY>() {
 template<>
 const DynamicIntVector& PhiAlgorithm::get<ds::LCP_ARRAY>() {
     return m_lcp;
+}
+
+template<>
+DynamicIntVector PhiAlgorithm::relinquish<ds::PLCP_ARRAY>() {
+    return std::move(m_plcp);
+}
+
+template<>
+DynamicIntVector PhiAlgorithm::relinquish<ds::LCP_ARRAY>() {
+    return std::move(m_lcp);
 }
 
 } //ns

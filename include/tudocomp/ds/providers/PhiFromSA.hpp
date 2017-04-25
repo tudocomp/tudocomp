@@ -22,6 +22,7 @@ public:
 
     using provides = std::index_sequence<ds::PHI_ARRAY>;
     using requires = std::index_sequence<ds::SUFFIX_ARRAY>;
+    using ds_types = tl::set<ds::PHI_ARRAY, decltype(m_phi)>;
 
     // implements concept "DSProvider"
     template<typename manager_t>
@@ -42,15 +43,18 @@ public:
     }
 
     // implements concept "DSProvider"
-    using ds_types = tl::set<ds::PHI_ARRAY, decltype(m_phi)>;
-
-    template<dsid_t ds>
-    const tl::get<ds, ds_types>& get();
+    template<dsid_t ds> const tl::get<ds, ds_types>& get();
+    template<dsid_t ds> tl::get<ds, ds_types> relinquish();
 };
 
 template<>
 const DynamicIntVector& PhiFromSA::get<ds::PHI_ARRAY>() {
     return m_phi;
+}
+
+template<>
+DynamicIntVector PhiFromSA::relinquish<ds::PHI_ARRAY>() {
+    return std::move(m_phi);
 }
 
 } //ns

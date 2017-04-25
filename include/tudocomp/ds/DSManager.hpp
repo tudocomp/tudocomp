@@ -183,6 +183,13 @@ public:
         return get_provider<ds>().template get<ds>();
     }
 
+    template<dsid_t ds>
+    inline auto relinquish() ->
+        decltype(get_provider<ds>().template relinquish<ds>()) {
+
+        return get_provider<ds>().template relinquish<ds>();
+    }
+
     const View& input = m_input;
 };
 

@@ -22,6 +22,7 @@ public:
 
     using provides = std::index_sequence<ds::INVERSE_SUFFIX_ARRAY>;
     using requires = std::index_sequence<ds::SUFFIX_ARRAY>;
+    using ds_types = tl::set<ds::INVERSE_SUFFIX_ARRAY, decltype(m_isa)>;
 
     // implements concept "DSProvider"
     template<typename manager_t>
@@ -42,15 +43,18 @@ public:
     }
 
     // implements concept "DSProvider"
-    using ds_types = tl::set<ds::INVERSE_SUFFIX_ARRAY, decltype(m_isa)>;
-
-    template<dsid_t ds>
-    const tl::get<ds, ds_types>& get();
+    template<dsid_t ds> const tl::get<ds, ds_types>& get();
+    template<dsid_t ds> tl::get<ds, ds_types> relinquish();
 };
 
 template<>
 const DynamicIntVector& ISAFromSA::get<ds::INVERSE_SUFFIX_ARRAY>() {
     return m_isa;
+}
+
+template<>
+DynamicIntVector ISAFromSA::relinquish<ds::INVERSE_SUFFIX_ARRAY>() {
+    return std::move(m_isa);
 }
 
 } //ns
