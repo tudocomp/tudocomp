@@ -228,18 +228,18 @@ namespace tdc {namespace esp {
                 }
             }
             // Read rules rhs in sorted order (B array)
-            std::vector<size_t> sis;
-            sis.reserve(slp_size);
+            std::vector<size_t> Bde;
+            Bde.reserve(slp_size);
             {
                 size_t last = 0;
                 for(size_t i = 0; i < slp_size && !bin.eof(); i++) {
                     // ...
                     auto diff = bin.read_unary<size_t>();
                     last += diff;
-                    sis.push_back(last);
+                    Bde.push_back(last);
                 }
             }
-            //std::cout << vec_to_debug_string(sis) << "\n";
+            //std::cout << vec_to_debug_string(Bde) << "\n";
 
             // Read b
             size_t b_size = bin.read_compressed_int<size_t>();
@@ -268,17 +268,17 @@ namespace tdc {namespace esp {
                 //std::cout << "ok " << __LINE__ << "\n";
 
                 for(auto& bv : Dpi_bvs) {
-                    bv.reserve(sis.size());
+                    bv.reserve(slp_size);
 
                     //std::cout << "ok " << __LINE__ << "\n";
 
-                    for(size_t i = 0; i < sis.size(); i++) {
+                    for(size_t i = 0; i < slp_size; i++) {
                         bv.push_back(bin.read_bit());
                     }
                     //std::cout << "Dpi bv: " << vec_to_debug_string(bv) << "\n";
                 }
 
-                Dpi = esp::recover_Dxx(Dpi_bvs, sis.size());
+                Dpi = esp::recover_Dxx(Dpi_bvs, slp_size);
             }
 
             //std::cout << "ok " << __LINE__ << "\n";
@@ -292,14 +292,14 @@ namespace tdc {namespace esp {
                 Dsi_bvs.resize(wt_depth);
 
                 for(auto& bv : Dsi_bvs) {
-                    bv.reserve(sis.size());
-                    for(size_t i = 0; i < sis.size(); i++) {
+                    bv.reserve(slp_size);
+                    for(size_t i = 0; i < slp_size; i++) {
                         bv.push_back(bin.read_bit());
                     }
                     //std::cout << "Dsi bv: " << vec_to_debug_string(bv) << "\n";
                 }
 
-                Dsi = esp::recover_Dxx(Dsi_bvs, sis.size());
+                Dsi = esp::recover_Dxx(Dsi_bvs, slp_size);
             }
             //std::cout << "Dsi: " << vec_to_debug_string(Dsi) << "\n";
 

@@ -1007,55 +1007,7 @@ TEST(MonotonSubseq, esp_encoding_real1) {
     // std::cout << "b:\n" << vec_to_debug_string(b) << "\n";
 
     // recover D
-    auto recovered_D = std::vector<size_t> {};
-    {
-        recovered_D.reserve(Dpi.size());
-        recovered_D.resize(Dpi.size());
-
-        std::vector<size_t> ss_ll;
-        ss_ll.reserve(Dpi.size());
-        ss_ll.resize(Dpi.size());
-
-        std::vector<size_t> ss_ll_front;
-        ss_ll_front.reserve(b.size());
-        ss_ll_front.resize(b.size(), size_t(-1)); // NB: ensure there is n+1 bits space in real impl
-
-        // based in Bdecoded and Dpi we know the sorted sequence.
-        // by mapping the Dsi sequence to it we get the original D
-
-        for (size_t i = 0; i < Dpi.size(); i++) {
-            size_t list_i = Dpi[i];
-            if (ss_ll_front[list_i] == size_t(-1)) {
-                ss_ll_front[list_i] = i;
-                ss_ll[i] = i;
-            } else {
-                size_t root_node = ss_ll_front[list_i];
-                size_t root_node_next = ss_ll[root_node];
-
-                ss_ll[root_node] = i;
-                ss_ll[i] = root_node_next;
-
-                if (b[list_i] == 1) {
-                    ss_ll_front[list_i] = i;
-                }
-            }
-        }
-
-        for (size_t& link : ss_ll_front) {
-            link = ss_ll[link];
-        }
-
-        for (size_t i = 0; i < Dsi.size(); i++) {
-            size_t j = Dsi.size() - i - 1;
-
-            size_t list_i = Dsi[j];
-
-            auto front = ss_ll_front[list_i];
-            ss_ll_front[list_i] = ss_ll[front];
-
-            recovered_D[j] = Bde[front];
-        }
-    }
+    auto recovered_D = esp::recover_D_from_encoding(Dpi, Dsi, b, Bde);
 
     //std::cout << "recovered_D:\n" << vec_to_debug_string(recovered_D, 3) << "\n";
 
