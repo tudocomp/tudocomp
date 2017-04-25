@@ -583,7 +583,7 @@ namespace tdc {namespace esp {
                 ss_ll[root_node] = i;
                 ss_ll[i] = root_node_next;
 
-                if (b[list_i] == 1) {
+                if (b[list_i] == uint_t<1>(1)) {
                     ss_ll_front[list_i] = i;
                 }
             }

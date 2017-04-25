@@ -519,7 +519,7 @@ public:
 };
 
 void inverse_deps(const esp::SLP& slp, size_t root_node, std::vector<size_t>& inv, size_t ind = 0) {
-    if (inv[root_node] != -1) {
+    if (inv[root_node] != size_t(-1)) {
         return;
     } else if (root_node <= 255) {
         inv[root_node] = 0;
