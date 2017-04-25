@@ -5,17 +5,26 @@
 #include <tudocomp/compressors/esp/TypedBlock.hpp>
 
 namespace tdc {namespace esp {
+    template<typename T>
     class DebugContextBase {
         struct Data {
             std::ostream* m_out;
             bool print_enabled = true;
             bool print_early = true;
             std::vector<std::function<void(std::ostream&)>> m_print_instructions;
+            T m_child_data;
         };
         std::shared_ptr<Data> m_data;
     protected:
-        template<typename T>
-        static std::vector<size_t> cast_vec(const T& v) {
+        template<typename F>
+        void with_child(F f) {
+            if (m_data) {
+                f(m_data->m_child_data);
+            }
+        }
+
+        template<typename U>
+        static std::vector<size_t> cast_vec(const U& v) {
             std::vector<size_t> r;
             r.reserve(v.size());
             for (auto e : v) {
@@ -57,21 +66,22 @@ namespace tdc {namespace esp {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-    class DebugMetablockContext: public DebugContextBase {
-        struct Data {
-            size_t alphabet_size;
-            std::vector<size_t> metablock;
-            size_t type;
-            size_t offset;
-            std::vector<TypedBlock> unadjusted_blocks;
+    struct DebugMetablockContextData {
+        size_t alphabet_size;
+        std::vector<size_t> metablock;
+        size_t type;
+        size_t offset;
+        std::vector<TypedBlock> unadjusted_blocks;
 
-            std::vector<size_t> mb2_initial;
-            std::vector<std::shared_ptr<std::vector<size_t>>> mb2_reduce_to_6_steps;
-            std::vector<std::shared_ptr<std::vector<size_t>>> mb2_reduce_to_3_steps;
+        std::vector<size_t> mb2_initial;
+        std::vector<std::shared_ptr<std::vector<size_t>>> mb2_reduce_to_6_steps;
+        std::vector<std::shared_ptr<std::vector<size_t>>> mb2_reduce_to_3_steps;
 
-            std::vector<size_t> mb2_high_landmarks;
-            std::vector<size_t> mb2_high_and_low_landmarks;
-        };
+        std::vector<size_t> mb2_high_landmarks;
+        std::vector<size_t> mb2_high_and_low_landmarks;
+    };
+    class DebugMetablockContext: public DebugContextBase<DebugMetablockContextData> {
+        using Data = DebugMetablockContextData;
         std::shared_ptr<Data> m_data;
     public:
         DebugMetablockContext(std::ostream& o, bool p_en, bool p_ea, size_t alphabet_size):
@@ -171,17 +181,18 @@ namespace tdc {namespace esp {
         }
     };
 
-    class DebugRoundContext: public DebugContextBase {
-        struct Data {
-            size_t number;
-            std::vector<size_t> string;
-            size_t root_node = 0;
-            bool empty = false;
-            std::vector<DebugMetablockContext> metablocks;
-            size_t alphabet_size;
-            std::vector<TypedBlock> adjusted_blocks;
-            std::vector<std::shared_ptr<std::pair<std::vector<size_t>, size_t>>> slice_symbol_map;
-        };
+    struct DebugRoundContextData {
+        size_t number;
+        std::vector<size_t> string;
+        size_t root_node = 0;
+        bool empty = false;
+        std::vector<DebugMetablockContext> metablocks;
+        size_t alphabet_size;
+        std::vector<TypedBlock> adjusted_blocks;
+        std::vector<std::shared_ptr<std::pair<std::vector<size_t>, size_t>>> slice_symbol_map;
+    };
+    class DebugRoundContext: public DebugContextBase<DebugRoundContextData> {
+        using Data = DebugRoundContextData;
         std::shared_ptr<Data> m_data;
     public:
         DebugRoundContext(std::ostream& o, bool p_en, bool p_ea):
@@ -263,17 +274,18 @@ namespace tdc {namespace esp {
         }
     };
 
-    class DebugContext: public DebugContextBase {
-        struct Data {
-            std::string input;
-            std::vector<DebugRoundContext> rounds;
-            bool empty;
-            size_t root_node;
-            size_t encode_max_value;
-            size_t encode_max_value_bits;
-            size_t encode_root_node;
-            std::vector<std::shared_ptr<std::vector<size_t>>> encode_slp;
-        };
+    struct DebugContextData {
+        std::string input;
+        std::vector<DebugRoundContext> rounds;
+        bool empty;
+        size_t root_node;
+        size_t encode_max_value;
+        size_t encode_max_value_bits;
+        size_t encode_root_node;
+        std::vector<std::shared_ptr<std::vector<size_t>>> encode_slp;
+    };
+    class DebugContext: public DebugContextBase<DebugContextData> {
+        using Data = DebugContextData;
         std::shared_ptr<Data> m_data;
     public:
         DebugContext(std::ostream& o, bool p_en, bool p_ea):
