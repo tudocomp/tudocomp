@@ -15,6 +15,9 @@ namespace tdc {namespace esp {
             T m_child_data;
         };
         std::shared_ptr<Data> m_data;
+
+        template<typename U>
+        friend class DebugContextBase;
     protected:
         template<typename F>
         void with_child(F f) {
@@ -47,11 +50,12 @@ namespace tdc {namespace esp {
         }
         DebugContextBase(std::ostream& o, bool p_en, bool p_ea):
             m_data(std::make_shared<Data>(Data { &o, p_en, p_ea })) {}
-        DebugContextBase(DebugContextBase& parent):
+    public:
+        template<typename U>
+        DebugContextBase(DebugContextBase<U>& parent):
             DebugContextBase(*(parent.m_data->m_out),
                              parent.m_data->print_enabled,
                              parent.m_data->print_early) {}
-    public:
         DebugContextBase(const DebugContextBase& other):
             m_data(other.m_data) {}
 
@@ -89,7 +93,8 @@ namespace tdc {namespace esp {
             m_data(std::make_shared<Data>(Data {})) {
                 m_data->alphabet_size = alphabet_size;
             }
-        DebugMetablockContext(DebugContextBase& parent, size_t alphabet_size):
+        template<typename U>
+        DebugMetablockContext(DebugContextBase<U>& parent, size_t alphabet_size):
             DebugContextBase(parent),
             m_data(std::make_shared<Data>(Data {})) {
                 m_data->alphabet_size = alphabet_size;
@@ -198,7 +203,8 @@ namespace tdc {namespace esp {
         DebugRoundContext(std::ostream& o, bool p_en, bool p_ea):
             DebugContextBase(o, p_en, p_ea),
             m_data(std::make_shared<Data>(Data {})) {}
-        DebugRoundContext(DebugContextBase& parent):
+        template<typename U>
+        DebugRoundContext(DebugContextBase<U>& parent):
             DebugContextBase(parent),
             m_data(std::make_shared<Data>(Data {})) {}
 
