@@ -114,6 +114,9 @@ namespace tdc {namespace esp {
                 slp_counter += additional_slp_size;
             }
 
+            // Delete previous hashmap
+            r.gr.n2 = decltype(r.gr.n2)();
+
             // Prepare next round
             rounds.push_back(Round {
                 GrammarRules(r.gr.rules_count()),
