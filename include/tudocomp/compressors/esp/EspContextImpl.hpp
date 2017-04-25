@@ -12,8 +12,13 @@ namespace tdc {namespace esp {
         size_t root_node = 0;
         bool empty = false;
 
+
         // Initialize initial round
         {
+            auto phase = with_env([&](auto& env) {
+                return env.stat_phase("Prepare round 0");
+            });
+
             Round round0 {
                 GrammarRules(256),
                 256, // TODO: Calc actual alphabet size

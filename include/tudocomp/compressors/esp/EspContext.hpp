@@ -13,10 +13,11 @@ namespace tdc {namespace esp {
         using esp_view_t = ConstGenericView<size_t>;
 
         template<typename F>
-        void with_env(F f) {
+        auto with_env(F f) -> decltype(f(*m_env)) {
             if (m_env != nullptr) {
-                f(*m_env);
+                return f(*m_env);
             }
+            return decltype(f(*m_env))();
         }
 
         DebugContext debug;
