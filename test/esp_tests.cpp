@@ -1,6 +1,7 @@
-#include "tudocomp/tudocomp.hpp"
 #include "test/util.hpp"
 #include <gtest/gtest.h>
+
+#include "tudocomp/compressors/EspCompressor.hpp"
 
 #include "tudocomp/compressors/esp/SLPDepSort.hpp"
 

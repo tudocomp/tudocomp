@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 #include <tudocomp/util.hpp>
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
@@ -25,62 +27,53 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         using namespace esp;
 
-        auto p1 = env().stat_phase("ESP Compressor");
+        auto phase0 = StatPhase("ESP Compressor");
 
         EspContext context { &env(), true };
         SLP slp;
 
         {
-            auto x = env().stat_phase("Compress Phase");
+            auto phase1 = StatPhase("Compress Phase");
 
-            auto p2 = env().stat_phase("Creating input view");
+            auto phase2 = StatPhase("Creating input view");
                 auto in = input.as_view();
-            p2.end();
 
             context.debug.input_string(in);
 
-            auto p3 = env().stat_phase("ESP Algorithm");
+            phase2.split("ESP Algorithm");
                 slp = context.generate_grammar(in);
-            p3.end();
         }
 
         {
-            auto x = env().stat_phase("Encode Phase");
+            auto phase1 = StatPhase("Encode Phase");
 
-            auto p5 = env().stat_phase("Creating strategy");
+            auto phase2 = StatPhase("Creating strategy");
                 const slp_strategy_t strategy { this->env().env_for_option("slp_strategy") };
-            p5.end();
 
-            auto p6 = env().stat_phase("Encode SLP");
+            phase2.split("Encode SLP");
                 strategy.encode(context, std::move(slp), output);
-            p6.end();
         }
 
         context.debug.print_all();
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        auto p1 = env().stat_phase("ESP Decompressor");
+        auto phase0 = StatPhase("ESP Decompressor");
 
-        auto p5 = env().stat_phase("Creating strategy");
+        auto phase1 = StatPhase("Creating strategy");
             const slp_strategy_t strategy { this->env().env_for_option("slp_strategy") };
-        p5.end();
-
-        auto x = env().stat_phase("Decode SLP");
+        phase1.split("Decode SLP");
             auto slp = strategy.decode(input);
-        x.end();
 
-        auto y = env().stat_phase("Create output stream");
+        phase1.split("Create output stream");
             auto out = output.as_stream();
-        y.end();
 
-        auto z = env().stat_phase("Derive text");
+        phase1.split("Derive text");
             if (!slp.empty) {
                 slp.derive_text(out);
             } else {
                 out << ""_v;
             }
-        z.end();
     }
 };
 

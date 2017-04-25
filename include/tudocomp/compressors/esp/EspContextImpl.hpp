@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 #include <tudocomp/compressors/esp/EspContext.hpp>
 #include <tudocomp/compressors/esp/RoundContext.hpp>
 #include <tudocomp/compressors/esp/meta_blocks.hpp>
@@ -20,7 +22,7 @@ namespace tdc {namespace esp {
         // Initialize initial round
         {
             auto phase = with_env([&](auto& env) {
-                return env.stat_phase("Prepare round 0");
+                return StatPhase("Prepare round 0");
             });
 
             round = std::make_unique<Round>(Round {
@@ -38,7 +40,7 @@ namespace tdc {namespace esp {
             auto phase = with_env([&](auto& env) {
                 std::stringstream ss;
                 ss << "Round " << n;
-                return env.stat_phase(ss.str());
+                return StatPhase(ss.str());
             });
 
             Round& r = *round;
