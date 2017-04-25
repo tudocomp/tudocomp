@@ -31,8 +31,11 @@ public:
         SLP slp;
 
         {
-            auto p2 = env().stat_phase("Input");
-            auto in = input.as_view();
+            auto x = env().stat_phase("Input Phase");
+
+            auto p2 = env().stat_phase("Creating input view");
+                auto in = input.as_view();
+            p2.end();
 
             context.debug.input_string(in);
 
@@ -45,24 +48,43 @@ public:
             p4.end();
         }
 
-        const slp_strategy_t strategy { this->env().env_for_option("slp_strategy") };
+        {
+            auto x = env().stat_phase("Encode Phase");
 
-        strategy.encode(context, std::move(slp), output);
+            auto p5 = env().stat_phase("Creating strategy");
+                const slp_strategy_t strategy { this->env().env_for_option("slp_strategy") };
+            p5.end();
+
+            auto p6 = env().stat_phase("Encode SLP");
+                strategy.encode(context, std::move(slp), output);
+            p6.end();
+        }
 
         context.debug.print_all();
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        const slp_strategy_t strategy { this->env().env_for_option("slp_strategy") };
+        auto p1 = env().stat_phase("ESP Decompressor");
 
-        auto slp = strategy.decode(input);
+        auto p5 = env().stat_phase("Creating strategy");
+            const slp_strategy_t strategy { this->env().env_for_option("slp_strategy") };
+        p5.end();
 
-        auto out = output.as_stream();
-        if (!slp.empty) {
-            slp.derive_text(out);
-        } else {
-            out << ""_v;
-        }
+        auto x = env().stat_phase("Decode SLP");
+            auto slp = strategy.decode(input);
+        x.end();
+
+        auto y = env().stat_phase("Create output stream");
+            auto out = output.as_stream();
+        y.end();
+
+        auto z = env().stat_phase("Derive text");
+            if (!slp.empty) {
+                slp.derive_text(out);
+            } else {
+                out << ""_v;
+            }
+        z.end();
     }
 };
 
