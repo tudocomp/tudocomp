@@ -50,12 +50,12 @@ namespace tdc {namespace esp {
         }
         DebugContextBase(std::ostream& o, bool p_en, bool p_ea):
             m_data(std::make_shared<Data>(Data { &o, p_en, p_ea })) {}
-    public:
         template<typename U>
         DebugContextBase(DebugContextBase<U>& parent):
             DebugContextBase(*(parent.m_data->m_out),
                              parent.m_data->print_enabled,
                              parent.m_data->print_early) {}
+    public:
         DebugContextBase(const DebugContextBase& other):
             m_data(other.m_data) {}
 
