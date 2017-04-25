@@ -26,6 +26,12 @@ public:
 
     // implements concept "DSProvider"
     template<dsid_t ds>
+    inline void compress() {
+        DLOG(INFO) << "ISAFromSA::compress<" << ds::name_for(ds) << ">";
+    }
+
+    // implements concept "DSProvider"
+    template<dsid_t ds>
     inline void discard() {
         DLOG(INFO) << "ISAFromSA::discard<" << ds::name_for(ds) << ">";
     }

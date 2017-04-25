@@ -41,11 +41,21 @@ namespace tdc {
 /// structures that have no corresponding node in the graph) are discarded
 /// immediately.
 ///
+/// In case of delayed compression: Once a data structure's node has an out
+/// degree of exactly one and this single edge is directly connected to
+/// CONSTRUCT, the data structure will be compressed.
+///
 /// \tparam manager_t the data structure manager's type
 /// \tparam m_construct the data structures to construct
 template<typename manager_t, dsid_t... m_construct>
 class DSDependencyGraph {
 private:
+    // tests if a data structure has been requested
+    template<dsid_t ds>
+    constexpr bool is_requested() {
+        return is::contains_idx<ds, std::index_sequence<m_construct...>>;
+    }
+
     // shortcut to provider type for a certain data structure
     template<dsid_t ds>
     using provider_t = typename manager_t::template provider_type<ds>;
@@ -131,8 +141,10 @@ private:
     manager_t* m_manager;
     CompressMode m_cm;
 
+    // TODO: use std::arrays of size is::max<m_construct...>() ?
     std::map<dsid_t, size_t> m_degree;
     std::set<dsid_t> m_constructed;
+    std::set<dsid_t> m_compressed;
 
     inline void init_degree(std::index_sequence<>) {
         // end of a construction path
@@ -153,6 +165,24 @@ private:
 
         // next
         init_degree(std::index_sequence<Tail...>());
+    }
+
+    template<dsid_t ds>
+    inline void possibly_compress() {
+        // if out degree of ds equals one and the ds is requested, compress
+        DLOG(INFO) << "possibly_compress<" << ds::name_for(ds) << ">";
+        if(is_requested<ds>()) {
+            if(m_compressed.find(ds) == m_compressed.end()) {
+                auto it = m_degree.find(ds);
+                if(it != m_degree.end() && it->second == 1) {
+                    //DLOG(INFO) << "compress: " << ds::name_for(ds);
+                    m_manager->template get_provider<ds>()
+                        .template compress<ds>();
+
+                    m_compressed.emplace(ds);
+                }
+            }
+        }
     }
 
     inline void decrease_degree(std::index_sequence<>) {
@@ -177,6 +207,9 @@ private:
             // no longer needed
             //DLOG(INFO) << "discard: " << ds::name_for(Head);
             m_manager->template get_provider<Head>().template discard<Head>();
+        } else if(m_cm == CompressMode::delayed) {
+            // otherwise, may be suitable for compression
+            possibly_compress<Head>();
         }
 
         // next
@@ -199,15 +232,18 @@ private:
         discard_byproducts(std::index_sequence<Tail...>());
     }
 
-    inline void construct_recursive(std::index_sequence<>) {
+    inline void construct_recursive(bool, std::index_sequence<>) {
         // end of a construction path
     }
 
     template<dsid_t Head, dsid_t... Tail>
-    inline void construct_recursive(std::index_sequence<Head, Tail...>) {
+    inline void construct_recursive(
+        bool top_level,
+        std::index_sequence<Head, Tail...>) {
+
         if(m_constructed.find(Head) == m_constructed.end()) {
             // construct dependencies
-            construct_recursive(dependency_order<Head>());
+            construct_recursive(false, dependency_order<Head>());
 
             // construct
             //DLOG(INFO) << "construct: " << ds::name_for(Head);
@@ -222,10 +258,15 @@ private:
 
             // decrease degree of direct dependencies
             decrease_degree(typename provider_t<Head>::requires());
-
-            // next
-            construct_recursive(std::index_sequence<Tail...>());
         }
+
+        // in delayed compressed mode, at the top level, possible compress
+        if(m_cm == CompressMode::delayed && top_level) {
+            possibly_compress<Head>();
+        }
+
+        // next
+        construct_recursive(top_level, std::index_sequence<Tail...>());
     }
 
 public:
@@ -241,7 +282,7 @@ public:
         init_degree(std::index_sequence<m_construct...>());
 
         // construct data structures
-        construct_recursive(construction_order<m_construct...>());
+        construct_recursive(true, construction_order<m_construct...>());
     }
 };
 

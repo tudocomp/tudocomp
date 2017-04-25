@@ -27,6 +27,12 @@ public:
 
     // implements concept "DSProvider"
     template<dsid_t ds>
+    inline void compress() {
+        DLOG(INFO) << "DivSufSort::compress<" << ds::name_for(ds) << ">";
+    }
+
+    // implements concept "DSProvider"
+    template<dsid_t ds>
     inline void discard() {
         DLOG(INFO) << "DivSufSort::discard<" << ds::name_for(ds) << ">";
     }
