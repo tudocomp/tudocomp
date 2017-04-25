@@ -32,6 +32,12 @@ namespace tdc {namespace esp {
         }
 
         for(size_t n = 0;; n++) {
+            auto phase = with_env([&](auto& env) {
+                std::stringstream ss;
+                ss << "Round " << n;
+                return env.stat_phase(ss.str());
+            });
+
             Round& r = rounds.back();
             in_t in = r.string;
 
