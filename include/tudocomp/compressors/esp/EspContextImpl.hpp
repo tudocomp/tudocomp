@@ -81,6 +81,10 @@ namespace tdc {namespace esp {
                     new_layer.push_back(rule_name);
                 }
             }
+
+            // Delete previous string
+            r.string = std::vector<size_t>();
+
             // TODO: Preallocate based on number of rules
             new_layer.shrink_to_fit();
 
