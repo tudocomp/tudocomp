@@ -8,7 +8,7 @@ namespace tdc {
 namespace tl {
 
 /// \brief Meta-type for a list of types.
-template<typename... Ts> struct type_list;
+template<typename... Ts> struct type_list{};
 
 /// \brief An empty type list.
 using mt = type_list<>;
@@ -19,12 +19,16 @@ struct None;
 /// \brief Represents an unidentifiable, ambiguous type.
 struct Ambiguous;
 
+/// \brief Represents an error type returned when \ref check_get is called
+///        with an index greater than the input sequence.
+struct OutOfBounds;
+
 /// \cond INTERNAL
 
 // declarations
 // see public using declarations below for descriptions
 
-template<size_t I, typename Tl> struct _get;
+template<size_t I, typename Tl> struct _get{};
 template<typename T, typename Tl> struct _prepend;
 template<size_t I, typename T> struct _set;
 template<typename Tl1, typename Tl2> struct _mix;
@@ -203,6 +207,32 @@ struct _set_all<std::index_sequence<I>, T> {
     using list = set<I, T>;
 };
 
+// check_get - SFINAE case 1 (index is within bounds)
+template<size_t I, typename... Ts>
+constexpr typename std::enable_if<(I < sizeof...(Ts)), get<I, type_list<Ts...>>
+    >::type _check_get_f(type_list<Ts...>);
+
+// check_get - SFINAE case 1 (index is out of bounds)
+template<size_t I, typename... Ts>
+constexpr typename std::enable_if<(I >= sizeof...(Ts)), OutOfBounds
+    >::type _check_get_f(type_list<Ts...>);
+
+template<size_t I, typename Tl> struct _check_get;
+
+template<size_t I, typename... Ts>
+struct _check_get<I, type_list<Ts...>> {
+    using type = decltype(_check_get_f<I, Ts...>(type_list<Ts...>()));
+};
+
 /// \endcond
+
+/// \brief Gets the i-th type in a type list with bounds checking.
+///
+/// In case i is out of the list's boundaries, \ref OutOfBounds is returned.
+///
+/// \tparam I  the index in the type list
+/// \tparam Tl the type list in question
+template<size_t I, typename Tl>
+using check_get = typename _check_get<I, Tl>::type;
 
 }} //ns

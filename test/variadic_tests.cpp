@@ -62,6 +62,20 @@ static_assert(std::is_same<tl::get<0, testtl1_t>, A>::value, "tl::get");
 static_assert(std::is_same<tl::get<1, testtl1_t>, B>::value, "tl::get");
 static_assert(std::is_same<tl::get<2, testtl1_t>, C>::value, "tl::get");
 
+// tl::check_get
+static_assert(
+    std::is_same<tl::check_get<0, testtl1_t>, A>::value,
+    "tl::check_get within bounds");
+static_assert(
+    std::is_same<tl::check_get<1, testtl1_t>, B>::value,
+    "tl::check_get within bounds");;
+static_assert(
+    std::is_same<tl::check_get<2, testtl1_t>, C>::value,
+    "tl::check_get within bounds");
+static_assert(
+    std::is_same<tl::check_get<3, testtl1_t>, tl::OutOfBounds>::value,
+    "tl::check_get out of bounds");
+
 // tl::prepend
 static_assert(std::is_same<
     tl::prepend<A, tl::mt>,
