@@ -18,17 +18,19 @@ namespace tdc {namespace esp {
         size_t m_initial_counter = 1;
 
         size_t add(in_t v) {
+            const size_t vs = v.size();
+
+            DCHECK(vs == 2 || vs == 3);
+
             size_t* r;
-            if (v.size() == 2) {
+            if (vs == 2) {
                 r = &n2[v];
-            } else if (v.size() == 3) {
+            } else {
                 Array<2> between;
                 between.m_data[0] = add(v.slice(0, 2));
                 between.m_data[1] = v[2];
 
                 r = &n2[between];
-            } else {
-                DCHECK(false);
             }
 
             if (*r == 0) {
