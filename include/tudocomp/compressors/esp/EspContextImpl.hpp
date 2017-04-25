@@ -8,7 +8,6 @@
 
 namespace tdc {namespace esp {
     Rounds EspContext::generate_grammar_rounds(string_ref input) {
-        std::vector<Round> rounds;
         size_t root_node = 0;
         bool empty = false;
 
@@ -16,22 +15,23 @@ namespace tdc {namespace esp {
         size_t slp_counter = 256;
         size_t prev_slp_counter = 0;
 
+        std::unique_ptr<Round> round;
+
         // Initialize initial round
         {
             auto phase = with_env([&](auto& env) {
                 return env.stat_phase("Prepare round 0");
             });
 
-            Round round0 {
+            round = std::make_unique<Round>(Round {
                 GrammarRules(256),
                 256, // TODO: Calc actual alphabet size
                 std::vector<size_t>(),
-            };
-            round0.string.reserve(input.size());
+            });
+            round->string.reserve(input.size());
             for (auto c : input) {
-                round0.string.push_back(c);
+                round->string.push_back(c);
             }
-            rounds.push_back(std::move(round0));
         }
 
         for(size_t n = 0;; n++) {
@@ -41,7 +41,7 @@ namespace tdc {namespace esp {
                 return env.stat_phase(ss.str());
             });
 
-            Round& r = rounds.back();
+            Round& r = *round;
             in_t in = r.string;
 
             esp::RoundContext<in_t> ctx {
@@ -118,21 +118,21 @@ namespace tdc {namespace esp {
             r.gr.n2 = decltype(r.gr.n2)();
 
             // Prepare next round
-            rounds.push_back(Round {
+            auto tmp = Round {
                 GrammarRules(r.gr.rules_count()),
                 r.gr.rules_count(),
                 std::move(new_layer),
-            });
+            };
+
+            round.reset();
+            round = std::make_unique<Round>(std::move(tmp));
         }
 
         slp.empty = empty;
         slp.root_rule = root_node;
 
         return Rounds {
-            std::move(rounds),
-            root_node,
-            empty,
-            slp,
+            slp
         };
     }
 

@@ -10,9 +10,6 @@ namespace tdc {namespace esp {
     };
 
     struct Rounds {
-        std::vector<Round> rounds;
-        size_t root_node;
-        bool empty = true;
         SLP slp;
     };
 }}
