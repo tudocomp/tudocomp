@@ -1007,7 +1007,9 @@ TEST(MonotonSubseq, esp_encoding_real1) {
     // std::cout << "b:\n" << vec_to_debug_string(b) << "\n";
 
     // recover D
-    auto recovered_D = esp::recover_D_from_encoding(Dpi, Dsi, b, Bde);
+    std::vector<size_t> recovered_D;
+    recovered_D.resize(Dpi.size());
+    esp::recover_D_from_encoding(Dpi, Dsi, b, Bde, &recovered_D);
 
     //std::cout << "recovered_D:\n" << vec_to_debug_string(recovered_D, 3) << "\n";
 

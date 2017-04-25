@@ -6,6 +6,18 @@
 
 namespace tdc {namespace esp {
     class SufficientSLPStrategy: public Algorithm {
+        struct RhsAdapter {
+            SLP* slp;
+            inline const size_t& operator[](size_t i) const {
+                return slp->rules[i][1];
+            }
+            inline size_t& operator[](size_t i) {
+                return slp->rules[i][1];
+            }
+            inline size_t size() const {
+                return slp->rules.size();
+            }
+        };
     public:
         inline static Meta meta() {
             Meta m("slp_strategy", "sufficient");
@@ -83,25 +95,17 @@ namespace tdc {namespace esp {
                 }
             }
 
-            struct RhsAdapter {
-                SLP* slp;
-                inline const size_t& operator[](size_t i) const {
-                    return slp->rules[i][1];
-                }
-                inline size_t size() const {
-                    return slp->rules.size();
-                }
-            };
             const auto rhs = RhsAdapter { &slp };
 
             /*
-            {
-                std::vector<size_t> rules_rhs;
-                for(size_t i = 0; i < rhs.size(); i++) {
-                    rules_rhs.push_back(rhs[i]);
-                }
-                std::cout << "rhs: " << vec_to_debug_string(rules_rhs) << "\n";
+            std::vector<size_t> TMP_D;
+            for(size_t i = 0; i < rhs.size(); i++) {
+                TMP_D.push_back(rhs[i]);
             }
+            std::vector<size_t> TMP_Bde;
+            std::vector<size_t> TMP_Dpi;
+            std::vector<size_t> TMP_Dsi;
+            IntVector<uint_t<1>> TMP_b;
             */
 
             // Sort rhs and create sorted indice array O(n log n)
@@ -109,11 +113,13 @@ namespace tdc {namespace esp {
 
             //std::cout << "sis: " << vec_to_debug_string(sis) << "\n";
 
+
             // Write rules rhs in sorted order (B array of encoding)
             {
                 size_t last = 0;
                 for (size_t i = 0; i < rhs.size(); i++) {
                     auto v = rhs[sis[i]];
+                    //TMP_Bde.push_back(v);
                     DCHECK_LE(last, v);
                     size_t diff = v - last;
                     bout.write_unary(diff);
@@ -130,6 +136,8 @@ namespace tdc {namespace esp {
                 b = std::move(tmp.b);
             }
             size_t b_size = b.size();
+            //TMP_b = b;
+            //TMP_Dpi = Dpi;
             DCHECK_GE(b_size, 1);
 
             //std::cout << "Dpi: " << vec_to_debug_string(Dpi) << "\n";
@@ -161,6 +169,7 @@ namespace tdc {namespace esp {
 
             // Create Dsi from Dpi, discard Dpi,
             auto Dsi = esp::create_dsigma_from_dpi_and_sorted_indices(sis, Dpi);
+            //TMP_Dsi = Dsi;
 
             //std::cout << "Dsi: " << vec_to_debug_string(Dsi) << "\n";
 
@@ -182,8 +191,14 @@ namespace tdc {namespace esp {
             // Discard Dpi
             Dsi = std::vector<size_t>();
 
-            //std::cout << "encode OK\n";
-
+            /*
+            std::cout << "Bde: " << vec_to_debug_string(TMP_Bde) << "\n";
+            std::cout << "Dpi: " << vec_to_debug_string(TMP_Dpi) << "\n";
+            std::cout << "Dsi: " << vec_to_debug_string(TMP_Dsi) << "\n";
+            std::cout << "b:   " << vec_to_debug_string(TMP_b) << "\n";
+            std::cout << "D:   " << vec_to_debug_string(TMP_D) << "\n";
+            std::cout << "\nencode OK\n\n";
+            */
         }
 
         inline SLP decode(Input& input) const {
@@ -227,6 +242,8 @@ namespace tdc {namespace esp {
                     slp.rules[i][0] = last;
                 }
             }
+
+            // TODO: Read later, requires splitting up input a bit
             // Read rules rhs in sorted order (B array)
             std::vector<size_t> Bde;
             Bde.reserve(slp_size);
@@ -307,8 +324,19 @@ namespace tdc {namespace esp {
 
             // Given sis, b, Dsi and Dpi, recover slp rhs
 
+            //std::cout << "Bde: " << vec_to_debug_string(Bde) << "\n";
+            //std::cout << "Dpi: " << vec_to_debug_string(Dpi) << "\n";
+            //std::cout << "Dsi: " << vec_to_debug_string(Dsi) << "\n";
+            //std::cout << "b:   " << vec_to_debug_string(b) << "\n";
 
-            return esp::SLP();
+            auto D = RhsAdapter { &slp };
+
+            esp::recover_D_from_encoding(Dpi, Dsi, b, Bde, &D);
+
+            //std::cout << "D:   " << vec_to_debug_string(D) << "\n";
+
+
+            return slp;
         }
     };
 }}

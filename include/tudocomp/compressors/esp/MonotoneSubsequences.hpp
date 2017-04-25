@@ -432,7 +432,8 @@ namespace tdc {namespace esp {
     };
 
     auto extract_from_wt(const std::vector<std::vector<size_t>>& node_sizes,
-                     const std::vector<IntVector<uint_t<1>>>& bvs) -> std::vector<size_t>
+                     const std::vector<IntVector<uint_t<1>>>& bvs,
+                     size_t size) -> std::vector<size_t>
     {
         size_t count = 0;
         for(size_t depth = 0; depth < bvs.size(); depth++) {
@@ -492,11 +493,14 @@ namespace tdc {namespace esp {
                 }
             }
 
-            ret.reserve(bvs[0].size());
+            ret.reserve(size);
             while(iters[0].has_next()) {
                 ret.push_back(iters[0].next());
                 //std::cout << "\n";
             }
+        } else {
+            ret.reserve(size);
+            ret.resize(size);
         }
 
         //std::cout << "!!!:\n" << vec_to_debug_string(ret) << "\n";
@@ -540,12 +544,15 @@ namespace tdc {namespace esp {
 
         //std::cout << "ok " << __LINE__ << "\n";
 
-        return extract_from_wt(wt_sizes, bvs);
+        return extract_from_wt(wt_sizes, bvs, size);
     }
 
-    template<typename Dxx_t, typename b_t, typename Bde_t>
-    auto recover_D_from_encoding(const Dxx_t& Dpi, const Dxx_t& Dsi, const b_t& b, const Bde_t& Bde)
-        -> std::vector<size_t>
+    template<typename Dxx_t, typename b_t, typename Bde_t, typename D_t>
+    auto recover_D_from_encoding(const Dxx_t& Dpi,
+                                 const Dxx_t& Dsi,
+                                 const b_t& b,
+                                 const Bde_t& Bde,
+                                 D_t* out)
     {
         std::vector<size_t> ss_ll;
         ss_ll.reserve(Dpi.size());
@@ -580,9 +587,8 @@ namespace tdc {namespace esp {
             link = ss_ll[link];
         }
 
-        auto recovered_D = std::vector<size_t>();
-        recovered_D.reserve(Dpi.size());
-        recovered_D.resize(Dpi.size());
+        auto& D = *out;
+        DCHECK_EQ(D.size(), Dpi.size());
         for (size_t i = 0; i < Dsi.size(); i++) {
             size_t j = Dsi.size() - i - 1;
 
@@ -591,10 +597,8 @@ namespace tdc {namespace esp {
             auto front = ss_ll_front[list_i];
             ss_ll_front[list_i] = ss_ll[front];
 
-            recovered_D[j] = Bde[front];
+            D[j] = Bde[front];
         }
-
-        return recovered_D;
     }
 
 }}
