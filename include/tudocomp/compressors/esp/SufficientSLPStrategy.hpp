@@ -36,8 +36,12 @@ namespace tdc {namespace esp {
                     << " -> (" << slp.rules[i][0] << ", " << slp.rules[i][1] << ")\n";
             }
             */
+
+            auto phase = StatPhase("SLP sort");
             slp_dep_sort(slp); // can be implemented better, and in a way that yields
                                // temporary lists for reusal
+
+            phase.split("Encode headers");
 
             auto max_val = slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX - 1;
             auto bit_width = bits_for(max_val);
@@ -84,6 +88,8 @@ namespace tdc {namespace esp {
             //std::cout << "emitted lhs:   " << vec_to_debug_string(rules_lhs) << "\n";
             //std::cout << "emitted diffs: " << vec_to_debug_string(rules_lhs_diff) << "\n";
 
+            phase.split("Encode SLP LHS");
+
             // Write rules lhs
             {
                 size_t last = 0;
@@ -108,11 +114,16 @@ namespace tdc {namespace esp {
             IntVector<uint_t<1>> TMP_b;
             */
 
+            phase.split("Encode SLP RHS");
+
+            auto phase1 = StatPhase("Sorting D");
+
             // Sort rhs and create sorted indice array O(n log n)
             const auto sis = sorted_indices(rhs);
 
             //std::cout << "sis: " << vec_to_debug_string(sis) << "\n";
 
+            phase1.split("Write out B array");
 
             // Write rules rhs in sorted order (B array of encoding)
             {
@@ -126,6 +137,8 @@ namespace tdc {namespace esp {
                     last = v;
                 }
             }
+
+            phase1.split("Create Dpi and b arrays");
 
             // Create Dpi and b
             std::vector<size_t> Dpi;
@@ -143,6 +156,8 @@ namespace tdc {namespace esp {
             //std::cout << "Dpi: " << vec_to_debug_string(Dpi) << "\n";
             //std::cout << "b:   " << vec_to_debug_string(b) << "\n";
 
+            phase1.split("Write out b, discard");
+
             // Write out b and discard it
             bout.write_compressed_int(b_size);
             for(uint8_t e : b) {
@@ -150,6 +165,7 @@ namespace tdc {namespace esp {
             }
             b = IntVector<uint_t<1>> {};
 
+            phase1.split("Create WT for Dpi, write, discard");
             // transform Dpi to WT and write WT and discard WT
             {
                 auto Dpi_bvs = make_wt(Dpi, b_size - 1);
@@ -167,6 +183,8 @@ namespace tdc {namespace esp {
                 }
             }
 
+            phase1.split("Create Dsi, discard Dpi");
+
             // Create Dsi from Dpi, discard Dpi,
             auto Dsi = esp::create_dsigma_from_dpi_and_sorted_indices(sis, Dpi);
             //TMP_Dsi = Dsi;
@@ -175,6 +193,7 @@ namespace tdc {namespace esp {
 
             Dpi = std::vector<size_t>();
 
+            phase1.split("Create WT for Dsi, write, discard WT and Dsi");
             // transform Dsi to WT and write WT and discard WT
             {
                 auto Dsi_bvs = make_wt(Dsi, b_size - 1);
