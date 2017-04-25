@@ -444,10 +444,8 @@ TEST(Esp, tree_reducer_roundtrip) {
         false,   // not silent
     };
 
-    auto r = esp.generate_grammar_rounds(s);
-
     std::cout << "\n[Complete Grammar]:\n\n";
-    auto slp = esp.generate_grammar(r);
+    auto slp = esp.generate_grammar(s);
     for (size_t i = 0; i < slp.rules.size(); i++) {
         std::cout
             << i << ": "

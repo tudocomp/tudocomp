@@ -31,7 +31,6 @@ namespace tdc {namespace esp {
         bool behavior_landmarks_tie_to_right = true;
         bool behavior_iter_log_mode = false; // UNUSED
 
-        Rounds generate_grammar_rounds(string_ref);
-        SLP generate_grammar(const Rounds&);
+        SLP generate_grammar(string_ref);
     };
 }}

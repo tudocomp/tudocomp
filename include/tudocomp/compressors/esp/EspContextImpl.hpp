@@ -7,7 +7,7 @@
 #include <tudocomp/compressors/esp/utils.hpp>
 
 namespace tdc {namespace esp {
-    Rounds EspContext::generate_grammar_rounds(string_ref input) {
+    SLP EspContext::generate_grammar(string_ref input) {
         size_t root_node = 0;
         bool empty = false;
 
@@ -131,23 +131,6 @@ namespace tdc {namespace esp {
         slp.empty = empty;
         slp.root_rule = root_node;
 
-        return Rounds {
-            slp
-        };
-    }
-
-    ///
-    /// REFACTOR: ONE GLOBAL HASHMAP STRUCTURE WITH GLOBAL ARRAY INDICE CONTENTS
-    /// SUBTRACT DOWN TO LAYER_INDEX MANUALLY WHERE NEEDED
-    ///
-    /// NEW GOAL
-    ///
-    /// direct hashmap -> slp conversion, with push-to-end and
-    /// remembering original start symbol
-
-    // TODO: Either ellided-256 alphabet, or compressed included alphabet
-
-    SLP EspContext::generate_grammar(const Rounds& rds) {
-        return std::move(rds.slp);
+        return slp;
     }
 }}

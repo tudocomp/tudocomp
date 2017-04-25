@@ -8,8 +8,4 @@ namespace tdc {namespace esp {
         size_t alphabet;
         std::vector<size_t> string;
     };
-
-    struct Rounds {
-        SLP slp;
-    };
 }}

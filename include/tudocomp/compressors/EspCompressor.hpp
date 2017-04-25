@@ -40,12 +40,8 @@ public:
             context.debug.input_string(in);
 
             auto p3 = env().stat_phase("ESP Algorithm");
-                auto r = context.generate_grammar_rounds(in);
+                slp = context.generate_grammar(in);
             p3.end();
-
-            auto p4 = env().stat_phase("Generate SLP from Hashmaps");
-                slp = context.generate_grammar(r);
-            p4.end();
         }
 
         {
