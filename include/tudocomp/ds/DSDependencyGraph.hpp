@@ -170,7 +170,7 @@ private:
     template<dsid_t ds>
     inline void possibly_compress() {
         // if out degree of ds equals one and the ds is requested, compress
-        DLOG(INFO) << "possibly_compress<" << ds::name_for(ds) << ">";
+        //DLOG(INFO) << "possibly_compress<" << ds::name_for(ds) << ">";
         if(is_requested<ds>()) {
             if(m_compressed.find(ds) == m_compressed.end()) {
                 auto it = m_degree.find(ds);

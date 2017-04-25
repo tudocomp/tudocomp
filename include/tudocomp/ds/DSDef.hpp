@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <tudocomp/util/type_list.hpp>
 
 namespace tdc {
 

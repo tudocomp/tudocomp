@@ -2,6 +2,7 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/DSDef.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
 
@@ -13,6 +14,10 @@ public:
         return m;
     }
 
+private:
+    DynamicIntVector m_isa;
+
+public:
     using Algorithm::Algorithm;
 
     using provides = std::index_sequence<ds::INVERSE_SUFFIX_ARRAY>;
@@ -35,6 +40,17 @@ public:
     inline void discard() {
         DLOG(INFO) << "ISAFromSA::discard<" << ds::name_for(ds) << ">";
     }
+
+    // implements concept "DSProvider"
+    using ds_types = tl::set<ds::INVERSE_SUFFIX_ARRAY, decltype(m_isa)>;
+
+    template<dsid_t ds>
+    const tl::get<ds, ds_types>& get();
 };
+
+template<>
+const DynamicIntVector& ISAFromSA::get<ds::INVERSE_SUFFIX_ARRAY>() {
+    return m_isa;
+}
 
 } //ns

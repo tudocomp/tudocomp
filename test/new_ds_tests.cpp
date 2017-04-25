@@ -95,5 +95,24 @@ TEST(DS, dev) {
     ASSERT_EQ("phi",           std::remove_reference<decltype(phi_provider)>::type::meta().name());
     ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(lcp_provider)>::type::meta().name());
     ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(plcp_provider)>::type::meta().name());
+
+    // get data structures
+    auto& sa   = dsman.get<ds::SUFFIX_ARRAY>();
+    auto& isa  = dsman.get<ds::INVERSE_SUFFIX_ARRAY>();
+    auto& phi  = dsman.get<ds::PHI_ARRAY>();
+    auto& plcp = dsman.get<ds::PLCP_ARRAY>();
+    auto& lcp  = dsman.get<ds::LCP_ARRAY>();
+
+    // check return types
+    static_assert(std::is_same<decltype(sa), const DynamicIntVector&>::value,
+        "wrong ds type for SUFFIX_ARRAY");
+    static_assert(std::is_same<decltype(isa), const DynamicIntVector&>::value,
+        "wrong ds type for INVERSE_SUFFIX_ARRAY");
+    static_assert(std::is_same<decltype(phi), const DynamicIntVector&>::value,
+        "wrong ds type for PHI_ARRAY");
+    static_assert(std::is_same<decltype(plcp), const DynamicIntVector&>::value,
+        "wrong ds type for PLCP_ARRAY");
+    static_assert(std::is_same<decltype(lcp), const DynamicIntVector&>::value,
+        "wrong ds type for LCP_ARRAY");
 }
 

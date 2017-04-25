@@ -178,6 +178,11 @@ public:
         depgraph_t(*this, m_cm);
     }
 
+    template<dsid_t ds>
+    inline auto get() -> decltype(get_provider<ds>().template get<ds>()) {
+        return get_provider<ds>().template get<ds>();
+    }
+
     const View& input = m_input;
 };
 

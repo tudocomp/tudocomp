@@ -2,6 +2,7 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/DSDef.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
 
@@ -13,6 +14,10 @@ public:
         return m;
     }
 
+private:
+    DynamicIntVector m_phi;
+
+public:
     using Algorithm::Algorithm;
 
     using provides = std::index_sequence<ds::PHI_ARRAY>;
@@ -35,6 +40,17 @@ public:
     inline void discard() {
         DLOG(INFO) << "PhiFromSA::discard<" << ds::name_for(ds) << ">";
     }
+
+    // implements concept "DSProvider"
+    using ds_types = tl::set<ds::PHI_ARRAY, decltype(m_phi)>;
+
+    template<dsid_t ds>
+    const tl::get<ds, ds_types>& get();
 };
+
+template<>
+const DynamicIntVector& PhiFromSA::get<ds::PHI_ARRAY>() {
+    return m_phi;
+}
 
 } //ns
