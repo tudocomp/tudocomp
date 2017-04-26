@@ -240,7 +240,6 @@ namespace tdc {namespace esp {
         }
 
         inline void remove_all_and_slice(ConstGenericView<size_t> links) {
-            // m_removed
 
             // Mark the links as deleted
             for(auto link : links) {
@@ -248,11 +247,82 @@ namespace tdc {namespace esp {
                 m_linked_list[link] = m_removed_counter;
             }
 
+            {
+                Link free_link = m_free_start;
+                Link prev_free_link = free_link;
+                Link next_free_link = m_free_list[free_link];
 
+                auto has_prev = [&](){ return prev_free_link != free_link; };
+                auto has_next = [&](){ return free_link != next_free_link; };
+
+                auto update_free_list = [&](Link remove_link) {
+                    while (free_link != remove_link) {
+                        DCHECK(has_next());
+                        prev_free_link = free_link;
+                        free_link = next_free_link;
+                        next_free_link = m_free_list[free_link];
+                    }
+
+                    DCHECK_EQ(free_link, remove_link);
+
+                    if (has_prev() && has_next()) {
+                        m_free_list[prev_free_link] = next_free_link;
+                        free_link = next_free_link;
+                        next_free_link = m_free_list[free_link];
+                    } else if (has_prev() && !has_next()) {
+                        DCHECK_EQ(m_free_end, free_link);
+
+                        m_free_list[prev_free_link] = prev_free_link;
+                        m_free_end = prev_free_link;
+                        free_link = next_free_link;
+                        next_free_link = m_free_list[free_link];
+                    } else if (!has_prev() && has_next()) {
+                        DCHECK_EQ(m_free_start, free_link);
+
+                        m_free_start = next_free_link;
+                        prev_free_link = next_free_link;
+                        free_link = next_free_link;
+                        next_free_link = m_free_list[free_link];
+                    } else {
+                        DCHECK_EQ(m_free_start, prev_free_link);
+                        DCHECK_EQ(prev_free_link, free_link);
+                        DCHECK_EQ(free_link, next_free_link);
+                        DCHECK_EQ(next_free_link, m_free_end);
+                        // NB: Can not fix free start and free end,
+                        // but iteration ends after this, so its fine.
+                    }
+                };
+
+                if (links.size() < 2 || links[0] < links[1]) {
+                    // forward
+                    for (size_t i = 0; i < links.size(); i++) {
+                        update_free_list(links[i]);
+                    }
+                } else {
+                    // reverse
+                    for (size_t i = 0; i < links.size(); i++) {
+                        update_free_list(links[links.size() - i - 1]);
+                    }
+                }
+
+            }
 
             m_removed_counter++;
             m_layers.clear();
             m_remaining_size -= links.size();
+
+            // DEBUG
+            if (m_remaining_size > 0) {
+                Link link = m_free_start;
+                for (size_t i = 0; i < m_linked_list.size(); i++) {
+                    if (i == link) {
+                        DCHECK_EQ(m_removed[i], uint_t<1>(0));
+                        link = m_free_list[link];
+                    } else {
+                        DCHECK_EQ(m_removed[i], uint_t<1>(1));
+                    }
+                }
+            }
         }
 
         inline std::vector<std::vector<Point>> to_debug_layer_points() {
