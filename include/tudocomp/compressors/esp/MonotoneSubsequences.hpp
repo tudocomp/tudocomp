@@ -407,7 +407,7 @@ namespace tdc {namespace esp {
         m_front(l.m_free_start),
         m_back(l.m_free_end),
         m_l(&l),
-        m_has_next(true)
+        m_has_next(l.m_remaining_size > 0)
     {}
     inline void LayersIterator::debug() {
         std::cout << "front: " << m_front << ", back: " << m_back << ", bits: ";
@@ -417,6 +417,10 @@ namespace tdc {namespace esp {
         return m_has_next;
     }
     inline Link LayersIterator::advance() {
+        if (m_front == m_back) {
+            m_has_next = false;
+        }
+
         //std::cout << "av: "; debug();
         size_t r;
         if (!m_reverse) {
@@ -426,9 +430,7 @@ namespace tdc {namespace esp {
             r = m_front;
             m_front = m_l->m_free_list[m_front];
         }
-        if (m_front == m_back) {
-            m_has_next = false;
-        }
+
         DCHECK_EQ(m_l->m_removed[r], uint_t<1>(0));
         //std::cout << "\n";
         return r;
