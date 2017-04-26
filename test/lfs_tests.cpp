@@ -62,7 +62,7 @@ void run_comp(std::string compression_string) {
 }
 
 
-/*
+
 template<class comp_strat>
 void run_comp_file(std::string file) {
     auto c = create_algo<tdc::lfs::LFSCompressor<comp_strat> >();
@@ -70,8 +70,8 @@ void run_comp_file(std::string file) {
     //std::string compressed;
     // compress
     {
-        tdc::Input dummy_input = Input::Path{file};
-        tdc::Output output = Output(file+".tdc", true);
+        tdc::Input dummy_input = Input(io::Path{file});
+        tdc::Output output = Output(io::Path{file+".tdc"}, true);
 
         c.compress(dummy_input, output);
        // compressed=output.result();
@@ -80,8 +80,8 @@ void run_comp_file(std::string file) {
     // decompress
     {
 
-        tdc::Input input = Input::Path{file+".tdc"};
-        tdc::Output output = Output(file+".dc", true);;
+        tdc::Input input = Input(io::Path{file+".tdc"});
+        tdc::Output output = Output(io::Path{file+".dc"}, true);;
 
         c.decompress(input, output);
 
@@ -90,8 +90,6 @@ void run_comp_file(std::string file) {
     //ASSERT_EQ(compression_string, compressed);
 }
 
-
-*/
 
 TEST(lfs, st_strat){
 
@@ -109,7 +107,7 @@ TEST(lfs, sim_st_strat){
 
     run_comp<tdc::lfs::SimSTStrategy<> >("ccaabbaabbcca$");
 
-   // run_comp_file<tdc::lfs::SimSTStrategy<> >("english.1MB");
+    run_comp_file<tdc::lfs::SimSTStrategy<> >("english.1MB");
 }
 
 TEST(lfs, esa_strat){

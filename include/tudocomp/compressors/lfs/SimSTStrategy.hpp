@@ -279,21 +279,25 @@ public:
                           //  int max = 0;
                          //   int card = 0;
 
-                            for (auto& child: stree.children(node)) {
-                                int child_id = stree.id(child);
-                                if(!node_begins[child_id].empty()){
+                            if(!node_begins[*bin_it].empty()){
+                                for (auto& child: stree.children(node)) {
+                                    int child_id = stree.id(child);
+                                    if(!node_begins[child_id].empty()){
 
-                                    node_begins[*bin_it].insert(node_begins[*bin_it].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
-                                }
+                                        node_begins[*bin_it].insert(node_begins[*bin_it].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
+                                    }
 
                                 //delete child bp
 
-                                node_begins[child_id].clear();
+                                    node_begins[child_id].clear();
 
                               //  n_tpl child_tpl = node_tuples[child_id];
                               //  min = std::min(min, std::get<0>(child_tpl));
                               //  max = std::max(max, std::get<1>(child_tpl));
                               //  card += std::get<2>(child_tpl);
+                                }
+
+                                std::sort(node_begins[*bin_it].begin(), node_begins[*bin_it].end());
                             }
 
                         //    DLOG(INFO)<<" beginnings for id: "<< *bin_it << " count: "<<node_begins[*bin_it].size();
@@ -308,7 +312,6 @@ public:
                             bin_it++;
                             continue;
                         }
-                        std::sort(node_begins[*bin_it].begin(), node_begins[*bin_it].end());
                         //check tuple
                         if(!(node_begins[*bin_it].size()>=2) && !( (  (uint)( node_begins[*bin_it].back()   - node_begins[*bin_it].front() )) >= i )){
 
