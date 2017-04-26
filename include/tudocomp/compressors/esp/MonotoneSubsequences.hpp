@@ -47,37 +47,19 @@ namespace tdc {namespace esp {
     class L;
 
     class LayersIterator {
-        // yields addresses in descending order of in normal mode,
+        // yields addresses in descending order in normal mode,
         // and in ascending order if in reverse mode.
         bool m_reverse;
         size_t m_front;
         size_t m_back;
         L* m_l;
+        bool m_has_next;
 
         inline void debug();
-        inline void front_skip();
-        inline void back_skip();
     public:
         inline LayersIterator(L& l, bool reverse);
-
-        inline bool has_next() {
-            //std::cout << "hn: "; debug();
-            return m_front != m_back;
-        }
-
-        inline Link advance() {
-            //std::cout << "av: "; debug();
-            size_t r;
-            if (!m_reverse) {
-                r = --m_back;
-                back_skip();
-            } else {
-                r = m_front++;
-                front_skip();
-            }
-            //std::cout << "\n";
-            return r;
-        }
+        inline bool has_next();
+        inline Link advance();
     };
 
     inline size_t layers_A_search(ConstGenericView<size_t> searchA, size_t piy) {
@@ -422,32 +404,34 @@ namespace tdc {namespace esp {
 
     inline LayersIterator::LayersIterator(L& l, bool reverse):
         m_reverse(reverse),
-        m_front(0),
-        m_back(l.m_removed.size()),
-        m_l(&l)
-    {
-        front_skip();
-        back_skip();
-    }
-
+        m_front(l.m_free_start),
+        m_back(l.m_free_end),
+        m_l(&l),
+        m_has_next(true)
+    {}
     inline void LayersIterator::debug() {
         std::cout << "front: " << m_front << ", back: " << m_back << ", bits: ";
         std::cout << vec_to_debug_string(m_l->m_removed) << "\n";
     }
-
-    inline void LayersIterator::front_skip() {
-        //std::cout << "fs: "; debug();
-        auto& skip = m_l->m_removed;
-        while (m_front != m_back && m_front < skip.size() && skip[m_front] == uint_t<1>(1)) {
-            m_front++;
-        }
+    inline bool LayersIterator::has_next() {
+        return m_has_next;
     }
-    inline void LayersIterator::back_skip() {
-        //std::cout << "bs: "; debug();
-        auto& skip = m_l->m_removed;
-        while (m_front != m_back && m_back > 0 && skip[m_back - 1] == uint_t<1>(1)) {
-            m_back--;
+    inline Link LayersIterator::advance() {
+        //std::cout << "av: "; debug();
+        size_t r;
+        if (!m_reverse) {
+            r = m_back;
+            m_back = m_l->m_linked_list[m_back];
+        } else {
+            r = m_front;
+            m_front = m_l->m_free_list[m_front];
         }
+        if (m_front == m_back) {
+            m_has_next = false;
+        }
+        DCHECK_EQ(m_l->m_removed[r], uint_t<1>(0));
+        //std::cout << "\n";
+        return r;
     }
 
     struct Dpi_and_b {
