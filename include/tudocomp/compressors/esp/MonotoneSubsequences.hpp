@@ -247,6 +247,7 @@ namespace tdc {namespace esp {
                 m_linked_list[link] = m_removed_counter;
             }
 
+            // Update the free list
             {
                 Link free_link = m_free_start;
                 Link prev_free_link = free_link;
@@ -311,6 +312,22 @@ namespace tdc {namespace esp {
             m_layers.clear();
             m_remaining_size -= links.size();
 
+            // update the free list in the linked list
+            if (m_remaining_size > 0) {
+                Link link = m_free_start;
+                Link prev_link = link;
+                while(true) {
+                    m_linked_list[link] = prev_link;
+                    Link next = m_free_list[link];
+                    if (link == next) {
+                        break;
+                    } else {
+                        prev_link = link;
+                        link = next;
+                    }
+                }
+            }
+
             // DEBUG
             if (m_remaining_size > 0) {
                 Link link = m_free_start;
@@ -322,6 +339,21 @@ namespace tdc {namespace esp {
                         DCHECK_EQ(m_removed[i], uint_t<1>(1));
                     }
                 }
+            } else {
+                DCHECK_EQ(m_free_start, m_free_end);
+            }
+            if (m_remaining_size > 0) {
+                Link link = m_free_end;
+                for (size_t i = 0; i < m_linked_list.size(); i++) {
+                    if (m_linked_list.size() - i - 1 == link) {
+                        DCHECK_EQ(m_removed[m_linked_list.size() - i - 1], uint_t<1>(0));
+                        link = m_linked_list[link];
+                    } else {
+                        DCHECK_EQ(m_removed[m_linked_list.size() - i - 1], uint_t<1>(1));
+                    }
+                }
+            } else {
+                DCHECK_EQ(m_free_start, m_free_end);
             }
         }
 
