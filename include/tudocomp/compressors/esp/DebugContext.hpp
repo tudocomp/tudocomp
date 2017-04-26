@@ -217,85 +217,105 @@ namespace tdc {namespace esp {
         std::vector<std::shared_ptr<std::pair<std::vector<size_t>, size_t>>> slice_symbol_map;
     };
     class DebugRoundContext: public DebugContextBase<DebugRoundContextData> {
-        using Data = DebugRoundContextData;
-        std::shared_ptr<Data> m_data;
     public:
         DebugRoundContext(std::ostream& o, bool p_en, bool p_ea):
-            DebugContextBase(o, p_en, p_ea),
-            m_data(std::make_shared<Data>(Data {})) {}
+            DebugContextBase(o, p_en, p_ea)
+        {
+            with_child([&] (auto& m_data) {
+            });
+        }
         template<typename U>
         DebugRoundContext(DebugContextBase<U>& parent):
-            DebugContextBase(parent),
-            m_data(std::make_shared<Data>(Data {})) {}
+            DebugContextBase(parent)
+        {
+            with_child([&] (auto& m_data) {
+            });
+        }
 
         void init(size_t number,
                   const std::vector<size_t>& string,
                   size_t alphabet_size) {
-            m_data->number = number;
-            m_data->string = string;
-            m_data->alphabet_size = alphabet_size;
+            with_child([&] (auto& m_data) {
+                m_data.number = number;
+                m_data.string = string;
+                m_data.alphabet_size = alphabet_size;
 
-            print([m_data = m_data](std::ostream& o) {
-                o << "\n[Round #" << m_data->number << "]:\n"
-                  << "  " << vec_to_debug_string(m_data->string) << "\n";
-                o << "  Alphabet size: " << m_data->alphabet_size << "\n";
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "\n[Round #" << m_data->number << "]:\n"
+                    << "  " << vec_to_debug_string(m_data->string) << "\n";
+                    o << "  Alphabet size: " << m_data->alphabet_size << "\n";
+                });
             });
         }
 
         void last_round(size_t rn, bool empty) {
-            m_data->root_node = rn;
-            m_data->empty = empty;
-            print([m_data = m_data](std::ostream& o) {
-                if (m_data->empty) {
-                    o << "  DONE, empty input\n";
-                } else {
-                    o << "  DONE, root node: " << m_data->root_node << "\n";
-                }
+            with_child([&] (auto& m_data) {
+                m_data.root_node = rn;
+                m_data.empty = empty;
+                this->print([m_data = &m_data](std::ostream& o) {
+                    if (m_data->empty) {
+                        o << "  DONE, empty input\n";
+                    } else {
+                        o << "  DONE, root node: " << m_data->root_node << "\n";
+                    }
+                });
             });
         }
 
         DebugMetablockContext metablock() {
-            DebugMetablockContext m_data_child(*this, m_data->alphabet_size);
-            m_data->metablocks.push_back(m_data_child);
-
-            print([m_data_child](std::ostream& o) {
-                m_data_child.print_all();
+            size_t as = 0;
+            with_child([&] (auto& m_data) {
+                as = m_data.alphabet_size;
             });
+            DebugMetablockContext m_data_child(*this, as);
+            with_child([&] (auto& m_data) {
+                m_data.metablocks.push_back(m_data_child);
 
+                this->print([m_data_child](std::ostream& o) {
+                    m_data_child.print_all();
+                });
+
+            });
             return m_data_child;
         }
 
         void adjusted_blocks(const ConstGenericView<TypedBlock>& buf) {
-            m_data->adjusted_blocks = buf;
+            with_child([&] (auto& m_data) {
+                m_data.adjusted_blocks = buf;
 
-            print([m_data = m_data](std::ostream& o) {
-                o << "  Adjusted blocks:\n";
-                for (auto b : m_data->adjusted_blocks) {
-                    o << "    block: " << b << "\n";
-                }
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "  Adjusted blocks:\n";
+                    for (auto b : m_data->adjusted_blocks) {
+                        o << "    block: " << b << "\n";
+                    }
+                });
             });
         }
 
         void slice_symbol_map_start() {
-            print([m_data = m_data](std::ostream& o) {
-                o << "  Slice-Symbol map:\n";
+            with_child([&] (auto& m_data) {
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "  Slice-Symbol map:\n";
+                });
             });
         }
 
         template<typename T>
         void slice_symbol_map(const T& slice, size_t symbol) {
-            auto p = std::make_shared<std::pair<std::vector<size_t>, size_t>>(
-                std::pair<std::vector<size_t>, size_t> {
-                    cast_vec(slice),
-                    symbol,
-                }
-            );
-            m_data->slice_symbol_map.push_back(p);
+            with_child([&] (auto& m_data) {
+                auto p = std::make_shared<std::pair<std::vector<size_t>, size_t>>(
+                    std::pair<std::vector<size_t>, size_t> {
+                        cast_vec(slice),
+                        symbol,
+                    }
+                );
+                m_data.slice_symbol_map.push_back(p);
 
-            print([m_data = m_data, p](std::ostream& o) {
-                o << "    "
-                  << vec_to_debug_string(p->first) << " -> "
-                  << p->second << "\n";
+                this->print([m_data = &m_data, p](std::ostream& o) {
+                    o << "    "
+                    << vec_to_debug_string(p->first) << " -> "
+                    << p->second << "\n";
+                });
             });
         }
     };
