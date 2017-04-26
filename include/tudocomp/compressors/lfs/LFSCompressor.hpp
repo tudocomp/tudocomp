@@ -36,7 +36,6 @@ public:
             "This is an implementation of the longest first substitution compression scheme.");
         m.option("computing_strat").templated<comp_strategy_t>("computing_strat");
         m.option("coding_strat").templated<coding_strat_t, EncodeStrategy<BitCoder, BitCoder> >("coding_strat");
-        //m.needs_sentinel_terminator();
         return m;
     }
 

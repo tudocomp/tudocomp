@@ -240,7 +240,7 @@ public:
             }
         }
         //at last, stream eof
-        ostream<<(char)0;
+        //ostream<<(char)0;
     }
 
 
