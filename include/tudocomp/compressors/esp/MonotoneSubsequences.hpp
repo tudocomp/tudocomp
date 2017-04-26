@@ -96,7 +96,6 @@ namespace tdc {namespace esp {
         std::vector<Link> m_layers;
         bool m_reverse = false;
         std::vector<size_t> m_rebuild_A; // allocation cache
-        IntVector<uint_t<1>> m_removed;
         size_t m_removed_counter = 0;
         size_t m_remaining_size = 0;
         std::vector<Link> m_free_list;
@@ -109,8 +108,6 @@ namespace tdc {namespace esp {
             m_linked_list.reserve(sindices.size());
             m_linked_list.resize(sindices.size());
             m_sindices = sindices;
-            m_removed.reserve(sindices.size());
-            m_removed.resize(sindices.size());
             m_remaining_size = sindices.size();
             m_free_list.reserve(sindices.size());
             m_free_list.resize(sindices.size());
@@ -225,7 +222,6 @@ namespace tdc {namespace esp {
 
             // Mark the links as deleted
             for(auto link : links) {
-                m_removed[link] = uint_t<1>(1);
                 m_linked_list[link] = m_removed_counter;
             }
 
@@ -317,11 +313,9 @@ namespace tdc {namespace esp {
                 Link link = m_free_start;
                 for (size_t i = 0; i < m_linked_list.size(); i++) {
                     if (i == link) {
-                        DCHECK_EQ(m_removed[i], uint_t<1>(0));
                         fwd_addrs.push_back(link);
                         link = m_free_list[link];
                     } else {
-                        DCHECK_EQ(m_removed[i], uint_t<1>(1));
                     }
                 }
             } else {
@@ -331,11 +325,9 @@ namespace tdc {namespace esp {
                 Link link = m_free_end;
                 for (size_t i = 0; i < m_linked_list.size(); i++) {
                     if (m_linked_list.size() - i - 1 == link) {
-                        DCHECK_EQ(m_removed[m_linked_list.size() - i - 1], uint_t<1>(0));
                         bwd_addrs.push_back(link);
                         link = m_linked_list[link];
                     } else {
-                        DCHECK_EQ(m_removed[m_linked_list.size() - i - 1], uint_t<1>(1));
                     }
                 }
             } else {
@@ -345,10 +337,10 @@ namespace tdc {namespace esp {
             DCHECK(fwd_addrs == bwd_addrs)
             << "\n" << vec_to_debug_string(m_linked_list) << "\n"
             << "\n" << vec_to_debug_string(m_free_list) << "\n"
-            << "\n" << vec_to_debug_string(m_removed) << "\n"
             << "\n" << vec_to_debug_string(fwd_addrs) << "\n"
             << "\n" << vec_to_debug_string(bwd_addrs) << "\n"
             ;
+            /*
             std::vector<size_t> fbv;
             for (size_t i = 0; i < m_removed.size(); i++) {
                 if (m_removed[i] == uint_t<1>(0)) {
@@ -358,11 +350,11 @@ namespace tdc {namespace esp {
             DCHECK(fwd_addrs == fbv)
             << "\n" << vec_to_debug_string(m_linked_list) << "\n"
             << "\n" << vec_to_debug_string(m_free_list) << "\n"
-            << "\n" << vec_to_debug_string(m_removed) << "\n"
             << "\n" << vec_to_debug_string(fwd_addrs) << "\n"
             << "\n" << vec_to_debug_string(fbv) << "\n"
             << "\n"
             ;
+            */
         }
 
         inline std::vector<std::vector<Point>> to_debug_layer_points() {
@@ -411,7 +403,6 @@ namespace tdc {namespace esp {
     {}
     inline void LayersIterator::debug() {
         std::cout << "front: " << m_front << ", back: " << m_back << ", bits: ";
-        std::cout << vec_to_debug_string(m_l->m_removed) << "\n";
     }
     inline bool LayersIterator::has_next() {
         return m_has_next;
@@ -431,7 +422,6 @@ namespace tdc {namespace esp {
             m_front = m_l->m_free_list[m_front];
         }
 
-        DCHECK_EQ(m_l->m_removed[r], uint_t<1>(0));
         //std::cout << "\n";
         return r;
     }
