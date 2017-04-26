@@ -51,8 +51,8 @@ private:
 
         int last =  0-length-1;
         int current;
-        int shorter_count = 0;
-        int min_shorter = length;
+        //int shorter_count = 0;
+        int min_shorter = 1;
         for (auto it=node_begins[node_id].begin(); it!=node_begins[node_id].end(); ++it){
 
             current = *it;
@@ -64,40 +64,29 @@ private:
                 not_selected_starting_positions.push_back(current);
             }
 
-           // if(dead_positions[current] && dead_positions[current+length-1]){
-                //delete from list
-           // }
-
 
             if(!dead_positions[current] && dead_positions[current+length-1]){
-
-                //Some replaceable lrf at beginning
-                for(int i =1; i < length; i++){
-                    if( ! (dead_positions[current+length-i-1]) ){
-                        min_shorter = std::min(min_shorter, i);
-                        shorter_count++;
-                        break;
-
-                    }
+                while(!dead_positions[current+min_shorter]){
+                    min_shorter++;
                 }
+
             }
 
         }
 
-        if(shorter_count>0){
 
-
+        if(min_shorter < length){
             node_type node = stree.inv_id(node_id);
 
-            if(length-min_shorter >= (int)min_lrf){
+            if(min_shorter >= (int)min_lrf){
                 //check if parent node is shorter
 
                 node_type parent = stree.parent(node);
                 uint depth = stree.depth(parent);
-                if(depth < (uint)(length-min_shorter)){
+                if(depth < (uint)(min_shorter)){
 
                     //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
-                    bins[length-min_shorter].push_back(node_id);
+                    bins[min_shorter].push_back(node_id);
                 }
             }
         }
