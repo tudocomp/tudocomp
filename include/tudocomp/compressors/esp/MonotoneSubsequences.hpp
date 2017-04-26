@@ -441,7 +441,7 @@ namespace tdc {namespace esp {
             auto l = esp::L(sorted_indices);
             std::vector<esp::Link> links;
             while (l.sindices_size() > 0) {
-                auto phase = StatPhase("Iteration");
+                //auto phase = StatPhase("Iteration");
                 l.rebuild(false);
                 l.lis(l.layers_size(), links);
 
