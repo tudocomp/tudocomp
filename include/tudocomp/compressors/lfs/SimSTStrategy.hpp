@@ -37,74 +37,10 @@ private:
     cst_t stree;
 
 
-    inline virtual std::vector<int> select_starting_positions(int node_id, int length){
+    inline virtual std::vector<uint> select_starting_positions(int node_id, int length){
 
-
-
-     //   uint offset = stree.csa[stree.lb(node)];
-        //uint fac_length = stree.depth(node);
-
-
-       // std::vector<int> beginning_positions;
-
-
-        //doesnt work:
-/*
-        for (auto& child: stree.children(node)) {
-            int child_id = stree.id(child);
-            n_tpl child_tpl = node_tuples[child_id];
-            beginning_positions.push_back(std::get<0>(child_tpl));
-
-            beginning_positions.push_back(std::get<1>(child_tpl));
-
-        }
-
-        std::sort(beginning_positions.begin(), beginning_positions.end());*/
-
-      //  if(stree.size(node)>=2){
-
-           // beginning_positions = node_begins[node_id];
-
-         //   beginning_positions.assign(node_begins[node_id].begin(), node_begins[node_id].end());
-            //for(auto bp_it =node_begins[node_id].begin(); bp_it != node_begins[node_id].end(); bp_it++){
-            //    beginning_positions.push_back(*bp_it);
-            //}
-
-            //iterate over corresponding sa and find min and max
-            /*
-            offset = stree.lb(node);
-            int min = stree.csa[offset];
-            int max = stree.csa[offset];
-            //int min_pos = offset;
-            //int max_pos = offset;
-            for(uint c = 0;c<stree.size(node); c++){
-                int val = stree.csa[c+offset];
-                beginning_positions.push_back(val);
-
-                if(min > val){
-                    min = val;
-                    //   min_pos = offset+c;
-                }
-                if(max < val){
-                    max = val;
-                    //  max_pos = offset+c;
-                }
-
-
-            }
-            int dif = max -min;
-            if(dif < length){
-
-                return std::vector<int>();
-            }
-            */
-
-         //   std::sort(beginning_positions.begin(), beginning_positions.end());
-       // }
-
-        std::vector<int> selected_starting_positions;
-
-        std::vector<int> not_selected_starting_positions;
+        std::vector<uint> selected_starting_positions;
+        std::vector<uint> not_selected_starting_positions;
        // if(beginning_positions.size()<2){
        //     return selected_starting_positions;
        // }
@@ -113,23 +49,24 @@ private:
 
         not_selected_starting_positions.reserve(node_begins[node_id].size());
 
-        int last =  0-length;
+        int last =  0-length-1;
         int current;
         int shorter_count = 0;
         int min_shorter = length;
         for (auto it=node_begins[node_id].begin(); it!=node_begins[node_id].end(); ++it){
 
             current = *it;
-            if(last+length <= current && !dead_positions[current] && !dead_positions[current+length-1]){
-
-
-
+            if(last+length <= (int) current && !dead_positions[current] && !dead_positions[current+length-1]){
                 selected_starting_positions.push_back(current);
                 last = current;
 
             } else {
                 not_selected_starting_positions.push_back(current);
             }
+
+           // if(dead_positions[current] && dead_positions[current+length-1]){
+                //delete from list
+           // }
 
 
             if(!dead_positions[current] && dead_positions[current+length-1]){
@@ -166,10 +103,10 @@ private:
         }
         if(selected_starting_positions.size()>=2){
             node_begins[node_id].assign(not_selected_starting_positions.begin(), not_selected_starting_positions.end());
-
+           // node_begins[node_id] = not_selected_starting_positions;
             return selected_starting_positions;
         } else {
-            return std::vector<int>();
+            return std::vector<uint>();
         }
     }
 
@@ -230,11 +167,6 @@ public:
 
 
             bins.resize(stree.size()+1);
-
-
-
-
-
             uint node_counter = 0;
 
             typedef sdsl::cst_bfs_iterator<cst_t> iterator;
@@ -257,55 +189,33 @@ public:
 
             uint nts_number =0;
             StatPhase::wrap("Iterate over Node Bins", [&]{
-                DLOG(INFO)<<"iterate node bins";
-
                 for(uint i = bins.size()-1; i>=min_lrf; i--){
                     auto bin_it = bins[i].begin();
                     while (bin_it!= bins[i].end()){
                         node_type node = stree.inv_id(*bin_it);
-                        n_tpl cur_tpl;
+
                         if(stree.is_leaf(node)){
-                            int bp = stree.csa[stree.lb(node)];
-                            cur_tpl = std::make_tuple(bp,bp,1);
-                           // node_tuples[*bin_it] = cur_tpl;
-
+                            uint bp = stree.csa[stree.lb(node)];
                             node_begins[*bin_it].push_back(bp);
-
-                            //DLOG(INFO)<<"new tuple for id: "<<*bin_it<< " <"<<bp<<","<<bp<<",1>";
-
                         }
                         else {
-                        //    int min = stree.size();
-                          //  int max = 0;
-                         //   int card = 0;
 
-                            if(!node_begins[*bin_it].empty()){
+                            if(node_begins[*bin_it].empty()){
+
                                 for (auto& child: stree.children(node)) {
                                     int child_id = stree.id(child);
+
+
                                     if(!node_begins[child_id].empty()){
 
                                         node_begins[*bin_it].insert(node_begins[*bin_it].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
                                     }
 
                                 //delete child bp
-
                                     node_begins[child_id].clear();
-
-                              //  n_tpl child_tpl = node_tuples[child_id];
-                              //  min = std::min(min, std::get<0>(child_tpl));
-                              //  max = std::max(max, std::get<1>(child_tpl));
-                              //  card += std::get<2>(child_tpl);
                                 }
-
                                 std::sort(node_begins[*bin_it].begin(), node_begins[*bin_it].end());
                             }
-
-                        //    DLOG(INFO)<<" beginnings for id: "<< *bin_it << " count: "<<node_begins[*bin_it].size();
-
-                          //  cur_tpl = std::make_tuple(min,max,card);
-                            //DLOG(INFO)<<"new tuple for id: "<<*bin_it<< " <"<<min<<","<<max<<","<<card<<">";
-                           // node_tuples[*bin_it] = cur_tpl;
-
                         }
                         if(node_begins[*bin_it].empty()){
 
@@ -319,16 +229,13 @@ public:
                             continue;
                         }
                             //do this
-
-
                            //Add new rule
                             //and add new non-terminal symbols
-                            std::vector<int> selected_bp = select_starting_positions(*bin_it, i);
+                            std::vector<uint> selected_bp = select_starting_positions(*bin_it, i);
                             if(! (selected_bp.size() >=2) ){
                                 bin_it++;
                                 continue;
                             }
-
                             //vector of text position, length
                             std::pair<uint,uint> rule = std::make_pair(selected_bp.at(0), i);
                             dictionary.push_back(rule);
@@ -336,10 +243,8 @@ public:
                             //iterate over selected pos, add non terminal symbols
                             for(auto bp_it = selected_bp.begin(); bp_it != selected_bp.end(); bp_it++){
                                 //(position in text, non_terminal_symbol_number, length_of_symbol);
-                                //typedef std::tuple<uint,uint,uint> non_term;
                                 non_term nts = std::make_tuple(*bp_it, nts_number, i);
                                 nts_symbols.push_back(nts);
-                                //typedef std::vector<non_term> non_terminal_symbols;
                                 //mark as used
                                 for(uint pos = 0; pos<i;pos++){
                                     dead_positions[pos+ *bp_it] = 1;
