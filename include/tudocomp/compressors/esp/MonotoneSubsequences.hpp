@@ -329,11 +329,14 @@ namespace tdc {namespace esp {
             }
 
             // DEBUG
+            std::vector<size_t> fwd_addrs;
+            std::vector<size_t> bwd_addrs;
             if (m_remaining_size > 0) {
                 Link link = m_free_start;
                 for (size_t i = 0; i < m_linked_list.size(); i++) {
                     if (i == link) {
                         DCHECK_EQ(m_removed[i], uint_t<1>(0));
+                        fwd_addrs.push_back(link);
                         link = m_free_list[link];
                     } else {
                         DCHECK_EQ(m_removed[i], uint_t<1>(1));
@@ -347,6 +350,7 @@ namespace tdc {namespace esp {
                 for (size_t i = 0; i < m_linked_list.size(); i++) {
                     if (m_linked_list.size() - i - 1 == link) {
                         DCHECK_EQ(m_removed[m_linked_list.size() - i - 1], uint_t<1>(0));
+                        bwd_addrs.push_back(link);
                         link = m_linked_list[link];
                     } else {
                         DCHECK_EQ(m_removed[m_linked_list.size() - i - 1], uint_t<1>(1));
@@ -355,6 +359,28 @@ namespace tdc {namespace esp {
             } else {
                 DCHECK_EQ(m_free_start, m_free_end);
             }
+            std::reverse(bwd_addrs.begin(), bwd_addrs.end());
+            DCHECK(fwd_addrs == bwd_addrs)
+            << "\n" << vec_to_debug_string(m_linked_list) << "\n"
+            << "\n" << vec_to_debug_string(m_free_list) << "\n"
+            << "\n" << vec_to_debug_string(m_removed) << "\n"
+            << "\n" << vec_to_debug_string(fwd_addrs) << "\n"
+            << "\n" << vec_to_debug_string(bwd_addrs) << "\n"
+            ;
+            std::vector<size_t> fbv;
+            for (size_t i = 0; i < m_removed.size(); i++) {
+                if (m_removed[i] == uint_t<1>(0)) {
+                    fbv.push_back(i);
+                }
+            }
+            DCHECK(fwd_addrs == fbv)
+            << "\n" << vec_to_debug_string(m_linked_list) << "\n"
+            << "\n" << vec_to_debug_string(m_free_list) << "\n"
+            << "\n" << vec_to_debug_string(m_removed) << "\n"
+            << "\n" << vec_to_debug_string(fwd_addrs) << "\n"
+            << "\n" << vec_to_debug_string(fbv) << "\n"
+            << "\n"
+            ;
         }
 
         inline std::vector<std::vector<Point>> to_debug_layer_points() {
