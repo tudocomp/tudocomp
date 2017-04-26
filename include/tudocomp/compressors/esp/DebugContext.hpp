@@ -9,7 +9,6 @@ namespace tdc {namespace esp {
     class DebugContextBase {
         struct Data {
             std::ostream* m_out;
-            bool print_enabled = true;
             bool print_early = true;
             std::vector<std::function<void(std::ostream&)>> m_print_instructions;
             T m_child_data;
@@ -38,31 +37,37 @@ namespace tdc {namespace esp {
 
         template<typename F>
         void print(F f) {
-            m_data->m_print_instructions.push_back(f); // TODO: Could add wrappers here
-            if (m_data->print_enabled && m_data->print_early) {
-                m_data->m_print_instructions.back()(*(m_data->m_out));
+            if (m_data) {
+                m_data->m_print_instructions.push_back(f); // TODO: Could add wrappers here
+                if (m_data->print_early) {
+                    m_data->m_print_instructions.back()(*(m_data->m_out));
+                }
             }
-
-            /*
-            print([m_data](std::ostream& o) {
-            })
-             */
         }
-        DebugContextBase(std::ostream& o, bool p_en, bool p_ea):
-            m_data(std::make_shared<Data>(Data { &o, p_en, p_ea })) {}
+        DebugContextBase(std::ostream& o, bool p_en, bool p_ea) {
+            if (p_en) {
+                m_data = std::make_shared<Data>(Data { &o, p_ea });
+            }
+        }
         template<typename U>
-        DebugContextBase(DebugContextBase<U>& parent):
-            DebugContextBase(*(parent.m_data->m_out),
-                             parent.m_data->print_enabled,
-                             parent.m_data->print_early) {}
+        DebugContextBase(DebugContextBase<U>& parent) {
+            if (parent.m_data) {
+                m_data = std::make_shared<Data>(Data {
+                    parent.m_data->m_out,
+                    parent.m_data->print_early
+                });
+            }
+        }
     public:
         DebugContextBase(const DebugContextBase& other):
             m_data(other.m_data) {}
 
         void print_all() const {
-            if (m_data->print_enabled & !m_data->print_early) {
-                for (auto& f : m_data->m_print_instructions) {
-                    f(*(m_data->m_out));
+            if (m_data) {
+                if (!m_data->print_early) {
+                    for (auto& f : m_data->m_print_instructions) {
+                        f(*(m_data->m_out));
+                    }
                 }
             }
         }
