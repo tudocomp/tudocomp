@@ -85,103 +85,123 @@ namespace tdc {namespace esp {
         std::vector<size_t> mb2_high_and_low_landmarks;
     };
     class DebugMetablockContext: public DebugContextBase<DebugMetablockContextData> {
-        using Data = DebugMetablockContextData;
-        std::shared_ptr<Data> m_data;
     public:
         DebugMetablockContext(std::ostream& o, bool p_en, bool p_ea, size_t alphabet_size):
-            DebugContextBase(o, p_en, p_ea),
-            m_data(std::make_shared<Data>(Data {})) {
-                m_data->alphabet_size = alphabet_size;
-            }
+            DebugContextBase(o, p_en, p_ea)
+        {
+            with_child([&] (auto& m_data) {
+                m_data.alphabet_size = alphabet_size;
+            });
+        }
         template<typename U>
         DebugMetablockContext(DebugContextBase<U>& parent, size_t alphabet_size):
-            DebugContextBase(parent),
-            m_data(std::make_shared<Data>(Data {})) {
-                m_data->alphabet_size = alphabet_size;
-            }
+            DebugContextBase(parent)
+        {
+            with_child([&] (auto& m_data) {
+                m_data.alphabet_size = alphabet_size;
+            });
+        }
 
         template<typename T>
         void init(size_t type, const T& string, size_t offset) {
-            m_data->type = type;
-            m_data->offset = offset;
-            m_data->metablock = cast_vec(string);
+            with_child([&] (auto& m_data) {
+                m_data.type = type;
+                m_data.offset = offset;
+                m_data.metablock = cast_vec(string);
 
-            print([m_data = m_data](std::ostream& o) {
-                o << "    type: " << m_data->type
-                  << ", offset: " << m_data->offset
-                  << ", metablock: " << vec_to_debug_string(m_data->metablock)
-                  << "\n";
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "    type: " << m_data->type
+                    << ", offset: " << m_data->offset
+                    << ", metablock: " << vec_to_debug_string(m_data->metablock)
+                    << "\n";
+                });
             });
         }
 
         void block(size_t width, size_t type) {
-            auto b = TypedBlock { uint8_t(width), uint8_t(type) };
-            m_data->unadjusted_blocks.push_back(b);
+            with_child([&] (auto& m_data) {
+                auto b = TypedBlock { uint8_t(width), uint8_t(type) };
+                m_data.unadjusted_blocks.push_back(b);
 
-            print([m_data = m_data, b](std::ostream& o) {
-                o << "      block: " << b << "\n";
+                this->print([m_data = &m_data, b](std::ostream& o) {
+                    o << "      block: " << b << "\n";
+                });
             });
         }
 
         template<typename T>
         void mb2_initial(const T& buf) {
-            m_data->mb2_initial = cast_vec(buf);
+            with_child([&] (auto& m_data) {
+                m_data.mb2_initial = cast_vec(buf);
 
-            print([m_data = m_data](std::ostream& o) {
-                o << "      Alphabet reduction initial:\n"
-                  << "        " << vec_to_debug_string(m_data->mb2_initial) << "\n";
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "      Alphabet reduction initial:\n"
+                    << "        " << vec_to_debug_string(m_data->mb2_initial) << "\n";
+                });
             });
         }
 
         void mb2_reduce_to_6_start() {
-            print([m_data = m_data](std::ostream& o) {
-                o << "      Reduce to 6:\n";
+            with_child([&] (auto& m_data) {
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "      Reduce to 6:\n";
+                });
             });
         }
 
         template<typename T>
         void mb2_reduce_to_6_step(const T& buf) {
-            auto p = std::make_shared<std::vector<size_t>>(cast_vec(buf));
-            m_data->mb2_reduce_to_6_steps.push_back(p);
+            with_child([&] (auto& m_data) {
+                auto p = std::make_shared<std::vector<size_t>>(cast_vec(buf));
+                m_data.mb2_reduce_to_6_steps.push_back(p);
 
-            print([m_data = m_data, p](std::ostream& o) {
-                o << "        " << vec_to_debug_string(*p) << "\n";
+                this->print([m_data = &m_data, p](std::ostream& o) {
+                    o << "        " << vec_to_debug_string(*p) << "\n";
+                });
             });
         }
 
         void mb2_reduce_to_3_start() {
-            print([m_data = m_data](std::ostream& o) {
-                o << "      Reduce to 3:\n";
+            with_child([&] (auto& m_data) {
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "      Reduce to 3:\n";
+                });
             });
         }
 
         template<typename T>
         void mb2_reduce_to_3_step(const T& buf) {
-            auto p = std::make_shared<std::vector<size_t>>(cast_vec(buf));
-            m_data->mb2_reduce_to_3_steps.push_back(p);
+            with_child([&] (auto& m_data) {
+                auto p = std::make_shared<std::vector<size_t>>(cast_vec(buf));
+                m_data.mb2_reduce_to_3_steps.push_back(p);
 
-            print([m_data = m_data, p](std::ostream& o) {
-                o << "        " << vec_to_debug_string(*p) << "\n";
+                this->print([m_data = &m_data, p](std::ostream& o) {
+                    o << "        " << vec_to_debug_string(*p) << "\n";
+                });
             });
         }
 
         template<typename T>
         void mb2_high_landmarks(const T& buf) {
-            m_data->mb2_high_landmarks = cast_vec(buf);
+            with_child([&] (auto& m_data) {
+                m_data.mb2_high_landmarks = cast_vec(buf);
 
-            print([m_data = m_data](std::ostream& o) {
-                o << "      High landmarks:\n"
-                  << "        " << vec_to_debug_string(m_data->mb2_high_landmarks) << "\n";
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "      High landmarks:\n"
+                    << "        " << vec_to_debug_string(m_data->mb2_high_landmarks) << "\n";
+                });
             });
         }
 
         template<typename T>
         void mb2_high_and_low_landmarks(const T& buf) {
-            m_data->mb2_high_and_low_landmarks = cast_vec(buf);
+            with_child([&] (auto& m_data) {
+                m_data.mb2_high_and_low_landmarks = cast_vec(buf);
 
-            print([m_data = m_data](std::ostream& o) {
-                o << "      High and low landmarks:\n"
-                  << "        " << vec_to_debug_string(m_data->mb2_high_and_low_landmarks) << "\n";
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "      High and low landmarks:\n"
+                    << "        " << vec_to_debug_string(m_data->mb2_high_and_low_landmarks) << "\n";
+                });
             });
         }
     };
