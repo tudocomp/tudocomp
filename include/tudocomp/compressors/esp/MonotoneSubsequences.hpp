@@ -44,43 +44,21 @@ namespace tdc {namespace esp {
         };
     }
 
+    class L;
+
     class LayersIterator {
         // yields addresses in descending order of in normal mode,
         // and in ascending order if in reverse mode.
         bool m_reverse;
         size_t m_front;
         size_t m_back;
-        IntVector<uint_t<1>>* m_skip;
+        L* m_l;
 
-        inline void debug() {
-            std::cout << "front: " << m_front << ", back: " << m_back << ", bits: ";
-            std::cout << vec_to_debug_string(*m_skip) << "\n";
-        }
-
-        inline void front_skip() {
-            //std::cout << "fs: "; debug();
-            auto& skip = *m_skip;
-            while (m_front != m_back && m_front < skip.size() && skip[m_front] == uint_t<1>(1)) {
-                m_front++;
-            }
-        }
-        inline void back_skip() {
-            //std::cout << "bs: "; debug();
-            auto& skip = *m_skip;
-            while (m_front != m_back && m_back > 0 && skip[m_back - 1] == uint_t<1>(1)) {
-                m_back--;
-            }
-        }
+        inline void debug();
+        inline void front_skip();
+        inline void back_skip();
     public:
-        inline LayersIterator(IntVector<uint_t<1>>& skip, bool reverse):
-            m_reverse(reverse),
-            m_front(0),
-            m_back(skip.size()),
-            m_skip(&skip)
-        {
-            front_skip();
-            back_skip();
-        }
+        inline LayersIterator(L& l, bool reverse);
 
         inline bool has_next() {
             //std::cout << "hn: "; debug();
@@ -138,7 +116,10 @@ namespace tdc {namespace esp {
         std::vector<size_t> m_rebuild_A; // allocation cache
         IntVector<uint_t<1>> m_removed;
         size_t m_removed_counter = 0;
-        size_t m_remaining_size;
+        size_t m_remaining_size = 0;
+        std::vector<Link> m_free_list;
+
+        friend class LayersIterator;
     public:
         inline L(ConstGenericView<Sindex> sindices) {
             m_linked_list.reserve(sindices.size());
@@ -147,6 +128,21 @@ namespace tdc {namespace esp {
             m_removed.reserve(sindices.size());
             m_removed.resize(sindices.size());
             m_remaining_size = sindices.size();
+            m_free_list.reserve(sindices.size());
+            m_free_list.resize(sindices.size());
+
+            for(size_t i = 1; i < m_linked_list.size(); i++) {
+                m_linked_list[i] = i - 1;
+            }
+            if (m_linked_list.size() > 0) {
+                m_linked_list.back() = m_linked_list.size() - 1;
+            }
+            for(size_t i = 0; i < m_free_list.size() - 1; i++) {
+                m_free_list[i] = i + 1;
+            }
+            if (m_free_list.size() > 0) {
+                m_free_list[0] = 0;
+            }
         }
 
         void rebuild(bool reverse) {
@@ -157,7 +153,7 @@ namespace tdc {namespace esp {
             A.push_back(size_t(-1));
             size_t l = 0;
 
-            auto layers_iter = LayersIterator(m_removed, m_reverse);
+            auto layers_iter = LayersIterator(*this, m_reverse);
 
             while (layers_iter.has_next()) {
                 auto link = layers_iter.advance();
@@ -289,6 +285,36 @@ namespace tdc {namespace esp {
             return std::move(m_linked_list);
         }
     };
+
+    inline LayersIterator::LayersIterator(L& l, bool reverse):
+        m_reverse(reverse),
+        m_front(0),
+        m_back(l.m_removed.size()),
+        m_l(&l)
+    {
+        front_skip();
+        back_skip();
+    }
+
+    inline void LayersIterator::debug() {
+        std::cout << "front: " << m_front << ", back: " << m_back << ", bits: ";
+        std::cout << vec_to_debug_string(m_l->m_removed) << "\n";
+    }
+
+    inline void LayersIterator::front_skip() {
+        //std::cout << "fs: "; debug();
+        auto& skip = m_l->m_removed;
+        while (m_front != m_back && m_front < skip.size() && skip[m_front] == uint_t<1>(1)) {
+            m_front++;
+        }
+    }
+    inline void LayersIterator::back_skip() {
+        //std::cout << "bs: "; debug();
+        auto& skip = m_l->m_removed;
+        while (m_front != m_back && m_back > 0 && skip[m_back - 1] == uint_t<1>(1)) {
+            m_back--;
+        }
+    }
 
     struct Dpi_and_b {
         std::vector<size_t> Dpi;

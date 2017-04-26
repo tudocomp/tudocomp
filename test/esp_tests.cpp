@@ -668,9 +668,9 @@ TEST(MonotonSubseq, init_bbwd) {
 TEST(MonotonSubseq, layers_iter_afwd) {
     auto rev = false;
     auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
-    auto bv = IntVector<uint_t<1>>(sis.size());
+    auto l = esp::L(sis);
 
-    auto layers_iter = esp::LayersIterator(bv, rev);
+    auto layers_iter = esp::LayersIterator(l, rev);
     std::vector<esp::Point> points;
     while (layers_iter.has_next()) {
         points.push_back(esp::point_coord_for_link(sis, layers_iter.advance(), rev));
@@ -686,9 +686,9 @@ TEST(MonotonSubseq, layers_iter_afwd) {
 TEST(MonotonSubseq, layers_iter_bbwd) {
     auto rev = true;
     auto sis = esp::sorted_indices(SUBSEQ_TEST_INPUT);
-    auto bv = IntVector<uint_t<1>>(sis.size());
+    auto l = esp::L(sis);
 
-    auto layers_iter = esp::LayersIterator(bv, rev);
+    auto layers_iter = esp::LayersIterator(l, rev);
     std::vector<esp::Point> points;
     while (layers_iter.has_next()) {
         points.push_back(esp::point_coord_for_link(sis, layers_iter.advance(), rev));
