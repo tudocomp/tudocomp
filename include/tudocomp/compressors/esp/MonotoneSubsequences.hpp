@@ -307,6 +307,7 @@ namespace tdc {namespace esp {
             }
 
             // DEBUG
+            /*
             std::vector<size_t> fwd_addrs;
             std::vector<size_t> bwd_addrs;
             if (m_remaining_size > 0) {
@@ -340,6 +341,7 @@ namespace tdc {namespace esp {
             << "\n" << vec_to_debug_string(fwd_addrs) << "\n"
             << "\n" << vec_to_debug_string(bwd_addrs) << "\n"
             ;
+            */
             /*
             std::vector<size_t> fbv;
             for (size_t i = 0; i < m_removed.size(); i++) {
