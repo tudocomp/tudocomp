@@ -201,7 +201,8 @@ public:
                                     }
 
                                 //delete child bp
-                                    node_begins[child_id].clear();
+                                   // node_begins[child_id].clear();
+                                     node_begins[child_id] = std::vector<uint>();
                                 }
                                 std::sort(node_begins[*bin_it].begin(), node_begins[*bin_it].end());
                             }
