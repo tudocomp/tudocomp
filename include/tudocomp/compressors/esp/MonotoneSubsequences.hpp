@@ -118,6 +118,8 @@ namespace tdc {namespace esp {
         size_t m_removed_counter = 0;
         size_t m_remaining_size = 0;
         std::vector<Link> m_free_list;
+        size_t m_free_start = 0;
+        size_t m_free_end = 0;
 
         friend class LayersIterator;
     public:
@@ -131,18 +133,20 @@ namespace tdc {namespace esp {
             m_free_list.reserve(sindices.size());
             m_free_list.resize(sindices.size());
 
+            DCHECK_GT(sindices.size(), 0);
+
             for(size_t i = 1; i < m_linked_list.size(); i++) {
                 m_linked_list[i] = i - 1;
             }
-            if (m_linked_list.size() > 0) {
-                m_linked_list.back() = m_linked_list.size() - 1;
-            }
+            m_linked_list[0] = 0;
+
             for(size_t i = 0; i < m_free_list.size() - 1; i++) {
                 m_free_list[i] = i + 1;
             }
-            if (m_free_list.size() > 0) {
-                m_free_list[0] = 0;
-            }
+            m_free_list[m_free_list.size() - 1] = m_free_list.size() - 1;
+
+            m_free_start = 0;
+            m_free_end = m_linked_list.size() - 1;
         }
 
         void rebuild(bool reverse) {
@@ -243,6 +247,8 @@ namespace tdc {namespace esp {
                 m_removed[link] = uint_t<1>(1);
                 m_linked_list[link] = m_removed_counter;
             }
+
+
 
             m_removed_counter++;
             m_layers.clear();
