@@ -331,80 +331,97 @@ namespace tdc {namespace esp {
         std::vector<std::shared_ptr<std::vector<size_t>>> encode_slp;
     };
     class DebugContext: public DebugContextBase<DebugContextData> {
-        using Data = DebugContextData;
-        std::shared_ptr<Data> m_data;
     public:
         DebugContext(std::ostream& o, bool p_en, bool p_ea):
-            DebugContextBase(o, p_en, p_ea),
-            m_data(std::make_shared<Data>(Data {})) {}
+            DebugContextBase(o, p_en, p_ea)
+        {
+            with_child([&] (auto& m_data) {
+            });
+        }
 
         void input_string(string_ref s) {
-            m_data->input = s;
+            with_child([&] (auto& m_data) {
+                m_data.input = s;
 
-            print([m_data = m_data](std::ostream& o) {
-                o << "\n[Input]:\n\"" << m_data->input << "\"\n";
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "\n[Input]:\n\"" << m_data->input << "\"\n";
+                });
             });
         }
 
         void generate_grammar(bool empty, size_t root_node) {
-            m_data->empty = empty;
-            m_data->root_node = root_node;
+            with_child([&] (auto& m_data) {
+                m_data.empty = empty;
+                m_data.root_node = root_node;
 
-            print([m_data = m_data](std::ostream& o) {
-                o << "\n[Grammar]:\n"
-                  << "  Is empty: " << (m_data->empty? "yes" : "no") << "\n"
-                  << "  Root node: " << m_data->root_node << "\n";
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "\n[Grammar]:\n"
+                    << "  Is empty: " << (m_data->empty? "yes" : "no") << "\n"
+                    << "  Root node: " << m_data->root_node << "\n";
+                });
             });
         }
 
         void encode_start() {
-            print([m_data = m_data](std::ostream& o) {
-                o << "\n[Encode]:\n";
+            with_child([&] (auto& m_data) {
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "\n[Encode]:\n";
+                });
             });
         }
 
         void encode_max_value(size_t value, size_t bits) {
-            m_data->encode_max_value = value;
-            m_data->encode_max_value_bits = bits;
+            with_child([&] (auto& m_data) {
+                m_data.encode_max_value = value;
+                m_data.encode_max_value_bits = bits;
 
-            print([m_data = m_data](std::ostream& o) {
-                o << "  Max value: " << m_data->encode_max_value << "\n";
-                o << "  Bits: " << m_data->encode_max_value_bits << "\n";
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "  Max value: " << m_data->encode_max_value << "\n";
+                    o << "  Bits: " << m_data->encode_max_value_bits << "\n";
+                });
             });
         }
 
         void encode_root_node(size_t node) {
-            m_data->encode_root_node = node;
+            with_child([&] (auto& m_data) {
+                m_data.encode_root_node = node;
 
-            print([m_data = m_data](std::ostream& o) {
-                o << "  Root node: " << m_data->encode_root_node << "\n";
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "  Root node: " << m_data->encode_root_node << "\n";
+                });
             });
         }
 
         void encode_rule_start() {
-            print([m_data = m_data](std::ostream& o) {
-                o << "\n  [SLP]:\n";
+            with_child([&] (auto& m_data) {
+                this->print([m_data = &m_data](std::ostream& o) {
+                    o << "\n  [SLP]:\n";
+                });
             });
         }
 
         template<typename T>
         void encode_rule(const T& rule) {
-            auto p = std::make_shared<std::vector<size_t>>(cast_vec(rule));
-            m_data->encode_slp.push_back(p);
+            with_child([&] (auto& m_data) {
+                auto p = std::make_shared<std::vector<size_t>>(cast_vec(rule));
+                m_data.encode_slp.push_back(p);
 
-            print([m_data = m_data, p](std::ostream& o) {
-                o << "    " << vec_to_debug_string(*p) << "\n";
+                this->print([m_data = &m_data, p](std::ostream& o) {
+                    o << "    " << vec_to_debug_string(*p) << "\n";
+                });
             });
         }
 
         DebugRoundContext round() {
             DebugRoundContext m_data_child(*this);
-            m_data->rounds.push_back(m_data_child);
+            with_child([&] (auto& m_data) {
+                m_data.rounds.push_back(m_data_child);
 
-            print([m_data_child](std::ostream& o) {
-                m_data_child.print_all();
+                this->print([m_data_child](std::ostream& o) {
+                    m_data_child.print_all();
+                });
+
             });
-
             return m_data_child;
         }
     };
