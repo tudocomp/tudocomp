@@ -4,6 +4,10 @@
 #include <tudocomp/ds/DSDef.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
+#include <tudocomp/util/divsufsort.hpp>
+#include <tudocomp/util.hpp>
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 /// Constructs the suffix array using divsufsort.
@@ -27,33 +31,58 @@ public:
     // implements concept "DSProvider"
     template<typename manager_t>
     inline void construct(manager_t& manager, bool compressed_space) {
-        DLOG(INFO) << "DivSufSort::construct";
+        StatPhase::wrap("Construct SA", [&]{
+            // Allocate
+            const size_t n = manager.input.size();
+            const size_t w = bits_for(n);
+
+            // divsufsort needs one additional bit for signs
+            m_sa = DynamicIntVector(n, 0, compressed_space ? w + 1 : LEN_BITS);
+
+            // Use divsufsort to construct
+            divsufsort(manager.input.data(), m_sa, n);
+
+            StatPhase::log("bit_width", size_t(m_sa.width()));
+            StatPhase::log("size", m_sa.bit_size() / 8);
+        });
+
+        if(compressed_space) {
+            // we can now drop the extra bit
+            compress<ds::SUFFIX_ARRAY>();
+        }
     }
 
     // implements concept "DSProvider"
-    template<dsid_t ds>
-    inline void compress() {
-        DLOG(INFO) << "DivSufSort::compress<" << ds::name_for(ds) << ">";
-    }
-
-    // implements concept "DSProvider"
-    template<dsid_t ds>
-    inline void discard() {
-        DLOG(INFO) << "DivSufSort::discard<" << ds::name_for(ds) << ">";
-    }
-
-    // implements concept "DSProvider"
+    template<dsid_t ds> void compress();
+    template<dsid_t ds> void discard();
     template<dsid_t ds> const tl::get<ds, ds_types>& get();
     template<dsid_t ds> tl::get<ds, ds_types> relinquish();
 };
 
 template<>
-const DynamicIntVector& DivSufSort::get<ds::SUFFIX_ARRAY>() {
+inline void DivSufSort::discard<ds::SUFFIX_ARRAY>() {
+    m_sa.clear();
+    m_sa.shrink_to_fit();
+}
+
+template<>
+inline void DivSufSort::compress<ds::SUFFIX_ARRAY>() {
+    StatPhase::wrap("Compress SA", [this]{
+        m_sa.width(bits_for(m_sa.size()));
+        m_sa.shrink_to_fit();
+
+        StatPhase::log("bit_width", size_t(m_sa.width()));
+        StatPhase::log("size", m_sa.bit_size() / 8);
+    });
+}
+
+template<>
+inline const DynamicIntVector& DivSufSort::get<ds::SUFFIX_ARRAY>() {
     return m_sa;
 }
 
 template<>
-DynamicIntVector DivSufSort::relinquish<ds::SUFFIX_ARRAY>() {
+inline DynamicIntVector DivSufSort::relinquish<ds::SUFFIX_ARRAY>() {
     return std::move(m_sa);
 }
 

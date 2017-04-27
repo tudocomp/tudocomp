@@ -4,6 +4,9 @@
 #include <tudocomp/ds/DSDef.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
+#include <tudocomp/util.hpp>
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 /// Constructs the inverse suffix array from the suffix array.
@@ -27,25 +30,49 @@ public:
     // implements concept "DSProvider"
     template<typename manager_t>
     inline void construct(manager_t& manager, bool compressed_space) {
-        DLOG(INFO) << "ISAFromSA::construct";
+        // get suffix array
+        auto& sa = manager.get<ds::SUFFIX_ARRAY>();
+
+        StatPhase::wrap("Construct ISA", [&]{
+            // Allocate
+            const size_t n = manager.input.size();
+            const size_t w = bits_for(n);
+
+            m_isa = DynamicIntVector(n, 0, compressed_space ? w : LEN_BITS);
+
+            // Construct
+            for(len_t i = 0; i < n; i++) {
+                m_isa[sa[i]] = i;
+            }
+
+            StatPhase::log("bit_width", size_t(m_isa.width()));
+            StatPhase::log("size", m_isa.bit_size() / 8);
+        });
     }
 
     // implements concept "DSProvider"
-    template<dsid_t ds>
-    inline void compress() {
-        DLOG(INFO) << "ISAFromSA::compress<" << ds::name_for(ds) << ">";
-    }
-
-    // implements concept "DSProvider"
-    template<dsid_t ds>
-    inline void discard() {
-        DLOG(INFO) << "ISAFromSA::discard<" << ds::name_for(ds) << ">";
-    }
-
-    // implements concept "DSProvider"
+    template<dsid_t ds> void compress();
+    template<dsid_t ds> void discard();
     template<dsid_t ds> const tl::get<ds, ds_types>& get();
     template<dsid_t ds> tl::get<ds, ds_types> relinquish();
 };
+
+template<>
+inline void ISAFromSA::discard<ds::INVERSE_SUFFIX_ARRAY>() {
+    m_isa.clear();
+    m_isa.shrink_to_fit();
+}
+
+template<>
+inline void ISAFromSA::compress<ds::INVERSE_SUFFIX_ARRAY>() {
+    StatPhase::wrap("Compress ISA", [this]{
+        m_isa.width(bits_for(m_isa.size()));
+        m_isa.shrink_to_fit();
+
+        StatPhase::log("bit_width", size_t(m_isa.width()));
+        StatPhase::log("size", m_isa.bit_size() / 8);
+    });
+}
 
 template<>
 const DynamicIntVector& ISAFromSA::get<ds::INVERSE_SUFFIX_ARRAY>() {
