@@ -3,6 +3,9 @@
 #include <limits>
 #include <tudocomp/util/cpp14/integer_sequence.hpp>
 
+#include <set>
+#include <vector>
+
 namespace tdc {
 namespace is {
 
@@ -221,6 +224,20 @@ struct _sort<T, Compare, std::integer_sequence<T, Head, Tail...>> {
 
 /// \cond INTERNAL
 template<typename T>
+inline void _to_set(std::set<T>& set, std::integer_sequence<T>) {
+    // done
+}
+
+template<typename T, T Head, T... Tail>
+inline void _to_set(std::set<T>& set,
+    std::integer_sequence<T, Head, Tail...>) {
+
+    // add head and recurse
+    set.emplace(Head);
+    _to_set(set, std::integer_sequence<T, Tail...>());
+}
+
+template<typename T>
 inline void _to_vector(std::vector<T>& v, std::integer_sequence<T>) {
     // done
 }
@@ -235,7 +252,18 @@ inline void _to_vector(std::vector<T>& v,
 }
 /// \endcond
 
-/// \brief Creates a vector from an integer sequence
+/// \brief Creates a set from an integer sequence.
+///
+/// \tparam T the integer type
+/// \tparam Seq the integer sequence
+template<typename T, T... Seq>
+inline std::set<T> to_set(std::integer_sequence<T, Seq...>) {
+    std::set<T> set;
+    _to_set(set, std::integer_sequence<T, Seq...>());
+    return set;
+}
+
+/// \brief Creates a vector from an integer sequence.
 ///
 /// \tparam T the integer type
 /// \tparam Seq the integer sequence
