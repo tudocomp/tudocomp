@@ -1465,3 +1465,33 @@ TEST(MMapHandle, test1) {
 
     ASSERT_EQ(mmap.view(), s);
 }
+
+TEST(Test, compress_input) {
+    auto i = test::compress_input("ab\0cd\0"_v);
+
+    ASSERT_EQ(i.as_view(), "ab\xff\xfe""cd\xff\xfe\0"_v);
+    std::stringstream ss;
+    ss << i.as_stream().rdbuf();
+    ASSERT_EQ(View(ss.str()), "ab\xff\xfe""cd\xff\xfe\0"_v);
+}
+
+TEST(Test, compress_output) {
+    auto o = test::compress_output();
+    o.as_stream() << "ab\0cd\0"_v;
+    ASSERT_EQ(o.result(), "ab\0cd\0"_v);
+}
+
+TEST(Test, decompress_input) {
+    auto i = test::decompress_input("ab\0cd\0"_v);
+
+    ASSERT_EQ(i.as_view(), "ab\0cd\0"_v);
+    std::stringstream ss;
+    ss << i.as_stream().rdbuf();
+    ASSERT_EQ(View(ss.str()), "ab\0cd\0"_v);
+}
+
+TEST(Test, decompress_output) {
+    auto o = test::decompress_output();
+    o.as_stream() << "ab\xff\xfe""cd\xff\xfe\0"_v;
+    ASSERT_EQ(o.result(), "ab\0cd\0"_v);
+}
