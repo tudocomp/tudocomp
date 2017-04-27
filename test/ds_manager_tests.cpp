@@ -17,6 +17,12 @@
 
 using namespace tdc;
 
+/*
+    TODO: These tests are heavily influenced by its application areas.
+
+    More generic test cases are required.
+*/
+
 // compile-time tests for DSManager
 using dsmanager_t = DSManager<DivSufSort, PhiAlgorithm, ISAFromSA, PhiFromSA>;
 
