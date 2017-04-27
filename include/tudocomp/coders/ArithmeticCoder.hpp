@@ -1,6 +1,3 @@
-#ifndef ARITHMETICCODER_H
-#define ARITHMETICCODER_H
-
 #pragma once
 
 #include <sstream>
@@ -17,8 +14,6 @@ namespace tdc {
 /// encoded as their string representations, terminated by the \e :
 /// character.
 class ArithmeticCoder : public Algorithm {
-
-
 
 public:
     /// \brief Yields the coder's meta information.
@@ -270,5 +265,3 @@ public:
 };
 
 }
-
-#endif // ARITHMETICCODER_H

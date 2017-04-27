@@ -14,6 +14,7 @@
 #include <tudocomp/coders/EliasGammaCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
 #include <tudocomp/coders/SLECoder.hpp>
+#include <tudocomp/coders/ArithmeticCoder.hpp>
 
 using namespace tdc;
 
@@ -212,3 +213,9 @@ TEST(coder, huff_bits) { test_bits<HuffmanCoder>(); }
 TEST(coder, huff_int) { test_int<HuffmanCoder>(); }
 TEST(coder, huff_str) { test_str<HuffmanCoder>(); }
 TEST(coder, huff_mixed) { test_mixed<HuffmanCoder>(); }
+
+TEST(coder, huff_mt) { test_mt<ArithmeticCoder>(); }
+TEST(coder, huff_bits) { test_bits<ArithmeticCoder>(); }
+TEST(coder, huff_int) { test_int<ArithmeticCoder>(); }
+TEST(coder, huff_str) { test_str<ArithmeticCoder>(); }
+TEST(coder, huff_mixed) { test_mixed<ArithmeticCoder>(); }
