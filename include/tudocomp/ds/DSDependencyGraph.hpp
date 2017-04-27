@@ -146,6 +146,19 @@ private:
     std::set<dsid_t> m_constructed;
     std::set<dsid_t> m_compressed;
 
+    inline size_t degree(const dsid_t ds) {
+        auto it = m_degree.find(ds);
+        return (it != m_degree.end()) ? it->second : 0;
+    }
+
+    inline bool is_constructed(const dsid_t ds) {
+        return (m_constructed.find(ds) != m_constructed.end());
+    }
+
+    inline bool is_compressed(const dsid_t ds) {
+        return (m_compressed.find(ds) != m_compressed.end());
+    }
+
     inline void init_degree(std::index_sequence<>) {
         // end of a construction path
     }
@@ -161,6 +174,9 @@ private:
             m_degree.emplace(Head, 1);
         } else {
             it->second += 1;
+
+            // mark for protection if degree exceeds 1
+            m_manager->protect(Head);
         }
 
         // next
@@ -172,9 +188,8 @@ private:
         // if out degree of ds equals one and the ds is requested, compress
         //DLOG(INFO) << "possibly_compress<" << ds::name_for(ds) << ">";
         if(is_requested<ds>()) {
-            if(m_compressed.find(ds) == m_compressed.end()) {
-                auto it = m_degree.find(ds);
-                if(it != m_degree.end() && it->second == 1) {
+            if(!is_compressed(ds)) {
+                if(degree(ds) == 1) {
                     //DLOG(INFO) << "compress: " << ds::name_for(ds);
                     m_manager->template get_provider<ds>()
                         .template compress<ds>();
@@ -212,6 +227,12 @@ private:
             possibly_compress<Head>();
         }
 
+        // allow inplace usage after degree reaches exactly one and
+        // data structure is not connected to CONSTRUCT
+        if(it->second == 1 && !is_requested<Head>()) {
+            m_manager->unprotect(Head);
+        }
+
         // next
         decrease_degree(std::index_sequence<Tail...>());
     }
@@ -222,7 +243,7 @@ private:
 
     template<dsid_t Head, dsid_t... Tail>
     inline void discard_byproducts(std::index_sequence<Head, Tail...>) {
-        if(m_degree.find(Head) == m_degree.end()) {
+        if(!degree(Head)) {
             // not in the dependency graph, ie., a byproduct
             //DLOG(INFO) << "discard byproduct: " << ds::name_for(Head);
             m_manager->template get_provider<Head>().template discard<Head>();
@@ -241,7 +262,7 @@ private:
         bool top_level,
         std::index_sequence<Head, Tail...>) {
 
-        if(m_constructed.find(Head) == m_constructed.end()) {
+        if(!is_constructed(Head)) {
             // construct dependencies
             construct_recursive(false, dependency_order<Head>());
 

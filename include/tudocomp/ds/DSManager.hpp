@@ -1,7 +1,7 @@
 #pragma once
 
-#include <map>
 #include <memory>
+#include <set>
 #include <tuple>
 #include <type_traits>
 
@@ -123,10 +123,10 @@ private:
         // construction done
     }
 
-    View m_input; // TODO: when the changes to the I/O system are done,
-                  // this can be an Input?
+    View m_input;      // TODO: use Input instead of View?
+    CompressMode m_cm; // the compression mode
 
-    CompressMode m_cm;
+    std::set<dsid_t> m_protect; // used temporarily during construction
 
 public:
     inline static Meta meta() {
@@ -169,25 +169,92 @@ public:
     }
 
 public:
+    /// \cond INTERNAL
+    inline void protect(const dsid_t ds) {
+        //DLOG(INFO) << "protect: " << ds::name_for(ds);
+        m_protect.emplace(ds);
+    }
+
+    inline void unprotect(const dsid_t ds) {
+        //DLOG(INFO) << "unprotect: " << ds::name_for(ds);
+        auto it = m_protect.find(ds);
+        if(it != m_protect.end()) m_protect.erase(it);
+    }
+
+    inline bool is_protected(const dsid_t ds) {
+        return (m_protect.find(ds) != m_protect.end());
+    }
+    /// \endcond
+
+    /// \brief Constructs the specified data structures.
+    ///
+    /// \tparam ds the data structures to construct.
     template<dsid_t... ds>
     inline void construct() {
         // build dependency graph
         using depgraph_t = DSDependencyGraph<this_t, ds...>;
 
+        // init protection (all requested data structures)
+        m_protect = is::to_set(std::index_sequence<ds...>());
+        //for(dsid_t x : m_protect) {
+        //    DLOG(INFO) << "initially protect: " << ds::name_for(x);
+        //}
+
         // construct
         depgraph_t(*this, m_cm);
+
+        // revoke protection
+        m_protect.clear();
     }
 
+    /// \brief Gets the specified data structure for reading.
+    ///
+    /// The data structure must have been constructed beforehand.
+    ///
+    /// \tparam ds the requested data structure.
+    /// \return a read-only reference to the data structure, the type of which
+    ///         is determined by the respective provider
     template<dsid_t ds>
     inline auto get() -> decltype(get_provider<ds>().template get<ds>()) {
         return get_provider<ds>().template get<ds>();
     }
 
+    /// \brief Relinquishes the specified data structure for modification.
+    ///
+    /// The data structure must have been constructed beforehand and cannot
+    /// be acquired again after this operation.
+    ///
+    /// \tparam ds the requested data structure.
+    /// \return the data structure, the type of which is determined by the
+    ///         respective provider
     template<dsid_t ds>
     inline auto relinquish() ->
         decltype(get_provider<ds>().template relinquish<ds>()) {
 
         return get_provider<ds>().template relinquish<ds>();
+    }
+
+    /// \brief Relinquishes the specified data structure for modification or
+    ///        creates a copy.
+    ///
+    /// This function is intended for construction time optimizations.
+    /// Dependening on whether or not the requested data structure has been
+    /// requested to be constructed (in \ref construct), the structure will
+    /// either be relinquished or copied.
+    ///
+    /// \tparam ds the requested data structure.
+    /// \return the data structure or a copy thereof, the type of which is
+    ///         determined by the respective provider
+    template<dsid_t ds>
+    inline auto inplace() -> decltype(relinquish<ds>()) {
+        if(is_protected(ds)) {
+            // create a copy
+            decltype(relinquish<ds>()) copy = get<ds>();
+            return copy;
+        } else {
+            // relinquish
+            return get_provider<ds>().template relinquish<ds>();
+        }
     }
 
     const View& input = m_input;
