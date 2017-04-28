@@ -19,8 +19,20 @@ namespace tdc {namespace esp {
         public:
             inline Map() {}
 
-            U& access(const T& key) {
+            inline U& access(const T& key) {
                 return m_map[key];
+            }
+
+            inline auto begin() const {
+                return m_map.begin();
+            }
+
+            inline auto end() const {
+                return m_map.end();
+            }
+
+            inline size_t size() const {
+                return m_map.size();
             }
         };
     };

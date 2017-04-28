@@ -8,7 +8,7 @@ namespace tdc {namespace esp {
         GrammarRules(size_t counter_start):
             counter(counter_start + 1),
             m_initial_counter(counter_start + 1) {}
-        using a2_t = std::unordered_map<Array<2>, size_t>;
+        using a2_t = typename ipd_t::template Map<Array<2>, size_t>;
 
         a2_t n2;
 
@@ -23,13 +23,13 @@ namespace tdc {namespace esp {
 
             size_t* r;
             if (vs == 2) {
-                r = &n2[v];
+                r = &n2.access(v);
             } else {
                 Array<2> between;
                 between.m_data[0] = add(v.slice(0, 2));
                 between.m_data[1] = v[2];
 
-                r = &n2[between];
+                r = &n2.access(between);
             }
 
             if (*r == 0) {
