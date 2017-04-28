@@ -9,8 +9,6 @@
 namespace tdc {namespace esp {
     template<typename round_view_t>
     struct RoundContext {
-        using esp_view_t = typename EspContext::esp_view_t;
-
         DebugRoundContext debug;
 
         bool behavior_metablocks_maximimze_repeating;

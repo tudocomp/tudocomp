@@ -9,7 +9,8 @@
 #include <tudocomp/compressors/esp/utils.hpp>
 
 namespace tdc {namespace esp {
-    SLP EspContext::generate_grammar(string_ref input) {
+    template<typename ipd_t>
+    SLP EspContext<ipd_t>::generate_grammar(string_ref input) {
         size_t root_node = 0;
         bool empty = false;
 
@@ -17,7 +18,7 @@ namespace tdc {namespace esp {
         size_t slp_counter = 256;
         size_t prev_slp_counter = 0;
 
-        std::unique_ptr<Round> round;
+        std::unique_ptr<Round<ipd_t>> round;
 
         // Initialize initial round
         {
@@ -25,8 +26,8 @@ namespace tdc {namespace esp {
                 return StatPhase("Prepare round 0");
             });
 
-            round = std::make_unique<Round>(Round {
-                GrammarRules(256),
+            round = std::make_unique<Round<ipd_t>>(Round<ipd_t> {
+                GrammarRules<ipd_t>(256),
                 256, // TODO: Calc actual alphabet size
                 std::vector<size_t>(),
             });
@@ -43,7 +44,7 @@ namespace tdc {namespace esp {
                 return StatPhase(ss.str());
             });
 
-            Round& r = *round;
+            auto& r = *round;
             in_t in = r.string;
 
             esp::RoundContext<in_t> ctx {
@@ -127,14 +128,14 @@ namespace tdc {namespace esp {
             DCHECK_EQ(r.gr.n2.size(), 0);
 
             // Prepare next round
-            auto tmp = Round {
-                GrammarRules(r.gr.rules_count()),
+            auto tmp = Round<ipd_t> {
+                GrammarRules<ipd_t>(r.gr.rules_count()),
                 r.gr.rules_count(),
                 std::move(new_layer),
             };
 
             round.reset();
-            round = std::make_unique<Round>(std::move(tmp));
+            round = std::make_unique<Round<ipd_t>>(std::move(tmp));
 
             phase.log_stat("slp size", slp.rules.size());
         }

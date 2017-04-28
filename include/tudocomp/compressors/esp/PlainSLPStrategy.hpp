@@ -12,12 +12,12 @@ namespace tdc {namespace esp {
 
         using Algorithm::Algorithm;
 
-        inline void encode(EspContext& context, SLP&& slp, Output& output) const {
-            context.debug.encode_start();
+        inline void encode(DebugContext& debug, SLP&& slp, Output& output) const {
+            debug.encode_start();
             auto max_val = slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX - 1;
             auto bit_width = bits_for(max_val);
-            context.debug.encode_max_value(max_val, bit_width);
-            context.debug.encode_root_node(slp.root_rule);
+            debug.encode_max_value(max_val, bit_width);
+            debug.encode_root_node(slp.root_rule);
 
             BitOStream bout(output.as_stream());
             // Write header
@@ -38,9 +38,9 @@ namespace tdc {namespace esp {
             bout.write_int(slp.root_rule, bit_width);
 
             // Write rules
-            context.debug.encode_rule_start();
+            debug.encode_rule_start();
             for (auto& rule : slp.rules) {
-                context.debug.encode_rule(rule);
+                debug.encode_rule(rule);
                 DCHECK_LE(rule[0], max_val);
                 DCHECK_LE(rule[1], max_val);
                 bout.write_int(rule[0], bit_width);

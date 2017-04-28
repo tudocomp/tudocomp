@@ -436,11 +436,13 @@ TEST(Esp, adjust_block_2) {
     );
 }
 
+using test_ipd_t = esp::StdUnorderedMapIPD;
+
 TEST(Esp, tree_reducer_roundtrip) {
     auto s = "0000dkasxxxcsdacjzsbkhvfaghskcbs"
              "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v;
 
-    esp::EspContext esp {
+    esp::EspContext<test_ipd_t> esp {
         nullptr, // no env
         false,   // not silent
     };

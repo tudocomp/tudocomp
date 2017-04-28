@@ -3,6 +3,7 @@
 #include <tudocomp/compressors/esp/HashArray.hpp>
 
 namespace tdc {namespace esp {
+    template<typename ipd_t>
     struct GrammarRules {
         GrammarRules(size_t counter_start):
             counter(counter_start + 1),

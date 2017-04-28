@@ -7,6 +7,7 @@
 #include <tudocomp/compressors/esp/DebugContext.hpp>
 
 namespace tdc {namespace esp {
+    template<typename ipd_t>
     class EspContext {
         Env* m_env;
     public:

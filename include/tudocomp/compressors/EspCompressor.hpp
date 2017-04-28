@@ -32,7 +32,7 @@ public:
 
         auto phase0 = StatPhase("ESP Compressor");
 
-        EspContext context { &env(), true };
+        EspContext<ipd_t> context { &env(), true };
         SLP slp;
 
         {
@@ -54,7 +54,7 @@ public:
                 const slp_strategy_t strategy { this->env().env_for_option("slp_strategy") };
 
             phase2.split("Encode SLP");
-                strategy.encode(context, std::move(slp), output);
+                strategy.encode(context.debug, std::move(slp), output);
         }
 
         context.debug.print_all();

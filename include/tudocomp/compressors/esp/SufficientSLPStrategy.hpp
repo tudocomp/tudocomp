@@ -26,7 +26,7 @@ namespace tdc {namespace esp {
 
         using Algorithm::Algorithm;
 
-        inline void encode(EspContext& context, SLP&& slp, Output& output) const {
+        inline void encode(DebugContext& debug, SLP&& slp, Output& output) const {
             /*
             std::cout << "unsorted:\n";
             for (size_t i = 0; i < slp.rules.size(); i++) {
