@@ -11,6 +11,8 @@
 
 #include "tudocomp/compressors/EspCompressor.hpp"
 
+#include <tudocomp/compressors/esp/HashMapIPD.hpp>
+
 using namespace tdc;
 
 struct Empty {};
@@ -436,7 +438,7 @@ TEST(Esp, adjust_block_2) {
     );
 }
 
-using test_ipd_t = esp::StdUnorderedMapIPD;
+using test_ipd_t = esp::HashMapIPD;
 
 TEST(Esp, tree_reducer_roundtrip) {
     auto s = "0000dkasxxxcsdacjzsbkhvfaghskcbs"
