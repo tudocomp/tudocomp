@@ -11,14 +11,17 @@
 
 #include <tudocomp/compressors/esp/PlainSLPStrategy.hpp>
 
+#include <tudocomp/compressors/esp/StdUnorderedMapIPD.hpp>
+
 namespace tdc {
 
-template<typename slp_strategy_t>
+template<typename slp_strategy_t, typename ipd_t = esp::StdUnorderedMapIPD>
 class EspCompressor: public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "esp", "ESP based grammar compression");
         m.option("slp_strategy").templated<slp_strategy_t, esp::PlainSLPStrategy>("slp_strategy");
+        m.option("ipd").templated<ipd_t, esp::StdUnorderedMapIPD>("ipd");
         return m;
     }
 

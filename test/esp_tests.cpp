@@ -493,6 +493,10 @@ void test_esp() {
         "報チ申猛あち涙境ワセ周兵いわ郵入せすをだ漏告されて話巡わッきや間紙あいきり諤止テヘエラ鳥提フ健2銀稿97傷エ映田ヒマ役請多暫械ゅにうて。関国ヘフヲオ場三をおか小都供セクヲ前俳著ゅ向深まも月10言スひす胆集ヌヱナ賀提63劇とやぽ生牟56詰ひめつそ総愛ス院攻せいまて報当アラノ日府ラのがし。",
     };
 
+    test::roundtrip_batch([&](const auto& s) {
+        cases.push_back(s);
+    });
+
     for (auto& c : cases) {
         std::cout << "---------------------\n";
         test::roundtrip<EspCompressor<T>>(c);
