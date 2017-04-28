@@ -5,7 +5,12 @@
 namespace tdc {namespace esp {
     template<typename ipd_t>
     struct GrammarRules {
+        static constexpr std::array<size_t, 2> default_key() {
+            return {{ size_t(-1), size_t(-1) }};
+        }
+
         GrammarRules(size_t counter_start):
+            n2(0, Array<2>(default_key())),
             counter(counter_start + 1),
             m_initial_counter(counter_start + 1) {}
         using a2_t = typename ipd_t::template Map<Array<2>, size_t>;

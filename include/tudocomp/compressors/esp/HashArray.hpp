@@ -21,6 +21,7 @@ namespace tdc {namespace esp {
                 m_data[i] = v[i];
             }
         }
+        Array(const std::array<size_t, N>& v): Array(in_t(v)) {}
     };
 
     template<size_t N>

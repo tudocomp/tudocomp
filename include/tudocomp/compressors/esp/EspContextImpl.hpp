@@ -124,8 +124,7 @@ namespace tdc {namespace esp {
             {
                 auto discard = std::move(r.gr.n2);
             }
-            r.gr.n2 = decltype(r.gr.n2)();
-            DCHECK_EQ(r.gr.n2.size(), 0);
+            //DCHECK_EQ(r.gr.n2.size(), 0);
 
             // Prepare next round
             auto tmp = Round<ipd_t> {

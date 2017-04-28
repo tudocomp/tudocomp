@@ -17,7 +17,7 @@ namespace tdc {namespace esp {
             std::unordered_map<T, U> m_map;
 
         public:
-            inline Map() {}
+            inline Map(size_t bucket_count, const T& empty) {}
 
             inline U& access(const T& key) {
                 return m_map[key];
