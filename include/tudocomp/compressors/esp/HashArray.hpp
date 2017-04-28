@@ -7,9 +7,11 @@
 namespace tdc {namespace esp {
     using in_t = ConstGenericView<size_t>;
 
-    template<size_t N>
+    template<size_t N, typename T = size_t>
     struct Array {
-        std::array<size_t, N> m_data;
+        using in_t = ConstGenericView<T>;
+
+        std::array<T, N> m_data;
         Array() {
             for(size_t i = 0; i < N; i++) {
                 m_data[i] = 0;
@@ -21,11 +23,11 @@ namespace tdc {namespace esp {
                 m_data[i] = v[i];
             }
         }
-        Array(const std::array<size_t, N>& v): Array(in_t(v)) {}
+        Array(const std::array<T, N>& v): Array(in_t(v)) {}
     };
 
-    template<size_t N>
-    bool operator==(const Array<N>& lhs, const Array<N>& rhs) {
+    template<size_t N, typename T>
+    bool operator==(const Array<N, T>& lhs, const Array<N, T>& rhs) {
         for(size_t i = 0; i < N; i++) {
             if (lhs.m_data[i] != rhs.m_data[i]) return false;
         }
@@ -33,12 +35,12 @@ namespace tdc {namespace esp {
     }
 }}
 namespace std {
-    template<size_t N>
-    struct hash<tdc::esp::Array<N>>
+    template<size_t N, typename T>
+    struct hash<tdc::esp::Array<N, T>>
     {
-        size_t operator()(const tdc::esp::Array<N>& x) const {
-            return std::hash<tdc::ConstGenericView<size_t>>()(
-                tdc::ConstGenericView<size_t> {
+        size_t operator()(const tdc::esp::Array<N, T>& x) const {
+            return std::hash<tdc::ConstGenericView<T>>()(
+                tdc::ConstGenericView<T> {
                     x.m_data.data(),
                     x.m_data.size()
                 });
