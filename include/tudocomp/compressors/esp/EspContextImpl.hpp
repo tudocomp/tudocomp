@@ -88,7 +88,10 @@ namespace tdc {namespace esp {
 
                     ctx.debug.slice_symbol_map(slice, rule_name);
 
+                    auto old_cap = new_layer.capacity();
                     new_layer.push_back(rule_name);
+                    auto new_cap = new_layer.capacity();
+                    DCHECK_EQ(old_cap, new_cap);
                 }
             }
 

@@ -1044,4 +1044,15 @@ TEST(IPD, DynamicSize) {
     auto x = builder<esp::DynamicSizeIPD<esp::StdUnorderedMapIPD>>().instance();
 }
 
+TEST(Hashmaps, size) {
+    using namespace tdc;
+    using namespace esp;
 
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<8>>, uint_t<8>>), (3 * 8) / 8);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<16>>, uint_t<16>>), (3 * 16) / 8);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<32>>, uint_t<32>>), (3 * 32) / 8);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<40>>, uint_t<40>>), (3 * 40) / 8);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<48>>, uint_t<48>>), (3 * 48) / 8);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<56>>, uint_t<56>>), (3 * 56) / 8);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<64>>, uint_t<64>>), (3 * 64) / 8);
+}

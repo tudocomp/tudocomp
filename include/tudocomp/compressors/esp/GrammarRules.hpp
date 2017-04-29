@@ -5,6 +5,18 @@
 namespace tdc {namespace esp {
     template<typename ipd_t>
     class GrammarRules {
+    public:
+        struct Stats {
+            size_t ext_size2_total = 0;
+            size_t ext_size2_unique = 0;
+
+            size_t ext_size3_total = 0;
+            size_t ext_size3_unique = 0;
+
+            size_t int_size2_total = 0;
+            size_t int_size2_unique = 0;
+        };
+    private:
         static constexpr std::array<size_t, 2> default_key() {
             return {{ size_t(-1), size_t(-1) }};
         }
@@ -16,6 +28,8 @@ namespace tdc {namespace esp {
         size_t counter = 1;
 
         size_t m_initial_counter = 1;
+
+        Stats m_stats;
     public:
         GrammarRules(size_t counter_start):
             n2(0, Array<2>(default_key())),
@@ -38,13 +52,28 @@ namespace tdc {namespace esp {
                 va.m_data[0] = v[0];
                 va.m_data[1] = v[1];
 
-                return n2.access(va, updater) - 1;
+                auto old_counter = counter;
+                auto r = n2.access(va, updater) - 1;
+                if (counter > old_counter) {
+                    m_stats.int_size2_unique++;
+                    m_stats.ext_size2_unique++;
+                }
+                m_stats.int_size2_total++;
+                m_stats.ext_size2_total++;
+                return r;
             } else {
                 Array<2> between;
                 between.m_data[0] = add(v.slice(0, 2));
                 between.m_data[1] = v[2];
 
-                return n2.access(between, updater) - 1;
+                auto old_counter = counter;
+                auto r = n2.access(between, updater) - 1;
+                if (counter > old_counter) {
+                    m_stats.ext_size3_unique++;
+                }
+                m_stats.ext_size2_total--; // compensate for internal 2 use
+                m_stats.ext_size3_total++;
+                return r;
             }
         }
 
