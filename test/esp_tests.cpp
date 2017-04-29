@@ -439,7 +439,7 @@ TEST(Esp, adjust_block_2) {
     );
 }
 
-using test_ipd_t = esp::HashMapIPD;
+using test_ipd_t = esp::DynamicSizeIPD<esp::HashMapIPD>;
 
 TEST(Esp, tree_reducer_roundtrip) {
     auto s = "0000dkasxxxcsdacjzsbkhvfaghskcbs"
