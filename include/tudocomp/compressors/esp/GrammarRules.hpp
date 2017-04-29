@@ -73,7 +73,7 @@ namespace tdc {namespace esp {
         }
 
         template<typename F>
-        void for_all(F f) {
+        void for_all(F f) const {
             n2.for_all(f);
         }
 
