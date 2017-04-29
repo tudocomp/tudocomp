@@ -34,7 +34,11 @@ namespace tdc {namespace esp {
             };
 
             if (vs == 2) {
-                return n2.access(v, updater) - 1;
+                Array<2> va;
+                va.m_data[0] = v[0];
+                va.m_data[1] = v[1];
+
+                return n2.access(va, updater) - 1;
             } else {
                 Array<2> between;
                 between.m_data[0] = add(v.slice(0, 2));

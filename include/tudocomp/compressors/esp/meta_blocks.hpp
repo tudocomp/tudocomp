@@ -72,7 +72,7 @@ public:
 
         // Handle non-m2 prefix
         {
-            auto type_3_prefix = A.substr(0, type_3_prefix_len);
+            auto type_3_prefix = A.slice(0, type_3_prefix_len);
             eager_mb13(type_3_prefix, 3);
             if (type_3_prefix_len == A.size()) { return; }
         }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp/ds/BitPackingVectorSlice.hpp>
+
 #include <tudocomp_stat/StatPhase.hpp>
 
 #include <tudocomp/util.hpp>
