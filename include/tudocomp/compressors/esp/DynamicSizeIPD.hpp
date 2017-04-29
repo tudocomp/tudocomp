@@ -5,48 +5,47 @@
 #include <tudocomp/compressors/esp/HashArray.hpp>
 
 namespace tdc {namespace esp {
-    template<typename X, size_t B>
-    struct SizeAdjust {
-    };
-
-    template<size_t B>
-    struct SizeAdjust<size_t, B> {
-        using Type = uint_t<B>;
-
-        inline static uint_t<B> cast_to(size_t val) {
-            return val;
-        }
-
-        inline static size_t cast_from(uint_t<B> val) {
-            return val;
-        }
-    };
-
-    template<size_t N, size_t B>
-    struct SizeAdjust<Array<N, size_t>, B> {
-        using Type = Array<N, uint_t<B>>;
-
-        inline static Array<N, uint_t<B>> cast_to(Array<N, size_t> val) {
-            Array<N, uint_t<B>> ret;
-            for(size_t i = 0; i < ret.m_data.size(); i++) {
-                ret.m_data[i] = val.m_data[i];
-            }
-
-            return ret;
-        }
-
-        inline static Array<N, size_t> cast_from(Array<N, uint_t<B>> val) {
-            Array<N, size_t> ret;
-            for(size_t i = 0; i < ret.m_data.size(); i++) {
-                ret.m_data[i] = val.m_data[i];
-            }
-
-            return ret;
-        }
-    };
-
     template<typename ipd_t>
     class DynamicSizeIPD: public Algorithm {
+        template<typename X, size_t B>
+        struct SizeAdjust {
+        };
+
+        template<size_t B>
+        struct SizeAdjust<size_t, B> {
+            using Type = uint_t<B>;
+
+            inline static uint_t<B> cast_to(size_t val) {
+                return val;
+            }
+
+            inline static size_t cast_from(uint_t<B> val) {
+                return val;
+            }
+        };
+
+        template<size_t N, size_t B>
+        struct SizeAdjust<Array<N, size_t>, B> {
+            using Type = Array<N, uint_t<B>>;
+
+            inline static Array<N, uint_t<B>> cast_to(Array<N, size_t> val) {
+                Array<N, uint_t<B>> ret;
+                for(size_t i = 0; i < ret.m_data.size(); i++) {
+                    ret.m_data[i] = val.m_data[i];
+                }
+
+                return ret;
+            }
+
+            inline static Array<N, size_t> cast_from(Array<N, uint_t<B>> val) {
+                Array<N, size_t> ret;
+                for(size_t i = 0; i < ret.m_data.size(); i++) {
+                    ret.m_data[i] = val.m_data[i];
+                }
+
+                return ret;
+            }
+        };
     public:
         inline static Meta meta() {
             Meta m("ipd", "dynamic_size");
