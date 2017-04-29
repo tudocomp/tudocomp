@@ -25,16 +25,17 @@ namespace tdc {namespace esp {
                 return m_map[key];
             }
 
-            inline auto begin() const {
-                return m_map.begin();
-            }
-
-            inline auto end() const {
-                return m_map.end();
-            }
-
             inline size_t size() const {
                 return m_map.size();
+            }
+
+            template<typename F>
+            void for_all(F f) {
+                for(auto& kv : m_map) {
+                    const auto& key = kv.first;
+                    const auto& val = kv.second;
+                    f(key, val);
+                }
             }
         };
     };

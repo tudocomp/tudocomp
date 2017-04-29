@@ -80,7 +80,7 @@ namespace tdc {namespace esp {
                 for (auto e : v) {
                     auto slice = s.slice(0, e.len);
                     s = s.slice(e.len);
-                    auto rule_name = r.gr.add(slice) - (r.gr.m_initial_counter - 1);
+                    auto rule_name = r.gr.add(slice) - (r.gr.initial_counter() - 1);
 
                     ctx.debug.slice_symbol_map(slice, rule_name);
 
@@ -107,24 +107,21 @@ namespace tdc {namespace esp {
                 slp.rules.resize(new_slp_size);
 
                 auto& rv = slp.rules;
-                for(auto& kv : r.gr.n2) {
-                    const auto& key = kv.first;
-                    const auto& val = kv.second - r.gr.m_initial_counter;
+
+                r.gr.for_all([&](const auto& key, const auto& val_) {
+                    const auto& val = val_ - r.gr.initial_counter();
 
                     size_t store_idx = slp_counter + val - 256;
                     rv[store_idx][0] = key.m_data[0] + prev_slp_counter;
                     rv[store_idx][1] = key.m_data[1] + prev_slp_counter;
-                }
+                });
 
                 prev_slp_counter = slp_counter;
                 slp_counter += additional_slp_size;
             }
 
             // Delete previous hashmap
-            {
-                auto discard = std::move(r.gr.n2);
-            }
-            //DCHECK_EQ(r.gr.n2.size(), 0);
+            r.gr.clear();
 
             // Prepare next round
             auto tmp = Round<ipd_t> {
