@@ -29,9 +29,9 @@ namespace tdc {namespace esp {
             round = std::make_unique<Round<ipd_t>>(Round<ipd_t> {
                 GrammarRules<ipd_t>(256),
                 256, // TODO: Calc actual alphabet size
-                std::vector<size_t>(),
+                IntVector<dynamic_t>(),
             });
-            round->string.reserve(input.size());
+            round->string.reserve(input.size(), bits_for(256 - 1));
             for (auto c : input) {
                 round->string.push_back(c);
             }
@@ -68,8 +68,8 @@ namespace tdc {namespace esp {
                 break;
             }
 
-            std::vector<size_t> new_layer;
-            new_layer.reserve(in.size() / 2 + 1);
+            IntVector<dynamic_t> new_layer;
+            new_layer.reserve(in.size() / 2 + 1, bits_for(in.size() / 2));
 
             ctx.split(in);
 
@@ -90,7 +90,7 @@ namespace tdc {namespace esp {
             }
 
             // Delete previous string
-            r.string = std::vector<size_t>();
+            r.string = IntVector<dynamic_t>();
 
             DCHECK_EQ(r.string.size(), 0);
             DCHECK_EQ(r.string.capacity(), 0);

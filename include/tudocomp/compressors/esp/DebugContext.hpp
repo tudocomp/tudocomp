@@ -237,12 +237,13 @@ namespace tdc {namespace esp {
             });
         }
 
+        template<typename X>
         void init(size_t number,
-                  const std::vector<size_t>& string,
+                  const X& string,
                   size_t alphabet_size) {
             with_child([&] (auto& m_data) {
                 m_data.number = number;
-                m_data.string = string;
+                m_data.string = cast_vec(string);
                 m_data.alphabet_size = alphabet_size;
 
                 this->print([m_data = &m_data](std::ostream& o) {

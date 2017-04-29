@@ -7,6 +7,6 @@ namespace tdc {namespace esp {
     struct Round {
         GrammarRules<ipd_t> gr;
         size_t alphabet;
-        std::vector<size_t> string;
+        IntVector<dynamic_t> string;
     };
 }}
