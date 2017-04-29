@@ -9,12 +9,6 @@ namespace tdc {namespace esp {
     struct SizeAdjust {
     };
 
-    template<size_t N>
-    struct SizeAdjust<Array<N, size_t>> {
-        template<size_t M>
-        using Type = Array<N, uint_t<M>>;
-    };
-
     template<>
     struct SizeAdjust<size_t> {
         template<size_t N>
@@ -37,10 +31,10 @@ namespace tdc {namespace esp {
             struct DynamicMap {
                 virtual ~DynamicMap() {}
             };
-            template<size_t M>
+            template<size_t M, size_t O>
             struct DynamicMapOf: DynamicMap {
                 using MappedT = typename SizeAdjust<T>::template Type<M>;
-                using MappedU = typename SizeAdjust<U>::template Type<M>;
+                using MappedU = typename SizeAdjust<U>::template Type<O>;
 
                 typename ipd_t::template IPDMap<Array<N, MappedT>, MappedU> m_map;
             };
