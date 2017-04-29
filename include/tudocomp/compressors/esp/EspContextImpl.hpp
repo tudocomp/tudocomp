@@ -127,6 +127,14 @@ namespace tdc {namespace esp {
                 slp_counter += additional_slp_size;
             }
 
+            // carry over stats
+            auto round_ipd_stats = r.gr.stats();
+            ipd_stats.ext_size2_total += round_ipd_stats.ext_size2_total;
+            ipd_stats.ext_size3_total += round_ipd_stats.ext_size3_total;
+            ipd_stats.ext_size3_unique += round_ipd_stats.ext_size3_unique;
+            ipd_stats.int_size2_total += round_ipd_stats.int_size2_total;
+            ipd_stats.int_size2_unique += round_ipd_stats.int_size2_unique;
+
             // Delete previous hashmap
             r.gr.clear();
 
@@ -140,7 +148,12 @@ namespace tdc {namespace esp {
             round.reset();
             round = std::make_unique<Round<ipd_t>>(std::move(tmp));
 
-            phase.log_stat("slp size", slp.rules.size());
+            phase.log_stat("SLP size", slp.rules.size());
+            phase.log_stat("ext_size2_total", round_ipd_stats.ext_size2_total);
+            phase.log_stat("ext_size3_total", round_ipd_stats.ext_size3_total);
+            phase.log_stat("ext_size3_unique", round_ipd_stats.ext_size3_unique);
+            phase.log_stat("int_size2_total", round_ipd_stats.int_size2_total);
+            phase.log_stat("int_size2_unique", round_ipd_stats.int_size2_unique);
         }
 
         slp.empty = empty;

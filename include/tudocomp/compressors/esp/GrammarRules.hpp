@@ -3,19 +3,20 @@
 #include <tudocomp/compressors/esp/HashArray.hpp>
 
 namespace tdc {namespace esp {
+    struct IPDStats {
+        size_t ext_size2_total = 0;
+
+        size_t ext_size3_total = 0;
+        size_t ext_size3_unique = 0;
+
+        size_t int_size2_total = 0;
+        size_t int_size2_unique = 0;
+    };
+
     template<typename ipd_t>
     class GrammarRules {
     public:
-        struct Stats {
-            size_t ext_size2_total = 0;
-            size_t ext_size2_unique = 0;
-
-            size_t ext_size3_total = 0;
-            size_t ext_size3_unique = 0;
-
-            size_t int_size2_total = 0;
-            size_t int_size2_unique = 0;
-        };
+        using Stats = IPDStats;
     private:
         static constexpr std::array<size_t, 2> default_key() {
             return {{ size_t(-1), size_t(-1) }};
@@ -56,7 +57,6 @@ namespace tdc {namespace esp {
                 auto r = n2.access(va, updater) - 1;
                 if (counter > old_counter) {
                     m_stats.int_size2_unique++;
-                    m_stats.ext_size2_unique++;
                 }
                 m_stats.int_size2_total++;
                 m_stats.ext_size2_total++;
@@ -92,6 +92,10 @@ namespace tdc {namespace esp {
 
         inline void clear() {
             auto discard = std::move(n2);
+        }
+
+        inline const Stats& stats() {
+            return m_stats;
         }
     };
 }}

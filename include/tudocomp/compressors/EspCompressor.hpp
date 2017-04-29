@@ -50,6 +50,11 @@ public:
         }
 
         phase0.log_stat("SLP size", slp.rules.size());
+        phase0.log_stat("ext_size2_total", context.ipd_stats.ext_size2_total);
+        phase0.log_stat("ext_size3_total", context.ipd_stats.ext_size3_total);
+        phase0.log_stat("ext_size3_unique", context.ipd_stats.ext_size3_unique);
+        phase0.log_stat("int_size2_total", context.ipd_stats.int_size2_total);
+        phase0.log_stat("int_size2_unique", context.ipd_stats.int_size2_unique);
 
         {
             auto phase1 = StatPhase("Encode Phase");

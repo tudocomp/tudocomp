@@ -22,6 +22,7 @@ namespace tdc {namespace esp {
         }
 
         DebugContext debug;
+        IPDStats ipd_stats;
 
         EspContext(Env* e, bool silent):
             m_env(e),
