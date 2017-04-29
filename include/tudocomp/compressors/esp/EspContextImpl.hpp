@@ -31,6 +31,7 @@ namespace tdc {namespace esp {
                 256, // TODO: Calc actual alphabet size
                 IntVector<dynamic_t>(),
             });
+            round->string.width(bits_for(256 - 1));
             round->string.reserve(input.size(), bits_for(256 - 1));
             for (auto c : input) {
                 round->string.push_back(c);
@@ -69,7 +70,9 @@ namespace tdc {namespace esp {
             }
 
             IntVector<dynamic_t> new_layer;
-            new_layer.reserve(in.size() / 2 + 1, bits_for(in.size() / 2));
+            size_t new_layer_width = bits_for(in.size() - 1);
+            new_layer.width(new_layer_width);
+            new_layer.reserve(in.size() / 2 + 1, new_layer_width);
 
             ctx.split(in);
 
