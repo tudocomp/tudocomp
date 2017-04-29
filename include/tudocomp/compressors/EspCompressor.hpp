@@ -47,6 +47,8 @@ public:
                 slp = context.generate_grammar(in);
         }
 
+        phase0.log_stat("SLP size", slp.rules.size());
+
         {
             auto phase1 = StatPhase("Encode Phase");
 
