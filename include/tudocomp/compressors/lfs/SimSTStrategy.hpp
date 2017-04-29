@@ -29,14 +29,6 @@ template<uint min_lrf = 2 >
 class SimSTStrategy : public Algorithm {
 private:
 
-    struct cmp_seeds {
-        bool operator () (const std::pair< std::vector<uint>::iterator, std::vector<uint>::iterator> p1,
-                          const std::pair< std::vector<uint>::iterator, std::vector<uint>::iterator> p2)
-        const {
-            return *(p1.first) <  *(p2.first);
-        }
-    };
-
 
     typedef sdsl::bp_interval<long unsigned int> node_type;
 
