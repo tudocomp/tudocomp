@@ -21,7 +21,10 @@ namespace tdc {namespace esp {
             inline Map(size_t bucket_count, const T& empty):
                 m_map(bucket_count, empty) {}
 
-            inline U& access(const T& key, size_t max_val) {
+            template<typename Updater>
+            inline U& access(const T& key, Updater updater) {
+                auto& val = m_map[key];
+                updater(val);
                 return m_map[key];
             }
 

@@ -40,28 +40,21 @@ namespace tdc {namespace esp {
 
             DCHECK(vs == 2 || vs == 3);
 
-            auto updater = make_updater(
-                [](size_t v) { return v == 0; },
-                [](size_t v) { return v + 1; }
-            );
+            auto updater = [&](size_t& v) {
+                if (v == 0) {
+                    v = counter++;
+                }
+            };
 
-            size_t* r;
             if (vs == 2) {
-                r = &n2.access(v, counter + 1);
+                return n2.access(v, updater) - 1;
             } else {
-
                 Array<2> between;
                 between.m_data[0] = add(v.slice(0, 2));
                 between.m_data[1] = v[2];
 
-                r = &n2.access(between, counter + 1);
+                return n2.access(between, updater) - 1;
             }
-
-            if (*r == 0) {
-                *r = counter++;
-            }
-
-            return *r - 1;
         }
 
         inline size_t rules_count() const {
