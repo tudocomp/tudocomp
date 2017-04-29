@@ -29,7 +29,14 @@ namespace tdc {namespace esp {
         template<size_t N, typename T, typename U>
         class IPDMap {
             struct DynamicMap {
+                using Updater = std::function<void(U&)>;
+                using ForEach = std::function<void(const typename Array<N, T>::in_t&, const U&)>;
+
                 virtual ~DynamicMap() {}
+
+                virtual U access(const Array<N, T>& key, Updater updater) = 0;
+                virtual size_t size() const = 0;
+                virtual void for_all(ForEach f) const = 0;
             };
             template<size_t M, size_t O>
             struct DynamicMapOf: DynamicMap {
@@ -46,10 +53,10 @@ namespace tdc {namespace esp {
                 {}
 
             template<typename Updater>
-            inline size_t access(const Array<N, T>& key, Updater updater) {
+            inline U access(const Array<N, T>& key, Updater updater) {
                 auto& val = m_map[key];
 
-                size_t val2 = val;
+                U val2 = val;
                 updater(val2);
                 val = val2;
                 return val2;
