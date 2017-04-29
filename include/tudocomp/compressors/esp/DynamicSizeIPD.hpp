@@ -58,9 +58,17 @@ namespace tdc {namespace esp {
 
         template<size_t N, typename K, typename V>
         class IPDMap {
+            inline static K key_max(const Array<N, K>& ka) {
+                K val = 0;
+                for (auto x : ka.as_view()) {
+                    val = std::max(val, x);
+                }
+                return val;
+            }
+
             struct DynamicMap {
                 using Updater = std::function<void(V&)>;
-                using ForEach = std::function<void(const typename Array<N, K>::in_t&, const V&)>;
+                using ForEach = std::function<void(const Array<N, K>&, const V&)>;
 
                 virtual ~DynamicMap() {}
 
@@ -90,8 +98,7 @@ namespace tdc {namespace esp {
 
                 inline virtual void for_all(ForEach f) const override final {
                     m_map.for_all([&](const auto& key, const auto& val) {
-                        auto key_ = Array<N, MappedK>(key);
-                        const auto& key2 = SizeAdjust<Array<N, K>, BK>::cast_from(key_);
+                        const auto& key2 = SizeAdjust<Array<N, K>, BK>::cast_from(key);
                         const auto& val2 = SizeAdjust<V, BK>::cast_from(val);
 
                         f(key2.as_view(), val2);
@@ -107,10 +114,7 @@ namespace tdc {namespace esp {
                         return false;
                     }
 
-                    size_t val = 0;
-                    for (auto x : key.as_view()) {
-                        val = std::max(val, x);
-                    }
+                    size_t val = key_max(key);
                     return bits_for(val) <= BK;
                 }
 
@@ -124,17 +128,64 @@ namespace tdc {namespace esp {
                 }
             };
 
+            Array<N, K> m_empty;
+            size_t m_map_bits = 0;
             std::unique_ptr<DynamicMap> m_map;
 
+            const static size_t INITIAL_BITS = 8;
+
+            template<size_t B>
+            std::unique_ptr<DynamicMap> new_map(size_t bucket_count, const Array<N, K>& empty) {
+                return std::make_unique<DynamicMapOf<B, B>>(bucket_count, empty);
+            }
+
+            inline void resize(size_t bits) {
+                std::unique_ptr<DynamicMap> n_map;
+                size_t n_bits = 0;
+
+                // TODO: Calc bucket count correctly
+                size_t s = m_map->size();
+
+                if (false) {}
+                else if (bits <= 8)  { n_map = new_map<8> (s, m_empty); n_bits = 8;  }
+                else if (bits <= 16) { n_map = new_map<16>(s, m_empty); n_bits = 16; }
+                else if (bits <= 24) { n_map = new_map<24>(s, m_empty); n_bits = 24; }
+                else if (bits <= 32) { n_map = new_map<32>(s, m_empty); n_bits = 32; }
+                else if (bits <= 40) { n_map = new_map<40>(s, m_empty); n_bits = 40; }
+                else if (bits <= 48) { n_map = new_map<48>(s, m_empty); n_bits = 48; }
+                else if (bits <= 56) { n_map = new_map<56>(s, m_empty); n_bits = 56; }
+                else if (bits <= 64) { n_map = new_map<64>(s, m_empty); n_bits = 64; }
+
+                m_map->for_all([&](const auto& key, const auto& val) {
+                    n_map->access(key, [&](auto& v) {
+                        v = val;
+                    });
+                });
+
+                DCHECK_EQ(m_map->size(), n_map->size());
+                m_map = std::move(n_map);
+                m_map_bits = n_bits;
+            }
+
+            inline void resize_key(const Array<N, K>& max_key) {
+                auto max = key_max(max_key);
+                resize(std::max(size_t(bits_for(max)), m_map_bits + 1));
+            }
+            inline void resize_val(V max_val) {
+                auto max = max_val;
+                resize(std::max(size_t(bits_for(max)), m_map_bits + 1));
+            }
         public:
             inline IPDMap(size_t bucket_count, const Array<N, K>& empty) {
-                m_map = std::make_unique<DynamicMapOf<64, 64>>(bucket_count, empty);
+                m_empty = empty;
+                m_map_bits = INITIAL_BITS;
+                m_map = new_map<INITIAL_BITS>(bucket_count, m_empty);
             }
 
             template<typename Updater>
             inline V access(const Array<N, K>& key, Updater updater) {
                 if (!m_map->can_fit_key(key)) {
-                    // RESIZE
+                    resize_key(key);
                 }
 
                 auto copy = V();
@@ -151,7 +202,7 @@ namespace tdc {namespace esp {
                 });
 
                 if (value_resize) {
-                    // RESIZE
+                    resize_val(copy);
                     ret = m_map->access(key, [&](V& val) {
                         val = copy;
                     });

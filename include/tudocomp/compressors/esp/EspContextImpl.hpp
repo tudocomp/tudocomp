@@ -108,8 +108,9 @@ namespace tdc {namespace esp {
 
                 auto& rv = slp.rules;
 
-                r.gr.for_all([&](const auto& key, const auto& val_) {
+                r.gr.for_all([&](const auto& k, const auto& val_) {
                     const auto& val = val_ - r.gr.initial_counter();
+                    const auto& key = k.as_view();
 
                     size_t store_idx = slp_counter + val - 256;
                     rv[store_idx][0] = key[0] + prev_slp_counter;
