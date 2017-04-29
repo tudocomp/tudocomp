@@ -28,13 +28,13 @@ namespace tdc {namespace esp {
 
             size_t* r;
             if (vs == 2) {
-                r = &n2.access(v);
+                r = &n2.access(v, counter + 1);
             } else {
                 Array<2> between;
                 between.m_data[0] = add(v.slice(0, 2));
                 between.m_data[1] = v[2];
 
-                r = &n2.access(between);
+                r = &n2.access(between, counter + 1);
             }
 
             if (*r == 0) {

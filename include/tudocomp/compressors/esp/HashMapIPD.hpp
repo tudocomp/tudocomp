@@ -21,7 +21,7 @@ namespace tdc {namespace esp {
             inline Map(size_t bucket_count, const T& empty):
                 m_map(bucket_count, empty) {}
 
-            inline U& access(const T& key) {
+            inline U& access(const T& key, size_t max_val) {
                 return m_map[key];
             }
 

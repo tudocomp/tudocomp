@@ -12,6 +12,7 @@
 #include "tudocomp/compressors/EspCompressor.hpp"
 
 #include <tudocomp/compressors/esp/HashMapIPD.hpp>
+#include <tudocomp/compressors/esp/DynamicSizeIPD.hpp>
 
 using namespace tdc;
 
@@ -1039,5 +1040,8 @@ TEST(MonotonSubseq, esp_encoding_real1) {
     }
 }
 
+TEST(IPD, DynamicSize) {
+    auto x = builder<esp::DynamicSizeIPD<esp::StdUnorderedMapIPD>>().instance();
+}
 
 
