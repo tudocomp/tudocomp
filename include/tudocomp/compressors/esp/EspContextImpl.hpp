@@ -69,6 +69,7 @@ namespace tdc {namespace esp {
             }
 
             std::vector<size_t> new_layer;
+            new_layer.reserve(in.size() / 2 + 1);
 
             ctx.split(in);
 
@@ -94,7 +95,6 @@ namespace tdc {namespace esp {
             DCHECK_EQ(r.string.size(), 0);
             DCHECK_EQ(r.string.capacity(), 0);
 
-            // TODO: Preallocate based on number of rules
             new_layer.shrink_to_fit();
 
             // Append to slp array
