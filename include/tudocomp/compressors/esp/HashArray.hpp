@@ -24,6 +24,10 @@ namespace tdc {namespace esp {
             }
         }
         Array(const std::array<T, N>& v): Array(in_t(v)) {}
+
+        inline in_t as_view() const {
+            return in_t(m_data);
+        }
     };
 
     template<size_t N, typename T>

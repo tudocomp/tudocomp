@@ -30,7 +30,7 @@ namespace tdc {namespace esp {
             template<typename F>
             void for_all(F f) const {
                 for(auto& kv : m_map) {
-                    const auto& key = kv.first;
+                    const auto& key = kv.first.as_view();
                     const auto& val = kv.second;
                     f(key, val);
                 }

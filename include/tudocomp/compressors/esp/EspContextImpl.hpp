@@ -112,8 +112,8 @@ namespace tdc {namespace esp {
                     const auto& val = val_ - r.gr.initial_counter();
 
                     size_t store_idx = slp_counter + val - 256;
-                    rv[store_idx][0] = key.m_data[0] + prev_slp_counter;
-                    rv[store_idx][1] = key.m_data[1] + prev_slp_counter;
+                    rv[store_idx][0] = key[0] + prev_slp_counter;
+                    rv[store_idx][1] = key[1] + prev_slp_counter;
                 });
 
                 prev_slp_counter = slp_counter;
