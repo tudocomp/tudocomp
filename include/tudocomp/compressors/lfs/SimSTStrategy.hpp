@@ -197,12 +197,9 @@ public:
                         }
                         else {
 
-                            std::vector<std::pair< std::vector<uint>::iterator , std::vector<uint>::iterator >  >iterator_heap;
-                            std::pair< std::vector<uint>::iterator , std::vector<uint>::iterator > heap_lead;
 
                             if(node_begins[*bin_it].empty()){
 
-                                uint child_bps=0;
 
                                 for (auto& child: stree.children(node)) {
                                     int child_id = stree.id(child);
@@ -210,44 +207,17 @@ public:
 
 
                                     if(!node_begins[child_id].empty()){
-                                        auto it_pair = std::make_pair(node_begins[child_id].begin(), node_begins[child_id].end());
-                                        iterator_heap.push_back(it_pair);
-                                        child_bps += node_begins[child_id].size();
 
-                                      //  node_begins[*bin_it].insert(node_begins[*bin_it].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
+                                        node_begins[*bin_it].insert(node_begins[*bin_it].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
                                     }
 
-                                //delete child bp
-                                   // node_begins[child_id].clear();
-                                    // node_begins[child_id] = std::vector<uint>();
-                                }
-
-                                std::make_heap(iterator_heap.begin(), iterator_heap.end(), cmp_seeds() );
-
-
-
-                                //std::vector<uint> node_bps;
-                                node_begins[*bin_it].reserve(child_bps);
-
-                               // DLOG(INFO) << "merge child vectors";
-                                //now merge child vectors
-                                while ( iterator_heap.empty() != true) {
-                                    heap_lead = iterator_heap.back();
-                                    iterator_heap.pop_back();
-                                        // sorted output
-                                    node_begins[*bin_it].push_back(*(heap_lead.first));
-
-                                    heap_lead.first++;
-                                    if (heap_lead.first != heap_lead.second) {
-
-                                            iterator_heap.push_back(heap_lead);
-                                            std::push_heap(iterator_heap.begin(), iterator_heap.end(), cmp_seeds() );
-                                    }
                                 }
 
 
 
-                               // std::sort(node_begins[*bin_it].begin(), node_begins[*bin_it].end());
+
+
+                                std::sort(node_begins[*bin_it].begin(), node_begins[*bin_it].end());
                             }
                         }
                         if(node_begins[*bin_it].empty()){
