@@ -32,27 +32,27 @@ namespace tdc {namespace esp {
 
         using Algorithm::Algorithm;
 
-        template<typename T, typename U>
-        class Map {
+        template<size_t N, typename T, typename U>
+        class IPDMap {
             struct DynamicMap {
                 virtual ~DynamicMap() {}
             };
-            template<size_t N>
+            template<size_t M>
             struct DynamicMapOf: DynamicMap {
-                using MappedT = typename SizeAdjust<T>::template Type<N>;
-                using MappedU = typename SizeAdjust<U>::template Type<N>;
+                using MappedT = typename SizeAdjust<T>::template Type<M>;
+                using MappedU = typename SizeAdjust<U>::template Type<M>;
 
-                typename ipd_t::template Map<MappedT, MappedU> m_map;
+                typename ipd_t::template IPDMap<Array<N, MappedT>, MappedU> m_map;
             };
 
-            std::unordered_map<T, U> m_map;
+            std::unordered_map<Array<N, T>, U> m_map;
 
         public:
-            inline Map(size_t bucket_count, const T& empty)
+            inline IPDMap(size_t bucket_count, const Array<N, T>& empty)
                 {}
 
             template<typename Updater>
-            inline size_t access(const T& key, Updater updater) {
+            inline size_t access(const Array<N, T>& key, Updater updater) {
                 auto& val = m_map[key];
 
                 size_t val2 = val;

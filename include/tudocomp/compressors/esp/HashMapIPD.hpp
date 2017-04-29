@@ -13,16 +13,16 @@ namespace tdc {namespace esp {
 
         using Algorithm::Algorithm;
 
-        template<typename T, typename U>
-        class Map {
-            rigtorp::HashMap<T, U> m_map;
+        template<size_t N, typename T, typename U>
+        class IPDMap {
+            rigtorp::HashMap<Array<N, T>, U> m_map;
 
         public:
-            inline Map(size_t bucket_count, const T& empty):
+            inline IPDMap(size_t bucket_count, const Array<N, T>& empty):
                 m_map(bucket_count, empty) {}
 
             template<typename Updater>
-            inline size_t access(const T& key, Updater updater) {
+            inline size_t access(const Array<N, T>& key, Updater updater) {
                 auto& val = m_map[key];
                 updater(val);
                 return val;

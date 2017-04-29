@@ -9,7 +9,7 @@ namespace tdc {namespace esp {
             return {{ size_t(-1), size_t(-1) }};
         }
 
-        using a2_t = typename ipd_t::template Map<Array<2>, size_t>;
+        using a2_t = typename ipd_t::template IPDMap<2, size_t, size_t>;
 
         a2_t n2;
 
