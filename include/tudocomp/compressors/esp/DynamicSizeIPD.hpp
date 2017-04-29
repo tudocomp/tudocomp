@@ -52,10 +52,13 @@ namespace tdc {namespace esp {
                 {}
 
             template<typename Updater>
-            inline U& access(const T& key, Updater updater) {
+            inline size_t access(const T& key, Updater updater) {
                 auto& val = m_map[key];
-                updater(val);
-                return m_map[key];
+
+                size_t val2 = val;
+                updater(val2);
+                val = val2;
+                return val2;
             }
 
             inline size_t size() const {
