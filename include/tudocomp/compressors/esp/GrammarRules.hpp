@@ -3,19 +3,6 @@
 #include <tudocomp/compressors/esp/HashArray.hpp>
 
 namespace tdc {namespace esp {
-    template<typename Pred, typename Update>
-    struct Updater {
-        Pred pred;
-        Update update;
-    };
-    template<typename Pred, typename Update>
-    inline Updater<Pred, Update> make_updater(Pred pred, Update update) {
-        return Updater<Pred, Update> {
-            pred,
-            update,
-        };
-    }
-
     template<typename ipd_t>
     class GrammarRules {
         static constexpr std::array<size_t, 2> default_key() {
