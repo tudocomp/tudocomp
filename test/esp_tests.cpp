@@ -516,6 +516,10 @@ TEST(ESP, test_sufficient) {
    test_esp<esp::SufficientSLPStrategy<>>();
 }
 
+TEST(ESP, test_optimal_plain) {
+   test_esp<esp::SufficientSLPStrategy<esp::DPlain>>();
+}
+
 class IBST {
     size_t m_node;
     std::vector<IBST> m_children;

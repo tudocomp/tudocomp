@@ -29,8 +29,14 @@ namespace tdc {namespace esp {
         using Algorithm::Algorithm;
 
         inline void encode(const SLPRhsAdapter& rhs, BitOStream& out, size_t bit_width) const {
+            for(size_t i = 0; i < rhs.size(); i++) {
+                out.write_int(rhs[i], bit_width);
+            }
         }
         inline void decode(SLPRhsAdapter& rhs, BitIStream& in, size_t bit_width) const {
+            for(size_t i = 0; i < rhs.size(); i++) {
+                rhs[i] = in.read_int<size_t>(bit_width);
+            }
         }
 
     };
