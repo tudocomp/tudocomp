@@ -97,7 +97,7 @@ namespace tdc {namespace esp {
 
             const auto rhs = RhsAdapter { &slp };
             d_coding_t d_coding { this->env().env_for_option("d_coding") };
-            d_coding.encode(rhs, bout);
+            d_coding.encode(rhs, bout, bit_width);
         }
 
         inline SLP decode(Input& input) const {
@@ -144,7 +144,7 @@ namespace tdc {namespace esp {
 
             auto D = RhsAdapter { &slp };
             d_coding_t d_coding { this->env().env_for_option("d_coding") };
-            d_coding.decode(D, bin);
+            d_coding.decode(D, bin, bit_width);
 
             return slp;
         }

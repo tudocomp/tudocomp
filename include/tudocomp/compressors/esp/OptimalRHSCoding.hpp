@@ -13,9 +13,9 @@ namespace tdc {namespace esp {
 
         using Algorithm::Algorithm;
 
-        inline void encode(const SLPRhsAdapter& rhs, BitOStream& out) const {
+        inline void encode(const SLPRhsAdapter& rhs, BitOStream& out, size_t bit_width) const {
         }
-        inline void decode(SLPRhsAdapter& rhs, BitIStream& in) const {
+        inline void decode(SLPRhsAdapter& rhs, BitIStream& in, size_t bit_width) const {
         }
 
     };
@@ -28,9 +28,9 @@ namespace tdc {namespace esp {
 
         using Algorithm::Algorithm;
 
-        inline void encode(const SLPRhsAdapter& rhs, BitOStream& out) const {
+        inline void encode(const SLPRhsAdapter& rhs, BitOStream& out, size_t bit_width) const {
         }
-        inline void decode(SLPRhsAdapter& rhs, BitIStream& in) const {
+        inline void decode(SLPRhsAdapter& rhs, BitIStream& in, size_t bit_width) const {
         }
 
     };
@@ -43,9 +43,9 @@ namespace tdc {namespace esp {
         };
 
         using Algorithm::Algorithm;
-        inline void encode(const SLPRhsAdapter& rhs, BitOStream& out) const {
+        inline void encode(const SLPRhsAdapter& rhs, BitOStream& out, size_t bit_width) const {
         }
-        inline void decode(SLPRhsAdapter& rhs, BitIStream& in) const {
+        inline void decode(SLPRhsAdapter& rhs, BitIStream& in, size_t bit_width) const {
         }
 
     };*/
@@ -57,7 +57,7 @@ namespace tdc {namespace esp {
         };
 
         using Algorithm::Algorithm;
-        inline void encode(const SLPRhsAdapter& rhs, BitOStream& bout) const {
+        inline void encode(const SLPRhsAdapter& rhs, BitOStream& bout, size_t bit_width) const {
             /*
             std::vector<size_t> TMP_D;
             for(size_t i = 0; i < rhs.size(); i++) {
@@ -172,7 +172,7 @@ namespace tdc {namespace esp {
             std::cout << "\nencode OK\n\n";
             */
         }
-        inline void decode(SLPRhsAdapter& D, BitIStream& bin) const {
+        inline void decode(SLPRhsAdapter& D, BitIStream& bin, size_t bit_width) const {
             auto slp_size = D.size();
 
             // TODO: Read later, requires splitting up input a bit
