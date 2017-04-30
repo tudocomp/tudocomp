@@ -513,7 +513,7 @@ TEST(ESP, test_plain) {
 }
 
 TEST(ESP, test_sufficient) {
-   test_esp<esp::SufficientSLPStrategy>();
+   test_esp<esp::SufficientSLPStrategy<>>();
 }
 
 class IBST {

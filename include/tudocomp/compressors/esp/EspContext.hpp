@@ -9,7 +9,7 @@
 namespace tdc {namespace esp {
     template<typename ipd_t>
     class EspContext {
-        Env* m_env;
+        const Env* m_env;
     public:
         using esp_view_t = ConstGenericView<size_t>;
 
@@ -24,7 +24,7 @@ namespace tdc {namespace esp {
         DebugContext debug;
         IPDStats ipd_stats;
 
-        EspContext(Env* e, bool silent):
+        EspContext(const Env* e, bool silent):
             m_env(e),
             debug(std::cout, !silent, false)
         {}

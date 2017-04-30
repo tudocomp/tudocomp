@@ -53,4 +53,17 @@ namespace tdc {namespace esp {
             return rules.at(node_idx(n));
         }
     };
+
+    struct SLPRhsAdapter {
+        SLP* slp;
+        inline const size_t& operator[](size_t i) const {
+            return slp->rules[i][1];
+        }
+        inline size_t& operator[](size_t i) {
+            return slp->rules[i][1];
+        }
+        inline size_t size() const {
+            return slp->rules.size();
+        }
+    };
 }}
