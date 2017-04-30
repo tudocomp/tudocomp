@@ -2,6 +2,7 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/compressors/esp/SLP.hpp>
+#include <tudocomp/compressors/esp/MonotoneSubsequences.hpp>
 
 namespace tdc {namespace esp {
     class DHuffman: public Algorithm {
@@ -22,7 +23,7 @@ namespace tdc {namespace esp {
     class DPlain: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "huffman");
+            Meta m("d_coding", "plain");
             return m;
         };
 
@@ -44,7 +45,7 @@ namespace tdc {namespace esp {
     class DAlphaCode: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "huffman");
+            Meta m("d_coding", "alpha");
             return m;
         };
 
@@ -58,7 +59,7 @@ namespace tdc {namespace esp {
     class DMonotonSubseq: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "huffman");
+            Meta m("d_coding", "optimal");
             return m;
         };
 
