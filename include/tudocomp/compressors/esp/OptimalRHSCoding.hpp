@@ -3,20 +3,25 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/compressors/esp/SLP.hpp>
 #include <tudocomp/compressors/esp/MonotoneSubsequences.hpp>
+#include <tudocomp/coders/HuffmanCoder.hpp>
 
 namespace tdc {namespace esp {
-    class DHuffman: public Algorithm {
+    template<typename coder_t>
+    class DCoder: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "huffman");
+            Meta m("d_coding", "coder");
+            m.option("coder").templated<coder_t, HuffmanCoder>("coder");
             return m;
         };
 
         using Algorithm::Algorithm;
 
-        inline void encode(const SLPRhsAdapter& rhs, BitOStream& out, size_t bit_width) const {
+        inline void encode(const SLPRhsAdapter& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+
         }
-        inline void decode(SLPRhsAdapter& rhs, BitIStream& in, size_t bit_width) const {
+        inline void decode(SLPRhsAdapter& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+
         }
 
     };
@@ -39,7 +44,12 @@ namespace tdc {namespace esp {
                 rhs[i] = in.read_int<size_t>(bit_width);
             }
         }
-
+        inline void encode(const SLPRhsAdapter& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+            encode(rhs, *out, bit_width);
+        }
+        inline void decode(SLPRhsAdapter& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+            decode(rhs, *in, bit_width);
+        }
     };
     /*
     class DAlphaCode: public Algorithm {
@@ -54,7 +64,12 @@ namespace tdc {namespace esp {
         }
         inline void decode(SLPRhsAdapter& rhs, BitIStream& in, size_t bit_width) const {
         }
-
+        inline void encode(const SLPRhsAdapter& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+            encode(rhs, *out, bit_width);
+        }
+        inline void decode(SLPRhsAdapter& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+            decode(rhs, *in, bit_width);
+        }
     };*/
     class DMonotonSubseq: public Algorithm {
     public:
@@ -272,6 +287,12 @@ namespace tdc {namespace esp {
             esp::recover_D_from_encoding(Dpi, Dsi, b, Bde, &D);
 
             //std::cout << "D:   " << vec_to_debug_string(D) << "\n";
+        }
+        inline void encode(const SLPRhsAdapter& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+            encode(rhs, *out, bit_width);
+        }
+        inline void decode(SLPRhsAdapter& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+            decode(rhs, *in, bit_width);
         }
     };
 }}

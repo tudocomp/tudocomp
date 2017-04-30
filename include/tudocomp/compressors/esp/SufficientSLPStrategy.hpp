@@ -38,7 +38,8 @@ namespace tdc {namespace esp {
             auto max_val = slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX - 1;
             auto bit_width = bits_for(max_val);
 
-            BitOStream bout(output.as_stream());
+            auto bouts = std::make_shared<BitOStream>(output.as_stream());
+            auto& bout = *bouts;
 
             DCHECK_GE(bit_width, 1);
             DCHECK_LE(bit_width, 63); // 64-bit sizes are
@@ -97,11 +98,12 @@ namespace tdc {namespace esp {
 
             const auto rhs = RhsAdapter { &slp };
             d_coding_t d_coding { this->env().env_for_option("d_coding") };
-            d_coding.encode(rhs, bout, bit_width);
+            d_coding.encode(rhs, bouts, bit_width);
         }
 
         inline SLP decode(Input& input) const {
-            BitIStream bin(input.as_stream());
+            auto bins = std::make_shared<BitIStream>(input.as_stream());
+            auto& bin = *bins;
 
             // bit width
             auto bit_width = bin.read_int<size_t>(6);
@@ -144,7 +146,7 @@ namespace tdc {namespace esp {
 
             auto D = RhsAdapter { &slp };
             d_coding_t d_coding { this->env().env_for_option("d_coding") };
-            d_coding.decode(D, bin, bit_width);
+            d_coding.decode(D, bins, bit_width);
 
             return slp;
         }
