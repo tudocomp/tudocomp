@@ -528,6 +528,10 @@ TEST(ESP, test_sufficient_greedy) {
    test_esp<esp::SufficientSLPStrategy<esp::DMonotonSubseq<esp::SubSeqGreedy>>>();
 }
 
+TEST(ESP, test_sufficient_greedy2) {
+   test_esp<esp::SufficientSLPStrategy<esp::DMonotonSubseq<esp::SubSeqGreedy2>>>();
+}
+
 
 /*TEST(ESP, test_optimal_arithmetic) {
    test_esp<esp::SufficientSLPStrategy<esp::DArithmetic>>();

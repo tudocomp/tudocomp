@@ -22,7 +22,7 @@ namespace tdc {namespace esp {
     class SubSeqGreedy: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("subseq", "greedy");
+            Meta m("subseq", "greedy1");
             return m;
         };
 
@@ -32,101 +32,316 @@ namespace tdc {namespace esp {
         inline Dpi_and_b create_dpi_and_b_from_sorted_indices(const SortedIndices& sis) const {
             Dpi_and_b ret;
             ret.Dpi.reserve(sis.size());
-            ret.Dpi.resize(sis.size());
+            ret.Dpi.resize(sis.size(), 999);
 
             size_t Dpi_counter = 0;
 
-            std::vector<size_t> free_list; // one dummy node at the end
-            free_list.reserve(sis.size() + 1);
-            free_list.resize(sis.size() + 1);
-            for (size_t i = 0; i < (free_list.size() - 1); i++) {
-                free_list[i] = i + 1;
+            DCHECK_GE(sis.size(), 1);
+            std::vector<std::pair<size_t, size_t>> free_list;
+            free_list.reserve(sis.size() + 2);
+            free_list.resize(sis.size() + 2);
+            for (size_t i = 1; i < (free_list.size() - 3); i++) {
+                free_list[i].first = i - 1;
+                free_list[i].second = i + 1;
             }
-            free_list[free_list.size() - 2] = free_list.size() - 2;
+            const size_t start_dummy_link = free_list.size() - 2;
+            const size_t end_dummy_link   = free_list.size() - 1;
 
-            const size_t dummy_link = free_list.size() - 1;
-            free_list[dummy_link] = 0;
+            if ((free_list.size() - 2) > 1) {
+                free_list[0].first = start_dummy_link;
+                free_list[0].second = 1;
+                free_list[free_list.size() - 3].first = free_list.size() - 4;
+                free_list[free_list.size() - 3].second = end_dummy_link;
+            } else {
+                free_list[0].first = start_dummy_link;
+                free_list[0].second = end_dummy_link;
+            }
+
+            free_list[start_dummy_link].first = start_dummy_link;
+            free_list[end_dummy_link].second = end_dummy_link;
+
+            free_list[start_dummy_link].second = 0;
+            free_list[end_dummy_link].first = free_list.size() - 3;
 
             std::vector<size_t> increasing;
             std::vector<size_t> decreasing;
             std::cout << "sis:\n";
-            std::cout << vec_to_debug_string(sis) << "\n";
-            while (free_list[dummy_link] != dummy_link) {
-                size_t current = dummy_link;
-                increasing.clear();
-                decreasing.clear();
-                increasing.push_back(current);
-                decreasing.push_back(current);
+            std::cout << vec_to_debug_string(sis, 3) << "\n\n";
 
-                auto si_of = [&](size_t link) {
-                    return sis[free_list[link]];
-                };
+            auto si_of = [&](size_t link) {
+                DCHECK(link != start_dummy_link);
+                DCHECK(link != end_dummy_link);
+                return sis[link];
+            };
 
-                auto debug = [&](const auto& links) {
-                    std::vector<size_t> x;
-                    for (auto y : links) {
-                        x.push_back(si_of(y));
-                    }
-                    std::cout << vec_to_debug_string(x) << "\n";
-                };
+            auto debug = [&](const auto& links) {
+                std::vector<size_t> x;
+                for (auto y : links) {
+                    x.push_back(si_of(y));
+                }
+                std::cout << vec_to_debug_string(x, 3) << "\n";
+            };
 
-                while(true) {
-                    debug(increasing);
-                    debug(decreasing);
-                    std::cout << "\n";
+            auto remove = [&](size_t link) {
+                DCHECK(link != start_dummy_link);
+                DCHECK(link != end_dummy_link);
+                auto prev = free_list[link].first;
+                auto next = free_list[link].second;
 
-                    {
-                        auto next = free_list[current];
-                        if (next == current) {
-                            std::cout << "next\n";
-                            break;
-                        } else {
-                            current = next;
-                        }
-                    }
+                free_list[prev].second = next;
+                free_list[next].first = prev;
 
-                    DCHECK(si_of(current) != si_of(increasing.back()));
-                    DCHECK(si_of(current) != si_of(decreasing.back()));
+                free_list[link].first = link;
+                free_list[link].second = link;
+            };
 
-                    if (si_of(current) > si_of(increasing.back())) {
-                        increasing.push_back(current);
-                    } else if (si_of(current) < si_of(decreasing.back())) {
-                        decreasing.push_back(current);
-                    }
+            auto handle = [&](const std::vector<size_t>& seq) {
+                for (auto link : seq) {
+                    DCHECK(link != start_dummy_link);
+                    DCHECK(link != end_dummy_link);
+                    ret.Dpi[link] = Dpi_counter;
                 }
 
-                auto remove_next = [&](size_t index) {
-                    auto prev = index;
-                    auto link = free_list[prev];
-                    auto next = free_list[link];
+                for (auto link : seq) {
+                    remove(link);
+                }
 
-                    if (next != link) {
-                        free_list[prev] = next;
-                    } else {
-                        free_list[prev] = prev;
+                Dpi_counter++;
+            };
+
+            while (free_list[start_dummy_link].second != end_dummy_link) {
+                {
+                    size_t cstart = free_list[start_dummy_link].second;
+                    increasing.clear();
+                    increasing.push_back(cstart);
+                    while(true) {
+
+
+                        if (free_list[cstart].second == end_dummy_link) {
+                            //std::cout << "inc done\n";
+                            break;
+                        } else {
+                            //std::cout << cstart << "\n";
+                            cstart = free_list[cstart].second;
+                            //std::cout << cstart << "\n";
+                        }
+
+                        DCHECK(si_of(cstart) != si_of(increasing.back()));
+                        if (si_of(cstart) > si_of(increasing.back())) {
+                            increasing.push_back(cstart);
+                        }
                     }
-                };
+                }
+                {
+                    size_t cend = free_list[end_dummy_link].first;
+                    decreasing.clear();
+                    decreasing.push_back(cend);
+                    while(true) {
 
-                auto handle = [&](const std::vector<size_t>& seq) {
-                    for (auto link : seq) {
-                        ret.Dpi[free_list[link]] = Dpi_counter;
+                        if (free_list[cend].first == start_dummy_link) {
+                            //std::cout << "dec done\n";
+                            break;
+                        } else {
+                            cend = free_list[cend].first;
+                        }
+
+                        DCHECK(si_of(cend) != si_of(decreasing.back()));
+                        if (si_of(cend) > si_of(decreasing.back())) {
+                            decreasing.push_back(cend);
+                        }
                     }
+                    // TODO: Just for debug
+                    std::reverse(decreasing.begin(), decreasing.end());
+                }
 
-                    for (auto link : seq) {
-                        remove_next(link);
-                    }
-
-                    Dpi_counter++;
-                };
+                debug(increasing);
+                debug(decreasing);
 
                 if (increasing.size() >= decreasing.size()) {
                     handle(increasing);
                     ret.b.push_back(uint_t<1>(0));
+                    //std::cout << "-> "; debug(increasing);
                 } else {
                     handle(decreasing);
                     ret.b.push_back(uint_t<1>(1));
+                    //std::cout << "-> "; debug(decreasing);
                 }
+                //std::cout << vec_to_debug_string(ret.Dpi, 3) << "\n";
+                //std::cout << vec_to_debug_string(ret.b) << "\n\n";
+                std::cout << "\n";
             }
+            std::cout << "\n";
+
+            return ret;
+        }
+    };
+    class SubSeqGreedy2: public Algorithm {
+    public:
+        inline static Meta meta() {
+            Meta m("subseq", "greedy2");
+            return m;
+        };
+
+        using Algorithm::Algorithm;
+
+        template<typename SortedIndices>
+        inline Dpi_and_b create_dpi_and_b_from_sorted_indices(const SortedIndices& sis) const {
+            Dpi_and_b ret;
+            ret.Dpi.reserve(sis.size());
+            ret.Dpi.resize(sis.size(), 999);
+
+            size_t Dpi_counter = 0;
+
+            DCHECK_GE(sis.size(), 1);
+            std::vector<std::pair<size_t, size_t>> free_list;
+            free_list.reserve(sis.size() + 2);
+            free_list.resize(sis.size() + 2);
+            for (size_t i = 1; i < (free_list.size() - 3); i++) {
+                free_list[i].first = i - 1;
+                free_list[i].second = i + 1;
+            }
+            const size_t start_dummy_link = free_list.size() - 2;
+            const size_t end_dummy_link   = free_list.size() - 1;
+
+            if ((free_list.size() - 2) > 1) {
+                free_list[0].first = start_dummy_link;
+                free_list[0].second = 1;
+                free_list[free_list.size() - 3].first = free_list.size() - 4;
+                free_list[free_list.size() - 3].second = end_dummy_link;
+            } else {
+                free_list[0].first = start_dummy_link;
+                free_list[0].second = end_dummy_link;
+            }
+
+            free_list[start_dummy_link].first = start_dummy_link;
+            free_list[end_dummy_link].second = end_dummy_link;
+
+            free_list[start_dummy_link].second = 0;
+            free_list[end_dummy_link].first = free_list.size() - 3;
+
+            std::vector<size_t> increasing;
+            std::vector<size_t> decreasing;
+            std::cout << "sis:\n";
+            std::cout << vec_to_debug_string(sis, 3) << "\n\n";
+
+            auto si_of = [&](size_t link) {
+                DCHECK(link != start_dummy_link);
+                DCHECK(link != end_dummy_link);
+                return sis[link];
+            };
+
+            auto debug = [&](const auto& links) {
+                std::vector<size_t> x;
+                for (auto y : links) {
+                    x.push_back(si_of(y));
+                }
+                std::cout << vec_to_debug_string(x, 3) << "\n";
+            };
+
+            auto remove = [&](size_t link) {
+                DCHECK(link != start_dummy_link);
+                DCHECK(link != end_dummy_link);
+                auto prev = free_list[link].first;
+                auto next = free_list[link].second;
+
+                free_list[prev].second = next;
+                free_list[next].first = prev;
+
+                free_list[link].first = link;
+                free_list[link].second = link;
+            };
+
+            auto handle = [&](const std::vector<size_t>& seq) {
+                for (auto link : seq) {
+                    DCHECK(link != start_dummy_link);
+                    DCHECK(link != end_dummy_link);
+                    ret.Dpi[link] = Dpi_counter;
+                }
+
+                for (auto link : seq) {
+                    remove(link);
+                }
+
+                Dpi_counter++;
+            };
+
+            while (free_list[start_dummy_link].second != end_dummy_link) {
+                size_t min_link = -1;
+                size_t max_link = -1;
+                {
+                    size_t min_value = size_t(-1);
+                    size_t max_value = 0;
+
+                    size_t current = free_list[start_dummy_link].second;
+                    while(true) {
+                        if (current == end_dummy_link) {
+                            break;
+                        }
+
+                        if (si_of(current) <= min_value) {
+                            min_value = si_of(current);
+                            min_link = current;
+                        }
+                        if (si_of(current) >= max_value) {
+                            max_value = si_of(current);
+                            max_link = current;
+                        }
+
+                        current = free_list[current].second;
+                    }
+                }
+                {
+                    size_t current = min_link;
+                    increasing.clear();
+                    increasing.push_back(current);
+                    while(true) {
+                        if (free_list[current].second == end_dummy_link) {
+                            break;
+                        } else {
+                            current = free_list[current].second;
+                        }
+
+                        DCHECK(si_of(current) != si_of(increasing.back()));
+                        if (si_of(current) > si_of(increasing.back())) {
+                            increasing.push_back(current);
+                        }
+                    }
+                }
+                {
+                    size_t current = max_link;
+                    decreasing.clear();
+                    decreasing.push_back(current);
+                    while(true) {
+                        if (free_list[current].second == end_dummy_link) {
+                            break;
+                        } else {
+                            current = free_list[current].second;
+                        }
+
+                        DCHECK(si_of(current) != si_of(decreasing.back()));
+                        if (si_of(current) < si_of(decreasing.back())) {
+                            decreasing.push_back(current);
+                        }
+                    }
+                }
+
+                debug(increasing);
+                debug(decreasing);
+
+                if (increasing.size() >= decreasing.size()) {
+                    handle(increasing);
+                    ret.b.push_back(uint_t<1>(0));
+                    //std::cout << "-> "; debug(increasing);
+                } else {
+                    handle(decreasing);
+                    ret.b.push_back(uint_t<1>(1));
+                    //std::cout << "-> "; debug(decreasing);
+                }
+                //std::cout << vec_to_debug_string(ret.Dpi, 3) << "\n";
+                //std::cout << vec_to_debug_string(ret.b) << "\n\n";
+                std::cout << "\n";
+            }
+            std::cout << "\n";
 
             return ret;
         }
