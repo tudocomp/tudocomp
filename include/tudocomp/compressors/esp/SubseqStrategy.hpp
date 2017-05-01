@@ -19,7 +19,7 @@ namespace tdc {namespace esp {
             return esp::create_dpi_and_b_from_sorted_indices(sorted_indices);
         }
     };
-    class SubSeqGreedy: public Algorithm {
+    class SubSeqGreedy1: public Algorithm {
     public:
         inline static Meta meta() {
             Meta m("subseq", "greedy1");
@@ -65,8 +65,8 @@ namespace tdc {namespace esp {
 
             std::vector<size_t> increasing;
             std::vector<size_t> decreasing;
-            std::cout << "sis:\n";
-            std::cout << vec_to_debug_string(sis, 3) << "\n\n";
+            //std::cout << "sis:\n";
+            //std::cout << vec_to_debug_string(sis, 3) << "\n\n";
 
             auto si_of = [&](size_t link) {
                 DCHECK(link != start_dummy_link);
@@ -154,8 +154,8 @@ namespace tdc {namespace esp {
                     std::reverse(decreasing.begin(), decreasing.end());
                 }
 
-                debug(increasing);
-                debug(decreasing);
+                //debug(increasing);
+                //debug(decreasing);
 
                 if (increasing.size() >= decreasing.size()) {
                     handle(increasing);
@@ -168,9 +168,9 @@ namespace tdc {namespace esp {
                 }
                 //std::cout << vec_to_debug_string(ret.Dpi, 3) << "\n";
                 //std::cout << vec_to_debug_string(ret.b) << "\n\n";
-                std::cout << "\n";
+                //std::cout << "\n";
             }
-            std::cout << "\n";
+            //std::cout << "\n";
 
             return ret;
         }
@@ -221,8 +221,8 @@ namespace tdc {namespace esp {
 
             std::vector<size_t> increasing;
             std::vector<size_t> decreasing;
-            std::cout << "sis:\n";
-            std::cout << vec_to_debug_string(sis, 3) << "\n\n";
+            //std::cout << "sis:\n";
+            //std::cout << vec_to_debug_string(sis, 3) << "\n\n";
 
             auto si_of = [&](size_t link) {
                 DCHECK(link != start_dummy_link);
@@ -325,8 +325,8 @@ namespace tdc {namespace esp {
                     }
                 }
 
-                debug(increasing);
-                debug(decreasing);
+                //debug(increasing);
+                //debug(decreasing);
 
                 if (increasing.size() >= decreasing.size()) {
                     handle(increasing);
@@ -339,9 +339,9 @@ namespace tdc {namespace esp {
                 }
                 //std::cout << vec_to_debug_string(ret.Dpi, 3) << "\n";
                 //std::cout << vec_to_debug_string(ret.b) << "\n\n";
-                std::cout << "\n";
+                //std::cout << "\n";
             }
-            std::cout << "\n";
+            //std::cout << "\n";
 
             return ret;
         }
