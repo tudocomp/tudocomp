@@ -161,10 +161,13 @@ namespace tdc {namespace esp {
             const size_t alphabet_size,
             const size_t real_alphabet_size)
         {
-            size_t max = std::max(real_alphabet_size, ULITERAL_MAX);
+
+            size_t max = real_alphabet_size;
+            // TODO Debug
+            //max = std::max(real_alphabet_size, ULITERAL_MAX);
             OrderedMapToEffective map_to_effective;
             map_to_effective.reserve(max);
-            map_to_effective.resize(max, size_t(255));
+            map_to_effective.resize(max, size_t(-1));
 
             for(size_t i = 0; i < alphabet_size; ++i) {
                 map_to_effective[ordered_map_from_effective[i]] = i;
