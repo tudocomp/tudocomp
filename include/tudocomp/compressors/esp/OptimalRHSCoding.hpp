@@ -19,14 +19,16 @@ namespace tdc {namespace esp {
 
         using Algorithm::Algorithm;
 
-        inline void encode(const SLPRhsAdapter& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
             HuffmanEncoder encoder { out, rhs };
 
             for (size_t i = 0; i < rhs.size(); i++) {
                 encoder.encode(rhs[i]);
             }
         }
-        inline void decode(SLPRhsAdapter& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
             HuffmanDecoder decoder { in };
 
             for (size_t i = 0; i < rhs.size(); i++) {
@@ -44,14 +46,16 @@ namespace tdc {namespace esp {
 
         using Algorithm::Algorithm;
 
-        inline void encode(const SLPRhsAdapter& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
             ArithmeticEncoder encoder { out, rhs };
 
             for (size_t i = 0; i < rhs.size(); i++) {
                 encoder.encode(rhs[i]);
             }
         }
-        inline void decode(SLPRhsAdapter& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
             ArithmeticDecoder decoder { in };
 
             for (size_t i = 0; i < rhs.size(); i++) {
@@ -68,32 +72,39 @@ namespace tdc {namespace esp {
 
         using Algorithm::Algorithm;
 
-        inline void encode(const SLPRhsAdapter& rhs, BitOStream& out, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width) const {
             for(size_t i = 0; i < rhs.size(); i++) {
                 out.write_int(rhs[i], bit_width);
             }
         }
-        inline void decode(SLPRhsAdapter& rhs, BitIStream& in, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void decode(rhs_t& rhs, BitIStream& in, size_t bit_width) const {
             for(size_t i = 0; i < rhs.size(); i++) {
                 rhs[i] = in.read_int<size_t>(bit_width);
             }
         }
-        inline void encode(const SLPRhsAdapter& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
             encode(rhs, *out, bit_width);
         }
-        inline void decode(SLPRhsAdapter& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
             decode(rhs, *in, bit_width);
         }
     };
+    //template<typename d_coding_t>
     class DMonotonSubseq: public Algorithm {
     public:
         inline static Meta meta() {
             Meta m("d_coding", "optimal");
+            //m.option("dx_coder").templated<d_coding_t, HuffmanCoder>("d_coding");
             return m;
         };
 
         using Algorithm::Algorithm;
-        inline void encode(const SLPRhsAdapter& rhs, BitOStream& bout, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, BitOStream& bout, size_t bit_width) const {
             /*
             std::vector<size_t> TMP_D;
             for(size_t i = 0; i < rhs.size(); i++) {
@@ -208,7 +219,8 @@ namespace tdc {namespace esp {
             std::cout << "\nencode OK\n\n";
             */
         }
-        inline void decode(SLPRhsAdapter& D, BitIStream& bin, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void decode(rhs_t& D, BitIStream& bin, size_t bit_width) const {
             auto slp_size = D.size();
 
             // TODO: Read later, requires splitting up input a bit
@@ -302,10 +314,12 @@ namespace tdc {namespace esp {
 
             //std::cout << "D:   " << vec_to_debug_string(D) << "\n";
         }
-        inline void encode(const SLPRhsAdapter& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
             encode(rhs, *out, bit_width);
         }
-        inline void decode(SLPRhsAdapter& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+        template<typename rhs_t>
+        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
             decode(rhs, *in, bit_width);
         }
     };
