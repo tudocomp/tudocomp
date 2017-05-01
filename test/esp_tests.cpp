@@ -524,6 +524,10 @@ TEST(ESP, test_optimal_huffman) {
    test_esp<esp::SufficientSLPStrategy<esp::DHuffman>>();
 }
 
+TEST(ESP, test_sufficient_greedy) {
+   test_esp<esp::SufficientSLPStrategy<esp::DMonotonSubseq<esp::SubSeqGreedy>>>();
+}
+
 
 /*TEST(ESP, test_optimal_arithmetic) {
    test_esp<esp::SufficientSLPStrategy<esp::DArithmetic>>();
