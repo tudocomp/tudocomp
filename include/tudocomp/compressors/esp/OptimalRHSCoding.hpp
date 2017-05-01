@@ -199,6 +199,7 @@ namespace tdc {namespace esp {
                 b = std::move(tmp.b);
             }
             size_t b_size = b.size();
+            phase1.log_stat("Subsequence count", b_size);
             //TMP_b = b;
             //TMP_Dpi = Dpi;
             DCHECK_GE(b_size, 1);
