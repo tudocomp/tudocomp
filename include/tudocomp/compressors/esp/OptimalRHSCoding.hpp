@@ -165,59 +165,33 @@ namespace tdc {namespace esp {
             }
             b = IntVector<uint_t<1>> {};
 
-            phase1.split("Create WT for Dpi, write, discard");
-            // transform Dpi to WT and write WT and discard WT
-            {
-                auto Dpi_bvs = make_wt(Dpi, b_size - 1);
-
-                // write WT depth
-                bout.write_compressed_int(Dpi_bvs.size());
-                //std::cout << "wt depth write: " << Dpi_bvs.size() << "\n";
-
-                // write WT
-                for(auto& bv : Dpi_bvs) {
-                    for(uint8_t bit: bv) {
-                        bout.write_bit(bit != 0);
-                    }
-                    //std::cout << "Dpi bv: " << vec_to_debug_string(bv) << "\n";
-                }
-            }
-
-            phase1.split("Create Dsi, discard Dpi");
-
-            // Create Dsi from Dpi, discard Dpi,
+            phase1.split("Create Dsi from Dpi");
             auto Dsi = esp::create_dsigma_from_dpi_and_sorted_indices(sis, Dpi);
-            //TMP_Dsi = Dsi;
 
-            //std::cout << "Dsi: " << vec_to_debug_string(Dsi) << "\n";
+            // TODO: change the two function to write in same vector
+            phase1.split("Combine Dsi and Dpi arrays");
 
-            Dpi = std::vector<size_t>();
-
-            phase1.split("Create WT for Dsi, write, discard WT and Dsi");
-            // transform Dsi to WT and write WT and discard WT
-            {
-                auto Dsi_bvs = make_wt(Dsi, b_size - 1);
-
-                // write WT
-                for(auto& bv : Dsi_bvs) {
-                    for(uint8_t bit: bv) {
-                        bout.write_bit(bit != 0);
-                    }
-                    //std::cout << "Dsi bv: " << vec_to_debug_string(bv) << "\n";
-                }
+            auto Dcombined = std::move(Dpi);
+            Dcombined.reserve(Dcombined.size() * 2);
+            for (auto x : Dsi) {
+                Dcombined.push_back(x);
             }
-
-            // Discard Dpi
             Dsi = std::vector<size_t>();
 
-            /*
-            std::cout << "Bde: " << vec_to_debug_string(TMP_Bde) << "\n";
-            std::cout << "Dpi: " << vec_to_debug_string(TMP_Dpi) << "\n";
-            std::cout << "Dsi: " << vec_to_debug_string(TMP_Dsi) << "\n";
-            std::cout << "b:   " << vec_to_debug_string(TMP_b) << "\n";
-            std::cout << "D:   " << vec_to_debug_string(TMP_D) << "\n";
-            std::cout << "\nencode OK\n\n";
-            */
+            phase1.split("Create WT for Dcombined, write, discard");
+            auto Dcombined_bvs = make_wt(Dcombined, b_size - 1);
+
+            // write WT depth
+            bout.write_compressed_int(Dcombined_bvs.size());
+
+            {
+                // write WT
+                for(auto& bv : Dcombined_bvs) {
+                    for(uint8_t bit: bv) {
+                        bout.write_bit(bit != 0);
+                    }
+                }
+            }
         }
         template<typename rhs_t>
         inline void decode(rhs_t& D, BitIStream& bin, size_t bit_width) const {
@@ -256,63 +230,27 @@ namespace tdc {namespace esp {
             //std::cout << wt_depth << "\n";
 
             // Read Dpi WT
-            auto Dpi = std::vector<size_t>();
-            {
-                auto Dpi_bvs = std::vector<IntVector<uint_t<1>>>();
-                Dpi_bvs.reserve(wt_depth);
-                Dpi_bvs.resize(wt_depth);
-
-                //std::cout << "ok " << __LINE__ << "\n";
-
-                for(auto& bv : Dpi_bvs) {
-                    bv.reserve(slp_size);
-
-                    //std::cout << "ok " << __LINE__ << "\n";
-
-                    for(size_t i = 0; i < slp_size; i++) {
-                        bv.push_back(bin.read_bit());
-                    }
-                    //std::cout << "Dpi bv: " << vec_to_debug_string(bv) << "\n";
-                }
-
-                Dpi = esp::recover_Dxx(Dpi_bvs, slp_size);
-            }
-
-            //std::cout << "ok " << __LINE__ << "\n";
-            //std::cout << "Dpi: " << vec_to_debug_string(Dpi) << "\n";
-
             // Read Dsi WT
-            auto Dsi = std::vector<size_t>();
+            auto Dcombined = std::vector<size_t>();
+            auto Dcombined_bvs = std::vector<IntVector<uint_t<1>>>();
+            Dcombined_bvs.reserve(wt_depth);
+            Dcombined_bvs.resize(wt_depth);
             {
-                auto Dsi_bvs = std::vector<IntVector<uint_t<1>>>();
-                Dsi_bvs.reserve(wt_depth);
-                Dsi_bvs.resize(wt_depth);
+                for(auto& bv : Dcombined_bvs) {
+                    bv.reserve(slp_size * 2);
 
-                for(auto& bv : Dsi_bvs) {
-                    bv.reserve(slp_size);
-                    for(size_t i = 0; i < slp_size; i++) {
+                    for(size_t i = 0; i < slp_size * 2; i++) {
                         bv.push_back(bin.read_bit());
                     }
-                    //std::cout << "Dsi bv: " << vec_to_debug_string(bv) << "\n";
                 }
 
-                Dsi = esp::recover_Dxx(Dsi_bvs, slp_size);
+                Dcombined = esp::recover_Dxx(Dcombined_bvs, slp_size * 2);
             }
-            //std::cout << "Dsi: " << vec_to_debug_string(Dsi) << "\n";
 
-            //std::cout << "ok " << __LINE__ << "\n";
-
-            // Given sis, b, Dsi and Dpi, recover slp rhs
-
-            //std::cout << "Bde: " << vec_to_debug_string(Bde) << "\n";
-            //std::cout << "Dpi: " << vec_to_debug_string(Dpi) << "\n";
-            //std::cout << "Dsi: " << vec_to_debug_string(Dsi) << "\n";
-            //std::cout << "b:   " << vec_to_debug_string(b) << "\n";
-
+            auto Dpi = ConstGenericView<size_t>(Dcombined).slice(0, slp_size);
+            auto Dsi = ConstGenericView<size_t>(Dcombined).slice(slp_size, slp_size * 2);
 
             esp::recover_D_from_encoding(Dpi, Dsi, b, Bde, &D);
-
-            //std::cout << "D:   " << vec_to_debug_string(D) << "\n";
         }
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
