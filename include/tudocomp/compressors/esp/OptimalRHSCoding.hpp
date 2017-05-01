@@ -3,9 +3,9 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/compressors/esp/SLP.hpp>
 #include <tudocomp/compressors/esp/MonotoneSubsequences.hpp>
-#include <tudocomp/coders/HuffmanCoder.hpp>
 #include <tudocomp/compressors/esp/ArithmeticCoder.hpp>
 #include <tudocomp/compressors/esp/HuffmanCoder.hpp>
+#include <tudocomp/compressors/esp/SubseqStrategy.hpp>
 
 namespace tdc {namespace esp {
     //template<typename coder_t>
@@ -150,11 +150,12 @@ namespace tdc {namespace esp {
             decode(rhs, *in, bit_width, max_value);
         }
     };
-    template<typename d_coding_t = DWaveletTree>
+    template<typename subseq_t = SubSeqOptimal, typename d_coding_t = DWaveletTree>
     class DMonotonSubseq: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "optimal");
+            Meta m("d_coding", "succinct");
+            m.option("subseq").templated<subseq_t, SubSeqOptimal>("subseq");
             m.option("dx_coder").templated<d_coding_t, DWaveletTree>("d_coding");
             return m;
         };
@@ -163,16 +164,6 @@ namespace tdc {namespace esp {
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
             BitOStream& bout = *out;
-            /*
-            std::vector<size_t> TMP_D;
-            for(size_t i = 0; i < rhs.size(); i++) {
-                TMP_D.push_back(rhs[i]);
-            }
-            std::vector<size_t> TMP_Bde;
-            std::vector<size_t> TMP_Dpi;
-            std::vector<size_t> TMP_Dsi;
-            IntVector<uint_t<1>> TMP_b;
-            */
 
             auto phase1 = StatPhase("Sorting D");
 
@@ -202,7 +193,8 @@ namespace tdc {namespace esp {
             std::vector<size_t> Dpi;
             auto b = IntVector<uint_t<1>> {};
             {
-                auto tmp = esp::create_dpi_and_b_from_sorted_indices(sis);
+                const subseq_t subseq { this->env().env_for_option("subseq") };
+                auto tmp = subseq.create_dpi_and_b_from_sorted_indices(sis);
                 Dpi = std::move(tmp.Dpi);
                 b = std::move(tmp.b);
             }
