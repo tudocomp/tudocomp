@@ -433,7 +433,7 @@ namespace tdc {namespace esp {
         IntVector<uint_t<1>> b;
     };
 
-    template<typename SortedIndices>
+    template<typename SortedIndices, size_t tie_to_decreasing = false>
     inline Dpi_and_b create_dpi_and_b_from_sorted_indices(const SortedIndices& sorted_indices) {
         std::vector<size_t> Dpi;
         auto b = IntVector<uint_t<1>> {};
@@ -446,14 +446,16 @@ namespace tdc {namespace esp {
                 l.lis(l.layers_size(), links);
 
                 l.rebuild(true);
-                // Only run lis() if needed:
-                // TODO: Keep this > to get more decreasing tests,
-                // but change back for final code to calculate less
-                if (!(links.size() > l.layers_size())) {
+                if (!tie_to_decreasing && (links.size() == l.layers_size())) {
+                    b.push_back(uint_t<1>(0));
+                } else if (tie_to_decreasing && (links.size() == l.layers_size())) {
                     l.lis(l.layers_size(), links);
                     b.push_back(uint_t<1>(1));
-                } else {
+                } else if (links.size() > l.layers_size()) {
                     b.push_back(uint_t<1>(0));
+                } else {
+                    l.lis(l.layers_size(), links);
+                    b.push_back(uint_t<1>(1));
                 }
 
                 // links now contains the longer sequence
