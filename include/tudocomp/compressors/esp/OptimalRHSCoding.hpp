@@ -20,7 +20,7 @@ namespace tdc {namespace esp {
         using Algorithm::Algorithm;
 
         template<typename rhs_t>
-        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
             HuffmanEncoder encoder { out, rhs };
 
             for (size_t i = 0; i < rhs.size(); i++) {
@@ -28,7 +28,7 @@ namespace tdc {namespace esp {
             }
         }
         template<typename rhs_t>
-        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width, size_t max_value) const {
             HuffmanDecoder decoder { in };
 
             for (size_t i = 0; i < rhs.size(); i++) {
@@ -47,7 +47,7 @@ namespace tdc {namespace esp {
         using Algorithm::Algorithm;
 
         template<typename rhs_t>
-        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
             ArithmeticEncoder encoder { out, rhs };
 
             for (size_t i = 0; i < rhs.size(); i++) {
@@ -55,7 +55,7 @@ namespace tdc {namespace esp {
             }
         }
         template<typename rhs_t>
-        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width, size_t max_value) const {
             ArithmeticDecoder decoder { in };
 
             for (size_t i = 0; i < rhs.size(); i++) {
@@ -73,38 +73,96 @@ namespace tdc {namespace esp {
         using Algorithm::Algorithm;
 
         template<typename rhs_t>
-        inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width) const {
+        inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
             for(size_t i = 0; i < rhs.size(); i++) {
                 out.write_int(rhs[i], bit_width);
             }
         }
         template<typename rhs_t>
-        inline void decode(rhs_t& rhs, BitIStream& in, size_t bit_width) const {
+        inline void decode(rhs_t& rhs, BitIStream& in, size_t bit_width, size_t max_value) const {
             for(size_t i = 0; i < rhs.size(); i++) {
                 rhs[i] = in.read_int<size_t>(bit_width);
             }
         }
         template<typename rhs_t>
-        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
-            encode(rhs, *out, bit_width);
+        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
+            encode(rhs, *out, bit_width, max_value);
         }
         template<typename rhs_t>
-        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
-            decode(rhs, *in, bit_width);
+        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width, size_t max_value) const {
+            decode(rhs, *in, bit_width, max_value);
         }
     };
-    //template<typename d_coding_t>
+    class DWaveletTree: public Algorithm {
+    public:
+        inline static Meta meta() {
+            Meta m("d_coding", "wavelet_tree");
+            return m;
+        };
+
+        using Algorithm::Algorithm;
+
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, BitOStream& bout, size_t bit_width, size_t max_value) const {
+            auto bvs = make_wt(rhs, max_value);
+
+            // write WT depth
+            bout.write_compressed_int(bvs.size());
+
+            {
+                // write WT
+                for(auto& bv : bvs) {
+                    for(uint8_t bit: bv) {
+                        bout.write_bit(bit != 0);
+                    }
+                }
+            }
+        }
+        template<typename rhs_t>
+        inline void decode(rhs_t& rhs, BitIStream& bin, size_t bit_width, size_t max_value) const {
+            // Read WT dept
+            size_t wt_depth = bin.read_compressed_int<size_t>();
+
+            auto Dcombined_bvs = std::vector<IntVector<uint_t<1>>>();
+            Dcombined_bvs.reserve(wt_depth);
+            Dcombined_bvs.resize(wt_depth);
+            {
+                for(auto& bv : Dcombined_bvs) {
+                    bv.reserve(rhs.size());
+
+                    for(size_t i = 0; i < rhs.size(); i++) {
+                        bv.push_back(bin.read_bit());
+                    }
+                }
+
+                auto Dcombined = esp::recover_Dxx(Dcombined_bvs, rhs.size());
+                for (size_t i = 0; i < rhs.size(); i++) {
+                    rhs[i] = Dcombined[i];
+                }
+            }
+        }
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
+            encode(rhs, *out, bit_width, max_value);
+        }
+        template<typename rhs_t>
+        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width, size_t max_value) const {
+            decode(rhs, *in, bit_width, max_value);
+        }
+    };
+    template<typename d_coding_t = DWaveletTree>
     class DMonotonSubseq: public Algorithm {
     public:
         inline static Meta meta() {
             Meta m("d_coding", "optimal");
-            //m.option("dx_coder").templated<d_coding_t, HuffmanCoder>("d_coding");
+            m.option("dx_coder").templated<d_coding_t, DWaveletTree>("d_coding");
             return m;
         };
 
         using Algorithm::Algorithm;
         template<typename rhs_t>
-        inline void encode(const rhs_t& rhs, BitOStream& bout, size_t bit_width) const {
+        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
+            BitOStream& bout = *out;
             /*
             std::vector<size_t> TMP_D;
             for(size_t i = 0; i < rhs.size(); i++) {
@@ -178,23 +236,18 @@ namespace tdc {namespace esp {
             }
             Dsi = std::vector<size_t>();
 
-            phase1.split("Create WT for Dcombined, write, discard");
-            auto Dcombined_bvs = make_wt(Dcombined, b_size - 1);
+            phase1.split("Encode Dcombined");
 
-            // write WT depth
-            bout.write_compressed_int(Dcombined_bvs.size());
+            const d_coding_t coder { this->env().env_for_option("dx_coder") };
 
-            {
-                // write WT
-                for(auto& bv : Dcombined_bvs) {
-                    for(uint8_t bit: bv) {
-                        bout.write_bit(bit != 0);
-                    }
-                }
-            }
+            auto d_max_value = b_size - 1;
+            auto d_bit_width = bits_for(d_max_value);
+
+            coder.encode(Dcombined, out, d_bit_width, d_max_value);
         }
         template<typename rhs_t>
-        inline void decode(rhs_t& D, BitIStream& bin, size_t bit_width) const {
+        inline void decode(rhs_t& D, std::shared_ptr<BitIStream>& in, size_t bit_width, size_t max_value) const {
+            BitIStream& bin = *in;
             auto slp_size = D.size();
 
             // TODO: Read later, requires splitting up input a bit
@@ -220,45 +273,24 @@ namespace tdc {namespace esp {
             for(size_t i = 0; i < b_size; i++) {
                 b[i] = bin.read_bit();
             }
-            //std::cout << "decomp b: " << vec_to_debug_string(b) << "\n";
-            //std::cout << "ok " << __LINE__ << "\n";
-
-            // Read WT dept
-            size_t wt_depth = bin.read_compressed_int<size_t>();
-
-            //std::cout << "ok " << __LINE__ << "\n";
-            //std::cout << wt_depth << "\n";
 
             // Read Dpi WT
             // Read Dsi WT
             auto Dcombined = std::vector<size_t>();
-            auto Dcombined_bvs = std::vector<IntVector<uint_t<1>>>();
-            Dcombined_bvs.reserve(wt_depth);
-            Dcombined_bvs.resize(wt_depth);
-            {
-                for(auto& bv : Dcombined_bvs) {
-                    bv.reserve(slp_size * 2);
+            Dcombined.reserve(slp_size * 2);
+            Dcombined.resize(slp_size * 2);
 
-                    for(size_t i = 0; i < slp_size * 2; i++) {
-                        bv.push_back(bin.read_bit());
-                    }
-                }
+            const d_coding_t coder { this->env().env_for_option("dx_coder") };
 
-                Dcombined = esp::recover_Dxx(Dcombined_bvs, slp_size * 2);
-            }
+            auto d_max_value = b_size - 1;
+            auto d_bit_width = bits_for(d_max_value);
+
+            coder.decode(Dcombined, in, d_bit_width, d_max_value);
 
             auto Dpi = ConstGenericView<size_t>(Dcombined).slice(0, slp_size);
             auto Dsi = ConstGenericView<size_t>(Dcombined).slice(slp_size, slp_size * 2);
 
             esp::recover_D_from_encoding(Dpi, Dsi, b, Bde, &D);
-        }
-        template<typename rhs_t>
-        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
-            encode(rhs, *out, bit_width);
-        }
-        template<typename rhs_t>
-        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
-            decode(rhs, *in, bit_width);
         }
     };
 }}

@@ -6,13 +6,13 @@
 #include <tudocomp/compressors/esp/OptimalRHSCoding.hpp>
 
 namespace tdc {namespace esp {
-    template<typename d_coding_t = DMonotonSubseq>
+    template<typename d_coding_t = DMonotonSubseq<>>
     class SufficientSLPStrategy: public Algorithm {
         using RhsAdapter = SLPRhsAdapter;
     public:
         inline static Meta meta() {
             Meta m("slp_strategy", "sorted");
-            m.option("d_coding").templated<d_coding_t, DMonotonSubseq>("d_coding");
+            m.option("d_coding").templated<d_coding_t, DMonotonSubseq<>>("d_coding");
             return m;
         };
 
@@ -98,7 +98,7 @@ namespace tdc {namespace esp {
 
             const auto rhs = RhsAdapter { &slp };
             d_coding_t d_coding { this->env().env_for_option("d_coding") };
-            d_coding.encode(rhs, bouts, bit_width);
+            d_coding.encode(rhs, bouts, bit_width, max_val);
         }
 
         inline SLP decode(Input& input) const {
@@ -146,7 +146,7 @@ namespace tdc {namespace esp {
 
             auto D = RhsAdapter { &slp };
             d_coding_t d_coding { this->env().env_for_option("d_coding") };
-            d_coding.decode(D, bins, bit_width);
+            d_coding.decode(D, bins, bit_width, max_val);
 
             return slp;
         }
