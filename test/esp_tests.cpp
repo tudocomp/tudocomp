@@ -520,6 +520,15 @@ TEST(ESP, test_optimal_plain) {
    test_esp<esp::SufficientSLPStrategy<esp::DPlain>>();
 }
 
+TEST(ESP, test_optimal_huffman) {
+   test_esp<esp::SufficientSLPStrategy<esp::DHuffman>>();
+}
+
+
+/*TEST(ESP, test_optimal_arithmetic) {
+   test_esp<esp::SufficientSLPStrategy<esp::DArithmetic>>();
+}*/
+
 class IBST {
     size_t m_node;
     std::vector<IBST> m_children;

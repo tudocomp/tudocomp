@@ -4,26 +4,60 @@
 #include <tudocomp/compressors/esp/SLP.hpp>
 #include <tudocomp/compressors/esp/MonotoneSubsequences.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
+#include <tudocomp/compressors/esp/ArithmeticCoder.hpp>
+#include <tudocomp/compressors/esp/HuffmanCoder.hpp>
 
 namespace tdc {namespace esp {
-    template<typename coder_t>
-    class DCoder: public Algorithm {
+    //template<typename coder_t>
+    class DHuffman: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "coder");
-            m.option("coder").templated<coder_t, HuffmanCoder>("coder");
+            Meta m("d_coding", "huffman");
+            //m.option("coder").templated<coder_t, HuffmanCoder>("coder");
             return m;
         };
 
         using Algorithm::Algorithm;
 
         inline void encode(const SLPRhsAdapter& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+            HuffmanEncoder encoder { out, rhs };
 
+            for (size_t i = 0; i < rhs.size(); i++) {
+                encoder.encode(rhs[i]);
+            }
         }
         inline void decode(SLPRhsAdapter& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+            HuffmanDecoder decoder { in };
 
+            for (size_t i = 0; i < rhs.size(); i++) {
+                rhs[i] = decoder.decode();
+            }
         }
+    };
+    class DArithmetic: public Algorithm {
+    public:
+        inline static Meta meta() {
+            Meta m("d_coding", "arithmetic");
+            //m.option("coder").templated<coder_t, HuffmanCoder>("coder");
+            return m;
+        };
 
+        using Algorithm::Algorithm;
+
+        inline void encode(const SLPRhsAdapter& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
+            ArithmeticEncoder encoder { out, rhs };
+
+            for (size_t i = 0; i < rhs.size(); i++) {
+                encoder.encode(rhs[i]);
+            }
+        }
+        inline void decode(SLPRhsAdapter& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
+            ArithmeticDecoder decoder { in };
+
+            for (size_t i = 0; i < rhs.size(); i++) {
+                rhs[i] = decoder.decode();
+            }
+        }
     };
     class DPlain: public Algorithm {
     public:
@@ -51,26 +85,6 @@ namespace tdc {namespace esp {
             decode(rhs, *in, bit_width);
         }
     };
-    /*
-    class DAlphaCode: public Algorithm {
-    public:
-        inline static Meta meta() {
-            Meta m("d_coding", "alpha");
-            return m;
-        };
-
-        using Algorithm::Algorithm;
-        inline void encode(const SLPRhsAdapter& rhs, BitOStream& out, size_t bit_width) const {
-        }
-        inline void decode(SLPRhsAdapter& rhs, BitIStream& in, size_t bit_width) const {
-        }
-        inline void encode(const SLPRhsAdapter& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width) const {
-            encode(rhs, *out, bit_width);
-        }
-        inline void decode(SLPRhsAdapter& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width) const {
-            decode(rhs, *in, bit_width);
-        }
-    };*/
     class DMonotonSubseq: public Algorithm {
     public:
         inline static Meta meta() {
