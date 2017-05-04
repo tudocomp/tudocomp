@@ -7,14 +7,15 @@ namespace tdc {
 
 /// \brief Base for data structures that use an integer array as a storage.
 class ArrayDS: public DynamicIntVector {
+public:
+    /// \brief The type of integer array to use as storage.
+    using iv_t = DynamicIntVector;
+
 protected:
     IF_DEBUG(
         /// Debug check to ensure the vector has not been moved out.
         bool m_is_initialized = false;
     )
-
-    /// \brief The type of integer array to use as storage.
-    using iv_t = DynamicIntVector;
 
     inline void debug_check_array_is_initialized() const {
         IF_DEBUG(

@@ -11,13 +11,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif(NOT CMAKE_BUILD_TYPE)
 
-if(NOT VERSION)
-    string(TIMESTAMP DATE "%y%m%d")
-    set(VERSION "0.${DATE}-$ENV{USER}${VERSION_SUFFIX}")
-endif(NOT VERSION)
-
-message("VERSION = ${VERSION}")
-
 if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "4.9")
     message(FATAL_ERROR "g++ version 4.9 or greater required!")
 endif()
@@ -54,6 +47,10 @@ if(STATS_DISABLED)
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSTATS_DISABLED")
 endif(STATS_DISABLED)
 
+# Find Python3
+set(Python_ADDITIONAL_VERSIONS 3)
+find_package(PythonInterp REQUIRED)
+
 # Global dependencies
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemodules")
 
@@ -62,7 +59,6 @@ include(cotire)
 set (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1000)
 
 # Finders
-include(FindPythonModule)
 include(find_or_download_package)
 
 # Usage: find_or_download_package(PACKAGE_NAME, FOUND_FLAG_PREFIX, TARGET_PREFIX)
@@ -100,20 +96,17 @@ add_subdirectory(docs)
 # Web
 add_subdirectory(www)
 
+# tudocomp_algorithms
+
 add_library(
     tudocomp_algorithms
     ${CMAKE_BINARY_DIR}/tudocomp_algorithms.cpp
 )
 
-add_dependencies(
-    tudocomp_algorithms
-    generate_tudocomp_hpp
-)
-
 target_link_libraries(
     tudocomp_algorithms
 
-    malloc_count
+    tudocomp_stat
     tudocomp
     glog
     sdsl

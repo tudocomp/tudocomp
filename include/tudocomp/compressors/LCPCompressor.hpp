@@ -9,6 +9,7 @@
 
 #include <tudocomp/ds/TextDS.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 namespace lcpcomp {
@@ -18,58 +19,56 @@ class CompactDec;
 template<typename coder_t, typename decode_buffer_t>
 inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs) {
 
-    decoder.env().begin_stat_phase("Starting Decoding");
+    StatPhase decode_phase("Decoding");
+
     // decode text range
     auto text_len = decoder.template decode<len_t>(len_r);
-    Range text_r(text_len);
-
-    // decode shortest and longest factor
-    auto flen_min = decoder.template decode<len_t>(text_r);
-    auto flen_max = decoder.template decode<len_t>(text_r);
-    MinDistributedRange flen_r(flen_min, flen_max);
-
-    // decode longest distance between factors
-    auto fdist_max = decoder.template decode<len_t>(text_r);
-    Range fdist_r(fdist_max);
 
     // init decode buffer
-//    decode_buffer_t buffer(text_len);
     decode_buffer_t  buffer(std::move(env), text_len);
 
-    // decode
-    while(!decoder.eof()) {
-        len_t num;
+    StatPhase::wrap("Starting Decoding", [&]{
+        Range text_r(text_len);
 
-        auto b = decoder.template decode<bool>(bit_r);
-        if(b) num = decoder.template decode<len_t>(fdist_r);
-        else  num = 0;
+        // decode shortest and longest factor
+        auto flen_min = decoder.template decode<len_t>(text_r);
+        auto flen_max = decoder.template decode<len_t>(text_r);
+        MinDistributedRange flen_r(flen_min, flen_max);
 
-        // decode characters
-        while(num--) {
-            auto c = decoder.template decode<uliteral_t>(literal_r);
-            buffer.decode_literal(c);
+        // decode longest distance between factors
+        auto fdist_max = decoder.template decode<len_t>(text_r);
+        Range fdist_r(fdist_max);
+
+        // decode
+        while(!decoder.eof()) {
+            len_t num;
+
+            auto b = decoder.template decode<bool>(bit_r);
+            if(b) num = decoder.template decode<len_t>(fdist_r);
+            else  num = 0;
+
+            // decode characters
+            while(num--) {
+                auto c = decoder.template decode<uliteral_t>(literal_r);
+                buffer.decode_literal(c);
+            }
+
+            if(!decoder.eof()) {
+                //decode factor
+                auto src = decoder.template decode<len_t>(text_r);
+                auto len = decoder.template decode<len_t>(flen_r);
+
+                buffer.decode_factor(src, len);
+            }
         }
+    });
 
-        if(!decoder.eof()) {
-            //decode factor
-            auto src = decoder.template decode<len_t>(text_r);
-            auto len = decoder.template decode<len_t>(flen_r);
-
-            buffer.decode_factor(src, len);
-        }
-    }
-   decoder.env().end_stat_phase();
-   decoder.env().begin_stat_phase("Scan Decoding");
-    buffer.decode_lazy();
-   decoder.env().end_stat_phase();
-   decoder.env().begin_stat_phase("Eager Decoding");
-    buffer.decode_eagerly();
-    IF_STATS(decoder.env().log_stat("longest_chain", buffer.longest_chain()));
-   decoder.env().end_stat_phase();
-   decoder.env().begin_stat_phase("Output Text");
-    buffer.write_to(outs);
-   decoder.env().end_stat_phase();
-   decoder.env().end_stat_phase();
+    StatPhase::wrap("Scan Decoding", [&]{ buffer.decode_lazy(); });
+    StatPhase::wrap("Eager Decoding", [&]{
+        buffer.decode_eagerly();
+        IF_STATS(StatPhase::log("longest_chain", buffer.longest_chain()));
+    });
+    StatPhase::wrap("Output Text", [&]{ buffer.write_to(outs); });
 }
 
 }//ns
@@ -81,10 +80,10 @@ class LCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "lcpcomp");
-        m.option("coder").templated<coder_t>();
-        m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>();
-        m.option("dec").templated<dec_t, lcpcomp::CompactDec>();
-        m.option("textds").templated<text_t, TextDS<>>();
+        m.option("coder").templated<coder_t>("coder");
+        m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>("lcpcomp_comp");
+        m.option("dec").templated<dec_t, lcpcomp::CompactDec>("lcpcomp_dec");
+        m.option("textds").templated<text_t, TextDS<>>("textds");
         m.option("threshold").dynamic(3);
         m.needs_sentinel_terminator();
         return m;
@@ -102,29 +101,27 @@ public:
         const len_t threshold = env().option("threshold").as_integer(); //factor threshold
         lzss::FactorBuffer factors;
 
-        {
+        StatPhase::wrap("Factorize", [&]{
             // Factorize
-            env().begin_stat_phase("Factorize");
-
             strategy_t strategy(env().env_for_option("comp"));
             strategy.factorize(text, threshold, factors);
 
-            env().log_stat("threshold", threshold);
-            env().log_stat("factors", factors.size());
-            env().end_stat_phase();
-        }
+            StatPhase::log("threshold", threshold);
+            StatPhase::log("factors", factors.size());
+        });
 
-        env().begin_stat_phase("Sorting Factors");
         // sort factors
-        factors.sort();
-        env().end_stat_phase();
-        env().begin_stat_phase("Encode Factors");
+        StatPhase::wrap("Sorting Factors", [&]{ factors.sort(); });
 
         // encode
-        typename coder_t::Encoder coder(env().env_for_option("coder"), output, lzss::TextLiterals<text_t>(text, factors));
+        StatPhase::wrap("Encode Factors", [&]{
+            typename coder_t::Encoder coder(
+                env().env_for_option("coder"),
+                output,
+                lzss::TextLiterals<text_t>(text, factors));
 
-        lzss::encode_text(coder, text, factors); //TODO is this correct?
-        env().end_stat_phase();
+            lzss::encode_text(coder, text, factors); //TODO is this correct?
+        });
     }
 
     inline virtual void decompress(Input& input, Output& output) override {

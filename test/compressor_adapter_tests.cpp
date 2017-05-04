@@ -149,55 +149,55 @@ const View CHAIN_STRING = "abcd"_v;
 const View CHAIN_STRING_NULL = "abcd\0"_v;
 
 TEST(ChainNull, stream_noop) {
-    test::roundtrip<NoopCompressor>(CHAIN_STRING, CHAIN_STRING,
+    test::roundtrip_ex<NoopCompressor>(CHAIN_STRING, CHAIN_STRING,
         R"('stream', true)", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, view_noop) {
-    test::roundtrip<NoopCompressor>(CHAIN_STRING, CHAIN_STRING,
+    test::roundtrip_ex<NoopCompressor>(CHAIN_STRING, CHAIN_STRING,
         R"('view', true)", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, view_noop_null) {
-    test::roundtrip<NoopEscapingCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
+    test::roundtrip_ex<NoopEscapingCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
         R"('view', true)", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, stream_chain_noop_noop) {
-    test::roundtrip<ChainCompressor>(CHAIN_STRING, CHAIN_STRING,
+    test::roundtrip_ex<ChainCompressor>(CHAIN_STRING, CHAIN_STRING,
         R"(noop('stream', true), noop('stream', true))", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, view_chain_noop_noop) {
-    test::roundtrip<ChainCompressor>(CHAIN_STRING, CHAIN_STRING,
+    test::roundtrip_ex<ChainCompressor>(CHAIN_STRING, CHAIN_STRING,
         R"(noop('view', true), noop('view', true))", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, view_chain_noop_null_noop) {
-    test::roundtrip<ChainCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
+    test::roundtrip_ex<ChainCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
         R"(noop_null('view', true), noop('view', true))", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, view_chain_noop_noop_null) {
-    test::roundtrip<ChainCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
+    test::roundtrip_ex<ChainCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
         R"(noop('view', true), noop_null('view', true))", COMPRESSOR_REGISTRY);
 }
 
 TEST(NoopCompressor, test) {
-    test::roundtrip<NoopCompressor>("abcd", "abcd");
-    test::roundtrip<NoopCompressor>("äüö", "äüö");
-    test::roundtrip<NoopCompressor>("\0\xff"_v, "\0\xff"_v);
-    test::roundtrip<NoopCompressor>("\xff\0"_v, "\xff\0"_v);
+    test::roundtrip_ex<NoopCompressor>("abcd", "abcd");
+    test::roundtrip_ex<NoopCompressor>("äüö", "äüö");
+    test::roundtrip_ex<NoopCompressor>("\0\xff"_v, "\0\xff"_v);
+    test::roundtrip_ex<NoopCompressor>("\xff\0"_v, "\xff\0"_v);
 }
 
 TEST(NoopEscapingCompressor, noop) {
-    test::roundtrip<NoopEscapingCompressor>("abcd", "abcd\0"_v);
+    test::roundtrip_ex<NoopEscapingCompressor>("abcd", "abcd\0"_v);
 }
 
 TEST(NoopEscapingCompressor, escaping) {
-    test::roundtrip<NoopEscapingCompressor>("ab\xff!"_v, "ab\xff\xff!\0"_v);
-    test::roundtrip<NoopEscapingCompressor>("ab\x00!"_v, "ab\xff\xfe!\0"_v);
-    test::roundtrip<NoopEscapingCompressor>("ab\xfe!"_v, "ab\xfe!\0"_v);
+    test::roundtrip_ex<NoopEscapingCompressor>("ab\xff!"_v, "ab\xff\xff!\0"_v);
+    test::roundtrip_ex<NoopEscapingCompressor>("ab\x00!"_v, "ab\xff\xfe!\0"_v);
+    test::roundtrip_ex<NoopEscapingCompressor>("ab\xfe!"_v, "ab\xfe!\0"_v);
 
     std::vector<uint8_t> a {
         0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,
@@ -240,5 +240,5 @@ TEST(NoopEscapingCompressor, escaping) {
         0
     };
 
-    test::roundtrip<NoopEscapingCompressor>(View(a), View(b));
+    test::roundtrip_ex<NoopEscapingCompressor>(View(a), View(b));
 }

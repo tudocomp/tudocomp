@@ -38,7 +38,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/stamps)
 
 # will compile and run ${test_target}.cpp
 # and add all further arguments as dependencies
-macro(generic_run_test test_target
+macro(generic_run_test test_target test_file
       driver driver_dep register_target register_build_target kind_name)
     set(options)
     set(oneValueArgs)
@@ -49,11 +49,7 @@ macro(generic_run_test test_target
     add_executable(${test_target}_testrunner
         EXCLUDE_FROM_ALL
         ${driver}
-        ${test_target}.cpp
-    )
-    add_dependencies(
-        ${test_target}_testrunner
-        generate_tudocomp_hpp
+        ${test_file}
     )
     target_link_libraries(${test_target}_testrunner
         glog
@@ -120,6 +116,20 @@ endmacro()
 macro(run_test test_target)
 generic_run_test(
     ${test_target}
+    "${test_target}.cpp"
+    "test/test_driver.cpp"
+    gtest
+    check
+    build_check
+    "Test"
+    ${ARGN}
+)
+endmacro()
+
+macro(run_doc_snippet snippet)
+generic_run_test(
+    "doc_${snippet}"
+    "doc_snippets/${snippet}.cpp"
     "test/test_driver.cpp"
     gtest
     check

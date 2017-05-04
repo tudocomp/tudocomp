@@ -4,6 +4,12 @@ add_executable(
     tudocomp_driver.cpp
 )
 
+add_dependencies(
+    tudocomp_driver
+
+    generate_version
+)
+
 target_link_libraries(
     tudocomp_driver
 

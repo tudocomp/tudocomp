@@ -14,6 +14,8 @@
 
 #include "lz78u/pre_header.hpp"
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lz78u {
 
@@ -104,8 +106,8 @@ public:
 
     inline static Meta meta() {
         Meta m("compressor", "lz78u", "Lempel-Ziv 78 U\n\n" );
-        m.option("comp").templated<strategy_t>();
-        m.option("coder").templated<ref_coder_t>();
+        m.option("comp").templated<strategy_t>("lz78u_strategy");
+        m.option("coder").templated<ref_coder_t>("coder");
         m.option("threshold").dynamic("3");
         // m.option("dict_size").dynamic("inf");
         m.needs_sentinel_terminator();
@@ -113,28 +115,26 @@ public:
     }
 
     virtual void compress(Input& input, Output& out) override {
-        auto phase1 = env().stat_phase("lz78u");
+        StatPhase phase1("lz78u");
         //std::cout << "START COMPRESS\n";
         const len_t threshold = env().option("threshold").as_integer(); //factor threshold
-        env().log_stat("threshold", threshold);
+        phase1.log_stat("threshold", threshold);
 
         auto iview = input.as_view();
         View T = iview;
 
         lz78u::SuffixTree::cst_t backing_cst;
-        {
-            auto phase2 = env().stat_phase("construct suffix tree");
-
+        StatPhase::wrap("construct suffix tree", [&]{
             // TODO: Specialize sdsl template for less alloc here
             std::string bad_copy_1 = T.slice(0, T.size() - 1);
             //std::cout << "text: " << vec_to_debug_string(bad_copy_1) << "\n";
 
             construct_im(backing_cst, bad_copy_1, 1);
-        }
+        });
         lz78u::SuffixTree ST(backing_cst);
 
         const size_t max_z = T.size() * bits_for(ST.cst.csa.sigma) / bits_for(T.size());
-        env().log_stat("max z", max_z);
+        phase1.log_stat("max z", max_z);
 
         sdsl::int_vector<> R(ST.internal_nodes,0,bits_for(max_z));
 

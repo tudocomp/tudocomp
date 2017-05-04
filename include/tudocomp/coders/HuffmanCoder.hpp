@@ -517,8 +517,10 @@ public:
     const huff::extended_huffmantable m_table;
     const uint8_t*const ordered_map_to_effective;
     public:
-        ENCODER_CTOR(env, out, literals)
-            , m_table{ [&] () {
+        template<typename literals_t>
+        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
+            : tdc::Encoder(std::move(env), out, literals),
+            m_table{ [&] () {
                 if(tdc_likely(!literals.has_next())) return huff::extended_huffmantable { nullptr, nullptr, nullptr, 0, nullptr, 0 };
                 const len_t*const C = huff::count_alphabet_literals(std::move(literals));
                 const len_t alphabet_size = huff::effective_alphabet_size(C);
@@ -538,10 +540,16 @@ public:
                 huff::huffmantable_encode(*m_out, m_table);
             }
         }
+
         ~Encoder() {
             if(tdc_likely(ordered_map_to_effective != nullptr)) {
                 delete [] ordered_map_to_effective;
             }
+        }
+
+        template<typename literals_t>
+        inline Encoder(Env&& env, Output& out, literals_t&& literals)
+            : Encoder(std::move(env), std::make_shared<BitOStream>(out), literals) {
         }
 
         using tdc::Encoder::encode; // default encoding as fallback
@@ -569,7 +577,9 @@ public:
             }
         }
 
-        DECODER_CTOR(env, in) {
+        inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
+            : tdc::Decoder(std::move(env), in) {
+
             if(tdc_unlikely(!m_in->read_bit())) {
                 ordered_map_from_effective = nullptr;
                 return;
@@ -581,6 +591,10 @@ public:
             prefix_sum_lengths = huff::gen_prefix_sum_lengths(ordered_codelengths, table.alphabet_size, table.longest);
             delete [] ordered_codelengths;
             firstcodes = huff::gen_first_codes(table.numl, table.longest);
+        }
+
+        inline Decoder(Env&& env, Input& in)
+            : Decoder(std::move(env), std::make_shared<BitIStream>(in)) {
         }
 
         using tdc::Decoder::decode; // default decoding as fallback

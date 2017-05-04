@@ -4,6 +4,8 @@
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 #include <tudocomp/Range.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 	class BitCoder;
@@ -63,8 +65,8 @@ public:
 
     inline static Meta meta() {
         Meta m("compressor", "lz78", "Lempel-Ziv 78\n\n" LZ78_DICT_SIZE_DESC);
-        m.option("coder").templated<coder_t, BitCoder>();
-        m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>();
+        m.option("coder").templated<coder_t, BitCoder>("coder");
+        m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>("lz78trie");
         m.option("dict_size").dynamic("inf");
         return m;
     }
@@ -74,7 +76,7 @@ public:
         auto is = input.as_stream();
 
         // Stats
-        auto phase1 = env().stat_phase("Lz78 compression");
+        StatPhase phase1("Lz78 compression");
 
         len_t stat_dictionary_resets = 0;
         len_t stat_dict_counter_at_last_reset = 0;
@@ -134,10 +136,10 @@ public:
             stat_factor_count++;
         }
 
-        env().log_stat("factor_count", stat_factor_count);
-        env().log_stat("dictionary_reset_counter",
+        phase1.log_stat("factor_count", stat_factor_count);
+        phase1.log_stat("dictionary_reset_counter",
                        stat_dictionary_resets);
-        env().log_stat("max_factor_counter",
+        phase1.log_stat("max_factor_counter",
                        stat_dict_counter_at_last_reset);
     }
 

@@ -46,10 +46,6 @@ body, table, div, p, dl {
     font-weight: bold;
 }
 
-#projectnumber::before {
-    content: 'v';
-}
-
 #projectnumber {
     font-size: inherit;
     font-weight: bold;

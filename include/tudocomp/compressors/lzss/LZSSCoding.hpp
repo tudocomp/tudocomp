@@ -10,6 +10,8 @@
 //#include <tudocomp/compressors/lzss/LZSSDecodeForwardListMapBuffer.hpp>
 //#include <tudocomp/compressors/lzss/LZSSDecodeForwardQueueListBuffer.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lzss {
 
@@ -131,7 +133,7 @@ inline void decode_text(coder_t& decoder, std::ostream& outs) {
     }
 
     // log stats
-    decoder.env().log_stat("longest_chain", buffer.longest_chain());
+    StatPhase::log("longest_chain", buffer.longest_chain());
 
     // write decoded text
     buffer.write_to(outs);
