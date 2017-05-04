@@ -151,7 +151,9 @@ public:
         }
 
     public:
-        ENCODER_CTOR(env, out, literals),
+        template<typename literals_t>
+        inline Encoder(Env&& env, Output& out, literals_t&& literals)
+            : tdc::Encoder(std::move(env), out, literals),
         C(count_alphabet_literals(std::move(literals))) {
             build_intervals(C);
             writeCodebook();
