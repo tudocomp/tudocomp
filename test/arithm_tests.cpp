@@ -1,0 +1,51 @@
+#include <gtest/gtest.h>
+
+#include "test/util.hpp"
+#include <tudocomp/Literal.hpp>
+#include <tudocomp/AlgorithmStringParser.hpp>
+#include <tudocomp/CreateAlgorithm.hpp>
+#include <tudocomp/coders/ArithmeticCoder.hpp>
+
+void test_arithm(const std::string& text) {
+    using namespace tdc;
+
+    //encode
+    std::stringstream input(text);
+    std::stringstream output;
+
+    {//write
+        tdc::io::Output out(output);
+        ArithmeticCoder::Encoder encoder(create_env(ArithmeticCoder::meta()), out, ViewLiterals(text));
+
+        {//now writing
+            literal_t c;
+            while(input.get(c)) {
+                encoder.encode(c, Range(c));
+            }
+        }
+    }
+
+    {//read
+        tdc::io::Input in(output);
+        ArithmeticCoder::Decoder decoder(create_env(ArithmeticCoder::meta()), in);
+        input.clear();
+        input.str(std::string{});
+
+        while(!decoder.eof()) {
+            input << decoder.template decode<literal_t> (literal_r);
+        }
+    }
+    ASSERT_EQ(input.str(), text);
+    ASSERT_EQ(input.str().size(), text.size());
+}
+
+TEST(arithm, nullbyte) {
+    test_arithm("hel\0lo");
+    test_arithm("hello\0");
+    test_arithm("hello\0\0\0");
+}
+
+TEST(arithm, stringgenerators) {
+    std::function<void(std::string&)> func(test_arithm);
+    test::on_string_generators(func,20);
+}
