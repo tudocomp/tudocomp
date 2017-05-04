@@ -14,7 +14,7 @@ class LiteralEncoder: public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "encode", "Simply encodes the input's individual characters.");
-        m.option("coder").templated<coder_t>();
+        m.option("coder").templated<coder_t>("coder");
         return m;
     }
 

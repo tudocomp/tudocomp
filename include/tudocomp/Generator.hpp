@@ -19,9 +19,5 @@ public:
     virtual std::string generate() = 0;
 };
 
-/// \cond INTERNAL
-using GeneratorConstructor = std::function<std::unique_ptr<Generator>(Env&&)>;
-/// \endcond
-
 }
 

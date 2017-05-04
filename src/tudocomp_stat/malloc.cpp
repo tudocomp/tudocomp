@@ -23,6 +23,7 @@ void* malloc(size_t size) {
     if(!size) return NULL;
 
     void *ptr = __libc_malloc(size + sizeof(block_header_t));
+    if(!ptr) return ptr; // malloc failed
 
     auto block = (block_header_t*)ptr;
     block->magic = MEMBLOCK_MAGIC;

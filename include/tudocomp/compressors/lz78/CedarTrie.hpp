@@ -50,8 +50,9 @@ public:
     }
 };
 
-using io::NULL_ESCAPE_ESCAPE_BYTE;
-using io::NULL_ESCAPE_REPLACEMENT_BYTE;
+const uint8_t NULL_ESCAPE_ESCAPE_BYTE = 255;
+const uint8_t NULL_ESCAPE_REPLACEMENT_BYTE = 254;
+
 const cedar_factorid_t HIDDEN_ESCAPE_ID = -3; // NOTE: May not be -1 or -2
 
 class CedarTrie: public Algorithm, public LZ78Trie<CedarSearchPos> {

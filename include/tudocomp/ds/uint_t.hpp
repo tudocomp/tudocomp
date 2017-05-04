@@ -62,8 +62,8 @@ class uint_t: public IntegerBase<uint_t<bits>> {
     static_assert(bits < 65, "bits must be at most 64");
     uint64_t m_data: bits;
 
-    friend class UinttDispatch<uint32_t>;
-    friend class UinttDispatch<uint64_t>;
+    friend struct UinttDispatch<uint32_t>;
+    friend struct UinttDispatch<uint64_t>;
 
 public:
     constexpr uint_t(): m_data(0) {}

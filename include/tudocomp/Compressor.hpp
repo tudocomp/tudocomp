@@ -36,9 +36,5 @@ public:
     virtual void decompress(Input& input, Output& output) = 0;
 };
 
-/// \cond INTERNAL
-using CompressorConstructor = std::function<std::unique_ptr<Compressor>(Env&&)>;
-/// \endcond
-
 }
 

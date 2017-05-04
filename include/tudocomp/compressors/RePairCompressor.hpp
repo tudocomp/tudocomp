@@ -86,7 +86,7 @@ private:
 public:
     inline static Meta meta() {
         Meta m("compressor", "repair", "Re-Pair compression");
-        m.option("coder").templated<coder_t, BitCoder>();
+        m.option("coder").templated<coder_t, BitCoder>("coder");
         m.option("max_rules").dynamic(0);
         return m;
     }

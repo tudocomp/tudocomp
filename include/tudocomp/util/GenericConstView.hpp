@@ -34,6 +34,13 @@ class ConstGenericView: GenericViewBase<T, const T*> {
     using Super = GenericViewBase<T, const T*>;
     inline ConstGenericView(const Super& other): Super::GenericViewBase(other) {}
     friend class GenericView<T>;
+
+    using Super::op_eq;
+    using Super::op_not_eq;
+    using Super::op_greater;
+    using Super::op_greater_eq;
+    using Super::op_less;
+    using Super::op_less_eq;
 public:
     using value_type             = typename Super::value_type;
     using const_reference        = typename Super::const_reference;
@@ -264,32 +271,32 @@ public:
 
 template<class T>
 bool operator==(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    return ConstGenericView<T>::Super::op_eq(lhs, rhs);
+    return ConstGenericView<T>::op_eq(lhs, rhs);
 }
 
 template<class T>
 bool operator!=(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    return ConstGenericView<T>::Super::op_not_eq(lhs, rhs);
+    return ConstGenericView<T>::op_not_eq(lhs, rhs);
 }
 
 template<class T>
 bool operator<(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    return ConstGenericView<T>::Super::op_less(lhs, rhs);
+    return ConstGenericView<T>::op_less(lhs, rhs);
 }
 
 template<class T>
 bool operator<=(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    return ConstGenericView<T>::Super::op_less_eq(lhs, rhs);
+    return ConstGenericView<T>::op_less_eq(lhs, rhs);
 }
 
 template<class T>
 bool operator>(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    return ConstGenericView<T>::Super::op_greater(lhs, rhs);
+    return ConstGenericView<T>::op_greater(lhs, rhs);
 }
 
 template<class T>
 bool operator>=(const ConstGenericView<T>& lhs, const ConstGenericView<T>& rhs) {
-    return ConstGenericView<T>::Super::op_greater_eq(lhs, rhs);
+    return ConstGenericView<T>::op_greater_eq(lhs, rhs);
 }
 
 template<class T>

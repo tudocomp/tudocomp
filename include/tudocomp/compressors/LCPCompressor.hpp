@@ -80,12 +80,12 @@ class LCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "lcpcomp");
-        m.option("coder").templated<coder_t>();
-        m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>();
-        m.option("dec").templated<dec_t, lcpcomp::CompactDec>();
-        m.option("textds").templated<text_t, TextDS<>>();
+        m.option("coder").templated<coder_t>("coder");
+        m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>("lcpcomp_comp");
+        m.option("dec").templated<dec_t, lcpcomp::CompactDec>("lcpcomp_dec");
+        m.option("textds").templated<text_t, TextDS<>>("textds");
         m.option("threshold").dynamic(3);
-        m.needs_sentinel_terminator();
+        m.uses_textds<text_t>(strategy_t::textds_flags());
         return m;
     }
 
@@ -95,7 +95,7 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
         DCHECK(in.ends_with(uint8_t(0)));
-        text_t text(env().env_for_option("textds"), in);
+        text_t text(env().env_for_option("textds"), in, strategy_t::textds_flags());
 
         // read options
         const len_t threshold = env().option("threshold").as_integer(); //factor threshold

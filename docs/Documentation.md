@@ -56,10 +56,8 @@ To achieve this kind of modularity, the use of C++'s meta programming features
 (namely templates) is heavily encouraged. *tudocomp* is designed in a way that
 allows template parameters to be populated seemingly at runtime.
 
-## Compression Chains
-
-Compressors and coders can be chained so that the output of one becomes the
-input of another.
+Furthermore, compressors and coders can be chained so that the output of one
+becomes the input of another.
 
 ## Library and Command-Line
 
@@ -126,9 +124,7 @@ implementation.
     * Fibonacci words
     * Thue-Morse strings
     * Run-Rich strings (Matsubara et al.)
-* Scripts for downloading a selected
-  [text corpus collection](http://tudocomp.org/text-collection.html) for testing
-  and benchmarking purposes
+* Scripts for downloading a text corpus for testing and benchmarking purposes
 * Tools to compare running time, heap memory usage and compression ratio of
   different compressor suites (*tudocomp* as well as third-party) on a freely
   definable set of inputs
@@ -155,23 +151,35 @@ $ cmake ..
 $ make
 ~~~
 
+Note that *tudocomp* is configured for a debug build by default. The build
+type can be changed by passing the `CMAKE_BUILD_TYPE` corresponding parameter
+to CMake:
+
+* Debug build (default): `cmake -DCMAKE_BUILD_TYPE=Debug ..`
+* Release build: `cmake -DCMAKE_BUILD_TYPE=Release ..`
+
+For benchmarking purposes, the Release configuration is heavily recommended, as
+it will tell the compiler to perform numerous optimizations.
+
 ### Dependencies
 
-*tudocomp* has the following external dependencies:
+*tudocomp*'s CMake build process will either find external dependencies on the
+system if they have been properly installed, or automatically download and build
+them from their official repositories in case they cannot be found. In that
+regard, a proper installation of the dependencies is not required.
+
+Said external dependencies are the following:
 
 * [SDSL](https://github.com/simongog/sdsl-lite)
   (2.1 or later).
-* [Gflags](https://gflags.github.io/gflags) (2.1.2 or later).
 * [Google Logging (glog)](https://github.com/google/glog) (0.34 or later).
 
 Additionally, the tests require
 [Google Test](https://github.com/google/googletest) (1.7.0 or later).
 
-The CMake build process will either find the external dependencies on the build
-system if they have been properly installed, or automatically download and build
-them from their official repositories in case they cannot be found.
+### Documentation Build Requirements
 
-For building the documentation, the following tools are required:
+For building the documentation, the following tools need to be installed:
 
 * [LaTeX](http://www.latex-project.org) (specifically the `pdflatex` component)
 * [Doxygen](http://doxygen.org) (1.8 or later).
@@ -188,8 +196,14 @@ limited feature set. Cygwin does not allow overrides of `malloc`, therefore the
 heap allocation counter cannot work and statistics tracking becomes largely
 nonfunctional.
 
->> *TODO*: Check if `valgrind` works in Ubuntu on Windows, since system memory
-   reporting via `free` or `top` does not.
+Note that [the comparison tool](#the-comparison-tool) relies on `valgrind`,
+which is not functional in the Bash on Ubuntu on Windows until the
+[Windows 10 Creators Update](https://blogs.windows.com/windowsexperience/2017/04/11/whats-new-in-the-windows-10-creators-update)
+[^windows-valgrind].
+
+[^windows-valgrind]: `valgrind` reportedly fails starting in Bash on Ubuntu on
+Windows before the Creators Update. The issue had been filed officially
+[here](https://github.com/Microsoft/BashOnWindows/issues/1295).
 
 ## Command-line Tool
 
@@ -223,6 +237,14 @@ Print the 10^th^ Fibonacci word to stdout:
 
 Compress the 10^th^ Fibonacci word, print to stdout without header:
 : `$ tdc -g "fib(10)" -a "lzss(coder=ascii)" --raw --usestdout`
+
+#### Chaining
+
+Compressors and coders can be chained so that the output of one becomes the
+input of another.
+
+Chain the Burrows-Wheeler transform of a file into run-length, move-to-front and Huffman coding:
+: `$ tdc -a "bwt:rle:mtf:encode(huff)" file.txt`
 
 ## Library
 
@@ -467,7 +489,7 @@ stored and perform the respective conversion. If no bit width is given, the
 default size of the data type will be used.
 
 Beyond writing single bits and fixed-width integers, the bit I/O features some
-basic integer encodings:
+universal integer encodings:
 
 * Unary code ([`write_unary`](@DX_BITOSTREAM_WRITE_UNARY@) /
   [`read_unary`](@DX_BITISTREAM_READ_UNARY@))
@@ -599,7 +621,7 @@ a minimal example:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
 inline static Meta meta() {
-    Meta m("undisclosed", "my_algorithm", "An example algorithm");
+    Meta m("example", "my_algorithm", "An example algorithm");
     return m;
 }
 ~~~
@@ -632,7 +654,7 @@ Options are declared in the algorithm's `Meta` object using the
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
 inline static Meta meta() {
-    Meta m("undisclosed", "my_algorithm", "An example algorithm");
+    Meta m("example", "my_algorithm", "An example algorithm");
     m.option("param1").dynamic("default_value");
     m.option("number").dynamic(147);
     return m;
@@ -668,7 +690,7 @@ parameter `strategy_t`, the following declares it as an option in the `meta`
 function:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
-m.option("strategy").templated<strategy_t>();
+m.option("strategy").templated<strategy_t>("my_strategy_t");
 ~~~
 
 The function [`templated`](@DX_OPTIONBUILDER_TEMPLATED@) determines that the
@@ -676,13 +698,14 @@ option named "strategy" can be assigned with an object of the template type. It
 is expected that substitued types also inherit from `Algorithm` and provide a
 `Meta` object.
 
->> *TODO*: Describe type connection once
-   [#18854](https://projekte.itmc.tu-dortmund.de/issues/18854) is resolved.
+The additional constraint, `"my_strategy_t"`, requires strategy algorithm to be
+of type "my_strategy_t". This corresponds to an Algorithm's type as reported by
+its `Meta` object.
 
 Consider the following example function for the algorithm:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
-inline int execute() {
+inline virtual int execute() override {
     // read number option as an integer
     auto number = env().option("number").as_integer();
 
@@ -741,6 +764,9 @@ public:
 ~~~
 
 Note how both strategies inherit from `Algorithm` and provide a `Meta` object.
+Both are of type `my_strategy_t` as required by the "strategy" option of the
+main algorithm.
+
 `SquareStrategy` implements a simple `result` function that squares the input
 parameter, while `MultiplyStrategy` accepts another option named "factor", that
 is read and multiplied by the inpt parameter to compute the result.
@@ -781,13 +807,31 @@ mix. Note how in the previous section's example, `create_algo` is called with
 fixed template types. A registry can be used to map string identifiers to actual
 types to obscure fixed typing.
 
-The following example creates a `Registry` and registers the example algorithm
+The following example creates a registry and registers the example algorithm
 with the two strategies. It is then used to instantiate both versions without
 the need of fixed typing:
 
->> *TODO*: `Registry` currently only allows `Compressor` or `Generator` types
-   to be registered at the top level. This could be replaced by a template
-   parameter - see [#18948](https://projekte.itmc.tu-dortmund.de/issues/18948).
+~~~ {.cpp caption="algorithm_impl.cpp"}
+// Create a registry for algorithms of type "example"
+Registry<MyAlgorithmBase> registry("example");
+
+// Register two specializations of the algorithm
+registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
+registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
+
+// Execute the algorithm with the square strategy
+auto algo_sqr = registry.select("my_algorithm(number=5, strategy=sqr)");
+algo_sqr->execute(); // the result is 25
+
+// Execute the algorithm with the multiply strategy
+auto algo_mul = registry.select("my_algorithm(number=5, strategy=mul(8))");
+algo_mul->execute(); // the result is 40
+~~~
+
+Note that for this example, the interface `MyAlgorithmBase` was introduced,
+which `MyAlgorithm` inherits from. It merely declares the virtual function
+`execute`. The additional layer of abstraction is necessary only for use as a
+template parameter for the `Registry` class in this example.
 
 ## Coders
 
@@ -1012,7 +1056,8 @@ Out of the box, *tudocomp* currently implements a set of coders, including:
 
 * Human readable coding (ASCII, for debugging purposes)
 * Binary coding
-* Low-entropy coding, including Elias and Huffman code
+* Universal codes (e.g. Elias codes)
+* Statistic codes (e.g. Huffman code)
 
 A full list can be found in the inheritance diagram for the
 [`Encoder`](@DX_ENCODER@) class' API reference.
@@ -1050,7 +1095,7 @@ class MyCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "my_compressor", "An example compressor");
-        m.option("coder").templated<coder_t>();
+        m.option("coder").templated<coder_t>("coder");
         return m;
     }
 
@@ -1059,7 +1104,7 @@ public:
     virtual void compress(Input& input, Output& output) override {
         // retrieve random access on the input
         auto view = input.as_view();
-        
+
         // find the lexicographically smallest and largest characters
         uliteral_t c_min = ULITERAL_MAX;
         uliteral_t c_max = 0;
@@ -1192,12 +1237,57 @@ that has to take care of this.
 
 ## String Generators
 
->> *TODO*: Describe interface and provide usage example.
+String generators are used to generate input strings via the command-line (as
+described in the [Command-line Tool](#command-line-tool) section) or for unit
+tests, to name some examples.
 
-## Text Data Structures
+They are based on the [`Generator`](@DX_GENERATOR@) class, which inherits from
+`Algorithm` (see [Algorithms](#algorithms)) and only need to implement the
+[`generate`](@DX_GENERATOR_GENERATE@) function.
 
->> *TODO*: Describe *NEW* TextDS
-   [#18910](https://projekte.itmc.tu-dortmund.de/issues/18910)
+In order to allow for convenient use within *tudocomp*, the actual generation
+should be implemented in a static function that receives all parameters directly
+instead of relying on an environment.
+
+The following class fully implements a string generator that simply repeats an
+optional character an optional amount of times:
+
+~~~ {.cpp caption="generator_impl.cpp"}
+class MyGenerator : public Generator {
+public:
+    inline static Meta meta() {
+        Meta m("generator", "my_compressor", "An example compressor");
+        m.option("length").dynamic();
+        m.option("char").dynamic('a');
+        return m;
+    }
+
+    inline static std::string generate(size_t length, char c) {
+        return std::string(length, c);
+    }
+
+    using Generator::Generator;
+
+    inline virtual std::string generate() override {
+        return generate(
+            env().option("length").as_integer(),
+            env().option("char").as_integer());
+    }
+};
+~~~
+
+### Available String Generators
+
+Out of the box, *tudocomp* currently implements a set of string generators,
+including:
+
+* Random strings with uniform character distribution
+* Fibonacci words
+* Thue-Morse strings
+* Run-Rich strings (Matsubara et al.)
+
+A full list can be found in the inheritance diagram for the
+[`Generator`](@DX_GENERATOR@) class' API reference.
 
 ## Runtime Statistics
 
@@ -1206,7 +1296,7 @@ dynamically allocated memory (e.h. via `malloc` or `new`) over the application
 lifetime.
 
 Recall at this point the restrictions when trying to use these features in a
-Windows enviroment (see [Windows Support](#windows-support)).
+Windows environment (see [Windows Support](#windows-support)).
 
 Runtime statistics are tracked in *phases*, ie. the running time and memory
 peak can be measured for individual stages during an algorithm's run. These
@@ -1350,7 +1440,7 @@ phase splitting:
 StatPhase::wrap("Phase 3", []{
     // Phase 3.1 yields a complex result
     StatPhase sub_phase("Phase 3.1");
-    
+
     char* result_part_1 = new char[1024];
     char* result_part_2 = new char[2048];
     std::this_thread::sleep_for(std::chrono::milliseconds(40));
@@ -1389,11 +1479,191 @@ displayed as a tooltip when the mouse is moved over its bar in the diagram.
 The Charter provides several options to customize the chart, as well as
 exporting it as either a vector graphic (`svg`) or an image file (`png`).
 
-## Text Corpus Collection
+## Text Corpus
 
->> *TODO*: Describe download targets and refer to info page.
+For testing and benchmarking purposes, *tudocomp* provides a utility to
+automatically download or generate a text corpus. For convenience, it also
+creates several prefixes of the included texts (200 MiB, 100 MiB 50 MiB, ...).
+
+The collection includes the [tagme](http://acube.di.unipi.it/tagme-dataset)
+and [hashtag](http://acube.di.unipi.it/hashtag-datasets) datasets from the
+[Lab of Advanced Algorithms and Applications](http://acube.di.unipi.it/datasets),
+as well as the [Pizza&Chili Corpus](http://pizzachili.dcc.uchile.cl)
+(identified by the prefixes `pc` and `pcr` below).
+
+The following collections are generated by *tudocomp* itself:
+
+ - `commoncrawl` - composition of a random subset of
+   [common crawl](http://commoncrawl.org), containing only the plain text
+   (i.e., excluding header and markup) of websites in ASCII format.
+ - `wiki-all-vital` - plain text composition of about 10,000 of the
+    [most vital Wikipedia articles](https://en.wikipedia.org/wiki/Wikipedia:Vital_articles/Expanded).
+
+The following table contains information relevant for text compression on each
+of the included texts:
+
+| Text              | σ   | max lcp   | avg lcp | bwt runs  | z       | max LZ77 factor | H~0~ | H~1~ | H~2~ | H~3~
+| ---               | --- | ---       | ---     | ---       | ---     | ---             | ---  | ---  | ---  | ---
+| `hashtag        ` | 179 | 54,075    | 84      | 63,014K   | 13,721K | 54,056          | 4.59 | 3.06 | 2.69 | 2.46
+| `pc-dblp.xml    ` | 97  | 1,084     | 44      | 29,585K   | 7,035K  | 1,060           | 5.26 | 3.48 | 2.17 | 1.43
+| `pc-dna         ` | 17  | 97,979    | 60      | 128,863K  | 13,970K | 97,966          | 1.97 | 1.93 | 1.92 | 1.92
+| `pc-english     ` | 226 | 987,770   | 9390    | 72,032K   | 13,971K | 987,766         | 4.52 | 3.62 | 2.95 | 2.42
+| `pc-proteins    ` | 26  | 45,704    | 278     | 108,459K  | 20,875K | 45,703          | 4.20 | 4.18 | 4.16 | 4.07
+| `pcr-cere       ` | 6   | 175,655   | 3541    | 10,422K   | 1,447K  | 175,643         | 2.19 | 1.81 | 1.81 | 1.80
+| `pcr-einstein.en` | 125 | 935,920   | 45983   | 153K      | 496K    | 906,995         | 4.92 | 3.66 | 2.61 | 1.63
+| `pcr-kernel     ` | 161 | 2,755,550 | 149872  | 2,718K    | 775K    | 2,755,550       | 5.38 | 4.03 | 2.93 | 2.05
+| `pcr-para       ` | 6   | 72,544    | 2268    | 13,576K   | 1,927K  | 70,680          | 2.12 | 1.88 | 1.88 | 1.87
+| `pc-sources     ` | 231 | 307,871   | 373     | 47,651K   | 11,542K | 307,871         | 5.47 | 4.08 | 3.10 | 2.34
+| `tagme          ` | 206 | 1,281     | 26      | 65,195K   | 13,841K | 1,279           | 4.90 | 3.77 | 3.20 | 2.60
+| `wiki-all-vital ` | 205 | 8,607     | 15      | 80,609K   | 16,274K | 8,607           | 4.56 | 3.62 | 3.03 | 2.45
+| `commoncrawl    ` | 115 | 246,266   | 1727    | 45,899K   | 10,791K | 246,266         | 5.37 | 4.30 | 3.55 | 2.78
+
+*Legend*:
+
+* *σ* is the alphabet size, i.e., the amount of distinct symbols occuring in
+   the text.
+* *max lcp* is the maximum value in the text's longest common prefix array.
+* *avg lcp* is the average of all longest common prefix array values.
+* *bwt runs* is the number of runs in the Burrows-Wheeler transform of the text
+   (i.e., how often `BWT[i] != BWT[i-1]` occurs).
+* *z* is the number of LZ77 factors (n window) for the text.
+* *max LZ77 factor* is the length of the longest LZ77 factor (no window).
+* *H~k~* is the k-th order entropy of the text.
+
+### Downloading the Text Corpus
+
+The following `make` command will download all of the text corpii listed above
+into the repository's `etc/datasets` directory:
+
+~~~
+$ make datasets
+~~~
+
+There are also targets to download specific subsets only. All of them have
+the prefix `datasets_` and should be offered by make's tab completion in the
+shell.
 
 ## The Comparison Tool
 
->> *TODO*: Describe usage.
+*tudocomp* contains a utility to compare running time, memory usage and
+compression rate for a range of compressors, called the comparison tool. It
+comes in the form of a Python 3 script located at `etc/compare.py`. Note that
+it prints a usage description when passing the `--help` parameter.
 
+The tool uses `valgrind` to measure the memory actually used by a process.
+Therefore, recall at this point the restrictions when using it in a Windows
+environment (see [Windows Support](#windows-support)).
+
+The comparison tool will perform the following steps for each input file and
+each compressor defined in the comparison suite (more details on suites
+follows further below):
+
+1. Compress the input file and measure the compressor's running time
+1. Compress the input file while measuring the compressor's memory usage
+1. Compute the compression rate (size of output file divided by the input file's
+   size).
+1. Decompress the output file and measure the decompressor's running time
+1. Decompress the output file while measuring the decompressor's memory usage
+1. Compare the decompressor's output against the original input file
+
+Memory measurement via `valgrind` slows the process down significantly, which
+is why the compressor / decompressor is executed twice in order to measure time
+and memory, respectively.  In case `valgrind` is unavailable, memory measurement
+will not take place.
+
+The gathered data is printed as a table like in the following example:
+
+~~~
+File: datasets/pc_dna.1MB (1.0MiB, sha256=b668b098927d32c5a239aef82dba6d45a034a205e64bf153810a5fe6f88fe196)
+
+ Compressor |   C Time |  C Memory |    C Rate |   D Time |  D Memory |  chk |
+------------------------------------------------------------------------------
+    gzip -1 |   33.0ms |    6.6MiB |  32.4776% |   22.5ms |    6.6MiB |   OK |
+    gzip -9 |  711.0ms |    6.6MiB |  27.2440% |   10.2ms |    6.6MiB |   OK |
+   bzip2 -1 |  123.5ms |    9.3MiB |  26.6178% |   51.9ms |    8.7MiB |   OK |
+   bzip2 -9 |  124.4ms |   15.4MiB |  26.1772% |   58.7ms |   11.7MiB |   OK |
+    lzma -1 |  120.3ms |   23.3MiB |  28.8488% |   30.9ms |   15.8MiB |   OK |
+    lzma -9 |  763.0ms |  687.8MiB |  24.7587% |   26.5ms |   78.8MiB |   OK |
+~~~
+
+The columns have the following meaning:
+
+* *Compressor*: display name of the compressor as defined in the comparison
+  suite (see below)
+* *C Time*: running time of the compressor
+* *C Memory*: memory usage of the compressor
+* *C Rate*: compression rate (output size divided by input size)
+* *D Time*: running time of the decompressor
+* *D Memory*: memory usage of the decompressor
+* *chk*: `OK` if the decompessed file equals the original file (tested by
+  comparing their respective SHA256 hashes), otherwise `FAIL`
+
+Multiple iterations can be performed per file (by passing the `-n` parameter).
+In this case, the respective median values of all iterations will be printed.
+
+### Comparison Suites
+
+A comparison suite defines a range of compressor pairs to be compared. A
+compressor pair consists of a display name for the tabular output, as well as
+information on how to invoke the compressor and decompressor on a command-line
+level (ie. command, arguments, and how input / output is passed to them).
+
+Technically speaking, a suite must be a valid Python statement that resolves to
+a list of `CompressorPair` objects. These are (named) tuples of a string
+(the display name) and two `Exec` objects that define the command-line interface
+for the compressor and decompressor, respectively. To that end, `Exec` contains
+the command-line to execute as well as means to pass input and output file
+information.
+
+The following example defines a small suite for comparing `gzip` against
+a *tudocomp* implementation of LZ77 with subsequent Huffman coding:
+
+~~~ { .py caption="compare_example.suite" }
+[
+# gzip -1
+CompressorPair(name = 'gzip',
+    compress   = Exec(args=['gzip', '-1'], inp=StdIn, outp=StdOut),
+    decompress = Exec(args=['gzip', '-d'], inp=StdIn, outp=StdOut)),
+
+# tudocomp with LZSS/LCP and Huffman
+CompressorPair(name = 'tdc_lzss_lcp_huff',
+    compress   = Exec(args=['./tdc', '-a', 'lzss_lcp(threshold=20,coder=huff)'],
+                      outp='--output'),
+    decompress = Exec(args=['./tdc', '-d'], outp='--output'))
+]
+~~~
+
+As noted above, an `Exec` object contains the basic command-line to invoke a
+compressor or decompressor as a string list in the `args` parameter. The
+parameters `inp` and `outp` define how input and output files are passed to the
+application. They have the following possible states (values):
+
+* If `outp` equals `StdOut`, it is expected that the application prints its
+  output to the standard output stream. In this case, the comparison tool pipes
+  it into a file.
+* Similarly, when `inp` equals `StdIn`, the input file is piped into the
+  application via standard input.
+* In case of a string value, it is used as an additional command-line parameter
+  followed by the file name (e.g. for `--output` in the example above,
+  `--output FILENAME` is appended to the command-line).
+* If unset (`None`), only the file name is appended to the command-line.
+
+The two helper functions `Tudocomp` and `StdCompressor` facilitate the
+definition of *tudocomp* command-lines and the standard Linux compressors,
+which read from stdin and write to stdout. They can be used to abbreviate the
+suite from the example above to the following:
+
+~~~ { .py caption="compare_example2.suite" }
+[
+# gzip -1
+StdCompressor(name='gzip',
+    binary='gzip', cflags=['-1'], dflags=['-d']),
+
+# tudocomp with LZSS/LCP and Huffman
+Tudocomp(name='tdc_lzss_lcp_huff',
+    algorithm='lzss_lcp(threshold=20,coder=huff)'),
+]
+~~~
+
+Note that by default, the *tudocomp* binary is expected at `./tdc`, therefore
+the comparison tool should be run from a build directory.

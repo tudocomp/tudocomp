@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
 #include <tudocomp/pre_header/Env.hpp>
 #include <tudocomp/io.hpp>
@@ -58,7 +59,7 @@ class Meta {
     std::string m_type;
     std::string m_name;
     std::string m_docs;
-    bool        m_add_null_terminator;
+    ds::InputRestrictionsAndFlags m_ds_flags;
 
     std::vector<decl::Arg> m_options;
 
@@ -92,7 +93,7 @@ public:
         m_type(type),
         m_name(name),
         m_docs(doc),
-        m_add_null_terminator(false),
+        m_ds_flags(),
         m_static_args(ast::Value(std::string(name), {}))
     {
     }
@@ -113,7 +114,7 @@ public:
         ///
         /// \tparam T The Algorithm type.
         template<class T>
-        inline void templated() {
+        inline void templated(const std::string& accepted_type) {
             m_meta.check_arg(m_argument_name);
             Meta sub_meta = T::meta();
             m_meta.m_sub_metas.push_back(sub_meta);
@@ -144,8 +145,8 @@ public:
         /// \tparam D The meta information provider type. \e Must implement a
         ///           static function \ref Meta \c meta().
         template<class T, class D>
-        inline void templated() {
-            templated<T>();
+        inline void templated(const std::string& accepted_type) {
+            templated<T>(accepted_type);
 
             std::string t_type = m_meta.m_options.back().type();
             m_meta.m_options.pop_back();
@@ -245,7 +246,7 @@ public:
             std::move(m_name),
             std::move(m_options),
             std::move(m_docs),
-            m_add_null_terminator
+            m_ds_flags
         );
     }
 
@@ -279,14 +280,32 @@ public:
         return m_type;
     }
 
-    /// \brief Indicates that this Algorithm requires a terminator symbol in Input.
+    /// \brief Places byte restrictions on the Input.
+    inline void input_restrictions(const io::InputRestrictions& restr) {
+        m_ds_flags |= restr;
+    }
+
+    /// \deprecated
+    /// \brief Indicates that this Algorithm requires a null terminator symbol in Input.
+    ///
+    /// All occurrences of null in the input will be escaped,
+    /// and an extra null will be appended to it.
     inline void needs_sentinel_terminator() {
-        m_add_null_terminator = true;
+        m_ds_flags |= io::InputRestrictions({ 0 }, true);
+    }
+
+    /// \brief Indicates that this Algorithm uses the TextDS class, and how it does.
+    template<typename text_t>
+    inline void uses_textds(ds::dsflags_t flags) {
+        io::InputRestrictions existing = m_ds_flags;
+        ds::InputRestrictionsAndFlags r(text_t::common_restrictions(flags) | existing,
+                                        flags);
+        m_ds_flags = r;
     }
 
     /// \cond INTERNAL
-    inline bool is_needs_sentinel_terminator() {
-        return m_add_null_terminator;
+    inline ds::InputRestrictionsAndFlags textds_flags() {
+        return m_ds_flags;
     }
     /// \endcond
 };

@@ -149,13 +149,44 @@ struct Error {
     std::string text;
     std::string roundtrip_text;
     std::string algo;
+
+    void print_error() {
+        auto& e = *this;
+        std::cout << "# [ERROR] ############################################################\n";
+        std::cout << "  " << e.message << "\n";
+        std::cout << "  in: " << e.test << "\n";
+        if (e.text != e.roundtrip_text) {
+            auto escaped_text = driver_test::format_escape(e.text);
+            auto escaped_roundtrip_text = driver_test::format_escape(e.roundtrip_text);
+            std::cout << "  expected:\n";
+            std::cout << "  " << escaped_text << "\n";
+            std::cout << "  actual:\n";
+            std::cout << "  " << escaped_roundtrip_text << "\n";
+            std::cout << "  diff:\n";
+            std::cout << "  " << driver_test::format_diff(e.text, e.roundtrip_text) << "\n";
+        }
+        std::cout << indent_lines(driver_test::format_std_outputs({
+            "compress command", e.compress_cmd,
+            "compress stdout", e.compress_stdout,
+            "decompress command", e.decompress_cmd,
+            "decompress stdout", e.decompress_stdout,
+        }), 2) << "\n";
+        std::cout << "######################################################################\n";
+    };
+
+    void check() {
+        if (has_error) {
+            print_error();
+            ASSERT_FALSE(has_error);
+        }
+    }
 };
 
-Error roundtrip(std::string algo,
-                std::string name_addition,
-                std::string text,
-                bool use_raw,
-                bool& abort)
+Error _roundtrip(std::string algo,
+                 std::string name_addition,
+                 std::string text,
+                 bool use_raw,
+                 bool& abort)
 {
     Error current { false };
     current.algo = algo;
@@ -263,6 +294,22 @@ Error roundtrip(std::string algo,
     }
 
     return current;
+}
+
+Error roundtrip(std::string algo,
+                std::string name_addition,
+                std::string text,
+                bool use_raw,
+                bool& abort,
+                bool surpress_test_error = false)
+{
+    auto r = _roundtrip(algo, name_addition, text, use_raw, abort);
+
+    if (!surpress_test_error) {
+        CHECK(!r.has_error);
+    }
+
+    return r;
 }
 
 std::vector<std::string> parse_scsv(const std::string& s) {

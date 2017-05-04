@@ -12,7 +12,7 @@ public:
 
     inline static Meta meta() {
         Meta m("lz78u_strategy", "buffering");
-        m.option("string_coder").templated<string_coder_t>();
+        m.option("string_coder").templated<string_coder_t>("coder");
         return m;
     }
 

@@ -10,7 +10,7 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#include <tudocomp/tudocomp.hpp>
+#include <tudocomp/io.hpp>
 
 using namespace tdc;
 

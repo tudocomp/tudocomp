@@ -29,10 +29,10 @@ TEST(TudocompDriver, algorithm_header) {
     std::string text = "asdfghjklöä";
     bool abort = false;
     // Without header
-    driver_test::roundtrip("lz78(ascii)", "_header_test_0", text, true, abort);
+    driver_test::roundtrip("lz78(ascii)", "_header_test_0", text, true, abort, true).check();
 
     // With header
-    driver_test::roundtrip("lz78(ascii)", "_header_test_1", text, false, abort);
+    driver_test::roundtrip("lz78(ascii)", "_header_test_1", text, false, abort, true).check();
 
     ASSERT_FALSE(abort);
 
@@ -101,7 +101,7 @@ TEST(Registry, decl) {
             decl::Arg("f", true, "g"),
         },
         "blub",
-        true,
+        tdc::ds::InputRestrictionsAndFlags(tdc::io::InputRestrictions({ 0 }, true), tdc::ds::SA),
     };
 
     ASSERT_EQ(b.name(), "foo");
@@ -121,7 +121,7 @@ TEST(Registry, decl) {
     ASSERT_EQ(b.arguments()[2].type(), "g");
     ASSERT_TRUE(b.arguments()[2].is_static());
     ASSERT_EQ(b.doc(), "blub");
-    ASSERT_EQ(b.add_null_terminator(), true);
+    ASSERT_EQ(b.textds_flags(), tdc::ds::InputRestrictionsAndFlags(tdc::io::InputRestrictions({ 0 }, true), tdc::ds::SA));
 
 }
 
@@ -151,7 +151,7 @@ TEST(Registry, dynamic_options) {
     struct MyCompressor: public Compressor {
         inline static Meta meta() {
             Meta y("compressor", "foo");
-            y.option("a").templated<MySub>();
+            y.option("a").templated<MySub>("b");
             y.option("c").dynamic();
             y.option("d").dynamic("asdf");
             return y;

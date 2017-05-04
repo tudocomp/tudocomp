@@ -106,11 +106,11 @@ public:
 
     inline static Meta meta() {
         Meta m("compressor", "lz78u", "Lempel-Ziv 78 U\n\n" );
-        m.option("comp").templated<strategy_t>();
-        m.option("coder").templated<ref_coder_t>();
+        m.option("comp").templated<strategy_t>("lz78u_strategy");
+        m.option("coder").templated<ref_coder_t>("coder");
         m.option("threshold").dynamic("3");
         // m.option("dict_size").dynamic("inf");
-        m.needs_sentinel_terminator();
+        m.input_restrictions(io::InputRestrictions({0},true));
         return m;
     }
 

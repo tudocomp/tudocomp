@@ -19,8 +19,8 @@ private:
 public:
     inline static Meta meta() {
         Meta m("compressor", "bwt", "BWT Compressor");
-        m.option("textds").templated<text_t, TextDS<>>();
-        m.needs_sentinel_terminator();
+        m.option("textds").templated<text_t, TextDS<>>("textds");
+        m.uses_textds<text_t>(ds::SA);
         return m;
     }
 
@@ -31,7 +31,7 @@ public:
         auto in = input.as_view();
         DCHECK(in.ends_with(uint8_t(0)));
 
-        text_t t(env().env_for_option("textds"), in);
+        text_t t(env().env_for_option("textds"), in, text_t::SA);
 		DVLOG(2) << vec_to_debug_string(t);
 		const len_t input_size = t.size();
 
