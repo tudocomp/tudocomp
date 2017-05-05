@@ -20,7 +20,7 @@ void test_arithm(const std::string& text) {
         {//now writing
             literal_t c;
             while(input.get(c)) {
-                encoder.encode(c, Range(c));
+                encoder.encode(c, tdc::literal_r);
             }
         }
     }
