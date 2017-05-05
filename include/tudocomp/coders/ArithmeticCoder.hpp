@@ -242,8 +242,10 @@ public:
             delete literals;
         }
 
+        using tdc::Decoder::decode;
+
         template<typename value_t>
-        inline value_t decode(const Range& r) {
+        inline value_t decode(const LiteralRange&) {
             //read code if nothing buffered
             if(!decoded.size()) {
                 ulong code = m_in->read_int<ulong>();
