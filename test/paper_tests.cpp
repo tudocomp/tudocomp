@@ -6,6 +6,8 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/compressors/lz78u/SuffixTree.hpp>
 
+using namespace tdc::lz78u;
+
 //m.option("textds").templated<text_t, TextDS<>>();
 //template<typename text_t>
 
@@ -23,7 +25,7 @@ class BWTComp : public Compressor {
     TextDS<> t(env().env_for_option("ds"),i);
     const auto& sa = t.require_sa();
     for(size_t j = 0; j < t.size(); ++j)
-      o << ((sa[j] != 0) ? t[sa[j] - 1]
+      o << ((sa[j] != 0u) ? t[sa[j] - 1]
                          : t[t.size() - 1]);
   }
   void decompress(Input&, Output&){/*[...]*/}
@@ -49,7 +51,8 @@ class MaxHeapStrategy : public Algorithm {
   text.require(text_t::SA | text_t::ISA | text_t::LCP);
   auto& sa = text.require_sa();
   auto& isa = text.require_isa();
-  auto lcp = text.release_lcp();
+  auto lcpp = text.release_lcp().relinquish();
+  auto& lcp = lcpp;
   ArrayMaxHeap<typename text_t::lcp_type::data_type> heap(lcp, lcp.size(), lcp.size());
   for(size_t i = 1; i < lcp.size(); ++i)
    if(lcp[i] >= t) heap.insert(i);
@@ -79,8 +82,6 @@ TEST(SEA17, MaxHeap) {
     maxheap.factorize(text_ds, 1);
 }
 /////////////////////////////////
-using namespace lz78u;
-
 void factorize(TextDS<>& T, SuffixTree& ST, std::function<void(size_t begin, size_t end, size_t ref)> output){
  typedef SuffixTree::node_type node_t;
  sdsl::int_vector<> R(ST.internal_nodes,0,bits_for(T.size() * bits_for(ST.cst.csa.sigma) / bits_for(T.size())));

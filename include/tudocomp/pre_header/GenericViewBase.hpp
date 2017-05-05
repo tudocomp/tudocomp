@@ -180,9 +180,9 @@ protected:
             to = m_size;
         }
 
-        DCHECK(from <= to);
-        DCHECK(from <= size());
-        DCHECK(to <= size());
+        DCHECK_LE(from, to);
+        DCHECK_LE(from, size());
+        DCHECK_LE(to, size());
 
         return GenericViewBase(m_data + from, to - from);
     }

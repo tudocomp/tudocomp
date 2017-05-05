@@ -110,7 +110,7 @@ public:
         m.option("coder").templated<ref_coder_t>("coder");
         m.option("threshold").dynamic("3");
         // m.option("dict_size").dynamic("inf");
-        m.needs_sentinel_terminator();
+        m.input_restrictions(io::InputRestrictions({0},true));
         return m;
     }
 
