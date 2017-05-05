@@ -163,8 +163,10 @@ public:
             delete C;
         }
 
+        using tdc::Encoder::encode; // default encoding as fallback
+
         template<typename value_t>
-        inline void encode(value_t v, const Range& r) {
+        inline void encode(value_t v, const LiteralRange&) {
             literal_counter++;
             setNewBounds(v);
 
