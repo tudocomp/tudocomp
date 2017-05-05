@@ -166,12 +166,19 @@ public:
                 DLOG(INFO)<<"iterate st";
 
                 for (iterator it = begin; it != end; ++it) {
-                    bins[stree.depth(*it)].push_back(stree.id(*it));
-                    node_counter++;
+
+                    if(!stree.is_leaf(*it)){
+                        bins[stree.depth(*it)].push_back(stree.id(*it));
+                        node_counter++;
+                     //   DLOG(INFO)<<"no leaf id: " <<  (stree.id(*it) - stree.size())<< " orig id "<< stree.id(*it);
+                    }
+
+                    //shoudl be 0
+                    //DLOG(INFO)<<"node id: "<<stree.id(*it) << " minus leaves: "<< stree.id(*it)- stree.lb(*it);
                 }
             });
 
-
+            DLOG(INFO)<<"node count"<< node_counter;
             node_begins.resize(node_counter);
 
             //node_tuples.resize(node_counter);
@@ -183,50 +190,62 @@ public:
                     while (bin_it!= bins[i].end()){
                         node_type node = stree.inv_id(*bin_it);
 
-                        if(stree.is_leaf(node)){
-                            uint bp = stree.csa[stree.lb(node)];
-                            node_begins[*bin_it].push_back(bp);
-                        }
-                        else {
+                         // if(stree.is_leaf(node)){
+                       //     uint bp = stree.csa[stree.lb(node)];
+                       //     node_begins[*bin_it].push_back(bp);
+
+                       // }
+                           //   bin_it++;
+                            //  continue;
+                          //}
+                         // else {
+                            uint no_leaf_id = *bin_it - stree.size();
+
+                          //  DLOG(INFO)<<"no leaf id: " << no_leaf_id << " orig id "<< *bin_it;
 
 
-                            if(node_begins[*bin_it].empty()){
+                            if(node_begins[no_leaf_id].empty()){
 
+                     //           DLOG(INFO)<<"this works";
 
                                 for (auto& child: stree.children(node)) {
-                                    int child_id = stree.id(child);
-
-
-
-                                    if(!node_begins[child_id].empty()){
-
-                                        node_begins[*bin_it].insert(node_begins[*bin_it].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
+                                    if(stree.is_leaf(child)){
+                                        node_begins[no_leaf_id].push_back(stree.csa[stree.lb(child)]);
+                                    //    DLOG(INFO)<<"child bp added";
+                                        //bin_it++;
+                                        continue;
                                     }
+                                    int child_id = stree.id(child) - stree.size();
+                                   //DLOG(INFO)<<"child id:" << no_leaf_id;
 
+                                    //DLOG(INFO)<<"this works";
+
+                                    if(!node_begins[child_id ].empty()){
+
+                                        node_begins[no_leaf_id].insert(node_begins[no_leaf_id].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
+                                    }
                                 }
-
-
-
-
-
-                                std::sort(node_begins[*bin_it].begin(), node_begins[*bin_it].end());
+                                std::sort(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].end());
                             }
-                        }
-                        if(node_begins[*bin_it].empty()){
+                     //   }
+                        if(node_begins[no_leaf_id].empty()){
 
                             bin_it++;
+                           // DLOG(INFO)<<"this works";
                             continue;
                         }
                         //check tuple
-                        if(!(node_begins[*bin_it].size()>=2) && !( (  (uint)( node_begins[*bin_it].back()   - node_begins[*bin_it].front() )) >= i )){
+                        if(!(node_begins[no_leaf_id].size()>=2) && !( (  (uint)( node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front() )) >= i )){
 
                             bin_it++;
+                          //  DLOG(INFO)<<"this works";
                             continue;
                         }
                             //do this
                            //Add new rule
                             //and add new non-terminal symbols
-                            std::vector<uint> selected_bp = select_starting_positions(*bin_it, i);
+                          //  DLOG(INFO)<<"this works";
+                            std::vector<uint> selected_bp = select_starting_positions(no_leaf_id, i);
                             if(! (selected_bp.size() >=2) ){
                                 bin_it++;
                                 continue;
