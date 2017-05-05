@@ -41,13 +41,13 @@ public:
 
             auto av = option_value.as_algorithm();
 
-            bool needs_sentinel = av.needs_sentinel_terminator();
+            auto textds_flags = av.textds_flags();
 
             DVLOG(1) << "dynamic creation of" << av.name() << "\n";
             auto compressor = create_algo_with_registry_dynamic(
                 tdc_algorithms::COMPRESSOR_REGISTRY, av);
 
-            f(i, o, *compressor, needs_sentinel);
+            f(i, o, *compressor, textds_flags);
         };
 
         std::vector<uint8_t> between_buf;
@@ -67,11 +67,17 @@ public:
     /// \param input The input stream.
     /// \param output The output stream.
     inline virtual void compress(Input& input, Output& output) override final {
-        chain(input, output, false, [](Input& i, Output& o, Compressor& c, bool needs_sentinel) {
-            if (needs_sentinel) {
-                i.escape_and_terminate();
+        chain(input, output, false, [](Input& i,
+                                       Output& o,
+                                       Compressor& c,
+                                       ds::InputRestrictionsAndFlags flags) {
+            bool res = flags.has_restrictions();
+            if (res) {
+                auto i2 = Input(i, flags);
+                c.compress(i2, o);
+            } else {
+                c.compress(i, o);
             }
-            c.compress(i, o);
         });
     }
 
@@ -80,11 +86,17 @@ public:
     /// \param input The input stream.
     /// \param output The output stream.
     inline virtual void decompress(Input& input, Output& output) override final {
-        chain(input, output, true, [](Input& i, Output& o, Compressor& c, bool needs_sentinel) {
-            if (needs_sentinel) {
-                o.unescape_and_trim();
+        chain(input, output, true, [](Input& i,
+                                      Output& o,
+                                      Compressor& c,
+                                      ds::InputRestrictionsAndFlags flags) {
+            bool res = flags.has_restrictions();
+            if (res) {
+                auto o2 = Output(o, flags);
+                c.decompress(i, o2);
+            } else {
+                c.decompress(i, o);
             }
-            c.decompress(i, o);
         });
     }
 };

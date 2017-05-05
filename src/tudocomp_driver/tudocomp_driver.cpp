@@ -175,21 +175,21 @@ int main(int argc, char** argv) {
         class Selection {
             std::string m_id_string;
             std::unique_ptr<Compressor> m_compressor;
-            bool m_needs_sentinel_terminator;
+            io::InputRestrictions m_input_restrictions;
             std::shared_ptr<EnvRoot> m_algorithm_env;
         public:
             Selection():
                 m_id_string(),
                 m_compressor(),
-                m_needs_sentinel_terminator(false),
+                m_input_restrictions(),
                 m_algorithm_env() {}
             Selection(std::string&& id_string,
                       std::unique_ptr<Compressor>&& compressor,
-                      bool needs_sentinel_terminator,
+                      io::InputRestrictions input_restrictions,
                       std::shared_ptr<EnvRoot>&& algorithm_env):
                 m_id_string(std::move(id_string)),
                 m_compressor(std::move(compressor)),
-                m_needs_sentinel_terminator(needs_sentinel_terminator),
+                m_input_restrictions(input_restrictions),
                 m_algorithm_env(std::move(algorithm_env)) {}
             const std::string& id_string() const {
                 return m_id_string;
@@ -197,8 +197,8 @@ int main(int argc, char** argv) {
             Compressor& compressor() {
                 return *m_compressor;
             }
-            bool needs_sentinel_terminator() const {
-                return m_needs_sentinel_terminator;
+            const io::InputRestrictions& input_restrictions() const {
+                return m_input_restrictions;
             }
             const std::shared_ptr<EnvRoot>& algorithm_env() const {
                 return m_algorithm_env;
@@ -213,14 +213,14 @@ int main(int argc, char** argv) {
             auto id_string = options.algorithm;
 
             auto av = compressor_registry.parse_algorithm_id(id_string);
-            auto needs_sentinel_terminator = av.needs_sentinel_terminator();
+            auto input_restrictions = av.textds_flags();
             auto compressor = compressor_registry.select_algorithm(av);
             auto algorithm_env = compressor->env().root();
 
             selection = Selection {
                 std::move(id_string),
                 std::move(compressor),
-                needs_sentinel_terminator,
+                input_restrictions,
                 std::move(algorithm_env),
             };
         }
@@ -245,7 +245,7 @@ int main(int argc, char** argv) {
                 inp = Input(generated);
                 in_size = inp.size();
             } else { // input from file
-                inp = Input(Input::Path{file});
+                inp = Input(io::Path{file});
                 in_size = inp.size();
             }
 
@@ -253,7 +253,7 @@ int main(int argc, char** argv) {
             if (options.stdout) { // output to stdout
                 out = Output(std::cout);
             } else { // output to file
-                out = Output(ofile, true);
+                out = Output(io::Path(ofile), true);
             }
 
             // do the due (or if you like sugar, the Dew is fine too)
@@ -265,8 +265,8 @@ int main(int argc, char** argv) {
                     o_stream << selection.id_string() << '%';
                 }
 
-                if (selection.needs_sentinel_terminator()) {
-                    inp.escape_and_terminate();
+                if (selection.input_restrictions().has_restrictions()) {
+                    inp = Input(inp, selection.input_restrictions());
                 }
 
                 //TODO: split?
@@ -283,28 +283,32 @@ int main(int argc, char** argv) {
                 std::string algorithm_header;
 
                 if (!options.raw) {
-                    // read header
-                    auto i_stream = inp.as_stream();
+                    {
+                        // read header
+                        auto i_stream = inp.as_stream();
 
-                    char c;
-                    size_t sanity_size_check = 0;
-                    bool err = false;
-                    while (i_stream.get(c)) {
-                        err = false;
-                        if (sanity_size_check > 1023) {
+                        char c;
+                        size_t sanity_size_check = 0;
+                        bool err = false;
+                        while (i_stream.get(c)) {
+                            err = false;
+                            if (sanity_size_check > 1023) {
+                                err = true;
+                                break;
+                            } else if (c == '%') {
+                                break;
+                            } else {
+                                algorithm_header.push_back(c);
+                            }
+                            sanity_size_check++;
                             err = true;
-                            break;
-                        } else if (c == '%') {
-                            break;
-                        } else {
-                            algorithm_header.push_back(c);
                         }
-                        sanity_size_check++;
-                        err = true;
+                        if (err) {
+                            exit("Input did not have an algorithm header!");
+                        }
                     }
-                    if (err) {
-                        exit("Input did not have an algorithm header!");
-                    }
+                    // Slice off the header
+                    inp = Input(inp, algorithm_header.size() + 1);
                 }
 
                 if (!options.raw && !selection.id_string().empty()) {
@@ -316,21 +320,21 @@ int main(int argc, char** argv) {
                     auto id_string = std::move(algorithm_header);
                     auto av = compressor_registry.parse_algorithm_id(id_string);
                     auto compressor = compressor_registry.select_algorithm(av);
-                    auto needs_sentinel_terminator = av.needs_sentinel_terminator();
+                    auto input_restrictions = av.textds_flags();
                     auto algorithm_env = compressor->env().root();
 
                     selection = Selection {
                         std::move(id_string),
                         std::move(compressor),
-                        needs_sentinel_terminator,
+                        input_restrictions,
                         std::move(algorithm_env),
                     };
                 } else {
                     DLOG(INFO) << "Using manually given " << selection.id_string();
                 }
 
-                if (selection.needs_sentinel_terminator()) {
-                    out.unescape_and_trim();
+                if (selection.input_restrictions().has_restrictions()) {
+                    out = Output(out, selection.input_restrictions());
                 }
 
                 //TODO: split?

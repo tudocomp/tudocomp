@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
@@ -28,12 +29,12 @@ template<
 >
 class TextDS : public Algorithm {
 public:
-    using dsflags_t = unsigned int;
-    static const dsflags_t SA  = 0x01;
-    static const dsflags_t ISA = 0x02;
-    static const dsflags_t LCP = 0x04;
-    static const dsflags_t PHI = 0x08;
-    static const dsflags_t PLCP = 0x10;
+    using dsflags_t = ds::dsflags_t;
+    static const dsflags_t SA  = ds::SA;
+    static const dsflags_t ISA = ds::ISA;
+    static const dsflags_t LCP = ds::LCP;
+    static const dsflags_t PHI = ds::PHI;
+    static const dsflags_t PLCP = ds::PLCP;
 
     using value_type = uliteral_t;
 
@@ -42,6 +43,18 @@ public:
     using plcp_type = plcp_t;
     using lcp_type = lcp_t;
     using isa_type = isa_t;
+
+    inline static ds::InputRestrictions common_restrictions(dsflags_t flags) {
+        ds::InputRestrictions rest;
+
+        if (flags & SA)   rest |= sa_type::restrictions();
+        if (flags & ISA)  rest |= isa_type::restrictions();
+        if (flags & LCP)  rest |= lcp_type::restrictions();
+        if (flags & PHI)  rest |= phi_type::restrictions();
+        if (flags & PLCP) rest |= plcp_type::restrictions();
+
+        return rest;
+    };
 
 private:
     using this_t = TextDS<sa_t, phi_t, plcp_t, lcp_t, isa_t>;

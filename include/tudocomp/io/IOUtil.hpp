@@ -44,32 +44,43 @@ void read_bytes_to_vec(std::istream& inp, T& vec, size_t bytes) {
     }
 }
 
-template<class T>
-T read_file_to_stl_byte_container(std::string& filename,
-                                  size_t offset = 0) {
+inline std::ifstream create_tdc_ifstream(const std::string& filename, size_t offset = 0) {
     std::ifstream in(filename, std::ios::in | std::ios::binary);
     if (bool(in)) {
-        T contents;
+        in.seekg(offset, std::ios::beg);
+        return in;
+    }
+    throw tdc_input_file_not_found_error(filename);
+}
 
-        // first, determine length from offset to end of file
+template<class T>
+T read_file_to_stl_byte_container(const std::string& filename,
+                                  size_t offset = 0,
+                                  size_t len = -1) {
+    auto in = create_tdc_ifstream(filename, offset);
+    T contents;
+
+    // if needed, determine length from offset to end of file
+    if (len == size_t(-1)) {
         in.seekg(offset, std::ios::beg);
         auto start = in.tellg();
         in.seekg(0, std::ios::end);
         auto end = in.tellg();
-        auto len = end - start;
-
-        // use length to allocate a single buffer for the file
-        contents.resize(len);
-
-        // set position back to the start position at offset
-        in.seekg(offset, std::ios::beg);
-
-        // read file into contents without reallocating
-        in.read((char*)&contents[0], contents.size());
-        in.close();
-        return(contents);
+        len = end - start;
     }
-    throw tdc_input_file_not_found_error(filename);
+
+    // use length to allocate a single buffer for the file
+    contents.reserve(len);
+    contents.resize(len);
+
+    // set position back to the start position at offset
+    in.seekg(offset, std::ios::beg);
+
+    // read file into contents without reallocating
+    in.read((char*)&contents[0], contents.size());
+    in.close();
+
+    return(contents);
 }
 
 template<class T, class S>
@@ -82,13 +93,12 @@ T read_stream_to_stl_byte_container(S& stream) {
     return(vector);
 }
 
-inline size_t read_file_size(std::string& file) {
-    std::ifstream t(file);
-    if (t) {
-        t.seekg(0, std::ios::end);
-        return t.tellg();
-    }
-    throw(errno);
+inline size_t read_file_size(const std::string& file) {
+    // TODO: Maybe replace by calling stat
+    auto in  = create_tdc_ifstream(file);
+    in.seekg(0, std::ios::end);
+
+    return in.tellg();
 }
 
 /// \endcond
