@@ -19,12 +19,16 @@ namespace tdc {
     public:
         /// \brief Constructs a range from zero to a maximum value
         /// \param max the range's maximum value
-        inline Range(size_t max) : m_min(0), m_max(max) {}
+        inline constexpr Range(size_t max)
+            : m_min(0), m_max(max) {
+        }
 
         /// \brief Constructs a range
         /// \param min the range's minimum value
         /// \param max the range's maximum value
-        inline Range(size_t min, size_t max) : m_min(min), m_max(max) {}
+        inline constexpr Range(size_t min, size_t max)
+            : m_min(min), m_max(max) {
+        }
 
         /// \brief Yields the range's minimum value
         /// \return the range's minimum value
@@ -51,12 +55,15 @@ namespace tdc {
     public:
         /// \brief Constructs a range from zero to a maximum value
         /// \param max the range's maximum value
-        inline MinDistributedRange(size_t max) : Range(0, max) {}
+        inline constexpr MinDistributedRange(size_t max) : Range(0, max) {
+        }
 
         /// \brief Constructs a range
         /// \param min the range's minimum value
         /// \param max the range's maximum value
-        inline MinDistributedRange(size_t min, size_t max) : Range(min, max) {}
+        inline constexpr MinDistributedRange(size_t min, size_t max)
+                         : Range(min, max) {
+        }
     };
 
     /// \brief Represents a range of valid values for a certain type
@@ -65,7 +72,8 @@ namespace tdc {
     class TypeRange : public Range {
     public:
         /// \brief Constructs a range for the type
-        TypeRange() : Range(0, std::numeric_limits<T>::max()) {}
+        inline constexpr TypeRange() : Range(0, std::numeric_limits<T>::max()) {
+        }
     };
 
     /// \brief Represents a compiler-level fixed range
@@ -73,34 +81,35 @@ namespace tdc {
     class FixedRange : public Range {
     public:
         /// \brief Constructs a range with the fixed values
-        FixedRange() : Range(t_min, t_max)  {}
+        inline constexpr FixedRange() : Range(t_min, t_max)  {}
     };
 
     /// \brief Represents the range of valid \ref tdc::uliteral_t values
     class LiteralRange : public TypeRange<uliteral_t> {
     public:
-        LiteralRange(): TypeRange<uliteral_t>() {}
+        inline constexpr LiteralRange() : TypeRange<uliteral_t>() {}
     };
 
     /// \brief Represents the range of valid \ref tdc::len_t values
     class LengthRange  : public TypeRange<len_t> {
     public:
-        LengthRange(): TypeRange<len_t>() {}
+        inline constexpr LengthRange(): TypeRange<len_t>() {}
     };
 
     /// \brief Represents the range of bit values, ie `0` to `1`
     using BitRange = FixedRange<0, 1>;
 
     /// \brief Global predefined range for the `size_t`.
-    const TypeRange<size_t> size_r;
+    constexpr auto size_r = TypeRange<size_t>();
 
     /// \brief Global predefined range for bits (`0` or `1`).
-    const BitRange bit_r;
+    constexpr auto bit_r = BitRange();
 
     /// \brief Global predefined reange for literals.
-    const LiteralRange literal_r, uliteral_r;
+    constexpr auto literal_r  = LiteralRange();
+    constexpr auto uliteral_r = LiteralRange();
 
     /// \brief Global predefined range for `len_t`.
-    const LengthRange len_r;
+    constexpr auto len_r = LengthRange();
 }
 
