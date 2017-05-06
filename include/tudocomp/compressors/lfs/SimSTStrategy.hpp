@@ -41,9 +41,7 @@ private:
 
         std::vector<uint> selected_starting_positions;
         std::vector<uint> not_selected_starting_positions;
-       // if(beginning_positions.size()<2){
-       //     return selected_starting_positions;
-       // }
+
         //select occurences greedily non-overlapping:
         selected_starting_positions.reserve(node_begins[node_id].size());
 
@@ -51,7 +49,7 @@ private:
 
         int last =  0-length-1;
         int current;
-        //int shorter_count = 0;
+
         int min_shorter = 1;
         for (auto it=node_begins[node_id].begin(); it!=node_begins[node_id].end(); ++it){
 
@@ -76,9 +74,9 @@ private:
 
 
         if(min_shorter < length){
-            node_type node = stree.inv_id(node_id);
+            node_type node = stree.inv_id(node_id + stree.size());
 
-            if(min_shorter >= (int)min_lrf){
+            if(min_shorter >= (int) min_lrf){
                 //check if parent node is shorter
 
                 node_type parent = stree.parent(node);
@@ -86,13 +84,12 @@ private:
                 if(depth < (uint)(min_shorter)){
 
                     //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
-                    bins[min_shorter].push_back(node_id);
+                    bins[min_shorter].push_back(node_id + stree.size());
                 }
             }
         }
         if(selected_starting_positions.size()>=2){
             node_begins[node_id].assign(not_selected_starting_positions.begin(), not_selected_starting_positions.end());
-           // node_begins[node_id] = not_selected_starting_positions;
             return selected_starting_positions;
         } else {
             return std::vector<uint>();
@@ -140,11 +137,8 @@ public:
 
         dead_positions = BitVector(input.size(), 0);
 
-
-
-
         StatPhase::wrap("Constructing ST", [&]{
-             sdsl::construct_im(stree, (const char*) input.data(), 1);
+            sdsl::construct_im(stree, (const char*) input.data(), 1);
         });
 
 
@@ -170,15 +164,10 @@ public:
                     if(!stree.is_leaf(*it)){
                         bins[stree.depth(*it)].push_back(stree.id(*it));
                         node_counter++;
-                     //   DLOG(INFO)<<"no leaf id: " <<  (stree.id(*it) - stree.size())<< " orig id "<< stree.id(*it);
                     }
-
-                    //shoudl be 0
-                    //DLOG(INFO)<<"node id: "<<stree.id(*it) << " minus leaves: "<< stree.id(*it)- stree.lb(*it);
                 }
             });
 
-            DLOG(INFO)<<"node count"<< node_counter;
             node_begins.resize(node_counter);
 
             //node_tuples.resize(node_counter);
@@ -190,86 +179,63 @@ public:
                     while (bin_it!= bins[i].end()){
                         node_type node = stree.inv_id(*bin_it);
 
-                         // if(stree.is_leaf(node)){
-                       //     uint bp = stree.csa[stree.lb(node)];
-                       //     node_begins[*bin_it].push_back(bp);
-
-                       // }
-                           //   bin_it++;
-                            //  continue;
-                          //}
-                         // else {
-                            uint no_leaf_id = *bin_it - stree.size();
-
-                          //  DLOG(INFO)<<"no leaf id: " << no_leaf_id << " orig id "<< *bin_it;
+                        uint no_leaf_id = *bin_it - stree.size();
 
 
-                            if(node_begins[no_leaf_id].empty()){
 
-                     //           DLOG(INFO)<<"this works";
+                        if(node_begins[no_leaf_id].empty()){
 
-                                for (auto& child: stree.children(node)) {
-                                    if(stree.is_leaf(child)){
-                                        node_begins[no_leaf_id].push_back(stree.csa[stree.lb(child)]);
-                                    //    DLOG(INFO)<<"child bp added";
-                                        //bin_it++;
-                                        continue;
-                                    }
+                            for (auto& child: stree.children(node)) {
+                                if(stree.is_leaf(child)){
+                                    node_begins[no_leaf_id].push_back(stree.csa[stree.lb(child)]);
+
+                                } else {
                                     int child_id = stree.id(child) - stree.size();
-                                   //DLOG(INFO)<<"child id:" << no_leaf_id;
-
-                                    //DLOG(INFO)<<"this works";
-
                                     if(!node_begins[child_id ].empty()){
-
                                         node_begins[no_leaf_id].insert(node_begins[no_leaf_id].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
                                     }
                                 }
-                                std::sort(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].end());
                             }
-                     //   }
+                            std::sort(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].end());
+                        }
                         if(node_begins[no_leaf_id].empty()){
 
                             bin_it++;
-                           // DLOG(INFO)<<"this works";
                             continue;
                         }
                         //check tuple
                         if(!(node_begins[no_leaf_id].size()>=2) && !( (  (uint)( node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front() )) >= i )){
-
                             bin_it++;
-                          //  DLOG(INFO)<<"this works";
                             continue;
                         }
-                            //do this
-                           //Add new rule
-                            //and add new non-terminal symbols
-                          //  DLOG(INFO)<<"this works";
-                            std::vector<uint> selected_bp = select_starting_positions(no_leaf_id, i);
-                            if(! (selected_bp.size() >=2) ){
-                                bin_it++;
-                                continue;
-                            }
-                            //vector of text position, length
-                            std::pair<uint,uint> rule = std::make_pair(selected_bp.at(0), i);
-                            dictionary.push_back(rule);
-
-                            //iterate over selected pos, add non terminal symbols
-                            for(auto bp_it = selected_bp.begin(); bp_it != selected_bp.end(); bp_it++){
-                                //(position in text, non_terminal_symbol_number, length_of_symbol);
-                                non_term nts = std::make_tuple(*bp_it, nts_number, i);
-                                nts_symbols.push_back(nts);
-                                //mark as used
-                                for(uint pos = 0; pos<i;pos++){
-                                    dead_positions[pos+ *bp_it] = 1;
-                                }
-                            }
-                            nts_number++;
-
+                        //do this
+                        //Add new rule
+                        //and add new non-terminal symbols
+                        std::vector<uint> selected_bp = select_starting_positions(no_leaf_id, i);
+                        if(! (selected_bp.size() >=2) ){
                             bin_it++;
-
+                            continue;
                         }
+                        //vector of text position, length
+                        std::pair<uint,uint> rule = std::make_pair(selected_bp.at(0), i);
+                        dictionary.push_back(rule);
+
+                        //iterate over selected pos, add non terminal symbols
+                        for(auto bp_it = selected_bp.begin(); bp_it != selected_bp.end(); bp_it++){
+                            //(position in text, non_terminal_symbol_number, length_of_symbol);
+                            non_term nts = std::make_tuple(*bp_it, nts_number, i);
+                            nts_symbols.push_back(nts);
+                            //mark as used
+                            for(uint pos = 0; pos<i;pos++){
+                                dead_positions[pos+ *bp_it] = 1;
+                            }
+                        }
+                        nts_number++;
+
+                        bin_it++;
+
                     }
+                }
 
             });
         });
@@ -280,9 +246,7 @@ public:
             std::sort(nts_symbols.begin(), nts_symbols.end());
 
         });
-
     }
 };
 }
-
 }
