@@ -29,7 +29,6 @@ template<uint min_lrf = 2 >
 class SimSTStrategy : public Algorithm {
 private:
 
-
     typedef sdsl::bp_interval<long unsigned int> node_type;
 
     //sdsl::t_csa sa =sdsl::csa_uncompressed<>
@@ -37,6 +36,9 @@ private:
     cst_t stree;
 
 
+
+
+    // greedily select starting positions and delete them from corresponding vector
     inline virtual std::vector<uint> select_starting_positions(int node_id, int length){
 
         std::vector<uint> selected_starting_positions;
@@ -45,16 +47,17 @@ private:
         //select occurences greedily non-overlapping:
         selected_starting_positions.reserve(node_begins[node_id].size());
 
+
         not_selected_starting_positions.reserve(node_begins[node_id].size());
 
-        int last =  0-length-1;
-        int current;
+        long last =  0-length-1;
+        uint current;
 
-        int min_shorter = 1;
-        for (auto it=node_begins[node_id].begin(); it!=node_begins[node_id].end(); ++it){
+        long min_shorter = 1;
+        for (auto it=node_begins[node_id].begin(); it!=node_begins[node_id].end(); it++){
 
             current = *it;
-            if(last+length <= (int) current && !dead_positions[current] && !dead_positions[current+length-1]){
+            if((last + length <= current )&& !dead_positions[current] && !dead_positions[current+length-1]){
                 selected_starting_positions.push_back(current);
                 last = current;
 
@@ -63,8 +66,10 @@ private:
             }
 
 
-            if(!dead_positions[current] && dead_positions[current+length-1]){
-                while(!dead_positions[current+min_shorter]){
+            if(current < dead_positions.size() && !dead_positions[current] && dead_positions[current+length-1]){
+
+
+                while((current+min_shorter < (long) dead_positions.size()) && !dead_positions[current+min_shorter]){
                     min_shorter++;
                 }
 
@@ -125,6 +130,7 @@ public:
 
     inline static Meta meta() {
         Meta m("lfs_comp", "sim_st");
+       // m.needs_sentinel_terminator();
         return m;
     }
 
@@ -135,11 +141,15 @@ public:
         DLOG(INFO)<<"build suffixtree";
 
 
+
         dead_positions = BitVector(input.size(), 0);
 
+
         StatPhase::wrap("Constructing ST", [&]{
-            sdsl::construct_im(stree, (const char*) input.data(), 1);
+            std::string in_string((const char*) input.data(), input.size());
+            sdsl::construct_im(stree, in_string, 1);
         });
+
 
 
 
@@ -170,6 +180,7 @@ public:
 
             node_begins.resize(node_counter);
 
+
             //node_tuples.resize(node_counter);
 
             uint nts_number =0;
@@ -178,25 +189,49 @@ public:
                     auto bin_it = bins[i].begin();
                     while (bin_it!= bins[i].end()){
                         node_type node = stree.inv_id(*bin_it);
-
                         uint no_leaf_id = *bin_it - stree.size();
-
 
 
                         if(node_begins[no_leaf_id].empty()){
 
-                            for (auto& child: stree.children(node)) {
+                            //get leaves or merge child vectors
+                            std::vector<uint> offsets;
+                            std::vector<uint> leaf_bps;
+
+
+                            for (auto & child : stree.children(node)) {
                                 if(stree.is_leaf(child)){
-                                    node_begins[no_leaf_id].push_back(stree.csa[stree.lb(child)]);
+
+                                    leaf_bps.push_back(stree.csa[stree.lb(child)]);
 
                                 } else {
                                     int child_id = stree.id(child) - stree.size();
                                     if(!node_begins[child_id ].empty()){
-                                        node_begins[no_leaf_id].insert(node_begins[no_leaf_id].begin(), node_begins[child_id].begin(), node_begins[child_id].end());
+                                        //append child list, remember offset
+                                        offsets.push_back(node_begins[no_leaf_id].size());
+
+
+                                        node_begins[no_leaf_id].insert(node_begins[no_leaf_id].end(),node_begins[child_id ].begin(), node_begins[child_id].end());
+
                                     }
                                 }
                             }
-                            std::sort(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].end());
+                            std::sort(leaf_bps.begin(), leaf_bps.end());
+                            offsets.push_back(node_begins[no_leaf_id].size());
+                            node_begins[no_leaf_id].insert(node_begins[no_leaf_id].end(),leaf_bps.begin(), leaf_bps.end());
+                            //offsets.push_back(node_begins[no_leaf_id].size());
+                            //inplace merge with offset
+                            for(uint k = 0; k < offsets.size()-1; k++){
+                                std::inplace_merge(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].begin()+ offsets[k], node_begins[no_leaf_id].begin()+ offsets[k+1]);
+
+                            }
+                            //now inplace merge to end
+                            std::inplace_merge(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].begin()+ offsets[offsets.size()-1], node_begins[no_leaf_id].end());
+
+                            //sort bps of leaves
+                          //  std::sort(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].end());
+
+
                         }
                         if(node_begins[no_leaf_id].empty()){
 
