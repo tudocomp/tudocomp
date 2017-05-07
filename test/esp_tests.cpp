@@ -1077,3 +1077,11 @@ TEST(Hashmaps, size) {
     ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<56>>, uint_t<56>>), (3 * 56) / 8);
     ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<64>>, uint_t<64>>), (3 * 64) / 8);
 }
+
+TEST(Fulltree, test) {
+    esp::EspContext<test_ipd_t> context { nullptr, false };
+    auto in = "0000dkasxxxcsdacjzsbkhvfaghskcbsaaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v;
+    context.debug.input_string(in);
+    auto slp = context.generate_grammar(in);
+    context.debug.print_all();
+}
