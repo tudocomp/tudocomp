@@ -141,7 +141,8 @@ public:
 
         StatPhase::wrap("Constructing ST", [&]{
             uint size =  input.size();
-            //remove sentinel because sdsl cant handle that
+            //remove sentinel because sdsl cant handle that (at last pos)
+            //this is just to handle test cases
             if(input[size-1] == 0){
                 size--;
             }

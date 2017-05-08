@@ -191,9 +191,9 @@ public:
                                             auto nts = non_terminal_symbols[parent_nts-1];
                                             //if length of parent nts is greater than current len + offset
                                             DLOG(INFO)<<"offset: "<<fl_offsets[occurence] <<  " len: " << nts.second;
-                                            if(nts.second >fl_offsets[occurence]-1 + i ){
+                                            if(nts.second >=fl_offsets[occurence]-1 + i ){
                                                 second_layer_viable.push_back(occurence);
-                                                DLOG(INFO)<<"sl added";
+                                                DLOG(INFO)<<"sl viable, parent length: " << nts.second << ">= " <<fl_offsets[occurence]-1 + i;
                                             }
                                         }
 
@@ -223,12 +223,28 @@ public:
                                         }
                                     }
 
-                                    //raise nts number:
-                                    nts_number++;
+
 
                                     for(uint sl_occ :second_layer_viable){
-                                        DLOG(INFO)<<"second layer viable: " << sl_occ;
+                                        uint parent_nts= first_layer_nts[ sl_occ - (fl_offsets[sl_occ] -1) ];
+                                        uint sl_start = (fl_offsets[sl_occ] -1);
+                                        uint sl_end = sl_start+i-1;
+                                        if(second_layer_dead[sl_start] == 0 && second_layer_dead[sl_end] == 0){
+
+                                            second_layer_nts[sl_start]=nts_number;
+
+                                            for(uint dead = sl_start; dead<=sl_end;dead++){
+                                                second_layer_dead[dead]=1;
+                                            }
+
+                                            DLOG(INFO)<<"second layer substituted: " << sl_occ;
+                                            DLOG(INFO)<<"sl_start: " << sl_start << " sl end: "<<sl_end;
+                                            DLOG(INFO)<<"position for parent: " << parent_nts;
+                                        }
                                     }
+
+                                    //raise nts number:
+                                    nts_number++;
 
                                 }
 
@@ -275,6 +291,29 @@ public:
 
 
                             ss << fl_offsets[x] ;
+                            ss << " " ;
+                        }
+
+                        DLOG(INFO)<< ss.str();
+
+                        ss.str("");
+                        ss.clear();
+
+                        for(uint x = 0; x < second_layer_nts.size(); x++){
+
+
+                            ss << second_layer_nts[x] ;
+                            ss << " " ;
+                        }
+
+                        DLOG(INFO)<< ss.str();
+                        ss.str("");
+                        ss.clear();
+
+                        for(uint x = 0; x < second_layer_dead.size(); x++){
+
+
+                            ss << second_layer_dead[x] ;
                             ss << " " ;
                         }
                         DLOG(INFO)<< ss.str();
