@@ -1,7 +1,8 @@
 #pragma once
 
+#include <cstddef>
 #include <limits>
-#include <tudocomp/util/cpp14/integer_sequence.hpp>
+#include <utility>
 
 #include <set>
 #include <vector>

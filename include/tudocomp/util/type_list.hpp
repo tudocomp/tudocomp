@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tudocomp/util/cpp14/integer_sequence.hpp>
+#include <utility>
 
 namespace tdc {
 
