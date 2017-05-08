@@ -137,8 +137,8 @@ command-line tool, respectively.
 ## Building
 
 The framework is built using [CMake](https://cmake.org) (3.0.2 or later).
-It is written in `C++11` with GNU extensions and has been tested with the `gcc`
-compiler family (version 4.9.2 or later) and `clang` (version 3.5.2 or later).
+It is written in `C++14` with GNU extensions and has been tested with the `gcc`
+compiler family (version 5.4 or later) and `clang` (version 3.4 or later).
 The build process requires a [Python](https://www.python.org/) interpreter
 (3 or later) to be installed on the system (`py` scripts are invoked directly).
 
@@ -361,7 +361,7 @@ The following code snippet demonstrates using a given input as a stream:
 ~~~ { .cpp caption="io.cpp" }
 auto istream = input.as_stream(); // retrieve an input stream
 
-// read the input character-wise using a C++11 range-based for loop
+// read the input character-wise using a range-based for loop
 for(uliteral_t c : istream) {
     // ...
 }
