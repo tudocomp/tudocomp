@@ -115,12 +115,6 @@ private:
     //could be node_type
     std::vector<std::vector<uint> > bins;
 
-    //vector of tuples, associates id to tuple
-    //tuple:: min_bp, max_bp, card
-    typedef std::tuple<int,int,int> n_tpl;
-    typedef std::vector< n_tpl > tuple_vector;
-    //tuple_vector node_tuples;
-
 
     std::vector<std::vector<uint> > node_begins;
 
@@ -146,8 +140,15 @@ public:
 
 
         StatPhase::wrap("Constructing ST", [&]{
-            std::string in_string((const char*) input.data(), input.size());
-            sdsl::construct_im(stree, in_string, 1);
+            uint size =  input.size();
+            //remove sentinel because sdsl cant handle that
+            if(input[size-1] == 0){
+                size--;
+            }
+            std::string in_string ((const char*) input.data(), size);
+            sdsl::construct_im(stree, in_string , 1);
+
+
         });
 
 
@@ -240,6 +241,15 @@ public:
                         }
                         //check tuple
                         if(!(node_begins[no_leaf_id].size()>=2) && !( (  (uint)( node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front() )) >= i )){
+                            uint min_shorter = node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front();
+                            //check if parent subs this lrf
+                            node_type parent = stree.parent(node);
+                            uint depth = stree.depth(parent);
+                            if(depth < (min_shorter)){
+                                //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
+                                bins[min_shorter].push_back(stree.id(node));
+                            }
+
                             bin_it++;
                             continue;
                         }

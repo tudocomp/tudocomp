@@ -27,111 +27,40 @@ template<uint min_lrf = 2 >
 class LFS2Compressor : public Compressor {
 private:
 
-    inline virtual std::vector<int> select_starting_positions(int node_id, int length){
-
-        node_type node = stree.inv_id(node_id);
-        uint offset = stree.csa[stree.lb(node)];
-        std::vector<int> beginning_positions;
-
-        if(stree.size(node)>=2){
-
-            //iterate over corresponding sa and find min and max
-            offset = stree.lb(node);
-            int min = stree.csa[offset];
-            int max = stree.csa[offset];
-            //int min_pos = offset;
-            //int max_pos = offset;
-            for(uint c = 0;c<stree.size(node); c++){
-                int val = stree.csa[c+offset];
-                beginning_positions.push_back(val);
-
-                if(min > val){
-                    min = val;
-                    //   min_pos = offset+c;
-                }
-                if(max < val){
-                    max = val;
-                    //  max_pos = offset+c;
-                }
-
-
-            }
-            int dif = max -min;
-            if(dif < length){
-
-                return std::vector<int>();
-            }
-
-            std::sort(beginning_positions.begin(), beginning_positions.end());
-        }
-
-        std::vector<int> selected_starting_positions;
-        //select occurences greedily non-overlapping:
-        selected_starting_positions.reserve(beginning_positions.size());
-
-        int last =  0-length;
-        int current;
-        int shorter_count = 0;
-        int min_shorter = length;
-        for (auto it=beginning_positions.begin(); it!=beginning_positions.end(); ++it){
-
-            current = *it;
-            if(last+length <= current && !dead_positions[current] && !dead_positions[current+length-1]){
 
 
 
-                selected_starting_positions.push_back(current);
-                last = current;
+    //sdsl::t_csa sa =sdsl::csa_uncompressed<>
+    //Suffix Tree type + st
+    typedef sdsl::cst_sct3< sdsl::csa_bitcompressed<> > cst_t;
+    cst_t stree;
 
-            }
-
-            if(!dead_positions[current] && dead_positions[current+length-1]){
-                //Some replaceable lrf at beginning
-                for(int i =1; i < length; i++){
-                    if( ! (dead_positions[current+length-i-1]) ){
-                        min_shorter = std::min(min_shorter, i);
-                        shorter_count++;
-                        break;
-
-                    }
-                }
-            }
-
-        }
-
-        if(shorter_count>0){
+    //Stores nts_symbols of first layer
+    IntVector<uint> first_layer_nts;
+    // offset to begin of last nts +1. if ==0 no substitution
+    IntVector<uint> fl_offsets;
+    // stores subs in first layer symbols
+    IntVector<uint> second_layer_nts;
+    // dead pos in first layer
+    BitVector second_layer_dead;
 
 
+    //pair contains begin pos, length
+    std::vector<std::pair<uint, uint> > non_terminal_symbols;
 
-            if(length-min_shorter >= (int)min_lrf){
-                bins[length-min_shorter].push_back(node_id);
-            }
-        }
-        return selected_starting_positions;
-    }
 
-    //(position in text, non_terminal_symbol_number, length_of_symbol);
-    typedef std::tuple<uint,uint,uint> non_term;
-    typedef std::vector<non_term> non_terminal_symbols;
-    typedef std::vector<std::pair<uint,uint>> rules;
+    //
+    //stores node_ids of corresponding factor length
+    std::vector<std::vector<uint> > bins;
+
+
+    //stores beginning positions corresponding to node_ids
+    std::vector<std::vector<uint> > node_begins;
 
 
     typedef sdsl::bp_interval<long unsigned int> node_type;
 
-    //sdsl::t_csa sa =sdsl::csa_uncompressed<>
-    typedef sdsl::cst_sct3< sdsl::csa_bitcompressed<> > cst_t;
-    cst_t stree;
 
-    IntVector<int> subs_positions;
-
-    //could be node_type
-    std::vector<std::vector<uint> > bins;
-
-    //vector of tuples, associates id to tuple
-    //tuple:: min_bp, max_bp, card
-    typedef std::tuple<int,int,int> n_tpl;
-    typedef std::vector< n_tpl > tuple_vector;
-    tuple_vector node_tuples;
 
 
 public:
@@ -139,7 +68,6 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lfs2_comp",
             "This is an implementation of the longest first substitution compression scheme, type 2.");
-        m.needs_sentinel_terminator();
         return m;
     }
 
@@ -153,25 +81,30 @@ public:
 
         auto in = input.as_view();
 
-        //build suffixtree
-        DLOG(INFO)<<"build suffixtree";
+        //create vectors:
+        first_layer_nts = IntVector<uint>(input.size(), 0);
+        fl_offsets = IntVector<uint>(input.size(), 0);
+        second_layer_nts = IntVector<uint>(input.size(), 0);
+        second_layer_dead = BitVector(input.size(), 0);
+
+
+
 
 
         StatPhase::wrap("Constructing ST", [&]{
-             sdsl::construct_im(stree, (const char*) in.data(), 1);
+            uint size =  in.size();
+            //remove sentinel because sdsl cant handle that
+            if(in[size-1] == 0){
+                size--;
+            }
+            std::string in_string ((const char*) in.data(), size);
+            sdsl::construct_im(stree, in_string , 1);
         });
 
 
 
         StatPhase::wrap("Computing LRF", [&]{
-            DLOG(INFO)<<"computing lrf";
-
-            //array of vectors for bins of nodes with string depth
-
-            bins.resize(stree.size()+1);
-
-
-
+            bins.resize(stree.size());
             uint node_counter = 0;
 
             typedef sdsl::cst_bfs_iterator<cst_t> iterator;
@@ -182,98 +115,163 @@ public:
                 DLOG(INFO)<<"iterate st";
 
                 for (iterator it = begin; it != end; ++it) {
-                    bins[stree.depth(*it)].push_back(stree.id(*it));
-                    node_counter++;
+
+                    if(!stree.is_leaf(*it)){
+                        bins[stree.depth(*it)].push_back(stree.id(*it));
+                        node_counter++;
+                    }
                 }
             });
+            node_begins.resize(node_counter);
 
-
-
-            node_tuples.resize(node_counter);
-
-            uint nts_number =0;
+            uint nts_number = 1 ;
             StatPhase::wrap("Iterate over Node Bins", [&]{
-                DLOG(INFO)<<"iterate node bins";
-
+                //iterate node bins top down
                 for(uint i = bins.size()-1; i>=min_lrf; i--){
-                    auto bin_it = bins[i].begin();
-                    while (bin_it!= bins[i].end()){
+
+                    //iterate over ids in bin:
+                    for(auto bin_it = bins[i].begin(); bin_it!= bins[i].end() ; bin_it++){
                         node_type node = stree.inv_id(*bin_it);
-                        n_tpl cur_tpl;
-                        if(stree.is_leaf(node)){
-                            int bp = stree.csa[stree.lb(node)];
-                            cur_tpl = std::make_tuple(bp,bp,1);
-                            node_tuples[*bin_it] = cur_tpl;
+                        uint no_leaf_id = *bin_it - stree.size();
 
-                            //DLOG(INFO)<<"new tuple for id: "<<*bin_it<< " <"<<bp<<","<<bp<<",1>";
+                        //get bps of node
 
-                        }
-                        else {
-                            int min = stree.size();
-                            int max = 0;
-                            int card = 0;
-                            for (auto& child: stree.children(node)) {
-                                int child_id = stree.id(child);
-                                n_tpl child_tpl = node_tuples[child_id];
-                                min = std::min(min, std::get<0>(child_tpl));
-                                max = std::max(max, std::get<1>(child_tpl));
-                                card += std::get<2>(child_tpl);
-                            }
+                        if(node_begins[no_leaf_id].empty()){
+                            //get leaves or merge child vectors
+                            for (auto & child : stree.children(node)) {
+                                if(stree.is_leaf(child)){
 
-                            cur_tpl = std::make_tuple(min,max,card);
-                            //DLOG(INFO)<<"new tuple for id: "<<*bin_it<< " <"<<min<<","<<max<<","<<card<<">";
-                            node_tuples[*bin_it] = cur_tpl;
+                                    node_begins[no_leaf_id].push_back(stree.csa[stree.lb(child)]);
 
-                        }
-                        //check tuple
-                        if(!(std::get<2>(cur_tpl)>=2) && !( (std::get<1>(cur_tpl) - std::get<0>(cur_tpl)) >= i )){
-
-                            bin_it++;
-                            continue;
-                        }
-                            //do this
-
-
-                           //Add new rule
-                            //and add new non-terminal symbols
-                            std::vector<int> selected_bp = select_starting_positions(*bin_it, i);
-                            if(! (selected_bp.size() >=2) ){
-                                bin_it++;
-                                continue;
-                            }
-
-                            //vector of text position, length
-                            std::pair<uint,uint> rule = std::make_pair(selected_bp.at(0), i);
-                            dictionary.push_back(rule);
-
-                            //iterate over selected pos, add non terminal symbols
-                            for(auto bp_it = selected_bp.begin(); bp_it != selected_bp.end(); bp_it++){
-                                //(position in text, non_terminal_symbol_number, length_of_symbol);
-                                //typedef std::tuple<uint,uint,uint> non_term;
-                                non_term nts = std::make_tuple(*bp_it, nts_number, i);
-                                nts_symbols.push_back(nts);
-                                //typedef std::vector<non_term> non_terminal_symbols;
-                                //mark as used
-                                for(uint pos = 0; pos<i;pos++){
-                                    dead_positions[pos+ *bp_it] = 1;
+                                } else {
+                                    int child_id = stree.id(child) - stree.size();
+                                    if(!node_begins[child_id ].empty()){
+                                        node_begins[no_leaf_id].insert(node_begins[no_leaf_id].end(),node_begins[child_id ].begin(), node_begins[child_id].end());
+                                        node_begins[child_id ].clear();
+                                    }
                                 }
                             }
-                            nts_number++;
+                            std::sort(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].end());
 
-                            bin_it++;
 
                         }
+                        //if still empty, because everything is substituted...
+                        if(node_begins[no_leaf_id].empty()){
+                           // bin_it++;
+                            continue;
+                        }
+                        //check if viable lrf, else sort higher!
+                        if((node_begins[no_leaf_id].size()>=2)){
+
+                            if (( (uint)( node_begins[no_leaf_id].back() - node_begins[no_leaf_id].front() )) >= i ){
+
+                                //greedily iterate over occurences
+                                signed long last =  0 - (long) i;
+                                std::vector<uint> first_layer_viable;
+                                std::vector<uint> second_layer_viable;
+                                DLOG(INFO)<<"iterating occs, lrf_len: " << i;
+                                for(uint occurence : node_begins[no_leaf_id]){
+                                    //check for viability
+                                    DLOG(INFO)<<"checking occ: " << occurence;
+                                    DLOG(INFO)<<"last chosen occ: " << last;
+                                    if( (last+i <= (long) occurence)){
+                                        DLOG(INFO)<<"last no collide";
+                                        if(fl_offsets[occurence] == 0){
+                                            DLOG(INFO)<<"first pos of occ ok";
+                                            if(fl_offsets[occurence + i -1] == 0){
+                                                //Position is firs layer viable
+                                                DLOG(INFO)<<"occ viable: " << occurence;
+                                                first_layer_viable.push_back(occurence);
+                                                last= occurence;
+                                            }
+                                        } else {
+                                            //find nts number of symbol that corresponds to substitued occ
+                                            uint parent_nts= first_layer_nts[ fl_offsets[occurence]-1 ];
+                                            auto nts = non_terminal_symbols[parent_nts];
+                                            //if length of parent nts is greater than current len + offset
+                                            if(nts.second >fl_offsets[occurence]-1 + i -1 ){
+                                                second_layer_viable.push_back(occurence);
+                                            }
+                                        }
+
+
+                                        //
+                                    }
+
+                                }
+
+
+                                //and substitute
+
+                                //if at least 2 first level layer occs viable:
+                                if(first_layer_viable.size()>=2){
+                                    DLOG(INFO)<<"adding new nts";
+                                    std::pair<uint,uint> nts = std::make_pair(first_layer_viable.front(), i);
+                                    non_terminal_symbols.push_back(nts);
+
+                                    //iterate over vector, make first layer unviable:
+                                    for(uint occ : first_layer_viable){
+                                        DLOG(INFO)<<"fl note nts";
+                                        first_layer_nts[occ]= nts_number;
+
+                                        DLOG(INFO)<<"fl offset to nts";
+                                        for(uint nts_length =0; nts_length < i; nts_length++){
+                                            fl_offsets[occ + nts_length] = nts_length+1;
+                                        }
+                                    }
+
+                                    //raise nts number:
+                                    nts_number++;
+
+                                }
+
+
+                            } else {
+                                //readd node if lrf shorter
+                                uint min_shorter = node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front();
+                                //check if parent subs this lrf
+                                node_type parent = stree.parent(node);
+                                uint depth = stree.depth(parent);
+                                if(depth < (min_shorter)){
+                                    //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
+                                    bins[min_shorter].push_back(stree.id(node));
+                                }
+                             //   bin_it++;
+                                continue;
+                            }
+                        }
+                        DLOG(INFO)<<"state of arrays: ";
+                        std::stringstream ss;
+                        for(uint x = 0; x < first_layer_nts.size(); x++){
+
+
+                            ss << first_layer_nts[x] ;
+                            ss << " " ;
+                        }
+                        DLOG(INFO)<< ss.str();
+
+                        ss.str("");
+                        ss.clear();
+
+                        for(uint x = 0; x < fl_offsets.size(); x++){
+
+
+                            ss << fl_offsets[x] ;
+                            ss << " " ;
+                        }
+                        DLOG(INFO)<< ss.str();
                     }
 
+                }
+
             });
-        });
-
-        StatPhase::wrap("Sorting occurences", [&]{
-
-            DLOG(INFO) << "sorting occurences";
-            std::sort(nts_symbols.begin(), nts_symbols.end());
 
         });
+
+        StatPhase::wrap("Encoding Comp", [&]{
+
+        });
+
 
 
     }

@@ -41,7 +41,7 @@ void run_comp(std::string compression_string) {
     std::string compressed;
     // compress
     {
-        test::TestInput dummy_input = test::compress_input(compression_string);
+        test::TestInput dummy_input (compression_string, true);
         test::TestOutput output = test::compress_output();
 
         c.compress(dummy_input, output);
@@ -51,7 +51,7 @@ void run_comp(std::string compression_string) {
     // decompress
     {
 
-        test::TestInput input = test::decompress_input(compressed);
+        test::TestInput input (compressed, false);
         test::TestOutput output = test::decompress_output();
 
         c.decompress(input, output);
@@ -61,7 +61,7 @@ void run_comp(std::string compression_string) {
     ASSERT_EQ(compression_string, compressed);
 }
 
-
+/*
 
 template<class comp_strat>
 void run_comp_file(std::string file) {
@@ -88,7 +88,7 @@ void run_comp_file(std::string file) {
        // compressed=output.result();
     }
     //ASSERT_EQ(compression_string, compressed);
-}
+}*/
 
 
 TEST(lfs, st_strat){
