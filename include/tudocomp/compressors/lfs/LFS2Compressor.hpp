@@ -186,11 +186,14 @@ public:
                                             }
                                         } else {
                                             //find nts number of symbol that corresponds to substitued occ
-                                            uint parent_nts= first_layer_nts[ fl_offsets[occurence]-1 ];
-                                            auto nts = non_terminal_symbols[parent_nts];
+                                            uint parent_nts= first_layer_nts[ occurence - (fl_offsets[occurence] -1) ];
+                                            DLOG(INFO)<<"sl maybe viable: " << occurence << " parent nts: " << parent_nts;
+                                            auto nts = non_terminal_symbols[parent_nts-1];
                                             //if length of parent nts is greater than current len + offset
-                                            if(nts.second >fl_offsets[occurence]-1 + i -1 ){
+                                            DLOG(INFO)<<"offset: "<<fl_offsets[occurence] <<  " len: " << nts.second;
+                                            if(nts.second >fl_offsets[occurence]-1 + i ){
                                                 second_layer_viable.push_back(occurence);
+                                                DLOG(INFO)<<"sl added";
                                             }
                                         }
 
@@ -223,7 +226,12 @@ public:
                                     //raise nts number:
                                     nts_number++;
 
+                                    for(uint sl_occ :second_layer_viable){
+                                        DLOG(INFO)<<"second layer viable: " << sl_occ;
+                                    }
+
                                 }
+
 
 
                             } else {
@@ -242,6 +250,16 @@ public:
                         }
                         DLOG(INFO)<<"state of arrays: ";
                         std::stringstream ss;
+                        for(uint x = 0; x < in.size(); x++){
+
+
+                            ss << in[x] ;
+                            ss << " " ;
+                        }
+                        DLOG(INFO)<< ss.str();
+
+                        ss.str("");
+                        ss.clear();
                         for(uint x = 0; x < first_layer_nts.size(); x++){
 
 

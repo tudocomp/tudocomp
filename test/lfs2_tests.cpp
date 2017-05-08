@@ -56,9 +56,11 @@ void run_comp(std::string compression_string) {
 TEST(lfs2, no_strat){
 
 
-    run_comp("abaaabbababb$");
+    run_comp("abaabacabdab$");
 
-    run_comp("ccaabbaabbcca$");
+    //run_comp("abaaabbababb$");
+
+   // run_comp("ccaabbaabbcca$");
 
 }
 
