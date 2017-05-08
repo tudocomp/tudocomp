@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
 project (tudocomp)
 
 find_program(CCACHE_FOUND ccache)
@@ -11,26 +11,32 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif(NOT CMAKE_BUILD_TYPE)
 
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "4.9")
-    message(FATAL_ERROR "g++ version 4.9 or greater required!")
+# Check compiler version
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND
+   ${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "5.4")
+    message(FATAL_ERROR "g++ version 5.4 or greater required!")
+endif()
+
+if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    # using Clang or AppleClang
+    if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "3.4")
+        message(FATAL_ERROR "clang version 3.4 or greater required!")
+    endif()
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    # using GCC
+    if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "5.4")
+        message(FATAL_ERROR "g++ version 5.4 or greater required!")
+    endif()
+else()
+    message(FATAL_ERROR "Compiler ${CMAKE_CXX_COMPILER_ID} is not supported!")
 endif()
 
 include(ExternalProject)
 
-# Select C++ standard
-if(${CYGWIN})
-    set(CMAKE_LEGACY_CYGWIN_WIN32 0)
-    set(CXX_STANDARD gnu++11)
-else()
-    set(CXX_STANDARD c++11)
-endif()
-
-# Using C++11, more warnings and debug info
-# TODO: Add --pedantic and fix issues
-# TODO: Actually add -Wall -Wextra -Werror -pedantic
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=${CXX_STANDARD}")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG")
+# More warnings and debug info
+set(CMAKE_CXX_FLAGS "-std=gnu++14 -Wall")
+set(CMAKE_CXX_FLAGS_RELEASE "-std=gnu++14 -DNDEBUG -march=native")
+set(CMAKE_CXX_FLAGS_DEBUG "-std=gnu++14 -O0 -ggdb -DDEBUG")
 
 find_package(Boost)
 
@@ -114,9 +120,7 @@ target_link_libraries(
 
 cotire(tudocomp_algorithms)
 
-
 MESSAGE( STATUS "Built Type: " ${CMAKE_BUILD_TYPE} )
-MESSAGE( STATUS "CXX Flags: " ${CMAKE_CXX_FLAGS} )
 MESSAGE( STATUS "[Optional] Judy Array: " ${JUDY_H_AVAILABLE} )
 MESSAGE( STATUS "[Optional] Boost: " ${Boost_FOUND} )
 
