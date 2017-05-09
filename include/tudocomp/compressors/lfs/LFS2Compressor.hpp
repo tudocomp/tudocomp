@@ -29,7 +29,7 @@ namespace tdc {
 namespace lfs {
 
 
-template<uint min_lrf = 2, typename literal_coder_t = BitCoder, typename len_coder_t = EliasGammaCoder >
+template<uint min_lrf = 10, typename literal_coder_t = BitCoder, typename len_coder_t = EliasGammaCoder >
 class LFS2Compressor : public Compressor {
 private:
 
@@ -72,11 +72,11 @@ private:
 public:
 
     inline static Meta meta() {
-        Meta m("compressor", "lfs2_comp",
+        Meta m("compressor", "lfs2",
             "This is an implementation of the longest first substitution compression scheme, type 2.");
 
-        m.option("lfs2_lit_coder").templated<literal_coder_t, ASCIICoder>("lfs2_lit_coder");
-        m.option("lfs2_len_coder").templated<len_coder_t, ASCIICoder>("lfs2_len_coder");
+        m.option("lfs2_lit_coder").templated<literal_coder_t, BitCoder>("lfs2_lit_coder");
+        m.option("lfs2_len_coder").templated<len_coder_t, EliasGammaCoder>("lfs2_len_coder");
         return m;
     }
 
@@ -96,6 +96,8 @@ public:
         second_layer_nts = IntVector<uint>(input.size(), 0);
         second_layer_dead = BitVector(input.size(), 0);
 
+        std::cerr<<"building stree"<<std::endl;
+
 
 
 
@@ -112,6 +114,7 @@ public:
 
 
 
+        std::cerr<<"computing lrf"<<std::endl;
         StatPhase::wrap("Computing LRF", [&]{
             bins.resize(stree.size());
             uint node_counter = 0;
@@ -238,7 +241,7 @@ public:
                                         uint parent_nts= first_layer_nts[ sl_occ - (fl_offsets[sl_occ] -1) ];
                                         uint sl_start = (fl_offsets[sl_occ] -1);
                                         uint sl_end = sl_start+i-1;
-                                        if(second_layer_dead[sl_start] == 0 && second_layer_dead[sl_end] == 0){
+                                        if(second_layer_dead[sl_start] == (bool)0 && second_layer_dead[sl_end] == (bool)0){
 
                                             second_layer_nts[sl_start]=nts_number;
 
@@ -272,7 +275,7 @@ public:
                              //   bin_it++;
                                 continue;
                             }
-                        }
+                        }/*
                         DLOG(INFO)<<"state of arrays: ";
                         std::stringstream ss;
                         for(uint x = 0; x < in.size(); x++){
@@ -325,7 +328,7 @@ public:
                             ss << second_layer_dead[x] ;
                             ss << " " ;
                         }
-                        DLOG(INFO)<< ss.str();
+                        DLOG(INFO)<< ss.str();*/
                     }
 
                 }
@@ -333,6 +336,7 @@ public:
             });
 
         });
+        std::cerr<<"encoding text"<<std::endl;
 
         StatPhase::wrap("Encoding Comp", [&]{
             // encode dictionary:
@@ -384,28 +388,28 @@ public:
             if(non_terminal_symbols.size()>=1){
                 std::pair<uint,uint> symbol;
                 for(long nts_num =non_terminal_symbols.size()-1; nts_num >= 0; nts_num--){
-                    DLOG(INFO)<<"nts_num: " << nts_num;
+               //     DLOG(INFO)<<"nts_num: " << nts_num;
                     symbol = non_terminal_symbols[nts_num];
-                    DLOG(INFO)<<"encoding from "<<symbol.first<<" to "<<symbol.second + symbol.first;
+                   // DLOG(INFO)<<"encoding from "<<symbol.first<<" to "<<symbol.second + symbol.first;
                     for(uint pos = symbol.first; pos < symbol.second + symbol.first ; pos++){
-                        DLOG(INFO)<<"pos: " <<pos;
+                     //   DLOG(INFO)<<"pos: " <<pos;
                         if(second_layer_nts[pos] > 0){
                             lit_coder.encode(1, bit_r);
                             lit_coder.encode(second_layer_nts[pos], dict_r);
                             auto symbol = non_terminal_symbols[second_layer_nts[pos] -1];
-                            DLOG(INFO)<<"old pos: "<<pos<<" len: " << symbol.second  <<" sl: " << second_layer_nts[pos];
+                          //  DLOG(INFO)<<"old pos: "<<pos<<" len: " << symbol.second  <<" sl: " << second_layer_nts[pos];
 
                             pos += symbol.second - 1;
-                            DLOG(INFO)<<"new pos "<< pos;
+                        //    DLOG(INFO)<<"new pos "<< pos;
 
                         } else {
-                            DLOG(INFO)<<"encoding literal: "<< in[pos];
+                        //    DLOG(INFO)<<"encoding literal: "<< in[pos];
                             lit_coder.encode(0, bit_r);
                             lit_coder.encode(in[pos],literal_r);
 
                         }
                     }
-                    DLOG(INFO)<<"symbol done";
+                  //  DLOG(INFO)<<"symbol done";
 
                 }
             }
@@ -418,13 +422,13 @@ public:
                     lit_coder.encode(1, bit_r);
                     lit_coder.encode(first_layer_nts[pos], dict_r);
                     auto symbol = non_terminal_symbols[first_layer_nts[pos] -1];
-                    DLOG(INFO)<<"old pos: "<<pos<<" len: " << symbol.second  <<" sl: " << first_layer_nts[pos];
+                  //  DLOG(INFO)<<"old pos: "<<pos<<" len: " << symbol.second  <<" sl: " << first_layer_nts[pos];
 
                     pos += symbol.second - 1;
-                    DLOG(INFO)<<"new pos "<< pos;
+                   // DLOG(INFO)<<"new pos "<< pos;
 
                 } else {
-                    DLOG(INFO)<<"encoding literal: "<< in[pos];
+                   // DLOG(INFO)<<"encoding literal: "<< in[pos];
                     lit_coder.encode(0, bit_r);
                     lit_coder.encode(in[pos],literal_r);
 
@@ -432,6 +436,7 @@ public:
                 }
             }
 
+            std::cerr<<"encoding done"<<std::endl;
 
             DLOG(INFO)<<"encoding done";
 
