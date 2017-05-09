@@ -24,8 +24,8 @@ var loadJSONfromURL = function(url) {
 var updateZoomText = function(zoom) {
     d3.select("#options .zoom-label").text(
         zoom.toFixed(1)
-        + " (" + (app.svgWidth * zoom).toFixed(0)
-        + " x " + (app.svgHeight * zoom).toFixed(0)
+        + " (" + (app.options.svgWidth * zoom).toFixed(0)
+        + " x " + (app.options.svgHeight * zoom).toFixed(0)
         + ")"
     );
 }

@@ -233,6 +233,10 @@ function chart(input, options) {
         return (ms / tDuration) * this.width;
     };
 
+    this.pxToTime = function(px) {
+        return (px / this.width) * tDuration;
+    };
+
     // Determine memory scale
     var memMaxPeak = chartData.raw.memPeak;
     var memUnit, memScale;
@@ -252,6 +256,10 @@ function chart(input, options) {
 
     this.memToPx = function(bytes) {
         return (bytes / memMaxPeak) * this.height;
+    };
+
+    this.pxToMem = function(px) {
+        return (px / this.height) * memMaxPeak;
     };
 
     // generate SVG

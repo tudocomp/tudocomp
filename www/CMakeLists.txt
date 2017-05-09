@@ -6,6 +6,7 @@ add_custom_target(www
     COMMENT "Copying website files" VERBATIM
     COMMAND ${CMAKE_COMMAND} -E make_directory ${WWW_OUT_DIR}
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${WWW_OUT_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/etc/charter/charter.js ${WWW_OUT_DIR}/charter
     # "exclude" these
     COMMAND ${CMAKE_COMMAND} -E remove ${WWW_OUT_DIR}/CMakeLists.txt
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${WWW_OUT_DIR}/pages
