@@ -22,6 +22,7 @@
 #include <tudocomp/coders/BitCoder.hpp>
 
 #include <tudocomp/coders/EliasGammaCoder.hpp>
+#include <tudocomp/coders/ASCIICoder.hpp>
 
 
 namespace tdc {
@@ -74,8 +75,8 @@ public:
         Meta m("compressor", "lfs2_comp",
             "This is an implementation of the longest first substitution compression scheme, type 2.");
 
-        m.option("lfs2_lit_coder").templated<literal_coder_t, BitCoder>("lfs2_lit_coder");
-        m.option("lfs2_len_coder").templated<len_coder_t, EliasGammaCoder>("lfs2_len_coder");
+        m.option("lfs2_lit_coder").templated<literal_coder_t, ASCIICoder>("lfs2_lit_coder");
+        m.option("lfs2_len_coder").templated<len_coder_t, ASCIICoder>("lfs2_len_coder");
         return m;
     }
 
@@ -374,13 +375,16 @@ public:
             }
             Range dict_r(0, non_terminal_symbols.size());
 
+            lit_coder.encode('s', literal_r);
+
 
             DLOG(INFO) << "encoding dictionary symbols";
 
             // encode dictionary strings, backwards, to directly decode strings:
             if(non_terminal_symbols.size()>=1){
                 std::pair<uint,uint> symbol;
-                for(uint nts_num =non_terminal_symbols.size()-1; nts_num >= 1; nts_num--){
+                for(long nts_num =non_terminal_symbols.size()-1; nts_num >= 0; nts_num--){
+                    DLOG(INFO)<<"nts_num: " << nts_num;
                     symbol = non_terminal_symbols[nts_num];
                     DLOG(INFO)<<"encoding from "<<symbol.first<<" to "<<symbol.second + symbol.first;
                     for(uint pos = symbol.first; pos < symbol.second + symbol.first ; pos++){
@@ -405,6 +409,30 @@ public:
 
                 }
             }
+
+            //encode start symbol
+
+            DLOG(INFO)<<"encode start symbol";
+            for(uint pos = 0; pos < in.size(); pos++){
+                if(first_layer_nts[pos]>0){
+                    lit_coder.encode(1, bit_r);
+                    lit_coder.encode(first_layer_nts[pos], dict_r);
+                    auto symbol = non_terminal_symbols[first_layer_nts[pos] -1];
+                    DLOG(INFO)<<"old pos: "<<pos<<" len: " << symbol.second  <<" sl: " << first_layer_nts[pos];
+
+                    pos += symbol.second - 1;
+                    DLOG(INFO)<<"new pos "<< pos;
+
+                } else {
+                    DLOG(INFO)<<"encoding literal: "<< in[pos];
+                    lit_coder.encode(0, bit_r);
+                    lit_coder.encode(in[pos],literal_r);
+
+
+                }
+            }
+
+
             DLOG(INFO)<<"encoding done";
 
 
@@ -463,9 +491,11 @@ public:
         std::stringstream ss;
         uint symbol_number;
         char c1;
+        c1 = lit_decoder.template decode<char>(literal_r);
+        DLOG(INFO)<<"sync symbol:: "<< c1;
 
         DLOG(INFO) << "reading dictionary";
-        for(uint i = dict_lengths.size() -1; i>=0 ;i--){
+        for(long i = dict_lengths.size() -1; i>=0 ;i--){
 
             ss.str("");
             ss.clear();
@@ -473,11 +503,15 @@ public:
             DLOG(INFO)<<"decoding symbol: "<<i << "length: "  << size_cur;
             while(size_cur > 0){
                 bool bit1 = lit_decoder.template decode<bool>(bit_r);
+
                 DLOG(INFO)<<"bit indicator: "<<bit1<<" rem len: " << size_cur;
 
                 if(bit1){
                     //bit = 1, is nts, decode nts num and copy
                     symbol_number = lit_decoder.template decode<uint>(dictionary_r); // Dekodiere Literal
+
+                    DLOG(INFO)<<"read symbol number: "<< symbol_number;
+                    symbol_number-=1;
 
                     if(symbol_number < dictionary.size()){
 
@@ -485,6 +519,7 @@ public:
                         size_cur-= dict_lengths[symbol_number];
                     } else {
                         DLOG(INFO)<< "too large symbol: " << symbol_number;
+                        break;
                     }
 
                 } else {
@@ -499,10 +534,39 @@ public:
             }
 
             dictionary[i]=ss.str();
-            DLOG(INFO)<<"rad symbol: " << i << " str: "<< ss.str();
+            DLOG(INFO)<<"add symbol: " << i << " str: "<< ss.str();
 
 
         }
+
+        auto ostream = output.as_stream();
+        //reading start symbol:
+        while(!lit_decoder.eof()){
+            //decode bit
+            bool bit1 = lit_decoder.template decode<bool>(bit_r);
+            char c1;
+            uint symbol_number;
+            // if bit = 0 its a literal
+            if(!bit1){
+                c1 = lit_decoder.template decode<char>(literal_r); // Dekodiere Literal
+
+                ostream << c1;
+            } else {
+            //else its a non-terminal
+                symbol_number = lit_decoder.template decode<uint>(dictionary_r); // Dekodiere Literal
+                symbol_number-=1;
+
+                if(symbol_number < dictionary.size()){
+
+                    ostream << dictionary.at(symbol_number);
+                } else {
+                    DLOG(INFO)<< "too large symbol: " << symbol_number;
+                }
+
+            }
+        }
+
+
 
     }
 

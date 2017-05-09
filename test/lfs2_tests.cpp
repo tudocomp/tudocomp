@@ -38,6 +38,7 @@ void run_comp(std::string compression_string) {
 
     }
     // decompress
+    DLOG(INFO)<<"compressed: " << compressed;
     {
 
         test::TestInput input = test::decompress_input(compressed);
