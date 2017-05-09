@@ -131,8 +131,8 @@ function tickDistance(range, n, base) {
 function ChartData(raw) {
     // Raw
     if(raw.meta) {
-        this.raw = x.data;
-        this.meta = x.meta;
+        this.raw = raw.data;
+        this.meta = raw.meta;
     } else {
         this.raw = raw;
     }
