@@ -1,29 +1,34 @@
 #pragma once
 
+//std includes:
 #include <vector>
 #include <tuple>
 
+//general includes:
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/io.hpp>
-
-
-#include <tudocomp/compressors/lfs/EncodeStrategy.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
-
-
 #include <tudocomp/ds/IntVector.hpp>
-
 #include <tudocomp_stat/StatPhase.hpp>
 
-
+//sdsl include stree:
 #include <sdsl/suffix_trees.hpp>
+
+
+//includes encoding:
+#include <tudocomp/io/BitIStream.hpp>
+#include <tudocomp/io/BitOStream.hpp>
+#include <tudocomp/Literal.hpp>
+#include <tudocomp/coders/BitCoder.hpp>
+
+#include <tudocomp/coders/EliasGammaCoder.hpp>
+
 
 namespace tdc {
 namespace lfs {
 
 
-template<uint min_lrf = 2 >
+template<uint min_lrf = 2, typename literal_coder_t = BitCoder, typename len_coder_t = EliasGammaCoder >
 class LFS2Compressor : public Compressor {
 private:
 
@@ -68,6 +73,9 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lfs2_comp",
             "This is an implementation of the longest first substitution compression scheme, type 2.");
+
+        m.option("lfs2_lit_coder").templated<literal_coder_t, BitCoder>("lfs2_lit_coder");
+        m.option("lfs2_len_coder").templated<len_coder_t, EliasGammaCoder>("lfs2_len_coder");
         return m;
     }
 
@@ -326,6 +334,84 @@ public:
         });
 
         StatPhase::wrap("Encoding Comp", [&]{
+            // encode dictionary:
+            DLOG(INFO) << "encoding dictionary symbol sizes ";
+
+            std::shared_ptr<BitOStream> bitout = std::make_shared<BitOStream>(output);
+            typename literal_coder_t::Encoder lit_coder(
+                env().env_for_option("lfs2_lit_coder"),
+                bitout,
+                NoLiterals()
+            );
+            typename len_coder_t::Encoder len_coder(
+                env().env_for_option("lfs2_len_coder"),
+                bitout,
+                NoLiterals()
+            );
+
+            //encode lengths:
+            DLOG(INFO)<<"number nts: " << non_terminal_symbols.size();
+            Range intrange (0, UINT_MAX);//uint32_r
+            //encode first length:
+            if(non_terminal_symbols.size()>=1){
+                auto symbol = non_terminal_symbols[0];
+                uint last_length=symbol.second;
+                //Range for encoding nts number
+                Range s_length_r (0,last_length);
+                len_coder.encode(last_length,intrange);
+                //encode delta length  of following symbols
+                for(uint nts_num = 1; nts_num < non_terminal_symbols.size(); nts_num++){
+                    symbol = non_terminal_symbols[nts_num];
+                    len_coder.encode(last_length-symbol.second,s_length_r);
+                    last_length=symbol.second;
+
+                }
+                //encode last length, to have zero length last
+                len_coder.encode(symbol.second,s_length_r);
+            }else {
+                len_coder.encode(0,intrange);
+
+            }
+            Range dict_r(0, non_terminal_symbols.size());
+
+
+            DLOG(INFO) << "encoding dictionary symbols";
+
+            // encode dictionary strings, backwards, to directly decode strings:
+            if(non_terminal_symbols.size()>=1){
+                std::pair<uint,uint> symbol;
+                for(uint nts_num =non_terminal_symbols.size()-1; nts_num >= 1; nts_num--){
+                    symbol = non_terminal_symbols[nts_num];
+                    DLOG(INFO)<<"encoding from "<<symbol.first<<" to "<<symbol.second + symbol.first;
+                    for(uint pos = symbol.first; pos < symbol.second + symbol.first ; pos++){
+                        DLOG(INFO)<<"pos: " <<pos;
+                        if(second_layer_nts[pos] > 0){
+                            lit_coder.encode(1, bit_r);
+                            lit_coder.encode(second_layer_nts[pos], dict_r);
+                            auto symbol = non_terminal_symbols[second_layer_nts[pos] -1];
+                            DLOG(INFO)<<"old pos: "<<pos<<" len: " << symbol.second  <<" sl: " << second_layer_nts[pos];
+
+                            pos += symbol.second - 1;
+                            DLOG(INFO)<<"new pos "<< pos;
+
+                        } else {
+                            DLOG(INFO)<<"encoding literal: "<< in[pos];
+                            lit_coder.encode(0, bit_r);
+                            lit_coder.encode(in[pos],literal_r);
+
+                        }
+                    }
+                    DLOG(INFO)<<"symbol done";
+
+                }
+            }
+            DLOG(INFO)<<"encoding done";
+
+
+
+
+
+
 
         });
 
@@ -334,6 +420,89 @@ public:
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
+
+        DLOG(INFO) << "decompress lfs";
+        std::shared_ptr<BitIStream> bitin = std::make_shared<BitIStream>(input);
+
+        typename literal_coder_t::Decoder lit_decoder(
+            env().env_for_option("lfs2_lit_coder"),
+            bitin
+        );
+        typename len_coder_t::Decoder len_decoder(
+            env().env_for_option("lfs2_len_coder"),
+            bitin
+        );
+        Range int_r (0,UINT_MAX);
+
+        uint symbol_length = len_decoder.template decode<uint>(int_r);
+        Range slength_r (0, symbol_length);
+        std::vector<uint> dict_lengths;
+        dict_lengths.reserve(symbol_length);
+        dict_lengths.push_back(symbol_length);
+        while(symbol_length>0){
+
+            uint current_delta = len_decoder.template decode<uint>(slength_r);
+            symbol_length-=current_delta;
+            dict_lengths.push_back(symbol_length);
+        }
+        dict_lengths.pop_back();
+
+        DLOG(INFO)<<"decoded number of nts: "<< dict_lengths.size();
+
+
+
+        std::vector<std::string> dictionary;
+        uint dictionary_size = dict_lengths.size();
+
+        Range dictionary_r (0, dictionary_size);
+
+
+        dictionary.resize(dict_lengths.size());
+
+        //uint length_of_symbol;
+        std::stringstream ss;
+        uint symbol_number;
+        char c1;
+
+        DLOG(INFO) << "reading dictionary";
+        for(uint i = dict_lengths.size() -1; i>=0 ;i--){
+
+            ss.str("");
+            ss.clear();
+            long size_cur = (long) dict_lengths[i];
+            DLOG(INFO)<<"decoding symbol: "<<i << "length: "  << size_cur;
+            while(size_cur > 0){
+                bool bit1 = lit_decoder.template decode<bool>(bit_r);
+                DLOG(INFO)<<"bit indicator: "<<bit1<<" rem len: " << size_cur;
+
+                if(bit1){
+                    //bit = 1, is nts, decode nts num and copy
+                    symbol_number = lit_decoder.template decode<uint>(dictionary_r); // Dekodiere Literal
+
+                    if(symbol_number < dictionary.size()){
+
+                        ss << dictionary.at(symbol_number);
+                        size_cur-= dict_lengths[symbol_number];
+                    } else {
+                        DLOG(INFO)<< "too large symbol: " << symbol_number;
+                    }
+
+                } else {
+                    //bit = 0, decode literal
+                    c1 = lit_decoder.template decode<char>(literal_r); // Dekodiere Literal
+                    size_cur--;
+
+                    ss << c1;
+
+                }
+
+            }
+
+            dictionary[i]=ss.str();
+            DLOG(INFO)<<"rad symbol: " << i << " str: "<< ss.str();
+
+
+        }
 
     }
 

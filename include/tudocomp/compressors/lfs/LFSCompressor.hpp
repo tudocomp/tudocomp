@@ -9,6 +9,7 @@
 
 #include <tudocomp/compressors/lfs/EncodeStrategy.hpp>
 #include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/EliasGammaCoder.hpp>
 
 
 #include <tudocomp/ds/IntVector.hpp>
@@ -20,7 +21,7 @@
 namespace tdc {
 namespace lfs {
 
-template<typename comp_strategy_t , typename coding_strat_t = EncodeStrategy<BitCoder, BitCoder> >
+template<typename comp_strategy_t , typename coding_strat_t = EncodeStrategy<BitCoder, EliasGammaCoder> >
 class LFSCompressor : public Compressor {
 private:
 
