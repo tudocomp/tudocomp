@@ -28,8 +28,8 @@
 namespace tdc {
 namespace lfs {
 
-
-template<uint min_lrf = 2, typename literal_coder_t = BitCoder, typename len_coder_t = EliasGammaCoder >
+//uint min_lrf = 2,
+template<typename literal_coder_t = BitCoder, typename len_coder_t = EliasGammaCoder >
 class LFS2Compressor : public Compressor {
 private:
 
@@ -74,9 +74,10 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lfs2",
             "This is an implementation of the longest first substitution compression scheme, type 2.");
-
+        m.option("min_lrf").dynamic(3);
         m.option("lfs2_lit_coder").templated<literal_coder_t, BitCoder>("lfs2_lit_coder");
         m.option("lfs2_len_coder").templated<len_coder_t, EliasGammaCoder>("lfs2_len_coder");
+
         return m;
     }
 
@@ -87,6 +88,7 @@ public:
         DLOG(INFO) << "Compressor lfs2 instantiated";
     }
     inline virtual void compress(Input& input, Output& output) override {
+        uint min_lrf = env().option("min_lrf").as_integer();
 
         auto in = input.as_view();
 
@@ -362,18 +364,24 @@ public:
 
         }
 
+        std::sort(nts_depth.begin(), nts_depth.end());
 
-
-
-        uint max_depth = 0;
-        for(uint gaga = 0; gaga < nts_depth.size(); gaga++){
-            if(max_depth< nts_depth[gaga]){
-                max_depth = nts_depth[gaga];
-            }
-        }
+        uint max_depth = nts_depth[nts_depth.size()-1];
 
         DLOG(INFO)<<"Max CFG Depth: "<< max_depth;
         DLOG(INFO)<<"Number of CFG rules: "<< non_terminal_symbols.size();
+
+        if(nts_depth.size()>=4){
+            uint quarter = nts_depth.size() /4;
+
+           // nts_depth[quarter -1];
+            StatPhase::log("25 \% quantil CFG Depth", nts_depth[quarter -1]);
+            StatPhase::log("50 \% quantil CFG Depth", nts_depth[(2*quarter) -1]);
+            StatPhase::log("75 \% quantil CFG Depth", nts_depth[(3*quarter) -1]);
+
+        }
+
+
 
 
         StatPhase::log("Max CFG Depth", max_depth);
