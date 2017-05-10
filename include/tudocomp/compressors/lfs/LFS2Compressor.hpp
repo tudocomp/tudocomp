@@ -29,7 +29,7 @@ namespace tdc {
 namespace lfs {
 
 
-template<uint min_lrf = 10, typename literal_coder_t = BitCoder, typename len_coder_t = EliasGammaCoder >
+template<uint min_lrf = 2, typename literal_coder_t = BitCoder, typename len_coder_t = EliasGammaCoder >
 class LFS2Compressor : public Compressor {
 private:
 
@@ -181,31 +181,31 @@ public:
                                 signed long last =  0 - (long) i;
                                 std::vector<uint> first_layer_viable;
                                 std::vector<uint> second_layer_viable;
-                                DLOG(INFO)<<"iterating occs, lrf_len: " << i;
+                              //  DLOG(INFO)<<"iterating occs, lrf_len: " << i;
                                 for(uint occurence : node_begins[no_leaf_id]){
                                     //check for viability
-                                    DLOG(INFO)<<"checking occ: " << occurence;
-                                    DLOG(INFO)<<"last chosen occ: " << last;
+                                 //   DLOG(INFO)<<"checking occ: " << occurence;
+                                 //   DLOG(INFO)<<"last chosen occ: " << last;
                                     if( (last+i <= (long) occurence)){
-                                        DLOG(INFO)<<"last no collide";
+                                //        DLOG(INFO)<<"last no collide";
                                         if(fl_offsets[occurence] == 0){
-                                            DLOG(INFO)<<"first pos of occ ok";
+                                       //     DLOG(INFO)<<"first pos of occ ok";
                                             if(fl_offsets[occurence + i -1] == 0){
                                                 //Position is firs layer viable
-                                                DLOG(INFO)<<"occ viable: " << occurence;
+                                        //        DLOG(INFO)<<"occ viable: " << occurence;
                                                 first_layer_viable.push_back(occurence);
                                                 last= occurence;
                                             }
                                         } else {
                                             //find nts number of symbol that corresponds to substitued occ
                                             uint parent_nts= first_layer_nts[ occurence - (fl_offsets[occurence] -1) ];
-                                            DLOG(INFO)<<"sl maybe viable: " << occurence << " parent nts: " << parent_nts;
+                                         //   DLOG(INFO)<<"sl maybe viable: " << occurence << " parent nts: " << parent_nts;
                                             auto nts = non_terminal_symbols[parent_nts-1];
                                             //if length of parent nts is greater than current len + offset
-                                            DLOG(INFO)<<"offset: "<<fl_offsets[occurence] <<  " len: " << nts.second;
+                                       //     DLOG(INFO)<<"offset: "<<fl_offsets[occurence] <<  " len: " << nts.second;
                                             if(nts.second >=fl_offsets[occurence]-1 + i ){
                                                 second_layer_viable.push_back(occurence);
-                                                DLOG(INFO)<<"sl viable, parent length: " << nts.second << ">= " <<fl_offsets[occurence]-1 + i;
+                                 //               DLOG(INFO)<<"sl viable, parent length: " << nts.second << ">= " <<fl_offsets[occurence]-1 + i;
                                             }
                                         }
 
@@ -220,16 +220,16 @@ public:
 
                                 //if at least 2 first level layer occs viable:
                                 if(first_layer_viable.size()>=2){
-                                    DLOG(INFO)<<"adding new nts";
+                                 //   DLOG(INFO)<<"adding new nts";
                                     std::pair<uint,uint> nts = std::make_pair(first_layer_viable.front(), i);
                                     non_terminal_symbols.push_back(nts);
 
                                     //iterate over vector, make first layer unviable:
                                     for(uint occ : first_layer_viable){
-                                        DLOG(INFO)<<"fl note nts";
+                                      //  DLOG(INFO)<<"fl note nts";
                                         first_layer_nts[occ]= nts_number;
 
-                                        DLOG(INFO)<<"fl offset to nts";
+                                      //  DLOG(INFO)<<"fl offset to nts";
                                         for(uint nts_length =0; nts_length < i; nts_length++){
                                             fl_offsets[occ + nts_length] = nts_length+1;
                                         }
@@ -239,9 +239,12 @@ public:
 
                                     for(uint sl_occ :second_layer_viable){
                                         uint parent_nts= first_layer_nts[ sl_occ - (fl_offsets[sl_occ] -1) ];
-                                        uint sl_start = (fl_offsets[sl_occ] -1);
+                                        //parten start
+                                        auto parent_sym = non_terminal_symbols[parent_nts-1];
+                                        uint parent_start= parent_sym.first;
+                                        uint sl_start = (parent_start + fl_offsets[sl_occ] -1);
                                         uint sl_end = sl_start+i-1;
-                                        if(second_layer_dead[sl_start] == (bool)0 && second_layer_dead[sl_end] == (bool)0){
+                                        if(second_layer_dead[sl_start] == (uint)0 && second_layer_dead[sl_end] == (uint)0){
 
                                             second_layer_nts[sl_start]=nts_number;
 
@@ -249,9 +252,9 @@ public:
                                                 second_layer_dead[dead]=1;
                                             }
 
-                                            DLOG(INFO)<<"second layer substituted: " << sl_occ;
-                                            DLOG(INFO)<<"sl_start: " << sl_start << " sl end: "<<sl_end;
-                                            DLOG(INFO)<<"position for parent: " << parent_nts;
+                                      //      DLOG(INFO)<<"second layer substituted: " << sl_occ;
+                                      //      DLOG(INFO)<<"sl_start: " << sl_start << " sl end: "<<sl_end;
+                                      //      DLOG(INFO)<<"position for parent: " << parent_nts;
                                         }
                                     }
 
@@ -338,11 +341,15 @@ public:
         });
         std::cerr<<"encoding text"<<std::endl;
 
+        std::vector<uint8_t> byte_buffer;
+
+        Output out_with_buf = output.from_memory(byte_buffer);
+
         StatPhase::wrap("Encoding Comp", [&]{
             // encode dictionary:
             DLOG(INFO) << "encoding dictionary symbol sizes ";
 
-            std::shared_ptr<BitOStream> bitout = std::make_shared<BitOStream>(output);
+            std::shared_ptr<BitOStream> bitout = std::make_shared<BitOStream>(out_with_buf);
             typename literal_coder_t::Encoder lit_coder(
                 env().env_for_option("lfs2_lit_coder"),
                 bitout,
@@ -381,6 +388,10 @@ public:
 
             lit_coder.encode('s', literal_r);
 
+            uint buf_size = byte_buffer.size();
+            StatPhase::log("Bytes Length Encoding", buf_size);
+            DLOG(INFO)<<"Bytes Length Encoding: "<< buf_size;
+
 
             DLOG(INFO) << "encoding dictionary symbols";
 
@@ -414,6 +425,12 @@ public:
                 }
             }
 
+            buf_size = byte_buffer.size() - buf_size;
+            StatPhase::log("Bytes Non-Terminal Symbol Encoding", buf_size);
+
+
+            DLOG(INFO)<<"Bytes Non-Terminal Symbol Encoding: "<< buf_size;
+
             //encode start symbol
 
             DLOG(INFO)<<"encode start symbol";
@@ -435,6 +452,19 @@ public:
 
                 }
             }
+
+            buf_size = byte_buffer.size() - buf_size;
+            StatPhase::log("Bytes Start Symbol Encoding", buf_size);
+
+
+            DLOG(INFO)<<"Bytes Start Symbol Encoding: "<< buf_size;
+
+            auto ostream = output.as_stream();
+            for(uint begin =0; begin < byte_buffer.size(); begin++){
+                ostream << byte_buffer[begin];
+
+            }
+            ostream << (char)0;
 
             std::cerr<<"encoding done"<<std::endl;
 
@@ -505,17 +535,17 @@ public:
             ss.str("");
             ss.clear();
             long size_cur = (long) dict_lengths[i];
-            DLOG(INFO)<<"decoding symbol: "<<i << "length: "  << size_cur;
+          //  DLOG(INFO)<<"decoding symbol: "<<i << "length: "  << size_cur;
             while(size_cur > 0){
                 bool bit1 = lit_decoder.template decode<bool>(bit_r);
 
-                DLOG(INFO)<<"bit indicator: "<<bit1<<" rem len: " << size_cur;
+             //   DLOG(INFO)<<"bit indicator: "<<bit1<<" rem len: " << size_cur;
 
                 if(bit1){
                     //bit = 1, is nts, decode nts num and copy
                     symbol_number = lit_decoder.template decode<uint>(dictionary_r); // Dekodiere Literal
 
-                    DLOG(INFO)<<"read symbol number: "<< symbol_number;
+              //      DLOG(INFO)<<"read symbol number: "<< symbol_number;
                     symbol_number-=1;
 
                     if(symbol_number < dictionary.size()){
@@ -523,7 +553,7 @@ public:
                         ss << dictionary.at(symbol_number);
                         size_cur-= dict_lengths[symbol_number];
                     } else {
-                        DLOG(INFO)<< "too large symbol: " << symbol_number;
+                   //     DLOG(INFO)<< "too large symbol: " << symbol_number;
                         break;
                     }
 
@@ -539,7 +569,7 @@ public:
             }
 
             dictionary[i]=ss.str();
-            DLOG(INFO)<<"add symbol: " << i << " str: "<< ss.str();
+          //  DLOG(INFO)<<"add symbol: " << i << " str: "<< ss.str();
 
 
         }
