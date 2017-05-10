@@ -11,6 +11,7 @@
 #include <tudocomp/ds/PLCPFromPhi.hpp>
 #include <tudocomp/ds/LCPFromPLCP.hpp>
 #include <tudocomp/ds/ISAFromSA.hpp>
+#include <tudocomp/ds/SparseISA.hpp>
 
 namespace tdc {
 
@@ -24,7 +25,8 @@ template<
     typename phi_t = PhiFromSA,
     typename plcp_t = PLCPFromPhi,
     typename lcp_t = LCPFromPLCP,
-    typename isa_t = ISAFromSA
+    typename isa_t = ISAFromSA,
+    typename sparseisa_t = SparseISA
 >
 class TextDS : public Algorithm {
 public:
@@ -34,6 +36,7 @@ public:
     static const dsflags_t LCP = 0x04;
     static const dsflags_t PHI = 0x08;
     static const dsflags_t PLCP = 0x10;
+    static const dsflags_t SPARSEISA = 0x0a;
 
     using value_type = uliteral_t;
 
@@ -42,9 +45,10 @@ public:
     using plcp_type = plcp_t;
     using lcp_type = lcp_t;
     using isa_type = isa_t;
+    using sparseisa_type = sparseisa_t;
 
 private:
-    using this_t = TextDS<sa_t, phi_t, plcp_t, lcp_t, isa_t>;
+    using this_t = TextDS<sa_t, phi_t, plcp_t, lcp_t, isa_t, sparseisa_t>;
 
     View m_text;
 
@@ -53,6 +57,7 @@ private:
     std::unique_ptr<plcp_t> m_plcp;
     std::unique_ptr<lcp_t> m_lcp;
     std::unique_ptr<isa_t> m_isa;
+    std::unique_ptr<sparseisa_t> m_sparseisa;
 
     dsflags_t m_ds_requested;
     CompressMode m_cm;
@@ -102,6 +107,7 @@ public:
         m.option("plcp").templated<plcp_t, PLCPFromPhi>();
         m.option("lcp").templated<lcp_t, LCPFromPLCP>();
         m.option("isa").templated<isa_t, ISAFromSA>();
+        m.option("sparseisa").templated<sparseisa_t, SparseISA>();
         m.option("compress").dynamic("delayed");
         return m;
     }
@@ -151,6 +157,9 @@ public:
     inline const isa_t& require_isa(CompressMode cm = CompressMode::select) {
         return require_ds(m_isa, "isa", cm);
     }
+    inline const sparseisa_t& require_sparseisa(CompressMode cm = CompressMode::select) {
+        return require_ds(m_sparseisa, "sparseisa", cm);
+    }
 
     // inplace methods
 
@@ -178,6 +187,11 @@ public:
 
         return inplace_ds(m_isa, ISA, "isa", cm);
     }
+    inline std::unique_ptr<typename sparseisa_t::data_type> inplace_sparseisa(
+            CompressMode cm = CompressMode::select) {
+
+        return inplace_ds(m_sparseisa, SPARSEISA, "sparseisa", cm);
+    }
 
     // release methods
 
@@ -186,6 +200,7 @@ public:
     inline std::unique_ptr<plcp_t> release_plcp() { return release_ds(m_plcp, PLCP); }
     inline std::unique_ptr<lcp_t> release_lcp() { return release_ds(m_lcp, LCP); }
     inline std::unique_ptr<isa_t> release_isa() { return release_ds(m_isa, ISA); }
+    inline std::unique_ptr<sparseisa_t> release_sparseisa() { return release_ds(m_sparseisa, SPARSEISA); }
 
 private:
     inline void release_unneeded() {
@@ -195,6 +210,7 @@ private:
         if(!(m_ds_requested & PLCP)) release_plcp();
         if(!(m_ds_requested & LCP)) release_lcp();
         if(!(m_ds_requested & ISA)) release_isa();
+        if(!(m_ds_requested & SPARSEISA)) release_sparseisa();
     }
 
 public:
@@ -237,6 +253,13 @@ public:
             if(cm == CompressMode::coherent_delayed) m_isa->compress();
         }
 
+        // Construct and compress SPARSEISA
+        if(flags & SPARSEISA)  {
+            require_sparseisa(cm);
+            release_unneeded();
+            if(cm == CompressMode::coherent_delayed) m_sparseisa->compress();
+        }
+
         // Compress data structures that had dependencies
         if(cm == CompressMode::coherent_delayed) {
             if(m_sa) m_sa->compress();
@@ -271,6 +294,7 @@ public:
         if(m_plcp) out << std::setw(w) << "PLCP[i]" << " | ";
         if(m_lcp) out << std::setw(w) << "LCP[i]" << " | ";
         if(m_isa) out << std::setw(w) << "ISA[i]" << " | ";
+        if(m_sparseisa) out << std::setw(w) << "SPARSEISA[i]" << " | ";
         out << std::endl;
 
         //Separator
@@ -281,6 +305,7 @@ public:
         if(m_plcp) out << std::setw(w) << "" << "-|-";
         if(m_lcp) out << std::setw(w) << "" << "-|-";
         if(m_isa) out << std::setw(w) << "" << "-|-";
+        if(m_sparseisa) out << std::setw(w) << "" << "-|-";
         out << std::endl;
 
         //Body
@@ -292,6 +317,7 @@ public:
             if(m_plcp) out << std::setw(w) << (*m_plcp)[i] << " | ";
             if(m_lcp) out << std::setw(w) << (*m_lcp)[i] << " | ";
             if(m_isa) out << std::setw(w) << ((*m_isa)[i] + base) << " | ";
+            if(m_sparseisa) out << std::setw(w) << ((*m_sparseisa)[i] + base) << " | ";
             out << std::endl;
         }
     }

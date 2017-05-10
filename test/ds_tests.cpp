@@ -100,6 +100,19 @@ void test_isa(const std::string& str, textds_t& t) {
 }
 
 template<class textds_t>
+void test_sparseisa(const std::string& str, textds_t& t) {
+    auto& isa = t.require_isa();
+    auto& sa  = t.require_sa(); //request afterwards!
+
+    ASSERT_EQ(isa.size(), sa.size()); //length
+
+    //correctness
+    for(size_t i = 0; i < sa.size(); ++i) {
+        ASSERT_EQ(isa[sa[i]], i);
+    }
+}
+
+template<class textds_t>
 void test_lcp(const std::string& str, textds_t& t) {
     auto& lcp = t.require_lcp();
     auto& sa  = t.require_sa(); //request afterwards!
@@ -118,6 +131,7 @@ void test_all_ds(const std::string& str, textds_t& t) {
     test_bwt(str,t);
     test_lcp(str, t);
     test_isa(str, t);
+    test_sparseisa(str, t);
 }
 
 template<class textds_t>
@@ -146,6 +160,7 @@ TEST(ds, SA)          { TEST_DS_STRINGCOLLECTION(test_sa); }
 TEST(ds, BWT)         { TEST_DS_STRINGCOLLECTION(test_bwt); }
 TEST(ds, LCP)         { TEST_DS_STRINGCOLLECTION(test_lcp); }
 TEST(ds, ISA)         { TEST_DS_STRINGCOLLECTION(test_isa); }
+TEST(ds, SPARSEISA)   { TEST_DS_STRINGCOLLECTION(test_sparseisa); }
 TEST(ds, Integration) { TEST_DS_STRINGCOLLECTION(test_all_ds); }
 #undef TEST_DS_STRINGCOLLECTION
 
