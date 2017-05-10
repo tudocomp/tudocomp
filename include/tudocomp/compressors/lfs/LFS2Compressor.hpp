@@ -339,6 +339,47 @@ public:
             });
 
         });
+
+        IntVector<uint> nts_depth(non_terminal_symbols.size(), 0);
+
+        for(uint nts_num =0; nts_num<non_terminal_symbols.size(); nts_num++){
+            auto symbol = non_terminal_symbols[nts_num];
+            uint cur_depth = nts_depth[nts_num];
+
+           // DLOG(INFO)<<"encoding from "<<symbol.first<<" to "<<symbol.second + symbol.first;
+            for(uint pos = symbol.first; pos < symbol.second + symbol.first ; pos++){
+                if(second_layer_nts[pos]>0){
+
+                    uint symbol_num = second_layer_nts[pos] -1;
+                    if(nts_depth[symbol_num]< cur_depth+1){
+                        nts_depth[symbol_num]= cur_depth+1;
+                    }
+
+                }
+
+
+            }
+
+        }
+
+
+
+
+        uint max_depth = 0;
+        for(uint gaga = 0; gaga < nts_depth.size(); gaga++){
+            if(max_depth< nts_depth[gaga]){
+                max_depth = nts_depth[gaga];
+            }
+        }
+
+        DLOG(INFO)<<"Max CFG Depth: "<< max_depth;
+        DLOG(INFO)<<"Number of CFG rules: "<< non_terminal_symbols.size();
+
+
+        StatPhase::log("Max CFG Depth", max_depth);
+        StatPhase::log("Number of CFG rules", non_terminal_symbols.size());
+
+
         std::cerr<<"encoding text"<<std::endl;
 
         std::vector<uint8_t> byte_buffer;
@@ -401,6 +442,7 @@ public:
                 for(long nts_num =non_terminal_symbols.size()-1; nts_num >= 0; nts_num--){
                //     DLOG(INFO)<<"nts_num: " << nts_num;
                     symbol = non_terminal_symbols[nts_num];
+
                    // DLOG(INFO)<<"encoding from "<<symbol.first<<" to "<<symbol.second + symbol.first;
                     for(uint pos = symbol.first; pos < symbol.second + symbol.first ; pos++){
                      //   DLOG(INFO)<<"pos: " <<pos;
@@ -408,6 +450,8 @@ public:
                             lit_coder.encode(1, bit_r);
                             lit_coder.encode(second_layer_nts[pos], dict_r);
                             auto symbol = non_terminal_symbols[second_layer_nts[pos] -1];
+
+
                           //  DLOG(INFO)<<"old pos: "<<pos<<" len: " << symbol.second  <<" sl: " << second_layer_nts[pos];
 
                             pos += symbol.second - 1;
@@ -424,6 +468,9 @@ public:
 
                 }
             }
+
+
+
 
             buf_size = byte_buffer.size() - buf_size;
             StatPhase::log("Bytes Non-Terminal Symbol Encoding", buf_size);
