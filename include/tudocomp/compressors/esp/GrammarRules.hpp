@@ -70,9 +70,11 @@ namespace tdc {namespace esp {
                 auto r = n2.access(between, updater) - 1;
                 if (counter > old_counter) {
                     m_stats.ext_size3_unique++;
+                    m_stats.int_size2_unique++;
                 }
                 m_stats.ext_size2_total--; // compensate for internal 2 use
                 m_stats.ext_size3_total++;
+                m_stats.int_size2_total++;
                 return r;
             }
         }
