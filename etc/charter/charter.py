@@ -5,10 +5,14 @@
 # Requires the PyExecJS module, NodeJS is recommended.
 
 import argparse
+import os
 import json
 import sys
 
 import execjs
+
+# Determine local directory
+local_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Parse command line arguments
 parser = argparse.ArgumentParser(description="""
@@ -48,7 +52,7 @@ else:
 js = execjs.get()
 
 # Compile charter script
-with open("charter.js", "r") as charter_js_file:
+with open(local_dir + "/charter.js", "r") as charter_js_file:
     charter = execjs.compile(charter_js_file.read())
 
 # TODO: test success
