@@ -6,6 +6,7 @@
 
 import argparse
 import json
+import sys
 
 import execjs
 
@@ -24,7 +25,7 @@ parser.add_argument('--no-legend', dest="draw_legend", action="store_false",
                     help='disable legend drawing')
 parser.add_argument('--no-offsets', dest="draw_offsets", action="store_false",
                     help='disable memory offset drawing')
-parser.add_argument('file', metavar='FILE', type=str,
+parser.add_argument('file', nargs="?", type=str,
                     help='the input file (json)')
 
 parser.set_defaults(draw_groups=True)
@@ -32,6 +33,16 @@ parser.set_defaults(draw_legend=True)
 parser.set_defaults(draw_offsets=True)
 
 args = parser.parse_args()
+
+# Read input into stat_json (file or stdin)
+if args.file:
+    with open(args.file) as input_file:
+        stat_json = input_file.read()
+elif not sys.stdin.isatty():
+    stat_json = sys.stdin.read()
+else:
+    print("no input given")
+    quit()
 
 # Create JavaScript runtime
 js = execjs.get()
@@ -52,9 +63,8 @@ options = {
 }
 
 # Draw chart
-with open(args.file) as example_json:
-    print(charter.call(
-        "drawSVG",
-        example_json.read(),
-        json.dumps(options)))
+print(charter.call(
+    "drawSVG",
+    stat_json,
+    json.dumps(options)))
 
