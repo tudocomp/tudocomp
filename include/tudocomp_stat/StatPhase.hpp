@@ -26,7 +26,7 @@ private:
     StatPhase* m_parent;
     PhaseData* m_data;
 
-    bool  m_track_memory;
+    bool m_track_memory;
 
     inline void append_child(PhaseData* data) {
         if(m_data->first_child) {
@@ -55,12 +55,20 @@ private:
         }
     }
 
+    inline void pause() {
+        m_track_memory = false;
+    }
+
+    inline void resume() {
+        m_track_memory = true;
+    }
+
     inline void init(const char* title) {
         m_parent = s_current;
 
-        if(m_parent) m_parent->m_track_memory = false;
+        if(m_parent) m_parent->pause();
         m_data = new PhaseData();
-        if(m_parent) m_parent->m_track_memory = true;
+        if(m_parent) m_parent->resume();
         m_data->title(title);
 
         m_data->mem_off = m_parent ? m_parent->m_data->mem_current : 0;
@@ -114,27 +122,35 @@ public:
         if(s_current) s_current->track_free_internal(bytes);
     }
 
+    inline static void pause_tracking() {
+        if(s_current) s_current->pause();
+    }
+
+    inline static void resume_tracking() {
+        if(s_current) s_current->resume();
+    }
+
     template<typename T>
     inline static void log(const char* key, const T& value) {
         if(s_current) s_current->log_stat(key, value);
     }
 
     inline StatPhase(const char* title) {
-        m_track_memory = false;
+        pause();
         init(title);
-        m_track_memory = true;
+        resume();
     }
 
     inline StatPhase(const std::string& str) : StatPhase(str.c_str()) {
     }
 
     inline ~StatPhase() {
-        m_track_memory = false;
+        pause();
         finish();
     }
 
     inline void split(const char* new_title) {
-        m_track_memory = false;
+        pause();
 
         finish();
         PhaseData* old_data = m_data;
@@ -144,7 +160,7 @@ public:
             m_data->mem_off = old_data->mem_off + old_data->mem_current;
         }
 
-        m_track_memory = true;
+        resume();
     }
 
     inline void split(const std::string& new_title) {
@@ -153,16 +169,16 @@ public:
 
     template<typename T>
     inline void log_stat(const char* key, const T& value) {
-        m_track_memory = false;
+        pause();
         m_data->log_stat(key, value);
-        m_track_memory = true;
+        resume();
     }
 
     inline json::Object to_json() {
         m_data->time_end = current_time_millis();
-        m_track_memory = false;
+        pause();
         json::Object obj = m_data->to_json();
-        m_track_memory = true;
+        resume();
         return obj;
     }
 };
