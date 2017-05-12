@@ -34,12 +34,15 @@ tmp_lz78u_string_coder = context_free_coder + [
     ("HuffmanCoder", "coders/HuffmanCoder.hpp", []),
 ]
 
-coder = tmp_lz78u_string_coder + [
-    ("SLECoder",   "coders/SLECoder.hpp",   []),
-] + [
+bit_interleaving_coder = [
     ("ArithmeticCoder", "coders/ArithmeticCoder.hpp", []),
 ]
 
+coder = tmp_lz78u_string_coder + bit_interleaving_coder + [
+    ("SLECoder",   "coders/SLECoder.hpp",   []),
+] 
+
+non_bit_interleaving_coder = [i for i in coder if i not in bit_interleaving_coder]
 
 lz78_trie = [
     ("lz78::BinarySortedTrie", "compressors/lz78/BinarySortedTrie.hpp", []),
@@ -95,8 +98,8 @@ compressors = [
     ("LiteralEncoder",              "compressors/LiteralEncoder.hpp",              [coder]),
     ("LZ78Compressor",              "compressors/LZ78Compressor.hpp",              [context_free_coder, lz78_trie]),
     ("LZWCompressor",               "compressors/LZWCompressor.hpp",               [context_free_coder, lz78_trie]),
-    ("RePairCompressor",            "compressors/RePairCompressor.hpp",            [coder]),
-    ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [coder, textds]),
+    ("RePairCompressor",            "compressors/RePairCompressor.hpp",            [non_bit_interleaving_coder]),
+    ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [non_bit_interleaving_coder, textds]),
     ("LZSSSlidingWindowCompressor", "compressors/LZSSSlidingWindowCompressor.hpp", [context_free_coder]),
     ("MTFCompressor",               "compressors/MTFCompressor.hpp",               []),
     ("NoopCompressor",              "compressors/NoopCompressor.hpp",              []),
