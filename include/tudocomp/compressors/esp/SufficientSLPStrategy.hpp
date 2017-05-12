@@ -37,7 +37,7 @@ namespace tdc {namespace esp {
 
             if (env().option("dump_json").as_bool()) {
                 phase.split("Dump JSON");
-                std::ofstream ostream(env().option("dump_json_file").as_string());
+                std::ofstream ostream(env().option("dump_json_file").as_string() + ".json");
 
                 std::vector<size_t> dl;
                 std::vector<size_t> dr;
