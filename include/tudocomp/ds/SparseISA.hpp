@@ -81,8 +81,6 @@ public:
          build();
      }
 
-    virtual ~SparseISA();
-
     inline void setC(const int c) {
         this->c = c;
         build();
