@@ -30,11 +30,20 @@ namespace tdc {namespace esp {
             }
             */
 
-            bool dump_json = env()->option("dump_json").as_bool();
-
             auto phase = StatPhase("SLP sort");
             slp_dep_sort(slp); // can be implemented better, and in a way that yields
                                // temporary lists for reusal
+
+            if (env().option("dump_json").as_bool()) {
+                phase.split("Dump JSON");
+
+                for (auto& e : slp.rules) {
+                    phase.log("DL", e[0]);
+                }
+                for (auto& e : slp.rules) {
+                    phase.log("DR", e[1]);
+                }
+            }
 
             phase.split("Encode headers");
 
