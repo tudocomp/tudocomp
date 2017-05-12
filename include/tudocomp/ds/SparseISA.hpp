@@ -9,10 +9,16 @@
 #include <sdsl/bit_vectors.hpp>
 #include <sdsl/rank_support.hpp>
 
+#include <tudocomp/ds/CompressMode.hpp>
+#include <tudocomp/ds/ArrayDS.hpp>
+#include <tudocomp/ds/IntVector.hpp>
+#include <tudocomp/util.hpp>
+
 namespace tdc {
 
 class SparseISA {
 private:
+    Env env;
     std::vector<int> Perm;
     sdsl::bit_vector MarksShortcuts;
     std::vector<int> Shortcuts;
@@ -27,7 +33,7 @@ private:
             marks.at(perm) = true;
             perm = Perm.at(perm);
         }
-        for (int k = 0; k < cycle.size(); k += c) {
+        for (unsigned int k = 0; k < cycle.size(); k += c) {
             MarksShortcuts[cycle.at(k)] = 1;
             Shortcuts.push_back(cycle.at((cycle.size() - c + k) % cycle.size()));
         }
@@ -36,39 +42,49 @@ private:
     void build() {
         std::vector<bool> marks;
         marks.assign(Perm.size(), false);
-        for (int i = 0; i < Perm.size(); i++) {
+        for (unsigned int i = 0; i < Perm.size(); i++) {
             if (marks.at(i) == false) {
                 computeCycle(i, marks);
             }
         }
     }
 
+protected:
+    using iv_t = DynamicIntVector;
+
 public:
-    SparseISA(std::vector<int> const vec, const int c) : Perm{}, MarksShortcuts{vec.size(), 0}, Shortcuts{}, c{c} {
-        Perm.assign(vec.begin(), vec.end());
-        build();
+
+    using data_type = iv_t;
+
+    inline static Meta meta() {
+        Meta m("sparseisa", "sparseisa implementation");
+        return m;
     }
 
-    SparseISA(int const arr[], std::size_t const size, int const c)
-            : Perm{}, MarksShortcuts{size, 0}, Shortcuts{}, c{c} {
-        for (int i = 0; i < size; i++) {
-            Perm.push_back(arr[i]);
+    template<typename textds_t>
+    SparseISA(Env&& env, textds_t& t, CompressMode cm) : env(std::move(env)) {
+
+        // Require Suffix Array
+        auto& sa = t.require_sa(cm);
+
+        this->env().begin_stat_phase("Construct ISA");
+
+        // Allocate
+        const size_t n = t.size();
+        const int c = n/3;
+        this->c = int(c);
+
+        for (unsigned int i = 0; i < n; i++) {
+            Perm.push_back(sa[i]);
         }
-        build();
-    }
-
-    template<std::size_t const size>
-    SparseISA(std::array<int, size> const arr, int const c)
-            : Perm{}, MarksShortcuts{arr.size(), 0}, Shortcuts{}, c{c} {
-        Perm.assign(arr.begin(), arr.end());
         build();
     }
 
     virtual ~SparseISA();
 
-    inline int getPower(int const i, int const k) const {
+    inline int getPower(int const i, unsigned int const k) const {
         int perm = Perm.at(i);
-        for (int j = 1; j < k; j++) {
+        for (unsigned int j = 1; j < k; j++) {
             perm = Perm.at(perm);
         }
         return perm;
@@ -94,6 +110,11 @@ public:
         return Perm;
     }
 
+    inline void compress() {
+        Perm.shrink_to_fit();
+        Shortcuts.shrink_to_fit();
+    }
+
 };
 
-} //ns
+} // namespace tdc
