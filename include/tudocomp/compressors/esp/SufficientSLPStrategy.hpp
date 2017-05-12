@@ -13,6 +13,7 @@ namespace tdc {namespace esp {
         inline static Meta meta() {
             Meta m("slp_strategy", "sorted");
             m.option("d_coding").templated<d_coding_t, DMonotonSubseq<>>("d_coding");
+            m.option("dump_json").dynamic("false");
             return m;
         };
 
@@ -28,6 +29,8 @@ namespace tdc {namespace esp {
                     << " -> (" << slp.rules[i][0] << ", " << slp.rules[i][1] << ")\n";
             }
             */
+
+            bool dump_json = env()->option("dump_json").as_bool();
 
             auto phase = StatPhase("SLP sort");
             slp_dep_sort(slp); // can be implemented better, and in a way that yields
