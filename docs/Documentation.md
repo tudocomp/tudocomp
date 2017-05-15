@@ -329,7 +329,7 @@ Input input_from_string("This is the input text");
 Input input_from_buffer(buffer);
 
 // Create an Input from a file
-Input input_from_file(Input::Path{"example.txt"});
+Input input_from_file(Path("example.txt"));
 
 // Create an Input from a given std::istream
 Input input_from_stream(std::cin); // from stdin
@@ -352,9 +352,9 @@ The choice is done by acquiring the respective handle using either the
 [`as_stream`](@DX_INPUT_ASSTREAM@) or the
 [`as_view`](@DX_INPUT_ASVIEW@) function. The stream object returned by
 `as_stream` conforms to the `std::istream` interface and also provides iterator
-access. The object returned by `as_view` provides the indexed access `[]`
-operator for and the function `size()` to return the amount of bytes available
-on the input.
+access. The [`View`](@DX_VIEW@) object returned by `as_view` provides the
+indexed access `[]` operator for and the function [`size`](@DX_VIEW_SIZE@) to
+return the amount of bytes available on the input.
 
 The following code snippet demonstrates using a given input as a stream:
 
@@ -393,6 +393,10 @@ for (len_t i = iview.size(); i > 0; i--) {
 The type [`len_t`](@DX_LEN_T@) is another one of *tudocomp*'s core
 types and shall be used for lengths and indices.
 
+The functions `as_stream` and `as_view` can be used arbitrarily often to create
+multiple streams or views on the same input, e.g., in case the input is to be
+streamed more than once.
+
 ### Producing an Output
 
 An [`Output`](@DX_OUTPUT@) can be created for different data sinks:
@@ -408,8 +412,8 @@ Like `Input`, it provides a constructor for each type of sink:
 Output output_to_buffer(buffer);
 
 // Create an Output to a file:
-Output output_to_file1("example.txt", false); // do not overwrite if exists (default)
-Output output_to_file2("example.txt", true); // overwrite if exists
+Output output_to_file1(Path("example.txt"), false); // do not overwrite if exists (default)
+Output output_to_file2(Path("example.txt"), true); // overwrite if exists
 
 // Create an Output to a given std::ostream
 Output output_to_stream(std::cout); // to stdout
