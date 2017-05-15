@@ -1301,9 +1301,6 @@ A full list can be found in the inheritance diagram for the
 dynamically allocated memory (e.h. via `malloc` or `new`) over the application
 lifetime.
 
-Recall at this point the restrictions when trying to use these features in a
-Windows environment (see [Windows Support](#windows-support)).
-
 Runtime statistics are tracked in *phases*, ie. the running time and memory
 peak can be measured for individual stages during an algorithm's run. These
 phases may be nested, ie., a phase can consist of multiple other phases. When
