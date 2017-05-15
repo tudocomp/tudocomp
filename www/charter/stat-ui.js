@@ -129,6 +129,10 @@ d3.select("#json-load").on("click", function() {
     loadJSON(d3.select("#json")[0][0].value);
 });
 
+d3.select("#json-clear").on("click", function() {
+    d3.select("#json")[0][0].value = "";
+});
+
 var load = function() {
     if(window.location.search) {
         var x = window.location.search.indexOf('=');
