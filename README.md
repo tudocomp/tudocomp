@@ -43,17 +43,12 @@ For building the documentation, the following tools need to be installed:
 
 ## Windows Support
 
-We highly recommend users of Windows 10 or later to use the
-[Bash on Ubuntu on Windows](https://msdn.microsoft.com/en-us/commandline/wsl/about).
-
-That being said, *tudocomp* has no explicit support for Windows. However, the
-project can be built in a [Cygwin](https://www.cygwin.com/) environment with a
-limited feature set. Cygwin does not allow overrides of `malloc`, therefore the
-heap allocation counter cannot work and statistics tracking becomes largely
-nonfunctional.
-
-Note that [the comparison tool](#the-comparison-tool) relies on `valgrind`,
-which is not functional in the Bash on Ubuntu on Windows until the
+While *tudocomp* has no explicit support Windows / Microsoft Visual C++, it is
+possible to use the
+[Bash on Ubuntu on Windows](https://msdn.microsoft.com/en-us/commandline/wsl/about)
+with next to no feature limitations. However, note that
+[the comparison tool](#the-comparison-tool) relies on `valgrind`, which is not
+functional in this environment until the
 [Windows 10 Creators Update](https://blogs.windows.com/windowsexperience/2017/04/11/whats-new-in-the-windows-10-creators-update).
 
 # License
