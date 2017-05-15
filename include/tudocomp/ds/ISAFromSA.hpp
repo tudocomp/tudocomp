@@ -5,20 +5,22 @@
 namespace tdc {
 
 /// Constructs the inverse suffix array using the suffix array.
-class ISAFromSA : public SparseISA {
+template<typename textds_t>
+class ISAFromSA {
 private:
+    SparseISA<textds_t> isa;
 public:
     inline static Meta meta() {
         Meta m("isa", "from_sa");
         return m;
     }
 
-    template<typename textds_t>
-    inline ISAFromSA(Env&& env, textds_t& t, CompressMode cm) : SparseISA(std::move(env),t,cm) {
+    inline ISAFromSA(Env&& env, textds_t& t, CompressMode cm) :
+            isa(std::move(env), t, cm) {
     }
 
-    inline int operator[](size_t i) const {
-        return getInv(i);
+    inline int operator[](const size_t i) const {
+        return isa.getInv(i);
     }
 };
 

@@ -15,22 +15,33 @@
 #include <tudocomp/util.hpp>
 
 namespace tdc {
-
+template<typename textds_t>
 class SparseISA : public ArrayDS {
 private:
     sdsl::bit_vector MarksShortcuts;
     std::vector<int> Shortcuts;
-    const size_t n;
     int c;
+    const int n;
+    CompressMode cm;
+    textds_t &SA;
+
+    const std::vector<int> getSA() const {
+        std::vector<int> result;
+        const auto &sa = SA.require_sa(cm);
+        for(int i = 0; i < n; i++) {
+            result.push_back(sa[i]);
+        }
+        return result;
+    }
 
     void computeCycle(int i, std::vector<bool> &marks) {
-        std::vector<int> cycle;
+        std::vector<int> cycle, sa{getSA()};
         cycle.push_back(i);
-        int perm = (*m_data)[i];
+        int perm = sa[i];
         while (perm != i) {
             cycle.push_back(perm);
             marks.at(perm) = true;
-            perm = (*m_data)[perm];
+            perm = sa[perm];
         }
         for (unsigned int k = 0; k < cycle.size(); k += c) {
             MarksShortcuts[cycle.at(k)] = 1;
@@ -56,22 +67,10 @@ public:
         return m;
     }
 
-    template<typename textds_t>
-    SparseISA(Env&& env, textds_t& t, CompressMode cm) : ArrayDS(std::move(env)), n(t.size()){
-
-         // Require Suffix Array
-         auto& sa = t.require_sa(cm);
+    SparseISA(Env&& env, textds_t& t, CompressMode cm) : ArrayDS(std::move(env)), n(t.size()), cm(cm), SA(t) {
 
          this->env().begin_stat_phase("Construct ISA");
 
-         const size_t w = bits_for(n);
-         m_data = std::make_unique<iv_t>(n, 0,
-            (cm == CompressMode::compressed) ? w : LEN_BITS);
-
-         // Construct
-         for(len_t i = 0; i < n; i++) {
-             (*m_data)[i] = sa[i];
-         }
          build();
 
          this->env().log_stat("bit_width", size_t(m_data->width()));
@@ -85,9 +84,11 @@ public:
         this->c = c;
         build();
     }
+protected:
 
-    inline int getInv(int const i) const {
-        int perm = (*m_data)[i], fperm = i;
+    inline int getInv(const size_t i) const {
+        std::vector<int> sa{getSA()};
+        int perm = sa[i], fperm = i;
         bool tookShortcut = false;
         sdsl::rank_support_v<> rankStructure{&MarksShortcuts};
         while (perm != i) {
@@ -97,22 +98,18 @@ public:
             } else {
                 fperm = perm;
             }
-            perm = (*m_data)[fperm];
+            perm = sa[fperm];
         }
         return fperm;
     }
 
     inline void compress() {
         Shortcuts.shrink_to_fit();
-        DCHECK(m_data);
 
         env().begin_stat_phase("Compress ISA");
 
-        m_data->width(bits_for(m_data->size()));
-        m_data->shrink_to_fit();
-
-        env().log_stat("bit_width", size_t(m_data->width()));
-        env().log_stat("size", m_data->bit_size() / 8);
+        //env().log_stat("bit_width", size_t(m_data->width()));
+        //env().log_stat("size", m_data->bit_size() / 8);
         env().end_stat_phase();
     }
 
