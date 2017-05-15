@@ -1431,6 +1431,8 @@ example, the following JSON output is produced:
 }
 ~~~
 
+#### Iterative Phases
+
 In some cases, phases of an algorithm compute complex results and would make it
 complicated to express them in a single lambda return statement. In other use
 cases, one may want to end a phase and begin a new phase within loop iterations
@@ -1457,6 +1459,34 @@ StatPhase::wrap("Phase 3", []{
     delete[] result_part_1;
     std::this_thread::sleep_for(std::chrono::milliseconds(60));
 });
+~~~
+
+#### Pausing and Resuming Memory Tracking
+
+There may be situations where the measurement of certain data structures is not
+desired, e.g., if they only serve as temporary helpers during development.
+Memory tracking can be paused and resumed during any phase using the
+[`StatPhase::pause_tracking`](@DX_STATPHASE_PAUSE@) and
+[`StatPhase::resume_tracking`](@DX_STATPHASE_RESUME@) functions, as demonstrated
+in the following snippet:
+
+~~~ { .cpp caption="stats.cpp" }
+// Allocate memory, but only track mem2
+StatPhase::pause_tracking();
+char* mem1 = new char[1024];
+StatPhase::resume_tracking();    
+
+char* mem2 = new char[2048];
+
+// Sleep
+std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+// Free memory, but only track mem2
+StatPhase::pause_tracking();
+delete[] mem1;
+StatPhase::resume_tracking();
+
+delete[] mem2;
 ~~~
 
 ### Charter Web Application
