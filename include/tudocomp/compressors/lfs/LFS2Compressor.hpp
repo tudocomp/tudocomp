@@ -74,7 +74,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lfs2",
             "This is an implementation of the longest first substitution compression scheme, type 2.");
-        m.option("min_lrf").dynamic(3);
+        m.option("min_lrf").dynamic(5);
         m.option("lfs2_lit_coder").templated<literal_coder_t, BitCoder>("lfs2_lit_coder");
         m.option("lfs2_len_coder").templated<len_coder_t, EliasGammaCoder>("lfs2_len_coder");
 
@@ -221,7 +221,8 @@ public:
                                 //and substitute
 
                                 //if at least 2 first level layer occs viable:
-                                if(first_layer_viable.size()>=2){
+                                // || (first_layer_viable.size() >=1 &&(first_layer_viable.size() + second_layer_viable.size() >= 2))
+                                if(first_layer_viable.size()>=2  || (first_layer_viable.size() >=1 &&(first_layer_viable.size() + second_layer_viable.size() >= 2)) ) {
                                  //   DLOG(INFO)<<"adding new nts";
                                     std::pair<uint,uint> nts = std::make_pair(first_layer_viable.front(), i);
                                     non_terminal_symbols.push_back(nts);
