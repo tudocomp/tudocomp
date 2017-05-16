@@ -141,6 +141,7 @@ public:
             uint nts_number = 1 ;
             StatPhase::wrap("Iterate over Node Bins", [&]{
                 //iterate node bins top down
+                DLOG(INFO)<<"iterate over Node Bins";
                 for(uint i = bins.size()-1; i>=min_lrf; i--){
 
                     //iterate over ids in bin:
@@ -186,10 +187,7 @@ public:
                               //  DLOG(INFO)<<"iterating occs, lrf_len: " << i;
                                 for(uint occurence : node_begins[no_leaf_id]){
                                     //check for viability
-                                 //   DLOG(INFO)<<"checking occ: " << occurence;
-                                 //   DLOG(INFO)<<"last chosen occ: " << last;
                                     if( (last+i <= (long) occurence)){
-                                //        DLOG(INFO)<<"last no collide";
                                         if(fl_offsets[occurence] == 0){
                                        //     DLOG(INFO)<<"first pos of occ ok";
                                             if(fl_offsets[occurence + i -1] == 0){
@@ -211,8 +209,6 @@ public:
                                             }
                                         }
 
-
-                                        //
                                     }
 
                                 }
@@ -222,7 +218,7 @@ public:
 
                                 //if at least 2 first level layer occs viable:
                                 // || (first_layer_viable.size() >=1 &&(first_layer_viable.size() + second_layer_viable.size() >= 2))
-                                if(first_layer_viable.size()>=2  || (first_layer_viable.size() >=1 &&(first_layer_viable.size() + second_layer_viable.size() >= 2)) ) {
+                                if(first_layer_viable.size() >=1 &&(first_layer_viable.size() + second_layer_viable.size() >= 2) ) {
                                  //   DLOG(INFO)<<"adding new nts";
                                     std::pair<uint,uint> nts = std::make_pair(first_layer_viable.front(), i);
                                     non_terminal_symbols.push_back(nts);
@@ -254,10 +250,6 @@ public:
                                             for(uint dead = sl_start; dead<=sl_end;dead++){
                                                 second_layer_dead[dead]=1;
                                             }
-
-                                      //      DLOG(INFO)<<"second layer substituted: " << sl_occ;
-                                      //      DLOG(INFO)<<"sl_start: " << sl_start << " sl end: "<<sl_end;
-                                      //      DLOG(INFO)<<"position for parent: " << parent_nts;
                                         }
                                     }
 
@@ -281,60 +273,7 @@ public:
                              //   bin_it++;
                                 continue;
                             }
-                        }/*
-                        DLOG(INFO)<<"state of arrays: ";
-                        std::stringstream ss;
-                        for(uint x = 0; x < in.size(); x++){
-
-
-                            ss << in[x] ;
-                            ss << " " ;
                         }
-                        DLOG(INFO)<< ss.str();
-
-                        ss.str("");
-                        ss.clear();
-                        for(uint x = 0; x < first_layer_nts.size(); x++){
-
-
-                            ss << first_layer_nts[x] ;
-                            ss << " " ;
-                        }
-                        DLOG(INFO)<< ss.str();
-
-                        ss.str("");
-                        ss.clear();
-
-                        for(uint x = 0; x < fl_offsets.size(); x++){
-
-
-                            ss << fl_offsets[x] ;
-                            ss << " " ;
-                        }
-
-                        DLOG(INFO)<< ss.str();
-
-                        ss.str("");
-                        ss.clear();
-
-                        for(uint x = 0; x < second_layer_nts.size(); x++){
-
-
-                            ss << second_layer_nts[x] ;
-                            ss << " " ;
-                        }
-
-                        DLOG(INFO)<< ss.str();
-                        ss.str("");
-                        ss.clear();
-
-                        for(uint x = 0; x < second_layer_dead.size(); x++){
-
-
-                            ss << second_layer_dead[x] ;
-                            ss << " " ;
-                        }
-                        DLOG(INFO)<< ss.str();*/
                     }
 
                 }
@@ -342,6 +281,8 @@ public:
             });
 
         });
+
+        DLOG(INFO)<<"Computing symbol depth";
 
         IntVector<uint> nts_depth(non_terminal_symbols.size(), 0);
 
@@ -365,41 +306,46 @@ public:
 
         }
 
+        DLOG(INFO)<<"Computing done";
+
         std::sort(nts_depth.begin(), nts_depth.end());
+        if(nts_depth.size()>0){
 
-        uint max_depth = nts_depth[nts_depth.size()-1];
+            uint max_depth = nts_depth[nts_depth.size()-1];
 
-        DLOG(INFO)<<"Max CFG Depth: "<< max_depth;
-        DLOG(INFO)<<"Number of CFG rules: "<< non_terminal_symbols.size();
+            DLOG(INFO)<<"Max CFG Depth: "<< max_depth;
+            DLOG(INFO)<<"Number of CFG rules: "<< non_terminal_symbols.size();
 
-        if(nts_depth.size()>=4){
-            uint quarter = nts_depth.size() /4;
+            if(nts_depth.size()>=4){
+                uint quarter = nts_depth.size() /4;
 
            // nts_depth[quarter -1];
-            StatPhase::log("25 \% quantil CFG Depth", nts_depth[quarter -1]);
-            StatPhase::log("50 \% quantil CFG Depth", nts_depth[(2*quarter) -1]);
-            StatPhase::log("75 \% quantil CFG Depth", nts_depth[(3*quarter) -1]);
+                StatPhase::log("25 \% quantil CFG Depth", nts_depth[quarter -1]);
+                StatPhase::log("50 \% quantil CFG Depth", nts_depth[(2*quarter) -1]);
+                StatPhase::log("75 \% quantil CFG Depth", nts_depth[(3*quarter) -1]);
 
+            }
+            StatPhase::log("Max CFG Depth", max_depth);
         }
 
 
 
 
-        StatPhase::log("Max CFG Depth", max_depth);
+
         StatPhase::log("Number of CFG rules", non_terminal_symbols.size());
 
 
         std::cerr<<"encoding text"<<std::endl;
 
-        std::vector<uint8_t> byte_buffer;
+       // std::vector<uint8_t> byte_buffer;
 
-        Output out_with_buf = output.from_memory(byte_buffer);
+        //Output out_with_buf = output.from_memory(byte_buffer);
 
         StatPhase::wrap("Encoding Comp", [&]{
             // encode dictionary:
             DLOG(INFO) << "encoding dictionary symbol sizes ";
 
-            std::shared_ptr<BitOStream> bitout = std::make_shared<BitOStream>(out_with_buf);
+            std::shared_ptr<BitOStream> bitout = std::make_shared<BitOStream>(output);
             typename literal_coder_t::Encoder lit_coder(
                 env().env_for_option("lfs2_lit_coder"),
                 bitout,
@@ -436,11 +382,13 @@ public:
             }
             Range dict_r(0, non_terminal_symbols.size());
 
-            lit_coder.encode('s', literal_r);
 
-            uint buf_size = byte_buffer.size();
+            long buf_size = bitout->tellp();
+
+           // long alt_size = ;
             StatPhase::log("Bytes Length Encoding", buf_size);
-            DLOG(INFO)<<"Bytes Length Encoding: "<< buf_size;
+           // DLOG(INFO)<<"Bytes Length Encoding: "<< buf_size;
+           // DLOG(INFO)<<"Bytes Length Encoding: "<< buf_size;
 
 
             DLOG(INFO) << "encoding dictionary symbols";
@@ -481,11 +429,11 @@ public:
 
 
 
-            buf_size = byte_buffer.size() - buf_size;
+            buf_size = bitout->tellp() - buf_size;
             StatPhase::log("Bytes Non-Terminal Symbol Encoding", buf_size);
 
 
-            DLOG(INFO)<<"Bytes Non-Terminal Symbol Encoding: "<< buf_size;
+          //  DLOG(INFO)<<"Bytes Non-Terminal Symbol Encoding: "<< buf_size;
 
             //encode start symbol
 
@@ -509,18 +457,20 @@ public:
                 }
             }
 
-            buf_size = byte_buffer.size() - buf_size;
+            buf_size = bitout->tellp() - buf_size;
             StatPhase::log("Bytes Start Symbol Encoding", buf_size);
 
 
-            DLOG(INFO)<<"Bytes Start Symbol Encoding: "<< buf_size;
+          //  DLOG(INFO)<<"Bytes Start Symbol Encoding: "<< buf_size;
 
-            auto ostream = output.as_stream();
-            for(uint begin =0; begin < byte_buffer.size(); begin++){
-                ostream << byte_buffer[begin];
+           // DLOG(INFO)<<"Bytes Length Encoding alt: "<< bitout->tellp();
 
-            }
-            ostream << (char)0;
+          //  auto ostream = output.as_stream();
+           // for(uint begin =0; begin < byte_buffer.size(); begin++){
+          //      ostream << byte_buffer[begin];
+
+           // }
+           // ostream << (char)0;
 
             std::cerr<<"encoding done"<<std::endl;
 
@@ -582,8 +532,8 @@ public:
         std::stringstream ss;
         uint symbol_number;
         char c1;
-        c1 = lit_decoder.template decode<char>(literal_r);
-        DLOG(INFO)<<"sync symbol:: "<< c1;
+        //c1 = lit_decoder.template decode<char>(literal_r);
+       // DLOG(INFO)<<"sync symbol:: "<< c1;
 
         DLOG(INFO) << "reading dictionary";
         for(long i = dict_lengths.size() -1; i>=0 ;i--){
