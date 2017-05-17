@@ -47,6 +47,10 @@ public:
     std::ostream& stream() {
         return *o;
     }
+
+    size_t size() const {
+        return buffer->size();
+    }
 };
 
 /// \endcond

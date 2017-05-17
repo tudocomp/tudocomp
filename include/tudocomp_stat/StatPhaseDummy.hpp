@@ -5,6 +5,8 @@
 
 #include <tudocomp_stat/Json.hpp>
 
+/// \cond INTERNAL
+
 namespace tdc {
 
 // same public interface as StatPhase, but doesn't do anything
@@ -36,6 +38,12 @@ public:
     inline static void track_free(size_t bytes) {
     }
 
+    inline static void pause_tracking() {
+    }
+
+    inline static void resume_tracking() {
+    }
+
     template<typename T>
     inline static void log(const char* key, const T& value) {
     }
@@ -65,4 +73,6 @@ public:
 };
 
 }
+
+/// \endcond
 

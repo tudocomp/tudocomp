@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp/io/Path.hpp>
+
 #include <tudocomp/io/Input.hpp>
 #include <tudocomp/io/Output.hpp>
 
@@ -7,6 +9,9 @@
 #include <tudocomp/io/BitOStream.hpp>
 
 namespace tdc {
+
+/// Convenience shortcut to \ref io::Path.
+using Path = io::Path;
 
 /// Convenience shortcut to \ref io::Input.
 using Input = io::Input;

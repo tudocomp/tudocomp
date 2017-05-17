@@ -24,8 +24,8 @@ var loadJSONfromURL = function(url) {
 var updateZoomText = function(zoom) {
     d3.select("#options .zoom-label").text(
         zoom.toFixed(1)
-        + " (" + (app.svgWidth * zoom).toFixed(0)
-        + " x " + (app.svgHeight * zoom).toFixed(0)
+        + " (" + (app.options.svgWidth * zoom).toFixed(0)
+        + " x " + (app.options.svgHeight * zoom).toFixed(0)
         + ")"
     );
 }
@@ -127,6 +127,10 @@ d3.select("#dropzone")
 
 d3.select("#json-load").on("click", function() {
     loadJSON(d3.select("#json")[0][0].value);
+});
+
+d3.select("#json-clear").on("click", function() {
+    d3.select("#json")[0][0].value = "";
 });
 
 var load = function() {

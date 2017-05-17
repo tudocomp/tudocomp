@@ -158,7 +158,7 @@ void test_mixed() {
         for(size_t i = 0; i < word.length(); i++) {
             coder.encode(word[i] == 'a', bit_r);
             coder.encode(i, size_r);
-            coder.encode(word[i], literal_r);
+            //coder.encode(word[i], literal_r);
             coder.encode(size_t(word[i]), atoz_min_r);
             coder.encode(size_t(word[i]), atoz_r);
         }
@@ -174,7 +174,7 @@ void test_mixed() {
         while(!decoder.eof()) {
             ASSERT_EQ(word[i] == 'a', decoder.template decode<bool>(bit_r));
             ASSERT_EQ(i, decoder.template decode<size_t>(size_r));
-            ASSERT_EQ(word[i], decoder.template decode<uliteral_t>(literal_r));
+            //ASSERT_EQ(word[i], decoder.template decode<uliteral_t>(literal_r));
             ASSERT_EQ(size_t(word[i]), decoder.template decode<size_t>(atoz_min_r));
             ASSERT_EQ(size_t(word[i]), decoder.template decode<size_t>(atoz_r));
             ++i;
