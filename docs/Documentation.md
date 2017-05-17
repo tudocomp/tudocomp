@@ -527,23 +527,17 @@ storing values in a byte-aligned way like standard vectors, `IntVector` stores
 them as a sequence of bits. This can dramatically reduce the size of vectors
 when the optimal bit width required for storing a single is not a power of two.
 
-`IntVector` can be used in two different ways:
+`IntVector` can be used with static or dynamic bit widths as explained in
+the following sections.
 
-Static:
-: The bit width of values is fixed at compile time. This is the standard
-  behaviozr if, for example, `IntVector<uint_t<40>>` is used for vectors of
-  40-bit integers.
-: A common use case for this is also the [`BitVector`](@DX_BITVECTOR@)
-  specialization, an alias for `IntVector<uint_t<1>>`, which effectively
-  implements bit vectors.
+### Static-width integer vectors
 
-Dynamic:
-: The bit width of values can be dynamically altered at runtime.
-: This is useful when the required width depends on previously processed input
-  (e.g. a text length). It can also be used to bit-compress an integer vector
-  after its  initial construction.
-: For this, the specialization [`DynamicIntVector`](@DX_DYNINTVECTOR@) is used
-  (which is merely an alias for `IntVector<dynamic_t>`).
+The bit width of values in static-width integer vectors is fixed at compile
+time. This is the standard behaviour if, for example, `IntVector<uint_t<40>>`
+is used for vectors of 40-bit integers.
+
+A notable use case for this is the [`BitVector`](@DX_BITVECTOR@) specialization,
+an alias for `IntVector<uint_t<1>>`, which effectively implements bit vectors.
 
 The following example illustrates the use of `IntVector` in a static way:
 
@@ -574,6 +568,16 @@ Note how arbitrary-width integers overflow in the expected fashion: `iv4[16]`
 (which should be 16 according to
 [`std::iota`](http://en.cppreference.com/w/cpp/algorithm/iota)) equals `iv4[0]`
 (which is zero).
+
+### Dynamic-width integer vectors
+
+Using the specialization [`DynamicIntVector`](@DX_DYNINTVECTOR@) (which is
+an alias for `IntVector<dynamic_t>`), the bit width of values can be dynamically
+altered at runtime.
+
+This is useful when the required width depends on previously processed input
+(e.g. a text length). It can also be used to bit-compress an integer vector
+after its  initial construction.
 
 The following is an example for the usage of `DynamicIntVector`:
 
