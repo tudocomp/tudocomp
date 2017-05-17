@@ -100,6 +100,11 @@ public:
 
         }
 
+        long buf_size = bitout->tellp();
+
+       // long alt_size = ;
+        StatPhase::log("Bytes Length Encoding", buf_size);
+
 
         DLOG(INFO) << "encoding dictionary symbols";
         // encode dictionary strings:
@@ -120,6 +125,9 @@ public:
                 it++;
             }
         }
+
+        buf_size = bitout->tellp() - buf_size;
+        StatPhase::log("Bytes Non-Terminal Symbol Encoding", buf_size);
 
         Range dict_r(0, dictionary.size());
         //encode string
@@ -163,6 +171,9 @@ public:
             lit_coder.encode(in[pos], literal_r);
             pos++;
         }
+
+        buf_size = bitout->tellp() - buf_size;
+        StatPhase::log("Bytes Start Symbol Encoding", buf_size);
 
         DLOG(INFO) << "compression with lfs done";
 

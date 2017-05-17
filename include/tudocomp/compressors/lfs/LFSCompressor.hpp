@@ -69,6 +69,7 @@ public:
                 DLOG(INFO)<<"dict size: "<<dictionary.size() << std::endl;
                 DLOG(INFO)<<"symbols:"<<nts_symbols.size()<< std::endl;
             });
+             StatPhase::log("Number of CFG rules", dictionary.size());
 
 
             StatPhase::wrap("encoding input", [&]{
