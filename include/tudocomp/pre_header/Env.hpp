@@ -23,6 +23,7 @@
 #include <glog/logging.h>
 
 #include <tudocomp/def.hpp>
+#include <tudocomp/OptionValue.hpp>
 
 namespace tdc {
 
