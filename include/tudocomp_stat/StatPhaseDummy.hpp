@@ -5,6 +5,8 @@
 
 #include <tudocomp_stat/Json.hpp>
 
+/// \cond INTERNAL
+
 namespace tdc {
 
 // same public interface as StatPhase, but doesn't do anything
@@ -71,4 +73,6 @@ public:
 };
 
 }
+
+/// \endcond
 
