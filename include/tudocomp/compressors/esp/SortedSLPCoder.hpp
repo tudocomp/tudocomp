@@ -3,7 +3,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/compressors/esp/SLPDepSort.hpp>
 #include <tudocomp/compressors/esp/MonotoneSubsequences.hpp>
-#include <tudocomp/compressors/esp/OptimalRHSCoding.hpp>
+#include <tudocomp/compressors/esp/DRCoder.hpp>
 
 namespace tdc {namespace esp {
     template<typename d_coding_t = DMonotonSubseq<>>
