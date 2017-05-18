@@ -14,7 +14,7 @@ namespace tdc {namespace esp {
             Meta m("slp_strategy", "sorted");
             m.option("d_coding").templated<d_coding_t, DMonotonSubseq<>>("d_coding");
             m.option("dump_json").dynamic("false");
-            m.option("dump_json_file").dynamic("");
+            m.option("dump_json_file").dynamic("-");
             return m;
         };
 
