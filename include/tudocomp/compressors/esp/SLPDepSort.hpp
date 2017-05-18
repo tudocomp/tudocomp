@@ -5,33 +5,72 @@
 
 namespace tdc {namespace esp {
     inline void slp_dep_sort(SLP& slp) {
-        //inverse_deps(slp, slp.root_rule);
+        std::vector<size_t> first_child;
+        first_child.reserve(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX);
+        first_child.resize(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX);
+        for (size_t i = 0; i < first_child.size(); i++) {
+            first_child[i] = i;
+        }
 
-        // inverse
-        //std::vector<size_t> inv;
-        //inv.reserve(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX);
-        //inv.resize(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX, -1);
-        //inverse_deps(slp, slp.root_rule, inv);
-        std::vector<std::vector<size_t>> inv;
-        inv.reserve(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX);
-        inv.resize(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX);
+        std::vector<size_t> next_child;
+        next_child.reserve(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX);
+        next_child.resize(slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX);
+        for (size_t i = 0; i < next_child.size(); i++) {
+            next_child[i] = i;
+        }
+
+        auto append = [&](size_t i, size_t node) {
+            DCHECK_NE(i, node);
+            if (first_child[i] == i) {
+                first_child[i] = node;
+            } else {
+                auto old_next = first_child[i];
+                first_child[i] = node;
+                next_child[node] = old_next;
+            }
+        };
+
+        auto for_all = [&](size_t i, auto f) {
+            size_t l = first_child[i];
+            if (l != i) {
+                f(l);
+                while (true) {
+                    if (next_child[l] != l) {
+                        l = next_child[l];
+                    } else {
+                        break;
+                    }
+                    f(l);
+                }
+            }
+        };
 
         for (size_t i = 0; i < slp.rules.size(); i++) {
-            auto node = i + esp::GRAMMAR_PD_ELLIDED_PREFIX;
-            auto left_child = slp.rules[i][0];
-                // + esp::GRAMMAR_PD_ELLIDED_PREFIX;
-
-            auto& v = inv[left_child];
-            v.push_back(node);
-        }
-
-        for (size_t i = 0; i < inv.size(); i++) {
-            if (i < 32 || i > 127) {
-                //std::cout << i       << " -> " << vec_to_debug_string(inv[i]) << "\n";
-            } else {
-                //std::cout << char(i) << " -> " << vec_to_debug_string(inv[i]) << "\n";
+            auto j = slp.rules.size() - i - 1;
+            {
+                auto node = j + esp::GRAMMAR_PD_ELLIDED_PREFIX;
+                auto left_child = slp.rules[j][0];
+                append(left_child, node);
             }
         }
+
+        /*for (size_t i = 0; i < inv.size(); i++) {
+            if (i < 32 || i > 127) {
+                std::cout << i       << " -> ";
+            } else {
+                std::cout << char(i) << " -> ";
+            }
+            std::cout << vec_to_debug_string(inv[i]);
+            {
+                std::vector<size_t> tmp;
+                for_all(i, [&](size_t l) {
+                    tmp.push_back(l);
+                });
+
+                std::cout << "; " << vec_to_debug_string(tmp);
+            }
+            std::cout << "\n";
+        }*/
 
         std::vector<size_t> rename;
         rename.reserve(slp.rules.size());
@@ -46,9 +85,9 @@ namespace tdc {namespace esp {
         while (!queue.empty()) {
             auto elem = queue.front();
             queue.pop();
-            for (auto child : inv[elem]) {
+            for_all(elem, [&](size_t child) {
                 queue.push(child);
-            }
+            });
 
             auto new_value = counter++;
 
@@ -64,6 +103,12 @@ namespace tdc {namespace esp {
             //std::cout << elem << ": " << new_value << "\n";
         }
 
+        {
+            auto discard = std::move(first_child);
+            discard = std::move(next_child);
+        }
+
+        // TODO: Could save one n alloc here by renaming DL and DR after each other
         std::vector<std::array<size_t, 2>> renamed_slp;
         renamed_slp.reserve(slp.rules.size());
         renamed_slp.resize(slp.rules.size());
