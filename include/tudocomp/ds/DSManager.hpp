@@ -170,6 +170,9 @@ public:
 
 public:
     /// \cond INTERNAL
+
+    using ds_types = tl::multimix<typename provider_ts::ds_types...>;
+
     inline void protect(const dsid_t ds) {
         //DLOG(INFO) << "protect: " << ds::name_for(ds);
         m_protect.emplace(ds);
@@ -215,7 +218,7 @@ public:
     /// \return a read-only reference to the data structure, the type of which
     ///         is determined by the respective provider
     template<dsid_t ds>
-    inline auto get() -> decltype(get_provider<ds>().template get<ds>()) {
+    inline const tl::get<ds, ds_types>& get() {
         return get_provider<ds>().template get<ds>();
     }
 
@@ -228,8 +231,7 @@ public:
     /// \return the data structure, the type of which is determined by the
     ///         respective provider
     template<dsid_t ds>
-    inline auto relinquish() ->
-        decltype(get_provider<ds>().template relinquish<ds>()) {
+    inline tl::get<ds, ds_types> relinquish() {
 
         return get_provider<ds>().template relinquish<ds>();
     }

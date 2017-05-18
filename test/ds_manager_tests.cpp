@@ -42,6 +42,16 @@ static_assert(std::is_same<
         dsmanager_t::provider_type<ds::LCP_ARRAY>, PhiAlgorithm
         >::value, "Wrong provider entry for LCP_ARRAY");
 
+static_assert(std::is_same<
+        dsmanager_t::ds_types,
+        tl::type_list<DynamicIntVector,
+                      DynamicIntVector,
+                      DynamicIntVector,
+                      DynamicIntVector,
+                      DynamicIntVector>
+        >::value, "Wrong data structure storage types");
+
+
 // compile-time tests for DSDependencyGraph
 using depgraph_t = DSDependencyGraph<dsmanager_t>;
 
