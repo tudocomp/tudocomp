@@ -11,18 +11,18 @@
 #include <tudocomp/compressors/esp/EspContextImpl.hpp>
 #include <tudocomp/compressors/esp/RoundContextImpl.hpp>
 
-#include <tudocomp/compressors/esp/PlainSLPStrategy.hpp>
+#include <tudocomp/compressors/esp/PlainSLPCoder.hpp>
 
 #include <tudocomp/compressors/esp/StdUnorderedMapIPD.hpp>
 
 namespace tdc {
 
-template<typename slp_strategy_t, typename ipd_t = esp::StdUnorderedMapIPD>
+template<typename slp_coder_t, typename ipd_t = esp::StdUnorderedMapIPD>
 class EspCompressor: public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "esp", "ESP based grammar compression");
-        m.option("slp_strategy").templated<slp_strategy_t, esp::PlainSLPStrategy>("slp_strategy");
+        m.option("slp_coder").templated<slp_coder_t, esp::PlainSLPCoder>("slp_coder");
         m.option("ipd").templated<ipd_t, esp::StdUnorderedMapIPD>("ipd");
         return m;
     }
@@ -43,10 +43,10 @@ public:
             auto phase2 = StatPhase("Creating input view");
                 auto in = input.as_view();
 
-            context.debug.input_string(in);
+                context.debug.input_string(in);
 
             phase2.split("ESP Algorithm");
-                slp = context.generate_grammar(in);
+                slp = context.generate_grammar(std::move(in));
         }
 
         phase0.log_stat("SLP size", slp.rules.size());
@@ -60,7 +60,7 @@ public:
             auto phase1 = StatPhase("Encode Phase");
 
             auto phase2 = StatPhase("Creating strategy");
-                const slp_strategy_t strategy { this->env().env_for_option("slp_strategy") };
+                const slp_coder_t strategy { this->env().env_for_option("slp_coder") };
 
             phase2.split("Encode SLP");
                 strategy.encode(context.debug, std::move(slp), output);
@@ -73,7 +73,7 @@ public:
         auto phase0 = StatPhase("ESP Decompressor");
 
         auto phase1 = StatPhase("Creating strategy");
-            const slp_strategy_t strategy { this->env().env_for_option("slp_strategy") };
+            const slp_coder_t strategy { this->env().env_for_option("slp_coder") };
         phase1.split("Decode SLP");
             auto slp = strategy.decode(input);
 

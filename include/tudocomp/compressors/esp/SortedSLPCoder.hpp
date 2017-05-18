@@ -7,11 +7,11 @@
 
 namespace tdc {namespace esp {
     template<typename d_coding_t = DMonotonSubseq<>>
-    class SufficientSLPStrategy: public Algorithm {
+    class SortedSLPCoder: public Algorithm {
         using RhsAdapter = SLPRhsAdapter;
     public:
         inline static Meta meta() {
-            Meta m("slp_strategy", "sorted");
+            Meta m("slp_coder", "sorted");
             m.option("d_coding").templated<d_coding_t, DMonotonSubseq<>>("d_coding");
             m.option("dump_json").dynamic("false");
             m.option("dump_json_file").dynamic("-");
@@ -174,4 +174,3 @@ namespace tdc {namespace esp {
         }
     };
 }}
-

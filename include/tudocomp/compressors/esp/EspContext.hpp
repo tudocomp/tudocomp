@@ -33,6 +33,7 @@ namespace tdc {namespace esp {
         bool behavior_landmarks_tie_to_right = true;
         bool behavior_iter_log_mode = false; // UNUSED
 
-        SLP generate_grammar(string_ref);
+        template<typename T>
+        SLP generate_grammar(T&& s);
     };
 }}

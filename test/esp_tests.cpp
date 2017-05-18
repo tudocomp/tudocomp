@@ -5,8 +5,8 @@
 
 #include "tudocomp/compressors/esp/SLPDepSort.hpp"
 
-#include "tudocomp/compressors/esp/PlainSLPStrategy.hpp"
-#include "tudocomp/compressors/esp/SufficientSLPStrategy.hpp"
+#include "tudocomp/compressors/esp/PlainSLPCoder.hpp"
+#include "tudocomp/compressors/esp/SortedSLPCoder.hpp"
 #include "tudocomp/compressors/esp/MonotoneSubsequences.hpp"
 
 #include "tudocomp/compressors/EspCompressor.hpp"
@@ -509,32 +509,32 @@ void test_esp() {
 }
 
 TEST(ESP, test_plain) {
-   test_esp<esp::PlainSLPStrategy>();
+   test_esp<esp::PlainSLPCoder>();
 }
 
 TEST(ESP, test_sufficient) {
-   test_esp<esp::SufficientSLPStrategy<>>();
+   test_esp<esp::SortedSLPCoder<>>();
 }
 
 TEST(ESP, test_optimal_plain) {
-   test_esp<esp::SufficientSLPStrategy<esp::DPlain>>();
+   test_esp<esp::SortedSLPCoder<esp::DPlain>>();
 }
 
 TEST(ESP, test_optimal_huffman) {
-   test_esp<esp::SufficientSLPStrategy<esp::DHuffman>>();
+   test_esp<esp::SortedSLPCoder<esp::DHuffman>>();
 }
 
 TEST(ESP, test_sufficient_greedy1) {
-   test_esp<esp::SufficientSLPStrategy<esp::DMonotonSubseq<esp::SubSeqGreedy1>>>();
+   test_esp<esp::SortedSLPCoder<esp::DMonotonSubseq<esp::SubSeqGreedy1>>>();
 }
 
 TEST(ESP, test_sufficient_greedy2) {
-   test_esp<esp::SufficientSLPStrategy<esp::DMonotonSubseq<esp::SubSeqGreedy2>>>();
+   test_esp<esp::SortedSLPCoder<esp::DMonotonSubseq<esp::SubSeqGreedy2>>>();
 }
 
 
 /*TEST(ESP, test_optimal_arithmetic) {
-   test_esp<esp::SufficientSLPStrategy<esp::DArithmetic>>();
+   test_esp<esp::SortedSLPCoder<esp::DArithmetic>>();
 }*/
 
 class IBST {

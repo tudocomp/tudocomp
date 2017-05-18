@@ -3,10 +3,10 @@
 #include <tudocomp/Algorithm.hpp>
 
 namespace tdc {namespace esp {
-    class PlainSLPStrategy: public Algorithm {
+    class PlainSLPCoder: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("slp_strategy", "plain");
+            Meta m("slp_coder", "plain");
             return m;
         };
 

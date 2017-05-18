@@ -10,7 +10,8 @@
 
 namespace tdc {namespace esp {
     template<typename ipd_t>
-    SLP EspContext<ipd_t>::generate_grammar(string_ref input) {
+    template<typename T>
+    SLP EspContext<ipd_t>::generate_grammar(T&& input) {
         size_t root_node = 0;
         bool empty = false;
 
@@ -36,6 +37,7 @@ namespace tdc {namespace esp {
             for (auto c : input) {
                 round->string.push_back(c);
             }
+            auto discard = std::move(input);
         }
 
         for(size_t n = 0;; n++) {
