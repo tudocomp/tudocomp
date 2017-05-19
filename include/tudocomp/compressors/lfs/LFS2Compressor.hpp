@@ -387,7 +387,7 @@ public:
 
            // long alt_size = ;
             StatPhase::log("Bytes Length Encoding", buf_size);
-           // DLOG(INFO)<<"Bytes Length Encoding: "<< buf_size;
+           DLOG(INFO)<<"Bytes Length Encoding: "<< buf_size;
            // DLOG(INFO)<<"Bytes Length Encoding: "<< buf_size;
 
 
@@ -409,7 +409,6 @@ public:
                             auto symbol = non_terminal_symbols[second_layer_nts[pos] -1];
 
 
-                          //  DLOG(INFO)<<"old pos: "<<pos<<" len: " << symbol.second  <<" sl: " << second_layer_nts[pos];
 
                             pos += symbol.second - 1;
                         //    DLOG(INFO)<<"new pos "<< pos;
@@ -433,7 +432,7 @@ public:
             StatPhase::log("Bytes Non-Terminal Symbol Encoding", buf_size);
 
 
-          //  DLOG(INFO)<<"Bytes Non-Terminal Symbol Encoding: "<< buf_size;
+            DLOG(INFO)<<"Bytes Non-Terminal Symbol Encoding: "<< buf_size;
 
             //encode start symbol
 
@@ -461,31 +460,14 @@ public:
             StatPhase::log("Bytes Start Symbol Encoding", buf_size);
 
 
-          //  DLOG(INFO)<<"Bytes Start Symbol Encoding: "<< buf_size;
+            DLOG(INFO)<<"Bytes Start Symbol Encoding: "<< buf_size;
 
-           // DLOG(INFO)<<"Bytes Length Encoding alt: "<< bitout->tellp();
-
-          //  auto ostream = output.as_stream();
-           // for(uint begin =0; begin < byte_buffer.size(); begin++){
-          //      ostream << byte_buffer[begin];
-
-           // }
-           // ostream << (char)0;
 
             std::cerr<<"encoding done"<<std::endl;
 
             DLOG(INFO)<<"encoding done";
 
-
-
-
-
-
-
         });
-
-
-
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
@@ -606,9 +588,6 @@ public:
 
             }
         }
-
-
-
     }
 
 };

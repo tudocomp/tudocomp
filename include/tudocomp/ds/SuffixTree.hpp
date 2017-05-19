@@ -220,6 +220,10 @@ public:
         return Text;
     }
 
+    inline uint get_size(){
+        return Text.size();
+    }
+
 
     inline SuffixTree::STNode* get_root(){
         return root;

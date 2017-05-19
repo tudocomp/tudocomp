@@ -76,7 +76,7 @@ private:
         //foreach occpos \in gso do
         for(auto it = selected_positions.begin();it!= selected_positions.end();it++){
             uint occpos = *it;
-            uint text_length = stree.get_text().length();
+            uint text_length = stree.get_size();
             uint pos = occpos;
             uint end = std::min(text_length, occpos + length);
             for(; pos<end;pos++){
@@ -106,7 +106,7 @@ private:
             node->card_bp=1;
 
         } else {
-            uint min=stree.get_text().size();
+            uint min=stree.get_size();
             uint max=0;
             uint card = 0;
             //add all min begins and maxi begins of children to begins
