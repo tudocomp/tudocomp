@@ -525,13 +525,8 @@ TEST(ESP, test_optimal_huffman) {
 }
 
 TEST(ESP, test_sufficient_greedy1) {
-   test_esp<esp::SortedSLPCoder<esp::DMonotonSubseq<esp::SubSeqGreedy1>>>();
+   test_esp<esp::SortedSLPCoder<esp::DMonotonSubseq<esp::SubSeqGreedy>>>();
 }
-
-TEST(ESP, test_sufficient_greedy2) {
-   test_esp<esp::SortedSLPCoder<esp::DMonotonSubseq<esp::SubSeqGreedy2>>>();
-}
-
 
 /*TEST(ESP, test_optimal_arithmetic) {
    test_esp<esp::SortedSLPCoder<esp::DArithmetic>>();
