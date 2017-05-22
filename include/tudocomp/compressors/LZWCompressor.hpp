@@ -98,7 +98,7 @@ public:
 		// take care of left-overs. We do not assume that the stream has a sentinel
 		DCHECK_NE(node.id(), lz78::undef_id);
 		coder.encode(node.id(), Range(factor_count + ULITERAL_MAX + 1)); //LZW
-		stat_factor_count++;
+		IF_STATS(stat_factor_count++);
 		factor_count++;
 
 		IF_STATS(

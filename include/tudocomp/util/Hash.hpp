@@ -565,11 +565,11 @@ class HashMap {
 			tablepos = m_sizeman.mod_tablesize(m_probe.template get<SizeManager>(i, tablepos, hash, table_size()), table_size(), init_hashvalue, i);
 			DCHECK_LT(i, table_size()) << "Hash table is full!";
 			IF_STATS(++m_collisions);
-			IF_DEBUG(
+			IF_STATS(IF_DEBUG(
 			m_old_size = table_size();
 			if(m_old_size != table_size()) {
                 DVLOG(1) << "HashMap size " << table_size() << std::endl;
-            })
+            }))
 		}
 	}
 
