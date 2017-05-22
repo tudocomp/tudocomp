@@ -31,6 +31,7 @@ public:
     inline const factorid_t& search_pos() const { return m_id_and_search_pos; }
 };
 
+
 #define LZ78_DICT_SIZE_DESC \
 			"`dict_size` has to either be 0 (unlimited), or a positive integer,\n" \
 			"and determines the maximum size of the backing storage of\n" \
@@ -41,6 +42,17 @@ class LZ78Trie {
 public:
     using node_t = TrieNode<search_pos>;
 protected:
+	const size_t m_n;
+	const size_t& m_remaining_characters;
+	LZ78Trie(const size_t n, const size_t& remaining_characters)
+		: m_n(n), m_remaining_characters(remaining_characters) {}
+
+	// static inline size_t expected_number_of_remaining_elements() {
+	// 	if(m_remaining_characters*2 <  m_n) {
+	// 		return (m_n - m_remaining_characters) / size();
+	// 	}
+	// 	return lz78_expected_number_of_remaining_elements(n, m_remaining_characters);
+	// }
 
 	/**
 	 * The dictionary can store multiple root nodes

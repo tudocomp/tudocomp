@@ -306,12 +306,22 @@ factorization of a factor label. It could be that this improves the compression 
 *Category*: Compression
 
 <!---
+### Survey implementation of different LCP/SA construction algorithms
+
+Faster VByte coding
+
+*References*:
+
+ - https://github.com/lemire/libvbyte
+
 ### Try to detect text type, and use appropriate compressor.
 Modify existing 
 Neutronal Network Detetects 
 *Category* Machine Learning
 
 Target field of application: Machine Learning
+
+
 ### Survey implementation of different LCP/SA construction algorithms
 
 *Category* Algorithm Engineering

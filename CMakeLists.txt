@@ -17,6 +17,8 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND
     message(FATAL_ERROR "g++ version 5.4 or greater required!")
 endif()
 
+set(CXX_STANDARD c++14)
+
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     # using Clang or AppleClang
     if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "3.4")

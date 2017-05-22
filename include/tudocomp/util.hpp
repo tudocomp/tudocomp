@@ -383,10 +383,6 @@ inline std::string make_table(const std::vector<std::string>& data,
     return ret.str();
 }
 
-}
-
-//Check that p is a permutation of [0..n-1]
-
 #if defined(DEBUG) && defined(PARANOID) //functions that cost more than constant time to check
 template<class T>
 void assert_permutation(const T& p, size_t n) {
@@ -417,6 +413,18 @@ template<class T> inline void assert_permutation_offset(const T&, size_t,size_t)
 #endif
 
 
+/**
+ * @brief Division with rounding up to the next integer.
+ * Call equivalent to (int) std::ceil(((double)x)/y)
+ * @param x dividend
+ * @param y divisor
+ * @return ceiling of the term x/y
+ */
+template<class T>
+constexpr T round_up_div(T x, T y) {
+	return (x + y -1)/y;
+}
+
 /*
  *	Square root by abacus algorithm, Martin Guy @ UKC, June 1985.
  *	From a book on programming abaci by Mr C. Woo.
@@ -443,3 +451,11 @@ int_t isqrt(int_t num) {
     return res;
 }
 
+static inline size_t lz78_expected_number_of_remaining_elements(const size_t z, const size_t n, const size_t remaining_characters) {
+		if(remaining_characters*2 < n ) {
+			return (z*remaining_characters) / (n - remaining_characters);
+		}
+	return remaining_characters*3/(bits_for(remaining_characters));
+}
+
+}//ns
