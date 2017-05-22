@@ -9,6 +9,8 @@
 #include <vector>
 #include <tuple>
 
+#include <unordered_map>
+
 
 #include <tudocomp/io.hpp>
 
@@ -74,7 +76,7 @@ public:
         //suffix if leaf
         uint suffix;
         // child nodes
-        std::map<char, STNode*> child_nodes;
+        std::unordered_map<char, STNode*> child_nodes;
         //suffix link
         STNode* suffix_link;
 

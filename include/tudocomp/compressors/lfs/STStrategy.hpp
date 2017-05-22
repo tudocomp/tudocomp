@@ -190,7 +190,13 @@ public:
 
         DLOG(INFO)<<"number of nodes: "<<nl.size();
 
-        std::sort(nl.begin(), nl.end());
+        StatPhase::log("Number of nodes", nl.size());
+
+
+        StatPhase::wrap("Sorting Nodes, String Depth", [&]{
+
+            std::sort(nl.begin(), nl.end());
+        });
         uint nts_number =0;
 
         DLOG(INFO)<<"done. computing lrfs";
