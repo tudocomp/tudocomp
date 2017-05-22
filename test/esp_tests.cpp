@@ -1075,7 +1075,7 @@ TEST(Hashmaps, size) {
 
 TEST(Fulltree, test) {
     esp::EspContext<test_ipd_t> context { nullptr, false };
-    auto in = "0000dkasxxxcsdacjzsbkhvfaghskcbsaaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v;
+    auto in = "dkaxxxxcsdacjzstj"_v;
     context.debug.input_string(in);
     auto slp = context.generate_grammar(in);
     context.debug.print_all();
