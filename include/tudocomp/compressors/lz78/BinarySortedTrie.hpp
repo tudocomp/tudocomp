@@ -13,7 +13,7 @@ class BinarySortedTrie : public Algorithm, public LZ78Trie<factorid_t> {
      */
     std::vector<factorid_t> m_first_child;
     std::vector<factorid_t> m_next_sibling;
-    std::vector<literal_t> m_literal;
+    std::vector<uliteral_t> m_literal;
 
     IF_STATS(
         size_t m_resizes = 0;
