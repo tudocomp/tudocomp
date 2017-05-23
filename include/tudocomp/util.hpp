@@ -458,4 +458,32 @@ static inline size_t lz78_expected_number_of_remaining_elements(const size_t z, 
 	return remaining_characters*3/(bits_for(remaining_characters));
 }
 
+class MoveGuard {
+    bool m_is_not_moved;
+public:
+    inline MoveGuard(): m_is_not_moved(true) {}
+    inline MoveGuard(const MoveGuard& other) {
+        DCHECK(other.m_is_not_moved) << "Trying to copy a already moved-from MoveGuard";
+        m_is_not_moved = other.m_is_not_moved;
+    }
+    inline MoveGuard(MoveGuard&& other) {
+        DCHECK(other.m_is_not_moved) << "Trying to move a already moved-from MoveGuard";
+        m_is_not_moved = other.m_is_not_moved;
+        other.m_is_not_moved = false;
+    }
+
+    inline bool is_not_moved() const {
+        return m_is_not_moved;
+    }
+    inline bool is_moved() const {
+        return !m_is_not_moved;
+    }
+    inline operator bool() const {
+        return is_not_moved();
+    }
+    inline bool operator!() const {
+        return is_moved();
+    }
+};
+
 }//ns
