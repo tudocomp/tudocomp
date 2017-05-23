@@ -154,7 +154,7 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
 }
 
 /// \brief Computes the highest set bit in an integer variable
-inline uint_fast8_t bits_hi(uint64_t x) {
+inline constexpr uint_fast8_t bits_hi(uint64_t x) {
 	return x == 0 ? 0 : 64 - __builtin_clzll(x);
 }
 
@@ -173,7 +173,7 @@ inline uint_fast8_t bits_hi(uint64_t x) {
 /// \param n The integer to be stored.
 /// \return The amount of bits required to store the value (guaranteed to be
 /// greater than zero).
-inline uint_fast8_t bits_for(size_t n) {
+inline constexpr uint_fast8_t bits_for(size_t n) {
     return n == 0 ? 1U : bits_hi(n);
 }
 
@@ -183,7 +183,7 @@ inline uint_fast8_t bits_for(size_t n) {
 /// \param a The dividend.
 /// \param b The divisor.
 /// \return The quotient, rounded up to the next integer value.
-inline size_t idiv_ceil(size_t a, size_t b) {
+inline constexpr size_t idiv_ceil(size_t a, size_t b) {
     return (a / b) + ((a % b) > 0);
 }
 
@@ -204,7 +204,7 @@ inline size_t idiv_ceil(size_t a, size_t b) {
 /// \param n The integer to be stored.
 /// \return The amount of bits required to store the value (guaranteed to be
 /// greater than zero).
-inline uint_fast8_t bytes_for(size_t n) {
+inline constexpr uint_fast8_t bytes_for(size_t n) {
     return idiv_ceil(bits_for(n), 8U);
 }
 
