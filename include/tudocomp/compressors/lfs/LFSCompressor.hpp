@@ -49,7 +49,7 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
        // StatPhase root("lfs compress");
 
-      //  StatPhase::wrap("lfs compressor", [&]{
+        StatPhase::wrap("lfs compressor", [&]{
 
 
             non_terminal_symbols nts_symbols = non_terminal_symbols();
@@ -86,10 +86,7 @@ public:
 
             });
 
-        // Print data in JSON representation to stdout
-        //root.to_json().str(std::cout);
-
-       // });
+        });
 
 
     }

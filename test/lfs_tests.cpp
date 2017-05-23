@@ -91,9 +91,9 @@ void run_comp_file(std::string file) {
 TEST(lfs, st_strat){
 
 
-    run_comp<tdc::lfs::STStrategy<> >("abaaabbababb$");
+    run_comp<tdc::lfs::STStrategy >("abaaabbababb$");
 
-    run_comp<tdc::lfs::STStrategy<> >("ccaabbaabbcca$");
+    run_comp<tdc::lfs::STStrategy >("ccaabbaabbcca$");
 
 }
 

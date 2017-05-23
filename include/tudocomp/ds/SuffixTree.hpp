@@ -97,7 +97,7 @@ public:
         //constructor. e=0
 
         // start(s), end (e)
-        STInnerNode(int s, int e = 0) : STNode(s,e){ suffix_link = NULL;}
+        STInnerNode(int s, int e = 0) : STNode(s,e){ suffix_link = NULL; child_nodes.reserve(6);}
 
         virtual ~STInnerNode(){}
 

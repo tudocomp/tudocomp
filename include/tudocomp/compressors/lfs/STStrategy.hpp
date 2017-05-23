@@ -3,6 +3,9 @@
 #include <vector>
 #include <tuple>
 
+#include <unordered_map>
+
+
 #include <tudocomp/util.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/ds/IntVector.hpp>
@@ -15,7 +18,6 @@
 namespace tdc {
 namespace lfs {
 
-template<uint min_lrf = 2 >
 class STStrategy : public Algorithm {
 private:
 
@@ -29,43 +31,51 @@ private:
 
     BitVector dead_positions;
 
-    typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
+    std::vector<std::vector<SuffixTree::STNode*> > bins;
+    uint node_count;
+
+    std::vector<uint> child_sizes;
 
 
-    inline virtual void compute_string_depth(SuffixTree::STNode* node, uint str_depth, string_depth_vector* node_list){
+   // typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
 
-        if(str_depth>0){
 
-            node_list->push_back(std::make_pair(str_depth, node));
-        }
+    inline virtual void compute_string_depth(SuffixTree::STNode* node, uint str_depth){
+
+
+
 
         SuffixTree::STInnerNode * inner = dynamic_cast<SuffixTree::STInnerNode *>(node);
         if(inner){
+            node_count++;
+            if(str_depth>0){
+
+                bins[str_depth].push_back(node);
+            }
+
+            child_sizes.push_back(inner->child_nodes.size());
 
             auto it = inner->child_nodes.begin();
             while (it != inner->child_nodes.end()){
                 auto child = *it;
                 uint child_depth = (str_depth+stree.edge_length(child.second));
-                compute_string_depth( child.second, child_depth, node_list);
-                //string_depth_vector child_list =
-                //node_list.insert(node_list->end(), child_list.begin(), child_list.end());
+                compute_string_depth( child.second, child_depth);
                 it++;
             }
 
         }
-
-
     }
 
-    /*
 
 
-    inline virtual std::vector<uint> select_starting_positions(std::set<uint> starting_positions, uint length){
+
+
+    inline virtual std::vector<uint> & select_starting_positions(std::vector<uint> & starting_positions, uint length){
         std::vector<uint> selected_starting_positions;
         //select occurences greedily non-overlapping:
         selected_starting_positions.reserve(starting_positions.size());
 
-        int last =  0-length;
+        long last =  0-length;
         uint current;
         for (auto it=starting_positions.begin(); it!=starting_positions.end(); ++it){
 
@@ -81,6 +91,8 @@ private:
         }
         return selected_starting_positions;
     }
+
+      /*
 
 
     inline virtual void update_tree(uint length, std::vector<uint> selected_positions){
@@ -162,62 +174,157 @@ public:
 
     inline static Meta meta() {
         Meta m("lfs_comp", "st");
+        m.option("min_lrf").dynamic(2);
         return m;
     }
 
 
     inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
-
-
-        //auto input = in.as_view();
-        //BitVector
-      //  dead_positions = BitVector(input.size(), 0);
-        //DLOG(INFO)<< "dead_positions.size(): "<<dead_positions.size();
-
-        //build suffixtree
-        DLOG(INFO)<<"build suffixtree";
-
-
+        uint min_lrf = env().option("min_lrf").as_integer();
 
         StatPhase::wrap("Constructing ST", [&]{
         stree = SuffixTree(input);
         });
 
 
-       // stree.append_input(in);
-
-        DLOG(INFO)<<"computing string depth";
-        //min_lrf=2;
-
-        //std::string t = stree.get_text();
-
-        //DLOG(INFO)<< t << std::endl;
-        //compute string depth of st:
-        string_depth_vector nl;
-
         StatPhase::wrap("Computing String Depth", [&]{
-        compute_string_depth(stree.get_root(),0, &nl);
+            bins.resize(stree.get_size());
+            node_count=0;
+            compute_string_depth(stree.get_root(),0);
         });
 
-        DLOG(INFO)<<"sorting nodes";
+        StatPhase::log("Number of inner Nodes", node_count);
 
-        DLOG(INFO)<<"number of nodes: "<<nl.size();
+        std::sort(child_sizes.begin(), child_sizes.end());
+        if(child_sizes.size()>0){
 
-        StatPhase::log("Number of nodes", nl.size());
+            uint max_depth = child_sizes[child_sizes.size()-1];
 
+            DLOG(INFO)<<"Max Child size: "<< max_depth;
 
-     //   StatPhase::wrap("Sorting Nodes, String Depth", [&]{
+            if(child_sizes.size()>=4){
+                uint quarter = child_sizes.size() /4;
 
-    //        std::sort(nl.begin(), nl.end());
-     //   });
+           // nts_depth[quarter -1];
+                StatPhase::log("25 \% quantil Child size", child_sizes[quarter -1]);
+                StatPhase::log("50 \% quantil Child size", child_sizes[(2*quarter) -1]);
+                StatPhase::log("75 \% quantil Child size", child_sizes[(3*quarter) -1]);
 
-        /*
-        uint nts_number =0;
+            }
+            if(child_sizes.size()>=10){
+                StatPhase::log("90 \% Child size", child_sizes[(9 * (child_sizes.size()/10) ) -1]);
+            }
+            StatPhase::log("Max Child size", max_depth);
+        }
 
-        DLOG(INFO)<<"done. computing lrfs";
 
         StatPhase::wrap("Computing LRF Occs", [&]{
-        auto it = nl.end();
+            dead_positions = BitVector(stree.get_size(), 0);
+            std::unordered_map<SuffixTree::STNode *, std::vector<uint> > beginning_positions;
+
+            beginning_positions.reserve(node_count);
+
+
+
+            for(uint i = bins.size()-1; i>=min_lrf; i--){
+                auto bin_it = bins[i].begin();
+                while (bin_it!= bins[i].end()){
+
+                    SuffixTree::STNode * node = *bin_it;
+
+                    auto bp = beginning_positions.find(node);
+
+                    //no begin poss found, get from children
+
+                    if(bp == beginning_positions.end()){
+
+                        std::vector<uint> positions;
+
+                        SuffixTree::STInnerNode * inner = dynamic_cast<SuffixTree::STInnerNode *>(node);
+                        auto it = inner->child_nodes.begin();
+                        while (it != inner->child_nodes.end()){
+                            auto child = *it;
+
+                            SuffixTree::STNode * child_node = child.second;
+
+                            if(SuffixTree::STInnerNode * inner_child = dynamic_cast<SuffixTree::STInnerNode *>(child_node)){
+                                auto child_bp = beginning_positions.find(inner_child);
+                                if(child_bp != beginning_positions.end()){
+
+                                    positions.insert(positions.end(), (*child_bp).second.begin(), (*child_bp).second.end());
+
+                                    beginning_positions.erase((*child_bp).first);
+                                    //(*child_bp).second.clear();
+
+                                }
+
+
+                            }
+                            if(SuffixTree::STLeaf * leaf_child = dynamic_cast<SuffixTree::STLeaf *>(child_node)){
+                                positions.push_back(leaf_child->suffix);
+
+                            }
+
+
+
+
+                            it++;
+                        }
+                      //  DLOG(INFO)<<"begin pos size: "<< positions.size();
+                        std::sort(positions.begin(), positions.end());
+
+                        beginning_positions[node]=positions;
+
+
+
+
+                    }
+                    std::vector<uint> & begin_pos = beginning_positions[node];
+
+                    for(auto e : begin_pos){
+                        DLOG(INFO)<<e;
+                    }
+                   // DLOG(INFO)<<"found pos size: "<< begin_pos.size();
+
+                    //check if repeating factor:
+                    if(begin_pos.size() >= 2 && ( *(begin_pos.end()) - *(begin_pos.begin()) >= i)){
+                        DLOG(INFO)<<"begin: " << *(begin_pos.begin());
+                        DLOG(INFO)<<"end: " << *(begin_pos.end() -1);
+
+                        //check dead positions:
+//                        if(!(
+//                                dead_positions[*(begin_pos.end())] ||
+//                                dead_positions[*(begin_pos.end()) +i -1] ||
+//                                dead_positions[*(begin_pos.begin())] ||
+//                                dead_positions[*(begin_pos.begin()) +i]
+//                                )
+
+
+//                                ){
+                            DLOG(INFO)<<"is lrf!, length: " << i;
+
+                           // std::vector<uint> sel_pos = select_starting_positions(begin_pos, i);
+                          //  DLOG(INFO)<<"selected pos: "<<sel_pos.size();
+
+
+
+
+                      //  DLOG(INFO)<<stree.get_text().substr(*begin_pos.begin(),i);
+                        //vector of text position, length
+                        //std::pair<uint,uint> rule = std::make_pair(begin_pos.begin(), pair.first);
+
+                       // dictionary.push_back(rule);
+                    }
+
+
+                    bin_it++;
+
+                }
+            }
+
+
+            /*
+        auto bin_it = bins.end();
         while (it != nl.begin()){
             it--;
             auto pair = *it;
@@ -267,15 +374,14 @@ public:
 
                 }
 
-            }
+            }*/
 
 
-        }
+
         });
 
         DLOG(INFO) << "sorting occurences";
         std::sort(nts_symbols.begin(), nts_symbols.end());
-        */
     }
 };
 }
