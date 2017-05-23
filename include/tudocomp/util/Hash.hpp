@@ -63,7 +63,7 @@ struct MixHasher : public Algorithm { // https://gist.github.com/badboy/6267743
 	}
 };
 
-struct NoopHasher : public Algorithm { 
+struct NoopHasher : public Algorithm {
     inline static Meta meta() {
         Meta m("hash_function", "noop", "Identity");
 		return m;
@@ -89,7 +89,7 @@ struct SizeManagerPow2 : public Algorithm {
 	 * The lowest possible size larger than hint
 	 */
 	static inline len_t get_min_size(const len_t& hint) {
-		return 1ULL<<bits_hi(std::max<len_t>(hint,3UL)); 
+		return 1ULL<<bits_hi(std::max<len_t>(hint,3UL));
 	}
 	/**
 	 *  Compute index % tablesize
@@ -112,7 +112,7 @@ struct SizeManagerDirect : public Algorithm {
 	 * The lowest possible size larger than hint
 	 */
 	static inline len_t get_min_size(const len_t& hint) {
-		return std::max<len_t>(hint,3UL); 
+		return std::max<len_t>(hint,3UL);
 	}
 	void resize(const len_t) {
 	}
@@ -141,7 +141,7 @@ struct SizeManagerNoob : public Algorithm {
 	 * The lowest possible size larger than hint
 	 */
 	static inline len_t get_min_size(const len_t& hint) {
-		return std::max<len_t>(hint,3UL); 
+		return std::max<len_t>(hint,3UL);
 	}
 	void resize(const len_t) {
 	}
@@ -164,7 +164,7 @@ struct SizeManagerPrime : public Algorithm {
 
 	static inline len_t get_min_size(const len_t& hint) {
 		return next_prime(hint);
-	}	
+	}
 	void resize(const len_t) {
 	}
 	static inline len_t mod_tablesize(const size_t& index, const len_t& tablesize, const size_t& , const size_t&) {
@@ -413,13 +413,13 @@ class HashMap {
 	const size_t& m_remaining_characters;
 
 	HashMap(Env&, const size_t n, const size_t& remaining_characters)
-		: m_h(create_env(HashFcn::meta())) 
+		: m_h(create_env(HashFcn::meta()))
 		, m_probe(create_env(ProbeFcn::meta()))
 // env.env_for_option("hash_prober"))
 		, m_sizeman(create_env(SizeManager::meta())) //env.env_for_option("hash_manager"))
 		, m_size(initial_size)
 		, m_keys(new key_t[initial_size])
-		, m_values(new value_t[initial_size]) 
+		, m_values(new value_t[initial_size])
 		, m_n(n)
 		, m_remaining_characters(remaining_characters)
 	{
@@ -431,7 +431,7 @@ class HashMap {
 	{
 		if(m_keys != nullptr) { delete [] m_keys; }
 		if(m_values != nullptr) { delete [] m_values; }
-		
+
 		m_keys = std::move(o.m_keys);
 		m_values = std::move(o.m_values);
 		m_size = std::move(o.m_size);
@@ -447,10 +447,17 @@ class HashMap {
 	)
 		reserve(newsize);
 	}
+
+	MoveGuard m_guard;
 	~HashMap() {
-		if(m_keys != nullptr) { delete [] m_keys; }
-		if(m_values != nullptr) { delete [] m_values; }
+        if (m_guard) {
+            if(m_keys != nullptr) { delete [] m_keys; }
+            if(m_values != nullptr) { delete [] m_values; }
+        }
 	}
+	inline HashMap(HashMap&& other) = default;
+    inline HashMap& operator=(HashMap&& other) = default;
+
 	void reserve(len_t hint) {
 		IF_STATS(++m_resizes);
 		const auto size = m_sizeman.get_min_size(hint);
