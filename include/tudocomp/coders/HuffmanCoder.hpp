@@ -38,7 +38,7 @@ namespace huff {
         std::memset(C, 0, sizeof(len_t)*(ULITERAL_MAX+1));
 
         while(input.has_next()) {
-            literal_t c = input.next().c;
+            uliteral_t c = input.next().c;
             DCHECK_LT(static_cast<uliteral_t>(c), ULITERAL_MAX+1);
             DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_t>::max());
             ++C[static_cast<uliteral_t>(c)];
@@ -325,7 +325,7 @@ namespace huff {
      * Encodes a stream storing input_length characters
      */
     inline void huffman_encode(
-            std::basic_istream<literal_t>& input,
+            std::istream& input,
             tdc::io::BitOStream& os,
             const size_t input_length,
             const uint8_t*const ordered_map_from_effective,
@@ -339,7 +339,7 @@ namespace huff {
 
             {//now writing
                 os.write_compressed_int<size_t>(input_length);
-                literal_t c;
+                char c;
                 while(input.get(c)) {
                     huffman_encode(c, os, ordered_codelengths, ordered_map_to_effective, alphabet_size, codewords);
                 }
@@ -369,7 +369,7 @@ namespace huff {
             DVLOG(2) << "prefix_sum_lengths : " << arr_to_debug_string(prefix_sum_lengths, longest);
             return prefix_sum_lengths;
     }
-    inline literal_t huffman_decode(
+    inline uliteral_t huffman_decode(
             tdc::io::BitIStream& is,
             const uliteral_t*const ordered_map_from_effective,
             const size_t*const prefix_sum_lengths,
@@ -394,7 +394,7 @@ namespace huff {
 
     inline void huffman_decode(
             tdc::io::BitIStream& is,
-            std::basic_ostream<literal_t>& output,
+            std::ostream& output,
             const uliteral_t*const ordered_map_from_effective,
             const uint8_t*const ordered_codelengths,
             const size_t alphabet_size,

@@ -42,7 +42,7 @@ value_type mtf_decode_char(const value_type v, value_type*const table) {
 	return return_value;
 }
 
-template<class char_type = literal_t>
+template<class char_type = uliteral_t>
 void mtf_encode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os) {
 	typedef typename std::make_unsigned<char_type>::type value_type; // -> default: uint8_t
 	static constexpr size_t table_size = std::numeric_limits<value_type>::max()+1;
@@ -55,7 +55,7 @@ void mtf_encode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
 	}
 }
 
-template<class char_type = literal_t>
+template<class char_type = uliteral_t>
 void mtf_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>& os) {
 	typedef typename std::make_unsigned<char_type>::type value_type; // -> default: uint8_t
 	static constexpr size_t table_size = std::numeric_limits<value_type>::max()+1;
