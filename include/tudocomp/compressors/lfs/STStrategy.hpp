@@ -70,7 +70,7 @@ private:
 
 
 
-    inline virtual std::vector<uint> & select_starting_positions(std::vector<uint> & starting_positions, uint length){
+    inline virtual std::vector<uint> select_starting_positions(std::vector<uint> & starting_positions, uint length){
         std::vector<uint> selected_starting_positions;
         //select occurences greedily non-overlapping:
         selected_starting_positions.reserve(starting_positions.size());
@@ -220,6 +220,7 @@ public:
 
         StatPhase::wrap("Computing LRF Occs", [&]{
             dead_positions = BitVector(stree.get_size(), 0);
+            DLOG(INFO)<<"input size: "<<stree.get_size();
             std::unordered_map<SuffixTree::STNode *, std::vector<uint> > beginning_positions;
 
             beginning_positions.reserve(node_count);
@@ -280,30 +281,28 @@ public:
 
                     }
                     std::vector<uint> & begin_pos = beginning_positions[node];
-
-                    for(auto e : begin_pos){
-                        DLOG(INFO)<<e;
-                    }
                    // DLOG(INFO)<<"found pos size: "<< begin_pos.size();
 
                     //check if repeating factor:
-                    if(begin_pos.size() >= 2 && ( *(begin_pos.end()) - *(begin_pos.begin()) >= i)){
-                        DLOG(INFO)<<"begin: " << *(begin_pos.begin());
-                        DLOG(INFO)<<"end: " << *(begin_pos.end() -1);
+                    if(begin_pos.size() >= 2 && ( (begin_pos.back() ) - (begin_pos.front()) >= i)){
 
                         //check dead positions:
-//                        if(!(
-//                                dead_positions[*(begin_pos.end())] ||
-//                                dead_positions[*(begin_pos.end()) +i -1] ||
-//                                dead_positions[*(begin_pos.begin())] ||
-//                                dead_positions[*(begin_pos.begin()) +i]
-//                                )
+                        if(!(
+                                dead_positions[(begin_pos.back())]              ||
+                                dead_positions[(begin_pos.back()) + i -1]    ||
+                                dead_positions[(begin_pos.front())]            ||
+                                dead_positions[(begin_pos.front()) + i -1]
+                                )
 
 
-//                                ){
+                                ){
                             DLOG(INFO)<<"is lrf!, length: " << i;
 
-                           // std::vector<uint> sel_pos = select_starting_positions(begin_pos, i);
+
+                            std::vector<uint> sel_pos = select_starting_positions(begin_pos, i);
+
+                        }
+
                           //  DLOG(INFO)<<"selected pos: "<<sel_pos.size();
 
 
@@ -314,6 +313,8 @@ public:
                         //std::pair<uint,uint> rule = std::make_pair(begin_pos.begin(), pair.first);
 
                        // dictionary.push_back(rule);
+                    } else {
+                        DLOG(INFO)<<"not a lrf!";
                     }
 
 
