@@ -10,7 +10,7 @@ namespace tdc {
 namespace lz78 {
 
 
-template<class HashFunction, class HashProber, class HashManager>
+template<class HashFunction = MixHasher, class HashProber = LinearProber, class HashManager = SizeManagerPow2>
 class HashTrie : public Algorithm, public LZ78Trie<factorid_t> {
 	HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,HashProber,HashManager> m_table;
 
@@ -24,8 +24,8 @@ public:
 		return m;
 	}
 
-    HashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0) 
-		: Algorithm(std::move(env)) 
+    HashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+		: Algorithm(std::move(env))
 		, LZ78Trie(n,remaining_characters)
         , m_table(this->env(),n,remaining_characters)
 	{
@@ -35,11 +35,16 @@ public:
 		}
     }
 
-	IF_STATS(
-		~HashTrie() {
-			m_table.collect_stats(env());
-		}
-	);
+    IF_STATS(
+        MoveGuard m_guard;
+        ~HashTrie() {
+            if (m_guard) {
+                m_table.collect_stats(env());
+            }
+        }
+    )
+    HashTrie(HashTrie&& other) = default;
+    HashTrie& operator=(HashTrie&& other) = default;
 
 	node_t add_rootnode(uliteral_t c) override {
 		m_table.insert(std::make_pair<squeeze_node_t,factorid_t>(create_node(0, c), size()));

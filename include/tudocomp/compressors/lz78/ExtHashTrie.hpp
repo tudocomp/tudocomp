@@ -28,7 +28,7 @@ public:
 		return m;
 	}
 
-    ExtHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0) 
+    ExtHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
 		: Algorithm(std::move(env))
 		, LZ78Trie(n, remaining_characters)
 		, m_n(n)
@@ -44,14 +44,19 @@ public:
 	// 		m_table.reserve(reserve);
 	// 	}
     // }
-	IF_STATS(
-		~ExtHashTrie() {
-		StatPhase::log("table size", m_table.bucket_count());
-		StatPhase::log("load factor", m_table.max_load_factor());
-		StatPhase::log("entries", m_table.size());
-		StatPhase::log("load ratio", m_table.load_factor());
-		}
-	);
+    IF_STATS(
+        MoveGuard m_guard;
+        inline ~ExtHashTrie() {
+            if (m_guard) {
+                StatPhase::log("table size", m_table.bucket_count());
+                StatPhase::log("load factor", m_table.max_load_factor());
+                StatPhase::log("entries", m_table.size());
+                StatPhase::log("load ratio", m_table.load_factor());
+            }
+        }
+    )
+    ExtHashTrie(ExtHashTrie&& other) = default;
+    ExtHashTrie& operator=(ExtHashTrie&& other) = default;
 
 	node_t add_rootnode(uliteral_t c) override {
 		m_table.insert(std::make_pair<squeeze_node_t,factorid_t>(create_node(0, c), size()));

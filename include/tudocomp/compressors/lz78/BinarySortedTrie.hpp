@@ -25,7 +25,7 @@ public:
 		return m;
 	}
     inline BinarySortedTrie(Env&& env, size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-		: Algorithm(std::move(env)) 
+		: Algorithm(std::move(env))
 		  , LZ78Trie(n,remaining_characters)
 	{
 		if(reserve > 0) {
@@ -107,18 +107,7 @@ public:
     factorid_t size() const override {
         return m_first_child.size();
     }
-    inline BinarySortedTrie(BinarySortedTrie&& other):
-        Algorithm(std::move(other)),
-        LZ78Trie<factorid_t>(std::move(other)),
-        m_first_child(std::move(other.m_first_child)),
-        m_next_sibling(std::move(other.m_next_sibling)),
-        m_literal(std::move(other.m_literal))
-    {
-        IF_STATS(
-            m_resizes = other.m_resizes;
-            m_specialresizes = other.m_specialresizes;
-        )
-    }
+
 };
 
 }} //ns

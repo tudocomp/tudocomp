@@ -127,17 +127,14 @@ TEST(Trie, BinaryTrie) {
     trie_test<BinaryTrie>();
 }
 
-/*
-#include <tudocomp/compressors/lz78/HashTrie.hpp>
-TEST(TrieStructure, HashTrie) {
-    trie_test<HashTrie>(false);
+#include <tudocomp/compressors/lz78/BinarySortedTrie.hpp>
+TEST(TrieStructure, BinarySortedTrie) {
+    trie_test<BinarySortedTrie>(false);
 }
-TEST(Trie, HashTrie) {
-    trie_test<HashTrie>();
+TEST(Trie, BinarySortedTrie) {
+    trie_test<BinarySortedTrie>();
 }
-*/
 
-/*
 #include <tudocomp/compressors/lz78/TernaryTrie.hpp>
 TEST(TrieStructure, TernaryTrie) {
     trie_test<TernaryTrie>(false);
@@ -145,7 +142,6 @@ TEST(TrieStructure, TernaryTrie) {
 TEST(Trie, TernaryTrie) {
     trie_test<TernaryTrie>();
 }
-*/
 
 #include <tudocomp/compressors/lz78/CedarTrie.hpp>
 TEST(TrieStructure, CedarTrie) {
@@ -155,35 +151,45 @@ TEST(Trie, CedarTrie) {
     trie_test<CedarTrie>();
 }
 
-/*
-#include <tudocomp/compressors/lz78/CustomHashTrie.hpp>
-TEST(TrieStructure, CustomHashTrie) {
-    trie_test<CustomHashTrie>(false);
+#include <tudocomp/compressors/lz78/HashTrie.hpp>
+TEST(TrieStructure, HashTrie) {
+    trie_test<HashTrie<>>(false);
 }
-TEST(Trie, CustomHashTrie) {
-    trie_test<CustomHashTrie>();
+TEST(Trie, HashTrie) {
+    trie_test<HashTrie<>>();
 }
-*/
 
-/*
-#include <tudocomp/compressors/lz78/MonteCarloTrie.hpp>
-TEST(TrieStructure, MonteCarloTrie) {
-    trie_test<MonteCarloTrie>(false);
+#include <tudocomp/compressors/lz78/HashTriePlus.hpp>
+TEST(TrieStructure, HashTriePlus) {
+    trie_test<HashTriePlus<>>(false);
 }
-TEST(Trie, MonteCarloTrie) {
-    trie_test<MonteCarloTrie>();
+TEST(Trie, HashTriePlus) {
+    trie_test<HashTriePlus<>>();
 }
-*/
 
-/*
-#include <tudocomp/compressors/lz78/SecondHashTrie.hpp>
-TEST(TrieStructure, SecondHashTrie) {
-    trie_test<SecondHashTrie>(false);
+#include <tudocomp/compressors/lz78/RollingTrie.hpp>
+TEST(TrieStructure, RollingTrie) {
+    trie_test<RollingTrie<>>(false);
 }
-TEST(Trie, SecondHashTrie) {
-    trie_test<SecondHashTrie>();
+TEST(Trie, RollingTrie) {
+    trie_test<RollingTrie<>>();
 }
-*/
+
+#include <tudocomp/compressors/lz78/RollingTriePlus.hpp>
+TEST(TrieStructure, RollingTriePlus) {
+    trie_test<RollingTriePlus<>>(false);
+}
+TEST(Trie, RollingTriePlus) {
+    trie_test<RollingTriePlus<>>();
+}
+
+#include <tudocomp/compressors/lz78/ExtHashTrie.hpp>
+TEST(TrieStructure, ExtHashTrie) {
+    trie_test<ExtHashTrie>(false);
+}
+TEST(Trie, ExtHashTrie) {
+    trie_test<ExtHashTrie>();
+}
 
 // #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>
 // TEST(TrieStructure, MBonsaiGammaTrie) {
