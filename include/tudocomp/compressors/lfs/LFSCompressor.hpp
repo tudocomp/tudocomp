@@ -71,8 +71,13 @@ public:
             });
              StatPhase::log("Number of CFG rules", dictionary.size());
 
+             if(dictionary.size()==0){
+                 return;
+             }
+
 
             StatPhase::wrap("encoding input", [&]{
+
 
                 //StatPhase encode("encoding input");
                 coding_strat_t coding_strategy(env().env_for_option("coding_strat"));

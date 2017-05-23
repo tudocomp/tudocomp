@@ -1,8 +1,5 @@
 //Test the longest first substitution
 
-#include <tudocomp/compressors/lfs/ESALFSCompressor.hpp>
-#include <tudocomp/compressors/lfs/STLFSCompressor.hpp>
-
 #include <tudocomp/compressors/lfs/LFSCompressor.hpp>
 #include <tudocomp/compressors/lfs/STStrategy.hpp>
 

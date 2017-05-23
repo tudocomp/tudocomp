@@ -20,12 +20,14 @@ namespace tdc {
 class SuffixTree{
 public:
     struct STNode;
+    struct STLeaf;
+    struct STInnerNode;
 private:
 
-    std::vector<STNode*> leaves;
+    //std::vector<STNode*> leaves;
 
     //root node
-    STNode* root;
+    STInnerNode* root;
 
     //text added to st
     std::string Text;
@@ -42,9 +44,9 @@ private:
 
 
     //saves last added node
-    STNode* last_added_sl;
+    STInnerNode* last_added_sl;
 
-    void add_sl(STNode* node){
+    void add_sl(STInnerNode* node){
 
         if(last_added_sl != root) {
             last_added_sl->suffix_link=node;
@@ -72,27 +74,35 @@ public:
         //represents the edge leading to this node
         int start;
         int end;
+        STNode(int s, int e = 0) :  start(s), end (e) {}
+        virtual ~STNode(){}
 
+    };
+
+    struct STLeaf : STNode {
         //suffix if leaf
         uint suffix;
+        //constructor. e=0
+        STLeaf(int s, int e = 0) : STNode(s,e){}
+
+        virtual ~STLeaf() {}
+
+    };
+
+    struct STInnerNode : STNode {
         // child nodes
         std::unordered_map<char, STNode*> child_nodes;
         //suffix link
-        STNode* suffix_link;
-
+        STInnerNode* suffix_link;
         //constructor. e=0
-        STNode(int s, int e = 0) : start(s), end (e){ suffix_link=NULL; card_bp=0;}
 
-        // needed for lfs, corresponds to triple
-        uint min_bp;
-        uint max_bp;
-        uint card_bp;
-        bool computed = false;
+        // start(s), end (e)
+        STInnerNode(int s, int e = 0) : STNode(s,e){ suffix_link = NULL;}
 
-        bool deleted = false;
-
+        virtual ~STInnerNode(){}
 
     };
+
     //constructor
     SuffixTree(){
         //no Text is read
@@ -102,7 +112,7 @@ public:
         suffix=0;
 
 
-        root = new STNode(-1);
+        root = new STInnerNode(-1);
 
         //active start node is root
         active_node=root;
@@ -133,17 +143,20 @@ private:
 
 
             //if the active node doesnt have the corresponding edge:
-            auto next_it = active_node->child_nodes.find(active_edge);
-            if(next_it==active_node->child_nodes.end()){
+
+            STInnerNode * active_inner = dynamic_cast<STInnerNode *> (active_node);
+
+            auto next_it = active_inner->child_nodes.find(active_edge);
+            if(next_it==active_inner->child_nodes.end()){
                 //insert new leaf
-                STNode* new_leaf = new STNode(pos);
-                active_node->child_nodes[active_edge] = new_leaf;
-                leaves.push_back(new_leaf);
+                STLeaf* new_leaf = new STLeaf(pos);
+                active_inner->child_nodes[active_edge] = new_leaf;
+         //       leaves.push_back(new_leaf);
                 new_leaf->suffix=suffix++;
-                add_sl(active_node);
+                add_sl(active_inner);
 
             } else {
-                STNode* next = active_node->child_nodes[active_edge];
+                STNode* next =  active_inner->child_nodes[active_edge] ;
                 //if the active length is greater than the edge length:
                 //switch active node to that
                 //walk down
@@ -157,30 +170,30 @@ private:
                 //if that suffix is already in the tree::
                 if(Text[next->start +active_length] == c){
                     active_length++;
-                    add_sl(active_node);
+                    add_sl(active_inner);
                     break;
                 }
 
                 //now split edge if the edge is found
 
-                STNode* split = new STNode(next->start, next->start+active_length);
-                active_node->child_nodes[active_edge] = split;
-                STNode* leaf = new STNode(pos);
+                STInnerNode* split = new STInnerNode(next->start, next->start+active_length);
+                active_inner->child_nodes[active_edge] = split;
+                STLeaf* leaf = new STLeaf(pos);
                 leaf->suffix=suffix++;
                 split->child_nodes[c] = leaf;
 
                 next->start=next->start + active_length;
                 split->child_nodes[Text[next->start]] = next;
                 add_sl(split);
-                leaves.push_back(leaf);
+       //         leaves.push_back(leaf);
             }
             remainder--;
             if(active_node==root && active_length>0){
                 active_length--;
                 active_edge = Text[pos-remainder+1];
             }else {
-                if(active_node->suffix_link != NULL){
-                    active_node = active_node->suffix_link;
+                if(active_inner->suffix_link != NULL){
+                    active_node = active_inner->suffix_link;
                 } else {
                     active_node = root;
                 }
@@ -198,7 +211,7 @@ public:
 
     inline void append_string(std::string input){
         Text += input;
-        leaves.reserve(leaves.size()+input.size());
+     //   leaves.reserve(leaves.size()+input.size());
         for(uint i = 0; i<input.length();i++){
             add_char(input[i]);
         }
@@ -210,7 +223,7 @@ public:
     }
 
     inline void append_input(io::InputView & input){
-        leaves.reserve(leaves.size()+input.size());
+      //  leaves.reserve(leaves.size()+input.size());
         Text += input;
         for (uint i = 0; i < input.size(); i++) {
             uint8_t c = input[i];
@@ -235,14 +248,15 @@ public:
         return Text.substr(node->start, edge_length(node));
     }
 
-    inline std::vector<STNode*> get_leaves(){
-        return leaves;
-    }
+   // inline std::vector<STNode*> get_leaves(){
+   //     return leaves;
+  //  }
 
-    inline STNode* get_leaf(uint position){
-        return leaves.at(position);
-    }
+   // inline STNode* get_leaf(uint position){
+   //     return leaves.at(position);
+   // }
 
+    /*
     inline void print_tree(std::ostream& out, STNode* node, std::string depth){
         auto it = node->child_nodes.begin();
         while (it != node->child_nodes.end()){
@@ -251,7 +265,7 @@ public:
             print_tree(out, child.second, depth+"  ");
             it++;
         }
-    }
+    }*/
 
     SuffixTree(Input& input) : SuffixTree(){
         append_input(input);
