@@ -826,7 +826,7 @@ namespace tdc {
             // Check that the static "overrides" fit the
             // to-be-evaluated algorithm
             CHECK(fixed_static_args.is_invokation());
-            CHECK(fixed_static_args.invokation_name() == v.invokation_name());
+            CHECK_EQ(fixed_static_args.invokation_name(), v.invokation_name());
         }
 
         inline void check_arg_has_value(decl::Arg& arg, ast::Value& arg_value) {
