@@ -527,10 +527,11 @@ class HashMap {
 				if(tdc_unlikely(table_size()*max_load_factor() < m_entries)) {
 					auto toinsert = std::make_pair(m_keys[tablepos], m_values[tablepos]);
 
-					const size_t expected_size = 
+					size_t expected_size = 
 					std::is_same<SizeManager,SizeManagerDirect>::value ?
 					(m_entries + 3.0/2.0*lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95 :
 					(m_entries + lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95;
+					expected_size = std::max<size_t>(expected_size, table_size()*1.1);
 					if(expected_size < table_size()*2.0*0.95) {
 							max_load_factor(0.95f);
 						if(std::is_same<SizeManager,SizeManagerDirect>::value) {
