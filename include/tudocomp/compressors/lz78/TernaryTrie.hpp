@@ -29,11 +29,11 @@ public:
         Meta m("lz78trie", "ternary", "Lempel-Ziv 78 Ternary Trie");
 		return m;
 	}
-	
+
 	/**
 	 * @param remaining_characters number of remaining characters until the complete text is parsed
 	 */
-    TernaryTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0) 
+    TernaryTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
 		: Algorithm(std::move(env))
 		, LZ78Trie(n, remaining_characters)
 	{
@@ -50,13 +50,19 @@ public:
 		size_t m_specialresizes = 0;
 		)
 
-	IF_STATS(
-		~TernaryTrie() {
-		StatPhase::log("resizes", m_resizes);
-		StatPhase::log("special resizes", m_specialresizes);
-		StatPhase::log("table size", first_child.capacity());
-		StatPhase::log("load ratio", first_child.size()*100/first_child.capacity());
-		})
+    IF_STATS(
+        MoveGuard m_guard;
+        ~TernaryTrie() {
+            if (m_guard) {
+                StatPhase::log("resizes", m_resizes);
+                StatPhase::log("special resizes", m_specialresizes);
+                StatPhase::log("table size", first_child.capacity());
+                StatPhase::log("load ratio", first_child.size()*100/first_child.capacity());
+            }
+        }
+    )
+    TernaryTrie(TernaryTrie&& other) = default;
+    TernaryTrie& operator=(TernaryTrie&& other) = default;
 
 	node_t add_rootnode(uliteral_t c) override {
         first_child.push_back(undef_id);

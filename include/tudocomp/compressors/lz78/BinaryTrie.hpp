@@ -38,12 +38,19 @@ public:
         }
     }
 
-    IF_STATS(inline ~BinaryTrie() {
-		StatPhase::log("resizes", m_resizes);
-        StatPhase::log("special resizes", m_specialresizes);
-        StatPhase::log("table size", m_first_child.capacity());
-        StatPhase::log("load ratio", m_first_child.size()*100/m_first_child.capacity());
-    })
+    IF_STATS(
+        MoveGuard m_guard;
+        inline ~BinaryTrie() {
+            if (m_guard) {
+                StatPhase::log("resizes", m_resizes);
+                StatPhase::log("special resizes", m_specialresizes);
+                StatPhase::log("table size", m_first_child.capacity());
+                StatPhase::log("load ratio", m_first_child.size()*100/m_first_child.capacity());
+            }
+        }
+    )
+    BinaryTrie(BinaryTrie&& other) = default;
+    BinaryTrie& operator=(BinaryTrie&& other) = default;
 
     inline node_t add_rootnode(uliteral_t c) override {
         m_first_child.push_back(undef_id);
@@ -100,19 +107,6 @@ public:
 
     inline factorid_t size() const override {
         return m_first_child.size();
-    }
-
-    inline BinaryTrie(BinaryTrie&& other):
-        Algorithm(std::move(other)),
-        LZ78Trie<factorid_t>(std::move(other)),
-        m_first_child(std::move(other.m_first_child)),
-        m_next_sibling(std::move(other.m_next_sibling)),
-        m_literal(std::move(other.m_literal))
-    {
-        IF_STATS(
-            m_resizes = other.m_resizes;
-            m_specialresizes = other.m_specialresizes;
-        )
     }
 };
 

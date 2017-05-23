@@ -9,22 +9,22 @@ namespace tdc {
 namespace lz78 {
 
 
-template<class HashFunction, class HashManager>
+template<class HashFunction = MixHasher, class HashManager = SizeManagerDirect>
 class HashTriePlus : public Algorithm, public LZ78Trie<factorid_t> {
 	HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,LinearProber,SizeManagerPow2> m_table;
 	HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,LinearProber,HashManager> m_table2;
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "hash+", "Hash Trie+");
+        Meta m("lz78trie", "hash_plus", "Hash Trie+");
 		m.option("hash_function").templated<HashFunction, MixHasher>("hash_function");
 		m.option("hash_manager").templated<HashManager, SizeManagerDirect>("hash_manager");
         m.option("load_factor").dynamic(30);
 		return m;
 	}
 
-    HashTriePlus(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0) 
-		: Algorithm(std::move(env)) 
+    HashTriePlus(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+		: Algorithm(std::move(env))
 		, LZ78Trie(n,remaining_characters)
         , m_table(this->env(),n,remaining_characters)
         , m_table2(this->env(),n,remaining_characters)
@@ -36,15 +36,20 @@ public:
 		}
     }
 
-	IF_STATS(
-		~HashTriePlus() {
-			if(m_table2.empty()) {
-			m_table.collect_stats(env());
-			} else {
-			m_table2.collect_stats(env());
-			}
-		}
-	);
+    IF_STATS(
+        MoveGuard m_guard;
+        ~HashTriePlus() {
+            if (m_guard) {
+                if(m_table2.empty()) {
+                    m_table.collect_stats(env());
+                } else {
+                    m_table2.collect_stats(env());
+                }
+            }
+        }
+    )
+    HashTriePlus(HashTriePlus&& other) = default;
+    HashTriePlus& operator=(HashTriePlus&& other) = default;
 
 	node_t add_rootnode(uliteral_t c) override {
 		DCHECK(m_table2.empty());

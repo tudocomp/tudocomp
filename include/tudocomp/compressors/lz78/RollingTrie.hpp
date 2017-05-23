@@ -8,7 +8,12 @@ namespace tdc {
 
 namespace lz78 {
 
-template<class HashRoller, class HashProber, class HashManager, class HashFunction = NoopHasher>
+template<
+    typename HashRoller = ZBackupRollingHash,
+    typename HashProber = LinearProber,
+    typename HashManager = SizeManagerPrime,
+    typename HashFunction = NoopHasher
+>
 class RollingTrie : public Algorithm, public LZ78Trie<factorid_t> {
 	typedef typename HashRoller::key_type key_type;
 	HashRoller m_roller;
@@ -26,10 +31,10 @@ public:
 		m.option("hash_prober").templated<HashProber, LinearProber>("hash_prober");
 		m.option("hash_manager").templated<HashManager, SizeManagerPrime>("hash_manager");
         m.option("load_factor").dynamic(30);
-		m.option("hash_function").templated<HashFunction, NoopHasher>("hash_function"); 
+		m.option("hash_function").templated<HashFunction, NoopHasher>("hash_function");
 		return m;
 	}
-    RollingTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0) 
+    RollingTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
 		: Algorithm(std::move(env))
 	    , LZ78Trie(n,remaining_characters)
 		, m_roller(this->env().env_for_option("hash_roller"))
@@ -39,10 +44,17 @@ public:
 			m_table.reserve(reserve);
 		}
     }
+
 	IF_STATS(
-	~RollingTrie() {
-	m_table.collect_stats(env());
-	});
+        MoveGuard m_guard;
+        inline ~RollingTrie() {
+            if (m_guard) {
+                m_table.collect_stats(env());
+            }
+        }
+    )
+    RollingTrie(RollingTrie&& other) = default;
+    RollingTrie& operator=(RollingTrie&& other) = default;
 
 	node_t add_rootnode(uliteral_t c) override {
 		m_table.insert(std::make_pair<key_type,factorid_t>(hash_node(c), size()));

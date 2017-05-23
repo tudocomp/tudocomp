@@ -8,7 +8,11 @@ namespace tdc {
 
 namespace lz78 {
 
-template<class HashRoller, class HashManager, class HashFunction = NoopHasher>
+template<
+    typename HashRoller = ZBackupRollingHash,
+    typename HashManager = SizeManagerNoob,
+    typename HashFunction = NoopHasher
+>
 class RollingTriePlus : public Algorithm, public LZ78Trie<factorid_t> {
 	typedef typename HashRoller::key_type key_type;
 	HashRoller m_roller;
@@ -22,18 +26,18 @@ class RollingTriePlus : public Algorithm, public LZ78Trie<factorid_t> {
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "rolling+", "Rolling Hash Trie+");
+        Meta m("lz78trie", "rolling_plus", "Rolling Hash Trie+");
 		m.option("hash_roller").templated<HashRoller, ZBackupRollingHash>("hash_roller");
 		m.option("hash_manager").templated<HashManager, SizeManagerNoob>("hash_manager");
 		m.option("hash_function").templated<HashFunction, NoopHasher>("hash_function"); // dummy parameter
         m.option("load_factor").dynamic(30);
 		return m;
 	}
-    RollingTriePlus(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0) 
+    RollingTriePlus(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
 		: Algorithm(std::move(env))
 	    , LZ78Trie(n,remaining_characters)
 		, m_roller(this->env().env_for_option("hash_roller"))
-		, m_table(this->env(), n, remaining_characters) 
+		, m_table(this->env(), n, remaining_characters)
         , m_table2(this->env(),n,remaining_characters)
 	{
         m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
@@ -42,14 +46,21 @@ public:
 			m_table.reserve(reserve);
 		}
     }
-	IF_STATS(
-		~RollingTriePlus() {
-		if(m_table2.empty()) {
-			m_table.collect_stats(env());
-		} else {
-			m_table2.collect_stats(env());
-		}
-	});
+
+    IF_STATS(
+        MoveGuard m_guard;
+        ~RollingTriePlus() {
+            if (m_guard) {
+                if(m_table2.empty()) {
+                    m_table.collect_stats(env());
+                } else {
+                    m_table2.collect_stats(env());
+                }
+            }
+        }
+    )
+    RollingTriePlus(RollingTriePlus&& other) = default;
+    RollingTriePlus& operator=(RollingTriePlus&& other) = default;
 
 	node_t add_rootnode(uliteral_t c) override {
 		m_table.insert(std::make_pair<key_type,factorid_t>(hash_node(c), size()));
