@@ -32,7 +32,10 @@ private:
     BitVector dead_positions;
 
     std::vector<std::vector<SuffixTree::STNode*> > bins;
+
+    //stats
     uint node_count;
+    uint max_depth;
 
     std::vector<uint> child_sizes;
 
@@ -41,12 +44,24 @@ private:
 
 
     inline virtual void compute_string_depth(SuffixTree::STNode* node, uint str_depth){
+        //resize if str depth grater than bins size
+
 
 
 
 
         SuffixTree::STInnerNode * inner = dynamic_cast<SuffixTree::STInnerNode *>(node);
         if(inner){
+
+            if(str_depth>= bins.size()){
+                bins.resize(bins.size()*2);
+
+                std::cerr<<"resizing: "<<bins.size();
+            }
+
+            if(str_depth>max_depth){
+                max_depth=str_depth;
+            }
             node_count++;
             if(str_depth>0){
 
@@ -188,12 +203,15 @@ public:
 
 
         StatPhase::wrap("Computing String Depth", [&]{
-            bins.resize(stree.get_size());
+            bins.resize(200);
             node_count=0;
+            max_depth=0;
             compute_string_depth(stree.get_root(),0);
         });
 
         StatPhase::log("Number of inner Nodes", node_count);
+        StatPhase::log("Max Depth inner Nodes", max_depth);
+        DLOG(INFO)<<"max depth: "<<max_depth;
 
         std::sort(child_sizes.begin(), child_sizes.end());
         if(child_sizes.size()>0){
@@ -220,7 +238,7 @@ public:
 
         StatPhase::wrap("Computing LRF Occs", [&]{
             dead_positions = BitVector(stree.get_size(), 0);
-            DLOG(INFO)<<"input size: "<<stree.get_size();
+        //    DLOG(INFO)<<"input size: "<<stree.get_size();
             std::unordered_map<SuffixTree::STNode *, std::vector<uint> > beginning_positions;
 
             beginning_positions.reserve(node_count);
@@ -296,7 +314,7 @@ public:
 
 
                                 ){
-                            DLOG(INFO)<<"is lrf!, length: " << i;
+                        //    DLOG(INFO)<<"is lrf!, length: " << i;
 
 
                             std::vector<uint> sel_pos = select_starting_positions(begin_pos, i);
@@ -314,7 +332,7 @@ public:
 
                        // dictionary.push_back(rule);
                     } else {
-                        DLOG(INFO)<<"not a lrf!";
+                     //   DLOG(INFO)<<"not a lrf!";
                     }
 
 
