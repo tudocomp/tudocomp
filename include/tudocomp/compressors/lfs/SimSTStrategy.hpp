@@ -161,7 +161,7 @@ public:
             //array of vectors for bins of nodes with string depth
 
 
-            bins.resize(stree.size()+1);
+            bins.resize(200);
             uint node_counter = 0;
 
             typedef sdsl::cst_bfs_iterator<cst_t> iterator;
@@ -174,6 +174,9 @@ public:
                 for (iterator it = begin; it != end; ++it) {
 
                     if(!stree.is_leaf(*it)){
+                        if(bins.size() <= stree.depth(*it) ){
+                            bins.resize(bins.size()*2);
+                        }
                         bins[stree.depth(*it)].push_back(stree.id(*it));
                         node_counter++;
                     }
