@@ -26,6 +26,7 @@ run_test(lz78_trie_tests DEPS ${BASIC_DEPS})
 
 run_test(lzss_test      DEPS ${BASIC_DEPS})
 
+run_test(meta_tests     DEPS ${BASIC_DEPS})
 run_test(tudocomp_tests DEPS ${BASIC_DEPS})
 run_test(input_output_tests DEPS ${BASIC_DEPS})
 run_test(ds_tests       DEPS ${BASIC_DEPS})
