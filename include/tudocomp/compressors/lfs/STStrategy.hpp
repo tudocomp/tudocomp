@@ -90,12 +90,12 @@ private:
         //select occurences greedily non-overlapping:
         selected_starting_positions.reserve(starting_positions.size());
 
-        long last =  0-length;
-        uint current;
+        long last =  0- (long) length - 1;
+        long current;
         for (auto it=starting_positions.begin(); it!=starting_positions.end(); ++it){
 
-            current = *it;
-            //DLOG(INFO) << "checking starting position: " << current << " length: " << top.first << "last " << last;
+            current = (long) *it;
+          //  DLOG(INFO) << "checking starting position: " << current << " length: " << length << "last " << last;
             if(last+length <= current && !dead_positions[current] && !dead_positions[current+length-1]){
 
                 selected_starting_positions.push_back(current);
@@ -240,6 +240,7 @@ public:
             dead_positions = BitVector(stree.get_size(), 0);
         //    DLOG(INFO)<<"input size: "<<stree.get_size();
             std::unordered_map<SuffixTree::STNode *, std::vector<uint> > beginning_positions;
+            uint nts_number =0;
 
             beginning_positions.reserve(node_count);
 
@@ -314,14 +315,39 @@ public:
 
 
                                 ){
-                        //    DLOG(INFO)<<"is lrf!, length: " << i;
+                          //  DLOG(INFO)<<"is lrf!, length: " << i;
+
+                           // DLOG(INFO)<<"begginging pos: "<<begin_pos.size();
 
 
                             std::vector<uint> sel_pos = select_starting_positions(begin_pos, i);
 
-                        }
+                             // DLOG(INFO)<<"selected pos: "<<sel_pos.size();
 
-                          //  DLOG(INFO)<<"selected pos: "<<sel_pos.size();
+
+
+                            if(! (sel_pos.size() >=2) ){
+                                bin_it++;
+                                continue;
+                            }
+                            //vector of text position, length
+                            std::pair<uint,uint> rule = std::make_pair(sel_pos.at(0), i);
+                            dictionary.push_back(rule);
+
+                        //iterate over selected pos, add non terminal symbols
+                            for(auto bp_it = sel_pos.begin(); bp_it != sel_pos.end(); bp_it++){
+                                //(position in text, non_terminal_symbol_number, length_of_symbol);
+                                non_term nts = std::make_tuple(*bp_it, nts_number, i);
+                                nts_symbols.push_back(nts);
+                                //mark as used
+                                for(uint pos = 0; pos<i;pos++){
+                                    dead_positions[pos+ *bp_it] = 1;
+                                }
+                            }
+                            nts_number++;
+                         }
+
+
 
 
 
