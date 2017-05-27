@@ -1,25 +1,31 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#include <tudocomp/util/meta/Mockup.hpp>
+#include <tudocomp/util/meta/DeclAlgorithm.hpp>
+#include <tudocomp/util/meta/DeclParam.hpp>
 
-using namespace tdc;
+#include <tudocomp/util/meta/ASTNode.hpp>
+#include <tudocomp/util/meta/ASTParser.hpp>
+
+using namespace tdc::meta;
 
 TEST(Sandbox, example) {
-    auto lz77 = meta::Algorithm("lz77", "compressor", "LZ77 online compressor.");
-    lz77.add_param(meta::Param("window"));
-    lz77.add_param(meta::Param("coder", false, false, "coder"));
-    DLOG(INFO) << lz77.str();
+    auto lz77 = decl::Algorithm("lz77", "compressor", "LZ77 online compressor.");
+    lz77.add_param(decl::Param("window"));
+    lz77.add_param(decl::Param("coder", false, false, "coder"));
+    //DLOG(INFO) << lz77.str();
 
-    auto binary = meta::Algorithm("binary", "coder", "Binary coder.");
-    DLOG(INFO) << binary.str();
+    auto binary = decl::Algorithm("binary", "coder", "Binary coder.");
+    //DLOG(INFO) << binary.str();
 
     // registry
-    meta::AlgorithmMap map;
+    decl::AlgorithmMap map;
     map.emplace("lz77", std::move(lz77));
     map.emplace("binary", std::move(binary));
 
     // parse
-    meta::parse("lz77(window=10, coder=binary)", map);
+    DLOG(INFO) << "parse...";
+    auto node = ast::Parser::parse("lz77(window=10,coder=binary(x=-3,q=sub(name='arf')))");
+    DLOG(INFO) << node.str();
 }
 
