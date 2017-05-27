@@ -53,6 +53,8 @@ private:
         SuffixTree::STInnerNode * inner = dynamic_cast<SuffixTree::STInnerNode *>(node);
         if(inner){
 
+            inner->string_depth = str_depth;
+
             if(str_depth>= bins.size()){
                 bins.resize(bins.size()*2);
 
@@ -73,8 +75,14 @@ private:
             auto it = inner->child_nodes.begin();
             while (it != inner->child_nodes.end()){
                 auto child = *it;
-                uint child_depth = (str_depth+stree.edge_length(child.second));
-                compute_string_depth( child.second, child_depth);
+
+                SuffixTree::STInnerNode * child_inner = dynamic_cast<SuffixTree::STInnerNode *>(child.second);
+                if(child_inner){
+                    child_inner->parent = inner;
+
+                    uint child_depth = (str_depth+stree.edge_length(child.second));
+                    compute_string_depth( child.second, child_depth);
+                }
                 it++;
             }
 
@@ -106,82 +114,6 @@ private:
         }
         return selected_starting_positions;
     }
-
-      /*
-
-
-    inline virtual void update_tree(uint length, std::vector<uint> selected_positions){
-        //foreach occpos \in gso do
-        for(auto it = selected_positions.begin();it!= selected_positions.end();it++){
-            uint occpos = *it;
-            uint text_length = stree.get_size();
-            uint pos = occpos;
-            uint end = std::min(text_length, occpos + length);
-            for(; pos<end;pos++){
-                if(pos>occpos) {
-                    dead_positions[pos] = 1;
-                }
-            }
-
-            dead_positions[occpos] = 1;
-        }
-
-    }
-
-    //returns all bp of corresponding factor
-    inline virtual std::set<uint> compute_triple(SuffixTree::STNode* node){
-
-        std::set<uint> beggining_positions;
-        //already computed
-        if(node->deleted){
-            return beggining_positions;
-
-        }
-        //if no childs, its a leaf
-        if(node->child_nodes.size()==0){
-            node->min_bp=node->suffix;
-            node->max_bp=node->suffix;
-            node->card_bp=1;
-
-        } else {
-            uint min=stree.get_size();
-            uint max=0;
-            uint card = 0;
-            //add all min begins and maxi begins of children to begins
-            auto it = node->child_nodes.begin();
-            uint min_child;
-            uint max_child;
-            while (it != node->child_nodes.end()){
-                auto child = *it;
-                min_child = child.second->min_bp;
-                max_child = child.second->max_bp;
-                if(child.second->card_bp>0 && !(child.second->deleted)){
-
-                    beggining_positions.insert(min_child);
-
-                    beggining_positions.insert(max_child);
-
-                    if(min > min_child){
-                        min = min_child;
-                    }
-                    if(max < max_child){
-                        max = max_child;
-                    }
-                    card +=child.second->card_bp;
-
-                }
-
-
-                it++;
-            }
-            node->card_bp=card;
-            node->min_bp = min;
-            node->max_bp= max;
-            node->computed = true;
-
-        }
-        return beggining_positions;
-    } */
 
 public:
 

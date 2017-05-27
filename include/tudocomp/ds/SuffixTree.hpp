@@ -90,6 +90,10 @@ public:
     };
 
     struct STInnerNode : STNode {
+        //
+        uint string_depth;
+        STInnerNode * parent;
+
         // child nodes
         std::unordered_map<char, STNode*> child_nodes;
         //suffix link
@@ -113,6 +117,8 @@ public:
 
 
         root = new STInnerNode(-1);
+        root->string_depth=0;
+
 
         //active start node is root
         active_node=root;
@@ -178,6 +184,7 @@ private:
 
                 STInnerNode* split = new STInnerNode(next->start, next->start+active_length);
                 active_inner->child_nodes[active_edge] = split;
+
                 STLeaf* leaf = new STLeaf(pos);
                 leaf->suffix=suffix++;
                 split->child_nodes[c] = leaf;
