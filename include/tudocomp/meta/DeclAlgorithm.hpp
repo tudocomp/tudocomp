@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tudocomp/util/meta/DeclParam.hpp>
+#include <tudocomp/meta/DeclParam.hpp>
 
 #include <sstream>
 #include <unordered_map>
