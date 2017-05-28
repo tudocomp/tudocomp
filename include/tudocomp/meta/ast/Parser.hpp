@@ -1,10 +1,11 @@
 #pragma once
 
-#include <tudocomp/util/meta/ASTAcceptor.hpp>
-#include <tudocomp/util/meta/ASTNode.hpp>
-#include <tudocomp/util/meta/ASTValue.hpp>
-#include <tudocomp/util/meta/ASTList.hpp>
-#include <tudocomp/util/meta/ASTObject.hpp>
+#include <tudocomp/meta/ast/Acceptor.hpp>
+
+#include <tudocomp/meta/ast/Node.hpp>
+#include <tudocomp/meta/ast/Value.hpp>
+#include <tudocomp/meta/ast/List.hpp>
+#include <tudocomp/meta/ast/Object.hpp>
 
 #include <stdexcept>
 

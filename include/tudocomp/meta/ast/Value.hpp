@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tudocomp/util/meta/ASTNode.hpp>
+#include <tudocomp/meta/ast/Node.hpp>
 
 namespace tdc {
 namespace meta {
