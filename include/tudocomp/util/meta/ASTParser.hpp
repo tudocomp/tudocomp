@@ -1,10 +1,10 @@
 #pragma once
 
 #include <tudocomp/util/meta/ASTAcceptor.hpp>
-#include <tudocomp/util/meta/ASTValue.hpp>
-#include <tudocomp/util/meta/ASTPrimitive.hpp>
-#include <tudocomp/util/meta/ASTList.hpp>
 #include <tudocomp/util/meta/ASTNode.hpp>
+#include <tudocomp/util/meta/ASTValue.hpp>
+#include <tudocomp/util/meta/ASTList.hpp>
+#include <tudocomp/util/meta/ASTObject.hpp>
 
 #include <stdexcept>
 
@@ -29,7 +29,7 @@ public:
     }
 };
 
-/// \brief Provides functionality to parse a string into an AST (\ref ASTNode).
+/// \brief Provides functionality to parse a string into an AST.
 class Parser {
 private:
     std::string m_str;
@@ -53,7 +53,7 @@ private:
         return count;
     }
 
-    inline std::shared_ptr<Primitive> parse_string_literal() {
+    inline std::shared_ptr<Value> parse_string_literal() {
         // save enclosing character (e.g. quote or double quote)
         const char enclose = peek();
         ++m_cursor; // quote
@@ -71,11 +71,11 @@ private:
         m_cursor = end + 1;
 
         // yield substring
-        return std::make_shared<Primitive>(
+        return std::make_shared<Value>(
             m_str.substr(start, m_cursor - 1 - start));
     }
 
-    inline std::shared_ptr<Primitive> parse_numeric_literal() {
+    inline std::shared_ptr<Value> parse_numeric_literal() {
         // save starting position
         size_t start = m_cursor;
 
@@ -99,7 +99,7 @@ private:
         }
 
         // yield substring
-        return std::make_shared<Primitive>(
+        return std::make_shared<Value>(
             m_str.substr(start, m_cursor - start));
     }
 
@@ -112,10 +112,10 @@ private:
         parse_whitespace();
         while(peek() != ']') {
             // parse values separated by commas
-            auto v = parse_value();
-            if(!v) throw ParseError("unexpected end of input", m_cursor);
+            auto node = parse_node();
+            if(!node) throw ParseError("unexpected end of input", m_cursor);
 
-            list->add_value(v);
+            list->add_value(node);
 
             parse_whitespace();
             if(peek() == ',') {
@@ -144,7 +144,7 @@ private:
         return m_str.substr(start, m_cursor - start);
     }
 
-    inline void parse_param_list(std::shared_ptr<Node> node) {
+    inline void parse_param_list(std::shared_ptr<Object> obj) {
         if(peek() == '(') {
             // param list
             ++m_cursor; // opening paranthesis
@@ -155,11 +155,11 @@ private:
                 auto name = parse_name();
                 if(name.empty()) {
                     // treat as nameless value
-                    auto v = parse_value();
-                    if(!v) {
+                    auto node = parse_node();
+                    if(!node) {
                         throw ParseError("unexpected end of input", m_cursor);
                     }
-                    node->add_param(Param(v));
+                    obj->add_param(Param(node));
                 } else {
                     parse_whitespace();
 
@@ -170,16 +170,16 @@ private:
                         parse_whitespace();
 
                         // parameter
-                        auto v = parse_value();
-                        if(!v) {
+                        auto node = parse_node();
+                        if(!node) {
                             throw ParseError("unexpected end of input", m_cursor);
                         }
-                        node->add_param(Param(name, v));
+                        obj->add_param(Param(name, node));
                     } else {
-                        // treat as a nameless sub node
-                        auto sub = std::make_shared<Node>(name);
+                        // treat as a nameless sub object
+                        auto sub = std::make_shared<Object>(name);
                         parse_param_list(sub); // recursion!
-                        node->add_param(Param(sub));
+                        obj->add_param(Param(sub));
                     }
                 }
                 if(peek() == ',') {
@@ -193,27 +193,27 @@ private:
         }
     }
 
-    inline std::shared_ptr<Node> parse_node() {
+    inline std::shared_ptr<Object> parse_object() {
         // attempt to parse a name
         auto name = parse_name();
         if(name.empty()) {
-            return std::shared_ptr<Node>(); // null
+            return std::shared_ptr<Object>(); // null
         } else {
-            auto node = std::make_shared<Node>(name);
+            auto obj = std::make_shared<Object>(name);
             parse_whitespace();
-            parse_param_list(node);
-            return node;
+            parse_param_list(obj);
+            return obj;
         }
     }
 
-    inline std::shared_ptr<Value> parse_value() {
+    inline std::shared_ptr<Node> parse_node() {
         parse_whitespace();
 
         // peek next character and decide what to do
         auto c = peek();
         if(c == 0) {
             // end
-            return std::shared_ptr<Value>();
+            return std::shared_ptr<Node>();
         } else if(c == '\'' || c == '\"') {
             // string literal, enclosed by quotes or double quotes
             return parse_string_literal();
@@ -221,23 +221,23 @@ private:
             // numeric literal
             return parse_numeric_literal();
         } else if(c == '[') {
-            // a list of values
+            // a list of nodes
             return parse_list();
         } else {
-            // attempt to parse a node
-            auto node = parse_node();
-            if(!node) {
+            // attempt to parse an object
+            auto obj = parse_object();
+            if(!obj) {
                 throw ParseError("syntax error", m_cursor);
             } else {
-                return node;
+                return obj;
             }
         }
     }
 
 public:
-    inline static std::shared_ptr<Value> parse(const std::string& str) {
+    inline static std::shared_ptr<Node> parse(const std::string& str) {
         Parser p(str);
-        return p.parse_value();
+        return p.parse_node();
     }
 };
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tudocomp/util/meta/ASTValue.hpp>
+#include <tudocomp/util/meta/ASTNode.hpp>
 
 #include <memory>
 #include <sstream>
@@ -10,16 +10,16 @@ namespace tdc {
 namespace meta {
 namespace ast {
 
-/// \brief Represents a list of values.
-class List : public Value {
+/// \brief Represents a list of nodes.
+class List : public Node {
 private:
-    std::vector<std::shared_ptr<Value>> m_values;
+    std::vector<std::shared_ptr<Node>> m_values;
 
 public:
     inline List() {
     }
 
-    inline void add_value(const std::shared_ptr<Value> value) {
+    inline void add_value(const std::shared_ptr<Node> value) {
         m_values.emplace_back(value);
     }
 
