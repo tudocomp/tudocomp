@@ -4,7 +4,6 @@
 #include <tudocomp/util/meta/DeclAlgorithm.hpp>
 #include <tudocomp/util/meta/DeclParam.hpp>
 
-#include <tudocomp/util/meta/ASTDef.hpp>
 #include <tudocomp/util/meta/ASTParser.hpp>
 
 using namespace tdc::meta;
