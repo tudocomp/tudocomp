@@ -1,15 +1,23 @@
 #pragma once
 
-#include <string>
+#include <tudocomp/util/meta/ASTNode.hpp>
 
 namespace tdc {
 namespace meta {
 namespace ast {
 
-/// \brief Abstract base for AST values.
-class Value {
+/// \brief Represents a single value in an AST.
+class Value : public Node {
+private:
+    std::string m_value;
+
 public:
-    virtual std::string str() const = 0;
+    inline Value(const std::string& value) : m_value(value) {
+    }
+
+    virtual std::string str() const override {
+        return '\'' + m_value + '\'';
+    }
 };
 
 }}} //ns
