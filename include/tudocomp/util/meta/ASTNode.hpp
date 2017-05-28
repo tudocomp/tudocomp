@@ -1,63 +1,14 @@
 #pragma once
 
-#include <glog/logging.h>
+#include <tudocomp/util/meta/ASTValue.hpp>
 
-#include <map>
 #include <memory>
 #include <sstream>
-#include <string>
-#include <utility>
 #include <vector>
 
 namespace tdc {
 namespace meta {
 namespace ast {
-
-/// \brief Abstract base for AST values.
-class Value {
-public:
-    virtual std::string str() const = 0;
-};
-
-/// \brief Represents a single primitive value in an AST.
-class Primitive : public Value {
-private:
-    std::string m_value;
-
-public:
-    inline Primitive(const std::string& value) : m_value(value) {
-    }
-
-    virtual std::string str() const override {
-        return '\'' + m_value + '\'';
-    }
-};
-
-/// \brief Represents a list of values.
-class List : public Value {
-private:
-    std::vector<std::shared_ptr<Value>> m_values;
-
-public:
-    inline List() {
-    }
-
-    inline void add_value(const std::shared_ptr<Value> value) {
-        m_values.emplace_back(value);
-    }
-
-    virtual std::string str() const override {
-        std::stringstream ss;
-        ss << '[';
-        size_t i = 0;
-        for(auto& v : m_values) {
-            ss << v->str();
-            if(++i < m_values.size()) ss << ", ";
-        }
-        ss << ']';
-        return ss.str();
-    }
-};
 
 /// \brief Represents a named value or a value assignment.
 class Param {

@@ -1,7 +1,10 @@
 #pragma once
 
 #include <tudocomp/util/meta/ASTAcceptor.hpp>
-#include <tudocomp/util/meta/ASTDef.hpp>
+#include <tudocomp/util/meta/ASTValue.hpp>
+#include <tudocomp/util/meta/ASTPrimitive.hpp>
+#include <tudocomp/util/meta/ASTList.hpp>
+#include <tudocomp/util/meta/ASTNode.hpp>
 
 #include <stdexcept>
 
