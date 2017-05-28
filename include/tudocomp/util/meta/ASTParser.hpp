@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tudocomp/util/meta/ASTAcceptor.hpp>
-#include <tudocomp/util/meta/ASTNode.hpp>
+#include <tudocomp/util/meta/ASTDef.hpp>
 
 #include <stdexcept>
 
@@ -50,41 +50,29 @@ private:
         return count;
     }
 
-    inline std::string parse_name() {
-        // save start position
-        size_t start = m_cursor;
-
-        // require a letter to start the name
-        if(sym_letter.accept(peek())) {
-            // parse name symbols
-            while(sym_name.accept(peek())) ++m_cursor;
-        }
-
-        // yield substring
-        return m_str.substr(start, m_cursor - start);
-    }
-
-    inline std::string parse_string_value() {
+    inline std::shared_ptr<Primitive> parse_string_literal() {
         // save enclosing character (e.g. quote or double quote)
         const char enclose = peek();
+        ++m_cursor; // quote
 
         // save starting position
-        size_t start = ++m_cursor;
+        size_t start = m_cursor;
 
-        // parse until enclosing character is found
-        while(peek() != enclose) {
-            if(peek() == 0) {
-                throw ParseError("unexpected end of string", m_cursor);
-            }
-            ++m_cursor;
+        // find closing quote
+        auto end = m_str.find(enclose, m_cursor);
+
+        if(end == std::string::npos) {
+            throw ParseError("string literal not closed", m_cursor);
         }
-        ++m_cursor; //enclose
+
+        m_cursor = end + 1;
 
         // yield substring
-        return m_str.substr(start, m_cursor - 1 - start);
+        return std::make_shared<Primitive>(
+            m_str.substr(start, m_cursor - 1 - start));
     }
 
-    inline std::string parse_numeric_value() {
+    inline std::shared_ptr<Primitive> parse_numeric_literal() {
         // save starting position
         size_t start = m_cursor;
 
@@ -108,105 +96,145 @@ private:
         }
 
         // yield substring
+        return std::make_shared<Primitive>(
+            m_str.substr(start, m_cursor - start));
+    }
+
+    inline std::shared_ptr<List> parse_list() {
+        auto list = std::make_shared<List>();
+
+        if(peek() != '[') throw ParseError("unexpected list opening", m_cursor);
+
+        ++m_cursor; // opening bracket
+        parse_whitespace();
+        while(peek() != ']') {
+            // parse values separated by commas
+            auto v = parse_value();
+            if(!v) throw ParseError("unexpected end of input", m_cursor);
+
+            list->add_value(v);
+
+            parse_whitespace();
+            if(peek() == ',') {
+                ++m_cursor; // comma
+                parse_whitespace();
+            } else if(peek() != ']') {
+                throw ParseError("invalid list syntax", m_cursor);
+            }
+        }
+        ++m_cursor; // closing bracket
+
+        return list;
+    }
+
+    inline std::string parse_name() {
+        // save start position
+        size_t start = m_cursor;
+
+        // require a letter to start the name
+        if(sym_letter.accept(peek())) {
+            // parse name symbols
+            while(sym_name.accept(peek())) ++m_cursor;
+        }
+
+        // yield substring
         return m_str.substr(start, m_cursor - start);
     }
 
-    inline std::string parse_value() {
-        if(peek() == '\'' || peek() == '\"') {
-            return parse_string_value();
-        } else if(peek() == '+' || peek() == '-' || sym_digit.accept(peek())) {
-            return parse_numeric_value();
-        } else {
-            return "";
-        }
-    }
-
-    inline void consume(size_t num) {
-        m_cursor += num;
-        parse_whitespace();
-    }
-
-    inline Node parse_node_remainder(std::string&& name) {
-        parse_whitespace();
-
-        // name already parsed
-        Node node(name);
-
+    inline void parse_param_list(std::shared_ptr<Node> node) {
         if(peek() == '(') {
-            consume(1); // opening paranthesis
+            // param list
+            ++m_cursor; // opening paranthesis
+            parse_whitespace();
 
-            // parse child list
             while(peek() != ')') {
-                std::string kn = parse_name();
-                if(kn.empty()) {
-                    // expect a keyless value
-                    std::string value = parse_value();
-                    if(value.empty()) {
-                        throw ParseError(
-                            "failed to parse either name or value", m_cursor);
-                    } else {
-                        node.add_child(Node("", value));
+                // attempt to parse a name first
+                auto name = parse_name();
+                if(name.empty()) {
+                    // treat as nameless value
+                    auto v = parse_value();
+                    if(!v) {
+                        throw ParseError("unexpected end of input", m_cursor);
                     }
+                    node->add_param(Param(v));
                 } else {
                     parse_whitespace();
 
-                    // kn may be a value key, OR the name of a keyless subnode
-                    if(peek() == '=') {
-                        consume(1); // assignment
+                    // peek next character and decide what to do
+                    auto c = peek();
+                    if(c == '=') {
+                        ++m_cursor;
+                        parse_whitespace();
 
-                        // value key
-                        std::string value = parse_value();
-                        if(value.empty()) {
-                            // expect keyed subnode
-                            node.add_child(kn, parse_node());
-                        } else {
-                            // keyed value
-                            node.add_child(kn, Node("", value));
+                        // parameter
+                        auto v = parse_value();
+                        if(!v) {
+                            throw ParseError("unexpected end of input", m_cursor);
                         }
-                    } else if(peek() == '(') {
-                        // keyless subnode
-                        node.add_child(parse_node_remainder(std::move(kn)));
+                        node->add_param(Param(name, v));
+                    } else {
+                        // treat as a nameless sub node
+                        auto sub = std::make_shared<Node>(name);
+                        parse_param_list(sub); // recursion!
+                        node->add_param(Param(sub));
                     }
                 }
-
-                parse_whitespace();
-                if(peek() == 0) {
-                    throw ParseError("unexpected end of child list", m_cursor);
-                } else if(peek() == ',') {
-                    consume(1); // separator
+                if(peek() == ',') {
+                    ++m_cursor; // comma
+                    parse_whitespace();
                 } else if(peek() != ')') {
-                    throw ParseError(
-                        "expected separator or closing paranthesis", m_cursor);
+                    throw ParseError("invalid param list syntax", m_cursor);
                 }
             }
-            consume(1); // closing paranthesis
+            ++m_cursor; // closing paranthesis
         }
-
-        return node;
     }
 
-    inline Node parse_node() {
+    inline std::shared_ptr<Node> parse_node() {
+        // attempt to parse a name
+        auto name = parse_name();
+        if(name.empty()) {
+            return std::shared_ptr<Node>(); // null
+        } else {
+            auto node = std::make_shared<Node>(name);
+            parse_whitespace();
+            parse_param_list(node);
+            return node;
+        }
+    }
+
+    inline std::shared_ptr<Value> parse_value() {
         parse_whitespace();
 
-        // parse node's name
-        std::string name = parse_name();
-        if(name.empty()) {
-            throw ParseError("node name must not be empty", m_cursor);
+        // peek next character and decide what to do
+        auto c = peek();
+        if(c == 0) {
+            // end
+            return std::shared_ptr<Value>();
+        } else if(c == '\'' || c == '\"') {
+            // string literal, enclosed by quotes or double quotes
+            return parse_string_literal();
+        } else if(c == '+' || c == '-' || sym_digit.accept(c)) {
+            // numeric literal
+            return parse_numeric_literal();
+        } else if(c == '[') {
+            // a list of values
+            return parse_list();
+        } else {
+            // attempt to parse a node
+            auto node = parse_node();
+            if(!node) {
+                throw ParseError("syntax error", m_cursor);
+            } else {
+                return node;
+            }
         }
-
-        return parse_node_remainder(std::move(name));
     }
 
 public:
-    inline static Node parse(const std::string& str) {
+    inline static std::shared_ptr<Value> parse(const std::string& str) {
         Parser p(str);
-        auto node = p.parse_node();
-
-        if(p.peek() != 0) {
-            throw ParseError("unexpected character beyond root node", 0);
-        }
-
-        return node;
+        return p.parse_value();
     }
 };
 
