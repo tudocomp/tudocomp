@@ -393,7 +393,7 @@ class HashMap {
 	public:
 	IF_STATS(
 		size_t collisions() const { return m_collisions; }
-		void collect_stats(Env& env) const {
+		void collect_stats(Env&) const {
 		StatPhase::log("collisions", collisions());
 		StatPhase::log("table size", table_size());
 		StatPhase::log("load factor", max_load_factor());
@@ -534,7 +534,7 @@ class HashMap {
 				if(tdc_unlikely(table_size()*max_load_factor() < m_entries)) {
 					auto toinsert = std::make_pair(m_keys[tablepos], m_values[tablepos]);
 
-					size_t expected_size = 
+					size_t expected_size =
 					std::is_same<SizeManager,SizeManagerDirect>::value ?
 					(m_entries + 3.0/2.0*lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95 :
 					(m_entries + lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95;

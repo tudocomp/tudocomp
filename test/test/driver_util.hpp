@@ -139,16 +139,16 @@ std::string format_escape(const std::string& s) {
 }
 
 struct Error {
-    bool has_error;
-    std::string test;
-    std::string message;
-    std::string compress_cmd;
-    std::string compress_stdout;
-    std::string decompress_cmd;
-    std::string decompress_stdout;
-    std::string text;
-    std::string roundtrip_text;
-    std::string algo;
+    bool has_error = false;
+    std::string test = "";
+    std::string message = "";
+    std::string compress_cmd = "";
+    std::string compress_stdout = "";
+    std::string decompress_cmd = "";
+    std::string decompress_stdout = "";
+    std::string text = "";
+    std::string roundtrip_text = "";
+    std::string algo = "";
 
     void print_error() {
         auto& e = *this;

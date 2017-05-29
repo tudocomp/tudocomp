@@ -39,12 +39,10 @@ class LzwRootSearchPosMap {
     std::array<CedarSearchPos, 256> m_array;
 public:
     inline CedarSearchPos get(uliteral_t c) {
-        DCHECK(0 <= c);
         DCHECK(c < m_array.size());
         return m_array[c];
     }
     inline void set(uliteral_t c, CedarSearchPos v) {
-        DCHECK(0 <= c);
         DCHECK(c < m_array.size());
         m_array[c] = v;
     }
@@ -181,7 +179,7 @@ public:
         return m;
     }
 
-    CedarTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    CedarTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t = 0)
         : Algorithm(std::move(env))
 		, LZ78Trie(n, remaining_characters)
         , m_trie(std::make_unique<cedar_t>()) {}

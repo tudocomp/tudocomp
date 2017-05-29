@@ -91,6 +91,8 @@ public:
         /// \tparam T The Algorithm type.
         template<class T>
         inline void templated(const std::string& accepted_type) {
+            (void) accepted_type; // TODO: Actual use this parameter
+
             m_meta.check_arg(m_argument_name);
             Meta sub_meta = T::meta();
             m_meta.m_sub_metas.push_back(sub_meta);

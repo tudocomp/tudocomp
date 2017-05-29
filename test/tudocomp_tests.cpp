@@ -342,7 +342,7 @@ namespace input_nte_matrix {
 
         i_copy_strat(std::move(input),
                      expected_output,
-                     [](Input& i) {},
+                     [](Input&) {},
                      i_out_compare);
     }
 
@@ -1188,9 +1188,9 @@ struct MyCompressor: public Compressor {
         Compressor(std::move(env)),
         custom_data(std::move(s)) {}
 
-    inline virtual void decompress(Input& input, Output& output) {}
+    inline virtual void decompress(Input&, Output&) {}
 
-    inline virtual void compress(Input& input, Output& output) {
+    inline virtual void compress(Input&, Output& output) {
         A a(env().env_for_option("sub"));
         auto s = output.as_stream();
         s << "ok! " << custom_data << " " << env().option("dyn").as_string();
@@ -1327,8 +1327,8 @@ struct EscapingComp: public Compressor {
 
     using Compressor::Compressor;
 
-    virtual void compress(Input& i, Output& o) {}
-    virtual void decompress(Input& i, Output& o) {}
+    virtual void compress(Input&, Output&) {}
+    virtual void decompress(Input&, Output&) {}
 };
 
 TEST(Escaping, option_value_direct) {
@@ -1430,10 +1430,10 @@ struct KeywordlessEvalOrderBug: public Compressor {
 
     KeywordlessEvalOrderBug(Env&& env): Compressor(std::move(env)){}
 
-    inline virtual void decompress(Input& input, Output& output) {
+    inline virtual void decompress(Input&, Output&) {
     }
 
-    inline virtual void compress(Input& input, Output& output) {
+    inline virtual void compress(Input&, Output&) {
         auto a = env().option("sub1").as_algorithm();
         auto b = env().option("dyn").as_string();
         auto c = env().option("sub2").as_algorithm();

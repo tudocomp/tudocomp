@@ -56,7 +56,7 @@ public:
         }
 
         template<typename value_t>
-        inline void encode(value_t v, const BitRange& r) {
+        inline void encode(value_t v, const BitRange&) {
             // Encode single bits as ASCII
             m_out->write_int(v ? '1' : '0');
         }
@@ -82,7 +82,7 @@ public:
         }
 
         template<typename value_t>
-        inline value_t decode(const BitRange& r) {
+        inline value_t decode(const BitRange&) {
             // Decode an ASCII character and compare against '0'
             uint8_t b = m_in->read_int<uint8_t>();
             return (b != '0');
@@ -92,7 +92,7 @@ public:
 
 TEST(doc_coder_impl, test) {
     std::stringstream ss;
-    
+
     Range r1(75, 125);
     Range r2(699, 702);
 

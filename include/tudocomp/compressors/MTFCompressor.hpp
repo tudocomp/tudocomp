@@ -66,7 +66,7 @@ void mtf_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
 	while(is.get(c)) {
 		os << mtf_decode_char(static_cast<value_type>(c), table);
 	}
-};
+}
 
 class MTFCompressor : public Compressor {
 public:

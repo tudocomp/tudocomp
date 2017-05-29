@@ -17,7 +17,7 @@ struct UinttDispatch {
     template<class Ref, class V>
     inline static void assign(Ref& self, V v) {
         self.m_data = v;
-    };
+    }
 
     template<class Ref, class R>
     inline static R cast_for_op(const Ref& self) {
