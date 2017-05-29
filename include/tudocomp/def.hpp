@@ -55,15 +55,37 @@
 #endif
 
 namespace tdc {
-    /// Type to represent input lengths.
-	typedef uint32_t len_t;
+    /// Type to represent an index value.
+    ///
+    /// This type can be defined to take up less bytes than a `size_t`,
+    /// but might have worse performance for arithmetic operations. It should
+    /// only be used for storing many indices in a data structure,
+    /// to reduce memory usage.
+    ///
+    /// For fast arithmetic operations, prefer a cast to `size_t`
+    /// or `fast_t<len_t>`.
+    typedef uint32_t index_t;
 
-    /// The maximum value of \ref len_t.
-	constexpr size_t LEN_MAX = std::numeric_limits<len_t>::max();
+    /// \cond INTERNAL
+    template<typename actual_type>
+    struct  _fast_t_size_check {
+        using Type = size_t;
+        static_assert(sizeof(Type) >= sizeof(actual_type),
+                      "Can only use fast_t with integer types <= size_t");
+    }
+    /// \endcond
+
+    /// Type to represent integer values in the size range of `actual_type`
+    /// that may require more Bits than it, while being faster.
+    template<typename actual_type>
+    using fast_t = _fast_t_size_check<actual_type>::Type;
+
+    /// The maximum value of \ref index_t.
+	constexpr size_t INDEX_MAX = std::numeric_limits<index_t>::max();
 
     /// The amount of bits required to store the binary representation of a
-    /// value of type \ref len_t.
-    constexpr size_t LEN_BITS = 8 * sizeof(len_t);
+    /// value of type \ref index_t.
+    constexpr size_t INDEX_BITS = 8 * sizeof(index_t);
 
     /// Type to represent signed single literals.
 	typedef uint8_t uliteral_t;

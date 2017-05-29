@@ -125,6 +125,14 @@ inline std::ostream& operator<<(std::ostream& os, const uint_t<N>& v) {
     return os << uint64_t(v);
 }
 
+template<size_t N>
+inline std::istream& operator>>(std::istream& is, uint_t<N>& v) {
+    uint64_t v2;
+    auto& x = is >> v2;
+    v = v2;
+    return x;
+}
+
 static_assert(sizeof(uint_t<8>)  == 1, "sanity check");
 static_assert(sizeof(uint_t<16>) == 2, "sanity check");
 static_assert(sizeof(uint_t<24>) == 3, "sanity check");
@@ -197,4 +205,9 @@ namespace std {
         static constexpr T signaling_NaN() { return 0; }
         static constexpr T denorm_min() { return 0; }
     };
+
+    template<size_t N>
+    std::string to_string(tdc::uint_t<N> value) {
+        return std::to_string(uint64_t(value));
+    }
 }
