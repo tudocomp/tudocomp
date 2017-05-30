@@ -25,7 +25,7 @@
 namespace tdc {
 namespace lfs {
 
-template<uint min_lrf = 2 >
+//template<uint min_lrf = 2 >
 class SimSTStrategy : public Algorithm {
 private:
 
@@ -111,6 +111,7 @@ private:
 
 
     BitVector dead_positions;
+    short min_lrf;
 
     //could be node_type
     std::vector<std::vector<uint> > bins;
@@ -125,11 +126,13 @@ public:
     inline static Meta meta() {
         Meta m("lfs_comp", "sim_st");
        // m.needs_sentinel_terminator();
+        m.option("min_lrf").dynamic(2);
         return m;
     }
 
 
     inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
+         min_lrf = env().option("min_lrf").as_integer();
 
         //build suffixtree
         DLOG(INFO)<<"build suffixtree";
@@ -151,6 +154,8 @@ public:
 
 
         });
+
+        StatPhase::log("Number of inner Nodes", stree.nodes() - stree.size());
 
 
 
@@ -175,7 +180,11 @@ public:
 
                     if(!stree.is_leaf(*it)){
                         if(bins.size() <= stree.depth(*it) ){
-                            bins.resize(bins.size()*2);
+                            uint resize = bins.size()*2;
+                            while (resize<= stree.depth(*it)) {
+                                resize*=2;
+                            }
+                            bins.resize(resize);
                         }
                         bins[stree.depth(*it)].push_back(stree.id(*it));
                         node_counter++;

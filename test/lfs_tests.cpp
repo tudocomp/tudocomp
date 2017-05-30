@@ -33,7 +33,9 @@ using namespace lfs;
 
 template<class comp_strat>
 void run_comp(std::string compression_string) {
-    auto c = create_algo<tdc::lfs::LFSCompressor<comp_strat> >();
+    // , tdc::lfs::EncodeStrategy< tdc::ASCIICoder, tdc::ASCIICoder
+    typedef tdc::lfs::EncodeStrategy< tdc::ASCIICoder, tdc::ASCIICoder >  coding_strat;
+    auto c = create_algo<tdc::lfs::LFSCompressor<comp_strat, coding_strat >  > ();
 
     std::string compressed;
     // compress
@@ -43,6 +45,7 @@ void run_comp(std::string compression_string) {
 
         c.compress(dummy_input, output);
         compressed=output.result();
+        DLOG(INFO)<<"compressed: "<< compressed;
 
     }
     // decompress

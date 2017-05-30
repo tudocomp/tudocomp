@@ -28,10 +28,14 @@ private:
 
 
     SuffixTree stree;
+    uint min_lrf;
 
     BitVector dead_positions;
 
     std::vector<std::vector<SuffixTree::STNode*> > bins;
+
+    //    DLOG(INFO)<<"input size: "<<stree.get_size();
+        std::unordered_map<SuffixTree::STNode *, std::vector<uint> > beginning_positions;
 
     //stats
     uint node_count;
@@ -93,8 +97,14 @@ private:
 
 
 
-    inline virtual std::vector<uint> select_starting_positions(std::vector<uint> & starting_positions, uint length){
+    inline virtual std::vector<uint> select_starting_positions(SuffixTree::STNode * node, uint length){
+
+
+        std::vector<uint> starting_positions = beginning_positions[node];
         std::vector<uint> selected_starting_positions;
+
+        long min_shorter = 1;
+
         //select occurences greedily non-overlapping:
         selected_starting_positions.reserve(starting_positions.size());
 
@@ -111,7 +121,37 @@ private:
 
             }
 
+            if(current < dead_positions.size() && !dead_positions[current] && dead_positions[current+length-1]){
+
+
+                while((current+min_shorter < (long) dead_positions.size()) && !dead_positions[current+min_shorter]){
+                    min_shorter++;
+                }
+
+            }
+
         }
+     //   DLOG(INFO)<<"min shorter: "<<min_shorter;
+
+        if(min_shorter < length){
+
+            if(min_shorter >= (int) min_lrf){
+                //check if parent node is shorter
+                SuffixTree::STInnerNode * inner = dynamic_cast<SuffixTree::STInnerNode *>(node);
+
+                SuffixTree::STInnerNode * parent = inner->parent;
+                uint depth = parent->string_depth;
+             //   DLOG(INFO)<<"check shorter node";
+                if(depth < (uint)(min_shorter)){
+                  //  DLOG(INFO)<<"pushing back shorter node";
+
+                    //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
+                    bins[min_shorter].push_back(node);
+                }
+            }
+        }
+
+
         return selected_starting_positions;
     }
 
@@ -127,7 +167,7 @@ public:
 
 
     inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
-        uint min_lrf = env().option("min_lrf").as_integer();
+        min_lrf = env().option("min_lrf").as_integer();
 
         StatPhase::wrap("Constructing ST", [&]{
         stree = SuffixTree(input);
@@ -170,11 +210,11 @@ public:
 
         StatPhase::wrap("Computing LRF Occs", [&]{
             dead_positions = BitVector(stree.get_size(), 0);
-        //    DLOG(INFO)<<"input size: "<<stree.get_size();
-            std::unordered_map<SuffixTree::STNode *, std::vector<uint> > beginning_positions;
             uint nts_number =0;
 
             beginning_positions.reserve(node_count);
+
+            uint rd_counter =0;
 
 
 
@@ -225,6 +265,13 @@ public:
                       //  DLOG(INFO)<<"begin pos size: "<< positions.size();
                         std::sort(positions.begin(), positions.end());
 
+                        uint real_depth = positions.back() - positions.front();
+
+                        if(real_depth<i){
+                            rd_counter++;
+                         //   DLOG(INFO)<<"reald depth of node: "<<real_depth;
+                        }
+
                         beginning_positions[node]=positions;
 
 
@@ -240,9 +287,9 @@ public:
                         //check dead positions:
                         if(!(
                                 dead_positions[(begin_pos.back())]              ||
-                                dead_positions[(begin_pos.back()) + i -1]    ||
-                                dead_positions[(begin_pos.front())]            ||
-                                dead_positions[(begin_pos.front()) + i -1]
+                            //    dead_positions[(begin_pos.back()) + i -1]    ||
+                                dead_positions[(begin_pos.front())]
+                            //    dead_positions[(begin_pos.front()) + i -1]
                                 )
 
 
@@ -252,7 +299,7 @@ public:
                            // DLOG(INFO)<<"begginging pos: "<<begin_pos.size();
 
 
-                            std::vector<uint> sel_pos = select_starting_positions(begin_pos, i);
+                            std::vector<uint> sel_pos = select_starting_positions(node, i);
 
                              // DLOG(INFO)<<"selected pos: "<<sel_pos.size();
 
@@ -299,59 +346,8 @@ public:
                 }
             }
 
+            StatPhase::log("real depth counter",rd_counter);
 
-            /*
-        auto bin_it = bins.end();
-        while (it != nl.begin()){
-            it--;
-            auto pair = *it;
-            if(pair.first<min_lrf){
-                break;
-            }
-            std::set<uint> begining_pos = compute_triple(pair.second);
-           // DLOG(INFO)<<"computing: \"" << t.substr( pair.second->min_bp, pair.first)<<"\"";
-            if(pair.second->card_bp>=2){
-                //compute if overlapping:
-                if(pair.second->min_bp+pair.first <= pair.second->max_bp){
-
-                    //its a reapting factor, compute
-                   // DLOG(INFO)<<"reapting factor:  \"" << t.substr( pair.second->min_bp, pair.first)<<"\"" ;
-
-                   // DLOG(INFO)<<"length: "<<pair.first;
-                    //min and mac of all children are all BPs of LRF
-                   // auto it = begining_pos.begin();
-
-
-                    std::vector<uint> selected_pos = select_starting_positions(begining_pos, pair.first);
-                   // DLOG(INFO) << "selected beginning positions: " << std::endl;
-                    if(selected_pos.size()>=2){
-
-                        update_tree(pair.first, selected_pos);
-
-                        //vector of text position, length
-                        std::pair<uint,uint> rule = std::make_pair(selected_pos.at(0), pair.first);
-
-                        dictionary.push_back(rule);
-
-                        //iterate over selected pos, add non terminal symbols
-                        for(auto it = selected_pos.begin(); it != selected_pos.end(); it++){
-                            //(position in text, non_terminal_symbol_number, length_of_symbol);
-                            //typedef std::tuple<uint,uint,uint> non_term;
-                            non_term nts = std::make_tuple(*it, nts_number, pair.first);
-                            nts_symbols.push_back(nts);
-                            //typedef std::vector<non_term> non_terminal_symbols;
-                        }
-                        nts_number++;
-
-                    }
-
-
-                    //
-
-
-                }
-
-            }*/
 
 
 

@@ -127,12 +127,19 @@ public:
 
             StatPhase::wrap("Iterate over ST", [&]{
                 DLOG(INFO)<<"iterate st";
+                std::cerr<<"iterate st"<<std::endl;
 
                 for (iterator it = begin; it != end; ++it) {
 
                     if(!stree.is_leaf(*it)){
+
                         if(bins.size() <= stree.depth(*it)) {
-                            bins.resize(bins.size()*2);
+
+                            uint resize = bins.size()*2;
+                            while (resize<= stree.depth(*it)) {
+                                resize*=2;
+                            }
+                            bins.resize(resize);
                         }
                         bins[stree.depth(*it)].push_back(stree.id(*it));
                         node_counter++;
@@ -141,6 +148,7 @@ public:
             });
             node_begins.resize(node_counter);
 
+            std::cerr<<"iterate st done"<<std::endl;
             uint nts_number = 1 ;
             StatPhase::wrap("Iterate over Node Bins", [&]{
                 //iterate node bins top down
