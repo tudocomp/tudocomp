@@ -103,14 +103,32 @@ std::string vec_as_lossy_string(const T& s, size_t start = 0,
 }
 
 /// \brief Represent a value as a string.
-/// \tparam T the value type.
-/// \param v the value to convert.
-/// \return the string representation of the given value.
+///
+/// This is done by creating a \c std::stringstream and writing the value
+/// into it using the \c << operator.
+///
+/// \tparam T the value type
+/// \param v the value to convert
+/// \return the string representation of the given value
 template<typename T>
-inline std::string to_str(const T& v) {
+inline std::string to_string(const T& v) {
     std::stringstream ss;
     ss << v;
     return ss.str();
+}
+
+/// \brief Parses the given string into a value.
+///
+/// This is done by creating a \c std::stringstream that writes to a value
+/// of the desired type using the \c >> operator.
+///
+/// \tparam T the value type
+/// \param s the string to parse
+/// \return the parsed value
+template<typename T> T lexical_cast(const std::string& s) {
+    T val;
+    std::stringstream(s) >> val;
+    return val;
 }
 
 inline void debug_print_uint64_t(uint64_t v) {
