@@ -32,7 +32,7 @@ public:
     inline bool has_name() const { return !m_name.empty(); }
 
     inline const std::string& name() const { return m_name; }
-    inline std::shared_ptr<const Node> value() const { return m_value; }
+    inline const Node* value() const { return m_value.get(); }
 
     inline std::string str() const {
         std::stringstream ss;

@@ -4,6 +4,7 @@
 #include <tudocomp/meta/ast/Parser.hpp>
 
 #include <unordered_map>
+#include <unordered_set>
 
 namespace tdc {
 namespace meta {
@@ -121,19 +122,42 @@ public:
             unmapped.emplace(dp->name(), dp);
         }
 
+        std::unordered_set<std::string> mapped;
+
         // attempt to map unnamed parameters first
-        for(auto p : unnamed_params) {
-            // TODO
+        {
+            size_t i = 0;
+            for(auto p : unnamed_params) {
+                auto dp = decl_params[i++];
+                m_params.emplace_back(*dp, p->value(), dict);
+
+                mapped.emplace(dp->name());
+                unmapped.erase(dp->name());
+            }
         }
 
         // afterwards, attempt to map named parameters
         for(auto p : named_params) {
-            // TODO
+            auto it = unmapped.find(p->name());
+            if(it != unmapped.end()) {
+                auto dp = it->second;
+                m_params.emplace_back(*dp, p->value(), dict);
+
+                mapped.emplace(dp->name());
+                unmapped.erase(dp->name());
+            } else {
+                if(mapped.find(p->name()) != mapped.end()) {
+                    throw ConfigError("parameter already set: " + p->name());
+                } else {
+                    throw ConfigError("undefined parameter: " + p->name());
+                }
+            }
         }
 
-        // finally, assign defaults to unmapped parameters
-        for(auto& e : unmapped) {
-            // TODO
+        // finally, process unmapped parameters
+        for(auto e : unmapped) {
+            auto dp = e.second;
+            throw ConfigError("parameter has no value: " + dp->name());
         }
     }
 
