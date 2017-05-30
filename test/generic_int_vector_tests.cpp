@@ -279,7 +279,7 @@ namespace tdc {
         template<class Ref, class V>
         inline static void assign(Ref& self, V v) {
             *self.m_ptr = v;
-        };
+        }
 
         template<class Ref, class R>
         inline static R cast_for_op(const Ref& self) {
@@ -540,7 +540,7 @@ TEST(integer_base, bit_ops_assign) {
 template<class T> struct tn { constexpr const static char* str = "unknown"; };
 template<>        struct tn<uint32_t> { constexpr const static char* str = "uint32_t"; };
 template<>        struct tn<uint64_t> { constexpr const static char* str = "uint64_t"; };
-template<class T> std::string type_name(T t) { return tn<T>::str; }
+template<class T> std::string type_name(T) { return tn<T>::str; }
 
 TEST(uint_t, b24) {
     uint_t<24> v;

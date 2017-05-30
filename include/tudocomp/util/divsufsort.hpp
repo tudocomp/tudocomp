@@ -28,11 +28,11 @@
 
 #pragma once
 
-#include <tudocomp/util/divsufsort_def.hpp>
-#include <tudocomp/util/divsufsort_private.hpp>
-#include <tudocomp/util/divsufsort_ssort.hpp>
-#include <tudocomp/util/divsufsort_trsort.hpp>
-#include <tudocomp/util/divsufsort_bufwrapper.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_def.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_private.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_ssort.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_trsort.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_bufwrapper.hpp>
 
 #include <tudocomp/ds/IntVector.hpp>
 

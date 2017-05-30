@@ -58,7 +58,7 @@ protected:
         }
     }
 
-    inline void debug_bound_check(size_t pos) const {
+    inline void debug_bound_check(size_t IF_DEBUG(pos)) const {
         IF_DEBUG(bound_check(pos));
     }
 

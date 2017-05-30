@@ -65,30 +65,28 @@ namespace tdc {
     constexpr size_t LEN_BITS = 8 * sizeof(len_t);
 
     /// Type to represent signed single literals.
-	typedef char literal_t;
-
-    /// Type to represent unsigned single literals.
-	typedef std::make_unsigned<literal_t>::type uliteral_t;
+	typedef uint8_t uliteral_t;
 
     /// The maximum value of \ref uliteral_t.
 	constexpr size_t ULITERAL_MAX = std::numeric_limits<uliteral_t>::max();
 
-    /// Converts a literal to an unsigned integer value.
+    /// Converts a literal to an integer value as if unsigned.
     ///
-    /// \tparam the literal type.
+    /// \tparam T the integer type.
     /// \param c the literal.
     /// \return the corresponding unsigned integer value.
-	template<class T>
-	inline size_t literal2int(const T& c) {
-		return static_cast<size_t>(c);
-	}
+    template<typename T = size_t>
+    constexpr T literal2int(uliteral_t c) {
+        return std::make_unsigned_t<T>(c);
+    }
 
-    /// Converts a signed literal to an unsigned integer value.
+    /// Converts an integer value to a literal as if unsigned.
     ///
-    /// \param c the literal.
-    /// \return the corresponding unsigned integer value.
-	template<>
-	inline size_t literal2int(const literal_t& c) {
-		return static_cast<size_t>(static_cast<uliteral_t>(c));
-	}
+    /// \tparam T the integer type.
+    /// \param c the integer value.
+    /// \return the corresponding literal.
+    template<typename T = size_t>
+    constexpr uliteral_t int2literal(const T& c) {
+        return std::make_unsigned_t<T>(c);
+    }
 }

@@ -87,7 +87,7 @@ void test_sa(const std::string& str, textds_t& t) {
 }
 
 template<class textds_t>
-void test_isa(const std::string& str, textds_t& t) {
+void test_isa(const std::string&, textds_t& t) {
     auto& isa = t.require_isa();
     auto& sa  = t.require_sa(); //request afterwards!
 

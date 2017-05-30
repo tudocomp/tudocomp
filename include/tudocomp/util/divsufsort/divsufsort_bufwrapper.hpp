@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tudocomp/util/divsufsort_def.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {

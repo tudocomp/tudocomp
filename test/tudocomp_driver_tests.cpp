@@ -158,7 +158,7 @@ TEST(Registry, dynamic_options) {
         }
 
         using Compressor::Compressor;
-        inline virtual void decompress(Input& input, Output& output) {}
+        inline virtual void decompress(Input&, Output&) {}
 
         inline virtual void compress(Input& input, Output& output) {
             auto s = output.as_stream();

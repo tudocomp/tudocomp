@@ -171,7 +171,7 @@ inline static sdsl::bit_vector construct_plcp_bitvector(const plcp_t& plcp) {
 }
 
 template<class sa_t, class text_t, class select_t = sdsl::select_support_mcl<1,1>>
-sdsl::bit_vector construct_plcp_bitvector(Env& env, const sa_t& sa, const text_t& text) {
+sdsl::bit_vector construct_plcp_bitvector(Env&, const sa_t& sa, const text_t& text) {
 	typedef DynamicIntVector phi_t;
 
     phi_t phi = StatPhase::wrap("Construct Phi Array", [&]{

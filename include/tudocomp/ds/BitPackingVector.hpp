@@ -53,7 +53,7 @@ namespace int_vector {
             m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
 
         inline uint8_t raw_width() const { return N; }
-        inline void set_width_raw(uint8_t width) { }
+        inline void set_width_raw(uint8_t) { }
 
     };
 

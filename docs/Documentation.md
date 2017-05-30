@@ -1004,7 +1004,7 @@ an ASCII encoding for single bits, as identified by the
 
 ~~~ {.cpp caption="coder_impl.cpp"}
 template<typename value_t>
-inline void encode(value_t v, const BitRange& r) {
+inline void encode(value_t v, const BitRange&) {
     // Encode single bits as ASCII
     m_out->write_int(v ? '1' : '0');
 }
@@ -1014,7 +1014,7 @@ The same idea works with decoding:
 
 ~~~ {.cpp caption="coder_impl.cpp"}
 template<typename value_t>
-inline value_t decode(const BitRange& r) {
+inline value_t decode(const BitRange&) {
     // Decode an ASCII character and compare against '0'
     uint8_t b = m_in->read_int<uint8_t>();
     return (b != '0');
@@ -1475,7 +1475,7 @@ in the following snippet:
 // Allocate memory, but only track mem2
 StatPhase::pause_tracking();
 char* mem1 = new char[1024];
-StatPhase::resume_tracking();    
+StatPhase::resume_tracking();
 
 char* mem2 = new char[2048];
 

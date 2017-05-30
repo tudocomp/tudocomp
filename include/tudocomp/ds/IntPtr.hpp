@@ -38,7 +38,7 @@ namespace tdc {
             sdsl::bits::write_int(word, x, offset, len);
         }
         template<>
-        inline void write_int<uint_t<1>>(uint64_t* word, uint64_t v, uint8_t o, const uint8_t len) {
+        inline void write_int<uint_t<1>>(uint64_t* word, uint64_t v, uint8_t o, const uint8_t) {
             auto& p = *word;
             const auto mask = uint64_t(1) << o;
 
@@ -53,7 +53,7 @@ namespace tdc {
         }
 
         template<>
-        inline uint64_t read_int<uint_t<1>>(const uint64_t* word, uint8_t o, const uint8_t len) {
+        inline uint64_t read_int<uint_t<1>>(const uint64_t* word, uint8_t o, const uint8_t) {
             const auto p = *word;
             const auto mask = uint64_t(1) << o;
 
@@ -71,7 +71,7 @@ struct RefDispatch {
                                    v,
                                    self.m_ptr.m_bit_offset,
                                    self.m_ptr.data_bit_size());
-    };
+    }
 
     template<class Ref, class R>
     inline static R cast_for_op(const Ref& self) {
@@ -159,7 +159,7 @@ namespace int_vector {
         private:
             //const uint8_t m_bit_size;
         public:
-            Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
+            Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
                 m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
             inline uint8_t data_bit_size() const { return N; }
             inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
@@ -177,7 +177,7 @@ namespace int_vector {
         private:
             //const uint8_t m_bit_size;
         public:
-            Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
+            Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
                 m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
             inline uint8_t data_bit_size() const { return N; }
             inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
@@ -448,7 +448,7 @@ namespace int_vector {
     template<class T>
     inline IntRef<T>& IntRef<T>::operator=(const ConstIntRef<T>& other) {
         return operator=(value_type(other));
-    };
+    }
 
     template<class T>
     inline IntRef<T> IntPtr<T>::operator*() {

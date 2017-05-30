@@ -16,13 +16,13 @@ typedef uint_t<40> squeeze_node_t; // TODO: change this to bits_for(literal_t) +
 
 
 #ifndef ALPHABET_BITS
-	#define ALPHABET_BITS (sizeof(literal_t)*8)
+	#define ALPHABET_BITS (sizeof(uliteral_t)*8)
 #endif //TODO alphabet_bits -> effective alphabet size
 
 inline factorid_t get_id(squeeze_node_t data) {
 	return static_cast<uint64_t>(data)>>ALPHABET_BITS;
 }
-inline literal_t get_letter(squeeze_node_t data) {
+inline uliteral_t get_letter(squeeze_node_t data) {
 	return static_cast<char>(static_cast<uint64_t>(data)) & 0xff; //TODO 0xff hard coded
 }
 inline squeeze_node_t create_node(factorid_t id, uliteral_t c) {
