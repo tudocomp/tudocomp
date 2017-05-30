@@ -3,6 +3,7 @@
 
 #include <tudocomp/meta/AlgorithmDecl.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
+#include <tudocomp/meta/AlgorithmConfig.hpp>
 
 using namespace tdc::meta;
 
@@ -22,7 +23,12 @@ TEST(Sandbox, example) {
 
     // parse
     DLOG(INFO) << "parse...";
-    auto v = ast::Parser::parse("lz77(coder=binary,window=10,values=[1,2,3,4,5])");
+    auto v = ast::Parser::parse("lz77(coder=binary,window=10)");
     DLOG(INFO) << v->str();
+
+    // attempt to create config
+    DLOG(INFO) << "config...";
+    auto cfg = AlgorithmConfig(dict.at("lz77"), v.get(), dict);
+    DLOG(INFO) << cfg.str();
 }
 

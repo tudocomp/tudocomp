@@ -29,6 +29,11 @@ public:
         : m_name(other.m_name), m_value(other.m_value) {
     }
 
+    inline bool has_name() const { return !m_name.empty(); }
+
+    inline const std::string& name() const { return m_name; }
+    inline std::shared_ptr<const Node> value() const { return m_value; }
+
     inline std::string str() const {
         std::stringstream ss;
         if(!m_name.empty()) ss << m_name << '=';
@@ -49,6 +54,13 @@ public:
 
     inline void add_param(const Param& param) {
         m_params.emplace_back(param);
+    }
+
+    inline const std::string& name() const { return m_name; }
+    inline std::vector<const Param*> params() const {
+        std::vector<const Param*> params;
+        for(auto& p : m_params) params.emplace_back(&p);
+        return params;
     }
 
     virtual std::string str() const override {
