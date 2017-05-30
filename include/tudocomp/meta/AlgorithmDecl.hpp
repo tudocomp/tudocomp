@@ -54,6 +54,11 @@ public:
               m_type(std::move(other.m_type)) {
         }
 
+        inline const std::string& name() const { return m_name; }
+        inline bool is_primitive() const { return m_primitive; }
+        inline bool is_list() const { return m_list; }
+        inline const std::string& type() const { return m_type; }
+
         inline const std::string str() const {
             return m_name + " : " + (m_list ? "[" + m_type + "]" : m_type);
         }
@@ -92,6 +97,15 @@ public:
 
     inline void add_param(Param&& p) {
         m_params.emplace_back(std::move(p));
+    }
+
+    inline const std::string& name() const { return m_name; }
+    inline const std::string& type() const { return m_type; }
+    inline const std::string& desc() const { return m_desc; }
+    inline std::vector<const Param*> params() const {
+        std::vector<const Param*> params;
+        for(auto& p : m_params) params.emplace_back(&p);
+        return params;
     }
 
     inline std::string str() const {
