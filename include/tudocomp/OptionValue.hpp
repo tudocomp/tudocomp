@@ -22,13 +22,6 @@ namespace pattern {
     inline std::ostream& operator<<(std::ostream&, const Algorithm&);
 }
 
-//DIY lexical cast
-template<typename T> T lexical_cast(const std::string& s) {
-    T val;
-    std::stringstream(s) >> val;
-    return val;
-}
-
 class OptionValue;
 class AlgorithmValue {
 public:

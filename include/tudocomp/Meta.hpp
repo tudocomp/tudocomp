@@ -186,17 +186,23 @@ public:
         /// \brief Declares that this option accepts values of a simple type
         ///        that can be parsed from a string (e.g. integers).
         /// \param default_value the default value for the option.
-        inline void dynamic(int default_value) { dynamic(to_str(default_value)); }
+        inline void dynamic(int default_value) {
+            dynamic(to_string(default_value));
+        }
 
         /// \brief Declares that this option accepts values of a simple type
         ///        that can be parsed from a string (e.g. integers).
         /// \param default_value the default value for the option.
-        inline void dynamic(float default_value) { dynamic(to_str(default_value)); }
+        inline void dynamic(float default_value) {
+            dynamic(to_string(default_value));
+        }
 
         /// \brief Declares that this option accepts values of a simple type
         ///        that can be parsed from a string (e.g. integers).
         /// \param default_value the default value for the option.
-        inline void dynamic(double default_value) { dynamic(to_str(default_value)); }
+        inline void dynamic(double default_value) {
+            dynamic(to_string(default_value));
+        }
 
         /// \brief Declares that this option accepts values of a arbitrary
         ///        Compressor type, dispatched at runtime.
