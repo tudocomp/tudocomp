@@ -15,6 +15,8 @@ public:
     inline Value(const std::string& value) : m_value(value) {
     }
 
+    const std::string& value() const { return m_value; }
+
     virtual std::string str() const override {
         return '\'' + m_value + '\'';
     }

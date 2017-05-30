@@ -3,8 +3,11 @@
 #include <tudocomp/meta/AlgorithmDecl.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
 
+#include <algorithm>
 #include <unordered_map>
 #include <unordered_set>
+
+#include <tudocomp/util.hpp>
 
 namespace tdc {
 namespace meta {
@@ -131,9 +134,8 @@ public:
               m_sub_configs(std::move(other.m_sub_configs)) {
         }
 
-        inline void add_sub_config(AlgorithmConfig&& sub) {
-            m_sub_configs.emplace_back(std::move(sub));
-        }
+        inline const AlgorithmDecl::Param& decl() const { return *m_decl; }
+        inline const ast::Node* config() const { return m_config; }
 
         inline std::string str() const {
             std::stringstream ss;
@@ -247,6 +249,70 @@ public:
             throw ConfigError(
                 "parameter was given no value and has no default: '" +
                 dp->name() + "'");
+        }
+    }
+
+private:
+    inline const Param& get_param(const std::string& name) {
+        auto it = std::find_if(m_params.begin(), m_params.end(),
+            [&](const Param& p) -> bool {
+                return (name == p.decl().name());
+            });
+
+        if(it != m_params.end()) {
+            return *it;
+        } else {
+            throw std::runtime_error("no such parameter: '" + name + "'");
+        }
+    }
+
+    template<typename T>
+    inline T get(const ast::Node* node) {
+        auto v = dynamic_cast<const ast::Value*>(node);
+        if(v) {
+            return lexical_cast<T>(v->value());
+        } else {
+            throw std::runtime_error("parameter has no primitive value type");
+        }
+    }
+
+public:
+    template<typename T>
+    inline T get(const std::string& param) {
+        return get<T>(get_param(param).config());
+    }
+
+    inline std::string get_string(const std::string& param) {
+        return get<std::string>(param);
+    }
+
+    inline bool get_bool(const std::string& param) {
+        return is_true(get_string(param));
+    }
+
+    inline int get_int(const std::string& param) {
+        return get<int>(param);
+    }
+
+    inline unsigned int get_uint(const std::string& param) {
+        return get<unsigned int>(param);
+    }
+
+    inline int get_float(const std::string& param) {
+        return get<float>(param);
+    }
+
+    template<typename T>
+    inline std::vector<T> get_vector(const std::string& param) {
+        auto list = dynamic_cast<const ast::List*>(get_param(param).config());
+        if(list) {
+            std::vector<T> vec;
+            for(auto item : list->items()) {
+                vec.emplace_back(get<T>(item));
+            }
+            return vec;
+        } else {
+            throw std::runtime_error("parameter has no list value type");
         }
     }
 
