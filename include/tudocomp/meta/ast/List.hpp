@@ -23,6 +23,12 @@ public:
         m_values.emplace_back(value);
     }
 
+    inline std::vector<const Node*> items() const {
+        std::vector<const Node*> items;
+        for(auto& v : m_values) items.emplace_back(v.get());
+        return items;
+    }
+
     virtual std::string str() const override {
         std::stringstream ss;
         ss << '[';
@@ -33,6 +39,10 @@ public:
         }
         ss << ']';
         return ss.str();
+    }
+
+    virtual std::string debug_type() const override {
+        return "list";
     }
 };
 
