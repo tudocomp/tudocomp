@@ -131,6 +131,24 @@ template<typename T> T lexical_cast(const std::string& s) {
     return val;
 }
 
+template<> std::string lexical_cast(const std::string& s) {
+    return std::string(s);
+}
+
+/// \brief Tests if the given string contains an expression that can be
+///        interpreted as a boolean \c true value.
+///
+/// This is the case if the string is one of \c "true", \c "1", \c "yes"
+/// or \c "on" (case-insensitive).
+///
+/// \param str the string to test
+/// \return \c true if the above description matches, \c false otherwise
+bool is_true(const std::string& str) {
+    std::string s(str);
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    return (s == "true" || s == "1" || s == "yes" || s == "on");
+}
+
 inline void debug_print_uint64_t(uint64_t v) {
     for(int i = 0; i < 64; i++) {
         if (i > 0 && i % 8 == 0) {

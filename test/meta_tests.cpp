@@ -31,5 +31,10 @@ TEST(Sandbox, example) {
     DLOG(INFO) << "config...";
     auto cfg = AlgorithmConfig(dict.at("lz77"), v.get(), dict);
     DLOG(INFO) << cfg.str();
-}
 
+    // stuff
+    DLOG(INFO) << "get...";
+    auto window = cfg.get_int("window");
+    auto values = cfg.get_vector<int>("values");
+    DLOG(INFO) << "window=" << window << ", values.size()=" << values.size();
+}
