@@ -180,20 +180,32 @@ class RefDiskStrategy {
 		
 
 
+		StatPhase sorting_phase("Sort by ISA");
+
 		stxxl::VECTOR_GENERATOR<std::pair<len_t,len_t>>::result m_sources;
-		for(auto it = m_factors.begin(); it != m_factors.end(); ++it) {
-			m_sources.push_back(std::make_pair(m_isa[it->first]-1, it->first));
-		}
-		stxxl::ksort(m_sources.begin(), m_sources.end(), KeyExtractor(m_sa.size()),512*1024*1024); //, STXXL_DEFAULT_ALLOC_STRATEGY());
+		StatPhase::wrap("Put factors", [&]{
+			for(auto it = m_factors.begin(); it != m_factors.end(); ++it) {
+				m_sources.push_back(std::make_pair(m_isa[it->first]-1, it->first));
+			}
+		});
+		StatPhase::wrap("Sort factors", [&]{
+			stxxl::ksort(m_sources.begin(), m_sources.end(), KeyExtractor(m_sa.size()),512*1024*1024); //, STXXL_DEFAULT_ALLOC_STRATEGY());
+		});
+		sorting_phase.split("Sort by SA");
 		stxxl::VECTOR_GENERATOR<std::pair<len_t,len_t>>::result m_sources2;
+		StatPhase::wrap("Put factors", [&]{
 		for(auto it = m_sources.begin(); it != m_sources.end(); ++it) {
 			m_sources2.push_back(std::make_pair(it->second, m_sa[it->first]));
 		}
 		m_sources.clear();
+		});
+		StatPhase::wrap("Sort factors", [&]{
 		stxxl::ksort(m_sources2.begin(), m_sources2.end(), KeyExtractor(m_sa.size()),512*1024*1024); //, STXXL_DEFAULT_ALLOC_STRATEGY());
+		});
 
+		sorting_phase.split("Write factors to buffer");
 		for(size_t i = 0; i < m_factors.size(); ++i) {
-		 	reflist.emplace_back(m_factors[i].first, m_sources2[i].second, m_factors[i].second);
+		 	// reflist.emplace_back(m_factors[i].first, m_sources2[i].second, m_factors[i].second);
 		}
 
 		// for(auto it = m_factors.begin(); it != m_factors.end(); ++it) {
@@ -250,21 +262,6 @@ class PLCPFileForwardIterator {
 	}
 };
 
-
-/// A very naive selection strategy for LCPComp.
-///
-/// TODO: Describe
-class PLCPStrategy : public Algorithm {
-private:
-    typedef TextDS<> text_t;
-
-public:
-    using Algorithm::Algorithm;
-
-    inline static Meta meta() {
-        Meta m("lcpcomp_comp", "plcp", "compressor using PLCP array");
-        return m;
-    }
 
 	template<class RefStrategy,class plcp_type>
 		void compute_references(const size_t n, RefStrategy& refStrategy, plcp_type& pplcp,  size_t threshold) {
@@ -392,6 +389,24 @@ public:
         IF_STATS(env().log_stat("max heap size", max_heap_size));
         env().end_stat_phase();
 		}
+
+
+
+/// A very naive selection strategy for LCPComp.
+///
+/// TODO: Describe
+class PLCPStrategy : public Algorithm {
+private:
+    typedef TextDS<> text_t;
+
+public:
+    using Algorithm::Algorithm;
+
+    inline static Meta meta() {
+        Meta m("lcpcomp_comp", "plcp", "compressor using PLCP array");
+        return m;
+    }
+
 
 
     // inline void factorize(text_t& text,
