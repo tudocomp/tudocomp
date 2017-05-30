@@ -25,6 +25,68 @@ public:
         const ast::Node* m_config;
         std::vector<AlgorithmConfig> m_sub_configs; // valid if non-primitive
 
+        inline static std::string param_str(bool list_item) {
+            return std::string(
+                list_item ? "list item of parameter" : "parameter");
+        }
+
+        inline const ast::List* configure_list(const ast::Node* config) {
+            auto list_value = dynamic_cast<const ast::List*>(config);
+            if(!list_value) {
+                throw ConfigError("type mismatch for parameter '" +
+                    m_decl->name() + "': expected list, got " +
+                    config->debug_type());
+            }
+            return list_value;
+        }
+
+        inline const ast::Value* configure_primitive(
+            const ast::Node* config,
+            bool list_item = false) {
+
+            auto value = dynamic_cast<const ast::Value*>(config);
+            if(!value) {
+                throw ConfigError("type mismatch for " + param_str(list_item) +
+                    " '" + m_decl->name() + "': expected value, got " +
+                    config->debug_type());
+            }
+            return value;
+        }
+
+        inline const ast::Object* configure_object(
+            const ast::Node* config,
+            const AlgorithmDict& dict,
+            bool list_item = false) {
+
+            auto obj_value = dynamic_cast<const ast::Object*>(config);
+            if(!obj_value) {
+                throw ConfigError("type mismatch for " + param_str(list_item) +
+                    " '" + m_decl->name() + "': expected object, got " +
+                    config->debug_type());
+            }
+
+            // find algorithm declaration
+            auto it = dict.find(obj_value->name());
+            if(it == dict.end()) {
+                throw ConfigError("unknown algorithm type: '" +
+                    obj_value->name() + "'");
+            }
+
+            auto& algo_decl = it->second;
+
+            // check type (TODO: inheritance)
+            if(algo_decl.type() != m_decl->type()) {
+                throw ConfigError("algorithm type mismatch for " +
+                    param_str(list_item) + " '" + m_decl->name() + "': " +
+                    "expected " + m_decl->type() + ", got " + algo_decl.type());
+            }
+
+            // create sub config
+            m_sub_configs.emplace_back(algo_decl, config, dict);
+
+            return obj_value;
+        }
+
     public:
         /// \brief Main constructor.
         inline Param(
@@ -33,7 +95,26 @@ public:
             const AlgorithmDict& dict)
             : m_decl(&decl), m_config(config) {
 
-            // TODO
+            if(!m_config) throw ConfigError("null");
+
+            if(m_decl->is_list()) {
+                auto list_value = configure_list(m_config);
+
+                //check list items
+                if(m_decl->is_primitive()) {
+                    for(auto item : list_value->items()) {
+                        configure_primitive(item, true);
+                    }
+                } else {
+                    for(auto item : list_value->items()) {
+                        configure_object(item, dict, true);
+                    }
+                }
+            } else if(m_decl->is_primitive()) {
+                configure_primitive(m_config);
+            } else {
+                configure_object(m_config, dict);
+            }
         }
 
         /// \brief Copy constructor.
@@ -102,7 +183,8 @@ public:
                 named_params.emplace_back(p);
             } else {
                 if(named_params.size() > 0) {
-                    throw ConfigError("unnamed parameters need to come first");
+                    throw ConfigError(
+                        "unnamed parameters need to be listed first");
                 }
 
                 unnamed_params.emplace_back(p);
@@ -124,7 +206,7 @@ public:
 
         std::unordered_set<std::string> mapped;
 
-        // attempt to map unnamed parameters first
+        // first, attempt to map unnamed parameters
         {
             size_t i = 0;
             for(auto p : unnamed_params) {
@@ -147,9 +229,11 @@ public:
                 unmapped.erase(dp->name());
             } else {
                 if(mapped.find(p->name()) != mapped.end()) {
-                    throw ConfigError("parameter already set: " + p->name());
+                    throw ConfigError("parameter '" + p->name() +
+                        " already set");
                 } else {
-                    throw ConfigError("undefined parameter: " + p->name());
+                    throw ConfigError("undefined parameter: '" + p->name() +
+                        "'");
                 }
             }
         }
@@ -157,7 +241,12 @@ public:
         // finally, process unmapped parameters
         for(auto e : unmapped) {
             auto dp = e.second;
-            throw ConfigError("parameter has no value: " + dp->name());
+
+            //TODO: default value
+
+            throw ConfigError(
+                "parameter was given no value and has no default: '" +
+                dp->name() + "'");
         }
     }
 

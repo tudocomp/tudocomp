@@ -18,6 +18,10 @@ public:
     virtual std::string str() const override {
         return '\'' + m_value + '\'';
     }
+
+    virtual std::string debug_type() const override {
+        return "value";
+    }
 };
 
 }}} //ns

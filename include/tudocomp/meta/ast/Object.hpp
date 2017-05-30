@@ -74,6 +74,10 @@ public:
         ss << ')';
         return ss.str();
     }
+
+    virtual std::string debug_type() const override {
+        return "object";
+    }
 };
 
 }}} //ns
