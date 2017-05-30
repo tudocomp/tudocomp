@@ -25,6 +25,8 @@ size_t filesize( const char*const filepath ){
 	return file.tellg();
 }
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -34,7 +36,7 @@ class IntegerFileArray {
 	const size_t m_size;
 	std::ifstream m_is;
 	public:
-	IntegerFileArray(const char*const filename) 
+	IntegerFileArray(const char*const filename)
 	: m_size { filesize(filename) }
 	, m_is {filename, std::ios::binary | std::ios::in }
 	{}
@@ -60,7 +62,7 @@ class IntegerFileArray {
 // 	int_t operator[](size_t i) {
 // 		if(i == 0) return m_data.size();
 // 		return m_data[i+1];
-// 	
+//
 // 	}
 // 	size_t size() const { return m_data.size()+1; }
 // };
@@ -89,7 +91,7 @@ class IntegerFileForwardIterator {
 	char m_buf[sizeof(int_t)];
 	public:
 
-	IntegerFileForwardIterator(const char*const filename) 
+	IntegerFileForwardIterator(const char*const filename)
 	: m_size { filesize(filename) }
 	, m_is {filename, std::ios::binary | std::ios::in }
 	, m_index {0}
@@ -102,7 +104,7 @@ class IntegerFileForwardIterator {
 	void advance() {
 		(*this)++;
 	}
-	IntegerFileForwardIterator& operator++(int) { 
+	IntegerFileForwardIterator& operator++(int) {
 		m_is.read(m_buf, sizeof(int_t));
 		++m_index;
 		return *this;
@@ -150,7 +152,7 @@ class RefDiskStrategy {
 	RefDiskStrategy(sa_t& sa, isa_t& isa) : m_sa(sa), m_isa(isa) {
 
 	}
-	void sort() { 
+	void sort() {
 		std::sort(m_factors_unsorted.begin(), m_factors_unsorted.end());
 		m_factors.reserve(std::max(m_factors.capacity(), m_factors.size()+m_factors_unsorted.size()));
 		for(auto it = m_factors_unsorted.begin(); it != m_factors_unsorted.end(); ++it) {
@@ -177,7 +179,7 @@ class RefDiskStrategy {
 			//value_type max_value() const { return std::make_pair(std::numeric_limits<key_type>::max(),0); }
 			value_type max_value() const { return std::make_pair(m_key,0); }
 		};
-		
+
 
 
 		StatPhase sorting_phase("Sort by ISA");
@@ -212,13 +214,13 @@ class RefDiskStrategy {
 		// 	const auto& el = *it;
 		// 	reflist.emplace_back(el.first, m_sa[m_isa[el.first]-1], el.second);
 		// }
-		
+
 	}
 };
 
 class PLCPFileForwardIterator {
 	std::ifstream m_is;
-	
+
 	uint64_t m_chunk = 0; // current data chunk
 	len_t m_idx = 0; // current select parameter
 	len_t m_block = 0; // block index
@@ -232,15 +234,15 @@ class PLCPFileForwardIterator {
 
 	public:
 	static constexpr const len_t eof = -1;
-	PLCPFileForwardIterator(const char* filepath) 
-		: m_is(filepath) 
+	PLCPFileForwardIterator(const char* filepath)
+		: m_is(filepath)
 	{
 		read_chunk();
 	}
 
 	len_t index() const { return m_idx; }
 	bool has_next() const {
-		return m_is;
+		return !m_is.fail();
 	}
 
 	len_t next_select() {
@@ -266,8 +268,6 @@ class PLCPFileForwardIterator {
 	template<class RefStrategy,class plcp_type>
 		void compute_references(const size_t n, RefStrategy& refStrategy, plcp_type& pplcp,  size_t threshold) {
 
-		env().end_stat_phase();
-		env().begin_stat_phase("Search Peaks");
 
 		struct Poi {
 			len_t pos;
@@ -314,26 +314,26 @@ class PLCPFileForwardIterator {
 					{
 						len_t newlcp_peak = 0; // a new peak can emerge at top.pos+top.lcp
 						bool peak_exists = false;
-						if(top.pos+top.lcp < i) 
+						if(top.pos+top.lcp < i)
 						for(len_t j = top.no+1; j < handles.size(); ++j) { // erase all right peaks that got substituted
 							if( handles[j].node_ == nullptr) continue;
 							const Poi poi = *(handles[j]);
 							DCHECK_LT(next_pos, poi.pos);
-							if(poi.pos < next_pos+top.lcp) { 
+							if(poi.pos < next_pos+top.lcp) {
 								heap.erase(handles[j]);
 								handles[j].node_ = nullptr;
 								if(poi.lcp + poi.pos > next_pos+top.lcp) {
 									const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
 									DCHECK_NE(remaining_lcp,0);
-									if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak); 
+									if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak);
 									newlcp_peak = std::max(remaining_lcp, newlcp_peak);
 								}
 							} else if( poi.pos == next_pos+top.lcp) { peak_exists=true; }
 							else { break; }  // only for performance
 						}
 #ifdef DEBUG
-						if(peak_exists) { 
-							for(len_t j = top.no+1; j < handles.size(); ++j) { 
+						if(peak_exists) {
+							for(len_t j = top.no+1; j < handles.size(); ++j) {
 								if( handles[j].node_ == nullptr) continue;
 								const Poi& poi = *(handles[j]);
 								if(poi.pos == next_pos+top.lcp) {
@@ -348,7 +348,7 @@ class PLCPFileForwardIterator {
 							DCHECK(handles[j].node_ == nullptr);
 							handles[j] = heap.emplace(next_pos+top.lcp, newlcp_peak, j);
 						}
-						
+
 					}
 					handles[top.no].node_ = nullptr;
 					heap.pop(); // top now gets erased
@@ -386,8 +386,7 @@ class PLCPFileForwardIterator {
 //			DCHECK_EQ(plcp[lastpos], plcp_i);
 			lastpos_lcp = plcp_i;
 		}
-        IF_STATS(env().log_stat("max heap size", max_heap_size));
-        env().end_stat_phase();
+        IF_STATS(StatPhase::log("max heap size", max_heap_size));
 		}
 
 
@@ -428,12 +427,14 @@ public:
     //     env().end_stat_phase();
     // }
 
-    inline void factorize(text_t& text,
-                   size_t threshold,
-                   lzss::FactorBuffer& refs) {
-		env().begin_stat_phase("Load index ds");
+    inline static ds::dsflags_t textds_flags() {
+        return text_t::SA | text_t::ISA;
+    }
+
+    inline void factorize(text_t& text, size_t threshold, lzss::FactorBuffer& refs) {
+		StatPhase phase("Load Index DS");
 //		const std::string textfilename  = "/bighome/workspace/compreSuite/tudocomp/datasets/abracadabra.0";
-		const std::string textfilename  = "/bighome/workspace/compreSuite/tudocomp/datasets/cc_commoncrawl.ascii.10MB.0";
+		const std::string textfilename  = "/local1/cc_commoncrawl.ascii.10MB.0";
 		IntegerFileArray<uint_t<40>> sa  ((textfilename + ".sa5").c_str());
 		IntegerFileArray<uint_t<40>> isa ((textfilename + ".isa5").c_str());
 		// SAFileArray<uint_t<40>> sa((textfilename + ".sa5").c_str());
@@ -441,44 +442,177 @@ public:
 		//IntegerFileForwardIterator<uint_t<40>> pplcp("/bighome/workspace/compreSuite/tudocomp/datasets/pc_english.200MB.plcp5");
 		DCHECK_EQ(sa.size(), text.size());
 
-//IF_DEBUG({
-		{
-	 	env().begin_stat_phase("Construct index ds");
-		text.require(text_t::SA | text_t::ISA | text_t::PLCP);
-
-        const auto& tsa = text.require_sa();
-        const auto& tisa = text.require_isa();
-        const auto& plcp = text.require_plcp();
-		PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
-		for(size_t i = 0; i < sa.size(); ++i) {
-		DCHECK_EQ(sa.size(),tsa.size());
-		DCHECK_EQ(sa[i], (uint64_t)tsa[i]);
-		}
-		DCHECK_EQ(isa.size(),tisa.size());
-		for(size_t i = 0; i < isa.size(); ++i) {
-		DCHECK_EQ(isa[i], (uint64_t)tisa[i]);
-		}
-		for(size_t i = 0; i < plcp.size()-1; ++i) {
-		DCHECK_EQ(pplcp(),(uint64_t) plcp[i]);
-		pplcp.advance();
-		}
-        env().end_stat_phase();
-	 	env().begin_stat_phase("Check");
-
-
-        env().end_stat_phase();
-		}
-//		})//DEBUG
+IF_DEBUG(
+		StatPhase::wrap("Check Index DS", [&]{
+			const auto& tsa = text.require_sa();
+			const auto& tisa = text.require_isa();
+			const auto& plcp = text.require_plcp();
+				PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
+			for(size_t i = 0; i < sa.size(); ++i) {
+			DCHECK_EQ(sa.size(),tsa.size());
+			DCHECK_EQ(sa[i], (uint64_t)tsa[i]);
+			}
+			DCHECK_EQ(isa.size(),tisa.size());
+			for(size_t i = 0; i < isa.size(); ++i) {
+			DCHECK_EQ(isa[i], (uint64_t)tisa[i]);
+			}
+			for(size_t i = 0; i < plcp.size()-1; ++i) {
+			DCHECK_EQ(pplcp(),(uint64_t) plcp[i]);
+			pplcp.advance();
+			}
+		});
+		);
 
 		PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
 
 		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
-		compute_references(text.size()-1, refStrategy, pplcp, threshold);
-		env().begin_stat_phase("Compute References");
-		refStrategy.factorize(refs);
-        env().end_stat_phase();
+		StatPhase::wrap("Search Peaks", [&]{
+				compute_references(text.size()-1, refStrategy, pplcp, threshold);
+		});
+		StatPhase::wrap("Compute References", [&]{
+				refStrategy.factorize(refs);
+				});
 
-    }
+	}
+    //
+    // inline void factorize(text_t& text,
+    //                size_t threshold,
+    //                lzss::FactorBuffer& factors) {
+    //
+	// 	// Construct SA, ISA and LCP
+    //     auto pplcp = StatPhase::wrap("Construct index ds", [&]{
+    //         text.require(text_t::SA | text_t::ISA);
+    //         const auto& sa = text.require_sa();
+    //         return LCPForwardIterator { (construct_plcp_bitvector(env(), sa, text)) };
+    //     });
+    //
+    //     const auto& sa = text.require_sa();
+    //     const auto& isa = text.require_isa();
+    //     const len_t n = sa.size();
+    //
+	// 	StatPhase::wrap("Search Peaks", [&]{
+    //
+	// 	    struct Poi {
+	// 		    len_t pos;
+	// 		    len_t lcp;
+	// 		    len_t no;
+	// 		    Poi(len_t _pos, len_t _lcp, len_t _no) : pos(_pos), lcp(_lcp), no(_no) {}
+	// 		    bool operator<(const Poi& o) const {
+	// 			    DCHECK_NE(o.pos, this->pos);
+	// 			    if(o.lcp == this->lcp) return this->pos > o.pos;
+	// 			    return this->lcp < o.lcp;
+	// 		    }
+	// 	    };
+    //
+	// 	    boost::heap::pairing_heap<Poi> heap;
+	// 	    std::vector<boost::heap::pairing_heap<Poi>::handle_type> handles;
+    //
+	// 	    IF_STATS(len_t max_heap_size = 0);
+    //
+	// 	    // std::stack<poi> pois; // text positions of interest, i.e., starting positions of factors we want to replace
+    //
+	// 	    len_t lastpos = 0;
+	// 	    len_t lastpos_lcp = 0;
+	// 	    for(len_t i = 0; i+1 < n; ++i) {
+	// 		    while(pplcp.index() < i) pplcp.advance();
+	// 		    const len_t plcp_i = pplcp(); DCHECK_EQ(pplcp.index(), i);
+	// 		    if(heap.empty()) {
+	// 			    if(plcp_i >= threshold) {
+	// 				    handles.emplace_back(heap.emplace(i, plcp_i, handles.size()));
+	// 				    lastpos = i;
+	// 				    lastpos_lcp = plcp_i;
+	// 			    }
+	// 			    continue;
+	// 		    }
+	// 		    if(i - lastpos >= lastpos_lcp || tdc_unlikely(i+1 == n)) {
+	// 			    IF_DEBUG(bool first = true);
+	// 			    IF_STATS(max_heap_size = std::max<len_t>(max_heap_size, heap.size()));
+	// 			    DCHECK_EQ(heap.size(), handles.size());
+	// 			    while(!heap.empty()) {
+	// 				    const Poi& top = heap.top();
+	// 				    const len_t source_position = sa[isa[top.pos]-1];
+	// 				    factors.emplace_back(top.pos, source_position, top.lcp);
+	// 				    const len_t next_pos = top.pos; // store top, this is the current position that gets factorized
+	// 				    IF_DEBUG(if(first) DCHECK_EQ(top.pos, lastpos); first = false;)
+    //
+	// 				    {
+	// 					    len_t newlcp_peak = 0; // a new peak can emerge at top.pos+top.lcp
+	// 					    bool peak_exists = false;
+	// 					    if(top.pos+top.lcp < i)
+	// 					    for(len_t j = top.no+1; j < handles.size(); ++j) { // erase all right peaks that got substituted
+	// 						    if( handles[j].node_ == nullptr) continue;
+	// 						    const Poi poi = *(handles[j]);
+	// 						    DCHECK_LT(next_pos, poi.pos);
+	// 						    if(poi.pos < next_pos+top.lcp) {
+	// 							    heap.erase(handles[j]);
+	// 							    handles[j].node_ = nullptr;
+	// 							    if(poi.lcp + poi.pos > next_pos+top.lcp) {
+	// 								    const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
+	// 								    DCHECK_NE(remaining_lcp,0);
+	// 								    if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak);
+	// 								    newlcp_peak = std::max(remaining_lcp, newlcp_peak);
+	// 							    }
+	// 						    } else if( poi.pos == next_pos+top.lcp) { peak_exists=true; }
+	// 						    else { break; }  // only for performance
+	// 					    }
+    // #ifdef DEBUG
+	// 					    if(peak_exists) {  //TODO: DEBUG
+	// 						    for(len_t j = top.no+1; j < handles.size(); ++j) {
+	// 							    if( handles[j].node_ == nullptr) continue;
+	// 							    const Poi& poi = *(handles[j]);
+	// 							    if(poi.pos == next_pos+top.lcp) {
+	// 								    DCHECK_LE(newlcp_peak, poi.lcp);
+	// 								    break;
+	// 							    }
+	// 						    }
+	// 					    }
+    // #endif
+	// 					    if(!peak_exists && newlcp_peak >= threshold) {
+	// 						    len_t j = top.no+1;
+	// 						    DCHECK(handles[j].node_ == nullptr);
+	// 						    handles[j] = heap.emplace(next_pos+top.lcp, newlcp_peak, j);
+	// 					    }
+    //
+	// 				    }
+	// 				    handles[top.no].node_ = nullptr;
+	// 				    heap.pop(); // top now gets erased
+    //
+	// 				    for(auto it = handles.rbegin(); it != handles.rend(); ++it) {
+	// 					    if( (*it).node_ == nullptr) continue;
+	// 					    Poi& poi = (*(*it));
+	// 					    if(poi.pos > next_pos)  continue;
+	// 					    const len_t newlcp = next_pos - poi.pos;
+	// 					    if(newlcp < poi.lcp) {
+	// 						    if(newlcp < threshold) {
+	// 							    heap.erase(*it);
+	// 							    it->node_ = nullptr;
+	// 						    } else {
+	// 							    poi.lcp = newlcp;
+	// 							    heap.decrease(*it);
+    //
+	// 						    }
+	// 					    } else {
+	// 						    break;
+	// 					    }
+	// 				    }
+	// 			    }
+	// 			    handles.clear();
+	// 			    --i;
+	// 			    continue;
+	// 		    }
+	// 		    DCHECK_EQ(pplcp.index(), i);
+	// 		    DCHECK_EQ(plcp_i, pplcp());
+	// 		    if(plcp_i <= lastpos_lcp) continue;
+	// 		    DCHECK_LE(threshold, plcp_i);
+	// 		    handles.emplace_back(heap.emplace(i,plcp_i, handles.size()));
+	// 		    lastpos = i;
+    // //			DCHECK_EQ(plcp[lastpos], plcp_i);
+	// 		    lastpos_lcp = plcp_i;
+	// 	    }
+    //         IF_STATS(StatPhase::log("max heap size", max_heap_size));
+    //
+    //     });
+    //}
 
 
 };
