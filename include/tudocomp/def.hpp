@@ -71,14 +71,16 @@ namespace tdc {
     struct  _fast_t_size_check {
         using Type = size_t;
         static_assert(sizeof(Type) >= sizeof(actual_type),
-                      "Can only use fast_t with integer types <= size_t");
-    }
+                      "Can only use fast_t with integer sizes <= sizeof(size_t)");
+    };
     /// \endcond
 
     /// Type to represent integer values in the size range of `actual_type`
     /// that may require more Bits than it, while being faster.
     template<typename actual_type>
-    using fast_t = _fast_t_size_check<actual_type>::Type;
+    using fast_t = typename _fast_t_size_check<actual_type>::Type;
+
+    using index_fast_t = fast_t<index_t>;
 
     /// The maximum value of \ref index_t.
 	constexpr size_t INDEX_MAX = std::numeric_limits<index_t>::max();
