@@ -240,11 +240,11 @@ inline void divsufsort_run(
 
 // specialize for len_t vectors
 template<>
-inline void divsufsort_run<std::vector<len_t>>(
-    const sauchar_t* T, std::vector<len_t>& SA,
+inline void divsufsort_run<std::vector<index_t>>(
+    const sauchar_t* T, std::vector<index_t>& SA,
     saidx_t *bucket_A, saidx_t *bucket_B, saidx_t n) {
 
-    BufferWrapper<std::vector<len_t>> wrapSA(SA);
+    BufferWrapper<std::vector<index_t>> wrapSA(SA);
     divsufsort_run(T, wrapSA, bucket_A, bucket_B, n);
 }
 
