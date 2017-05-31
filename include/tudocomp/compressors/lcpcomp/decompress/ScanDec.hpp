@@ -27,11 +27,11 @@ namespace lcpcomp {
 		IntVector<uliteral_t>& m_buffer;
 		const sdsl::bit_vector m_bv;
 		const sdsl::bit_vector::rank_1_type m_rank;
-		const len_t m_empty_entries;
-		len_t**const m_fwd = nullptr;
+		const index_fast_t m_empty_entries;
+		index_t**const m_fwd = nullptr;
 
-		IF_STATS(len_t m_longest_chain = 0);
-		IF_STATS(len_t m_current_chain = 0);
+		IF_STATS(index_fast_t m_longest_chain = 0);
+		IF_STATS(index_fast_t m_current_chain = 0);
 
 		public:
 		EagerScanDec(Env& env, IntVector<uliteral_t>& buffer)
@@ -39,49 +39,49 @@ namespace lcpcomp {
 			, m_buffer { buffer }
 			, m_bv ( [&buffer] () -> sdsl::bit_vector {
 				sdsl::bit_vector bv { buffer.size(),0 };
-				for(len_t i = 0; i < buffer.size(); ++i) {
+				for(index_fast_t i = 0; i < buffer.size(); ++i) {
 					if(buffer[i]) continue;
 					bv[i] = 1;
 				}
 				return bv;
 			}() )
 			, m_rank { &m_bv }
-			//, m_empty_entries { static_cast<len_t>( buffer.size()) }
-			, m_empty_entries { static_cast<len_t>(std::count_if(buffer.cbegin(), buffer.cend(), [] (const uliteral_t& i) { return i == 0; })) }
-			, m_fwd { new len_t*[m_empty_entries+1] }
+			//, m_empty_entries { static_cast<index_fast_t>( buffer.size()) }
+			, m_empty_entries { static_cast<index_fast_t>(std::count_if(buffer.cbegin(), buffer.cend(), [] (const uliteral_t& i) { return i == 0; })) }
+			, m_fwd { new index_t*[m_empty_entries+1] }
 		{
         std::fill(m_fwd,m_fwd+m_empty_entries,nullptr);
 		}
 
-		len_t rank(len_t i) const {
+		index_fast_t rank(index_fast_t i) const {
 			DCHECK(m_bv[i]);
 			return m_rank.rank(i+1);
 		}
 
-		void decode(const std::vector<len_t>& m_target_pos, const std::vector<len_t>& m_source_pos, const std::vector<len_t>& m_length) {
+		void decode(const std::vector<index_t>& m_target_pos, const std::vector<index_t>& m_source_pos, const std::vector<index_t>& m_length) {
             StatPhase phase("Decoding Factors");
-			const len_t factors = m_source_pos.size();
+			const index_fast_t factors = m_source_pos.size();
 			phase.log_stat("factors", factors);
 
-			for(len_t j = 0; j < factors; ++j) {
-				const len_t& target_position = m_target_pos[j];
-				const len_t& source_position = m_source_pos[j];
-				const len_t& factor_length = m_length[j];
-				for(len_t i = 0; i < factor_length; ++i) {
+			for(index_fast_t j = 0; j < factors; ++j) {
+				const index_t& target_position = m_target_pos[j];
+				const index_t& source_position = m_source_pos[j];
+				const index_t& factor_length = m_length[j];
+				for(index_fast_t i = 0; i < factor_length; ++i) {
 					if(m_buffer[source_position+i]) {
 						decode_literal_at(target_position+i, m_buffer[source_position+i]);
 					} else {
 						DCHECK_EQ(m_bv[source_position+i],1);
-						len_t*& bucket = m_fwd[rank(source_position+i)];
+						index_t*& bucket = m_fwd[rank(source_position+i)];
 						if(bucket == nullptr) {
-							bucket = new len_t[2];
+							bucket = new index_t[2];
 							bucket[0] = 2;
 							bucket[1] = target_position+i;
 						}
 						else
 						{ // this block implements the call of m_fwd[src]->push_back(m_cursor);
 							++bucket[0]; // increase the size of a bucket only by one!
-							bucket = (len_t*) realloc(bucket, sizeof(len_t)*bucket[0]);
+							bucket = (index_t*) realloc(bucket, sizeof(index_t)*bucket[0]);
 							bucket[bucket[0]-1] = target_position+i;
 						}
 					}
@@ -97,7 +97,7 @@ namespace lcpcomp {
                 })
 			}
 		}
-    inline void decode_literal_at(len_t pos, uliteral_t c) {
+    inline void decode_literal_at(index_fast_t pos, uliteral_t c) {
 		IF_STATS(++m_current_chain);
         IF_STATS(m_longest_chain = std::max(m_longest_chain, m_current_chain));
 
@@ -106,10 +106,10 @@ namespace lcpcomp {
 		DCHECK(c != 0 || pos == m_buffer.size()-1); // we assume that the text to restore does not contain a NULL-byte but at its very end
 
 		if(m_bv[pos] == 1) {
-			const len_t rankpos = rank(pos);
+			const index_fast_t rankpos = rank(pos);
 			DCHECK_LE(rankpos, m_empty_entries);
 			if(m_fwd[rankpos] != nullptr) {
-				const len_t*const& bucket = m_fwd[rankpos];
+				const index_t*const& bucket = m_fwd[rankpos];
 				for(size_t i = 1; i < bucket[0]; ++i) {
 					decode_literal_at(bucket[i], c); // recursion
 				}
@@ -122,7 +122,7 @@ namespace lcpcomp {
     }
 
     IF_STATS(
-    inline len_t longest_chain() const {
+    inline index_fast_t longest_chain() const {
         return m_longest_chain;
     })
 
@@ -175,12 +175,12 @@ public:
 
 private:
     inline void decode_lazy_() {
-        const len_t factors = m_source_pos.size();
-        for(len_t j = 0; j < factors; ++j) {
-            const len_t& target_position = m_target_pos[j];
-            const len_t& source_position = m_source_pos[j];
-            const len_t& factor_length = m_length[j];
-            for(len_t i = 0; i < factor_length; ++i) {
+        const index_fast_t factors = m_source_pos.size();
+        for(index_fast_t j = 0; j < factors; ++j) {
+            const index_t& target_position = m_target_pos[j];
+            const index_t& source_position = m_source_pos[j];
+            const index_t& factor_length = m_length[j];
+            for(index_fast_t i = 0; i < factor_length; ++i) {
 				//DCHECK(m_buffer[source_position+i] == 0 && m_buffer[target_position+i] == 0);
 				m_buffer[target_position+i] = m_buffer[source_position+i];
             }
@@ -188,16 +188,16 @@ private:
     }
     const size_t m_scans; // number of scan rounds
 
-    len_t m_cursor;
+    index_fast_t m_cursor;
 
 	IntVector<uliteral_t> m_buffer;
 
     //storing factors
-    std::vector<len_t> m_target_pos;
-    std::vector<len_t> m_source_pos;
-    std::vector<len_t> m_length;
+    std::vector<index_t> m_target_pos;
+    std::vector<index_t> m_source_pos;
+    std::vector<index_t> m_length;
 
-	IF_STATS(len_t m_longest_chain = 0);
+	IF_STATS(index_fast_t m_longest_chain = 0);
 
 public:
     ScanDec(ScanDec&& other)
@@ -207,7 +207,7 @@ public:
         , m_buffer(std::move(other.m_buffer))
     { }
 
-    inline ScanDec(Env&& env, len_t size)
+    inline ScanDec(Env&& env, index_fast_t size)
         : Algorithm(std::move(env))
 		, m_scans(this->env().option("scans").as_integer())
 		, m_cursor(0)
@@ -219,10 +219,10 @@ public:
 		DCHECK(c != 0 || m_cursor == m_buffer.size()); // we assume that the text to restore does not contain a NULL-byte but at its very end
     }
 
-    inline void decode_factor(const len_t source_position, const len_t factor_length) {
+    inline void decode_factor(const index_fast_t source_position, const index_fast_t factor_length) {
         bool factor_stored = false;
-        for(len_t i = 0; i < factor_length; ++i) {
-            const len_t src_pos = source_position+i;
+        for(index_fast_t i = 0; i < factor_length; ++i) {
+            const index_fast_t src_pos = source_position+i;
             if(m_buffer[src_pos]) {
                 m_buffer[m_cursor] = m_buffer[src_pos];
             }
@@ -237,7 +237,7 @@ public:
     }
 
     IF_STATS(
-    inline len_t longest_chain() const {
+    inline index_fast_t longest_chain() const {
         return m_longest_chain;
     })
 

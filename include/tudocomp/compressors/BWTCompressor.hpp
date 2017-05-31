@@ -33,7 +33,7 @@ public:
 
         text_t t(env().env_for_option("textds"), in, text_t::SA);
 		DVLOG(2) << vec_to_debug_string(t);
-		const len_t input_size = t.size();
+		const index_fast_t input_size = t.size();
 
         StatPhase::wrap("Construct Text DS", [&]{
             t.require(text_t::SA);

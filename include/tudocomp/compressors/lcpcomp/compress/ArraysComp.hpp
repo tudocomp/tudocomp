@@ -51,7 +51,7 @@ public:
 
         if(lcp.max_lcp()+1 <= threshold) return; // nothing to factorize
         const size_t cand_length = lcp.max_lcp()+1-threshold;
-        std::vector<len_t>* cand = new std::vector<len_t>[cand_length];
+        std::vector<index_t>* cand = new std::vector<index_t>[cand_length];
 
         StatPhase::wrap("Fill candidates", [&]{
             for(size_t i = 1; i < sa.size(); ++i) {
@@ -73,16 +73,16 @@ public:
 
             for(size_t maxlcp = lcp.max_lcp(); maxlcp >= threshold; --maxlcp) {
                 IF_STATS({
-                    const len_t maxlcpbits = bits_for(maxlcp-threshold);
+                    const index_fast_t maxlcpbits = bits_for(maxlcp-threshold);
                     if( ((maxlcpbits ^ (1UL<<(bits_for(maxlcpbits)-1))) == 0) && (( (maxlcp-threshold) ^ (1UL<<(maxlcpbits-1))) == 0)) { // only log at certain LCP values
                         phase.split(std::string{"Factors at max. LCP value "}
                             + std::to_string(maxlcp));
                         phase.log_stat("num factors", factors.size());
                     }
                 })
-                std::vector<len_t>& candcol = cand[maxlcp-threshold]; // select the vector specific to the LCP value
+                std::vector<index_t>& candcol = cand[maxlcp-threshold]; // select the vector specific to the LCP value
                 for(size_t i = 0; i < candcol.size(); ++i) {
-                    const len_t& index = candcol[i];
+                    const index_t& index = candcol[i];
                     const auto& lcp_value = lcp[index];
                     if(lcp_value < maxlcp) { // if it got resized, we push it down
                         if(lcp_value < threshold) continue; // already erased
@@ -90,10 +90,10 @@ public:
                         continue;
                     }
                     //generate factor
-                    const len_t pos_target = sa[index];
+                    const index_fast_t pos_target = sa[index];
                     DCHECK_GT(index,0);
-                    const len_t pos_source = sa[index-1];
-                    const len_t factor_length = lcp[index];
+                    const index_fast_t pos_source = sa[index-1];
+                    const index_fast_t factor_length = lcp[index];
 
                     factors.emplace_back(pos_target, pos_source, factor_length);
 
@@ -102,12 +102,12 @@ public:
                         lcp[isa[pos_target + k]] = 0;
                     }
 
-                    const len_t max_affect = std::min(factor_length, pos_target); //if pos_target is at the very beginning, we have less to scan
+                    const index_fast_t max_affect = std::min(factor_length, pos_target); //if pos_target is at the very beginning, we have less to scan
                     //correct intersecting entries
-                    for(len_t k = 0; k < max_affect; ++k) {
-                        const len_t pos_suffix = pos_target - k - 1; DCHECK_GE(pos_target,k+1);
-                        const len_t& ind_suffix = isa[pos_suffix];
-                        lcp[ind_suffix] = std::min<len_t>(k+1, lcp[ind_suffix]);
+                    for(index_fast_t k = 0; k < max_affect; ++k) {
+                        const index_fast_t pos_suffix = pos_target - k - 1; DCHECK_GE(pos_target,k+1);
+                        const index_t& ind_suffix = isa[pos_suffix];
+                        lcp[ind_suffix] = std::min<index_fast_t>(k+1, lcp[ind_suffix]);
                     }
 
                 }
