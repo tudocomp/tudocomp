@@ -10,17 +10,17 @@
 #if defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(__clang__)
     /// Provides a hint to the compiler that `x` is expected to resolve to
     /// \e true.
-	#define tdc_likely(x)	__builtin_expect((x) != 0, 1)
+    #define tdc_likely(x)    __builtin_expect((x) != 0, 1)
     /// Provides a hint to the compiler that `x` is expected to resolve to
     /// \e false.
-	#define tdc_unlikely(x)  __builtin_expect((x) != 0, 0)
+    #define tdc_unlikely(x)  __builtin_expect((x) != 0, 0)
 #else
     /// Provides a hint to the compiler that `x` is expected to resolve to
     /// \e true.
-	#define tdc_likely(x)	x
+    #define tdc_likely(x)    x
     /// Provides a hint to the compiler that `x` is expected to resolve to
     /// \e false.
-	#define tdc_unlikely(x)  x
+    #define tdc_unlikely(x)  x
 #endif
 
 // code compiled only in debug build (set build type to Debug)
@@ -55,17 +55,6 @@
 #endif
 
 namespace tdc {
-    /// Type to represent an index value.
-    ///
-    /// This type can be defined to take up less bytes than a `size_t`,
-    /// but might have worse performance for arithmetic operations. It should
-    /// only be used for storing many indices in a data structure,
-    /// to reduce memory usage.
-    ///
-    /// For fast arithmetic operations, prefer a cast to `size_t`
-    /// or `fast_t<len_t>`.
-    typedef uint32_t index_t;
-
     /// \cond INTERNAL
     template<typename actual_type>
     struct  _fast_t_size_check {
@@ -75,32 +64,42 @@ namespace tdc {
     };
     /// \endcond
 
-    /// The maximum value of \ref index_t.
-	constexpr size_t INDEX_MAX = std::numeric_limits<index_t>::max();
-
-    /// The amount of bits required to store the binary representation of a
-    /// value of type \ref index_t.
-    constexpr size_t INDEX_BITS = 8 * sizeof(index_t);
-
     /// Type to represent integer values in the size range of `actual_type`
     /// that may require more Bits than it, while being faster.
     template<typename actual_type>
     using fast_t = typename _fast_t_size_check<actual_type>::Type;
 
-    using index_fast_t = fast_t<index_t>;
+    /// Type to represent an index value.
+    ///
+    /// This type can be defined to take up less bytes than a `size_t`,
+    /// but might have worse performance for arithmetic operations. It should
+    /// only be used for storing many indices in a data structure,
+    /// to reduce memory usage.
+    ///
+    /// For fast arithmetic operations, prefer a cast to `size_t`
+    /// or `fast_t<len_t>`.
+    using index_t = uint32_t;
+    using index_fast_t = uint32_t;
+
+    /// The maximum value of \ref index_t.
+    constexpr size_t INDEX_MAX = std::numeric_limits<index_t>::max();
+
+    /// The amount of bits required to store the binary representation of a
+    /// value of type \ref index_t.
+    constexpr size_t INDEX_BITS = 8 * sizeof(index_t);
 
     /// The maximum value of \ref index_fast_t.
-	constexpr size_t INDEX_FAST_MAX = std::numeric_limits<index_fast_t>::max();
+    constexpr size_t INDEX_FAST_MAX = std::numeric_limits<index_fast_t>::max();
 
     /// The amount of bits required to store the binary representation of a
     /// value of type \ref index_fast_t.
     constexpr size_t INDEX_FAST_BITS = 8 * sizeof(index_fast_t);
 
     /// Type to represent signed single literals.
-	typedef uint8_t uliteral_t;
+    typedef uint8_t uliteral_t;
 
     /// The maximum value of \ref uliteral_t.
-	constexpr size_t ULITERAL_MAX = std::numeric_limits<uliteral_t>::max();
+    constexpr size_t ULITERAL_MAX = std::numeric_limits<uliteral_t>::max();
 
     /// Converts a literal to an integer value as if unsigned.
     ///
