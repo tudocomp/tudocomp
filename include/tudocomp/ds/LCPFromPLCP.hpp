@@ -11,7 +11,7 @@ namespace tdc {
 /// Constructs the LCP array using the Phi algorithm.
 class LCPFromPLCP: public Algorithm, public ArrayDS {
 private:
-    len_t m_max;
+    index_fast_t m_max;
 
 public:
     inline static Meta meta() {
@@ -38,11 +38,11 @@ public:
             m_max = plcp.max_lcp();
             const size_t w = bits_for(m_max);
 
-            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : LEN_BITS));
+            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : INDEX_FAST_BITS));
 
             (*this)[0] = 0;
-            for(len_t i = 1; i < n; i++) {
-                const len_t x = plcp[sa[i]];
+            for(index_fast_t i = 1; i < n; i++) {
+                const index_fast_t x = plcp[sa[i]];
                 (*this)[i] = x;
             }
 
@@ -53,7 +53,7 @@ public:
         if(cm == CompressMode::delayed) compress();
     }
 
-	inline len_t max_lcp() const {
+	inline index_fast_t max_lcp() const {
 		return m_max;
 	}
 

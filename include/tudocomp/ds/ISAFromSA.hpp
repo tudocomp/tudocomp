@@ -31,10 +31,10 @@ public:
             // Allocate
             const size_t n = t.size();
             const size_t w = bits_for(n);
-            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : LEN_BITS));
+            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : INDEX_FAST_BITS));
 
             // Construct
-            for(len_t i = 0; i < n; i++) {
+            for(index_fast_t i = 0; i < n; i++) {
                 (*this)[sa[i]] = i;
             }
 

@@ -160,7 +160,7 @@ public:
 
     /// Decrease key on array item with index i.
     template<typename T>
-    inline void decrease_key(len_t i, T value) {
+    inline void decrease_key(index_fast_t i, T value) {
         remove(i);
         (*m_lcp)[i] = value;
         insert(i);

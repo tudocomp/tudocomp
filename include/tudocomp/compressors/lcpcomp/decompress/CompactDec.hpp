@@ -28,15 +28,15 @@ public:
     }
 
 private:
-    len_t** m_fwd;
+    index_t** m_fwd;
 
-    len_t m_cursor;
-    IF_STATS(len_t m_longest_chain);
-    IF_STATS(len_t m_current_chain);
+    index_fast_t m_cursor;
+    IF_STATS(index_fast_t m_longest_chain);
+    IF_STATS(index_fast_t m_current_chain);
 
     IntVector<uliteral_t> m_buffer;
 
-    inline void decode_literal_at(len_t pos, uliteral_t c) {
+    inline void decode_literal_at(index_fast_t pos, uliteral_t c) {
 		IF_STATS(++m_current_chain);
         IF_STATS(m_longest_chain = std::max(m_longest_chain, m_current_chain));
 
@@ -44,7 +44,7 @@ private:
 		DCHECK(c != 0 || pos == m_buffer.size()-1); // we assume that the text to restore does not contain a NULL-byte but at its very end
 
         if(m_fwd[pos] != nullptr) {
-            const len_t*const& bucket = m_fwd[pos];
+            const index_t*const& bucket = m_fwd[pos];
             for(size_t i = 1; i < bucket[0]; ++i) {
                 decode_literal_at(bucket[i], c); // recursion
             }
@@ -77,13 +77,13 @@ public:
             delete [] m_fwd;
         }
     }
-    inline CompactDec(Env&& env, len_t size)
+    inline CompactDec(Env&& env, index_fast_t size)
         : Algorithm(std::move(env)), m_cursor(0), m_buffer(size,0) {
 
         IF_STATS(m_longest_chain = 0);
         IF_STATS(m_current_chain = 0);
 
-        m_fwd = new len_t*[size];
+        m_fwd = new index_t*[size];
         std::fill(m_fwd,m_fwd+size,nullptr);
     }
 
@@ -91,15 +91,15 @@ public:
         decode_literal_at(m_cursor++, c);
     }
 
-    inline void decode_factor(len_t pos, len_t num) {
-        for(len_t i = 0; i < num; i++) {
-            len_t src = pos+i;
+    inline void decode_factor(index_fast_t pos, index_fast_t num) {
+        for(index_fast_t i = 0; i < num; i++) {
+            index_fast_t src = pos+i;
             if(m_buffer[src]) {
                 decode_literal_at(m_cursor, m_buffer[src]);
             } else {
-                len_t*& bucket = m_fwd[src];
+                index_t*& bucket = m_fwd[src];
                 if(bucket == nullptr) {
-                    bucket = new len_t[2];
+                    bucket = new index_t[2];
                     DCHECK(m_fwd[src] == bucket);
                     bucket[0] = 2;
 					bucket[1] = m_cursor;
@@ -107,7 +107,7 @@ public:
 				else
                 { // this block implements the call of m_fwd[src]->push_back(m_cursor);
 					++bucket[0]; // increase the size of a bucket only by one!
-					bucket = (len_t*) realloc(bucket, sizeof(len_t)*bucket[0]);
+					bucket = (index_t*) realloc(bucket, sizeof(index_t)*bucket[0]);
                     bucket[bucket[0]-1] = m_cursor;
                 }
             }
@@ -117,7 +117,7 @@ public:
     }
 
     IF_STATS(
-    inline len_t longest_chain() const {
+    inline index_fast_t longest_chain() const {
         return m_longest_chain;
     })
 

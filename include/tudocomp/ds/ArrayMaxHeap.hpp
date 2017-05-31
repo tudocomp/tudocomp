@@ -23,15 +23,15 @@ private:
         RIGHT
     };
 
-    static inline len_t lc(len_t i) {
+    static inline index_fast_t lc(index_fast_t i) {
         return 2*i+1;
     }
 
-    static inline len_t rc(len_t i) {
+    static inline index_fast_t rc(index_fast_t i) {
         return 2*i+2;
     }
 
-    static inline len_t parent(len_t i) {
+    static inline index_fast_t parent(index_fast_t i) {
         return (i-1)/2;
     }
 
@@ -48,7 +48,7 @@ private:
     // back mapping
     DynamicIntVector m_pos;
 
-    inline void put(size_t pos, len_t i) {
+    inline void put(size_t pos, index_fast_t i) {
         m_heap[pos] = i;
         m_pos[i] = pos;
     }
@@ -74,7 +74,7 @@ public:
     ///
     /// \param i The index of the item in the key array. The key is retrieved
     ///          from there.
-    inline void insert(len_t i) {
+    inline void insert(index_fast_t i) {
         DCHECK_EQ(m_pos[i], m_undef) << "trying to insert an item that's already in the heap";
 
         size_t pos = m_size++;
@@ -95,13 +95,13 @@ public:
     }
 
 private:
-    inline void perlocate_down(size_t pos, len_t k) {
+    inline void perlocate_down(size_t pos, index_fast_t k) {
         auto lcp_k = (*m_array)[k];
 
         perlocation_dir_t dir = NONE;
         do {
-            len_t lcp_lc = (lc(pos) < m_size) ? (*m_array)[m_heap[lc(pos)]] : 0;
-            len_t lcp_rc = (rc(pos) < m_size) ? (*m_array)[m_heap[rc(pos)]] : 0;
+            index_fast_t lcp_lc = (lc(pos) < m_size) ? (*m_array)[m_heap[lc(pos)]] : 0;
+            index_fast_t lcp_rc = (rc(pos) < m_size) ? (*m_array)[m_heap[rc(pos)]] : 0;
 
             // find perlocation direction
             if(lcp_k < lcp_lc && lcp_k < lcp_rc) {
@@ -127,7 +127,7 @@ private:
 			else {
                 dir = NONE;
             }
-		
+
 
             // go down if necessary
             if(dir == LEFT) {
@@ -149,7 +149,7 @@ public:
     ///
     /// \param i The index of the item in the key array. The key is retrieved
     ///          from there.
-    inline void remove(len_t i) {
+    inline void remove(index_fast_t i) {
         auto pos = m_pos[i];
         if(pos != m_undef) { // never mind if it's not in the heap
             // get last element in heap
@@ -174,7 +174,7 @@ public:
     ///          from there.
     /// \param value The new key value.
     template<typename key_t>
-    inline void decrease_key(len_t i, key_t value) {
+    inline void decrease_key(index_fast_t i, key_t value) {
         (*m_array)[i] = value;
 
         auto pos = m_pos[i];
@@ -195,7 +195,7 @@ public:
     ///
     /// \param i The index of the item in the key array.
     /// \return \e true if the item is contained in the heap, \e false otherwise.
-    inline bool contains(len_t i) const {
+    inline bool contains(index_fast_t i) const {
         return m_pos[i] != m_undef;
     }
 
@@ -221,7 +221,7 @@ public:
     ///
     /// \param i The index of the item in the key array.
     /// \return The item's key, retrieved from the key array.
-    inline len_t key(len_t i) const {
+    inline index_fast_t key(index_fast_t i) const {
         return (*m_array)[i];
     }
 

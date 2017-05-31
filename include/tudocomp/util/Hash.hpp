@@ -83,19 +83,19 @@ struct SizeManagerPow2 : public Algorithm {
 		return m;
 	}
 	SizeManagerPow2(Env&& env) : Algorithm(std::move(env)) {}
-	void resize(const len_t) {
+	void resize(const index_fast_t) {
 	}
 	/**
 	 * The lowest possible size larger than hint
 	 */
-	static inline len_t get_min_size(const len_t& hint) {
-		return 1ULL<<bits_hi(std::max<len_t>(hint,3UL));
+	static inline index_fast_t get_min_size(const index_fast_t& hint) {
+		return 1ULL<<bits_hi(std::max<index_fast_t>(hint,3UL));
 	}
 	/**
 	 *  Compute index % tablesize
 	 *  Since tablesize is a power of two, a bitwise-AND is equivalent and faster
 	 */
-	static inline len_t mod_tablesize(const size_t& index, const len_t& tablesize, const size_t& , const size_t&) {
+	static inline index_fast_t mod_tablesize(const size_t& index, const index_fast_t& tablesize, const size_t& , const size_t&) {
 		return index & (tablesize-1);
 	}
 };
@@ -111,10 +111,10 @@ struct SizeManagerDirect : public Algorithm {
 	/**
 	 * The lowest possible size larger than hint
 	 */
-	static inline len_t get_min_size(const len_t& hint) {
-		return std::max<len_t>(hint,3UL);
+	static inline index_fast_t get_min_size(const index_fast_t& hint) {
+		return std::max<index_fast_t>(hint,3UL);
 	}
-	void resize(const len_t) {
+	void resize(const index_fast_t) {
 	}
 
 	/**
@@ -122,9 +122,9 @@ struct SizeManagerDirect : public Algorithm {
 	 *  Since tablesize is a power of two, a bitwise-AND is equivalent and faster
 	 *  from http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/
 	 */
-	inline len_t mod_tablesize(const size_t, const len_t tablesize, const size_t key, const size_t probe) {
+	inline index_fast_t mod_tablesize(const size_t, const index_fast_t tablesize, const size_t key, const size_t probe) {
 		const __uint128_t v = (static_cast<uint64_t>(key + (static_cast<__uint128_t>(probe) << 64)/(tablesize))) * static_cast<__uint128_t>(tablesize);
-		const len_t ret = v >> 64;
+		const index_fast_t ret = v >> 64;
 		DCHECK_LT(ret, tablesize);
 		return ret;
 		// return index % tablesize; // fallback
@@ -140,16 +140,16 @@ struct SizeManagerNoob : public Algorithm {
 	/**
 	 * The lowest possible size larger than hint
 	 */
-	static inline len_t get_min_size(const len_t& hint) {
-		return std::max<len_t>(hint,3UL);
+	static inline index_fast_t get_min_size(const index_fast_t& hint) {
+		return std::max<index_fast_t>(hint,3UL);
 	}
-	void resize(const len_t) {
+	void resize(const index_fast_t) {
 	}
 
 	/**
 	 *  Compute index % tablesize
 	 */
-	inline len_t mod_tablesize(const size_t index, const len_t tablesize, const size_t , const size_t ) {
+	inline index_fast_t mod_tablesize(const size_t index, const index_fast_t tablesize, const size_t , const size_t ) {
 		return index % tablesize; // fallback
 	}
 };
@@ -162,12 +162,12 @@ struct SizeManagerPrime : public Algorithm {
 	}
 	SizeManagerPrime(Env&& env) : Algorithm(std::move(env)) {}
 
-	static inline len_t get_min_size(const len_t& hint) {
+	static inline index_fast_t get_min_size(const index_fast_t& hint) {
 		return next_prime(hint);
 	}
-	void resize(const len_t) {
+	void resize(const index_fast_t) {
 	}
-	static inline len_t mod_tablesize(const size_t& index, const len_t& tablesize, const size_t& , const size_t&) {
+	static inline index_fast_t mod_tablesize(const size_t& index, const index_fast_t& tablesize, const size_t& , const size_t&) {
 		//return (static_cast<uint64_t>(index)*static_cast<uint64_t>(tablesize)) >> 32;
 		return index % tablesize;
 	}
@@ -242,7 +242,7 @@ struct QuadraticProber : public Algorithm {
 	 * table_size: the size of the table
 	 */
 	template<class SizeManager>
-	static inline len_t get(const len_t& i, const len_t&, const len_t& init, const len_t&) {
+	static inline index_fast_t get(const index_fast_t& i, const index_fast_t&, const index_fast_t& init, const index_fast_t&) {
 		return init+i*i;
 	}
 };
@@ -257,7 +257,7 @@ struct GaussProber : public Algorithm {
 	static inline void init(const key_t&) {
 	}
 	template<class SizeManager>
-	static inline len_t get(const len_t& i, const len_t& tablepos, const len_t&, const len_t&) {
+	static inline index_fast_t get(const index_fast_t& i, const index_fast_t& tablepos, const index_fast_t&, const index_fast_t&) {
 		return tablepos+i;
 	}
 };
@@ -274,14 +274,14 @@ struct LinearProber : public Algorithm {
 	static inline void init(const key_t&) {
 	}
 	template<class SizeManager>
-	static inline len_t get(const len_t&, const len_t& tablepos, const len_t&, const len_t&) {
+	static inline index_fast_t get(const index_fast_t&, const index_fast_t& tablepos, const index_fast_t&, const index_fast_t&) {
 		return tablepos+1;
 	}
 };
 
 template<class SizeManager>
 struct _DoubleHashingProber {
-	static inline len_t get(const size_t& hash_value, const len_t& max_value) {
+	static inline index_fast_t get(const size_t& hash_value, const index_fast_t& max_value) {
 		return (1+(hash_value%(max_value-1))) | 1;
 	}
 };
@@ -296,7 +296,7 @@ class DoubleHashingProber {
 		hash_value = f(key);
 	}
 	template<class SizeManager>
-	inline len_t get(const len_t&, const len_t& tablepos, const len_t&, const len_t& max_value) const {
+	inline index_fast_t get(const index_fast_t&, const index_fast_t& tablepos, const index_fast_t&, const index_fast_t& max_value) const {
 		//return init+i*hash_value;
 		return tablepos+ _DoubleHashingProber<SizeManager>::get(hash_value, max_value); //( (1+(hash_value%(max_value-1)))|1);
 	}
@@ -379,10 +379,10 @@ class HashMap {
 	size_t m_size;
 	key_t* m_keys;
 	value_t* m_values;
-	len_t m_entries = 0;
+	index_fast_t m_entries = 0;
 	float m_load_factor = 0.3f;
 	static constexpr value_t empty_val = undef_id;
-	static constexpr len_t initial_size = 4; // nark::__hsm_stl_next_prime(1)
+	static constexpr index_fast_t initial_size = 4; // nark::__hsm_stl_next_prime(1)
 	IF_STATS(
 		size_t m_collisions = 0;
 		size_t m_old_size = 0;
@@ -427,7 +427,7 @@ class HashMap {
 		m_sizeman.resize(m_size);
 	}
 	template<class T>
-	void incorporate(T&& o, len_t newsize)
+	void incorporate(T&& o, index_fast_t newsize)
 	{
 		if(m_keys != nullptr) { delete [] m_keys; }
 		if(m_values != nullptr) { delete [] m_values; }
@@ -458,7 +458,7 @@ class HashMap {
 	inline HashMap(HashMap&& other) = default;
     inline HashMap& operator=(HashMap&& other) = default;
 
-	void reserve(len_t hint) {
+	void reserve(index_fast_t hint) {
 		IF_STATS(++m_resizes);
 		const auto size = m_sizeman.get_min_size(hint);
 		if(m_entries > 0) {
@@ -474,7 +474,7 @@ class HashMap {
 			std::swap(m_values,values);
 			std::swap(m_keys,keys);
 			m_entries=0;
-			for(len_t i = 0; i < oldsize; ++i) {
+			for(index_fast_t i = 0; i < oldsize; ++i) {
 				if(values[i] == empty_val) continue;
 				auto ret = insert(std::make_pair(std::move(keys[i]),std::move(values[i])));
 				DCHECK_EQ(ret.second, true); // no duplicates
@@ -494,9 +494,9 @@ class HashMap {
 
 	class Iterator {
 		HashMap* m_table;
-		len_t m_offset;
+		index_fast_t m_offset;
 		public:
-		Iterator(HashMap* table, len_t offset)
+		Iterator(HashMap* table, index_fast_t offset)
 			: m_table(table), m_offset(offset)
 		{
 		}
@@ -513,19 +513,19 @@ class HashMap {
 		}
 	};
 
-	inline len_t entries() const { return m_entries; }
-	inline len_t table_size() const { return m_size; }
-	inline len_t empty() const { return m_entries == 0; }
+	inline index_fast_t entries() const { return m_entries; }
+	inline index_fast_t table_size() const { return m_size; }
+	inline index_fast_t empty() const { return m_entries == 0; }
 
 	std::pair<Iterator,bool> insert(std::pair<key_t,value_t>&& value) {
-		len_t i=0;
+		index_fast_t i=0;
 //		const size_t _size = table_size()-1;
 		//const size_t _size = table_size();
 		DCHECK_NE(value.second, empty_val); // cannot insert the empty value
 		const size_t init_hashvalue = m_h(value.first);
 		size_t hash = m_sizeman.mod_tablesize(init_hashvalue, table_size(), init_hashvalue, i);
 		m_probe.init(value.first);
-		len_t tablepos = hash;
+		index_fast_t tablepos = hash;
 		while(true) {
 			if(m_values[tablepos] == empty_val) {
 				m_keys[tablepos] = std::move(value.first);

@@ -83,10 +83,10 @@ public:
         // Stats
         StatPhase phase1("Lz78 compression");
 
-        IF_STATS(len_t stat_dictionary_resets = 0);
-        IF_STATS(len_t stat_dict_counter_at_last_reset = 0);
-        IF_STATS(len_t stat_factor_count = 0);
-        len_t factor_count = 0;
+        IF_STATS(size_t stat_dictionary_resets = 0);
+        IF_STATS(size_t stat_dict_counter_at_last_reset = 0);
+        IF_STATS(size_t stat_factor_count = 0);
+        size_t factor_count = 0;
 
 		size_t remaining_characters = n; // position in the text
         dict_t dict(env().env_for_option("lz78trie"), n, remaining_characters, reserved_size);

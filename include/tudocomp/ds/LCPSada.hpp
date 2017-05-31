@@ -17,7 +17,7 @@ namespace tdc {
  */
 template<class phi_t, class sa_t>
 inline phi_t construct_phi_array(const sa_t& sa) {
-	const len_t n = sa.size();
+	const index_fast_t n = sa.size();
 	//assert_permutation(sa,n);
 
 	phi_t phi(n, 0, bits_for(n));
@@ -40,8 +40,8 @@ template<typename phi_t, typename text_t>
 inline void phi_algorithm(phi_t& phi, const text_t& text) {
 	const size_t n = phi.size();
 	DCHECK_EQ(text[n-1],0);
-	for(len_t i = 0, l = 0; i < n - 1; ++i) {
-		const len_t phii = phi[i];
+	for(index_fast_t i = 0, l = 0; i < n - 1; ++i) {
+		const index_fast_t phii = phi[i];
 		DCHECK_LT(i+l, n);
 		DCHECK_LT(phii+l, n);
 		DCHECK_NE(i, phii);
@@ -74,27 +74,27 @@ class LCPSada {
 		, m_select(&m_bv)
 	{
 	}
-	len_t operator[](len_t i) const {
+	index_fast_t operator[](index_fast_t i) const {
 		if(size() == 1) return 0;
-		const len_t idx = m_sa[i];
+		const index_fast_t idx = m_sa[i];
 		return m_select.select(idx+1) - 2*idx;
 	}
-	len_t plcp(len_t idx) const {
+	index_fast_t plcp(index_fast_t idx) const {
 		if(size() == 1) return 0;
 		return m_select.select(idx+1) - 2*idx;
 	}
-    inline len_t size() const {
+    inline index_fast_t size() const {
 		return m_sa.size();
 	}
 
 	// only for reference:
-	// len_t naive_select(len_t idx) const {
+	// index_fast_t naive_select(index_fast_t idx) const {
 	// 	DCHECK_GT(m_bv.size(), 1);
 	// 	DCHECK_GT(idx,0);
 	// 	DCHECK_LT(idx, m_bv.size());
-	// 	const len_t chunk_size = 1 + ((m_bv.size()-1)/64);
-	// 	len_t pos = 0;
-	// 	len_t rank = 0;
+	// 	const index_fast_t chunk_size = 1 + ((m_bv.size()-1)/64);
+	// 	index_fast_t pos = 0;
+	// 	index_fast_t rank = 0;
 	// 	const uint64_t*const data = m_bv.data();
 	// 	for(pos = 0; pos < chunk_size; ++pos) {
 	// 		const uint_fast8_t ones = sdsl::bits::cnt(data[pos]);
@@ -105,7 +105,7 @@ class LCPSada {
 	// 	return 64*pos + sdsl::bits::sel(data[pos], idx-rank);
 	// }
     //
-	// len_t naive_plcp(len_t idx) const {
+	// index_fast_t naive_plcp(index_fast_t idx) const {
 	// 	if(size() == 1) return 0;
 	// 	return naive_select(idx+1) - 2*idx;
 	// }
@@ -115,20 +115,20 @@ class LCPSada {
 class LCPForwardIterator {
 	sdsl::bit_vector m_bv;
 
-	len_t m_idx = 0; // current select parameter
-	len_t m_block = 0; // block index
-	len_t m_blockrank = 0; //number of ones up to previous block
+	index_fast_t m_idx = 0; // current select parameter
+	index_fast_t m_block = 0; // block index
+	index_fast_t m_blockrank = 0; //number of ones up to previous block
 
 	public:
 	LCPForwardIterator(sdsl::bit_vector&& bv) : m_bv(bv) {}
 
-	len_t index() const { return m_idx; }
+	index_fast_t index() const { return m_idx; }
 
-	len_t next_select() {
+	index_fast_t next_select() {
 		DCHECK_GE(m_bv.size(), 1);
 //		DCHECK_GT(m_idx,0);
 		DCHECK_LT(m_idx+1, m_bv.size());
-		const len_t chunk_size = 1 + ((m_bv.size()-1)/64); //TODO: in constructor
+		const index_fast_t chunk_size = 1 + ((m_bv.size()-1)/64); //TODO: in constructor
 		const uint64_t*const data = m_bv.data();
 		while(m_block < chunk_size) {
 			const uint_fast8_t ones = sdsl::bits::cnt(data[m_block]); // TODO: make member variable to speed up
@@ -140,8 +140,8 @@ class LCPForwardIterator {
 		return 64*m_block + sdsl::bits::sel(data[m_block], m_idx+1-m_blockrank);
 
 	}
-	len_t operator()() {
-		const len_t ret = next_select() - 2*m_idx;
+	index_fast_t operator()() {
+		const index_fast_t ret = next_select() - 2*m_idx;
 		return ret;
 	}
 	void advance() {
@@ -151,16 +151,16 @@ class LCPForwardIterator {
 
 template<class plcp_t>
 inline static sdsl::bit_vector construct_plcp_bitvector(const plcp_t& plcp) {
-	const len_t n = plcp.size();
-	len_t len = plcp[0];
-	for(len_t i = 0; i+1 < n; i++) {
+	const index_fast_t n = plcp.size();
+	index_fast_t len = plcp[0];
+	for(index_fast_t i = 0; i+1 < n; i++) {
 		DCHECK_GE(plcp[i+1]+1, plcp[i]);
 		len += plcp[i+1]-plcp[i]+1;
 	}
 	sdsl::bit_vector bv(len+n,0);
 	bv[plcp[0]]=1;
 	len=plcp[0];
-	for(len_t i = 0; i+1 < n; i++) {
+	for(index_fast_t i = 0; i+1 < n; i++) {
 		len += plcp[i+1]-plcp[i]+2;
 		DCHECK_LT(len, bv.size());
 		bv[len] = 1;

@@ -117,7 +117,7 @@ public:
     virtual void compress(Input& input, Output& out) override {
         StatPhase phase1("lz78u");
         //std::cout << "START COMPRESS\n";
-        const len_t threshold = env().option("threshold").as_integer(); //factor threshold
+        const index_fast_t threshold = env().option("threshold").as_integer(); //factor threshold
         phase1.log_stat("threshold", threshold);
 
         auto iview = input.as_view();
@@ -138,8 +138,8 @@ public:
 
         sdsl::int_vector<> R(ST.internal_nodes,0,bits_for(max_z));
 
-        len_t pos = 0;
-        len_t z = 0;
+        index_fast_t pos = 0;
+        index_fast_t z = 0;
 
         typedef lz78u::SuffixTree::node_type node_t;
 
@@ -149,11 +149,11 @@ public:
             std::make_shared<BitOStream>(out)
         };
 
-        len_t factor_count = 0;
+        index_fast_t factor_count = 0;
 
         // `begin` and `end` denote a half-open range [begin, end)
         // of characters of the input string
-        auto output = [&](len_t begin, len_t end, size_t ref) {
+        auto output = [&](index_fast_t begin, index_fast_t end, size_t ref) {
             // if trailing 0, remove
             while(T[end-1] == 0) --end;
 
@@ -168,18 +168,18 @@ public:
                 // indicate that this is a factorized string
                 strategy.encode_sep(false);
 
-                for(len_t pos = begin; pos < end;) {
+                for(index_fast_t pos = begin; pos < end;) {
                     // similar to the normal LZ78U factorization, but does not introduce new factor ids
 
                     const node_t leaf = ST.select_leaf(ST.cst.csa.isa[pos]);
-                    len_t d = 1;
+                    index_fast_t d = 1;
                     node_t parent = ST.root;
                     node_t node = ST.level_anc(leaf, d);
                     while(!ST.cst.is_leaf(node) && R[ST.nid(node)] != 0) {
                         parent = node;
                         node = ST.level_anc(leaf, ++d);
                     } // not a good feature: We lost the factor ids of the leaves, since R only stores the IDs of internal nodes
-                    const len_t depth = ST.str_depth(parent);
+                    const index_fast_t depth = ST.str_depth(parent);
                     // if the largest factor is not large enough, we only store the current character and move one text position to the right
                     if(depth < threshold) {
                         DVLOG(2) << "sub char";
@@ -225,10 +225,10 @@ public:
         // Skip the trailing 0
         while(pos < T.size() - 1) {
             const node_t l = ST.select_leaf(ST.cst.csa.isa[pos]);
-            const len_t leaflabel = pos;
+            const index_fast_t leaflabel = pos;
 
             if(ST.parent(l) == ST.root || R[ST.nid(ST.parent(l))] != 0) {
-                const len_t parent_strdepth = ST.str_depth(ST.parent(l));
+                const index_fast_t parent_strdepth = ST.str_depth(ST.parent(l));
 
                 //std::cout << "out leaf: [" << (pos+parent_strdepth)  << ","<< (pos + parent_strdepth + 1) << "] ";
                 output(pos + parent_strdepth,
@@ -243,7 +243,7 @@ public:
                 continue;
             }
 
-            len_t d = 1;
+            index_fast_t d = 1;
             node_t parent = ST.root;
             node_t node = ST.level_anc(l, d);
 
@@ -256,8 +256,8 @@ public:
 
 
             // const auto& str = T.slice(leaflabel + ST.str_depth(parent), leaflabel + ST.str_depth(node));
-            const len_t begin = leaflabel + ST.str_depth(parent);
-            const len_t end = leaflabel + ST.str_depth(node);
+            const index_fast_t begin = leaflabel + ST.str_depth(parent);
+            const index_fast_t end = leaflabel + ST.str_depth(node);
 
             //std::cout << "out slice: [ "<< (leaflabel + ST.str_depth(parent)) << ", "<< (leaflabel + ST.str_depth(node))<< " ] ";
             output(begin,

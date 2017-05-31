@@ -32,9 +32,9 @@ public:
 
         StatPhase::wrap("Construct Phi Array", [&]{
             // Construct Phi Array
-            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : LEN_BITS));
+            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : INDEX_FAST_BITS));
 
-            for(len_t i = 1, prev = sa[0]; i < n; i++) {
+            for(index_fast_t i = 1, prev = sa[0]; i < n; i++) {
                 (*this)[sa[i]] = prev;
                 prev = sa[i];
             }

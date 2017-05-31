@@ -18,7 +18,7 @@ struct Literal {
     uliteral_t c;
 
     /// The position of the literal in the input.
-    len_t pos;
+    index_fast_t pos;
 };
 
 class LiteralIterator {
@@ -41,7 +41,7 @@ class NoLiterals : LiteralIterator {
 class ViewLiterals : LiteralIterator {
 private:
     View m_view;
-    len_t m_index;
+    index_fast_t m_index;
 
 public:
     /// \brief Constructor.
