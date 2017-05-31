@@ -89,7 +89,7 @@ private:
                 if(depth < (uint)(min_shorter)){
 
                     //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
-                    bins[min_shorter].push_back(node_id + stree.size());
+           //         bins[min_shorter].push_back(node_id + stree.size());
                 }
             }
         }
@@ -111,7 +111,7 @@ private:
 
 
     BitVector dead_positions;
-    short min_lrf;
+    unsigned short min_lrf;
 
     //could be node_type
     std::vector<std::vector<uint> > bins;
@@ -125,7 +125,6 @@ public:
 
     inline static Meta meta() {
         Meta m("lfs_comp", "sim_st");
-       // m.needs_sentinel_terminator();
         m.option("min_lrf").dynamic(2);
         return m;
     }
@@ -139,7 +138,7 @@ public:
 
 
 
-        dead_positions = BitVector(input.size(), 0);
+
 
 
         StatPhase::wrap("Constructing ST", [&]{
@@ -155,25 +154,24 @@ public:
 
         });
 
-        StatPhase::log("Number of inner Nodes", stree.nodes() - stree.size());
 
 
 
 
-        StatPhase::wrap("Computing LRF", [&]{
+
+      //  StatPhase::wrap("Computing LRF", [&]{
             DLOG(INFO)<<"computing lrf";
 
             //array of vectors for bins of nodes with string depth
 
-
-            bins.resize(200);
             uint node_counter = 0;
+            uint max_depth =0;
 
-            typedef sdsl::cst_bfs_iterator<cst_t> iterator;
-            iterator begin = iterator(&stree, stree.root());
-            iterator end   = iterator(&stree, stree.root(), true, true);
-
-            StatPhase::wrap("Iterate over ST", [&]{
+            StatPhase::wrap("Computing String Depth", [&]{
+                typedef sdsl::cst_bfs_iterator<cst_t> iterator;
+                iterator begin = iterator(&stree, stree.root());
+                iterator end   = iterator(&stree, stree.root(), true, true);
+                bins.resize(200);
                 DLOG(INFO)<<"iterate st";
 
                 for (iterator it = begin; it != end; ++it) {
@@ -188,17 +186,22 @@ public:
                         }
                         bins[stree.depth(*it)].push_back(stree.id(*it));
                         node_counter++;
+                        if(max_depth< stree.depth(*it)){
+                            max_depth = stree.depth(*it);
+                        }
                     }
                 }
             });
 
-            node_begins.resize(node_counter);
-
-
-            //node_tuples.resize(node_counter);
+             StatPhase::log("Number of inner Nodes", stree.nodes() - stree.size());
+            StatPhase::log("Max Depth inner Nodes", max_depth);
+            DLOG(INFO)<<"max depth: "<<max_depth;
 
             uint nts_number =0;
-            StatPhase::wrap("Iterate over Node Bins", [&]{
+            StatPhase::wrap("Computing LRF Substitution", [&]{
+                node_begins.resize(node_counter);
+                dead_positions = BitVector(input.size(), 0);
+
                 for(uint i = bins.size()-1; i>=min_lrf; i--){
                     auto bin_it = bins[i].begin();
                     while (bin_it!= bins[i].end()){
@@ -253,7 +256,9 @@ public:
                             continue;
                         }
                         //check tuple
-                        if(!(node_begins[no_leaf_id].size()>=2) && !( (  (uint)( node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front() )) >= i )){
+                        /*
+                        if( (node_begins[no_leaf_id].size()>=2) &&
+                                ( (  (uint)( node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front() )) < i )){
                             uint min_shorter = node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front();
                             //check if parent subs this lrf
                             node_type parent = stree.parent(node);
@@ -263,6 +268,15 @@ public:
                                 bins[min_shorter].push_back(stree.id(node));
                             }
 
+                           // std::cerr<<"useless code? size " << node_begins[no_leaf_id].size() <<std::endl;
+
+                            bin_it++;
+                            continue;
+                        }
+                        */
+
+                        if( (node_begins[no_leaf_id].size()>=2) &&
+                                ( (  (uint)( node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front() )) < i )){
                             bin_it++;
                             continue;
                         }
@@ -296,7 +310,7 @@ public:
                 }
 
             });
-        });
+    //    });
 
         StatPhase::wrap("Sorting occurences", [&]{
 

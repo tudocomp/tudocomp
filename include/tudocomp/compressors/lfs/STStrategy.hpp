@@ -41,7 +41,7 @@ private:
     uint node_count;
     uint max_depth;
 
-    std::vector<uint> child_sizes;
+   // std::vector<uint> child_sizes;
 
 
    // typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
@@ -74,7 +74,7 @@ private:
                 bins[str_depth].push_back(node);
             }
 
-            child_sizes.push_back(inner->child_nodes.size());
+      //      child_sizes.push_back(inner->child_nodes.size());
 
             auto it = inner->child_nodes.begin();
             while (it != inner->child_nodes.end()){
@@ -121,7 +121,7 @@ private:
 
             }
 
-            if(current < dead_positions.size() && !dead_positions[current] && dead_positions[current+length-1]){
+            if(current < (long) dead_positions.size() && !dead_positions[current] && dead_positions[current+length-1]){
 
 
                 while((current+min_shorter < (long) dead_positions.size()) && !dead_positions[current+min_shorter]){
@@ -170,7 +170,7 @@ public:
         min_lrf = env().option("min_lrf").as_integer();
 
         StatPhase::wrap("Constructing ST", [&]{
-        stree = SuffixTree(input);
+            stree = SuffixTree(input);
         });
 
 
@@ -184,6 +184,8 @@ public:
         StatPhase::log("Number of inner Nodes", node_count);
         StatPhase::log("Max Depth inner Nodes", max_depth);
         DLOG(INFO)<<"max depth: "<<max_depth;
+
+        /*
 
         std::sort(child_sizes.begin(), child_sizes.end());
         if(child_sizes.size()>0){
@@ -205,10 +207,10 @@ public:
                 StatPhase::log("90 \% Child size", child_sizes[(9 * (child_sizes.size()/10) ) -1]);
             }
             StatPhase::log("Max Child size", max_depth);
-        }
+        } */
 
 
-        StatPhase::wrap("Computing LRF Occs", [&]{
+        StatPhase::wrap("Computing LRF Substitution", [&]{
             dead_positions = BitVector(stree.get_size(), 0);
             uint nts_number =0;
 
@@ -294,9 +296,6 @@ public:
 
 
                                 ){
-                          //  DLOG(INFO)<<"is lrf!, length: " << i;
-
-                           // DLOG(INFO)<<"begginging pos: "<<begin_pos.size();
 
 
                             std::vector<uint> sel_pos = select_starting_positions(node, i);
@@ -336,9 +335,19 @@ public:
                         //std::pair<uint,uint> rule = std::make_pair(begin_pos.begin(), pair.first);
 
                        // dictionary.push_back(rule);
-                    } else {
-                     //   DLOG(INFO)<<"not a lrf!";
                     }
+
+                    /*else {
+
+                        uint min_shorter = begin_pos.back() - begin_pos.front();
+                        SuffixTree::STInnerNode * inner = dynamic_cast<SuffixTree::STInnerNode *>(node);
+                        SuffixTree::STInnerNode * parent = inner->parent;
+                        uint parent_depth = parent->string_depth;
+                        if(parent_depth < min_shorter){
+                            bins[min_shorter].push_back(node);
+                        }
+                     //   DLOG(INFO)<<"not a lrf!";
+                    }*/
 
 
                     bin_it++;
@@ -352,9 +361,10 @@ public:
 
 
         });
-
+        StatPhase::wrap("Sorting occurences", [&]{
         DLOG(INFO) << "sorting occurences";
         std::sort(nts_symbols.begin(), nts_symbols.end());
+        });
     }
 };
 }

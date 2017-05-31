@@ -103,9 +103,9 @@ TEST(lfs, st_strat){
 TEST(lfs, sim_st_strat){
 
 
-    run_comp<tdc::lfs::SimSTStrategy<> >("abaaabbababb$");
+    run_comp<tdc::lfs::SimSTStrategy >("abaaabbababb$");
 
-    run_comp<tdc::lfs::SimSTStrategy<> >("ccaabbaabbcca$");
+    run_comp<tdc::lfs::SimSTStrategy >("ccaabbaabbcca$");
 
    // run_comp_file<tdc::lfs::SimSTStrategy<> >("english.1MB");
 }
