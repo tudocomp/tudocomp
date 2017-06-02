@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <title>tudocomp &ndash; Charter</title>
     <script src="d3.v3.js"></script>
+    <script src="charter.js"></script>
 
-    <!--<script src="data.kjv.js"></script>-->
     <script defer src="stat-chart.js"></script>
     <script defer src="stat-ui.js"></script>
 
@@ -44,6 +44,7 @@
                     <p>&hellip; or paste the JSON below and click <button id="json-load"><i class="fa fa-play"></i> Load</button>.</p>
                     <p id="json-error">Failed to load JSON:<br/><code id="json-error-message"></code></p>
                     <p><textarea cols="32" rows="5" id="json"></textarea></p>
+                    <p><button id="json-clear"><i class="fa fa-remove"></i> Clear</button></p>
                 </div>
             </div>
             <div id="chart">
@@ -64,11 +65,10 @@
                     </table>
                 </div>
                 <div id="svg-container">
-                    <svg xmlns="http://www.w3.org/2000/svg" version="1.1" style="font-family: sans-serif; font-size: 10pt;"></svg>
                 </div>
                 <div id="data">
-                    <h1 class="title">Meta</h1>
                     <div id="meta">
+                        <h1 class="title">Meta</h1>
                         <table>
                             <tbody class="basic">
                                 <tr><th>Time:</th><td class="timestamp"></td></tr>

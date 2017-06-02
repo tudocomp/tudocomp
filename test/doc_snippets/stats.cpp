@@ -70,3 +70,27 @@ TEST(stats, example) {
     root.to_json().str(std::cout);
 }
 
+TEST(stats, pause_resume) {
+    StatPhase phase("Pause and Resume");
+
+    // Allocate memory, but only track mem2
+    StatPhase::pause_tracking();
+    char* mem1 = new char[1024];
+    StatPhase::resume_tracking();    
+
+    char* mem2 = new char[2048];
+
+    // Sleep
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Free memory, but only track mem2
+    StatPhase::pause_tracking();
+    delete[] mem1;
+    StatPhase::resume_tracking();
+
+    delete[] mem2;
+
+    // Print data in JSON representation to stdout
+    phase.to_json().str(std::cout);
+}
+

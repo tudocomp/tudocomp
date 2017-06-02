@@ -63,6 +63,17 @@ public:
         write_next();
     }
 
+    /// \brief Returns the output position indicator of the underlying stream,
+    ///        which should equal the amount of bytes written to it.
+    ///
+    /// Note that this value does not include bits that have not yet been
+    /// flushed.
+    ///
+    /// \return the output position indicator of the underlying stream
+    inline auto tellp() -> decltype(m_stream.tellp()) {
+        return m_stream.tellp();
+    }
+
     /// \brief Writes a single bit to the output.
     /// \param set The bit value (0 or 1).
     inline void write_bit(bool set) {

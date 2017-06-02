@@ -1,378 +1,66 @@
-var colors = [
-    "#4682B4", // steelblue
-    "#FF6347", // tomato
-    "#FF8C00", // darkorange
-    "#8FBC8F", // darkseagreen
-    "#6A5ACD", // slateblue
-    "#BC8F8F", // rosybrown
-    "#FF69B4", // hotpink
-    "#DDA0DD", // plum
-    "#90EE90", // lightgreen
-    "#708090", // slategrey
-    "#FFD700", // gold
-    "#CD853F", // peru
-    "#9ACD32", // yellowgreen
-];
-
-var grayColor = "#CCC";
-var grayFontColor = "#888";
-
-/*
-    Shade color by percentage.
-    Source: http://stackoverflow.com/questions/5560248 (shadeColor2 by Pimp Trizkit)
-*/
-function shadeColor(color, percent) {
-    var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
-    return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
-}
-
-var memUnits = ["bytes", "KiB", "MiB", "GiB"];
-
+// Application data
 var app = {
-    // Data
     raw: null,
-    meta: null,
-    data: [],
-    groups: [],
-    root: null,
-
-    // Options
     options: {
-       drawGroups: true,
-       drawOffsets: true,
-       drawLegend: true
+        svgWidth: 900,
+        svgHeight: 450,
+        drawGroups: true,
+        drawOffsets: true,
+        drawLegend: true,
     },
 
-    // Dimensions
-    svgWidth: 900,
-    svgHeight: 450,
-
-    chartWidth: 0,
-    chartHeight: 0,
-
-    // Scales
-    tUnit: "s",
-    tScale: null,
-
-    memUnit: "",
-    memScale: null,
-
-    // Axes
-    x: null,
-    y: null,
-
-    // Elements
+    chart: null,
     marker: null,
+}
 
-    // Utility
-    timeToPx: function(ms) {
-        return app.x(app.tScale(ms));
-    },
+// print meta information
+var printMeta = function() {
+    var meta = app.chart.data.meta;
+    if(meta) {
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    memToPx: function(bytes) {
-        return app.y(app.memScale(bytes));
+        var date = new Date(meta.startTime * 1000);
+        var year = date.getFullYear();
+        var month = months[date.getMonth()];
+        var day = date.getDate();
+        var hours = date.getHours();
+        var minutes = "0" + date.getMinutes();
+        var seconds = "0" + date.getSeconds();
+
+        if(!meta.title) meta.title = "Untitled";
+
+        d3.select("#meta").style("display", "block");
+        d3.select("#meta h1").text(meta.title);
+        d3.select("#meta td.timestamp").text(month + " " + day + ", " + year + " - " + hours + ":" + minutes.substr(-2) + ":" + seconds.substr(-2));
+        d3.select("#meta td.config").text(meta.config);
+        d3.select("#meta td.input").text(meta.input);
+        d3.select("#meta td.input-size").text(formatMem(meta.inputSize));
+        d3.select("#meta td.output").text(meta.output);
+        d3.select("#meta td.output-size").text(formatMem(meta.outputSize));
+        d3.select("#meta td.rate").text(formatPercent(meta.rate));
+    } else {
+        d3.select("#meta").style("display", "none");
     }
 }
 
-//Convert stats to data
-var convert = function(x, memOff, level) {
-    var ds = {
-        title:     x.title,
-        tStart:    x.timeStart - app.raw.timeStart,
-        tEnd:      x.timeEnd - app.raw.timeStart,
-        tDuration: (x.timeEnd - x.timeStart),
-        memOff:    memOff + x.memOff,
-        memPeak:   memOff + x.memOff + x.memPeak,
-        memFinal:  memOff + x.memOff + x.memFinal,
-        stats:     x.stats,
-        sub:       []
-    };
+// redraw chart
+var drawChart = function(data) {
+    // create chart object
+    app.chart = new chart(app.raw, app.options);
 
-    if(x != app.raw && x.sub.length > 0) {
-        ds.level = level;
-        app.groups.push(ds);
-    } else if(x.sub.length == 0) {
-        ds.color = colors[app.data.length % colors.length];
-        app.data.push(ds);
-    }
+    // insert SVG
+    var container = d3.select("#svg-container");
+    container.html(app.chart.svg);
 
-    for(var i = 0; i < x.sub.length; i++) {
-        ds.sub.push(convert(x.sub[i], memOff + x.memOff, level + 1));
-    }
+    // print or hide meta information
+    printMeta();
 
-    return ds;
-};
+    // print data table
+    printDataTable();
 
-var printMeta = function(meta) {
-    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-    var date = new Date(meta.startTime * 1000);
-    var year = date.getFullYear();
-    var month = months[date.getMonth()];
-    var day = date.getDate();
-    var hours = date.getHours();
-    var minutes = "0" + date.getMinutes();
-    var seconds = "0" + date.getSeconds();
-
-    if(!meta.title) meta.title = "Untitled";
-
-    d3.select("#data h1.title").text(meta.title);
-    d3.select("#meta td.timestamp").text(month + " " + day + ", " + year + " - " + hours + ":" + minutes.substr(-2) + ":" + seconds.substr(-2));
-    d3.select("#meta td.config").text(meta.config);
-    d3.select("#meta td.input").text(meta.input);
-    d3.select("#meta td.input-size").text(formatMem(meta.inputSize));
-    d3.select("#meta td.output").text(meta.output);
-    d3.select("#meta td.output-size").text(formatMem(meta.outputSize));
-    d3.select("#meta td.rate").text(formatPercent(meta.rate));
-}
-
-var drawChart = function(raw) {
-    app.data = [];
-    app.groups = [];
-
-    app.root = convert(raw, raw.memOff, -1);
-
-    // Define dimensions
-    var groupBracketHeight = 15;
-    var groupLevelMax = d3.max(app.groups, function(g) { return g.level; });
-    var groupLevelIndent = function(level) {
-        return (groupLevelMax - level) * 30;
-    };
-
-    var margin = {
-        top: 10,
-        left: 55,
-        bottom: 50,
-        right: 10
-    };
-
-    if(app.options.drawGroups && app.groups.length > 0) {
-        margin.top += groupLevelIndent(-1) + groupBracketHeight;
-    }
-
-    if(app.options.drawLegend) {
-        var longestTitle = d3.max(app.data, function(d) { return d.title.length; });
-        margin.right += longestTitle * 8;
-    }
-
-    app.chartWidth = app.svgWidth - margin.left - margin.right;
-    app.chartHeight = app.svgHeight - margin.top - margin.bottom;
-
-    // Define scales
-    var tDuration = raw.timeEnd - raw.timeStart;
-
-    app.tScale = d3.scale.linear()
-                .range([0, tDuration / 1000])
-                .domain([0, tDuration]);
-
-    var memDiv = 1;
-    {
-        var u = 0;
-        var memPeak = raw.memPeak;
-        while(u < memUnits.length && memPeak > 1024) {
-            memPeak /= 1024.0;
-            memDiv *= 1024;
-            u++;
-        }
-
-        app.memUnit = memUnits[u];
-    }
-
-    app.memScale = d3.scale.linear()
-                    .range([0, raw.memPeak / memDiv])
-                    .domain([0, raw.memPeak]);
-
-    // Define axes
-    app.x = d3.scale.linear()
-                .range([0, app.chartWidth])
-                .domain(app.tScale.range());
-
-    app.y = d3.scale.linear()
-                .range([app.chartHeight, 0])
-                .domain(app.memScale.range());
-
-    var xAxis = d3.svg.axis().scale(app.x).orient("bottom").ticks(15);
-    var yAxis = d3.svg.axis().scale(app.y).orient("left");
-
-    // Clear chart
-    var svg = d3.select("#chart svg");
-    svg.html("");
-
-    // Create new chart
-    var chart = svg
-        .attr("width", app.svgWidth)
-        .attr("height", app.svgHeight)
-        .append("g")
-        .attr("class", "zoom")
-        .attr("transform", "scale(1.0)")
-        .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-    chart.on("mousemove", chartMouseMove);
-    chart.on("mouseout", chartMouseOut);
-
-    // Draw background - TODO: optional?
-    /*chart.append("rect")
-        .attr("class", "back")
-        .attr("x", "0")
-        .attr("y", "0")
-        .attr("width", app.chartWidth)
-        .attr("height", app.chartHeight)
-        .attr("fill", "white");*/
-
-    // Draw bars
-    var bar = chart.selectAll("g.bar")
-        .data(app.data).enter()
-        .append("g")
-        .attr("class", "bar")
-        .attr("transform", function(d) {
-            return "translate(" + app.timeToPx(d.tStart) + ",0)";
-         });
-
-    // Main bar
-    bar.append("rect")
-        .attr("class", "mem")
-        .attr("x", "0")
-        .attr("y", function(d) { return app.memToPx(d.memPeak); })
-        .attr("width", function(d) { return app.timeToPx(d.tDuration); })
-        .attr("height", function(d) { return app.chartHeight - app.memToPx(d.memPeak); })
-        .attr("fill", function(d) { return d.color; });
-
-    // Offset bar
-    if(app.options.drawOffsets) {
-        bar.append("rect")
-            .attr("class", "mem")
-            .attr("x", "0")
-            .attr("y", function(d) { return app.memToPx(d.memOff); })
-            .attr("width", function(d) { return app.timeToPx(d.tDuration); })
-            .attr("height", function(d) { return app.chartHeight - app.memToPx(d.memOff); })
-            .attr("fill", function(d) { return shadeColor(d.color, -0.25); });
-    }
-
-    // Draw legend
-    if(app.options.drawLegend) {
-        var legend = chart.selectAll("g.legend")
-                    .data(app.data).enter()
-                    .append("g")
-                    .attr("class", "legend")
-                    .attr("transform", function(d) {
-                        return "translate(" + (app.x.range()[1] + 5) + ",0)";
-                    });
-
-        legend.append("rect")
-            .attr("fill", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? grayColor : d.color; })
-            .attr("x", "0")
-            .attr("y", function(d, i) { return (i * 1.35) + "em" })
-            .attr("width", "1em")
-            .attr("height", "1em");
-
-        legend.append("text")
-            .attr("x", "1.15em")
-            .attr("y", function(d, i) { return (i * 1.35) + "em" })
-            .attr("dy", "0.85em")
-            .text(function(d) { return d.title; })
-            .style("fill", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? grayFontColor : "inherit"; })
-            .style("font-style", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? "italic" : "normal"; })
-            .style("text-decoration", function(d) { return (app.timeToPx(d.tDuration) < 1.0) ? "line-through" : "none"; });
-    }
-
-    // Draw groups
-    if(app.options.drawGroups) {
-        var group = chart.selectAll("g.group")
-            .data(app.groups).enter()
-            .append("g")
-            .attr("class", "group")
-            .attr("transform", function(d) {
-                return "translate(" + app.timeToPx(d.tStart) + ",0)";
-            });
-
-        group.append("text")
-            .attr("x", function(d) { return app.timeToPx(d.tDuration / 2); })
-            .attr("y", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level) - groupBracketHeight; })
-            .attr("dy", "-3")
-            .style("font-weight", "bold")
-            .style("text-anchor", "middle")
-            .text(function(d) { return d.title; });
-
-        group.append("path")
-            .attr("d", function(d) {
-                // draw curly brace
-                var x1 = 0;
-                var x2 = app.timeToPx(d.tDuration);
-                var y = app.memToPx(d.memPeak) - groupLevelIndent(d.level);
-
-                var w = x2 - x1;
-                var w4 = w/4;
-                var h = groupBracketHeight;
-                var h2 = h/2;
-                var h4 = h/4;
-
-                return "M " + x1 + " " + y +
-                " q 0 " + (-h2) + ", " + w4 + " " + (-h2) +
-                " q " + w4 + " 0, " + w4 + " " + (-h2) +
-                " q 0 " + h2 + ", " + w4 + " " + h2 +
-                " q " + w4 + " 0, " + w4 + " " + h2;
-            })
-            .style("fill", "none")
-            .style("stroke", "black")
-            .style("stroke-width", "1.5");
-
-        group.append("line")
-            .attr("x1", 0)
-            .attr("x2", 0)
-            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
-            .attr("y2", app.chartHeight);
-
-        group.append("line")
-            .attr("x1", function(d) { return app.timeToPx(d.tDuration); })
-            .attr("x2", function(d) { return app.timeToPx(d.tDuration); })
-            .attr("y1", function(d) { return app.memToPx(d.memPeak) - groupLevelIndent(d.level); })
-            .attr("y2", app.chartHeight);
-
-        group.selectAll("line")
-            .style("stroke", "rgba(0,0,0,0.25)")
-            .style("stroke-width", "1")
-            .style("stroke-dasharray", "5,2");
-    }
-
-    // Draw axes
-    chart.append("g")
-        .attr("class", "axis")
-        .attr("transform", "translate(0," + app.chartHeight + ")")
-        .call(xAxis);
-
-    chart.append("text")
-        .attr("class", "axis-label")
-        .attr("transform", "translate(" + app.chartWidth / 2 + "," + app.chartHeight + ")")
-        .attr("dy", "3em")
-        .style("font-weight", "bold")
-        .style("font-style", "italic")
-        .style("text-anchor", "middle")
-        .text("Time / " + app.tUnit);
-
-    chart.append("g")
-        .attr("class", "axis")
-        .call(yAxis);
-
-    chart.append("text")
-        .attr("class", "axis-label")
-        .attr("transform", "translate(0," + app.chartHeight / 2 + ") rotate(-90)")
-        .attr("dy", "-3em")
-        .style("font-weight", "bold")
-        .style("font-style", "italic")
-        .style("text-anchor", "middle")
-        .text("Memory Peak / " + app.memUnit);
-
-    chart.selectAll(".axis path.domain")
-        .style("fill", "none")
-        .style("stroke", "black")
-        .style("shape-rendering", "crispEdges");
-
-    chart.selectAll(".axis g.tick line")
-        .style("stroke", "black");
-
-    // Marker
-    app.marker = chart.append("g")
+    // create marker
+    var gChart = d3.select("#chart svg > g > g")
+    app.marker = gChart.append("g")
         .attr("class", "marker")
         .attr("transform", "translate(0, 0)");
 
@@ -380,7 +68,7 @@ var drawChart = function(raw) {
         .attr("x1", "0")
         .attr("x2", "0")
         .attr("y1", 0)
-        .attr("y2", app.chartHeight)
+        .attr("y2", app.chart.height)
         .style("stroke", "black")
         .style("stroke-width", "1");
 
@@ -390,23 +78,26 @@ var drawChart = function(raw) {
         .attr("r", "3")
         .style("fill", "black");
 
-    // Data table
-    printDataTable();
+    // initially hide marker
+    hideMarker();
 
-    // Post
+    // hook mouse events
+    gChart.on("mousemove", chartMouseMove);
+    gChart.on("mouseout", chartMouseOut);
+
+    // post actions
     d3.select("#dropzone-wrapper").style("display", "none");
     d3.select("#footer").style("display", "none");
     d3.select("#chart").style("display", "block");
     d3.select("#options").style("display", "block");
 
     updateZoomText(1.0);
-    hideMarker();
 };
 
 var printPhase = function(parentElem, d) {
     var phaseNode = parentElem.insert("div").attr("class", "phase");
 
-    var shortPhase = (app.timeToPx(d.tDuration) < 1.0);
+    var shortPhase = (app.chart.timeToPx(d.tDuration) < 1.0);
     var titleNode = phaseNode.insert("div")
         .attr("class", "title " + ((d.sub.length > 0) ? "group" : "leaf"))
         .style("border-left-color", shortPhase ? grayColor : d.color)
@@ -430,12 +121,12 @@ var printDataTable = function() {
     var data = d3.select("#data-content");
     data.html("");
 
-    printPhase(data, app.root);
+    printPhase(data, app.chart.data.root);
 };
 
 var fillStatTable = function(d, e) {
     var dur = d.tEnd - d.tStart;
-    var durPct = dur / app.tScale.invert(app.tScale.range()[1]);
+    var durPct = dur / app.chart.data.root.tDuration;
 
     e.select(".title").text(d.title);
     e.select(".start").text(formatTime(d.tStart));
@@ -458,7 +149,11 @@ var fillStatTable = function(d, e) {
 
 // Formatting functions
 var formatTime = function(ms) {
-    return app.tScale(ms).toFixed(3) + " " + app.tUnit;
+    if(ms < 1000) {
+        return ms + " ms";
+    } else {
+        return (ms / 1000).toFixed(3) + " s";
+    }
 };
 
 var formatMem = function(mem) {
@@ -485,19 +180,19 @@ var hideMarker = function() {
 }
 
 var setMarker = function(xpos) {
-    var t = app.tScale.invert(app.x.invert(xpos));
+    var t = app.chart.pxToTime(xpos);
 
-    for(var i = 0; i < app.data.length; i++) {
-        var d = app.data[i];
+    for(var i = 0; i < app.chart.data.data.length; i++) {
+        var d = app.chart.data.data[i];
         if(t >= d.tStart && t <= d.tEnd) {
-            var memY = app.memToPx(d.memPeak);
+            var memY = app.chart.memToPx(d.memPeak);
 
             app.marker.attr("transform", "translate(" + xpos + ",0)");
-            app.marker.select("circle").attr("cy", memY);
+            app.marker.select("circle").attr("cy", app.chart.height - memY);
 
             return {
                 data: d,
-                y:    memY
+                y:    app.chart.height - memY
             };
         }
     }
@@ -512,7 +207,7 @@ var chartMouseMove = function() {
     var m = d3.mouse(this);
 
     var mx = m[0], my = m[1];
-    if(mx >= 0 && mx <= app.chartWidth && my >= 0 && my <= app.chartHeight) {
+    if(mx >= 0 && mx <= app.chart.width && my >= 0 && my <= app.chart.height) {
         var marker = setMarker(mx);
         if(marker && marker.data) {
             showMarker();
@@ -523,7 +218,7 @@ var chartMouseMove = function() {
                 cachedTop = marker.y;
 
                 var dur = d.tEnd - d.tStart;
-                var durPct = dur / app.tScale.invert(app.tScale.range()[1]);
+                var durPct = dur / app.chart.data.root.tDuration;
 
                 var tip = d3.select("#tip");
                 fillStatTable(d, tip);
@@ -545,7 +240,7 @@ var chartMouseOut = function() {
     var m = d3.mouse(this);
 
     var mx = m[0], my = m[1];
-    if(mx >= 0 && mx <= app.chartWidth && my >= 0 && my <= app.chartHeight) {
+    if(mx >= 0 && mx <= app.chart.width && my >= 0 && my <= app.chart.height) {
         var marker = setMarker(mx);
         if(marker && marker.data && my >= marker.y) {
             return;
@@ -558,32 +253,25 @@ var chartMouseOut = function() {
 
 var setZoom = function(zoom) {
     d3.select("#chart svg")
-        .attr("width", app.svgWidth * zoom)
-        .attr("height", app.svgHeight * zoom);
+        .attr("width", app.options.svgWidth * zoom)
+        .attr("height", app.options.svgHeight * zoom);
     d3.select("#chart g.zoom").attr("transform", "scale(" + zoom + ")");
 
     updateZoomText(zoom);
 }
 
 var redrawChart = function() {
-    drawChart(app.raw);
-    if(app.meta) printMeta(app.meta);
+    drawChart();
 }
 
 var loadJSON = function(json) {
     d3.select("#json")[0][0].value = json;
     d3.select("#json-error").style("display", "none");
     try {
-        var x = JSON.parse(json);
-        if(x.meta) {
-            app.raw = x.data;
-            app.meta = x.meta;
-        } else {
-            app.raw = x;
-        }
-
+        app.raw = JSON.parse(json);
         redrawChart();
     } catch(err) {
+        console.log(err);
         d3.select("#json-error-message").text(err.message);
         d3.select("#json-error").style("display", "block");
     }

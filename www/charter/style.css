@@ -113,6 +113,10 @@ button {
     font-size: 1rem;
 }
 
+button#json-clear {
+    font-size: 0.8rem;
+}
+
 #display {
     background-color: white;
 }

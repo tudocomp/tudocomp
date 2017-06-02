@@ -8,10 +8,12 @@
 
 #ifndef STATS_DISABLED
 
+/// \cond INTERNAL
 namespace malloc_callback {
     void on_alloc(size_t);
     void on_free(size_t);
 }
+/// \endcond
 
 #endif
 

@@ -19,6 +19,10 @@ namespace io {
         public:
             virtual ~Variant() {}
             virtual std::ostream& stream() = 0;
+
+            virtual std::streampos tellp() {
+                return stream().tellp();
+            }
         };
 
         class Memory: public Variant {
@@ -37,6 +41,10 @@ namespace io {
 
             inline Memory(const Memory& other) = delete;
             inline Memory() = delete;
+
+            virtual std::streampos tellp() override {
+                return m_stream.size();
+            }
         };
         class Stream: public Variant {
             std::ostream* m_stream;
@@ -142,6 +150,10 @@ namespace io {
                 return m_variant->stream().rdbuf();
             }
         }
+
+        inline std::streampos tellp() {
+            return m_variant->tellp();
+        }
     };
     /// \endcond
 
@@ -164,6 +176,10 @@ namespace io {
 
         /// \brief Default constructor (deleted).
         inline OutputStream() = delete;
+
+        inline std::streampos tellp() {
+            return OutputStreamInternal::tellp();
+        }
     };
 
     inline OutputStream Output::Memory::as_stream() const {
