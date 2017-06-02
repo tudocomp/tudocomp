@@ -403,6 +403,7 @@ public:
 
 
             DLOG(INFO) << "encoding dictionary symbols";
+            uint literals=0;
 
             // encode dictionary strings, backwards, to directly decode strings:
             if(non_terminal_symbols.size()>=1){
@@ -428,6 +429,7 @@ public:
                         //    DLOG(INFO)<<"encoding literal: "<< in[pos];
                             lit_coder.encode(0, bit_r);
                             lit_coder.encode(in[pos],literal_r);
+                            literals++;
 
                         }
                     }
@@ -435,6 +437,9 @@ public:
 
                 }
             }
+
+             StatPhase::log("Literals in Dictionary", literals);
+             literals=0;
 
 
 
@@ -462,6 +467,7 @@ public:
                    // DLOG(INFO)<<"encoding literal: "<< in[pos];
                     lit_coder.encode(0, bit_r);
                     lit_coder.encode(in[pos],literal_r);
+                    literals++;
 
 
                 }
@@ -473,6 +479,8 @@ public:
 
             DLOG(INFO)<<"Bytes Start Symbol Encoding: "<< buf_size;
 
+             StatPhase::log("Literals in Start Symbol", literals);
+             StatPhase::log("Literals in Input", in.size());
 
             std::cerr<<"encoding done"<<std::endl;
 

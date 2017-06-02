@@ -104,6 +104,7 @@ public:
 
        // long alt_size = ;
         StatPhase::log("Bytes Length Encoding", buf_size);
+        uint literals=0;
 
 
         DLOG(INFO) << "encoding dictionary symbols";
@@ -121,13 +122,18 @@ public:
 
                 for(uint k = 0; k<symbol.second; k++){
                     lit_coder.encode(in[symbol.first + k],literal_r);
+                    literals++;
                 }
                 it++;
             }
         }
 
+        StatPhase::log("Literals in Dictionary", literals);
+
         buf_size = bitout->tellp() - buf_size;
         StatPhase::log("Bytes Non-Terminal Symbol Encoding", buf_size);
+
+        literals=0;
 
         Range dict_r(0, dictionary.size());
         //encode string
@@ -150,6 +156,8 @@ public:
                 lit_coder.encode(0, bit_r);
                 lit_coder.encode(in[pos], literal_r);
 
+                literals++;
+
                 if(first_char){
                     first_char=false;
                 }
@@ -170,10 +178,14 @@ public:
             lit_coder.encode(0, bit_r);
             lit_coder.encode(in[pos], literal_r);
             pos++;
+
+            literals++;
         }
 
         buf_size = bitout->tellp() - buf_size;
         StatPhase::log("Bytes Start Symbol Encoding", buf_size);
+
+        StatPhase::log("Literals in Start Symbol", literals);
 
         DLOG(INFO) << "compression with lfs done";
 
