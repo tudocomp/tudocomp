@@ -391,3 +391,5 @@ def gen_algorithm_cpp():
 
 
 gen_algorithm_cpp()
+
+os.sync()
