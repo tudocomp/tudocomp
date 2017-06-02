@@ -245,10 +245,6 @@ def gen_algorithm_cpp():
         instances = []
         for (headers, line, hierachy) in gen_list(l):
             hsh = make_hash(line)[0:10]
-            header_lines = []
-            for header in headers:
-                header_lines.append(str.format("#include <tudocomp/{}>", header))
-            register_line = str.format("r.register_algorithm<{}>();", line)
             escaped_line = line \
                 .replace('<', '_') \
                 .replace('>', '_') \
@@ -336,7 +332,6 @@ def gen_algorithm_cpp():
 
             group_paths = []
             for group in instance_groups:
-                pass
                 conc = "".join([x.identifier for x in group])
                 group_file_name = "group_" + make_hash(conc) + ".cpp"
                 group_content = "".join([x.content for x in group])
