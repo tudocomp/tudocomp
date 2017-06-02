@@ -111,6 +111,5 @@ namespace tdc {
 
     /// \brief Global predefined range for `len_t`.
     constexpr auto len_r = LengthRange();
-
 }
 

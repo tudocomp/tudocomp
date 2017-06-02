@@ -73,10 +73,6 @@ find_or_download_package(SDSL SDSL sdsl)
 
 include(FindJudy)
 
-# Header-files
-FILE(GLOB_RECURSE LibFiles "include/*.hpp")
-add_custom_target(headers SOURCES ${LibFiles})
-
 # Generate source files
 include(generate_tudocomp_sources)
 

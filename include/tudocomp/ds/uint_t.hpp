@@ -83,7 +83,7 @@ public:
     constexpr operator signed char() const { return m_data; }
 
     constexpr uint_t(char i): m_data(i) {}
-    inline uint_t& operator=(char data) { m_data = data; return *this; }
+    constexpr uint_t& operator=(char data) { m_data = data; return *this; }
     constexpr operator char() const { return m_data; }
 
     // conversions for all fundamental integer types
