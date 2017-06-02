@@ -51,7 +51,7 @@ public:
             C.resize(ULITERAL_MAX+1, 0);
 
             while(input.has_next()) {
-                literal_t c = input.next().c;
+                uliteral_t c = input.next().c;
                 DCHECK_LT(static_cast<uliteral_t>(c), ULITERAL_MAX+1);
                 DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_t>::max());
                 ++C[static_cast<uliteral_t>(c)];
@@ -127,12 +127,12 @@ public:
             m_out->write_int((uliteral_t) codebook_size);
 
             if(C[0]!=0) {
-                m_out->write_int(literal_t(0));
+                m_out->write_int(uliteral_t(0));
                 m_out->write_int(C[0]);
             }
             for(ulong i=1; i<=ULITERAL_MAX;i++) {
                 if(C[i]!=C[i-1]) {
-                    m_out->write_int((literal_t) i);
+                    m_out->write_int((uliteral_t) i);
                     m_out->write_int(C[i]);
                 }
 
@@ -175,7 +175,7 @@ public:
     /// \brief Decodes data from an Arithmetic character stream.
     class Decoder : public tdc::Decoder {
     private:
-        std::vector<std::pair<literal_t ,int>> literals;
+        std::vector<std::pair<uliteral_t ,int>> literals;
         std::string decoded;
         uliteral_t codebook_size;
         len_t literal_count = 0;
@@ -197,7 +197,7 @@ public:
                 ulong interval_lower_bound = lower_bound;
                 //search the right interval
                 for(int i = 0; i < codebook_size ; i++) {
-                    const std::pair<literal_t, int>& pair=literals[i];
+                    const std::pair<uliteral_t, int>& pair=literals[i];
                     const ulong offset = range <= interval_parts ? range*pair.second/interval_parts : range/interval_parts*pair.second;
                     upper_bound = lower_bound + offset;
                     if(code < upper_bound) {
@@ -225,9 +225,9 @@ public:
 
             //read and parse dictionary - is is already "normalized"
             for (int i =0; i<codebook_size; i++) {
-                literal_t c = m_in->read_int<literal_t>();
+                uliteral_t c = m_in->read_int<uliteral_t>();
                 int val = m_in->read_int<int>();
-                literals[i]=std::pair<literal_t, int>(c, val);
+                literals[i]=std::pair<uliteral_t, int>(c, val);
             }
 
             min_range=literals[codebook_size-1].second;

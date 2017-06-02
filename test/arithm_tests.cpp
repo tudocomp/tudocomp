@@ -18,9 +18,9 @@ void test_arithm(const std::string& text) {
         ArithmeticCoder::Encoder encoder(create_env(ArithmeticCoder::meta()), out, ViewLiterals(text));
 
         {//now writing
-            literal_t c;
+            char c;
             while(input.get(c)) {
-                encoder.encode(c, tdc::literal_r);
+                encoder.encode(uliteral_t(c), tdc::literal_r);
             }
         }
     }
@@ -32,7 +32,7 @@ void test_arithm(const std::string& text) {
         input.str(std::string{});
 
         while(!decoder.eof()) {
-            input << decoder.template decode<literal_t> (literal_r);
+            input << decoder.template decode<uliteral_t> (literal_r);
         }
     }
     ASSERT_EQ(input.str(), text);
