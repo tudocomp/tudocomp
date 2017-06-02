@@ -11,6 +11,10 @@
 
 #include <tudocomp_stat/StatPhase.hpp>
 
+// For default params
+#include <tudocomp/compressors/lcpcomp/decompress/CompactDec.hpp>
+#include <tudocomp/compressors/lcpcomp/compress/MaxLCPStrategy.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 class MaxLCPStrategy;
