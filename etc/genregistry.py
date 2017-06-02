@@ -8,6 +8,7 @@ import pprint
 import hashlib
 import collections
 import os
+import time
 
 from operator import itemgetter, attrgetter
 from textwrap import dedent, indent
@@ -28,9 +29,10 @@ config_path = args.config_header_path
 out_path = args.out_path
 
 def eval_config(path, globs):
-    file2 = open(path, 'r')
-    content = file2.read()
-    file2.close()
+    file0 = open(path, 'r')
+    content = file0.read()
+    file0.flush()
+    file0.close()
     exec(content, globs)
 
 def config_match(pattern):
@@ -61,43 +63,6 @@ def iprint(*arg):
 # //  The registered algorithms now live in registry_config.py  // #
 # //                                                            // #
 # //////////////////////////////////////////////////////////////// #
-
-instance_fn_signature_name = "register_$ID"
-instance_fn_signature = "void " + instance_fn_signature_name + "(Registry<$KIND>& r)"
-
-instance_root_cpp_decl = '''
-#include <tudocomp_driver/Registry.hpp>
-
-namespace tdc_algorithms {
-using namespace tdc;
-
-void register_compressors(Registry<$KIND>& r);
-$FORWARD_DECLARE
-
-// One global instance for the registry
-Registry<$KIND> COMPRESSOR_REGISTRY = Registry<$KIND>::with_all_from(register_compressors, "compressor");
-
-void register_compressors(Registry<$KIND>& r) {
-$COMPRESSOR_CALLS
-}//function register_compressors
-
-}//ns
-'''
-
-instance_cpp_decl = '''
-#include <tudocomp_driver/Registry.hpp>
-$HEADERS
-
-namespace tdc_algorithms {
-
-using namespace tdc;
-
-$SIGNATURE {
-    $COMPRESSOR
-}
-
-}//ns
-'''
 
 def code(s, i = 0, r = {}):
     s = indent(dedent(s)[1:], '    ' * i)
@@ -241,15 +206,6 @@ def gen_list(ls):
         return_list += expand_deps(algorithm)
     return return_list
 
-# Generates list of all includes
-def gather_header(ls):
-    headers = set()
-    for e in ls:
-        headers |= { e[1] }
-        for a in e[2]:
-            headers |= gather_header(a)
-    return headers
-
 def make_hash(s):
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
 
@@ -263,7 +219,16 @@ def update_file(path, content):
             return
     file1 = open(path, 'w+')
     file1.write(content)
+    file1.flush()
     file1.close()
+    while not os.path.exists(path):
+        time.sleep(0.01)
+    while True:
+        file3 = open(path, 'r')
+        actually_written_content = file3.read()
+        file3.close()
+        if actually_written_content == content:
+            break
 
 # Output algorithm.cpp
 def gen_algorithm_cpp():
@@ -334,7 +299,7 @@ def gen_algorithm_cpp():
                     break
                 instance_groups.pop(0)
 
-                counter = {}
+                counter = OrderedDict()
                 for x in first:
                     for b in x.hierachy:
                         if not b in counter: counter[b] = 0
