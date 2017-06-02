@@ -1,10 +1,11 @@
 set(GENERATE_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated_source)
 file(MAKE_DIRECTORY ${GENERATE_DIR})
 
+set(GENREGCONFIG ${CMAKE_SOURCE_DIR}/etc/registry_config.py)
 set(GENREGSCRIPT ${CMAKE_SOURCE_DIR}/etc/genregistry.py)
 set(GENREGCOMMAND
     ${GENREGSCRIPT}
-    ${CMAKE_SOURCE_DIR}/etc/registry_config.py
+    ${GENREGCONFIG}
     ${CMAKE_BINARY_DIR}/include/tudocomp/config.h
     ${GENERATE_DIR}
     --group 20
@@ -21,7 +22,7 @@ endif()
 
 add_custom_command(
     COMMAND ${GENREGCOMMAND} --generate_files
-    DEPENDS ${GENREGSCRIPT}
+    DEPENDS ${GENREGSCRIPT} ${GENREGCONFIG}
     OUTPUT ${OUTPUTS}
     COMMENT "Generating the registry..."
 )
@@ -41,4 +42,5 @@ target_link_libraries(
 
 cotire(tudocomp_algorithms)
 
-configure_file(${GENREGSCRIPT} ${GENERATE_DIR}/trash COPYONLY)
+configure_file(${GENREGSCRIPT} ${GENERATE_DIR}/trash1 COPYONLY)
+configure_file(${GENREGCONFIG} ${GENERATE_DIR}/trash2 COPYONLY)
