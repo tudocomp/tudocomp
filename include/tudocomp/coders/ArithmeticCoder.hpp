@@ -30,7 +30,7 @@ public:
     /// \brief Encodes data to an ASCII character stream.
     class Encoder : public tdc::Encoder {
     private:
-        len_t*const C = nullptr;
+        std::vector<len_t> C;
 
         ulong lower_bound=0;
         ulong upper_bound=std::numeric_limits<ulong>::max();
@@ -46,9 +46,9 @@ public:
          * @return an array with count of each single literal
          */
         template<class T>
-        len_t* count_alphabet_literals(T&& input) {
-            len_t* C { new len_t[ULITERAL_MAX+1] };
-            std::memset(C, 0, sizeof(len_t)*(ULITERAL_MAX+1));
+        std::vector<len_t> count_alphabet_literals(T&& input) {
+            std::vector<len_t> C;
+            C.resize(ULITERAL_MAX+1, 0);
 
             while(input.has_next()) {
                 literal_t c = input.next().c;
@@ -65,7 +65,7 @@ public:
          * Every entry contains the difference to the entry before.
          * @param c
          */
-        void build_intervals(len_t *const c) {
+        void build_intervals(std::vector<len_t> &c) {
             if(c[0]) {
                 codebook_size++;
             }
@@ -159,10 +159,6 @@ public:
             writeCodebook();
         }
 
-        ~Encoder() {
-            delete C;
-        }
-
         using tdc::Encoder::encode; // default encoding as fallback
 
         template<typename value_t>
@@ -179,7 +175,7 @@ public:
     /// \brief Decodes data from an Arithmetic character stream.
     class Decoder : public tdc::Decoder {
     private:
-        std::pair<literal_t ,int>* literals;
+        std::vector<std::pair<literal_t ,int>> literals;
         std::string decoded;
         uliteral_t codebook_size;
         len_t literal_count = 0;
@@ -225,7 +221,7 @@ public:
             //read codebook size
             literal_count = m_in->read_int<len_t>();
             codebook_size = m_in->read_int<uliteral_t>();
-            literals = new std::pair<literal_t, int>[codebook_size];
+            literals.resize(codebook_size);
 
             //read and parse dictionary - is is already "normalized"
             for (int i =0; i<codebook_size; i++) {
@@ -235,11 +231,6 @@ public:
             }
 
             min_range=literals[codebook_size-1].second;
-        }
-
-
-        ~Decoder() {
-            delete literals;
         }
 
         using tdc::Decoder::decode;
