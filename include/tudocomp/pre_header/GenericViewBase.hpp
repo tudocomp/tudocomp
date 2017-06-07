@@ -224,7 +224,6 @@ protected:
     template<class U, class Q>
     friend void swap(GenericViewBase<U, Q>& lhs, GenericViewBase<U, Q>& rhs);
 
-
     inline static bool op_eq(const GenericViewBase<T, const T*>& lhs, const GenericViewBase<T, const T*>& rhs) {
         if (lhs.size() != rhs.size()) return false;
         return std::equal(lhs.cbegin(), lhs.cend(), rhs.cbegin());
