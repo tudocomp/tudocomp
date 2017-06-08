@@ -147,7 +147,7 @@ class ScanDec : public Algorithm {
 public:
     inline static Meta meta() {
         Meta m("lcpcomp_dec", "scan");
-        m.option("scans").dynamic(0);
+        m.option("scans").dynamic(6);
         return m;
 
     }

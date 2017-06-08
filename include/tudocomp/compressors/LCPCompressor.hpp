@@ -12,8 +12,8 @@
 #include <tudocomp_stat/StatPhase.hpp>
 
 // For default params
-#include <tudocomp/compressors/lcpcomp/decompress/CompactDec.hpp>
-#include <tudocomp/compressors/lcpcomp/compress/MaxLCPStrategy.hpp>
+#include <tudocomp/compressors/lcpcomp/decompress/ScanDec.hpp>
+#include <tudocomp/compressors/lcpcomp/compress/ArraysComp.hpp>
 
 namespace tdc {
 namespace lcpcomp {
@@ -85,10 +85,10 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lcpcomp");
         m.option("coder").templated<coder_t>("coder");
-        m.option("comp").templated<strategy_t, lcpcomp::MaxLCPStrategy>("lcpcomp_comp");
-        m.option("dec").templated<dec_t, lcpcomp::CompactDec>("lcpcomp_dec");
+        m.option("comp").templated<strategy_t, lcpcomp::ArraysComp>("lcpcomp_comp");
+        m.option("dec").templated<dec_t, lcpcomp::ScanDec>("lcpcomp_dec");
         m.option("textds").templated<text_t, TextDS<>>("textds");
-        m.option("threshold").dynamic(3);
+        m.option("threshold").dynamic(5);
         m.uses_textds<text_t>(strategy_t::textds_flags());
         return m;
     }
