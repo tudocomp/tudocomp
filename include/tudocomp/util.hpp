@@ -125,13 +125,15 @@ inline std::string to_string(const T& v) {
 /// \tparam T the value type
 /// \param s the string to parse
 /// \return the parsed value
-template<typename T> T lexical_cast(const std::string& s) {
+template<typename T>
+inline T lexical_cast(const std::string& s) {
     T val;
     std::stringstream(s) >> val;
     return val;
 }
 
-template<> std::string lexical_cast(const std::string& s) {
+template<>
+inline std::string lexical_cast(const std::string& s) {
     return std::string(s);
 }
 
@@ -143,7 +145,7 @@ template<> std::string lexical_cast(const std::string& s) {
 ///
 /// \param str the string to test
 /// \return \c true if the above description matches, \c false otherwise
-bool is_true(const std::string& str) {
+inline bool is_true(const std::string& str) {
     std::string s(str);
     std::transform(s.begin(), s.end(), s.begin(), ::tolower);
     return (s == "true" || s == "1" || s == "yes" || s == "on");
