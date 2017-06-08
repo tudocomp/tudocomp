@@ -15,17 +15,15 @@
 namespace tdc {
 namespace lzss {
 
-template<typename coder_t, typename text_t>
-inline void encode_text(coder_t& coder,
-                        const text_t& text,
-                        const FactorBuffer& factors) {
+template<typename coder_t, typename text_t, typename factor_t = FactorBuffer>
+inline void encode_text(coder_t& coder, const text_t& text, const factor_t& factors) {
     assert(factors.is_sorted());
 
-    auto n = text.size();
+    const auto n = text.size();
 
     // determine longest and shortest factor
-    auto flen_min = factors.shortest_factor();
-    auto flen_max = factors.longest_factor();
+    const auto flen_min = factors.shortest_factor();
+    const auto flen_max = factors.longest_factor();
 
     // determine longest distance between two factors
     size_t fdist_max = 0;
@@ -40,9 +38,9 @@ inline void encode_text(coder_t& coder,
     }
 
     // define ranges
-    Range text_r(n);
-    MinDistributedRange flen_r(flen_min, flen_max);
-    Range fdist_r(fdist_max);
+    const Range text_r(n);
+    const MinDistributedRange flen_r(flen_min, flen_max);
+    const Range fdist_r(fdist_max);
 
     // encode ranges
     coder.encode(n, len_r);
@@ -51,7 +49,7 @@ inline void encode_text(coder_t& coder,
     coder.encode(fdist_max, text_r);
 
     // walk over factors
-    size_t p = 0;
+    size_t p = 0; //! current text position
     for(size_t i = 0; i < factors.size(); i++) {
         const Factor& f = factors[i];
 
