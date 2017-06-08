@@ -250,10 +250,16 @@ Chain the Burrows-Wheeler transform of a file into run-length, move-to-front and
 
 ## Library
 
-The library part of *tudocomp* is generated as the `libtudocomp_algorithms.a`
-artifact that can be used for static linking. Using this and the headers
-(located in the `include` directory tree), *tudocomp* can be used as an external
-library in third-party applications.
+In order to use *tudocomp* as an external library in another application,
+the following steps are necessary:
+
+1. Build *tudocomp*
+1. Point the compiler to the `include` directory for includes
+1. Statically link `<build_dir>/src/tudocomp_stat/libtudocomp_stat.a` (where 
+   `<build_dir>` is the location where *tudocomp* has been built in)
+
+Note that the aforementioned [dependencies](#dependencies) need to be linked
+as well.
 
 The [Doxygen documentation](@URL_DOXYGEN@) provides an overview of the
 framework's full API, including the contained compression and encoding

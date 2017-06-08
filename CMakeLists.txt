@@ -101,24 +101,6 @@ add_subdirectory(docs)
 # Web
 add_subdirectory(www)
 
-# tudocomp_algorithms
-
-add_library(
-    tudocomp_algorithms
-    ${CMAKE_BINARY_DIR}/tudocomp_algorithms.cpp
-)
-
-target_link_libraries(
-    tudocomp_algorithms
-
-    tudocomp_stat
-    tudocomp
-    glog
-    sdsl
-)
-
-cotire(tudocomp_algorithms)
-
 MESSAGE( STATUS "Built Type: " ${CMAKE_BUILD_TYPE} )
 MESSAGE( STATUS "[Optional] Judy Array: " ${JUDY_H_AVAILABLE} )
 MESSAGE( STATUS "[Optional] Boost: " ${Boost_FOUND} )

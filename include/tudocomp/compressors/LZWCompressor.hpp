@@ -10,6 +10,10 @@
 
 #include <tudocomp_stat/StatPhase.hpp>
 
+// For default params
+#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
+#include <tudocomp/coders/BitCoder.hpp>
+
 namespace tdc {
 
 	class BitCoder;

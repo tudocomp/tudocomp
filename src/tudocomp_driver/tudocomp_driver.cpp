@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
             } else if(do_compress && !options.remaining.empty()) {
                 ofile = file + "." + COMPRESSED_FILE_ENDING;
             } else {
-                return bad_usage(cmd, "missing output file or standard output");
+                return bad_usage(cmd, "either specify a filename (-o filename) or state that the output is standard output (--usestdout)");
             }
 
             if(file_exists(ofile) && !options.force) {
