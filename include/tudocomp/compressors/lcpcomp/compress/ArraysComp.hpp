@@ -35,7 +35,7 @@ public:
 
     using Algorithm::Algorithm; //import constructor
 
-    inline void factorize(text_t& text, size_t threshold, lzss::FactorBuffer& factors) {
+    inline void factorize(text_t& text, size_t threshold, lzss::FactorBufferRAM& factors) {
 
 		// Construct SA, ISA and LCP
         auto lcp = StatPhase::wrap("Construct Index Data Structures", [&] {

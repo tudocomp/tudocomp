@@ -107,7 +107,7 @@ public:
 
         // read options
         const len_t threshold = env().option("threshold").as_integer(); //factor threshold
-        lzss::FactorBuffer factors;
+        lzss::FactorBufferRAM factors;
 
         StatPhase::wrap("Factorize", [&]{
             // Factorize
@@ -131,7 +131,7 @@ public:
             typename coder_t::Encoder coder(
                 env().env_for_option("coder"),
                 output,
-                lzss::TextLiterals<text_t>(text, factors));
+                lzss::TextLiterals<text_t,decltype(factors)>(text, factors));
 
             lzss::encode_text(coder, text, factors); //TODO is this correct?
         });

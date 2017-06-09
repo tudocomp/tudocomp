@@ -1,7 +1,6 @@
 #pragma once
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
-#include <tudocomp/Env.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <sdsl/select_support_mcl.hpp> // for the select data structure
 
@@ -122,8 +121,8 @@ class LCPForwardIterator {
 	const len_t m_chunk_length = 1 + ((m_bv.size()-1)/64); // number of 64bit chunks in the bit vector
 
 	public:
-	LCPForwardIterator(sdsl::bit_vector&& bv) 
-		: m_bv(bv) 
+	LCPForwardIterator(sdsl::bit_vector&& bv)
+		: m_bv(bv)
 		, m_ones(sdsl::bits::cnt(m_bv.data()[0]))
 	{ }
 
@@ -137,7 +136,7 @@ class LCPForwardIterator {
 			if(m_blockrank+m_ones >= m_idx+1) break;
 			m_blockrank += m_ones;
 			++m_block;
-			m_ones = sdsl::bits::cnt(data[m_block]); 
+			m_ones = sdsl::bits::cnt(data[m_block]);
 		}
 		if(m_block == m_chunk_length) return m_bv.size();
 		return 64*m_block + sdsl::bits::sel(data[m_block], m_idx+1-m_blockrank);
@@ -174,7 +173,7 @@ inline static sdsl::bit_vector construct_plcp_bitvector(const plcp_t& plcp) {
 }
 
 template<class sa_t, class text_t, class select_t = sdsl::select_support_mcl<1,1>>
-sdsl::bit_vector construct_plcp_bitvector(Env&, const sa_t& sa, const text_t& text) {
+sdsl::bit_vector construct_plcp_bitvector(const sa_t& sa, const text_t& text) {
 	typedef DynamicIntVector phi_t;
 
     phi_t phi = StatPhase::wrap("Construct Phi Array", [&]{
@@ -193,9 +192,9 @@ sdsl::bit_vector construct_plcp_bitvector(Env&, const sa_t& sa, const text_t& te
 }
 
 template<class sa_t, class text_t, class select_t = sdsl::select_support_mcl<1,1>>
-LCPSada<sa_t,select_t> construct_lcp_sada(Env& env, const sa_t& sa, const text_t& text) {
+LCPSada<sa_t,select_t> construct_lcp_sada(const sa_t& sa, const text_t& text) {
     return StatPhase::wrap("Build Select on Bit Vector", [&]{
-        sdsl::bit_vector bv = construct_plcp_bitvector(env, sa, text);
+        sdsl::bit_vector bv = construct_plcp_bitvector(sa, text);
         return LCPSada<sa_t,select_t> { sa, std::move(bv) };
     });
 }
