@@ -29,9 +29,10 @@ inline void encode_text(coder_t& coder, const text_t& text, const factor_t& fact
     size_t fdist_max = 0;
     {
         size_t p = 0;
-        for(size_t i = 0; i < factors.size(); i++) {
-            fdist_max = std::max(fdist_max, factors[i].pos - p);
-            p = factors[i].pos + factors[i].len;
+        for(auto it = factors.begin(); it != factors.end(); ++it) {
+            const Factor& factor = *it;
+            fdist_max = std::max(fdist_max, factor.pos - p);
+            p = factor.pos + factor.len;
         }
 
         fdist_max = std::max(fdist_max, n - p);
@@ -39,7 +40,7 @@ inline void encode_text(coder_t& coder, const text_t& text, const factor_t& fact
 
     // define ranges
     const Range text_r(n);
-    const MinDistributedRange flen_r(flen_min, flen_max);
+    const MinDistributedRange flen_r(flen_min, flen_max); //! range for factor lengths
     const Range fdist_r(fdist_max);
 
     // encode ranges
@@ -50,10 +51,10 @@ inline void encode_text(coder_t& coder, const text_t& text, const factor_t& fact
 
     // walk over factors
     size_t p = 0; //! current text position
-    for(size_t i = 0; i < factors.size(); i++) {
-        const Factor& f = factors[i];
+    for(auto it = factors.begin(); it != factors.end(); ++it) {
+        const Factor& factor = *it;
 
-        if(factors[i].pos == p) {
+        if(factor.pos == p) {
             // cursor reached factor i, encode 0-bit
             coder.encode(false, bit_r);
         } else {
@@ -61,21 +62,22 @@ inline void encode_text(coder_t& coder, const text_t& text, const factor_t& fact
             coder.encode(true, bit_r);
 
             // also encode amount of literals until factor i
-            DCHECK_LE(p, factors[i].pos);
-            coder.encode(factors[i].pos - p, fdist_r);
+            DCHECK_LE(p, factor.pos);
+            DCHECK_LE(factor.pos - p, fdist_max); //distance cannot be larger than maximum distance
+            coder.encode(factor.pos - p, fdist_r);
         }
 
         // encode literals until cursor reaches factor i
-        while(p < f.pos) {
+        while(p < factor.pos) {
             coder.encode(text[p++], literal_r);
         }
 
         // encode factor
-        DCHECK_LT(f.src + f.len, n);
-        coder.encode(f.src, text_r);
-        coder.encode(f.len, flen_r);
+        DCHECK_LT(factor.src + factor.len, n);
+        coder.encode(factor.src, text_r);
+        coder.encode(factor.len, flen_r);
 
-        p += f.len;
+        p += factor.len;
     }
 
     if(p < n) {
