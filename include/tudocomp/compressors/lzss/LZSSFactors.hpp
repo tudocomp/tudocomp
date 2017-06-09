@@ -6,6 +6,7 @@
 
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
+#include <stxxl/vector>
 
 namespace tdc {
 namespace lzss {
@@ -20,9 +21,15 @@ public:
 }  __attribute__((__packed__));
 
 
+
+template<class vector_type = std::vector<Factor>>
 class FactorBuffer {
 private:
-    std::vector<Factor> m_factors;
+    // typedef stxxl::VECTOR_GENERATOR<Factor>::result vector_type;
+    typedef typename vector_type::const_iterator const_iterator;
+
+    vector_type m_factors;
+//    std::vector<Factor> m_factors;
     bool m_sorted; //! factors need to be sorted before they are output
 
     len_t m_shortest_factor;
@@ -40,10 +47,16 @@ public:
 
     inline void emplace_back(len_t fpos, len_t fsrc, len_t flen) {
         m_sorted = m_sorted && (m_factors.empty() || fpos >= m_factors.back().pos);
-        m_factors.emplace_back(fpos, fsrc, flen);
+        m_factors.push_back(Factor { fpos, fsrc, flen });
 
         m_shortest_factor = std::min(m_shortest_factor, flen);
         m_longest_factor = std::max(m_longest_factor, flen);
+    }
+    inline const_iterator begin() const {
+        return m_factors.cbegin();
+    }
+    inline const_iterator end() const {
+        return m_factors.cend();
     }
 
     inline const_iterator begin() const {
@@ -67,7 +80,7 @@ public:
     }
 
     inline void sort() { //TODO: use radix sort
-        if(!m_sorted) {
+        if(!m_sorted) { // TODO: exchange when using stxxl
             std::sort(m_factors.begin(), m_factors.end(),
                 [](const Factor& a, const Factor& b) -> bool { return a.pos < b.pos; });
 
@@ -118,7 +131,7 @@ public:
                     break;
                 }
             }
-            
+
             if(depth) {
                 f.src = src;
 
@@ -140,6 +153,9 @@ public:
     }
 
 };
+
+typedef FactorBuffer<std::vector<Factor>> FactorBufferRAM;
+typedef FactorBuffer<stxxl::VECTOR_GENERATOR<Factor>::result> FactorBufferDisk;
 
 }} //ns
 

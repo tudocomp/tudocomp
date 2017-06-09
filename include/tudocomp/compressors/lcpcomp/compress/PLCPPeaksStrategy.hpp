@@ -35,7 +35,7 @@ public:
 
     inline void factorize(text_t& text,
                    size_t threshold,
-                   lzss::FactorBuffer& factors) {
+                   lzss::FactorBuffer<>& factors) {
 
 		// Construct SA, ISA and LCP
         StatPhase::wrap("Construct text ds", [&]{

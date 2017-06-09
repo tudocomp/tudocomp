@@ -50,39 +50,6 @@ class IntegerFileArray {
 	size_t size() const { return m_size/sizeof(int_t); }
 };
 
-// /** Transforms a suffix array SA of size n not storing the entry for the delimiter $
-//  * to a suffix array storing this delimiter by
-//  * setting SA'[0] = n, and SA'[i] = SA[i+1]
-// **/
-// template<class int_t>
-// class SAFileArray {
-// 	IntegerFileArray<int_t> m_data;
-// 	public:
-// 	SAFileArray(const char*const filename) : m_data(filename) {}
-// 	int_t operator[](size_t i) {
-// 		if(i == 0) return m_data.size();
-// 		return m_data[i+1];
-//
-// 	}
-// 	size_t size() const { return m_data.size()+1; }
-// };
-//
-// /** Transforms an inverse suffix array ISA of size n not storing the entry for the delimiter $
-//  * to an inverse suffix array storing this delimiter by
-//  * setting ISA'[i] = i+1, and SA'[n] = SA[0]
-// **/
-// template<class int_t>
-// class ISAFileArray {
-// 	IntegerFileArray<int_t> m_data;
-// 	public:
-// 	ISAFileArray(const char*const filename) : m_data(filename) {}
-// 	int_t operator[](size_t i) {
-// 		if(i == m_data.size()) return 0;
-// 		return m_data[i]+1;
-// 	}
-// 	size_t size() const { return m_data.size()+1; }
-// };
-
 template<class int_t>
 class IntegerFileForwardIterator {
 	const size_t m_size;
@@ -113,13 +80,13 @@ class IntegerFileForwardIterator {
 
 template<class sa_t, class isa_t>
 class RefRAMStrategy {
-	const sa_t& m_sa;
-	const isa_t& m_isa;
+	sa_t& m_sa; //TODO: add const
+	isa_t& m_isa; //TODO: add const
 	std::vector<std::pair<len_t,len_t>> m_factors;
 	std::vector<std::pair<len_t,len_t>> m_factors_unsorted;
 
 	public:
-	RefRAMStrategy(const sa_t& sa, const isa_t& isa) : m_sa(sa), m_isa(isa) {
+	RefRAMStrategy(sa_t& sa, isa_t& isa) : m_sa(sa), m_isa(isa) {
 
 	}
 	void sort() { // sort m_factors_unsorted and append the sorted list to m_factors
@@ -131,7 +98,7 @@ class RefRAMStrategy {
     void add_factor(len_t source_position, len_t factor_length) {
 		return m_factors_unsorted.emplace_back(source_position,factor_length);
 	}
-	void factorize(lzss::FactorBuffer& reflist) {
+	void factorize(lzss::FactorBufferRAM& reflist) {
 		for(len_t i = 0; i < m_factors.size(); ++i) {
 			const auto& el = m_factors[i];
 			reflist.emplace_back(el.first, m_sa[m_isa[el.first]-1], el.second);
@@ -163,9 +130,7 @@ class RefDiskStrategy {
     void add_factor(len_t source_position, len_t factor_length) {
 		return m_factors_unsorted.push_back(std::make_pair(source_position,factor_length));
 	}
-	void factorize(lzss::FactorBuffer& reflist) {
-
-
+	void factorize(lzss::FactorBufferDisk& reflist) {
 
 		struct KeyExtractor {
 			typedef len_t key_type;
@@ -207,7 +172,7 @@ class RefDiskStrategy {
 
 		sorting_phase.split("Write factors to buffer");
 		for(size_t i = 0; i < m_factors.size(); ++i) {
-		 	// reflist.emplace_back(m_factors[i].first, m_sources2[i].second, m_factors[i].second);
+		 	reflist.emplace_back(m_factors[i].first, m_sources2[i].second, m_factors[i].second);
 		}
 
 		// for(auto it = m_factors.begin(); it != m_factors.end(); ++it) {
@@ -265,8 +230,12 @@ class PLCPFileForwardIterator {
 };
 
 
+/**
+ * The actual PLCPcomp compressor: it searches for peaks, replaces them and adds the replacements to the RefStrategy
+ * @tparam RefStrategy container class that stores the factors (source,len). This class has to reconstruct the target.
+ */
 	template<class RefStrategy,class plcp_type>
-		void compute_references(const size_t n, RefStrategy& refStrategy, plcp_type& pplcp,  size_t threshold) {
+		void compute_references(const size_t n, RefStrategy& refStrategy, plcp_type& pplcp, size_t threshold) {
 
 
 		struct Poi {
@@ -408,211 +377,69 @@ public:
 
 
 
-    // inline void factorize(text_t& text,
-    //                size_t threshold,
-    //                lzss::FactorBuffer& refs) {
-    //
-	// 	// Construct SA, ISA and LCP
-	// 	env().begin_stat_phase("Construct index ds");
-	// 	text.require(text_t::SA | text_t::ISA);
-    //
-    //     const auto& sa = text.require_sa();
-    //     const auto& isa = text.require_isa();
-	// 	//RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
-	// 	RefRAMStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
-	// 	LCPForwardIterator pplcp { (construct_plcp_bitvector(env(), sa, text)) };
-	// 	compute_references(text.size(), refStrategy, pplcp, threshold);
-	// 	env().begin_stat_phase("Compute References");
-	// 	refStrategy.factorize(refs);
-    //     env().end_stat_phase();
-    // }
+    inline void factorize(text_t& text, size_t threshold, lzss::FactorBufferRAM& refs) {
+		StatPhase phase("Load Index DS");
+		text.require(text_t::SA | text_t::ISA);
+
+        const auto& sa = text.require_sa();
+        const auto& isa = text.require_isa();
+		//RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
+		RefRAMStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
+		LCPForwardIterator pplcp { (construct_plcp_bitvector(sa, text)) };
+		compute_references(text.size(), refStrategy, pplcp, threshold);
+        phase.split("Compute References");
+		refStrategy.factorize(refs);
+    }
 
     inline static ds::dsflags_t textds_flags() {
         return text_t::SA | text_t::ISA;
     }
 
-    inline void factorize(text_t& text, size_t threshold, lzss::FactorBuffer& refs) {
-		StatPhase phase("Load Index DS");
-//		const std::string textfilename  = "/bighome/workspace/compreSuite/tudocomp/datasets/abracadabra.0";
-		const std::string textfilename  = "/local1/cc_commoncrawl.ascii.10MB.0";
-		IntegerFileArray<uint_t<40>> sa  ((textfilename + ".sa5").c_str());
-		IntegerFileArray<uint_t<40>> isa ((textfilename + ".isa5").c_str());
-		// SAFileArray<uint_t<40>> sa((textfilename + ".sa5").c_str());
-		// ISAFileArray<uint_t<40>> isa((textfilename + ".isa5").c_str());
-		//IntegerFileForwardIterator<uint_t<40>> pplcp("/bighome/workspace/compreSuite/tudocomp/datasets/pc_english.200MB.plcp5");
-		DCHECK_EQ(sa.size(), text.size());
 
-IF_DEBUG(
-		StatPhase::wrap("Check Index DS", [&]{
-			const auto& tsa = text.require_sa();
-			const auto& tisa = text.require_isa();
-			const auto& plcp = text.require_plcp();
-				PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
-			for(size_t i = 0; i < sa.size(); ++i) {
-			DCHECK_EQ(sa.size(),tsa.size());
-			DCHECK_EQ(sa[i], (uint64_t)tsa[i]);
-			}
-			DCHECK_EQ(isa.size(),tisa.size());
-			for(size_t i = 0; i < isa.size(); ++i) {
-			DCHECK_EQ(isa[i], (uint64_t)tisa[i]);
-			}
-			for(size_t i = 0; i < plcp.size()-1; ++i) {
-			DCHECK_EQ(pplcp(),(uint64_t) plcp[i]);
-			pplcp.advance();
-			}
-		});
-		);
-
-		PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
-
-		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
-		StatPhase::wrap("Search Peaks", [&]{
-				compute_references(text.size()-1, refStrategy, pplcp, threshold);
-		});
-		StatPhase::wrap("Compute References", [&]{
-				refStrategy.factorize(refs);
-				});
-
-	}
-    //
-    // inline void factorize(text_t& text,
-    //                size_t threshold,
-    //                lzss::FactorBuffer& factors) {
-    //
-	// 	// Construct SA, ISA and LCP
-    //     auto pplcp = StatPhase::wrap("Construct index ds", [&]{
-    //         text.require(text_t::SA | text_t::ISA);
-    //         const auto& sa = text.require_sa();
-    //         return LCPForwardIterator { (construct_plcp_bitvector(env(), sa, text)) };
-    //     });
-    //
-    //     const auto& sa = text.require_sa();
-    //     const auto& isa = text.require_isa();
-    //     const len_t n = sa.size();
-    //
-	// 	StatPhase::wrap("Search Peaks", [&]{
-    //
-	// 	    struct Poi {
-	// 		    len_t pos;
-	// 		    len_t lcp;
-	// 		    len_t no;
-	// 		    Poi(len_t _pos, len_t _lcp, len_t _no) : pos(_pos), lcp(_lcp), no(_no) {}
-	// 		    bool operator<(const Poi& o) const {
-	// 			    DCHECK_NE(o.pos, this->pos);
-	// 			    if(o.lcp == this->lcp) return this->pos > o.pos;
-	// 			    return this->lcp < o.lcp;
-	// 		    }
-	// 	    };
-    //
-	// 	    boost::heap::pairing_heap<Poi> heap;
-	// 	    std::vector<boost::heap::pairing_heap<Poi>::handle_type> handles;
-    //
-	// 	    IF_STATS(len_t max_heap_size = 0);
-    //
-	// 	    // std::stack<poi> pois; // text positions of interest, i.e., starting positions of factors we want to replace
-    //
-	// 	    len_t lastpos = 0;
-	// 	    len_t lastpos_lcp = 0;
-	// 	    for(len_t i = 0; i+1 < n; ++i) {
-	// 		    while(pplcp.index() < i) pplcp.advance();
-	// 		    const len_t plcp_i = pplcp(); DCHECK_EQ(pplcp.index(), i);
-	// 		    if(heap.empty()) {
-	// 			    if(plcp_i >= threshold) {
-	// 				    handles.emplace_back(heap.emplace(i, plcp_i, handles.size()));
-	// 				    lastpos = i;
-	// 				    lastpos_lcp = plcp_i;
-	// 			    }
-	// 			    continue;
-	// 		    }
-	// 		    if(i - lastpos >= lastpos_lcp || tdc_unlikely(i+1 == n)) {
-	// 			    IF_DEBUG(bool first = true);
-	// 			    IF_STATS(max_heap_size = std::max<len_t>(max_heap_size, heap.size()));
-	// 			    DCHECK_EQ(heap.size(), handles.size());
-	// 			    while(!heap.empty()) {
-	// 				    const Poi& top = heap.top();
-	// 				    const len_t source_position = sa[isa[top.pos]-1];
-	// 				    factors.emplace_back(top.pos, source_position, top.lcp);
-	// 				    const len_t next_pos = top.pos; // store top, this is the current position that gets factorized
-	// 				    IF_DEBUG(if(first) DCHECK_EQ(top.pos, lastpos); first = false;)
-    //
-	// 				    {
-	// 					    len_t newlcp_peak = 0; // a new peak can emerge at top.pos+top.lcp
-	// 					    bool peak_exists = false;
-	// 					    if(top.pos+top.lcp < i)
-	// 					    for(len_t j = top.no+1; j < handles.size(); ++j) { // erase all right peaks that got substituted
-	// 						    if( handles[j].node_ == nullptr) continue;
-	// 						    const Poi poi = *(handles[j]);
-	// 						    DCHECK_LT(next_pos, poi.pos);
-	// 						    if(poi.pos < next_pos+top.lcp) {
-	// 							    heap.erase(handles[j]);
-	// 							    handles[j].node_ = nullptr;
-	// 							    if(poi.lcp + poi.pos > next_pos+top.lcp) {
-	// 								    const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
-	// 								    DCHECK_NE(remaining_lcp,0);
-	// 								    if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak);
-	// 								    newlcp_peak = std::max(remaining_lcp, newlcp_peak);
-	// 							    }
-	// 						    } else if( poi.pos == next_pos+top.lcp) { peak_exists=true; }
-	// 						    else { break; }  // only for performance
-	// 					    }
-    // #ifdef DEBUG
-	// 					    if(peak_exists) {  //TODO: DEBUG
-	// 						    for(len_t j = top.no+1; j < handles.size(); ++j) {
-	// 							    if( handles[j].node_ == nullptr) continue;
-	// 							    const Poi& poi = *(handles[j]);
-	// 							    if(poi.pos == next_pos+top.lcp) {
-	// 								    DCHECK_LE(newlcp_peak, poi.lcp);
-	// 								    break;
-	// 							    }
-	// 						    }
-	// 					    }
-    // #endif
-	// 					    if(!peak_exists && newlcp_peak >= threshold) {
-	// 						    len_t j = top.no+1;
-	// 						    DCHECK(handles[j].node_ == nullptr);
-	// 						    handles[j] = heap.emplace(next_pos+top.lcp, newlcp_peak, j);
-	// 					    }
-    //
-	// 				    }
-	// 				    handles[top.no].node_ = nullptr;
-	// 				    heap.pop(); // top now gets erased
-    //
-	// 				    for(auto it = handles.rbegin(); it != handles.rend(); ++it) {
-	// 					    if( (*it).node_ == nullptr) continue;
-	// 					    Poi& poi = (*(*it));
-	// 					    if(poi.pos > next_pos)  continue;
-	// 					    const len_t newlcp = next_pos - poi.pos;
-	// 					    if(newlcp < poi.lcp) {
-	// 						    if(newlcp < threshold) {
-	// 							    heap.erase(*it);
-	// 							    it->node_ = nullptr;
-	// 						    } else {
-	// 							    poi.lcp = newlcp;
-	// 							    heap.decrease(*it);
-    //
-	// 						    }
-	// 					    } else {
-	// 						    break;
-	// 					    }
-	// 				    }
-	// 			    }
-	// 			    handles.clear();
-	// 			    --i;
-	// 			    continue;
-	// 		    }
-	// 		    DCHECK_EQ(pplcp.index(), i);
-	// 		    DCHECK_EQ(plcp_i, pplcp());
-	// 		    if(plcp_i <= lastpos_lcp) continue;
-	// 		    DCHECK_LE(threshold, plcp_i);
-	// 		    handles.emplace_back(heap.emplace(i,plcp_i, handles.size()));
-	// 		    lastpos = i;
-    // //			DCHECK_EQ(plcp[lastpos], plcp_i);
-	// 		    lastpos_lcp = plcp_i;
-	// 	    }
-    //         IF_STATS(StatPhase::log("max heap size", max_heap_size));
-    //
-    //     });
-    //}
+//     inline void factorize(text_t& text, size_t threshold, lzss::FactorBufferRAM& refs) { //TODO!
+// 		StatPhase phase("Load Index DS");
+// //		const std::string textfilename  = "/bighome/workspace/compreSuite/tudocomp/datasets/abracadabra.0";
+// 		const std::string textfilename  = "/local1/cc_commoncrawl.ascii.10MB.0";
+// 		IntegerFileArray<uint_t<40>> sa  ((textfilename + ".sa5").c_str());
+// 		IntegerFileArray<uint_t<40>> isa ((textfilename + ".isa5").c_str());
+// 		// SAFileArray<uint_t<40>> sa((textfilename + ".sa5").c_str());
+// 		// ISAFileArray<uint_t<40>> isa((textfilename + ".isa5").c_str());
+// 		//IntegerFileForwardIterator<uint_t<40>> pplcp("/bighome/workspace/compreSuite/tudocomp/datasets/pc_english.200MB.plcp5");
+// 		DCHECK_EQ(sa.size(), text.size());
+//
+// IF_DEBUG(
+// 		StatPhase::wrap("Check Index DS", [&]{
+// 			const auto& tsa = text.require_sa();
+// 			const auto& tisa = text.require_isa();
+// 			const auto& plcp = text.require_plcp();
+// 				PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
+// 			for(size_t i = 0; i < sa.size(); ++i) {
+// 			DCHECK_EQ(sa.size(),tsa.size());
+// 			DCHECK_EQ(sa[i], (uint64_t)tsa[i]);
+// 			}
+// 			DCHECK_EQ(isa.size(),tisa.size());
+// 			for(size_t i = 0; i < isa.size(); ++i) {
+// 			DCHECK_EQ(isa[i], (uint64_t)tisa[i]);
+// 			}
+// 			for(size_t i = 0; i < plcp.size()-1; ++i) {
+// 			DCHECK_EQ(pplcp(),(uint64_t) plcp[i]);
+// 			pplcp.advance();
+// 			}
+// 		});
+// 		);
+//
+// 		PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
+//
+// 		RefRAMStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
+// 		//RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
+// 		StatPhase::wrap("Search Peaks", [&]{
+// 				compute_references(text.size()-1, refStrategy, pplcp, threshold);
+// 		});
+// 		StatPhase::wrap("Compute References", [&]{
+// 				refStrategy.factorize(refs);
+// 				});
+//
+// 	}
 
 
 };

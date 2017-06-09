@@ -7,11 +7,11 @@
 namespace tdc {
 namespace lzss {
 
-template<typename text_t>
+template<typename text_t, typename factorbuffer_t>
 class TextLiterals : LiteralIterator {
 private:
     const text_t* m_text;
-    const FactorBuffer* m_factors;
+    const factorbuffer_t* m_factors;
     len_t m_pos;
     FactorBuffer::const_iterator m_next_factor;
 
