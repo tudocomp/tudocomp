@@ -227,8 +227,8 @@ TEST(coder, ternary_int) { test_int<TernaryCoder>(); }
 TEST(coder, ternary_str) { test_str<TernaryCoder>(); }
 TEST(coder, ternary_mixed) { test_mixed<TernaryCoder>(); }
 
-TEST(coder, ternary_mt) { test_mt<AdaptiveHuffmanCoder>(); }
-TEST(coder, ternary_bits) { test_bits<AdaptiveHuffmanCoder>(); }
-TEST(coder, ternary_int) { test_int<AdaptiveHuffmanCoder>(); }
-TEST(coder, ternary_str) { test_str<AdaptiveHuffmanCoder>(); }
-TEST(coder, ternary_mixed) { test_mixed<AdaptiveHuffmanCoder>(); }
+TEST(coder, adaphuff_mt) { test_mt<AdaptiveHuffmanCoder>(); }
+TEST(coder, adaphuff_bits) { test_bits<AdaptiveHuffmanCoder>(); }
+TEST(coder, adaphuff_int) { test_int<AdaptiveHuffmanCoder>(); }
+TEST(coder, adaphuff_str) { test_str<AdaptiveHuffmanCoder>(); }
+TEST(coder, adaphuff_mixed) { test_mixed<AdaptiveHuffmanCoder>(); }
