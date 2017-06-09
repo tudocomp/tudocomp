@@ -16,6 +16,7 @@
 #include <tudocomp/coders/SLECoder.hpp>
 #include <tudocomp/coders/ArithmeticCoder.hpp>
 #include <tudocomp/coders/TernaryCoder.hpp>
+#include <tudocomp/coders/AdaptiveHuffmanCoder.hpp>
 
 using namespace tdc;
 

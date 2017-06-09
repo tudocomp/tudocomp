@@ -27,6 +27,7 @@ context_free_coder = [
     ("BitCoder",        "coders/BitCoder.hpp",        []),
     ("EliasGammaCoder", "coders/EliasGammaCoder.hpp", []),
     ("EliasDeltaCoder", "coders/EliasDeltaCoder.hpp", []),
+    ("AdaptiveHuffmanCoder", "coders/AdaptiveHuffmanCoder.hpp", []),
 ]
 
 # TODO: Fix bad interaction between sle and lz78u code and remove this distinction
