@@ -1,6 +1,8 @@
 #pragma once
 
-#include <tuple>
+#include <algorithm>
+#include <vector>
+#include <tudocomp/def.hpp>
 
 namespace tdc {
 namespace lzss {
@@ -17,15 +19,16 @@ public:
 class FactorBuffer {
 private:
     std::vector<Factor> m_factors;
-    bool m_sorted;
+    bool m_sorted; //! factors need to be sorted before they are output
 
     len_t m_shortest_factor;
     len_t m_longest_factor;
 
 public:
-    inline FactorBuffer() : m_sorted(true),
-                            m_shortest_factor(LEN_MAX),
-                            m_longest_factor(0)
+    inline FactorBuffer()
+        : m_sorted(true)
+        , m_shortest_factor(LEN_MAX)
+        , m_longest_factor(0)
     {
     }
 
@@ -36,10 +39,16 @@ public:
         m_shortest_factor = std::min(m_shortest_factor, flen);
         m_longest_factor = std::max(m_longest_factor, flen);
     }
-
-    inline const Factor& operator[](size_t i) const {
-        return m_factors[i];
+    inline std::vector<Factor>::const_iterator begin() const {
+        return m_factors.cbegin();
     }
+    inline std::vector<Factor>::const_iterator end() const {
+        return m_factors.cend();
+    }
+
+    // inline const Factor& operator[](size_t i) const {
+    //     return m_factors[i];
+    // }
 
     inline bool empty() const {
         return m_factors.empty();
@@ -69,6 +78,7 @@ public:
     inline size_t longest_factor() const {
         return m_longest_factor;
     }
+
 };
 
 }} //ns
