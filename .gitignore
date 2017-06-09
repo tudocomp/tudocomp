@@ -4,3 +4,6 @@ include/tudocomp/tudocomp.hpp
 Cargo.lock
 *~
 .~lock.*
+
+/.idea/
+/cmake-build-debug/
