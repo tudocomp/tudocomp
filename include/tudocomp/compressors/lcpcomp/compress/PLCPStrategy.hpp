@@ -19,17 +19,17 @@
 #include <iostream>
 #include <fstream>
 
-size_t filesize( const char*const filepath ){
-	std::ifstream file(filepath, std::ios::binary | std::ios::ate | std::ios::in);
-	if(!file.good()) return 0;
-	return file.tellg();
-}
 
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 namespace lcpcomp {
 
+inline size_t filesize( const char*const filepath ){
+	std::ifstream file(filepath, std::ios::binary | std::ios::ate | std::ios::in);
+	if(!file.good()) return 0;
+	return file.tellg();
+}
 
 template<class int_t>
 class IntegerFileArray {
