@@ -16,6 +16,7 @@ public:
     }
 }  __attribute__((__packed__));
 
+
 class FactorBuffer {
 private:
     std::vector<Factor> m_factors;
@@ -46,9 +47,9 @@ public:
         return m_factors.cend();
     }
 
-    // inline const Factor& operator[](size_t i) const {
-    //     return m_factors[i];
-    // }
+    [[deprecated("use interators")]] inline const Factor& operator[](size_t i) const {
+        return m_factors[i];
+    }
 
     inline bool empty() const {
         return m_factors.empty();
