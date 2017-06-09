@@ -226,3 +226,9 @@ TEST(coder, ternary_bits) { test_bits<TernaryCoder>(); }
 TEST(coder, ternary_int) { test_int<TernaryCoder>(); }
 TEST(coder, ternary_str) { test_str<TernaryCoder>(); }
 TEST(coder, ternary_mixed) { test_mixed<TernaryCoder>(); }
+
+TEST(coder, ternary_mt) { test_mt<AdaptiveHuffmanCoder>(); }
+TEST(coder, ternary_bits) { test_bits<AdaptiveHuffmanCoder>(); }
+TEST(coder, ternary_int) { test_int<AdaptiveHuffmanCoder>(); }
+TEST(coder, ternary_str) { test_str<AdaptiveHuffmanCoder>(); }
+TEST(coder, ternary_mixed) { test_mixed<AdaptiveHuffmanCoder>(); }
