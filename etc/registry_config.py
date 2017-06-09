@@ -83,6 +83,7 @@ lcpc_buffer = [
 lcpc_coder = [
     ("ASCIICoder", "coders/ASCIICoder.hpp", []),
     ("SLECoder", "coders/SLECoder.hpp", []),
+    ("HuffmanCoder", "coders/HuffmanCoder.hpp", []),
 ]
 
 lz78u_strategy = [
