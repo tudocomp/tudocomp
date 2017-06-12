@@ -23,6 +23,12 @@ public:
 
     public:
         /// \brief Main constructor.
+        /// \param name the parameter name
+        /// \param primitive if \c true, the parameter accepts string values,
+        ///                  otherwise it accepts a sub algorithm
+        /// \param list if \c true, the parameter accepts a list of values
+        /// \param type if the parameter is non-primitive, sub algorithms must
+        ///             match this type
         inline Param(
             const std::string& name,
             bool primitive = true,
@@ -40,6 +46,7 @@ public:
         }
 
         /// \brief Copy constructor.
+        /// \param other the object to copy
         inline Param(const Param& other)
             : m_name(other.m_name),
               m_primitive(other.m_primitive),
@@ -48,6 +55,7 @@ public:
         }
 
         /// \brief Move constructor.
+        /// \param other the object to move
         inline Param(Param&& other)
             : m_name(std::move(other.m_name)),
               m_primitive(other.m_primitive),
@@ -60,6 +68,8 @@ public:
         inline bool is_list() const { return m_list; }
         inline const std::string& type() const { return m_type; }
 
+        /// \brief Returns a string representation of the declaration.
+        /// \return a string representation of the declaration
         inline const std::string str() const {
             return m_name + " : " + (m_list ? "[" + m_type + "]" : m_type);
         }
@@ -73,6 +83,9 @@ private:
 
 public:
     /// \brief Main constructor.
+    /// \param name the algorithm's name
+    /// \param type the algorithm's type
+    /// \param desc a brief documentaton of the algorithm
     inline AlgorithmDecl(
         const std::string& name,
         const std::string& type,
@@ -81,6 +94,7 @@ public:
     }
 
     /// \brief Copy constructor.
+    /// \param other the object to copy
     inline AlgorithmDecl(const AlgorithmDecl& other)
         : m_name(other.m_name),
           m_type(other.m_type),
@@ -89,6 +103,7 @@ public:
     }
 
     /// \brief Move constructor.
+    /// \param other the object to move
     inline AlgorithmDecl(AlgorithmDecl&& other)
         : m_name(std::move(other.m_name)),
           m_type(std::move(other.m_type)),
@@ -96,6 +111,8 @@ public:
           m_params(std::move(other.m_params)) {
     }
 
+    /// \brief Adds a parameter to the declaration.
+    /// \param p the parameter to add
     inline void add_param(Param&& p) {
         m_params.emplace_back(std::move(p));
     }
@@ -107,6 +124,8 @@ public:
         return m_params;
     }
 
+    /// \brief Returns a string representation of the declaration.
+    /// \return a string representation of the declaration
     inline std::string str() const {
         std::stringstream ss;
         ss << m_name << "(";

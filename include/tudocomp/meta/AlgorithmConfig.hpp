@@ -12,6 +12,7 @@
 namespace tdc {
 namespace meta {
 
+/// \brief Error type for config related errors.
 class ConfigError : public std::runtime_error {
 public:
     using std::runtime_error::runtime_error;
@@ -98,6 +99,9 @@ public:
 
     public:
         /// \brief Main constructor.
+        /// \param decl the parameter declaration
+        /// \param config the configured value
+        /// \param dict the algorithm dictionary used for name resolution
         inline Param(
             const AlgorithmDecl::Param& decl,
             std::shared_ptr<const ast::Node> config,
@@ -127,6 +131,7 @@ public:
         }
 
         /// \brief Copy constructor.
+        /// \param other the object to copy
         inline Param(const Param& other)
             : m_decl(other.m_decl),
               m_config(other.m_config),
@@ -134,24 +139,34 @@ public:
         }
 
         /// \brief Move constructor.
+        /// \param other the object to move
         inline Param(Param&& other)
             : m_decl(other.m_decl),
               m_config(other.m_config),
               m_sub_configs(std::move(other.m_sub_configs)) {
         }
 
+        /// \brief Gets the parameter's declaration.
+        /// \return the parameter's declaration
         inline const AlgorithmDecl::Param& decl() const {
             return *m_decl;
         }
 
+        /// \brief Gets the parameter's configured value.
+        /// \return the parameter's configured value
         inline std::shared_ptr<const ast::Node> config() const {
             return m_config;
         }
 
+        /// \brief Gets the parameter's sub configurations.
+        /// \return the parameter's sub configurations
         inline const std::vector<AlgorithmConfig>& sub_configs() const {
             return m_sub_configs;
         }
 
+        /// \brief Returns a human-readable string representation of the
+        ///        configuration.
+        /// \return a human-readable string representation of the configuration
         inline std::string str() const {
             std::stringstream ss;
             ss << m_decl->name() << '=';
@@ -176,6 +191,14 @@ private:
     std::vector<Param> m_params;
 
 public:
+    /// \brief Main constructor.
+    ///
+    /// This will recursively create a configuration for all parameters and
+    /// sub algorithms. A \ref ConfigError is thrown in case of a failure.
+    ///
+    /// \param decl the algorithm declaration
+    /// \param config the value configuration
+    /// \param dict the algorithm dictionary used for name resolution
     inline AlgorithmConfig(
         const AlgorithmDecl& decl,
         std::shared_ptr<const ast::Node> config,
@@ -295,31 +318,81 @@ private:
     }
 
 public:
+    /// \brief Converts and returns the single value of the requested parameter.
+    ///
+    /// The parameter must exist and must have a primitive value, ie., it must
+    /// neither be a sub configuration, nor a list of values.
+    ///
+    /// The value conversion is done using a \ref lexical_cast.
+    ///
+    /// \tparam T the value type to convert to
+    /// \param param the name of the parameter
+    /// \return the value of the parameter, converted to the desired type
     template<typename T>
     inline T get(const std::string& param) {
         return get<T>(get_param(param).config());
     }
 
+    /// \brief Gets the string value of the requested parameter.
+    /// \param param the name of the parameter
+    /// \return the string value of the parameter
+    /// \see get
     inline std::string get_string(const std::string& param) {
         return get<std::string>(param);
     }
 
+    /// \brief Gets the boolean value of the requested parameter.
+    ///
+    /// The boolean value is evaluated using the \ref is_true function.
+    ///
+    /// \param param the name of the parameter
+    /// \return the string value of the parameter
+    /// \see get
     inline bool get_bool(const std::string& param) {
         return is_true(get_string(param));
     }
 
+    /// \brief Gets the integer value of the requested parameter.
+    /// \param param the name of the parameter
+    /// \return the integer value of the parameter
+    /// \see get
     inline int get_int(const std::string& param) {
         return get<int>(param);
     }
 
+    /// \brief Gets the unsigned integer value of the requested parameter.
+    /// \param param the name of the parameter
+    /// \return the unsigned integer value of the parameter
+    /// \see get
     inline unsigned int get_uint(const std::string& param) {
         return get<unsigned int>(param);
     }
 
-    inline int get_float(const std::string& param) {
+    /// \brief Gets the floating point value of the requested parameter.
+    /// \param param the name of the parameter
+    /// \return the floating point value of the parameter
+    /// \see get
+    inline float get_float(const std::string& param) {
         return get<float>(param);
     }
 
+    /// \brief Gets the double-precision floating point value of the
+    ///        requested parameter.
+    /// \param param the name of the parameter
+    /// \return the double-precision floating point value of the parameter
+    /// \see get
+    inline double get_double(const std::string& param) {
+        return get<double>(param);
+    }
+
+    /// \brief Converts and returns the values of the requested list parameter.
+    ///
+    /// The parameter must exist and must be a list of primitive values. The
+    /// value conversions are done as in the \ref get function.
+    ///
+    /// \tparam T the value type to convert single values to
+    /// \param param the name of the parameter
+    /// \return the values of the list parameter, converted to the desired type
     template<typename T>
     inline std::vector<T> get_vector(const std::string& param) {
         auto list = std::dynamic_pointer_cast<const ast::List>(
@@ -336,6 +409,12 @@ public:
         }
     }
 
+    /// \brief Gets the configuration of the requested sub algorithm.
+    ///
+    /// The parameter must exist and must be a single sub algorithm.
+    ///
+    /// \param param the name of the parameter
+    /// \return the configuration of the corresponding sub algorithm
     inline const AlgorithmConfig& get_sub_config(const std::string& param) {
         auto& sub = get_param(param).sub_configs();
         if(sub.size() == 0) {
@@ -347,17 +426,21 @@ public:
         }
     }
 
+    /// \brief Gets the configurations of the requested sub algorithm list.
+    ///
+    /// The parameter must exist and must be a list of sub algorithms.
+    ///
+    /// \param param the name of the parameter
+    /// \return the configurations of the corresponding sub algorithms
     inline const std::vector<AlgorithmConfig>& get_sub_configs(
         const std::string& param) {
 
-        auto& sub = get_param(param).sub_configs();
-        if(sub.size() == 0) {
-            throw std::runtime_error("parameter has no sub configuations");
-        } else {
-            return sub;
-        }
+        return get_param(param).sub_configs();
     }
 
+    /// \brief Returns a human-readable string representation of the
+    ///        configuration.
+    /// \return a human-readable string representation of the configuration
     inline std::string str() const {
         std::stringstream ss;
         ss << m_decl->name() << '(';
