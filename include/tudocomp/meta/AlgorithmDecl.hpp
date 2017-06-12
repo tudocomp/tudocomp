@@ -69,7 +69,7 @@ private:
     std::string m_name;
     std::string m_type;
     std::string m_desc;
-    std::vector<std::shared_ptr<const Param>> m_params;
+    std::vector<Param> m_params;
 
 public:
     /// \brief Main constructor.
@@ -96,14 +96,14 @@ public:
           m_params(std::move(other.m_params)) {
     }
 
-    inline void add_param(std::shared_ptr<const Param> p) {
-        m_params.emplace_back(p);
+    inline void add_param(Param&& p) {
+        m_params.emplace_back(std::move(p));
     }
 
     inline const std::string& name() const { return m_name; }
     inline const std::string& type() const { return m_type; }
     inline const std::string& desc() const { return m_desc; }
-    inline const std::vector<std::shared_ptr<const Param>> params() const {
+    inline const std::vector<Param>& params() const {
         return m_params;
     }
 
@@ -113,7 +113,7 @@ public:
 
         size_t i = 0;
         for(auto& param : m_params) {
-            ss << param->str();
+            ss << param.str();
             if(++i < m_params.size()) ss << ", ";
         }
 

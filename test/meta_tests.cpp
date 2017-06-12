@@ -9,12 +9,9 @@ using namespace tdc::meta;
 
 TEST(Sandbox, example) {
     auto lz77 = AlgorithmDecl("lz77", "compressor", "LZ77 online compressor.");
-    lz77.add_param(std::make_shared<AlgorithmDecl::Param>(
-        "window"));
-    lz77.add_param(std::make_shared<AlgorithmDecl::Param>(
-        "coder", false, false, "coder"));
-    lz77.add_param(std::make_shared<AlgorithmDecl::Param>(
-        "values", true, true));
+    lz77.add_param(AlgorithmDecl::Param("window"));
+    lz77.add_param(AlgorithmDecl::Param("coder", false, false, "coder"));
+    lz77.add_param(AlgorithmDecl::Param("values", true, true));
     //DLOG(INFO) << lz77.str();
 
     auto binary = AlgorithmDecl("binary", "coder", "Binary coder.");
