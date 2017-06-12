@@ -32,6 +32,10 @@ TEST(Sandbox, example) {
     auto cfg = AlgorithmConfig(dict.at("lz77"), v, dict);
     DLOG(INFO) << cfg.str();
 
+    // signature
+    DLOG(INFO) << "signature...";
+    DLOG(INFO) << cfg.signature();
+
     // stuff
     DLOG(INFO) << "get...";
     auto window = cfg.get_int("window");
