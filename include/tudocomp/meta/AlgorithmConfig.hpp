@@ -294,7 +294,7 @@ public:
     }
 
 private:
-    inline const Param& get_param(const std::string& name) {
+    inline const Param& get_param(const std::string& name) const {
         auto it = std::find_if(m_params.begin(), m_params.end(),
             [&](const Param& p) -> bool {
                 return (name == p.decl().name());
@@ -308,7 +308,7 @@ private:
     }
 
     template<typename T>
-    inline T get(std::shared_ptr<const ast::Node> node) {
+    inline T get(std::shared_ptr<const ast::Node> node) const {
         auto v = std::dynamic_pointer_cast<const ast::Value>(node);
         if(v) {
             return lexical_cast<T>(v->value());
@@ -329,7 +329,7 @@ public:
     /// \param param the name of the parameter
     /// \return the value of the parameter, converted to the desired type
     template<typename T>
-    inline T get(const std::string& param) {
+    inline T get(const std::string& param) const {
         return get<T>(get_param(param).config());
     }
 
@@ -337,7 +337,7 @@ public:
     /// \param param the name of the parameter
     /// \return the string value of the parameter
     /// \see get
-    inline std::string get_string(const std::string& param) {
+    inline std::string get_string(const std::string& param) const {
         return get<std::string>(param);
     }
 
@@ -348,7 +348,7 @@ public:
     /// \param param the name of the parameter
     /// \return the string value of the parameter
     /// \see get
-    inline bool get_bool(const std::string& param) {
+    inline bool get_bool(const std::string& param) const {
         return is_true(get_string(param));
     }
 
@@ -356,7 +356,7 @@ public:
     /// \param param the name of the parameter
     /// \return the integer value of the parameter
     /// \see get
-    inline int get_int(const std::string& param) {
+    inline int get_int(const std::string& param) const {
         return get<int>(param);
     }
 
@@ -364,7 +364,7 @@ public:
     /// \param param the name of the parameter
     /// \return the unsigned integer value of the parameter
     /// \see get
-    inline unsigned int get_uint(const std::string& param) {
+    inline unsigned int get_uint(const std::string& param) const {
         return get<unsigned int>(param);
     }
 
@@ -372,7 +372,7 @@ public:
     /// \param param the name of the parameter
     /// \return the floating point value of the parameter
     /// \see get
-    inline float get_float(const std::string& param) {
+    inline float get_float(const std::string& param) const {
         return get<float>(param);
     }
 
@@ -381,7 +381,7 @@ public:
     /// \param param the name of the parameter
     /// \return the double-precision floating point value of the parameter
     /// \see get
-    inline double get_double(const std::string& param) {
+    inline double get_double(const std::string& param) const {
         return get<double>(param);
     }
 
@@ -394,7 +394,7 @@ public:
     /// \param param the name of the parameter
     /// \return the values of the list parameter, converted to the desired type
     template<typename T>
-    inline std::vector<T> get_vector(const std::string& param) {
+    inline std::vector<T> get_vector(const std::string& param) const {
         auto list = std::dynamic_pointer_cast<const ast::List>(
             get_param(param).config());
 
@@ -415,7 +415,9 @@ public:
     ///
     /// \param param the name of the parameter
     /// \return the configuration of the corresponding sub algorithm
-    inline const AlgorithmConfig& get_sub_config(const std::string& param) {
+    inline const AlgorithmConfig& get_sub_config(
+        const std::string& param) const {
+
         auto& sub = get_param(param).sub_configs();
         if(sub.size() == 0) {
             throw std::runtime_error("parameter has no sub configuations");
@@ -433,9 +435,59 @@ public:
     /// \param param the name of the parameter
     /// \return the configurations of the corresponding sub algorithms
     inline const std::vector<AlgorithmConfig>& get_sub_configs(
-        const std::string& param) {
+        const std::string& param) const {
 
         return get_param(param).sub_configs();
+    }
+
+    /// \brief Gets the algorithm's declaration.
+    /// \return the algorithm's declaration
+    inline const AlgorithmDecl& decl() const {
+        return *m_decl;
+    }
+
+    /// \brief Constructs the signature of the algorithm configuration,
+    ///        with respect only to the configured sub algorithms.
+    ///
+    /// Signatures are used to map algorithm configurations to their
+    /// corresponding C++ classes. These are usually instances of (cascaded)
+    /// class templates, which the signature identifies uniquely.
+    inline std::string signature() const {
+        std::stringstream ss;
+        size_t sig_params = 0;
+
+        // add algorithm name to signature
+        ss << m_decl->name();
+
+        // iterate over declarated parameters
+        for(auto& p : m_decl->params()) {
+            if(!p.is_primitive()) {
+                // add parameter to signature
+                ss << (sig_params ? ", " : "(");
+                ++sig_params;
+                ss << p.name() << "=";
+
+                if(p.is_list()) {
+                    // list of sub algorithms
+                    ss << "[";
+                    auto& subs = get_sub_configs(p.name());
+                    size_t i = 0;
+                    for(auto& sub : subs) {
+                        // recurse for each
+                        ss << sub.signature();
+                        if(++i < subs.size()) ss << ", ";
+                    }
+                    ss << "]";
+                } else {
+                    // single sub algorithm - recurse
+                    ss << get_sub_config(p.name()).signature();
+                }
+            }
+        }
+
+        if(sig_params) ss << ")";
+
+        return ss.str();
     }
 
     /// \brief Returns a human-readable string representation of the
