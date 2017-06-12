@@ -37,4 +37,7 @@ TEST(Sandbox, example) {
     auto window = cfg.get_int("window");
     auto values = cfg.get_vector<int>("values");
     DLOG(INFO) << "window=" << window << ", values.size()=" << values.size();
+
+    auto& coder_cfg = cfg.get_sub_config("coder");
+    DLOG(INFO) << "coder: " << coder_cfg.str();
 }

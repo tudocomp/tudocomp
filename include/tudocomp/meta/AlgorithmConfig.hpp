@@ -140,9 +140,16 @@ public:
               m_sub_configs(std::move(other.m_sub_configs)) {
         }
 
-        inline const AlgorithmDecl::Param& decl() const { return *m_decl; }
+        inline const AlgorithmDecl::Param& decl() const {
+            return *m_decl;
+        }
+
         inline std::shared_ptr<const ast::Node> config() const {
             return m_config;
+        }
+
+        inline const std::vector<AlgorithmConfig>& sub_configs() const {
+            return m_sub_configs;
         }
 
         inline std::string str() const {
@@ -326,6 +333,28 @@ public:
             return vec;
         } else {
             throw std::runtime_error("parameter has no list value type");
+        }
+    }
+
+    inline const AlgorithmConfig& get_sub_config(const std::string& param) {
+        auto& sub = get_param(param).sub_configs();
+        if(sub.size() == 0) {
+            throw std::runtime_error("parameter has no sub configuations");
+        } else if(sub.size() > 1) {
+            throw std::runtime_error("parameter has multiple sub configuations");
+        } else {
+            return sub.front();
+        }
+    }
+
+    inline const std::vector<AlgorithmConfig>& get_sub_configs(
+        const std::string& param) {
+
+        auto& sub = get_param(param).sub_configs();
+        if(sub.size() == 0) {
+            throw std::runtime_error("parameter has no sub configuations");
+        } else {
+            return sub;
         }
     }
 
