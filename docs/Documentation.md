@@ -302,7 +302,13 @@ registered in the `CMakeLists.txt` file.
 The generated Makefile contains a target for registered each test suite.
 For example, the command-line `make tudocomp_tests` (from a build directory)
 invokes the `tudocomp_tests` suite, which is contained in `tudocomp_tests.cpp`.
-The `check` target executes all registered test suites in succession.
+The following global test targets are available:
+* The `build_check` target tries to build tudocomp and all tests
+* The `check` target executes all registered test suites in succession.
+* `matix_tests` runs every compressor with all possible combinations on a fixed given test collection of small strings.
+   Each test in `matix_test` has a unique label given by the arguments passed to a compressor.
+   The tests can be restricted by the global environment variable `MATRIX_PATTERN`.
+   For instance, `MATRIX_PATTERN='string_coder = huff' make matrix_test` only runs those combinations whose label contain `huff` as a `string_coder`.
 
 The `sandbox_tests` suite is ignored by the framework's repository and can be
 used for quick developmental tests to avoid the registration procedure. It
