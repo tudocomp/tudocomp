@@ -16,14 +16,19 @@ private:
     std::vector<std::shared_ptr<const Node>> m_values;
 
 public:
+    /// \brief Main constructor.
     inline List() {
     }
 
+    /// \brief Adds a node to the list.
+    /// \param value the node to add to the list
     inline void add_value(std::shared_ptr<const Node> value) {
         m_values.emplace_back(value);
     }
 
-    inline const std::vector<std::shared_ptr<const Node>> items() const {
+    /// \brief Yields a read-only vector of the list's items.
+    /// \return a read-only vector of the list's items
+    inline const std::vector<std::shared_ptr<const Node>>& items() const {
         return m_values;
     }
 
