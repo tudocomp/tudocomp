@@ -13,18 +13,29 @@ namespace tdc {
 namespace meta {
 namespace ast {
 
+/// \brief Accepts whitespace characters.
 constexpr Acceptor sym_whitespace = Acceptor(" \t\n\r");
 
+/// \brief Accepts ANSI letters (A-Z and a-z).
 constexpr Acceptor sym_letter = Acceptor(
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+
+/// \brief Accepts ANSI digits (0-9).
 constexpr Acceptor sym_digit = Acceptor("0123456789");
 
+/// \brief Accepts special characters allowed in names.
 constexpr Acceptor sym_name_special = Acceptor("_");
+
+/// \brief Accepts characters allowed in names.
 constexpr UnionAcceptor sym_name = UnionAcceptor({
     sym_letter, sym_digit, sym_name_special});
 
+/// \brief Error type for parsing related errors.
 class ParseError : public std::runtime_error {
 public:
+    /// \brief Main constructor.
+    /// \param err the error message
+    /// \param pos the current position in the parsed string
     inline ParseError(const std::string& err, size_t pos)
         : std::runtime_error(err + " (pos: " + std::to_string(pos+1) + ")") {
     }
@@ -236,9 +247,11 @@ private:
     }
 
 public:
+    /// \brief Parses the given string and returns the resulting AST.
+    /// \param str the input string
+    /// \return the resulting AST
     inline static std::shared_ptr<Node> parse(const std::string& str) {
-        Parser p(str);
-        return p.parse_node();
+        return Parser(str).parse_node();
     }
 };
 

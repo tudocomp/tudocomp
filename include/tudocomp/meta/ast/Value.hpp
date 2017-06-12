@@ -12,9 +12,13 @@ private:
     std::string m_value;
 
 public:
+    /// \brief Main constructor.
+    /// \param value the contained string value
     inline Value(const std::string& value) : m_value(value) {
     }
 
+    /// \brief Gets the value contained in this value node.
+    /// \return the contained string value
     const std::string& value() const { return m_value; }
 
     virtual std::string str() const override {
