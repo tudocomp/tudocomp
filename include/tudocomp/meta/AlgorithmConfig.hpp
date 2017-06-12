@@ -25,7 +25,7 @@ public:
     private:
         const AlgorithmDecl::Param* m_decl;
 
-        const ast::Node* m_config;
+        std::shared_ptr<const ast::Node> m_config;
         std::vector<AlgorithmConfig> m_sub_configs; // valid if non-primitive
 
         inline static std::string param_str(bool list_item) {
@@ -33,8 +33,12 @@ public:
                 list_item ? "list item of parameter" : "parameter");
         }
 
-        inline const ast::List* configure_list(const ast::Node* config) {
-            auto list_value = dynamic_cast<const ast::List*>(config);
+        inline std::shared_ptr<const ast::List> configure_list(
+            std::shared_ptr<const ast::Node> config) {
+
+            auto list_value =
+                std::dynamic_pointer_cast<const ast::List>(config);
+
             if(!list_value) {
                 throw ConfigError("type mismatch for parameter '" +
                     m_decl->name() + "': expected list, got " +
@@ -43,11 +47,11 @@ public:
             return list_value;
         }
 
-        inline const ast::Value* configure_primitive(
-            const ast::Node* config,
+        inline std::shared_ptr<const ast::Value> configure_primitive(
+            std::shared_ptr<const ast::Node> config,
             bool list_item = false) {
 
-            auto value = dynamic_cast<const ast::Value*>(config);
+            auto value = std::dynamic_pointer_cast<const ast::Value>(config);
             if(!value) {
                 throw ConfigError("type mismatch for " + param_str(list_item) +
                     " '" + m_decl->name() + "': expected value, got " +
@@ -56,12 +60,14 @@ public:
             return value;
         }
 
-        inline const ast::Object* configure_object(
-            const ast::Node* config,
+        inline std::shared_ptr<const ast::Object> configure_object(
+            std::shared_ptr<const ast::Node> config,
             const AlgorithmDict& dict,
             bool list_item = false) {
 
-            auto obj_value = dynamic_cast<const ast::Object*>(config);
+            auto obj_value =
+                std::dynamic_pointer_cast<const ast::Object>(config);
+
             if(!obj_value) {
                 throw ConfigError("type mismatch for " + param_str(list_item) +
                     " '" + m_decl->name() + "': expected object, got " +
@@ -94,7 +100,7 @@ public:
         /// \brief Main constructor.
         inline Param(
             const AlgorithmDecl::Param& decl,
-            const ast::Node* config,
+            std::shared_ptr<const ast::Node> config,
             const AlgorithmDict& dict)
             : m_decl(&decl), m_config(config) {
 
@@ -105,11 +111,11 @@ public:
 
                 //check list items
                 if(m_decl->is_primitive()) {
-                    for(auto item : list_value->items()) {
+                    for(auto& item : list_value->items()) {
                         configure_primitive(item, true);
                     }
                 } else {
-                    for(auto item : list_value->items()) {
+                    for(auto& item : list_value->items()) {
                         configure_object(item, dict, true);
                     }
                 }
@@ -135,7 +141,9 @@ public:
         }
 
         inline const AlgorithmDecl::Param& decl() const { return *m_decl; }
-        inline const ast::Node* config() const { return m_config; }
+        inline std::shared_ptr<const ast::Node> config() const {
+            return m_config;
+        }
 
         inline std::string str() const {
             std::stringstream ss;
@@ -158,17 +166,17 @@ public:
 
 private:
     const AlgorithmDecl* m_decl;
-    std::vector<Param> m_params;
+    std::vector<std::shared_ptr<const Param>> m_params;
 
 public:
     inline AlgorithmConfig(
         const AlgorithmDecl& decl,
-        const ast::Node* config,
+        std::shared_ptr<const ast::Node> config,
         const AlgorithmDict& dict)
         : m_decl(&decl) {
 
         // assure that config is an object
-        auto obj = dynamic_cast<const ast::Object*>(config);
+        auto obj = std::dynamic_pointer_cast<const ast::Object>(config);
         if(!obj) throw ConfigError("invalid algorithm configuation");
 
         // sanity check that name matches
@@ -177,10 +185,10 @@ public:
         }
 
         // collect named and unnamed params in config
-        std::vector<const ast::Param*> named_params;
-        std::vector<const ast::Param*> unnamed_params;
+        std::vector<std::shared_ptr<const ast::Param>> named_params;
+        std::vector<std::shared_ptr<const ast::Param>> unnamed_params;
 
-        for(auto p : obj->params()) {
+        for(auto& p : obj->params()) {
             if(p->has_name()) {
                 named_params.emplace_back(p);
             } else {
@@ -201,8 +209,13 @@ public:
             throw ConfigError("too many parameters");
         }
 
-        std::unordered_map<std::string, const AlgorithmDecl::Param*> unmapped;
-        for(auto dp : decl_params) {
+        // store parameters that have not been mapped
+        std::unordered_map<
+            std::string,
+            std::shared_ptr<const AlgorithmDecl::Param>
+        > unmapped;
+
+        for(auto& dp : decl_params) {
             unmapped.emplace(dp->name(), dp);
         }
 
@@ -211,9 +224,10 @@ public:
         // first, attempt to map unnamed parameters
         {
             size_t i = 0;
-            for(auto p : unnamed_params) {
+            for(auto& p : unnamed_params) {
                 auto dp = decl_params[i++];
-                m_params.emplace_back(*dp, p->value(), dict);
+                m_params.push_back(
+                    std::make_shared<Param>(*dp, p->value(), dict));
 
                 mapped.emplace(dp->name());
                 unmapped.erase(dp->name());
@@ -221,11 +235,12 @@ public:
         }
 
         // afterwards, attempt to map named parameters
-        for(auto p : named_params) {
+        for(auto& p : named_params) {
             auto it = unmapped.find(p->name());
             if(it != unmapped.end()) {
                 auto dp = it->second;
-                m_params.emplace_back(*dp, p->value(), dict);
+                m_params.push_back(
+                    std::make_shared<Param>(*dp, p->value(), dict));
 
                 mapped.emplace(dp->name());
                 unmapped.erase(dp->name());
@@ -241,7 +256,7 @@ public:
         }
 
         // finally, process unmapped parameters
-        for(auto e : unmapped) {
+        for(auto& e : unmapped) {
             auto dp = e.second;
 
             //TODO: default value
@@ -253,10 +268,10 @@ public:
     }
 
 private:
-    inline const Param& get_param(const std::string& name) {
+    inline std::shared_ptr<const Param> get_param(const std::string& name) {
         auto it = std::find_if(m_params.begin(), m_params.end(),
-            [&](const Param& p) -> bool {
-                return (name == p.decl().name());
+            [&](std::shared_ptr<const Param>& p) -> bool {
+                return (name == p->decl().name());
             });
 
         if(it != m_params.end()) {
@@ -267,8 +282,8 @@ private:
     }
 
     template<typename T>
-    inline T get(const ast::Node* node) {
-        auto v = dynamic_cast<const ast::Value*>(node);
+    inline T get(std::shared_ptr<const ast::Node> node) {
+        auto v = std::dynamic_pointer_cast<const ast::Value>(node);
         if(v) {
             return lexical_cast<T>(v->value());
         } else {
@@ -279,7 +294,7 @@ private:
 public:
     template<typename T>
     inline T get(const std::string& param) {
-        return get<T>(get_param(param).config());
+        return get<T>(get_param(param)->config());
     }
 
     inline std::string get_string(const std::string& param) {
@@ -304,10 +319,12 @@ public:
 
     template<typename T>
     inline std::vector<T> get_vector(const std::string& param) {
-        auto list = dynamic_cast<const ast::List*>(get_param(param).config());
+        auto list = std::dynamic_pointer_cast<const ast::List>(
+            get_param(param)->config());
+
         if(list) {
             std::vector<T> vec;
-            for(auto item : list->items()) {
+            for(auto& item : list->items()) {
                 vec.emplace_back(get<T>(item));
             }
             return vec;
@@ -322,7 +339,7 @@ public:
 
         size_t i = 0;
         for(auto& param : m_params) {
-            ss << param.str();
+            ss << param->str();
             if(++i < m_params.size()) ss << ", ";
         }
 

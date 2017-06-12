@@ -13,20 +13,18 @@ namespace ast {
 /// \brief Represents a list of nodes.
 class List : public Node {
 private:
-    std::vector<std::shared_ptr<Node>> m_values;
+    std::vector<std::shared_ptr<const Node>> m_values;
 
 public:
     inline List() {
     }
 
-    inline void add_value(const std::shared_ptr<Node> value) {
+    inline void add_value(std::shared_ptr<const Node> value) {
         m_values.emplace_back(value);
     }
 
-    inline std::vector<const Node*> items() const {
-        std::vector<const Node*> items;
-        for(auto& v : m_values) items.emplace_back(v.get());
-        return items;
+    inline const std::vector<std::shared_ptr<const Node>> items() const {
+        return m_values;
     }
 
     virtual std::string str() const override {

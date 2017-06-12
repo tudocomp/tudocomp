@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -68,7 +69,7 @@ private:
     std::string m_name;
     std::string m_type;
     std::string m_desc;
-    std::vector<Param> m_params;
+    std::vector<std::shared_ptr<const Param>> m_params;
 
 public:
     /// \brief Main constructor.
@@ -95,17 +96,15 @@ public:
           m_params(std::move(other.m_params)) {
     }
 
-    inline void add_param(Param&& p) {
-        m_params.emplace_back(std::move(p));
+    inline void add_param(std::shared_ptr<const Param> p) {
+        m_params.emplace_back(p);
     }
 
     inline const std::string& name() const { return m_name; }
     inline const std::string& type() const { return m_type; }
     inline const std::string& desc() const { return m_desc; }
-    inline std::vector<const Param*> params() const {
-        std::vector<const Param*> params;
-        for(auto& p : m_params) params.emplace_back(&p);
-        return params;
+    inline const std::vector<std::shared_ptr<const Param>> params() const {
+        return m_params;
     }
 
     inline std::string str() const {
@@ -114,7 +113,7 @@ public:
 
         size_t i = 0;
         for(auto& param : m_params) {
-            ss << param.str();
+            ss << param->str();
             if(++i < m_params.size()) ss << ", ";
         }
 
