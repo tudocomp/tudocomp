@@ -166,7 +166,7 @@ public:
 
 private:
     const AlgorithmDecl* m_decl;
-    std::vector<std::shared_ptr<const Param>> m_params;
+    std::vector<Param> m_params;
 
 public:
     inline AlgorithmConfig(
@@ -202,7 +202,7 @@ public:
         }
 
         // create decl name mapping
-        auto decl_params = m_decl->params();
+        auto& decl_params = m_decl->params();
 
         // sanity check
         if(decl_params.size() < named_params.size() + unnamed_params.size()) {
@@ -210,27 +210,24 @@ public:
         }
 
         // store parameters that have not been mapped
-        std::unordered_map<
-            std::string,
-            std::shared_ptr<const AlgorithmDecl::Param>
-        > unmapped;
+        std::unordered_map<std::string, const AlgorithmDecl::Param*> unmapped;
 
         for(auto& dp : decl_params) {
-            unmapped.emplace(dp->name(), dp);
+            unmapped.emplace(dp.name(), &dp);
         }
 
+        // store parameters that have been mapped
         std::unordered_set<std::string> mapped;
 
         // first, attempt to map unnamed parameters
         {
             size_t i = 0;
             for(auto& p : unnamed_params) {
-                auto dp = decl_params[i++];
-                m_params.push_back(
-                    std::make_shared<Param>(*dp, p->value(), dict));
+                auto& dp = decl_params[i++];
+                m_params.emplace_back(dp, p->value(), dict);
 
-                mapped.emplace(dp->name());
-                unmapped.erase(dp->name());
+                mapped.emplace(dp.name());
+                unmapped.erase(dp.name());
             }
         }
 
@@ -239,8 +236,7 @@ public:
             auto it = unmapped.find(p->name());
             if(it != unmapped.end()) {
                 auto dp = it->second;
-                m_params.push_back(
-                    std::make_shared<Param>(*dp, p->value(), dict));
+                m_params.emplace_back(*dp, p->value(), dict);
 
                 mapped.emplace(dp->name());
                 unmapped.erase(dp->name());
@@ -268,10 +264,10 @@ public:
     }
 
 private:
-    inline std::shared_ptr<const Param> get_param(const std::string& name) {
+    inline const Param& get_param(const std::string& name) {
         auto it = std::find_if(m_params.begin(), m_params.end(),
-            [&](std::shared_ptr<const Param>& p) -> bool {
-                return (name == p->decl().name());
+            [&](const Param& p) -> bool {
+                return (name == p.decl().name());
             });
 
         if(it != m_params.end()) {
@@ -294,7 +290,7 @@ private:
 public:
     template<typename T>
     inline T get(const std::string& param) {
-        return get<T>(get_param(param)->config());
+        return get<T>(get_param(param).config());
     }
 
     inline std::string get_string(const std::string& param) {
@@ -320,7 +316,7 @@ public:
     template<typename T>
     inline std::vector<T> get_vector(const std::string& param) {
         auto list = std::dynamic_pointer_cast<const ast::List>(
-            get_param(param)->config());
+            get_param(param).config());
 
         if(list) {
             std::vector<T> vec;
@@ -339,7 +335,7 @@ public:
 
         size_t i = 0;
         for(auto& param : m_params) {
-            ss << param->str();
+            ss << param.str();
             if(++i < m_params.size()) ss << ", ";
         }
 
