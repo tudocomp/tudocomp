@@ -192,19 +192,19 @@ public:
         }
 
         // collect named and unnamed params in config
-        std::vector<std::shared_ptr<const ast::Param>> named_params;
-        std::vector<std::shared_ptr<const ast::Param>> unnamed_params;
+        std::vector<const ast::Param*> named_params;
+        std::vector<const ast::Param*> unnamed_params;
 
         for(auto& p : obj->params()) {
-            if(p->has_name()) {
-                named_params.emplace_back(p);
+            if(p.has_name()) {
+                named_params.emplace_back(&p);
             } else {
                 if(named_params.size() > 0) {
                     throw ConfigError(
                         "unnamed parameters need to be listed first");
                 }
 
-                unnamed_params.emplace_back(p);
+                unnamed_params.emplace_back(&p);
             }
         }
 
