@@ -285,11 +285,14 @@ public:
         for(auto& e : unmapped) {
             auto dp = e.second;
 
-            //TODO: default value
-
-            throw ConfigError(
-                "parameter was given no value and has no default: '" +
-                dp->name() + "'");
+            auto default_value = dp->default_value();
+            if(!default_value) {
+                throw ConfigError(
+                    "parameter was given no value and has no default: '" +
+                    dp->name() + "'");
+            } else {
+                m_params.emplace_back(*dp, default_value, dict);
+            }
         }
     }
 
