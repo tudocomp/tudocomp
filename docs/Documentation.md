@@ -314,6 +314,11 @@ The `sandbox_tests` suite is ignored by the framework's repository and can be
 used for quick developmental tests to avoid the registration procedure. It
 can also be used as a template for new test suites.
 
+All tests are compiled with the `gtest` library.
+The library usually runs all tests continuing on errors. To terminate the program on a failure, one can pass the 
+argument `--gtest_break_on_failure` as a command line parameter. This is useful for debugging with `gdb`.
+
+
 ## Input and Output
 
 *tudocomp* provides an abstraction for handling input from different kinds of
@@ -665,6 +670,8 @@ When instantiated, an algorithm receives an environment object
 ([`Env`](@DX_ENV@)) via its [constructor](@DX_ALGORITHM_CTOR@). The environment
 provides access to algorithm options as explained below. It is retrieved using
 the [`env`](@DX_ALGORITHM_ENV@) function.
+
+A dummy environment can be created with the function `create_env`, passing a `Meta` object for initialization.
 
 ### Options
 
