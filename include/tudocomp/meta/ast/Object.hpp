@@ -73,7 +73,7 @@ public:
 class Object : public Node {
 private:
     std::string m_name;
-    std::vector<std::shared_ptr<const Param>> m_params;
+    std::vector<Param> m_params;
 
 public:
     /// \brief Main constructor.
@@ -83,8 +83,8 @@ public:
 
     /// \brief Adds a parameter to the object.
     /// \param param the parameter to add.
-    inline void add_param(std::shared_ptr<const Param> param) {
-        m_params.emplace_back(param);
+    inline void add_param(Param&& param) {
+        m_params.emplace_back(std::move(param));
     }
 
     /// \brief Gets the object's name.
@@ -93,7 +93,7 @@ public:
 
     /// \brief Returns a read-only vector of the object's parameters.
     /// \return a read-only vector of the object's parameters
-    inline const std::vector<std::shared_ptr<const Param>>& params() const {
+    inline const std::vector<Param>& params() const {
         return m_params;
     }
 
@@ -102,7 +102,7 @@ public:
         ss << m_name << '(';
         size_t i = 0;
         for(auto& p : m_params) {
-            ss << p->str();
+            ss << p.str();
             if(++i < m_params.size()) ss << ", ";
         }
         ss << ')';
