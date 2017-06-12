@@ -7,8 +7,19 @@
 #include <utility>
 #include <vector>
 
+#include <tudocomp/meta/ast/Node.hpp>
+#include <tudocomp/meta/ast/List.hpp>
+#include <tudocomp/meta/ast/Value.hpp>
+
 namespace tdc {
 namespace meta {
+
+/// \brief Error type for declaration related errors.
+class DeclError : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
+
 
 /// \brief Represents an algorithm declaration.
 class AlgorithmDecl {
@@ -17,9 +28,12 @@ public:
     class Param {
     private:
         std::string m_name;
-        bool m_primitive; // if false, type needs to be set
-        bool m_list; // if true, value/type flags account for list items
+        bool m_primitive;   // if false, type needs to be set
+        bool m_list;        // if true, value/type flags account for list items
         std::string m_type; // only valid if non-primitive
+
+        // default value - only used if primitive
+        std::shared_ptr<const ast::Node> m_default;
 
     public:
         /// \brief Main constructor.
@@ -33,16 +47,53 @@ public:
             const std::string& name,
             bool primitive = true,
             bool list = false,
-            const std::string& type = "")
-            : m_name(name), m_primitive(primitive), m_list(list) {
+            const std::string& type = "",
+            std::shared_ptr<const ast::Node> defv =
+                std::shared_ptr<const ast::Node>())
+            : m_name(name),
+              m_primitive(primitive),
+              m_list(list),
+              m_default(defv) {
 
-            CHECK(primitive || !type.empty()) <<
-                "non-primitive parameters must have a type";
+            if(!primitive && type.empty()) {
+                throw DeclError("non-primitive parameters must have a type");
+            }
 
-            CHECK(!primitive || type.empty()) <<
-                "primitive parameters must not have a type";
+            if(primitive && !type.empty()) {
+                throw DeclError("primitive parameters must not have a type");
+            }
+
+            if(!primitive && defv) {
+                throw DeclError(
+                    "non-primitive parameters cannot have a default value");
+            }
 
             m_type = primitive ? "$" : type;
+
+            // sanity checks on default value
+            if(defv) {
+                if(list) {
+                    auto list_value =
+                        std::dynamic_pointer_cast<const ast::List>(defv);
+
+                    if(!list_value) {
+                        throw DeclError(
+                            "default value should be a list, but is a " +
+                            defv->debug_type());
+                    }
+
+                    for(auto& item : list_value->items()) {
+                        if(!std::dynamic_pointer_cast<const ast::Value>(item)) {
+                            throw DeclError(
+                            "default list value must only contain primitives");
+                        }
+                    }
+                } else if(!std::dynamic_pointer_cast<const ast::Value>(defv)) {
+                    throw DeclError(
+                        "default value should be a value, but is a " +
+                        defv->debug_type());
+                }
+            }
         }
 
         /// \brief Copy constructor.
@@ -51,7 +102,8 @@ public:
             : m_name(other.m_name),
               m_primitive(other.m_primitive),
               m_list(other.m_list),
-              m_type(other.m_type) {
+              m_type(other.m_type),
+              m_default(other.m_default) {
         }
 
         /// \brief Move constructor.
@@ -60,13 +112,18 @@ public:
             : m_name(std::move(other.m_name)),
               m_primitive(other.m_primitive),
               m_list(other.m_list),
-              m_type(std::move(other.m_type)) {
+              m_type(std::move(other.m_type)),
+              m_default(std::move(other.m_default)) {
         }
 
         inline const std::string& name() const { return m_name; }
         inline bool is_primitive() const { return m_primitive; }
         inline bool is_list() const { return m_list; }
         inline const std::string& type() const { return m_type; }
+
+        inline std::shared_ptr<const ast::Node> default_value() const {
+            return m_default;
+        }
 
         /// \brief Returns a string representation of the declaration.
         /// \return a string representation of the declaration
