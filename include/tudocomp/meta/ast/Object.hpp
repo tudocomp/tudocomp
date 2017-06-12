@@ -32,7 +32,9 @@ public:
     inline bool has_name() const { return !m_name.empty(); }
 
     inline const std::string& name() const { return m_name; }
-    inline const Node* value() const { return m_value.get(); }
+    inline std::shared_ptr<const Node> value() const {
+        return std::const_pointer_cast<const Node>(m_value);
+    }
 
     inline std::string str() const {
         std::stringstream ss;
@@ -46,21 +48,19 @@ public:
 class Object : public Node {
 private:
     std::string m_name;
-    std::vector<Param> m_params;
+    std::vector<std::shared_ptr<const Param>> m_params;
 
 public:
     inline Object(const std::string& name) : m_name(name) {
     }
 
-    inline void add_param(const Param& param) {
+    inline void add_param(std::shared_ptr<const Param> param) {
         m_params.emplace_back(param);
     }
 
     inline const std::string& name() const { return m_name; }
-    inline std::vector<const Param*> params() const {
-        std::vector<const Param*> params;
-        for(auto& p : m_params) params.emplace_back(&p);
-        return params;
+    inline const std::vector<std::shared_ptr<const Param>> params() const {
+        return m_params;
     }
 
     virtual std::string str() const override {
@@ -68,7 +68,7 @@ public:
         ss << m_name << '(';
         size_t i = 0;
         for(auto& p : m_params) {
-            ss << p.str();
+            ss << p->str();
             if(++i < m_params.size()) ss << ", ";
         }
         ss << ')';

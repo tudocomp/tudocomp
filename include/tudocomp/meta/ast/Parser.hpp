@@ -160,7 +160,7 @@ private:
                     if(!node) {
                         throw ParseError("unexpected end of input", m_cursor);
                     }
-                    obj->add_param(Param(node));
+                    obj->add_param(std::make_shared<Param>(node));
                 } else {
                     parse_whitespace();
 
@@ -175,12 +175,12 @@ private:
                         if(!node) {
                             throw ParseError("unexpected end of input", m_cursor);
                         }
-                        obj->add_param(Param(name, node));
+                        obj->add_param(std::make_shared<Param>(name, node));
                     } else {
                         // treat as a nameless sub object
                         auto sub = std::make_shared<Object>(name);
                         parse_param_list(sub); // recursion!
-                        obj->add_param(Param(sub));
+                        obj->add_param(std::make_shared<Param>(sub));
                     }
                 }
                 if(peek() == ',') {
