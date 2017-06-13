@@ -56,18 +56,32 @@
 
 namespace tdc {
     /// \cond INTERNAL
-    template<typename actual_type>
-    struct  _fast_t_size_check {
+    template<typename T, class X = void>
+    struct FastIntType {
+        // <not defined>
+    };
+    template<size_t N>
+    struct FastIntType<uint_t<N>, std::enable_if_t<(N <= 32)>> {
         using Type = uint32_t;
-        static_assert(sizeof(Type) >= sizeof(actual_type),
-                      "Can only use fast_t with integer sizes <= sizeof(size_t)");
+    };
+    template<size_t N>
+    struct FastIntType<uint_t<N>, std::enable_if_t<(N > 32)>> {
+        using Type = uint64_t;
+    };
+    template<>
+    struct FastIntType<uint32_t> {
+        using Type = uint32_t;
+    };
+    template<>
+    struct FastIntType<uint64_t> {
+        using Type = uint64_t;
     };
     /// \endcond
 
     /// Type to represent integer values in the size range of `actual_type`
     /// that may require more Bits than it, while being faster.
     template<typename actual_type>
-    using fast_t = typename _fast_t_size_check<actual_type>::Type;
+    using fast_t = typename FastIntType<actual_type>::Type;
 
     /// Type to represent an index value.
     ///

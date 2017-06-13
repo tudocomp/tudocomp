@@ -41,6 +41,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG")
 
+# Set integer with for length type
+if(DEFINED LEN_BITS)
+    message(STATUS "Setting length type to ${LEN_BITS} Bits")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEN_BITS=${LEN_BITS}")
+endif(DEFINED LEN_BITS)
+
 find_package(Boost)
 
 # Paranoid debugging
