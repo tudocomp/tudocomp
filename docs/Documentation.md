@@ -1061,7 +1061,7 @@ literal iterator to count the amount of occurences of each possible literal
 
 ~~~ {.cpp caption="coder_impl.cpp"}
 // count occurences of each literal
-std::memset(m_occ, 0, 256);
+std::memset(m_occ, 0, 256 * sizeof(int));
 
 while(literals.has_next()) {
     Literal l = literals.next();
