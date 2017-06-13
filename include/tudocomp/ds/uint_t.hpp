@@ -210,4 +210,11 @@ namespace std {
     std::string to_string(tdc::uint_t<N> value) {
         return std::to_string(uint64_t(value));
     }
+
+    template<size_t N>
+    struct hash<tdc::uint_t<N>> {
+        size_t operator()(const tdc::uint_t<N>& x) const {
+            return hash<uint64_t>()(x);
+        }
+    };
 }

@@ -91,7 +91,7 @@ public:
                     }
                     //generate factor
                     const index_fast_t pos_target = sa[index];
-                    DCHECK_GT(index,0);
+                    DCHECK_GT(index,0u);
                     const index_fast_t pos_source = sa[index-1];
                     const index_fast_t factor_length = lcp[index];
 
@@ -106,7 +106,7 @@ public:
                     //correct intersecting entries
                     for(index_fast_t k = 0; k < max_affect; ++k) {
                         const index_fast_t pos_suffix = pos_target - k - 1; DCHECK_GE(pos_target,k+1);
-                        const index_t& ind_suffix = isa[pos_suffix];
+                        const index_fast_t ind_suffix = isa[pos_suffix];
                         lcp[ind_suffix] = std::min<index_fast_t>(k+1, lcp[ind_suffix]);
                     }
 

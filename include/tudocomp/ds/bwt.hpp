@@ -38,8 +38,8 @@ index_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 		C[i] += C[i-1];
 	}
 	DVLOG(2) << "C: " << arr_to_debug_string(C,ULITERAL_MAX);
-	DCHECK_EQ(C[0],0); // no character preceeds 0
-	DCHECK_EQ(C[1],1); // there is exactly only one '\0' byte
+	DCHECK_EQ(C[0],0u); // no character preceeds 0
+	DCHECK_EQ(C[1],1u); // there is exactly only one '\0' byte
 
 	index_t* LF { new index_t[bwt_length] };
 	for(index_fast_t i = 0; i < bwt_length; ++i) {

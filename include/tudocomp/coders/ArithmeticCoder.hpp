@@ -66,13 +66,13 @@ public:
          * @param c
          */
         void build_intervals(std::vector<index_t> &c) {
-            if(c[0]) {
+            if(c[0] != 0u) {
                 codebook_size++;
             }
             index_fast_t min=std::numeric_limits<index_t>::max();
             //calculates difference to the entry before, searches min and counts entries != 0
             for(ulong i=1; i<=ULITERAL_MAX; i++) {
-                if(c[i]!=0) {
+                if(c[i]!=0u) {
                     codebook_size++;
                     min=std::min(min, index_fast_t(c[i]));
                 }
@@ -126,7 +126,7 @@ public:
             //write codebook size in outstream
             m_out->write_int<uliteral_t>(codebook_size);
 
-            if(C[0]!=0) {
+            if(C[0]!=0u) {
                 m_out->write_int(uliteral_t(0));
                 m_out->write_int(C[0]);
             }

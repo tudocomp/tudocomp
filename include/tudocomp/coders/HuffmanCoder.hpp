@@ -49,7 +49,7 @@ namespace huff {
      *  @param C @see count_alphabet
      */
     inline index_fast_t effective_alphabet_size(const index_t* C) {
-        return std::count_if(C, C+ULITERAL_MAX+1, [] (const index_t& i) { return i != 0; }); // size of the effective alphabet
+        return std::count_if(C, C+ULITERAL_MAX+1, [] (const index_t& i) { return i != 0u; }); // size of the effective alphabet
     }
 
     /**
@@ -62,7 +62,7 @@ namespace huff {
         uliteral_t* map_from_effective { new uliteral_t[alphabet_size] };
         size_t j = 0;
         for(size_t i = 0; i <= ULITERAL_MAX; ++i) {
-            if(C[i] == 0) continue;
+            if(C[i] == 0u) continue;
             DCHECK_LT(j, alphabet_size);
             map_from_effective[j++] = i;
         }
@@ -70,7 +70,7 @@ namespace huff {
         for(size_t i = 0; i < alphabet_size; ++i) {
 //          DCHECK_NE(map_from_effective[i],0);
             DCHECK_LE(map_from_effective[i], ULITERAL_MAX);
-            DCHECK_NE(C[map_from_effective[i]],0);
+            DCHECK_NE(C[map_from_effective[i]], 0u);
         }
         return map_from_effective;
     }
