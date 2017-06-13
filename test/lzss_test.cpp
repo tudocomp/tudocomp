@@ -51,8 +51,10 @@ TEST(lzss, factor_buffer_sort) {
     buf.sort();
     ASSERT_TRUE(buf.is_sorted());
 
-    for(size_t i = 0; i < buf.size() - 1; i++) {
-        ASSERT_LE(buf[i].pos, buf[i+1].pos);
+    auto last = buf.begin();
+    for(auto next = last + 1; next != buf.end(); ++next) {
+        ASSERT_LE(last->pos, next->pos);
+        last = next;
     }
 }
 

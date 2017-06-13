@@ -26,6 +26,8 @@ private:
     len_t m_longest_factor;
 
 public:
+    using const_iterator = std::vector<Factor>::const_iterator;
+
     inline FactorBuffer()
         : m_sorted(true)
         , m_shortest_factor(LEN_MAX)
@@ -40,15 +42,13 @@ public:
         m_shortest_factor = std::min(m_shortest_factor, flen);
         m_longest_factor = std::max(m_longest_factor, flen);
     }
-    inline std::vector<Factor>::const_iterator begin() const {
+
+    inline const_iterator begin() const {
         return m_factors.cbegin();
     }
-    inline std::vector<Factor>::const_iterator end() const {
-        return m_factors.cend();
-    }
 
-    [[deprecated("use interators")]] inline const Factor& operator[](size_t i) const {
-        return m_factors[i];
+    inline const_iterator end() const {
+        return m_factors.cend();
     }
 
     inline bool empty() const {
