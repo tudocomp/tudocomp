@@ -12,7 +12,8 @@ TEST(Sandbox, example) {
     auto lz77 = AlgorithmDecl("lz77", "compressor", "LZ77 online compressor.");
     lz77.add_param(AlgorithmDecl::Param("window", true, false, "",
         ast::Parser::parse("10")));
-    lz77.add_param(AlgorithmDecl::Param("coder", false, false, "coder"));
+    lz77.add_param(AlgorithmDecl::Param("coder", false, false, "coder",
+        ast::Parser::parse("binary()")));
     lz77.add_param(AlgorithmDecl::Param("values", true, true, "",
         ast::Parser::parse("[1,4,7]")));
     //DLOG(INFO) << lz77.str();
@@ -27,7 +28,7 @@ TEST(Sandbox, example) {
 
     // parse
     DLOG(INFO) << "parse...";
-    auto v = ast::Parser::parse("lz77(coder=binary)");
+    auto v = ast::Parser::parse("lz77");
     DLOG(INFO) << v->str();
 
     // attempt to create config
