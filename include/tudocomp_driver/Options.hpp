@@ -24,6 +24,9 @@ constexpr option OPTIONS[] = {
     {"raw",        no_argument,       nullptr, OPT_RAW},
     {"usestdin",   no_argument,       nullptr, OPT_STDIN},
     {"usestdout",  no_argument,       nullptr, OPT_STDOUT},
+    {"logdir",     required_argument, nullptr, 'L'},
+    {"loglevel",   required_argument, nullptr, 'O'},
+    {"logverbosity",   required_argument, nullptr, 'V'},
     {0, 0, 0, 0} // termination (required last entry!!)
 };
 
@@ -129,6 +132,27 @@ public:
             << left << setw(W_LF) << "--version"
             << "print the version number of this build"
             << endl;
+
+        // -L, --logdir
+        out << right << setw(W_SF) << "-L" << ", "
+            << left << setw(W_LF) << "--logdir=path"
+            << "instead of logging to stdout use a log dir"
+            << endl << setw(W_INDENT) << "" << "in which log files are saved"
+            << endl;
+
+        // -O, --lOglevel
+        out << right << setw(W_SF) << "-O" << ", "
+            << left << setw(W_LF) << "--loglevel=[0|1|2|3]"
+            << "log messages at or above this level"
+            << endl << setw(W_INDENT) << "" << "levels are INFO, WARNING, ERROR, and FATAL, "
+            << endl << setw(W_INDENT) << "" << "enumerated by 0, 1, 2, and 3, respectively."
+            << endl;
+
+        // -V, --logverbosity
+        out << right << setw(W_SF) << "-V" << ", "
+            << left << setw(W_LF) << "--logverbosity=[0|1|2]"
+            << "show all VLOG(m) messages for m less or equal the value of this flag"
+            << endl;
     }
 
 private:
@@ -173,7 +197,7 @@ public:
         m_stats(false)
     {
         int c, option_index = 0;
-        while((c = getopt_long(argc, argv, "a:dfg:lo:s::v",
+        while((c = getopt_long(argc, argv, "O:V:L:a:dfg:lo:s::v",
             OPTIONS, &option_index)) != -1) {
 
             switch(c) {
@@ -197,6 +221,7 @@ public:
                     m_list = true;
                     break;
 
+
                 case 'v': // --version
                     m_version = true;
                     break;
@@ -208,6 +233,18 @@ public:
                 case 's': // --stats=[optarg]
                     m_stats = true;
                     if(optarg) m_stats_title = std::string(optarg);
+                    break;
+
+				//logging
+                case 'L': // --logdir
+					FLAGS_log_dir = std::string(optarg);
+					FLAGS_logtostderr = 0;
+                    break;
+                case 'V': // --logVerbosity
+					FLAGS_v = std::stoi(std::string(optarg));
+                    break;
+                case 'O': // --lOglevel
+					FLAGS_minloglevel = std::stoi(std::string(optarg));
                     break;
 
                 case OPT_HELP: // --help

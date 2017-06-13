@@ -30,6 +30,7 @@
 #else
     /// `x` is compiled only in debug builds.
     #define IF_DEBUG(x)
+	#define GOOGLE_STRIP_LOG 1 // no google logging
 #endif
 
 // code compiled only in paranoid debug build (pass -DPARANOID=1 to CMake)

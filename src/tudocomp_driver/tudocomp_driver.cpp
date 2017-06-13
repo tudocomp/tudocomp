@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 
-#include <glog/logging.h>
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.hpp>
@@ -20,6 +19,8 @@
 
 #include <tudocomp_stat/Json.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
+
+#include <glog/logging.h>
 
 namespace tdc_driver {
 
@@ -59,8 +60,8 @@ int main(int argc, char** argv) {
 
     const char* cmd = argv[0];
 
-    // init logging
-    google::InitGoogleLogging(cmd);
+	FLAGS_logtostderr = 1;
+
 
     // no options
     if(argc == 1) {
@@ -85,6 +86,9 @@ int main(int argc, char** argv) {
         std::cout << tdc::VERSION << "\n";
         return 0;
     }
+
+    // init logging
+    google::InitGoogleLogging(cmd);
 
     try {
         // load registry
