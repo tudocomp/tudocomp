@@ -40,22 +40,23 @@ private:
     DynamicIntVector& m_buffer;
     saidx_t m_index;
 
-    // upper value bounds for bit width
-    const uint64_t m_upper, m_upper_signed;
+    // NB: Could add a bit mask for the maximum value width here,
+    // such that a int64_t representation only uses DynamicIntVector::width bits(),
+    // but a DynamicIntVector silently truncates the values, so its not needed.
+    // mask = ~(1ull << buffer.width())
+    // val = val & mask
 
     inline saidx_t to_signed(uint64_t v) {
-        return (v >= m_upper_signed) ? -(m_upper - v) : v;
+        return int64_t(v);
     }
 
     inline uint64_t to_unsigned(saidx_t v) {
-        return (v < 0) ? (m_upper + v) : v;
+        return int64_t(v);
     }
 
 public:
     inline Accessor(DynamicIntVector& buffer, saidx_t i)
-        : m_buffer(buffer), m_index(i),
-          m_upper(1ULL << buffer.width()),
-          m_upper_signed(m_upper >> 1ULL)
+        : m_buffer(buffer), m_index(i)
     {
     }
 
