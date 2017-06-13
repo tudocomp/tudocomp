@@ -50,7 +50,7 @@ private:
     uint remainder;
 
     //active point, from where to start inserting new suffixes
-    STNode* active_node;
+    uint active_node;
     char active_edge;
     uint active_length;
 
@@ -112,7 +112,7 @@ public:
     }
 
     //constructor
-    SuffixTree(){
+    BinarySuffixTree(){
         //no Text is read
         pos=-1;
         Text="";
@@ -138,7 +138,7 @@ public:
         last_added_sl=0;
 
     }
-    ~SuffixTree(){
+    ~BinarySuffixTree(){
 
     }
 
@@ -147,7 +147,7 @@ private:
         //Text += c;
         pos++;
         remainder++;
-        last_added_sl=root;
+        last_added_sl=0;
 
         while(remainder > 0){
             if(active_length==0){
@@ -180,7 +180,7 @@ private:
                 create_node(pos, 0, active_edge);
          //       leaves.push_back(new_leaf);
            //     new_leaf->suffix=suffix++;
-                add_sl(active_inner);
+                add_sl(active_node);
 
             } else {
                 uint next =  child ;
@@ -195,9 +195,9 @@ private:
                 }
 
                 //if that suffix is already in the tree::
-                if(Text[next->start +active_length] == c){
+                if(Text[start[next]+active_length] == c){
                     active_length++;
-                    add_sl(active_inner);
+                    add_sl(active_node);
                     break;
                 }
 
@@ -233,8 +233,8 @@ private:
                 active_length--;
                 active_edge = Text[pos-remainder+1];
             }else {
-                if(suffix_link[active_inner] != 0){
-                    active_node = suffix_link[active_inner];
+                if(suffix_link[active_node] != 0){
+                    active_node = suffix_link[active_node];
                 } else {
                     active_node = 0;
                 }
@@ -308,15 +308,15 @@ public:
         }
     }*/
 
-    BinarySuffixTree(Input& input) : SuffixTree(){
+    BinarySuffixTree(Input& input) : BinarySuffixTree(){
         append_input(input);
     }
 
-    BinarySuffixTree(io::InputView & input) : SuffixTree(){
+    BinarySuffixTree(io::InputView & input) : BinarySuffixTree(){
         append_input(input);
     }
 
-    BinarySuffixTree(std::string input) :  SuffixTree(){
+    BinarySuffixTree(std::string input) :  BinarySuffixTree(){
         append_string(input);
     }
 

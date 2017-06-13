@@ -14,13 +14,21 @@
 namespace tdc {
 //namespace SuffixTree {
 
-SuffixTree* build_suffix_tree(Input& input){
-    input.escape_and_terminate();
-    tdc::SuffixTree* stree = new tdc::SuffixTree();
+BinarySuffixTree* build_suffix_tree(Input& input){
+    //input.escape_and_terminate();
+    tdc::BinarySuffixTree* stree = new tdc::BinarySuffixTree();
     stree->append_input(input);
     return stree;
 }
 
+TEST(stree, st_input_test_small){
+    Input file_input("abcabxabcd$abcabxabcd$abcabxabcd$abcabxabcd$");
+    BinarySuffixTree* stree = build_suffix_tree(file_input);
+   // auto leaves = stree->get_leaves();
+    ASSERT_EQ(stree->get_text().size(), file_input.size());
+}
+
+/*
 
 TEST(stree, st_node_test){
     SuffixTree* stree = new SuffixTree();
@@ -189,7 +197,6 @@ TEST(stree, st_constructor_tests){
     ASSERT_EQ(stree_str.get_text().size(), leaves.size());
 }
 
-/*/
 TEST(stree, st_file_test_1mb_english){
     Input file_input = Input(Input::Path{"english.1MB"});
     SuffixTree* stree = build_suffix_tree(file_input);
@@ -219,7 +226,7 @@ TEST(stree, st_file_test_10mb_sources){
     auto leaves = stree->get_leaves();
     ASSERT_EQ(stree->get_text().size(), leaves.size());
 
-} // */
+}  */
 
 
 
