@@ -41,7 +41,7 @@ private:
     saidx_t m_index;
 
     // NB: Could add a bit mask for the maximum value width here,
-    // such that a int64_t representation only uses DynamicIntVector::width bits(),
+    // such that a int64_t representation only uses DynamicIntVector::width() bits,
     // but a DynamicIntVector silently truncates the values, so its not needed.
     // mask = ~(1ull << buffer.width())
     // val = val & mask
