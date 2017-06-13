@@ -42,58 +42,16 @@ private:
     DynamicIntVector& m_buffer;
     saidx_t m_index;
 
-    const uint64_t m_mask;
-    const uint64_t m_sign_bit;
-    const uint8_t  m_width;
+    const int m_shift;
 
     inline saidx_t to_signed(uint64_t v, int p = 0) {
-        const uint8_t lshift = 64 - m_width;
-
-        saidx_t r;
-        if (v & m_sign_bit) {
-            r = int64_t(v | m_mask);
-        } else {
-            r = int64_t(v);
-        }
-
-        std::cout << "S Cast from " << v << " to " << r << "\n";
-        if (p == 0) {
-            std::cout << "Back ";
-            auto r2 = to_unsigned(r, p + 1);
-
-            std::cout << "v:  " << pm(v) << "\n";
-            std::cout << "r2: " << pm(r2) << "\n";
-            DCHECK_EQ(v, r2);
-        }
-
-        return r;
+        // NB: Need to use portable arithmetic shift instruction
+        // to ensure shifting a signed value causes a proper sign extension
+        return shift_by(shift_by(int64_t(v), m_shift), -m_shift);
     }
 
     inline uint64_t to_unsigned(saidx_t v, int p = 0) {
-        const uint8_t lshift = 64 - m_width;
-
-        uint64_t r;
-        r = int64_t(v);
-        //r = r & (~m_mask);
-
-        DCHECK_EQ(v, int64_t(v));
-
-        std::cout << "U Cast from " << v << " to " << r << "\n";
-        if (p == 0) {
-            std::cout << "Back ";
-            auto r2 = to_signed(r, p + 1);
-
-            std::cout << "v:  " << pm(v) << "\n";
-            std::cout << "r2: " << pm(r2) << "\n";
-            DCHECK_EQ(v, r2);
-        }
-
-        return r;
-
-        // NB: Could do this:
-        // return int64_t(v & (~m_mask));
-        // to properly truncate, but assigning to a DynamicIntVector
-        // does this implicitly
+        return (uint64_t(int64_t(v)) << m_shift) >> m_shift;
     }
 
     std::string pm(uint64_t v) {
@@ -108,22 +66,8 @@ public:
     inline Accessor(DynamicIntVector& buffer, saidx_t i):
         m_buffer(buffer),
         m_index(i),
-        m_mask(~((1ull << buffer.width()) - 1ull)),
-        m_sign_bit(1ull << (buffer.width() - 1)),
-        m_width(buffer.width())
+        m_shift(64 - buffer.width())
     {
-        DCHECK_EQ(m_mask & m_sign_bit, m_sign_bit);
-        DCHECK_EQ(m_mask & (m_sign_bit << 1), 0);
-        DCHECK_EQ(m_mask & (m_sign_bit << 1), (m_sign_bit << 1));
-
-        if (buffer.width() == 64) {
-            DCHECK_EQ(m_mask, ~uint64_t(0));
-            DCHECK_EQ(m_mask, uint64_t(-1));
-        }
-
-        std::cout << "width: " << int(buffer.width()) << "\n";
-        std::cout << "mask:  " << pm(m_mask) << "\n";
-        std::cout << "sign:  " << pm(m_sign_bit) << "\n";
     }
 
     inline operator saidx_t() { return to_signed(m_buffer[m_index]); }
