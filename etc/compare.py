@@ -159,6 +159,8 @@ else:
         Tudocomp(name='huff',                            algorithm='encode(huff)'),
         Tudocomp(name='lzw(ternary)',                    algorithm='lzw(coder=bit,lz78trie=ternary)'),
         Tudocomp(name='lz78(ternary)',                   algorithm='lz78(coder=bit,lz78trie=ternary)'),
+		Tudocomp(name='lfs_simst',                       algorithm='lfs_comp(sim_st)'),
+		Tudocomp(name='lfs2',                       	 algorithm='lfs2'),
         # Some standard Linux compressors
         StdCompressor(name='gzip -1',  binary='gzip',  cflags=['-1'], dflags=['-d']),
         StdCompressor(name='gzip -9',  binary='gzip',  cflags=['-9'], dflags=['-d']),
@@ -178,7 +180,7 @@ def memsize(num, suffix='B'):
 
 def timesize(num, suffix='s'):
     if(num < 1.0):
-        for unit in ['','m','μ','n']:
+        for unit in ['','m','mu','n']:
             if num > 1.0:
                 return "%3.1f%s%s" % (num, unit, suffix)
             num *= 1000

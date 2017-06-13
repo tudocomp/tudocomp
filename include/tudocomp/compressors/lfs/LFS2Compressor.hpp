@@ -98,7 +98,7 @@ public:
         second_layer_nts = IntVector<uint>(input.size(), 0);
         second_layer_dead = BitVector(input.size(), 0);
 
-        std::cerr<<"building stree"<<std::endl;
+     //   std::cerr<<"building stree"<<std::endl;
 
 
 
@@ -116,7 +116,7 @@ public:
 
 
 
-        std::cerr<<"computing lrf"<<std::endl;
+      //  std::cerr<<"computing lrf"<<std::endl;
         StatPhase::wrap("Computing LRF", [&]{
             bins.resize(200);
             uint node_counter = 0;
@@ -127,7 +127,7 @@ public:
 
             StatPhase::wrap("Iterate over ST", [&]{
                 DLOG(INFO)<<"iterate st";
-                std::cerr<<"iterate st"<<std::endl;
+              //  std::cerr<<"iterate st"<<std::endl;
 
                 for (iterator it = begin; it != end; ++it) {
 
@@ -148,7 +148,7 @@ public:
             });
             node_begins.resize(node_counter);
 
-            std::cerr<<"iterate st done"<<std::endl;
+        //    std::cerr<<"iterate st done"<<std::endl;
             uint nts_number = 1 ;
             StatPhase::wrap("Iterate over Node Bins", [&]{
                 //iterate node bins top down
@@ -346,7 +346,7 @@ public:
         StatPhase::log("Number of CFG rules", non_terminal_symbols.size());
 
 
-        std::cerr<<"encoding text"<<std::endl;
+    //    std::cerr<<"encoding text"<<std::endl;
 
        // std::vector<uint8_t> byte_buffer;
 
@@ -487,7 +487,7 @@ public:
              double literal_percent = ((double)dict_literals + (double)literals)/ (double)in.size();
              StatPhase::log("Literals Encoding / Literals Input", literal_percent);
 
-            std::cerr<<"encoding done"<<std::endl;
+        //    std::cerr<<"encoding done"<<std::endl;
 
             DLOG(INFO)<<"encoding done";
 

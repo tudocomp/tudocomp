@@ -5,6 +5,8 @@
 
 #include "tudocomp/ds/SuffixTree.hpp"
 
+#include "tudocomp/ds/BinarySuffixTree.hpp"
+
 
 //#include "tudocomp/ds/SuffixTreeEdge.hpp"
 //#include "tudocomp/ds/SuffixTreeNode.hpp"
