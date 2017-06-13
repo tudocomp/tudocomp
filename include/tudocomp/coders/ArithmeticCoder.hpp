@@ -30,15 +30,15 @@ public:
     /// \brief Encodes data to an ASCII character stream.
     class Encoder : public tdc::Encoder {
     private:
-        std::vector<len_t> C;
+        std::vector<index_t> C;
 
         ulong lower_bound=0;
         ulong upper_bound=std::numeric_limits<ulong>::max();
         uliteral_t codebook_size=0;
 
-        len_t literal_count = 0;
-        len_t literal_counter = 0;
-        ulong min_range=std::numeric_limits<len_t>::max();
+        index_fast_t literal_count = 0;
+        index_fast_t literal_counter = 0;
+        ulong min_range=std::numeric_limits<index_t>::max();
 
         /**
          * @brief count_alphabet_literals counts how often a literal occurs in \ref input
@@ -46,14 +46,14 @@ public:
          * @return an array with count of each single literal
          */
         template<class T>
-        std::vector<len_t> count_alphabet_literals(T&& input) {
-            std::vector<len_t> C;
+        std::vector<index_t> count_alphabet_literals(T&& input) {
+            std::vector<index_t> C;
             C.resize(ULITERAL_MAX+1, 0);
 
             while(input.has_next()) {
                 uliteral_t c = input.next().c;
                 DCHECK_LT(static_cast<uliteral_t>(c), ULITERAL_MAX+1);
-                DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_t>::max());
+                DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<index_t>::max());
                 ++C[static_cast<uliteral_t>(c)];
             }
 
@@ -65,16 +65,16 @@ public:
          * Every entry contains the difference to the entry before.
          * @param c
          */
-        void build_intervals(std::vector<len_t> &c) {
+        void build_intervals(std::vector<index_t> &c) {
             if(c[0]) {
                 codebook_size++;
             }
-            len_t min=std::numeric_limits<len_t>::max();
+            index_fast_t min=std::numeric_limits<index_t>::max();
             //calculates difference to the entry before, searches min and counts entries != 0
             for(ulong i=1; i<=ULITERAL_MAX; i++) {
                 if(c[i]!=0) {
                     codebook_size++;
-                    min=std::min(min,c[i]);
+                    min=std::min(min, index_fast_t(c[i]));
                 }
                 c[i] = c[i] + c[i-1];
             }
@@ -121,10 +121,10 @@ public:
             /// code1 code2 code3 code4
 
             //write count of expected chars
-            m_out->write_int(literal_count);
+            m_out->write_int<index_t>(literal_count);
 
             //write codebook size in outstream
-            m_out->write_int((uliteral_t) codebook_size);
+            m_out->write_int<uliteral_t>(codebook_size);
 
             if(C[0]!=0) {
                 m_out->write_int(uliteral_t(0));
@@ -178,8 +178,8 @@ public:
         std::vector<std::pair<uliteral_t ,int>> literals;
         std::string decoded;
         uliteral_t codebook_size;
-        len_t literal_count = 0;
-        len_t literal_counter = 0;
+        index_fast_t literal_count = 0;
+        index_fast_t literal_counter = 0;
         ulong literals_read = 0;
         ulong min_range=std::numeric_limits<ulong>::max();
 
@@ -219,7 +219,7 @@ public:
     public:
         DECODER_CTOR(env, in) {
             //read codebook size
-            literal_count = m_in->read_int<len_t>();
+            literal_count = m_in->read_int<index_t>();
             codebook_size = m_in->read_int<uliteral_t>();
             literals.resize(codebook_size);
 
