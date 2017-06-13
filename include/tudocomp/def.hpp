@@ -78,8 +78,14 @@ namespace tdc {
     ///
     /// For fast arithmetic operations, prefer a cast to `size_t`
     /// or `fast_t<len_t>`.
+
+#ifdef LEN_BITS
+    using index_t = uint_t<LEN_BITS>;
+    using index_fast_t = fast_t<uint_t<LEN_BITS>>;
+#else
     using index_t = uint32_t;
-    using index_fast_t = uint64_t;
+    using index_fast_t = uint32_t;
+#endif
 
     /// The maximum value of \ref index_t.
     constexpr size_t INDEX_MAX = std::numeric_limits<index_t>::max();

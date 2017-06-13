@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include <tudocomp/util/divsufsort/divsufsort_def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
@@ -40,24 +42,35 @@ private:
     DynamicIntVector& m_buffer;
     saidx_t m_index;
 
-    // NB: Could add a bit mask for the maximum value width here,
-    // such that a int64_t representation only uses DynamicIntVector::width() bits,
-    // but a DynamicIntVector silently truncates the values, so its not needed.
-    // mask = ~(1ull << buffer.width())
-    // val = val & mask
+    const uint64_t m_mask;
+    const uint64_t m_sign_bit;
 
     inline saidx_t to_signed(uint64_t v) {
-        return int64_t(v);
+        if (v & m_sign_bit) {
+            return int64_t(v | m_mask);
+        } else {
+            return int64_t(v);
+        }
     }
 
     inline uint64_t to_unsigned(saidx_t v) {
         return int64_t(v);
+        // NB: Could do this:
+        // return int64_t(v & (~m_mask));
+        // to properly truncate, but assigning to a DynamicIntVector
+        // does this implicitly
     }
 
 public:
-    inline Accessor(DynamicIntVector& buffer, saidx_t i)
-        : m_buffer(buffer), m_index(i)
+    inline Accessor(DynamicIntVector& buffer, saidx_t i):
+        m_buffer(buffer),
+        m_index(i),
+        m_mask(~((1ull << buffer.width()) - 1ull)),
+        m_sign_bit(1ull << (std::max(uint(buffer.width()), uint(1)) - 1))
     {
+        //std::cout << "width: " << int(buffer.width()) << "\n";
+        //std::cout << "mask:  " << m_mask << "\n";
+        //std::cout << "sign:  " << m_sign_bit << "\n";
     }
 
     inline operator saidx_t() { return to_signed(m_buffer[m_index]); }
