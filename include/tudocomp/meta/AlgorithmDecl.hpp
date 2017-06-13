@@ -10,6 +10,7 @@
 #include <tudocomp/meta/ast/Node.hpp>
 #include <tudocomp/meta/ast/List.hpp>
 #include <tudocomp/meta/ast/Value.hpp>
+#include <tudocomp/meta/ast/Object.hpp>
 #include <tudocomp/meta/ast/TypeConversion.hpp>
 
 namespace tdc {
@@ -21,6 +22,10 @@ public:
     using std::runtime_error::runtime_error;
 };
 
+class AlgorithmDecl; //fwd
+
+/// \brief Maps algorithm names to their declarations.
+using AlgorithmDict = std::unordered_map<std::string, AlgorithmDecl>;
 
 /// \brief Represents an algorithm declaration.
 class AlgorithmDecl {
@@ -63,11 +68,6 @@ public:
                 throw DeclError("primitive parameters must not have a type");
             }
 
-            if(!primitive && defv) {
-                throw DeclError(
-                    "non-primitive parameters cannot have a default value");
-            }
-
             m_type = primitive ? "$" : type;
 
             // sanity checks on default value
@@ -76,12 +76,23 @@ public:
                     auto list_value = ast::convert<ast::List>(defv,
                         "default value type mismatch");
 
-                    for(auto& item : list_value->items()) {
-                        ast::convert<ast::Value>(item,
-                            "default list item type mismatch");
+                    // check each list item
+                    if(primitive) {
+                        for(auto& item : list_value->items()) {
+                            ast::convert<ast::Value>(item,
+                                "default list item type mismatch");
+                        }
+                    } else {
+                        for(auto& item : list_value->items()) {
+                            ast::convert<ast::Object>(item,
+                                "default list item type mismatch");
+                        }
                     }
-                } else {
+                } else if(primitive) {
                     ast::convert<ast::Value>(defv,
+                        "default value type mismatch");
+                } else {
+                    ast::convert<ast::Object>(defv,
                         "default value type mismatch");
                 }
             }
@@ -111,6 +122,17 @@ public:
         inline bool is_primitive() const { return m_primitive; }
         inline bool is_list() const { return m_list; }
         inline const std::string& type() const { return m_type; }
+
+        inline void check_type(ast::NodePtr<> node) {
+            // TODO:
+
+            // If primitive, make sure the node is an ast::Value.
+
+            // Otherwise, make sure the node is an ast::Object AND
+            // also check that the algorithm exists and its type matches.
+
+            // In case of a list, perform this check for each item.
+        }
 
         inline ast::NodePtr<> default_value() const {
             return m_default;
@@ -189,6 +211,12 @@ public:
     }
 };
 
-using AlgorithmDict = std::unordered_map<std::string, AlgorithmDecl>;
+/// \brief Error type for failed dictionary lookups.
+class UnknownAlgorithmError : public std::runtime_error {
+public:
+    inline UnknownAlgorithmError(const std::string& name)
+        : std::runtime_error("unknown algorithm: '" + name + "'") {
+    }
+};
 
 }} //ns
