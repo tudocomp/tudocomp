@@ -16,6 +16,10 @@ private:
     std::vector<std::shared_ptr<const Node>> m_values;
 
 public:
+    static inline std::string ast_debug_type() {
+        return "list";
+    }
+
     /// \brief Main constructor.
     inline List() {
     }
@@ -45,7 +49,7 @@ public:
     }
 
     virtual std::string debug_type() const override {
-        return "list";
+        return ast_debug_type();
     }
 };
 

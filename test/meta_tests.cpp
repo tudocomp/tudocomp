@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include <tudocomp/meta/AlgorithmDecl.hpp>
+#include <tudocomp/meta/ast/TypeConversion.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
 #include <tudocomp/meta/AlgorithmConfig.hpp>
 

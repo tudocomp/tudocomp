@@ -2,6 +2,7 @@
 
 #include <tudocomp/meta/AlgorithmDecl.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
+#include <tudocomp/meta/ast/TypeConversion.hpp>
 
 #include <algorithm>
 #include <unordered_map>
@@ -26,7 +27,7 @@ public:
     private:
         const AlgorithmDecl::Param* m_decl;
 
-        std::shared_ptr<const ast::Node> m_config;
+        ast::NodePtr<> m_config;
         std::vector<AlgorithmConfig> m_sub_configs; // valid if non-primitive
 
         inline static std::string param_str(bool list_item) {
@@ -34,46 +35,28 @@ public:
                 list_item ? "list item of parameter" : "parameter");
         }
 
-        inline std::shared_ptr<const ast::List> configure_list(
-            std::shared_ptr<const ast::Node> config) {
-
-            auto list_value =
-                std::dynamic_pointer_cast<const ast::List>(config);
-
-            if(!list_value) {
-                throw ConfigError("type mismatch for parameter '" +
-                    m_decl->name() + "': expected list, got " +
-                    config->debug_type());
-            }
-            return list_value;
+        inline ast::NodePtr<ast::List> configure_list(ast::NodePtr<> config) {
+            return ast::convert<ast::List>(config,
+                "type mismatch for parameter '" + m_decl->name() + "'");
         }
 
-        inline std::shared_ptr<const ast::Value> configure_primitive(
-            std::shared_ptr<const ast::Node> config,
+        inline ast::NodePtr<ast::Value> configure_primitive(
+            ast::NodePtr<> config,
             bool list_item = false) {
 
-            auto value = std::dynamic_pointer_cast<const ast::Value>(config);
-            if(!value) {
-                throw ConfigError("type mismatch for " + param_str(list_item) +
-                    " '" + m_decl->name() + "': expected value, got " +
-                    config->debug_type());
-            }
-            return value;
+            return ast::convert<ast::Value>(config,
+                "type mismatch for " + param_str(list_item) +
+                " '" + m_decl->name() + "'");
         }
 
-        inline std::shared_ptr<const ast::Object> configure_object(
-            std::shared_ptr<const ast::Node> config,
+        inline ast::NodePtr<ast::Object> configure_object(
+            ast::NodePtr<> config,
             const AlgorithmDict& dict,
             bool list_item = false) {
 
-            auto obj_value =
-                std::dynamic_pointer_cast<const ast::Object>(config);
-
-            if(!obj_value) {
-                throw ConfigError("type mismatch for " + param_str(list_item) +
-                    " '" + m_decl->name() + "': expected object, got " +
-                    config->debug_type());
-            }
+            auto obj_value = ast::convert<ast::Object>(config,
+                "type mismatch for " + param_str(list_item) +
+                " '" + m_decl->name() + "'");
 
             // find algorithm declaration
             auto it = dict.find(obj_value->name());
@@ -104,7 +87,7 @@ public:
         /// \param dict the algorithm dictionary used for name resolution
         inline Param(
             const AlgorithmDecl::Param& decl,
-            std::shared_ptr<const ast::Node> config,
+            ast::NodePtr<> config,
             const AlgorithmDict& dict)
             : m_decl(&decl), m_config(config) {
 
@@ -154,7 +137,7 @@ public:
 
         /// \brief Gets the parameter's configured value.
         /// \return the parameter's configured value
-        inline std::shared_ptr<const ast::Node> config() const {
+        inline ast::NodePtr<> config() const {
             return m_config;
         }
 
@@ -201,13 +184,13 @@ public:
     /// \param dict the algorithm dictionary used for name resolution
     inline AlgorithmConfig(
         const AlgorithmDecl& decl,
-        std::shared_ptr<const ast::Node> config,
+        ast::NodePtr<> config,
         const AlgorithmDict& dict)
         : m_decl(&decl) {
 
         // assure that config is an object
-        auto obj = std::dynamic_pointer_cast<const ast::Object>(config);
-        if(!obj) throw ConfigError("invalid algorithm configuation");
+        auto obj = ast::convert<ast::Object>(config,
+            "invalid algorithm configuation");
 
         // sanity check that name matches
         if(m_decl->name() != obj->name()) {
@@ -311,13 +294,11 @@ private:
     }
 
     template<typename T>
-    inline T get(std::shared_ptr<const ast::Node> node) const {
-        auto v = std::dynamic_pointer_cast<const ast::Value>(node);
-        if(v) {
-            return lexical_cast<T>(v->value());
-        } else {
-            throw std::runtime_error("parameter has no primitive value type");
-        }
+    inline T get(ast::NodePtr<> node) const {
+        auto v = ast::convert<ast::Value>(node,
+            "parameter has no primitive value type");
+
+        return lexical_cast<T>(v->value());
     }
 
 public:
@@ -398,18 +379,14 @@ public:
     /// \return the values of the list parameter, converted to the desired type
     template<typename T>
     inline std::vector<T> get_vector(const std::string& param) const {
-        auto list = std::dynamic_pointer_cast<const ast::List>(
-            get_param(param).config());
+        auto list = ast::convert<ast::List>(get_param(param).config(),
+            "parameter has no list value type");
 
-        if(list) {
-            std::vector<T> vec;
-            for(auto& item : list->items()) {
-                vec.emplace_back(get<T>(item));
-            }
-            return vec;
-        } else {
-            throw std::runtime_error("parameter has no list value type");
+        std::vector<T> vec;
+        for(auto& item : list->items()) {
+            vec.emplace_back(get<T>(item));
         }
+        return vec;
     }
 
     /// \brief Gets the configuration of the requested sub algorithm.

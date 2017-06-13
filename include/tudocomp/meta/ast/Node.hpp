@@ -18,4 +18,14 @@ public:
     virtual std::string debug_type() const = 0;
 };
 
+#include <memory>
+
+template<typename node_t = Node>
+using NodePtr = std::shared_ptr<const node_t>;
+
+template<typename target_t>
+NodePtr<target_t> node_cast(NodePtr<> node) noexcept {
+    return std::dynamic_pointer_cast<const target_t>(node);
+}
+
 }}} //ns

@@ -10,6 +10,7 @@
 #include <tudocomp/meta/ast/Node.hpp>
 #include <tudocomp/meta/ast/List.hpp>
 #include <tudocomp/meta/ast/Value.hpp>
+#include <tudocomp/meta/ast/TypeConversion.hpp>
 
 namespace tdc {
 namespace meta {
@@ -33,7 +34,7 @@ public:
         std::string m_type; // only valid if non-primitive
 
         // default value - only used if primitive
-        std::shared_ptr<const ast::Node> m_default;
+        ast::NodePtr<> m_default;
 
     public:
         /// \brief Main constructor.
@@ -48,8 +49,7 @@ public:
             bool primitive = true,
             bool list = false,
             const std::string& type = "",
-            std::shared_ptr<const ast::Node> defv =
-                std::shared_ptr<const ast::Node>())
+            ast::NodePtr<> defv = ast::NodePtr<>())
             : m_name(name),
               m_primitive(primitive),
               m_list(list),
@@ -73,25 +73,16 @@ public:
             // sanity checks on default value
             if(defv) {
                 if(list) {
-                    auto list_value =
-                        std::dynamic_pointer_cast<const ast::List>(defv);
-
-                    if(!list_value) {
-                        throw DeclError(
-                            "default value should be a list, but is a " +
-                            defv->debug_type());
-                    }
+                    auto list_value = ast::convert<ast::List>(defv,
+                        "default value type mismatch");
 
                     for(auto& item : list_value->items()) {
-                        if(!std::dynamic_pointer_cast<const ast::Value>(item)) {
-                            throw DeclError(
-                            "default list value must only contain primitives");
-                        }
+                        ast::convert<ast::Value>(item,
+                            "default list item type mismatch");
                     }
-                } else if(!std::dynamic_pointer_cast<const ast::Value>(defv)) {
-                    throw DeclError(
-                        "default value should be a value, but is a " +
-                        defv->debug_type());
+                } else {
+                    ast::convert<ast::Value>(defv,
+                        "default value type mismatch");
                 }
             }
         }
@@ -121,7 +112,7 @@ public:
         inline bool is_list() const { return m_list; }
         inline const std::string& type() const { return m_type; }
 
-        inline std::shared_ptr<const ast::Node> default_value() const {
+        inline ast::NodePtr<> default_value() const {
             return m_default;
         }
 

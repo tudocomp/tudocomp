@@ -250,7 +250,7 @@ public:
     /// \brief Parses the given string and returns the resulting AST.
     /// \param str the input string
     /// \return the resulting AST
-    inline static std::shared_ptr<Node> parse(const std::string& str) {
+    inline static ast::NodePtr<> parse(const std::string& str) {
         return Parser(str).parse_node();
     }
 };
