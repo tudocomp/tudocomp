@@ -76,6 +76,10 @@ private:
     std::vector<Param> m_params;
 
 public:
+    static inline std::string ast_debug_type() {
+        return "object";
+    }
+
     /// \brief Main constructor.
     /// \param name the object's name
     inline Object(const std::string& name) : m_name(name) {
@@ -110,7 +114,7 @@ public:
     }
 
     virtual std::string debug_type() const override {
-        return "object";
+        return ast_debug_type();
     }
 };
 

@@ -12,6 +12,10 @@ private:
     std::string m_value;
 
 public:
+    static inline std::string ast_debug_type() {
+        return "value";
+    }
+
     /// \brief Main constructor.
     /// \param value the contained string value
     inline Value(const std::string& value) : m_value(value) {
@@ -26,7 +30,7 @@ public:
     }
 
     virtual std::string debug_type() const override {
-        return "value";
+        return ast_debug_type();
     }
 };
 
