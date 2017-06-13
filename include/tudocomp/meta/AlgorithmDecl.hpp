@@ -22,11 +22,6 @@ public:
     using std::runtime_error::runtime_error;
 };
 
-class AlgorithmDecl; //fwd
-
-/// \brief Maps algorithm names to their declarations.
-using AlgorithmDict = std::unordered_map<std::string, AlgorithmDecl>;
-
 /// \brief Represents an algorithm declaration.
 class AlgorithmDecl {
 public:
@@ -211,12 +206,7 @@ public:
     }
 };
 
-/// \brief Error type for failed dictionary lookups.
-class UnknownAlgorithmError : public std::runtime_error {
-public:
-    inline UnknownAlgorithmError(const std::string& name)
-        : std::runtime_error("unknown algorithm: '" + name + "'") {
-    }
-};
+/// \brief Maps algorithm names to their declarations.
+using AlgorithmLib = std::unordered_map<std::string, AlgorithmDecl>;
 
 }} //ns

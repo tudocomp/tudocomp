@@ -22,9 +22,9 @@ TEST(Sandbox, example) {
     //DLOG(INFO) << binary.str();
 
     // registry
-    AlgorithmDict dict;
-    dict.emplace("lz77", std::move(lz77));
-    dict.emplace("binary", std::move(binary));
+    AlgorithmLib lib;
+    lib.emplace("lz77", std::move(lz77));
+    lib.emplace("binary", std::move(binary));
 
     // parse
     DLOG(INFO) << "parse...";
@@ -33,7 +33,7 @@ TEST(Sandbox, example) {
 
     // attempt to create config
     DLOG(INFO) << "config...";
-    auto cfg = AlgorithmConfig(dict.at("lz77"), v, dict);
+    auto cfg = AlgorithmConfig(lib.at("lz77"), v, lib);
     DLOG(INFO) << cfg.str();
 
     // signature

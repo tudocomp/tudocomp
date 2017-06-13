@@ -51,7 +51,7 @@ public:
 
         inline ast::NodePtr<ast::Object> configure_object(
             ast::NodePtr<> config,
-            const AlgorithmDict& dict,
+            const AlgorithmLib& lib,
             bool list_item = false) {
 
             auto obj_value = ast::convert<ast::Object>(config,
@@ -59,8 +59,8 @@ public:
                 " '" + m_decl->name() + "'");
 
             // find algorithm declaration
-            auto it = dict.find(obj_value->name());
-            if(it == dict.end()) {
+            auto it = lib.find(obj_value->name());
+            if(it == lib.end()) {
                 throw ConfigError("unknown algorithm type: '" +
                     obj_value->name() + "'");
             }
@@ -75,7 +75,7 @@ public:
             }
 
             // create sub config
-            m_sub_configs.emplace_back(algo_decl, config, dict);
+            m_sub_configs.emplace_back(algo_decl, config, lib);
 
             return obj_value;
         }
@@ -84,11 +84,11 @@ public:
         /// \brief Main constructor.
         /// \param decl the parameter declaration
         /// \param config the configured value
-        /// \param dict the algorithm dictionary used for name resolution
+        /// \param lib the algorithm library used for name resolution
         inline Param(
             const AlgorithmDecl::Param& decl,
             ast::NodePtr<> config,
-            const AlgorithmDict& dict)
+            const AlgorithmLib& lib)
             : m_decl(&decl), m_config(config) {
 
             if(!m_config) throw ConfigError("null");
@@ -103,13 +103,13 @@ public:
                     }
                 } else {
                     for(auto& item : list_value->items()) {
-                        configure_object(item, dict, true);
+                        configure_object(item, lib, true);
                     }
                 }
             } else if(m_decl->is_primitive()) {
                 configure_primitive(m_config);
             } else {
-                configure_object(m_config, dict);
+                configure_object(m_config, lib);
             }
         }
 
@@ -181,11 +181,11 @@ public:
     ///
     /// \param decl the algorithm declaration
     /// \param config the value configuration
-    /// \param dict the algorithm dictionary used for name resolution
+    /// \param lib the algorithm library used for name resolution
     inline AlgorithmConfig(
         const AlgorithmDecl& decl,
         ast::NodePtr<> config,
-        const AlgorithmDict& dict)
+        const AlgorithmLib& lib)
         : m_decl(&decl) {
 
         // assure that config is an object
@@ -237,7 +237,7 @@ public:
             size_t i = 0;
             for(auto& p : unnamed_params) {
                 auto& dp = decl_params[i++];
-                m_params.emplace_back(dp, p->value(), dict);
+                m_params.emplace_back(dp, p->value(), lib);
 
                 mapped.emplace(dp.name());
                 unmapped.erase(dp.name());
@@ -249,7 +249,7 @@ public:
             auto it = unmapped.find(p->name());
             if(it != unmapped.end()) {
                 auto dp = it->second;
-                m_params.emplace_back(*dp, p->value(), dict);
+                m_params.emplace_back(*dp, p->value(), lib);
 
                 mapped.emplace(dp->name());
                 unmapped.erase(dp->name());
@@ -274,7 +274,7 @@ public:
                     "parameter was given no value and has no default: '" +
                     dp->name() + "'");
             } else {
-                m_params.emplace_back(*dp, default_value, dict);
+                m_params.emplace_back(*dp, default_value, lib);
             }
         }
     }
