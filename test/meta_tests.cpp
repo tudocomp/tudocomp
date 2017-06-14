@@ -5,30 +5,37 @@
 #include <tudocomp/meta/ast/TypeConversion.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
 #include <tudocomp/meta/AlgorithmConfig.hpp>
+#include <tudocomp/meta/Meta.hpp>
 
 using namespace tdc::meta;
 
+class LZ77Compressor {
+public:
+    static inline Meta meta() {
+        Meta m("lz77", "compressor", "LZ77 online compressor.");
+        m.sub_algo("coder", "coder"); //TODO: template parameter necessary?
+        m.param("window", "10");
+        m.param_list("values", "[1,4,7]");
+        return m;
+    }
+};
+
+class BinaryCoder {
+public:
+    static inline Meta meta() {
+        return Meta("binary", "coder", "Binary coder.");
+    }
+};
+
 TEST(Sandbox, example) {
-    auto lz77 = AlgorithmDecl("lz77", "compressor", "LZ77 online compressor.");
-    lz77.add_param(AlgorithmDecl::Param("window", true, false, "",
-        ast::Parser::parse("10")));
-    lz77.add_param(AlgorithmDecl::Param("coder", false, false, "coder",
-        ast::Parser::parse("binary()")));
-    lz77.add_param(AlgorithmDecl::Param("values", true, true, "",
-        ast::Parser::parse("[1,4,7]")));
-    //DLOG(INFO) << lz77.str();
-
-    auto binary = AlgorithmDecl("binary", "coder", "Binary coder.");
-    //DLOG(INFO) << binary.str();
-
     // registry
     AlgorithmLib lib;
-    lib.emplace("lz77", std::move(lz77));
-    lib.emplace("binary", std::move(binary));
+    lib.emplace("lz77", LZ77Compressor::meta().decl());
+    lib.emplace("binary", BinaryCoder::meta().decl());
 
     // parse
     DLOG(INFO) << "parse...";
-    auto v = ast::Parser::parse("lz77");
+    auto v = ast::Parser::parse("lz77(coder=binary)");
     DLOG(INFO) << v->str();
 
     // attempt to create config

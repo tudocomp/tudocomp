@@ -33,7 +33,7 @@ public:
         bool m_list;        // if true, value/type flags account for list items
         std::string m_type; // only valid if non-primitive
 
-        // default value - only used if primitive
+        // default value
         ast::NodePtr<> m_default;
 
     public:
@@ -117,17 +117,6 @@ public:
         inline bool is_primitive() const { return m_primitive; }
         inline bool is_list() const { return m_list; }
         inline const std::string& type() const { return m_type; }
-
-        inline void check_type(ast::NodePtr<> node) {
-            // TODO:
-
-            // If primitive, make sure the node is an ast::Value.
-
-            // Otherwise, make sure the node is an ast::Object AND
-            // also check that the algorithm exists and its type matches.
-
-            // In case of a list, perform this check for each item.
-        }
 
         inline ast::NodePtr<> default_value() const {
             return m_default;
