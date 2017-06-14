@@ -22,12 +22,33 @@ BinarySuffixTree* build_suffix_tree(Input& input){
 }
 
 TEST(stree, st_input_test_small){
-    Input file_input("abcabxabcd$abcabxabcd$abcabxabcd$abcabxabcd$");
+    Input file_input("abcabxabcd$");
     BinarySuffixTree* stree = build_suffix_tree(file_input);
+    /*
+    DLOG(INFO)<<"childs of root:";
+    uint child  = stree->get_first_child(0);
+    if(child != 0){
+        do{
+            DLOG(INFO)<<stree->get_string_of_edge(child) << " length: " << stree->edge_length(child);
+        }
+        while ((child = stree->get_next_sibling(child)) != 0);
+    }*/
+     DLOG(INFO)<<"size of tree: " << stree->get_tree_size();
+
+     stree->print_tree(DLOG(INFO), 0, "");
    // auto leaves = stree->get_leaves();
     ASSERT_EQ(stree->get_text().size(), file_input.size());
 }
 
+TEST(stree, st_file_test_1mb_english){
+    Input file_input = test::TestInput(Path{"english.1MB"}, true);
+    //test::TestInput file_input = test::compress_input_file("english.1MB");
+    BinarySuffixTree* stree = build_suffix_tree(file_input);
+
+    DLOG(INFO)<<"size of tree: " << stree->get_tree_size();
+    ASSERT_EQ(stree->get_size(), file_input.size());
+
+}
 /*
 
 TEST(stree, st_node_test){

@@ -5,6 +5,7 @@
 
 
 
+
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Range.hpp>
 #include <tudocomp/util.hpp>
@@ -297,6 +298,8 @@ public:
 
 
         stree.append_input(in);
+
+        return;
 
         DLOG(INFO)<<"computing string depth";
 

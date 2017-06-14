@@ -121,12 +121,7 @@ public:
 
 
         //init root
-        start.push_back(0);
-        end.push_back(0);
-        first_child.push_back(0);
-        next_sibling.push_back(0);
-        edge.push_back(0);
-        suffix_link.push_back(0);
+        create_node(0,0,0);
         //suffix corresponds to start
  //       suffix.push_back(0);
 
@@ -149,6 +144,7 @@ private:
         remainder++;
         last_added_sl=0;
 
+
         while(remainder > 0){
             if(active_length==0){
                 active_edge = c;
@@ -162,7 +158,8 @@ private:
             uint child  = first_child[active_node];
             uint previous_sibling = child;
             if(child != 0){
-                do{
+                while (next_sibling[child] != 0)
+                {
                     if(edge[child] == active_edge){
                         found = true;
                         break;
@@ -171,15 +168,18 @@ private:
                         child=next_sibling[child];
                     }
                 }
-                while (next_sibling[child] != 0);
+
             }
 
             //if not found
             if(!found){
                 //insert new leaf
-                create_node(pos, 0, active_edge);
-         //       leaves.push_back(new_leaf);
-           //     new_leaf->suffix=suffix++;
+                uint leaf = create_node(pos, 0, active_edge);
+                if(child==0){
+                    first_child[active_node] = leaf;
+                } else {
+                    next_sibling[child] = leaf;
+                }
                 add_sl(active_node);
 
             } else {
@@ -210,20 +210,21 @@ private:
                // leaf->suffix=suffix++;
 
                 //update relations of nodes
-                first_child[split] = next;
-                if(previous_sibling == next){
+                if(first_child[active_node] == 0){
+                    first_child[active_node]= split;
+                }
+                if(first_child[active_node] == next){
                     first_child[active_node]= split;
                 } else {
                     next_sibling[previous_sibling] = split;
                 }
-                if(next_sibling[next] != 0){
-                    next_sibling[split] = next_sibling[next];
-
-                }
+                first_child[split] = next;
+                next_sibling[split] = next_sibling[next];
                 next_sibling[next] = leaf;
 
 
                 start[next]=start[next]+ active_length;
+                edge[next]=Text[start[next]];
                // split->child_nodes[Text[next->start]] = next;
                 add_sl(split);
        //         leaves.push_back(leaf);
@@ -252,6 +253,7 @@ public:
 
     inline void append_string(std::string input){
         Text += input;
+        reserve(input.size() * 3);
      //   leaves.reserve(leaves.size()+input.size());
         for(uint i = 0; i<input.length();i++){
             add_char(input[i]);
@@ -265,6 +267,7 @@ public:
 
     inline void append_input(io::InputView & input){
       //  leaves.reserve(leaves.size()+input.size());
+        reserve(input.size() * 3);
         Text += input;
         for (uint i = 0; i < input.size(); i++) {
             uint8_t c = input[i];
@@ -280,6 +283,14 @@ public:
         return Text.size();
     }
 
+    inline uint get_first_child(uint node){
+        return first_child[node];
+    }
+
+    inline uint get_next_sibling(uint node){
+        return next_sibling[node];
+    }
+
 
     inline uint get_root(){
         return 0;
@@ -287,6 +298,10 @@ public:
 
     inline std::string get_string_of_edge(uint node){
         return Text.substr(start[node], edge_length(node));
+    }
+
+    inline uint get_tree_size(){
+        return start.size();
     }
 
    // inline std::vector<STNode*> get_leaves(){
@@ -297,16 +312,16 @@ public:
    //     return leaves.at(position);
    // }
 
-    /*
-    inline void print_tree(std::ostream& out, STNode* node, std::string depth){
-        auto it = node->child_nodes.begin();
-        while (it != node->child_nodes.end()){
-            std::pair<char, STNode*> child = *it;
-            out<< depth << "edge: " << get_string_of_edge(child.second) << std::endl;
-            print_tree(out, child.second, depth+"  ");
-            it++;
+
+    inline void print_tree(std::ostream& out, uint node, std::string depth){
+
+        uint child = first_child[node];
+        while (child != 0){
+            out<< depth << "edge: " << get_string_of_edge(child) << std::endl;
+            print_tree(out, child, depth+"  ");
+            child=next_sibling[child];
         }
-    }*/
+    }
 
     BinarySuffixTree(Input& input) : BinarySuffixTree(){
         append_input(input);
