@@ -159,9 +159,12 @@ public:
                 for(uint i = bins.size()-1; i>=min_lrf; i--){
 
                     //iterate over ids in bin:
-                    for(auto bin_it = bins[i].begin(); bin_it!= bins[i].end() ; bin_it++){
-                        node_type node = stree.inv_id(*bin_it);
-                        uint no_leaf_id = *bin_it - stree.size();
+                  //  for(auto bin_it = bins[i].begin(); bin_it!= bins[i].end() ; bin_it++){
+                    while(!bins[i].empty()){
+                        uint id = bins[i].back();
+                        bins[i].pop_back();
+                        node_type node = stree.inv_id(id);
+                        uint no_leaf_id = id - stree.size();
 
                         //get bps of node
 
@@ -176,7 +179,7 @@ public:
                                     int child_id = stree.id(child) - stree.size();
                                     if(!node_begins[child_id ].empty()){
                                         node_begins[no_leaf_id].insert(node_begins[no_leaf_id].end(),node_begins[child_id ].begin(), node_begins[child_id].end());
-                                        node_begins[child_id ].clear();
+                                        node_begins[child_id ] = std::vector<uint>();
                                     }
                                 }
                             }
@@ -355,6 +358,19 @@ public:
                 literals << in[position];
             }
         }
+        for(uint nts_num = 0; nts_num<=non_terminal_symbols.size(); nts_num++){
+
+            auto symbol = non_terminal_symbols[nts_num];
+
+           // DLOG(INFO)<<"encoding from "<<symbol.first<<" to "<<symbol.second + symbol.first;
+            for(uint pos = symbol.first; pos < symbol.second + symbol.first ; pos++){
+             //   DLOG(INFO)<<"pos: " <<pos;
+                if(second_layer_nts[pos] == 0){
+                    literals<< in[pos];
+
+                }
+            }
+        }
 
 
 
@@ -372,7 +388,7 @@ public:
             typename literal_coder_t::Encoder lit_coder(
                 env().env_for_option("lfs2_lit_coder"),
                 bitout,
-                ViewLiterals(in)
+                ViewLiterals(literals.str())
             );
             typename len_coder_t::Encoder len_coder(
                 env().env_for_option("lfs2_len_coder"),

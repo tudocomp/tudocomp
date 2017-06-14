@@ -150,6 +150,14 @@ else:
     # default
     suite = [
         # tudocomp examples
+		Tudocomp(name='lfs_simst',                       algorithm='lfs_comp(sim_st)'),
+		Tudocomp(name='lfs2',                       	 algorithm='lfs2'),
+		Tudocomp(name='lz78(ternary)',                   algorithm='lz78(coder=bit,lz78trie=ternary)'),
+		Tudocomp(name='lz78',                   		 algorithm='lz78'),
+		Tudocomp(name='lzw',                   		 	 algorithm='lzw'),
+		Tudocomp(name='repair(min=50)',                  algorithm='repair(bit,50)'),
+		Tudocomp(name='lzw',                   		 	 algorithm='lzw'),
+		Tudocomp(name='lzss',                   		 algorithm='lzss(bit)'),
         Tudocomp(name='bwtzip',                          algorithm='bwt:rle:mtf:encode(huff)'),
         Tudocomp(name='lcpcomp(t=5,arrays,scans(a=25))', algorithm='lcpcomp(coder=sle,threshold=5,comp=arrays,dec=scan(25))'),
         Tudocomp(name='lzss_lcp(t=5,bit)',               algorithm='lzss_lcp(coder=bit,threshold=5)'),
@@ -158,9 +166,8 @@ else:
         Tudocomp(name='sle',                             algorithm='encode(sle)'),
         Tudocomp(name='huff',                            algorithm='encode(huff)'),
         Tudocomp(name='lzw(ternary)',                    algorithm='lzw(coder=bit,lz78trie=ternary)'),
-        Tudocomp(name='lz78(ternary)',                   algorithm='lz78(coder=bit,lz78trie=ternary)'),
-		Tudocomp(name='lfs_simst',                       algorithm='lfs_comp(sim_st)'),
-		Tudocomp(name='lfs2',                       	 algorithm='lfs2'),
+        
+		
         # Some standard Linux compressors
         StdCompressor(name='gzip -1',  binary='gzip',  cflags=['-1'], dflags=['-d']),
         StdCompressor(name='gzip -9',  binary='gzip',  cflags=['-9'], dflags=['-d']),

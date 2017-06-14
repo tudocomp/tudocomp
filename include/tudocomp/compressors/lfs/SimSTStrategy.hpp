@@ -230,6 +230,8 @@ public:
 
                                         node_begins[no_leaf_id].insert(node_begins[no_leaf_id].end(),node_begins[child_id ].begin(), node_begins[child_id].end());
 
+                                        node_begins[child_id] = std::vector<uint>();
+
                                     }
                                 }
                             }
