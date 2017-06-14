@@ -103,7 +103,7 @@ public:
                 }
                 //compute length of non-overlapping factor:
 
-                dif = abs(sa_t[i-1] - sa_t[i]);
+                dif = std::abs((long)(sa_t[i-1] - sa_t[i]));
                 factor_length = lcp_t[i];
                 factor_length = std::min(factor_length, dif);
 
@@ -111,7 +111,7 @@ public:
                 int j =i-1;
                 uint alt_dif;
                 while(j>0 && lcp_t[j]>factor_length ){
-                    alt_dif = abs(sa_t[j] - sa_t[i]);
+                    alt_dif = abs((long)(sa_t[j] - sa_t[i]));
                     if(alt_dif>dif){
                         dif = alt_dif;
                     }
