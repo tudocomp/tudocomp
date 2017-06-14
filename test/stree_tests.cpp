@@ -35,7 +35,7 @@ TEST(stree, st_input_test_small){
     }*/
      DLOG(INFO)<<"size of tree: " << stree->get_tree_size();
 
-     stree->print_tree(DLOG(INFO), 0, "");
+     stree->print_tree(0, "");
    // auto leaves = stree->get_leaves();
     ASSERT_EQ(stree->get_text().size(), file_input.size());
 }

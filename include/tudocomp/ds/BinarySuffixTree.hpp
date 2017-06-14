@@ -37,14 +37,14 @@ private:
     //suffix link of node
     std::vector<uint> suffix_link;
 
-   // std::vector<uint> suffix;
+    std::vector<uint> suffix;
 
 
     //text added to st
     std::string Text;
     int pos;
 
-    uint suffix;
+    uint current_suffix;
 
     //number of suffixes to be added;
     uint remainder;
@@ -75,7 +75,7 @@ private:
         next_sibling.push_back(0);
         edge.push_back(c);
         suffix_link.push_back(0);
-      //  suffix.push_back(0);
+        suffix.push_back(0);
 
         return start.size()-1;
 
@@ -90,7 +90,7 @@ private:
         next_sibling.reserve(size);
         edge.reserve(size);
         suffix_link.reserve(size);
-     //   suffix.reserve(size);
+        suffix.reserve(size);
     }
 
 
@@ -117,7 +117,7 @@ public:
         pos=-1;
         Text="";
         remainder=0;
-        suffix=0;
+        current_suffix=0;
 
 
         //init root
@@ -158,7 +158,7 @@ private:
             uint child  = first_child[active_node];
             uint previous_sibling = child;
             if(child != 0){
-                while (next_sibling[child] != 0)
+                do
                 {
                     if(edge[child] == active_edge){
                         found = true;
@@ -168,6 +168,7 @@ private:
                         child=next_sibling[child];
                     }
                 }
+                while (child != 0);
 
             }
 
@@ -175,10 +176,11 @@ private:
             if(!found){
                 //insert new leaf
                 uint leaf = create_node(pos, 0, active_edge);
-                if(child==0){
+                suffix[leaf] = current_suffix++;
+                if(first_child[active_node]==0){
                     first_child[active_node] = leaf;
                 } else {
-                    next_sibling[child] = leaf;
+                    next_sibling[previous_sibling] = leaf;
                 }
                 add_sl(active_node);
 
@@ -221,6 +223,7 @@ private:
                 first_child[split] = next;
                 next_sibling[split] = next_sibling[next];
                 next_sibling[next] = leaf;
+                suffix[leaf] = current_suffix++;
 
 
                 start[next]=start[next]+ active_length;
@@ -290,6 +293,9 @@ public:
     inline uint get_next_sibling(uint node){
         return next_sibling[node];
     }
+    inline uint get_suffix(uint node){
+        return suffix[node];
+    }
 
 
     inline uint get_root(){
@@ -313,12 +319,12 @@ public:
    // }
 
 
-    inline void print_tree(std::ostream& out, uint node, std::string depth){
+    inline void print_tree(uint node, std::string depth){
 
         uint child = first_child[node];
         while (child != 0){
-            out<< depth << "edge: " << get_string_of_edge(child) << std::endl;
-            print_tree(out, child, depth+"  ");
+            DLOG(INFO)<< depth << "edge: " << get_string_of_edge(child) << std::endl;
+            print_tree(child, depth+"  ");
             child=next_sibling[child];
         }
     }

@@ -32,10 +32,10 @@ private:
 
     BitVector dead_positions;
 
-    std::vector<std::vector<SuffixTree::STNode*> > bins;
+    std::vector<std::vector<uint> > bins;
 
     //    DLOG(INFO)<<"input size: "<<stree.get_size();
-        std::unordered_map<SuffixTree::STNode *, std::vector<uint> > beginning_positions;
+      //  std::unordered_map<SuffixTree::STNode *, std::vector<uint> > beginning_positions;
 
     //stats
     uint node_count;
@@ -47,23 +47,18 @@ private:
    // typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
 
 
-    inline virtual void compute_string_depth(SuffixTree::STNode* node, uint str_depth){
+    inline virtual void compute_string_depth(uint node, uint str_depth){
         //resize if str depth grater than bins size
+        uint child = stree.get_first_child(node);
 
 
-
-
-
-        SuffixTree::STInnerNode * inner = dynamic_cast<SuffixTree::STInnerNode *>(node);
-        if(inner){
-
-            inner->string_depth = str_depth;
-
-            if(str_depth>= bins.size()){
+        if(child != 0){
+            while(str_depth>= bins.size()){
                 bins.resize(bins.size()*2);
-
                 std::cerr<<"resizing: "<<bins.size();
             }
+
+
 
             if(str_depth>max_depth){
                 max_depth=str_depth;
@@ -73,29 +68,21 @@ private:
 
                 bins[str_depth].push_back(node);
             }
-
-      //      child_sizes.push_back(inner->child_nodes.size());
-
-            auto it = inner->child_nodes.begin();
-            while (it != inner->child_nodes.end()){
-                auto child = *it;
-
-                SuffixTree::STInnerNode * child_inner = dynamic_cast<SuffixTree::STInnerNode *>(child.second);
-                if(child_inner){
-                    child_inner->parent = inner;
-
-                   // uint child_depth = (str_depth+stree.edge_length(child.second));
-                 //   compute_string_depth( child.second, child_depth);
-                }
-                it++;
+            while (child != 0){
+                compute_string_depth(child, str_depth);
+                child=stree.get_next_sibling(child);
             }
 
         }
+
     }
 
 
 
 
+
+
+/*
 
     inline virtual std::vector<uint> select_starting_positions(SuffixTree::STNode * node, uint length){
 
@@ -154,6 +141,7 @@ private:
 
         return selected_starting_positions;
     }
+    */
 
 public:
 
@@ -174,12 +162,12 @@ public:
         });
         StatPhase::log("Number of Nodes", stree.get_tree_size());
 
-/*
+
         StatPhase::wrap("Computing String Depth", [&]{
             bins.resize(200);
             node_count=0;
             max_depth=0;
-            compute_string_depth(stree.get_root(),0);
+            compute_string_depth(0,0);
         });
 
         StatPhase::log("Number of inner Nodes", node_count);
@@ -188,6 +176,7 @@ public:
 
 
 
+        /*
 
         StatPhase::wrap("Computing LRF Substitution", [&]{
             dead_positions = BitVector(stree.get_size(), 0);
