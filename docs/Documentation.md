@@ -299,25 +299,30 @@ All test sources are located in the `test` directory in the repository root.
 The test source files categorize unit tests into test suites and are
 registered in the `CMakeLists.txt` file.
 
-The generated Makefile contains a target for registered each test suite.
+The generated Makefile contains a target for each registered test suite.
 For example, the command-line `make tudocomp_tests` (from a build directory)
 invokes the `tudocomp_tests` suite, which is contained in `tudocomp_tests.cpp`.
+
 The following global test targets are available:
-* The `build_check` target tries to build tudocomp and all tests
-* The `check` target executes all registered test suites in succession.
-* `matix_tests` runs every compressor with all possible combinations on a fixed given test collection of small strings.
-   Each test in `matix_test` has a unique label given by the arguments passed to a compressor.
-   The tests can be restricted by the global environment variable `MATRIX_PATTERN`.
-   For instance, `MATRIX_PATTERN='string_coder = huff' make matrix_test` only runs those combinations whose label contain `huff` as a `string_coder`.
+
+* `build_check` - tries to compile (not run) tudocomp and all tests
+* `check` - executes all registered test suites in succession
+* `matix_tests` - runs all registered compressors with all registered
+   combinations of coders, strategies, etc. on a collection of small border-case
+   test strings. Each test in `matix_tests` has a unique label given by the
+   arguments passed to a compressor. The tests can be restricted by the global
+   environment variable `MATRIX_PATTERN`. For instance,
+   `MATRIX_PATTERN='string_coder = huff' make matrix_test` only runs those
+   combinations whose label contain `huff` as a `string_coder`.
 
 The `sandbox_tests` suite is ignored by the framework's repository and can be
 used for quick developmental tests to avoid the registration procedure. It
 can also be used as a template for new test suites.
 
-All tests are compiled with the `gtest` library.
-The library usually runs all tests continuing on errors. To terminate the program on a failure, one can pass the 
-argument `--gtest_break_on_failure` as a command line parameter. This is useful for debugging with `gdb`.
-
+Google Test suites are usually run completely, continuing even in case a single
+test fails. In order to terminate the test once a failure occurs, the
+`--gtest_break_on_failure` flag can be passed to the make target as a
+command-line parameter. This can be useful for debugging with `gdb`.
 
 ## Input and Output
 
