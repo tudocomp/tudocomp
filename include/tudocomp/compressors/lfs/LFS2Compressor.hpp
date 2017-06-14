@@ -25,11 +25,14 @@
 #include <tudocomp/coders/ASCIICoder.hpp>
 
 
+#include <tudocomp/coders/HuffmanCoder.hpp>
+
+
 namespace tdc {
 namespace lfs {
 
 //uint min_lrf = 2,
-template<typename literal_coder_t = BitCoder, typename len_coder_t = EliasGammaCoder >
+template<typename literal_coder_t = HuffmanCoder, typename len_coder_t = EliasGammaCoder >
 class LFS2Compressor : public Compressor {
 private:
 
@@ -75,7 +78,7 @@ public:
         Meta m("compressor", "lfs2",
             "This is an implementation of the longest first substitution compression scheme, type 2.");
         m.option("min_lrf").dynamic(5);
-        m.option("lfs2_lit_coder").templated<literal_coder_t, BitCoder>("lfs2_lit_coder");
+        m.option("lfs2_lit_coder").templated<literal_coder_t, HuffmanCoder>("lfs2_lit_coder");
         m.option("lfs2_len_coder").templated<len_coder_t, EliasGammaCoder>("lfs2_len_coder");
 
         return m;
@@ -345,6 +348,15 @@ public:
 
         StatPhase::log("Number of CFG rules", non_terminal_symbols.size());
 
+        std::stringstream literals;
+
+        for(uint position = 0; position< in.size(); position++){
+            if(fl_offsets[position]==0){
+                literals << in[position];
+            }
+        }
+
+
 
     //    std::cerr<<"encoding text"<<std::endl;
 
@@ -360,7 +372,7 @@ public:
             typename literal_coder_t::Encoder lit_coder(
                 env().env_for_option("lfs2_lit_coder"),
                 bitout,
-                NoLiterals()
+                ViewLiterals(in)
             );
             typename len_coder_t::Encoder len_coder(
                 env().env_for_option("lfs2_len_coder"),

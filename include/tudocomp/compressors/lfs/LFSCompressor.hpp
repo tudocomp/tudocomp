@@ -16,12 +16,15 @@
 
 
 
+#include <tudocomp/coders/HuffmanCoder.hpp>
+
+
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 namespace lfs {
 
-template<typename comp_strategy_t , typename coding_strat_t = EncodeStrategy<BitCoder, EliasGammaCoder> >
+template<typename comp_strategy_t , typename coding_strat_t = EncodeStrategy<HuffmanCoder, EliasGammaCoder> >
 class LFSCompressor : public Compressor {
 private:
 
@@ -36,7 +39,7 @@ public:
         Meta m("compressor", "lfs_comp",
             "This is an implementation of the longest first substitution compression scheme.");
         m.option("computing_strat").templated<comp_strategy_t>("computing_strat");
-        m.option("coding_strat").templated<coding_strat_t, EncodeStrategy<BitCoder, BitCoder> >("coding_strat");
+        m.option("coding_strat").templated<coding_strat_t, EncodeStrategy<HuffmanCoder, EliasGammaCoder> >("coding_strat");
         return m;
     }
 

@@ -29,6 +29,8 @@
 #include <tudocomp/coders/BitCoder.hpp>
 #include <tudocomp/coders/EliasGammaCoder.hpp>
 
+#include <tudocomp/coders/HuffmanCoder.hpp>
+
 
 //#include <tudocomp/tudocomp.hpp>
 
@@ -51,7 +53,7 @@ public:
 
     inline static Meta meta() {
         Meta m("lfs_comp_enc", "lfs_enocde_strat");
-        m.option("lfs_lit_coder").templated<literal_coder_t, BitCoder>("lfs_lit_coder");
+        m.option("lfs_lit_coder").templated<literal_coder_t, HuffmanCoder>("lfs_lit_coder");
         m.option("lfs_len_coder").templated<len_coder_t, EliasGammaCoder>("lfs_len_coder");
         return m;
     }
@@ -67,7 +69,7 @@ public:
         typename literal_coder_t::Encoder lit_coder(
             env().env_for_option("lfs_lit_coder"),
             bitout,
-            NoLiterals()
+            ViewLiterals(in)
         );
         typename len_coder_t::Encoder len_coder(
             env().env_for_option("lfs_len_coder"),
