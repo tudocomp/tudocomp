@@ -9,7 +9,7 @@
 #include <vector>
 #include <tuple>
 
-#include <unordered_map>
+#include <sstream>
 
 
 #include <tudocomp/io.hpp>
@@ -28,7 +28,7 @@ private:
 
     //information of nodes, stored in array
 
-    std::vector<char> edge;
+   // std::vector<char> edge;
 
     //represents the edge leading to this node
     std::vector<uint> start;
@@ -41,7 +41,7 @@ private:
 
 
     //text added to st
-    std::string Text;
+    const io::InputView& Text;
     int pos;
 
     uint current_suffix;
@@ -51,7 +51,7 @@ private:
 
     //active point, from where to start inserting new suffixes
     uint active_node;
-    char active_edge;
+    uint8_t active_edge;
     uint active_length;
 
 
@@ -73,7 +73,7 @@ private:
         end.push_back(e);
         first_child.push_back(0);
         next_sibling.push_back(0);
-        edge.push_back(c);
+       // edge.push_back(c);
         suffix_link.push_back(0);
         suffix.push_back(0);
 
@@ -88,9 +88,36 @@ private:
         end.reserve(size);
         first_child.reserve(size);
         next_sibling.reserve(size);
-        edge.reserve(size);
+      //  edge.reserve(size);
         suffix_link.reserve(size);
         suffix.reserve(size);
+    }
+
+    void compute(){
+        reserve(Text.size() * 2 -1);
+
+        //no Text is read
+        pos=-1;
+        remainder=0;
+        current_suffix=0;
+
+
+        //init root
+        create_node(0,0,0);
+        //suffix corresponds to start
+ //       suffix.push_back(0);
+
+
+        //active start node is root
+        active_node=0;
+        active_length=0;
+
+        last_added_sl=0;
+
+        for (uint i = 0; i < Text.size(); i++) {
+            uint8_t c = Text[i];
+            add_char(c);
+        }
     }
 
 
@@ -111,28 +138,7 @@ public:
         }
     }
 
-    //constructor
-    BinarySuffixTree(){
-        //no Text is read
-        pos=-1;
-        Text="";
-        remainder=0;
-        current_suffix=0;
 
-
-        //init root
-        create_node(0,0,0);
-        //suffix corresponds to start
- //       suffix.push_back(0);
-
-
-        //active start node is root
-        active_node=0;
-        active_length=0;
-
-        last_added_sl=0;
-
-    }
     ~BinarySuffixTree(){
 
     }
@@ -160,7 +166,7 @@ private:
             if(child != 0){
                 do
                 {
-                    if(edge[child] == active_edge){
+                    if(  Text[(start[child])] == active_edge){
                         found = true;
                         break;
                     } else {
@@ -192,12 +198,12 @@ private:
                 if(active_length>= edge_length(next)){
                     active_node = next;
                     active_length -= edge_length(next);
-                    active_edge = Text[pos-active_length];
+                    active_edge = (char) Text[pos-active_length];
                     continue;
                 }
 
                 //if that suffix is already in the tree::
-                if(Text[start[next]+active_length] == c){
+                if( (char) Text[start[next]+active_length] == c){
                     active_length++;
                     add_sl(active_node);
                     break;
@@ -227,7 +233,7 @@ private:
 
 
                 start[next]=start[next]+ active_length;
-                edge[next]=Text[start[next]];
+              //  edge[next]=Text[start[next]];
                // split->child_nodes[Text[next->start]] = next;
                 add_sl(split);
        //         leaves.push_back(leaf);
@@ -248,39 +254,34 @@ private:
 
     }
 public:
-    inline void append_char(char c){
+  //  inline void append_char(char c){
 
-        Text +=c;
-        add_char(c);
-    }
+   //     Text +=c;
+  //      add_char(c);
+  //  }
 
-    inline void append_string(std::string input){
-        Text += input;
-        reserve(input.size() * 3);
+   // inline void append_string(std::string input){
+   //     Text += input;
+    //    reserve(input.size() * 3);
      //   leaves.reserve(leaves.size()+input.size());
-        for(uint i = 0; i<input.length();i++){
-            add_char(input[i]);
-        }
-    }
+    //    for(uint i = 0; i<input.length();i++){
+   //         add_char(input[i]);
+   //     }
+  //  }
 
-    inline void append_input(Input& input){
-        auto iview  = input.as_view();
-        append_input(iview);
-    }
+   // inline void append_input(Input& input){
+    //    auto iview  = input.as_view();
+  //      append_input(iview);
+  //  }
 
-    inline void append_input(io::InputView & input){
+  //  inline void append_input(io::InputView & input){
       //  leaves.reserve(leaves.size()+input.size());
-        reserve(input.size() * 3);
-        Text += input;
-        for (uint i = 0; i < input.size(); i++) {
-            uint8_t c = input[i];
-            add_char(c);
-        }
-    }
 
-    inline std::string get_text(){
-        return Text;
-    }
+    //}
+
+    //inline std::string get_text(){
+    //    return Text;
+   // }
 
     inline uint get_size(){
         return Text.size();
@@ -303,7 +304,15 @@ public:
     }
 
     inline std::string get_string_of_edge(uint node){
-        return Text.substr(start[node], edge_length(node));
+       // return Text.substr(start[node], edge_length(node));
+        std::stringstream ss ;
+        ss << start[node]<< " " <<start[node] + edge_length(node);
+       // for (uint i = start[node]; i<start[node] + edge_length(node); i++){
+        //    DLOG(INFO)<<"works "<< i << " " <<  edge_length(node) ;
+          //  ss << Text[i];
+        //    DLOG(INFO)<<"works";
+      //  }
+        return ss.str();
     }
 
     inline uint get_tree_size(){
@@ -329,16 +338,17 @@ public:
         }
     }
 
-    BinarySuffixTree(Input& input) : BinarySuffixTree(){
-        append_input(input);
-    }
+    BinarySuffixTree(Input& input) : Text(input.as_view()){
+     //   auto in = input.as_view();
+        compute();
 
-    BinarySuffixTree(io::InputView & input) : BinarySuffixTree(){
-        append_input(input);
-    }
+   }
 
-    BinarySuffixTree(std::string input) :  BinarySuffixTree(){
-        append_string(input);
+    BinarySuffixTree(io::InputView & input) : Text(input){
+
+        compute();
+
+
     }
 
 

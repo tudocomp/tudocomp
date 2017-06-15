@@ -180,6 +180,9 @@ public:
 
                 uint shorter_dif = lcp_len;
 
+             //   uint left_bound = 0;
+             //   uint right_bound = 0;
+
                 while(i>=0 && ( lcp_t[i])>=lcp_len){
                     if(!dead_positions[sa_t[i-1]]  && !dead_positions[sa_t[i-1]+lcp_len-1]){
                         starting_positions.push_back(sa_t[i-1]);
@@ -192,6 +195,8 @@ public:
                         }
                     }
                     i--;
+
+//                    left_bound = i;
 
                 }
                 i = *bin_it;
@@ -206,8 +211,15 @@ public:
                             shorter_dif--;
                         }
                     }
+             //       right_bound=i;
                     i++;
                 }
+
+               // DLOG(INFO) << sa_t[left_bound] << "  "<< sa_t[right_bound];
+              //  std::sort(sa_t.begin() + left_bound, sa_t.begin() +right_bound);
+
+
+                //DLOG(INFO) << sa_t[left_bound] << "  "<< sa_t[right_bound];
                // DLOG(INFO)<<"lrf_len: "<<lcp_len<< " shorter dif: "<< shorter_dif;
                 //if the factor is still repeating, make the corresponding positions unviable
                 if(lcp_len-shorter_dif>=min_lrf){

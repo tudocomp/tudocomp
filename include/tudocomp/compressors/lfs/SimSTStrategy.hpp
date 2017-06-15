@@ -215,7 +215,6 @@ public:
                             std::vector<uint> offsets;
                             std::vector<uint> leaf_bps;
 
-
                             for (auto & child : stree.children(node)) {
                                 if(stree.is_leaf(child)){
 
