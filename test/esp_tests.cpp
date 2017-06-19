@@ -528,6 +528,10 @@ TEST(ESP, test_sufficient_greedy1) {
    test_esp<esp::SortedSLPCoder<esp::DMonotonSubseq<esp::SubSeqGreedy>>>();
 }
 
+TEST(ESP, test_sorted_diff) {
+   test_esp<esp::SortedSLPCoder<esp::DDiff>>();
+}
+
 /*TEST(ESP, test_optimal_arithmetic) {
    test_esp<esp::SortedSLPCoder<esp::DArithmetic>>();
 }*/

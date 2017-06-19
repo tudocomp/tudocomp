@@ -286,4 +286,70 @@ namespace tdc {namespace esp {
             esp::recover_D_from_encoding(Dpi, Dsi, b, Bde, &D);
         }
     };
+
+    class DDiff: public Algorithm {
+    public:
+        inline static Meta meta() {
+            Meta m("d_coding", "diff");
+            return m;
+        };
+
+        using Algorithm::Algorithm;
+
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
+
+
+            //IntVector<uint_t<1>> signs;
+            //signs.reserve(rhs.size());
+
+            size_t last = 0;
+            for(size_t i = 0; i < rhs.size(); i++) {
+                bool sign = (rhs[i] >= last);
+                out.write_bit(sign);
+                last = rhs[i];
+            }
+
+            last = 0;
+            for(size_t i = 0; i < rhs.size(); i++) {
+                bool sign = (rhs[i] >= last);
+                size_t diff;
+                if (sign) {
+                    diff = rhs[i] - last;
+                } else {
+                    diff = last - rhs[i];
+                }
+                out.write_unary(diff);
+                last = rhs[i];
+            }
+
+        }
+        template<typename rhs_t>
+        inline void decode(rhs_t& rhs, BitIStream& in, size_t bit_width, size_t max_value) const {
+            IntVector<uint_t<1>> signs;
+            signs.reserve(rhs.size());
+
+            for(size_t i = 0; i < rhs.size(); i++) {
+                signs.push_back(in.read_bit());
+            }
+            size_t last = 0;
+            for(size_t i = 0; i < rhs.size(); i++) {
+                if (signs[i]) {
+                    last += in.read_unary<size_t>();
+                } else {
+                    last -= in.read_unary<size_t>();
+                }
+                rhs[i] = last;
+            }
+
+        }
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
+            encode(rhs, *out, bit_width, max_value);
+        }
+        template<typename rhs_t>
+        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width, size_t max_value) const {
+            decode(rhs, *in, bit_width, max_value);
+        }
+    };
 }}
