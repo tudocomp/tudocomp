@@ -99,7 +99,10 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
         DCHECK(in.ends_with(uint8_t(0)));
-        text_t text(env().env_for_option("textds"), in, strategy_t::textds_flags());
+
+        auto text = StatPhase::wrap("Construct Text DS", [&]{
+            return text_t(env().env_for_option("textds"), in, strategy_t::textds_flags());
+        });
 
         // read options
         const len_t threshold = env().option("threshold").as_integer(); //factor threshold

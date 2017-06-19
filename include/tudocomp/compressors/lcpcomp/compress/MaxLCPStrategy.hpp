@@ -40,9 +40,9 @@ public:
                    lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
-        StatPhase::wrap("Construct text ds", [&]{
-            text.require(text_t::SA | text_t::ISA | text_t::LCP);
-        });
+        //StatPhase::wrap("Construct text ds", [&]{
+        //    text.require(text_t::SA | text_t::ISA | text_t::LCP);
+        //});
 
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
