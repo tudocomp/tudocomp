@@ -27,7 +27,7 @@ private:
     typedef std::vector<std::pair<uint,uint>> rules;
 
 
-    BinarySuffixTree stree;
+    BinarySuffixTree * stree;
     uint min_lrf;
 
     BitVector dead_positions;
@@ -46,7 +46,7 @@ private:
 
    // typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
 
-
+/*
     inline virtual void compute_string_depth(uint node, uint str_depth){
         //resize if str depth grater than bins size
         uint child = stree.get_first_child(node);
@@ -78,7 +78,7 @@ private:
     }
 
 
-
+*/
 
 
 
@@ -155,19 +155,21 @@ public:
 
 
     inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
+     //   BinarySuffixTree stree;
         min_lrf = env().option("min_lrf").as_integer();
 
         StatPhase::wrap("Constructing ST", [&]{
-            stree = BinarySuffixTree(input);
+            stree = new BinarySuffixTree(input);
+            StatPhase::log("Number of Nodes", stree->get_tree_size());
         });
-        StatPhase::log("Number of Nodes", stree.get_tree_size());
+
 
 
         StatPhase::wrap("Computing String Depth", [&]{
             bins.resize(200);
             node_count=0;
             max_depth=0;
-            compute_string_depth(0,0);
+         //   compute_string_depth(0,0);
         });
 
         StatPhase::log("Number of inner Nodes", node_count);

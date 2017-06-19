@@ -12,6 +12,11 @@
 #include <sstream>
 
 
+#include <math.h>
+
+#include <tudocomp/ds/IntVector.hpp>
+
+
 #include <tudocomp/io.hpp>
 
 
@@ -22,8 +27,8 @@ private:
 
 
     //binary property of tree:
-    std::vector<uint> first_child;
-    std::vector<uint> next_sibling;
+    DynamicIntVector first_child;
+    DynamicIntVector next_sibling;
 
 
     //information of nodes, stored in array
@@ -31,13 +36,14 @@ private:
    // std::vector<char> edge;
 
     //represents the edge leading to this node
-    std::vector<uint> start;
-    std::vector<uint> end;
+    //DynamicIntVector start_dyn;
+    DynamicIntVector start;
+    DynamicIntVector end;
 
     //suffix link of node
-    std::vector<uint> suffix_link;
+    DynamicIntVector suffix_link;
 
-    std::vector<uint> suffix;
+    DynamicIntVector suffix;
 
 
     //text added to st
@@ -45,6 +51,7 @@ private:
     int pos;
 
     uint current_suffix;
+    uint new_node;
 
     //number of suffixes to be added;
     uint remainder;
@@ -67,34 +74,52 @@ private:
     }
 
     uint create_node(uint s, uint e, char c){
+        new_node++;
+        start[new_node] = s;
+        end[new_node] = e;
 
         //init empty node
-        start.push_back(s);
-        end.push_back(e);
-        first_child.push_back(0);
-        next_sibling.push_back(0);
+       // start.push_back(s);
+       // end.push_back(e);
+       // first_child.push_back(0);
+       // next_sibling.push_back(0);
        // edge.push_back(c);
-        suffix_link.push_back(0);
-        suffix.push_back(0);
+       // suffix_link.push_back(0);
+      //  suffix.push_back(0);
 
-        return start.size()-1;
+        return new_node;
 
     }
 
 
-    void reserve(uint size){
+    void reserve(){
+
+        auto bits_req_text = bits_for(Text.size() );
+        auto size = Text.size() * 2 -1;
+        auto bits_req_arr = bits_for(size);
+        DLOG(INFO)<<" bits req: " << bits_req_text;
+        DLOG(INFO)<<" text size *2 -1: " << size << "bits: " << bits_req_arr;
+
+        start= DynamicIntVector(size, 0, bits_req_text);
+        end =  DynamicIntVector(size, 0, bits_req_text);
         //init empty node
-        start.reserve(size);
-        end.reserve(size);
-        first_child.reserve(size);
-        next_sibling.reserve(size);
+     //   start.reserve(size);
+     //   end.reserve(size);
+        first_child= DynamicIntVector(size, 0, bits_req_arr);
+        next_sibling= DynamicIntVector(size, 0, bits_req_arr);
       //  edge.reserve(size);
-        suffix_link.reserve(size);
-        suffix.reserve(size);
+        suffix_link= DynamicIntVector(size, 0, bits_req_arr);
+        suffix= DynamicIntVector(size, 0, bits_req_text);
     }
 
     void compute(){
-        reserve(Text.size() * 2 -1);
+        new_node=0;
+
+
+
+
+
+        reserve();
 
         //no Text is read
         pos=-1;
@@ -113,6 +138,7 @@ private:
         active_length=0;
 
         last_added_sl=0;
+        DLOG(INFO)<<"Text size: " << Text.size();
 
         for (uint i = 0; i < Text.size(); i++) {
             uint8_t c = Text[i];
@@ -131,7 +157,7 @@ public:
             return 0;
         }
 
-        if(end[node] == 0){
+        if(end[node] == (uint)0){
             return pos - start[node]+1;
         } else {
             return end[node]- start[node];
@@ -183,7 +209,7 @@ private:
                 //insert new leaf
                 uint leaf = create_node(pos, 0, active_edge);
                 suffix[leaf] = current_suffix++;
-                if(first_child[active_node]==0){
+                if(first_child[active_node]== (uint)0){
                     first_child[active_node] = leaf;
                 } else {
                     next_sibling[previous_sibling] = leaf;
@@ -218,7 +244,7 @@ private:
                // leaf->suffix=suffix++;
 
                 //update relations of nodes
-                if(first_child[active_node] == 0){
+                if(first_child[active_node] == (uint) 0){
                     first_child[active_node]= split;
                 }
                 if(first_child[active_node] == next){
@@ -243,7 +269,7 @@ private:
                 active_length--;
                 active_edge = Text[pos-remainder+1];
             }else {
-                if(suffix_link[active_node] != 0){
+                if(suffix_link[active_node] != (uint)0){
                     active_node = suffix_link[active_node];
                 } else {
                     active_node = 0;
