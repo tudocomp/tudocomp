@@ -303,45 +303,54 @@ namespace tdc {namespace esp {
             //IntVector<uint_t<1>> signs;
             //signs.reserve(rhs.size());
 
-            size_t last = 0;
+            size_t last;
+
+            last = 0;
             for(size_t i = 0; i < rhs.size(); i++) {
-                bool sign = (rhs[i] >= last);
-                out.write_bit(sign);
-                last = rhs[i];
+                const size_t current = rhs[i];
+                size_t diff;
+                if (current >= last) {
+                    diff = current - last;
+                } else {
+                    diff = last - current;
+                }
+                out.write_unary(diff);
+                last = current;
             }
 
             last = 0;
             for(size_t i = 0; i < rhs.size(); i++) {
-                bool sign = (rhs[i] >= last);
-                size_t diff;
-                if (sign) {
-                    diff = rhs[i] - last;
-                } else {
-                    diff = last - rhs[i];
+                const size_t current = rhs[i];
+
+                if (last < current) {
+                    out.write_bit(true);
+                } else if (last > current) {
+                    out.write_bit(false);
                 }
-                out.write_unary(diff);
-                last = rhs[i];
+
+                last = current;
             }
+
 
         }
         template<typename rhs_t>
         inline void decode(rhs_t& rhs, BitIStream& in, size_t bit_width, size_t max_value) const {
-            IntVector<uint_t<1>> signs;
-            signs.reserve(rhs.size());
-
             for(size_t i = 0; i < rhs.size(); i++) {
-                signs.push_back(in.read_bit());
+                rhs[i] = in.read_unary<size_t>();
             }
+
             size_t last = 0;
             for(size_t i = 0; i < rhs.size(); i++) {
-                if (signs[i]) {
-                    last += in.read_unary<size_t>();
-                } else {
-                    last -= in.read_unary<size_t>();
+                const size_t diff = rhs[i];
+                if (diff != 0) {
+                    if (in.read_bit()) {
+                        last += diff;
+                    } else {
+                        last -= diff;
+                    }
                 }
                 rhs[i] = last;
             }
-
         }
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {

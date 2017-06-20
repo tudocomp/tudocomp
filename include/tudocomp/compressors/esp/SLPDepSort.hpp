@@ -54,24 +54,6 @@ namespace tdc {namespace esp {
             }
         }
 
-        /*for (size_t i = 0; i < inv.size(); i++) {
-            if (i < 32 || i > 127) {
-                std::cout << i       << " -> ";
-            } else {
-                std::cout << char(i) << " -> ";
-            }
-            std::cout << vec_to_debug_string(inv[i]);
-            {
-                std::vector<size_t> tmp;
-                for_all(i, [&](size_t l) {
-                    tmp.push_back(l);
-                });
-
-                std::cout << "; " << vec_to_debug_string(tmp);
-            }
-            std::cout << "\n";
-        }*/
-
         std::vector<size_t> rename;
         rename.reserve(slp.rules.size());
         rename.resize(slp.rules.size());
