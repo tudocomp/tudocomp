@@ -292,7 +292,9 @@ namespace tdc {namespace esp {
     inline void encode_unary_diff(vec_t& vec,
                                   BitOStream& out,
                                   const size_t bit_width,
-                                  const size_t diff_bit_width) {
+                                  const size_t diff_bit_width,
+                                  const bool sign = true
+                                 ) {
         auto cvec = [&](size_t i) -> size_t {
             return size_t(typename vec_t::value_type(vec[i]));
         };
@@ -314,7 +316,7 @@ namespace tdc {namespace esp {
 
             unary_sep_bit_counter += 1;
             unary_val_bit_counter += diff;
-            if (diff != 0) {
+            if (diff != 0 && sign) {
                 diff_val_counter += 1;
             }
             last = current;
@@ -350,17 +352,19 @@ namespace tdc {namespace esp {
                 last = current;
             }
 
-            last = 0;
-            for(size_t i = 0; i < vec.size(); i++) {
-                const size_t current = cvec(i);
+            if (sign) {
+                last = 0;
+                for(size_t i = 0; i < vec.size(); i++) {
+                    const size_t current = cvec(i);
 
-                if (last < current) {
-                    out.write_bit(true);
-                } else if (last > current) {
-                    out.write_bit(false);
+                    if (last < current) {
+                        out.write_bit(true);
+                    } else if (last > current) {
+                        out.write_bit(false);
+                    }
+
+                    last = current;
                 }
-
-                last = current;
             }
         } else {
             size_t out_counter = 0;
@@ -399,7 +403,8 @@ namespace tdc {namespace esp {
     inline void decode_unary_diff(vec_t& vec,
                                   BitIStream& in,
                                   const size_t bit_width,
-                                  const size_t diff_bit_width) {
+                                  const size_t diff_bit_width,
+                                  const bool sign = true) {
         auto cvec = [&](size_t i) -> size_t {
             return size_t(typename vec_t::value_type(vec[i]));
         };
@@ -415,10 +420,14 @@ namespace tdc {namespace esp {
             for(size_t i = 0; i < vec.size(); i++) {
                 const size_t diff = cvec(i);
                 if (diff != 0) {
-                    if (in.read_bit()) {
-                        last += diff;
+                    if (sign) {
+                        if (in.read_bit()) {
+                            last += diff;
+                        } else {
+                            last -= diff;
+                        }
                     } else {
-                        last -= diff;
+                        last += diff;
                     }
                 }
                 vec[i] = last;
