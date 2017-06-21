@@ -1,5 +1,5 @@
-#include "test/util.hpp"
 #include <gtest/gtest.h>
+#include "test/util.hpp"
 
 #include "tudocomp/compressors/EspCompressor.hpp"
 

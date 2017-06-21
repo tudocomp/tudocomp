@@ -1,9 +1,11 @@
 #pragma once
 
 #include <sstream>
-#include <tudocomp/Coder.hpp>
 #include <iostream>
 #include <bitset>
+#include <numeric>
+
+#include <tudocomp/Coder.hpp>
 
 namespace tdc {namespace esp {
     namespace huff2 {

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/compressors/esp/DebugContext.hpp>
+#include <tudocomp/compressors/esp/SLP.hpp>
+#include <tudocomp/compressors/esp/HashArray.hpp>
 
 namespace tdc {namespace esp {
     class PlainSLPCoder: public Algorithm {

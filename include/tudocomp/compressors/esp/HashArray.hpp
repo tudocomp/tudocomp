@@ -3,6 +3,7 @@
 #include<array>
 
 #include<tudocomp/util/View.hpp>
+#include <tudocomp/ds/BitPackingVectorSlice.hpp>
 
 namespace tdc {namespace esp {
     using in_t = BitPackingVectorSlice<dynamic_t>;
