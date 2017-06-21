@@ -289,13 +289,19 @@ namespace tdc {namespace esp {
 
 
     template<typename vec_t>
-    inline void encode_unary_diff(vec_t& vec, BitOStream& out) {
+    inline void encode_unary_diff(vec_t& vec,
+                                  BitOStream& out,
+                                  const size_t bit_width,
+                                  const size_t diff_bit_width) {
         auto cvec = [&](size_t i) -> size_t {
             return size_t(typename vec_t::value_type(vec[i]));
         };
 
         size_t last;
 
+        uint64_t unary_sep_bit_counter = 0;
+        uint64_t unary_val_bit_counter = 0;
+        size_t diff_val_counter = 0;
         last = 0;
         for(size_t i = 0; i < vec.size(); i++) {
             const size_t current = cvec(i);
@@ -305,45 +311,128 @@ namespace tdc {namespace esp {
             } else {
                 diff = last - current;
             }
-            out.write_unary(diff);
+
+            unary_sep_bit_counter += 1;
+            unary_val_bit_counter += diff;
+            if (diff != 0) {
+                diff_val_counter += 1;
+            }
             last = current;
         }
 
-        last = 0;
-        for(size_t i = 0; i < vec.size(); i++) {
-            const size_t current = cvec(i);
+        const uint64_t bits_unary = unary_sep_bit_counter + unary_val_bit_counter;
+        const uint64_t bits_binary
+            = (diff_val_counter + 1) * (bit_width + diff_bit_width) // size change entry
+            ;
 
-            if (last < current) {
-                out.write_bit(true);
-            } else if (last > current) {
-                out.write_bit(false);
+        const bool use_unary = (bits_unary <= bits_binary);
+        out.write_bit(use_unary);
+
+        /*
+        std::cout
+            << "bits unary: " << bits_unary
+            << ", bits_binary: " << bits_binary
+            << ", use unary: " << (use_unary ? "true" : "false")
+            << "\n";
+        */
+
+        if (use_unary) {
+            last = 0;
+            for(size_t i = 0; i < vec.size(); i++) {
+                const size_t current = cvec(i);
+                size_t diff;
+                if (current >= last) {
+                    diff = current - last;
+                } else {
+                    diff = last - current;
+                }
+                out.write_unary(diff);
+                last = current;
             }
 
-            last = current;
+            last = 0;
+            for(size_t i = 0; i < vec.size(); i++) {
+                const size_t current = cvec(i);
+
+                if (last < current) {
+                    out.write_bit(true);
+                } else if (last > current) {
+                    out.write_bit(false);
+                }
+
+                last = current;
+            }
+        } else {
+            size_t out_counter = 0;
+            size_t last_value = 0;
+            size_t value_counter = 0;
+            if (0 < vec.size()) {
+                last_value = cvec(0);
+                value_counter = 1;
+            }
+            for(size_t i = 1; i < vec.size(); i++) {
+                const size_t current = cvec(i);
+
+                if (current == last_value) {
+                    value_counter++;
+                    continue;
+                } else {
+                    out.write_int<size_t>(value_counter, bit_width);
+                    out.write_int<size_t>(last_value, diff_bit_width);
+                    out_counter++;
+
+                    last_value = current;
+                    value_counter = 1;
+                }
+            }
+            if (value_counter > 0) {
+                out.write_int<size_t>(value_counter, bit_width);
+                out.write_int<size_t>(last_value, diff_bit_width);
+                out_counter++;
+            }
+
+            DCHECK_EQ(out_counter, diff_val_counter + 1);
         }
     }
 
     template<typename vec_t>
-    inline void decode_unary_diff(vec_t& vec, BitIStream& in) {
+    inline void decode_unary_diff(vec_t& vec,
+                                  BitIStream& in,
+                                  const size_t bit_width,
+                                  const size_t diff_bit_width) {
         auto cvec = [&](size_t i) -> size_t {
             return size_t(typename vec_t::value_type(vec[i]));
         };
 
-        for(size_t i = 0; i < vec.size(); i++) {
-            vec[i] = in.read_unary<size_t>();
-        }
+        const bool use_unary = in.read_bit();
 
-        size_t last = 0;
-        for(size_t i = 0; i < vec.size(); i++) {
-            const size_t diff = cvec(i);
-            if (diff != 0) {
-                if (in.read_bit()) {
-                    last += diff;
-                } else {
-                    last -= diff;
+        if (use_unary) {
+            for(size_t i = 0; i < vec.size(); i++) {
+                vec[i] = in.read_unary<size_t>();
+            }
+
+            size_t last = 0;
+            for(size_t i = 0; i < vec.size(); i++) {
+                const size_t diff = cvec(i);
+                if (diff != 0) {
+                    if (in.read_bit()) {
+                        last += diff;
+                    } else {
+                        last -= diff;
+                    }
+                }
+                vec[i] = last;
+            }
+        } else {
+            size_t vec_i = 0;
+            while(vec_i < vec.size()) {
+                const size_t repeats = in.read_int<size_t>(bit_width);
+                const size_t val = in.read_int<size_t>(diff_bit_width);
+                const size_t vec_i_end = vec_i + repeats;
+                for (; vec_i < vec_i_end; vec_i++) {
+                    vec[vec_i] = val;
                 }
             }
-            vec[i] = last;
         }
     }
 
@@ -358,11 +447,11 @@ namespace tdc {namespace esp {
 
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
-            encode_unary_diff(rhs, out);
+            encode_unary_diff(rhs, out, bit_width, bit_width);
         }
         template<typename rhs_t>
         inline void decode(rhs_t& rhs, BitIStream& in, size_t bit_width, size_t max_value) const {
-            decode_unary_diff(rhs, in);
+            decode_unary_diff(rhs, in, bit_width, bit_width);
         }
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
@@ -425,7 +514,7 @@ namespace tdc {namespace esp {
             //std::cout << "wrote mins\n";
             //std::cout << vec_to_debug_string(mins) << "\n\n";
 
-            encode_unary_diff(bit_ranges, out);
+            encode_unary_diff(bit_ranges, out, bit_width, 64);
 
             //std::cout << "wrote bit sizes\n";
             //std::cout << vec_to_debug_string(bit_ranges) << "\n\n";
@@ -459,7 +548,7 @@ namespace tdc {namespace esp {
             bit_ranges.reserve(size);
             bit_ranges.resize(size);
 
-            decode_unary_diff(bit_ranges, in);
+            decode_unary_diff(bit_ranges, in, bit_width, 64);
 
             //std::cout << "read bit sizes\n";
             //std::cout << vec_to_debug_string(bit_ranges) << "\n\n";
