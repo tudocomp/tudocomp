@@ -546,6 +546,10 @@ namespace tdc {namespace esp {
                 bit_ranges.push_back(bits_for(range));
             }
 
+            // TODO: switch for rounding range up
+            // TODO: group by range
+            // TODO: start using wavelet tree for range groups
+
             //std::cout << "wrote mins\n";
             //std::cout << vec_to_debug_string(mins) << "\n\n";
 
