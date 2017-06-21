@@ -287,6 +287,66 @@ namespace tdc {namespace esp {
         }
     };
 
+
+    template<typename vec_t>
+    inline void encode_unary_diff(vec_t& vec, BitOStream& out) {
+        auto cvec = [&](size_t i) -> size_t {
+            return size_t(typename vec_t::value_type(vec[i]));
+        };
+
+        size_t last;
+
+        last = 0;
+        for(size_t i = 0; i < vec.size(); i++) {
+            const size_t current = cvec(i);
+            size_t diff;
+            if (current >= last) {
+                diff = current - last;
+            } else {
+                diff = last - current;
+            }
+            out.write_unary(diff);
+            last = current;
+        }
+
+        last = 0;
+        for(size_t i = 0; i < vec.size(); i++) {
+            const size_t current = cvec(i);
+
+            if (last < current) {
+                out.write_bit(true);
+            } else if (last > current) {
+                out.write_bit(false);
+            }
+
+            last = current;
+        }
+    }
+
+    template<typename vec_t>
+    inline void decode_unary_diff(vec_t& vec, BitIStream& in) {
+        auto cvec = [&](size_t i) -> size_t {
+            return size_t(typename vec_t::value_type(vec[i]));
+        };
+
+        for(size_t i = 0; i < vec.size(); i++) {
+            vec[i] = in.read_unary<size_t>();
+        }
+
+        size_t last = 0;
+        for(size_t i = 0; i < vec.size(); i++) {
+            const size_t diff = cvec(i);
+            if (diff != 0) {
+                if (in.read_bit()) {
+                    last += diff;
+                } else {
+                    last -= diff;
+                }
+            }
+            vec[i] = last;
+        }
+    }
+
     class DDiff: public Algorithm {
     public:
         inline static Meta meta() {
@@ -298,59 +358,117 @@ namespace tdc {namespace esp {
 
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
-
-
-            //IntVector<uint_t<1>> signs;
-            //signs.reserve(rhs.size());
-
-            size_t last;
-
-            last = 0;
-            for(size_t i = 0; i < rhs.size(); i++) {
-                const size_t current = rhs[i];
-                size_t diff;
-                if (current >= last) {
-                    diff = current - last;
-                } else {
-                    diff = last - current;
-                }
-                out.write_unary(diff);
-                last = current;
-            }
-
-            last = 0;
-            for(size_t i = 0; i < rhs.size(); i++) {
-                const size_t current = rhs[i];
-
-                if (last < current) {
-                    out.write_bit(true);
-                } else if (last > current) {
-                    out.write_bit(false);
-                }
-
-                last = current;
-            }
-
-
+            encode_unary_diff(rhs, out);
         }
         template<typename rhs_t>
         inline void decode(rhs_t& rhs, BitIStream& in, size_t bit_width, size_t max_value) const {
-            for(size_t i = 0; i < rhs.size(); i++) {
-                rhs[i] = in.read_unary<size_t>();
+            decode_unary_diff(rhs, in);
+        }
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
+            encode(rhs, *out, bit_width, max_value);
+        }
+        template<typename rhs_t>
+        inline void decode(rhs_t& rhs, std::shared_ptr<BitIStream>& in, size_t bit_width, size_t max_value) const {
+            decode(rhs, *in, bit_width, max_value);
+        }
+    };
+
+    class DRangeFit: public Algorithm {
+    public:
+        inline static Meta meta() {
+            Meta m("d_coding", "range_fit");
+            return m;
+        };
+
+        using Algorithm::Algorithm;
+
+        template<typename rhs_t>
+        inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
+            const size_t size = rhs.size();
+
+            std::vector<size_t> mins;
+            mins.reserve(size);
+            size_t min = size_t(-1);
+
+            for(size_t i = 0; i < size; i++) {
+                const size_t j = size - i - 1;
+                const size_t current = rhs[j];
+
+                if (current < min) {
+                    min = current;
+                }
+                mins.push_back(min);
+            }
+            std::reverse(mins.begin(), mins.end());
+
+            // TODO: Potential bug if bit width == 64 ?
+            IntVector<uint_t<6>> bit_ranges;
+            bit_ranges.reserve(size);
+
+            size_t max = 0;
+            size_t min_diff = 0;
+            for(size_t i = 0; i < size; i++) {
+                const size_t min = mins[i];
+                out.write_unary(min - min_diff);
+                min_diff = min;
+
+                const size_t current = rhs[i];
+                if (current > max) {
+                    max = current;
+                }
+
+                const size_t range = max - min;
+                bit_ranges.push_back(bits_for(range));
             }
 
+            //std::cout << "wrote mins\n";
+            //std::cout << vec_to_debug_string(mins) << "\n\n";
+
+            encode_unary_diff(bit_ranges, out);
+
+            //std::cout << "wrote bit sizes\n";
+            //std::cout << vec_to_debug_string(bit_ranges) << "\n\n";
+
+            for(size_t i = 0; i < size; i++) {
+                const size_t current = rhs[i];
+                const size_t min = mins[i];
+                const size_t compact_value = current - min;
+
+                out.write_int<size_t>(compact_value, size_t(uint_t<6>(bit_ranges[i])));
+            }
+
+            //std::cout << "wrote values\n";
+        }
+        template<typename rhs_t>
+        inline void decode(rhs_t& rhs, BitIStream& in, size_t bit_width, size_t max_value) const {
+            const size_t size = rhs.size();
+
+            std::vector<size_t> mins;
+            mins.reserve(size);
             size_t last = 0;
             for(size_t i = 0; i < rhs.size(); i++) {
-                const size_t diff = rhs[i];
-                if (diff != 0) {
-                    if (in.read_bit()) {
-                        last += diff;
-                    } else {
-                        last -= diff;
-                    }
-                }
-                rhs[i] = last;
+                last += in.read_unary<size_t>();
+                mins.push_back(last);
             }
+
+            //std::cout << "read mins\n";
+            //std::cout << vec_to_debug_string(mins) << "\n\n";
+
+            IntVector<uint_t<6>> bit_ranges;
+            bit_ranges.reserve(size);
+            bit_ranges.resize(size);
+
+            decode_unary_diff(bit_ranges, in);
+
+            //std::cout << "read bit sizes\n";
+            //std::cout << vec_to_debug_string(bit_ranges) << "\n\n";
+
+            for(size_t i = 0; i < size; i++) {
+                rhs[i] = in.read_int<size_t>(size_t(uint_t<6>(bit_ranges[i]))) + mins[i];
+            }
+
+            //std::cout << "read values\n";
         }
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {

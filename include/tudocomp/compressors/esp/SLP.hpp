@@ -55,6 +55,8 @@ namespace tdc {namespace esp {
     };
 
     struct SLPRhsAdapter {
+        using value_type = size_t;
+
         SLP* slp;
         inline const size_t& operator[](size_t i) const {
             return slp->rules[i][1];

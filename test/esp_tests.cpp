@@ -532,6 +532,10 @@ TEST(ESP, test_sorted_diff) {
    test_esp<esp::SortedSLPCoder<esp::DDiff>>();
 }
 
+TEST(ESP, test_sorted_range_fit) {
+   test_esp<esp::SortedSLPCoder<esp::DRangeFit>>();
+}
+
 /*TEST(ESP, test_optimal_arithmetic) {
    test_esp<esp::SortedSLPCoder<esp::DArithmetic>>();
 }*/
