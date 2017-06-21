@@ -473,9 +473,19 @@ namespace tdc {namespace esp {
     };
 
     class DRangeFit: public Algorithm {
+        inline static bool perc_diff(double a, double b, double diff) {
+            auto r = std::abs((a - b) / ((a + b) / 2.0)) <= diff;
+            /*
+            if (r && (a != b)) {
+                std::cout << a << " too close to " << b << "\n";
+            }
+            */
+            return r;
+        }
     public:
         inline static Meta meta() {
             Meta m("d_coding", "range_fit");
+            m.option("threshold").dynamic("none");
             return m;
         };
 
@@ -485,10 +495,17 @@ namespace tdc {namespace esp {
         inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
             const size_t size = rhs.size();
 
+            const bool has_threshold = env().option("threshold").as_string() != "none";
+            double threshold = 0.02;
+            if (has_threshold) {
+                threshold = double(env().option("threshold").as_integer()) / 100.0;
+            }
+
             std::vector<size_t> mins;
             mins.reserve(size);
-            size_t min = size_t(-1);
+            mins.resize(size);
 
+            size_t min = size_t(-1);
             for(size_t i = 0; i < size; i++) {
                 const size_t j = size - i - 1;
                 const size_t current = rhs[j];
@@ -496,9 +513,19 @@ namespace tdc {namespace esp {
                 if (current < min) {
                     min = current;
                 }
-                mins.push_back(min);
+                mins[j] = min;
             }
-            std::reverse(mins.begin(), mins.end());
+
+            if (has_threshold || true) {
+                size_t last = 0;
+                for(size_t i = 0; i < size; i++) {
+                    if (perc_diff(mins[i], last, threshold)) {
+                        DCHECK_GE(mins[i], last);
+                        mins[i] = last;
+                    }
+                    last = mins[i];
+                }
+            }
 
             // TODO: Potential bug if bit width == 64 ?
             IntVector<uint_t<6>> bit_ranges;
