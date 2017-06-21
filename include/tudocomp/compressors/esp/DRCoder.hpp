@@ -485,7 +485,8 @@ namespace tdc {namespace esp {
     public:
         inline static Meta meta() {
             Meta m("d_coding", "range_fit");
-            m.option("threshold").dynamic("none");
+            m.option("threshold").dynamic(2); // "none"
+            m.option("wt").dynamic(true);     // false
             return m;
         };
 
@@ -500,6 +501,7 @@ namespace tdc {namespace esp {
             if (has_threshold) {
                 threshold = double(env().option("threshold").as_integer()) / 100.0;
             }
+            const bool use_wt = env().option("wt").as_bool();
 
             std::vector<size_t> mins;
             mins.reserve(size);
@@ -516,7 +518,7 @@ namespace tdc {namespace esp {
                 mins[j] = min;
             }
 
-            if (has_threshold || true) {
+            if (has_threshold) {
                 size_t last = 0;
                 for(size_t i = 0; i < size; i++) {
                     if (perc_diff(mins[i], last, threshold)) {
@@ -527,73 +529,146 @@ namespace tdc {namespace esp {
                 }
             }
 
-            // TODO: Potential bug if bit width == 64 ?
-            IntVector<uint_t<6>> bit_ranges;
-            bit_ranges.reserve(size);
-
             encode_unary_diff(mins, out, bit_width, bit_width, false);
 
-            size_t max = 0;
-            for(size_t i = 0; i < size; i++) {
-                const size_t min = mins[i];
+            if (!use_wt) {
+                // TODO: Potential bug if bit width == 64 ?
+                IntVector<uint_t<6>> bit_ranges;
+                bit_ranges.reserve(size);
 
-                const size_t current = rhs[i];
-                if (current > max) {
-                    max = current;
+                size_t max = 0;
+                for(size_t i = 0; i < size; i++) {
+                    const size_t min = mins[i];
+
+                    const size_t current = rhs[i];
+                    if (current > max) {
+                        max = current;
+                    }
+
+                    const size_t range = max - min;
+                    bit_ranges.push_back(bits_for(range));
                 }
 
-                const size_t range = max - min;
-                bit_ranges.push_back(bits_for(range));
+                // TODO: switch for rounding range up
+                // TODO: group by range
+                // TODO: start using wavelet tree for range groups
+
+                encode_unary_diff(bit_ranges, out, bit_width, 64);
+
+
+                for(size_t i = 0; i < size; i++) {
+                    const size_t current = rhs[i];
+                    const size_t min = mins[i];
+                    const size_t compact_value = current - min;
+
+                    out.write_int<size_t>(compact_value, size_t(uint_t<6>(bit_ranges[i])));
+                }
+            } else {
+                std::vector<size_t> maxs;
+                maxs.reserve(size);
+                maxs.resize(size);
+
+                size_t max = 0;
+                for(size_t i = 0; i < size; i++) {
+                    const size_t current = rhs[i];
+
+                    if (current > max) {
+                        max = current;
+                    }
+                    maxs[i] = max;
+                }
+
+                if (has_threshold) {
+                    size_t last = size_t(-1);
+                    for(size_t i = 0; i < size; i++) {
+                        const size_t j = size - i - 1;
+
+                        if (perc_diff(maxs[j], last, threshold)) {
+                            DCHECK_LE(maxs[j], last);
+                            maxs[j] = last;
+                        }
+                        last = maxs[j];
+                    }
+                }
+
+                std::vector<size_t> ranges;
+                ranges.reserve(size);
+                ranges.resize(size);
+
+                for(size_t i = 0; i < size; i++) {
+                    ranges[i] = maxs[i] - mins[i];
+                }
+
+                if (has_threshold) {
+                    size_t last = 0;
+                    for(size_t i = 0; i < size; i++) {
+                        const size_t j = size - i - 1;
+
+                        if (ranges[j] < last) {
+                            if (perc_diff(ranges[j], last, threshold)) {
+                                DCHECK_LE(ranges[j], last);
+                                ranges[j] = last;
+                            }
+                        }
+                        last = ranges[j];
+                    }
+                }
+                if (has_threshold) {
+                    size_t last = 0;
+                    for(size_t i = 0; i < size; i++) {
+                        if (ranges[i] < last) {
+                            if (perc_diff(ranges[i], last, threshold)) {
+                                DCHECK_LE(ranges[i], last);
+                                ranges[i] = last;
+                            }
+                        }
+                        last = ranges[i];
+                    }
+                }
+
+                encode_unary_diff(ranges, out, bit_width, bit_width);
+
+                for(size_t i = 0; i < size; i++) {
+                    const size_t current = rhs[i];
+                    const size_t min = mins[i];
+                    const size_t compact_value = current - min;
+
+                    out.write_int<size_t>(compact_value, bits_for(ranges[i]));
+                }
             }
-
-            // TODO: switch for rounding range up
-            // TODO: group by range
-            // TODO: start using wavelet tree for range groups
-
-            //std::cout << "wrote mins\n";
-            //std::cout << vec_to_debug_string(mins) << "\n\n";
-
-            encode_unary_diff(bit_ranges, out, bit_width, 64);
-
-            //std::cout << "wrote bit sizes\n";
-            //std::cout << vec_to_debug_string(bit_ranges) << "\n\n";
-
-            for(size_t i = 0; i < size; i++) {
-                const size_t current = rhs[i];
-                const size_t min = mins[i];
-                const size_t compact_value = current - min;
-
-                out.write_int<size_t>(compact_value, size_t(uint_t<6>(bit_ranges[i])));
-            }
-
-            //std::cout << "wrote values\n";
         }
         template<typename rhs_t>
         inline void decode(rhs_t& rhs, BitIStream& in, size_t bit_width, size_t max_value) const {
             const size_t size = rhs.size();
+            const bool use_wt = env().option("wt").as_bool();
 
             std::vector<size_t> mins;
             mins.reserve(size);
             mins.resize(size);
             decode_unary_diff(mins, in, bit_width, bit_width, false);
 
-            //std::cout << "read mins\n";
-            //std::cout << vec_to_debug_string(mins) << "\n\n";
 
-            IntVector<uint_t<6>> bit_ranges;
-            bit_ranges.reserve(size);
-            bit_ranges.resize(size);
+            if (!use_wt) {
+                IntVector<uint_t<6>> bit_ranges;
+                bit_ranges.reserve(size);
+                bit_ranges.resize(size);
 
-            decode_unary_diff(bit_ranges, in, bit_width, 64);
+                decode_unary_diff(bit_ranges, in, bit_width, 64);
 
-            //std::cout << "read bit sizes\n";
-            //std::cout << vec_to_debug_string(bit_ranges) << "\n\n";
+                for(size_t i = 0; i < size; i++) {
+                    rhs[i] = in.read_int<size_t>(size_t(uint_t<6>(bit_ranges[i]))) + mins[i];
+                }
+            } else {
+                std::vector<size_t> ranges;
+                ranges.reserve(size);
+                ranges.resize(size);
 
-            for(size_t i = 0; i < size; i++) {
-                rhs[i] = in.read_int<size_t>(size_t(uint_t<6>(bit_ranges[i]))) + mins[i];
+                decode_unary_diff(ranges, in, bit_width, bit_width);
+
+                for(size_t i = 0; i < size; i++) {
+                    rhs[i] = in.read_int<size_t>(bits_for(ranges[i])) + mins[i];
+                }
             }
-
-            //std::cout << "read values\n";
         }
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
