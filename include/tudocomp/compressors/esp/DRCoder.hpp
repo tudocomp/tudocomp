@@ -504,12 +504,11 @@ namespace tdc {namespace esp {
             IntVector<uint_t<6>> bit_ranges;
             bit_ranges.reserve(size);
 
+            encode_unary_diff(mins, out, bit_width, bit_width, false);
+
             size_t max = 0;
-            size_t min_diff = 0;
             for(size_t i = 0; i < size; i++) {
                 const size_t min = mins[i];
-                out.write_unary(min - min_diff);
-                min_diff = min;
 
                 const size_t current = rhs[i];
                 if (current > max) {
@@ -544,11 +543,8 @@ namespace tdc {namespace esp {
 
             std::vector<size_t> mins;
             mins.reserve(size);
-            size_t last = 0;
-            for(size_t i = 0; i < rhs.size(); i++) {
-                last += in.read_unary<size_t>();
-                mins.push_back(last);
-            }
+            mins.resize(size);
+            decode_unary_diff(mins, in, bit_width, bit_width, false);
 
             //std::cout << "read mins\n";
             //std::cout << vec_to_debug_string(mins) << "\n\n";
