@@ -9,7 +9,7 @@ namespace lzss {
 
 class Factor {
 public:
-    len_t pos, src, len;
+    len_compact_t pos, src, len;
 
     inline Factor(len_t fpos, len_t fsrc, len_t flen)
         : pos(fpos), src(fsrc), len(flen) {
@@ -30,7 +30,7 @@ public:
 
     inline FactorBuffer()
         : m_sorted(true)
-        , m_shortest_factor(LEN_MAX)
+        , m_shortest_factor(INDEX_MAX)
         , m_longest_factor(0)
     {
     }

@@ -238,16 +238,6 @@ inline void divsufsort_run(
     construct_SA(T, SA, bucket_A, bucket_B, n, m);
 }
 
-// specialize for len_t vectors
-template<>
-inline void divsufsort_run<std::vector<len_t>>(
-    const sauchar_t* T, std::vector<len_t>& SA,
-    saidx_t *bucket_A, saidx_t *bucket_B, saidx_t n) {
-
-    BufferWrapper<std::vector<len_t>> wrapSA(SA);
-    divsufsort_run(T, wrapSA, bucket_A, bucket_B, n);
-}
-
 // specialize for DynamicIntVector
 template<>
 inline void divsufsort_run<DynamicIntVector>(

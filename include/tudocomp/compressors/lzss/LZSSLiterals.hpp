@@ -20,7 +20,7 @@ private:
             m_next_factor != m_factors->end() &&
             m_pos == m_next_factor->pos) {
 
-            m_pos += m_next_factor->len;
+            m_pos += len_t(m_next_factor->len);
             ++m_next_factor;
         }
     }

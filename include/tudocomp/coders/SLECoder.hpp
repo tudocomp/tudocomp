@@ -285,13 +285,13 @@ public:
             if(bits <= 5) {
                 m_out->write_int(v, bits);
             } else {
-                if(v < 8) {
+                if(v < 8u) {
                     m_out->write_int(0, 2);
                     m_out->write_int(v, 3);
-                } else if(v < 16) {
+                } else if(v < 16u) {
                     m_out->write_int(1, 2);
                     m_out->write_int(v - value_t(8), 3);
-                } else if(v < 32) {
+                } else if(v < 32u) {
                     m_out->write_int(2, 2);
                     m_out->write_int(v - value_t(16), 4);
                 } else {
