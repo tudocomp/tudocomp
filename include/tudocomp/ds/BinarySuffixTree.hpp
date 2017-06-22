@@ -26,9 +26,11 @@ class BinarySuffixTree{
 private:
 
 
-    //binary property of tree:
-    DynamicIntVector first_child;
-    DynamicIntVector next_sibling;
+    typedef IntVector<uint> vectortype ;
+
+    //binary property of tree:  DynamicIntVector
+    vectortype first_child;
+    vectortype next_sibling;
 
 
     //information of nodes, stored in array
@@ -37,13 +39,13 @@ private:
 
     //represents the edge leading to this node
     //DynamicIntVector start_dyn;
-    DynamicIntVector start;
-    DynamicIntVector end;
+    vectortype start;
+    vectortype end;
 
     //suffix link of node
-    DynamicIntVector suffix_link;
+    vectortype suffix_link;
 
-    DynamicIntVector suffix;
+    vectortype suffix;
 
 
     //text added to st
@@ -97,9 +99,18 @@ private:
         auto bits_req_text = bits_for(Text.size() );
         auto size = Text.size() * 2 -1;
         auto bits_req_arr = bits_for(size);
-        DLOG(INFO)<<" bits req: " << bits_req_text;
-        DLOG(INFO)<<" text size *2 -1: " << size << "bits: " << bits_req_arr;
+        DLOG(INFO)<<" bits req: " << (uint)bits_req_text;
 
+        DLOG(INFO)<<"next multi eight: "  << ((bits_req_text /8)+1)*8;
+        DLOG(INFO)<<" text size *2 -1: " << size << " bits: " << (uint)bits_req_arr << "nexteicht: " << ((bits_req_arr /8)+1)*8;
+
+       // bits_req_arr = ((bits_req_arr /8)+1)*8;
+       // bits_req_text = ((bits_req_text /8)+1)*8;
+
+       // bits_req_arr =32;
+       // bits_req_text=32;
+
+        /*
         start= DynamicIntVector(size, 0, bits_req_text);
         end =  DynamicIntVector(size, 0, bits_req_text);
         //init empty node
@@ -110,6 +121,40 @@ private:
       //  edge.reserve(size);
         suffix_link= DynamicIntVector(size, 0, bits_req_arr);
         suffix= DynamicIntVector(size, 0, bits_req_text);
+        */
+        start= vectortype(size, 0);
+        end =  vectortype(size, 0);
+        //init empty node
+     //   start.reserve(size);
+     //   end.reserve(size);
+        first_child= vectortype(size, 0);
+        next_sibling= vectortype(size, 0);
+      //  edge.reserve(size);
+        suffix_link= vectortype(size, 0);
+        suffix= vectortype(size, 0);
+
+
+
+
+    }
+
+    void resize(){
+        new_node++;
+        start.resize(new_node);
+        end.resize(new_node);
+        first_child.resize(new_node);
+        next_sibling.resize(new_node);
+        suffix_link.resize(new_node);
+        suffix.resize(new_node);
+
+
+        start.shrink_to_fit();
+        end.shrink_to_fit();
+        first_child.shrink_to_fit();
+        next_sibling.shrink_to_fit();
+        suffix_link.shrink_to_fit();
+        suffix.shrink_to_fit();
+
     }
 
     void compute(){
@@ -144,6 +189,8 @@ private:
             uint8_t c = Text[i];
             add_char(c);
         }
+
+        resize();
     }
 
 
