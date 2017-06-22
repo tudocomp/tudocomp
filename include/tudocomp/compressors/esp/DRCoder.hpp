@@ -639,12 +639,6 @@ namespace tdc {namespace esp {
                     {
                         const auto range = ranges[range_chunk_i];
 
-                        std::cout << range << ": "
-                            << range_chunk_i << " - " << range_chunk_j
-                            << ", " << (range_chunk_j - range_chunk_i)
-                            << "\n";
-
-
                         struct ChunkView {
                             const std::vector<size_t>* mins;
                             const rhs_t* vals;
@@ -669,14 +663,10 @@ namespace tdc {namespace esp {
 
                         auto bvs = esp::make_wt(cv, range);
 
-                        for(const auto& bv : bvs) {
-                            std::cout << vec_to_debug_string(bv) << "\n";
-                        }
-
                         if (range == 0) {
-                            CHECK_EQ(bvs.size(), bits_for(range) - 1);
+                            DCHECK_EQ(bvs.size(), bits_for(range) - 1);
                         } else {
-                            CHECK_EQ(bvs.size(), bits_for(range));
+                            DCHECK_EQ(bvs.size(), bits_for(range));
                         }
 
                         for(const auto& bv : bvs) {
@@ -697,8 +687,6 @@ namespace tdc {namespace esp {
                                 out.write_bit(bv[i]);
                             }
                         }
-
-                        //std::cout << vec_to_debug_string(cv) << "\n";
                     }
 
                     range_chunk_i = range_chunk_j;
@@ -733,8 +721,6 @@ namespace tdc {namespace esp {
 
                 decode_unary_diff(ranges, in, bit_width, bit_width);
 
-                std::cout << "\n";
-
                 size_t range_chunk_i = 0;
                 while (range_chunk_i < ranges.size()) {
                     size_t range_chunk_j = range_chunk_i;
@@ -746,11 +732,6 @@ namespace tdc {namespace esp {
                     {
                         const auto range = ranges[range_chunk_i];
                         size_t cv_size = range_chunk_j - range_chunk_i;
-
-                        std::cout << range << ": "
-                            << range_chunk_i << " - " << range_chunk_j
-                            << ", " << (range_chunk_j - range_chunk_i)
-                            << "\n";
 
                         size_t bv_c = 0;
                         if (range == 0) {
@@ -774,14 +755,7 @@ namespace tdc {namespace esp {
                             }
                         }
 
-                        for(const auto& bv : bvs) {
-                            std::cout << vec_to_debug_string(bv) << "\n";
-                        }
-
                         auto vec = recover_Dxx(bvs, cv_size);
-
-                        //std::cout << vec_to_debug_string(vec) << "\n";
-                        // TODO: recover rhs from wt
 
                         for(size_t i = range_chunk_i; i < range_chunk_j; i++) {
                             rhs[i] = vec[i - range_chunk_i] + mins[i];
