@@ -106,7 +106,7 @@ namespace tdc {
     ///
     /// For a more compact memory footprint in array data structures,
     /// prefer a cast to `len_compact_t`.
-    using len_t = fast_t<uint_t<LEN_BITS>>;
+    using len_t = fast_t<len_compact_t>;
 
     /// The maximum value of \ref len_compact_t.
     constexpr size_t INDEX_MAX = std::numeric_limits<len_compact_t>::max();
