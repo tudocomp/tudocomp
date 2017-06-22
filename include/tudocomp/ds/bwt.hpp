@@ -24,10 +24,10 @@ inline typename text_t::value_type bwt(const text_t& text, const sa_t& sa, const
  * Input is a BWT and its length
  */
 template<typename bwt_t>
-index_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
+len_compact_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	DVLOG(2) << "Computing LF";
 	if(bwt_length == 0) return nullptr;
-	index_t C[ULITERAL_MAX+1] { 0 }; // alphabet counter
+	len_compact_t C[ULITERAL_MAX+1] { 0 }; // alphabet counter
 	for(auto& c : bwt) {
 		if(literal2int(c) != ULITERAL_MAX) {
 			++C[literal2int(c)+1];
@@ -41,8 +41,8 @@ index_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	DCHECK_EQ(C[0],0u); // no character preceeds 0
 	DCHECK_EQ(C[1],1u); // there is exactly only one '\0' byte
 
-	index_t* LF { new index_t[bwt_length] };
-	for(index_fast_t i = 0; i < bwt_length; ++i) {
+	len_compact_t* LF { new len_compact_t[bwt_length] };
+	for(len_t i = 0; i < bwt_length; ++i) {
 		DCHECK_LE(literal2int(bwt[i]), ULITERAL_MAX);
 		LF[i] = C[literal2int(bwt[i])];
 		++C[literal2int(bwt[i])];
@@ -51,8 +51,8 @@ index_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	DVLOG(2) << "LF: " << arr_to_debug_string(LF, bwt_length);
 	DCHECK([&] () { // unique invariant of the LF mapping
 			assert_permutation(LF,bwt_length);
-			for(index_fast_t i = 0; i < bwt_length; ++i)
-			for(index_fast_t j = i+1; j < bwt_length; ++j) {
+			for(len_t i = 0; i < bwt_length; ++i)
+			for(len_t j = i+1; j < bwt_length; ++j) {
 			if(bwt[i] != bwt[j]) continue;
 			DCHECK_LT(LF[i], LF[j]);
 			}
@@ -78,12 +78,12 @@ uliteral_t* decode_bwt(const bwt_t& bwt) {
 		decoded_string[0] = 0;
 		return decoded_string;
 	}
-	const index_t*const LF { compute_LF(bwt, bwt_length) };
+	const len_compact_t*const LF { compute_LF(bwt, bwt_length) };
 
 	uliteral_t*const decoded_string = new uliteral_t[bwt_length];
 	decoded_string[bwt_length-1] = 0;
-	index_fast_t i = 0;
-	for(index_fast_t j = 1; j < bwt_length && bwt[i] != 0; ++j) {
+	len_t i = 0;
+	for(len_t j = 1; j < bwt_length && bwt[i] != 0; ++j) {
 		decoded_string[bwt_length - j-1] = bwt[i];
 		i = LF[i];
 		DCHECK( (bwt[i] == 0 && j+1 == bwt_length) || (bwt[i] != 0 && j+1 < bwt_length));

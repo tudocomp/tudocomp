@@ -51,7 +51,7 @@ template<class textds_t>
 void test_bwt(const std::string& str, textds_t& t) {
     auto& sa = t.require_sa();
 
-	const index_fast_t input_size = str.length()+1;
+	const len_t input_size = str.length()+1;
 	std::vector<char> bwt;
 	for(size_t i = 0; i < input_size; ++i) {
 		bwt.push_back(bwt::bwt(str,sa,i));

@@ -34,7 +34,7 @@ public:
             set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : INDEX_FAST_BITS));
 
             // Construct
-            for(index_fast_t i = 0; i < n; i++) {
+            for(len_t i = 0; i < n; i++) {
                 (*this)[sa[i]] = i;
             }
 

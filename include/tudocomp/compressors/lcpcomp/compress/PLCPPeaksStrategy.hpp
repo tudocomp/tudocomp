@@ -51,23 +51,23 @@ public:
             //
             const size_t n = sa.size();
 
-		    index_fast_t last_replacement_pos = 0;
-		    for(index_fast_t i = 0; i+1 < n; ) {
+		    len_t last_replacement_pos = 0;
+		    for(len_t i = 0; i+1 < n; ) {
 			    if( (i == last_replacement_pos || plcp[i] > plcp[i-1]) && plcp[i] > plcp[i+1] && plcp[i] >= threshold) {
 				    DCHECK_NE(isa[i], 0u);
-				    const index_fast_t& target_position = i;
-				    const index_fast_t factor_length = plcp[target_position];
+				    const len_t& target_position = i;
+				    const len_t factor_length = plcp[target_position];
 				    DCHECK_LT(target_position+factor_length,n);
-				    const index_fast_t source_position = sa[isa[target_position]-1];
+				    const len_t source_position = sa[isa[target_position]-1];
 				    factors.emplace_back(i, source_position, factor_length);
 				    // for(size_t k = 0; k < factor_length; ++k) {
 				    // 	plcp[target_position + k] = 0;
 				    // }
-				    // const index_fast_t affected_length = std::min(factor_length, target_position);
+				    // const len_t affected_length = std::min(factor_length, target_position);
 				    // for(size_t k = 0; k < affected_length; ++k) {
-				    // 	const index_fast_t affected_position = target_position - k - 1;
+				    // 	const len_t affected_position = target_position - k - 1;
 				    // 	if(target_position < affected_position + plcp[affected_position]) {
-				    // 		const index_fast_t affected_length = target_position - affected_position;
+				    // 		const len_t affected_length = target_position - affected_position;
 				    // 		plcp[affected_position] = affected_length;
 				    // 	}
 				    // }

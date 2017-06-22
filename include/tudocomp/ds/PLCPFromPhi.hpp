@@ -11,7 +11,7 @@ namespace tdc {
 /// Constructs the PLCP array using the phi array.
 class PLCPFromPhi: public Algorithm, public ArrayDS {
 private:
-    index_fast_t m_max;
+    len_t m_max;
 
 public:
     inline static Meta meta() {
@@ -35,8 +35,8 @@ public:
         StatPhase::wrap("Construct PLCP Array", [&]{
             // Use Phi algorithm to compute PLCP array
             m_max = 0;
-            for(index_fast_t i = 0, l = 0; i < n - 1; ++i) {
-                const index_fast_t phii = (*this)[i];
+            for(len_t i = 0, l = 0; i < n - 1; ++i) {
+                const len_t phii = (*this)[i];
                 while(t[i+l] == t[phii+l]) ++l;
                 m_max = std::max(m_max, l);
                 (*this)[i] = l;
@@ -52,7 +52,7 @@ public:
         }
     }
 
-	inline index_fast_t max_lcp() const {
+	inline len_t max_lcp() const {
 		return m_max;
 	}
 

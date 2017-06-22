@@ -94,26 +94,26 @@ namespace tdc {
     /// or `fast_t<len_t>`.
 
 #ifdef LEN_BITS
-    using index_t = uint_t<LEN_BITS>;
-    using index_fast_t = fast_t<uint_t<LEN_BITS>>;
+    using len_compact_t = uint_t<LEN_BITS>;
+    using len_t = fast_t<uint_t<LEN_BITS>>;
 #else
-    using index_t = uint32_t;
-    using index_fast_t = uint32_t;
+    using len_compact_t = uint32_t;
+    using len_t = uint32_t;
 #endif
 
-    /// The maximum value of \ref index_t.
-    constexpr size_t INDEX_MAX = std::numeric_limits<index_t>::max();
+    /// The maximum value of \ref len_compact_t.
+    constexpr size_t INDEX_MAX = std::numeric_limits<len_compact_t>::max();
 
     /// The amount of bits required to store the binary representation of a
-    /// value of type \ref index_t.
-    constexpr size_t INDEX_BITS = 8 * sizeof(index_t);
+    /// value of type \ref len_compact_t.
+    constexpr size_t INDEX_BITS = 8 * sizeof(len_compact_t);
 
-    /// The maximum value of \ref index_fast_t.
-    constexpr size_t INDEX_FAST_MAX = std::numeric_limits<index_fast_t>::max();
+    /// The maximum value of \ref len_t.
+    constexpr size_t INDEX_FAST_MAX = std::numeric_limits<len_t>::max();
 
     /// The amount of bits required to store the binary representation of a
-    /// value of type \ref index_fast_t.
-    constexpr size_t INDEX_FAST_BITS = 8 * sizeof(index_fast_t);
+    /// value of type \ref len_t.
+    constexpr size_t INDEX_FAST_BITS = 8 * sizeof(len_t);
 
     /// Type to represent signed single literals.
     typedef uint8_t uliteral_t;

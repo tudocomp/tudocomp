@@ -37,7 +37,7 @@ TEST(doc_int_vector, iv_static) {
     BitVector bv(32);
 
     // mark all multiples of 3
-    for(index_fast_t i = 0; i < 32; i++) bv[i] = ((iv4[i] % 3) == 0);
+    for(len_t i = 0; i < 32; i++) bv[i] = ((iv4[i] % 3) == 0);
 
     ASSERT_EQ(1UL, bv[0]);
     ASSERT_EQ(0UL, bv[7]);
@@ -54,7 +54,7 @@ TEST(doc_int_vector, iv_dynamic) {
     // fill it with the Fibonacci sequence
     fib[0] = 0;
     fib[1] = 1;
-    for(index_fast_t i = 2; i < fib.size(); i++)
+    for(len_t i = 2; i < fib.size(); i++)
       fib[i] = fib[i - 2] + fib[i - 1];
 
     // find the amount of bits required to store the last (and largest) value

@@ -19,28 +19,28 @@ namespace huff {
      * @return storing for each character of the full alphabet whether it exists in a given input text (value > 0 -> existing, value = 0 -> non-existing)
      */
     template<class T>
-    index_t* count_alphabet(const T& input) {
+    len_compact_t* count_alphabet(const T& input) {
         typedef typename std::make_unsigned<typename T::value_type>::type value_type;
         constexpr size_t max_literal = std::numeric_limits<value_type>::max();
-        index_t* C { new index_t[max_literal+1] };
-        std::memset(C, 0, sizeof(index_t)*(max_literal+1));
+        len_compact_t* C { new len_compact_t[max_literal+1] };
+        std::memset(C, 0, sizeof(len_compact_t)*(max_literal+1));
 
         for(const auto& c : input) {
             DCHECK_LT(static_cast<value_type>(c), max_literal+1);
-            DCHECK_LT(C[static_cast<value_type>(c)], std::numeric_limits<index_t>::max());
+            DCHECK_LT(C[static_cast<value_type>(c)], std::numeric_limits<len_compact_t>::max());
             ++C[static_cast<value_type>(c)];
         }
         return C;
     }
     template<class T>
-    index_t* count_alphabet_literals(T&& input) {
-        index_t* C { new index_t[ULITERAL_MAX+1] };
-        std::memset(C, 0, sizeof(index_t)*(ULITERAL_MAX+1));
+    len_compact_t* count_alphabet_literals(T&& input) {
+        len_compact_t* C { new len_compact_t[ULITERAL_MAX+1] };
+        std::memset(C, 0, sizeof(len_compact_t)*(ULITERAL_MAX+1));
 
         while(input.has_next()) {
             uliteral_t c = input.next().c;
             DCHECK_LT(static_cast<uliteral_t>(c), ULITERAL_MAX+1);
-            DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<index_t>::max());
+            DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_compact_t>::max());
             ++C[static_cast<uliteral_t>(c)];
         }
         return C;
@@ -48,8 +48,8 @@ namespace huff {
     /** Computes an array that maps from the effective alphabet to the full alphabet.
      *  @param C @see count_alphabet
      */
-    inline index_fast_t effective_alphabet_size(const index_t* C) {
-        return std::count_if(C, C+ULITERAL_MAX+1, [] (const index_t& i) { return i != 0u; }); // size of the effective alphabet
+    inline len_t effective_alphabet_size(const len_compact_t* C) {
+        return std::count_if(C, C+ULITERAL_MAX+1, [] (const len_compact_t& i) { return i != 0u; }); // size of the effective alphabet
     }
 
     /**
@@ -58,7 +58,7 @@ namespace huff {
      * @param C storing for each character of the full alphabet whether it exists in a given input text (value > 0 -> existing, value = 0 -> non-existing)
      * @param C @see count_alphabet
      */
-    inline uliteral_t* gen_effective_alphabet(const index_t*const C, const size_t alphabet_size) {
+    inline uliteral_t* gen_effective_alphabet(const len_compact_t*const C, const size_t alphabet_size) {
         uliteral_t* map_from_effective { new uliteral_t[alphabet_size] };
         size_t j = 0;
         for(size_t i = 0; i <= ULITERAL_MAX; ++i) {
@@ -84,7 +84,7 @@ namespace huff {
      * @param alphabet_size the size of the effective alphabet
      *
      **/
-    inline uint8_t* gen_codelengths(const index_t*const C, const uliteral_t*const map_from_effective, const size_t alphabet_size) {
+    inline uint8_t* gen_codelengths(const len_compact_t*const C, const uliteral_t*const map_from_effective, const size_t alphabet_size) {
         size_t A[2*alphabet_size];
         for(size_t i=0; i < alphabet_size; i++) {
             DVLOG(2) << "Char " << map_from_effective[i] << " : " << size_t(C[map_from_effective[i]]);
@@ -434,7 +434,7 @@ namespace huff {
      * @attention Deletes the input array C!
      * @attention C must contain at least two non-zero values
      */
-    inline extended_huffmantable gen_huffmantable(const index_t*const C) {
+    inline extended_huffmantable gen_huffmantable(const len_compact_t*const C) {
         const size_t alphabet_size = effective_alphabet_size(C);
         DCHECK_GT(alphabet_size,0);
 
@@ -469,14 +469,14 @@ namespace huff {
     }
 
     inline extended_huffmantable gen_huffmantable(const std::string& text) {
-        const index_t*const C { count_alphabet(text) };
+        const len_compact_t*const C { count_alphabet(text) };
         return gen_huffmantable(C);
     }
 
     inline void encode(tdc::io::Input& input, tdc::io::Output& output) {
         tdc::io::BitOStream bit_os{output};
         View iview = input.as_view();
-        const index_t*const C { count_alphabet(iview) };
+        const len_compact_t*const C { count_alphabet(iview) };
         extended_huffmantable table = gen_huffmantable(C);
         huffmantable_encode(bit_os, table);
         io::ViewStream view_stream(iview);
@@ -522,8 +522,8 @@ public:
             : tdc::Encoder(std::move(env), out, literals),
             m_table{ [&] () {
                 if(tdc_likely(!literals.has_next())) return huff::extended_huffmantable { nullptr, nullptr, nullptr, 0, nullptr, 0 };
-                const index_t*const C = huff::count_alphabet_literals(std::move(literals));
-                const index_fast_t alphabet_size = huff::effective_alphabet_size(C);
+                const len_compact_t*const C = huff::count_alphabet_literals(std::move(literals));
+                const len_t alphabet_size = huff::effective_alphabet_size(C);
                 if(tdc_unlikely(alphabet_size == 1)) {
                     delete [] C;
                     return huff::extended_huffmantable { nullptr, nullptr, nullptr, 1, nullptr, 0 };

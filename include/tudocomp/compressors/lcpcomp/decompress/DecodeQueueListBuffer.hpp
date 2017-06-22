@@ -8,7 +8,7 @@
 namespace tdc {
 namespace lcpcomp {
 
-constexpr index_fast_t undef_len = std::numeric_limits<index_t>::max();
+constexpr len_t undef_len = std::numeric_limits<len_compact_t>::max();
 class DecodeForwardQueueListBuffer : public Algorithm {
     public:
     inline static Meta meta() {
@@ -22,20 +22,20 @@ class DecodeForwardQueueListBuffer : public Algorithm {
 
 private:
     std::vector<uliteral_t> m_buffer;
-    std::vector<std::vector<index_t>> m_fwd;
+    std::vector<std::vector<len_compact_t>> m_fwd;
     BitVector m_decoded;
 
-    index_fast_t m_cursor;
+    len_t m_cursor;
 
     //stats:
-    index_fast_t m_longest_chain;
-    index_fast_t m_current_chain;
-    index_fast_t m_max_depth;
+    len_t m_longest_chain;
+    len_t m_current_chain;
+    len_t m_max_depth;
 
-    inline void decode_literal_at(index_fast_t pos, uliteral_t c) {
+    inline void decode_literal_at(len_t pos, uliteral_t c) {
         ++m_current_chain;
         m_longest_chain = std::max(m_longest_chain, m_current_chain);
-        m_max_depth = std::max<index_fast_t>(m_max_depth, m_fwd[pos].size());
+        m_max_depth = std::max<len_t>(m_max_depth, m_fwd[pos].size());
 
         m_buffer[pos] = c;
         m_decoded[pos] = 1;
@@ -43,18 +43,18 @@ private:
         for(auto fwd : m_fwd[pos]) {
             decode_literal_at(fwd, c); // recursion
         }
-        std::vector<index_t>().swap(m_fwd[pos]); // forces vector to drop to capacity 0
+        std::vector<len_compact_t>().swap(m_fwd[pos]); // forces vector to drop to capacity 0
 //        m_fwd[pos].clear();
 
         --m_current_chain;
     }
 
 public:
-    inline DecodeForwardQueueListBuffer(Env&& env, index_fast_t size)
+    inline DecodeForwardQueueListBuffer(Env&& env, len_t size)
         : Algorithm(std::move(env)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_max_depth(0) {
 
         m_buffer.resize(size, 0);
-        m_fwd.resize(size, std::vector<index_t>());
+        m_fwd.resize(size, std::vector<len_compact_t>());
         m_decoded = BitVector(size, 0);
     }
 
@@ -62,9 +62,9 @@ public:
         decode_literal_at(m_cursor++, c);
     }
 
-    inline void decode_factor(index_fast_t pos, index_fast_t num) {
-        for(index_fast_t i = 0; i < num; i++) {
-            index_fast_t src = pos+i;
+    inline void decode_factor(len_t pos, len_t num) {
+        for(len_t i = 0; i < num; i++) {
+            len_t src = pos+i;
             if(m_decoded[src]) {
                 decode_literal_at(m_cursor, m_buffer[src]);
             } else {
@@ -75,7 +75,7 @@ public:
         }
     }
 
-    inline index_fast_t longest_chain() const {
+    inline len_t longest_chain() const {
         return m_longest_chain;
     }
 

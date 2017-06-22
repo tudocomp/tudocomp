@@ -54,13 +54,13 @@ public:
         auto& lcp = text.require_lcp();
 
         // Factorize
-        const index_fast_t text_length = text.size();
+        const len_t text_length = text.size();
         lzss::FactorBuffer factors;
 
         StatPhase::wrap("Factorize", [&]{
-            const index_fast_t threshold = env().option("threshold").as_integer(); //factor threshold
+            const len_t threshold = env().option("threshold").as_integer(); //factor threshold
 
-            for(index_fast_t i = 0; i+1 < text_length;) { // we omit T[text_length-1] since we assume that it is the \0 byte!
+            for(len_t i = 0; i+1 < text_length;) { // we omit T[text_length-1] since we assume that it is the \0 byte!
                 //get SA position for suffix i
                 const size_t& cur_pos = isa[i];
 			    DCHECK_NE(cur_pos,0); // isa[i] == 0 <=> T[i] = 0

@@ -55,7 +55,7 @@ public:
         }
 
         //factorize
-        const index_fast_t threshold = env().option("threshold").as_integer(); //factor threshold
+        const len_t threshold = env().option("threshold").as_integer(); //factor threshold
         phase.log_stat("threshold", threshold);
 
         size_t pos = 0;

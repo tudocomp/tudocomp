@@ -23,7 +23,7 @@ TEST(doc_io, input_stream) {
     auto istream = input.as_stream(); // retrieve an input stream
 
     // read the input character-wise using a C++11 range-based for loop
-    index_fast_t i = 0;
+    len_t i = 0;
     for(uliteral_t c : istream) {
         ASSERT_EQ(example_text[i++], c);
     }
@@ -44,7 +44,7 @@ TEST(doc_io, input_view) {
     ASSERT_EQ(example_text.substr(1, 5), sub_view); // assertion for the sub-view's contents
 
     // iterate over the whole view character-wise in reverse order
-    for (index_fast_t i = iview.size(); i > 0; i--) {
+    for (len_t i = iview.size(); i > 0; i--) {
         uliteral_t c = iview[i-1];
         ASSERT_EQ(example_text[i-1], c);
     }

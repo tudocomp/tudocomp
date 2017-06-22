@@ -12,7 +12,7 @@ class TextLiterals : LiteralIterator {
 private:
     const text_t* m_text;
     const FactorBuffer* m_factors;
-    index_fast_t m_pos;
+    len_t m_pos;
     FactorBuffer::const_iterator m_next_factor;
 
     inline void skip_factors() {
@@ -20,7 +20,7 @@ private:
             m_next_factor != m_factors->end() &&
             m_pos == m_next_factor->pos) {
 
-            m_pos += index_fast_t(m_next_factor->len);
+            m_pos += len_t(m_next_factor->len);
             ++m_next_factor;
         }
     }
@@ -42,7 +42,7 @@ public:
     inline Literal next() {
         assert(has_next());
 
-        Literal l = {uliteral_t((*m_text)[m_pos]), index_fast_t(m_pos)};
+        Literal l = {uliteral_t((*m_text)[m_pos]), len_t(m_pos)};
 
         ++m_pos; skip_factors();
         return l;

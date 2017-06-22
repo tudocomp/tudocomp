@@ -19,21 +19,21 @@ class MultimapBuffer : public Algorithm {
 
 private:
     std::vector<uliteral_t> m_buffer;
-    std::unordered_multimap<index_t, index_t> m_fwd;
+    std::unordered_multimap<len_compact_t, len_compact_t> m_fwd;
     BitVector m_decoded;
 
-    index_fast_t m_cursor;
-    index_fast_t m_longest_chain;
-    index_fast_t m_current_chain;
+    len_t m_cursor;
+    len_t m_longest_chain;
+    len_t m_current_chain;
 
     //storing factors
-    std::vector<index_t> m_target_pos;
-    std::vector<index_t> m_source_pos;
-    std::vector<index_t> m_length;
+    std::vector<len_compact_t> m_target_pos;
+    std::vector<len_compact_t> m_source_pos;
+    std::vector<len_compact_t> m_length;
 
     const size_t m_lazy; // number of lazy rounds
 
-    inline void decode_literal_at(index_fast_t pos, uliteral_t c) {
+    inline void decode_literal_at(len_t pos, uliteral_t c) {
         ++m_current_chain;
         m_longest_chain = std::max(m_longest_chain, m_current_chain);
 
@@ -63,12 +63,12 @@ private:
     }
 
     inline void decode_lazy_() {
-        const index_fast_t factors = m_source_pos.size();
-        for(index_fast_t j = 0; j < factors; ++j) {
-            const index_t& target_position = m_target_pos[j];
-            const index_t& source_position = m_source_pos[j];
-            const index_t& factor_length = m_length[j];
-            for(index_fast_t i = 0; i < factor_length; ++i) {
+        const len_t factors = m_source_pos.size();
+        for(len_t j = 0; j < factors; ++j) {
+            const len_compact_t& target_position = m_target_pos[j];
+            const len_compact_t& source_position = m_source_pos[j];
+            const len_compact_t& factor_length = m_length[j];
+            for(len_t i = 0; i < factor_length; ++i) {
                 if(m_decoded[source_position+i]) {
                     m_buffer[target_position+i] = m_buffer[source_position+i];
                     m_decoded[target_position+i] = 1;
@@ -78,7 +78,7 @@ private:
     }
 
 public:
-    inline MultimapBuffer(Env&& env, index_fast_t size)
+    inline MultimapBuffer(Env&& env, len_t size)
         : Algorithm(std::move(env)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_lazy(this->env().option("lazy").as_integer())
     {
 		m_fwd.max_load_factor(0.8);
@@ -90,10 +90,10 @@ public:
         decode_literal_at(m_cursor++, c);
     }
 
-    inline void decode_factor(const index_fast_t source_position, const index_fast_t factor_length) {
+    inline void decode_factor(const len_t source_position, const len_t factor_length) {
         bool factor_stored = false;
-        for(index_fast_t i = 0; i < factor_length; ++i) {
-            const index_fast_t src_pos = source_position+i;
+        for(len_t i = 0; i < factor_length; ++i) {
+            const len_t src_pos = source_position+i;
             if(m_decoded[src_pos]) {
                 m_buffer[m_cursor] = m_buffer[src_pos];
                 m_decoded[m_cursor] = 1;
@@ -117,17 +117,17 @@ public:
     }
 
     inline void decode_eagerly() {
-        const index_fast_t factors = m_source_pos.size();
+        const len_t factors = m_source_pos.size();
 		StatPhase phase("Decoding Factors");
         phase.log_stat("factors", factors);
 
         IF_STATS(size_t max_size = 0);
 
-        for(index_fast_t j = 0; j < factors; ++j) {
-            const index_t& target_position = m_target_pos[j];
-            const index_t& source_position = m_source_pos[j];
-            const index_t& factor_length = m_length[j];
-            for(index_fast_t i = 0; i < factor_length; ++i) {
+        for(len_t j = 0; j < factors; ++j) {
+            const len_compact_t& target_position = m_target_pos[j];
+            const len_compact_t& source_position = m_source_pos[j];
+            const len_compact_t& factor_length = m_length[j];
+            for(len_t i = 0; i < factor_length; ++i) {
                 if(m_decoded[source_position+i]) {
                     decode_literal_at(target_position+i, m_buffer[source_position+i]);
                 } else {
@@ -149,7 +149,7 @@ public:
 		IF_STATS(phase.log_stat("hash table max size", max_size));
     }
 
-    inline index_fast_t longest_chain() const {
+    inline len_t longest_chain() const {
         return m_longest_chain;
     }
 

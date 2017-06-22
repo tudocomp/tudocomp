@@ -26,7 +26,7 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
     StatPhase decode_phase("Decoding");
 
     // decode text range
-    auto text_len = decoder.template decode<index_fast_t>(len_r);
+    auto text_len = decoder.template decode<len_t>(len_r);
 
     // init decode buffer
     decode_buffer_t  buffer(std::move(env), text_len);
@@ -35,20 +35,20 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
         Range text_r(text_len);
 
         // decode shortest and longest factor
-        auto flen_min = decoder.template decode<index_fast_t>(text_r);
-        auto flen_max = decoder.template decode<index_fast_t>(text_r);
+        auto flen_min = decoder.template decode<len_t>(text_r);
+        auto flen_max = decoder.template decode<len_t>(text_r);
         MinDistributedRange flen_r(flen_min, flen_max);
 
         // decode longest distance between factors
-        auto fdist_max = decoder.template decode<index_fast_t>(text_r);
+        auto fdist_max = decoder.template decode<len_t>(text_r);
         Range fdist_r(fdist_max);
 
         // decode
         while(!decoder.eof()) {
-            index_fast_t num;
+            len_t num;
 
             auto b = decoder.template decode<bool>(bit_r);
-            if(b) num = decoder.template decode<index_fast_t>(fdist_r);
+            if(b) num = decoder.template decode<len_t>(fdist_r);
             else  num = 0;
 
             // decode characters
@@ -59,8 +59,8 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
 
             if(!decoder.eof()) {
                 //decode factor
-                auto src = decoder.template decode<index_fast_t>(text_r);
-                auto len = decoder.template decode<index_fast_t>(flen_r);
+                auto src = decoder.template decode<len_t>(text_r);
+                auto len = decoder.template decode<len_t>(flen_r);
 
                 buffer.decode_factor(src, len);
             }
@@ -105,7 +105,7 @@ public:
         });
 
         // read options
-        const index_fast_t threshold = env().option("threshold").as_integer(); //factor threshold
+        const len_t threshold = env().option("threshold").as_integer(); //factor threshold
         lzss::FactorBuffer factors;
 
         StatPhase::wrap("Factorize", [&]{

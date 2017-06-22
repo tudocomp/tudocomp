@@ -57,7 +57,7 @@ public:
 			sa_t& m_sa;
 			LCPCompare(lcp_t& lcp_, sa_t& sa_) : m_lcp(lcp_), m_sa(sa_) {}
 
-			bool operator()(const index_fast_t i, const index_fast_t j) const {
+			bool operator()(const len_t i, const len_t j) const {
 				if(m_lcp[i] == m_lcp[j]) return m_sa[i] > m_sa[j];
 				return m_lcp[i] < m_lcp[j];
 			}
@@ -68,7 +68,7 @@ public:
 
         StatPhase phase("Construct MaxLCPHeap");
 
-		boost::heap::pairing_heap<index_t,boost::heap::compare<LCPCompare>> heap(comp);
+		boost::heap::pairing_heap<len_compact_t,boost::heap::compare<LCPCompare>> heap(comp);
 		std::vector<decltype(heap)::handle_type> handles(lcp.size());
 
 		handles[0].node_ = nullptr;
@@ -82,18 +82,18 @@ public:
 
         while(heap.size() > 0) {
             //get suffix with longest LCP
-            const index_t& m = heap.top();
+            const len_compact_t& m = heap.top();
 
             //generate factor
-            const index_fast_t fpos = sa[m];
-            const index_fast_t fsrc = sa[m-1];
-            const index_fast_t flen = lcp[m];
+            const len_t fpos = sa[m];
+            const len_t fsrc = sa[m-1];
+            const len_t flen = lcp[m];
 
             factors.emplace_back(fpos, fsrc, flen);
 
             //remove overlapped entries
             for(size_t k = 0; k < flen; k++) {
-                const index_fast_t pos = isa[fpos + k];
+                const len_t pos = isa[fpos + k];
 			    if(handles[pos].node_ == nullptr) continue;
                 heap.erase(handles[pos]);
 			    handles[pos].node_ = nullptr;

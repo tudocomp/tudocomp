@@ -36,17 +36,17 @@ private:
     class Literals : LiteralIterator {
     private:
         const text_t* m_text;
-        index_fast_t         m_text_size;
-        const index_t*  m_next;
-        index_fast_t         m_pos;
+        len_t         m_text_size;
+        const len_compact_t*  m_next;
+        len_t         m_pos;
 
         std::vector<uliteral_t> m_g_literals;
-        index_fast_t                   m_g_pos;
+        len_t                   m_g_pos;
 
     public:
         inline Literals(const text_t& text,
-                        index_fast_t text_size,
-                        const index_t* next,
+                        len_t text_size,
+                        const len_compact_t* next,
                         const grammar_t& grammar)
             : m_text(&text), m_text_size(text_size), m_next(next),
               m_pos(0), m_g_pos(0) {
@@ -99,15 +99,15 @@ public:
         if(max_rules == 0) max_rules = SIZE_MAX;
 
         // prepare editable text
-        index_fast_t n;
+        len_t n;
         sym_t *text;
-        index_t *next; //TODO use an int vector of required bit width
+        len_compact_t *next; //TODO use an int vector of required bit width
 
         {
             auto view = input.as_view();
             n = view.size();
             text = new sym_t[n];
-            next = new index_t[n];
+            next = new len_compact_t[n];
 
             for(size_t i = 0; i < n; i++) {
                 text[i] = view[i];

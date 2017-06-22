@@ -130,7 +130,7 @@ public:
                 return false;
             }
 
-            lzw::Factor factor(decoder.template decode<index_fast_t>(Range(counter + ULITERAL_MAX + 1)));
+            lzw::Factor factor(decoder.template decode<len_t>(Range(counter + ULITERAL_MAX + 1)));
             counter++;
             entry = factor;
             return true;

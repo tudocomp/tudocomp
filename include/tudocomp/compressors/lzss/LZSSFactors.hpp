@@ -9,9 +9,9 @@ namespace lzss {
 
 class Factor {
 public:
-    index_t pos, src, len;
+    len_compact_t pos, src, len;
 
-    inline Factor(index_fast_t fpos, index_fast_t fsrc, index_fast_t flen)
+    inline Factor(len_t fpos, len_t fsrc, len_t flen)
         : pos(fpos), src(fsrc), len(flen) {
     }
 }  __attribute__((__packed__));
@@ -22,8 +22,8 @@ private:
     std::vector<Factor> m_factors;
     bool m_sorted; //! factors need to be sorted before they are output
 
-    index_fast_t m_shortest_factor;
-    index_fast_t m_longest_factor;
+    len_t m_shortest_factor;
+    len_t m_longest_factor;
 
 public:
     using const_iterator = std::vector<Factor>::const_iterator;
@@ -35,7 +35,7 @@ public:
     {
     }
 
-    inline void emplace_back(index_fast_t fpos, index_fast_t fsrc, index_fast_t flen) {
+    inline void emplace_back(len_t fpos, len_t fsrc, len_t flen) {
         m_sorted = m_sorted && (m_factors.empty() || fpos >= m_factors.back().pos);
         m_factors.emplace_back(fpos, fsrc, flen);
 

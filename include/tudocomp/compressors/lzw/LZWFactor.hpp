@@ -5,7 +5,7 @@
 namespace tdc {
 namespace lzw {
 
-using Factor = index_t;
+using Factor = len_compact_t;
 
 }} //ns
 
