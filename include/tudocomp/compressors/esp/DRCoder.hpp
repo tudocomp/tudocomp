@@ -497,7 +497,7 @@ namespace tdc {namespace esp {
             const size_t size = rhs.size();
 
             const bool has_threshold = env().option("threshold").as_string() != "none";
-            double threshold = 0.02;
+            double threshold = 0.0;
             if (has_threshold) {
                 threshold = double(env().option("threshold").as_integer()) / 100.0;
             }
@@ -628,12 +628,80 @@ namespace tdc {namespace esp {
 
                 encode_unary_diff(ranges, out, bit_width, bit_width);
 
-                for(size_t i = 0; i < size; i++) {
-                    const size_t current = rhs[i];
-                    const size_t min = mins[i];
-                    const size_t compact_value = current - min;
+                size_t range_chunk_i = 0;
+                while (range_chunk_i < ranges.size()) {
+                    size_t range_chunk_j = range_chunk_i;
+                    while(range_chunk_j < ranges.size()
+                            && (ranges[range_chunk_j] == ranges[range_chunk_i])) {
+                        range_chunk_j++;
+                    }
 
-                    out.write_int<size_t>(compact_value, bits_for(ranges[i]));
+                    {
+                        const auto range = ranges[range_chunk_i];
+
+                        std::cout << range << ": "
+                            << range_chunk_i << " - " << range_chunk_j
+                            << ", " << (range_chunk_j - range_chunk_i)
+                            << "\n";
+
+
+                        struct ChunkView {
+                            const std::vector<size_t>* mins;
+                            const rhs_t* vals;
+                            size_t i;
+                            size_t j;
+
+                            inline size_t operator[](size_t x) const {
+                                return (*vals)[x + i] - (*mins)[x + i];
+                            }
+
+                            inline size_t size() const {
+                                return j - i;
+                            }
+                        };
+
+                        auto cv = ChunkView {
+                            &mins,
+                            &rhs,
+                            range_chunk_i,
+                            range_chunk_j,
+                        };
+
+                        auto bvs = esp::make_wt(cv, range);
+
+                        for(const auto& bv : bvs) {
+                            std::cout << vec_to_debug_string(bv) << "\n";
+                        }
+
+                        if (range == 0) {
+                            CHECK_EQ(bvs.size(), bits_for(range) - 1);
+                        } else {
+                            CHECK_EQ(bvs.size(), bits_for(range));
+                        }
+
+                        for(const auto& bv : bvs) {
+                            size_t tnull = 0;
+
+                            for(size_t i = 0; i < cv.size(); i++) {
+                                size_t j = cv.size() - i - 1;
+                                if (bv[j] == 0) {
+                                    tnull++;
+                                } else {
+                                    break;
+                                }
+                            }
+
+                            out.write_int<size_t>(tnull, bits_for(cv.size()));
+
+                            for(size_t i = 0; i < cv.size() - tnull; i++) {
+                                out.write_bit(bv[i]);
+                            }
+                        }
+
+                        //std::cout << vec_to_debug_string(cv) << "\n";
+                    }
+
+                    range_chunk_i = range_chunk_j;
                 }
             }
         }
@@ -665,8 +733,62 @@ namespace tdc {namespace esp {
 
                 decode_unary_diff(ranges, in, bit_width, bit_width);
 
-                for(size_t i = 0; i < size; i++) {
-                    rhs[i] = in.read_int<size_t>(bits_for(ranges[i])) + mins[i];
+                std::cout << "\n";
+
+                size_t range_chunk_i = 0;
+                while (range_chunk_i < ranges.size()) {
+                    size_t range_chunk_j = range_chunk_i;
+                    while(range_chunk_j < ranges.size()
+                            && (ranges[range_chunk_j] == ranges[range_chunk_i])) {
+                        range_chunk_j++;
+                    }
+
+                    {
+                        const auto range = ranges[range_chunk_i];
+                        size_t cv_size = range_chunk_j - range_chunk_i;
+
+                        std::cout << range << ": "
+                            << range_chunk_i << " - " << range_chunk_j
+                            << ", " << (range_chunk_j - range_chunk_i)
+                            << "\n";
+
+                        size_t bv_c = 0;
+                        if (range == 0) {
+                            bv_c = bits_for(range) - 1;
+                        } else {
+                            bv_c = bits_for(range);
+                        }
+
+
+                        std::vector<IntVector<uint_t<1>>> bvs(bv_c);
+                        for(size_t bv_i = 0; bv_i < bv_c; bv_i++) {
+                            auto& bv = bvs[bv_i];
+                            size_t tnull = in.read_int<size_t>(bits_for(cv_size));
+
+                            bv = IntVector<uint_t<1>>(cv_size);
+                            for(size_t i = 0; i < cv_size - tnull; i++) {
+                                bv[i] = in.read_bit();
+                            }
+                            for(size_t i = cv_size - tnull; i < cv_size; i++) {
+                                bv[i] = 0;
+                            }
+                        }
+
+                        for(const auto& bv : bvs) {
+                            std::cout << vec_to_debug_string(bv) << "\n";
+                        }
+
+                        auto vec = recover_Dxx(bvs, cv_size);
+
+                        //std::cout << vec_to_debug_string(vec) << "\n";
+                        // TODO: recover rhs from wt
+
+                        for(size_t i = range_chunk_i; i < range_chunk_j; i++) {
+                            rhs[i] = vec[i - range_chunk_i] + mins[i];
+                        }
+                    }
+
+                    range_chunk_i = range_chunk_j;
                 }
             }
         }

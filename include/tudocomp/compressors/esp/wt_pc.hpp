@@ -17,7 +17,8 @@ template <typename AlphabetType, typename SizeType>
 class wt_pc {
 
 public:
-  wt_pc(const std::vector<AlphabetType>& text, const SizeType size,
+    template<typename text_t>
+  wt_pc(const text_t& text, const SizeType size,
     const SizeType levels) : _bv(levels) {
 
     SizeType cur_max_char = (1 << levels);
