@@ -45,7 +45,15 @@ else
         exit 1
     fi
 
-    cmake $BUILD_TYPE_FLAG $PARANOID_FLAG $STATS_FLAG ..
+    if [[ "$len_t" == "DefaultLenType" ]]; then
+        LEN_BITS=
+    elif [[ "$len_t" == "40BitLenType" ]]; then
+        LEN_BITS=-DLEN_BITS=40
+    else
+        exit 1
+    fi
+
+    cmake $BUILD_TYPE_FLAG $PARANOID_FLAG $STATS_FLAG $LEN_BITS ..
 
     if [[ "$1" == "build" ]]; then
         if [[ "$make_target" == "Make" ]]; then
