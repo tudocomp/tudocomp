@@ -83,23 +83,30 @@ namespace tdc {
     template<typename actual_type>
     using fast_t = typename FastIntType<actual_type>::Type;
 
-    /// Type to represent an index value.
+    /// Type to represent an bit-compact length value.
     ///
     /// This type can be defined to take up less bytes than a `size_t`,
     /// but might have worse performance for arithmetic operations. It should
-    /// only be used for storing many indices in a data structure,
+    /// only be used for storing many integers in a data structure,
     /// to reduce memory usage.
     ///
-    /// For fast arithmetic operations, prefer a cast to `size_t`
-    /// or `fast_t<len_t>`.
-
+    /// For fast arithmetic operations, prefer a cast to `len_t`
+    /// or `size_t`.
 #ifdef LEN_BITS
     using len_compact_t = uint_t<LEN_BITS>;
-    using len_t = fast_t<uint_t<LEN_BITS>>;
 #else
     using len_compact_t = uint32_t;
-    using len_t = uint32_t;
 #endif
+
+    /// Type to represent an length value.
+    ///
+    /// This type is defined to take up at least as many bytes as a `len_compact_t`,
+    /// but is guaranteed to be a fast integer type with the size of a machine word.
+    /// It should be used for fast arithmetic operations and local variables.
+    ///
+    /// For a more compact memory footprint in array data structures,
+    /// prefer a cast to `len_compact_t`.
+    using len_t = fast_t<uint_t<LEN_BITS>>;
 
     /// The maximum value of \ref len_compact_t.
     constexpr size_t INDEX_MAX = std::numeric_limits<len_compact_t>::max();
