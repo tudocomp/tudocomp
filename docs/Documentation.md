@@ -255,7 +255,7 @@ the following steps are necessary:
 
 1. Build *tudocomp*
 1. Point the compiler to the `include` directory for includes
-1. Statically link `<build_dir>/src/tudocomp_stat/libtudocomp_stat.a` (where 
+1. Statically link `<build_dir>/src/tudocomp_stat/libtudocomp_stat.a` (where
    `<build_dir>` is the location where *tudocomp* has been built in)
 
 Note that the aforementioned [dependencies](#dependencies) need to be linked
@@ -414,8 +414,12 @@ for (len_t i = iview.size(); i > 0; i--) {
 }
 ~~~
 
-The type [`len_t`](@DX_LEN_T@) is another one of *tudocomp*'s core
-types and shall be used for lengths and indices.
+The types [`len_t`](@DX_LEN_T@) and [`len_compact_t`](@DX_LEN_COMPACT_T@)
+are another instance of *tudocomp*'s core types.
+They shall be used for lengths and indices derived from the length of an input.
+
+`len_t` shall be used for single variables, and `len_compact_t` for elements
+of an array or vector.
 
 The functions `as_stream` and `as_view` can be used arbitrarily often to create
 multiple streams or views on the same input, e.g., in case the input is to be
