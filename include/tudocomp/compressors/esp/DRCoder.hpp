@@ -485,8 +485,8 @@ namespace tdc {namespace esp {
     public:
         inline static Meta meta() {
             Meta m("d_coding", "range_fit");
-            m.option("threshold").dynamic(2); // "none"
-            m.option("wt").dynamic(true);     // false
+            m.option("threshold").dynamic("none"); // "none"
+            m.option("wt").dynamic(false);     // false
             return m;
         };
 
