@@ -215,13 +215,11 @@ TEST(coder, huff_int) { test_int<HuffmanCoder>(); }
 TEST(coder, huff_str) { test_str<HuffmanCoder>(); }
 TEST(coder, huff_mixed) { test_mixed<HuffmanCoder>(); }
 
-/*
 TEST(coder, arithm_mt) { test_mt<ArithmeticCoder>(); }
 TEST(coder, arithm_bits) { test_bits<ArithmeticCoder>(); }
 TEST(coder, arithm_int) { test_int<ArithmeticCoder>(); }
 TEST(coder, arithm_str) { test_str<ArithmeticCoder>(); }
 TEST(coder, arithm_mixed) { test_mixed<ArithmeticCoder>(); }
-*/
 
 TEST(coder, ternary_mt) { test_mt<TernaryCoder>(); }
 TEST(coder, ternary_bits) { test_bits<TernaryCoder>(); }
