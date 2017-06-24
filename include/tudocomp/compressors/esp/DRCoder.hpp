@@ -568,6 +568,7 @@ namespace tdc {namespace esp {
                 bit_ranges.reserve(size);
 
                 size_t max = 0;
+                size_t last_min_flush = 0;
                 for(size_t i = 0; i < size; i++) {
                     const size_t current = rhs[i];
                     if (current > max) {
@@ -579,9 +580,10 @@ namespace tdc {namespace esp {
                         const size_t min = mins[i];
                         const size_t min_max_bits = bits_for(max - min);
                         const size_t max_bits     = bits_for(max - 0);
-                        if (max_bits == min_max_bits) {
+                        if (max_bits == min_max_bits && last_min_flush == 0) {
                             mins[i] = 0;
                         }
+                        last_min_flush = mins[i];
                     }
 
                     const size_t min = mins[i];
@@ -600,8 +602,6 @@ namespace tdc {namespace esp {
                     out.write_int<size_t>(compact_value, size_t(uint_t<6>(bit_ranges[i])));
                 }
             } else {
-                encode_unary_diff(mins, out, bit_width, bit_width, false, phase);
-
                 std::vector<size_t> maxs;
                 maxs.reserve(size);
                 maxs.resize(size);
@@ -633,7 +633,17 @@ namespace tdc {namespace esp {
                 ranges.reserve(size);
                 ranges.resize(size);
 
+                size_t last_min_flush = 0;
                 for(size_t i = 0; i < size; i++) {
+                    if (use_zero_min) {
+                        const size_t bits_min_max = bits_for(maxs[i] - mins[i]);
+                        const size_t bits_max     = bits_for(maxs[i] - 0);
+                        if (bits_min_max == bits_max && last_min_flush == 0) {
+                            mins[i] = 0;
+                        }
+                        last_min_flush = mins[i];
+                    }
+
                     ranges[i] = maxs[i] - mins[i];
                 }
 
@@ -664,6 +674,7 @@ namespace tdc {namespace esp {
                     }
                 }
 
+                encode_unary_diff(mins, out, bit_width, bit_width, false, phase);
                 encode_unary_diff(ranges, out, bit_width, bit_width, true, phase);
 
                 size_t range_chunk_i = 0;
