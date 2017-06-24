@@ -293,7 +293,8 @@ namespace tdc {namespace esp {
                                   BitOStream& out,
                                   const size_t bit_width,
                                   const size_t diff_bit_width,
-                                  const bool sign = true
+                                  const bool sign,
+                                  StatPhase& phase
                                  ) {
         auto cvec = [&](size_t i) -> size_t {
             return size_t(typename vec_t::value_type(vec[i]));
@@ -327,8 +328,13 @@ namespace tdc {namespace esp {
             = (diff_val_counter + 1) * (bit_width + diff_bit_width) // size change entry
             ;
 
+        phase.log_stat("predicted unary bits", bits_unary);
+        phase.log_stat("predicted binary bits", bits_binary);
+
         const bool use_unary = (bits_unary <= bits_binary);
         out.write_bit(use_unary);
+
+        phase.log_stat("use unary", use_unary);
 
         /*
         std::cout
@@ -340,6 +346,7 @@ namespace tdc {namespace esp {
 
         if (use_unary) {
             last = 0;
+            size_t diff_sign_bits = 0;
             for(size_t i = 0; i < vec.size(); i++) {
                 const size_t current = cvec(i);
                 size_t diff;
@@ -350,26 +357,33 @@ namespace tdc {namespace esp {
                 }
                 out.write_unary(diff);
                 last = current;
+                diff_sign_bits += diff + 1;
             }
+            phase.log_stat("diff bits", diff_sign_bits);
 
             if (sign) {
+                size_t sign_bits = 0;
                 last = 0;
                 for(size_t i = 0; i < vec.size(); i++) {
                     const size_t current = cvec(i);
 
                     if (last < current) {
                         out.write_bit(true);
+                        sign_bits++;
                     } else if (last > current) {
                         out.write_bit(false);
+                        sign_bits++;
                     }
 
                     last = current;
                 }
+                phase.log_stat("sign bits", sign_bits);
             }
         } else {
             size_t out_counter = 0;
             size_t last_value = 0;
             size_t value_counter = 0;
+            size_t binary_bits = 0;
             if (0 < vec.size()) {
                 last_value = cvec(0);
                 value_counter = 1;
@@ -383,6 +397,7 @@ namespace tdc {namespace esp {
                 } else {
                     out.write_int<size_t>(value_counter, bit_width);
                     out.write_int<size_t>(last_value, diff_bit_width);
+                    binary_bits += (bit_width + diff_bit_width);
                     out_counter++;
 
                     last_value = current;
@@ -392,8 +407,11 @@ namespace tdc {namespace esp {
             if (value_counter > 0) {
                 out.write_int<size_t>(value_counter, bit_width);
                 out.write_int<size_t>(last_value, diff_bit_width);
+                binary_bits += (bit_width + diff_bit_width);
                 out_counter++;
             }
+
+            phase.log_stat("binary bits", binary_bits);
 
             DCHECK_EQ(out_counter, diff_val_counter + 1);
         }
@@ -404,7 +422,7 @@ namespace tdc {namespace esp {
                                   BitIStream& in,
                                   const size_t bit_width,
                                   const size_t diff_bit_width,
-                                  const bool sign = true) {
+                                  const bool sign) {
         auto cvec = [&](size_t i) -> size_t {
             return size_t(typename vec_t::value_type(vec[i]));
         };
@@ -456,11 +474,12 @@ namespace tdc {namespace esp {
 
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
-            encode_unary_diff(rhs, out, bit_width, bit_width);
+            auto phase = StatPhase("RangeFit");
+            encode_unary_diff(rhs, out, bit_width, bit_width, true, phase);
         }
         template<typename rhs_t>
         inline void decode(rhs_t& rhs, BitIStream& in, size_t bit_width, size_t max_value) const {
-            decode_unary_diff(rhs, in, bit_width, bit_width);
+            decode_unary_diff(rhs, in, bit_width, bit_width, true);
         }
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
@@ -494,6 +513,7 @@ namespace tdc {namespace esp {
 
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
+            auto phase = StatPhase("RangeFit");
             const size_t size = rhs.size();
 
             const bool has_threshold = env().option("threshold").as_string() != "none";
@@ -529,7 +549,7 @@ namespace tdc {namespace esp {
                 }
             }
 
-            encode_unary_diff(mins, out, bit_width, bit_width, false);
+            encode_unary_diff(mins, out, bit_width, bit_width, false, phase);
 
             if (!use_wt) {
                 // TODO: Potential bug if bit width == 64 ?
@@ -549,11 +569,7 @@ namespace tdc {namespace esp {
                     bit_ranges.push_back(bits_for(range));
                 }
 
-                // TODO: switch for rounding range up
-                // TODO: group by range
-                // TODO: start using wavelet tree for range groups
-
-                encode_unary_diff(bit_ranges, out, bit_width, 64);
+                encode_unary_diff(bit_ranges, out, bit_width, 64, true, phase);
 
 
                 for(size_t i = 0; i < size; i++) {
@@ -626,7 +642,7 @@ namespace tdc {namespace esp {
                     }
                 }
 
-                encode_unary_diff(ranges, out, bit_width, bit_width);
+                encode_unary_diff(ranges, out, bit_width, bit_width, true, phase);
 
                 size_t range_chunk_i = 0;
                 while (range_chunk_i < ranges.size()) {
@@ -709,7 +725,7 @@ namespace tdc {namespace esp {
                 bit_ranges.reserve(size);
                 bit_ranges.resize(size);
 
-                decode_unary_diff(bit_ranges, in, bit_width, 64);
+                decode_unary_diff(bit_ranges, in, bit_width, 64, true);
 
                 for(size_t i = 0; i < size; i++) {
                     rhs[i] = in.read_int<size_t>(size_t(uint_t<6>(bit_ranges[i]))) + mins[i];
@@ -719,7 +735,7 @@ namespace tdc {namespace esp {
                 ranges.reserve(size);
                 ranges.resize(size);
 
-                decode_unary_diff(ranges, in, bit_width, bit_width);
+                decode_unary_diff(ranges, in, bit_width, bit_width, true);
 
                 size_t range_chunk_i = 0;
                 while (range_chunk_i < ranges.size()) {
