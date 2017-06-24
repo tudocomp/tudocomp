@@ -304,7 +304,9 @@ namespace tdc {namespace esp {
 
         uint64_t unary_sep_bit_counter = 0;
         uint64_t unary_val_bit_counter = 0;
+
         size_t diff_val_counter = 0;
+
         last = 0;
         for(size_t i = 0; i < vec.size(); i++) {
             const size_t current = cvec(i);
@@ -317,15 +319,16 @@ namespace tdc {namespace esp {
 
             unary_sep_bit_counter += 1;
             unary_val_bit_counter += diff;
-            if (diff != 0 && sign) {
+            if (diff != 0) {
                 diff_val_counter += 1;
             }
             last = current;
         }
 
-        const uint64_t bits_unary = unary_sep_bit_counter + unary_val_bit_counter;
+        const uint64_t bits_unary
+            = unary_sep_bit_counter + unary_val_bit_counter + diff_val_counter;
         const uint64_t bits_binary
-            = (diff_val_counter + 1) * (bit_width + diff_bit_width) // size change entry
+            = (diff_val_counter) * (bit_width + diff_bit_width) // size change entry
             ;
 
         phase.log_stat("predicted unary bits", bits_unary);
@@ -345,8 +348,10 @@ namespace tdc {namespace esp {
         */
 
         if (use_unary) {
-            last = 0;
             size_t diff_sign_bits = 0;
+            size_t sign_bits = 0;
+
+            last = 0;
             for(size_t i = 0; i < vec.size(); i++) {
                 const size_t current = cvec(i);
                 size_t diff;
@@ -357,12 +362,11 @@ namespace tdc {namespace esp {
                 }
                 out.write_unary(diff);
                 last = current;
-                diff_sign_bits += diff + 1;
+                diff_sign_bits += (diff + 1);
             }
             phase.log_stat("diff bits", diff_sign_bits);
 
             if (sign) {
-                size_t sign_bits = 0;
                 last = 0;
                 for(size_t i = 0; i < vec.size(); i++) {
                     const size_t current = cvec(i);
@@ -379,26 +383,27 @@ namespace tdc {namespace esp {
                 }
                 phase.log_stat("sign bits", sign_bits);
             }
+
+            CHECK_EQ(diff_sign_bits + sign_bits, bits_unary);
         } else {
             size_t out_counter = 0;
             size_t last_value = 0;
             size_t value_counter = 0;
             size_t binary_bits = 0;
-            if (0 < vec.size()) {
-                last_value = cvec(0);
-                value_counter = 1;
-            }
-            for(size_t i = 1; i < vec.size(); i++) {
+
+            for(size_t i = 0; i < vec.size(); i++) {
                 const size_t current = cvec(i);
 
                 if (current == last_value) {
                     value_counter++;
                     continue;
                 } else {
-                    out.write_int<size_t>(value_counter, bit_width);
-                    out.write_int<size_t>(last_value, diff_bit_width);
-                    binary_bits += (bit_width + diff_bit_width);
-                    out_counter++;
+                    if (value_counter > 0) {
+                        out.write_int<size_t>(value_counter, bit_width);
+                        out.write_int<size_t>(last_value, diff_bit_width);
+                        binary_bits += (bit_width + diff_bit_width);
+                        out_counter++;
+                    }
 
                     last_value = current;
                     value_counter = 1;
@@ -413,8 +418,10 @@ namespace tdc {namespace esp {
 
             phase.log_stat("binary bits", binary_bits);
 
-            DCHECK_EQ(out_counter, diff_val_counter + 1);
+            CHECK_EQ(binary_bits, bits_binary);
+            CHECK_EQ(out_counter, diff_val_counter);
         }
+
     }
 
     template<typename vec_t>
@@ -506,6 +513,7 @@ namespace tdc {namespace esp {
             Meta m("d_coding", "range_fit");
             m.option("threshold").dynamic("none"); // "none"
             m.option("wt").dynamic(false);     // false
+            m.option("zero_min").dynamic(true);     // false
             return m;
         };
 
@@ -522,6 +530,7 @@ namespace tdc {namespace esp {
                 threshold = double(env().option("threshold").as_integer()) / 100.0;
             }
             const bool use_wt = env().option("wt").as_bool();
+            const bool use_zero_min = env().option("zero_min").as_bool();
 
             std::vector<size_t> mins;
             mins.reserve(size);
@@ -549,8 +558,6 @@ namespace tdc {namespace esp {
                 }
             }
 
-            encode_unary_diff(mins, out, bit_width, bit_width, false, phase);
-
             if (!use_wt) {
                 // TODO: Potential bug if bit width == 64 ?
                 IntVector<uint_t<6>> bit_ranges;
@@ -569,8 +576,8 @@ namespace tdc {namespace esp {
                     bit_ranges.push_back(bits_for(range));
                 }
 
+                encode_unary_diff(mins, out, bit_width, bit_width, false, phase);
                 encode_unary_diff(bit_ranges, out, bit_width, 64, true, phase);
-
 
                 for(size_t i = 0; i < size; i++) {
                     const size_t current = rhs[i];
@@ -580,6 +587,8 @@ namespace tdc {namespace esp {
                     out.write_int<size_t>(compact_value, size_t(uint_t<6>(bit_ranges[i])));
                 }
             } else {
+                encode_unary_diff(mins, out, bit_width, bit_width, false, phase);
+
                 std::vector<size_t> maxs;
                 maxs.reserve(size);
                 maxs.resize(size);
