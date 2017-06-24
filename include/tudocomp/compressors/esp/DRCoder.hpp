@@ -304,8 +304,7 @@ namespace tdc {namespace esp {
 
         uint64_t unary_sep_bit_counter = 0;
         uint64_t unary_val_bit_counter = 0;
-
-        size_t diff_val_counter = 0;
+        uint64_t unary_sign_bit_counter = 0;
 
         last = 0;
         for(size_t i = 0; i < vec.size(); i++) {
@@ -320,13 +319,18 @@ namespace tdc {namespace esp {
             unary_sep_bit_counter += 1;
             unary_val_bit_counter += diff;
             if (diff != 0) {
-                diff_val_counter += 1;
+                unary_sign_bit_counter += 1;
             }
             last = current;
         }
 
+        uint64_t diff_val_counter = unary_sign_bit_counter;
+        if (vec.size() > 0 && cvec(0) == 0) {
+            diff_val_counter++;
+        }
+
         const uint64_t bits_unary
-            = unary_sep_bit_counter + unary_val_bit_counter + diff_val_counter;
+            = unary_sep_bit_counter + unary_val_bit_counter + unary_sign_bit_counter;
         const uint64_t bits_binary
             = (diff_val_counter) * (bit_width + diff_bit_width) // size change entry
             ;
@@ -513,7 +517,7 @@ namespace tdc {namespace esp {
             Meta m("d_coding", "range_fit");
             m.option("threshold").dynamic("none"); // "none"
             m.option("wt").dynamic(false);     // false
-            m.option("zero_min").dynamic(true);     // false
+            m.option("zero_min").dynamic(false);     // false
             return m;
         };
 
@@ -565,13 +569,22 @@ namespace tdc {namespace esp {
 
                 size_t max = 0;
                 for(size_t i = 0; i < size; i++) {
-                    const size_t min = mins[i];
-
                     const size_t current = rhs[i];
                     if (current > max) {
                         max = current;
                     }
 
+                    // Insert check here
+                    if (use_zero_min) {
+                        const size_t min = mins[i];
+                        const size_t min_max_bits = bits_for(max - min);
+                        const size_t max_bits     = bits_for(max - 0);
+                        if (max_bits == min_max_bits) {
+                            mins[i] = 0;
+                        }
+                    }
+
+                    const size_t min = mins[i];
                     const size_t range = max - min;
                     bit_ranges.push_back(bits_for(range));
                 }
