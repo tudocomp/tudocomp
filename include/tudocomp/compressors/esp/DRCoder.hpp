@@ -289,16 +289,18 @@ namespace tdc {namespace esp {
 
 
     template<typename vec_t>
-    inline void encode_unary_diff(vec_t& vec,
+    inline auto encode_unary_diff(vec_t& vec,
                                   BitOStream& out,
                                   const size_t bit_width,
                                   const size_t diff_bit_width,
                                   const bool sign,
                                   StatPhase& phase
-                                 ) {
+                                 ) -> uint64_t {
         auto cvec = [&](size_t i) -> size_t {
             return size_t(typename vec_t::value_type(vec[i]));
         };
+
+        uint64_t written_bits = 0;
 
         size_t last;
 
@@ -340,6 +342,7 @@ namespace tdc {namespace esp {
 
         const bool use_unary = (bits_unary <= bits_binary);
         out.write_bit(use_unary);
+        written_bits++;
 
         phase.log_stat("use unary", use_unary);
 
@@ -365,6 +368,7 @@ namespace tdc {namespace esp {
                     diff = last - current;
                 }
                 out.write_unary(diff);
+                written_bits += (diff + 1);
                 last = current;
                 diff_sign_bits += (diff + 1);
             }
@@ -378,9 +382,11 @@ namespace tdc {namespace esp {
                     if (last < current) {
                         out.write_bit(true);
                         sign_bits++;
+                        written_bits++;
                     } else if (last > current) {
                         out.write_bit(false);
                         sign_bits++;
+                        written_bits++;
                     }
 
                     last = current;
@@ -406,6 +412,7 @@ namespace tdc {namespace esp {
                         out.write_int<size_t>(value_counter, bit_width);
                         out.write_int<size_t>(last_value, diff_bit_width);
                         binary_bits += (bit_width + diff_bit_width);
+                        written_bits += (bit_width + diff_bit_width);
                         out_counter++;
                     }
 
@@ -417,6 +424,7 @@ namespace tdc {namespace esp {
                 out.write_int<size_t>(value_counter, bit_width);
                 out.write_int<size_t>(last_value, diff_bit_width);
                 binary_bits += (bit_width + diff_bit_width);
+                written_bits += (bit_width + diff_bit_width);
                 out_counter++;
             }
 
@@ -425,7 +433,7 @@ namespace tdc {namespace esp {
             CHECK_EQ(binary_bits, bits_binary);
             CHECK_EQ(out_counter, diff_val_counter);
         }
-
+        return written_bits;
     }
 
     template<typename vec_t>
@@ -591,16 +599,31 @@ namespace tdc {namespace esp {
                     bit_ranges.push_back(bits_for(range));
                 }
 
-                encode_unary_diff(mins, out, bit_width, bit_width, false, phase);
-                encode_unary_diff(bit_ranges, out, bit_width, 64, true, phase);
+                uint64_t writte_bits_mins =
+                    encode_unary_diff(mins, out, bit_width, bit_width, false, phase);
+                uint64_t written_bits_bit_range =
+                    encode_unary_diff(bit_ranges, out, bit_width, 64, true, phase);
 
+                uint64_t written_bits_values = 0;
                 for(size_t i = 0; i < size; i++) {
                     const size_t current = rhs[i];
                     const size_t min = mins[i];
                     const size_t compact_value = current - min;
+                    const size_t bits = size_t(uint_t<6>(bit_ranges[i]));
+                    written_bits_values += bits;
 
-                    out.write_int<size_t>(compact_value, size_t(uint_t<6>(bit_ranges[i])));
+                    out.write_int<size_t>(compact_value, bits);
                 }
+
+                phase.log_stat("writte_bits_mins", writte_bits_mins);
+                phase.log_stat("written_bits_bit_range", written_bits_bit_range);
+                phase.log_stat("written_bits_values", written_bits_values);
+                phase.log_stat("written_bits_all",
+                    writte_bits_mins + written_bits_bit_range + written_bits_values
+                );
+                phase.log_stat("written_bits_all_plain", rhs.size() * bit_width);
+                phase.log_stat("elements", rhs.size());
+                phase.log_stat("max_bit_width", bit_width);
             } else {
                 std::vector<size_t> maxs;
                 maxs.reserve(size);
