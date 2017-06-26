@@ -30,6 +30,11 @@
 #else
     /// `x` is compiled only in debug builds.
     #define IF_DEBUG(x)
+
+    #if defined(GOOGLE_STRIP_LOG)
+    #undef GOOGLE_STRIP_LOG
+    #endif
+
 	#define GOOGLE_STRIP_LOG 1 // no google logging
 #endif
 
