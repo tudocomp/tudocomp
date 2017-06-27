@@ -151,6 +151,8 @@ else:
     suite = [
         # tudocomp examples
 		Tudocomp(name='lfs_simst',                       algorithm='lfs_comp(sim_st)'),
+		Tudocomp(name='lfs_esa',                       algorithm='lfs_comp(esa)'),
+		Tudocomp(name='lfs_st',                       algorithm='lfs_comp(st)'),
 		Tudocomp(name='lfs2',                       	 algorithm='lfs2'),
 		Tudocomp(name='lz78(ternary)',                   algorithm='lz78(coder=bit,lz78trie=ternary)'),
 		Tudocomp(name='lz78',                   		 algorithm='lz78'),

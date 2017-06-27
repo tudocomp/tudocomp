@@ -59,6 +59,7 @@ public:
         m.option("textds").templated<text_t, TextDS<>>("textds");
 
         m.uses_textds<text_t>(text_t::SA | text_t::ISA | text_t::LCP);
+
         return m;
     }
 

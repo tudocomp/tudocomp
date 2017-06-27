@@ -38,6 +38,8 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lfs_comp",
             "This is an implementation of the longest first substitution compression scheme.");
+
+        m.needs_sentinel_terminator();
         m.option("computing_strat").templated<comp_strategy_t>("computing_strat");
         m.option("coding_strat").templated<coding_strat_t, EncodeStrategy<HuffmanCoder, EliasGammaCoder> >("coding_strat");
         return m;
