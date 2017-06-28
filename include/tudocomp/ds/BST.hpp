@@ -30,7 +30,7 @@ private:
     typedef  uint node_type;
 
 
-    STInterface<size_type> stree;
+   // STInterface<size_type> stree;
 
     typedef IntVector<uint> vectortype ;
 
@@ -56,12 +56,12 @@ private:
 
 
     //text added to st
-    const io::InputView& Text;
+   // const io::InputView& Text;
 
     size_type new_node;
 
 
-    uint create_node(uint s, uint e, char c){
+    node_type create_node(uint s, uint e, char c){
         new_node++;
         start[new_node] = s;
         end[new_node] = e;
@@ -127,9 +127,9 @@ private:
     }
 
 public:
-    void add_child(node_type node, char c, size_type start, size_type suffix){
+    inline void add_child(node_type node, char c, size_type start, size_type suffix_beg){
         node_type child = create_node(start,0,c);
-        suffix[child]=suffix;
+        suffix[child]=suffix_beg;
 
         //add to childs of node:
         size_type temp = first_child[node];
@@ -144,25 +144,21 @@ public:
     //virtual auto set_end(node_type node, size_type end) -> void;
     //virtual auto set_suffix(node_type node, size_type suffix) -> void;
 
-    node_type split_edge(node_type node, size_type edge_len, char c){
+    inline node_type split_edge(node_type node, size_type edge_len, char c){
 
-        uint split = create_node(start[node] + edge_len, end[node], c);
+        node_type split = create_node(start[node] + edge_len, end[node], c);
         end[node]= start[node] + edge_len;
         size_type temp = first_child[node];
         first_child[node]= split;
         first_child[split]=temp;
 
-        //update relations of nodes
 
-        size_type temp = first_child[node];
-        first_child[node]=split;
-        first_child[child]=temp;
-
+        return split;
 
     }
 
 
-    size_type get_edge_length(node_type node){
+    inline size_type get_edge_length(node_type node){
             if(node==0){
                 return 0;
             }
@@ -178,12 +174,12 @@ public:
 
   //  virtual auto get_edge_label(node_type node, size_type pos) -> char;
 
-    size_type get_suffix(node_type node){
+    inline size_type get_suffix(node_type node){
         return suffix[node];
     }
 
 
-    bool is_leaf(node_type node){
+    inline bool is_leaf(node_type node){
         if(first_child[node]>0){
             return false;
         }
@@ -192,7 +188,7 @@ public:
         }
     }
 
-    node_type get_child(node_type node, char c){
+    inline node_type get_child(node_type node, char c){
         size_type child = first_child[node];
         if(child != 0){
             do
@@ -215,60 +211,42 @@ public:
     }
 
 
-    std::vector<node_type> get_child(node_type node){
-        std::vector<node_type> child;
+    inline std::vector<node_type> get_child(node_type node){
+        std::vector<node_type> children;
         size_type child = first_child[node];
         if(child != 0){
             do
             {
-                if(  Text[(start[child])] == active_edge){
-                    found = true;
-                    break;
-                } else {
-                    previous_sibling = child;
-                    child=next_sibling[child];
-                }
+                children.push_back(child);
+                child=next_sibling[child];
+
             }
             while (child != 0);
 
         }
+        return children;
     }
 
-    node_type get_suffix_link(node_type node){
+    inline node_type get_suffix_link(node_type node){
         return suffix_link[node];
     }
 
-    void set_suffix_link(node_type from_node, node_type to_node){
+    inline void set_suffix_link(node_type from_node, node_type to_node){
         suffix_link[from_node]= to_node;
     }
 
 
-    node_type get_root(){
+    inline node_type get_root(){
         return 0;
     }
 
-    size_type get_tree_size(){
+    inline size_type get_tree_size(){
         return new_node;
     }
 
 
 
 
-    inline uint get_first_child(uint node){
-        return first_child[node];
-    }
-
-    inline uint get_next_sibling(uint node){
-        return next_sibling[node];
-    }
-    inline uint get_suffix(uint node){
-        return suffix[node];
-    }
-
-
-    inline uint get_root(){
-        return 0;
-    }
 
     inline std::string get_string_of_edge(uint node){
        // return Text.substr(start[node], edge_length(node));
@@ -282,9 +260,6 @@ public:
         return ss.str();
     }
 
-    inline uint get_tree_size(){
-        return start.size();
-    }
 
    // inline std::vector<STNode*> get_leaves(){
    //     return leaves;
@@ -305,17 +280,17 @@ public:
         }
     }
 
-    BST(Input& input) : Text(input.as_view()){
+    BST(Input& input) : STInterface(input){
      //   auto in = input.as_view();
 
-        stree(input.as_view());
+     //   stree(input.as_view());
 
    }
 
-    BST(io::InputView & input) : Text(input){
+    BST(io::InputView & input) : STInterface(input){
 
 
-        stree(input);
+      //  stree(input);
 
 
     }

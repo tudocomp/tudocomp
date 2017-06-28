@@ -4,10 +4,38 @@ namespace tdc {
 
 template<typename node_type, typename size_type = uint>
 class STInterface{
+public:
+    virtual auto add_child(node_type node, char c, size_type start, size_type suffix) -> void;
+    //virtual auto set_start(node_type node, size_type start) -> void;
+    //virtual auto set_end(node_type node, size_type end) -> void;
+    //virtual auto set_suffix(node_type node, size_type suffix) -> void;
+
+    virtual auto split_edge(node_type node, size_type edge_len, char c) -> node_type;
+
+
+    virtual auto get_edge_length(node_type node) -> size_type;
+    virtual auto get_edge_label(node_type node, size_type pos) -> char;
+
+    virtual auto get_suffix(node_type node) -> size_type;
+
+
+    virtual auto is_leaf(node_type node) -> bool;
+    virtual auto get_child(node_type node, char c) -> node_type;
+    virtual auto get_child(node_type node) -> std::vector<node_type>;
+
+    virtual auto get_suffix_link(node_type node) -> node_type;
+    virtual auto set_suffix_link(node_type from_node, node_type to_node) -> void;
+
+
+    virtual auto get_root() -> node_type;
+    virtual auto get_tree_size() -> size_type;
+protected:
+
+    const io::InputView& Text;
+
 private:
 
 
-    const io::InputView& Text;
 
 
     int pos;
@@ -57,7 +85,7 @@ private:
             //if not found
             if(!found){
                 //insert new leaf
-                node_type leaf = add_child(active_node,active_edge,pos,current_suffix++);
+                add_child(active_node,active_edge,pos,current_suffix++);
                 add_sl(active_node);
 
             } else {
@@ -138,30 +166,12 @@ public:
         construct();
     }
 
-    virtual auto add_child(node_type node, char c, size_type start, size_type suffix) -> void;
-    //virtual auto set_start(node_type node, size_type start) -> void;
-    //virtual auto set_end(node_type node, size_type end) -> void;
-    //virtual auto set_suffix(node_type node, size_type suffix) -> void;
+    STInterface(io::Input& in) : Text(in.as_view()) {
 
-    virtual auto split_edge(node_type node, size_type edge_len, char c) -> node_type;
+        construct();
+    }
 
 
-    virtual auto get_edge_length(node_type node) -> size_type;
-    virtual auto get_edge_label(node_type node, size_type pos) -> char;
-
-    virtual auto get_suffix(node_type node) -> size_type;
-
-
-    virtual auto is_leaf(node_type node) -> bool;
-    virtual auto get_child(node_type node, char c) -> node_type;
-    virtual auto get_child(node_type node) -> std::vector<node_type>;
-
-    virtual auto get_suffix_link(node_type node) -> node_type;
-    virtual auto set_suffix_link(node_type from_node, node_type to_node) -> void;
-
-
-    virtual auto get_root() -> node_type;
-    virtual auto get_tree_size() -> size_type;
 
 
 };
