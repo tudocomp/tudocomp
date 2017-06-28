@@ -172,7 +172,9 @@ public:
 
     }
 
-  //  virtual auto get_edge_label(node_type node, size_type pos) -> char;
+    inline char get_edge_label(node_type node, size_type pos){
+        return Text[start[node] + pos];
+    }
 
     inline size_type get_suffix(node_type node){
         return suffix[node];
