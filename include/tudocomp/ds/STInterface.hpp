@@ -66,7 +66,7 @@ private:
                 //switch active node to that
                 //walk down
                 if(active_length>= get_edge_length(child)){
-                    active_node = next;
+                    active_node = child;
                     active_length -= get_edge_length(child);
                     active_edge = (char) Text[pos-active_length];
                     continue;
@@ -82,7 +82,7 @@ private:
 
                 //now split edge if the edge is found
 
-                node_type split = split_edge(active_node, active_length);
+                node_type split = split_edge(active_node, active_length, active_edge);
 
                 //        create_node(start[next], start[next]+active_length, active_edge);
                 //active_inner->child_nodes[active_edge] = split;
@@ -143,7 +143,7 @@ public:
     //virtual auto set_end(node_type node, size_type end) -> void;
     //virtual auto set_suffix(node_type node, size_type suffix) -> void;
 
-    virtual auto split_edge(node_type node, size_type edge_len) -> node_type;
+    virtual auto split_edge(node_type node, size_type edge_len, char c) -> node_type;
 
 
     virtual auto get_edge_length(node_type node) -> size_type;
