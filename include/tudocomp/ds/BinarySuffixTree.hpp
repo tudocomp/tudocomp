@@ -22,6 +22,7 @@
 
 namespace tdc {
 
+
 class BinarySuffixTree{
 private:
 
@@ -93,6 +94,23 @@ private:
 
     }
 
+
+    /* uint previous_sibling = child;
+            if(child != 0){
+                do
+                {
+                    if(  Text[(start[child])] == active_edge){
+                        found = true;
+                        break;
+                    } else {
+                        previous_sibling = child;
+                        child=next_sibling[child];
+                    }
+                }
+                while (child != 0);
+
+            }
+            */
 
     void reserve(){
 
