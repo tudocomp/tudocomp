@@ -27,6 +27,7 @@ public:
     /// \brief Provides access to the environment that the algorithm works in.
     /// \return The environment that the algorithm works in.
     inline Env& env() { return m_env; }
+    inline const Env& env() const { return m_env; }
 };
 
 }
