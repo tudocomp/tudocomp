@@ -14,61 +14,66 @@ import execjs
 # Determine local directory
 local_dir = os.path.dirname(os.path.realpath(__file__))
 
-# Parse command line arguments
-parser = argparse.ArgumentParser(description="""
-    Generate a chart SVG based on a tudocomp JSON dataset.
-""")
+def draw_svg(stat_json, options):
+    # Create JavaScript runtime
+    js = execjs.get()
 
-parser.add_argument('--width', type=int, default=900,
-                    help='the SVG width in pixels')
-parser.add_argument('--height', type=int, default=450,
-                    help='the SVG width in pixels')
-parser.add_argument('--no-groups', dest="draw_groups", action="store_false",
-                    help='disable group bracket drawing')
-parser.add_argument('--no-legend', dest="draw_legend", action="store_false",
-                    help='disable legend drawing')
-parser.add_argument('--no-offsets', dest="draw_offsets", action="store_false",
-                    help='disable memory offset drawing')
-parser.add_argument('file', nargs="?", type=str,
-                    help='the input file (json)')
+    # Compile charter script
+    with open(local_dir + "/charter.js", "r") as charter_js_file:
+        charter = execjs.compile(charter_js_file.read())
 
-parser.set_defaults(draw_groups=True)
-parser.set_defaults(draw_legend=True)
-parser.set_defaults(draw_offsets=True)
+    return charter.call(
+        "drawSVG",
+        stat_json,
+        json.dumps(options))
 
-args = parser.parse_args()
+if __name__ == "__main__":
 
-# Read input into stat_json (file or stdin)
-if args.file:
-    with open(args.file) as input_file:
-        stat_json = input_file.read()
-elif not sys.stdin.isatty():
-    stat_json = sys.stdin.read()
-else:
-    print("no input given")
-    quit()
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="""
+        Generate a chart SVG based on a tudocomp JSON dataset.
+    """)
 
-# Create JavaScript runtime
-js = execjs.get()
+    parser.add_argument('--width', type=int, default=900,
+                        help='the SVG width in pixels')
+    parser.add_argument('--height', type=int, default=450,
+                        help='the SVG width in pixels')
+    parser.add_argument('--no-groups', dest="draw_groups", action="store_false",
+                        help='disable group bracket drawing')
+    parser.add_argument('--no-legend', dest="draw_legend", action="store_false",
+                        help='disable legend drawing')
+    parser.add_argument('--no-offsets', dest="draw_offsets", action="store_false",
+                        help='disable memory offset drawing')
+    parser.add_argument('file', nargs="?", type=str,
+                        help='the input file (json)')
 
-# Compile charter script
-with open(local_dir + "/charter.js", "r") as charter_js_file:
-    charter = execjs.compile(charter_js_file.read())
+    parser.set_defaults(draw_groups=True)
+    parser.set_defaults(draw_legend=True)
+    parser.set_defaults(draw_offsets=True)
 
-# TODO: test success
+    args = parser.parse_args()
 
-# Set options
-options = {
-    "svgWidth": args.width,
-    "svgHeight": args.height,
-    "drawGroups": args.draw_groups,
-    "drawOffsets": args.draw_offsets,
-    "drawLegend": args.draw_legend,
-}
+    # Read input into stat_json (file or stdin)
+    if args.file:
+        with open(args.file) as input_file:
+            stat_json = input_file.read()
+    elif not sys.stdin.isatty():
+        stat_json = sys.stdin.read()
+    else:
+        print("no input given")
+        quit()
 
-# Draw chart
-print(charter.call(
-    "drawSVG",
-    stat_json,
-    json.dumps(options)))
+    # TODO: test success
 
+    # Set options
+    options = {
+        "svgWidth": args.width,
+        "svgHeight": args.height,
+        "drawGroups": args.draw_groups,
+        "drawOffsets": args.draw_offsets,
+        "drawLegend": args.draw_legend,
+    }
+
+    # Draw chart
+    sys.stdout.write(draw_svg(stat_json, options))
+    sys.stdout.flush()

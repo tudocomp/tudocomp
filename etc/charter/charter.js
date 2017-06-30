@@ -38,7 +38,7 @@ function shadeColor(color, percent) {
 
 /**
  * Simple XML builder.
- * 
+ *
  * Each element is represented by a class of this type and has an attribute
  * object and an array of children.
  */
@@ -118,7 +118,7 @@ function tickDistance(range, n, base) {
     if(Math.floor(range / d) <= n / 2) {
         d = Math.floor(d / 2);
     }
-    
+
     return d;
 }
 
@@ -270,7 +270,7 @@ function chart(input, options) {
         width:   options.svgWidth,
         height:  options.svgHeight,
     });
-    
+
     var gZoom = svg.appendChild(new XMLNode("g", {
         "class":   "zoom",
         transform: "scale(1.0)"
@@ -355,10 +355,10 @@ function chart(input, options) {
     if(options.drawGroups) {
         for(var i = 0; i < chartData.groups.length; i++) {
             var d = chartData.groups[i];
-            
+
             var gGroup = gChart.appendChild(new XMLNode("g", {
                 "class": "group",
-                transform: "translate(" + this.timeToPx(d.tStart) + "," + 
+                transform: "translate(" + this.timeToPx(d.tStart) + "," +
                     (this.height - this.memToPx(d.memPeak) - groupLevelIndent(d.level)) + ")"
             }));
 
@@ -410,7 +410,7 @@ function chart(input, options) {
     }
 
     // draw X axis
-    {   
+    {
         var gAxis = gChart.appendChild(new XMLNode("g", {
             "class":   "axis",
             transform: "translate(0," + this.height + ")"
@@ -430,7 +430,7 @@ function chart(input, options) {
             "class":   "axis-label",
             transform: "translate(" + (this.width / 2) + ",0)",
             dy:        "3em",
-            style:     "font-weight: bold; font-style: italic;" + 
+            style:     "font-weight: bold; font-style: italic;" +
                        "text-anchor: middle;"
         })).content = "Time / " + tUnit;
 
@@ -480,7 +480,7 @@ function chart(input, options) {
             transform: "translate(0," + (this.height / 2) + ") " +
                        "rotate(-90)",
             dy:        "-3em",
-            style:     "font-weight: bold; font-style: italic;" + 
+            style:     "font-weight: bold; font-style: italic;" +
                        "text-anchor: middle;"
         })).content = "Memory / " + memUnit;
 
