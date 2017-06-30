@@ -282,17 +282,23 @@ public:
         }
     }
 
-    BST(Input& input) : STInterface(input){
+   // BST(Input& input) : STInterface(input){
      //   auto in = input.as_view();
 
      //   stree(input.as_view());
+    //    construct();
 
-   }
+  // }
 
     BST(io::InputView & input) : STInterface(input){
 
+        reserve();
+
 
       //  stree(input);
+        construct();
+
+        resize();
 
 
     }

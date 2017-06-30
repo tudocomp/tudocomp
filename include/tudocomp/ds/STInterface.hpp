@@ -1,5 +1,8 @@
 #pragma once
 
+
+#include <tudocomp/io.hpp>
+
 namespace tdc {
 
 template<typename node_type, typename size_type = uint>
@@ -31,7 +34,29 @@ public:
     virtual auto get_tree_size() -> size_type  =0;
 protected:
 
-    const io::InputView& Text;
+    const io::InputView & Text;
+
+    void construct(){
+
+        DLOG(INFO)<< "text size: "<< Text.size();
+
+        pos=-1;
+        remainder=0;
+        current_suffix=0;
+
+        active_node=0;
+        active_length=0;
+
+        last_added_sl=0;
+
+        DLOG(INFO)<<"Text size: " << Text.size();
+
+        for (uint i = 0; i < Text.size(); i++) {
+            uint8_t c = Text[i];
+            add_char(c);
+        }
+
+    }
 
 private:
 
@@ -65,6 +90,8 @@ private:
         //Text += c;
         pos++;
         remainder++;
+
+        DLOG(INFO)<<"adding char: "<< c ;
 
 
         while(remainder > 0){
@@ -139,37 +166,19 @@ private:
     }
 
 
-    void construct(){
 
-        pos=-1;
-        remainder=0;
-        current_suffix=0;
-
-        active_node=0;
-        active_length=0;
-
-        last_added_sl=0;
-
-        DLOG(INFO)<<"Text size: " << Text.size();
-
-        for (uint i = 0; i < Text.size(); i++) {
-            uint8_t c = Text[i];
-            add_char(c);
-        }
-
-    }
 
 public:
 
     STInterface(io::InputView& in) : Text(in) {
 
-        construct();
+      //  construct();
     }
 
-    STInterface(io::Input& in) : Text(in.as_view()) {
+  //  STInterface(io::Input& in) : Text(in.as_view()) {
 
-        construct();
-    }
+      //  construct();
+  //  }
 
 
 

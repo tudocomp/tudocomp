@@ -8,6 +8,9 @@
 #include "tudocomp/ds/BST.hpp"
 
 
+#include <tudocomp/io.hpp>
+
+
 //#include "tudocomp/ds/SuffixTreeEdge.hpp"
 //#include "tudocomp/ds/SuffixTreeNode.hpp"
 
@@ -16,7 +19,9 @@ namespace tdc {
 
 BST<> * build_suffix_tree(Input& input){
     //input.escape_and_terminate();
-    tdc::BST<> * stree = new tdc::BST<>(input);
+    io::InputView file_view = input.as_view();
+
+    tdc::BST<> * stree = new tdc::BST<>(file_view);
    // stree->append_input(input);
     return stree;
 }
@@ -42,6 +47,7 @@ TEST(stree, st_input_test_small){
 
 TEST(stree, st_file_test_1mb_english){
     Input file_input = test::TestInput(Path{"english.1MB"}, true);
+
     //test::TestInput file_input = test::compress_input_file("english.1MB");
     BST<>* stree = build_suffix_tree(file_input);
 
