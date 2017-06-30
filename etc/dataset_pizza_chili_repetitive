@@ -25,4 +25,7 @@ URLS=(
     "$URL/pc-real/kernel.7z"
     "$URL/pc-real/para.7z"
     "$URL/pc-real/world_leaders.7z"
+    "http://pizzachili.dcc.uchile.cl/repcorpus/artificial/fib41.7z"
+    "http://pizzachili.dcc.uchile.cl/repcorpus/artificial/rs.13.7z"
+    "http://pizzachili.dcc.uchile.cl/repcorpus/artificial/tm29.7z"
 )
