@@ -61,7 +61,7 @@ private:
     size_type new_node;
 
 
-    node_type create_node(uint s, uint e, char c){
+    node_type create_node(uint s, uint e){
         new_node++;
         start[new_node] = s;
         end[new_node] = e;
@@ -127,8 +127,8 @@ private:
     }
 
 public:
-    inline void add_child(node_type node, char c, size_type start, size_type suffix_beg){
-        node_type child = create_node(start,0,c);
+    inline void add_child(node_type node, size_type start, size_type suffix_beg){
+        node_type child = create_node(start,0);
         suffix[child]=suffix_beg;
 
         //add to childs of node:
@@ -144,10 +144,14 @@ public:
     //virtual auto set_end(node_type node, size_type end) -> void;
     //virtual auto set_suffix(node_type node, size_type suffix) -> void;
 
-    inline node_type split_edge(node_type node, size_type edge_len, char c){
+    inline node_type split_edge(node_type node, size_type edge_len){
 
-        node_type split = create_node(start[node] + edge_len, end[node], c);
+        node_type split = create_node(start[node] + edge_len , end[node]);
+
+
         end[node]= start[node] + edge_len;
+
+
         size_type temp = first_child[node];
         first_child[node]= split;
         first_child[split]=temp;

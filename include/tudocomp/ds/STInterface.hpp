@@ -8,12 +8,12 @@ namespace tdc {
 template<typename node_type, typename size_type = uint>
 class STInterface{
 public:
-    virtual auto add_child(node_type node, char c, size_type start, size_type suffix) -> void =0;
+    virtual auto add_child(node_type node, size_type start, size_type suffix) -> void =0;
     //virtual auto set_start(node_type node, size_type start) -> void;
     //virtual auto set_end(node_type node, size_type end) -> void;
     //virtual auto set_suffix(node_type node, size_type suffix) -> void;
 
-    virtual auto split_edge(node_type node, size_type edge_len, char c) -> node_type=0;
+    virtual auto split_edge(node_type node, size_type edge_len) -> node_type=0;
 
 
     virtual auto get_edge_length(node_type node) -> size_type=0;
@@ -112,7 +112,7 @@ private:
             //if not found
             if(!found){
                 //insert new leaf
-                add_child(active_node,active_edge,pos,current_suffix++);
+                add_child(active_node,pos,current_suffix++);
                 add_sl(active_node);
 
             } else {
@@ -137,16 +137,16 @@ private:
 
                 //now split edge if the edge is found
 
-                node_type split = split_edge(active_node, active_length, active_edge);
+                node_type split = split_edge(child, active_length);
 
                 //        create_node(start[next], start[next]+active_length, active_edge);
                 //active_inner->child_nodes[active_edge] = split;
 
                 //node_type leaf =
-                add_child(split,active_edge, pos,current_suffix++);
+                add_child(split, pos,current_suffix++);
 
 
-                add_sl(split);
+                add_sl(child);
        //         leaves.push_back(leaf);
             }
             remainder--;

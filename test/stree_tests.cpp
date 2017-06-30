@@ -44,7 +44,7 @@ TEST(stree, st_input_test_small){
    // auto leaves = stree->get_leaves();
   //  ASSERT_EQ(stree->get_text().size(), file_input.size());
 }
-
+/*
 TEST(stree, st_file_test_1mb_english){
     Input file_input = test::TestInput(Path{"english.1MB"}, true);
 
@@ -54,7 +54,7 @@ TEST(stree, st_file_test_1mb_english){
     DLOG(INFO)<<"size of tree: " << stree->get_tree_size();
  //   ASSERT_EQ(stree->get_size(), file_input.size());
 
-}
+}*/
 /*
 
 TEST(stree, st_node_test){
