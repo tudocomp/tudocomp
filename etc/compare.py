@@ -177,6 +177,7 @@ else:
         StdCompressor(name='bzip2 -9', binary='bzip2', cflags=['-9'], dflags=['-d']),
         StdCompressor(name='lzma -1',  binary='lzma',  cflags=['-1'], dflags=['-d']),
         StdCompressor(name='lzma -9',  binary='lzma',  cflags=['-9'], dflags=['-d']),
+		#StdCompressor(name='lcpcompress',  binary='lcpcompress',  cflags=[''], dflags=['-d']),
     ]
     sot.print("Using built-in default suite")
 
