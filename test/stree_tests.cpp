@@ -7,6 +7,8 @@
 
 #include "tudocomp/ds/BST.hpp"
 
+#include "tudocomp/ds/BinarySuffixTree.hpp"
+
 
 #include <tudocomp/io.hpp>
 
@@ -22,13 +24,32 @@ BST<> * build_suffix_tree(Input& input){
     io::InputView file_view = input.as_view();
 
     tdc::BST<> * stree = new tdc::BST<>(file_view);
+
    // stree->append_input(input);
     return stree;
 }
 
+BinarySuffixTree * build_bin_suffix_tree(Input& input){
+    //input.escape_and_terminate();
+    io::InputView file_view = input.as_view();
+
+    tdc::BinarySuffixTree * stree = new tdc::BinarySuffixTree(file_view);
+   // stree->print_tree(0, "");
+   // stree->append_input(input);
+    return stree;
+}
+
+
+
 TEST(stree, st_input_test_small){
-    Input file_input("abcabxabcd$");
-    BST<> * stree = build_suffix_tree(file_input);
+    Input file_input("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum.$");
+   // BST<> * stree = build_suffix_tree(file_input);
+
+    //stree->print_tree(0, "");
+
+  //  BinarySuffixTree * stree2 = build_bin_suffix_tree(file_input);
+
+ //   stree2->print_tree(0, "");
     /*
     DLOG(INFO)<<"childs of root:";
     uint child  = stree->get_first_child(0);
@@ -38,14 +59,28 @@ TEST(stree, st_input_test_small){
         }
         while ((child = stree->get_next_sibling(child)) != 0);
     }*/
-     DLOG(INFO)<<"size of tree: " << stree->get_tree_size();
+  //   DLOG(INFO)<<"size of tree1: " << stree->get_tree_size();
 
-     stree->print_tree(0, "");
+   //  DLOG(INFO)<<"size of tree2: " << stree2->get_tree_size();
+
+
    // auto leaves = stree->get_leaves();
   //  ASSERT_EQ(stree->get_text().size(), file_input.size());
 }
+
 /*
-TEST(stree, st_file_test_1mb_english){
+TEST(stree, bin_st_file_test_1mb_english){
+    Input file_input = test::TestInput(Path{"english.1MB"}, true);
+
+    //test::TestInput file_input = test::compress_input_file("english.1MB");
+    BinarySuffixTree * stree = build_bin_suffix_tree(file_input);
+
+    DLOG(INFO)<<"size of tree: " << stree->get_tree_size();
+ //   ASSERT_EQ(stree->get_size(), file_input.size());
+
+}*/
+
+TEST(stree, int_st_file_test_1mb_english){
     Input file_input = test::TestInput(Path{"english.1MB"}, true);
 
     //test::TestInput file_input = test::compress_input_file("english.1MB");
@@ -54,7 +89,8 @@ TEST(stree, st_file_test_1mb_english){
     DLOG(INFO)<<"size of tree: " << stree->get_tree_size();
  //   ASSERT_EQ(stree->get_size(), file_input.size());
 
-}*/
+}
+
 /*
 
 TEST(stree, st_node_test){

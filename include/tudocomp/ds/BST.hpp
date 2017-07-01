@@ -91,7 +91,11 @@ private:
 
     void reserve(){
 
+
+
         auto size = Text.size() * 2 -1;
+         DLOG(INFO)<<"allocating: "<<size;
+
         start= vectortype(size, 0);
         end =  vectortype(size, 0);
         first_child= vectortype(size, 0);
@@ -106,6 +110,8 @@ private:
     }
 
     void resize(){
+
+        DLOG(INFO)<<"resizing: "<<new_node;
         new_node++;
         start.resize(new_node);
         end.resize(new_node);
@@ -144,20 +150,46 @@ public:
     //virtual auto set_end(node_type node, size_type end) -> void;
     //virtual auto set_suffix(node_type node, size_type suffix) -> void;
 
-    inline node_type split_edge(node_type node, size_type edge_len){
-
-        node_type split = create_node(start[node] + edge_len , end[node]);
+    inline node_type split_edge(node_type parent, node_type child, size_type edge_len){
 
 
-        end[node]= start[node] + edge_len;
+        node_type split = create_node(start[child]  , start[child] + edge_len);
+        start[child]= start[child] + edge_len;
+
+        node_type child_prev = first_child[parent];
 
 
-        size_type temp = first_child[node];
-        first_child[node]= split;
-        first_child[split]=temp;
+        first_child[split] = child;
+        next_sibling[split] = next_sibling[child];
+        next_sibling[child]=0;
+
+            //if(child_prev == (uint) 0){
+              //  first_child[parent]= split;
+           // }
+
+            if(child_prev == child){
 
 
-        return split;
+                //size_type temp = first_child[parent];
+                first_child[parent]= split;
+
+
+
+                return split;
+
+            }
+            do
+            {
+                if(  next_sibling[child_prev] == child){
+                    break;
+                } else {
+                    child_prev=next_sibling[child_prev];
+                }
+            }
+            while (child_prev != 0);
+            next_sibling[child_prev] = split;
+
+            return split;
 
     }
 
@@ -168,7 +200,7 @@ public:
             }
 
             if(end[node] == (uint)0){
-                return new_node - start[node]+1;
+                return pos - start[node]+1;
             } else {
                 return end[node]- start[node];
             }
@@ -176,9 +208,10 @@ public:
 
     }
 
-    inline char get_edge_label(node_type node, size_type pos){
-        return Text[start[node] + pos];
-    }
+    inline size_type get_start(node_type node){ return start[node];}
+    inline size_type get_end(node_type node){ return end[node];}
+
+
 
     inline size_type get_suffix(node_type node){
         return suffix[node];
@@ -200,7 +233,7 @@ public:
             do
             {
                 if(  Text[(start[child])] == c){
-                    break;
+                    return child;
                 } else {
                     child=next_sibling[child];
                 }
@@ -208,11 +241,8 @@ public:
             while (child != 0);
 
         }
-        if(child >0){
-            return child;
-        } else {
-            return node;
-        }
+        return node;
+
 
     }
 
@@ -243,7 +273,7 @@ public:
 
 
     inline node_type get_root(){
-        return 0;
+        return (uint) 0;
     }
 
     inline size_type get_tree_size(){

@@ -70,6 +70,7 @@ private:
 
     void add_sl(uint node){
 
+
         if(last_added_sl != 0) {
             suffix_link[last_added_sl]=node;
         }
@@ -114,13 +115,9 @@ private:
 
     void reserve(){
 
-        auto bits_req_text = bits_for(Text.size() );
+       // auto bits_req_text = bits_for(Text.size() );
         auto size = Text.size() * 2 -1;
-        auto bits_req_arr = bits_for(size);
-        DLOG(INFO)<<" bits req: " << (uint)bits_req_text;
-
-        DLOG(INFO)<<"next multi eight: "  << ((bits_req_text /8)+1)*8;
-        DLOG(INFO)<<" text size *2 -1: " << size << " bits: " << (uint)bits_req_arr << "nexteicht: " << ((bits_req_arr /8)+1)*8;
+       // auto bits_req_arr = bits_for(size);
 
        // bits_req_arr = ((bits_req_arr /8)+1)*8;
        // bits_req_text = ((bits_req_text /8)+1)*8;
@@ -248,7 +245,6 @@ private:
             }
 
 
-
             //if the active node doesnt have the corresponding edge:
             //find edge corresponding to added active edge
             bool found = false;
@@ -300,12 +296,15 @@ private:
                     break;
                 }
 
+
                 //now split edge if the edge is found
 
                 uint split = create_node(start[next], start[next]+active_length, active_edge);
                 //active_inner->child_nodes[active_edge] = split;
 
-                uint leaf = create_node(pos, 0, c);
+
+                start[next]=start[next]+ active_length;
+
                // leaf->suffix=suffix++;
 
                 //update relations of nodes
@@ -319,11 +318,12 @@ private:
                 }
                 first_child[split] = next;
                 next_sibling[split] = next_sibling[next];
+
+                uint leaf = create_node(pos, 0, c);
                 next_sibling[next] = leaf;
                 suffix[leaf] = current_suffix++;
 
 
-                start[next]=start[next]+ active_length;
               //  edge[next]=Text[start[next]];
                // split->child_nodes[Text[next->start]] = next;
                 add_sl(split);
