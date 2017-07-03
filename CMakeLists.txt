@@ -17,6 +17,8 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND
     message(FATAL_ERROR "g++ version 5.4 or greater required!")
 endif()
 
+set(CXX_STANDARD c++14)
+
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     # using Clang or AppleClang
     if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "3.4")
@@ -34,9 +36,9 @@ endif()
 include(ExternalProject)
 
 # More warnings and debug info
-set(CMAKE_CXX_FLAGS "-std=gnu++14 -Wall")
-set(CMAKE_CXX_FLAGS_RELEASE "-std=gnu++14 -DNDEBUG -march=native")
-set(CMAKE_CXX_FLAGS_DEBUG "-std=gnu++14 -O0 -ggdb -DDEBUG")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=gnu++14 -DNDEBUG -march=native")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=gnu++14 -O0 -ggdb -DDEBUG")
 
 find_package(Boost)
 

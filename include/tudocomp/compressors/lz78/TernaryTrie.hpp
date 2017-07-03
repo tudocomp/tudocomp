@@ -3,6 +3,7 @@
 #include <vector>
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 namespace lz78 {
@@ -21,14 +22,21 @@ class TernaryTrie : public Algorithm, public LZ78Trie<factorid_t> {
 	std::vector<factorid_t> first_child;
 	std::vector<factorid_t> left_sibling;
 	std::vector<factorid_t> right_sibling;
-	std::vector<literal_t> literal;
+	std::vector<uliteral_t> literal;
 
 public:
     inline static Meta meta() {
         Meta m("lz78trie", "ternary", "Lempel-Ziv 78 Ternary Trie");
 		return m;
 	}
-    TernaryTrie(Env&& env, factorid_t reserve = 0) : Algorithm(std::move(env)) {
+
+	/**
+	 * @param remaining_characters number of remaining characters until the complete text is parsed
+	 */
+    TernaryTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+		: Algorithm(std::move(env))
+		, LZ78Trie(n, remaining_characters)
+	{
 		if(reserve > 0) {
 			first_child.reserve(reserve);
 			left_sibling.reserve(reserve);
@@ -36,6 +44,25 @@ public:
 			literal.reserve(reserve);
 		}
     }
+
+	IF_STATS(
+		size_t m_resizes = 0;
+		size_t m_specialresizes = 0;
+		)
+
+    IF_STATS(
+        MoveGuard m_guard;
+        ~TernaryTrie() {
+            if (m_guard) {
+                StatPhase::log("resizes", m_resizes);
+                StatPhase::log("special resizes", m_specialresizes);
+                StatPhase::log("table size", first_child.capacity());
+                StatPhase::log("load ratio", first_child.size()*100/first_child.capacity());
+            }
+        }
+    )
+    TernaryTrie(TernaryTrie&& other) = default;
+    TernaryTrie& operator=(TernaryTrie&& other) = default;
 
 	node_t add_rootnode(uliteral_t c) override {
         first_child.push_back(undef_id);
@@ -91,7 +118,19 @@ public:
                 }
             }
 		}
-        first_child.push_back(undef_id);
+		// do not double the size if we only need fewer space
+		if(first_child.capacity() == first_child.size()) {
+			const size_t newbound =	first_child.size()+lz78_expected_number_of_remaining_elements(size(),m_n,m_remaining_characters);
+			if(newbound < first_child.size()*2 ) {
+				first_child.reserve   (newbound);
+				left_sibling.reserve  (newbound);
+				right_sibling.reserve (newbound);
+				literal.reserve       (newbound);
+				IF_STATS(++m_specialresizes);
+			}
+			IF_STATS(++m_resizes);
+		}
+		first_child.push_back(undef_id);
 		left_sibling.push_back(undef_id);
 		right_sibling.push_back(undef_id);
 		literal.push_back(c);

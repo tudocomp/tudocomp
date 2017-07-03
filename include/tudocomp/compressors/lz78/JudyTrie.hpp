@@ -21,9 +21,9 @@ class JudyTrie : public Algorithm, public LZ78Trie<factorid_t> {
 	Pvoid_t m_dict; // judy array
 	size_t m_size;
 
-	factorid_t& find(const node_t& node) {
+	factorid_t& find(const squeeze_node_t& node) {
 		void* pvalue;
-		JLI(pvalue, m_dict, node.id()); //lookup node in dict, store value in pvalue
+		JLI(pvalue, m_dict, node); //lookup node in dict, store value in pvalue
 		DCHECK_NE(pvalue, PJERR);
 		return *reinterpret_cast<factorid_t*>(pvalue);
 	}
@@ -33,22 +33,24 @@ public:
         Meta m("lz78trie", "judy", "Lempel-Ziv 78 Judy Array");
 		return m;
 	}
-    JudyTrie(Env&& env, factorid_t = 0)
+    inline JudyTrie(Env&& env, size_t n, const size_t& remaining_characters, factorid_t = 0)
 		: Algorithm(std::move(env))
+    	, LZ78Trie(n,remaining_characters)
 	    , m_dict(static_cast<Pvoid_t>(nullptr))
 	    , m_size(0)
 	{
     }
 
     node_t get_rootnode(uliteral_t c) override {
-        return create_node(0,c);
+		DCHECK_LT(create_node(0,c), std::numeric_limits<factorid_t>::max());
+        return factorid_t(create_node(0,c));
     }
 
 	node_t add_rootnode(uliteral_t c) override {
 		DCHECK_EQ(find(create_node(0, c)), 0);
 		find(create_node(0, c)) = size();
 		++m_size;
-		return size();
+		return m_size-1;
 	}
 
 	void clear() override {
@@ -60,7 +62,7 @@ public:
 	}
 
     node_t find_or_insert(const node_t& parent, uliteral_t c) override {
-		const node_t node = create_node(parent.id(), c);
+		const squeeze_node_t node = create_node(parent.id(), c);
 
 		factorid_t& id = find(node);
 

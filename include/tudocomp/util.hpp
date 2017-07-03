@@ -154,7 +154,7 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
 }
 
 /// \brief Computes the highest set bit in an integer variable
-inline uint_fast8_t bits_hi(uint64_t x) {
+inline constexpr uint_fast8_t bits_hi(uint64_t x) {
 	return x == 0 ? 0 : 64 - __builtin_clzll(x);
 }
 
@@ -173,7 +173,7 @@ inline uint_fast8_t bits_hi(uint64_t x) {
 /// \param n The integer to be stored.
 /// \return The amount of bits required to store the value (guaranteed to be
 /// greater than zero).
-inline uint_fast8_t bits_for(size_t n) {
+inline constexpr uint_fast8_t bits_for(size_t n) {
     return n == 0 ? 1U : bits_hi(n);
 }
 
@@ -183,7 +183,7 @@ inline uint_fast8_t bits_for(size_t n) {
 /// \param a The dividend.
 /// \param b The divisor.
 /// \return The quotient, rounded up to the next integer value.
-inline size_t idiv_ceil(size_t a, size_t b) {
+inline constexpr size_t idiv_ceil(size_t a, size_t b) {
     return (a / b) + ((a % b) > 0);
 }
 
@@ -204,7 +204,7 @@ inline size_t idiv_ceil(size_t a, size_t b) {
 /// \param n The integer to be stored.
 /// \return The amount of bits required to store the value (guaranteed to be
 /// greater than zero).
-inline uint_fast8_t bytes_for(size_t n) {
+inline constexpr uint_fast8_t bytes_for(size_t n) {
     return idiv_ceil(bits_for(n), 8U);
 }
 
@@ -383,10 +383,6 @@ inline std::string make_table(const std::vector<std::string>& data,
     return ret.str();
 }
 
-}
-
-//Check that p is a permutation of [0..n-1]
-
 #if defined(DEBUG) && defined(PARANOID) //functions that cost more than constant time to check
 template<class T>
 void assert_permutation(const T& p, size_t n) {
@@ -417,6 +413,18 @@ template<class T> inline void assert_permutation_offset(const T&, size_t,size_t)
 #endif
 
 
+/**
+ * @brief Division with rounding up to the next integer.
+ * Call equivalent to (int) std::ceil(((double)x)/y)
+ * @param x dividend
+ * @param y divisor
+ * @return ceiling of the term x/y
+ */
+template<class T>
+constexpr T round_up_div(T x, T y) {
+	return (x + y -1)/y;
+}
+
 /*
  *	Square root by abacus algorithm, Martin Guy @ UKC, June 1985.
  *	From a book on programming abaci by Mr C. Woo.
@@ -443,3 +451,39 @@ int_t isqrt(int_t num) {
     return res;
 }
 
+static inline size_t lz78_expected_number_of_remaining_elements(const size_t z, const size_t n, const size_t remaining_characters) {
+		if(remaining_characters*2 < n ) {
+			return (z*remaining_characters) / (n - remaining_characters);
+		}
+	return remaining_characters*3/(bits_for(remaining_characters));
+}
+
+class MoveGuard {
+    bool m_is_not_moved;
+public:
+    inline MoveGuard(): m_is_not_moved(true) {}
+    inline MoveGuard(const MoveGuard& other) {
+        DCHECK(other.m_is_not_moved) << "Trying to copy a already moved-from MoveGuard";
+        m_is_not_moved = other.m_is_not_moved;
+    }
+    inline MoveGuard(MoveGuard&& other) {
+        DCHECK(other.m_is_not_moved) << "Trying to move a already moved-from MoveGuard";
+        m_is_not_moved = other.m_is_not_moved;
+        other.m_is_not_moved = false;
+    }
+
+    inline bool is_not_moved() const {
+        return m_is_not_moved;
+    }
+    inline bool is_moved() const {
+        return !m_is_not_moved;
+    }
+    inline operator bool() const {
+        return is_not_moved();
+    }
+    inline bool operator!() const {
+        return is_moved();
+    }
+};
+
+}//ns

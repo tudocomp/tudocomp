@@ -45,13 +45,40 @@ coder = tmp_lz78u_string_coder + bit_interleaving_coder + [
 
 non_bit_interleaving_coder = [i for i in coder if i not in bit_interleaving_coder]
 
+hash_manager = [
+        ("SizeManagerPow2", "util/Hash.hpp",  []),
+        ("SizeManagerPrime", "util/Hash.hpp", []),
+        ("SizeManagerDirect", "util/Hash.hpp", []),
+        ]
+hash_prober = [
+        ("LinearProber", "util/Hash.hpp",  []),
+        ]
+hash_roll = [
+        ("WordpackRollingHash", "util/Hash.hpp",  []),
+        # ("ZBackupRollingHash", "util/Hash.hpp",  []),
+        # ("CyclicHash", "util/hash/cyclichash.h",  []),
+        ("KarpRabinHash", "util/hash/rabinkarphash.h",  []),
+        # ("ThreeWiseHash", "util/hash/threewisehash.h",  []),
+        ]
+hash_function = [
+        ("NoopHasher", "util/Hash.hpp",  []),
+        ("MixHasher", "util/Hash.hpp",  []),
+        ("VignaHasher", "util/Hash.hpp",  []),
+        ("KnuthHasher", "util/Hash.hpp",  []),
+        # ("Zobrist", "util/hash/zobrist.h",  []),
+        # ("CLHash", "util/hash/clhash.h",  []),
+        ]
+
 lz78_trie = [
     ("lz78::BinarySortedTrie", "compressors/lz78/BinarySortedTrie.hpp", []),
     ("lz78::BinaryTrie",       "compressors/lz78/BinaryTrie.hpp",       []),
-    ("lz78::HashTrie",         "compressors/lz78/HashTrie.hpp",         []),
-    ("lz78::MyHashTrie",       "compressors/lz78/MyHashTrie.hpp",       []),
-    ("lz78::TernaryTrie",      "compressors/lz78/TernaryTrie.hpp",      []),
     ("lz78::CedarTrie",        "compressors/lz78/CedarTrie.hpp",        []),
+    ("lz78::ExtHashTrie",       "compressors/lz78/ExtHashTrie.hpp",   []),
+    ("lz78::HashTrie",         "compressors/lz78/HashTrie.hpp",         [hash_function,hash_prober,hash_manager]),
+    ("lz78::HashTriePlus",         "compressors/lz78/HashTriePlus.hpp",         [hash_function,hash_manager]),
+    ("lz78::RollingTrie",   "compressors/lz78/RollingTrie.hpp",   [hash_roll, hash_prober,hash_manager,hash_function]),
+    ("lz78::RollingTriePlus",   "compressors/lz78/RollingTriePlus.hpp",   [hash_roll, hash_manager,hash_function]),
+    ("lz78::TernaryTrie",      "compressors/lz78/TernaryTrie.hpp",      []),
 ]
 
 if config_match("^#define JUDY_H_AVAILABLE 1"): lz78_trie += [
@@ -74,7 +101,6 @@ lcpc_buffer = [
     ("lcpcomp::ScanDec",       "compressors/lcpcomp/decompress/ScanDec.hpp", []),
     ("lcpcomp::DecodeForwardQueueListBuffer", "compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp",  []),
     ("lcpcomp::CompactDec",           "compressors/lcpcomp/decompress/CompactDec.hpp",     []),
-    ("lcpcomp::MyMapBuffer",                  "compressors/lcpcomp/decompress/MyMapBuffer.hpp",            []),
     ("lcpcomp::MultimapBuffer",               "compressors/lcpcomp/decompress/MultiMapBuffer.hpp",         []),
 ]
 

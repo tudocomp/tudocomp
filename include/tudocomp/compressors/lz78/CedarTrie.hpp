@@ -181,9 +181,10 @@ public:
         return m;
     }
 
-    inline CedarTrie(Env&& env, factorid_t reserve = 0):
-        Algorithm(std::move(env)),
-        m_trie(std::make_unique<cedar_t>()) {}
+    CedarTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+        : Algorithm(std::move(env))
+		, LZ78Trie(n, remaining_characters)
+        , m_trie(std::make_unique<cedar_t>()) {}
 
     inline node_t add_rootnode(const uliteral_t c) override final {
         cedar_factorid_t ids = c;
