@@ -77,6 +77,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lfs2",
             "This is an implementation of the longest first substitution compression scheme, type 2.");
+        m.needs_sentinel_terminator();
         m.option("min_lrf").dynamic(5);
         m.option("lfs2_lit_coder").templated<literal_coder_t, HuffmanCoder>("lfs2_lit_coder");
         m.option("lfs2_len_coder").templated<len_coder_t, EliasGammaCoder>("lfs2_len_coder");
@@ -110,9 +111,12 @@ public:
         StatPhase::wrap("Constructing ST", [&]{
             uint size =  in.size();
             //remove sentinel because sdsl cant handle that
-            if(in[size-1] == 0){
+            while(in[size-1] == 0){
                 size--;
             }
+
+
+
             std::string in_string ((const char*) in.data(), size);
             sdsl::construct_im(stree, in_string , 1);
         });
