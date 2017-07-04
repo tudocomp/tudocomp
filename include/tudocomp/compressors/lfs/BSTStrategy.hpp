@@ -93,10 +93,11 @@ private:
     inline virtual std::vector<uint> select_starting_positions(node_type node, uint length){
 
 
-        std::vector<uint> starting_positions = beginning_positions[node];
+        std::vector<uint> & starting_positions = beginning_positions[node];
         std::vector<uint> selected_starting_positions;
+        std::vector<uint> not_selected_starting_positions;
 
-        long min_shorter = 1;
+   //     long min_shorter = 1;
 
         //select occurences greedily non-overlapping:
         selected_starting_positions.reserve(starting_positions.size());
@@ -112,17 +113,19 @@ private:
                 selected_starting_positions.push_back(current);
                 last = current;
 
-            }
+            } else {
 
-            if(current < (long) dead_positions.size() && !dead_positions[current] && dead_positions[current+length-1]){
-
-
-                while((current+min_shorter < (long) dead_positions.size()) && !dead_positions[current+min_shorter]){
-                    min_shorter++;
+                if( !dead_positions[current] ){
+                    not_selected_starting_positions.push_back(current);
                 }
 
             }
 
+
+        }
+
+        if(selected_starting_positions.size() >= 2){
+            beginning_positions[node] = not_selected_starting_positions;
         }
 
 
@@ -178,7 +181,7 @@ public:
 
             beginning_positions.reserve(node_count);
 
-            uint rd_counter =0;
+
 
 
             DLOG(INFO)<<"Iterating nodes";
@@ -212,12 +215,12 @@ public:
                             if(stree->get_first_child(inner) == 0){
                                 positions.push_back(stree->get_suffix(inner));
                             } else {
-                                auto child_bp = beginning_positions[inner];
+                                auto & child_bp = beginning_positions[inner];
                                 if(!child_bp.empty()){
 
                                     positions.insert(positions.end(), child_bp.begin(), child_bp.end());
 
-                                    beginning_positions[inner]=std::vector<uint>();
+                                    beginning_positions.erase(inner);
                                     //(*child_bp).second.clear();
 
                                 }
@@ -237,7 +240,7 @@ public:
 
 
                     }
-                    std::vector<uint> & begin_pos = beginning_positions[node];
+                    std::vector<uint> begin_pos = beginning_positions[node];
                //     DLOG(INFO)<<"found pos size: "<< begin_pos.size();
 
                     //check if repeating factor:
@@ -257,7 +260,7 @@ public:
 
 
                       //      DLOG(INFO)<<"selecint bps";
-                            std::vector<uint> sel_pos = select_starting_positions(node, i);
+                            std::vector<uint>  sel_pos = select_starting_positions(node, i);
                            // DLOG(INFO)<<"selected bps";
 
                       //       DLOG(INFO)<<"selected pos: "<<sel_pos.size();
@@ -286,15 +289,6 @@ public:
                          }
 
 
-
-
-
-
-                      //  DLOG(INFO)<<stree.get_text().substr(*begin_pos.begin(),i);
-                        //vector of text position, length
-                        //std::pair<uint,uint> rule = std::make_pair(begin_pos.begin(), pair.first);
-
-                       // dictionary.push_back(rule);
                     }
 
 
@@ -304,7 +298,7 @@ public:
                 }
             }
 
-            StatPhase::log("real depth counter",rd_counter);
+         //   StatPhase::log("real depth counter",rd_counter);
 
 
 
