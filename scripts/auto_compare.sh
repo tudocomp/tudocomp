@@ -1,6 +1,6 @@
 #!/bin/bash
 base="/media/sf_Corpus/"
-_dfiles="pitches
+_dfiles="proteins.50MB
 "
 #english.50MB
 #dblp.xml.50MB
@@ -11,6 +11,6 @@ _dfiles="pitches
 	for f in $_dfiles
 	do
         echo "Processing $f file"
-		echo "output /media/sf_Corpus/auto/$a$f.compare "
-		python3 ../etc/compare.py "$base$f" > /media/sf_Corpus/auto/$f.compare
+		echo "output /media/sf_Corpus/auto/$f.compare "
+		python3 ../etc/compare.py "$base$f" > /media/sf_Corpus/auto/compare/$f.compare
 	done

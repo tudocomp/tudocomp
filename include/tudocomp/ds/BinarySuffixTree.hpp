@@ -394,6 +394,10 @@ public:
         return 0;
     }
 
+    inline uint get_edge_length(uint node){
+        return edge_length(node);
+    }
+
     inline std::string get_string_of_edge(uint node){
        // return Text.substr(start[node], edge_length(node));
         std::stringstream ss ;

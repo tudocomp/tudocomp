@@ -3,6 +3,8 @@
 #include <tudocomp/compressors/lfs/LFSCompressor.hpp>
 #include <tudocomp/compressors/lfs/STStrategy.hpp>
 
+#include <tudocomp/compressors/lfs/BSTStrategy.hpp>
+
 #include <tudocomp/compressors/lfs/ESAStrategy.hpp>
 
 #include <tudocomp/compressors/lfs/SimSTStrategy.hpp>
@@ -91,14 +93,16 @@ void run_comp_file(std::string file) {
 }*/
 
 
-TEST(lfs, st_strat){
+TEST(lfs, bst_strat){
 
 
-    run_comp<tdc::lfs::STStrategy >("abaaabbababb$");
+    run_comp<tdc::lfs::BSTStrategy >("abaaabbababb$");
 
-    run_comp<tdc::lfs::STStrategy >("ccaabbaabbcca$");
+    run_comp<tdc::lfs::BSTStrategy >("ccaabbaabbcca$");
 
 }
+
+/*
 
 TEST(lfs, sim_st_strat){
 
@@ -119,5 +123,15 @@ TEST(lfs, esa_strat){
 
 
 }
+
+TEST(lfs, esa_strat){
+
+
+    run_comp<tdc::lfs::ESAStrategy<> >("abaaabbababb$");
+
+    run_comp<tdc::lfs::ESAStrategy<> >("ccaabbaabbcca$");
+
+
+}*/
 
 

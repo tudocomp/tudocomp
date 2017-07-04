@@ -25,6 +25,7 @@ private:
     typedef std::tuple<uint,uint,uint> non_term;
     typedef std::vector<non_term> non_terminal_symbols;
     typedef std::vector<std::pair<uint,uint>> rules;
+    typedef uint node_type;
 
 
     BinarySuffixTree * stree;
@@ -33,6 +34,11 @@ private:
     BitVector dead_positions;
 
     std::vector<std::vector<uint> > bins;
+
+
+    std::unordered_map< uint , std::vector< uint > > beginning_positions;
+
+
 
     //    DLOG(INFO)<<"input size: "<<stree.get_size();
       //  std::unordered_map<SuffixTree::STNode *, std::vector<uint> > beginning_positions;
@@ -46,16 +52,16 @@ private:
 
    // typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
 
-/*
+
     inline virtual void compute_string_depth(uint node, uint str_depth){
         //resize if str depth grater than bins size
-        uint child = stree.get_first_child(node);
+        uint child = stree->get_first_child(node);
 
 
         if(child != 0){
             while(str_depth>= bins.size()){
                 bins.resize(bins.size()*2);
-                std::cerr<<"resizing: "<<bins.size();
+            //    std::cerr<<"resizing: "<<bins.size();
             }
 
 
@@ -69,8 +75,8 @@ private:
                 bins[str_depth].push_back(node);
             }
             while (child != 0){
-                compute_string_depth(child, str_depth);
-                child=stree.get_next_sibling(child);
+                compute_string_depth(child, str_depth + stree->get_edge_length(child));
+                child=stree->get_next_sibling(child);
             }
 
         }
@@ -78,13 +84,13 @@ private:
     }
 
 
-*/
 
 
 
-/*
 
-    inline virtual std::vector<uint> select_starting_positions(SuffixTree::STNode * node, uint length){
+
+
+    inline virtual std::vector<uint> select_starting_positions(node_type node, uint length){
 
 
         std::vector<uint> starting_positions = beginning_positions[node];
@@ -118,30 +124,11 @@ private:
             }
 
         }
-     //   DLOG(INFO)<<"min shorter: "<<min_shorter;
-
-        if(min_shorter < length){
-
-            if(min_shorter >= (int) min_lrf){
-                //check if parent node is shorter
-                SuffixTree::STInnerNode * inner = dynamic_cast<SuffixTree::STInnerNode *>(node);
-
-                SuffixTree::STInnerNode * parent = inner->parent;
-                uint depth = parent->string_depth;
-             //   DLOG(INFO)<<"check shorter node";
-                if(depth < (uint)(min_shorter)){
-                  //  DLOG(INFO)<<"pushing back shorter node";
-
-                    //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
-                    bins[min_shorter].push_back(node);
-                }
-            }
-        }
 
 
         return selected_starting_positions;
     }
-    */
+
 
 public:
 
@@ -159,6 +146,7 @@ public:
         min_lrf = env().option("min_lrf").as_integer();
 
         StatPhase::wrap("Constructing ST", [&]{
+            DLOG(INFO)<<"Constructing ST";
             stree = new BinarySuffixTree(input);
             StatPhase::log("Number of Nodes", stree->get_tree_size());
         });
@@ -169,7 +157,10 @@ public:
             bins.resize(200);
             node_count=0;
             max_depth=0;
-         //   compute_string_depth(0,0);
+            compute_string_depth(0,0);
+
+            bins.resize(max_depth +1);
+            bins.shrink_to_fit();
         });
 
         StatPhase::log("Number of inner Nodes", node_count);
@@ -178,10 +169,11 @@ public:
 
 
 
-        /*
+
+
 
         StatPhase::wrap("Computing LRF Substitution", [&]{
-            dead_positions = BitVector(stree.get_size(), 0);
+            dead_positions = BitVector(input.size(), 0);
             uint nts_number =0;
 
             beginning_positions.reserve(node_count);
@@ -189,12 +181,18 @@ public:
             uint rd_counter =0;
 
 
+            DLOG(INFO)<<"Iterating nodes";
 
             for(uint i = bins.size()-1; i>=min_lrf; i--){
+
+               // DLOG(INFO)<<"Bin depth: " << i;
                 auto bin_it = bins[i].begin();
                 while (bin_it!= bins[i].end()){
 
-                    SuffixTree::STNode * node = *bin_it;
+
+                    node_type node = *bin_it;
+
+                  //  DLOG(INFO)<<"Current node: " << node;
 
                     auto bp = beginning_positions.find(node);
 
@@ -202,47 +200,36 @@ public:
 
                     if(bp == beginning_positions.end()){
 
+                    //    DLOG(INFO)<<"Processing bps";
+
                         std::vector<uint> positions;
 
-                        SuffixTree::STInnerNode * inner = dynamic_cast<SuffixTree::STInnerNode *>(node);
-                        auto it = inner->child_nodes.begin();
-                        while (it != inner->child_nodes.end()){
-                            auto child = *it;
+                        node_type inner = stree->get_first_child(node);
 
-                            SuffixTree::STNode * child_node = child.second;
+                        while (inner != 0){
+                          //  DLOG(INFO)<<"addding pos of "<< inner;
 
-                            if(SuffixTree::STInnerNode * inner_child = dynamic_cast<SuffixTree::STInnerNode *>(child_node)){
-                                auto child_bp = beginning_positions.find(inner_child);
-                                if(child_bp != beginning_positions.end()){
+                            if(stree->get_first_child(inner) == 0){
+                                positions.push_back(stree->get_suffix(inner));
+                            } else {
+                                auto child_bp = beginning_positions[inner];
+                                if(!child_bp.empty()){
 
-                                    positions.insert(positions.end(), (*child_bp).second.begin(), (*child_bp).second.end());
+                                    positions.insert(positions.end(), child_bp.begin(), child_bp.end());
 
-                                    beginning_positions.erase((*child_bp).first);
+                                    beginning_positions[inner]=std::vector<uint>();
                                     //(*child_bp).second.clear();
 
                                 }
 
-
                             }
-                            if(SuffixTree::STLeaf * leaf_child = dynamic_cast<SuffixTree::STLeaf *>(child_node)){
-                                positions.push_back(leaf_child->suffix);
-
-                            }
-
-
-
-
-                            it++;
+                            inner = stree->get_next_sibling(inner);
                         }
-                      //  DLOG(INFO)<<"begin pos size: "<< positions.size();
                         std::sort(positions.begin(), positions.end());
 
-                        uint real_depth = positions.back() - positions.front();
 
-                        if(real_depth<i){
-                            rd_counter++;
-                         //   DLOG(INFO)<<"reald depth of node: "<<real_depth;
-                        }
+
+
 
                         beginning_positions[node]=positions;
 
@@ -251,10 +238,11 @@ public:
 
                     }
                     std::vector<uint> & begin_pos = beginning_positions[node];
-                   // DLOG(INFO)<<"found pos size: "<< begin_pos.size();
+               //     DLOG(INFO)<<"found pos size: "<< begin_pos.size();
 
                     //check if repeating factor:
                     if(begin_pos.size() >= 2 && ( (begin_pos.back() ) - (begin_pos.front()) >= i)){
+                   //     DLOG(INFO)<<"cechking bp";
 
                         //check dead positions:
                         if(!(
@@ -268,9 +256,11 @@ public:
                                 ){
 
 
+                      //      DLOG(INFO)<<"selecint bps";
                             std::vector<uint> sel_pos = select_starting_positions(node, i);
+                           // DLOG(INFO)<<"selected bps";
 
-                             // DLOG(INFO)<<"selected pos: "<<sel_pos.size();
+                      //       DLOG(INFO)<<"selected pos: "<<sel_pos.size();
 
 
 
@@ -325,7 +315,7 @@ public:
         std::sort(nts_symbols.begin(), nts_symbols.end());
         });
 
-    */
+
     }
 };
 }
