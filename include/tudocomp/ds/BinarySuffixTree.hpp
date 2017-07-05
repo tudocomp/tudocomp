@@ -159,7 +159,7 @@ private:
         end.resize(new_node);
         first_child.resize(new_node);
         next_sibling.resize(new_node);
-        suffix_link.resize(new_node);
+
         suffix.resize(new_node);
 
 
@@ -167,8 +167,11 @@ private:
         end.shrink_to_fit();
         first_child.shrink_to_fit();
         next_sibling.shrink_to_fit();
-        suffix_link.shrink_to_fit();
+      //  suffix_link.shrink_to_fit();
         suffix.shrink_to_fit();
+
+        //deallocate sl, because not necessar, save 20% space
+        suffix_link=vectortype(0, 0);
 
     }
 

@@ -11,6 +11,8 @@ world_leaders.50MB
 "
 
 _algorithms="lfs_comp(sim_st)
+lfs_comp(bst)
+lfs2bst
 lfs2
 lfs_comp(esa)"
 
