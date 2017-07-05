@@ -217,8 +217,11 @@ public:
 
                             for (auto & child : stree.children(node)) {
                                 if(stree.is_leaf(child)){
+                                    uint temp = stree.csa[stree.lb(child)];
+                                    if(!dead_positions[temp]){
 
-                                    leaf_bps.push_back(stree.csa[stree.lb(child)]);
+                                        leaf_bps.push_back(stree.csa[stree.lb(child)]);
+                                    }
 
                                 } else {
                                     int child_id = stree.id(child) - stree.size();
@@ -235,6 +238,7 @@ public:
                                 }
                             }
                             std::sort(leaf_bps.begin(), leaf_bps.end());
+
                             offsets.push_back(node_begins[no_leaf_id].size());
                             node_begins[no_leaf_id].insert(node_begins[no_leaf_id].end(),leaf_bps.begin(), leaf_bps.end());
                             //offsets.push_back(node_begins[no_leaf_id].size());

@@ -195,7 +195,7 @@ public:
 
                     node_type node = *bin_it;
 
-                  //  DLOG(INFO)<<"Current node: " << node;
+                   // DLOG(INFO)<<"Current node: " << node;
 
                     auto bp = beginning_positions.find(node);
 
@@ -203,22 +203,32 @@ public:
 
                     if(bp == beginning_positions.end()){
 
-                    //    DLOG(INFO)<<"Processing bps";
+                     //  DLOG(INFO)<<"Processing bps";
 
                         std::vector<uint> positions;
+                        //get leaves or merge child vectors
+                        std::vector<uint> offsets;
+                        std::vector<uint> leaf_bps;
 
                         node_type inner = stree->get_first_child(node);
+                       // DLOG(INFO)<<"collectint bps:";
 
                         while (inner != 0){
                           //  DLOG(INFO)<<"addding pos of "<< inner;
 
                             if(stree->get_first_child(inner) == 0){
-                                positions.push_back(stree->get_suffix(inner));
+                                uint temp = stree->get_suffix(inner);
+                                if(!dead_positions[temp]){
+
+                                    leaf_bps.push_back(stree->get_suffix(inner));
+                                }
                             } else {
                                 auto & child_bp = beginning_positions[inner];
                                 if(!child_bp.empty()){
+                                    offsets.push_back(positions.size());
 
                                     positions.insert(positions.end(), child_bp.begin(), child_bp.end());
+
 
                                     beginning_positions.erase(inner);
                                     //(*child_bp).second.clear();
@@ -228,10 +238,25 @@ public:
                             }
                             inner = stree->get_next_sibling(inner);
                         }
-                        std::sort(positions.begin(), positions.end());
+                        //std::sort(positions.begin(), positions.end());
+                     //   DLOG(INFO)<<"merging bps:";
+                      //  DLOG(INFO)<<"size leaves: "<< leaf_bps.size();
 
+                        std::sort(leaf_bps.begin(), leaf_bps.end());
+                        offsets.push_back(positions.size());
+                        positions.insert(positions.end(),leaf_bps.begin(), leaf_bps.end());
+                        //offsets.push_back(node_begins[no_leaf_id].size());
+                        //inplace merge with offset
+                      //  DLOG(INFO)<<"offsets: " << offsets.size();
+                        for(uint k = 0; k < offsets.size()-1; k++){
+                          //  DLOG(INFO)<<"merging from to "<< k << " "<< k+1;
+                            std::inplace_merge(positions.begin(), positions.begin()+ offsets[k], positions.begin()+ offsets[k+1]);
 
+                        }
+                        //now inplace merge to end
+                        std::inplace_merge(positions.begin(), positions.begin()+ offsets.back(), positions.end());
 
+                      //  DLOG(INFO)<<"merging done";
 
 
                         beginning_positions[node]=positions;
