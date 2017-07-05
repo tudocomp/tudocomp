@@ -220,7 +220,7 @@ public:
                                     uint temp = stree.csa[stree.lb(child)];
                                     if(!dead_positions[temp]){
 
-                                        leaf_bps.push_back(stree.csa[stree.lb(child)]);
+                                        leaf_bps.push_back(temp);
                                     }
 
                                 } else {

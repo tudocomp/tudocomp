@@ -69,6 +69,8 @@ private:
 
     typedef sdsl::bp_interval<long unsigned int> node_type;
 
+    bool exact;
+
 
 
 
@@ -79,6 +81,7 @@ public:
             "This is an implementation of the longest first substitution compression scheme, type 2.");
         m.needs_sentinel_terminator();
         m.option("min_lrf").dynamic(5);
+        m.option("exact").dynamic(0);
         m.option("lfs2_lit_coder").templated<literal_coder_t, HuffmanCoder>("lfs2_lit_coder");
         m.option("lfs2_len_coder").templated<len_coder_t, EliasGammaCoder>("lfs2_len_coder");
 
@@ -93,6 +96,11 @@ public:
     }
     inline virtual void compress(Input& input, Output& output) override {
         uint min_lrf = env().option("min_lrf").as_integer();
+        uint temp = env().option("exact").as_integer();
+        exact=false;
+        if(temp > 0){
+            exact =true;
+        }
 
         auto in = input.as_view();
 
@@ -174,20 +182,45 @@ public:
 
                         if(node_begins[no_leaf_id].empty()){
                             //get leaves or merge child vectors
+                            std::vector<uint> offsets;
+                            std::vector<uint> leaf_bps;
+
                             for (auto & child : stree.children(node)) {
                                 if(stree.is_leaf(child)){
 
-                                    node_begins[no_leaf_id].push_back(stree.csa[stree.lb(child)]);
+
+                                        leaf_bps.push_back(stree.csa[stree.lb(child)]);
+
 
                                 } else {
                                     int child_id = stree.id(child) - stree.size();
                                     if(!node_begins[child_id ].empty()){
+                                        //append child list, remember offset
+                                        offsets.push_back(node_begins[no_leaf_id].size());
+
+
                                         node_begins[no_leaf_id].insert(node_begins[no_leaf_id].end(),node_begins[child_id ].begin(), node_begins[child_id].end());
-                                        node_begins[child_id ] = std::vector<uint>();
+
+                                        node_begins[child_id] = std::vector<uint>();
+
                                     }
                                 }
                             }
-                            std::sort(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].end());
+                            std::sort(leaf_bps.begin(), leaf_bps.end());
+
+                            offsets.push_back(node_begins[no_leaf_id].size());
+                            node_begins[no_leaf_id].insert(node_begins[no_leaf_id].end(),leaf_bps.begin(), leaf_bps.end());
+                            //offsets.push_back(node_begins[no_leaf_id].size());
+                            //inplace merge with offset
+                            for(uint k = 0; k < offsets.size()-1; k++){
+                                std::inplace_merge(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].begin()+ offsets[k], node_begins[no_leaf_id].begin()+ offsets[k+1]);
+
+                            }
+                            //now inplace merge to end
+                            std::inplace_merge(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].begin()+ offsets[offsets.size()-1], node_begins[no_leaf_id].end());
+
+                            //sort bps of leaves
+                          //  std::sort(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].end());
 
 
                         }
@@ -282,17 +315,21 @@ public:
 
 
                             } else {
-                                //readd node if lrf shorter
-                                uint min_shorter = node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front();
-                                //check if parent subs this lrf
-                                node_type parent = stree.parent(node);
-                                uint depth = stree.depth(parent);
-                                if(depth < (min_shorter)){
-                                    //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
-                                    bins[min_shorter].push_back(stree.id(node));
+                                if(exact){
+                                    //readd node if lrf shorter
+                                    uint min_shorter = node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front();
+                                    //check if parent subs this lrf
+                                    node_type parent = stree.parent(node);
+                                    uint depth = stree.depth(parent);
+                                    if(depth < (min_shorter)){
+                                        //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
+                                        bins[min_shorter].push_back(stree.id(node));
+                                    }
+                                 //   bin_it++;
+                                    continue;
+
                                 }
-                             //   bin_it++;
-                                continue;
+
                             }
                         }
                     }
