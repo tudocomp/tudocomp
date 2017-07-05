@@ -327,9 +327,10 @@ public:
                                         bins[min_shorter].push_back(stree.id(node));
                                     }
                                  //   bin_it++;
-                                    continue;
+
 
                                 }
+                                continue;
 
                             }
                         }
@@ -400,12 +401,12 @@ public:
                 literals << in[position];
             }
         }
-        for(uint nts_num = 0; nts_num<=non_terminal_symbols.size(); nts_num++){
+        for(uint nts_num = 0; nts_num<non_terminal_symbols.size(); nts_num++){
 
             auto symbol = non_terminal_symbols[nts_num];
 
            // DLOG(INFO)<<"encoding from "<<symbol.first<<" to "<<symbol.second + symbol.first;
-            for(uint pos = symbol.first; pos < symbol.second + symbol.first -1 ; pos++){
+            for(uint pos = symbol.first; pos < symbol.second + symbol.first; pos++){
              //   DLOG(INFO)<<"pos: " <<pos;
                 if(second_layer_nts[pos] == 0 && pos < in.size()){
                     literals<< in[pos];

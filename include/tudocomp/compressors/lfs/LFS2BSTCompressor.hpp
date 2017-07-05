@@ -188,11 +188,10 @@ public:
                         //uint nts_number =0;
 
 
-                        uint node = no_leaf_id;
 
                        // DLOG(INFO)<<"Current node: " << node;
 
-                        auto bp = node_begins.find(node);
+                        auto bp = node_begins.find(no_leaf_id);
 
                         //no begin poss found, get from children
 
@@ -205,7 +204,7 @@ public:
                             std::vector<uint> offsets;
                             std::vector<uint> leaf_bps;
 
-                            uint inner = stree->get_first_child(node);
+                            uint inner = stree->get_first_child(no_leaf_id);
                            // DLOG(INFO)<<"collectint bps:";
 
                             while (inner != 0){
@@ -253,8 +252,12 @@ public:
 
                           //  DLOG(INFO)<<"merging done";
 
+                            if(!std::is_sorted(positions.begin(), positions.end() )){
+                                DLOG(INFO)<<"positions not sorted!!!";
+                            }
 
-                            node_begins[node]=positions;
+
+                            node_begins[no_leaf_id]=positions;
 
 
 
