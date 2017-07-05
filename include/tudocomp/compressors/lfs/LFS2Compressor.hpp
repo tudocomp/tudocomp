@@ -70,6 +70,7 @@ private:
     typedef sdsl::bp_interval<long unsigned int> node_type;
 
     bool exact;
+    uint size;
 
 
 
@@ -117,7 +118,7 @@ public:
 
 
         StatPhase::wrap("Constructing ST", [&]{
-            uint size =  in.size();
+            size =  in.size();
             //remove sentinel because sdsl cant handle that
             while(in[size-1] == 0){
                 size--;
@@ -217,7 +218,7 @@ public:
 
                             }
                             //now inplace merge to end
-                            std::inplace_merge(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].begin()+ offsets[offsets.size()-1], node_begins[no_leaf_id].end());
+                            std::inplace_merge(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].begin()+ offsets.back(), node_begins[no_leaf_id].end());
 
                             //sort bps of leaves
                           //  std::sort(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].end());
@@ -404,9 +405,9 @@ public:
             auto symbol = non_terminal_symbols[nts_num];
 
            // DLOG(INFO)<<"encoding from "<<symbol.first<<" to "<<symbol.second + symbol.first;
-            for(uint pos = symbol.first; pos < symbol.second + symbol.first ; pos++){
+            for(uint pos = symbol.first; pos < symbol.second + symbol.first -1 ; pos++){
              //   DLOG(INFO)<<"pos: " <<pos;
-                if(second_layer_nts[pos] == 0){
+                if(second_layer_nts[pos] == 0 && pos < in.size()){
                     literals<< in[pos];
 
                 }
