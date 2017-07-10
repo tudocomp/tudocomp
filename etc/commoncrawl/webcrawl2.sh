@@ -3,7 +3,7 @@
 # Script to download at least 200MiB of ASCII-only
 # plain text extract from commoncrawls.org
 
-target_size=10000
+target_size=10240
 ascii_extract="commoncrawl_${target_size}.ascii"
 
 wet_paths_url="https://commoncrawl.s3.amazonaws.com/crawl-data/CC-MAIN-2016-50/wet.paths.gz"
