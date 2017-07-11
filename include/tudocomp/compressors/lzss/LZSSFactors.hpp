@@ -78,56 +78,53 @@ public:
 public:
     inline void flatten() {
         if(m_factors.empty()) return; //nothing to do
-        assert(m_sorted);
+
+        CHECK(m_sorted)
+            << "factors need to be sorted before they can be flattened";
 
         // create pos -> factor map
-        DynamicIntVector fmap;
+        auto& last = m_factors.back();
+        DynamicIntVector fmap(
+            last.pos + last.len,
+            0,
+            bits_for(m_factors.size() + 1));
 
-        StatPhase::wrap("Populate Map", [&]{
-            auto& last = m_factors.back();
-            fmap = DynamicIntVector(
-                last.pos + last.len,
-                0,
-                bits_for(m_factors.size() + 1));
+        for(size_t i = 0; i < m_factors.size(); i++) {
+            auto& f = m_factors[i];
+            for(size_t j = 0; j < f.len; j++) {
+                fmap[f.pos + j] = i + 1;
+            }
+        }
 
-            for(size_t i = 0; i < m_factors.size(); i++) {
-                auto& f = m_factors[i];
-                for(size_t j = 0; j < f.len; j++) {
-                    //fmap.emplace(f.pos + j, &f);
-                    fmap[f.pos + j] = i + 1;
+        // process factors
+        size_t num_flattened = 0;
+        size_t max_depth = 0;
+        for(auto& f : m_factors) {
+            size_t depth = 0;
+
+            size_t src = f.src;
+            while(src < fmap.size() && fmap[src]) {
+                auto& s = m_factors[fmap[src] - 1];
+
+                size_t d = src - s.pos;
+                if((s.src + d + f.len) <= (s.src + s.len)) {
+                    src = s.src + d;
+                    ++depth;
+                } else {
+                    break;
                 }
             }
-        });
+            
+            if(depth) {
+                f.src = src;
 
-        StatPhase::wrap("Process Factors", [&]{
-            size_t num_flattened = 0;
-            size_t max_depth = 0;
-            for(auto& f : m_factors) {
-                size_t depth = 0;
-
-                size_t src = f.src;
-                while(src < fmap.size() && fmap[src]) {
-                    auto& s = m_factors[fmap[src] - 1];
-
-                    size_t d = src - s.pos;
-                    if((s.src + d + f.len) <= (s.src + s.len)) {
-                        src = s.src + d;
-                        ++depth;
-                    } else {
-                        break;
-                    }
-                }
-                
-                if(depth) {
-                    f.src = src;
-
-                    ++num_flattened;
-                    max_depth = std::max(max_depth, depth);
-                }
+                ++num_flattened;
+                max_depth = std::max(max_depth, depth);
             }
-            StatPhase::log("num_flattened", num_flattened);
-            StatPhase::log("max_depth", max_depth);
-        });
+        }
+
+        StatPhase::log("num_flattened", num_flattened);
+        StatPhase::log("max_depth", max_depth);
     }
 
     inline size_t shortest_factor() const {
