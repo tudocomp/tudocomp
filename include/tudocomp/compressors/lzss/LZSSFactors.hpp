@@ -109,6 +109,10 @@ public:
                 size_t d = src - s.pos;
                 if((s.src + d + f.len) <= (s.src + s.len)) {
                     src = s.src + d;
+
+                    //FIXME: actually, one would have to add the flatten
+                    //       depth of the referred factors recursively,
+                    //       so the depth here is only a lower bound
                     ++depth;
                 } else {
                     break;
@@ -124,7 +128,7 @@ public:
         }
 
         StatPhase::log("num_flattened", num_flattened);
-        StatPhase::log("max_depth", max_depth);
+        StatPhase::log("max_depth_lb", max_depth);
     }
 
     inline size_t shortest_factor() const {
