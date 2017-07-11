@@ -95,6 +95,8 @@ public:
                     }
                 }
             }
+
+            StatPhase::log("num_factors", factors.size());
         });
     }
 };

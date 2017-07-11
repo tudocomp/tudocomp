@@ -89,6 +89,7 @@ public:
         m.option("dec").templated<dec_t, lcpcomp::ScanDec>("lcpcomp_dec");
         m.option("textds").templated<text_t, TextDS<>>("textds");
         m.option("threshold").dynamic(5);
+        m.option("flatten").dynamic(0); // 0 or 1
         m.uses_textds<text_t>(strategy_t::textds_flags());
         return m;
     }
@@ -118,7 +119,12 @@ public:
         });
 
         // sort factors
-        StatPhase::wrap("Sorting Factors", [&]{ factors.sort(); });
+        StatPhase::wrap("Sort Factors", [&]{ factors.sort(); });
+
+        if(env().option("flatten").as_integer()) {
+            // flatten factors
+            StatPhase::wrap("Flatten Factors", [&]{ factors.flatten(); });
+        }
 
         // encode
         StatPhase::wrap("Encode Factors", [&]{
