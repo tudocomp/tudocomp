@@ -89,7 +89,7 @@ public:
         m.option("dec").templated<dec_t, lcpcomp::ScanDec>("lcpcomp_dec");
         m.option("textds").templated<text_t, TextDS<>>("textds");
         m.option("threshold").dynamic(5);
-        m.option("flatten").dynamic(0); // 0 or 1
+        m.option("flatten").dynamic(1); // 0 or 1
         m.uses_textds<text_t>(strategy_t::textds_flags());
         return m;
     }
@@ -141,7 +141,6 @@ public:
         //TODO: tell that forward-factors are allowed
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
         auto outs = output.as_stream();
-
 
         //lzss::decode_text_internal<coder_t, dec_t>(decoder, outs);
         // if(lazy == 0)
