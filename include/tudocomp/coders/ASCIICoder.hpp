@@ -31,7 +31,7 @@ public:
         using tdc::Encoder::Encoder;
 
         template<typename value_t>
-        inline void encode(value_t v, const Range& r) {
+        inline void encode(value_t v, const Range&) {
             std::ostringstream s;
             s << v;
             for(uint8_t c : s.str()) m_out->write_int(c);
@@ -39,12 +39,12 @@ public:
         }
 
         template<typename value_t>
-        inline void encode(value_t v, const LiteralRange& r) {
+        inline void encode(value_t v, const LiteralRange&) {
             m_out->write_int(uint8_t(v));
         }
 
         template<typename value_t>
-        inline void encode(value_t v, const BitRange& r) {
+        inline void encode(value_t v, const BitRange&) {
             m_out->write_int(v ? '1' : '0');
         }
     };
@@ -55,7 +55,7 @@ public:
         using tdc::Decoder::Decoder;
 
         template<typename value_t>
-        inline value_t decode(const Range& r) {
+        inline value_t decode(const Range&) {
             std::ostringstream os;
             for(uint8_t c = m_in->read_int<uint8_t>();
                 c >= '0' && c <= '9';
@@ -73,12 +73,12 @@ public:
         }
 
         template<typename value_t>
-        inline value_t decode(const LiteralRange& r) {
+        inline value_t decode(const LiteralRange&) {
             return value_t(m_in->read_int<uint8_t>());
         }
 
         template<typename value_t>
-        inline value_t decode(const BitRange& r) {
+        inline value_t decode(const BitRange&) {
             uint8_t b = m_in->read_int<uint8_t>();
             return (b != '0');
         }

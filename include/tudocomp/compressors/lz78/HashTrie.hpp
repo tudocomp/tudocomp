@@ -1,31 +1,53 @@
 #pragma once
 
-#include <unordered_map>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/util/Hash.hpp>
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 #include <tudocomp/compressors/lz78/squeeze_node.hpp>
+#include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 namespace lz78 {
 
+
+template<class HashFunction = MixHasher, class HashProber = LinearProber, class HashManager = SizeManagerPow2>
 class HashTrie : public Algorithm, public LZ78Trie<factorid_t> {
-    using squeze_node_t = ::tdc::lz78::node_t;
-	std::unordered_map<squeze_node_t, factorid_t> table;
+	HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,HashProber,HashManager> m_table;
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "hash", "Lempel-Ziv 78 Hash Trie");
+        Meta m("lz78trie", "hash", "Hash Trie");
+		m.option("hash_function").templated<HashFunction, MixHasher>("hash_function");
+		m.option("hash_prober").templated<HashProber, LinearProber>("hash_prober");
+		m.option("hash_manager").templated<HashManager, SizeManagerPow2>("hash_manager");
+        m.option("load_factor").dynamic(30);
 		return m;
 	}
 
-    HashTrie(Env&& env, factorid_t reserve = 0) : Algorithm(std::move(env)) {
+    HashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+		: Algorithm(std::move(env))
+		, LZ78Trie(n,remaining_characters)
+        , m_table(this->env(),n,remaining_characters)
+	{
+        m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
 		if(reserve > 0) {
-			table.reserve(reserve);
+			m_table.reserve(reserve);
 		}
     }
 
+    IF_STATS(
+        MoveGuard m_guard;
+        ~HashTrie() {
+            if (m_guard) {
+                m_table.collect_stats(env());
+            }
+        }
+    )
+    HashTrie(HashTrie&& other) = default;
+    HashTrie& operator=(HashTrie&& other) = default;
+
 	node_t add_rootnode(uliteral_t c) override {
-		table.insert(std::make_pair<squeze_node_t,factorid_t>(create_node(0, c), size()));
+		m_table.insert(std::make_pair<squeeze_node_t,factorid_t>(create_node(0, c), size()));
 		return size() - 1;
 	}
 
@@ -34,7 +56,7 @@ public:
     }
 
 	void clear() override {
-		table.clear();
+//		table.clear();
 
 	}
 
@@ -42,13 +64,13 @@ public:
         auto parent = parent_w.id();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
-		auto ret = table.insert(std::make_pair(create_node(parent,c), newleaf_id));
+		auto ret = m_table.insert(std::make_pair(create_node(parent,c), newleaf_id));
 		if(ret.second) return undef_id; // added a new node
-		return ret.first->second; // return the factor id of that node
+		return ret.first.value();
     }
 
     factorid_t size() const override {
-        return table.size();
+        return m_table.entries();
     }
 };
 

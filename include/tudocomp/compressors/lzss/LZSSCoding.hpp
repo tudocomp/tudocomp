@@ -15,34 +15,33 @@
 namespace tdc {
 namespace lzss {
 
-template<typename coder_t, typename text_t>
-inline void encode_text(coder_t& coder,
-                        const text_t& text,
-                        const FactorBuffer& factors) {
+template<typename coder_t, typename text_t, typename factor_t = FactorBuffer>
+inline void encode_text(coder_t& coder, const text_t& text, const factor_t& factors) {
     assert(factors.is_sorted());
 
-    auto n = text.size();
+    const auto n = text.size();
 
     // determine longest and shortest factor
-    auto flen_min = factors.shortest_factor();
-    auto flen_max = factors.longest_factor();
+    const auto flen_min = factors.shortest_factor();
+    const auto flen_max = factors.longest_factor();
 
     // determine longest distance between two factors
     size_t fdist_max = 0;
     {
         size_t p = 0;
-        for(size_t i = 0; i < factors.size(); i++) {
-            fdist_max = std::max(fdist_max, factors[i].pos - p);
-            p = factors[i].pos + factors[i].len;
+        for(auto it = factors.begin(); it != factors.end(); ++it) {
+            const Factor& factor = *it;
+            fdist_max = std::max(fdist_max, factor.pos - p);
+            p = factor.pos + factor.len;
         }
 
         fdist_max = std::max(fdist_max, n - p);
     }
 
     // define ranges
-    Range text_r(n);
-    MinDistributedRange flen_r(flen_min, flen_max);
-    Range fdist_r(fdist_max);
+    const Range text_r(n);
+    const MinDistributedRange flen_r(flen_min, flen_max); //! range for factor lengths
+    const Range fdist_r(fdist_max);
 
     // encode ranges
     coder.encode(n, len_r);
@@ -51,11 +50,11 @@ inline void encode_text(coder_t& coder,
     coder.encode(fdist_max, text_r);
 
     // walk over factors
-    size_t p = 0;
-    for(size_t i = 0; i < factors.size(); i++) {
-        const Factor& f = factors[i];
+    size_t p = 0; //! current text position
+    for(auto it = factors.begin(); it != factors.end(); ++it) {
+        const Factor& factor = *it;
 
-        if(factors[i].pos == p) {
+        if(factor.pos == p) {
             // cursor reached factor i, encode 0-bit
             coder.encode(false, bit_r);
         } else {
@@ -63,21 +62,22 @@ inline void encode_text(coder_t& coder,
             coder.encode(true, bit_r);
 
             // also encode amount of literals until factor i
-            DCHECK_LE(p, factors[i].pos);
-            coder.encode(factors[i].pos - p, fdist_r);
+            DCHECK_LE(p, factor.pos);
+            DCHECK_LE(factor.pos - p, fdist_max); //distance cannot be larger than maximum distance
+            coder.encode(factor.pos - p, fdist_r);
         }
 
         // encode literals until cursor reaches factor i
-        while(p < f.pos) {
+        while(p < factor.pos) {
             coder.encode(text[p++], literal_r);
         }
 
         // encode factor
-        DCHECK_LT(f.src + f.len, n);
-        coder.encode(f.src, text_r);
-        coder.encode(f.len, flen_r);
+        DCHECK_LT(factor.src + factor.len, n);
+        coder.encode(factor.src, text_r);
+        coder.encode(factor.len, flen_r);
 
-        p += f.len;
+        p += size_t(factor.len);
     }
 
     if(p < n) {

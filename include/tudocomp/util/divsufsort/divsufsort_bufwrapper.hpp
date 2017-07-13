@@ -1,6 +1,8 @@
 #pragma once
 
-#include <tudocomp/util/divsufsort_def.hpp>
+#include <algorithm>
+
+#include <tudocomp/util/divsufsort/divsufsort_def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {
@@ -40,22 +42,31 @@ private:
     DynamicIntVector& m_buffer;
     saidx_t m_index;
 
-    // upper value bounds for bit width
-    const uint64_t m_upper, m_upper_signed;
+    const int m_shift;
 
-    inline saidx_t to_signed(uint64_t v) {
-        return (v >= m_upper_signed) ? -(m_upper - v) : v;
+    inline saidx_t to_signed(uint64_t v, int p = 0) {
+        // NB: Need to use portable arithmetic shift instruction
+        // to ensure shifting a signed value causes a proper sign extension
+        return shift_by(shift_by(int64_t(v), m_shift), -m_shift);
     }
 
-    inline uint64_t to_unsigned(saidx_t v) {
-        return (v < 0) ? (m_upper + v) : v;
+    inline uint64_t to_unsigned(saidx_t v, int p = 0) {
+        return (uint64_t(int64_t(v)) << m_shift) >> m_shift;
+    }
+
+    std::string pm(uint64_t v) {
+        std::stringstream ss;
+        for(size_t i = 0; i < 64; i++) {
+            ss << int((v & (1ull << (64 - i - 1))) != 0);
+        }
+        return ss.str();
     }
 
 public:
-    inline Accessor(DynamicIntVector& buffer, saidx_t i)
-        : m_buffer(buffer), m_index(i),
-          m_upper(1ULL << buffer.width()),
-          m_upper_signed(m_upper >> 1ULL)
+    inline Accessor(DynamicIntVector& buffer, saidx_t i):
+        m_buffer(buffer),
+        m_index(i),
+        m_shift(64 - buffer.width())
     {
     }
 

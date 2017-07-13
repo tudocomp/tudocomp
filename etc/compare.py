@@ -11,6 +11,9 @@ import statistics
 import subprocess
 import tempfile
 import time
+import pprint
+import json
+from collections import namedtuple
 
 # Argument parser
 parser = argparse.ArgumentParser(description="""
@@ -23,23 +26,78 @@ parser.add_argument('--iterations', '-n', type=int, default=1,
                     help='the amount of iterations for each input file')
 parser.add_argument('files', metavar='FILE', type=str, nargs='+',
                     help='the input files to use for comparison')
+parser.add_argument('--format', type=str, default='stdout',
+                    help='Format to output')
+parser.add_argument('--nomem', action="store_true",
+                    help='Don\'t measure memory')
 
 args = parser.parse_args()
+
+class StdOutTable:
+    def __init__(self):
+        pass
+    def print(self, *s):
+        print(*s)
+    def file(self, srcfname, srcsize, srchash):
+        print()
+        print("File: %s (%s, sha256=%s)" % (srcfname, memsize(srcsize), srchash))
+    def header(self, tup):
+        print()
+        print(("%"+ str(maxnicknamelength) + "s | %10s | %10s | %10s | %10s | %10s | %4s |") % tup)
+        print('-'*(maxnicknamelength+5*10+6*3+4+2))
+    def cell(self, content, format, sep, f):
+        print((format + " " + sep) % f(content), end='',flush=True)
+    def end_row(self):
+        print()
+    def flush(self):
+        pass
+
+class JsonTable:
+    def __init__(self):
+        self.messages = []
+        self.files = {}
+    def print(self, *s):
+        self.messages.append(" ".join(map(str, iter(s))))
+    def file(self, srcfname, srcsize, srchash):
+        self.files[srcfname] = {}
+        self.currentfile = self.files[srcfname]
+        self.currentfile["cols"] = {}
+        self.currentfile["size"] = srcsize
+        self.currentfile["hash"] = srchash
+    def header(self, tup):
+        self.headings = tup
+        self.current_heading = 0
+        for heading in tup:
+            self.currentfile["cols"][heading] = []
+    def cell(self, content, format, sep, f):
+        self.currentfile["cols"][self.headings[self.current_heading]].append(content)
+        self.current_heading += 1
+    def end_row(self):
+        self.current_heading = 0
+
+    def flush(self):
+        print(json.dumps(self.__dict__, sort_keys=True, indent=4))
+
+sot = StdOutTable()
+if args.format == "json":
+    sot = JsonTable()
 
 # Ensure that the input files are readable
 for srcfname in args.files:
     if not os.access(srcfname, os.R_OK):
-        print("ERROR: Input file not found or not readable:", srcfname)
+        sot.print("ERROR: Input file not found or not readable:", srcfname)
         quit()
 
 # Check that valgrind is available for memory measurement
-try:
-    subprocess.check_call(["valgrind", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    mem_available = True
-except:
-    mem_available = False
-    print("WARNING: valgrind not found - memory measurement unavailable.")
-    print()
+mem_available = False
+if not args.nomem:
+    try:
+        subprocess.check_call(["valgrind", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        mem_available = True
+    except:
+        mem_available = False
+        sot.print("WARNING: valgrind not found - memory measurement unavailable.")
+        sot.print()
 
 # Program execution definition
 StdOut = 0
@@ -82,11 +140,11 @@ if args.suite:
                 raise(Exception("Suite must only contain CompressorPair objects" +
                     ", found " + str(type(c))))
     except:
-        print("ERROR: Failed to load suite '" + args.suite + "'")
-        print(sys.exc_info()[1])
+        sot.print("ERROR: Failed to load suite '" + args.suite + "'")
+        sot.print(sys.exc_info()[1])
         quit()
 
-    print("Using suite '" + args.suite + "'")
+    sot.print("Using suite '" + args.suite + "'")
 
 else:
     # default
@@ -109,7 +167,7 @@ else:
         StdCompressor(name='lzma -1',  binary='lzma',  cflags=['-1'], dflags=['-d']),
         StdCompressor(name='lzma -9',  binary='lzma',  cflags=['-9'], dflags=['-d']),
     ]
-    print("Using built-in default suite")
+    sot.print("Using built-in default suite")
 
 def memsize(num, suffix='B'):
     for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
@@ -197,25 +255,24 @@ def measure_mem(x, infilename, outfilename):
 
 maxnicknamelength = len(max(suite, key=lambda p: len(p.name))[0] ) + 3
 
-print("Number of iterations per file: ", args.iterations)
+sot.print("Number of iterations per file: ", args.iterations)
 
 for srcfname in args.files:
     srchash = hashlib.sha256(open(srcfname, 'rb').read()).hexdigest()
     srcsize = os.path.getsize(srcfname)
 
-    print()
-    print("File: %s (%s, sha256=%s)" % (srcfname, memsize(srcsize), srchash))
+    sot.file(srcfname, srcsize, srchash)
 
-    print()
-    print(("%"+ str(maxnicknamelength) + "s | %10s | %10s | %10s | %10s | %10s | %4s |") % ("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"))
-    print('-'*(maxnicknamelength+5*10+6*3+4+2))
+    sot.header(("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"));
 
     logfilename = tempfile.mktemp()
     decompressedfilename = tempfile.mktemp()
     outfilename = tempfile.mktemp()
 
-    def print_column(content, format="%11s", sep="|"):
-        print((format + " " + sep) % content, end='',flush=True)
+    def print_column(content, format="%11s", sep="|", f=lambda x:x):
+        sot.cell(content, format, sep, f)
+    def end_row():
+        sot.end_row()
 
     try:
         with open(logfilename,"wb") as logfile:
@@ -226,31 +283,31 @@ for srcfname in args.files:
                 # compress time
                 try:
                     comp_time=measure_time(c.compress, srcfname, outfilename)
-                    print_column(timesize(comp_time))
+                    print_column(comp_time*1000, f=lambda x: timesize(x/1000))
                 except FileNotFoundError as e:
                     print_column("(ERR)", sep=">")
-                    print(" " + e.strerror)
+                    sot.print(" " + e.strerror)
                     continue
 
                 # compress memory
                 if mem_available:
                     comp_mem=measure_mem(c.compress, srcfname, outfilename)
-                    print_column(memsize(comp_mem))
+                    print_column(comp_mem,f=memsize)
                 else:
                     print_column("(N/A)")
 
                 # compress rate
                 outputsize=os.path.getsize(outfilename)
-                print_column(100*float(outputsize) / float(srcsize), format="%10.4f%%")
+                print_column(float(outputsize) / float(srcsize), format="%10.4f%%", f=lambda x: 100*x)
 
                 # decompress time
                 dec_time = measure_time(c.decompress, outfilename, decompressedfilename)
-                print_column(timesize(dec_time))
+                print_column(dec_time*1000,f=lambda x: timesize(x/1000))
 
                 # decompress memory
                 if mem_available:
                     dec_mem = measure_mem(c.decompress, outfilename, decompressedfilename)
-                    print_column(memsize(dec_mem))
+                    print_column(dec_mem,f=memsize)
                 else:
                     print_column("(N/A)")
 
@@ -264,13 +321,13 @@ for srcfname in args.files:
                     print_column("OK", format="%5s")
 
                 # EOL
-                print()
+                end_row()
     except:
-        print()
-        print("ERROR:", sys.exc_info()[0])
-        print(sys.exc_info()[1])
+        sot.print()
+        sot.print("ERROR:", sys.exc_info()[0])
+        sot.print(sys.exc_info()[1])
 
-with open(logfilename, 'r') as fin: print(fin.read())
+with open(logfilename, 'r') as fin: sot.print(fin.read())
 os.remove(logfilename)
 
 if os.path.exists(decompressedfilename):
@@ -278,4 +335,6 @@ if os.path.exists(decompressedfilename):
 
 if os.path.exists(outfilename):
     os.remove(outfilename)
+
+sot.flush()
 

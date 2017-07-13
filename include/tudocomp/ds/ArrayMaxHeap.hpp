@@ -127,7 +127,7 @@ private:
 			else {
                 dir = NONE;
             }
-		
+
 
             // go down if necessary
             if(dir == LEFT) {

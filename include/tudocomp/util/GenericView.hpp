@@ -69,6 +69,11 @@ public:
     inline GenericView(std::vector<T>& other):
         Super::GenericViewBase(other.data(), other.size()) {}
 
+    /// Construct a View pointing at the contents of a array
+    template<size_t N>
+    inline GenericView(std::array<uliteral_t, N>& other):
+        Super::GenericViewBase(other.data(), other.size()) {}
+
     /// Construct a vector with the contents of this View
     inline operator std::vector<T>() const {
         return Super::operator std::vector<T>();

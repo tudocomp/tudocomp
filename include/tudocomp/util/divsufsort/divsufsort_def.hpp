@@ -6,7 +6,7 @@ namespace tdc {
 namespace libdivsufsort {
 
 // core type definitions
-using saidx_t = std::make_signed<len_t>::type;
+using saidx_t = ssize_t;
 using saint_t = int;
 using sauchar_t = uliteral_t;
 

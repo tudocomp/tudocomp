@@ -255,7 +255,7 @@ the following steps are necessary:
 
 1. Build *tudocomp*
 1. Point the compiler to the `include` directory for includes
-1. Statically link `<build_dir>/src/tudocomp_stat/libtudocomp_stat.a` (where 
+1. Statically link `<build_dir>/src/tudocomp_stat/libtudocomp_stat.a` (where
    `<build_dir>` is the location where *tudocomp* has been built in)
 
 Note that the aforementioned [dependencies](#dependencies) need to be linked
@@ -414,8 +414,12 @@ for (len_t i = iview.size(); i > 0; i--) {
 }
 ~~~
 
-The type [`len_t`](@DX_LEN_T@) is another one of *tudocomp*'s core
-types and shall be used for lengths and indices.
+The types [`len_t`](@DX_LEN_T@) and [`len_compact_t`](@DX_LEN_COMPACT_T@)
+are another instance of *tudocomp*'s core types.
+They shall be used for lengths and indices derived from the length of an input.
+
+`len_t` shall be used for single variables, and `len_compact_t` for elements
+of an array or vector.
 
 The functions `as_stream` and `as_view` can be used arbitrarily often to create
 multiple streams or views on the same input, e.g., in case the input is to be
@@ -1028,7 +1032,7 @@ an ASCII encoding for single bits, as identified by the
 
 ~~~ {.cpp caption="coder_impl.cpp"}
 template<typename value_t>
-inline void encode(value_t v, const BitRange& r) {
+inline void encode(value_t v, const BitRange&) {
     // Encode single bits as ASCII
     m_out->write_int(v ? '1' : '0');
 }
@@ -1038,7 +1042,7 @@ The same idea works with decoding:
 
 ~~~ {.cpp caption="coder_impl.cpp"}
 template<typename value_t>
-inline value_t decode(const BitRange& r) {
+inline value_t decode(const BitRange&) {
     // Decode an ASCII character and compare against '0'
     uint8_t b = m_in->read_int<uint8_t>();
     return (b != '0');
@@ -1061,7 +1065,7 @@ literal iterator to count the amount of occurences of each possible literal
 
 ~~~ {.cpp caption="coder_impl.cpp"}
 // count occurences of each literal
-std::memset(m_occ, 0, 256);
+std::memset(m_occ, 0, 256 * sizeof(int));
 
 while(literals.has_next()) {
     Literal l = literals.next();
@@ -1499,7 +1503,7 @@ in the following snippet:
 // Allocate memory, but only track mem2
 StatPhase::pause_tracking();
 char* mem1 = new char[1024];
-StatPhase::resume_tracking();    
+StatPhase::resume_tracking();
 
 char* mem2 = new char[2048];
 

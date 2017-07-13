@@ -51,8 +51,10 @@ TEST(lzss, factor_buffer_sort) {
     buf.sort();
     ASSERT_TRUE(buf.is_sorted());
 
-    for(size_t i = 0; i < buf.size() - 1; i++) {
-        ASSERT_LE(buf[i].pos, buf[i+1].pos);
+    auto last = buf.begin();
+    for(auto next = last + 1; next != buf.end(); ++next) {
+        ASSERT_LE(last->pos, next->pos);
+        last = next;
     }
 }
 
@@ -66,7 +68,7 @@ template<typename text_t>
 void lzss_text_literals_factors(
     lzss::TextLiterals<text_t>& literals,
     const std::string& ref_literals,
-    const len_t* ref_positions) {
+    const len_compact_t* ref_positions) {
 
     size_t i = 0;
     while(literals.has_next()) {
@@ -81,7 +83,7 @@ void lzss_text_literals_factors(
 
 TEST(lzss, text_literals_nofactors) {
     std::string text = "abcdefgh";
-    const len_t positions[] = {0,1,2,3,4,5,6,7};
+    const len_compact_t positions[] = {0,1,2,3,4,5,6,7};
 
     lzss::FactorBuffer empty;
     lzss::TextLiterals<std::string> literals(text, empty);
@@ -92,7 +94,7 @@ TEST(lzss, text_literals_nofactors) {
 TEST(lzss, text_literals_factors_middle) {
     std::string text = "a__b____cd___e";
     std::string ref_literals = "abcde";
-    const len_t ref_positions[] = {0,3,8,9,13};
+    const len_compact_t ref_positions[] = {0,3,8,9,13};
 
     lzss::FactorBuffer factors;
     factors.emplace_back(1, text.length(), 2);
@@ -107,7 +109,7 @@ TEST(lzss, text_literals_factors_middle) {
 TEST(lzss, text_literals_factors_begin) {
     std::string text = "___a__bc__de";
     std::string ref_literals = "abcde";
-    const len_t ref_positions[] = {3,6,7,10,11};
+    const len_compact_t ref_positions[] = {3,6,7,10,11};
 
     lzss::FactorBuffer factors;
     factors.emplace_back(0, text.length(), 3);
@@ -122,7 +124,7 @@ TEST(lzss, text_literals_factors_begin) {
 TEST(lzss, text_literals_factors_end) {
     std::string text = "a___b__cd__e__";
     std::string ref_literals = "abcde";
-    const len_t ref_positions[] = {0,4,7,8,11};
+    const len_compact_t ref_positions[] = {0,4,7,8,11};
 
     lzss::FactorBuffer factors;
     factors.emplace_back(1, text.length(), 3);

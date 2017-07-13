@@ -28,11 +28,11 @@
 
 #pragma once
 
-#include <tudocomp/util/divsufsort_def.hpp>
-#include <tudocomp/util/divsufsort_private.hpp>
-#include <tudocomp/util/divsufsort_ssort.hpp>
-#include <tudocomp/util/divsufsort_trsort.hpp>
-#include <tudocomp/util/divsufsort_bufwrapper.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_def.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_private.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_ssort.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_trsort.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_bufwrapper.hpp>
 
 #include <tudocomp/ds/IntVector.hpp>
 
@@ -236,16 +236,6 @@ inline void divsufsort_run(
 
     saidx_t m = sort_typeBstar(T, SA, bucket_A, bucket_B, n);
     construct_SA(T, SA, bucket_A, bucket_B, n, m);
-}
-
-// specialize for len_t vectors
-template<>
-inline void divsufsort_run<std::vector<len_t>>(
-    const sauchar_t* T, std::vector<len_t>& SA,
-    saidx_t *bucket_A, saidx_t *bucket_B, saidx_t n) {
-
-    BufferWrapper<std::vector<len_t>> wrapSA(SA);
-    divsufsort_run(T, wrapSA, bucket_A, bucket_B, n);
 }
 
 // specialize for DynamicIntVector

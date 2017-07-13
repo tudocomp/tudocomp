@@ -38,7 +38,7 @@ public:
             m_max = plcp.max_lcp();
             const size_t w = bits_for(m_max);
 
-            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : LEN_BITS));
+            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w : INDEX_FAST_BITS));
 
             (*this)[0] = 0;
             for(len_t i = 1; i < n; i++) {

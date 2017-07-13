@@ -28,6 +28,8 @@ class ViewStream {
         virtual inline std::streampos seekpos(std::streampos sp,
                                               std::ios_base::openmode which) override
         {
+            DCHECK(which == (std::ios_base::in | std::ios_base::out));
+
             auto begin = eback();
             auto end = egptr();
             if ((size_t(begin) + sp) > size_t(end)) {

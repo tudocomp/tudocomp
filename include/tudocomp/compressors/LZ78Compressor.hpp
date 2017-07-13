@@ -6,6 +6,10 @@
 
 #include <tudocomp_stat/StatPhase.hpp>
 
+// For default params
+#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
+#include <tudocomp/coders/BitCoder.hpp>
+
 namespace tdc {
 
 	class BitCoder;
@@ -72,18 +76,20 @@ public:
     }
 
     virtual void compress(Input& input, Output& out) override {
-        const size_t reserved_size = isqrt(input.size())*2;
+		const size_t n = input.size();
+        const size_t reserved_size = isqrt(n)*2;
         auto is = input.as_stream();
 
         // Stats
         StatPhase phase1("Lz78 compression");
 
-        len_t stat_dictionary_resets = 0;
-        len_t stat_dict_counter_at_last_reset = 0;
-        len_t stat_factor_count = 0;
-        len_t factor_count = 0;
+        IF_STATS(size_t stat_dictionary_resets = 0);
+        IF_STATS(size_t stat_dict_counter_at_last_reset = 0);
+        IF_STATS(size_t stat_factor_count = 0);
+        size_t factor_count = 0;
 
-        dict_t dict(env().env_for_option("lz78trie"), reserved_size);
+		size_t remaining_characters = n; // position in the text
+        dict_t dict(env().env_for_option("lz78trie"), n, remaining_characters, reserved_size);
 
         auto reset_dict = [&dict] () {
             dict.clear();
@@ -102,13 +108,14 @@ public:
         DCHECK_EQ(parent.id(), 0);
 
         char c;
-        while (is.get(c)) {
+        while(is.get(c)) {
+			--remaining_characters;
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
             if(child.id() == lz78::undef_id) {
                 coder.encode(node.id(), Range(factor_count));
                 coder.encode(static_cast<uliteral_t>(c), literal_r);
                 factor_count++;
-                stat_factor_count++;
+                IF_STATS(stat_factor_count++);
                 parent = node = dict.get_rootnode(0); // return to the root
                 DCHECK_EQ(node.id(), 0);
                 DCHECK_EQ(parent.id(), 0);
@@ -118,8 +125,8 @@ public:
                     DCHECK(false); // broken right now
                     reset_dict();
                     factor_count = 0; //coder.dictionary_reset();
-                    stat_dictionary_resets++;
-                    stat_dict_counter_at_last_reset = m_dict_max_size;
+                    IF_STATS(stat_dictionary_resets++);
+                    IF_STATS(stat_dict_counter_at_last_reset = m_dict_max_size);
                 }
             } else { // traverse further
                 parent = node;
@@ -131,16 +138,19 @@ public:
         if(node.id() != 0) {
             coder.encode(parent.id(), Range(factor_count));
             coder.encode(c, literal_r);
-            DCHECK_EQ(dict.find_or_insert(parent, static_cast<uliteral_t>(c)).id(), node.id());
+//            // TODO: this check only works if the trie is not the MonteCarloTrie !
+//            DCHECK_EQ(dict.find_or_insert(parent, static_cast<uliteral_t>(c)).id(), node.id());
             factor_count++;
-            stat_factor_count++;
+            IF_STATS(stat_factor_count++);
         }
 
+		IF_STATS(
         phase1.log_stat("factor_count", stat_factor_count);
         phase1.log_stat("dictionary_reset_counter",
                        stat_dictionary_resets);
         phase1.log_stat("max_factor_counter",
                        stat_dict_counter_at_last_reset);
+		)
     }
 
     virtual void decompress(Input& input, Output& output) override final {

@@ -17,6 +17,8 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" AND
     message(FATAL_ERROR "g++ version 5.4 or greater required!")
 endif()
 
+set(CXX_STANDARD c++14)
+
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     # using Clang or AppleClang
     if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "3.4")
@@ -34,9 +36,16 @@ endif()
 include(ExternalProject)
 
 # More warnings and debug info
-set(CMAKE_CXX_FLAGS "-std=gnu++14 -Wall")
-set(CMAKE_CXX_FLAGS_RELEASE "-std=gnu++14 -DNDEBUG -march=native")
-set(CMAKE_CXX_FLAGS_DEBUG "-std=gnu++14 -O0 -ggdb -DDEBUG")
+# TODO: Add these, they break building glog -Wextra -Wpedantic
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG")
+
+# Set integer with for length type
+if(DEFINED LEN_BITS)
+    message(STATUS "Setting length type to ${LEN_BITS} Bits")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEN_BITS=${LEN_BITS}")
+endif(DEFINED LEN_BITS)
 
 find_package(Boost)
 
@@ -97,24 +106,6 @@ add_subdirectory(docs)
 
 # Web
 add_subdirectory(www)
-
-# tudocomp_algorithms
-
-add_library(
-    tudocomp_algorithms
-    ${CMAKE_BINARY_DIR}/tudocomp_algorithms.cpp
-)
-
-target_link_libraries(
-    tudocomp_algorithms
-
-    tudocomp_stat
-    tudocomp
-    glog
-    sdsl
-)
-
-cotire(tudocomp_algorithms)
 
 MESSAGE( STATUS "Built Type: " ${CMAKE_BUILD_TYPE} )
 MESSAGE( STATUS "[Optional] Judy Array: " ${JUDY_H_AVAILABLE} )

@@ -10,6 +10,10 @@
 
 #include <tudocomp_stat/StatPhase.hpp>
 
+// For default params
+#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
+#include <tudocomp/coders/BitCoder.hpp>
+
 namespace tdc {
 
 	class BitCoder;
@@ -38,17 +42,19 @@ public:
     }
 
     virtual void compress(Input& input, Output& out) override {
-		const size_t reserved_size = isqrt(input.size())*2;
+		const size_t n = input.size();
+		const size_t reserved_size = isqrt(n)*2;
         auto is = input.as_stream();
 
         // Stats
         StatPhase phase("LZW Compression");
-        len_t stat_dictionary_resets = 0;
-        len_t stat_dict_counter_at_last_reset = 0;
-        len_t stat_factor_count = 0;
-        len_t factor_count = 0;
+        IF_STATS(size_t stat_dictionary_resets = 0);
+        IF_STATS(size_t stat_dict_counter_at_last_reset = 0);
+        IF_STATS(size_t stat_factor_count = 0);
+        size_t factor_count = 0;
 
-        dict_t dict(env().env_for_option("lz78trie"), reserved_size);
+		size_t remaining_characters = n; // position in the text
+        dict_t dict(env().env_for_option("lz78trie"), n, remaining_characters, reserved_size+ULITERAL_MAX+1);
 		auto reset_dict = [&dict] () {
 			dict.clear();
             std::stringstream ss;
@@ -69,12 +75,13 @@ public:
 		node_t node = dict.get_rootnode(static_cast<uliteral_t>(c));
 
 		while(is.get(c)) {
+			--remaining_characters;
 			node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
 			DVLOG(2) << " child " << child.id() << " #factor " << factor_count << " size " << dict.size() << " node " << node.id();
 
 			if(child.id() == lz78::undef_id) {
                 coder.encode(node.id(), Range(factor_count + ULITERAL_MAX + 1));
-                stat_factor_count++;
+                IF_STATS(stat_factor_count++);
                 factor_count++;
 				DCHECK_EQ(factor_count+ULITERAL_MAX+1, dict.size());
                 node = dict.get_rootnode(static_cast<uliteral_t>(c));
@@ -83,8 +90,8 @@ public:
 					DCHECK_GT(dict.size(),0);
 					reset_dict();
 					factor_count = 0; //coder.dictionary_reset();
-					stat_dictionary_resets++;
-					stat_dict_counter_at_last_reset = m_dict_max_size;
+					IF_STATS(stat_dictionary_resets++);
+					IF_STATS(stat_dict_counter_at_last_reset = m_dict_max_size);
 				}
 			} else { // traverse further
 				node = child;
@@ -95,12 +102,14 @@ public:
 		// take care of left-overs. We do not assume that the stream has a sentinel
 		DCHECK_NE(node.id(), lz78::undef_id);
 		coder.encode(node.id(), Range(factor_count + ULITERAL_MAX + 1)); //LZW
-		stat_factor_count++;
+		IF_STATS(stat_factor_count++);
 		factor_count++;
 
+		IF_STATS(
         phase.log_stat("factor_count", stat_factor_count);
         phase.log_stat("dictionary_reset_counter", stat_dictionary_resets);
         phase.log_stat("max_factor_counter", stat_dict_counter_at_last_reset);
+		)
     }
 
     virtual void decompress(Input& input, Output& output) override final {
@@ -109,10 +118,10 @@ public:
         auto out = output.as_stream();
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
 
-        len_t counter = 0;
+        size_t counter = 0;
 
 		//TODO file_corrupted not used!
-        lzw::decode_step([&](lz78::factorid_t& entry, bool reset, bool &file_corrupted) -> lzw::Factor {
+        lzw::decode_step([&](lz78::factorid_t& entry, bool reset, bool &file_corrupted) -> bool {
             if (reset) {
                 counter = 0;
             }

@@ -28,8 +28,8 @@
 
 #pragma once
 
-#include <tudocomp/util/divsufsort_def.hpp>
-#include <tudocomp/util/divsufsort_private.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_def.hpp>
+#include <tudocomp/util/divsufsort/divsufsort_private.hpp>
 
 namespace tdc {
 namespace libdivsufsort {

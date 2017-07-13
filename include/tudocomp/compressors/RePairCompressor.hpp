@@ -37,7 +37,7 @@ private:
     private:
         const text_t* m_text;
         len_t         m_text_size;
-        const len_t*  m_next;
+        const len_compact_t*  m_next;
         len_t         m_pos;
 
         std::vector<uliteral_t> m_g_literals;
@@ -46,7 +46,7 @@ private:
     public:
         inline Literals(const text_t& text,
                         len_t text_size,
-                        const len_t* next,
+                        const len_compact_t* next,
                         const grammar_t& grammar)
             : m_text(&text), m_text_size(text_size), m_next(next),
               m_pos(0), m_g_pos(0) {
@@ -101,13 +101,13 @@ public:
         // prepare editable text
         len_t n;
         sym_t *text;
-        len_t *next; //TODO use an int vector of required bit width
+        len_compact_t *next; //TODO use an int vector of required bit width
 
         {
             auto view = input.as_view();
             n = view.size();
             text = new sym_t[n];
-            next = new len_t[n];
+            next = new len_compact_t[n];
 
             for(size_t i = 0; i < n; i++) {
                 text[i] = view[i];

@@ -3,14 +3,37 @@
 import re
 import sys
 import itertools
+import argparse
+import pprint
+import hashlib
+import collections
+import os
+import time
 
-if not len(sys.argv[1:]) == 3:
-    print(str.format("Usage {} [config.h] [selection] [outfile]", sys.argv[0]))
-    sys.exit(1)
+from operator import itemgetter, attrgetter
+from textwrap import dedent, indent
+from collections import OrderedDict
 
-config_path = sys.argv[1]
-selection = sys.argv[2]
-outfile = sys.argv[3]
+parser = argparse.ArgumentParser()
+parser.add_argument("config")
+parser.add_argument("config_header_path")
+parser.add_argument("out_path")
+parser.add_argument("--print_deps", action="store_true")
+parser.add_argument("--print", action="store_true")
+parser.add_argument("--generate_files", action="store_true")
+parser.add_argument("--group", type=int)
+args = parser.parse_args()
+
+pyconfig = args.config
+config_path = args.config_header_path
+out_path = args.out_path
+
+def eval_config(path, globs):
+    file0 = open(path, 'r')
+    content = file0.read()
+    file0.flush()
+    file0.close()
+    exec(content, globs)
 
 def config_match(pattern):
     textfile = open(config_path, 'r')
@@ -22,145 +45,157 @@ def config_match(pattern):
             return True
     return False
 
-context_free_coder = [
-    ("ASCIICoder",      "coders/ASCIICoder.hpp",      []),
-    ("BitCoder",        "coders/BitCoder.hpp",        []),
-    ("EliasGammaCoder", "coders/EliasGammaCoder.hpp", []),
-    ("EliasDeltaCoder", "coders/EliasDeltaCoder.hpp", []),
-]
+kinds = []
+def generate_code(lkinds):
+    global kinds
+    kinds = lkinds
 
-# TODO: Fix bad interaction between sle and lz78u code and remove this distinction
-tmp_lz78u_string_coder = context_free_coder + [
-    ("HuffmanCoder", "coders/HuffmanCoder.hpp", []),
-]
+eval_config(pyconfig, {
+    "config_match"  : config_match,
+    "generate_code" : generate_code,
+})
 
-coder = tmp_lz78u_string_coder + [
-    ("SLECoder",   "coders/SLECoder.hpp",   []),
-]
+def iprint(*arg):
+    if args.print: print(*arg)
 
-lz78_trie = [
-    ("lz78::BinarySortedTrie", "compressors/lz78/BinarySortedTrie.hpp", []),
-    ("lz78::BinaryTrie",       "compressors/lz78/BinaryTrie.hpp",       []),
-    ("lz78::HashTrie",         "compressors/lz78/HashTrie.hpp",         []),
-    ("lz78::MyHashTrie",       "compressors/lz78/MyHashTrie.hpp",       []),
-    ("lz78::TernaryTrie",      "compressors/lz78/TernaryTrie.hpp",      []),
-    ("lz78::CedarTrie",        "compressors/lz78/CedarTrie.hpp",        []),
-]
+# //////////////////////////////////////////////////////////////// #
+# //                                                            // #
+# //  The registered algorithms now live in registry_config.py  // #
+# //                                                            // #
+# //////////////////////////////////////////////////////////////// #
 
-if config_match("^#define JUDY_H_AVAILABLE 1"): lz78_trie += [
-    ("lz78::JudyTrie",         "compressors/lz78/JudyTrie.hpp",         []),
-]
+def code(s, i = 0, r = {}):
+    s = indent(dedent(s)[1:], '    ' * i)
+    for key in r:
+        s = s.replace(key, r[key])
+    return s
 
-lcpc_strat = [
-    ("lcpcomp::MaxHeapStrategy",  "compressors/lcpcomp/compress/MaxHeapStrategy.hpp",   []),
-    ("lcpcomp::MaxLCPStrategy",   "compressors/lcpcomp/compress/MaxLCPStrategy.hpp",    []),
-    ("lcpcomp::ArraysComp", "compressors/lcpcomp/compress/ArraysComp.hpp",  []),
-    ("lcpcomp::PLCPPeaksStrategy","compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp", []),
-]
-
-if config_match("^#define Boost_FOUND 1"): lcpc_strat += [
-    ("lcpcomp::BoostHeap",  "compressors/lcpcomp/compress/BoostHeap.hpp",   []),
-    ("lcpcomp::PLCPStrategy",     "compressors/lcpcomp/compress/PLCPStrategy.hpp",      [])
-    ]
-
-lcpc_buffer = [
-    ("lcpcomp::ScanDec",       "compressors/lcpcomp/decompress/ScanDec.hpp", []),
-    ("lcpcomp::DecodeForwardQueueListBuffer", "compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp",  []),
-    ("lcpcomp::CompactDec",           "compressors/lcpcomp/decompress/CompactDec.hpp",     []),
-    ("lcpcomp::MyMapBuffer",                  "compressors/lcpcomp/decompress/MyMapBuffer.hpp",            []),
-    ("lcpcomp::MultimapBuffer",               "compressors/lcpcomp/decompress/MultiMapBuffer.hpp",         []),
-]
-
-lcpc_coder = [
-    ("ASCIICoder", "coders/ASCIICoder.hpp", []),
-    ("SLECoder", "coders/SLECoder.hpp", []),
-]
-
-lz78u_strategy = [
-    ("lz78u::StreamingStrategy", "compressors/lz78u/StreamingStrategy.hpp", [context_free_coder]),
-    ("lz78u::BufferingStrategy", "compressors/lz78u/BufferingStrategy.hpp", [tmp_lz78u_string_coder]),
-]
-
-textds = [
-    ("TextDS<>", "ds/TextDS.hpp", [])
-]
-
-compressors = [
-    ("LCPCompressor",               "compressors/LCPCompressor.hpp",               [lcpc_coder, lcpc_strat, lcpc_buffer, textds]),
-    ("LZ78UCompressor",             "compressors/LZ78UCompressor.hpp",             [lz78u_strategy, context_free_coder]),
-    ("RunLengthEncoder",            "compressors/RunLengthEncoder.hpp",            []),
-    ("LiteralEncoder",              "compressors/LiteralEncoder.hpp",              [coder]),
-    ("LZ78Compressor",              "compressors/LZ78Compressor.hpp",              [context_free_coder, lz78_trie]),
-    ("LZWCompressor",               "compressors/LZWCompressor.hpp",               [context_free_coder, lz78_trie]),
-    ("RePairCompressor",            "compressors/RePairCompressor.hpp",            [coder]),
-    ("LZSSLCPCompressor",           "compressors/LZSSLCPCompressor.hpp",           [coder, textds]),
-    ("LZSSSlidingWindowCompressor", "compressors/LZSSSlidingWindowCompressor.hpp", [context_free_coder]),
-    ("MTFCompressor",               "compressors/MTFCompressor.hpp",               []),
-    ("NoopCompressor",              "compressors/NoopCompressor.hpp",              []),
-    ("BWTCompressor",               "compressors/BWTCompressor.hpp",               [textds]),
-    ("ChainCompressor",             "../tudocomp_driver/ChainCompressor.hpp",      []),
-]
-
-generators = [
-    ("FibonacciGenerator",     "generators/FibonacciGenerator.hpp", []),
-    ("ThueMorseGenerator",     "generators/ThueMorseGenerator.hpp", []),
-    ("RandomUniformGenerator", "generators/RandomUniformGenerator.hpp", []),
-    ("RunRichGenerator",       "generators/RunRichGenerator.hpp", []),
-]
+class Code:
+    def __init__(self):
+        self.s = ""
+    def code(self, s, i = 0, r = {}):
+        self.s += code(s, i, r)
+    def emptyline(self):
+        self.s += "\n"
+    def str(self):
+        return self.s
 
 algorithms_cpp_head = '''
-/* Autogenerated file by genregistry.py */
+    /* Autogenerated file by genregistry.py */
 '''
 
-algorithms_cpp_decl = '''
-#include <tudocomp_driver/Registry.hpp>
+def root_cpp(kinds):
+    r = Code()
 
-namespace tdc_algorithms {
+    # Header of root.cpp file
+    r.code(algorithms_cpp_head)
+    r.emptyline()
+    r.code('''
+        #include <tudocomp_driver/Registry.hpp>
 
-using namespace tdc;
+        namespace tdc_algorithms {
+            using namespace tdc;
+    ''')
+    r.emptyline()
 
-void register_compressors(Registry<Compressor>& r);
-void register_generators(Registry<Generator>& r);
+    # Generate calls to each template expansion of a kind of Registry
+    for (type, calls) in kinds:
+        ident = type.lower()
+        const = type.upper()
 
-// One global instance for the registry
-Registry<Compressor> COMPRESSOR_REGISTRY = Registry<Compressor>::with_all_from(register_compressors, "compressor");
-Registry<Generator> GENERATOR_REGISTRY = Registry<Generator>::with_all_from(register_generators, "generator");
+        # Declare and define the registry and register function
+        r.code('''
+            void register_$IDENTs(Registry<$TYPE>& r);
+            Registry<$TYPE> $CONST_REGISTRY = Registry<$TYPE>::with_all_from(register_$IDENTs, "$IDENT");
+        ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
+        r.emptyline()
 
-void register_compressors(Registry<Compressor>& r) {
-$COMPRESSORS
-}//function register_compressors
+        # Forward-declare all template expansion calls
+        for call in calls:
+            r.code('''
+                void register_$CALL(Registry<$TYPE>& r);
+            ''', 1, { "$CALL": call, "$TYPE": type })
+        r.emptyline()
 
-void register_generators(Registry<Generator>& r) {
-$GENERATORS
-}//function register_generators
+        # Define the register functions
+        r.code('''
+            void register_$IDENTs(Registry<$TYPE>& r) {
+        ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
+        for call in calls:
+            r.code('''
+                register_$CALL(r);
+            ''', 2, { "$CALL": call})
+        r.code('''
+            } // register_$IDENTs
+        ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
+        r.emptyline()
+    r.code('''
+        } // namespace
+    ''')
+    return r.str()
 
-}//ns
-'''
+def single_expansion_cpp(kind, call_ident, call_type, headers):
+    r = Code()
 
-tudocomp_hpp_template = '''
-/*
-    Autogenerated file by genregistry.py
-    Include this to include practically all of tudocomp.
+    # Header of *.cpp file
+    r.code(algorithms_cpp_head)
+    r.emptyline()
+    r.code('''
+        #include <tudocomp_driver/Registry.hpp>
+    ''')
+    for header in headers:
+        r.code('''
+            #include <tudocomp/$HEADER>
+        ''', 0, { "$HEADER": header })
+    r.code('''
 
-    This header also contains the Doxygen documentation of the main namespaces.
-*/
-'''
+        namespace tdc_algorithms {
+            using namespace tdc;
+    ''')
+    r.emptyline()
+
+    # Call with actual template expansion
+    r.code('''
+        void register_$CALL(Registry<$TYPE>& r) {
+            r.register_algorithm<$CTYPE>();
+        }
+    ''', 1, { "$TYPE": kind, "$CALL": call_ident, "$CTYPE": call_type })
+    r.code('''
+        }
+    ''')
+    return r.str()
 
 # Generates carthesian product of template params
 def gen_list(ls):
     def expand_deps(algorithm):
         name = algorithm[0]
+        header = algorithm[1]
         deps = algorithm[2]
 
         deps_lists = [gen_list(x) for x in deps]
-        deps_lists_prod = itertools.product(*deps_lists)
+
+        #pprint.pprint(deps_lists)
+
+        deps_lists_prod = list(itertools.product(*deps_lists))
+
+        #pprint.pprint(deps_lists_prod)
 
         return_list = []
         for deps_tuple in deps_lists_prod:
             if len(deps_tuple) == 0:
-                return_list += [str.format("{}", name)]
+                return_list.append(([header], str.format("{}", name), [name]))
             else:
-                return_list += [str.format("{}<{}>", name, ",".join(deps_tuple))]
+                hs = []
+                ds = []
+                hiers = []
+                for (hss, d, hier) in deps_tuple:
+                    for h in hss:
+                        hs.append(h)
+                    ds.append(d)
+                    hiers += hier
+                hs.append(header)
+                hs = list(OrderedDict.fromkeys(hs))
+                return_list.append((hs, str.format("{}<{}>", name, ",".join(ds)), [name] + hiers))
 
         assert len(return_list) != 0
 
@@ -171,37 +206,150 @@ def gen_list(ls):
         return_list += expand_deps(algorithm)
     return return_list
 
-# Generates list of all includes
-def gather_header(ls):
-    headers = set()
-    for e in ls:
-        headers |= { e[1] }
-        for a in e[2]:
-            headers |= gather_header(a)
-    return headers
+def make_hash(s):
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+def update_file(path, content):
+    if os.path.exists(path):
+        file2 = open(path, 'r')
+        existing_content = file2.read()
+        file2.close()
+        if existing_content == content:
+            #print("Skipping", path)
+            return
+    file1 = open(path, 'w+')
+    file1.write(content)
+    file1.flush()
+    file1.close()
+    while not os.path.exists(path):
+        time.sleep(0.01)
+    while True:
+        file3 = open(path, 'r')
+        actually_written_content = file3.read()
+        file3.close()
+        if actually_written_content == content:
+            break
 
 # Output algorithm.cpp
 def gen_algorithm_cpp():
-    algorithms_cpp = algorithms_cpp_head
-    for header in sorted(gather_header(compressors + generators)):
-        algorithms_cpp += str.format("#include <tudocomp/{}>\n", header)
+    Instance = collections.namedtuple("Instance", [
+        "identifier",
+        "hierachy",
+        "file_name",
+        "content",
+    ])
 
-    algorithms_cpp += algorithms_cpp_decl
-    l_compressors = []
-    for line in gen_list(compressors):
-        l_compressors += [str.format("    r.register_algorithm<{}>();", line)]
+    kind_instances = []
 
-    l_generators = []
-    for line in gen_list(generators):
-        l_generators += [str.format("    r.register_algorithm<{}>();", line)]
+    for (kind, l) in kinds:
+        instances = []
+        for (headers, line, hierachy) in gen_list(l):
+            hsh = make_hash(line)[0:10]
+            escaped_line = line \
+                .replace('<', '_') \
+                .replace('>', '_') \
+                .replace(',', '_') \
+                .replace(':', '_')
+            escaped_hash_line =  hsh + "_" + escaped_line
+            #print(escaped_hash_line, len(escaped_hash_line))
 
-    return algorithms_cpp.replace(
-                "$COMPRESSORS", "\n".join(l_compressors)).replace(
-                "$GENERATORS", "\n".join(l_generators))+ "\n"
+            path = os.path.join(out_path, escaped_hash_line + ".cpp")
+            #print(path)
 
-if selection == "tudocomp_algorithms.cpp":
-    file1 = open(outfile, 'w+')
-    file1.write(gen_algorithm_cpp())
-    file1.close()
-else:
-    sys.exit(1)
+            instance_content = single_expansion_cpp(kind, escaped_hash_line, line, headers)
+
+            instances.append(Instance(
+                escaped_hash_line,
+                hierachy,
+                path,
+                instance_content
+            ))
+        kind_instances.append((kind, instances))
+
+    for (kind, instances) in kind_instances:
+        for instance in instances:
+            iprint(instance.hierachy)
+            iprint(instance.file_name)
+            iprint(instance.content)
+
+            if args.generate_files:
+                update_file(instance.file_name, instance.content)
+
+    root_content = root_cpp(list(map(lambda t: (t[0], list(map(lambda x: x.identifier, t[1]))), kind_instances)))
+    root_file =  os.path.join(out_path, "root" + ".cpp")
+    iprint(root_file)
+    iprint(root_content)
+    if args.generate_files:
+        update_file(root_file, root_content)
+
+    dep_paths = [root_file]
+
+    for (kind, instances) in kind_instances:
+        if not args.group or len(instances) < args.group:
+            dep_paths += list(map(lambda x: x.file_name, instances))
+        else:
+            instance_groups = [instances]
+            while len(instance_groups) < args.group:
+                first = instance_groups[0]
+                if len(first) == 1:
+                    break
+                instance_groups.pop(0)
+
+                counter = OrderedDict()
+                for x in first:
+                    for b in x.hierachy:
+                        if not b in counter: counter[b] = 0
+                        counter[b] += 1
+
+                counter_l = []
+                for k in counter:
+                    counter_l.append((k, counter[k]))
+
+                counter_l.sort(key=itemgetter(1))
+                counter_l.reverse()
+
+                while counter_l[0][1] == len(first):
+                    counter_l.pop(0)
+                #pprint.pprint(counter_l)
+
+                head = []
+                tail = []
+                for ins in first:
+                    if counter_l[0][0] in ins.hierachy:
+                        head.append(ins)
+                    else:
+                        tail.append(ins)
+                instance_groups.append(head)
+                instance_groups.append(tail)
+
+                #pprint.pprint(list(map(lambda y: list(map(lambda x: x.file_name, y)), instance_groups)))
+
+                instance_groups.sort(key=lambda x: len(x))
+                instance_groups.reverse()
+
+                #print("Current grouping:")
+                #pprint.pprint([len(x) for x in instance_groups])
+
+            group_paths = []
+            for group in instance_groups:
+                conc = "".join([x.identifier for x in group])
+                group_file_name = "group_" + make_hash(conc) + ".cpp"
+                group_content = "".join([x.content for x in group])
+                group_file_path = os.path.join(out_path, group_file_name)
+                group_paths.append(group_file_path)
+
+                iprint(group_file_name)
+                iprint(group_content)
+                if args.generate_files:
+                    update_file(group_file_path, group_content)
+
+            dep_paths += group_paths
+
+    if args.print_deps:
+        sys.stdout.write(";".join(dep_paths))
+        sys.stdout.flush()
+
+
+gen_algorithm_cpp()
+
+os.sync()

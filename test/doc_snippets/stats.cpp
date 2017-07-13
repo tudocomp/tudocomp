@@ -54,7 +54,7 @@ TEST(stats, example) {
     StatPhase::wrap("Phase 3", []{
         // Phase 3.1 yields a complex result
         StatPhase sub_phase("Phase 3.1");
-        
+
         char* result_part_1 = new char[1024];
         char* result_part_2 = new char[2048];
         std::this_thread::sleep_for(std::chrono::milliseconds(40));
@@ -76,7 +76,7 @@ TEST(stats, pause_resume) {
     // Allocate memory, but only track mem2
     StatPhase::pause_tracking();
     char* mem1 = new char[1024];
-    StatPhase::resume_tracking();    
+    StatPhase::resume_tracking();
 
     char* mem2 = new char[2048];
 

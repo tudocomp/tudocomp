@@ -479,8 +479,9 @@ inline void roundtrip_ex(string_ref original_text,
     auto e = RoundTrip<T>(options, registry).compress(original_text);
     auto& compressed_text = e.str;
 
-    if(expected_compressed_text.size() > 0)
-    ASSERT_EQ(std::string(expected_compressed_text), compressed_text);
+    if(expected_compressed_text.size() > 0) {
+        ASSERT_EQ(std::string(expected_compressed_text), compressed_text);
+    }
 
     e.assert_decompress();
 }

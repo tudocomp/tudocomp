@@ -34,7 +34,9 @@ public:
             const size_t w = bits_for(n);
 
             // divsufsort needs one additional bit for signs
-            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w + 1 : LEN_BITS));
+            set_array(iv_t(n, 0, (cm == CompressMode::compressed) ? w + 1 : INDEX_FAST_BITS));
+            //std::cout << w << "\n";
+            //std::cout << INDEX_FAST_BITS << "\n";
 
             // Use divsufsort to construct
             divsufsort(t.text(), (iv_t&) *this, n);

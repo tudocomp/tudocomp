@@ -28,7 +28,7 @@ public:
     }
 
 private:
-    len_t** m_fwd;
+    len_compact_t** m_fwd;
 
     len_t m_cursor;
     IF_STATS(len_t m_longest_chain);
@@ -44,7 +44,7 @@ private:
 		DCHECK(c != 0 || pos == m_buffer.size()-1); // we assume that the text to restore does not contain a NULL-byte but at its very end
 
         if(m_fwd[pos] != nullptr) {
-            const len_t*const& bucket = m_fwd[pos];
+            const len_compact_t*const& bucket = m_fwd[pos];
             for(size_t i = 1; i < bucket[0]; ++i) {
                 decode_literal_at(bucket[i], c); // recursion
             }
@@ -83,7 +83,7 @@ public:
         IF_STATS(m_longest_chain = 0);
         IF_STATS(m_current_chain = 0);
 
-        m_fwd = new len_t*[size];
+        m_fwd = new len_compact_t*[size];
         std::fill(m_fwd,m_fwd+size,nullptr);
     }
 
@@ -97,9 +97,9 @@ public:
             if(m_buffer[src]) {
                 decode_literal_at(m_cursor, m_buffer[src]);
             } else {
-                len_t*& bucket = m_fwd[src];
+                len_compact_t*& bucket = m_fwd[src];
                 if(bucket == nullptr) {
-                    bucket = new len_t[2];
+                    bucket = new len_compact_t[2];
                     DCHECK(m_fwd[src] == bucket);
                     bucket[0] = 2;
 					bucket[1] = m_cursor;
@@ -107,7 +107,7 @@ public:
 				else
                 { // this block implements the call of m_fwd[src]->push_back(m_cursor);
 					++bucket[0]; // increase the size of a bucket only by one!
-					bucket = (len_t*) realloc(bucket, sizeof(len_t)*bucket[0]);
+					bucket = (len_compact_t*) realloc(bucket, sizeof(len_compact_t)*bucket[0]);
                     bucket[bucket[0]-1] = m_cursor;
                 }
             }
