@@ -6,6 +6,9 @@ macro(dataset_target dataset_name dataset_parent_target)
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
     add_dependencies(${dataset_parent_target} datasets_${dataset_name})
+
+    # Don't build this automatically
+    set_target_properties(${dataset_parent_target} PROPERTIES EXCLUDE_FROM_ALL true)
 endmacro(dataset_target)
 
 dataset_target(pizza_chili datasets)
@@ -15,7 +18,5 @@ dataset_target(tagmynews datasets)
 #dataset_target(hashtag datasets)
 dataset_target(wiki datasets)
 dataset_target(commoncrawl datasets)
-dataset_target(large datasets)
 
-# Don't build this automatically
-set_target_properties(datasets PROPERTIES EXCLUDE_FROM_ALL true)
+dataset_target(large datasets_large)
