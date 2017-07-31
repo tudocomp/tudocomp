@@ -15,6 +15,7 @@ dataset_target(tagmynews)
 #dataset_target(hashtag)
 dataset_target(wiki)
 dataset_target(commoncrawl)
+dataset_target(large)
 
 # Don't build this automatically
 set_target_properties(datasets PROPERTIES EXCLUDE_FROM_ALL true)
