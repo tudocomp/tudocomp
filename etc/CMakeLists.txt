@@ -19,4 +19,4 @@ dataset_target(tagmynews datasets)
 dataset_target(wiki datasets)
 dataset_target(commoncrawl datasets)
 
-dataset_target(large datasets_large)
+dataset_target(large large_datasets)
