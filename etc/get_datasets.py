@@ -57,7 +57,7 @@ def remove_suffix(path):
         Path(path).stem
     )
 
-def download_and_extract(OUT_DIR, URLS, SIZES):
+def download_and_extract(OUT_DIR, SIZES, URLS):
     SIZES.sort()
 
     # max_size = max(*SIZES)
@@ -92,7 +92,7 @@ def download_and_extract(OUT_DIR, URLS, SIZES):
                 tmp_download_path = remove_suffix(tmp_download_path)
             elif preprocess == "7z":
                 _7z = sh.Command("7z")
-                _7z("e", "-o", TMP_DIR, tmp_download_path)
+                _7z("e", "-o" + TMP_DIR, tmp_download_path)
                 sh.rm(tmp_download_path)
                 tmp_download_path = remove_suffix(tmp_download_path)
 
