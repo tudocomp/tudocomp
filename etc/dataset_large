@@ -4,7 +4,8 @@
 OUT_DIR=large
 PREFIX_SIZES="10240"
 
+#"http://zola.di.unipi.it/andrea/wp-content/uploads/2016/05/rlzap_dataset.tar.gz"
+
 URLS=(
-    "http://zola.di.unipi.it/andrea/wp-content/uploads/2016/05/rlzap_dataset.tar.gz"
     "dacit.cs.uni-dortmund.de/datasets/commoncrawl_10240.ascii"
 )
