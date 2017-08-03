@@ -2,8 +2,8 @@
 
 //Original Implementation::
 // https://gist.github.com/makagonov/f7ed8ce729da72621b321f0ab547debb
-
 //from: http://stackoverflow.com/questions/9452701/ukkonens-suffix-tree-algorithm-in-plain-english/9513423#9513423
+
 #include <string>
 #include <map>
 #include <vector>
@@ -36,10 +36,8 @@ private:
 
     //information of nodes, stored in array
 
-   // std::vector<char> edge;
 
     //represents the edge leading to this node
-    //DynamicIntVector start_dyn;
     vectortype start;
     vectortype end;
 
@@ -83,68 +81,19 @@ private:
         end[new_node] = e;
 
         //init empty node
-       // start.push_back(s);
-       // end.push_back(e);
-       // first_child.push_back(0);
-       // next_sibling.push_back(0);
-       // edge.push_back(c);
-       // suffix_link.push_back(0);
-      //  suffix.push_back(0);
 
         return new_node;
 
     }
 
 
-    /* uint previous_sibling = child;
-            if(child != 0){
-                do
-                {
-                    if(  Text[(start[child])] == active_edge){
-                        found = true;
-                        break;
-                    } else {
-                        previous_sibling = child;
-                        child=next_sibling[child];
-                    }
-                }
-                while (child != 0);
-
-            }
-            */
-
     void reserve(){
 
-       // auto bits_req_text = bits_for(Text.size() );
         auto size = Text.size() * 2 -1;
-       // auto bits_req_arr = bits_for(size);
-
-       // bits_req_arr = ((bits_req_arr /8)+1)*8;
-       // bits_req_text = ((bits_req_text /8)+1)*8;
-
-       // bits_req_arr =32;
-       // bits_req_text=32;
-
-        /*
-        start= DynamicIntVector(size, 0, bits_req_text);
-        end =  DynamicIntVector(size, 0, bits_req_text);
-        //init empty node
-     //   start.reserve(size);
-     //   end.reserve(size);
-        first_child= DynamicIntVector(size, 0, bits_req_arr);
-        next_sibling= DynamicIntVector(size, 0, bits_req_arr);
-      //  edge.reserve(size);
-        suffix_link= DynamicIntVector(size, 0, bits_req_arr);
-        suffix= DynamicIntVector(size, 0, bits_req_text);
-        */
         start= vectortype(size, 0);
         end =  vectortype(size, 0);
-        //init empty node
-     //   start.reserve(size);
-     //   end.reserve(size);
         first_child= vectortype(size, 0);
         next_sibling= vectortype(size, 0);
-      //  edge.reserve(size);
         suffix_link= vectortype(size, 0);
         suffix= vectortype(size, 0);
 
@@ -167,10 +116,9 @@ private:
         end.shrink_to_fit();
         first_child.shrink_to_fit();
         next_sibling.shrink_to_fit();
-      //  suffix_link.shrink_to_fit();
         suffix.shrink_to_fit();
 
-        //deallocate sl, because not necessar, save 20% space
+        //deallocate sl, because not necessary, save 20% space
         suffix_link=vectortype(0, 0);
 
     }
@@ -193,7 +141,6 @@ private:
         //init root
         create_node(0,0,0);
         //suffix corresponds to start
- //       suffix.push_back(0);
 
 
         //active start node is root
@@ -236,7 +183,6 @@ public:
 
 private:
     inline void add_char(char c){
-        //Text += c;
         pos++;
         remainder++;
         last_added_sl=0;
@@ -303,12 +249,10 @@ private:
                 //now split edge if the edge is found
 
                 uint split = create_node(start[next], start[next]+active_length, active_edge);
-                //active_inner->child_nodes[active_edge] = split;
 
 
                 start[next]=start[next]+ active_length;
 
-               // leaf->suffix=suffix++;
 
                 //update relations of nodes
                 if(first_child[active_node] == (uint) 0){
@@ -326,11 +270,7 @@ private:
                 next_sibling[next] = leaf;
                 suffix[leaf] = current_suffix++;
 
-
-              //  edge[next]=Text[start[next]];
-               // split->child_nodes[Text[next->start]] = next;
                 add_sl(split);
-       //         leaves.push_back(leaf);
             }
             remainder--;
             if(active_node==0 && active_length>0){
@@ -348,34 +288,6 @@ private:
 
     }
 public:
-  //  inline void append_char(char c){
-
-   //     Text +=c;
-  //      add_char(c);
-  //  }
-
-   // inline void append_string(std::string input){
-   //     Text += input;
-    //    reserve(input.size() * 3);
-     //   leaves.reserve(leaves.size()+input.size());
-    //    for(uint i = 0; i<input.length();i++){
-   //         add_char(input[i]);
-   //     }
-  //  }
-
-   // inline void append_input(Input& input){
-    //    auto iview  = input.as_view();
-  //      append_input(iview);
-  //  }
-
-  //  inline void append_input(io::InputView & input){
-      //  leaves.reserve(leaves.size()+input.size());
-
-    //}
-
-    //inline std::string get_text(){
-    //    return Text;
-   // }
 
     inline uint get_size(){
         return Text.size();
@@ -402,14 +314,8 @@ public:
     }
 
     inline std::string get_string_of_edge(uint node){
-       // return Text.substr(start[node], edge_length(node));
         std::stringstream ss ;
         ss << start[node]<< " " <<start[node] + edge_length(node);
-       // for (uint i = start[node]; i<start[node] + edge_length(node); i++){
-        //    DLOG(INFO)<<"works "<< i << " " <<  edge_length(node) ;
-          //  ss << Text[i];
-        //    DLOG(INFO)<<"works";
-      //  }
         return ss.str();
     }
 
@@ -417,13 +323,6 @@ public:
         return start.size();
     }
 
-   // inline std::vector<STNode*> get_leaves(){
-   //     return leaves;
-  //  }
-
-   // inline STNode* get_leaf(uint position){
-   //     return leaves.at(position);
-   // }
 
 
     inline void print_tree(uint node, std::string depth){
@@ -437,7 +336,6 @@ public:
     }
 
     BinarySuffixTree(Input& input) : Text(input.as_view()){
-     //   auto in = input.as_view();
         compute();
 
    }

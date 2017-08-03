@@ -2,7 +2,6 @@
 
 //Original Implementation::
 // https://gist.github.com/makagonov/f7ed8ce729da72621b321f0ab547debb
-
 //from: http://stackoverflow.com/questions/9452701/ukkonens-suffix-tree-algorithm-in-plain-english/9513423#9513423
 #include <string>
 #include <map>
@@ -24,7 +23,6 @@ public:
     struct STInnerNode;
 private:
 
-    //std::vector<STNode*> leaves;
 
     //root node
     STInnerNode* root;
@@ -218,7 +216,6 @@ public:
 
     inline void append_string(std::string input){
         Text += input;
-     //   leaves.reserve(leaves.size()+input.size());
         for(uint i = 0; i<input.length();i++){
             add_char(input[i]);
         }
@@ -230,7 +227,6 @@ public:
     }
 
     inline void append_input(io::InputView & input){
-      //  leaves.reserve(leaves.size()+input.size());
         Text += input;
         for (uint i = 0; i < input.size(); i++) {
             uint8_t c = input[i];
@@ -255,24 +251,6 @@ public:
         return Text.substr(node->start, edge_length(node));
     }
 
-   // inline std::vector<STNode*> get_leaves(){
-   //     return leaves;
-  //  }
-
-   // inline STNode* get_leaf(uint position){
-   //     return leaves.at(position);
-   // }
-
-    /*
-    inline void print_tree(std::ostream& out, STNode* node, std::string depth){
-        auto it = node->child_nodes.begin();
-        while (it != node->child_nodes.end()){
-            std::pair<char, STNode*> child = *it;
-            out<< depth << "edge: " << get_string_of_edge(child.second) << std::endl;
-            print_tree(out, child.second, depth+"  ");
-            it++;
-        }
-    }*/
 
     SuffixTree(Input& input) : SuffixTree(){
         append_input(input);
