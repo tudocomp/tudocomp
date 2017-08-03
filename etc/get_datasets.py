@@ -79,6 +79,9 @@ def download_and_extract(OUT_DIR, SIZES, URLS):
         elif tmp_download_path.endswith(".7z"):
             target_path = remove_suffix(target_path)
             preprocess = "7z"
+        elif tmp_download_path.endswith(".xz"):
+            target_path = remove_suffix(target_path)
+            preprocess = "xz"
 
         if not path.exists(str(stamp_target_path)):
             print("Download", target_path)
@@ -94,6 +97,9 @@ def download_and_extract(OUT_DIR, SIZES, URLS):
                 _7z = sh.Command("7z")
                 _7z("e", "-o" + TMP_DIR, tmp_download_path)
                 sh.rm(tmp_download_path)
+                tmp_download_path = remove_suffix(tmp_download_path)
+            elif preprocess == "xz":
+                sh.xz("-d", tmp_download_path)
                 tmp_download_path = remove_suffix(tmp_download_path)
 
             sh.mv(tmp_download_path, target_path)
