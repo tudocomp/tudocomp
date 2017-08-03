@@ -21,7 +21,6 @@ namespace lfs {
 class STStrategy : public Algorithm {
 private:
 
-    //(position in text, non_terminal_symbol_number, length_of_symbol);
     typedef std::tuple<uint,uint,uint> non_term;
     typedef std::vector<non_term> non_terminal_symbols;
     typedef std::vector<std::pair<uint,uint>> rules;
@@ -34,17 +33,13 @@ private:
 
     std::vector<std::vector<SuffixTree::STNode*> > bins;
 
-    //    DLOG(INFO)<<"input size: "<<stree.get_size();
         std::unordered_map<SuffixTree::STNode *, std::vector<uint> > beginning_positions;
 
     //stats
     uint node_count;
     uint max_depth;
 
-   // std::vector<uint> child_sizes;
 
-
-   // typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
 
 
     inline virtual void compute_string_depth(SuffixTree::STNode* node, uint str_depth){
@@ -74,7 +69,6 @@ private:
                 bins[str_depth].push_back(node);
             }
 
-      //      child_sizes.push_back(inner->child_nodes.size());
 
             auto it = inner->child_nodes.begin();
             while (it != inner->child_nodes.end()){
@@ -113,7 +107,6 @@ private:
         for (auto it=starting_positions.begin(); it!=starting_positions.end(); ++it){
 
             current = (long) *it;
-          //  DLOG(INFO) << "checking starting position: " << current << " length: " << length << "last " << last;
             if(last+length <= current && !dead_positions[current] && !dead_positions[current+length-1]){
 
                 selected_starting_positions.push_back(current);
@@ -131,7 +124,6 @@ private:
             }
 
         }
-     //   DLOG(INFO)<<"min shorter: "<<min_shorter;
 
         if(min_shorter < length){
 
@@ -141,9 +133,7 @@ private:
 
                 SuffixTree::STInnerNode * parent = inner->parent;
                 uint depth = parent->string_depth;
-             //   DLOG(INFO)<<"check shorter node";
                 if(depth < (uint)(min_shorter)){
-                  //  DLOG(INFO)<<"pushing back shorter node";
 
                     //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
                     bins[min_shorter].push_back(node);
@@ -185,29 +175,6 @@ public:
         StatPhase::log("Max Depth inner Nodes", max_depth);
         DLOG(INFO)<<"max depth: "<<max_depth;
 
-        /*
-
-        std::sort(child_sizes.begin(), child_sizes.end());
-        if(child_sizes.size()>0){
-
-            uint max_depth = child_sizes[child_sizes.size()-1];
-
-            DLOG(INFO)<<"Max Child size: "<< max_depth;
-
-            if(child_sizes.size()>=4){
-                uint quarter = child_sizes.size() /4;
-
-           // nts_depth[quarter -1];
-                StatPhase::log("25 \% quantil Child size", child_sizes[quarter -1]);
-                StatPhase::log("50 \% quantil Child size", child_sizes[(2*quarter) -1]);
-                StatPhase::log("75 \% quantil Child size", child_sizes[(3*quarter) -1]);
-
-            }
-            if(child_sizes.size()>=10){
-                StatPhase::log("90 \% Child size", child_sizes[(9 * (child_sizes.size()/10) ) -1]);
-            }
-            StatPhase::log("Max Child size", max_depth);
-        } */
 
 
         StatPhase::wrap("Computing LRF Substitution", [&]{
@@ -248,7 +215,7 @@ public:
                                     positions.insert(positions.end(), (*child_bp).second.begin(), (*child_bp).second.end());
 
                                     beginning_positions.erase((*child_bp).first);
-                                    //(*child_bp).second.clear();
+
 
                                 }
 
@@ -264,14 +231,12 @@ public:
 
                             it++;
                         }
-                      //  DLOG(INFO)<<"begin pos size: "<< positions.size();
                         std::sort(positions.begin(), positions.end());
 
                         uint real_depth = positions.back() - positions.front();
 
                         if(real_depth<i){
                             rd_counter++;
-                         //   DLOG(INFO)<<"reald depth of node: "<<real_depth;
                         }
 
                         beginning_positions[node]=positions;
@@ -281,7 +246,6 @@ public:
 
                     }
                     std::vector<uint> & begin_pos = beginning_positions[node];
-                   // DLOG(INFO)<<"found pos size: "<< begin_pos.size();
 
                     //check if repeating factor:
                     if(begin_pos.size() >= 2 && ( (begin_pos.back() ) - (begin_pos.front()) >= i)){
@@ -289,9 +253,7 @@ public:
                         //check dead positions:
                         if(!(
                                 dead_positions[(begin_pos.back())]              ||
-                            //    dead_positions[(begin_pos.back()) + i -1]    ||
                                 dead_positions[(begin_pos.front())]
-                            //    dead_positions[(begin_pos.front()) + i -1]
                                 )
 
 
@@ -300,7 +262,7 @@ public:
 
                             std::vector<uint> sel_pos = select_starting_positions(node, i);
 
-                             // DLOG(INFO)<<"selected pos: "<<sel_pos.size();
+
 
 
 
@@ -314,7 +276,6 @@ public:
 
                         //iterate over selected pos, add non terminal symbols
                             for(auto bp_it = sel_pos.begin(); bp_it != sel_pos.end(); bp_it++){
-                                //(position in text, non_terminal_symbol_number, length_of_symbol);
                                 non_term nts = std::make_tuple(*bp_it, nts_number, i);
                                 nts_symbols.push_back(nts);
                                 //mark as used
@@ -326,28 +287,7 @@ public:
                          }
 
 
-
-
-
-
-                      //  DLOG(INFO)<<stree.get_text().substr(*begin_pos.begin(),i);
-                        //vector of text position, length
-                        //std::pair<uint,uint> rule = std::make_pair(begin_pos.begin(), pair.first);
-
-                       // dictionary.push_back(rule);
                     }
-
-                    /*else {
-
-                        uint min_shorter = begin_pos.back() - begin_pos.front();
-                        SuffixTree::STInnerNode * inner = dynamic_cast<SuffixTree::STInnerNode *>(node);
-                        SuffixTree::STInnerNode * parent = inner->parent;
-                        uint parent_depth = parent->string_depth;
-                        if(parent_depth < min_shorter){
-                            bins[min_shorter].push_back(node);
-                        }
-                     //   DLOG(INFO)<<"not a lrf!";
-                    }*/
 
 
                     bin_it++;

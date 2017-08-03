@@ -40,17 +40,9 @@ private:
 
 
 
-    //    DLOG(INFO)<<"input size: "<<stree.get_size();
-      //  std::unordered_map<SuffixTree::STNode *, std::vector<uint> > beginning_positions;
-
     //stats
     uint node_count;
     uint max_depth;
-
-   // std::vector<uint> child_sizes;
-
-
-   // typedef  std::vector<std::pair<uint, SuffixTree::STNode*> > string_depth_vector;
 
 
     inline virtual void compute_string_depth(uint node, uint str_depth){
@@ -61,7 +53,6 @@ private:
         if(child != 0){
             while(str_depth>= bins.size()){
                 bins.resize(bins.size()*2);
-            //    std::cerr<<"resizing: "<<bins.size();
             }
 
 
@@ -97,8 +88,6 @@ private:
         std::vector<uint> selected_starting_positions;
         std::vector<uint> not_selected_starting_positions;
 
-   //     long min_shorter = 1;
-
         //select occurences greedily non-overlapping:
         selected_starting_positions.reserve(starting_positions.size());
 
@@ -107,7 +96,6 @@ private:
         for (auto it=starting_positions.begin(); it!=starting_positions.end(); ++it){
 
             current = (long) *it;
-          //  DLOG(INFO) << "checking starting position: " << current << " length: " << length << "last " << last;
             if(last+length <= current && !dead_positions[current] && !dead_positions[current+length-1]){
 
                 selected_starting_positions.push_back(current);
@@ -145,7 +133,6 @@ public:
 
 
     inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
-     //   BinarySuffixTree stree;
         min_lrf = env().option("min_lrf").as_integer();
 
         StatPhase::wrap("Constructing ST", [&]{
@@ -188,22 +175,19 @@ public:
 
             for(uint i = bins.size()-1; i>=min_lrf; i--){
 
-               // DLOG(INFO)<<"Bin depth: " << i;
                 auto bin_it = bins[i].begin();
                 while (bin_it!= bins[i].end()){
 
 
                     node_type node = *bin_it;
 
-                   // DLOG(INFO)<<"Current node: " << node;
 
                     auto bp = beginning_positions.find(node);
 
-                    //no begin poss found, get from children
+                    //no begin pos found, get from children
 
                     if(bp == beginning_positions.end()){
 
-                     //  DLOG(INFO)<<"Processing bps";
 
                         std::vector<uint> positions;
                         //get leaves or merge child vectors
@@ -211,10 +195,8 @@ public:
                         std::vector<uint> leaf_bps;
 
                         node_type inner = stree->get_first_child(node);
-                       // DLOG(INFO)<<"collectint bps:";
 
                         while (inner != 0){
-                          //  DLOG(INFO)<<"addding pos of "<< inner;
 
                             if(stree->get_first_child(inner) == 0){
                                 uint temp = stree->get_suffix(inner);
@@ -231,33 +213,22 @@ public:
 
 
                                     beginning_positions.erase(inner);
-                                    //(*child_bp).second.clear();
 
                                 }
 
                             }
                             inner = stree->get_next_sibling(inner);
                         }
-                        //std::sort(positions.begin(), positions.end());
-                     //   DLOG(INFO)<<"merging bps:";
-                      //  DLOG(INFO)<<"size leaves: "<< leaf_bps.size();
 
                         std::sort(leaf_bps.begin(), leaf_bps.end());
                         offsets.push_back(positions.size());
                         positions.insert(positions.end(),leaf_bps.begin(), leaf_bps.end());
-                        //offsets.push_back(node_begins[no_leaf_id].size());
-                        //inplace merge with offset
-                      //  DLOG(INFO)<<"offsets: " << offsets.size();
                         for(uint k = 0; k < offsets.size()-1; k++){
-                          //  DLOG(INFO)<<"merging from to "<< k << " "<< k+1;
                             std::inplace_merge(positions.begin(), positions.begin()+ offsets[k], positions.begin()+ offsets[k+1]);
 
                         }
                         //now inplace merge to end
                         std::inplace_merge(positions.begin(), positions.begin()+ offsets.back(), positions.end());
-
-                      //  DLOG(INFO)<<"merging done";
-
 
                         beginning_positions[node]=positions;
 
@@ -266,31 +237,17 @@ public:
 
                     }
                     std::vector<uint> begin_pos = beginning_positions[node];
-               //     DLOG(INFO)<<"found pos size: "<< begin_pos.size();
-
                     //check if repeating factor:
                     if(begin_pos.size() >= 2 && ( (begin_pos.back() ) - (begin_pos.front()) >= i)){
-                   //     DLOG(INFO)<<"cechking bp";
-
                         //check dead positions:
                         if(!(
                                 dead_positions[(begin_pos.back())]              ||
-                            //    dead_positions[(begin_pos.back()) + i -1]    ||
                                 dead_positions[(begin_pos.front())]
-                            //    dead_positions[(begin_pos.front()) + i -1]
                                 )
 
 
                                 ){
-
-
-                      //      DLOG(INFO)<<"selecint bps";
                             std::vector<uint>  sel_pos = select_starting_positions(node, i);
-                           // DLOG(INFO)<<"selected bps";
-
-                      //       DLOG(INFO)<<"selected pos: "<<sel_pos.size();
-
-
 
                             if(! (sel_pos.size() >=2) ){
                                 bin_it++;
@@ -322,8 +279,6 @@ public:
 
                 }
             }
-
-         //   StatPhase::log("real depth counter",rd_counter);
 
 
 

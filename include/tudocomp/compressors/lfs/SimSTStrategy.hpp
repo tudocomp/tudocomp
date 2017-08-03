@@ -12,12 +12,8 @@
 #include <tudocomp/ds/IntVector.hpp>
 
 
-//#include <sdsl/suffixarrays.hpp>
 
 #include <sdsl/suffix_trees.hpp>
-//#include <sdsl/suffix_arrays.hpp>
-//#include <sdsl/csa_bitcompressed.hpp>
-//#include <sdsl/csa_uncompressed.hpp>
 
 
 
@@ -31,7 +27,6 @@ private:
 
     typedef sdsl::bp_interval<long unsigned int> node_type;
 
-    //sdsl::t_csa sa =sdsl::csa_uncompressed<>
     typedef sdsl::cst_sct3< sdsl::csa_bitcompressed<> > cst_t;
     cst_t stree;
 
@@ -89,7 +84,7 @@ private:
                 if(depth < (uint)(min_shorter)){
 
                     //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
-           //         bins[min_shorter].push_back(node_id + stree.size());
+                    bins[min_shorter].push_back(node_id + stree.size());
                 }
             }
         }
@@ -158,8 +153,6 @@ public:
 
 
 
-
-      //  StatPhase::wrap("Computing LRF", [&]{
             DLOG(INFO)<<"computing lrf";
 
             //array of vectors for bins of nodes with string depth
@@ -241,7 +234,7 @@ public:
 
                             offsets.push_back(node_begins[no_leaf_id].size());
                             node_begins[no_leaf_id].insert(node_begins[no_leaf_id].end(),leaf_bps.begin(), leaf_bps.end());
-                            //offsets.push_back(node_begins[no_leaf_id].size());
+
                             //inplace merge with offset
                             for(uint k = 0; k < offsets.size()-1; k++){
                                 std::inplace_merge(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].begin()+ offsets[k], node_begins[no_leaf_id].begin()+ offsets[k+1]);
@@ -251,7 +244,6 @@ public:
                             std::inplace_merge(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].begin()+ offsets[offsets.size()-1], node_begins[no_leaf_id].end());
 
                             //sort bps of leaves
-                          //  std::sort(node_begins[no_leaf_id].begin(), node_begins[no_leaf_id].end());
 
 
                         }
@@ -260,25 +252,7 @@ public:
                             bin_it++;
                             continue;
                         }
-                        //check tuple
-                        /*
-                        if( (node_begins[no_leaf_id].size()>=2) &&
-                                ( (  (uint)( node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front() )) < i )){
-                            uint min_shorter = node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front();
-                            //check if parent subs this lrf
-                            node_type parent = stree.parent(node);
-                            uint depth = stree.depth(parent);
-                            if(depth < (min_shorter)){
-                                //just re-add node, if the possible replaceable lrf is longer than dpeth of parent node
-                                bins[min_shorter].push_back(stree.id(node));
-                            }
 
-                           // std::cerr<<"useless code? size " << node_begins[no_leaf_id].size() <<std::endl;
-
-                            bin_it++;
-                            continue;
-                        }
-                        */
 
                         if( (node_begins[no_leaf_id].size()>=2) &&
                                 ( (  (uint)( node_begins[no_leaf_id].back()   - node_begins[no_leaf_id].front() )) < i )){
@@ -299,7 +273,6 @@ public:
 
                         //iterate over selected pos, add non terminal symbols
                         for(auto bp_it = selected_bp.begin(); bp_it != selected_bp.end(); bp_it++){
-                            //(position in text, non_terminal_symbol_number, length_of_symbol);
                             non_term nts = std::make_tuple(*bp_it, nts_number, i);
                             nts_symbols.push_back(nts);
                             //mark as used
@@ -315,7 +288,6 @@ public:
                 }
 
             });
-    //    });
 
         StatPhase::wrap("Sorting occurences", [&]{
 

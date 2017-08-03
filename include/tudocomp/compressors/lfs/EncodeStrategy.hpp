@@ -60,7 +60,7 @@ public:
 
 
     inline void encode(io::InputView & in, Output & output, rules & dictionary, non_terminal_symbols & nts_symbols){
-        //const auto in = input.as_view();
+
 
         // encode dictionary:
         DLOG(INFO) << "encoding dictionary symbol sizes ";
@@ -78,7 +78,6 @@ public:
         );
 
         auto it = dictionary.begin();
-        //range int_r (0,MAX_INT);
 
         Range intrange (0, UINT_MAX);//uint32_r
         if(dictionary.size() >=1 ){
@@ -104,7 +103,6 @@ public:
 
         long buf_size = bitout->tellp();
 
-       // long alt_size = ;
         StatPhase::log("Bytes Length Encoding", buf_size);
         uint literals=0;
 
@@ -113,14 +111,11 @@ public:
         // encode dictionary strings:
         if(dictionary.size() >=1 ){
             auto it = dictionary.begin();
-            std::pair<uint,uint> symbol;// = *it;
-            //Range slength_r (0, symbol.second);
-            //coder.encode(symbol.second,intrange);//uint32_r
+            std::pair<uint,uint> symbol;
 
              while(it != dictionary.end()){
             //first length of non terminal symbol
                 symbol = *it;
-                //coder.encode(symbol.second,slength_r);
 
                 for(uint k = 0; k<symbol.second; k++){
                     lit_coder.encode(in[symbol.first + k],literal_r);
@@ -265,8 +260,6 @@ public:
 
             }
         }
-        //at last, stream eof
-        //ostream<<(char)0;
     }
 
 

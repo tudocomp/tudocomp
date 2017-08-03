@@ -52,7 +52,6 @@ public:
         DLOG(INFO) << "Compressor instantiated";
     }
     inline virtual void compress(Input& input, Output& output) override {
-       // StatPhase root("lfs compress");
 
         StatPhase::wrap("lfs compressor", [&]{
 
@@ -63,14 +62,12 @@ public:
 
 
 
-            // StatPhase strat("computing lrfs");
             comp_strategy_t strategy(env().env_for_option("computing_strat"));
 
             StatPhase::wrap("computing lrfs", [&]{
             //compute dictionary and nts.
                 strategy.compute_rules( in, dictionary, nts_symbols);
 
-            //DLOG(INFO)
                 DLOG(INFO)<<"dict size: "<<dictionary.size() << std::endl;
                 DLOG(INFO)<<"symbols:"<<nts_symbols.size()<< std::endl;
             });

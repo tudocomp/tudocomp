@@ -66,12 +66,8 @@ public:
 
     inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
 
-//env().env_for_option("textds"),
-        //const auto input = in.as_view();
-
 
         text_t t(env().env_for_option("textds"), input);
-       // text_t t(env, in);
         DLOG(INFO) << "building sa and lcp";
         StatPhase::wrap("computing sa and lcp", [&]{
 
@@ -80,11 +76,10 @@ public:
         auto& sa_t = t.require_sa();
         auto& lcp_t = t.require_lcp();
 
-        //min_lrf=2;
         StatPhase::wrap("computing lrf occurences", [&]{
 
         // iterate over lcp array, add indexes with non overlapping prefix length greater than min_lrf_length to vector
-        //std::vector<std::pair<uint,uint>> lrf_occurences;
+
 
         StatPhase::wrap("computing lrf occs", [&]{
 
@@ -124,10 +119,6 @@ public:
                 factor_length = std::min(factor_length, dif);
                 //second is position in suffix array
                 //first is length of common prefix
-               // std::pair<uint,uint> pair (factor_length, i);
-              //  if(factor_length>=min_lrf){
-               //     lrf_occurences.push_back(pair);
-               // }
 
                 lcp_bins[factor_length].push_back(i);
             }
@@ -143,35 +134,24 @@ public:
 
         DLOG(INFO) << "computing lrfs";
 
-        //vector of text position, length
-        //std::vector<std::pair<uint,uint>> dictionary;
-      //  StatPhase::wrap("sorting lrf occs", [&]{
-
-      //  std::sort(lrf_occurences.begin(),lrf_occurences.end());
-     //   });
 
         StatPhase::wrap("selecting occs", [&]{
 
             // Pop PQ, Select occurences of suffix, check if contains replaced symbols
         dead_positions = BitVector(t.size(), 0);
 
-        //std::vector<std::tuple<uint,uint,uint>> nts_symbols;
         nts_symbols.reserve(lcp_bins.size());
         uint non_terminal_symbol_number = 0;
 
         for(uint lcp_len = lcp_bins.size()-1; lcp_len>= min_lrf; lcp_len--){
-            //DLOG(INFO)<<"size of lrf: "  << lcp_len <<" occs: "<< lcp_bins[lcp_len].size();
             for(auto bin_it = lcp_bins[lcp_len].begin(); bin_it!=lcp_bins[lcp_len].end(); bin_it++){
 
-               // if(dead_positions[sa_t[*bin_it]] || dead_positions[sa_t[*bin_it-1]] || dead_positions[sa_t[*bin_it]+lcp_len-1] || dead_positions[sa_t[*bin_it-1]+lcp_len-1]){
-               //     continue;
-               // }
+
 
                 //detect all starting positions of this string using the sa and lcp:
                 std::vector<uint> starting_positions;
                 starting_positions.reserve(20);
 
-                //starting_positions.push_back(sa_t[*bin_it]);
 
 
                 // and ceck in bitvector viable starting positions
@@ -181,8 +161,6 @@ public:
 
                 uint shorter_dif = lcp_len;
 
-             //   uint left_bound = 0;
-             //   uint right_bound = 0;
 
                 while(i>=0 && ( lcp_t[i])>=lcp_len){
                     if(!dead_positions[sa_t[i-1]]  && !dead_positions[sa_t[i-1]+lcp_len-1]){
@@ -190,14 +168,11 @@ public:
                     }
 
                     if(!dead_positions[sa_t[i-1]] && dead_positions[sa_t[i-1]+lcp_len-1] ){
-                        //DLOG(INFO)<<"shorter lrf poss";
                         while(!dead_positions[sa_t[i-1]+lcp_len-shorter_dif]){
                             shorter_dif--;
                         }
                     }
                     i--;
-
-//                    left_bound = i;
 
                 }
                 i = *bin_it;
@@ -207,27 +182,12 @@ public:
                         starting_positions.push_back(sa_t[i]);
                     }
                     if(!dead_positions[sa_t[i]]   && dead_positions[sa_t[i]+lcp_len-1] ){
-                        //DLOG(INFO)<<"shorter lrf poss";
                         while(!dead_positions[sa_t[i]+lcp_len-shorter_dif]){
                             shorter_dif--;
                         }
                     }
-             //       right_bound=i;
                     i++;
                 }
-
-               // DLOG(INFO) << sa_t[left_bound] << "  "<< sa_t[right_bound];
-              //  std::sort(sa_t.begin() + left_bound, sa_t.begin() +right_bound);
-
-
-                //DLOG(INFO) << sa_t[left_bound] << "  "<< sa_t[right_bound];
-               // DLOG(INFO)<<"lrf_len: "<<lcp_len<< " shorter dif: "<< shorter_dif;
-                //if the factor is still repeating, make the corresponding positions unviable
-                if(lcp_len-shorter_dif>=min_lrf){
-                    //commented because extremly slow
-                    //lcp_bins[lcp_len-shorter_dif].push_back(*bin_it);
-                }
-
                 if(starting_positions.size()>=2){
                     std::vector<uint> selected_starting_positions = select_starting_positions(starting_positions, lcp_len);
                     //computing substring to be replaced
@@ -260,7 +220,6 @@ public:
 
         StatPhase::wrap("sorting symbols", [&]{
         DLOG(INFO) << "sorting symbols";
-        //, std::greater<std::tuple<uint,uint,uint>>()
         std::sort(nts_symbols.begin(), nts_symbols.end());
 
         });
