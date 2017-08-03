@@ -59,3 +59,8 @@ download_and_extract("tagmynews", small_sizes, [
     DACIT_URL + "/news.gz",
     DACIT_URL + "/data-web-snippets.tar.gz",
 ])
+
+# ASCII-only Wikipedia excerpt from the "10.000 most vital articles" project
+download_and_extract("wiki", small_sizes, [
+    DACIT_URL + "/all_vital.txt.gz",
+])
