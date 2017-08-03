@@ -59,9 +59,6 @@ TEST(lfs2, no_strat){
 
     run_comp("abaabacabdab$");
 
-    //run_comp("abaaabbababb$");
-
-   // run_comp("ccaabbaabbcca$");
 
 }
 

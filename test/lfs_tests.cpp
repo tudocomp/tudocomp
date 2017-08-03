@@ -63,35 +63,6 @@ void run_comp(std::string compression_string) {
     ASSERT_EQ(compression_string, compressed);
 }
 
-/*
-
-template<class comp_strat>
-void run_comp_file(std::string file) {
-    auto c = create_algo<tdc::lfs::LFSCompressor<comp_strat> >();
-
-    //std::string compressed;
-    // compress
-    {
-        tdc::Input dummy_input = Input(io::Path{file});
-        tdc::Output output = Output(io::Path{file+".tdc"}, true);
-
-        c.compress(dummy_input, output);
-       // compressed=output.result();
-
-    }
-    // decompress
-    {
-
-        tdc::Input input = Input(io::Path{file+".tdc"});
-        tdc::Output output = Output(io::Path{file+".dc"}, true);;
-
-        c.decompress(input, output);
-
-       // compressed=output.result();
-    }
-    //ASSERT_EQ(compression_string, compressed);
-}*/
-
 
 TEST(lfs, bst_strat){
 
@@ -102,7 +73,7 @@ TEST(lfs, bst_strat){
 
 }
 
-/*
+
 
 TEST(lfs, sim_st_strat){
 
@@ -132,6 +103,6 @@ TEST(lfs, esa_strat){
     run_comp<tdc::lfs::ESAStrategy<> >("ccaabbaabbcca$");
 
 
-}*/
+}
 
 

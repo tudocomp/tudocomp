@@ -41,7 +41,6 @@ run_test(esp_tests      DEPS ${BASIC_DEPS})
 
 run_test(lfs_tests     DEPS ${BASIC_DEPS})
 run_test(lfs2_tests     DEPS ${BASIC_DEPS})
-run_test(stree_tests     DEPS ${BASIC_DEPS})
 
 
 
