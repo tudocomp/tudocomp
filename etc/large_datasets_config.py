@@ -1,4 +1,4 @@
-sizes = [1024] #[10240]
+sizes = [1, 10240]
 
 DACIT_URL = "dacit.cs.uni-dortmund.de/datasets"
 
@@ -6,6 +6,7 @@ download_and_extract("large", sizes, [
     DACIT_URL + "/commoncrawl_10240.ascii",
 
     # http://acube.di.unipi.it/rlzap-dataset/
+    # (array of 32bit values)
     DACIT_URL + "/rlzap_dlcp_female",
 
     # http://www.internationalgenome.org/data-portal/sample/NA19000
