@@ -28,16 +28,16 @@ with open(args.dataset_config, 'r') as myfile:
     config = myfile.read()
 
 def filesize(p):
-    return path.getsize(p)
+    return path.getsize(str(p))
 
 def abspath(p):
-    return path.abspath(p)
+    return path.abspath(str(p))
 
 def filesize_in_mb(p):
     return int(filesize(p) / 1024 / 1024)
 
 def gen_prefix(p, sizes):
-    if path.exists(p):
+    if path.exists(str(p)):
         file_size_in_mb = filesize_in_mb(p)
         for size in sizes:
             under_cutoff = True
@@ -45,7 +45,7 @@ def gen_prefix(p, sizes):
                 under_cutoff = (size <= args.max_prefix_size)
             if size <= file_size_in_mb and under_cutoff:
                 prefix_file_name = str(p) + "." + str(size) + "MB"
-                if (not path.exists(prefix_file_name)) or (filesize_in_mb(prefix_file_name) != size):
+                if (not path.exists(str(prefix_file_name))) or (filesize_in_mb(prefix_file_name) != size):
                     print("Generating {}MB prefix of {} to {}".format(size, p, prefix_file_name))
                     sh.sh("-c", "cat {} | dd count={}K bs=1K > {}".format(p, size, prefix_file_name))
             elif under_cutoff:
@@ -80,7 +80,7 @@ def download_and_extract(OUT_DIR, SIZES, URLS):
             target_path = remove_suffix(target_path)
             preprocess = "7z"
 
-        if not path.exists(stamp_target_path):
+        if not path.exists(str(stamp_target_path)):
             print("Download", target_path)
 
             sh.wget("-c", "-O", tmp_download_path, url, _fg=True)
@@ -100,7 +100,7 @@ def download_and_extract(OUT_DIR, SIZES, URLS):
 
         gen_prefix(target_path, SIZES)
 
-        if not path.exists(stamp_target_path):
+        if not path.exists(str(stamp_target_path)):
             if args.delete_original:
                 sh.rm(target_path)
                 sh.touch(stamp_target_path)
