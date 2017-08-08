@@ -9,8 +9,8 @@ using namespace tdc::lz78u;
 
 void test_strdepth(const std::string& str) {
 	if(str.length() == 0) return;
-	cst_sada<> cst;
-	construct_im(cst, str, 1);
+	sdsl::cst_sada<> cst;
+	sdsl::construct_im(cst, str, 1);
     SuffixTree st(cst);
 	root_childrank_support rrank(cst.bp_support);
 	for(auto node : cst) {

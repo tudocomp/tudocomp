@@ -14,6 +14,8 @@ namespace tdc {
 /// encoded as their string representations, terminated by the \e :
 /// character.
 class ArithmeticCoder : public Algorithm {
+    // TODO: Figure out how to correctly replace this with len_t or len_compact_t
+    using len_fixup_t = uint32_t;
 
 public:
     /// \brief Yields the coder's meta information.
@@ -30,7 +32,7 @@ public:
     /// \brief Encodes data to an ASCII character stream.
     class Encoder : public tdc::Encoder {
     private:
-        std::vector<len_t> C;
+        std::vector<len_fixup_t> C;
 
         ulong lower_bound=0;
         ulong upper_bound=std::numeric_limits<ulong>::max();
@@ -38,7 +40,7 @@ public:
 
         len_t literal_count = 0;
         len_t literal_counter = 0;
-        ulong min_range=std::numeric_limits<len_t>::max();
+        ulong min_range=std::numeric_limits<len_fixup_t>::max();
 
         /**
          * @brief count_alphabet_literals counts how often a literal occurs in \ref input
@@ -46,14 +48,14 @@ public:
          * @return an array with count of each single literal
          */
         template<class T>
-        std::vector<len_t> count_alphabet_literals(T&& input) {
-            std::vector<len_t> C;
+        std::vector<len_fixup_t> count_alphabet_literals(T&& input) {
+            std::vector<len_fixup_t> C;
             C.resize(ULITERAL_MAX+1, 0);
 
             while(input.has_next()) {
                 uliteral_t c = input.next().c;
                 DCHECK_LT(static_cast<uliteral_t>(c), ULITERAL_MAX+1);
-                DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_t>::max());
+                DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_fixup_t>::max());
                 ++C[static_cast<uliteral_t>(c)];
             }
 
@@ -65,16 +67,16 @@ public:
          * Every entry contains the difference to the entry before.
          * @param c
          */
-        void build_intervals(std::vector<len_t> &c) {
-            if(c[0]) {
+        void build_intervals(std::vector<len_fixup_t> &c) {
+            if(c[0] != 0u) {
                 codebook_size++;
             }
-            len_t min=std::numeric_limits<len_t>::max();
+            len_t min=std::numeric_limits<len_fixup_t>::max();
             //calculates difference to the entry before, searches min and counts entries != 0
             for(ulong i=1; i<=ULITERAL_MAX; i++) {
-                if(c[i]!=0) {
+                if(c[i]!=0u) {
                     codebook_size++;
-                    min=std::min(min,c[i]);
+                    min=std::min(min, len_t(c[i]));
                 }
                 c[i] = c[i] + c[i-1];
             }
@@ -121,12 +123,12 @@ public:
             /// code1 code2 code3 code4
 
             //write count of expected chars
-            m_out->write_int(literal_count);
+            m_out->write_int<len_fixup_t>(literal_count);
 
             //write codebook size in outstream
-            m_out->write_int((uliteral_t) codebook_size);
+            m_out->write_int<uliteral_t>(codebook_size);
 
-            if(C[0]!=0) {
+            if(C[0]!=0u) {
                 m_out->write_int(uliteral_t(0));
                 m_out->write_int(C[0]);
             }
@@ -219,7 +221,7 @@ public:
     public:
         DECODER_CTOR(env, in) {
             //read codebook size
-            literal_count = m_in->read_int<len_t>();
+            literal_count = m_in->read_int<len_fixup_t>();
             codebook_size = m_in->read_int<uliteral_t>();
             literals.resize(codebook_size);
 

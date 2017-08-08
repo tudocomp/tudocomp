@@ -17,7 +17,7 @@ inline void Registry<algorithm_t>::register_algorithm() {
     auto static_s
         = eval::pattern_eval(std::move(s), m_root_type, m_data->m_algorithms);
 
-    CHECK(m_data->m_registered.count(static_s) == 0); // Don't register twice...
+    CHECK(m_data->m_registered.count(static_s) == 0) << "registered twice"; // Don't register twice...
     m_data->m_registered[std::move(static_s)] = [](Env&& env) {
         return std::make_unique<T>(std::move(env));
     };
@@ -34,13 +34,34 @@ inline const eval::AlgorithmTypes& Registry<algorithm_t>::algorithm_map() const 
 }
 
 template<typename algorithm_t>
-inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_with_static_internal(View type) const {
+inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_with_static_internal(
+    std::vector<AlreadySeenPair>& already_seen,
+    View type
+) const {
     std::vector<pattern::Algorithm> r;
 
     using AlgorithmArgs = std::vector<pattern::Arg>;
 
     for (auto& c : m_data->m_algorithms.at(type)) {
         std::vector<std::vector<AlgorithmArgs>> args_variations;
+
+        auto seen = AlreadySeenPair {
+            type, c.name()
+        };
+        //std::cout << "Checking if " << type << ", " << c.name() << "\n";
+        int found = 0;
+        for (auto& x: already_seen) {
+            //std::cout << "  " << x.pair[0] << "\n";
+            if (x.pair[0] == type) {
+                found++;
+            }
+        }
+        if (found > 2) {
+            //std::cout << "break\n";
+            continue;
+        }
+
+        already_seen.push_back(seen);
 
         for (auto& arg : c.arguments()) {
             const std::string& arg_name = arg.name();
@@ -50,7 +71,8 @@ inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_wit
             bool is_static = arg.is_static();
             if (is_static) {
                 std::vector<AlgorithmArgs> arg_variations;
-                for(auto arg : all_algorithms_with_static_internal(arg_type)) {
+
+                for(auto arg : all_algorithms_with_static_internal(already_seen, arg_type)) {
                     arg_variations.push_back(AlgorithmArgs {
                         pattern::Arg {
                             std::string(arg_name),
@@ -61,6 +83,8 @@ inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_wit
                 args_variations.push_back(arg_variations);
             }
         }
+
+        already_seen.pop_back();
 
         std::string x_name;
         std::vector<pattern::Arg> x_args;
@@ -100,7 +124,8 @@ template<typename algorithm_t>
 inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_with_static(View type) const {
     std::vector<pattern::Algorithm> filtered_r;
 
-    for (auto x : all_algorithms_with_static_internal(type)) {
+    std::vector<AlreadySeenPair> already_seen;
+    for (auto x : all_algorithms_with_static_internal(already_seen, type)) {
         if (m_data->m_registered.count(x) > 0) {
             filtered_r.push_back(std::move(x));
         }
@@ -128,7 +153,7 @@ inline Registry<algorithm_t> Registry<algorithm_t>::with_all_from(std::function<
 }
 
 template<typename algorithm_t>
-inline std::string Registry<algorithm_t>::generate_doc_string() const {
+inline std::string Registry<algorithm_t>::generate_doc_string(const std::string& title) const {
     auto print = [](std::vector<decl::Algorithm>& x, size_t iden) {
         std::vector<std::string> cells;
 
@@ -159,7 +184,7 @@ inline std::string Registry<algorithm_t>::generate_doc_string() const {
 
     std::stringstream ss;
 
-    ss << "  [Compression algorithms]\n";
+    ss << "  [" << title << "]\n";
     ss << print(m_data->m_algorithms[m_root_type], 2) << "\n\n";
 
     ss << "  [Argument types]\n";

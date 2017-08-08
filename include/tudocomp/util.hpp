@@ -524,4 +524,43 @@ public:
     }
 };
 
+/// \cond INTERNAL
+namespace portable_arithmetic_shift {
+    // Source: https://gist.github.com/palotasb/de46414a93ba90fff22bdbd2327ae393
+
+    template <typename T>
+    constexpr auto builtin_shr(T value, int amount) noexcept
+        -> decltype(value >> amount)
+    {
+        return value >> amount;
+    }
+
+    template <typename T>
+    struct uses_arithmetic_shift : std::integral_constant<bool, builtin_shr(T(-1), 1) == -1> {};
+
+    template <typename T = int>
+    constexpr T shift_by_portable(T value, int amount) noexcept
+    {
+        return value < 0 ?
+        amount < 0 ? ~(~value >> -amount) : -(-value << amount) :
+        amount < 0 ? value >> -amount : value << amount;
+    }
+
+    template <typename T = int>
+    constexpr T shift_by_arithmetic(T value, int amount) noexcept
+    {
+        // Only use with negative T values when the compiler translates right shift to arithmetic shift instructions.
+        return amount < 0 ? value >> -amount : value << amount;
+    }
+}
+/// \endcond
+
+template <typename T = int>
+constexpr T shift_by(T value, int amount) noexcept
+{
+    using namespace portable_arithmetic_shift;
+
+    return uses_arithmetic_shift<T>::value ? shift_by_arithmetic(value, amount) : shift_by_portable(value, amount);
+}
+
 }//ns

@@ -45,15 +45,30 @@ def config_match(pattern):
             return True
     return False
 
-kinds = []
-def generate_code(lkinds):
-    global kinds
-    kinds = lkinds
+
+AlgorithmConfig = collections.namedtuple(
+    'AlgorithmConfig', ['name', 'header', 'sub'])
+AlgorithmConfig.__new__.__defaults__ = ('', '', [])
+
+class RegistryConfig:
+    compressors = []
+    generators  = []
+
+    def get_kinds(self):
+        return [
+            ("Compressor", self.compressors),
+            ("Generator",  self.generators),
+        ]
+
+tdc = RegistryConfig()
 
 eval_config(pyconfig, {
-    "config_match"  : config_match,
-    "generate_code" : generate_code,
+    "config_match": config_match,
+    "AlgorithmConfig": AlgorithmConfig,
+    "tdc": tdc
 })
+
+kinds = tdc.get_kinds()
 
 def iprint(*arg):
     if args.print: print(*arg)

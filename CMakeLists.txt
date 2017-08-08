@@ -41,6 +41,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG")
 
+# Set integer with for length type
+if(DEFINED LEN_BITS)
+    message(STATUS "Setting length type to ${LEN_BITS} Bits")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEN_BITS=${LEN_BITS}")
+endif(DEFINED LEN_BITS)
+
 find_package(Boost)
 
 # Paranoid debugging
@@ -87,6 +93,12 @@ include(generate_tudocomp_sources)
 include_directories(include)
 
 # TuDoComp library and implementors
+if(DEFINED TDC_REGISTRY)
+    message("[CAUTION] Using custom registry config: ${TDC_REGISTRY}")
+else()
+    set(TDC_REGISTRY ${CMAKE_SOURCE_DIR}/etc/registry_config.py)
+endif(DEFINED TDC_REGISTRY)
+
 add_subdirectory(src)
 
 # Unit tests for everything in src

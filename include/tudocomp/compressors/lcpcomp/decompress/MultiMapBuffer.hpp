@@ -19,7 +19,7 @@ class MultimapBuffer : public Algorithm {
 
 private:
     std::vector<uliteral_t> m_buffer;
-    std::unordered_multimap<len_t, len_t> m_fwd;
+    std::unordered_multimap<len_compact_t, len_compact_t> m_fwd;
     BitVector m_decoded;
 
     len_t m_cursor;
@@ -27,9 +27,9 @@ private:
     len_t m_current_chain;
 
     //storing factors
-    std::vector<len_t> m_target_pos;
-    std::vector<len_t> m_source_pos;
-    std::vector<len_t> m_length;
+    std::vector<len_compact_t> m_target_pos;
+    std::vector<len_compact_t> m_source_pos;
+    std::vector<len_compact_t> m_length;
 
     const size_t m_lazy; // number of lazy rounds
 
@@ -65,9 +65,9 @@ private:
     inline void decode_lazy_() {
         const len_t factors = m_source_pos.size();
         for(len_t j = 0; j < factors; ++j) {
-            const len_t& target_position = m_target_pos[j];
-            const len_t& source_position = m_source_pos[j];
-            const len_t& factor_length = m_length[j];
+            const len_compact_t& target_position = m_target_pos[j];
+            const len_compact_t& source_position = m_source_pos[j];
+            const len_compact_t& factor_length = m_length[j];
             for(len_t i = 0; i < factor_length; ++i) {
                 if(m_decoded[source_position+i]) {
                     m_buffer[target_position+i] = m_buffer[source_position+i];
@@ -124,9 +124,9 @@ public:
         IF_STATS(size_t max_size = 0);
 
         for(len_t j = 0; j < factors; ++j) {
-            const len_t& target_position = m_target_pos[j];
-            const len_t& source_position = m_source_pos[j];
-            const len_t& factor_length = m_length[j];
+            const len_compact_t& target_position = m_target_pos[j];
+            const len_compact_t& source_position = m_source_pos[j];
+            const len_compact_t& factor_length = m_length[j];
             for(len_t i = 0; i < factor_length; ++i) {
                 if(m_decoded[source_position+i]) {
                     decode_literal_at(target_position+i, m_buffer[source_position+i]);

@@ -37,7 +37,7 @@ public:
             : tdc::Encoder(std::move(env), out, literals) {
 
             // count occurences of each literal
-            std::memset(m_occ, 0, 256);
+            std::memset(m_occ, 0, 256 * sizeof(int));
 
             while(literals.has_next()) {
                 Literal l = literals.next();

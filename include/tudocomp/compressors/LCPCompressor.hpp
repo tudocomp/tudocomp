@@ -89,6 +89,7 @@ public:
         m.option("dec").templated<dec_t, lcpcomp::ScanDec>("lcpcomp_dec");
         m.option("textds").templated<text_t, TextDS<>>("textds");
         m.option("threshold").dynamic(5);
+        m.option("flatten").dynamic(1); // 0 or 1
         m.uses_textds<text_t>(strategy_t::textds_flags());
         return m;
     }
@@ -99,7 +100,10 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
         DCHECK(in.ends_with(uint8_t(0)));
-        text_t text(env().env_for_option("textds"), in, strategy_t::textds_flags());
+
+        auto text = StatPhase::wrap("Construct Text DS", [&]{
+            return text_t(env().env_for_option("textds"), in, strategy_t::textds_flags());
+        });
 
         // read options
         const len_t threshold = env().option("threshold").as_integer(); //factor threshold
@@ -115,7 +119,12 @@ public:
         });
 
         // sort factors
-        StatPhase::wrap("Sorting Factors", [&]{ factors.sort(); });
+        StatPhase::wrap("Sort Factors", [&]{ factors.sort(); });
+
+        if(env().option("flatten").as_integer()) {
+            // flatten factors
+            StatPhase::wrap("Flatten Factors", [&]{ factors.flatten(); });
+        }
 
         // encode
         StatPhase::wrap("Encode Factors", [&]{
@@ -132,7 +141,6 @@ public:
         //TODO: tell that forward-factors are allowed
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
         auto outs = output.as_stream();
-
 
         //lzss::decode_text_internal<coder_t, dec_t>(decoder, outs);
         // if(lazy == 0)

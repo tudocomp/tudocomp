@@ -8,7 +8,7 @@
 namespace tdc {
 namespace lcpcomp {
 
-constexpr len_t undef_len = std::numeric_limits<len_t>::max();
+constexpr len_t undef_len = std::numeric_limits<len_compact_t>::max();
 class DecodeForwardQueueListBuffer : public Algorithm {
     public:
     inline static Meta meta() {
@@ -22,7 +22,7 @@ class DecodeForwardQueueListBuffer : public Algorithm {
 
 private:
     std::vector<uliteral_t> m_buffer;
-    std::vector<std::vector<len_t>> m_fwd;
+    std::vector<std::vector<len_compact_t>> m_fwd;
     BitVector m_decoded;
 
     len_t m_cursor;
@@ -43,7 +43,7 @@ private:
         for(auto fwd : m_fwd[pos]) {
             decode_literal_at(fwd, c); // recursion
         }
-        std::vector<len_t>().swap(m_fwd[pos]); // forces vector to drop to capacity 0
+        std::vector<len_compact_t>().swap(m_fwd[pos]); // forces vector to drop to capacity 0
 //        m_fwd[pos].clear();
 
         --m_current_chain;
@@ -54,7 +54,7 @@ public:
         : Algorithm(std::move(env)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_max_depth(0) {
 
         m_buffer.resize(size, 0);
-        m_fwd.resize(size, std::vector<len_t>());
+        m_fwd.resize(size, std::vector<len_compact_t>());
         m_decoded = BitVector(size, 0);
     }
 

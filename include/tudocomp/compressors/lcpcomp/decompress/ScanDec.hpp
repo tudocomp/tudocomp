@@ -28,7 +28,7 @@ namespace lcpcomp {
 		const sdsl::bit_vector m_bv;
 		const sdsl::bit_vector::rank_1_type m_rank;
 		const len_t m_empty_entries;
-		len_t**const m_fwd = nullptr;
+		len_compact_t**const m_fwd = nullptr;
 
 		IF_STATS(len_t m_longest_chain = 0);
 		IF_STATS(len_t m_current_chain = 0);
@@ -48,7 +48,7 @@ namespace lcpcomp {
 			, m_rank { &m_bv }
 			//, m_empty_entries { static_cast<len_t>( buffer.size()) }
 			, m_empty_entries { static_cast<len_t>(std::count_if(buffer.cbegin(), buffer.cend(), [] (const uliteral_t& i) { return i == 0; })) }
-			, m_fwd { new len_t*[m_empty_entries+1] }
+			, m_fwd { new len_compact_t*[m_empty_entries+1] }
 		{
         std::fill(m_fwd,m_fwd+m_empty_entries,nullptr);
 		}
@@ -58,30 +58,30 @@ namespace lcpcomp {
 			return m_rank.rank(i+1);
 		}
 
-		void decode(const std::vector<len_t>& m_target_pos, const std::vector<len_t>& m_source_pos, const std::vector<len_t>& m_length) {
+		void decode(const std::vector<len_compact_t>& m_target_pos, const std::vector<len_compact_t>& m_source_pos, const std::vector<len_compact_t>& m_length) {
             StatPhase phase("Decoding Factors");
 			const len_t factors = m_source_pos.size();
 			phase.log_stat("factors", factors);
 
 			for(len_t j = 0; j < factors; ++j) {
-				const len_t& target_position = m_target_pos[j];
-				const len_t& source_position = m_source_pos[j];
-				const len_t& factor_length = m_length[j];
+				const len_compact_t& target_position = m_target_pos[j];
+				const len_compact_t& source_position = m_source_pos[j];
+				const len_compact_t& factor_length = m_length[j];
 				for(len_t i = 0; i < factor_length; ++i) {
 					if(m_buffer[source_position+i]) {
 						decode_literal_at(target_position+i, m_buffer[source_position+i]);
 					} else {
 						DCHECK_EQ(m_bv[source_position+i],1);
-						len_t*& bucket = m_fwd[rank(source_position+i)];
+						len_compact_t*& bucket = m_fwd[rank(source_position+i)];
 						if(bucket == nullptr) {
-							bucket = new len_t[2];
+							bucket = new len_compact_t[2];
 							bucket[0] = 2;
 							bucket[1] = target_position+i;
 						}
 						else
 						{ // this block implements the call of m_fwd[src]->push_back(m_cursor);
 							++bucket[0]; // increase the size of a bucket only by one!
-							bucket = (len_t*) realloc(bucket, sizeof(len_t)*bucket[0]);
+							bucket = (len_compact_t*) realloc(bucket, sizeof(len_compact_t)*bucket[0]);
 							bucket[bucket[0]-1] = target_position+i;
 						}
 					}
@@ -109,7 +109,7 @@ namespace lcpcomp {
 			const len_t rankpos = rank(pos);
 			DCHECK_LE(rankpos, m_empty_entries);
 			if(m_fwd[rankpos] != nullptr) {
-				const len_t*const& bucket = m_fwd[rankpos];
+				const len_compact_t*const& bucket = m_fwd[rankpos];
 				for(size_t i = 1; i < bucket[0]; ++i) {
 					decode_literal_at(bucket[i], c); // recursion
 				}
@@ -177,9 +177,9 @@ private:
     inline void decode_lazy_() {
         const len_t factors = m_source_pos.size();
         for(len_t j = 0; j < factors; ++j) {
-            const len_t& target_position = m_target_pos[j];
-            const len_t& source_position = m_source_pos[j];
-            const len_t& factor_length = m_length[j];
+            const len_compact_t& target_position = m_target_pos[j];
+            const len_compact_t& source_position = m_source_pos[j];
+            const len_compact_t& factor_length = m_length[j];
             for(len_t i = 0; i < factor_length; ++i) {
 				//DCHECK(m_buffer[source_position+i] == 0 && m_buffer[target_position+i] == 0);
 				m_buffer[target_position+i] = m_buffer[source_position+i];
@@ -193,9 +193,9 @@ private:
 	IntVector<uliteral_t> m_buffer;
 
     //storing factors
-    std::vector<len_t> m_target_pos;
-    std::vector<len_t> m_source_pos;
-    std::vector<len_t> m_length;
+    std::vector<len_compact_t> m_target_pos;
+    std::vector<len_compact_t> m_source_pos;
+    std::vector<len_compact_t> m_length;
 
 	IF_STATS(len_t m_longest_chain = 0);
 

@@ -308,7 +308,7 @@ namespace int_vector {
 
         inline reference operator[](size_type n) {
             using Data = typename int_vector::IntPtrTrait<pointer>::Data;
-            DCHECK(n < size());
+            DCHECK_LT(n, size());
             auto x = bitpos2backingpos(elem2bits(n));
             return reference(pointer(Data(this->m_vec.data() + x.pos, x.offset, this->width())));
         }

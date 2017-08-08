@@ -58,7 +58,7 @@ void test_bwt(const std::string& str, textds_t& t) {
 	}
 	uliteral_t* decoded_string = bwt::decode_bwt(bwt);
 	if(decoded_string == nullptr) {
-		ASSERT_EQ(str.length(), 0);
+		ASSERT_EQ(str.length(), 0u);
 		return;
 	}
 	std::string decoded;

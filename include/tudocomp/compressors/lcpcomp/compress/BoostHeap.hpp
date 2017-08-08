@@ -67,8 +67,8 @@ public:
 		LCPCompare comp(lcp,sa);
 
         StatPhase phase("Construct MaxLCPHeap");
-    
-		boost::heap::pairing_heap<len_t,boost::heap::compare<LCPCompare>> heap(comp);
+
+		boost::heap::pairing_heap<len_compact_t,boost::heap::compare<LCPCompare>> heap(comp);
 		std::vector<decltype(heap)::handle_type> handles(lcp.size());
 
 		handles[0].node_ = nullptr;
@@ -82,7 +82,7 @@ public:
 
         while(heap.size() > 0) {
             //get suffix with longest LCP
-            const len_t& m = heap.top();
+            const len_compact_t& m = heap.top();
 
             //generate factor
             const len_t fpos = sa[m];

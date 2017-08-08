@@ -6,9 +6,9 @@
 #include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/coders/ArithmeticCoder.hpp>
 
-void test_arithm(const std::string& text) {
-    using namespace tdc;
+using namespace tdc;
 
+void test_arithm(const std::string& text) {
     //encode
     std::stringstream input(text);
     std::stringstream output;

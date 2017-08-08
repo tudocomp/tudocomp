@@ -77,7 +77,7 @@ inline void encode_text(coder_t& coder, const text_t& text, const factor_t& fact
         coder.encode(factor.src, text_r);
         coder.encode(factor.len, flen_r);
 
-        p += factor.len;
+        p += size_t(factor.len);
     }
 
     if(p < n) {
