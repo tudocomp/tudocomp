@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <tudocomp/coders/HuffmanCoder.hpp>
 
+using namespace tdc;
+
 void test_huffmantable_storing(const std::string& text) {
 	using namespace tdc::huff;
 	if(text.length() <=  1) return;

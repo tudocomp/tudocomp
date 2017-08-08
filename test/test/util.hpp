@@ -27,8 +27,7 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/io/Path.hpp>
 
-using namespace tdc;
-
+namespace tdc {
 namespace test {
 
 // TODO: Actually specialize the 3 kinds
@@ -602,5 +601,5 @@ void test_binary_out(string_ref in, std::vector<uint64_t> packed_ints_out, bool 
     test::assert_eq_binary(res, packed_ints_out);
 }
 
-}
+}} //ns
 
