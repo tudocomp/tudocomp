@@ -49,15 +49,18 @@ len_compact_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	}
 
 	DVLOG(2) << "LF: " << arr_to_debug_string(LF, bwt_length);
-	DCHECK([&] () { // unique invariant of the LF mapping
-			assert_permutation(LF,bwt_length);
-			for(len_t i = 0; i < bwt_length; ++i)
-			for(len_t j = i+1; j < bwt_length; ++j) {
-			if(bwt[i] != bwt[j]) continue;
-			DCHECK_LT(LF[i], LF[j]);
-			}
-			return true;
-			}());
+
+    IF_PARANOID(
+	    DCHECK([&] () { // unique invariant of the LF mapping
+			    assert_permutation(LF,bwt_length);
+			    for(len_t i = 0; i < bwt_length; ++i)
+			    for(len_t j = i+1; j < bwt_length; ++j) {
+			    if(bwt[i] != bwt[j]) continue;
+			    DCHECK_LT(LF[i], LF[j]);
+			    }
+			    return true;
+			    }());
+    )
 
 	DVLOG(2) << "Finished Computing LF";
 	return LF;
@@ -69,24 +72,27 @@ len_compact_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
  * It is assumed that the BWT is stored in a container with access to operator[] and .size()
  */
 template<typename bwt_t>
-uliteral_t* decode_bwt(const bwt_t& bwt) {
+std::string decode_bwt(const bwt_t& bwt) {
 	const size_t bwt_length = bwt.size();
 	VLOG(2) << "InputSize: " << bwt_length;
-	if(tdc_unlikely(bwt.empty())) return nullptr;
+	if(tdc_unlikely(bwt.empty())) return std::string();
 	if(tdc_unlikely(bwt_length == 1)) { // since there has to be a zero in each string, a string of length 1 is equal to '\0'
-		uliteral_t*const decoded_string { new uliteral_t[1] };
-		decoded_string[0] = 0;
-		return decoded_string;
+        return std::string(1, 0);
 	}
 	const len_compact_t*const LF { compute_LF(bwt, bwt_length) };
 
-	uliteral_t*const decoded_string = new uliteral_t[bwt_length];
+	//uliteral_t*const decoded_string = new uliteral_t[bwt_length];
+    std::string decoded_string(bwt_length, 0);
+
 	decoded_string[bwt_length-1] = 0;
 	len_t i = 0;
 	for(len_t j = 1; j < bwt_length && bwt[i] != 0; ++j) {
 		decoded_string[bwt_length - j-1] = bwt[i];
 		i = LF[i];
-		DCHECK( (bwt[i] == 0 && j+1 == bwt_length) || (bwt[i] != 0 && j+1 < bwt_length));
+
+        // this debug line only holds for texts that are guaranteed not
+        // to contain no ZERO bytes
+		//DCHECK( (bwt[i] == 0 && j+1 == bwt_length) || (bwt[i] != 0 && j+1 < bwt_length));
 	}
 	delete [] LF;
 	return decoded_string;
