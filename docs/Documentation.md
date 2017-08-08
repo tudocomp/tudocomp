@@ -291,6 +291,10 @@ accept an encoding strategy), the allowed selection for these are defined once
 in a variable before the aforementioned output variables, making use of the
 advantages that come from the fact that the configuration is a Python script.
 
+The predefined `config_match` function can be used to create registry items only
+if a certain pattern exists in the generated `config.h` file. This file contains
+definitions regarding optional dependencies of *tudocomp* (e.g. Boost).
+
 ## Library
 
 In order to use *tudocomp* as an external library in another application,
