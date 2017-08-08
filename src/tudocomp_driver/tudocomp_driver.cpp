@@ -98,7 +98,8 @@ int main(int argc, char** argv) {
         if (options.list) {
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
-            std::cout << compressor_registry.generate_doc_string();
+            std::cout << compressor_registry.generate_doc_string("Compressors");
+            std::cout << generator_registry.generate_doc_string("String Generators");
             return 0;
         }
 

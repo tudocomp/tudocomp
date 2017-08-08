@@ -153,7 +153,7 @@ inline Registry<algorithm_t> Registry<algorithm_t>::with_all_from(std::function<
 }
 
 template<typename algorithm_t>
-inline std::string Registry<algorithm_t>::generate_doc_string() const {
+inline std::string Registry<algorithm_t>::generate_doc_string(const std::string& title) const {
     auto print = [](std::vector<decl::Algorithm>& x, size_t iden) {
         std::vector<std::string> cells;
 
@@ -184,7 +184,7 @@ inline std::string Registry<algorithm_t>::generate_doc_string() const {
 
     std::stringstream ss;
 
-    ss << "  [Compression algorithms]\n";
+    ss << "  [" << title << "]\n";
     ss << print(m_data->m_algorithms[m_root_type], 2) << "\n\n";
 
     ss << "  [Argument types]\n";

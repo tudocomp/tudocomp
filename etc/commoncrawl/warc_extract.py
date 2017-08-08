@@ -4,8 +4,18 @@
 
 import sys
 import mmap
+import argparse
 
-filename = sys.argv[1]
+parser = argparse.ArgumentParser()
+parser.add_argument("filename", type=str)
+parser.add_argument("--ascii", action="store_true")
+parser.add_argument("--non_ascii", action="store_true")
+parser.add_argument("--nulls", action="store_true")
+
+parser.parse_args()
+args = parser.parse_args()
+
+filename = args.filename
 
 def unit(n):
     return str.format("{} MiB", int(n/1024/1024))
@@ -15,7 +25,6 @@ with open(filename, 'rb') as f:
 
     header_offset = 0
     total_length = 0
-    ascii_length = 0
 
     while header_offset < m.size():
         assert m.find(b"WARC/1.0\r\n", header_offset) == header_offset
@@ -47,23 +56,33 @@ with open(filename, 'rb') as f:
             (uri, etc) = field(b"WARC-Target-URI: ")
             assert len(uri) > 0
 
+            has_ascii = False
+            has_non_ascii = False
+
             try:
                 content.decode("ascii")
             except UnicodeDecodeError:
-                #print("X : ", uri)
-                pass
+                has_non_ascii = True
             else:
-                #print("O : ", uri)
-                if content.find(0) == -1:
-                    sys.stdout.buffer.write(content)
-                    ascii_length += content_length
+                has_ascii = True
+
+            has_null = (content.find(0) != -1)
+
+            use = False
+
+            if (args.ascii and has_ascii):
+                use = True
+            if (args.non_ascii and has_non_ascii):
+                use = True
+
+            if (not args.nulls and has_null):
+                use = False
+
+            if (use):
+                sys.stdout.buffer.write(content)
         else:
             sys.exit(1)
 
         header_offset = content_pos
         header_offset += content_length
         header_offset += 4
-
-    #print()
-    #print(str.format("Content size:       {}", unit(total_length)));
-    #print(str.format("Ascii Content size: {}", unit(ascii_length)));

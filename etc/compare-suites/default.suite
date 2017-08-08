@@ -1,0 +1,20 @@
+# The default comparison suite, use as a reference
+[
+    # tudocomp examples
+    Tudocomp(name='bwtzip',                          algorithm='bwt:rle:mtf:encode(huff)'),
+    Tudocomp(name='lcpcomp(t=5,arrays,scans(a=25))', algorithm='lcpcomp(coder=sle,threshold=5,comp=arrays,dec=scan(25))'),
+    Tudocomp(name='lzss_lcp(t=5,bit)',               algorithm='lzss_lcp(coder=bit,threshold=5)'),
+    Tudocomp(name='lz78u(t=5,huff)',                 algorithm='lz78u(coder=bit,threshold=5,comp=buffering(huff))'),
+    Tudocomp(name='lcpcomp(t=5,heap,compact)',       algorithm='lcpcomp(coder=sle,threshold="5",comp=heap,dec=compact)'),
+    Tudocomp(name='sle',                             algorithm='encode(sle)'),
+    Tudocomp(name='huff',                            algorithm='encode(huff)'),
+    Tudocomp(name='lzw(ternary)',                    algorithm='lzw(coder=bit,lz78trie=ternary)'),
+    Tudocomp(name='lz78(ternary)',                   algorithm='lz78(coder=bit,lz78trie=ternary)'),
+    # Some standard Linux compressors
+    StdCompressor(name='gzip -1',  binary='gzip',  cflags=['-1'], dflags=['-d']),
+    StdCompressor(name='gzip -9',  binary='gzip',  cflags=['-9'], dflags=['-d']),
+    StdCompressor(name='bzip2 -1', binary='bzip2', cflags=['-1'], dflags=['-d']),
+    StdCompressor(name='bzip2 -9', binary='bzip2', cflags=['-9'], dflags=['-d']),
+    StdCompressor(name='lzma -1',  binary='lzma',  cflags=['-1'], dflags=['-d']),
+    StdCompressor(name='lzma -9',  binary='lzma',  cflags=['-9'], dflags=['-d']),
+]
