@@ -1680,12 +1680,16 @@ compressor pair consists of a display name for the tabular output, as well as
 information on how to invoke the compressor and decompressor on a command-line
 level (ie. command, arguments, and how input / output is passed to them).
 
-Technically speaking, a suite must be a valid Python statement that resolves to
-a list of `CompressorPair` objects. These are (named) tuples of a string
-(the display name) and two `Exec` objects that define the command-line interface
-for the compressor and decompressor, respectively. To that end, `Exec` contains
-the command-line to execute as well as means to pass input and output file
-information.
+These suites are stored in files that can be selected by passing the
+`--suite` parameter, followed by the path to the suite file, to the comparison
+tool.
+
+Technically speaking, a suite file must contain a valid Python statement that
+resolves to a list of `CompressorPair` objects. These are (named) tuples of a
+string (the display name) and two `Exec` objects that define the command-line
+interface for the compressor and decompressor, respectively. To that end, `Exec`
+contains the command-line to execute as well as means to pass input and output
+file information.
 
 The following example defines a small suite for comparing `gzip` against
 a *tudocomp* implementation of LZ77 with subsequent Huffman coding:
