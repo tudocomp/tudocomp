@@ -1,33 +1,61 @@
-context_free_coder = [
+###############################################################################
+#
+# This script determines which algorithms will be available in the tdc binary.
+#
+# Please refer to the documentation ("Registering Algorithms" section) for
+# more information.
+#
+###############################################################################
+
+##### General #####
+
+# Universal coders
+universal_coders = [
     AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
     AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
     AlgorithmConfig(name="EliasGammaCoder", header="coders/EliasGammaCoder.hpp"),
     AlgorithmConfig(name="EliasDeltaCoder", header="coders/EliasDeltaCoder.hpp"),
 ]
 
-# TODO: Fix bad interaction between sle and lz78u code and remove this distinction
-tmp_lz78u_string_coder = context_free_coder + [
+# Entropy coders
+entropy_coders = [
     AlgorithmConfig(name="HuffmanCoder", header="coders/HuffmanCoder.hpp"),
 ]
 
-bit_interleaving_coder = [
+# Entropy coders that may consume characters without immediately generating an
+# output (not suitable for all scenarios, see "Interleaved Coding" section in
+# the documentation)
+consuming_entropy_coders = [
     AlgorithmConfig(name="ArithmeticCoder", header="coders/ArithmeticCoder.hpp"),
-]
-
-coder = tmp_lz78u_string_coder + bit_interleaving_coder + [
     AlgorithmConfig(name="SLECoder", header="coders/SLECoder.hpp"),
 ]
 
-non_bit_interleaving_coder = [i for i in coder if i not in bit_interleaving_coder]
+# All non-consuming coders
+non_consuming_coders = universal_coders + entropy_coders
 
+# All coders
+all_coders = universal_coders + entropy_coders + consuming_entropy_coders
+
+# Text data structures
+textds = [
+    AlgorithmConfig(name="TextDS<>", header="ds/TextDS.hpp")
+]
+
+##### lz78 #####
+
+# LZ78 trie hash map size managers
 hash_manager = [
         AlgorithmConfig(name="SizeManagerPow2", header="util/Hash.hpp"),
         AlgorithmConfig(name="SizeManagerPrime", header="util/Hash.hpp"),
         AlgorithmConfig(name="SizeManagerDirect", header="util/Hash.hpp"),
         ]
+
+# LZ78 trie hash probers
 hash_prober = [
         AlgorithmConfig(name="LinearProber", header="util/Hash.hpp"),
         ]
+
+# LZ78 trie rolling hash functions
 hash_roll = [
         AlgorithmConfig(name="WordpackRollingHash", header="util/Hash.hpp"),
         # AlgorithmConfig(name="ZBackupRollingHash", header="util/Hash.hpp"),
@@ -35,6 +63,8 @@ hash_roll = [
         AlgorithmConfig(name="KarpRabinHash", header="util/hash/rabinkarphash.h"),
         # AlgorithmConfig(name="ThreeWiseHash", header="util/hash/threewisehash.h"),
         ]
+
+# LZ78 trie hash functions
 hash_function = [
         AlgorithmConfig(name="NoopHasher", header="util/Hash.hpp"),
         AlgorithmConfig(name="MixHasher", header="util/Hash.hpp"),
@@ -44,7 +74,7 @@ hash_function = [
         # AlgorithmConfig(name="CLHash", header="util/hash/clhash.h"),
         ]
 
-
+# LZ78 tries ("lz78trie")
 lz78_trie = [
     AlgorithmConfig(name="lz78::BinarySortedTrie", header="compressors/lz78/BinarySortedTrie.hpp"),
     AlgorithmConfig(name="lz78::BinaryTrie", header="compressors/lz78/BinaryTrie.hpp"),
@@ -57,61 +87,68 @@ lz78_trie = [
     AlgorithmConfig(name="lz78::TernaryTrie", header="compressors/lz78/TernaryTrie.hpp"),
 ]
 
-if config_match("^#define JUDY_H_AVAILABLE 1"): lz78_trie += [
-    AlgorithmConfig(name="lz78::JudyTrie", header="compressors/lz78/JudyTrie.hpp"),
+if config_match("^#define JUDY_H_AVAILABLE 1"): # if the Judy trie is available
+    lz78_trie += [
+        AlgorithmConfig(name="lz78::JudyTrie", header="compressors/lz78/JudyTrie.hpp"),
+    ]
+
+##### lz78u #####
+
+# LZ78U factorization strategies ("comp")
+lz78u_comp = [
+    AlgorithmConfig(name="lz78u::StreamingStrategy", header="compressors/lz78u/StreamingStrategy.hpp", sub=[universal_coders]),
+    AlgorithmConfig(name="lz78u::BufferingStrategy", header="compressors/lz78u/BufferingStrategy.hpp", sub=[non_consuming_coders]),
 ]
 
-lcpc_strat = [
+##### lcpcomp #####
+
+# Allowed coders for lcpcomp
+lcpcomp_coders = [
+    AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
+    AlgorithmConfig(name="SLECoder", header="coders/SLECoder.hpp"),
+    AlgorithmConfig(name="HuffmanCoder", header="coders/HuffmanCoder.hpp"),
+]
+
+# lcpcomp factorization strategies ("comp")
+lcpcomp_comp = [
     AlgorithmConfig(name="lcpcomp::MaxHeapStrategy", header="compressors/lcpcomp/compress/MaxHeapStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::MaxLCPStrategy", header="compressors/lcpcomp/compress/MaxLCPStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::ArraysComp", header="compressors/lcpcomp/compress/ArraysComp.hpp"),
     AlgorithmConfig(name="lcpcomp::PLCPPeaksStrategy", header="compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp"),
 ]
 
-if config_match("^#define Boost_FOUND 1"): lcpc_strat += [
-    AlgorithmConfig(name="lcpcomp::BoostHeap", header="compressors/lcpcomp/compress/BoostHeap.hpp"),
-    AlgorithmConfig("lcpcomp::PLCPStrategy", header="compressors/lcpcomp/compress/PLCPStrategy.hpp")
+if config_match("^#define Boost_FOUND 1"): # if Boost is available
+    lcpcomp_comp += [
+        AlgorithmConfig(name="lcpcomp::BoostHeap", header="compressors/lcpcomp/compress/BoostHeap.hpp"),
+        AlgorithmConfig(name="lcpcomp::PLCPStrategy", header="compressors/lcpcomp/compress/PLCPStrategy.hpp")
     ]
 
-lcpc_buffer = [
+# lcpcomp factor decoding strategies ("dec")
+lcpcomp_dec = [
     AlgorithmConfig(name="lcpcomp::ScanDec", header="compressors/lcpcomp/decompress/ScanDec.hpp"),
     AlgorithmConfig(name="lcpcomp::DecodeForwardQueueListBuffer", header="compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp"),
     AlgorithmConfig(name="lcpcomp::CompactDec", header="compressors/lcpcomp/decompress/CompactDec.hpp"),
     AlgorithmConfig(name="lcpcomp::MultimapBuffer", header="compressors/lcpcomp/decompress/MultiMapBuffer.hpp"),
 ]
 
-lcpc_coder = [
-    AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
-    AlgorithmConfig(name="SLECoder", header="coders/SLECoder.hpp"),
-    AlgorithmConfig(name="HuffmanCoder", header="coders/HuffmanCoder.hpp"),
-]
-
-lz78u_strategy = [
-    AlgorithmConfig(name="lz78u::StreamingStrategy", header="compressors/lz78u/StreamingStrategy.hpp", sub=[context_free_coder]),
-    AlgorithmConfig(name="lz78u::BufferingStrategy", header="compressors/lz78u/BufferingStrategy.hpp", sub=[tmp_lz78u_string_coder]),
-]
-
-textds = [
-    AlgorithmConfig(name="TextDS<>", header="ds/TextDS.hpp")
-]
-
-# Export compressors and generators
+##### Export available compressors #####
 tdc.compressors = [
-    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lcpc_coder, lcpc_strat, lcpc_buffer, textds]),
-    AlgorithmConfig(name="LZ78UCompressor", header="compressors/LZ78UCompressor.hpp", sub=[lz78u_strategy, context_free_coder]),
+    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lcpcomp_coders, lcpcomp_comp, lcpcomp_dec, textds]),
+    AlgorithmConfig(name="LZ78UCompressor", header="compressors/LZ78UCompressor.hpp", sub=[lz78u_comp, universal_coders]),
     AlgorithmConfig(name="RunLengthEncoder", header="compressors/RunLengthEncoder.hpp"),
-    AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[coder]),
-    AlgorithmConfig(name="LZ78Compressor", header="compressors/LZ78Compressor.hpp", sub=[context_free_coder, lz78_trie]),
-    AlgorithmConfig(name="LZWCompressor", header="compressors/LZWCompressor.hpp", sub=[context_free_coder, lz78_trie]),
-    AlgorithmConfig(name="RePairCompressor", header="compressors/RePairCompressor.hpp", sub=[non_bit_interleaving_coder]),
-    AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[non_bit_interleaving_coder, textds]),
-    AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[context_free_coder]),
+    AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
+    AlgorithmConfig(name="LZ78Compressor", header="compressors/LZ78Compressor.hpp", sub=[universal_coders, lz78_trie]),
+    AlgorithmConfig(name="LZWCompressor", header="compressors/LZWCompressor.hpp", sub=[universal_coders, lz78_trie]),
+    AlgorithmConfig(name="RePairCompressor", header="compressors/RePairCompressor.hpp", sub=[non_consuming_coders]),
+    AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[non_consuming_coders, textds]),
+    AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[universal_coders]),
     AlgorithmConfig(name="MTFCompressor", header="compressors/MTFCompressor.hpp"),
     AlgorithmConfig(name="NoopCompressor", header="compressors/NoopCompressor.hpp"),
     AlgorithmConfig(name="BWTCompressor", header="compressors/BWTCompressor.hpp", sub=[textds]),
     AlgorithmConfig(name="ChainCompressor", header="../tudocomp_driver/ChainCompressor.hpp"),
 ]
 
+##### Export available string generators #####
 tdc.generators = [
     AlgorithmConfig(name="FibonacciGenerator", header="generators/FibonacciGenerator.hpp"),
     AlgorithmConfig(name="ThueMorseGenerator", header="generators/ThueMorseGenerator.hpp"),
