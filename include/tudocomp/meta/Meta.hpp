@@ -65,13 +65,22 @@ public:
         const std::string& param_name,
         const std::string& type) {
 
-        auto default_meta = Default::meta();
+        auto default_decl = Default::meta().decl();
+
+        if(default_decl.type() != type) {
+            throw DeclError(
+                std::string("type mismatch in default value for parameter '") +
+                    param_name + "': expected " + type + ", got " +
+                    default_decl.type() + " ('" +
+                    default_decl.name() + "')");
+        }
+
         m_decl.add_param(AlgorithmDecl::Param(
             param_name,
             false, // primitive
             false, // no list
             type,  // no type
-            default_meta.m_decl.default_config()));
+            default_decl.default_config()));
     }
 
     inline const AlgorithmDecl& decl() const {
