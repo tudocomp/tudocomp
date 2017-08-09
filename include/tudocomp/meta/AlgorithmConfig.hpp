@@ -67,11 +67,12 @@ public:
 
             auto& algo_decl = it->second;
 
-            // check type (TODO: inheritance)
-            if(algo_decl.type() != m_decl->type()) {
+            // check algorithm type
+            if(!algo_decl.type().subtype_of(m_decl->type())) {
                 throw ConfigError("algorithm type mismatch for " +
                     param_str(list_item) + " '" + m_decl->name() + "': " +
-                    "expected " + m_decl->type() + ", got " + algo_decl.type());
+                    "expected " + m_decl->type().name() +
+                    ", got " + algo_decl.type().name());
             }
 
             // create sub config

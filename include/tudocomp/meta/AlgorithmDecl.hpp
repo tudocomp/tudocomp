@@ -13,6 +13,8 @@
 #include <tudocomp/meta/ast/Object.hpp>
 #include <tudocomp/meta/ast/TypeConversion.hpp>
 
+#include <tudocomp/meta/TypeDesc.hpp>
+
 namespace tdc {
 namespace meta {
 
@@ -31,7 +33,7 @@ public:
         std::string m_name;
         bool m_primitive;   // if false, type needs to be set
         bool m_list;        // if true, value/type flags account for list items
-        std::string m_type; // only valid if non-primitive
+        TypeDesc m_type;    // only valid if non-primitive
 
         // default value
         ast::NodePtr<> m_default;
@@ -48,22 +50,22 @@ public:
             const std::string& name,
             bool primitive = true,
             bool list = false,
-            const std::string& type = "",
+            const TypeDesc& type = TypeDesc(),
             ast::NodePtr<> defv = ast::NodePtr<>())
             : m_name(name),
               m_primitive(primitive),
               m_list(list),
               m_default(defv) {
 
-            if(!primitive && type.empty()) {
+            if(!primitive && !type.valid()) {
                 throw DeclError("non-primitive parameters must have a type");
             }
 
-            if(primitive && !type.empty()) {
+            if(primitive && type.valid()) {
                 throw DeclError("primitive parameters must not have a type");
             }
 
-            m_type = primitive ? "$" : type;
+            m_type = primitive ? TypeDesc("$") : type;
 
             // sanity checks on default value
             if(defv) {
@@ -116,7 +118,7 @@ public:
         inline const std::string& name() const { return m_name; }
         inline bool is_primitive() const { return m_primitive; }
         inline bool is_list() const { return m_list; }
-        inline const std::string& type() const { return m_type; }
+        inline const TypeDesc& type() const { return m_type; }
 
         inline ast::NodePtr<> default_value() const {
             return m_default;
@@ -125,13 +127,14 @@ public:
         /// \brief Returns a string representation of the declaration.
         /// \return a string representation of the declaration
         inline const std::string str() const {
-            return m_name + " : " + (m_list ? "[" + m_type + "]" : m_type);
+            return m_name + " : " +
+                (m_list ? "[" + m_type.name() + "]" : m_type.name());
         }
     };
 
 private:
     std::string m_name;
-    std::string m_type;
+    TypeDesc    m_type;
     std::string m_desc;
     std::vector<Param> m_params;
 
@@ -142,7 +145,7 @@ public:
     /// \param desc a brief documentaton of the algorithm
     inline AlgorithmDecl(
         const std::string& name,
-        const std::string& type,
+        const TypeDesc&    type,
         const std::string& desc = "")
         : m_name(name), m_type(type), m_desc(desc) {
     }
@@ -181,7 +184,7 @@ public:
     }
 
     inline const std::string& name() const { return m_name; }
-    inline const std::string& type() const { return m_type; }
+    inline const TypeDesc&    type() const { return m_type; }
     inline const std::string& desc() const { return m_desc; }
     inline const std::vector<Param>& params() const {
         return m_params;
@@ -199,7 +202,7 @@ public:
             if(++i < m_params.size()) ss << ", ";
         }
 
-        ss << ") : " << m_type;
+        ss << ") : " << m_type.name();
         return ss.str();
     }
 };

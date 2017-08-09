@@ -14,7 +14,7 @@ private:
 public:
     inline Meta(
         const std::string& name,
-        const std::string& type,
+        const TypeDesc&    type,
         const std::string& desc)
         : m_decl(AlgorithmDecl(name, type, desc)) {
     }
@@ -25,9 +25,9 @@ public:
 
         m_decl.add_param(AlgorithmDecl::Param(
             name,
-            true,  // primitive
-            false, // no list
-            "",    // no type
+            true,       // primitive
+            false,      // no list
+            TypeDesc(), // no type
             default_value.empty() ?
                 ast::NodePtr<>() :
                 ast::Parser::parse(default_value)));
@@ -39,9 +39,9 @@ public:
 
         m_decl.add_param(AlgorithmDecl::Param(
             name,
-            true, // primitive
-            true, // list
-            "",   // no type
+            true,       // primitive
+            true,       // list
+            TypeDesc(), // no type
             default_value.empty() ?
                 ast::NodePtr<>() :
                 ast::Parser::parse(default_value)));
@@ -49,13 +49,13 @@ public:
 
     inline void sub_algo(
         const std::string& param_name,
-        const std::string& type) {
+        const TypeDesc& type) {
 
         m_decl.add_param(AlgorithmDecl::Param(
             param_name,
             false, // primitive
             false, // no list
-            type,  // no type
+            type,
             ast::NodePtr<>() //no default
         ));
     }
@@ -63,15 +63,15 @@ public:
     template<typename Default>
     inline void sub_algo(
         const std::string& param_name,
-        const std::string& type) {
+        const TypeDesc& type) {
 
         auto default_decl = Default::meta().decl();
 
-        if(default_decl.type() != type) {
+        if(!default_decl.type().subtype_of(type)) {
             throw DeclError(
                 std::string("type mismatch in default value for parameter '") +
-                    param_name + "': expected " + type + ", got " +
-                    default_decl.type() + " ('" +
+                    param_name + "': expected " + type.name() + ", got " +
+                    default_decl.type().name() + " ('" +
                     default_decl.name() + "')");
         }
 
