@@ -171,6 +171,15 @@ public:
         m_params.emplace_back(std::move(p));
     }
 
+    /// \brief Generates the default configuration for the declared algorithm.
+    inline ast::NodePtr<ast::Object> default_config() {
+        auto obj = std::make_shared<ast::Object>(m_name);
+        for(auto& param : m_params) {
+            obj->add_param(ast::Param(param.name(), param.default_value()));
+        }
+        return obj;
+    }
+
     inline const std::string& name() const { return m_name; }
     inline const std::string& type() const { return m_type; }
     inline const std::string& desc() const { return m_desc; }

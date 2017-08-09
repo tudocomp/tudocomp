@@ -91,7 +91,11 @@ public:
             const AlgorithmLib& lib)
             : m_decl(&decl), m_config(config) {
 
-            if(!m_config) throw ConfigError("null");
+            if(!m_config) {
+                throw ConfigError(
+                    std::string("tried to configure parameter '") +
+                    decl.name() + "' with a NULL value");
+            }
 
             if(m_decl->is_list()) {
                 auto list_value = configure_list(m_config);

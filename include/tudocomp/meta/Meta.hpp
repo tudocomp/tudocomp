@@ -16,14 +16,14 @@ public:
         const std::string& name,
         const std::string& type,
         const std::string& desc)
-        : m_decl(meta::AlgorithmDecl(name, type, desc)) {
+        : m_decl(AlgorithmDecl(name, type, desc)) {
     }
 
     inline void param(
         const std::string& name,
         const std::string& default_value = "") {
-        
-        m_decl.add_param(meta::AlgorithmDecl::Param(
+
+        m_decl.add_param(AlgorithmDecl::Param(
             name,
             true,  // primitive
             false, // no list
@@ -36,8 +36,8 @@ public:
     inline void param_list(
         const std::string& name,
         const std::string& default_value = "") {
-        
-        m_decl.add_param(meta::AlgorithmDecl::Param(
+
+        m_decl.add_param(AlgorithmDecl::Param(
             name,
             true, // primitive
             true, // list
@@ -51,15 +51,30 @@ public:
         const std::string& param_name,
         const std::string& type) {
 
-        m_decl.add_param(meta::AlgorithmDecl::Param(
+        m_decl.add_param(AlgorithmDecl::Param(
             param_name,
             false, // primitive
             false, // no list
             type,  // no type
-            ast::NodePtr<>())); // TODO: default?
+            ast::NodePtr<>() //no default
+        ));
     }
 
-    inline const meta::AlgorithmDecl& decl() const {
+    template<typename Default>
+    inline void sub_algo(
+        const std::string& param_name,
+        const std::string& type) {
+
+        auto default_meta = Default::meta();
+        m_decl.add_param(AlgorithmDecl::Param(
+            param_name,
+            false, // primitive
+            false, // no list
+            type,  // no type
+            default_meta.m_decl.default_config()));
+    }
+
+    inline const AlgorithmDecl& decl() const {
         return m_decl;
     }
 };

@@ -14,20 +14,20 @@ namespace ast {
 class Param {
 private:
     std::string m_name;
-    std::shared_ptr<Node> m_value;
+    NodePtr<> m_value;
 
 public:
     /// \brief Main constructor.
     /// \param name the parameter name
     /// \param value the assigned node
     inline Param(const std::string& name,
-                 const std::shared_ptr<Node> value)
+                 const NodePtr<> value)
                  : m_name(name), m_value(value) {
     }
 
     /// \brief Constructs an unnamed parameter.
     /// \param value the assigned node
-    inline Param(const std::shared_ptr<Node> value) : Param("", value) {
+    inline Param(const NodePtr<> value) : Param("", value) {
     }
 
     /// \brief Copy constructor.
@@ -55,8 +55,8 @@ public:
 
     /// \brief Gets the parameter's assigned node.
     /// \return the parameter's assigned node
-    inline std::shared_ptr<const Node> value() const {
-        return std::const_pointer_cast<const Node>(m_value);
+    inline NodePtr<> value() const {
+        return m_value;
     }
 
     /// \brief Returns a human-readable string representation of the parameter.
