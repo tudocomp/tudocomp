@@ -81,6 +81,8 @@ public:
     inline const TypeDesc& super() const { return *m_super; }
 };
 
+constexpr TypeDesc no_type;
+
 } //namespace meta
 
 using TypeDesc = meta::TypeDesc;

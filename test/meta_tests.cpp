@@ -39,8 +39,8 @@ public:
         Meta m("lz77", compressor_td, "LZ77 online compressor.");
         m.param("coder").strategy<BinaryCoder>(coder_td);
         m.param("coders").strategy_list<BinaryCoder, UnaryCoder>(coder_td);
-        m.param("window").primitive("10");
-        m.param("values").primitive_list("[1,4,7]");
+        m.param("window").primitive(10);
+        m.param("values").primitive_list({1,4,7});
         return m;
     }
 };

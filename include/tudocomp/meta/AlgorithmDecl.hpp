@@ -24,6 +24,8 @@ public:
     using std::runtime_error::runtime_error;
 };
 
+constexpr TypeDesc primitive_type("$");
+
 /// \brief Represents an algorithm declaration.
 class AlgorithmDecl {
 public:
@@ -65,7 +67,7 @@ public:
                 throw DeclError("primitive parameters must not have a type");
             }
 
-            m_type = primitive ? TypeDesc("$") : type;
+            m_type = primitive ? primitive_type : type;
 
             // sanity checks on default value
             if(defv) {

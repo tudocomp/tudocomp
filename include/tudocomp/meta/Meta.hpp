@@ -73,26 +73,47 @@ public:
             : m_decl(&decl), m_name(name) {
         }
 
-        inline void primitive(const std::string& default_value = "") {
+        inline void primitive() {
             m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 true,       // primitive
                 false,      // no list
-                TypeDesc(), // no type
-                default_value.empty() ?
-                    ast::NodePtr<>() :
-                    ast::Parser::parse(default_value)));
+                no_type,
+                ast::NodePtr<>())); // no default
         }
 
-        inline void primitive_list(const std::string& default_value = "") {
+        template<typename T>
+        inline void primitive(const T& default_value) {
             m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 true,       // primitive
-                true,       // no list
-                TypeDesc(), // no type
-                default_value.empty() ?
-                    ast::NodePtr<>() :
-                    ast::Parser::parse(default_value)));
+                false,      // no list
+                no_type,
+                std::make_shared<ast::Value>(to_string(default_value))));
+        }
+
+        inline void primitive_list() {
+            m_decl->add_param(AlgorithmDecl::Param(
+                m_name,
+                true,       // primitive
+                true,       // list
+                no_type,
+                ast::NodePtr<>())); // no default
+        }
+
+        template<typename T>
+        inline void primitive_list(std::initializer_list<T> default_value) {
+            auto list = std::make_shared<ast::List>();
+            for(auto& v : default_value) {
+                list->add_value(std::make_shared<ast::Value>(to_string(v)));
+            }
+
+            m_decl->add_param(AlgorithmDecl::Param(
+                m_name,
+                true,       // primitive
+                true,       // list
+                no_type,
+                list));
         }
 
         inline void strategy(const TypeDesc& type) {
@@ -111,9 +132,9 @@ public:
 
             m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
-                false, // primitive
+                false, // non-primitive
                 false, // no list
-                type,  // no type
+                type,
                 default_decl.default_config()));
         }
 
@@ -121,7 +142,7 @@ public:
             m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // non-primitive
-                true,
+                true,  // list
                 type,
                 ast::NodePtr<>() //no default
             ));
@@ -135,7 +156,7 @@ public:
             m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // non-primitive
-                true,
+                true,  // list
                 type,
                 std::const_pointer_cast<ast::List>(defaults)
             ));
