@@ -175,7 +175,7 @@ public:
     }
 
     /// \brief Generates the default configuration for the declared algorithm.
-    inline ast::NodePtr<ast::Object> default_config() {
+    inline ast::NodePtr<ast::Object> default_config() const {
         auto obj = std::make_shared<ast::Object>(m_name);
         for(auto& param : m_params) {
             obj->add_param(ast::Param(param.name(), param.default_value()));

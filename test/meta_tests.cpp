@@ -12,10 +12,24 @@ using namespace tdc::meta;
 constexpr TypeDesc coder_td("coder");
 constexpr TypeDesc compressor_td("coder");
 
+class OtherAlgo {
+public:
+    static inline Meta meta() {
+        return Meta("other", TypeDesc("other"), "Any other algorithm.");
+    }
+};
+
 class BinaryCoder {
 public:
     static inline Meta meta() {
-        return Meta("binary", TypeDesc("xcoder", coder_td), "Binary coder.");
+        return Meta("binary", coder_td, "Binary coder.");
+    }
+};
+
+class UnaryCoder {
+public:
+    static inline Meta meta() {
+        return Meta("unary", coder_td, "Unary coder.");
     }
 };
 
@@ -23,9 +37,10 @@ class LZ77Compressor {
 public:
     static inline Meta meta() {
         Meta m("lz77", compressor_td, "LZ77 online compressor.");
-        m.sub_algo<BinaryCoder>("coder", coder_td);
-        m.param("window", "10");
-        m.param_list("values", "[1,4,7]");
+        m.param("coder").strategy<BinaryCoder>(coder_td);
+        m.param("coders").strategy_list<BinaryCoder, UnaryCoder>(coder_td);
+        m.param("window").primitive("10");
+        m.param("values").primitive_list("[1,4,7]");
         return m;
     }
 };
@@ -33,12 +48,14 @@ public:
 TEST(Sandbox, example) {
     // registry
     AlgorithmLib lib;
+    lib.emplace("other", OtherAlgo::meta().decl());
     lib.emplace("binary", BinaryCoder::meta().decl());
+    lib.emplace("unary", UnaryCoder::meta().decl());
     lib.emplace("lz77", LZ77Compressor::meta().decl());
 
     // parse
     DLOG(INFO) << "parse...";
-    auto v = ast::Parser::parse("lz77");
+    auto v = ast::Parser::parse("lz77()");
     DLOG(INFO) << v->str();
 
     // attempt to create config
