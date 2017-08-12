@@ -6,27 +6,30 @@
 #include <tudocomp/meta/ast/Parser.hpp>
 #include <tudocomp/meta/AlgorithmConfig.hpp>
 #include <tudocomp/meta/Meta.hpp>
+#include <tudocomp/meta/Registry.hpp>
 
 using namespace tdc::meta;
 
 constexpr TypeDesc coder_td("coder");
 constexpr TypeDesc compressor_td("coder");
 
-class OtherAlgo {
+class Algorithm {};
+
+class OtherAlgo : public Algorithm {
 public:
     static inline Meta meta() {
         return Meta("other", TypeDesc("other"), "Any other algorithm.");
     }
 };
 
-class BinaryCoder {
+class BinaryCoder : public Algorithm {
 public:
     static inline Meta meta() {
         return Meta("binary", coder_td, "Binary coder.");
     }
 };
 
-class UnaryCoder {
+class UnaryCoder : public Algorithm {
 public:
     static inline Meta meta() {
         return Meta("unary", coder_td, "Unary coder.");
@@ -34,7 +37,7 @@ public:
 };
 
 template<typename coder_t, typename coder2_t>
-class LZ77Compressor {
+class LZ77Compressor : public Algorithm {
 public:
     static inline Meta meta() {
         Meta m("lz77", compressor_td, "LZ77 online compressor.");
@@ -48,25 +51,17 @@ public:
 };
 
 TEST(Sandbox, example) {
-    // registry
-    AlgorithmLib lib;
-    lib.emplace("other", OtherAlgo::meta().decl());
-    lib.emplace("binary", BinaryCoder::meta().decl());
-    lib.emplace("unary", UnaryCoder::meta().decl());
-    lib.emplace("lz77", LZ77Compressor<BinaryCoder, UnaryCoder>::meta().decl());
+    Registry<Algorithm> registry;
+    registry.register_algorithm<LZ77Compressor<BinaryCoder, BinaryCoder>>();
+    registry.register_algorithm<LZ77Compressor<BinaryCoder, UnaryCoder>>();
+    registry.register_algorithm<LZ77Compressor<UnaryCoder, BinaryCoder>>();
+    registry.register_algorithm<LZ77Compressor<UnaryCoder, UnaryCoder>>();
 
-    // meta signatures
-    DLOG(INFO) << "signature(binary, binary): " <<
-        LZ77Compressor<BinaryCoder, BinaryCoder>::meta().signature()->str();
-    DLOG(INFO) << "signature(binary, unary): " <<
-        LZ77Compressor<BinaryCoder, UnaryCoder>::meta().signature()->str();
-    DLOG(INFO) << "signature(unary, binary): " <<
-        LZ77Compressor<UnaryCoder, BinaryCoder>::meta().signature()->str();
-    DLOG(INFO) << "signature(unary, unary): " <<
-        LZ77Compressor<UnaryCoder, UnaryCoder>::meta().signature()->str();
+    auto algo = registry.select("lz77(window=147)");
 
+    /*
     // parse
-    /*DLOG(INFO) << "parse...";
+    DLOG(INFO) << "parse...";
     auto v = ast::Parser::parse("lz77()");
     DLOG(INFO) << v->str();
 
@@ -77,5 +72,6 @@ TEST(Sandbox, example) {
 
     // signature
     DLOG(INFO) << "signature...";
-    DLOG(INFO) << cfg.signature()->str();*/
+    DLOG(INFO) << cfg.signature()->str();
+    */
 }
