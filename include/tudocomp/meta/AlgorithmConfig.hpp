@@ -437,42 +437,29 @@ public:
     /// Signatures are used to map algorithm configurations to their
     /// corresponding C++ classes. These are usually instances of (cascaded)
     /// class templates, which the signature identifies uniquely.
-    inline std::string signature() const {
-        std::stringstream ss;
-        size_t sig_params = 0;
-
-        // add algorithm name to signature
-        ss << m_decl->name();
+    inline ast::NodePtr<ast::Object> signature() const {
+        auto sig = std::make_shared<ast::Object>(m_decl->name());
 
         // iterate over declarated parameters
         for(auto& p : m_decl->params()) {
             if(!p.is_primitive()) {
                 // add parameter to signature
-                ss << (sig_params ? ", " : "(");
-                ++sig_params;
-                ss << p.name() << "=";
-
                 if(p.is_list()) {
-                    // list of sub algorithms
-                    ss << "[";
-                    auto& subs = get_sub_configs(p.name());
-                    size_t i = 0;
-                    for(auto& sub : subs) {
-                        // recurse for each
-                        ss << sub.signature();
-                        if(++i < subs.size()) ss << ", ";
+                    // list of sub algorithms - recurse for each
+                    auto list = std::make_shared<ast::List>();
+                    for(auto& sub : get_sub_configs(p.name())) {
+                        list->add_value(sub.signature());
                     }
-                    ss << "]";
+                    sig->add_param(ast::Param(p.name(), list));
                 } else {
                     // single sub algorithm - recurse
-                    ss << get_sub_config(p.name()).signature();
+                    sig->add_param(ast::Param(
+                        p.name(),
+                        get_sub_config(p.name()).signature()));
                 }
             }
         }
-
-        if(sig_params) ss << ")";
-
-        return ss.str();
+        return sig;
     }
 
     /// \brief Returns a human-readable string representation of the

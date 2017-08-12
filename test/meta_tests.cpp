@@ -67,5 +67,5 @@ TEST(Sandbox, example) {
 
     // signature
     DLOG(INFO) << "signature...";
-    DLOG(INFO) << cfg.signature();
+    DLOG(INFO) << cfg.signature()->str();
 }
