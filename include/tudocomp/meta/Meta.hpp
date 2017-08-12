@@ -26,7 +26,7 @@ struct gather<std::tuple<Head, Tail...>> {
         const TypeDesc& type) {
 
         list->add_value(
-            check_algo_type<Head>(param_name, type).decl().default_config());
+            check_algo_type<Head>(param_name, type).decl()->default_config());
         gather<std::tuple<Tail...>>::defaults(list, param_name, type);
     }
 
@@ -63,7 +63,7 @@ struct gather<std::tuple<>> {
 /// \brief Provides meta information about an Algorithm.
 class Meta {
 private:
-    AlgorithmDecl m_decl;
+    std::shared_ptr<AlgorithmDecl> m_decl;
     std::shared_ptr<ast::Object> m_sig; // signature of bindings
 
 public:
@@ -81,7 +81,7 @@ public:
         }
 
         inline void primitive() {
-            m_meta->m_decl.add_param(AlgorithmDecl::Param(
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 true,       // primitive
                 false,      // no list
@@ -91,7 +91,7 @@ public:
 
         template<typename T>
         inline void primitive(const T& default_value) {
-            m_meta->m_decl.add_param(AlgorithmDecl::Param(
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 true,       // primitive
                 false,      // no list
@@ -100,7 +100,7 @@ public:
         }
 
         inline void primitive_list() {
-            m_meta->m_decl.add_param(AlgorithmDecl::Param(
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 true,       // primitive
                 true,       // list
@@ -115,7 +115,7 @@ public:
                 list->add_value(std::make_shared<ast::Value>(to_string(v)));
             }
 
-            m_meta->m_decl.add_param(AlgorithmDecl::Param(
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 true,       // primitive
                 true,       // list
@@ -134,7 +134,7 @@ public:
         template<typename Binding>
         inline void strategy(const TypeDesc& type) {
             add_to_signature<Binding>(type);
-            m_meta->m_decl.add_param(AlgorithmDecl::Param(
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // primitive
                 false, // no list
@@ -147,9 +147,9 @@ public:
         inline void strategy(const TypeDesc& type, Meta::Default<D>&&) {
             add_to_signature<Binding>(type);
             auto def =
-                check_algo_type<D>(m_name, type).decl().default_config();
+                check_algo_type<D>(m_name, type).decl()->default_config();
 
-            m_meta->m_decl.add_param(AlgorithmDecl::Param(
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // non-primitive
                 false, // no list
@@ -170,7 +170,7 @@ public:
         inline void strategy_list(const TypeDesc& type) {
             add_list_to_signature<Bindings...>(type);
 
-            m_meta->m_decl.add_param(AlgorithmDecl::Param(
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // non-primitive
                 true,  // list
@@ -189,7 +189,7 @@ public:
             auto defaults = std::make_shared<ast::List>();
             gather<std::tuple<D...>>::defaults(defaults, m_name, type);
 
-            m_meta->m_decl.add_param(AlgorithmDecl::Param(
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // non-primitive
                 true,  // list
@@ -203,7 +203,7 @@ public:
         const std::string& name,
         const TypeDesc&    type,
         const std::string& desc)
-        : m_decl(AlgorithmDecl(name, type, desc)),
+        : m_decl(std::make_shared<AlgorithmDecl>(name, type, desc)),
           m_sig(std::make_shared<ast::Object>(name)) {
     }
 
@@ -211,7 +211,7 @@ public:
         return ParamBuilder(*this, name);
     }
 
-    inline const AlgorithmDecl& decl() const {
+    inline std::shared_ptr<const AlgorithmDecl> decl() const {
         return m_decl;
     }
 
@@ -227,13 +227,13 @@ inline Meta check_algo_type(
     const TypeDesc& type) {
 
     auto meta = Algo::meta();
-    auto& decl = meta.decl();
-    if(!decl.type().subtype_of(type)) {
+    auto decl = meta.decl();
+    if(!decl->type().subtype_of(type)) {
         throw DeclError(std::string(
             "algorithm type mismatch in default value for parameter '") +
             param_name + "': expected " + type.name() + ", got " +
-            decl.type().name() + " ('" +
-            decl.name() + "')");
+            decl->type().name() + " ('" +
+            decl->name() + "')");
     }
 
     return meta;

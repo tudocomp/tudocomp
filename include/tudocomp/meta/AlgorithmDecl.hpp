@@ -210,6 +210,7 @@ public:
 };
 
 /// \brief Maps algorithm names to their declarations.
-using AlgorithmLib = std::unordered_map<std::string, AlgorithmDecl>;
+using AlgorithmLib = std::unordered_map<
+                        std::string, std::shared_ptr<AlgorithmDecl>>;
 
 }} //ns

@@ -65,18 +65,18 @@ public:
                     obj_value->name() + "'");
             }
 
-            auto& algo_decl = it->second;
+            auto algo_decl = it->second;
 
             // check algorithm type
-            if(!algo_decl.type().subtype_of(m_decl->type())) {
+            if(!algo_decl->type().subtype_of(m_decl->type())) {
                 throw ConfigError("algorithm type mismatch for " +
                     param_str(list_item) + " '" + m_decl->name() + "': " +
                     "expected " + m_decl->type().name() +
-                    ", got " + algo_decl.type().name());
+                    ", got " + algo_decl->type().name());
             }
 
             // create sub config
-            m_sub_configs.emplace_back(algo_decl, config, lib);
+            m_sub_configs.emplace_back(*algo_decl, config, lib);
 
             return obj_value;
         }
