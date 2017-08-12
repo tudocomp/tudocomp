@@ -55,8 +55,18 @@ TEST(Sandbox, example) {
     lib.emplace("unary", UnaryCoder::meta().decl());
     lib.emplace("lz77", LZ77Compressor<BinaryCoder, UnaryCoder>::meta().decl());
 
+    // meta signatures
+    DLOG(INFO) << "signature(binary, binary): " <<
+        LZ77Compressor<BinaryCoder, BinaryCoder>::meta().signature()->str();
+    DLOG(INFO) << "signature(binary, unary): " <<
+        LZ77Compressor<BinaryCoder, UnaryCoder>::meta().signature()->str();
+    DLOG(INFO) << "signature(unary, binary): " <<
+        LZ77Compressor<UnaryCoder, BinaryCoder>::meta().signature()->str();
+    DLOG(INFO) << "signature(unary, unary): " <<
+        LZ77Compressor<UnaryCoder, UnaryCoder>::meta().signature()->str();
+
     // parse
-    DLOG(INFO) << "parse...";
+    /*DLOG(INFO) << "parse...";
     auto v = ast::Parser::parse("lz77()");
     DLOG(INFO) << v->str();
 
@@ -67,5 +77,5 @@ TEST(Sandbox, example) {
 
     // signature
     DLOG(INFO) << "signature...";
-    DLOG(INFO) << cfg.signature()->str();
+    DLOG(INFO) << cfg.signature()->str();*/
 }

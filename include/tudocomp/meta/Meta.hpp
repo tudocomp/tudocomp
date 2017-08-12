@@ -9,50 +9,53 @@ namespace tdc {
 namespace meta {
 
 /// \cond INTERNAL
+class Meta;
+
 template<typename Algo>
-inline const AlgorithmDecl& check_algo_type(
-    const std::string& param_name,
-    const TypeDesc& type) {
-
-    auto& decl = Algo::meta().decl();
-    if(!decl.type().subtype_of(type)) {
-        throw DeclError(std::string(
-            "type mismatch in default value for parameter '") +
-            param_name + "': expected " + type.name() + ", got " +
-            decl.type().name() + " ('" +
-            decl.name() + "')");
-    }
-
-    return decl;
-}
+Meta check_algo_type(const std::string& param_name, const TypeDesc& type);
 
 template<typename Tl>
-struct gather_defaults;
+struct gather;
 
 // TODO: use type_list from textds branch
 template<typename Head, typename... Tail>
-struct gather_defaults<std::tuple<Head, Tail...>> {
-    static inline std::shared_ptr<ast::List> list(
+struct gather<std::tuple<Head, Tail...>> {
+    static inline void defaults(
+        std::shared_ptr<ast::List> list,
         const std::string& param_name,
         const TypeDesc& type) {
 
-        auto list =
-            gather_defaults<std::tuple<Tail...>>::list(param_name, type);
+        list->add_value(
+            check_algo_type<Head>(param_name, type).decl().default_config());
+        gather<std::tuple<Tail...>>::defaults(list, param_name, type);
+    }
 
-        auto& decl = check_algo_type<Head>(param_name, type);
-        list->add_value(decl.default_config());
-        return list;
+    static inline void signatures(
+        std::shared_ptr<ast::List> list,
+        const std::string& param_name,
+        const TypeDesc& type) {
+
+        list->add_value(
+            check_algo_type<Head>(param_name, type).signature());
+        gather<std::tuple<Tail...>>::signatures(list, param_name, type);
     }
 };
 
 // TODO: use type_list from textds branch
 template<>
-struct gather_defaults<std::tuple<>> {
-    static inline std::shared_ptr<ast::List> list(
+struct gather<std::tuple<>> {
+    static inline void defaults(
+        std::shared_ptr<ast::List> list,
         const std::string& param_name,
         const TypeDesc& type) {
+        // done
+    }
 
-        return std::make_shared<ast::List>(); // base
+    static inline void signatures(
+        std::shared_ptr<ast::List> list,
+        const std::string& param_name,
+        const TypeDesc& type) {
+        // done
     }
 };
 /// \endcond
@@ -61,6 +64,7 @@ struct gather_defaults<std::tuple<>> {
 class Meta {
 private:
     AlgorithmDecl m_decl;
+    std::shared_ptr<ast::Object> m_sig; // signature of bindings
 
 public:
     template<typename D>    struct Default {};
@@ -68,16 +72,16 @@ public:
 
     class ParamBuilder {
     private:
-        AlgorithmDecl* m_decl;
+        Meta* m_meta;
         std::string m_name;
 
     public:
-        inline ParamBuilder(AlgorithmDecl& decl, const std::string& name)
-            : m_decl(&decl), m_name(name) {
+        inline ParamBuilder(Meta& meta, const std::string& name)
+            : m_meta(&meta), m_name(name) {
         }
 
         inline void primitive() {
-            m_decl->add_param(AlgorithmDecl::Param(
+            m_meta->m_decl.add_param(AlgorithmDecl::Param(
                 m_name,
                 true,       // primitive
                 false,      // no list
@@ -87,7 +91,7 @@ public:
 
         template<typename T>
         inline void primitive(const T& default_value) {
-            m_decl->add_param(AlgorithmDecl::Param(
+            m_meta->m_decl.add_param(AlgorithmDecl::Param(
                 m_name,
                 true,       // primitive
                 false,      // no list
@@ -96,7 +100,7 @@ public:
         }
 
         inline void primitive_list() {
-            m_decl->add_param(AlgorithmDecl::Param(
+            m_meta->m_decl.add_param(AlgorithmDecl::Param(
                 m_name,
                 true,       // primitive
                 true,       // list
@@ -111,7 +115,7 @@ public:
                 list->add_value(std::make_shared<ast::Value>(to_string(v)));
             }
 
-            m_decl->add_param(AlgorithmDecl::Param(
+            m_meta->m_decl.add_param(AlgorithmDecl::Param(
                 m_name,
                 true,       // primitive
                 true,       // list
@@ -119,11 +123,18 @@ public:
                 list));
         }
 
+    private:
+        template<typename Binding>
+        inline void add_to_signature(const TypeDesc& type) {
+            m_meta->m_sig->add_param(ast::Param(
+                m_name, check_algo_type<Binding>(m_name, type).signature()));
+        }
+
+    public:
         template<typename Binding>
         inline void strategy(const TypeDesc& type) {
-            //TODO: add Binding to signature
-
-            m_decl->add_param(AlgorithmDecl::Param(
+            add_to_signature<Binding>(type);
+            m_meta->m_decl.add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // primitive
                 false, // no list
@@ -134,23 +145,32 @@ public:
 
         template<typename Binding, typename D>
         inline void strategy(const TypeDesc& type, Meta::Default<D>&&) {
-            //TODO: add Binding to signature
+            add_to_signature<Binding>(type);
+            auto def =
+                check_algo_type<D>(m_name, type).decl().default_config();
 
-            auto& default_decl = check_algo_type<D>(m_name, type);
-
-            m_decl->add_param(AlgorithmDecl::Param(
+            m_meta->m_decl.add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // non-primitive
                 false, // no list
                 type,
-                default_decl.default_config()));
+                def));
         }
 
+    private:
+        template<typename... Bindings>
+        inline void add_list_to_signature(const TypeDesc& type) {
+            auto sigs = std::make_shared<ast::List>();
+            gather<std::tuple<Bindings...>>::signatures(sigs, m_name, type);
+            m_meta->m_sig->add_param(ast::Param(m_name, sigs));
+        }
+
+    public:
         template<typename... Bindings>
         inline void strategy_list(const TypeDesc& type) {
-            //TODO: add Bindings to signature
+            add_list_to_signature<Bindings...>(type);
 
-            m_decl->add_param(AlgorithmDecl::Param(
+            m_meta->m_decl.add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // non-primitive
                 true,  // list
@@ -164,17 +184,17 @@ public:
             const TypeDesc& type,
             Meta::Defaults<D...>&&) {
 
-            //TODO: add Bindings to signature
+            add_list_to_signature<Bindings...>(type);
 
-            auto defaults =
-                gather_defaults<std::tuple<D...>>::list(m_name, type);
+            auto defaults = std::make_shared<ast::List>();
+            gather<std::tuple<D...>>::defaults(defaults, m_name, type);
 
-            m_decl->add_param(AlgorithmDecl::Param(
+            m_meta->m_decl.add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // non-primitive
                 true,  // list
                 type,
-                std::const_pointer_cast<ast::List>(defaults)
+                defaults
             ));
         }
     };
@@ -183,17 +203,42 @@ public:
         const std::string& name,
         const TypeDesc&    type,
         const std::string& desc)
-        : m_decl(AlgorithmDecl(name, type, desc)) {
+        : m_decl(AlgorithmDecl(name, type, desc)),
+          m_sig(std::make_shared<ast::Object>(name)) {
     }
 
     inline ParamBuilder param(const std::string& name) {
-        return ParamBuilder(m_decl, name);
+        return ParamBuilder(*this, name);
     }
 
     inline const AlgorithmDecl& decl() const {
         return m_decl;
     }
+
+    inline ast::NodePtr<ast::Object> signature() const {
+        return m_sig;
+    }
 };
+
+/// \cond INTERNAL
+template<typename Algo>
+inline Meta check_algo_type(
+    const std::string& param_name,
+    const TypeDesc& type) {
+
+    auto meta = Algo::meta();
+    auto& decl = meta.decl();
+    if(!decl.type().subtype_of(type)) {
+        throw DeclError(std::string(
+            "algorithm type mismatch in default value for parameter '") +
+            param_name + "': expected " + type.name() + ", got " +
+            decl.type().name() + " ('" +
+            decl.name() + "')");
+    }
+
+    return meta;
+}
+/// \endcond
 
 } //namespace meta
 
