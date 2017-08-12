@@ -33,12 +33,14 @@ public:
     }
 };
 
+template<typename coder_t, typename coder2_t>
 class LZ77Compressor {
 public:
     static inline Meta meta() {
         Meta m("lz77", compressor_td, "LZ77 online compressor.");
-        m.param("coder").strategy<BinaryCoder>(coder_td);
-        m.param("coders").strategy_list<BinaryCoder, UnaryCoder>(coder_td);
+        m.param("coder").strategy<coder_t>(coder_td, Meta::Default<BinaryCoder>());
+        m.param("coders").strategy_list<coder_t, coder2_t>(
+            coder_td, Meta::Defaults<BinaryCoder, UnaryCoder>());
         m.param("window").primitive(10);
         m.param("values").primitive_list({1,4,7});
         return m;
@@ -51,7 +53,7 @@ TEST(Sandbox, example) {
     lib.emplace("other", OtherAlgo::meta().decl());
     lib.emplace("binary", BinaryCoder::meta().decl());
     lib.emplace("unary", UnaryCoder::meta().decl());
-    lib.emplace("lz77", LZ77Compressor::meta().decl());
+    lib.emplace("lz77", LZ77Compressor<BinaryCoder, UnaryCoder>::meta().decl());
 
     // parse
     DLOG(INFO) << "parse...";

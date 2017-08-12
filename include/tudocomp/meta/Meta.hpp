@@ -63,6 +63,9 @@ private:
     AlgorithmDecl m_decl;
 
 public:
+    template<typename D>    struct Default {};
+    template<typename... D> struct Defaults {};
+
     class ParamBuilder {
     private:
         AlgorithmDecl* m_decl;
@@ -116,7 +119,10 @@ public:
                 list));
         }
 
+        template<typename Binding>
         inline void strategy(const TypeDesc& type) {
+            //TODO: add Binding to signature
+
             m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // primitive
@@ -126,9 +132,11 @@ public:
             ));
         }
 
-        template<typename Default>
-        inline void strategy(const TypeDesc& type) {
-            auto& default_decl = check_algo_type<Default>(m_name, type);
+        template<typename Binding, typename D>
+        inline void strategy(const TypeDesc& type, Meta::Default<D>&&) {
+            //TODO: add Binding to signature
+
+            auto& default_decl = check_algo_type<D>(m_name, type);
 
             m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
@@ -138,7 +146,10 @@ public:
                 default_decl.default_config()));
         }
 
+        template<typename... Bindings>
         inline void strategy_list(const TypeDesc& type) {
+            //TODO: add Bindings to signature
+
             m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // non-primitive
@@ -148,10 +159,15 @@ public:
             ));
         }
 
-        template<typename... Defaults>
-        inline void strategy_list(const TypeDesc& type) {
+        template<typename... Bindings, typename... D>
+        inline void strategy_list(
+            const TypeDesc& type,
+            Meta::Defaults<D...>&&) {
+
+            //TODO: add Bindings to signature
+
             auto defaults =
-                gather_defaults<std::tuple<Defaults...>>::list(m_name, type);
+                gather_defaults<std::tuple<D...>>::list(m_name, type);
 
             m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
