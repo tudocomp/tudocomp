@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 
+#include <tudocomp/meta/AlgorithmConfig.hpp>
 #include <tudocomp/meta/Meta.hpp>
 
 namespace tdc {
@@ -19,7 +20,7 @@ public:
 template<typename T>
 class Registry {
 private:
-    using ctor_t = std::function<std::unique_ptr<T>()>;
+    using ctor_t = std::function<std::unique_ptr<T>(AlgorithmConfig&&)>;
 
     AlgorithmLib m_lib;
     std::unordered_map<std::string, ctor_t> m_reg;
@@ -33,8 +34,8 @@ public:
         auto sig = meta.signature()->str();
         auto it = m_reg.find(sig);
         if(it == m_reg.end()) {
-            m_reg.emplace(sig, []() {
-                return std::make_unique<Algo>();
+            m_reg.emplace(sig, [](AlgorithmConfig&& cfg) {
+                return std::make_unique<Algo>(std::move(cfg));
             });
         } else {
             throw RegistryError(std::string("already registered: ") + sig);
@@ -67,7 +68,7 @@ public:
                 std::string("unregistered instance: ") + sig->str());
         }
 
-        return reg_entry->second();
+        return (reg_entry->second)(std::move(cfg));
     }
 };
 

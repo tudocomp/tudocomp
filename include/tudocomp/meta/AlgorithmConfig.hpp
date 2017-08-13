@@ -284,6 +284,16 @@ public:
         }
     }
 
+    /// \brief Copy constructor.
+    inline AlgorithmConfig(const AlgorithmConfig& other)
+        : m_decl(other.m_decl), m_params(other.m_params) {
+    }
+
+    /// \brief Move constructor.
+    inline AlgorithmConfig(AlgorithmConfig&& other)
+        : m_decl(other.m_decl), m_params(std::move(other.m_params)) {
+    }
+
 private:
     inline const Param& get_param(const std::string& name) const {
         auto it = std::find_if(m_params.begin(), m_params.end(),
@@ -480,4 +490,8 @@ public:
     }
 };
 
-}} //ns
+} // namespace meta
+
+using AlgorithmConfig = meta::AlgorithmConfig;
+
+} // namespace tdc

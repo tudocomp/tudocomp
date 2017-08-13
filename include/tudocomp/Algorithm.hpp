@@ -1,33 +1,31 @@
 #pragma once
 
-#include <tudocomp/Meta.hpp>
-#include <tudocomp/Env.hpp>
+#include <tudocomp/meta/AlgorithmConfig.hpp>
+#include <tudocomp/meta/Meta.hpp>
+#include <tudocomp/meta/Registry.hpp>
 
 namespace tdc {
 
-/// \brief Interface for algorithms.
-///
-/// This is the base for classes that use an environment (\ref Env) to receive
-/// options or communicate with the framework in different ways.
-///
-/// Algorithms are required to implement also a static function \c meta() that
-/// returns a Meta object, containing information about the algorithm.
 class Algorithm {
-    Env m_env;
+    AlgorithmConfig m_config;
+
 public:
-    /// \cond DELETED
+    template<typename T>
+    static inline std::unique_ptr<T> instance(std::string config = "") {
+        Registry<T> tmp_registry;
+        tmp_registry.template register_algorithm<T>();
+
+        if(config.empty()) {
+            config = T::meta().decl()->default_config()->str();
+        }
+
+        return tmp_registry.select(config);
+    }
+
     inline Algorithm() = delete;
-    /// \endcond
+    inline Algorithm(AlgorithmConfig&& cfg): m_config(std::move(cfg)) {}
 
-    /// \brief Instantiates an algorithm in the specified environment.
-    ///
-    /// \param env The environment for the algorithm to work in.
-    inline Algorithm(Env&& env): m_env(std::move(env)) {}
-
-    /// \brief Provides access to the environment that the algorithm works in.
-    /// \return The environment that the algorithm works in.
-    inline Env& env() { return m_env; }
-    inline const Env& env() const { return m_env; }
+    inline const AlgorithmConfig& config() const { return m_config; }
 };
 
 }

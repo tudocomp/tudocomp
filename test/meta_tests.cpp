@@ -1,25 +1,21 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
-#include <tudocomp/meta/AlgorithmDecl.hpp>
-#include <tudocomp/meta/ast/TypeConversion.hpp>
-#include <tudocomp/meta/ast/Parser.hpp>
-#include <tudocomp/meta/AlgorithmConfig.hpp>
-#include <tudocomp/meta/Meta.hpp>
 #include <tudocomp/meta/Registry.hpp>
+#include <tudocomp/Algorithm.hpp>
 
-using namespace tdc::meta;
+using namespace tdc;
 
 constexpr TypeDesc coder_td("coder");
 constexpr TypeDesc compressor_td("compressor");
-
-class Algorithm {};
 
 class OtherAlgo : public Algorithm {
 public:
     static inline Meta meta() {
         return Meta("other", TypeDesc("other"), "Any other algorithm.");
     }
+
+    using Algorithm::Algorithm;
 };
 
 class BinaryCoder : public Algorithm {
@@ -27,6 +23,8 @@ public:
     static inline Meta meta() {
         return Meta("binary", coder_td, "Binary coder.");
     }
+
+    using Algorithm::Algorithm;
 };
 
 class UnaryCoder : public Algorithm {
@@ -34,6 +32,8 @@ public:
     static inline Meta meta() {
         return Meta("unary", coder_td, "Unary coder.");
     }
+
+    using Algorithm::Algorithm;
 };
 
 template<typename coder_t, typename coder2_t>
@@ -48,6 +48,8 @@ public:
         m.param("values").primitive_list({1,4,7});
         return m;
     }
+
+    using Algorithm::Algorithm;
 };
 
 TEST(Sandbox, example) {
@@ -59,6 +61,8 @@ TEST(Sandbox, example) {
 
     auto algo = registry.select("lz77(window=147)");
     DLOG(INFO) << "instance: " << algo.get();
+
+    auto algo2 = Algorithm::instance<LZ77Compressor<UnaryCoder, BinaryCoder>>();
 
     /*
     // parse
