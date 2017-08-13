@@ -16,6 +16,7 @@ public:
         tmp_registry.template register_algorithm<T>();
 
         if(config.empty()) {
+            //FIXME: bindings may be different from default config!
             config = T::meta().decl()->default_config()->str();
         }
 

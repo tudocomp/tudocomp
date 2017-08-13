@@ -135,14 +135,14 @@ public:
 
         template<typename Binding, typename D>
         inline void strategy(const TypeDesc& type, Meta::Default<D>&&) {
-            auto binding = register_binding<Binding>(type);
+            register_binding<Binding>(type);
 
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // non-primitive
                 false, // no list
                 type,
-                binding.decl()->default_config()));
+                D::meta().decl()->default_config()));
         }
 
     private:
@@ -180,10 +180,16 @@ public:
             const TypeDesc& type,
             Meta::Defaults<D...>&&) {
 
-            auto bindings = register_bindings<Bindings...>(type);
+            register_bindings<Bindings...>(type);
+
             auto defaults = std::make_shared<ast::List>();
-            for(auto& b : bindings) {
-                defaults->add_value(b.decl()->default_config());
+            {
+                std::vector<Meta> metas;
+                gather<std::tuple<D...>>::metas(metas, m_name, type);
+
+                for(auto& meta : metas) {
+                    defaults->add_value(meta.decl()->default_config());
+                }
             }
 
             m_meta->m_decl->add_param(AlgorithmDecl::Param(

@@ -41,9 +41,9 @@ class LZ77Compressor : public Algorithm {
 public:
     static inline Meta meta() {
         Meta m("lz77", compressor_td, "LZ77 online compressor.");
-        m.param("coder").strategy<coder_t>(coder_td, Meta::Default<BinaryCoder>());
+        m.param("coder").strategy<coder_t>(coder_td, Meta::Default<UnaryCoder>());
         m.param("coders").strategy_list<coder_t, coder2_t>(
-            coder_td, Meta::Defaults<BinaryCoder, UnaryCoder>());
+            coder_td, Meta::Defaults<UnaryCoder, UnaryCoder>());
         m.param("window").primitive(10);
         m.param("values").primitive_list({1,4,7});
         return m;
@@ -62,7 +62,7 @@ TEST(Sandbox, example) {
     auto algo = registry.select("lz77(window=147)");
     DLOG(INFO) << "instance: " << algo.get();
 
-    auto algo2 = Algorithm::instance<LZ77Compressor<UnaryCoder, BinaryCoder>>();
+    //auto algo2 = Algorithm::instance<LZ77Compressor<BinaryCoder, BinaryCoder>>();
 
     /*
     // parse
