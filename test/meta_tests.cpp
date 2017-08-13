@@ -57,12 +57,8 @@ TEST(Sandbox, example) {
     registry.register_algorithm<LZ77Compressor<UnaryCoder, BinaryCoder>>();
     registry.register_algorithm<LZ77Compressor<UnaryCoder, UnaryCoder>>();
 
-    DLOG(INFO) << "Library entries:";
-    for(auto e : registry.lib()) {
-        DLOG(INFO) << e.first << " -> (" << e.second->type().name() << ")";
-    }
-
     auto algo = registry.select("lz77(window=147)");
+    DLOG(INFO) << "instance: " << algo.get();
 
     /*
     // parse

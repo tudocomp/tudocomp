@@ -42,16 +42,33 @@ public:
     }
 
     inline std::unique_ptr<T> select(const std::string& str) {
-        auto ast = ast::Parser::parse(str);
-        DLOG(INFO) << "parsed AST: " << ast->str();
+        auto obj = ast::convert<ast::Object>(ast::Parser::parse(str));
+        DLOG(INFO) << "parsed AST: " << obj->str();
 
-        //TODO: poll AlgorithmLib, create config, get signature, lookup
+        auto lib_entry = m_lib.find(obj->name());
+        if(lib_entry == m_lib.end()) {
+            throw RegistryError(
+                std::string("unknown algorithm: ") + obj->name());
+        }
 
-        return std::unique_ptr<T>(); // TODO: implement
+        auto decl = lib_entry->second;
+        DLOG(INFO) << "found declaration: " << decl->name()
+                   << " (" << decl->type().name() << ")";
+
+        auto cfg = AlgorithmConfig(*decl, obj, m_lib);
+        DLOG(INFO) << "config: " << cfg.str();
+
+        auto sig = cfg.signature();
+        DLOG(INFO) << "signature: " << sig->str();
+
+        auto reg_entry = m_reg.find(sig->str());
+        if(reg_entry == m_reg.end()) {
+            throw RegistryError(
+                std::string("unregistered instance: ") + sig->str());
+        }
+
+        return reg_entry->second();
     }
-
-    //TODO: only for debugging
-    inline const AlgorithmLib& lib() const { return m_lib; }
 };
 
 } //namespace meta
