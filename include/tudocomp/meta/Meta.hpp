@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tuple>
+#include <vector>
 
 #include <tudocomp/meta/AlgorithmDecl.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
@@ -14,47 +15,32 @@ class Meta;
 template<typename Algo>
 Meta check_algo_type(const std::string& param_name, const TypeDesc& type);
 
+void add_to_lib(AlgorithmLib& target, const Meta& meta);
+
 template<typename Tl>
 struct gather;
 
 // TODO: use type_list from textds branch
 template<typename Head, typename... Tail>
 struct gather<std::tuple<Head, Tail...>> {
-    static inline void defaults(
-        std::shared_ptr<ast::List> list,
+    static inline void metas(
+        std::vector<Meta>& out,
         const std::string& param_name,
         const TypeDesc& type) {
 
-        list->add_value(
-            check_algo_type<Head>(param_name, type).decl()->default_config());
-        gather<std::tuple<Tail...>>::defaults(list, param_name, type);
-    }
-
-    static inline void signatures(
-        std::shared_ptr<ast::List> list,
-        const std::string& param_name,
-        const TypeDesc& type) {
-
-        list->add_value(
-            check_algo_type<Head>(param_name, type).signature());
-        gather<std::tuple<Tail...>>::signatures(list, param_name, type);
+        out.push_back(check_algo_type<Head>(param_name, type));
+        gather<std::tuple<Tail...>>::metas(out, param_name, type);
     }
 };
 
 // TODO: use type_list from textds branch
 template<>
 struct gather<std::tuple<>> {
-    static inline void defaults(
-        std::shared_ptr<ast::List> list,
+    static inline void metas(
+        std::vector<Meta>& out,
         const std::string& param_name,
         const TypeDesc& type) {
-        // done
-    }
 
-    static inline void signatures(
-        std::shared_ptr<ast::List> list,
-        const std::string& param_name,
-        const TypeDesc& type) {
         // done
     }
 };
@@ -65,6 +51,7 @@ class Meta {
 private:
     std::shared_ptr<AlgorithmDecl> m_decl;
     std::shared_ptr<ast::Object> m_sig; // signature of bindings
+    AlgorithmLib m_known; // library of known declarations (excluding self!)
 
 public:
     template<typename D>    struct Default {};
@@ -125,15 +112,18 @@ public:
 
     private:
         template<typename Binding>
-        inline void add_to_signature(const TypeDesc& type) {
-            m_meta->m_sig->add_param(ast::Param(
-                m_name, check_algo_type<Binding>(m_name, type).signature()));
+        inline Meta register_binding(const TypeDesc& type) {
+            auto meta = check_algo_type<Binding>(m_name, type);
+            m_meta->m_sig->add_param(ast::Param(m_name, meta.signature()));
+            add_to_lib(m_meta->m_known, meta);
+            return meta;
         }
 
     public:
         template<typename Binding>
         inline void strategy(const TypeDesc& type) {
-            add_to_signature<Binding>(type);
+            register_binding<Binding>(type);
+
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // primitive
@@ -145,30 +135,36 @@ public:
 
         template<typename Binding, typename D>
         inline void strategy(const TypeDesc& type, Meta::Default<D>&&) {
-            add_to_signature<Binding>(type);
-            auto def =
-                check_algo_type<D>(m_name, type).decl()->default_config();
+            auto binding = register_binding<Binding>(type);
 
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
                 false, // non-primitive
                 false, // no list
                 type,
-                def));
+                binding.decl()->default_config()));
         }
 
     private:
         template<typename... Bindings>
-        inline void add_list_to_signature(const TypeDesc& type) {
+        inline std::vector<Meta> register_bindings(const TypeDesc& type) {
+            std::vector<Meta> metas;
+            gather<std::tuple<Bindings...>>::metas(metas, m_name, type);
+
             auto sigs = std::make_shared<ast::List>();
-            gather<std::tuple<Bindings...>>::signatures(sigs, m_name, type);
+            for(auto& meta : metas) {
+                sigs->add_value(meta.signature());
+                add_to_lib(m_meta->m_known, meta);
+            }
+
             m_meta->m_sig->add_param(ast::Param(m_name, sigs));
+            return metas;
         }
 
     public:
         template<typename... Bindings>
         inline void strategy_list(const TypeDesc& type) {
-            add_list_to_signature<Bindings...>(type);
+            register_bindings<Bindings...>(type);
 
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
@@ -184,10 +180,11 @@ public:
             const TypeDesc& type,
             Meta::Defaults<D...>&&) {
 
-            add_list_to_signature<Bindings...>(type);
-
+            auto bindings = register_bindings<Bindings...>(type);
             auto defaults = std::make_shared<ast::List>();
-            gather<std::tuple<D...>>::defaults(defaults, m_name, type);
+            for(auto& b : bindings) {
+                defaults->add_value(b.decl()->default_config());
+            }
 
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
@@ -218,6 +215,10 @@ public:
     inline ast::NodePtr<ast::Object> signature() const {
         return m_sig;
     }
+
+    inline const AlgorithmLib& known() const {
+        return m_known;
+    }
 };
 
 /// \cond INTERNAL
@@ -237,6 +238,11 @@ inline Meta check_algo_type(
     }
 
     return meta;
+}
+
+inline void add_to_lib(AlgorithmLib& target, const Meta& meta) {
+    for(auto e : meta.known()) add_to_lib(target, e.second);
+    add_to_lib(target, meta.decl());
 }
 /// \endcond
 

@@ -28,9 +28,9 @@ public:
     template<typename Algo>
     inline void register_algorithm() {
         auto meta = Algo::meta();
-        //TODO: update AlgorithmLib using meta.decl() and bindings
-        auto sig = meta.signature()->str();
+        add_to_lib(m_lib, meta);
 
+        auto sig = meta.signature()->str();
         auto it = m_reg.find(sig);
         if(it == m_reg.end()) {
             m_reg.emplace(sig, []() {
@@ -49,6 +49,9 @@ public:
 
         return std::unique_ptr<T>(); // TODO: implement
     }
+
+    //TODO: only for debugging
+    inline const AlgorithmLib& lib() const { return m_lib; }
 };
 
 } //namespace meta
