@@ -17,6 +17,22 @@
 
 namespace tdc {
 
+/// \cond INTERNAL
+template<class T>
+struct char_as_uint_trait {
+    static inline uint64_t conv(const T& t) { return t; }
+};
+template<>
+struct char_as_uint_trait<char> {
+    static inline uint64_t conv(const char& t) { return uint8_t(t); }
+};
+
+template<class T>
+inline uint64_t char_as_uint(const T& t) {
+    return char_as_uint_trait<T>::conv(t);
+}
+/// \endcond
+
 /// \brief Builds the string representation of a vector of byte values,
 /// sorrounded by square brackets (\c \[ and \c \]).
 ///

@@ -49,12 +49,10 @@ hash_manager = [
         AlgorithmConfig(name="SizeManagerPrime", header="util/Hash.hpp"),
         AlgorithmConfig(name="SizeManagerDirect", header="util/Hash.hpp"),
         ]
-
 # LZ78 trie hash probers
 hash_prober = [
         AlgorithmConfig(name="LinearProber", header="util/Hash.hpp"),
         ]
-
 # LZ78 trie rolling hash functions
 hash_roll = [
         AlgorithmConfig(name="WordpackRollingHash", header="util/Hash.hpp"),
@@ -63,7 +61,6 @@ hash_roll = [
         AlgorithmConfig(name="KarpRabinHash", header="util/hash/rabinkarphash.h"),
         # AlgorithmConfig(name="ThreeWiseHash", header="util/hash/threewisehash.h"),
         ]
-
 # LZ78 trie hash functions
 hash_function = [
         AlgorithmConfig(name="NoopHasher", header="util/Hash.hpp"),
@@ -73,6 +70,7 @@ hash_function = [
         # AlgorithmConfig(name="Zobrist", header="util/hash/zobrist.h"),
         # AlgorithmConfig(name="CLHash", header="util/hash/clhash.h"),
         ]
+
 
 # LZ78 tries ("lz78trie")
 lz78_trie = [
@@ -90,7 +88,7 @@ lz78_trie = [
 if config_match("^#define JUDY_H_AVAILABLE 1"): # if the Judy trie is available
     lz78_trie += [
         AlgorithmConfig(name="lz78::JudyTrie", header="compressors/lz78/JudyTrie.hpp"),
-    ]
+]
 
 ##### lz78u #####
 
@@ -98,7 +96,7 @@ if config_match("^#define JUDY_H_AVAILABLE 1"): # if the Judy trie is available
 lz78u_comp = [
     AlgorithmConfig(name="lz78u::StreamingStrategy", header="compressors/lz78u/StreamingStrategy.hpp", sub=[universal_coders]),
     AlgorithmConfig(name="lz78u::BufferingStrategy", header="compressors/lz78u/BufferingStrategy.hpp", sub=[non_consuming_coders]),
-]
+    ]
 
 ##### lcpcomp #####
 
@@ -121,7 +119,7 @@ if config_match("^#define Boost_FOUND 1"): # if Boost is available
     lcpcomp_comp += [
         AlgorithmConfig(name="lcpcomp::BoostHeap", header="compressors/lcpcomp/compress/BoostHeap.hpp"),
         AlgorithmConfig(name="lcpcomp::PLCPStrategy", header="compressors/lcpcomp/compress/PLCPStrategy.hpp")
-    ]
+]
 
 # lcpcomp factor decoding strategies ("dec")
 lcpcomp_dec = [
@@ -129,6 +127,40 @@ lcpcomp_dec = [
     AlgorithmConfig(name="lcpcomp::DecodeForwardQueueListBuffer", header="compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp"),
     AlgorithmConfig(name="lcpcomp::CompactDec", header="compressors/lcpcomp/decompress/CompactDec.hpp"),
     AlgorithmConfig(name="lcpcomp::MultimapBuffer", header="compressors/lcpcomp/decompress/MultiMapBuffer.hpp"),
+]
+
+##### ESP grammar compressor WIP #####
+ipd = [
+    AlgorithmConfig(name="esp::StdUnorderedMapIPD", header="compressors/esp/StdUnorderedMapIPD.hpp"),
+    AlgorithmConfig(name="esp::HashMapIPD", header="compressors/esp/HashMapIPD.hpp"),
+]
+
+ipddyn = ipd + [
+    AlgorithmConfig(name="esp::DynamicSizeIPD", header="compressors/esp/DynamicSizeIPD.hpp", sub=[ipd]),
+]
+
+slp_d_coder_2 = [
+    AlgorithmConfig(name="esp::DPlain", header="compressors/esp/DRCoder.hpp"),
+    AlgorithmConfig(name="esp::DHuffman", header="compressors/esp/DRCoder.hpp"),
+    AlgorithmConfig(name="esp::DWaveletTree", header="compressors/esp/DRCoder.hpp"),
+]
+
+subseq = [
+    AlgorithmConfig(name="esp::SubSeqOptimal", header="compressors/esp/SubseqStrategy.hpp"),
+    AlgorithmConfig(name="esp::SubSeqGreedy", header="compressors/esp/SubseqStrategy.hpp"),
+]
+
+slp_d_coder = [
+    AlgorithmConfig(name="esp::DPlain", header="compressors/esp/DRCoder.hpp"),
+    AlgorithmConfig(name="esp::DHuffman", header="compressors/esp/DRCoder.hpp"),
+    AlgorithmConfig(name="esp::DMonotonSubseq", header="compressors/esp/DRCoder.hpp", sub=[subseq, slp_d_coder_2]),
+    AlgorithmConfig(name="esp::DDiff", header="compressors/esp/DRCoder.hpp"),
+    AlgorithmConfig(name="esp::DRangeFit", header="compressors/esp/DRCoder.hpp"),
+]
+
+slp_coder = [
+    AlgorithmConfig(name="esp::PlainSLPCoder", header="compressors/esp/PlainSLPCoder.hpp"),
+    AlgorithmConfig(name="esp::SortedSLPCoder", header="compressors/esp/SortedSLPCoder.hpp", sub=[slp_d_coder]),
 ]
 
 ##### Export available compressors #####
@@ -146,6 +178,7 @@ tdc.compressors = [
     AlgorithmConfig(name="NoopCompressor", header="compressors/NoopCompressor.hpp"),
     AlgorithmConfig(name="BWTCompressor", header="compressors/BWTCompressor.hpp", sub=[textds]),
     AlgorithmConfig(name="ChainCompressor", header="../tudocomp_driver/ChainCompressor.hpp"),
+    AlgorithmConfig(name="EspCompressor", header="compressors/EspCompressor.hpp", sub=[slp_coder, ipddyn]),
 ]
 
 ##### Export available string generators #####

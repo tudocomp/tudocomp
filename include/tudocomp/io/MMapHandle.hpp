@@ -129,8 +129,8 @@ namespace tdc {namespace io {
                         malloc_callback::on_alloc(adj_size(m_size));
                     })
                 } else {
-                    LOG(INFO) << "Mapping file into memory failed, falling"
-                              << " back to copying into a anonymous map";
+                    //LOG(INFO) << "Mapping file into memory failed, falling"
+                    //          << " back to copying into a anonymous map";
                     try_next = true;
                 }
             }

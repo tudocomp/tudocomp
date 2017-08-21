@@ -31,6 +31,7 @@ run_test(input_output_tests DEPS ${BASIC_DEPS})
 run_test(ds_tests       DEPS ${BASIC_DEPS})
 run_test(lcpsada_tests  DEPS ${BASIC_DEPS})
 run_test(generic_int_vector_tests DEPS ${BASIC_DEPS})
+run_test(esp_tests      DEPS ${BASIC_DEPS})
 
 #Disabled due to breakage on this branch:
 #run_test(paper_tests    DEPS ${BASIC_DEPS})
