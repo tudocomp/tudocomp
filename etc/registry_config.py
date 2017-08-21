@@ -129,38 +129,38 @@ lcpcomp_dec = [
     AlgorithmConfig(name="lcpcomp::MultimapBuffer", header="compressors/lcpcomp/decompress/MultiMapBuffer.hpp"),
 ]
 
-##### ESP merge stuff #####
+##### ESP grammar compressor WIP #####
 ipd = [
-    ("esp::StdUnorderedMapIPD", "compressors/esp/StdUnorderedMapIPD.hpp", []),
-    ("esp::HashMapIPD",         "compressors/esp/HashMapIPD.hpp", []),
+    AlgorithmConfig(name="esp::StdUnorderedMapIPD", header="compressors/esp/StdUnorderedMapIPD.hpp"),
+    AlgorithmConfig(name="esp::HashMapIPD", header="compressors/esp/HashMapIPD.hpp"),
 ]
 
 ipddyn = ipd + [
-    ("esp::DynamicSizeIPD", "compressors/esp/DynamicSizeIPD.hpp", [ipd]),
+    AlgorithmConfig(name="esp::DynamicSizeIPD", header="compressors/esp/DynamicSizeIPD.hpp", sub=[ipd]),
 ]
 
 slp_d_coder_2 = [
-    ("esp::DPlain",         "compressors/esp/DRCoder.hpp", []),
-    ("esp::DHuffman",       "compressors/esp/DRCoder.hpp", []),
-    ("esp::DWaveletTree",   "compressors/esp/DRCoder.hpp", []),
+    AlgorithmConfig(name="esp::DPlain", header="compressors/esp/DRCoder.hpp"),
+    AlgorithmConfig(name="esp::DHuffman", header="compressors/esp/DRCoder.hpp"),
+    AlgorithmConfig(name="esp::DWaveletTree", header="compressors/esp/DRCoder.hpp"),
 ]
 
 subseq = [
-    ("esp::SubSeqOptimal",  "compressors/esp/SubseqStrategy.hpp", []),
-    ("esp::SubSeqGreedy",  "compressors/esp/SubseqStrategy.hpp", []),
+    AlgorithmConfig(name="esp::SubSeqOptimal", header="compressors/esp/SubseqStrategy.hpp"),
+    AlgorithmConfig(name="esp::SubSeqGreedy", header="compressors/esp/SubseqStrategy.hpp"),
 ]
 
 slp_d_coder = [
-    ("esp::DPlain",         "compressors/esp/DRCoder.hpp", []),
-    ("esp::DHuffman",       "compressors/esp/DRCoder.hpp", []),
-    ("esp::DMonotonSubseq", "compressors/esp/DRCoder.hpp", [subseq, slp_d_coder_2]),
-    ("esp::DDiff",          "compressors/esp/DRCoder.hpp", []),
-    ("esp::DRangeFit",      "compressors/esp/DRCoder.hpp", []),
+    AlgorithmConfig(name="esp::DPlain", header="compressors/esp/DRCoder.hpp"),
+    AlgorithmConfig(name="esp::DHuffman", header="compressors/esp/DRCoder.hpp"),
+    AlgorithmConfig(name="esp::DMonotonSubseq", header="compressors/esp/DRCoder.hpp", sub=[subseq, slp_d_coder_2]),
+    AlgorithmConfig(name="esp::DDiff", header="compressors/esp/DRCoder.hpp"),
+    AlgorithmConfig(name="esp::DRangeFit", header="compressors/esp/DRCoder.hpp"),
 ]
 
 slp_coder = [
-    ("esp::PlainSLPCoder",  "compressors/esp/PlainSLPCoder.hpp", []),
-    ("esp::SortedSLPCoder", "compressors/esp/SortedSLPCoder.hpp", [slp_d_coder]),
+    AlgorithmConfig(name="esp::PlainSLPCoder", header="compressors/esp/PlainSLPCoder.hpp"),
+    AlgorithmConfig(name="esp::SortedSLPCoder", header="compressors/esp/SortedSLPCoder.hpp", sub=[slp_d_coder]),
 ]
 
 ##### Export available compressors #####
@@ -178,9 +178,8 @@ tdc.compressors = [
     AlgorithmConfig(name="NoopCompressor", header="compressors/NoopCompressor.hpp"),
     AlgorithmConfig(name="BWTCompressor", header="compressors/BWTCompressor.hpp", sub=[textds]),
     AlgorithmConfig(name="ChainCompressor", header="../tudocomp_driver/ChainCompressor.hpp"),
+    AlgorithmConfig(name="EspCompressor", header="compressors/EspCompressor.hpp", sub=[slp_coder, ipddyn]),
 ]
-
-#     ("EspCompressor",               "compressors/EspCompressor.hpp",               [slp_coder, ipddyn]),
 
 ##### Export available string generators #####
 tdc.generators = [
