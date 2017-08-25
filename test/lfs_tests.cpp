@@ -95,7 +95,7 @@ TEST(lfs, esa_strat){
 
 }
 
-TEST(lfs, esa_strat){
+TEST(lfs, esa_strat2){
 
 
     run_comp<tdc::lfs::ESAStrategy<> >("abaaabbababb$");
