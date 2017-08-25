@@ -73,11 +73,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemod
 include(cotire)
 set (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1000)
 
-# for showing include in qtcreator
-FILE(GLOB_RECURSE LibFiles "include/*.hpp")
-add_custom_target(headers SOURCES ${LibFiles})
-
-
 # Finders
 include(find_or_download_package)
 
