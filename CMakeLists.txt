@@ -89,6 +89,7 @@ include(generate_tudocomp_sources)
 
 #include(sdsl)
 
+
 # Add include directory to include searches
 include_directories(include)
 
@@ -117,3 +118,6 @@ MESSAGE( STATUS "Built Type: " ${CMAKE_BUILD_TYPE} )
 MESSAGE( STATUS "[Optional] Judy Array: " ${JUDY_H_AVAILABLE} )
 MESSAGE( STATUS "[Optional] Boost: " ${Boost_FOUND} )
 
+# for showing include in qtcreator
+FILE(GLOB_RECURSE LibFiles "include/*.hpp")
+add_custom_target(headers SOURCES ${LibFiles})

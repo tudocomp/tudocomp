@@ -4,3 +4,9 @@ include/tudocomp/tudocomp.hpp
 Cargo.lock
 *~
 .~lock.*
+*.aux
+*.pdf
+*.log
+*.out
+*.toc
+CMakeLists.txt.user
