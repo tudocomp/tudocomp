@@ -65,11 +65,20 @@ void run_comp(std::string compression_string) {
 
 
 TEST(lfs, bst_strat){
+    typedef tdc::lfs::BSTStrategy esa_strat;
 
+    run_comp<esa_strat >("");
+    run_comp<esa_strat >("a");
+    run_comp<esa_strat >("foobar");
 
-    run_comp<tdc::lfs::BSTStrategy >("abaaabbababb$");
+    run_comp<esa_strat >("ab");
+    run_comp<esa_strat >("abcd$");
 
-    run_comp<tdc::lfs::BSTStrategy >("ccaabbaabbcca$");
+    run_comp<esa_strat >("abab");
+
+    run_comp<esa_strat >("abaaabbababb$");
+
+    run_comp<esa_strat >("ccaabbaabbcca$");
 
 }
 
@@ -77,32 +86,52 @@ TEST(lfs, bst_strat){
 
 TEST(lfs, sim_st_strat){
 
+    typedef tdc::lfs::SimSTStrategy esa_strat;
 
-    run_comp<tdc::lfs::SimSTStrategy >("abaaabbababb$");
+    run_comp<esa_strat >("");
+    run_comp<esa_strat >("a");
+    run_comp<esa_strat >("foobar");
 
-    run_comp<tdc::lfs::SimSTStrategy >("ccaabbaabbcca$");
+    run_comp<esa_strat >("ab");
+    run_comp<esa_strat >("abcd$");
+
+    run_comp<esa_strat >("abab");
+
+    run_comp<esa_strat >("abaaabbababb$");
+
+    run_comp<esa_strat >("ccaabbaabbcca$");
 
    // run_comp_file<tdc::lfs::SimSTStrategy<> >("english.1MB");
 }
 
 TEST(lfs, esa_strat){
 
+    typedef tdc::lfs::ESAStrategy<> esa_strat;
 
-    run_comp<tdc::lfs::ESAStrategy<> >("abaaabbababb$");
+    run_comp<esa_strat >("");
+    run_comp<esa_strat >("a");
+    run_comp<esa_strat >("foobar");
 
-    run_comp<tdc::lfs::ESAStrategy<> >("ccaabbaabbcca$");
+    run_comp<esa_strat >("ab");
+    run_comp<esa_strat >("abcd$");
+
+    run_comp<esa_strat >("abab");
+
+    run_comp<esa_strat >("abaaabbababb$");
+
+    run_comp<esa_strat >("ccaabbaabbcca$");
 
 
 }
 
-TEST(lfs, esa_strat2){
+//TEST(lfs, esa_strat2){
 
 
-    run_comp<tdc::lfs::ESAStrategy<> >("abaaabbababb$");
+//    run_comp<tdc::lfs::ESAStrategy<> >("abaaabbababb$");
 
-    run_comp<tdc::lfs::ESAStrategy<> >("ccaabbaabbcca$");
+//    run_comp<tdc::lfs::ESAStrategy<> >("ccaabbaabbcca$");
 
 
-}
+//}
 
 

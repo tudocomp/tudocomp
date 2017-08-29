@@ -172,8 +172,16 @@ lfs_strat = [
     AlgorithmConfig(name="lfs::SimSTStrategy", header="compressors/lfs/SimSTStrategy.hpp"),
 ]
 
-len_coder = universal_coders + [
+lit_coder = [
+    AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
+    AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
     AlgorithmConfig(name="HuffmanCoder", header="coders/HuffmanCoder.hpp"),
+]
+
+len_coder = universal_coders
+
+coding_strat = [
+	AlgorithmConfig(name="lfs::EncodeStrategy", header="compressors/lfs/EncodeStrategy.hpp", sub=[lit_coder, len_coder]),
 ]
 
 ##### Export available compressors #####
@@ -192,9 +200,9 @@ tdc.compressors = [
     AlgorithmConfig(name="BWTCompressor", header="compressors/BWTCompressor.hpp", sub=[textds]),
     AlgorithmConfig(name="ChainCompressor", header="../tudocomp_driver/ChainCompressor.hpp"),
     AlgorithmConfig(name="EspCompressor", header="compressors/EspCompressor.hpp", sub=[slp_coder, ipddyn]),
-    AlgorithmConfig(name="lfs::LFSCompressor", header="compressors/lfs/LFSCompressor.hpp", sub=[lfs_strat]),
-    AlgorithmConfig(name="lfs::LFS2Compressor", header="compressors/lfs/LFS2Compressor.hpp", sub=[len_coder, universal_coders]),
-    AlgorithmConfig(name="lfs::LFS2BSTCompressor", header="compressors/lfs/LFS2BSTCompressor.hpp", sub=[len_coder, universal_coders]),
+    AlgorithmConfig(name="lfs::LFSCompressor", header="compressors/lfs/LFSCompressor.hpp", sub=[lfs_strat, coding_strat]),
+    AlgorithmConfig(name="lfs::LFS2Compressor", header="compressors/lfs/LFS2Compressor.hpp", sub=[lit_coder, len_coder]),
+    AlgorithmConfig(name="lfs::LFS2BSTCompressor", header="compressors/lfs/LFS2BSTCompressor.hpp", sub=[lit_coder, len_coder]),
 ]
 
 ##### Export available string generators #####

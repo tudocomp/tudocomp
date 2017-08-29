@@ -37,7 +37,7 @@ public:
 
     inline static Meta meta() {
         Meta m("compressor", "lfs_comp",
-            "This is an implementation of the longest first substitution compression scheme.");
+            "LFS compression scheme");
 
         m.needs_sentinel_terminator();
         m.option("computing_strat").templated<comp_strategy_t>("computing_strat");
@@ -59,23 +59,26 @@ public:
             non_terminal_symbols nts_symbols = non_terminal_symbols();
             rules dictionary = rules();
             auto in = input.as_view();
+            if(in.size()>1){
+                comp_strategy_t strategy(env().env_for_option("computing_strat"));
+
+                StatPhase::wrap("computing lrfs", [&]{
+                //compute dictionary and nts.
+                    strategy.compute_rules( in, dictionary, nts_symbols);
+
+                    DLOG(INFO)<<"dict size: "<<dictionary.size() << std::endl;
+                    DLOG(INFO)<<"symbols:"<<nts_symbols.size()<< std::endl;
+                });
+                 StatPhase::log("Number of CFG rules", dictionary.size());
+            }
 
 
 
-            comp_strategy_t strategy(env().env_for_option("computing_strat"));
 
-            StatPhase::wrap("computing lrfs", [&]{
-            //compute dictionary and nts.
-                strategy.compute_rules( in, dictionary, nts_symbols);
 
-                DLOG(INFO)<<"dict size: "<<dictionary.size() << std::endl;
-                DLOG(INFO)<<"symbols:"<<nts_symbols.size()<< std::endl;
-            });
-             StatPhase::log("Number of CFG rules", dictionary.size());
-
-             if(dictionary.size()==0){
-                 return;
-             }
+            // if(dictionary.size()==0){
+           //      return;
+           //  }
 
 
             StatPhase::wrap("encoding input", [&]{

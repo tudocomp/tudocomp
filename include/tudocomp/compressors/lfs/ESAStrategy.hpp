@@ -125,9 +125,14 @@ public:
         }
 
         DLOG(INFO)<<"max lcp: "<<max;
+        DLOG(INFO)<<"lcp bins: "<<lcp_bins.size();
 
         });
 
+        if(lcp_bins.size()< min_lrf){
+            DLOG(INFO)<<"nothing to replace, returning";
+            return;
+        }
 
         //Pq for the non-terminal symbols
         //the first in pair is position, the seconds the number of the non terminal symbol

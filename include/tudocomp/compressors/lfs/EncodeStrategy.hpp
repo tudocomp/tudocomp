@@ -171,7 +171,6 @@ public:
         }
         //if no more terminals, write rest of text
         while( pos<in.size()){
-
             lit_coder.encode(0, bit_r);
             lit_coder.encode(in[pos], literal_r);
             pos++;
