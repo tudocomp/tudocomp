@@ -102,6 +102,7 @@ public:
 
         auto in = input.as_view();
 
+
         //create vectors:
         first_layer_nts = IntVector<uint>(input.size(), 0);
         fl_offsets = IntVector<uint>(input.size(), 0);
@@ -109,6 +110,8 @@ public:
         second_layer_dead = BitVector(input.size(), 0);
 
 
+
+        if(in.size() >= min_lrf){
 
 
 
@@ -366,7 +369,8 @@ public:
 
 
 
-
+        //input size end
+        }
 
         StatPhase::log("Number of CFG rules", non_terminal_symbols.size());
 
@@ -388,7 +392,6 @@ public:
                 }
             }
         }
-
 
 
         StatPhase::wrap("Encoding Comp", [&]{

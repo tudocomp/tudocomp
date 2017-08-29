@@ -2,6 +2,7 @@
 
 
 #include <tudocomp/compressors/lfs/LFS2Compressor.hpp>
+#include <tudocomp/compressors/lfs/LFS2BSTCompressor.hpp>
 #include "gtest/gtest.h"
 
 #include <tudocomp/Algorithm.hpp>
@@ -25,7 +26,7 @@ using namespace lfs;
 
 
 void run_comp(std::string compression_string) {
-    auto c = create_algo<tdc::lfs::LFS2Compressor<> >();
+    auto c = create_algo<tdc::lfs::LFS2BSTCompressor<> >();
 
     std::string compressed;
     // compress
@@ -57,7 +58,18 @@ void run_comp(std::string compression_string) {
 TEST(lfs2, no_strat){
 
 
-    run_comp("abaabacabdab$");
+    run_comp("");
+    run_comp("a");
+    run_comp("foobar");
+
+    run_comp("ab");
+    run_comp("abcd$");
+
+    run_comp("abab");
+
+    run_comp("abaaabbababb$");
+
+    run_comp("ccaabbaabbcca$");
 
 
 }

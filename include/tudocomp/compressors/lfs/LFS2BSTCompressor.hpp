@@ -118,7 +118,7 @@ public:
     inline LFS2BSTCompressor(Env&& env):
         Compressor(std::move(env))
     {
-        DLOG(INFO) << "Compressor lfs2 instantiated";
+        DLOG(INFO) << "Compressor lfs2bst instantiated";
     }
     inline virtual void compress(Input& input, Output& output) override {
         uint min_lrf = env().option("min_lrf").as_integer();
@@ -132,8 +132,9 @@ public:
         second_layer_dead = BitVector(input.size(), 0);
 
 
+        DLOG(INFO) << "text length: "<<in.size();
 
-
+        if(in.size() >= min_lrf){
 
 
         StatPhase::wrap("Constructing ST", [&]{
@@ -365,8 +366,8 @@ public:
             StatPhase::log("Max CFG Depth", max_depth);
         }
 
-
-
+        //input size end
+        }
 
 
         StatPhase::log("Number of CFG rules", non_terminal_symbols.size());
@@ -378,18 +379,21 @@ public:
                 literals << in[position];
             }
         }
-        for(uint nts_num = 0; nts_num<=non_terminal_symbols.size(); nts_num++){
+        for(uint nts_num = 0; nts_num<non_terminal_symbols.size(); nts_num++){
 
             auto symbol = non_terminal_symbols[nts_num];
 
             for(uint pos = symbol.first; pos < symbol.second + symbol.first ; pos++){
-                if(second_layer_nts[pos] == 0){
+
+                if(second_layer_nts[pos] == 0 && pos < in.size()){
                     literals<< in[pos];
 
                 }
             }
         }
 
+
+        DLOG(INFO)<<"encoding";
 
         StatPhase::wrap("Encoding Comp", [&]{
             // encode dictionary:
