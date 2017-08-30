@@ -13,7 +13,7 @@ private:
     const text_t* m_text;
     const factorbuffer_t* m_factors;
     len_t m_pos;
-    FactorBuffer::const_iterator m_next_factor;
+    typename factorbuffer_t::const_iterator m_next_factor;
 
     inline void skip_factors() {
         while(
@@ -26,7 +26,7 @@ private:
     }
 
 public:
-    inline TextLiterals(const text_t& text, const FactorBuffer& factors)
+    inline TextLiterals(const text_t& text, const factorbuffer_t& factors)
         : m_text(&text),
           m_factors(&factors),
           m_pos(0),
