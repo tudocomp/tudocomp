@@ -6,6 +6,8 @@
 #include <tudocomp/meta/AlgorithmDecl.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
 
+#include <tudocomp/io/InputRestrictions.hpp>
+
 namespace tdc {
 namespace meta {
 
@@ -52,6 +54,10 @@ private:
     std::shared_ptr<AlgorithmDecl> m_decl;
     std::shared_ptr<ast::Object> m_sig; // signature of bindings
     AlgorithmLib m_known; // library of known declarations (excluding self!)
+
+    // further meta information
+    // TODO: generalize?
+    InputRestrictions m_input_restrictions;
 
 public:
     template<typename D>    struct Default {};
@@ -224,6 +230,14 @@ public:
 
     inline const AlgorithmLib& known() const {
         return m_known;
+    }
+
+    inline const InputRestrictions& input_restrictions() const {
+        return m_input_restrictions;
+    }
+
+    inline void input_restrictions(InputRestrictions r) {
+        m_input_restrictions = r;
     }
 };
 
