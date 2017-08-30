@@ -493,5 +493,6 @@ public:
 } // namespace meta
 
 using AlgorithmConfig = meta::AlgorithmConfig;
+using Env = meta::AlgorithmConfig; //TODO: deprecate
 
 } // namespace tdc

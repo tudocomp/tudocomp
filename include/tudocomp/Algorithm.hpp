@@ -27,6 +27,9 @@ public:
     inline Algorithm(AlgorithmConfig&& cfg): m_config(std::move(cfg)) {}
 
     inline const AlgorithmConfig& config() const { return m_config; }
+
+    //TODO: deprecate
+    inline const AlgorithmConfig& env() const { return m_config; }
 };
 
 }
