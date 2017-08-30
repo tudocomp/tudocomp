@@ -22,13 +22,26 @@ class Registry {
 private:
     using ctor_t = std::function<std::unique_ptr<T>(AlgorithmConfig&&)>;
 
+    TypeDesc m_root_type;
     AlgorithmLib m_lib;
     std::unordered_map<std::string, ctor_t> m_reg;
 
 public:
+    inline Registry(const TypeDesc& root_type) : m_root_type(root_type) {
+    }
+
     template<typename Algo>
     inline void register_algorithm() {
         auto meta = Algo::meta();
+        
+        if(!meta.decl()->type().subtype_of(m_root_type)) {
+            throw RegistryError(std::string(
+                "trying to register algorithm of type ") +
+                meta.decl()->type().name() +
+                std::string(", expected ") +
+                m_root_type.name());
+        }
+
         add_to_lib(m_lib, meta);
 
         auto sig = meta.signature()->str();

@@ -53,16 +53,15 @@ public:
 };
 
 TEST(Sandbox, example) {
-    Registry<Algorithm> registry;
+    Registry<Algorithm> registry(compressor_td);
     registry.register_algorithm<LZ77Compressor<BinaryCoder, BinaryCoder>>();
     registry.register_algorithm<LZ77Compressor<BinaryCoder, UnaryCoder>>();
     registry.register_algorithm<LZ77Compressor<UnaryCoder, BinaryCoder>>();
     registry.register_algorithm<LZ77Compressor<UnaryCoder, UnaryCoder>>();
+    //registry.register_algorithm<BinaryCoder>();
 
     auto algo = registry.select("lz77(window=147)");
     DLOG(INFO) << "instance: " << algo.get();
-
-    auto& env = algo.get()->env();
 
     //auto algo2 = Algorithm::instance<LZ77Compressor<BinaryCoder, BinaryCoder>>();
 
