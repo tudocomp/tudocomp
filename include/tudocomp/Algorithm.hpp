@@ -28,7 +28,7 @@ public:
 
     inline const AlgorithmConfig& config() const { return m_config; }
 
-    //TODO: deprecate
+    [[deprecated("use config()")]]
     inline const AlgorithmConfig& env() const { return m_config; }
 };
 

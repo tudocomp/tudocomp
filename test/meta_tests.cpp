@@ -62,6 +62,8 @@ TEST(Sandbox, example) {
     auto algo = registry.select("lz77(window=147)");
     DLOG(INFO) << "instance: " << algo.get();
 
+    auto& env = algo.get()->env();
+
     //auto algo2 = Algorithm::instance<LZ77Compressor<BinaryCoder, BinaryCoder>>();
 
     /*

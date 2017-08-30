@@ -174,6 +174,103 @@ public:
         }
     };
 
+    /// \brief Accessor for parameter values.
+    class ParamValue {
+    private:
+        friend class AlgorithmConfig;
+
+        template<typename T>
+        inline static T node_value_as(ast::NodePtr<> node) {
+            auto v = ast::convert<ast::Value>(node,
+                "parameter has no primitive value type");
+
+            return lexical_cast<T>(v->value());
+        }
+
+        ast::NodePtr<> m_config;
+
+        inline ParamValue(const Param& param) : m_config(param.config()) {}
+
+    public:
+        /// \brief Converts and returns the single value of the parameter.
+        ///
+        /// The parameter must have a primitive value, ie., it must
+        /// neither be a sub configuration, nor a list of values.
+        ///
+        /// The value conversion is done using a \ref lexical_cast.
+        ///
+        /// \tparam T the value type to convert to
+        /// \return the value of the parameter, converted to the desired type
+        template<typename T>
+        inline T as() const {
+            return node_value_as<T>(m_config);
+        }
+
+        /// \brief Gets the string value of the parameter.
+        /// \return the string value of the parameter
+        /// \see as
+        inline std::string as_string() const {
+            return as<std::string>();
+        }
+
+        /// \brief Gets the boolean value of the parameter.
+        ///
+        /// The boolean value is evaluated using the \ref is_true function.
+        ///
+        /// \return the boolean value of the parameter
+        inline bool as_bool() const {
+            return is_true(as_string());
+        }
+
+        /// \brief Gets the integer value of the parameter.
+        /// \return the integer value of the parameter
+        /// \see as
+        inline int as_int(const std::string& param) const {
+            return as<int>();
+        }
+
+        /// \brief Gets the unsigned integer value of the parameter.
+        /// \return the unsigned integer value of the parameter
+        /// \see as
+        inline unsigned int as_uint(const std::string& param) const {
+            return as<unsigned int>();
+        }
+
+        /// \brief Gets the floating point value of the parameter.
+        /// \return the floating point value of the parameter
+        /// \see as
+        inline float as_float(const std::string& param) const {
+            return as<float>();
+        }
+
+        /// \brief Gets the double-precision floating point value of the
+        ///        parameter.
+        /// \return the double-precision floating point value of the parameter
+        /// \see as
+        inline double as_double(const std::string& param) const {
+            return as<double>();
+        }
+
+        /// \brief Converts and returns the values of the list parameter.
+        ///
+        /// The parameter must be a list of primitive values. The value
+        /// value conversions are done as in the \ref as function.
+        ///
+        /// \tparam T the value type to convert single values to
+        /// \return the values of the list parameter
+        template<typename T>
+        inline std::vector<T> as_vector(const std::string& param) const {
+            auto list = ast::convert<ast::List>(m_config,
+                "parameter has no list value type");
+
+            std::vector<T> vec;
+            for(auto& item : list->items()) {
+                vec.emplace_back(node_value_as<T>(item));
+            }
+            return vec;
+        }
+    };
+
 private:
     const AlgorithmDecl* m_decl;
     std::vector<Param> m_params;
@@ -308,100 +405,14 @@ private:
         }
     }
 
-    template<typename T>
-    inline T get(ast::NodePtr<> node) const {
-        auto v = ast::convert<ast::Value>(node,
-            "parameter has no primitive value type");
-
-        return lexical_cast<T>(v->value());
-    }
-
 public:
-    /// \brief Converts and returns the single value of the requested parameter.
-    ///
-    /// The parameter must exist and must have a primitive value, ie., it must
-    /// neither be a sub configuration, nor a list of values.
-    ///
-    /// The value conversion is done using a \ref lexical_cast.
-    ///
-    /// \tparam T the value type to convert to
-    /// \param param the name of the parameter
-    /// \return the value of the parameter, converted to the desired type
-    template<typename T>
-    inline T get(const std::string& param) const {
-        return get<T>(get_param(param).config());
+    inline ParamValue param(const std::string& name) const {
+        return ParamValue(get_param(name));
     }
 
-    /// \brief Gets the string value of the requested parameter.
-    /// \param param the name of the parameter
-    /// \return the string value of the parameter
-    /// \see get
-    inline std::string get_string(const std::string& param) const {
-        return get<std::string>(param);
-    }
-
-    /// \brief Gets the boolean value of the requested parameter.
-    ///
-    /// The boolean value is evaluated using the \ref is_true function.
-    ///
-    /// \param param the name of the parameter
-    /// \return the string value of the parameter
-    /// \see get
-    inline bool get_bool(const std::string& param) const {
-        return is_true(get_string(param));
-    }
-
-    /// \brief Gets the integer value of the requested parameter.
-    /// \param param the name of the parameter
-    /// \return the integer value of the parameter
-    /// \see get
-    inline int get_int(const std::string& param) const {
-        return get<int>(param);
-    }
-
-    /// \brief Gets the unsigned integer value of the requested parameter.
-    /// \param param the name of the parameter
-    /// \return the unsigned integer value of the parameter
-    /// \see get
-    inline unsigned int get_uint(const std::string& param) const {
-        return get<unsigned int>(param);
-    }
-
-    /// \brief Gets the floating point value of the requested parameter.
-    /// \param param the name of the parameter
-    /// \return the floating point value of the parameter
-    /// \see get
-    inline float get_float(const std::string& param) const {
-        return get<float>(param);
-    }
-
-    /// \brief Gets the double-precision floating point value of the
-    ///        requested parameter.
-    /// \param param the name of the parameter
-    /// \return the double-precision floating point value of the parameter
-    /// \see get
-    inline double get_double(const std::string& param) const {
-        return get<double>(param);
-    }
-
-    /// \brief Converts and returns the values of the requested list parameter.
-    ///
-    /// The parameter must exist and must be a list of primitive values. The
-    /// value conversions are done as in the \ref get function.
-    ///
-    /// \tparam T the value type to convert single values to
-    /// \param param the name of the parameter
-    /// \return the values of the list parameter, converted to the desired type
-    template<typename T>
-    inline std::vector<T> get_vector(const std::string& param) const {
-        auto list = ast::convert<ast::List>(get_param(param).config(),
-            "parameter has no list value type");
-
-        std::vector<T> vec;
-        for(auto& item : list->items()) {
-            vec.emplace_back(get<T>(item));
-        }
-        return vec;
+    [[deprecated("use param(name)")]]
+    inline ParamValue option(const std::string& name) const {
+        return param(name);
     }
 
     /// \brief Gets the configuration of the requested sub algorithm.
@@ -410,8 +421,7 @@ public:
     ///
     /// \param param the name of the parameter
     /// \return the configuration of the corresponding sub algorithm
-    inline const AlgorithmConfig& get_sub_config(
-        const std::string& param) const {
+    inline const AlgorithmConfig& sub_config(const std::string& param) const {
 
         auto& sub = get_param(param).sub_configs();
         if(sub.size() == 0) {
@@ -429,7 +439,7 @@ public:
     ///
     /// \param param the name of the parameter
     /// \return the configurations of the corresponding sub algorithms
-    inline const std::vector<AlgorithmConfig>& get_sub_configs(
+    inline const std::vector<AlgorithmConfig>& sub_configs(
         const std::string& param) const {
 
         return get_param(param).sub_configs();
@@ -457,7 +467,7 @@ public:
                 if(p.is_list()) {
                     // list of sub algorithms - recurse for each
                     auto list = std::make_shared<ast::List>();
-                    for(auto& sub : get_sub_configs(p.name())) {
+                    for(auto& sub : sub_configs(p.name())) {
                         list->add_value(sub.signature());
                     }
                     sig->add_param(ast::Param(p.name(), list));
@@ -465,7 +475,7 @@ public:
                     // single sub algorithm - recurse
                     sig->add_param(ast::Param(
                         p.name(),
-                        get_sub_config(p.name()).signature()));
+                        sub_config(p.name()).signature()));
                 }
             }
         }
@@ -493,6 +503,7 @@ public:
 } // namespace meta
 
 using AlgorithmConfig = meta::AlgorithmConfig;
+
 using Env = meta::AlgorithmConfig; //TODO: deprecate
 
 } // namespace tdc
