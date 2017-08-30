@@ -25,12 +25,14 @@
 namespace tdc {
 namespace lcpcomp {
 
+
 inline size_t filesize( const char*const filepath ){
 	std::ifstream file(filepath, std::ios::binary | std::ios::ate | std::ios::in);
 	if(!file.good()) return 0;
 	return file.tellg();
 }
 
+//! use read/seek to emulate an array on a file
 template<class int_t>
 class IntegerFileArray {
 	const size_t m_size;
@@ -50,6 +52,7 @@ class IntegerFileArray {
 	size_t size() const { return m_size/sizeof(int_t); }
 };
 
+//! wrapper to stream a file as an array of integers/characters
 template<class int_t>
 class IntegerFileForwardIterator {
 	const size_t m_size;
@@ -78,6 +81,12 @@ class IntegerFileForwardIterator {
 	}
 };
 
+/** Strategy for generating the final factors
+ *  plcpcomp adds factors with add_factor, and calls sort
+ *  whenever it is sure that the next factors' target text position are always be greater
+ *  than all factors currently added. This is a good time to sort the already stored factors.
+ *  The method @factorize will finally produce the factors, and store them in @reflist.
+ */
 template<class sa_t, class isa_t>
 class RefRAMStrategy {
 	sa_t& m_sa; //TODO: add const
@@ -108,6 +117,8 @@ class RefRAMStrategy {
 
 
 
+/** Same as @RefRAMStrategy, but works with STXXL vectors
+ */
 template<class sa_t, class isa_t>
 class RefDiskStrategy {
 	sa_t& m_sa;
@@ -183,6 +194,9 @@ class RefDiskStrategy {
 	}
 };
 
+/** Iterates over the PLCP-file
+ *  this file stores all plcp values unary in the representation of Sadakane using 2n bits for storing n entries
+ */
 class PLCPFileForwardIterator {
 	std::ifstream m_is;
 
@@ -377,6 +391,10 @@ public:
 
 
 
+    /**
+     *  Called by the LCPcompCompressor.
+     *  The compressor works in RAM mode, so this method produces the factors in RAM.
+     */
     inline void factorize(text_t& text, size_t threshold, lzss::FactorBufferRAM& refs) {
 		StatPhase phase("Load Index DS");
 		text.require(text_t::SA | text_t::ISA);
