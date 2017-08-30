@@ -15,6 +15,8 @@ class Factor {
 public:
     len_compact_t pos, src, len;
 
+    inline Factor() {} // needed by STXXL to create Factor's
+
     inline Factor(len_t fpos, len_t fsrc, len_t flen)
         : pos(fpos), src(fsrc), len(flen) {
     }
@@ -22,11 +24,11 @@ public:
 
 
 
-template<class vector_type = std::vector<Factor>>
+template<class vector_type = std::vector<Factor>> // or vector_type =  stxxl::VECTOR_GENERATOR<Factor>::result
 class FactorBuffer {
-private:
-    // typedef stxxl::VECTOR_GENERATOR<Factor>::result vector_type;
+public:
     typedef typename vector_type::const_iterator const_iterator;
+private:
 
     vector_type m_factors;
 //    std::vector<Factor> m_factors;
@@ -36,7 +38,6 @@ private:
     len_t m_longest_factor;
 
 public:
-    using const_iterator = std::vector<Factor>::const_iterator;
 
     inline FactorBuffer()
         : m_sorted(true)
@@ -55,14 +56,6 @@ public:
     inline const_iterator begin() const {
         return m_factors.cbegin();
     }
-    inline const_iterator end() const {
-        return m_factors.cend();
-    }
-
-    inline const_iterator begin() const {
-        return m_factors.cbegin();
-    }
-
     inline const_iterator end() const {
         return m_factors.cend();
     }
