@@ -92,6 +92,17 @@ public:
                 std::make_shared<ast::Value>(to_string(default_value))));
         }
 
+        [[deprecated("transitional alias")]]
+        inline void dynamic() {
+            primitive();
+        }
+
+        template<typename T>
+        [[deprecated("transitional alias")]]
+        inline void dynamic(const T& default_value) {
+            primitive(default_value);
+        }
+
         inline void primitive_list() {
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
@@ -149,6 +160,18 @@ public:
                 false, // no list
                 type,
                 D::meta().decl()->default_config()));
+        }
+
+        template<typename Binding>
+        [[deprecated("transitional alias")]]
+        inline void templated(conststr type) {
+            strategy<Binding>(TypeDesc(type));
+        }
+
+        template<typename Binding, typename D>
+        [[deprecated("transitional alias")]]
+        inline void templated(conststr type) {
+            strategy<Binding>(TypeDesc(type), Meta::Default<D>());
         }
 
     private:
@@ -216,7 +239,7 @@ public:
           m_sig(std::make_shared<ast::Object>(name)) {
     }
 
-    [[deprecated("only a transitional solution")]]
+    [[deprecated("transitional override")]]
     inline Meta(
         conststr           type,
         const std::string& name,
@@ -228,8 +251,20 @@ public:
         return ParamBuilder(*this, name);
     }
 
+    [[deprecated("transitional alias")]]
+    inline ParamBuilder option(const std::string& name) {
+        return param(name);
+    }
+
     inline std::shared_ptr<const AlgorithmDecl> decl() const {
         return m_decl;
+    }
+
+    inline AlgorithmConfig default_config() const { 
+        return AlgorithmConfig(
+            *m_decl,
+            m_decl->default_config(),
+            m_known);
     }
 
     inline ast::NodePtr<ast::Object> signature() const {
@@ -277,6 +312,11 @@ inline void add_to_lib(AlgorithmLib& target, const Meta& meta) {
 } //namespace meta
 
 using Meta = meta::Meta;
+
+[[deprecated("transitional alias")]]
+AlgorithmConfig create_env(const Meta& meta) {
+    return meta.default_config();
+}
 
 } //namespace tdc
 

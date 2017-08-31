@@ -30,6 +30,9 @@ public:
 
     [[deprecated("use config()")]]
     inline const AlgorithmConfig& env() const { return m_config; }
+
+    [[deprecated("transitional solution")]]
+    inline AlgorithmConfig& env() { return m_config; }
 };
 
 }

@@ -229,6 +229,11 @@ public:
             return as<int>();
         }
 
+        [[deprecated("transitional alias")]]
+        inline int as_integer() const {
+            return as_int();
+        }
+
         /// \brief Gets the unsigned integer value of the parameter.
         /// \return the unsigned integer value of the parameter
         /// \see as
@@ -410,7 +415,7 @@ public:
         return ParamValue(get_param(name));
     }
 
-    [[deprecated("use param(name)")]]
+    [[deprecated("transitional alias")]]
     inline ParamValue option(const std::string& name) const {
         return param(name);
     }
@@ -431,6 +436,13 @@ public:
         } else {
             return sub.front();
         }
+    }
+
+    [[deprecated("transitional solution")]]
+    inline AlgorithmConfig env_for_option(
+        const std::string& param) const {
+
+        return AlgorithmConfig(sub_config(param));
     }
 
     /// \brief Gets the configurations of the requested sub algorithm list.
