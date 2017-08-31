@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 
-
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/io/IOUtil.hpp>
@@ -26,6 +25,7 @@ namespace tdc_driver {
 
 using namespace tdc;
 using namespace tdc_algorithms;
+using tdc::io::file_exists;
 
 const std::string COMPRESSED_FILE_ENDING = "tdc";
 
@@ -36,11 +36,6 @@ static inline bool ternary_xor(bool a, bool b, bool c) {
 static void exit(std::string msg) {
     // TODO: Replace with more specific logic-error-exception
     throw std::runtime_error(msg);
-}
-
-static bool file_exists(const std::string& filename) {
-    std::ifstream ifile(filename);
-    return bool(ifile);
 }
 
 static int bad_usage(const char* cmd, const std::string& message) {

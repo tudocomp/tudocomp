@@ -4,6 +4,10 @@
 #include <iostream>
 #include <string>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 namespace tdc {
 namespace io {
 
@@ -103,6 +107,13 @@ inline size_t read_file_size(const std::string& file) {
 
 /// \endcond
 
-}
+inline bool file_exists(const std::string& filename) {
+    auto path = filename.c_str();
+    struct stat path_stat;
+    stat(path, &path_stat);
+    bool r = S_ISREG(path_stat.st_mode);
+    return r;
 }
 
+}
+}
