@@ -225,21 +225,21 @@ public:
         /// \brief Gets the integer value of the parameter.
         /// \return the integer value of the parameter
         /// \see as
-        inline int as_int(const std::string& param) const {
+        inline int as_int() const {
             return as<int>();
         }
 
         /// \brief Gets the unsigned integer value of the parameter.
         /// \return the unsigned integer value of the parameter
         /// \see as
-        inline unsigned int as_uint(const std::string& param) const {
+        inline unsigned int as_uint() const {
             return as<unsigned int>();
         }
 
         /// \brief Gets the floating point value of the parameter.
         /// \return the floating point value of the parameter
         /// \see as
-        inline float as_float(const std::string& param) const {
+        inline float as_float() const {
             return as<float>();
         }
 
@@ -247,7 +247,7 @@ public:
         ///        parameter.
         /// \return the double-precision floating point value of the parameter
         /// \see as
-        inline double as_double(const std::string& param) const {
+        inline double as_double() const {
             return as<double>();
         }
 
@@ -259,7 +259,7 @@ public:
         /// \tparam T the value type to convert single values to
         /// \return the values of the list parameter
         template<typename T>
-        inline std::vector<T> as_vector(const std::string& param) const {
+        inline std::vector<T> as_vector() const {
             auto list = ast::convert<ast::List>(m_config,
                 "parameter has no list value type");
 
