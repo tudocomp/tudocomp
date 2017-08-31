@@ -12,7 +12,7 @@ constexpr TypeDesc compressor_td("compressor");
 class OtherAlgo : public Algorithm {
 public:
     static inline Meta meta() {
-        return Meta("other", TypeDesc("other"), "Any other algorithm.");
+        return Meta(TypeDesc("other"), "other", "Any other algorithm.");
     }
 
     using Algorithm::Algorithm;
@@ -21,7 +21,7 @@ public:
 class BinaryCoder : public Algorithm {
 public:
     static inline Meta meta() {
-        return Meta("binary", coder_td, "Binary coder.");
+        return Meta(coder_td, "binary", "Binary coder.");
     }
 
     using Algorithm::Algorithm;
@@ -30,7 +30,7 @@ public:
 class UnaryCoder : public Algorithm {
 public:
     static inline Meta meta() {
-        return Meta("unary", coder_td, "Unary coder.");
+        return Meta(coder_td, "unary", "Unary coder.");
     }
 
     using Algorithm::Algorithm;
@@ -40,7 +40,7 @@ template<typename coder_t, typename coder2_t>
 class LZ77Compressor : public Algorithm {
 public:
     static inline Meta meta() {
-        Meta m("lz77", compressor_td, "LZ77 online compressor.");
+        Meta m(compressor_td, "lz77", "LZ77 online compressor.");
         m.param("coder").strategy<coder_t>(coder_td, Meta::Default<UnaryCoder>());
         m.param("coders").strategy_list<coder_t, coder2_t>(
             coder_td, Meta::Defaults<UnaryCoder, UnaryCoder>());

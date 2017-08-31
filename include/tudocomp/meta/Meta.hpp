@@ -209,11 +209,19 @@ public:
     };
 
     inline Meta(
-        const std::string& name,
         const TypeDesc&    type,
+        const std::string& name,
         const std::string& desc)
         : m_decl(std::make_shared<AlgorithmDecl>(name, type, desc)),
           m_sig(std::make_shared<ast::Object>(name)) {
+    }
+
+    [[deprecated("only a transitional solution")]]
+    inline Meta(
+        conststr           type,
+        const std::string& name,
+        const std::string& desc)
+        : Meta(TypeDesc(type), name, desc) {
     }
 
     inline ParamBuilder param(const std::string& name) {
