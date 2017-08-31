@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
                 // file
                 file = options.remaining[0];
                 if(!file_exists(file)) {
-                    std::cerr << "input file not found: " << file << std::endl;
+                    std::cerr << "input path not found or is not a file: " << file << std::endl;
                     return 1;
                 }
             }
