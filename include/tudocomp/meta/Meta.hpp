@@ -282,6 +282,13 @@ public:
     inline void input_restrictions(InputRestrictions r) {
         m_input_restrictions = r;
     }
+
+    template<typename text_t>
+    [[deprecated("transitional alias")]]
+    inline void uses_textds(uint64_t flags) {
+        input_restrictions(
+            m_input_restrictions | text_t::common_restrictions(flags));
+    }
 };
 
 /// \cond INTERNAL
