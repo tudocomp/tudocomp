@@ -1,7 +1,6 @@
 #pragma once
 
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/Env.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
 #include <tudocomp/io.hpp>

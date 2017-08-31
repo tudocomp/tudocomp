@@ -1,7 +1,8 @@
 #pragma once
+
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
-#include <tudocomp/Env.hpp>
+#include <tudocomp/meta/AlgorithmConfig.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <sdsl/select_support_mcl.hpp> // for the select data structure
 

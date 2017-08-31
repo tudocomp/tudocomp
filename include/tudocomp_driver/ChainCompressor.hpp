@@ -1,11 +1,7 @@
 #pragma once
 
-#include <tudocomp/Compressor.hpp>
-#include <tudocomp/Env.hpp>
-#include <tudocomp/Registry.hpp>
-#include <tudocomp/io.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp_driver/Registry.hpp>
+#include <tudocomp/io.hpp>
 #include <vector>
 #include <memory>
 

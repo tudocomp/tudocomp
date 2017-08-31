@@ -2,7 +2,6 @@
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/Env.hpp>
 #include <numeric>
 #include <tudocomp/def.hpp>
 

@@ -1,8 +1,9 @@
 #pragma once
+
 #include <tudocomp/def.hpp>
-#include <tudocomp/Algorithm.hpp>
 #include <tudocomp/util.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
+#include <tudocomp/Algorithm.hpp>
+
 #include <tudocomp_stat/StatPhase.hpp>
 // #include <tudocomp/util/hash/clhash.h>
 // #include <tudocomp/util/hash/zobrist.h>

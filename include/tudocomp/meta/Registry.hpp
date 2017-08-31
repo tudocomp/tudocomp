@@ -55,10 +55,7 @@ public:
         }
     }
 
-    inline std::unique_ptr<T> select(const std::string& str) {
-        auto obj = ast::convert<ast::Object>(ast::Parser::parse(str));
-        DLOG(INFO) << "parsed AST: " << obj->str();
-
+    inline std::unique_ptr<T> select(ast::NodePtr<ast::Object> obj) {
         auto lib_entry = m_lib.find(obj->name());
         if(lib_entry == m_lib.end()) {
             throw RegistryError(
@@ -82,6 +79,12 @@ public:
         }
 
         return (reg_entry->second)(std::move(cfg));
+    }
+
+    inline std::unique_ptr<T> select(const std::string& str) {
+        auto obj = ast::convert<ast::Object>(ast::Parser::parse(str));
+        DLOG(INFO) << "parsed AST: " << obj->str();
+        return select(obj);
     }
 };
 

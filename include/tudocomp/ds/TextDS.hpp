@@ -137,7 +137,7 @@ public:
             );
         }
 
-        auto& cm_str = this->env().option("compress").as_string();
+        const auto& cm_str = this->env().option("compress").as_string();
         if(cm_str == "delayed") {
             m_cm = CompressMode::delayed;
         } else if(cm_str == "compressed") {
