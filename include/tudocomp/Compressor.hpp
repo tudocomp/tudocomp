@@ -17,10 +17,9 @@ namespace tdc {
 /// representation.
 class Compressor: public Algorithm {
 public:
-    /// \brief Construct the compressor with an environment.
-    ///
-    /// \param env The algorithm's environment.
-    inline Compressor(Env&& env): Algorithm(std::move(env)) {}
+    static constexpr TypeDesc type_desc = TypeDesc("compressor");
+
+    using Algorithm::Algorithm;
 
     /// \brief Compress the given input to the given output.
     ///
