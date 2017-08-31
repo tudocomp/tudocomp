@@ -234,7 +234,7 @@ public:
     inline Meta(
         const TypeDesc&    type,
         const std::string& name,
-        const std::string& desc)
+        const std::string& desc = "")
         : m_decl(std::make_shared<AlgorithmDecl>(name, type, desc)),
           m_sig(std::make_shared<ast::Object>(name)) {
     }
@@ -243,7 +243,7 @@ public:
     inline Meta(
         conststr           type,
         const std::string& name,
-        const std::string& desc)
+        const std::string& desc = "")
         : Meta(TypeDesc(type), name, desc) {
     }
 
