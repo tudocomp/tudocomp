@@ -746,7 +746,7 @@ namespace tdc {namespace esp {
 
                             for(size_t i = 0; i < cv.size(); i++) {
                                 size_t j = cv.size() - i - 1;
-                                if (bv[j] == 0) {
+                                if (bv[j] == 0u) {
                                     tnull++;
                                 } else {
                                     break;

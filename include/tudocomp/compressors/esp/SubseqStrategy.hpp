@@ -74,14 +74,6 @@ namespace tdc {namespace esp {
                 return sis[link];
             };
 
-            auto debug = [&](const auto& links) {
-                std::vector<size_t> x;
-                for (auto y : links) {
-                    x.push_back(si_of(y));
-                }
-                std::cout << vec_to_debug_string(x, 3) << "\n";
-            };
-
             auto remove = [&](size_t link) {
                 DCHECK(link != start_dummy_link);
                 DCHECK(link != end_dummy_link);
