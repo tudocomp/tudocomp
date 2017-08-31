@@ -19,13 +19,12 @@
 
 #include <glog/logging.h>
 
-#include <tudocomp/Env.hpp>
+#include <tudocomp/util.hpp>
+
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Generator.hpp>
-#include <tudocomp/Algorithm.hpp>
-#include <tudocomp/util.hpp>
-#include <tudocomp/AlgorithmStringParser.hpp>
-#include <tudocomp/Registry.hpp>
+
+#include <tudocomp/meta/Registry.hpp>
 
 /// \brief Contains the executable driver application.
 ///

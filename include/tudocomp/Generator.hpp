@@ -1,10 +1,6 @@
 #pragma once
 
-#include <functional>
-#include <memory>
-
-#include <tudocomp/pre_header/Registry.hpp>
-#include <tudocomp/pre_header/Env.hpp>
+#include <string>
 #include <tudocomp/Algorithm.hpp>
 
 namespace tdc {

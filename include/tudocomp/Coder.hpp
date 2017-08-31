@@ -2,7 +2,7 @@
 
 #include <tudocomp/io.hpp>
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/Env.hpp>
+
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
 
