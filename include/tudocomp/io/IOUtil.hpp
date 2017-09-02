@@ -110,9 +110,11 @@ inline size_t read_file_size(const std::string& file) {
 inline bool file_exists(const std::string& filename) {
     auto path = filename.c_str();
     struct stat path_stat;
-    stat(path, &path_stat);
-    bool r = S_ISREG(path_stat.st_mode);
-    return r;
+
+    bool does_exist = (stat(path, &path_stat) == 0);
+
+    // Check if it exists, and if its also a regular file
+    return does_exist && S_ISREG(path_stat.st_mode);
 }
 
 }
