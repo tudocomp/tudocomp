@@ -10,7 +10,7 @@ namespace lzss {
 template<typename text_t, typename factorbuffer_t>
 class TextLiterals : LiteralIterator {
 private:
-    const text_t* m_text;
+    text_t* m_text; // cannot made to const since it is in conflict with tdc::lcpcomp::IntegerFileArray
     const factorbuffer_t* m_factors;
     len_t m_pos;
     typename factorbuffer_t::const_iterator m_next_factor;
@@ -26,7 +26,7 @@ private:
     }
 
 public:
-    inline TextLiterals(const text_t& text, const factorbuffer_t& factors)
+    inline TextLiterals(text_t& text, const factorbuffer_t& factors)
         : m_text(&text),
           m_factors(&factors),
           m_pos(0),

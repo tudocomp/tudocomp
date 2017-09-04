@@ -4,6 +4,7 @@
 #include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
 #include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/HuffmanCoder.hpp>
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
@@ -53,10 +54,16 @@ namespace tdc { namespace lcpcomp {
 				refStrategy.factorize(refs);
 				});
 
+        // StatPhase::wrap("Encode Factors", [&]{
+        //         tdc::Output output(tdc::Path(outfilename), true);
+        //         tdc::Env env = tdc::create_env(Meta("plcpcomp", "plcp"));
+        //         tdc::BitCoder::Encoder coder(std::move(env), output, tdc::lzss::TextLiterals<text_t,decltype(refs)>(text, refs));
+        //     tdc::lzss::encode_text(coder, text, refs); //TODO is this correct?
+        // });
         StatPhase::wrap("Encode Factors", [&]{
                 tdc::Output output(tdc::Path(outfilename), true);
                 tdc::Env env = tdc::create_env(Meta("plcpcomp", "plcp"));
-                tdc::BitCoder::Encoder coder(std::move(env), output, tdc::lzss::TextLiterals<text_t,decltype(refs)>(text, refs));
+                tdc::HuffmanCoder::Encoder coder(std::move(env), output, tdc::lzss::TextLiterals<text_t,decltype(refs)>(text, refs));
             tdc::lzss::encode_text(coder, text, refs); //TODO is this correct?
         });
 
