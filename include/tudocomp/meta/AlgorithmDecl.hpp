@@ -31,9 +31,17 @@ class AlgorithmDecl {
 public:
     /// \brief Represents a declared parameter for an algorithm.
     class Param {
+    public:
+        /// \brief Enumeration of parameter kinds.
+        enum Kind {
+            primitive, /// a primitive value
+            bounded,   /// a bounded strategy, which appears in signatures
+            unbounded  /// an unbounded strategy, which cannot appear in signatures
+        };
+
     private:
         std::string m_name;
-        bool m_primitive;   // if false, type needs to be set
+        Kind m_kind;        // if not primitive, type needs to be set
         bool m_list;        // if true, value/type flags account for list items
         TypeDesc m_type;    // only valid if non-primitive
 
@@ -50,24 +58,24 @@ public:
         ///             match this type
         inline Param(
             const std::string& name,
-            bool primitive = true,
+            Kind kind = Kind::primitive,
             bool list = false,
             const TypeDesc& type = TypeDesc(),
             ast::NodePtr<> defv = ast::NodePtr<>())
             : m_name(name),
-              m_primitive(primitive),
+              m_kind(kind),
               m_list(list),
               m_default(defv) {
 
-            if(!primitive && !type.valid()) {
+            if(!is_primitive() && !type.valid()) {
                 throw DeclError("non-primitive parameters must have a type");
             }
 
-            if(primitive && type.valid()) {
+            if(is_primitive() && type.valid()) {
                 throw DeclError("primitive parameters must not have a type");
             }
 
-            m_type = primitive ? primitive_type : type;
+            m_type = is_primitive() ? primitive_type : type;
 
             // sanity checks on default value
             if(defv) {
@@ -76,7 +84,7 @@ public:
                         "default value type mismatch");
 
                     // check each list item
-                    if(primitive) {
+                    if(is_primitive()) {
                         for(auto& item : list_value->items()) {
                             ast::convert<ast::Value>(item,
                                 "default list item type mismatch");
@@ -87,7 +95,7 @@ public:
                                 "default list item type mismatch");
                         }
                     }
-                } else if(primitive) {
+                } else if(is_primitive()) {
                     ast::convert<ast::Value>(defv,
                         "default value type mismatch");
                 } else {
@@ -101,7 +109,7 @@ public:
         /// \param other the object to copy
         inline Param(const Param& other)
             : m_name(other.m_name),
-              m_primitive(other.m_primitive),
+              m_kind(other.m_kind),
               m_list(other.m_list),
               m_type(other.m_type),
               m_default(other.m_default) {
@@ -111,16 +119,18 @@ public:
         /// \param other the object to move
         inline Param(Param&& other)
             : m_name(std::move(other.m_name)),
-              m_primitive(other.m_primitive),
+              m_kind(other.m_kind),
               m_list(other.m_list),
               m_type(std::move(other.m_type)),
               m_default(std::move(other.m_default)) {
         }
 
         inline const std::string& name() const { return m_name; }
-        inline bool is_primitive() const { return m_primitive; }
+        inline Kind kind() const { return m_kind; }
         inline bool is_list() const { return m_list; }
         inline const TypeDesc& type() const { return m_type; }
+
+        inline bool is_primitive() const { return m_kind == primitive; }
 
         inline ast::NodePtr<> default_value() const {
             return m_default;

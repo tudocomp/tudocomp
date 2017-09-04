@@ -78,7 +78,7 @@ public:
         inline void primitive() {
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
-                true,       // primitive
+                AlgorithmDecl::Param::Kind::primitive,
                 false,      // no list
                 no_type,
                 ast::NodePtr<>())); // no default
@@ -88,8 +88,8 @@ public:
         inline void primitive(const T& default_value) {
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
-                true,       // primitive
-                false,      // no list
+                AlgorithmDecl::Param::Kind::primitive,
+                false, // no list
                 no_type,
                 std::make_shared<ast::Value>(to_string(default_value))));
         }
@@ -108,8 +108,8 @@ public:
         inline void primitive_list() {
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
-                true,       // primitive
-                true,       // list
+                AlgorithmDecl::Param::Kind::primitive,
+                true, // list
                 no_type,
                 ast::NodePtr<>())); // no default
         }
@@ -123,8 +123,8 @@ public:
 
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
-                true,       // primitive
-                true,       // list
+                AlgorithmDecl::Param::Kind::primitive,
+                true, // list
                 no_type,
                 list));
         }
@@ -149,8 +149,8 @@ public:
 
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
-                false, // non-primitive
-                false, // no list
+                AlgorithmDecl::Param::Kind::bounded,
+                false,
                 type,
                 ast::NodePtr<>() //no default
             ));
@@ -163,7 +163,7 @@ public:
 
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
-                false, // non-primitive
+                AlgorithmDecl::Param::Kind::bounded,
                 false, // no list
                 type,
                 D::meta().m_binding_config));
@@ -179,6 +179,31 @@ public:
         [[deprecated("transitional alias")]]
         inline void templated(conststr type) {
             strategy<Binding>(TypeDesc(type), Meta::Default<D>());
+        }
+
+        inline void unbounded_strategy(const TypeDesc& type) {
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
+                m_name,
+                AlgorithmDecl::Param::Kind::unbounded,
+                false, // no list
+                type,
+                ast::NodePtr<>() //no default
+            ));
+        }
+
+        template<typename D>
+        inline void unbounded_strategy(
+            const TypeDesc& type,
+            Meta::Default<D>&&) {
+
+            add_to_lib(m_meta->m_known, D::meta());
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
+                m_name,
+                AlgorithmDecl::Param::Kind::unbounded,
+                false, // no list
+                type,
+                D::meta().m_binding_config
+            ));
         }
 
     private:
@@ -234,8 +259,43 @@ public:
 
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
-                false, // non-primitive
-                true,  // list
+                AlgorithmDecl::Param::Kind::bounded,
+                true, // list
+                type,
+                defaults
+            ));
+        }
+
+        inline void unbounded_strategy_list(const TypeDesc& type) {
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
+                m_name,
+                AlgorithmDecl::Param::Kind::unbounded,
+                true, // list
+                type,
+                ast::NodePtr<>() //no default
+            ));
+        }
+
+        template<typename... D>
+        inline void unbounded_strategy_list(
+            const TypeDesc& type,
+            Meta::Defaults<D...>&&) {
+
+            auto defaults = std::make_shared<ast::List>();
+            {
+                std::vector<Meta> metas;
+                gather<std::tuple<D...>>::metas(metas, m_name, type);
+
+                for(auto& meta : metas) {
+                    defaults->add_value(meta.m_binding_config);
+                    add_to_lib(m_meta->m_known, meta);
+                }
+            }
+
+            m_meta->m_decl->add_param(AlgorithmDecl::Param(
+                m_name,
+                AlgorithmDecl::Param::Kind::unbounded,
+                false, // no list
                 type,
                 defaults
             ));

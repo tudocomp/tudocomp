@@ -52,18 +52,42 @@ public:
     using Algorithm::Algorithm;
 };
 
+class Shell : public Algorithm {
+public:
+    static inline Meta meta() {
+        Meta m(compressor_td, "shell", "Compressor shell.");
+        m.param("inner").unbounded_strategy(compressor_td);
+        return m;
+    }
+
+    using Algorithm::Algorithm;
+};
+
+class MultiShell : public Algorithm {
+public:
+    static inline Meta meta() {
+        Meta m(compressor_td, "mshell", "Compressor shell.");
+        m.param("inner").unbounded_strategy_list(compressor_td);
+        return m;
+    }
+
+    using Algorithm::Algorithm;
+};
+
 TEST(Sandbox, example) {
     Registry<Algorithm> registry(compressor_td);
+    registry.register_algorithm<Shell>();
+    registry.register_algorithm<MultiShell>();
     registry.register_algorithm<LZ77Compressor<BinaryCoder, BinaryCoder>>();
     registry.register_algorithm<LZ77Compressor<BinaryCoder, UnaryCoder>>();
     registry.register_algorithm<LZ77Compressor<UnaryCoder, BinaryCoder>>();
     registry.register_algorithm<LZ77Compressor<UnaryCoder, UnaryCoder>>();
     //registry.register_algorithm<BinaryCoder>();
 
-    auto algo = registry.select("lz77(window=147)");
+    auto algo = registry.select("shell(inner=lz77(window=147))");
     DLOG(INFO) << "algo: " << algo->env().str();
 
-    auto algo2 = Algorithm::instance<LZ77Compressor<UnaryCoder, BinaryCoder>>("window=1");
+    auto algo2 = registry.select("mshell(inner=[lz77()])");
     DLOG(INFO) << "algo2: " << algo2->env().str();
 
     /*
