@@ -11,16 +11,16 @@ class Algorithm {
 
 public:
     template<typename T>
-    static inline std::unique_ptr<T> instance(std::string config = "") {
+    static inline std::unique_ptr<T> instance(std::string config_str = "") {
         Registry<T> tmp_registry;
         tmp_registry.template register_algorithm<T>();
 
-        if(config.empty()) {
-            //FIXME: bindings may be different from default config!
-            config = T::meta().decl()->default_config()->str();
-        }
+        //FIXME: bindings may be different from default config values!
+        auto ast = config_str.empty() ?
+            T::meta().decl()->default_config() :
+            meta::ast::Parser::parse(config_str);
 
-        return tmp_registry.select(config);
+        return tmp_registry.select(ast);
     }
 
     inline Algorithm() = delete;
