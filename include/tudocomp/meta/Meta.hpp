@@ -273,11 +273,25 @@ public:
     }
 
 public:
+    inline AlgorithmConfig default_config(
+        ast::NodePtr<ast::Object> overrides) const {
+
+        if(overrides) {
+            auto cfg = std::make_shared<ast::Object>(m_decl->name());
+            for(auto& p : overrides->params()) cfg->add_param(ast::Param(p));
+            for(auto& p : m_binding_config->params()) {
+                if(!cfg->has_param(p.name())) {
+                    cfg->add_param(ast::Param(p));
+                }
+            }
+            return AlgorithmConfig(*m_decl, cfg, m_known);
+        } else {
+            return AlgorithmConfig(*m_decl, m_binding_config, m_known);
+        }
+    }
+
     inline AlgorithmConfig default_config() const {
-        return AlgorithmConfig(
-            *m_decl,
-            m_binding_config,
-            m_known);
+        return default_config(std::make_shared<ast::Object>(m_decl->name()));
     }
 
     inline ast::NodePtr<ast::Object> signature() const {

@@ -101,6 +101,16 @@ public:
         return m_params;
     }
 
+    /// \brief Tests if the object has a parameter with the given name
+    /// \param name the parameter in question
+    /// \return \c true iff the object has a parameter with the given name
+    inline bool has_param(const std::string& name) const {
+        for(auto& p : m_params) {
+            if(p.name() == name) return true;
+        }
+        return false;
+    }
+
     virtual std::string str() const override {
         std::stringstream ss;
         ss << m_name << '(';

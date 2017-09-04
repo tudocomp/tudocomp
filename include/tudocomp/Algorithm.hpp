@@ -12,24 +12,19 @@ class Algorithm {
 public:
     template<typename T>
     static inline std::unique_ptr<T> instance(std::string config_str = "") {
+        using namespace meta;
+
         auto meta = T::meta();
 
         if(config_str.empty()) {
             // just create an instance with the default config
             return std::make_unique<T>(meta.default_config());
         } else {
-            /*
-                //FIXME: This does not yet do what one would expect.
-                
-                config_str is expected to be complete, including the bindings
-
-                Instead, the meta's default binding config should be extended by
-                the user config. Based on that config, the instance should
-                be created.
-            */
-            Registry<T> tmp_registry(meta.decl()->type());
-            tmp_registry.template register_algorithm<T>();
-            return tmp_registry.select(config_str);
+            // create an instance with an override config
+            return std::make_unique<T>(meta.default_config(
+                ast::convert<ast::Object>(
+                    ast::Parser::parse(
+                        meta.decl()->name() + "(" + config_str + ")"))));
         }
     }
 
