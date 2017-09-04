@@ -12,15 +12,25 @@ class Algorithm {
 public:
     template<typename T>
     static inline std::unique_ptr<T> instance(std::string config_str = "") {
-        Registry<T> tmp_registry;
-        tmp_registry.template register_algorithm<T>();
+        auto meta = T::meta();
 
-        //FIXME: bindings may be different from default config values!
-        auto ast = config_str.empty() ?
-            T::meta().decl()->default_config() :
-            meta::ast::Parser::parse(config_str);
+        if(config_str.empty()) {
+            // just create an instance with the default config
+            return std::make_unique<T>(meta.default_config());
+        } else {
+            /*
+                //FIXME: This does not yet do what one would expect.
+                
+                config_str is expected to be complete, including the bindings
 
-        return tmp_registry.select(ast);
+                Instead, the meta's default binding config should be extended by
+                the user config. Based on that config, the instance should
+                be created.
+            */
+            Registry<T> tmp_registry(meta.decl()->type());
+            tmp_registry.template register_algorithm<T>();
+            return tmp_registry.select(config_str);
+        }
     }
 
     inline Algorithm() = delete;

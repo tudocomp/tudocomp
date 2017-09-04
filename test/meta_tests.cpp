@@ -61,9 +61,10 @@ TEST(Sandbox, example) {
     //registry.register_algorithm<BinaryCoder>();
 
     auto algo = registry.select("lz77(window=147)");
-    DLOG(INFO) << "instance: " << algo.get();
+    DLOG(INFO) << "algo: " << algo->env().str();
 
-    //auto algo2 = Algorithm::instance<LZ77Compressor<BinaryCoder, BinaryCoder>>();
+    auto algo2 = Algorithm::instance<LZ77Compressor<UnaryCoder, BinaryCoder>>("window=1");
+    DLOG(INFO) << "algo2: " << algo2->env().str();
 
     /*
     // parse

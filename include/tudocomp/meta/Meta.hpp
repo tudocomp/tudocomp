@@ -55,6 +55,8 @@ private:
     std::shared_ptr<ast::Object> m_sig; // signature of bindings
     AlgorithmLib m_known; // library of known declarations (excluding self!)
 
+    std::shared_ptr<ast::Object> m_binding_config; // binding configuration
+
     // further meta information
     // TODO: generalize?
     InputRestrictions m_input_restrictions;
@@ -132,6 +134,10 @@ public:
         inline Meta register_binding(const TypeDesc& type) {
             auto meta = check_algo_type<Binding>(m_name, type);
             m_meta->m_sig->add_param(ast::Param(m_name, meta.signature()));
+
+            m_meta->m_binding_config->add_param(
+                ast::Param(m_name, meta.m_binding_config));
+
             add_to_lib(m_meta->m_known, meta);
             return meta;
         }
@@ -160,7 +166,7 @@ public:
                 false, // non-primitive
                 false, // no list
                 type,
-                D::meta().decl()->default_config()));
+                D::meta().m_binding_config));
         }
 
         template<typename Binding>
@@ -182,12 +188,15 @@ public:
             gather<std::tuple<Bindings...>>::metas(metas, m_name, type);
 
             auto sigs = std::make_shared<ast::List>();
+            auto bindings = std::make_shared<ast::List>();
             for(auto& meta : metas) {
                 sigs->add_value(meta.signature());
+                bindings->add_value(meta.m_binding_config);
                 add_to_lib(m_meta->m_known, meta);
             }
 
             m_meta->m_sig->add_param(ast::Param(m_name, sigs));
+            m_meta->m_binding_config->add_param(ast::Param(m_name, bindings));
             return metas;
         }
 
@@ -218,7 +227,7 @@ public:
                 gather<std::tuple<D...>>::metas(metas, m_name, type);
 
                 for(auto& meta : metas) {
-                    defaults->add_value(meta.decl()->default_config());
+                    defaults->add_value(meta.m_binding_config);
                     add_to_lib(m_meta->m_known, meta);
                 }
             }
@@ -238,7 +247,8 @@ public:
         const std::string& name,
         const std::string& desc = "")
         : m_decl(std::make_shared<AlgorithmDecl>(name, type, desc)),
-          m_sig(std::make_shared<ast::Object>(name)) {
+          m_sig(std::make_shared<ast::Object>(name)),
+          m_binding_config(std::make_shared<ast::Object>(name)) {
     }
 
     [[deprecated("transitional override")]]
@@ -262,10 +272,11 @@ public:
         return m_decl;
     }
 
-    inline AlgorithmConfig default_config() const { 
+public:
+    inline AlgorithmConfig default_config() const {
         return AlgorithmConfig(
             *m_decl,
-            m_decl->default_config(),
+            m_binding_config,
             m_known);
     }
 
