@@ -153,6 +153,7 @@ public:
         template<typename Binding, typename D>
         inline void strategy(const TypeDesc& type, Meta::Default<D>&&) {
             register_binding<Binding>(type);
+            add_to_lib(m_meta->m_known, D::meta());
 
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
@@ -218,6 +219,7 @@ public:
 
                 for(auto& meta : metas) {
                     defaults->add_value(meta.decl()->default_config());
+                    add_to_lib(m_meta->m_known, meta);
                 }
             }
 
