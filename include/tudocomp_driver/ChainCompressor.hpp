@@ -11,8 +11,8 @@ class ChainCompressor: public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "chain");
-        m.option("first").dynamic_compressor();
-        m.option("second").dynamic_compressor();
+        m.option("first").unbounded_strategy(Compressor::type_desc);
+        m.option("second").unbounded_strategy(Compressor::type_desc);
         return m;
     }
 
@@ -32,18 +32,14 @@ public:
         }
 
         auto run = [&](Input& i, Output& o, string_ref option) {
-            auto& option_value = env().option(option);
-            DCHECK(option_value.is_algorithm());
+            auto option_value = env().option(option);
+            auto compressor = tdc_algorithms::COMPRESSOR_REGISTRY.select(
+                meta::ast::convert<meta::ast::Object>(option_value.ast()));
 
-            auto av = option_value.as_algorithm();
+            auto is = compressor.decl()->input_restrictions();
 
-            auto textds_flags = av.textds_flags();
-
-            DVLOG(1) << "dynamic creation of" << av.name() << "\n";
-            auto compressor = create_algo_with_registry_dynamic(
-                tdc_algorithms::COMPRESSOR_REGISTRY, av);
-
-            f(i, o, *compressor, textds_flags);
+            DVLOG(1) << "dynamic creation of " << compressor.decl()->name();
+            f(i, o, *compressor, is);
         };
 
         std::vector<uint8_t> between_buf;
@@ -66,7 +62,7 @@ public:
         chain(input, output, false, [](Input& i,
                                        Output& o,
                                        Compressor& c,
-                                       ds::InputRestrictionsAndFlags flags) {
+                                       InputRestrictions flags) {
             bool res = flags.has_restrictions();
             if (res) {
                 auto i2 = Input(i, flags);
@@ -85,7 +81,7 @@ public:
         chain(input, output, true, [](Input& i,
                                       Output& o,
                                       Compressor& c,
-                                      ds::InputRestrictionsAndFlags flags) {
+                                      InputRestrictions flags) {
             bool res = flags.has_restrictions();
             if (res) {
                 auto o2 = Output(o, flags);

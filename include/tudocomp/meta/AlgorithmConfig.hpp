@@ -192,6 +192,10 @@ public:
         inline ParamValue(const Param& param) : m_config(param.config()) {}
 
     public:
+        inline ast::NodePtr<> ast() const {
+            return m_config;
+        }
+
         /// \brief Converts and returns the single value of the parameter.
         ///
         /// The parameter must have a primitive value, ie., it must

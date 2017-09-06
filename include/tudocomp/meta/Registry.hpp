@@ -55,7 +55,38 @@ public:
         }
     }
 
-    inline std::unique_ptr<T> select(ast::NodePtr<ast::Object> obj) {
+    class Selection {
+    private:
+        friend class Registry;
+
+        std::shared_ptr<const AlgorithmDecl> m_decl;
+        std::unique_ptr<T> m_instance;
+
+        inline Selection(
+            std::shared_ptr<const AlgorithmDecl> decl,
+            std::unique_ptr<T>&& instance)
+            : m_decl(decl), m_instance(std::move(instance)) {
+        }
+
+    public:
+        inline std::shared_ptr<const AlgorithmDecl> decl() const {
+            return m_decl;
+        }
+
+        inline T& instance() {
+            return *m_instance;
+        }
+
+        inline T& operator*() {
+            return instance();
+        }
+
+        inline T* operator->() {
+            return m_instance.get();
+        }
+    };
+
+    inline Selection select(ast::NodePtr<ast::Object> obj) {
         auto lib_entry = m_lib.find(obj->name());
         if(lib_entry == m_lib.end()) {
             throw RegistryError(
@@ -78,13 +109,17 @@ public:
                 std::string("unregistered instance: ") + sig->str());
         }
 
-        return (reg_entry->second)(std::move(cfg));
+        return Selection(decl, (reg_entry->second)(std::move(cfg)));
     }
 
-    inline std::unique_ptr<T> select(const std::string& str) {
+    inline Selection select(const std::string& str) {
         auto obj = ast::convert<ast::Object>(ast::Parser::parse(str));
         DLOG(INFO) << "parsed AST: " << obj->str();
         return select(obj);
+    }
+
+    inline std::string generate_doc_string(const std::string& title) {
+        return std::string(""); //TODO: implement
     }
 };
 
