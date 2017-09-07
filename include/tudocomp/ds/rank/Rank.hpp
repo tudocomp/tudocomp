@@ -26,6 +26,41 @@ private:
     DynamicIntVector m_supblocks;
 
 public:
+    inline Rank()
+        : m_bv(nullptr),
+          m_supblock_size(0) {
+    }
+
+    inline Rank(const Rank& other)
+        : m_bv(other.m_bv),
+          m_supblock_size(other.m_supblock_size),
+          m_blocks(other.m_blocks),
+          m_supblocks(other.m_supblocks) {
+    }
+
+    inline Rank(Rank&& other)
+        : m_bv(other.m_bv),
+          m_supblock_size(other.m_supblock_size),
+          m_blocks(std::move(other.m_blocks)),
+          m_supblocks(std::move(other.m_supblocks)) {
+    }
+
+    inline Rank& operator=(const Rank& other) {
+        m_bv = other.m_bv;
+        m_supblock_size = other.m_supblock_size;
+        m_blocks = other.m_blocks;
+        m_supblocks = other.m_supblocks;
+        return *this;
+    }
+
+    inline Rank& operator=(Rank&& other) {
+        m_bv = other.m_bv;
+        m_supblock_size = other.m_supblock_size;
+        m_blocks = std::move(other.m_blocks);
+        m_supblocks = std::move(other.m_supblocks);
+        return *this;
+    }
+
     inline Rank(
         const BitVector& bv,
         size_t supblock_size = block_size * block_size)
