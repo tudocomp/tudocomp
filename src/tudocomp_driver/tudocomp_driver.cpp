@@ -135,7 +135,7 @@ int main(int argc, char** argv) {
         }
 
         std::string file;
-        std::unique_ptr<Generator> generator;
+        Registry<Generator>::Selection generator;
 
         if(!options.stdin) {
             if(!options.generator.empty()) {
@@ -176,58 +176,9 @@ int main(int argc, char** argv) {
             }
         }
 
-        // select compressor
-        class Selection {
-            std::string m_id_string;
-            std::unique_ptr<Compressor> m_compressor;
-            io::InputRestrictions m_input_restrictions;
-            std::shared_ptr<EnvRoot> m_algorithm_env;
-        public:
-            Selection():
-                m_id_string(),
-                m_compressor(),
-                m_input_restrictions(),
-                m_algorithm_env() {}
-            Selection(std::string&& id_string,
-                      std::unique_ptr<Compressor>&& compressor,
-                      io::InputRestrictions input_restrictions,
-                      std::shared_ptr<EnvRoot>&& algorithm_env):
-                m_id_string(std::move(id_string)),
-                m_compressor(std::move(compressor)),
-                m_input_restrictions(input_restrictions),
-                m_algorithm_env(std::move(algorithm_env)) {}
-            const std::string& id_string() const {
-                return m_id_string;
-            }
-            Compressor& compressor() {
-                return *m_compressor;
-            }
-            const io::InputRestrictions& input_restrictions() const {
-                return m_input_restrictions;
-            }
-            const std::shared_ptr<EnvRoot>& algorithm_env() const {
-                return m_algorithm_env;
-            }
-            operator bool() const {
-                return bool(m_compressor);
-            }
-        };
-        Selection selection;
-
+        Registry<Compressor>::Selection compressor;
         if (!options.algorithm.empty()) {
-            auto id_string = options.algorithm;
-
-            auto av = compressor_registry.parse_algorithm_id(id_string);
-            auto input_restrictions = av.textds_flags();
-            auto compressor = compressor_registry.select_algorithm(av);
-            auto algorithm_env = compressor->env().root();
-
-            selection = Selection {
-                std::move(id_string),
-                std::move(compressor),
-                input_restrictions,
-                std::move(algorithm_env),
-            };
+            compressor = compressor_registry.select(options.algorithm);
         }
 
         // open streams
@@ -239,7 +190,6 @@ int main(int argc, char** argv) {
         clk::time_point end_time;
 
         StatPhase root("root");
-
         {
             Input inp;
             if (options.stdin) { // input from stdin
@@ -262,22 +212,24 @@ int main(int argc, char** argv) {
             }
 
             // do the due (or if you like sugar, the Dew is fine too)
-            if (do_compress && selection) {
+            if (do_compress && compressor) {
                 if (!options.raw) {
-                    CHECK(selection.id_string().find('%') == std::string::npos);
+                    auto id_string = compressor->env().str();
+                    CHECK(id_string.find('%') == std::string::npos);
 
                     auto o_stream = out.as_stream();
-                    o_stream << selection.id_string() << '%';
+                    o_stream << id_string << '%';
                 }
 
-                if (selection.input_restrictions().has_restrictions()) {
-                    inp = Input(inp, selection.input_restrictions());
+                auto is = compressor.decl()->input_restrictions();
+                if (is.has_restrictions()) {
+                    inp = Input(inp, is);
                 }
 
                 //TODO: split?
                 //selection.algorithm_env()->restart_stats("Compress");
                 setup_time = clk::now();
-                selection.compressor().compress(inp, out);
+                compressor->compress(inp, out);
                 comp_time = clk::now();
             } else if(options.decompress) {
                 // 3 cases
@@ -316,36 +268,29 @@ int main(int argc, char** argv) {
                     inp = Input(inp, algorithm_header.size() + 1);
                 }
 
-                if (!options.raw && !selection.id_string().empty()) {
+                if (!options.raw && compressor) {
                     DLOG(INFO) << "Ignoring header " << algorithm_header
-                        << " and using manually given " << selection.id_string();
+                        << " and using manually given "
+                        << compressor->env().str();
                 } else if (!options.raw) {
                     DLOG(INFO) << "Using header id string " << algorithm_header;
 
                     auto id_string = std::move(algorithm_header);
-                    auto av = compressor_registry.parse_algorithm_id(id_string);
-                    auto compressor = compressor_registry.select_algorithm(av);
-                    auto input_restrictions = av.textds_flags();
-                    auto algorithm_env = compressor->env().root();
-
-                    selection = Selection {
-                        std::move(id_string),
-                        std::move(compressor),
-                        input_restrictions,
-                        std::move(algorithm_env),
-                    };
+                    compressor = compressor_registry.select(id_string);
                 } else {
-                    DLOG(INFO) << "Using manually given " << selection.id_string();
+                    DLOG(INFO) << "Using manually given "
+                               << compressor->env().str();
                 }
 
-                if (selection.input_restrictions().has_restrictions()) {
-                    out = Output(out, selection.input_restrictions());
+                auto is = compressor.decl()->input_restrictions();
+                if (is.has_restrictions()) {
+                    out = Output(out, is);
                 }
 
                 //TODO: split?
                 //selection.algorithm_env()->restart_stats("Decompress");
                 setup_time = clk::now();
-                selection.compressor().decompress(inp, out);
+                compressor->decompress(inp, out);
                 comp_time = clk::now();
             } else {
                 setup_time = clk::now();
@@ -378,7 +323,7 @@ int main(int argc, char** argv) {
                 std::chrono::duration_cast<std::chrono::seconds>(
                     start_time.time_since_epoch()).count());
 
-            meta.set("config", selection ? selection.id_string() : "<none>");
+            meta.set("config", compressor ? compressor->env().str() : "<none>");
             meta.set("input", options.stdin ? "<stdin>" :
                               (generator ? options.generator : file));
             meta.set("inputSize", in_size);
