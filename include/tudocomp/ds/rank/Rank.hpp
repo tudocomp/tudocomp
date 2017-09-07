@@ -6,41 +6,111 @@
 
 namespace tdc {
 
+/// \brief Implements a rank data structure for a \ref BitVector.
+///
+/// The data structure follows the block / superblock principle. Blocks are
+/// always 64 bits in size; the size of a superblock defaults to 4096, but
+/// is optional.
 class Rank {
+public:
+    static constexpr size_t block_size =
+        8 * sizeof(BitVector::internal_data_type);
+
+    static_assert(block_size <= 64, "block_size cannot be larger than 64 bits");
+
 private:
+    const BitVector* m_bv;
+
+    size_t m_supblock_size;
     DynamicIntVector m_blocks;
-    DynamicIntVector m_super_blocks;
+    DynamicIntVector m_supblocks;
 
 public:
-    inline Rank(const BitVector& bv) {
-        const size_t n = bv.size();
-        const size_t b = 64;
-        const size_t sb = b * b;
+    inline Rank(
+        const BitVector& bv,
+        size_t supblock_size = block_size * block_size)
+        : m_bv(&bv),
+          m_supblock_size(supblock_size) {
 
-        LOG(INFO) << "b = " << b << ", sb = " << sb;
+        DCHECK_GT(supblock_size, block_size)
+            << "superblocks must be larger than blocks!";
+        DCHECK_EQ(0, supblock_size % block_size)
+            << "superblock size must be a multiple of the block size!";
 
-        m_super_blocks = DynamicIntVector(n / sb, 0, bits_for(n));
-        m_blocks = DynamicIntVector(n / b,  0, bits_for(sb));
+        const size_t n = m_bv->size();
+        const auto data = m_bv->data();
 
-        LOG(INFO) << "|BV| = " << bv.size();
-        LOG(INFO) << "|M'| = " << m_super_blocks.size() << ", |M| = " << m_blocks.size();
-        LOG(INFO) << "total size in bits: " << (m_super_blocks.bit_size() + m_blocks.bit_size());
+        // compute number of superblocks / blocks
+        // note that we do not need to round up, as the first block always
+        // contains zero and does not need to be stored
+        const size_t num_supblocks = n / supblock_size;
+        const size_t num_blocks    = n / block_size;
 
-        LOG(INFO) << "constructing ...";
-        const uint64_t* data = bv.data();
-        size_t rank1_bv = 0;
-        for(size_t i = 0; i < (n/sb); i++) {
-            size_t rank1_sb = 0;
-            for(size_t j = 0; j < sb && (i * sb + j) < (n/b); j++) {
-                rank1_sb += rank1(data[i * sb + j]);
-                m_blocks[i * sb + j] = rank1_sb;
+        const size_t blocks_per_supblock = supblock_size / block_size;
+
+        m_supblocks = DynamicIntVector(num_supblocks, 0, bits_for(n));
+        m_blocks = DynamicIntVector(num_blocks, 0, bits_for(supblock_size));
+
+        // construct
+        size_t rank_bv = 0; // 1-bits in whole BV
+        size_t rank_sb = 0; // 1-bits in current superblock
+        size_t cur_sb = 0;   // current superblock
+
+        for(size_t j = 0; j < num_blocks; j++) {
+            size_t i = j / blocks_per_supblock;
+            if(i > cur_sb) {
+                // we reached a new superblock
+                m_supblocks[cur_sb] = rank_bv;
+                rank_sb = 0;
+                cur_sb = i;
             }
-            rank1_bv += rank1_sb;
-            m_super_blocks[i] = rank1_bv;
+
+            auto rank_b = tdc::rank1(data[j]);
+            rank_sb += rank_b;
+            rank_bv += rank_b;
+
+            m_blocks[j] = rank_sb;
         }
-        LOG(INFO) << "Done.";
+    }
+
+    /// rank1 for [0, x]
+    inline size_t rank1(size_t x) const {
+        DCHECK_LT(x, m_bv->size());
+        size_t r = 0;
+        size_t i = x / m_supblock_size;
+        if(i > 0) r += m_supblocks[i-1];
+        size_t j = x / block_size;
+
+        size_t k = j - i * (m_supblock_size / block_size);
+        if(k > 0) r += m_blocks[j-1];
+
+        r += tdc::rank1(m_bv->data()[j], x % block_size);
+        return r;
+    }
+
+    /// rank1 for [x, y]
+    inline size_t rank1(size_t x, size_t y) const {
+        DCHECK_LE(x, y);
+        size_t r = rank1(y);
+        if(x > 0) r -= rank1(x-1);
+        return r;
+    }
+
+    inline size_t operator()(size_t x) const {
+        return rank1(x);
+    }
+
+    inline size_t operator()(size_t x, size_t y) const {
+        return rank1(x, y);
+    }
+
+    inline size_t rank0(size_t x) const {
+        return x + 1 - rank1(x);
+    }
+
+    inline size_t rank0(size_t x, size_t y) const {
+        return (y - x + 1) - rank1(x, y);
     }
 };
 
 }
-

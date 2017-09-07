@@ -3,6 +3,7 @@
 
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/ds/rank/rank_64bit.hpp>
+#include <tudocomp/ds/rank/Rank.hpp>
 
 using namespace tdc;
 
@@ -126,4 +127,27 @@ TEST(rank, rank0_16_32_64bit) {
     for(uint8_t i = 1; i <= 2; i++) ASSERT_EQ(7, rank0(v16, 8*(i-1), 8*i-1));
     for(uint8_t i = 1; i <= 4; i++) ASSERT_EQ(7, rank0(v32, 8*(i-1), 8*i-1));
     for(uint8_t i = 1; i <= 8; i++) ASSERT_EQ(7, rank0(v64, 8*(i-1), 8*i-1));
+}
+
+TEST(rank, rank_bv) {
+    const size_t N = 16384; // amount of bits
+    const size_t K = 4;     // set every K-th bit
+
+    BitVector bv(N);
+
+    // set every K-th bit
+    for(size_t i = 0; i < N; i += K) bv[i] = 1;
+
+    // construct rank data structure
+    Rank rank(bv, N/2);
+
+    // rank1
+    ASSERT_EQ(N/K, rank(N-1));
+    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(i, rank(K*i-1));
+    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(1, rank(K*(i-1), K*i-1));
+
+    // rank0
+    ASSERT_EQ(N-N/K, rank.rank0(N-1));
+    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ((K-1)*i, rank.rank0(K*i-1));
+    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K-1, rank.rank0(K*(i-1), K*i-1));
 }
