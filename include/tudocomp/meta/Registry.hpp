@@ -33,7 +33,7 @@ public:
     template<typename Algo>
     inline void register_algorithm() {
         auto meta = Algo::meta();
-        
+
         if(!meta.decl()->type().subtype_of(m_root_type)) {
             throw RegistryError(std::string(
                 "trying to register algorithm of type ") +
@@ -69,6 +69,24 @@ public:
         }
 
     public:
+        inline Selection() {
+        }
+
+        inline Selection(Selection&& other)
+            : m_decl(std::move(other.m_decl)),
+              m_instance(std::move(other.m_instance)) {
+        }
+
+        inline Selection& operator=(Selection&& other) {
+            m_decl = std::move(other.m_decl);
+            m_instance = std::move(other.m_instance);
+            return *this;
+        }
+
+        inline operator bool() const {
+            return bool(m_instance);
+        }
+
         inline std::shared_ptr<const AlgorithmDecl> decl() const {
             return m_decl;
         }
@@ -86,7 +104,7 @@ public:
         }
     };
 
-    inline Selection select(ast::NodePtr<ast::Object> obj) {
+    inline Selection select(ast::NodePtr<ast::Object> obj) const {
         auto lib_entry = m_lib.find(obj->name());
         if(lib_entry == m_lib.end()) {
             throw RegistryError(
@@ -112,13 +130,13 @@ public:
         return Selection(decl, (reg_entry->second)(std::move(cfg)));
     }
 
-    inline Selection select(const std::string& str) {
+    inline Selection select(const std::string& str) const {
         auto obj = ast::convert<ast::Object>(ast::Parser::parse(str));
         DLOG(INFO) << "parsed AST: " << obj->str();
         return select(obj);
     }
 
-    inline std::string generate_doc_string(const std::string& title) {
+    inline std::string generate_doc_string(const std::string& title) const {
         return std::string(""); //TODO: implement
     }
 };
