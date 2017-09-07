@@ -5,7 +5,7 @@
 
 #include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/ds/CompressMode.hpp>
-#include <tudocomp/ds/ArrayDS.hpp>
+#include <tudocomp/ds/rank/Rank.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -19,18 +19,11 @@ public:
     using data_type = iv_t;
 
 private:
-    static inline size_t rank1(const BitVector& bv, size_t j) {
-        //TODO: naive!
-        size_t rank = 0;
-        for(size_t i = 0; i < j; i++) {
-            if(bv[i]) ++rank;
-        }
-        return rank;
-    }
-
     const sa_t* m_sa;
 
     BitVector m_has_shortcut;
+    Rank      m_rank;
+
     iv_t m_shortcuts;
 
 public:
@@ -85,14 +78,16 @@ public:
                 }
             }
 
-            m_shortcuts = DynamicIntVector(rank1(m_has_shortcut, n), 0, bits_for(n));
+            m_rank = Rank(m_has_shortcut);
+            m_shortcuts = DynamicIntVector(m_rank(n-1), 0, bits_for(n));
+
             for(size_t i = 0; i < n; i++) {
                 if(v[i]) {
                     v[i] = 0;
                     size_t j = (*m_sa)[i];
                     while(v[j]) {
                         if(m_has_shortcut[j]) {
-                            m_shortcuts[rank1(m_has_shortcut, j)] = i;
+                            m_shortcuts[m_rank(j)-1] = i;
                             i = j;
                         }
                         v[j] = 0;
@@ -100,7 +95,7 @@ public:
                     }
 
                     if(m_has_shortcut[j]) {
-                        m_shortcuts[rank1(m_has_shortcut, j)] = i;
+                        m_shortcuts[m_rank(j)-1] = i;
                     }
 
                     i = j;
@@ -116,7 +111,7 @@ public:
 
         while((*m_sa)[j] != i) {
             if(s && m_has_shortcut[j]) {
-                j = m_shortcuts[rank1(m_has_shortcut, j)];
+                j = m_shortcuts[m_rank(j)-1];
                 s = false;
             } else {
                 j = (*m_sa)[j];
