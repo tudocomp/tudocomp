@@ -402,7 +402,7 @@ inline void add_to_lib(AlgorithmLib& target, const Meta& meta) {
 using Meta = meta::Meta;
 
 [[deprecated("transitional alias")]]
-AlgorithmConfig create_env(const Meta& meta) {
+inline AlgorithmConfig create_env(const Meta& meta) {
     return meta.default_config();
 }
 
