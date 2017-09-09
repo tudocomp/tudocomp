@@ -5,7 +5,7 @@
 
 #include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/ds/CompressMode.hpp>
-#include <tudocomp/ds/rank/Rank.hpp>
+#include <tudocomp/ds/Rank.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 

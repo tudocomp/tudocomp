@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/ds/rank/rank_64bit.hpp>
+#include <tudocomp/ds/rank_64bit.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc {

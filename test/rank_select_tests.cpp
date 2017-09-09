@@ -2,9 +2,9 @@
 #include <gtest/gtest.h>
 
 #include <tudocomp/ds/IntVector.hpp>
-#include <tudocomp/ds/rank/rank_64bit.hpp>
-#include <tudocomp/ds/rank/select_64bit.hpp>
-#include <tudocomp/ds/rank/Rank.hpp>
+#include <tudocomp/ds/rank_64bit.hpp>
+#include <tudocomp/ds/select_64bit.hpp>
+#include <tudocomp/ds/Rank.hpp>
 
 using namespace tdc;
 
