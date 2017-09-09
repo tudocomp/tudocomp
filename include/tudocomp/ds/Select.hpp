@@ -36,35 +36,68 @@ public:
         m_supblocks = DynamicIntVector(idiv_ceil(n, m_supblock_size), 0, log_n);
         m_blocks = DynamicIntVector(idiv_ceil(n, m_block_size), 0, log_n);
 
-        size_t r = 0;
+        m_max = 0;
+        size_t r_sb = 0; // current bit count in superblock
+        size_t r_b = 0;  // current bit count in block
 
-        size_t cur_sb = 0;
-        size_t cur_sb_offset = 0;
-        size_t longest_sb = 0;
+        size_t cur_sb = 0;        // current superblock
+        size_t cur_sb_offset = 0; // starting position of current superblock
+        size_t longest_sb = 0;    // length of longest superblock
 
-        size_t cur_b = 0;
+        size_t cur_b = 0; // current block
 
-        for(size_t i = 0; i < n; i++) {
-            if(bv[i]) { //TODO templatize
-                ++r;
+        auto data = bv.data();
+        for(size_t i = 0; i < idiv_ceil(n, bv_data_width); i++) {
+            const auto v = data[i];
+            const uint8_t r = tdc::rank1(v);
+            m_max += r;
 
-                if((r % m_supblock_size) == 0) {
-                    // reached new superblock
-                    longest_sb = std::max(longest_sb, i - cur_sb_offset);
-                    cur_sb_offset = i;
-                    m_supblocks[cur_sb++] = i;
+            if(r_b + r >= m_block_size) {
+                // entered new block
 
-                    DCHECK((r % m_block_size) == 0) << "bad alignment";
+                // amount of bits needed to fill current block
+                size_t distance_b = m_block_size - r_b;
+
+                // stores the offset of the last bit in the current block
+                uint8_t offs = 0;
+
+                r_b += r;
+
+                size_t distance_sum = 0;
+                while(r_b >= m_block_size) {
+                    // find exact position of the bit in question
+                    offs = tdc::select1(v, offs, distance_b);
+                    DCHECK_NE(SELECT_FAIL, offs);
+
+                    const size_t pos = i * bv_data_width + offs;
+
+                    distance_sum += distance_b;
+                    r_sb += distance_b;
+                    if(r_sb >= m_supblock_size) {
+                        // entered new superblock
+                        longest_sb = std::max(longest_sb, pos - cur_sb_offset);
+                        cur_sb_offset = pos;
+
+                        m_supblocks[cur_sb++] = pos;
+
+                        r_sb -= m_supblock_size;
+                    }
+
+                    m_blocks[cur_b++] = pos - cur_sb_offset;
+                    r_b -= m_block_size;
+                    distance_b = m_block_size;
+
+                    ++offs;
                 }
 
-                if((r % m_block_size) == 0) {
-                    // reached new block
-                    m_blocks[cur_b++] = i - cur_sb_offset;
-                }
+                DCHECK_GE(size_t(r), distance_sum);
+                r_sb += r - distance_sum;
+            } else {
+                r_b  += r;
+                r_sb += r;
             }
         }
 
-        m_max = r;
         longest_sb = std::max(longest_sb, n - cur_sb_offset);
         const size_t w_block = bits_for(longest_sb);
 
@@ -110,7 +143,7 @@ public:
         size_t i = pos / bv_data_width;
         size_t offs  = pos % bv_data_width;
 
-        uint8_t s = select1(data[i], offs, x);
+        uint8_t s = tdc::select1(data[i], offs, x);
         if(s != SELECT_FAIL) {
             // found in first data segment
             return pos + s - offs;
@@ -118,12 +151,12 @@ public:
             // linearly search in the next segments
             size_t passes = 1;
 
-            x -= rank1(data[i], offs, bv_data_width-1);
+            x -= tdc::rank1(data[i], offs, bv_data_width-1);
             do {
                 ++passes;
                 pos = (++i) * bv_data_width;
-                s = select1(data[i], x);
-                if(s == SELECT_FAIL) x -= rank1(data[i]);
+                s = tdc::select1(data[i], x);
+                if(s == SELECT_FAIL) x -= tdc::rank1(data[i]);
             } while(s == SELECT_FAIL);
 
             return pos + s;
