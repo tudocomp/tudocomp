@@ -5,6 +5,7 @@
 #include <tudocomp/ds/rank_64bit.hpp>
 #include <tudocomp/ds/select_64bit.hpp>
 #include <tudocomp/ds/Rank.hpp>
+#include <tudocomp/ds/Select.hpp>
 
 using namespace tdc;
 
@@ -127,8 +128,8 @@ TEST(rank, uint_16_32_64) {
     }
 }
 
-TEST(rank, rank_bv) {
-    const size_t N = 16384; // amount of bits
+TEST(rank, bv) {
+    const size_t N = 65536; // amount of bits
     const size_t K = 4;     // set every K-th bit
 
     BitVector bv(N);
@@ -137,7 +138,7 @@ TEST(rank, rank_bv) {
     for(size_t i = 0; i < N; i += K) bv[i] = 1;
 
     // construct rank data structure
-    Rank rank(bv, N/2);
+    Rank rank(bv);
 
     // rank1
     ASSERT_EQ(N/K, rank(N-1));
@@ -180,7 +181,25 @@ TEST(select, ranged) {
     }
 }
 
-TEST(rank_select, inverse_property) {
+TEST(select, bv) {
+    const size_t N = 65536; // amount of bits
+    const size_t K = 4;     // set every K-th bit
+
+    BitVector bv(N);
+
+    // set every K-th bit
+    for(size_t i = 0; i < N; i += K) bv[i] = 1;
+
+    // construct select data structures
+    Select1 select1(bv);
+
+    // select1
+    ASSERT_EQ(SELECT_FAIL, select1(0));
+    ASSERT_EQ(N, select1(1+N/K));
+    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K*(i-1), select1(i));
+}
+
+TEST(rank_select, inverse_property_64bit) {
     uint64_t v64 = 0x0101010101010101ULL;
 
     for(size_t i = 1; i <= 8; i++) {
@@ -191,5 +210,27 @@ TEST(rank_select, inverse_property) {
     for(size_t i = 0; i < 64; i++) {
         ASSERT_GE(i, select1(v64,            rank1(v64, i)));
         ASSERT_GE(i, select0(uint64_t(~v64), rank0(uint64_t(~v64), i)));
+    }
+}
+
+TEST(rank_select, inverse_property_bv) {
+    const size_t N = 65536; // amount of bits
+    const size_t K = 4;     // set every K-th bit
+
+    BitVector bv(N);
+
+    // set every K-th bit
+    for(size_t i = 0; i < N; i += K) bv[i] = 1;
+
+    // construct rank and select data structures
+    Rank rank(bv);
+    Select1 select1(bv);
+
+    for(size_t i = 1; i <= N/K; i++) {
+        ASSERT_EQ(i, rank(select1(i)));
+    }
+
+    for(size_t i = 0; i < N; i++) {
+        ASSERT_GE(i, select1(rank(i)));
     }
 }
