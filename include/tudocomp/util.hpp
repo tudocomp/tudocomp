@@ -224,6 +224,23 @@ inline constexpr uint_fast8_t bytes_for(size_t n) {
     return idiv_ceil(bits_for(n), 8U);
 }
 
+/// \brief Yields the position of the most significant bit for the template
+///        integer type.
+///
+/// In some scenarios (e.g. rank and select), where bit order and boundaries
+/// of a certain type are relevant, it is assumed that the "first" bit is
+/// the least significant one at position 0, while the "last" bit is the most
+/// significant one.
+///
+/// The latter can be retrieved from the \c pos constant within this struct.
+///
+/// \tparam int_t the integer type in question
+template<typename int_t> struct msbf;
+template<> struct msbf<uint8_t>  { static constexpr uint8_t pos = 7; };
+template<> struct msbf<uint16_t> { static constexpr uint8_t pos = 15; };
+template<> struct msbf<uint32_t> { static constexpr uint8_t pos = 31; };
+template<> struct msbf<uint64_t> { static constexpr uint8_t pos = 63; };
+
 /// \brief Creates the cross product of a set of elements given a product
 /// function.
 ///

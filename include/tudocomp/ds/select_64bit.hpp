@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <tudocomp/util.hpp>
 
 namespace tdc {
 
@@ -34,14 +35,6 @@ inline constexpr uint8_t select1(uint_t v, uint8_t k) {
     }
     return SELECT_FAIL; //TODO: throw error?
 }
-
-/// \cond INTERNAL
-template<typename uint_t> struct msbf;
-template<> struct msbf<uint8_t>  { static constexpr uint8_t pos = 7; };
-template<> struct msbf<uint16_t> { static constexpr uint8_t pos = 15; };
-template<> struct msbf<uint32_t> { static constexpr uint8_t pos = 31; };
-template<> struct msbf<uint64_t> { static constexpr uint8_t pos = 63; };
-/// \endcond
 
 /// \brief Finds the position of the k-th 0-bit in the binary representation
 ///        of the given value.

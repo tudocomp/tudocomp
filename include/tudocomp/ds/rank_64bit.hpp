@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <tudocomp/util.hpp>
 
 namespace tdc {
 
@@ -76,156 +77,59 @@ namespace tdc {
     }
 
     /// \brief Computes the amount of 1-bits in an interval of the
-    ///        binary representation of the given 8-bit value.
+    ///        binary representation of the given value.
     ///
-    /// The exact rank value computed is that of the interval [0,m] in
+    /// The rank value computed is that of the bit interval [0,m] in
     /// zero-based LSBF order.
     ///
+    /// \tparam uint_t the type of the value in question
     /// \param v the value in question
     /// \param m the most significant bit (up until which to count)
     /// \return the amount of 1-bits in the given interval
-    inline constexpr uint8_t rank1(uint8_t v, uint8_t m) {
-        DCHECK(m < 8) << "m=" << m;
-        const uint8_t mask = 0xFFU >> (7-m);
-        return rank1_8bit[v & mask];
+    template<typename uint_t>
+    inline constexpr uint8_t rank1(uint_t v, uint8_t m) {
+        DCHECK(m <= msbf<uint_t>::pos) << "m=" << m;
+        const uint_t mask =
+            std::numeric_limits<uint_t>::max() >> (msbf<uint_t>::pos-m);
+        return rank1(uint_t(v & mask));
     }
 
     /// \brief Computes the amount of 1-bits in an interval of the
-    ///        binary representation of the given 8-bit value.
+    ///        binary representation of the given value.
     ///
-    /// The exact rank value computed is that of the interval [l,m] in
+    /// The rank value computed is that of the bit interval [l,m] in
     /// zero-based LSBF order.
     ///
+    /// \tparam uint_t the type of the value in question
     /// \param v the value in question
     /// \param l the least significant bit (from which the counting starts)
     /// \param m the most significant bit (up until which to count)
     /// \return the amount of 1-bits in the given interval
-    inline constexpr uint8_t rank1(uint8_t v, uint8_t l, uint8_t m) {
-        DCHECK(l < 8 && m < 8 && l <= m) << "l=" << l << ",m=" << m;
-        const uint8_t mask_m = UINT8_MAX >> (7-m);
-        const uint8_t mask_l = UINT8_MAX << l;
-        return rank1_8bit[v & mask_m & mask_l];
+    template<typename uint_t>
+    inline constexpr uint8_t rank1(uint_t v, uint8_t l, uint8_t m) {
+        DCHECK(l <= msbf<uint_t>::pos &&
+               m <= msbf<uint_t>::pos &&
+               l <= m) << "l=" << l << ",m=" << m;
+
+        const uint_t mask_m =
+            std::numeric_limits<uint_t>::max() >> (msbf<uint_t>::pos-m);
+        const uint_t mask_l =
+            std::numeric_limits<uint_t>::max() << l;
+        return rank1(uint_t(v & mask_m & mask_l));
     }
 
-    /// \brief Computes the amount of 1-bits in an interval of the
-    ///        binary representation of the given 16-bit value.
-    ///
-    /// The exact rank value computed is that of the interval [0,m] in
-    /// zero-based LSBF order.
-    ///
-    /// \param v the value in question
-    /// \param m the most significant bit (up until which to count)
-    /// \return the amount of 1-bits in the given interval
-    inline constexpr uint8_t rank1(uint16_t v, uint8_t m) {
-        DCHECK(m < 16) << "m=" << m;
-        const uint16_t mask = UINT16_MAX >> (15-m);
-        return __builtin_popcount(v & mask);
+    template<typename uint_t>
+    inline constexpr uint8_t rank0(uint_t v) {
+        return msbf<uint_t>::pos + 1 - rank1(v);
     }
 
-    /// \brief Computes the amount of 1-bits in an interval of the
-    ///        binary representation of the given 16-bit value.
-    ///
-    /// The exact rank value computed is that of the interval [l,m] in
-    /// zero-based LSBF order.
-    ///
-    /// \param v the value in question
-    /// \param l the least significant bit (from which the counting starts)
-    /// \param m the most significant bit (up until which to count)
-    /// \return the amount of 1-bits in the given interval
-    inline constexpr uint8_t rank1(uint16_t v, uint8_t l, uint8_t m) {
-        DCHECK(l < 16 && m < 16 && l <= m) << "l=" << l << ",m=" << m;
-        const uint16_t mask_m = UINT16_MAX >> (15-m);
-        const uint16_t mask_l = UINT16_MAX << l;
-        return __builtin_popcount(v & mask_m & mask_l);
-    }
-
-    /// \brief Computes the amount of 1-bits in an interval of the
-    ///        binary representation of the given 32-bit value.
-    ///
-    /// The exact rank value computed is that of the interval [0,m] in
-    /// zero-based LSBF order.
-    ///
-    /// \param v the value in question
-    /// \param m the most significant bit (up until which to count)
-    /// \return the amount of 1-bits in the given interval
-    inline constexpr uint8_t rank1(uint32_t v, uint8_t m) {
-        DCHECK(m < 32) << "m=" << m;
-        const uint32_t mask = UINT32_MAX >> (31-m);
-        return __builtin_popcount(v & mask);
-    }
-
-    /// \brief Computes the amount of 1-bits in an interval of the
-    ///        binary representation of the given 32-bit value.
-    ///
-    /// The exact rank value computed is that of the interval [l,m] in
-    /// zero-based LSBF order.
-    ///
-    /// \param v the value in question
-    /// \param l the least significant bit (from which the counting starts)
-    /// \param m the most significant bit (up until which to count)
-    /// \return the amount of 1-bits in the given interval
-    inline constexpr uint8_t rank1(uint32_t v, uint8_t l, uint8_t m) {
-        DCHECK(l < 32 && m < 32 && l <= m) << "l=" << l << ",m=" << m;
-        const uint32_t mask_m = UINT32_MAX >> (31-m);
-        const uint32_t mask_l = UINT32_MAX << l;
-        return __builtin_popcount(v & mask_m & mask_l);
-    }
-
-    /// \brief Computes the amount of 1-bits in an interval of the
-    ///        binary representation of the given 64-bit value.
-    ///
-    /// The exact rank value computed is that of the interval [0,m] in
-    /// zero-based LSBF order.
-    ///
-    /// \param v the value in question
-    /// \param m the most significant bit (up until which to count)
-    /// \return the amount of 1-bits in the given interval
-    inline constexpr uint8_t rank1(uint64_t v, uint8_t m) {
-        DCHECK(m < 64) << "m=" << m;
-        const uint64_t mask = UINT64_MAX >> (63-m);
-        return __builtin_popcountll(v & mask);
-    }
-
-    /// \brief Computes the amount of 1-bits in an interval of the
-    ///        binary representation of the given 64-bit value.
-    ///
-    /// The exact rank value computed is that of the interval [l,m] in
-    /// zero-based LSBF order.
-    ///
-    /// \param v the value in question
-    /// \param l the least significant bit (from which the counting starts)
-    /// \param m the most significant bit (up until which to count)
-    /// \return the amount of 1-bits in the given interval
-    inline constexpr uint8_t rank1(uint64_t v, uint8_t l, uint8_t m) {
-        DCHECK(l < 64 && m < 64 && l <= m) << "l=" << l << ",m=" << m;
-        const uint64_t mask_m = UINT64_MAX >> (63-m);
-        const uint64_t mask_l = UINT64_MAX << l;
-        return __builtin_popcountll(v & mask_m & mask_l);
-    }
-
-    inline constexpr uint8_t rank0(uint8_t v) {
-        return uint8_t(8) - rank1(v);
-    }
-
-    inline constexpr uint8_t rank0(uint16_t v) {
-        return uint8_t(16) - rank1(v);
-    }
-
-    inline constexpr uint8_t rank0(uint32_t v) {
-        return uint8_t(32) - rank1(v);
-    }
-
-    inline constexpr uint8_t rank0(uint64_t v) {
-        return uint8_t(64) - rank1(v);
-    }
-
-    template<typename T>
-    inline constexpr uint8_t rank0(T v, uint8_t m) {
+    template<typename uint_t>
+    inline constexpr uint8_t rank0(uint_t v, uint8_t m) {
         return (m + 1) - rank1(v, m);
     }
 
-    template<typename T>
-    inline constexpr uint8_t rank0(T v, uint8_t l, uint8_t m) {
+    template<typename uint_t>
+    inline constexpr uint8_t rank0(uint_t v, uint8_t l, uint8_t m) {
         return (m - l + 1) - rank1(v, l, m);
     }
 
