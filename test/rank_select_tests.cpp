@@ -3,6 +3,7 @@
 
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/ds/rank/rank_64bit.hpp>
+#include <tudocomp/ds/rank/select_64bit.hpp>
 #include <tudocomp/ds/rank/Rank.hpp>
 
 using namespace tdc;
@@ -87,7 +88,7 @@ TEST(rank, rank0_8bit) {
     for(uint8_t i = 0; i < 8; i++) ASSERT_EQ(1, rank0(v0, i, i));
 }
 
-TEST(rank, rank1_16_32_64bit) {
+TEST(rank, uint_16_32_64) {
     // full vectors
     uint16_t v16 = 0x0101;
     uint32_t v32 = 0x01010101UL;
@@ -98,35 +99,32 @@ TEST(rank, rank1_16_32_64bit) {
     ASSERT_EQ(8, rank1(v64));
 
     // interval [0, m]
-    for(uint8_t i = 1; i <= 2; i++) ASSERT_EQ(i, rank1(v16, 8*i-1));
-    for(uint8_t i = 1; i <= 4; i++) ASSERT_EQ(i, rank1(v32, 8*i-1));
-    for(uint8_t i = 1; i <= 8; i++) ASSERT_EQ(i, rank1(v64, 8*i-1));
+    for(uint8_t i = 1; i <= 2; i++) {
+        ASSERT_EQ(i, rank1(v16, 8*i-1));
+        ASSERT_EQ(i, rank0(uint16_t(~v16), 8*i-1));
+    }
+    for(uint8_t i = 1; i <= 4; i++) {
+        ASSERT_EQ(i, rank1(v32, 8*i-1));
+        ASSERT_EQ(i, rank0(uint32_t(~v32), 8*i-1));
+    }
+    for(uint8_t i = 1; i <= 8; i++) {
+        ASSERT_EQ(i, rank1(v64, 8*i-1));
+        ASSERT_EQ(i, rank0(uint64_t(~v64), 8*i-1));
+    }
 
     // interval [l, m]
-    for(uint8_t i = 1; i <= 2; i++) ASSERT_EQ(1, rank1(v16, 8*(i-1), 8*i-1));
-    for(uint8_t i = 1; i <= 4; i++) ASSERT_EQ(1, rank1(v32, 8*(i-1), 8*i-1));
-    for(uint8_t i = 1; i <= 8; i++) ASSERT_EQ(1, rank1(v64, 8*(i-1), 8*i-1));
-}
-
-TEST(rank, rank0_16_32_64bit) {
-    // full vectors
-    uint16_t v16 = 0x0101;
-    uint32_t v32 = 0x01010101UL;
-    uint64_t v64 = 0x0101010101010101ULL;
-
-    ASSERT_EQ(14, rank0(v16));
-    ASSERT_EQ(28, rank0(v32));
-    ASSERT_EQ(56, rank0(v64));
-
-    // interval [0, m]
-    for(uint8_t i = 1; i <= 2; i++) ASSERT_EQ(7*i, rank0(v16, 8*i-1));
-    for(uint8_t i = 1; i <= 4; i++) ASSERT_EQ(7*i, rank0(v32, 8*i-1));
-    for(uint8_t i = 1; i <= 8; i++) ASSERT_EQ(7*i, rank0(v64, 8*i-1));
-
-    // interval [l, m]
-    for(uint8_t i = 1; i <= 2; i++) ASSERT_EQ(7, rank0(v16, 8*(i-1), 8*i-1));
-    for(uint8_t i = 1; i <= 4; i++) ASSERT_EQ(7, rank0(v32, 8*(i-1), 8*i-1));
-    for(uint8_t i = 1; i <= 8; i++) ASSERT_EQ(7, rank0(v64, 8*(i-1), 8*i-1));
+    for(uint8_t i = 1; i <= 2; i++) {
+        ASSERT_EQ(1, rank1(v16, 8*(i-1), 8*i-1));
+        ASSERT_EQ(1, rank0(uint16_t(~v16), 8*(i-1), 8*i-1));
+    }
+    for(uint8_t i = 1; i <= 4; i++) {
+        ASSERT_EQ(1, rank1(v32, 8*(i-1), 8*i-1));
+        ASSERT_EQ(1, rank0(uint32_t(~v32), 8*(i-1), 8*i-1));
+    }
+    for(uint8_t i = 1; i <= 8; i++) {
+        ASSERT_EQ(1, rank1(v64, 8*(i-1), 8*i-1));
+        ASSERT_EQ(1, rank0(uint64_t(~v64), 8*(i-1), 8*i-1));
+    }
 }
 
 TEST(rank, rank_bv) {
@@ -150,4 +148,36 @@ TEST(rank, rank_bv) {
     ASSERT_EQ(N-N/K, rank.rank0(N-1));
     for(size_t i = 1; i <= N/K; i++) ASSERT_EQ((K-1)*i, rank.rank0(K*i-1));
     for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K-1, rank.rank0(K*(i-1), K*i-1));
+}
+
+TEST(select, basic) {
+    uint64_t v0 = 0ULL;
+    uint64_t v1 = 0xFFFFFFFFFFFFFFFFULL;
+    uint64_t v64 = 0x0101010101010101ULL;
+
+    for(size_t i = 1; i <= 64; i++) {
+        ASSERT_EQ(i-1, select1(v1, i));
+        ASSERT_EQ(SELECT_FAIL, select1(v0, i));
+        ASSERT_EQ(i-1, select0(v0, i));
+        ASSERT_EQ(SELECT_FAIL, select0(v1, i));
+    }
+
+    for(size_t i = 1; i <= 8; i++) {
+        ASSERT_EQ(8*(i-1), select1(v64, i));
+        ASSERT_EQ(8*(i-1), select0(uint64_t(~v64), i));
+    }
+}
+
+TEST(rank_select, inverse_property) {
+    uint64_t v64 = 0x0101010101010101ULL;
+
+    for(size_t i = 1; i <= 8; i++) {
+        ASSERT_EQ(i, rank1(v64,            select1(v64, i)));
+        ASSERT_EQ(i, rank0(uint64_t(~v64), select0(uint64_t(~v64), i)));
+    }
+
+    for(size_t i = 0; i < 64; i++) {
+        ASSERT_GE(i, select1(v64,            rank1(v64, i)));
+        ASSERT_GE(i, select0(uint64_t(~v64), rank0(uint64_t(~v64), i)));
+    }
 }
