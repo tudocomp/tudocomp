@@ -128,29 +128,6 @@ TEST(rank, uint_16_32_64) {
     }
 }
 
-TEST(rank, bv) {
-    const size_t N = 65536; // amount of bits
-    const size_t K = 4;     // set every K-th bit
-
-    BitVector bv(N);
-
-    // set every K-th bit
-    for(size_t i = 0; i < N; i += K) bv[i] = 1;
-
-    // construct rank data structure
-    Rank rank(bv);
-
-    // rank1
-    ASSERT_EQ(N/K, rank(N-1));
-    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(i, rank(K*i-1));
-    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(1, rank(K*(i-1), K*i-1));
-
-    // rank0
-    ASSERT_EQ(N-N/K, rank.rank0(N-1));
-    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ((K-1)*i, rank.rank0(K*i-1));
-    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K-1, rank.rank0(K*(i-1), K*i-1));
-}
-
 TEST(select, basic) {
     uint64_t v0 = 0ULL;
     uint64_t v1 = 0xFFFFFFFFFFFFFFFFULL;
@@ -181,24 +158,6 @@ TEST(select, ranged) {
     }
 }
 
-TEST(select, bv) {
-    const size_t N = 65536; // amount of bits
-    const size_t K = 4;     // set every K-th bit
-
-    BitVector bv(N);
-
-    // set every K-th bit
-    for(size_t i = 0; i < N; i += K) bv[i] = 1;
-
-    // construct select data structures
-    Select1 select1(bv);
-
-    // select1
-    ASSERT_EQ(SELECT_FAIL, select1(0));
-    ASSERT_EQ(N, select1(1+N/K));
-    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K*(i-1), select1(i));
-}
-
 TEST(rank_select, inverse_property_64bit) {
     uint64_t v64 = 0x0101010101010101ULL;
 
@@ -213,24 +172,73 @@ TEST(rank_select, inverse_property_64bit) {
     }
 }
 
+template<typename F>
+void NK_test(F f) {
+    for(size_t n = 7; n <= 16; n++) {
+        const size_t N = 1 << n; // amount of bits
+        for(size_t k = 0; k <= 4; k++) {
+            const size_t K = 1 << k;  // every K-th bit set
+            f(N, K);
+        }
+    }
+}
+
+TEST(rank, bv) {
+    NK_test([](size_t N, size_t K){
+        BitVector bv(N);
+
+        // set every K-th bit
+        for(size_t i = 0; i < N; i += K) bv[i] = 1;
+
+        // construct rank data structure
+        Rank rank(bv);
+
+        // rank1
+        ASSERT_EQ(N/K, rank(N-1));
+        for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(i, rank(K*i-1));
+        for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(1, rank(K*(i-1), K*i-1));
+
+        // rank0
+        ASSERT_EQ(N-N/K, rank.rank0(N-1));
+        for(size_t i = 1; i <= N/K; i++) ASSERT_EQ((K-1)*i, rank.rank0(K*i-1));
+        for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K-1, rank.rank0(K*(i-1), K*i-1));
+    });
+}
+
+TEST(select, bv) {
+    NK_test([](size_t N, size_t K){
+        BitVector bv(N);
+
+        // set every K-th bit
+        for(size_t i = 0; i < N; i += K) bv[i] = 1;
+
+        // construct select data structures
+        Select1 select1(bv);
+
+        // select1
+        ASSERT_EQ(SELECT_FAIL, select1(0));
+        ASSERT_EQ(N, select1(1+N/K));
+        for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K*(i-1), select1(i));
+    });
+}
+
 TEST(rank_select, inverse_property_bv) {
-    const size_t N = 65536; // amount of bits
-    const size_t K = 4;     // set every K-th bit
+    NK_test([](size_t N, size_t K){
+        BitVector bv(N);
 
-    BitVector bv(N);
+        // set every K-th bit
+        for(size_t i = 0; i < N; i += K) bv[i] = 1;
 
-    // set every K-th bit
-    for(size_t i = 0; i < N; i += K) bv[i] = 1;
+        // construct rank and select data structures
+        Rank rank(bv);
+        Select1 select1(bv);
 
-    // construct rank and select data structures
-    Rank rank(bv);
-    Select1 select1(bv);
+        for(size_t i = 1; i <= N/K; i++) {
+            ASSERT_EQ(i, rank(select1(i)));
+        }
 
-    for(size_t i = 1; i <= N/K; i++) {
-        ASSERT_EQ(i, rank(select1(i)));
-    }
-
-    for(size_t i = 0; i < N; i++) {
-        ASSERT_GE(i, select1(rank(i)));
-    }
+        for(size_t i = 0; i < N; i++) {
+            ASSERT_GE(i, select1(rank(i)));
+        }
+    });
 }
