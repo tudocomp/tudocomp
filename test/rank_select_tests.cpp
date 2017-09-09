@@ -168,6 +168,18 @@ TEST(select, basic) {
     }
 }
 
+TEST(select, ranged) {
+    uint64_t v0 = 0ULL;
+    uint64_t v1 = 0xFFFFFFFFFFFFFFFFULL;
+
+    for(size_t i = 1; i <= 64; i++) {
+        ASSERT_EQ(i-1, select1(v1, i-1, 1));
+        ASSERT_EQ(SELECT_FAIL, select1(v0, i-1, 1));
+        ASSERT_EQ(i-1, select0(v0, i-1, 1));
+        ASSERT_EQ(SELECT_FAIL, select0(v1, i-1, 1));
+    }
+}
+
 TEST(rank_select, inverse_property) {
     uint64_t v64 = 0x0101010101010101ULL;
 
