@@ -89,10 +89,8 @@ public:
         const auto data = m_bv->data();
 
         // compute number of superblocks / blocks
-        // note that we do not need to round up, as the first block always
-        // contains zero and does not need to be stored
-        const size_t num_supblocks = n / m_supblock_size;
-        const size_t num_blocks    = n / block_size;
+        const size_t num_supblocks = idiv_ceil(n, m_supblock_size);
+        const size_t num_blocks    = idiv_ceil(n, block_size);
 
         const size_t blocks_per_supblock = m_supblock_size / block_size;
 
@@ -102,7 +100,7 @@ public:
         // construct
         size_t rank_bv = 0; // 1-bits in whole BV
         size_t rank_sb = 0; // 1-bits in current superblock
-        size_t cur_sb = 0;   // current superblock
+        size_t cur_sb = 0;  // current superblock
 
         for(size_t j = 0; j < num_blocks; j++) {
             size_t i = j / blocks_per_supblock;
