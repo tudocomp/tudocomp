@@ -10,6 +10,7 @@
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/bwt.hpp>
 #include <tudocomp/ds/SparseISA.hpp>
+#include <tudocomp/ds/CompressedLCP.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
 #include "test/util.hpp"
 
@@ -154,3 +155,8 @@ using textds_sparse_isa_t = TextDS<
 TEST(ds, sparse_isa_ISA)         { TEST_DS_STRINGCOLLECTION(textds_sparse_isa_t, test_isa); }
 TEST(ds, sparse_isa_Integration) { TEST_DS_STRINGCOLLECTION(textds_sparse_isa_t, test_all_ds); }
 
+using textds_comp_lcp_t = TextDS<
+    SADivSufSort, PhiFromSA, PLCPFromPhi, CompressedLCP<SADivSufSort>, ISAFromSA>;
+
+TEST(ds, comp_lcp_LCP)         { TEST_DS_STRINGCOLLECTION(textds_comp_lcp_t, test_lcp); }
+TEST(ds, comp_lcp_Integration) { TEST_DS_STRINGCOLLECTION(textds_comp_lcp_t, test_all_ds); }
