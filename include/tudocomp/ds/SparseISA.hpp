@@ -55,7 +55,7 @@ public:
         const size_t t = this->env().option("t").as_integer();
 
         // Construct
-        {
+        StatPhase::wrap("Construct sparse ISA", [&]{
             auto v = BitVector(n);
             for(size_t i = 0; i < n; i++) {
                 if(!v[i]) {
@@ -101,7 +101,7 @@ public:
                     i = j;
                 }
             }
-        }
+        });
     }
 
 public:
