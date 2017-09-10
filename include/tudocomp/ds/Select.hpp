@@ -6,6 +6,16 @@
 
 namespace tdc {
 
+/// \brief Implements a select data structure for a \ref BitVector.
+///
+/// The data structure follows a block / superblock principle, where superblocks
+/// always contain \c s flagged bits and blocks contain \c s' flagged bits
+/// (flagged bits meaning 1 for select1 and 0 for select0).
+///
+/// The size of a block is logarithmic in the bit vector's length, the size of a
+/// superblock is the squared block size.
+///
+/// \tparam m_bit the bits to flag (0 or 1)
 template<bool m_bit>
 class Select {
 private:
@@ -31,6 +41,13 @@ private:
     DynamicIntVector m_blocks;
 
 public:
+    /// \brief Constructs the select data structure for the given bit vector.
+    ///
+    /// Note that changes to the bit vector after construction of this data
+    /// structure will cause the select operation to not work correctly
+    /// anymore. In other words, this data structure is static.
+    ///
+    /// \param bv the underlying bit vector
     inline Select(BitVector& bv) : m_bv(&bv) {
         const size_t n = bv.size();
 
@@ -116,8 +133,13 @@ public:
         m_supblocks.shrink_to_fit();
     }
 
+    /// \brief Finds the position of the x-th flagged bit in the bit vector.
+    /// \param the order of the flagged bit to find
+    /// \return the position of the x-th flagged bit. In case the position is
+    ///         not contained in the bit vector, the bit vector's size is
+    ///         returned.
     inline size_t select(size_t x) const {
-        if(x == 0) return SELECT_FAIL;
+        DCHECK_GT(x, 0) << "order must be at least one";
         if(x > m_max) return m_bv->size();
 
         size_t pos = 0;
@@ -170,6 +192,7 @@ public:
         }
     }
 
+    /// \see select
     inline size_t operator()(size_t k) const {
         return select(k);
     }

@@ -218,7 +218,6 @@ TEST(select, bv) {
             Select1 select1(bv);
 
             // test
-            ASSERT_EQ(SELECT_FAIL, select1(0));
             ASSERT_EQ(N, select1(1+N/K));
             for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K*(i-1), select1(i));
         }
@@ -233,7 +232,6 @@ TEST(select, bv) {
             Select0 select0(bv);
 
             // test
-            ASSERT_EQ(SELECT_FAIL, select0(0));
             ASSERT_EQ(N, select0(1+N/K));
             for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K*(i-1), select0(i));
         }

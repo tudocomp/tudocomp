@@ -24,7 +24,7 @@ constexpr uint8_t SELECT_FAIL = 0xFF;
 ///         or \ref SELECT_FAIL if no such bit exists
 template<typename uint_t>
 inline constexpr uint8_t select1(uint_t v, uint8_t k) {
-    DCHECK(k > 0) << "k must be at least zero";
+    DCHECK(k > 0) << "order must be at least one";
     uint8_t pos = 0;
     while(v) {
         if(v&1) {
@@ -63,7 +63,7 @@ inline constexpr uint8_t select1(uint_t v, uint8_t l, uint8_t k) {
 ///         or \ref SELECT_FAIL if no such bit exists
 template<typename uint_t>
 inline constexpr uint8_t select0(uint_t v, uint8_t k) {
-    DCHECK(k > 0) << "k must be at least zero";
+    DCHECK(k > 0) << "order must be at least one";
     uint8_t pos = 0;
     while(v) {
         if(!(v&1)) {

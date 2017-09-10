@@ -8,11 +8,14 @@ namespace tdc {
 
 /// \brief Implements a rank data structure for a \ref BitVector.
 ///
-/// The data structure follows the block / superblock principle. Blocks are
-/// always 64 bits in size; the size of a superblock defaults to 4096, but
-/// is optional.
+/// The data structure follows a block / superblock principle. Blocks are
+/// always of fixed size (e.g. 64 bits), the size of a superblock is
+/// the squared block size.
+///
+/// The structure supports both rank1 and rank0 queries.
 class Rank {
 public:
+    /// The size of a block in bits.
     static constexpr size_t block_size =
         8 * sizeof(BitVector::internal_data_type);
 
@@ -61,15 +64,20 @@ public:
         return *this;
     }
 
-    inline Rank(
-        const BitVector& bv,
-        size_t supblock_size = block_size * block_size)
+    /// \brief Constructs the rank data structure for the given bit vector.
+    ///
+    /// Note that changes to the bit vector after construction of this data
+    /// structure will cause the rank operations to not work correctly
+    /// anymore. In other words, this data structure is static.
+    ///
+    /// \param bv the underlying bit vector
+    inline Rank(const BitVector& bv)
         : m_bv(&bv),
-          m_supblock_size(supblock_size) {
+          m_supblock_size(block_size * block_size) {
 
-        DCHECK_GT(supblock_size, block_size)
+        DCHECK_GT(m_supblock_size, block_size)
             << "superblocks must be larger than blocks!";
-        DCHECK_EQ(0, supblock_size % block_size)
+        DCHECK_EQ(0, m_supblock_size % block_size)
             << "superblock size must be a multiple of the block size!";
 
         const size_t n = m_bv->size();
@@ -78,13 +86,13 @@ public:
         // compute number of superblocks / blocks
         // note that we do not need to round up, as the first block always
         // contains zero and does not need to be stored
-        const size_t num_supblocks = n / supblock_size;
+        const size_t num_supblocks = n / m_supblock_size;
         const size_t num_blocks    = n / block_size;
 
-        const size_t blocks_per_supblock = supblock_size / block_size;
+        const size_t blocks_per_supblock = m_supblock_size / block_size;
 
         m_supblocks = DynamicIntVector(num_supblocks, 0, bits_for(n));
-        m_blocks = DynamicIntVector(num_blocks, 0, bits_for(supblock_size));
+        m_blocks = DynamicIntVector(num_blocks, 0, bits_for(m_supblock_size));
 
         // construct
         size_t rank_bv = 0; // 1-bits in whole BV
@@ -108,7 +116,10 @@ public:
         }
     }
 
-    /// rank1 for [0, x]
+    /// \brief Counts the amount of 1-bits from the beginning of the bit vector
+    ///        up to (including) the given position.
+    /// \param x the position up to which to count (inclusively)
+    /// \return the amount of counted 1-bits
     inline size_t rank1(size_t x) const {
         DCHECK_LT(x, m_bv->size());
         size_t r = 0;
@@ -123,7 +134,11 @@ public:
         return r;
     }
 
-    /// rank1 for [x, y]
+    /// \brief Counts the amount of 1-bits in the given interval (borders
+    ///        included) of the bit vector.
+    /// \param x the position from which to start counting (inclusively)
+    /// \param y the position at which to stop counting (inclusively)
+    /// \return the amount of counted 1-bits
     inline size_t rank1(size_t x, size_t y) const {
         DCHECK_LE(x, y);
         size_t r = rank1(y);
@@ -131,18 +146,29 @@ public:
         return r;
     }
 
+    /// \see rank1
     inline size_t operator()(size_t x) const {
         return rank1(x);
     }
 
+    /// \see rank1
     inline size_t operator()(size_t x, size_t y) const {
         return rank1(x, y);
     }
 
+    /// \brief Counts the amount of 0-bits from the beginning of the bit vector
+    ///        up to (including) the given position.
+    /// \param x the position up to which to count (inclusively)
+    /// \return the amount of counted 0-bits
     inline size_t rank0(size_t x) const {
         return x + 1 - rank1(x);
     }
 
+    /// \brief Counts the amount of 0-bits in the given interval (borders
+    ///        included) of the bit vector.
+    /// \param x the position from which to start counting (inclusively)
+    /// \param y the position at which to stop counting (inclusively)
+    /// \return the amount of counted 0-bits
     inline size_t rank0(size_t x, size_t y) const {
         return (y - x + 1) - rank1(x, y);
     }
