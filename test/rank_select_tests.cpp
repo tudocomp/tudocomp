@@ -207,38 +207,68 @@ TEST(rank, bv) {
 
 TEST(select, bv) {
     NK_test([](size_t N, size_t K){
-        BitVector bv(N);
-
-        // set every K-th bit
-        for(size_t i = 0; i < N; i += K) bv[i] = 1;
-
-        // construct select data structures
-        Select1 select1(bv);
-
         // select1
-        ASSERT_EQ(SELECT_FAIL, select1(0));
-        ASSERT_EQ(N, select1(1+N/K));
-        for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K*(i-1), select1(i));
+        {
+            BitVector bv(N);
+
+            // set every K-th bit
+            for(size_t i = 0; i < N; i += K) bv[i] = 1;
+
+            // construct select data structure
+            Select1 select1(bv);
+
+            // test
+            ASSERT_EQ(SELECT_FAIL, select1(0));
+            ASSERT_EQ(N, select1(1+N/K));
+            for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K*(i-1), select1(i));
+        }
+        // select0
+        {
+            BitVector bv(N, 1);
+
+            // unset every K-th bit
+            for(size_t i = 0; i < N; i += K) bv[i] = 0;
+
+            // construct select data structure
+            Select0 select0(bv);
+
+            // test
+            ASSERT_EQ(SELECT_FAIL, select0(0));
+            ASSERT_EQ(N, select0(1+N/K));
+            for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K*(i-1), select0(i));
+        }
     });
 }
 
 TEST(rank_select, inverse_property_bv) {
     NK_test([](size_t N, size_t K){
-        BitVector bv(N);
+        //1
+        {
+            BitVector bv(N);
 
-        // set every K-th bit
-        for(size_t i = 0; i < N; i += K) bv[i] = 1;
+            // set every K-th bit
+            for(size_t i = 0; i < N; i += K) bv[i] = 1;
 
-        // construct rank and select data structures
-        Rank rank(bv);
-        Select1 select1(bv);
+            // construct rank and select data structures
+            Rank r(bv);
+            Select1 select1(bv);
 
-        for(size_t i = 1; i <= N/K; i++) {
-            ASSERT_EQ(i, rank(select1(i)));
+            for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(i, r.rank1(select1(i)));
+            for(size_t i = 0; i < N; i++)    ASSERT_GE(i, select1(r.rank1(i)));
         }
+        //0
+        {
+            BitVector bv(N, 1);
 
-        for(size_t i = 0; i < N; i++) {
-            ASSERT_GE(i, select1(rank(i)));
+            // unset every K-th bit
+            for(size_t i = 0; i < N; i += K) bv[i] = 0;
+
+            // construct rank and select data structures
+            Rank r(bv);
+            Select0 select0(bv);
+
+            for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(i, r.rank0(select0(i)));
+            for(size_t i = 0; i < N; i++)    ASSERT_GE(i, select0(r.rank0(i)));
         }
     });
 }

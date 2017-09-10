@@ -6,13 +6,20 @@
 
 namespace tdc {
 
-class Select1 {
+template<bool m_bit>
+class Select {
 private:
-    static constexpr size_t bv_data_width =
-        8 * sizeof(BitVector::internal_data_type);
+    using data_t = BitVector::internal_data_type;
+    static constexpr size_t data_w = 8 * sizeof(data_t);
 
-    static_assert(bv_data_width <= 64,
+    static_assert(data_w <= 64,
         "bit vectors backing must have width of at most 64 bits");
+
+    // template variants
+    static constexpr uint8_t basic_rank(data_t v);
+    static constexpr uint8_t basic_rank(data_t v, uint8_t l, uint8_t m);
+    static constexpr uint8_t basic_select(data_t, uint8_t k);
+    static constexpr uint8_t basic_select(data_t, uint8_t l, uint8_t k);
 
     const BitVector* m_bv;
 
@@ -24,7 +31,7 @@ private:
     DynamicIntVector m_blocks;
 
 public:
-    inline Select1(BitVector& bv) : m_bv(&bv) {
+    inline Select(BitVector& bv) : m_bv(&bv) {
         const size_t n = bv.size();
 
         const size_t log_n = bits_for(n);
@@ -47,9 +54,9 @@ public:
         size_t cur_b = 0; // current block
 
         auto data = bv.data();
-        for(size_t i = 0; i < idiv_ceil(n, bv_data_width); i++) {
+        for(size_t i = 0; i < idiv_ceil(n, data_w); i++) {
             const auto v = data[i];
-            const uint8_t r = tdc::rank1(v);
+            const uint8_t r = basic_rank(v);
             m_max += r;
 
             if(r_b + r >= m_block_size) {
@@ -66,10 +73,10 @@ public:
                 size_t distance_sum = 0;
                 while(r_b >= m_block_size) {
                     // find exact position of the bit in question
-                    offs = tdc::select1(v, offs, distance_b);
+                    offs = basic_select(v, offs, distance_b);
                     DCHECK_NE(SELECT_FAIL, offs);
 
-                    const size_t pos = i * bv_data_width + offs;
+                    const size_t pos = i * data_w + offs;
 
                     distance_sum += distance_b;
                     r_sb += distance_b;
@@ -140,10 +147,10 @@ public:
         // from this point forward, search directly in the bit vector
         auto data = m_bv->data();
 
-        size_t i = pos / bv_data_width;
-        size_t offs  = pos % bv_data_width;
+        size_t i = pos / data_w;
+        size_t offs  = pos % data_w;
 
-        uint8_t s = tdc::select1(data[i], offs, x);
+        uint8_t s = basic_select(data[i], offs, x);
         if(s != SELECT_FAIL) {
             // found in first data segment
             return pos + s - offs;
@@ -151,12 +158,12 @@ public:
             // linearly search in the next segments
             size_t passes = 1;
 
-            x -= tdc::rank1(data[i], offs, bv_data_width-1);
+            x -= basic_rank(data[i], offs, data_w-1);
             do {
                 ++passes;
-                pos = (++i) * bv_data_width;
-                s = tdc::select1(data[i], x);
-                if(s == SELECT_FAIL) x -= tdc::rank1(data[i]);
+                pos = (++i) * data_w;
+                s = basic_select(data[i], x);
+                if(s == SELECT_FAIL) x -= basic_rank(data[i]);
             } while(s == SELECT_FAIL);
 
             return pos + s;
@@ -167,5 +174,49 @@ public:
         return select(k);
     }
 };
+
+using Select1 = Select<1>;
+
+template<>
+inline constexpr uint8_t Select1::basic_rank(data_t v) {
+    return tdc::rank1(v);
+}
+
+template<>
+inline constexpr uint8_t Select1::basic_rank(data_t v, uint8_t l, uint8_t m) {
+    return tdc::rank1(v, l, m);
+}
+
+template<>
+inline constexpr uint8_t Select1::basic_select(data_t v, uint8_t k) {
+    return tdc::select1(v, k);
+}
+
+template<>
+inline constexpr uint8_t Select1::basic_select(data_t v, uint8_t l, uint8_t k) {
+    return tdc::select1(v, l, k);
+}
+
+using Select0 = Select<0>;
+
+template<>
+inline constexpr uint8_t Select0::basic_rank(data_t v) {
+    return tdc::rank0(v);
+}
+
+template<>
+inline constexpr uint8_t Select0::basic_rank(data_t v, uint8_t l, uint8_t m) {
+    return tdc::rank0(v, l, m);
+}
+
+template<>
+inline constexpr uint8_t Select0::basic_select(data_t v, uint8_t k) {
+    return tdc::select0(v, k);
+}
+
+template<>
+inline constexpr uint8_t Select0::basic_select(data_t v, uint8_t l, uint8_t k) {
+    return tdc::select0(v, l, k);
+}
 
 }
