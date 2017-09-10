@@ -29,11 +29,13 @@ private:
     DynamicIntVector m_supblocks;
 
 public:
+    /// \brief Default constructor.
     inline Rank()
         : m_bv(nullptr),
           m_supblock_size(0) {
     }
 
+    /// \brief Copy constructor.
     inline Rank(const Rank& other)
         : m_bv(other.m_bv),
           m_supblock_size(other.m_supblock_size),
@@ -41,6 +43,7 @@ public:
           m_supblocks(other.m_supblocks) {
     }
 
+    /// \brief Move constructor.
     inline Rank(Rank&& other)
         : m_bv(other.m_bv),
           m_supblock_size(other.m_supblock_size),
@@ -48,6 +51,7 @@ public:
           m_supblocks(std::move(other.m_supblocks)) {
     }
 
+    /// \brief Copy assignment.
     inline Rank& operator=(const Rank& other) {
         m_bv = other.m_bv;
         m_supblock_size = other.m_supblock_size;
@@ -56,6 +60,7 @@ public:
         return *this;
     }
 
+    /// \brief Move assignment.
     inline Rank& operator=(Rank&& other) {
         m_bv = other.m_bv;
         m_supblock_size = other.m_supblock_size;

@@ -37,10 +37,60 @@ private:
     size_t m_block_size;
     size_t m_supblock_size;
 
-    DynamicIntVector m_supblocks;
     DynamicIntVector m_blocks;
+    DynamicIntVector m_supblocks;
 
 public:
+    /// \brief Default constructor.
+    inline Select()
+        : m_bv(nullptr),
+          m_max(0),
+          m_block_size(0),
+          m_supblock_size(0) {
+    }
+
+    /// \brief Copy constructor.
+    inline Select(const Select& other)
+        : m_bv(other.m_bv),
+          m_max(other.m_max),
+          m_block_size(other.m_block_size),
+          m_supblock_size(other.m_supblock_size),
+          m_blocks(other.m_blocks),
+          m_supblocks(other.m_supblocks) {
+    }
+
+    /// \brief Move constructor.
+    inline Select(Select&& other)
+        : m_bv(other.m_bv),
+          m_max(other.m_max),
+          m_block_size(other.m_block_size),
+          m_supblock_size(other.m_supblock_size),
+          m_blocks(std::move(other.m_blocks)),
+          m_supblocks(std::move(other.m_supblocks)) {
+    }
+
+    /// \brief Copy assignment.
+    inline Select& operator=(const Select& other) {
+        m_bv = other.m_bv;
+        m_max = other.m_max;
+        m_block_size = other.m_block_size;
+        m_supblock_size = other.m_supblock_size;
+        m_blocks = other.m_blocks;
+        m_supblocks = other.m_supblocks;
+        return *this;
+    }
+
+    /// \brief Move assignment.
+    inline Select& operator=(Select&& other) {
+        m_bv = other.m_bv;
+        m_max = other.m_max;
+        m_block_size = other.m_block_size;
+        m_supblock_size = other.m_supblock_size;
+        m_blocks = std::move(other.m_blocks);
+        m_supblocks = std::move(other.m_supblocks);
+        return *this;
+    }
+
     /// \brief Constructs the select data structure for the given bit vector.
     ///
     /// Note that changes to the bit vector after construction of this data
