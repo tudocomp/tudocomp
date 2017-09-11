@@ -3,6 +3,7 @@
 #include <iostream>
 #include <getopt.h>
 
+/// \cond INTERNAL
 namespace tdc_driver {
 
 // getopt data
@@ -305,3 +306,5 @@ public:
 };
 
 }
+/// \endcond
+

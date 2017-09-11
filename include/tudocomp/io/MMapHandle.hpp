@@ -11,12 +11,11 @@
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/io/IOUtil.hpp>
 
+/// \cond INTERNAL
 namespace tdc {namespace io {
-    /// \cond INTERNAL
     inline size_t pagesize() {
         return sysconf(_SC_PAGESIZE);
     }
-    /// \cond INTERNAL
 
     /// A handle for a memory map.
     ///
@@ -129,8 +128,8 @@ namespace tdc {namespace io {
                         malloc_callback::on_alloc(adj_size(m_size));
                     })
                 } else {
-                    LOG(INFO) << "Mapping file into memory failed, falling"
-                              << " back to copying into a anonymous map";
+                    //LOG(INFO) << "Mapping file into memory failed, falling"
+                    //          << " back to copying into a anonymous map";
                     try_next = true;
                 }
             }
@@ -268,3 +267,5 @@ namespace tdc {namespace io {
         }
     };
 }}
+/// \endcond
+

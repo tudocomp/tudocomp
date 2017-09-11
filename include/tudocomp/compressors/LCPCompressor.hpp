@@ -150,5 +150,10 @@ public:
     }
 };
 
+/// \brief Contains factorization and decoding strategies for
+///        the  \ref LCPCompressor.
+namespace lcpcomp {
+}
+
 }
 

@@ -3,6 +3,7 @@
 #include <tudocomp/pre_header/Registry.hpp>
 #include <tudocomp/pre_header/Env.hpp>
 
+/// \cond INTERNAL
 namespace tdc {
 
 template<typename algorithm_t>
@@ -237,4 +238,5 @@ inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select(
 }
 
 }
+/// \endcond
 

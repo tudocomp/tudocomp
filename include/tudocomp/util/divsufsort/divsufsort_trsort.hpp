@@ -31,6 +31,7 @@
 #include <tudocomp/util/divsufsort/divsufsort_def.hpp>
 #include <tudocomp/util/divsufsort/divsufsort_private.hpp>
 
+/// \cond INTERNAL
 namespace tdc {
 namespace libdivsufsort {
 
@@ -535,3 +536,5 @@ inline void trsort(buffer_t& B, saidx_t ISA, saidx_t SA, saidx_t n, saidx_t dept
 }
 
 }} //ns
+///\endcond
+

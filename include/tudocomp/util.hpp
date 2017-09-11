@@ -17,6 +17,22 @@
 
 namespace tdc {
 
+/// \cond INTERNAL
+template<class T>
+struct char_as_uint_trait {
+    static inline uint64_t conv(const T& t) { return t; }
+};
+template<>
+struct char_as_uint_trait<char> {
+    static inline uint64_t conv(const char& t) { return uint8_t(t); }
+};
+
+template<class T>
+inline uint64_t char_as_uint(const T& t) {
+    return char_as_uint_trait<T>::conv(t);
+}
+/// \endcond
+
 /// \brief Builds the string representation of a vector of byte values,
 /// sorrounded by square brackets (\c \[ and \c \]).
 ///
@@ -24,6 +40,7 @@ namespace tdc {
 ///
 /// \tparam T The byte vector type.
 /// \param s The byte vector.
+/// \param indent The amount of spaces to indent the string by.
 /// \return The string representation of the byte vector.
 template<class T>
 std::string vec_to_debug_string(const T& s, size_t indent = 0) {
@@ -48,6 +65,7 @@ std::string vec_to_debug_string(const T& s, size_t indent = 0) {
 ///
 /// \tparam T The byte array type.
 /// \param s The byte array.
+/// \param length The length of the byte array.
 /// \return The string representation of the byte array.
 template<class T>
 std::string arr_to_debug_string(const T* s, size_t length) {
@@ -207,6 +225,49 @@ inline constexpr size_t idiv_ceil(size_t a, size_t b) {
 inline constexpr uint_fast8_t bytes_for(size_t n) {
     return idiv_ceil(bits_for(n), 8U);
 }
+
+/// \brief Yields the position of the most significant bit for the template
+///        integer type.
+///
+/// In some scenarios (e.g. rank and select), where bit order and boundaries
+/// of a certain type are relevant, it is assumed that the "first" bit is
+/// the least significant one at position 0, while the "last" bit is the most
+/// significant one.
+///
+/// The latter can be retrieved from the static \c pos constant expression
+/// within this struct.
+///
+/// \tparam int_t the integer type in question
+template<typename int_t> struct msbf;
+
+/// \brief Specialization of \ref msbf for 8-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint8_t>  {
+    /// \brief The position of the most significant bit in 8-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 7;
+};
+/// \brief Specialization of \ref msbf for 16-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint16_t> {
+    /// \brief The position of the most significant bit in 8-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 15;
+};
+/// \brief Specialization of \ref msbf for 32-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint32_t> {
+    /// \brief The position of the most significant bit in 32-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 31;
+};
+/// \brief Specialization of \ref msbf for 64-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint64_t> {
+    /// \brief The position of the most significant bit in 64-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 63;
+};
 
 /// \brief Creates the cross product of a set of elements given a product
 /// function.

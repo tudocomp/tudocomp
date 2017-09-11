@@ -18,9 +18,6 @@ namespace lcpcomp {
 ///
 /// TODO: Describe
 class PLCPPeaksStrategy : public Algorithm {
-private:
-    typedef TextDS<> text_t;
-
 public:
     using Algorithm::Algorithm;
 
@@ -30,9 +27,10 @@ public:
     }
 
     inline static ds::dsflags_t textds_flags() {
-        return text_t::SA | text_t::ISA | text_t::PLCP;
+        return ds::SA | ds::ISA | ds::PLCP;
     }
 
+    template<typename text_t>
     inline void factorize(text_t& text,
                    size_t threshold,
                    lzss::FactorBuffer& factors) {

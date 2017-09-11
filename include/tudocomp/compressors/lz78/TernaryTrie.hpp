@@ -30,9 +30,7 @@ public:
 		return m;
 	}
 
-	/**
-	 * @param remaining_characters number of remaining characters until the complete text is parsed
-	 */
+	//remaining_characters is the number of remaining characters until the complete text is parsed
     TernaryTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
 		: Algorithm(std::move(env))
 		, LZ78Trie(n, remaining_characters)

@@ -12,11 +12,10 @@ namespace tdc {
 // same public interface as StatPhase, but doesn't do anything
 // used for STATS_DISABLED
 class StatPhaseDummy {
-private:
+public:
     inline StatPhaseDummy() {
     }
 
-public:
     template<typename F>
     inline static auto wrap(const char* title, F func) ->
         typename std::result_of<F(StatPhaseDummy&)>::type {

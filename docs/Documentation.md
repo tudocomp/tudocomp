@@ -685,6 +685,74 @@ internally backed by an array of 64-bit integers, a call to
 [`shrink_to_fit`](@DX_INTVECTOR_STF@) is necessary in order to actually shrink
 the vector's capacity.
 
+## Bit Vectors
+
+As mentioned previously, the [`BitVector`](@DX_BITVECTOR@) class (technically
+an alias for `IntVector<uint_t<1>>`) provides an implementation of bit vectors.
+
+This section introduces some additional data structures on bit vectors that
+are available in *tudocomp*.
+
+### Rank and Select
+
+The classes [`Rank`](@DX_RANK@) and [`Select`](@DX_SELECT@) implement data
+structures for these widely used operations on bit vectors. Both are succinct,
+meaning that they allow constant-time queries with relatively low memory
+overhead. While `Rank` answers rank queries for 1-bits as well as 0-bits,
+`Select` has the two variants [`Select1`](@DX_SELECT1@) and
+[`Select0`](@DX_SELECT0@) (which work analogously).
+
+The following example showcases the usage of these data structures:
+
+~~~ {.cpp caption="bit_vector.cpp"}
+// Construct a bit vector where every second bit is set
+BitVector bv(128);
+for(len_t i = 1; i < 128; i += 2) bv[i] = 1;
+
+// Construct Rank and Select1 data structures
+Rank    rank(bv);
+Select1 select1(bv);
+
+// Query the amount of 1-bits in the whole bit vector
+ASSERT_EQ(64, rank.rank1(127));
+
+// Query the amount of 0-bits in the whole bit vector
+ASSERT_EQ(64, rank.rank0(127));
+
+// Query the amount of 1-bits in the second half of the bit vector
+ASSERT_EQ(32, rank.rank0(64, 127));
+
+// Find the position of the first 1-bit
+ASSERT_EQ(1,  select1(1));
+
+// Find the position of the 32nd 1-bit
+ASSERT_EQ(63, select1(32));
+
+// Find the position of the 1000th 1-bit (which does not exist)
+ASSERT_EQ(bv.size(), select1(1000));
+
+// rank1(select1(i)) = i holds
+for(len_t i = 1; i <= 64; i++) {
+    ASSERT_EQ(i, rank(select1(i)));
+}
+~~~
+
+For `Rank`, the functions [`rank1`](@DX_RANK_RANK1@) and
+[`rank0`](@DX_RANK_RANK0@) invoke the respective queries, while for `Select`,
+the [`operator()`](@DX_SELECT_PARAN@) can be used as a shortcut. Note that
+`Rank` also provides the shortcut [`operator()`](@DX_RANK_PARAN@), which is
+equal to calling `rank1`.
+
+All operations expect zero-based indices, i.e., the position of the first bit
+in a bit vector is 0. Orders, on the other hand, are intuitively one-based
+i.e. the order of the 1^st^ occurence of a bit is 1 (e.g. as the return value
+of rank or the input parameter of select). That said, select does not accept an
+input order of 0.
+
+If for a parameter `k`, the `k`^th^ occurence of a bit does not exist in the
+bit vector, select will return the bit vector's length instead, as a means
+of saying "out of scope".
+
 ## Algorithms
 
 The [`Algorithm`](@DX_ALGORITHM@) class plays a central role in *tudocomp* as
