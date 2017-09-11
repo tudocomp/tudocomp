@@ -67,10 +67,7 @@ public:
         StatPhase::wrap("Construct compressed LCP Array", [&]{
             encode_unary(plcp[0] + 1);
             for(size_t i = 1; i < m_size; i++) {
-                len_t self = plcp[i];
-                len_t prev = plcp[i-1];
-                encode_unary(self - prev + 1);
-                //TODO: (plcp[i] - plcp[i-1] + 1) seems to have weird side effects!
+                encode_unary(plcp[i] - plcp[i-1] + 1);
             }
 
             m_select = Select1(m_lcp);
