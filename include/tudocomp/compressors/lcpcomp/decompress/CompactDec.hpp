@@ -13,7 +13,7 @@ namespace lcpcomp {
  * It creates an array of dynamic arrays. Each dynamic array stores in
  * the first element its size. On appending a new element, the dynamic array
  * gets resized by one (instead of doubling). This helps to keep the memory footprint low.
- * It can be faster than @class ScanDec if its "scans"-value too small.
+ * It can be faster than \ref ScanDec if its "scans"-value too small.
  */
 class CompactDec : public Algorithm {
 public:

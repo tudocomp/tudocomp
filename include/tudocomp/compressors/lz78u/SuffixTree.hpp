@@ -48,7 +48,7 @@ struct SuffixTree {
 
 	/**
 	 * Select the i-th leaf in SA-order
-	 * 0 \le i < n
+	 * 0 <= i < n
 	 */
 	cst_t::node_type select_leaf(const cst_t::size_type& i) const {
 		return cst.select_leaf(i+1);

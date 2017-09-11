@@ -184,7 +184,7 @@ public:
     }
 
     /// \brief Finds the position of the x-th flagged bit in the bit vector.
-    /// \param the order of the flagged bit to find
+    /// \param x the order of the flagged bit to find
     /// \return the position of the x-th flagged bit. In case the position is
     ///         not contained in the bit vector, the bit vector's size is
     ///         returned.
@@ -250,6 +250,7 @@ public:
 
 using Select1 = Select<1>;
 
+/// \cond INTERNAL
 template<>
 inline constexpr uint8_t Select1::basic_rank(data_t v) {
     return tdc::rank1(v);
@@ -269,9 +270,11 @@ template<>
 inline constexpr uint8_t Select1::basic_select(data_t v, uint8_t l, uint8_t k) {
     return tdc::select1(v, l, k);
 }
+///\endcond
 
 using Select0 = Select<0>;
 
+/// \cond INTERNAL
 template<>
 inline constexpr uint8_t Select0::basic_rank(data_t v) {
     return tdc::rank0(v);
@@ -291,5 +294,6 @@ template<>
 inline constexpr uint8_t Select0::basic_select(data_t v, uint8_t l, uint8_t k) {
     return tdc::select0(v, l, k);
 }
+///\endcond
 
 }

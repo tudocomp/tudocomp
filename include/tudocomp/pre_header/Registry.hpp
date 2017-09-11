@@ -22,7 +22,7 @@ inline bool operator==(const AlreadySeenPair& lhs, const AlreadySeenPair& rhs) {
 ///
 /// For algorithms to be made available in the driver application, they need
 /// to be registered in the application's main registry. This is done in
-/// the \ref register_algorithms step. Any registered algorithm will also
+/// the \ref register_algorithm step. Any registered algorithm will also
 /// be listed in the utility's help message.
 template<typename algorithm_t>
 class Registry {

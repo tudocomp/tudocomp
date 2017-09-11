@@ -40,6 +40,7 @@ inline uint64_t char_as_uint(const T& t) {
 ///
 /// \tparam T The byte vector type.
 /// \param s The byte vector.
+/// \param indent The amount of spaces to indent the string by.
 /// \return The string representation of the byte vector.
 template<class T>
 std::string vec_to_debug_string(const T& s, size_t indent = 0) {
@@ -64,6 +65,7 @@ std::string vec_to_debug_string(const T& s, size_t indent = 0) {
 ///
 /// \tparam T The byte array type.
 /// \param s The byte array.
+/// \param length The length of the byte array.
 /// \return The string representation of the byte array.
 template<class T>
 std::string arr_to_debug_string(const T* s, size_t length) {

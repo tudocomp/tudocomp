@@ -35,7 +35,7 @@ public:
         m_window = this->env().option("window").as_integer();
     }
 
-    /// \copydoc
+    /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
         auto ins = input.as_stream();
 

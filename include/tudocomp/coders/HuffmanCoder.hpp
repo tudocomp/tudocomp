@@ -11,6 +11,7 @@
 
 namespace tdc {
 
+/// \cond INTERNAL
 namespace huff {
 
     /**
@@ -502,7 +503,7 @@ namespace huff {
     }
 
 }//ns
-
+/// \endcond
 
 class HuffmanCoder : public Algorithm {
 public:

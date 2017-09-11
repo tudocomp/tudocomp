@@ -402,7 +402,7 @@ class HashMap {
 		StatPhase::log("special resizes", m_specialresizes);
 		StatPhase::log("load ratio", entries()*100/table_size());
 		}
-	);
+	)
 	void max_load_factor(float z) {
 		m_load_factor = z;
 	}
