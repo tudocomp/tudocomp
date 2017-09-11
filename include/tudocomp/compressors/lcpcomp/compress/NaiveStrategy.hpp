@@ -15,9 +15,6 @@ namespace lcpcomp {
 ///
 /// TODO: Describe
 class NaiveStrategy : public Algorithm {
-private:
-    typedef TextDS<> text_t;
-
 public:
     using Algorithm::Algorithm;
 
@@ -27,9 +24,10 @@ public:
     }
 
     inline static ds::dsflags_t textds_flags() {
-        return text_t::SA | text_t::ISA | text_t::LCP;
+        return ds::SA | ds::ISA | ds::LCP;
     }
 
+    template<typename text_t>
     inline void factorize(text_t& text,
                    size_t threshold,
                    lzss::FactorBuffer& factors) {
