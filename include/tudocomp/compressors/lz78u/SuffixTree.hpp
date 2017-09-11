@@ -5,11 +5,11 @@
 
 #include <sstream>
 
-using namespace sdsl;
-
 //template<class bp_support = sdsl::bp_support_sada<> >
 namespace tdc {
 namespace lz78u {
+
+using namespace sdsl;
 
 /**
  * This is a wrapper class around the sdsl-lite library to get a easier translation between
