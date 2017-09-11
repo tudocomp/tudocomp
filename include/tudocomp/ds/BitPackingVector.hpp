@@ -23,6 +23,8 @@
 #include <sdsl/bits.hpp>
 #include <glog/logging.h>
 
+///  \cond INTERNAL
+
 namespace tdc {
 namespace int_vector {
     enum class ElementStorageMode {
@@ -657,4 +659,6 @@ template<class T>
 using BitPackingVector = int_vector::BitPackingVector<T>;
 
 }
+
+/// \endcond
 

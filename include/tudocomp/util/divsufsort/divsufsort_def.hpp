@@ -2,6 +2,7 @@
 
 #include <tudocomp/def.hpp>
 
+/// \cond INTERNAL
 namespace tdc {
 namespace libdivsufsort {
 
@@ -79,3 +80,5 @@ inline saint_t ilg(saidx_t n) {
 #endif
 
 }} //ns
+///\endcond
+

@@ -25,6 +25,7 @@
 
 namespace tdc {
 namespace int_vector {
+    /// \cond INTERNAL
     template<class T, class U, class V, class X = void>
     struct ConversionHelper {
     };
@@ -235,6 +236,7 @@ namespace int_vector {
             width_error();
         }
     };
+    ///\endcond
 
     /// A vector over arbitrary unsigned integer types.
     ///
@@ -621,11 +623,20 @@ namespace int_vector {
 
 }
 
+/// \copydoc int_vector::IntVector
 template<class T>
 using IntVector = int_vector::IntVector<T>;
 
+/// \brief Represents a bit vector, alias for \ref IntVector with a fixed
+///        bit width of 1.
 using BitVector = IntVector<uint_t<1>>;
 
+/// \brief Represents an integer vector with unspecified (dynamic) bit
+///        width.
+///
+/// The bit width defaults to 64 bits, but it can be changed at will via the
+/// constructor, or later during runtime using the
+/// \ref int_vector::IntVector::width(uint8_t) method.
 using DynamicIntVector = IntVector<dynamic_t>;
 
 }

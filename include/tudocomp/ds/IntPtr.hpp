@@ -22,6 +22,8 @@
 #include <sdsl/bits.hpp>
 #include <glog/logging.h>
 
+/// \cond INTERNAL
+
 namespace tdc {
     namespace int_vector {
         template<class T>
@@ -524,3 +526,6 @@ template<class T>
 using ConstIntPtr = int_vector::ConstIntPtr<T>;
 
 }
+
+/// \endcond
+

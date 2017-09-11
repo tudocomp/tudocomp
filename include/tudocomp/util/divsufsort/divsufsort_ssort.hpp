@@ -31,6 +31,7 @@
 #include <tudocomp/util/divsufsort/divsufsort_def.hpp>
 #include <tudocomp/util/divsufsort/divsufsort_private.hpp>
 
+/// \cond INTERNAL
 namespace tdc {
 namespace libdivsufsort {
 
@@ -758,3 +759,5 @@ inline void sssort(const sauchar_t *T, buffer_t& B, saidx_t PA,
 }
 
 }} //ns
+///\endcond
+

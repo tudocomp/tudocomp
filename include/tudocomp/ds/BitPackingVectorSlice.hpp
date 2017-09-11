@@ -25,6 +25,8 @@
 
 #include <tudocomp/ds/IntVector.hpp>
 
+/// \cond INTERNAL
+
 namespace tdc {
 namespace int_vector {
     template<class T>
@@ -288,3 +290,6 @@ template<class T>
 using BitPackingVectorSlice = int_vector::BitPackingVectorSlice<T>;
 
 }
+
+/// \endcond
+

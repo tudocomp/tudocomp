@@ -81,6 +81,7 @@
 #include <time.h>
 #include <math.h>
 
+/// \cond INTERNAL
 class MTRand {
 // Data
 public:
@@ -434,6 +435,8 @@ inline std::istream& operator>>( std::istream& is, MTRand& mtrand )
     mtrand.pNext = &mtrand.state[mtrand.N-mtrand.left];
     return is;
 }
+
+/// \endcond
 
 #endif  // MERSENNETWISTER_H
 

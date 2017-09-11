@@ -12,7 +12,7 @@ typedef unsigned int uint;
 
 using namespace std;
 
-
+/// \cond INTERNAL
 
 
 class mersenneRNG {
@@ -64,6 +64,8 @@ public:
 
     hashvaluetype hashvalues[1 << ( sizeof(chartype)*8 )];
 };
+
+/// \endcond
 
 #endif
 

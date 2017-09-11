@@ -13,6 +13,8 @@
 #include <cstring>
 #include <vector>
 
+/// \cond INTERNAL
+
 template <typename AlphabetType, typename SizeType>
 class wt_pc {
 
@@ -82,6 +84,8 @@ public:
 private:
   std::vector<uint64_t*> _bv;
 }; // class wt_pc
+
+/// \endcond
 
 #endif // WT_PREFIX_COUNTING
 
