@@ -7,7 +7,7 @@
 #
 ###############################################################################
 
-##### General #####
+##### Coders #####
 
 # Universal coders
 universal_coders = [
@@ -36,9 +36,42 @@ non_consuming_coders = universal_coders + entropy_coders
 # All coders
 all_coders = universal_coders + entropy_coders + consuming_entropy_coders
 
-# Text data structures
+##### Text data structures #####
+
+# Suffix Array
+sa = [
+    AlgorithmConfig(name="SADivSufSort", header="ds/SADivSufSort.hpp"),
+]
+
+# Phi Array
+phi = [
+    AlgorithmConfig(name="PhiFromSA", header="ds/PhiFromSA.hpp"),
+]
+
+# PLCP Array
+plcp = [
+    AlgorithmConfig(name="PLCPFromPhi", header="ds/PLCPFromPhi.hpp"),
+]
+
+# Uncompressed LCP Array
+lcp_uncompressed = [
+    AlgorithmConfig(name="LCPFromPLCP", header="ds/LCPFromPLCP.hpp"),
+]
+
+# All LCP Arrays
+lcp = lcp_uncompressed + [
+    AlgorithmConfig(name="CompressedLCP", header="ds/CompressedLCP.hpp", sub=[sa]),
+]
+
+# Inverse Suffix Array
+isa = [
+    AlgorithmConfig(name="ISAFromSA", header="ds/ISAFromSA.hpp"),
+    AlgorithmConfig(name="SparseISA", header="ds/SparseISA.hpp", sub=[sa]),
+]
+
+# TextDS
 textds = [
-    AlgorithmConfig(name="TextDS<>", header="ds/TextDS.hpp")
+    AlgorithmConfig(name="TextDS", header="ds/TextDS.hpp", sub=[sa, phi, plcp, lcp, isa]),
 ]
 
 ##### lz78 #####
@@ -129,6 +162,11 @@ lcpcomp_dec = [
     AlgorithmConfig(name="lcpcomp::MultimapBuffer", header="compressors/lcpcomp/decompress/MultiMapBuffer.hpp"),
 ]
 
+# Allowed TextDS instances for lcpcomp (LCP array must be writable!)
+lcpcomp_textds = [
+    AlgorithmConfig(name="TextDS", header="ds/TextDS.hpp", sub=[sa, phi, plcp, lcp_uncompressed, isa]),
+]
+
 ##### ESP grammar compressor WIP #####
 ipd = [
     AlgorithmConfig(name="esp::StdUnorderedMapIPD", header="compressors/esp/StdUnorderedMapIPD.hpp"),
@@ -186,7 +224,7 @@ coding_strat = [
 
 ##### Export available compressors #####
 tdc.compressors = [
-    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lcpcomp_coders, lcpcomp_comp, lcpcomp_dec, textds]),
+    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lcpcomp_coders, lcpcomp_comp, lcpcomp_dec, lcpcomp_textds]),
     AlgorithmConfig(name="LZ78UCompressor", header="compressors/LZ78UCompressor.hpp", sub=[lz78u_comp, universal_coders]),
     AlgorithmConfig(name="RunLengthEncoder", header="compressors/RunLengthEncoder.hpp"),
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
