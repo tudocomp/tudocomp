@@ -34,7 +34,7 @@ public:
 
             Once we know a better way to ensure this, this should stay.
         */
-        malloc(0);
+        free(malloc(0));
     }
 
     /// \brief Provides access to the environment that the algorithm works in.
