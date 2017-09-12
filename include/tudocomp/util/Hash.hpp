@@ -313,7 +313,7 @@ class ZBackupRollingHash : public Algorithm {
 	key_type m_len=0;
 	public:
     inline static Meta meta() {
-        Meta m("hash_roll", "zbackup", "ZBackup Rolling Hash");
+        Meta m("hash_roller", "zbackup", "ZBackup Rolling Hash");
 		return m;
 	}
 	ZBackupRollingHash(Env&& env) : Algorithm(std::move(env)) {}
@@ -337,7 +337,7 @@ class WordpackRollingHash : public Algorithm {
 	key_type m_val=0;
 	public:
     inline static Meta meta() {
-        Meta m("hash_roll", "wordpack", "Wordpacking Rolling Hash");
+        Meta m("hash_roller", "wordpack", "Wordpacking Rolling Hash");
 		return m;
 	}
 	WordpackRollingHash(Env&& env) : Algorithm(std::move(env)) {}

@@ -31,7 +31,7 @@ public:
 	typedef unsigned char chartype;
 	typedef hashvaluetype key_type;
     inline static Meta meta() {
-        Meta m("hash_roll", "rk", "Karp-Rabin Rolling Hash");
+        Meta m("hash_roller", "rk", "Karp-Rabin Rolling Hash");
 		return m;
 	}
 	void operator+=(char c) { eat(c); }
