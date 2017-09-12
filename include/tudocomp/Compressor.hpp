@@ -17,7 +17,9 @@ namespace tdc {
 /// representation.
 class Compressor: public Algorithm {
 public:
-    static constexpr TypeDesc type_desc = TypeDesc("compressor");
+    static inline constexpr TypeDesc type_desc() {
+        return TypeDesc("compressor");
+    }
 
     using Algorithm::Algorithm;
 

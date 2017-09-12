@@ -135,7 +135,7 @@ def root_cpp(kinds):
         # Define the register functions
         r.code('''
             Registry<$TYPE> register_$IDENTs() {
-                Registry<$TYPE> r($TYPE::type_desc);
+                Registry<$TYPE> r($TYPE::type_desc());
         ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
         for call in calls:
             r.code('''

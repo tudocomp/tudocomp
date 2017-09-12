@@ -11,8 +11,8 @@ class ChainCompressor: public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "chain");
-        m.option("first").unbounded_strategy(Compressor::type_desc);
-        m.option("second").unbounded_strategy(Compressor::type_desc);
+        m.option("first").unbounded_strategy(Compressor::type_desc());
+        m.option("second").unbounded_strategy(Compressor::type_desc());
         return m;
     }
 

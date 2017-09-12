@@ -8,7 +8,9 @@ namespace tdc {
 /// \brief Base for string generators.
 class Generator : public Algorithm {
 public:
-    static constexpr TypeDesc type_desc = TypeDesc("generator");
+    static inline constexpr TypeDesc type_desc() {
+        return TypeDesc("generator");
+    }
 
     using Algorithm::Algorithm;
 
