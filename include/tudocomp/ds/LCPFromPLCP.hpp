@@ -15,7 +15,7 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("lcp", "from_phi");
+        Meta m("lcp", "lcp_from_plcp");
         return m;
     }
 

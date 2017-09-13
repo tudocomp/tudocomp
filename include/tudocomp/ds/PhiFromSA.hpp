@@ -12,7 +12,7 @@ namespace tdc {
 class PhiFromSA: public Algorithm, public ArrayDS {
 public:
     inline static Meta meta() {
-        Meta m("phi", "from_sa");
+        Meta m("phi", "phi_from_sa");
         return m;
     }
 

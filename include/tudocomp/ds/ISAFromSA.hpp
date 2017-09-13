@@ -12,7 +12,7 @@ namespace tdc {
 class ISAFromSA: public Algorithm, public ArrayDS {
 public:
     inline static Meta meta() {
-        Meta m("isa", "from_sa");
+        Meta m("isa", "isa_from_sa");
         return m;
     }
 
