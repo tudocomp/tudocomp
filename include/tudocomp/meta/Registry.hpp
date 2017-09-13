@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 
@@ -112,16 +113,10 @@ public:
         }
 
         auto decl = lib_entry->second;
-        DLOG(INFO) << "found declaration: " << decl->name()
-                   << " (" << decl->type().name() << ")";
-
         auto cfg = AlgorithmConfig(*decl, obj, m_lib);
-        DLOG(INFO) << "config: " << cfg.str();
-
         auto sig = cfg.signature();
-        DLOG(INFO) << "signature: " << sig->str();
-
         auto reg_entry = m_reg.find(sig->str());
+
         if(reg_entry == m_reg.end()) {
             throw RegistryError(
                 std::string("unregistered instance: ") + sig->str());
@@ -137,7 +132,12 @@ public:
     }
 
     inline std::string generate_doc_string(const std::string& title) const {
-        return std::string(""); //TODO: implement
+        // TODO: implement
+        std::stringstream ss;
+        for(auto e : m_reg) {
+            ss << e.first << std::endl;
+        }
+        return ss.str();
     }
 };
 
