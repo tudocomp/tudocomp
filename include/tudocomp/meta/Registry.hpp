@@ -127,7 +127,6 @@ public:
 
     inline Selection select(const std::string& str) const {
         auto obj = ast::convert<ast::Object>(ast::Parser::parse(str));
-        DLOG(INFO) << "parsed AST: " << obj->str();
         return select(obj);
     }
 
