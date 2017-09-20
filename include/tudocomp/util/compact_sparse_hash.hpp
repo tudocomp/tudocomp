@@ -649,6 +649,29 @@ private:
     };
 
     template<typename handler_t>
+    inline void insert_after(SearchedGroup const& res,
+                             DecomposedKey const& dkey,
+                             handler_t&& handler)
+    {
+        // this will insert the value at the end of the range defined by res
+
+        if (sparse_is_empty(res.group_end)) {
+            // if there is no following group, just append the new entry
+
+            sparse_set_at_empty_handler(res.group_end,
+                                        dkey.stored_quotient,
+                                        std::move(handler));
+        } else {
+            // else, shift all following elements
+
+            shift_insert_handler(res.group_end,
+                                 res.groups_terminator,
+                                 dkey.stored_quotient,
+                                 std::move(handler));
+        }
+    }
+
+    template<typename handler_t>
     inline void insert_handler(uint64_t key, size_t key_width, handler_t&& handler) {
         grow_if_needed(key_width);
         auto const dkey = decompose_key(key);
@@ -673,24 +696,6 @@ private:
             // check if there already is a group for this key
             bool const group_exists = get_v(dkey.initial_address);
 
-            // this will insert the value at the end of the range defined by res
-            auto insert_after = [&](auto const& res) {
-                if (sparse_is_empty(res.group_end)) {
-                    // if there is no following group, just append the new entry
-
-                    sparse_set_at_empty_handler(res.group_end,
-                                                dkey.stored_quotient,
-                                                std::move(handler));
-                } else {
-                    // else, shift all following elements
-
-                    shift_insert_handler(res.group_end,
-                                         res.groups_terminator,
-                                         dkey.stored_quotient,
-                                         std::move(handler));
-                }
-            };
-
             if (group_exists) {
                 auto const res = search_existing_group(dkey);
 
@@ -699,7 +704,7 @@ private:
                 if (p != nullptr) {
                     handler.on_existing(*p);
                 } else {
-                    insert_after(res);
+                    insert_after(res, dkey, std::move(handler));
                     m_sizing.size()++;
                 }
             } else {
@@ -712,7 +717,7 @@ private:
                 auto const res = search_existing_group(dkey);
 
                 // insert the element after the found group
-                insert_after(res);
+                insert_after(res, dkey, std::move(handler));
 
                 // mark the inserted element as the start of a new group,
                 // thus fixing-up the v <-> c mapping
