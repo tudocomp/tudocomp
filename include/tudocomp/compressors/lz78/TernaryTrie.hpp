@@ -118,7 +118,7 @@ public:
 		}
 		// do not double the size if we only need fewer space
 		if(first_child.capacity() == first_child.size()) {
-			const size_t newbound =	first_child.size()+lz78_expected_number_of_remaining_elements(size(),m_n,m_remaining_characters);
+			const size_t newbound =	first_child.size()+expected_number_of_remaining_elements(size());
 			if(newbound < first_child.size()*2 ) {
 				first_child.reserve   (newbound);
 				left_sibling.reserve  (newbound);

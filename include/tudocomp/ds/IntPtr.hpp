@@ -164,6 +164,7 @@ namespace int_vector {
             Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
                 m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
             inline uint8_t data_bit_size() const { return N; }
+            inline void set_data_bit_size(uint8_t x) { }
             inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
                 return Data(ptr, offset, this->data_bit_size());
             }
@@ -182,6 +183,7 @@ namespace int_vector {
             Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
                 m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
             inline uint8_t data_bit_size() const { return N; }
+            inline void set_data_bit_size(uint8_t x) { }
             inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
                 return Data(ptr, offset, this->data_bit_size());
             }
@@ -198,11 +200,12 @@ namespace int_vector {
             const DynamicIntValueType* m_ptr;
             uint8_t m_bit_offset;
         private:
-            const uint8_t m_bit_size;
+            uint8_t m_bit_size;
         public:
             Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
                 m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
             inline uint8_t data_bit_size() const { return m_bit_size; }
+            inline void set_data_bit_size(uint8_t x) { m_bit_size = x; }
             inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
                 return Data(ptr, offset, this->data_bit_size());
             }
@@ -216,11 +219,12 @@ namespace int_vector {
             DynamicIntValueType* m_ptr;
             uint8_t m_bit_offset;
         private:
-            const uint8_t m_bit_size;
+            uint8_t m_bit_size;
         public:
             Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
                 m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
             inline uint8_t data_bit_size() const { return m_bit_size; }
+            inline void set_data_bit_size(uint8_t x) { m_bit_size = x; }
             inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) const {
                 return Data(ptr, offset, this->data_bit_size());
             }
@@ -255,7 +259,7 @@ namespace int_vector {
             IntPtrTrait<Self>::Data(other){}
 
         Self& operator=(const Self& other) {
-            DCHECK(this->data_bit_size() == other.data_bit_size());
+            this->set_data_bit_size(other.data_bit_size());
             this->m_ptr = other.m_ptr;
             this->m_bit_offset = other.m_bit_offset;
             return static_cast<Self&>(*this);

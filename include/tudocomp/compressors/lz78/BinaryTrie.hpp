@@ -90,7 +90,7 @@ public:
             }
         }
         if(m_first_child.capacity() == m_first_child.size()) {
-            const size_t newbound =    m_first_child.size()+lz78_expected_number_of_remaining_elements(size(),m_n,m_remaining_characters);
+            const size_t newbound =    m_first_child.size()+expected_number_of_remaining_elements(size());
             if(newbound < m_first_child.size()*2 ) {
                 m_first_child.reserve   (newbound);
                 m_next_sibling.reserve  (newbound);

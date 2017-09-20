@@ -90,12 +90,12 @@ private:
     void reserve(){
 
         auto size = Text.size() * 2 -1;
-        start= vectortype(size, 0);
-        end =  vectortype(size, 0);
+        start= vectortype(size + 1, 0);
+        end =  vectortype(size + 1, 0);
         first_child= vectortype(size, 0);
         next_sibling= vectortype(size, 0);
         suffix_link= vectortype(size, 0);
-        suffix= vectortype(size, 0);
+        suffix= vectortype(size + 1, 0);
 
 
 

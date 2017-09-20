@@ -47,7 +47,12 @@ public:
     HashTrie& operator=(HashTrie&& other) = default;
 
 	node_t add_rootnode(uliteral_t c) override {
-		m_table.insert(std::make_pair<squeeze_node_t,factorid_t>(create_node(0, c), size()));
+		m_table.insert(
+            std::make_pair<squeeze_node_t,factorid_t>(
+                create_node(0, c),
+                size()
+            )
+        );
 		return size() - 1;
 	}
 
@@ -64,7 +69,12 @@ public:
         auto parent = parent_w.id();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
-		auto ret = m_table.insert(std::make_pair(create_node(parent,c), newleaf_id));
+		auto ret = m_table.insert(
+            std::make_pair(
+                create_node(parent,c),
+                newleaf_id
+            )
+        );
 		if(ret.second) return undef_id; // added a new node
 		return ret.first.value();
     }

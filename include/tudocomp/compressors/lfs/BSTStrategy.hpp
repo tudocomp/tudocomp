@@ -28,7 +28,7 @@ private:
     typedef uint node_type;
 
 
-    BinarySuffixTree * stree;
+    std::unique_ptr<BinarySuffixTree> stree;
     uint min_lrf;
 
     BitVector dead_positions;
@@ -137,7 +137,7 @@ public:
 
         StatPhase::wrap("Constructing ST", [&]{
             DLOG(INFO)<<"Constructing ST";
-            stree = new BinarySuffixTree(input);
+            stree = std::make_unique<BinarySuffixTree>(input);
             StatPhase::log("Number of Nodes", stree->get_tree_size());
         });
 

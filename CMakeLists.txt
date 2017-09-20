@@ -37,9 +37,11 @@ include(ExternalProject)
 
 # More warnings and debug info
 # TODO: Add these, they break building glog -Wextra -Wpedantic
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall")
+set(GCC_WARNINGS "-Wall -Werror=return-type")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 ${GCC_WARNINGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG -fsanitize=undefined -fsanitize=address -fsanitize=leak")
 
 # Set integer with for length type
 if(DEFINED LEN_BITS)

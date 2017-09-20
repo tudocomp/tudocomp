@@ -43,11 +43,11 @@ bool operator==(const TestTrieElement& lhs, const TestTrieElement& rhs) {
 }
 
 std::ostream& operator<<(std::ostream& out, const TestTrieElement& v) {
-    out << "[" << v.chr << " (" << int(v.chr) << ")|" << v.id << "]\n";
+    out << "\n[" << v.chr << " (" << int(v.chr) << ")|" << v.id << "]";
     for(auto& e: v.children) {
         std::stringstream ss;
         ss << e;
-        out << indent_lines(ss.str(), 4) << "\n";
+        out << indent_lines(ss.str(), 4);
     }
     return out;
 }
@@ -95,8 +95,8 @@ void trie_test_single(TestTrie test, bool test_values) {
         }
     }
 
-    ASSERT_EQ(is_trie_size, trie.size());
     ASSERT_EQ(should_trie, is_trie);
+    ASSERT_EQ(is_trie_size, trie.size());
 }
 
 template<typename T>
@@ -257,6 +257,14 @@ TEST(TrieStructure, ExtHashTrie) {
 }
 TEST(Trie, ExtHashTrie) {
     trie_test<ExtHashTrie>();
+}
+
+#include <tudocomp/compressors/lz78/CompactSparseHashTrie.hpp>
+TEST(TrieStructure, CompactSparseHashTrie) {
+    trie_test<CompactSparseHashTrie>(false);
+}
+TEST(Trie, CompactSparseHashTrie) {
+    trie_test<CompactSparseHashTrie>();
 }
 
 // #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>

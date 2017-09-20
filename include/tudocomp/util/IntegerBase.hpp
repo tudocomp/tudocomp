@@ -256,10 +256,10 @@ public:
     Self& operator/=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self;  }
     Self& operator%=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self;  }
 
-    Self& operator++() { auto& self = static_cast<Self&>(*this); assign(self, self + 1); return self; }
-    Self& operator--() { auto& self = static_cast<Self&>(*this); assign(self, self - 1); return self; }
-    SelfMaxBit operator++(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self + 1); return tmp; }
-    SelfMaxBit operator--(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self - 1); return tmp; }
+    Self& operator++() { auto& self = static_cast<Self&>(*this); assign(self, self + 1u); return self; }
+    Self& operator--() { auto& self = static_cast<Self&>(*this); assign(self, self - 1u); return self; }
+    SelfMaxBit operator++(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self + 1u); return tmp; }
+    SelfMaxBit operator--(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self - 1u); return tmp; }
 
     Self& operator&=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self;  }
     Self& operator|=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self;  }

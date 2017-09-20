@@ -15,6 +15,12 @@ namespace tdc {
 class Algorithm {
     Env m_env;
 public:
+    virtual ~Algorithm() = default;
+    Algorithm(Algorithm const&) = default;
+    Algorithm(Algorithm&&) = default;
+    Algorithm& operator=(Algorithm const&) = default;
+    Algorithm& operator=(Algorithm&&) = default;
+
     /// \cond DELETED
     inline Algorithm() = delete;
     /// \endcond
