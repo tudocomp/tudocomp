@@ -107,8 +107,10 @@ TEST(hash, insert) {
     //ch.insert(9);
     //ch.insert(128);
 
-    std::cout << "=======================\n";
-    std::cout << ch.debug_state() << "\n";
+    //std::cout << "=======================\n";
+    //std::cout << ch.debug_state() << "\n";
+    //std::cout << "=======================\n";
+
 }
 
 TEST(hash, insert_wrap) {
@@ -119,8 +121,10 @@ TEST(hash, insert_wrap) {
     ch.insert(7, Init());
     ch.insert(15, Init());
 
-    std::cout << "=======================\n";
-    std::cout << ch.debug_state() << "\n";
+    //std::cout << "=======================\n";
+    //std::cout << ch.debug_state() << "\n";
+    //std::cout << "=======================\n";
+
 }
 
 TEST(hash, insert_move_wrap) {
@@ -138,9 +142,9 @@ TEST(hash, insert_move_wrap) {
 
     ch.insert(4, Init());
 
-    std::cout << "=======================\n";
-    std::cout << ch.debug_state() << "\n";
-    std::cout << "=======================\n";
+    //std::cout << "=======================\n";
+    //std::cout << ch.debug_state() << "\n";
+    //std::cout << "=======================\n";
 
     ch.debug_check_single(3,      Init(0));
     ch.debug_check_single(3 + 8,  Init(1));
@@ -161,12 +165,12 @@ TEST(hash, cornercase) {
     ch.debug_check_single(0,      Init(0));
     ch.debug_check_single(0 + 8,  Init(1));
 
-    std::cout << "=======================\n";
-    std::cout << ch.debug_state() << "\n";
-    std::cout << "=======================\n";
+    //std::cout << "=======================\n";
+    //std::cout << ch.debug_state() << "\n";
+    //std::cout << "=======================\n";
+
 }
 
-/*
 TEST(hash, grow) {
     Init::reset();
 
@@ -188,9 +192,9 @@ TEST(hash, grow) {
         add(i, Init(), Init(i));
     }
 
-    std::cout << "=======================\n";
-    std::cout << ch.debug_state() << "\n";
-    std::cout << "=======================\n";
+    //std::cout << "=======================\n";
+    //std::cout << ch.debug_state() << "\n";
+    //std::cout << "=======================\n";
 
 }
 
@@ -219,9 +223,9 @@ TEST(hash, grow_bits) {
         add(i, Init(), Init(i));
     }
 
-    std::cout << "=======================\n";
-    std::cout << ch.debug_state() << "\n";
-    std::cout << "=======================\n";
+    //std::cout << "=======================\n";
+    //std::cout << ch.debug_state() << "\n";
+    //std::cout << "=======================\n";
 
 }
 
@@ -263,7 +267,7 @@ TEST(hash, grow_bits_larger_address) {
     auto add = [&](auto key, auto&& v1) {
         bits = std::max(bits, bits_for(key));
 
-        DCHECK_EQ(ch.index(key, bits), v1);
+        ASSERT_EQ(ch.index(key, bits), v1);
         inserted.clear();
         inserted.push_back({ key, std::move(v1) });
         for (auto& kv : inserted) {
@@ -275,7 +279,11 @@ TEST(hash, grow_bits_larger_address) {
     for(size_t i = 0; i < 10000; i++) {
         add(i*13ull, Init(i));
     }
-}*/
+
+    //std::cout << "=======================\n";
+    //std::cout << ch.debug_state() << "\n";
+    //std::cout << "=======================\n";
+}
 
 TEST(hash, lookup_bug) {
     auto ch = compact_hash<uint64_t>(0);
@@ -284,6 +292,8 @@ TEST(hash, lookup_bug) {
         if (val == 0) {
             val = new_value;
         }
+        //std::cout << "find_or_insert(" << key << ", " << existing_value << ", " << new_value << ");\n";
+        //std::cout << ch.debug_state() << "\n";
         DCHECK_EQ(val, existing_value);
     };
 
@@ -300,4 +310,5 @@ TEST(hash, lookup_bug) {
     find_or_insert(97, 1, 8);
     find_or_insert(354, 8, 8);
     find_or_insert(99, 3, 9);
+
 }

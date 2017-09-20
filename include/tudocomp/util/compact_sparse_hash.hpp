@@ -401,11 +401,13 @@ private:
     }
 
     inline void set_v(size_t pos, bool v) {
-        m_cv.at(pos) |= (0b01 * v);
+        auto x = m_cv.at(pos) & 0b10;
+        m_cv.at(pos) = x | (0b01 * v);
     }
 
     inline void set_c(size_t pos, bool c) {
-        m_cv.at(pos) |= (0b10 * c);
+        auto x = m_cv.at(pos) & 0b01;
+        m_cv.at(pos) = x | (0b10 * c);
     }
 
     inline void sparse_drop_bucket(size_t i) {
@@ -492,10 +494,9 @@ private:
 
             i = next_i;
         }
-        set_c(from, false);
-
         shift_insert_sparse_handler(from, to, key, std::move(handler));
 
+        set_c(from, false);
     }
 
     struct SearchedGroup {
@@ -576,7 +577,7 @@ public:
     }
 
     inline val_t& index(uint64_t key, size_t key_width) {
-        val_t* addr;
+        val_t* addr = nullptr;
 
         insert_handler(key, key_width, AddressDefaultHandler {
             &addr
@@ -650,7 +651,6 @@ private:
     template<typename handler_t>
     inline void insert_handler(uint64_t key, size_t key_width, handler_t&& handler) {
         grow_if_needed(key_width);
-
         auto const dkey = decompose_key(key);
 
         // cases:
@@ -872,7 +872,7 @@ public:
         auto print_gap = [&](){
             if (gap_active) {
                 gap_active = false;
-                ss << "    [" << gap_start << " to " << gap_end << "]\n";
+                ss << "    [" << gap_start << " to " << gap_end << " empty]\n";
             }
         };
 
@@ -899,7 +899,8 @@ public:
                 << ", quot = " << stored_quotient
                 << ", iadr = " << initial_address
                 << "\t, key = " << key
-                << "\t, value = " << val;
+                << "\t, value = " << val
+                << "\t (" << &val << ")";
 
             lines.at(i) = ss2.str();
         });
@@ -1003,8 +1004,8 @@ private:
             BucketElem<val_t>    m_b_end;
             size_t               m_quotient_width;
 
-            inline void set_bucket_elem_range(size_t start_offset) {
-                size_t end_offset = m_bucket->size();
+            inline void set_bucket_elem_range(size_t end_offset) {
+                size_t start_offset = 0;
                 DCHECK_LE(start_offset, end_offset);
 
                 m_b_start = m_bucket->at(start_offset, m_quotient_width);
@@ -1014,12 +1015,12 @@ private:
             inline iter(compact_hash& table,
                         SparsePos const& pos) {
                 m_quotient_width = table.quotient_width();
-                m_bucket = &table.m_buckets[pos.bucket_pos];
+                m_bucket = &table.m_buckets.at(pos.bucket_pos);
 
                 set_bucket_elem_range(pos.offset);
             }
 
-            inline BucketElem<val_t>& get() {
+            inline BucketElem<val_t> get() {
                 return m_b_end;
             }
 
@@ -1030,7 +1031,7 @@ private:
                     do {
                         --m_bucket;
                     } while(m_bucket->bv() == 0);
-                    set_bucket_elem_range(0);
+                    set_bucket_elem_range(m_bucket->size());
                 }
             }
 
@@ -1062,8 +1063,14 @@ private:
         while(src != from_iter) {
             src.decrement();
             dst.decrement();
-            dst.get().val() = std::move(src.get().val());
-            dst.get().set_quotient(src.get().get_quotient());
+
+            auto& src_val = src.get().val();
+            auto& dst_val = dst.get().val();
+
+            auto src_quot = src.get().get_quotient();
+
+            dst_val = std::move(src_val);
+            dst.get().set_quotient(src_quot);
         }
 
         // move new element into empty from position
@@ -1089,14 +1096,8 @@ private:
 
         auto value_handler = handler.on_new();
         auto& val = value_handler.get();
-        bool val_loc_already_set = false;
 
-        auto notify_location = [&](auto const& loc) {
-            // notify handler over the address of the new value
-            value_handler.new_location(sparse_get_at(loc).val());
-            val_loc_already_set = true;
-        };
-
+        SparsePos loc;
         if (to < from) {
             // if the range wraps around, we decompose into two ranges:
             // [   |      |      ]
@@ -1111,33 +1112,37 @@ private:
             // inserts the new element at the start of the range,
             // and temporarily stores the element at the end of the range
             // in `val` and `quot`
-            auto loc = sparse_shift(from,  table_size(), val, quot);
+            loc = sparse_shift(from,  table_size(), val, quot);
             sparse_shift(0, to, val, quot);
-            notify_location(loc);
         } else {
             // inserts the new element at the start of the range,
             // and temporarily stores the element at the end of the range
             // in `val` and `quot`
-            auto loc = sparse_shift(from, to, val, quot);
-            notify_location(loc);
+            loc = sparse_shift(from, to, val, quot);
         }
 
         // insert the element from the end of the range at the free
         // position to the right of it
         auto insert = InsertHandler(std::move(val));
         sparse_set_at_empty_handler(to, quot, std::move(insert));
+
+        // after the previous insert and a potential reallocation,
+        // notify the handler about the address of the new value
+        value_handler.new_location(sparse_get_at(loc).val());
     }
 
     struct SparsePos {
     public:
-        const size_t bucket_pos;
-        const size_t bit_pos;
+        size_t bucket_pos;
+        size_t bit_pos;
     private:
-        const uint64_t bv;
+        uint64_t bv;
     public:
-        const uint64_t b_mask;
-        const bool exists;
-        const size_t offset;
+        uint64_t b_mask;
+        bool exists;
+        size_t offset;
+
+        inline SparsePos() {}
 
         template<typename buckets_t>
         inline SparsePos(size_t pos, buckets_t& m_buckets):
@@ -1167,7 +1172,7 @@ private:
     }
 
     inline BucketElem<val_t> sparse_get_at(SparsePos pos) {
-        CHECK(pos.exists);
+        DCHECK(pos.exists);
         size_t qw = quotient_width();
 
         return m_buckets[pos.bucket_pos].at(pos.offset, qw);
