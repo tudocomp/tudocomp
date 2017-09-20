@@ -12,8 +12,14 @@ namespace lz78 {
 
 
 class CompactSparseHashTrie : public Algorithm, public LZ78Trie<factorid_t> {
-    //compact_hash<factorid_t> m_table;
-    std::unordered_map<uint64_t, factorid_t> m_table;
+    compact_hash<factorid_t> m_table;
+    //std::unordered_map<uint64_t, factorid_t> m_table;
+    size_t m_key_width = 0;
+
+    inline size_t key_width(uint64_t key) {
+        m_key_width = std::max(m_key_width, size_t(bits_for(key)));
+        return m_key_width;
+    }
 
 public:
     inline static Meta meta() {
@@ -25,7 +31,7 @@ public:
     CompactSparseHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
         : Algorithm(std::move(env))
         , LZ78Trie(n,remaining_characters)
-        , m_table(next_power_of_two(reserve))
+        , m_table(next_power_of_two(reserve), 0)
     {
         //m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
     }
@@ -45,7 +51,7 @@ public:
         auto key = create_node(0, c);
         auto value = size();
 
-        auto& entry = m_table[key];
+        auto& entry = m_table.index(key, key_width(key));
 
         //std::cout << "find_or_insert(" << key << ", " << entry << ", " << value << ");\n";
 
@@ -74,7 +80,7 @@ public:
         DCHECK_NE(newleaf_id, 0);
 
         auto key = create_node(parent,c);
-        auto& val = m_table[key];
+        auto& val = m_table.index(key, key_width(key));
         if (val == 0) {
             val = newleaf_id;
             DCHECK_EQ(val, newleaf_id);
