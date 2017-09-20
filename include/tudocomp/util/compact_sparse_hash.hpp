@@ -73,6 +73,10 @@ public:
         return m_size;
     }
 
+    inline size_t const& size() const {
+        return m_size;
+    }
+
     inline size_t capacity() const {
         return 1 << m_capacity_log2;
     }
@@ -557,21 +561,21 @@ private:
 
 public:
 
+    // TODO: This is not a std interface
     inline void insert(uint64_t key, val_t&& value) {
         insert(key, std::move(value), m_width);
     }
-
     inline void insert(uint64_t key, val_t&& value, size_t key_width) {
         insert_handler(key, key_width, InsertHandler {
             std::move(value)
         });
     }
 
-    inline val_t& at(uint64_t key) {
-        return at(key, m_width);
+    inline val_t& operator[](uint64_t key) {
+        return index(key, m_width);
     }
 
-    inline val_t& at(uint64_t key, size_t key_width) {
+    inline val_t& index(uint64_t key, size_t key_width) {
         val_t* addr;
 
         insert_handler(key, key_width, AddressDefaultHandler {
@@ -579,6 +583,10 @@ public:
         });
 
         return *addr;
+    }
+
+    inline size_t size() const {
+        return m_sizing.size();
     }
 
 private:
