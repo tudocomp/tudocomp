@@ -360,6 +360,8 @@ def gen_algorithm_cpp():
 
             dep_paths += group_paths
 
+    dep_paths = list(set(dep_paths))
+
     if args.print_deps:
         sys.stdout.write(";".join(dep_paths))
         sys.stdout.flush()
