@@ -255,7 +255,7 @@ namespace int_vector {
             IntPtrTrait<Self>::Data(other){}
 
         Self& operator=(const Self& other) {
-            DCHECK(this->data_bit_size() == other.data_bit_size());
+            //DCHECK(this->data_bit_size() == other.data_bit_size());
             this->m_ptr = other.m_ptr;
             this->m_bit_offset = other.m_bit_offset;
             return static_cast<Self&>(*this);
