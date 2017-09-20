@@ -1031,7 +1031,7 @@ private:
                     do {
                         --m_bucket;
                     } while(m_bucket->bv() == 0);
-                    set_bucket_elem_range(m_bucket->size());
+                    set_bucket_elem_range(m_bucket->size() - 1);
                 }
             }
 

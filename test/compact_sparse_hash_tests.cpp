@@ -287,14 +287,27 @@ TEST(hash, grow_bits_larger_address) {
 
 TEST(hash, lookup_bug) {
     auto ch = compact_hash<uint64_t>(0);
-    auto find_or_insert = [&](auto key, auto existing_value, auto new_value) {
+    size_t i = 0;
+    bool abort = false;
+    std::string last;
+    auto find_or_insert = [&](auto key, uint64_t existing_value, uint64_t new_value) {
+        if (abort) return;
+
         auto& val = ch[key];
         if (val == 0) {
             val = new_value;
         }
-        //std::cout << "find_or_insert(" << key << ", " << existing_value << ", " << new_value << ");\n";
-        //std::cout << ch.debug_state() << "\n";
-        DCHECK_EQ(val, existing_value);
+        std::cout << "find_or_insert(" << key << ", " << existing_value << ", " << new_value << ") \t#" << (i++) << "\n";
+
+        if (val != existing_value) {
+            abort = true;
+            std::cout << "[before]" << "\n";
+            std::cout << last << "\n";
+            std::cout << "[after]" << "\n";
+            std::cout << ch.debug_state() << "\n";
+        }
+        ASSERT_EQ(val, existing_value);
+        last = ch.debug_state();
     };
 
     find_or_insert(0, 0, 0);
@@ -311,4 +324,189 @@ TEST(hash, lookup_bug) {
     find_or_insert(354, 8, 8);
     find_or_insert(99, 3, 9);
 
+}
+
+
+TEST(hash, lookup_bug2) {
+    auto ch = compact_hash<uint64_t>(0);
+    size_t i = 0;
+    bool abort = false;
+    std::string last;
+    auto find_or_insert = [&](auto key, uint64_t existing_value, uint64_t new_value) {
+        if (abort) return;
+
+        auto& val = ch[key];
+        if (val == 0) {
+            val = new_value;
+        }
+        std::cout << "find_or_insert(" << key << ", " << existing_value << ", " << new_value << ") \t#" << (i++) << "\n";
+
+        if (val != existing_value) {
+            abort = true;
+            std::cout << "[before]" << "\n";
+            std::cout << last << "\n";
+            std::cout << "[after]" << "\n";
+            std::cout << ch.debug_state() << "\n";
+        }
+        ASSERT_EQ(val, existing_value);
+        last = ch.debug_state();
+    };
+
+    find_or_insert(0, 0, 0);
+    find_or_insert(97, 1, 1);
+    find_or_insert(115, 2, 2);
+    find_or_insert(100, 3, 3);
+    find_or_insert(102, 4, 4);
+    find_or_insert(97, 1, 1);
+    find_or_insert(371, 5, 5);
+    find_or_insert(99, 6, 6);
+    find_or_insert(116, 7, 7);
+    find_or_insert(106, 8, 8);
+    find_or_insert(107, 9, 9);
+    find_or_insert(99, 6, 6);
+    find_or_insert(1634, 10, 10);
+    find_or_insert(119, 11, 11);
+    find_or_insert(101, 12, 12);
+    find_or_insert(97, 1, 1);
+    find_or_insert(371, 5, 5);
+    find_or_insert(1378, 13, 13);
+    find_or_insert(101, 12, 12);
+    find_or_insert(3170, 14, 14);
+    find_or_insert(118, 15, 15);
+    find_or_insert(116, 7, 7);
+    find_or_insert(1897, 16, 16);
+    find_or_insert(119, 11, 11);
+    find_or_insert(2917, 17, 17);
+    find_or_insert(116, 7, 7);
+    find_or_insert(1911, 18, 18);
+    find_or_insert(99, 6, 6);
+    find_or_insert(1646, 19, 19);
+    find_or_insert(98, 20, 20);
+    find_or_insert(119, 11, 11);
+    find_or_insert(2914, 21, 21);
+    find_or_insert(98, 20, 20);
+    find_or_insert(5233, 22, 22);
+    find_or_insert(110, 23, 23);
+    find_or_insert(113, 24, 24);
+    find_or_insert(120, 25, 25);
+    find_or_insert(101, 12, 12);
+    find_or_insert(3186, 26, 26);
+    find_or_insert(110, 23, 23);
+    find_or_insert(6001, 27, 27);
+    find_or_insert(122, 28, 28);
+    find_or_insert(101, 12, 12);
+    find_or_insert(3194, 29, 29);
+    find_or_insert(119, 11, 11);
+    find_or_insert(2933, 30, 30);
+    find_or_insert(113, 24, 24);
+    find_or_insert(6263, 31, 31);
+    find_or_insert(101, 12, 12);
+    find_or_insert(3194, 29, 29);
+    find_or_insert(7541, 32, 32);
+    find_or_insert(101, 12, 12);
+    find_or_insert(3188, 33, 33);
+    find_or_insert(113, 24, 24);
+    find_or_insert(6243, 34, 34);
+    find_or_insert(114, 35, 35);
+    find_or_insert(110, 23, 23);
+    find_or_insert(6010, 36, 36);
+    find_or_insert(120, 25, 25);
+    find_or_insert(6498, 37, 37);
+    find_or_insert(110, 23, 23);
+    find_or_insert(5989, 38, 38);
+    find_or_insert(113, 24, 24);
+    find_or_insert(6245, 39, 39);
+    find_or_insert(98, 20, 20);
+    find_or_insert(5239, 40, 40);
+    find_or_insert(99, 6, 6);
+    find_or_insert(1634, 10, 10);
+    find_or_insert(2673, 41, 41);
+    find_or_insert(119, 11, 11);
+    find_or_insert(2921, 42, 42);
+    find_or_insert(99, 6, 6);
+    find_or_insert(1634, 10, 10);
+    find_or_insert(2673, 41, 41);
+    find_or_insert(10595, 43, 43);
+    find_or_insert(98, 20, 20);
+    find_or_insert(5236, 44, 44);
+    find_or_insert(110, 23, 23);
+    find_or_insert(6001, 27, 27);
+    find_or_insert(7031, 45, 45);
+    find_or_insert(101, 12, 12);
+    find_or_insert(3185, 46, 46);
+    find_or_insert(120, 25, 25);
+    find_or_insert(6499, 47, 47);
+    find_or_insert(98, 20, 20);
+    find_or_insert(5239, 40, 40);
+    find_or_insert(10357, 48, 48);
+    find_or_insert(101, 12, 12);
+    find_or_insert(3192, 49, 49);
+    find_or_insert(99, 6, 6);
+    find_or_insert(1634, 10, 10);
+    find_or_insert(2682, 50, 50);
+    find_or_insert(113, 24, 24);
+    find_or_insert(6263, 31, 31);
+    find_or_insert(8037, 51, 51);
+    find_or_insert(122, 28, 28);
+    find_or_insert(7267, 52, 52);
+    find_or_insert(113, 24, 24);
+    find_or_insert(6242, 53, 53);
+    find_or_insert(119, 11, 11);
+    find_or_insert(2917, 17, 17);
+    find_or_insert(4451, 54, 54);
+    find_or_insert(113, 24, 24);
+    find_or_insert(6242, 53, 53);
+    find_or_insert(13687, 55, 55);
+    find_or_insert(100, 3, 3);
+    find_or_insert(865, 56, 56);
+    find_or_insert(115, 2, 2);
+    find_or_insert(627, 57, 57);
+    find_or_insert(100, 3, 3);
+    find_or_insert(865, 56, 56);
+    find_or_insert(14451, 58, 58);
+    find_or_insert(100, 3, 3);
+    find_or_insert(870, 59, 59);
+    find_or_insert(122, 28, 28);
+    find_or_insert(7268, 60, 60);
+    find_or_insert(102, 4, 4);
+    find_or_insert(1127, 61, 61);
+    find_or_insert(102, 4, 4);
+    find_or_insert(1139, 62, 62);
+    find_or_insert(100, 3, 3);
+    find_or_insert(870, 59, 59);
+    find_or_insert(15219, 63, 63);
+    find_or_insert(100, 3, 3);
+    find_or_insert(871, 64, 64);
+    find_or_insert(102, 4, 4);
+    find_or_insert(1124, 65, 65);
+    find_or_insert(117, 66, 66);
+    find_or_insert(99, 6, 6);
+    find_or_insert(1637, 67, 67);
+    find_or_insert(122, 28, 28);
+    find_or_insert(7267, 52, 52);
+    find_or_insert(13428, 68, 68);
+    find_or_insert(122, 28, 28);
+    find_or_insert(7281, 69, 69);
+    find_or_insert(119, 11, 11);
+    find_or_insert(2917, 17, 17);
+    find_or_insert(4450, 70, 70);
+    find_or_insert(99, 6, 6);
+    find_or_insert(1652, 71, 71);
+    find_or_insert(117, 66, 66);
+    find_or_insert(17001, 72, 72);
+    find_or_insert(113, 24, 24);
+    find_or_insert(6263, 31, 31);
+    find_or_insert(8041, 73, 73);
+    find_or_insert(105, 74, 74);
+    find_or_insert(113, 24, 24);
+    find_or_insert(6243, 34, 34);
+    find_or_insert(8802, 75, 75);
+    find_or_insert(110, 23, 23);
+    find_or_insert(6010, 36, 36);
+    find_or_insert(9315, 76, 76);
+    find_or_insert(101, 12, 12);
+    find_or_insert(3170, 14, 14);
+    find_or_insert(3706, 77, 77);
+    find_or_insert(113, 24, 24);
+    find_or_insert(6243, 34, 34);
 }

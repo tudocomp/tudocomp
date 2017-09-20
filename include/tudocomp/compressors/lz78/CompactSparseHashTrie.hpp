@@ -12,8 +12,8 @@ namespace lz78 {
 
 
 class CompactSparseHashTrie : public Algorithm, public LZ78Trie<factorid_t> {
-    compact_hash<factorid_t> m_table;
-    //std::unordered_map<uint64_t, factorid_t> m_table;
+    //compact_hash<factorid_t> m_table;
+    std::unordered_map<uint64_t, factorid_t> m_table;
 
 public:
     inline static Meta meta() {
@@ -45,7 +45,11 @@ public:
         auto key = create_node(0, c);
         auto value = size();
 
-        m_table[key] = value;
+        auto& entry = m_table[key];
+
+        //std::cout << "find_or_insert(" << key << ", " << entry << ", " << value << ");\n";
+
+        entry = value;
         return value;
     }
 
@@ -74,8 +78,10 @@ public:
         if (val == 0) {
             val = newleaf_id;
             DCHECK_EQ(val, newleaf_id);
+            //std::cout << "find_or_insert(" << key << ", " << val << ", " << newleaf_id << ");\n";
             return undef_id;
         } else {
+            //std::cout << "find_or_insert(" << key << ", " << val << ", " << val << ");\n";
             return val;
         }
     }
