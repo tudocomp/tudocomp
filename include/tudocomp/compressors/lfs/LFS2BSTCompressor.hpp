@@ -39,7 +39,7 @@ private:
 
 
 
-    BinarySuffixTree * stree;
+    std::unique_ptr<BinarySuffixTree> stree;
 
     //Stores nts_symbols of first layer
     IntVector<uint> first_layer_nts;
@@ -139,7 +139,7 @@ public:
 
         StatPhase::wrap("Constructing ST", [&]{
             DLOG(INFO)<<"Constructing ST";
-            stree = new BinarySuffixTree(input);
+            stree = std::make_unique<BinarySuffixTree>(input);
             StatPhase::log("Number of Nodes", stree->get_tree_size());
         });
 
