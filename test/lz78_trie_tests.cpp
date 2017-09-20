@@ -259,6 +259,14 @@ TEST(Trie, ExtHashTrie) {
     trie_test<ExtHashTrie>();
 }
 
+#include <tudocomp/compressors/lz78/CompactSparseHashTrie.hpp>
+TEST(TrieStructure, CompactSparseHashTrie) {
+    trie_test<CompactSparseHashTrie>(false);
+}
+TEST(Trie, CompactSparseHashTrie) {
+    trie_test<CompactSparseHashTrie>();
+}
+
 // #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>
 // TEST(TrieStructure, MBonsaiGammaTrie) {
 //     trie_test<MBonsaiGammaTrie>(false);
