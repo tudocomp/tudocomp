@@ -734,67 +734,81 @@ private:
         return (v - sub) & mask;
     }
 
-    // INVARIANT: table is not entirely full
-    template<typename F>
-    inline void iter_all(F f) {
-        // first, skip forward to the first empty location
-        // so that iteration can start at the beginning of the first complete group
-
+    struct iter_all_t {
+        compact_hash<val_t>& m_self;
         size_t i = 0;
+        size_t original_start = 0;
+        uint64_t initial_address = 0;
+        enum {
+            EMPTY_LOCATIONS,
+            FULL_LOCATIONS
+        } state = EMPTY_LOCATIONS;
 
-        for(;;i++) {
-            if (sparse_is_empty(i)) {
-                break;
+        inline iter_all_t(compact_hash<val_t>& self): m_self(self) {
+            // first, skip forward to the first empty location
+            // so that iteration can start at the beginning of the first complete group
+
+            i = 0;
+
+            for(;;i++) {
+                if (m_self.sparse_is_empty(i)) {
+                    break;
+                }
             }
+
+            // Remember our startpoint so that we can recognize it when
+            // we wrapped around back to it
+            original_start = i;
+
+            // We proceed to the next position so that we can iterate until
+            // we reach `original_start` again.
+            i = m_self.mod_add(i);
         }
 
-        // Remember our startpoint so that we can recognize it when
-        // we wrapped around back to it
-        const size_t original_start = i;
-
-        // We proceed to the next position so that we can iterate until
-        // we reach `original_start` again.
-        i = mod_add(i);
-
-        while(true) {
-            uint64_t initial_address;
-
-            // skip empty locations
-            for(;;i = mod_add(i)) {
-                if (sparse_exists(i)) {
-                    // we initialize init-addr at 1 pos before the start of
-                    // a group of blocks, so that the blocks iteration logic works
-                    initial_address = mod_sub(i);
-                    break;
-                }
-                if (i == original_start) {
-                    return;
-                }
-            }
-
-            // process full locations
-            for(;;i = mod_add(i)) {
-                if (sparse_is_empty(i))  {
-                    break;
-                }
-
-                if (get_c(i)) {
-                    // skip forward m_v cursor
-                    // to find initial address for this block
-                    //
-                    // this works for the first block because
-                    // initial_address starts at 1 before the group
-                    initial_address = mod_add(initial_address);
-
-                    while(!get_v(initial_address)) {
-                        initial_address = mod_add(initial_address);
+        inline bool next(uint64_t* out_initial_address, size_t* out_i) {
+            while(true) {
+                if (state == EMPTY_LOCATIONS) {
+                    // skip empty locations
+                    for(;;i = m_self.mod_add(i)) {
+                        if (m_self.sparse_exists(i)) {
+                            // we initialize init-addr at 1 pos before the start of
+                            // a group of blocks, so that the blocks iteration logic works
+                            initial_address = m_self.mod_sub(i);
+                            state = FULL_LOCATIONS;
+                            break;
+                        }
+                        if (i == original_start) {
+                            return false;
+                        }
                     }
-                }
+                } else {
+                    // process full locations
+                    if (m_self.sparse_is_empty(i))  {
+                        state = EMPTY_LOCATIONS;
+                        continue;
+                    }
+                    if (m_self.get_c(i)) {
+                        // skip forward m_v cursor
+                        // to find initial address for this block
+                        //
+                        // this works for the first block because
+                        // initial_address starts at 1 before the group
+                        initial_address = m_self.mod_add(initial_address);
 
-                f(initial_address, i);
+                        while(!m_self.get_v(initial_address)) {
+                            initial_address = m_self.mod_add(initial_address);
+                        }
+                    }
+
+                    *out_initial_address = initial_address;
+                    *out_i = i;
+
+                    i = m_self.mod_add(i);
+                    return true;
+                }
             }
         }
-    }
+    };
 
     inline size_t quotient_width() {
         return real_width() - table_size_log2();
@@ -831,7 +845,10 @@ private:
             bool start_of_bucket = false;
             size_t bucket = 0;
 
-            iter_all([&](auto initial_address, auto i) {
+            uint64_t initial_address;
+            size_t i;
+            auto iter = iter_all_t(*this);
+            while(iter.next(&initial_address, &i)) {
                 auto p = sparse_pos(i);
 
                 // drop buckets of old table as they get emptied out
@@ -851,7 +868,7 @@ private:
                 key_t key = compose_key(initial_address, stored_quotient);
 
                 new_table.insert(key, std::move(val));
-            });
+            }
 
             *this = std::move(new_table);
         }
@@ -885,25 +902,29 @@ public:
         };
 
         std::vector<std::string> lines(table_size());
-        iter_all([&](auto initial_address, auto i) {
+
+        uint64_t initial_address;
+        size_t j;
+        auto iter = iter_all_t(*this);
+        while(iter.next(&initial_address, &j)) {
             std::stringstream ss2;
 
-            auto kv = sparse_get_at(i);
+            auto kv = sparse_get_at(j);
             auto stored_quotient = kv.get_quotient();
             auto& val = kv.val();
             key_t key = compose_key(initial_address, stored_quotient);
 
-            ss2 << i
-                << "\t: v = " << get_v(i)
-                << ", c = " << get_c(i)
+            ss2 << j
+                << "\t: v = " << get_v(j)
+                << ", c = " << get_c(j)
                 << ", quot = " << stored_quotient
                 << ", iadr = " << initial_address
                 << "\t, key = " << key
                 << "\t, value = " << val
                 << "\t (" << &val << ")";
 
-            lines.at(i) = ss2.str();
-        });
+            lines.at(j) = ss2.str();
+        }
 
         ss << "[\n";
         for (size_t i = 0; i < table_size(); i++) {
