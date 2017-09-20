@@ -1,5 +1,3 @@
-#pragma once
-
 #include <gtest/gtest.h>
 #include "test/util.hpp"
 
@@ -168,6 +166,7 @@ TEST(hash, cornercase) {
     std::cout << "=======================\n";
 }
 
+/*
 TEST(hash, grow) {
     Init::reset();
 
@@ -264,7 +263,7 @@ TEST(hash, grow_bits_larger_address) {
     auto add = [&](auto key, auto&& v1) {
         bits = std::max(bits, bits_for(key));
 
-        DCHECK_EQ(ch.at(key, bits), v1);
+        DCHECK_EQ(ch.index(key, bits), v1);
         inserted.clear();
         inserted.push_back({ key, std::move(v1) });
         for (auto& kv : inserted) {
@@ -276,4 +275,29 @@ TEST(hash, grow_bits_larger_address) {
     for(size_t i = 0; i < 10000; i++) {
         add(i*13ull, Init(i));
     }
+}*/
+
+TEST(hash, lookup_bug) {
+    auto ch = compact_hash<uint64_t>(0);
+    auto find_or_insert = [&](auto key, auto existing_value, auto new_value) {
+        auto& val = ch[key];
+        if (val == 0) {
+            val = new_value;
+        }
+        DCHECK_EQ(val, existing_value);
+    };
+
+    find_or_insert(0, 0, 0);
+    find_or_insert(97, 1, 1);
+    find_or_insert(98, 2, 2);
+    find_or_insert(99, 3, 3);
+    find_or_insert(100, 4, 4);
+    find_or_insert(101, 5, 5);
+    find_or_insert(98, 2, 6);
+    find_or_insert(611, 6, 6);
+    find_or_insert(100, 4, 7);
+    find_or_insert(1125, 7, 7);
+    find_or_insert(97, 1, 8);
+    find_or_insert(354, 8, 8);
+    find_or_insert(99, 3, 9);
 }
