@@ -45,7 +45,6 @@ public:
         auto key = create_node(0, c);
         auto value = size();
 
-        std::cout << "find_or_insert(" << key << ", " << value << ", " << value << ");\n";
         m_table[key] = value;
         return value;
     }
@@ -75,10 +74,8 @@ public:
         if (val == 0) {
             val = newleaf_id;
             DCHECK_EQ(val, newleaf_id);
-            std::cout << "find_or_insert(" << key << ", " << val << ", " << newleaf_id << ");\n";
             return undef_id;
         } else {
-            std::cout << "find_or_insert(" << key <<  ", " << val << ", " << newleaf_id << ");\n";
             return val;
         }
     }
