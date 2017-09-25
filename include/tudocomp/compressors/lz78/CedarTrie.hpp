@@ -10,28 +10,15 @@ namespace tdc {
 namespace lz78 {
 
 namespace cedar {
-    struct CedarSearchPos {
-        size_t from;
-    };
-
-    class CedarTrieNode {
-        factorid_t m_id;
-        bool m_is_new;
-        CedarSearchPos m_search_pos;
+    class CedarTrieNode: public LZ78TrieNode {
+        size_t m_search_pos;
     public:
-        using search_pos_t = CedarSearchPos;
+        inline CedarTrieNode(factorid_t id, bool is_new, size_t search_pos):
+            LZ78TrieNode(id, is_new),m_search_pos(search_pos) {}
+        inline CedarTrieNode():
+            LZ78TrieNode(), m_search_pos(0) {}
 
-        inline CedarTrieNode(factorid_t id, bool is_new, search_pos_t const& search_pos):
-            m_id(id),
-            m_is_new(is_new),
-            m_search_pos(search_pos) {
-                //DCHECK(id != NO_VALUE && id != NO_PATH);
-            }
-        inline CedarTrieNode(): CedarTrieNode(0, false, search_pos_t { 0 }) {}
-
-        inline bool is_new() const { return m_is_new; }
-        inline factorid_t id() const { return m_id; }
-        inline search_pos_t const& search_pos() const { return m_search_pos; }
+        inline size_t search_pos() const { return m_search_pos; }
     };
 }
 
@@ -50,13 +37,13 @@ class CedarTrie: public Algorithm, public LZ78Trie<cedar::CedarTrieNode> {
     static constexpr cedar_factorid_t HIDDEN_ESCAPE_ID = -3; // NOTE: May not be -1 or -2
 
     class LzwRootSearchPosMap {
-        std::array<cedar::CedarSearchPos, 256> m_array;
+        std::array<size_t, 256> m_array;
     public:
-        inline cedar::CedarSearchPos get(uliteral_t c) const {
+        inline size_t get(uliteral_t c) const {
             DCHECK(c < m_array.size());
             return m_array[c];
         }
-        inline void set(uliteral_t c, cedar::CedarSearchPos v) {
+        inline void set(uliteral_t c, size_t v) {
             DCHECK(c < m_array.size());
             m_array[c] = v;
         }
@@ -71,7 +58,7 @@ class CedarTrie: public Algorithm, public LZ78Trie<cedar::CedarTrieNode> {
         auto search_pos = parent.search_pos();
 
         auto letter = (const char*) &c;
-        auto& from = search_pos.from;
+        auto& from = search_pos;
         cedar_factorid_t searchResult;
 
         {
@@ -195,7 +182,7 @@ public:
         DCHECK(m_ids == ids);
         m_ids++;
 
-        cedar::CedarSearchPos search_pos;
+        size_t search_pos;
 
         if (c != 0 && c != NULL_ESCAPE_ESCAPE_BYTE) {
             const char* letter = (const char*) &c;
@@ -203,7 +190,7 @@ public:
             size_t pos = 0;
             m_trie->update(letter, from, pos, 1, ids);
             DCHECK(pos == 1);
-            search_pos = cedar::CedarSearchPos{ from };
+            search_pos = size_t{ from };
         } else {
             const char* letter;
             size_t from = 0;
@@ -228,7 +215,7 @@ public:
             m_trie->update(letter, from, pos, 1, ids);
             DCHECK(pos == 1);
 
-            search_pos = cedar::CedarSearchPos{ from };
+            search_pos = size_t{ from };
         }
         auto r = node_t(ids, true, search_pos);
         m_roots.set(c, search_pos);
@@ -237,7 +224,7 @@ public:
             << "char: " << int(c)
             << ", factor id: "
             << r.id() << ", from: "
-            << r.search_pos().from;
+            << r.search_pos();
         print();
         */
         return r;
@@ -262,7 +249,7 @@ public:
             << "char: " << int(c)
             << ", factor id: "
             << parent.id() << ", from: "
-            << parent.search_pos().from;
+            << parent.search_pos();
         */
         if (c == 0) {
             auto r1 = _find_or_insert(parent, NULL_ESCAPE_ESCAPE_BYTE, false);

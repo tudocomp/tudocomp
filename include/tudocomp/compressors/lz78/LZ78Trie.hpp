@@ -20,20 +20,16 @@ constexpr size_t DMS_MAX = std::numeric_limits<factorid_t>::max();
 
 /// Default return type of find_or_insert
 class LZ78TrieNode {
-    factorid_t m_id_and_search_pos;
+    factorid_t m_id;
     bool m_is_new;
 public:
-    using search_pos_t = factorid_t;
-
-    inline LZ78TrieNode(factorid_t id_and_search_pos, bool is_new):
-        m_id_and_search_pos(id_and_search_pos),
-        m_is_new(is_new)
-    {}
-    inline LZ78TrieNode(): LZ78TrieNode(0, false) {}
+    inline LZ78TrieNode(factorid_t id, bool is_new):
+        m_id(id), m_is_new(is_new) {}
+    inline LZ78TrieNode():
+        LZ78TrieNode(0, false) {}
 
     inline bool is_new() const { return m_is_new; }
-    inline factorid_t id() const { return m_id_and_search_pos; }
-    inline search_pos_t const& search_pos() const { return m_id_and_search_pos; }
+    inline factorid_t id() const { return m_id; }
 };
 
 #define LZ78_DICT_SIZE_DESC \
