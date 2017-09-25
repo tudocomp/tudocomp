@@ -97,7 +97,7 @@ protected:
     /**
      * Returns the number of entries, plus the number of rootnodes
      */
-    inline factorid_t size() const {
+    inline size_t size() const {
         CHECK(false) << "This needs to be implemented by a inheriting class";
         return 0;
     }

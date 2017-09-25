@@ -75,7 +75,7 @@ public:
         return id-1;
     }
 
-    inline factorid_t size() const {
+    inline size_t size() const {
         return m_size;
     }
 };

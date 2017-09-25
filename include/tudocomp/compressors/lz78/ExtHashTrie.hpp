@@ -94,7 +94,7 @@ public:
         return ret.first->second; // return the factor id of that node
     }
 
-    inline factorid_t size() const {
+    inline size_t size() const {
         return m_table.size();
     }
 };

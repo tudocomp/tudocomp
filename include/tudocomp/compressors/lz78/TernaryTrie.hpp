@@ -134,7 +134,7 @@ public:
         return undef_id;
     }
 
-    inline factorid_t size() const {
+    inline size_t size() const {
         return first_child.size();
     }
 };

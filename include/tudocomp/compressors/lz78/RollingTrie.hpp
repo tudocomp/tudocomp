@@ -82,7 +82,7 @@ public:
         return ret.first.value();
     }
 
-    inline factorid_t size() const {
+    inline size_t size() const {
         return m_table.entries();
     }
 };

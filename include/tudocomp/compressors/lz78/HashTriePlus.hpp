@@ -91,7 +91,7 @@ public:
         return ret.first.value();
     }
 
-    inline factorid_t size() const {
+    inline size_t size() const {
         return m_table2.empty() ? m_table.entries() : m_table2.entries();
     }
 };
