@@ -184,7 +184,7 @@ public:
 		, LZ78Trie(n, remaining_characters)
         , m_trie(std::make_unique<cedar_t>()) {}
 
-    inline node_t add_rootnode(const uliteral_t c) override final {
+    inline node_t add_rootnode(const uliteral_t c) {
         cedar_factorid_t ids = c;
         DCHECK(m_ids == ids);
         m_ids++;
@@ -235,11 +235,11 @@ public:
         return r;
     }
 
-    inline node_t get_rootnode(uliteral_t c) override final {
+    inline node_t get_rootnode(uliteral_t c) {
         return node_t(c, m_roots.get(c));
     }
 
-    inline void clear() override final {
+    inline void clear() {
         // TODO: cedar seems to have a clear() method, but also
         // seems to have bugs in its implementation
         m_trie = std::make_unique<cedar_t>();
@@ -247,7 +247,7 @@ public:
         m_roots = LzwRootSearchPosMap();
     }
 
-    inline node_t find_or_insert(const node_t& parent, uliteral_t c) override final {
+    inline node_t find_or_insert(const node_t& parent, uliteral_t c) {
         node_t r;
         /*
         DLOG(INFO) << "find or insert "
@@ -271,7 +271,7 @@ public:
         return r;
     }
 
-    inline factorid_t size() const override final {
+    inline factorid_t size() const {
         return m_ids;
     }
 };
