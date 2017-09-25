@@ -1079,7 +1079,7 @@ functionality by providing an [`Encoder`](@DX_ENCODER@) and a
 It is expected that for any encoder, there is a corresponding decoder that
 restores the original output. In order to enforce this, encoder and decoder
 implementations are typically encapsulated in an outer `Coder` class that
-inheirty from `Algorithm`. This design pattern allows for separation of encoding
+inherit from `Algorithm`. This design pattern allows for separation of encoding
 and decoding functionality while retaining the ability to instantiate both from
 a template type (ie. the outer class).
 
@@ -1858,3 +1858,75 @@ Tudocomp(name='tdc_lzss_lcp_huff',
 
 Note that by default, the *tudocomp* binary is expected at `./tdc`, therefore
 the comparison tool should be run from a build directory.
+
+# Manual
+
+## The LZ78/LZW Implementation
+
+Tudocomp contains an implementation of both Lz78 and Lzw. Both are implemented
+according to their basic definitions: A sequence of characters is being read
+from a input stream, and a dictionary is searched for a longest previously-seen
+prefix of characters. The dictionary is updated as needed,
+and lz factors containing references to the found prefixes are being output.
+
+The Algorithms are defined in terms of two abstract interfaces:
+
+- `LZ78Trie`. It abstracts over a concrete dictionary data structure with a trie-like interface and search API, and is used by both Lz78 and Lzw, despite its name.
+- `Coder`. It abstracts over the concrete encoding of a sequence of integer values, in this case the references and characters in a lz factor.
+
+The trie interface is explained in more details below. For details to the `Coder` interface, see the Tutorial section above.
+
+Both algorithms also support limiting the dictionary to a certain maximum size,
+to reduce memory consumption and search overhead at the cost of compression rate.
+Concretely, this is defined by clearing the dictionary once it reaches a specific size,
+leading to multiple rebuilds of the data structure during a Lz78/Lzw run.
+
+> Note: The dictionary-limiting option is currently internally disabled due to bugs with a few of the existing dictionary implementations.
+
+### Algorithm API
+
+Both the compressors and the different dictionaries are registered as Algorithms in
+Tudocomps registry. The full list of existing implementations can bee seen with
+`./tdc --list`. For example:
+
+To compress `input.txt` with Lz78 using the `BinaryTrie`:
+
+```
+./tdc -a "lz78(lz78trie = binary)" input.txt
+```
+
+To compress  `input.txt` with Lzw using a limited dictionary size of 1024 entries:
+
+```
+./tdc -a "lzw(dict_size = 1024)" input.txt
+```
+
+### Source Location
+
+The Lz78 and Lzw implementations can be found in `include/tudocomp/compressors/LZ78Compressor.hpp` and `include/tudocomp/compressors/LZWCompressor.hpp`, respectively.
+
+Support definitions and the Trie base class can be found in `include/tudocomp/compressors/lz78/LZ78Trie.hpp`. The same directory also contains all existing LZ78Trie implementations.
+
+### The LZ78Trie interface.
+
+In order to fulfill the LZ78Trie interface, a class needs to:
+
+- Implement Tudocomps `Algorithm` concept, for which it needs to:
+    - Public inherit from `Algorithm`.
+    - Delegate to the `Algorithm(Env&&)` constructor.
+    - Be movable and move-assignable.
+    - Implement a `inline static Meta meta();` describing the Algorithm.
+- Public inherit from `LZ78Trie<search_pos_t>` with some type `search_pos_t` (see below).
+- Delegate to the `LZ78Trie<search_pos_t>(const size_t n, const size_t& remaining_characters)` constructor.
+- Have a constructor with the signature `(Env&& env, const size_t n, const size_t& remaining_characters, size_t reserve = 0)` that delegates to the two constructors mentioned above, and tries to reserve memory for `reserve`-many dictionary entries.
+
+
+
+
+
+
+
+
+search_pos_t
+
+
