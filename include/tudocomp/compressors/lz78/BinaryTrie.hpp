@@ -52,24 +52,24 @@ public:
     BinaryTrie(BinaryTrie&& other) = default;
     BinaryTrie& operator=(BinaryTrie&& other) = default;
 
-    inline node_t add_rootnode(uliteral_t c) override {
+    inline node_t add_rootnode(uliteral_t c) {
         m_first_child.push_back(undef_id);
         m_next_sibling.push_back(undef_id);
         m_literal.push_back(c);
         return size() - 1;
     }
 
-    inline node_t get_rootnode(uliteral_t c) override {
+    inline node_t get_rootnode(uliteral_t c) {
         return c;
     }
 
-    inline void clear() override {
+    inline void clear() {
         m_first_child.clear();
         m_next_sibling.clear();
         m_literal.clear();
     }
 
-    inline node_t find_or_insert(const node_t& parent_w, uliteral_t c) override {
+    inline node_t find_or_insert(const node_t& parent_w, uliteral_t c) {
         auto parent = parent_w.id();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
@@ -105,7 +105,7 @@ public:
         return undef_id;
     }
 
-    inline factorid_t size() const override {
+    inline factorid_t size() const {
         return m_first_child.size();
     }
 };
