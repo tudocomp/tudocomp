@@ -28,7 +28,7 @@ public:
         return m;
     }
 
-    CompactSparseHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline CompactSparseHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
         : Algorithm(std::move(env))
         , LZ78Trie(n,remaining_characters)
         , m_table(next_power_of_two(reserve), 0)
@@ -38,7 +38,7 @@ public:
 
     IF_STATS(
         MoveGuard m_guard;
-        ~CompactSparseHashTrie() {
+        inline ~CompactSparseHashTrie() {
             if (m_guard) {
                 //m_table.collect_stats(env());
             }
@@ -47,7 +47,7 @@ public:
     CompactSparseHashTrie(CompactSparseHashTrie&& other) = default;
     CompactSparseHashTrie& operator=(CompactSparseHashTrie&& other) = default;
 
-    node_t add_rootnode(uliteral_t c) override {
+    inline node_t add_rootnode(uliteral_t c) {
         auto key = create_node(0, c);
         auto value = size();
 
@@ -59,15 +59,15 @@ public:
         return value;
     }
 
-    node_t get_rootnode(uliteral_t c) override {
+    inline node_t get_rootnode(uliteral_t c) {
         return c;
     }
 
-    void clear() override {
+    inline void clear() {
         // m_table.clear();
     }
 
-    node_t find_or_insert(const node_t& parent_w, uliteral_t c) override {
+    inline node_t find_or_insert(const node_t& parent_w, uliteral_t c) {
         auto parent = parent_w.id();
 
         // if we add a new node, its index will be equal to the current size of the dictionary
@@ -92,7 +92,7 @@ public:
         }
     }
 
-    factorid_t size() const override {
+    inline factorid_t size() const {
         return m_table.size();
     }
 };
