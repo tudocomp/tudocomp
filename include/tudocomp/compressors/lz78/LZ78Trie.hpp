@@ -39,10 +39,10 @@ public:
             "and determines the maximum size of the backing storage of\n" \
             "the dictionary before it gets reset."
 
-template<typename search_pos>
+template<typename search_pos_t>
 class LZ78Trie {
 public:
-    using node_t = TrieNode<search_pos>;
+    using node_t = TrieNode<search_pos_t>;
 private:
     const size_t m_n;
     const size_t& m_remaining_characters;
