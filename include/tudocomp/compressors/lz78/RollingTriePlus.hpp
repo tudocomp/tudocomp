@@ -15,11 +15,11 @@ template<
 >
 class RollingTriePlus : public Algorithm, public LZ78Trie<factorid_t> {
     typedef typename HashRoller::key_type key_type;
-    HashRoller m_roller;
+    mutable HashRoller m_roller;
     HashMap<key_type, factorid_t, undef_id, NoopHasher, std::equal_to<key_type>, LinearProber, SizeManagerPow2> m_table;
     HashMap<key_type, factorid_t, undef_id, HashFunction, std::equal_to<key_type>, LinearProber, HashManager> m_table2;
 
-    inline key_type hash_node(uliteral_t c) {
+    inline key_type hash_node(uliteral_t c) const {
         m_roller += c;
         return m_roller();
     }
@@ -68,7 +68,7 @@ public:
         return size() - 1;
     }
 
-    inline node_t get_rootnode(uliteral_t c) {
+    inline node_t get_rootnode(uliteral_t c) const {
         hash_node(c);
         return c;
     }

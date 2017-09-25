@@ -66,7 +66,7 @@ protected:
     /**
      * Returns the root node corresponding to literal c
      */
-    inline node_t get_rootnode(uliteral_t c) {
+    inline node_t get_rootnode(uliteral_t c) const {
         CHECK(false) << "This needs to be implemented by a inheriting class";
         return 0;
     }

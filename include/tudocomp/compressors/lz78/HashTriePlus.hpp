@@ -57,7 +57,7 @@ public:
         return size() - 1;
     }
 
-    inline node_t get_rootnode(uliteral_t c) {
+    inline node_t get_rootnode(uliteral_t c) const {
         return c;
     }
 

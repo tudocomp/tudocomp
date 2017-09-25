@@ -38,7 +38,7 @@ public:
 class LzwRootSearchPosMap {
     std::array<CedarSearchPos, 256> m_array;
 public:
-    inline CedarSearchPos get(uliteral_t c) {
+    inline CedarSearchPos get(uliteral_t c) const {
         DCHECK(c < m_array.size());
         return m_array[c];
     }
@@ -235,7 +235,7 @@ public:
         return r;
     }
 
-    inline node_t get_rootnode(uliteral_t c) {
+    inline node_t get_rootnode(uliteral_t c) const {
         return node_t(c, m_roots.get(c));
     }
 

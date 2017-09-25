@@ -41,7 +41,7 @@ public:
     {
     }
 
-    inline node_t get_rootnode(uliteral_t c) {
+    inline node_t get_rootnode(uliteral_t c) const {
         DCHECK_LT(create_node(0,c), std::numeric_limits<factorid_t>::max());
         return factorid_t(create_node(0,c));
     }
