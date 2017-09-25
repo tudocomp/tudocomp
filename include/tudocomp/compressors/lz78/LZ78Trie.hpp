@@ -24,13 +24,17 @@ class TrieNode<factorid_t> {
     using search_pos_t = factorid_t;
 
     factorid_t m_id_and_search_pos;
+    bool m_is_new;
 public:
-    TrieNode(const factorid_t& id_and_search_pos):
-        m_id_and_search_pos(id_and_search_pos){}
-    TrieNode(): TrieNode(0) {}
+    TrieNode(factorid_t id_and_search_pos, bool is_new):
+        m_id_and_search_pos(id_and_search_pos),
+        m_is_new(is_new)
+    {}
+    TrieNode(): TrieNode(0, false) {}
 
-    inline const factorid_t& id() const { return m_id_and_search_pos; }
-    inline const search_pos_t& search_pos() const { return m_id_and_search_pos; }
+    inline bool is_new() const { return m_is_new; }
+    inline factorid_t id() const { return m_id_and_search_pos; }
+    inline search_pos_t const& search_pos() const { return m_id_and_search_pos; }
 };
 
 

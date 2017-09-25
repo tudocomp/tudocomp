@@ -59,12 +59,12 @@ public:
     inline node_t add_rootnode(uliteral_t c) {
         m_table.insert(std::make_pair<key_type,factorid_t>(hash_node(c), size()));
         m_roller.clear();
-        return size() - 1;
+        return node_t(size() - 1, true);
     }
 
     inline node_t get_rootnode(uliteral_t c) const {
         hash_node(c);
-        return c;
+        return node_t(c, false);
     }
 
     inline void clear() {
@@ -77,9 +77,9 @@ public:
         auto ret = m_table.insert(std::make_pair(hash_node(c), newleaf_id));
         if(ret.second) {
             m_roller.clear();
-            return undef_id; // added a new node
+            return node_t(newleaf_id, true); // added a new node
         }
-        return ret.first.value();
+        return node_t(ret.first.value(), false);
     }
 
     inline size_t size() const {

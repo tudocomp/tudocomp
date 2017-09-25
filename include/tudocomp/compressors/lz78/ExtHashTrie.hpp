@@ -60,11 +60,11 @@ public:
 
     inline node_t add_rootnode(uliteral_t c) {
         m_table.insert(std::make_pair<squeeze_node_t,factorid_t>(create_node(0, c), size()));
-        return size() - 1;
+        return node_t(size() - 1, true);
     }
 
     inline node_t get_rootnode(uliteral_t c) const {
-        return c;
+        return node_t(c, false);
     }
 
     inline void clear() {
@@ -78,7 +78,6 @@ public:
 
         auto ret = m_table.insert(std::make_pair(create_node(parent,c), newleaf_id));
 
-
         if(ret.second) { // added a new node
             if(tdc_unlikely(m_table.bucket_count()*m_table.max_load_factor() < m_table.size()+1)) {
                 const size_t expected_size = (m_table.size() + 1 + lz78_expected_number_of_remaining_elements(m_table.size(), m_n, m_remaining_characters))/0.95;
@@ -86,12 +85,10 @@ public:
                     m_table.reserve(expected_size);
                 }
             }
-            return undef_id; // added a new node
+            return node_t(size() - 1, true); // added a new node
         }
 
-
-        if(ret.second) return undef_id; // added a new node
-        return ret.first->second; // return the factor id of that node
+        return node_t(ret.first->second, false); // return the factor id of that node
     }
 
     inline size_t size() const {

@@ -56,11 +56,11 @@ public:
         //std::cout << "find_or_insert(" << key << ", " << entry << ", " << value << ");\n";
 
         entry = value;
-        return value;
+        return node_t(value, true);
     }
 
     inline node_t get_rootnode(uliteral_t c) const {
-        return c;
+        return node_t(c, false);
     }
 
     inline void clear() {
@@ -85,10 +85,10 @@ public:
             val = newleaf_id;
             DCHECK_EQ(val, newleaf_id);
             //std::cout << "find_or_insert(" << key << ", " << val << ", " << newleaf_id << ");\n";
-            return undef_id;
+            return node_t(val, true);
         } else {
             //std::cout << "find_or_insert(" << key << ", " << val << ", " << val << ");\n";
-            return val;
+            return node_t(val, false);
         }
     }
 

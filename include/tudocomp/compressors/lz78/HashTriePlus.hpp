@@ -54,11 +54,11 @@ public:
     inline node_t add_rootnode(uliteral_t c) {
         DCHECK(m_table2.empty());
         m_table.insert(std::make_pair<squeeze_node_t,factorid_t>(create_node(0, c), size()));
-        return size() - 1;
+        return node_t(size() - 1, true);
     }
 
     inline node_t get_rootnode(uliteral_t c) const {
-        return c;
+        return node_t(c, false);
     }
 
     inline void clear() {
@@ -72,9 +72,9 @@ public:
         if(!m_table2.empty()) { // already using the second hash table
             auto ret = m_table2.insert(std::make_pair(create_node(parent,c), newleaf_id));
             if(ret.second) {
-                return undef_id; // added a new node
+                return node_t(newleaf_id, true); // added a new node
             }
-            return ret.first.value();
+            return node_t(ret.first.value(), false);
         }
         // using still the first hash table
         auto ret = m_table.insert(std::make_pair(create_node(parent,c), newleaf_id));
@@ -86,9 +86,9 @@ public:
                 }
 
             }
-            return undef_id; // added a new node
+            return node_t(newleaf_id, true); // added a new node
         }
-        return ret.first.value();
+        return node_t(ret.first.value(), false);
     }
 
     inline size_t size() const {

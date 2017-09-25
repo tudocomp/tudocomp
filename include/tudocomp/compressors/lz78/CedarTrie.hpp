@@ -20,17 +20,20 @@ class TrieNode<cedar::CedarSearchPos> {
     using search_pos_t = cedar::CedarSearchPos;
 
     factorid_t m_id;
+    bool m_is_new;
     search_pos_t m_search_pos;
 public:
-    TrieNode(const factorid_t& id, const search_pos_t& search_pos):
+    TrieNode(factorid_t id, bool is_new, search_pos_t const& search_pos):
         m_id(id),
+        m_is_new(is_new),
         m_search_pos(search_pos) {
             //DCHECK(id != NO_VALUE && id != NO_PATH);
         }
-    TrieNode(): TrieNode(0, search_pos_t { 0 }) {}
+    TrieNode(): TrieNode(0, false, search_pos_t { 0 }) {}
 
-    inline const factorid_t& id() const { return m_id; }
-    inline const search_pos_t& search_pos() const { return m_search_pos; }
+    inline bool is_new() const { return m_is_new; }
+    inline factorid_t id() const { return m_id; }
+    inline search_pos_t const& search_pos() const { return m_search_pos; }
 };
 
 class CedarTrie: public Algorithm, public LZ78Trie<cedar::CedarSearchPos> {
@@ -77,11 +80,10 @@ class CedarTrie: public Algorithm, public LZ78Trie<cedar::CedarSearchPos> {
             searchResult = m_trie->traverse(letter, from, pos, 1);
         }
 
-        node_t r;
-
         if(searchResult != NO_VALUE && searchResult != NO_PATH) {
-            r = node_t {
+            return node_t {
                 searchResult - 1,
+                false,
                 search_pos,
             };
         } else {
@@ -93,13 +95,12 @@ class CedarTrie: public Algorithm, public LZ78Trie<cedar::CedarSearchPos> {
                     m_trie->update(letter, from, pos, 1, HIDDEN_ESCAPE_ID);
                 }
             }
-            r = node_t {
-                lz78::undef_id,
+            return node_t {
+                factorid_t(size() - 1ull),
+                true,
                 search_pos,
             };
         }
-
-        return r;
     }
 
     inline void _print(size_t from, size_t ind) {
@@ -230,7 +231,7 @@ public:
 
             search_pos = cedar::CedarSearchPos{ from };
         }
-        auto r = node_t(ids, search_pos);
+        auto r = node_t(ids, true, search_pos);
         m_roots.set(c, search_pos);
         /*
         DLOG(INFO) << "add rootnode "
@@ -244,7 +245,7 @@ public:
     }
 
     inline node_t get_rootnode(uliteral_t c) const {
-        return node_t(c, m_roots.get(c));
+        return node_t(c, false, m_roots.get(c));
     }
 
     inline void clear() {

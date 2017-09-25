@@ -97,7 +97,7 @@ public:
         while(is.get(c)) {
             --remaining_characters;
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
-            if(child.id() == lz78::undef_id) {
+            if(child.is_new()) {
                 coder.encode(node.id(), Range(factor_count));
                 coder.encode(static_cast<uliteral_t>(c), literal_r);
                 factor_count++;

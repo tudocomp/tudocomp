@@ -43,14 +43,14 @@ public:
 
     inline node_t get_rootnode(uliteral_t c) const {
         DCHECK_LT(create_node(0,c), std::numeric_limits<factorid_t>::max());
-        return factorid_t(create_node(0,c));
+        return node_t(create_node(0,c), false);
     }
 
     inline node_t add_rootnode(uliteral_t c) {
         DCHECK_EQ(find(create_node(0, c)), 0);
         find(create_node(0, c)) = size();
         ++m_size;
-        return m_size-1;
+        return node_t(m_size-1, true);
     }
 
     inline void clear() {
@@ -70,9 +70,9 @@ public:
             const factorid_t newleaf_id = size()+1; //! if we add a new node, its index will be equal to the current size of the dictionary
             id = newleaf_id;
             ++m_size;
-            return undef_id;
+            return node_t(newleaf_id, true);
         }
-        return id-1;
+        return node_t(id-1, false);
     }
 
     inline size_t size() const {

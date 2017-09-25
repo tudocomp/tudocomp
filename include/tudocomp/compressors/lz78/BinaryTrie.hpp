@@ -53,14 +53,15 @@ public:
     BinaryTrie& operator=(BinaryTrie&& other) = default;
 
     inline node_t add_rootnode(uliteral_t c) {
+        DCHECK_EQ(c, size());
         m_first_child.push_back(undef_id);
         m_next_sibling.push_back(undef_id);
         m_literal.push_back(c);
-        return size() - 1;
+        return node_t(c, true);
     }
 
     inline node_t get_rootnode(uliteral_t c) const {
-        return c;
+        return node_t(c, false);
     }
 
     inline void clear() {
@@ -81,7 +82,7 @@ public:
         } else {
             factorid_t node = m_first_child[parent];
             while(true) { // search the binary tree stored in parent (following left/right siblings)
-                if(c == m_literal[node]) return node;
+                if(c == m_literal[node]) return node_t(node, false);
                 if(m_next_sibling[node] == undef_id) {
                     m_next_sibling[node] = newleaf_id;
                     break;
@@ -102,7 +103,7 @@ public:
         m_first_child.push_back(undef_id);
         m_next_sibling.push_back(undef_id);
         m_literal.push_back(c);
-        return undef_id;
+        return node_t(size() - 1, true);
     }
 
     inline size_t size() const {

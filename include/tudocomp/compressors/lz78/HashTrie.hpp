@@ -53,11 +53,11 @@ public:
                 size()
             )
         );
-        return size() - 1;
+        return node_t(size() - 1, true);
     }
 
     inline node_t get_rootnode(uliteral_t c) const {
-        return c;
+        return node_t(c, false);
     }
 
     inline void clear() {
@@ -75,8 +75,8 @@ public:
                 newleaf_id
             )
         );
-        if(ret.second) return undef_id; // added a new node
-        return ret.first.value();
+        if(ret.second) return node_t(newleaf_id, true); // added a new node
+        return node_t(ret.first.value(), false);
     }
 
     inline size_t size() const {

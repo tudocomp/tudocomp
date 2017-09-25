@@ -63,15 +63,16 @@ public:
     TernaryTrie& operator=(TernaryTrie&& other) = default;
 
     inline node_t add_rootnode(uliteral_t c) {
+        DCHECK_EQ(c, size());
         first_child.push_back(undef_id);
         left_sibling.push_back(undef_id);
         right_sibling.push_back(undef_id);
         literal.push_back(c);
-        return size() - 1;
+        return node_t(c, true);
     }
 
     inline node_t get_rootnode(uliteral_t c) const {
-        return c;
+        return node_t(c, false);
     }
 
     inline void clear() {
@@ -111,7 +112,7 @@ public:
                         node = right_sibling[node];
                 }
                 else /* c == literal[node] -> node is the node we want to find */ {
-                    return node;
+                    return node_t(node, false);
                 }
             }
         }
@@ -131,7 +132,7 @@ public:
         left_sibling.push_back(undef_id);
         right_sibling.push_back(undef_id);
         literal.push_back(c);
-        return undef_id;
+        return node_t(size() - 1, true);
     }
 
     inline size_t size() const {

@@ -74,7 +74,7 @@ public:
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
             DVLOG(2) << " child " << child.id() << " #factor " << factor_count << " size " << dict.size() << " node " << node.id();
 
-            if(child.id() == lz78::undef_id) {
+            if(child.is_new()) {
                 coder.encode(node.id(), Range(factor_count + ULITERAL_MAX + 1));
                 IF_STATS(stat_factor_count++);
                 factor_count++;
