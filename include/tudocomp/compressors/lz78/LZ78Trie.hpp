@@ -7,11 +7,14 @@
 namespace tdc {
 namespace lz78 {
 
-using factorid_t = std::uint32_t; //! type for the factor indices, bounded by the number of LZ78 trie nodes
-static constexpr factorid_t undef_id = std::numeric_limits<factorid_t>::max(); // for a non-existing factor
+/// Type for the factor indices, bounded by the number of LZ78 trie nodes
+using factorid_t = uint32_t;
+
+/// Id that can be used for a non-existing factor
+constexpr factorid_t undef_id = std::numeric_limits<factorid_t>::max();
 
 /// Maximum legal dictionary size.
-const factorid_t DMS_MAX = std::numeric_limits<factorid_t>::max(); //TODO
+constexpr size_t DMS_MAX = std::numeric_limits<factorid_t>::max();
 
 // NB: Also update the Lz78 chapter in the docs in case of changes to this file
 
