@@ -11,7 +11,7 @@ namespace tdc {
 namespace lz78 {
 
 
-class CompactSparseHashTrie : public Algorithm, public LZ78Trie<factorid_t> {
+class CompactSparseHashTrie : public Algorithm, public LZ78Trie<> {
     compact_hash<factorid_t> m_table;
     //std::unordered_map<uint64_t, factorid_t> m_table;
     size_t m_key_width = 0;

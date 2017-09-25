@@ -13,7 +13,7 @@ namespace lz78 {
 ///
 /// \sa http://www.cplusplus.com/articles/iL18T05o/
 ///
-class TernaryTrie : public Algorithm, public LZ78Trie<factorid_t> {
+class TernaryTrie : public Algorithm, public LZ78Trie<> {
 
     /*
      * The trie is not stored in standard form. Each node stores the pointer to its first child (first as first come first served).

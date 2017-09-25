@@ -7,7 +7,7 @@
 namespace tdc {
 namespace lz78 {
 
-class BinarySortedTrie : public Algorithm, public LZ78Trie<factorid_t> {
+class BinarySortedTrie : public Algorithm, public LZ78Trie<> {
     /*
      * The trie is not stored in standard form. Each node stores the pointer to its first child and a pointer to its next sibling (first as first come first served)
      */

@@ -11,7 +11,7 @@ namespace lz78 {
 
 
 template<class HashFunction = MixHasher, class HashProber = LinearProber, class HashManager = SizeManagerPow2>
-class HashTrie : public Algorithm, public LZ78Trie<factorid_t> {
+class HashTrie : public Algorithm, public LZ78Trie<> {
     HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,HashProber,HashManager> m_table;
 
 public:

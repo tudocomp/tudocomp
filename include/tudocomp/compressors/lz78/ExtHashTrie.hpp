@@ -11,7 +11,7 @@
 namespace tdc {
 namespace lz78 {
 
-class ExtHashTrie : public Algorithm, public LZ78Trie<factorid_t> {
+class ExtHashTrie : public Algorithm, public LZ78Trie<> {
     typedef std::unordered_map<squeeze_node_t, factorid_t, _VignaHasher> table_t;
 //    typedef rigtorp::HashMap<squeeze_node_t, factorid_t,CLhash> table_t;
 //    typedef ska::flat_hash_map<squeeze_node_t, factorid_t,CLhash> table_t; //ska::power_of_two_std_hash<size_t>> table_t;

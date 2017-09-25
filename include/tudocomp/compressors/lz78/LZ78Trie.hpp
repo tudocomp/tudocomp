@@ -13,48 +13,41 @@ static constexpr factorid_t undef_id = std::numeric_limits<factorid_t>::max(); /
 /// Maximum legal dictionary size.
 const factorid_t DMS_MAX = std::numeric_limits<factorid_t>::max(); //TODO
 
-/// Return type of find_or_insert
-template<typename search_pos_t>
-class TrieNode {
-};
+// NB: Also update the Lz78 chapter in the docs in case of changes to this file
 
-/// Return type of find_or_insert
-template<>
-class TrieNode<factorid_t> {
-    using search_pos_t = factorid_t;
-
+/// Default return type of find_or_insert
+class LZ78TrieNode {
     factorid_t m_id_and_search_pos;
     bool m_is_new;
 public:
-    TrieNode(factorid_t id_and_search_pos, bool is_new):
+    using search_pos_t = factorid_t;
+
+    inline LZ78TrieNode(factorid_t id_and_search_pos, bool is_new):
         m_id_and_search_pos(id_and_search_pos),
         m_is_new(is_new)
     {}
-    TrieNode(): TrieNode(0, false) {}
+    inline LZ78TrieNode(): LZ78TrieNode(0, false) {}
 
     inline bool is_new() const { return m_is_new; }
     inline factorid_t id() const { return m_id_and_search_pos; }
     inline search_pos_t const& search_pos() const { return m_id_and_search_pos; }
 };
 
-
 #define LZ78_DICT_SIZE_DESC \
             "`dict_size` has to either be 0 (unlimited), or a positive integer,\n" \
             "and determines the maximum size of the backing storage of\n" \
             "the dictionary before it gets reset."
 
-template<typename search_pos_t>
+template<typename _node_t = LZ78TrieNode>
 class LZ78Trie {
 public:
-    using node_t = TrieNode<search_pos_t>;
+    using node_t = _node_t;
 private:
     const size_t m_n;
     const size_t& m_remaining_characters;
 protected:
     LZ78Trie(const size_t n, const size_t& remaining_characters)
         : m_n(n), m_remaining_characters(remaining_characters) {}
-
-    // NB: Also update docs/Lz78w.md in case of changes to this file
 
     inline size_t expected_number_of_remaining_elements(const size_t z) const {
         return lz78_expected_number_of_remaining_elements(z, m_n, m_remaining_characters);
@@ -90,8 +83,7 @@ protected:
     /** Searches a pair (`parent`, `c`). If there is no node below `parent` on an edge labeled with `c`, a new leaf of the `parent` will be constructed.
       * @param parent  the parent node's id
       * @param c       the edge label to follow
-      * @return the index of the respective child, if it was found.
-      * @retval undef_id   if a new leaf was inserted
+      * @return the new or found child node
       **/
     inline node_t find_or_insert(const node_t& parent, uliteral_t c) {
         CHECK(false) << "This needs to be implemented by a inheriting class";

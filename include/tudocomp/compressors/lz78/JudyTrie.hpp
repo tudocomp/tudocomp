@@ -16,7 +16,7 @@ namespace lz78 {
 ///
 /// \sa http://www.cplusplus.com/articles/iL18T05o/
 ///
-class JudyTrie : public Algorithm, public LZ78Trie<factorid_t> {
+class JudyTrie : public Algorithm, public LZ78Trie<> {
 
     Pvoid_t m_dict; // judy array
     size_t m_size;

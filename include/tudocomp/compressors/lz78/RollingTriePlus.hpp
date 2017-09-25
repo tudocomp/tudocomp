@@ -13,7 +13,7 @@ template<
     typename HashManager = SizeManagerNoob,
     typename HashFunction = NoopHasher
 >
-class RollingTriePlus : public Algorithm, public LZ78Trie<factorid_t> {
+class RollingTriePlus : public Algorithm, public LZ78Trie<> {
     typedef typename HashRoller::key_type key_type;
     mutable HashRoller m_roller;
     HashMap<key_type, factorid_t, undef_id, NoopHasher, std::equal_to<key_type>, LinearProber, SizeManagerPow2> m_table;

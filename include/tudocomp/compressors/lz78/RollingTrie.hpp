@@ -14,7 +14,7 @@ template<
     typename HashManager = SizeManagerPrime,
     typename HashFunction = NoopHasher
 >
-class RollingTrie : public Algorithm, public LZ78Trie<factorid_t> {
+class RollingTrie : public Algorithm, public LZ78Trie<> {
     typedef typename HashRoller::key_type key_type;
     mutable HashRoller m_roller;
     HashMap<key_type, factorid_t, undef_id, HashFunction, std::equal_to<key_type>, HashProber, HashManager> m_table;

@@ -13,30 +13,29 @@ namespace cedar {
     struct CedarSearchPos {
         size_t from;
     };
+
+    class CedarTrieNode {
+        factorid_t m_id;
+        bool m_is_new;
+        CedarSearchPos m_search_pos;
+    public:
+        using search_pos_t = CedarSearchPos;
+
+        inline CedarTrieNode(factorid_t id, bool is_new, search_pos_t const& search_pos):
+            m_id(id),
+            m_is_new(is_new),
+            m_search_pos(search_pos) {
+                //DCHECK(id != NO_VALUE && id != NO_PATH);
+            }
+        inline CedarTrieNode(): CedarTrieNode(0, false, search_pos_t { 0 }) {}
+
+        inline bool is_new() const { return m_is_new; }
+        inline factorid_t id() const { return m_id; }
+        inline search_pos_t const& search_pos() const { return m_search_pos; }
+    };
 }
 
-template<>
-class TrieNode<cedar::CedarSearchPos> {
-    using search_pos_t = cedar::CedarSearchPos;
-
-    factorid_t m_id;
-    bool m_is_new;
-    search_pos_t m_search_pos;
-public:
-    TrieNode(factorid_t id, bool is_new, search_pos_t const& search_pos):
-        m_id(id),
-        m_is_new(is_new),
-        m_search_pos(search_pos) {
-            //DCHECK(id != NO_VALUE && id != NO_PATH);
-        }
-    TrieNode(): TrieNode(0, false, search_pos_t { 0 }) {}
-
-    inline bool is_new() const { return m_is_new; }
-    inline factorid_t id() const { return m_id; }
-    inline search_pos_t const& search_pos() const { return m_search_pos; }
-};
-
-class CedarTrie: public Algorithm, public LZ78Trie<cedar::CedarSearchPos> {
+class CedarTrie: public Algorithm, public LZ78Trie<cedar::CedarTrieNode> {
     using cedar_factorid_t = lz78::factorid_t;
     // NB: this refers to different cedar namespace than defined in this file
     using cedar_t = ::cedar::da<cedar_factorid_t>;
