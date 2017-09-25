@@ -21,6 +21,8 @@ class TrieNode {
 /// Return type of find_or_insert
 template<>
 class TrieNode<factorid_t> {
+    using search_pos_t = factorid_t;
+
     factorid_t m_id_and_search_pos;
 public:
     TrieNode(const factorid_t& id_and_search_pos):
@@ -28,7 +30,7 @@ public:
     TrieNode(): TrieNode(0) {}
 
     inline const factorid_t& id() const { return m_id_and_search_pos; }
-    inline const factorid_t& search_pos() const { return m_id_and_search_pos; }
+    inline const search_pos_t& search_pos() const { return m_id_and_search_pos; }
 };
 
 
@@ -47,6 +49,8 @@ private:
 protected:
     LZ78Trie(const size_t n, const size_t& remaining_characters)
         : m_n(n), m_remaining_characters(remaining_characters) {}
+
+    // NB: Also update docs/Lz78w.md in case of changes to this file
 
     inline size_t expected_number_of_remaining_elements(const size_t z) const {
         return lz78_expected_number_of_remaining_elements(z, m_n, m_remaining_characters);
