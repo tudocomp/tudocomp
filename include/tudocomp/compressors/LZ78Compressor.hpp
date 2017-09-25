@@ -44,17 +44,8 @@ class LZ78Compressor: public Compressor {
 private:
     using node_t = typename dict_t::node_t;
 
-    static inline lz78::factorid_t select_size(Env& env, string_ref name) {
-        auto& o = env.option(name);
-        if (o.as_string() == "inf") {
-            return 0;
-        } else {
-            return o.as_integer();
-        }
-    }
-
     /// Max dictionary size before reset
-    const lz78::factorid_t m_dict_max_size {0};
+    const lz78::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
 
 public:
     inline LZ78Compressor(Env&& env):
@@ -66,7 +57,7 @@ public:
         Meta m("compressor", "lz78", "Lempel-Ziv 78\n\n" LZ78_DICT_SIZE_DESC);
         m.option("coder").templated<coder_t, BitCoder>("coder");
         m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>("lz78trie");
-        m.option("dict_size").dynamic("inf");
+        m.option("dict_size").dynamic(0);
         return m;
     }
 
