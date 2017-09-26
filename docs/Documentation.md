@@ -1869,7 +1869,7 @@ from a input stream, and a dictionary is searched for a longest previously-seen
 prefix of characters. The dictionary is updated as needed,
 and lz factors containing references to the found prefixes are being output.
 
-The Algorithms are defined in terms of two abstract interfaces:
+The Algorithms are defined in terms of two abstract interfaces, implemented as C++ concepts:
 
 - `LZ78Trie`. It abstracts over a concrete dictionary data structure with a trie-like interface and search API, and is used by both Lz78 and Lzw, despite its name.
 - `Coder`. It abstracts over the concrete encoding of a sequence of integer values, in this case the references and characters in a lz factor.
@@ -1881,7 +1881,7 @@ to reduce memory consumption and search overhead at the cost of compression rate
 Concretely, this is defined by clearing the dictionary once it reaches a specific size,
 leading to multiple rebuilds of the data structure during a Lz78/Lzw run.
 
-> Note: The dictionary-limiting option is currently internally disabled due to bugs with a few of the existing dictionary implementations.
+> Note: The dictionary-limiting option is currently disabled due to bugs with a few of the existing dictionary implementations.
 
 ### Algorithm API
 
@@ -1909,24 +1909,68 @@ Support definitions and the Trie base class can be found in `include/tudocomp/co
 
 ### The LZ78Trie interface.
 
-In order to fulfill the LZ78Trie interface, a class needs to:
+In order to fulfill the LZ78Trie interface, a class `T`{.cpp} needs to:
 
 - Implement Tudocomps `Algorithm` concept, for which it needs to:
-    - Public inherit from `Algorithm`.
-    - Delegate to the `Algorithm(Env&&)` constructor.
+    - Public inherit from `Algorithm`{.cpp}.
+    - Call the `Algorithm(Env&&)`{.cpp} constructor.
     - Be movable and move-assignable.
-    - Implement a `inline static Meta meta();` describing the Algorithm.
-- Public inherit from `LZ78Trie<search_pos_t>` with some type `search_pos_t` (see below).
-- Delegate to the `LZ78Trie<search_pos_t>(const size_t n, const size_t& remaining_characters)` constructor.
-- Have a constructor with the signature `(Env&& env, const size_t n, const size_t& remaining_characters, size_t reserve = 0)` that delegates to the two constructors mentioned above, and tries to reserve memory for `reserve`-many dictionary entries.
+    - Implement a `inline static Meta meta();`{.cpp} describing the Algorithm.
+- Public inherit from `LZ78Trie<>`{.cpp}.
+    - _Optionally_, instead inherit from `LZ78Trie<my_node_type_t>`{.cpp} with
+      a custom node type `my_node_type_t`{.cpp} (see below).
+- Call the `LZ78Trie(const size_t n, const size_t& remaining_characters)`{.cpp} constructor.
+- Implement the following constructor and methods:
 
+    ~~~ {.cpp}
+    inline T(Env&& env, const size_t n, const size_t& remaining_characters, size_t reserve = 0);
+    inline node_t add_rootnode(uliteral_t c);
+    inline node_t get_rootnode(uliteral_t c) const;
+    inline node_t find_or_insert(const node_t& parent, uliteral_t c);
+    inline void clear();
+    inline size_t size() const;
+    ~~~
 
+    where `node_t`{.cpp} is a type member provided by the parent `LZ78Trie<X>`{.cpp} that describes a node in the trie, and is equal to `X`. It defaults to `LZ78TrieNode`{.cpp}, see below for more details.
 
+These members should have the following semantics:
 
+- The constructor should delegate its arguments to the two base constructors mentioned above, and try to reserve memory for `reserve`{.cpp}-many dictionary entries.
+- `add_rootnode(x)`{.cpp} should create a root node in the trie that corresponds
+  to the lz node with label `x`. For Lz78, this will be called once
+  with argument 0. For Lzw, this will be called for all possible character values (the byte values 0 to 255).
+  An implementation may choose how it maps these logical root nodes to the actual data structure. A common approach is to have a hidden single real root node, with the logical root nodes living on the first layer below it. See the graphic below.
+- `get_rootnode(x)`{.cpp} should return the same node as created by the corresponding `add_rootnode(x)`{.cpp} call.
+- `find_or_insert(parent, c)`{.cpp} should search the node `parent`{.cpp} for
+  a child with edge label `c`{.cpp}, create one if it doesn't exist,
+  and then return it.
+- `clear()`{.cpp} should reset the data structure entirely, including root nodes.
+- `size()`{.cpp} should return the number of nodes in the data structure,
+  including root nodes.
 
+![LZ78 and LZW Trie for the string "bacacb"](media/lz78_trie.png)
 
+#### `node_t`{.cpp} and custom node types
 
+`node_t`{.cpp} is per default identical to `LZ78TrieNode`{.cpp},
+and behaves like a `(integer, bool)` tuple with the following API:
 
-search_pos_t
+~~~ {.cpp}
+inline node_t(factorid_t id, bool is_new);
+inline node_t();
+inline factorid_t id() const;
+inline bool is_new() const;
+~~~
 
+`id()`{.cpp} returns the node label, and `is_new()`{.cpp} is true if this node has been freshly created by `find_or_insert()`{.cpp}.
 
+Usually, just having the node label is enough for a `LZ78Trie`{.cpp} implementation
+to locate a node in its internal data structure.
+In cases where that is not possible though, say if you need the internal address of an node, you can replace the default `node_t`{.cpp} type with a custom one by passing it to the template argument of the `LZ78Trie<...>` parent class.
+
+Such a type `T`{.cpp} needs to provide the same API as `LZ78TrieNode`{.cpp}, but may:
+
+- Have a custom constructor.
+- Have additional members (for example, storing an internal node address).
+
+The easiest way to do this is by inheriting from `LZ78TrieNode`{.cpp}. See `include/tudocomp/compressors/lz78/CedarTrie.hpp` for an example of how this is done.
