@@ -9,51 +9,46 @@
 namespace tdc {
 namespace lz78 {
 
-using cedar_factorid_t = lz78::factorid_t;
-using cedar_t = cedar::da<cedar_factorid_t>;
+namespace cedar {
+    class CedarTrieNode: public LZ78TrieNode {
+        size_t m_search_pos;
+    public:
+        inline CedarTrieNode(factorid_t id, bool is_new, size_t search_pos):
+            LZ78TrieNode(id, is_new),m_search_pos(search_pos) {}
+        inline CedarTrieNode():
+            LZ78TrieNode(), m_search_pos(0) {}
 
-const cedar_factorid_t CEDAR_NO_VALUE = static_cast<cedar_factorid_t>(cedar_t::error_code::CEDAR_NO_VALUE);
-const cedar_factorid_t CEDAR_NO_PATH = static_cast<cedar_factorid_t>(cedar_t::error_code::CEDAR_NO_PATH);
+        inline size_t search_pos() const { return m_search_pos; }
+    };
+}
 
-struct CedarSearchPos {
-    size_t from;
-};
+class CedarTrie: public Algorithm, public LZ78Trie<cedar::CedarTrieNode> {
+    using cedar_factorid_t = lz78::factorid_t;
+    // NB: this refers to different cedar namespace than defined in this file
+    using cedar_t = ::cedar::da<cedar_factorid_t>;
 
-template<>
-class TrieNode<CedarSearchPos> {
-    factorid_t m_id;
-    CedarSearchPos m_search_pos;
-public:
-    TrieNode(const factorid_t& id, const CedarSearchPos& search_pos):
-        m_id(id),
-        m_search_pos(search_pos) {
-            //DCHECK(id != CEDAR_NO_VALUE && id != CEDAR_NO_PATH);
+    static constexpr uint8_t NULL_ESCAPE_ESCAPE_BYTE = 255;
+    static constexpr uint8_t NULL_ESCAPE_REPLACEMENT_BYTE = 254;
+
+    static constexpr cedar_factorid_t NO_VALUE = static_cast<cedar_factorid_t>(
+        cedar_t::error_code::CEDAR_NO_VALUE);
+    static constexpr cedar_factorid_t NO_PATH = static_cast<cedar_factorid_t>(
+        cedar_t::error_code::CEDAR_NO_PATH);
+    static constexpr cedar_factorid_t HIDDEN_ESCAPE_ID = -3; // NOTE: May not be -1 or -2
+
+    class LzwRootSearchPosMap {
+        std::array<size_t, 256> m_array;
+    public:
+        inline size_t get(uliteral_t c) const {
+            DCHECK(c < m_array.size());
+            return m_array[c];
         }
-    TrieNode(): TrieNode(0, CedarSearchPos { 0 }) {}
+        inline void set(uliteral_t c, size_t v) {
+            DCHECK(c < m_array.size());
+            m_array[c] = v;
+        }
+    };
 
-    inline const factorid_t& id() const { return m_id; }
-    inline const CedarSearchPos& search_pos() const { return m_search_pos; }
-};
-
-class LzwRootSearchPosMap {
-    std::array<CedarSearchPos, 256> m_array;
-public:
-    inline CedarSearchPos get(uliteral_t c) {
-        DCHECK(c < m_array.size());
-        return m_array[c];
-    }
-    inline void set(uliteral_t c, CedarSearchPos v) {
-        DCHECK(c < m_array.size());
-        m_array[c] = v;
-    }
-};
-
-const uint8_t NULL_ESCAPE_ESCAPE_BYTE = 255;
-const uint8_t NULL_ESCAPE_REPLACEMENT_BYTE = 254;
-
-const cedar_factorid_t HIDDEN_ESCAPE_ID = -3; // NOTE: May not be -1 or -2
-
-class CedarTrie: public Algorithm, public LZ78Trie<CedarSearchPos> {
     // unique_ptr only needed for reassignment
     std::unique_ptr<cedar_t> m_trie;
     cedar_factorid_t m_ids = 0;
@@ -63,7 +58,7 @@ class CedarTrie: public Algorithm, public LZ78Trie<CedarSearchPos> {
         auto search_pos = parent.search_pos();
 
         auto letter = (const char*) &c;
-        auto& from = search_pos.from;
+        auto& from = search_pos;
         cedar_factorid_t searchResult;
 
         {
@@ -71,11 +66,10 @@ class CedarTrie: public Algorithm, public LZ78Trie<CedarSearchPos> {
             searchResult = m_trie->traverse(letter, from, pos, 1);
         }
 
-        node_t r;
-
-        if(searchResult != CEDAR_NO_VALUE && searchResult != CEDAR_NO_PATH) {
-            r = node_t {
+        if(searchResult != NO_VALUE && searchResult != NO_PATH) {
+            return node_t {
                 searchResult - 1,
+                false,
                 search_pos,
             };
         } else {
@@ -87,13 +81,12 @@ class CedarTrie: public Algorithm, public LZ78Trie<CedarSearchPos> {
                     m_trie->update(letter, from, pos, 1, HIDDEN_ESCAPE_ID);
                 }
             }
-            r = node_t {
-                lz78::undef_id,
+            return node_t {
+                factorid_t(size() - 1ull),
+                true,
                 search_pos,
             };
         }
-
-        return r;
     }
 
     inline void _print(size_t from, size_t ind) {
@@ -143,7 +136,7 @@ class CedarTrie: public Algorithm, public LZ78Trie<CedarSearchPos> {
             const char c = uint8_t(i);
             size_t pos = 0;
             auto r = t.traverse(&c, child_from, pos, 1);
-            if (r != CEDAR_NO_PATH && r != CEDAR_NO_VALUE) {
+            if (r != NO_PATH && r != NO_VALUE) {
                 print_prev_empty();
                 prev_empty_min = i + 1;
                 DLOG(INFO)
@@ -184,12 +177,12 @@ public:
 		, LZ78Trie(n, remaining_characters)
         , m_trie(std::make_unique<cedar_t>()) {}
 
-    inline node_t add_rootnode(const uliteral_t c) override final {
+    inline node_t add_rootnode(const uliteral_t c) {
         cedar_factorid_t ids = c;
         DCHECK(m_ids == ids);
         m_ids++;
 
-        CedarSearchPos search_pos;
+        size_t search_pos;
 
         if (c != 0 && c != NULL_ESCAPE_ESCAPE_BYTE) {
             const char* letter = (const char*) &c;
@@ -197,17 +190,19 @@ public:
             size_t pos = 0;
             m_trie->update(letter, from, pos, 1, ids);
             DCHECK(pos == 1);
-            search_pos = CedarSearchPos{ from };
+            search_pos = size_t{ from };
         } else {
             const char* letter;
             size_t from = 0;
             size_t pos;
 
             pos = 0;
-            letter = (const char*) &NULL_ESCAPE_ESCAPE_BYTE;
+
+            auto null_escape_byte = NULL_ESCAPE_ESCAPE_BYTE;
+            letter = (const char*) &null_escape_byte;
             auto res = m_trie->traverse(letter, from, pos, 1);
 
-            if (res == CEDAR_NO_PATH || res == CEDAR_NO_VALUE) {
+            if (res == NO_PATH || res == NO_VALUE) {
                 DCHECK(pos == 0);
                 m_trie->update(letter, from, pos, 1, cedar_factorid_t(HIDDEN_ESCAPE_ID));
                 DCHECK(pos == 1);
@@ -220,26 +215,26 @@ public:
             m_trie->update(letter, from, pos, 1, ids);
             DCHECK(pos == 1);
 
-            search_pos = CedarSearchPos{ from };
+            search_pos = size_t{ from };
         }
-        auto r = node_t(ids, search_pos);
+        auto r = node_t(ids, true, search_pos);
         m_roots.set(c, search_pos);
         /*
         DLOG(INFO) << "add rootnode "
             << "char: " << int(c)
             << ", factor id: "
             << r.id() << ", from: "
-            << r.search_pos().from;
+            << r.search_pos();
         print();
         */
         return r;
     }
 
-    inline node_t get_rootnode(uliteral_t c) override final {
-        return node_t(c, m_roots.get(c));
+    inline node_t get_rootnode(uliteral_t c) const {
+        return node_t(c, false, m_roots.get(c));
     }
 
-    inline void clear() override final {
+    inline void clear() {
         // TODO: cedar seems to have a clear() method, but also
         // seems to have bugs in its implementation
         m_trie = std::make_unique<cedar_t>();
@@ -247,14 +242,14 @@ public:
         m_roots = LzwRootSearchPosMap();
     }
 
-    inline node_t find_or_insert(const node_t& parent, uliteral_t c) override final {
+    inline node_t find_or_insert(const node_t& parent, uliteral_t c) {
         node_t r;
         /*
         DLOG(INFO) << "find or insert "
             << "char: " << int(c)
             << ", factor id: "
             << parent.id() << ", from: "
-            << parent.search_pos().from;
+            << parent.search_pos();
         */
         if (c == 0) {
             auto r1 = _find_or_insert(parent, NULL_ESCAPE_ESCAPE_BYTE, false);
@@ -271,7 +266,7 @@ public:
         return r;
     }
 
-    inline factorid_t size() const override final {
+    inline size_t size() const {
         return m_ids;
     }
 };

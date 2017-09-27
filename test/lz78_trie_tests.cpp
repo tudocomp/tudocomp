@@ -77,7 +77,7 @@ void trie_test_single(TestTrie test, bool test_values) {
         //std::cout << "char '" << char(c) << "'";
         remaining--;
         auto child = trie.find_or_insert(node, c);
-        if (child.id() == lz78::undef_id) {
+        if (child.is_new()) {
             //std::cout << " not found\n";
             is_trie_node->add(c,is_trie_size);
 

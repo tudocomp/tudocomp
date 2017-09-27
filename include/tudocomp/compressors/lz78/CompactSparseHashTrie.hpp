@@ -11,7 +11,7 @@ namespace tdc {
 namespace lz78 {
 
 
-class CompactSparseHashTrie : public Algorithm, public LZ78Trie<factorid_t> {
+class CompactSparseHashTrie : public Algorithm, public LZ78Trie<> {
     compact_hash<factorid_t> m_table;
     //std::unordered_map<uint64_t, factorid_t> m_table;
     size_t m_key_width = 0;
@@ -28,7 +28,7 @@ public:
         return m;
     }
 
-    CompactSparseHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline CompactSparseHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
         : Algorithm(std::move(env))
         , LZ78Trie(n,remaining_characters)
         , m_table(next_power_of_two(reserve), 0)
@@ -38,7 +38,7 @@ public:
 
     IF_STATS(
         MoveGuard m_guard;
-        ~CompactSparseHashTrie() {
+        inline ~CompactSparseHashTrie() {
             if (m_guard) {
                 //m_table.collect_stats(env());
             }
@@ -47,7 +47,7 @@ public:
     CompactSparseHashTrie(CompactSparseHashTrie&& other) = default;
     CompactSparseHashTrie& operator=(CompactSparseHashTrie&& other) = default;
 
-    node_t add_rootnode(uliteral_t c) override {
+    inline node_t add_rootnode(uliteral_t c) {
         auto key = create_node(0, c);
         auto value = size();
 
@@ -56,18 +56,18 @@ public:
         //std::cout << "find_or_insert(" << key << ", " << entry << ", " << value << ");\n";
 
         entry = value;
-        return value;
+        return node_t(value, true);
     }
 
-    node_t get_rootnode(uliteral_t c) override {
-        return c;
+    inline node_t get_rootnode(uliteral_t c) const {
+        return node_t(c, false);
     }
 
-    void clear() override {
+    inline void clear() {
         // m_table.clear();
     }
 
-    node_t find_or_insert(const node_t& parent_w, uliteral_t c) override {
+    inline node_t find_or_insert(const node_t& parent_w, uliteral_t c) {
         auto parent = parent_w.id();
 
         // if we add a new node, its index will be equal to the current size of the dictionary
@@ -85,14 +85,14 @@ public:
             val = newleaf_id;
             DCHECK_EQ(val, newleaf_id);
             //std::cout << "find_or_insert(" << key << ", " << val << ", " << newleaf_id << ");\n";
-            return undef_id;
+            return node_t(val, true);
         } else {
             //std::cout << "find_or_insert(" << key << ", " << val << ", " << val << ");\n";
-            return val;
+            return node_t(val, false);
         }
     }
 
-    factorid_t size() const override {
+    inline size_t size() const {
         return m_table.size();
     }
 };

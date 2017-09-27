@@ -8,7 +8,7 @@
 namespace tdc {
 namespace lz78 {
 
-class BinaryTrie : public Algorithm, public LZ78Trie<factorid_t> {
+class BinaryTrie : public Algorithm, public LZ78Trie<> {
 
     /*
      * The trie is not stored in standard form. Each node stores the pointer to its first child and a pointer to its next sibling (first as first come first served)
@@ -52,24 +52,25 @@ public:
     BinaryTrie(BinaryTrie&& other) = default;
     BinaryTrie& operator=(BinaryTrie&& other) = default;
 
-    inline node_t add_rootnode(uliteral_t c) override {
+    inline node_t add_rootnode(uliteral_t c) {
+        DCHECK_EQ(c, size());
         m_first_child.push_back(undef_id);
         m_next_sibling.push_back(undef_id);
         m_literal.push_back(c);
-        return size() - 1;
+        return node_t(c, true);
     }
 
-    inline node_t get_rootnode(uliteral_t c) override {
-        return c;
+    inline node_t get_rootnode(uliteral_t c) const {
+        return node_t(c, false);
     }
 
-    inline void clear() override {
+    inline void clear() {
         m_first_child.clear();
         m_next_sibling.clear();
         m_literal.clear();
     }
 
-    inline node_t find_or_insert(const node_t& parent_w, uliteral_t c) override {
+    inline node_t find_or_insert(const node_t& parent_w, uliteral_t c) {
         auto parent = parent_w.id();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
@@ -81,7 +82,7 @@ public:
         } else {
             factorid_t node = m_first_child[parent];
             while(true) { // search the binary tree stored in parent (following left/right siblings)
-                if(c == m_literal[node]) return node;
+                if(c == m_literal[node]) return node_t(node, false);
                 if(m_next_sibling[node] == undef_id) {
                     m_next_sibling[node] = newleaf_id;
                     break;
@@ -102,10 +103,10 @@ public:
         m_first_child.push_back(undef_id);
         m_next_sibling.push_back(undef_id);
         m_literal.push_back(c);
-        return undef_id;
+        return node_t(size() - 1, true);
     }
 
-    inline factorid_t size() const override {
+    inline size_t size() const {
         return m_first_child.size();
     }
 };
