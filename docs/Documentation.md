@@ -1968,7 +1968,7 @@ Usually, just having the node label is enough for a `LZ78Trie` implementation
 to locate a node in its internal data structure.
 In cases where that is not possible though, say if you need the internal address of an node, you can replace the default `node_t`{.cpp} type with a custom one by passing it to the template argument of the `LZ78Trie<...>` parent class.
 
-Such a type `T`{.cpp} needs to provide the same API as `LZ78TrieNode`, but may:
+Such a type needs to provide the same API as `LZ78TrieNode`, but may:
 
 - Have a custom constructor.
 - Have additional members (for example, storing an internal node address).
