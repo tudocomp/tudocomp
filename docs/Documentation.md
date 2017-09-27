@@ -1931,7 +1931,7 @@ In order to fulfill the LZ78Trie interface, a class `T`{.cpp} needs to:
     inline size_t size() const;
     ~~~
 
-    where `node_t`{.cpp} is a type member provided by the parent `LZ78Trie<X>`{.cpp} that describes a node in the trie, and is equal to `X`. It defaults to `LZ78TrieNode`{.cpp}, see below for more details.
+    where `node_t`{.cpp} is a type member provided by the parent `LZ78Trie<X>`{.cpp} that describes a node in the trie, and is equal to `X`. It defaults to `LZ78TrieNode`, see below for more details.
 
 These members should have the following semantics:
 
@@ -1952,7 +1952,7 @@ These members should have the following semantics:
 
 #### `node_t`{.cpp} and custom node types
 
-`node_t`{.cpp} is per default identical to `LZ78TrieNode`{.cpp},
+`node_t`{.cpp} is per default identical to `LZ78TrieNode`,
 and behaves like a `(integer, bool)` tuple with the following API:
 
 ~~~ {.cpp}
@@ -1964,13 +1964,13 @@ inline bool is_new() const;
 
 `id()`{.cpp} returns the node label, and `is_new()`{.cpp} is true if this node has been freshly created by `find_or_insert()`{.cpp}.
 
-Usually, just having the node label is enough for a `LZ78Trie`{.cpp} implementation
+Usually, just having the node label is enough for a `LZ78Trie` implementation
 to locate a node in its internal data structure.
 In cases where that is not possible though, say if you need the internal address of an node, you can replace the default `node_t`{.cpp} type with a custom one by passing it to the template argument of the `LZ78Trie<...>` parent class.
 
-Such a type `T`{.cpp} needs to provide the same API as `LZ78TrieNode`{.cpp}, but may:
+Such a type `T`{.cpp} needs to provide the same API as `LZ78TrieNode`, but may:
 
 - Have a custom constructor.
 - Have additional members (for example, storing an internal node address).
 
-The easiest way to do this is by inheriting from `LZ78TrieNode`{.cpp}. See `include/tudocomp/compressors/lz78/CedarTrie.hpp` for an example of how this is done.
+The easiest way to do this is by inheriting from `LZ78TrieNode`. See `include/tudocomp/compressors/lz78/CedarTrie.hpp` for an example of how this is done.
