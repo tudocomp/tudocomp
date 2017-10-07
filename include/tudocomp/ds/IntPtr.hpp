@@ -402,9 +402,17 @@ namespace int_vector {
         public GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>,
         public ConstIntegerBaseCombiner<
             ConstIntegerBaseWithSelf<ConstIntRef<T>>,
-            ConstIntegerBaseWith32<ConstIntRef<T>, uint32_t>,
-            ConstIntegerBaseWith32<ConstIntRef<T>, int>,
-            ConstIntegerBaseWith64<ConstIntRef<T>, uint64_t>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, unsigned char>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, char>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, signed char>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, unsigned short int>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, signed short int>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, unsigned int>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, signed int>,
+            ConstIntegerBaseWith64<ConstIntRef<T>, unsigned long int>,
+            ConstIntegerBaseWith64<ConstIntRef<T>, signed long int>,
+            ConstIntegerBaseWith64<ConstIntRef<T>, unsigned long long int>,
+            ConstIntegerBaseWith64<ConstIntRef<T>, signed long long int>,
             ConstIntegerBaseWith64<ConstIntRef<T>, T>
         > {
     public:
@@ -419,9 +427,17 @@ namespace int_vector {
         public GenericIntRef<IntRef<T>, IntPtr<T>, T>,
         public IntegerBaseCombiner<
             IntegerBaseWithSelf<IntRef<T>>,
-            IntegerBaseWith32<IntRef<T>, uint32_t>,
-            IntegerBaseWith32<IntRef<T>, int>,
-            IntegerBaseWith64<IntRef<T>, uint64_t>,
+            IntegerBaseWith32<IntRef<T>, unsigned char>,
+            IntegerBaseWith32<IntRef<T>, char>,
+            IntegerBaseWith32<IntRef<T>, signed char>,
+            IntegerBaseWith32<IntRef<T>, unsigned short int>,
+            IntegerBaseWith32<IntRef<T>, signed short int>,
+            IntegerBaseWith32<IntRef<T>, unsigned int>,
+            IntegerBaseWith32<IntRef<T>, signed int>,
+            IntegerBaseWith64<IntRef<T>, unsigned long int>,
+            IntegerBaseWith64<IntRef<T>, signed long int>,
+            IntegerBaseWith64<IntRef<T>, unsigned long long int>,
+            IntegerBaseWith64<IntRef<T>, signed long long int>,
             IntegerBaseWith64<IntRef<T>, T>
         > {
     public:
