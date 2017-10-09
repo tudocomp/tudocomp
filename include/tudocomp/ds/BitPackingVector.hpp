@@ -62,7 +62,7 @@ namespace int_vector {
     template<>
     struct BitPackingVectorBase<dynamic_t> {
         typedef DynamicIntValueType internal_data_type;
-        typedef dynamic_t           value_type;
+        typedef uint64_t            value_type;
 
         std::vector<internal_data_type> m_vec;
         uint64_t m_real_size;
@@ -102,13 +102,13 @@ namespace int_vector {
 
     template<class T>
     struct BitPackingVector: BitPackingVectorBase<T> {
-        typedef typename BitPackingVectorBase<T>::value_type            value_type;
+        typedef typename BitPackingVectorBase<T>::value_type         value_type;
 
-        typedef IntRef<value_type>                                   reference;
-        typedef ConstIntRef<value_type>                              const_reference;
+        typedef IntRef<T>                                            reference;
+        typedef ConstIntRef<T>                                       const_reference;
 
-        typedef IntPtr<value_type>                                   pointer;
-        typedef ConstIntPtr<value_type>                              const_pointer;
+        typedef IntPtr<T>                                            pointer;
+        typedef ConstIntPtr<T>                                       const_pointer;
 
         typedef pointer                                              iterator;
         typedef const_pointer                                        const_iterator;

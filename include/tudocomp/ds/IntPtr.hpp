@@ -174,6 +174,9 @@ namespace int_vector {
         private:
             //const uint8_t m_bit_size;
         public:
+            using value_type = uint_impl_t<N>;
+            using tag_type = uint_impl_t<N>;
+
             Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
                 m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
             inline uint8_t data_bit_size() const { return N; }
@@ -193,6 +196,9 @@ namespace int_vector {
         private:
             //const uint8_t m_bit_size;
         public:
+            using value_type = uint_impl_t<N>;
+            using tag_type = uint_impl_t<N>;
+
             Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
                 m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
             inline uint8_t data_bit_size() const { return N; }
@@ -215,6 +221,9 @@ namespace int_vector {
         private:
             uint8_t m_bit_size;
         public:
+            using value_type = uint64_t;
+            using tag_type = dynamic_t;
+
             Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
                 m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
             inline uint8_t data_bit_size() const { return m_bit_size; }
@@ -234,6 +243,9 @@ namespace int_vector {
         private:
             uint8_t m_bit_size;
         public:
+            using value_type = uint64_t;
+            using tag_type = dynamic_t;
+
             Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
                 m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
             inline uint8_t data_bit_size() const { return m_bit_size; }
@@ -256,6 +268,9 @@ namespace int_vector {
         private:
             //const uint8_t m_bit_size;
         public:
+            using value_type = bool;
+            using tag_type = uint_t<1>;
+
             Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
                 m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
             inline uint8_t data_bit_size() const { return 1; }
@@ -275,6 +290,9 @@ namespace int_vector {
         private:
             //const uint8_t m_bit_size;
         public:
+            using value_type = bool;
+            using tag_type = uint_t<1>;
+
             Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
                 m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
             inline uint8_t data_bit_size() const { return 1; }
@@ -419,14 +437,9 @@ namespace int_vector {
         }
     };
 
-    template<typename T>
-    class GenericIntRefAutocast {
-    public:
-        using autocast_type = T;
-    };
-
-    template<class Self, class Ptr, class T>
+    template<class Self, class Ptr, class X>
     class GenericIntRef {
+        using T = typename IntPtrTrait<Ptr>::Data::tag_type;
     protected:
         friend class IntPtr<T>;
         friend class ConstIntPtr<T>;
@@ -438,14 +451,13 @@ namespace int_vector {
 
         Ptr m_ptr;
     public:
-        using value_type = T;
-        using autocast_type = typename GenericIntRefAutocast<T>::autocast_type;
+        using value_type = typename IntPtrTrait<Ptr>::Data::value_type;
 
         inline GenericIntRef() = delete;
         explicit GenericIntRef(const Ptr& ptr): m_ptr(ptr) {}
 
-        operator autocast_type() const {
-            return read_int<autocast_type>(
+        operator value_type() const {
+            return read_int<value_type>(
                 m_ptr.m_ptr, m_ptr.m_bit_offset, this->m_ptr.data_bit_size());
         }
 
@@ -496,7 +508,6 @@ namespace int_vector {
         > {
     public:
         using typename GenericIntRef<IntRef<T>, IntPtr<T>, T>::value_type;
-        using autocast_type = typename GenericIntRefAutocast<T>::autocast_type;
 
         inline IntRef() = delete;
         explicit IntRef(const IntPtr<T>& ptr): GenericIntRef<IntRef<T>, IntPtr<T>, T>::GenericIntRef(ptr) {}
@@ -509,7 +520,7 @@ namespace int_vector {
         };
 
         inline IntRef& operator=(const IntRef& other) {
-            return operator=(value_type(other.operator autocast_type()));
+            return operator=(other.operator value_type());
         };
 
         inline IntRef& operator=(const ConstIntRef<T>& other);
@@ -573,12 +584,6 @@ namespace int_vector {
 
     static_assert(sizeof(GenericIntPtr<ConstIntPtr<uint_t<40>>, uint_t<40>>) <= (sizeof(void*) * 2),
                   "make sure this is reasonably small");
-
-    // specializations for dynamic_t
-    template<> class GenericIntRefAutocast<dynamic_t> {
-    public:
-        using autocast_type = uint64_t;
-    };
 
 }
 

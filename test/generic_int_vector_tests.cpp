@@ -621,6 +621,8 @@ template<> struct bit_size<bool> {
     static const bool dynamic = false;
 };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnarrowing"
 template<class T>
 void generic_int_vector_template() {
     namespace iv = int_vector;
@@ -1040,6 +1042,7 @@ void generic_int_vector_template() {
     ASSERT_EQ(const_conv_1_const_ref, const_conv_2_const_ref);
     ASSERT_EQ(const_conv_1_const_ptr, const_conv_2_const_ptr);
 }
+#pragma GCC diagnostic pop
 
 // TODO: Test constness of operations
 
@@ -1088,20 +1091,20 @@ TEST(generic_int_vector, dynamic_t_extra) {
 
     IntVector<dynamic_t> a(3, 3, 1);
     IntVector<dynamic_t> b(3, 3, 2);
-    IntVector<dynamic_t> c(size_t(3), dynamic_t(4));
+    IntVector<dynamic_t> c(size_t(3), 4);
 
     {
         ASSERT_EQ(a.width(), 1);
         ASSERT_EQ(b.width(), 2);
         ASSERT_EQ(c.width(), 64);
 
-        std::vector<dynamic_t> av(a.begin(), a.end());
-        std::vector<dynamic_t> bv(b.begin(), b.end());
-        std::vector<dynamic_t> cv(c.begin(), c.end());
+        std::vector<uint64_t> av(a.begin(), a.end());
+        std::vector<uint64_t> bv(b.begin(), b.end());
+        std::vector<uint64_t> cv(c.begin(), c.end());
 
-        ASSERT_EQ(av, (std::vector<dynamic_t> { 1, 1, 1 }));
-        ASSERT_EQ(bv, (std::vector<dynamic_t> { 3, 3, 3 }));
-        ASSERT_EQ(cv, (std::vector<dynamic_t> { 4, 4, 4 }));
+        ASSERT_EQ(av, (std::vector<uint64_t> { 1, 1, 1 }));
+        ASSERT_EQ(bv, (std::vector<uint64_t> { 3, 3, 3 }));
+        ASSERT_EQ(cv, (std::vector<uint64_t> { 4, 4, 4 }));
     }
 
     a.swap(b);
@@ -1111,13 +1114,13 @@ TEST(generic_int_vector, dynamic_t_extra) {
         ASSERT_EQ(b.width(), 1);
         ASSERT_EQ(c.width(), 64);
 
-        std::vector<dynamic_t> av(a.begin(), a.end());
-        std::vector<dynamic_t> bv(b.begin(), b.end());
-        std::vector<dynamic_t> cv(c.begin(), c.end());
+        std::vector<uint64_t> av(a.begin(), a.end());
+        std::vector<uint64_t> bv(b.begin(), b.end());
+        std::vector<uint64_t> cv(c.begin(), c.end());
 
-        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
-        ASSERT_EQ(bv, (std::vector<dynamic_t> { 1, 1, 1 }));
-        ASSERT_EQ(cv, (std::vector<dynamic_t> { 4, 4, 4 }));
+        ASSERT_EQ(av, (std::vector<uint64_t> { 3, 3, 3 }));
+        ASSERT_EQ(bv, (std::vector<uint64_t> { 1, 1, 1 }));
+        ASSERT_EQ(cv, (std::vector<uint64_t> { 4, 4, 4 }));
     }
 
     b = c;
@@ -1127,13 +1130,13 @@ TEST(generic_int_vector, dynamic_t_extra) {
         ASSERT_EQ(b.width(), 64);
         ASSERT_EQ(c.width(), 64);
 
-        std::vector<dynamic_t> av(a.begin(), a.end());
-        std::vector<dynamic_t> bv(b.begin(), b.end());
-        std::vector<dynamic_t> cv(c.begin(), c.end());
+        std::vector<uint64_t> av(a.begin(), a.end());
+        std::vector<uint64_t> bv(b.begin(), b.end());
+        std::vector<uint64_t> cv(c.begin(), c.end());
 
-        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
-        ASSERT_EQ(bv, (std::vector<dynamic_t> { 4, 4, 4 }));
-        ASSERT_EQ(cv, (std::vector<dynamic_t> { 4, 4, 4 }));
+        ASSERT_EQ(av, (std::vector<uint64_t> { 3, 3, 3 }));
+        ASSERT_EQ(bv, (std::vector<uint64_t> { 4, 4, 4 }));
+        ASSERT_EQ(cv, (std::vector<uint64_t> { 4, 4, 4 }));
     }
 
     c = a;
@@ -1143,37 +1146,37 @@ TEST(generic_int_vector, dynamic_t_extra) {
         ASSERT_EQ(b.width(), 64);
         ASSERT_EQ(c.width(), 2);
 
-        std::vector<dynamic_t> av(a.begin(), a.end());
-        std::vector<dynamic_t> bv(b.begin(), b.end());
-        std::vector<dynamic_t> cv(c.begin(), c.end());
+        std::vector<uint64_t> av(a.begin(), a.end());
+        std::vector<uint64_t> bv(b.begin(), b.end());
+        std::vector<uint64_t> cv(c.begin(), c.end());
 
-        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
-        ASSERT_EQ(bv, (std::vector<dynamic_t> { 4, 4, 4 }));
-        ASSERT_EQ(cv, (std::vector<dynamic_t> { 3, 3, 3 }));
+        ASSERT_EQ(av, (std::vector<uint64_t> { 3, 3, 3 }));
+        ASSERT_EQ(bv, (std::vector<uint64_t> { 4, 4, 4 }));
+        ASSERT_EQ(cv, (std::vector<uint64_t> { 3, 3, 3 }));
     }
 
     a.width(3);
     {
         ASSERT_EQ(a.width(), 3);
-        std::vector<dynamic_t> av(a.begin(), a.end());
-        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3 }));
+        std::vector<uint64_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<uint64_t> { 3, 3, 3 }));
     }
     a.push_back(7);
     a.push_back(8);
     a.push_back(15);
     {
-        std::vector<dynamic_t> av(a.begin(), a.end());
-        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3, 7, 0, 7 }));
+        std::vector<uint64_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<uint64_t> { 3, 3, 3, 7, 0, 7 }));
     }
     a.width(2);
     {
-        std::vector<dynamic_t> av(a.begin(), a.end());
-        ASSERT_EQ(av, (std::vector<dynamic_t> { 3, 3, 3, 3, 0, 3 }));
+        std::vector<uint64_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<uint64_t> { 3, 3, 3, 3, 0, 3 }));
     }
     a.width(1);
     {
-        std::vector<dynamic_t> av(a.begin(), a.end());
-        ASSERT_EQ(av, (std::vector<dynamic_t> { 1, 1, 1, 1, 0, 1 }));
+        std::vector<uint64_t> av(a.begin(), a.end());
+        ASSERT_EQ(av, (std::vector<uint64_t> { 1, 1, 1, 1, 0, 1 }));
     }
 
     IntVector<dynamic_t> d { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
@@ -1184,8 +1187,8 @@ TEST(generic_int_vector, dynamic_t_extra) {
     auto dbs = d.bit_size();
     auto dbc = d.bit_capacity();
     {
-        std::vector<dynamic_t> dv(d.begin(), d.end());
-        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }));
+        std::vector<uint64_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<uint64_t> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }));
     }
 
     d.resize(5, 0, 8);
@@ -1195,8 +1198,8 @@ TEST(generic_int_vector, dynamic_t_extra) {
     ASSERT_EQ(dbs, d.bit_size());
     ASSERT_EQ(dbc, d.bit_capacity());
     {
-        std::vector<dynamic_t> dv(d.begin(), d.end());
-        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 4, 5 }));
+        std::vector<uint64_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<uint64_t> { 1, 2, 3, 4, 5 }));
     }
 
     d.resize(10, 11, 4);
@@ -1206,8 +1209,8 @@ TEST(generic_int_vector, dynamic_t_extra) {
     ASSERT_EQ(dbs, d.bit_size());
     ASSERT_EQ(dbc, d.bit_capacity());
     {
-        std::vector<dynamic_t> dv(d.begin(), d.end());
-        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 4, 5, 11, 11, 11, 11, 11 }));
+        std::vector<uint64_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<uint64_t> { 1, 2, 3, 4, 5, 11, 11, 11, 11, 11 }));
     }
 
     d.resize(5, 11, 2);
@@ -1216,8 +1219,8 @@ TEST(generic_int_vector, dynamic_t_extra) {
     ASSERT_EQ(d.width(), 2);
     ASSERT_EQ(10, d.bit_size());
     {
-        std::vector<dynamic_t> dv(d.begin(), d.end());
-        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 0, 1 }));
+        std::vector<uint64_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<uint64_t> { 1, 2, 3, 0, 1 }));
     }
 
     d.resize(11, 20, 10);
@@ -1226,8 +1229,8 @@ TEST(generic_int_vector, dynamic_t_extra) {
     ASSERT_EQ(d.width(), 10);
     ASSERT_EQ(110, d.bit_size());
     {
-        std::vector<dynamic_t> dv(d.begin(), d.end());
-        ASSERT_EQ(dv, (std::vector<dynamic_t> { 1, 2, 3, 0, 1, 20, 20, 20, 20, 20, 20 }));
+        std::vector<uint64_t> dv(d.begin(), d.end());
+        ASSERT_EQ(dv, (std::vector<uint64_t> { 1, 2, 3, 0, 1, 20, 20, 20, 20, 20, 20 }));
     }
 
     IntVector<dynamic_t> e;
