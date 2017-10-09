@@ -66,11 +66,11 @@ namespace tdc {
         // <not defined>
     };
     template<size_t N>
-    struct FastIntType<uint_t<N>, std::enable_if_t<(N <= 32)>> {
+    struct FastIntType<uint_impl_t<N>, std::enable_if_t<(N <= 32)>> {
         using Type = uint32_t;
     };
     template<size_t N>
-    struct FastIntType<uint_t<N>, std::enable_if_t<(N > 32)>> {
+    struct FastIntType<uint_impl_t<N>, std::enable_if_t<(N > 32)>> {
         using Type = uint64_t;
     };
     template<>

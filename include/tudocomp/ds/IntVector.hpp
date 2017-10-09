@@ -181,8 +181,64 @@ namespace int_vector {
         }
     };
 
+    template<>
+    struct IntVectorTrait<bool> {
+        typedef typename BitPackingVector<bool>::value_type             value_type;
+
+        typedef typename BitPackingVector<bool>::reference              reference;
+        typedef typename BitPackingVector<bool>::const_reference        const_reference;
+
+        typedef typename BitPackingVector<bool>::pointer                pointer;
+        typedef typename BitPackingVector<bool>::const_pointer          const_pointer;
+
+        typedef typename BitPackingVector<bool>::iterator               iterator;
+        typedef typename BitPackingVector<bool>::const_iterator         const_iterator;
+
+        typedef typename BitPackingVector<bool>::reverse_iterator       reverse_iterator;
+        typedef typename BitPackingVector<bool>::const_reverse_iterator const_reverse_iterator;
+
+        typedef typename BitPackingVector<bool>::difference_type        difference_type;
+        typedef typename BitPackingVector<bool>::size_type              size_type;
+
+        typedef          BitPackingVector<bool>                         backing_data;
+        typedef typename BitPackingVector<bool>::internal_data_type     internal_data_type;
+
+        inline static uint64_t bit_size(const backing_data& self) {
+            return self.size();
+        }
+
+        inline static uint64_t bit_capacity(const backing_data& self) {
+            return self.capacity();
+        }
+
+        static constexpr ElementStorageMode element_storage_mode() {
+            return ElementStorageMode::BitPacked;
+        }
+
+        inline static uint8_t width(const backing_data& self) {
+            return self.width();
+        }
+
+        inline static backing_data with_width(size_type n, const value_type& val, uint8_t width) {
+            width_error();
+            return backing_data(n, val);
+        }
+
+        inline static void width(backing_data& self, uint8_t w) {
+            width_error();
+        }
+
+        inline static void resize(backing_data& self, size_type n, const value_type& val, uint8_t w) {
+            width_error();
+        }
+
+        inline static void bit_reserve(backing_data& self, uint64_t n) {
+            width_error();
+        }
+    };
+
     template<size_t N>
-    struct IntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) != 0>::type> {
+    struct IntVectorTrait<uint_impl_t<N>, typename std::enable_if<(N % 8) != 0 && (N > 1)>::type> {
         typedef typename BitPackingVector<uint_t<N>>::value_type             value_type;
 
         typedef typename BitPackingVector<uint_t<N>>::reference              reference;

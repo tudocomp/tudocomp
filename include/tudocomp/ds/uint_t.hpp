@@ -8,7 +8,7 @@
 namespace tdc {
 
 template<size_t bits>
-class uint_t;
+class uint_impl_t;
 
 template<class MB>
 struct UinttDispatch {
@@ -26,25 +26,36 @@ struct UinttDispatch {
 };
 
 template<size_t N>
-struct ConstIntegerBaseTrait<uint_t<N>, typename std::enable_if<(N <= 32)>::type> {
+struct ConstIntegerBaseTrait<uint_impl_t<N>, typename std::enable_if<(N <= 32)>::type> {
     typedef UinttDispatch<uint32_t> Dispatch;
 };
 
 template<size_t N>
-struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N <= 32)>::type>
-: ConstIntegerBaseTrait<uint_t<N>> {
+struct IntegerBaseTrait<uint_impl_t<N>, typename std::enable_if<(N <= 32)>::type>
+: ConstIntegerBaseTrait<uint_impl_t<N>> {
     typedef UinttDispatch<uint32_t> Dispatch;
 };
 
 template<size_t N>
-struct ConstIntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type> {
+struct ConstIntegerBaseTrait<uint_impl_t<N>, typename std::enable_if<(N > 32)>::type> {
     typedef UinttDispatch<uint64_t> Dispatch;
 };
 
 template<size_t N>
-struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type>
-: ConstIntegerBaseTrait<uint_t<N>> {
+struct IntegerBaseTrait<uint_impl_t<N>, typename std::enable_if<(N > 32)>::type>
+: ConstIntegerBaseTrait<uint_impl_t<N>> {
     typedef UinttDispatch<uint64_t> Dispatch;
+};
+
+template<>
+struct ConstIntegerBaseTrait<bool> {
+    typedef UinttDispatch<uint32_t> Dispatch;
+};
+
+template<>
+struct IntegerBaseTrait<bool>
+: ConstIntegerBaseTrait<bool> {
+    typedef UinttDispatch<uint32_t> Dispatch;
 };
 
 /// Custom integer type for storing values of arbitrary bit size `bits`.
@@ -57,7 +68,7 @@ struct IntegerBaseTrait<uint_t<N>, typename std::enable_if<(N > 32)>::type>
 /// 40 bit indices correspond to 1TiB of addressable memory,
 /// and 48 bit correspond to today's hardware limits of the x86_64 architecture.
 template<size_t bits>
-class uint_t: public IntegerBase<uint_t<bits>> {
+class uint_impl_t: public IntegerBase<uint_impl_t<bits>> {
     static_assert(bits > 0, "bits must be non-negative");
     static_assert(bits < 65, "bits must be at most 64");
     uint64_t m_data: bits;
@@ -66,72 +77,92 @@ class uint_t: public IntegerBase<uint_t<bits>> {
     friend struct UinttDispatch<uint64_t>;
 
 public:
-    constexpr uint_t(): m_data(0) {}
-    constexpr uint_t(uint_t&& i): m_data(i.m_data) {}
+    constexpr uint_impl_t(): m_data(0) {}
+    constexpr uint_impl_t(uint_impl_t&& i): m_data(i.m_data) {}
 
     // copying
-    constexpr uint_t(const uint_t& i): m_data(i.m_data) {}
-    inline uint_t& operator=(const uint_t& b) { m_data = b.m_data; return *this; }
+    constexpr uint_impl_t(const uint_impl_t& i): m_data(i.m_data) {}
+    inline uint_impl_t& operator=(const uint_impl_t& b) { m_data = b.m_data; return *this; }
 
     // conversions for all fundamental char types
-    constexpr uint_t(unsigned char i): m_data(i) {}
-    inline uint_t& operator=(unsigned char data) { m_data = data; return *this; }
+    constexpr uint_impl_t(unsigned char i): m_data(i) {}
+    inline uint_impl_t& operator=(unsigned char data) { m_data = data; return *this; }
     constexpr operator unsigned char() const { return m_data; }
 
-    constexpr uint_t(signed char i): m_data(i) {}
-    inline uint_t& operator=(signed char data) { m_data = data; return *this; }
+    constexpr uint_impl_t(signed char i): m_data(i) {}
+    inline uint_impl_t& operator=(signed char data) { m_data = data; return *this; }
     constexpr operator signed char() const { return m_data; }
 
-    constexpr uint_t(char i): m_data(i) {}
-    constexpr uint_t& operator=(char data) { m_data = data; return *this; }
+    constexpr uint_impl_t(char i): m_data(i) {}
+    constexpr uint_impl_t& operator=(char data) { m_data = data; return *this; }
     constexpr operator char() const { return m_data; }
 
     // conversions for all fundamental integer types
-    constexpr uint_t(unsigned int i): m_data(i) {}
-    inline uint_t& operator=(unsigned int data) { m_data = data; return *this; }
+    constexpr uint_impl_t(unsigned int i): m_data(i) {}
+    inline uint_impl_t& operator=(unsigned int data) { m_data = data; return *this; }
     constexpr operator unsigned int() const { return m_data; }
 
-    constexpr uint_t(unsigned short int i): m_data(i) {}
-    inline uint_t& operator=(unsigned short int data) { m_data = data; return *this; }
+    constexpr uint_impl_t(unsigned short int i): m_data(i) {}
+    inline uint_impl_t& operator=(unsigned short int data) { m_data = data; return *this; }
     constexpr operator unsigned short int() const { return m_data; }
 
-    constexpr uint_t(unsigned long int i): m_data(i) {}
-    inline uint_t& operator=(unsigned long int data) { m_data = data; return *this; }
+    constexpr uint_impl_t(unsigned long int i): m_data(i) {}
+    inline uint_impl_t& operator=(unsigned long int data) { m_data = data; return *this; }
     constexpr operator unsigned long int() const { return m_data; }
 
-    constexpr uint_t(unsigned long long int i): m_data(i) {}
-    inline uint_t& operator=(unsigned long long int data) { m_data = data; return *this; }
+    constexpr uint_impl_t(unsigned long long int i): m_data(i) {}
+    inline uint_impl_t& operator=(unsigned long long int data) { m_data = data; return *this; }
     constexpr operator unsigned long long int() const { return m_data; }
 
-    constexpr uint_t(int i): m_data(i) {}
-    inline uint_t& operator=(int data) { m_data = data; return *this; }
+    constexpr uint_impl_t(int i): m_data(i) {}
+    inline uint_impl_t& operator=(int data) { m_data = data; return *this; }
     constexpr operator int() const { return m_data; }
 
-    constexpr uint_t(short int i): m_data(i) {}
-    inline uint_t& operator=(short int data) { m_data = data; return *this; }
+    constexpr uint_impl_t(short int i): m_data(i) {}
+    inline uint_impl_t& operator=(short int data) { m_data = data; return *this; }
     constexpr operator short int() const { return m_data; }
 
-    constexpr uint_t(long int i): m_data(i) {}
-    inline uint_t& operator=(long int data) { m_data = data; return *this; }
+    constexpr uint_impl_t(long int i): m_data(i) {}
+    inline uint_impl_t& operator=(long int data) { m_data = data; return *this; }
     constexpr operator long int() const { return m_data; }
 
-    constexpr uint_t(long long int i): m_data(i) {}
-    inline uint_t& operator=(long long int data) { m_data = data; return *this; }
+    constexpr uint_impl_t(long long int i): m_data(i) {}
+    inline uint_impl_t& operator=(long long int data) { m_data = data; return *this; }
     constexpr operator long long int() const { return m_data; }
 } __attribute__((packed));
 
 template<size_t N>
-inline std::ostream& operator<<(std::ostream& os, const uint_t<N>& v) {
+inline std::ostream& operator<<(std::ostream& os, const uint_impl_t<N>& v) {
     return os << uint64_t(v);
 }
 
 template<size_t N>
-inline std::istream& operator>>(std::istream& is, uint_t<N>& v) {
+inline std::istream& operator>>(std::istream& is, uint_impl_t<N>& v) {
     uint64_t v2;
     auto& x = is >> v2;
     v = v2;
     return x;
 }
+
+// Specialize uint_t<1> to be identical to bool
+
+// We disable 1-Bit instantiation of the actual type because the typedef
+// below will redirect uint_t<1> to bool.
+template<>
+class uint_impl_t<1> {};
+
+template<size_t N>
+struct uint_dispatch_t {
+    using type = uint_impl_t<N>;
+};
+
+template<>
+struct uint_dispatch_t<1> {
+    using type = bool;
+};
+
+template<size_t N>
+using uint_t = typename uint_dispatch_t<N>::type;
 
 static_assert(sizeof(uint_t<8>)  == 1, "sanity check");
 static_assert(sizeof(uint_t<16>) == 2, "sanity check");
@@ -163,8 +194,8 @@ static_assert(sizeof(uint_t<57>) == 8, "sanity check");
 
 namespace std {
     template<size_t N>
-    class numeric_limits<tdc::uint_t<N>> {
-        using T = tdc::uint_t<N>;
+    class numeric_limits<tdc::uint_impl_t<N>> {
+        using T = tdc::uint_impl_t<N>;
     public:
         static constexpr bool is_specialized = true;
         static constexpr bool is_signed = false;
@@ -207,13 +238,13 @@ namespace std {
     };
 
     template<size_t N>
-    std::string to_string(tdc::uint_t<N> value) {
+    std::string to_string(tdc::uint_impl_t<N> value) {
         return std::to_string(uint64_t(value));
     }
 
     template<size_t N>
-    struct hash<tdc::uint_t<N>> {
-        size_t operator()(const tdc::uint_t<N>& x) const {
+    struct hash<tdc::uint_impl_t<N>> {
+        size_t operator()(const tdc::uint_impl_t<N>& x) const {
             return hash<uint64_t>()(x);
         }
     };

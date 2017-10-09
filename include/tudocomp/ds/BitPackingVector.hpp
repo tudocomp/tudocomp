@@ -40,7 +40,7 @@ namespace int_vector {
     struct BitPackingVectorBase {};
 
     template<size_t N>
-    struct BitPackingVectorBase<uint_t<N>> {
+    struct BitPackingVectorBase<uint_impl_t<N>> {
         typedef DynamicIntValueType internal_data_type;
         typedef uint_t<N>           value_type;
 
@@ -62,7 +62,7 @@ namespace int_vector {
     template<>
     struct BitPackingVectorBase<dynamic_t> {
         typedef DynamicIntValueType internal_data_type;
-        typedef dynamic_t           value_type;
+        typedef uint64_t            value_type;
 
         std::vector<internal_data_type> m_vec;
         uint64_t m_real_size;
@@ -80,15 +80,35 @@ namespace int_vector {
 
     };
 
+    template<>
+    struct BitPackingVectorBase<bool> {
+        typedef DynamicIntValueType internal_data_type;
+        typedef bool                value_type;
+
+        std::vector<internal_data_type> m_vec;
+        uint64_t m_real_size;
+
+        inline BitPackingVectorBase():
+            m_vec(), m_real_size(0) {}
+        inline BitPackingVectorBase(const BitPackingVectorBase& other):
+            m_vec(other.m_vec), m_real_size(other.m_real_size) {}
+        inline BitPackingVectorBase(BitPackingVectorBase&& other):
+            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
+
+        inline uint8_t raw_width() const { return 1; }
+        inline void set_width_raw(uint8_t) { }
+
+    };
+
     template<class T>
     struct BitPackingVector: BitPackingVectorBase<T> {
-        typedef typename BitPackingVectorBase<T>::value_type            value_type;
+        typedef typename BitPackingVectorBase<T>::value_type         value_type;
 
-        typedef IntRef<value_type>                                   reference;
-        typedef ConstIntRef<value_type>                              const_reference;
+        typedef IntRef<T>                                            reference;
+        typedef ConstIntRef<T>                                       const_reference;
 
-        typedef IntPtr<value_type>                                   pointer;
-        typedef ConstIntPtr<value_type>                              const_pointer;
+        typedef IntPtr<T>                                            pointer;
+        typedef ConstIntPtr<T>                                       const_pointer;
 
         typedef pointer                                              iterator;
         typedef const_pointer                                        const_iterator;
