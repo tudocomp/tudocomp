@@ -580,11 +580,6 @@ namespace int_vector {
         using autocast_type = uint64_t;
     };
 
-    // specializations for uint_t<1>
-    template<> class GenericIntRefAutocast<uint_t<1>> {
-    public:
-        using autocast_type = bool;
-    };
 }
 
 template<class T>
