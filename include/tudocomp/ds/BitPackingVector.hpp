@@ -40,7 +40,7 @@ namespace int_vector {
     struct BitPackingVectorBase {};
 
     template<size_t N>
-    struct BitPackingVectorBase<uint_t<N>> {
+    struct BitPackingVectorBase<uint_impl_t<N>> {
         typedef DynamicIntValueType internal_data_type;
         typedef uint_t<N>           value_type;
 
@@ -77,6 +77,26 @@ namespace int_vector {
 
         inline uint8_t raw_width() const { return m_width; }
         inline void set_width_raw(uint8_t width) { m_width = width; }
+
+    };
+
+    template<>
+    struct BitPackingVectorBase<bool> {
+        typedef DynamicIntValueType internal_data_type;
+        typedef bool                value_type;
+
+        std::vector<internal_data_type> m_vec;
+        uint64_t m_real_size;
+
+        inline BitPackingVectorBase():
+            m_vec(), m_real_size(0) {}
+        inline BitPackingVectorBase(const BitPackingVectorBase& other):
+            m_vec(other.m_vec), m_real_size(other.m_real_size) {}
+        inline BitPackingVectorBase(BitPackingVectorBase&& other):
+            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
+
+        inline uint8_t raw_width() const { return 1; }
+        inline void set_width_raw(uint8_t) { }
 
     };
 

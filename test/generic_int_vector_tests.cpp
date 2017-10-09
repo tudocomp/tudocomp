@@ -608,7 +608,7 @@ template<class T> struct bit_size {
     static const uint64_t size = sizeof(T) * CHAR_BIT;
     static const bool dynamic = false;
 };
-template<size_t N> struct bit_size<uint_t<N>> {
+template<size_t N> struct bit_size<uint_impl_t<N>> {
     static const uint64_t size = N;
     static const bool dynamic = false;
 };
@@ -616,12 +616,31 @@ template<> struct bit_size<dynamic_t> {
     static const uint64_t size = 64;
     static const bool dynamic = true;
 };
+template<> struct bit_size<bool> {
+    static const uint64_t size = 1;
+    static const bool dynamic = false;
+};
 
 template<class T>
 void generic_int_vector_template() {
     namespace iv = int_vector;
     auto N = bit_size<T>::size;
     using V = typename IntVector<T>::value_type;
+
+    auto vi = [&](uint x) -> int {
+        return x & ((1ull << (N - 1) << 1) - 1ull);
+    };
+    auto v = [&](uint x) -> V {
+        return vi(x);
+    };
+
+    auto construct = [&](std::initializer_list<int> data) {
+        IntVector<T> n;
+        for (auto x : data) {
+            n.push_back(v(x));
+        }
+        return n;
+    };
 
     std::cout << "tests for " << N << "\n";
 
@@ -631,56 +650,56 @@ void generic_int_vector_template() {
         ASSERT_EQ(IntVector<T>::element_storage_mode(), iv::ElementStorageMode::BitPacked);
     }
 
-    ASSERT_TRUE ((IntVector<T> { 1, 2, 3 }) == (IntVector<T> { 1, 2, 3 }));
-    ASSERT_TRUE ((IntVector<T> {         }) == (IntVector<T> {         }));
-    ASSERT_TRUE ((IntVector<T> { 9       }) == (IntVector<T> { 9       }));
-    ASSERT_FALSE((IntVector<T> { 1, 2, 3 }) == (IntVector<T> { 1, 2, 4 }));
-    ASSERT_FALSE((IntVector<T> { 1, 2, 3 }) == (IntVector<T> { 1, 2    }));
+    ASSERT_TRUE (construct({ 1, 2, 3 }) == construct({ 1, 2, 3 }));
+    ASSERT_TRUE (construct({         }) == construct({         }));
+    ASSERT_TRUE (construct({ 9       }) == construct({ 9       }));
+    ASSERT_FALSE(construct({ 1, 2, 3 }) == construct({ 1, 2, 4 }));
+    ASSERT_FALSE(construct({ 1, 2, 3 }) == construct({ 1, 2    }));
 
-    ASSERT_TRUE ((IntVector<T> { 1, 2, 3 }) != (IntVector<T> { 1, 2, 4 }));
-    ASSERT_TRUE ((IntVector<T> { 1, 2, 3 }) != (IntVector<T> { 1, 2    }));
-    ASSERT_TRUE ((IntVector<T> {         }) != (IntVector<T> { 1, 2    }));
-    ASSERT_FALSE((IntVector<T> { 1, 2, 3 }) != (IntVector<T> { 1, 2, 3 }));
+    ASSERT_TRUE (construct({ 1, 2, 3 }) != construct({ 1, 2, 4 }));
+    ASSERT_TRUE (construct({ 1, 2, 3 }) != construct({ 1, 2    }));
+    ASSERT_TRUE (construct({         }) != construct({ 1, 2    }));
+    ASSERT_FALSE(construct({ 1, 2, 3 }) != construct({ 1, 2, 3 }));
 
-    ASSERT_TRUE ((IntVector<T> { 0, 2, 4 }) < (IntVector<T> { 0, 2, 5 }));
-    ASSERT_TRUE ((IntVector<T> { 1, 2    }) < (IntVector<T> { 1, 2, 3 }));
-    ASSERT_TRUE ((IntVector<T> { 0, 1, 3 }) < (IntVector<T> { 3, 0, 0 }));
-    ASSERT_TRUE ((IntVector<T> {         }) < (IntVector<T> { 1       }));
-    ASSERT_FALSE((IntVector<T> { 0, 1, 2 }) < (IntVector<T> { 0, 1, 2 }));
-    ASSERT_FALSE((IntVector<T> { 0, 2, 5 }) < (IntVector<T> { 0, 2, 4 }));
-    ASSERT_FALSE((IntVector<T> { 1, 2, 3 }) < (IntVector<T> { 1, 2    }));
-    ASSERT_FALSE((IntVector<T> { 3, 0, 0 }) < (IntVector<T> { 0, 1, 3 }));
-    ASSERT_FALSE((IntVector<T> { 1,      }) < (IntVector<T> {         }));
+    ASSERT_TRUE (construct({ 0, 2, 4 }) < construct({ 0, 2, 5 }));
+    ASSERT_TRUE (construct({ 1, 2    }) < construct({ 1, 2, 3 }));
+    ASSERT_TRUE (construct({ 0, 1, 3 }) < construct({ 3, 0, 0 }));
+    ASSERT_TRUE (construct({         }) < construct({ 1       }));
+    ASSERT_FALSE(construct({ 0, 1, 2 }) < construct({ 0, 1, 2 }));
+    ASSERT_FALSE(construct({ 0, 2, 5 }) < construct({ 0, 2, 4 }));
+    ASSERT_FALSE(construct({ 1, 2, 3 }) < construct({ 1, 2    }));
+    ASSERT_FALSE(construct({ 3, 0, 0 }) < construct({ 0, 1, 3 }));
+    ASSERT_FALSE(construct({ 1,      }) < construct({         }));
 
-    ASSERT_TRUE ((IntVector<T> { 0, 2, 5 }) > (IntVector<T> { 0, 2, 4 }));
-    ASSERT_TRUE ((IntVector<T> { 1, 2, 3 }) > (IntVector<T> { 1, 2    }));
-    ASSERT_TRUE ((IntVector<T> { 3, 0, 0 }) > (IntVector<T> { 0, 1, 3 }));
-    ASSERT_TRUE ((IntVector<T> { 1,      }) > (IntVector<T> {         }));
-    ASSERT_FALSE((IntVector<T> { 0, 1, 2 }) > (IntVector<T> { 0, 1, 2 }));
-    ASSERT_FALSE((IntVector<T> { 0, 2, 4 }) > (IntVector<T> { 0, 2, 5 }));
-    ASSERT_FALSE((IntVector<T> { 1, 2    }) > (IntVector<T> { 1, 2, 3 }));
-    ASSERT_FALSE((IntVector<T> { 0, 1, 3 }) > (IntVector<T> { 3, 0, 0 }));
-    ASSERT_FALSE((IntVector<T> {         }) > (IntVector<T> { 1       }));
+    ASSERT_TRUE (construct({ 0, 2, 5 }) > construct({ 0, 2, 4 }));
+    ASSERT_TRUE (construct({ 1, 2, 3 }) > construct({ 1, 2    }));
+    ASSERT_TRUE (construct({ 3, 0, 0 }) > construct({ 0, 1, 3 }));
+    ASSERT_TRUE (construct({ 1,      }) > construct({         }));
+    ASSERT_FALSE(construct({ 0, 1, 2 }) > construct({ 0, 1, 2 }));
+    ASSERT_FALSE(construct({ 0, 2, 4 }) > construct({ 0, 2, 5 }));
+    ASSERT_FALSE(construct({ 1, 2    }) > construct({ 1, 2, 3 }));
+    ASSERT_FALSE(construct({ 0, 1, 3 }) > construct({ 3, 0, 0 }));
+    ASSERT_FALSE(construct({         }) > construct({ 1       }));
 
-    ASSERT_TRUE ((IntVector<T> { 0, 2, 4 }) <= (IntVector<T> { 0, 2, 5 }));
-    ASSERT_TRUE ((IntVector<T> { 1, 2    }) <= (IntVector<T> { 1, 2, 3 }));
-    ASSERT_TRUE ((IntVector<T> { 0, 1, 3 }) <= (IntVector<T> { 3, 0, 0 }));
-    ASSERT_TRUE ((IntVector<T> {         }) <= (IntVector<T> { 1       }));
-    ASSERT_TRUE ((IntVector<T> { 0, 1, 2 }) <= (IntVector<T> { 0, 1, 2 }));
-    ASSERT_FALSE((IntVector<T> { 0, 2, 5 }) <= (IntVector<T> { 0, 2, 4 }));
-    ASSERT_FALSE((IntVector<T> { 1, 2, 3 }) <= (IntVector<T> { 1, 2    }));
-    ASSERT_FALSE((IntVector<T> { 3, 0, 0 }) <= (IntVector<T> { 0, 1, 3 }));
-    ASSERT_FALSE((IntVector<T> { 1,      }) <= (IntVector<T> {         }));
+    ASSERT_TRUE (construct({ 0, 2, 4 }) <= construct({ 0, 2, 5 }));
+    ASSERT_TRUE (construct({ 1, 2    }) <= construct({ 1, 2, 3 }));
+    ASSERT_TRUE (construct({ 0, 1, 3 }) <= construct({ 3, 0, 0 }));
+    ASSERT_TRUE (construct({         }) <= construct({ 1       }));
+    ASSERT_TRUE (construct({ 0, 1, 2 }) <= construct({ 0, 1, 2 }));
+    ASSERT_FALSE(construct({ 0, 2, 5 }) <= construct({ 0, 2, 4 }));
+    ASSERT_FALSE(construct({ 1, 2, 3 }) <= construct({ 1, 2    }));
+    ASSERT_FALSE(construct({ 3, 0, 0 }) <= construct({ 0, 1, 3 }));
+    ASSERT_FALSE(construct({ 1,      }) <= construct({         }));
 
-    ASSERT_TRUE ((IntVector<T> { 0, 2, 5 }) >= (IntVector<T> { 0, 2, 4 }));
-    ASSERT_TRUE ((IntVector<T> { 1, 2, 3 }) >= (IntVector<T> { 1, 2    }));
-    ASSERT_TRUE ((IntVector<T> { 3, 0, 0 }) >= (IntVector<T> { 0, 1, 3 }));
-    ASSERT_TRUE ((IntVector<T> { 1,      }) >= (IntVector<T> {         }));
-    ASSERT_TRUE ((IntVector<T> { 0, 1, 2 }) >= (IntVector<T> { 0, 1, 2 }));
-    ASSERT_FALSE((IntVector<T> { 0, 2, 4 }) >= (IntVector<T> { 0, 2, 5 }));
-    ASSERT_FALSE((IntVector<T> { 1, 2    }) >= (IntVector<T> { 1, 2, 3 }));
-    ASSERT_FALSE((IntVector<T> { 0, 1, 3 }) >= (IntVector<T> { 3, 0, 0 }));
-    ASSERT_FALSE((IntVector<T> {         }) >= (IntVector<T> { 1       }));
+    ASSERT_TRUE (construct({ 0, 2, 5 }) >= construct({ 0, 2, 4 }));
+    ASSERT_TRUE (construct({ 1, 2, 3 }) >= construct({ 1, 2    }));
+    ASSERT_TRUE (construct({ 3, 0, 0 }) >= construct({ 0, 1, 3 }));
+    ASSERT_TRUE (construct({ 1,      }) >= construct({         }));
+    ASSERT_TRUE (construct({ 0, 1, 2 }) >= construct({ 0, 1, 2 }));
+    ASSERT_FALSE(construct({ 0, 2, 4 }) >= construct({ 0, 2, 5 }));
+    ASSERT_FALSE(construct({ 1, 2    }) >= construct({ 1, 2, 3 }));
+    ASSERT_FALSE(construct({ 0, 1, 3 }) >= construct({ 3, 0, 0 }));
+    ASSERT_FALSE(construct({         }) >= construct({ 1       }));
 
     IntVector<T> dflt;
     ASSERT_EQ(dflt.size(), 0);
@@ -690,68 +709,68 @@ void generic_int_vector_template() {
     IntVector<T> fill1(size_t(10));
     ASSERT_EQ(fill1.size(), 10);
     ASSERT_EQ(fill1.bit_size(), 10 * N);
-    ASSERT_EQ(fill1, (IntVector<T> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
+    ASSERT_EQ(fill1, construct({ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
 
     IntVector<T> fill2(size_t(10), V(1));
     ASSERT_EQ(fill2.size(), 10);
     ASSERT_EQ(fill2.bit_size(), 10 * N);
-    ASSERT_EQ(fill2, (IntVector<T> { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
+    ASSERT_EQ(fill2, construct({ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
 
     std::vector<V> iter_src_1(10, V(1));
     IntVector<T> range1(iter_src_1.begin(), iter_src_1.end());
     ASSERT_EQ(range1.size(), 10);
     ASSERT_EQ(range1.bit_size(), 10 * N);
-    ASSERT_EQ(range1, (IntVector<T> { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
+    ASSERT_EQ(range1, construct({ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
 
     std::vector<uint64_t> iter_src_2(10, 1);
     IntVector<T> range2(iter_src_2.begin(), iter_src_2.end());
     ASSERT_EQ(range2.size(), 10);
     ASSERT_EQ(range2.bit_size(), 10 * N);
-    ASSERT_EQ(range2, (IntVector<T> { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
+    ASSERT_EQ(range2, construct({ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
 
     IntVector<T> copy(fill1);
     ASSERT_EQ(copy.size(), 10);
     ASSERT_EQ(copy.bit_size(), 10 * N);
-    ASSERT_EQ(copy, (IntVector<T> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
+    ASSERT_EQ(copy, construct({ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
     ASSERT_EQ(copy, fill1);
 
     IntVector<T> move(std::move(copy));
     ASSERT_EQ(move.size(), 10);
     ASSERT_EQ(move.bit_size(), 10 * N);
-    ASSERT_EQ(move, (IntVector<T> { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
+    ASSERT_EQ(move, construct({ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }));
     ASSERT_EQ(move, fill1);
 
-    IntVector<T> il1 { V(1), V(2), V(3), V(4) };
+    IntVector<T> il1 { v(1), v(2), v(3), v(4) };
     ASSERT_EQ(il1.size(), 4);
     ASSERT_EQ(il1.bit_size(), 4 * N);
-    ASSERT_EQ(il1, (IntVector<T> { 1, 2, 3, 4 }));
+    ASSERT_EQ(il1, construct({ 1, 2, 3, 4 }));
 
-    IntVector<T> il2 { 1, 2, 3, 4 };
+    IntVector<T> il2 { vi(1), vi(2), vi(3), vi(4) };
     ASSERT_EQ(il2.size(), 4);
     ASSERT_EQ(il2.bit_size(), 4 * N);
-    ASSERT_EQ(il2, (IntVector<T> { 1, 2, 3, 4 }));
+    ASSERT_EQ(il2, construct({ 1, 2, 3, 4 }));
 
     IntVector<T> assign_target;
-    IntVector<T> assign_src1 { 1, 2, 3, 4 };
-    IntVector<T> assign_src2 { 5, 6, 7 };
+    IntVector<T> assign_src1 { vi(1), vi(2), vi(3), vi(4) };
+    IntVector<T> assign_src2 { vi(5), vi(6), vi(7) };
 
     assign_target = assign_src1;
     ASSERT_EQ(assign_target.size(), 4);
     ASSERT_EQ(assign_target.bit_size(), 4 * N);
-    ASSERT_EQ(assign_target, (IntVector<T> { 1, 2, 3, 4 }));
+    ASSERT_EQ(assign_target, construct({ 1, 2, 3, 4 }));
 
     assign_target = std::move(assign_src2);
     ASSERT_EQ(assign_target.size(), 3);
     ASSERT_EQ(assign_target.bit_size(), 3 * N);
-    ASSERT_EQ(assign_target, (IntVector<T> { 5, 6, 7 }));
+    ASSERT_EQ(assign_target, construct({ 5, 6, 7 }));
 
-    assign_target = { 8, 9, 10, 11, 12 };
+    assign_target = { vi(8), vi(9), vi(10), vi(11), vi(12) };
     ASSERT_EQ(assign_target.size(), 5);
     ASSERT_EQ(assign_target.bit_size(), 5 * N);
-    ASSERT_EQ(assign_target, (IntVector<T> { 8, 9, 10, 11, 12 }));
+    ASSERT_EQ(assign_target, construct({ 8, 9, 10, 11, 12 }));
 
-    IntVector<T> iter_src { 1, 2, 3, 4 };
-    std::vector<uint64_t> iter_src_cmp  { V(1), V(2), V(3), V(4) };
+    IntVector<T> iter_src { vi(1), vi(2), vi(3), vi(4) };
+    std::vector<uint64_t> iter_src_cmp  { v(1), v(2), v(3), v(4) };
 
     ASSERT_EQ(*iter_src.begin(), *iter_src_cmp.begin());
     ASSERT_EQ(*iter_src.rbegin(), *iter_src_cmp.rbegin());
@@ -759,38 +778,38 @@ void generic_int_vector_template() {
     ASSERT_EQ(*iter_src.crbegin(), *iter_src_cmp.crbegin());
 
     std::vector<V> iterd1(iter_src.begin(), iter_src.end());
-    ASSERT_EQ(iterd1, (std::vector<V> { 1, 2, 3, 4 }));
+    ASSERT_EQ(iterd1, (std::vector<V> { vi(1), vi(2), vi(3), vi(4) }));
 
     std::vector<V> iterd2(iter_src.rbegin(), iter_src.rend());
-    ASSERT_EQ(iterd2, (std::vector<V> { 4, 3, 2, 1 }));
+    ASSERT_EQ(iterd2, (std::vector<V> { vi(4), vi(3), vi(2), vi(1) }));
 
     auto iterd_i = 1;
     for (auto a = iter_src.begin(), b = iter_src.end(); a != b; ++a) {
         *a += iterd_i;
         iterd_i++;
     }
-    ASSERT_EQ(iter_src, (IntVector<T> { 2, 4, 6, 8 }));
+    ASSERT_EQ(iter_src, construct({ 2, 4, 6, 8 }));
 
     for (auto a = iter_src.rbegin(), b = iter_src.rend(); a != b; ++a) {
         *a += iterd_i;
         iterd_i++;
     }
-    ASSERT_EQ(iter_src, (IntVector<T> { 10, 11, 12, 13 }));
+    ASSERT_EQ(iter_src, construct({ 10, 11, 12, 13 }));
 
-    const IntVector<T> const_iter_src { 1, 2, 3, 4 };
+    const IntVector<T> const_iter_src { vi(1), vi(2), vi(3), vi(4) };
 
     std::vector<V> iterd3(const_iter_src.begin(), const_iter_src.end());
-    ASSERT_EQ(iterd3, (std::vector<V> { 1, 2, 3, 4 }));
+    ASSERT_EQ(iterd3, (std::vector<V> { vi(1), vi(2), vi(3), vi(4) }));
 
     std::vector<V> iterd4(const_iter_src.rbegin(), const_iter_src.rend());
-    ASSERT_EQ(iterd4, (std::vector<V> { 4, 3, 2, 1 }));
+    ASSERT_EQ(iterd4, (std::vector<V> { vi(4), vi(3), vi(2), vi(1) }));
 
     ASSERT_GE(dflt.max_size(), std::vector<uint64_t>().max_size());
 
-    IntVector<T> resize { 1, 2, 3, 4 };
+    IntVector<T> resize { vi(1), vi(2), vi(3), vi(4) };
     ASSERT_EQ(resize.size(), 4);
     auto tmp_capa = resize.capacity();
-    ASSERT_EQ(resize, (IntVector<T> { 1, 2, 3, 4 }));
+    ASSERT_EQ(resize, construct({ 1, 2, 3, 4 }));
     ASSERT_GE(resize.capacity(), resize.size());
     ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
 
@@ -798,11 +817,11 @@ void generic_int_vector_template() {
     ASSERT_EQ(resize.size(), 2);
     ASSERT_EQ(tmp_capa, resize.capacity());
     ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
-    ASSERT_EQ(resize, (IntVector<T> { 1, 2 }));
+    ASSERT_EQ(resize, construct({ 1, 2 }));
 
     resize.resize(5, 1);
     ASSERT_EQ(resize.size(), 5);
-    ASSERT_EQ(resize, (IntVector<T> { 1, 2, 1, 1, 1 }));
+    ASSERT_EQ(resize, construct({ 1, 2, 1, 1, 1 }));
     ASSERT_GE(resize.capacity(), resize.size());
     ASSERT_EQ(resize.capacity() * N, resize.bit_capacity());
 
@@ -818,39 +837,39 @@ void generic_int_vector_template() {
 
     reserve.shrink_to_fit();
 
-    IntVector<T> referenced { 1, 2, 3, 4, 5 };
-    const IntVector<T> const_referenced { 1, 2, 3, 4, 5 };
-    ASSERT_EQ(referenced[0], (T(1)));
-    ASSERT_EQ(referenced[1], (T(2)));
-    ASSERT_EQ(referenced[2], (T(3)));
-    ASSERT_EQ(referenced[3], (T(4)));
-    ASSERT_EQ(referenced[4], (T(5)));
+    IntVector<T> referenced { vi(1), vi(2), vi(3), vi(4), vi(5) };
+    const IntVector<T> const_referenced { vi(1), vi(2), vi(3), vi(4), vi(5) };
+    ASSERT_EQ(referenced[0], (v(1)));
+    ASSERT_EQ(referenced[1], (v(2)));
+    ASSERT_EQ(referenced[2], (v(3)));
+    ASSERT_EQ(referenced[3], (v(4)));
+    ASSERT_EQ(referenced[4], (v(5)));
 
-    ASSERT_EQ(const_referenced[0], (T(1)));
-    ASSERT_EQ(const_referenced[1], (T(2)));
-    ASSERT_EQ(const_referenced[2], (T(3)));
-    ASSERT_EQ(const_referenced[3], (T(4)));
-    ASSERT_EQ(const_referenced[4], (T(5)));
+    ASSERT_EQ(const_referenced[0], (v(1)));
+    ASSERT_EQ(const_referenced[1], (v(2)));
+    ASSERT_EQ(const_referenced[2], (v(3)));
+    ASSERT_EQ(const_referenced[3], (v(4)));
+    ASSERT_EQ(const_referenced[4], (v(5)));
 
-    referenced[2] = V(100);
-    ASSERT_EQ(referenced[2], (V(100)));
-    ASSERT_EQ(referenced, (IntVector<T> { 1, 2, 100, 4, 5 }));
+    referenced[2] = v(100);
+    ASSERT_EQ(referenced[2], (v(100)));
+    ASSERT_EQ(referenced, construct({ 1, 2, 100, 4, 5 }));
 
-    ASSERT_EQ(referenced.at(0), (V(1)));
-    ASSERT_EQ(referenced.at(1), (V(2)));
-    ASSERT_EQ(referenced.at(2), (V(100)));
-    ASSERT_EQ(referenced.at(3), (V(4)));
-    ASSERT_EQ(referenced.at(4), (V(5)));
+    ASSERT_EQ(referenced.at(0), (v(1)));
+    ASSERT_EQ(referenced.at(1), (v(2)));
+    ASSERT_EQ(referenced.at(2), (v(100)));
+    ASSERT_EQ(referenced.at(3), (v(4)));
+    ASSERT_EQ(referenced.at(4), (v(5)));
 
-    ASSERT_EQ(const_referenced.at(0), (V(1)));
-    ASSERT_EQ(const_referenced.at(1), (V(2)));
-    ASSERT_EQ(const_referenced.at(2), (V(3)));
-    ASSERT_EQ(const_referenced.at(3), (V(4)));
-    ASSERT_EQ(const_referenced.at(4), (V(5)));
+    ASSERT_EQ(const_referenced.at(0), (v(1)));
+    ASSERT_EQ(const_referenced.at(1), (v(2)));
+    ASSERT_EQ(const_referenced.at(2), (v(3)));
+    ASSERT_EQ(const_referenced.at(3), (v(4)));
+    ASSERT_EQ(const_referenced.at(4), (v(5)));
 
-    referenced.at(3) = V(99);
-    ASSERT_EQ(referenced.at(3), (V(99)));
-    ASSERT_EQ(referenced, (IntVector<T> { 1, 2, 100, 99, 5 }));
+    referenced.at(3) = v(99);
+    ASSERT_EQ(referenced.at(3), (v(99)));
+    ASSERT_EQ(referenced, construct({ 1, 2, 100, 99, 5 }));
 
     {
         bool caught = false;
@@ -881,136 +900,136 @@ void generic_int_vector_template() {
         ASSERT_TRUE(caught);
     }
 
-    ASSERT_EQ(referenced.front(), (T(1)));
-    ASSERT_EQ(const_referenced.front(), (T(1)));
-    ASSERT_EQ(referenced.back(), (T(5)));
-    ASSERT_EQ(const_referenced.back(), (T(5)));
+    ASSERT_EQ(referenced.front(), (v(1)));
+    ASSERT_EQ(const_referenced.front(), (v(1)));
+    ASSERT_EQ(referenced.back(), (v(5)));
+    ASSERT_EQ(const_referenced.back(), (v(5)));
 
     ASSERT_NE(referenced.data(), nullptr);
     ASSERT_NE(const_referenced.data(), nullptr);
 
     IntVector<T> assign1;
-    assign1.assign(size_t(10), T(1));
+    assign1.assign(size_t(10), v(1));
     ASSERT_EQ(assign1.size(), 10);
     ASSERT_EQ(assign1.bit_size(), 10 * N);
-    ASSERT_EQ(assign1, (IntVector<T> { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
+    ASSERT_EQ(assign1, construct({ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
 
     IntVector<T> assign2;
     assign2.assign(iter_src_1.begin(), iter_src_1.end());
     ASSERT_EQ(assign2.size(), 10);
     ASSERT_EQ(assign2.bit_size(), 10 * N);
-    ASSERT_EQ(assign2, (IntVector<T> { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
+    ASSERT_EQ(assign2, construct({ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
 
     IntVector<T> assign3;
     assign3.assign(iter_src_2.begin(), iter_src_2.end());
     ASSERT_EQ(assign3.size(), 10);
     ASSERT_EQ(assign3.bit_size(), 10 * N);
-    ASSERT_EQ(assign3, (IntVector<T> { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
+    ASSERT_EQ(assign3, construct({ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }));
 
     IntVector<T> assign4;
-    assign4.assign({ T(1), T(2), T(3), T(4) });
+    assign4.assign({ v(1), v(2), v(3), v(4) });
     ASSERT_EQ(assign4.size(), 4);
     ASSERT_EQ(assign4.bit_size(), 4 * N);
-    ASSERT_EQ(assign4, (IntVector<T> { 1, 2, 3, 4 }));
+    ASSERT_EQ(assign4, construct({ 1, 2, 3, 4 }));
 
     IntVector<T> push_back;
     ASSERT_EQ(push_back.size(), 0);
     ASSERT_EQ(push_back.bit_size(), 0 * N);
-    ASSERT_EQ(push_back, (IntVector<T> { }));
+    ASSERT_EQ(push_back, construct({ }));
 
-    push_back.push_back(T(15));
+    push_back.push_back(v(15));
     ASSERT_EQ(push_back.size(), 1);
     ASSERT_EQ(push_back.bit_size(), 1 * N);
-    ASSERT_EQ(push_back, (IntVector<T> { 15 }));
+    ASSERT_EQ(push_back, construct({ 15 }));
 
-    push_back.push_back(T(9));
+    push_back.push_back(v(9));
     ASSERT_EQ(push_back.size(), 2);
     ASSERT_EQ(push_back.bit_size(), 2 * N);
-    ASSERT_EQ(push_back, (IntVector<T> { 15, 9 }));
+    ASSERT_EQ(push_back, construct({ 15, 9 }));
 
     push_back.pop_back();
     ASSERT_EQ(push_back.size(), 1);
     ASSERT_EQ(push_back.bit_size(), 1 * N);
-    ASSERT_EQ(push_back, (IntVector<T> { 15 }));
+    ASSERT_EQ(push_back, construct({ 15 }));
 
-    IntVector<T> insert1 { 6, 5, 4, 3, 2, 1 };
-    auto insert1_r = insert1.insert(insert1.cbegin() + 3, T(9));
-    ASSERT_EQ(*insert1_r, (T(9)));
+    IntVector<T> insert1 { vi(6), vi(5), vi(4), vi(3), vi(2), vi(1) };
+    auto insert1_r = insert1.insert(insert1.cbegin() + 3, v(9));
+    ASSERT_EQ(*insert1_r, (v(9)));
     ASSERT_TRUE((insert1.begin() < insert1_r) && (insert1_r < insert1.end()));
-    ASSERT_EQ(insert1, (IntVector<T> { 6, 5, 4, 9, 3, 2, 1 }));
+    ASSERT_EQ(insert1, construct({ 6, 5, 4, 9, 3, 2, 1 }));
 
-    IntVector<T> insert2 { 6, 5, 4, 3, 2, 1 };
-    auto insert2_r = insert2.insert(insert2.cbegin() + 3, 3, T(9));
-    ASSERT_EQ(*insert2_r, (T(9)));
+    IntVector<T> insert2 { vi(6), vi(5), vi(4), vi(3), vi(2), vi(1) };
+    auto insert2_r = insert2.insert(insert2.cbegin() + 3, 3, v(9));
+    ASSERT_EQ(*insert2_r, (v(9)));
     ASSERT_TRUE((insert2.begin() < insert2_r) && (insert2_r < insert2.end()));
-    ASSERT_EQ(insert2, (IntVector<T> { 6, 5, 4, 9, 9, 9, 3, 2, 1 }));
+    ASSERT_EQ(insert2, construct({ 6, 5, 4, 9, 9, 9, 3, 2, 1 }));
 
-    IntVector<T> insert3 { 6, 5, 4, 3, 2, 1 };
-    IntVector<T> insert3_src { 9, 8, 7 };
+    IntVector<T> insert3 { vi(6), vi(5), vi(4), vi(3), vi(2), vi(1) };
+    IntVector<T> insert3_src { vi(9), vi(8), vi(7) };
     auto insert3_r = insert3.insert(insert3.cbegin() + 3, insert3_src.begin(), insert3_src.end());
-    ASSERT_EQ(*insert3_r, (T(9)));
+    ASSERT_EQ(*insert3_r, (v(9)));
     ASSERT_TRUE((insert3.begin() < insert3_r) && (insert3_r < insert3.end()));
-    ASSERT_EQ(insert3, (IntVector<T> { 6, 5, 4, 9, 8, 7, 3, 2, 1 }));
+    ASSERT_EQ(insert3, construct({ 6, 5, 4, 9, 8, 7, 3, 2, 1 }));
 
-    IntVector<T> insert4 { 6, 5, 4, 3, 2, 1 };
-    auto insert4_v = T(9);
+    IntVector<T> insert4 { vi(6), vi(5), vi(4), vi(3), vi(2), vi(1) };
+    auto insert4_v = v(9);
     auto insert4_r = insert4.insert(insert4.cbegin() + 3, std::move(insert4_v));
-    ASSERT_EQ(*insert4_r, (T(9)));
+    ASSERT_EQ(*insert4_r, (v(9)));
     ASSERT_TRUE((insert4.begin() < insert4_r) && (insert4_r < insert4.end()));
-    ASSERT_EQ(insert4, (IntVector<T> { 6, 5, 4, 9, 3, 2, 1 }));
+    ASSERT_EQ(insert4, construct({ 6, 5, 4, 9, 3, 2, 1 }));
 
-    IntVector<T> insert5 { 6, 5, 4, 3, 2, 1 };
-    auto insert5_r = insert5.insert(insert5.cbegin() + 3, { 9, 8, 7 });
-    ASSERT_EQ(*insert5_r, (T(9)));
+    IntVector<T> insert5 { vi(6), vi(5), vi(4), vi(3), vi(2), vi(1) };
+    auto insert5_r = insert5.insert(insert5.cbegin() + 3, { vi(9), vi(8), vi(7) });
+    ASSERT_EQ(*insert5_r, (v(9)));
     ASSERT_TRUE((insert5.begin() < insert5_r) && (insert5_r < insert5.end()));
-    ASSERT_EQ(insert5, (IntVector<T> { 6, 5, 4, 9, 8, 7, 3, 2, 1 }));
+    ASSERT_EQ(insert5, construct({ 6, 5, 4, 9, 8, 7, 3, 2, 1 }));
 
-    IntVector<T> erase1 { 1, 2, 3, 9, 4, 5, 6 };
+    IntVector<T> erase1 { vi(1), vi(2), vi(3), vi(9), vi(4), vi(5), vi(6) };
     auto erase1_r = erase1.erase(erase1.cbegin() + 3);
     ASSERT_TRUE((erase1.begin() < erase1_r) && (erase1_r < erase1.end()));
-    ASSERT_EQ(*erase1_r, (T(4)));
-    ASSERT_EQ(erase1, (IntVector<T> { 1, 2, 3, 4, 5, 6 }));
+    ASSERT_EQ(*erase1_r, (v(4)));
+    ASSERT_EQ(erase1, construct({ 1, 2, 3, 4, 5, 6 }));
 
-    IntVector<T> erase2 { 1, 2, 3, 9, 4, 5, 6 };
+    IntVector<T> erase2 { vi(1), vi(2), vi(3), vi(9), vi(4), vi(5), vi(6) };
     auto erase2_r = erase2.erase(erase2.cbegin() + 3, erase2.cbegin() + 5);
     ASSERT_TRUE((erase2.begin() < erase2_r) && (erase2_r < erase2.end()));
-    ASSERT_EQ(*erase2_r, (T(5)));
-    ASSERT_EQ(erase2, (IntVector<T> { 1, 2, 3, 5, 6 }));
+    ASSERT_EQ(*erase2_r, (v(5)));
+    ASSERT_EQ(erase2, construct({ 1, 2, 3, 5, 6 }));
 
-    IntVector<T> swap_a { 1, 2, 3 };
-    IntVector<T> swap_b { 4, 5, 6 };
+    IntVector<T> swap_a { vi(1), vi(2), vi(3) };
+    IntVector<T> swap_b { vi(4), vi(5), vi(6) };
     swap_a.swap(swap_b);
-    ASSERT_EQ(swap_a, (IntVector<T> { 4, 5, 6 }));
-    ASSERT_EQ(swap_b, (IntVector<T> { 1, 2, 3 }));
+    ASSERT_EQ(swap_a, construct({ 4, 5, 6 }));
+    ASSERT_EQ(swap_b, construct({ 1, 2, 3 }));
 
-    IntVector<T> clear { 9, 8, 7 };
+    IntVector<T> clear { vi(9), vi(8), vi(7) };
     clear.clear();
     ASSERT_EQ(clear.size(), 0);
     ASSERT_EQ(clear.bit_size(), 0);
-    ASSERT_EQ(clear, (IntVector<T> { }));
+    ASSERT_EQ(clear, construct({ }));
 
-    IntVector<T> emplace1 { 1, 2, 3, 4 };
-    auto emplace1_r = emplace1.emplace(emplace1.cbegin() + 2, T(125));
-    ASSERT_EQ(emplace1, (IntVector<T> { 1, 2, 125, 3, 4 }));
+    IntVector<T> emplace1 { vi(1), vi(2), vi(3), vi(4) };
+    auto emplace1_r = emplace1.emplace(emplace1.cbegin() + 2, v(125));
+    ASSERT_EQ(emplace1, construct({ 1, 2, 125, 3, 4 }));
     ASSERT_TRUE((emplace1.begin() < emplace1_r) && (emplace1_r < emplace1.end()));
 
-    ASSERT_EQ(*emplace1_r, (T(125)));
+    ASSERT_EQ(*emplace1_r, (v(125)));
 
-    IntVector<T> emplace2 { 1, 2, 3, 4 };
-    emplace2.emplace_back(125);
-    ASSERT_EQ(emplace2, (IntVector<T> { 1, 2, 3, 4, 125 }));
+    IntVector<T> emplace2 { vi(1), vi(2), vi(3), vi(4) };
+    emplace2.emplace_back(vi(125));
+    ASSERT_EQ(emplace2, construct({ 1, 2, 3, 4, 125 }));
 
-    IntVector<T> ref_ptr { 1, 2, 3 };
+    IntVector<T> ref_ptr { vi(1), vi(2), vi(3) };
     auto ptr = &ref_ptr[1];
 
-    ASSERT_EQ(*ptr, (T(2)));
+    ASSERT_EQ(*ptr, (v(2)));
 
     using reference_t = typename IntVector<T>::reference;
     using const_reference_t = typename IntVector<T>::const_reference;
     using pointer_t = typename IntVector<T>::pointer;
     using const_pointer_t = typename IntVector<T>::const_pointer;
 
-    IntVector<T> const_conv_1 { 1 };
+    IntVector<T> const_conv_1 { vi(1) };
     reference_t const_conv_1_ref = const_conv_1[0];
     pointer_t const_conv_1_ptr = &const_conv_1[0];
     const const_reference_t const_conv_1_const_ref = const_conv_1_ref;

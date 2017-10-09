@@ -84,29 +84,42 @@ struct RefDispatch {
 };
 
 template<size_t N>
-struct ConstIntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
+struct ConstIntegerBaseTrait<int_vector::IntRef<uint_impl_t<N>>, typename std::enable_if<(N > 1 && N <= 32)>::type> {
     typedef RefDispatch<uint32_t, uint_t<N>> Dispatch;
 };
 template<size_t N>
-struct IntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
+struct IntegerBaseTrait<int_vector::IntRef<uint_impl_t<N>>, typename std::enable_if<(N > 1 && N <= 32)>::type> {
     typedef RefDispatch<uint32_t, uint_t<N>> Dispatch;
 };
 template<size_t N>
-struct ConstIntegerBaseTrait<int_vector::ConstIntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
+struct ConstIntegerBaseTrait<int_vector::ConstIntRef<uint_impl_t<N>>, typename std::enable_if<(N > 1 && N <= 32)>::type> {
     typedef RefDispatch<uint32_t, uint_t<N>> Dispatch;
 };
 
 template<size_t N>
-struct ConstIntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
+struct ConstIntegerBaseTrait<int_vector::IntRef<uint_impl_t<N>>, typename std::enable_if<(N > 32)>::type> {
     typedef RefDispatch<uint64_t, uint_t<N>> Dispatch;
 };
 template<size_t N>
-struct IntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
+struct IntegerBaseTrait<int_vector::IntRef<uint_impl_t<N>>, typename std::enable_if<(N > 32)>::type> {
     typedef RefDispatch<uint64_t, uint_t<N>> Dispatch;
 };
 template<size_t N>
-struct ConstIntegerBaseTrait<int_vector::ConstIntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
+struct ConstIntegerBaseTrait<int_vector::ConstIntRef<uint_impl_t<N>>, typename std::enable_if<(N > 32)>::type> {
     typedef RefDispatch<uint64_t, uint_t<N>> Dispatch;
+};
+
+template<>
+struct ConstIntegerBaseTrait<int_vector::IntRef<bool>> {
+    typedef RefDispatch<uint32_t, bool> Dispatch;
+};
+template<>
+struct IntegerBaseTrait<int_vector::IntRef<bool>> {
+    typedef RefDispatch<uint32_t, bool> Dispatch;
+};
+template<>
+struct ConstIntegerBaseTrait<int_vector::ConstIntRef<bool>> {
+    typedef RefDispatch<uint32_t, bool> Dispatch;
 };
 
 
@@ -153,7 +166,7 @@ namespace int_vector {
     struct IntPtrTrait {};
 
     template<size_t N>
-    struct IntPtrTrait<ConstIntPtr<uint_t<N>>> {
+    struct IntPtrTrait<ConstIntPtr<uint_impl_t<N>>> {
         class Data {
         public:
             const DynamicIntValueType* m_ptr;
@@ -172,7 +185,7 @@ namespace int_vector {
     };
 
     template<size_t N>
-    struct IntPtrTrait<IntPtr<uint_t<N>>> {
+    struct IntPtrTrait<IntPtr<uint_impl_t<N>>> {
         class Data {
         public:
             DynamicIntValueType* m_ptr;
@@ -230,6 +243,47 @@ namespace int_vector {
             }
             inline operator typename IntPtrTrait<ConstIntPtr<dynamic_t>>::Data() const {
                 return typename IntPtrTrait<ConstIntPtr<dynamic_t>>::Data(m_ptr, m_bit_offset, m_bit_size);
+            }
+        };
+    };
+
+    template<>
+    struct IntPtrTrait<ConstIntPtr<bool>> {
+        class Data {
+        public:
+            const DynamicIntValueType* m_ptr;
+            uint8_t m_bit_offset;
+        private:
+            //const uint8_t m_bit_size;
+        public:
+            Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
+                m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
+            inline uint8_t data_bit_size() const { return 1; }
+            inline void set_data_bit_size(uint8_t x) { }
+            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
+                return Data(ptr, offset, this->data_bit_size());
+            }
+        };
+    };
+
+    template<>
+    struct IntPtrTrait<IntPtr<bool>> {
+        class Data {
+        public:
+            DynamicIntValueType* m_ptr;
+            uint8_t m_bit_offset;
+        private:
+            //const uint8_t m_bit_size;
+        public:
+            Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
+                m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
+            inline uint8_t data_bit_size() const { return 1; }
+            inline void set_data_bit_size(uint8_t x) { }
+            inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
+                return Data(ptr, offset, this->data_bit_size());
+            }
+            inline operator typename IntPtrTrait<ConstIntPtr<bool>>::Data() const {
+                return typename IntPtrTrait<ConstIntPtr<bool>>::Data(m_ptr, m_bit_offset, 0);
             }
         };
     };
