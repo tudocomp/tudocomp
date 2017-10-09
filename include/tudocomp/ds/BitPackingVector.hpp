@@ -229,15 +229,15 @@ namespace int_vector {
         }
 
         inline iterator begin() {
-            using Data = typename int_vector::IntPtrTrait<pointer>::Data;
+            using Base = typename int_vector::IntPtrBase<pointer>;
             auto x = bitpos2backingpos(0);
-            return pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
+            return pointer(Base(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline iterator end() {
-            using Data = typename int_vector::IntPtrTrait<pointer>::Data;
+            using Base = typename int_vector::IntPtrBase<pointer>;
             auto x = bitpos2backingpos(elem2bits(this->m_real_size));
-            return pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
+            return pointer(Base(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline reverse_iterator rbegin() {
@@ -249,15 +249,15 @@ namespace int_vector {
         }
 
         inline const_iterator begin() const {
-            using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
+            using Base = typename int_vector::IntPtrBase<const_pointer>;
             auto x = bitpos2backingpos(0);
-            return const_pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
+            return const_pointer(Base(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline const_iterator end() const {
-            using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
+            using Base = typename int_vector::IntPtrBase<const_pointer>;
             auto x = bitpos2backingpos(elem2bits(this->m_real_size));
-            return const_pointer(Data(&this->m_vec[x.pos], x.offset, this->width()));
+            return const_pointer(Base(&this->m_vec[x.pos], x.offset, this->width()));
         }
 
         inline const_reverse_iterator rbegin() const {
@@ -329,17 +329,17 @@ namespace int_vector {
         }
 
         inline reference operator[](size_type n) {
-            using Data = typename int_vector::IntPtrTrait<pointer>::Data;
+            using Base = typename int_vector::IntPtrBase<pointer>;
             DCHECK_LT(n, size());
             auto x = bitpos2backingpos(elem2bits(n));
-            return reference(pointer(Data(this->m_vec.data() + x.pos, x.offset, this->width())));
+            return reference(pointer(Base(this->m_vec.data() + x.pos, x.offset, this->width())));
         }
 
         inline const_reference operator[](size_type n) const {
-            using Data = typename int_vector::IntPtrTrait<const_pointer>::Data;
+            using Base = typename int_vector::IntPtrBase<const_pointer>;
             DCHECK(n < size());
             auto x = bitpos2backingpos(elem2bits(n));
-            return const_reference(const_pointer(Data(this->m_vec.data() + x.pos, x.offset, this->width())));
+            return const_reference(const_pointer(Base(this->m_vec.data() + x.pos, x.offset, this->width())));
         }
 
         inline void range_check(size_type n) const {

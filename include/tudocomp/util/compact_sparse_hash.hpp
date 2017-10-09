@@ -90,7 +90,7 @@ using QuotPtr = IntPtr<dynamic_t>;
 inline QuotPtr make_quot_ptr(uint64_t* ptr, size_t quot_width) {
     using namespace int_vector;
 
-    return IntPtrTrait<QuotPtr>::Data(ptr, 0, quot_width);
+    return IntPtrBase<QuotPtr>(ptr, 0, quot_width);
 }
 template<typename V, typename I>
 inline void rotate_end_to(I base, size_t pos, size_t size) {

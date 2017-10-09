@@ -163,157 +163,145 @@ namespace int_vector {
     typedef uint64_t DynamicIntValueType;
 
     template<class T>
-    struct IntPtrTrait {};
+    struct IntPtrBase {};
 
     template<size_t N>
-    struct IntPtrTrait<ConstIntPtr<uint_impl_t<N>>> {
-        class Data {
-        public:
-            const DynamicIntValueType* m_ptr;
-            uint8_t m_bit_offset;
-        private:
-            //const uint8_t m_bit_size;
-        public:
-            using value_type = uint_impl_t<N>;
-            using tag_type = uint_impl_t<N>;
+    class IntPtrBase<ConstIntPtr<uint_impl_t<N>>> {
+    public:
+        const DynamicIntValueType* m_ptr;
+        uint8_t m_bit_offset;
+    private:
+        //const uint8_t m_bit_size;
+    public:
+        using value_type = uint_impl_t<N>;
+        using tag_type = uint_impl_t<N>;
 
-            Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
-                m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
-            inline uint8_t data_bit_size() const { return N; }
-            inline void set_data_bit_size(uint8_t x) { }
-            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
-                return Data(ptr, offset, this->data_bit_size());
-            }
-        };
+        IntPtrBase(const DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
+            m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
+        inline uint8_t data_bit_size() const { return N; }
+        inline void set_data_bit_size(uint8_t x) { }
+        inline IntPtrBase data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
+            return IntPtrBase(ptr, offset, this->data_bit_size());
+        }
     };
 
     template<size_t N>
-    struct IntPtrTrait<IntPtr<uint_impl_t<N>>> {
-        class Data {
-        public:
-            DynamicIntValueType* m_ptr;
-            uint8_t m_bit_offset;
-        private:
-            //const uint8_t m_bit_size;
-        public:
-            using value_type = uint_impl_t<N>;
-            using tag_type = uint_impl_t<N>;
+    class IntPtrBase<IntPtr<uint_impl_t<N>>> {
+    public:
+        DynamicIntValueType* m_ptr;
+        uint8_t m_bit_offset;
+    private:
+        //const uint8_t m_bit_size;
+    public:
+        using value_type = uint_impl_t<N>;
+        using tag_type = uint_impl_t<N>;
 
-            Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
-                m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
-            inline uint8_t data_bit_size() const { return N; }
-            inline void set_data_bit_size(uint8_t x) { }
-            inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
-                return Data(ptr, offset, this->data_bit_size());
-            }
-            inline operator typename IntPtrTrait<ConstIntPtr<uint_t<N>>>::Data() const {
-                return typename IntPtrTrait<ConstIntPtr<uint_t<N>>>::Data(m_ptr, m_bit_offset, 0);
-            }
-        };
+        IntPtrBase(DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
+            m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
+        inline uint8_t data_bit_size() const { return N; }
+        inline void set_data_bit_size(uint8_t x) { }
+        inline IntPtrBase data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
+            return IntPtrBase(ptr, offset, this->data_bit_size());
+        }
+        inline operator IntPtrBase<ConstIntPtr<uint_t<N>>>() const {
+            return IntPtrBase<ConstIntPtr<uint_t<N>>>(m_ptr, m_bit_offset, 0);
+        }
     };
 
     template<>
-    struct IntPtrTrait<ConstIntPtr<dynamic_t>> {
-        class Data {
-        public:
-            const DynamicIntValueType* m_ptr;
-            uint8_t m_bit_offset;
-        private:
-            uint8_t m_bit_size;
-        public:
-            using value_type = uint64_t;
-            using tag_type = dynamic_t;
+    class IntPtrBase<ConstIntPtr<dynamic_t>> {
+    public:
+        const DynamicIntValueType* m_ptr;
+        uint8_t m_bit_offset;
+    private:
+        uint8_t m_bit_size;
+    public:
+        using value_type = uint64_t;
+        using tag_type = dynamic_t;
 
-            Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
-                m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
-            inline uint8_t data_bit_size() const { return m_bit_size; }
-            inline void set_data_bit_size(uint8_t x) { m_bit_size = x; }
-            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
-                return Data(ptr, offset, this->data_bit_size());
-            }
-        };
+        IntPtrBase(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
+            m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
+        inline uint8_t data_bit_size() const { return m_bit_size; }
+        inline void set_data_bit_size(uint8_t x) { m_bit_size = x; }
+        inline IntPtrBase data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
+            return IntPtrBase(ptr, offset, this->data_bit_size());
+        }
     };
 
     template<>
-    struct IntPtrTrait<IntPtr<dynamic_t>> {
-        class Data {
-        public:
-            DynamicIntValueType* m_ptr;
-            uint8_t m_bit_offset;
-        private:
-            uint8_t m_bit_size;
-        public:
-            using value_type = uint64_t;
-            using tag_type = dynamic_t;
+    class IntPtrBase<IntPtr<dynamic_t>> {
+    public:
+        DynamicIntValueType* m_ptr;
+        uint8_t m_bit_offset;
+    private:
+        uint8_t m_bit_size;
+    public:
+        using value_type = uint64_t;
+        using tag_type = dynamic_t;
 
-            Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
-                m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
-            inline uint8_t data_bit_size() const { return m_bit_size; }
-            inline void set_data_bit_size(uint8_t x) { m_bit_size = x; }
-            inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) const {
-                return Data(ptr, offset, this->data_bit_size());
-            }
-            inline operator typename IntPtrTrait<ConstIntPtr<dynamic_t>>::Data() const {
-                return typename IntPtrTrait<ConstIntPtr<dynamic_t>>::Data(m_ptr, m_bit_offset, m_bit_size);
-            }
-        };
+        IntPtrBase(DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
+            m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
+        inline uint8_t data_bit_size() const { return m_bit_size; }
+        inline void set_data_bit_size(uint8_t x) { m_bit_size = x; }
+        inline IntPtrBase data_offset_to(DynamicIntValueType* ptr, uint8_t offset) const {
+            return IntPtrBase(ptr, offset, this->data_bit_size());
+        }
+        inline operator IntPtrBase<ConstIntPtr<dynamic_t>>() const {
+            return IntPtrBase<ConstIntPtr<dynamic_t>>(m_ptr, m_bit_offset, m_bit_size);
+        }
     };
 
     template<>
-    struct IntPtrTrait<ConstIntPtr<bool>> {
-        class Data {
-        public:
-            const DynamicIntValueType* m_ptr;
-            uint8_t m_bit_offset;
-        private:
-            //const uint8_t m_bit_size;
-        public:
-            using value_type = bool;
-            using tag_type = uint_t<1>;
+    class IntPtrBase<ConstIntPtr<bool>> {
+    public:
+        const DynamicIntValueType* m_ptr;
+        uint8_t m_bit_offset;
+    private:
+        //const uint8_t m_bit_size;
+    public:
+        using value_type = bool;
+        using tag_type = uint_t<1>;
 
-            Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
-                m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
-            inline uint8_t data_bit_size() const { return 1; }
-            inline void set_data_bit_size(uint8_t x) { }
-            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
-                return Data(ptr, offset, this->data_bit_size());
-            }
-        };
+        IntPtrBase(const DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
+            m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
+        inline uint8_t data_bit_size() const { return 1; }
+        inline void set_data_bit_size(uint8_t x) { }
+        inline IntPtrBase data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
+            return IntPtrBase(ptr, offset, this->data_bit_size());
+        }
     };
 
     template<>
-    struct IntPtrTrait<IntPtr<bool>> {
-        class Data {
-        public:
-            DynamicIntValueType* m_ptr;
-            uint8_t m_bit_offset;
-        private:
-            //const uint8_t m_bit_size;
-        public:
-            using value_type = bool;
-            using tag_type = uint_t<1>;
+    class IntPtrBase<IntPtr<bool>> {
+    public:
+        DynamicIntValueType* m_ptr;
+        uint8_t m_bit_offset;
+    private:
+        //const uint8_t m_bit_size;
+    public:
+        using value_type = bool;
+        using tag_type = uint_t<1>;
 
-            Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
-                m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
-            inline uint8_t data_bit_size() const { return 1; }
-            inline void set_data_bit_size(uint8_t x) { }
-            inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
-                return Data(ptr, offset, this->data_bit_size());
-            }
-            inline operator typename IntPtrTrait<ConstIntPtr<bool>>::Data() const {
-                return typename IntPtrTrait<ConstIntPtr<bool>>::Data(m_ptr, m_bit_offset, 0);
-            }
-        };
+        IntPtrBase(DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
+            m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
+        inline uint8_t data_bit_size() const { return 1; }
+        inline void set_data_bit_size(uint8_t x) { }
+        inline IntPtrBase data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
+            return IntPtrBase(ptr, offset, this->data_bit_size());
+        }
+        inline operator IntPtrBase<ConstIntPtr<bool>>() const {
+            return IntPtrBase<ConstIntPtr<bool>>(m_ptr, m_bit_offset, 0);
+        }
     };
 
-    template<class Self, class Ptr, class T>
+    template<class Self, class Ptr>
     class GenericIntRef;
 
     template<class Self, class T>
-    class GenericIntPtr: IntPtrTrait<Self>::Data {
+    class GenericIntPtr: IntPtrBase<Self> {
     protected:
-        friend class GenericIntRef<IntRef<T>, IntPtr<T>, T>;
-        friend class GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>;
+        friend class GenericIntRef<IntRef<T>, IntPtr<T>>;
+        friend class GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>>;
         friend class IntRef<T>;
         friend class ConstIntRef<T>;
         friend struct IntegerBaseTrait<IntRef<T>>;
@@ -324,11 +312,11 @@ namespace int_vector {
 
     public:
         GenericIntPtr():
-            IntPtrTrait<Self>::Data(nullptr, 0, 0) {}
-        GenericIntPtr(const typename IntPtrTrait<Self>::Data& other):
-            IntPtrTrait<Self>::Data(other) {}
+            IntPtrBase<Self>(nullptr, 0, 0) {}
+        GenericIntPtr(const IntPtrBase<Self>& other):
+            IntPtrBase<Self>(other) {}
         GenericIntPtr(const GenericIntPtr& other):
-            IntPtrTrait<Self>::Data(other){}
+            IntPtrBase<Self>(other){}
 
         Self& operator=(const Self& other) {
             this->set_data_bit_size(other.data_bit_size());
@@ -433,13 +421,13 @@ namespace int_vector {
         inline IntRef<T> operator[](size_t i);
 
         inline operator ConstIntPtr<T>() const {
-            return ConstIntPtr<T>(typename IntPtrTrait<ConstIntPtr<T>>::Data((const typename IntPtrTrait<IntPtr<T>>::Data&) *this));
+            return ConstIntPtr<T>(IntPtrBase<ConstIntPtr<T>>((const IntPtrBase<IntPtr<T>>&) *this));
         }
     };
 
-    template<class Self, class Ptr, class X>
+    template<class Self, class Ptr>
     class GenericIntRef {
-        using T = typename IntPtrTrait<Ptr>::Data::tag_type;
+        using T = typename IntPtrBase<Ptr>::tag_type;
     protected:
         friend class IntPtr<T>;
         friend class ConstIntPtr<T>;
@@ -451,7 +439,7 @@ namespace int_vector {
 
         Ptr m_ptr;
     public:
-        using value_type = typename IntPtrTrait<Ptr>::Data::value_type;
+        using value_type = typename IntPtrBase<Ptr>::value_type;
 
         inline GenericIntRef() = delete;
         explicit GenericIntRef(const Ptr& ptr): m_ptr(ptr) {}
@@ -465,7 +453,7 @@ namespace int_vector {
 
     template<class T>
     class ConstIntRef:
-        public GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>,
+        public GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>>,
         public ConstIntegerBaseCombiner<
             ConstIntegerBaseWithSelf<ConstIntRef<T>>,
             ConstIntegerBaseWith32<ConstIntRef<T>, unsigned char>,
@@ -483,14 +471,14 @@ namespace int_vector {
         > {
     public:
         inline ConstIntRef() = delete;
-        explicit ConstIntRef(const ConstIntPtr<T>& ptr): GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>::GenericIntRef(ptr) {}
+        explicit ConstIntRef(const ConstIntPtr<T>& ptr): GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>>::GenericIntRef(ptr) {}
 
         inline ConstIntPtr<T> operator&() { return this->m_ptr; }
     };
 
     template<class T>
     class IntRef:
-        public GenericIntRef<IntRef<T>, IntPtr<T>, T>,
+        public GenericIntRef<IntRef<T>, IntPtr<T>>,
         public IntegerBaseCombiner<
             IntegerBaseWithSelf<IntRef<T>>,
             IntegerBaseWith32<IntRef<T>, unsigned char>,
@@ -507,10 +495,10 @@ namespace int_vector {
             IntegerBaseWith64<IntRef<T>, T>
         > {
     public:
-        using typename GenericIntRef<IntRef<T>, IntPtr<T>, T>::value_type;
+        using typename GenericIntRef<IntRef<T>, IntPtr<T>>::value_type;
 
         inline IntRef() = delete;
-        explicit IntRef(const IntPtr<T>& ptr): GenericIntRef<IntRef<T>, IntPtr<T>, T>::GenericIntRef(ptr) {}
+        explicit IntRef(const IntPtr<T>& ptr): GenericIntRef<IntRef<T>, IntPtr<T>>::GenericIntRef(ptr) {}
 
         inline IntRef& operator=(value_type other) {
             write_int<T>(this->m_ptr.m_ptr, other,
