@@ -11,17 +11,17 @@ class Algorithm {
 
 public:
     template<typename T>
-    static inline std::unique_ptr<T> instance(std::string config_str = "") {
+    static inline T instance(std::string config_str = "") {
         using namespace meta;
 
         auto meta = T::meta();
 
         if(config_str.empty()) {
             // just create an instance with the default config
-            return std::make_unique<T>(meta.default_config());
+            return T(meta.default_config());
         } else {
             // create an instance with an override config
-            return std::make_unique<T>(meta.default_config(
+            return T(meta.default_config(
                 ast::convert<ast::Object>(
                     ast::Parser::parse(
                         meta.decl()->name() + "(" + config_str + ")"))));

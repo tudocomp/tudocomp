@@ -402,16 +402,11 @@ public:
 
 private:
     inline const Param& get_param(const std::string& name) const {
-        auto it = std::find_if(m_params.begin(), m_params.end(),
-            [&](const Param& p) -> bool {
-                return (name == p.decl().name());
-            });
-
-        if(it != m_params.end()) {
-            return *it;
-        } else {
-            throw std::runtime_error("no such parameter: '" + name + "'");
+        for(auto& p : m_params) {
+            if(name == p.decl().name()) return p;
         }
+
+        throw std::runtime_error("no such parameter: '" + name + "'");
     }
 
 public:
