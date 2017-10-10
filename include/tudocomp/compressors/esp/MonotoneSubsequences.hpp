@@ -508,7 +508,7 @@ namespace tdc {namespace esp {
         //std::cout << "wt_depth:   " << wt_depth << "\n";
 
         if (wt_depth == 0) {
-            return std::move(wt_bvs);
+            return wt_bvs;
         }
 
         auto wt = wt_pc<size_t, size_t>(v, v.size(), wt_depth).get_bv();
@@ -532,7 +532,7 @@ namespace tdc {namespace esp {
 
         }
 
-        return std::move(wt_bvs);
+        return wt_bvs;
     }
 
     struct WTIter {

@@ -127,7 +127,7 @@ public:
 
         StatPhase::log("Literals in Dictionary", literals);
 
-        buf_size = bitout->tellp() - buf_size;
+        buf_size = long(bitout->tellp()) - buf_size;
         StatPhase::log("Bytes Non-Terminal Symbol Encoding", buf_size);
 
         literals=0;
@@ -178,7 +178,7 @@ public:
             literals++;
         }
 
-        buf_size = bitout->tellp() - buf_size;
+        buf_size = long(bitout->tellp()) - buf_size;
         StatPhase::log("Bytes Start Symbol Encoding", buf_size);
 
         StatPhase::log("Literals in Start Symbol", literals);

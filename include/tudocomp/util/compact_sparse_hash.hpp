@@ -3,6 +3,7 @@
 #include <memory>
 #include <cstdint>
 #include <utility>
+#include <algorithm>
 
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/ds/IntPtr.hpp>
@@ -42,8 +43,8 @@ inline uint64_t compact_reverse_hashfn(uint64_t x, uint64_t w)  {
     return compact_hashfn(x, w);
 }
 
-inline uint64_t log2_upper(uint64_t v) {
-    size_t m = 0;
+inline uint8_t log2_upper(uint64_t v) {
+    uint8_t m = 0;
     uint64_t n = v;
     while(n) {
         n >>= 1;
@@ -58,7 +59,7 @@ inline bool is_pot(size_t n) {
 }
 
 class SizeManager {
-    size_t m_capacity_log2;
+    uint8_t m_capacity_log2;
     size_t m_size;
 
 public:
@@ -78,10 +79,10 @@ public:
     }
 
     inline size_t capacity() const {
-        return 1 << m_capacity_log2;
+        return 1ull << m_capacity_log2;
     }
 
-    inline size_t capacity_log2() const {
+    inline uint8_t capacity_log2() const {
         return m_capacity_log2;
     }
 };
@@ -336,7 +337,7 @@ class compact_hash {
     static constexpr bool HIGH_BITS_RANDOM = false;
 
     SizeManager m_sizing;
-    uint64_t m_width;
+    uint8_t m_width;
 
     // Compact table data
     IntVector<uint_t<2>> m_cv;
@@ -384,7 +385,7 @@ public:
     }
 
 private:
-    inline size_t table_size_log2() {
+    inline uint8_t table_size_log2() {
         return m_sizing.capacity_log2();
     }
 
@@ -435,8 +436,8 @@ private:
 
     // he actual amount of bits usable for storing a key
     // is always >= the set key width stored in m_width
-    inline uint64_t real_width() {
-        return std::max(table_size_log2() + 1, m_width);
+    inline uint8_t real_width() {
+        return std::max(uint8_t(table_size_log2() + 1), m_width);
     }
 
     struct DecomposedKey {

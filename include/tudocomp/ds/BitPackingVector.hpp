@@ -15,6 +15,7 @@
 #include <utility>
 #include <climits>
 
+#include <tudocomp/ds/IntRepr.hpp>
 #include <tudocomp/ds/IntPtr.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/dynamic_t.hpp>
@@ -27,82 +28,9 @@
 
 namespace tdc {
 namespace int_vector {
-    enum class ElementStorageMode {
-        Direct,
-        BitPacked
-    };
-
-    inline void width_error() {
-        throw std::runtime_error("Can not set the width of a IntVector with statically sized elements");
-    }
-
     template<class T>
-    struct BitPackingVectorBase {};
-
-    template<size_t N>
-    struct BitPackingVectorBase<uint_impl_t<N>> {
-        typedef DynamicIntValueType internal_data_type;
-        typedef uint_t<N>           value_type;
-
-        std::vector<internal_data_type> m_vec;
-        uint64_t m_real_size;
-
-        inline BitPackingVectorBase():
-            m_vec(), m_real_size(0) {}
-        inline BitPackingVectorBase(const BitPackingVectorBase& other):
-            m_vec(other.m_vec), m_real_size(other.m_real_size) {}
-        inline BitPackingVectorBase(BitPackingVectorBase&& other):
-            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
-
-        inline uint8_t raw_width() const { return N; }
-        inline void set_width_raw(uint8_t) { }
-
-    };
-
-    template<>
-    struct BitPackingVectorBase<dynamic_t> {
-        typedef DynamicIntValueType internal_data_type;
-        typedef uint64_t            value_type;
-
-        std::vector<internal_data_type> m_vec;
-        uint64_t m_real_size;
-        uint8_t m_width;
-
-        inline BitPackingVectorBase():
-            m_vec(), m_real_size(0), m_width(64) {}
-        inline BitPackingVectorBase(const BitPackingVectorBase& other):
-            m_vec(other.m_vec), m_real_size(other.m_real_size), m_width(other.m_width) {}
-        inline BitPackingVectorBase(BitPackingVectorBase&& other):
-            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size), m_width(other.m_width) {}
-
-        inline uint8_t raw_width() const { return m_width; }
-        inline void set_width_raw(uint8_t width) { m_width = width; }
-
-    };
-
-    template<>
-    struct BitPackingVectorBase<bool> {
-        typedef DynamicIntValueType internal_data_type;
-        typedef bool                value_type;
-
-        std::vector<internal_data_type> m_vec;
-        uint64_t m_real_size;
-
-        inline BitPackingVectorBase():
-            m_vec(), m_real_size(0) {}
-        inline BitPackingVectorBase(const BitPackingVectorBase& other):
-            m_vec(other.m_vec), m_real_size(other.m_real_size) {}
-        inline BitPackingVectorBase(BitPackingVectorBase&& other):
-            m_vec(std::move(other.m_vec)), m_real_size(other.m_real_size) {}
-
-        inline uint8_t raw_width() const { return 1; }
-        inline void set_width_raw(uint8_t) { }
-
-    };
-
-    template<class T>
-    struct BitPackingVector: BitPackingVectorBase<T> {
-        typedef typename BitPackingVectorBase<T>::value_type         value_type;
+    struct BitPackingVector: IntRepr<T>::BitPackingVectorRepr {
+        typedef typename IntRepr<T>::value_type                      value_type;
 
         typedef IntRef<T>                                            reference;
         typedef ConstIntRef<T>                                       const_reference;
@@ -119,7 +47,7 @@ namespace int_vector {
         typedef ptrdiff_t                                            difference_type;
         typedef size_t                                               size_type;
 
-        typedef typename BitPackingVectorBase<T>::internal_data_type    internal_data_type;
+        typedef typename IntRepr<T>::BitPackingVectorRepr::internal_data_type    internal_data_type;
 
         template<class M>
         friend bool operator==(const BitPackingVector<M>& lhs, const BitPackingVector<M>& rhs);
@@ -169,7 +97,7 @@ namespace int_vector {
             return bitpos2backingpos_w(bits);
         }
 
-        inline explicit BitPackingVector(): BitPackingVectorBase<T>::BitPackingVectorBase() {}
+        inline explicit BitPackingVector(): IntRepr<T>::BitPackingVectorRepr() {}
         inline explicit BitPackingVector(size_type n): BitPackingVector() {
             this->m_real_size = n;
             size_t converted_size = bits2backing(elem2bits(this->m_real_size));
@@ -203,9 +131,9 @@ namespace int_vector {
             }
         }
         inline BitPackingVector (const BitPackingVector& other):
-            BitPackingVectorBase<T>(other) {}
+            IntRepr<T>::BitPackingVectorRepr(other) {}
         inline BitPackingVector (BitPackingVector&& other):
-            BitPackingVectorBase<T>(std::move(other)) {}
+            IntRepr<T>::BitPackingVectorRepr(std::move(other)) {}
         inline BitPackingVector(std::initializer_list<value_type> il):
             BitPackingVector(il.begin(), il.end()) {}
 
