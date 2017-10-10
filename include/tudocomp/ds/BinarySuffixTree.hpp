@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <tuple>
+#include <memory>
 
 #include <sstream>
 
@@ -335,18 +336,9 @@ public:
         }
     }
 
-    BinarySuffixTree(Input& input) : Text(input.as_view()){
-        compute();
-
-   }
-
     BinarySuffixTree(io::InputView & input) : Text(input){
-
         compute();
-
-
     }
-
 
 };
 

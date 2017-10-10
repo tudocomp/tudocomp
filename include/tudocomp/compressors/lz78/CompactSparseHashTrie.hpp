@@ -31,7 +31,7 @@ public:
     inline CompactSparseHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
         : Algorithm(std::move(env))
         , LZ78Trie(n,remaining_characters)
-        , m_table(next_power_of_two(reserve), 0)
+        , m_table(zero_or_next_power_of_two(reserve), 0)
     {
         //m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
     }

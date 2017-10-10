@@ -2,6 +2,7 @@
 
 #include <unordered_set>
 #include <tudocomp/AlgorithmStringParser.hpp>
+#include <array>
 
 namespace tdc {
 

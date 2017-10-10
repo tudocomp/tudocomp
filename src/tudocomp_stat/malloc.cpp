@@ -8,6 +8,8 @@
 
 #elif !defined(STATS_DISABLED)
 
+#ifndef __MACH__
+
 constexpr size_t MEMBLOCK_MAGIC = 0xFEDCBA9876543210;
 
 struct block_header_t {
@@ -83,3 +85,4 @@ void* calloc(size_t num, size_t size) {
 
 #endif
 
+#endif

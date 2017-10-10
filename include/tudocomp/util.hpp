@@ -586,9 +586,7 @@ constexpr T shift_by(T value, int amount) noexcept
     return uses_arithmetic_shift<T>::value ? shift_by_arithmetic(value, amount) : shift_by_portable(value, amount);
 }
 
-inline uint64_t next_power_of_two(uint64_t x) {
-    if (x < 0)
-        return 0;
+inline uint64_t zero_or_next_power_of_two(uint64_t x) {
     --x;
     x |= x >> 1;
     x |= x >> 2;
