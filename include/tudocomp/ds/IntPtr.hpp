@@ -108,7 +108,7 @@ namespace int_vector {
         friend struct IntegerBaseTrait<IntRef<T>>;
         friend struct ConstIntegerBaseTrait<IntRef<T>>;
         friend struct ConstIntegerBaseTrait<ConstIntRef<T>>;
-        friend IntRepr<T>::IntOpDispatch;
+        friend typename IntRepr<T>::IntOpDispatch;
 
     public:
         using tag_type = T;
@@ -236,7 +236,7 @@ namespace int_vector {
         friend struct IntegerBaseTrait<IntRef<T>>;
         friend struct ConstIntegerBaseTrait<IntRef<T>>;
         friend struct ConstIntegerBaseTrait<ConstIntRef<T>>;
-        friend IntRepr<T>::IntOpDispatch;
+        friend typename IntRepr<T>::IntOpDispatch;
 
         Ptr m_ptr;
     public:
