@@ -27,6 +27,8 @@ matrix:
             #- george-edison55-precise-backports
             - ubuntu-toolchain-r-test
     - os: osx
+      env:
+        - FAST_MATRIX=1
 #    - os: linux
 #      env:
 #        - COMPILER_NAME=clang
