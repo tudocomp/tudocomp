@@ -27,7 +27,14 @@ matrix:
             #- george-edison55-precise-backports
             - ubuntu-toolchain-r-test
     - os: osx
+      env:
+        - FAST_MATRIX=1
+    - os: osx
       osx_image: xcode6.4
+      env:
+        - FAST_MATRIX=1
+    - os: osx
+      osx_image: xcode9.1
       env:
         - FAST_MATRIX=1
 #    - os: linux
