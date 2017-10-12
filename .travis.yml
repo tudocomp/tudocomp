@@ -13,6 +13,7 @@ matrix:
         - COMPILER_NAME=gcc
         - CXX=g++-5
         - CC=gcc-5
+        - FAST_MATRIX=1
       dist: trusty
       addons:
         apt:
@@ -27,10 +28,6 @@ matrix:
             #- george-edison55-precise-backports
             - ubuntu-toolchain-r-test
     - os: osx
-      env:
-        - FAST_MATRIX=1
-    - os: osx
-      osx_image: xcode6.4
       env:
         - FAST_MATRIX=1
     - os: osx
