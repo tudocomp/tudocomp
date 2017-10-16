@@ -16,12 +16,13 @@ namespace io {
 class BitIStream {
     InputStream m_stream;
 
-    uint8_t m_current, m_next;
+    uint8_t m_current = 0;
+    uint8_t m_next = 0;
 
-    bool m_is_final;
-    uint8_t m_final_bits;
+    bool m_is_final = false;
+    uint8_t m_final_bits = 0;
 
-    uint8_t m_cursor;
+    uint8_t m_cursor = 0;
 
     inline void read_next() {
         const uint8_t MSB = 7;

@@ -4,7 +4,7 @@ set -x
 
 mkdir build
 cd build
-cmake ..
-make
+cmake -DCMAKE_BUILD_TYPE=Release ..
 make build_check
+make
 make check

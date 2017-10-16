@@ -24,14 +24,10 @@ namespace lfs {
 //template<uint min_lrf = 2 >
 class SimSTStrategy : public Algorithm {
 private:
-
-    typedef sdsl::bp_interval<long unsigned int> node_type;
-
     typedef sdsl::cst_sct3< sdsl::csa_bitcompressed<> > cst_t;
     cst_t stree;
 
-
-
+    using node_type = typename cst_t::node_type;
 
     // greedily select starting positions and delete them from corresponding vector
     inline virtual std::vector<uint> select_starting_positions(int node_id, int length){

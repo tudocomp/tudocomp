@@ -15,6 +15,7 @@
 #include <utility>
 #include <climits>
 
+#include <tudocomp/ds/IntRepr.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/dynamic_t.hpp>
 #include <tudocomp/util/IntegerBase.hpp>
@@ -34,112 +35,38 @@ namespace tdc {
         class IntPtr;
         template<class T>
         class ConstIntPtr;
-
-        template<class Self>
-        inline void write_int(uint64_t* word, uint64_t x, uint8_t offset, const uint8_t len) {
-            sdsl::bits::write_int(word, x, offset, len);
-        }
-        template<>
-        inline void write_int<uint_t<1>>(uint64_t* word, uint64_t v, uint8_t o, const uint8_t) {
-            auto& p = *word;
-            const auto mask = uint64_t(1) << o;
-
-            v &= 1;
-            p &= (~mask);
-            p |= (uint64_t(v) << o);
-        }
-
-        template<class Self>
-        inline uint64_t read_int(const uint64_t* word, uint8_t offset, const uint8_t len) {
-            return sdsl::bits::read_int(word, offset, len);
-        }
-
-        template<>
-        inline uint64_t read_int<uint_t<1>>(const uint64_t* word, uint8_t o, const uint8_t) {
-            const auto p = *word;
-            const auto mask = uint64_t(1) << o;
-
-            return (p & mask) != 0;
-        }
     }
 
-template<class MB, class For>
-struct RefDispatch {
-    typedef MB SelfMaxBit;
-
-    template<class Ref, class V>
-    inline static void assign(Ref& self, V v) {
-        int_vector::write_int<For>(self.m_ptr.m_ptr,
-                                   v,
-                                   self.m_ptr.m_bit_offset,
-                                   self.m_ptr.data_bit_size());
-    }
-
-    template<class Ref, class R>
-    inline static R cast_for_op(const Ref& self) {
-        return int_vector::read_int<For>(self.m_ptr.m_ptr,
-                                         self.m_ptr.m_bit_offset,
-                                         self.m_ptr.data_bit_size());
-    }
+template<typename T>
+struct ConstIntegerBaseTrait<int_vector::IntRef<T>> {
+    using Dispatch = typename int_vector::IntRepr<T>::IntOpDispatch;
 };
-
-template<size_t N>
-struct ConstIntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
-    typedef RefDispatch<uint32_t, uint_t<N>> Dispatch;
+template<typename T>
+struct IntegerBaseTrait<int_vector::IntRef<T>> {
+    using Dispatch = typename int_vector::IntRepr<T>::IntOpDispatch;
 };
-template<size_t N>
-struct IntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
-    typedef RefDispatch<uint32_t, uint_t<N>> Dispatch;
-};
-template<size_t N>
-struct ConstIntegerBaseTrait<int_vector::ConstIntRef<uint_t<N>>, typename std::enable_if<(N <= 32)>::type> {
-    typedef RefDispatch<uint32_t, uint_t<N>> Dispatch;
-};
-
-template<size_t N>
-struct ConstIntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
-    typedef RefDispatch<uint64_t, uint_t<N>> Dispatch;
-};
-template<size_t N>
-struct IntegerBaseTrait<int_vector::IntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
-    typedef RefDispatch<uint64_t, uint_t<N>> Dispatch;
-};
-template<size_t N>
-struct ConstIntegerBaseTrait<int_vector::ConstIntRef<uint_t<N>>, typename std::enable_if<(N > 32)>::type> {
-    typedef RefDispatch<uint64_t, uint_t<N>> Dispatch;
-};
-
-
-template<>
-struct ConstIntegerBaseTrait<int_vector::IntRef<dynamic_t>> {
-    typedef RefDispatch<uint64_t, dynamic_t> Dispatch;
-};
-template<>
-struct IntegerBaseTrait<int_vector::IntRef<dynamic_t>> {
-    typedef RefDispatch<uint64_t, dynamic_t> Dispatch;
-};
-template<>
-struct ConstIntegerBaseTrait<int_vector::ConstIntRef<dynamic_t>> {
-    typedef RefDispatch<uint64_t, dynamic_t> Dispatch;
+template<typename T>
+struct ConstIntegerBaseTrait<int_vector::ConstIntRef<T>> {
+    using Dispatch = typename int_vector::IntRepr<T>::IntOpDispatch;
 };
 }
 
 namespace std {
-    template<class T>
+    template<typename T>
     struct iterator_traits<tdc::int_vector::IntPtr<T>> {
-        typedef ptrdiff_t                       difference_type;
-        typedef T                               value_type;
-        typedef tdc::int_vector::IntPtr<T>      pointer;
-        typedef tdc::int_vector::IntRef<T>      reference;
-        typedef std::random_access_iterator_tag iterator_category;
+        typedef ptrdiff_t                                        difference_type;
+        typedef typename tdc::int_vector::IntRepr<T>::value_type value_type;
+        typedef tdc::int_vector::IntPtr<T>                       pointer;
+        typedef tdc::int_vector::IntRef<T>                       reference;
+        typedef std::random_access_iterator_tag                  iterator_category;
     };
-    template<class T>
+    template<typename T>
     struct iterator_traits<tdc::int_vector::ConstIntPtr<T>> {
-        typedef ptrdiff_t                       difference_type;
-        typedef T                               value_type;
-        typedef tdc::int_vector::ConstIntPtr<T> pointer;
-        typedef tdc::int_vector::ConstIntRef<T> reference;
-        typedef std::random_access_iterator_tag iterator_category;
+        typedef ptrdiff_t                                        difference_type;
+        typedef typename tdc::int_vector::IntRepr<T>::value_type value_type;
+        typedef tdc::int_vector::ConstIntPtr<T>                  pointer;
+        typedef tdc::int_vector::ConstIntRef<T>                  reference;
+        typedef std::random_access_iterator_tag                  iterator_category;
     };
 }
 
@@ -147,129 +74,68 @@ namespace tdc {
 namespace int_vector {
     using sdsl::bits;
 
-    typedef uint64_t DynamicIntValueType;
-
     template<class T>
-    struct IntPtrTrait {};
+    struct IntPtrBase {};
 
-    template<size_t N>
-    struct IntPtrTrait<ConstIntPtr<uint_t<N>>> {
-        class Data {
-        public:
-            const DynamicIntValueType* m_ptr;
-            uint8_t m_bit_offset;
-        private:
-            //const uint8_t m_bit_size;
-        public:
-            Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
-                m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
-            inline uint8_t data_bit_size() const { return N; }
-            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
-                return Data(ptr, offset, this->data_bit_size());
-            }
-        };
+    template<typename T>
+    class IntPtrBase<ConstIntPtr<T>>:
+        public IntRepr<T>::ConstIntPtrBase {
+    public:
+        using IntRepr<T>::ConstIntPtrBase::ConstIntPtrBase;
     };
 
-    template<size_t N>
-    struct IntPtrTrait<IntPtr<uint_t<N>>> {
-        class Data {
-        public:
-            DynamicIntValueType* m_ptr;
-            uint8_t m_bit_offset;
-        private:
-            //const uint8_t m_bit_size;
-        public:
-            Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t /*size*/):
-                m_ptr(ptr), m_bit_offset(offset) /*, m_bit_size(size)*/ {}
-            inline uint8_t data_bit_size() const { return N; }
-            inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) {
-                return Data(ptr, offset, this->data_bit_size());
-            }
-            inline operator typename IntPtrTrait<ConstIntPtr<uint_t<N>>>::Data() const {
-                return typename IntPtrTrait<ConstIntPtr<uint_t<N>>>::Data(m_ptr, m_bit_offset, 0);
-            }
-        };
+    template<typename T>
+    class IntPtrBase<IntPtr<T>>:
+        public IntRepr<T>::IntPtrBase {
+    public:
+        using IntRepr<T>::IntPtrBase::IntPtrBase;
+
+        inline operator IntPtrBase<ConstIntPtr<T>>() const {
+            return IntPtrBase<ConstIntPtr<T>>(this->m_ptr, this->m_bit_offset, this->data_bit_size());
+        }
     };
 
-    template<>
-    struct IntPtrTrait<ConstIntPtr<dynamic_t>> {
-        class Data {
-        public:
-            const DynamicIntValueType* m_ptr;
-            uint8_t m_bit_offset;
-        private:
-            const uint8_t m_bit_size;
-        public:
-            Data(const DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
-                m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
-            inline uint8_t data_bit_size() const { return m_bit_size; }
-            inline Data data_offset_to(const DynamicIntValueType* ptr, uint8_t offset) const {
-                return Data(ptr, offset, this->data_bit_size());
-            }
-        };
-    };
-
-    template<>
-    struct IntPtrTrait<IntPtr<dynamic_t>> {
-        class Data {
-        public:
-            DynamicIntValueType* m_ptr;
-            uint8_t m_bit_offset;
-        private:
-            const uint8_t m_bit_size;
-        public:
-            Data(DynamicIntValueType* ptr, uint8_t offset, uint8_t size):
-                m_ptr(ptr), m_bit_offset(offset), m_bit_size(size) {}
-            inline uint8_t data_bit_size() const { return m_bit_size; }
-            inline Data data_offset_to(DynamicIntValueType* ptr, uint8_t offset) const {
-                return Data(ptr, offset, this->data_bit_size());
-            }
-            inline operator typename IntPtrTrait<ConstIntPtr<dynamic_t>>::Data() const {
-                return typename IntPtrTrait<ConstIntPtr<dynamic_t>>::Data(m_ptr, m_bit_offset, m_bit_size);
-            }
-        };
-    };
-
-    template<class Self, class Ptr, class T>
+    template<class Self, class Ptr>
     class GenericIntRef;
 
     template<class Self, class T>
-    class GenericIntPtr: IntPtrTrait<Self>::Data {
+    class GenericIntPtr: IntPtrBase<Self> {
     protected:
-        friend class GenericIntRef<IntRef<T>, IntPtr<T>, T>;
-        friend class GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>;
+        friend class GenericIntRef<IntRef<T>, IntPtr<T>>;
+        friend class GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>>;
         friend class IntRef<T>;
         friend class ConstIntRef<T>;
         friend struct IntegerBaseTrait<IntRef<T>>;
         friend struct ConstIntegerBaseTrait<IntRef<T>>;
         friend struct ConstIntegerBaseTrait<ConstIntRef<T>>;
-        friend struct RefDispatch<uint32_t, T>;
-        friend struct RefDispatch<uint64_t, T>;
+        friend typename IntRepr<T>::IntOpDispatch;
 
     public:
+        using tag_type = T;
+
         GenericIntPtr():
-            IntPtrTrait<Self>::Data(nullptr, 0, 0) {}
-        GenericIntPtr(const typename IntPtrTrait<Self>::Data& other):
-            IntPtrTrait<Self>::Data(other) {}
+            IntPtrBase<Self>(nullptr, 0, 0) {}
+        GenericIntPtr(const IntPtrBase<Self>& other):
+            IntPtrBase<Self>(other) {}
         GenericIntPtr(const GenericIntPtr& other):
-            IntPtrTrait<Self>::Data(other){}
+            IntPtrBase<Self>(other){}
 
         Self& operator=(const Self& other) {
-            DCHECK(this->data_bit_size() == other.data_bit_size());
+            this->set_data_bit_size(other.data_bit_size());
             this->m_ptr = other.m_ptr;
             this->m_bit_offset = other.m_bit_offset;
             return static_cast<Self&>(*this);
         }
 
         Self& operator++() {
-            const DynamicIntValueType* tmp = this->m_ptr;
+            DynamicIntValueType const* tmp = this->m_ptr;
             bits::move_right(tmp, this->m_bit_offset, this->data_bit_size());
             this->m_ptr = (DynamicIntValueType*) tmp;
             return static_cast<Self&>(*this);
         }
 
         Self& operator--() {
-            const DynamicIntValueType* tmp = this->m_ptr;
+            DynamicIntValueType const* tmp = this->m_ptr;
             bits::move_left(tmp, this->m_bit_offset, this->data_bit_size());
             this->m_ptr = (DynamicIntValueType*) tmp;
             return static_cast<Self&>(*this);
@@ -357,37 +223,30 @@ namespace int_vector {
         inline IntRef<T> operator[](size_t i);
 
         inline operator ConstIntPtr<T>() const {
-            return ConstIntPtr<T>(typename IntPtrTrait<ConstIntPtr<T>>::Data((const typename IntPtrTrait<IntPtr<T>>::Data&) *this));
+            return ConstIntPtr<T>(IntPtrBase<ConstIntPtr<T>>((const IntPtrBase<IntPtr<T>>&) *this));
         }
     };
 
-    template<typename T>
-    class GenericIntRefAutocast {
-    public:
-        using autocast_type = T;
-    };
-
-    template<class Self, class Ptr, class T>
+    template<class Self, class Ptr>
     class GenericIntRef {
+        using T = typename Ptr::tag_type;
     protected:
         friend class IntPtr<T>;
         friend class ConstIntPtr<T>;
         friend struct IntegerBaseTrait<IntRef<T>>;
         friend struct ConstIntegerBaseTrait<IntRef<T>>;
         friend struct ConstIntegerBaseTrait<ConstIntRef<T>>;
-        friend struct RefDispatch<uint32_t, T>;
-        friend struct RefDispatch<uint64_t, T>;
+        friend typename IntRepr<T>::IntOpDispatch;
 
         Ptr m_ptr;
     public:
-        using value_type = T;
-        using autocast_type = typename GenericIntRefAutocast<T>::autocast_type;
+        using value_type = typename IntRepr<T>::value_type;
 
         inline GenericIntRef() = delete;
         explicit GenericIntRef(const Ptr& ptr): m_ptr(ptr) {}
 
-        operator autocast_type() const {
-            return read_int<autocast_type>(
+        operator value_type() const {
+            return IntRepr<T>::mem_rw::read_int(
                 m_ptr.m_ptr, m_ptr.m_bit_offset, this->m_ptr.data_bit_size());
         }
 
@@ -395,47 +254,65 @@ namespace int_vector {
 
     template<class T>
     class ConstIntRef:
-        public GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>,
+        public GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>>,
         public ConstIntegerBaseCombiner<
             ConstIntegerBaseWithSelf<ConstIntRef<T>>,
-            ConstIntegerBaseWith32<ConstIntRef<T>, uint32_t>,
-            ConstIntegerBaseWith32<ConstIntRef<T>, int>,
-            ConstIntegerBaseWith64<ConstIntRef<T>, uint64_t>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, unsigned char>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, char>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, signed char>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, unsigned short int>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, signed short int>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, unsigned int>,
+            ConstIntegerBaseWith32<ConstIntRef<T>, signed int>,
+            ConstIntegerBaseWith64<ConstIntRef<T>, unsigned long int>,
+            ConstIntegerBaseWith64<ConstIntRef<T>, signed long int>,
+            ConstIntegerBaseWith64<ConstIntRef<T>, unsigned long long int>,
+            ConstIntegerBaseWith64<ConstIntRef<T>, signed long long int>,
             ConstIntegerBaseWith64<ConstIntRef<T>, T>
         > {
     public:
         inline ConstIntRef() = delete;
-        explicit ConstIntRef(const ConstIntPtr<T>& ptr): GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>, T>::GenericIntRef(ptr) {}
+        explicit ConstIntRef(const ConstIntPtr<T>& ptr): GenericIntRef<ConstIntRef<T>, ConstIntPtr<T>>::GenericIntRef(ptr) {}
 
         inline ConstIntPtr<T> operator&() { return this->m_ptr; }
     };
 
     template<class T>
     class IntRef:
-        public GenericIntRef<IntRef<T>, IntPtr<T>, T>,
+        public GenericIntRef<IntRef<T>, IntPtr<T>>,
         public IntegerBaseCombiner<
             IntegerBaseWithSelf<IntRef<T>>,
-            IntegerBaseWith32<IntRef<T>, uint32_t>,
-            IntegerBaseWith32<IntRef<T>, int>,
-            IntegerBaseWith64<IntRef<T>, uint64_t>,
+            IntegerBaseWith32<IntRef<T>, unsigned char>,
+            IntegerBaseWith32<IntRef<T>, char>,
+            IntegerBaseWith32<IntRef<T>, signed char>,
+            IntegerBaseWith32<IntRef<T>, unsigned short int>,
+            IntegerBaseWith32<IntRef<T>, signed short int>,
+            IntegerBaseWith32<IntRef<T>, unsigned int>,
+            IntegerBaseWith32<IntRef<T>, signed int>,
+            IntegerBaseWith64<IntRef<T>, unsigned long int>,
+            IntegerBaseWith64<IntRef<T>, signed long int>,
+            IntegerBaseWith64<IntRef<T>, unsigned long long int>,
+            IntegerBaseWith64<IntRef<T>, signed long long int>,
             IntegerBaseWith64<IntRef<T>, T>
         > {
     public:
-        using typename GenericIntRef<IntRef<T>, IntPtr<T>, T>::value_type;
-        using autocast_type = typename GenericIntRefAutocast<T>::autocast_type;
+        using typename GenericIntRef<IntRef<T>, IntPtr<T>>::value_type;
 
         inline IntRef() = delete;
-        explicit IntRef(const IntPtr<T>& ptr): GenericIntRef<IntRef<T>, IntPtr<T>, T>::GenericIntRef(ptr) {}
+        explicit IntRef(const IntPtr<T>& ptr): GenericIntRef<IntRef<T>, IntPtr<T>>::GenericIntRef(ptr) {}
 
         inline IntRef& operator=(value_type other) {
-            write_int<T>(this->m_ptr.m_ptr, other,
-                         this->m_ptr.m_bit_offset,
-                         this->m_ptr.data_bit_size());
+            IntRepr<T>::mem_rw::write_int(
+                this->m_ptr.m_ptr, other,
+                this->m_ptr.m_bit_offset,
+                this->m_ptr.data_bit_size()
+            );
+
             return *this;
         };
 
         inline IntRef& operator=(const IntRef& other) {
-            return operator=(value_type(other.operator autocast_type()));
+            return operator=(other.operator value_type());
         };
 
         inline IntRef& operator=(const ConstIntRef<T>& other);
@@ -500,17 +377,6 @@ namespace int_vector {
     static_assert(sizeof(GenericIntPtr<ConstIntPtr<uint_t<40>>, uint_t<40>>) <= (sizeof(void*) * 2),
                   "make sure this is reasonably small");
 
-    // specializations for dynamic_t
-    template<> class GenericIntRefAutocast<dynamic_t> {
-    public:
-        using autocast_type = uint64_t;
-    };
-
-    // specializations for uint_t<1>
-    template<> class GenericIntRefAutocast<uint_t<1>> {
-    public:
-        using autocast_type = bool;
-    };
 }
 
 template<class T>

@@ -52,7 +52,7 @@ inline std::ifstream create_tdc_ifstream(const std::string& filename, size_t off
     std::ifstream in(filename, std::ios::in | std::ios::binary);
     if (bool(in)) {
         in.seekg(offset, std::ios::beg);
-        return std::move(in);
+        return in;
     }
     throw tdc_input_file_not_found_error(filename);
 }

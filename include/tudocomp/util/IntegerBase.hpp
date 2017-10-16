@@ -183,9 +183,17 @@ class ConstIntegerBaseCombiner<T>: public T {
 template<class Self>
 using ConstIntegerBase = ConstIntegerBaseCombiner<
     ConstIntegerBaseWithSelf<Self>,
-    ConstIntegerBaseWith32<Self, uint32_t>,
-    ConstIntegerBaseWith32<Self, int>,
-    ConstIntegerBaseWith64<Self, uint64_t>
+    ConstIntegerBaseWith32<Self, unsigned char>,
+    ConstIntegerBaseWith32<Self, char>,
+    ConstIntegerBaseWith32<Self, signed char>,
+    ConstIntegerBaseWith32<Self, unsigned short int>,
+    ConstIntegerBaseWith32<Self, signed short int>,
+    ConstIntegerBaseWith32<Self, unsigned int>,
+    ConstIntegerBaseWith32<Self, signed int>,
+    ConstIntegerBaseWith64<Self, unsigned long int>,
+    ConstIntegerBaseWith64<Self, signed long int>,
+    ConstIntegerBaseWith64<Self, unsigned long long int>,
+    ConstIntegerBaseWith64<Self, signed long long int>
 >;
 
 template<class Self, class Other>
@@ -256,10 +264,10 @@ public:
     Self& operator/=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self / v); return self;  }
     Self& operator%=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self % v); return self;  }
 
-    Self& operator++() { auto& self = static_cast<Self&>(*this); assign(self, self + 1); return self; }
-    Self& operator--() { auto& self = static_cast<Self&>(*this); assign(self, self - 1); return self; }
-    SelfMaxBit operator++(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self + 1); return tmp; }
-    SelfMaxBit operator--(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self - 1); return tmp; }
+    Self& operator++() { auto& self = static_cast<Self&>(*this); assign(self, self + 1u); return self; }
+    Self& operator--() { auto& self = static_cast<Self&>(*this); assign(self, self - 1u); return self; }
+    SelfMaxBit operator++(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self + 1u); return tmp; }
+    SelfMaxBit operator--(int) { auto& self = static_cast<Self&>(*this); auto tmp = cast_for_self_op(self); assign(self, self - 1u); return tmp; }
 
     Self& operator&=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self & v); return self;  }
     Self& operator|=(const Self& v)     { auto& self = static_cast<Self&>(*this); assign(self, self | v); return self;  }
@@ -321,9 +329,17 @@ public:
 template<class Self>
 using IntegerBase = IntegerBaseCombiner<
     IntegerBaseWithSelf<Self>,
-    IntegerBaseWith32<Self, uint32_t>,
-    IntegerBaseWith32<Self, int>,
-    IntegerBaseWith64<Self, uint64_t>
+    IntegerBaseWith32<Self, unsigned char>,
+    IntegerBaseWith32<Self, char>,
+    IntegerBaseWith32<Self, signed char>,
+    IntegerBaseWith32<Self, unsigned short int>,
+    IntegerBaseWith32<Self, signed short int>,
+    IntegerBaseWith32<Self, unsigned int>,
+    IntegerBaseWith32<Self, signed int>,
+    IntegerBaseWith64<Self, unsigned long int>,
+    IntegerBaseWith64<Self, signed long int>,
+    IntegerBaseWith64<Self, unsigned long long int>,
+    IntegerBaseWith64<Self, signed long long int>
 >;
 
 }

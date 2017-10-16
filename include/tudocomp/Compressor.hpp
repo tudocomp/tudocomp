@@ -18,6 +18,12 @@ namespace tdc {
 /// representation.
 class Compressor: public Algorithm {
 public:
+    virtual ~Compressor() = default;
+    Compressor(Compressor const&) = default;
+    Compressor(Compressor&&) = default;
+    Compressor& operator=(Compressor const&) = default;
+    Compressor& operator=(Compressor&&) = default;
+
     /// \brief Construct the compressor with an environment.
     ///
     /// \param env The algorithm's environment.

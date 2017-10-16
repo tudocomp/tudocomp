@@ -107,6 +107,10 @@ TEST(TudocompDriver, roundtrip_matrix) {
         }
     }
 
+    // Check if we want the fast, abbreviated matrix test
+    auto env_fast_p = std::getenv("FAST_MATRIX");
+    bool env_fast = (env_fast_p != nullptr);
+
     for (auto& e : test_cases) {
         std::cout << "  " << e << "\n";
     }
@@ -121,7 +125,8 @@ TEST(TudocompDriver, roundtrip_matrix) {
     for (auto& algo : test_cases) {
         int counter = 0;
         bool abort = false;
-        test::roundtrip_batch([&](std::string text) {
+
+        auto run = [&](std::string text) {
             if (abort) {
                 return;
             }
@@ -139,7 +144,19 @@ TEST(TudocompDriver, roundtrip_matrix) {
                     errors.push_back(e);
                 }
             }
-        });
+        };
+
+        if (!env_fast) {
+            test::roundtrip_batch([&](std::string text) {
+                run(text);
+            });
+        } else {
+            std::stringstream ss;
+            test::roundtrip_batch([&](std::string text) {
+                ss << text;
+            });
+            run(ss.str());
+        }
     }
 
     for (auto& e : errors) {

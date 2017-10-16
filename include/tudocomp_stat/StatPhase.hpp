@@ -10,7 +10,30 @@
 
 #include <tudocomp_stat/PhaseData.hpp>
 
+#include <time.h>
+#include <sys/time.h>
+
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
 namespace tdc {
+
+// Use clock_gettime in linux, clock_get_time in OS X.
+inline void get_monotonic_time(struct timespec *ts){
+#ifdef __MACH__
+  clock_serv_t cclock;
+  mach_timespec_t mts;
+  host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+  clock_get_time(cclock, &mts);
+  mach_port_deallocate(mach_task_self(), cclock);
+  ts->tv_sec = mts.tv_sec;
+  ts->tv_nsec = mts.tv_nsec;
+#else
+  clock_gettime(CLOCK_MONOTONIC, ts);
+#endif
+}
 
 /// \brief Provides access to runtime and memory measurement in statistics
 ///        phases.
@@ -24,7 +47,7 @@ private:
 
     inline static unsigned long current_time_millis() {
         timespec t;
-        clock_gettime(CLOCK_MONOTONIC, &t);
+        get_monotonic_time(&t);
 
         return t.tv_sec * 1000L + t.tv_nsec / 1000000L;
     }

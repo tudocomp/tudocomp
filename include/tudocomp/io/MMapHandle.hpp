@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cstring>
 
 #include <tudocomp_stat/malloc.hpp>
 #include <tudocomp/def.hpp>
@@ -205,6 +206,9 @@ namespace tdc {namespace io {
             DCHECK(m_mode == Mode::ReadWrite);
             DCHECK(m_state == State::Private);
 
+            // On Linux, use mremap to expand memory in place
+            #ifndef __MACH__
+
             auto p = mremap(m_ptr, adj_size(m_size), adj_size(new_size), MREMAP_MAYMOVE);
             check_mmap_error(p, "remapping memory");
             IF_STATS(if (m_state == State::Private) {
@@ -216,6 +220,16 @@ namespace tdc {namespace io {
 
             m_ptr = (uint8_t*) p;
             m_size =  new_size;
+
+            // On Mac there is no mremap, so we just copy
+            #else
+
+            auto new_map = MMap(new_size);
+            size_t common_size = std::min(new_size, m_size);
+            std::memcpy(new_map.view().data(), view().data(), common_size);
+            *this = std::move(new_map);
+
+            #endif
         }
 
         View view() const {
