@@ -7,7 +7,7 @@
 
 namespace tdc {
 
-template<typename T, typename registry_root_t = T>
+template<typename T, typename registry_root_t = Compressor>
 class Builder {
     Registry<registry_root_t> m_registry;
     std::string m_options;
@@ -79,11 +79,10 @@ public:
 ///
 /// \tparam T The Algorithm type.
 /// \return The algorithm builder instance.
-template<typename T, typename registry_root_t = T>
+template<typename T, typename registry_root_t = Compressor>
 Builder<T, registry_root_t> builder() {
     return Builder<T, registry_root_t>();
 }
-
 
 /// \cond INTERNAL
 inline std::unique_ptr<Compressor> create_algo_with_registry_dynamic(
@@ -116,7 +115,7 @@ T create_algo_with_registry(const std::string& options,
 /// \return The created algorithm instance.
 template<class T, class... Args>
 T create_algo(const std::string& options, Args&&... args) {
-    return create_algo_with_registry<T>(options, Registry<T>(), std::forward<Args>(args)...);
+    return create_algo_with_registry<T>(options, Registry<Compressor>(), std::forward<Args>(args)...);
 }
 
 /// \brief Template for easy algorithm instantiation.

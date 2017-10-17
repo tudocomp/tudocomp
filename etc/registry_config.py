@@ -237,7 +237,7 @@ tdc.compressors = [
     AlgorithmConfig(name="MTFCompressor", header="compressors/MTFCompressor.hpp"),
     AlgorithmConfig(name="NoopCompressor", header="compressors/NoopCompressor.hpp"),
     AlgorithmConfig(name="BWTCompressor", header="compressors/BWTCompressor.hpp", sub=[textds]),
-    AlgorithmConfig(name="ChainCompressor", header="../tudocomp_driver/ChainCompressor.hpp"),
+    AlgorithmConfig(name="ChainCompressor", header="compressors/ChainCompressor.hpp"),
     AlgorithmConfig(name="EspCompressor", header="compressors/EspCompressor.hpp", sub=[slp_coder, ipddyn]),
     AlgorithmConfig(name="lfs::LFSCompressor", header="compressors/lfs/LFSCompressor.hpp", sub=[lfs_strat, coding_strat]),
     AlgorithmConfig(name="lfs::LFS2Compressor", header="compressors/lfs/LFS2Compressor.hpp", sub=[lit_coder, len_coder]),
