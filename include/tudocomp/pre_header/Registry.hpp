@@ -35,7 +35,6 @@ class Registry {
     };
 
     std::shared_ptr<RegistryData> m_data;
-    std::string m_root_type;
 
     /// \cond INTERNAL
     friend class AlgorithmTypeBuilder;
@@ -43,8 +42,8 @@ class Registry {
     /// \endcond
 
 public:
-    inline Registry(const std::string& root_type = "any"):
-        m_data(std::make_shared<RegistryData>()), m_root_type(root_type) {}
+    inline Registry():
+        m_data(std::make_shared<RegistryData>()) {}
 
     /// \brief Registers an \ref tdc::Algorithm.
     ///
@@ -68,8 +67,11 @@ public:
     inline std::unique_ptr<algorithm_t> select_algorithm(const AlgorithmValue& algo) const;
     inline AlgorithmValue parse_algorithm_id(string_ref text) const;
     inline std::unique_ptr<algorithm_t> select(const std::string& text) const;
-    inline static Registry<algorithm_t> with_all_from(std::function<void(Registry<algorithm_t>&)> f, const std::string& root_type);
+    inline static Registry<algorithm_t> with_all_from(std::function<void(Registry<algorithm_t>&)> f);
     inline std::string generate_doc_string(const std::string& title) const;
+    inline string_ref root_type() const {
+        return algorithm_t::meta_type();
+    }
     /// \endcond
 };
 

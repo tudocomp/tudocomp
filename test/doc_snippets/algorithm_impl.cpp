@@ -21,6 +21,16 @@ class MyAlgorithmBase : public Algorithm {
 public:
     using Algorithm::Algorithm; // inherit the default constructor
 
+    // make the destructor virtual, and define copy and move constructors
+    virtual ~MyAlgorithmBase() = default;
+    MyAlgorithmBase(MyAlgorithmBase const&) = default;
+    MyAlgorithmBase(MyAlgorithmBase&&) = default;
+    MyAlgorithmBase& operator=(MyAlgorithmBase const&) = default;
+    MyAlgorithmBase& operator=(MyAlgorithmBase&&) = default;
+
+    // mark this as having the meta type "example"
+    static string_ref meta_type() { return "example"_v; };
+
     virtual int execute() = 0;
 };
 
@@ -106,7 +116,7 @@ TEST(doc_algorithm_impl, algo_instantiate) {
 
 TEST(doc_algorithm_impl, algo_registry) {
     // Create a registry for algorithms of type "example"
-    Registry<MyAlgorithmBase> registry("example");
+    Registry<MyAlgorithmBase> registry;
 
     // Register two specializations of the algorithm
     registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
