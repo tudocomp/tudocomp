@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
 
         if(!options.stdin) {
             if(!options.generator.empty()) {
-                generator = generator_registry.select(options.generator);
+                generator = generator_registry.select_algorithm(options.generator);
             } else if(!options.remaining.empty()) {
                 // file
                 file = options.remaining[0];

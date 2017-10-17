@@ -231,7 +231,7 @@ inline AlgorithmValue Registry<algorithm_t>::parse_algorithm_id(
 }
 
 template<typename algorithm_t>
-inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select(
+inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(
     const std::string& options) const {
 
     return select_algorithm(parse_algorithm_id(options));

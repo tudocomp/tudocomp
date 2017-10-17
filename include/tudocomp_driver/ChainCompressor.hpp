@@ -44,8 +44,10 @@ public:
             auto textds_flags = av.textds_flags();
 
             DVLOG(1) << "dynamic creation of" << av.name() << "\n";
-            auto compressor = create_algo_with_registry_dynamic(
-                tdc_algorithms::COMPRESSOR_REGISTRY, av);
+
+            auto const& registry = env().root()->registry<Compressor>();
+
+            auto compressor = create_algo_with_registry_dynamic(registry, av);
 
             f(i, o, *compressor, textds_flags);
         };

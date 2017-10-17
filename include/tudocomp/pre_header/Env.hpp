@@ -46,7 +46,15 @@ public:
     inline AlgorithmValue& algo_value();
     template<typename T>
     inline void register_registry(Registry<T> const& registry) {
-        m_registries[registry.root_type()] = std::make_unique<VirtualRegistry>(registry);
+        m_registries.insert(std::make_pair(
+            std::string(registry.root_type()),
+            std::make_unique<Registry<T>>(registry)
+        ));
+    }
+
+    template<typename algorithm_if_t>
+    inline Registry<algorithm_if_t> const& registry() const {
+        return m_registries.at(algorithm_if_t::meta_type())->template downcast<algorithm_if_t>();
     }
 };
 
