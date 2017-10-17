@@ -16,6 +16,16 @@ struct AlreadySeenPair {
 inline bool operator==(const AlreadySeenPair& lhs, const AlreadySeenPair& rhs) {
     return lhs.pair[0] == rhs.pair[0] && lhs.pair[1] == rhs.pair[1];
 }
+
+class VirtualRegistry {
+public:
+    virtual ~VirtualRegistry() = default;
+    VirtualRegistry() = default;
+    VirtualRegistry(VirtualRegistry const&) = default;
+    VirtualRegistry(VirtualRegistry&&) = default;
+    VirtualRegistry& operator=(VirtualRegistry const&) = default;
+    VirtualRegistry& operator=(VirtualRegistry&&) = default;
+};
 /// \endcond
 
 /// \brief A registry for algorithms to be made available in the driver
@@ -26,7 +36,7 @@ inline bool operator==(const AlreadySeenPair& lhs, const AlreadySeenPair& rhs) {
 /// the \ref register_algorithm step. Any registered algorithm will also
 /// be listed in the utility's help message.
 template<typename algorithm_t>
-class Registry {
+class Registry: public VirtualRegistry {
     typedef std::function<std::unique_ptr<algorithm_t>(Env&&)> constructor_t;
 
     struct RegistryData {
@@ -38,7 +48,6 @@ class Registry {
 
     /// \cond INTERNAL
     friend class AlgorithmTypeBuilder;
-    friend class GlobalRegistry;
     /// \endcond
 
 public:

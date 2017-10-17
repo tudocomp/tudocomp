@@ -216,6 +216,8 @@ int main(int argc, char** argv) {
             auto input_restrictions = av.textds_flags();
             auto compressor = compressor_registry.select_algorithm(av);
             auto algorithm_env = compressor->env().root();
+            algorithm_env->register_registry(compressor_registry);
+            algorithm_env->register_registry(generator_registry);
 
             selection = Selection {
                 std::move(id_string),
@@ -322,6 +324,8 @@ int main(int argc, char** argv) {
                     auto compressor = compressor_registry.select_algorithm(av);
                     auto input_restrictions = av.textds_flags();
                     auto algorithm_env = compressor->env().root();
+                    algorithm_env->register_registry(compressor_registry);
+                    algorithm_env->register_registry(generator_registry);
 
                     selection = Selection {
                         std::move(id_string),
