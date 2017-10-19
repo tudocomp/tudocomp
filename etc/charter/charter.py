@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # Python3 host for the charter core.
 # This can be used to generate chart SVGs from the command-line.
