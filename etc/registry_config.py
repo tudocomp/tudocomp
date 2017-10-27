@@ -124,6 +124,7 @@ if config_match("^#define Boost_FOUND 1"): # if Boost is available
 # lcpcomp factor decoding strategies ("dec")
 lcpcomp_dec = [
     AlgorithmConfig(name="lcpcomp::ScanDec", header="compressors/lcpcomp/decompress/ScanDec.hpp"),
+    AlgorithmConfig(name="lcpcomp::PointerJump", header="compressors/lcpcomp/decompress/PointerJump.hpp"),
     AlgorithmConfig(name="lcpcomp::DecodeForwardQueueListBuffer", header="compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp"),
     AlgorithmConfig(name="lcpcomp::CompactDec", header="compressors/lcpcomp/decompress/CompactDec.hpp"),
     AlgorithmConfig(name="lcpcomp::MultimapBuffer", header="compressors/lcpcomp/decompress/MultiMapBuffer.hpp"),
