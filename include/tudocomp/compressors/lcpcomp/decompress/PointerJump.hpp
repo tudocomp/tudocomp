@@ -26,57 +26,115 @@ namespace tdc {
             }
 
             inline void decode_lazy() {
-                if (tdc_likely(m_decode_literal_factor.len)) {
-                    m_resolved.push_back(m_decode_literal_factor);
+                len_t rounds = 0;
+                len_t positions_completed = 0;
+
+                m_sources_temp.resize(m_buffer.size());
+
+                if (0) {
+                    while (true) {
+                        positions_completed = pointer_jump_round();
+                        rounds++;
+
+                        if (positions_completed == m_buffer.size()) {
+                            break;
+                        }
+
+//                    if (positions_completed >= m_buffer.size() * 0.9) {
+//                        exhaustive_jumps();
+//                    }
+                    };
+
+                    //exhaustive_jumps();
+
+                    StatPhase::log("PJ rounds", rounds);
                 }
 
-                bool done = false;
-                do {
-                    done = process_round();
-                } while(!done);
+                exhaustive_jumps();
 
+                m_sources_temp.clear();
+                m_sources_temp.shrink_to_fit();
             }
 
             void decode_eagerly() {
+                #pragma omp parallel for
+                for(len_t i=0; i < m_buffer.size(); i++) {
+                    m_buffer[i] = m_buffer[m_sources[i]];
+                }
             }
 
+        private:
+            inline len_t pointer_jump_round() {
+                len_t positions_completed = 0;
+
+                #pragma omp parallel for reduction(+:positions_completed)
+                for(len_t i=0; i < m_sources.size(); i++) {
+                    const auto parent = m_sources[i];
+
+                    m_sources_temp[i] = m_sources[parent];
+                    positions_completed += (m_sources[parent] == parent);
+                }
+
+                std::swap(m_sources, m_sources_temp);
+
+                StatPhase::log("Positions completed", positions_completed);
+
+                return positions_completed;
+            }
+
+            inline void exhaustive_jumps() {
+                #pragma omp parallel for
+                for(len_t i=0; i < m_sources.size(); i++) {
+                    len_t parent = i;
+
+                    do {
+                        parent = m_sources[parent];
+                    } while (parent != m_sources[parent]);
+
+                    m_sources_temp[i] = parent;
+                }
+
+                std::swap(m_sources, m_sources_temp);
+            }
+
+            len_t m_cursor;
+
+            IntVector<uliteral_t> m_buffer;
+
+            //storing factors
+            const len_t source_complete = std::numeric_limits<len_t>::max();
+            using SourceVector = std::vector<len_t>;
+
+            SourceVector m_sources;
+            SourceVector m_sources_temp;
+
+            IF_STATS(len_t m_longest_chain = 0);
+
+        public:
             PointerJump(PointerJump&& other) = default;
 
             inline PointerJump(Env&& env, len_t size)
                     : Algorithm(std::move(env))
                     , m_cursor(0)
                     , m_buffer(size)
+                    , m_sources(size)
             {}
 
-
-        // decoding statge
             inline void decode_literal(uliteral_t c) {
                 m_buffer[m_cursor] = c;
-
-                if (tdc_unlikely(m_decode_literal_factor.len == 0)) {
-                    m_decode_literal_factor.source = m_cursor;
-                }
-
-                m_decode_literal_factor.len++;
+                m_sources[m_cursor] = m_cursor;
                 m_cursor++;
 
-                // we assume that the text to restore does not contain a NULL-byte but at its very end
-                DCHECK(c != 0 || m_cursor == m_buffer.size());
+                DCHECK(c != 0 || m_cursor == m_buffer.size()); // we assume that the text to restore does not contain a NULL-byte but at its very end
             }
 
             inline void decode_factor(const len_t source_position, const len_t factor_length) {
-                if (tdc_likely(m_decode_literal_factor.len)) {
-                    m_resolved.push_back(m_decode_literal_factor);
-                    m_decode_literal_factor.len = 0;
+                for(len_t i = 0; i < factor_length; ++i, ++m_cursor) {
+                    const len_t src_pos = source_position+i;
+                    m_sources[m_cursor] = src_pos;
                 }
-
-                m_unresolved.emplace_back(source_position, m_cursor, factor_length);
-                m_new_requests.emplace_back(source_position, m_cursor, factor_length);
-
-                m_cursor += factor_length;
             }
 
-        // final touch
             IF_STATS(
             inline len_t longest_chain() const {
                 // We would need additional data structures to compute it. so we output a dummy value.
@@ -87,96 +145,6 @@ namespace tdc {
 
             inline void write_to(std::ostream& out) const {
                 for(auto c : m_buffer) out << c;
-            }
-
-
-        private:
-            // literals and insertion
-            len_t m_cursor;
-            IntVector<uliteral_t> m_buffer;
-
-            // request handling
-            struct Factor {
-                len_t source;
-                len_t len;
-                IF_DEBUG(len_t target);
-
-                Factor() {}
-                Factor(len_t source, len_t len) : source(source), len(len) {}
-                Factor(len_t source, len_t target, len_t len)
-                        : source(source), len(len)
-                {
-                    IF_DEBUG(this->target = target);
-                }
-
-                Factor(const Factor&) = default;
-
-                bool operator< (const Factor& o) const {
-                    return std::tie(source, len) < std::tie(o.source, o.len);
-                }
-            };
-
-            struct Request {
-                len_t source;
-                len_t target;
-                len_t len;
-
-                Request() {}
-                Request(len_t source, len_t target, len_t len)
-                        : source(source), target(target), len(len)
-                {}
-                Request(const Request&) = default;
-
-                bool operator< (const Request& o) const {
-                    return std::tie(source, target, len) < std::tie(o.source, o.target, o.len);
-                }
-            };
-
-            std::vector<Factor> m_resolved;
-            std::vector<Factor> m_unresolved;
-            std::vector<Request> m_requests;
-            std::vector<Request> m_new_requests;
-
-            Factor m_decode_literal_factor{0, 0};
-
-            void check_invariants() const {
-                DCHECK(std::is_sorted(m_resolved.cbegin(), m_resolved.cend()));
-                DCHECK(std::is_sorted(m_requests.cbegin(), m_requests.cend()));
-
-                // Ensure that each character is exactly resolved or unresolved
-                {
-                    len_t cursor = 0;
-                    auto iter_un = m_unresolved.cbegin();
-                    auto iter_res = m_resolved.cbegin();
-
-                    while(cursor < m_buffer.size()) {
-                        if (iter_res != m_resolved.cend() && iter_res->source == cursor) {
-                            // cursor points to unresolved
-                            cursor += iter_res->len;
-                            iter_res++;
-                            continue;
-                        }
-
-                        DCHECK(iter_un != m_unresolved.cend());
-                        DCHECK_EQ(iter_un->target, cursor);
-                        cursor += iter_un->len;
-                        iter_un++;
-                    }
-
-                    DCHECK_EQ(cursor, m_buffer.size());
-                }
-            }
-
-            bool process_round() {
-                // sort and exchange requests
-                std::sort(m_new_requests.begin(), m_new_requests.end());
-                m_requests.swap(m_new_requests);
-                m_new_requests.clear();
-
-                IF_DEBUG(check_invariants());
-
-                std::vector<Factor> new_resolved;
-
             }
         };
 
