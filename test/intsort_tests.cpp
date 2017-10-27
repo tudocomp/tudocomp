@@ -1,7 +1,5 @@
 #include <gtest/gtest.h>
 
-#define ENABLE_OPENMP
-
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -15,8 +13,8 @@ void compare_sort(std::vector<T>& input, KeyExtract extract, Key max_key, Less l
     std::vector<T> vec_ref(input);
     std::vector<T> input2(input);
 
-    intsort(input.begin(), input.end(), extract, max_key);
-    intsort(input2, extract, max_key);
+    tdc::intsort(input.begin(), input.end(), extract, max_key);
+    tdc::intsort(input2, extract, max_key);
     std::sort(vec_ref.begin(), vec_ref.end(), less);
 
     for(size_t i = 0; i < input.size(); ++i)
