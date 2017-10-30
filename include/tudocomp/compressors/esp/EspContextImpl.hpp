@@ -19,26 +19,25 @@ namespace tdc {namespace esp {
         size_t slp_counter = 256;
         size_t prev_slp_counter = 0;
 
-        std::unique_ptr<Round<ipd_t>> round;
+        std::unique_ptr<Round<ipd_t>> round_ptr;
 
         // Initialize initial round
         {
             auto phase = StatPhase("Prepare round 0");
 
-            round = std::make_unique<Round<ipd_t>>(Round<ipd_t> {
-                GrammarRules<ipd_t>(256),
-                256, // TODO: Calc actual alphabet size
+            // TODO: Calc actual alphabet size, or make parametric over arbitrary alphabet
+            size_t initial_alphabet_size = 256;
+            round_ptr = std::make_unique<Round<ipd_t>>(Round<ipd_t> {
+                GrammarRules<ipd_t>(initial_alphabet_size),
+                initial_alphabet_size,
                 IntVector<dynamic_t>(),
             });
-            round->string.width(bits_for(256 - 1));
-            round->string.reserve(input.size(), bits_for(256 - 1));
+            round_ptr->string.width(bits_for(initial_alphabet_size - 1));
+            round_ptr->string.reserve(input.size(), bits_for(initial_alphabet_size - 1));
             for (auto c : input) {
-                round->string.push_back(c);
+                // TODO: Take input as a stream instead
+                round_ptr->string.push_back(c);
             }
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-            auto discard = std::move(input);
-#pragma GCC diagnostic pop
         }
 
         for(size_t n = 0;; n++) {
@@ -46,11 +45,11 @@ namespace tdc {namespace esp {
             ss << "Round " << n;
             auto phase = StatPhase(ss.str());
 
-            auto& r = *round;
-            in_t in = r.string;
+            auto& round = *round_ptr;
+            in_t in = round.string;
 
             esp::RoundContext<in_t> ctx {
-                r.alphabet,
+                round.alphabet,
                 in
             };
 
@@ -77,7 +76,7 @@ namespace tdc {namespace esp {
                 for (auto e : v) {
                     auto slice = s.slice(0, e.len);
                     s = s.slice(e.len);
-                    auto rule_name = r.gr.add(slice) - (r.gr.initial_counter() - 1);
+                    auto rule_name = round.gr.add(slice) - (round.gr.initial_counter() - 1);
 
                     auto old_cap = new_layer.capacity();
                     new_layer.push_back(rule_name);
@@ -87,17 +86,17 @@ namespace tdc {namespace esp {
             }
 
             // Delete previous string
-            r.string = IntVector<dynamic_t>();
+            round.string = IntVector<dynamic_t>();
 
-            DCHECK_EQ(r.string.size(), 0);
-            DCHECK_EQ(r.string.capacity(), 0);
+            DCHECK_EQ(round.string.size(), 0);
+            DCHECK_EQ(round.string.capacity(), 0);
 
             new_layer.shrink_to_fit();
 
             // Append to slp array
             {
                 size_t old_slp_size = slp.rules.size();
-                size_t additional_slp_size = r.gr.rules_count();
+                size_t additional_slp_size = round.gr.rules_count();
                 size_t new_slp_size = old_slp_size + additional_slp_size;
 
                 slp.rules.reserve(new_slp_size);
@@ -105,8 +104,8 @@ namespace tdc {namespace esp {
 
                 auto& rv = slp.rules;
 
-                r.gr.for_all([&](const auto& k, const auto& val_) {
-                    const auto& val = val_ - r.gr.initial_counter();
+                round.gr.for_all([&](const auto& k, const auto& val_) {
+                    const auto& val = val_ - round.gr.initial_counter();
                     const auto& key = k.as_view();
 
                     size_t store_idx = slp_counter + val - 256;
@@ -119,7 +118,7 @@ namespace tdc {namespace esp {
             }
 
             // carry over stats
-            auto round_ipd_stats = r.gr.stats();
+            auto round_ipd_stats = round.gr.stats();
             ipd_stats.ext_size2_total += round_ipd_stats.ext_size2_total;
             ipd_stats.ext_size3_total += round_ipd_stats.ext_size3_total;
             ipd_stats.ext_size3_unique += round_ipd_stats.ext_size3_unique;
@@ -127,17 +126,17 @@ namespace tdc {namespace esp {
             ipd_stats.int_size2_unique += round_ipd_stats.int_size2_unique;
 
             // Delete previous hashmap
-            r.gr.clear();
+            round.gr.clear();
 
             // Prepare next round
             auto tmp = Round<ipd_t> {
-                GrammarRules<ipd_t>(r.gr.rules_count()),
-                r.gr.rules_count(),
+                GrammarRules<ipd_t>(round.gr.rules_count()),
+                round.gr.rules_count(),
                 std::move(new_layer),
             };
 
-            round.reset();
-            round = std::make_unique<Round<ipd_t>>(std::move(tmp));
+            round_ptr.reset();
+            round_ptr = std::make_unique<Round<ipd_t>>(std::move(tmp));
 
             phase.log_stat("SLP size", slp.rules.size());
             phase.log_stat("ext_size2_total", round_ipd_stats.ext_size2_total);
