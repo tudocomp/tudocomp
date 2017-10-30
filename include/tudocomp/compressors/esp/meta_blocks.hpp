@@ -159,8 +159,7 @@ public:
                 },
                 [&](size_t left, size_t right) {
                     push_block(right - left + 1, 2);
-                },
-                ctx.behavior_landmarks_tie_to_right
+                }
             );
         }
     }

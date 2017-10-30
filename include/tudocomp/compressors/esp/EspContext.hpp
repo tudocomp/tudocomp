@@ -18,10 +18,6 @@ namespace tdc {namespace esp {
             m_env(e)
         {}
 
-        bool behavior_metablocks_maximimze_repeating = true;
-        bool behavior_landmarks_tie_to_right = true;
-        bool behavior_iter_log_mode = false; // UNUSED
-
         template<typename T>
         SLP generate_grammar(T&& s);
     };

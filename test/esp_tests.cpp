@@ -352,9 +352,7 @@ TEST(Esp, landmark_spanner_13) {
 void split_test(string_ref s) {
     esp::RoundContext<decltype(s)> ctx {
         256,
-        s,
-        true, // max repeating meta blocks
-        true // tie to right (or left?)
+        s
     };
 
     std::cout << "             [" << s << "]\n";

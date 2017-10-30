@@ -8,9 +8,6 @@
 namespace tdc {namespace esp {
     template<typename round_view_t>
     struct RoundContext {
-        bool behavior_metablocks_maximimze_repeating;
-        bool behavior_landmarks_tie_to_right;
-
         size_t alphabet_size;
         std::vector<size_t> scratchpad;
         round_view_t s;
@@ -20,11 +17,7 @@ namespace tdc {namespace esp {
         std::vector<TypedBlock> block_buffer;
 
         RoundContext(size_t as,
-                     round_view_t src,
-                     bool metablocks_maximimze_repeating,
-                     bool landmarks_tie_to_right):
-            behavior_metablocks_maximimze_repeating(metablocks_maximimze_repeating),
-            behavior_landmarks_tie_to_right(landmarks_tie_to_right),
+                     round_view_t src):
             alphabet_size(as),
             scratchpad(),
             s(src),

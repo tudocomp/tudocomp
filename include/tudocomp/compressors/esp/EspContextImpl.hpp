@@ -51,9 +51,7 @@ namespace tdc {namespace esp {
 
             esp::RoundContext<in_t> ctx {
                 r.alphabet,
-                in,
-                behavior_metablocks_maximimze_repeating,
-                behavior_landmarks_tie_to_right,
+                in
             };
 
             if (in.size() == 0) {

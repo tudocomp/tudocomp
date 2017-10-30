@@ -15,15 +15,13 @@ namespace tdc {namespace esp {
 
     template<typename round_view_t>
     void RoundContext<round_view_t>::split(round_view_t src) {
-        auto& ctx = *this;
-
         // Split up the input into metablocks of type 2 or 1/3
         for (size_t i = 0; i < src.size();) {
             size_t j;
 
             // Scan for non-repeating
             // NB: First to not find a size-1 repeating prefix
-            j = split_where(src, i, !ctx.behavior_metablocks_maximimze_repeating,
+            j = split_where(src, i, false,
                             [](size_t a, size_t b){ return a != b; });
             if(j != i) {
                 auto s = src.slice(i, j);
@@ -35,7 +33,7 @@ namespace tdc {namespace esp {
             }
 
             // Scan for repeating
-            j = split_where(src, i, ctx.behavior_metablocks_maximimze_repeating,
+            j = split_where(src, i, true,
                             [](size_t a, size_t b){ return a == b; });
             if(j != i) {
                 auto s = src.slice(i, j);
