@@ -28,10 +28,7 @@ namespace tdc {namespace esp {
             if(j != i) {
                 auto s = src.slice(i, j);
 
-                auto mb = debug.metablock();
-                mb.init(2, s, i);
-
-                MetablockContext<round_view_t> mbctx(*this, mb);
+                MetablockContext<round_view_t> mbctx {*this};
 
                 mbctx.eager_mb2(s);
                 i = j;
@@ -43,10 +40,7 @@ namespace tdc {namespace esp {
             if(j != i) {
                 auto s = src.slice(i, j);
 
-                auto mb = debug.metablock();
-                mb.init(1, s, i);
-
-                MetablockContext<round_view_t> mbctx(*this, mb);
+                MetablockContext<round_view_t> mbctx {*this};
 
                 mbctx.eager_mb13(s, 1);
                 i = j;

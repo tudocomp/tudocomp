@@ -354,8 +354,7 @@ void split_test(string_ref s) {
         256,
         s,
         true, // max repeating meta blocks
-        true, // tie to right (or left?)
-        esp::DebugRoundContext(std::cout, true, true),
+        true // tie to right (or left?)
     };
 
     std::cout << "             [" << s << "]\n";
@@ -1089,9 +1088,7 @@ TEST(Fulltree, test) {
     //auto in = "ghkhkgbananabanana"_v;
     //auto in = "ghkhkgbananabanana"_v;
     auto in = "abcddddabcbababac"_v;
-    context.debug.input_string(in);
     auto slp = context.generate_grammar(in);
-    context.debug.print_all();
 }
 
 
@@ -1156,7 +1153,7 @@ TEST(WT, compact) {
         size_t c = 0;
         while (a != b) {
             --b;
-            if (*b == 0) {
+            if (*b == 0u) {
                 c += 1;
             } else {
                 break;

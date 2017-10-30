@@ -4,7 +4,6 @@
 #include <tudocomp/compressors/esp/SLP.hpp>
 #include <tudocomp/compressors/esp/Rounds.hpp>
 #include <tudocomp/compressors/esp/utils.hpp>
-#include <tudocomp/compressors/esp/DebugContext.hpp>
 
 namespace tdc {namespace esp {
     template<typename ipd_t>
@@ -21,12 +20,10 @@ namespace tdc {namespace esp {
             return decltype(f(*m_env))();
         }
 
-        DebugContext debug;
         IPDStats ipd_stats;
 
         EspContext(const Env* e, bool silent):
-            m_env(e),
-            debug(std::cout, !silent, false)
+            m_env(e)
         {}
 
         bool behavior_metablocks_maximimze_repeating = true;

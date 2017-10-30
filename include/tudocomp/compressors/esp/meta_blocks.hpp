@@ -20,14 +20,10 @@ public:
         return *m_parent;
     }
 
-    DebugMetablockContext debug;
-
-    MetablockContext(RoundContext<Source>& ctx, DebugMetablockContext dbg):
-        m_parent(&ctx),
-        debug(dbg) {}
+    MetablockContext(RoundContext<Source>& ctx):
+        m_parent(&ctx) {}
 
     void push_block(size_t width, size_t type) {
-        debug.block(width, type);
         rctx().push_back(width, type);
     }
 
@@ -59,7 +55,6 @@ public:
                 }
             }
         }();
-        rctx().debug_check_advanced(src.size());
     }
 
     inline void eager_mb2(const Source& src) {
@@ -77,8 +72,6 @@ public:
             if (type_3_prefix_len == A.size()) { return; }
         }
 
-        auto type_2_suffix_size = src.size() - type_3_prefix_len;
-
         // Prepare scratchpad buffer
         auto& buf = ctx.scratchpad;
         buf.clear();
@@ -89,8 +82,6 @@ public:
         // This reduces the size by `iter_log(alphabet_size) == type_3_prefix_len`
         // the alphabet to size 6.
         {
-            debug.mb2_initial(buf);
-            debug.mb2_reduce_to_6_start();
             for (uint shrink_i = 0; shrink_i < type_3_prefix_len; shrink_i++) {
                 for (size_t i = 1; i < buf.size(); i++) {
                     auto left  = buf[i - 1];
@@ -98,8 +89,6 @@ public:
                     buf[i - 1] = label(left, right);
                 }
                 buf.pop_back();
-
-                debug.mb2_reduce_to_6_step(buf);
             }
 
             DCHECK_LE(calc_alphabet_size(buf), 6);
@@ -107,8 +96,6 @@ public:
 
         // Reduce further to alphabet 3
         {
-            debug.mb2_reduce_to_3_start();
-
             // final pass: reduce to alphabet 3
             for(uint to_replace = 3; to_replace < 6; to_replace++) {
                 do_for_neighbors(buf, [&](size_t i, ConstGenericView<size_t> neighbors) {
@@ -119,8 +106,6 @@ public:
                         for (auto n : neighbors) { if (n == e) { e++; } }
                     }
                 });
-
-                debug.mb2_reduce_to_3_step(buf);
             }
 
             DCHECK(calc_alphabet_size(buf) <= 3);
@@ -145,8 +130,6 @@ public:
                 }
             });
 
-            debug.mb2_high_landmarks(landmarks);
-
             do_for_neighbors(buf, [&](size_t i, ConstGenericView<size_t> neighbors) {
                 bool is_low_landmark = true;
                 for (auto e : neighbors) {
@@ -165,8 +148,6 @@ public:
                 }
             });
 
-            debug.mb2_high_and_low_landmarks(landmarks);
-
             DCHECK(check_landmarks(landmarks, true));
 
             // Split at landmarks
@@ -182,8 +163,6 @@ public:
                 ctx.behavior_landmarks_tie_to_right
             );
         }
-
-        ctx.debug_check_advanced(type_2_suffix_size);
     }
 };
 

@@ -37,7 +37,10 @@ namespace tdc {namespace esp {
             for (auto c : input) {
                 round->string.push_back(c);
             }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
             auto discard = std::move(input);
+#pragma GCC diagnostic pop
         }
 
         for(size_t n = 0;; n++) {
@@ -55,19 +58,14 @@ namespace tdc {namespace esp {
                 in,
                 behavior_metablocks_maximimze_repeating,
                 behavior_landmarks_tie_to_right,
-                debug.round(),
             };
-
-            ctx.debug.init(n, in, r.alphabet);
 
             if (in.size() == 0) {
                 empty = true;
-                ctx.debug.last_round(0, true);
                 break;
             }
             if (in.size() == 1) {
                 root_node = in[0] + prev_slp_counter;
-                ctx.debug.last_round(root_node, false);
                 break;
             }
 
@@ -80,15 +78,12 @@ namespace tdc {namespace esp {
 
             const auto& v = ctx.adjusted_blocks();
 
-            ctx.debug.slice_symbol_map_start();
             {
                 in_t s = in;
                 for (auto e : v) {
                     auto slice = s.slice(0, e.len);
                     s = s.slice(e.len);
                     auto rule_name = r.gr.add(slice) - (r.gr.initial_counter() - 1);
-
-                    ctx.debug.slice_symbol_map(slice, rule_name);
 
                     auto old_cap = new_layer.capacity();
                     new_layer.push_back(rule_name);

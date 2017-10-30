@@ -43,8 +43,6 @@ public:
             auto phase2 = StatPhase("Creating input view");
                 auto in = input.as_view();
 
-                context.debug.input_string(in);
-
             phase2.split("ESP Algorithm");
                 slp = context.generate_grammar(std::move(in));
         }
@@ -63,10 +61,8 @@ public:
                 const slp_coder_t strategy { this->env().env_for_option("slp_coder") };
 
             phase2.split("Encode SLP");
-                strategy.encode(context.debug, std::move(slp), output);
+                strategy.encode(std::move(slp), output);
         }
-
-        context.debug.print_all();
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
