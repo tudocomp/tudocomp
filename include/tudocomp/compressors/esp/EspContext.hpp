@@ -22,7 +22,7 @@ namespace tdc {namespace esp {
 
         IPDStats ipd_stats;
 
-        EspContext(const Env* e, bool silent):
+        EspContext(const Env* e):
             m_env(e)
         {}
 

@@ -34,7 +34,7 @@ public:
 
         auto phase0 = StatPhase("ESP Compressor");
 
-        EspContext<ipd_t> context { &env(), true };
+        EspContext<ipd_t> context { &env() };
         SLP slp;
 
         {
