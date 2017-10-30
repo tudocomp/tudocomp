@@ -382,7 +382,7 @@ namespace tdc {
                                 new_resolved.emplace_back( request.target, length );
 
                                 if (true) {
-                                    // copy data (unfortunately this triggers unstructured I/Os)
+                                    // copy data (unfortunately this triggers unstructured I/Os); easy to replace in EM
                                     std::copy(
                                             std::next(m_buffer.cbegin(), request.source),
                                             std::next(m_buffer.cbegin(), request.source + length),
@@ -423,6 +423,7 @@ namespace tdc {
                     }
 
                     // new requests -> new unresolved
+                    StatPhase::log("m_unresolved.size", m_unresolved.size() - 1);
                     m_unresolved.clear();
                     m_unresolved.reserve(m_new_requests.size() + 1);
                     m_unresolved.assign(m_new_requests.cbegin(), m_new_requests.cend());
@@ -432,6 +433,7 @@ namespace tdc {
                     PARSEQ::sort(m_unresolved.begin(), m_unresolved.end(),
                          [] (const Request& a, const Request& b) {return a.target < b.target;});
 #endif
+                    StatPhase::log("m_new_unresolved.size", m_unresolved.size());
                     m_unresolved.push_back(Request::max_sentinel());
 
                     // merge resolved vector
