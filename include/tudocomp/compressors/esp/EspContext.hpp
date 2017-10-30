@@ -8,15 +8,10 @@
 namespace tdc {namespace esp {
     template<typename ipd_t>
     class EspContext {
-        const Env* m_env;
     public:
-        using esp_view_t = ConstGenericView<size_t>;
-
         IPDStats ipd_stats;
 
-        EspContext(const Env* e):
-            m_env(e)
-        {}
+        EspContext() = default;
 
         template<typename T>
         SLP generate_grammar(T&& s);

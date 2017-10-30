@@ -442,9 +442,7 @@ TEST(Esp, tree_reducer_roundtrip) {
     auto s = "0000dkasxxxcsdacjzsbkhvfaghskcbs"
              "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v;
 
-    esp::EspContext<test_ipd_t> esp {
-        nullptr, // no env
-    };
+    esp::EspContext<test_ipd_t> esp;
 
     std::cout << "\n[Complete Grammar]:\n\n";
     auto slp = esp.generate_grammar(s);
@@ -1078,7 +1076,7 @@ TEST(Hashmaps, size) {
 }
 
 TEST(Fulltree, test) {
-    esp::EspContext<test_ipd_t> context { nullptr };
+    esp::EspContext<test_ipd_t> context;
     //auto in = "dkaxxxxcsdacjzstj"_v;
     //auto in = "ghkhkgasdfjlkbananasdframaaaaaaaaaaaaaaaaaaasdfjlkbananaasddjztt"_v;
     //auto in = "ghkhkgbananabananasdframaaaaaaaaaaaaaaaaasdfjuzlbananabananauztl"_v;

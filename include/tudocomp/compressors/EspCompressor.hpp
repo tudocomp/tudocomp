@@ -34,17 +34,17 @@ public:
 
         auto phase0 = StatPhase("ESP Compressor");
 
-        EspContext<ipd_t> context { &env() };
+        EspContext<ipd_t> context;
         SLP slp;
 
         {
             auto phase1 = StatPhase("Compress Phase");
 
             auto phase2 = StatPhase("Creating input view");
-                auto in = input.as_view();
+            auto in = input.as_view();
 
             phase2.split("ESP Algorithm");
-                slp = context.generate_grammar(std::move(in));
+            slp = context.generate_grammar(std::move(in));
         }
 
         phase0.log_stat("SLP size", slp.rules.size());
@@ -58,10 +58,10 @@ public:
             auto phase1 = StatPhase("Encode Phase");
 
             auto phase2 = StatPhase("Creating strategy");
-                const slp_coder_t strategy { this->env().env_for_option("slp_coder") };
+            const slp_coder_t strategy { this->env().env_for_option("slp_coder") };
 
             phase2.split("Encode SLP");
-                strategy.encode(std::move(slp), output);
+            strategy.encode(std::move(slp), output);
         }
     }
 
@@ -69,19 +69,20 @@ public:
         auto phase0 = StatPhase("ESP Decompressor");
 
         auto phase1 = StatPhase("Creating strategy");
-            const slp_coder_t strategy { this->env().env_for_option("slp_coder") };
+        const slp_coder_t strategy { this->env().env_for_option("slp_coder") };
+
         phase1.split("Decode SLP");
-            auto slp = strategy.decode(input);
+        auto slp = strategy.decode(input);
 
         phase1.split("Create output stream");
-            auto out = output.as_stream();
+        auto out = output.as_stream();
 
         phase1.split("Derive text");
-            if (!slp.empty) {
-                slp.derive_text(out);
-            } else {
-                out << ""_v;
-            }
+        if (!slp.empty) {
+            slp.derive_text(out);
+        } else {
+            out << ""_v;
+        }
     }
 };
 
