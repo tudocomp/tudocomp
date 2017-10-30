@@ -23,9 +23,7 @@ namespace tdc {namespace esp {
 
         // Initialize initial round
         {
-            auto phase = with_env([&](auto& env) {
-                return StatPhase("Prepare round 0");
-            });
+            auto phase = StatPhase("Prepare round 0");
 
             round = std::make_unique<Round<ipd_t>>(Round<ipd_t> {
                 GrammarRules<ipd_t>(256),
@@ -44,11 +42,9 @@ namespace tdc {namespace esp {
         }
 
         for(size_t n = 0;; n++) {
-            auto phase = with_env([&](auto& env) {
-                std::stringstream ss;
-                ss << "Round " << n;
-                return StatPhase(ss.str());
-            });
+            std::stringstream ss;
+            ss << "Round " << n;
+            auto phase = StatPhase(ss.str());
 
             auto& r = *round;
             in_t in = r.string;

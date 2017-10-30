@@ -12,14 +12,6 @@ namespace tdc {namespace esp {
     public:
         using esp_view_t = ConstGenericView<size_t>;
 
-        template<typename F>
-        auto with_env(F f) -> decltype(f(*m_env)) {
-            if (m_env != nullptr) {
-                return f(*m_env);
-            }
-            return decltype(f(*m_env))();
-        }
-
         IPDStats ipd_stats;
 
         EspContext(const Env* e):
