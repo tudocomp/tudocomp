@@ -214,14 +214,14 @@ void landmark_spanner_test_adj(std::vector<int> landmarks,
     for(auto span : spans) {
         v.push_block(uint8_t(span[1] - span[0] + 1), 2);
     }
-    v.done();
 
     spans.clear();
+
     size_t i = 0;
-    for (auto b : v.vec()) {
-        spans.push_back({ i, i + b.len - 1});
-        i += b.len;
-    }
+    v.for_each_block_len([&](size_t block_len) {
+        spans.push_back({ i, i + block_len - 1});
+        i += block_len;
+    });
 
     ASSERT_EQ(should_spans, spans) << "Adjusted spans don't match";
 }
@@ -352,7 +352,7 @@ void split_test(string_ref s) {
     };
 
     std::cout << "             [" << s << "]\n";
-    ctx.split(s);
+    ctx.split_into_blocks(s);
 }
 
 TEST(Esp, new_split) {

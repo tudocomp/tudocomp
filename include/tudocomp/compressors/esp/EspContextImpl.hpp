@@ -67,20 +67,20 @@ namespace tdc {namespace esp {
             new_layer.width(new_layer_width);
             new_layer.reserve(in.size() / 2 + 1, new_layer_width);
 
-            auto v = ctx.split(in);
-
             {
+                auto block_grid = ctx.split_into_blocks(in);
+
                 in_t s = in;
-                for (auto e : v.vec()) {
-                    auto slice = s.slice(0, e.len);
-                    s = s.slice(e.len);
+                block_grid.for_each_block_len([&](size_t block_len) {
+                    auto slice = s.slice(0, block_len);
+                    s = s.slice(block_len);
                     auto rule_name = round.gr.add(slice) - (round.gr.initial_counter() - 1);
 
                     auto old_cap = new_layer.capacity();
                     new_layer.push_back(rule_name);
                     auto new_cap = new_layer.capacity();
                     DCHECK_EQ(old_cap, new_cap);
-                }
+                });
             }
 
             // Delete previous string

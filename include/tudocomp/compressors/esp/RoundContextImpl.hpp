@@ -14,7 +14,7 @@ namespace tdc {namespace esp {
     }
 
     template<typename round_view_t>
-    BlockGrid RoundContext<round_view_t>::split(round_view_t src) {
+    BlockGrid RoundContext<round_view_t>::split_into_blocks(round_view_t src) {
         BlockGrid grid;
 
         // Split up the input into metablocks of type 2 or 1/3
@@ -47,7 +47,6 @@ namespace tdc {namespace esp {
             }
         }
 
-        grid.done();
         return grid;
     }
 }}

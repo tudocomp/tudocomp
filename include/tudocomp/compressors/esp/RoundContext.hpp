@@ -6,15 +6,19 @@
 
 namespace tdc {namespace esp {
     class BlockGrid {
-        std::vector<TypedBlock> m_block_buffer;
+        // Store the bulk of blocks as one bit each:
+        // bit == 0: block len == 2
+        // bit == 1: block len == 3
+        BitVector m_block_buffer;
         std::array<TypedBlock, 2> m_adjust_buffer;
         size_t m_adjust_buffer_size = 0;
     public:
-        BlockGrid() = default;
+        BlockGrid() = default; // TODO: add ability to preallocate?
 
         inline void push_block(size_t l, size_t type) {
             if (m_adjust_buffer_size == 2) {
-                m_block_buffer.push_back(m_adjust_buffer[0]);
+                DCHECK(m_adjust_buffer[0].len >= 2 && m_adjust_buffer[0].len <= 3);
+                m_block_buffer.push_back(m_adjust_buffer[0].len - 2);
                 m_adjust_buffer[0] = m_adjust_buffer[1];
                 m_adjust_buffer_size = 1;
             }
@@ -22,13 +26,6 @@ namespace tdc {namespace esp {
 
             // Check if the adjust buffer contains a block with invalid size (outside of 2 or 3), and fix it up
             maybe_adjust();
-        }
-
-        inline void done() {
-            for(size_t i = 0; i < m_adjust_buffer_size; i++) {
-                m_block_buffer.push_back(m_adjust_buffer[i]);
-            }
-            m_adjust_buffer_size = 0;
         }
 
         // Simplified logic - if there is a block of size 1,
@@ -52,8 +49,14 @@ namespace tdc {namespace esp {
             }
         }
 
-        inline auto& vec() {
-            return m_block_buffer;
+        template<typename F>
+        inline void for_each_block_len(F f) {
+            for (auto e : m_block_buffer) {
+                f(e + 2); // convert bit to real block width
+            }
+            for(size_t i = 0; i < m_adjust_buffer_size; i++) {
+                f(m_adjust_buffer[i].len);
+            }
         }
     };
 
@@ -64,6 +67,6 @@ namespace tdc {namespace esp {
 
         RoundContext(size_t as): alphabet_size(as) {}
 
-        BlockGrid split(round_view_t);
+        BlockGrid split_into_blocks(round_view_t);
     };
 }}
