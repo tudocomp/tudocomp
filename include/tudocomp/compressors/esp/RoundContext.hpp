@@ -1,10 +1,22 @@
 #pragma once
 
-#include <tudocomp/compressors/esp/TypedBlock.hpp>
 #include <tudocomp/compressors/esp/utils.hpp>
 #include <tudocomp/compressors/esp/EspContext.hpp>
 
 namespace tdc {namespace esp {
+    struct TypedBlock {
+        uint8_t len;
+        uint8_t type;
+    };
+
+    inline bool operator==(const TypedBlock& a, const TypedBlock& b) {
+        return a.len == b.len && a.type == b.type;
+    }
+
+    inline std::ostream& operator<<(std::ostream& o, const TypedBlock& b) {
+        return o << "{ len: " << int(b.len) << ", type: " << int(b.type) << " }";
+    }
+
     class BlockGrid {
         // Store the bulk of blocks as one bit each:
         // bit == 0: block len == 2

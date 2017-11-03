@@ -32,7 +32,6 @@ namespace tdc {namespace esp {
             size_t j;
 
             // Scan for non-repeating
-            // NB: First to not find a size-1 repeating prefix
             j = search_equal(src, i);
             if(j != i) {
                 auto s = src.slice(i, j);

@@ -20,7 +20,7 @@ public:
     MetablockContext(RoundContext<round_view_t>& ctx, BlockGrid& grid):
         m_parent(&ctx), m_grid(&grid) {}
 
-    void push_block(size_t width, size_t type) {
+    inline void push_block(size_t width, size_t type) {
         m_grid->push_block(width, type);
     }
 
