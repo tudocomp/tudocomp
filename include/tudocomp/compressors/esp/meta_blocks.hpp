@@ -12,22 +12,19 @@
 
 namespace tdc {namespace esp {
 
-template<typename Source>
+template<typename round_view_t>
 class MetablockContext {
-    RoundContext<Source>* m_parent;
+    RoundContext<round_view_t>* m_parent;
+    BlockGrid* m_grid;
 public:
-    RoundContext<Source>& rctx() {
-        return *m_parent;
-    }
-
-    MetablockContext(RoundContext<Source>& ctx):
-        m_parent(&ctx) {}
+    MetablockContext(RoundContext<round_view_t>& ctx, BlockGrid& grid):
+        m_parent(&ctx), m_grid(&grid) {}
 
     void push_block(size_t width, size_t type) {
-        rctx().push_back(width, type);
+        m_grid->push_block(width, type);
     }
 
-    inline void eager_mb13(const Source& src, size_t t) {
+    inline void eager_mb13(const round_view_t& src, size_t t) {
         size_t j = src.size();
         for (size_t i = 0; i < j;) {
             size_t remaining_len = j - i;
@@ -55,8 +52,8 @@ public:
         }
     }
 
-    inline void eager_mb2(const Source& src) {
-        auto& ctx = rctx();
+    inline void eager_mb2(const round_view_t& src) {
+        auto& ctx = *m_parent;
 
         auto A = src;
         DCHECK(A.size() > 0);

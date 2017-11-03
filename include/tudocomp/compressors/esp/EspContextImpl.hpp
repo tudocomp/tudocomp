@@ -50,8 +50,7 @@ namespace tdc {namespace esp {
             in_t in = round.string;
 
             esp::RoundContext<in_t> ctx {
-                round.alphabet,
-                in
+                round.alphabet
             };
 
             if (in.size() == 0) {
@@ -68,14 +67,11 @@ namespace tdc {namespace esp {
             new_layer.width(new_layer_width);
             new_layer.reserve(in.size() / 2 + 1, new_layer_width);
 
-            //TODO
-            ctx.split(in); // make this more functional and have it return the splitted stuff
-
-            const auto& v = ctx.adjusted_blocks();
+            auto v = ctx.split(in);
 
             {
                 in_t s = in;
-                for (auto e : v) {
+                for (auto e : v.vec()) {
                     auto slice = s.slice(0, e.len);
                     s = s.slice(e.len);
                     auto rule_name = round.gr.add(slice) - (round.gr.initial_counter() - 1);

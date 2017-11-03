@@ -210,18 +210,15 @@ void landmark_spanner_test_adj(std::vector<int> landmarks,
                           },
                           tie);
 
-    std::vector<esp::TypedBlock> v;
+    esp::BlockGrid v;
     for(auto span : spans) {
-        v.push_back(esp::TypedBlock {
-            uint8_t(span[1] - span[0] + 1), 2
-        });
+        v.push_block(uint8_t(span[1] - span[0] + 1), 2);
     }
-
-    esp::adjust_blocks(v);
+    v.done();
 
     spans.clear();
     size_t i = 0;
-    for (auto b : v) {
+    for (auto b : v.vec()) {
         spans.push_back({ i, i + b.len - 1});
         i += b.len;
     }
@@ -351,14 +348,11 @@ TEST(Esp, landmark_spanner_13) {
 
 void split_test(string_ref s) {
     esp::RoundContext<decltype(s)> ctx {
-        256,
-        s
+        256
     };
 
     std::cout << "             [" << s << "]\n";
     ctx.split(s);
-    std::cout << "\n[Adjusted]:\n\n";
-    ctx.adjusted_blocks();
 }
 
 TEST(Esp, new_split) {
@@ -413,27 +407,6 @@ TEST(Esp, new_split_12) {
 
 TEST(Esp, new_split_13) {
     split_test("aaaaaaf"_v);
-}
-
-void test_adjust_blocks(std::vector<esp::TypedBlock> a,
-                        std::vector<esp::TypedBlock> b) {
-    adjust_blocks(a);
-    ASSERT_EQ(a, b);
-}
-
-
-TEST(Esp, adjust_block_1) {
-    test_adjust_blocks(
-        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 3, 2 } },
-        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 3, 2 } }
-    );
-}
-
-TEST(Esp, adjust_block_2) {
-    test_adjust_blocks(
-        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 1, 2 }, esp::TypedBlock { 2, 2 } },
-        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 3, 2 } }
-    );
 }
 
 using test_ipd_t = esp::DynamicSizeIPD<esp::HashMapIPD>;
