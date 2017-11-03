@@ -27,6 +27,7 @@ namespace tdc {namespace esp {
 
             // TODO: Calc actual alphabet size, or make parametric over arbitrary alphabet
             size_t initial_alphabet_size = 256;
+
             round_ptr = std::make_unique<Round<ipd_t>>(Round<ipd_t> {
                 GrammarRules<ipd_t>(initial_alphabet_size),
                 initial_alphabet_size,
@@ -135,7 +136,7 @@ namespace tdc {namespace esp {
                 std::move(new_layer),
             };
 
-            round_ptr.reset();
+            round_ptr.reset(); // Reset unique pointer to drop contained Round as soon as possible
             round_ptr = std::make_unique<Round<ipd_t>>(std::move(tmp));
 
             phase.log_stat("SLP size", slp.rules.size());
