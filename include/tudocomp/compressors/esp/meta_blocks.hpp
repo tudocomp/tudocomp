@@ -28,33 +28,31 @@ public:
     }
 
     inline void eager_mb13(const Source& src, size_t t) {
-        [&]() {
-            size_t j = src.size();
-            for (size_t i = 0; i < j;) {
-                size_t remaining_len = j - i;
-                switch (remaining_len) {
-                    case 4:
-                        push_block(2, t);
-                        push_block(2, t);
-                        return;
-                    case 3:
-                        push_block(3, t);
-                        return;
-                    case 2:
-                        push_block(2, t);
-                        return;
-                    case 1:
-                        push_block(1, t);
-                        //DCHECK_GT(remaining_len, 1);
-                        return;
-                    case 0:
-                        return;
-                    default:
-                        push_block(3, t);
-                        i += 3;
-                }
+        size_t j = src.size();
+        for (size_t i = 0; i < j;) {
+            size_t remaining_len = j - i;
+            switch (remaining_len) {
+                case 4:
+                    push_block(2, t);
+                    push_block(2, t);
+                    return;
+                case 3:
+                    push_block(3, t);
+                    return;
+                case 2:
+                    push_block(2, t);
+                    return;
+                case 1:
+                    push_block(1, t);
+                    //DCHECK_GT(remaining_len, 1);
+                    return;
+                case 0:
+                    return;
+                default:
+                    push_block(3, t);
+                    i += 3;
             }
-        }();
+        }
     }
 
     inline void eager_mb2(const Source& src) {
