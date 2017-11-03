@@ -3,11 +3,21 @@
 #include <tudocomp/compressors/esp/RoundContext.hpp>
 
 namespace tdc {namespace esp {
-    template<typename Source, typename F>
-    inline size_t split_where(const Source& src, size_t i, bool max, F f) {
-        for(size_t j = i; j < src.size() - 1; j++) {
-            if (!f(src[j], src[j + 1])) {
-                return j + (max ? 1 : 0);
+    template<typename round_view_t>
+    inline size_t search_equal(const round_view_t& src, size_t from) {
+        for(size_t j = from; j < src.size() - 1; j++) {
+            if (src[j] == src[j + 1]) {
+                return j;
+            }
+        }
+        return src.size();
+    }
+
+    template<typename round_view_t>
+    inline size_t search_not_equal(const round_view_t& src, size_t from) {
+        for(size_t j = from; j < src.size() - 1; j++) {
+            if (src[j] != src[j + 1]) {
+                return j + 1;
             }
         }
         return src.size();
@@ -23,8 +33,7 @@ namespace tdc {namespace esp {
 
             // Scan for non-repeating
             // NB: First to not find a size-1 repeating prefix
-            j = split_where(src, i, false,
-                            [](size_t a, size_t b){ return a != b; });
+            j = search_equal(src, i);
             if(j != i) {
                 auto s = src.slice(i, j);
 
@@ -35,8 +44,7 @@ namespace tdc {namespace esp {
             }
 
             // Scan for repeating
-            j = split_where(src, i, true,
-                            [](size_t a, size_t b){ return a == b; });
+            j = search_not_equal(src, i);
             if(j != i) {
                 auto s = src.slice(i, j);
 
