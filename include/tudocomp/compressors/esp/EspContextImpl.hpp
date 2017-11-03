@@ -68,7 +68,8 @@ namespace tdc {namespace esp {
             new_layer.width(new_layer_width);
             new_layer.reserve(in.size() / 2 + 1, new_layer_width);
 
-            ctx.split(in);
+            //TODO
+            ctx.split(in); // make this more functional and have it return the splitted stuff
 
             const auto& v = ctx.adjusted_blocks();
 

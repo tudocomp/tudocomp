@@ -10,23 +10,16 @@ namespace tdc {namespace esp {
     struct RoundContext {
         size_t alphabet_size;
         std::vector<size_t> scratchpad;
-        round_view_t s;
-        size_t i = 0;
-        size_t last_i = 0;
 
         std::vector<TypedBlock> block_buffer;
 
         RoundContext(size_t as,
                      round_view_t src):
             alphabet_size(as),
-            scratchpad(),
-            s(src),
-            i(0),
-            last_i(0)
+            scratchpad()
         {}
 
         void push_back(size_t l, size_t type) {
-            IF_DEBUG(i += l;)
             block_buffer.push_back(TypedBlock { uint8_t(l), uint8_t(type) });
         }
 
