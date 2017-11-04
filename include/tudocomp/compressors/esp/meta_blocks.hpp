@@ -12,7 +12,7 @@
 
 namespace tdc {namespace esp {
 
-template<typename round_view_t>
+template<typename level_view_t>
 class MetablockContext {
     BlockGrid* m_grid;
     std::vector<size_t>* m_scratchpad;
@@ -21,7 +21,7 @@ public:
     MetablockContext(std::vector<size_t>& scratchpad, BlockGrid& grid, size_t alphabet_size):
         m_grid(&grid), m_scratchpad(&scratchpad), m_alphabet_size(alphabet_size) {}
 
-    inline void eager_mb13(const round_view_t& src, size_t t) {
+    inline void eager_mb13(const level_view_t& src, size_t t) {
         size_t j = src.size();
         for (size_t i = 0; i < j;) {
             size_t remaining_len = j - i;
@@ -49,7 +49,7 @@ public:
         }
     }
 
-    inline void eager_mb2(const round_view_t& src) {
+    inline void eager_mb2(const level_view_t& src) {
         auto A = src;
         DCHECK(A.size() > 0);
         auto type_3_prefix_len = std::min(iter_log(m_alphabet_size),

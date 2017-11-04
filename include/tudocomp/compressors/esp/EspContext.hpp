@@ -35,22 +35,22 @@ namespace tdc {namespace esp {
             size_t slp_counter = initial_alphabet_size;
             size_t prev_slp_counter = 0;
 
-            std::unique_ptr<Level<ipd_t>> round_ptr;
+            std::unique_ptr<Level<ipd_t>> level_ptr;
 
-            // Initialize initial round
+            //
             {
-                auto phase = StatPhase("Prepare round 0");
+                auto phase = StatPhase("Prepare level 0");
 
-                round_ptr = std::make_unique<Level<ipd_t>>(Level<ipd_t> {
+                level_ptr = std::make_unique<Level<ipd_t>>(Level<ipd_t> {
                     GrammarRules<ipd_t>(initial_alphabet_size),
                     initial_alphabet_size,
                     IntVector<dynamic_t>(),
                 });
                 size_t bit_width = bits_for(initial_alphabet_size - 1);
-                round_ptr->string.width(bit_width);
-                round_ptr->string.reserve(size, bit_width);
+                level_ptr->string.width(bit_width);
+                level_ptr->string.reserve(size, bit_width);
                 for (; begin != end; ++begin) {
-                    round_ptr->string.push_back(*begin);
+                    level_ptr->string.push_back(*begin);
                 }
             }
 
@@ -59,11 +59,11 @@ namespace tdc {namespace esp {
                 ss << "Level " << n;
                 auto phase = StatPhase(ss.str());
 
-                auto& round = *round_ptr;
-                in_t in = round.string;
+                auto& level = *level_ptr;
+                in_t in = level.string;
 
-                esp::LevelContext ctx {
-                    round.alphabet
+                LevelContext ctx {
+                    level.alphabet
                 };
 
                 if (in.size() == 0) {
@@ -87,7 +87,7 @@ namespace tdc {namespace esp {
                     block_grid.for_each_block_len([&](size_t block_len) {
                         auto slice = s.slice(0, block_len);
                         s = s.slice(block_len);
-                        auto rule_name = round.gr.add(slice) - (round.gr.initial_counter() - 1);
+                        auto rule_name = level.gr.add(slice) - (level.gr.initial_counter() - 1);
 
                         auto old_cap = new_layer.capacity();
                         new_layer.push_back(rule_name);
@@ -97,17 +97,17 @@ namespace tdc {namespace esp {
                 }
 
                 // Delete previous string
-                round.string = IntVector<dynamic_t>();
+                level.string = IntVector<dynamic_t>();
 
-                DCHECK_EQ(round.string.size(), 0);
-                DCHECK_EQ(round.string.capacity(), 0);
+                DCHECK_EQ(level.string.size(), 0);
+                DCHECK_EQ(level.string.capacity(), 0);
 
                 new_layer.shrink_to_fit();
 
                 // Append to slp array
                 {
                     size_t old_slp_size = slp.rules.size();
-                    size_t additional_slp_size = round.gr.rules_count();
+                    size_t additional_slp_size = level.gr.rules_count();
                     size_t new_slp_size = old_slp_size + additional_slp_size;
 
                     slp.rules.reserve(new_slp_size);
@@ -115,8 +115,8 @@ namespace tdc {namespace esp {
 
                     auto& rv = slp.rules;
 
-                    round.gr.for_all([&](const auto& k, const auto& val_) {
-                        const auto& val = val_ - round.gr.initial_counter();
+                    level.gr.for_all([&](const auto& k, const auto& val_) {
+                        const auto& val = val_ - level.gr.initial_counter();
                         const auto& key = k.as_view();
 
                         size_t store_idx = slp_counter + val - 256;
@@ -129,32 +129,32 @@ namespace tdc {namespace esp {
                 }
 
                 // carry over stats
-                auto round_ipd_stats = round.gr.stats();
-                ipd_stats.ext_size2_total += round_ipd_stats.ext_size2_total;
-                ipd_stats.ext_size3_total += round_ipd_stats.ext_size3_total;
-                ipd_stats.ext_size3_unique += round_ipd_stats.ext_size3_unique;
-                ipd_stats.int_size2_total += round_ipd_stats.int_size2_total;
-                ipd_stats.int_size2_unique += round_ipd_stats.int_size2_unique;
+                auto level_ipd_stats = level.gr.stats();
+                ipd_stats.ext_size2_total += level_ipd_stats.ext_size2_total;
+                ipd_stats.ext_size3_total += level_ipd_stats.ext_size3_total;
+                ipd_stats.ext_size3_unique += level_ipd_stats.ext_size3_unique;
+                ipd_stats.int_size2_total += level_ipd_stats.int_size2_total;
+                ipd_stats.int_size2_unique += level_ipd_stats.int_size2_unique;
 
                 // Delete previous hashmap
-                round.gr.clear();
+                level.gr.clear();
 
-                // Prepare next round
+                // Prepare next level
                 auto tmp = Level<ipd_t> {
-                    GrammarRules<ipd_t>(round.gr.rules_count()),
-                    round.gr.rules_count(),
+                    GrammarRules<ipd_t>(level.gr.rules_count()),
+                    level.gr.rules_count(),
                     std::move(new_layer),
                 };
 
-                round_ptr.reset(); // Reset unique pointer to drop contained Level as soon as possible
-                round_ptr = std::make_unique<Level<ipd_t>>(std::move(tmp));
+                level_ptr.reset(); // Reset unique pointer to drop contained Level as soon as possible
+                level_ptr = std::make_unique<Level<ipd_t>>(std::move(tmp));
 
                 phase.log_stat("SLP size", slp.rules.size());
-                phase.log_stat("ext_size2_total", round_ipd_stats.ext_size2_total);
-                phase.log_stat("ext_size3_total", round_ipd_stats.ext_size3_total);
-                phase.log_stat("ext_size3_unique", round_ipd_stats.ext_size3_unique);
-                phase.log_stat("int_size2_total", round_ipd_stats.int_size2_total);
-                phase.log_stat("int_size2_unique", round_ipd_stats.int_size2_unique);
+                phase.log_stat("ext_size2_total", level_ipd_stats.ext_size2_total);
+                phase.log_stat("ext_size3_total", level_ipd_stats.ext_size3_total);
+                phase.log_stat("ext_size3_unique", level_ipd_stats.ext_size3_unique);
+                phase.log_stat("int_size2_total", level_ipd_stats.int_size2_total);
+                phase.log_stat("int_size2_unique", level_ipd_stats.int_size2_unique);
             }
 
             slp.empty = empty;
