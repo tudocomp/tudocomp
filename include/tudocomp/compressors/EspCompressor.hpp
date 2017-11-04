@@ -8,7 +8,7 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/IntVector.hpp>
-#include <tudocomp/compressors/esp/EspContextImpl.hpp>
+#include <tudocomp/compressors/esp/EspContext.hpp>
 #include <tudocomp/compressors/esp/RoundContextImpl.hpp>
 
 #include <tudocomp/compressors/esp/PlainSLPCoder.hpp>

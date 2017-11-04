@@ -1,7 +1,6 @@
 #pragma once
 
 #include <tudocomp/compressors/esp/utils.hpp>
-#include <tudocomp/compressors/esp/EspContext.hpp>
 
 namespace tdc {namespace esp {
     struct TypedBlock {

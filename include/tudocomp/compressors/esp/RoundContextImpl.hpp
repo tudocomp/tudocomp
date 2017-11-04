@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tudocomp/compressors/esp/RoundContext.hpp>
+#include <tudocomp/compressors/esp/meta_blocks.hpp>
 
 namespace tdc {namespace esp {
     template<typename round_view_t>
