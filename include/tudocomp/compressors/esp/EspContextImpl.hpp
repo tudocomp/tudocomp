@@ -10,6 +10,13 @@
 
 namespace tdc {namespace esp {
     template<typename ipd_t>
+    struct Round {
+        GrammarRules<ipd_t> gr;
+        size_t alphabet;
+        IntVector<dynamic_t> string;
+    };
+
+    template<typename ipd_t>
     template<typename T>
     SLP EspContext<ipd_t>::generate_grammar(T&& input) {
         size_t root_node = 0;
