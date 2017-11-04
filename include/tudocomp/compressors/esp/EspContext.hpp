@@ -25,13 +25,14 @@ namespace tdc {namespace esp {
 
         EspContext() = default;
 
-        template<typename view_t>
-        SLP generate_grammar(view_t&& input) {
+        template<typename iterator_t>
+        SLP generate_grammar(iterator_t&& begin, iterator_t&& end,
+                             size_t size, size_t initial_alphabet_size) {
             size_t root_node = 0;
             bool empty = false;
 
             SLP slp;
-            size_t slp_counter = 256;
+            size_t slp_counter = initial_alphabet_size;
             size_t prev_slp_counter = 0;
 
             std::unique_ptr<Round<ipd_t>> round_ptr;
@@ -40,19 +41,16 @@ namespace tdc {namespace esp {
             {
                 auto phase = StatPhase("Prepare round 0");
 
-                // TODO: Calc actual alphabet size, or make parametric over arbitrary alphabet
-                size_t initial_alphabet_size = 256;
-
                 round_ptr = std::make_unique<Round<ipd_t>>(Round<ipd_t> {
                     GrammarRules<ipd_t>(initial_alphabet_size),
                     initial_alphabet_size,
                     IntVector<dynamic_t>(),
                 });
-                round_ptr->string.width(bits_for(initial_alphabet_size - 1));
-                round_ptr->string.reserve(input.size(), bits_for(initial_alphabet_size - 1));
-                for (auto c : input) {
-                    // TODO: Take input as a stream instead
-                    round_ptr->string.push_back(c);
+                size_t bit_width = bits_for(initial_alphabet_size - 1);
+                round_ptr->string.width(bit_width);
+                round_ptr->string.reserve(size, bit_width);
+                for (; begin != end; ++begin) {
+                    round_ptr->string.push_back(*begin);
                 }
             }
 

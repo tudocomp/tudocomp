@@ -418,7 +418,7 @@ TEST(Esp, tree_reducer_roundtrip) {
     esp::EspContext<test_ipd_t> esp;
 
     std::cout << "\n[Complete Grammar]:\n\n";
-    auto slp = esp.generate_grammar(s);
+    auto slp = esp.generate_grammar(s.begin(), s.end(), s.size(), 256);
     for (size_t i = 0; i < slp.rules.size(); i++) {
         std::cout
             << i << ": "
@@ -1056,7 +1056,7 @@ TEST(Fulltree, test) {
     //auto in = "ghkhkgbananabanana"_v;
     //auto in = "ghkhkgbananabanana"_v;
     auto in = "abcddddabcbababac"_v;
-    auto slp = context.generate_grammar(in);
+    auto slp = context.generate_grammar(in.begin(), in.end(), in.size(), 256);
 }
 
 

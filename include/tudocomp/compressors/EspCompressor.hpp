@@ -38,13 +38,14 @@ public:
         {
             auto phase1 = StatPhase("Compress Phase");
 
-            auto phase2 = StatPhase("Creating input view");
-            auto in = input.as_view();
+            auto phase2 = StatPhase("Creating input handler");
+            auto in_stream = input.as_stream();
+            size_t in_size = input.size();
 
             phase2.split("ESP Algorithm");
 
             // ## Actual ESP Algorithm runs here ## //
-            slp = context.generate_grammar(std::move(in));
+            slp = context.generate_grammar(in_stream.begin(), in_stream.end(), in_size, 256);
         }
 
         phase0.log_stat("SLP size", slp.rules.size());
