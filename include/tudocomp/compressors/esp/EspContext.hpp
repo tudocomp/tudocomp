@@ -11,11 +11,14 @@
 #include <tudocomp/compressors/esp/utils.hpp>
 
 namespace tdc {namespace esp {
+    using dynamic_bit_vector_t = DynamicIntVector;
+    using dynamic_bit_view_t = BitPackingVectorSlice<dynamic_t>; // TODO: Overhaul tudocomp view types
+
     template<typename ipd_t>
     struct Level {
         GrammarRules<ipd_t> gr;
         size_t alphabet;
-        IntVector<dynamic_t> string;
+        dynamic_bit_vector_t string;
     };
 
     template<typename ipd_t>
@@ -37,14 +40,15 @@ namespace tdc {namespace esp {
 
             std::unique_ptr<Level<ipd_t>> level_ptr;
 
-            //
+            // Copy the input into the level buffer for level 0,
+            // and set the initial alphabet size
             {
                 auto phase = StatPhase("Prepare level 0");
 
                 level_ptr = std::make_unique<Level<ipd_t>>(Level<ipd_t> {
                     GrammarRules<ipd_t>(initial_alphabet_size),
                     initial_alphabet_size,
-                    IntVector<dynamic_t>(),
+                    dynamic_bit_vector_t(),
                 });
                 size_t bit_width = bits_for(initial_alphabet_size - 1);
                 level_ptr->string.width(bit_width);
@@ -54,13 +58,15 @@ namespace tdc {namespace esp {
                 }
             }
 
+            // Iteratively generate new levels until we end up with a level with just
+            // 1 symbol
             for(size_t n = 0;; n++) {
                 std::stringstream ss;
                 ss << "Level " << n;
                 auto phase = StatPhase(ss.str());
 
                 auto& level = *level_ptr;
-                in_t in = level.string;
+                dynamic_bit_view_t in = level.string;
 
                 LevelContext ctx {
                     level.alphabet
@@ -75,7 +81,7 @@ namespace tdc {namespace esp {
                     break;
                 }
 
-                IntVector<dynamic_t> new_layer;
+                dynamic_bit_vector_t new_layer;
                 size_t new_layer_width = bits_for(in.size() - 1);
                 new_layer.width(new_layer_width);
                 new_layer.reserve(in.size() / 2 + 1, new_layer_width);
@@ -83,7 +89,7 @@ namespace tdc {namespace esp {
                 {
                     auto block_grid = ctx.split_into_blocks(in);
 
-                    in_t s = in;
+                    dynamic_bit_view_t s = in;
                     block_grid.for_each_block_len([&](size_t block_len) {
                         auto slice = s.slice(0, block_len);
                         s = s.slice(block_len);
@@ -97,7 +103,7 @@ namespace tdc {namespace esp {
                 }
 
                 // Delete previous string
-                level.string = IntVector<dynamic_t>();
+                level.string = dynamic_bit_vector_t();
 
                 DCHECK_EQ(level.string.size(), 0);
                 DCHECK_EQ(level.string.capacity(), 0);
