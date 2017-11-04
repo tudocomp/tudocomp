@@ -5,8 +5,8 @@
 #include <tudocomp/compressors/esp/BlockGrid.hpp>
 
 namespace tdc {namespace esp {
-    template<typename round_view_t>
     class LevelContext {
+        template<typename round_view_t>
         inline size_t search_equal(const round_view_t& src, size_t from) {
             for(size_t j = from; j < src.size() - 1; j++) {
                 if (src[j] == src[j + 1]) {
@@ -16,6 +16,7 @@ namespace tdc {namespace esp {
             return src.size();
         }
 
+        template<typename round_view_t>
         inline size_t search_not_equal(const round_view_t& src, size_t from) {
             for(size_t j = from; j < src.size() - 1; j++) {
                 if (src[j] != src[j + 1]) {
@@ -29,9 +30,10 @@ namespace tdc {namespace esp {
         size_t m_alphabet_size;
 
     public:
-        LevelContext(size_t as): m_alphabet_size(as) {}
+        inline LevelContext(size_t as): m_alphabet_size(as) {}
 
-        BlockGrid split_into_blocks(round_view_t src)  {
+        template<typename round_view_t>
+        inline BlockGrid split_into_blocks(round_view_t const& src)  {
             BlockGrid grid;
             MetablockContext<round_view_t> mbctx {m_scratchpad, grid, m_alphabet_size};
 

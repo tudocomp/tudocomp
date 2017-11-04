@@ -347,7 +347,7 @@ TEST(Esp, landmark_spanner_13) {
 
 
 void split_test(string_ref s) {
-    esp::LevelContext<decltype(s)> ctx {
+    esp::LevelContext ctx {
         256
     };
 

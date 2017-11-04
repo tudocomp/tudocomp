@@ -62,7 +62,7 @@ namespace tdc {namespace esp {
                 auto& round = *round_ptr;
                 in_t in = round.string;
 
-                esp::LevelContext<in_t> ctx {
+                esp::LevelContext ctx {
                     round.alphabet
                 };
 
