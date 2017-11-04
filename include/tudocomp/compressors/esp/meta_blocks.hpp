@@ -20,33 +20,29 @@ public:
     MetablockContext(RoundContext<round_view_t>& ctx, BlockGrid& grid):
         m_parent(&ctx), m_grid(&grid) {}
 
-    inline void push_block(size_t width, size_t type) {
-        m_grid->push_block(width, type);
-    }
-
     inline void eager_mb13(const round_view_t& src, size_t t) {
         size_t j = src.size();
         for (size_t i = 0; i < j;) {
             size_t remaining_len = j - i;
             switch (remaining_len) {
                 case 4:
-                    push_block(2, t);
-                    push_block(2, t);
+                    m_grid->push_block(2, t);
+                    m_grid->push_block(2, t);
                     return;
                 case 3:
-                    push_block(3, t);
+                    m_grid->push_block(3, t);
                     return;
                 case 2:
-                    push_block(2, t);
+                    m_grid->push_block(2, t);
                     return;
                 case 1:
-                    push_block(1, t);
+                    m_grid->push_block(1, t);
                     //DCHECK_GT(remaining_len, 1);
                     return;
                 case 0:
                     return;
                 default:
-                    push_block(3, t);
+                    m_grid->push_block(3, t);
                     i += 3;
             }
         }
@@ -153,7 +149,7 @@ public:
                     return landmarks[i] == uint_t<1>(1);
                 },
                 [&](size_t left, size_t right) {
-                    push_block(right - left + 1, 2);
+                    m_grid->push_block(right - left + 1, 2);
                 }
             );
         }
