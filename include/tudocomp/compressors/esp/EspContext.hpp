@@ -66,38 +66,40 @@ namespace tdc {namespace esp {
                 auto phase = StatPhase(ss.str());
 
                 auto& level = *level_ptr;
-                dynamic_bit_view_t in = level.string;
+                dynamic_bit_view_t level_str = level.string;
 
                 LevelContext ctx {
                     level.alphabet
                 };
 
-                if (in.size() == 0) {
+                if (level_str.size() == 0) {
                     empty = true;
                     break;
                 }
-                if (in.size() == 1) {
-                    root_node = in[0] + prev_slp_counter;
+                if (level_str.size() == 1) {
+                    root_node = level_str[0] + prev_slp_counter;
                     break;
                 }
 
-                dynamic_bit_vector_t new_layer;
-                size_t new_layer_width = bits_for(in.size() - 1);
-                new_layer.width(new_layer_width);
-                new_layer.reserve(in.size() / 2 + 1, new_layer_width);
+                dynamic_bit_vector_t new_level_str;
+                size_t new_level_str_width = bits_for(level_str.size() - 1);
+                new_level_str.width(new_level_str_width);
+
+                // Preallocate vector for the worst-case number of blocks
+                new_level_str.reserve(level_str.size() / 2 + 1, new_level_str_width);
 
                 {
-                    auto block_grid = ctx.split_into_blocks(in);
+                    auto block_grid = ctx.split_into_blocks(level_str);
 
-                    dynamic_bit_view_t s = in;
+                    dynamic_bit_view_t s = level_str;
                     block_grid.for_each_block_len([&](size_t block_len) {
                         auto slice = s.slice(0, block_len);
                         s = s.slice(block_len);
                         auto rule_name = level.gr.add(slice) - (level.gr.initial_counter() - 1);
 
-                        auto old_cap = new_layer.capacity();
-                        new_layer.push_back(rule_name);
-                        auto new_cap = new_layer.capacity();
+                        auto old_cap = new_level_str.capacity();
+                        new_level_str.push_back(rule_name);
+                        auto new_cap = new_level_str.capacity();
                         DCHECK_EQ(old_cap, new_cap);
                     });
                 }
@@ -108,7 +110,7 @@ namespace tdc {namespace esp {
                 DCHECK_EQ(level.string.size(), 0);
                 DCHECK_EQ(level.string.capacity(), 0);
 
-                new_layer.shrink_to_fit();
+                new_level_str.shrink_to_fit();
 
                 // Append to slp array
                 {
@@ -149,7 +151,7 @@ namespace tdc {namespace esp {
                 auto tmp = Level<ipd_t> {
                     GrammarRules<ipd_t>(level.gr.rules_count()),
                     level.gr.rules_count(),
-                    std::move(new_layer),
+                    std::move(new_level_str),
                 };
 
                 level_ptr.reset(); // Reset unique pointer to drop contained Level as soon as possible
