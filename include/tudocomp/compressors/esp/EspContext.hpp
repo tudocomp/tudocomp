@@ -15,13 +15,6 @@ namespace tdc {namespace esp {
     using dynamic_bit_view_t = BitPackingVectorSlice<dynamic_t>; // TODO: Overhaul tudocomp view types
 
     template<typename ipd_t>
-    struct Level {
-        GrammarRules<ipd_t> gr;
-        size_t alphabet;
-        dynamic_bit_vector_t string;
-    };
-
-    template<typename ipd_t>
     class EspContext {
     public:
         IPDStats ipd_stats;
@@ -34,18 +27,35 @@ namespace tdc {namespace esp {
             size_t root_node = 0;
             bool empty = false;
 
+            // The, initially empty, final grammar.
             SLP slp;
+
+            // These two counters keep track of how many different non-terminal
+            // variables there are in the grammar as it is being build.
+            // - prev_slp_counter: count at the point before the current level
+            // - slp_counter: count at the current point in time
+            //
+            // They are used as offsets, such that each level can work with
+            // local symbol values that start at 0.
             size_t slp_counter = initial_alphabet_size;
             size_t prev_slp_counter = 0;
 
-            std::unique_ptr<Level<ipd_t>> level_ptr;
+            // In each level, we generate a string of block labels and a
+            // local grammar.
+            struct Level {
+                GrammarRules<ipd_t> gr;
+                size_t alphabet_size;
+                dynamic_bit_vector_t string;
+            };
+
+            std::unique_ptr<Level> level_ptr;
 
             // Copy the input into the level buffer for level 0,
             // and set the initial alphabet size
             {
                 auto phase = StatPhase("Prepare level 0");
 
-                level_ptr = std::make_unique<Level<ipd_t>>(Level<ipd_t> {
+                level_ptr = std::make_unique<Level>(Level {
                     GrammarRules<ipd_t>(initial_alphabet_size),
                     initial_alphabet_size,
                     dynamic_bit_vector_t(),
@@ -69,9 +79,10 @@ namespace tdc {namespace esp {
                 dynamic_bit_view_t level_str = level.string;
 
                 LevelContext ctx {
-                    level.alphabet
+                    level.alphabet_size
                 };
 
+                // Loop break conditions:
                 if (level_str.size() == 0) {
                     empty = true;
                     break;
@@ -91,20 +102,21 @@ namespace tdc {namespace esp {
                 {
                     auto block_grid = ctx.split_into_blocks(level_str);
 
-                    dynamic_bit_view_t s = level_str;
-                    block_grid.for_each_block_len([&](size_t block_len) {
-                        auto slice = s.slice(0, block_len);
-                        s = s.slice(block_len);
-                        auto rule_name = level.gr.add(slice) - (level.gr.initial_counter() - 1);
+                    dynamic_bit_view_t level_str_suffix = level_str;
 
-                        auto old_cap = new_level_str.capacity();
-                        new_level_str.push_back(rule_name);
-                        auto new_cap = new_level_str.capacity();
-                        DCHECK_EQ(old_cap, new_cap);
+                    // Iteratively slice away individual blocks from the beginning
+                    block_grid.for_each_block_len([&](size_t block_len) {
+                        auto block = level_str_suffix.slice(0, block_len);
+                        level_str_suffix = level_str_suffix.slice(block_len);
+
+                        auto grammar_variable = level.gr.add(block) - (level.gr.initial_counter() - 1);
+
+                        new_level_str.push_back(grammar_variable);
                     });
                 }
 
-                // Delete previous string
+                // Delete previous level string, because it is entirely contained in
+                // the grammar now, and we need to save memory
                 level.string = dynamic_bit_vector_t();
 
                 DCHECK_EQ(level.string.size(), 0);
@@ -112,7 +124,7 @@ namespace tdc {namespace esp {
 
                 new_level_str.shrink_to_fit();
 
-                // Append to slp array
+                // Append to slp
                 {
                     size_t old_slp_size = slp.rules.size();
                     size_t additional_slp_size = level.gr.rules_count();
@@ -144,18 +156,15 @@ namespace tdc {namespace esp {
                 ipd_stats.int_size2_total += level_ipd_stats.int_size2_total;
                 ipd_stats.int_size2_unique += level_ipd_stats.int_size2_unique;
 
-                // Delete previous hashmap
-                level.gr.clear();
-
                 // Prepare next level
-                auto tmp = Level<ipd_t> {
+                auto new_level = Level {
                     GrammarRules<ipd_t>(level.gr.rules_count()),
                     level.gr.rules_count(),
                     std::move(new_level_str),
                 };
 
                 level_ptr.reset(); // Reset unique pointer to drop contained Level as soon as possible
-                level_ptr = std::make_unique<Level<ipd_t>>(std::move(tmp));
+                level_ptr = std::make_unique<Level>(std::move(new_level));
 
                 phase.log_stat("SLP size", slp.rules.size());
                 phase.log_stat("ext_size2_total", level_ipd_stats.ext_size2_total);
