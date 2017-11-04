@@ -8,11 +8,9 @@
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/IntVector.hpp>
+
 #include <tudocomp/compressors/esp/EspContext.hpp>
-#include <tudocomp/compressors/esp/RoundContextImpl.hpp>
-
 #include <tudocomp/compressors/esp/PlainSLPCoder.hpp>
-
 #include <tudocomp/compressors/esp/StdUnorderedMapIPD.hpp>
 
 namespace tdc {
@@ -44,6 +42,8 @@ public:
             auto in = input.as_view();
 
             phase2.split("ESP Algorithm");
+
+            // ## Actual ESP Algorithm runs here ## //
             slp = context.generate_grammar(std::move(in));
         }
 

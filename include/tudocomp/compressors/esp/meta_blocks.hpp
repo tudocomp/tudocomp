@@ -8,17 +8,18 @@
 #include <tudocomp/compressors/esp/landmarks.hpp>
 #include <tudocomp/compressors/esp/utils.hpp>
 #include <tudocomp/compressors/esp/esp_math.hpp>
-#include <tudocomp/compressors/esp/RoundContext.hpp>
+#include <tudocomp/compressors/esp/BlockGrid.hpp>
 
 namespace tdc {namespace esp {
 
 template<typename round_view_t>
 class MetablockContext {
-    RoundContext<round_view_t>* m_parent;
     BlockGrid* m_grid;
+    std::vector<size_t>* m_scratchpad;
+    size_t m_alphabet_size;
 public:
-    MetablockContext(RoundContext<round_view_t>& ctx, BlockGrid& grid):
-        m_parent(&ctx), m_grid(&grid) {}
+    MetablockContext(std::vector<size_t>& scratchpad, BlockGrid& grid, size_t alphabet_size):
+        m_grid(&grid), m_scratchpad(&scratchpad), m_alphabet_size(alphabet_size) {}
 
     inline void eager_mb13(const round_view_t& src, size_t t) {
         size_t j = src.size();
@@ -49,11 +50,9 @@ public:
     }
 
     inline void eager_mb2(const round_view_t& src) {
-        auto& ctx = *m_parent;
-
         auto A = src;
         DCHECK(A.size() > 0);
-        auto type_3_prefix_len = std::min(iter_log(ctx.alphabet_size),
+        auto type_3_prefix_len = std::min(iter_log(m_alphabet_size),
                                         A.size());
 
         // Handle non-m2 prefix
@@ -64,7 +63,7 @@ public:
         }
 
         // Prepare scratchpad buffer
-        auto& buf = ctx.scratchpad;
+        auto& buf = *m_scratchpad;
         buf.clear();
         buf.reserve(A.cend() - A.cbegin());
         buf.insert(buf.cbegin(), A.cbegin(), A.cend());

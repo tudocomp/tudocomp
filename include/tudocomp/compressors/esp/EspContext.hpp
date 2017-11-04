@@ -1,10 +1,11 @@
 #pragma once
 
-#include <tudocomp/util/View.hpp>
-#include <tudocomp/compressors/esp/SLP.hpp>
-#include <tudocomp/compressors/esp/utils.hpp>
-#include <tudocomp/compressors/esp/GrammarRules.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
+
+#include <tudocomp/util/View.hpp>
+
+#include <tudocomp/compressors/esp/SLP.hpp>
+#include <tudocomp/compressors/esp/GrammarRules.hpp>
 #include <tudocomp/compressors/esp/RoundContext.hpp>
 #include <tudocomp/compressors/esp/meta_blocks.hpp>
 #include <tudocomp/compressors/esp/utils.hpp>
