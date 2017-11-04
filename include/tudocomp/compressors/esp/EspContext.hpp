@@ -6,13 +6,13 @@
 
 #include <tudocomp/compressors/esp/SLP.hpp>
 #include <tudocomp/compressors/esp/GrammarRules.hpp>
-#include <tudocomp/compressors/esp/RoundContext.hpp>
+#include <tudocomp/compressors/esp/LevelContext.hpp>
 #include <tudocomp/compressors/esp/meta_blocks.hpp>
 #include <tudocomp/compressors/esp/utils.hpp>
 
 namespace tdc {namespace esp {
     template<typename ipd_t>
-    struct Round {
+    struct Level {
         GrammarRules<ipd_t> gr;
         size_t alphabet;
         IntVector<dynamic_t> string;
@@ -35,13 +35,13 @@ namespace tdc {namespace esp {
             size_t slp_counter = initial_alphabet_size;
             size_t prev_slp_counter = 0;
 
-            std::unique_ptr<Round<ipd_t>> round_ptr;
+            std::unique_ptr<Level<ipd_t>> round_ptr;
 
             // Initialize initial round
             {
                 auto phase = StatPhase("Prepare round 0");
 
-                round_ptr = std::make_unique<Round<ipd_t>>(Round<ipd_t> {
+                round_ptr = std::make_unique<Level<ipd_t>>(Level<ipd_t> {
                     GrammarRules<ipd_t>(initial_alphabet_size),
                     initial_alphabet_size,
                     IntVector<dynamic_t>(),
@@ -56,13 +56,13 @@ namespace tdc {namespace esp {
 
             for(size_t n = 0;; n++) {
                 std::stringstream ss;
-                ss << "Round " << n;
+                ss << "Level " << n;
                 auto phase = StatPhase(ss.str());
 
                 auto& round = *round_ptr;
                 in_t in = round.string;
 
-                esp::RoundContext<in_t> ctx {
+                esp::LevelContext<in_t> ctx {
                     round.alphabet
                 };
 
@@ -140,14 +140,14 @@ namespace tdc {namespace esp {
                 round.gr.clear();
 
                 // Prepare next round
-                auto tmp = Round<ipd_t> {
+                auto tmp = Level<ipd_t> {
                     GrammarRules<ipd_t>(round.gr.rules_count()),
                     round.gr.rules_count(),
                     std::move(new_layer),
                 };
 
-                round_ptr.reset(); // Reset unique pointer to drop contained Round as soon as possible
-                round_ptr = std::make_unique<Round<ipd_t>>(std::move(tmp));
+                round_ptr.reset(); // Reset unique pointer to drop contained Level as soon as possible
+                round_ptr = std::make_unique<Level<ipd_t>>(std::move(tmp));
 
                 phase.log_stat("SLP size", slp.rules.size());
                 phase.log_stat("ext_size2_total", round_ipd_stats.ext_size2_total);
