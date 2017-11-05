@@ -130,7 +130,6 @@ namespace tdc {namespace esp {
                     size_t additional_slp_size = level.gr.rules_count();
                     size_t new_slp_size = old_slp_size + additional_slp_size;
 
-                    slp.reserve(new_slp_size);
                     slp.resize(new_slp_size);
 
                     level.gr.for_all([&](const auto& k, const auto& v) {

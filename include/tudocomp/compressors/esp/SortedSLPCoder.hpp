@@ -148,7 +148,6 @@ namespace tdc {namespace esp {
             }
 
             size_t slp_size = max_val + 1;
-            slp.reserve(slp_size);
             slp.resize(slp_size);
 
             // Read rules lhs

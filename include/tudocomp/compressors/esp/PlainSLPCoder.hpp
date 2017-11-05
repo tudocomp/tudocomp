@@ -64,7 +64,6 @@ namespace tdc {namespace esp {
             esp::SLP slp { SLP_CODING_ALPHABET_SIZE };
             slp.set_empty(empty);
             slp.set_root_rule(root_rule);
-            slp.reserve(slp_size);
             slp.resize(slp_size);
 
             size_t i = SLP_CODING_ALPHABET_SIZE;

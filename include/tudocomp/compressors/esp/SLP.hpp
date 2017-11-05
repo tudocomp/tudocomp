@@ -31,14 +31,11 @@ namespace tdc {namespace esp {
             m_dr.resize(m_alphabet_size);
         }
 
-        // Reserve space for `size` grammar rules
-        inline void reserve(size_t size) {
-            m_dl.reserve(size);
-            m_dr.reserve(size);
-        }
-
         inline void resize(size_t size) {
+            m_dl.reserve(size);
             m_dl.resize(size);
+
+            m_dr.reserve(size);
             m_dr.resize(size);
         }
 

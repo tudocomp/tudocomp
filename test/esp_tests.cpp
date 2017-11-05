@@ -594,7 +594,6 @@ TEST(DepSort, test) {
         {287, 288},
     };
 
-    slp.reserve(rules.size() + 256);
     slp.resize(rules.size() + 256);
     for (size_t i = 0; i < rules.size(); i++) {
         slp.set(i + 256, rules[i][0], rules[i][1]);
