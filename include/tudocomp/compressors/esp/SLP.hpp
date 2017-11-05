@@ -63,11 +63,6 @@ namespace tdc {namespace esp {
             m_dr[rule] = r;
         }
 
-        inline void push_rule(size_t l, size_t r) {
-            m_dl.push_back(l);
-            m_dr.push_back(r);
-        }
-
         inline void set_root_rule(size_t rule) {
             m_root_rule = rule;
         }

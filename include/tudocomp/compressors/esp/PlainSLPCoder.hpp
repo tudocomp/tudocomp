@@ -32,7 +32,8 @@ namespace tdc {namespace esp {
 
             bout.write_int(bit_width, 6);
 
-            // root rule
+            // max_val and root rule
+            bout.write_int(max_val, bit_width);
             bout.write_int(slp.root_rule(), bit_width);
 
             // Write rules
@@ -53,20 +54,25 @@ namespace tdc {namespace esp {
             auto bit_width = bin.read_int<size_t>(6);
             bool empty = (bit_width == 0);
 
+            auto max_val = bin.read_int<size_t>(bit_width);
             auto root_rule = bin.read_int<size_t>(bit_width);
+
+            size_t slp_size = max_val + 1;
 
             //std::cout << "in:  Root rule: " << root_rule << "\n";
 
             esp::SLP slp { SLP_CODING_ALPHABET_SIZE };
             slp.set_empty(empty);
             slp.set_root_rule(root_rule);
-            slp.reserve(std::pow(2, bit_width)); // TODO: Make more exact
+            slp.reserve(slp_size);
+            slp.resize(slp_size);
 
+            size_t i = SLP_CODING_ALPHABET_SIZE;
             while (!bin.eof()) {
                 auto a = bin.read_int<size_t>(bit_width);
                 auto b = bin.read_int<size_t>(bit_width);
 
-                slp.push_rule(a, b);
+                slp.set(i++, a, b);
             }
 
             return slp;
