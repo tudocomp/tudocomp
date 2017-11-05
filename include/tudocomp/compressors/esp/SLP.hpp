@@ -18,26 +18,36 @@ namespace tdc {namespace esp {
         size_t m_alphabet_size = 0;
         size_t m_root_rule = 0;
         bool m_is_empty = true;
-        //size_t m_width;
     public:
         inline size_t width() const {
             return m_dl.width();
         }
 
-        inline SLP(size_t alphabet_size): m_alphabet_size(alphabet_size) {
-            m_dl.reserve(m_alphabet_size);
-            m_dr.reserve(m_alphabet_size);
-            m_dl.resize(m_alphabet_size);
-            m_dr.resize(m_alphabet_size);
+        inline SLP(size_t alphabet_size /*, size_t width = 64*/):
+            m_alphabet_size(alphabet_size)
+        {
+            resize(m_alphabet_size /*, width*/);
         }
 
+        inline void resize(size_t size /*, size_t width*/) {
+            // TODO: Fix bug in BitVector that makes setting width here not work
+            size_t width = this->width();
+
+            m_dl.reserve(size /*, width*/);
+            m_dl.resize(size /*, width*/);
+
+            m_dr.reserve(size /*, width*/);
+            m_dr.resize(size /*, width*/);
+
+            DCHECK_EQ(m_dl.width(), width);
+            DCHECK_EQ(m_dr.width(), width);
+        }
+
+        /*
         inline void resize(size_t size) {
-            m_dl.reserve(size);
-            m_dl.resize(size);
-
-            m_dr.reserve(size);
-            m_dr.resize(size);
+            resize(size, width());
         }
+        */
 
         inline size_t get_l(size_t rule) const {
             return m_dl[rule];
