@@ -101,7 +101,11 @@ namespace tdc {namespace esp {
 
                     dynamic_bit_view_t level_str_suffix = level_str;
 
-                    // Iteratively slice away individual blocks from the beginning
+                    // Iteratively slice away individual blocks from the beginning:
+                    //
+                    //   ... [block][    level_str_suffix    ]
+                    // [              level_str              ]
+                    //
                     block_grid.for_each_block_len([&](size_t block_len) {
                         auto block = level_str_suffix.slice(0, block_len);
                         level_str_suffix = level_str_suffix.slice(block_len);
