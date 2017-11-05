@@ -28,7 +28,7 @@ namespace tdc {namespace esp {
             bool empty = false;
 
             // The, initially empty, final grammar.
-            SLP slp;
+            SLP slp { initial_alphabet_size };
 
             // These two counters keep track of how many different non-terminal
             // variables there are in the grammar as it is being build.
@@ -126,22 +126,23 @@ namespace tdc {namespace esp {
 
                 // Append to slp
                 {
-                    size_t old_slp_size = slp.rules.size();
+                    size_t old_slp_size = slp.size();
                     size_t additional_slp_size = level.gr.rules_count();
                     size_t new_slp_size = old_slp_size + additional_slp_size;
 
-                    slp.rules.reserve(new_slp_size);
-                    slp.rules.resize(new_slp_size);
+                    slp.reserve(new_slp_size);
+                    slp.resize(new_slp_size);
 
-                    auto& rv = slp.rules;
-
-                    level.gr.for_all([&](const auto& k, const auto& val_) {
-                        const auto& val = val_ - level.gr.initial_counter();
+                    level.gr.for_all([&](const auto& k, const auto& v) {
+                        const auto& val = v - level.gr.initial_counter();
                         const auto& key = k.as_view();
 
-                        size_t store_idx = slp_counter + val - 256;
-                        rv[store_idx][0] = key[0] + prev_slp_counter;
-                        rv[store_idx][1] = key[1] + prev_slp_counter;
+                        size_t store_idx = slp_counter + val;
+                        slp.set(
+                            store_idx,
+                            key[0] + prev_slp_counter,
+                            key[1] + prev_slp_counter
+                        );
                     });
 
                     prev_slp_counter = slp_counter;
@@ -166,7 +167,7 @@ namespace tdc {namespace esp {
                 level_ptr.reset(); // Reset unique pointer to drop contained Level as soon as possible
                 level_ptr = std::make_unique<Level>(std::move(new_level));
 
-                phase.log_stat("SLP size", slp.rules.size());
+                phase.log_stat("SLP size", slp.size());
                 phase.log_stat("ext_size2_total", level_ipd_stats.ext_size2_total);
                 phase.log_stat("ext_size3_total", level_ipd_stats.ext_size3_total);
                 phase.log_stat("ext_size3_unique", level_ipd_stats.ext_size3_unique);
@@ -174,8 +175,8 @@ namespace tdc {namespace esp {
                 phase.log_stat("int_size2_unique", level_ipd_stats.int_size2_unique);
             }
 
-            slp.empty = empty;
-            slp.root_rule = root_node;
+            slp.set_empty(empty);
+            slp.set_root_rule(root_node);
 
             return slp;
         }

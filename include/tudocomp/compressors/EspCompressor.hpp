@@ -33,7 +33,7 @@ public:
         auto phase0 = StatPhase("ESP Compressor");
 
         EspContext<ipd_t> context;
-        SLP slp;
+        SLP slp { SLP_CODING_ALPHABET_SIZE };
 
         {
             auto phase1 = StatPhase("Compress Phase");
@@ -48,7 +48,7 @@ public:
             slp = context.generate_grammar(in_stream.begin(), in_stream.end(), in_size, 256);
         }
 
-        phase0.log_stat("SLP size", slp.rules.size());
+        phase0.log_stat("SLP size", slp.size());
         phase0.log_stat("ext_size2_total", context.ipd_stats.ext_size2_total);
         phase0.log_stat("ext_size3_total", context.ipd_stats.ext_size3_total);
         phase0.log_stat("ext_size3_unique", context.ipd_stats.ext_size3_unique);
@@ -79,7 +79,7 @@ public:
         auto out = output.as_stream();
 
         phase1.split("Derive text");
-        if (!slp.empty) {
+        if (!slp.is_empty()) {
             slp.derive_text(out);
         } else {
             out << ""_v;

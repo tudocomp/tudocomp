@@ -15,7 +15,7 @@ namespace tdc {namespace esp {
         using Algorithm::Algorithm;
 
         inline void encode(SLP&& slp, Output& output) const {
-            auto max_val = slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX - 1;
+            auto max_val = slp.size() - 1;
             auto bit_width = bits_for(max_val);
 
             BitOStream bout(output.as_stream());
@@ -25,23 +25,25 @@ namespace tdc {namespace esp {
             DCHECK_LE(bit_width, 63); // 64-bit sizes are
                                     // restricted to 63 or less in practice
 
-            if (slp.empty) {
+            if (slp.is_empty()) {
                 bit_width = 0;
-                DCHECK(slp.rules.empty());
-                DCHECK_EQ(slp.root_rule, 0);
+                DCHECK_EQ(slp.root_rule(), 0);
             }
 
             bout.write_int(bit_width, 6);
 
             // root rule
-            bout.write_int(slp.root_rule, bit_width);
+            bout.write_int(slp.root_rule(), bit_width);
 
             // Write rules
-            for (auto& rule : slp.rules) {
-                DCHECK_LE(rule[0], max_val);
-                DCHECK_LE(rule[1], max_val);
-                bout.write_int(rule[0], bit_width);
-                bout.write_int(rule[1], bit_width);
+            for (size_t i = SLP_CODING_ALPHABET_SIZE; i < slp.size(); i++) {
+                auto a = slp.get_l(i);
+                auto b = slp.get_r(i);
+
+                DCHECK_LE(a, max_val);
+                DCHECK_LE(b, max_val);
+                bout.write_int(a, bit_width);
+                bout.write_int(b, bit_width);
             }
         }
 
@@ -55,19 +57,16 @@ namespace tdc {namespace esp {
 
             //std::cout << "in:  Root rule: " << root_rule << "\n";
 
-            esp::SLP slp;
-            slp.empty = empty;
-            slp.root_rule = root_rule;
-            slp.rules.reserve(std::pow(2, bit_width)); // TODO: Make more exact
+            esp::SLP slp { SLP_CODING_ALPHABET_SIZE };
+            slp.set_empty(empty);
+            slp.set_root_rule(root_rule);
+            slp.reserve(std::pow(2, bit_width)); // TODO: Make more exact
 
             while (!bin.eof()) {
                 auto a = bin.read_int<size_t>(bit_width);
                 auto b = bin.read_int<size_t>(bit_width);
-                auto array = std::array<size_t, 2>{{ a, b, }};
 
-                //std::cout << "IN:  " << vec_to_debug_string(array) << "\n";
-
-                slp.rules.push_back(array);
+                slp.push_rule(a, b);
             }
 
             return slp;

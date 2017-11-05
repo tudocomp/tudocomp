@@ -419,14 +419,13 @@ TEST(Esp, tree_reducer_roundtrip) {
 
     std::cout << "\n[Complete Grammar]:\n\n";
     auto slp = esp.generate_grammar(s.begin(), s.end(), s.size(), 256);
-    for (size_t i = 0; i < slp.rules.size(); i++) {
+    for (size_t i = 0; i < slp.size(); i++) {
         std::cout
-            << i << ": "
-            << i + esp::GRAMMAR_PD_ELLIDED_PREFIX
-            << " -> (" << slp.rules[i][0] << ", " << slp.rules[i][1] << ")\n";
+            << i
+            << " -> (" << slp.get_l(i) << ", " << slp.get_r(i) << ")\n";
     }
 
-    std::cout << "start rule: " << slp.root_rule << "\n";
+    std::cout << "start rule: " << slp.root_rule() << "\n";
 
     auto s2 = slp.derive_text_s();
 
@@ -525,10 +524,8 @@ void inverse_deps(const esp::SLP& slp, size_t root_node, std::vector<size_t>& in
         return;
     }
 
-    auto& x = slp.node(root_node);
-    auto a = x[0];
-    auto b = x[1];
-
+    auto a = slp.get_l(root_node);
+    auto b = slp.get_r(root_node);
 
     //std::cout << std::setw(ind) << "" << a << " -> " << root_node << "\n";
     inverse_deps(slp, a, inv, ind + 2);
@@ -537,9 +534,9 @@ void inverse_deps(const esp::SLP& slp, size_t root_node, std::vector<size_t>& in
 }
 
 TEST(DepSort, test) {
-    esp::SLP slp;
+    esp::SLP slp { 256 };
 
-    slp.rules = std::vector<std::array<size_t, 2>> {
+    auto rules = std::vector<std::array<size_t, 2>> {
         {48, 48},
         {100, 107},
         {97, 115},
@@ -596,20 +593,26 @@ TEST(DepSort, test) {
         {284, 285},
         {287, 288},
     };
-    slp.root_rule = 294;
-    slp.empty = false;
+
+    slp.reserve(rules.size() + 256);
+    slp.resize(rules.size() + 256);
+    for (size_t i = 0; i < rules.size(); i++) {
+        slp.set(i + 256, rules[i][0], rules[i][1]);
+    }
+
+    slp.set_root_rule(294);
+    slp.set_empty(false);
 
     auto slp_test = [&]() {
         std::cout << "[SLP Grammar]:\n";
-        for (size_t i = 0; i < slp.rules.size(); i++) {
-            auto x = i + esp::GRAMMAR_PD_ELLIDED_PREFIX;
+        for (size_t i = 0; i < slp.size(); i++) {
             std::cout
                 << "  "
-                << x
+                << i
                 << " -> ("
-                << slp.rules[i][0]
+                << slp.get_l(i)
                 << ", "
-                << slp.rules[i][1]
+                << slp.get_r(i)
                 << ")\n";
         }
         auto s = slp.derive_text_s();
