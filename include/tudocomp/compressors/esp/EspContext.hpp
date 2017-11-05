@@ -78,10 +78,6 @@ namespace tdc {namespace esp {
                 auto& level = *level_ptr;
                 dynamic_bit_view_t level_str = level.string;
 
-                LevelContext ctx {
-                    level.alphabet_size
-                };
-
                 // Loop break conditions:
                 if (level_str.size() == 0) {
                     empty = true;
@@ -100,7 +96,8 @@ namespace tdc {namespace esp {
                 new_level_str.reserve(level_str.size() / 2 + 1, new_level_str_width);
 
                 {
-                    auto block_grid = ctx.split_into_blocks(level_str);
+                    auto block_grid = LevelContext(level.alphabet_size)
+                        .split_into_blocks(level_str);
 
                     dynamic_bit_view_t level_str_suffix = level_str;
 
