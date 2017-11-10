@@ -23,15 +23,15 @@ inline const AlgorithmValue& Env::algo() const {
     return m_node;
 }
 
-inline std::shared_ptr<EnvRoot>& Env::root() {
+inline const std::shared_ptr<EnvRoot>& Env::root() const {
     return m_root;
 }
 
-inline void Env::error(const std::string& msg) {
+inline void Env::error(const std::string& msg) const {
     throw std::runtime_error(msg);
 }
 
-inline Env Env::env_for_option(const std::string& option) {
+inline Env Env::env_for_option(const std::string& option) const {
     CHECK(algo().arguments().count(option) > 0)
         << "env_for_option(): There is no option '"
         << option

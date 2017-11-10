@@ -1,0 +1,6 @@
+[
+Tudocomp(name='flattening OFF',
+    algorithm='lcpcomp(coder=sle,comp=max_lcp,threshold=5,flatten=0)'),
+Tudocomp(name='flattening  ON',
+    algorithm='lcpcomp(coder=sle,comp=max_lcp,threshold=5,flatten=1)'),
+]

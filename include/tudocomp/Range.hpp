@@ -7,7 +7,9 @@ namespace tdc {
     /// \brief Represents a generic range of positive integers
     ///
     /// Ranges have a minimum and a maximum value. They are used as hints for a
-    /// \ref tdc::Coder for it to determine how to encode certain values.
+    /// \ref Encoder or \ref Decoder for it to determine how to encode/decode
+    /// certain values.
+    ///
     /// Correspondingly implemented coders can use this information to encode
     /// more efficiently, therefore it is advised to feed it ranges as precise
     /// as possible for every value to encode.

@@ -15,6 +15,12 @@ namespace tdc {
 class Algorithm {
     Env m_env;
 public:
+    virtual ~Algorithm() = default;
+    Algorithm(Algorithm const&) = default;
+    Algorithm(Algorithm&&) = default;
+    Algorithm& operator=(Algorithm const&) = default;
+    Algorithm& operator=(Algorithm&&) = default;
+
     /// \cond DELETED
     inline Algorithm() = delete;
     /// \endcond
@@ -22,11 +28,25 @@ public:
     /// \brief Instantiates an algorithm in the specified environment.
     ///
     /// \param env The environment for the algorithm to work in.
-    inline Algorithm(Env&& env): m_env(std::move(env)) {}
+    inline Algorithm(Env&& env): m_env(std::move(env)) {
+        /*
+            //FIXME:
+
+            The following spooky line of code does absolutely nothing except
+            tell the compilation framework that we are really serious about
+            requiring "malloc". Not including an explicit call of "malloc"
+            somewhere will cause the compiler not to link against our custom
+            "malloc" implementation in the "tudocomp_stat" module.
+
+            Once we know a better way to ensure this, this should stay.
+        */
+        free(malloc(0));
+    }
 
     /// \brief Provides access to the environment that the algorithm works in.
     /// \return The environment that the algorithm works in.
     inline Env& env() { return m_env; }
+    inline const Env& env() const { return m_env; }
 };
 
 }

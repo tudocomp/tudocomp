@@ -71,6 +71,11 @@ public:
     inline ConstGenericView(const std::vector<uliteral_t>& other):
         Super::GenericViewBase(other.data(), other.size()) {}
 
+    /// Construct a View pointing at the contents of a array
+    template<size_t N>
+    inline ConstGenericView(const std::array<uliteral_t, N>& other):
+        Super::GenericViewBase(other.data(), other.size()) {}
+
     /// Construct a vector with the contents of this View
     inline operator std::vector<uliteral_t>() const {
         return Super::operator std::vector<uliteral_t>();

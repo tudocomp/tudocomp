@@ -32,7 +32,7 @@ public:
         // Construct Phi and attempt to work in-place
         set_array(t.inplace_phi(cm));
 
-        StatPhase::wrap("Construct Phi Array", [&]{
+        StatPhase::wrap("Construct PLCP Array", [&]{
             // Use Phi algorithm to compute PLCP array
             m_max = 0;
             for(len_t i = 0, l = 0; i < n - 1; ++i) {

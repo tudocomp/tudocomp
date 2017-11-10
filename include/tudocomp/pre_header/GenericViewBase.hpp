@@ -58,7 +58,7 @@ protected:
         }
     }
 
-    inline void debug_bound_check(size_t pos) const {
+    inline void debug_bound_check(size_t IF_DEBUG(pos)) const {
         IF_DEBUG(bound_check(pos));
     }
 
@@ -223,7 +223,6 @@ protected:
 
     template<class U, class Q>
     friend void swap(GenericViewBase<U, Q>& lhs, GenericViewBase<U, Q>& rhs);
-
 
     inline static bool op_eq(const GenericViewBase<T, const T*>& lhs, const GenericViewBase<T, const T*>& rhs) {
         if (lhs.size() != rhs.size()) return false;

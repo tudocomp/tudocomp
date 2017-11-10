@@ -11,6 +11,8 @@
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/BitCoder.hpp>
 
+using namespace tdc;
+
 struct InputOutput {
     View in;
     View out;
@@ -19,8 +21,6 @@ struct InputOutput {
 std::ostream& operator<<(std::ostream& os, const InputOutput& v) {
     return os << v.in << " : " << v.out;
 }
-
-using namespace tdc;
 
 class NotCedarLz78Compress: public ::testing::TestWithParam<InputOutput> {};
 TEST_P(NotCedarLz78Compress, test) {

@@ -17,6 +17,22 @@
 
 namespace tdc {
 
+/// \cond INTERNAL
+template<class T>
+struct char_as_uint_trait {
+    static inline uint64_t conv(const T& t) { return t; }
+};
+template<>
+struct char_as_uint_trait<char> {
+    static inline uint64_t conv(const char& t) { return uint8_t(t); }
+};
+
+template<class T>
+inline uint64_t char_as_uint(const T& t) {
+    return char_as_uint_trait<T>::conv(t);
+}
+/// \endcond
+
 /// \brief Builds the string representation of a vector of byte values,
 /// sorrounded by square brackets (\c \[ and \c \]).
 ///
@@ -24,6 +40,7 @@ namespace tdc {
 ///
 /// \tparam T The byte vector type.
 /// \param s The byte vector.
+/// \param indent The amount of spaces to indent the string by.
 /// \return The string representation of the byte vector.
 template<class T>
 std::string vec_to_debug_string(const T& s, size_t indent = 0) {
@@ -48,6 +65,7 @@ std::string vec_to_debug_string(const T& s, size_t indent = 0) {
 ///
 /// \tparam T The byte array type.
 /// \param s The byte array.
+/// \param length The length of the byte array.
 /// \return The string representation of the byte array.
 template<class T>
 std::string arr_to_debug_string(const T* s, size_t length) {
@@ -154,7 +172,7 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
 }
 
 /// \brief Computes the highest set bit in an integer variable
-inline uint_fast8_t bits_hi(uint64_t x) {
+inline constexpr uint_fast8_t bits_hi(uint64_t x) {
 	return x == 0 ? 0 : 64 - __builtin_clzll(x);
 }
 
@@ -173,7 +191,7 @@ inline uint_fast8_t bits_hi(uint64_t x) {
 /// \param n The integer to be stored.
 /// \return The amount of bits required to store the value (guaranteed to be
 /// greater than zero).
-inline uint_fast8_t bits_for(size_t n) {
+inline constexpr uint_fast8_t bits_for(size_t n) {
     return n == 0 ? 1U : bits_hi(n);
 }
 
@@ -183,7 +201,7 @@ inline uint_fast8_t bits_for(size_t n) {
 /// \param a The dividend.
 /// \param b The divisor.
 /// \return The quotient, rounded up to the next integer value.
-inline size_t idiv_ceil(size_t a, size_t b) {
+inline constexpr size_t idiv_ceil(size_t a, size_t b) {
     return (a / b) + ((a % b) > 0);
 }
 
@@ -204,9 +222,52 @@ inline size_t idiv_ceil(size_t a, size_t b) {
 /// \param n The integer to be stored.
 /// \return The amount of bits required to store the value (guaranteed to be
 /// greater than zero).
-inline uint_fast8_t bytes_for(size_t n) {
+inline constexpr uint_fast8_t bytes_for(size_t n) {
     return idiv_ceil(bits_for(n), 8U);
 }
+
+/// \brief Yields the position of the most significant bit for the template
+///        integer type.
+///
+/// In some scenarios (e.g. rank and select), where bit order and boundaries
+/// of a certain type are relevant, it is assumed that the "first" bit is
+/// the least significant one at position 0, while the "last" bit is the most
+/// significant one.
+///
+/// The latter can be retrieved from the static \c pos constant expression
+/// within this struct.
+///
+/// \tparam int_t the integer type in question
+template<typename int_t> struct msbf;
+
+/// \brief Specialization of \ref msbf for 8-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint8_t>  {
+    /// \brief The position of the most significant bit in 8-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 7;
+};
+/// \brief Specialization of \ref msbf for 16-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint16_t> {
+    /// \brief The position of the most significant bit in 8-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 15;
+};
+/// \brief Specialization of \ref msbf for 32-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint32_t> {
+    /// \brief The position of the most significant bit in 32-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 31;
+};
+/// \brief Specialization of \ref msbf for 64-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint64_t> {
+    /// \brief The position of the most significant bit in 64-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 63;
+};
 
 /// \brief Creates the cross product of a set of elements given a product
 /// function.
@@ -383,10 +444,6 @@ inline std::string make_table(const std::vector<std::string>& data,
     return ret.str();
 }
 
-}
-
-//Check that p is a permutation of [0..n-1]
-
 #if defined(DEBUG) && defined(PARANOID) //functions that cost more than constant time to check
 template<class T>
 void assert_permutation(const T& p, size_t n) {
@@ -417,6 +474,18 @@ template<class T> inline void assert_permutation_offset(const T&, size_t,size_t)
 #endif
 
 
+/**
+ * @brief Division with rounding up to the next integer.
+ * Call equivalent to (int) std::ceil(((double)x)/y)
+ * @param x dividend
+ * @param y divisor
+ * @return ceiling of the term x/y
+ */
+template<class T>
+constexpr T round_up_div(T x, T y) {
+	return (x + y -1)/y;
+}
+
 /*
  *	Square root by abacus algorithm, Martin Guy @ UKC, June 1985.
  *	From a book on programming abaci by Mr C. Woo.
@@ -443,3 +512,90 @@ int_t isqrt(int_t num) {
     return res;
 }
 
+static inline size_t lz78_expected_number_of_remaining_elements(const size_t z, const size_t n, const size_t remaining_characters) {
+		if(remaining_characters*2 < n ) {
+			return (z*remaining_characters) / (n - remaining_characters);
+		}
+	return remaining_characters*3/(bits_for(remaining_characters));
+}
+
+class MoveGuard {
+    bool m_is_not_moved;
+public:
+    inline MoveGuard(): m_is_not_moved(true) {}
+    inline MoveGuard(const MoveGuard& other) {
+        DCHECK(other.m_is_not_moved) << "Trying to copy a already moved-from MoveGuard";
+        m_is_not_moved = other.m_is_not_moved;
+    }
+    inline MoveGuard(MoveGuard&& other) {
+        DCHECK(other.m_is_not_moved) << "Trying to move a already moved-from MoveGuard";
+        m_is_not_moved = other.m_is_not_moved;
+        other.m_is_not_moved = false;
+    }
+
+    inline bool is_not_moved() const {
+        return m_is_not_moved;
+    }
+    inline bool is_moved() const {
+        return !m_is_not_moved;
+    }
+    inline operator bool() const {
+        return is_not_moved();
+    }
+    inline bool operator!() const {
+        return is_moved();
+    }
+};
+
+/// \cond INTERNAL
+namespace portable_arithmetic_shift {
+    // Source: https://gist.github.com/palotasb/de46414a93ba90fff22bdbd2327ae393
+
+    template <typename T>
+    constexpr auto builtin_shr(T value, int amount) noexcept
+        -> decltype(value >> amount)
+    {
+        return value >> amount;
+    }
+
+    template <typename T>
+    struct uses_arithmetic_shift : std::integral_constant<bool, builtin_shr(T(-1), 1) == -1> {};
+
+    template <typename T = int>
+    constexpr T shift_by_portable(T value, int amount) noexcept
+    {
+        return value < 0 ?
+        amount < 0 ? ~(~value >> -amount) : -(-value << amount) :
+        amount < 0 ? value >> -amount : value << amount;
+    }
+
+    template <typename T = int>
+    constexpr T shift_by_arithmetic(T value, int amount) noexcept
+    {
+        // Only use with negative T values when the compiler translates right shift to arithmetic shift instructions.
+        return amount < 0 ? value >> -amount : value << amount;
+    }
+}
+/// \endcond
+
+template <typename T = int>
+constexpr T shift_by(T value, int amount) noexcept
+{
+    using namespace portable_arithmetic_shift;
+
+    return uses_arithmetic_shift<T>::value ? shift_by_arithmetic(value, amount) : shift_by_portable(value, amount);
+}
+
+inline uint64_t zero_or_next_power_of_two(uint64_t x) {
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
+
+    return x + 1;
+}
+
+}//ns

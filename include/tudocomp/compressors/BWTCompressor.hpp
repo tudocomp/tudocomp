@@ -50,17 +50,16 @@ public:
         auto in = input.as_view();
         auto ostream = output.as_stream();
 
-		uliteral_t* decoded_string = StatPhase::wrap("Decode BWT", [&]{
+		auto decoded_string = StatPhase::wrap("Decode BWT", [&]{
             return bwt::decode_bwt(in);
         });
 
-		if(tdc_unlikely(decoded_string == nullptr)) {
+		if(tdc_unlikely(decoded_string.empty())) {
 			return;
 		}
 
         StatPhase::wrap("Output Text", [&]{
             ostream << decoded_string << '\0';
-            delete [] decoded_string;
         });
     }
 };

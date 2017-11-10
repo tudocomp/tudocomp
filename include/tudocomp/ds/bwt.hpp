@@ -7,7 +7,9 @@
 
 namespace tdc {
 
-	namespace bwt {
+/// \brief Contains functionality for computing and decoding the Burrows-Wheeler
+///        transform (BWT) of a text.
+namespace bwt {
 		static_assert(std::is_same<View::value_type, uliteral_t>::value, "View::value_type and uliteral_t must be the same");
 
 /**
@@ -24,10 +26,10 @@ inline typename text_t::value_type bwt(const text_t& text, const sa_t& sa, const
  * Input is a BWT and its length
  */
 template<typename bwt_t>
-len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
+len_compact_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	DVLOG(2) << "Computing LF";
 	if(bwt_length == 0) return nullptr;
-	len_t C[ULITERAL_MAX+1] { 0 }; // alphabet counter
+	len_compact_t C[ULITERAL_MAX+1] { 0 }; // alphabet counter
 	for(auto& c : bwt) {
 		if(literal2int(c) != ULITERAL_MAX) {
 			++C[literal2int(c)+1];
@@ -38,10 +40,10 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 		C[i] += C[i-1];
 	}
 	DVLOG(2) << "C: " << arr_to_debug_string(C,ULITERAL_MAX);
-	DCHECK_EQ(C[0],0); // no character preceeds 0
-	DCHECK_EQ(C[1],1); // there is exactly only one '\0' byte
+	DCHECK_EQ(C[0],0u); // no character preceeds 0
+	DCHECK_EQ(C[1],1u); // there is exactly only one '\0' byte
 
-	len_t* LF { new len_t[bwt_length] };
+	len_compact_t* LF { new len_compact_t[bwt_length] };
 	for(len_t i = 0; i < bwt_length; ++i) {
 		DCHECK_LE(literal2int(bwt[i]), ULITERAL_MAX);
 		LF[i] = C[literal2int(bwt[i])];
@@ -49,15 +51,18 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	}
 
 	DVLOG(2) << "LF: " << arr_to_debug_string(LF, bwt_length);
-	DCHECK([&] () { // unique invariant of the LF mapping
-			assert_permutation(LF,bwt_length);
-			for(len_t i = 0; i < bwt_length; ++i)
-			for(len_t j = i+1; j < bwt_length; ++j) {
-			if(bwt[i] != bwt[j]) continue;
-			DCHECK_LT(LF[i], LF[j]);
-			}
-			return true;
-			}());
+
+    IF_PARANOID(
+	    DCHECK([&] () { // unique invariant of the LF mapping
+			    assert_permutation(LF,bwt_length);
+			    for(len_t i = 0; i < bwt_length; ++i)
+			    for(len_t j = i+1; j < bwt_length; ++j) {
+			    if(bwt[i] != bwt[j]) continue;
+			    DCHECK_LT(LF[i], LF[j]);
+			    }
+			    return true;
+			    }());
+    )
 
 	DVLOG(2) << "Finished Computing LF";
 	return LF;
@@ -69,24 +74,24 @@ len_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
  * It is assumed that the BWT is stored in a container with access to operator[] and .size()
  */
 template<typename bwt_t>
-uliteral_t* decode_bwt(const bwt_t& bwt) {
+std::string decode_bwt(const bwt_t& bwt) {
 	const size_t bwt_length = bwt.size();
 	VLOG(2) << "InputSize: " << bwt_length;
-	if(tdc_unlikely(bwt.empty())) return nullptr;
-	if(tdc_unlikely(bwt_length == 1)) { // since there has to be a zero in each string, a string of length 1 is equal to '\0'
-		uliteral_t*const decoded_string { new uliteral_t[1] };
-		decoded_string[0] = 0;
-		return decoded_string;
-	}
-	const len_t*const LF { compute_LF(bwt, bwt_length) };
+	if(tdc_unlikely(bwt_length <= 1)) return std::string();
 
-	uliteral_t*const decoded_string = new uliteral_t[bwt_length];
-	decoded_string[bwt_length-1] = 0;
+	const len_compact_t*const LF { compute_LF(bwt, bwt_length) };
+
+    std::string decoded_string(bwt_length-1, 0);
+    //decoded_string[bwt_length-1] = 0;
+
 	len_t i = 0;
-	for(len_t j = 1; j < bwt_length && bwt[i] != 0; ++j) {
+	for(len_t j = 1; j < bwt_length; ++j) {
 		decoded_string[bwt_length - j-1] = bwt[i];
 		i = LF[i];
-		DCHECK( (bwt[i] == 0 && j+1 == bwt_length) || (bwt[i] != 0 && j+1 < bwt_length));
+
+        // this debug line only holds for texts that are guaranteed not
+        // to contain no ZERO bytes
+		//DCHECK( (bwt[i] == 0 && j+1 == bwt_length) || (bwt[i] != 0 && j+1 < bwt_length));
 	}
 	delete [] LF;
 	return decoded_string;

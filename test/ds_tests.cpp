@@ -9,6 +9,8 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/bwt.hpp>
+#include <tudocomp/ds/SparseISA.hpp>
+#include <tudocomp/ds/CompressedLCP.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
 #include "test/util.hpp"
 
@@ -56,15 +58,12 @@ void test_bwt(const std::string& str, textds_t& t) {
 	for(size_t i = 0; i < input_size; ++i) {
 		bwt.push_back(bwt::bwt(str,sa,i));
 	}
-	uliteral_t* decoded_string = bwt::decode_bwt(bwt);
-	if(decoded_string == nullptr) {
-		ASSERT_EQ(str.length(), 0);
+	auto decoded_string = bwt::decode_bwt(bwt);
+	if(decoded_string.empty()) {
+		ASSERT_EQ(str.length(), 0u);
 		return;
 	}
-	std::string decoded;
-	decoded.assign(reinterpret_cast<char*>(decoded_string));
-	ASSERT_EQ(decoded, str);
-	delete [] decoded_string;
+	ASSERT_EQ(decoded_string, str);
 }
 
 
@@ -87,7 +86,7 @@ void test_sa(const std::string& str, textds_t& t) {
 }
 
 template<class textds_t>
-void test_isa(const std::string& str, textds_t& t) {
+void test_isa(const std::string&, textds_t& t) {
     auto& isa = t.require_isa();
     auto& sa  = t.require_sa(); //request afterwards!
 
@@ -138,14 +137,26 @@ class RunTestDS {
 	}
 };
 
-#define TEST_DS_STRINGCOLLECTION(func) \
-	RunTestDS<TextDS<>> runner(func); \
+#define TEST_DS_STRINGCOLLECTION(textds_t, func) \
+	RunTestDS<textds_t> runner(func); \
 	test::roundtrip_batch(runner); \
 	test::on_string_generators(runner,11);
-TEST(ds, SA)          { TEST_DS_STRINGCOLLECTION(test_sa); }
-TEST(ds, BWT)         { TEST_DS_STRINGCOLLECTION(test_bwt); }
-TEST(ds, LCP)         { TEST_DS_STRINGCOLLECTION(test_lcp); }
-TEST(ds, ISA)         { TEST_DS_STRINGCOLLECTION(test_isa); }
-TEST(ds, Integration) { TEST_DS_STRINGCOLLECTION(test_all_ds); }
-#undef TEST_DS_STRINGCOLLECTION
 
+using textds_default_t = TextDS<>;
+TEST(ds, default_SA)  { TEST_DS_STRINGCOLLECTION(textds_default_t, test_sa); }
+TEST(ds, default_BWT)         { TEST_DS_STRINGCOLLECTION(textds_default_t, test_bwt); }
+TEST(ds, default_LCP)         { TEST_DS_STRINGCOLLECTION(textds_default_t, test_lcp); }
+TEST(ds, default_ISA)         { TEST_DS_STRINGCOLLECTION(textds_default_t, test_isa); }
+TEST(ds, default_Integration) { TEST_DS_STRINGCOLLECTION(textds_default_t, test_all_ds); }
+
+using textds_sparse_isa_t = TextDS<
+    SADivSufSort, PhiFromSA, PLCPFromPhi, LCPFromPLCP, SparseISA<SADivSufSort>>;
+
+TEST(ds, sparse_isa_ISA)         { TEST_DS_STRINGCOLLECTION(textds_sparse_isa_t, test_isa); }
+TEST(ds, sparse_isa_Integration) { TEST_DS_STRINGCOLLECTION(textds_sparse_isa_t, test_all_ds); }
+
+using textds_comp_lcp_t = TextDS<
+    SADivSufSort, PhiFromSA, PLCPFromPhi, CompressedLCP<SADivSufSort>, ISAFromSA>;
+
+TEST(ds, comp_lcp_LCP)         { TEST_DS_STRINGCOLLECTION(textds_comp_lcp_t, test_lcp); }
+TEST(ds, comp_lcp_Integration) { TEST_DS_STRINGCOLLECTION(textds_comp_lcp_t, test_all_ds); }

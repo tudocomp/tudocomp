@@ -13,7 +13,7 @@ namespace lcpcomp {
  * It creates an array of dynamic arrays. Each dynamic array stores in
  * the first element its size. On appending a new element, the dynamic array
  * gets resized by one (instead of doubling). This helps to keep the memory footprint low.
- * It can be faster than @class ScanDec if its "scans"-value too small.
+ * It can be faster than \ref ScanDec if its "scans"-value too small.
  */
 class CompactDec : public Algorithm {
 public:
@@ -28,7 +28,7 @@ public:
     }
 
 private:
-    len_t** m_fwd;
+    len_compact_t** m_fwd;
 
     len_t m_cursor;
     IF_STATS(len_t m_longest_chain);
@@ -44,11 +44,11 @@ private:
 		DCHECK(c != 0 || pos == m_buffer.size()-1); // we assume that the text to restore does not contain a NULL-byte but at its very end
 
         if(m_fwd[pos] != nullptr) {
-            const len_t*const& bucket = m_fwd[pos];
+            const len_compact_t*const& bucket = m_fwd[pos];
             for(size_t i = 1; i < bucket[0]; ++i) {
                 decode_literal_at(bucket[i], c); // recursion
             }
-            delete [] m_fwd[pos];
+            free(m_fwd[pos]);
             m_fwd[pos] = nullptr;
         }
 
@@ -72,7 +72,7 @@ public:
         if(m_fwd != nullptr) {
             for(size_t i = 0; i < m_buffer.size(); ++i) {
                 if(m_fwd[i] == nullptr) continue;
-                delete [] m_fwd[i];
+                free(m_fwd[i]);
             }
             delete [] m_fwd;
         }
@@ -83,7 +83,7 @@ public:
         IF_STATS(m_longest_chain = 0);
         IF_STATS(m_current_chain = 0);
 
-        m_fwd = new len_t*[size];
+        m_fwd = new len_compact_t*[size];
         std::fill(m_fwd,m_fwd+size,nullptr);
     }
 
@@ -97,9 +97,9 @@ public:
             if(m_buffer[src]) {
                 decode_literal_at(m_cursor, m_buffer[src]);
             } else {
-                len_t*& bucket = m_fwd[src];
+                len_compact_t*& bucket = m_fwd[src];
                 if(bucket == nullptr) {
-                    bucket = new len_t[2];
+                    bucket = (len_compact_t*) malloc(sizeof(len_compact_t) * 2);
                     DCHECK(m_fwd[src] == bucket);
                     bucket[0] = 2;
 					bucket[1] = m_cursor;
@@ -107,7 +107,7 @@ public:
 				else
                 { // this block implements the call of m_fwd[src]->push_back(m_cursor);
 					++bucket[0]; // increase the size of a bucket only by one!
-					bucket = (len_t*) realloc(bucket, sizeof(len_t)*bucket[0]);
+					bucket = (len_compact_t*) realloc(bucket, sizeof(len_compact_t)*bucket[0]);
                     bucket[bucket[0]-1] = m_cursor;
                 }
             }

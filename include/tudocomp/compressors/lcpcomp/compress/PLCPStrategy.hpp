@@ -17,15 +17,7 @@
 namespace tdc {
 namespace lcpcomp {
 
-
-
-/// A very naive selection strategy for LCPComp.
-///
-/// TODO: Describe
 class PLCPStrategy : public Algorithm {
-private:
-    typedef TextDS<> text_t;
-
 public:
     using Algorithm::Algorithm;
 
@@ -35,9 +27,10 @@ public:
     }
 
     inline static ds::dsflags_t textds_flags() {
-        return text_t::SA | text_t::ISA;
+        return ds::SA | ds::ISA;
     }
 
+    template<typename text_t>
     inline void factorize(text_t& text,
                    size_t threshold,
                    lzss::FactorBuffer& factors) {
@@ -53,22 +46,21 @@ public:
         const auto& isa = text.require_isa();
         const len_t n = sa.size();
 
+	    struct Poi {
+		    len_t pos;
+		    len_t lcp;
+		    len_t no;
+		    Poi(len_t _pos, len_t _lcp, len_t _no) : pos(_pos), lcp(_lcp), no(_no) {}
+		    bool operator<(const Poi& o) const {
+			    DCHECK_NE(o.pos, this->pos);
+			    if(o.lcp == this->lcp) return this->pos > o.pos;
+			    return this->lcp < o.lcp;
+		    }
+	    };
+
 		StatPhase::wrap("Search Peaks", [&]{
-
-		    struct Poi {
-			    len_t pos;
-			    len_t lcp;
-			    len_t no;
-			    Poi(len_t _pos, len_t _lcp, len_t _no) : pos(_pos), lcp(_lcp), no(_no) {}
-			    bool operator<(const Poi& o) const {
-				    DCHECK_NE(o.pos, this->pos);
-				    if(o.lcp == this->lcp) return this->pos > o.pos;
-				    return this->lcp < o.lcp;
-			    }
-		    };
-
 		    boost::heap::pairing_heap<Poi> heap;
-		    std::vector<boost::heap::pairing_heap<Poi>::handle_type> handles;
+		    std::vector<typename boost::heap::pairing_heap<Poi>::handle_type> handles;
 
 		    IF_STATS(len_t max_heap_size = 0);
 

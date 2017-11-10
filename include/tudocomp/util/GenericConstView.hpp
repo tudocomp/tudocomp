@@ -73,6 +73,11 @@ public:
     inline ConstGenericView(const std::vector<T>& other):
         Super::GenericViewBase(other.data(), other.size()) {}
 
+    /// Construct a View pointing at the contents of a array
+    template<size_t N>
+    inline ConstGenericView(const std::array<T, N>& other):
+        Super::GenericViewBase(other.data(), other.size()) {}
+
     /// Construct a vector with the contents of this View
     inline operator std::vector<T>() const {
         return Super::operator std::vector<T>();
@@ -312,7 +317,7 @@ namespace std {
     struct hash<tdc::ConstGenericView<T>>
     {
         size_t operator()(const tdc::ConstGenericView<T>& x) const {
-            std::size_t seed;
+            std::size_t seed = 0;
             std::hash<T> hasher;
             for (const auto& v : x) {
                 seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);

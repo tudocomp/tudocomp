@@ -16,11 +16,13 @@
 namespace tdc {
 
 // Forward declaration to be used by the parser
+/// \cond INTERNAL
 namespace pattern {
     class Algorithm;
 
     inline std::ostream& operator<<(std::ostream&, const Algorithm&);
 }
+/// \endcond
 
 //DIY lexical cast
 template<typename T> T lexical_cast(const std::string& s) {
@@ -76,6 +78,7 @@ public:
     inline AlgorithmValue to_algorithm() &&;
     inline const std::string& as_string() const;
     inline uint64_t as_integer() const;
+    inline double as_floating() const;
     inline bool as_bool() const;
     template<class T>
     inline T as() const;
@@ -170,6 +173,9 @@ inline const std::string& OptionValue::as_string() const {
 }
 inline uint64_t OptionValue::as_integer() const {
     return lexical_cast<uint64_t>(as_string());
+}
+inline double OptionValue::as_floating() const {
+    return lexical_cast<double>(as_string());
 }
 inline bool OptionValue::as_bool() const {
     auto& s = as_string();

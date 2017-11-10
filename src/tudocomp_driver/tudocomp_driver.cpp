@@ -8,8 +8,6 @@
 #include <string>
 #include <vector>
 
-#include <glog/logging.h>
-
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/io/IOUtil.hpp>
@@ -21,10 +19,13 @@
 #include <tudocomp_stat/Json.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
+#include <glog/logging.h>
+
 namespace tdc_driver {
 
 using namespace tdc;
 using namespace tdc_algorithms;
+using tdc::io::file_exists;
 
 const std::string COMPRESSED_FILE_ENDING = "tdc";
 
@@ -35,11 +36,6 @@ static inline bool ternary_xor(bool a, bool b, bool c) {
 static void exit(std::string msg) {
     // TODO: Replace with more specific logic-error-exception
     throw std::runtime_error(msg);
-}
-
-static bool file_exists(const std::string& filename) {
-    std::ifstream ifile(filename);
-    return bool(ifile);
 }
 
 static int bad_usage(const char* cmd, const std::string& message) {
@@ -59,8 +55,8 @@ int main(int argc, char** argv) {
 
     const char* cmd = argv[0];
 
-    // init logging
-    google::InitGoogleLogging(cmd);
+	FLAGS_logtostderr = 1;
+
 
     // no options
     if(argc == 1) {
@@ -86,6 +82,9 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    // init logging
+    google::InitGoogleLogging(cmd);
+
     try {
         // load registry
         const Registry<Compressor>& compressor_registry = COMPRESSOR_REGISTRY;
@@ -94,7 +93,8 @@ int main(int argc, char** argv) {
         if (options.list) {
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
-            std::cout << compressor_registry.generate_doc_string();
+            std::cout << compressor_registry.generate_doc_string("Compressors");
+            std::cout << generator_registry.generate_doc_string("String Generators");
             return 0;
         }
 
@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
                 // file
                 file = options.remaining[0];
                 if(!file_exists(file)) {
-                    std::cerr << "input file not found: " << file << std::endl;
+                    std::cerr << "input path not found or is not a file: " << file << std::endl;
                     return 1;
                 }
             }
@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
             } else if(do_compress && !options.remaining.empty()) {
                 ofile = file + "." + COMPRESSED_FILE_ENDING;
             } else {
-                return bad_usage(cmd, "missing output file or standard output");
+                return bad_usage(cmd, "either specify a filename (-o filename) or state that the output is standard output (--usestdout)");
             }
 
             if(file_exists(ofile) && !options.force) {

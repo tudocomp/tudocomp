@@ -1,6 +1,7 @@
 ExternalProject_Add(
     gtest_external
     GIT_REPOSITORY https://github.com/google/googletest
+    GIT_TAG release-1.8.0
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     UPDATE_COMMAND ""
 )

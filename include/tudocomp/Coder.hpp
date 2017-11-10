@@ -26,7 +26,10 @@ public:
     /// \param out The bit stream to write to.
     /// \param literals The literal iterator.
     template<typename literals_t>
-    inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
+    inline Encoder(
+        Env&& env,
+        std::shared_ptr<BitOStream> out,
+        literals_t&& literals)
         : Algorithm(std::move(env)), m_out(out) {
     }
 

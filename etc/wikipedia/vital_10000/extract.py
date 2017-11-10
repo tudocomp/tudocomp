@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # Given a source file of wiki html language for a
 # vital article list page, extract the names of all referenced articles

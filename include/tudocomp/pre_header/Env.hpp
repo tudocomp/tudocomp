@@ -66,14 +66,14 @@ public:
                const AlgorithmValue& node);
     inline ~Env();
 
-    inline std::shared_ptr<EnvRoot>& root();
+    inline const std::shared_ptr<EnvRoot>& root() const;
 
     /// Log an error and end the current operation
-    inline void error(const std::string& msg);
+    inline void error(const std::string& msg) const;
 
     /// Create the environment for a sub algorithm
     /// option.
-    inline Env env_for_option(const std::string& option);
+    inline Env env_for_option(const std::string& option) const;
 
     /// Get an option of this algorithm
     inline const OptionValue& option(const std::string& option) const;

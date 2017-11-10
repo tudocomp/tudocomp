@@ -10,7 +10,30 @@
 
 #include <tudocomp_stat/PhaseData.hpp>
 
+#include <time.h>
+#include <sys/time.h>
+
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
 namespace tdc {
+
+// Use clock_gettime in linux, clock_get_time in OS X.
+inline void get_monotonic_time(struct timespec *ts){
+#ifdef __MACH__
+  clock_serv_t cclock;
+  mach_timespec_t mts;
+  host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &cclock);
+  clock_get_time(cclock, &mts);
+  mach_port_deallocate(mach_task_self(), cclock);
+  ts->tv_sec = mts.tv_sec;
+  ts->tv_nsec = mts.tv_nsec;
+#else
+  clock_gettime(CLOCK_MONOTONIC, ts);
+#endif
+}
 
 /// \brief Provides access to runtime and memory measurement in statistics
 ///        phases.
@@ -24,15 +47,16 @@ private:
 
     inline static unsigned long current_time_millis() {
         timespec t;
-        clock_gettime(CLOCK_MONOTONIC, &t);
+        get_monotonic_time(&t);
 
         return t.tv_sec * 1000L + t.tv_nsec / 1000000L;
     }
 
-    StatPhase* m_parent;
-    PhaseData* m_data;
+    StatPhase* m_parent = nullptr;
+    PhaseData* m_data = nullptr;
 
-    bool m_track_memory;
+    bool m_track_memory = false;
+    bool m_disabled = false;
 
     inline void append_child(PhaseData* data) {
         if(m_data->first_child) {
@@ -195,12 +219,17 @@ public:
         if(s_current) s_current->log_stat(key, value);
     }
 
+    /// \brief Creates a inert statistics phase without any effect.
+    inline StatPhase() {
+        m_disabled = true;
+    }
+
     /// \brief Creates a new statistics phase.
     ///
     /// The new phase is started as a sub phase of the current phase and will
     /// immediately become the current phase.
     ///
-    /// \param title the phase title 
+    /// \param title the phase title
     inline StatPhase(const char* title) {
         pause();
         init(title);
@@ -212,7 +241,7 @@ public:
     /// The new phase is started as a sub phase of the current phase and will
     /// immediately become the current phase.
     ///
-    /// \param str the phase title 
+    /// \param str the phase title
     inline StatPhase(const std::string& str) : StatPhase(str.c_str()) {
     }
 
@@ -220,8 +249,10 @@ public:
     ///
     /// The phase's parent phase, if any, will become the current phase.
     inline ~StatPhase() {
-        pause();
-        finish();
+        if (!m_disabled) {
+            pause();
+            finish();
+        }
     }
 
     /// \brief Starts a new phase as a sibling, reusing the same object.
@@ -231,17 +262,19 @@ public:
     ///
     /// \param new_title the new phase title
     inline void split(const char* new_title) {
-        pause();
+        if (!m_disabled) {
+            pause();
 
-        finish();
-        PhaseData* old_data = m_data;
+            finish();
+            PhaseData* old_data = m_data;
 
-        init(new_title);
-        if(old_data) {
-            m_data->mem_off = old_data->mem_off + old_data->mem_current;
+            init(new_title);
+            if(old_data) {
+                m_data->mem_off = old_data->mem_off + old_data->mem_current;
+            }
+
+            resume();
         }
-
-        resume();
     }
 
     /// \brief Starts a new phase as a sibling, reusing the same object.
@@ -263,9 +296,11 @@ public:
     /// \param value the value to log (will be converted to a string)
     template<typename T>
     inline void log_stat(const char* key, const T& value) {
-        pause();
-        m_data->log_stat(key, value);
-        resume();
+        if (!m_disabled) {
+            pause();
+            m_data->log_stat(key, value);
+            resume();
+        }
     }
 
     /// \brief Constructs the JSON representation of the measured data.
@@ -274,11 +309,15 @@ public:
     ///
     /// \return the \ref json::Object containing the JSON representation
     inline json::Object to_json() {
-        m_data->time_end = current_time_millis();
-        pause();
-        json::Object obj = m_data->to_json();
-        resume();
-        return obj;
+        if (!m_disabled) {
+            m_data->time_end = current_time_millis();
+            pause();
+            json::Object obj = m_data->to_json();
+            resume();
+            return obj;
+        } else {
+            return json::Object();
+        }
     }
 };
 

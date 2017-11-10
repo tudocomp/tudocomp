@@ -127,7 +127,7 @@ private:
 			else {
                 dir = NONE;
             }
-		
+
 
             // go down if necessary
             if(dir == LEFT) {
@@ -150,7 +150,7 @@ public:
     /// \param i The index of the item in the key array. The key is retrieved
     ///          from there.
     inline void remove(len_t i) {
-        auto pos = m_pos[i];
+        size_t pos = m_pos[i];
         if(pos != m_undef) { // never mind if it's not in the heap
             // get last element in heap
             auto k = m_heap[--m_size];
@@ -177,7 +177,7 @@ public:
     inline void decrease_key(len_t i, key_t value) {
         (*m_array)[i] = value;
 
-        auto pos = m_pos[i];
+        size_t pos = m_pos[i];
         DCHECK_NE(pos, m_undef) << "trying to decrease_key on an item that's not in the heap";
 
         if(pos != m_undef) {

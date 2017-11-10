@@ -22,9 +22,6 @@ namespace lcpcomp {
 /// This was the original naive approach in "Textkompression mithilfe von
 /// Enhanced Suffix Arrays" (BA thesis, Patrick Dinklage, 2015).
 class BoostHeap : public Algorithm {
-private:
-    typedef TextDS<> text_t;
-
 public:
     inline static Meta meta() {
         Meta m("lcpcomp_comp", "bheap", "boost heaps");
@@ -32,11 +29,12 @@ public:
     }
 
     inline static ds::dsflags_t textds_flags() {
-        return text_t::SA | text_t::ISA | text_t::LCP;
+        return ds::SA | ds::ISA | ds::LCP;
     }
 
     using Algorithm::Algorithm; //import constructor
 
+    template<typename text_t>
     inline void factorize(text_t& text, const size_t threshold, lzss::FactorBuffer& factors) {
 
 		// Construct SA, ISA and LCP
@@ -67,9 +65,9 @@ public:
 		LCPCompare comp(lcp,sa);
 
         StatPhase phase("Construct MaxLCPHeap");
-    
-		boost::heap::pairing_heap<len_t,boost::heap::compare<LCPCompare>> heap(comp);
-		std::vector<decltype(heap)::handle_type> handles(lcp.size());
+
+		boost::heap::pairing_heap<len_compact_t,boost::heap::compare<LCPCompare>> heap(comp);
+		std::vector<typename decltype(heap)::handle_type> handles(lcp.size());
 
 		handles[0].node_ = nullptr;
         for(size_t i = 1; i < lcp.size(); ++i) {
@@ -82,7 +80,7 @@ public:
 
         while(heap.size() > 0) {
             //get suffix with longest LCP
-            const len_t& m = heap.top();
+            const len_compact_t& m = heap.top();
 
             //generate factor
             const len_t fpos = sa[m];

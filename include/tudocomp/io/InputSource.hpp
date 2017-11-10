@@ -61,7 +61,7 @@ namespace tdc {namespace io {
             && lhs.m_view.size() == rhs.m_view.size()
             && lhs.m_path == rhs.m_path
             && lhs.m_stream == rhs.m_stream;
-    };
+    }
 
     inline std::ostream& operator<<(std::ostream& o, const InputSource& v) {
         if (v.is_view()) {
