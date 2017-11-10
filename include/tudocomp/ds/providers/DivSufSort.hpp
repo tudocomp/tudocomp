@@ -37,7 +37,8 @@ public:
             const size_t w = bits_for(n);
 
             // divsufsort needs one additional bit for signs
-            m_sa = DynamicIntVector(n, 0, compressed_space ? w + 1 : LEN_BITS);
+            m_sa = DynamicIntVector(
+                n, 0, compressed_space ? w + 1 : INDEX_BITS);
 
             // Use divsufsort to construct
             divsufsort(manager.input.data(), m_sa, n);

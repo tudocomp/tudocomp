@@ -66,7 +66,8 @@ public:
             // Compute LCP array
             const size_t w = bits_for(m_max_lcp);
 
-            m_lcp = DynamicIntVector(n, 0, compressed_space ? w : LEN_BITS);
+            m_lcp = DynamicIntVector(
+                n, 0, compressed_space ? w : INDEX_BITS);
 
             m_lcp[0] = 0;
             for(len_t i = 1; i < n; i++) {

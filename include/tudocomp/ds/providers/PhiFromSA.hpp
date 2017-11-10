@@ -38,7 +38,7 @@ public:
 
         StatPhase::wrap("Construct Phi Array", [&]{
             // Construct Phi Array
-            m_phi = DynamicIntVector(n, 0, compressed_space ? w : LEN_BITS);
+            m_phi = DynamicIntVector(n, 0, compressed_space ? w : INDEX_BITS);
 
             for(len_t i = 1, prev = sa[0]; i < n; i++) {
                 m_phi[sa[i]] = prev;

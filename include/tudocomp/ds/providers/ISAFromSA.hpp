@@ -38,7 +38,7 @@ public:
             const size_t n = manager.input.size();
             const size_t w = bits_for(n);
 
-            m_isa = DynamicIntVector(n, 0, compressed_space ? w : LEN_BITS);
+            m_isa = DynamicIntVector(n, 0, compressed_space ? w : INDEX_BITS);
 
             // Construct
             for(len_t i = 0; i < n; i++) {
