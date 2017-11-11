@@ -9,6 +9,7 @@
 #include <tudocomp/ds/providers/ISAFromSA.hpp>
 #include <tudocomp/ds/providers/PhiAlgorithm.hpp>
 #include <tudocomp/ds/providers/PhiFromSA.hpp>
+#include <tudocomp/ds/providers/LCPFromPLCP.hpp>
 
 #include <tudocomp/CreateAlgorithm.hpp>
 
@@ -24,7 +25,8 @@ using namespace tdc;
 */
 
 // compile-time tests for DSManager
-using dsmanager_t = DSManager<DivSufSort, PhiAlgorithm, ISAFromSA, PhiFromSA>;
+using dsmanager_t = DSManager<
+    DivSufSort, PhiAlgorithm, LCPFromPLCP, ISAFromSA, PhiFromSA>;
 
 static_assert(std::is_same<
         dsmanager_t::provider_type<ds::SUFFIX_ARRAY>, DivSufSort
@@ -39,7 +41,7 @@ static_assert(std::is_same<
         dsmanager_t::provider_type<ds::PLCP_ARRAY>, PhiAlgorithm
         >::value, "Wrong provider entry for PLCP_ARRAY");
 static_assert(std::is_same<
-        dsmanager_t::provider_type<ds::LCP_ARRAY>, PhiAlgorithm
+        dsmanager_t::provider_type<ds::LCP_ARRAY>, LCPFromPLCP
         >::value, "Wrong provider entry for LCP_ARRAY");
 
 static_assert(std::is_same<
@@ -62,18 +64,22 @@ static_assert(1 == depgraph_t::in_degree<ds::INVERSE_SUFFIX_ARRAY>(),
     "Wrong in degree of INVERSE_SUFFIX_ARRAY node in dependency graph");
 static_assert(1 == depgraph_t::in_degree<ds::PHI_ARRAY>(),
     "Wrong in degree of PHI_ARRAY node in dependency graph");
+static_assert(1 == depgraph_t::in_degree<ds::PLCP_ARRAY>(),
+    "Wrong in degree of LCP_ARRAY node in dependency graph");
 static_assert(1 == depgraph_t::in_degree<ds::LCP_ARRAY>(),
     "Wrong in degree of LCP_ARRAY node in dependency graph");
 
 // cost
 static_assert(0 == depgraph_t::cost<ds::SUFFIX_ARRAY>(),
-    "Wrong in cost of SUFFIX_ARRAY node in dependency graph");
+    "Wrong cost of SUFFIX_ARRAY node in dependency graph");
 static_assert(1 == depgraph_t::cost<ds::INVERSE_SUFFIX_ARRAY>(),
-    "Wrong in cost of INVERSE_SUFFIX_ARRAY node in dependency graph");
+    "Wrong cost of INVERSE_SUFFIX_ARRAY node in dependency graph");
 static_assert(1 == depgraph_t::cost<ds::PHI_ARRAY>(),
-    "Wrong in cost of PHI_ARRAY node in dependency graph");
-static_assert(2 == depgraph_t::cost<ds::LCP_ARRAY>(),
-    "Wrong in cost of LCP_ARRAY node in dependency graph");
+    "Wrong cost of PHI_ARRAY node in dependency graph");
+static_assert(2 == depgraph_t::cost<ds::PLCP_ARRAY>(),
+    "Wrong cost of PLCP_ARRAY node in dependency graph");
+static_assert(3 == depgraph_t::cost<ds::LCP_ARRAY>(),
+    "Wrong cost of LCP_ARRAY node in dependency graph");
 
 // construction order
 static_assert(std::is_same<
@@ -109,7 +115,7 @@ TEST(DS, dev) {
     ASSERT_EQ("divsufsort",    std::remove_reference<decltype(sa_provider)>::type::meta().name());
     ASSERT_EQ("isa",           std::remove_reference<decltype(isa_provider)>::type::meta().name());
     ASSERT_EQ("phi",           std::remove_reference<decltype(phi_provider)>::type::meta().name());
-    ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(lcp_provider)>::type::meta().name());
+    ASSERT_EQ("lcp",           std::remove_reference<decltype(lcp_provider)>::type::meta().name());
     ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(plcp_provider)>::type::meta().name());
 
     {
