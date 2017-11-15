@@ -8,7 +8,6 @@
 namespace tdc {namespace esp {
     template<typename d_coding_t = DMonotonSubseq<>>
     class SortedSLPCoder: public Algorithm {
-        using RhsAdapter = SLPRhsAdapter;
     public:
         inline static Meta meta() {
             Meta m("slp_coder", "sorted");
@@ -20,14 +19,13 @@ namespace tdc {namespace esp {
 
         using Algorithm::Algorithm;
 
-        inline void encode(DebugContext& debug, SLP&& slp, Output& output) const {
+        inline void encode(SLP&& slp, Output& output) const {
             /*
             std::cout << "unsorted:\n";
-            for (size_t i = 0; i < slp.rules.size(); i++) {
+            for (size_t i = 0; i < slp.size(); i++) {
                 std::cout
-                    << i << ": "
-                    << i + esp::GRAMMAR_PD_ELLIDED_PREFIX
-                    << " -> (" << slp.rules[i][0] << ", " << slp.rules[i][1] << ")\n";
+                    << i
+                    << " -> (" << slp.get_l(i) << ", " << slp.get_r(i) << ")\n";
             }
             */
 
@@ -39,12 +37,9 @@ namespace tdc {namespace esp {
                 phase.split("Dump JSON");
                 std::ofstream ostream(env().option("dump_json_file").as_string() + ".json");
 
-                std::vector<size_t> dl;
-                std::vector<size_t> dr;
-                for (auto& e : slp.rules) {
-                    dl.push_back(e[0]);
-                    dr.push_back(e[1]);
-                }
+                auto& dl = slp.dl();
+                auto& dr = slp.dr();
+
                 ostream << "{\n";
                 ostream << "    \"DL\" : " << vec_to_debug_string(dl) << "\n,";
                 ostream << ",\n";
@@ -57,7 +52,7 @@ namespace tdc {namespace esp {
 
             phase.split("Encode headers");
 
-            auto max_val = slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX - 1;
+            auto max_val = slp.size() - 1;
             auto bit_width = bits_for(max_val);
 
             auto bouts = std::make_shared<BitOStream>(output.as_stream());
@@ -67,10 +62,9 @@ namespace tdc {namespace esp {
             DCHECK_LE(bit_width, 63); // 64-bit sizes are
                                     // restricted to 63 or less in practice
 
-            if (slp.empty) {
+            if (slp.is_empty()) {
                 bit_width = 0;
-                DCHECK(slp.rules.empty());
-                DCHECK_EQ(slp.root_rule, 0);
+                DCHECK_EQ(slp.root_rule(), 0);
             }
 
             // bit width
@@ -80,20 +74,20 @@ namespace tdc {namespace esp {
             bout.write_int(max_val, bit_width);
 
             // root rule
-            bout.write_int(slp.root_rule, bit_width);
+            bout.write_int(slp.root_rule(), bit_width);
 
-            if (slp.empty || slp.root_rule < 256) {
+            if (slp.is_empty() || slp.root_rule() < SLP_CODING_ALPHABET_SIZE) {
                 return;
             }
 
             /*
             std::cout << "sorted:\n";
-            for (size_t i = 0; i < slp.rules.size(); i++) {
+            for (size_t i = 0; i < slp.size(); i++) {
                 std::cout
-                    << i << ": "
-                    << i + esp::GRAMMAR_PD_ELLIDED_PREFIX
-                    << " -> (" << slp.rules[i][0] << ", " << slp.rules[i][1] << ")\n";
-            }*/
+                    << i
+                    << " -> (" << slp.get_l(i) << ", " << slp.get_r(i) << ")\n";
+            }
+            */
 
             // ...
             //std::vector<size_t> rules_lhs;
@@ -107,20 +101,22 @@ namespace tdc {namespace esp {
 
             // Write rules lhs
             {
+                auto dl = std::move(slp.dl());
+
                 size_t last = 0;
-                for (auto& e : slp.rules) {
-                    DCHECK_LE(last, e[0]);
-                    size_t diff = e[0] - last;
+                for (size_t node : dl) {
+                    DCHECK_LE(last, node);
+                    size_t diff = node - last;
                     bout.write_unary(diff);
-                    last = e[0];
+                    last = node;
                 }
             }
 
             phase.split("Encode SLP RHS");
 
-            const auto rhs = RhsAdapter { &slp };
+            const auto dr = std::move(slp.dr());
             d_coding_t d_coding { this->env().env_for_option("d_coding") };
-            d_coding.encode(rhs, bouts, bit_width, max_val);
+            d_coding.encode(dr, bouts, bit_width, max_val);
         }
 
         inline SLP decode(Input& input) const {
@@ -143,17 +139,16 @@ namespace tdc {namespace esp {
             //std::cout << "parsed lhs:   " << vec_to_debug_string(rules_lhs) << "\n";
             //std::cout << "parsed diffs: " << vec_to_debug_string(rules_lhs_diff) << "\n";
 
-            esp::SLP slp;
-            slp.empty = empty;
-            slp.root_rule = root_rule;
+            esp::SLP slp { SLP_CODING_ALPHABET_SIZE };
+            slp.set_empty(empty);
+            slp.set_root_rule(root_rule);
 
-            if (empty || slp.root_rule < 256) {
+            if (empty || slp.root_rule() < SLP_CODING_ALPHABET_SIZE) {
                 return slp;
             }
 
-            size_t slp_size = (max_val + 1) - 256; // implied initial bytes
-            slp.rules.reserve(slp_size);
-            slp.rules.resize(slp_size);
+            size_t slp_size = max_val + 1;
+            slp.resize(slp_size);
 
             // Read rules lhs
             {
@@ -162,13 +157,12 @@ namespace tdc {namespace esp {
                     // ...
                     auto diff = bin.read_unary<size_t>();
                     last += diff;
-                    slp.rules[i][0] = last;
+                    slp.set_l(i, last);
                 }
             }
 
-            auto D = RhsAdapter { &slp };
             d_coding_t d_coding { this->env().env_for_option("d_coding") };
-            d_coding.decode(D, bins, bit_width, max_val);
+            d_coding.decode(slp.dr(), bins, bit_width, max_val);
 
             return slp;
         }

@@ -210,21 +210,18 @@ void landmark_spanner_test_adj(std::vector<int> landmarks,
                           },
                           tie);
 
-    std::vector<esp::TypedBlock> v;
+    esp::BlockGrid v;
     for(auto span : spans) {
-        v.push_back(esp::TypedBlock {
-            uint8_t(span[1] - span[0] + 1), 2
-        });
+        v.push_block(uint8_t(span[1] - span[0] + 1), 2);
     }
-
-    esp::adjust_blocks(v);
 
     spans.clear();
+
     size_t i = 0;
-    for (auto b : v) {
-        spans.push_back({ i, i + b.len - 1});
-        i += b.len;
-    }
+    v.for_each_block_len([&](size_t block_len) {
+        spans.push_back({ i, i + block_len - 1});
+        i += block_len;
+    });
 
     ASSERT_EQ(should_spans, spans) << "Adjusted spans don't match";
 }
@@ -350,18 +347,12 @@ TEST(Esp, landmark_spanner_13) {
 
 
 void split_test(string_ref s) {
-    esp::RoundContext<decltype(s)> ctx {
-        256,
-        s,
-        true, // max repeating meta blocks
-        true, // tie to right (or left?)
-        esp::DebugRoundContext(std::cout, true, true),
+    esp::LevelContext ctx {
+        256
     };
 
     std::cout << "             [" << s << "]\n";
-    ctx.split(s);
-    std::cout << "\n[Adjusted]:\n\n";
-    ctx.adjusted_blocks();
+    ctx.split_into_blocks(s);
 }
 
 TEST(Esp, new_split) {
@@ -418,48 +409,23 @@ TEST(Esp, new_split_13) {
     split_test("aaaaaaf"_v);
 }
 
-void test_adjust_blocks(std::vector<esp::TypedBlock> a,
-                        std::vector<esp::TypedBlock> b) {
-    adjust_blocks(a);
-    ASSERT_EQ(a, b);
-}
-
-
-TEST(Esp, adjust_block_1) {
-    test_adjust_blocks(
-        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 3, 2 } },
-        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 3, 2 } }
-    );
-}
-
-TEST(Esp, adjust_block_2) {
-    test_adjust_blocks(
-        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 1, 2 }, esp::TypedBlock { 2, 2 } },
-        { esp::TypedBlock { 2, 3 }, esp::TypedBlock { 3, 2 } }
-    );
-}
-
 using test_ipd_t = esp::DynamicSizeIPD<esp::HashMapIPD>;
 
 TEST(Esp, tree_reducer_roundtrip) {
     auto s = "0000dkasxxxcsdacjzsbkhvfaghskcbs"
              "aaaaaaaaaaaaaaaaaadkcbgasdbkjcbackscfa"_v;
 
-    esp::EspContext<test_ipd_t> esp {
-        nullptr, // no env
-        false,   // not silent
-    };
+    esp::EspContext<test_ipd_t> esp;
 
     std::cout << "\n[Complete Grammar]:\n\n";
-    auto slp = esp.generate_grammar(s);
-    for (size_t i = 0; i < slp.rules.size(); i++) {
+    auto slp = esp.generate_grammar(s.begin(), s.end(), s.size(), 256);
+    for (size_t i = 0; i < slp.size(); i++) {
         std::cout
-            << i << ": "
-            << i + esp::GRAMMAR_PD_ELLIDED_PREFIX
-            << " -> (" << slp.rules[i][0] << ", " << slp.rules[i][1] << ")\n";
+            << i
+            << " -> (" << slp.get_l(i) << ", " << slp.get_r(i) << ")\n";
     }
 
-    std::cout << "start rule: " << slp.root_rule << "\n";
+    std::cout << "start rule: " << slp.root_rule() << "\n";
 
     auto s2 = slp.derive_text_s();
 
@@ -558,10 +524,8 @@ void inverse_deps(const esp::SLP& slp, size_t root_node, std::vector<size_t>& in
         return;
     }
 
-    auto& x = slp.node(root_node);
-    auto a = x[0];
-    auto b = x[1];
-
+    auto a = slp.get_l(root_node);
+    auto b = slp.get_r(root_node);
 
     //std::cout << std::setw(ind) << "" << a << " -> " << root_node << "\n";
     inverse_deps(slp, a, inv, ind + 2);
@@ -570,9 +534,9 @@ void inverse_deps(const esp::SLP& slp, size_t root_node, std::vector<size_t>& in
 }
 
 TEST(DepSort, test) {
-    esp::SLP slp;
+    esp::SLP slp { 256 };
 
-    slp.rules = std::vector<std::array<size_t, 2>> {
+    auto rules = std::vector<std::array<size_t, 2>> {
         {48, 48},
         {100, 107},
         {97, 115},
@@ -629,20 +593,25 @@ TEST(DepSort, test) {
         {284, 285},
         {287, 288},
     };
-    slp.root_rule = 294;
-    slp.empty = false;
+
+    slp.resize(rules.size() + 256);
+    for (size_t i = 0; i < rules.size(); i++) {
+        slp.set(i + 256, rules[i][0], rules[i][1]);
+    }
+
+    slp.set_root_rule(294);
+    slp.set_empty(false);
 
     auto slp_test = [&]() {
         std::cout << "[SLP Grammar]:\n";
-        for (size_t i = 0; i < slp.rules.size(); i++) {
-            auto x = i + esp::GRAMMAR_PD_ELLIDED_PREFIX;
+        for (size_t i = 0; i < slp.size(); i++) {
             std::cout
                 << "  "
-                << x
+                << i
                 << " -> ("
-                << slp.rules[i][0]
+                << slp.get_l(i)
                 << ", "
-                << slp.rules[i][1]
+                << slp.get_r(i)
                 << ")\n";
         }
         auto s = slp.derive_text_s();
@@ -1082,16 +1051,14 @@ TEST(Hashmaps, size) {
 }
 
 TEST(Fulltree, test) {
-    esp::EspContext<test_ipd_t> context { nullptr, false };
+    esp::EspContext<test_ipd_t> context;
     //auto in = "dkaxxxxcsdacjzstj"_v;
     //auto in = "ghkhkgasdfjlkbananasdframaaaaaaaaaaaaaaaaaaasdfjlkbananaasddjztt"_v;
     //auto in = "ghkhkgbananabananasdframaaaaaaaaaaaaaaaaasdfjuzlbananabananauztl"_v;
     //auto in = "ghkhkgbananabanana"_v;
     //auto in = "ghkhkgbananabanana"_v;
     auto in = "abcddddabcbababac"_v;
-    context.debug.input_string(in);
-    auto slp = context.generate_grammar(in);
-    context.debug.print_all();
+    auto slp = context.generate_grammar(in.begin(), in.end(), in.size(), 256);
 }
 
 
@@ -1156,7 +1123,7 @@ TEST(WT, compact) {
         size_t c = 0;
         while (a != b) {
             --b;
-            if (*b == 0) {
+            if (*b == 0u) {
                 c += 1;
             } else {
                 break;

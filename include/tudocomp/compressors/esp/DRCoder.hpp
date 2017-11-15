@@ -75,7 +75,7 @@ namespace tdc {namespace esp {
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
             for(size_t i = 0; i < rhs.size(); i++) {
-                out.write_int(rhs[i], bit_width);
+                out.write_int(size_t(rhs[i]), bit_width);
             }
         }
         template<typename rhs_t>
