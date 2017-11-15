@@ -39,7 +39,7 @@ run_test(compact_sparse_hash_tests      DEPS ${BASIC_DEPS})
 #Disabled due to breakage on this branch:
 #run_test(paper_tests    DEPS ${BASIC_DEPS})
 #run_bench(int_vector_benchs DEPS ${BASIC_DEPS})
-#run_test(compressor_adapter_tests DEPS tudocomp_algorithms ${BASIC_DEPS})
+run_test(compressor_adapter_tests DEPS tudocomp_algorithms ${BASIC_DEPS})
 #run_test(example_tests  DEPS ${BASIC_DEPS})
 
 run_test(lfs_tests     DEPS ${BASIC_DEPS})

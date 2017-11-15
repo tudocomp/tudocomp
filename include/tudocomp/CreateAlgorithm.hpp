@@ -52,6 +52,7 @@ public:
         auto evaluated_options = evald_algo.as_algorithm();
 
         auto env_root = std::make_shared<EnvRoot>(std::move(evaluated_options));
+        env_root->register_registry(m_registry);
         Env env(env_root, env_root->algo_value());
 
         return env;
