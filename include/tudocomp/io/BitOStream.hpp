@@ -17,9 +17,7 @@ namespace io {
 class BitOStream {
     OutputStream m_stream;
 
-    bool m_dirty;
     uint8_t m_next;
-
     int8_t m_cursor;
     static constexpr int8_t MSB = 7;
 

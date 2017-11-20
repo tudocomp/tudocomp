@@ -16,6 +16,8 @@ namespace io {
 class BitIStream {
     InputStream m_stream;
 
+    static constexpr uint8_t MSB = 7;
+
     uint8_t m_current = 0;
     uint8_t m_next = 0;
 
@@ -25,8 +27,6 @@ class BitIStream {
     uint8_t m_cursor = 0;
 
     inline void read_next() {
-        const uint8_t MSB = 7;
-
         m_current = m_next;
         m_cursor = MSB;
 
@@ -35,30 +35,24 @@ class BitIStream {
             m_next = c;
 
             if(m_stream.get(c)) {
-                /*DLOG(INFO) << "read_next: ...";*/
-
                 // stream still going
                 m_stream.unget();
             } else {
                 // stream over after next, do some checks
                 m_final_bits = c;
-                m_final_bits &= 0x7;
+                m_final_bits &= 0b111;
                 if(m_final_bits >= 6) {
                     // special case - already final
                     m_is_final = true;
                     m_next = 0;
-                    /*DLOG(INFO) << "read_next: EOF*" <<
-                        ", m_final_bits := " << size_t(m_final_bits);*/
                 }
             }
         } else {
             m_is_final = true;
-            m_final_bits = m_current & 0x7;
+            m_final_bits = m_current & 0b111;
 
             m_next = 0;
 
-            /*DLOG(INFO) << "read_next: EOF" <<
-                ", m_final_bits := " << size_t(m_final_bits);*/
         }
     }
 
@@ -69,12 +63,18 @@ public:
     inline BitIStream(InputStream&& input) : m_stream(std::move(input)) {
         char c;
         if(m_stream.get(c)) {
+            // prepare the state by reading the first byte into to the `m_next`
+            // member. `read_next()` will then shift it to the `m_current`
+            // member, from which the `read_XXX()` methods take away bits.
+
             m_is_final = false;
             m_next = c;
 
             read_next();
         } else {
-            //empty stream
+            // special case: if the stream is empty to begin with, we
+            // never read the last 3 bits and just treat it as completely empty
+
             m_is_final = true;
             m_final_bits = 0;
         }
@@ -91,11 +91,6 @@ public:
     /// \brief Reads the next single bit from the input.
     /// \return 1 if the next bit is set, 0 otherwise.
     inline uint8_t read_bit() {
-        /*DLOG(INFO) <<"read_bit: " <<
-                "m_is_final = " << m_is_final <<
-                ", m_final_bits = " << size_t(m_final_bits) <<
-                ", m_cursor = " << size_t(m_cursor);*/
-
         if(!eof()) {
             uint8_t bit = (m_current >> m_cursor) & 1;
             if(m_cursor) {
@@ -112,7 +107,9 @@ public:
 
     /// TODO document
     inline bool eof() const {
-        return m_is_final && m_cursor <= (7 - m_final_bits);
+        // If there are no more bytes, and all bits from the current buffer are read,
+        // we are done
+        return m_is_final && (m_cursor <= (MSB - m_final_bits));
     }
 
     // Only higher level functions that use read_bit below:
