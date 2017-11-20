@@ -35,6 +35,24 @@ class BitOStream {
         reset();
     }
 
+    struct BitSink {
+        BitOStream* m_ptr;
+
+        inline void write_bit(bool set) {
+            m_ptr->write_bit(set);
+        }
+
+        template<typename T>
+        inline void write_int(T value, size_t bits = sizeof(T) * CHAR_BIT) {
+            m_ptr->write_int(value, bits);
+        }
+    };
+
+    inline BitSink bit_sink() {
+        return BitSink {
+            this
+        };
+    }
 public:
     /// \brief Constructs a bitwise output stream.
     ///
@@ -67,6 +85,19 @@ public:
         }
     }
 
+    /// \brief Asserts that the next write operation starts on a byte boundary
+    inline void assert_byte_boundary() const {
+        CHECK(!is_dirty());
+    }
+
+    /// \brief Returns the underlying stream.
+    ///
+    /// Note that the stream does not include bits that have not yet been
+    /// flushed.
+    inline std::ostream& stream() {
+        return m_stream;
+    }
+
     /// \brief Writes a single bit to the output.
     /// \param set The bit value (0 or 1).
     inline void write_bit(bool set) {
@@ -81,21 +112,6 @@ public:
         }
     }
 
-    /// \brief Asserts that the next write operation starts on a byte boundary
-    inline void assert_byte_boundary() const {
-        CHECK(!is_dirty());
-    }
-
-    /// \brief Returns the underlying stream.
-    ///
-    /// Note that the stream does not include bits that have not yet been
-    /// flushed.
-    inline std::ostream& stream() {
-        return m_stream;
-    }
-
-    // Only higher level functions that use write_bit below:
-
     /// Writes the bit representation of an integer in MSB first order to
     /// the output.
     ///
@@ -105,42 +121,36 @@ public:
     ///             this equals the bit width of type \c T.
     template<class T>
     inline void write_int(T value, size_t bits = sizeof(T) * CHAR_BIT) {
+        // TODO: Optimize to not always process individual bits
+
         for (int i = bits - 1; i >= 0; i--) {
             write_bit((value & T(T(1) << i)) != T(0));
         }
     }
 
+    // ########################################################
+    // Only higher level functions that use bit_sink() below:
+    // NB: Try to add new functions in IOUtil.hpp instead of here
+    // ########################################################
+
     template<typename value_t>
     inline void write_unary(value_t v) {
-        while(v--) {
-            write_bit(0);
-        }
-
-        write_bit(1);
+        ::tdc::io::write_unary<value_t>(bit_sink(), v);
     }
 
     template<typename value_t>
     inline void write_ternary(value_t v) {
-        if(v) {
-            --v;
-            do {
-                write_int(v % 3, 2); // 0 -> 00, 1 -> 01, 2 -> 10
-                v /= 3;
-            } while(v);
-        }
-        write_int(3, 2); // terminator -> 11
+        ::tdc::io::write_ternary<value_t>(bit_sink(), v);
     }
 
     template<typename value_t>
     inline void write_elias_gamma(value_t v) {
-        write_unary(bits_for(v));
-        write_int(v, bits_for(v));
+        ::tdc::io::write_elias_gamma<value_t>(bit_sink(), v);
     }
 
     template<typename value_t>
     inline void write_elias_delta(value_t v) {
-        write_elias_gamma(bits_for(v));
-        write_int(v, bits_for(v));
+        ::tdc::io::write_elias_delta<value_t>(bit_sink(), v);
     }
 
     /// \brief Writes a compressed integer to the input.
@@ -158,17 +168,7 @@ public:
     /// \param b The block width in bits. The default is 7 bits.
     template<typename T>
     inline void write_compressed_int(T v, size_t b = 7) {
-        DCHECK(b > 0);
-
-        uint64_t u = uint64_t(v);
-        uint64_t mask = (u << b) - 1;
-        do {
-            uint64_t current = v & mask;
-            v >>= b;
-
-            write_bit(v > 0);
-            write_int(current, b);
-        } while(v > 0);
+        ::tdc::io::write_compressed_int<T>(bit_sink(), v, b);
     }
 };
 

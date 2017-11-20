@@ -56,6 +56,24 @@ class BitIStream {
         }
     }
 
+    struct BitSink {
+        BitIStream* m_ptr;
+
+        inline uint8_t read_bit() {
+            return m_ptr->read_bit();
+        }
+
+        template<class T>
+        inline T read_int(size_t amount = sizeof(T) * CHAR_BIT) {
+            return m_ptr->template read_int<T>(amount);
+        }
+    };
+
+    inline BitSink bit_sink() {
+        return BitSink {
+            this
+        };
+    }
 public:
     /// \brief Constructs a bitwise input stream.
     ///
@@ -88,6 +106,13 @@ public:
 
     BitIStream(BitIStream&& other) = default;
 
+    /// TODO document
+    inline bool eof() const {
+        // If there are no more bytes, and all bits from the current buffer are read,
+        // we are done
+        return m_is_final && (m_cursor <= (MSB - m_final_bits));
+    }
+
     /// \brief Reads the next single bit from the input.
     /// \return 1 if the next bit is set, 0 otherwise.
     inline uint8_t read_bit() {
@@ -105,15 +130,6 @@ public:
         }
     }
 
-    /// TODO document
-    inline bool eof() const {
-        // If there are no more bytes, and all bits from the current buffer are read,
-        // we are done
-        return m_is_final && (m_cursor <= (MSB - m_final_bits));
-    }
-
-    // Only higher level functions that use read_bit below:
-
     /// \brief Reads the integer value of the next \c amount bits in MSB first
     ///        order.
     /// \tparam The integer type to read.
@@ -123,6 +139,8 @@ public:
     ///         order.
     template<class T>
     inline T read_int(size_t amount = sizeof(T) * CHAR_BIT) {
+        // TODO: Optimize to not always process individual bits
+
         T value = 0;
         for(size_t i = 0; i < amount; i++) {
             value <<= 1;
@@ -131,40 +149,29 @@ public:
         return value;
     }
 
+    // ########################################################
+    // Only higher level functions that use bit_sink() below:
+    // NB: Try to add new functions in IOUtil.hpp instead of here
+    // ########################################################
+
     template<typename value_t>
     inline value_t read_unary() {
-        value_t v = 0;
-        while(!read_bit()) ++v;
-        return v;
+        return ::tdc::io::read_unary<value_t>(bit_sink());
     }
 
     template<typename value_t>
     inline value_t read_ternary() {
-        size_t mod = read_int<size_t>(2);
-        value_t v = 0;
-        if(mod < 3) {
-            size_t b = 1;
-            do {
-                v += mod * b;
-                b *= 3;
-                mod = read_int<size_t>(2);
-            } while(mod != 3);
-
-            ++v;
-        }
-        return v;
+        return ::tdc::io::read_ternary<value_t>(bit_sink());
     }
 
     template<typename value_t>
     inline value_t read_elias_gamma() {
-        auto bits = read_unary<size_t>();
-        return read_int<value_t>(bits);
+        return ::tdc::io::read_elias_gamma<value_t>(bit_sink());
     }
 
     template<typename value_t>
     inline value_t read_elias_delta() {
-        auto bits = read_elias_gamma<size_t>();
-        return read_int<value_t>(bits);
+        return ::tdc::io::read_elias_delta<value_t>(bit_sink());
     }
 
     /// \brief Reads a compressed integer from the input.
@@ -179,18 +186,7 @@ public:
     /// \return The read integer value.
     template<typename T = size_t>
     inline T read_compressed_int(size_t b = 7) {
-        DCHECK(b > 0);
-
-        uint64_t value = 0;
-        size_t i = 0;
-
-        bool has_next;
-        do {
-            has_next = read_bit();
-            value |= (read_int<size_t>(b) << (b * (i++)));
-        } while(has_next);
-
-        return T(value);
+        return ::tdc::io::read_compressed_int<T>(bit_sink(), b);
     }
 };
 
