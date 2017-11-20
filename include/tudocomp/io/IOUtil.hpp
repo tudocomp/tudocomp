@@ -1,5 +1,6 @@
 #pragma once
 
+#include <climits>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -115,6 +116,23 @@ inline bool file_exists(const std::string& filename) {
 
     // Check if it exists, and if its also a regular file
     return does_exist && S_ISREG(path_stat.st_mode);
+}
+
+template<class T, typename BitSink>
+inline void write_int(BitSink&& sink, T value, size_t bits = sizeof(T) * CHAR_BIT) {
+    for (int i = bits - 1; i >= 0; i--) {
+        sink.write_bit((value & T(T(1) << i)) != T(0));
+    }
+}
+
+template<class T, typename BitSink>
+inline T read_int(BitSink&& sink, size_t amount = sizeof(T) * CHAR_BIT) {
+    T value = 0;
+    for(size_t i = 0; i < amount; i++) {
+        value <<= 1;
+        value |= sink.read_bit();
+    }
+    return value;
 }
 
 template<typename T, typename BitSink>

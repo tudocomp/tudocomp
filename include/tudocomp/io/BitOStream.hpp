@@ -122,10 +122,7 @@ public:
     template<class T>
     inline void write_int(T value, size_t bits = sizeof(T) * CHAR_BIT) {
         // TODO: Optimize to not always process individual bits
-
-        for (int i = bits - 1; i >= 0; i--) {
-            write_bit((value & T(T(1) << i)) != T(0));
-        }
+        ::tdc::io::write_int<T>(bit_sink(), value, bits);
     }
 
     // ########################################################

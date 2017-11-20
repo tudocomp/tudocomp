@@ -140,13 +140,7 @@ public:
     template<class T>
     inline T read_int(size_t amount = sizeof(T) * CHAR_BIT) {
         // TODO: Optimize to not always process individual bits
-
-        T value = 0;
-        for(size_t i = 0; i < amount; i++) {
-            value <<= 1;
-            value |= read_bit();
-        }
-        return value;
+        return ::tdc::io::read_int<T>(bit_sink(), amount);
     }
 
     // ########################################################
