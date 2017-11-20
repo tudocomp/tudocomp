@@ -101,7 +101,7 @@ public:
 
         }
 
-        long buf_size = bitout->tellp();
+        long buf_size = bitout->stream().tellp();
 
         StatPhase::log("Bytes Length Encoding", buf_size);
         uint literals=0;
@@ -127,7 +127,7 @@ public:
 
         StatPhase::log("Literals in Dictionary", literals);
 
-        buf_size = long(bitout->tellp()) - buf_size;
+        buf_size = long(bitout->stream().tellp()) - buf_size;
         StatPhase::log("Bytes Non-Terminal Symbol Encoding", buf_size);
 
         literals=0;
@@ -178,7 +178,7 @@ public:
             literals++;
         }
 
-        buf_size = long(bitout->tellp()) - buf_size;
+        buf_size = long(bitout->stream().tellp()) - buf_size;
         StatPhase::log("Bytes Start Symbol Encoding", buf_size);
 
         StatPhase::log("Literals in Start Symbol", literals);

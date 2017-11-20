@@ -86,6 +86,8 @@ public:
     inline BitIStream(Input& input) : BitIStream(input.as_stream()) {
     }
 
+    BitIStream(BitIStream&& other) = default;
+
     /// \brief Reads the next single bit from the input.
     /// \return 1 if the next bit is set, 0 otherwise.
     inline uint8_t read_bit() {
@@ -107,6 +109,13 @@ public:
             return 0; //EOF
         }
     }
+
+    /// TODO document
+    inline bool eof() const {
+        return m_is_final && m_cursor <= (7 - m_final_bits);
+    }
+
+    // Only higher level functions that use read_bit below:
 
     /// \brief Reads the integer value of the next \c amount bits in MSB first
     ///        order.
@@ -185,11 +194,6 @@ public:
         } while(has_next);
 
         return T(value);
-    }
-
-    /// TODO document
-    inline bool eof() const {
-        return m_is_final && m_cursor <= (7 - m_final_bits);
     }
 };
 

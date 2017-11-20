@@ -19,21 +19,22 @@ class BitOStream {
 
     bool m_dirty;
     uint8_t m_next;
-    int m_cursor;
+
+    int8_t m_cursor;
+    static constexpr int8_t MSB = 7;
+
+    inline bool is_dirty() const {
+        return m_cursor != MSB;
+    }
 
     inline void reset() {
-        const int MSB = 7;
-
         m_next = 0;
         m_cursor = MSB;
-        m_dirty = false;
     }
 
     inline void write_next() {
-        if (m_dirty) {
-            m_stream.put(char(m_next));
-            reset();
-        }
+        m_stream.put(char(m_next));
+        reset();
     }
 
 public:
@@ -50,28 +51,22 @@ public:
     inline BitOStream(Output& output) : BitOStream(output.as_stream()) {
     }
 
-    ~BitOStream() {
-        char set = 7 - m_cursor;
+    BitOStream(BitOStream&& other) = default;
+
+    inline ~BitOStream() {
+        uint8_t set_bits = MSB - m_cursor; // will only be in range 0 to 7
         if(m_cursor >= 2) {
-            m_next |= set;
-        } else {
+            // if there are at least 3 bits free in the byte buffer,
+            // write them into the cursor at the last 3 bit positions
+            m_next |= set_bits;
             write_next();
-            m_next = set;
+        } else {
+            // else write out the byte, and write the length into the
+            // last 3 bit positions of the next byte
+            write_next();
+            m_next = set_bits;
+            write_next();
         }
-
-        m_dirty = true;
-        write_next();
-    }
-
-    /// \brief Returns the output position indicator of the underlying stream,
-    ///        which should equal the amount of bytes written to it.
-    ///
-    /// Note that this value does not include bits that have not yet been
-    /// flushed.
-    ///
-    /// \return the output position indicator of the underlying stream
-    inline auto tellp() -> decltype(m_stream.tellp()) {
-        return m_stream.tellp();
     }
 
     /// \brief Writes a single bit to the output.
@@ -81,11 +76,27 @@ public:
             m_next |= (1 << m_cursor);
         }
 
-        m_dirty = true;
-        if (--m_cursor < 0) {
+        m_cursor--;
+
+        if (m_cursor < 0) {
             write_next();
         }
     }
+
+    /// \brief Asserts that the next write operation starts on a byte boundary
+    inline void assert_byte_boundary() const {
+        CHECK(!is_dirty());
+    }
+
+    /// \brief Returns the underlying stream.
+    ///
+    /// Note that the stream does not include bits that have not yet been
+    /// flushed.
+    inline std::ostream& stream() {
+        return m_stream;
+    }
+
+    // Only higher level functions that use write_bit below:
 
     /// Writes the bit representation of an integer in MSB first order to
     /// the output.
