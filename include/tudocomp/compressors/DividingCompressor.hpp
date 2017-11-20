@@ -131,8 +131,6 @@ public:
 
     template<typename F>
     inline void compress_for_each_block(Input& _input, Output& output, F f) const {
-        std::cout << "compress start!\n";
-
         // TODO: Fix the special case in file slicing that requires this extra buffer here
         auto _view = _input.as_view();
         auto input = Input::from_memory(_view);
@@ -140,17 +138,13 @@ public:
         const dividing_t strategy { this->env().env_for_option("strategy") };
         auto offsets = strategy.split_at(input);
 
-        std::cout << "Full Input size: " << input.size() << "\n";
-
         for (size_t i = 0; i < offsets.size() - 1; i++) {
             auto buffer = std::vector<uint8_t>();
             {
                 auto slice = Input(input, offsets[i], offsets[i + 1]);
                 auto tmp_o = Output(buffer);
-                std::cout << "Compress on slice: " << offsets[i] << ".." << offsets[i + 1] << "\n";
                 f(slice, tmp_o);
             }
-            std::cout << "Output size: " << buffer.size() << "\n";
             {
                 auto os = output.as_stream();
                 io::write_int<size_t>(BitOSink { &os }, buffer.size());
@@ -165,16 +159,10 @@ public:
             auto os = output.as_stream();
             os << ""_v;
         }
-
-        std::cout << "compress ok!\n";
-
-        std::cout << "---\n";
     }
 
     template<typename F>
     inline void decompress_for_each_block(Input& _input, Output& output, F f) const {
-        std::cout << "decompress start!\n";
-
         // TODO: Fix the special case in file slicing that requires this extra buffer here
         auto _view = _input.as_view();
         auto input = Input::from_memory(_view);
@@ -182,19 +170,15 @@ public:
         size_t size = input.size();
         size_t cursor = 0;
 
-        std::cout << "Full Input size: " << input.size() << "\n";
-
         while (cursor < size) {
             size_t block_size;
             {
                 auto local_input = Input(input, cursor);
                 auto is = local_input.as_stream();
                 block_size = io::read_int<size_t>(BitISink { &is });
-                std::cout << "Input size: " << block_size << "\n";
             }
             cursor += sizeof(size_t);
             {
-                std::cout << "Decompress on slice: " << cursor << ".." << cursor + block_size << "\n";
                 auto block_slice = Input(input, cursor, cursor + block_size);
                 f(block_slice, output);
             }
@@ -208,10 +192,6 @@ public:
             auto os = output.as_stream();
             os << ""_v;
         }
-
-        std::cout << "decompress ok!\n";
-
-        std::cout << "===\n";
     }
 
     inline virtual void compress(Input& input, Output& output) override final {
