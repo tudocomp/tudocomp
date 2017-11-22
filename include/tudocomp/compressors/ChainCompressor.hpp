@@ -5,7 +5,6 @@
 #include <tudocomp/Registry.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
-#include <tudocomp_driver/Registry.hpp>
 #include <vector>
 #include <memory>
 
@@ -15,8 +14,8 @@ class ChainCompressor: public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "chain");
-        m.option("first").dynamic_compressor();
-        m.option("second").dynamic_compressor();
+        m.option("first").dynamic<Compressor>();
+        m.option("second").dynamic<Compressor>();
         return m;
     }
 
@@ -37,15 +36,15 @@ public:
 
         auto run = [&](Input& i, Output& o, string_ref option) {
             auto& option_value = env().option(option);
-            DCHECK(option_value.is_algorithm());
 
             auto av = option_value.as_algorithm();
-
             auto textds_flags = av.textds_flags();
 
             DVLOG(1) << "dynamic creation of" << av.name() << "\n";
-            auto compressor = create_algo_with_registry_dynamic(
-                tdc_algorithms::COMPRESSOR_REGISTRY, av);
+
+            auto const& registry = env().root()->registry<Compressor>();
+
+            auto compressor = create_algo_with_registry_dynamic(registry, av);
 
             f(i, o, *compressor, textds_flags);
         };
@@ -102,4 +101,3 @@ public:
 };
 
 }
-

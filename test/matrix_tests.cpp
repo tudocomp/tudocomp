@@ -17,11 +17,18 @@ using namespace tdc_algorithms;
 
 const std::vector<std::string> EXCLUDED_TESTS {
     "chain",
+    "dividing",
 };
 const std::vector<std::string> ADDITIONAL_TESTS {
-    // "chain(chain(chain(chain(easyrle(\"1\"),bwt()),mtf()),easyrle()),encode(huff))",
-    // "chain(lz78, lzw)",
-    // "chain(lz78, chain(noop, lzw))",
+    "chain(noop, noop)",
+    "chain(lz78, lzw)",
+    //"chain(lz78, chain(noop, lzw))",
+    "dividing(strategy=blocked(10), compressor=lz78(ascii))",
+    "dividing(strategy=division(2), compressor=lz78(ascii))",
+    "dividing(strategy=blocked(10), compressor=lzw)",
+    "dividing(strategy=division(2), compressor=lzw)",
+    "dividing(strategy=blocked(10), compressor=esp)",
+    "dividing(strategy=division(2), compressor=esp)",
 };
 
 TEST(TudocompDriver, roundtrip_matrix) {

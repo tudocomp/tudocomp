@@ -23,7 +23,8 @@
 #include <tudocomp/ds/TextDS.hpp>
 
 #include <tudocomp_driver/Registry.hpp>
-#include <tudocomp_driver/ChainCompressor.hpp>
+#include <tudocomp/compressors/ChainCompressor.hpp>
+#include <tudocomp/compressors/DividingCompressor.hpp>
 
 #include "test/util.hpp"
 
@@ -243,4 +244,28 @@ TEST(NoopEscapingCompressor, escaping) {
     };
 
     test::roundtrip_ex<NoopEscapingCompressor>(View(a), View(b));
+}
+
+TEST(Dividing, test_division) {
+    test::roundtrip_ex<DividingCompressor<DivisionDividingStrategy>>(
+        "569874523695214569874523196875"_v, ""_v,
+        R"(strategy=division(2), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
+    test::roundtrip_ex<DividingCompressor<DivisionDividingStrategy>>(
+        ""_v, ""_v,
+        R"(strategy=division(2), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
+    test::roundtrip_ex<DividingCompressor<DivisionDividingStrategy>>(
+        "1"_v, ""_v,
+        R"(strategy=division(2), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
+}
+
+TEST(Dividing, test_blocked) {
+    test::roundtrip_ex<DividingCompressor<BlockedDividingStrategy>>(
+        "569874523695214569874523196875"_v, ""_v,
+        R"(strategy=blocked(10), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
+    test::roundtrip_ex<DividingCompressor<BlockedDividingStrategy>>(
+        ""_v, ""_v,
+        R"(strategy=blocked(10), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
+    test::roundtrip_ex<DividingCompressor<BlockedDividingStrategy>>(
+        "1"_v, ""_v,
+        R"(strategy=blocked(10), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
 }

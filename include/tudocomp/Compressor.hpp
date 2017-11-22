@@ -18,6 +18,8 @@ namespace tdc {
 /// representation.
 class Compressor: public Algorithm {
 public:
+    static string_ref meta_type() { return "compressor"_v; };
+
     virtual ~Compressor() = default;
     Compressor(Compressor const&) = default;
     Compressor(Compressor&&) = default;

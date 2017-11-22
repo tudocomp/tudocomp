@@ -121,7 +121,7 @@ def root_cpp(kinds):
         # Declare and define the registry and register function
         r.code('''
             void register_$IDENTs(Registry<$TYPE>& r);
-            Registry<$TYPE> $CONST_REGISTRY = Registry<$TYPE>::with_all_from(register_$IDENTs, "$IDENT");
+            Registry<$TYPE> $CONST_REGISTRY = Registry<$TYPE>::with_all_from(register_$IDENTs);
         ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
         r.emptyline()
 
