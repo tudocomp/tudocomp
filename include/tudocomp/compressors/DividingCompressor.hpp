@@ -198,7 +198,7 @@ public:
         auto& option_value = env().option("compressor");
         auto av = option_value.as_algorithm();
         auto textds_flags = av.textds_flags();
-        auto const& registry = env().root()->registry<Compressor>();
+        auto const& registry = env().root()->template registry<Compressor>();
 
         // Make sure null termination and escaping happens
         auto input2 = Input(input, textds_flags);
@@ -216,7 +216,7 @@ public:
         auto& option_value = env().option("compressor");
         auto av = option_value.as_algorithm();
         auto textds_flags = av.textds_flags();
-        auto const& registry = env().root()->registry<Compressor>();
+        auto const& registry = env().root()->template registry<Compressor>();
 
         // Make sure null termination and escaping gets reverted
         auto output2 = Output(output, textds_flags);
