@@ -965,7 +965,7 @@ the need of fixed typing:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
 // Create a registry for algorithms inheriting from MyAlgorithmBase
-Registry<MyAlgorithmBase> registry();
+Registry<MyAlgorithmBase> registry;
 
 // Register two implementations of the algorithm
 registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
