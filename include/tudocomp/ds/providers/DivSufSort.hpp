@@ -24,9 +24,11 @@ private:
 public:
     using Algorithm::Algorithm;
 
+    using sa_t = decltype(m_sa);
+
     using provides = std::index_sequence<ds::SUFFIX_ARRAY>;
     using requires = std::index_sequence<>;
-    using ds_types = tl::set<ds::SUFFIX_ARRAY, decltype(m_sa)>;
+    using ds_types = tl::set<ds::SUFFIX_ARRAY, sa_t>;
 
     // implements concept "DSProvider"
     template<typename manager_t>
@@ -78,12 +80,12 @@ inline void DivSufSort::compress<ds::SUFFIX_ARRAY>() {
 }
 
 template<>
-inline const DynamicIntVector& DivSufSort::get<ds::SUFFIX_ARRAY>() {
+inline const DivSufSort::sa_t& DivSufSort::get<ds::SUFFIX_ARRAY>() {
     return m_sa;
 }
 
 template<>
-inline DynamicIntVector DivSufSort::relinquish<ds::SUFFIX_ARRAY>() {
+inline DivSufSort::sa_t DivSufSort::relinquish<ds::SUFFIX_ARRAY>() {
     return std::move(m_sa);
 }
 

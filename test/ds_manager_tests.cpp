@@ -7,6 +7,7 @@
 
 #include <tudocomp/ds/providers/DivSufSort.hpp>
 #include <tudocomp/ds/providers/ISAFromSA.hpp>
+#include <tudocomp/ds/providers/SparseISA.hpp>
 #include <tudocomp/ds/providers/PhiAlgorithm.hpp>
 #include <tudocomp/ds/providers/PhiFromSA.hpp>
 #include <tudocomp/ds/providers/LCPFromPLCP.hpp>
@@ -26,13 +27,13 @@ using namespace tdc;
 
 // compile-time tests for DSManager
 using dsmanager_t = DSManager<
-    DivSufSort, PhiAlgorithm, LCPFromPLCP, ISAFromSA, PhiFromSA>;
+    DivSufSort, PhiAlgorithm, LCPFromPLCP, SparseISA<DivSufSort::sa_t>, PhiFromSA>;
 
 static_assert(std::is_same<
         dsmanager_t::provider_type<ds::SUFFIX_ARRAY>, DivSufSort
         >::value, "Wrong provider entry for SUFFIX_ARRAY");
 static_assert(std::is_same<
-        dsmanager_t::provider_type<ds::INVERSE_SUFFIX_ARRAY>, ISAFromSA
+        dsmanager_t::provider_type<ds::INVERSE_SUFFIX_ARRAY>, SparseISA<DivSufSort::sa_t>
         >::value, "Wrong provider entry for INVERSE_SUFFIX_ARRAY");
 static_assert(std::is_same<
         dsmanager_t::provider_type<ds::PHI_ARRAY>, PhiFromSA
@@ -47,7 +48,7 @@ static_assert(std::is_same<
 static_assert(std::is_same<
         dsmanager_t::ds_types,
         tl::type_list<DynamicIntVector,
-                      DynamicIntVector,
+                      SparseISA<DivSufSort::sa_t>::Data,
                       DynamicIntVector,
                       DynamicIntVector,
                       DynamicIntVector>
@@ -113,7 +114,7 @@ TEST(DS, dev) {
 
     // make sure they are the right ones
     ASSERT_EQ("divsufsort",    std::remove_reference<decltype(sa_provider)>::type::meta().name());
-    ASSERT_EQ("isa",           std::remove_reference<decltype(isa_provider)>::type::meta().name());
+    ASSERT_EQ("sparse_isa",    std::remove_reference<decltype(isa_provider)>::type::meta().name());
     ASSERT_EQ("phi",           std::remove_reference<decltype(phi_provider)>::type::meta().name());
     ASSERT_EQ("lcp",           std::remove_reference<decltype(lcp_provider)>::type::meta().name());
     ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(plcp_provider)>::type::meta().name());
@@ -129,7 +130,7 @@ TEST(DS, dev) {
         // check return types
         static_assert(std::is_same<decltype(sa), const DynamicIntVector&>::value,
             "wrong ds type for SUFFIX_ARRAY");
-        static_assert(std::is_same<decltype(isa), const DynamicIntVector&>::value,
+        static_assert(std::is_same<decltype(isa), const SparseISA<DivSufSort::sa_t>::Data&>::value,
             "wrong ds type for INVERSE_SUFFIX_ARRAY");
         static_assert(std::is_same<decltype(phi), const DynamicIntVector&>::value,
             "wrong ds type for PHI_ARRAY");
@@ -149,7 +150,7 @@ TEST(DS, dev) {
         // check return types
         static_assert(std::is_same<decltype(sa), DynamicIntVector>::value,
             "wrong ds type for SUFFIX_ARRAY");
-        static_assert(std::is_same<decltype(isa), DynamicIntVector>::value,
+        static_assert(std::is_same<decltype(isa), SparseISA<DivSufSort::sa_t>::Data>::value,
             "wrong ds type for INVERSE_SUFFIX_ARRAY");
         static_assert(std::is_same<decltype(phi), DynamicIntVector>::value,
             "wrong ds type for PHI_ARRAY");
