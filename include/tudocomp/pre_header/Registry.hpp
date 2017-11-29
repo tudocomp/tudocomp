@@ -16,6 +16,29 @@ struct AlreadySeenPair {
 inline bool operator==(const AlreadySeenPair& lhs, const AlreadySeenPair& rhs) {
     return lhs.pair[0] == rhs.pair[0] && lhs.pair[1] == rhs.pair[1];
 }
+
+template<typename algorithm_t>
+class Registry;
+
+class VirtualRegistry {
+public:
+    virtual ~VirtualRegistry() = default;
+    VirtualRegistry() = default;
+    VirtualRegistry(VirtualRegistry const&) = default;
+    VirtualRegistry(VirtualRegistry&&) = default;
+    VirtualRegistry& operator=(VirtualRegistry const&) = default;
+    VirtualRegistry& operator=(VirtualRegistry&&) = default;
+
+    virtual string_ref root_type() const = 0;
+
+    template<typename algorithm_t>
+    inline Registry<algorithm_t> const& downcast() {
+        DCHECK_EQ(algorithm_t::meta_type(), root_type());
+
+        VirtualRegistry const* virtual_registry = this;
+        return *static_cast<Registry<algorithm_t> const*>(virtual_registry);
+    }
+};
 /// \endcond
 
 /// \brief A registry for algorithms to be made available in the driver
@@ -26,7 +49,7 @@ inline bool operator==(const AlreadySeenPair& lhs, const AlreadySeenPair& rhs) {
 /// the \ref register_algorithm step. Any registered algorithm will also
 /// be listed in the utility's help message.
 template<typename algorithm_t>
-class Registry {
+class Registry: public VirtualRegistry {
     typedef std::function<std::unique_ptr<algorithm_t>(Env&&)> constructor_t;
 
     struct RegistryData {
@@ -35,16 +58,14 @@ class Registry {
     };
 
     std::shared_ptr<RegistryData> m_data;
-    std::string m_root_type;
 
     /// \cond INTERNAL
     friend class AlgorithmTypeBuilder;
-    friend class GlobalRegistry;
     /// \endcond
 
 public:
-    inline Registry(const std::string& root_type = "any"):
-        m_data(std::make_shared<RegistryData>()), m_root_type(root_type) {}
+    inline Registry():
+        m_data(std::make_shared<RegistryData>()) {}
 
     /// \brief Registers an \ref tdc::Algorithm.
     ///
@@ -67,9 +88,12 @@ public:
     inline std::vector<pattern::Algorithm> check_for_undefined_algorithms();
     inline std::unique_ptr<algorithm_t> select_algorithm(const AlgorithmValue& algo) const;
     inline AlgorithmValue parse_algorithm_id(string_ref text) const;
-    inline std::unique_ptr<algorithm_t> select(const std::string& text) const;
-    inline static Registry<algorithm_t> with_all_from(std::function<void(Registry<algorithm_t>&)> f, const std::string& root_type);
+    inline std::unique_ptr<algorithm_t> select_algorithm(const std::string& text) const;
+    inline static Registry<algorithm_t> with_all_from(std::function<void(Registry<algorithm_t>&)> f);
     inline std::string generate_doc_string(const std::string& title) const;
+    inline string_ref root_type() const override {
+        return algorithm_t::meta_type();
+    }
     /// \endcond
 };
 

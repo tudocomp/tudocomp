@@ -1,7 +1,6 @@
 #pragma once
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/compressors/esp/DebugContext.hpp>
 #include <tudocomp/compressors/esp/SLP.hpp>
 #include <tudocomp/compressors/esp/HashArray.hpp>
 
@@ -15,12 +14,9 @@ namespace tdc {namespace esp {
 
         using Algorithm::Algorithm;
 
-        inline void encode(DebugContext& debug, SLP&& slp, Output& output) const {
-            debug.encode_start();
-            auto max_val = slp.rules.size() + esp::GRAMMAR_PD_ELLIDED_PREFIX - 1;
+        inline void encode(SLP&& slp, Output& output) const {
+            auto max_val = slp.size() - 1;
             auto bit_width = bits_for(max_val);
-            debug.encode_max_value(max_val, bit_width);
-            debug.encode_root_node(slp.root_rule);
 
             BitOStream bout(output.as_stream());
             // Write header
@@ -29,25 +25,26 @@ namespace tdc {namespace esp {
             DCHECK_LE(bit_width, 63); // 64-bit sizes are
                                     // restricted to 63 or less in practice
 
-            if (slp.empty) {
+            if (slp.is_empty()) {
                 bit_width = 0;
-                DCHECK(slp.rules.empty());
-                DCHECK_EQ(slp.root_rule, 0);
+                DCHECK_EQ(slp.root_rule(), 0);
             }
 
             bout.write_int(bit_width, 6);
 
-            // root rule
-            bout.write_int(slp.root_rule, bit_width);
+            // max_val and root rule
+            bout.write_int(max_val, bit_width);
+            bout.write_int(slp.root_rule(), bit_width);
 
             // Write rules
-            debug.encode_rule_start();
-            for (auto& rule : slp.rules) {
-                debug.encode_rule(rule);
-                DCHECK_LE(rule[0], max_val);
-                DCHECK_LE(rule[1], max_val);
-                bout.write_int(rule[0], bit_width);
-                bout.write_int(rule[1], bit_width);
+            for (size_t i = SLP_CODING_ALPHABET_SIZE; i < slp.size(); i++) {
+                auto a = slp.get_l(i);
+                auto b = slp.get_r(i);
+
+                DCHECK_LE(a, max_val);
+                DCHECK_LE(b, max_val);
+                bout.write_int(a, bit_width);
+                bout.write_int(b, bit_width);
             }
         }
 
@@ -57,23 +54,24 @@ namespace tdc {namespace esp {
             auto bit_width = bin.read_int<size_t>(6);
             bool empty = (bit_width == 0);
 
+            auto max_val = bin.read_int<size_t>(bit_width);
             auto root_rule = bin.read_int<size_t>(bit_width);
+
+            size_t slp_size = max_val + 1;
 
             //std::cout << "in:  Root rule: " << root_rule << "\n";
 
-            esp::SLP slp;
-            slp.empty = empty;
-            slp.root_rule = root_rule;
-            slp.rules.reserve(std::pow(2, bit_width)); // TODO: Make more exact
+            esp::SLP slp { SLP_CODING_ALPHABET_SIZE };
+            slp.set_empty(empty);
+            slp.set_root_rule(root_rule);
+            slp.resize(slp_size);
 
+            size_t i = SLP_CODING_ALPHABET_SIZE;
             while (!bin.eof()) {
                 auto a = bin.read_int<size_t>(bit_width);
                 auto b = bin.read_int<size_t>(bit_width);
-                auto array = std::array<size_t, 2>{{ a, b, }};
 
-                //std::cout << "IN:  " << vec_to_debug_string(array) << "\n";
-
-                slp.rules.push_back(array);
+                slp.set(i++, a, b);
             }
 
             return slp;

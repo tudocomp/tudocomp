@@ -24,6 +24,7 @@
 
 #include <tudocomp/def.hpp>
 #include <tudocomp/OptionValue.hpp>
+#include <tudocomp/pre_header/Registry.hpp>
 
 namespace tdc {
 
@@ -33,19 +34,28 @@ class Env;
 class EnvRoot {
 private:
     std::unique_ptr<AlgorithmValue> m_algo_value;
+    std::unordered_map<std::string, std::unique_ptr<VirtualRegistry>> m_registries;
 
 public:
-    inline EnvRoot() {
-    }
+    inline EnvRoot() = default;
 
     inline EnvRoot(AlgorithmValue&& algo_value):
         m_algo_value(std::make_unique<AlgorithmValue>(std::move(algo_value)))  {
     }
 
-    inline ~EnvRoot() {
+    inline AlgorithmValue& algo_value();
+    template<typename T>
+    inline void register_registry(Registry<T> const& registry) {
+        m_registries.insert(std::make_pair(
+            std::string(registry.root_type()),
+            std::make_unique<Registry<T>>(registry)
+        ));
     }
 
-    inline AlgorithmValue& algo_value();
+    template<typename algorithm_if_t>
+    inline Registry<algorithm_if_t> const& registry() const {
+        return m_registries.at(algorithm_if_t::meta_type())->template downcast<algorithm_if_t>();
+    }
 };
 
 /// Local environment for a compression/encoding/decompression call.

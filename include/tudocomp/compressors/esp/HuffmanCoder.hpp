@@ -248,7 +248,7 @@ namespace tdc {namespace esp {
             ExtendedHuffmantable(const input_t& inp) {
                 size_t max = 0;
                 for (size_t i = 0; i < inp.size(); i++) {
-                    max = std::max(max, inp[i]);
+                    max = std::max<size_t>(max, inp[i]);
                 }
                 size_t alphabet_size = max + 1;
 

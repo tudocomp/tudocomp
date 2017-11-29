@@ -37,7 +37,8 @@ namespace tdc {namespace esp {
             counter(counter_start + 1),
             m_initial_counter(counter_start + 1) {}
 
-        inline size_t add(in_t v) {
+        template<typename view_t>
+        inline size_t add(view_t v) {
             const size_t vs = v.size();
 
             DCHECK(vs == 2 || vs == 3);

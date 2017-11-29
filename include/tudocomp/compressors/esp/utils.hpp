@@ -7,26 +7,10 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
-#include <tudocomp/compressors/esp/TypedBlock.hpp>
-
 namespace tdc {
 namespace esp {
     //[debugging]///////////////////////////////////////////////////////////////
 
-    std::ostream& nice_block_lengths(GenericView<TypedBlock> tbs, std::ostream& o) {
-        for (auto& tb: tbs) {
-            if (tb.len == 1) {
-                o << "[" << int(tb.type) << "]";
-            } else if (tb.len == 2) {
-                o << "[  " << int(tb.type) << " ]";
-            } else if (tb.len == 3) {
-                o << "[   " << int(tb.type) << "   ]";
-            } else {
-                o << "<Err: " << tb <<  ">";
-            }
-        }
-        return o;
-    }
     template<typename T>
     class DebugPrint {
         ConstGenericView<T> m_view;

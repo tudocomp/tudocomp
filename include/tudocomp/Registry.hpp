@@ -16,7 +16,7 @@ inline void Registry<algorithm_t>::register_algorithm() {
     gather_types(m_data->m_algorithms, std::move(meta));
 
     auto static_s
-        = eval::pattern_eval(std::move(s), m_root_type, m_data->m_algorithms);
+        = eval::pattern_eval(std::move(s), root_type(), m_data->m_algorithms);
 
     CHECK(m_data->m_registered.count(static_s) == 0) << "registered twice"; // Don't register twice...
     m_data->m_registered[std::move(static_s)] = [](Env&& env) {
@@ -138,7 +138,7 @@ inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_wit
 template<typename algorithm_t>
 inline std::vector<pattern::Algorithm> Registry<algorithm_t>::check_for_undefined_algorithms() {
     std::vector<pattern::Algorithm> r;
-    for (auto& s : all_algorithms_with_static(m_root_type)) {
+    for (auto& s : all_algorithms_with_static(root_type())) {
         if (m_data->m_registered.count(s) == 0) {
             r.push_back(s);
         }
@@ -147,8 +147,8 @@ inline std::vector<pattern::Algorithm> Registry<algorithm_t>::check_for_undefine
 }
 
 template<typename algorithm_t>
-inline Registry<algorithm_t> Registry<algorithm_t>::with_all_from(std::function<void(Registry&)> f, const std::string& root_type) {
-    Registry r(root_type);
+inline Registry<algorithm_t> Registry<algorithm_t>::with_all_from(std::function<void(Registry&)> f) {
+    Registry r;
     f(r);
     return r;
 }
@@ -186,11 +186,11 @@ inline std::string Registry<algorithm_t>::generate_doc_string(const std::string&
     std::stringstream ss;
 
     ss << "  [" << title << "]\n";
-    ss << print(m_data->m_algorithms[m_root_type], 2) << "\n\n";
+    ss << print(m_data->m_algorithms[root_type()], 2) << "\n\n";
 
     ss << "  [Argument types]\n";
     for (auto& x : m_data->m_algorithms) {
-        if (x.first == m_root_type) {
+        if (x.first == root_type()) {
             continue;
         }
         ss << "    [" << x.first << "]\n";
@@ -211,7 +211,7 @@ inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(cons
 
         return constructor(Env(env, env->algo_value()));
     } else {
-        throw std::runtime_error("No implementation found for " + m_root_type + " "
+        throw std::runtime_error("No implementation found for " + std::string(root_type()) + " "
         + static_only_evald_algo.to_string()
         );
     }
@@ -224,14 +224,14 @@ inline AlgorithmValue Registry<algorithm_t>::parse_algorithm_id(
     ast::Parser p { text };
     auto parsed_algo = p.parse_value();
     auto options = eval::cl_eval(std::move(parsed_algo),
-                                    m_root_type,
+                                    root_type(),
                                     m_data->m_algorithms);
 
     return std::move(options).to_algorithm();
 }
 
 template<typename algorithm_t>
-inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select(
+inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(
     const std::string& options) const {
 
     return select_algorithm(parse_algorithm_id(options));

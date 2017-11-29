@@ -964,25 +964,26 @@ with the two strategies. It is then used to instantiate both versions without
 the need of fixed typing:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
-// Create a registry for algorithms of type "example"
-Registry<MyAlgorithmBase> registry("example");
+// Create a registry for algorithms inheriting from MyAlgorithmBase
+Registry<MyAlgorithmBase> registry;
 
-// Register two specializations of the algorithm
+// Register two implementations of the algorithm
 registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
 registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
 
 // Execute the algorithm with the square strategy
-auto algo_sqr = registry.select("my_algorithm(number=5, strategy=sqr)");
+auto algo_sqr = registry.select_algorithm("my_algorithm(number=5, strategy=sqr)");
 algo_sqr->execute(); // the result is 25
 
 // Execute the algorithm with the multiply strategy
-auto algo_mul = registry.select("my_algorithm(number=5, strategy=mul(8))");
+auto algo_mul = registry.select_algorithm("my_algorithm(number=5, strategy=mul(8))");
 algo_mul->execute(); // the result is 40
 ~~~
 
 Note that for this example, the interface `MyAlgorithmBase` was introduced,
-which `MyAlgorithm` inherits from. It merely declares the virtual function
-`execute`. The additional layer of abstraction is necessary only for use as a
+which `MyAlgorithm` inherits from. It declares the virtual function
+`execute`, and declares itself as having the type id string `"example"`.
+This additional layer of abstraction is necessary only for use as a
 template parameter for the `Registry` class in this example.
 
 ## Coders

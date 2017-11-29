@@ -30,7 +30,7 @@ namespace tdc {namespace esp {
     void landmark_spanner(size_t size,
                           LmPred pred,
                           SpanPush push,
-                          bool tie) {
+                          bool tie_to_right = true) {
         struct Block {
             size_t left;
             size_t right;
@@ -54,7 +54,7 @@ namespace tdc {namespace esp {
                 if (bi > 0) {
                     // Adjust overlap of adjacent landmarks
                     if (blocks[1].left == blocks[0].right) {
-                        if (tie) {
+                        if (tie_to_right) {
                             blocks[0].right--;
                         } else {
                             blocks[1].left++;
