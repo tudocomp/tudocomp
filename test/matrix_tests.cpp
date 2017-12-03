@@ -29,6 +29,7 @@ const std::vector<std::string> ADDITIONAL_TESTS {
     "dividing(strategy=division(2), compressor=lzw)",
     "dividing(strategy=blocked(10), compressor=esp)",
     "dividing(strategy=division(2), compressor=esp)",
+    "long_common_string(b=1)",
 };
 
 TEST(TudocompDriver, roundtrip_matrix) {
