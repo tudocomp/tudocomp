@@ -40,7 +40,7 @@ public:
                     debug_out << m_escape_byte;
                 }
             }
-            std::cout << "out: " << debug_out.str() << "\n\n";
+            std::cout << "out: " << debug_out.str() << "\n";
         }
 
         inline void code_factor(size_t rel_position, size_t size) {
@@ -49,11 +49,7 @@ public:
             m_stream.write_compressed_int(rel_position);
             m_stream.write_compressed_int(size);
             debug_out << "<-" << rel_position << "," << size << ">";
-            std::cout << "out: " << debug_out.str() << "\n\n";
-        }
-
-        inline void debug() {
-            std::cout << "out: " << debug_out.str() << "\n\n";
+            std::cout << "out: " << debug_out.str() << "\n";
         }
     };
 
@@ -180,7 +176,6 @@ public:
             auto map = map_t(INITIAL_BUCKETS, HashFn { }, EqFn { view, b });
 
             auto store = [&](size_t i) {
-                std::cout << "store [" << view.slice( i - b, i) << "]\n";
                 map.insert(Offset { i, rolling_hash.hashvalue });
             };
 
@@ -220,14 +215,6 @@ public:
                 //   [_________________________________________left_border_      ]
                 //
 
-                std::cout
-                    << "[EXTEND] dst: "
-                    << dst_begin << ".." << dst_end
-                    << ", src: "
-                    << src_begin << ".." << src_end
-                    << ", left_border: " << dst_left_border
-                    << "\n";
-
                 // how many bytes to extend from {dst/src}_end
                 size_t left_extend = 0;
                 size_t right_extend = 0;
@@ -239,34 +226,26 @@ public:
                     size_t const left_extend_begin
                         = std::max<size_t>(dst_left_border, dst_begin - (b - 1));
                     size_t const max_left_extend = dst_begin - left_extend_begin;
-
-                    std::cout << "[EXTEND] left_extend_begin: " << left_extend_begin << "\n";
-                    std::cout << "[EXTEND] max_left_extend: " << max_left_extend << "\n";
-
                     left_extend = max_left_extend + b;
                     for(size_t i = 0; i < max_left_extend; i++) {
-                        std::cout << "[EXTEND] check src " << (src_begin - i) << "\n";
                         if ((src_begin - i == 0) || (view[dst_begin - i - 1] != view[src_begin - i - 1])) {
                             left_extend = i + b;
                             break;
                         }
                     }
                 } else {
-                    std::cout << "[EXTEND] skip left extend\n";
                     if (dst_left_border < dst_end) {
                         left_extend = dst_end - dst_left_border;
                     } else {
                         left_extend = 0;
                     }
                 }
-                std::cout << "[EXTEND] left_extend: " << left_extend << "\n";
 
                 // We only need to search for a right extension
                 // if a previous right extension one would not have covered it already.
                 if (dst_left_border < dst_end) {
                     // Search forward
                     size_t const max_right_extend = view.size() - dst_end;
-                    std::cout << "[EXTEND] max_right_extend: " << max_right_extend << "\n";
                     right_extend = max_right_extend;
                     for(size_t i = 0; i < max_right_extend; i++) {
                         if (view[dst_end + i] != view[src_end + i]) {
@@ -274,10 +253,7 @@ public:
                             break;
                         }
                     }
-                } else {
-                    std::cout << "[EXTEND] skip right extend\n";
                 }
-                std::cout << "[EXTEND] right_extend: " << right_extend << "\n";
 
                 size_t const src_match_begin = src_end - left_extend;
                 size_t const dst_match_begin = dst_end - left_extend;
@@ -294,8 +270,10 @@ public:
                 for(auto pair = map.equal_range(dst); pair.first != pair.second; ++pair.first) {
                     //create and extend match as far as possible to the left and right
                     auto match = extend_match(left_border, pair.first->m_end, dst.m_end);
-
-                    std::cout << "at " << i << ", copy <" << match.src_begin() << "," << match.size() << "> to " << match.dst_begin() << "\n";
+                    std::cout << "check <" << match.src_begin()
+                        << ","
+                        << match.src_end() << ">: "
+                        << match.size() << "\n";
 
                     if (match.size() > closest_max_match.size()) {
                         closest_max_match = match;
@@ -342,10 +320,6 @@ public:
                 if (res.size() != 0) {
                     flush_plain(res.dst_begin(), "intra-unmatched");
 
-                    size_t start_i = i - b;
-
-                    std::cout << "encode: i = " << start_i << ", src = " << res.src_begin() << ", dst = " << res.dst_begin() << "\n";
-
                     // We encode the relative reference to the current position
                     coder.code_factor(res.dst_begin() - res.src_begin(), res.size());
 
@@ -355,7 +329,6 @@ public:
             }
             flush_plain(view.size(), "post-unmatched");
         }
-        coder.debug();
     }
 
     inline virtual void decompress(Input& input, Output& output) override final {
@@ -371,7 +344,6 @@ public:
             buffer.push_back(byte);
             i++;
         }, [&](size_t rel_position, size_t size) {
-            std::cout << "decode: <-" << rel_position << "," << size << ">\n";
             size_t position = i - rel_position;
             size_t end_position = position + size;
             while (position != end_position) {
