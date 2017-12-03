@@ -300,6 +300,12 @@ public:
                     if (match.size() > closest_max_match.size()) {
                         closest_max_match = match;
                     } else if (match.size() == closest_max_match.size()) {
+                        // NB: This case is optional, and not described in the original
+                        // algorithm.
+                        // It ensures that we find the largest match _closest_
+                        // to the current location, to minimize the bitsize of
+                        // the back-reference.
+
                         if (match.src_begin() > closest_max_match.src_begin()) {
                             closest_max_match = match;
                         }
