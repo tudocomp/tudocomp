@@ -299,13 +299,11 @@ public:
 
                     if (match.size() > closest_max_match.size()) {
                         closest_max_match = match;
-                    }/* else if (match.size() == closest_max_match.size()) {
+                    } else if (match.size() == closest_max_match.size()) {
                         if (match.src_begin() > closest_max_match.src_begin()) {
                             closest_max_match = match;
                         }
-
-                        TODO: fix and reuse this!
-                    }*/
+                    }
                 }
 
                 return closest_max_match;
