@@ -24,8 +24,6 @@ public:
     class Coder {
         uint8_t m_escape_byte = 0;
         BitOStream m_stream;
-
-        std::stringstream debug_out;
     public:
         inline Coder(Env const& env, Output& output): m_stream(output) {
             m_escape_byte = env.option("escape_byte").as_integer();
@@ -34,10 +32,8 @@ public:
         inline void code_plain(View view) {
             for (uint8_t byte : view) {
                 m_stream.write_int(byte);
-                debug_out << byte;
                 if (byte == m_escape_byte) {
                     m_stream.write_compressed_int(0);
-                    debug_out << m_escape_byte;
                 }
             }
         }
@@ -47,14 +43,6 @@ public:
             m_stream.write_int(m_escape_byte);
             m_stream.write_compressed_int(rel_position);
             m_stream.write_compressed_int(size);
-            debug_out << "<-" << rel_position << "," << size << ">";
-        }
-
-        Coder(Coder&&) = default;
-        Coder& operator=(Coder&&) = default;
-
-        inline ~Coder() {
-            std::cout << "out: " << debug_out.str() << "\n";
         }
     };
 
