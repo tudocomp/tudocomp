@@ -40,7 +40,6 @@ public:
                     debug_out << m_escape_byte;
                 }
             }
-            std::cout << "out: " << debug_out.str() << "\n";
         }
 
         inline void code_factor(size_t rel_position, size_t size) {
@@ -49,6 +48,12 @@ public:
             m_stream.write_compressed_int(rel_position);
             m_stream.write_compressed_int(size);
             debug_out << "<-" << rel_position << "," << size << ">";
+        }
+
+        Coder(Coder&&) = default;
+        Coder& operator=(Coder&&) = default;
+
+        inline ~Coder() {
             std::cout << "out: " << debug_out.str() << "\n";
         }
     };
@@ -158,7 +163,6 @@ public:
             output,
         };
 
-        std::cout << "in:  " << view << "\n";
         if (b >= view.size()) {
             // Don't bother to even start, we never hash a single block
             coder.code_plain(view);
@@ -270,10 +274,6 @@ public:
                 for(auto pair = map.equal_range(dst); pair.first != pair.second; ++pair.first) {
                     //create and extend match as far as possible to the left and right
                     auto match = extend_match(left_border, pair.first->m_end, dst.m_end);
-                    std::cout << "check <" << match.src_begin()
-                        << ","
-                        << match.src_end() << ">: "
-                        << match.size() << "\n";
 
                     if (match.size() > closest_max_match.size()) {
                         closest_max_match = match;
@@ -309,10 +309,6 @@ public:
                 update_rolling_hash(i);
 
                 i++;
-
-                std::cout << "current: [" << view.slice(0, i - b) << "|" << view.slice(i - b, i)
-                << std::setw(view.size() - i) << ""
-                << "]\n";
 
                 // check if we can find the current b chars in the hashmap,
                 // and if yes, how many (extended) bytes did we match

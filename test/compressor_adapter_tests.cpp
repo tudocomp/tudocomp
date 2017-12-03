@@ -314,6 +314,14 @@ TEST(LongCommonStringCompressor, test_batch_1) {
     });
 }
 
+TEST(LongCommonStringCompressor, test_batch_3) {
+    test::roundtrip_batch([](string_ref s){
+        test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
+            s, ""_v,
+            R"(b = 3)", COMPRESSOR_REGISTRY);
+    });
+}
+
 TEST(LongCommonStringCompressor, test_batch_5) {
     test::roundtrip_batch([](string_ref s){
         test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
