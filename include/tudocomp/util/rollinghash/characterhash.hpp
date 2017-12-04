@@ -18,17 +18,17 @@ using namespace std;
 
 class mersenneRNG {
 public:
-    mersenneRNG(uint32 maxval) : mtr(),n(maxval) {};
-    uint32 operator()() {
+    inline mersenneRNG(uint32 maxval) : mtr(),n(maxval) {};
+    inline uint32 operator()() {
         return mtr.randInt(n);
     }
-    void seed(uint32 seedval) {
+    inline void seed(uint32 seedval) {
         mtr.seed(seedval);
     }
-    void seed() {
+    inline void seed() {
         mtr.seed();
     }
-    uint32 rand_max() {
+    inline uint32 rand_max() {
         return n;
     }
 private:
@@ -37,7 +37,7 @@ private:
 };
 
 template <typename hashvaluetype>
-hashvaluetype maskfnc(int bits) {
+inline hashvaluetype maskfnc(int bits) {
     assert(bits>0);
     assert(size_t(bits)<=sizeof(hashvaluetype)*8);
     hashvaluetype x = static_cast<hashvaluetype>(1) << (bits - 1);
@@ -47,7 +47,7 @@ hashvaluetype maskfnc(int bits) {
 template <typename hashvaluetype = uint32, typename chartype =  unsigned char>
 class CharacterHash {
 public:
-    CharacterHash(hashvaluetype maxval) {
+    inline CharacterHash(hashvaluetype maxval) {
         if(sizeof(hashvaluetype) <=4) {
             mersenneRNG randomgenerator(maxval);
             for(size_t k =0; k<nbrofchars; ++k)
@@ -61,7 +61,7 @@ public:
         } else throw runtime_error("unsupported hash value type");
     }
 
-    CharacterHash(hashvaluetype maxval, uint32 seed1, uint32 seed2) {
+    inline CharacterHash(hashvaluetype maxval, uint32 seed1, uint32 seed2) {
         if(sizeof(hashvaluetype) <=4) {
             mersenneRNG randomgenerator(maxval);
             randomgenerator.seed(seed1);
