@@ -1,6 +1,8 @@
+set(dataset_path ${CMAKE_CURRENT_SOURCE_DIR}/datasets CACHE PATH "The path to store datasets to")
+
 macro(dataset_target dataset_name dataset_config)
     add_custom_target(${dataset_name}
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get_datasets.py ${CMAKE_CURRENT_SOURCE_DIR}/datasets ${CMAKE_CURRENT_SOURCE_DIR}/${dataset_config} --delete_original
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/get_datasets.py ${dataset_path} ${CMAKE_CURRENT_SOURCE_DIR}/${dataset_config} --delete_original
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     )
     set_target_properties(${dataset_name} PROPERTIES EXCLUDE_FROM_ALL true)
