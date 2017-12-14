@@ -30,6 +30,10 @@ parser.add_argument('--format', type=str, default='stdout',
                     help='Format to output')
 parser.add_argument('--nomem', action="store_true",
                     help='Don\'t measure memory')
+parser.add_argument('--nodec', action="store_true",
+                    help='Only compress, don\'t decompress')
+parser.add_argument('--nolog', action="store_true",
+                    help='Don\'t print log when done')
 
 args = parser.parse_args()
 
@@ -212,15 +216,6 @@ def run_exec(x, infilename, outfilename):
     if os.path.exists(outfilename):
         os.remove(outfilename)
 
-    # Determine Output
-    if(x.outp == StdOut):
-        outfile = open(outfilename, "wb")
-        pipe_out = outfile
-    else:
-        outfile = None
-        pipe_out = logfile
-        args += ([x.outp, outfilename] if x.outp != None else [outfilename])
-
     # Determine input
     if(x.inp == StdIn):
         infile = open(infilename, "rb")
@@ -229,6 +224,15 @@ def run_exec(x, infilename, outfilename):
         infile = None
         pipe_in = None
         args += ([x.inp, infilename]   if x.inp  != None else [infilename])
+
+    # Determine Output
+    if(x.outp == StdOut):
+        outfile = open(outfilename, "wb")
+        pipe_out = outfile
+    else:
+        outfile = None
+        pipe_out = logfile
+        args += ([x.outp, outfilename] if x.outp != None else [outfilename])
 
     # Call
     t0 = time.time()
@@ -312,25 +316,30 @@ for srcfname in args.files:
                 outputsize=os.path.getsize(outfilename)
                 print_column(float(outputsize) / float(srcsize), format="%10.4f%%", f=lambda x: 100*x)
 
-                # decompress time
-                dec_time = measure_time(c.decompress, outfilename, decompressedfilename)
-                print_column(dec_time*1000,f=lambda x: timesize(x/1000))
+                if not args.nodec:
+                    # decompress time
+                    dec_time = measure_time(c.decompress, outfilename, decompressedfilename)
+                    print_column(dec_time*1000,f=lambda x: timesize(x/1000))
 
-                # decompress memory
-                if mem_available:
-                    dec_mem = measure_mem(c.decompress, outfilename, decompressedfilename)
-                    print_column(dec_mem,f=memsize)
+                    # decompress memory
+                    if mem_available:
+                        dec_mem = measure_mem(c.decompress, outfilename, decompressedfilename)
+                        print_column(dec_mem,f=memsize)
+                    else:
+                        print_column("(N/A)")
+
+                    # decompress check
+                    decompressedhash = hashlib.sha256(
+                        open(decompressedfilename, 'rb').read()).hexdigest()
+
+                    if decompressedhash != srchash:
+                        print_column("FAIL", format="%5s")
+                    else:
+                        print_column("OK", format="%5s")
                 else:
-                    print_column("(N/A)")
-
-                # decompress check
-                decompressedhash = hashlib.sha256(
-                    open(decompressedfilename, 'rb').read()).hexdigest()
-
-                if decompressedhash != srchash:
-                    print_column("FAIL", format="%5s")
-                else:
-                    print_column("OK", format="%5s")
+                    print_column("-")
+                    print_column("-")
+                    print_column("-")
 
                 # EOL
                 end_row()
@@ -339,7 +348,9 @@ for srcfname in args.files:
         sot.print("ERROR:", sys.exc_info()[0])
         sot.print(sys.exc_info()[1])
 
-with open(logfilename, 'r') as fin: sot.print(fin.read())
+if not args.nolog:
+    with open(logfilename, 'r') as fin: sot.print(fin.read())
+
 os.remove(logfilename)
 
 if os.path.exists(decompressedfilename):
