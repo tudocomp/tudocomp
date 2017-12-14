@@ -1,0 +1,6 @@
+# The default comparison suite, use as a reference
+[
+    CompressorPair('plcp',
+            compress   = Exec(args=['/home/dinklage/dev/emtools/build/comp.sh']),
+            decompress = Exec(args=['/home/dinklage/dev/emtools/build/decomp.sh']))
+]
