@@ -123,11 +123,12 @@ template<class sa_t, class isa_t>
 class RefDiskStrategy {
 	sa_t& m_sa;
 	isa_t& m_isa;
+    len_t m_memory;
     stxxl::VECTOR_GENERATOR<std::pair<len_t,len_t>>::result m_factors; // (text_position, factor_length)
 	std::vector<std::pair<len_t,len_t>> m_factors_unsorted;
 
 	public:
-	RefDiskStrategy(sa_t& sa, isa_t& isa) : m_sa(sa), m_isa(isa) {
+	RefDiskStrategy(sa_t& sa, isa_t& isa, len_t memory = 512*1024*1024) : m_sa(sa), m_isa(isa), m_memory(memory) {
 
 	}
 	void sort() {
@@ -167,7 +168,7 @@ class RefDiskStrategy {
 			}
 		});
 		StatPhase::wrap("Sort factors", [&]{
-			stxxl::ksort(m_sources.begin(), m_sources.end(), KeyExtractor(m_sa.size()),512*1024*1024); //, STXXL_DEFAULT_ALLOC_STRATEGY());
+			stxxl::ksort(m_sources.begin(), m_sources.end(), KeyExtractor(m_sa.size()),m_memory); //, STXXL_DEFAULT_ALLOC_STRATEGY());
 		});
 		sorting_phase.split("Sort by SA");
 		stxxl::VECTOR_GENERATOR<std::pair<len_t,len_t>>::result m_sources2;
@@ -178,7 +179,7 @@ class RefDiskStrategy {
 		m_sources.clear();
 		});
 		StatPhase::wrap("Sort factors", [&]{
-		stxxl::ksort(m_sources2.begin(), m_sources2.end(), KeyExtractor(m_sa.size()),512*1024*1024); //, STXXL_DEFAULT_ALLOC_STRATEGY());
+		stxxl::ksort(m_sources2.begin(), m_sources2.end(), KeyExtractor(m_sa.size()),m_memory); //, STXXL_DEFAULT_ALLOC_STRATEGY());
 		});
 
 		sorting_phase.split("Write factors to buffer");

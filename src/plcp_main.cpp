@@ -9,6 +9,9 @@
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
 namespace tdc { namespace lcpcomp {
+    constexpr len_t M = 1024 * 1024;
+    constexpr len_t MEMORY = 512 * M;
+
     inline void factorize(const std::string& textfilename, const std::string& outfilename, size_t threshold) {
 		StatPhase phase("PLCPComp");
 		IntegerFileArray<uint_t<40>> sa  ((textfilename + ".sa5").c_str());
@@ -45,7 +48,7 @@ namespace tdc { namespace lcpcomp {
 
 		PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
 
-		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
+		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa,MEMORY);
 		StatPhase::wrap("Search Peaks", [&]{
 				compute_references(filesize(textfilename.c_str())-1, refStrategy, pplcp, threshold);
 		});
@@ -79,7 +82,7 @@ bool file_exist(const std::string& filepath) {
 
 int main(int argc, char** argv) {
 	if(argc <= 2) {
-		std::cerr << "Usage : " << argv[0] << " [infile] [outfile] " << std::endl;
+		std::cerr << "Usage : " << argv[0] << " <infile> <outfile>" << std::endl;
 		return 1;
 	}
 	tdc::StatPhase root("Root");
