@@ -111,7 +111,8 @@ Exec = collections.namedtuple('Exec', ['args', 'outp', 'inp'])
 Exec.__new__.__defaults__ = (None, None) # args is required
 
 # Compressor Pair definition
-CompressorPair = collections.namedtuple('CompressorPair', ['name', 'compress', 'decompress'])
+CompressorPair = collections.namedtuple('CompressorPair', ['name', 'compress', 'decompress', 'stats'])
+CompressorPair.__new__.__defaults__ = (None, None, None, dict())
 
 def Tudocomp(name, algorithm, tdc_binary='./tdc', cflags=[], dflags=[]):
     return CompressorPair(name,
@@ -320,6 +321,7 @@ for srcfname in args.files:
             
             log += "\n### output of " + c.name + " ###\n"
             log += curlog
+            log += "stats:\n"
 
             # compress rate
             outputsize=os.path.getsize(outfilename)
@@ -345,10 +347,26 @@ for srcfname in args.files:
                     print_column("FAIL", format="%5s")
                 else:
                     print_column("OK", format="%5s")
+
             else:
                 print_column("-")
                 print_column("-")
                 print_column("-", format="%5s")
+
+            num_stats = 0
+            stats = ' '
+            for name, regex in c.stats.items():
+                p = re.compile(regex)
+                m = p.search(curlog.replace('\n', ''))
+                if m:
+                    if(num_stats > 0):
+                        stats += ", "
+
+                    stats += name + " = " + m.group(1)
+                    num_stats += 1
+
+            if(num_stats > 0):
+                print_column(stats, format="%" + str(len(stats)) + "s")
 
             # EOL
             end_row()
