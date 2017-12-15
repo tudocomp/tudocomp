@@ -249,8 +249,10 @@ def run_exec(x, infilename, outfilename, logging):
 
 def measure_time(x, infilename, outfilename):
     t=[]
+    first=True
     for _ in range(0, args.iterations):
-        t = t + [run_exec(x, infilename, outfilename, False)]
+        t = t + [run_exec(x, infilename, outfilename, first)]
+        first = False
 
     return(statistics.median(t))
 
@@ -259,7 +261,7 @@ def measure_mem(x, infilename, outfilename):
 
     run_exec(
         Exec(args=['valgrind', '-q', '--tool=massif', '--pages-as-heap=yes',  '--massif-out-file=' + massiffilename] + x.args, inp=x.inp, outp=x.outp),
-        infilename, outfilename, True)
+        infilename, outfilename, False)
 
     with open(massiffilename) as f:
         maxmem=0
@@ -312,26 +314,28 @@ for srcfname in args.files:
             # nickname
             print_column(c.name, "%"+ str(maxnicknamelength) +"s")
 
-            # compress time
-            try:
-                comp_time=measure_time(c.compress, srcfname, outfilename)
-                print_column(comp_time*1000, f=lambda x: timesize(x/1000))
-            except FileNotFoundError as e:
-                print_column("(ERR)", sep=">")
-                sot.print(" " + e.strerror)
-                continue
-
-            # compress memory
             logfilename = tempfile.mktemp()
             with open(logfilename, 'a+') as current_logfile:
-                if mem_available:
-                    comp_mem=measure_mem(c.compress, srcfname, outfilename)
-                    print_column(comp_mem,f=memsize)
-                else:
-                    print_column("(N/A)")
+                # compress time
+                try:
+                    comp_time=measure_time(c.compress, srcfname, outfilename)
+                    print_column(comp_time*1000, f=lambda x: timesize(x/1000))
+                except FileNotFoundError as e:
+                    print_column("(ERR)", sep=">")
+                    sot.print(" " + e.strerror)
+                    continue
 
                 current_logfile.seek(0)
                 curlog = current_logfile.read()
+
+            # compress memory
+            if mem_available:
+                comp_mem=measure_mem(c.compress, srcfname, outfilename)
+                print_column(comp_mem,f=memsize)
+            else:
+                print_column("(N/A)")
+
+
             
             log += "\n### output of " + c.name + " ###\n"
             log += curlog
