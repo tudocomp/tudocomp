@@ -209,7 +209,7 @@ def timesize(num, suffix='s'):
             num /= 3600
             return "%3.1f%s" % (num, 'h')
 
-def run_exec(x, infilename, outfilename):
+def run_exec(x, infilename, outfilename, logging):
     args = list(x.args)
 
     # Delete existing output file
@@ -231,12 +231,13 @@ def run_exec(x, infilename, outfilename):
         pipe_out = outfile
     else:
         outfile = None
-        pipe_out = logfile
+        pipe_out = (current_logfile if logging else subprocess.DEVNULL)
         args += ([x.outp, outfilename] if x.outp != None else [outfilename])
 
     # Call
     t0 = time.time()
-    subprocess.check_call(args, stdin=pipe_in, stdout=pipe_out, stderr=logfile)
+    subprocess.check_call(
+        args, stdin=pipe_in, stdout=pipe_out, stderr=pipe_out)
 
     # Close files
     outfile.close() if outfile else None
@@ -248,7 +249,7 @@ def run_exec(x, infilename, outfilename):
 def measure_time(x, infilename, outfilename):
     t=[]
     for _ in range(0, args.iterations):
-        t = t + [run_exec(x, infilename, outfilename)]
+        t = t + [run_exec(x, infilename, outfilename, False)]
 
     return(statistics.median(t))
 
@@ -257,7 +258,7 @@ def measure_mem(x, infilename, outfilename):
 
     run_exec(
         Exec(args=['valgrind', '-q', '--tool=massif', '--pages-as-heap=yes',  '--massif-out-file=' + massiffilename] + x.args, inp=x.inp, outp=x.outp),
-        infilename, outfilename)
+        infilename, outfilename, True)
 
     with open(massiffilename) as f:
         maxmem=0
@@ -269,7 +270,7 @@ def measure_mem(x, infilename, outfilename):
     os.remove(massiffilename)
     return(maxmem)
 
-maxnicknamelength = len(max(suite, key=lambda p: len(p.name))[0] ) + 3
+maxnicknamelength = max(10, len(max(suite, key=lambda p: len(p.name))[0] ) + 3)
 
 sot.print("Number of iterations per file: ", args.iterations)
 
@@ -281,7 +282,8 @@ for srcfname in args.files:
 
     sot.header(("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"));
 
-    logfilename = tempfile.mktemp()
+    log = ''
+    current_logfile = subprocess.DEVNULL # will be set for each compressor
     decompressedfilename = tempfile.mktemp()
     outfilename = tempfile.mktemp()
 
@@ -291,67 +293,75 @@ for srcfname in args.files:
         sot.end_row()
 
     try:
-        with open(logfilename,"wb") as logfile:
-            for c in suite:
-                # nickname
-                print_column(c.name, "%"+ str(maxnicknamelength) +"s")
+        for c in suite:
+            # nickname
+            print_column(c.name, "%"+ str(maxnicknamelength) +"s")
 
-                # compress time
-                try:
-                    comp_time=measure_time(c.compress, srcfname, outfilename)
-                    print_column(comp_time*1000, f=lambda x: timesize(x/1000))
-                except FileNotFoundError as e:
-                    print_column("(ERR)", sep=">")
-                    sot.print(" " + e.strerror)
-                    continue
+            # compress time
+            try:
+                comp_time=measure_time(c.compress, srcfname, outfilename)
+                print_column(comp_time*1000, f=lambda x: timesize(x/1000))
+            except FileNotFoundError as e:
+                print_column("(ERR)", sep=">")
+                sot.print(" " + e.strerror)
+                continue
 
-                # compress memory
+            # compress memory
+            logfilename = tempfile.mktemp()
+            with open(logfilename, 'a+') as current_logfile:
                 if mem_available:
                     comp_mem=measure_mem(c.compress, srcfname, outfilename)
                     print_column(comp_mem,f=memsize)
                 else:
                     print_column("(N/A)")
 
-                # compress rate
-                outputsize=os.path.getsize(outfilename)
-                print_column(float(outputsize) / float(srcsize), format="%10.4f%%", f=lambda x: 100*x)
+                current_logfile.seek(0)
+                curlog = current_logfile.read()
+            
+            log += "\n### output of " + c.name + " ###\n"
+            log += curlog
 
-                if not args.nodec:
-                    # decompress time
-                    dec_time = measure_time(c.decompress, outfilename, decompressedfilename)
-                    print_column(dec_time*1000,f=lambda x: timesize(x/1000))
+            # compress rate
+            outputsize=os.path.getsize(outfilename)
+            print_column(float(outputsize) / float(srcsize), format="%10.4f%%", f=lambda x: 100*x)
 
-                    # decompress memory
-                    if mem_available:
-                        dec_mem = measure_mem(c.decompress, outfilename, decompressedfilename)
-                        print_column(dec_mem,f=memsize)
-                    else:
-                        print_column("(N/A)")
+            if not args.nodec:
+                # decompress time
+                dec_time = measure_time(c.decompress, outfilename, decompressedfilename)
+                print_column(dec_time*1000,f=lambda x: timesize(x/1000))
 
-                    # decompress check
-                    decompressedhash = hashlib.sha256(
-                        open(decompressedfilename, 'rb').read()).hexdigest()
-
-                    if decompressedhash != srchash:
-                        print_column("FAIL", format="%5s")
-                    else:
-                        print_column("OK", format="%5s")
+                # decompress memory
+                if mem_available:
+                    dec_mem = measure_mem(c.decompress, outfilename, decompressedfilename)
+                    print_column(dec_mem,f=memsize)
                 else:
-                    print_column("-")
-                    print_column("-")
-                    print_column("-")
+                    print_column("(N/A)")
 
-                # EOL
-                end_row()
+                # decompress check
+                decompressedhash = hashlib.sha256(
+                    open(decompressedfilename, 'rb').read()).hexdigest()
+
+                if decompressedhash != srchash:
+                    print_column("FAIL", format="%5s")
+                else:
+                    print_column("OK", format="%5s")
+            else:
+                print_column("-")
+                print_column("-")
+                print_column("-", format="%5s")
+
+            # EOL
+            end_row()
     except:
         sot.print()
         sot.print("ERROR:", sys.exc_info()[0])
         sot.print(sys.exc_info()[1])
+        sot.print(traceback.print_tb(sys.exc_info()[2]))
 
 if not args.nolog:
-    with open(logfilename, 'r') as fin: sot.print(fin.read())
-
-os.remove(logfilename)
+    sot.print()
+    sot.print("Log output (use --nolog to disable):")
+    sot.print(log);
 
 if os.path.exists(decompressedfilename):
     os.remove(decompressedfilename)
