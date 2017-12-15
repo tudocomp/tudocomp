@@ -2,10 +2,12 @@
 [
     CompressorPair('plcp',
             compress   = Exec(args=['/home/dinklage/dev/tudocomp/build_plcp/plcp']),
+            measure = "xz -k @OUT@ && stat -c %s @OUT@.xz && rm @OUT@.xz",
             decompress = Exec(args=['echo']),
             stats = {'factors':r'num_factors.+?"value": "(.+?)"'}),
     CompressorPair('em-lpf',
             compress   = Exec(args=['/home/dinklage/dev/EM-LPF/build/parse','512']),
+            measure = "xz -k @OUT@ && stat -c %s @OUT@.xz && rm @OUT@.xz",
             decompress = Exec(args=['echo']),
             stats = {'factors':r'num_factors: (.+?);'})
 ]

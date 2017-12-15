@@ -111,8 +111,8 @@ Exec = collections.namedtuple('Exec', ['args', 'outp', 'inp'])
 Exec.__new__.__defaults__ = (None, None) # args is required
 
 # Compressor Pair definition
-CompressorPair = collections.namedtuple('CompressorPair', ['name', 'compress', 'decompress', 'stats'])
-CompressorPair.__new__.__defaults__ = (None, None, None, dict())
+CompressorPair = collections.namedtuple('CompressorPair', ['name', 'compress', 'measure', 'decompress', 'stats'])
+CompressorPair.__new__.__defaults__ = (None, None, None, None, dict())
 
 def Tudocomp(name, algorithm, tdc_binary='./tdc', cflags=[], dflags=[]):
     return CompressorPair(name,
@@ -271,6 +271,20 @@ def measure_mem(x, infilename, outfilename):
     os.remove(massiffilename)
     return(maxmem)
 
+def measure_size(x, filename):
+    if not x:
+        return(os.path.getsize(filename))
+    else:
+        proc = subprocess.Popen(x.replace('@OUT@', filename), shell=True,
+                           stdout=subprocess.PIPE, 
+                           stderr=subprocess.PIPE)
+
+        out, err = proc.communicate()
+        if(proc.returncode == 0):
+            return(int(out))
+        else:
+            raise Exception('failed to measure output file size', out, err)
+
 maxnicknamelength = max(10, len(max(suite, key=lambda p: len(p.name))[0] ) + 3)
 
 sot.print("Number of iterations per file: ", args.iterations)
@@ -324,7 +338,7 @@ for srcfname in args.files:
             log += "stats:\n"
 
             # compress rate
-            outputsize=os.path.getsize(outfilename)
+            outputsize = measure_size(c.measure, outfilename)
             print_column(float(outputsize) / float(srcsize), format="%10.4f%%", f=lambda x: 100*x)
 
             if not args.nodec:
