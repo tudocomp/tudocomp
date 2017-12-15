@@ -13,38 +13,13 @@ namespace tdc { namespace lcpcomp {
     constexpr len_t MEMORY = 512 * M;
 
     inline void factorize(const std::string& textfilename, const std::string& outfilename, size_t threshold) {
+        using uint40_t = uint_t<40>;
+
 		StatPhase phase("PLCPComp");
-		IntegerFileArray<uint_t<40>> sa  ((textfilename + ".sa5").c_str());
-		IntegerFileArray<uint_t<40>> isa ((textfilename + ".isa5").c_str());
+		IntegerFileArray<uint40_t> sa  ((textfilename + ".sa5").c_str());
+		IntegerFileArray<uint40_t> isa ((textfilename + ".isa5").c_str());
 		IntegerFileArray<char> text (textfilename.c_str());
         typedef IntegerFileArray<char> text_t;
-
-		// SAFileArray<uint_t<40>> sa((textfilename + ".sa5").c_str());
-		// ISAFileArray<uint_t<40>> isa((textfilename + ".isa5").c_str());
-		//IntegerFileForwardIterator<uint_t<40>> pplcp("/bighome/workspace/compreSuite/tudocomp/datasets/pc_english.200MB.plcp5");
-
-// IF_DEBUG(
-// 		DCHECK_EQ(sa.size(), text.size());
-// 		StatPhase::wrap("Check Index DS", [&]{
-// 			const auto& tsa = text.require_sa();
-// 			const auto& tisa = text.require_isa();
-// 			const auto& plcp = text.require_plcp();
-// 				PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
-// 			for(size_t i = 0; i < sa.size(); ++i) {
-// 			DCHECK_EQ(sa.size(),tsa.size());
-// 			DCHECK_EQ(sa[i], (uint64_t)tsa[i]);
-// 			}
-// 			DCHECK_EQ(isa.size(),tisa.size());
-// 			for(size_t i = 0; i < isa.size(); ++i) {
-// 			DCHECK_EQ(isa[i], (uint64_t)tisa[i]);
-// 			}
-// 			for(size_t i = 0; i < plcp.size()-1; ++i) {
-// 			DCHECK_EQ(pplcp(),(uint64_t) plcp[i]);
-// 			pplcp.advance();
-// 			}
-// 		});
-// 		);
-//
 
 		PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
 
@@ -52,22 +27,46 @@ namespace tdc { namespace lcpcomp {
 		StatPhase::wrap("Search Peaks", [&]{
 				compute_references(filesize(textfilename.c_str())-1, refStrategy, pplcp, threshold);
 		});
+
         tdc::lzss::FactorBufferDisk refs;
 		StatPhase::wrap("Compute References", [&]{
-				refStrategy.factorize(refs);
-				});
+			refStrategy.factorize(refs);
+            StatPhase::log("num_factors", refs.size());
+    	});
 
-        // StatPhase::wrap("Encode Factors", [&]{
-        //         tdc::Output output(tdc::Path(outfilename), true);
-        //         tdc::Env env = tdc::create_env(Meta("plcpcomp", "plcp"));
-        //         tdc::BitCoder::Encoder coder(std::move(env), output, tdc::lzss::TextLiterals<text_t,decltype(refs)>(text, refs));
-        //     tdc::lzss::encode_text(coder, text, refs); //TODO is this correct?
-        // });
         StatPhase::wrap("Encode Factors", [&]{
-                tdc::Output output(tdc::Path(outfilename), true);
-                tdc::Env env = tdc::create_env(Meta("plcpcomp", "plcp"));
-                tdc::HuffmanCoder::Encoder coder(std::move(env), output, tdc::lzss::TextLiterals<text_t,decltype(refs)>(text, refs));
-            tdc::lzss::encode_text(coder, text, refs); //TODO is this correct?
+            /*
+            tdc::Output output(tdc::Path(outfilename), true);
+            tdc::Env env = tdc::create_env(Meta("plcpcomp", "plcp"));
+            tdc::HuffmanCoder::Encoder coder(std::move(env), output, tdc::lzss::TextLiterals<text_t,decltype(refs)>(text, refs));
+            tdc::lzss::encode_text(coder, text, refs);
+            */
+
+            // Use the same stupid encoding as EM-LPF for a comparison
+            tdc::Output output(tdc::Path(outfilename), true);
+            tdc::BitOStream out(output);           
+
+            // walk over factors
+            size_t p = 0; //! current text position
+            for(auto& factor : refs) {
+                // encode literals until cursor reaches factor
+                while(p < factor.pos) {
+                    out.write_int(uint40_t(text[p++]));
+                    out.write_int(uint40_t(0));
+                }
+
+                // encode factor
+                out.write_int(uint40_t(factor.src));
+                out.write_int(uint40_t(factor.len));
+                p += size_t(factor.len);
+            }
+
+            const size_t n = text.size();
+            while(p < n)  {
+                // encode remaining literals
+                out.write_int(uint40_t(text[p++]));
+                out.write_int(uint40_t(0));
+            }
         });
 
 	}
