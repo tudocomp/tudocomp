@@ -8,6 +8,8 @@
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
+constexpr size_t THRESHOLD = 2;
+
 namespace tdc { namespace lcpcomp {
     constexpr len_t M = 1024 * 1024;
     constexpr len_t MEMORY = 512 * M;
@@ -105,7 +107,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	tdc::lcpcomp::factorize(infile, outfile, 5);
+	tdc::lcpcomp::factorize(infile, outfile, THRESHOLD);
 
 	root.to_json().str(std::cout);
 	std::cout << std::endl;
