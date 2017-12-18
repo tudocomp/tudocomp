@@ -8,13 +8,13 @@
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
-constexpr size_t THRESHOLD = 2;
-
 namespace tdc { namespace lcpcomp {
     constexpr len_t M = 1024 * 1024;
-    constexpr len_t MEMORY = 512 * M;
 
-    inline void factorize(const std::string& textfilename, const std::string& outfilename, size_t threshold) {
+    inline void factorize(const std::string& textfilename,
+                          const std::string& outfilename,
+                          const size_t threshold,
+                          const len_t mb_ram) {
         using uint40_t = uint_t<40>;
 
 		StatPhase phase("PLCPComp");
@@ -25,7 +25,7 @@ namespace tdc { namespace lcpcomp {
 
 		PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
 
-		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa,MEMORY);
+		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa,mb_ram * M);
 		StatPhase::wrap("Search Peaks", [&]{
 				compute_references(filesize(textfilename.c_str())-1, refStrategy, pplcp, threshold);
 		});
@@ -46,7 +46,7 @@ namespace tdc { namespace lcpcomp {
 
             // Use the same stupid encoding as EM-LPF for a comparison
             tdc::Output output(tdc::Path(outfilename), true);
-            tdc::BitOStream out(output);           
+            tdc::BitOStream out(output);
 
             // walk over factors
             size_t p = 0; //! current text position
@@ -83,7 +83,8 @@ bool file_exist(const std::string& filepath) {
 
 int main(int argc, char** argv) {
 	if(argc <= 2) {
-		std::cerr << "Usage : " << argv[0] << " <infile> <outfile>" << std::endl;
+		std::cerr << "Usage : " << argv[0]
+                  << " <infile> <outfile> [threshold] [mb_ram]" << std::endl;
 		return 1;
 	}
 	tdc::StatPhase root("Root");
@@ -107,7 +108,10 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	tdc::lcpcomp::factorize(infile, outfile, THRESHOLD);
+    const size_t threshold = (argc >= 3) ? std::stoi(argv[3]) : 2;
+    const tdc::len_t mb_ram = (argc >= 4) ? std::stoi(argv[4]) : 512;
+
+	tdc::lcpcomp::factorize(infile, outfile, threshold, mb_ram);
 
 	root.to_json().str(std::cout);
 	std::cout << std::endl;
