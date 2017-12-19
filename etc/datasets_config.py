@@ -1,5 +1,8 @@
 small_sizes = [200, 100, 50, 10, 1]
 
+# Root of tudocomp provided mirrors of datasets
+TDC_URL = "dolomit.cs.uni-dortmund.de/"
+
 # HashTag Datasets, see http://acube.di.unipi.it/datasets/
 ACUBE_URL = "http://acube.di.unipi.it/repo/he-graph"
 download_and_extract("hashtag", small_sizes, [
@@ -8,14 +11,13 @@ download_and_extract("hashtag", small_sizes, [
     ACUBE_URL + "/classification/crowdflower.tsv",
 ])
 
-TDC_URL = "dolomit.cs.uni-dortmund.de/"
-
 # ASCII-only, no inner null commoncrawl.org extract
 download_and_extract("cc", small_sizes, [
     TDC_URL + "/commoncrawl.ascii"
 ])
 
 # Pizza&Chili Corpus text collection
+PC_URL = "http://pizzachili.dcc.uchile.cl"
 download_and_extract("pc", small_sizes, [
     TDC_URL + "/code/sources.gz",
     TDC_URL + "/music/pitches.gz",
@@ -43,9 +45,9 @@ download_and_extract("pcr", small_sizes, [
     TDC_URL + "/pc-real/kernel.7z",
     TDC_URL + "/pc-real/para.7z",
     TDC_URL + "/pc-real/world_leaders.7z",
-    "http://pizzachili.dcc.uchile.cl/repcorpus/artificial/fib41.7z",
-    "http://pizzachili.dcc.uchile.cl/repcorpus/artificial/rs.13.7z",
-    "http://pizzachili.dcc.uchile.cl/repcorpus/artificial/tm29.7z",
+    PC_URL + "/repcorpus/artificial/fib41.7z",
+    PC_URL + "/repcorpus/artificial/rs.13.7z",
+    PC_URL + "/repcorpus/artificial/tm29.7z",
 ])
 
 # TAGME Datasets, see http://acube.di.unipi.it/datasets/
