@@ -107,7 +107,7 @@ if not args.nomem:
 StdOut = 0
 StdIn  = 0
 
-Exec = collections.namedtuple('Exec', ['args', 'outp', 'inp'])
+Exec = collections.namedtuple('Exec', ['cmd', 'outp', 'inp'])
 Exec.__new__.__defaults__ = (None, None) # args is required
 
 # Compressor Pair definition
@@ -211,7 +211,7 @@ def timesize(num, suffix='s'):
             return "%3.1f%s" % (num, 'h')
 
 def run_exec(x, infilename, outfilename, logging):
-    args = list(x.args)
+    cmd = x.cmd.replace('@IN@', infilename).replace('@OUT@', outfilename);
 
     # Delete existing output file
     if os.path.exists(outfilename):
@@ -224,7 +224,6 @@ def run_exec(x, infilename, outfilename, logging):
     else:
         infile = None
         pipe_in = None
-        args += ([x.inp, infilename]   if x.inp  != None else [infilename])
 
     # Determine Output
     if(x.outp == StdOut):
@@ -233,16 +232,23 @@ def run_exec(x, infilename, outfilename, logging):
     else:
         outfile = None
         pipe_out = (current_logfile if logging else subprocess.DEVNULL)
-        args += ([x.outp, outfilename] if x.outp != None else [outfilename])
 
     # Call
     t0 = time.time()
-    subprocess.check_call(
-        args, stdin=pipe_in, stdout=pipe_out, stderr=pipe_out)
+    proc = subprocess.Popen(cmd,
+                            shell=True,
+                            stdin=pipe_in,
+                            stdout=pipe_out,
+                            stderr=pipe_out)
+    result = proc.wait()
 
     # Close files
     outfile.close() if outfile else None
     infile.close()  if infile  else None
+
+    # result
+    if(result != 0):
+        raise Exception('execution failed: ' + cmd);
 
     # Yield time delta
     return(time.time() - t0)
