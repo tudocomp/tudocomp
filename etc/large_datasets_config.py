@@ -1,6 +1,6 @@
 sizes = [1, 10240]
 
-TDC_URL = "dolomit.cs.uni-dortmund.de/datasets"
+TDC_URL = "dolomit.cs.uni-dortmund.de"
 
 download_and_extract("large", sizes, [
     TDC_URL + "/commoncrawl_10240.ascii",
