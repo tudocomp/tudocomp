@@ -49,6 +49,8 @@ namespace tdc { namespace lcpcomp {
             tdc::BitOStream out(output);
 
             // walk over factors
+            size_t num_replaced = 0;
+
             size_t p = 0; //! current text position
             for(auto& factor : refs) {
                 // encode literals until cursor reaches factor
@@ -61,6 +63,7 @@ namespace tdc { namespace lcpcomp {
                 out.write_int(uint40_t(factor.src));
                 out.write_int(uint40_t(factor.len));
                 p += size_t(factor.len);
+                num_replaced += factor.len;
             }
 
             const size_t n = text.size();
@@ -69,6 +72,8 @@ namespace tdc { namespace lcpcomp {
                 out.write_int(uint40_t(text[p++]));
                 out.write_int(uint40_t(0));
             }
+
+            StatPhase::log("num_replaced", num_replaced);
         });
 
 	}
