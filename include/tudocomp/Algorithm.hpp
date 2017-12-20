@@ -2,7 +2,6 @@
 
 #include <tudocomp/meta/AlgorithmConfig.hpp>
 #include <tudocomp/meta/Meta.hpp>
-#include <tudocomp/meta/Registry.hpp>
 
 namespace tdc {
 
