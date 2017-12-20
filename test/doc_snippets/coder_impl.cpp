@@ -12,8 +12,6 @@
 
 #include <tudocomp/Coder.hpp>
 
-#include "../test/util.hpp"
-
 using namespace tdc;
 
 // "Capsule" for Encoder and Decoder implementations
