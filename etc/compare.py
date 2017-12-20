@@ -8,11 +8,13 @@ import os
 import re
 import sys
 import statistics
+import string
 import subprocess
-import tempfile
 import time
 import pprint
 import json
+import random
+import traceback
 from collections import namedtuple
 
 # Argument parser
@@ -34,8 +36,22 @@ parser.add_argument('--nodec', action="store_true",
                     help='Only compress, don\'t decompress')
 parser.add_argument('--nolog', action="store_true",
                     help='Don\'t print log when done')
+parser.add_argument('--tmp', type=str, default='/tmp',
+                    help='Directory for temporary files')
 
 args = parser.parse_args()
+
+def randstr(n):
+    return(''.join(random.choice(string.ascii_uppercase) for _ in range(n)))
+
+def mktemp():
+    while(True):
+        tmp = args.tmp + '/' + randstr(8)
+        if(not os.path.isfile(tmp)):
+            break
+	
+    return(tmp)
+
 
 class StdOutTable:
     def __init__(self):
@@ -263,7 +279,7 @@ def measure_time(x, infilename, outfilename):
     return(statistics.median(t))
 
 def measure_mem(x, infilename, outfilename):
-    massiffilename=tempfile.mktemp()
+    massiffilename=mktemp()
 
     run_exec(
         Exec(args=['valgrind', '-q', '--tool=massif', '--pages-as-heap=yes',  '--massif-out-file=' + massiffilename] + x.args, inp=x.inp, outp=x.outp),
@@ -298,7 +314,11 @@ maxnicknamelength = max(10, len(max(suite, key=lambda p: len(p.name))[0] ) + 3)
 sot.print("Number of iterations per file: ", args.iterations)
 
 for srcfname in args.files:
-    srchash = hashlib.sha256(open(srcfname, 'rb').read()).hexdigest()
+    if(not args.nodec):
+        srchash = hashlib.sha256(open(srcfname, 'rb').read()).hexdigest()
+    else:
+        srchash = 'dontcare'
+
     srcsize = os.path.getsize(srcfname)
 
     sot.file(srcfname, srcsize, srchash)
@@ -307,8 +327,8 @@ for srcfname in args.files:
 
     log = ''
     current_logfile = subprocess.DEVNULL # will be set for each compressor
-    decompressedfilename = tempfile.mktemp()
-    outfilename = tempfile.mktemp()
+    decompressedfilename = mktemp()
+    outfilename = mktemp()
 
     def print_column(content, format="%11s", sep="|", f=lambda x:x):
         sot.cell(content, format, sep, f)
@@ -320,7 +340,7 @@ for srcfname in args.files:
             # nickname
             print_column(c.name, "%"+ str(maxnicknamelength) +"s")
 
-            logfilename = tempfile.mktemp()
+            logfilename = mktemp()
             with open(logfilename, 'a+') as current_logfile:
                 # compress time
                 try:
