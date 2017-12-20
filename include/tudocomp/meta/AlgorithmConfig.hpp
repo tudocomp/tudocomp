@@ -76,7 +76,7 @@ public:
             }
 
             // create sub config
-            m_sub_configs.emplace_back(*algo_decl, config, lib);
+            m_sub_configs.emplace_back(algo_decl, config, lib);
 
             return obj_value;
         }
@@ -281,7 +281,7 @@ public:
     };
 
 private:
-    const AlgorithmDecl* m_decl;
+    std::shared_ptr<const AlgorithmDecl> m_decl;
     std::vector<Param> m_params;
 
 public:
@@ -294,10 +294,10 @@ public:
     /// \param config the value configuration
     /// \param lib the algorithm library used for name resolution
     inline AlgorithmConfig(
-        const AlgorithmDecl& decl,
+        std::shared_ptr<const AlgorithmDecl> decl,
         ast::NodePtr<> config,
         const AlgorithmLib& lib)
-        : m_decl(&decl) {
+        : m_decl(decl) {
 
         // assure that config is an object
         auto obj = ast::convert<ast::Object>(config,

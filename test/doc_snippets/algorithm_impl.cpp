@@ -92,14 +92,12 @@ TEST(doc_algorithm_impl, algo_instantiate) {
     auto algo_sqr = Algorithm::instance<MyAlgorithm<SquareStrategy>>("number=7");
     ASSERT_EQ(49, algo_sqr.execute());
 
-    auto algo_mul5 = Algorithm::instance<MyAlgorithm<MultiplyStrategy>>("number=7,strategy=mul(5)");
-    ASSERT_EQ("default_value", algo_sqr.param1());
-
     // Execute the algorithm with the multiply strategy
-
+    auto algo_mul5 = Algorithm::instance<MyAlgorithm<MultiplyStrategy>>("number=7,strategy=mul(5)");
     ASSERT_EQ(35, algo_mul5.execute());
 
-    // param1 was not passed and should be "default_value"
+    // param1 was not passed and should be "default_value" for both
+    ASSERT_EQ("default_value", algo_sqr.param1());
     ASSERT_EQ("default_value", algo_mul5.param1());
 }
 

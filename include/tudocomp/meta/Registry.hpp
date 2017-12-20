@@ -113,7 +113,7 @@ public:
         }
 
         auto decl = lib_entry->second;
-        auto cfg = AlgorithmConfig(*decl, obj, m_lib);
+        auto cfg = AlgorithmConfig(decl, obj, m_lib);
         auto sig = cfg.signature();
         auto reg_entry = m_reg.find(sig->str());
 

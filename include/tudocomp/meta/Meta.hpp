@@ -338,9 +338,9 @@ public:
                     cfg->add_param(ast::Param(p));
                 }
             }
-            return AlgorithmConfig(*m_decl, cfg, m_known);
+            return AlgorithmConfig(m_decl, cfg, m_known);
         } else {
-            return AlgorithmConfig(*m_decl, m_binding_config, m_known);
+            return AlgorithmConfig(m_decl, m_binding_config, m_known);
         }
     }
 
