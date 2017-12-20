@@ -6,7 +6,6 @@
 #include <sdsl/cst_sada.hpp>
 
 #include <tudocomp/Range.hpp>
-#include <tudocomp/ds/TextDS.hpp>
 
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 
