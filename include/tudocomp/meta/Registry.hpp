@@ -28,6 +28,9 @@ private:
     std::unordered_map<std::string, ctor_t> m_reg;
 
 public:
+    inline Registry() : m_root_type(T::type_desc()) {
+    }
+
     inline Registry(const TypeDesc& root_type) : m_root_type(root_type) {
     }
 
@@ -122,12 +125,18 @@ public:
                 std::string("unregistered instance: ") + sig->str());
         }
 
-        return Selection(decl, (reg_entry->second)(std::move(cfg)));
+        auto ctor = reg_entry->second;
+        return Selection(decl, ctor(std::move(cfg)));
     }
 
     inline Selection select(const std::string& str) const {
         auto obj = ast::convert<ast::Object>(ast::Parser::parse(str));
         return select(obj);
+    }
+
+    template<typename C>
+    inline Selection select(const std::string& options = "") const {
+        return select(C::meta().decl()->name());
     }
 
     inline std::string generate_doc_string(const std::string& title) const {
