@@ -30,7 +30,7 @@ private:
 public:
     inline LZWCompressor(Env&& env):
         Compressor(std::move(env)),
-        m_dict_max_size(env.option("dict_size").as_integer())
+        m_dict_max_size(this->env().option("dict_size").as_integer())
     {}
 
     inline static Meta meta() {
