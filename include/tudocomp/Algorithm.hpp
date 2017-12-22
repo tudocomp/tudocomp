@@ -9,22 +9,35 @@ class Algorithm {
     AlgorithmConfig m_config;
 
 public:
-    template<typename T>
-    static inline T instance(std::string config_str = "") {
+    template<typename T, typename... Args>
+    static inline T instance(std::string config_str = "", Args&&... args) {
         using namespace meta;
 
         auto meta = T::meta();
 
         if(config_str.empty()) {
             // just create an instance with the default config
-            return T(meta.default_config());
+            return T(meta.default_config(), args...);
         } else {
             // create an instance with an override config
             return T(meta.default_config(
                 ast::convert<ast::Object>(
                     ast::Parser::parse(
-                        meta.decl()->name() + "(" + config_str + ")"))));
+                        meta.decl()->name() + "(" + config_str + ")"))),
+                std::forward<Args>(args)...);
         }
+    }
+
+    template<typename T, typename... Args>
+    static inline T instance(const char* config_str, Args&&... args) {
+        return instance<T>(std::string(config_str),
+            std::forward<Args>(args)...);
+    }
+
+    template<typename T, typename... Args>
+    static inline T instance(Args&&... args) {
+        return instance<T>(std::string(),
+            std::forward<Args>(args)...);
     }
 
     inline Algorithm() = delete;
