@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <tudocomp/meta/AlgorithmConfig.hpp>
 #include <tudocomp/meta/Meta.hpp>
@@ -153,6 +154,12 @@ public:
             ss << e.first << std::endl;
         }
         return ss.str();
+    }
+
+    inline std::vector<std::string> signatures() const {
+        std::vector<std::string> sigs;
+        for(auto e : m_reg) sigs.emplace_back(e.first);
+        return sigs;
     }
 };
 
