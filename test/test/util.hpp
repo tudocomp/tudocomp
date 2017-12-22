@@ -387,7 +387,7 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decoded_buffer);
 
-            auto compressor = m_registry.instance<C>(options);
+            auto compressor = m_registry.select<C>(options);
 
             auto restr = C::meta().input_restrictions();
             if (restr.has_restrictions()) {
@@ -409,7 +409,7 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decompressed_bytes);
 
-            auto compressor = m_registry.instance<C>(options);
+            auto compressor = m_registry.select<C>(options);
 
             auto restr = C::meta().input_restrictions();
             if (restr.has_restrictions()) {
@@ -444,7 +444,7 @@ public:
             Input text_in = Input::from_memory(text);
             Output encoded_out = Output::from_memory(encoded_buffer);
 
-            auto compressor = m_registry.instance<C>(m_options);
+            auto compressor = m_registry.select<C>(m_options);
 
             auto restr = C::meta().input_restrictions();
             if (restr.has_restrictions()) {

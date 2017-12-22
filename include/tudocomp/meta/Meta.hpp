@@ -163,13 +163,7 @@ public:
                 D::meta().m_binding_config));
         }
 
-        template<typename Binding>
-        [[deprecated("transitional alias")]]
-        inline void templated(conststr type) {
-            strategy<Binding>(TypeDesc(type));
-        }
-
-        template<typename Binding, typename D>
+        template<typename Binding, typename D = Binding>
         [[deprecated("transitional alias")]]
         inline void templated(conststr type) {
             strategy<Binding>(TypeDesc(type), Meta::Default<D>());
@@ -394,6 +388,18 @@ inline Meta check_algo_type(
 inline void add_to_lib(AlgorithmLib& target, const Meta& meta) {
     for(auto e : meta.known()) add_to_lib(target, e.second);
     add_to_lib(target, meta.decl());
+}
+
+inline AlgorithmLib merge_libs(
+    const AlgorithmLib& a, const AlgorithmLib& b) {
+
+    AlgorithmLib lib = a;
+    for(auto it : b) {
+        if(lib.find(it.first) == lib.end()) {
+            lib.emplace(it.first, it.second);
+        }
+    }
+    return lib;
 }
 /// \endcond
 

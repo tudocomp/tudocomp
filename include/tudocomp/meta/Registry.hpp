@@ -136,7 +136,14 @@ public:
 
     template<typename C>
     inline Selection select(const std::string& options = "") const {
-        return select(C::meta().decl()->name());
+        auto meta = C::meta();
+        auto decl = meta.decl();
+        auto obj = ast::convert<ast::Object>(ast::Parser::parse(
+            decl->name() + "(" + options + ")"));
+
+        auto cfg = AlgorithmConfig(
+            decl, obj, merge_libs(m_lib, meta.known()));
+        return Selection(decl, std::make_unique<C>(std::move(cfg)));
     }
 
     inline std::string generate_doc_string(const std::string& title) const {
