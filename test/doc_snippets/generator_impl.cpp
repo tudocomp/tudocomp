@@ -11,7 +11,6 @@
 #include <gtest/gtest.h>
 
 #include <tudocomp/Generator.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 
 using namespace tdc;
 
@@ -38,7 +37,7 @@ public:
 };
 
 TEST(doc_generator_impl, test) {
-    auto generator = create_algo<MyGenerator>("length=7, char=64");
+    auto generator = Algorithm::instance<MyGenerator>("length=7, char=64");
     ASSERT_EQ("@@@@@@@", generator.generate());
 }
 

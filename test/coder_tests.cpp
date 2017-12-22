@@ -2,7 +2,6 @@
 
 #include <tudocomp/Generator.hpp>
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/io.hpp>
 
@@ -27,14 +26,17 @@ void test_mt() {
     std::stringstream ss;
     {
         Output out(ss);
-        typename coder_t::Encoder coder(create_env(coder_t::meta()), out, DUMMY_LITERALS);
+        typename coder_t::Encoder coder(
+            coder_t::meta().default_config(), out, DUMMY_LITERALS);
     }
 
     // Expect nothing to be decoded
     std::string result = ss.str();
     {
         Input in(result);
-        typename coder_t::Decoder decoder(create_env(coder_t::meta()), in);
+        typename coder_t::Decoder decoder(
+            coder_t::meta().default_config(), in);
+
         ASSERT_TRUE(decoder.eof());
     }
 }
@@ -48,7 +50,8 @@ void test_bits() {
     std::stringstream ss;
     {
         Output out(ss);
-        typename coder_t::Encoder coder(create_env(coder_t::meta()), out, DUMMY_LITERALS);
+        typename coder_t::Encoder coder(
+            coder_t::meta().default_config(), out, DUMMY_LITERALS);
 
         for(char c : word) coder.encode(c != '0', bit_r);
     }
@@ -57,7 +60,8 @@ void test_bits() {
     std::string result = ss.str();
     {
         Input in(result);
-        typename coder_t::Decoder decoder(create_env(coder_t::meta()), in);
+        typename coder_t::Decoder decoder(
+            coder_t::meta().default_config(), in);
 
         size_t i = 0;
         while(!decoder.eof()) {
@@ -76,7 +80,8 @@ void test_int(size_t n = 93) {
     std::stringstream ss;
     {
         Output out(ss);
-        typename coder_t::Encoder coder(create_env(coder_t::meta()), out, DUMMY_LITERALS);
+        typename coder_t::Encoder coder(
+            coder_t::meta().default_config(), out, DUMMY_LITERALS);
 
         uint64_t a = 0, b = 1, t;
         for(size_t i = 0; i < n; i++) {
@@ -93,7 +98,8 @@ void test_int(size_t n = 93) {
     std::string result = ss.str();
     {
         Input in(result);
-        typename coder_t::Decoder decoder(create_env(coder_t::meta()), in);
+        typename coder_t::Decoder decoder(
+            coder_t::meta().default_config(), in);
 
         size_t i = 0;
         uint64_t a = 0, b = 1, t;
@@ -123,7 +129,8 @@ void test_str() {
     std::stringstream ss;
     {
         Output out(ss);
-        typename coder_t::Encoder coder(create_env(coder_t::meta()), out, ViewLiterals(word));
+        typename coder_t::Encoder coder(
+            coder_t::meta().default_config(), out, ViewLiterals(word));
 
         for(char c : word) coder.encode(c, literal_r);
     }
@@ -132,7 +139,8 @@ void test_str() {
     std::string result = ss.str();
     {
         Input in(result);
-        typename coder_t::Decoder decoder(create_env(coder_t::meta()), in);
+        typename coder_t::Decoder decoder(
+            coder_t::meta().default_config(), in);
 
         size_t i = 0;
         while(!decoder.eof()) {
@@ -154,7 +162,8 @@ void test_mixed() {
     std::stringstream ss;
     {
         Output out(ss);
-        typename coder_t::Encoder coder(create_env(coder_t::meta()), out, ViewLiterals(word));
+        typename coder_t::Encoder coder(
+            coder_t::meta().default_config(), out, ViewLiterals(word));
 
         for(size_t i = 0; i < word.length(); i++) {
             coder.encode(word[i] == 'a', bit_r);
@@ -169,7 +178,8 @@ void test_mixed() {
     std::string result = ss.str();
     {
         Input in(result);
-        typename coder_t::Decoder decoder(create_env(coder_t::meta()), in);
+        typename coder_t::Decoder decoder(
+            coder_t::meta().default_config(), in);
 
         size_t i = 0;
         while(!decoder.eof()) {
