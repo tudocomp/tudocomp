@@ -9,7 +9,7 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/bwt.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
+
 #include "test/util.hpp"
 
 using namespace tdc;
@@ -129,7 +129,7 @@ class RunTestDS {
 		test::TestInput input = test::compress_input(str);
 		InputView in = input.as_view();
 		DCHECK_EQ(str.length()+1, in.size());
-		textds_t t = create_algo<textds_t>("", in);
+		textds_t t = Algorithm::instance<textds_t>("", in);
 		DCHECK_EQ(str.length()+1, t.size());
 		m_testfunc(str, t);
 	}

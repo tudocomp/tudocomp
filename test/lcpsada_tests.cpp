@@ -9,7 +9,6 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/bwt.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 #include "test/util.hpp"
 #include <tudocomp/ds/LCPSada.hpp>
 
@@ -31,7 +30,7 @@ void test_lcpsada(TextDS<>& t) {
     for (size_t i = 0; i < sa.size()-1; i++) {
 		DCHECK_EQ(plcp.index(),i);
         ASSERT_EQ(plcp_ds[i], plcp()) << "assert_eq_sequence: failed at i=" << i;
-		plcp.advance(); 
+		plcp.advance();
 	}
 }
 
@@ -49,7 +48,7 @@ class RunTestDS {
 		test::TestInput input = test::compress_input(str);
 		InputView in = input.as_view();
 		DCHECK_EQ(str.length()+1, in.size());
-		textds_t t = create_algo<textds_t>("", in);
+		textds_t t = Algorithm::instance<textds_t>("", in);
 		DCHECK_EQ(str.length()+1, t.size());
 		m_testfunc(t);
 	}

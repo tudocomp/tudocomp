@@ -11,11 +11,8 @@
 
 #include <sys/stat.h>
 
-#include <tudocomp/Env.hpp>
-#include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/AlgorithmStringParser.hpp>
-#include <tudocomp/Registry.hpp>
+#include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util/View.hpp>
 

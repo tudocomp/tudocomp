@@ -2,7 +2,6 @@
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Generator.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
@@ -154,7 +153,7 @@ TEST(lzss, decode_back_buffer) {
 
 template<typename T>
 void test_forward_decode_buffer_chain() {
-    T buffer = create_algo<T>("", 12);
+    T buffer = Algorithm::instance<T>("", 12);
     buffer.decode_literal('b');
     buffer.decode_factor(3, 3);
     buffer.decode_literal('n');
@@ -170,7 +169,7 @@ void test_forward_decode_buffer_chain() {
 
 template<typename T>
 void test_forward_decode_buffer_multiref() {
-    T buffer = create_algo<T>("", 12);
+    T buffer = Algorithm::instance<T>("", 12);
     buffer.decode_factor(6, 6);
     buffer.decode_literal('b');
     buffer.decode_factor(9, 3);
