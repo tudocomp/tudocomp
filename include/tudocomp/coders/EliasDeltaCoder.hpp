@@ -4,6 +4,10 @@
 
 namespace tdc {
 
+/// \brief Defines data encoding to and decoding from a stream of
+///        Elias-Delta codes.
+///
+/// All values are encoded using Elias-Delta code.
 class EliasDeltaCoder : public Algorithm {
 public:
     inline static Meta meta() {
@@ -13,6 +17,7 @@ public:
 
     EliasDeltaCoder() = delete;
 
+    /// \brief Encodes data to a stream of Elias-Delta codes.
     class Encoder : public tdc::Encoder {
     public:
         using tdc::Encoder::Encoder;
@@ -24,6 +29,7 @@ public:
         }
     };
 
+    /// \brief Decodes data from a stream of Elias-Delta codes.
     class Decoder : public tdc::Decoder {
     public:
         using tdc::Decoder::Decoder;

@@ -26,7 +26,10 @@ public:
     /// \param out The bit stream to write to.
     /// \param literals The literal iterator.
     template<typename literals_t>
-    inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&&)
+    inline Encoder(
+        Env&& env,
+        std::shared_ptr<BitOStream> out,
+        literals_t&& literals)
         : Algorithm(std::move(env)), m_out(out) {
     }
 
@@ -69,7 +72,7 @@ public:
     /// \param v The value to encode.
     /// \param r Unused.
     template<typename value_t>
-    inline void encode(value_t v, const BitRange&) {
+    inline void encode(value_t v, const BitRange& r) {
         m_out->write_bit(v);
     }
 
@@ -134,7 +137,7 @@ public:
     /// \param r Unused.
     /// \return The decoded bit value (zero or one).
     template<typename value_t>
-    inline value_t decode(const BitRange&) {
+    inline value_t decode(const BitRange& r) {
         return value_t(m_in->read_bit());
     }
 

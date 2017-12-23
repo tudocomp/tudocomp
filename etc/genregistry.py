@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import re
 import sys
@@ -361,6 +361,8 @@ def gen_algorithm_cpp():
                     update_file(group_file_path, group_content)
 
             dep_paths += group_paths
+
+    dep_paths = list(set(dep_paths))
 
     if args.print_deps:
         sys.stdout.write(";".join(dep_paths))

@@ -1295,3 +1295,15 @@ TEST(Test, decompress_output) {
     o.as_stream() << "ab\xff\xfe""cd\xff\xfe\0"_v;
     ASSERT_EQ(o.result(), "ab\0cd\0"_v);
 }
+
+TEST(Util, power_of_two) {
+    ASSERT_EQ(zero_or_next_power_of_two(0), 0);
+    ASSERT_EQ(zero_or_next_power_of_two(1), 1);
+    ASSERT_EQ(zero_or_next_power_of_two(2), 2);
+    ASSERT_EQ(zero_or_next_power_of_two(3), 4);
+    ASSERT_EQ(zero_or_next_power_of_two(4), 4);
+    ASSERT_EQ(zero_or_next_power_of_two(5), 8);
+    ASSERT_EQ(zero_or_next_power_of_two(6), 8);
+    ASSERT_EQ(zero_or_next_power_of_two(7), 8);
+    ASSERT_EQ(zero_or_next_power_of_two(8), 8);
+}

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <tudocomp/meta/AlgorithmDecl.hpp>
+#include <tudocomp/meta/AlgorithmLib.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
 
 namespace tdc {
@@ -322,28 +323,25 @@ public:
 
 public:
     inline AlgorithmConfig default_config(
-        ast::NodePtr<ast::Object> overrides) const {
+        ast::NodePtr<ast::Object> overrides = ast::NodePtr<ast::Object>())
+        const {
 
+        ast::NodePtr<ast::Object> cfg;
         if(overrides) {
-            auto cfg = std::make_shared<ast::Object>(m_decl->name());
-            for(auto& p : overrides->params()) cfg->add_param(ast::Param(p));
-            for(auto& p : m_binding_config->params()) {
-                if(!cfg->has_param(p.name())) {
-                    cfg->add_param(ast::Param(p));
-                }
-            }
-            return AlgorithmConfig(m_decl, cfg, m_known);
+            cfg = overrides->inherit(m_binding_config);
         } else {
-            return AlgorithmConfig(m_decl, m_binding_config, m_known);
+            cfg = m_binding_config;
         }
-    }
 
-    inline AlgorithmConfig default_config() const {
-        return default_config(std::make_shared<ast::Object>(m_decl->name()));
+        return AlgorithmConfig(m_decl, cfg, m_known);
     }
 
     inline ast::NodePtr<ast::Object> signature() const {
         return m_sig;
+    }
+
+    inline ast::NodePtr<ast::Object> bindings() const {
+        return m_binding_config;
     }
 
     inline const AlgorithmLib& known() const {
@@ -356,6 +354,12 @@ public:
 
     inline void input_restrictions(InputRestrictions r) {
         m_decl->input_restrictions(r);
+    }
+
+    [[deprecated("transitional alias")]]
+    inline void needs_sentinel_terminator() {
+        input_restrictions(
+            input_restrictions() | io::InputRestrictions({ 0 }, true));
     }
 
     template<typename text_t>
@@ -386,20 +390,8 @@ inline Meta check_algo_type(
 }
 
 inline void add_to_lib(AlgorithmLib& target, const Meta& meta) {
-    for(auto e : meta.known()) add_to_lib(target, e.second);
-    add_to_lib(target, meta.decl());
-}
-
-inline AlgorithmLib merge_libs(
-    const AlgorithmLib& a, const AlgorithmLib& b) {
-
-    AlgorithmLib lib = a;
-    for(auto it : b) {
-        if(lib.find(it.first) == lib.end()) {
-            lib.emplace(it.first, it.second);
-        }
-    }
-    return lib;
+    for(auto e : meta.known().entries()) target.insert(e);
+    target.insert(meta.decl());
 }
 /// \endcond
 

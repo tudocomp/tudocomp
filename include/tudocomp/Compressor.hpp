@@ -21,7 +21,16 @@ public:
         return TypeDesc("compressor");
     }
 
-    using Algorithm::Algorithm;
+    virtual ~Compressor() = default;
+    Compressor(Compressor const&) = default;
+    Compressor(Compressor&&) = default;
+    Compressor& operator=(Compressor const&) = default;
+    Compressor& operator=(Compressor&&) = default;
+
+    /// \brief Construct the compressor with an environment.
+    ///
+    /// \param env The algorithm's environment.
+    inline Compressor(Env&& env): Algorithm(std::move(env)) {}
 
     /// \brief Compress the given input to the given output.
     ///

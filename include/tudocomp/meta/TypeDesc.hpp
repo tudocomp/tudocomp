@@ -78,7 +78,7 @@ public:
 
     inline constexpr bool valid() const { return m_valid; }
     inline std::string name() const { return std::string(m_name.str()); }
-    inline const TypeDesc& super() const { return *m_super; }
+    inline const TypeDesc* super() const { return m_super; }
 };
 
 constexpr TypeDesc no_type;

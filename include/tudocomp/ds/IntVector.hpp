@@ -15,6 +15,7 @@
 #include <utility>
 #include <climits>
 
+#include <tudocomp/ds/IntRepr.hpp>
 #include <tudocomp/ds/IntPtr.hpp>
 #include <tudocomp/ds/BitPackingVector.hpp>
 #include <tudocomp/ds/uint_t.hpp>
@@ -25,52 +26,10 @@
 
 namespace tdc {
 namespace int_vector {
-    template<class T, class U, class V, class X = void>
-    struct ConversionHelper {
-    };
+    /// \cond INTERNAL
 
-    template<class T, class U, class V>
-    struct ConversionHelper<T, U, V, typename std::enable_if<(
-        std::is_convertible<T, V>::value
-    )>::type> {
-        inline static V convert(const T& t) {
-            return t;
-        }
-    };
-
-    template<class T, class U, class V>
-    struct ConversionHelper<T, U, V, typename std::enable_if<(
-        !std::is_convertible<T, V>::value
-        && std::is_convertible<T, U>::value
-        && std::is_convertible<U, V>::value
-    )>::type> {
-        inline static V convert(const T& t) {
-            return U(t);
-        }
-    };
-
-    template<class T, class U, class V>
-    inline V conversion_helper(const T& t) {
-        return ConversionHelper<T, U, V>::convert(t);
-    }
-
-    /*
-     * TODO:
-     o constructor for int width
-     o swap/reassign ops
-     o bit capacity?
-     o width setter
-     ? void bit_resize(const size_type size);
-     ? value_type get_int(size_type idx, const uint8_t len=64) const;
-     ? void set_int(size_type idx, value_type x, const uint8_t len=64);
-     - in-place width setting?
-     - flip?
-
-     maybe split up into raw-bits-vector and element-vector?
-     */
-
-    template<class T, class X = void>
-    struct IntVectorTrait {
+    template<typename T>
+    struct IntVectorStdVectorRepr {
         typedef typename std::vector<T>::value_type             value_type;
 
         typedef typename std::vector<T>::reference              reference;
@@ -99,7 +58,7 @@ namespace int_vector {
             return sizeof(T) * CHAR_BIT * self.capacity();
         }
 
-        static constexpr ElementStorageMode element_storage_mode() {
+        inline static constexpr ElementStorageMode element_storage_mode() {
             return ElementStorageMode::Direct;
         }
 
@@ -108,44 +67,42 @@ namespace int_vector {
         }
 
         inline static backing_data with_width(size_type n, const value_type& val, uint8_t width) {
-            width_error();
-            return backing_data(n, val);
+            return backing_data(n, val, width);
         }
 
         inline static void width(backing_data& self, uint8_t w) {
-            width_error();
         }
 
         inline static void resize(backing_data& self, size_type n, const value_type& val, uint8_t w) {
-            width_error();
+            self.resize(n, val);
         }
 
         inline static void bit_reserve(backing_data& self, uint64_t n) {
-            width_error();
+            // TODO: Should this round up to the size of element, and then reserve normally?
         }
     };
 
-    template<>
-    struct IntVectorTrait<dynamic_t> {
-        typedef typename BitPackingVector<dynamic_t>::value_type             value_type;
+    template<typename T>
+    struct IntVectorBitPackingVectorRepr {
+        typedef typename BitPackingVector<T>::value_type             value_type;
 
-        typedef typename BitPackingVector<dynamic_t>::reference              reference;
-        typedef typename BitPackingVector<dynamic_t>::const_reference        const_reference;
+        typedef typename BitPackingVector<T>::reference              reference;
+        typedef typename BitPackingVector<T>::const_reference        const_reference;
 
-        typedef typename BitPackingVector<dynamic_t>::pointer                pointer;
-        typedef typename BitPackingVector<dynamic_t>::const_pointer          const_pointer;
+        typedef typename BitPackingVector<T>::pointer                pointer;
+        typedef typename BitPackingVector<T>::const_pointer          const_pointer;
 
-        typedef typename BitPackingVector<dynamic_t>::iterator               iterator;
-        typedef typename BitPackingVector<dynamic_t>::const_iterator         const_iterator;
+        typedef typename BitPackingVector<T>::iterator               iterator;
+        typedef typename BitPackingVector<T>::const_iterator         const_iterator;
 
-        typedef typename BitPackingVector<dynamic_t>::reverse_iterator       reverse_iterator;
-        typedef typename BitPackingVector<dynamic_t>::const_reverse_iterator const_reverse_iterator;
+        typedef typename BitPackingVector<T>::reverse_iterator       reverse_iterator;
+        typedef typename BitPackingVector<T>::const_reverse_iterator const_reverse_iterator;
 
-        typedef typename BitPackingVector<dynamic_t>::difference_type        difference_type;
-        typedef typename BitPackingVector<dynamic_t>::size_type              size_type;
+        typedef typename BitPackingVector<T>::difference_type        difference_type;
+        typedef typename BitPackingVector<T>::size_type              size_type;
 
-        typedef          BitPackingVector<dynamic_t>                         backing_data;
-        typedef typename BitPackingVector<dynamic_t>::internal_data_type     internal_data_type;
+        typedef          BitPackingVector<T>                         backing_data;
+        typedef typename BitPackingVector<T>::internal_data_type     internal_data_type;
 
         inline static uint64_t bit_size(const backing_data& self) {
             return self.size() * self.width();
@@ -155,7 +112,7 @@ namespace int_vector {
             return self.capacity() * self.width();
         }
 
-        static constexpr ElementStorageMode element_storage_mode() {
+        inline static constexpr ElementStorageMode element_storage_mode() {
             return ElementStorageMode::BitPacked;
         }
 
@@ -180,61 +137,23 @@ namespace int_vector {
         }
     };
 
+    template<class T, class X = void>
+    struct IntVectorTrait:
+        public IntVectorStdVectorRepr<T> {};
+
     template<size_t N>
-    struct IntVectorTrait<uint_t<N>, typename std::enable_if<(N % 8) != 0>::type> {
-        typedef typename BitPackingVector<uint_t<N>>::value_type             value_type;
+    struct IntVectorTrait<uint_impl_t<N>, typename std::enable_if_t<(N % 8 != 0) && (N > 1)>>:
+        public IntVectorBitPackingVectorRepr<uint_t<N>> {};
 
-        typedef typename BitPackingVector<uint_t<N>>::reference              reference;
-        typedef typename BitPackingVector<uint_t<N>>::const_reference        const_reference;
+    template<>
+    struct IntVectorTrait<dynamic_t>:
+        public IntVectorBitPackingVectorRepr<dynamic_t> {};
 
-        typedef typename BitPackingVector<uint_t<N>>::pointer                pointer;
-        typedef typename BitPackingVector<uint_t<N>>::const_pointer          const_pointer;
+    template<>
+    struct IntVectorTrait<bool>:
+        public IntVectorBitPackingVectorRepr<uint_t<1>> {};
 
-        typedef typename BitPackingVector<uint_t<N>>::iterator               iterator;
-        typedef typename BitPackingVector<uint_t<N>>::const_iterator         const_iterator;
-
-        typedef typename BitPackingVector<uint_t<N>>::reverse_iterator       reverse_iterator;
-        typedef typename BitPackingVector<uint_t<N>>::const_reverse_iterator const_reverse_iterator;
-
-        typedef typename BitPackingVector<uint_t<N>>::difference_type        difference_type;
-        typedef typename BitPackingVector<uint_t<N>>::size_type              size_type;
-
-        typedef          BitPackingVector<uint_t<N>>                         backing_data;
-        typedef typename BitPackingVector<uint_t<N>>::internal_data_type     internal_data_type;
-
-        inline static uint64_t bit_size(const backing_data& self) {
-            return self.size() * N;
-        }
-
-        inline static uint64_t bit_capacity(const backing_data& self) {
-            return self.capacity() * N;
-        }
-
-        static constexpr ElementStorageMode element_storage_mode() {
-            return ElementStorageMode::BitPacked;
-        }
-
-        inline static uint8_t width(const backing_data& self) {
-            return self.width();
-        }
-
-        inline static backing_data with_width(size_type n, const value_type& val, uint8_t width) {
-            width_error();
-            return backing_data(n, val);
-        }
-
-        inline static void width(backing_data& self, uint8_t w) {
-            width_error();
-        }
-
-        inline static void resize(backing_data& self, size_type n, const value_type& val, uint8_t w) {
-            width_error();
-        }
-
-        inline static void bit_reserve(backing_data& self, uint64_t n) {
-            width_error();
-        }
-    };
+    ///\endcond
 
     /// A vector over arbitrary unsigned integer types.
     ///
@@ -451,24 +370,20 @@ namespace int_vector {
             m_data.shrink_to_fit();
         }
 
-        template<class Idx>
-        inline reference operator[](const Idx& n) {
-            return m_data[conversion_helper<Idx, value_type, size_type>(n)];
+        inline reference operator[](size_type n) {
+            return m_data[n];
         }
 
-        template<class Idx>
-        inline const_reference operator[](const Idx& n) const {
-            return m_data[conversion_helper<Idx, value_type, size_type>(n)];
+        inline const_reference operator[](size_type n) const {
+            return m_data[n];
         }
 
-        template<class Idx>
-        inline reference at(const Idx& n) {
-            return m_data.at(conversion_helper<Idx, value_type, size_type>(n));
+        inline reference at(size_type n) {
+            return m_data.at(n);
         }
 
-        template<class Idx>
-        inline const_reference at(const Idx& n) const {
-            return m_data.at(conversion_helper<Idx, value_type, size_type>(n));
+        inline const_reference at(size_type n) const {
+            return m_data.at(n);
         }
 
         inline reference front() {
@@ -621,11 +536,20 @@ namespace int_vector {
 
 }
 
+/// \copydoc int_vector::IntVector
 template<class T>
 using IntVector = int_vector::IntVector<T>;
 
+/// \brief Represents a bit vector, alias for \ref IntVector with a fixed
+///        bit width of 1.
 using BitVector = IntVector<uint_t<1>>;
 
+/// \brief Represents an integer vector with unspecified (dynamic) bit
+///        width.
+///
+/// The bit width defaults to 64 bits, but it can be changed at will via the
+/// constructor, or later during runtime using the
+/// \ref int_vector::IntVector::width(uint8_t) method.
 using DynamicIntVector = IntVector<dynamic_t>;
 
 }

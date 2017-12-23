@@ -1,0 +1,175 @@
+{
+    "data": {
+        "memFinal": 0,
+        "memOff": 0,
+        "memPeak": 3145733329,
+        "stats": [],
+        "sub": [{
+            "memFinal": 1992297152,
+            "memOff": 209715769,
+            "memPeak": 2936017560,
+            "stats": [],
+            "sub": [{
+                "memFinal": 838860824,
+                "memOff": 4256,
+                "memPeak": 839387160,
+                "stats": [{
+                    "key": "bit_width",
+                    "value": "32"
+                },{
+                    "key": "size",
+                    "value": "838860820"
+                }],
+                "sub": [],
+                "timeEnd": 4852477627,
+                "timeStart": 4852376884,
+                "title": "Construct SA"
+            },{
+                "memFinal": 838860824,
+                "memOff": 838865904,
+                "memPeak": 838860824,
+                "stats": [{
+                    "key": "bit_width",
+                    "value": "32"
+                },{
+                    "key": "size",
+                    "value": "838860820"
+                }],
+                "sub": [],
+                "timeEnd": 4852486059,
+                "timeStart": 4852477627,
+                "title": "Construct Phi Array"
+            },{
+                "memFinal": 0,
+                "memOff": 1677726440,
+                "memPeak": 0,
+                "stats": [{
+                    "key": "bit_width",
+                    "value": "32"
+                },{
+                    "key": "size",
+                    "value": "838860820"
+                }],
+                "sub": [],
+                "timeEnd": 4852491841,
+                "timeStart": 4852486059,
+                "title": "Construct PLCP Array"
+            },{
+                "memFinal": 838860824,
+                "memOff": 1677726384,
+                "memPeak": 838860824,
+                "stats": [{
+                    "key": "bit_width",
+                    "value": "32"
+                },{
+                    "key": "size",
+                    "value": "838860820"
+                }],
+                "sub": [],
+                "timeEnd": 4852501232,
+                "timeStart": 4852491841,
+                "title": "Construct LCP Array"
+            },{
+                "memFinal": -314572808,
+                "memOff": 1677726088,
+                "memPeak": 524288016,
+                "stats": [{
+                    "key": "bit_width",
+                    "value": "20"
+                },{
+                    "key": "size",
+                    "value": "524288012"
+                }],
+                "sub": [],
+                "timeEnd": 4852502078,
+                "timeStart": 4852501234,
+                "title": "Compress LCP Array"
+            },{
+                "memFinal": 838860824,
+                "memOff": 1363153568,
+                "memPeak": 838860824,
+                "stats": [{
+                    "key": "bit_width",
+                    "value": "32"
+                },{
+                    "key": "size",
+                    "value": "838860820"
+                }],
+                "sub": [],
+                "timeEnd": 4852510329,
+                "timeStart": 4852502078,
+                "title": "Construct ISA"
+            },{
+                "memFinal": -104857600,
+                "memOff": 2202014336,
+                "memPeak": 734003224,
+                "stats": [{
+                    "key": "bit_width",
+                    "value": "28"
+                },{
+                    "key": "size",
+                    "value": "734003217"
+                }],
+                "sub": [],
+                "timeEnd": 4852511662,
+                "timeStart": 4852510329,
+                "title": "Compress ISA"
+            },{
+                "memFinal": -104857600,
+                "memOff": 2097156736,
+                "memPeak": 734003224,
+                "stats": [{
+                    "key": "bit_width",
+                    "value": "28"
+                },{
+                    "key": "size",
+                    "value": "734003217"
+                }],
+                "sub": [],
+                "timeEnd": 4852513126,
+                "timeStart": 4852511662,
+                "title": "Compress SA"
+            }],
+            "timeEnd": 4852513126,
+            "timeStart": 4852376884,
+            "title": "Construct Text DS"
+        },{
+            "memFinal": 201326592,
+            "memOff": 2202012921,
+            "memPeak": 301989888,
+            "stats": [{
+                "key": "threshold",
+                "value": "5"
+            },{
+                "key": "factors",
+                "value": "13729356"
+            }],
+            "sub": [],
+            "timeEnd": 4852544688,
+            "timeStart": 4852513126,
+            "title": "Factorize"
+        },{
+            "memFinal": 0,
+            "memOff": 2403339513,
+            "memPeak": 2404515,
+            "stats": [],
+            "sub": [],
+            "timeEnd": 4852548118,
+            "timeStart": 4852544688,
+            "title": "Encode"
+        }],
+        "timeEnd": 4852548153,
+        "timeStart": 4852376103,
+        "title": "root"
+    },
+    "meta": {
+        "config": "lzss_lcp(coder=sle,threshold=5)",
+        "input": "../etc/datasets/pc_english.200MB",
+        "inputSize": 209715200,
+        "output": "test.tdc",
+        "outputSize": 59439000,
+        "rate": 0.283427,
+        "startTime": 1497876200,
+        "title": "lzss - P&C English - 200MiB"
+    }
+}

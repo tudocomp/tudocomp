@@ -14,6 +14,8 @@ namespace tdc {
 /// encoded as their string representations, terminated by the \e :
 /// character.
 class ArithmeticCoder : public Algorithm {
+    using ulong = unsigned long;
+
     // TODO: Figure out how to correctly replace this with len_t or len_compact_t
     using len_fixup_t = uint32_t;
 

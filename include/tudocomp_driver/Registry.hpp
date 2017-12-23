@@ -26,6 +26,7 @@
 
 #include <tudocomp/meta/Registry.hpp>
 
+/// \cond INTERNAL
 /// \brief Contains the executable driver application.
 ///
 /// The driver application is a standalone executable that makes the
@@ -41,7 +42,6 @@ namespace tdc_algorithms {
 
 using namespace tdc;
 
-/// \cond INTERNAL
 extern Registry<Compressor> COMPRESSOR_REGISTRY;
 extern Registry<Generator>  GENERATOR_REGISTRY;
 

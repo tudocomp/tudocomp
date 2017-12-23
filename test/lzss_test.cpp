@@ -59,7 +59,8 @@ TEST(lzss, factor_buffer_sort) {
 
 TEST(lzss, text_literals_empty) {
     lzss::FactorBuffer empty;
-    lzss::TextLiterals<std::string> literals("", empty);
+    std::string tmp = "";
+    lzss::TextLiterals<std::string> literals(tmp, empty);
     ASSERT_FALSE(literals.has_next());
 }
 

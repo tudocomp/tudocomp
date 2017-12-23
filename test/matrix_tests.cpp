@@ -15,11 +15,19 @@ using namespace tdc_algorithms;
 
 const std::vector<std::string> EXCLUDED_TESTS {
     "chain",
+    "dividing",
 };
 const std::vector<std::string> ADDITIONAL_TESTS {
-    // "chain(chain(chain(chain(easyrle(\"1\"),bwt()),mtf()),easyrle()),encode(huff))",
-    // "chain(lz78, lzw)",
-    // "chain(lz78, chain(noop, lzw))",
+    "chain(noop, noop)",
+    "chain(lz78, lzw)",
+    //"chain(lz78, chain(noop, lzw))",
+    "dividing(strategy=blocked(10), compressor=lz78(ascii))",
+    "dividing(strategy=division(2), compressor=lz78(ascii))",
+    "dividing(strategy=blocked(10), compressor=lzw)",
+    "dividing(strategy=division(2), compressor=lzw)",
+    "dividing(strategy=blocked(10), compressor=esp)",
+    "dividing(strategy=division(2), compressor=esp)",
+    "long_common_string(b=1)",
 };
 
 TEST(TudocompDriver, roundtrip_matrix) {
@@ -103,6 +111,10 @@ TEST(TudocompDriver, roundtrip_matrix) {
         }
     }
 
+    // Check if we want the fast, abbreviated matrix test
+    auto env_fast_p = std::getenv("FAST_MATRIX");
+    bool env_fast = (env_fast_p != nullptr);
+
     for (auto& e : test_cases) {
         std::cout << "  " << e << "\n";
     }
@@ -117,7 +129,8 @@ TEST(TudocompDriver, roundtrip_matrix) {
     for (auto& algo : test_cases) {
         int counter = 0;
         bool abort = false;
-        test::roundtrip_batch([&](std::string text) {
+
+        auto run = [&](std::string text) {
             if (abort) {
                 return;
             }
@@ -135,7 +148,19 @@ TEST(TudocompDriver, roundtrip_matrix) {
                     errors.push_back(e);
                 }
             }
-        });
+        };
+
+        if (!env_fast) {
+            test::roundtrip_batch([&](std::string text) {
+                run(text);
+            });
+        } else {
+            std::stringstream ss;
+            test::roundtrip_batch([&](std::string text) {
+                ss << text;
+            });
+            run(ss.str());
+        }
     }
 
     for (auto& e : errors) {

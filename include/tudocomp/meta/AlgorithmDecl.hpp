@@ -222,19 +222,4 @@ public:
     }
 };
 
-/// \brief Maps algorithm names to their declarations.
-using AlgorithmLib = std::unordered_map<
-                        std::string, std::shared_ptr<const AlgorithmDecl>>;
-
-/// \cond INTERNAL
-inline void add_to_lib(
-    AlgorithmLib& target,
-    std::shared_ptr<const AlgorithmDecl> decl) {
-
-    if(target.find(decl->name()) == target.end()) {
-        target.emplace(decl->name(), decl);
-    }
-}
-/// \endcond
-
 }} //ns

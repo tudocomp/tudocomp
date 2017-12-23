@@ -34,7 +34,7 @@ inline phi_t construct_phi_array(const sa_t& sa) {
 /**
  * Constructs the PLCP array
  * @param phi the phi-array. Will be overwritten with PLCP
- * @text the input text
+ * @param text the input text
  * @author Kärkkäinen et. al, "Permuted Longest-Common-Prefix Array", CPM'09
  */
 template<typename phi_t, typename text_t>

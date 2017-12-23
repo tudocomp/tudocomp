@@ -38,20 +38,19 @@ public:
     template<typename Algo>
     inline void register_algorithm() {
         auto meta = Algo::meta();
-
-        if(!meta.decl()->type().subtype_of(m_root_type)) {
+        auto type = meta.decl()->type();
+        if(!type.subtype_of(m_root_type)) {
             throw RegistryError(std::string(
                 "trying to register algorithm of type ") +
-                meta.decl()->type().name() +
+                type.name() +
                 std::string(", expected ") +
                 m_root_type.name());
         }
 
-        add_to_lib(m_lib, meta);
-
         auto sig = meta.signature()->str();
         auto it = m_reg.find(sig);
         if(it == m_reg.end()) {
+            add_to_lib(m_lib, meta);
             m_reg.emplace(sig, [](AlgorithmConfig&& cfg) {
                 return std::make_unique<Algo>(std::move(cfg));
             });
@@ -60,8 +59,10 @@ public:
         }
     }
 
+    class Entry;
     class Selection {
     private:
+        friend class Entry;
         friend class Registry;
 
         std::shared_ptr<const AlgorithmDecl> m_decl;
@@ -109,14 +110,41 @@ public:
         }
     };
 
-    inline Selection select(ast::NodePtr<ast::Object> obj) const {
-        auto lib_entry = m_lib.find(obj->name());
-        if(lib_entry == m_lib.end()) {
+    class Entry {
+    private:
+        friend class Registry;
+
+        std::shared_ptr<const AlgorithmDecl> m_decl;
+        const ctor_t* m_ctor;
+        AlgorithmConfig m_cfg;
+
+        inline Entry(
+            std::shared_ptr<const AlgorithmDecl> decl,
+            const ctor_t& ctor,
+            AlgorithmConfig&& cfg) : m_decl(decl), m_ctor(&ctor), m_cfg(cfg) {
+        }
+
+    public:
+        inline std::shared_ptr<const AlgorithmDecl> decl() const {
+            return m_decl;
+        }
+
+        inline const AlgorithmConfig& config() const {
+            return m_cfg.decl();
+        }
+
+        inline Selection select() const {
+            return Selection(m_decl, (*m_ctor)(AlgorithmConfig(m_cfg)));
+        }
+    };
+
+    inline Entry find(ast::NodePtr<ast::Object> obj) const {
+        auto decl = m_lib.find(obj->name(), m_root_type);
+        if(!decl) {
             throw RegistryError(
                 std::string("unknown algorithm: ") + obj->name());
         }
 
-        auto decl = lib_entry->second;
         auto cfg = AlgorithmConfig(decl, obj, m_lib);
         auto sig = cfg.signature();
         auto reg_entry = m_reg.find(sig->str());
@@ -126,8 +154,11 @@ public:
                 std::string("unregistered instance: ") + sig->str());
         }
 
-        auto ctor = reg_entry->second;
-        return Selection(decl, ctor(std::move(cfg)));
+        return Entry(decl, reg_entry->second, std::move(cfg));
+    }
+
+    inline Selection select(ast::NodePtr<ast::Object> obj) const {
+        return find(obj).select();
     }
 
     inline Selection select(const std::string& str) const {
@@ -139,11 +170,12 @@ public:
     inline Selection select(const std::string& options = "") const {
         auto meta = C::meta();
         auto decl = meta.decl();
-        auto obj = ast::convert<ast::Object>(ast::Parser::parse(
-            decl->name() + "(" + options + ")"));
-
+        auto parsed = ast::convert<ast::Object>(
+            ast::Parser::parse(decl->name() + paranthesize(options)));
+        auto obj = parsed->inherit(meta.bindings());
         auto cfg = AlgorithmConfig(
-            decl, obj, merge_libs(m_lib, meta.known()));
+            decl, obj, m_lib + meta.known());
+
         return Selection(decl, std::make_unique<C>(std::move(cfg)));
     }
 

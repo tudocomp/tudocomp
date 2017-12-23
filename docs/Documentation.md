@@ -685,6 +685,74 @@ internally backed by an array of 64-bit integers, a call to
 [`shrink_to_fit`](@DX_INTVECTOR_STF@) is necessary in order to actually shrink
 the vector's capacity.
 
+## Bit Vectors
+
+As mentioned previously, the [`BitVector`](@DX_BITVECTOR@) class (technically
+an alias for `IntVector<uint_t<1>>`) provides an implementation of bit vectors.
+
+This section introduces some additional data structures on bit vectors that
+are available in *tudocomp*.
+
+### Rank and Select
+
+The classes [`Rank`](@DX_RANK@) and [`Select`](@DX_SELECT@) implement data
+structures for these widely used operations on bit vectors. Both are succinct,
+meaning that they allow constant-time queries with relatively low memory
+overhead. While `Rank` answers rank queries for 1-bits as well as 0-bits,
+`Select` has the two variants [`Select1`](@DX_SELECT1@) and
+[`Select0`](@DX_SELECT0@) (which work analogously).
+
+The following example showcases the usage of these data structures:
+
+~~~ {.cpp caption="bit_vector.cpp"}
+// Construct a bit vector where every second bit is set
+BitVector bv(128);
+for(len_t i = 1; i < 128; i += 2) bv[i] = 1;
+
+// Construct Rank and Select1 data structures
+Rank    rank(bv);
+Select1 select1(bv);
+
+// Query the amount of 1-bits in the whole bit vector
+ASSERT_EQ(64, rank.rank1(127));
+
+// Query the amount of 0-bits in the whole bit vector
+ASSERT_EQ(64, rank.rank0(127));
+
+// Query the amount of 1-bits in the second half of the bit vector
+ASSERT_EQ(32, rank.rank0(64, 127));
+
+// Find the position of the first 1-bit
+ASSERT_EQ(1,  select1(1));
+
+// Find the position of the 32nd 1-bit
+ASSERT_EQ(63, select1(32));
+
+// Find the position of the 1000th 1-bit (which does not exist)
+ASSERT_EQ(bv.size(), select1(1000));
+
+// rank1(select1(i)) = i holds
+for(len_t i = 1; i <= 64; i++) {
+    ASSERT_EQ(i, rank(select1(i)));
+}
+~~~
+
+For `Rank`, the functions [`rank1`](@DX_RANK_RANK1@) and
+[`rank0`](@DX_RANK_RANK0@) invoke the respective queries, while for `Select`,
+the [`operator()`](@DX_SELECT_PARAN@) can be used as a shortcut. Note that
+`Rank` also provides the shortcut [`operator()`](@DX_RANK_PARAN@), which is
+equal to calling `rank1`.
+
+All operations expect zero-based indices, i.e., the position of the first bit
+in a bit vector is 0. Orders, on the other hand, are intuitively one-based
+i.e. the order of the 1^st^ occurence of a bit is 1 (e.g. as the return value
+of rank or the input parameter of select). That said, select does not accept an
+input order of 0.
+
+If for a parameter `k`, the `k`^th^ occurence of a bit does not exist in the
+bit vector, select will return the bit vector's length instead, as a means
+of saying "out of scope".
+
 ## Algorithms
 
 The [`Algorithm`](@DX_ALGORITHM@) class plays a central role in *tudocomp* as
@@ -896,25 +964,26 @@ with the two strategies. It is then used to instantiate both versions without
 the need of fixed typing:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
-// Create a registry for algorithms of type "example"
-Registry<MyAlgorithmBase> registry("example");
+// Create a registry for algorithms inheriting from MyAlgorithmBase
+Registry<MyAlgorithmBase> registry;
 
-// Register two specializations of the algorithm
+// Register two implementations of the algorithm
 registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
 registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
 
 // Execute the algorithm with the square strategy
-auto algo_sqr = registry.select("my_algorithm(number=5, strategy=sqr)");
+auto algo_sqr = registry.select_algorithm("my_algorithm(number=5, strategy=sqr)");
 algo_sqr->execute(); // the result is 25
 
 // Execute the algorithm with the multiply strategy
-auto algo_mul = registry.select("my_algorithm(number=5, strategy=mul(8))");
+auto algo_mul = registry.select_algorithm("my_algorithm(number=5, strategy=mul(8))");
 algo_mul->execute(); // the result is 40
 ~~~
 
 Note that for this example, the interface `MyAlgorithmBase` was introduced,
-which `MyAlgorithm` inherits from. It merely declares the virtual function
-`execute`. The additional layer of abstraction is necessary only for use as a
+which `MyAlgorithm` inherits from. It declares the virtual function
+`execute`, and declares itself as having the type id string `"example"`.
+This additional layer of abstraction is necessary only for use as a
 template parameter for the `Registry` class in this example.
 
 ## Coders
@@ -1011,7 +1080,7 @@ functionality by providing an [`Encoder`](@DX_ENCODER@) and a
 It is expected that for any encoder, there is a corresponding decoder that
 restores the original output. In order to enforce this, encoder and decoder
 implementations are typically encapsulated in an outer `Coder` class that
-inheirty from `Algorithm`. This design pattern allows for separation of encoding
+inherit from `Algorithm`. This design pattern allows for separation of encoding
 and decoding functionality while retaining the ability to instantiate both from
 a template type (ie. the outer class).
 
@@ -1790,3 +1859,119 @@ Tudocomp(name='tdc_lzss_lcp_huff',
 
 Note that by default, the *tudocomp* binary is expected at `./tdc`, therefore
 the comparison tool should be run from a build directory.
+
+# Manual
+
+## The LZ78/LZW Implementation
+
+Tudocomp contains an implementation of both Lz78 and Lzw. Both are implemented
+according to their basic definitions: A sequence of characters is being read
+from a input stream, and a dictionary is searched for a longest previously-seen
+prefix of characters. The dictionary is updated as needed,
+and lz factors containing references to the found prefixes are being output.
+
+The Algorithms are defined in terms of two abstract interfaces, implemented as C++ concepts:
+
+- `LZ78Trie`. It abstracts over a concrete dictionary data structure with a trie-like interface and search API, and is used by both Lz78 and Lzw, despite its name.
+- `Coder`. It abstracts over the concrete encoding of a sequence of integer values, in this case the references and characters in a lz factor.
+
+The trie interface is explained in more details below. For details to the `Coder` interface, see the Tutorial section above.
+
+Both algorithms also support limiting the dictionary to a certain maximum size,
+to reduce memory consumption and search overhead at the cost of compression rate.
+Concretely, this is defined by clearing the dictionary once it reaches a specific size,
+leading to multiple rebuilds of the data structure during a Lz78/Lzw run.
+
+> Note: The dictionary-limiting option is currently disabled due to bugs with a few of the existing dictionary implementations.
+
+### Algorithm API
+
+Both the compressors and the different dictionaries are registered as Algorithms in
+Tudocomps registry. The full list of existing implementations can bee seen with
+`./tdc --list`. For example:
+
+To compress `input.txt` with Lz78 using the `BinaryTrie`:
+
+```
+./tdc -a "lz78(lz78trie = binary)" input.txt
+```
+
+To compress  `input.txt` with Lzw using a limited dictionary size of 1024 entries:
+
+```
+./tdc -a "lzw(dict_size = 1024)" input.txt
+```
+
+### Source Location
+
+The Lz78 and Lzw implementations can be found in `include/tudocomp/compressors/LZ78Compressor.hpp` and `include/tudocomp/compressors/LZWCompressor.hpp`, respectively.
+
+Support definitions and the Trie base class can be found in `include/tudocomp/compressors/lz78/LZ78Trie.hpp`. The same directory also contains all existing LZ78Trie implementations.
+
+### The LZ78Trie interface.
+
+In order to fulfill the LZ78Trie interface, a class `T`{.cpp} needs to:
+
+- Implement Tudocomps `Algorithm` concept, for which it needs to:
+    - Public inherit from `Algorithm`{.cpp}.
+    - Call the `Algorithm(Env&&)`{.cpp} constructor.
+    - Be movable and move-assignable.
+    - Implement a `inline static Meta meta();`{.cpp} describing the Algorithm.
+- Public inherit from `LZ78Trie<>`{.cpp}.
+    - _Optionally_, instead inherit from `LZ78Trie<my_node_type_t>`{.cpp} with
+      a custom node type `my_node_type_t`{.cpp} (see below).
+- Call the `LZ78Trie(const size_t n, const size_t& remaining_characters)`{.cpp} constructor.
+- Implement the following constructor and methods:
+
+    ~~~ {.cpp}
+    inline T(Env&& env, const size_t n, const size_t& remaining_characters, size_t reserve = 0);
+    inline node_t add_rootnode(uliteral_t c);
+    inline node_t get_rootnode(uliteral_t c) const;
+    inline node_t find_or_insert(const node_t& parent, uliteral_t c);
+    inline void clear();
+    inline size_t size() const;
+    ~~~
+
+    where `node_t`{.cpp} is a type member provided by the parent `LZ78Trie<X>`{.cpp} that describes a node in the trie, and is equal to `X`. It defaults to `LZ78TrieNode`, see below for more details.
+
+These members should have the following semantics:
+
+- The constructor should delegate its arguments to the two base constructors mentioned above, and try to reserve memory for `reserve`{.cpp}-many dictionary entries.
+- `add_rootnode(x)`{.cpp} should create a root node in the trie that corresponds
+  to the lz node with label `x`. For Lz78, this will be called once
+  with argument 0. For Lzw, this will be called for all possible character values (the byte values 0 to 255).
+  An implementation may choose how it maps these logical root nodes to the actual data structure. A common approach is to have a hidden single real root node, with the logical root nodes living on the first layer below it. See the graphic below.
+- `get_rootnode(x)`{.cpp} should return the same node as created by the corresponding `add_rootnode(x)`{.cpp} call.
+- `find_or_insert(parent, c)`{.cpp} should search the node `parent`{.cpp} for
+  a child with edge label `c`{.cpp}, create one if it doesn't exist,
+  and then return it.
+- `clear()`{.cpp} should reset the data structure entirely, including root nodes.
+- `size()`{.cpp} should return the number of nodes in the data structure,
+  including root nodes.
+
+![LZ78 and LZW Trie for the string "bacacb"](media/lz78_trie.png)
+
+#### `node_t`{.cpp} and custom node types
+
+`node_t`{.cpp} is per default identical to `LZ78TrieNode`,
+and behaves like a `(integer, bool)` tuple with the following API:
+
+~~~ {.cpp}
+inline node_t(factorid_t id, bool is_new);
+inline node_t();
+inline factorid_t id() const;
+inline bool is_new() const;
+~~~
+
+`id()`{.cpp} returns the node label, and `is_new()`{.cpp} is true if this node has been freshly created by `find_or_insert()`{.cpp}.
+
+Usually, just having the node label is enough for a `LZ78Trie` implementation
+to locate a node in its internal data structure.
+In cases where that is not possible though, say if you need the internal address of an node, you can replace the default `node_t`{.cpp} type with a custom one by passing it to the template argument of the `LZ78Trie<...>` parent class.
+
+Such a type needs to provide the same API as `LZ78TrieNode`, but may:
+
+- Have a custom constructor.
+- Have additional members (for example, storing an internal node address).
+
+The easiest way to do this is by inheriting from `LZ78TrieNode`. See `include/tudocomp/compressors/lz78/CedarTrie.hpp` for an example of how this is done.

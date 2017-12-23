@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 from python_libs import sh
 
@@ -47,7 +47,7 @@ def gen_prefix(p, sizes):
                 prefix_file_name = str(p) + "." + str(size) + "MB"
                 if (not path.exists(str(prefix_file_name))) or (filesize_in_mb(prefix_file_name) != size):
                     print("Generating {}MB prefix of {} to {}".format(size, p, prefix_file_name))
-                    sh.sh("-c", "cat {} | dd count={}K bs=1K > {}".format(p, size, prefix_file_name))
+                    sh.sh("-c", "cat {} | dd count={}k bs=1k > {}".format(p, size, prefix_file_name))
             elif under_cutoff:
                 print("Info: {} is too small to generate {}MB prefix".format(p, size))
 

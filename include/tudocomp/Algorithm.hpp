@@ -23,7 +23,7 @@ public:
             return T(meta.default_config(
                 ast::convert<ast::Object>(
                     ast::Parser::parse(
-                        meta.decl()->name() + "(" + config_str + ")"))),
+                        meta.decl()->name() + paranthesize(config_str)))),
                 std::forward<Args>(args)...);
         }
     }

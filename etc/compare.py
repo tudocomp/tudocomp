@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import argparse
 import collections
@@ -150,6 +150,16 @@ else:
     # default
     suite = [
         # tudocomp examples
+		Tudocomp(name='lfs_simst',                       algorithm='lfs_comp(sim_st)'),
+		Tudocomp(name='lfs_esa',                       algorithm='lfs_comp(esa)'),
+	#	Tudocomp(name='lfs_st',                       algorithm='lfs_comp(st)'),
+		Tudocomp(name='lfs2',                       	 algorithm='lfs2'),
+		Tudocomp(name='lz78(ternary)',                   algorithm='lz78(coder=bit,lz78trie=ternary)'),
+		Tudocomp(name='lz78',                   		 algorithm='lz78'),
+		Tudocomp(name='lzw',                   		 	 algorithm='lzw'),
+		Tudocomp(name='repair(min=50)',                  algorithm='repair(bit,50)'),
+		Tudocomp(name='lzw',                   		 	 algorithm='lzw'),
+		Tudocomp(name='lzss',                   		 algorithm='lzss(bit)'),
         Tudocomp(name='bwtzip',                          algorithm='bwt:rle:mtf:encode(huff)'),
         Tudocomp(name='lcpcomp(t=5,arrays,scans(a=25))', algorithm='lcpcomp(coder=sle,threshold=5,comp=arrays,dec=scan(25))'),
         Tudocomp(name='lzss_lcp(t=5,bit)',               algorithm='lzss_lcp(coder=bit,threshold=5)'),
@@ -158,7 +168,8 @@ else:
         Tudocomp(name='sle',                             algorithm='encode(sle)'),
         Tudocomp(name='huff',                            algorithm='encode(huff)'),
         Tudocomp(name='lzw(ternary)',                    algorithm='lzw(coder=bit,lz78trie=ternary)'),
-        Tudocomp(name='lz78(ternary)',                   algorithm='lz78(coder=bit,lz78trie=ternary)'),
+
+
         # Some standard Linux compressors
         StdCompressor(name='gzip -1',  binary='gzip',  cflags=['-1'], dflags=['-d']),
         StdCompressor(name='gzip -9',  binary='gzip',  cflags=['-9'], dflags=['-d']),
@@ -166,6 +177,7 @@ else:
         StdCompressor(name='bzip2 -9', binary='bzip2', cflags=['-9'], dflags=['-d']),
         StdCompressor(name='lzma -1',  binary='lzma',  cflags=['-1'], dflags=['-d']),
         StdCompressor(name='lzma -9',  binary='lzma',  cflags=['-9'], dflags=['-d']),
+		#StdCompressor(name='lcpcompress',  binary='lcpcompress',  cflags=[''], dflags=['-d']),
     ]
     sot.print("Using built-in default suite")
 
@@ -178,7 +190,7 @@ def memsize(num, suffix='B'):
 
 def timesize(num, suffix='s'):
     if(num < 1.0):
-        for unit in ['','m','μ','n']:
+        for unit in ['','m','mu','n']:
             if num > 1.0:
                 return "%3.1f%s%s" % (num, unit, suffix)
             num *= 1000

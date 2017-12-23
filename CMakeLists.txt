@@ -37,9 +37,12 @@ include(ExternalProject)
 
 # More warnings and debug info
 # TODO: Add these, they break building glog -Wextra -Wpedantic
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall -Wno-deprecated-declarations")
+set(GCC_WARNINGS "-Wall -Werror=return-type -Wno-deprecated-declarations")
+#set(SANITIZATION "-fsanitize=undefined -fsanitize=address -fsanitize=leak")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 ${GCC_WARNINGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG ${SANITIZATION}")
 
 # Set integer with for length type
 if(DEFINED LEN_BITS)
@@ -89,6 +92,7 @@ include(generate_tudocomp_sources)
 
 #include(sdsl)
 
+
 # Add include directory to include searches
 include_directories(include)
 
@@ -117,3 +121,6 @@ MESSAGE( STATUS "Built Type: " ${CMAKE_BUILD_TYPE} )
 MESSAGE( STATUS "[Optional] Judy Array: " ${JUDY_H_AVAILABLE} )
 MESSAGE( STATUS "[Optional] Boost: " ${Boost_FOUND} )
 
+# for showing include in qtcreator
+FILE(GLOB_RECURSE LibFiles "include/*.hpp")
+add_custom_target(headers SOURCES ${LibFiles})

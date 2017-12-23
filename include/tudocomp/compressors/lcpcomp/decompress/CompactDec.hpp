@@ -13,7 +13,7 @@ namespace lcpcomp {
  * It creates an array of dynamic arrays. Each dynamic array stores in
  * the first element its size. On appending a new element, the dynamic array
  * gets resized by one (instead of doubling). This helps to keep the memory footprint low.
- * It can be faster than @class ScanDec if its "scans"-value too small.
+ * It can be faster than \ref ScanDec if its "scans"-value too small.
  */
 class CompactDec : public Algorithm {
 public:
@@ -48,7 +48,7 @@ private:
             for(size_t i = 1; i < bucket[0]; ++i) {
                 decode_literal_at(bucket[i], c); // recursion
             }
-            delete [] m_fwd[pos];
+            free(m_fwd[pos]);
             m_fwd[pos] = nullptr;
         }
 
@@ -72,7 +72,7 @@ public:
         if(m_fwd != nullptr) {
             for(size_t i = 0; i < m_buffer.size(); ++i) {
                 if(m_fwd[i] == nullptr) continue;
-                delete [] m_fwd[i];
+                free(m_fwd[i]);
             }
             delete [] m_fwd;
         }
@@ -99,7 +99,7 @@ public:
             } else {
                 len_compact_t*& bucket = m_fwd[src];
                 if(bucket == nullptr) {
-                    bucket = new len_compact_t[2];
+                    bucket = (len_compact_t*) malloc(sizeof(len_compact_t) * 2);
                     DCHECK(m_fwd[src] == bucket);
                     bucket[0] = 2;
 					bucket[1] = m_cursor;

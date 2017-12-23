@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tudocomp/meta/AlgorithmDecl.hpp>
+#include <tudocomp/meta/AlgorithmLib.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
 #include <tudocomp/meta/ast/TypeConversion.hpp>
 
@@ -59,20 +60,10 @@ public:
                 " '" + m_decl->name() + "'");
 
             // find algorithm declaration
-            auto it = lib.find(obj_value->name());
-            if(it == lib.end()) {
-                throw ConfigError("unknown algorithm type: '" +
+            auto algo_decl = lib.find(obj_value->name(), m_decl->type());
+            if(!algo_decl) {
+                throw ConfigError("unknown algorithm: '" +
                     obj_value->name() + "'");
-            }
-
-            auto algo_decl = it->second;
-
-            // check algorithm type
-            if(!algo_decl->type().subtype_of(m_decl->type())) {
-                throw ConfigError("algorithm type mismatch for " +
-                    param_str(list_item) + " '" + m_decl->name() + "': " +
-                    "expected " + m_decl->type().name() +
-                    ", got " + algo_decl->type().name());
             }
 
             // create sub config

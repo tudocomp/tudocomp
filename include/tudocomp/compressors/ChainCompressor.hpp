@@ -33,6 +33,8 @@ public:
 
         auto run = [&](Input& i, Output& o, string_ref option) {
             auto option_value = env().option(option);
+
+            //TODO: eliminate tdc_algorithms dependency
             auto compressor = tdc_algorithms::COMPRESSOR_REGISTRY.select(
                 meta::ast::convert<meta::ast::Object>(option_value.ast()));
 
@@ -94,4 +96,3 @@ public:
 };
 
 }
-

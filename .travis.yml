@@ -13,6 +13,7 @@ matrix:
         - COMPILER_NAME=gcc
         - CXX=g++-5
         - CC=gcc-5
+        - FAST_MATRIX=1
       dist: trusty
       addons:
         apt:
@@ -26,6 +27,13 @@ matrix:
             #- llvm-toolchain-precise-3.8
             #- george-edison55-precise-backports
             - ubuntu-toolchain-r-test
+    - os: osx
+      env:
+        - FAST_MATRIX=1
+    - os: osx
+      osx_image: xcode9.1
+      env:
+        - FAST_MATRIX=1
 #    - os: linux
 #      env:
 #        - COMPILER_NAME=clang
@@ -41,6 +49,16 @@ matrix:
 #            - python3
 #            - python
 #          sources: *sources
+before_install: |
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        brew update;
+        brew install python3;
 
+        # This step needed on osx 10.10 image
+        #sudo pip install virtualenv;
+
+        virtualenv venv -p python3;
+        source venv/bin/activate;
+    fi
 script:
   - ./etc/travis_build.sh

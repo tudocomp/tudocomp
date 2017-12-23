@@ -85,6 +85,20 @@ public:
     inline Object(const std::string& name) : m_name(name) {
     }
 
+    /// \brief Copy constructor.
+    /// \param other the object to copy
+    inline Object(const Object& other)
+        : m_name(other.m_name),
+          m_params(other.m_params) {
+    }
+
+    /// \brief Move constructor.
+    /// \param other the object to move
+    inline Object(Object&& other)
+        : m_name(std::move(other.m_name)),
+          m_params(std::move(other.m_params)) {
+    }
+
     /// \brief Adds a parameter to the object.
     /// \param param the parameter to add.
     inline void add_param(Param&& param) {
@@ -99,6 +113,24 @@ public:
     /// \return a read-only vector of the object's parameters
     inline const std::vector<Param>& params() const {
         return m_params;
+    }
+
+    /// \brief Construct an object that inherits from a base object.
+    ///
+    /// The returned object starts as a copy of the current object.
+    /// Subsequently, all parameters from the base object are added, unless
+    /// they are already present.
+    ///
+    /// \param base the base object
+    /// \return the enhanced object
+    inline NodePtr<Object> inherit(NodePtr<Object> base) const {
+        auto obj = std::make_shared<Object>(*this);
+        for(auto& p : base->params()) {
+            if(!obj->has_param(p.name())) {
+                obj->add_param(ast::Param(p));
+            }
+        }
+        return obj;
     }
 
     /// \brief Tests if the object has a parameter with the given name

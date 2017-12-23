@@ -12,11 +12,6 @@
 
 namespace tdc {
 
-	class BitCoder;
-	namespace lz78 {
-		class TernaryTrie;
-	}
-
     namespace lz78 {
         class Decompressor {
             std::vector<lz78::factorid_t> indices;
@@ -49,17 +44,8 @@ class LZ78Compressor: public Compressor {
 private:
     using node_t = typename dict_t::node_t;
 
-    static inline lz78::factorid_t select_size(Env& env, string_ref name) {
-        auto& o = env.option(name);
-        if (o.as_string() == "inf") {
-            return 0;
-        } else {
-            return o.as_integer();
-        }
-    }
-
     /// Max dictionary size before reset
-    const lz78::factorid_t m_dict_max_size {0};
+    const lz78::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
 
 public:
     inline LZ78Compressor(Env&& env):
@@ -71,12 +57,12 @@ public:
         Meta m("compressor", "lz78", "Lempel-Ziv 78\n\n" LZ78_DICT_SIZE_DESC);
         m.option("coder").templated<coder_t, BitCoder>("coder");
         m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>("lz78trie");
-        m.option("dict_size").dynamic("inf");
+        m.option("dict_size").dynamic(0);
         return m;
     }
 
     virtual void compress(Input& input, Output& out) override {
-		const size_t n = input.size();
+        const size_t n = input.size();
         const size_t reserved_size = isqrt(n)*2;
         auto is = input.as_stream();
 
@@ -88,7 +74,7 @@ public:
         IF_STATS(size_t stat_factor_count = 0);
         size_t factor_count = 0;
 
-		size_t remaining_characters = n; // position in the text
+        size_t remaining_characters = n; // position in the text
         dict_t dict(env().env_for_option("lz78trie"), n, remaining_characters, reserved_size);
 
         auto reset_dict = [&dict] () {
@@ -109,9 +95,9 @@ public:
 
         char c;
         while(is.get(c)) {
-			--remaining_characters;
+            --remaining_characters;
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
-            if(child.id() == lz78::undef_id) {
+            if(child.is_new()) {
                 coder.encode(node.id(), Range(factor_count));
                 coder.encode(static_cast<uliteral_t>(c), literal_r);
                 factor_count++;
@@ -144,13 +130,13 @@ public:
             IF_STATS(stat_factor_count++);
         }
 
-		IF_STATS(
+        IF_STATS(
         phase1.log_stat("factor_count", stat_factor_count);
         phase1.log_stat("dictionary_reset_counter",
                        stat_dictionary_resets);
         phase1.log_stat("max_factor_counter",
                        stat_dict_counter_at_last_reset);
-		)
+        )
     }
 
     virtual void decompress(Input& input, Output& output) override final {

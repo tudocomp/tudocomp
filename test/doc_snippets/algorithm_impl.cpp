@@ -19,6 +19,16 @@ class MyAlgorithmBase : public Algorithm {
 public:
     using Algorithm::Algorithm; // inherit the default constructor
 
+    // make the destructor virtual, and define copy and move constructors
+    virtual ~MyAlgorithmBase() = default;
+    MyAlgorithmBase(MyAlgorithmBase const&) = default;
+    MyAlgorithmBase(MyAlgorithmBase&&) = default;
+    MyAlgorithmBase& operator=(MyAlgorithmBase const&) = default;
+    MyAlgorithmBase& operator=(MyAlgorithmBase&&) = default;
+
+    // mark this as having the meta type "example"
+    static string_ref meta_type() { return "example"_v; };
+
     virtual int execute() = 0;
 };
 
@@ -104,7 +114,7 @@ TEST(doc_algorithm_impl, algo_instantiate) {
 #include <tudocomp/meta/Registry.hpp>
 
 TEST(doc_algorithm_impl, algo_registry) {
-    /*// Create a registry for algorithms of type "example"
+    // Create a registry for algorithms of type "example"
     Registry<MyAlgorithmBase> registry(TypeDesc("example"));
 
     // Register two specializations of the algorithm
@@ -117,6 +127,6 @@ TEST(doc_algorithm_impl, algo_registry) {
 
     // Execute the algorithm with the multiply strategy
     auto algo_mul = registry.select("my_algorithm(number=5, strategy=mul(8))");
-    ASSERT_EQ(40, algo_mul->execute());*/
+    ASSERT_EQ(40, algo_mul->execute());
 }
 
