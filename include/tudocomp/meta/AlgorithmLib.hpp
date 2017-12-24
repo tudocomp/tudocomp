@@ -59,11 +59,11 @@ private:
         auto it = lib_for_type.find(decl->name());
         if(it != lib_for_type.end()) {
             auto other_decl = it->second;
-            if(other_decl->name() != decl->name()) {
-                throw LibError(std::string("name conflict for '") + decl->name()
-                    + "' - one is a " + decl->type().name() + ", the other is a"
-                    + other_decl->type().name() + ", both inherit from "
-                    + type.name());
+            if(other_decl->type() != decl->type()) {
+                throw LibError(std::string("conflict for '") + decl->name()
+                    + "' - one is of type " + decl->type().name()
+                    + ", the other is of type " + other_decl->type().name()
+                    + ", both inherit from " + type.name());
             }
         } else {
             lib_for_type.emplace(decl->name(), decl);
