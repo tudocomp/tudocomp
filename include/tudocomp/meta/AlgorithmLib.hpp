@@ -38,9 +38,16 @@ public:
     }
 
 private:
-    inline void insert_for_type(
+    inline void insert_recursively(
         std::shared_ptr<const AlgorithmDecl> decl,
         const TypeDesc& type) {
+
+        // recursively add for super types
+        // (we do not want to continue if that fails)
+        {
+            auto super = type.super();
+            if(super) insert_recursively(decl, *super);
+        }
 
         // first, get the sublibrary for the given type
         decltype(m_lib)::iterator it_for_type;
@@ -80,11 +87,7 @@ public:
     ///
     /// \param decl the declaration to insert
     inline void insert(std::shared_ptr<const AlgorithmDecl> decl) {
-        const TypeDesc* typep = &decl->type();
-        do {
-            insert_for_type(decl, *typep);
-            typep = typep->super();
-        } while(typep);
+        insert_recursively(decl, decl->type());
     }
 
 private:
