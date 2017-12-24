@@ -194,6 +194,8 @@ private:
                         obj->add_param(Param(sub));
                     }
                 }
+
+                parse_whitespace();
                 if(peek() == ',') {
                     ++m_cursor; // comma
                     parse_whitespace();
