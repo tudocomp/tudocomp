@@ -1,10 +1,14 @@
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 
+#include <limits.h>
 #include <sstream>
 
+#include <tudocomp/meta/AlgorithmDecl.hpp>
+#include <tudocomp/meta/AlgorithmLib.hpp>
+#include <tudocomp/meta/AlgorithmConfig.hpp>
+#include <tudocomp/meta/Meta.hpp>
 #include <tudocomp/meta/Registry.hpp>
-#include <tudocomp/Algorithm.hpp>
 
 using namespace tdc::meta;
 
@@ -141,11 +145,14 @@ TEST(ast, parse_list) {
     });
 }
 
-TEST(typedesc, properties) {
+TEST(typedesc, basic) {
     TypeDesc invalid;
     ASSERT_FALSE(invalid.valid());
-    ASSERT_TRUE(TypeDesc("a_name").valid());
+    ASSERT_TRUE(TypeDesc("any_name").valid());
+}
 
+TEST(typedesc, inheritance) {
+    TypeDesc invalid;
     TypeDesc animal("animal");
     TypeDesc dog("dog", animal);
     TypeDesc bird("bird", animal);
@@ -166,7 +173,7 @@ TEST(typedesc, properties) {
     ASSERT_TRUE(duck != goose);
 }
 
-TEST(algorithm_lib, insert_find) {
+TEST(lib, insert_find) {
     // declare some types
     TypeDesc a_type("A");
     TypeDesc b_type("B", a_type); // B inherits from A
@@ -207,22 +214,282 @@ TEST(algorithm_lib, insert_find) {
     ASSERT_EQ(nullptr, lib.find("a", b_type).get());
 }
 
+TEST(lib, merge) {
+    // construct some declarations
+    TypeDesc a_type("A");
+    TypeDesc b_type("B", a_type); // B inherits from A
+    TypeDesc x_type("X");
+    TypeDesc y_type("Y", x_type); // Y inherits from X
+    auto a = std::make_shared<AlgorithmDecl>("a", a_type);
+    auto b = std::make_shared<AlgorithmDecl>("b", b_type);
+    auto x = std::make_shared<AlgorithmDecl>("x", x_type);
+    auto y = std::make_shared<AlgorithmDecl>("y", y_type);
+    // a declaration named "a" but of type B
+    auto a_b = std::make_shared<AlgorithmDecl>("a", b_type);
+
+    // construct libraries
+    AlgorithmLib lib1; lib1.insert(a); lib1.insert(b);
+    AlgorithmLib lib2; lib2.insert(x); lib2.insert(y);
+    AlgorithmLib lib3; lib3.insert(a); lib3.insert(x);
+    AlgorithmLib lib4; lib4.insert(a_b); lib4.insert(x);
+
+    // merge lib1 and lib2
+    {
+        auto merged = lib1 + lib2;
+        ASSERT_EQ(a, merged.find("a", a_type));
+        ASSERT_EQ(b, merged.find("b", b_type));
+        ASSERT_EQ(x, merged.find("x", x_type));
+        ASSERT_EQ(y, merged.find("y", y_type));
+    }
+
+    // attempt to merge with lib3
+    // this should work, because the declarations' types match with
+    // those of lib1 and lib2
+    {
+        auto merged = lib3 + (lib1 + lib2);
+        ASSERT_EQ(a, merged.find("a", a_type));
+        ASSERT_EQ(b, merged.find("b", b_type));
+        ASSERT_EQ(x, merged.find("x", x_type));
+        ASSERT_EQ(y, merged.find("y", y_type));
+    }
+
+    // attempt to merge with lib4
+    // this should fail, because "a" is declared with type A in lib1 and B
+    // in lib4
+    ASSERT_THROW(lib4 + (lib1 + lib2), LibError);
+}
+
+class config : public ::testing::Test {
+protected:
+    static constexpr TypeDesc a_type() { return TypeDesc("a"); }
+    static constexpr TypeDesc b_type() { return TypeDesc("b"); }
+    static constexpr TypeDesc c_type() { return TypeDesc("c"); }
+
+    std::shared_ptr<AlgorithmDecl> a, b, c;
+    AlgorithmLib lib;
+
+    virtual void SetUp() {
+        a = std::make_shared<AlgorithmDecl>("a", a_type());
+        b = std::make_shared<AlgorithmDecl>("b", b_type());
+        c = std::make_shared<AlgorithmDecl>("c", c_type());
+
+        // add parameters to a
+        {
+            // p1 is a primitive value with no default
+            a->add_param(AlgorithmDecl::Param(
+                "p1", AlgorithmDecl::Param::Kind::primitive,
+                false, TypeDesc(), ast::NodePtr<>()));
+
+            // p2 is a primitive value with default value "1"
+            a->add_param(AlgorithmDecl::Param(
+                "p2", AlgorithmDecl::Param::Kind::primitive,
+                false, TypeDesc(), ast::Parser::parse("1")));
+
+            // l1 is a list of primitive values with no default
+            a->add_param(AlgorithmDecl::Param(
+                "l1", AlgorithmDecl::Param::Kind::primitive,
+                true, TypeDesc(), ast::NodePtr<>()));
+
+            // l2 is a list of primitive values with default "[1,2,3]"
+            a->add_param(AlgorithmDecl::Param(
+                "l2", AlgorithmDecl::Param::Kind::primitive,
+                true, TypeDesc(), ast::Parser::parse("[1,2,3]")));
+
+            // b1 is an object of type B with no default
+            // it is bounded and should occur in the signature
+            a->add_param(AlgorithmDecl::Param(
+                "b1", AlgorithmDecl::Param::Kind::bounded,
+                false, b_type(), ast::NodePtr<>()));
+
+            // b2 is an object of type B with default "b()"
+            // it is unbounded and should not occur in the signature
+            a->add_param(AlgorithmDecl::Param(
+                "b2", AlgorithmDecl::Param::Kind::unbounded,
+                false, b_type(), ast::Parser::parse("b()")));
+        }
+
+        // add parameters to b
+        {
+            // cl is a list of objects of type C with default "[]"
+            // they are bounded and should occur in the signature
+            b->add_param(AlgorithmDecl::Param(
+                "cl", AlgorithmDecl::Param::Kind::bounded,
+                true, c_type(), ast::Parser::parse("[]")));
+        }
+
+        // insert a and b into lib
+        lib.insert(a);
+        lib.insert(b);
+        lib.insert(c);
+    }
+
+    inline AlgorithmConfig a_cfg(const std::string& str) {
+        return AlgorithmConfig(a, ast::Parser::parse(str), lib);
+    }
+
+    inline AlgorithmConfig a_cfg(
+        const std::string& str,
+        const AlgorithmLib& _lib) {
+
+        return AlgorithmConfig(a, ast::Parser::parse(str), _lib);
+    }
+};
+
+TEST_F(config, sanity) {
+    // null
+    ASSERT_THROW(a_cfg(""),  ast::TypeMismatchError);
+    // wrong node type
+    ASSERT_THROW(a_cfg("1"), ast::TypeMismatchError);
+    // wrong name
+    ASSERT_THROW(a_cfg("x"), ConfigError);
+    // missing values for p1, l1, b1
+    ASSERT_THROW(a_cfg("a"), ConfigError);
+    // missing values for p1, l1, b1
+    ASSERT_THROW(a_cfg("a(p2=2,l2=[7,8,9],b1=b)"), ConfigError);
+    // missing value for p1
+    ASSERT_THROW(a_cfg("a(l1=[],b1=b)"), ConfigError);
+    // missing value for l1
+    ASSERT_THROW(a_cfg("a(p1=1,b1=b)"), ConfigError);
+    // missing value for b1
+    ASSERT_THROW(a_cfg("a(p1=1,l1=[])"), ConfigError);
+    // OK
+    ASSERT_NO_THROW(a_cfg("a(p1=2,l1=[],b1=b)"));
+    // OK
+    ASSERT_NO_THROW(a_cfg("a(p1=2,l1=[],b1=b(cl=[c,c,c]))"));
+    // OK
+    ASSERT_NO_THROW(a_cfg("a(p1=1,p2=2,l1=[],l2=[7,8,9],b1=b,b2=b)"));
+    // b not known
+    ASSERT_THROW(a_cfg("a(p1=2,l1=[],b1=b)", AlgorithmLib()), ConfigError);
+    // bad type for p1
+    ASSERT_THROW(a_cfg("a(p1=[],l1=[],b1=b)"), ast::TypeMismatchError);
+    // bad type for l1
+    ASSERT_THROW(a_cfg("a(p1=1,l1=c,b1=b)"), ast::TypeMismatchError);
+    // bad value type for b1
+    ASSERT_THROW(a_cfg("a(p1=1,l1=[],b1=1)"), ast::TypeMismatchError);
+    // bad algorithm type for b1
+    ASSERT_THROW(a_cfg("a(p1=1,l1=[],b1=c)"), ConfigError);
+    // bad algorithm type in cl
+    ASSERT_THROW(a_cfg("a(p1=1,l1=[],b1=b(cl=[c,a]))"), ConfigError);
+    // OK
+    ASSERT_NO_THROW(a_cfg("a(1,2,[],[7,8,9],b(cl=[c]),b)"));
+    // missing value for b1
+    ASSERT_THROW(a_cfg("a(1,2,[],[7,8,9])"), ConfigError);
+    // bad types
+    ASSERT_THROW(a_cfg("a(1,[],b)"), ast::TypeMismatchError);
+
+    auto cfg = a_cfg("a(p1=2,l1=[],b1=b)");
+    // param x1 does not exist
+    ASSERT_THROW(cfg.param("x1"), std::runtime_error);
+    // param b2 does exist (default value)
+    ASSERT_NO_THROW(cfg.param("b2"));
+}
+
+TEST_F(config, signature) {
+    ASSERT_EQ("a(b1=b(cl=[]))",
+        a_cfg("a(p1=2,l1=[],b1=b)").signature()->str());
+    ASSERT_EQ("a(b1=b(cl=[c(), c(), c()]))",
+        a_cfg("a(p1=7,l1=[1,2,3],b1=b(cl=[c,c,c]))").signature()->str());
+}
+
+TEST_F(config, primitive) {
+    auto cfg = a_cfg("a(p1=-1.25,p2='true',l1=[],b1=b)");
+    auto p1 = cfg.param("p1");
+    ASSERT_EQ(-1, p1.as_int());
+    ASSERT_EQ(UINT_MAX, p1.as_uint());
+    ASSERT_EQ(-1.25f, p1.as_float());
+    ASSERT_EQ(-1.25, p1.as_double());
+    ASSERT_FALSE(p1.as_bool());
+    ASSERT_THROW(p1.as_vector<int>(), ast::TypeMismatchError);
+
+    auto p2 = cfg.param("p2");
+    ASSERT_TRUE(p2.as_bool());
+    ASSERT_EQ(0U, p2.as_uint());
+    ASSERT_THROW(p2.as_vector<std::string>(), ast::TypeMismatchError);
+}
+
+TEST_F(config, primitive_list) {
+    auto cfg = a_cfg("a(l1=[],l2=[+3,-1.5,'x'],p1=0,b1=b)");
+    auto l1 = cfg.param("l1");
+    ASSERT_THROW(l1.as_int(), ast::TypeMismatchError);
+    ASSERT_EQ(0, l1.as_vector<int>().size());
+
+    auto l2 = cfg.param("l2");
+    ASSERT_EQ(3, l2.as_vector<int>().size());
+    {
+        auto vi = l2.as_vector<int>();
+        ASSERT_EQ(3, vi[0]);
+        ASSERT_EQ(-1, vi[1]);
+        ASSERT_EQ(0, vi[2]);
+    }
+    {
+        auto vf = l2.as_vector<float>();
+        ASSERT_EQ(3.0f, vf[0]);
+        ASSERT_EQ(-1.5f, vf[1]);
+        ASSERT_EQ(0.0f, vf[2]);
+    }
+    {
+        auto vs = l2.as_vector<std::string>();
+        ASSERT_EQ("+3", vs[0]);
+        ASSERT_EQ("-1.5", vs[1]);
+        ASSERT_EQ("x", vs[2]);
+    }
+}
+
+TEST_F(config, sub) {
+    auto cfg = a_cfg("a(b1=b(cl=[c,c,c]),b2=b,p1=1,l1=[])");
+    {
+        auto b1 = cfg.param("b1");
+        ASSERT_THROW(b1.as_int(), ast::TypeMismatchError);
+        ASSERT_THROW(b1.as_vector<int>(), ast::TypeMismatchError);
+    }
+    {
+        auto& b1 = cfg.sub_config("b1");
+        ASSERT_EQ(b, b1.decl());
+        auto& cl = b1.sub_configs("cl");
+        ASSERT_EQ(3, cl.size());
+        ASSERT_EQ(c, cl[0].decl());
+        ASSERT_EQ(c, cl[1].decl());
+        ASSERT_EQ(c, cl[2].decl());
+    }
+    {
+        auto& b2 = cfg.sub_config("b2");
+        ASSERT_EQ(b, b2.decl());
+        auto& cl = b2.sub_configs("cl");
+        ASSERT_EQ(0, cl.size());
+    }
+}
+
+TEST_F(config, defaults) {
+    auto cfg = a_cfg("a(p1=0,l1=[],b1=b)");
+    {
+        auto p2 = cfg.param("p2");
+        ASSERT_EQ(1, p2.as_int());
+    }
+    {
+        auto l2 = cfg.param("l2");
+        auto vi = l2.as_vector<int>();
+        ASSERT_EQ(3, vi.size());
+        ASSERT_EQ(1, vi[0]);
+        ASSERT_EQ(2, vi[1]);
+        ASSERT_EQ(3, vi[2]);
+    }
+    {
+        auto b2 = cfg.sub_config("b2");
+        ASSERT_EQ(b, b2.decl());
+        auto& cl = b2.sub_configs("cl");
+        ASSERT_EQ(0, cl.size());
+    }
+}
+
 /*
     Test cases to cover:
-    - AlgorithmLib
-        - Merge
-    - AlgorithmConfig
-        - Value conversions
-        - Decl defaults
-        - Error for lack of defaults
-        - Sub configs / nesting
     - Meta
         - Value options
         - Bindings (single and packs)
-        - Signature
         - Unbounded strategies
         - Type issues
         - Default config
+    - Algorithm::instance
     - Registry
         - Registration (with minor differences)
         - Selection from AST with and w/o options
