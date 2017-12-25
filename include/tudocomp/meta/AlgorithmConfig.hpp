@@ -449,8 +449,8 @@ public:
 
     /// \brief Gets the algorithm's declaration.
     /// \return the algorithm's declaration
-    inline const AlgorithmDecl& decl() const {
-        return *m_decl;
+    inline std::shared_ptr<const AlgorithmDecl> decl() const {
+        return m_decl;
     }
 
     /// \brief Constructs the signature of the algorithm configuration,
