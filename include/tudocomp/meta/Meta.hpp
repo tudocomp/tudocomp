@@ -54,8 +54,6 @@ private:
     std::shared_ptr<ast::Object> m_sig; // signature of bindings
     AlgorithmLib m_known; // library of known declarations (excluding self!)
 
-    std::shared_ptr<ast::Object> m_binding_config; // binding configuration
-
 public:
     template<typename D>    struct Default {};
     template<typename... D> struct Defaults {};
@@ -128,10 +126,7 @@ public:
         template<typename Binding>
         inline Meta register_binding(const TypeDesc& type) {
             auto meta = check_algo_type<Binding>(m_name, type);
-            m_meta->m_sig->add_param(ast::Param(m_name, meta.signature()));
-
-            m_meta->m_binding_config->add_param(
-                ast::Param(m_name, meta.m_binding_config));
+            m_meta->m_sig->add_param(ast::Param(m_name, meta.m_sig));
 
             add_to_lib(m_meta->m_known, meta);
             return meta;
@@ -161,7 +156,7 @@ public:
                 AlgorithmDecl::Param::Kind::bounded,
                 false, // no list
                 type,
-                D::meta().m_binding_config));
+                D::meta().m_sig));
         }
 
         template<typename Binding, typename D = Binding>
@@ -191,7 +186,7 @@ public:
                 AlgorithmDecl::Param::Kind::unbounded,
                 false, // no list
                 type,
-                D::meta().m_binding_config
+                D::meta().m_sig
             ));
         }
 
@@ -202,15 +197,12 @@ public:
             gather<std::tuple<Bindings...>>::metas(metas, m_name, type);
 
             auto sigs = std::make_shared<ast::List>();
-            auto bindings = std::make_shared<ast::List>();
             for(auto& meta : metas) {
                 sigs->add_value(meta.signature());
-                bindings->add_value(meta.m_binding_config);
                 add_to_lib(m_meta->m_known, meta);
             }
 
             m_meta->m_sig->add_param(ast::Param(m_name, sigs));
-            m_meta->m_binding_config->add_param(ast::Param(m_name, bindings));
             return metas;
         }
 
@@ -241,7 +233,7 @@ public:
                 gather<std::tuple<D...>>::metas(metas, m_name, type);
 
                 for(auto& meta : metas) {
-                    defaults->add_value(meta.m_binding_config);
+                    defaults->add_value(meta.m_sig);
                     add_to_lib(m_meta->m_known, meta);
                 }
             }
@@ -276,7 +268,7 @@ public:
                 gather<std::tuple<D...>>::metas(metas, m_name, type);
 
                 for(auto& meta : metas) {
-                    defaults->add_value(meta.m_binding_config);
+                    defaults->add_value(meta.m_sig);
                     add_to_lib(m_meta->m_known, meta);
                 }
             }
@@ -296,8 +288,7 @@ public:
         const std::string& name,
         const std::string& desc = "")
         : m_decl(std::make_shared<AlgorithmDecl>(name, type, desc)),
-          m_sig(std::make_shared<ast::Object>(name)),
-          m_binding_config(std::make_shared<ast::Object>(name)) {
+          m_sig(std::make_shared<ast::Object>(name)) {
     }
 
     [[deprecated("transitional override")]]
@@ -321,16 +312,15 @@ public:
         return m_decl;
     }
 
-public:
     inline AlgorithmConfig default_config(
         ast::NodePtr<ast::Object> overrides = ast::NodePtr<ast::Object>())
         const {
 
         ast::NodePtr<ast::Object> cfg;
         if(overrides) {
-            cfg = overrides->inherit(m_binding_config);
+            cfg = overrides->inherit(m_sig);
         } else {
-            cfg = m_binding_config;
+            cfg = m_sig;
         }
 
         return AlgorithmConfig(m_decl, cfg, m_known);
@@ -338,10 +328,6 @@ public:
 
     inline ast::NodePtr<ast::Object> signature() const {
         return m_sig;
-    }
-
-    inline ast::NodePtr<ast::Object> bindings() const {
-        return m_binding_config;
     }
 
     inline const AlgorithmLib& known() const {

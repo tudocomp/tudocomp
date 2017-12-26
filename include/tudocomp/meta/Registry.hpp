@@ -172,7 +172,7 @@ public:
         auto decl = meta.decl();
         auto parsed = ast::convert<ast::Object>(
             ast::Parser::parse(decl->name() + paranthesize(options)));
-        auto obj = parsed->inherit(meta.bindings());
+        auto obj = parsed->inherit(meta.signature());
         auto cfg = AlgorithmConfig(
             decl, obj, m_lib + meta.known());
 
