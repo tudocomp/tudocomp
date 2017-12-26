@@ -261,14 +261,14 @@ TEST(lib, merge) {
 
 class config : public ::testing::Test {
 protected:
-    static constexpr TypeDesc a_type() { return TypeDesc("a"); }
-    static constexpr TypeDesc b_type() { return TypeDesc("b"); }
-    static constexpr TypeDesc c_type() { return TypeDesc("c"); }
+    static constexpr TypeDesc a_type() { return TypeDesc("A"); }
+    static constexpr TypeDesc b_type() { return TypeDesc("B"); }
+    static constexpr TypeDesc c_type() { return TypeDesc("C"); }
 
     std::shared_ptr<AlgorithmDecl> a, b, c;
     AlgorithmLib lib;
 
-    virtual void SetUp() {
+    virtual void SetUp() override {
         a = std::make_shared<AlgorithmDecl>("a", a_type());
         b = std::make_shared<AlgorithmDecl>("b", b_type());
         c = std::make_shared<AlgorithmDecl>("c", c_type());
@@ -481,15 +481,114 @@ TEST_F(config, defaults) {
     }
 }
 
+class meta : public ::testing::Test {
+protected:
+    static constexpr TypeDesc a_type() { return TypeDesc("A"); }
+    static constexpr TypeDesc b_type() { return TypeDesc("B"); }
+    static constexpr TypeDesc c_type() { return TypeDesc("C"); }
+
+    // first class f type C
+    class C1 {
+    public:
+        static inline Meta meta() { return Meta(c_type(), "c1"); }
+    };
+    // second class with type C
+    class C2 {
+    public:
+        static inline Meta meta() { return Meta(c_type(), "c2"); }
+    };
+
+    // B-type class
+    template<typename... c_t>
+    class B {
+    public:
+        static inline Meta meta() {
+            Meta m(b_type(), "b");
+            m.param("cl").strategy_list<c_t...>(c_type());
+            return m;
+        }
+    };
+
+    // A-type class
+    template<typename b_t>
+    class A {
+    public:
+        static inline Meta meta() {
+            Meta m(a_type(), "a");
+            m.param("p1").primitive();
+            m.param("p2").primitive(1);
+            m.param("l1").primitive_list();
+            m.param("l2").primitive_list({1,2,3});
+            m.param("b1").strategy<b_t>(b_type());
+            m.param("b2").unbounded_strategy(
+                b_type(), Meta::Default<B<C2,C1>>());
+            return m;
+        }
+    };
+};
+
+TEST_F(meta, signature) {
+    using A_B_ = A<B<>>;
+    using A_B_C1C2 = A<B<C1, C2>>;
+    using A_B_C2C1 = A<B<C2, C1>>;
+
+    ASSERT_EQ(
+        "a(b1=b(cl=[]))", A_B_::meta().signature()->str());
+    ASSERT_EQ(
+        "a(b1=b(cl=[c1(), c2()]))", A_B_C1C2::meta().signature()->str());
+    ASSERT_EQ(
+        "a(b1=b(cl=[c2(), c1()]))", A_B_C2C1::meta().signature()->str());
+}
+
+TEST_F(meta, default_cfg) {
+    using Subject = A<B<C1, C2>>;
+
+    auto meta = Subject::meta();
+
+    // no defaults for p1 and l1
+    ASSERT_THROW(meta.default_config(), ConfigError);
+
+    // OK (b1 and cl are bounded and therefore configured implicitly)
+    ASSERT_NO_THROW(meta.default_config(ast::convert<ast::Object>(
+        ast::Parser::parse("a(p1=777,l1=[])"))));
+
+    // not default for cl of b2
+    ASSERT_THROW(meta.default_config(ast::convert<ast::Object>(
+        ast::Parser::parse("a(p1=777,l1=[],b2=b)"))),
+        ConfigError);
+
+    // OK
+    ASSERT_NO_THROW(meta.default_config(ast::convert<ast::Object>(
+        ast::Parser::parse("a(p1=777,l1=[],b2=b(cl=[]))"))));
+
+    // config checks
+    {
+        auto cfg = meta.default_config(ast::convert<ast::Object>(
+            ast::Parser::parse("a(p1=777,l1=[])")));
+
+        ASSERT_EQ(777, cfg.param("p1").as_int());
+        ASSERT_EQ(1, cfg.param("p2").as_int());
+        ASSERT_EQ(0, cfg.param("l1").as_vector<int>().size());
+        ASSERT_EQ(3, cfg.param("l2").as_vector<int>().size());
+
+        auto& b1 = cfg.sub_config("b1");
+        ASSERT_EQ("b", b1.decl()->name());
+        auto& b2 = cfg.sub_config("b2");
+        ASSERT_EQ("b", b1.decl()->name());
+
+        auto& cl1 = b1.sub_configs("cl");
+        ASSERT_EQ(2, cl1.size());
+        ASSERT_EQ("c1", cl1[0].decl()->name());
+        ASSERT_EQ("c2", cl1[1].decl()->name());
+        auto& cl2 = b2.sub_configs("cl");
+        ASSERT_EQ(2, cl2.size());
+        ASSERT_EQ("c2", cl2[0].decl()->name());
+        ASSERT_EQ("c1", cl2[1].decl()->name());
+    }
+}
+
 /*
     Test cases to cover:
-    - Meta
-        - Value options
-        - Bindings (single and packs)
-        - Unbounded strategies
-        - Type issues
-        - Default config
-    - Algorithm::instance
     - Registry
         - Registration (with minor differences)
         - Selection from AST with and w/o options
