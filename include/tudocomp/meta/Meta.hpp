@@ -213,7 +213,7 @@ public:
 
             m_meta->m_decl->add_param(AlgorithmDecl::Param(
                 m_name,
-                false, // non-primitive
+                AlgorithmDecl::Param::Kind::bounded,
                 true,  // list
                 type,
                 ast::NodePtr<>() //no default
