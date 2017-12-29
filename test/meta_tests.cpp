@@ -481,37 +481,46 @@ TEST_F(config, defaults) {
     }
 }
 
+#include <tudocomp/Algorithm.hpp>
+
+using Algorithm = tdc::Algorithm;
+
 class meta : public ::testing::Test {
 protected:
     static constexpr TypeDesc a_type() { return TypeDesc("A"); }
     static constexpr TypeDesc b_type() { return TypeDesc("B"); }
     static constexpr TypeDesc c_type() { return TypeDesc("C"); }
 
-    // first class f type C
-    class C1 {
+    // first class with type C
+    class C1 : public Algorithm {
     public:
         static inline Meta meta() { return Meta(c_type(), "c1"); }
+        using Algorithm::Algorithm;
     };
+
     // second class with type C
-    class C2 {
+    class C2 : public Algorithm {
     public:
         static inline Meta meta() { return Meta(c_type(), "c2"); }
+        using Algorithm::Algorithm;
     };
 
     // B-type class
     template<typename... c_t>
-    class B {
+    class B : public Algorithm {
     public:
         static inline Meta meta() {
             Meta m(b_type(), "b");
             m.param("cl").strategy_list<c_t...>(c_type());
             return m;
         }
+
+        using Algorithm::Algorithm;
     };
 
     // A-type class
     template<typename b_t>
-    class A {
+    class A : public Algorithm {
     public:
         static inline Meta meta() {
             Meta m(a_type(), "a");
@@ -524,6 +533,8 @@ protected:
                 b_type(), Meta::Default<B<C2,C1>>());
             return m;
         }
+
+        using Algorithm::Algorithm;
     };
 };
 
@@ -587,10 +598,69 @@ TEST_F(meta, default_cfg) {
     }
 }
 
-/*
-    Test cases to cover:
-    - Registry
-        - Registration (with minor differences)
-        - Selection from AST with and w/o options
-        - Selection using template type with and w/o options
-*/
+class registry : public meta {
+protected:
+};
+
+TEST_F(registry, _register) {
+    using A_B_ = A<B<>>;
+    using A_B_C1C2 = A<B<C1, C2>>;
+    using A_B_C2C1 = A<B<C2, C1>>;
+
+    // create a registry for type A
+    Registry<Algorithm> reg(a_type());
+
+    // register
+    ASSERT_NO_THROW(reg.register_algorithm<A_B_>());
+    ASSERT_NO_THROW(reg.register_algorithm<A_B_C1C2>());
+    ASSERT_NO_THROW(reg.register_algorithm<A_B_C2C1>());
+
+    // already registered
+    ASSERT_THROW(reg.register_algorithm<A_B_>(), RegistryError);
+
+    // wrong type
+    ASSERT_THROW(reg.register_algorithm<C1>(), RegistryError);
+}
+
+TEST_F(registry, select_ast) {
+    // create a registry for type A
+    Registry<Algorithm> reg(a_type());
+    reg.register_algorithm<A<B<>>>();
+    reg.register_algorithm<A<B<C1, C2>>>();
+    reg.register_algorithm<A<B<C2, C1>>>();
+
+    // select unknown algorithm
+    ASSERT_THROW(reg.select("x"), RegistryError);
+
+    // no defaults for p1 and l1
+    ASSERT_THROW(reg.select("a(b1=b([c1,c1]))"), ConfigError);
+
+    // unregistered algorithm A<B<C1,C1>>
+    ASSERT_THROW(reg.select("a(b1=b([c1,c1]),p1=1,l1=[])"), RegistryError);
+
+    // OK
+    using A_B_C1C2 = A<B<C1, C2>>;
+    auto algo = reg.select("a(b1=b([c1,c2]),p1=1,l1=[])");
+    ASSERT_EQ(
+        A_B_C1C2::meta().signature()->str(),
+        algo->config().signature()->str());
+}
+
+TEST_F(registry, select_type) {
+    // create a registry for type A
+    Registry<Algorithm> reg(a_type());
+    reg.register_algorithm<A<B<>>>();
+    reg.register_algorithm<A<B<C1, C2>>>();
+    reg.register_algorithm<A<B<C2, C1>>>();
+
+    using A_B_C1C1 = A<B<C1, C1>>;
+
+    // no defaults for p1 and l1
+    ASSERT_THROW(reg.select<A_B_C1C1>(), ConfigError);
+
+    // OK (implicit temporary registration)
+    auto algo = reg.select<A_B_C1C1>("p1=1,l1=[]");
+    ASSERT_EQ(
+        A_B_C1C1::meta().signature()->str(),
+        algo->config().signature()->str());
+}
