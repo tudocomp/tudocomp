@@ -29,7 +29,7 @@ public:
 constexpr TypeDesc primitive_type("$");
 
 /// \brief Represents an algorithm declaration.
-class AlgorithmDecl {
+class Decl {
 public:
     /// \brief Represents a declared parameter for an algorithm.
     class Param {
@@ -159,7 +159,7 @@ public:
     /// \param name the algorithm's name
     /// \param type the algorithm's type
     /// \param desc a brief documentaton of the algorithm
-    inline AlgorithmDecl(
+    inline Decl(
         const std::string& name,
         const TypeDesc&    type,
         const std::string& desc = "")
@@ -168,7 +168,7 @@ public:
 
     /// \brief Copy constructor.
     /// \param other the object to copy
-    inline AlgorithmDecl(const AlgorithmDecl& other)
+    inline Decl(const Decl& other)
         : m_name(other.m_name),
           m_type(other.m_type),
           m_desc(other.m_desc),
@@ -177,7 +177,7 @@ public:
 
     /// \brief Move constructor.
     /// \param other the object to move
-    inline AlgorithmDecl(AlgorithmDecl&& other)
+    inline Decl(Decl&& other)
         : m_name(std::move(other.m_name)),
           m_type(std::move(other.m_type)),
           m_desc(std::move(other.m_desc)),

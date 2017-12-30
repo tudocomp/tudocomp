@@ -3,7 +3,7 @@
 #include <forward_list>
 #include <string>
 #include <unordered_map>
-#include <tudocomp/meta/AlgorithmDecl.hpp>
+#include <tudocomp/meta/Decl.hpp>
 
 namespace tdc {
 namespace meta {
@@ -15,31 +15,31 @@ public:
 };
 
 /// \brief A library of algorithm declarations.
-class AlgorithmLib {
+class DeclLib {
 private:
     using inner_map_t = std::unordered_map<
-        std::string, std::shared_ptr<const AlgorithmDecl>>;
+        std::string, std::shared_ptr<const Decl>>;
 
     std::unordered_map<std::string, inner_map_t> m_lib;
 
 public:
     /// \brief Main Constructor.
-    inline AlgorithmLib() {
+    inline DeclLib() {
     }
 
     /// \brief Copy constructor.
     /// \param other the object to copy
-    inline AlgorithmLib(const AlgorithmLib& other) : m_lib(other.m_lib) {
+    inline DeclLib(const DeclLib& other) : m_lib(other.m_lib) {
     }
 
     /// \brief Move constructor.
     /// \param other the object to move
-    inline AlgorithmLib(AlgorithmLib&& other) : m_lib(std::move(other.m_lib)) {
+    inline DeclLib(DeclLib&& other) : m_lib(std::move(other.m_lib)) {
     }
 
 private:
     inline void insert_recursively(
-        std::shared_ptr<const AlgorithmDecl> decl,
+        std::shared_ptr<const Decl> decl,
         const TypeDesc& type) {
 
         // recursively add for super types
@@ -86,12 +86,12 @@ public:
     /// is thrown.
     ///
     /// \param decl the declaration to insert
-    inline void insert(std::shared_ptr<const AlgorithmDecl> decl) {
+    inline void insert(std::shared_ptr<const Decl> decl) {
         insert_recursively(decl, decl->type());
     }
 
 private:
-    inline std::shared_ptr<const AlgorithmDecl> find_for_type(
+    inline std::shared_ptr<const Decl> find_for_type(
         const std::string& name,
         const TypeDesc& type) const {
 
@@ -104,7 +104,7 @@ private:
             }
         }
 
-        return std::shared_ptr<const AlgorithmDecl>();
+        return std::shared_ptr<const Decl>();
     }
 
 public:
@@ -114,14 +114,14 @@ public:
     /// \param include_subtypes if \c true, declarations whose type inherit
     ///                         the specified type are also considered
     /// \return the found declaration, or an empty pointer if none was found
-    inline std::shared_ptr<const AlgorithmDecl> find(
+    inline std::shared_ptr<const Decl> find(
         const std::string& name,
         const TypeDesc& type,
         bool include_subtypes = true) const {
 
-        std::shared_ptr<const AlgorithmDecl> result = find_for_type(name, type);
+        std::shared_ptr<const Decl> result = find_for_type(name, type);
         if(result && !include_subtypes && result->type() != type) {
-            return std::shared_ptr<const AlgorithmDecl>(); // "null"
+            return std::shared_ptr<const Decl>(); // "null"
         } else {
             return result;
         }
@@ -129,8 +129,8 @@ public:
 
     /// \brief Returns a list of all entered declarations.
     /// \return a list of all entered declarations with no specific order
-    inline std::forward_list<std::shared_ptr<const AlgorithmDecl>> entries() const {
-        std::forward_list<std::shared_ptr<const AlgorithmDecl>> e;
+    inline std::forward_list<std::shared_ptr<const Decl>> entries() const {
+        std::forward_list<std::shared_ptr<const Decl>> e;
         for(auto outer : m_lib) {
             for(auto inner : outer.second) {
                 e.emplace_front(inner.second);
@@ -140,8 +140,8 @@ public:
     }
 };
 
-inline AlgorithmLib operator+(const AlgorithmLib& a, const AlgorithmLib& b) {
-    AlgorithmLib merged = a;
+inline DeclLib operator+(const DeclLib& a, const DeclLib& b) {
+    DeclLib merged = a;
     for(auto e : b.entries()) merged.insert(e);
     return merged;
 }

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <tudocomp/meta/AlgorithmDecl.hpp>
-#include <tudocomp/meta/AlgorithmLib.hpp>
+#include <tudocomp/meta/Decl.hpp>
+#include <tudocomp/meta/DeclLib.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
 #include <tudocomp/meta/ast/TypeConversion.hpp>
 
@@ -21,15 +21,15 @@ public:
 };
 
 /// \brief Represents a value configuration of a declared algorithm.
-class AlgorithmConfig {
+class Config {
 public:
     /// \brief Represents a value configuration for a declared parameter.
     class Param {
     private:
-        const AlgorithmDecl::Param* m_decl;
+        const Decl::Param* m_decl;
 
         ast::NodePtr<> m_config;
-        std::vector<AlgorithmConfig> m_sub_configs; // valid if non-primitive
+        std::vector<Config> m_sub_configs; // valid if non-primitive
 
         inline static std::string param_str(bool list_item) {
             return std::string(
@@ -52,7 +52,7 @@ public:
 
         inline ast::NodePtr<ast::Object> configure_object(
             ast::NodePtr<> config,
-            const AlgorithmLib& lib,
+            const DeclLib& lib,
             bool list_item = false) {
 
             auto obj_value = ast::convert<ast::Object>(config,
@@ -78,9 +78,9 @@ public:
         /// \param config the configured value
         /// \param lib the algorithm library used for name resolution
         inline Param(
-            const AlgorithmDecl::Param& decl,
+            const Decl::Param& decl,
             ast::NodePtr<> config,
-            const AlgorithmLib& lib)
+            const DeclLib& lib)
             : m_decl(&decl), m_config(config) {
 
             if(!m_config) {
@@ -127,7 +127,7 @@ public:
 
         /// \brief Gets the parameter's declaration.
         /// \return the parameter's declaration
-        inline const AlgorithmDecl::Param& decl() const {
+        inline const Decl::Param& decl() const {
             return *m_decl;
         }
 
@@ -139,7 +139,7 @@ public:
 
         /// \brief Gets the parameter's sub configurations.
         /// \return the parameter's sub configurations
-        inline const std::vector<AlgorithmConfig>& sub_configs() const {
+        inline const std::vector<Config>& sub_configs() const {
             return m_sub_configs;
         }
 
@@ -168,7 +168,7 @@ public:
     /// \brief Accessor for parameter values.
     class ParamValue {
     private:
-        friend class AlgorithmConfig;
+        friend class Config;
 
         template<typename T>
         inline static T node_value_as(ast::NodePtr<> node) {
@@ -272,7 +272,7 @@ public:
     };
 
 private:
-    std::shared_ptr<const AlgorithmDecl> m_decl;
+    std::shared_ptr<const Decl> m_decl;
     std::vector<Param> m_params;
 
 public:
@@ -284,10 +284,10 @@ public:
     /// \param decl the algorithm declaration
     /// \param config the value configuration
     /// \param lib the algorithm library used for name resolution
-    inline AlgorithmConfig(
-        std::shared_ptr<const AlgorithmDecl> decl,
+    inline Config(
+        std::shared_ptr<const Decl> decl,
         ast::NodePtr<> config,
-        const AlgorithmLib& lib)
+        const DeclLib& lib)
         : m_decl(decl) {
 
         // assure that config is an object
@@ -325,7 +325,7 @@ public:
         }
 
         // store parameters that have not been mapped
-        std::unordered_map<std::string, const AlgorithmDecl::Param*> unmapped;
+        std::unordered_map<std::string, const Decl::Param*> unmapped;
 
         for(auto& dp : decl_params) {
             unmapped.emplace(dp.name(), &dp);
@@ -382,12 +382,12 @@ public:
     }
 
     /// \brief Copy constructor.
-    inline AlgorithmConfig(const AlgorithmConfig& other)
+    inline Config(const Config& other)
         : m_decl(other.m_decl), m_params(other.m_params) {
     }
 
     /// \brief Move constructor.
-    inline AlgorithmConfig(AlgorithmConfig&& other)
+    inline Config(Config&& other)
         : m_decl(other.m_decl), m_params(std::move(other.m_params)) {
     }
 
@@ -416,7 +416,7 @@ public:
     ///
     /// \param param the name of the parameter
     /// \return the configuration of the corresponding sub algorithm
-    inline const AlgorithmConfig& sub_config(const std::string& param) const {
+    inline const Config& sub_config(const std::string& param) const {
 
         auto& sub = get_param(param).sub_configs();
         if(sub.size() == 0) {
@@ -429,10 +429,10 @@ public:
     }
 
     [[deprecated("transitional solution")]]
-    inline AlgorithmConfig env_for_option(
+    inline Config env_for_option(
         const std::string& param) const {
 
-        return AlgorithmConfig(sub_config(param));
+        return Config(sub_config(param));
     }
 
     /// \brief Gets the configurations of the requested sub algorithm list.
@@ -441,7 +441,7 @@ public:
     ///
     /// \param param the name of the parameter
     /// \return the configurations of the corresponding sub algorithms
-    inline const std::vector<AlgorithmConfig>& sub_configs(
+    inline const std::vector<Config>& sub_configs(
         const std::string& param) const {
 
         return get_param(param).sub_configs();
@@ -449,7 +449,7 @@ public:
 
     /// \brief Gets the algorithm's declaration.
     /// \return the algorithm's declaration
-    inline std::shared_ptr<const AlgorithmDecl> decl() const {
+    inline std::shared_ptr<const Decl> decl() const {
         return m_decl;
     }
 
@@ -464,7 +464,7 @@ public:
 
         // iterate over declarated parameters
         for(auto& p : m_decl->params()) {
-            if(p.kind() == AlgorithmDecl::Param::Kind::bounded) {
+            if(p.kind() == Decl::Param::Kind::bounded) {
                 // add parameter to signature
                 if(p.is_list()) {
                     // list of sub algorithms - recurse for each
@@ -504,8 +504,8 @@ public:
 
 } // namespace meta
 
-using AlgorithmConfig = meta::AlgorithmConfig;
+using Config = meta::Config;
 
-using Env = meta::AlgorithmConfig; //TODO: deprecate
+using Env = meta::Config; //TODO: deprecate
 
 } // namespace tdc

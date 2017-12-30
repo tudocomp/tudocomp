@@ -4,9 +4,9 @@
 #include <limits.h>
 #include <sstream>
 
-#include <tudocomp/meta/AlgorithmDecl.hpp>
-#include <tudocomp/meta/AlgorithmLib.hpp>
-#include <tudocomp/meta/AlgorithmConfig.hpp>
+#include <tudocomp/meta/Decl.hpp>
+#include <tudocomp/meta/DeclLib.hpp>
+#include <tudocomp/meta/Config.hpp>
 #include <tudocomp/meta/Meta.hpp>
 #include <tudocomp/meta/Registry.hpp>
 
@@ -181,18 +181,18 @@ TEST(lib, insert_find) {
     TypeDesc x_type("X");
 
     // construct declarations
-    auto a = std::make_shared<AlgorithmDecl>("a", a_type);
-    auto b = std::make_shared<AlgorithmDecl>("b", b_type);
-    auto c = std::make_shared<AlgorithmDecl>("c", c_type);
-    auto x = std::make_shared<AlgorithmDecl>("x", x_type);
+    auto a = std::make_shared<Decl>("a", a_type);
+    auto b = std::make_shared<Decl>("b", b_type);
+    auto c = std::make_shared<Decl>("c", c_type);
+    auto x = std::make_shared<Decl>("x", x_type);
 
     // a declaration named "a" but of type X
-    auto a_x = std::make_shared<AlgorithmDecl>("a", x_type);
+    auto a_x = std::make_shared<Decl>("a", x_type);
     // a declaration named "a" but of type B
-    auto a_b = std::make_shared<AlgorithmDecl>("a", b_type);
+    auto a_b = std::make_shared<Decl>("a", b_type);
 
     // construct library
-    AlgorithmLib lib;
+    DeclLib lib;
     lib.insert(a);
     lib.insert(b);
     lib.insert(c);
@@ -220,18 +220,18 @@ TEST(lib, merge) {
     TypeDesc b_type("B", a_type); // B inherits from A
     TypeDesc x_type("X");
     TypeDesc y_type("Y", x_type); // Y inherits from X
-    auto a = std::make_shared<AlgorithmDecl>("a", a_type);
-    auto b = std::make_shared<AlgorithmDecl>("b", b_type);
-    auto x = std::make_shared<AlgorithmDecl>("x", x_type);
-    auto y = std::make_shared<AlgorithmDecl>("y", y_type);
+    auto a = std::make_shared<Decl>("a", a_type);
+    auto b = std::make_shared<Decl>("b", b_type);
+    auto x = std::make_shared<Decl>("x", x_type);
+    auto y = std::make_shared<Decl>("y", y_type);
     // a declaration named "a" but of type B
-    auto a_b = std::make_shared<AlgorithmDecl>("a", b_type);
+    auto a_b = std::make_shared<Decl>("a", b_type);
 
     // construct libraries
-    AlgorithmLib lib1; lib1.insert(a); lib1.insert(b);
-    AlgorithmLib lib2; lib2.insert(x); lib2.insert(y);
-    AlgorithmLib lib3; lib3.insert(a); lib3.insert(x);
-    AlgorithmLib lib4; lib4.insert(a_b); lib4.insert(x);
+    DeclLib lib1; lib1.insert(a); lib1.insert(b);
+    DeclLib lib2; lib2.insert(x); lib2.insert(y);
+    DeclLib lib3; lib3.insert(a); lib3.insert(x);
+    DeclLib lib4; lib4.insert(a_b); lib4.insert(x);
 
     // merge lib1 and lib2
     {
@@ -265,46 +265,46 @@ protected:
     static constexpr TypeDesc b_type() { return TypeDesc("B"); }
     static constexpr TypeDesc c_type() { return TypeDesc("C"); }
 
-    std::shared_ptr<AlgorithmDecl> a, b, c;
-    AlgorithmLib lib;
+    std::shared_ptr<Decl> a, b, c;
+    DeclLib lib;
 
     virtual void SetUp() override {
-        a = std::make_shared<AlgorithmDecl>("a", a_type());
-        b = std::make_shared<AlgorithmDecl>("b", b_type());
-        c = std::make_shared<AlgorithmDecl>("c", c_type());
+        a = std::make_shared<Decl>("a", a_type());
+        b = std::make_shared<Decl>("b", b_type());
+        c = std::make_shared<Decl>("c", c_type());
 
         // add parameters to a
         {
             // p1 is a primitive value with no default
-            a->add_param(AlgorithmDecl::Param(
-                "p1", AlgorithmDecl::Param::Kind::primitive,
+            a->add_param(Decl::Param(
+                "p1", Decl::Param::Kind::primitive,
                 false, TypeDesc(), ast::NodePtr<>()));
 
             // p2 is a primitive value with default value "1"
-            a->add_param(AlgorithmDecl::Param(
-                "p2", AlgorithmDecl::Param::Kind::primitive,
+            a->add_param(Decl::Param(
+                "p2", Decl::Param::Kind::primitive,
                 false, TypeDesc(), ast::Parser::parse("1")));
 
             // l1 is a list of primitive values with no default
-            a->add_param(AlgorithmDecl::Param(
-                "l1", AlgorithmDecl::Param::Kind::primitive,
+            a->add_param(Decl::Param(
+                "l1", Decl::Param::Kind::primitive,
                 true, TypeDesc(), ast::NodePtr<>()));
 
             // l2 is a list of primitive values with default "[1,2,3]"
-            a->add_param(AlgorithmDecl::Param(
-                "l2", AlgorithmDecl::Param::Kind::primitive,
+            a->add_param(Decl::Param(
+                "l2", Decl::Param::Kind::primitive,
                 true, TypeDesc(), ast::Parser::parse("[1,2,3]")));
 
             // b1 is an object of type B with no default
             // it is bounded and should occur in the signature
-            a->add_param(AlgorithmDecl::Param(
-                "b1", AlgorithmDecl::Param::Kind::bounded,
+            a->add_param(Decl::Param(
+                "b1", Decl::Param::Kind::bounded,
                 false, b_type(), ast::NodePtr<>()));
 
             // b2 is an object of type B with default "b()"
             // it is unbounded and should not occur in the signature
-            a->add_param(AlgorithmDecl::Param(
-                "b2", AlgorithmDecl::Param::Kind::unbounded,
+            a->add_param(Decl::Param(
+                "b2", Decl::Param::Kind::unbounded,
                 false, b_type(), ast::Parser::parse("b()")));
         }
 
@@ -312,8 +312,8 @@ protected:
         {
             // cl is a list of objects of type C with default "[]"
             // they are bounded and should occur in the signature
-            b->add_param(AlgorithmDecl::Param(
-                "cl", AlgorithmDecl::Param::Kind::bounded,
+            b->add_param(Decl::Param(
+                "cl", Decl::Param::Kind::bounded,
                 true, c_type(), ast::Parser::parse("[]")));
         }
 
@@ -323,15 +323,15 @@ protected:
         lib.insert(c);
     }
 
-    inline AlgorithmConfig a_cfg(const std::string& str) {
-        return AlgorithmConfig(a, ast::Parser::parse(str), lib);
+    inline Config a_cfg(const std::string& str) {
+        return Config(a, ast::Parser::parse(str), lib);
     }
 
-    inline AlgorithmConfig a_cfg(
+    inline Config a_cfg(
         const std::string& str,
-        const AlgorithmLib& _lib) {
+        const DeclLib& _lib) {
 
-        return AlgorithmConfig(a, ast::Parser::parse(str), _lib);
+        return Config(a, ast::Parser::parse(str), _lib);
     }
 };
 
@@ -359,7 +359,7 @@ TEST_F(config, sanity) {
     // OK
     ASSERT_NO_THROW(a_cfg("a(p1=1,p2=2,l1=[],l2=[7,8,9],b1=b,b2=b)"));
     // b not known
-    ASSERT_THROW(a_cfg("a(p1=2,l1=[],b1=b)", AlgorithmLib()), ConfigError);
+    ASSERT_THROW(a_cfg("a(p1=2,l1=[],b1=b)", DeclLib()), ConfigError);
     // bad type for p1
     ASSERT_THROW(a_cfg("a(p1=[],l1=[],b1=b)"), ast::TypeMismatchError);
     // bad type for l1

@@ -2,7 +2,7 @@
 
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
-#include <tudocomp/meta/AlgorithmConfig.hpp>
+#include <tudocomp/meta/Config.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <sdsl/select_support_mcl.hpp> // for the select data structure
 

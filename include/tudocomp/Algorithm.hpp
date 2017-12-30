@@ -1,12 +1,12 @@
 #pragma once
 
-#include <tudocomp/meta/AlgorithmConfig.hpp>
+#include <tudocomp/meta/Config.hpp>
 #include <tudocomp/meta/Meta.hpp>
 
 namespace tdc {
 
 class Algorithm {
-    AlgorithmConfig m_config;
+    Config m_config;
 
 public:
     template<typename T, typename... Args>
@@ -41,15 +41,15 @@ public:
     }
 
     inline Algorithm() = delete;
-    inline Algorithm(AlgorithmConfig&& cfg): m_config(std::move(cfg)) {}
+    inline Algorithm(Config&& cfg): m_config(std::move(cfg)) {}
 
-    inline const AlgorithmConfig& config() const { return m_config; }
+    inline const Config& config() const { return m_config; }
 
     [[deprecated("use config()")]]
-    inline const AlgorithmConfig& env() const { return m_config; }
+    inline const Config& env() const { return m_config; }
 
     [[deprecated("transitional solution")]]
-    inline AlgorithmConfig& env() { return m_config; }
+    inline Config& env() { return m_config; }
 };
 
 }

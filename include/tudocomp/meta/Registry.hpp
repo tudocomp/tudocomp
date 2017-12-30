@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <tudocomp/meta/AlgorithmConfig.hpp>
+#include <tudocomp/meta/Config.hpp>
 #include <tudocomp/meta/Meta.hpp>
 
 namespace tdc {
@@ -22,10 +22,10 @@ public:
 template<typename T>
 class Registry {
 private:
-    using ctor_t = std::function<std::unique_ptr<T>(AlgorithmConfig&&)>;
+    using ctor_t = std::function<std::unique_ptr<T>(Config&&)>;
 
     TypeDesc m_root_type;
-    AlgorithmLib m_lib;
+    DeclLib m_lib;
     std::unordered_map<std::string, ctor_t> m_reg;
 
 public:
@@ -51,7 +51,7 @@ public:
         auto it = m_reg.find(sig);
         if(it == m_reg.end()) {
             add_to_lib(m_lib, meta);
-            m_reg.emplace(sig, [](AlgorithmConfig&& cfg) {
+            m_reg.emplace(sig, [](Config&& cfg) {
                 return std::make_unique<Algo>(std::move(cfg));
             });
         } else {
@@ -65,11 +65,11 @@ public:
         friend class Entry;
         friend class Registry;
 
-        std::shared_ptr<const AlgorithmDecl> m_decl;
+        std::shared_ptr<const Decl> m_decl;
         std::unique_ptr<T> m_instance;
 
         inline Selection(
-            std::shared_ptr<const AlgorithmDecl> decl,
+            std::shared_ptr<const Decl> decl,
             std::unique_ptr<T>&& instance)
             : m_decl(decl), m_instance(std::move(instance)) {
         }
@@ -93,7 +93,7 @@ public:
             return bool(m_instance);
         }
 
-        inline std::shared_ptr<const AlgorithmDecl> decl() const {
+        inline std::shared_ptr<const Decl> decl() const {
             return m_decl;
         }
 
@@ -114,27 +114,27 @@ public:
     private:
         friend class Registry;
 
-        std::shared_ptr<const AlgorithmDecl> m_decl;
+        std::shared_ptr<const Decl> m_decl;
         const ctor_t* m_ctor;
-        AlgorithmConfig m_cfg;
+        Config m_cfg;
 
         inline Entry(
-            std::shared_ptr<const AlgorithmDecl> decl,
+            std::shared_ptr<const Decl> decl,
             const ctor_t& ctor,
-            AlgorithmConfig&& cfg) : m_decl(decl), m_ctor(&ctor), m_cfg(cfg) {
+            Config&& cfg) : m_decl(decl), m_ctor(&ctor), m_cfg(cfg) {
         }
 
     public:
-        inline std::shared_ptr<const AlgorithmDecl> decl() const {
+        inline std::shared_ptr<const Decl> decl() const {
             return m_decl;
         }
 
-        inline const AlgorithmConfig& config() const {
+        inline const Config& config() const {
             return m_cfg.decl();
         }
 
         inline Selection select() const {
-            return Selection(m_decl, (*m_ctor)(AlgorithmConfig(m_cfg)));
+            return Selection(m_decl, (*m_ctor)(Config(m_cfg)));
         }
     };
 
@@ -145,7 +145,7 @@ public:
                 std::string("unknown algorithm: ") + obj->name());
         }
 
-        auto cfg = AlgorithmConfig(decl, obj, m_lib);
+        auto cfg = Config(decl, obj, m_lib);
         auto sig = cfg.signature();
         auto reg_entry = m_reg.find(sig->str());
 
@@ -173,7 +173,7 @@ public:
         auto parsed = ast::convert<ast::Object>(
             ast::Parser::parse(decl->name() + paranthesize(options)));
         auto obj = parsed->inherit(meta.signature());
-        auto cfg = AlgorithmConfig(
+        auto cfg = Config(
             decl, obj, m_lib + meta.known());
 
         return Selection(decl, std::make_unique<C>(std::move(cfg)));
