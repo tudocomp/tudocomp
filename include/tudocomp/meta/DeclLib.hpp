@@ -1,8 +1,9 @@
 #pragma once
 
-#include <forward_list>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
 #include <tudocomp/meta/Decl.hpp>
 
 namespace tdc {
@@ -129,11 +130,11 @@ public:
 
     /// \brief Returns a list of all entered declarations.
     /// \return a list of all entered declarations with no specific order
-    inline std::forward_list<std::shared_ptr<const Decl>> entries() const {
-        std::forward_list<std::shared_ptr<const Decl>> e;
+    inline std::vector<std::shared_ptr<const Decl>> entries() const {
+        std::vector<std::shared_ptr<const Decl>> e;
         for(auto outer : m_lib) {
             for(auto inner : outer.second) {
-                e.emplace_front(inner.second);
+                e.emplace_back(inner.second);
             }
         }
         return e;

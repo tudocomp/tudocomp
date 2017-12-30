@@ -91,10 +91,21 @@ int main(int argc, char** argv) {
         const Registry<Generator>& generator_registry = GENERATOR_REGISTRY;
 
         if (options.list) {
+            auto list = [&](std::vector<std::shared_ptr<const meta::Decl>> v){
+                for(auto decl : v) {
+                    std::cout
+                        << decl->name() << " : "
+                        << decl->type().name() << std::endl;
+                }
+                std::cout << std::endl;
+            };
+
             std::cout << "This build supports the following algorithms:\n";
             std::cout << std::endl;
-            std::cout << compressor_registry.generate_doc_string("Compressors");
-            std::cout << generator_registry.generate_doc_string("String Generators");
+            std::cout << "Compressors:" << std::endl;
+            list(compressor_registry.declarations());
+            std::cout << "String Generators:" << std::endl;
+            list(generator_registry.declarations());
             return 0;
         }
 

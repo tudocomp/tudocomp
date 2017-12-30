@@ -179,13 +179,8 @@ public:
         return Selection(decl, std::make_unique<C>(std::move(cfg)));
     }
 
-    inline std::string generate_doc_string(const std::string& title) const {
-        // TODO: implement
-        std::stringstream ss;
-        for(auto e : m_reg) {
-            ss << e.first << std::endl;
-        }
-        return ss.str();
+    inline std::vector<std::shared_ptr<const Decl>> declarations() const {
+        return m_lib.entries();
     }
 
     inline std::vector<std::string> signatures() const {
