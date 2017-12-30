@@ -8,6 +8,7 @@
 #include <tudocomp/meta/ast/Object.hpp>
 
 #include <stdexcept>
+#include <sstream>
 
 namespace tdc {
 namespace meta {
@@ -248,12 +249,28 @@ private:
         }
     }
 
+    inline static std::string preprocess(const std::string& str) {
+        // FIXME: the chain syntax should NOT be hardcoded in the AST module
+        // Make Parser a singleton and allow preprocessors to hook
+        // This requires a Parser.cpp file, which will be addressed in a future
+        // branch
+        size_t pos = str.find(':');
+        if(pos != std::string::npos) {
+            return std::string("chain(") +
+                    str.substr(0, pos) + ", " +
+                    preprocess(str.substr(pos+1)) + ")";
+        } else {
+            return str;
+        }
+    }
+
 public:
     /// \brief Parses the given string and returns the resulting AST.
     /// \param str the input string
     /// \return the resulting AST
     inline static ast::NodePtr<> parse(const std::string& str) {
-        return Parser(str).parse_node();
+        auto x = preprocess(str);
+        return Parser(x).parse_node();
     }
 };
 
