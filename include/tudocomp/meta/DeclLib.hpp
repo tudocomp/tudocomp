@@ -128,8 +128,30 @@ public:
         }
     }
 
+    /// \brief Finds all declarations matching the specified type.
+    /// \param type the type of declarations to retrieve
+    /// \param include_subtypes if \c true, declarations whose type inherit
+    /// \return a list of all found declarations in no specific order
+    inline std::vector<std::shared_ptr<const Decl>> find_all(
+        const TypeDesc& type,
+        bool include_subtypes = true) const {
+
+        std::vector<std::shared_ptr<const Decl>> result;
+        auto it = m_lib.find(type.name());
+        if(it != m_lib.end()) {
+            auto& lib_for_type = it->second;
+            for(auto e : lib_for_type) {
+                auto decl = e.second;
+                if(include_subtypes || decl->type() == type) {
+                    result.emplace_back(decl);
+                }
+            }
+        }
+        return result;
+    }
+
     /// \brief Returns a list of all entered declarations.
-    /// \return a list of all entered declarations with no specific order
+    /// \return a list of all entered declarations in no specific order
     inline std::vector<std::shared_ptr<const Decl>> entries() const {
         std::vector<std::shared_ptr<const Decl>> e;
         for(auto outer : m_lib) {

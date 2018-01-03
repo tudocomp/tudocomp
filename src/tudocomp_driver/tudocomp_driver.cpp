@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <exception>
@@ -12,6 +13,8 @@
 #include <tudocomp/io.hpp>
 #include <tudocomp/io/IOUtil.hpp>
 #include <tudocomp/version.hpp>
+
+#include <tudocomp/util/ASCIITable.hpp>
 
 #include <tudocomp_driver/Options.hpp>
 #include <tudocomp_driver/Registry.hpp>
@@ -91,22 +94,54 @@ int main(int argc, char** argv) {
         const Registry<Generator>& generator_registry = GENERATOR_REGISTRY;
 
         if (options.list) {
-            auto list = [&](std::vector<std::shared_ptr<const meta::Decl>> v){
-                for(auto decl : v) {
-                    std::cout
-                        << decl->name() << " : "
-                        << decl->type().name() << std::endl;
-                }
-                std::cout << std::endl;
-            };
+            auto lib = compressor_registry.library() +
+                       generator_registry.library();
 
-            std::cout << "This build supports the following algorithms:\n";
-            std::cout << std::endl;
-            std::cout << "Compressors:" << std::endl;
-            list(compressor_registry.declarations());
-            std::cout << "String Generators:" << std::endl;
-            list(generator_registry.declarations());
-            return 0;
+            if(options.list_algorithm.empty()) {
+                // list all algorithms
+                std::cout << "The following is a listing of algorithms "
+                          << "supported by this build." << std::endl;
+                std::cout << "Use " << cmd << " --list=<ID> to get detail "
+                          << "information on the algorithm with the given ID."
+                          << std::endl << std::endl;
+
+                auto print_type_table = [&](TypeDesc type){
+                    auto all = lib.find_all(type);
+                    std::sort(all.begin(), all.end(),
+                        [](std::shared_ptr<const meta::Decl> a,
+                           std::shared_ptr<const meta::Decl> b) {
+
+                        return (a->name() <= b->name());
+                    });
+
+                    ASCIITable table(80);
+                    size_t longest = 2;
+                    for(auto decl : all) {
+                        longest = std::max(longest, decl->name().length());
+                    }
+
+                    table.add_column("ID", longest);
+                    table.add_column("Description", 0, true);
+                    for(auto decl : all) {
+                        table.add_row({ decl->name(), decl->desc() });
+                    }
+                    table.print(std::cout);
+                };
+
+                std::cout << "Compressors (for the -a option):";
+                std::cout << std::endl << std::endl;
+                print_type_table(Compressor::type_desc());
+                std::cout << std::endl;
+                std::cout << "String generators (for the -g option):";
+                std::cout << std::endl << std::endl;
+                print_type_table(Generator::type_desc());
+                std::cout << std::endl;
+                return 0;
+            } else {
+                // details
+                std::cout << "Details: " << options.list_algorithm << std::endl;
+                return 0;
+            }
         }
 
         // check mode

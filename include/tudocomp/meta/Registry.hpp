@@ -179,6 +179,10 @@ public:
         return Selection(decl, std::make_unique<C>(std::move(cfg)));
     }
 
+    inline const DeclLib& library() const {
+        return m_lib;
+    }
+
     inline std::vector<std::shared_ptr<const Decl>> declarations() const {
         return m_lib.entries();
     }
