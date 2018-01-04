@@ -202,6 +202,10 @@ int main(int argc, char** argv) {
                     if(decl->params().size() > 0) {
                         std::set<std::string> param_types;
                         {
+                            size_t num_defaults = 0;
+                            std::stringstream defaults;
+                            defaults << decl->name() << "(";
+
                             ASCIITable table(80, " - ");
                             size_t longest_pname = 0;
                             for(auto& p : decl->params()) {
@@ -217,10 +221,10 @@ int main(int argc, char** argv) {
                                 std::stringstream desc;
 
                                 if(p.is_primitive()) {
-                                    desc << "primitive value\n";
+                                    desc << "primitive value";
                                 } else {
                                     desc << "algorithm of type '"
-                                         << p.type().name() << "'\n";
+                                         << p.type().name() << "'";
 
                                     param_types.emplace(p.type().name());
                                 }
@@ -228,13 +232,20 @@ int main(int argc, char** argv) {
                                 //TODO description
 
                                 if(p.default_value()) {
-                                    desc << "default: "
-                                         << p.default_value()->str() << "\n";
+                                    if(num_defaults++ > 0) defaults << ", ";
+                                    defaults << p.name() << "="
+                                             << p.default_value()->str();
                                 }
                                 
                                 table.add_row({ p.name(), desc.str() });
                             }
+
                             table.print(std::cout, false, false, false);
+
+                            defaults << ")";
+                            std::cout << std::endl;
+                            std::cout << "Default configuration:" << std::endl;
+                            std::cout << defaults.str() << std::endl;
                         }
 
                         if(param_types.size() > 0) {
