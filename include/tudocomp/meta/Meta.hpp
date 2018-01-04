@@ -62,15 +62,17 @@ public:
     private:
         Meta* m_meta;
         std::string m_name;
+        std::string m_desc;
 
     public:
-        inline ParamBuilder(Meta& meta, const std::string& name)
-            : m_meta(&meta), m_name(name) {
+        inline ParamBuilder(
+            Meta& meta, const std::string& name, const std::string& desc)
+            : m_meta(&meta), m_name(name), m_desc(desc) {
         }
 
         inline void primitive() {
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::primitive,
                 false,      // no list
                 no_type,
@@ -80,7 +82,7 @@ public:
         template<typename T>
         inline void primitive(const T& default_value) {
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::primitive,
                 false, // no list
                 no_type,
@@ -100,7 +102,7 @@ public:
 
         inline void primitive_list() {
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::primitive,
                 true, // list
                 no_type,
@@ -115,7 +117,7 @@ public:
             }
 
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::primitive,
                 true, // list
                 no_type,
@@ -138,7 +140,7 @@ public:
             register_binding<Binding>(type);
 
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::bound,
                 false,
                 type,
@@ -152,7 +154,7 @@ public:
             add_to_lib(m_meta->m_known, D::meta());
 
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::bound,
                 false, // no list
                 type,
@@ -167,7 +169,7 @@ public:
 
         inline void unbound_strategy(const TypeDesc& type) {
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::unbound,
                 false, // no list
                 type,
@@ -182,7 +184,7 @@ public:
 
             add_to_lib(m_meta->m_known, D::meta());
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::unbound,
                 false, // no list
                 type,
@@ -212,7 +214,7 @@ public:
             register_bindings<Bindings...>(type);
 
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::bound,
                 true,  // list
                 type,
@@ -239,7 +241,7 @@ public:
             }
 
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::bound,
                 true, // list
                 type,
@@ -249,7 +251,7 @@ public:
 
         inline void unbound_strategy_list(const TypeDesc& type) {
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::unbound,
                 true, // list
                 type,
@@ -274,7 +276,7 @@ public:
             }
 
             m_meta->m_decl->add_param(Decl::Param(
-                m_name,
+                m_name, m_desc,
                 Decl::Param::Kind::unbound,
                 false, // no list
                 type,
@@ -299,8 +301,10 @@ public:
         : Meta(TypeDesc(type), name, desc) {
     }
 
-    inline ParamBuilder param(const std::string& name) {
-        return ParamBuilder(*this, name);
+    inline ParamBuilder param(
+        const std::string& name, const std::string& desc = "") {
+
+        return ParamBuilder(*this, name, desc);
     }
 
     [[deprecated("transitional alias")]]

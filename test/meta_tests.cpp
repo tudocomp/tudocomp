@@ -277,34 +277,34 @@ protected:
         {
             // p1 is a primitive value with no default
             a->add_param(Decl::Param(
-                "p1", Decl::Param::Kind::primitive,
+                "p1", "", Decl::Param::Kind::primitive,
                 false, TypeDesc(), ast::NodePtr<>()));
 
             // p2 is a primitive value with default value "1"
             a->add_param(Decl::Param(
-                "p2", Decl::Param::Kind::primitive,
+                "p2", "", Decl::Param::Kind::primitive,
                 false, TypeDesc(), ast::Parser::parse("1")));
 
             // l1 is a list of primitive values with no default
             a->add_param(Decl::Param(
-                "l1", Decl::Param::Kind::primitive,
+                "l1", "", Decl::Param::Kind::primitive,
                 true, TypeDesc(), ast::NodePtr<>()));
 
             // l2 is a list of primitive values with default "[1,2,3]"
             a->add_param(Decl::Param(
-                "l2", Decl::Param::Kind::primitive,
+                "l2", "", Decl::Param::Kind::primitive,
                 true, TypeDesc(), ast::Parser::parse("[1,2,3]")));
 
             // b1 is an object of type B with no default
             // it is bounded and should occur in the signature
             a->add_param(Decl::Param(
-                "b1", Decl::Param::Kind::bound,
+                "b1", "", Decl::Param::Kind::bound,
                 false, b_type(), ast::NodePtr<>()));
 
             // b2 is an object of type B with default "b()"
             // it is unbounded and should not occur in the signature
             a->add_param(Decl::Param(
-                "b2", Decl::Param::Kind::unbound,
+                "b2", "", Decl::Param::Kind::unbound,
                 false, b_type(), ast::Parser::parse("b()")));
         }
 
@@ -313,7 +313,7 @@ protected:
             // cl is a list of objects of type C with default "[]"
             // they are bounded and should occur in the signature
             b->add_param(Decl::Param(
-                "cl", Decl::Param::Kind::bound,
+                "cl", "", Decl::Param::Kind::bound,
                 true, c_type(), ast::Parser::parse("[]")));
         }
 

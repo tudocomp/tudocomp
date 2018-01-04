@@ -230,6 +230,9 @@ int main(int argc, char** argv) {
                                 }
 
                                 //TODO description
+                                if(!p.desc().empty()) {
+                                    desc << "\n" << p.desc();
+                                }
 
                                 if(p.default_value()) {
                                     if(num_defaults++ > 0) defaults << ", ";

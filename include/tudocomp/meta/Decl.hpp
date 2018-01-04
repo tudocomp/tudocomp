@@ -43,6 +43,8 @@ public:
 
     private:
         std::string m_name;
+        std::string m_desc;
+
         Kind m_kind;        // if not primitive, type needs to be set
         bool m_list;        // if true, value/type flags account for list items
         TypeDesc m_type;    // only valid if non-primitive
@@ -53,6 +55,7 @@ public:
     public:
         /// \brief Main constructor.
         /// \param name the parameter name
+        /// \param desc the parameter's description
         /// \param primitive if \c true, the parameter accepts string values,
         ///                  otherwise it accepts a sub algorithm
         /// \param list if \c true, the parameter accepts a list of values
@@ -60,11 +63,13 @@ public:
         ///             match this type
         inline Param(
             const std::string& name,
+            const std::string& desc = "",
             Kind kind = Kind::primitive,
             bool list = false,
             const TypeDesc& type = TypeDesc(),
             ast::NodePtr<> defv = ast::NodePtr<>())
             : m_name(name),
+              m_desc(desc),
               m_kind(kind),
               m_list(list),
               m_default(defv) {
@@ -111,6 +116,7 @@ public:
         /// \param other the object to copy
         inline Param(const Param& other)
             : m_name(other.m_name),
+              m_desc(other.m_desc),
               m_kind(other.m_kind),
               m_list(other.m_list),
               m_type(other.m_type),
@@ -121,6 +127,7 @@ public:
         /// \param other the object to move
         inline Param(Param&& other)
             : m_name(std::move(other.m_name)),
+              m_desc(std::move(other.m_desc)),
               m_kind(other.m_kind),
               m_list(other.m_list),
               m_type(std::move(other.m_type)),
@@ -128,6 +135,7 @@ public:
         }
 
         inline const std::string& name() const { return m_name; }
+        inline const std::string& desc() const { return m_desc; }
         inline Kind kind() const { return m_kind; }
         inline bool is_list() const { return m_list; }
         inline const TypeDesc& type() const { return m_type; }
