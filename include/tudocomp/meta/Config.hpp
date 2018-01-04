@@ -454,7 +454,7 @@ public:
     }
 
     /// \brief Constructs the signature of the algorithm configuration,
-    ///        with respect only to the configured bounded sub algorithms.
+    ///        with respect only to the configured type-bound sub algorithms.
     ///
     /// Signatures are used to map algorithm configurations to their
     /// corresponding C++ classes. These are usually instances of (cascaded)
@@ -464,7 +464,7 @@ public:
 
         // iterate over declarated parameters
         for(auto& p : m_decl->params()) {
-            if(p.kind() == Decl::Param::Kind::bounded) {
+            if(p.kind() == Decl::Param::Kind::bound) {
                 // add parameter to signature
                 if(p.is_list()) {
                     // list of sub algorithms - recurse for each

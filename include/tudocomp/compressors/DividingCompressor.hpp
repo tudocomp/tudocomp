@@ -124,7 +124,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "dividing");
         m.option("strategy").templated<dividing_t>("dividing_strategy");
-        m.option("compressor").unbounded_strategy(Compressor::type_desc());
+        m.option("compressor").unbound_strategy(Compressor::type_desc());
         return m;
     }
 

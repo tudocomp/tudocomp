@@ -37,8 +37,8 @@ public:
         /// \brief Enumeration of parameter kinds.
         enum Kind {
             primitive, /// a primitive value
-            bounded,   /// a bounded strategy, which appears in signatures
-            unbounded  /// an unbounded strategy, which cannot appear in signatures
+            bound,     /// a type-bound strategy, which appears in signatures
+            unbound    /// an unbound strategy, which cannot appear in signatures
         };
 
     private:

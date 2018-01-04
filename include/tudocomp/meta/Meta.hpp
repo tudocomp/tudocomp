@@ -139,7 +139,7 @@ public:
 
             m_meta->m_decl->add_param(Decl::Param(
                 m_name,
-                Decl::Param::Kind::bounded,
+                Decl::Param::Kind::bound,
                 false,
                 type,
                 ast::NodePtr<>() //no default
@@ -153,7 +153,7 @@ public:
 
             m_meta->m_decl->add_param(Decl::Param(
                 m_name,
-                Decl::Param::Kind::bounded,
+                Decl::Param::Kind::bound,
                 false, // no list
                 type,
                 D::meta().m_sig));
@@ -165,10 +165,10 @@ public:
             strategy<Binding>(TypeDesc(type), Meta::Default<D>());
         }
 
-        inline void unbounded_strategy(const TypeDesc& type) {
+        inline void unbound_strategy(const TypeDesc& type) {
             m_meta->m_decl->add_param(Decl::Param(
                 m_name,
-                Decl::Param::Kind::unbounded,
+                Decl::Param::Kind::unbound,
                 false, // no list
                 type,
                 ast::NodePtr<>() //no default
@@ -176,14 +176,14 @@ public:
         }
 
         template<typename D>
-        inline void unbounded_strategy(
+        inline void unbound_strategy(
             const TypeDesc& type,
             Meta::Default<D>&&) {
 
             add_to_lib(m_meta->m_known, D::meta());
             m_meta->m_decl->add_param(Decl::Param(
                 m_name,
-                Decl::Param::Kind::unbounded,
+                Decl::Param::Kind::unbound,
                 false, // no list
                 type,
                 D::meta().m_sig
@@ -213,7 +213,7 @@ public:
 
             m_meta->m_decl->add_param(Decl::Param(
                 m_name,
-                Decl::Param::Kind::bounded,
+                Decl::Param::Kind::bound,
                 true,  // list
                 type,
                 ast::NodePtr<>() //no default
@@ -240,17 +240,17 @@ public:
 
             m_meta->m_decl->add_param(Decl::Param(
                 m_name,
-                Decl::Param::Kind::bounded,
+                Decl::Param::Kind::bound,
                 true, // list
                 type,
                 defaults
             ));
         }
 
-        inline void unbounded_strategy_list(const TypeDesc& type) {
+        inline void unbound_strategy_list(const TypeDesc& type) {
             m_meta->m_decl->add_param(Decl::Param(
                 m_name,
-                Decl::Param::Kind::unbounded,
+                Decl::Param::Kind::unbound,
                 true, // list
                 type,
                 ast::NodePtr<>() //no default
@@ -258,7 +258,7 @@ public:
         }
 
         template<typename... D>
-        inline void unbounded_strategy_list(
+        inline void unbound_strategy_list(
             const TypeDesc& type,
             Meta::Defaults<D...>&&) {
 
@@ -275,7 +275,7 @@ public:
 
             m_meta->m_decl->add_param(Decl::Param(
                 m_name,
-                Decl::Param::Kind::unbounded,
+                Decl::Param::Kind::unbound,
                 false, // no list
                 type,
                 defaults

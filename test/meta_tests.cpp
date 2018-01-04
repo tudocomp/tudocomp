@@ -298,13 +298,13 @@ protected:
             // b1 is an object of type B with no default
             // it is bounded and should occur in the signature
             a->add_param(Decl::Param(
-                "b1", Decl::Param::Kind::bounded,
+                "b1", Decl::Param::Kind::bound,
                 false, b_type(), ast::NodePtr<>()));
 
             // b2 is an object of type B with default "b()"
             // it is unbounded and should not occur in the signature
             a->add_param(Decl::Param(
-                "b2", Decl::Param::Kind::unbounded,
+                "b2", Decl::Param::Kind::unbound,
                 false, b_type(), ast::Parser::parse("b()")));
         }
 
@@ -313,7 +313,7 @@ protected:
             // cl is a list of objects of type C with default "[]"
             // they are bounded and should occur in the signature
             b->add_param(Decl::Param(
-                "cl", Decl::Param::Kind::bounded,
+                "cl", Decl::Param::Kind::bound,
                 true, c_type(), ast::Parser::parse("[]")));
         }
 
@@ -529,7 +529,7 @@ protected:
             m.param("l1").primitive_list();
             m.param("l2").primitive_list({1,2,3});
             m.param("b1").strategy<b_t>(b_type());
-            m.param("b2").unbounded_strategy(
+            m.param("b2").unbound_strategy(
                 b_type(), Meta::Default<B<C2,C1>>());
             return m;
         }
