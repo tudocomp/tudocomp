@@ -35,6 +35,7 @@ namespace tdc {
             bool        align_left;
         };
 
+        std::string m_separator;
         size_t m_max_width;
         size_t m_width;
 
@@ -42,11 +43,16 @@ namespace tdc {
         std::vector<std::vector<std::string>> m_rows;
 
         inline void print_row(std::ostream& out, std::string* row) const {
+            bool first_wrap_row = true;
             bool empty;
             do {
                 empty = true;
                 for(size_t i = 0; i < m_columns.size(); i++) {
-                    if(i > 0) out << " | ";
+                    if(i > 0) {
+                        if(first_wrap_row) out << m_separator;
+                        else out << std::setw(m_separator.length()) << "";
+                    }
+
                     auto w = m_columns[i].width;
                     auto s = wrap(row[i], m_columns[i].width);
                     out << std::setw(w)
@@ -55,12 +61,21 @@ namespace tdc {
                     empty = empty && row[i].empty();
                 }
                 out << std::endl;
+                first_wrap_row = false;
             } while(!empty);
         }
 
+        inline void print_hline(std::ostream& out) const {
+            for(size_t i = 0; i < m_max_width; i++) {
+                out << "-";
+            }
+            out << std::endl;
+        }
+
     public:
-        inline ASCIITable(size_t max_width = 80)
-            : m_max_width(max_width), m_width(0) {
+        inline ASCIITable(
+            size_t max_width = 80, const std::string& separator = " | ")
+            : m_separator(separator), m_max_width(max_width), m_width(0) {
         }
 
         inline void add_column(
@@ -69,15 +84,15 @@ namespace tdc {
             bool align_left = false) {
 
             if(width == 0) {
-                width = m_max_width - m_width - 3;
+                width = m_max_width - m_width - m_separator.length();
             }
 
             if(title.length() > width) {
                 throw std::runtime_error("column title too long");
             }
 
-            if(m_width + 3 <= m_max_width) {
-                m_width += width + 3;
+            if(m_width + m_separator.length() <= m_max_width) {
+                m_width += width + m_separator.length();
                 m_columns.emplace_back(column_t{title, width, align_left});
             } else {
                 throw std::runtime_error("column too wide");
@@ -88,21 +103,23 @@ namespace tdc {
             m_rows.emplace_back(cols);
         }
 
-        inline void print(std::ostream& out) const {
+        inline void print(std::ostream& out,
+            bool print_header = true,
+            bool print_head_line = true,
+            bool print_foot_line = true) const {
+
             const size_t num_cols = m_columns.size();
             std::string* row = new std::string[num_cols];
 
-            // header
-            for(size_t i = 0; i < num_cols; i++) {
-                row[i] = m_columns[i].title;
+            if(print_header) {
+                // header
+                for(size_t i = 0; i < num_cols; i++) {
+                    row[i] = m_columns[i].title;
+                }
+                print_row(out, row);
             }
-            print_row(out, row);
 
-            // line
-            for(size_t i = 0; i < m_max_width; i++) {
-                out << "-";
-            }
-            out << std::endl;
+            if(print_head_line) print_hline(out);
 
             // rows
             for(auto& r : m_rows) {
@@ -111,6 +128,8 @@ namespace tdc {
                 }
                 print_row(out, row);
             }
+
+            if(print_foot_line) print_hline(out);
 
             // clean up
             delete[] row;

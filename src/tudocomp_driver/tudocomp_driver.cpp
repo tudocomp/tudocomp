@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -96,6 +97,29 @@ int main(int argc, char** argv) {
         if (options.list) {
             auto lib = compressor_registry.library() +
                        generator_registry.library();
+        
+            auto print_type_table = [&](const std::string& type){
+                auto all = lib.type_entries(type);
+                std::sort(all.begin(), all.end(),
+                    [](std::shared_ptr<const meta::Decl> a,
+                       std::shared_ptr<const meta::Decl> b) {
+
+                    return (a->name() <= b->name());
+                });
+
+                ASCIITable table(80);
+                size_t longest = 2;
+                for(auto decl : all) {
+                    longest = std::max(longest, decl->name().length());
+                }
+
+                table.add_column("ID", longest);
+                table.add_column("Description", 0, true);
+                for(auto decl : all) {
+                    table.add_row({ decl->name(), decl->desc() });
+                }
+                table.print(std::cout, false, true, false);
+            };
 
             if(options.list_algorithm.empty()) {
                 // list all algorithms
@@ -105,41 +129,127 @@ int main(int argc, char** argv) {
                           << "information on the algorithm with the given ID."
                           << std::endl << std::endl;
 
-                auto print_type_table = [&](TypeDesc type){
-                    auto all = lib.find_all(type);
-                    std::sort(all.begin(), all.end(),
-                        [](std::shared_ptr<const meta::Decl> a,
-                           std::shared_ptr<const meta::Decl> b) {
-
-                        return (a->name() <= b->name());
-                    });
-
-                    ASCIITable table(80);
-                    size_t longest = 2;
-                    for(auto decl : all) {
-                        longest = std::max(longest, decl->name().length());
-                    }
-
-                    table.add_column("ID", longest);
-                    table.add_column("Description", 0, true);
-                    for(auto decl : all) {
-                        table.add_row({ decl->name(), decl->desc() });
-                    }
-                    table.print(std::cout);
-                };
-
                 std::cout << "Compressors (for the -a option):";
-                std::cout << std::endl << std::endl;
-                print_type_table(Compressor::type_desc());
+                std::cout << std::endl;
+                print_type_table(Compressor::type_desc().name());
                 std::cout << std::endl;
                 std::cout << "String generators (for the -g option):";
-                std::cout << std::endl << std::endl;
-                print_type_table(Generator::type_desc());
+                std::cout << std::endl;
+                print_type_table(Generator::type_desc().name());
                 std::cout << std::endl;
                 return 0;
             } else {
-                // details
-                std::cout << "Details: " << options.list_algorithm << std::endl;
+                std::shared_ptr<const meta::Decl> decl;
+
+                // no type constraint given
+                const size_t sep = options.list_algorithm.find(':');
+                if(sep == std::string::npos) {
+                    auto found = lib.name_entries(options.list_algorithm);
+                    if(found.size() == 0) {
+                        std::cout << "There is no algorithm named '"
+                                  << options.list_algorithm << "'."
+                                  << std::endl;
+                    } else if(found.size() > 1) {
+                        std::cout << "There is more than algorithm named '"
+                                  << options.list_algorithm << "'. "
+                                  << "Please specify using one of the "
+                                  << "following canonical IDs:"
+                                  << std::endl;
+
+                        for(auto decl : found) {
+                            std::cout << decl->name() << ":"
+                                      << decl->type().name()
+                                      << std::endl;
+                        }
+                    } else {
+                        decl = found[0];
+                    }
+                } else {
+                    auto name = options.list_algorithm.substr(0, sep);
+                    auto type = options.list_algorithm.substr(sep + 1);
+                    decl = lib.find(name, type, false);
+                    if(!decl) {
+                        std::cout << "There is no algorithm '"
+                                  << options.list_algorithm << "'."
+                                  << std::endl;
+                    }
+                }
+
+                if(decl) {
+                    std::cout << decl->name();
+                    if(!decl->desc().empty()) {
+                        std::cout << " -- " << decl->desc();
+                    }
+                    std::cout << std::endl << std::endl;
+                    std::cout << "Declaration:" << std::endl;
+                    std::cout << decl->str() << std::endl;
+                    if(decl->type().super()) {
+                        std::cout << std::endl;
+                        std::cout << "Type inheritance: ";
+                        {
+                            bool first = true;
+                            const TypeDesc* type = &decl->type();
+                            while(type) {
+                                if(!first) std::cout << " -> ";
+                                    else first = false;
+
+                                std::cout << type->name();
+                                type = type->super();
+                            }
+                        }
+                    }
+
+                    if(decl->params().size() > 0) {
+                        std::set<std::string> param_types;
+                        {
+                            ASCIITable table(80, " - ");
+                            size_t longest_pname = 0;
+                            for(auto& p : decl->params()) {
+                                longest_pname = std::max(
+                                    longest_pname, p.name().length());
+                            }
+                            table.add_column("", longest_pname);
+                            table.add_column("", 0, true);
+
+                            std::cout << std::endl;
+                            std::cout << "Parameters:" << std::endl;
+                            for(auto& p : decl->params()) {
+                                std::stringstream desc;
+
+                                if(p.is_primitive()) {
+                                    desc << "primitive value\n";
+                                } else {
+                                    desc << "algorithm of type '"
+                                         << p.type().name() << "'\n";
+
+                                    param_types.emplace(p.type().name());
+                                }
+
+                                //TODO description
+
+                                if(p.default_value()) {
+                                    desc << "default: "
+                                         << p.default_value()->str() << "\n";
+                                }
+                                
+                                table.add_row({ p.name(), desc.str() });
+                            }
+                            table.print(std::cout, false, false, false);
+                        }
+
+                        if(param_types.size() > 0) {
+                            for(auto& type : param_types) {
+                                std::cout << std::endl;
+                                std::cout << std::endl;
+                                std::cout << "Available algorithms for "
+                                << "parameters of type '" << type << "':"
+                                << std::endl;
+                                print_type_table(type);
+                            }
+                        }
+                    }
+                    std::cout << std::endl;
+                }
                 return 0;
             }
         }

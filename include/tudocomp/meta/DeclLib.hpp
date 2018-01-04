@@ -94,9 +94,9 @@ public:
 private:
     inline std::shared_ptr<const Decl> find_for_type(
         const std::string& name,
-        const TypeDesc& type) const {
+        const std::string& type) const {
 
-        auto it = m_lib.find(type.name());
+        auto it = m_lib.find(type);
         if(it != m_lib.end()) {
             auto& lib_for_type = it->second;
             auto inner_it = lib_for_type.find(name);
@@ -117,34 +117,66 @@ public:
     /// \return the found declaration, or an empty pointer if none was found
     inline std::shared_ptr<const Decl> find(
         const std::string& name,
-        const TypeDesc& type,
+        const std::string& type,
         bool include_subtypes = true) const {
 
         std::shared_ptr<const Decl> result = find_for_type(name, type);
-        if(result && !include_subtypes && result->type() != type) {
+        if(result && !include_subtypes && result->type().name() != type) {
             return std::shared_ptr<const Decl>(); // "null"
         } else {
             return result;
         }
     }
 
+    /// \brief Finds a declaration of the given name and type in the library.
+    /// \param name the name of the declaration to find
+    /// \param type the type of the declaration to find
+    /// \param include_subtypes if \c true, declarations whose type inherit
+    ///                         the specified type are also considered
+    /// \return the found declaration, or an empty pointer if none was found
+    inline std::shared_ptr<const Decl> find(
+        const std::string& name,
+        const TypeDesc& type,
+        bool include_subtypes = true) const {
+
+        return find(name, type.name(), include_subtypes);
+    }
+
     /// \brief Finds all declarations matching the specified type.
     /// \param type the type of declarations to retrieve
     /// \param include_subtypes if \c true, declarations whose type inherit
     /// \return a list of all found declarations in no specific order
-    inline std::vector<std::shared_ptr<const Decl>> find_all(
-        const TypeDesc& type,
+    inline std::vector<std::shared_ptr<const Decl>> type_entries(
+        const std::string& type,
         bool include_subtypes = true) const {
 
         std::vector<std::shared_ptr<const Decl>> result;
-        auto it = m_lib.find(type.name());
+        auto it = m_lib.find(type);
         if(it != m_lib.end()) {
             auto& lib_for_type = it->second;
             for(auto e : lib_for_type) {
                 auto decl = e.second;
-                if(include_subtypes || decl->type() == type) {
+                if(include_subtypes || decl->type().name() == type) {
                     result.emplace_back(decl);
                 }
+            }
+        }
+        return result;
+    }
+
+    /// \brief Finds all declarations with the specified name, independent of
+    ///        their type.
+    /// \param name the name of the declarations to retrieve
+    /// \return a list of all found declarations in no specific order
+    inline std::vector<std::shared_ptr<const Decl>> name_entries(
+        const std::string& name) {
+
+        std::vector<std::shared_ptr<const Decl>> result;
+        for(auto outer : m_lib) {
+            auto& lib_for_type = outer.second;
+            auto it = lib_for_type.find(name);
+            if(it != lib_for_type.end()) {
+                result.emplace_back(it->second);
             }
         }
         return result;
