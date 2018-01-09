@@ -55,10 +55,12 @@ namespace tdc { namespace lcpcomp {
             for(auto& factor : refs) {
                 // encode literals until cursor reaches factor
                 while(p < factor.pos) {
+					std::cout << text[p];
                     out.write_int(uint40_t(text[p++]));
                     out.write_int(uint40_t(0));
                 }
-
+                
+				std::cout << "(" << factor.src << ", " << factor.len << ")";
                 // encode factor
                 out.write_int(uint40_t(factor.src));
                 out.write_int(uint40_t(factor.len));
@@ -69,6 +71,7 @@ namespace tdc { namespace lcpcomp {
             const size_t n = text.size();
             while(p < n)  {
                 // encode remaining literals
+                std::cout << text[p] << "?";
                 out.write_int(uint40_t(text[p++]));
                 out.write_int(uint40_t(0));
             }
@@ -117,9 +120,6 @@ int main(int argc, char** argv) {
     const tdc::len_t mb_ram = (argc >= 4) ? std::stoi(argv[4]) : 512;
 
 	tdc::lcpcomp::factorize(infile, outfile, threshold, mb_ram);
-
-	root.to_json().str(std::cout);
-	std::cout << std::endl;
 
     return 0;
 }
