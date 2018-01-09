@@ -11,7 +11,7 @@ namespace tdc {
 class EliasDeltaCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("coder", "delta", "Elias-delta encoding");
+        Meta m("coder", "delta", "Encodes integers using Elias-delta codes.");
         return m;
     }
 

@@ -13,7 +13,9 @@ namespace tdc {
 class BitCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("coder", "bit", "Encoding using range-optimal bit widths");
+        Meta m("coder", "bit",
+            "Encodes integers in their binary representation. An integer "
+            "from a range [M,N] is encoded using ceil(log(N-M)) bits.");
         return m;
     }
 

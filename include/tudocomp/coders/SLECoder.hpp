@@ -34,8 +34,15 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("coder", "sle", "Static low entropy encoding conforming [Dinklage, 2015]");
-        m.option("kmer").dynamic(3);
+        Meta m("coder", "sle",
+           "Static low entropy encoding, conforming [Dinklage, 2015].\n"
+           "Similar to a combination of Rice and  Huffman codes, it encodes "
+           "integers based on their value range and uses the occurence count "
+           "of symbols and k-mers to achieve low-entropy encoding of string "
+           "portions."
+        );
+        m.param("kmer", "The length of the k-mers that are candidates for "
+                        "being mapped to a single symbol.").primitive(3);
         return m;
     }
 
