@@ -9,7 +9,7 @@
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 #include <stxxl/bits/containers/vector.h>
-#include <stxxl/bits/algo/ksort.h>
+#include <stxxl/bits/algo/sort.h>
 
 namespace tdc { namespace lcpcomp {
     constexpr len_t M = 1024 * 1024;
@@ -27,18 +27,21 @@ namespace tdc { namespace lcpcomp {
     }
     
     template <bool sortByTarget = false>
-    struct KeyExtractorPJ
+    struct FactorComparison
     {
         const uint40_t min = std::numeric_limits<uint40_t>::min();
         const uint40_t max = std::numeric_limits<uint40_t>::max();
+        
+        const uint40pair_t min_factor = std::make_pair(min, min);
+        const uint40pair_t max_factor = std::make_pair(max, max);
 
-        typedef uint40_t key_type;
-        key_type operator() (const uint40pair_t &obj) const
-        { return std::get<sortByTarget>(obj); }
+        bool operator()(const uint40pair_t &a, const uint40pair_t &b) const {
+            return std::get<sortByTarget>(a) < std::get<sortByTarget>(b);
+        }
         uint40pair_t min_value() const
-        { return std::make_pair(min, min); }
+        { return min_factor; }
         uint40pair_t max_value() const
-        { return std::make_pair(max, max); }
+        { return max_factor; }
     };
     
     inline void defactorize(const std::string& textfilename,
@@ -46,7 +49,10 @@ namespace tdc { namespace lcpcomp {
                           const len_t mb_ram) {      
 
         StatPhase phase("PLCPDeComp");
-        StatPhase::wrap("Do everything", [&]{           
+        StatPhase::wrap("Decompress", [&]{
+            
+            FactorComparison<false> sortByTextPos;
+            FactorComparison<true> sortByTargetPos;      
 
             // (textPos, character) pairs
             stxxl::VECTOR_GENERATOR<uint40pair_t>::result m_literals;
@@ -81,7 +87,7 @@ namespace tdc { namespace lcpcomp {
             m_references2.reserve(nReferences);
 
             // everything here is 1-based
-            // (necessary for stxxl ksort)
+            // (necessary for stxxl sort)
             uint40_t textPos = 1;
             for (size_t i = 0; i < nFactors; i++)
             {
@@ -110,8 +116,8 @@ namespace tdc { namespace lcpcomp {
                 // copy changes from updated reference to original references
                 m_references1 = m_references2;
                 // sort first references by textPos, second references by targetPos
-                stxxl::ksort(m_references1.begin(), m_references1.end(), KeyExtractorPJ<>(), mb_ram*1024*1024);
-                stxxl::ksort(m_references2.begin(), m_references2.end(), KeyExtractorPJ<true>(), mb_ram*1024*1024);
+                stxxl::sort(m_references1.begin(), m_references1.end(), sortByTextPos, mb_ram*1024*1024);
+                stxxl::sort(m_references2.begin(), m_references2.end(), sortByTargetPos, mb_ram*1024*1024);
 
                 // do the actual pointer jumping
                 uint40_t j = 0;            
@@ -137,7 +143,7 @@ namespace tdc { namespace lcpcomp {
                 m_literals.push_back(literal);
             }           
             // sort the literal vector by text position 
-            stxxl::ksort(m_literals.begin(), m_literals.end(), KeyExtractorPJ<>(), mb_ram*1024*1024);
+            stxxl::sort(m_literals.begin(), m_literals.end(), sortByTextPos, mb_ram*1024*1024);
             
             // write only the actual literal characters into the output file
             std::ofstream outputFile;
