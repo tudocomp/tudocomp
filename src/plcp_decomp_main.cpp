@@ -27,7 +27,7 @@ namespace tdc { namespace lcpcomp {
     }
     
     template <bool sortByTarget = false>
-    struct FactorComparison
+    struct SingleCharacterFactorComparison
     {
         const uint40_t min = std::numeric_limits<uint40_t>::min();
         const uint40_t max = std::numeric_limits<uint40_t>::max();
@@ -51,8 +51,8 @@ namespace tdc { namespace lcpcomp {
         StatPhase phase("PLCPDeComp");
         StatPhase::wrap("Decompress", [&]{
             
-            FactorComparison<false> sortByTextPos;
-            FactorComparison<true> sortByTargetPos;      
+            SingleCharacterFactorComparison<false> sortByTextPos;
+            SingleCharacterFactorComparison<true> sortByTargetPos;      
 
             // (textPos, character) pairs
             stxxl::VECTOR_GENERATOR<uint40pair_t>::result m_literals;
