@@ -213,10 +213,9 @@ namespace tdc { namespace lcpcomp {
             CopyFactorComparison<false> sortByTextPos;
             CopyFactorComparison<true> sortByTargetPos;      
 
-            stxxl::VECTOR_GENERATOR<uint40pair_t>::result m_literals;
+            stxxl::VECTOR_GENERATOR<char>::result restoredText;
             stxxl::VECTOR_GENERATOR<uint40triple_t>::result byTextPosV;
-            stxxl::VECTOR_GENERATOR<uint40triple_t>::result byTargetPosV;            
-            stxxl::VECTOR_GENERATOR<uint40triple_t>::result byTargetPosV_new;
+            stxxl::VECTOR_GENERATOR<uint40triple_t>::result byTargetPosV;
             stxxl::VECTOR_GENERATOR<uint40triple_t>::result resolvedV;
             stxxl::VECTOR_GENERATOR<uint40triple_t>::result resolvedV_new;
 
@@ -234,10 +233,9 @@ namespace tdc { namespace lcpcomp {
             }
 
             // reserve space on disk for vectors
-            m_literals.reserve(nLiterals + nReferences);
+            restoredText.resize(nLiterals + nReferences);
             byTextPosV.reserve(nReferences);
             byTargetPosV.reserve(nReferences);
-            byTargetPosV_new.reserve(nReferences);
             resolvedV.reserve(nReferences);
             resolvedV_new.reserve(nReferences);
             
@@ -249,8 +247,7 @@ namespace tdc { namespace lcpcomp {
                 uint40_t target = swapBytes(text[i * 2]) + 1;
                 uint40_t len = swapBytes(text[i * 2 + 1]);
                 if(len == uint40_t(0)) {
-                    // fill literal vector (naturally sorted by text position)
-                    m_literals.push_back(std::make_pair(textPosition++, target));
+                    restoredText[textPosition++ - 1] = char(target - 1);
                 } 
                 else {
                     // fill requests vector (naturally sorted by text position)
@@ -260,21 +257,29 @@ namespace tdc { namespace lcpcomp {
                 }
             } 
             
-            
+            auto byTargetPosSize = byTargetPosV.size();
+            long byTargetPosResize = 0;
             // do pointer jumping until there are no more unresolveds factors
-            while(byTargetPosV.size() > 0) {
+            while(byTargetPosSize + byTargetPosResize > 0) {
+                
+                std::cout << "Resizing from " << byTargetPosV.size() << " to " << byTargetPosV.size() + byTargetPosResize << std::endl;
+                
+                
+                stxxl::sort(byTargetPosV.begin(), byTargetPosV.end(), sortByTargetPos, mb_ram*1024*1024);
+                byTargetPosV.resize(byTargetPosSize + byTargetPosResize);
+                byTargetPosResize = 0;
                 
                 std::cout << "Factors left: " << byTargetPosV.size() << std::endl;
                 
                 byTextPosV = byTargetPosV;
                 stxxl::sort(byTextPosV.begin(), byTextPosV.end(), sortByTextPos, mb_ram*1024*1024);
-                stxxl::sort(byTargetPosV.begin(), byTargetPosV.end(), sortByTargetPos, mb_ram*1024*1024);
                 
+                byTargetPosSize = byTargetPosV.size();
                 unsigned j = 0;
                 unsigned last_j = 0;
                 uint40_t last_targetStart = 0;
                 uint40triple_t &byTextPos = byTextPosV[j];
-                for(unsigned i = 0; i < byTargetPosV.size(); i++) {         
+                for(unsigned i = 0; i < byTargetPosSize; i++) {
                     
                     uint40triple_t &byTargetPos = byTargetPosV[i];
                     
@@ -312,13 +317,14 @@ namespace tdc { namespace lcpcomp {
                     }
                     // pointerjump prefix or entire factor
                     else {                       
-                        
                         auto posOffset = targetStart - textStart;
                         auto newTargetPos = targetPos(byTextPos) + posOffset;
                         prefixLen = targetLen - (std::max(targetEnd, textEnd) - textEnd);
                         
                         uint40triple_t jumped = std::make_tuple(textPos(byTargetPos), newTargetPos, prefixLen);
-                        byTargetPosV_new.push_back(jumped);
+                        byTargetPosV.push_back(jumped);
+                        
+                        ++byTargetPosResize;
                         
                         print(jumped, "           Jumped:");
                     }
@@ -330,6 +336,9 @@ namespace tdc { namespace lcpcomp {
                         --i;
                         last_j = j;
                         print(byTargetPosV[i + 1], "           Remaining:");
+                    } else {
+                        byTargetPos = sortByTargetPos.max_value();
+                        --byTargetPosResize;
                     }
                     
                     last_targetStart = targetStart;
@@ -338,9 +347,6 @@ namespace tdc { namespace lcpcomp {
                 for(auto resolved : resolvedV_new) {
                     resolvedV.push_back(resolved);
                 }
-                byTargetPosV = byTargetPosV_new;
-                
-                byTargetPosV_new.clear();
                 resolvedV_new.clear();
             }
             
