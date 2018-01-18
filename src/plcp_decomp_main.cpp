@@ -213,11 +213,14 @@ namespace tdc { namespace lcpcomp {
             CopyFactorComparison<false> sortByTextPos;
             CopyFactorComparison<true> sortByTargetPos;      
 
+            // vector to hold the restored text
             stxxl::VECTOR_GENERATOR<char>::result restoredText;
-            stxxl::VECTOR_GENERATOR<uint40triple_t>::result byTextPosV;
+            // vector for all unresolved factors sorted by target position
             stxxl::VECTOR_GENERATOR<uint40triple_t>::result byTargetPosV;
+            // vector for all unresolved factors sorted by text position
+            stxxl::VECTOR_GENERATOR<uint40triple_t>::result byTextPosV;
+            // vector for the factors that have been resolved during the current scan
             stxxl::VECTOR_GENERATOR<uint40triple_t>::result resolvedV;
-            stxxl::VECTOR_GENERATOR<uint40triple_t>::result resolvedV_new;
 
             IntegerFileArray<uint40_t> text (textfilename.c_str());
 
@@ -234,10 +237,9 @@ namespace tdc { namespace lcpcomp {
 
             // reserve space on disk for vectors
             restoredText.resize(nLiterals + nReferences);
-            byTextPosV.reserve(nReferences);
             byTargetPosV.reserve(nReferences);
+            byTextPosV.reserve(nReferences);
             resolvedV.reserve(nReferences);
-            resolvedV_new.reserve(nReferences);
             
             // everything here is 1-based
             // (necessary for stxxl sort)
@@ -247,10 +249,13 @@ namespace tdc { namespace lcpcomp {
                 uint40_t target = swapBytes(text[i * 2]) + 1;
                 uint40_t len = swapBytes(text[i * 2 + 1]);
                 if(len == uint40_t(0)) {
+                    // restore literal factors immediatly
+                    // (naturally in textpos order -> single scan)
                     restoredText[textPosition++ - 1] = char(target - 1);
                 } 
                 else {
-                    // fill requests vector (naturally sorted by text position)
+                    // fill one of the factor vectors
+                    // (other one will get copied)
                     auto reference = std::make_tuple(textPosition, target++, len);
                     byTargetPosV.push_back(reference);
                     textPosition += len;
@@ -259,45 +264,49 @@ namespace tdc { namespace lcpcomp {
             
             auto byTargetPosSize = byTargetPosV.size();
             long byTargetPosResize = 0;
-            // do pointer jumping until there are no more unresolveds factors
+            
+            // do pointer jumping and resolving until there are no more unresolved factors
             while(byTargetPosSize + byTargetPosResize > 0) {
                 
-                std::cout << "Resizing from " << byTargetPosV.size() << " to " << byTargetPosV.size() + byTargetPosResize << std::endl;
-                
-                
+                // sort unresolved vectors by target pos
                 stxxl::sort(byTargetPosV.begin(), byTargetPosV.end(), sortByTargetPos, mb_ram*1024*1024);
+                
+                // remove old factors that have been either entirely resolved or pointer-jumped
                 byTargetPosV.resize(byTargetPosSize + byTargetPosResize);
                 byTargetPosResize = 0;
                 
-                std::cout << "Factors left: " << byTargetPosV.size() << std::endl;
-                
+                // copy unresolved factors and sort copy by textpos
                 byTextPosV = byTargetPosV;
                 stxxl::sort(byTextPosV.begin(), byTextPosV.end(), sortByTextPos, mb_ram*1024*1024);
                 
+                // memorize number of unresolved factors
+                // (will be used for resizing in the following round)
                 byTargetPosSize = byTargetPosV.size();
+                
                 unsigned j = 0;
                 unsigned last_j = 0;
                 uint40_t last_targetStart = 0;
                 uint40triple_t &byTextPos = byTextPosV[j];
                 for(unsigned i = 0; i < byTargetPosSize; i++) {
                     
+                    // try to resolve or pointer jump the factors in targetpos order
                     uint40triple_t &byTargetPos = byTargetPosV[i];
-                    
-                    print(byTargetPos, "   Factor " + std::to_string(i) + ":");
                     
                     uint40_t targetLen = factorLength(byTargetPos);
                     uint40_t targetStart = targetPos(byTargetPos);
                     uint40_t targetEnd = targetStart + targetLen;
                     
+                    // rollback if splitting up factors has resulted in moving too far
+                    // in the list of factors sorted by textpos
                     if(last_targetStart > targetStart) {
                         j = last_j;
                         byTextPos = byTextPosV[j];
                     }
                     
+                    // find the closest factor, that has its last text position after
+                    // or at the start of the factor we are trying to resolve
                     while(targetStart >= textPos(byTextPos) + factorLength(byTextPos))
                         byTextPos = byTextPosV[++j];
-                        
-                    print(byTextPos, "       Against:");
                         
                     uint40_t textLen = factorLength(byTextPos);
                     uint40_t textStart = textPos(byTextPos);
@@ -306,53 +315,87 @@ namespace tdc { namespace lcpcomp {
                     
                     uint40_t prefixLen;                  
                     
-                    // resolve prefix or entire factor
+                    // resolve prefix (or entire factor), if a prefix of the vector to resolve
+                    // does not overlap with the other factor
                     if(targetStart < textStart) {
                         prefixLen = targetLen - (std::max(targetEnd, textStart) - textStart);
-                        
                         uint40triple_t resolved = std::make_tuple(textPos(byTargetPos), targetPos(byTargetPos), prefixLen);
-                        resolvedV_new.push_back(resolved);
-                        
-                        print(resolved, "           Resolved:");
+                        resolvedV.push_back(resolved);
                     }
-                    // pointerjump prefix or entire factor
+                    // pointerjump prefix (or entire factor), if a prefix of the vector to resolve
+                    // does overlap with the other factor
                     else {                       
                         auto posOffset = targetStart - textStart;
                         auto newTargetPos = targetPos(byTextPos) + posOffset;
                         prefixLen = targetLen - (std::max(targetEnd, textEnd) - textEnd);
-                        
                         uint40triple_t jumped = std::make_tuple(textPos(byTargetPos), newTargetPos, prefixLen);
+                        
+                        // add pointer-jumped factor to the end of the factor vector
+                        // (this factor will not be considered in this scan, but in the next scan)
                         byTargetPosV.push_back(jumped);
-                        
                         ++byTargetPosResize;
-                        
-                        print(jumped, "           Jumped:");
                     }
                     
+                    // if only a prefix of the current factor has been dealt with,
+                    // calculate remaining factor and consider it next
                     if(prefixLen < targetLen) {
+                        // manipulate the current factor directly in the factor vector
                         textPos(byTargetPos, textPos(byTargetPos) + prefixLen);
                         targetPos(byTargetPos, targetPos(byTargetPos) + prefixLen);
                         factorLength(byTargetPos, factorLength(byTargetPos) - prefixLen);
+                        // by decrementing i, the manipulated factor will be considered next
                         --i;
+                        // memorize the current position in the textpos sorted vector
+                        // (this position will get restored, if the splitting of the
+                        // current factor makes it necessary)
                         last_j = j;
-                        print(byTargetPosV[i + 1], "           Remaining:");
                     } else {
+                        // if the entire factor has been either resolved or pointer-jumped
+                        // it is set to the maximum possible factor. this ensures, that it
+                        // is in the backmost part of the sorted by target pos vector after
+                        // the next sort. this way, it can be removed with a resize of the
+                        // vector
                         byTargetPos = sortByTargetPos.max_value();
                         --byTargetPosResize;
                     }
                     
+                    // memorize the last target start position to restore it later
+                    // (if necessary)
                     last_targetStart = targetStart;
                 }
                 
-                for(auto resolved : resolvedV_new) {
-                    resolvedV.push_back(resolved);
+                // sort the resolved factors by textposition
+                stxxl::sort(resolvedV.begin(), resolvedV.end(), sortByTextPos, mb_ram*1024*1024);
+                
+                // restore the actual text from the resolved factors
+                // (does this cause unstructured IO?)
+                for(auto resolved : resolvedV) {
+                    auto resolvedLen = factorLength(resolved);
+                    auto resolvedTextPos = textPos(resolved);
+                    auto resolvedTargetPos = targetPos(resolved);
+                    for (unsigned i = 0; i < resolvedLen; i++) {
+                        restoredText[resolvedTextPos + i - 1] = restoredText[resolvedTargetPos + i - 1];
+                    }
+                    
                 }
-                resolvedV_new.clear();
+                resolvedV.clear();
             }
             
-            for(auto resolved : resolvedV) {
-                print(resolved, "Resolved:");
+            // print restored text, if it is short
+            if(restoredText.size() < 500) {
+                std::cout << "The restored text is: " << std::endl;
+                for(auto character : restoredText) {
+                    std::cout << character;
+                }
+                std::cout << std::endl;
             }
+            
+            // write restored text into output file
+            std::ofstream outputFile;
+            outputFile.open(outfilename);
+            for (auto character : restoredText)
+                outputFile << character;
+            outputFile.close();
         });
 
     }
