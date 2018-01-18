@@ -67,7 +67,6 @@ namespace tdc { namespace lcpcomp {
 
 
             IntegerFileArray<uint40_t> text (textfilename.c_str());
-            typedef IntegerFileArray<uint40_t> text_t;
 
             const size_t nFactors = text.size() / 2;
             uint40_t nReferences = 0;
@@ -77,7 +76,7 @@ namespace tdc { namespace lcpcomp {
             for (size_t i = 0; i < nFactors; i++)
             {
                 uint40_t len = swapBytes(text[2 * i + 1]);
-                if(len == 0) nLiterals += 1;
+                if(len == uint40_t(0)) nLiterals += 1;
                 else nReferences += len;
             }
 
@@ -94,7 +93,7 @@ namespace tdc { namespace lcpcomp {
                 // read current factor
                 uint40_t target = swapBytes(text[i * 2]) + 1;
                 uint40_t len = swapBytes(text[i * 2 + 1]);
-                if(len == 0) {
+                if(len == uint40_t(0)) {
                     // fill literal vector (naturally sorted by text position)
                     m_literals.push_back(std::make_pair(textPos++, target));
                 } 
@@ -154,7 +153,6 @@ namespace tdc { namespace lcpcomp {
         });
 
     }
-
 }}//ns
 
 
