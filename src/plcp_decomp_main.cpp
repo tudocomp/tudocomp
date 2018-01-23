@@ -10,6 +10,7 @@
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 #include <stxxl/bits/containers/vector.h>
 #include <stxxl/bits/algo/sort.h>
+#include <stxxl/bits/io/iostats.h>
 
 namespace tdc { namespace lcpcomp {
     constexpr len_t M = 1024 * 1024;
@@ -99,19 +100,27 @@ namespace tdc { namespace lcpcomp {
         StatPhase phase("PLCPDeComp");
         StatPhase::wrap("Decompress", [&]{
             
+            // generate stats instance
+            stxxl::stats * Stats = stxxl::stats::get_instance();
+            // start measurement here
+            stxxl::stats_data stats_begin(*Stats);            
+            
             SingleCharacterFactorComparison<false> sortByTextPos;
-            SingleCharacterFactorComparison<true> sortByTargetPos;      
+            SingleCharacterFactorComparison<true> sortByTargetPos;
+            
+            // vector to hold the restored text
+            stxxl::VECTOR_GENERATOR<char>::result restoredText;
+            
+            // (textPos, targetPos) pairs:
+            
+            typedef stxxl::VECTOR_GENERATOR<uint40pair_t>::result references_vector;
 
-            // (textPos, character) pairs
-            stxxl::VECTOR_GENERATOR<uint40pair_t>::result m_literals;
-            
-            
-            // (textPos, targetPos) pairs
             // this vector will always be sorted by textPos
-            stxxl::VECTOR_GENERATOR<uint40pair_t>::result m_references1;
-            // (textPos, targetPos) pairs
+            references_vector byTextPos;
             // this vector will always be sorted by targetPos
-            stxxl::VECTOR_GENERATOR<uint40pair_t>::result m_references2;
+            references_vector *byTargetPos = new references_vector();
+            // this vector will always be sorted by targetPos
+            references_vector *byTargetPosNew = new references_vector();
 
 
             IntegerFileArray<uint40_t> text (textfilename.c_str());
@@ -119,6 +128,7 @@ namespace tdc { namespace lcpcomp {
             const size_t nFactors = text.size() / 2;
             uint40_t nReferences = 0;
             uint40_t nLiterals = 0;
+            uint40_t nCharacters;
 
             // count literals and number of characters contained in references
             for (size_t i = 0; i < nFactors; i++)
@@ -127,11 +137,18 @@ namespace tdc { namespace lcpcomp {
                 if(len == uint40_t(0)) nLiterals += 1;
                 else nReferences += len;
             }
+            nCharacters = nReferences + nLiterals;
+            
+            std::cout << "Factors:              " << nFactors << std::endl;
+            std::cout << "Literal characters:   " << nLiterals << std::endl;
+            std::cout << "Reference characters: " << nReferences << std::endl;
+            std::cout << "Total characters:     " << nCharacters << std::endl;
 
             // reserve space on disk for vectors
-            m_literals.reserve(nLiterals + nReferences);
-            m_references1.reserve(nReferences);
-            m_references2.reserve(nReferences);
+            restoredText.resize(nCharacters);
+            byTargetPos->reserve(nReferences);
+
+            std::cout << "Reserved space for vectors." << std::endl;
 
             // everything here is 1-based
             // (necessary for stxxl sort)
@@ -142,61 +159,91 @@ namespace tdc { namespace lcpcomp {
                 uint40_t target = swapBytes(text[i * 2]) + 1;
                 uint40_t len = swapBytes(text[i * 2 + 1]);
                 if(len == uint40_t(0)) {
-                    // fill literal vector (naturally sorted by text position)
-                    m_literals.push_back(std::make_pair(textPos++, target));
+                    restoredText[textPos++ - 1] = char(target - 1);
                 } 
                 else {
                     // fill references vector (naturally sorted by text position)
                     for (uint40_t j = 0; j < len; j++)
                     {
                         auto reference = std::make_pair(textPos++, target++);
-                        m_references2.push_back(reference);
+                        byTargetPos->push_back(reference);
                     }
                 }
             } 
             
+            std::cout << "Vectors filled: " << byTargetPos->size() << std::endl;
+            
+            int round = 0;
             // do pointer jumping until there are no more changes
             // (this implementation is quite naive so far)
-            bool changed = true;
-            while(changed) {
-                changed = false;
-                // copy changes from updated reference to original references
-                m_references1 = m_references2;
-                // sort first references by textPos, second references by targetPos
-                stxxl::sort(m_references1.begin(), m_references1.end(), sortByTextPos, mb_ram*1024*1024);
-                stxxl::sort(m_references2.begin(), m_references2.end(), sortByTargetPos, mb_ram*1024*1024);
+            while(byTargetPos->size() > 0) {
+                round++;
+                std::cout << "Round " << round << ": Remaining references: " << byTargetPos->size() << std::endl;
+                
+                std::cout << "Copying modified byTargetPos vector to byTextPos vector..." << std::endl;
+                byTextPos = *byTargetPos;
+                
+                std::cout << "Sorting byTargetPos vector..." << std::endl;
+                stxxl::sort(byTargetPos->begin(), byTargetPos->end(), sortByTargetPos, mb_ram*1024*1024);
+                std::cout << "Sorting byTextPos vector..." << std::endl;
+                if(round > 1) stxxl::sort(byTextPos.begin(), byTextPos.end(), sortByTextPos, mb_ram*1024*1024);
+                
+                // add guard to byTextPos vector
+                byTextPos.push_back(sortByTextPos.max_value());
+                
+                std::cout << "Initializing buffer for pointer-jumped references..." << std::endl;
+                byTargetPosNew->clear();
+                byTargetPosNew->reserve(byTargetPos->size());
 
+                std::cout << "Scanning (Resolve & Jump)..." << std::endl;
+                uint40_t jumped = 0, resolved = 0;
                 // do the actual pointer jumping
-                uint40_t j = 0;            
-                for (uint40_t i = 0; i < nReferences; i++)
+                
+                references_vector::bufreader_type i_iter(byTextPos);            
+                for (references_vector::bufreader_type j_iter(*byTargetPos); !j_iter.empty(); ++j_iter)
                 {
-                    while(m_references1[j].first < m_references2[i].second) j++;
-                    if(m_references1[j].first == m_references2[i].second) {
-                        if(m_references2[i].second != m_references1[j].second) {
-                            m_references2[i].second = m_references1[j].second;
-                            changed = true;
-                        }
-                    }
+                    while((*i_iter).first < (*j_iter).second) ++i_iter;
+
+                    //~ std::cout << "Round " << round << ": Entry i: " << (*i_iter).first << ", Entry j: " << (*j_iter).second << ", Changes: " << changes << " ---" << std::endl;
+
+                    auto referenceFromByTextPos = (*i_iter);
+                    auto referenceFromByTargetPos = (*j_iter);
+                    
+                    if(referenceFromByTextPos.first == referenceFromByTargetPos.second) {
+                        // jump
+                        referenceFromByTargetPos.second = referenceFromByTextPos.second;
+                        byTargetPosNew->push_back(referenceFromByTargetPos);
+                        jumped++;
+                    } else {
+                        // restore
+                        restoredText[referenceFromByTargetPos.first - 1] = 
+                            restoredText[referenceFromByTargetPos.second - 1];
+                        resolved++;
+                    }                    
                 }
+                
+                
+                std::cout << "Pointing byTargetPos to buffer..." << std::endl;
+                
+                stxxl::VECTOR_GENERATOR<uint40pair_t>::result *h = byTargetPos;
+                byTargetPos = byTargetPosNew;
+                byTargetPosNew = h;
+                
+                std::cout << "Round complete. Resolved: " << resolved << ". Jumped: " << jumped << "." << std::endl;
+                
+                // substract current stats from stats at the beginning of the measurement
+                std::cout << (stxxl::stats_data(*Stats) - stats_begin) << std::endl;
+                
             }
+            delete byTargetPosNew;
             
-            // replace the targetPos of the reference by actual literals
-            // push everything into the literal vector
-            uint40_t j = 0;
-            for (uint40_t i = 0; i < nReferences; i++)
-            {
-                while(m_literals[j].first < m_references2[i].second) j++;
-                auto literal = std::make_pair(m_references2[i].first, m_literals[j].second);
-                m_literals.push_back(literal);
-            }           
-            // sort the literal vector by text position 
-            stxxl::sort(m_literals.begin(), m_literals.end(), sortByTextPos, mb_ram*1024*1024);
             
-            // write only the actual literal characters into the output file
+            
+            // write restored text into output file
             std::ofstream outputFile;
             outputFile.open(outfilename);
-            for (auto literal : m_literals)
-                outputFile << char(literal.second - 1);
+            for (auto character : restoredText)
+                outputFile << character;
             outputFile.close();
         });
 
@@ -235,6 +282,10 @@ namespace tdc { namespace lcpcomp {
                 else nReferences += len;
             }
 
+            std::cout << "Factors:              " << nFactors << std::endl;
+            std::cout << "Literal characters:   " << nLiterals << std::endl;
+            std::cout << "Reference characters: " << nReferences << std::endl;
+
             // reserve space on disk for vectors
             restoredText.resize(nLiterals + nReferences);
             byTargetPosV.reserve(nReferences);
@@ -256,7 +307,7 @@ namespace tdc { namespace lcpcomp {
                 else {
                     // fill one of the factor vectors
                     // (other one will get copied)
-                    auto reference = std::make_tuple(textPosition, target++, len);
+                    auto reference = std::make_tuple(textPosition, target, len);
                     byTargetPosV.push_back(reference);
                     textPosition += len;
                 }
@@ -265,6 +316,7 @@ namespace tdc { namespace lcpcomp {
             auto byTargetPosSize = byTargetPosV.size();
             long byTargetPosResize = 0;
             
+            int round = 0;
             // do pointer jumping and resolving until there are no more unresolved factors
             while(byTargetPosSize + byTargetPosResize > 0) {
                 
@@ -282,6 +334,8 @@ namespace tdc { namespace lcpcomp {
                 // memorize number of unresolved factors
                 // (will be used for resizing in the following round)
                 byTargetPosSize = byTargetPosV.size();
+                
+                std::cout << "Round " << round++ << ": Factors left: " << byTargetPosSize << std::endl;
                 
                 unsigned j = 0;
                 unsigned last_j = 0;
@@ -305,8 +359,13 @@ namespace tdc { namespace lcpcomp {
                     
                     // find the closest factor, that has its last text position after
                     // or at the start of the factor we are trying to resolve
-                    while(targetStart >= textPos(byTextPos) + factorLength(byTextPos))
-                        byTextPos = byTextPosV[++j];
+                    while(targetStart >= textPos(byTextPos) + factorLength(byTextPos)){
+                        if(j + 1 < byTextPosV.size())
+                            byTextPos = byTextPosV[++j];
+                        else
+                            byTextPos = sortByTextPos.max_value();
+                    }
+                        
                         
                     uint40_t textLen = factorLength(byTextPos);
                     uint40_t textStart = textPos(byTextPos);
@@ -315,10 +374,10 @@ namespace tdc { namespace lcpcomp {
                     
                     uint40_t prefixLen;                  
                     
-                    // resolve prefix (or entire factor), if a prefix of the vector to resolve
+                    // resolve prefix (or entire factor), if a prefix of the factor to resolve
                     // does not overlap with the other factor
                     if(targetStart < textStart) {
-                        prefixLen = targetLen - (std::max(targetEnd, textStart) - textStart);
+                        prefixLen = std::min(targetLen, uint40_t(textStart - targetStart));//targetLen - (std::max(targetEnd, textStart) - textStart);
                         uint40triple_t resolved = std::make_tuple(textPos(byTargetPos), targetPos(byTargetPos), prefixLen);
                         resolvedV.push_back(resolved);
                     }
@@ -327,7 +386,7 @@ namespace tdc { namespace lcpcomp {
                     else {                       
                         auto posOffset = targetStart - textStart;
                         auto newTargetPos = targetPos(byTextPos) + posOffset;
-                        prefixLen = targetLen - (std::max(targetEnd, textEnd) - textEnd);
+                        prefixLen = std::min(targetLen, uint40_t(textEnd - targetStart));//targetLen - (std::max(targetEnd, textEnd) - textEnd);
                         uint40triple_t jumped = std::make_tuple(textPos(byTargetPos), newTargetPos, prefixLen);
                         
                         // add pointer-jumped factor to the end of the factor vector
@@ -367,18 +426,30 @@ namespace tdc { namespace lcpcomp {
                 // sort the resolved factors by textposition
                 stxxl::sort(resolvedV.begin(), resolvedV.end(), sortByTextPos, mb_ram*1024*1024);
                 
+                uint64_t failed = 0;
+                uint64_t succeeded = 0;
+                
                 // restore the actual text from the resolved factors
                 // (does this cause unstructured IO?)
                 for(auto resolved : resolvedV) {
                     auto resolvedLen = factorLength(resolved);
-                    auto resolvedTextPos = textPos(resolved);
-                    auto resolvedTargetPos = targetPos(resolved);
+                    auto resolvedTextPos = textPos(resolved) - 1;
+                    auto resolvedTargetPos = targetPos(resolved) - 1;
                     for (unsigned i = 0; i < resolvedLen; i++) {
-                        restoredText[resolvedTextPos + i - 1] = restoredText[resolvedTargetPos + i - 1];
+                        restoredText[resolvedTextPos + i] = restoredText[resolvedTargetPos + i];
+                        if(restoredText[resolvedTextPos + i] == char(0) || restoredText[resolvedTextPos + i] == '?'){
+							restoredText[resolvedTextPos + i]  = '?';
+							failed++;
+						} else {
+							succeeded++;
+						}
                     }
                     
                 }
                 resolvedV.clear();
+                
+                std::cout << "Failed:    " << failed << std::endl;
+                std::cout << "Succeeded: " << succeeded << std::endl;
             }
             
             // print restored text, if it is short
@@ -425,7 +496,7 @@ int main(int argc, char** argv) {
 
     const tdc::len_t mb_ram = (argc >= 3) ? std::stoi(argv[3]) : 512;
 
-    tdc::lcpcomp::defactorize2(infile, outfile, mb_ram);
+    tdc::lcpcomp::defactorize(infile, outfile, mb_ram);
 
     return 0;
 }
