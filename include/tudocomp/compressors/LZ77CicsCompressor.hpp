@@ -3,6 +3,8 @@
 #include <tudocomp/compressors/lzss/LZSSOnlineCoding.hpp>
 #include <tudocomp/compressors/lzcics/st.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 namespace tdc {
 
 template<typename coder_t>
@@ -15,6 +17,7 @@ public:
     inline static Meta meta() {
         Meta m("compressor", "lz77cics", "LZ77 compression in compressed space.");
         m.option("coder").templated<coder_t>("coder");
+        m.input_restrictions(io::InputRestrictions({0}, false));
         return m;
     }
 
@@ -28,6 +31,9 @@ public:
         // coder
         typename coder_t::Encoder coder(
             env().env_for_option("coder"), output, ViewLiterals(text));
+
+        // encode text length
+        coder.encode(n, size_r);
 
         // construct suffix tree
         lzcics::cst_t cst;
@@ -112,7 +118,10 @@ public:
 		        if(x == p) {
                     auto c = st.head(ell);
 			        DVLOG(2) << "Cha: " << c;
-                    lzss::online_encode_literal(coder, c);
+                    if(p < n) {
+                        // don't encode sentinel
+                        lzss::online_encode_literal(coder, c);
+                    }
 			        ++p;
 		        }
 		        ell = st.next_leaf(ell);
@@ -128,7 +137,11 @@ public:
 
     /// \copydoc Compressor::compress
     inline virtual void decompress(Input& input, Output& output) override {
-        //TODO
+        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+        auto n = decoder.template decode<size_t>(size_r);
+        auto text = lzss::online_decode(decoder, n);
+        auto outs = output.as_stream();
+        for(auto c : text) outs << c;
     }
 };
 
