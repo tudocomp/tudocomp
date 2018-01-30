@@ -132,12 +132,12 @@ struct ST {
 
 };
 
-void reset_bitvector(bit_vector& bv) { //! resets a bit-vector, clearing all ones
+inline void reset_bitvector(bit_vector& bv) { //! resets a bit-vector, clearing all ones
 	for(auto it = bv.begin(); it != bv.end(); ++it) *it = 0; //TODO: is this the fastest approach?
 }
 
 //get suffix tree for text
-ST suffix_tree(const uliteral_t* text, cst_t& cst) {
+inline ST suffix_tree(const uliteral_t* text, cst_t& cst) {
     construct_im(cst, (const char*)text, 1); //FIXME: SDSL s*cks
     return ST(cst);
 }
