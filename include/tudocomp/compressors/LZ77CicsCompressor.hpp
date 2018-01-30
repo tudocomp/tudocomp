@@ -9,10 +9,6 @@ namespace tdc {
 
 template<typename coder_t>
 class LZ77CicsCompressor : public Compressor {
-
-private:
-    size_t m_window;
-
 public:
     inline static Meta meta() {
         Meta m("compressor", "lz77cics", "LZ77 compression in compressed space.");
