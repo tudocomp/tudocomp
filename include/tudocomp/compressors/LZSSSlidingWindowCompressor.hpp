@@ -116,27 +116,9 @@ public:
 
     inline virtual void decompress(Input& input, Output& output) override {
         typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
-
-        std::vector<uliteral_t> text;
-        while(!decoder.eof()) {
-            bool is_factor = decoder.template decode<bool>(bit_r);
-            if(is_factor) {
-                size_t fsrc = text.size() - decoder.template decode<size_t>(Range(text.size()));
-
-                //TODO are the compressor options saved into tudocomp's magic?
-                size_t fnum = decoder.template decode<size_t>(Range(m_window));
-
-                for(size_t i = 0; i < fnum; i++) {
-                    text.push_back(text[fsrc+i]);
-                }
-            } else {
-                auto c = decoder.template decode<uliteral_t>(literal_r);
-                text.push_back(c);
-            }
-        }
-
+        auto text = lzss::online_decode(decoder, m_window);
         auto outs = output.as_stream();
-        for(uint8_t c : text) outs << c;
+        for(auto c : text) outs << c;
     }
 };
 
