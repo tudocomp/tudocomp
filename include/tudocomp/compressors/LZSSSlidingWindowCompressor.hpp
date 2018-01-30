@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp/compressors/lzss/LZSSOnlineCoding.hpp>
+
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
@@ -84,16 +86,11 @@ public:
 
             if(fnum > 0) {
                 // encode factor
-                coder.encode(true, bit_r);
-                coder.encode(fpos - fsrc, Range(fpos)); //delta
-                coder.encode(fnum, Range(m_window));
-
+                lzss::online_encode_factor(coder, fpos, fsrc, fnum, m_window);
                 advance = fnum;
             } else {
                 // encode literal
-                coder.encode(false, bit_r);
-                coder.encode(uliteral_t(buf[ahead]), literal_r);
-
+                lzss::online_encode_literal(coder, buf[ahead]);
                 advance = 1;
             }
 
