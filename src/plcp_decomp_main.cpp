@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
-#include <tudocomp_stat/StatPhase.hpp>
+#include <tudocomp_stat/StatPhaseStxxl.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
 #include <tudocomp/coders/BitCoder.hpp>
@@ -13,6 +13,7 @@
 #include <stxxl/bits/io/iostats.h>
 
 namespace tdc { namespace lcpcomp {
+    
     constexpr len_t M = 1024 * 1024;
     using uint40_t = uint_t<40>;
     using uint40pair_t = std::pair<uint40_t,uint40_t>;
@@ -97,8 +98,7 @@ namespace tdc { namespace lcpcomp {
                           const std::string& outfilename,
                           const len_t mb_ram) {      
 
-        StatPhase phase("PLCPDeComp");
-        StatPhase::wrap("Decompress", [&]{
+        tdc::StatPhase::wrap("Decompress", [&]{
             
             // generate stats instance
             stxxl::stats * Stats = stxxl::stats::get_instance();
@@ -180,6 +180,8 @@ namespace tdc { namespace lcpcomp {
                 round++;
                 std::cout << "Round " << round << ": Remaining references: " << byTargetPos->size() << std::endl;
                 
+                tdc::StatPhase currentPhase("Scan " + std::to_string(round));
+                
                 std::cout << "Copying modified byTargetPos vector to byTextPos vector..." << std::endl;
                 byTextPos = *byTargetPos;
                 
@@ -237,6 +239,14 @@ namespace tdc { namespace lcpcomp {
             }
             delete byTargetPosNew;
             
+            // print restored text, if it is short
+            if(restoredText.size() < 500) {
+                std::cout << "The restored text is: " << std::endl;
+                for(auto character : restoredText) {
+                    std::cout << character;
+                }
+                std::cout << std::endl;
+            }
             
             
             // write restored text into output file
@@ -485,7 +495,19 @@ int main(int argc, char** argv) {
                   << " <infile> <outfile> [mb_ram]" << std::endl;
         return 1;
     }
+    
+    tdc::StatPhaseStxxlConfig statsCfg(false);
+    statsCfg.parallelTime_combined = true;
+    statsCfg.waitTime_combined = true;
+    statsCfg.numberOfBytes_read = true;
+    statsCfg.numberOfBytes_write = true;
+    //~ statsCfg = tdc::StatPhaseStxxlConfig();
+    tdc::StatPhaseStxxl::enable(statsCfg);
     tdc::StatPhase root("Root");
+    
+    root.to_json();
+    root.to_json();
+    root.to_json();
 
     const std::string infile { argv[1] };
     const std::string outfile { argv[2] };
@@ -497,6 +519,27 @@ int main(int argc, char** argv) {
     const tdc::len_t mb_ram = (argc >= 3) ? std::stoi(argv[3]) : 512;
 
     tdc::lcpcomp::defactorize(infile, outfile, mb_ram);
+    
+    auto algorithm_stats = root.to_json();
+
+    tdc::json::Object meta;
+    meta.set("title", "TITLE");
+    meta.set("startTime", "STARTTIME");
+
+    meta.set("config", "NONE");
+    meta.set("input", "FILENAME");;
+    meta.set("inputSize", "INPUTSIZE");
+    meta.set("output", "NONE");
+    meta.set("outputSize", "OUTPUTSIZE");
+    meta.set("rate", "NONE");
+
+    tdc::json::Object stats;
+    stats.set("meta", meta);
+    stats.set("data", algorithm_stats);
+
+    std::cout << "data for http://tudocomp.org/charter" << std::endl;
+    stats.str(std::cout);
+    std::cout << std::endl;
 
     return 0;
 }
