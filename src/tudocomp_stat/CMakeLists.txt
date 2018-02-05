@@ -3,6 +3,7 @@ add_library(
 
     malloc.cpp
     StatPhase.cpp
+    PhaseData.cpp
 )
 
 target_link_libraries(
