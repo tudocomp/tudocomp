@@ -84,12 +84,19 @@ private:
 
         m_data->time_end = 0;
         m_data->time_start = current_time_millis();
+        
+        if(m_data->stxxl_start) {
+            m_data->stxxl_start(m_data);
+        }
 
         s_current = this;
     }
 
     inline void finish() {
         m_data->time_end = current_time_millis();
+        if(m_data->stxxl_read_stats) {
+            m_data->stxxl_read_stats(m_data);
+        }
 
         if(m_parent) {
             // add data to parent's data
@@ -105,6 +112,7 @@ private:
     }
 
 public:
+
     /// \brief Executes a lambda as a single statistics phase.
     ///
     /// The new phase is started as a sub phase of the current phase and will
@@ -287,8 +295,11 @@ public:
     /// \return the \ref json::Object containing the JSON representation
     inline json::Object to_json() {
         if (!m_disabled) {
-            m_data->time_end = current_time_millis();
+            m_data->time_end = current_time_millis();            
             pause();
+            if(m_data->stxxl_read_stats) {
+                m_data->stxxl_read_stats(m_data);
+            }
             json::Object obj = m_data->to_json();
             resume();
             return obj;
