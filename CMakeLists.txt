@@ -76,6 +76,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemod
 include(cotire)
 set (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1000)
 
+# Git Submodule sources
+include(git_submodule_subdirectories)
+
 # Finders
 include(find_or_download_package)
 
