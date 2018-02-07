@@ -78,6 +78,7 @@ set (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1000)
 
 # Git Submodule sources
 include(git_submodule_subdirectories)
+git_submodule_subdirectory(include/tudocomp/bit_span)
 
 # Finders
 include(find_or_download_package)
