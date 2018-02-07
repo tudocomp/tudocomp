@@ -1,0 +1,3 @@
+[submodule "etc/datasets"]
+	path = etc/datasets
+	url = git@github.com:Kimundi/datasets.git
