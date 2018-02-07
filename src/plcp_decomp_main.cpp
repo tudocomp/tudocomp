@@ -98,7 +98,7 @@ namespace tdc { namespace lcpcomp {
                           const std::string& outfilename,
                           const len_t mb_ram) {      
 
-        tdc::StatPhase::wrap("Decompress", [&]{
+        tdc::StatPhase::wrap("Decompress (character based)", [&]{
             
             // generate stats instance
             stxxl::stats * Stats = stxxl::stats::get_instance();
@@ -264,8 +264,7 @@ namespace tdc { namespace lcpcomp {
                           const std::string& outfilename,
                           const len_t mb_ram) {      
 
-        StatPhase phase("PLCPDeComp");
-        StatPhase::wrap("Decompress", [&]{
+        StatPhase::wrap("Decompress (factor based)", [&]{
             
             CopyFactorComparison<false> sortByTextPos;
             CopyFactorComparison<true> sortByTargetPos;      
@@ -312,7 +311,8 @@ namespace tdc { namespace lcpcomp {
                 if(len == uint40_t(0)) {
                     // restore literal factors immediatly
                     // (naturally in textpos order -> single scan)
-                    restoredText[textPosition++ - 1] = char(target - 1);
+                    restoredText[textPosition - 1] = char(target - 1);
+                    textPosition++;
                 } 
                 else {
                     // fill one of the factor vectors
@@ -335,21 +335,16 @@ namespace tdc { namespace lcpcomp {
                 
                 // remove old factors that have been either entirely resolved or pointer-jumped
                 byTargetPosV.resize(byTargetPosSize + byTargetPosResize);
+                byTargetPosSize = byTargetPosV.size();
                 byTargetPosResize = 0;
                 
                 // copy unresolved factors and sort copy by textpos
                 byTextPosV = byTargetPosV;
                 stxxl::sort(byTextPosV.begin(), byTextPosV.end(), sortByTextPos, mb_ram*1024*1024);
                 
-                // memorize number of unresolved factors
-                // (will be used for resizing in the following round)
-                byTargetPosSize = byTargetPosV.size();
-                
                 std::cout << "Round " << round++ << ": Factors left: " << byTargetPosSize << std::endl;
                 
                 unsigned j = 0;
-                unsigned last_j = 0;
-                uint40_t last_targetStart = 0;
                 uint40triple_t &byTextPos = byTextPosV[j];
                 for(unsigned i = 0; i < byTargetPosSize; i++) {
                     
@@ -360,13 +355,6 @@ namespace tdc { namespace lcpcomp {
                     uint40_t targetStart = targetPos(byTargetPos);
                     uint40_t targetEnd = targetStart + targetLen;
                     
-                    // rollback if splitting up factors has resulted in moving too far
-                    // in the list of factors sorted by textpos
-                    if(last_targetStart > targetStart) {
-                        j = last_j;
-                        byTextPos = byTextPosV[j];
-                    }
-                    
                     // find the closest factor, that has its last text position after
                     // or at the start of the factor we are trying to resolve
                     while(targetStart >= textPos(byTextPos) + factorLength(byTextPos)){
@@ -375,7 +363,6 @@ namespace tdc { namespace lcpcomp {
                         else
                             byTextPos = sortByTextPos.max_value();
                     }
-                        
                         
                     uint40_t textLen = factorLength(byTextPos);
                     uint40_t textStart = textPos(byTextPos);
@@ -387,8 +374,8 @@ namespace tdc { namespace lcpcomp {
                     // resolve prefix (or entire factor), if a prefix of the factor to resolve
                     // does not overlap with the other factor
                     if(targetStart < textStart) {
-                        prefixLen = std::min(targetLen, uint40_t(textStart - targetStart));//targetLen - (std::max(targetEnd, textStart) - textStart);
-                        uint40triple_t resolved = std::make_tuple(textPos(byTargetPos), targetPos(byTargetPos), prefixLen);
+                        prefixLen = std::min(targetLen, uint40_t(textStart - targetStart));
+                        uint40triple_t resolved = std::make_tuple(textPos(byTargetPos), targetStart, prefixLen);
                         resolvedV.push_back(resolved);
                     }
                     // pointerjump prefix (or entire factor), if a prefix of the vector to resolve
@@ -396,7 +383,7 @@ namespace tdc { namespace lcpcomp {
                     else {                       
                         auto posOffset = targetStart - textStart;
                         auto newTargetPos = targetPos(byTextPos) + posOffset;
-                        prefixLen = std::min(targetLen, uint40_t(textEnd - targetStart));//targetLen - (std::max(targetEnd, textEnd) - textEnd);
+                        prefixLen = std::min(targetLen, uint40_t(textEnd - targetStart));
                         uint40triple_t jumped = std::make_tuple(textPos(byTargetPos), newTargetPos, prefixLen);
                         
                         // add pointer-jumped factor to the end of the factor vector
@@ -406,18 +393,12 @@ namespace tdc { namespace lcpcomp {
                     }
                     
                     // if only a prefix of the current factor has been dealt with,
-                    // calculate remaining factor and consider it next
+                    // calculate remaining factor
                     if(prefixLen < targetLen) {
                         // manipulate the current factor directly in the factor vector
                         textPos(byTargetPos, textPos(byTargetPos) + prefixLen);
                         targetPos(byTargetPos, targetPos(byTargetPos) + prefixLen);
                         factorLength(byTargetPos, factorLength(byTargetPos) - prefixLen);
-                        // by decrementing i, the manipulated factor will be considered next
-                        --i;
-                        // memorize the current position in the textpos sorted vector
-                        // (this position will get restored, if the splitting of the
-                        // current factor makes it necessary)
-                        last_j = j;
                     } else {
                         // if the entire factor has been either resolved or pointer-jumped
                         // it is set to the maximum possible factor. this ensures, that it
@@ -427,10 +408,6 @@ namespace tdc { namespace lcpcomp {
                         byTargetPos = sortByTargetPos.max_value();
                         --byTargetPosResize;
                     }
-                    
-                    // memorize the last target start position to restore it later
-                    // (if necessary)
-                    last_targetStart = targetStart;
                 }
                 
                 // sort the resolved factors by textposition
@@ -518,7 +495,7 @@ int main(int argc, char** argv) {
 
     const tdc::len_t mb_ram = (argc >= 3) ? std::stoi(argv[3]) : 512;
 
-    tdc::lcpcomp::defactorize(infile, outfile, mb_ram);
+    tdc::lcpcomp::defactorize2(infile, outfile, mb_ram);
     
     auto algorithm_stats = root.to_json();
 
