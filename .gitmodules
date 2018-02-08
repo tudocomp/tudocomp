@@ -1,5 +1,5 @@
-[submodule "etc/datasets"]
-	path = etc/datasets
+[submodule "external/datasets"]
+	path = external/datasets
 	url = https://github.com/tudocomp/datasets.git
 [submodule "external/bit_span"]
 	path = external/bit_span
