@@ -97,6 +97,8 @@ protected:
         return 0;
     }
 
+public:
+    inline void debug_print() {}
 };
 
 

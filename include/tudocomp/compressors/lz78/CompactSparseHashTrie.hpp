@@ -84,16 +84,18 @@ public:
         if (val == 0) {
             val = newleaf_id;
             DCHECK_EQ(val, newleaf_id);
-            //std::cout << "find_or_insert(" << key << ", " << val << ", " << newleaf_id << ");\n";
             return node_t(val, true);
         } else {
-            //std::cout << "find_or_insert(" << key << ", " << val << ", " << val << ");\n";
             return node_t(val, false);
         }
     }
 
     inline size_t size() const {
         return m_table.size();
+    }
+
+    inline void debug_print() {
+        m_table.debug_print();
     }
 };
 

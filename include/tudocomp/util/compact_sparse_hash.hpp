@@ -93,185 +93,198 @@ inline QuotPtr make_quot_ptr(uint64_t* ptr, size_t quot_width) {
 
     return IntPtrBase<QuotPtr>(ptr, 0, quot_width);
 }
-template<typename V, typename I>
-inline void rotate_end_to(I base, size_t pos, size_t size) {
-    auto a = base + pos;
-    auto b = base + size;
-
-    V tmp = std::move(*b);
-    while(a != b) {
-        *b = std::move(*(b - 1));
-        b--;
-    }
-    *a = std::move(tmp);
-}
 
 template<typename val_t>
 class BucketElem;
 
 template<typename val_t>
 class Bucket {
-    uint64_t m_bv = 0;
-    void* m_ptr = nullptr;
+    std::unique_ptr<uint64_t[]> m_data;
+
+public:
+    inline bool is_empty() const {
+        return m_data.get() == nullptr;
+    }
+
+private:
+
+    static inline bool is_aligned(void const* const pointer, size_t byte_count) {
+        return (uintptr_t)pointer % byte_count == 0;
+    }
+
+    static inline size_t size(uint64_t bv) {
+        return __builtin_popcountll(bv);
+    }
 
     struct Layout {
-        size_t val_bytes;
-        size_t padding;
-        size_t bv_bytes;
-
-        inline size_t byte_size() {
-            return val_bytes + padding + bv_bytes;
-        }
-
-        inline size_t bv_offset() {
-            return val_bytes + padding;
-        }
+        size_t vals_qword_offset;
+        size_t quots_qword_offset;
+        size_t overall_qword_size;
     };
     inline static Layout calc_sizes(size_t size, size_t quot_width) {
-        size_t val_size = sizeof(val_t) * size;
-        size_t bv_size = (size * quot_width + 63ull) / 64ull * sizeof(uint64_t);
-        size_t padding = 0;
+        DCHECK_NE(size, 0);
+        DCHECK_LE(alignof(val_t), alignof(uint64_t));
 
-        DCHECK_EQ(val_size % alignof(val_t), 0);
+        size_t vals_size_in_bytes = sizeof(val_t) * size;
+        size_t vals_size_in_qwords = (vals_size_in_bytes + 7) / 8;
 
-        size_t rem = val_size % alignof(uint64_t);
+        uint64_t quots_size_in_bits = quot_width * size;
+        size_t quots_size_in_qwords = (quots_size_in_bits + 63ull) / 64ull;
 
-        if (rem != 0) {
-            padding += (alignof(uint64_t) - rem);
-        }
+        Layout r;
 
-        size_t padded_val_size = val_size + padding;
+        r.vals_qword_offset = 1;
+        r.quots_qword_offset = r.vals_qword_offset + vals_size_in_qwords;
 
-        DCHECK_EQ(padded_val_size % alignof(uint64_t), 0);
+        r.overall_qword_size = 1 + vals_size_in_qwords + quots_size_in_qwords;
 
-        return Layout {
-            val_size,
-            padding,
-            bv_size,
-        };
+        /*
+        std::cout
+            << "size=" << size
+            << ", quot_width=" << quot_width
+            << ", sizeof(val_t)=" << sizeof(val_t)
+            << ", alignof(val_t)=" << alignof(val_t)
+            << ", sizeof(uint64_t)=" << sizeof(uint64_t)
+            << ", alignof(uint64_t)=" << alignof(uint64_t)
+            << ", vals_qword_offset=" << r.vals_qword_offset
+            << ", quots_qword_offset=" << r.quots_qword_offset
+            << ", overall_qword_size=" << r.overall_qword_size
+            << "\n";
+        */
+
+        return r;
     }
 
     struct Ptrs {
-        val_t* val_ptr;
-        QuotPtr quot_ptr;
+        val_t* vals_ptr;
+        QuotPtr quots_ptr;
     };
     inline Ptrs ptrs(size_t quot_width) const {
+        DCHECK(!is_empty());
         size_t size = this->size();
 
         auto layout = calc_sizes(size, quot_width);
 
-        char* p = (char*) m_ptr;
+        uint64_t* const vals_start = &m_data[layout.vals_qword_offset];
+        uint64_t* const quots_ptr = &m_data[layout.quots_qword_offset];
 
-        val_t* val_ptr = (val_t*)(p);
-        uint64_t* bv_ptr = (uint64_t*)(p + layout.bv_offset());
+        val_t* const vals_ptr = reinterpret_cast<val_t*>(vals_start);
 
-        DCHECK_EQ(uint64_t(val_ptr) % alignof(val_t), 0);
-        DCHECK_EQ(uint64_t(bv_ptr) % alignof(uint64_t), 0);
+        DCHECK(is_aligned(vals_ptr, alignof(val_t))) << (void*)vals_ptr << ", " << alignof(val_t);
+        DCHECK(is_aligned(quots_ptr, alignof(uint64_t)));
 
         return Ptrs {
-            val_ptr,
-            make_quot_ptr(bv_ptr, quot_width)
+            vals_ptr,
+            make_quot_ptr(quots_ptr, quot_width),
         };
     }
 
 public:
-    inline Bucket(): m_bv(0), m_ptr(nullptr) {}
-    explicit inline Bucket(uint64_t bv, size_t quot_width): m_bv(bv) {
-        size_t size = this->size();
+    inline Bucket(): m_data() {}
+    explicit inline Bucket(uint64_t bv, size_t quot_width) {
+        if (bv != 0) {
+            auto layout = calc_sizes(size(bv), quot_width);
 
-        if (size == 0) {
-            m_ptr = nullptr;
-            return;
+            m_data = std::make_unique<uint64_t[]>(layout.overall_qword_size);
+            m_data[0] = bv;
+
+            // NB: We call this for its alignment asserts
+            ptrs(quot_width);
+        } else {
+            m_data.reset();
         }
-
-        auto layout = calc_sizes(size, quot_width);
-        size_t malloc_size = layout.byte_size();
-
-        /*std::cout << "size: " << size
-                  << ", val: "
-                    << "x" << sizeof(val_t) << "=" << val_size
-                    << " al " << alignof(val_t)
-                  << ", bv: "
-                    << "x" << (quot_width/64ull) << ":" << (quot_width%64ull)
-                    << "=" << ((size * quot_width)/64ull) << ":" << ((size * quot_width) %64ull)
-                    << "="
-                    << (bv_size/sizeof(uint64_t)) << "x" << sizeof(uint64_t) << "=" << bv_size
-                    << " al " << alignof(uint64_t)
-                  << ", rem: " << rem
-                  << ", padding: " << padding
-                  << ", padded_val_size: " << padded_val_size
-                  << ", malloc_size: " << malloc_size
-                  << "\n";*/
-
-        m_ptr = malloc(malloc_size);
-    }
-
-    inline size_t size() const {
-        return __builtin_popcountll(m_bv);
     }
 
     inline uint64_t bv() const {
-        return m_bv;
+        if (!is_empty()) {
+            return m_data[0];
+        } else {
+            return 0;
+        }
+    }
+
+    inline size_t size() const {
+        return size(bv());
     }
 
     inline void destroy_vals(size_t quot_width) {
-        size_t size = this->size();
+        if (!is_empty()) {
+            size_t size = this->size();
 
-        val_t* start = ptrs(quot_width).val_ptr;
-        val_t* end = start + size;
+            val_t* start = ptrs(quot_width).vals_ptr;
+            val_t* end = start + size;
 
-        for(; start != end; start++) {
-            start->~val_t();
+            for(; start != end; start++) {
+                start->~val_t();
+            }
         }
     }
 
-    inline void destroy_self() {
-        if (m_ptr != nullptr) {
-            free(m_ptr);
-            m_ptr = nullptr;
-        }
-    }
-
-    inline ~Bucket() {
-        destroy_self();
-    }
-
-    inline Bucket(Bucket&& other) {
-        m_ptr = other.m_ptr;
-        other.m_ptr = nullptr;
-        m_bv = other.m_bv;
-        other.m_bv = 0;
-    }
-
-    inline Bucket& operator=(Bucket&& other) {
-        destroy_self();
-
-        m_ptr = other.m_ptr;
-        other.m_ptr = nullptr;
-        m_bv = other.m_bv;
-        other.m_bv = 0;
-
-        return *this;
-    }
+    inline Bucket(Bucket&& other) = default;
+    inline Bucket& operator=(Bucket&& other) = default;
 
     inline BucketElem<val_t> at(size_t pos, size_t quot_width) const {
-        auto ps = ptrs(quot_width);
-        return BucketElem<val_t>(ps.val_ptr + pos, ps.quot_ptr + pos);
-    }
-
-    inline void rotate_end_to(size_t pos, size_t quot_width) {
-        size_t size = this->size();
-        size_t last = size - 1;
-
-        auto ps = ptrs(quot_width);
-        tdc::rotate_end_to<val_t>(ps.val_ptr, pos, last);
-        tdc::rotate_end_to<uint64_t>(ps.quot_ptr, pos, last);
-    }
-
-    inline bool is_empty() {
-        return m_ptr == nullptr;
+        if(!is_empty()) {
+            auto ps = ptrs(quot_width);
+            return BucketElem<val_t>(ps.vals_ptr + pos, ps.quots_ptr + pos);
+        } else {
+            DCHECK_EQ(pos, 0);
+            return BucketElem<val_t>(nullptr, make_quot_ptr(nullptr, quot_width));
+        }
     }
 };
+
+
+template<typename val_t>
+inline void insert_in_bucket(Bucket<val_t>& bucket,
+                                      size_t new_elem_bucket_pos,
+                                      uint64_t new_elem_bv_bit,
+                                      size_t qw,
+                                      val_t&& val,
+                                      uint64_t quot)
+{
+    static_assert(sizeof(Bucket<val_t>) == sizeof(void*), "unique_ptr is more than 1 ptr large!");
+
+    size_t const size = bucket.size();
+
+    // TODO: check out different sizing strategies
+    // eg, the known sparse_hash repo uses overallocation for small buckets
+
+    // create a new bucket with enough size for the new element
+    auto new_bucket = Bucket<val_t>(bucket.bv() | new_elem_bv_bit, qw);
+
+    // move all elements before the new element's location from old bucket into new bucket
+    for(size_t i = 0; i < new_elem_bucket_pos; i++) {
+        // TODO: Iterate pointers instead?
+        auto new_elem = new_bucket.at(i, qw);
+        auto old_elem = bucket.at(i, qw);
+
+        new_elem.set_quotient(old_elem.get_quotient());
+        new(&new_elem.val()) val_t(std::move(old_elem.val()));
+    }
+
+    // move new element into its location in the new bucket
+    {
+        auto new_elem = new_bucket.at(new_elem_bucket_pos, qw);
+        new_elem.set_quotient(quot);
+        new(&new_elem.val()) val_t(std::move(val));
+    }
+
+    // move all elements after the new element's location from old bucket into new bucket
+    for(size_t i = new_elem_bucket_pos; i < size; i++) {
+        // TODO: Iterate pointers instead?
+        auto new_elem = new_bucket.at(i + 1, qw);
+        auto old_elem = bucket.at(i, qw);
+
+        new_elem.set_quotient(old_elem.get_quotient());
+        new(&new_elem.val()) val_t(std::move(old_elem.val()));
+    }
+
+    // destroy old empty elements
+    bucket.destroy_vals(qw);
+
+    bucket = std::move(new_bucket);
+}
 
 template<typename val_t>
 class BucketElem {
@@ -289,7 +302,7 @@ class BucketElem {
 
 public:
     inline BucketElem():
-        m_val_ptr(nullptr) {}
+        m_val_ptr(nullptr), m_quot_ptr() {}
 
     inline uint64_t get_quotient() {
         return uint64_t(*m_quot_ptr);
@@ -330,6 +343,7 @@ public:
 template<typename val_t>
 class compact_hash {
     using key_t = uint64_t;
+    using buckets_t = std::vector<Bucket<val_t>>;
 
     static constexpr size_t BVS_WIDTH_SHIFT = 6;
     static constexpr size_t BVS_WIDTH_MASK = 0b111111;
@@ -343,7 +357,7 @@ class compact_hash {
     IntVector<uint_t<2>> m_cv;
 
     // Sparse table data
-    std::vector<Bucket<val_t>> m_buckets;
+    buckets_t m_buckets;
 
     inline static constexpr size_t min_size(size_t size) {
         return (size < 2) ? 2 : size;
@@ -355,10 +369,15 @@ public:
         m_sizing(min_size(size)),
         m_width(key_width)
     {
-        m_cv.reserve(table_size());
-        m_cv.resize(table_size());
-        m_buckets.reserve((m_sizing.size() + BVS_WIDTH_MASK) << BVS_WIDTH_SHIFT);
-        m_buckets.resize((m_sizing.size() + BVS_WIDTH_MASK) << BVS_WIDTH_SHIFT);
+        size_t cv_size = table_size();
+        size_t buckets_size = ((table_size() + BVS_WIDTH_MASK) >> BVS_WIDTH_SHIFT);
+
+        // std::cout << "cv_size: " << cv_size << ", buckets_size: " << buckets_size << "\n";
+
+        m_cv.reserve(cv_size);
+        m_cv.resize(cv_size);
+        m_buckets.reserve(buckets_size);
+        m_buckets.resize(buckets_size);
     }
 
     inline ~compact_hash() {
@@ -449,6 +468,11 @@ private:
         dcheck_key_width(key);
         uint64_t hres = compact_hashfn(key, real_width());
 
+        IF_DEBUG({
+            auto reverted = compact_reverse_hashfn(hres, real_width());
+            DCHECK_EQ(reverted, key);
+        });
+
         uint64_t shift = table_size_log2();
 
         if (HIGH_BITS_RANDOM) {
@@ -484,7 +508,7 @@ private:
     template<typename handler_t>
     inline void shift_insert_handler(size_t from,
                                      size_t to,
-                                     uint64_t key,
+                                     uint64_t quot,
                                      handler_t&& handler) {
         DCHECK_NE(from, to);
 
@@ -495,7 +519,7 @@ private:
 
             i = next_i;
         }
-        shift_insert_sparse_handler(from, to, key, std::move(handler));
+        shift_insert_sparse_handler(from, to, quot, std::move(handler));
 
         set_c(from, false);
     }
@@ -583,6 +607,8 @@ public:
         insert_handler(key, key_width, AddressDefaultHandler {
             &addr
         });
+
+        DCHECK(addr != nullptr);
 
         return *addr;
     }
@@ -677,10 +703,14 @@ private:
         grow_if_needed(key_width);
         auto const dkey = decompose_key(key);
 
+        DCHECK_EQ(key, compose_key(dkey.initial_address, dkey.stored_quotient));
+
         // cases:
         // - initial address empty
         // - initial address full, v[initial address] = 1
         // - initial address full, v[initial address] = 0
+
+        DCHECK_LT(dkey.initial_address >> BVS_WIDTH_SHIFT, m_buckets.size());
 
         if (sparse_is_empty(dkey.initial_address)) {
             // check if we can insert directly
@@ -829,6 +859,13 @@ private:
             return needs_capacity_change() || (new_width != m_width);
         };
 
+        /*
+        std::cout
+                << "buckets size/cap: " << m_buckets.size()
+                << ", size: " << m_sizing.size()
+                << "\n";
+        */
+
         if (needs_realloc()) {
             size_t new_capacity;
             if (needs_capacity_change()) {
@@ -840,10 +877,9 @@ private:
 
             /*
             std::cout
-                << "size: " << m_sizing.size()
-                << ", grow to cap " << new_table.table_size()
-                << ", m_width: " << new_table.m_width
-                << ", real_width: " << new_table.real_width()
+                << "grow to cap " << new_table.table_size()
+                << ", m_width: " << int(new_table.m_width)
+                << ", real_width: " << int(new_table.real_width())
                 << ", quot width: " << new_table.quotient_width()
                 << "\n";
             */
@@ -858,7 +894,7 @@ private:
                 auto p = sparse_pos(i);
 
                 // drop buckets of old table as they get emptied out
-                if (p.offset == 0) {
+                if (p.offset_in_bucket() == 0) {
                     if (start_of_bucket) {
                         DCHECK_NE(bucket, p.bucket_pos);
                         sparse_drop_bucket(bucket);
@@ -961,51 +997,34 @@ public:
         }
     }
 
+    inline void debug_print() {
+        std::cout << "m_width: " << uint32_t(m_width) << "\n",
+        std::cout << "size: " << size() << "\n",
+        std::cout << debug_state() << "\n";
+    }
+
 private:
     template<typename handler_t>
     inline void sparse_set_at_empty_handler(size_t pos, key_t quot, handler_t&& handler) {
         auto data = sparse_pos(pos);
-        DCHECK(!data.exists);
+        DCHECK(!data.exists_in_bucket());
+
+        // TODO: Check that the sparse_pos to a invalid position works correctly
 
         // figure out which bucket to access
         auto& bucket = m_buckets[data.bucket_pos];
-        size_t qw = quotient_width();
-        const size_t size = bucket.size();
+        size_t const qw = quotient_width();
 
         // we will insert a new element
         auto value_handler = handler.on_new();
         auto& val = value_handler.get();
 
-        // TODO: check out different sizing strategies
-        // eg, the known sparse_hash repo uses overallocation for small buckets
-
-        // create a new bucket with enough size for the new element
-        auto new_bucket = Bucket<val_t>(bucket.bv() | data.b_mask, qw);
-
-        // move element from old bucket into new bucket
-        for(size_t i = 0; i < size; i++) {
-            auto new_elem = new_bucket.at(i, qw);
-            auto elem = bucket.at(i, qw);
-
-            new_elem.set_quotient(elem.get_quotient());
-            new(&new_elem.val()) val_t(std::move(elem.val()));
-        }
-
-        // construct new element into new bucket position
-        auto new_elem = new_bucket.at(size, qw);
-        new_elem.set_quotient(quot);
-        new(&new_elem.val()) val_t(std::move(val));
-
-        // rotate new element to the right position
-        new_bucket.rotate_end_to(data.offset, qw);
+        // insert element & grow bucket as appropriate
+        insert_in_bucket(bucket, data.offset_in_bucket(), data.b_mask, qw, std::move(val), quot);
 
         // notify handler with location of new element
-        auto new_loc = new_bucket.at(data.offset, qw);
+        auto new_loc = bucket.at(data.offset_in_bucket(), qw);
         value_handler.new_location(new_loc.val());
-
-        // destroy old empty elements and replace with new bucket
-        bucket.destroy_vals(qw);
-        bucket = std::move(new_bucket);
     }
 
     inline bool sparse_is_empty(size_t i) {
@@ -1013,16 +1032,13 @@ private:
     }
 
     inline bool sparse_exists(size_t pos) {
-        return sparse_pos(pos).exists;
+        return sparse_pos(pos).exists_in_bucket();
     }
 
     // shifts all elements one to the right,
     // inserts val and quot at the from position,
-    // stores the old from element in val and quot,
-    // and returns the SparsePos to the form position
-    inline auto sparse_shift(size_t from, size_t to, val_t& val, key_t& quot) {
-        DCHECK_LT(from, to);
-
+    // and stores the old from element in val and quot.
+    inline void sparse_shift(size_t from, size_t to, val_t& val, key_t& quot) {
         // pseudo-iterator for iterating over bucket elements
         // NB: does not wrap around!
         struct iter {
@@ -1042,9 +1058,17 @@ private:
             inline iter(compact_hash& table,
                         SparsePos const& pos) {
                 m_quotient_width = table.quotient_width();
-                m_bucket = &table.m_buckets.at(pos.bucket_pos);
 
-                set_bucket_elem_range(pos.offset);
+                // NB: Using pointer arithmetic here, because
+                // we can (intentionally) end up with the address 1-past
+                // the end of the vector, which represents a end-iterator
+                m_bucket = table.m_buckets.data() + pos.bucket_pos;
+
+                if(pos.bucket_pos < table.m_buckets.size()) {
+                    set_bucket_elem_range(pos.offset_in_bucket());
+                } else {
+                    // use default constructed nullptr BucketElems
+                }
             }
 
             inline BucketElem<val_t> get() {
@@ -1067,6 +1091,8 @@ private:
             }
         };
 
+        DCHECK_LT(from, to);
+
         // initialize iterators like this:
         // [         ]
         // ^from   to^
@@ -1088,16 +1114,17 @@ private:
 
         // move all elements one to the right
         while(src != from_iter) {
+            // Decrement first for backward iteration
             src.decrement();
             dst.decrement();
 
-            auto& src_val = src.get().val();
-            auto& dst_val = dst.get().val();
+            // Get access to the value/quotient at src and dst
+            auto src_be = src.get();
+            auto dst_be = dst.get();
 
-            auto src_quot = src.get().get_quotient();
-
-            dst_val = std::move(src_val);
-            dst.get().set_quotient(src_quot);
+            // Copy value/quotient over
+            dst_be.val() = std::move(src_be.val());
+            dst_be.set_quotient(src_be.get_quotient());
         }
 
         // move new element into empty from position
@@ -1107,9 +1134,7 @@ private:
 
         // move temporary element into the parameters
         val = std::move(tmp_val);
-        quot = std::move(tmp_quot);
-
-        return from_loc;
+        quot = tmp_quot;
     }
 
     template<typename handler_t>
@@ -1124,7 +1149,6 @@ private:
         auto value_handler = handler.on_new();
         auto& val = value_handler.get();
 
-        SparsePos loc;
         if (to < from) {
             // if the range wraps around, we decompose into two ranges:
             // [   |      |      ]
@@ -1139,13 +1163,13 @@ private:
             // inserts the new element at the start of the range,
             // and temporarily stores the element at the end of the range
             // in `val` and `quot`
-            loc = sparse_shift(from,  table_size(), val, quot);
+            sparse_shift(from,  table_size(), val, quot);
             sparse_shift(0, to, val, quot);
         } else {
             // inserts the new element at the start of the range,
             // and temporarily stores the element at the end of the range
             // in `val` and `quot`
-            loc = sparse_shift(from, to, val, quot);
+            sparse_shift(from, to, val, quot);
         }
 
         // insert the element from the end of the range at the free
@@ -1155,43 +1179,49 @@ private:
 
         // after the previous insert and a potential reallocation,
         // notify the handler about the address of the new value
-        value_handler.new_location(sparse_get_at(loc).val());
+        auto new_loc = sparse_pos(from);
+        value_handler.new_location(sparse_get_at(new_loc).val());
     }
 
     struct SparsePos {
-    public:
-        size_t bucket_pos;
-        size_t bit_pos;
     private:
-        uint64_t bv;
+        buckets_t* m_buckets;
     public:
-        uint64_t b_mask;
-        bool exists;
-        size_t offset;
+        size_t const bucket_pos;
+        size_t const bit_pos;
+        uint64_t const b_mask;
 
         inline SparsePos() {}
 
-        template<typename buckets_t>
-        inline SparsePos(size_t pos, buckets_t& m_buckets):
+        inline SparsePos(size_t pos, buckets_t& buckets):
+            m_buckets(&buckets),
+
             // bucket index based on position (division by 64 bits)
             bucket_pos(pos >> BVS_WIDTH_SHIFT),
 
             // remainder position of pos inside the bucket (modulo by 64 bits)
             bit_pos(pos & BVS_WIDTH_MASK),
 
-            // reference to the bitvector for the bucket
-            bv(m_buckets[bucket_pos].bv()),
-
             // mask for the single bit we deal with
-            b_mask(1ull << bit_pos),
-
-            // check if the bit is set
-            exists(bv & b_mask),
-
-            // calculate offset of element in bucket for current pos
-            // based on number of set bits in bv
-            offset(__builtin_popcountll(bv & ((1ull << bit_pos) - 1)))
+            b_mask(1ull << bit_pos)
         {}
+
+        // check if the right bit is set in the bucket's bv
+        inline bool exists_in_bucket() const {
+            // bitvector of the bucket
+            uint64_t bv = m_buckets->at(bucket_pos).bv();
+
+            return (bv & b_mask) != 0;
+        }
+
+        // calculate offset of element in bucket for current pos
+        // based on number of set bits in bv
+        inline size_t offset_in_bucket() const {
+            // bitvector of the bucket
+            uint64_t bv = m_buckets->at(bucket_pos).bv();
+
+            return __builtin_popcountll(bv & (b_mask - 1));
+        }
     };
 
     SparsePos sparse_pos(size_t pos) {
@@ -1199,10 +1229,10 @@ private:
     }
 
     inline BucketElem<val_t> sparse_get_at(SparsePos pos) {
-        DCHECK(pos.exists);
+        DCHECK(pos.exists_in_bucket());
         size_t qw = quotient_width();
 
-        return m_buckets[pos.bucket_pos].at(pos.offset, qw);
+        return m_buckets[pos.bucket_pos].at(pos.offset_in_bucket(), qw);
     }
 
     inline BucketElem<val_t> sparse_get_at(size_t pos) {
