@@ -148,12 +148,8 @@ private:
     }
     
 public:
-    inline static void enable(StatPhaseStxxlConfig config) {
+    inline static void enable(StatPhaseStxxlConfig config = StatPhaseStxxlConfig(true)) {
         StatPhaseStxxl::s_config = config;
-        enable();
-    }
-    
-    inline static void enable() {
         PhaseData::s_stxxl_start = &onStart;
         PhaseData::s_stxxl_read_stats = &onRead;
         PhaseData::s_stxxl_stop = &onStop;
@@ -166,8 +162,6 @@ public:
     }
 };
 
-stxxl::stats* StatPhaseStxxl::s_stxxl_stats = stxxl::stats::get_instance();
-StatPhaseStxxlConfig StatPhaseStxxl::s_config = StatPhaseStxxlConfig();
 }
 
 #else
@@ -176,8 +170,7 @@ namespace tdc {
 
 class StatPhaseStxxl {
 public:
-    inline static void enable(StatPhaseStxxlConfig config) {}
-    inline static void enable() {}
+    inline static void enable(StatPhaseStxxlConfig config = StatPhaseStxxlConfig(false)) {}
     inline static void disable() {}
 };
 }
