@@ -1,9 +1,6 @@
 [submodule "etc/datasets"]
 	path = etc/datasets
 	url = git@github.com:Kimundi/datasets.git
-[submodule "include/tudocomp/bit_span"]
-	path = include/tudocomp/bit_span
-	url = git@github.com:Kimundi/bit_span.git
 [submodule "external/bit_span"]
 	path = external/bit_span
 	url = git@github.com:Kimundi/bit_span.git
