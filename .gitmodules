@@ -1,9 +1,9 @@
 [submodule "etc/datasets"]
 	path = etc/datasets
-	url = git@github.com:Kimundi/datasets.git
+	url = https://github.com/tudocomp/datasets.git
 [submodule "external/bit_span"]
 	path = external/bit_span
-	url = git@github.com:Kimundi/bit_span.git
+	url = https://github.com/tudocomp/bit_span.git
 [submodule "external/compact_sparse_hash"]
 	path = external/compact_sparse_hash
-	url = git@github.com:Kimundi/compact_sparse_hash.git
+	url = https://github.com/tudocomp/compact_sparse_hash.git
