@@ -17,6 +17,7 @@ target_link_libraries(
     tudocomp_algorithms
     glog
     sdsl
+    bit_span
 )
 
 cotire(tudocomp_driver)
