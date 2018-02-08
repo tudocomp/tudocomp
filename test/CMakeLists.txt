@@ -32,13 +32,11 @@ run_test(tudocomp_tests DEPS ${BASIC_DEPS})
 run_test(input_output_tests DEPS ${BASIC_DEPS})
 run_test(ds_tests       DEPS ${BASIC_DEPS})
 run_test(lcpsada_tests  DEPS ${BASIC_DEPS})
-run_test(generic_int_vector_tests DEPS ${BASIC_DEPS})
 run_test(esp_tests      DEPS ${BASIC_DEPS})
 run_test(compact_sparse_hash_tests      DEPS ${BASIC_DEPS})
 
 #Disabled due to breakage on this branch:
 #run_test(paper_tests    DEPS ${BASIC_DEPS})
-#run_bench(int_vector_benchs DEPS ${BASIC_DEPS})
 run_test(compressor_adapter_tests DEPS tudocomp_algorithms ${BASIC_DEPS})
 #run_test(example_tests  DEPS ${BASIC_DEPS})
 
