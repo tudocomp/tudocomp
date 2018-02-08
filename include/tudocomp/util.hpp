@@ -14,6 +14,7 @@
 #include <iomanip>
 
 #include <tudocomp/util/View.hpp>
+#include <tudocomp/util/bits.hpp>
 
 namespace tdc {
 
