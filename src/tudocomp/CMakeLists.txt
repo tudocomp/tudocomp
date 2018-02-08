@@ -13,5 +13,6 @@ target_link_libraries(
     glog
     sdsl
     bit_span
+    compact_sparse_hash
 )
 

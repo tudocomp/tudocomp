@@ -86,6 +86,7 @@ include(find_or_download_package)
 find_or_download_package(Glog GLOG glog)
 find_or_download_package(SDSL SDSL sdsl)
 git_submodule_subdirectory(external/bit_span)
+git_submodule_subdirectory(external/compact_sparse_hash)
 
 include(FindJudy)
 
