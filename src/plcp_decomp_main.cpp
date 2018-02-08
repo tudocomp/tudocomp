@@ -42,6 +42,12 @@ namespace tdc { namespace lcpcomp {
     inline void factorLength(uint40triple_t &factor, uint40_t value) {
         std::get<2>(factor) = value;
     }
+
+    inline void makeSuffix(uint40triple_t &factor, uint40_t prefixLength) {
+        textPos(factor, textPos(factor) + prefixLength);
+        targetPos(factor, targetPos(factor) + prefixLength);
+        factorLength(factor, factorLength(factor) - prefixLength);
+    }
     
     void print(const uint40triple_t &triple, const std::string &header) {
         std::cout << header << " { " << textPos(triple) << ", " << targetPos(triple) << ", " << factorLength(triple) << " }" << std::endl;
@@ -369,44 +375,37 @@ namespace tdc { namespace lcpcomp {
                     uint40_t textEnd = textStart + textLen;
                     
                     
-                    uint40_t prefixLen;                  
                     
                     // resolve prefix (or entire factor), if a prefix of the factor to resolve
                     // does not overlap with the other factor
                     if(targetStart < textStart) {
-                        prefixLen = std::min(targetLen, uint40_t(textStart - targetStart));
+                        uint40_t prefixLen = std::min(targetLen, uint40_t(textStart - targetStart));
                         uint40triple_t resolved = std::make_tuple(textPos(byTargetPos), targetStart, prefixLen);
                         resolvedV.push_back(resolved);
+                        
+                        if(prefixLen < targetLen) {
+                            makeSuffix(byTargetPos, prefixLen);
+                        } else {
+                            byTargetPos = sortByTargetPos.max_value();
+                            --byTargetPosResize;
+                        }
                     }
                     // pointerjump prefix (or entire factor), if a prefix of the vector to resolve
                     // does overlap with the other factor
                     else {                       
                         auto posOffset = targetStart - textStart;
                         auto newTargetPos = targetPos(byTextPos) + posOffset;
-                        prefixLen = std::min(targetLen, uint40_t(textEnd - targetStart));
+                        uint40_t prefixLen = std::min(targetLen, uint40_t(textEnd - targetStart));
                         uint40triple_t jumped = std::make_tuple(textPos(byTargetPos), newTargetPos, prefixLen);
                         
-                        // add pointer-jumped factor to the end of the factor vector
-                        // (this factor will not be considered in this scan, but in the next scan)
-                        byTargetPosV.push_back(jumped);
-                        ++byTargetPosResize;
-                    }
-                    
-                    // if only a prefix of the current factor has been dealt with,
-                    // calculate remaining factor
-                    if(prefixLen < targetLen) {
-                        // manipulate the current factor directly in the factor vector
-                        textPos(byTargetPos, textPos(byTargetPos) + prefixLen);
-                        targetPos(byTargetPos, targetPos(byTargetPos) + prefixLen);
-                        factorLength(byTargetPos, factorLength(byTargetPos) - prefixLen);
-                    } else {
-                        // if the entire factor has been either resolved or pointer-jumped
-                        // it is set to the maximum possible factor. this ensures, that it
-                        // is in the backmost part of the sorted by target pos vector after
-                        // the next sort. this way, it can be removed with a resize of the
-                        // vector
-                        byTargetPos = sortByTargetPos.max_value();
-                        --byTargetPosResize;
+                        if(prefixLen < targetLen) {
+                            makeSuffix(byTargetPos, prefixLen);
+                            byTargetPosV.push_back(jumped);
+                            ++byTargetPosResize;
+                        }
+                        else {
+                            byTargetPos = jumped;
+                        }
                     }
                 }
                 
@@ -424,14 +423,7 @@ namespace tdc { namespace lcpcomp {
                     auto resolvedTargetPos = targetPos(resolved) - 1;
                     for (unsigned i = 0; i < resolvedLen; i++) {
                         restoredText[resolvedTextPos + i] = restoredText[resolvedTargetPos + i];
-                        if(restoredText[resolvedTextPos + i] == char(0) || restoredText[resolvedTextPos + i] == '?'){
-							restoredText[resolvedTextPos + i]  = '?';
-							failed++;
-						} else {
-							succeeded++;
-						}
                     }
-                    
                 }
                 resolvedV.clear();
                 
@@ -457,6 +449,7 @@ namespace tdc { namespace lcpcomp {
         });
 
     }
+    
 }}//ns
 
 
