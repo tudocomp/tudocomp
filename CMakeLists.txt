@@ -78,7 +78,6 @@ set (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1000)
 
 # Git Submodule sources
 include(git_submodule_subdirectories)
-git_submodule_subdirectory(external/bit_span)
 
 # Finders
 include(find_or_download_package)
@@ -86,6 +85,7 @@ include(find_or_download_package)
 # Usage: find_or_download_package(PACKAGE_NAME, FOUND_FLAG_PREFIX, TARGET_PREFIX)
 find_or_download_package(Glog GLOG glog)
 find_or_download_package(SDSL SDSL sdsl)
+git_submodule_subdirectory(external/bit_span)
 
 include(FindJudy)
 
