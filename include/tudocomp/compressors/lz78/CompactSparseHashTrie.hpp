@@ -24,7 +24,7 @@ class CompactSparseHashTrie : public Algorithm, public LZ78Trie<> {
 public:
     inline static Meta meta() {
         Meta m("lz78trie", "compact_sparse_hash", "Compact Sparse Hash Trie");
-        //m.option("load_factor").dynamic(30);
+        m.option("load_factor").dynamic(50);
         return m;
     }
 
@@ -33,14 +33,27 @@ public:
         , LZ78Trie(n,remaining_characters)
         , m_table(zero_or_next_power_of_two(reserve), 0)
     {
-        //m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
+        m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
     }
 
     IF_STATS(
         MoveGuard m_guard;
         inline ~CompactSparseHashTrie() {
             if (m_guard) {
-                //m_table.collect_stats(env());
+                auto stats = m_table.stat_gather();
+
+                // StatPhase::log("collisions", collisions());
+                StatPhase::log("table size", m_table.table_size());
+                StatPhase::log("load factor", m_table.max_load_factor());
+                StatPhase::log("entries", m_table.size());
+                // StatPhase::log("resizes", m_resizes);
+                // StatPhase::log("special resizes", m_specialresizes);
+                StatPhase::log("load ratio", m_table.size() * 100.0 / m_table.table_size());
+                StatPhase::log("buckets", stats.buckets);
+                StatPhase::log("allocated_buckets", stats.allocated_buckets);
+                StatPhase::log("buckets_real_allocated_capacity_in_bytes", stats.buckets_real_allocated_capacity_in_bytes);
+                StatPhase::log("real_allocated_capacity_in_bytes", stats.real_allocated_capacity_in_bytes);
+                StatPhase::log("theoretical_minimum_size_in_bits", stats.theoretical_minimum_size_in_bits);
             }
         }
     )
