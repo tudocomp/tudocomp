@@ -95,7 +95,7 @@ public:
     }
 
     inline void debug_print() {
-        m_table.debug_print();
+        std::cout << m_table.debug_state() << "\n";
     }
 };
 
