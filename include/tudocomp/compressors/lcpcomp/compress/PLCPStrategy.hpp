@@ -100,7 +100,10 @@ class RefRAMStrategy {
 	}
 	void sort() { // sort m_factors_unsorted and append the sorted list to m_factors
 		std::sort(m_factors_unsorted.begin(), m_factors_unsorted.end());
-		m_factors.reserve(std::max(m_factors.capacity(), m_factors.size()+m_factors_unsorted.size()));
+        // only give a resize hint if we need more space than doubling it, what is the default behavior of a vector
+        if(m_factors.capacity()*2 < m_factors.size()+m_factors_unsorted.size()) {
+            m_factors.reserve(m_factors.size()+m_factors_unsorted.size());
+        }
 		std::move(m_factors_unsorted.begin(), m_factors_unsorted.end(), std::inserter(m_factors, m_factors.end()));
 		m_factors_unsorted.clear();
 	}
@@ -133,7 +136,11 @@ class RefDiskStrategy {
 	}
 	void sort() {
 		std::sort(m_factors_unsorted.begin(), m_factors_unsorted.end());
-		m_factors.reserve(std::max(m_factors.capacity(), m_factors.size()+m_factors_unsorted.size()));
+        // only give a resize hint if we need more space than doubling it, what is the default behavior of a vector
+        if(m_factors.capacity()*2 < m_factors.size()+m_factors_unsorted.size()) {
+            m_factors.reserve(m_factors.size()+m_factors_unsorted.size());
+        }
+		//m_factors.reserve(std::max(m_factors.capacity(), m_factors.size()+m_factors_unsorted.size()));
 		for(auto it = m_factors_unsorted.begin(); it != m_factors_unsorted.end(); ++it) {
 			m_factors.push_back(*it);
 		}
@@ -405,8 +412,9 @@ public:
 		//RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
 		RefRAMStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
 		LCPForwardIterator pplcp { (construct_plcp_bitvector(sa, text)) };
-		compute_references(text.size(), refStrategy, pplcp, threshold);
         phase.split("Compute References");
+		compute_references(text.size(), refStrategy, pplcp, threshold);
+        phase.split("Factorize");
 		refStrategy.factorize(refs);
     }
 
