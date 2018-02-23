@@ -64,7 +64,7 @@ public:
         auto key = create_node(0, c);
         auto value = size();
 
-        auto& entry = m_table.index(key, key_width(key));
+        auto& entry = m_table.access_key_width(key, key_width(key));
 
         //std::cout << "find_or_insert(" << key << ", " << entry << ", " << value << ");\n";
 
@@ -93,7 +93,7 @@ public:
         DCHECK_NE(newleaf_id, 0);
 
         auto key = create_node(parent,c);
-        auto& val = m_table.index(key, key_width(key));
+        auto& val = m_table.access_key_width(key, key_width(key));
         if (val == 0) {
             val = newleaf_id;
             DCHECK_EQ(val, newleaf_id);
