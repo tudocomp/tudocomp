@@ -10,20 +10,27 @@
 
 namespace tdc { namespace lcpcomp {
     constexpr len_t M = 1024 * 1024;
+    using uint40_t = uint_t<40>;
+
+    inline void write_uint40(std::ostream& outs, uint40_t v) {
+        outs.write((const char*)&v, sizeof(uint40_t));
+    }
+
+    inline void skip_bytes(std::istream& ins, size_t num) {
+        while(num--) {
+            ins.get();
+        }
+    }
 
     inline void factorize(const std::string& textfilename,
                           const std::string& outfilename,
                           const size_t threshold,
                           const len_t mb_ram) {
-        using uint40_t = uint_t<40>;
 
 		StatPhase phase("PLCPComp");
 		IntegerFileArray<uint40_t> sa  ((textfilename + ".sa5").c_str());
 		IntegerFileArray<uint40_t> isa ((textfilename + ".isa5").c_str());
-		IntegerFileArray<char> text (textfilename.c_str());
-        typedef IntegerFileArray<char> text_t;
-
-		PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
+		PLCPFileForwardIterator pplcp  ((textfilename + ".plcp").c_str());
 
 		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa,mb_ram * M);
 		StatPhase::wrap("Search Peaks", [&]{
@@ -37,16 +44,13 @@ namespace tdc { namespace lcpcomp {
     	});
 
         StatPhase::wrap("Encode Factors", [&]{
-            /*
-            tdc::Output output(tdc::Path(outfilename), true);
-            tdc::Env env = tdc::create_env(Meta("plcpcomp", "plcp"));
-            tdc::HuffmanCoder::Encoder coder(std::move(env), output, tdc::lzss::TextLiterals<text_t,decltype(refs)>(text, refs));
-            tdc::lzss::encode_text(coder, text, refs);
-            */
+            // Open input file
+            auto input = tdc::Input(tdc::Path(textfilename));
+            auto ins = input.as_stream();
 
             // Use the same stupid encoding as EM-LPF for a comparison
-            tdc::Output output(tdc::Path(outfilename), true);
-            tdc::BitOStream out(output);
+            auto output = tdc::Output(tdc::Path(outfilename), true);
+            auto outs = output.as_stream();
 
             // walk over factors
             size_t num_replaced = 0;
@@ -54,23 +58,24 @@ namespace tdc { namespace lcpcomp {
             size_t p = 0; //! current text position
             for(auto& factor : refs) {
                 // encode literals until cursor reaches factor
-                while(p < factor.pos) {
-                    out.write_int(uint40_t(text[p++]));
-                    out.write_int(uint40_t(0));
+                while(p++ < factor.pos) {
+                    write_uint40(outs, ins.get());
+                    write_uint40(outs, 0);
                 }
 
                 // encode factor
-                out.write_int(uint40_t(factor.src));
-                out.write_int(uint40_t(factor.len));
+                write_uint40(outs, factor.src);
+                write_uint40(outs, factor.len);
+
                 p += size_t(factor.len);
+                skip_bytes(ins, factor.len);
                 num_replaced += factor.len;
             }
 
-            const size_t n = text.size();
-            while(p < n)  {
+            while(!ins.eof())  {
                 // encode remaining literals
-                out.write_int(uint40_t(text[p++]));
-                out.write_int(uint40_t(0));
+                write_uint40(outs, ins.get());
+                write_uint40(outs, 0);
             }
 
             StatPhase::log("num_replaced", num_replaced);
