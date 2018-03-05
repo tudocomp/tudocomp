@@ -18,7 +18,34 @@ namespace tdc { namespace lcpcomp {
     using uint40_t = uint_t<40>;
     using uint40pair_t = std::pair<uint40_t,uint40_t>;
     using uint40triple_t = std::tuple<uint40_t,uint40_t,uint40_t>;
-
+    using vector_uint40triple_t = stxxl::VECTOR_GENERATOR<uint40triple_t>::result;
+    
+    
+    template <typename unsigned_t>
+    struct Factor {
+        
+        const unsigned_t min_value = std::numeric_limits<unsigned_t>::min();
+        const unsigned_t max_value = std::numeric_limits<unsigned_t>::max();
+        
+        const Factor<unsigned_t> min_factor = Factor<unsigned_t>(min_value,min_value,min_value);
+        const Factor<unsigned_t> max_factor = Factor<unsigned_t>(max_value,max_value,max_value);
+        
+        unsigned_t writeTo;
+        unsigned_t copyFrom;
+        unsigned_t length;
+        
+        Factor(
+            unsigned_t writeTo,
+            unsigned_t copyFrom,
+            unsigned_t length) {
+            this.writeTo = writeTo;
+            this.copyFrom = copyFrom;
+            this.length = length;
+        }
+        
+    };
+    
+    
     inline uint40_t textPos(const uint40triple_t &factor) {
         return std::get<0>(factor);
     }
@@ -408,6 +435,65 @@ namespace tdc { namespace lcpcomp {
                         }
                     }
                 }
+                
+                //~ unsigned j = 0;
+                //~ uint40triple_t &byTextPos = byTextPosV[j];
+                //~ for(unsigned i = 0; i < byTargetPosSize; i++) {
+                    
+                    //~ // try to resolve or pointer jump the factors in targetpos order
+                    //~ uint40triple_t &byTargetPos = byTargetPosV[i];
+                    
+                    //~ uint40_t targetLen = factorLength(byTargetPos);
+                    //~ uint40_t targetStart = targetPos(byTargetPos);
+                    //~ uint40_t targetEnd = targetStart + targetLen;
+                    
+                    //~ // find the closest factor, that has its last text position after
+                    //~ // or at the start of the factor we are trying to resolve
+                    //~ while(targetStart >= textPos(byTextPos) + factorLength(byTextPos)){
+                        //~ if(j + 1 < byTextPosV.size())
+                            //~ byTextPos = byTextPosV[++j];
+                        //~ else
+                            //~ byTextPos = sortByTextPos.max_value();
+                    //~ }
+                        
+                    //~ uint40_t textLen = factorLength(byTextPos);
+                    //~ uint40_t textStart = textPos(byTextPos);
+                    //~ uint40_t textEnd = textStart + textLen;
+                    
+                    
+                    
+                    //~ // resolve prefix (or entire factor), if a prefix of the factor to resolve
+                    //~ // does not overlap with the other factor
+                    //~ if(targetStart < textStart) {
+                        //~ uint40_t prefixLen = std::min(targetLen, uint40_t(textStart - targetStart));
+                        //~ uint40triple_t resolved = std::make_tuple(textPos(byTargetPos), targetStart, prefixLen);
+                        //~ resolvedV.push_back(resolved);
+                        
+                        //~ if(prefixLen < targetLen) {
+                            //~ makeSuffix(byTargetPos, prefixLen);
+                        //~ } else {
+                            //~ byTargetPos = sortByTargetPos.max_value();
+                            //~ --byTargetPosResize;
+                        //~ }
+                    //~ }
+                    //~ // pointerjump prefix (or entire factor), if a prefix of the vector to resolve
+                    //~ // does overlap with the other factor
+                    //~ else {                       
+                        //~ auto posOffset = targetStart - textStart;
+                        //~ auto newTargetPos = targetPos(byTextPos) + posOffset;
+                        //~ uint40_t prefixLen = std::min(targetLen, uint40_t(textEnd - targetStart));
+                        //~ uint40triple_t jumped = std::make_tuple(textPos(byTargetPos), newTargetPos, prefixLen);
+                        
+                        //~ if(prefixLen < targetLen) {
+                            //~ makeSuffix(byTargetPos, prefixLen);
+                            //~ byTargetPosV.push_back(jumped);
+                            //~ ++byTargetPosResize;
+                        //~ }
+                        //~ else {
+                            //~ byTargetPos = jumped;
+                        //~ }
+                    //~ }
+                //~ }
                 
                 // sort the resolved factors by textposition
                 stxxl::sort(resolvedV.begin(), resolvedV.end(), sortByTextPos, mb_ram*1024*1024);
