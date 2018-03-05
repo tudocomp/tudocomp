@@ -248,7 +248,7 @@ int main(int argc, char** argv) {
     statsCfg.waitTime_combined = true;
     statsCfg.numberOfBytes_read = true;
     statsCfg.numberOfBytes_write = true;
-    //~ statsCfg = tdc::StatPhaseStxxlConfig();
+    statsCfg = tdc::StatPhaseStxxlConfig();
     tdc::StatPhaseStxxl::enable(statsCfg);
     tdc::StatPhase root("Root");
     

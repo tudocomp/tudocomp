@@ -130,15 +130,12 @@ class PLCPDecomp {
         
 template <typename unsigned_t>
 typename PLCPDecomp<unsigned_t>::vector_of_char_t PLCPDecomp<unsigned_t>::decompress() {
-    std::cout << "Resolve" << std::endl;
-    
-    
-    
-    
-    while(byCopyToV->size() > 0)
+
+    unsigned scanCount = 0;
+    while(byCopyToV->size() > 0) {
+        tdc::StatPhase scanPhase("Scan " + std::to_string(scanCount) + " (Factors: " + std::to_string(byCopyToV->size()) + ")");
         scan();
-    
-    
+    }
     //~ print(textBuffer);
     
     return textBuffer;
