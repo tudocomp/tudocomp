@@ -250,11 +250,7 @@ int main(int argc, char** argv) {
     statsCfg.numberOfBytes_write = true;
     statsCfg = tdc::StatPhaseStxxlConfig();
     tdc::StatPhaseStxxl::enable(statsCfg);
-    tdc::StatPhase root("Root");
-    
-    root.to_json();
-    root.to_json();
-    root.to_json();
+
 
     const std::string infile { argv[1] };
     const std::string outfile { argv[2] };
@@ -264,10 +260,25 @@ int main(int argc, char** argv) {
     }
 
     const tdc::len_t mb_ram = (argc >= 3) ? std::stoi(argv[3]) : 512;
-
+    
     tdc::lcpcomp::IntegerFileArray<tdc::uint_t<40>> compressed (infile.c_str());
-
+    
+    tdc::StatPhase root("Root");
+    // generate stats instance
+    stxxl::stats * Stats = stxxl::stats::get_instance();
+    // start measurement here
+    stxxl::stats_data stats_begin(*Stats);
+    stxxl::block_manager * bm = stxxl::block_manager::get_instance();
+    
     auto textBuffer = tdc::lcpcomp::PLCPDecompGenerator::decompress(compressed, mb_ram);
+    
+    
+    // substract current stats from stats at the beginning of the measurement
+    std::cout << (stxxl::stats_data(*Stats) - stats_begin);
+    std::cout << "Maximum EM allocation: " << bm->get_maximum_allocation() << std::endl;
+    root.log("EM Peak", bm->get_maximum_allocation());
+    
+    auto algorithm_stats = root.to_json();
     
     std::ofstream outputFile;
     outputFile.open(outfile);
@@ -275,7 +286,7 @@ int main(int argc, char** argv) {
         outputFile << character;
     outputFile.close();
 
-    auto algorithm_stats = root.to_json();
+    
 
     tdc::json::Object meta;
     meta.set("title", "TITLE");

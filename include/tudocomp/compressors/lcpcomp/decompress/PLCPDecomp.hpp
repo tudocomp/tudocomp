@@ -131,9 +131,10 @@ class PLCPDecomp {
 template <typename unsigned_t>
 typename PLCPDecomp<unsigned_t>::vector_of_char_t PLCPDecomp<unsigned_t>::decompress() {
 
+    std::cout << "Decompressing. Type: " << typeid(unsigned_t).name() << std::endl;
     unsigned scanCount = 0;
     while(byCopyToV->size() > 0) {
-        tdc::StatPhase scanPhase("Scan " + std::to_string(scanCount) + " (Factors: " + std::to_string(byCopyToV->size()) + ")");
+        tdc::StatPhase scanPhase("Scan " + std::to_string(++scanCount) + " (Factors: " + std::to_string(byCopyToV->size()) + ")");
         scan();
     }
     //~ print(textBuffer);
