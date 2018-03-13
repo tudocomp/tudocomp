@@ -101,7 +101,7 @@ namespace tdc { namespace lcpcomp {
 
                     p += size_t(factor.len);
                     skip_bytes(ins, factor.len);
-                    num_replaced += factor.len;
+                    num_replaced += size_t(factor.len);
                 }
 
                 while(!ins.eof())  {
