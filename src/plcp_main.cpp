@@ -57,8 +57,10 @@ namespace tdc { namespace lcpcomp {
                           const len_t mb_ram) {
 
 		StatPhase phase("PLCPComp");
+
 		IntegerFileArray<uint40_t> sa  ((textfilename + ".sa5").c_str());
 		IntegerFileArray<uint40_t> isa ((textfilename + ".isa5").c_str());
+
 		PLCPFileForwardIterator pplcp  ((textfilename + ".plcp").c_str());
 
 		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa,mb_ram * M);
@@ -88,7 +90,9 @@ namespace tdc { namespace lcpcomp {
                 BufferedWriter<uint40_t> bw(outs, 400);
 
                 size_t p = 0; //! current text position
-                for(auto& factor : refs) {
+
+                decltype(refs)::backing_vector_type::bufreader_type reader(refs.factors);
+                for(auto& factor : reader) {
                     // encode literals until cursor reaches factor
                     while(p++ < factor.pos) {
                         bw.write(ins.get());

@@ -170,8 +170,11 @@ class RefDiskStrategy {
 
 		stxxl::VECTOR_GENERATOR<std::pair<len_t,len_t>>::result m_sources;
 		StatPhase::wrap("Put factors", [&]{
-			for(auto it = m_factors.begin(); it != m_factors.end(); ++it) {
-				m_sources.push_back(std::make_pair(m_isa[it->first]-1, it->first));
+            typename decltype(m_factors)::bufreader_type reader(m_factors);
+            decltype(m_sources)::bufwriter_type writer(m_sources);
+			for(auto it = reader.begin(); it != reader.end(); ++it) {
+				//m_sources.push_back(std::make_pair(m_isa[it->first]-1, it->first));
+                writer << std::make_pair(m_isa[it->first]-1, it->first);
 			}
 		});
 		StatPhase::wrap("Sort factors", [&]{
@@ -180,19 +183,27 @@ class RefDiskStrategy {
 		sorting_phase.split("Sort by SA");
 		stxxl::VECTOR_GENERATOR<std::pair<len_t,len_t>>::result m_sources2;
 		StatPhase::wrap("Put factors", [&]{
-		for(auto it = m_sources.begin(); it != m_sources.end(); ++it) {
-			m_sources2.push_back(std::make_pair(it->second, m_sa[it->first]));
-		}
-		m_sources.clear();
+            typename decltype(m_sources)::bufreader_type reader(m_sources);
+            decltype(m_sources2)::bufwriter_type writer(m_sources2);
+		    for(auto it = reader.begin(); it != reader.end(); ++it) {
+			    //m_sources2.push_back(std::make_pair(it->second, m_sa[it->first]));
+                writer << std::make_pair(it->second, m_sa[it->first]);
+		    }
+    		m_sources.clear();
 		});
 		StatPhase::wrap("Sort factors", [&]{
 		stxxl::ksort(m_sources2.begin(), m_sources2.end(), KeyExtractor(m_sa.size()),m_memory); //, STXXL_DEFAULT_ALLOC_STRATEGY());
 		});
 
 		sorting_phase.split("Write factors to buffer");
+
+        {
+        lzss::FactorBufferDisk::backing_vector_type::bufwriter_type writer(reflist.factors);
 		for(size_t i = 0; i < m_factors.size(); ++i) {
-		 	reflist.emplace_back(m_factors[i].first, m_sources2[i].second, m_factors[i].second);
+		 	//reflist.emplace_back(m_factors[i].first, m_sources2[i].second, m_factors[i].second);
+            writer << lzss::Factor { m_factors[i].first, m_sources2[i].second, m_factors[i].second };
 		}
+        }
 
 		// for(auto it = m_factors.begin(); it != m_factors.end(); ++it) {
 		// 	const auto& el = *it;
