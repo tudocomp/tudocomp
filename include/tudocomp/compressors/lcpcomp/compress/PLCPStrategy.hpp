@@ -124,14 +124,14 @@ class RefRAMStrategy {
  */
 template<class sa_t, class isa_t>
 class RefDiskStrategy {
-	sa_t& m_sa;
-	isa_t& m_isa;
+	const sa_t& m_sa;
+	const isa_t& m_isa;
     len_t m_memory;
     stxxl::VECTOR_GENERATOR<std::pair<len_t,len_t>>::result m_factors; // (text_position, factor_length)
 	std::vector<std::pair<len_t,len_t>> m_factors_unsorted;
 
 	public:
-	RefDiskStrategy(sa_t& sa, isa_t& isa, len_t memory = 512*1024*1024) : m_sa(sa), m_isa(isa), m_memory(memory) {
+	RefDiskStrategy(const sa_t& sa, const isa_t& isa, len_t memory = 512*1024*1024) : m_sa(sa), m_isa(isa), m_memory(memory) {
 
 	}
 	void sort() {
