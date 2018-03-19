@@ -8,6 +8,8 @@
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
+#include <stxxl/bits/io/syscall_file.h>
+
 namespace tdc { namespace lcpcomp {
     constexpr len_t M = 1024 * 1024;
     using uint40_t = uint_t<40>;
@@ -58,8 +60,13 @@ namespace tdc { namespace lcpcomp {
 
 		StatPhase phase("PLCPComp");
 
-		IntegerFileArray<uint40_t> sa  ((textfilename + ".sa5").c_str());
-		IntegerFileArray<uint40_t> isa ((textfilename + ".isa5").c_str());
+        using filemapped_vector_t = stxxl::VECTOR_GENERATOR<uint40_t,4,8,20480>::result;
+
+        stxxl::syscall_file sa_file(textfilename + ".sa5", stxxl::file::open_mode::RDONLY);
+        filemapped_vector_t sa(&sa_file);
+
+        stxxl::syscall_file isa_file(textfilename + ".isa5", stxxl::file::open_mode::RDONLY);
+        filemapped_vector_t isa(&isa_file);
 
 		PLCPFileForwardIterator pplcp  ((textfilename + ".plcp").c_str());
 
