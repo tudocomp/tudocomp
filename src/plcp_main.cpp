@@ -53,14 +53,20 @@ namespace tdc { namespace lcpcomp {
         }
     }
 
+    // parameters for filemapped vector
+    // these are "good" values, determined by trial and error on elbait
+    constexpr size_t blocks_per_page = 4;
+    constexpr size_t cache_pages = 8;
+    constexpr size_t block_size = 16 * 4096 * sizeof(uint40_t);
+    using filemapped_vector_t = stxxl::VECTOR_GENERATOR<
+        uint40_t, blocks_per_page, cache_pages, block_size>::result;
+
     inline void factorize(const std::string& textfilename,
                           const std::string& outfilename,
                           const size_t threshold,
                           const len_t mb_ram) {
 
 		StatPhase phase("PLCPComp");
-
-        using filemapped_vector_t = stxxl::VECTOR_GENERATOR<uint40_t,4,8,20480>::result;
 
         stxxl::syscall_file sa_file(textfilename + ".sa5", stxxl::file::open_mode::RDONLY);
         filemapped_vector_t sa(&sa_file);
