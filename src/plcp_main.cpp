@@ -12,7 +12,6 @@
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
 #include <stxxl/bits/io/syscall_file.h>
-#include <stxxl/map>
 
 namespace tdc { namespace lcpcomp {
     template<typename node_t>
@@ -26,38 +25,37 @@ namespace tdc { namespace lcpcomp {
             static node_t max_value() { return std::numeric_limits<node_t>::max(); }
         };
 
-        using edge_map_t = stxxl::map<
-            node_t,
-            node_t,
-            CompareSm,
-            DATA_NODE_BLOCK_SIZE,
-            DATA_LEAF_BLOCK_SIZE>;
+        typename stxxl::VECTOR_GENERATOR<node_t>::result m_edges;
+        size_t m_num_edges;
 
-        std::unique_ptr<edge_map_t> m_edges;
         size_t m_longest_path;
         size_t m_shortcuts;
         std::vector<node_t> m_path;
+
+        static constexpr node_t NONE = 0;
+        static inline node_t ref(node_t x) { return x+1; }
+        static inline node_t deref(node_t x) { return x-1; }
 
         inline node_t follow_path(const node_t start, const node_t avoid) {
             auto v = start;
 
             // follow and store path
-            auto it = m_edges->find(v);
-            while(it != m_edges->end()) {
+            auto x = m_edges[v];
+            while(x != NONE) {
                 m_path.emplace_back(v);
 
-                v = it->second;
+                v = deref(x);
                 CHECK(v != start) << "cycle detected";
-                CHECK(v != avoid) << "cycle detected";
+                CHECK(v != avoid) << "cycle avoided";
 
-                it = m_edges->find(v);
+                x = m_edges[v];
             }
 
             if(m_path.size() > 1) {
                 // create shortcuts
                 m_shortcuts += m_path.size() - 1;
-                for(auto u : m_path) {
-                    (*m_edges)[u] = v;
+                for(size_t i = 0; i < m_path.size() - 1; i++) {
+                    m_edges[m_path[i]] = ref(v);
                 }
             }
 
@@ -68,13 +66,17 @@ namespace tdc { namespace lcpcomp {
         }
 
     public:
-        inline ReferenceGraph() :
+        inline ReferenceGraph(const size_t n) :
+            m_num_edges(0),
             m_longest_path(0),
             m_shortcuts(0) {
 
-            m_edges = std::make_unique<edge_map_t>(
-                edge_map_t::node_block_type::raw_size * 131072,  // 512 MB
-                edge_map_t::leaf_block_type::raw_size * 131072); // 512 MB
+            // initialize edge vector
+            m_edges.resize(n);
+            typename decltype(m_edges)::bufwriter_type w(m_edges);
+            for(size_t i = 0; i < n; i++) {
+                w << NONE;
+            }
         }
 
         inline size_t longest_path() const {
@@ -86,13 +88,14 @@ namespace tdc { namespace lcpcomp {
         }
 
         inline size_t num_edges() const {
-            return m_edges->size();
+            return m_num_edges;
         }
 
         // insert an edge, throw error if a cycle is detected or if u already
         // has an outgoing edge
         inline void insert_edge(node_t u, node_t v) {
-            m_edges->insert(std::pair<node_t, node_t>(u, follow_path(v, u)));
+            m_edges[u] = ref(follow_path(v, u));
+            ++m_num_edges;
         }
     };
 
@@ -174,8 +177,10 @@ namespace tdc { namespace lcpcomp {
 
         LOG(INFO) << "Start verification... factors: " << refs.size();
         StatPhase::wrap("Verify", [&]{
-            ReferenceGraph<size_t> g;
             const size_t n = sa.size();
+            ReferenceGraph<size_t> g(n);
+            LOG(INFO) << "(edge vector initialized)";
+
             size_t num_replaced = 0;
             size_t next_unreplaced = 0;
 
