@@ -12,37 +12,52 @@
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
 #include <stxxl/bits/io/syscall_file.h>
+#include <stxxl/map>
 
 namespace tdc { namespace lcpcomp {
     template<typename node_t>
     class ReferenceGraph {
     private:
-        std::vector<node_t> m_path;
+        static constexpr size_t DATA_NODE_BLOCK_SIZE = 4096;
+        static constexpr size_t DATA_LEAF_BLOCK_SIZE = 4096;
 
-        std::unordered_map<node_t, node_t> m_edges;
+        struct CompareSm {
+            bool operator () (const node_t& a, const node_t& b) const { return a < b; }
+            static node_t max_value() { return std::numeric_limits<node_t>::max(); }
+        };
+
+        using edge_map_t = stxxl::map<
+            node_t,
+            node_t,
+            CompareSm,
+            DATA_NODE_BLOCK_SIZE,
+            DATA_LEAF_BLOCK_SIZE>;
+
+        std::unique_ptr<edge_map_t> m_edges;
         size_t m_longest_path;
         size_t m_shortcuts;
+        std::vector<node_t> m_path;
 
         inline node_t follow_path(const node_t start, const node_t avoid) {
             auto v = start;
 
             // follow and store path
-            auto it = m_edges.find(v);
-            while(it != m_edges.end()) {
+            auto it = m_edges->find(v);
+            while(it != m_edges->end()) {
                 m_path.emplace_back(v);
 
                 v = it->second;
                 CHECK(v != start) << "cycle detected";
                 CHECK(v != avoid) << "cycle detected";
 
-                it = m_edges.find(v);
+                it = m_edges->find(v);
             }
 
             if(m_path.size() > 1) {
                 // create shortcuts
                 m_shortcuts += m_path.size() - 1;
                 for(auto u : m_path) {
-                    m_edges[u] = v;
+                    (*m_edges)[u] = v;
                 }
             }
 
@@ -53,7 +68,13 @@ namespace tdc { namespace lcpcomp {
         }
 
     public:
-        inline ReferenceGraph() : m_longest_path(0), m_shortcuts(0) {
+        inline ReferenceGraph() :
+            m_longest_path(0),
+            m_shortcuts(0) {
+
+            m_edges = std::make_unique<edge_map_t>(
+                edge_map_t::node_block_type::raw_size * 131072,  // 512 MB
+                edge_map_t::leaf_block_type::raw_size * 131072); // 512 MB
         }
 
         inline size_t longest_path() const {
@@ -65,14 +86,13 @@ namespace tdc { namespace lcpcomp {
         }
 
         inline size_t num_edges() const {
-            return m_edges.size();
+            return m_edges->size();
         }
 
         // insert an edge, throw error if a cycle is detected or if u already
         // has an outgoing edge
         inline void insert_edge(node_t u, node_t v) {
-            CHECK(m_edges.find(u) == m_edges.end()) << "duplicate edge detected";
-            m_edges[u] = follow_path(v, u);
+            m_edges->insert(std::pair<node_t, node_t>(u, follow_path(v, u)));
         }
     };
 
