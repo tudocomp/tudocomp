@@ -34,7 +34,7 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("coder", "sle",
+        Meta m(Coder::type_desc(), "sle",
            "Static low entropy encoding, conforming [Dinklage, 2015].\n"
            "Similar to a combination of Rice and  Huffman codes, it encodes "
            "integers based on their value range and uses the occurence count "
@@ -84,10 +84,10 @@ public:
 
     public:
         template<typename literals_t>
-        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
-            : tdc::Encoder(std::move(env), out, literals) {
+        inline Encoder(Config&& cfg, std::shared_ptr<BitOStream> out, literals_t&& literals)
+            : tdc::Encoder(std::move(cfg), out, literals) {
 
-            m_k     = this->env().option("kmer").as_integer();
+            m_k     = this->config().param("kmer").as_uint();
             assert(m_k <= max_kmer);
 
             m_kmer = new uliteral_t[m_k];
@@ -173,8 +173,8 @@ public:
         }
 
         template<typename literals_t>
-        inline Encoder(Env&& env, Output& out, literals_t&& literals)
-            : Encoder(std::move(env), std::make_shared<BitOStream>(out), literals) {
+        inline Encoder(Config&& cfg, Output& out, literals_t&& literals)
+            : Encoder(std::move(cfg), std::make_shared<BitOStream>(out), literals) {
         }
 
         ~Encoder() {
@@ -330,9 +330,9 @@ public:
         }
 
     public:
-        inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
-            : tdc::Decoder(std::move(env), in) {
-            m_k = this->env().option("kmer").as_integer();
+        inline Decoder(Config&& cfg, std::shared_ptr<BitIStream> in)
+            : tdc::Decoder(std::move(cfg), in) {
+            m_k = this->config().param("kmer").as_uint();
 
             m_kmer = new uliteral_t[m_k];
             reset_kmer();
@@ -353,8 +353,8 @@ public:
             }
         }
 
-        inline Decoder(Env&& env, Input& in)
-            : Decoder(std::move(env), std::make_shared<BitIStream>(in)) {
+        inline Decoder(Config&& cfg, Input& in)
+            : Decoder(std::move(cfg), std::make_shared<BitIStream>(in)) {
         }
 
         ~Decoder() {

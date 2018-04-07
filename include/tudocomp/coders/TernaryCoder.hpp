@@ -7,7 +7,8 @@ namespace tdc {
 class TernaryCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("coder", "ternary", "Encodes integers using ternary code.");
+        Meta m(Coder::type_desc(), "ternary",
+            "Encodes integers using ternary code.");
         return m;
     }
 

@@ -15,7 +15,8 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("lcp", "lcp_from_plcp");
+        Meta m(TypeDesc("lcp"), "lcp_from_plcp",
+            "Constructs the LCP array using the Phi algorithm.");
         return m;
     }
 

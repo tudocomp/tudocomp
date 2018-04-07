@@ -23,7 +23,7 @@ public:
     /// \brief Yields the coder's meta information.
     /// \sa Meta
     inline static Meta meta() {
-        Meta m("coder", "arithmetic", "Simple range encoding");
+        Meta m(Coder::type_desc(), "arithmetic", "Simple range encoding");
         return m;
     }
 

@@ -12,7 +12,8 @@ namespace tdc {
 class PhiFromSA: public Algorithm, public ArrayDS {
 public:
     inline static Meta meta() {
-        Meta m("phi", "phi_from_sa");
+        Meta m(TypeDesc("phi"), "phi_from_sa",
+            "Constructs the Phi array using the suffix array.");
         return m;
     }
 
@@ -21,8 +22,8 @@ public:
     }
 
     template<typename textds_t>
-    inline PhiFromSA(Env&& env, textds_t& t, CompressMode cm)
-            : Algorithm(std::move(env)) {
+    inline PhiFromSA(Config&& cfg, textds_t& t, CompressMode cm)
+            : Algorithm(std::move(cfg)) {
 
         // Construct Suffix Array
         auto& sa = t.require_sa(cm);

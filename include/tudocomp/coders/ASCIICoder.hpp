@@ -17,7 +17,7 @@ public:
     /// \brief Yields the coder's meta information.
     /// \sa Meta
     inline static Meta meta() {
-        Meta m("coder", "ascii",
+        Meta m(Coder::type_desc(), "ascii",
             "Encodes data using their ASCII representations. Integer "
             "representations are terminated with a ':' character to ensure "
             "decodability.");

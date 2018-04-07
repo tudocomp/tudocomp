@@ -8,6 +8,13 @@
 
 namespace tdc {
 
+class Coder {
+public:
+    static inline constexpr TypeDesc type_desc() {
+        return TypeDesc("coder");
+    }
+};
+
 /// \brief Base for data encoders.
 ///
 /// Used for encoding integer values to a certain bit representation.

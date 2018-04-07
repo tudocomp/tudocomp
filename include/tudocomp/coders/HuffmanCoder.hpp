@@ -511,7 +511,7 @@ namespace huff {
 class HuffmanCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("coder", "huff", "Canonical Huffman Coder");
+        Meta m(Coder::type_desc(), "huff", "Canonical Huffman Coder");
         return m;
     }
 

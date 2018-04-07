@@ -15,7 +15,8 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("plcp", "from_phi");
+        Meta m(TypeDesc("plcp"), "from_phi",
+            "Constructs the PLCP array using the phi array.");
         return m;
     }
 
@@ -24,8 +25,8 @@ public:
     }
 
     template<typename textds_t>
-    inline PLCPFromPhi(Env&& env, textds_t& t, CompressMode cm)
-            : Algorithm(std::move(env)) {
+    inline PLCPFromPhi(Config&& cfg, textds_t& t, CompressMode cm)
+            : Algorithm(std::move(cfg)) {
 
         const size_t n = t.size();
 

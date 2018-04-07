@@ -12,7 +12,8 @@ namespace tdc {
 class ISAFromSA: public Algorithm, public ArrayDS {
 public:
     inline static Meta meta() {
-        Meta m("isa", "isa_from_sa");
+        Meta m(TypeDesc("isa"), "isa_from_sa",
+            "Constructs the inverse suffix array using the suffix array");
         return m;
     }
 
@@ -21,8 +22,8 @@ public:
     }
 
     template<typename textds_t>
-    inline ISAFromSA(Env&& env, textds_t& t, CompressMode cm)
-            : Algorithm(std::move(env)) {
+    inline ISAFromSA(Config&& cfg, textds_t& t, CompressMode cm)
+            : Algorithm(std::move(cfg)) {
 
         // Require Suffix Array
         auto& sa = t.require_sa(cm);
