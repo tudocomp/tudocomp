@@ -10,9 +10,13 @@ namespace tdc {
 class ChainCompressor: public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "chain");
-        m.option("first").unbound_strategy(Compressor::type_desc());
-        m.option("second").unbound_strategy(Compressor::type_desc());
+        Meta m(Compressor::type_desc(), "chain",
+            "Executes two compressors consecutively, passing the first "
+            "compressors output to the input of the second.");
+        m.param("first", "The first compressor.")
+            .unbound_strategy(Compressor::type_desc());
+        m.param("second", "The second compressor.")
+            .unbound_strategy(Compressor::type_desc());
         return m;
     }
 
@@ -20,19 +24,20 @@ public:
     inline ChainCompressor() = delete;
 
     /// Construct the class with an environment and the algorithms to chain.
-    inline ChainCompressor(Env&& env):
-        Compressor(std::move(env)) {}
+    inline ChainCompressor(Config&& cfg):
+        Compressor(std::move(cfg)) {}
 
     template<class F>
     inline void chain(Input& input, Output& output, bool reverse, F f) {
         string_ref first_algo = "first";
         string_ref second_algo = "second";
+
         if (reverse) {
             std::swap(first_algo, second_algo);
         }
 
         auto run = [&](Input& i, Output& o, string_ref option) {
-            auto option_value = env().option(option);
+            auto option_value = config().param(option);
 
             //TODO: eliminate tdc_algorithms dependency
             auto compressor = tdc_algorithms::COMPRESSOR_REGISTRY.select(

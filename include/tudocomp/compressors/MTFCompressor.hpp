@@ -70,7 +70,8 @@ void mtf_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
 class MTFCompressor : public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "mtf", "Move To Front Compressor");
+        Meta m(Compressor::type_desc(), "mtf",
+            "Encodes the input in a Move-To-Front manner.");
         return m;
     }
     inline MTFCompressor(Env&& env)

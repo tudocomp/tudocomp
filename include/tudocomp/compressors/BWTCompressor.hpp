@@ -12,14 +12,12 @@ namespace tdc {
 
 template<typename text_t = TextDS<>>
 class BWTCompressor : public Compressor {
-
-private:
-//    const TypeRange<len_t> len_r = TypeRange<len_t>();
-
 public:
     inline static Meta meta() {
-        Meta m("compressor", "bwt", "BWT Compressor");
-        m.option("textds").templated<text_t, TextDS<>>("textds");
+        Meta m(Compressor::type_desc(), "bwt",
+            "Computes the Burrows-Wheeler transform of the input text.");
+        m.param("textds", "The text data structure provider.")
+            .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
         m.uses_textds<text_t>(ds::SA);
         return m;
     }
@@ -31,7 +29,7 @@ public:
         auto in = input.as_view();
         DCHECK(in.ends_with(uint8_t(0)));
 
-        text_t t(env().env_for_option("textds"), in, text_t::SA);
+        text_t t(config().sub_config("textds"), in, text_t::SA);
 		DVLOG(2) << vec_to_debug_string(t);
 		const len_t input_size = t.size();
 

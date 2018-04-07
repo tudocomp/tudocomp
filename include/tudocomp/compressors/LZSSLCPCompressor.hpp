@@ -24,20 +24,19 @@ template<typename coder_t, typename text_t = TextDS<>>
 class LZSSLCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "lzss_lcp", "LZSS Factorization using LCP");
-        m.option("coder").templated<coder_t>("coder");
-        m.option("textds").templated<text_t, TextDS<>>("textds");
-        m.option("threshold").dynamic(3);
+        Meta m(Compressor::type_desc(), "lzss_lcp",
+            "Computes the LZSS factorization of the input using the "
+            "suffix and LCP array.");
+        m.param("coder", "The output encoder.")
+            .strategy<coder_t>(TypeDesc("coder"));
+        m.param("textds", "The text data structure provider.")
+            .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
+        m.param("threshold", "The minimum factor length.").primitive(2);
         m.uses_textds<text_t>(text_t::SA | text_t::ISA | text_t::LCP);
         return m;
     }
 
-    /// Default constructor (not supported).
-    inline LZSSLCPCompressor() = delete;
-
-    /// Construct the class with an environment.
-    inline LZSSLCPCompressor(Env&& env) : Compressor(std::move(env)) {
-    }
+    using Compressor::Compressor;
 
     inline virtual void compress(Input& input, Output& output) override {
         auto view = input.as_view();
@@ -45,7 +44,7 @@ public:
 
         // Construct text data structures
         text_t text = StatPhase::wrap("Construct Text DS", [&]{
-            return text_t(env().env_for_option("textds"), view,
+            return text_t(config().sub_config("textds"), view,
                     text_t::SA | text_t::ISA | text_t::LCP);
         });
 
@@ -58,7 +57,7 @@ public:
         lzss::FactorBuffer factors;
 
         StatPhase::wrap("Factorize", [&]{
-            const len_t threshold = env().option("threshold").as_integer(); //factor threshold
+            const len_t threshold = config().param("threshold").as_uint();
 
             for(len_t i = 0; i+1 < text_length;) { // we omit T[text_length-1] since we assume that it is the \0 byte!
                 //get SA position for suffix i
@@ -116,7 +115,7 @@ public:
 
         // encode
         StatPhase::wrap("Encode", [&]{
-            typename coder_t::Encoder coder(env().env_for_option("coder"),
+            typename coder_t::Encoder coder(config().sub_config("coder"),
                 output, lzss::TextLiterals<text_t>(text, factors));
 
             lzss::encode_text(coder, text, factors); //TODO is this correct?
@@ -124,7 +123,8 @@ public:
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+        typename coder_t::Decoder decoder(
+            config().sub_config("coder"), input);
         auto outs = output.as_stream();
 
         lzss::decode_text<typename coder_t::Decoder, lzss::DecodeBackBuffer>(decoder, outs);

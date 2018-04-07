@@ -19,10 +19,13 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("compressor", "lzss", "Lempel-Ziv-Storer-Szymanski (Sliding Window)");
-        m.option("coder").templated<coder_t>("coder");
-        m.option("window").dynamic(16);
-        m.option("threshold").dynamic(3);
+        Meta m(Compressor::type_desc(), "lzss",
+            "Computes the LZSS factorization of the input using a "
+            "sliding window.");
+        m.param("coder", "The output encoder.")
+            .strategy<coder_t>(TypeDesc("coder"));
+        m.param("window", "The sliding window size").primitive(16);
+        m.param("threshold", "The minimum factor length.").primitive(2);
         return m;
     }
 
@@ -30,16 +33,16 @@ public:
     inline LZSSSlidingWindowCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZSSSlidingWindowCompressor(Env&& e) : Compressor(std::move(e))
-    {
-        m_window = this->env().option("window").as_integer();
+    inline LZSSSlidingWindowCompressor(Config&& c) : Compressor(std::move(c)) {
+        m_window = this->config().param("window").as_uint();
     }
 
     /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
         auto ins = input.as_stream();
 
-        typename coder_t::Encoder coder(env().env_for_option("coder"), output, NoLiterals());
+        typename coder_t::Encoder coder(
+            config().sub_config("coder"), output, NoLiterals());
 
         std::vector<uint8_t> buf;
 
@@ -55,7 +58,7 @@ public:
         }
 
         //factorize
-        const len_t threshold = env().option("threshold").as_integer(); //factor threshold
+        const len_t threshold = config().param("threshold").as_uint();
         phase.log_stat("threshold", threshold);
 
         size_t pos = 0;
@@ -118,7 +121,7 @@ public:
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+        typename coder_t::Decoder decoder(config().sub_config("coder"), input);
 
         std::vector<uliteral_t> text;
         while(!decoder.eof()) {

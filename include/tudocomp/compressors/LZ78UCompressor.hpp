@@ -100,24 +100,24 @@ private:
         = typename strategy_t::template Decompression<RefDecoder>;
 
 public:
-    inline LZ78UCompressor(Env&& env):
-        Compressor(std::move(env))
-    {}
-
     inline static Meta meta() {
-        Meta m("compressor", "lz78u", "Lempel-Ziv 78 U\n\n" );
-        m.option("comp").templated<strategy_t>("lz78u_strategy");
-        m.option("coder").templated<ref_coder_t>("coder");
-        m.option("threshold").dynamic("3");
-        // m.option("dict_size").dynamic("inf");
-        m.input_restrictions(io::InputRestrictions({0},true));
+        Meta m(Compressor::type_desc(), "lz78u",
+            "Computes the LZ78U factorization of the input.");
+        m.param("coder", "The output encoder.")
+            .strategy<ref_coder_t>(TypeDesc("coder"));
+        m.param("comp", "The factorization strategy.")
+            .strategy<strategy_t>(TypeDesc("coder"));
+        m.param("threshold", "the minimum factor length").primitive(3);
+        m.needs_sentinel_terminator();
         return m;
     }
+
+    using Compressor::Compressor;
 
     virtual void compress(Input& input, Output& out) override {
         StatPhase phase1("lz78u");
         //std::cout << "START COMPRESS\n";
-        const len_t threshold = env().option("threshold").as_integer(); //factor threshold
+        const len_t threshold = config().param("threshold").as_uint(); //factor threshold
         phase1.log_stat("threshold", threshold);
 
         auto iview = input.as_view();
@@ -144,8 +144,8 @@ public:
         typedef lz78u::SuffixTree::node_type node_t;
 
         CompressionStrat strategy {
-            env().env_for_option("comp"),
-            env().env_for_option("coder"),
+            config().sub_config("comp"),
+            config().sub_config("coder"),
             std::make_shared<BitOStream>(out)
         };
 
@@ -277,8 +277,8 @@ public:
 
         {
             DecompressionStrat strategy {
-                env().env_for_option("comp"),
-                env().env_for_option("coder"),
+                config().sub_config("comp"),
+                config().sub_config("coder"),
                 std::make_shared<BitIStream>(input)
             };
 
