@@ -416,7 +416,7 @@ public:
     ///
     /// \param param the name of the parameter
     /// \return the configuration of the corresponding sub algorithm
-    inline const Config& sub_config(const std::string& param) const {
+    inline Config sub_config(const std::string& param) const {
 
         auto& sub = get_param(param).sub_configs();
         if(sub.size() == 0) {
@@ -424,7 +424,7 @@ public:
         } else if(sub.size() > 1) {
             throw std::runtime_error("parameter has multiple sub configuations");
         } else {
-            return sub.front();
+            return Config(sub.front());
         }
     }
 
@@ -432,7 +432,7 @@ public:
     inline Config env_for_option(
         const std::string& param) const {
 
-        return Config(sub_config(param));
+        return sub_config(param);
     }
 
     /// \brief Gets the configurations of the requested sub algorithm list.
