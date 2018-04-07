@@ -346,14 +346,14 @@ public:
         m_decl->input_restrictions(r);
     }
 
-    [[deprecated("transitional alias")]]
+    //TODO: rename
     inline void needs_sentinel_terminator() {
         input_restrictions(
             input_restrictions() | io::InputRestrictions({ 0 }, true));
     }
 
+    //TODO: refactor
     template<typename text_t>
-    [[deprecated("transitional alias")]]
     inline void uses_textds(uint64_t flags) {
         input_restrictions(
             input_restrictions() | text_t::common_restrictions(flags));
