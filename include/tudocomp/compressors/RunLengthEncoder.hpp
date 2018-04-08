@@ -51,13 +51,15 @@ void rle_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
 class RunLengthEncoder : public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "rle", "Run Length Encoding Compressor");
-        m.option("offset").dynamic(0);
+        Meta m(Compressor::type_desc(), "rle",
+            "Run-length encoding.");
+        m.param("offset").primitive(0);
         return m;
     }
 	const size_t m_offset;
-    inline RunLengthEncoder(Env&& env)
-		: Compressor(std::move(env)), m_offset(this->env().option("offset").as_integer()) {
+    inline RunLengthEncoder(Config&& cfg)
+		: Compressor(std::move(cfg)),
+          m_offset(this->config().param("offset").as_uint()) {
     }
 
     inline virtual void compress(Input& input, Output& output) override {

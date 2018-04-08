@@ -59,7 +59,7 @@ public:
         m.param("coder", "The output encoder.")
             .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BitCoder>());
         m.param("lz78trie", "The trie data structure implementation.")
-            .strategy<coder_t>(TypeDesc("lz78trie"),
+            .strategy<dict_t>(TypeDesc("lz78trie"),
                 Meta::Default<lz78::TernaryTrie>());
         m.param("dict_size",
             "the maximum size of the dictionary's backing storage before it "

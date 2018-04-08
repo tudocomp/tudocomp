@@ -106,7 +106,7 @@ public:
         m.param("coder", "The output encoder.")
             .strategy<ref_coder_t>(TypeDesc("coder"));
         m.param("comp", "The factorization strategy.")
-            .strategy<strategy_t>(TypeDesc("coder"));
+            .strategy<strategy_t>(TypeDesc("lz78u_strategy"));
         m.param("threshold", "the minimum factor length").primitive(3);
         m.needs_sentinel_terminator();
         return m;
