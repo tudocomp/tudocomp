@@ -243,6 +243,7 @@ tdc.compressors = [
     AlgorithmConfig(name="LZWCompressor", header="compressors/LZWCompressor.hpp", sub=[universal_coders, lz78_trie]),
     AlgorithmConfig(name="RePairCompressor", header="compressors/RePairCompressor.hpp", sub=[non_consuming_coders]),
     AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[non_consuming_coders, textds]),
+    AlgorithmConfig(name="LZSSLCPDidacticCompressor", header="compressors/LZSSLCPDidacticCompressor.hpp", sub=[textds]),
     AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[universal_coders]),
     #SLOW AlgorithmConfig(name="LZ77CicsCompressor", header="compressors/LZ77CicsCompressor.hpp", sub=[all_coders]),
     AlgorithmConfig(name="MTFCompressor", header="compressors/MTFCompressor.hpp"),

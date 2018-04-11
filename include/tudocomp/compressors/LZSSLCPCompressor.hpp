@@ -32,12 +32,7 @@ public:
         return m;
     }
 
-    /// Default constructor (not supported).
-    inline LZSSLCPCompressor() = delete;
-
-    /// Construct the class with an environment.
-    inline LZSSLCPCompressor(Env&& env) : Compressor(std::move(env)) {
-    }
+    using Compressor::Compressor;
 
     inline virtual void compress(Input& input, Output& output) override {
         auto view = input.as_view();
@@ -115,11 +110,19 @@ public:
         });
 
         // encode
+        encode(output, text, factors);
+    }
+
+    inline virtual void encode(
+        Output& output,
+        const text_t& text,
+        const lzss::FactorBuffer& factors)
+    {
         StatPhase::wrap("Encode", [&]{
             typename coder_t::Encoder coder(env().env_for_option("coder"),
                 output, lzss::TextLiterals<text_t>(text, factors));
 
-            lzss::encode_text(coder, text, factors); //TODO is this correct?
+            lzss::encode_text(coder, text, factors);
         });
     }
 
