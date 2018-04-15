@@ -38,7 +38,7 @@ public:
             }
 
             os << '{' << (f.src+1) << ',' << f.len << '}';
-            p += f.len;
+            p += size_t(f.len);
         }
 
         while(p < text.size()) {
