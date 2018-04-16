@@ -34,7 +34,10 @@ TEST(ringbuffer, pop) {
     RingBuffer<size_t> r(N);
     for(size_t i = 0; i < N; i++) r.push_back(i);
     ASSERT_TRUE(r.full());
-    for(size_t i = 0; i < N; i++) ASSERT_EQ(i, r.pop_front());
+    for(size_t i = 0; i < N; i++) {
+        ASSERT_EQ(i, r.pop_front());
+        ASSERT_EQ(N-i-1, r.size());
+    }
     ASSERT_TRUE(r.empty());
 }
 
@@ -53,6 +56,7 @@ TEST(ringbuffer, iterator) {
     
     size_t k = 0;
     for(auto x : r) ASSERT_EQ(k++, x);
+    ASSERT_EQ(N, k);
 }
 
 TEST(ringbuffer, iterator_offset) {
@@ -68,6 +72,23 @@ TEST(ringbuffer, circular) {
     
     size_t k = N;
     for(auto x : r) ASSERT_EQ(k++, x);
+    ASSERT_EQ(2 * N, k);
+}
+
+TEST(ringbuffer, start_end_swapped) {
+    RingBuffer<size_t> r(N);
+    for(size_t i = 0; i < N + N/2; i++) r.push_back(i);
+
+    ASSERT_EQ(N, r.size());
+    r.pop_front();
+    ASSERT_EQ(N-1, r.size());
+
+    size_t k = 0;
+    auto it = r.begin();
+    for(;it != r.end(); ++it) {
+        ++k;
+    }
+    ASSERT_EQ(N-1, k);
 }
 
 TEST(ringbuffer, underfull) {

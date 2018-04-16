@@ -15,12 +15,11 @@ namespace lzss {
 template<typename coder_t>
 inline void online_encode_factor(
     coder_t& coder,
-    size_t fpos, size_t fsrc, size_t flen,
-    size_t max_len) {
+    size_t fpos, size_t fsrc, size_t flen, Range flen_r) {
 
     coder.encode(true, bit_r);              // 1-bit
-    coder.encode(fpos - fsrc, Range(fpos)); // delta
-    coder.encode(flen, Range(max_len));     // num
+    coder.encode(fpos - fsrc, Range(1, fpos)); // delta
+    coder.encode(flen, flen_r);     // num
 }
 
 /// \brief Encodes a character in an LZSS online scenario.
@@ -39,14 +38,14 @@ inline void online_encode_literal(coder_t& coder, uliteral_t literal) {
 /// \param max_len the maximum length of any factor
 template<typename decoder_t>
 inline std::vector<uliteral_t> online_decode(
-    decoder_t& decoder, size_t max_len) {
+    decoder_t& decoder, Range flen_r) {
 
     std::vector<uliteral_t> text;
     while(!decoder.eof()) {
         bool is_factor = decoder.template decode<bool>(bit_r);
         if(is_factor) {
-            size_t fsrc = text.size() - decoder.template decode<size_t>(Range(text.size()));
-            size_t fnum = decoder.template decode<size_t>(Range(max_len));
+            size_t fsrc = text.size() - decoder.template decode<size_t>(Range(1, text.size()));
+            size_t fnum = decoder.template decode<size_t>(flen_r);
 
             for(size_t i = 0; i < fnum; i++) {
                 text.emplace_back(text[fsrc+i]);

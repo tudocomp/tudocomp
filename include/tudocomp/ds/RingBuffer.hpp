@@ -15,25 +15,31 @@ namespace tdc {
     template<typename T>
     class RingBuffer {
     private:
-        std::vector<T> m_buffer;
+        T* m_buffer;
+        size_t m_capacity;
+
         size_t m_start, m_end;
         bool m_empty;
 
         // simulates "i++", but also applies the modulo for the buffer size
         inline size_t post_inc(size_t& i) const {
             const size_t r = i;
-            i = (i+1) % capacity();
+            i = (i+1) % m_capacity;
             return r;
         }
 
     public:
         /// \brief Constructor.
         ///
-        /// \param bufsize the ring buffer size
-        inline RingBuffer(size_t bufsize)
-            : m_start(0), m_end(0), m_empty(true) 
+        /// \param capacity the ring buffer capacity
+        inline RingBuffer(size_t capacity)
+            : m_capacity(capacity), m_start(0), m_end(0), m_empty(true) 
         {
-            m_buffer.resize(bufsize);
+            m_buffer = new T[m_capacity];
+        }
+
+        inline ~RingBuffer() {
+            delete[] m_buffer;
         }
 
         /// \brief Placed a new item at the end of the buffer.
@@ -92,18 +98,19 @@ namespace tdc {
 
         /// \brief Gets the ring buffer's capacity.
         inline size_t capacity() const {
-            return m_buffer.size();
+            return m_capacity;
         }
 
-        /// \brief Gets the ring buffer's current amount of entries.
+        /// \brief Gets the ring buffer's size (current amount of entries).
         inline size_t size() const {
-            //TODO test
-            if(m_start == m_end) {
-                return m_empty ? 0 : capacity();
-            } else if(m_start < m_end) {
-                return m_end - m_start;
-            } else { // m_first > m_last
-                return (capacity() - m_start + 1) + m_end;
+            if(m_empty) {
+                return 0;
+            } else {
+                if(m_end > m_start) {
+                    return m_end - m_start;
+                } else { // (m_end <= m_start)
+                    return m_capacity - (m_start - m_end);
+                }
             }
         }
 
@@ -129,7 +136,7 @@ namespace tdc {
                     if(m_pos >= m_rb->m_start) {
                         return m_pos - m_rb->m_start;
                     } else { // m_pos < m_rb->m_start
-                        return (m_rb->capacity() - m_rb->m_start + 1) + m_pos;
+                        return (m_rb->m_capacity - m_rb->m_start) + m_pos;
                     }
                 }
             }
@@ -175,11 +182,21 @@ namespace tdc {
             }
         };
 
-        const_iterator begin() { return const_iterator(*this); }
-        const_iterator end()   { return const_iterator(*this, true); }
+        inline const_iterator begin() const { return const_iterator(*this); }
+        inline const_iterator end()   const { return const_iterator(*this, true); }
 
-        const_iterator cbegin() { return begin(); }
-        const_iterator cend()   { return end(); }
+        inline const_iterator cbegin() const { return begin(); }
+        inline const_iterator cend()   const { return end(); }
+
+        // dump the current content from start to end
+        inline std::vector<T> dump() const {
+            std::vector<T> v(size());
+            size_t i = 0;
+            for(auto it = cbegin(); it != cend(); it++) {
+                v[i++] = *it;
+            }
+            return v;
+        }
     };
 }
 
