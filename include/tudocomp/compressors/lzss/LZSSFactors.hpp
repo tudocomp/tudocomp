@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <vector>
 #include <tudocomp/def.hpp>
-
+#include <tudocomp/util.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 

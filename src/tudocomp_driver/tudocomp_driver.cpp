@@ -501,8 +501,18 @@ int main(int argc, char** argv) {
             stats.set("meta", meta);
             stats.set("data", algo_stats);
 
-            stats.str(std::cout);
-            std::cout << std::endl;
+            if (options.stat_file == "") {
+                stats.str(std::cout);
+                std::cout << std::endl;
+            } else {
+                std::ofstream stat_file;
+                stat_file.open(options.stat_file);
+
+                stats.str(stat_file);
+                stat_file << std::endl;
+
+                stat_file.close();
+            }
         }
     } catch (std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

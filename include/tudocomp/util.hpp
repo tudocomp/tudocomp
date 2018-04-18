@@ -14,6 +14,7 @@
 #include <iomanip>
 
 #include <tudocomp/util/View.hpp>
+#include <tudocomp/util/bits.hpp>
 
 namespace tdc {
 
@@ -207,30 +208,6 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
     }
     out = n;
     return more;
-}
-
-/// \brief Computes the highest set bit in an integer variable
-inline constexpr uint_fast8_t bits_hi(uint64_t x) {
-	return x == 0 ? 0 : 64 - __builtin_clzll(x);
-}
-
-/// \brief Computes the number of bits required to store the given integer
-/// value.
-///
-/// This is equivalent to the binary logarithm rounded up to the next integer.
-///
-/// Examples:
-/// - `bits_for(0b0) == 1`
-/// - `bits_for(0b1) == 1`
-/// - `bits_for(0b10) == 2`
-/// - `bits_for(0b11) == 2`
-/// - `bits_for(0b100) == 3`
-///
-/// \param n The integer to be stored.
-/// \return The amount of bits required to store the value (guaranteed to be
-/// greater than zero).
-inline constexpr uint_fast8_t bits_for(size_t n) {
-    return n == 0 ? 1U : bits_hi(n);
 }
 
 /// \brief Performs an integer division with the result rounded up to the
@@ -584,45 +561,6 @@ public:
         return is_moved();
     }
 };
-
-/// \cond INTERNAL
-namespace portable_arithmetic_shift {
-    // Source: https://gist.github.com/palotasb/de46414a93ba90fff22bdbd2327ae393
-
-    template <typename T>
-    constexpr auto builtin_shr(T value, int amount) noexcept
-        -> decltype(value >> amount)
-    {
-        return value >> amount;
-    }
-
-    template <typename T>
-    struct uses_arithmetic_shift : std::integral_constant<bool, builtin_shr(T(-1), 1) == -1> {};
-
-    template <typename T = int>
-    constexpr T shift_by_portable(T value, int amount) noexcept
-    {
-        return value < 0 ?
-        amount < 0 ? ~(~value >> -amount) : -(-value << amount) :
-        amount < 0 ? value >> -amount : value << amount;
-    }
-
-    template <typename T = int>
-    constexpr T shift_by_arithmetic(T value, int amount) noexcept
-    {
-        // Only use with negative T values when the compiler translates right shift to arithmetic shift instructions.
-        return amount < 0 ? value >> -amount : value << amount;
-    }
-}
-/// \endcond
-
-template <typename T = int>
-constexpr T shift_by(T value, int amount) noexcept
-{
-    using namespace portable_arithmetic_shift;
-
-    return uses_arithmetic_shift<T>::value ? shift_by_arithmetic(value, amount) : shift_by_portable(value, amount);
-}
 
 inline uint64_t zero_or_next_power_of_two(uint64_t x) {
     --x;

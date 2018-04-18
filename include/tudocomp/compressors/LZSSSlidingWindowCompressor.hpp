@@ -1,9 +1,13 @@
 #pragma once
 
+#include <tudocomp/compressors/lzss/LZSSOnlineCoding.hpp>
+
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
 #include <tudocomp/util.hpp>
+
+#include <tudocomp/ds/RingBuffer.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -15,7 +19,12 @@ template<typename coder_t>
 class LZSSSlidingWindowCompressor : public Compressor {
 
 private:
+    size_t m_threshold;
     size_t m_window;
+
+    inline Range factor_length_range() const {
+        return Range(m_threshold, 2 * m_window);
+    }
 
 public:
     inline static Meta meta() {
@@ -34,115 +43,110 @@ public:
 
     /// Construct the class with an environment.
     inline LZSSSlidingWindowCompressor(Config&& c) : Compressor(std::move(c)) {
+        m_threshold = this->config().param("threshold").as_uint();
         m_window = this->config().param("window").as_uint();
     }
 
     /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
+        // initialize encoder
+        typename coder_t::Encoder coder(env().env_for_option("coder"), output, NoLiterals());
+
+        // allocate window and lookahead buffer
+        RingBuffer<uliteral_t> window(m_window), ahead(m_window);
+
+        // open stream
         auto ins = input.as_stream();
+        decltype(ins)::int_type c;
 
-        typename coder_t::Encoder coder(
-            config().sub_config("coder"), output, NoLiterals());
-
-        std::vector<uint8_t> buf;
-
-        size_t ahead = 0; //marks the index in the buffer at which the back buffer ends and the ahead buffer begins
-        char c;
-
-        StatPhase phase("Factorize");
-
-        //initially fill the buffer
-        size_t buf_off = 0;
-        while(buf.size() < 2 * m_window && ins.get(c)) {
-            buf.push_back(uint8_t(c));
+        // initialize lookahead buffer
+        while(!ahead.full() && (c = ins.get()) >= 0) {
+            ahead.push_back(uliteral_t(c));
         }
 
-        //factorize
-        const len_t threshold = config().param("threshold").as_uint();
-        phase.log_stat("threshold", threshold);
+        // factorize
+        size_t i = 0; // all symbols before i have already been factorized
+        while(!ahead.empty()) {
+            auto ahead_dbg = ahead.dump();
+            auto window_dbg = window.dump();
 
-        size_t pos = 0;
-        bool eof = false;
-        while(ahead < buf.size()) {
-            size_t fpos = 0, fsrc = 0, fnum = 0;
+            // look for longest prefix of ahead in window
+            size_t flen = 1, fsrc = SIZE_MAX;
+            size_t pos = 0;
 
-            //walk back buffer
-            for(size_t k = (ahead > m_window ? ahead - m_window : 0); k < ahead; k++) {
-                //compare string
-                size_t j = 0;
-                while(ahead + j < buf.size() && buf[k + j] == buf[ahead + j]) {
-                    ++j;
+            for(auto it = window.begin(); it != window.end(); it++) {
+                if(*it == ahead.peek_front()) {
+                    // at least one character matches, find factor length
+                    // by comparing additional characters
+                    size_t len = 1;
+
+                    auto it_window = it + 1;
+                    auto it_ahead = ahead.begin() + 1;
+
+                    while(it_window != window.end() &&
+                          it_ahead != ahead.end() &&
+                          *it_window == *it_ahead) {
+
+                        ++it_window;
+                        ++it_ahead;
+                        ++len;
+                    }
+
+                    if(it_window == window.end() && it_ahead != ahead.end()) {
+                        // we looked until the end of the window, but there
+                        // are more characters in the lookahead buffer
+                        // -> test for overlapping factor!
+                        auto it_overlap = ahead.begin();
+                        while(it_ahead != ahead.end() &&
+                            *it_overlap == *it_ahead) {
+
+                            ++it_overlap;
+                            ++it_ahead;
+                            ++len;
+                        }
+                    }
+
+                    // test if factor is currently the longest
+                    if(len > flen) {
+                        flen = len;
+                        fsrc = pos;
+                    }
                 }
-
-                //factorize if longer than one already found
-                if(j >= threshold && j > fnum) {
-                    fpos = buf_off + ahead;
-                    fsrc = buf_off + k;
-                    fnum = j;
-                }
+                ++pos;
             }
 
-            //output longest factor or symbol
-            size_t advance;
-
-            if(fnum > 0) {
-                // encode factor
-                coder.encode(true, bit_r);
-                coder.encode(fpos - fsrc, Range(fpos)); //delta
-                coder.encode(fnum, Range(m_window));
-
-                advance = fnum;
+            if(flen >= m_threshold) {
+                // factor
+                lzss::online_encode_factor(
+                    coder, i, i-window.size()+fsrc, flen, factor_length_range());
             } else {
-                // encode literal
-                coder.encode(false, bit_r);
-                coder.encode(uliteral_t(buf[ahead]), literal_r);
-
-                advance = 1;
+                // unfactorized symbols
+                auto it = ahead.begin();
+                for(size_t k = 0; k < flen; k++) {
+                    lzss::online_encode_literal(coder, *it++);
+                }
             }
 
-            //advance buffer
-            pos += advance;
-            while(advance--) {
-                if(ahead < m_window) {
-                    //case 1: still reading the first w symbols from the stream
-                    ++ahead;
-                } else if(!eof && ins.get(c)) {
-                    //case 2: read a new symbol
-                    buf.erase(buf.begin()); //TODO ouch
-                    buf.push_back(uint8_t(c));
-                    ++buf_off;
-                } else {
-                    //case 3: EOF, read rest of buffer
-                    eof = true;
-                    ++ahead;
+            // advance
+            i += flen;
+
+            size_t advance = flen;
+            while(advance-- && !ahead.empty()) {
+                // move 
+                window.push_back(ahead.pop_front());
+
+                if(!ins.eof() && (c = ins.get()) >= 0) { 
+                    ahead.push_back(uliteral_t(c));
                 }
             }
         }
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        typename coder_t::Decoder decoder(config().sub_config("coder"), input);
-
-        std::vector<uliteral_t> text;
-        while(!decoder.eof()) {
-            bool is_factor = decoder.template decode<bool>(bit_r);
-            if(is_factor) {
-                size_t fsrc = text.size() - decoder.template decode<size_t>(Range(text.size()));
-
-                //TODO are the compressor options saved into tudocomp's magic?
-                size_t fnum = decoder.template decode<size_t>(Range(m_window));
-
-                for(size_t i = 0; i < fnum; i++) {
-                    text.push_back(text[fsrc+i]);
-                }
-            } else {
-                auto c = decoder.template decode<uliteral_t>(literal_r);
-                text.push_back(c);
-            }
-        }
-
+        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+        auto text = lzss::online_decode(decoder, factor_length_range());
         auto outs = output.as_stream();
-        for(uint8_t c : text) outs << c;
+        for(auto c : text) outs << c;
     }
 };
 

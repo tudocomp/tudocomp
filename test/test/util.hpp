@@ -150,6 +150,8 @@ void roundtrip_batch(F f) {
 
     f("abbbbbbbbbbcbbbbbbbbbb"_v);
 
+    f("0	100009425	0.1661:0.1661	#businessfor"_v);
+
     //f("abc\0"_v);
 
     std::vector<uint8_t> all_bytes {

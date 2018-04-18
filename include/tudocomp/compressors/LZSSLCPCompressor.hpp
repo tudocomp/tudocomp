@@ -114,11 +114,19 @@ public:
         });
 
         // encode
+        encode(output, text, factors);
+    }
+
+    inline virtual void encode(
+        Output& output,
+        const text_t& text,
+        const lzss::FactorBuffer& factors)
+    {
         StatPhase::wrap("Encode", [&]{
             typename coder_t::Encoder coder(config().sub_config("coder"),
                 output, lzss::TextLiterals<text_t>(text, factors));
 
-            lzss::encode_text(coder, text, factors); //TODO is this correct?
+            lzss::encode_text(coder, text, factors);
         });
     }
 

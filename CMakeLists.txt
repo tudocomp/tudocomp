@@ -76,12 +76,18 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemod
 include(cotire)
 set (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1000)
 
+# Git Submodule sources
+include(git_submodule_subdirectories)
+
 # Finders
 include(find_or_download_package)
 
 # Usage: find_or_download_package(PACKAGE_NAME, FOUND_FLAG_PREFIX, TARGET_PREFIX)
 find_or_download_package(Glog GLOG glog)
 find_or_download_package(SDSL SDSL sdsl)
+git_submodule_subdirectory(external/bit_span)
+git_submodule_subdirectory(external/compact_sparse_hash)
+git_submodule_subdirectory(external/datasets)
 
 include(FindJudy)
 
