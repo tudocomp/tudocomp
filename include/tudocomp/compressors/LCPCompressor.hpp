@@ -3,9 +3,10 @@
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/Compressor.hpp>
+
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
-#include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 
@@ -131,7 +132,7 @@ public:
             typename coder_t::Encoder coder(
                 env().env_for_option("coder"),
                 output,
-                lzss::TextLiterals<text_t>(text, factors));
+                lzss::UnreplacedLiterals<text_t>(text, factors));
 
             lzss::encode_text(coder, text, factors); //TODO is this correct?
         });

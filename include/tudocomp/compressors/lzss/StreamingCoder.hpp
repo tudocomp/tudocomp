@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tudocomp/compressors/lzss/LZSSCoder.hpp>
+
 #include <tudocomp/compressors/lzss/StreamingEncoder.hpp>
 #include <tudocomp/compressors/lzss/StreamingDecoder.hpp>
 

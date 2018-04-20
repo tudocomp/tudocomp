@@ -2,13 +2,13 @@
 
 #include <istream>
 #include <tudocomp/Literal.hpp>
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 
 namespace tdc {
 namespace lzss {
 
 template<typename text_t>
-class TextLiterals : LiteralIterator {
+class UnreplacedLiterals : LiteralIterator {
 private:
     const text_t* m_text;
     const FactorBuffer* m_factors;
@@ -26,7 +26,7 @@ private:
     }
 
 public:
-    inline TextLiterals(const text_t& text, const FactorBuffer& factors)
+    inline UnreplacedLiterals(const text_t& text, const FactorBuffer& factors)
         : m_text(&text),
           m_factors(&factors),
           m_pos(0),

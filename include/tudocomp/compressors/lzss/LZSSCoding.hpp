@@ -3,7 +3,7 @@
 #include <cassert>
 
 #include <tudocomp/Range.hpp>
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lzss/LZSSDecodeBackBuffer.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>

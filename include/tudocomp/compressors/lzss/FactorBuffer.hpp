@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <vector>
 
-#include <tudocomp/compressors/lzss/LZSSFactor.hpp>
+#include <tudocomp/compressors/lzss/Factor.hpp>
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/ds/IntVector.hpp>
@@ -67,7 +67,6 @@ public:
         }
     }
 
-public:
     inline void flatten() {
         if(m_factors.empty()) return; //nothing to do
 

@@ -4,7 +4,7 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/ArrayMaxHeap.hpp>
 
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 

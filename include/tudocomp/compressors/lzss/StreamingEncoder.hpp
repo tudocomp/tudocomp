@@ -3,6 +3,8 @@
 #include <tudocomp/def.hpp>
 #include <tudocomp/Range.hpp>
 
+#include <tudocomp/compressors/lzss/Factor.hpp>
+
 namespace tdc {
 namespace lzss {
 
