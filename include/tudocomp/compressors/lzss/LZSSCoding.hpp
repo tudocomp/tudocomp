@@ -5,10 +5,6 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/compressors/lzss/LZSSDecodeBackBuffer.hpp>
-//#include <tudocomp/compressors/lzss/LZSSDecodeForwardChainBuffer.hpp>
-//#include <tudocomp/compressors/lzss/LZSSDecodeForwardMultimapBuffer.hpp>
-//#include <tudocomp/compressors/lzss/LZSSDecodeForwardListMapBuffer.hpp>
-//#include <tudocomp/compressors/lzss/LZSSDecodeForwardQueueListBuffer.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 

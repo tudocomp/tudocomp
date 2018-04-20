@@ -2,23 +2,15 @@
 
 #include <algorithm>
 #include <vector>
-#include <tudocomp/def.hpp>
+
+#include <tudocomp/compressors/lzss/LZSSFactor.hpp>
+
 #include <tudocomp/util.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 namespace lzss {
-
-class Factor {
-public:
-    len_compact_t pos, src, len;
-
-    inline Factor(len_t fpos, len_t fsrc, len_t flen)
-        : pos(fpos), src(fsrc), len(flen) {
-    }
-}  __attribute__((__packed__));
-
 
 class FactorBuffer {
 private:
@@ -118,7 +110,7 @@ public:
                     break;
                 }
             }
-            
+
             if(depth) {
                 f.src = src;
 
