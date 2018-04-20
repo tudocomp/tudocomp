@@ -4,7 +4,6 @@
 
 #include <tudocomp/Range.hpp>
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
-#include <tudocomp/compressors/lzss/LZSSDecodeBackBuffer.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -134,18 +133,6 @@ inline void decode_text(coder_t& decoder, std::ostream& outs) {
     // write decoded text
     buffer.write_to(outs);
 }
-
-// template<typename coder_t>
-// inline void decode_text(coder_t& decoder, std::ostream& outs, bool allow_forward = false) {
-//     if(allow_forward) {
-// //        decode_text_internal<coder_t, DecodeForwardListMapBuffer>(decoder, outs);
-//         //decode_text_internal<coder_t, SuccinctListBuffer>(decoder, outs);
-//         decode_text_internal<coder_t, DecodeForwardQueueListBuffer>(decoder, outs);
-//         //decode_text_internal<coder_t, DecodeForwardMultimapBuffer>(decoder, outs);
-//     } else {
-//         decode_text_internal<coder_t, DecodeBackBuffer>(decoder, outs);
-//     }
-// }
 
 }} //ns
 

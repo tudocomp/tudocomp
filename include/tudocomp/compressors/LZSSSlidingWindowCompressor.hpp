@@ -7,6 +7,8 @@
 
 #include <tudocomp/ds/RingBuffer.hpp>
 
+#include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
+
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
@@ -141,9 +143,12 @@ public:
 
     inline virtual void decompress(Input& input, Output& output) override {
         auto outs = output.as_stream();
+
+        lzss::DecompBackBuffer decomp;
         lzss_coder_t(env().env_for_option("coder")).decoder(
-            input, factor_length_range())
-                .decode(outs);
+            input, factor_length_range()).decode(decomp);
+
+        decomp.write_to(outs);
     }
 };
 

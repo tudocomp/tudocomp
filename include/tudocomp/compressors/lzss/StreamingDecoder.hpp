@@ -28,27 +28,23 @@ public:
     {
     }
 
-    inline void decode(std::ostream& outs) {
-        std::vector<uliteral_t> text;
-
+    template<typename decomp_t>
+    inline void decode(decomp_t& decomp) {
+        size_t p = 0;
         while(!m_lit_decoder->eof()) {
             auto is_factor = m_lit_decoder->template decode<bool>(bit_r);
             if(is_factor) {
-                size_t fsrc = text.size() - m_ref_decoder
-                    ->template decode<size_t>(Range(1, text.size()));
-
+                size_t fsrc = p - m_ref_decoder->template decode<size_t>(Range(1, p));
                 size_t flen = m_len_decoder->template decode<size_t>(m_len_r);
 
-                for(size_t i = 0; i < flen; i++) {
-                    text.emplace_back(text[fsrc+i]);
-                }
+                decomp.decode_factor(fsrc, flen);
+                p += flen;
             } else {
                 auto c = m_lit_decoder->template decode<uliteral_t>(literal_r);
-                text.emplace_back(c);
+                decomp.decode_literal(c);
+                ++p;
             }
         }
-
-        for(auto c : text) outs << c;
     }
 };
 
