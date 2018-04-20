@@ -174,6 +174,10 @@ public:
                 postProcessing();
             }
         }
+
+        inline void flush() {
+            throw std::runtime_error("ArithmeticCoder::flush not implemented");
+        }
     };
 
     /// \brief Decodes data from an Arithmetic character stream.

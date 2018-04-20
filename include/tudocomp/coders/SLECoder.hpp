@@ -306,6 +306,10 @@ public:
             flush_kmer(); // k-mer interrupted
 			m_out->write_bit(v);
         }
+
+        inline void flush() {
+            flush_kmer();
+        }
     };
 
     class Decoder : public tdc::Decoder {
