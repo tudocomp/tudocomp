@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lzss/LZSSCoder.hpp>
 
 namespace tdc {
@@ -63,6 +64,19 @@ public:
             m_litc->encode(false, bit_r); // 0-bit to indicate literal
             m_litc->encode(c, literal_r);
             // no context switch here - make good use of potential runs!
+        }
+
+        template<typename text_t>
+        inline void encode_run(const text_t& text, size_t p, const size_t q) {
+            while(p < q) encode_literal(text[p++]);
+        }
+
+        template<typename text_t>
+        inline void encode_text(
+            const text_t& text,
+            const FactorBuffer& factors) {
+
+            factors.encode_text(text, *this);
         }
     };
 

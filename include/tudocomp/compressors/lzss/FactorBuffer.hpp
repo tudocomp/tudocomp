@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <functional>
 #include <vector>
 
 #include <tudocomp/compressors/lzss/Factor.hpp>
@@ -65,6 +66,24 @@ public:
 
             m_sorted = true;
         }
+    }
+
+    template<typename text_t, typename encoder_t>
+    inline void encode_text(const text_t& text, encoder_t& encoder) {
+        if(m_factors.empty()) return; //nothing to do
+
+        CHECK(m_sorted)
+            << "factors need to be sorted before they can be encoded";
+
+        // walk over text
+        size_t p = 0;
+        for(auto& f : m_factors) {
+            encoder.encode_run(text, p, f.pos);
+            encoder.encode_factor(f);
+
+            p = f.pos + f.len;
+        }
+        encoder.encode_run(text, p, text.size());
     }
 
     inline void flatten() {
