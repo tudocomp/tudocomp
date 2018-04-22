@@ -43,8 +43,8 @@ lzss_streaming_coders = [
 ]
 
 lzss_coders = lzss_streaming_coders + [
-    #AlgorithmConfig(name="lzss::StreamingCoder", header="compressors/lzss/StreamingCoder.hpp",
-    #    sub=[universal_coders,universal_coders,universal_coders]),
+    AlgorithmConfig(name="lzss::BufferedLRCoder", header="compressors/lzss/BufferedLRCoder.hpp",
+        sub=[universal_coders,universal_coders,all_coders]),
 ]
 
 ##### Text data structures #####
