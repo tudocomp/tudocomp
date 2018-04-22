@@ -93,9 +93,9 @@ namespace tdc {
     };
 
     /// \brief Represents the range of valid \ref tdc::len_t values
-    class LengthRange  : public TypeRange<len_t> {
+    class LengthRange  : public TypeRange<len_compact_t> {
     public:
-        inline constexpr LengthRange(): TypeRange<len_t>() {}
+        inline constexpr LengthRange(): TypeRange<len_compact_t>() {}
     };
 
     /// \brief Represents the range of bit values, ie `0` to `1`
