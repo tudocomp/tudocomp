@@ -86,6 +86,7 @@ public:
             const text_t& text,
             const FactorBuffer& factors) {
 
+            m_flen_r = factors.factor_length_range();
             factors.encode_text(text, *this);
         }
     };
@@ -115,8 +116,6 @@ public:
             const size_t flen_min = m_lend->template decode<size_t>(LengthRange());
             const size_t flen_max = m_lend->template decode<size_t>(LengthRange());
             Range flen_r(flen_min, flen_max);
-
-            DLOG(INFO) << "len = [" << flen_r.min() << "," << flen_r.max() << "]";
 
             // decode text
             size_t p = 0;
