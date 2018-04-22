@@ -37,9 +37,14 @@ non_consuming_coders = universal_coders + entropy_coders
 all_coders = universal_coders + entropy_coders + consuming_entropy_coders
 
 ##### LZSS Coding Strategies #####
-lzss_coders = [
+lzss_streaming_coders = [
     AlgorithmConfig(name="lzss::StreamingCoder", header="compressors/lzss/StreamingCoder.hpp",
         sub=[universal_coders,universal_coders,universal_coders]),
+]
+
+lzss_coders = lzss_streaming_coders + [
+    #AlgorithmConfig(name="lzss::StreamingCoder", header="compressors/lzss/StreamingCoder.hpp",
+    #    sub=[universal_coders,universal_coders,universal_coders]),
 ]
 
 ##### Text data structures #####
@@ -249,9 +254,8 @@ tdc.compressors = [
     #SLOW AlgorithmConfig(name="LZ78CicsCompressor", header="compressors/LZ78CicsCompressor.hpp", sub=[universal_coders]),
     AlgorithmConfig(name="LZWCompressor", header="compressors/LZWCompressor.hpp", sub=[universal_coders, lz78_trie]),
     AlgorithmConfig(name="RePairCompressor", header="compressors/RePairCompressor.hpp", sub=[non_consuming_coders]),
-    AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[non_consuming_coders, textds]),
-    AlgorithmConfig(name="LZSSLCPDidacticCompressor", header="compressors/LZSSLCPDidacticCompressor.hpp", sub=[textds]),
-    AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[lzss_coders]),
+    AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[lzss_coders, textds]),
+    AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[lzss_streaming_coders]),
     #SLOW AlgorithmConfig(name="LZ77CicsCompressor", header="compressors/LZ77CicsCompressor.hpp", sub=[all_coders]),
     AlgorithmConfig(name="MTFCompressor", header="compressors/MTFCompressor.hpp"),
     AlgorithmConfig(name="NoopCompressor", header="compressors/NoopCompressor.hpp"),

@@ -69,13 +69,15 @@ public:
     }
 
     template<typename text_t, typename encoder_t>
-    inline void encode_text(const text_t& text, encoder_t& encoder) {
+    inline void encode_text(const text_t& text, encoder_t& encoder) const {
         if(m_factors.empty()) return; //nothing to do
 
         CHECK(m_sorted)
             << "factors need to be sorted before they can be encoded";
 
         // walk over text
+        encoder.encode_header();
+
         size_t p = 0;
         for(auto& f : m_factors) {
             encoder.encode_run(text, p, f.pos);
@@ -149,6 +151,9 @@ public:
         return m_longest_factor;
     }
 
+    inline Range factor_length_range() const {
+        return Range(m_shortest_factor, m_longest_factor);
+    }
 };
 
 }} //ns

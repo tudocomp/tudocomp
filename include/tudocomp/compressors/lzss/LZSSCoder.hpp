@@ -28,7 +28,7 @@ public:
         template<typename,typename,typename> typename lzss_encoder_t,
         typename literals_t
     >
-    inline auto encoder(Output& output, literals_t&& literals, Range len_r) {
+    inline auto encoder(Output& output, literals_t&& literals) {
         auto out = std::make_shared<BitOStream>(output);
         return lzss_encoder_t<
             typename ref_coder_t::Encoder,
@@ -40,13 +40,12 @@ public:
             std::make_unique<typename len_coder_t::Encoder>(
                 this->env().env_for_option("len"), out, NoLiterals()),
             std::make_unique<typename lit_coder_t::Encoder>(
-                this->env().env_for_option("lit"), out, std::move(literals)),
-            len_r
+                this->env().env_for_option("lit"), out, std::move(literals))
         );
     }
 
     template<template<typename,typename,typename> typename lzss_decoder_t>
-    inline auto decoder(Input& input, Range len_r) {
+    inline auto decoder(Input& input) {
         auto in = std::make_shared<BitIStream>(input);
         return lzss_decoder_t<
             typename ref_coder_t::Decoder,
@@ -58,8 +57,7 @@ public:
             std::make_unique<typename len_coder_t::Decoder>(
                 this->env().env_for_option("len"), in),
             std::make_unique<typename lit_coder_t::Decoder>(
-                this->env().env_for_option("lit"), in),
-            len_r
+                this->env().env_for_option("lit"), in)
         );
     }
 };

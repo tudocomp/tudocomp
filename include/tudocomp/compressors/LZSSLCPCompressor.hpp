@@ -10,7 +10,6 @@
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
-#include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
@@ -21,12 +20,12 @@ namespace tdc {
 
 /// Computes the LZ77 factorization of the input using its suffix array and
 /// LCP table.
-template<typename coder_t, typename text_t = TextDS<>>
+template<typename lzss_coder_t, typename text_t = TextDS<>>
 class LZSSLCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "lzss_lcp", "LZSS Factorization using LCP");
-        m.option("coder").templated<coder_t>("coder");
+        m.option("coder").templated<lzss_coder_t>("lzss_coder");
         m.option("textds").templated<text_t, TextDS<>>("textds");
         m.option("threshold").dynamic(3);
         m.uses_textds<text_t>(text_t::SA | text_t::ISA | text_t::LCP);
@@ -111,29 +110,25 @@ public:
         });
 
         // encode
-        encode(output, text, factors);
-    }
-
-    inline virtual void encode(
-        Output& output,
-        const text_t& text,
-        const lzss::FactorBuffer& factors)
-    {
         StatPhase::wrap("Encode", [&]{
-            typename coder_t::Encoder coder(env().env_for_option("coder"),
+            auto coder = lzss_coder_t(env().env_for_option("coder")).encoder(
                 output, lzss::UnreplacedLiterals<text_t>(text, factors));
 
-            lzss::encode_text(coder, text, factors);
+            coder.encode_text(text, factors);
         });
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
-        auto outs = output.as_stream();
+        lzss::DecompBackBuffer decomp;
 
-        lzss::decode_text<typename coder_t::Decoder, lzss::DecompBackBuffer>(decoder, outs);
+        {
+            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            decoder.decode(decomp);
+        }
+
+        auto outs = output.as_stream();
+        decomp.write_to(outs);
     }
 };
 
-}
-
+} //ns

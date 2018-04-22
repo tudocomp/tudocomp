@@ -22,10 +22,6 @@ private:
     size_t m_threshold;
     size_t m_window;
 
-    inline Range factor_length_range() const {
-        return Range(m_threshold, 2 * m_window);
-    }
-
 public:
     inline static Meta meta() {
         Meta m("compressor", "lzss", "Lempel-Ziv-Storer-Szymanski (Sliding Window)");
@@ -48,8 +44,11 @@ public:
     /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
         // initialize encoder
-        auto coder = lzss_coder_t(env().env_for_option("coder")).encoder(
-            output, NoLiterals(), factor_length_range());
+        auto coder = lzss_coder_t(env().env_for_option("coder"))
+            .encoder(output, NoLiterals());
+
+        coder.factor_length_range(Range(m_threshold, 2 * m_window));
+        coder.encode_header();
 
         // allocate window and lookahead buffer
         RingBuffer<uliteral_t> window(m_window), ahead(m_window);
@@ -142,15 +141,16 @@ public:
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        auto outs = output.as_stream();
-
         lzss::DecompBackBuffer decomp;
-        lzss_coder_t(env().env_for_option("coder")).decoder(
-            input, factor_length_range()).decode(decomp);
 
+        {
+            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            decoder.decode(decomp);
+        }
+
+        auto outs = output.as_stream();
         decomp.write_to(outs);
     }
 };
 
 } //ns
-

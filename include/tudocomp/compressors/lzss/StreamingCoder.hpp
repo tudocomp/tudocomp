@@ -37,13 +37,23 @@ public:
         inline Encoder(
             std::unique_ptr<refc_t>&& refc,
             std::unique_ptr<lenc_t>&& lenc,
-            std::unique_ptr<litc_t>&& litc,
-            Range flen_r = TypeRange<len_compact_t>())
+            std::unique_ptr<litc_t>&& litc)
             : m_refc(std::move(refc)),
               m_lenc(std::move(lenc)),
               m_litc(std::move(litc)),
-              m_flen_r(flen_r)
+              m_flen_r(LengthRange())
         {
+        }
+
+        inline void factor_length_range(Range r) {
+            // create a new Range object to avoid type issues when decoding
+            m_flen_r = Range(r.min(), r.max());
+        }
+
+        inline void encode_header() {
+            m_lenc->encode(m_flen_r.min(), LengthRange());
+            m_lenc->encode(m_flen_r.max(), LengthRange());
+            m_lenc->flush();
         }
 
         inline void encode_factor(Factor f) {
@@ -86,30 +96,35 @@ public:
         std::unique_ptr<refd_t> m_refd;
         std::unique_ptr<lend_t> m_lend;
         std::unique_ptr<litd_t> m_litd;
-        Range m_flen_r;
 
     public:
         /// \brief Constructor.
         inline Decoder(
             std::unique_ptr<refd_t>&& refd,
             std::unique_ptr<lend_t>&& lend,
-            std::unique_ptr<litd_t>&& litd,
-            Range flen_r = TypeRange<len_compact_t>())
+            std::unique_ptr<litd_t>&& litd)
             : m_refd(std::move(refd)),
               m_lend(std::move(lend)),
-              m_litd(std::move(litd)),
-              m_flen_r(flen_r)
+              m_litd(std::move(litd))
         {
         }
 
         template<typename decomp_t>
         inline void decode(decomp_t& decomp) {
+            // decode header
+            const size_t flen_min = m_lend->template decode<size_t>(LengthRange());
+            const size_t flen_max = m_lend->template decode<size_t>(LengthRange());
+            Range flen_r(flen_min, flen_max);
+
+            DLOG(INFO) << "len = [" << flen_r.min() << "," << flen_r.max() << "]";
+
+            // decode text
             size_t p = 0;
             while(!m_litd->eof()) {
                 auto is_factor = m_litd->template decode<bool>(bit_r);
                 if(is_factor) {
                     size_t fsrc = p - m_refd->template decode<size_t>(Range(1, p));
-                    size_t flen = m_lend->template decode<size_t>(m_flen_r);
+                    size_t flen = m_lend->template decode<size_t>(flen_r);
 
                     decomp.decode_factor(fsrc, flen);
                     p += flen;
@@ -123,14 +138,13 @@ public:
     };
 
     template<typename literals_t>
-    inline auto encoder(Output& output, literals_t&& literals, Range len_r) {
-        return super_t::template encoder<Encoder>(output, std::move(literals), len_r);
+    inline auto encoder(Output& output, literals_t&& literals) {
+        return super_t::template encoder<Encoder>(output, std::move(literals));
     }
 
-    inline auto decoder(Input& input, Range len_r) {
-        return super_t::template decoder<Decoder>(input, len_r);
+    inline auto decoder(Input& input) {
+        return super_t::template decoder<Decoder>(input);
     }
 };
 
-}}
-
+}} //ns
