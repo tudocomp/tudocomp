@@ -16,8 +16,8 @@ public:
     inline DecompBackBuffer() : m_cursor(0) {
     }
 
-    //TODO: remove
     inline DecompBackBuffer(size_t n) : m_cursor(0) {
+        m_buffer.reserve(n);
     }
 
     inline void decode_literal(uliteral_t c) {
