@@ -69,11 +69,12 @@ struct reference_t : public factor_t<unsigned_t> {
     }
 };
 
-template <unsigned bitsPerUInt, unsigned bitsPerUIntInitial>
+
+template <unsigned bitsPerUInt>
 class PLCPDecomp {
     friend class PLCPDecompGenerator;
  public:
-    typedef uint_t<bitsPerUIntInitial> unsigned_initial_t;
+    typedef uint_t<40> unsigned_initial_t;
     typedef reference_t<unsigned_initial_t> ref_initial_t;
     typedef typename stxxl::VECTOR_GENERATOR<ref_initial_t>::result vector_of_ref_initial_t;
     typedef typename vector_of_ref_initial_t::bufwriter_type vector_of_ref_writer_initial_t;
@@ -178,9 +179,8 @@ class PLCPDecomp {
         byCopyToV_writer = new vector_of_ref_writer_t(*byCopyToV_new);
         resolvedV_writer = new vector_of_ref_writer_t(resolvedV);
         
-        std::cout 
-            << "Converting references from " 
-            << bitsPerUIntInitial << " bits to " 
+        std::cout
+            << "Converting references from 40 bits to " 
             << bitsPerUInt << " bits..." << std::endl;
             
         vector_of_ref_writer_t toWriter(*byCopyToV);
@@ -192,8 +192,8 @@ class PLCPDecomp {
 };
 
         
-template <unsigned bitsPerUInt, unsigned bitsPerUIntInitial>
-typename PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::vector_of_char_t PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::decompress() {
+template <unsigned bitsPerUInt>
+typename PLCPDecomp<bitsPerUInt>::vector_of_char_t PLCPDecomp<bitsPerUInt>::decompress() {
     std::cout << "Decompressing. Type: " << typeid(unsigned_t).name() << std::endl;
     unsigned scanCount = 0;
     while(byCopyToV->size() > 0) {
@@ -205,8 +205,8 @@ typename PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::vector_of_char_t PLCPDecom
     return textBuffer;
 }
 
-template <unsigned bitsPerUInt, unsigned bitsPerUIntInitial>
-void PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::scan() {
+template <unsigned bitsPerUInt>
+void PLCPDecomp<bitsPerUInt>::scan() {
     //~ count();
     std::cout << "SCAN..." << std::endl;
     
@@ -266,8 +266,8 @@ void PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::scan() {
     //~ count();
 }
 
-template <unsigned bitsPerUInt, unsigned bitsPerUIntInitial>
-bool PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::resolve(ref_t &fromFactor, const ref_t &toFactor) {
+template <unsigned bitsPerUInt>
+bool PLCPDecomp<bitsPerUInt>::resolve(ref_t &fromFactor, const ref_t &toFactor) {
     
     //~ std::cout << "(" << fromFactor.copyTo << ", " << fromFactor.copyFrom << ", " << fromFactor.length << "), ";
     //~ std::cout << "(" << toFactor.copyTo << ", " << toFactor.copyFrom << ", " << toFactor.length << ")";
@@ -307,8 +307,9 @@ bool PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::resolve(ref_t &fromFactor, con
     }    
 }
 
-template <unsigned bitsPerUInt, unsigned bitsPerUIntInitial>
-void PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::restore() {
+
+template <unsigned bitsPerUInt>
+void PLCPDecomp<bitsPerUInt>::restore() {
     std::cout << "  Sort ResolvedV by copyFrom..." << std::endl;
     stxxl::sort(resolvedV.begin(), resolvedV.end(), compare_by_copyFrom, bytes_memory);
     
@@ -328,6 +329,7 @@ void PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::restore() {
     std::cout << "  Sort ResolvedLiteralsV by copyTo..." << std::endl;
     stxxl::sort(resolvedLiteralsV.begin(), resolvedLiteralsV.end(), compare_by_copyTo_lit, bytes_memory);
     
+    std::cout << "  Restore resolved literals in textbuffer..." << std::endl;
     for (auto literal : resolvedLiteralsV) {
         textBuffer[literal.copyTo - 1] = literal.character;
     }

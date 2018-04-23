@@ -22,10 +22,10 @@ class PLCPDecompGenerator {
     template<typename unsigned_t>
     inline static unsigned_t swapBytes(uint_t<40> value);
     
-    template<unsigned bitsPerUInt, unsigned bitsPerUIntInitial>
+    template<unsigned bitsPerUInt>
     static stxxl_vector_of_char_t decompressInternal(
-        typename PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::vector_of_char_t &textBuffer,
-        typename PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::vector_of_ref_initial_t &factors, 
+        typename PLCPDecomp<bitsPerUInt>::vector_of_char_t &textBuffer,
+        typename PLCPDecomp<bitsPerUInt>::vector_of_ref_initial_t &factors, 
         len_t bytes_memory);
     
  public:
@@ -38,7 +38,7 @@ class PLCPDecompGenerator {
 PLCPDecompGenerator::stxxl_vector_of_char_t PLCPDecompGenerator::decompress
         (IntegerFileArray<uint_t<40>> &factors, len_t megabytes_memory){
     
-    using compressor_t = PLCPDecomp<40, 40>;
+    using compressor_t = PLCPDecomp<40>;
     
     std::cout << "Preparing decompression..." << std::endl;
 
@@ -58,6 +58,10 @@ PLCPDecompGenerator::stxxl_vector_of_char_t PLCPDecompGenerator::decompress
     uint_t<40> textPosition = 1;
     for (uint_t<40> i = 0; i < nFactors; i++) {
        
+        if (i % 500000 == 0) {
+            std::cout << "        Factor " << i << " of " << nFactors << "... " << std::endl;
+        }
+        
         //~ uint_t<40> target(swapBytes<uint_t<40>>(factors[2 * i]) + 1);
         //~ uint_t<40> len(swapBytes<uint_t<40>>(factors[2 * i + 1]));
         uint_t<40> target(factors[i * 2] + 1);
@@ -92,20 +96,21 @@ PLCPDecompGenerator::stxxl_vector_of_char_t PLCPDecompGenerator::decompress
     //~ else if(specs.bitsPerInt <= 12) return decompressInternal<uint_t<12>>(factors, specs);
     //~ else if(specs.bitsPerInt <= 16) return decompressInternal<uint_t<16>>(factors, specs);
     //~ else if(specs.bitsPerInt <= 20) return decompressInternal<uint_t<20>>(factors, specs);
-    //~ else if(specs.bitsPerInt <= 24) return decompressInternal<uint_t<24>>(factors, specs);
-    //~ else if(specs.bitsPerInt <= 28) return decompressInternal<uint_t<28>>(factors, specs);
-    //~ else if(specs.bitsPerInt <= 32) return decompressInternal<uint_t<32>>(factors, specs);
-    //~ else if(specs.bitsPerInt <= 36) return decompressInternal<uint_t<36>>(factors, specs);
-    /*else /*if(specs.bitsPerInt <= 40)*/ return decompressInternal<34, 40>(textBuffer, factorsForCompressor, nBytesMemory);
+    //~ else if(specs.bitsPerInt <= 24) return decompressInternal<40, 40>(textBuffer, factorsForCompressor, nBytesMemory);
+    //~ else if(specs.bitsPerInt <= 28) return decompressInternal<40, 40>(textBuffer, factorsForCompressor, nBytesMemory);
+    //~ else 
+    if(bitsPerInt <= 32) return decompressInternal<32>(textBuffer, factorsForCompressor, nBytesMemory);
+    //~ else if(specs.bitsPerInt <= 36) return decompressInternal<40, 40>(textBuffer, factorsForCompressor, nBytesMemory);
+    else /*if(specs.bitsPerInt <= 40)*/ return decompressInternal<40>(textBuffer, factorsForCompressor, nBytesMemory);
 }
 
-template<unsigned bitsPerUInt, unsigned bitsPerUIntInitial>
+template<unsigned bitsPerUInt>
 PLCPDecompGenerator::stxxl_vector_of_char_t PLCPDecompGenerator::decompressInternal(
-        typename PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::vector_of_char_t &textBuffer,
-        typename PLCPDecomp<bitsPerUInt, bitsPerUIntInitial>::vector_of_ref_initial_t &factors, 
+        typename PLCPDecomp<bitsPerUInt>::vector_of_char_t &textBuffer,
+        typename PLCPDecomp<bitsPerUInt>::vector_of_ref_initial_t &factors, 
         len_t bytes_memory) {
 
-    PLCPDecomp<bitsPerUInt, bitsPerUIntInitial> compressor(textBuffer, factors, bytes_memory);
+    PLCPDecomp<bitsPerUInt> compressor(textBuffer, factors, bytes_memory);
     return compressor.decompress();
 }
 
