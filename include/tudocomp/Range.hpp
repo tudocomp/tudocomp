@@ -32,6 +32,10 @@ namespace tdc {
             : m_min(min), m_max(max) {
         }
 
+        inline Range(const Range& other)
+            : m_min(other.min()), m_max(other.max()) {
+        }
+
         /// \brief Yields the range's minimum value
         /// \return the range's minimum value
         inline size_t min() const { return m_min; }
@@ -65,6 +69,9 @@ namespace tdc {
         /// \param max the range's maximum value
         inline constexpr MinDistributedRange(size_t min, size_t max)
                          : Range(min, max) {
+        }
+
+        inline MinDistributedRange(const Range& other) : Range(other) {
         }
     };
 
