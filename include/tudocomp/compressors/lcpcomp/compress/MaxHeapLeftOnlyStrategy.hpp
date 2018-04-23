@@ -19,10 +19,10 @@ namespace lcpcomp {
 ///
 /// This was the original naive approach in "Textkompression mithilfe von
 /// Enhanced Suffix Arrays" (BA thesis, Patrick Dinklage, 2015).
-class MaxHeapStrategy : public Algorithm {
+class MaxHeapLeftOnlyStrategy : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_comp", "heap");
+        Meta m("lcpcomp_comp", "heap_l");
         return m;
     }
 
@@ -42,6 +42,7 @@ public:
             text.require(text_t::SA | text_t::ISA | text_t::LCP);
         });
 
+        const size_t n = text.size();
         auto& sa = text.require_sa();
         auto& isa = text.require_isa();
         auto lcp = text.release_lcp();
@@ -70,28 +71,58 @@ public:
                 size_t m = heap.get_max();
 
                 //generate factor
-                size_t fpos = sa[m];
-                size_t fsrc = sa[m-1];
-                size_t flen = lcp[m];
+                size_t p = sa[m];
+                size_t q = sa[m-1];
+                size_t len = lcp[m];
 
-                factors.emplace_back(fpos, fsrc, flen);
-
-                //remove overlapped entries
-                for(size_t k = 0; k < flen; k++) {
-                    heap.remove(isa[fpos + k]);
+                if(p < q) {
+                    std::swap(p, q);
                 }
 
-                //correct intersecting entries
-                for(size_t k = 0; k < flen && fpos > k; k++) {
-                    size_t s = fpos - k - 1;
-                    size_t i = isa[s];
-                    if(heap.contains(i)) {
-                        if(s + lcp[i] > fpos) {
-                            size_t l = fpos - s;
+                factors.emplace_back(p, q, len);
+
+                // remove heap entries that would cause more replacements in p
+                for(size_t k = 0; k < len; k++) {
+                    // look at lexicographically smaller suffix
+                    const size_t x = isa[p + k];
+                    if( x > 0 &&
+                        lcp[x] >= threshold &&
+                        sa[x-1] < p+k) {
+
+                        heap.remove(x);
+                    }
+
+                    // look at lexicographically larger suffix
+                    if( x + 1 < n &&
+                        lcp[x+1] >= threshold &&
+                        sa[x+1] < p+k) {
+
+                        heap.remove(x+1);
+                    }
+                }
+
+                // correct left intersections into p
+                for(size_t k = 0; k < len && p > k; k++) {
+                    const size_t left = p - k - 1;
+                    const size_t x = isa[left];
+                    if(x > 0 && heap.contains(x)) {
+                        if(sa[x-1] < left && left + lcp[x] > p) {
+                            size_t l = p - left;
                             if(l >= threshold) {
-                                heap.decrease_key(i, l);
+                                heap.decrease_key(x, l);
                             } else {
-                                heap.remove(i);
+                                heap.remove(x);
+                            }
+                        }
+                    }
+
+                    if(x+1 < n && heap.contains(x+1)) {
+                        if(sa[x+1] < left && left + lcp[x+1] > p) {
+                            size_t l = p - left;
+                            if(l >= threshold) {
+                                heap.decrease_key(x+1, l);
+                            } else {
+                                heap.remove(x+1);
                             }
                         }
                     }

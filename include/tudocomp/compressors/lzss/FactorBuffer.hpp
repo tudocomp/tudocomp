@@ -1,24 +1,17 @@
 #pragma once
 
 #include <algorithm>
+#include <functional>
 #include <vector>
-#include <tudocomp/def.hpp>
+
+#include <tudocomp/compressors/lzss/Factor.hpp>
+
 #include <tudocomp/util.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 namespace lzss {
-
-class Factor {
-public:
-    len_compact_t pos, src, len;
-
-    inline Factor(len_t fpos, len_t fsrc, len_t flen)
-        : pos(fpos), src(fsrc), len(flen) {
-    }
-}  __attribute__((__packed__));
-
 
 class FactorBuffer {
 private:
@@ -75,7 +68,26 @@ public:
         }
     }
 
-public:
+    template<typename text_t, typename encoder_t>
+    inline void encode_text(const text_t& text, encoder_t& encoder) const {
+        if(m_factors.empty()) return; //nothing to do
+
+        CHECK(m_sorted)
+            << "factors need to be sorted before they can be encoded";
+
+        // walk over text
+        encoder.encode_header();
+
+        size_t p = 0;
+        for(auto& f : m_factors) {
+            encoder.encode_run(text, p, f.pos);
+            encoder.encode_factor(f);
+
+            p = f.pos + f.len;
+        }
+        encoder.encode_run(text, p, text.size());
+    }
+
     inline void flatten() {
         if(m_factors.empty()) return; //nothing to do
 
@@ -118,7 +130,7 @@ public:
                     break;
                 }
             }
-            
+
             if(depth) {
                 f.src = src;
 
@@ -139,6 +151,9 @@ public:
         return m_longest_factor;
     }
 
+    inline Range factor_length_range() const {
+        return Range(m_shortest_factor, m_longest_factor);
+    }
 };
 
 }} //ns

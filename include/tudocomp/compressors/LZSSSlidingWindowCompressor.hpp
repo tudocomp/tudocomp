@@ -1,7 +1,5 @@
 #pragma once
 
-#include <tudocomp/compressors/lzss/LZSSOnlineCoding.hpp>
-
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
@@ -9,22 +7,20 @@
 
 #include <tudocomp/ds/RingBuffer.hpp>
 
+#include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
+
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 
 /// Computes the LZ77 factorization of the input by moving a sliding window
 /// over it in which redundant phrases will be looked for.
-template<typename coder_t>
+template<typename lzss_coder_t>
 class LZSSSlidingWindowCompressor : public Compressor {
 
 private:
     size_t m_threshold;
     size_t m_window;
-
-    inline Range factor_length_range() const {
-        return Range(m_threshold, 2 * m_window);
-    }
 
 public:
     inline static Meta meta() {
@@ -32,7 +28,7 @@ public:
             "Computes the LZSS factorization of the input using a "
             "sliding window.");
         m.param("coder", "The output encoder.")
-            .strategy<coder_t>(TypeDesc("coder"));
+            .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
         m.param("window", "The sliding window size").primitive(16);
         m.param("threshold", "The minimum factor length.").primitive(2);
         return m;
@@ -50,7 +46,11 @@ public:
     /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
         // initialize encoder
-        typename coder_t::Encoder coder(env().env_for_option("coder"), output, NoLiterals());
+        auto coder = lzss_coder_t(env().env_for_option("coder"))
+            .encoder(output, NoLiterals());
+
+        coder.factor_length_range(Range(m_threshold, 2 * m_window));
+        coder.encode_header();
 
         // allocate window and lookahead buffer
         RingBuffer<uliteral_t> window(m_window), ahead(m_window);
@@ -117,13 +117,13 @@ public:
 
             if(flen >= m_threshold) {
                 // factor
-                lzss::online_encode_factor(
-                    coder, i, i-window.size()+fsrc, flen, factor_length_range());
+                coder.encode_factor(lzss::Factor(
+                    i, i-window.size()+fsrc, flen));
             } else {
                 // unfactorized symbols
                 auto it = ahead.begin();
                 for(size_t k = 0; k < flen; k++) {
-                    lzss::online_encode_literal(coder, *it++);
+                    coder.encode_literal(*it++);
                 }
             }
 
@@ -132,10 +132,10 @@ public:
 
             size_t advance = flen;
             while(advance-- && !ahead.empty()) {
-                // move 
+                // move
                 window.push_back(ahead.pop_front());
 
-                if(!ins.eof() && (c = ins.get()) >= 0) { 
+                if(!ins.eof() && (c = ins.get()) >= 0) {
                     ahead.push_back(uliteral_t(c));
                 }
             }
@@ -143,12 +143,16 @@ public:
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
-        auto text = lzss::online_decode(decoder, factor_length_range());
+        lzss::DecompBackBuffer decomp;
+
+        {
+            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            decoder.decode(decomp);
+        }
+
         auto outs = output.as_stream();
-        for(auto c : text) outs << c;
+        decomp.write_to(outs);
     }
 };
 
 } //ns
-

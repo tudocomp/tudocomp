@@ -267,7 +267,7 @@ def gen_algorithm_cpp():
                 .replace('>', '_') \
                 .replace(',', '_') \
                 .replace(':', '_')
-            escaped_hash_line =  hsh + "_" + escaped_line
+            escaped_hash_line =  hsh #+ "_" + escaped_line
             #print(escaped_hash_line, len(escaped_hash_line))
 
             path = os.path.join(out_path, escaped_hash_line + ".cpp")
@@ -347,18 +347,27 @@ def gen_algorithm_cpp():
                 #print("Current grouping:")
                 #pprint.pprint([len(x) for x in instance_groups])
 
+            max_group_size = 100
+
             group_paths = []
             for group in instance_groups:
-                conc = "".join([x.identifier for x in group])
-                group_file_name = "group_" + make_hash(conc) + ".cpp"
-                group_content = "".join([x.content for x in group])
-                group_file_path = os.path.join(out_path, group_file_name)
-                group_paths.append(group_file_path)
+                num = len(group)
+                while num > 0:
+                    xgroup = group[:max_group_size]
+                    group = group[max_group_size:]
 
-                iprint(group_file_name)
-                iprint(group_content)
-                if args.generate_files:
-                    update_file(group_file_path, group_content)
+                    conc = "".join([x.identifier for x in xgroup])
+                    group_file_name = "group_" + make_hash(conc) + ".cpp"
+                    group_content = "".join([x.content for x in xgroup])
+                    group_file_path = os.path.join(out_path, group_file_name)
+                    group_paths.append(group_file_path)
+
+                    iprint(group_file_name)
+                    iprint(group_content)
+                    if args.generate_files:
+                        update_file(group_file_path, group_content)
+
+                    num -= max_group_size
 
             dep_paths += group_paths
 

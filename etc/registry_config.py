@@ -36,6 +36,19 @@ non_consuming_coders = universal_coders + entropy_coders
 # All coders
 all_coders = universal_coders + entropy_coders + consuming_entropy_coders
 
+##### LZSS Coding Strategies #####
+lzss_streaming_coders = [
+    AlgorithmConfig(name="lzss::StreamingCoder", header="compressors/lzss/StreamingCoder.hpp",
+        sub=[universal_coders,universal_coders,universal_coders]),
+]
+
+lzss_coders = lzss_streaming_coders + [
+    AlgorithmConfig(name="lzss::BufferedLRCoder", header="compressors/lzss/BufferedLRCoder.hpp",
+        sub=[universal_coders,universal_coders,all_coders]),
+    AlgorithmConfig(name="lzss::BufferedBidirectionalCoder", header="compressors/lzss/BufferedBidirectionalCoder.hpp",
+        sub=[universal_coders,universal_coders,all_coders]),
+]
+
 ##### Text data structures #####
 
 # Suffix Array
@@ -134,16 +147,10 @@ lz78u_comp = [
 
 ##### lcpcomp #####
 
-# Allowed coders for lcpcomp
-lcpcomp_coders = [
-    AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
-    AlgorithmConfig(name="SLECoder", header="coders/SLECoder.hpp"),
-    AlgorithmConfig(name="HuffmanCoder", header="coders/HuffmanCoder.hpp"),
-]
-
 # lcpcomp factorization strategies ("comp")
 lcpcomp_comp = [
     AlgorithmConfig(name="lcpcomp::MaxHeapStrategy", header="compressors/lcpcomp/compress/MaxHeapStrategy.hpp"),
+    AlgorithmConfig(name="lcpcomp::MaxHeapLeftOnlyStrategy", header="compressors/lcpcomp/compress/MaxHeapLeftOnlyStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::MaxLCPStrategy", header="compressors/lcpcomp/compress/MaxLCPStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::ArraysComp", header="compressors/lcpcomp/compress/ArraysComp.hpp"),
     AlgorithmConfig(name="lcpcomp::PLCPPeaksStrategy", header="compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp"),
@@ -234,7 +241,7 @@ long_common_strat = [
 
 ##### Export available compressors #####
 tdc.compressors = [
-    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lcpcomp_coders, lcpcomp_comp, lcpcomp_dec, lcpcomp_textds]),
+    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_coders, lcpcomp_comp, lcpcomp_dec, lcpcomp_textds]),
     AlgorithmConfig(name="RunLengthEncoder", header="compressors/RunLengthEncoder.hpp"),
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
     AlgorithmConfig(name="LZ78Compressor", header="compressors/LZ78Compressor.hpp", sub=[universal_coders, lz78_trie]),
@@ -242,9 +249,8 @@ tdc.compressors = [
     #SLOW AlgorithmConfig(name="LZ78CicsCompressor", header="compressors/LZ78CicsCompressor.hpp", sub=[universal_coders]),
     AlgorithmConfig(name="LZWCompressor", header="compressors/LZWCompressor.hpp", sub=[universal_coders, lz78_trie]),
     AlgorithmConfig(name="RePairCompressor", header="compressors/RePairCompressor.hpp", sub=[non_consuming_coders]),
-    AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[non_consuming_coders, textds]),
-    AlgorithmConfig(name="LZSSLCPDidacticCompressor", header="compressors/LZSSLCPDidacticCompressor.hpp", sub=[textds]),
-    AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[universal_coders]),
+    AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[lzss_coders, textds]),
+    AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[lzss_streaming_coders]),
     #SLOW AlgorithmConfig(name="LZ77CicsCompressor", header="compressors/LZ77CicsCompressor.hpp", sub=[all_coders]),
     AlgorithmConfig(name="MTFCompressor", header="compressors/MTFCompressor.hpp"),
     AlgorithmConfig(name="NoopCompressor", header="compressors/NoopCompressor.hpp"),

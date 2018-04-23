@@ -12,7 +12,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/SuffixTree.hpp>
 
-
+#include <tudocomp_stat/StatPhase.hpp>
 
 
 namespace tdc {

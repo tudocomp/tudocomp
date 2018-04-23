@@ -7,26 +7,29 @@
 namespace tdc {
 namespace lzss {
 
-class DecodeBackBuffer{
-
+class DecompBackBuffer {
 private:
     std::vector<uliteral_t> m_buffer;
     len_t m_cursor;
 
 public:
+    inline DecompBackBuffer() : m_cursor(0) {
+    }
 
-    inline DecodeBackBuffer(len_t size)
-		: m_cursor(0)
-    {
-        m_buffer.resize(size, 0);
+    inline void initialize(size_t n) {
+        m_buffer.reserve(n);
     }
 
     inline void decode_literal(uliteral_t c) {
-        m_buffer[m_cursor++] = c;
+        m_buffer.emplace_back(c);
     }
 
-    inline void decode_factor(len_t pos, len_t num) {
-        while(num--) m_buffer[m_cursor++] = m_buffer[pos++];
+    inline void decode_factor(len_t src, len_t len) {
+        while(len--) m_buffer.emplace_back(m_buffer[src++]);
+    }
+
+    inline void process() {
+        // no post-processing needed
     }
 
     inline len_t longest_chain() const {

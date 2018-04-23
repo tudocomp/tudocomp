@@ -200,19 +200,18 @@ private:
 	IF_STATS(len_t m_longest_chain = 0);
 
 public:
-    ScanDec(ScanDec&& other)
-        : Algorithm(std::move(*this))
-		, m_scans(std::move(other.m_scans))
-        , m_cursor(std::move(other.m_cursor))
-        , m_buffer(std::move(other.m_buffer))
-    { }
-
-    inline ScanDec(Env&& env, len_t size)
+    inline ScanDec(Env&& env)
         : Algorithm(std::move(env))
 		, m_scans(this->env().option("scans").as_integer())
 		, m_cursor(0)
-		, m_buffer(size,0)
 	{ }
+
+    inline void initialize(size_t n) {
+        if(tdc_unlikely(n == 0)) throw std::runtime_error(
+            "no text length provided");
+
+        m_buffer.resize(n, 0);
+    }
 
     inline void decode_literal(uliteral_t c) {
         m_buffer[m_cursor++] = c;
@@ -234,6 +233,11 @@ public:
             }
             ++m_cursor;
         }
+    }
+
+    inline void process() {
+        decode_lazy();
+        decode_eagerly();
     }
 
     IF_STATS(

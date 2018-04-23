@@ -8,9 +8,9 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/util.hpp>
 
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
-#include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
-#include <tudocomp/compressors/lzss/LZSSCoding.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
+#include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 
@@ -20,7 +20,7 @@ namespace tdc {
 
 /// Computes the LZ77 factorization of the input using its suffix array and
 /// LCP table.
-template<typename coder_t, typename text_t = TextDS<>>
+template<typename lzss_coder_t, typename text_t = TextDS<>>
 class LZSSLCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
@@ -28,7 +28,7 @@ public:
             "Computes the LZSS factorization of the input using the "
             "suffix and LCP array.");
         m.param("coder", "The output encoder.")
-            .strategy<coder_t>(TypeDesc("coder"));
+            .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
         m.param("textds", "The text data structure provider.")
             .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
         m.param("threshold", "The minimum factor length.").primitive(2);
@@ -114,30 +114,36 @@ public:
         });
 
         // encode
-        encode(output, text, factors);
-    }
-
-    inline virtual void encode(
-        Output& output,
-        const text_t& text,
-        const lzss::FactorBuffer& factors)
-    {
         StatPhase::wrap("Encode", [&]{
+<<<<<<< HEAD
             typename coder_t::Encoder coder(config().sub_config("coder"),
                 output, lzss::TextLiterals<text_t>(text, factors));
+=======
+            auto coder = lzss_coder_t(env().env_for_option("coder")).encoder(
+                output, lzss::UnreplacedLiterals<text_t>(text, factors));
+>>>>>>> master
 
-            lzss::encode_text(coder, text, factors);
+            coder.encode_text(text, factors);
         });
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
+<<<<<<< HEAD
         typename coder_t::Decoder decoder(
             config().sub_config("coder"), input);
         auto outs = output.as_stream();
+=======
+        lzss::DecompBackBuffer decomp;
+>>>>>>> master
 
-        lzss::decode_text<typename coder_t::Decoder, lzss::DecodeBackBuffer>(decoder, outs);
+        {
+            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            decoder.decode(decomp);
+        }
+
+        auto outs = output.as_stream();
+        decomp.write_to(outs);
     }
 };
 
-}
-
+} //ns

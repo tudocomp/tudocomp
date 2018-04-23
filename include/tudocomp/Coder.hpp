@@ -83,6 +83,14 @@ public:
         m_out->write_bit(v);
     }
 
+    /// \brief Flush any output that may be held back in a buffer.
+    ///
+    /// This is used for destruction of the encoder as well as for context
+    /// switches, e.g., when multiple encoders work on the same bit stream.
+    inline void flush() {
+        // nothing to do by default
+    }
+
     inline const std::shared_ptr<BitOStream>& stream() {
         return m_out;
     }
