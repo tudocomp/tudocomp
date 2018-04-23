@@ -15,10 +15,6 @@ class DecodeForwardQueueListBuffer : public Algorithm {
         Meta m("lcpcomp_dec", "QueueListBuffer");
         return m;
     }
-    inline void decode_lazy() const {
-    }
-    inline void decode_eagerly() const {
-    }
 
 private:
     std::vector<uliteral_t> m_buffer;
@@ -50,12 +46,21 @@ private:
     }
 
 public:
-    inline DecodeForwardQueueListBuffer(Env&& env, len_t size)
-        : Algorithm(std::move(env)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_max_depth(0) {
+    inline DecodeForwardQueueListBuffer(Env&& env)
+        : Algorithm(std::move(env)),
+          m_cursor(0),
+          m_longest_chain(0),
+          m_current_chain(0),
+          m_max_depth(0) {
+    }
 
-        m_buffer.resize(size, 0);
-        m_fwd.resize(size, std::vector<len_compact_t>());
-        m_decoded = BitVector(size, 0);
+    inline void initialize(size_t n) {
+        if(tdc_unlikely(n == 0)) throw std::runtime_error(
+            "no text length provided");
+
+        m_buffer.resize(n, 0);
+        m_fwd.resize(n, std::vector<len_compact_t>());
+        m_decoded = BitVector(n, 0);
     }
 
     inline void decode_literal(uliteral_t c) {
@@ -73,6 +78,9 @@ public:
 
             ++m_cursor;
         }
+    }
+
+    inline void process() {
     }
 
     inline len_t longest_chain() const {

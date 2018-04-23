@@ -6,7 +6,6 @@
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
-#include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 
@@ -18,9 +17,8 @@
 
 namespace tdc {
 namespace lcpcomp {
-class MaxLCPStrategy;
-class CompactDec;
 
+/*
 template<typename coder_t, typename decode_buffer_t>
 inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs) {
 
@@ -75,17 +73,18 @@ inline void decode_text_internal(Env&& env, coder_t& decoder, std::ostream& outs
     });
     StatPhase::wrap("Output Text", [&]{ buffer.write_to(outs); });
 }
-
+*/
 }//ns
+
 
 /// Factorizes the input by finding redundant phrases in a re-ordered version
 /// of the LCP table.
-template<typename coder_t, typename strategy_t, typename dec_t, typename text_t = TextDS<>>
+template<typename lzss_coder_t, typename strategy_t, typename dec_t, typename text_t = TextDS<>>
 class LCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "lcpcomp");
-        m.option("coder").templated<coder_t>("coder");
+        m.option("coder").templated<lzss_coder_t>("lzss_coder");
         m.option("comp").templated<strategy_t, lcpcomp::ArraysComp>("lcpcomp_comp");
         m.option("dec").templated<dec_t, lcpcomp::ScanDec>("lcpcomp_dec");
         m.option("textds").templated<text_t, TextDS<>>("textds");
@@ -128,26 +127,24 @@ public:
         }
 
         // encode
-        StatPhase::wrap("Encode Factors", [&]{
-            typename coder_t::Encoder coder(
-                env().env_for_option("coder"),
-                output,
-                lzss::UnreplacedLiterals<text_t>(text, factors));
+        StatPhase::wrap("Encode", [&]{
+            auto coder = lzss_coder_t(env().env_for_option("coder")).encoder(
+                output, lzss::UnreplacedLiterals<text_t>(text, factors));
 
-            lzss::encode_text(coder, text, factors); //TODO is this correct?
+            coder.encode_text(text, factors);
         });
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        //TODO: tell that forward-factors are allowed
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
-        auto outs = output.as_stream();
+        dec_t decomp(env().env_for_option("dec"));
 
-        //lzss::decode_text_internal<coder_t, dec_t>(decoder, outs);
-        // if(lazy == 0)
-        // 	lzss::decode_text_internal<coder_t, dec_t>(decoder, outs);
-        // else
-        lcpcomp::decode_text_internal<typename coder_t::Decoder, dec_t>(env().env_for_option("dec"), decoder, outs);
+        {
+            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            decoder.decode(decomp);
+        }
+
+        auto outs = output.as_stream();
+        decomp.write_to(outs);
     }
 };
 

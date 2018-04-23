@@ -47,7 +47,7 @@ public:
 
         inline void factor_length_range(Range r) {
             // create a new Range object to avoid type issues when decoding
-            m_flen_r = Range(r.min(), r.max());
+            m_flen_r = MinDistributedRange(r);
         }
 
         inline void encode_header() {
@@ -112,10 +112,12 @@ public:
 
         template<typename decomp_t>
         inline void decode(decomp_t& decomp) {
+            decomp.initialize(0); // text length not known
+
             // decode header
             const size_t flen_min = m_lend->template decode<size_t>(LengthRange());
             const size_t flen_max = m_lend->template decode<size_t>(LengthRange());
-            Range flen_r(flen_min, flen_max);
+            MinDistributedRange flen_r(flen_min, flen_max);
 
             // decode text
             size_t p = 0;
@@ -133,6 +135,8 @@ public:
                     ++p;
                 }
             }
+
+            decomp.process();
         }
     };
 

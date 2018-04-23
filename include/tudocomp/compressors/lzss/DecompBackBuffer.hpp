@@ -16,7 +16,7 @@ public:
     inline DecompBackBuffer() : m_cursor(0) {
     }
 
-    inline DecompBackBuffer(size_t n) : m_cursor(0) {
+    inline void initialize(size_t n) {
         m_buffer.reserve(n);
     }
 
@@ -26,6 +26,10 @@ public:
 
     inline void decode_factor(len_t src, len_t len) {
         while(len--) m_buffer.emplace_back(m_buffer[src++]);
+    }
+
+    inline void process() {
+        // no post-processing needed
     }
 
     inline len_t longest_chain() const {

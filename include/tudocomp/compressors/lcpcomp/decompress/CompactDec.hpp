@@ -22,10 +22,6 @@ public:
         return m;
 
     }
-    inline void decode_lazy() const {
-    }
-    inline void decode_eagerly() const {
-    }
 
 private:
     len_compact_t** m_fwd;
@@ -56,18 +52,6 @@ private:
     }
 
 public:
-    CompactDec(CompactDec&& other):
-        Algorithm(std::move(*this)),
-        m_fwd(std::move(other.m_fwd)),
-        m_cursor(std::move(other.m_cursor)),
-        m_buffer(std::move(other.m_buffer))
-    {
-        IF_STATS(m_longest_chain = std::move(other.m_longest_chain));
-        IF_STATS(m_current_chain = std::move(other.m_current_chain));
-
-        other.m_fwd = nullptr;
-    }
-
     ~CompactDec() {
         if(m_fwd != nullptr) {
             for(size_t i = 0; i < m_buffer.size(); ++i) {
@@ -77,14 +61,20 @@ public:
             delete [] m_fwd;
         }
     }
-    inline CompactDec(Env&& env, len_t size)
-        : Algorithm(std::move(env)), m_cursor(0), m_buffer(size,0) {
+    inline CompactDec(Env&& env)
+        : Algorithm(std::move(env)), m_cursor(0) {
 
         IF_STATS(m_longest_chain = 0);
         IF_STATS(m_current_chain = 0);
+    }
 
-        m_fwd = new len_compact_t*[size];
-        std::fill(m_fwd,m_fwd+size,nullptr);
+    inline void initialize(size_t n) {
+        if(tdc_unlikely(n == 0)) throw std::runtime_error(
+            "no text length provided");
+
+        m_buffer.resize(n, 0);
+        m_fwd = new len_compact_t*[n];
+        std::fill(m_fwd,m_fwd+n,nullptr);
     }
 
     inline void decode_literal(uliteral_t c) {
@@ -114,6 +104,9 @@ public:
 
             ++m_cursor;
         }
+    }
+
+    inline void process() {
     }
 
     IF_STATS(
