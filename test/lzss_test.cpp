@@ -140,12 +140,14 @@ TEST(lzss, text_literals_factors_end) {
 }
 
 TEST(lzss, decode_back_buffer) {
-    lzss::DecompBackBuffer buffer(12);
+    lzss::DecompBackBuffer buffer;
+    buffer.initialize(12);
     buffer.decode_literal('b');
     buffer.decode_literal('a');
     buffer.decode_literal('n');
     buffer.decode_factor(1, 3);
     buffer.decode_factor(0, 6);
+    buffer.process();
 
     std::stringstream ss;
     buffer.write_to(ss);
@@ -155,13 +157,14 @@ TEST(lzss, decode_back_buffer) {
 
 template<typename T>
 void test_forward_decode_buffer_chain() {
-    T buffer = create_algo<T>("", 12);
+    T buffer(create_env(T::meta()));
+    buffer.initialize(12);
     buffer.decode_literal('b');
     buffer.decode_factor(3, 3);
     buffer.decode_literal('n');
     buffer.decode_literal('a');
     buffer.decode_factor(0, 6);
-    buffer.decode_eagerly();
+    buffer.process();
 
     std::stringstream ss;
     buffer.write_to(ss);
@@ -171,13 +174,14 @@ void test_forward_decode_buffer_chain() {
 
 template<typename T>
 void test_forward_decode_buffer_multiref() {
-    T buffer = create_algo<T>("", 12);
+    T buffer(create_env(T::meta()));
+    buffer.initialize(12);
     buffer.decode_factor(6, 6);
     buffer.decode_literal('b');
     buffer.decode_factor(9, 3);
     buffer.decode_literal('n');
     buffer.decode_literal('a');
-    buffer.decode_eagerly();
+    buffer.process();
 
     std::stringstream ss;
     buffer.write_to(ss);
