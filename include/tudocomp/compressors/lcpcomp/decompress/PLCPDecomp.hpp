@@ -14,6 +14,14 @@
 
 namespace tdc { namespace lcpcomp {
 
+constexpr uint64_t numberOfVectors = 5;
+constexpr double memoryPercentageVectorCache = .3125;
+
+constexpr uint64_t blockSize = 2 * 1024 * 1024; // 2MiB per block
+constexpr uint64_t pageSize = 4;                // 4 blocks per page
+constexpr uint64_t cachedPages = 8;             // 8 cached pages (will be adjusted later)
+constexpr uint64_t minBytesMemoryPerVector = cachedPages * pageSize * blockSize;
+constexpr uint64_t minBytesMemory = len_t((minBytesMemoryPerVector * numberOfVectors) / memoryPercentageVectorCache);
 
 template <typename unsigned_t>
 struct literal_t {
@@ -70,28 +78,32 @@ struct reference_t : public factor_t<unsigned_t> {
 };
 
 
+typedef uint_t<40> unsigned_initial_t;
+typedef reference_t<unsigned_initial_t> ref_initial_t;
+typedef typename stxxl::VECTOR_GENERATOR<ref_initial_t, pageSize, cachedPages, blockSize>::result vector_of_ref_initial_t;
+typedef typename vector_of_ref_initial_t::bufwriter_type vector_of_ref_writer_initial_t;
+typedef typename vector_of_ref_initial_t::bufreader_type vector_of_ref_reader_initial_t;
+typedef typename stxxl::VECTOR_GENERATOR<char, pageSize, cachedPages, blockSize>::result vector_of_char_t;
+typedef typename vector_of_char_t::bufwriter_type vector_of_char_writer_t;
+typedef typename vector_of_char_t::bufreader_type vector_of_char_reader_t;
+
+
 template <unsigned bitsPerUInt>
 class PLCPDecomp {
     friend class PLCPDecompGenerator;
  public:
-    typedef uint_t<40> unsigned_initial_t;
-    typedef reference_t<unsigned_initial_t> ref_initial_t;
-    typedef typename stxxl::VECTOR_GENERATOR<ref_initial_t>::result vector_of_ref_initial_t;
-    typedef typename vector_of_ref_initial_t::bufwriter_type vector_of_ref_writer_initial_t;
-    typedef typename vector_of_ref_initial_t::bufreader_type vector_of_ref_reader_initial_t;
     
     typedef uint_t<bitsPerUInt> unsigned_t;    
     typedef reference_t<unsigned_t> ref_t;
     typedef literal_t<unsigned_t> lit_t;
-    typedef typename stxxl::VECTOR_GENERATOR<ref_t>::result vector_of_ref_t;
+    typedef typename stxxl::VECTOR_GENERATOR<ref_t, pageSize, cachedPages, blockSize>::result vector_of_ref_t;
     typedef typename vector_of_ref_t::bufwriter_type vector_of_ref_writer_t;
     typedef typename vector_of_ref_t::bufreader_type vector_of_ref_reader_t;
-    typedef typename stxxl::VECTOR_GENERATOR<lit_t>::result vector_of_lit_t;
+    typedef typename stxxl::VECTOR_GENERATOR<lit_t, pageSize, cachedPages, blockSize>::result vector_of_lit_t;
     typedef typename vector_of_lit_t::bufwriter_type vector_of_lit_writer_t;
     typedef typename vector_of_lit_t::bufreader_type vector_of_lit_reader_t;
-    typedef typename stxxl::VECTOR_GENERATOR<char>::result vector_of_char_t;
-    typedef typename vector_of_char_t::bufwriter_type vector_of_char_writer_t;
-    typedef typename vector_of_char_t::bufreader_type vector_of_char_reader_t;
+    
+    typedef typename stxxl::VECTOR_GENERATOR<char, pageSize, cachedPages, blockSize>::result::size_type vector_size_t;
     
  private:
 
@@ -137,7 +149,8 @@ class PLCPDecomp {
     vector_of_ref_t resolvedV;
     vector_of_ref_writer_t * resolvedV_writer;
     
-    len_t bytes_memory;
+    uint64_t sortBytesMemory;
+    uint64_t cachedPagesPerVector;
     
     ~PLCPDecomp() {
         delete byCopyToV;
@@ -150,32 +163,51 @@ class PLCPDecomp {
     bool resolve(ref_t &fromFactor, const ref_t &toFactor);
     void restore();
     
-    void count() {
-        uint64_t count = 0;
-        for (auto c : textBuffer)
-        {
-            if(c != '\0') count++;
-        }
-        std::cout << "Resolved:   " << count << std::endl;
-        uint64_t count2 = 0;
-        for (auto f : *byCopyToV)
-        {
-            count2 += 0 + f.length;
-        }
-        std::cout << "Unresolved: " << count2 << std::endl;
-        std::cout << "All:        " << count + count2 << std::endl;
+    static uint64_t getNumberOfCachedPages(uint64_t totalBytesMemory) {
+        totalBytesMemory = std::max(totalBytesMemory, minBytesMemory);
+        uint64_t bytesPerVector = uint64_t((totalBytesMemory * memoryPercentageVectorCache) / numberOfVectors);
+        return (bytesPerVector / blockSize) / pageSize;
     }
-    
+
  public:
     
     PLCPDecomp(
             vector_of_char_t &textBuffer, 
-            vector_of_ref_initial_t &factors, len_t bytes_memory) :
-            textBuffer(textBuffer),
-            bytes_memory(bytes_memory) {
+            vector_of_ref_initial_t &factors, uint64_t bytesMemory) :
+            textBuffer(textBuffer) {
         
-        byCopyToV = new vector_of_ref_t();
-        byCopyToV_new = new vector_of_ref_t();
+        if(minBytesMemory > bytesMemory) {
+            std::cerr << 
+                "At least " << minBytesMemory / 1024 / 1024 << 
+                "MiB memory are required" << std::endl;
+            std::cerr << 
+                "[continuing with " << minBytesMemory / 1024 / 1024 << 
+                "MiB memory]" << std::endl;
+            bytesMemory = minBytesMemory;
+        }
+        
+        cachedPagesPerVector = getNumberOfCachedPages(bytesMemory);
+        
+        uint64_t bytesVectorsTotal = cachedPagesPerVector * pageSize * blockSize * numberOfVectors;
+        sortBytesMemory = bytesMemory - bytesVectorsTotal;
+        
+        std::cout << "Number of vectors:  " << numberOfVectors << std::endl;
+        std::cout << "Memory per vector:  " << bytesVectorsTotal / numberOfVectors / 1024.0 / 1024.0 << "MiB" << std::endl;
+        std::cout << "    (block size: " << blockSize / 1024.0 / 1024.0 << "MiB)" << std::endl;
+        std::cout << "    (page size:  " << pageSize << " blocks)" << std::endl;
+        std::cout << "    (cache size: " << cachedPagesPerVector << " pages)" << std::endl;
+        std::cout << "Memory for sorting: " << sortBytesMemory / 1024.0 / 1024.0 << "MiB" << std::endl;
+        
+        if(textBuffer.numpages() != cachedPagesPerVector) {
+            std::cout << std::endl;
+            std::cerr << "The given textbuffer has a cache size of " << textBuffer.numpages() << " pages" << std::endl;
+            std::cerr << "[continuing execution outside memory specifications]" << std::endl;     
+        }
+        
+        byCopyToV = new vector_of_ref_t(vector_size_t(0), cachedPagesPerVector);
+        byCopyToV_new = new vector_of_ref_t(vector_size_t(0), cachedPagesPerVector);
+        resolvedV = vector_of_ref_t(vector_size_t(0), cachedPagesPerVector);
+        
         byCopyToV_writer = new vector_of_ref_writer_t(*byCopyToV_new);
         resolvedV_writer = new vector_of_ref_writer_t(resolvedV);
         
@@ -188,12 +220,18 @@ class PLCPDecomp {
             toWriter << factor.template convert<unsigned_t>();
     }
  
+    static vector_of_char_t getEmptyTextBuffer(uint64_t totalBytesMemory) {
+        uint64_t cachedPages = getNumberOfCachedPages(totalBytesMemory);
+        return vector_of_char_t(vector_size_t(0), cachedPages);
+    }
+ 
     vector_of_char_t decompress();
+    
 };
 
         
 template <unsigned bitsPerUInt>
-typename PLCPDecomp<bitsPerUInt>::vector_of_char_t PLCPDecomp<bitsPerUInt>::decompress() {
+vector_of_char_t PLCPDecomp<bitsPerUInt>::decompress() {
     std::cout << "Decompressing. Type: " << typeid(unsigned_t).name() << std::endl;
     unsigned scanCount = 0;
     while(byCopyToV->size() > 0) {
@@ -216,7 +254,7 @@ void PLCPDecomp<bitsPerUInt>::scan() {
     byCopyToV->push_back(compare_by_copyTo.max_value());
     
     std::cout << "  Sort CopyFromV..." << std::endl;
-    stxxl::sort(byCopyFromV.begin(), byCopyFromV.end(), compare_by_copyFrom, bytes_memory);
+    stxxl::sort(byCopyFromV.begin(), byCopyFromV.end(), compare_by_copyFrom, sortBytesMemory);
     
     
     std::cout << "  Resolve & Jump..." << std::endl;
@@ -256,7 +294,7 @@ void PLCPDecomp<bitsPerUInt>::scan() {
     byCopyToV_writer = new vector_of_ref_writer_t(*byCopyToV_new);
     
     std::cout << "  Sort CopyToV..." << std::endl;
-    stxxl::sort(byCopyToV->begin(), byCopyToV->end(), compare_by_copyTo, bytes_memory);
+    stxxl::sort(byCopyToV->begin(), byCopyToV->end(), compare_by_copyTo, sortBytesMemory);
     
     restore();
     resolvedV.clear();
@@ -311,9 +349,9 @@ bool PLCPDecomp<bitsPerUInt>::resolve(ref_t &fromFactor, const ref_t &toFactor) 
 template <unsigned bitsPerUInt>
 void PLCPDecomp<bitsPerUInt>::restore() {
     std::cout << "  Sort ResolvedV by copyFrom..." << std::endl;
-    stxxl::sort(resolvedV.begin(), resolvedV.end(), compare_by_copyFrom, bytes_memory);
+    stxxl::sort(resolvedV.begin(), resolvedV.end(), compare_by_copyFrom, sortBytesMemory);
     
-    vector_of_lit_t resolvedLiteralsV;
+    vector_of_lit_t resolvedLiteralsV(vector_size_t(0), cachedPagesPerVector);
     vector_of_lit_writer_t literalWriter(resolvedLiteralsV);
     
     for (auto factor : resolvedV) {
@@ -327,7 +365,7 @@ void PLCPDecomp<bitsPerUInt>::restore() {
     literalWriter.finish();
     
     std::cout << "  Sort ResolvedLiteralsV by copyTo..." << std::endl;
-    stxxl::sort(resolvedLiteralsV.begin(), resolvedLiteralsV.end(), compare_by_copyTo_lit, bytes_memory);
+    stxxl::sort(resolvedLiteralsV.begin(), resolvedLiteralsV.end(), compare_by_copyTo_lit, sortBytesMemory);
     
     std::cout << "  Restore resolved literals in textbuffer..." << std::endl;
     for (auto literal : resolvedLiteralsV) {
