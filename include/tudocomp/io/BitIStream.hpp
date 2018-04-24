@@ -168,6 +168,11 @@ public:
         return ::tdc::io::read_elias_delta<value_t>(bit_sink());
     }
 
+    template<typename value_t>
+    inline value_t read_rice(uint8_t p) {
+        return ::tdc::io::read_rice<value_t>(bit_sink(), p);
+    }
+
     /// \brief Reads a compressed integer from the input.
     ///
     /// The \e compressed form of an integer \c n is achieved by splitting

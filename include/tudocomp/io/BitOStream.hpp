@@ -150,6 +150,11 @@ public:
         ::tdc::io::write_elias_delta<value_t>(bit_sink(), v);
     }
 
+    template<typename value_t>
+    inline void write_rice(value_t v, uint8_t p) {
+        ::tdc::io::write_rice<value_t>(bit_sink(), v, p);
+    }
+
     /// \brief Writes a compressed integer to the input.
     ///
     /// The \e compressed form of an integer \c n is achieved by splitting

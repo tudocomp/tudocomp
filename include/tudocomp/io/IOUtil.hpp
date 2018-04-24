@@ -235,5 +235,21 @@ inline T read_elias_delta(BitSink&& sink) {
     return sink.template read_int<T>(bits);
 }
 
+template<typename T, typename BitSink>
+inline void write_rice(BitSink&& sink, T v, uint8_t p) {
+    const uint64_t q = uint64_t(v) >> p;
+    const uint64_t r = uint64_t(v) & ((1 << p) - 1);
+
+    write_unary(sink, q + 1);
+    sink.write_int(r, p);
+}
+
+template<typename T, typename BitSink>
+inline T read_rice(BitSink&& sink, uint8_t p) {
+    const auto q = read_unary<uint64_t>(sink) - 1;
+    const auto r = sink.template read_int<uint64_t>(p);
+    return T(q * (1 << p) + r);
+}
+
 }
 }
