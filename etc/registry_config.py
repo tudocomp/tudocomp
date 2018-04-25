@@ -43,7 +43,7 @@ lzss_streaming_coders = [
 ]
 
 lzss_coders = lzss_streaming_coders + [
-    AlgorithmConfig(name="lzss::BufferedLRCoder", header="compressors/lzss/BufferedLRCoder.hpp",
+    AlgorithmConfig(name="lzss::BufferedLeftCoder", header="compressors/lzss/BufferedLeftCoder.hpp",
         sub=[universal_coders,universal_coders,all_coders]),
     AlgorithmConfig(name="lzss::BufferedBidirectionalCoder", header="compressors/lzss/BufferedBidirectionalCoder.hpp",
         sub=[universal_coders,universal_coders,all_coders]),

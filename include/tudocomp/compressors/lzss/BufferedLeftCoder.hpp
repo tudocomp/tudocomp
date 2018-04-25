@@ -15,13 +15,13 @@ namespace lzss {
 /// positions in the text. Each run of literals is preceded by the run's
 /// length.
 template<typename ref_coder_t, typename len_coder_t, typename lit_coder_t>
-class BufferedLRCoder : public LZSSCoder<ref_coder_t, len_coder_t, lit_coder_t> {
+class BufferedLeftCoder : public LZSSCoder<ref_coder_t, len_coder_t, lit_coder_t> {
 private:
     using super_t = LZSSCoder<ref_coder_t, len_coder_t, lit_coder_t>;
 
 public:
     inline static Meta meta() {
-        return super_t::meta(Meta("lzss_coder", "lr", "Buffered left-reference coding"));
+        return super_t::meta(Meta("lzss_coder", "left", "Buffered left-reference coding"));
     }
 
     using super_t::LZSSCoder;
