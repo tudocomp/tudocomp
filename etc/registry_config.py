@@ -153,7 +153,6 @@ lcpcomp_comp = [
     AlgorithmConfig(name="lcpcomp::MaxHeapLeftOnlyStrategy", header="compressors/lcpcomp/compress/MaxHeapLeftOnlyStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::MaxLCPStrategy", header="compressors/lcpcomp/compress/MaxLCPStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::ArraysComp", header="compressors/lcpcomp/compress/ArraysComp.hpp"),
-    AlgorithmConfig(name="lcpcomp::PLCPPeaksStrategy", header="compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp"),
 ]
 
 if config_match("^#define Boost_FOUND 1"): # if Boost is available
