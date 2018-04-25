@@ -9,6 +9,7 @@
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lzss/FactorizationStats.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
 #include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
 
@@ -104,10 +105,13 @@ public:
                     ++i; //advance
                 }
             }
-
-            StatPhase::log("threshold", threshold);
-            StatPhase::log("factors", factors.size());
         });
+
+        // statistics
+        IF_STATS({
+            lzss::FactorizationStats stats(factors, text.size());
+            stats.log();
+        })
 
         // encode
         StatPhase::wrap("Encode", [&]{

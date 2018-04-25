@@ -5,6 +5,7 @@
 #include <tudocomp/Compressor.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lzss/FactorizationStats.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
@@ -113,9 +114,6 @@ public:
             // Factorize
             strategy_t strategy(env().env_for_option("comp"));
             strategy.factorize(text, threshold, factors);
-
-            StatPhase::log("threshold", threshold);
-            StatPhase::log("factors", factors.size());
         });
 
         // sort factors
@@ -125,6 +123,12 @@ public:
             // flatten factors
             StatPhase::wrap("Flatten Factors", [&]{ factors.flatten(); });
         }
+
+        // statistics
+        IF_STATS({
+            lzss::FactorizationStats stats(factors, text.size());
+            stats.log();
+        })
 
         // encode
         StatPhase::wrap("Encode", [&]{
