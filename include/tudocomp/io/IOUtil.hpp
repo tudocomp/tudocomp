@@ -253,13 +253,13 @@ template<typename T, typename BitSink>
 inline void write_rice(BitSink&& sink, T v, uint8_t p) {
     const uint64_t q = uint64_t(v) >> p;
 
-    write_unary(sink, q + 1);
+    write_elias_gamma(sink, q + 1);
     sink.write_int(v, p); // r is exactly the lowest p bits of v
 }
 
 template<typename T, typename BitSink>
 inline T read_rice(BitSink&& sink, uint8_t p) {
-    const auto q = read_unary<uint64_t>(sink) - 1;
+    const auto q = read_elias_gamma<uint64_t>(sink) - 1;
     const auto r = sink.template read_int<uint64_t>(p);
     return T(q * (1ULL << p) + r);
 }
