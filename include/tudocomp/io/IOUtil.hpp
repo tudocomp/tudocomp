@@ -213,42 +213,55 @@ inline T read_ternary(BitSink&& sink) {
 
 template<typename T, typename BitSink>
 inline void write_elias_gamma(BitSink&& sink, T v) {
-    write_unary(sink, bits_for(v));
-    sink.write_int(v, bits_for(v));
+    DCHECK_GT(v, 0) << "zero cannot be gamma-encoded";
+
+    const auto m = bits_for(v) - 1;
+    write_unary(sink, m);
+    if(m > 0) sink.write_int(v, m); // cut off leading 1
 }
 
 template<typename T, typename BitSink>
 inline T read_elias_gamma(BitSink&& sink) {
-    auto bits = read_unary<size_t>(sink);
-    return sink.template read_int<T>(bits);
+    auto m = read_unary<size_t>(sink);
+    if(m > 0) {
+        return T((1ULL << m) | sink.template read_int<uint64_t>(m));
+    } else {
+        return T(1);
+    }
 }
 
 template<typename T, typename BitSink>
 inline void write_elias_delta(BitSink&& sink, T v) {
-    write_elias_gamma(sink, bits_for(v));
-    sink.write_int(v, bits_for(v));
+    DCHECK_GT(v, 0) << "zero cannot be delta-encoded";
+
+    auto m = bits_for(v) - 1;
+    write_elias_gamma(sink, m+1);
+    if(m > 0) sink.write_int(v, m); // cut off leading 1
 }
 
 template<typename T, typename BitSink>
 inline T read_elias_delta(BitSink&& sink) {
-    auto bits = read_elias_gamma<size_t>(sink);
-    return sink.template read_int<T>(bits);
+    auto m = read_elias_gamma<size_t>(sink) - 1;
+    if(m > 0) {
+        return T((1ULL << m) | sink.template read_int<uint64_t>(m));
+    } else {
+        return T(1);
+    }
 }
 
 template<typename T, typename BitSink>
 inline void write_rice(BitSink&& sink, T v, uint8_t p) {
     const uint64_t q = uint64_t(v) >> p;
-    const uint64_t r = uint64_t(v) & ((1 << p) - 1);
 
     write_unary(sink, q + 1);
-    sink.write_int(r, p);
+    sink.write_int(v, p); // r is exactly the lowest p bits of v
 }
 
 template<typename T, typename BitSink>
 inline T read_rice(BitSink&& sink, uint8_t p) {
     const auto q = read_unary<uint64_t>(sink) - 1;
     const auto r = sink.template read_int<uint64_t>(p);
-    return T(q * (1 << p) + r);
+    return T(q * (1ULL << p) + r);
 }
 
 }
