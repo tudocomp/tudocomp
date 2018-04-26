@@ -11,16 +11,16 @@ struct FactorizationStats {
     size_t num_factors, num_runs, num_replaced, num_unreplaced;
 
     // factor lengths
-    size_t len_min, len_max, len_med;
+    size_t len_min, len_max, len_med, len_uq;
     float len_avg;
 
     // references
     bool bidirectioal;
-    size_t dist_min, dist_max, dist_med;
+    size_t dist_min, dist_max, dist_med, dist_uq;
     float dist_avg;
 
     // literal runs
-    size_t run_max, run_med;
+    size_t run_max, run_med, run_uq;
     float run_avg;
 
     inline FactorizationStats(FactorBuffer& factors, const size_t n) {
@@ -103,12 +103,15 @@ struct FactorizationStats {
         // compute medians
         std::sort(lens.begin(), lens.end());
         len_med = lens[lens.size() / 2];
+        len_uq = lens[(3*lens.size()) / 4];
 
         std::sort(runs.begin(), runs.end());
         run_med = runs[runs.size() / 2];
+        run_uq = runs[(3*runs.size()) / 4];
 
         std::sort(dists.begin(), dists.end());
         dist_med = dists[dists.size() / 2];
+        dist_uq = dists[(3*dists.size()) / 4];
     }
 
     /// logs the statistics
@@ -121,13 +124,16 @@ struct FactorizationStats {
         StatPhase::log("len_max", len_max);
         StatPhase::log("len_avg", len_avg);
         StatPhase::log("len_med", len_med);
+        StatPhase::log("len_uq", len_uq);
         StatPhase::log("run_max", run_max);
         StatPhase::log("run_avg", run_avg);
         StatPhase::log("run_med", run_med);
+        StatPhase::log("run_uq", run_uq);
         StatPhase::log("dist_min", dist_min);
         StatPhase::log("dist_max", dist_max);
         StatPhase::log("dist_avg", dist_avg);
         StatPhase::log("dist_med", dist_med);
+        StatPhase::log("dist_uq", dist_uq);
         StatPhase::log("bidirectioal", bidirectioal);
     }
 };
