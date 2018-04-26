@@ -24,8 +24,8 @@ public:
         using tdc::Encoder::encode;
 
         template<typename value_t>
-        inline void encode(value_t v, const Range&) {
-            m_out->write_elias_gamma(v);
+        inline void encode(value_t v, const Range& r) {
+            m_out->write_elias_gamma(v - value_t(r.min()));
         }
     };
 
@@ -36,8 +36,8 @@ public:
         using tdc::Decoder::decode;
 
         template<typename value_t>
-        inline value_t decode(const Range&) {
-            return m_in->read_elias_gamma<value_t>();
+        inline value_t decode(const Range& r) {
+            return value_t(r.min()) + m_in->read_elias_gamma<value_t>();
         }
     };
 };
