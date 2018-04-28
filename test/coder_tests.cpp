@@ -17,6 +17,7 @@
 #include <tudocomp/coders/ArithmeticCoder.hpp>
 #include <tudocomp/coders/TernaryCoder.hpp>
 #include <tudocomp/coders/RiceCoder.hpp>
+#include <tudocomp/coders/SigmaCoder.hpp>
 
 using namespace tdc;
 
@@ -209,6 +210,12 @@ TEST(coder, gamma_bits) { test_bits<EliasGammaCoder>(); }
 TEST(coder, gamma_int) { test_int<EliasDeltaCoder>(); }
 TEST(coder, gamma_str) { test_str<EliasDeltaCoder>(); }
 TEST(coder, gamma_mixed) { test_mixed<EliasDeltaCoder>(); }
+
+TEST(coder, sigma_mt) { test_mt<SigmaCoder>(); }
+TEST(coder, sigma_bits) { test_bits<SigmaCoder>(); }
+TEST(coder, sigma_int) { test_int<SigmaCoder>(); }
+TEST(coder, sigma_str) { test_str<SigmaCoder>(); }
+TEST(coder, sigma_mixed) { test_mixed<SigmaCoder>(); }
 
 TEST(coder, huff_mt) { test_mt<HuffmanCoder>(); }
 TEST(coder, huff_bits) { test_bits<HuffmanCoder>(); }

@@ -19,6 +19,7 @@ universal_coders = [
 
 # Entropy coders
 entropy_coders = [
+    AlgorithmConfig(name="SigmaCoder", header="coders/SigmaCoder.hpp"),
     AlgorithmConfig(name="HuffmanCoder", header="coders/HuffmanCoder.hpp"),
 ]
 
