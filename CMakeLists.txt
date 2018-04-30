@@ -43,9 +43,11 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG")
 
 # Set integer with for length type
 if(DEFINED LEN_BITS)
-    message(STATUS "Setting length type to ${LEN_BITS} Bits")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEN_BITS=${LEN_BITS}")
+else(DEFINED LEN_BITS)
+    set(LEN_BITS 32)
 endif(DEFINED LEN_BITS)
+message(STATUS "Setting length type to ${LEN_BITS} Bits")
 
 find_package(Boost)
 

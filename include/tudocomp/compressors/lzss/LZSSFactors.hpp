@@ -27,6 +27,7 @@ public:
 template<class vector_type = std::vector<Factor>> // or vector_type =  stxxl::VECTOR_GENERATOR<Factor>::result
 class FactorBuffer {
 public:
+    using backing_vector_type = vector_type;
     typedef typename vector_type::const_iterator const_iterator;
 private:
 
@@ -45,6 +46,8 @@ public:
         , m_longest_factor(0)
     {
     }
+
+    vector_type& factors = m_factors;
 
     inline void emplace_back(len_t fpos, len_t fsrc, len_t flen) {
         m_sorted = m_sorted && (m_factors.empty() || fpos >= m_factors.back().pos);

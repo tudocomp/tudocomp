@@ -1,5 +1,8 @@
 #include <algorithm>
+#include <forward_list>
 #include <iostream>
+#include <unordered_map>
+
 #include <tudocomp_stat/StatPhase.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
@@ -8,22 +11,73 @@
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
 
+#include <stxxl/bits/io/syscall_file.h>
+
 namespace tdc { namespace lcpcomp {
     constexpr len_t M = 1024 * 1024;
+    using uint40_t = uint_t<40>;
+
+    template<typename T>
+    class BufferedWriter {
+        private:
+            std::ostream* m_outs;
+
+            T* m_buf;
+            size_t m_bufsize;
+
+            size_t m_num;
+
+            inline void flush() {
+                m_outs->write((const char*)m_buf, m_num * sizeof(T));
+                m_num = 0;
+            }
+
+        public:
+            inline BufferedWriter(std::ostream& outs, size_t bufsize)
+                : m_outs(&outs), m_bufsize(bufsize), m_num(0) {
+
+                m_buf = new T[bufsize];
+            }
+
+            inline ~BufferedWriter() {
+                flush();
+                delete[] m_buf;
+            }
+
+            inline void write(const T& value) {
+                m_buf[m_num++] = value;
+                if(m_num >= m_bufsize) flush();
+            }
+    };
+
+    inline void skip_bytes(std::istream& ins, size_t num) {
+        while(num--) {
+            ins.get();
+        }
+    }
+
+    // parameters for filemapped vector
+    // these are "good" values, determined by trial and error on elbait
+    constexpr size_t blocks_per_page = 4;
+    constexpr size_t cache_pages = 8;
+    constexpr size_t block_size = 16 * 4096 * sizeof(uint40_t);
+    using filemapped_vector_t = stxxl::VECTOR_GENERATOR<
+        uint40_t, blocks_per_page, cache_pages, block_size>::result;
 
     inline void factorize(const std::string& textfilename,
                           const std::string& outfilename,
                           const size_t threshold,
                           const len_t mb_ram) {
-        using uint40_t = uint_t<40>;
 
 		StatPhase phase("PLCPComp");
-		IntegerFileArray<uint40_t> sa  ((textfilename + ".sa5").c_str());
-		IntegerFileArray<uint40_t> isa ((textfilename + ".isa5").c_str());
-		IntegerFileArray<char> text (textfilename.c_str());
-        typedef IntegerFileArray<char> text_t;
 
-		PLCPFileForwardIterator pplcp    ((textfilename + ".plcp").c_str());
+        stxxl::syscall_file sa_file(textfilename + ".sa5", stxxl::file::open_mode::RDONLY);
+        filemapped_vector_t sa(&sa_file);
+
+        stxxl::syscall_file isa_file(textfilename + ".isa5", stxxl::file::open_mode::RDONLY);
+        filemapped_vector_t isa(&isa_file);
+
+		PLCPFileForwardIterator pplcp  ((textfilename + ".plcp").c_str());
 
 		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa,mb_ram * M);
 		StatPhase::wrap("Search Peaks", [&]{
@@ -37,43 +91,45 @@ namespace tdc { namespace lcpcomp {
     	});
 
         StatPhase::wrap("Encode Factors", [&]{
-            /*
-            tdc::Output output(tdc::Path(outfilename), true);
-            tdc::Env env = tdc::create_env(Meta("plcpcomp", "plcp"));
-            tdc::HuffmanCoder::Encoder coder(std::move(env), output, tdc::lzss::TextLiterals<text_t,decltype(refs)>(text, refs));
-            tdc::lzss::encode_text(coder, text, refs);
-            */
+            // Open input file
+            auto input = tdc::Input(tdc::Path(textfilename));
+            auto ins = input.as_stream();
 
             // Use the same stupid encoding as EM-LPF for a comparison
-            tdc::Output output(tdc::Path(outfilename), true);
-            tdc::BitOStream out(output);
+            auto output = tdc::Output(tdc::Path(outfilename), true);
+            auto outs = output.as_stream();
 
             // walk over factors
             size_t num_replaced = 0;
 
-            size_t p = 0; //! current text position
-            for(auto& factor : refs) {
-                // encode literals until cursor reaches factor
-                while(p < factor.pos) {
-					std::cout << text[p];
-                    out.write_int(uint40_t(text[p++]));
-                    out.write_int(uint40_t(0));
-                }
-                
-				std::cout << "(" << factor.src << ", " << factor.len << ")";
-                // encode factor
-                out.write_int(uint40_t(factor.src));
-                out.write_int(uint40_t(factor.len));
-                p += size_t(factor.len);
-                num_replaced += factor.len;
-            }
+            {
+                BufferedWriter<uint40_t> bw(outs, 400);
 
-            const size_t n = text.size();
-            while(p < n)  {
-                // encode remaining literals
-                std::cout << text[p] << "?";
-                out.write_int(uint40_t(text[p++]));
-                out.write_int(uint40_t(0));
+                size_t p = 0; //! current text position
+
+                decltype(refs)::backing_vector_type::bufreader_type reader(refs.factors);
+                for(auto& factor : reader) {
+                    // encode literals until cursor reaches factor
+                    while(p < factor.pos) {
+                        bw.write(ins.get());
+                        bw.write(0);
+                        ++p;
+                    }
+
+                    // encode factor
+                    bw.write(factor.src);
+                    bw.write(factor.len);
+
+                    p += size_t(factor.len);
+                    skip_bytes(ins, factor.len);
+                    num_replaced += size_t(factor.len);
+                }
+
+                while(!ins.eof())  {
+                    // encode remaining literals
+                    bw.write(ins.get());
+                    bw.write(0);
+                }
             }
 
             StatPhase::log("num_replaced", num_replaced);
@@ -120,6 +176,9 @@ int main(int argc, char** argv) {
     const tdc::len_t mb_ram = (argc >= 4) ? std::stoi(argv[4]) : 512;
 
 	tdc::lcpcomp::factorize(infile, outfile, threshold, mb_ram);
+
+	root.to_json().str(std::cout);
+	std::cout << std::endl;
 
     return 0;
 }
