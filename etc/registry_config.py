@@ -168,6 +168,7 @@ lcpcomp_dec = [
     AlgorithmConfig(name="lcpcomp::DecodeForwardQueueListBuffer", header="compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp"),
     AlgorithmConfig(name="lcpcomp::CompactDec", header="compressors/lcpcomp/decompress/CompactDec.hpp"),
     AlgorithmConfig(name="lcpcomp::MultimapBuffer", header="compressors/lcpcomp/decompress/MultiMapBuffer.hpp"),
+    AlgorithmConfig(name="lcpcomp::LeftDec", header="compressors/lcpcomp/decompress/LeftDec.hpp"),
 ]
 
 # Allowed TextDS instances for lcpcomp (LCP array must be writable!)
