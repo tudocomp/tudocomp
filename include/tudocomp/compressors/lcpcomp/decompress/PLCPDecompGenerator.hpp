@@ -60,10 +60,10 @@ vector_of_char_t PLCPDecompGenerator::decompress
             std::cout << "        Factor " << i << " of " << nFactors << "... " << std::endl;
         }
         
-        uint_t<40> target(swapBytes<uint_t<40>>(factors[2 * i]) + 1);
-        uint_t<40> len(swapBytes<uint_t<40>>(factors[2 * i + 1]));
-        //~ uint_t<40> target(factors[i * 2] + 1);
-        //~ uint_t<40> len(factors[i * 2 + 1]);
+        //~ uint_t<40> target(swapBytes<uint_t<40>>(factors[2 * i]) + 1);
+        //~ uint_t<40> len(swapBytes<uint_t<40>>(factors[2 * i + 1]));
+        uint_t<40> target(factors[i * 2] + 1);
+        uint_t<40> len(factors[i * 2 + 1]);
         
         if(len == uint_t<40>(0)) {
             textWriter << char(target - 1);
@@ -89,9 +89,9 @@ vector_of_char_t PLCPDecompGenerator::decompress
     std::cout << "    Bits per integer:       " << bitsPerInt << std::endl;
     std::cout << "    Allowed memory (bytes): " << nBytesMemory << std::endl;
     
-    if(bitsPerInt <= 24) return decompressInternal<24>(textBuffer, factorsForCompressor, nBytesMemory);
-    else if(bitsPerInt <= 32) return decompressInternal<32>(textBuffer, factorsForCompressor, nBytesMemory);
-    else /*if(specs.bitsPerInt <= 40)*/ return decompressInternal<40>(textBuffer, factorsForCompressor, nBytesMemory);
+    //~ if(bitsPerInt <= 24) return decompressInternal<24>(textBuffer, factorsForCompressor, nBytesMemory);
+    //~ else if(bitsPerInt <= 32) return decompressInternal<32>(textBuffer, factorsForCompressor, nBytesMemory);
+    /*else /*if(specs.bitsPerInt <= 40)*/ return decompressInternal<40>(textBuffer, factorsForCompressor, nBytesMemory);
 }
 
 template<unsigned bitsPerUInt>
