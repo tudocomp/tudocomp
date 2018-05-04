@@ -271,6 +271,7 @@ class PLCPFileForwardIterator {
 		void compute_references(const size_t n, RefStrategy& refStrategy, plcp_type& pplcp, size_t threshold) {
 
 
+			// Poi = peak
 		struct Poi {
 			len_t pos;
 			len_t lcp;
@@ -303,35 +304,37 @@ class PLCPFileForwardIterator {
 				}
 				continue;
 			}
-			if(i - lastpos >= lastpos_lcp || tdc_unlikely(i+1 == n)) {
+			
+			if(i - lastpos >= lastpos_lcp || tdc_unlikely(i+1 == n)) { // condition that lastpos is a maximal peak
 				IF_DEBUG(bool first = true);
 				IF_STATS(max_heap_size = std::max<len_t>(max_heap_size, heap.size()));
 				DCHECK_EQ(heap.size(), handles.size());
 				while(!heap.empty()) {
 					const Poi& top = heap.top();
-					refStrategy.add_factor(top.pos, top.lcp);
+					refStrategy.add_factor(top.pos, top.lcp); // add new factor with position top.pos and length top.lcp
 					const len_t next_pos = top.pos; // store top, this is the current position that gets factorized
 					IF_DEBUG(if(first) DCHECK_EQ(top.pos, lastpos); first = false;)
 
 					{
 						len_t newlcp_peak = 0; // a new peak can emerge at top.pos+top.lcp
 						bool peak_exists = false;
-						if(top.pos+top.lcp < i)
-						for(len_t j = top.no+1; j < handles.size(); ++j) { // erase all right peaks that got substituted
-							if( handles[j].node_ == nullptr) continue;
-							const Poi poi = *(handles[j]);
-							DCHECK_LT(next_pos, poi.pos);
-							if(poi.pos < next_pos+top.lcp) {
-								heap.erase(handles[j]);
-								handles[j].node_ = nullptr;
-								if(poi.lcp + poi.pos > next_pos+top.lcp) {
-									const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
-									DCHECK_NE(remaining_lcp,0);
-									if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak);
-									newlcp_peak = std::max(remaining_lcp, newlcp_peak);
-								}
-							} else if( poi.pos == next_pos+top.lcp) { peak_exists=true; }
-							else { break; }  // only for performance
+						if(top.pos+top.lcp < i) {
+							for(len_t j = top.no+1; j < handles.size(); ++j) { // erase all right peaks that got substituted
+								if( handles[j].node_ == nullptr) continue;
+								const Poi poi = *(handles[j]);
+								DCHECK_LT(next_pos, poi.pos);
+								if(poi.pos < next_pos+top.lcp) {
+									heap.erase(handles[j]);
+									handles[j].node_ = nullptr;
+									if(poi.lcp + poi.pos > next_pos+top.lcp) {
+										const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
+										DCHECK_NE(remaining_lcp,0);
+										if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak);
+										newlcp_peak = std::max(remaining_lcp, newlcp_peak);
+									}
+								} else if( poi.pos == next_pos+top.lcp) { peak_exists=true; }
+								else { break; }  // only for performance
+							}
 						}
 #ifdef DEBUG
 						if(peak_exists) {
@@ -359,7 +362,7 @@ class PLCPFileForwardIterator {
 						if( (*it).node_ == nullptr) continue;
 						Poi& poi = (*(*it));
 						if(poi.pos > next_pos)  continue;
-						const len_t newlcp = next_pos - poi.pos;
+						const len_t newlcp = next_pos - poi.pos; // newlcp is actually the distance
 						if(newlcp < poi.lcp) {
 							if(newlcp < threshold) {
 								heap.erase(*it);
@@ -369,7 +372,7 @@ class PLCPFileForwardIterator {
 								heap.decrease(*it);
 
 							}
-						} else {
+						} else { // if the distance is too large then we are already too far away from the peaks that need to be truncated
 							break;
 						}
 					}
