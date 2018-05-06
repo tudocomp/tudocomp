@@ -13,9 +13,45 @@
 namespace tdc {
 namespace lz78 {
 
+struct Sparse {
+    inline static Meta meta() {
+        Meta m("compact_hash_strategy", "sparse_cv", "Sparse Table with CV structure");
+        return m;
+    }
 
-class CompactSparseHashTrie : public Algorithm, public LZ78Trie<> {
+    using table_t = compact_sparse_hashtable::compact_sparse_hashtable_t<dynamic_t>;
+};
+
+struct Plain {
+    inline static Meta meta() {
+        Meta m("compact_hash_strategy", "plain_cv", "Plain Table with CV structure");
+        return m;
+    }
+
     using table_t = compact_sparse_hashtable::compact_hashtable_t<dynamic_t>;
+};
+
+struct SparseDisplacement {
+    inline static Meta meta() {
+        Meta m("compact_hash_strategy", "sparse_disp", "Sparse Table with displacement structure");
+        return m;
+    }
+
+    using table_t = compact_sparse_hashtable::compact_sparse_displacement_hashtable_t<dynamic_t>;
+};
+
+struct PlainDisplacement {
+    inline static Meta meta() {
+        Meta m("compact_hash_strategy", "plain_disp", "Plain Table with displacement structure");
+        return m;
+    }
+
+    using table_t = compact_sparse_hashtable::compact_displacement_hashtable_t<dynamic_t>;
+};
+
+template<typename compact_hash_strategy_t = Sparse>
+class CompactSparseHashTrie : public Algorithm, public LZ78Trie<> {
+    using table_t = typename compact_hash_strategy_t::table_t;
     using ref_t = typename table_t::reference_type;
 
     table_t m_table;
@@ -36,6 +72,8 @@ public:
     inline static Meta meta() {
         Meta m("lz78trie", "compact_sparse_hash", "Compact Sparse Hash Trie");
         m.option("load_factor").dynamic(50);
+        m.option("compact_hash_strategy")
+            .templated<compact_hash_strategy_t, Sparse>("compact_hash_strategy");
         return m;
     }
 

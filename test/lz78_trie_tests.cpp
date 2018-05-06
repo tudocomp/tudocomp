@@ -376,10 +376,28 @@ TEST(Trie, ExtHashTrie) {
 
 #include <tudocomp/compressors/lz78/CompactSparseHashTrie.hpp>
 TEST(TrieStructure, CompactSparseHashTrie) {
-    trie_test<CompactSparseHashTrie>(false);
+    trie_test<CompactSparseHashTrie<>>(false);
 }
 TEST(Trie, CompactSparseHashTrie) {
-    trie_test<CompactSparseHashTrie>();
+    trie_test<CompactSparseHashTrie<>>();
+}
+TEST(TrieStructure, CompactSparseHashTriePlain) {
+    trie_test<CompactSparseHashTrie<Plain>>(false);
+}
+TEST(Trie, CompactSparseHashTriePlain) {
+    trie_test<CompactSparseHashTrie<Plain>>();
+}
+TEST(TrieStructure, CompactSparseHashTrieSparseDisplacement) {
+    trie_test<CompactSparseHashTrie<SparseDisplacement>>(false);
+}
+TEST(Trie, CompactSparseHashTrieSparseDisplacement) {
+    trie_test<CompactSparseHashTrie<SparseDisplacement>>();
+}
+TEST(TrieStructure, CompactSparseHashTriePlainDisplacement) {
+    trie_test<CompactSparseHashTrie<PlainDisplacement>>(false);
+}
+TEST(Trie, CompactSparseHashTriePlainDisplacement) {
+    trie_test<CompactSparseHashTrie<PlainDisplacement>>();
 }
 
 // #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>
