@@ -118,7 +118,8 @@ lcpcomp_comp = [
 if config_match("^#define Boost_FOUND 1"): # if Boost is available
     lcpcomp_comp += [
         AlgorithmConfig(name="lcpcomp::BoostHeap", header="compressors/lcpcomp/compress/BoostHeap.hpp"),
-        AlgorithmConfig(name="lcpcomp::PLCPStrategy", header="compressors/lcpcomp/compress/PLCPStrategy.hpp")
+        AlgorithmConfig(name="lcpcomp::PLCPStrategy", header="compressors/lcpcomp/compress/PLCPStrategy.hpp"),
+        AlgorithmConfig(name="lcpcomp::PLCPLeftStrategy", header="compressors/lcpcomp/compress/PLCPLeftStrategy.hpp")
 ]
 
 # lcpcomp factor decoding strategies ("dec")
