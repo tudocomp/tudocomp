@@ -52,8 +52,6 @@ void compute_left_references(const size_t n, factor_buffer_type& factor_buffer, 
 
     IF_STATS(len_t max_heap_size = 0);
 
-    len_t rightRefPeaks = 0;
-
     len_t lastdst = 0;
     len_t lastdst_lcp = threshold;
     PeakCandidate lastRightRef(0,0,0,0);
@@ -74,7 +72,6 @@ void compute_left_references(const size_t n, factor_buffer_type& factor_buffer, 
 
                 const len_t top_dst = top.dst; // store top, this is the current position that gets factorized
                 IF_DEBUG(if(first) DCHECK_EQ(top.dst, lastdst); first = false;)
-
                 {
                     len_t newlcp_peak = 0; // a new peak can emerge at top.dst+top.lcp
                     len_t newlcp_peak_src = 0;
@@ -150,15 +147,9 @@ void compute_left_references(const size_t n, factor_buffer_type& factor_buffer, 
             lastdst_lcp = threshold;
         }
 
-        if(plcp_i >= threshold) {
-            if(i < phi[i]) {
-                if(i >= lastRightRef.src + lastRightRef.lcp || plcp_i > lastRightRef.lcp - (i - lastRightRef.src)) {
-                    lastRightRef = PeakCandidate(i, phi[i], plcp_i, 0);
-                    right_ref_heap.push(lastRightRef);
-                }
-            }
-        }
 
+        bool i_points_right = i < phi[i];
+        
         bool was_right_ref = false;
         while(!right_ref_heap.empty() && right_ref_heap.top().dst + right_ref_heap.top().lcp < i) right_ref_heap.pop();
         if(!right_ref_heap.empty()) {
@@ -169,8 +160,7 @@ void compute_left_references(const size_t n, factor_buffer_type& factor_buffer, 
                 next_right_ref.src += offset;
                 next_right_ref.lcp -= offset;
                 
-                if((i < phi[i] || next_right_ref.lcp > plcp_i) && next_right_ref.lcp > lastdst_lcp) {
-                    rightRefPeaks++;
+                if((i_points_right || next_right_ref.lcp > plcp_i) && next_right_ref.lcp > lastdst_lcp) {
                     next_right_ref.no = left_ref_handles.size();
                     left_ref_handles.emplace_back(left_ref_heap.push(next_right_ref));
                     lastdst = i;
@@ -180,8 +170,15 @@ void compute_left_references(const size_t n, factor_buffer_type& factor_buffer, 
             }
         }
 
-
-        if(!was_right_ref && plcp_i > lastdst_lcp && i > phi[i]) {
+        if(i_points_right) {
+            if(plcp_i >= threshold) {
+                if(i >= lastRightRef.src + lastRightRef.lcp || plcp_i > lastRightRef.lcp - (i - lastRightRef.src)) {
+                    lastRightRef = PeakCandidate(i, phi[i], plcp_i, 0);
+                    right_ref_heap.push(lastRightRef);
+                }
+            }
+        } 
+        else if(!was_right_ref && plcp_i > lastdst_lcp) {
             left_ref_handles.emplace_back(left_ref_heap.emplace(phi[i], i, plcp_i, left_ref_handles.size()));
             lastdst = i;
             lastdst_lcp = plcp_i;
