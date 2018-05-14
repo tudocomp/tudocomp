@@ -149,7 +149,7 @@ public:
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        dec_t decomp(env().env_for_option("dec"));
+        dec_t decomp(config().sub_config("dec"));
         {
             auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
             decoder.decode(decomp);

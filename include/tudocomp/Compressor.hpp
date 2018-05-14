@@ -30,7 +30,7 @@ public:
     /// \brief Construct the compressor with an environment.
     ///
     /// \param env The algorithm's environment.
-    inline Compressor(Env&& env): Algorithm(std::move(env)) {}
+    inline Compressor(Config&& cfg): Algorithm(std::move(cfg)) {}
 
     /// \brief Compress the given input to the given output.
     ///

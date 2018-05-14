@@ -25,8 +25,8 @@ public:
     }
 
     template<typename textds_t>
-    inline LCPFromPLCP(Env&& env, textds_t& t, CompressMode cm)
-            : Algorithm(std::move(env)) {
+    inline LCPFromPLCP(Config&& cfg, textds_t& t, CompressMode cm)
+            : Algorithm(std::move(cfg)) {
 
         // Construct Suffix Array and PLCP Array
         auto& sa = t.require_sa(cm);

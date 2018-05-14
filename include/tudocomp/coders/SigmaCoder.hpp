@@ -11,7 +11,8 @@ namespace tdc {
 class SigmaCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("coder", "sigma", "Encode characters using log(sigma) bits.");
+        Meta m(Coder::type_desc(), "sigma",
+            "Encode characters using log(sigma) bits.");
         return m;
     }
 
@@ -25,8 +26,8 @@ public:
 
     public:
         template<typename literals_t>
-        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
-            : tdc::Encoder(std::move(env), out, literals) {
+        inline Encoder(Config&& cfg, std::shared_ptr<BitOStream> out, literals_t&& literals)
+            : tdc::Encoder(std::move(cfg), out, literals) {
 
             // find occuring characters
             m_bv = BitVector(ULITERAL_MAX+1, 0);
@@ -52,8 +53,8 @@ public:
         }
 
         template<typename literals_t>
-        inline Encoder(Env&& env, Output& out, literals_t&& literals)
-            : Encoder(std::move(env), std::make_shared<BitOStream>(out), literals) {
+        inline Encoder(Config&& cfg, Output& out, literals_t&& literals)
+            : Encoder(std::move(cfg), std::make_shared<BitOStream>(out), literals) {
         }
 
         using tdc::Encoder::encode; // default encoding as fallback
@@ -71,8 +72,8 @@ public:
         size_t m_sigma_bits;
 
     public:
-        inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
-            : tdc::Decoder(std::move(env), in) {
+        inline Decoder(Config&& cfg, std::shared_ptr<BitIStream> in)
+            : tdc::Decoder(std::move(cfg), in) {
 
             // read alphabet
             const size_t literal_bits = bits_for(ULITERAL_MAX);
@@ -86,8 +87,8 @@ public:
             m_sigma_bits = bits_for(sigma-1);
         }
 
-        inline Decoder(Env&& env, Input& in)
-            : Decoder(std::move(env), std::make_shared<BitIStream>(in)) {
+        inline Decoder(Config&& cfg, Input& in)
+            : Decoder(std::move(cfg), std::make_shared<BitIStream>(in)) {
         }
 
         ~Decoder() {

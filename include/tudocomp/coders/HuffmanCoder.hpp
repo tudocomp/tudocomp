@@ -522,8 +522,8 @@ public:
     const uint8_t*const ordered_map_to_effective;
     public:
         template<typename literals_t>
-        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
-            : tdc::Encoder(std::move(env), out, literals),
+        inline Encoder(Config&& cfg, std::shared_ptr<BitOStream> out, literals_t&& literals)
+            : tdc::Encoder(std::move(cfg), out, literals),
             m_table{ [&] () {
                 if(tdc_likely(!literals.has_next())) return huff::extended_huffmantable { nullptr, nullptr, nullptr, 0, nullptr, 0 };
                 const len_compact_t*const C = huff::count_alphabet_literals(std::move(literals));
@@ -552,8 +552,8 @@ public:
         }
 
         template<typename literals_t>
-        inline Encoder(Env&& env, Output& out, literals_t&& literals)
-            : Encoder(std::move(env), std::make_shared<BitOStream>(out), literals) {
+        inline Encoder(Config&& cfg, Output& out, literals_t&& literals)
+            : Encoder(std::move(cfg), std::make_shared<BitOStream>(out), literals) {
         }
 
         using tdc::Encoder::encode; // default encoding as fallback
@@ -580,8 +580,8 @@ public:
             }
         }
 
-        inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
-            : tdc::Decoder(std::move(env), in) {
+        inline Decoder(Config&& cfg, std::shared_ptr<BitIStream> in)
+            : tdc::Decoder(std::move(cfg), in) {
 
             if(tdc_unlikely(!m_in->read_bit())) {
                 ordered_map_from_effective = nullptr;
@@ -596,8 +596,8 @@ public:
             firstcodes = huff::gen_first_codes(table.numl, table.longest);
         }
 
-        inline Decoder(Env&& env, Input& in)
-            : Decoder(std::move(env), std::make_shared<BitIStream>(in)) {
+        inline Decoder(Config&& cfg, Input& in)
+            : Decoder(std::move(cfg), std::make_shared<BitIStream>(in)) {
         }
 
         using tdc::Decoder::decode; // default decoding as fallback

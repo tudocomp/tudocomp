@@ -46,7 +46,7 @@ public:
     /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
         // initialize encoder
-        auto coder = lzss_coder_t(env().env_for_option("coder"))
+        auto coder = lzss_coder_t(config().sub_config("coder"))
             .encoder(output, NoLiterals());
 
         coder.factor_length_range(Range(m_threshold, 2 * m_window));
@@ -146,7 +146,7 @@ public:
         lzss::DecompBackBuffer decomp;
 
         {
-            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
             decoder.decode(decomp);
         }
 
