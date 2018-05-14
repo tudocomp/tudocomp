@@ -5,6 +5,7 @@
 #include <tudocomp/Compressor.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lzss/FactorizationStats.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
@@ -122,9 +123,6 @@ public:
             // Factorize
             strategy_t strategy(config().sub_config("comp"));
             strategy.factorize(text, threshold, factors);
-
-            StatPhase::log("threshold", threshold);
-            StatPhase::log("factors", factors.size());
         });
 
         // sort factors
@@ -135,41 +133,30 @@ public:
             StatPhase::wrap("Flatten Factors", [&]{ factors.flatten(); });
         }
 
+        // statistics
+        IF_STATS({
+            lzss::FactorizationStats stats(factors, text.size());
+            stats.log();
+        })
+
         // encode
-<<<<<<< HEAD
         StatPhase::wrap("Encode Factors", [&]{
-            typename coder_t::Encoder coder(
-                config().sub_config("coder"),
-                output,
-                lzss::TextLiterals<text_t>(text, factors));
-=======
-        StatPhase::wrap("Encode", [&]{
-            auto coder = lzss_coder_t(env().env_for_option("coder")).encoder(
+            auto coder = lzss_coder_t(config().sub_config("coder")).encoder(
                 output, lzss::UnreplacedLiterals<text_t>(text, factors));
->>>>>>> master
 
             coder.encode_text(text, factors);
         });
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-<<<<<<< HEAD
-        typename coder_t::Decoder decoder(config().sub_config("coder"), input);
-        auto outs = output.as_stream();
-
-        lcpcomp::decode_text_internal<typename coder_t::Decoder, dec_t>(
-            config().sub_config("dec"), decoder, outs);
-=======
         dec_t decomp(env().env_for_option("dec"));
-
         {
-            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
             decoder.decode(decomp);
         }
 
         auto outs = output.as_stream();
         decomp.write_to(outs);
->>>>>>> master
     }
 };
 

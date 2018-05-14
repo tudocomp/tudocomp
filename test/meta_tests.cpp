@@ -443,7 +443,7 @@ TEST_F(config, sub) {
         ASSERT_THROW(b1.as_vector<int>(), ast::TypeMismatchError);
     }
     {
-        auto& b1 = cfg.sub_config("b1");
+        auto b1 = cfg.sub_config("b1");
         ASSERT_EQ(b, b1.decl());
         auto& cl = b1.sub_configs("cl");
         ASSERT_EQ(3, cl.size());
@@ -452,7 +452,7 @@ TEST_F(config, sub) {
         ASSERT_EQ(c, cl[2].decl());
     }
     {
-        auto& b2 = cfg.sub_config("b2");
+        auto b2 = cfg.sub_config("b2");
         ASSERT_EQ(b, b2.decl());
         auto& cl = b2.sub_configs("cl");
         ASSERT_EQ(0, cl.size());
@@ -557,24 +557,24 @@ TEST_F(meta, default_cfg) {
     auto meta = Subject::meta();
 
     // no defaults for p1 and l1
-    ASSERT_THROW(meta.default_config(), ConfigError);
+    ASSERT_THROW(meta.config(), ConfigError);
 
     // OK (b1 and cl are bounded and therefore configured implicitly)
-    ASSERT_NO_THROW(meta.default_config(ast::convert<ast::Object>(
+    ASSERT_NO_THROW(meta.config(ast::convert<ast::Object>(
         ast::Parser::parse("a(p1=777,l1=[])"))));
 
     // not default for cl of b2
-    ASSERT_THROW(meta.default_config(ast::convert<ast::Object>(
+    ASSERT_THROW(meta.config(ast::convert<ast::Object>(
         ast::Parser::parse("a(p1=777,l1=[],b2=b)"))),
         ConfigError);
 
     // OK
-    ASSERT_NO_THROW(meta.default_config(ast::convert<ast::Object>(
+    ASSERT_NO_THROW(meta.config(ast::convert<ast::Object>(
         ast::Parser::parse("a(p1=777,l1=[],b2=b(cl=[]))"))));
 
     // config checks
     {
-        auto cfg = meta.default_config(ast::convert<ast::Object>(
+        auto cfg = meta.config(ast::convert<ast::Object>(
             ast::Parser::parse("a(p1=777,l1=[])")));
 
         ASSERT_EQ(777, cfg.param("p1").as_int());
@@ -582,9 +582,9 @@ TEST_F(meta, default_cfg) {
         ASSERT_EQ(0, cfg.param("l1").as_vector<int>().size());
         ASSERT_EQ(3, cfg.param("l2").as_vector<int>().size());
 
-        auto& b1 = cfg.sub_config("b1");
+        auto b1 = cfg.sub_config("b1");
         ASSERT_EQ("b", b1.decl()->name());
-        auto& b2 = cfg.sub_config("b2");
+        auto b2 = cfg.sub_config("b2");
         ASSERT_EQ("b", b1.decl()->name());
 
         auto& cl1 = b1.sub_configs("cl");

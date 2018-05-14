@@ -35,6 +35,7 @@ public:
             typename len_coder_t::Encoder,
             typename lit_coder_t::Encoder>
         (
+            this->env(),
             std::make_unique<typename ref_coder_t::Encoder>(
                 this->env().env_for_option("ref"), out, NoLiterals()),
             std::make_unique<typename len_coder_t::Encoder>(
@@ -52,6 +53,7 @@ public:
             typename len_coder_t::Decoder,
             typename lit_coder_t::Decoder>
         (
+            this->env(),
             std::make_unique<typename ref_coder_t::Decoder>(
                 this->env().env_for_option("ref"), in),
             std::make_unique<typename len_coder_t::Decoder>(

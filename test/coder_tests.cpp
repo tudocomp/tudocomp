@@ -15,19 +15,21 @@
 #include <tudocomp/coders/SLECoder.hpp>
 #include <tudocomp/coders/ArithmeticCoder.hpp>
 #include <tudocomp/coders/TernaryCoder.hpp>
+#include <tudocomp/coders/RiceCoder.hpp>
+#include <tudocomp/coders/SigmaCoder.hpp>
 
 using namespace tdc;
 
 #define DUMMY_LITERALS ViewLiterals("dummy")
 
 template<typename coder_t>
-void test_mt() {
+void test_mt(const std::string& options = "") {
     // Don't encode anything
     std::stringstream ss;
     {
         Output out(ss);
         typename coder_t::Encoder coder(
-            coder_t::meta().default_config(), out, DUMMY_LITERALS);
+            coder_t::meta().config(options), out, DUMMY_LITERALS);
     }
 
     // Expect nothing to be decoded
@@ -35,14 +37,14 @@ void test_mt() {
     {
         Input in(result);
         typename coder_t::Decoder decoder(
-            coder_t::meta().default_config(), in);
+            coder_t::meta().config(options), in);
 
         ASSERT_TRUE(decoder.eof());
     }
 }
 
 template<typename coder_t>
-void test_bits() {
+void test_bits(const std::string& options = "") {
     // Generate a thue morse word and use it as test subject
     const std::string word = ThueMorseGenerator::generate(16);
 
@@ -51,7 +53,7 @@ void test_bits() {
     {
         Output out(ss);
         typename coder_t::Encoder coder(
-            coder_t::meta().default_config(), out, DUMMY_LITERALS);
+            coder_t::meta().config(options), out, DUMMY_LITERALS);
 
         for(char c : word) coder.encode(c != '0', bit_r);
     }
@@ -61,7 +63,7 @@ void test_bits() {
     {
         Input in(result);
         typename coder_t::Decoder decoder(
-            coder_t::meta().default_config(), in);
+            coder_t::meta().config(options), in);
 
         size_t i = 0;
         while(!decoder.eof()) {
@@ -73,7 +75,7 @@ void test_bits() {
 }
 
 template<typename coder_t>
-void test_int(size_t n = 93) {
+void test_int(const std::string& options = "", size_t n = 93) {
     // Encode Fibonacci series using fixed and dynamic ranges
     MinDistributedRange min_r(1, n); const size_t mod = n / 9;
 
@@ -81,7 +83,7 @@ void test_int(size_t n = 93) {
     {
         Output out(ss);
         typename coder_t::Encoder coder(
-            coder_t::meta().default_config(), out, DUMMY_LITERALS);
+            coder_t::meta().config(options), out, DUMMY_LITERALS);
 
         uint64_t a = 0, b = 1, t;
         for(size_t i = 0; i < n; i++) {
@@ -99,7 +101,7 @@ void test_int(size_t n = 93) {
     {
         Input in(result);
         typename coder_t::Decoder decoder(
-            coder_t::meta().default_config(), in);
+            coder_t::meta().config(options), in);
 
         size_t i = 0;
         uint64_t a = 0, b = 1, t;
@@ -121,7 +123,7 @@ void test_int(size_t n = 93) {
 }
 
 template<typename coder_t>
-void test_str() {
+void test_str(const std::string& options = "") {
     // Generate a fibonacci word and use it as test subject
     const std::string word = FibonacciGenerator::generate(24);
 
@@ -130,7 +132,7 @@ void test_str() {
     {
         Output out(ss);
         typename coder_t::Encoder coder(
-            coder_t::meta().default_config(), out, ViewLiterals(word));
+            coder_t::meta().config(options), out, ViewLiterals(word));
 
         for(char c : word) coder.encode(c, literal_r);
     }
@@ -140,7 +142,7 @@ void test_str() {
     {
         Input in(result);
         typename coder_t::Decoder decoder(
-            coder_t::meta().default_config(), in);
+            coder_t::meta().config(options), in);
 
         size_t i = 0;
         while(!decoder.eof()) {
@@ -152,7 +154,7 @@ void test_str() {
 }
 
 template<typename coder_t>
-void test_mixed() {
+void test_mixed(const std::string& options = "") {
     // Generate a fibonacci word and use it as test subject
     const std::string word = FibonacciGenerator::generate(24);
     Range atoz_r('a', 'z');
@@ -163,7 +165,7 @@ void test_mixed() {
     {
         Output out(ss);
         typename coder_t::Encoder coder(
-            coder_t::meta().default_config(), out, ViewLiterals(word));
+            coder_t::meta().config(options), out, ViewLiterals(word));
 
         for(size_t i = 0; i < word.length(); i++) {
             coder.encode(word[i] == 'a', bit_r);
@@ -179,7 +181,7 @@ void test_mixed() {
     {
         Input in(result);
         typename coder_t::Decoder decoder(
-            coder_t::meta().default_config(), in);
+            coder_t::meta().config(options), in);
 
         size_t i = 0;
         while(!decoder.eof()) {
@@ -219,6 +221,12 @@ TEST(coder, gamma_int) { test_int<EliasDeltaCoder>(); }
 TEST(coder, gamma_str) { test_str<EliasDeltaCoder>(); }
 TEST(coder, gamma_mixed) { test_mixed<EliasDeltaCoder>(); }
 
+TEST(coder, sigma_mt) { test_mt<SigmaCoder>(); }
+TEST(coder, sigma_bits) { test_bits<SigmaCoder>(); }
+TEST(coder, sigma_int) { test_int<SigmaCoder>(); }
+TEST(coder, sigma_str) { test_str<SigmaCoder>(); }
+TEST(coder, sigma_mixed) { test_mixed<SigmaCoder>(); }
+
 TEST(coder, huff_mt) { test_mt<HuffmanCoder>(); }
 TEST(coder, huff_bits) { test_bits<HuffmanCoder>(); }
 TEST(coder, huff_int) { test_int<HuffmanCoder>(); }
@@ -236,3 +244,10 @@ TEST(coder, ternary_bits) { test_bits<TernaryCoder>(); }
 TEST(coder, ternary_int) { test_int<TernaryCoder>(); }
 TEST(coder, ternary_str) { test_str<TernaryCoder>(); }
 TEST(coder, ternary_mixed) { test_mixed<TernaryCoder>(); }
+
+constexpr size_t RICE = 32;
+TEST(coder, rice_mt) { for(size_t i = 1; i < RICE; i++) test_mt<RiceCoder>(to_string(i)); }
+TEST(coder, rice_bits) { for(size_t i = 1; i < RICE; i++) test_bits<RiceCoder>(to_string(i)); }
+TEST(coder, rice_int) { for(size_t i = 1; i < RICE; i++) test_int<RiceCoder>(to_string(i)); }
+TEST(coder, rice_str) { for(size_t i = 1; i < RICE; i++) test_str<RiceCoder>(to_string(i)); }
+TEST(coder, rice_mixed) { for(size_t i = 1; i < RICE; i++) test_mixed<RiceCoder>(to_string(i)); }

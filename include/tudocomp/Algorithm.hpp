@@ -11,21 +11,8 @@ class Algorithm {
 public:
     template<typename T, typename... Args>
     static inline T instance(std::string config_str = "", Args&&... args) {
-        using namespace meta;
-
-        auto meta = T::meta();
-
-        if(config_str.empty()) {
-            // just create an instance with the default config
-            return T(meta.default_config(), args...);
-        } else {
-            // create an instance with an override config
-            return T(meta.default_config(
-                ast::convert<ast::Object>(
-                    ast::Parser::parse(
-                        meta.decl()->name() + paranthesize(config_str)))),
-                std::forward<Args>(args)...);
-        }
+        return T(T::meta().config(config_str),
+            std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>

@@ -9,6 +9,7 @@
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lzss/FactorizationStats.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
 #include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
 
@@ -108,36 +109,27 @@ public:
                     ++i; //advance
                 }
             }
-
-            StatPhase::log("threshold", threshold);
-            StatPhase::log("factors", factors.size());
         });
+
+        // statistics
+        IF_STATS({
+            lzss::FactorizationStats stats(factors, text.size());
+            stats.log();
+        })
 
         // encode
         StatPhase::wrap("Encode", [&]{
-<<<<<<< HEAD
-            typename coder_t::Encoder coder(config().sub_config("coder"),
-                output, lzss::TextLiterals<text_t>(text, factors));
-=======
-            auto coder = lzss_coder_t(env().env_for_option("coder")).encoder(
+            auto coder = lzss_coder_t(config().sub_config("coder")).encoder(
                 output, lzss::UnreplacedLiterals<text_t>(text, factors));
->>>>>>> master
 
             coder.encode_text(text, factors);
         });
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-<<<<<<< HEAD
-        typename coder_t::Decoder decoder(
-            config().sub_config("coder"), input);
-        auto outs = output.as_stream();
-=======
         lzss::DecompBackBuffer decomp;
->>>>>>> master
-
         {
-            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
             decoder.decode(decomp);
         }
 

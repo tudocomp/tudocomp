@@ -584,7 +584,7 @@ void test_binary_out(string_ref in, std::vector<uint64_t> packed_ints_out, bool 
     test::TestOutput o(false);
     {
         std::shared_ptr<BitOStream> bo = std::make_shared<BitOStream>(o);
-        typename Coder::Encoder coder(Coder::meta().default_config(), bo, ViewLiterals(v));
+        typename Coder::Encoder coder(Coder::meta().config(), bo, ViewLiterals(v));
 
         bool was_zero = true;
         for (auto c : v) {

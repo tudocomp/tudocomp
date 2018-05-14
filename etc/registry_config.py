@@ -19,6 +19,7 @@ universal_coders = [
 
 # Entropy coders
 entropy_coders = [
+    AlgorithmConfig(name="SigmaCoder", header="coders/SigmaCoder.hpp"),
     AlgorithmConfig(name="HuffmanCoder", header="coders/HuffmanCoder.hpp"),
 ]
 
@@ -43,7 +44,7 @@ lzss_streaming_coders = [
 ]
 
 lzss_coders = lzss_streaming_coders + [
-    AlgorithmConfig(name="lzss::BufferedLRCoder", header="compressors/lzss/BufferedLRCoder.hpp",
+    AlgorithmConfig(name="lzss::BufferedLeftCoder", header="compressors/lzss/BufferedLeftCoder.hpp",
         sub=[universal_coders,universal_coders,all_coders]),
     AlgorithmConfig(name="lzss::BufferedBidirectionalCoder", header="compressors/lzss/BufferedBidirectionalCoder.hpp",
         sub=[universal_coders,universal_coders,all_coders]),
@@ -153,7 +154,6 @@ lcpcomp_comp = [
     AlgorithmConfig(name="lcpcomp::MaxHeapLeftOnlyStrategy", header="compressors/lcpcomp/compress/MaxHeapLeftOnlyStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::MaxLCPStrategy", header="compressors/lcpcomp/compress/MaxLCPStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::ArraysComp", header="compressors/lcpcomp/compress/ArraysComp.hpp"),
-    AlgorithmConfig(name="lcpcomp::PLCPPeaksStrategy", header="compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp"),
 ]
 
 if config_match("^#define Boost_FOUND 1"): # if Boost is available
@@ -168,6 +168,7 @@ lcpcomp_dec = [
     AlgorithmConfig(name="lcpcomp::DecodeForwardQueueListBuffer", header="compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp"),
     AlgorithmConfig(name="lcpcomp::CompactDec", header="compressors/lcpcomp/decompress/CompactDec.hpp"),
     AlgorithmConfig(name="lcpcomp::MultimapBuffer", header="compressors/lcpcomp/decompress/MultiMapBuffer.hpp"),
+    AlgorithmConfig(name="lcpcomp::LeftDec", header="compressors/lcpcomp/decompress/LeftDec.hpp"),
 ]
 
 # Allowed TextDS instances for lcpcomp (LCP array must be writable!)

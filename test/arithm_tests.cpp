@@ -14,7 +14,7 @@ void test_arithm(const std::string& text) {
     {//write
         tdc::io::Output out(output);
         ArithmeticCoder::Encoder encoder(
-            ArithmeticCoder::meta().default_config(), out, ViewLiterals(text));
+            ArithmeticCoder::meta().config(), out, ViewLiterals(text));
 
         {//now writing
             char c;
@@ -27,7 +27,7 @@ void test_arithm(const std::string& text) {
     {//read
         tdc::io::Input in(output);
         ArithmeticCoder::Decoder decoder(
-            ArithmeticCoder::meta().default_config(), in);
+            ArithmeticCoder::meta().config(), in);
 
         input.clear();
         input.str(std::string{});

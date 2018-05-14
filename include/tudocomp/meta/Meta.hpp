@@ -316,18 +316,23 @@ public:
         return m_decl;
     }
 
-    inline Config default_config(
-        ast::NodePtr<ast::Object> overrides = ast::NodePtr<ast::Object>())
+    inline Config config(
+        ast::NodePtr<ast::Object> config_ast = ast::NodePtr<ast::Object>())
         const {
 
         ast::NodePtr<ast::Object> cfg;
-        if(overrides) {
-            cfg = overrides->inherit(m_sig);
+        if(config_ast) {
+            cfg = config_ast->inherit(m_sig);
         } else {
             cfg = m_sig;
         }
 
         return Config(m_decl, cfg, m_known);
+    }
+
+    inline Config config(const std::string& config_str) const {
+        return config(ast::convert<ast::Object>(
+            ast::Parser::parse(m_decl->name() + paranthesize(config_str))));
     }
 
     inline ast::NodePtr<ast::Object> signature() const {
@@ -391,7 +396,7 @@ using Meta = meta::Meta;
 
 [[deprecated("transitional alias")]]
 inline Config create_env(const Meta& meta) {
-    return meta.default_config();
+    return meta.config();
 }
 
 } //namespace tdc
