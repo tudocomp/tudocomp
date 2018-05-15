@@ -28,8 +28,9 @@ struct FactorizationStats {
             << "factors need to be sorted before they can be analyzed";
 
         const size_t m = factors.size();
-
         num_factors = m;
+
+        if(m == 0) return; // nothing to do...
 
         len_min = factors.shortest_factor();
         len_max = factors.longest_factor();
@@ -117,24 +118,27 @@ struct FactorizationStats {
     /// logs the statistics
     inline void log() const {
         StatPhase::log("num_factors", num_factors);
-        StatPhase::log("num_runs", num_runs);
-        StatPhase::log("num_replaced", num_replaced);
-        StatPhase::log("num_unreplaced", num_unreplaced);
-        StatPhase::log("len_min", len_min);
-        StatPhase::log("len_max", len_max);
-        StatPhase::log("len_avg", len_avg);
-        StatPhase::log("len_med", len_med);
-        StatPhase::log("len_uq", len_uq);
-        StatPhase::log("run_max", run_max);
-        StatPhase::log("run_avg", run_avg);
-        StatPhase::log("run_med", run_med);
-        StatPhase::log("run_uq", run_uq);
-        StatPhase::log("dist_min", dist_min);
-        StatPhase::log("dist_max", dist_max);
-        StatPhase::log("dist_avg", dist_avg);
-        StatPhase::log("dist_med", dist_med);
-        StatPhase::log("dist_uq", dist_uq);
-        StatPhase::log("bidirectioal", bidirectioal);
+
+        if(num_factors > 0) {
+            StatPhase::log("num_runs", num_runs);
+            StatPhase::log("num_replaced", num_replaced);
+            StatPhase::log("num_unreplaced", num_unreplaced);
+            StatPhase::log("len_min", len_min);
+            StatPhase::log("len_max", len_max);
+            StatPhase::log("len_avg", len_avg);
+            StatPhase::log("len_med", len_med);
+            StatPhase::log("len_uq", len_uq);
+            StatPhase::log("run_max", run_max);
+            StatPhase::log("run_avg", run_avg);
+            StatPhase::log("run_med", run_med);
+            StatPhase::log("run_uq", run_uq);
+            StatPhase::log("dist_min", dist_min);
+            StatPhase::log("dist_max", dist_max);
+            StatPhase::log("dist_avg", dist_avg);
+            StatPhase::log("dist_med", dist_med);
+            StatPhase::log("dist_uq", dist_uq);
+            StatPhase::log("bidirectioal", bidirectioal);
+        }
     }
 };
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tudocomp/Range.hpp>
+#include <tudocomp/Literal.hpp>
 #include <tudocomp/Algorithm.hpp>
 
 namespace tdc {

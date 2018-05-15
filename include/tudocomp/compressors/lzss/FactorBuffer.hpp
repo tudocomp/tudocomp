@@ -7,6 +7,7 @@
 #include <tudocomp/compressors/lzss/Factor.hpp>
 
 #include <tudocomp/util.hpp>
+#include <tudocomp/Range.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -70,8 +71,6 @@ public:
 
     template<typename text_t, typename encoder_t>
     inline void encode_text(const text_t& text, encoder_t& encoder) const {
-        if(m_factors.empty()) return; //nothing to do
-
         CHECK(m_sorted)
             << "factors need to be sorted before they can be encoded";
 
