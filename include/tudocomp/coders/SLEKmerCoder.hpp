@@ -6,7 +6,7 @@
 
 namespace tdc {
 
-class SLECoder : public Algorithm {
+class SLEKmerCoder : public Algorithm {
 private:
     typedef size_t sym_t;
     static const size_t max_kmer = sizeof(sym_t) - 1;
@@ -34,12 +34,12 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("coder", "sle", "Static low entropy encoding conforming [Dinklage, 2015]");
-        m.option("kmer").dynamic(3);
+        Meta m("coder", "kmer", "Static low entropy encoding conforming [Dinklage, 2015]");
+        m.option("k").dynamic(3);
         return m;
     }
 
-    SLECoder() = delete;
+    SLEKmerCoder() = delete;
 
     class Encoder : public tdc::Encoder {
     private:
@@ -80,7 +80,7 @@ public:
         inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
             : tdc::Encoder(std::move(env), out, literals) {
 
-            m_k     = this->env().option("kmer").as_integer();
+            m_k     = this->env().option("k").as_integer();
             assert(m_k <= max_kmer);
 
             m_kmer = new uliteral_t[m_k];
@@ -270,41 +270,14 @@ public:
 
         template<typename value_t>
         inline void encode(value_t v, const Range& r) {
-            flush_kmer(); // k-mer interrupted
-            m_out->write_int(v - r.min(), bits_for(r.delta()));
+            flush(); // k-mer interrupted
+            tdc::Encoder::encode(v, r);
         }
 
         template<typename value_t>
-        inline void encode(value_t v, const MinDistributedRange& r) {
-            flush_kmer(); // k-mer interrupted
-
-            // see [Dinklage, 2015]
-            v -= r.min();
-            auto bits = bits_for(r.delta());
-
-            if(bits <= 5) {
-                m_out->write_int(v, bits);
-            } else {
-                if(v < 8u) {
-                    m_out->write_int(0, 2);
-                    m_out->write_int(v, 3);
-                } else if(v < 16u) {
-                    m_out->write_int(1, 2);
-                    m_out->write_int(v - value_t(8), 3);
-                } else if(v < 32u) {
-                    m_out->write_int(2, 2);
-                    m_out->write_int(v - value_t(16), 4);
-                } else {
-                    m_out->write_int(3, 2);
-                    m_out->write_int(v, bits);
-                }
-            }
-        }
-
-        template<typename value_t>
-        inline void encode(value_t v, const BitRange&) {
-            flush_kmer(); // k-mer interrupted
-			m_out->write_bit(v);
+        inline void encode(value_t v, const BitRange& r) {
+            flush(); // k-mer interrupted
+            tdc::Encoder::encode(v, r);
         }
 
         inline void flush() {
@@ -329,7 +302,7 @@ public:
     public:
         inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
             : tdc::Decoder(std::move(env), in) {
-            m_k = this->env().option("kmer").as_integer();
+            m_k = this->env().option("k").as_integer();
 
             m_kmer = new uliteral_t[m_k];
             reset_kmer();
@@ -422,36 +395,14 @@ public:
 		template<typename value_t>
 		inline value_t decode(const Range& r) {
             reset_kmer(); // current k-mer interrupted
-            return m_in->read_int<value_t>(bits_for(r.delta())) + value_t(r.min());
+            return tdc::Decoder::template decode<value_t>(r);
         }
 
 		template<typename value_t>
-		inline value_t decode(const MinDistributedRange& r) {
+		inline value_t decode(const BitRange& r) {
             reset_kmer(); // current k-mer interrupted
-
-            auto bits = bits_for(r.delta());
-            value_t v = 0;
-
-            if(bits <= 5) {
-                v = m_in->read_int<value_t>(bits);
-            } else {
-                auto x = m_in->read_int<uint8_t>(2);
-                switch(x) {
-                    case 0: v = m_in->read_int<value_t>(3); break;
-                    case 1: v = value_t(8) + m_in->read_int<value_t>(3); break;
-                    case 2: v = value_t(16) + m_in->read_int<value_t>(4); break;
-                    case 3: v = m_in->read_int<value_t>(bits); break;
-                }
-            }
-
-            return v + value_t(r.min());
-		}
-
-		template<typename value_t>
-		inline value_t decode(const BitRange&) {
-            reset_kmer(); // current k-mer interrupted
-			return value_t(m_in->read_bit());
-		}
+            return tdc::Decoder::template decode<value_t>(r);
+        }
     };
 };
 

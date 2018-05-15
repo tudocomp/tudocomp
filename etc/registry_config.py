@@ -15,6 +15,7 @@ universal_coders = [
     AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
     AlgorithmConfig(name="EliasGammaCoder", header="coders/EliasGammaCoder.hpp"),
     AlgorithmConfig(name="EliasDeltaCoder", header="coders/EliasDeltaCoder.hpp"),
+    AlgorithmConfig(name="SLEIntCoder", header="coders/SLEIntCoder.hpp"),
 ]
 
 # Entropy coders
@@ -28,7 +29,7 @@ entropy_coders = [
 # the documentation)
 consuming_entropy_coders = [
     AlgorithmConfig(name="ArithmeticCoder", header="coders/ArithmeticCoder.hpp"),
-    AlgorithmConfig(name="SLECoder", header="coders/SLECoder.hpp"),
+    AlgorithmConfig(name="SLEKmerCoder", header="coders/SLEKmerCoder.hpp"),
 ]
 
 # All non-consuming coders

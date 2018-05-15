@@ -13,7 +13,8 @@
 #include <tudocomp/coders/EliasDeltaCoder.hpp>
 #include <tudocomp/coders/EliasGammaCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
-#include <tudocomp/coders/SLECoder.hpp>
+#include <tudocomp/coders/SLEKmerCoder.hpp>
+#include <tudocomp/coders/SLEIntCoder.hpp>
 #include <tudocomp/coders/ArithmeticCoder.hpp>
 #include <tudocomp/coders/TernaryCoder.hpp>
 #include <tudocomp/coders/RiceCoder.hpp>
@@ -193,11 +194,17 @@ TEST(coder, ascii_int) { test_int<ASCIICoder>(); }
 TEST(coder, ascii_str) { test_str<ASCIICoder>(); }
 TEST(coder, ascii_mixed) { test_mixed<ASCIICoder>(); }
 
-TEST(coder, sle_mt) { test_mt<SLECoder>(); }
-TEST(coder, sle_bits) { test_bits<SLECoder>(); }
-TEST(coder, sle_int) { test_int<SLECoder>(); }
-TEST(coder, sle_str) { test_str<SLECoder>(); }
-TEST(coder, sle_mixed) { test_mixed<SLECoder>(); }
+TEST(coder, sle_kmer_mt) { test_mt<SLEKmerCoder>(); }
+TEST(coder, sle_kmer_bits) { test_bits<SLEKmerCoder>(); }
+TEST(coder, sle_kmer_int) { test_int<SLEKmerCoder>(); }
+TEST(coder, sle_kmer_str) { test_str<SLEKmerCoder>(); }
+TEST(coder, sle_kmer_mixed) { test_mixed<SLEKmerCoder>(); }
+
+TEST(coder, sle_int_mt) { test_mt<SLEIntCoder>(); }
+TEST(coder, sle_int_bits) { test_bits<SLEIntCoder>(); }
+TEST(coder, sle_int_int) { test_int<SLEIntCoder>(); }
+TEST(coder, sle_int_str) { test_str<SLEIntCoder>(); }
+TEST(coder, sle_int_mixed) { test_mixed<SLEIntCoder>(); }
 
 TEST(coder, delta_mt) { test_mt<EliasDeltaCoder>(); }
 TEST(coder, delta_bits) { test_bits<EliasDeltaCoder>(); }
