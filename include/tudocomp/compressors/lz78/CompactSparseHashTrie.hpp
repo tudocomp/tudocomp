@@ -40,6 +40,15 @@ struct SparseDisplacement {
     using table_t = compact_sparse_hashtable::compact_sparse_displacement_hashtable_t<dynamic_t>;
 };
 
+struct SparseEliasDisplacement {
+    inline static Meta meta() {
+        Meta m("compact_hash_strategy", "sparse_elias_disp", "Sparse Table with elias gamma coded displacement structure");
+        return m;
+    }
+
+    using table_t = compact_sparse_hashtable::compact_sparse_elias_displacement_hashtable_t<dynamic_t>;
+};
+
 struct PlainDisplacement {
     inline static Meta meta() {
         Meta m("compact_hash_strategy", "plain_disp", "Plain Table with displacement structure");
@@ -47,6 +56,15 @@ struct PlainDisplacement {
     }
 
     using table_t = compact_sparse_hashtable::compact_displacement_hashtable_t<dynamic_t>;
+};
+
+struct PlainEliasDisplacement {
+    inline static Meta meta() {
+        Meta m("compact_hash_strategy", "plain_elias_disp", "Plain Table with elias gamma coded displacement structure");
+        return m;
+    }
+
+    using table_t = compact_sparse_hashtable::compact_elias_displacement_hashtable_t<dynamic_t>;
 };
 
 template<typename compact_hash_strategy_t = Sparse>

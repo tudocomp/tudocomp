@@ -399,6 +399,18 @@ TEST(TrieStructure, CompactSparseHashTriePlainDisplacement) {
 TEST(Trie, CompactSparseHashTriePlainDisplacement) {
     trie_test<CompactSparseHashTrie<PlainDisplacement>>();
 }
+TEST(TrieStructure, CompactSparseHashTrieSparseEliasDisplacement) {
+    trie_test<CompactSparseHashTrie<SparseEliasDisplacement>>(false);
+}
+TEST(Trie, CompactSparseHashTrieSparseEliasDisplacement) {
+    trie_test<CompactSparseHashTrie<SparseEliasDisplacement>>();
+}
+TEST(TrieStructure, CompactSparseHashTriePlainEliasDisplacement) {
+    trie_test<CompactSparseHashTrie<PlainEliasDisplacement>>(false);
+}
+TEST(Trie, CompactSparseHashTriePlainEliasDisplacement) {
+    trie_test<CompactSparseHashTrie<PlainEliasDisplacement>>();
+}
 
 // #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>
 // TEST(TrieStructure, MBonsaiGammaTrie) {

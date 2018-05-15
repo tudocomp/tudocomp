@@ -126,6 +126,8 @@ compact_hashtable_strategies = [
     AlgorithmConfig(name="lz78::Plain", header="compressors/lz78/CompactSparseHashTrie.hpp"),
     AlgorithmConfig(name="lz78::SparseDisplacement", header="compressors/lz78/CompactSparseHashTrie.hpp"),
     AlgorithmConfig(name="lz78::PlainDisplacement", header="compressors/lz78/CompactSparseHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::SparseEliasDisplacement", header="compressors/lz78/CompactSparseHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::PlainEliasDisplacement", header="compressors/lz78/CompactSparseHashTrie.hpp"),
 ]
 
 # LZ78 tries ("lz78trie")
