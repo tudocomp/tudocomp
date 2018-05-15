@@ -40,6 +40,7 @@ all_coders = universal_coders + entropy_coders + consuming_entropy_coders
 
 ##### LZSS Coding Strategies #####
 lzss_streaming_coders = [
+    AlgorithmConfig(name="lzss::DidacticalCoder", header="compressors/lzss/DidacticalCoder.hpp")
     AlgorithmConfig(name="lzss::StreamingCoder", header="compressors/lzss/StreamingCoder.hpp",
         sub=[universal_coders,universal_coders,universal_coders]),
 ]
