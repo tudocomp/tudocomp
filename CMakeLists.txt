@@ -114,6 +114,9 @@ add_subdirectory(src)
 # Unit tests for everything in src
 add_subdirectory(test)
 
+# Examples
+add_subdirectory(examples)
+
 # etc
 add_subdirectory(etc)
 
