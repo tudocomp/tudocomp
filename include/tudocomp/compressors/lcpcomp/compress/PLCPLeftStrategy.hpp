@@ -17,6 +17,8 @@
 namespace tdc {
 namespace lcpcomp {
 
+//TODO: sort multiple times
+
 struct PeakCandidate {
     len_t src;
     len_t dst;
