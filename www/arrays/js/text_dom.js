@@ -35,9 +35,21 @@ function updateHistoryInternal() {
     window.history.replaceState("", "", window.location.pathname + newQuery.toString());
 }
 
+function updateTextAreas() {
+    updateTextArea(inField);
+    updateTextArea(outField);
+}
+
+function updateTextArea(area) {
+    area.value += "\n";
+    area.style.height = ""; 
+    area.style.height = area.scrollHeight + 'px';
+    area.value = area.value.substr(0, area.value.length - 1);
+}
+
 var varText, varIndex, varSA, varISA, varPHI, varLCP, varPLCP, varPSI, varF, varBWT, varLF;
 function updateArrays() {
-    varText = inField.value;
+    varText = inField.value;    
     if(!varText) varText = inField.placeholder;
 
     var varBase = 0;
@@ -70,8 +82,9 @@ function updateArrays() {
         else varDs = arrayToString(varDs, sep, varBase, hex);
         result += padRight(dsName + ":", ' ', 7) + varDs + "\n";
     });
-    
-    outField.value = result;
+    outField.value = result.substr(0, result.length - 1);
+
+    updateTextAreas();
     updateHistory();
 }
 
