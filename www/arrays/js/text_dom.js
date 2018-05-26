@@ -41,10 +41,8 @@ function updateTextAreas() {
 }
 
 function updateTextArea(area) {
-    area.value += "\n";
     area.style.height = ""; 
-    area.style.height = area.scrollHeight + 'px';
-    area.value = area.value.substr(0, area.value.length - 1);
+    area.style.height = (10 + area.scrollHeight) + 'px';
 }
 
 var varText, varIndex, varSA, varISA, varPHI, varLCP, varPLCP, varPSI, varF, varBWT, varLF;
