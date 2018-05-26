@@ -28,7 +28,12 @@ function updateHistoryInternal() {
     var optsStr = options.getEnabled();
  
     var newQuery = $.query.empty();
-    if(inField.value) newQuery = newQuery.set("text", inField.value);
+    var inText;
+    if(options.enabled("whitespace"))
+        inText = decodeWhitespaces(inField.value);
+    else inText = inField.value;
+    
+    if(inText) newQuery = newQuery.set("text", inText);
     if(structsStr != defaultStructures) newQuery = newQuery.set("structures", structsStr);
     if(optsStr != defaultOptions) newQuery = newQuery.set("options", optsStr);
     
