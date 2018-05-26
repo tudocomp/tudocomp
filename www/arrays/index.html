@@ -14,19 +14,16 @@
     <link rel="icon" type="image/png" href="../tudocomp-icon.png">
 
 </head>
-<body class="tdc-body" style="min-height:720px;">
+<body>
     
-
-<!--
-    TODO
--->
-    <div class="tdc-header">
+    <div class="qa-header">
         <h1><i class="fa fa-circle-o-notch"></i> QuickArrays</h1>
     </div>
     
-    <div class="tdc-main qa-main">
+    <div class="qa-main">
         <div class="qa-description">Enter your text below to generate useful data structures!</div>
-        <textarea class="qa-textarea" id="textSource" placeholder="MISSISSIPPI" rows=3></textarea>
+        <textarea class="qa-textarea" id="textSource" placeholder="MISSISSIPPI"></textarea>
+        <div class="qa-description">Choose your data structures (drag and drop or double-click):</div>
         <div class="qa-structures">
             <div id="qa-structures-enabled">
                 <div class="qa-structures-header">Enabled: </div>
@@ -57,10 +54,9 @@
         <textarea class="qa-textarea" style="flex-grow:1;line-height:175%;" id="arraysDestination" readonly></textarea>
     </div>
     
-    <div class="tdc-footer">
-        ALPHA
-    </div>
-    
+</div>
+</body>
+
 <script src="js/jquery-3.3.1.min.js"></script>
 <script src="js/jquery.query-object.js"></script>
 <script src="js/sortable.min.js"></script>
@@ -68,8 +64,7 @@
 <script src="js/text_ds_element.js"></script>
 <script src="js/text_opt_element.js"></script>
 <script src="js/text_dom.js"></script>
-</div>
-</body>
+
 </html>
 
 <html>
