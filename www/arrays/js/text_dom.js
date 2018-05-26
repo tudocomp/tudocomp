@@ -133,5 +133,6 @@ window.onload = function () {
     inField.onpropertychange = updateArrays;
 
     updateArrays();
+    updateHistoryInternal();
     initDragAndDrop(structuresListEn, structuresListDis);
 };
