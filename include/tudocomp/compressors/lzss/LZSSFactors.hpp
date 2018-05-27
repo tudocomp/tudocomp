@@ -56,6 +56,15 @@ public:
         m_shortest_factor = std::min(m_shortest_factor, flen);
         m_longest_factor = std::max(m_longest_factor, flen);
     }
+    
+    inline void push_back(Factor &factor) {
+        m_sorted = m_sorted && (m_factors.empty() || factor.pos >= m_factors.back().pos);
+        m_factors.push_back(factor);
+
+        m_shortest_factor = std::min(m_shortest_factor, factor.len);
+        m_longest_factor = std::max(m_longest_factor, factor.len);
+    }
+    
     inline const_iterator begin() const {
         return m_factors.cbegin();
     }

@@ -17,6 +17,9 @@
 namespace tdc {
 namespace lcpcomp {
 
+using Factor = lzss::Factor;
+using FactorBufferRAM = lzss::FactorBufferRAM;
+
 //TODO: sort multiple times
 
 struct PeakCandidate {
@@ -39,12 +42,40 @@ struct PeakDstGreater {
     }
 };
 
+struct FactorDstLess {
+    bool operator()(const Factor& f1, const Factor& f2) const {
+        return f1.pos < f2.pos;
+    }
+};
+
+
+class LeftRefRAMStrategy {
+    FactorBufferRAM &m_factors;
+    std::vector<Factor> m_buffer;
+
+  public:
+  
+    LeftRefRAMStrategy(FactorBufferRAM &factor_buffer)
+        : m_factors(factor_buffer) {}
+    
+    void add_factor(len_t dest, len_t src, len_t len) {
+        return m_buffer.emplace_back(dest, src, len);
+    }
+    
+    void sort() {
+        std::sort(m_buffer.begin(), m_buffer.end(), FactorDstLess());
+        for(auto factor : m_buffer) m_factors.push_back(factor);
+        m_buffer.clear();
+    }
+};
+
+
 /**
 * The actual PLCPcomp compressor: it searches for peaks, replaces them and adds the replacements to the RefStrategy
 * @tparam RefStrategy container class that stores the factors (source,len). This class has to reconstruct the target.
 */
-template<class factor_buffer_type,class plcp_type,class phi_type>
-void compute_left_references(const size_t n, factor_buffer_type& factor_buffer, plcp_type& pplcp, phi_type& phi, size_t threshold) {
+template<class ref_strategy_type,class plcp_type,class phi_type>
+void compute_left_references(const size_t n, ref_strategy_type& ref_strategy, plcp_type& pplcp, phi_type& phi, size_t threshold) {
 
     typedef boost::heap::pairing_heap<PeakCandidate, boost::heap::compare<PeakLCPLess>> left_ref_heap_type;
     left_ref_heap_type left_ref_heap;
@@ -70,7 +101,7 @@ void compute_left_references(const size_t n, factor_buffer_type& factor_buffer, 
             while(!left_ref_heap.empty()) {
                 const PeakCandidate &top = left_ref_heap.top();
 
-                factor_buffer.emplace_back(top.dst, top.src, top.lcp); // add new factor with position top.dst and length top.lcp
+                ref_strategy.add_factor(top.dst, top.src, top.lcp); // add new factor with position top.dst and length top.lcp
 
                 const len_t top_dst = top.dst; // store top, this is the current position that gets factorized
                 IF_DEBUG(if(first) DCHECK_EQ(top.dst, lastdst); first = false;)
@@ -147,6 +178,8 @@ void compute_left_references(const size_t n, factor_buffer_type& factor_buffer, 
             
             lastdst = 0;
             lastdst_lcp = threshold;
+            
+            ref_strategy.sort();
         }
 
 
@@ -211,18 +244,18 @@ class PLCPLeftStrategy : public Algorithm {
         *  Called by the LCPcompCompressor.
         *  The compressor works in RAM mode, so this method produces the factors in RAM.
         */
-        inline void factorize(text_t& text, size_t threshold, lzss::FactorBufferRAM& refs) {
+        inline void factorize(text_t& text, size_t threshold, FactorBufferRAM& refs) {
             StatPhase phase("Load Index DS");
             text.require(text_t::SA | text_t::PHI);
 
             const auto& sa = text.require_sa();
             const auto& phi = text.require_phi();
+            
+            LeftRefRAMStrategy ref_strat(refs);
 
             LCPForwardIterator pplcp { (construct_plcp_bitvector(sa, text)) };
             phase.split("Compute factors");
-            compute_left_references(text.size(), refs, pplcp, phi, threshold);
-            phase.split("Sort factors");
-            refs.sort();
+            compute_left_references(text.size(), ref_strat, pplcp, phi, threshold);
         }
 
         inline static ds::dsflags_t textds_flags() {
