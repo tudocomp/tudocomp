@@ -6,6 +6,8 @@
 #include <fstream>
 
 #include <boost/heap/pairing_heap.hpp>
+#include <stxxl/bits/containers/vector.h>
+#include <stxxl/bits/algo/sort.h>
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/IntVector.hpp>
@@ -19,6 +21,7 @@ namespace lcpcomp {
 
 using Factor = lzss::Factor;
 using FactorBufferRAM = lzss::FactorBufferRAM;
+using FactorBufferDisk = lzss::FactorBufferDisk;
 
 //TODO: sort multiple times
 
@@ -42,14 +45,15 @@ struct PeakDstGreater {
     }
 };
 
-struct FactorDstLess {
-    bool operator()(const Factor& f1, const Factor& f2) const {
-        return f1.pos < f2.pos;
-    }
-};
-
 
 class LeftRefRAMStrategy {
+    
+    struct FactorDstLess {
+        bool operator()(const Factor& f1, const Factor& f2) const {
+            return f1.pos < f2.pos;
+        }
+    } factorDstLess;
+    
     FactorBufferRAM &m_factors;
     std::vector<Factor> m_buffer;
 
@@ -59,14 +63,70 @@ class LeftRefRAMStrategy {
         : m_factors(factor_buffer) {}
     
     void add_factor(len_t dest, len_t src, len_t len) {
-        return m_buffer.emplace_back(dest, src, len);
+        m_buffer.emplace_back(dest, src, len);
     }
     
     void sort() {
-        std::sort(m_buffer.begin(), m_buffer.end(), FactorDstLess());
+        std::sort(m_buffer.begin(), m_buffer.end(), factorDstLess);
         for(auto factor : m_buffer) m_factors.push_back(factor);
         m_buffer.clear();
     }
+};
+
+class LeftRefDiskStrategy {
+  private:
+    
+    typedef FactorBufferDisk::backing_vector_type vector_type;
+    typedef vector_type::bufwriter_type writer_type;
+    typedef vector_type::bufreader_type reader_type;
+  
+    len_t m_bytes_mem;
+    len_t m_max_dest;
+    
+    struct FactorDstLess {
+        Factor min_factor = Factor(0, 0, 0);
+        Factor max_factor;
+        
+        FactorDstLess(len_t max_dest) : max_factor(max_dest, 0, 0) {}
+        
+        bool operator() (const Factor &f1, const Factor &f2) const {
+            return f1.pos < f2.pos;
+        }
+        Factor min_value() const { return min_factor; };
+        Factor max_value() const { return max_factor; };
+    };
+
+    vector_type m_buffer;
+    writer_type * m_buffer_writer;
+
+    FactorBufferDisk &m_factor_buffer;
+
+  public:
+  
+    ~LeftRefDiskStrategy() { delete m_buffer_writer; }
+    LeftRefDiskStrategy(FactorBufferDisk &factor_buffer, len_t max_dest, len_t bytes_mem = 512 * 1024 * 1024)
+        : m_factor_buffer(factor_buffer) {
+        m_buffer_writer = new writer_type(m_buffer);
+        m_max_dest = max_dest + 1;
+        m_bytes_mem = bytes_mem;
+    }
+
+    void add_factor(len_t dest, len_t src, len_t len) {
+        *m_buffer_writer << Factor(dest, src, len);
+    }
+    
+    void sort() {
+        delete m_buffer_writer;
+        stxxl::sort(m_buffer.begin(), m_buffer.end(), FactorDstLess(m_max_dest), m_bytes_mem);
+        
+        writer_type writer(m_factor_buffer.factors);        
+        for (reader_type reader(m_buffer); !reader.empty(); ++reader)
+            writer << *reader;
+        
+        m_buffer.clear();
+        m_buffer_writer = new writer_type(m_buffer);
+    }
+
 };
 
 
