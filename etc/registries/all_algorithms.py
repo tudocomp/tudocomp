@@ -274,4 +274,3 @@ tdc.generators = [
     AlgorithmConfig(name="RandomUniformGenerator", header="generators/RandomUniformGenerator.hpp"),
     AlgorithmConfig(name="RunRichGenerator", header="generators/RunRichGenerator.hpp"),
 ]
-
