@@ -28,7 +28,12 @@ function updateHistoryInternal() {
     var optsStr = options.getEnabled();
  
     var newQuery = $.query.empty();
-    if(inField.value) newQuery = newQuery.set("text", inField.value);
+    var inText;
+    if(options.enabled("whitespace"))
+        inText = decodeWhitespaces(inField.value);
+    else inText = inField.value;
+    
+    if(inText) newQuery = newQuery.set("text", inText);
     if(structsStr != defaultStructures) newQuery = newQuery.set("structures", structsStr);
     if(optsStr != defaultOptions) newQuery = newQuery.set("options", optsStr);
     
@@ -45,9 +50,43 @@ function updateTextArea(area) {
     area.style.height = (10 + area.scrollHeight) + 'px';
 }
 
+function encodeWhitespaces(string) {
+    return string.replace(/\n/g, '\u21b5').replace(/\s/g, '\u23b5');
+}
+
+function decodeWhitespaces(string) {
+    return string.replace(/\u21b5/g, '\n').replace(/\u23b5/g, ' ');
+}
+
+var wasWhitespace = false;
+function updateWhitespaces() {
+    if(options.enabled("whitespace")) {
+        var selStart = inField.selectionStart;
+        var selEnd = inField.selectionEnd;
+        inField.value = encodeWhitespaces(inField.value);
+        inField.selectionStart = selStart;
+        inField.selectionEnd = selEnd;
+        wasWhitespace = true;
+    }
+    else if(wasWhitespace) {
+        var selStart = inField.selectionStart;
+        var selEnd = inField.selectionEnd;
+        inField.value = decodeWhitespaces(inField.value);
+        inField.selectionStart = selStart;
+        inField.selectionEnd = selEnd;
+        wasWhitespace = false;
+    }
+}
+
 var varText, varIndex, varSA, varISA, varPHI, varLCP, varPLCP, varPSI, varF, varBWT, varLF;
 function updateArrays() {
-    varText = inField.value;    
+    
+    updateWhitespaces();
+    if(options.enabled("whitespace"))
+        varText = decodeWhitespaces(inField.value);
+    else 
+        varText = inField.value;
+
     if(!varText) varText = inField.placeholder;
 
     var varBase = 0;
@@ -70,14 +109,16 @@ function updateArrays() {
     var sep = "";
     if(options.enabled("comma")) sep += ",";
     if(options.enabled("space")) sep += " ";
-    var hex = options.enabled("hex");
     
     var result = "";
     dataStructures.forEachEnabled(function(dsName) {
         var varDs = window["var" + dsName];
-        if(dataStructures.isString(dsName)) 
-            varDs = stringToString(varDs, sep, varBase, hex);
-        else varDs = arrayToString(varDs, sep, varBase, hex);
+        if(dataStructures.isString(dsName)) {
+            if(options.enabled("whitespace"))
+                varDs = encodeWhitespaces(varDs);
+            varDs = stringToString(varDs, sep, varBase);
+        }
+        else varDs = arrayToString(varDs, sep, varBase);
         result += padRight(dsName + ":", ' ', 7) + varDs + "\n";
     });
     outField.value = result.substr(0, result.length - 1);

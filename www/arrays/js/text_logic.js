@@ -100,20 +100,18 @@ function padLeft(str, char, len) {
     return str;
 }
 
-function arrayToString(array, sep = " ", base = 0, hex = false) {
-    hex = hex ? 16 : 10;
-    var width = ("" + (array.length + base - 1).toString(hex)).length
+function arrayToString(array, sep = " ", base = 0) {
+    var width = ("" + (array.length + base - 1).toString()).length
     var result = "";
     for(var i = 0; i < array.length - 1; i++) 
-        result += padLeft("" + array[i].toString(hex).toUpperCase(), ' ', width) + sep;
-    result += padLeft("" + array[array.length - 1].toString(hex).toUpperCase(), ' ', width);
+        result += padLeft("" + array[i], ' ', width) + sep;
+    result += padLeft("" + array[array.length - 1], ' ', width);
     return result;
 }
 
-function stringToString(string, sep = " ", base = 0, hex = false) {
-    hex = hex ? 16 : 10;
+function stringToString(string, sep = " ", base = 0) {
     string = string.replace("\0", "$");
-    var width = ("" + (string.length + base - 1).toString(hex)).length
+    var width = ("" + (string.length + base - 1).toString()).length
     var result = "";
     for(var i = 0; i < string.length - 1; i++) 
         result += padLeft("" + string[i], ' ', width) + sep;
