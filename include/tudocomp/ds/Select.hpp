@@ -133,7 +133,11 @@ public:
             } else {
                 // only get amount of flag bits up to end of bit vector
                 const size_t m = n % data_w;
-                r = basic_rank(v, 0, m-1);
+                if(m > 0) {
+                    r = basic_rank(v, 0, m-1);
+                } else {
+                    r = basic_rank(v); // full element, but last one
+                }
             }
 
             m_max += r;
