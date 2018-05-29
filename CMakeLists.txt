@@ -106,7 +106,7 @@ include_directories(include)
 if(DEFINED TDC_REGISTRY)
     message("[CAUTION] Using custom registry config: ${TDC_REGISTRY}")
 else()
-    set(TDC_REGISTRY ${CMAKE_SOURCE_DIR}/etc/registry_config.py)
+    set(TDC_REGISTRY ${CMAKE_SOURCE_DIR}/etc/registries/all_algorithms.py)
 endif(DEFINED TDC_REGISTRY)
 
 add_subdirectory(src)
