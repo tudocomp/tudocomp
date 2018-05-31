@@ -26,6 +26,7 @@
 #include <tudocomp/OptionValue.hpp>
 #include <tudocomp/pre_header/Registry.hpp>
 #include <tudocomp/RegistryRegistry.hpp>
+#include <tudocomp/Registry.hpp>
 
 namespace tdc {
 

@@ -392,7 +392,9 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decoded_buffer);
 
-            auto compressor = create_algo_with_registry<C>(options, m_registry);
+            RegistryRegistry reg;
+            reg.register_registry(m_registry);
+            auto compressor = create_algo_with_registry<C, Compressor>(options, reg);
 
             if (C::meta().textds_flags().has_restrictions()) {
                 decoded_out = Output(decoded_out, C::meta().textds_flags());
@@ -413,7 +415,9 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decompressed_bytes);
 
-            auto compressor = create_algo_with_registry<C>(options, m_registry);
+            RegistryRegistry reg;
+            reg.register_registry(m_registry);
+            auto compressor = create_algo_with_registry<C, Compressor>(options, reg);
 
             if (C::meta().textds_flags().has_restrictions()) {
                 decoded_out = Output(decoded_out, C::meta().textds_flags());
@@ -447,7 +451,9 @@ public:
             Input text_in = Input::from_memory(text);
             Output encoded_out = Output::from_memory(encoded_buffer);
 
-            auto compressor = create_algo_with_registry<C>(m_options, m_registry);
+            RegistryRegistry reg;
+            reg.register_registry(m_registry);
+            auto compressor = create_algo_with_registry<C, Compressor>(m_options, reg);
 
             if (C::meta().textds_flags().has_restrictions()) {
                 text_in = Input(text_in, C::meta().textds_flags());
