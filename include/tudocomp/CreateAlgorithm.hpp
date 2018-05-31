@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tudocomp/Env.hpp>
-#include <tudocomp/Megistry.hpp>
+#include <tudocomp/Registry.hpp>
 #include <tudocomp/RegistryOf.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/Compressor.hpp>
@@ -10,7 +10,7 @@ namespace tdc {
 
 template<typename T, typename registry_root_t = Compressor>
 class Builder {
-    Megistry m_registry;
+    Registry m_registry;
     std::string m_options;
 public:
     inline Builder() {}
@@ -23,7 +23,7 @@ public:
 
 
     /// Sets a registry to be used for dynamic type lookups during instantiation.
-    inline Builder& registry(const Megistry& reg) {
+    inline Builder& registry(const Registry& reg) {
         m_registry = reg;
         return *this;
     }
@@ -88,7 +88,7 @@ Builder<T, registry_root_t> builder() {
 /// \cond INTERNAL
 template<typename T, typename registry_root_t, typename... Args>
 T create_algo_with_registry(const std::string& options,
-                            const Megistry& registry,
+                            const Registry& registry,
                             Args&&... args) {
     return builder<T, registry_root_t>()
         .registry(registry)
@@ -110,7 +110,7 @@ T create_algo_with_registry(const std::string& options,
 /// \return The created algorithm instance.
 template<class T, class... Args>
 T create_algo(const std::string& options, Args&&... args) {
-    Megistry registry;
+    Registry registry;
 
     return create_algo_with_registry<T, Compressor, Args...>(options, registry, std::forward<Args>(args)...);
 }
@@ -157,7 +157,7 @@ inline Env create_env(Meta&& meta, const std::string& options = "") {
         std::move(fixed_static_args)
     );
 
-    Megistry regregs;
+    Registry regregs;
 
     auto evaluated_options = evald_algo.as_algorithm();
     auto env_root = EnvRoot(regregs, std::move(evaluated_options));

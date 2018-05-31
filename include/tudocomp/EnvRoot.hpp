@@ -25,7 +25,7 @@
 #include <tudocomp/def.hpp>
 #include <tudocomp/OptionValue.hpp>
 #include <tudocomp/pre_header/RegistryOf.hpp>
-#include <tudocomp/Megistry.hpp>
+#include <tudocomp/Registry.hpp>
 
 namespace tdc {
 
@@ -33,14 +33,14 @@ class EnvRoot {
 private:
     struct this_t {
         std::unique_ptr<AlgorithmValue> m_algo_value;
-        Megistry m_registries;
+        Registry m_registries;
     };
     std::shared_ptr<this_t> m_this;
 
 public:
     inline EnvRoot(): m_this(std::make_shared<this_t>()) {}
 
-    inline EnvRoot(Megistry const& regreg, AlgorithmValue&& algo_value):
+    inline EnvRoot(Registry const& regreg, AlgorithmValue&& algo_value):
         m_this(std::make_shared<this_t>(this_t {
             std::make_unique<AlgorithmValue>(std::move(algo_value)),
             std::move(regreg),

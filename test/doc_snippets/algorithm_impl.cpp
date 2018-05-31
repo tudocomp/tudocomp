@@ -13,7 +13,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/RegistryOf.hpp>
-#include <tudocomp/Megistry.hpp>
+#include <tudocomp/Registry.hpp>
 
 using namespace tdc;
 
@@ -117,7 +117,7 @@ TEST(doc_algorithm_impl, algo_instantiate) {
 
 TEST(doc_algorithm_impl, algo_registry) {
     // Create a registry
-    Megistry registry;
+    Registry registry;
 
     // Access the sub registry for algorithms of type "example"
     auto& my_algo_registry = registry.registry<MyAlgorithmBase>();

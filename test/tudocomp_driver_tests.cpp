@@ -128,7 +128,7 @@ TEST(RegistryOf, decl) {
 TEST(RegistryOf, lookup) {
     using namespace tdc_algorithms;
 
-    Megistry reg;
+    Registry reg;
     reg.register_registry(COMPRESSOR_REGISTRY);
     reg.register_registry(GENERATOR_REGISTRY);
 
@@ -191,7 +191,7 @@ TEST(RegistryOf, dynamic_options) {
 
     r.register_algorithm<MyCompressor>();
 
-    Megistry reg;
+    Registry reg;
     reg.register_registry(r);
 
     auto av = r.parse_algorithm_id("foo(x, \"qwerty\")");
