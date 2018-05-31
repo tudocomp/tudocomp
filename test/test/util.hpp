@@ -392,7 +392,7 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decoded_buffer);
 
-            RegistryRegistry reg;
+            Megistry reg;
             reg.register_registry(m_registry);
             auto compressor = create_algo_with_registry<C, Compressor>(options, reg);
 
@@ -415,7 +415,7 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decompressed_bytes);
 
-            RegistryRegistry reg;
+            Megistry reg;
             reg.register_registry(m_registry);
             auto compressor = create_algo_with_registry<C, Compressor>(options, reg);
 
@@ -451,7 +451,7 @@ public:
             Input text_in = Input::from_memory(text);
             Output encoded_out = Output::from_memory(encoded_buffer);
 
-            RegistryRegistry reg;
+            Megistry reg;
             reg.register_registry(m_registry);
             auto compressor = create_algo_with_registry<C, Compressor>(m_options, reg);
 

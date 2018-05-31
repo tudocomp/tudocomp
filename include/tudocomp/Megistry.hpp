@@ -27,13 +27,13 @@
 
 namespace tdc {
 
-class RegistryRegistry {
+class Megistry {
 private:
     using map_t = std::unordered_map<std::string, std::unique_ptr<VirtualRegistry>>;
     std::shared_ptr<map_t> m_registries;
 
 public:
-    inline RegistryRegistry(): m_registries(std::make_shared<map_t>()) {}
+    inline Megistry(): m_registries(std::make_shared<map_t>()) {}
 
     inline AlgorithmValue& algo_value();
     template<typename T>
