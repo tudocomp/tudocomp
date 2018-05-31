@@ -86,12 +86,6 @@ Builder<T, registry_root_t> builder() {
 }
 
 /// \cond INTERNAL
-inline std::unique_ptr<Compressor> create_algo_with_registry_dynamic(
-        const Registry<Compressor>& registry,
-        const AlgorithmValue& algorithm_value) {
-    return registry.select_algorithm(algorithm_value);
-}
-
 template<typename T, typename registry_root_t, typename... Args>
 T create_algo_with_registry(const std::string& options,
                             const Registry<registry_root_t>& registry,

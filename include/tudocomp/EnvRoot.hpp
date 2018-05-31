@@ -28,7 +28,7 @@
 
 namespace tdc {
 
-class EnvRoot {
+class EnvRoot: std::enable_shared_from_this<EnvRoot> {
 private:
     std::unique_ptr<AlgorithmValue> m_algo_value;
     std::unordered_map<std::string, std::unique_ptr<VirtualRegistry>> m_registries;
@@ -61,6 +61,14 @@ public:
 
         return m_registries.at(a)->template downcast<algorithm_if_t>();
     }
+
+    /// \cond INTERNAL
+    template<typename algorithm_if_t>
+    inline std::unique_ptr<algorithm_if_t> select_algorithm(AlgorithmValue const& algo) {
+        std::shared_ptr<EnvRoot> shared = shared_from_this();
+        return registry<algorithm_if_t>().select_algorithm(shared, algo);
+    }
+    /// \endcond
 };
 
 }

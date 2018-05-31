@@ -42,9 +42,7 @@ public:
 
             DLOG(INFO) << "dynamic creation of " << av.name() << "\n";
 
-            auto const& registry = env().root()->registry<Compressor>();
-
-            auto compressor = create_algo_with_registry_dynamic(registry, av);
+            auto compressor = env().root()->select_algorithm<Compressor>(av);
 
             f(i, o, *compressor, textds_flags);
         };

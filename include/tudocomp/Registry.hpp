@@ -201,16 +201,12 @@ inline std::string Registry<algorithm_t>::generate_doc_string(const std::string&
 }
 
 template<typename algorithm_t>
-inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(const AlgorithmValue& algo) const {
+inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(std::shared_ptr<EnvRoot> env_root, AlgorithmValue const& algo) const {
     auto& static_only_evald_algo = algo.static_selection();
 
     if (m_data->m_registered.count(static_only_evald_algo) > 0) {
-        auto env_root = std::make_shared<EnvRoot>(AlgorithmValue(algo));
-        env_root->register_registry(*this);
-
         auto& constructor = m_data->m_registered[static_only_evald_algo];
-
-        return constructor(Env(env_root, env_root->algo_value()));
+        return constructor(Env(env_root, algo));
     } else {
         throw std::runtime_error("No implementation found for " + std::string(root_type()) + " "
         + static_only_evald_algo.to_string()
@@ -229,13 +225,6 @@ inline AlgorithmValue Registry<algorithm_t>::parse_algorithm_id(
                                     m_data->m_algorithms);
 
     return std::move(options).to_algorithm();
-}
-
-template<typename algorithm_t>
-inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(
-    const std::string& options) const {
-
-    return select_algorithm(parse_algorithm_id(options));
 }
 
 }

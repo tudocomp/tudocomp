@@ -133,7 +133,12 @@ int main(int argc, char** argv) {
 
     if(!options.stdin) {
         if(!options.generator.empty()) {
-            generator = generator_registry.select_algorithm(options.generator);
+            auto av = generator_registry.parse_algorithm_id(options.generator);
+            auto algorithm_env = std::make_shared<EnvRoot>(AlgorithmValue(av));
+            algorithm_env->register_registry(compressor_registry);
+            algorithm_env->register_registry(generator_registry);
+
+            generator = algorithm_env->select_algorithm<Generator>(av);
         } else if(!options.remaining.empty()) {
             // file
             file = options.remaining[0];
@@ -213,10 +218,12 @@ int main(int argc, char** argv) {
 
         auto av = compressor_registry.parse_algorithm_id(id_string);
         auto input_restrictions = av.textds_flags();
-        auto compressor = compressor_registry.select_algorithm(av);
-        auto algorithm_env = compressor->env().root();
+
+        auto algorithm_env = std::make_shared<EnvRoot>(AlgorithmValue(av));
         algorithm_env->register_registry(compressor_registry);
         algorithm_env->register_registry(generator_registry);
+
+        auto compressor = algorithm_env->select_algorithm<Compressor>(av);
 
         selection = Selection {
             std::move(id_string),
@@ -320,11 +327,13 @@ int main(int argc, char** argv) {
 
                 auto id_string = std::move(algorithm_header);
                 auto av = compressor_registry.parse_algorithm_id(id_string);
-                auto compressor = compressor_registry.select_algorithm(av);
                 auto input_restrictions = av.textds_flags();
-                auto algorithm_env = compressor->env().root();
+
+                auto algorithm_env = std::make_shared<EnvRoot>(AlgorithmValue(av));
                 algorithm_env->register_registry(compressor_registry);
                 algorithm_env->register_registry(generator_registry);
+
+                auto compressor = algorithm_env->select_algorithm<Compressor>(av);
 
                 selection = Selection {
                     std::move(id_string),
