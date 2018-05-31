@@ -24,7 +24,7 @@
 
 #include <tudocomp/def.hpp>
 #include <tudocomp/OptionValue.hpp>
-#include <tudocomp/pre_header/Registry.hpp>
+#include <tudocomp/pre_header/RegistryOf.hpp>
 #include <tudocomp/Megistry.hpp>
 
 namespace tdc {
@@ -51,7 +51,7 @@ public:
     }
 
     template<typename algorithm_if_t>
-    inline Registry<algorithm_if_t> const& registry() const {
+    inline RegistryOf<algorithm_if_t> const& registry() const {
         return m_this->m_registries.registry<algorithm_if_t>();
     }
 

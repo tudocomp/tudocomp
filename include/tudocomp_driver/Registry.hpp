@@ -25,7 +25,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
-#include <tudocomp/Registry.hpp>
+#include <tudocomp/RegistryOf.hpp>
 
 /// \cond INTERNAL
 /// \brief Contains the executable driver application.
@@ -43,11 +43,11 @@ namespace tdc_algorithms {
 
 using namespace tdc;
 
-extern Registry<Compressor> COMPRESSOR_REGISTRY;
-extern Registry<Generator>  GENERATOR_REGISTRY;
+extern RegistryOf<Compressor> COMPRESSOR_REGISTRY;
+extern RegistryOf<Generator>  GENERATOR_REGISTRY;
 
-void register_compressors(Registry<Compressor>&);
-void register_generators(Registry<Generator>&);
+void register_compressors(RegistryOf<Compressor>&);
+void register_generators(RegistryOf<Generator>&);
 
 /// \endcond
 

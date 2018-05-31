@@ -48,7 +48,7 @@ TEST(TudocompDriver, algorithm_header) {
 
 }
 
-TEST(Registry, smoketest) {
+TEST(RegistryOf, smoketest) {
     using namespace tdc_algorithms;
     using ast::Value;
     using ast::Arg;
@@ -91,7 +91,7 @@ TEST(Registry, smoketest) {
         ASSERT_EQ(b[4].value().invokation_name(), "q");
 }
 
-TEST(Registry, decl) {
+TEST(RegistryOf, decl) {
     using namespace tdc_algorithms;
     decl::Algorithm b {
         "foo",
@@ -125,15 +125,15 @@ TEST(Registry, decl) {
 
 }
 
-TEST(Registry, lookup) {
+TEST(RegistryOf, lookup) {
     using namespace tdc_algorithms;
 
     Megistry reg;
     reg.register_registry(COMPRESSOR_REGISTRY);
     reg.register_registry(GENERATOR_REGISTRY);
 
-    Registry<Compressor>& cr = reg.registry<Compressor>();
-    Registry<Generator>& gr = reg.registry<Generator>();
+    RegistryOf<Compressor>& cr = reg.registry<Compressor>();
+    RegistryOf<Generator>& gr = reg.registry<Generator>();
 
     auto av = cr.parse_algorithm_id("rle");
     EnvRoot env1(reg, AlgorithmValue(av));
@@ -144,10 +144,10 @@ TEST(Registry, lookup) {
     auto g = gr.select_algorithm(env2, av2);
 }
 
-TEST(Registry, dynamic_options) {
+TEST(RegistryOf, dynamic_options) {
     using namespace tdc_algorithms;
 
-    Registry<Compressor>& r = COMPRESSOR_REGISTRY;
+    RegistryOf<Compressor>& r = COMPRESSOR_REGISTRY;
 
     struct MySub {
         inline static Meta meta() {
@@ -208,7 +208,7 @@ TEST(Registry, dynamic_options) {
 TEST(TudocompDriver, all_compressors_defined) {
     using namespace tdc_algorithms;
 
-    Registry<Compressor>& r = COMPRESSOR_REGISTRY;
+    RegistryOf<Compressor>& r = COMPRESSOR_REGISTRY;
     auto s = r.check_for_undefined_algorithms();
     bool has_undefined_compressors = s.size() > 0;
     if (has_undefined_compressors) {
@@ -220,7 +220,7 @@ TEST(TudocompDriver, all_compressors_defined) {
     }
 }
 
-TEST(Registry, chain_sugar) {
+TEST(RegistryOf, chain_sugar) {
     using namespace tdc_algorithms;
     using ast::Value;
     using ast::Arg;

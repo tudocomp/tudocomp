@@ -24,7 +24,7 @@
 
 #include <tudocomp/def.hpp>
 #include <tudocomp/OptionValue.hpp>
-#include <tudocomp/pre_header/Registry.hpp>
+#include <tudocomp/pre_header/RegistryOf.hpp>
 #include <tudocomp/EnvRoot.hpp>
 
 namespace tdc {

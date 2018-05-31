@@ -3,7 +3,7 @@
 #include <functional>
 #include <memory>
 
-#include <tudocomp/pre_header/Registry.hpp>
+#include <tudocomp/pre_header/RegistryOf.hpp>
 #include <tudocomp/pre_header/Env.hpp>
 #include <tudocomp/Algorithm.hpp>
 

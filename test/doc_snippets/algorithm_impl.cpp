@@ -12,12 +12,12 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
-#include <tudocomp/Registry.hpp>
+#include <tudocomp/RegistryOf.hpp>
 #include <tudocomp/Megistry.hpp>
 
 using namespace tdc;
 
-// Base class, merely required for the Registry example
+// Base class, merely required for the RegistryOf example
 class MyAlgorithmBase : public Algorithm {
 public:
     using Algorithm::Algorithm; // inherit the default constructor

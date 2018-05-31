@@ -2,7 +2,7 @@
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/Megistry.hpp>
-#include <tudocomp/Registry.hpp>
+#include <tudocomp/RegistryOf.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/Compressor.hpp>
 

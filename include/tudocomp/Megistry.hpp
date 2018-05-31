@@ -23,13 +23,13 @@
 #include <glog/logging.h>
 
 #include <tudocomp/def.hpp>
-#include <tudocomp/pre_header/Registry.hpp>
+#include <tudocomp/pre_header/RegistryOf.hpp>
 
 namespace tdc {
 
 class Megistry {
 private:
-    using map_t = std::unordered_map<std::string, std::unique_ptr<VirtualRegistry>>;
+    using map_t = std::unordered_map<std::string, std::unique_ptr<RegistryOfVirtual>>;
     std::shared_ptr<map_t> m_registries;
 
 public:
@@ -37,21 +37,21 @@ public:
 
     inline AlgorithmValue& algo_value();
     template<typename T>
-    inline void register_registry(Registry<T> const& registry) {
+    inline void register_registry(RegistryOf<T> const& registry) {
         m_registries->insert(std::make_pair(
             std::string(registry.root_type()),
-            std::make_unique<Registry<T>>(registry)
+            std::make_unique<RegistryOf<T>>(registry)
         ));
     }
 
     template<typename algorithm_if_t>
-    inline Registry<algorithm_if_t> const& registry() const {
+    inline RegistryOf<algorithm_if_t> const& registry() const {
         auto a = algorithm_if_t::meta_type();
 
         if (m_registries->count(a) == 0) {
             m_registries->insert(std::make_pair(
                 std::string(a),
-                std::make_unique<Registry<algorithm_if_t>>()
+                std::make_unique<RegistryOf<algorithm_if_t>>()
             ));
         }
 
@@ -59,13 +59,13 @@ public:
     }
 
     template<typename algorithm_if_t>
-    inline Registry<algorithm_if_t>& registry() {
+    inline RegistryOf<algorithm_if_t>& registry() {
         auto a = algorithm_if_t::meta_type();
 
         if (m_registries->count(a) == 0) {
             m_registries->insert(std::make_pair(
                 std::string(a),
-                std::make_unique<Registry<algorithm_if_t>>()
+                std::make_unique<RegistryOf<algorithm_if_t>>()
             ));
         }
 

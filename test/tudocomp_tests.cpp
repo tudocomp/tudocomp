@@ -1342,7 +1342,7 @@ TEST(Escaping, option_value_direct) {
 }
 
 TEST(Escaping, option_value_indirect) {
-    Registry<Compressor> r;
+    RegistryOf<Compressor> r;
     r.register_algorithm<EscapingComp>();
     auto av = r.parse_algorithm_id("esc_test");
 
@@ -1356,7 +1356,7 @@ TEST(Escaping, option_value_indirect) {
 }
 
 TEST(Escaping, option_value_indirect_copy) {
-    Registry<Compressor> r;
+    RegistryOf<Compressor> r;
     r.register_algorithm<EscapingComp>();
     AlgorithmValue av = r.parse_algorithm_id("esc_test");
     AlgorithmValue av2("", {}, nullptr, (ds::InputRestrictionsAndFlags {
@@ -1442,7 +1442,7 @@ struct KeywordlessEvalOrderBug: public Compressor {
 
 TEST(KeywordlessEvalOrder, test) {
     auto x1 = create_algo<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
-    Registry<Compressor> r;
+    RegistryOf<Compressor> r;
     r.register_algorithm<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
     r.parse_algorithm_id("eval_order_bug(sub1 = sub1(x = 'x'), dyn = 'foobar', sub2 = sub2(y = 'y'))");
     r.parse_algorithm_id("eval_order_bug(sub1 = sub1, dyn = 'foobar', sub2 = sub2)");

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tudocomp/pre_header/Registry.hpp>
+#include <tudocomp/pre_header/RegistryOf.hpp>
 #include <tudocomp/pre_header/Env.hpp>
 #include <tudocomp/EnvRoot.hpp>
 
@@ -9,7 +9,7 @@ namespace tdc {
 
 template<typename algorithm_t>
 template<typename T>
-inline void Registry<algorithm_t>::register_algorithm() {
+inline void RegistryOf<algorithm_t>::register_algorithm() {
     auto meta = T::meta();
 
     ast::Value s = std::move(meta).build_static_args_ast_value();
@@ -26,17 +26,17 @@ inline void Registry<algorithm_t>::register_algorithm() {
 }
 
 template<typename algorithm_t>
-inline eval::AlgorithmTypes& Registry<algorithm_t>::algorithm_map() {
+inline eval::AlgorithmTypes& RegistryOf<algorithm_t>::algorithm_map() {
     return m_data->m_algorithms;
 }
 
 template<typename algorithm_t>
-inline const eval::AlgorithmTypes& Registry<algorithm_t>::algorithm_map() const {
+inline const eval::AlgorithmTypes& RegistryOf<algorithm_t>::algorithm_map() const {
     return m_data->m_algorithms;
 }
 
 template<typename algorithm_t>
-inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_with_static_internal(
+inline std::vector<pattern::Algorithm> RegistryOf<algorithm_t>::all_algorithms_with_static_internal(
     std::vector<AlreadySeenPair>& already_seen,
     View type
 ) const {
@@ -123,7 +123,7 @@ inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_wit
 }
 
 template<typename algorithm_t>
-inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_with_static(View type) const {
+inline std::vector<pattern::Algorithm> RegistryOf<algorithm_t>::all_algorithms_with_static(View type) const {
     std::vector<pattern::Algorithm> filtered_r;
 
     std::vector<AlreadySeenPair> already_seen;
@@ -137,7 +137,7 @@ inline std::vector<pattern::Algorithm> Registry<algorithm_t>::all_algorithms_wit
 }
 
 template<typename algorithm_t>
-inline std::vector<pattern::Algorithm> Registry<algorithm_t>::check_for_undefined_algorithms() {
+inline std::vector<pattern::Algorithm> RegistryOf<algorithm_t>::check_for_undefined_algorithms() {
     std::vector<pattern::Algorithm> r;
     for (auto& s : all_algorithms_with_static(root_type())) {
         if (m_data->m_registered.count(s) == 0) {
@@ -148,14 +148,14 @@ inline std::vector<pattern::Algorithm> Registry<algorithm_t>::check_for_undefine
 }
 
 template<typename algorithm_t>
-inline Registry<algorithm_t> Registry<algorithm_t>::with_all_from(std::function<void(Registry&)> f) {
-    Registry r;
+inline RegistryOf<algorithm_t> RegistryOf<algorithm_t>::with_all_from(std::function<void(RegistryOf&)> f) {
+    RegistryOf r;
     f(r);
     return r;
 }
 
 template<typename algorithm_t>
-inline std::string Registry<algorithm_t>::generate_doc_string(const std::string& title) const {
+inline std::string RegistryOf<algorithm_t>::generate_doc_string(const std::string& title) const {
     auto print = [](std::vector<decl::Algorithm>& x, size_t iden) {
         std::vector<std::string> cells;
 
@@ -202,7 +202,7 @@ inline std::string Registry<algorithm_t>::generate_doc_string(const std::string&
 }
 
 template<typename algorithm_t>
-inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(EnvRoot env_root, AlgorithmValue const& algo) const {
+inline std::unique_ptr<algorithm_t> RegistryOf<algorithm_t>::select_algorithm(EnvRoot env_root, AlgorithmValue const& algo) const {
     auto& static_only_evald_algo = algo.static_selection();
 
     if (m_data->m_registered.count(static_only_evald_algo) > 0) {
@@ -216,7 +216,7 @@ inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(EnvR
 }
 
 template<typename algorithm_t>
-inline AlgorithmValue Registry<algorithm_t>::parse_algorithm_id(
+inline AlgorithmValue RegistryOf<algorithm_t>::parse_algorithm_id(
     string_ref text) const {
 
     ast::Parser p { text };
@@ -230,4 +230,3 @@ inline AlgorithmValue Registry<algorithm_t>::parse_algorithm_id(
 
 }
 /// \endcond
-

@@ -45,8 +45,8 @@ static int bad_usage(const char* cmd, const std::string& message) {
     return 2;
 }
 
-RegistryRegistry build_registry() {
-    RegistryRegistry regreg;
+Megistry build_registry() {
+    Megistry regreg;
     regreg.register_registry(COMPRESSOR_REGISTRY);
     regreg.register_registry(GENERATOR_REGISTRY);
     return regreg;
@@ -95,9 +95,9 @@ int main(int argc, char** argv) {
     google::InitGoogleLogging(cmd);
 
     // load registry
-    const RegistryRegistry registry = build_registry();
-    const Registry<Compressor>& compressor_registry = registry.registry<Compressor>();
-    const Registry<Generator>& generator_registry = registry.registry<Generator>();
+    const Megistry registry = build_registry();
+    const RegistryOf<Compressor>& compressor_registry = registry.registry<Compressor>();
+    const RegistryOf<Generator>& generator_registry = registry.registry<Generator>();
 
     if (options.list) {
         std::cout << "This build supports the following algorithms:\n";

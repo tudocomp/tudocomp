@@ -14,7 +14,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
 #include <tudocomp/Env.hpp>
-#include <tudocomp/Registry.hpp>
+#include <tudocomp/RegistryOf.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/io.hpp>
@@ -368,14 +368,14 @@ void assert_eq_binary(string_ref actual, PacketIntegers expected) {
 template<class C>
 struct CompressResult {
 private:
-    Registry<Compressor> m_registry;
+    RegistryOf<Compressor> m_registry;
 public:
     std::vector<uint8_t> bytes;
     std::string str;
     std::string orginal_text;
     std::string options;
 
-    CompressResult(const Registry<Compressor>& registry,
+    CompressResult(const RegistryOf<Compressor>& registry,
                     std::vector<uint8_t>&& p_bytes,
                     std::string&& p_str,
                     std::string&& p_original,
@@ -436,10 +436,10 @@ public:
 template<class C>
 class RoundTrip {
     std::string m_options;
-    Registry<Compressor> m_registry;
+    RegistryOf<Compressor> m_registry;
 public:
     inline RoundTrip(const std::string& options = "",
-                        const Registry<Compressor>& registry = Registry<Compressor>()):
+                        const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()):
         m_options(options),
         m_registry(registry)
     {
@@ -474,7 +474,7 @@ public:
 template<class T>
 inline CompressResult<T> compress(string_ref text,
                                     const std::string& options = "",
-                                    const Registry<Compressor>& registry = Registry<Compressor>()) {
+                                    const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()) {
     return RoundTrip<T>(options, registry).compress(text);
 }
 
@@ -482,7 +482,7 @@ template<class T>
 inline void roundtrip_ex(string_ref original_text,
                         string_ref expected_compressed_text,
                         const std::string& options = "",
-                        const Registry<Compressor>& registry = Registry<Compressor>()) {
+                        const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()) {
     auto e = RoundTrip<T>(options, registry).compress(original_text);
     auto& compressed_text = e.str;
 
@@ -502,7 +502,7 @@ template<class T>
 inline void roundtrip_binary(string_ref original_text,
                             const std::vector<uint64_t>& expected_compressed_text_packed_ints = {},
                             const std::string& options = "",
-                            const Registry<Compressor>& registry = Registry<Compressor>()) {
+                            const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()) {
     auto e = RoundTrip<T>(options, registry).compress(original_text);
     auto& compressed_text = e.bytes;
 
