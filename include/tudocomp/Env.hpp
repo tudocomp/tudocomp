@@ -1,12 +1,9 @@
 #pragma once
 
 #include <tudocomp/pre_header/Env.hpp>
+#include <tudocomp/EnvRoot.hpp>
 
 namespace tdc {
-
-inline AlgorithmValue& EnvRoot::algo_value() {
-    return *m_algo_value;
-}
 
 inline Env::Env(Env&& other):
     m_root(std::move(other.m_root)),

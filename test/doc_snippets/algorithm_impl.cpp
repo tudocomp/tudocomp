@@ -13,6 +13,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/Registry.hpp>
+#include <tudocomp/RegistryRegistry.hpp>
 
 using namespace tdc;
 
@@ -116,18 +117,28 @@ TEST(doc_algorithm_impl, algo_instantiate) {
 
 TEST(doc_algorithm_impl, algo_registry) {
     // Create a registry for algorithms of type "example"
-    Registry<MyAlgorithmBase> registry;
+    Registry<MyAlgorithmBase> my_algo_registry;
 
-    // Register two specializations of the algorithm
-    registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
-    registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
+    // Register two implementations of the algorithm
+    my_algo_registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
+    my_algo_registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
+
+    // Create a registry for all interfaces used
+    RegistryRegistry registry;
+
+    // Register the interface registry for MyAlgorithmBase
+    registry.register_registry(my_algo_registry);
 
     // Execute the algorithm with the square strategy
-    auto algo_sqr = registry.select_algorithm("my_algorithm(number=5, strategy=sqr)");
+    auto av_1 = my_algo_registry.parse_algorithm_id("my_algorithm(number=5, strategy=sqr)");
+    auto env_root_1 = std::make_shared<EnvRoot>(registry, AlgorithmValue(av_1));
+    auto algo_sqr = my_algo_registry.select_algorithm(env_root_1, av_1);
     ASSERT_EQ(25, algo_sqr->execute());
 
     // Execute the algorithm with the multiply strategy
-    auto algo_mul = registry.select_algorithm("my_algorithm(number=5, strategy=mul(8))");
+    auto av_2 = my_algo_registry.parse_algorithm_id("my_algorithm(number=5, strategy=mul(8))");
+    auto env_root_2 = std::make_shared<EnvRoot>(registry, AlgorithmValue(av_2));
+    auto algo_mul = my_algo_registry.select_algorithm(env_root_2, av_2);
     ASSERT_EQ(40, algo_mul->execute());
 }
 

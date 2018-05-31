@@ -45,6 +45,13 @@ static int bad_usage(const char* cmd, const std::string& message) {
     return 2;
 }
 
+RegistryRegistry build_registry() {
+    RegistryRegistry regreg;
+    regreg.register_registry(COMPRESSOR_REGISTRY);
+    regreg.register_registry(GENERATOR_REGISTRY);
+    return regreg;
+}
+
 } // namespace tdc_driver
 
 #include <iomanip>
@@ -52,6 +59,8 @@ static int bad_usage(const char* cmd, const std::string& message) {
 int main(int argc, char** argv) {
     using namespace tdc_driver;
     using namespace tdc_algorithms;
+
+
 
     const char* cmd = argv[0];
 
@@ -86,8 +95,9 @@ int main(int argc, char** argv) {
     google::InitGoogleLogging(cmd);
 
     // load registry
-    const Registry<Compressor>& compressor_registry = COMPRESSOR_REGISTRY;
-    const Registry<Generator>& generator_registry = GENERATOR_REGISTRY;
+    const RegistryRegistry registry = build_registry();
+    const Registry<Compressor>& compressor_registry = registry.registry<Compressor>();
+    const Registry<Generator>& generator_registry = registry.registry<Generator>();
 
     if (options.list) {
         std::cout << "This build supports the following algorithms:\n";
@@ -134,9 +144,7 @@ int main(int argc, char** argv) {
     if(!options.stdin) {
         if(!options.generator.empty()) {
             auto av = generator_registry.parse_algorithm_id(options.generator);
-            auto algorithm_env = std::make_shared<EnvRoot>(AlgorithmValue(av));
-            algorithm_env->register_registry(compressor_registry);
-            algorithm_env->register_registry(generator_registry);
+            auto algorithm_env = std::make_shared<EnvRoot>(registry, AlgorithmValue(av));
 
             generator = algorithm_env->select_algorithm<Generator>(av);
         } else if(!options.remaining.empty()) {
@@ -219,9 +227,7 @@ int main(int argc, char** argv) {
         auto av = compressor_registry.parse_algorithm_id(id_string);
         auto input_restrictions = av.textds_flags();
 
-        auto algorithm_env = std::make_shared<EnvRoot>(AlgorithmValue(av));
-        algorithm_env->register_registry(compressor_registry);
-        algorithm_env->register_registry(generator_registry);
+        auto algorithm_env = std::make_shared<EnvRoot>(registry, AlgorithmValue(av));
 
         auto compressor = algorithm_env->select_algorithm<Compressor>(av);
 
@@ -329,9 +335,7 @@ int main(int argc, char** argv) {
                 auto av = compressor_registry.parse_algorithm_id(id_string);
                 auto input_restrictions = av.textds_flags();
 
-                auto algorithm_env = std::make_shared<EnvRoot>(AlgorithmValue(av));
-                algorithm_env->register_registry(compressor_registry);
-                algorithm_env->register_registry(generator_registry);
+                auto algorithm_env = std::make_shared<EnvRoot>(registry, AlgorithmValue(av));
 
                 auto compressor = algorithm_env->select_algorithm<Compressor>(av);
 

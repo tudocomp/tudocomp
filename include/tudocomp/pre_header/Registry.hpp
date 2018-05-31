@@ -34,11 +34,14 @@ public:
     virtual string_ref root_type() const = 0;
 
     template<typename algorithm_t>
-    inline Registry<algorithm_t> const& downcast() {
+    inline Registry<algorithm_t>& downcast() {
         DCHECK_EQ(algorithm_t::meta_type(), root_type());
-
-        VirtualRegistry const* virtual_registry = this;
-        return *static_cast<Registry<algorithm_t> const*>(virtual_registry);
+        return *static_cast<Registry<algorithm_t>*>(this);
+    }
+    template<typename algorithm_t>
+    inline Registry<algorithm_t> const& downcast() const {
+        DCHECK_EQ(algorithm_t::meta_type(), root_type());
+        return *static_cast<Registry<algorithm_t> const*>(this);
     }
 };
 /// \endcond
