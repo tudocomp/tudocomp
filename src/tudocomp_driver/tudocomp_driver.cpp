@@ -140,10 +140,7 @@ int main(int argc, char** argv) {
 
     if(!options.stdin) {
         if(!options.generator.empty()) {
-            auto av = generator_registry.parse_algorithm_id(options.generator);
-            auto algorithm_env = EnvRoot(registry, AlgorithmValue(av));
-
-            generator = algorithm_env.select_algorithm<Generator>(av);
+            generator = generator_registry.create_algorithm(options.generator);
         } else if(!options.remaining.empty()) {
             // file
             file = options.remaining[0];
@@ -185,21 +182,17 @@ int main(int argc, char** argv) {
         std::string m_id_string;
         std::unique_ptr<Compressor> m_compressor;
         io::InputRestrictions m_input_restrictions;
-        EnvRoot m_algorithm_env;
     public:
         Selection():
             m_id_string(),
             m_compressor(),
-            m_input_restrictions(),
-            m_algorithm_env() {}
+            m_input_restrictions() {}
         Selection(std::string&& id_string,
                   std::unique_ptr<Compressor>&& compressor,
-                  io::InputRestrictions input_restrictions,
-                  EnvRoot&& algorithm_env):
+                  io::InputRestrictions input_restrictions):
             m_id_string(std::move(id_string)),
             m_compressor(std::move(compressor)),
-            m_input_restrictions(input_restrictions),
-            m_algorithm_env(std::move(algorithm_env)) {}
+            m_input_restrictions(input_restrictions) {}
         const std::string& id_string() const {
             return m_id_string;
         }
@@ -209,9 +202,6 @@ int main(int argc, char** argv) {
         const io::InputRestrictions& input_restrictions() const {
             return m_input_restrictions;
         }
-        const EnvRoot& algorithm_env() const {
-            return m_algorithm_env;
-        }
         operator bool() const {
             return bool(m_compressor);
         }
@@ -220,19 +210,14 @@ int main(int argc, char** argv) {
 
     if (!options.algorithm.empty()) {
         auto id_string = options.algorithm;
-
         auto av = compressor_registry.parse_algorithm_id(id_string);
         auto input_restrictions = av.textds_flags();
-
-        auto algorithm_env = EnvRoot(registry, AlgorithmValue(av));
-
-        auto compressor = algorithm_env.select_algorithm<Compressor>(av);
+        auto compressor = compressor_registry.create_algorithm(av);
 
         selection = Selection {
             std::move(id_string),
             std::move(compressor),
             input_restrictions,
-            std::move(algorithm_env),
         };
     }
 
@@ -331,16 +316,12 @@ int main(int argc, char** argv) {
                 auto id_string = std::move(algorithm_header);
                 auto av = compressor_registry.parse_algorithm_id(id_string);
                 auto input_restrictions = av.textds_flags();
-
-                auto algorithm_env = EnvRoot(registry, AlgorithmValue(av));
-
-                auto compressor = algorithm_env.select_algorithm<Compressor>(av);
+                auto compressor = compressor_registry.create_algorithm(av);
 
                 selection = Selection {
                     std::move(id_string),
                     std::move(compressor),
                     input_restrictions,
-                    std::move(algorithm_env),
                 };
             } else {
                 DLOG(INFO) << "Using manually given " << selection.id_string();
