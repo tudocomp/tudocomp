@@ -125,10 +125,10 @@ TEST(RegistryOf, decl) {
 
 }
 
-TEST(RegistryOf, lookup) {
+TEST(RegistryOf, lookup_manual) {
     using namespace tdc_algorithms;
-
     Registry reg;
+
     reg.register_registry(COMPRESSOR_REGISTRY);
     reg.register_registry(GENERATOR_REGISTRY);
 
@@ -142,6 +142,20 @@ TEST(RegistryOf, lookup) {
     auto av2 = gr.parse_algorithm_id("fib(n = \"10\")");
     EnvRoot env2(reg, AlgorithmValue(av2));
     auto g = gr.select_algorithm(env2, av2);
+}
+
+TEST(RegistryOf, lookup_automatic) {
+    using namespace tdc_algorithms;
+    Registry reg;
+
+    reg.register_registry(COMPRESSOR_REGISTRY);
+    reg.register_registry(GENERATOR_REGISTRY);
+
+    RegistryOf<Compressor>& cr = reg.of<Compressor>();
+    RegistryOf<Generator>& gr = reg.of<Generator>();
+
+    auto c = cr.create_algorithm("rle");
+    auto g = gr.create_algorithm("fib(n = \"10\")");
 }
 
 TEST(RegistryOf, dynamic_options) {

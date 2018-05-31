@@ -58,7 +58,7 @@ public:
     /// \cond INTERNAL
     template<typename algorithm_if_t>
     inline std::unique_ptr<algorithm_if_t> select_algorithm(AlgorithmValue const& algo) const {
-        EnvRoot shared = *this;;
+        EnvRoot shared = *this;
         return registry<algorithm_if_t>().select_algorithm(shared, algo);
     }
     /// \endcond
