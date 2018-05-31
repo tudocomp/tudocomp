@@ -36,7 +36,7 @@ public:
         auto padded_options = meta.name() + "(" + m_options + ")";
         auto meta_type = meta.type();
 
-        eval::AlgorithmTypes types = m_registry.registry<registry_root_t>().algorithm_map();
+        eval::AlgorithmTypes types = m_registry.of<registry_root_t>().algorithm_map();
         gather_types(types, {
             std::move(meta)
         });

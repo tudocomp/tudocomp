@@ -45,7 +45,7 @@ public:
     }
 
     template<typename algorithm_if_t>
-    inline RegistryOf<algorithm_if_t> const& registry() const {
+    inline RegistryOf<algorithm_if_t> const& of() const {
         auto a = algorithm_if_t::meta_type();
 
         if (m_registries->count(a) == 0) {
@@ -59,7 +59,7 @@ public:
     }
 
     template<typename algorithm_if_t>
-    inline RegistryOf<algorithm_if_t>& registry() {
+    inline RegistryOf<algorithm_if_t>& of() {
         auto a = algorithm_if_t::meta_type();
 
         if (m_registries->count(a) == 0) {

@@ -132,8 +132,8 @@ TEST(RegistryOf, lookup) {
     reg.register_registry(COMPRESSOR_REGISTRY);
     reg.register_registry(GENERATOR_REGISTRY);
 
-    RegistryOf<Compressor>& cr = reg.registry<Compressor>();
-    RegistryOf<Generator>& gr = reg.registry<Generator>();
+    RegistryOf<Compressor>& cr = reg.of<Compressor>();
+    RegistryOf<Generator>& gr = reg.of<Generator>();
 
     auto av = cr.parse_algorithm_id("rle");
     EnvRoot env1(reg, AlgorithmValue(av));

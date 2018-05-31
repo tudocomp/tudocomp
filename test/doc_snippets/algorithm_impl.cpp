@@ -120,7 +120,7 @@ TEST(doc_algorithm_impl, algo_registry) {
     Registry registry;
 
     // Access the sub registry for algorithms of type "example"
-    auto& my_algo_registry = registry.registry<MyAlgorithmBase>();
+    auto& my_algo_registry = registry.of<MyAlgorithmBase>();
 
     // Register two specializations of the algorithm
     my_algo_registry.register_algorithm<MyAlgorithm<SquareStrategy>>();

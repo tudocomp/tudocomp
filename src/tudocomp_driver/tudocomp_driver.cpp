@@ -93,8 +93,8 @@ int main(int argc, char** argv) {
 
     // load registry
     const Registry registry = build_registry();
-    const RegistryOf<Compressor>& compressor_registry = registry.registry<Compressor>();
-    const RegistryOf<Generator>& generator_registry = registry.registry<Generator>();
+    const RegistryOf<Compressor>& compressor_registry = registry.of<Compressor>();
+    const RegistryOf<Generator>& generator_registry = registry.of<Generator>();
 
     if (options.list) {
         std::cout << "This build supports the following algorithms:\n";

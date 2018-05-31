@@ -52,7 +52,7 @@ public:
 
     template<typename algorithm_if_t>
     inline RegistryOf<algorithm_if_t> const& registry() const {
-        return m_this->m_registries.registry<algorithm_if_t>();
+        return m_this->m_registries.of<algorithm_if_t>();
     }
 
     /// \cond INTERNAL
