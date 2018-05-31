@@ -40,7 +40,7 @@ public:
             auto av = option_value.as_algorithm();
             auto textds_flags = av.textds_flags();
 
-            DVLOG(1) << "dynamic creation of" << av.name() << "\n";
+            DLOG(INFO) << "dynamic creation of " << av.name() << "\n";
 
             auto const& registry = env().root()->registry<Compressor>();
 

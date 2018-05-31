@@ -5,6 +5,7 @@
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
 #include <tudocomp/io.hpp>
+#include <tudocomp/CreateAlgorithm.hpp>
 
 namespace tdc {
 

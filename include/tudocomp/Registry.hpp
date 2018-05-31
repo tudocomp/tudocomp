@@ -205,11 +205,12 @@ inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(cons
     auto& static_only_evald_algo = algo.static_selection();
 
     if (m_data->m_registered.count(static_only_evald_algo) > 0) {
-        auto env = std::make_shared<EnvRoot>(AlgorithmValue(algo));
+        auto env_root = std::make_shared<EnvRoot>(AlgorithmValue(algo));
+        env_root->register_registry(*this);
 
         auto& constructor = m_data->m_registered[static_only_evald_algo];
 
-        return constructor(Env(env, env->algo_value()));
+        return constructor(Env(env_root, env_root->algo_value()));
     } else {
         throw std::runtime_error("No implementation found for " + std::string(root_type()) + " "
         + static_only_evald_algo.to_string()
