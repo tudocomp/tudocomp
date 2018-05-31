@@ -2,6 +2,7 @@
 
 #include <tudocomp/Env.hpp>
 #include <tudocomp/RegistryRegistry.hpp>
+#include <tudocomp/Registry.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/Compressor.hpp>
 
@@ -51,8 +52,8 @@ public:
 
         auto evaluated_options = evald_algo.as_algorithm();
 
-        auto env_root = std::make_shared<EnvRoot>(m_registry, std::move(evaluated_options));
-        Env env(env_root, env_root->algo_value());
+        auto env_root = EnvRoot(m_registry, std::move(evaluated_options));
+        Env env(env_root, env_root.algo_value());
 
         return env;
     }
@@ -159,8 +160,8 @@ inline Env create_env(Meta&& meta, const std::string& options = "") {
     RegistryRegistry regregs;
 
     auto evaluated_options = evald_algo.as_algorithm();
-    auto env_root = std::make_shared<EnvRoot>(regregs, std::move(evaluated_options));
-    Env env(env_root, env_root->algo_value());
+    auto env_root = EnvRoot(regregs, std::move(evaluated_options));
+    Env env(env_root, env_root.algo_value());
 
     return env;
 }

@@ -2,6 +2,7 @@
 
 #include <tudocomp/pre_header/Registry.hpp>
 #include <tudocomp/pre_header/Env.hpp>
+#include <tudocomp/EnvRoot.hpp>
 
 /// \cond INTERNAL
 namespace tdc {
@@ -201,7 +202,7 @@ inline std::string Registry<algorithm_t>::generate_doc_string(const std::string&
 }
 
 template<typename algorithm_t>
-inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(std::shared_ptr<EnvRoot> env_root, AlgorithmValue const& algo) const {
+inline std::unique_ptr<algorithm_t> Registry<algorithm_t>::select_algorithm(EnvRoot env_root, AlgorithmValue const& algo) const {
     auto& static_only_evald_algo = algo.static_selection();
 
     if (m_data->m_registered.count(static_only_evald_algo) > 0) {

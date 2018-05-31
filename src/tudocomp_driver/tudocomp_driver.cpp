@@ -144,9 +144,9 @@ int main(int argc, char** argv) {
     if(!options.stdin) {
         if(!options.generator.empty()) {
             auto av = generator_registry.parse_algorithm_id(options.generator);
-            auto algorithm_env = std::make_shared<EnvRoot>(registry, AlgorithmValue(av));
+            auto algorithm_env = EnvRoot(registry, AlgorithmValue(av));
 
-            generator = algorithm_env->select_algorithm<Generator>(av);
+            generator = algorithm_env.select_algorithm<Generator>(av);
         } else if(!options.remaining.empty()) {
             // file
             file = options.remaining[0];
@@ -188,7 +188,7 @@ int main(int argc, char** argv) {
         std::string m_id_string;
         std::unique_ptr<Compressor> m_compressor;
         io::InputRestrictions m_input_restrictions;
-        std::shared_ptr<EnvRoot> m_algorithm_env;
+        EnvRoot m_algorithm_env;
     public:
         Selection():
             m_id_string(),
@@ -198,7 +198,7 @@ int main(int argc, char** argv) {
         Selection(std::string&& id_string,
                   std::unique_ptr<Compressor>&& compressor,
                   io::InputRestrictions input_restrictions,
-                  std::shared_ptr<EnvRoot>&& algorithm_env):
+                  EnvRoot&& algorithm_env):
             m_id_string(std::move(id_string)),
             m_compressor(std::move(compressor)),
             m_input_restrictions(input_restrictions),
@@ -212,7 +212,7 @@ int main(int argc, char** argv) {
         const io::InputRestrictions& input_restrictions() const {
             return m_input_restrictions;
         }
-        const std::shared_ptr<EnvRoot>& algorithm_env() const {
+        const EnvRoot& algorithm_env() const {
             return m_algorithm_env;
         }
         operator bool() const {
@@ -227,9 +227,9 @@ int main(int argc, char** argv) {
         auto av = compressor_registry.parse_algorithm_id(id_string);
         auto input_restrictions = av.textds_flags();
 
-        auto algorithm_env = std::make_shared<EnvRoot>(registry, AlgorithmValue(av));
+        auto algorithm_env = EnvRoot(registry, AlgorithmValue(av));
 
-        auto compressor = algorithm_env->select_algorithm<Compressor>(av);
+        auto compressor = algorithm_env.select_algorithm<Compressor>(av);
 
         selection = Selection {
             std::move(id_string),
@@ -335,9 +335,9 @@ int main(int argc, char** argv) {
                 auto av = compressor_registry.parse_algorithm_id(id_string);
                 auto input_restrictions = av.textds_flags();
 
-                auto algorithm_env = std::make_shared<EnvRoot>(registry, AlgorithmValue(av));
+                auto algorithm_env = EnvRoot(registry, AlgorithmValue(av));
 
-                auto compressor = algorithm_env->select_algorithm<Compressor>(av);
+                auto compressor = algorithm_env.select_algorithm<Compressor>(av);
 
                 selection = Selection {
                     std::move(id_string),

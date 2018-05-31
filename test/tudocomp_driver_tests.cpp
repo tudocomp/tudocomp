@@ -26,25 +26,25 @@ TEST(TudocompDriver, list) {
 }
 
 TEST(TudocompDriver, algorithm_header) {
-    std::string text = "asdfghjklöä";
+    std::string text = "asdfghhhhhhhhhhhhjklöä";
     bool abort = false;
     // Without header
-    driver_test::roundtrip("lz78(ascii)", "_header_test_0", text, true, abort, true).check();
+    driver_test::roundtrip("rle", "_header_test_0", text, true, abort, true).check();
 
     // With header
-    driver_test::roundtrip("lz78(ascii)", "_header_test_1", text, false, abort, true).check();
+    driver_test::roundtrip("rle", "_header_test_1", text, false, abort, true).check();
 
     ASSERT_FALSE(abort);
 
     std::string text0 = test::read_test_file(driver_test::roundtrip_comp_file_name(
-        "lz78(ascii)", "_header_test_0"));
+        "rle", "_header_test_0"));
 
-    ASSERT_FALSE(text0.find("lz78(ascii)%") == 0);
+    ASSERT_FALSE(text0.find("rle%") == 0);
 
     std::string text1 = test::read_test_file(driver_test::roundtrip_comp_file_name(
-        "lz78(ascii)", "_header_test_1"));
+        "rle", "_header_test_1"));
 
-    ASSERT_TRUE(text1.find("lz78(ascii)%") == 0);
+    ASSERT_TRUE(text1.find("rle%") == 0);
 
 }
 
@@ -127,13 +127,21 @@ TEST(Registry, decl) {
 
 TEST(Registry, lookup) {
     using namespace tdc_algorithms;
-    Registry<Compressor>& cr = COMPRESSOR_REGISTRY;
-    auto av = cr.parse_algorithm_id("lz78(dict_size = \"100\")");
-    auto c = cr.select_algorithm(av);
 
-    Registry<Generator>& gr = GENERATOR_REGISTRY;
+    RegistryRegistry reg;
+    reg.register_registry(COMPRESSOR_REGISTRY);
+    reg.register_registry(GENERATOR_REGISTRY);
+
+    Registry<Compressor>& cr = reg.registry<Compressor>();
+    Registry<Generator>& gr = reg.registry<Generator>();
+
+    auto av = cr.parse_algorithm_id("rle");
+    EnvRoot env1(reg, AlgorithmValue(av));
+    auto c = cr.select_algorithm(env1, av);
+
     auto av2 = gr.parse_algorithm_id("fib(n = \"10\")");
-    auto g = gr.select_algorithm(av2);
+    EnvRoot env2(reg, AlgorithmValue(av2));
+    auto g = gr.select_algorithm(env2, av2);
 }
 
 TEST(Registry, dynamic_options) {
@@ -183,8 +191,12 @@ TEST(Registry, dynamic_options) {
 
     r.register_algorithm<MyCompressor>();
 
+    RegistryRegistry reg;
+    reg.register_registry(r);
+
     auto av = r.parse_algorithm_id("foo(x, \"qwerty\")");
-    auto c = r.select_algorithm(av);
+    EnvRoot env(reg, AlgorithmValue(av));
+    auto c = r.select_algorithm(env, av);
     std::vector<uint8_t> data;
     Output out(data);
     Input inp("test");

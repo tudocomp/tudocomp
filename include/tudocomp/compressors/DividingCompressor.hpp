@@ -207,7 +207,7 @@ public:
         compress_for_each_block(input2, output, [&](auto& input, auto& output){
             // TODO: If compressors ever got changed to not store runtime state,
             // then this init could happen once
-            auto compressor = env_root->select_algorithm<Compressor>(av);
+            auto compressor = env_root.select_algorithm<Compressor>(av);
 
             compressor->compress(input, output);
         });
@@ -225,7 +225,7 @@ public:
         decompress_for_each_block(input, output2, [&](auto& input, auto& output){
             // TODO: If compressors ever got changed to not store runtime state,
             // then this init could happen once
-            auto compressor = env_root->select_algorithm<Compressor>(av);
+            auto compressor = env_root.select_algorithm<Compressor>(av);
 
             compressor->decompress(input, output);
         });

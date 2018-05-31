@@ -91,9 +91,9 @@ public:
     inline std::vector<pattern::Algorithm> all_algorithms_with_static(View type) const;
     inline std::vector<pattern::Algorithm> all_algorithms_with_static_internal(std::vector<AlreadySeenPair>& already_seen, View type) const;
     inline std::vector<pattern::Algorithm> check_for_undefined_algorithms();
-    inline std::unique_ptr<algorithm_t> select_algorithm(std::shared_ptr<EnvRoot>, AlgorithmValue const&) const;
+    inline std::unique_ptr<algorithm_t> select_algorithm(EnvRoot, AlgorithmValue const&) const;
     inline AlgorithmValue parse_algorithm_id(string_ref text) const;
-    inline std::unique_ptr<algorithm_t> select_algorithm(std::shared_ptr<EnvRoot>, const std::string& text) const;
+    inline std::unique_ptr<algorithm_t> select_algorithm(EnvRoot, const std::string& text) const;
     inline static Registry<algorithm_t> with_all_from(std::function<void(Registry<algorithm_t>&)> f);
     inline std::string generate_doc_string(const std::string& title) const;
     inline string_ref root_type() const override {

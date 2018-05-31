@@ -42,7 +42,7 @@ public:
 
             DLOG(INFO) << "dynamic creation of " << av.name() << "\n";
 
-            auto compressor = env().root()->select_algorithm<Compressor>(av);
+            auto compressor = env().root().select_algorithm<Compressor>(av);
 
             f(i, o, *compressor, textds_flags);
         };
