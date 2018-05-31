@@ -216,6 +216,19 @@ inline std::unique_ptr<algorithm_t> RegistryOf<algorithm_t>::select_algorithm(En
 }
 
 template<typename algorithm_t>
+inline std::unique_ptr<algorithm_t> RegistryOf<algorithm_t>::create_algorithm(AlgorithmValue const& algo) const {
+    Registry registry = m_data->m_registry;
+    auto env_root = EnvRoot(registry, AlgorithmValue(algo));
+    return select_algorithm(env_root, algo);
+}
+
+template<typename algorithm_t>
+inline std::unique_ptr<algorithm_t> RegistryOf<algorithm_t>::create_algorithm(std::string const& algo) const {
+    auto av = parse_algorithm_id(algo);
+    return create_algorithm(av);
+}
+
+template<typename algorithm_t>
 inline AlgorithmValue RegistryOf<algorithm_t>::parse_algorithm_id(
     string_ref text) const {
 

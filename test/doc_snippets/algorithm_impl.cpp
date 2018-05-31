@@ -120,22 +120,18 @@ TEST(doc_algorithm_impl, algo_registry) {
     Registry registry;
 
     // Access the sub registry for algorithms of type "example"
-    auto& my_algo_registry = registry.of<MyAlgorithmBase>();
+    auto my_algo_registry = registry.of<MyAlgorithmBase>();
 
     // Register two specializations of the algorithm
     my_algo_registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
     my_algo_registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
 
     // Execute the algorithm with the square strategy
-    auto av_1 = my_algo_registry.parse_algorithm_id("my_algorithm(number=5, strategy=sqr)");
-    auto env_root_1 = EnvRoot(registry, AlgorithmValue(av_1));
-    auto algo_sqr = my_algo_registry.select_algorithm(env_root_1, av_1);
+    auto algo_sqr = my_algo_registry.create_algorithm("my_algorithm(number=5, strategy=sqr)");
     ASSERT_EQ(25, algo_sqr->execute());
 
     // Execute the algorithm with the multiply strategy
-    auto av_2 = my_algo_registry.parse_algorithm_id("my_algorithm(number=5, strategy=mul(8))");
-    auto env_root_2 = EnvRoot(registry, AlgorithmValue(av_2));
-    auto algo_mul = my_algo_registry.select_algorithm(env_root_2, av_2);
+    auto algo_mul = my_algo_registry.create_algorithm("my_algorithm(number=5, strategy=mul(8))");
     ASSERT_EQ(40, algo_mul->execute());
 }
 

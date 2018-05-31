@@ -39,7 +39,7 @@ TEST(Test, test_file) {
     std::string err;
     try {
         test::read_test_file("not_test.txt");
-    } catch (std::runtime_error e) {
+    } catch (std::runtime_error& e) {
         err = e.what();
     }
     ASSERT_EQ("Could not open test file \"test_files/not_test.txt\"", err);
