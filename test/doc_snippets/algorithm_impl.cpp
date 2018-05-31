@@ -116,18 +116,15 @@ TEST(doc_algorithm_impl, algo_instantiate) {
 }
 
 TEST(doc_algorithm_impl, algo_registry) {
-    // Create a registry for algorithms of type "example"
-    Registry<MyAlgorithmBase> my_algo_registry;
-
-    // Register two implementations of the algorithm
-    my_algo_registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
-    my_algo_registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
-
-    // Create a registry for all interfaces used
+    // Create a registry
     RegistryRegistry registry;
 
-    // Register the interface registry for MyAlgorithmBase
-    registry.register_registry(my_algo_registry);
+    // Access the sub registry for algorithms of type "example"
+    auto& my_algo_registry = registry.registry<MyAlgorithmBase>();
+
+    // Register two specializations of the algorithm
+    my_algo_registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
+    my_algo_registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
 
     // Execute the algorithm with the square strategy
     auto av_1 = my_algo_registry.parse_algorithm_id("my_algorithm(number=5, strategy=sqr)");
