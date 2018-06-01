@@ -5,6 +5,7 @@
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
 #include <tudocomp/io.hpp>
+#include <tudocomp/CreateAlgorithm.hpp>
 
 namespace tdc {
 
@@ -198,7 +199,7 @@ public:
         auto& option_value = env().option("compressor");
         auto av = option_value.as_algorithm();
         auto textds_flags = av.textds_flags();
-        auto const& registry = env().root()->template registry<Compressor>();
+        auto env_root = env().root();
 
         // Make sure null termination and escaping happens
         auto input2 = Input(input, textds_flags);
@@ -206,7 +207,7 @@ public:
         compress_for_each_block(input2, output, [&](auto& input, auto& output){
             // TODO: If compressors ever got changed to not store runtime state,
             // then this init could happen once
-            auto compressor = create_algo_with_registry_dynamic(registry, av);
+            auto compressor = env_root.select_algorithm<Compressor>(av);
 
             compressor->compress(input, output);
         });
@@ -216,7 +217,7 @@ public:
         auto& option_value = env().option("compressor");
         auto av = option_value.as_algorithm();
         auto textds_flags = av.textds_flags();
-        auto const& registry = env().root()->template registry<Compressor>();
+        auto env_root = env().root();
 
         // Make sure null termination and escaping gets reverted
         auto output2 = Output(output, textds_flags);
@@ -224,7 +225,7 @@ public:
         decompress_for_each_block(input, output2, [&](auto& input, auto& output){
             // TODO: If compressors ever got changed to not store runtime state,
             // then this init could happen once
-            auto compressor = create_algo_with_registry_dynamic(registry, av);
+            auto compressor = env_root.select_algorithm<Compressor>(av);
 
             compressor->decompress(input, output);
         });

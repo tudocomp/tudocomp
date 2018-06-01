@@ -14,7 +14,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
 #include <tudocomp/Env.hpp>
-#include <tudocomp/Registry.hpp>
+#include <tudocomp/RegistryOf.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/io.hpp>
@@ -368,14 +368,14 @@ void assert_eq_binary(string_ref actual, PacketIntegers expected) {
 template<class C>
 struct CompressResult {
 private:
-    Registry<Compressor> m_registry;
+    Registry m_registry;
 public:
     std::vector<uint8_t> bytes;
     std::string str;
     std::string orginal_text;
     std::string options;
 
-    CompressResult(const Registry<Compressor>& registry,
+    CompressResult(const Registry& registry,
                     std::vector<uint8_t>&& p_bytes,
                     std::string&& p_str,
                     std::string&& p_original,
@@ -392,7 +392,7 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decoded_buffer);
 
-            auto compressor = create_algo_with_registry<C>(options, m_registry);
+            auto compressor = create_algo_with_registry<C, Compressor>(options, m_registry);
 
             if (C::meta().textds_flags().has_restrictions()) {
                 decoded_out = Output(decoded_out, C::meta().textds_flags());
@@ -413,7 +413,7 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decompressed_bytes);
 
-            auto compressor = create_algo_with_registry<C>(options, m_registry);
+            auto compressor = create_algo_with_registry<C, Compressor>(options, m_registry);
 
             if (C::meta().textds_flags().has_restrictions()) {
                 decoded_out = Output(decoded_out, C::meta().textds_flags());
@@ -432,10 +432,10 @@ public:
 template<class C>
 class RoundTrip {
     std::string m_options;
-    Registry<Compressor> m_registry;
+    Registry m_registry;
 public:
     inline RoundTrip(const std::string& options = "",
-                        const Registry<Compressor>& registry = Registry<Compressor>()):
+                        const Registry& registry = Registry()):
         m_options(options),
         m_registry(registry)
     {
@@ -447,7 +447,7 @@ public:
             Input text_in = Input::from_memory(text);
             Output encoded_out = Output::from_memory(encoded_buffer);
 
-            auto compressor = create_algo_with_registry<C>(m_options, m_registry);
+            auto compressor = create_algo_with_registry<C, Compressor>(m_options, m_registry);
 
             if (C::meta().textds_flags().has_restrictions()) {
                 text_in = Input(text_in, C::meta().textds_flags());
@@ -468,7 +468,7 @@ public:
 template<class T>
 inline CompressResult<T> compress(string_ref text,
                                     const std::string& options = "",
-                                    const Registry<Compressor>& registry = Registry<Compressor>()) {
+                                    const Registry& registry = Registry()) {
     return RoundTrip<T>(options, registry).compress(text);
 }
 
@@ -476,7 +476,7 @@ template<class T>
 inline void roundtrip_ex(string_ref original_text,
                         string_ref expected_compressed_text,
                         const std::string& options = "",
-                        const Registry<Compressor>& registry = Registry<Compressor>()) {
+                        const Registry& registry = Registry()) {
     auto e = RoundTrip<T>(options, registry).compress(original_text);
     auto& compressed_text = e.str;
 
@@ -496,7 +496,7 @@ template<class T>
 inline void roundtrip_binary(string_ref original_text,
                             const std::vector<uint64_t>& expected_compressed_text_packed_ints = {},
                             const std::string& options = "",
-                            const Registry<Compressor>& registry = Registry<Compressor>()) {
+                            const Registry& registry = Registry()) {
     auto e = RoundTrip<T>(options, registry).compress(original_text);
     auto& compressed_text = e.bytes;
 

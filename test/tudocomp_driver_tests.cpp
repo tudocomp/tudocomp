@@ -26,29 +26,29 @@ TEST(TudocompDriver, list) {
 }
 
 TEST(TudocompDriver, algorithm_header) {
-    std::string text = "asdfghjklöä";
+    std::string text = "asdfghhhhhhhhhhhhjklöä";
     bool abort = false;
     // Without header
-    driver_test::roundtrip("lz78(ascii)", "_header_test_0", text, true, abort, true).check();
+    driver_test::roundtrip("rle", "_header_test_0", text, true, abort, true).check();
 
     // With header
-    driver_test::roundtrip("lz78(ascii)", "_header_test_1", text, false, abort, true).check();
+    driver_test::roundtrip("rle", "_header_test_1", text, false, abort, true).check();
 
     ASSERT_FALSE(abort);
 
     std::string text0 = test::read_test_file(driver_test::roundtrip_comp_file_name(
-        "lz78(ascii)", "_header_test_0"));
+        "rle", "_header_test_0"));
 
-    ASSERT_FALSE(text0.find("lz78(ascii)%") == 0);
+    ASSERT_FALSE(text0.find("rle%") == 0);
 
     std::string text1 = test::read_test_file(driver_test::roundtrip_comp_file_name(
-        "lz78(ascii)", "_header_test_1"));
+        "rle", "_header_test_1"));
 
-    ASSERT_TRUE(text1.find("lz78(ascii)%") == 0);
+    ASSERT_TRUE(text1.find("rle%") == 0);
 
 }
 
-TEST(Registry, smoketest) {
+TEST(RegistryOf, smoketest) {
     using namespace tdc_algorithms;
     using ast::Value;
     using ast::Arg;
@@ -91,7 +91,7 @@ TEST(Registry, smoketest) {
         ASSERT_EQ(b[4].value().invokation_name(), "q");
 }
 
-TEST(Registry, decl) {
+TEST(RegistryOf, decl) {
     using namespace tdc_algorithms;
     decl::Algorithm b {
         "foo",
@@ -125,21 +125,37 @@ TEST(Registry, decl) {
 
 }
 
-TEST(Registry, lookup) {
+TEST(RegistryOf, lookup_manual) {
     using namespace tdc_algorithms;
-    Registry<Compressor>& cr = COMPRESSOR_REGISTRY;
-    auto av = cr.parse_algorithm_id("lz78(dict_size = \"100\")");
-    auto c = cr.select_algorithm(av);
+    Registry reg = REGISTRY;
 
-    Registry<Generator>& gr = GENERATOR_REGISTRY;
+    RegistryOf<Compressor>& cr = reg.of<Compressor>();
+    RegistryOf<Generator>& gr = reg.of<Generator>();
+
+    auto av = cr.parse_algorithm_id("rle");
+    EnvRoot env1(reg, AlgorithmValue(av));
+    auto c = cr.select_algorithm(env1, av);
+
     auto av2 = gr.parse_algorithm_id("fib(n = \"10\")");
-    auto g = gr.select_algorithm(av2);
+    EnvRoot env2(reg, AlgorithmValue(av2));
+    auto g = gr.select_algorithm(env2, av2);
 }
 
-TEST(Registry, dynamic_options) {
+TEST(RegistryOf, lookup_automatic) {
+    using namespace tdc_algorithms;
+    Registry reg = REGISTRY;
+
+    RegistryOf<Compressor>& cr = reg.of<Compressor>();
+    RegistryOf<Generator>& gr = reg.of<Generator>();
+
+    auto c = cr.create_algorithm("rle");
+    auto g = gr.create_algorithm("fib(n = \"10\")");
+}
+
+TEST(RegistryOf, dynamic_options) {
     using namespace tdc_algorithms;
 
-    Registry<Compressor>& r = COMPRESSOR_REGISTRY;
+    RegistryOf<Compressor>& r = REGISTRY.of<Compressor>();
 
     struct MySub {
         inline static Meta meta() {
@@ -183,8 +199,12 @@ TEST(Registry, dynamic_options) {
 
     r.register_algorithm<MyCompressor>();
 
+    Registry reg;
+    reg.register_registry(r);
+
     auto av = r.parse_algorithm_id("foo(x, \"qwerty\")");
-    auto c = r.select_algorithm(av);
+    EnvRoot env(reg, AlgorithmValue(av));
+    auto c = r.select_algorithm(env, av);
     std::vector<uint8_t> data;
     Output out(data);
     Input inp("test");
@@ -196,7 +216,7 @@ TEST(Registry, dynamic_options) {
 TEST(TudocompDriver, all_compressors_defined) {
     using namespace tdc_algorithms;
 
-    Registry<Compressor>& r = COMPRESSOR_REGISTRY;
+    RegistryOf<Compressor>& r = REGISTRY.of<Compressor>();
     auto s = r.check_for_undefined_algorithms();
     bool has_undefined_compressors = s.size() > 0;
     if (has_undefined_compressors) {
@@ -208,7 +228,7 @@ TEST(TudocompDriver, all_compressors_defined) {
     }
 }
 
-TEST(Registry, chain_sugar) {
+TEST(RegistryOf, chain_sugar) {
     using namespace tdc_algorithms;
     using ast::Value;
     using ast::Arg;

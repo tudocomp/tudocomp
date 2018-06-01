@@ -1,12 +1,15 @@
 #pragma once
 
 #include <unordered_set>
-#include <tudocomp/AlgorithmStringParser.hpp>
 #include <array>
+
+#include <tudocomp/AlgorithmStringParser.hpp>
 
 namespace tdc {
 
 class Env;
+class EnvRoot;
+class WeakRegistry;
 
 /// \cond INTERNAL
 struct AlreadySeenPair {
@@ -18,28 +21,45 @@ inline bool operator==(const AlreadySeenPair& lhs, const AlreadySeenPair& rhs) {
 }
 
 template<typename algorithm_t>
-class Registry;
+class RegistryOf;
 
-class VirtualRegistry {
+class RegistryOfVirtual {
 public:
-    virtual ~VirtualRegistry() = default;
-    VirtualRegistry() = default;
-    VirtualRegistry(VirtualRegistry const&) = default;
-    VirtualRegistry(VirtualRegistry&&) = default;
-    VirtualRegistry& operator=(VirtualRegistry const&) = default;
-    VirtualRegistry& operator=(VirtualRegistry&&) = default;
+    virtual ~RegistryOfVirtual() = default;
+    RegistryOfVirtual() = default;
+    RegistryOfVirtual(RegistryOfVirtual const&) = default;
+    RegistryOfVirtual(RegistryOfVirtual&&) = default;
+    RegistryOfVirtual& operator=(RegistryOfVirtual const&) = default;
+    RegistryOfVirtual& operator=(RegistryOfVirtual&&) = default;
 
     virtual string_ref root_type() const = 0;
 
     template<typename algorithm_t>
-    inline Registry<algorithm_t> const& downcast() {
+    inline RegistryOf<algorithm_t>& downcast() {
         DCHECK_EQ(algorithm_t::meta_type(), root_type());
-
-        VirtualRegistry const* virtual_registry = this;
-        return *static_cast<Registry<algorithm_t> const*>(virtual_registry);
+        return *static_cast<RegistryOf<algorithm_t>*>(this);
+    }
+    template<typename algorithm_t>
+    inline RegistryOf<algorithm_t> const& downcast() const {
+        DCHECK_EQ(algorithm_t::meta_type(), root_type());
+        return *static_cast<RegistryOf<algorithm_t> const*>(this);
     }
 };
 /// \endcond
+
+class Registry;
+
+class WeakRegistry {
+    using map_t = std::unordered_map<std::string, std::unique_ptr<RegistryOfVirtual>>;
+    std::weak_ptr<map_t> m_registries;
+
+    friend class Registry;
+public:
+    inline WeakRegistry();
+    inline ~WeakRegistry();
+    inline WeakRegistry(Registry const& r);
+    inline operator Registry() const;
+};
 
 /// \brief A registry for algorithms to be made available in the driver
 ///        application.
@@ -49,23 +69,19 @@ public:
 /// the \ref register_algorithm step. Any registered algorithm will also
 /// be listed in the utility's help message.
 template<typename algorithm_t>
-class Registry: public VirtualRegistry {
+class RegistryOf: public RegistryOfVirtual {
     typedef std::function<std::unique_ptr<algorithm_t>(Env&&)> constructor_t;
 
-    struct RegistryData {
+    struct RegistryOfData {
         eval::AlgorithmTypes m_algorithms;
         std::map<pattern::Algorithm, constructor_t> m_registered;
+        WeakRegistry m_registry;
     };
 
-    std::shared_ptr<RegistryData> m_data;
-
-    /// \cond INTERNAL
-    friend class AlgorithmTypeBuilder;
-    /// \endcond
-
+    std::shared_ptr<RegistryOfData> m_data;
 public:
-    inline Registry():
-        m_data(std::make_shared<RegistryData>()) {}
+    inline RegistryOf():
+        m_data(std::make_shared<RegistryOfData>()) {}
 
     /// \brief Registers an \ref tdc::Algorithm.
     ///
@@ -81,15 +97,23 @@ public:
     inline eval::AlgorithmTypes& algorithm_map();
     inline const eval::AlgorithmTypes& algorithm_map() const;
 
+    inline std::unique_ptr<algorithm_t> create_algorithm(const AlgorithmValue& text) const;
+    inline std::unique_ptr<algorithm_t> create_algorithm(const std::string& text) const;
+
     /// \cond INTERNAL
+    friend class AlgorithmTypeBuilder;
+    friend class Registry;
+    friend class WeakRegistry;
+    inline RegistryOf(WeakRegistry wr): m_data(std::make_shared<RegistryOfData>()) {
+        m_data->m_registry = wr;
+    }
     // Create the list of all possible static-argument-type combinations
     inline std::vector<pattern::Algorithm> all_algorithms_with_static(View type) const;
     inline std::vector<pattern::Algorithm> all_algorithms_with_static_internal(std::vector<AlreadySeenPair>& already_seen, View type) const;
     inline std::vector<pattern::Algorithm> check_for_undefined_algorithms();
-    inline std::unique_ptr<algorithm_t> select_algorithm(const AlgorithmValue& algo) const;
+    inline std::unique_ptr<algorithm_t> select_algorithm(EnvRoot, AlgorithmValue const&) const;
     inline AlgorithmValue parse_algorithm_id(string_ref text) const;
-    inline std::unique_ptr<algorithm_t> select_algorithm(const std::string& text) const;
-    inline static Registry<algorithm_t> with_all_from(std::function<void(Registry<algorithm_t>&)> f);
+    inline static RegistryOf<algorithm_t> with_all_from(std::function<void(RegistryOf<algorithm_t>&)> f);
     inline std::string generate_doc_string(const std::string& title) const;
     inline string_ref root_type() const override {
         return algorithm_t::meta_type();
@@ -111,4 +135,3 @@ namespace std {
         }
     };
 }
-

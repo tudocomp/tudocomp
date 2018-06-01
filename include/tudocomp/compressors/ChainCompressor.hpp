@@ -2,7 +2,7 @@
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Env.hpp>
-#include <tudocomp/Registry.hpp>
+#include <tudocomp/RegistryOf.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
 #include <vector>
@@ -40,11 +40,9 @@ public:
             auto av = option_value.as_algorithm();
             auto textds_flags = av.textds_flags();
 
-            DVLOG(1) << "dynamic creation of" << av.name() << "\n";
+            DLOG(INFO) << "dynamic creation of " << av.name() << "\n";
 
-            auto const& registry = env().root()->registry<Compressor>();
-
-            auto compressor = create_algo_with_registry_dynamic(registry, av);
+            auto compressor = env().root().select_algorithm<Compressor>(av);
 
             f(i, o, *compressor, textds_flags);
         };
