@@ -127,10 +127,7 @@ TEST(RegistryOf, decl) {
 
 TEST(RegistryOf, lookup_manual) {
     using namespace tdc_algorithms;
-    Registry reg;
-
-    reg.register_registry(COMPRESSOR_REGISTRY);
-    reg.register_registry(GENERATOR_REGISTRY);
+    Registry reg = REGISTRY;
 
     RegistryOf<Compressor>& cr = reg.of<Compressor>();
     RegistryOf<Generator>& gr = reg.of<Generator>();
@@ -146,10 +143,7 @@ TEST(RegistryOf, lookup_manual) {
 
 TEST(RegistryOf, lookup_automatic) {
     using namespace tdc_algorithms;
-    Registry reg;
-
-    reg.register_registry(COMPRESSOR_REGISTRY);
-    reg.register_registry(GENERATOR_REGISTRY);
+    Registry reg = REGISTRY;
 
     RegistryOf<Compressor>& cr = reg.of<Compressor>();
     RegistryOf<Generator>& gr = reg.of<Generator>();
@@ -161,7 +155,7 @@ TEST(RegistryOf, lookup_automatic) {
 TEST(RegistryOf, dynamic_options) {
     using namespace tdc_algorithms;
 
-    RegistryOf<Compressor>& r = COMPRESSOR_REGISTRY;
+    RegistryOf<Compressor>& r = REGISTRY.of<Compressor>();
 
     struct MySub {
         inline static Meta meta() {
@@ -222,7 +216,7 @@ TEST(RegistryOf, dynamic_options) {
 TEST(TudocompDriver, all_compressors_defined) {
     using namespace tdc_algorithms;
 
-    RegistryOf<Compressor>& r = COMPRESSOR_REGISTRY;
+    RegistryOf<Compressor>& r = REGISTRY.of<Compressor>();
     auto s = r.check_for_undefined_algorithms();
     bool has_undefined_compressors = s.size() > 0;
     if (has_undefined_compressors) {

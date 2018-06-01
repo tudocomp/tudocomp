@@ -45,13 +45,6 @@ static int bad_usage(const char* cmd, const std::string& message) {
     return 2;
 }
 
-Registry build_registry() {
-    Registry regreg;
-    regreg.register_registry(COMPRESSOR_REGISTRY);
-    regreg.register_registry(GENERATOR_REGISTRY);
-    return regreg;
-}
-
 } // namespace tdc_driver
 
 #include <iomanip>
@@ -92,7 +85,7 @@ int main(int argc, char** argv) {
     google::InitGoogleLogging(cmd);
 
     // load registry
-    const Registry registry = build_registry();
+    const Registry registry = REGISTRY;
     const RegistryOf<Compressor>& compressor_registry = registry.of<Compressor>();
     const RegistryOf<Generator>& generator_registry = registry.of<Generator>();
 

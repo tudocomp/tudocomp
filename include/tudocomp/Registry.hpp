@@ -75,6 +75,12 @@ public:
 
         return m_registries->at(a)->template downcast<algorithm_if_t>();
     }
+
+    inline static Registry with_all_from(std::function<void(Registry&)> f) {
+        Registry r;
+        f(r);
+        return r;
+    }
 };
 
 inline WeakRegistry::WeakRegistry(Registry const& r):

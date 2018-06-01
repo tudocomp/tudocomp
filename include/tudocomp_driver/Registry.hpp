@@ -25,6 +25,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
+#include <tudocomp/Registry.hpp>
 #include <tudocomp/RegistryOf.hpp>
 
 /// \cond INTERNAL
@@ -40,16 +41,7 @@
 namespace tdc_driver {}
 
 namespace tdc_algorithms {
-
-using namespace tdc;
-
-extern RegistryOf<Compressor> COMPRESSOR_REGISTRY;
-extern RegistryOf<Generator>  GENERATOR_REGISTRY;
-
-void register_compressors(RegistryOf<Compressor>&);
-void register_generators(RegistryOf<Generator>&);
-
-/// \endcond
-
+    using namespace tdc;
+    extern Registry REGISTRY;
 }
-
+/// \endcond
