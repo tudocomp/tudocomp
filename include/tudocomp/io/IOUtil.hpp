@@ -137,7 +137,7 @@ inline T read_int(BitSink&& sink, size_t amount = sizeof(T) * CHAR_BIT) {
 
 template<typename T, typename BitSink>
 inline void write_compressed_int(BitSink&& sink, T v, size_t b = 7) {
-    DCHECK_GT(b, 0);
+    DCHECK_GT(b, 0) << "b cannot be set to zero";
 
     uint64_t u = uint64_t(v);
     uint64_t mask = (u << b) - 1;
@@ -152,7 +152,7 @@ inline void write_compressed_int(BitSink&& sink, T v, size_t b = 7) {
 
 template<typename T, typename BitSink>
 inline T read_compressed_int(BitSink&& sink, size_t b = 7) {
-    DCHECK_GT(b, 0);
+    DCHECK_GT(b, 0) << "b cannot be set to zero";
 
     uint64_t value = 0;
     size_t i = 0;
