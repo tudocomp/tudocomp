@@ -1,19 +1,20 @@
 #pragma once
 
-#include <tudocomp/compressors/lzss/LZSSOnlineCoding.hpp>
 #include <tudocomp/compressors/lzcics/st.hpp>
+#include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
+#include <tudocomp/compressors/lzss/Factor.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 
-template<typename coder_t>
+template<typename lzss_coder_t>
 class LZ77CicsCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m("compressor", "lz77cics", "LZ77 compression in compressed space.");
         m.param("coder", "The output encoder.")
-            .strategy<coder_t>(TypeDesc("coder"));
+            .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
         m.input_restrictions(io::InputRestrictions({0}, false));
         return m;
     }
@@ -25,12 +26,12 @@ public:
         auto text = input.as_view();
         const size_t n = text.size();
 
-        // coder
-        typename coder_t::Encoder coder(
-            config().sub_config("coder"), output, ViewLiterals(text));
+        // initialize encoder
+        auto coder = lzss_coder_t(config().sub_config("coder"))
+            .encoder(output, ViewLiterals(text));
 
-        // encode text length
-        coder.encode(n, size_r);
+        coder.factor_length_range(Range(n));
+        coder.encode_header();
 
         // construct suffix tree
         lzcics::cst_t cst;
@@ -99,7 +100,7 @@ public:
                             auto len = st.str_depth(v);
 
 					        DVLOG(2) << "Pos: " << src << ", Len: " << len;
-                            lzss::online_encode_factor(coder, p, src, len, n);
+                            coder.encode_factor(lzss::Factor(p, src, len));
 					        p += len;
 				        }
 				        break;
@@ -117,7 +118,7 @@ public:
 			        DVLOG(2) << "Cha: " << c;
                     if(p < n) {
                         // don't encode sentinel
-                        lzss::online_encode_literal(coder, c);
+                        coder.encode_literal(c);
                     }
 			        ++p;
 		        }
@@ -134,11 +135,14 @@ public:
 
     /// \copydoc Compressor::compress
     inline virtual void decompress(Input& input, Output& output) override {
-        typename coder_t::Decoder decoder(config().sub_config("coder"), input);
-        auto n = decoder.template decode<size_t>(size_r);
-        auto text = lzss::online_decode(decoder, n);
+        lzss::DecompBackBuffer decomp;
+        {
+            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
+            decoder.decode(decomp);
+        }
+
         auto outs = output.as_stream();
-        for(auto c : text) outs << c;
+        decomp.write_to(outs);
     }
 };
 

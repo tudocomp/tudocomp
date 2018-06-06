@@ -5,6 +5,18 @@ var urlPattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
     '(\\?[;&a-z\\d%_.~+=-]*)?'+ // query string
     '(\\#[-a-z\\d_]*)?$','i'); // fragment locator
 
+var downloadBlob = function(blob, fileName) {
+    var a = d3.select("#blob-download")[0][0];
+    console.log(a);
+    a.style = "display: none";
+
+    var url = window.URL.createObjectURL(blob);
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    window.URL.revokeObjectURL(url);
+};
+
 var loadJSONfromURL = function(url) {
     if(urlPattern.test(url)) {
         //get using asynchronous http request
@@ -30,9 +42,19 @@ var updateZoomText = function(zoom) {
     );
 }
 
-var getSVGData = function() {
-    return "data:image/svg+xml;base64," + btoa(d3.select("#svg-container").html());
-};
+d3.select("#options button.close").on("click", function() {
+    d3.select("#dropzone-wrapper").style("display", "block");
+    d3.select("#footer").style("display", "block");
+    d3.select("#chart").style("display", "none");
+    d3.select("#options").style("display", "none");
+});
+
+d3.select("#options button.svg").on("click", function() {
+    var svg = d3.select("#svg-container")[0][0];
+    var serializer = new XMLSerializer();
+    var blob = new Blob([serializer.serializeToString(svg)],{'type': "image/svg+xml"});
+    downloadBlob(blob, "tdc-chart-export.svg");
+});
 
 var exportCanvas = document.createElement("canvas");
 var exportImage = document.createElement("img");
@@ -43,23 +65,20 @@ exportImage.onload = function() {
 
     var ctx = exportCanvas.getContext("2d");
     ctx.drawImage(exportImage, 0, 0);
-    window.open(exportCanvas.toDataURL("image/png"));
+
+    exportCanvas.toBlob(function(blob){
+        downloadBlob(blob, "tdc-chart-export.png");
+    }, "image/png");
 };
 
-d3.select("#options button.close").on("click", function() {
-    // d3.select("#json")[0][0].value = "";
-    d3.select("#dropzone-wrapper").style("display", "block");
-    d3.select("#footer").style("display", "block");
-    d3.select("#chart").style("display", "none");
-    d3.select("#options").style("display", "none");
-});
+var getSVGData = function() {
+    return ;
+};
 
 d3.select("#options button.img").on("click", function() {
-    exportImage.setAttribute("src", getSVGData());
-});
-
-d3.select("#options button.svg").on("click", function() {
-    window.open(getSVGData());
+    var svgHtml = d3.select("#svg-container").html();
+    var svgBase64 = "data:image/svg+xml;base64," + btoa(svgHtml);
+    exportImage.setAttribute("src", svgBase64);
 });
 
 d3.select("#options .zoom")

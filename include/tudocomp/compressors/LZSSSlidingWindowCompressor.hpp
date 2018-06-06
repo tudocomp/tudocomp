@@ -8,6 +8,7 @@
 #include <tudocomp/ds/RingBuffer.hpp>
 
 #include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
+#include <tudocomp/compressors/lzss/Factor.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 

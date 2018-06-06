@@ -121,9 +121,25 @@ public:
         size_t cur_b = 0; // current block
 
         auto data = bv.data();
-        for(size_t i = 0; i < idiv_ceil(n, data_w); i++) {
+        const size_t num_data = idiv_ceil(n, data_w);
+
+        for(size_t i = 0; i < num_data; i++) {
             const auto v = data[i];
-            const uint8_t r = basic_rank(v);
+
+            uint8_t r;
+            if(i + 1 < num_data) {
+                // get amount flag bits in whole data element
+                r = basic_rank(v);
+            } else {
+                // only get amount of flag bits up to end of bit vector
+                const size_t m = n % data_w;
+                if(m > 0) {
+                    r = basic_rank(v, 0, m-1);
+                } else {
+                    r = basic_rank(v); // full element, but last one
+                }
+            }
+
             m_max += r;
 
             if(r_b + r >= m_block_size) {
