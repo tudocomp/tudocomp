@@ -171,6 +171,10 @@ class NoKVGrow {
             return m_elements[i];
         }
 
+        T& operator[](size_t i) {
+            return m_elements.at(i);
+        }
+
         inline size_t size() const {
             return m_elements.size();
         }
@@ -178,9 +182,9 @@ class NoKVGrow {
         width_bucket_t() = default;
     };
 
-    using val_bit_tables_t = std::vector<compact_hash_strategy_t>;
-    using key_bit_tables_t = width_bucket_t<val_bit_tables_t>;
-    key_bit_tables_t m_tables;
+    using val_tables_t = width_bucket_t<compact_hash_strategy_t>;
+    using key_tables_t = width_bucket_t<val_tables_t>;
+    key_tables_t m_key_tables;
     size_t m_overall_size = 0;
     size_t m_overall_table_size = 0;
 
@@ -221,24 +225,23 @@ public:
 
         // Grow by-key bit index as needed
         uint16_t key_bits = bits_for(key);
-        auto& val_bits_tables = m_tables.access(key_bits, [](auto bits){
-            return val_bit_tables_t();
+        auto& val_tables = m_key_tables.access(key_bits, [](auto bits){
+            return val_tables_t();
         });
 
         // Grow by-val bit index as needed
         uint16_t value_bits = bits_for(value);
-        while ((value_bits) >= val_bits_tables.size()) {
-            uint64_t this_val_bits = val_bits_tables.size() + 0;
-
-            auto t = compact_hash_strategy_t(m_initial_table_size,
-                                             m_max_load_factor,
-                                             key_bits - (key_bits > 0 && reduce_key_range),
-                                             this_val_bits  - (this_val_bits > 0 && reduce_value_range));
-            m_overall_size += t.size();
-            m_overall_table_size += t.table_size();
-
-            val_bits_tables.push_back(std::move(t));
-        }
+        auto& table = val_tables.access(value_bits, [&](uint64_t bits) {
+            compact_hash_strategy_t x {
+                m_initial_table_size,
+                m_max_load_factor,
+                key_bits - (key_bits > 0 && reduce_key_range),
+                bits  - (bits > 0 && reduce_value_range),
+            };
+            m_overall_size += x.size();
+            m_overall_table_size += x.table_size();
+            return x;
+        });
 
         auto min_val = [](uint64_t bits) {
             return bits <= 1 ? 0 : 1ull << (bits - 1);
@@ -273,7 +276,7 @@ public:
         }
 
         for (size_t i = 0; i < value_bits; i++) {
-            uint64_t v = val_bits_tables[i].search(key);
+            uint64_t v = val_tables[i].search(key);
             if (v != 0) {
                 if (reduce_value_range) {
                     v += min_val(i);
@@ -282,12 +285,11 @@ public:
             }
         }
 
-        auto& t = val_bits_tables[(value_bits)];
-        m_overall_size -= t.size();
-        m_overall_table_size -= t.table_size();
-        auto r = t.insert(key, value);
-        m_overall_size += t.size();
-        m_overall_table_size += t.table_size();
+        m_overall_size -= table.size();
+        m_overall_table_size -= table.table_size();
+        auto r = table.insert(key, value);
+        m_overall_size += table.size();
+        m_overall_table_size += table.table_size();
 
         if (reduce_value_range) {
             r += value_min;
@@ -300,23 +302,21 @@ public:
     inline ~NoKVGrow() {
         if (m_guard) {
             std::cout << "Tables:\n";
-            for (size_t i = 0; i < m_tables.size(); i++) {
+            for (size_t i = 0; i < m_key_tables.size(); i++) {
                 std::cout << "  KeyBits(" << (i + 0) << "):\n";
-                auto& t = m_tables.access(i, [](auto bits) {
-                    return val_bit_tables_t();
-                });
-                for (size_t j = 0; j < t.size(); j++) {
+                auto& val_tables = m_key_tables[i];
+                for (size_t j = 0; j < val_tables.size(); j++) {
                     std::cout << "    ValBits(" << (j + 0) << "): size/tsize(";
-                    auto& t2 = t[j];
+                    auto& table = val_tables[j];
                     std::cout
-                    << t2.size()
+                    << table.size()
                     << "/"
-                    << t2.table_size()
+                    << table.table_size()
                     << ")"
                     << ", kvsize("
-                    << t2.key_width()
+                    << table.key_width()
                     << ","
-                    << t2.value_width()
+                    << table.value_width()
                     << ")"
                     << "\n";
                 }
