@@ -12,62 +12,110 @@
 
 namespace tdc {
 namespace lz78 {
+namespace ch {
+using namespace compact_sparse_hashmap;
 
-struct Sparse {
+template<typename table_type>
+class Common {
+    table_type m_table;
+public:
+    // TODO hide
+    using table_t = table_type;
+
+    inline Common(size_t table_size, double max_load_factor):
+        m_table(table_size)
+    {
+        m_table.max_load_factor(max_load_factor);
+    }
+
+    inline size_t size() const {
+        return m_table.size();
+    }
+
+    inline size_t table_size() const {
+        return m_table.table_size();
+    }
+
+    inline double max_load_factor() const {
+        return m_table.max_load_factor();
+    }
+
+    inline decltype(auto) access_kv_width(uint64_t key,
+                                          uint64_t key_width,
+                                          uint64_t value_width) {
+        return m_table.access_kv_width(key, key_width, value_width);
+    }
+};
+
+struct Sparse:
+    Common<compact_sparse_hashmap_t<dynamic_t>>
+{
     inline static Meta meta() {
         Meta m("compact_hash_strategy", "sparse_cv", "Sparse Table with CV structure");
         return m;
     }
 
-    using table_t = compact_sparse_hashmap::compact_sparse_hashmap_t<dynamic_t>;
+    using Common::Common;
 };
 
-struct Plain {
+struct Plain:
+    Common<compact_hashmap_t<dynamic_t>>
+{
     inline static Meta meta() {
         Meta m("compact_hash_strategy", "plain_cv", "Plain Table with CV structure");
         return m;
     }
 
-    using table_t = compact_sparse_hashmap::compact_hashmap_t<dynamic_t>;
+    using Common::Common;
 };
 
-struct SparseDisplacement {
+struct SparseDisplacement:
+    Common<compact_sparse_displacement_hashmap_t<dynamic_t>>
+{
     inline static Meta meta() {
         Meta m("compact_hash_strategy", "sparse_disp", "Sparse Table with displacement structure");
         return m;
     }
 
-    using table_t = compact_sparse_hashmap::compact_sparse_displacement_hashmap_t<dynamic_t>;
+    using Common::Common;
 };
 
-struct SparseEliasDisplacement {
+struct SparseEliasDisplacement:
+    Common<compact_sparse_elias_displacement_hashmap_t<dynamic_t>>
+{
     inline static Meta meta() {
         Meta m("compact_hash_strategy", "sparse_elias_disp", "Sparse Table with elias gamma coded displacement structure");
         return m;
     }
 
-    using table_t = compact_sparse_hashmap::compact_sparse_elias_displacement_hashmap_t<dynamic_t>;
+    using Common::Common;
 };
 
-struct PlainDisplacement {
+struct PlainDisplacement:
+    Common<compact_displacement_hashmap_t<dynamic_t>>
+{
     inline static Meta meta() {
         Meta m("compact_hash_strategy", "plain_disp", "Plain Table with displacement structure");
         return m;
     }
 
-    using table_t = compact_sparse_hashmap::compact_displacement_hashmap_t<dynamic_t>;
+    using Common::Common;
 };
 
-struct PlainEliasDisplacement {
+struct PlainEliasDisplacement:
+    Common<compact_elias_displacement_hashmap_t<dynamic_t>>
+{
     inline static Meta meta() {
         Meta m("compact_hash_strategy", "plain_elias_disp", "Plain Table with elias gamma coded displacement structure");
         return m;
     }
 
-    using table_t = compact_sparse_hashmap::compact_elias_displacement_hashmap_t<dynamic_t>;
+    using Common::Common;
 };
 
-template<typename compact_hash_strategy_t = Sparse>
+}
+
+template<typename compact_hash_strategy_t = ch::Sparse>
 class CompactHashTrie : public Algorithm, public LZ78Trie<> {
     using table_t = typename compact_hash_strategy_t::table_t;
 
@@ -90,7 +138,7 @@ public:
         Meta m("lz78trie", "compact_sparse_hash", "Compact Sparse Hash Trie");
         m.option("load_factor").dynamic(50);
         m.option("compact_hash_strategy")
-            .templated<compact_hash_strategy_t, Sparse>("compact_hash_strategy");
+            .templated<compact_hash_strategy_t, ch::Sparse>("compact_hash_strategy");
         return m;
     }
 

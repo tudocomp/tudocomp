@@ -122,12 +122,12 @@ hash_function = [
 
 # CompactHashTrie strategies
 compact_hashmap_strategies = [
-    AlgorithmConfig(name="lz78::Sparse", header="compressors/lz78/CompactHashTrie.hpp"),
-    AlgorithmConfig(name="lz78::Plain", header="compressors/lz78/CompactHashTrie.hpp"),
-    AlgorithmConfig(name="lz78::SparseDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
-    AlgorithmConfig(name="lz78::PlainDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
-    AlgorithmConfig(name="lz78::SparseEliasDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
-    AlgorithmConfig(name="lz78::PlainEliasDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::ch::Sparse", header="compressors/lz78/CompactHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::ch::Plain", header="compressors/lz78/CompactHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::ch::SparseDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::ch::PlainDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::ch::SparseEliasDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::ch::PlainEliasDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
 ]
 
 # LZ78 tries ("lz78trie")
