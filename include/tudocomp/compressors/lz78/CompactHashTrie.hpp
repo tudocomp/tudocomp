@@ -159,20 +159,27 @@ class NoKVGrow {
     double m_max_load_factor;
 
     // We map (key_width, value_width) to hashmap
+    static constexpr size_t MIN_BITS = 1;
     template<typename T>
     struct width_bucket_t {
         std::vector<T> m_elements;
 
         template<typename grow_t>
         T& access(size_t i, grow_t f) {
-            while(i >= m_elements.size()) {
+            DCHECK_GE(i, MIN_BITS);
+            while((i - MIN_BITS) >= m_elements.size()) {
                 m_elements.push_back(f(m_elements.size()));
             }
-            return m_elements[i];
+            return m_elements[i - MIN_BITS];
         }
 
         T& operator[](size_t i) {
-            return m_elements.at(i);
+            DCHECK_GE(i, MIN_BITS);
+            return m_elements.at(i - MIN_BITS);
+        }
+
+        inline size_t min_index() const {
+            return MIN_BITS;
         }
 
         inline size_t size() const {
@@ -225,18 +232,18 @@ public:
 
         // Grow by-key bit index as needed
         uint16_t key_bits = bits_for(key);
-        auto& val_tables = m_key_tables.access(key_bits, [](auto bits){
+        auto&& val_tables = m_key_tables.access(key_bits, [](uint64_t bits) {
             return val_tables_t();
         });
 
         // Grow by-val bit index as needed
         uint16_t value_bits = bits_for(value);
-        auto& table = val_tables.access(value_bits, [&](uint64_t bits) {
+        auto&& table = val_tables.access(value_bits, [&](uint64_t bits) {
             compact_hash_strategy_t x {
                 m_initial_table_size,
                 m_max_load_factor,
-                key_bits - (key_bits > 0 && reduce_key_range),
-                bits  - (bits > 0 && reduce_value_range),
+                key_bits - uint64_t(key_bits > 0 && reduce_key_range),
+                bits - uint64_t(bits > 0 && reduce_value_range),
             };
             m_overall_size += x.size();
             m_overall_table_size += x.table_size();
@@ -275,7 +282,7 @@ public:
             value -= value_min;
         }
 
-        for (size_t i = 0; i < value_bits; i++) {
+        for (size_t i = val_tables.min_index(); i < value_bits; i++) {
             uint64_t v = val_tables[i].search(key);
             if (v != 0) {
                 if (reduce_value_range) {
@@ -302,10 +309,10 @@ public:
     inline ~NoKVGrow() {
         if (m_guard) {
             std::cout << "Tables:\n";
-            for (size_t i = 0; i < m_key_tables.size(); i++) {
+            for (size_t i = m_key_tables.min_index(); i < m_key_tables.size(); i++) {
                 std::cout << "  KeyBits(" << (i + 0) << "):\n";
                 auto& val_tables = m_key_tables[i];
-                for (size_t j = 0; j < val_tables.size(); j++) {
+                for (size_t j = val_tables.min_index(); j < val_tables.size(); j++) {
                     std::cout << "    ValBits(" << (j + 0) << "): size/tsize(";
                     auto& table = val_tables[j];
                     std::cout
