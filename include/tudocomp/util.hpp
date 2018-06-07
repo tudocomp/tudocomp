@@ -12,6 +12,7 @@
 #include <type_traits>
 #include <utility>
 #include <iomanip>
+#include <unordered_map>
 
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/util/bits.hpp>
@@ -535,5 +536,48 @@ inline uint64_t zero_or_next_power_of_two(uint64_t x) {
 
     return x + 1;
 }
+
+class DebugTableFormatter {
+    std::unordered_map<uint64_t, std::string> m_pixel;
+
+    uint64_t pair(uint64_t x, uint64_t y) {
+        return (x << 32) | y;
+    }
+public:
+    DebugTableFormatter(){}
+
+    inline void put(size_t x, size_t y, std::string const& t) {
+        m_pixel[pair(x, y)] = t;
+    }
+    template<typename T>
+    inline void put(size_t x, size_t y, T const& t) {
+        std::stringstream ss;
+        ss << t;
+        put(x, y, ss.str());
+    }
+
+    inline std::string print(size_t w, size_t h) {
+        std::vector<size_t> col_ws;
+        for (size_t x = 0; x < w; x++) {
+            size_t col_w = 0;
+            for (size_t y = 0; y < h; y++) {
+                col_w = std::max(col_w, m_pixel[pair(x, y)].size());
+            }
+            col_ws.push_back(col_w);
+        }
+
+        std::stringstream ss;
+        for (size_t y = 0; y < h; y++) {
+            ss << "│";
+            for (size_t x = 0; x < w; x++) {
+                ss << std::setw(col_ws[x]) << m_pixel[pair(x, y)];
+                ss << "│";
+            }
+            ss << "\n";
+        }
+
+        return ss.str();
+    }
+};
 
 }//ns

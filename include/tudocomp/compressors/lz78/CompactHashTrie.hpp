@@ -7,6 +7,7 @@
 #include <tudocomp/util/compact_hash.hpp>
 #include <tudocomp/util/compact_displacement_hash.hpp>
 #include <tudocomp/util/compact_sparse_displacement_hash.hpp>
+#include <tudocomp/util.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -227,17 +228,38 @@ public:
     }
 
     inline uint64_t space_value(uint64_t value) {
-        return value;
+        auto v = value;
+        uint64_t mult = 4;
+        uint64_t accum = 2;
+
+        while(v >= accum) {
+            v++;
+            accum = mult;
+            mult *= 2;
+        }
+
+        return v;
     }
+
     inline uint64_t unspace_value(uint64_t value) {
-        return value;
+        auto v = value;
+        uint64_t mult = 63;
+
+        while(mult > 0) {
+            if (v >= (1ull << mult)) {
+                v--;
+            }
+            mult--;
+        }
+
+        return v;
     }
 
     inline uint64_t insert(uint64_t key, uint64_t value) {
         value = space_value(value);
 
         constexpr bool reduce_key_range = true;
-        constexpr bool reduce_value_range = false;
+        constexpr bool reduce_value_range = true;
 
         // Grow by-key bit index as needed
         uint16_t key_bits = bits_for(key);
@@ -337,6 +359,17 @@ public:
                     << "\n";
                 }
             }
+
+            size_t mx = 45;
+            DebugTableFormatter fmt;
+
+            fmt.put(0, 0, 0);
+            for(size_t i = 1; i < mx; i++) {
+                fmt.put(i, 0, i);
+                fmt.put(space_value(i), 1, i);
+                fmt.put(unspace_value(space_value(i)), 2, i);
+            }
+            std::cout << fmt.print(mx, 3) << "\n";
         }
     }
 private:
