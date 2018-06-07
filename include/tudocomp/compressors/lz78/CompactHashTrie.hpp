@@ -226,7 +226,16 @@ public:
         return bits_for(v);
     }
 
+    inline uint64_t space_value(uint64_t value) {
+        return value;
+    }
+    inline uint64_t unspace_value(uint64_t value) {
+        return value;
+    }
+
     inline uint64_t insert(uint64_t key, uint64_t value) {
+        value = space_value(value);
+
         constexpr bool reduce_key_range = true;
         constexpr bool reduce_value_range = false;
 
@@ -288,7 +297,7 @@ public:
                 if (reduce_value_range) {
                     v += min_val(i);
                 }
-                return v;
+                return unspace_value(v);
             }
         }
 
@@ -301,7 +310,7 @@ public:
         if (reduce_value_range) {
             r += value_min;
         }
-        return r;
+        return unspace_value(r);
     }
 
     inline NoKVGrow(NoKVGrow&&) = default;
