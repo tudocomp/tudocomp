@@ -228,31 +228,20 @@ public:
     }
 
     inline uint64_t space_value(uint64_t value) {
-        auto v = value;
-        uint64_t mult = 4;
-        uint64_t accum = 2;
+        uint64_t extra_bits = 0;
+        uint64_t bits = 0;
 
-        while(v >= accum) {
-            v++;
-            accum = mult;
-            mult *= 2;
-        }
+        do {
+            extra_bits = bits_for(value) - bits - 1;
+            value += extra_bits;
+            bits += extra_bits;
+        } while (extra_bits != 0);
 
-        return v;
+        return value;
     }
 
     inline uint64_t unspace_value(uint64_t value) {
-        auto v = value;
-        uint64_t mult = 63;
-
-        while(mult > 0) {
-            if (v >= (1ull << mult)) {
-                v--;
-            }
-            mult--;
-        }
-
-        return v;
+        return value + 1 - bits_for(value);
     }
 
     inline uint64_t insert(uint64_t key, uint64_t value) {
@@ -369,7 +358,7 @@ public:
                 fmt.put(space_value(i), 1, i);
                 fmt.put(unspace_value(space_value(i)), 2, i);
             }
-            std::cout << fmt.print(mx, 3) << "\n";
+            std::cout << fmt.print(mx, 4) << "\n";
         }
     }
 private:
