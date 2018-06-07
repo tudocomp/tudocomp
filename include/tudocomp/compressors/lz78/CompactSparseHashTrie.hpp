@@ -19,7 +19,7 @@ struct Sparse {
         return m;
     }
 
-    using table_t = compact_sparse_hashtable::compact_sparse_hashtable_t<dynamic_t>;
+    using table_t = compact_sparse_hashmap::compact_sparse_hashmap_t<dynamic_t>;
 };
 
 struct Plain {
@@ -28,7 +28,7 @@ struct Plain {
         return m;
     }
 
-    using table_t = compact_sparse_hashtable::compact_hashtable_t<dynamic_t>;
+    using table_t = compact_sparse_hashmap::compact_hashmap_t<dynamic_t>;
 };
 
 struct SparseDisplacement {
@@ -37,7 +37,7 @@ struct SparseDisplacement {
         return m;
     }
 
-    using table_t = compact_sparse_hashtable::compact_sparse_displacement_hashtable_t<dynamic_t>;
+    using table_t = compact_sparse_hashmap::compact_sparse_displacement_hashmap_t<dynamic_t>;
 };
 
 struct SparseEliasDisplacement {
@@ -46,7 +46,7 @@ struct SparseEliasDisplacement {
         return m;
     }
 
-    using table_t = compact_sparse_hashtable::compact_sparse_elias_displacement_hashtable_t<dynamic_t>;
+    using table_t = compact_sparse_hashmap::compact_sparse_elias_displacement_hashmap_t<dynamic_t>;
 };
 
 struct PlainDisplacement {
@@ -55,7 +55,7 @@ struct PlainDisplacement {
         return m;
     }
 
-    using table_t = compact_sparse_hashtable::compact_displacement_hashtable_t<dynamic_t>;
+    using table_t = compact_sparse_hashmap::compact_displacement_hashmap_t<dynamic_t>;
 };
 
 struct PlainEliasDisplacement {
@@ -64,7 +64,7 @@ struct PlainEliasDisplacement {
         return m;
     }
 
-    using table_t = compact_sparse_hashtable::compact_elias_displacement_hashtable_t<dynamic_t>;
+    using table_t = compact_sparse_hashmap::compact_elias_displacement_hashmap_t<dynamic_t>;
 };
 
 template<typename compact_hash_strategy_t = Sparse>
