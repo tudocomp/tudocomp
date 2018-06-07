@@ -8,3 +8,18 @@ FOREACH(child ${children})
     ENDIF()
 ENDFOREACH()
 
+add_executable(
+    coder_stats_example
+
+    coder_stats.cpp
+)
+
+target_link_libraries(
+    coder_stats_example
+
+    tudocomp
+    bit_span
+)
+
+add_dependencies(examples coder_stats_example)
+
