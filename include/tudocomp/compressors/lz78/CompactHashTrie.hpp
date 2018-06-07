@@ -168,7 +168,7 @@ class NoKVGrow {
         T& access(size_t i, grow_t f) {
             DCHECK_GE(i, MIN_BITS);
             while((i - MIN_BITS) >= m_elements.size()) {
-                m_elements.push_back(f(m_elements.size()));
+                m_elements.push_back(f(m_elements.size() + MIN_BITS));
             }
             return m_elements[i - MIN_BITS];
         }
@@ -183,7 +183,7 @@ class NoKVGrow {
         }
 
         inline size_t size() const {
-            return m_elements.size();
+            return m_elements.size() + MIN_BITS;
         }
 
         width_bucket_t() = default;
