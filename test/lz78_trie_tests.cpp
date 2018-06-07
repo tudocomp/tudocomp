@@ -374,42 +374,42 @@ TEST(Trie, ExtHashTrie) {
     trie_test<ExtHashTrie>();
 }
 
-#include <tudocomp/compressors/lz78/CompactSparseHashTrie.hpp>
-TEST(TrieStructure, CompactSparseHashTrie) {
-    trie_test<CompactSparseHashTrie<>>(false);
+#include <tudocomp/compressors/lz78/CompactHashTrie.hpp>
+TEST(TrieStructure, CompactHashTrie) {
+    trie_test<CompactHashTrie<>>(false);
 }
-TEST(Trie, CompactSparseHashTrie) {
-    trie_test<CompactSparseHashTrie<>>();
+TEST(Trie, CompactHashTrie) {
+    trie_test<CompactHashTrie<>>();
 }
-TEST(TrieStructure, CompactSparseHashTriePlain) {
-    trie_test<CompactSparseHashTrie<Plain>>(false);
+TEST(TrieStructure, CompactHashTriePlain) {
+    trie_test<CompactHashTrie<Plain>>(false);
 }
-TEST(Trie, CompactSparseHashTriePlain) {
-    trie_test<CompactSparseHashTrie<Plain>>();
+TEST(Trie, CompactHashTriePlain) {
+    trie_test<CompactHashTrie<Plain>>();
 }
-TEST(TrieStructure, CompactSparseHashTrieSparseDisplacement) {
-    trie_test<CompactSparseHashTrie<SparseDisplacement>>(false);
+TEST(TrieStructure, CompactHashTrieSparseDisplacement) {
+    trie_test<CompactHashTrie<SparseDisplacement>>(false);
 }
-TEST(Trie, CompactSparseHashTrieSparseDisplacement) {
-    trie_test<CompactSparseHashTrie<SparseDisplacement>>();
+TEST(Trie, CompactHashTrieSparseDisplacement) {
+    trie_test<CompactHashTrie<SparseDisplacement>>();
 }
-TEST(TrieStructure, CompactSparseHashTriePlainDisplacement) {
-    trie_test<CompactSparseHashTrie<PlainDisplacement>>(false);
+TEST(TrieStructure, CompactHashTriePlainDisplacement) {
+    trie_test<CompactHashTrie<PlainDisplacement>>(false);
 }
-TEST(Trie, CompactSparseHashTriePlainDisplacement) {
-    trie_test<CompactSparseHashTrie<PlainDisplacement>>();
+TEST(Trie, CompactHashTriePlainDisplacement) {
+    trie_test<CompactHashTrie<PlainDisplacement>>();
 }
-TEST(TrieStructure, CompactSparseHashTrieSparseEliasDisplacement) {
-    trie_test<CompactSparseHashTrie<SparseEliasDisplacement>>(false);
+TEST(TrieStructure, CompactHashTrieSparseEliasDisplacement) {
+    trie_test<CompactHashTrie<SparseEliasDisplacement>>(false);
 }
-TEST(Trie, CompactSparseHashTrieSparseEliasDisplacement) {
-    trie_test<CompactSparseHashTrie<SparseEliasDisplacement>>();
+TEST(Trie, CompactHashTrieSparseEliasDisplacement) {
+    trie_test<CompactHashTrie<SparseEliasDisplacement>>();
 }
-TEST(TrieStructure, CompactSparseHashTriePlainEliasDisplacement) {
-    trie_test<CompactSparseHashTrie<PlainEliasDisplacement>>(false);
+TEST(TrieStructure, CompactHashTriePlainEliasDisplacement) {
+    trie_test<CompactHashTrie<PlainEliasDisplacement>>(false);
 }
-TEST(Trie, CompactSparseHashTriePlainEliasDisplacement) {
-    trie_test<CompactSparseHashTrie<PlainEliasDisplacement>>();
+TEST(Trie, CompactHashTriePlainEliasDisplacement) {
+    trie_test<CompactHashTrie<PlainEliasDisplacement>>();
 }
 
 // #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>

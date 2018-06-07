@@ -68,7 +68,7 @@ struct PlainEliasDisplacement {
 };
 
 template<typename compact_hash_strategy_t = Sparse>
-class CompactSparseHashTrie : public Algorithm, public LZ78Trie<> {
+class CompactHashTrie : public Algorithm, public LZ78Trie<> {
     using table_t = typename compact_hash_strategy_t::table_t;
     using ref_t = typename table_t::reference_type;
 
@@ -95,7 +95,7 @@ public:
         return m;
     }
 
-    inline CompactSparseHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline CompactHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
         : Algorithm(std::move(env))
         , LZ78Trie(n,remaining_characters)
         , m_table(zero_or_next_power_of_two(reserve))
@@ -105,7 +105,7 @@ public:
 
     IF_STATS(
         MoveGuard m_guard;
-        inline ~CompactSparseHashTrie() {
+        inline ~CompactHashTrie() {
             if (m_guard) {
                 //auto stats = m_table.stat_gather();
 
@@ -126,8 +126,8 @@ public:
             }
         }
     )
-    CompactSparseHashTrie(CompactSparseHashTrie&& other) = default;
-    CompactSparseHashTrie& operator=(CompactSparseHashTrie&& other) = default;
+    CompactHashTrie(CompactHashTrie&& other) = default;
+    CompactHashTrie& operator=(CompactHashTrie&& other) = default;
 
     inline node_t add_rootnode(uliteral_t c) {
         auto key = create_node(0, c);
