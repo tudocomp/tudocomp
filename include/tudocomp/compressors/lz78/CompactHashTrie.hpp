@@ -30,8 +30,12 @@ class Common {
         return m_value_width;
     }
 public:
-    inline Common(size_t table_size, double max_load_factor):
-        m_table(table_size)
+    inline Common() = default;
+    inline Common(size_t table_size,
+                  double max_load_factor,
+                  uint64_t key_width = table_t::DEFAULT_KEY_WIDTH,
+                  uint64_t value_width = table_t::DEFAULT_VALUE_WIDTH):
+        m_table(table_size, key_width, value_width)
     {
         m_table.max_load_factor(max_load_factor);
     }
@@ -48,7 +52,15 @@ public:
         return m_table.max_load_factor();
     }
 
-    inline uint64_t insert_kv_width(uint64_t key, uint64_t value) {
+    inline uint64_t key_width() {
+        return m_table.key_width();
+    }
+
+    inline uint64_t value_width() {
+        return m_table.value_width();
+    }
+
+    inline uint64_t insert(uint64_t key, uint64_t value) {
         DCHECK_NE(value, 0u);
         auto&& r = m_table.access_kv_width(key,
                                            key_width(key),
@@ -58,6 +70,19 @@ public:
             return r;
         } else {
             return r;
+        }
+    }
+
+    inline uint64_t search(uint64_t key) {
+        using ptr_t = typename table_t::pointer_type;
+
+        auto p = m_table.search(key);
+        if (p != ptr_t()) {
+            uint64_t v = *p;
+            DCHECK_NE(v, 0);
+            return v;
+        } else {
+            return 0;
         }
     }
 };
@@ -128,6 +153,132 @@ struct PlainEliasDisplacement:
     using Common::Common;
 };
 
+template<typename compact_hash_strategy_t>
+class NoKVGrow {
+    size_t m_initial_table_size;
+    double m_max_load_factor;
+
+    // We map (key_width, value_width) to hashmap
+    using val_bit_tables_t = std::vector<compact_hash_strategy_t>;
+    using key_bit_tables_t = std::vector<val_bit_tables_t>;
+    key_bit_tables_t m_tables;
+    size_t m_overall_size = 0;
+    size_t m_overall_table_size = 0;
+
+public:
+    inline static Meta meta() {
+        Meta m("compact_hash_strategy", "no_kv_grow", "Adapter that does not grow the bit widths of keys and values, but rather creates additional hash tables as needed.");
+        m.option("compact_hash_strategy")
+            .templated<compact_hash_strategy_t>("compact_hash_strategy");
+        return m;
+    }
+
+    inline NoKVGrow(size_t table_size, double max_load_factor):
+        m_initial_table_size(table_size),
+        m_max_load_factor(max_load_factor)
+    {
+    }
+
+    inline size_t size() const {
+        return m_overall_size;
+    }
+
+    inline size_t table_size() {
+        return m_overall_table_size;
+    }
+
+    inline double max_load_factor() {
+        return m_max_load_factor;
+    }
+
+    inline static uint64_t my_bits_for(uint64_t v) {
+        if (v == 0) return 0;
+        return bits_for(v);
+    }
+
+    inline uint64_t insert(uint64_t key, uint64_t value) {
+        // Grow by-key bit index as needed
+        uint16_t key_bits = bits_for(key);
+        while (key_bits >= m_tables.size()) {
+            m_tables.push_back(val_bit_tables_t());
+        }
+        auto& val_bits_tables = m_tables[key_bits];
+
+        // Grow by-val bit index as needed
+        uint16_t value_bits = bits_for(value);
+        while (value_bits >= val_bits_tables.size()) {
+            uint64_t this_val_bits = val_bits_tables.size();
+
+            auto t = compact_hash_strategy_t(m_initial_table_size,
+                                             m_max_load_factor,
+                                             key_bits,
+                                             this_val_bits);
+            m_overall_size += t.size();
+            m_overall_table_size += t.table_size();
+
+            val_bits_tables.push_back(std::move(t));
+        }
+
+        /*
+        uint64_t key_mask = key_bits == 0 ? 0 : (1ull << (key_bits - 1));
+        DCHECK_GE(key, key_mask);
+        key &= ~key_mask;
+        DCHECK_LT(key, key_mask);
+        */
+
+        uint64_t key_min = key_bits == 1 ? 0 : 1ull << (key_bits - 1);
+        uint64_t key_max = (1ull << key_bits) - 1;
+        DCHECK_GE(key, key_min);
+        DCHECK_LE(key, key_max);
+
+        std::cout << "insert key " << key << " with " << key_bits << " bits, min/max: ("<<key_min<<","<<key_max<<")\n";
+
+        for (size_t i = 0; i < value_bits; i++) {
+            uint64_t v = val_bits_tables[i].search(key);
+            if (v != 0) {
+                return v;
+            }
+        }
+
+        auto& t = val_bits_tables[value_bits];
+        m_overall_size -= t.size();
+        m_overall_table_size -= t.table_size();
+        auto r = t.insert(key, value);
+        m_overall_size += t.size();
+        m_overall_table_size += t.table_size();
+        return r;
+    }
+
+    inline NoKVGrow(NoKVGrow&&) = default;
+    inline NoKVGrow& operator=(NoKVGrow&&) = default;
+    inline ~NoKVGrow() {
+        if (m_guard) {
+            std::cout << "Tables:\n";
+            for (size_t i = 0; i < m_tables.size(); i++) {
+                std::cout << "  KeyBits(" << i << "):\n";
+                auto& t = m_tables[i];
+                for (size_t j = 0; j < t.size(); j++) {
+                    std::cout << "    ValBits(" << j << "): size/tsize(";
+                    auto& t2 = t[j];
+                    std::cout
+                    << t2.size()
+                    << "/"
+                    << t2.table_size()
+                    << ")"
+                    << ", kvsize("
+                    << t2.key_width()
+                    << ","
+                    << t2.value_width()
+                    << ")"
+                    << "\n";
+                }
+            }
+        }
+    }
+private:
+    MoveGuard m_guard;
+};
+
 }
 
 template<typename compact_hash_strategy_t = ch::Sparse>
@@ -179,7 +330,7 @@ public:
     inline node_t add_rootnode(uliteral_t c) {
         auto key = create_node(0, c);
         auto value = size() + 1;
-        bool inserted_val = m_table.insert_kv_width(key, value);
+        bool inserted_val = m_table.insert(key, value);
         DCHECK_EQ(inserted_val, value);
         return node_t(value - 1, true);
     }
@@ -205,7 +356,7 @@ public:
         DCHECK_NE(newleaf_id, 0u);
 
         auto key = create_node(parent,c);
-        auto val = m_table.insert_kv_width(key, newleaf_id);
+        auto val = m_table.insert(key, newleaf_id);
         bool is_new = (val == newleaf_id);
 
         return node_t(val - 1, is_new);

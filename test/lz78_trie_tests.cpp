@@ -411,6 +411,12 @@ TEST(TrieStructure, CompactHashTriePlainEliasDisplacement) {
 TEST(Trie, CompactHashTriePlainEliasDisplacement) {
     trie_test<CompactHashTrie<ch::PlainEliasDisplacement>>();
 }
+TEST(TrieStructure, CompactHashTrieNoKVGrow) {
+    trie_test<CompactHashTrie<ch::NoKVGrow<ch::Sparse>>>(false);
+}
+TEST(Trie, CompactHashTrieNoKVGrow) {
+    trie_test<CompactHashTrie<ch::NoKVGrow<ch::Sparse>>>();
+}
 
 // #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>
 // TEST(TrieStructure, MBonsaiGammaTrie) {
