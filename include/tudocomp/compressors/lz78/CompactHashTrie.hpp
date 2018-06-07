@@ -70,7 +70,6 @@ struct PlainEliasDisplacement {
 template<typename compact_hash_strategy_t = Sparse>
 class CompactHashTrie : public Algorithm, public LZ78Trie<> {
     using table_t = typename compact_hash_strategy_t::table_t;
-    using ref_t = typename table_t::reference_type;
 
     table_t m_table;
     //std::unordered_map<uint64_t, factorid_t> m_table;
@@ -133,7 +132,7 @@ public:
         auto key = create_node(0, c);
         auto value = size() + 1;
 
-        ref_t entry = m_table.access_kv_width(key, key_width(key), value_width(value));
+        auto&& entry = m_table.access_kv_width(key, key_width(key), value_width(value));
 
         //std::cout << "find_or_insert(" << key << ", " << entry << ", " << value << ");\n";
 
@@ -164,7 +163,7 @@ public:
         DCHECK_NE(newleaf_id, 0u);
 
         auto key = create_node(parent,c);
-        ref_t val = m_table.access_kv_width(key, key_width(key), value_width(newleaf_id));
+        auto&& val = m_table.access_kv_width(key, key_width(key), value_width(newleaf_id));
         if (val == 0u) {
             val = newleaf_id;
             DCHECK_EQ(val, newleaf_id);
