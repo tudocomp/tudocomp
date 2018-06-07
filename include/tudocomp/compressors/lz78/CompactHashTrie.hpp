@@ -197,6 +197,9 @@ public:
     }
 
     inline uint64_t insert(uint64_t key, uint64_t value) {
+        constexpr bool reduce_key_range = true;
+        constexpr bool reduce_value_range = false;
+
         // Grow by-key bit index as needed
         uint16_t key_bits = bits_for(key);
         while (key_bits >= m_tables.size()) {
@@ -211,31 +214,50 @@ public:
 
             auto t = compact_hash_strategy_t(m_initial_table_size,
                                              m_max_load_factor,
-                                             key_bits,
-                                             this_val_bits);
+                                             key_bits - (key_bits > 0 && reduce_key_range),
+                                             this_val_bits  - (this_val_bits > 0 && reduce_value_range));
             m_overall_size += t.size();
             m_overall_table_size += t.table_size();
 
             val_bits_tables.push_back(std::move(t));
         }
 
-        /*
-        uint64_t key_mask = key_bits == 0 ? 0 : (1ull << (key_bits - 1));
-        DCHECK_GE(key, key_mask);
-        key &= ~key_mask;
-        DCHECK_LT(key, key_mask);
-        */
+        auto min_val = [](uint64_t bits) {
+            return bits <= 1 ? 0 : 1ull << (bits - 1);
+        };
+        auto max_val = [](uint64_t bits) {
+            return (1ull << bits) - 1;
+        };
 
-        uint64_t key_min = key_bits == 1 ? 0 : 1ull << (key_bits - 1);
-        uint64_t key_max = (1ull << key_bits) - 1;
+        uint64_t key_min = min_val(key_bits);
+        uint64_t key_max = max_val(key_bits);
         DCHECK_GE(key, key_min);
         DCHECK_LE(key, key_max);
 
-        std::cout << "insert key " << key << " with " << key_bits << " bits, min/max: ("<<key_min<<","<<key_max<<")\n";
+        uint64_t value_min = min_val(value_bits);
+        uint64_t value_max = max_val(value_bits);
+        DCHECK_GE(value, value_min);
+        DCHECK_LE(value, value_max);
+
+        std::cout << "insert: "
+            << "key(" << key_bits << ", " << key_min << ".." << key << ".." << key_max << "), "
+            << "value(" << value_bits << ", " << value_min << ".." << value << ".." << value_max << ")"
+            << "\n";
+
+        if (reduce_key_range) {
+            key -= key_min;
+        }
+
+        if (reduce_value_range) {
+            value -= value_min;
+        }
 
         for (size_t i = 0; i < value_bits; i++) {
             uint64_t v = val_bits_tables[i].search(key);
             if (v != 0) {
+                if (reduce_value_range) {
+                    v += min_val(i);
+                }
                 return v;
             }
         }
@@ -246,6 +268,10 @@ public:
         auto r = t.insert(key, value);
         m_overall_size += t.size();
         m_overall_table_size += t.table_size();
+
+        if (reduce_value_range) {
+            r += value_min;
+        }
         return r;
     }
 
