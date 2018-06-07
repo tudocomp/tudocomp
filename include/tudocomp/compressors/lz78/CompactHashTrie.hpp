@@ -18,6 +18,17 @@ using namespace compact_sparse_hashmap;
 template<typename table_t>
 class Common {
     table_t m_table;
+    size_t m_key_width = 0;
+    size_t m_value_width = 0;
+
+    inline size_t key_width(uint64_t key) {
+        m_key_width = std::max(m_key_width, size_t(bits_for(key)));
+        return m_key_width;
+    }
+    inline size_t value_width(uint64_t val) {
+        m_value_width = std::max(m_value_width, size_t(bits_for(val)));
+        return m_value_width;
+    }
 public:
     inline Common(size_t table_size, double max_load_factor):
         m_table(table_size)
@@ -37,12 +48,11 @@ public:
         return m_table.max_load_factor();
     }
 
-    inline uint64_t insert_kv_width(uint64_t key,
-                                    uint64_t value,
-                                    uint64_t key_width,
-                                    uint64_t value_width) {
+    inline uint64_t insert_kv_width(uint64_t key, uint64_t value) {
         DCHECK_NE(value, 0u);
-        auto&& r = m_table.access_kv_width(key, key_width, value_width);
+        auto&& r = m_table.access_kv_width(key,
+                                           key_width(key),
+                                           value_width(value));
         if (r == 0) {
             r = value;
             return r;
@@ -123,17 +133,6 @@ struct PlainEliasDisplacement:
 template<typename compact_hash_strategy_t = ch::Sparse>
 class CompactHashTrie : public Algorithm, public LZ78Trie<> {
     compact_hash_strategy_t m_table;
-    size_t m_key_width = 0;
-    size_t m_value_width = 0;
-
-    inline size_t key_width(uint64_t key) {
-        m_key_width = std::max(m_key_width, size_t(bits_for(key)));
-        return m_key_width;
-    }
-    inline size_t value_width(uint64_t val) {
-        m_value_width = std::max(m_value_width, size_t(bits_for(val)));
-        return m_value_width;
-    }
 
 public:
     inline static Meta meta() {
@@ -180,10 +179,7 @@ public:
     inline node_t add_rootnode(uliteral_t c) {
         auto key = create_node(0, c);
         auto value = size() + 1;
-        bool inserted_val = m_table.insert_kv_width(key,
-                                                    value,
-                                                    key_width(key),
-                                                    value_width(value));
+        bool inserted_val = m_table.insert_kv_width(key, value);
         DCHECK_EQ(inserted_val, value);
         return node_t(value - 1, true);
     }
@@ -209,10 +205,7 @@ public:
         DCHECK_NE(newleaf_id, 0u);
 
         auto key = create_node(parent,c);
-        auto val = m_table.insert_kv_width(key,
-                                           newleaf_id,
-                                           key_width(key),
-                                           value_width(newleaf_id));
+        auto val = m_table.insert_kv_width(key, newleaf_id);
         bool is_new = (val == newleaf_id);
 
         return node_t(val - 1, is_new);
