@@ -227,6 +227,7 @@ public:
         return bits_for(v);
     }
 
+    // skip every power of two, except 0
     inline uint64_t space_value(uint64_t value) {
         uint64_t extra_bits = 0;
         uint64_t bits = 0;
@@ -240,6 +241,7 @@ public:
         return value;
     }
 
+    // unskip every power of two, except 0
     inline uint64_t unspace_value(uint64_t value) {
         return value + 1 - bits_for(value);
     }

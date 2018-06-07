@@ -69,13 +69,16 @@ hash_function = [
         ]
 
 # CompactHashTrie strategies
-compact_hashmap_strategies = [
+compact_hashmap_strategies_norec = [
     AlgorithmConfig(name="lz78::ch::Sparse", header="compressors/lz78/CompactHashTrie.hpp"),
     AlgorithmConfig(name="lz78::ch::Plain", header="compressors/lz78/CompactHashTrie.hpp"),
     AlgorithmConfig(name="lz78::ch::SparseDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
     AlgorithmConfig(name="lz78::ch::PlainDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
     AlgorithmConfig(name="lz78::ch::SparseEliasDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
     AlgorithmConfig(name="lz78::ch::PlainEliasDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
+]
+compact_hashmap_strategies = compact_hashmap_strategies_norec + [
+    AlgorithmConfig(name="lz78::ch::NoKVGrow", header="compressors/lz78/CompactHashTrie.hpp", sub=[compact_hashmap_strategies_norec]),
 ]
 
 # LZ78 tries ("lz78trie")
