@@ -323,7 +323,7 @@ public:
         }
         return unspace_value(r);
     }
-
+/*
     inline NoKVGrow(NoKVGrow&&) = default;
     inline NoKVGrow& operator=(NoKVGrow&&) = default;
     inline ~NoKVGrow() {
@@ -363,6 +363,7 @@ public:
     }
 private:
     MoveGuard m_guard;
+*/
 };
 
 }
@@ -417,7 +418,7 @@ public:
         auto key = create_node(0, c);
         auto value = size() + 1;
         uint64_t inserted_val = m_table.insert(key, value);
-        std::cout << "add_root::insert("<<key<<","<<value<<") -> " << inserted_val << "\n";
+        //std::cout << "add_root::insert("<<key<<","<<value<<") -> " << inserted_val << "\n";
         DCHECK_EQ(inserted_val, value);
         return node_t(value - 1, true);
     }
@@ -444,7 +445,7 @@ public:
 
         auto key = create_node(parent,c);
         auto val = m_table.insert(key, newleaf_id);
-        std::cout << "find_or_insert::insert("<<key<<","<<newleaf_id<<") -> " << val << "\n";
+        //std::cout << "find_or_insert::insert("<<key<<","<<newleaf_id<<") -> " << val << "\n";
         bool is_new = (val == newleaf_id);
 
         return node_t(val - 1, is_new);
