@@ -159,7 +159,6 @@ class NoKVGrow {
     double m_max_load_factor;
 
     // We map (key_width, value_width) to hashmap
-    static constexpr size_t min_bits = 1;
     using val_bit_tables_t = std::vector<compact_hash_strategy_t>;
     using key_bit_tables_t = std::vector<val_bit_tables_t>;
     key_bit_tables_t m_tables;
@@ -201,25 +200,17 @@ public:
         constexpr bool reduce_key_range = true;
         constexpr bool reduce_value_range = false;
 
-        auto min_bit_sat = [min_bits](uint64_t bits) {
-            if (bits > min_bits) {
-                return bits - min_bits;
-            } else {
-                return uint64_t(0);
-            }
-        };
-
         // Grow by-key bit index as needed
         uint16_t key_bits = bits_for(key);
-        while (min_bit_sat(key_bits) >= m_tables.size()) {
+        while ((key_bits) >= m_tables.size()) {
             m_tables.push_back(val_bit_tables_t());
         }
-        auto& val_bits_tables = m_tables[min_bit_sat(key_bits)];
+        auto& val_bits_tables = m_tables[(key_bits)];
 
         // Grow by-val bit index as needed
         uint16_t value_bits = bits_for(value);
-        while (min_bit_sat(value_bits) >= val_bits_tables.size()) {
-            uint64_t this_val_bits = val_bits_tables.size() + min_bits;
+        while ((value_bits) >= val_bits_tables.size()) {
+            uint64_t this_val_bits = val_bits_tables.size() + 0;
 
             auto t = compact_hash_strategy_t(m_initial_table_size,
                                              m_max_load_factor,
@@ -248,10 +239,12 @@ public:
         DCHECK_GE(value, value_min);
         DCHECK_LE(value, value_max);
 
+        /*
         std::cout << "insert: "
             << "key(" << key_bits << ", " << key_min << ".." << key << ".." << key_max << "), "
             << "value(" << value_bits << ", " << value_min << ".." << value << ".." << value_max << ")"
             << "\n";
+        */
 
         if (reduce_key_range) {
             key -= key_min;
@@ -261,8 +254,8 @@ public:
             value -= value_min;
         }
 
-        for (size_t i = min_bits; i < value_bits; i++) {
-            uint64_t v = val_bits_tables[i - min_bits].search(key);
+        for (size_t i = 0; i < value_bits; i++) {
+            uint64_t v = val_bits_tables[i].search(key);
             if (v != 0) {
                 if (reduce_value_range) {
                     v += min_val(i);
@@ -271,7 +264,7 @@ public:
             }
         }
 
-        auto& t = val_bits_tables[value_bits - min_bits];
+        auto& t = val_bits_tables[(value_bits)];
         m_overall_size -= t.size();
         m_overall_table_size -= t.table_size();
         auto r = t.insert(key, value);
@@ -290,10 +283,10 @@ public:
         if (m_guard) {
             std::cout << "Tables:\n";
             for (size_t i = 0; i < m_tables.size(); i++) {
-                std::cout << "  KeyBits(" << (i + min_bits) << "):\n";
+                std::cout << "  KeyBits(" << (i + 0) << "):\n";
                 auto& t = m_tables[i];
                 for (size_t j = 0; j < t.size(); j++) {
-                    std::cout << "    ValBits(" << (j + min_bits) << "): size/tsize(";
+                    std::cout << "    ValBits(" << (j + 0) << "): size/tsize(";
                     auto& t2 = t[j];
                     std::cout
                     << t2.size()
@@ -365,7 +358,8 @@ public:
     inline node_t add_rootnode(uliteral_t c) {
         auto key = create_node(0, c);
         auto value = size() + 1;
-        bool inserted_val = m_table.insert(key, value);
+        uint64_t inserted_val = m_table.insert(key, value);
+        std::cout << "add_root::insert("<<key<<","<<value<<") -> " << inserted_val << "\n";
         DCHECK_EQ(inserted_val, value);
         return node_t(value - 1, true);
     }
@@ -392,6 +386,7 @@ public:
 
         auto key = create_node(parent,c);
         auto val = m_table.insert(key, newleaf_id);
+        std::cout << "find_or_insert::insert("<<key<<","<<newleaf_id<<") -> " << val << "\n";
         bool is_new = (val == newleaf_id);
 
         return node_t(val - 1, is_new);
