@@ -159,6 +159,7 @@ class NoKVGrow {
     double m_max_load_factor;
 
     // We map (key_width, value_width) to hashmap
+    static constexpr size_t min_bits = 1;
     using val_bit_tables_t = std::vector<compact_hash_strategy_t>;
     using key_bit_tables_t = std::vector<val_bit_tables_t>;
     key_bit_tables_t m_tables;
@@ -200,17 +201,25 @@ public:
         constexpr bool reduce_key_range = true;
         constexpr bool reduce_value_range = false;
 
+        auto min_bit_sat = [min_bits](uint64_t bits) {
+            if (bits > min_bits) {
+                return bits - min_bits;
+            } else {
+                return uint64_t(0);
+            }
+        };
+
         // Grow by-key bit index as needed
         uint16_t key_bits = bits_for(key);
-        while (key_bits >= m_tables.size()) {
+        while (min_bit_sat(key_bits) >= m_tables.size()) {
             m_tables.push_back(val_bit_tables_t());
         }
-        auto& val_bits_tables = m_tables[key_bits];
+        auto& val_bits_tables = m_tables[min_bit_sat(key_bits)];
 
         // Grow by-val bit index as needed
         uint16_t value_bits = bits_for(value);
-        while (value_bits >= val_bits_tables.size()) {
-            uint64_t this_val_bits = val_bits_tables.size();
+        while (min_bit_sat(value_bits) >= val_bits_tables.size()) {
+            uint64_t this_val_bits = val_bits_tables.size() + min_bits;
 
             auto t = compact_hash_strategy_t(m_initial_table_size,
                                              m_max_load_factor,
@@ -252,8 +261,8 @@ public:
             value -= value_min;
         }
 
-        for (size_t i = 0; i < value_bits; i++) {
-            uint64_t v = val_bits_tables[i].search(key);
+        for (size_t i = min_bits; i < value_bits; i++) {
+            uint64_t v = val_bits_tables[i - min_bits].search(key);
             if (v != 0) {
                 if (reduce_value_range) {
                     v += min_val(i);
@@ -262,7 +271,7 @@ public:
             }
         }
 
-        auto& t = val_bits_tables[value_bits];
+        auto& t = val_bits_tables[value_bits - min_bits];
         m_overall_size -= t.size();
         m_overall_table_size -= t.table_size();
         auto r = t.insert(key, value);
@@ -281,10 +290,10 @@ public:
         if (m_guard) {
             std::cout << "Tables:\n";
             for (size_t i = 0; i < m_tables.size(); i++) {
-                std::cout << "  KeyBits(" << i << "):\n";
+                std::cout << "  KeyBits(" << (i + min_bits) << "):\n";
                 auto& t = m_tables[i];
                 for (size_t j = 0; j < t.size(); j++) {
-                    std::cout << "    ValBits(" << j << "): size/tsize(";
+                    std::cout << "    ValBits(" << (j + min_bits) << "): size/tsize(";
                     auto& t2 = t[j];
                     std::cout
                     << t2.size()
