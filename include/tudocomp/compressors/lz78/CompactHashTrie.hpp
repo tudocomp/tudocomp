@@ -159,8 +159,27 @@ class NoKVGrow {
     double m_max_load_factor;
 
     // We map (key_width, value_width) to hashmap
+    template<typename T>
+    struct width_bucket_t {
+        std::vector<T> m_elements;
+
+        template<typename grow_t>
+        T& access(size_t i, grow_t f) {
+            while(i >= m_elements.size()) {
+                m_elements.push_back(f(m_elements.size()));
+            }
+            return m_elements[i];
+        }
+
+        inline size_t size() const {
+            return m_elements.size();
+        }
+
+        width_bucket_t() = default;
+    };
+
     using val_bit_tables_t = std::vector<compact_hash_strategy_t>;
-    using key_bit_tables_t = std::vector<val_bit_tables_t>;
+    using key_bit_tables_t = width_bucket_t<val_bit_tables_t>;
     key_bit_tables_t m_tables;
     size_t m_overall_size = 0;
     size_t m_overall_table_size = 0;
@@ -202,10 +221,9 @@ public:
 
         // Grow by-key bit index as needed
         uint16_t key_bits = bits_for(key);
-        while ((key_bits) >= m_tables.size()) {
-            m_tables.push_back(val_bit_tables_t());
-        }
-        auto& val_bits_tables = m_tables[(key_bits)];
+        auto& val_bits_tables = m_tables.access(key_bits, [](auto bits){
+            return val_bit_tables_t();
+        });
 
         // Grow by-val bit index as needed
         uint16_t value_bits = bits_for(value);
@@ -284,7 +302,9 @@ public:
             std::cout << "Tables:\n";
             for (size_t i = 0; i < m_tables.size(); i++) {
                 std::cout << "  KeyBits(" << (i + 0) << "):\n";
-                auto& t = m_tables[i];
+                auto& t = m_tables.access(i, [](auto bits) {
+                    return val_bit_tables_t();
+                });
                 for (size_t j = 0; j < t.size(); j++) {
                     std::cout << "    ValBits(" << (j + 0) << "): size/tsize(";
                     auto& t2 = t[j];
