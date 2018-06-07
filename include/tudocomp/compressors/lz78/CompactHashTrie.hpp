@@ -15,13 +15,10 @@ namespace lz78 {
 namespace ch {
 using namespace compact_sparse_hashmap;
 
-template<typename table_type>
+template<typename table_t>
 class Common {
-    table_type m_table;
+    table_t m_table;
 public:
-    // TODO hide
-    using table_t = table_type;
-
     inline Common(size_t table_size, double max_load_factor):
         m_table(table_size)
     {
@@ -40,10 +37,18 @@ public:
         return m_table.max_load_factor();
     }
 
-    inline decltype(auto) access_kv_width(uint64_t key,
-                                          uint64_t key_width,
-                                          uint64_t value_width) {
-        return m_table.access_kv_width(key, key_width, value_width);
+    inline uint64_t insert_kv_width(uint64_t key,
+                                    uint64_t value,
+                                    uint64_t key_width,
+                                    uint64_t value_width) {
+        DCHECK_NE(value, 0u);
+        auto&& r = m_table.access_kv_width(key, key_width, value_width);
+        if (r == 0) {
+            r = value;
+            return r;
+        } else {
+            return r;
+        }
     }
 };
 
@@ -117,10 +122,7 @@ struct PlainEliasDisplacement:
 
 template<typename compact_hash_strategy_t = ch::Sparse>
 class CompactHashTrie : public Algorithm, public LZ78Trie<> {
-    using table_t = typename compact_hash_strategy_t::table_t;
-
     compact_hash_strategy_t m_table;
-    //std::unordered_map<uint64_t, factorid_t> m_table;
     size_t m_key_width = 0;
     size_t m_value_width = 0;
 
@@ -178,14 +180,11 @@ public:
     inline node_t add_rootnode(uliteral_t c) {
         auto key = create_node(0, c);
         auto value = size() + 1;
-
-        auto&& entry = m_table.access_kv_width(key, key_width(key), value_width(value));
-
-        //std::cout << "find_or_insert(" << key << ", " << entry << ", " << value << ");\n";
-
-        DCHECK_NE(value, 0u);
-
-        entry = value;
+        bool inserted_val = m_table.insert_kv_width(key,
+                                                    value,
+                                                    key_width(key),
+                                                    value_width(value));
+        DCHECK_EQ(inserted_val, value);
         return node_t(value - 1, true);
     }
 
@@ -210,14 +209,13 @@ public:
         DCHECK_NE(newleaf_id, 0u);
 
         auto key = create_node(parent,c);
-        auto&& val = m_table.access_kv_width(key, key_width(key), value_width(newleaf_id));
-        if (val == 0u) {
-            val = newleaf_id;
-            DCHECK_EQ(val, newleaf_id);
-            return node_t(val - 1, true);
-        } else {
-            return node_t(val - 1, false);
-        }
+        auto val = m_table.insert_kv_width(key,
+                                           newleaf_id,
+                                           key_width(key),
+                                           value_width(newleaf_id));
+        bool is_new = (val == newleaf_id);
+
+        return node_t(val - 1, is_new);
     }
 
     inline size_t size() const {
