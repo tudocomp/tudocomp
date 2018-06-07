@@ -32,11 +32,11 @@ public:
         return m_table.size();
     }
 
-    inline size_t table_size() const {
+    inline size_t table_size() {
         return m_table.table_size();
     }
 
-    inline double max_load_factor() const {
+    inline double max_load_factor() {
         return m_table.max_load_factor();
     }
 
@@ -119,7 +119,7 @@ template<typename compact_hash_strategy_t = ch::Sparse>
 class CompactHashTrie : public Algorithm, public LZ78Trie<> {
     using table_t = typename compact_hash_strategy_t::table_t;
 
-    table_t m_table;
+    compact_hash_strategy_t m_table;
     //std::unordered_map<uint64_t, factorid_t> m_table;
     size_t m_key_width = 0;
     size_t m_value_width = 0;
@@ -145,9 +145,8 @@ public:
     inline CompactHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
         : Algorithm(std::move(env))
         , LZ78Trie(n,remaining_characters)
-        , m_table(zero_or_next_power_of_two(reserve))
+        , m_table(zero_or_next_power_of_two(reserve), this->env().option("load_factor").as_integer()/100.0f)
     {
-        m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
     }
 
     IF_STATS(
