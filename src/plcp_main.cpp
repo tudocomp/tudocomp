@@ -171,6 +171,12 @@ int main(int argc, char** argv) {
 		std::cerr << "Infile " << infile << ".plcp does not exist" << std::endl;
 		return 1;
 	}
+	{
+		const size_t filesize = tdc::lcpcomp::filesize(infile.c_str());
+		if(static_cast<size_t>(static_cast<tdc::len_compact_t>(filesize)) != filesize) {
+			std::cerr << "The file " << infile << " is too large to handle. This program is compiled with " << sizeof(tdc::len_compact_t)*8 << "-bit address ranges." << std::endl;
+		}
+	}
 
     const size_t threshold = (argc >= 3) ? std::stoi(argv[3]) : 2;
     const tdc::len_t mb_ram = (argc >= 4) ? std::stoi(argv[4]) : 512;
