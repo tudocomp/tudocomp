@@ -190,6 +190,161 @@ class NoKVGrow {
         width_bucket_t() = default;
     };
 
+    using key_tables_t = width_bucket_t<compact_hash_strategy_t>;
+    key_tables_t m_key_tables;
+    size_t m_overall_size = 0;
+    size_t m_overall_table_size = 0;
+
+public:
+    inline static Meta meta() {
+        Meta m("compact_hash_strategy", "no_k_grow", "Adapter that does not grow the bit widths of keys, but rather creates additional hash tables as needed.");
+        m.option("compact_hash_strategy")
+            .templated<compact_hash_strategy_t>("compact_hash_strategy");
+        return m;
+    }
+
+    inline NoKVGrow(size_t table_size, double max_load_factor):
+        m_initial_table_size(table_size),
+        m_max_load_factor(max_load_factor)
+    {
+    }
+
+    inline size_t size() const {
+        return m_overall_size;
+    }
+
+    inline size_t table_size() {
+        return m_overall_table_size;
+    }
+
+    inline double max_load_factor() {
+        return m_max_load_factor;
+    }
+
+    inline static uint64_t my_bits_for(uint64_t v) {
+        if (v == 0) return 0;
+        return bits_for(v);
+    }
+
+    inline uint64_t insert(uint64_t key, uint64_t value) {
+        constexpr bool reduce_key_range = true;
+
+        // Grow by-key bit index as needed
+        uint16_t key_bits = bits_for(key);
+        auto&& table = m_key_tables.access(key_bits, [&](uint64_t bits) {
+            compact_hash_strategy_t x {
+                m_initial_table_size,
+                m_max_load_factor,
+                key_bits - uint64_t(key_bits > 0 && reduce_key_range),
+            };
+            m_overall_size += x.size();
+            m_overall_table_size += x.table_size();
+            return x;
+        });
+
+        auto min_val = [](uint64_t bits) {
+            return bits <= 1 ? 0 : 1ull << (bits - 1);
+        };
+        auto max_val = [](uint64_t bits) {
+            return (1ull << bits) - 1;
+        };
+
+        uint64_t key_min = min_val(key_bits);
+        uint64_t key_max = max_val(key_bits);
+        DCHECK_GE(key, key_min);
+        DCHECK_LE(key, key_max);
+
+        if (reduce_key_range) {
+            key -= key_min;
+        }
+
+        m_overall_size -= table.size();
+        m_overall_table_size -= table.table_size();
+        auto r = table.insert(key, value);
+        m_overall_size += table.size();
+        m_overall_table_size += table.table_size();
+
+        return r;
+    }
+/*
+    inline NoKVGrow(NoKVGrow&&) = default;
+    inline NoKVGrow& operator=(NoKVGrow&&) = default;
+    inline ~NoKVGrow() {
+        if (m_guard) {
+            std::cout << "Tables:\n";
+            for (size_t i = m_key_tables.min_index(); i < m_key_tables.size(); i++) {
+                std::cout << "  KeyBits(" << (i + 0) << "):\n";
+                auto& val_tables = m_key_tables[i];
+                for (size_t j = val_tables.min_index(); j < val_tables.size(); j++) {
+                    std::cout << "    ValBits(" << (j + 0) << "): size/tsize(";
+                    auto& table = val_tables[j];
+                    std::cout
+                    << table.size()
+                    << "/"
+                    << table.table_size()
+                    << ")"
+                    << ", kvsize("
+                    << table.key_width()
+                    << ","
+                    << table.value_width()
+                    << ")"
+                    << "\n";
+                }
+            }
+
+            size_t mx = 45;
+            DebugTableFormatter fmt;
+
+            fmt.put(0, 0, 0);
+            for(size_t i = 1; i < mx; i++) {
+                fmt.put(i, 0, i);
+                fmt.put(space_value(i), 1, i);
+                fmt.put(unspace_value(space_value(i)), 2, i);
+            }
+            std::cout << fmt.print(mx, 4) << "\n";
+        }
+    }
+private:
+    MoveGuard m_guard;
+*/
+};
+
+template<typename compact_hash_strategy_t>
+class NoKGrow {
+    size_t m_initial_table_size;
+    double m_max_load_factor;
+
+    // We map (key_width, value_width) to hashmap
+    static constexpr size_t MIN_BITS = 1;
+    template<typename T>
+    struct width_bucket_t {
+        std::vector<T> m_elements;
+
+        template<typename grow_t>
+        T& access(size_t i, grow_t f) {
+            DCHECK_GE(i, MIN_BITS);
+            while((i - MIN_BITS) >= m_elements.size()) {
+                m_elements.push_back(f(m_elements.size() + MIN_BITS));
+            }
+            return m_elements[i - MIN_BITS];
+        }
+
+        T& operator[](size_t i) {
+            DCHECK_GE(i, MIN_BITS);
+            return m_elements.at(i - MIN_BITS);
+        }
+
+        inline size_t min_index() const {
+            return MIN_BITS;
+        }
+
+        inline size_t size() const {
+            return m_elements.size() + MIN_BITS;
+        }
+
+        width_bucket_t() = default;
+    };
+
     using val_tables_t = width_bucket_t<compact_hash_strategy_t>;
     using key_tables_t = width_bucket_t<val_tables_t>;
     key_tables_t m_key_tables;
@@ -204,7 +359,7 @@ public:
         return m;
     }
 
-    inline NoKVGrow(size_t table_size, double max_load_factor):
+    inline NoKGrow(size_t table_size, double max_load_factor):
         m_initial_table_size(table_size),
         m_max_load_factor(max_load_factor)
     {
@@ -326,9 +481,9 @@ public:
         return unspace_value(r);
     }
 /*
-    inline NoKVGrow(NoKVGrow&&) = default;
-    inline NoKVGrow& operator=(NoKVGrow&&) = default;
-    inline ~NoKVGrow() {
+    inline NoKGrow(NoKGrow&&) = default;
+    inline NoKGrow& operator=(NoKGrow&&) = default;
+    inline ~NoKGrow() {
         if (m_guard) {
             std::cout << "Tables:\n";
             for (size_t i = m_key_tables.min_index(); i < m_key_tables.size(); i++) {

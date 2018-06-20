@@ -79,6 +79,7 @@ compact_hashmap_strategies_norec = [
 ]
 compact_hashmap_strategies = compact_hashmap_strategies_norec + [
     AlgorithmConfig(name="lz78::ch::NoKVGrow", header="compressors/lz78/CompactHashTrie.hpp", sub=[compact_hashmap_strategies_norec]),
+    AlgorithmConfig(name="lz78::ch::NoKGrow", header="compressors/lz78/CompactHashTrie.hpp", sub=[compact_hashmap_strategies_norec]),
 ]
 
 # LZ78 tries ("lz78trie")
