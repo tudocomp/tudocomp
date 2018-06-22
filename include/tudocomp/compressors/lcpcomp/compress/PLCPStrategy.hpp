@@ -10,15 +10,12 @@
 
 #include <tudocomp/compressors/lzss/LZSSFactors.hpp>
 #include <tudocomp/ds/LCPSada.hpp>
-#include <boost/heap/pairing_heap.hpp>
-//#include <stxxl/bits/stream/sort_stream.h>
+
 #include <stxxl/bits/containers/vector.h>
 #include <stxxl/bits/algo/ksort.h>
 
-
 #include <iostream>
 #include <fstream>
-
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -269,142 +266,173 @@ class PLCPFileForwardIterator {
  */
 template<class RefStrategy,class plcp_type>
 void compute_references(const size_t n, RefStrategy& refStrategy, plcp_type& pplcp, size_t threshold) {
-    // Poi = interesting peak
+    // Point of interest
     struct Poi {
         len_t pos;
         len_t lcp;
-        len_t no;
 
-        Poi(len_t _pos, len_t _lcp, len_t _no)
-            : pos(_pos), lcp(_lcp), no(_no) {
+        Poi(len_t _pos, len_t _lcp) : pos(_pos), lcp(_lcp) {
         }
 
-        bool operator<(const Poi& o) const {
+        inline len_t end() const {
+            return pos + lcp;
+        }
+
+        inline bool operator<(const Poi& o) const {
             DCHECK_NE(o.pos, this->pos);
             if(o.lcp == this->lcp) return this->pos > o.pos;
             return this->lcp < o.lcp;
         }
-    };
 
-    boost::heap::pairing_heap<Poi> heap;
-    std::vector<typename boost::heap::pairing_heap<Poi>::handle_type> handles; // handle = pointer to entry?
-
-    IF_STATS(len_t max_heap_size = 0);
-
-    len_t lastpos = 0;
-    len_t lastpos_lcp = 0;
-    for(len_t i = 0; i+1 < n; ++i) {
-        while(pplcp.index() < i) pplcp.advance(); //FIXME: "while" necessary?
-
-        const len_t plcp_i = pplcp(); DCHECK_EQ(pplcp.index(), i);
-
-        if(heap.empty()) {
-            // heap is empty - enter point of interest into heap and go on
-            if(plcp_i >= threshold) {
-                handles.emplace_back(heap.emplace(i, plcp_i, handles.size()));
-                lastpos = i;
-                lastpos_lcp = plcp_i;
-            }
-            continue;
+        inline bool operator==(const Poi& o) const {
+            return (o.pos == this->pos);
         }
 
-        if(i - lastpos >= lastpos_lcp || tdc_unlikely(i+1 == n)) {
-            // lastpos is a maximal peak
-            IF_DEBUG(bool first = true);
-            IF_STATS(max_heap_size = std::max<len_t>(max_heap_size, heap.size()));
-            DCHECK_EQ(heap.size(), handles.size());
+        inline bool operator!=(const Poi& o) const {
+            return !(o == *this);
+        }
 
-            // replace all peaks currently in heap
-            while(!heap.empty()) {
-                const Poi& top = heap.top();
-                refStrategy.add_factor(top.pos, top.lcp); // add new factor with position top.pos and length top.lcp
-                const len_t next_pos = top.pos; // store top, this is the current position that gets factorized
-                IF_DEBUG(if(first) DCHECK_EQ(top.pos, lastpos); first = false;)
+        inline operator bool() const {
+            return (this->lcp > 0);
+        }
 
-                {
-                    len_t newlcp_peak = 0; // a new peak can emerge at top.pos+top.lcp
-                    bool peak_exists = false;
+        inline void clear() {
+            this->lcp = 0;
+        }
 
-                    // erase "right intersection"
-                    if(top.pos+top.lcp < i) {
-                        for(len_t j = top.no+1; j < handles.size(); ++j) { // erase all right peaks that got substituted
-                            if( handles[j].node_ == nullptr) continue;
-                            const Poi poi = *(handles[j]);
-                            DCHECK_LT(next_pos, poi.pos);
-                            if(poi.pos < next_pos+top.lcp) {
-                                heap.erase(handles[j]);
-                                handles[j].node_ = nullptr;
-                                if(poi.lcp + poi.pos > next_pos+top.lcp) {
-                                    const len_t remaining_lcp = poi.lcp+poi.pos - (next_pos+top.lcp);
-                                    DCHECK_NE(remaining_lcp,0);
-                                    if(newlcp_peak != 0) DCHECK_LE(remaining_lcp, newlcp_peak);
-                                    newlcp_peak = std::max(remaining_lcp, newlcp_peak);
-                                }
-                            } else if( poi.pos == next_pos+top.lcp) { peak_exists=true; }
-                            else { break; }  // only for performance
-                        }
+        inline std::string str() const {
+            std::stringstream ss;
+            ss << '(' << pos << ',' << lcp << ')';
+            return ss.str();
+        }
+    };
+
+    std::vector<Poi> pois;
+    IF_STATS(size_t max_array_size = 0);
+    IF_STATS(size_t num_factors = 0);
+
+    // process text
+    for(len_t i = 0; i+1 < n; ++i) {
+        DCHECK_EQ(pplcp.index(), i);
+
+        const len_t plcp_i = pplcp();
+        if(!pois.empty()) {
+            const auto& last = pois.back();
+            if(i - last.pos >= last.lcp || tdc_unlikely(i+1 == n)) {
+                DCHECK_EQ(i - last.pos, last.lcp);
+
+                // no new peak after last - factorize!
+                IF_STATS(max_array_size = std::max(max_array_size, pois.size()));
+
+                Poi* current = &pois.back(); // last is initially the highest
+                IF_DEBUG(
+                    // ensure current is actually a maximal peak
+                    for(const auto& poi : pois) {
+                        DCHECK_LE(poi.lcp, current->lcp);
                     }
+                )
 
-#ifdef DEBUG
-                    if(peak_exists) {
-                        for(len_t j = top.no+1; j < handles.size(); ++j) {
-                            if( handles[j].node_ == nullptr) continue;
-                            const Poi& poi = *(handles[j]);
-                            if(poi.pos == next_pos+top.lcp) {
-                                DCHECK_LE(newlcp_peak, poi.lcp);
-                                break;
+                while(current) {
+                    // look at surrounding peaks
+                    Poi* next = nullptr;
+
+                    len_t rightpeak_lcp = 0;
+                    bool rightpeak_exists = false;
+
+                    for(auto& poi : pois) {
+                        if(poi == *current) continue; // all except current
+                        if(!poi) continue; // already obsolete
+
+                        if(poi.pos < current->pos) {
+                            // left of current
+                            if(poi.end() > current->pos) {
+                                // left overlap!
+                                len_t d = poi.end() - current->pos;
+
+                                // shorten POI by overlap length or remove
+                                len_t newlcp = poi.lcp - d;
+                                if(newlcp >= threshold) {
+                                    // shorten
+                                    poi.lcp = newlcp;
+                                } else {
+                                    // too short - remove
+                                    poi.clear();
+                                }
+                            }
+                        } else if(poi.pos > current->pos) {
+                            // right of current
+                            if(current->end() > poi.pos) {
+                                // right overlap!
+                                len_t d = current->end() - poi.pos;
+
+                                // candidate for new peak right of current
+                                rightpeak_lcp = std::max(rightpeak_lcp, poi.lcp - d);
+
+                                // remove
+                                poi.clear();
+                            } else if(current->end() == poi.pos) {
+                                // there's a peak to the right
+                                rightpeak_exists = true;
+                            }
+                        } else {
+                            DCHECK(false) << "shouldn't happen";
+                        }
+
+                        if(poi) {
+                            // if still intact, test if maximal
+                            if(!next || poi.lcp > next->lcp) {
+                                next = &poi;
                             }
                         }
                     }
-#endif
-                    if(!peak_exists && newlcp_peak >= threshold) {
-                        len_t j = top.no+1;
-                        DCHECK(handles[j].node_ == nullptr);
-                        handles[j] = heap.emplace(next_pos+top.lcp, newlcp_peak, j);
+
+                    // introduce factor
+                    ++num_factors;
+                    refStrategy.add_factor(current->pos, current->lcp);
+
+                    if(!rightpeak_exists && rightpeak_lcp >= threshold) {
+                        // re-use current as new peak to the right
+                        current->pos = current->end();
+                        current->lcp = rightpeak_lcp;
+
+                        // potentially highest peak
+                        if(!next || rightpeak_lcp > next->lcp) {
+                            next = current;
+                        }
+                    } else {
+                        // no peak to the right - remove current
+                        current->clear();
                     }
 
+                    // select next
+                    current = next;
                 }
 
-                handles[top.no].node_ = nullptr;
-                heap.pop(); // top now gets erased
+                // the found references can now be sorted and appended to the already sorted list of references (appending preserves the ordering)
+                refStrategy.sort(); // EM: sort in RAM and then write to disk
 
-                // decrease "left intersections"
-                for(auto it = handles.rbegin(); it != handles.rend(); ++it) {
-                    if( (*it).node_ == nullptr) continue;
-                    Poi& poi = (*(*it));
-                    if(poi.pos > next_pos)  continue;
-                    const len_t newlcp = next_pos - poi.pos; // newlcp is actually the distance
-                    if(newlcp < poi.lcp) {
-                        if(newlcp < threshold) {
-                            heap.erase(*it);
-                            it->node_ = nullptr;
-                        } else {
-                            poi.lcp = newlcp;
-                            heap.decrease(*it);
-
-                        }
-                    } else { // if the distance is too large then we are already too far away from the peaks that need to be truncated
-                        break;
-                    }
+                // restart looking from here
+                pois.clear();
+            } else {
+                if(plcp_i > last.lcp) {
+                    // higher peak than last
+                    pois.emplace_back(i, plcp_i);
                 }
             }
-
-            // the found references can now be sorted and appended to the already sorted list of references (appending preserves the ordering)
-            refStrategy.sort(); // EM: sort in RAM and then write to disk
-            handles.clear();
-            --i;
-            continue;
         }
-        DCHECK_EQ(pplcp.index(), i);
-        DCHECK_EQ(plcp_i, pplcp());
-        if(plcp_i <= lastpos_lcp) continue;
-        DCHECK_LE(threshold, plcp_i);
-        handles.emplace_back(heap.emplace(i,plcp_i, handles.size()));
-        lastpos = i;
-        //DCHECK_EQ(plcp[lastpos], plcp_i);
-        lastpos_lcp = plcp_i;
+
+        if(pois.empty()) {
+            if(plcp_i >= threshold) {
+                // first POI of a chunk
+                pois.emplace_back(i, plcp_i);
+            }
+        }
+
+        pplcp.advance();
     }
-    IF_STATS(StatPhase::log("max heap size", max_heap_size));
+
+    IF_STATS(StatPhase::log("max_array_size", max_array_size));
+    IF_STATS(StatPhase::log("num_factors", num_factors));
 }
 
 /// A very naive selection strategy for LCPComp.
