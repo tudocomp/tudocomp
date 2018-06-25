@@ -5,7 +5,7 @@
 
 #include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/ds/CompressMode.hpp>
-#include <tudocomp/ds/rank/Rank.hpp>
+#include <tudocomp/ds/Rank.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -55,7 +55,7 @@ public:
         const size_t t = this->env().option("t").as_integer();
 
         // Construct
-        {
+        StatPhase::wrap("Construct sparse ISA", [&]{
             auto v = BitVector(n);
             for(size_t i = 0; i < n; i++) {
                 if(!v[i]) {
@@ -101,7 +101,7 @@ public:
                     i = j;
                 }
             }
-        }
+        });
     }
 
 public:

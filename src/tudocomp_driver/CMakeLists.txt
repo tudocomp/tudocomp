@@ -17,8 +17,10 @@ target_link_libraries(
     tudocomp_algorithms
     glog
     sdsl
-	pthread
-	gomp
+    pthread
+    gomp
+    bit_span
+    compact_sparse_hash
 )
 
 cotire(tudocomp_driver)

@@ -154,7 +154,7 @@ namespace tdc {namespace io {
         ///
         /// The stream will still be buffered in memory.
         ///
-        /// \param buf The input string.
+        /// \param stream The input stream.
         Input(std::istream& stream):
             m_data(std::make_shared<Variant>(InputSource(&stream))) {}
 

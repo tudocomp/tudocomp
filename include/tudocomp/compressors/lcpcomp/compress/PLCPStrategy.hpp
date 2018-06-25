@@ -8,7 +8,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/ds/LCPSada.hpp>
 
 #include <stxxl/bits/containers/vector.h>
@@ -28,55 +28,6 @@ inline size_t filesize( const char*const filepath ){
     if(!file.good()) return 0;
     return file.tellg();
 }
-
-//! use read/seek to emulate an array on a file
-template<class int_t>
-class IntegerFileArray {
-    const size_t m_size;
-    std::ifstream m_is;
-    public:
-    IntegerFileArray(const char*const filename)
-    : m_size { filesize(filename) }
-    , m_is {filename, std::ios::binary | std::ios::in }
-    {}
-    int_t operator[](size_t i) {
-        DCHECK_LT(i, size());
-        m_is.seekg(i*sizeof(int_t), std::ios_base::beg);
-        char buf[sizeof(int_t)];
-        m_is.read(buf, sizeof(int_t));
-        return *reinterpret_cast<int_t*>(buf);
-    }
-    size_t size() const { return m_size/sizeof(int_t); }
-};
-
-//! wrapper to stream a file as an array of integers/characters
-template<class int_t>
-class IntegerFileForwardIterator {
-    const size_t m_size;
-    std::ifstream m_is;
-    size_t m_index;
-    char m_buf[sizeof(int_t)];
-    public:
-
-    IntegerFileForwardIterator(const char*const filename)
-    : m_size { filesize(filename) }
-    , m_is {filename, std::ios::binary | std::ios::in }
-    , m_index {0}
-    {}
-
-    size_t size() const { return m_size/sizeof(int_t); }
-    size_t index() const { return m_index; }
-    int_t operator*() { return *reinterpret_cast<int_t*>(m_buf); }
-    int_t operator()() { return *reinterpret_cast<int_t*>(m_buf); }
-    void advance() {
-        (*this)++;
-    }
-    IntegerFileForwardIterator& operator++(int) {
-        m_is.read(m_buf, sizeof(int_t));
-        ++m_index;
-        return *this;
-    }
-};
 
 /** Strategy for generating the final factors
  *  plcpcomp adds factors with add_factor, and calls sort
@@ -439,9 +390,6 @@ void compute_references(const size_t n, RefStrategy& refStrategy, plcp_type& ppl
 ///
 /// TODO: Describe
 class PLCPStrategy : public Algorithm {
-private:
-    typedef TextDS<> text_t;
-
 public:
     using Algorithm::Algorithm;
 
@@ -450,11 +398,16 @@ public:
         return m;
     }
 
+    inline static ds::dsflags_t textds_flags() {
+        return ds::SA | ds::ISA;
+    }
+
     /**
      *  Called by the LCPcompCompressor.
      *  The compressor works in RAM mode, so this method produces the factors in RAM.
      */
-    inline void factorize(text_t& text, size_t threshold, lzss::FactorBufferRAM& refs) {
+    template<typename text_t, typename factorbuffer_t>
+    inline void factorize(text_t& text, size_t threshold, factorbuffer_t& refs) {
         StatPhase phase("Load Index DS");
         text.require(text_t::SA | text_t::ISA);
 
@@ -467,10 +420,6 @@ public:
         compute_references(text.size(), refStrategy, pplcp, threshold);
         phase.split("Factorize");
         refStrategy.factorize(refs);
-    }
-
-    inline static ds::dsflags_t textds_flags() {
-        return text_t::SA | text_t::ISA;
     }
 };
 

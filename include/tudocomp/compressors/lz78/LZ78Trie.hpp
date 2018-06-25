@@ -7,85 +7,98 @@
 namespace tdc {
 namespace lz78 {
 
-using factorid_t = std::uint32_t; //! type for the factor indices, bounded by the number of LZ78 trie nodes
-static constexpr factorid_t undef_id = std::numeric_limits<factorid_t>::max(); // for a non-existing factor
+/// Type for the factor indices, bounded by the number of LZ78 trie nodes
+using factorid_t = uint32_t;
+
+/// Id that can be used for a non-existing factor
+constexpr factorid_t undef_id = std::numeric_limits<factorid_t>::max();
 
 /// Maximum legal dictionary size.
-const factorid_t DMS_MAX = std::numeric_limits<factorid_t>::max(); //TODO
+constexpr size_t DMS_MAX = std::numeric_limits<factorid_t>::max();
 
-/// Return type of find_or_insert
-template<typename search_pos_t>
-class TrieNode {
-};
+// NB: Also update the Lz78 chapter in the docs in case of changes to this file
 
-/// Return type of find_or_insert
-template<>
-class TrieNode<factorid_t> {
-    factorid_t m_id_and_search_pos;
+/// Default return type of find_or_insert
+class LZ78TrieNode {
+    factorid_t m_id;
+    bool m_is_new;
 public:
-    TrieNode(const factorid_t& id_and_search_pos):
-        m_id_and_search_pos(id_and_search_pos){}
-    TrieNode(): TrieNode(0) {}
+    inline LZ78TrieNode(factorid_t id, bool is_new):
+        m_id(id), m_is_new(is_new) {}
+    inline LZ78TrieNode():
+        LZ78TrieNode(0, false) {}
 
-    inline const factorid_t& id() const { return m_id_and_search_pos; }
-    inline const factorid_t& search_pos() const { return m_id_and_search_pos; }
+    inline bool is_new() const { return m_is_new; }
+    inline factorid_t id() const { return m_id; }
 };
-
 
 #define LZ78_DICT_SIZE_DESC \
-			"`dict_size` has to either be 0 (unlimited), or a positive integer,\n" \
-			"and determines the maximum size of the backing storage of\n" \
-			"the dictionary before it gets reset."
+            "`dict_size` has to either be 0 (unlimited), or a positive integer,\n" \
+            "and determines the maximum size of the backing storage of\n" \
+            "the dictionary before it gets reset."
 
-template<typename search_pos>
+template<typename _node_t = LZ78TrieNode>
 class LZ78Trie {
 public:
-    using node_t = TrieNode<search_pos>;
+    using node_t = _node_t;
+private:
+    const size_t m_n;
+    const size_t& m_remaining_characters;
 protected:
-	const size_t m_n;
-	const size_t& m_remaining_characters;
-	LZ78Trie(const size_t n, const size_t& remaining_characters)
-		: m_n(n), m_remaining_characters(remaining_characters) {}
+    LZ78Trie(const size_t n, const size_t& remaining_characters)
+        : m_n(n), m_remaining_characters(remaining_characters) {}
 
-	// static inline size_t expected_number_of_remaining_elements() {
-	// 	if(m_remaining_characters*2 <  m_n) {
-	// 		return (m_n - m_remaining_characters) / size();
-	// 	}
-	// 	return lz78_expected_number_of_remaining_elements(n, m_remaining_characters);
-	// }
+    inline size_t expected_number_of_remaining_elements(const size_t z) const {
+        return lz78_expected_number_of_remaining_elements(z, m_n, m_remaining_characters);
+    }
 
-	/**
-	 * The dictionary can store multiple root nodes
-	 * For LZ78, we use a root node with the id = c = 0.
-	 * For LZW, we add for each possible literal value a root node.
-	 * The compressor has to add these nodes.
-	 */
-	virtual node_t add_rootnode(uliteral_t c) = 0;
+    /**
+     * The dictionary can store multiple root nodes
+     * For LZ78, we use a root node with the id = c = 0.
+     * For LZW, we add for each possible literal value a root node.
+     * The compressor has to add these nodes.
+     */
+    inline node_t add_rootnode(uliteral_t c) {
+        CHECK(false) << "This needs to be implemented by a inheriting class";
+        return 0;
+    }
 
     /**
      * Returns the root node corresponding to literal c
      */
-    virtual node_t get_rootnode(uliteral_t c) = 0;
+    inline node_t get_rootnode(uliteral_t c) const {
+        CHECK(false) << "This needs to be implemented by a inheriting class";
+        return 0;
+    }
 
-	/**
-	 * Erases the contents of the dictionary.
-	 * Used by compressors with limited dictionary size.
-	 */
-	virtual void clear() = 0;
+    /**
+     * Erases the contents of the dictionary.
+     * Used by compressors with limited dictionary size.
+     */
+    inline void clear() {
+        CHECK(false) << "This needs to be implemented by a inheriting class";
+    }
 
     /** Searches a pair (`parent`, `c`). If there is no node below `parent` on an edge labeled with `c`, a new leaf of the `parent` will be constructed.
       * @param parent  the parent node's id
       * @param c       the edge label to follow
-      * @return the index of the respective child, if it was found.
-      * @retval undef_id   if a new leaf was inserted
+      * @return the new or found child node
       **/
-    virtual node_t find_or_insert(const node_t& parent, uliteral_t c) = 0;
+    inline node_t find_or_insert(const node_t& parent, uliteral_t c) {
+        CHECK(false) << "This needs to be implemented by a inheriting class";
+        return 0;
+    }
 
-	/**
-	 * Returns the number of entries, plus the number of rootnodes
-	 */
-    virtual factorid_t size() const = 0;
+    /**
+     * Returns the number of entries, plus the number of rootnodes
+     */
+    inline size_t size() const {
+        CHECK(false) << "This needs to be implemented by a inheriting class";
+        return 0;
+    }
 
+public:
+    inline void debug_print() {}
 };
 
 

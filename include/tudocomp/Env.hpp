@@ -1,18 +1,15 @@
 #pragma once
 
 #include <tudocomp/pre_header/Env.hpp>
+#include <tudocomp/EnvRoot.hpp>
 
 namespace tdc {
-
-inline AlgorithmValue& EnvRoot::algo_value() {
-    return *m_algo_value;
-}
 
 inline Env::Env(Env&& other):
     m_root(std::move(other.m_root)),
     m_node(other.m_node) {}
 
-inline Env::Env(std::shared_ptr<EnvRoot> root,
+inline Env::Env(EnvRoot root,
                 const AlgorithmValue& node):
     m_root(root),
     m_node(node) {}
@@ -23,7 +20,7 @@ inline const AlgorithmValue& Env::algo() const {
     return m_node;
 }
 
-inline const std::shared_ptr<EnvRoot>& Env::root() const {
+inline const EnvRoot& Env::root() const {
     return m_root;
 }
 

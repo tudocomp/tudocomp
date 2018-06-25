@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz78/LZ78Coding.hpp>
 #include <tudocomp/Range.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
@@ -12,54 +12,13 @@
 
 namespace tdc {
 
-	class BitCoder;
-	namespace lz78 {
-		class TernaryTrie;
-	}
-
-    namespace lz78 {
-        class Decompressor {
-            std::vector<lz78::factorid_t> indices;
-            std::vector<uliteral_t> literals;
-
-            public:
-            inline void decompress(lz78::factorid_t index, uliteral_t literal, std::ostream& out) {
-                indices.push_back(index);
-                literals.push_back(literal);
-                std::vector<uliteral_t> buffer;
-
-                while(index != 0) {
-                    buffer.push_back(literal);
-                    literal = literals[index - 1];
-                    index = indices[index - 1];
-                }
-
-                out << literal;
-                for(size_t i = buffer.size(); i > 0; i--) {
-                    out << buffer[i - 1];
-                }
-            }
-
-        };
-    }//ns
-
-
 template <typename coder_t, typename dict_t>
 class LZ78Compressor: public Compressor {
 private:
     using node_t = typename dict_t::node_t;
 
-    static inline lz78::factorid_t select_size(Env& env, string_ref name) {
-        auto& o = env.option(name);
-        if (o.as_string() == "inf") {
-            return 0;
-        } else {
-            return o.as_integer();
-        }
-    }
-
     /// Max dictionary size before reset
-    const lz78::factorid_t m_dict_max_size {0};
+    const lz78::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
 
 public:
     inline LZ78Compressor(Env&& env):
@@ -71,12 +30,12 @@ public:
         Meta m("compressor", "lz78", "Lempel-Ziv 78\n\n" LZ78_DICT_SIZE_DESC);
         m.option("coder").templated<coder_t, BitCoder>("coder");
         m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>("lz78trie");
-        m.option("dict_size").dynamic("inf");
+        m.option("dict_size").dynamic(0);
         return m;
     }
 
     virtual void compress(Input& input, Output& out) override {
-		const size_t n = input.size();
+        const size_t n = input.size();
         const size_t reserved_size = isqrt(n)*2;
         auto is = input.as_stream();
 
@@ -88,7 +47,7 @@ public:
         IF_STATS(size_t stat_factor_count = 0);
         size_t factor_count = 0;
 
-		size_t remaining_characters = n; // position in the text
+        size_t remaining_characters = n; // position in the text
         dict_t dict(env().env_for_option("lz78trie"), n, remaining_characters, reserved_size);
 
         auto reset_dict = [&dict] () {
@@ -109,11 +68,10 @@ public:
 
         char c;
         while(is.get(c)) {
-			--remaining_characters;
+            --remaining_characters;
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
-            if(child.id() == lz78::undef_id) {
-                coder.encode(node.id(), Range(factor_count));
-                coder.encode(static_cast<uliteral_t>(c), literal_r);
+            if(child.is_new()) {
+                lz78::encode_factor(coder, node.id(), static_cast<uliteral_t>(c), factor_count);
                 factor_count++;
                 IF_STATS(stat_factor_count++);
                 parent = node = dict.get_rootnode(0); // return to the root
@@ -136,21 +94,20 @@ public:
 
         // take care of left-overs. We do not assume that the stream has a sentinel
         if(node.id() != 0) {
-            coder.encode(parent.id(), Range(factor_count));
-            coder.encode(c, literal_r);
+            lz78::encode_factor(coder, parent.id(), c, factor_count);
 //            // TODO: this check only works if the trie is not the MonteCarloTrie !
 //            DCHECK_EQ(dict.find_or_insert(parent, static_cast<uliteral_t>(c)).id(), node.id());
             factor_count++;
             IF_STATS(stat_factor_count++);
         }
 
-		IF_STATS(
+        IF_STATS(
         phase1.log_stat("factor_count", stat_factor_count);
         phase1.log_stat("dictionary_reset_counter",
                        stat_dictionary_resets);
         phase1.log_stat("max_factor_counter",
                        stat_dict_counter_at_last_reset);
-		)
+        )
     }
 
     virtual void decompress(Input& input, Output& output) override final {

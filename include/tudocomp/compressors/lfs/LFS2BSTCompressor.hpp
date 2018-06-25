@@ -39,7 +39,7 @@ private:
 
 
 
-    BinarySuffixTree * stree;
+    std::unique_ptr<BinarySuffixTree> stree;
 
     //Stores nts_symbols of first layer
     IntVector<uint> first_layer_nts;
@@ -64,10 +64,6 @@ private:
 
     //stores beginning positions corresponding to node_ids
     std::unordered_map< uint , std::vector< uint > >  node_begins;
-
-
-    typedef sdsl::bp_interval<long unsigned int> node_type;
-
 
     inline virtual void compute_string_depth(uint node, uint str_depth){
         //resize if str depth grater than bins size
@@ -139,7 +135,7 @@ public:
 
         StatPhase::wrap("Constructing ST", [&]{
             DLOG(INFO)<<"Constructing ST";
-            stree = new BinarySuffixTree(input);
+            stree = std::make_unique<BinarySuffixTree>(in);
             StatPhase::log("Number of Nodes", stree->get_tree_size());
         });
 
@@ -437,7 +433,7 @@ public:
             Range dict_r(0, non_terminal_symbols.size());
 
 
-            long buf_size = bitout->tellp();
+            long buf_size = bitout->stream().tellp();
 
             StatPhase::log("Bytes Length Encoding", buf_size);
            DLOG(INFO)<<"Bytes Length Encoding: "<< buf_size;
@@ -478,7 +474,7 @@ public:
 
 
 
-            buf_size = bitout->tellp() - buf_size;
+            buf_size = long(bitout->stream().tellp()) - buf_size;
             StatPhase::log("Bytes Non-Terminal Symbol Encoding", buf_size);
 
 
@@ -504,7 +500,7 @@ public:
                 }
             }
 
-            buf_size = bitout->tellp() - buf_size;
+            buf_size = long(bitout->stream().tellp()) - buf_size;
             StatPhase::log("Bytes Start Symbol Encoding", buf_size);
 
 

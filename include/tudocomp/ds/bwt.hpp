@@ -7,7 +7,9 @@
 
 namespace tdc {
 
-	namespace bwt {
+/// \brief Contains functionality for computing and decoding the Burrows-Wheeler
+///        transform (BWT) of a text.
+namespace bwt {
 		static_assert(std::is_same<View::value_type, uliteral_t>::value, "View::value_type and uliteral_t must be the same");
 
 /**

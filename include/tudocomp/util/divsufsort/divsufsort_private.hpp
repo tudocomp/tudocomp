@@ -30,6 +30,7 @@
 
 #include <tudocomp/def.hpp>
 
+/// \cond INTERNAL
 namespace tdc {
 namespace libdivsufsort {
 
@@ -121,3 +122,5 @@ const ssize_t TR_STACKSIZE = divsufsort64 ? 96 : 64;
 #endif
 
 }} //ns
+///\endcond
+

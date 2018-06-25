@@ -1,3 +1,11 @@
+get_property(LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS)
+
+if ("${LIB64}" STREQUAL "TRUE")
+    set(LIBSUFFIX 64)
+else()
+    set(LIBSUFFIX "")
+endif()
+
 function(find_or_download_package package package_found_prefix target_name)
     if($ENV{TDC_ALLWAYS_DOWNLOAD})
         message(STATUS "${package} assumed not found, will use locally downloaded and build one")

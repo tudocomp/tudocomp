@@ -3,7 +3,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lcpcomp/MaxLCPSuffixList.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
@@ -20,9 +20,6 @@ namespace lcpcomp {
 /// This was the original naive approach in "Textkompression mithilfe von
 /// Enhanced Suffix Arrays" (BA thesis, Patrick Dinklage, 2015).
 class MaxLCPStrategy : public Algorithm {
-private:
-    typedef TextDS<> text_t;
-
 public:
     inline static Meta meta() {
         Meta m("lcpcomp_comp", "max_lcp");
@@ -30,14 +27,13 @@ public:
     }
 
     inline static ds::dsflags_t textds_flags() {
-        return text_t::SA | text_t::ISA | text_t::LCP;
+        return ds::SA | ds::ISA | ds::LCP;
     }
 
     using Algorithm::Algorithm; //import constructor
 
-    inline void factorize(text_t& text,
-                   size_t threshold,
-                   lzss::FactorBuffer<>& factors) {
+    template<typename text_t, typename factorbuffer_t>
+    inline void factorize(text_t& text, size_t threshold, factorbuffer_t& factors) {
 
 		// Construct SA, ISA and LCP
         //StatPhase::wrap("Construct text ds", [&]{
@@ -51,7 +47,7 @@ public:
         auto lcp = text.release_lcp();
 
         auto list = StatPhase::wrap("Construct MaxLCPSuffixList", [&]{
-            MaxLCPSuffixList<text_t::lcp_type::data_type> list(
+            MaxLCPSuffixList<typename text_t::lcp_type::data_type> list(
                 lcp, threshold, lcp.max_lcp());
 
             StatPhase::log("entries", list.size());

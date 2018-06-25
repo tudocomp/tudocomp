@@ -14,6 +14,7 @@
 #include <iomanip>
 
 #include <tudocomp/util/View.hpp>
+#include <tudocomp/util/bits.hpp>
 
 namespace tdc {
 
@@ -40,6 +41,7 @@ inline uint64_t char_as_uint(const T& t) {
 ///
 /// \tparam T The byte vector type.
 /// \param s The byte vector.
+/// \param indent The amount of spaces to indent the string by.
 /// \return The string representation of the byte vector.
 template<class T>
 std::string vec_to_debug_string(const T& s, size_t indent = 0) {
@@ -64,6 +66,7 @@ std::string vec_to_debug_string(const T& s, size_t indent = 0) {
 ///
 /// \tparam T The byte array type.
 /// \param s The byte array.
+/// \param length The length of the byte array.
 /// \return The string representation of the byte array.
 template<class T>
 std::string arr_to_debug_string(const T* s, size_t length) {
@@ -169,30 +172,6 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
     return more;
 }
 
-/// \brief Computes the highest set bit in an integer variable
-inline constexpr uint_fast8_t bits_hi(uint64_t x) {
-	return x == 0 ? 0 : 64 - __builtin_clzll(x);
-}
-
-/// \brief Computes the number of bits required to store the given integer
-/// value.
-///
-/// This is equivalent to the binary logarithm rounded up to the next integer.
-///
-/// Examples:
-/// - `bits_for(0b0) == 1`
-/// - `bits_for(0b1) == 1`
-/// - `bits_for(0b10) == 2`
-/// - `bits_for(0b11) == 2`
-/// - `bits_for(0b100) == 3`
-///
-/// \param n The integer to be stored.
-/// \return The amount of bits required to store the value (guaranteed to be
-/// greater than zero).
-inline constexpr uint_fast8_t bits_for(size_t n) {
-    return n == 0 ? 1U : bits_hi(n);
-}
-
 /// \brief Performs an integer division with the result rounded up to the
 /// next integer.
 ///
@@ -223,6 +202,49 @@ inline constexpr size_t idiv_ceil(size_t a, size_t b) {
 inline constexpr uint_fast8_t bytes_for(size_t n) {
     return idiv_ceil(bits_for(n), 8U);
 }
+
+/// \brief Yields the position of the most significant bit for the template
+///        integer type.
+///
+/// In some scenarios (e.g. rank and select), where bit order and boundaries
+/// of a certain type are relevant, it is assumed that the "first" bit is
+/// the least significant one at position 0, while the "last" bit is the most
+/// significant one.
+///
+/// The latter can be retrieved from the static \c pos constant expression
+/// within this struct.
+///
+/// \tparam int_t the integer type in question
+template<typename int_t> struct msbf;
+
+/// \brief Specialization of \ref msbf for 8-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint8_t>  {
+    /// \brief The position of the most significant bit in 8-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 7;
+};
+/// \brief Specialization of \ref msbf for 16-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint16_t> {
+    /// \brief The position of the most significant bit in 8-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 15;
+};
+/// \brief Specialization of \ref msbf for 32-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint32_t> {
+    /// \brief The position of the most significant bit in 32-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 31;
+};
+/// \brief Specialization of \ref msbf for 64-bit unsigned integers.
+/// \see msbf
+template<> struct msbf<uint64_t> {
+    /// \brief The position of the most significant bit in 64-bit unsigned
+    ///        integer values.
+    static constexpr uint8_t pos = 63;
+};
 
 /// \brief Creates the cross product of a set of elements given a product
 /// function.
@@ -502,43 +524,16 @@ public:
     }
 };
 
-/// \cond INTERNAL
-namespace portable_arithmetic_shift {
-    // Source: https://gist.github.com/palotasb/de46414a93ba90fff22bdbd2327ae393
+inline uint64_t zero_or_next_power_of_two(uint64_t x) {
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
 
-    template <typename T>
-    constexpr auto builtin_shr(T value, int amount) noexcept
-        -> decltype(value >> amount)
-    {
-        return value >> amount;
-    }
-
-    template <typename T>
-    struct uses_arithmetic_shift : std::integral_constant<bool, builtin_shr(T(-1), 1) == -1> {};
-
-    template <typename T = int>
-    constexpr T shift_by_portable(T value, int amount) noexcept
-    {
-        return value < 0 ?
-        amount < 0 ? ~(~value >> -amount) : -(-value << amount) :
-        amount < 0 ? value >> -amount : value << amount;
-    }
-
-    template <typename T = int>
-    constexpr T shift_by_arithmetic(T value, int amount) noexcept
-    {
-        // Only use with negative T values when the compiler translates right shift to arithmetic shift instructions.
-        return amount < 0 ? value >> -amount : value << amount;
-    }
-}
-/// \endcond
-
-template <typename T = int>
-constexpr T shift_by(T value, int amount) noexcept
-{
-    using namespace portable_arithmetic_shift;
-
-    return uses_arithmetic_shift<T>::value ? shift_by_arithmetic(value, amount) : shift_by_portable(value, amount);
+    return x + 1;
 }
 
 }//ns

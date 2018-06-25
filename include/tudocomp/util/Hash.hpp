@@ -402,7 +402,7 @@ class HashMap {
 		StatPhase::log("special resizes", m_specialresizes);
 		StatPhase::log("load ratio", entries()*100/table_size());
 		}
-	);
+	)
 	void max_load_factor(float z) {
 		m_load_factor = z;
 	}
@@ -418,8 +418,8 @@ class HashMap {
 // env.env_for_option("hash_prober"))
 		, m_sizeman(create_env(SizeManager::meta())) //env.env_for_option("hash_manager"))
 		, m_size(initial_size)
-		, m_keys(new key_t[initial_size])
-		, m_values(new value_t[initial_size])
+		, m_keys((key_t*) malloc(sizeof(key_t) * initial_size))
+		, m_values((value_t*) malloc(sizeof(value_t) * initial_size))
 		, m_n(n)
 		, m_remaining_characters(remaining_characters)
 	{
@@ -429,8 +429,8 @@ class HashMap {
 	template<class T>
 	void incorporate(T&& o, len_t newsize)
 	{
-		if(m_keys != nullptr) { delete [] m_keys; }
-		if(m_values != nullptr) { delete [] m_values; }
+		if(m_keys != nullptr) { free(m_keys); }
+		if(m_values != nullptr) { free(m_values); }
 
 		m_keys = std::move(o.m_keys);
 		m_values = std::move(o.m_values);
@@ -451,8 +451,8 @@ class HashMap {
 	MoveGuard m_guard;
 	~HashMap() {
         if (m_guard) {
-            if(m_keys != nullptr) { delete [] m_keys; }
-            if(m_values != nullptr) { delete [] m_values; }
+            if(m_keys != nullptr) { free(m_keys); }
+            if(m_values != nullptr) { free(m_values); }
         }
 	}
 	inline HashMap(HashMap&& other) = default;
@@ -465,10 +465,8 @@ class HashMap {
 			const size_t oldsize = m_size;
 			m_size = size;
 			m_sizeman.resize(m_size);
-			// key_t* keys = new key_t[m_size];
-			// value_t* values = new value_t[m_size];
-			key_t* keys = (key_t*) malloc(sizeof(key_t)*m_size);
-			value_t* values = (value_t*) malloc(sizeof(value_t)*m_size);
+			key_t* keys = (key_t*) malloc(sizeof(key_t) * m_size);
+			value_t* values = (value_t*) malloc(sizeof(value_t) * m_size);
 			for(size_t i = 0; i < m_size; ++i) values[i] = undef_id;
 //			memset(values, 0, sizeof(value_t)*size);
 			std::swap(m_values,values);
@@ -479,8 +477,8 @@ class HashMap {
 				auto ret = insert(std::make_pair(std::move(keys[i]),std::move(values[i])));
 				DCHECK_EQ(ret.second, true); // no duplicates
 			}
-			delete [] keys;
-			delete [] values;
+			free(keys);
+			free(values);
 		}
 		else {
 			m_size = size;

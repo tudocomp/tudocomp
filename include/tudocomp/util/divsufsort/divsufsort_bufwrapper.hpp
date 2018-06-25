@@ -5,6 +5,7 @@
 #include <tudocomp/util/divsufsort/divsufsort_def.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
+/// \cond INTERNAL
 namespace tdc {
 namespace libdivsufsort {
 
@@ -80,3 +81,5 @@ public:
 };
 
 }} //ns
+///\endcond
+

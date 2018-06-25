@@ -264,4 +264,5 @@ namespace tdc {
             return ident;
         }
     }
+    /// \endcond
 }

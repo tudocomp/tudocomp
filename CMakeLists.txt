@@ -37,17 +37,20 @@ include(ExternalProject)
 
 # More warnings and debug info
 # TODO: Add these, they break building glog -Wextra -Wpedantic
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -Wall")
+set(GCC_WARNINGS "-Wall -Werror=return-type")
+#set(SANITIZATION "-fsanitize=undefined -fsanitize=address -fsanitize=leak")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 ${GCC_WARNINGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG ${SANITIZATION}")
 
 # Set integer with for length type
-if(DEFINED LEN_BITS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEN_BITS=${LEN_BITS}")
-else(DEFINED LEN_BITS)
+if(NOT DEFINED LEN_BITS)
     set(LEN_BITS 32)
-endif(DEFINED LEN_BITS)
+endif(NOT DEFINED LEN_BITS)
+
 message(STATUS "Setting length type to ${LEN_BITS} Bits")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEN_BITS=${LEN_BITS}")
 
 find_package(Boost)
 
@@ -75,6 +78,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemod
 include(cotire)
 set (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1000)
 
+# Git Submodule sources
+include(git_submodule_subdirectories)
+
 # Finders
 include(find_or_download_package)
 
@@ -82,6 +88,10 @@ include(find_or_download_package)
 find_or_download_package(Glog GLOG glog)
 find_or_download_package(SDSL SDSL sdsl)
 find_or_download_package(STXXL STXXL stxxl)
+
+git_submodule_subdirectory(external/bit_span)
+git_submodule_subdirectory(external/compact_sparse_hash)
+git_submodule_subdirectory(external/datasets)
 
 include(FindJudy)
 
@@ -109,13 +119,16 @@ include_directories(include)
 if(DEFINED TDC_REGISTRY)
     message("[CAUTION] Using custom registry config: ${TDC_REGISTRY}")
 else()
-    set(TDC_REGISTRY ${CMAKE_SOURCE_DIR}/etc/registry_config.py)
+    set(TDC_REGISTRY ${CMAKE_SOURCE_DIR}/etc/registries/all_algorithms.py)
 endif(DEFINED TDC_REGISTRY)
 
 add_subdirectory(src)
 
 # Unit tests for everything in src
 add_subdirectory(test)
+
+# Examples
+add_subdirectory(examples)
 
 # etc
 add_subdirectory(etc)

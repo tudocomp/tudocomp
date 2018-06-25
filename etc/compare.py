@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import argparse
 import collections
@@ -189,8 +189,8 @@ else:
         Tudocomp(name='sle',                             algorithm='encode(sle)'),
         Tudocomp(name='huff',                            algorithm='encode(huff)'),
         Tudocomp(name='lzw(ternary)',                    algorithm='lzw(coder=bit,lz78trie=ternary)'),
-        
-		
+
+
         # Some standard Linux compressors
         StdCompressor(name='gzip -1',  binary='gzip',  cflags=['-1'], dflags=['-d']),
         StdCompressor(name='gzip -9',  binary='gzip',  cflags=['-9'], dflags=['-d']),

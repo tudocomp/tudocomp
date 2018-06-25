@@ -78,12 +78,18 @@ private:
     }
 
 public:
-    inline MultimapBuffer(Env&& env, len_t size)
+    inline MultimapBuffer(Env&& env)
         : Algorithm(std::move(env)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_lazy(this->env().option("lazy").as_integer())
     {
 		m_fwd.max_load_factor(0.8);
-        m_buffer.resize(size, 0);
-        m_decoded = BitVector(size, 0);
+    }
+
+    inline void initialize(size_t n) {
+        if(tdc_unlikely(n == 0)) throw std::runtime_error(
+            "no text length provided");
+
+        m_buffer.resize(n, 0);
+        m_decoded = BitVector(n, 0);
     }
 
     inline void decode_literal(uliteral_t c) {
@@ -147,6 +153,11 @@ public:
             })
         }
 		IF_STATS(phase.log_stat("hash table max size", max_size));
+    }
+
+    inline void process() {
+        decode_lazy();
+        decode_eagerly();
     }
 
     inline len_t longest_chain() const {

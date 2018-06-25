@@ -4,7 +4,7 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/def.hpp>
 
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lcpcomp/MaxLCPSuffixList.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
@@ -20,9 +20,6 @@ namespace lcpcomp {
  * In the latter case, we push it down to the respective array
  */
 class ArraysComp : public Algorithm {
-private:
-    typedef TextDS<> text_t;
-
 public:
     inline static Meta meta() {
         Meta m("lcpcomp_comp", "arrays");
@@ -30,12 +27,13 @@ public:
     }
 
     inline static ds::dsflags_t textds_flags() {
-        return text_t::SA | text_t::ISA | text_t::LCP;
+        return ds::SA | ds::ISA | ds::LCP;
     }
 
     using Algorithm::Algorithm; //import constructor
 
-    inline void factorize(text_t& text, size_t threshold, lzss::FactorBufferRAM& factors) {
+    template<typename text_t, typename factorbuffer_t>
+    inline void factorize(text_t& text, size_t threshold, factorbuffer_t& factors) {
 
 		// Construct SA, ISA and LCP
         auto lcp = StatPhase::wrap("Construct Index Data Structures", [&] {

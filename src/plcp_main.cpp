@@ -5,11 +5,11 @@
 
 #include <tudocomp_stat/StatPhase.hpp>
 #include <tudocomp/CreateAlgorithm.hpp>
-#include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
+
 #include <tudocomp/coders/BitCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
-#include <tudocomp/compressors/lzss/LZSSCoding.hpp>
-#include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
+
+#include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
 
 #include <stxxl/bits/io/syscall_file.h>
 
@@ -117,8 +117,8 @@ namespace tdc { namespace lcpcomp {
                     }
 
                     // encode factor
-                    bw.write(factor.src);
-                    bw.write(factor.len);
+                    bw.write(len_t(factor.src));
+                    bw.write(len_t(factor.len));
 
                     p += size_t(factor.len);
                     skip_bytes(ins, factor.len);

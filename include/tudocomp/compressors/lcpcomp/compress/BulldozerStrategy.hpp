@@ -6,7 +6,7 @@
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -18,8 +18,6 @@ namespace lcpcomp {
 /// TODO: Describe
 class BulldozerStrategy : public Algorithm {
 private:
-    typedef TextDS<> text_t;
-
     struct Interval {
         size_t p, q, l;
     };
@@ -43,12 +41,11 @@ public:
     }
 
     inline static ds::dsflags_t textds_flags() {
-        return text_t::SA | text_t::ISA | text_t::LCP;
+        return ds::SA | ds::ISA | ds::LCP;
     }
 
-    inline void factorize(text_t& text,
-                   size_t threshold,
-                   lzss::FactorBuffer& factors) {
+    template<typename text_t, typename factorbuffer_t>
+    inline void factorize(text_t& text, size_t threshold, factorbuffer_t& factors) {
 
 		// Construct SA, ISA and LCP
         StatPhase::wrap("Construct text ds", [&]{

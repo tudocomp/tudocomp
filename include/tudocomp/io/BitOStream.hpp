@@ -17,25 +17,42 @@ namespace io {
 class BitOStream {
     OutputStream m_stream;
 
-    bool m_dirty;
     uint8_t m_next;
-    int m_cursor;
+    int8_t m_cursor;
+    static constexpr int8_t MSB = 7;
+
+    inline bool is_dirty() const {
+        return m_cursor != MSB;
+    }
 
     inline void reset() {
-        const int MSB = 7;
-
         m_next = 0;
         m_cursor = MSB;
-        m_dirty = false;
     }
 
     inline void write_next() {
-        if (m_dirty) {
-            m_stream.put(char(m_next));
-            reset();
-        }
+        m_stream.put(char(m_next));
+        reset();
     }
 
+    struct BitSink {
+        BitOStream* m_ptr;
+
+        inline void write_bit(bool set) {
+            m_ptr->write_bit(set);
+        }
+
+        template<typename T>
+        inline void write_int(T value, size_t bits = sizeof(T) * CHAR_BIT) {
+            m_ptr->write_int(value, bits);
+        }
+    };
+
+    inline BitSink bit_sink() {
+        return BitSink {
+            this
+        };
+    }
 public:
     /// \brief Constructs a bitwise output stream.
     ///
@@ -50,28 +67,35 @@ public:
     inline BitOStream(Output& output) : BitOStream(output.as_stream()) {
     }
 
-    ~BitOStream() {
-        char set = 7 - m_cursor;
-        if(m_cursor >= 2) {
-            m_next |= set;
-        } else {
-            write_next();
-            m_next = set;
-        }
+    BitOStream(BitOStream&& other) = default;
 
-        m_dirty = true;
-        write_next();
+    inline ~BitOStream() {
+        uint8_t set_bits = MSB - m_cursor; // will only be in range 0 to 7
+        if(m_cursor >= 2) {
+            // if there are at least 3 bits free in the byte buffer,
+            // write them into the cursor at the last 3 bit positions
+            m_next |= set_bits;
+            write_next();
+        } else {
+            // else write out the byte, and write the length into the
+            // last 3 bit positions of the next byte
+            write_next();
+            m_next = set_bits;
+            write_next();
+        }
     }
 
-    /// \brief Returns the output position indicator of the underlying stream,
-    ///        which should equal the amount of bytes written to it.
+    /// \brief Asserts that the next write operation starts on a byte boundary
+    inline void assert_byte_boundary() const {
+        CHECK(!is_dirty());
+    }
+
+    /// \brief Returns the underlying stream.
     ///
-    /// Note that this value does not include bits that have not yet been
+    /// Note that the stream does not include bits that have not yet been
     /// flushed.
-    ///
-    /// \return the output position indicator of the underlying stream
-    inline auto tellp() -> decltype(m_stream.tellp()) {
-        return m_stream.tellp();
+    inline std::ostream& stream() {
+        return m_stream;
     }
 
     /// \brief Writes a single bit to the output.
@@ -81,8 +105,9 @@ public:
             m_next |= (1 << m_cursor);
         }
 
-        m_dirty = true;
-        if (--m_cursor < 0) {
+        m_cursor--;
+
+        if (m_cursor < 0) {
             write_next();
         }
     }
@@ -96,42 +121,38 @@ public:
     ///             this equals the bit width of type \c T.
     template<class T>
     inline void write_int(T value, size_t bits = sizeof(T) * CHAR_BIT) {
-        for (int i = bits - 1; i >= 0; i--) {
-            write_bit((value & T(T(1) << i)) != T(0));
-        }
+        // TODO: Optimize to not always process individual bits
+        ::tdc::io::write_int<T>(bit_sink(), value, bits);
     }
+
+    // ########################################################
+    // Only higher level functions that use bit_sink() below:
+    // NB: Try to add new functions in IOUtil.hpp instead of here
+    // ########################################################
 
     template<typename value_t>
     inline void write_unary(value_t v) {
-        while(v--) {
-            write_bit(0);
-        }
-
-        write_bit(1);
+        ::tdc::io::write_unary<value_t>(bit_sink(), v);
     }
 
     template<typename value_t>
     inline void write_ternary(value_t v) {
-        if(v) {
-            --v;
-            do {
-                write_int(v % 3, 2); // 0 -> 00, 1 -> 01, 2 -> 10
-                v /= 3;
-            } while(v);
-        }
-        write_int(3, 2); // terminator -> 11
+        ::tdc::io::write_ternary<value_t>(bit_sink(), v);
     }
 
     template<typename value_t>
     inline void write_elias_gamma(value_t v) {
-        write_unary(bits_for(v));
-        write_int(v, bits_for(v));
+        ::tdc::io::write_elias_gamma<value_t>(bit_sink(), v);
     }
 
     template<typename value_t>
     inline void write_elias_delta(value_t v) {
-        write_elias_gamma(bits_for(v));
-        write_int(v, bits_for(v));
+        ::tdc::io::write_elias_delta<value_t>(bit_sink(), v);
+    }
+
+    template<typename value_t>
+    inline void write_rice(value_t v, uint8_t p) {
+        ::tdc::io::write_rice<value_t>(bit_sink(), v, p);
     }
 
     /// \brief Writes a compressed integer to the input.
@@ -149,17 +170,7 @@ public:
     /// \param b The block width in bits. The default is 7 bits.
     template<typename T>
     inline void write_compressed_int(T v, size_t b = 7) {
-        DCHECK(b > 0);
-
-        uint64_t u = uint64_t(v);
-        uint64_t mask = (u << b) - 1;
-        do {
-            uint64_t current = v & mask;
-            v >>= b;
-
-            write_bit(v > 0);
-            write_int(current, b);
-        } while(v > 0);
+        ::tdc::io::write_compressed_int<T>(bit_sink(), v, b);
     }
 };
 

@@ -14,6 +14,8 @@ namespace tdc {
 /// encoded as their string representations, terminated by the \e :
 /// character.
 class ArithmeticCoder : public Algorithm {
+    using ulong = unsigned long;
+
     // TODO: Figure out how to correctly replace this with len_t or len_compact_t
     using len_fixup_t = uint32_t;
 
@@ -155,6 +157,11 @@ public:
     public:
         template<typename literals_t>
         inline Encoder(Env&& env, Output& out, literals_t&& literals)
+            : Encoder(std::move(env), std::make_shared<BitOStream>(out), literals) {
+        }
+
+        template<typename literals_t>
+        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
             : tdc::Encoder(std::move(env), out, literals),
         C(count_alphabet_literals(std::move(literals))) {
             build_intervals(C);
@@ -171,6 +178,10 @@ public:
             if(literal_counter==literal_count){
                 postProcessing();
             }
+        }
+
+        inline void flush() {
+            throw std::runtime_error("ArithmeticCoder::flush not implemented");
         }
     };
 

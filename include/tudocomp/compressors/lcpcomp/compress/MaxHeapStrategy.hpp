@@ -4,7 +4,7 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/ArrayMaxHeap.hpp>
 
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -20,9 +20,6 @@ namespace lcpcomp {
 /// This was the original naive approach in "Textkompression mithilfe von
 /// Enhanced Suffix Arrays" (BA thesis, Patrick Dinklage, 2015).
 class MaxHeapStrategy : public Algorithm {
-private:
-    typedef TextDS<> text_t;
-
 public:
     inline static Meta meta() {
         Meta m("lcpcomp_comp", "heap");
@@ -30,14 +27,13 @@ public:
     }
 
     inline static ds::dsflags_t textds_flags() {
-        return text_t::SA | text_t::ISA | text_t::LCP;
+        return ds::SA | ds::ISA | ds::LCP;
     }
 
     using Algorithm::Algorithm; //import constructor
 
-    inline void factorize(text_t& text,
-                   const size_t threshold,
-                   lzss::FactorBuffer<>& factors) {
+    template<typename text_t, typename factorbuffer_t>
+    inline void factorize(text_t& text, size_t threshold, factorbuffer_t& factors) {
 
 		// Construct SA, ISA and LCP
         StatPhase::wrap("Construct text ds", [&]{
@@ -56,7 +52,7 @@ public:
             }
 
             // Construct heap
-            ArrayMaxHeap<text_t::lcp_type::data_type> heap(lcp, lcp.size(), heap_size);
+            ArrayMaxHeap<typename text_t::lcp_type::data_type> heap(lcp, lcp.size(), heap_size);
             for(size_t i = 1; i < lcp.size(); i++) {
                 if(lcp[i] >= threshold) heap.insert(i);
             }

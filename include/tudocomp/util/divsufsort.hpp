@@ -36,6 +36,7 @@
 
 #include <tudocomp/ds/IntVector.hpp>
 
+/// \cond INTERNAL
 namespace tdc {
 namespace libdivsufsort {
 
@@ -283,3 +284,5 @@ using libdivsufsort::saidx_t;
 using libdivsufsort::divsufsort;
 
 } //ns tdc
+/// \endcond
+

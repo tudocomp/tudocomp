@@ -50,6 +50,7 @@ Disadvantages:
 #include <stdexcept>
 #include <vector>
 
+/// \cond INTERNAL
 namespace rigtorp {
 
 template <typename Key, typename T, typename Hash = std::hash<Key>,
@@ -327,3 +328,4 @@ private:
   size_t size_ = 0;
 };
 }
+/// \endcond

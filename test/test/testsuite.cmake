@@ -69,7 +69,7 @@ macro(generic_run_test test_target test_file
         COMMAND
             ${test_target}_testrunner
         COMMAND
-            cmake -E touch ${CMAKE_CURRENT_BINARY_DIR}/stamps/${test_target}_testrunner.stamp
+            +env ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/stamps/${test_target}_testrunner.stamp
         WORKING_DIRECTORY
             "${CMAKE_BINARY_DIR}"
         COMMENT
@@ -89,7 +89,7 @@ macro(generic_run_test test_target test_file
     add_custom_command(
         TARGET ${register_target}
         PRE_BUILD
-        COMMAND cmake --build . --target ${test_target}
+        COMMAND +env ${CMAKE_COMMAND} --build . --target ${test_target}
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
         COMMENT "${kind_name} ${test_target}" VERBATIM
     )
@@ -98,7 +98,7 @@ macro(generic_run_test test_target test_file
     add_custom_command(
         TARGET ${register_build_target}
         PRE_BUILD
-        COMMAND cmake --build . --target ${test_target}_testrunner
+        COMMAND +env ${CMAKE_COMMAND} --build . --target ${test_target}_testrunner
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
         COMMENT "Building ${kind_name} ${test_target}" VERBATIM
     )
@@ -108,7 +108,7 @@ macro(generic_run_test test_target test_file
         add_custom_command(
             TARGET ${test_target}_testrunner
             PRE_BUILD
-            COMMAND cmake --build . --target ${bin_dep}
+            COMMAND +env ${CMAKE_COMMAND} --build . --target ${bin_dep}
             WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
         )
     endforeach(bin_dep)

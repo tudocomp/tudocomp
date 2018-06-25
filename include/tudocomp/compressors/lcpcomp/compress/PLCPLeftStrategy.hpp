@@ -13,7 +13,8 @@
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/ds/LCPSada.hpp>
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
+
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
@@ -289,9 +290,6 @@ void compute_left_references(const size_t n, ref_strategy_type& ref_strategy, pl
 ///
 /// TODO: Describe
 class PLCPLeftStrategy : public Algorithm {
-    private:
-        typedef TextDS<> text_t;
-
     public:
         using Algorithm::Algorithm;
 
@@ -300,11 +298,16 @@ class PLCPLeftStrategy : public Algorithm {
             return m;
         }
 
+        inline static ds::dsflags_t textds_flags() {
+            return ds::SA | ds::PHI;
+        }
+
         /**
         *  Called by the LCPcompCompressor.
         *  The compressor works in RAM mode, so this method produces the factors in RAM.
         */
-        inline void factorize(text_t& text, size_t threshold, FactorBufferRAM& refs) {
+        template<typename text_t, typename factorbuffer_t>
+        inline void factorize(text_t& text, size_t threshold, factorbuffer_t& refs) {
             StatPhase phase("Load Index DS");
             text.require(text_t::SA | text_t::PHI);
 
@@ -316,10 +319,6 @@ class PLCPLeftStrategy : public Algorithm {
             LCPForwardIterator pplcp { (construct_plcp_bitvector(sa, text)) };
             phase.split("Compute factors");
             compute_left_references(text.size(), ref_strat, pplcp, phi, threshold);
-        }
-
-        inline static ds::dsflags_t textds_flags() {
-            return text_t::SA | text_t::PHI;
         }
 };
 

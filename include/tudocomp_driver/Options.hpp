@@ -3,6 +3,7 @@
 #include <iostream>
 #include <getopt.h>
 
+/// \cond INTERNAL
 namespace tdc_driver {
 
 // getopt data
@@ -20,6 +21,7 @@ constexpr option OPTIONS[] = {
     {"list",       no_argument,       nullptr, 'l'},
     {"output",     required_argument, nullptr, 'o'},
     {"stats",      optional_argument, nullptr, 's'},
+    {"statfile",   required_argument, nullptr, 'S'},
     {"version",    no_argument,       nullptr, 'v'},
     {"raw",        no_argument,       nullptr, OPT_RAW},
     {"usestdin",   no_argument,       nullptr, OPT_STDIN},
@@ -103,6 +105,12 @@ public:
             << "print (de-)compression statistics in JSON format"
             << endl;
 
+        // -S, --statfile=FILE
+        out << right << setw(W_SF) << "-S" << ", "
+            << left << setw(W_LF) << "--statfile=FILE"
+            << "write stats to FILE."
+            << endl;
+
         // --help
         out << right << setw(W_NOSF) << ""
             << left << setw(W_LF) << "--help"
@@ -175,6 +183,7 @@ private:
 
     bool m_stats;
     std::string m_stats_title;
+    std::string m_stat_file;
 
     std::vector<std::string> m_remaining;
 
@@ -233,6 +242,10 @@ public:
                 case 's': // --stats=[optarg]
                     m_stats = true;
                     if(optarg) m_stats_title = std::string(optarg);
+                    break;
+
+                case 'S': // --statfile=<optarg>
+                    m_stat_file = std::string(optarg);
                     break;
 
 				//logging
@@ -299,9 +312,11 @@ public:
     const bool& decompress = m_decompress;
 
     const bool& stats = m_stats;
+    const std::string& stat_file = m_stat_file;
     const std::string& stats_title = m_stats_title;
 
     const std::vector<std::string>& remaining = m_remaining;
 };
 
 }
+/// \endcond
