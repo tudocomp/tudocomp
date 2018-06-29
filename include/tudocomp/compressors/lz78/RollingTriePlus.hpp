@@ -28,7 +28,6 @@ public:
     inline static Meta meta() {
         Meta m("lz78trie", "rolling_plus", "Rolling Hash Trie+");
         m.option("hash_roller").templated<HashRoller, ZBackupRollingHash>("hash_roller");
-        m.option("hash_manager").templated<HashManager, SizeManagerNoob>("hash_manager");
         m.option("hash_function").templated<HashFunction, NoopHasher>("hash_function"); // dummy parameter
         m.option("load_factor").dynamic(30);
         return m;

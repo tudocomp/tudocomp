@@ -19,7 +19,6 @@ public:
         Meta m("lz78trie", "hash", "Hash Trie");
         m.option("hash_function").templated<HashFunction, MixHasher>("hash_function");
         m.option("hash_prober").templated<HashProber, LinearProber>("hash_prober");
-        m.option("hash_manager").templated<HashManager, SizeManagerPow2>("hash_manager");
         m.option("load_factor").dynamic(30);
         return m;
     }

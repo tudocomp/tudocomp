@@ -40,12 +40,6 @@ all_coders = universal_coders + entropy_coders + consuming_entropy_coders
 
 ##### lz78 #####
 
-# LZ78 trie hash map size managers
-hash_manager = [
-        AlgorithmConfig(name="SizeManagerPow2", header="util/Hash.hpp"),
-        AlgorithmConfig(name="SizeManagerPrime", header="util/Hash.hpp"),
-        AlgorithmConfig(name="SizeManagerDirect", header="util/Hash.hpp"),
-        ]
 # LZ78 trie hash probers
 hash_prober = [
         AlgorithmConfig(name="LinearProber", header="util/Hash.hpp"),
@@ -88,10 +82,10 @@ lz78_trie = [
     AlgorithmConfig(name="lz78::BinaryTrie", header="compressors/lz78/BinaryTrie.hpp"),
     AlgorithmConfig(name="lz78::CedarTrie", header="compressors/lz78/CedarTrie.hpp"),
     AlgorithmConfig(name="lz78::ExtHashTrie", header="compressors/lz78/ExtHashTrie.hpp"),
-    AlgorithmConfig(name="lz78::HashTrie", header="compressors/lz78/HashTrie.hpp", sub=[hash_function,hash_prober,hash_manager]),
-    AlgorithmConfig(name="lz78::HashTriePlus", header="compressors/lz78/HashTriePlus.hpp", sub=[hash_function,hash_manager]),
-    AlgorithmConfig(name="lz78::RollingTrie", header="compressors/lz78/RollingTrie.hpp", sub=[hash_roll, hash_prober,hash_manager,hash_function]),
-    AlgorithmConfig(name="lz78::RollingTriePlus", header="compressors/lz78/RollingTriePlus.hpp", sub=[hash_roll, hash_manager,hash_function]),
+    AlgorithmConfig(name="lz78::HashTrie", header="compressors/lz78/HashTrie.hpp", sub=[hash_function,hash_prober]),
+    AlgorithmConfig(name="lz78::HashTriePlus", header="compressors/lz78/HashTriePlus.hpp", sub=[hash_function]),
+    AlgorithmConfig(name="lz78::RollingTrie", header="compressors/lz78/RollingTrie.hpp", sub=[hash_roll, hash_prober,hash_function]),
+    AlgorithmConfig(name="lz78::RollingTriePlus", header="compressors/lz78/RollingTriePlus.hpp", sub=[hash_roll, hash_function]),
     AlgorithmConfig(name="lz78::TernaryTrie", header="compressors/lz78/TernaryTrie.hpp"),
     AlgorithmConfig(name="lz78::CompactHashTrie", header="compressors/lz78/CompactHashTrie.hpp", sub=[compact_hashmap_strategies]),
 ]
