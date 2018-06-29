@@ -74,11 +74,12 @@ struct NoopHasher : public Algorithm {
 	}
 };
 
+struct SizeManagerDirect{};
 
 //// Hash Table Size Managers
 
-struct SizeManagerPow2 : public Algorithm {
-	SizeManagerPow2(Env&& env) : Algorithm(std::move(env)) {}
+struct SizeManagerPow2 {
+	SizeManagerPow2() {}
 	void resize(const len_t) {
 	}
 	/**
@@ -96,39 +97,8 @@ struct SizeManagerPow2 : public Algorithm {
 	}
 };
 
-
-
-struct SizeManagerDirect : public Algorithm {
-    inline static Meta meta() {
-        Meta m("hash_manager", "direct", "Direct Hash Table Sizes");
-		return m;
-	}
-	SizeManagerDirect(Env&& env) : Algorithm(std::move(env)) {}
-	/**
-	 * The lowest possible size larger than hint
-	 */
-	static inline len_t get_min_size(const len_t& hint) {
-		return std::max<len_t>(hint,3UL);
-	}
-	void resize(const len_t) {
-	}
-
-	/**
-	 *  Compute index % tablesize
-	 *  Since tablesize is a power of two, a bitwise-AND is equivalent and faster
-	 *  from http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/
-	 */
-	inline len_t mod_tablesize(const size_t, const len_t tablesize, const size_t key, const size_t probe) {
-		const __uint128_t v = (static_cast<uint64_t>(key + (static_cast<__uint128_t>(probe) << 64)/(tablesize))) * static_cast<__uint128_t>(tablesize);
-		const len_t ret = v >> 64;
-		DCHECK_LT(ret, tablesize);
-		return ret;
-		// return index % tablesize; // fallback
-	}
-};
-
-struct SizeManagerNoob : public Algorithm {
-	SizeManagerNoob(Env&& env) : Algorithm(std::move(env)) {}
+struct SizeManagerNoob {
+	SizeManagerNoob() {}
 	/**
 	 * The lowest possible size larger than hint
 	 */
@@ -338,7 +308,7 @@ class HashMap {
 		: m_h(create_env(HashFcn::meta()))
 		, m_probe(create_env(ProbeFcn::meta()))
 // env.env_for_option("hash_prober"))
-		, m_sizeman(create_env(SizeManager::meta())) //env.env_for_option("hash_manager"))
+		, m_sizeman()
 		, m_size(initial_size)
 		, m_keys((key_t*) malloc(sizeof(key_t) * initial_size))
 		, m_values((value_t*) malloc(sizeof(value_t) * initial_size))

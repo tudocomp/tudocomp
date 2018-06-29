@@ -10,8 +10,8 @@ namespace lz78 {
 
 template<
     typename HashRoller = ZBackupRollingHash,
-    typename HashManager = SizeManagerNoob,
-    typename HashFunction = NoopHasher
+    typename HashFunction = NoopHasher,
+    typename HashManager = SizeManagerNoob
 >
 class RollingTriePlus : public Algorithm, public LZ78Trie<> {
     typedef typename HashRoller::key_type key_type;
