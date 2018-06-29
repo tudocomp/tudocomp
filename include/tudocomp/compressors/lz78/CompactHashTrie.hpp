@@ -66,7 +66,7 @@ public:
         auto&& r = m_table.access_kv_width(key,
                                            key_width(key),
                                            value_width(value));
-        if (r == 0) {
+        if (r == 0u) {
             r = value;
             return r;
         } else {
