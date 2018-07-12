@@ -70,18 +70,16 @@ class RefRAMStrategy {
 
 /** Same as @RefRAMStrategy, but works with STXXL vectors
  */
-template<class sa_t, class isa_t>
+template<class phi_t>
 class RefDiskStrategy {
-    const sa_t& m_sa;
-    const isa_t& m_isa;
-    len_t m_memory;
+    const phi_t& m_phi; // tuples (i, phi[i]) for irreducible positions i only
     stxxl::VECTOR_GENERATOR<std::pair<len_t,len_t>>::result m_factors; // (text_position, factor_length)
     std::vector<std::pair<len_t,len_t>> m_factors_unsorted;
 
-    public:
-    RefDiskStrategy(const sa_t& sa, const isa_t& isa, len_t memory = 512*1024*1024) : m_sa(sa), m_isa(isa), m_memory(memory) {
-
+public:
+    RefDiskStrategy(const phi_t& phi) : m_phi(phi) {
     }
+
     void sort() {
         std::sort(m_factors_unsorted.begin(), m_factors_unsorted.end());
         // only give a resize hint if we need more space than doubling it, what is the default behavior of a vector
@@ -94,70 +92,39 @@ class RefDiskStrategy {
         }
         m_factors_unsorted.clear();
     }
+
     void add_factor(len_t source_position, len_t factor_length) {
         return m_factors_unsorted.push_back(std::make_pair(source_position,factor_length));
     }
+
     void factorize(lzss::FactorBufferDisk& reflist) {
+        typename phi_t::bufreader_type phi_reader(m_phi);
+        auto phi_iterator = phi_reader.begin();
+        CHECK_EQ(0ULL, size_t(phi_iterator->first)); // first phi array entry needs to be for i=0
 
-        struct KeyExtractor {
-            typedef len_t key_type;
-            typedef std::pair<len_t,len_t> value_type;
-            key_type m_key;
+        typename decltype(m_factors)::bufreader_type factor_reader(m_factors);
 
-            KeyExtractor() {}
-            KeyExtractor(const key_type& k) : m_key(k) {}
-            key_type operator()(const value_type& v) const { return v.first; }
-            value_type min_value() const { return std::make_pair(0,0); }
-            //value_type max_value() const { return std::make_pair(std::numeric_limits<key_type>::max(),0); }
-            value_type max_value() const { return std::make_pair(m_key,0); }
-        };
-
-
-
-        StatPhase sorting_phase("Sort by ISA");
-
-        stxxl::VECTOR_GENERATOR<std::pair<len_t,len_t>>::result m_sources;
-        StatPhase::wrap("Put factors", [&]{
-            typename decltype(m_factors)::bufreader_type reader(m_factors);
-            decltype(m_sources)::bufwriter_type writer(m_sources);
-            for(auto it = reader.begin(); it != reader.end(); ++it) {
-                //m_sources.push_back(std::make_pair(m_isa[it->first]-1, it->first));
-                writer << std::make_pair(m_isa[it->first]-1, it->first);
-            }
-        });
-        StatPhase::wrap("Sort factors", [&]{
-            stxxl::ksort(m_sources.begin(), m_sources.end(), KeyExtractor(m_sa.size()),m_memory); //, STXXL_DEFAULT_ALLOC_STRATEGY());
-        });
-        sorting_phase.split("Sort by SA");
-        stxxl::VECTOR_GENERATOR<std::pair<len_t,len_t>>::result m_sources2;
-        StatPhase::wrap("Put factors", [&]{
-            typename decltype(m_sources)::bufreader_type reader(m_sources);
-            decltype(m_sources2)::bufwriter_type writer(m_sources2);
-            for(auto it = reader.begin(); it != reader.end(); ++it) {
-                //m_sources2.push_back(std::make_pair(it->second, m_sa[it->first]));
-                writer << std::make_pair(it->second, m_sa[it->first]);
-            }
-            m_sources.clear();
-        });
-        StatPhase::wrap("Sort factors", [&]{
-        stxxl::ksort(m_sources2.begin(), m_sources2.end(), KeyExtractor(m_sa.size()),m_memory); //, STXXL_DEFAULT_ALLOC_STRATEGY());
-        });
-
-        sorting_phase.split("Write factors to buffer");
-
-        {
         lzss::FactorBufferDisk::backing_vector_type::bufwriter_type writer(reflist.factors);
-        for(size_t i = 0; i < m_factors.size(); ++i) {
-             //reflist.emplace_back(m_factors[i].first, m_sources2[i].second, m_factors[i].second);
-            writer << lzss::Factor { m_factors[i].first, m_sources2[i].second, m_factors[i].second };
-        }
-        }
 
-        // for(auto it = m_factors.begin(); it != m_factors.end(); ++it) {
-        //     const auto& el = *it;
-        //     reflist.emplace_back(el.first, m_sa[m_isa[el.first]-1], el.second);
-        // }
+        len_t irreducible_pos = 0;
+        len_t irreducible_phi = phi_iterator->second;
+        ++phi_iterator;
 
+        for(auto f = factor_reader.begin(); f != factor_reader.end(); ++f) {
+            auto pos = f->first;
+
+            // find phi[pos]
+            while(pos >= phi_iterator->first) {
+                irreducible_pos = phi_iterator->first;
+                irreducible_phi = phi_iterator->second;
+                ++phi_iterator;
+            }
+            DCHECK_LE(irreducible_pos, pos);
+            auto phi_pos = irreducible_phi + (pos - irreducible_pos);
+
+            DLOG(INFO) << "phi[" << pos << "] = " << phi_pos;
+            writer << lzss::Factor { pos, phi_pos, f->second };
+        }
     }
 };
 

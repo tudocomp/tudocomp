@@ -61,8 +61,9 @@ namespace tdc { namespace lcpcomp {
     constexpr size_t blocks_per_page = 4;
     constexpr size_t cache_pages = 8;
     constexpr size_t block_size = 16 * 4096 * sizeof(uint40_t);
-    using filemapped_vector_t = stxxl::VECTOR_GENERATOR<
-        uint40_t, blocks_per_page, cache_pages, block_size>::result;
+
+    using phi_array_t = stxxl::VECTOR_GENERATOR<
+        std::pair<uint40_t, uint40_t>, blocks_per_page, cache_pages, block_size>::result;
 
     inline void factorize(const std::string& textfilename,
                           const std::string& outfilename,
@@ -71,17 +72,14 @@ namespace tdc { namespace lcpcomp {
 
 		StatPhase phase("PLCPComp");
 
-        stxxl::syscall_file sa_file(textfilename + ".sa5", stxxl::file::open_mode::RDONLY);
-        filemapped_vector_t sa(&sa_file);
+        stxxl::syscall_file phi_file(textfilename + ".phi5", stxxl::file::open_mode::RDONLY);
+        phi_array_t phi(&phi_file);
 
-        stxxl::syscall_file isa_file(textfilename + ".isa5", stxxl::file::open_mode::RDONLY);
-        filemapped_vector_t isa(&isa_file);
+		PLCPFileForwardIterator pplcp((textfilename + ".plcp").c_str());
 
-		PLCPFileForwardIterator pplcp  ((textfilename + ".plcp").c_str());
-
-		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa,mb_ram * M);
+		RefDiskStrategy<decltype(phi)> refStrategy(phi);
 		StatPhase::wrap("Search Peaks", [&]{
-				compute_references(filesize(textfilename.c_str())-1, refStrategy, pplcp, threshold);
+            compute_references(filesize(textfilename.c_str())-1, refStrategy, pplcp, threshold);
 		});
 
         tdc::lzss::FactorBufferDisk refs;
@@ -159,12 +157,8 @@ int main(int argc, char** argv) {
 		std::cerr << "Infile " << infile << " does not exist" << std::endl;
 		return 1;
 	}
-	if(!file_exist(infile + ".sa5")) {
-		std::cerr << "Infile " << infile << ".sa5 does not exist" << std::endl;
-		return 1;
-	}
-	if(!file_exist(infile + ".isa5")) {
-		std::cerr << "Infile " << infile << ".isa5 does not exist" << std::endl;
+	if(!file_exist(infile + ".phi5")) {
+		std::cerr << "Infile " << infile << ".phi5 does not exist" << std::endl;
 		return 1;
 	}
 	if(!file_exist(infile + ".plcp")) {
