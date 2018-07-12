@@ -4,6 +4,8 @@
 #include <unordered_map>
 
 #include <tudocomp_stat/StatPhase.hpp>
+#include <tudocomp_stat/StatPhaseStxxl.hpp>
+
 #include <tudocomp/CreateAlgorithm.hpp>
 
 #include <tudocomp/coders/BitCoder.hpp>
@@ -70,6 +72,7 @@ namespace tdc { namespace lcpcomp {
                           const size_t threshold,
                           const len_t mb_ram) {
 
+        StatPhaseStxxl::enable(StatPhaseStxxlConfig()); // enable all STXXL stats
 		StatPhase phase("PLCPComp");
 
         stxxl::syscall_file phi_file(textfilename + ".phi5", stxxl::file::open_mode::RDONLY);
