@@ -13,7 +13,7 @@ namespace lcpcomp {
  * It creates an array of dynamic arrays. Each dynamic array stores in
  * the first element its size. On appending a new element, the dynamic array
  * gets resized by one (instead of doubling). This helps to keep the memory footprint low.
- * It can be faster than @class ScanDec if its "scans"-value too small.
+ * It can be faster than \ref ScanDec if its "scans"-value too small.
  */
 class CompactDec : public Algorithm {
 public:
@@ -21,10 +21,6 @@ public:
         Meta m("lcpcomp_dec", "compact");
         return m;
 
-    }
-    inline void decode_lazy() const {
-    }
-    inline void decode_eagerly() const {
     }
 
 private:
@@ -48,7 +44,7 @@ private:
             for(size_t i = 1; i < bucket[0]; ++i) {
                 decode_literal_at(bucket[i], c); // recursion
             }
-            delete [] m_fwd[pos];
+            free(m_fwd[pos]);
             m_fwd[pos] = nullptr;
         }
 
@@ -56,35 +52,29 @@ private:
     }
 
 public:
-    CompactDec(CompactDec&& other):
-        Algorithm(std::move(*this)),
-        m_fwd(std::move(other.m_fwd)),
-        m_cursor(std::move(other.m_cursor)),
-        m_buffer(std::move(other.m_buffer))
-    {
-        IF_STATS(m_longest_chain = std::move(other.m_longest_chain));
-        IF_STATS(m_current_chain = std::move(other.m_current_chain));
-
-        other.m_fwd = nullptr;
-    }
-
     ~CompactDec() {
         if(m_fwd != nullptr) {
             for(size_t i = 0; i < m_buffer.size(); ++i) {
                 if(m_fwd[i] == nullptr) continue;
-                delete [] m_fwd[i];
+                free(m_fwd[i]);
             }
             delete [] m_fwd;
         }
     }
-    inline CompactDec(Env&& env, len_t size)
-        : Algorithm(std::move(env)), m_cursor(0), m_buffer(size,0) {
+    inline CompactDec(Env&& env)
+        : Algorithm(std::move(env)), m_cursor(0) {
 
         IF_STATS(m_longest_chain = 0);
         IF_STATS(m_current_chain = 0);
+    }
 
-        m_fwd = new len_compact_t*[size];
-        std::fill(m_fwd,m_fwd+size,nullptr);
+    inline void initialize(size_t n) {
+        if(tdc_unlikely(n == 0)) throw std::runtime_error(
+            "no text length provided");
+
+        m_buffer.resize(n, 0);
+        m_fwd = new len_compact_t*[n];
+        std::fill(m_fwd,m_fwd+n,nullptr);
     }
 
     inline void decode_literal(uliteral_t c) {
@@ -99,7 +89,7 @@ public:
             } else {
                 len_compact_t*& bucket = m_fwd[src];
                 if(bucket == nullptr) {
-                    bucket = new len_compact_t[2];
+                    bucket = (len_compact_t*) malloc(sizeof(len_compact_t) * 2);
                     DCHECK(m_fwd[src] == bucket);
                     bucket[0] = 2;
 					bucket[1] = m_cursor;
@@ -114,6 +104,9 @@ public:
 
             ++m_cursor;
         }
+    }
+
+    inline void process() {
     }
 
     IF_STATS(

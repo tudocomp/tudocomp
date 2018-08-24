@@ -8,66 +8,51 @@
 #include <tudocomp/compressors/esp/landmarks.hpp>
 #include <tudocomp/compressors/esp/utils.hpp>
 #include <tudocomp/compressors/esp/esp_math.hpp>
-#include <tudocomp/compressors/esp/RoundContext.hpp>
+#include <tudocomp/compressors/esp/BlockGrid.hpp>
 
 namespace tdc {namespace esp {
 
-template<typename Source>
+template<typename level_view_t>
 class MetablockContext {
-    RoundContext<Source>* m_parent;
+    BlockGrid* m_grid;
+    std::vector<size_t>* m_scratchpad;
+    size_t m_alphabet_size;
 public:
-    RoundContext<Source>& rctx() {
-        return *m_parent;
-    }
+    MetablockContext(std::vector<size_t>& scratchpad, BlockGrid& grid, size_t alphabet_size):
+        m_grid(&grid), m_scratchpad(&scratchpad), m_alphabet_size(alphabet_size) {}
 
-    DebugMetablockContext debug;
-
-    MetablockContext(RoundContext<Source>& ctx, DebugMetablockContext dbg):
-        m_parent(&ctx),
-        debug(dbg) {}
-
-    void push_block(size_t width, size_t type) {
-        debug.block(width, type);
-        rctx().push_back(width, type);
-    }
-
-    inline void eager_mb13(const Source& src, size_t t) {
-        [&]() {
-            size_t j = src.size();
-            for (size_t i = 0; i < j;) {
-                size_t remaining_len = j - i;
-                switch (remaining_len) {
-                    case 4:
-                        push_block(2, t);
-                        push_block(2, t);
-                        return;
-                    case 3:
-                        push_block(3, t);
-                        return;
-                    case 2:
-                        push_block(2, t);
-                        return;
-                    case 1:
-                        push_block(1, t);
-                        //DCHECK_GT(remaining_len, 1);
-                        return;
-                    case 0:
-                        return;
-                    default:
-                        push_block(3, t);
-                        i += 3;
-                }
+    inline void eager_mb13(const level_view_t& src, size_t t) {
+        size_t j = src.size();
+        for (size_t i = 0; i < j;) {
+            size_t remaining_len = j - i;
+            switch (remaining_len) {
+                case 4:
+                    m_grid->push_block(2, t);
+                    m_grid->push_block(2, t);
+                    return;
+                case 3:
+                    m_grid->push_block(3, t);
+                    return;
+                case 2:
+                    m_grid->push_block(2, t);
+                    return;
+                case 1:
+                    m_grid->push_block(1, t);
+                    //DCHECK_GT(remaining_len, 1);
+                    return;
+                case 0:
+                    return;
+                default:
+                    m_grid->push_block(3, t);
+                    i += 3;
             }
-        }();
-        rctx().debug_check_advanced(src.size());
+        }
     }
 
-    inline void eager_mb2(const Source& src) {
-        auto& ctx = rctx();
-
+    inline void eager_mb2(const level_view_t& src) {
         auto A = src;
         DCHECK(A.size() > 0);
-        auto type_3_prefix_len = std::min(iter_log(ctx.alphabet_size),
+        auto type_3_prefix_len = std::min(iter_log(m_alphabet_size),
                                         A.size());
 
         // Handle non-m2 prefix
@@ -77,10 +62,8 @@ public:
             if (type_3_prefix_len == A.size()) { return; }
         }
 
-        auto type_2_suffix_size = src.size() - type_3_prefix_len;
-
         // Prepare scratchpad buffer
-        auto& buf = ctx.scratchpad;
+        auto& buf = *m_scratchpad;
         buf.clear();
         buf.reserve(A.cend() - A.cbegin());
         buf.insert(buf.cbegin(), A.cbegin(), A.cend());
@@ -89,8 +72,6 @@ public:
         // This reduces the size by `iter_log(alphabet_size) == type_3_prefix_len`
         // the alphabet to size 6.
         {
-            debug.mb2_initial(buf);
-            debug.mb2_reduce_to_6_start();
             for (uint shrink_i = 0; shrink_i < type_3_prefix_len; shrink_i++) {
                 for (size_t i = 1; i < buf.size(); i++) {
                     auto left  = buf[i - 1];
@@ -98,8 +79,6 @@ public:
                     buf[i - 1] = label(left, right);
                 }
                 buf.pop_back();
-
-                debug.mb2_reduce_to_6_step(buf);
             }
 
             DCHECK_LE(calc_alphabet_size(buf), 6);
@@ -107,8 +86,6 @@ public:
 
         // Reduce further to alphabet 3
         {
-            debug.mb2_reduce_to_3_start();
-
             // final pass: reduce to alphabet 3
             for(uint to_replace = 3; to_replace < 6; to_replace++) {
                 do_for_neighbors(buf, [&](size_t i, ConstGenericView<size_t> neighbors) {
@@ -119,8 +96,6 @@ public:
                         for (auto n : neighbors) { if (n == e) { e++; } }
                     }
                 });
-
-                debug.mb2_reduce_to_3_step(buf);
             }
 
             DCHECK(calc_alphabet_size(buf) <= 3);
@@ -145,8 +120,6 @@ public:
                 }
             });
 
-            debug.mb2_high_landmarks(landmarks);
-
             do_for_neighbors(buf, [&](size_t i, ConstGenericView<size_t> neighbors) {
                 bool is_low_landmark = true;
                 for (auto e : neighbors) {
@@ -165,8 +138,6 @@ public:
                 }
             });
 
-            debug.mb2_high_and_low_landmarks(landmarks);
-
             DCHECK(check_landmarks(landmarks, true));
 
             // Split at landmarks
@@ -177,13 +148,10 @@ public:
                     return landmarks[i] == uint_t<1>(1);
                 },
                 [&](size_t left, size_t right) {
-                    push_block(right - left + 1, 2);
-                },
-                ctx.behavior_landmarks_tie_to_right
+                    m_grid->push_block(right - left + 1, 2);
+                }
             );
         }
-
-        ctx.debug_check_advanced(type_2_suffix_size);
     }
 };
 

@@ -6,8 +6,6 @@
 #include <tudocomp/ds/BitPackingVectorSlice.hpp>
 
 namespace tdc {namespace esp {
-    using in_t = BitPackingVectorSlice<dynamic_t>;
-
     template<size_t N, typename T = size_t>
     struct Array {
         using in_t = ConstGenericView<T>;

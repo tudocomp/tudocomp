@@ -5,11 +5,11 @@
 
 #include <sstream>
 
-using namespace sdsl;
-
 //template<class bp_support = sdsl::bp_support_sada<> >
 namespace tdc {
 namespace lz78u {
+
+using namespace sdsl;
 
 /**
  * This is a wrapper class around the sdsl-lite library to get a easier translation between
@@ -48,7 +48,7 @@ struct SuffixTree {
 
 	/**
 	 * Select the i-th leaf in SA-order
-	 * 0 \le i < n
+	 * 0 <= i < n
 	 */
 	cst_t::node_type select_leaf(const cst_t::size_type& i) const {
 		return cst.select_leaf(i+1);

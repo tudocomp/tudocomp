@@ -22,6 +22,11 @@ namespace tdc {
 namespace io {
 }
 
+/// \brief Contains general structures and constants concerning the available
+///        data structure implementations.
+namespace ds {
+}
+
 /// \brief Contains compressors and encoders that work with Lempel-Ziv-78-like
 /// dictionaries.
 ///
@@ -49,6 +54,14 @@ namespace lzss {
 /// explicitly store the follow-up symbol. Instead, they are re-generated on
 /// the fly by the decoder.
 namespace lzw {
+}
+
+/// \brief Contains the \ref IntVector class and its backing utilities.
+namespace int_vector {
+}
+
+/// \brief Contains helpers for the unit tests.
+namespace test {
 }
 
 }//namespace tdc

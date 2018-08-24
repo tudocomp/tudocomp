@@ -222,12 +222,17 @@ namespace tdc {
 
                 PointerJumpIntEM(PointerJumpIntEM&& other) = default;
 
-                inline PointerJumpIntEM(Env&& env, len_t size)
+                inline PointerJumpIntEM(Env&& env)
                         : Algorithm(std::move(env))
                         , m_cursor(0)
-                        , m_buffer(size)
                 {}
 
+                inline void initialize(size_t n) {
+                    if(tdc_unlikely(n == 0)) throw std::runtime_error(
+                        "no text length provided");
+
+                    m_buffer = IntVector<uliteral_t>(n);
+                }
 
             // decoding statge
                 inline void decode_literal(uliteral_t c) {
@@ -285,13 +290,14 @@ namespace tdc {
                 }
 
             // final touch
-                IF_STATS(
+                inline void process() {
+                }
+
                 inline len_t longest_chain() const {
                     // We would need additional data structures to compute it. so we output a dummy value.
                     // if you need it, use a different decompressor
                     return 0;
-                })
-
+                }
 
                 inline void write_to(std::ostream& out) const {
                     for(auto c : m_buffer) out << c;

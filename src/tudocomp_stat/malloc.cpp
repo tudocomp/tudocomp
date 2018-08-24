@@ -8,6 +8,8 @@
 
 #elif !defined(STATS_DISABLED)
 
+#ifndef __MACH__
+
 constexpr size_t MEMBLOCK_MAGIC = 0xFEDCBA9876543210;
 
 struct block_header_t {
@@ -19,7 +21,7 @@ inline bool is_managed(block_header_t* block) {
     return (block->magic == MEMBLOCK_MAGIC);
 }
 
-void* malloc(size_t size) {
+extern "C" void* malloc(size_t size) {
     if(!size) return NULL;
 
     void *ptr = __libc_malloc(size + sizeof(block_header_t));
@@ -34,7 +36,7 @@ void* malloc(size_t size) {
     return (char*)ptr + sizeof(block_header_t);
 }
 
-void free(void* ptr) {
+extern "C" void free(void* ptr) {
     if(!ptr) return;
 
     auto block = (block_header_t*)((char*)ptr - sizeof(block_header_t));
@@ -46,7 +48,7 @@ void free(void* ptr) {
     }
 }
 
-void* realloc(void* ptr, size_t size) {
+extern "C" void* realloc(void* ptr, size_t size) {
     if(!size) {
         free(ptr);
         return NULL;
@@ -72,7 +74,7 @@ void* realloc(void* ptr, size_t size) {
     }
 }
 
-void* calloc(size_t num, size_t size) {
+extern "C" void* calloc(size_t num, size_t size) {
     size *= num;
     if(!size) return NULL;
 
@@ -83,3 +85,4 @@ void* calloc(size_t num, size_t size) {
 
 #endif
 
+#endif

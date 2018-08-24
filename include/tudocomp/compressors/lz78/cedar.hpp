@@ -14,6 +14,8 @@
 
 #define STATIC_ASSERT(e, msg) typedef char msg[(e) ? 1 : -1]
 
+/// \cond INTERNAL
+
 namespace cedar {
   // typedefs
   typedef unsigned char  uchar;
@@ -675,4 +677,6 @@ namespace cedar {
     }
   };
 }
+
+/// \endcond
 

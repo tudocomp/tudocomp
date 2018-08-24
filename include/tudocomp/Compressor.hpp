@@ -3,7 +3,7 @@
 #include <functional>
 #include <memory>
 
-#include <tudocomp/pre_header/Registry.hpp>
+#include <tudocomp/pre_header/RegistryOf.hpp>
 #include <tudocomp/pre_header/Env.hpp>
 #include <tudocomp/Algorithm.hpp>
 
@@ -18,6 +18,14 @@ namespace tdc {
 /// representation.
 class Compressor: public Algorithm {
 public:
+    static string_ref meta_type() { return "compressor"_v; };
+
+    virtual ~Compressor() = default;
+    Compressor(Compressor const&) = default;
+    Compressor(Compressor&&) = default;
+    Compressor& operator=(Compressor const&) = default;
+    Compressor& operator=(Compressor&&) = default;
+
     /// \brief Construct the compressor with an environment.
     ///
     /// \param env The algorithm's environment.

@@ -198,16 +198,19 @@ public:
         /// \param default_value the default value for the option.
         inline void dynamic(double default_value) { dynamic(to_str(default_value)); }
 
-        /// \brief Declares that this option accepts values of a arbitrary
-        ///        Compressor type, dispatched at runtime.
-        inline void dynamic_compressor() {
+        /// \brief Declares that this option accepts values of an arbitrary
+        ///        Algorithm type, dispatched at runtime.
+        /// \tparam algorithm_base_t The virtual base class that describes the interface of the algorithm.
+        template<typename algorithm_base_t>
+        inline void dynamic() {
             m_meta.check_arg(m_argument_name);
             m_meta.m_options.push_back(decl::Arg(
                 std::string(m_argument_name),
                 false,
-                "compressor"
+                algorithm_base_t::meta_type()
             ));
         }
+
     };
 
     /// \brief Declares an accepted option for this algorithm.

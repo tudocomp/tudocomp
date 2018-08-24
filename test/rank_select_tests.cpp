@@ -2,8 +2,10 @@
 #include <gtest/gtest.h>
 
 #include <tudocomp/ds/IntVector.hpp>
-#include <tudocomp/ds/rank/rank_64bit.hpp>
-#include <tudocomp/ds/rank/Rank.hpp>
+#include <tudocomp/ds/rank_64bit.hpp>
+#include <tudocomp/ds/select_64bit.hpp>
+#include <tudocomp/ds/Rank.hpp>
+#include <tudocomp/ds/Select.hpp>
 
 using namespace tdc;
 
@@ -87,7 +89,7 @@ TEST(rank, rank0_8bit) {
     for(uint8_t i = 0; i < 8; i++) ASSERT_EQ(1, rank0(v0, i, i));
 }
 
-TEST(rank, rank1_16_32_64bit) {
+TEST(rank, uint_16_32_64) {
     // full vectors
     uint16_t v16 = 0x0101;
     uint32_t v32 = 0x01010101UL;
@@ -98,56 +100,173 @@ TEST(rank, rank1_16_32_64bit) {
     ASSERT_EQ(8, rank1(v64));
 
     // interval [0, m]
-    for(uint8_t i = 1; i <= 2; i++) ASSERT_EQ(i, rank1(v16, 8*i-1));
-    for(uint8_t i = 1; i <= 4; i++) ASSERT_EQ(i, rank1(v32, 8*i-1));
-    for(uint8_t i = 1; i <= 8; i++) ASSERT_EQ(i, rank1(v64, 8*i-1));
+    for(uint8_t i = 1; i <= 2; i++) {
+        ASSERT_EQ(i, rank1(v16, 8*i-1));
+        ASSERT_EQ(i, rank0(uint16_t(~v16), 8*i-1));
+    }
+    for(uint8_t i = 1; i <= 4; i++) {
+        ASSERT_EQ(i, rank1(v32, 8*i-1));
+        ASSERT_EQ(i, rank0(uint32_t(~v32), 8*i-1));
+    }
+    for(uint8_t i = 1; i <= 8; i++) {
+        ASSERT_EQ(i, rank1(v64, 8*i-1));
+        ASSERT_EQ(i, rank0(uint64_t(~v64), 8*i-1));
+    }
 
     // interval [l, m]
-    for(uint8_t i = 1; i <= 2; i++) ASSERT_EQ(1, rank1(v16, 8*(i-1), 8*i-1));
-    for(uint8_t i = 1; i <= 4; i++) ASSERT_EQ(1, rank1(v32, 8*(i-1), 8*i-1));
-    for(uint8_t i = 1; i <= 8; i++) ASSERT_EQ(1, rank1(v64, 8*(i-1), 8*i-1));
+    for(uint8_t i = 1; i <= 2; i++) {
+        ASSERT_EQ(1, rank1(v16, 8*(i-1), 8*i-1));
+        ASSERT_EQ(1, rank0(uint16_t(~v16), 8*(i-1), 8*i-1));
+    }
+    for(uint8_t i = 1; i <= 4; i++) {
+        ASSERT_EQ(1, rank1(v32, 8*(i-1), 8*i-1));
+        ASSERT_EQ(1, rank0(uint32_t(~v32), 8*(i-1), 8*i-1));
+    }
+    for(uint8_t i = 1; i <= 8; i++) {
+        ASSERT_EQ(1, rank1(v64, 8*(i-1), 8*i-1));
+        ASSERT_EQ(1, rank0(uint64_t(~v64), 8*(i-1), 8*i-1));
+    }
 }
 
-TEST(rank, rank0_16_32_64bit) {
-    // full vectors
-    uint16_t v16 = 0x0101;
-    uint32_t v32 = 0x01010101UL;
+TEST(select, basic) {
+    uint64_t v0 = 0ULL;
+    uint64_t v1 = 0xFFFFFFFFFFFFFFFFULL;
     uint64_t v64 = 0x0101010101010101ULL;
 
-    ASSERT_EQ(14, rank0(v16));
-    ASSERT_EQ(28, rank0(v32));
-    ASSERT_EQ(56, rank0(v64));
+    for(size_t i = 1; i <= 64; i++) {
+        ASSERT_EQ(i-1, select1(v1, i));
+        ASSERT_EQ(SELECT_FAIL, select1(v0, i));
+        ASSERT_EQ(i-1, select0(v0, i));
+        ASSERT_EQ(SELECT_FAIL, select0(v1, i));
+    }
 
-    // interval [0, m]
-    for(uint8_t i = 1; i <= 2; i++) ASSERT_EQ(7*i, rank0(v16, 8*i-1));
-    for(uint8_t i = 1; i <= 4; i++) ASSERT_EQ(7*i, rank0(v32, 8*i-1));
-    for(uint8_t i = 1; i <= 8; i++) ASSERT_EQ(7*i, rank0(v64, 8*i-1));
-
-    // interval [l, m]
-    for(uint8_t i = 1; i <= 2; i++) ASSERT_EQ(7, rank0(v16, 8*(i-1), 8*i-1));
-    for(uint8_t i = 1; i <= 4; i++) ASSERT_EQ(7, rank0(v32, 8*(i-1), 8*i-1));
-    for(uint8_t i = 1; i <= 8; i++) ASSERT_EQ(7, rank0(v64, 8*(i-1), 8*i-1));
+    for(size_t i = 1; i <= 8; i++) {
+        ASSERT_EQ(8*(i-1), select1(v64, i));
+        ASSERT_EQ(8*(i-1), select0(uint64_t(~v64), i));
+    }
 }
 
-TEST(rank, rank_bv) {
-    const size_t N = 16384; // amount of bits
-    const size_t K = 4;     // set every K-th bit
+TEST(select, ranged) {
+    uint64_t v0 = 0ULL;
+    uint64_t v1 = 0xFFFFFFFFFFFFFFFFULL;
 
-    BitVector bv(N);
+    for(size_t i = 1; i <= 64; i++) {
+        ASSERT_EQ(i-1, select1(v1, i-1, 1));
+        ASSERT_EQ(SELECT_FAIL, select1(v0, i-1, 1));
+        ASSERT_EQ(i-1, select0(v0, i-1, 1));
+        ASSERT_EQ(SELECT_FAIL, select0(v1, i-1, 1));
+    }
+}
 
-    // set every K-th bit
-    for(size_t i = 0; i < N; i += K) bv[i] = 1;
+TEST(rank_select, inverse_property_64bit) {
+    uint64_t v64 = 0x0101010101010101ULL;
 
-    // construct rank data structure
-    Rank rank(bv, N/2);
+    for(size_t i = 1; i <= 8; i++) {
+        ASSERT_EQ(i, rank1(v64,            select1(v64, i)));
+        ASSERT_EQ(i, rank0(uint64_t(~v64), select0(uint64_t(~v64), i)));
+    }
 
-    // rank1
-    ASSERT_EQ(N/K, rank(N-1));
-    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(i, rank(K*i-1));
-    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(1, rank(K*(i-1), K*i-1));
+    for(size_t i = 0; i < 64; i++) {
+        ASSERT_GE(i, select1(v64,            rank1(v64, i)));
+        ASSERT_GE(i, select0(uint64_t(~v64), rank0(uint64_t(~v64), i)));
+    }
+}
 
-    // rank0
-    ASSERT_EQ(N-N/K, rank.rank0(N-1));
-    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ((K-1)*i, rank.rank0(K*i-1));
-    for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K-1, rank.rank0(K*(i-1), K*i-1));
+template<typename F>
+void NK_test(F f) {
+    for(size_t n = 7; n <= 16; n++) {
+        const size_t N = 1 << n; // amount of bits
+        for(size_t k = 0; k <= 4; k++) {
+            const size_t K = 1 << k;  // every K-th bit set
+            f(N, K);
+        }
+    }
+}
+
+TEST(rank, bv) {
+    NK_test([](size_t N, size_t K){
+        BitVector bv(N);
+
+        // set every K-th bit
+        for(size_t i = 0; i < N; i += K) bv[i] = 1;
+
+        // construct rank data structure
+        Rank rank(bv);
+
+        // rank1
+        ASSERT_EQ(N/K, rank(N-1));
+        for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(i, rank(K*i-1));
+        for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(1, rank(K*(i-1), K*i-1));
+
+        // rank0
+        ASSERT_EQ(N-N/K, rank.rank0(N-1));
+        for(size_t i = 1; i <= N/K; i++) ASSERT_EQ((K-1)*i, rank.rank0(K*i-1));
+        for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K-1, rank.rank0(K*(i-1), K*i-1));
+    });
+}
+
+TEST(select, bv) {
+    NK_test([](size_t N, size_t K){
+        // select1
+        {
+            BitVector bv(N);
+
+            // set every K-th bit
+            for(size_t i = 0; i < N; i += K) bv[i] = 1;
+
+            // construct select data structure
+            Select1 select1(bv);
+
+            // test
+            ASSERT_EQ(N, select1(1+N/K));
+            for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K*(i-1), select1(i));
+        }
+        // select0
+        {
+            BitVector bv(N, 1);
+
+            // unset every K-th bit
+            for(size_t i = 0; i < N; i += K) bv[i] = 0;
+
+            // construct select data structure
+            Select0 select0(bv);
+
+            // test
+            ASSERT_EQ(N, select0(1+N/K));
+            for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(K*(i-1), select0(i));
+        }
+    });
+}
+
+TEST(rank_select, inverse_property_bv) {
+    NK_test([](size_t N, size_t K){
+        //1
+        {
+            BitVector bv(N);
+
+            // set every K-th bit
+            for(size_t i = 0; i < N; i += K) bv[i] = 1;
+
+            // construct rank and select data structures
+            Rank r(bv);
+            Select1 select1(bv);
+
+            for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(i, r.rank1(select1(i)));
+            for(size_t i = 0; i < N; i++)    ASSERT_GE(i, select1(r.rank1(i)));
+        }
+        //0
+        {
+            BitVector bv(N, 1);
+
+            // unset every K-th bit
+            for(size_t i = 0; i < N; i += K) bv[i] = 0;
+
+            // construct rank and select data structures
+            Rank r(bv);
+            Select0 select0(bv);
+
+            for(size_t i = 1; i <= N/K; i++) ASSERT_EQ(i, r.rank0(select0(i)));
+            for(size_t i = 0; i < N; i++)    ASSERT_GE(i, select0(r.rank0(i)));
+        }
+    });
 }

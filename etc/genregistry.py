@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import re
 import sys
@@ -118,23 +118,28 @@ def root_cpp(kinds):
         ident = type.lower()
         const = type.upper()
 
-        # Declare and define the registry and register function
+        # Declare and define the register function
         r.code('''
-            void register_$IDENTs(Registry<$TYPE>& r);
-            Registry<$TYPE> $CONST_REGISTRY = Registry<$TYPE>::with_all_from(register_$IDENTs, "$IDENT");
+            void register_$IDENTs(RegistryOf<$TYPE>& r);
         ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
+
+        ## Declare and define the registry
+        #r.code('''
+        #    RegistryOf<$TYPE> $CONST_REGISTRY = RegistryOf<$TYPE>::with_all_from(register_$IDENTs);
+        #''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
+
         r.emptyline()
 
         # Forward-declare all template expansion calls
         for call in calls:
             r.code('''
-                void register_$CALL(Registry<$TYPE>& r);
+                void register_$CALL(RegistryOf<$TYPE>& r);
             ''', 1, { "$CALL": call, "$TYPE": type })
         r.emptyline()
 
         # Define the register functions
         r.code('''
-            void register_$IDENTs(Registry<$TYPE>& r) {
+            void register_$IDENTs(RegistryOf<$TYPE>& r) {
         ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
         for call in calls:
             r.code('''
@@ -144,6 +149,21 @@ def root_cpp(kinds):
             } // register_$IDENTs
         ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
         r.emptyline()
+
+    # Define a common register_all function for initializing a single `Registry`
+    r.code('''
+            void register_all(Registry& r) {
+    ''', 1)
+    for (type, calls) in kinds:
+        ident = type.lower()
+        r.code('''
+                register_$IDENTs(r.of<$TYPE>());
+        ''', 2, { "$TYPE": type, "$IDENT": ident })
+    r.code('''
+            }
+
+            Registry REGISTRY = Registry::with_all_from(register_all);
+    ''', 1)
     r.code('''
         } // namespace
     ''')
@@ -171,7 +191,7 @@ def single_expansion_cpp(kind, call_ident, call_type, headers):
 
     # Call with actual template expansion
     r.code('''
-        void register_$CALL(Registry<$TYPE>& r) {
+        void register_$CALL(RegistryOf<$TYPE>& r) {
             r.register_algorithm<$CTYPE>();
         }
     ''', 1, { "$TYPE": kind, "$CALL": call_ident, "$CTYPE": call_type })
@@ -265,7 +285,7 @@ def gen_algorithm_cpp():
                 .replace('>', '_') \
                 .replace(',', '_') \
                 .replace(':', '_')
-            escaped_hash_line =  hsh + "_" + escaped_line
+            escaped_hash_line =  hsh #+ "_" + escaped_line
             #print(escaped_hash_line, len(escaped_hash_line))
 
             path = os.path.join(out_path, escaped_hash_line + ".cpp")
@@ -345,20 +365,31 @@ def gen_algorithm_cpp():
                 #print("Current grouping:")
                 #pprint.pprint([len(x) for x in instance_groups])
 
+            max_group_size = 100
+
             group_paths = []
             for group in instance_groups:
-                conc = "".join([x.identifier for x in group])
-                group_file_name = "group_" + make_hash(conc) + ".cpp"
-                group_content = "".join([x.content for x in group])
-                group_file_path = os.path.join(out_path, group_file_name)
-                group_paths.append(group_file_path)
+                num = len(group)
+                while num > 0:
+                    xgroup = group[:max_group_size]
+                    group = group[max_group_size:]
 
-                iprint(group_file_name)
-                iprint(group_content)
-                if args.generate_files:
-                    update_file(group_file_path, group_content)
+                    conc = "".join([x.identifier for x in xgroup])
+                    group_file_name = "group_" + make_hash(conc) + ".cpp"
+                    group_content = "".join([x.content for x in xgroup])
+                    group_file_path = os.path.join(out_path, group_file_name)
+                    group_paths.append(group_file_path)
+
+                    iprint(group_file_name)
+                    iprint(group_content)
+                    if args.generate_files:
+                        update_file(group_file_path, group_content)
+
+                    num -= max_group_size
 
             dep_paths += group_paths
+
+    dep_paths = list(set(dep_paths))
 
     if args.print_deps:
         sys.stdout.write(";".join(dep_paths))

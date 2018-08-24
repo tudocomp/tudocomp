@@ -11,6 +11,7 @@
 
 namespace tdc {
 
+/// \cond INTERNAL
 namespace huff {
 
     /**
@@ -352,13 +353,17 @@ namespace huff {
      * prefix_sum_lengths stores for each different codeword length the first entry of the codeword with this length in codewords
      * Needed for decoding Huffman code
      */
-    inline size_t* gen_prefix_sum_lengths(
+    inline std::unique_ptr<size_t[]> gen_prefix_sum_lengths(
             const uint8_t*const ordered_codelengths,
             const size_t alphabet_size,
             const uint8_t longest) {
-            size_t*const prefix_sum_lengths = new size_t[longest];
+            auto prefix_sum_lengths = std::make_unique<size_t[]>(longest);
 #ifndef NDDEBUG
-            std::fill(prefix_sum_lengths,prefix_sum_lengths+longest,std::numeric_limits<size_t>::max());
+            std::fill(
+                prefix_sum_lengths.get(),
+                prefix_sum_lengths.get() + longest,
+                std::numeric_limits<size_t>::max()
+            );
 #endif
             prefix_sum_lengths[ordered_codelengths[0]-1] = 0;
             for(size_t i = 1; i < alphabet_size; ++i) {
@@ -366,7 +371,7 @@ namespace huff {
                     prefix_sum_lengths[ordered_codelengths[i]-1] = i;
             }
             DVLOG(2) << "ordered_codelengths : " << arr_to_debug_string(ordered_codelengths, alphabet_size);
-            DVLOG(2) << "prefix_sum_lengths : " << arr_to_debug_string(prefix_sum_lengths, longest);
+            DVLOG(2) << "prefix_sum_lengths : " << arr_to_debug_string(prefix_sum_lengths.get(), longest);
             return prefix_sum_lengths;
     }
     inline uliteral_t huffman_decode(
@@ -401,7 +406,7 @@ namespace huff {
             const uliteral_t*const numl,
             const uint8_t longest) {
 
-            const size_t*const prefix_sum_lengths { gen_prefix_sum_lengths(ordered_codelengths, alphabet_size, longest) };
+            std::unique_ptr<size_t const[]> const prefix_sum_lengths { gen_prefix_sum_lengths(ordered_codelengths, alphabet_size, longest) };
 
             const size_t text_length = is.read_compressed_int<size_t>();
             DCHECK_GT(text_length, 0);
@@ -409,7 +414,7 @@ namespace huff {
             DVLOG(2) << "firstcodes : " << arr_to_debug_string(firstcodes, longest);
             size_t num_chars_read = 0;
             while(true) {
-                output << huffman_decode(is, ordered_map_from_effective, prefix_sum_lengths, firstcodes);
+                output << huffman_decode(is, ordered_map_from_effective, prefix_sum_lengths.get(), firstcodes);
                 ++num_chars_read;
                 if(num_chars_read == text_length) break;
             }
@@ -502,7 +507,7 @@ namespace huff {
     }
 
 }//ns
-
+/// \endcond
 
 class HuffmanCoder : public Algorithm {
 public:
@@ -566,13 +571,12 @@ public:
 
     class Decoder : public tdc::Decoder {
         const uliteral_t* ordered_map_from_effective;
-        const size_t* prefix_sum_lengths;
+        std::unique_ptr<size_t const[]> prefix_sum_lengths;
         const size_t* firstcodes;
     public:
         ~Decoder() {
             if(tdc_likely(ordered_map_from_effective != nullptr)) {
                 delete [] ordered_map_from_effective;
-                delete [] prefix_sum_lengths;
                 delete [] firstcodes;
             }
         }
@@ -603,7 +607,7 @@ public:
         inline value_t decode(const LiteralRange&) {
             if(tdc_unlikely(ordered_map_from_effective == nullptr))
                 return m_in->read_int<uliteral_t>();
-            return huff::huffman_decode(*m_in, ordered_map_from_effective, prefix_sum_lengths, firstcodes);
+            return huff::huffman_decode(*m_in, ordered_map_from_effective, prefix_sum_lengths.get(), firstcodes);
         }
     };
 };

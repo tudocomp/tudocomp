@@ -7,7 +7,9 @@ namespace tdc {
     /// \brief Represents a generic range of positive integers
     ///
     /// Ranges have a minimum and a maximum value. They are used as hints for a
-    /// \ref tdc::Coder for it to determine how to encode certain values.
+    /// \ref Encoder or \ref Decoder for it to determine how to encode/decode
+    /// certain values.
+    ///
     /// Correspondingly implemented coders can use this information to encode
     /// more efficiently, therefore it is advised to feed it ranges as precise
     /// as possible for every value to encode.
@@ -28,6 +30,10 @@ namespace tdc {
         /// \param max the range's maximum value
         inline constexpr Range(size_t min, size_t max)
             : m_min(min), m_max(max) {
+        }
+
+        inline Range(const Range& other)
+            : m_min(other.min()), m_max(other.max()) {
         }
 
         /// \brief Yields the range's minimum value
@@ -64,6 +70,9 @@ namespace tdc {
         inline constexpr MinDistributedRange(size_t min, size_t max)
                          : Range(min, max) {
         }
+
+        inline MinDistributedRange(const Range& other) : Range(other) {
+        }
     };
 
     /// \brief Represents a range of valid values for a certain type
@@ -91,9 +100,9 @@ namespace tdc {
     };
 
     /// \brief Represents the range of valid \ref tdc::len_t values
-    class LengthRange  : public TypeRange<len_t> {
+    class LengthRange  : public TypeRange<len_compact_t> {
     public:
-        inline constexpr LengthRange(): TypeRange<len_t>() {}
+        inline constexpr LengthRange(): TypeRange<len_compact_t>() {}
     };
 
     /// \brief Represents the range of bit values, ie `0` to `1`

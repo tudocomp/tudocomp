@@ -4,12 +4,14 @@
 #include <unordered_map>
 
 #include <tudocomp_stat/StatPhase.hpp>
+#include <tudocomp_stat/StatPhaseStxxl.hpp>
+
 #include <tudocomp/CreateAlgorithm.hpp>
-#include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
+
 #include <tudocomp/coders/BitCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
-#include <tudocomp/compressors/lzss/LZSSCoding.hpp>
-#include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
+
+#include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
 
 #include <stxxl/bits/io/syscall_file.h>
 
@@ -61,27 +63,26 @@ namespace tdc { namespace lcpcomp {
     constexpr size_t blocks_per_page = 4;
     constexpr size_t cache_pages = 8;
     constexpr size_t block_size = 16 * 4096 * sizeof(uint40_t);
-    using filemapped_vector_t = stxxl::VECTOR_GENERATOR<
-        uint40_t, blocks_per_page, cache_pages, block_size>::result;
+
+    using phi_array_t = stxxl::VECTOR_GENERATOR<
+        std::pair<uint40_t, uint40_t>, blocks_per_page, cache_pages, block_size>::result;
 
     inline void factorize(const std::string& textfilename,
                           const std::string& outfilename,
                           const size_t threshold,
                           const len_t mb_ram) {
 
+        StatPhaseStxxl::enable(StatPhaseStxxlConfig()); // enable all STXXL stats
 		StatPhase phase("PLCPComp");
 
-        stxxl::syscall_file sa_file(textfilename + ".sa5", stxxl::file::open_mode::RDONLY);
-        filemapped_vector_t sa(&sa_file);
+        stxxl::syscall_file phi_file(textfilename + ".phi5", stxxl::file::open_mode::RDONLY);
+        phi_array_t phi(&phi_file);
 
-        stxxl::syscall_file isa_file(textfilename + ".isa5", stxxl::file::open_mode::RDONLY);
-        filemapped_vector_t isa(&isa_file);
+		PLCPFileForwardIterator pplcp((textfilename + ".plcp").c_str());
 
-		PLCPFileForwardIterator pplcp  ((textfilename + ".plcp").c_str());
-
-		RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa,mb_ram * M);
+		RefDiskStrategy<decltype(phi)> refStrategy(phi);
 		StatPhase::wrap("Search Peaks", [&]{
-				compute_references(filesize(textfilename.c_str())-1, refStrategy, pplcp, threshold);
+            compute_references(filesize(textfilename.c_str())-1, refStrategy, pplcp, threshold);
 		});
 
         tdc::lzss::FactorBufferDisk refs;
@@ -117,8 +118,8 @@ namespace tdc { namespace lcpcomp {
                     }
 
                     // encode factor
-                    bw.write(factor.src);
-                    bw.write(factor.len);
+                    bw.write(len_t(factor.src));
+                    bw.write(len_t(factor.len));
 
                     p += size_t(factor.len);
                     skip_bytes(ins, factor.len);
@@ -159,17 +160,19 @@ int main(int argc, char** argv) {
 		std::cerr << "Infile " << infile << " does not exist" << std::endl;
 		return 1;
 	}
-	if(!file_exist(infile + ".sa5")) {
-		std::cerr << "Infile " << infile << ".sa5 does not exist" << std::endl;
-		return 1;
-	}
-	if(!file_exist(infile + ".isa5")) {
-		std::cerr << "Infile " << infile << ".isa5 does not exist" << std::endl;
+	if(!file_exist(infile + ".phi5")) {
+		std::cerr << "Infile " << infile << ".phi5 does not exist" << std::endl;
 		return 1;
 	}
 	if(!file_exist(infile + ".plcp")) {
 		std::cerr << "Infile " << infile << ".plcp does not exist" << std::endl;
 		return 1;
+	}
+	{
+		const size_t filesize = tdc::lcpcomp::filesize(infile.c_str());
+		if(static_cast<size_t>(static_cast<tdc::len_compact_t>(filesize)) != filesize) {
+			std::cerr << "The file " << infile << " is too large to handle. This program is compiled with " << sizeof(tdc::len_compact_t)*8 << "-bit address ranges." << std::endl;
+		}
 	}
 
     const size_t threshold = (argc >= 3) ? std::stoi(argv[3]) : 2;

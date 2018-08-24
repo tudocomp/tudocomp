@@ -15,7 +15,7 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/AlgorithmStringParser.hpp>
-#include <tudocomp/Registry.hpp>
+#include <tudocomp/RegistryOf.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util/View.hpp>
 
