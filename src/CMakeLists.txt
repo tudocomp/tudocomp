@@ -51,31 +51,6 @@ target_link_libraries(
 )
 
 cotire(plcp-decomp)
-    
+
 add_custom_command(TARGET plcp-decomp POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/plcp-decomp ${CMAKE_BINARY_DIR}/plcp-decomp)
-
-add_executable(
-    plcp-decomp2
-    plcp_decomp_main2.cpp
-)
-
-add_dependencies(
-    plcp-decomp2
-    generate_version
-)
-
-target_link_libraries(
-    plcp-decomp2
-    tudocomp
-    tudocomp_algorithms
-    glog
-    sdsl
-	pthread
-	gomp
-)
-
-cotire(plcp-decomp2)
-    
-add_custom_command(TARGET plcp-decomp2 POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/plcp-decomp2 ${CMAKE_BINARY_DIR}/plcp-decomp2)

@@ -8,535 +8,226 @@
 #include <tudocomp/coders/HuffmanCoder.hpp>
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
 #include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
+#include <tudocomp/compressors/lcpcomp/decompress/PLCPDecompGenerator.hpp>
 #include <stxxl/bits/containers/vector.h>
 #include <stxxl/bits/algo/sort.h>
 #include <stxxl/bits/io/iostats.h>
 
-namespace tdc { namespace lcpcomp {
+//~ namespace tdc { namespace lcpcomp {
     
-    constexpr len_t M = 1024 * 1024;
-    using uint40_t = uint_t<40>;
-    using uint40pair_t = std::pair<uint40_t,uint40_t>;
-    using uint40triple_t = std::tuple<uint40_t,uint40_t,uint40_t>;
-    using vector_uint40triple_t = stxxl::VECTOR_GENERATOR<uint40triple_t>::result;
-    
-    
-    template <typename unsigned_t>
-    struct Factor {
+
+//~ using uint40_t = uint_t<40>;
+//~ using uint_max_t = uint_t<64>;
+
+
+//~ class PLCPDecomp {
+ //~ private:
+    //~ void push(uint64_t target, uint64_t length);
+    //~ void prepare();
+ //~ public:
+    //~ void resolve();
+//~ };
+
+//~ template <typename unsigned_t>
+//~ class PLCPDecompInternal : public PLCPDecomp {
+    //~ friend class PLCPDecompGenerator;
+  //~ private:
+    //~ struct factor_t {
+        //~ unsigned_t copyTo, copyFrom, length;
         
-        const unsigned_t min_value = std::numeric_limits<unsigned_t>::min();
-        const unsigned_t max_value = std::numeric_limits<unsigned_t>::max();
+        //~ factor_t() {}        
+        //~ factor_t(unsigned_t copyTo, unsigned_t copyFrom, unsigned_t length) {
+            //~ this->copyTo = copyTo;
+            //~ this->copyFrom = copyFrom;
+            //~ this->length = length;
+        //~ }
         
-        const Factor<unsigned_t> min_factor = Factor<unsigned_t>(min_value,min_value,min_value);
-        const Factor<unsigned_t> max_factor = Factor<unsigned_t>(max_value,max_value,max_value);
+        //~ void removePrefix(unsigned_t prefixLength) {
+            //~ copyTo += prefixLength;
+            //~ copyFrom += prefixLength;
+            //~ length -= prefixLength;
+        //~ }
+    //~ };
+    
+    //~ const unsigned_t min_unsigned = std::numeric_limits<unsigned_t>::min();
+    //~ const unsigned_t max_unsigned = std::numeric_limits<unsigned_t>::max();
+    //~ const factor_t min_factor = factor_t(min_unsigned, min_unsigned, min_unsigned);
+    //~ const factor_t max_factor = factor_t(max_unsigned, max_unsigned, max_unsigned);
+
+    //~ struct factor_compare_by_copyTo_t {
+        //~ bool operator()(const factor_t &a, const factor_t &b) const 
+        //~ { return a.copyTo < b.copyTo; }
+        //~ factor_t min_value() const { return min_factor; }
+        //~ factor_t max_value() const { return max_factor; }
+    //~ };
+    
+    //~ struct factor_compare_by_copyFrom_t {
+        //~ bool operator()(const factor_t &a, const factor_t &b) const 
+        //~ { return a.copyFrom < b.copyFrom; }
+        //~ factor_t min_value() const { return min_factor; }
+        //~ factor_t max_value() const { return max_factor; }
+    //~ };
+ 
+    //~ typedef typename stxxl::VECTOR_GENERATOR<factor_t>::result vector_of_factor_t;
+    //~ typedef typename stxxl::VECTOR_GENERATOR<char>::result vector_of_char_t;
+ 
+    //~ len_t bytes_memory;
+    
+    //~ vector_of_char_t textBuffer;
+    //~ vector_of_factor_t byCopyToV;
+    //~ vector_of_factor_t byCopyFromV;
+    //~ vector_of_factor_t resolvedV;
+    
+    //~ unsigned_t pushNextPos = 0;
+    
+    //~ PLCPDecompInternal(unsigned_t nReferences = 0, unsigned_t nLiterals = 0);
+
+    //~ void push(unsigned_t target, unsigned_t length);
+    
+ //~ public:
+ 
+    //~ void resolve();
+//~ };
+
+//~ template <typename unsigned_t>
+//~ PLCPDecompInternal<unsigned_t>::PLCPDecompInternal(
+        //~ unsigned_t nReferences, 
+        //~ unsigned_t nLiterals) {
+    //~ byCopyToV.reserve(nReferences);
+    //~ textBuffer.resize(nLiterals + nReferences);
+//~ }
+
+
+//~ template <typename unsigned_t>
+//~ void PLCPDecompInternal<unsigned_t>::push(
+        //~ unsigned_t target, 
+        //~ unsigned_t length) {
+    //~ if(length == unsigned_t(0)) {
+        //~ textBuffer[pushNextPos] = char(target);
+        //~ pushNextPos++;
+    //~ } 
+    //~ else {
+        //~ factor_t factor(pushNextPos + 1, target + 1, length);
+        //~ byCopyToV.push_back(factor);
+        //~ pushNextPos += length;
+    //~ }
+//~ }
+
         
-        unsigned_t writeTo;
-        unsigned_t copyFrom;
-        unsigned_t length;
+//~ template <typename unsigned_t>
+//~ void PLCPDecompInternal<unsigned_t>::resolve() {
         
-        Factor(
-            unsigned_t writeTo,
-            unsigned_t copyFrom,
-            unsigned_t length) {
-            this.writeTo = writeTo;
-            this.copyFrom = copyFrom;
-            this.length = length;
-        }
-        
-    };
+//~ }
+
+
+//~ class PLCPDecompGenerator {
+ //~ private: 
+    //~ inline static uint40_t swapBytes(uint40_t value);
+    
+ //~ public:
+    //~ static PLCPDecomp getInstance(const std::string& infilename, len_t megabytes_memory);
+//~ };
+
+//~ PLCPDecomp PLCPDecompGenerator::getInstance(const std::string& infilename, len_t megabytes_memory){
+
+    //~ std::cout << "Generating PLCP decompressor..." << std::endl;
+
+    //~ IntegerFileArray<uint40_t> text (infilename.c_str());
+
+    //~ const size_t nFactors = text.size() / 2;
+    //~ uint40_t nReferences = 0;
+    //~ uint40_t nLiterals = 0;
+
+    //~ // count literals and number of characters contained in references
+    //~ for (size_t i = 0; i < nFactors; i++) {
+        //~ uint40_t target = swapBytes(text[2 * i]);
+        //~ uint40_t len = swapBytes(text[2 * i + 1]);
+        //~ if(len == uint40_t(0)) nLiterals += 1;
+        //~ else nReferences += len;
+    //~ }
+    
+    //~ int bitsPerInt = 1 + (int) std::log2((uint64_t)(nReferences + nLiterals + 1));
+    //~ int bytesPerInt = (bitsPerInt + 7) / 8;
+    
+    //~ std::cout << "Factors:              " << nFactors << std::endl;
+    //~ std::cout << "Literal characters:   " << nLiterals << std::endl;
+    //~ std::cout << "Reference characters: " << nReferences << std::endl;
+    //~ std::cout << "Total characters:     " << nReferences + nLiterals << std::endl;
+    //~ std::cout << "Bits per integer:     " << bitsPerInt << std::endl;
+    //~ std::cout << "Bytes per integer:    " << bytesPerInt << std::endl;
+
+    //~ PLCPDecomp decompressor;
+
+    //~ if(bytesPerInt == 1) decompressor = PLCPDecompInternal<uint_t<8>>();
+    //~ else if(bytesPerInt == 2) decompressor = PLCPDecompInternal<uint_t<16>>();
+    //~ else if(bytesPerInt == 3) decompressor = PLCPDecompInternal<uint_t<24>>();
+    //~ else if(bytesPerInt == 4) decompressor = PLCPDecompInternal<uint_t<32>>();
+    //~ else if(bytesPerInt == 5) decompressor = PLCPDecompInternal<uint_t<40>>();
+    //~ else decompressor = PLCPDecompInternal<uint_t<64>>();
+    
+    //~ std::cout << "Reserving space for vector of unresolved factors..." << std::endl;
+    //~ auto &byCopyToV = decompressor;
+    //~ byCopyToV.reserve(nReferences);
     
     
-    inline uint40_t textPos(const uint40triple_t &factor) {
-        return std::get<0>(factor);
-    }
+    //~ return decompressor;
+//~ }
+
+//~ template<int bytesPerUInt>
+//~ PLCPDecomp &PLCPDecompGenerator::getInstanceInternal(const std::string& infilename, len_t megabytes_memory){
+    //~ typedef uint_t<bytesPerUInt * 8> uint_t;
     
-    inline uint40_t targetPos(const uint40triple_t &factor) {
-        return std::get<1>(factor);
-    }
-
-    inline uint40_t factorLength(const uint40triple_t &factor) {
-        return std::get<2>(factor);
-    }
+    //~ std::cout << "Reserving space for vector of unresolved factors..." << std::endl;
+    //~ typename PLCPDecompInternal<uint_t>::vector_of_factor_t byCopyToV;
+    //~ byCopyToV.reserve(nReferences);
     
-    inline void textPos(uint40triple_t &factor, uint40_t value) {
-        std::get<0>(factor) = value;
-    }
+    //~ std::cout << "Reserving space for vector of resolved characters..." << std::endl;
+    //~ typename PLCPDecompInternal<uint_t>::vector_of_char_t restoredText;
+    //~ restoredText.resize(nLiterals + nReferences);    
     
-    inline void targetPos(uint40triple_t &factor, uint40_t value) {
-        std::get<1>(factor) = value;
-    }
-
-    inline void factorLength(uint40triple_t &factor, uint40_t value) {
-        std::get<2>(factor) = value;
-    }
-
-    inline void makeSuffix(uint40triple_t &factor, uint40_t prefixLength) {
-        textPos(factor, textPos(factor) + prefixLength);
-        targetPos(factor, targetPos(factor) + prefixLength);
-        factorLength(factor, factorLength(factor) - prefixLength);
-    }
+    //~ std::cout << "Parsing unresolved factors and literals..." << std::endl;
+    //~ std::cout << "    (fill vector of unresolved factors in copyTo order)" << std::endl;
+    //~ std::cout << "    (fill vector of resolved characters with literals)" << std::endl;
     
-    void print(const uint40triple_t &triple, const std::string &header) {
-        std::cout << header << " { " << textPos(triple) << ", " << targetPos(triple) << ", " << factorLength(triple) << " }" << std::endl;
-    }
-
-
-    inline uint40_t swapBytes(uint40_t value) {
-        uint40_t result = 0;
-        result |= (value & 0xFF) << 32;
-        result |= (value & 0xFF00) << 16;
-        result |= (value & 0xFF0000);
-        result |= (value & 0xFF000000) >> 16;
-        result |= (value & (uint40_t)0xFF00000000) >> 32;
-        return result;
-    }
+    //~ // everything here is 1-based
+    //~ // (necessary for stxxl sort)
+    //~ uint40_t textPosition = 1;
+    //~ for (size_t i = 0; i < nFactors; i++) {
+        //~ // read current factor
+        //~ uint40_t target = swapBytes(text[i * 2]) + 1;
+        //~ uint40_t len = swapBytes(text[i * 2 + 1]);
+        //~ if(len == uint40_t(0)) {
+            //~ // restore literal factors immediatly
+            //~ // (naturally in textpos order -> single scan)
+            //~ restoredText[textPosition - 1] = char(target - 1);
+            //~ textPosition++;
+        //~ } 
+        //~ else {
+            //~ // fill one of the factor vectors
+            //~ // (other one will get copied)
+            //~ auto reference = factor_t<>(textPosition, target, len);
+            //~ byCopyToV.push_back(reference);
+            //~ textPosition += len;
+        //~ }
+    //~ }
     
-    template <bool sortByTarget = false>
-    struct SingleCharacterFactorComparison
-    {
-        const uint40_t min = std::numeric_limits<uint40_t>::min();
-        const uint40_t max = std::numeric_limits<uint40_t>::max();
-        
-        const uint40pair_t min_factor = std::make_pair(min, min);
-        const uint40pair_t max_factor = std::make_pair(max, max);
-
-        bool operator()(const uint40pair_t &a, const uint40pair_t &b) const {
-            return std::get<sortByTarget>(a) < std::get<sortByTarget>(b);
-        }
-        uint40pair_t min_value() const
-        { return min_factor; }
-        uint40pair_t max_value() const
-        { return max_factor; }
-    };
-    
-    template <bool sortByTarget = false>
-    struct CopyFactorComparison
-    {
-        const uint40_t min = std::numeric_limits<uint40_t>::min();
-        const uint40_t max = std::numeric_limits<uint40_t>::max();
-        
-        const uint40triple_t min_factor = std::make_tuple(min, min, min);
-        const uint40triple_t max_factor = std::make_tuple(max, max, max);
-
-        bool operator()(const uint40triple_t &a, const uint40triple_t &b) const {
-            return std::get<sortByTarget>(a) < std::get<sortByTarget>(b);
-        }
-        uint40triple_t min_value() const
-        { return min_factor; }
-        uint40triple_t max_value() const
-        { return max_factor; }
-    };
-    
-    inline void defactorize(const std::string& textfilename,
-                          const std::string& outfilename,
-                          const len_t mb_ram) {      
-
-        tdc::StatPhase::wrap("Decompress (character based)", [&]{
-            
-            // generate stats instance
-            stxxl::stats * Stats = stxxl::stats::get_instance();
-            // start measurement here
-            stxxl::stats_data stats_begin(*Stats);            
-            
-            SingleCharacterFactorComparison<false> sortByTextPos;
-            SingleCharacterFactorComparison<true> sortByTargetPos;
-            
-            // vector to hold the restored text
-            stxxl::VECTOR_GENERATOR<char>::result restoredText;
-            
-            // (textPos, targetPos) pairs:
-            
-            typedef stxxl::VECTOR_GENERATOR<uint40pair_t>::result references_vector;
-
-            // this vector will always be sorted by textPos
-            references_vector byTextPos;
-            // this vector will always be sorted by targetPos
-            references_vector *byTargetPos = new references_vector();
-            // this vector will always be sorted by targetPos
-            references_vector *byTargetPosNew = new references_vector();
+    //~ return PLCPDecompInternal<uint_t>(restoredText, byCopyToV, megabytes_memory);
+//~ }
 
 
-            IntegerFileArray<uint40_t> text (textfilename.c_str());
+//~ uint40_t PLCPDecompGenerator::swapBytes(uint40_t value) {
+    //~ uint40_t result = 0;
+    //~ result |= (value & 0xFF) << 32;
+    //~ result |= (value & 0xFF00) << 16;
+    //~ result |= (value & 0xFF0000);
+    //~ result |= (value & 0xFF000000) >> 16;
+    //~ result |= (value & (uint40_t)0xFF00000000) >> 32;
+    //~ return result;
+//~ }
 
-            const size_t nFactors = text.size() / 2;
-            uint40_t nReferences = 0;
-            uint40_t nLiterals = 0;
-            uint40_t nCharacters;
 
-            // count literals and number of characters contained in references
-            for (size_t i = 0; i < nFactors; i++)
-            {
-                uint40_t len = swapBytes(text[2 * i + 1]);
-                if(len == uint40_t(0)) nLiterals += 1;
-                else nReferences += len;
-            }
-            nCharacters = nReferences + nLiterals;
-            
-            std::cout << "Factors:              " << nFactors << std::endl;
-            std::cout << "Literal characters:   " << nLiterals << std::endl;
-            std::cout << "Reference characters: " << nReferences << std::endl;
-            std::cout << "Total characters:     " << nCharacters << std::endl;
 
-            // reserve space on disk for vectors
-            restoredText.resize(nCharacters);
-            byTargetPos->reserve(nReferences);
-
-            std::cout << "Reserved space for vectors." << std::endl;
-
-            // everything here is 1-based
-            // (necessary for stxxl sort)
-            uint40_t textPos = 1;
-            for (size_t i = 0; i < nFactors; i++)
-            {
-                // read current factor
-                uint40_t target = swapBytes(text[i * 2]) + 1;
-                uint40_t len = swapBytes(text[i * 2 + 1]);
-                if(len == uint40_t(0)) {
-                    restoredText[textPos++ - 1] = char(target - 1);
-                } 
-                else {
-                    // fill references vector (naturally sorted by text position)
-                    for (uint40_t j = 0; j < len; j++)
-                    {
-                        auto reference = std::make_pair(textPos++, target++);
-                        byTargetPos->push_back(reference);
-                    }
-                }
-            } 
-            
-            std::cout << "Vectors filled: " << byTargetPos->size() << std::endl;
-            
-            int round = 0;
-            // do pointer jumping until there are no more changes
-            // (this implementation is quite naive so far)
-            while(byTargetPos->size() > 0) {
-                round++;
-                std::cout << "Round " << round << ": Remaining references: " << byTargetPos->size() << std::endl;
-                
-                tdc::StatPhase currentPhase("Scan " + std::to_string(round));
-                
-                std::cout << "Copying modified byTargetPos vector to byTextPos vector..." << std::endl;
-                byTextPos = *byTargetPos;
-                
-                std::cout << "Sorting byTargetPos vector..." << std::endl;
-                stxxl::sort(byTargetPos->begin(), byTargetPos->end(), sortByTargetPos, mb_ram*1024*1024);
-                std::cout << "Sorting byTextPos vector..." << std::endl;
-                if(round > 1) stxxl::sort(byTextPos.begin(), byTextPos.end(), sortByTextPos, mb_ram*1024*1024);
-                
-                // add guard to byTextPos vector
-                byTextPos.push_back(sortByTextPos.max_value());
-                
-                std::cout << "Initializing buffer for pointer-jumped references..." << std::endl;
-                byTargetPosNew->clear();
-                byTargetPosNew->reserve(byTargetPos->size());
-
-                std::cout << "Scanning (Resolve & Jump)..." << std::endl;
-                uint40_t jumped = 0, resolved = 0;
-                // do the actual pointer jumping
-                
-                references_vector::bufreader_type i_iter(byTextPos);            
-                for (references_vector::bufreader_type j_iter(*byTargetPos); !j_iter.empty(); ++j_iter)
-                {
-                    while((*i_iter).first < (*j_iter).second) ++i_iter;
-
-                    //~ std::cout << "Round " << round << ": Entry i: " << (*i_iter).first << ", Entry j: " << (*j_iter).second << ", Changes: " << changes << " ---" << std::endl;
-
-                    auto referenceFromByTextPos = (*i_iter);
-                    auto referenceFromByTargetPos = (*j_iter);
-                    
-                    if(referenceFromByTextPos.first == referenceFromByTargetPos.second) {
-                        // jump
-                        referenceFromByTargetPos.second = referenceFromByTextPos.second;
-                        byTargetPosNew->push_back(referenceFromByTargetPos);
-                        jumped++;
-                    } else {
-                        // restore
-                        restoredText[referenceFromByTargetPos.first - 1] = 
-                            restoredText[referenceFromByTargetPos.second - 1];
-                        resolved++;
-                    }                    
-                }
-                
-                
-                std::cout << "Pointing byTargetPos to buffer..." << std::endl;
-                
-                stxxl::VECTOR_GENERATOR<uint40pair_t>::result *h = byTargetPos;
-                byTargetPos = byTargetPosNew;
-                byTargetPosNew = h;
-                
-                std::cout << "Round complete. Resolved: " << resolved << ". Jumped: " << jumped << "." << std::endl;
-                
-                // substract current stats from stats at the beginning of the measurement
-                std::cout << (stxxl::stats_data(*Stats) - stats_begin) << std::endl;
-                
-            }
-            delete byTargetPosNew;
-            
-            // print restored text, if it is short
-            if(restoredText.size() < 500) {
-                std::cout << "The restored text is: " << std::endl;
-                for(auto character : restoredText) {
-                    std::cout << character;
-                }
-                std::cout << std::endl;
-            }
-            
-            
-            // write restored text into output file
-            std::ofstream outputFile;
-            outputFile.open(outfilename);
-            for (auto character : restoredText)
-                outputFile << character;
-            outputFile.close();
-        });
-
-    }
-    
-    
-    inline void defactorize2(const std::string& textfilename,
-                          const std::string& outfilename,
-                          const len_t mb_ram) {      
-
-        StatPhase::wrap("Decompress (factor based)", [&]{
-            
-            CopyFactorComparison<false> sortByTextPos;
-            CopyFactorComparison<true> sortByTargetPos;      
-
-            // vector to hold the restored text
-            stxxl::VECTOR_GENERATOR<char>::result restoredText;
-            // vector for all unresolved factors sorted by target position
-            stxxl::VECTOR_GENERATOR<uint40triple_t>::result byTargetPosV;
-            // vector for all unresolved factors sorted by text position
-            stxxl::VECTOR_GENERATOR<uint40triple_t>::result byTextPosV;
-            // vector for the factors that have been resolved during the current scan
-            stxxl::VECTOR_GENERATOR<uint40triple_t>::result resolvedV;
-
-            IntegerFileArray<uint40_t> text (textfilename.c_str());
-
-            const size_t nFactors = text.size() / 2;
-            uint40_t nReferences = 0;
-            uint40_t nLiterals = 0;
-
-            // count literals and number of characters contained in references
-            for (size_t i = 0; i < nFactors; i++) {
-                uint40_t len = swapBytes(text[2 * i + 1]);
-                if(len == uint40_t(0)) nLiterals += 1;
-                else nReferences += len;
-            }
-
-            std::cout << "Factors:              " << nFactors << std::endl;
-            std::cout << "Literal characters:   " << nLiterals << std::endl;
-            std::cout << "Reference characters: " << nReferences << std::endl;
-
-            // reserve space on disk for vectors
-            restoredText.resize(nLiterals + nReferences);
-            byTargetPosV.reserve(nReferences);
-            byTextPosV.reserve(nReferences);
-            resolvedV.reserve(nReferences);
-            
-            // everything here is 1-based
-            // (necessary for stxxl sort)
-            uint40_t textPosition = 1;
-            for (size_t i = 0; i < nFactors; i++) {
-                // read current factor
-                uint40_t target = swapBytes(text[i * 2]) + 1;
-                uint40_t len = swapBytes(text[i * 2 + 1]);
-                if(len == uint40_t(0)) {
-                    // restore literal factors immediatly
-                    // (naturally in textpos order -> single scan)
-                    restoredText[textPosition - 1] = char(target - 1);
-                    textPosition++;
-                } 
-                else {
-                    // fill one of the factor vectors
-                    // (other one will get copied)
-                    auto reference = std::make_tuple(textPosition, target, len);
-                    byTargetPosV.push_back(reference);
-                    textPosition += len;
-                }
-            } 
-            
-            auto byTargetPosSize = byTargetPosV.size();
-            long byTargetPosResize = 0;
-            
-            int round = 0;
-            // do pointer jumping and resolving until there are no more unresolved factors
-            while(byTargetPosSize + byTargetPosResize > 0) {
-                
-                // sort unresolved vectors by target pos
-                stxxl::sort(byTargetPosV.begin(), byTargetPosV.end(), sortByTargetPos, mb_ram*1024*1024);
-                
-                // remove old factors that have been either entirely resolved or pointer-jumped
-                byTargetPosV.resize(byTargetPosSize + byTargetPosResize);
-                byTargetPosSize = byTargetPosV.size();
-                byTargetPosResize = 0;
-                
-                // copy unresolved factors and sort copy by textpos
-                byTextPosV = byTargetPosV;
-                stxxl::sort(byTextPosV.begin(), byTextPosV.end(), sortByTextPos, mb_ram*1024*1024);
-                
-                std::cout << "Round " << round++ << ": Factors left: " << byTargetPosSize << std::endl;
-                
-                unsigned j = 0;
-                uint40triple_t &byTextPos = byTextPosV[j];
-                for(unsigned i = 0; i < byTargetPosSize; i++) {
-                    
-                    // try to resolve or pointer jump the factors in targetpos order
-                    uint40triple_t &byTargetPos = byTargetPosV[i];
-                    
-                    uint40_t targetLen = factorLength(byTargetPos);
-                    uint40_t targetStart = targetPos(byTargetPos);
-                    uint40_t targetEnd = targetStart + targetLen;
-                    
-                    // find the closest factor, that has its last text position after
-                    // or at the start of the factor we are trying to resolve
-                    while(targetStart >= textPos(byTextPos) + factorLength(byTextPos)){
-                        if(j + 1 < byTextPosV.size())
-                            byTextPos = byTextPosV[++j];
-                        else
-                            byTextPos = sortByTextPos.max_value();
-                    }
-                        
-                    uint40_t textLen = factorLength(byTextPos);
-                    uint40_t textStart = textPos(byTextPos);
-                    uint40_t textEnd = textStart + textLen;
-                    
-                    
-                    
-                    // resolve prefix (or entire factor), if a prefix of the factor to resolve
-                    // does not overlap with the other factor
-                    if(targetStart < textStart) {
-                        uint40_t prefixLen = std::min(targetLen, uint40_t(textStart - targetStart));
-                        uint40triple_t resolved = std::make_tuple(textPos(byTargetPos), targetStart, prefixLen);
-                        resolvedV.push_back(resolved);
-                        
-                        if(prefixLen < targetLen) {
-                            makeSuffix(byTargetPos, prefixLen);
-                        } else {
-                            byTargetPos = sortByTargetPos.max_value();
-                            --byTargetPosResize;
-                        }
-                    }
-                    // pointerjump prefix (or entire factor), if a prefix of the vector to resolve
-                    // does overlap with the other factor
-                    else {                       
-                        auto posOffset = targetStart - textStart;
-                        auto newTargetPos = targetPos(byTextPos) + posOffset;
-                        uint40_t prefixLen = std::min(targetLen, uint40_t(textEnd - targetStart));
-                        uint40triple_t jumped = std::make_tuple(textPos(byTargetPos), newTargetPos, prefixLen);
-                        
-                        if(prefixLen < targetLen) {
-                            makeSuffix(byTargetPos, prefixLen);
-                            byTargetPosV.push_back(jumped);
-                            ++byTargetPosResize;
-                        }
-                        else {
-                            byTargetPos = jumped;
-                        }
-                    }
-                }
-                
-                //~ unsigned j = 0;
-                //~ uint40triple_t &byTextPos = byTextPosV[j];
-                //~ for(unsigned i = 0; i < byTargetPosSize; i++) {
-                    
-                    //~ // try to resolve or pointer jump the factors in targetpos order
-                    //~ uint40triple_t &byTargetPos = byTargetPosV[i];
-                    
-                    //~ uint40_t targetLen = factorLength(byTargetPos);
-                    //~ uint40_t targetStart = targetPos(byTargetPos);
-                    //~ uint40_t targetEnd = targetStart + targetLen;
-                    
-                    //~ // find the closest factor, that has its last text position after
-                    //~ // or at the start of the factor we are trying to resolve
-                    //~ while(targetStart >= textPos(byTextPos) + factorLength(byTextPos)){
-                        //~ if(j + 1 < byTextPosV.size())
-                            //~ byTextPos = byTextPosV[++j];
-                        //~ else
-                            //~ byTextPos = sortByTextPos.max_value();
-                    //~ }
-                        
-                    //~ uint40_t textLen = factorLength(byTextPos);
-                    //~ uint40_t textStart = textPos(byTextPos);
-                    //~ uint40_t textEnd = textStart + textLen;
-                    
-                    
-                    
-                    //~ // resolve prefix (or entire factor), if a prefix of the factor to resolve
-                    //~ // does not overlap with the other factor
-                    //~ if(targetStart < textStart) {
-                        //~ uint40_t prefixLen = std::min(targetLen, uint40_t(textStart - targetStart));
-                        //~ uint40triple_t resolved = std::make_tuple(textPos(byTargetPos), targetStart, prefixLen);
-                        //~ resolvedV.push_back(resolved);
-                        
-                        //~ if(prefixLen < targetLen) {
-                            //~ makeSuffix(byTargetPos, prefixLen);
-                        //~ } else {
-                            //~ byTargetPos = sortByTargetPos.max_value();
-                            //~ --byTargetPosResize;
-                        //~ }
-                    //~ }
-                    //~ // pointerjump prefix (or entire factor), if a prefix of the vector to resolve
-                    //~ // does overlap with the other factor
-                    //~ else {                       
-                        //~ auto posOffset = targetStart - textStart;
-                        //~ auto newTargetPos = targetPos(byTextPos) + posOffset;
-                        //~ uint40_t prefixLen = std::min(targetLen, uint40_t(textEnd - targetStart));
-                        //~ uint40triple_t jumped = std::make_tuple(textPos(byTargetPos), newTargetPos, prefixLen);
-                        
-                        //~ if(prefixLen < targetLen) {
-                            //~ makeSuffix(byTargetPos, prefixLen);
-                            //~ byTargetPosV.push_back(jumped);
-                            //~ ++byTargetPosResize;
-                        //~ }
-                        //~ else {
-                            //~ byTargetPos = jumped;
-                        //~ }
-                    //~ }
-                //~ }
-                
-                // sort the resolved factors by textposition
-                stxxl::sort(resolvedV.begin(), resolvedV.end(), sortByTextPos, mb_ram*1024*1024);
-                
-                uint64_t failed = 0;
-                uint64_t succeeded = 0;
-                
-                // restore the actual text from the resolved factors
-                // (does this cause unstructured IO?)
-                for(auto resolved : resolvedV) {
-                    auto resolvedLen = factorLength(resolved);
-                    auto resolvedTextPos = textPos(resolved) - 1;
-                    auto resolvedTargetPos = targetPos(resolved) - 1;
-                    for (unsigned i = 0; i < resolvedLen; i++) {
-                        restoredText[resolvedTextPos + i] = restoredText[resolvedTargetPos + i];
-                    }
-                }
-                resolvedV.clear();
-                
-                std::cout << "Failed:    " << failed << std::endl;
-                std::cout << "Succeeded: " << succeeded << std::endl;
-            }
-            
-            // print restored text, if it is short
-            if(restoredText.size() < 500) {
-                std::cout << "The restored text is: " << std::endl;
-                for(auto character : restoredText) {
-                    std::cout << character;
-                }
-                std::cout << std::endl;
-            }
-            
-            // write restored text into output file
-            std::ofstream outputFile;
-            outputFile.open(outfilename);
-            for (auto character : restoredText)
-                outputFile << character;
-            outputFile.close();
-        });
-
-    }
-    
-}}//ns
+//~ }}//ns
 
 
 bool file_exist(const std::string& filepath) {
@@ -557,13 +248,9 @@ int main(int argc, char** argv) {
     statsCfg.waitTime_combined = true;
     statsCfg.numberOfBytes_read = true;
     statsCfg.numberOfBytes_write = true;
-    //~ statsCfg = tdc::StatPhaseStxxlConfig();
+    statsCfg = tdc::StatPhaseStxxlConfig();
     tdc::StatPhaseStxxl::enable(statsCfg);
-    tdc::StatPhase root("Root");
-    
-    root.to_json();
-    root.to_json();
-    root.to_json();
+
 
     const std::string infile { argv[1] };
     const std::string outfile { argv[2] };
@@ -573,10 +260,33 @@ int main(int argc, char** argv) {
     }
 
     const tdc::len_t mb_ram = (argc >= 3) ? std::stoi(argv[3]) : 512;
-
-    tdc::lcpcomp::defactorize2(infile, outfile, mb_ram);
+    
+    tdc::lcpcomp::IntegerFileArray<tdc::uint_t<40>> compressed (infile.c_str());
+    
+    tdc::StatPhase root("Root");
+    // generate stats instance
+    stxxl::stats * Stats = stxxl::stats::get_instance();
+    // start measurement here
+    stxxl::stats_data stats_begin(*Stats);
+    stxxl::block_manager * bm = stxxl::block_manager::get_instance();
+    
+    auto textBuffer = tdc::lcpcomp::PLCPDecompGenerator::decompress(compressed, mb_ram);
+    
+    
+    // substract current stats from stats at the beginning of the measurement
+    std::cout << (stxxl::stats_data(*Stats) - stats_begin);
+    std::cout << "Maximum EM allocation: " << bm->get_maximum_allocation() << std::endl;
+    root.log("EM Peak", bm->get_maximum_allocation());
     
     auto algorithm_stats = root.to_json();
+    
+    std::ofstream outputFile;
+    outputFile.open(outfile);
+    for (auto character : textBuffer)
+        outputFile << character;
+    outputFile.close();
+
+    
 
     tdc::json::Object meta;
     meta.set("title", "TITLE");
