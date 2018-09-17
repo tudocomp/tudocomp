@@ -126,9 +126,9 @@ namespace tdc { namespace lcpcomp {
                     num_replaced += size_t(factor.len);
                 }
 
-                while(!ins.eof())  {
-                    // encode remaining literals
-                    bw.write(ins.get());
+                // encode remaining literals
+                for(auto c = ins.get(); ins.good(); c = ins.get()){
+                    bw.write(c);
                     bw.write(0);
                 }
             }
