@@ -68,6 +68,16 @@ hash_function = [
         # AlgorithmConfig(name="CLHash", header="util/hash/clhash.h"),
         ]
 
+# CompactHashTrie strategies
+compact_hashmap_strategies = [
+    AlgorithmConfig(name="lz78::Sparse", header="compressors/lz78/CompactHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::Plain", header="compressors/lz78/CompactHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::SparseDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::PlainDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::SparseEliasDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::PlainEliasDisplacement", header="compressors/lz78/CompactHashTrie.hpp"),
+]
+
 # LZ78 tries ("lz78trie")
 lz78_trie = [
     AlgorithmConfig(name="lz78::BinarySortedTrie", header="compressors/lz78/BinarySortedTrie.hpp"),
@@ -79,7 +89,7 @@ lz78_trie = [
     AlgorithmConfig(name="lz78::RollingTrie", header="compressors/lz78/RollingTrie.hpp", sub=[hash_roll, hash_prober,hash_manager,hash_function]),
     AlgorithmConfig(name="lz78::RollingTriePlus", header="compressors/lz78/RollingTriePlus.hpp", sub=[hash_roll, hash_manager,hash_function]),
     AlgorithmConfig(name="lz78::TernaryTrie", header="compressors/lz78/TernaryTrie.hpp"),
-    AlgorithmConfig(name="lz78::CompactSparseHashTrie", header="compressors/lz78/CompactSparseHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::CompactHashTrie", header="compressors/lz78/CompactHashTrie.hpp", sub=[compact_hashmap_strategies]),
 ]
 
 if config_match("^#define JUDY_H_AVAILABLE 1"): # if the Judy trie is available
