@@ -34,21 +34,11 @@
 /// command-line utility.
 ///
 /// For algorithms to be made available in the driver application, they need
-/// to be registered in the \ref Registry. Any registered algorithm will also
+/// to be registered in the registry. Any registered algorithm will also
 /// be listed in the utility's help message.
 namespace tdc_driver {}
 
 namespace tdc_algorithms {
-
-using namespace tdc;
-
-extern Registry<Compressor> COMPRESSOR_REGISTRY;
-extern Registry<Generator>  GENERATOR_REGISTRY;
-
-void register_compressors(Registry<Compressor>&);
-void register_generators(Registry<Generator>&);
-
-/// \endcond
-
+    void register_algorithms();
 }
-
+/// \endcond

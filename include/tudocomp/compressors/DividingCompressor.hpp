@@ -5,8 +5,6 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/io.hpp>
 
-#include <tudocomp_driver/Registry.hpp>
-
 namespace tdc {
 
 constexpr TypeDesc dividing_strategy_td() {
@@ -207,7 +205,7 @@ public:
         auto option_value = config().param("compressor");
 
         //TODO: eliminate tdc_algorithms dependency
-        auto entry = tdc_algorithms::COMPRESSOR_REGISTRY.find(
+        auto entry = Registry::of<Compressor>().find(
             meta::ast::convert<meta::ast::Object>(option_value.ast()));
 
         auto is = entry.decl()->input_restrictions();
@@ -227,7 +225,7 @@ public:
         auto option_value = config().param("compressor");
 
         //TODO: eliminate tdc_algorithms dependency
-        auto entry = tdc_algorithms::COMPRESSOR_REGISTRY.find(
+        auto entry = Registry::of<Compressor>().find(
             meta::ast::convert<meta::ast::Object>(option_value.ast()));
 
         auto is = entry.decl()->input_restrictions();

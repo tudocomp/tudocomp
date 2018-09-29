@@ -1,9 +1,10 @@
 #pragma once
 
-#include <tudocomp_driver/Registry.hpp>
-#include <tudocomp/io.hpp>
-#include <vector>
 #include <memory>
+#include <vector>
+
+#include <tudocomp/io.hpp>
+#include <tudocomp/meta/Registry.hpp>
 
 namespace tdc {
 
@@ -40,7 +41,7 @@ public:
             auto option_value = config().param(option);
 
             //TODO: eliminate tdc_algorithms dependency
-            auto compressor = tdc_algorithms::COMPRESSOR_REGISTRY.select(
+            auto compressor = Registry::of<Compressor>().select(
                 meta::ast::convert<meta::ast::Object>(option_value.ast()));
 
             auto is = compressor.decl()->input_restrictions();

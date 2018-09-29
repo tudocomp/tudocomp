@@ -118,34 +118,40 @@ def root_cpp(kinds):
         ident = type.lower()
         const = type.upper()
 
-        # Declare and define the registry and register function
-        r.code('''
-            Registry<$TYPE> register_$IDENTs();
-            Registry<$TYPE> $CONST_REGISTRY = register_$IDENTs();
-        ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
-        r.emptyline()
-
         # Forward-declare all template expansion calls
         for call in calls:
             r.code('''
-                void register_$CALL(Registry<$TYPE>& r);
+                void register_$CALL(RegistryOf<$TYPE>& r);
             ''', 1, { "$CALL": call, "$TYPE": type })
         r.emptyline()
 
         # Define the register functions
         r.code('''
-            Registry<$TYPE> register_$IDENTs() {
-                Registry<$TYPE> r($TYPE::type_desc());
+            void register_$IDENTs() {
+                auto& r = Registry::of<$TYPE>();
         ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
         for call in calls:
             r.code('''
                 register_$CALL(r);
             ''', 2, { "$CALL": call})
         r.code('''
-                return r;
             } // register_$IDENTs
         ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
         r.emptyline()
+
+    # Initialization
+    r.code('''
+        void register_algorithms() {
+    ''')
+    for (type, calls) in kinds:
+        r.code('''
+            register_$IDENTs();
+        ''', 1, { "$IDENT": type.lower() })
+    r.code('''
+        }
+    ''')
+
+    r.emptyline()
     r.code('''
         } // namespace
     ''')
@@ -173,7 +179,7 @@ def single_expansion_cpp(kind, call_ident, call_type, headers):
 
     # Call with actual template expansion
     r.code('''
-        void register_$CALL(Registry<$TYPE>& r) {
+        void register_$CALL(RegistryOf<$TYPE>& r) {
             r.register_algorithm<$CTYPE>();
         }
     ''', 1, { "$TYPE": kind, "$CALL": call_ident, "$CTYPE": call_type })

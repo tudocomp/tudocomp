@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sstream>
 #include <tudocomp/util/conststr.hpp>
 
 namespace tdc {
@@ -79,6 +80,18 @@ public:
     inline constexpr bool valid() const { return m_valid; }
     inline std::string name() const { return std::string(m_name.str()); }
     inline const TypeDesc* super() const { return m_super; }
+
+    inline std::string canonical_id() const {
+        std::stringstream id;
+
+        const TypeDesc* td = this;
+        id << td->name();
+
+        for(td = td->super(); td; td = td->super()) {
+            id << ':' << td->name();
+        }
+        return id.str();
+    }
 };
 
 constexpr TypeDesc no_type;
@@ -88,3 +101,14 @@ constexpr TypeDesc no_type;
 using TypeDesc = meta::TypeDesc;
 
 } //namespace tdc
+
+#include <functional>
+
+namespace std {
+    template<> struct hash<tdc::TypeDesc> {
+        size_t operator()(tdc::TypeDesc const& td) const noexcept {
+            return std::hash<std::string>{}(td.canonical_id());
+        }
+    };
+}
+

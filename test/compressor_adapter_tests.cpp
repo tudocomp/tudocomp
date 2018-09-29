@@ -32,6 +32,8 @@
 using namespace tdc;
 using namespace tdc_algorithms;
 
+#define COMPRESSOR_REGISTRY Registry::of<Compressor>()
+
 class NoopEscapingCompressor: public Compressor {
 public:
     inline static Meta meta() {

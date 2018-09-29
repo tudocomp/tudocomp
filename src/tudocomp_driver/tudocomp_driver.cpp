@@ -55,7 +55,9 @@ static int bad_usage(const char* cmd, const std::string& message) {
 
 int main(int argc, char** argv) {
     using namespace tdc_driver;
-    using namespace tdc_algorithms;
+
+    // init registry
+    tdc_algorithms::register_algorithms();
 
     const char* cmd = argv[0];
 
@@ -90,14 +92,14 @@ int main(int argc, char** argv) {
     google::InitGoogleLogging(cmd);
 
     try {
-        // load registry
-        const Registry<Compressor>& compressor_registry = COMPRESSOR_REGISTRY;
-        const Registry<Generator>& generator_registry = GENERATOR_REGISTRY;
+        // load registries
+        const auto& compressor_registry = Registry::of<Compressor>();
+        const auto& generator_registry = Registry::of<Generator>();
 
         if (options.list) {
             auto lib = compressor_registry.library() +
                        generator_registry.library();
-        
+
             auto print_type_table = [&](const std::string& type){
                 auto all = lib.type_entries(type);
                 std::sort(all.begin(), all.end(),
@@ -239,7 +241,7 @@ int main(int argc, char** argv) {
                                     defaults << p.name() << "="
                                              << p.default_value()->str();
                                 }
-                                
+
                                 table.add_row({ p.name(), desc.str() });
                             }
 
@@ -300,7 +302,7 @@ int main(int argc, char** argv) {
         }
 
         std::string file;
-        Registry<Generator>::Selection generator;
+        RegistryOf<Generator>::Selection generator;
 
         if(!options.stdin) {
             if(!options.generator.empty()) {
@@ -341,7 +343,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        Registry<Compressor>::Selection compressor;
+        RegistryOf<Compressor>::Selection compressor;
         if (!options.algorithm.empty()) {
             compressor = compressor_registry.select(options.algorithm);
         }

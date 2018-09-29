@@ -8,7 +8,7 @@
 #include <tudocomp/meta/DeclLib.hpp>
 #include <tudocomp/meta/Config.hpp>
 #include <tudocomp/meta/Meta.hpp>
-#include <tudocomp/meta/Registry.hpp>
+#include <tudocomp/meta/RegistryOf.hpp>
 
 using namespace tdc::meta;
 
@@ -608,7 +608,7 @@ TEST_F(registry, _register) {
     using A_B_C2C1 = A<B<C2, C1>>;
 
     // create a registry for type A
-    Registry<Algorithm> reg(a_type());
+    RegistryOf<Algorithm> reg(a_type());
 
     // register
     ASSERT_NO_THROW(reg.register_algorithm<A_B_>());
@@ -624,7 +624,7 @@ TEST_F(registry, _register) {
 
 TEST_F(registry, select_ast) {
     // create a registry for type A
-    Registry<Algorithm> reg(a_type());
+    RegistryOf<Algorithm> reg(a_type());
     reg.register_algorithm<A<B<>>>();
     reg.register_algorithm<A<B<C1, C2>>>();
     reg.register_algorithm<A<B<C2, C1>>>();
@@ -648,7 +648,7 @@ TEST_F(registry, select_ast) {
 
 TEST_F(registry, select_type) {
     // create a registry for type A
-    Registry<Algorithm> reg(a_type());
+    RegistryOf<Algorithm> reg(a_type());
     reg.register_algorithm<A<B<>>>();
     reg.register_algorithm<A<B<C1, C2>>>();
     reg.register_algorithm<A<B<C2, C1>>>();

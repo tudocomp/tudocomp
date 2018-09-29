@@ -1,13 +1,11 @@
 add_library(
     tudocomp
 
-    INTERFACE
+    meta/Registry.cpp
 )
 
 target_link_libraries(
     tudocomp
-
-    INTERFACE
 
     tudocomp_stat
     glog
@@ -16,3 +14,4 @@ target_link_libraries(
     compact_sparse_hash
 )
 
+cotire(tudocomp)

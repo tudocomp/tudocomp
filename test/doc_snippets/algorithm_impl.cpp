@@ -111,11 +111,11 @@ TEST(doc_algorithm_impl, algo_instantiate) {
     ASSERT_EQ("default_value", algo_mul5.param1());
 }
 
-#include <tudocomp/meta/Registry.hpp>
+#include <tudocomp/meta/RegistryOf.hpp>
 
 TEST(doc_algorithm_impl, algo_registry) {
     // Create a registry for algorithms of type "example"
-    Registry<MyAlgorithmBase> registry(TypeDesc("example"));
+    RegistryOf<MyAlgorithmBase> registry(TypeDesc("example"));
 
     // Register two specializations of the algorithm
     registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
