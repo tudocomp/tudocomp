@@ -89,13 +89,13 @@ public:
                 std::make_shared<ast::Value>(to_string(default_value))));
         }
 
-        [[deprecated("transitional alias")]]
+        [[deprecated("transitional alias - use primitive()")]]
         inline void dynamic() {
             primitive();
         }
 
         template<typename T>
-        [[deprecated("transitional alias")]]
+        [[deprecated("transitional alias - use primitive(value)")]]
         inline void dynamic(const T& default_value) {
             primitive(default_value);
         }
@@ -162,7 +162,7 @@ public:
         }
 
         template<typename Binding, typename D = Binding>
-        [[deprecated("transitional alias")]]
+        [[deprecated("transitional alias - use strategy")]]
         inline void templated(conststr type) {
             strategy<Binding>(TypeDesc(type), Meta::Default<D>());
         }
@@ -293,7 +293,7 @@ public:
           m_sig(std::make_shared<ast::Object>(name)) {
     }
 
-    [[deprecated("transitional override")]]
+    [[deprecated("transitional override - use TypeDesc for type")]]
     inline Meta(
         conststr           type,
         const std::string& name,
@@ -307,7 +307,7 @@ public:
         return ParamBuilder(*this, name, desc);
     }
 
-    [[deprecated("transitional alias")]]
+    [[deprecated("transitional alias - use param(name)")]]
     inline ParamBuilder option(const std::string& name) {
         return param(name);
     }
@@ -316,10 +316,7 @@ public:
         return m_decl;
     }
 
-    inline Config config(
-        ast::NodePtr<ast::Object> config_ast = ast::NodePtr<ast::Object>())
-        const {
-
+    inline Config config(ast::NodePtr<ast::Object> config_ast) const {
         ast::NodePtr<ast::Object> cfg;
         if(config_ast) {
             cfg = config_ast->inherit(m_sig);
@@ -333,6 +330,10 @@ public:
     inline Config config(const std::string& config_str) const {
         return config(ast::convert<ast::Object>(
             ast::Parser::parse(m_decl->name() + paranthesize(config_str))));
+    }
+
+    inline Config config() const {
+        return config(ast::NodePtr<ast::Object>());
     }
 
     inline ast::NodePtr<ast::Object> signature() const {
@@ -394,7 +395,7 @@ inline void add_to_lib(DeclLib& target, const Meta& meta) {
 
 using Meta = meta::Meta;
 
-[[deprecated("transitional alias")]]
+[[deprecated("transitional alias - use Meta::config()")]]
 inline Config create_env(const Meta& meta) {
     return meta.config();
 }

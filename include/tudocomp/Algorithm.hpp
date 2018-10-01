@@ -32,10 +32,10 @@ public:
 
     inline const Config& config() const { return m_config; }
 
-    [[deprecated("use config()")]]
+    [[deprecated("transitional alias - use config()")]]
     inline const Config& env() const { return m_config; }
 
-    [[deprecated("transitional solution")]]
+    [[deprecated("transitional alias - use config()")]]
     inline Config& env() { return m_config; }
 };
 

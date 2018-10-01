@@ -220,19 +220,19 @@ public:
         /// \brief Gets the integer value of the parameter.
         /// \return the integer value of the parameter
         /// \see as
-        inline int as_int() const {
+        inline ssize_t as_int() const {
             return as<int>();
         }
 
-        [[deprecated("transitional alias")]]
-        inline int as_integer() const {
+        [[deprecated("transitional alias - use as_int()")]]
+        inline ssize_t as_integer() const {
             return as_int();
         }
 
         /// \brief Gets the unsigned integer value of the parameter.
         /// \return the unsigned integer value of the parameter
         /// \see as
-        inline unsigned int as_uint() const {
+        inline size_t as_uint() const {
             return as<unsigned int>();
         }
 
@@ -405,7 +405,7 @@ public:
         return ParamValue(get_param(name));
     }
 
-    [[deprecated("transitional alias")]]
+    [[deprecated("transitional alias - use param(name)")]]
     inline ParamValue option(const std::string& name) const {
         return param(name);
     }
@@ -428,7 +428,7 @@ public:
         }
     }
 
-    [[deprecated("transitional solution")]]
+    [[deprecated("transitional alias - use sub_config(param)")]]
     inline Config env_for_option(
         const std::string& param) const {
 
@@ -506,6 +506,7 @@ public:
 
 using Config = meta::Config;
 
-using Env = meta::Config; //TODO: deprecate
+typedef meta::Config Env __attribute__(
+    (deprecated("transitional alias - use Config")));
 
 } // namespace tdc

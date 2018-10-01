@@ -37,7 +37,7 @@ include(ExternalProject)
 
 # More warnings and debug info
 # TODO: Add these, they break building glog -Wextra -Wpedantic
-set(GCC_WARNINGS "-Wall -Werror=return-type -Wno-deprecated-declarations")
+set(GCC_WARNINGS "-Wall -Werror=return-type")
 #set(SANITIZATION "-fsanitize=undefined -fsanitize=address -fsanitize=leak")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=gnu++14 ${GCC_WARNINGS}")
