@@ -22,23 +22,23 @@ class PLCPDecompGenerator {
     static vector_of_char_t decompressInternal(
         vector_of_char_t &textBuffer,
         vector_of_ref_initial_t &factors,
-        len_t bytesMemory);
+        uint64_t bytesMemory);
 
  public:
 
     static vector_of_char_t decompress(
         vector_of_upair_initial_t &factors,
-        len_t mebiBytesMemory);
+        uint64_t mebiBytesMemory);
 };
 
 vector_of_char_t PLCPDecompGenerator::decompress
-        (vector_of_upair_initial_t &factors, len_t mebiBytesMemory){
+        (vector_of_upair_initial_t &factors, uint64_t mebiBytesMemory){
 
     using compressor_t = PLCPDecomp<40>;
 
     std::cout << "Preparing decompression..." << std::endl;
 
-    len_t nBytesMemory = mebiBytesMemory * 1024 * 1024;
+    uint64_t nBytesMemory = mebiBytesMemory * 1024 * 1024;
     uint_t<40> nFactors = factors.size();
     uint_t<40> nReferences = 0;
     uint_t<40> nLiterals = 0;
@@ -98,7 +98,7 @@ template<unsigned bitsPerUInt>
 vector_of_char_t PLCPDecompGenerator::decompressInternal(
         vector_of_char_t &textBuffer,
         vector_of_ref_initial_t &factors,
-        len_t bytesMemory) {
+        uint64_t bytesMemory) {
 
     PLCPDecomp<bitsPerUInt> compressor(textBuffer, factors, bytesMemory);
     return compressor.decompress();

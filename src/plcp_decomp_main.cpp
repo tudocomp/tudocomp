@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    const tdc::len_t mb_ram = (argc >= 3) ? std::stoi(argv[3]) : 512;
+    const uint64_t mb_ram = (argc >= 3) ? std::stoi(argv[3]) : 512;
 
     tdc::StatPhase root("Root");
     // generate stats instance
@@ -71,8 +71,6 @@ int main(int argc, char** argv) {
     for (auto character : textBuffer)
         outputFile << character;
     outputFile.close();
-
-
 
     tdc::json::Object meta;
     meta.set("title", "TITLE");
