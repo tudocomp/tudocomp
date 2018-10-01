@@ -40,7 +40,7 @@ include(ExternalProject)
 set(GCC_WARNINGS "-Wall -Werror=return-type -Wno-deprecated-declarations")
 #set(SANITIZATION "-fsanitize=undefined -fsanitize=address -fsanitize=leak")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 ${GCC_WARNINGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=gnu++14 ${GCC_WARNINGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG ${SANITIZATION}")
 
