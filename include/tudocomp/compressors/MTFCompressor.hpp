@@ -74,8 +74,8 @@ public:
             "Encodes the input in a Move-To-Front manner.");
         return m;
     }
-    inline MTFCompressor(Env&& env)
-		: Compressor(std::move(env)) {
+    inline MTFCompressor(Config&& cfg)
+		: Compressor(std::move(cfg)) {
     }
 
     inline virtual void compress(Input& input, Output& output) override {
