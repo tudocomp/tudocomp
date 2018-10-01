@@ -7,7 +7,10 @@ namespace meta {
 
 class Registry {
 private:
-    static Registry global;
+    // the global registry MUST lie in the heap
+    // otherwise, there are unexplainable floating point exceptions in
+    // std's hash map
+    static std::unique_ptr<Registry> global;
 
     using regmap_t = std::unordered_map<
         TypeDesc, std::shared_ptr<RegistryOfAny>>;
@@ -17,7 +20,8 @@ private:
 public:
     template<typename T>
     static inline RegistryOf<T>& of() {
-        return global.get<T>();
+        if(!global) global = std::make_unique<Registry>();
+        return global->get<T>();
     }
 
     inline Registry() {

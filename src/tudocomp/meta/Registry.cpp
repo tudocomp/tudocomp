@@ -4,6 +4,6 @@ namespace tdc {
 namespace meta {
 
 // instantiate global registry
-Registry Registry::global;
+std::unique_ptr<Registry> Registry::global;
 
 }} // ns
