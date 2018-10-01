@@ -115,14 +115,14 @@ public:
     using Algorithm::Algorithm; //import constructor
 
     inline static Meta meta() {
-        Meta m("lfs_comp", "sim_st");
-        m.option("min_lrf").dynamic(2);
+        Meta m(TypeDesc("lfs_comp"), "sim_st");
+        m.param("min_lrf").primitive(2);
         return m;
     }
 
 
     inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
-         min_lrf = env().option("min_lrf").as_integer();
+         min_lrf = config().param("min_lrf").as_uint();
 
         //build suffixtree
         DLOG(INFO)<<"build suffixtree";

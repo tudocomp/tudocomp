@@ -36,18 +36,18 @@ private:
 public:
 
     inline static Meta meta() {
-        Meta m("compressor", "lfs_comp",
-            "LFS compression scheme");
-
+        Meta m(Compressor::type_desc(), "lfs_comp", "LFS compression scheme");
+        m.param("computing_strat").strategy<comp_strategy_t>(TypeDesc("lfs_comp"));
+        m.param("coding_strat").strategy<coding_strat_t>(
+            TypeDesc("lfs_comp_enc"),
+            Meta::Default<EncodeStrategy<HuffmanCoder, EliasGammaCoder>>());
         m.needs_sentinel_terminator();
-        m.option("computing_strat").templated<comp_strategy_t>("lfs_comp");
-        m.option("coding_strat").templated<coding_strat_t, EncodeStrategy<HuffmanCoder, EliasGammaCoder> >("lfs_comp_enc");
         return m;
     }
 
 
-    inline LFSCompressor(Env&& env):
-        Compressor(std::move(env))
+    inline LFSCompressor(Config&& cfg):
+        Compressor(std::move(cfg))
     {
         DLOG(INFO) << "Compressor instantiated";
     }
@@ -60,7 +60,7 @@ public:
             rules dictionary = rules();
             auto in = input.as_view();
             if(in.size()>1){
-                comp_strategy_t strategy(env().env_for_option("computing_strat"));
+                comp_strategy_t strategy(config().sub_config("computing_strat"));
 
                 StatPhase::wrap("computing lrfs", [&]{
                 //compute dictionary and nts.
@@ -85,7 +85,7 @@ public:
 
 
                 //StatPhase encode("encoding input");
-                coding_strat_t coding_strategy(env().env_for_option("coding_strat"));
+                coding_strat_t coding_strategy(config().sub_config("coding_strat"));
 
                 coding_strategy.encode(in, output, dictionary, nts_symbols);
 
@@ -98,7 +98,7 @@ public:
 
     inline virtual void decompress(Input& input, Output& output) override {
 
-        coding_strat_t strategy(env().env_for_option("coding_strat"));
+        coding_strat_t strategy(config().sub_config("coding_strat"));
 
         strategy.decode(input,output);
     }
