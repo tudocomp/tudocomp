@@ -8,15 +8,11 @@
 #include <tudocomp/io.hpp>
 #include <tudocomp/Algorithm.hpp>
 
-
 #include <tudocomp/ds/IntVector.hpp>
 
-
+#include <tudocomp_stat/StatPhase.hpp>
 
 #include <sdsl/suffix_trees.hpp>
-
-
-
 
 namespace tdc {
 namespace lfs {
