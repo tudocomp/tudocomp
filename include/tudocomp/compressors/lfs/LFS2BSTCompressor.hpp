@@ -427,7 +427,7 @@ public:
                 //encode last length, to have zero length last
                 len_coder.encode(symbol.second,s_length_r);
             }else {
-                len_coder.encode(0,intrange);
+                len_coder.encode(0ULL,intrange);
 
             }
             Range dict_r(0, non_terminal_symbols.size());

@@ -99,7 +99,7 @@ public:
             }
             len_coder.encode(symbol.second,s_length_r);
         }else {
-            len_coder.encode(0,intrange);
+            len_coder.encode(0ULL,intrange);
 
         }
 
