@@ -172,7 +172,7 @@ inline static sdsl::bit_vector construct_plcp_bitvector(const plcp_t& plcp) {
 }
 
 template<class sa_t, class text_t, class select_t = sdsl::select_support_mcl<1,1>>
-sdsl::bit_vector construct_plcp_bitvector(Config&, const sa_t& sa, const text_t& text) {
+sdsl::bit_vector construct_plcp_bitvector(const Config&, const sa_t& sa, const text_t& text) {
 	typedef DynamicIntVector phi_t;
 
     phi_t phi = StatPhase::wrap("Construct Phi Array", [&]{
@@ -191,7 +191,7 @@ sdsl::bit_vector construct_plcp_bitvector(Config&, const sa_t& sa, const text_t&
 }
 
 template<class sa_t, class text_t, class select_t = sdsl::select_support_mcl<1,1>>
-LCPSada<sa_t,select_t> construct_lcp_sada(Config& cfg, const sa_t& sa, const text_t& text) {
+LCPSada<sa_t,select_t> construct_lcp_sada(const Config& cfg, const sa_t& sa, const text_t& text) {
     return StatPhase::wrap("Build Select on Bit Vector", [&]{
         sdsl::bit_vector bv = construct_plcp_bitvector(cfg, sa, text);
         return LCPSada<sa_t,select_t> { sa, std::move(bv) };

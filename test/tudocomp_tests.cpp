@@ -1153,21 +1153,21 @@ TEST(GenericView, template_64) {
 }
 
 struct MySubAlgo: Algorithm {
-    MySubAlgo(Env&& e): Algorithm(std::move(e)) {}
+    MySubAlgo(Config&& c): Algorithm(std::move(c)) {}
 
     inline static Meta meta() {
-        Meta y("sub_t", "sub1");
-        y.option("x").dynamic("x");
+        Meta y(TypeDesc("sub_t"), "sub1");
+        y.param("x").primitive("x");
         return y;
     }
 };
 
 struct MySubAlgo2: Algorithm {
-    MySubAlgo2(Env&& e): Algorithm(std::move(e)) {}
+    MySubAlgo2(Config&& c): Algorithm(std::move(c)) {}
 
     inline static Meta meta() {
-        Meta y("sub_t", "sub2");
-        y.option("y").dynamic("y");
+        Meta y(TypeDesc("sub_t"), "sub2");
+        y.param("y").primitive("y");
         return y;
     }
 };
@@ -1175,26 +1175,26 @@ struct MySubAlgo2: Algorithm {
 template<class A>
 struct MyCompressor: public Compressor {
     inline static Meta meta() {
-        Meta y("compressor", "my");
-        y.option("sub").templated<A, MySubAlgo2>("sub_t");
-        y.option("dyn").dynamic("foobar");
-        y.option("bool_val").dynamic("true");
+        Meta y(Compressor::type_desc(), "my");
+        y.param("sub").strategy<A>(TypeDesc("sub_t"), Meta::Default<MySubAlgo2>());
+        y.param("dyn").primitive("foobar");
+        y.param("bool_val").primitive(true);
         return y;
     }
 
     std::string custom_data;
     MyCompressor() = delete;
-    MyCompressor(Env&& env, std::string&& s):
-        Compressor(std::move(env)),
+    MyCompressor(Config&& cfg, std::string&& s):
+        Compressor(std::move(cfg)),
         custom_data(std::move(s)) {}
 
     inline virtual void decompress(Input&, Output&) {}
 
     inline virtual void compress(Input&, Output& output) {
-        A a(env().env_for_option("sub"));
+        A a(config().sub_config("sub"));
         auto s = output.as_stream();
-        s << "ok! " << custom_data << " " << env().option("dyn").as_string();
-        ASSERT_TRUE(env().option("bool_val").as_bool());
+        s << "ok! " << custom_data << " " << config().param("dyn").as_string();
+        ASSERT_TRUE(config().param("bool_val").as_bool());
     }
 };
 

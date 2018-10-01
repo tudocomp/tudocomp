@@ -17,9 +17,9 @@ using namespace tdc;
 class MyGenerator : public Generator {
 public:
     inline static Meta meta() {
-        Meta m("generator", "my_compressor", "An example compressor");
-        m.option("length").dynamic();
-        m.option("char").dynamic('a');
+        Meta m(Generator::type_desc(), "my_generator", "An example generator");
+        m.param("length").primitive();
+        m.param("char").primitive('a');
         return m;
     }
 
@@ -31,8 +31,8 @@ public:
 
     inline virtual std::string generate() override {
         return generate(
-            env().option("length").as_integer(),
-            env().option("char").as_integer());
+            config().param("length").as_uint(),
+            config().param("char").as_int());
     }
 };
 

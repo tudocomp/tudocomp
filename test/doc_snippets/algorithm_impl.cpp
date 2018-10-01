@@ -38,10 +38,10 @@ class MyAlgorithm : public MyAlgorithmBase {
 public:
     inline static Meta meta() {
         // define the algorithm's meta information
-        Meta m("example", "my_algorithm", "An example algorithm");
-        m.option("param1").dynamic("default_value");
-        m.option("number").dynamic(147);
-        m.option("strategy").templated<strategy_t>("my_strategy_t");
+        Meta m(TypeDesc("example"), "my_algorithm", "An example algorithm");
+        m.param("param1").primitive("default_value");
+        m.param("number").primitive(147);
+        m.param("strategy").strategy<strategy_t>(TypeDesc("my_strategy_t"));
         return m;
     }
 
@@ -49,15 +49,15 @@ public:
 
     inline std::string param1() {
         // read param1 option as a string
-        return env().option("param1").as_string();
+        return config().param("param1").as_string();
     }
 
     inline virtual int execute() override {
         // read number option as an integer
-        auto number = env().option("number").as_integer();
+        auto number = config().param("number").as_int();
 
         // instantiate strategy with sub environment
-        strategy_t strategy(env().env_for_option("strategy"));
+        strategy_t strategy(config().sub_config("strategy"));
 
         // use strategy to determine result
         return strategy.result(number);
@@ -69,7 +69,7 @@ class SquareStrategy : public Algorithm {
 public:
     inline static Meta meta() {
         // define the algorithm's meta information
-        Meta m("my_strategy_t", "sqr", "Computes the square");
+        Meta m(TypeDesc("my_strategy_t"), "sqr", "Computes the square");
         return m;
     }
 
@@ -85,15 +85,15 @@ class MultiplyStrategy : public Algorithm {
 public:
     inline static Meta meta() {
         // define the algorithm's meta information
-        Meta m("my_strategy_t", "mul", "Computes a product");
-        m.option("factor").dynamic(); // no default
+        Meta m(TypeDesc("my_strategy_t"), "mul", "Computes a product");
+        m.param("factor").primitive(); // no default
         return m;
     }
 
     using Algorithm::Algorithm; // inherit the default constructor
 
     inline int result(int x) {
-        return x * env().option("factor").as_integer();
+        return x * config().param("factor").as_int();
     }
 };
 

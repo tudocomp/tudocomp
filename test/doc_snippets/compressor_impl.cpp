@@ -24,8 +24,8 @@ template<typename coder_t>
 class MyCompressor : public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "my_compressor", "An example compressor");
-        m.option("coder").templated<coder_t>("coder");
+        Meta m(Compressor::type_desc(), "my_compressor", "An example compressor");
+        m.param("coder").strategy<coder_t>(Coder::type_desc());
         return m;
     }
 
@@ -46,7 +46,7 @@ public:
 
         // instantiate the encoder using the whole input alphabet
         typename coder_t::Encoder coder(
-            env().env_for_option("coder"), output, ViewLiterals(view));
+            config().sub_config("coder"), output, ViewLiterals(view));
 
         // encode the smallest and largest characters
         coder.encode(c_min, uliteral_r);
@@ -67,7 +67,7 @@ public:
 
         // instantiate the decoder using the whole input alphabet
         typename coder_t::Decoder decoder(
-            env().env_for_option("coder"), input);
+            config().sub_config("coder"), input);
 
         // encode the smallest and largest characters
         auto c_min = decoder.template decode<uliteral_t>(uliteral_r);
