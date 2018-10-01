@@ -28,7 +28,7 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("isa", "sparse_isa",
+        Meta m(TypeDesc("isa"), "sparse_isa",
             "Constructs a sparse inverse suffix array using the suffix array "
             "and a sampling strategy.");
         m.param("sa", "The suffix array implementation.")

@@ -381,7 +381,7 @@ int main(int argc, char** argv) {
             // do the due (or if you like sugar, the Dew is fine too)
             if (do_compress && compressor) {
                 if (!options.raw) {
-                    auto id_string = compressor->env().str();
+                    auto id_string = compressor->config().str();
                     CHECK(id_string.find('%') == std::string::npos);
 
                     auto o_stream = out.as_stream();
@@ -393,8 +393,6 @@ int main(int argc, char** argv) {
                     inp = Input(inp, is);
                 }
 
-                //TODO: split?
-                //selection.algorithm_env()->restart_stats("Compress");
                 setup_time = clk::now();
                 compressor->compress(inp, out);
                 comp_time = clk::now();
@@ -438,7 +436,7 @@ int main(int argc, char** argv) {
                 if (!options.raw && compressor) {
                     DLOG(INFO) << "Ignoring header " << algorithm_header
                         << " and using manually given "
-                        << compressor->env().str();
+                        << compressor->config().str();
                 } else if (!options.raw) {
                     DLOG(INFO) << "Using header id string " << algorithm_header;
 
@@ -446,7 +444,7 @@ int main(int argc, char** argv) {
                     compressor = compressor_registry.select(id_string);
                 } else {
                     DLOG(INFO) << "Using manually given "
-                               << compressor->env().str();
+                               << compressor->config().str();
                 }
 
                 auto is = compressor.decl()->input_restrictions();
@@ -454,8 +452,6 @@ int main(int argc, char** argv) {
                     out = Output(out, is);
                 }
 
-                //TODO: split?
-                //selection.algorithm_env()->restart_stats("Decompress");
                 setup_time = clk::now();
                 compressor->decompress(inp, out);
                 comp_time = clk::now();
@@ -490,7 +486,8 @@ int main(int argc, char** argv) {
                 std::chrono::duration_cast<std::chrono::seconds>(
                     start_time.time_since_epoch()).count());
 
-            meta.set("config", compressor ? compressor->env().str() : "<none>");
+            meta.set("config", compressor ? compressor->config().str() :
+                               "<none>");
             meta.set("input", options.stdin ? "<stdin>" :
                               (generator ? options.generator : file));
             meta.set("inputSize", in_size);

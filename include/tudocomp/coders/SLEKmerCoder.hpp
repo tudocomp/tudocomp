@@ -303,8 +303,8 @@ public:
         }
 
     public:
-        inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
-            : tdc::Decoder(std::move(env), in) {
+        inline Decoder(Config&& cfg, std::shared_ptr<BitIStream> in)
+            : tdc::Decoder(std::move(cfg), in) {
             m_k = this->config().param("k").as_uint();
 
             m_kmer = new uliteral_t[m_k];
