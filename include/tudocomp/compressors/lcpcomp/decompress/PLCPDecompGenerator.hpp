@@ -89,9 +89,9 @@ vector_of_char_t PLCPDecompGenerator::decompress
     std::cout << "    Bits per integer:       " << bitsPerInt << std::endl;
     std::cout << "    Allowed memory (bytes): " << nBytesMemory << std::endl;
 
-    //~ if(bitsPerInt <= 24) return decompressInternal<24>(textBuffer, factorsForCompressor, nBytesMemory);
-    //~ else if(bitsPerInt <= 32) return decompressInternal<32>(textBuffer, factorsForCompressor, nBytesMemory);
-    /*else if(specs.bitsPerInt <= 40)*/ return decompressInternal<40>(textBuffer, factorsForCompressor, nBytesMemory);
+    if(bitsPerInt <= 24) return decompressInternal<24>(textBuffer, factorsForCompressor, nBytesMemory);
+    else if(bitsPerInt <= 32) return decompressInternal<32>(textBuffer, factorsForCompressor, nBytesMemory);
+    else /*if(specs.bitsPerInt <= 40)*/ return decompressInternal<40>(textBuffer, factorsForCompressor, nBytesMemory);
 }
 
 template<unsigned bitsPerUInt>
