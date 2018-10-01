@@ -46,7 +46,7 @@ TEST(TudocompDriver, roundtrip_matrix) {
 
     // stage 1: automatically generated list of tests
     {
-        test_cases = COMPRESSOR_REGISTRY.signatures();
+        test_cases = Registry::of<Compressor>().signatures();
     }
     // stage 2: build-in exclude and additional
     {
