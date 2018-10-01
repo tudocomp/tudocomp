@@ -13,7 +13,8 @@ namespace lzss {
 class DidacticalCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        return Meta("lzss_coder", "didactic", "Didactical output of factors");
+        return Meta(lzss_coder_type(), "didactic",
+            "Didactical output of factors");
     }
 
     using Algorithm::Algorithm;
@@ -23,7 +24,7 @@ public:
         std::unique_ptr<io::OutputStream> m_out;
 
     public:
-        inline Encoder(const Env& env, Output& out) {
+        inline Encoder(const Config& cfg, Output& out) {
             m_out = std::make_unique<io::OutputStream>(out.as_stream());
         }
 
@@ -61,7 +62,7 @@ public:
         std::unique_ptr<io::InputStream> m_in;
 
     public:
-        inline Decoder(const Env& env, Input& in) {
+        inline Decoder(const Config& cfg, Input& in) {
             m_in = std::make_unique<io::InputStream>(in.as_stream());
         }
 
@@ -73,11 +74,11 @@ public:
 
     template<typename literals_t>
     inline auto encoder(Output& output, literals_t&& literals) {
-        return Encoder(env(), output);
+        return Encoder(config(), output);
     }
 
     inline auto decoder(Input& input) {
-        return Decoder(env(), input);
+        return Decoder(config(), input);
     }
 };
 

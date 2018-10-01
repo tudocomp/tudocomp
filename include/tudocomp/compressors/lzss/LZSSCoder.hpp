@@ -5,6 +5,11 @@
 #include <tudocomp/Algorithm.hpp>
 
 namespace tdc {
+
+static inline constexpr TypeDesc lzss_coder_type() {
+    return TypeDesc("lzss_coder");
+}
+
 namespace lzss {
 
 /// \brief Base coder for LZ77-style factorizations in a

@@ -19,7 +19,8 @@ private:
 
 public:
     inline static Meta meta() {
-        return super_t::meta(Meta("lzss_coder", "stream", "Streaming / online"));
+        return super_t::meta(Meta(
+            lzss_coder_type(), "stream", "Streaming / online"));
     }
 
     using super_t::LZSSCoder;
@@ -35,7 +36,7 @@ public:
     public:
         /// \brief Constructor.
         inline Encoder(
-            const Env& env,
+            const Config& cfg,
             std::unique_ptr<refc_t>&& refc,
             std::unique_ptr<lenc_t>&& lenc,
             std::unique_ptr<litc_t>&& litc)
@@ -102,7 +103,7 @@ public:
     public:
         /// \brief Constructor.
         inline Decoder(
-            const Env& env,
+            const Config& cfg,
             std::unique_ptr<refd_t>&& refd,
             std::unique_ptr<lend_t>&& lend,
             std::unique_ptr<litd_t>&& litd)
