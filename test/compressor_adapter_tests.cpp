@@ -32,28 +32,28 @@
 using namespace tdc;
 using namespace tdc_algorithms;
 
-#define COMPRESSOR_REGISTRY Registry::of<Compressor>()
+auto& COMPRESSOR_REGISTRY = Registry::of<Compressor>();
 
 class NoopEscapingCompressor: public Compressor {
 public:
     inline static Meta meta() {
-        Meta m ("compressor", "noop_null", "");
+        Meta m(Compressor::type_desc(), "noop_null", "");
         m.input_restrictions(io::InputRestrictions({0}, true));
-        m.option("mode").dynamic("view");
-        m.option("debug").dynamic("false");
+        m.param("mode").primitive("view");
+        m.param("debug").primitive(false);
         return m;
     }
 
-    inline NoopEscapingCompressor(Env&& env):
-        Compressor(std::move(env)) {}
+    inline NoopEscapingCompressor(Config&& cfg):
+        Compressor(std::move(cfg)) {}
 
 
     inline virtual void compress(Input& i, Output& o) override final {
         auto os = o.as_stream();
 
-        if (env().option("mode").as_string() == "stream") {
+        if (config().param("mode").as_string() == "stream") {
             auto is = i.as_stream();
-            if (env().option("debug").as_bool()) {
+            if (config().param("debug").as_bool()) {
                 std::stringstream ss;
                 ss << is.rdbuf();
                 std::string txt = ss.str();
@@ -62,9 +62,9 @@ public:
             } else {
                 os << is.rdbuf();
             }
-        } else {
+        } else { // view
             auto iv = i.as_view();
-            if (env().option("debug").as_bool()) {
+            if (config().param("debug").as_bool()) {
                 DLOG(INFO) << vec_to_debug_string(iv);
                 os << iv;
             } else {
@@ -76,9 +76,9 @@ public:
     inline virtual void decompress(Input& i, Output& o) override final {
         auto os = o.as_stream();
 
-        if (env().option("mode").as_string() == "stream") {
+        if (config().param("mode").as_string() == "stream") {
             auto is = i.as_stream();
-            if (env().option("debug").as_bool()) {
+            if (config().param("debug").as_bool()) {
                 std::stringstream ss;
                 ss << is.rdbuf();
                 std::string txt = ss.str();
@@ -87,9 +87,9 @@ public:
             } else {
                 os << is.rdbuf();
             }
-        } else {
+        } else { // view
             auto iv = i.as_view();
-            if (env().option("debug").as_bool()) {
+            if (config().param("debug").as_bool()) {
                 DLOG(INFO) << vec_to_debug_string(iv);
                 os << iv;
             } else {
@@ -99,8 +99,11 @@ public:
     }
 };
 
-TEST(A, a) {
+TEST(Init, init) {
+    // initialization
     FLAGS_logtostderr = 0;
+
+    tdc_algorithms::register_algorithms();
     COMPRESSOR_REGISTRY.register_algorithm<NoopEscapingCompressor>();
 }
 
