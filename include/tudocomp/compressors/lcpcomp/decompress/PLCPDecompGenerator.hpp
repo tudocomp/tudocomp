@@ -57,9 +57,9 @@ vector_of_char_t PLCPDecompGenerator::decompress
     uint_t<40> textPosition = 1;
     for (uint_t<40> i = 0; i < nFactors; i++) {
 
-        if (i % 500000 == 0) {
+/*        if (i % 500000 == 0) {
             std::cout << "        Factor " << i << " of " << nFactors << "... " << std::endl;
-        }
+        }*/
 
         uint_t<40> target = inFactorsIt->first + 1;
         uint_t<40> len =    inFactorsIt->second;
