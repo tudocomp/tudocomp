@@ -12,7 +12,7 @@ template<typename lzss_coder_t>
 class LZ77CicsCompressor : public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "lz77cics", "LZ77 compression in compressed space.");
+        Meta m(Compressor::type_desc(), "lz77cics", "LZ77 compression in compressed space.");
         m.param("coder", "The output encoder.")
             .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
         m.input_restrictions(io::InputRestrictions({0}, false));
