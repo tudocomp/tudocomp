@@ -119,19 +119,9 @@ class PLCPDecomp {
             << "Converting references from 40 bits to "
             << bitsPerUInt << " bits..." << std::endl;
 
-        PLCPFlattener<unsigned_initial_t> flattener;
-
         vector_of_ref_writer_t toWriter(*byCopyToV);
-        for (auto factor : vector_of_ref_reader_initial_t(factors)) {
-            //~ toWriter << factor.template convert<unsigned_t>();
-            flattener.add(factor.copyTo, factor.copyFrom, factor.length);
-        }
-
-        flattener.flatten(3, sortBytesMemory);
-
-        for(auto factor : flattener) {
+        for (auto factor : vector_of_ref_reader_initial_t(factors))
             toWriter << factor.template convert<unsigned_t>();
-        }
     }
 
     static vector_of_char_t getEmptyTextBuffer(uint64_t totalBytesMemory) {
