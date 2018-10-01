@@ -7,7 +7,7 @@ namespace tdc {namespace esp {
     class HashMapIPD: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("ipd", "hash_map");
+            Meta m(TypeDesc("ipd"), "hash_map");
             return m;
         };
 

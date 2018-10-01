@@ -13,7 +13,7 @@ namespace tdc {namespace esp {
         return 4;
     }
 
-    uint64_t label(uint64_t left, uint64_t right) {
+    inline uint64_t label(uint64_t left, uint64_t right) {
         auto diff = left ^ right;
 
         //std::cout << "l: " << std::setbase(2) << left << "\n";

@@ -48,8 +48,8 @@ namespace tdc {namespace esp {
         };
     public:
         inline static Meta meta() {
-            Meta m("ipd", "dynamic_size");
-            m.option("ipd").templated<ipd_t>("ipd");
+            Meta m(TypeDesc("ipd"), "dynamic_size");
+            m.param("ipd").strategy<ipd_t>(TypeDesc("ipd"));
             return m;
         };
 
