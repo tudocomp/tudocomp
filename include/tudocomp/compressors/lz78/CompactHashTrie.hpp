@@ -13,9 +13,13 @@
 namespace tdc {
 namespace lz78 {
 
+constexpr TypeDesc compact_hash_strategy_type() {
+    return TypeDesc("compact_hash_strategy");
+}
+
 struct Sparse {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "sparse_cv", "Sparse Table with CV structure");
+        Meta m(compact_hash_strategy_type(), "sparse_cv", "Sparse Table with CV structure");
         return m;
     }
 
@@ -24,7 +28,7 @@ struct Sparse {
 
 struct Plain {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "plain_cv", "Plain Table with CV structure");
+        Meta m(compact_hash_strategy_type(), "plain_cv", "Plain Table with CV structure");
         return m;
     }
 
@@ -33,7 +37,7 @@ struct Plain {
 
 struct SparseDisplacement {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "sparse_disp", "Sparse Table with displacement structure");
+        Meta m(compact_hash_strategy_type(), "sparse_disp", "Sparse Table with displacement structure");
         return m;
     }
 
@@ -42,7 +46,7 @@ struct SparseDisplacement {
 
 struct SparseEliasDisplacement {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "sparse_elias_disp", "Sparse Table with elias gamma coded displacement structure");
+        Meta m(compact_hash_strategy_type(), "sparse_elias_disp", "Sparse Table with elias gamma coded displacement structure");
         return m;
     }
 
@@ -51,7 +55,7 @@ struct SparseEliasDisplacement {
 
 struct PlainDisplacement {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "plain_disp", "Plain Table with displacement structure");
+        Meta m(compact_hash_strategy_type(), "plain_disp", "Plain Table with displacement structure");
         return m;
     }
 
@@ -60,7 +64,7 @@ struct PlainDisplacement {
 
 struct PlainEliasDisplacement {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "plain_elias_disp", "Plain Table with elias gamma coded displacement structure");
+        Meta m(compact_hash_strategy_type(), "plain_elias_disp", "Plain Table with elias gamma coded displacement structure");
         return m;
     }
 
@@ -88,19 +92,19 @@ class CompactHashTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "compact_sparse_hash", "Compact Sparse Hash Trie");
-        m.option("load_factor").dynamic(50);
-        m.option("compact_hash_strategy")
-            .templated<compact_hash_strategy_t, Sparse>("compact_hash_strategy");
+        Meta m(lz78_trie_type(), "compact_sparse_hash", "Compact Sparse Hash Trie");
+        m.param("load_factor").primitive(50);
+        m.param("compact_hash_strategy").strategy<compact_hash_strategy_t>(
+            compact_hash_strategy_type(), Meta::Default<Sparse>());
         return m;
     }
 
-    inline CompactHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-        : Algorithm(std::move(env))
+    inline CompactHashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+        : Algorithm(std::move(cfg))
         , LZ78Trie(n,remaining_characters)
         , m_table(zero_or_next_power_of_two(reserve))
     {
-        m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
+        m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
     }
 
     IF_STATS(

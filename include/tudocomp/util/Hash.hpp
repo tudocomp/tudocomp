@@ -4,6 +4,7 @@
 #include <tudocomp/util.hpp>
 #include <tudocomp/Algorithm.hpp>
 
+#include <tudocomp/util/HashTypes.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 // #include <tudocomp/util/hash/clhash.h>
 // #include <tudocomp/util/hash/zobrist.h>
@@ -13,10 +14,10 @@ namespace tdc {
 	//TODO: can operator() be made to constexpr?
 struct VignaHasher : public Algorithm { // http://xorshift.di.unimi.it/splitmix64.c
     inline static Meta meta() {
-        Meta m("hash_function", "vigna", "Vigna's splitmix Hasher");
+        Meta m(hash_function_type(), "vigna", "Vigna's splitmix Hasher");
 		return m;
 	}
-	VignaHasher(Env&& env) : Algorithm(std::move(env)) {}
+	VignaHasher(Config&& cfg) : Algorithm(std::move(cfg)) {}
 	inline uint64_t operator()(uint64_t x) const {
 		x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
 		x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
@@ -35,10 +36,10 @@ struct _VignaHasher  { // http://xorshift.di.unimi.it/splitmix64.c
 
 struct KnuthHasher : public Algorithm { // http://xorshift.di.unimi.it/splitmix64.c
     inline static Meta meta() {
-        Meta m("hash_function", "knuth", "Knuth's splitmix Hasher");
+        Meta m(hash_function_type(), "knuth", "Knuth's splitmix Hasher");
 		return m;
 	}
-	KnuthHasher(Env&& env) : Algorithm(std::move(env)) {}
+	KnuthHasher(Config&& cfg) : Algorithm(std::move(cfg)) {}
 	size_t operator()(size_t key)
 	{
 		return key * 2654435769ULL;
@@ -48,10 +49,10 @@ struct KnuthHasher : public Algorithm { // http://xorshift.di.unimi.it/splitmix6
 
 struct MixHasher : public Algorithm { // https://gist.github.com/badboy/6267743
     inline static Meta meta() {
-        Meta m("hash_function", "mixer", "MixHasher");
+        Meta m(hash_function_type(), "mixer", "MixHasher");
 		return m;
 	}
-	MixHasher(Env&& env) : Algorithm(std::move(env)) {}
+	MixHasher(Config&& cfg) : Algorithm(std::move(cfg)) {}
 	size_t operator()(size_t key) const {
 		key = (~key) + (key << 21); // key = (key << 21) - key - 1;
 		key = key ^ (key >> 24);
@@ -66,10 +67,10 @@ struct MixHasher : public Algorithm { // https://gist.github.com/badboy/6267743
 
 struct NoopHasher : public Algorithm {
     inline static Meta meta() {
-        Meta m("hash_function", "noop", "Identity");
+        Meta m(hash_function_type(), "noop", "Identity");
 		return m;
 	}
-	NoopHasher(Env&& env) : Algorithm(std::move(env)) {}
+	NoopHasher(Config&& cfg) : Algorithm(std::move(cfg)) {}
 	size_t operator()(size_t key) const {
 		return key;
 	}
@@ -80,10 +81,10 @@ struct NoopHasher : public Algorithm {
 
 struct SizeManagerPow2 : public Algorithm {
     inline static Meta meta() {
-        Meta m("hash_manager", "pow", "Pow2 Hash Table Sizes");
+        Meta m(hash_manager_type(), "pow", "Pow2 Hash Table Sizes");
 		return m;
 	}
-	SizeManagerPow2(Env&& env) : Algorithm(std::move(env)) {}
+	SizeManagerPow2(Config&& cfg) : Algorithm(std::move(cfg)) {}
 	void resize(const len_t) {
 	}
 	/**
@@ -105,10 +106,10 @@ struct SizeManagerPow2 : public Algorithm {
 
 struct SizeManagerDirect : public Algorithm {
     inline static Meta meta() {
-        Meta m("hash_manager", "direct", "Direct Hash Table Sizes");
+        Meta m(hash_manager_type(), "direct", "Direct Hash Table Sizes");
 		return m;
 	}
-	SizeManagerDirect(Env&& env) : Algorithm(std::move(env)) {}
+	SizeManagerDirect(Config&& cfg) : Algorithm(std::move(cfg)) {}
 	/**
 	 * The lowest possible size larger than hint
 	 */
@@ -134,10 +135,10 @@ struct SizeManagerDirect : public Algorithm {
 
 struct SizeManagerNoob : public Algorithm {
     inline static Meta meta() {
-        Meta m("hash_manager", "noob", "Classic Modulo Reduction");
+        Meta m(hash_manager_type(), "noob", "Classic Modulo Reduction");
 		return m;
 	}
-	SizeManagerNoob(Env&& env) : Algorithm(std::move(env)) {}
+	SizeManagerNoob(Config&& cfg) : Algorithm(std::move(cfg)) {}
 	/**
 	 * The lowest possible size larger than hint
 	 */
@@ -158,10 +159,10 @@ struct SizeManagerNoob : public Algorithm {
 
 struct SizeManagerPrime : public Algorithm {
     inline static Meta meta() {
-        Meta m("hash_manager", "prime", "Prime Hash Table Sizes");
+        Meta m(hash_manager_type(), "prime", "Prime Hash Table Sizes");
 		return m;
 	}
-	SizeManagerPrime(Env&& env) : Algorithm(std::move(env)) {}
+	SizeManagerPrime(Config&& cfg) : Algorithm(std::move(cfg)) {}
 
 	static inline len_t get_min_size(const len_t& hint) {
 		return next_prime(hint);
@@ -229,10 +230,10 @@ struct SizeManagerPrime : public Algorithm {
 
 struct QuadraticProber : public Algorithm {
     inline static Meta meta() {
-        Meta m("hash_prober", "quad", "Quadratic Prober");
+        Meta m(hash_prober_type(), "quad", "Quadratic Prober");
 		return m;
 	}
-	QuadraticProber(Env&& env) : Algorithm(std::move(env)) {}
+	QuadraticProber(Config&& cfg) : Algorithm(std::move(cfg)) {}
 	template<class key_t>
 	static inline void init(const key_t&) {
 	}
@@ -250,10 +251,10 @@ struct QuadraticProber : public Algorithm {
 
 struct GaussProber : public Algorithm {
     inline static Meta meta() {
-        Meta m("hash_prober", "gauss", "Gauss Prober");
+        Meta m(hash_prober_type(), "gauss", "Gauss Prober");
 		return m;
 	}
-	GaussProber(Env&& env) : Algorithm(std::move(env)) {}
+	GaussProber(Config&& cfg) : Algorithm(std::move(cfg)) {}
 	template<class key_t>
 	static inline void init(const key_t&) {
 	}
@@ -266,10 +267,10 @@ struct GaussProber : public Algorithm {
 
 struct LinearProber : public Algorithm {
     inline static Meta meta() {
-        Meta m("hash_prober", "linear", "Linear Prober");
+        Meta m(hash_prober_type(), "linear", "Linear Prober");
 		return m;
 	}
-	LinearProber(Env&& env) : Algorithm(std::move(env)) {}
+	LinearProber(Config&& cfg) : Algorithm(std::move(cfg)) {}
 
 	template<class key_t>
 	static inline void init(const key_t&) {
@@ -313,10 +314,10 @@ class ZBackupRollingHash : public Algorithm {
 	key_type m_len=0;
 	public:
     inline static Meta meta() {
-        Meta m("hash_roller", "zbackup", "ZBackup Rolling Hash");
+        Meta m(hash_roller_type(), "zbackup", "ZBackup Rolling Hash");
 		return m;
 	}
-	ZBackupRollingHash(Env&& env) : Algorithm(std::move(env)) {}
+	ZBackupRollingHash(Config&& cfg) : Algorithm(std::move(cfg)) {}
 	void operator+=(char c) {
 		m_val = (m_val << (sizeof(char)*sizeof(key_type))) + m_val + static_cast<key_type>(c); // % 18446744073709551557ULL;
 		m_len += m_len << 8;
@@ -337,10 +338,10 @@ class WordpackRollingHash : public Algorithm {
 	key_type m_val=0;
 	public:
     inline static Meta meta() {
-        Meta m("hash_roller", "wordpack", "Wordpacking Rolling Hash");
+        Meta m(hash_roller_type(), "wordpack", "Wordpacking Rolling Hash");
 		return m;
 	}
-	WordpackRollingHash(Env&& env) : Algorithm(std::move(env)) {}
+	WordpackRollingHash(Config&& cfg) : Algorithm(std::move(cfg)) {}
 	void operator+=(char c) {
 		m_val = ((m_val + (m_val << 8)) + c);// % 138350580553ULL;   // prime number between 2**63 and 2**64
 	}
@@ -368,7 +369,7 @@ class HashMap {
 	typedef std::pair<key_t,value_t> store_t;
 
     inline static Meta meta() {
-        Meta m("hash", "ctable", "Custom Hash Table");
+        Meta m(hash_map_type(), "ctable", "Custom Hash Table");
 		return m;
 	}
 
@@ -394,7 +395,7 @@ class HashMap {
 	public:
 	IF_STATS(
 		size_t collisions() const { return m_collisions; }
-		void collect_stats(Env&) const {
+		void collect_stats(const Config&) const {
 		StatPhase::log("collisions", collisions());
 		StatPhase::log("table size", table_size());
 		StatPhase::log("load factor", max_load_factor());
@@ -413,10 +414,10 @@ class HashMap {
 	const size_t m_n;
 	const size_t& m_remaining_characters;
 
-	HashMap(Env&, const size_t n, const size_t& remaining_characters)
-		: m_h(create_env(HashFcn::meta()))
-		, m_probe(create_env(ProbeFcn::meta()))
-		, m_sizeman(create_env(SizeManager::meta()))
+	HashMap(const Config&, const size_t n, const size_t& remaining_characters)
+		: m_h(HashFcn::meta().config())
+		, m_probe(ProbeFcn::meta().config())
+		, m_sizeman(SizeManager::meta().config())
 		, m_size(initial_size)
 		, m_keys((key_t*) malloc(sizeof(key_t) * initial_size))
 		, m_values((value_t*) malloc(sizeof(value_t) * initial_size))

@@ -41,6 +41,11 @@ template<typename _node_t = LZ78TrieNode>
 class LZ78Trie {
 public:
     using node_t = _node_t;
+
+    static inline constexpr TypeDesc lz78_trie_type() {
+        return TypeDesc("lz78trie");
+    }
+
 private:
     const size_t m_n;
     const size_t& m_remaining_characters;

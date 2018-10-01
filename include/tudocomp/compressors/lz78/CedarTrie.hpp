@@ -168,12 +168,12 @@ class CedarTrie: public Algorithm, public LZ78Trie<cedar::CedarTrieNode> {
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "cedar", "Lempel-Ziv 78 Cedar Trie");
+        Meta m(lz78_trie_type(), "cedar", "Lempel-Ziv 78 Cedar Trie");
         return m;
     }
 
-    CedarTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t = 0)
-        : Algorithm(std::move(env))
+    CedarTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t = 0)
+        : Algorithm(std::move(cfg))
 		, LZ78Trie(n, remaining_characters)
         , m_trie(std::make_unique<cedar_t>()) {}
 

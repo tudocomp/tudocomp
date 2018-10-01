@@ -26,13 +26,13 @@ class TernaryTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "ternary", "Lempel-Ziv 78 Ternary Trie");
+        Meta m(lz78_trie_type(), "ternary", "Lempel-Ziv 78 Ternary Trie");
         return m;
     }
 
     //remaining_characters is the number of remaining characters until the complete text is parsed
-    inline TernaryTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-        : Algorithm(std::move(env))
+    inline TernaryTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+        : Algorithm(std::move(cfg))
         , LZ78Trie(n, remaining_characters)
     {
         if(reserve > 0) {
