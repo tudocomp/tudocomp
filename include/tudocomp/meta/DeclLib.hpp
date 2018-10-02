@@ -47,7 +47,7 @@ private:
         // (we do not want to continue if that fails)
         {
             auto super = type.super();
-            if(super) insert_recursively(decl, *super);
+            if(super.valid()) insert_recursively(decl, super);
         }
 
         // first, get the sublibrary for the given type

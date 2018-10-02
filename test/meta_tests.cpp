@@ -166,11 +166,18 @@ TEST(typedesc, inheritance) {
     ASSERT_FALSE(duck.subtype_of(dog));
     ASSERT_FALSE(duck.subtype_of(goose));
     ASSERT_FALSE(duck.subtype_of(invalid));
-    ASSERT_EQ(nullptr, animal.super());
-    ASSERT_EQ(&animal, bird.super());
-    ASSERT_EQ(&bird, duck.super());
-    ASSERT_TRUE(duck == TypeDesc("duck"));
+    ASSERT_FALSE(animal.super().valid());
+    ASSERT_EQ(animal, bird.super());
+
+    ASSERT_TRUE(duck == duck);
     ASSERT_TRUE(duck != goose);
+    ASSERT_TRUE(duck != TypeDesc("duck"));
+    ASSERT_TRUE(duck != TypeDesc("duck", TypeDesc("bird")));
+    ASSERT_TRUE(duck == TypeDesc("duck", TypeDesc("bird", TypeDesc("animal"))));
+
+    ASSERT_EQ(bird, duck.super());
+    ASSERT_EQ(duck, TypeDesc("rubber_duck", duck).super());
+
 }
 
 TEST(lib, insert_find) {

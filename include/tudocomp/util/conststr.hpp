@@ -8,12 +8,22 @@
 #include <string>
 
 class conststr {
+private:
+    static constexpr const char* EMPTY = "";
+
     const char* m_ptr;
     size_t m_size;
 
 public:
+    inline constexpr conststr() : m_ptr(EMPTY), m_size(0) {
+    }
+
     template<size_t N>
     inline constexpr conststr(const char(&a)[N]) : m_ptr(a), m_size(N - 1) {
+    }
+
+    inline constexpr conststr(const conststr& other)
+        : m_ptr(other.m_ptr), m_size(other.m_size) {
     }
 
     inline constexpr char operator[](size_t n) const {
@@ -39,5 +49,9 @@ public:
             if(m_ptr[i] != other.m_ptr[i]) return false;
         }
         return true;
+    }
+
+    inline constexpr bool operator!=(const conststr& other) const {
+        return !(*this == other);
     }
 };

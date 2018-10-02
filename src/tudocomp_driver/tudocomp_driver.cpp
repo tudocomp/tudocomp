@@ -185,18 +185,18 @@ int main(int argc, char** argv) {
                     std::cout << std::endl << std::endl;
                     std::cout << "Declaration:" << std::endl;
                     std::cout << decl->str() << std::endl;
-                    if(decl->type().super()) {
+                    if(decl->type().super().valid()) {
                         std::cout << std::endl;
                         std::cout << "Type inheritance: ";
                         {
                             bool first = true;
-                            const TypeDesc* type = &decl->type();
-                            while(type) {
+                            TypeDesc type = decl->type();
+                            while(type.valid()) {
                                 if(!first) std::cout << " -> ";
                                     else first = false;
 
-                                std::cout << type->name();
-                                type = type->super();
+                                std::cout << type.name();
+                                type = type.super();
                             }
                         }
                     }
