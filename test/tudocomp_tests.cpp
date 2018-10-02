@@ -726,6 +726,25 @@ TEST(IO, bits_eof) {
     }
 }
 
+TEST(IO, bits_compressed) {
+    // test border case for compressed_int
+    std::stringstream ss_out;
+    {
+        Output output(ss_out);
+        BitOStream out(output);
+        out.write_compressed_int(1ULL << 63, 3);
+    }
+
+    std::string result = ss_out.str();
+
+    //advanced input test
+    {
+        Input input(result);
+        BitIStream in(input);
+        ASSERT_EQ(in.read_compressed_int<size_t>(3), 1ULL << 63);
+    }
+}
+
 TEST(View, construction) {
     static const uint8_t DATA[3] = { 'f', 'o', 'o' };
 
