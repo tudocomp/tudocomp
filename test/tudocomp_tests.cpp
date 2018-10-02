@@ -655,7 +655,57 @@ TEST(Output, file_not_exists_view) {
     ASSERT_TRUE(threw);
 }
 
-TEST(IO, bits) {
+TEST(IO, bits_only) {
+    const size_t N = 6'500'000;
+
+    std::stringstream ss;
+    {
+        Output output(ss);
+        BitOStream out(output);
+
+        for(size_t i = 0; i < N; i++) {
+            out.write_bit(i % 2);
+        }
+    }
+
+    auto result = ss.str();
+    {
+        Input input(result);
+        BitIStream in(input);
+
+        for(size_t i = 0; i < N; i++) {
+            ASSERT_EQ(i%2, in.read_bit());
+        }
+    }
+}
+
+TEST(IO, bits_and_ints) {
+    const size_t N = 100'000;
+
+    std::stringstream ss;
+    {
+        Output output(ss);
+        BitOStream out(output);
+
+        for(size_t i = 0; i < N; i++) {
+            out.write_bit(i % 2);
+            out.write_int(~i, 64);
+        }
+    }
+
+    auto result = ss.str();
+    {
+        Input input(result);
+        BitIStream in(input);
+
+        for(size_t i = 0; i < N; i++) {
+            ASSERT_EQ(i%2, in.read_bit());
+            ASSERT_EQ(~i , in.template read_int<size_t>(64)) << "i=" << i;
+        }
+    }
+}
+
+TEST(IO, bits_classic_test) {
     std::stringstream ss_out;
 
     {

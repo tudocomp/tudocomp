@@ -120,9 +120,58 @@ public:
     /// \param bits The amount of low bits of the value to write. By default,
     ///             this equals the bit width of type \c T.
     template<class T>
-    inline void write_int(T value, size_t bits = sizeof(T) * CHAR_BIT) {
-        // TODO: Optimize to not always process individual bits
-        ::tdc::io::write_int<T>(bit_sink(), value, bits);
+    inline void write_int(const T value, size_t bits = sizeof(T) * CHAR_BIT) {
+        DCHECK_LE(bits, 64ULL);
+        DCHECK_GE(m_cursor, 0);
+        const size_t bits_left_in_next = size_t(m_cursor + 1);
+        DCHECK_LE(bits_left_in_next, 8ULL);
+
+        if(bits < bits_left_in_next) {
+            // we are writing only few bits
+            // simply use the bit-by-bit method
+            ::tdc::io::write_int<T>(bit_sink(), value, bits);
+        } else {
+            // we are at least finishing the next byte
+
+            // mask low bits of value
+            size_t v = (bits < 64ULL) ?
+                (size_t(value) & ((1ULL << bits) - 1ULL)) : value;
+
+            // fill it up next byte and continue with remaining bits
+            bits -= bits_left_in_next;
+            m_next |= (v >> bits);
+            write_next();
+
+            v &= (1ULL << bits) - 1ULL; // mask remaining bits
+
+            // write as many full bytes as possible
+            if(bits >= 8ULL) {
+                const size_t n = bits / 8ULL;
+                bits %= 8ULL;
+
+                // convert full bytes into BIG ENDIAN (!) representation
+                #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+                    const size_t v_bytes = __builtin_bswap64(v >> bits);
+                #else
+                    const size_t v_bytes = v >> bits;
+                #endif
+
+                const size_t off  = sizeof(size_t) - n;
+                m_stream.write(((const char*)&v_bytes) + off, n);
+
+                v &= (1ULL << bits) - 1ULL; // mask remaining bits
+            }
+
+            if(bits) {
+                // write remaining bits
+                // they (must) fit into the next byte, so just stuff them in
+                DCHECK_LT(bits, 8ULL);
+                DCHECK_LT(v, 256ULL);
+                m_next = (v << (8ULL - bits));
+                m_cursor = MSB - int8_t(bits);
+                DCHECK_GE(m_cursor, 0);
+            }
+        }
     }
 
     // ########################################################

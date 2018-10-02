@@ -26,10 +26,7 @@ class BitIStream {
 
     uint8_t m_cursor = 0;
 
-    inline void read_next() {
-        m_current = m_next;
-        m_cursor = MSB;
-
+    inline void read_next_from_stream() {
         char c;
         if(m_stream.get(c)) {
             m_next = c;
@@ -52,8 +49,14 @@ class BitIStream {
             m_final_bits = m_current & 0b111;
 
             m_next = 0;
-
         }
+    }
+
+    inline void read_next() {
+        m_current = m_next;
+        m_cursor = MSB;
+
+        read_next_from_stream();
     }
 
     struct BitSink {
@@ -133,14 +136,70 @@ public:
     /// \brief Reads the integer value of the next \c amount bits in MSB first
     ///        order.
     /// \tparam The integer type to read.
-    /// \param amount The bit width of the integer to read. By default, this
-    ///               equals the bit width of type \c T.
+    /// \param bits The bit width of the integer to read. By default, this
+    ///             equals the bit width of type \c T.
     /// \return The integer value of the next \c amount bits in MSB first
     ///         order.
     template<class T>
-    inline T read_int(size_t amount = sizeof(T) * CHAR_BIT) {
-        // TODO: Optimize to not always process individual bits
-        return ::tdc::io::read_int<T>(bit_sink(), amount);
+    inline T read_int(size_t bits = sizeof(T) * CHAR_BIT) {
+        DCHECK_LE(bits, 64ULL);
+
+        const size_t bits_left_in_current = m_cursor + 1ULL;
+        if(bits < bits_left_in_current) {
+            // we are reading only few bits
+            // simply use the bit-by-bit method
+            return ::tdc::io::read_int<T>(bit_sink(), bits);
+        } else {
+            // we are at least consuming the current byte
+            bits -= bits_left_in_current;
+            size_t v = m_current & ((1ULL << bits_left_in_current) - 1ULL);
+            v <<= bits;
+
+            // read as many full bytes as possible
+            if(bits >= 8ULL) {
+                if(bits >= 16ULL) {
+                    // use m_next and then read remaining bytes
+                    const size_t n = (bits / 8ULL) - 1;
+                    bits %= 8ULL;
+
+                    const size_t off = sizeof(size_t) - n;
+
+                    size_t v_bytes = 0;
+                    m_stream.read(((char*)&v_bytes) + off, n);
+
+                    // convert full bytes into LITTLE ENDIAN (!) representation
+                    #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+                        v_bytes = __builtin_bswap64(v_bytes);
+                    #endif
+
+                    v_bytes |= size_t(m_next) << (n * 8ULL);
+                    v |= (v_bytes) << bits;
+
+                    // keep data consistency
+                    read_next_from_stream();
+                } else {
+                    // use m_next
+                    bits -= 8ULL;
+                    DCHECK_EQ(false, eof());
+                    read_next();
+                    v |= size_t(m_current) << bits;
+                }
+            }
+
+            // get next byte
+            read_next();
+
+            // read remaining bits
+            // they (must) be available in the next byte, so just mask them out
+            if(bits) {
+                DCHECK_EQ(false, eof());
+                DCHECK_LT(bits, 8ULL);
+                v |= (m_current >> (8ULL - bits));
+                m_cursor = MSB - bits;
+            }
+
+            return v;
+        }
     }
 
     // ########################################################
