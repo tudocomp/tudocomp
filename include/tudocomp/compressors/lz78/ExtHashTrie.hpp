@@ -24,12 +24,12 @@ class ExtHashTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "exthash", "Hash Trie with external hash table");
+        Meta m(lz78_trie_type(), "exthash", "Hash Trie with external hash table");
         return m;
     }
 
-    inline ExtHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-        : Algorithm(std::move(env))
+    inline ExtHashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+        : Algorithm(std::move(cfg))
         , LZ78Trie(n, remaining_characters)
         , m_n(n)
         , m_remaining_characters(remaining_characters)

@@ -12,15 +12,13 @@
 
 #include <tudocomp/Coder.hpp>
 
-#include "../test/util.hpp"
-
 using namespace tdc;
 
 // "Capsule" for Encoder and Decoder implementations
 class MyCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("coder", "my_coder", "An example coder");
+        Meta m(Coder::type_desc(), "my_coder", "An example coder");
         return m;
     }
 
@@ -33,8 +31,8 @@ public:
 
     public:
         template<typename literals_t>
-        inline Encoder(Env&& env, Output& out, literals_t&& literals)
-            : tdc::Encoder(std::move(env), out, literals) {
+        inline Encoder(Config&& cfg, Output& out, literals_t&& literals)
+            : tdc::Encoder(std::move(cfg), out, literals) {
 
             // count occurences of each literal
             std::memset(m_occ, 0, 256 * sizeof(int));
@@ -98,7 +96,7 @@ TEST(doc_coder_impl, test) {
 
     {
         Output out(ss);
-        MyCoder::Encoder encoder(create_env(MyCoder::meta()), out,
+        MyCoder::Encoder encoder(MyCoder::meta().config(), out,
             ViewLiterals("a very simple text"));
 
         ASSERT_EQ(3, encoder.occ(' '));
@@ -111,7 +109,7 @@ TEST(doc_coder_impl, test) {
     std::string result = ss.str();
     {
         Input in(result);
-        MyCoder::Decoder decoder(create_env(MyCoder::meta()), in);
+        MyCoder::Decoder decoder(MyCoder::meta().config(), in);
 
         ASSERT_EQ(100, decoder.template decode<int>(r1));
         ASSERT_EQ(true, decoder.template decode<bool>(bit_r));

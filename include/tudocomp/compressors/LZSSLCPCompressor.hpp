@@ -8,9 +8,10 @@
 #include <tudocomp/Range.hpp>
 #include <tudocomp/util.hpp>
 
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
-#include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
-#include <tudocomp/compressors/lzss/LZSSCoding.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lzss/FactorizationStats.hpp>
+#include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
+#include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 
@@ -20,24 +21,23 @@ namespace tdc {
 
 /// Computes the LZ77 factorization of the input using its suffix array and
 /// LCP table.
-template<typename coder_t, typename text_t = TextDS<>>
+template<typename lzss_coder_t, typename text_t = TextDS<>>
 class LZSSLCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "lzss_lcp", "LZSS Factorization using LCP");
-        m.option("coder").templated<coder_t>("coder");
-        m.option("textds").templated<text_t, TextDS<>>("textds");
-        m.option("threshold").dynamic(3);
+        Meta m(Compressor::type_desc(), "lzss_lcp",
+            "Computes the LZSS factorization of the input using the "
+            "suffix and LCP array.");
+        m.param("coder", "The output encoder.")
+            .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
+        m.param("textds", "The text data structure provider.")
+            .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
+        m.param("threshold", "The minimum factor length.").primitive(2);
         m.uses_textds<text_t>(text_t::SA | text_t::ISA | text_t::LCP);
         return m;
     }
 
-    /// Default constructor (not supported).
-    inline LZSSLCPCompressor() = delete;
-
-    /// Construct the class with an environment.
-    inline LZSSLCPCompressor(Env&& env) : Compressor(std::move(env)) {
-    }
+    using Compressor::Compressor;
 
     inline virtual void compress(Input& input, Output& output) override {
         auto view = input.as_view();
@@ -45,7 +45,7 @@ public:
 
         // Construct text data structures
         text_t text = StatPhase::wrap("Construct Text DS", [&]{
-            return text_t(env().env_for_option("textds"), view,
+            return text_t(config().sub_config("textds"), view,
                     text_t::SA | text_t::ISA | text_t::LCP);
         });
 
@@ -58,7 +58,7 @@ public:
         lzss::FactorBuffer factors;
 
         StatPhase::wrap("Factorize", [&]{
-            const len_t threshold = env().option("threshold").as_integer(); //factor threshold
+            const len_t threshold = config().param("threshold").as_uint();
 
             for(len_t i = 0; i+1 < text_length;) { // we omit T[text_length-1] since we assume that it is the \0 byte!
                 //get SA position for suffix i
@@ -109,27 +109,33 @@ public:
                     ++i; //advance
                 }
             }
-
-            StatPhase::log("threshold", threshold);
-            StatPhase::log("factors", factors.size());
         });
+
+        // statistics
+        IF_STATS({
+            lzss::FactorizationStats stats(factors, text.size());
+            stats.log();
+        })
 
         // encode
         StatPhase::wrap("Encode", [&]{
-            typename coder_t::Encoder coder(env().env_for_option("coder"),
-                output, lzss::TextLiterals<text_t>(text, factors));
+            auto coder = lzss_coder_t(config().sub_config("coder")).encoder(
+                output, lzss::UnreplacedLiterals<text_t>(text, factors));
 
-            lzss::encode_text(coder, text, factors); //TODO is this correct?
+            coder.encode_text(text, factors);
         });
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
-        auto outs = output.as_stream();
+        lzss::DecompBackBuffer decomp;
+        {
+            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
+            decoder.decode(decomp);
+        }
 
-        lzss::decode_text<typename coder_t::Decoder, lzss::DecodeBackBuffer>(decoder, outs);
+        auto outs = output.as_stream();
+        decomp.write_to(outs);
     }
 };
 
-}
-
+} //ns

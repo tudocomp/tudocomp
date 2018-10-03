@@ -1,10 +1,6 @@
 #pragma once
 
-#include <functional>
-#include <memory>
-
-#include <tudocomp/pre_header/Registry.hpp>
-#include <tudocomp/pre_header/Env.hpp>
+#include <string>
 #include <tudocomp/Algorithm.hpp>
 
 namespace tdc {
@@ -12,8 +8,9 @@ namespace tdc {
 /// \brief Base for string generators.
 class Generator : public Algorithm {
 public:
-    static string_ref meta_type() { return "generator"_v; };
-
+    static inline constexpr TypeDesc type_desc() {
+        return TypeDesc("generator");
+    }
     virtual ~Generator() = default;
     Generator(Generator const&) = default;
     Generator(Generator&&) = default;

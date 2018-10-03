@@ -12,11 +12,7 @@
 #include <sys/stat.h>
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/AlgorithmStringParser.hpp>
-#include <tudocomp/Env.hpp>
-#include <tudocomp/Registry.hpp>
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util/View.hpp>
 #include <tudocomp/generators/FibonacciGenerator.hpp>
@@ -26,6 +22,7 @@
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
 #include <tudocomp/io/Path.hpp>
+#include <tudocomp/meta/RegistryOf.hpp>
 
 namespace tdc {
 namespace test {
@@ -152,6 +149,8 @@ void roundtrip_batch(F f) {
     f("abcabca"_v);
 
     f("abbbbbbbbbbcbbbbbbbbbb"_v);
+
+    f("0	100009425	0.1661:0.1661	#businessfor"_v);
 
     //f("abc\0"_v);
 
@@ -366,14 +365,14 @@ void assert_eq_binary(string_ref actual, PacketIntegers expected) {
 template<class C>
 struct CompressResult {
 private:
-    Registry<Compressor> m_registry;
+    RegistryOf<Compressor> m_registry;
 public:
     std::vector<uint8_t> bytes;
     std::string str;
     std::string orginal_text;
     std::string options;
 
-    CompressResult(const Registry<Compressor>& registry,
+    CompressResult(const RegistryOf<Compressor>& registry,
                     std::vector<uint8_t>&& p_bytes,
                     std::string&& p_str,
                     std::string&& p_original,
@@ -390,13 +389,14 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decoded_buffer);
 
-            auto compressor = create_algo_with_registry<C>(options, m_registry);
+            auto compressor = m_registry.select<C>(options);
 
-            if (C::meta().textds_flags().has_restrictions()) {
-                decoded_out = Output(decoded_out, C::meta().textds_flags());
+            auto restr = C::meta().input_restrictions();
+            if (restr.has_restrictions()) {
+                decoded_out = Output(decoded_out, restr);
             }
 
-            compressor.decompress(text_in, decoded_out);
+            compressor->decompress(text_in, decoded_out);
         }
         std::string decompressed_text {
             decoded_buffer.begin(),
@@ -411,13 +411,14 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decompressed_bytes);
 
-            auto compressor = create_algo_with_registry<C>(options, m_registry);
+            auto compressor = m_registry.select<C>(options);
 
-            if (C::meta().textds_flags().has_restrictions()) {
-                decoded_out = Output(decoded_out, C::meta().textds_flags());
+            auto restr = C::meta().input_restrictions();
+            if (restr.has_restrictions()) {
+                decoded_out = Output(decoded_out, restr);
             }
 
-            compressor.decompress(text_in, decoded_out);
+            compressor->decompress(text_in, decoded_out);
         }
         std::vector<uint8_t> orginal_bytes {
             orginal_text.begin(),
@@ -430,10 +431,10 @@ public:
 template<class C>
 class RoundTrip {
     std::string m_options;
-    Registry<Compressor> m_registry;
+    RegistryOf<Compressor> m_registry;
 public:
     inline RoundTrip(const std::string& options = "",
-                        const Registry<Compressor>& registry = Registry<Compressor>()):
+                        const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()):
         m_options(options),
         m_registry(registry)
     {
@@ -445,12 +446,13 @@ public:
             Input text_in = Input::from_memory(text);
             Output encoded_out = Output::from_memory(encoded_buffer);
 
-            auto compressor = create_algo_with_registry<C>(m_options, m_registry);
+            auto compressor = m_registry.select<C>(m_options);
 
-            if (C::meta().textds_flags().has_restrictions()) {
-                text_in = Input(text_in, C::meta().textds_flags());
+            auto restr = C::meta().input_restrictions();
+            if (restr.has_restrictions()) {
+                text_in = Input(text_in, restr);
             }
-            compressor.compress(text_in, encoded_out);
+            compressor->compress(text_in, encoded_out);
         }
         std::string s(encoded_buffer.begin(), encoded_buffer.end());
         return CompressResult<C> {
@@ -466,7 +468,7 @@ public:
 template<class T>
 inline CompressResult<T> compress(string_ref text,
                                     const std::string& options = "",
-                                    const Registry<Compressor>& registry = Registry<Compressor>()) {
+                                    const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()) {
     return RoundTrip<T>(options, registry).compress(text);
 }
 
@@ -474,7 +476,7 @@ template<class T>
 inline void roundtrip_ex(string_ref original_text,
                         string_ref expected_compressed_text,
                         const std::string& options = "",
-                        const Registry<Compressor>& registry = Registry<Compressor>()) {
+                        const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()) {
     auto e = RoundTrip<T>(options, registry).compress(original_text);
     auto& compressed_text = e.str;
 
@@ -494,7 +496,7 @@ template<class T>
 inline void roundtrip_binary(string_ref original_text,
                             const std::vector<uint64_t>& expected_compressed_text_packed_ints = {},
                             const std::string& options = "",
-                            const Registry<Compressor>& registry = Registry<Compressor>()) {
+                            const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()) {
     auto e = RoundTrip<T>(options, registry).compress(original_text);
     auto& compressed_text = e.bytes;
 
@@ -581,9 +583,8 @@ void test_binary_out(string_ref in, std::vector<uint64_t> packed_ints_out, bool 
     auto v = in;
     test::TestOutput o(false);
     {
-        auto env = tdc::builder<Coder>().env();
         std::shared_ptr<BitOStream> bo = std::make_shared<BitOStream>(o);
-        typename Coder::Encoder coder(std::move(env), bo, ViewLiterals(v));
+        typename Coder::Encoder coder(Coder::meta().config(), bo, ViewLiterals(v));
 
         bool was_zero = true;
         for (auto c : v) {

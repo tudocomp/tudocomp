@@ -28,9 +28,12 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("isa", "sparse_isa");
-        m.option("sa").templated<sa_t>("sa");
-        m.option("t").dynamic(3);
+        Meta m(TypeDesc("isa"), "sparse_isa",
+            "Constructs a sparse inverse suffix array using the suffix array "
+            "and a sampling strategy.");
+        m.param("sa", "The suffix array implementation.")
+            .strategy<sa_t>(TypeDesc("sa"));
+        m.param("t", "The sampling rate.").primitive(3);
         return m;
     }
 
@@ -39,8 +42,8 @@ public:
     }
 
     template<typename textds_t>
-    inline SparseISA(Env&& env, textds_t& tds, CompressMode cm)
-            : Algorithm(std::move(env)) {
+    inline SparseISA(Config&& cfg, textds_t& tds, CompressMode cm)
+            : Algorithm(std::move(cfg)) {
 
         // Suffix Array types must match
         static_assert(std::is_same<sa_t, typename textds_t::sa_type>(),
@@ -52,7 +55,7 @@ public:
         const size_t n = m_sa->size();
         m_has_shortcut = BitVector(n);
 
-        const size_t t = this->env().option("t").as_integer();
+        const size_t t = this->config().param("t").as_uint();
 
         // Construct
         StatPhase::wrap("Construct sparse ISA", [&]{

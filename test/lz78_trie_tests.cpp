@@ -1,8 +1,9 @@
+#include <cctype>
+
 #include "test/util.hpp"
 #include <gtest/gtest.h>
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 
@@ -42,6 +43,7 @@ bool operator==(const TestTrieElement& lhs, const TestTrieElement& rhs) {
     return lhs.chr == rhs.chr && lhs.id == rhs.id && lhs.children == rhs.children;
 }
 
+/*
 std::ostream& operator<<(std::ostream& out, const TestTrieElement& v) {
     out << "\n[" << v.chr << " (" << int(v.chr) << ")|" << v.id << "]";
     for(auto& e: v.children) {
@@ -49,6 +51,29 @@ std::ostream& operator<<(std::ostream& out, const TestTrieElement& v) {
         ss << e;
         out << indent_lines(ss.str(), 4);
     }
+    return out;
+}
+*/
+
+std::ostream& operator<<(std::ostream& out, const TestTrieElement& v) {
+    out << "\n{";
+    if (std::isprint(v.chr)) {
+        out << "'" << v.chr << "'";
+    } else {
+        out << uint32_t(uint8_t(v.chr));
+    }
+    out << ",";
+    out << uint32_t(uint8_t(v.id));
+    out << ",{";
+    for(auto& e: v.children) {
+        std::stringstream ss;
+        ss << e;
+        out << indent_lines(ss.str(), 4);
+    }
+    if (v.children.size() > 0) {
+        out << "\n";
+    }
+    out << "}},";
     return out;
 }
 
@@ -67,27 +92,44 @@ void trie_test_single(TestTrie test, bool test_values) {
     size_t is_trie_size = 1;
 
     size_t remaining = test.input.size();
-    auto trie = builder<T>().instance(remaining, remaining);
+    auto trie = Algorithm::instance<T>(remaining, remaining);
     trie.add_rootnode(0);
 
     auto is_trie_node = &is_trie;
     auto node = trie.get_rootnode(0);
 
     for (uint8_t c : test.input) {
-        //std::cout << "char '" << char(c) << "'";
         remaining--;
         auto child = trie.find_or_insert(node, c);
+
+        // std::cout << "char '" << char(c) << "'\n";
+        // trie.debug_print();
+
         if (child.is_new()) {
-            //std::cout << " not found\n";
+            // std::cout << " not found\n";
             is_trie_node->add(c,is_trie_size);
 
-            is_trie_size++;
+            // Check that insert worked correctly
+            try {
+                auto tmp = is_trie_node->find(c);
+                ASSERT_EQ(tmp.chr, c);
+                ASSERT_EQ(tmp.id, is_trie_size);
+            } catch (std::runtime_error& e) {
+                ASSERT_TRUE(false) << "Child node "<<c<<","<<is_trie_size<<" that should be there could not be found in the trie 2";
+            }
 
+            is_trie_size++;
             is_trie_node = &is_trie;
             node = trie.get_rootnode(0);
         } else {
-            //std::cout << " found\n";
-            is_trie_node = &is_trie_node->find(c);
+            // std::cout << " found\n";
+
+            // Check that insert worked correctly, and look at value
+            try  {
+                is_trie_node = &is_trie_node->find(c);
+            } catch (std::runtime_error& e) {
+                ASSERT_TRUE(false) << "Child node "<<c<<",? that should be there could not be found in the trie 1";
+            }
             if (test_values) {
                 EXPECT_EQ(child.id(), is_trie_node->id);
             }
@@ -185,6 +227,78 @@ void trie_test(bool test_values = true) {
             {229,16,{}},
         }},
     }, test_values);
+    trie_test_single<T>({
+        "0	100009425	0.1661:0.1661	#businessfo"_v,
+        {0,0,{
+            {9,2,{
+                {'0',9,{}},
+            }},
+            {'#',17,{}},
+            {'.',10,{}},
+            {'0',1,{
+                {'.',14,{}},
+                {'0',4,{
+                    {'9',5,{}},
+                }},
+            }},
+            {'1',3,{
+                {9,16,{}},
+                {'6',11,{
+                    {'6',15,{}},
+                }},
+                {':',13,{}},
+            }},
+            {'2',7,{}},
+            {'4',6,{}},
+            {'5',8,{}},
+            {'6',12,{}},
+            {'b',18,{}},
+            {'e',23,{}},
+            {'f',25,{}},
+            {'i',21,{}},
+            {'n',22,{}},
+            {'o',26,{}},
+            {'s',20,{
+                {'s',24,{}},
+            }},
+            {'u',19,{}},
+        }},
+    }, test_values);
+    /*
+    trie_test_single<T>({
+        "a\0\0"_v,
+        {0,0,{
+            {0,2,{}},
+            {'a',1,{}},
+        }},
+    }, test_values);
+    trie_test_single<T>({
+        "data-web-snippets/\0\0"_v,
+        {0,0,{
+            {0,16,{}},
+            {'-',8,{}},
+            {'/',15,{}},
+            {'a',2,{
+                {'-',4,{}},
+            }},
+            {'b',7,{}},
+            {'d',1,{}},
+            {'e',6,{}},
+            {'i',11,{}},
+            {'n',10,{}},
+            {'p',12,{
+                {'e',13,{}},
+            }},
+            {'s',9,{}},
+            {'t',3,{
+                {'s',14,{}},
+            }},
+            {'w',5,{}},
+        }},
+    }, test_values);
+    */
+
+    // {,,{}},
 }
 
 #include <tudocomp/compressors/lz78/BinaryTrie.hpp>
@@ -259,12 +373,42 @@ TEST(Trie, ExtHashTrie) {
     trie_test<ExtHashTrie>();
 }
 
-#include <tudocomp/compressors/lz78/CompactSparseHashTrie.hpp>
-TEST(TrieStructure, CompactSparseHashTrie) {
-    trie_test<CompactSparseHashTrie>(false);
+#include <tudocomp/compressors/lz78/CompactHashTrie.hpp>
+TEST(TrieStructure, CompactHashTrie) {
+    trie_test<CompactHashTrie<>>(false);
 }
-TEST(Trie, CompactSparseHashTrie) {
-    trie_test<CompactSparseHashTrie>();
+TEST(Trie, CompactHashTrie) {
+    trie_test<CompactHashTrie<>>();
+}
+TEST(TrieStructure, CompactHashTriePlain) {
+    trie_test<CompactHashTrie<Plain>>(false);
+}
+TEST(Trie, CompactHashTriePlain) {
+    trie_test<CompactHashTrie<Plain>>();
+}
+TEST(TrieStructure, CompactHashTrieSparseDisplacement) {
+    trie_test<CompactHashTrie<SparseDisplacement>>(false);
+}
+TEST(Trie, CompactHashTrieSparseDisplacement) {
+    trie_test<CompactHashTrie<SparseDisplacement>>();
+}
+TEST(TrieStructure, CompactHashTriePlainDisplacement) {
+    trie_test<CompactHashTrie<PlainDisplacement>>(false);
+}
+TEST(Trie, CompactHashTriePlainDisplacement) {
+    trie_test<CompactHashTrie<PlainDisplacement>>();
+}
+TEST(TrieStructure, CompactHashTrieSparseEliasDisplacement) {
+    trie_test<CompactHashTrie<SparseEliasDisplacement>>(false);
+}
+TEST(Trie, CompactHashTrieSparseEliasDisplacement) {
+    trie_test<CompactHashTrie<SparseEliasDisplacement>>();
+}
+TEST(TrieStructure, CompactHashTriePlainEliasDisplacement) {
+    trie_test<CompactHashTrie<PlainEliasDisplacement>>(false);
+}
+TEST(Trie, CompactHashTriePlainEliasDisplacement) {
+    trie_test<CompactHashTrie<PlainEliasDisplacement>>();
 }
 
 // #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>

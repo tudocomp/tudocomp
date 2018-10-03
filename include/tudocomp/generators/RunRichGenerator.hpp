@@ -10,8 +10,10 @@ class RunRichGenerator : public Generator {
 
 public:
     inline static Meta meta() {
-        Meta m("generator", "run_rich", "Generates run-rich strings.");
-        m.option("n").dynamic();
+        Meta m(Generator::type_desc(), "run_rich",
+            "Generates a run-rich string on a binary alphabet conforming "
+            "[Matsubara et al., 2009].");
+        m.param("n", "The length of the generated string.").primitive();
         return m;
     }
 
@@ -39,7 +41,7 @@ public:
     using Generator::Generator;
 
     inline virtual std::string generate() override {
-        return generate(env().option("n").as_integer());
+        return generate(config().param("n").as_uint());
     }
 };
 

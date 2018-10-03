@@ -54,12 +54,9 @@ public:
     using Algorithm::Algorithm; //import constructor
 
     inline static Meta meta() {
-        Meta m("lfs_comp", "esa");
-
-        m.option("textds").templated<text_t, TextDS<>>("textds");
-
+        Meta m(TypeDesc("lfs_comp"), "esa");
+        m.param("textds").strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
         m.uses_textds<text_t>(text_t::SA | text_t::ISA | text_t::LCP);
-
         return m;
     }
 
@@ -67,7 +64,7 @@ public:
     inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
 
 
-        text_t t(env().env_for_option("textds"), input);
+        text_t t(config().sub_config("textds"), input);
         DLOG(INFO) << "building sa and lcp";
         StatPhase::wrap("computing sa and lcp", [&]{
 

@@ -1,17 +1,21 @@
 #pragma once
 
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/Env.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
 #include <tudocomp/io.hpp>
 
 namespace tdc {
 
+constexpr TypeDesc dividing_strategy_td() {
+    return TypeDesc("dividing_strategy");
+}
+
 struct DivisionDividingStrategy: public Algorithm {
     inline static Meta meta() {
-        Meta m("dividing_strategy", "division");
-        m.option("n").dynamic(4);
+        Meta m(dividing_strategy_td(), "division",
+            "Partitions the input into a fixed amount of blocks.");
+        m.param("n", "The amount of blocks").primitive(4);
         return m;
     }
 
@@ -19,7 +23,7 @@ struct DivisionDividingStrategy: public Algorithm {
 
     inline std::vector<size_t> split_at(Input& inp) const {
         auto size = inp.size();
-        auto n = env().option("n").as_integer();
+        auto n = config().param("n").as_uint();
         size_t delta = size / n;
         if (size != 0 && delta == 0) {
             delta = 1;
@@ -42,8 +46,9 @@ struct DivisionDividingStrategy: public Algorithm {
 
 struct BlockedDividingStrategy: public Algorithm {
     inline static Meta meta() {
-        Meta m("dividing_strategy", "blocked");
-        m.option("n").dynamic(1024); // TODO: Change this to something reasonable like 1024
+        Meta m(dividing_strategy_td(), "blocked",
+            "Partitions the input into blocks of fixed size.");
+        m.param("n", "the size of each block (in bytes)").primitive(1024);
         return m;
     }
 
@@ -51,7 +56,7 @@ struct BlockedDividingStrategy: public Algorithm {
 
     inline std::vector<size_t> split_at(Input& inp) const {
         auto size = inp.size();
-        auto delta = env().option("n").as_integer();
+        auto delta = config().param("n").as_uint();
 
         std::vector<size_t> ret;
         ret.push_back(0);
@@ -121,13 +126,15 @@ class DividingCompressor: public Compressor {
 
 public:
     inline static Meta meta() {
-        Meta m("compressor", "dividing");
-        m.option("strategy").templated<dividing_t>("dividing_strategy");
-        m.option("compressor").dynamic<Compressor>();
+        Meta m(Compressor::type_desc(), "dividing",
+            "Partitions the input into blocks and compresses each block "
+            "individually.");
+        m.param("strategy").strategy<dividing_t>(dividing_strategy_td());
+        m.param("compressor").unbound_strategy(Compressor::type_desc());
         return m;
     }
 
-    inline DividingCompressor(Env&& env) : Compressor(std::move(env)) {}
+    using Compressor::Compressor;
 
     template<typename F>
     inline void compress_for_each_block(Input& _input, Output& output, F f) const {
@@ -135,7 +142,7 @@ public:
         auto _view = _input.as_view();
         auto input = Input::from_memory(_view);
 
-        const dividing_t strategy { this->env().env_for_option("strategy") };
+        const dividing_t strategy { config().sub_config("strategy") };
         auto offsets = strategy.split_at(input);
 
         for (size_t i = 0; i < offsets.size() - 1; i++) {
@@ -195,37 +202,41 @@ public:
     }
 
     inline virtual void compress(Input& input, Output& output) override final {
-        auto& option_value = env().option("compressor");
-        auto av = option_value.as_algorithm();
-        auto textds_flags = av.textds_flags();
-        auto const& registry = env().root()->template registry<Compressor>();
+        auto option_value = config().param("compressor");
+
+        //TODO: eliminate tdc_algorithms dependency
+        auto entry = Registry::of<Compressor>().find(
+            meta::ast::convert<meta::ast::Object>(option_value.ast()));
+
+        auto is = entry.decl()->input_restrictions();
 
         // Make sure null termination and escaping happens
-        auto input2 = Input(input, textds_flags);
+        auto input2 = Input(input, is);
 
         compress_for_each_block(input2, output, [&](auto& input, auto& output){
             // TODO: If compressors ever got changed to not store runtime state,
             // then this init could happen once
-            auto compressor = create_algo_with_registry_dynamic(registry, av);
-
+            auto compressor = entry.select();
             compressor->compress(input, output);
         });
     }
 
     inline virtual void decompress(Input& input, Output& output) override final {
-        auto& option_value = env().option("compressor");
-        auto av = option_value.as_algorithm();
-        auto textds_flags = av.textds_flags();
-        auto const& registry = env().root()->template registry<Compressor>();
+        auto option_value = config().param("compressor");
+
+        //TODO: eliminate tdc_algorithms dependency
+        auto entry = Registry::of<Compressor>().find(
+            meta::ast::convert<meta::ast::Object>(option_value.ast()));
+
+        auto is = entry.decl()->input_restrictions();
 
         // Make sure null termination and escaping gets reverted
-        auto output2 = Output(output, textds_flags);
+        auto output2 = Output(output, is);
 
         decompress_for_each_block(input, output2, [&](auto& input, auto& output){
             // TODO: If compressors ever got changed to not store runtime state,
             // then this init could happen once
-            auto compressor = create_algo_with_registry_dynamic(registry, av);
-
+            auto compressor = entry.select();
             compressor->decompress(input, output);
         });
     }

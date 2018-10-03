@@ -1,7 +1,6 @@
 
 #include "test/util.hpp"
 #include <gtest/gtest.h>
-#include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZWCompressor.hpp>
@@ -24,7 +23,7 @@ std::ostream& operator<<(std::ostream& os, const InputOutput& v) {
 
 class NotCedarLz78Compress: public ::testing::TestWithParam<InputOutput> {};
 TEST_P(NotCedarLz78Compress, test) {
-    auto c = create_algo<LZ78Compressor<ASCIICoder, lz78::BinaryTrie>>();
+    auto c = Algorithm::instance<LZ78Compressor<ASCIICoder, lz78::BinaryTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
     c.compress(i, o);
@@ -43,7 +42,7 @@ INSTANTIATE_TEST_CASE_P(
 
 class CedarLz78Compress: public ::testing::TestWithParam<InputOutput> {};
 TEST_P(CedarLz78Compress, test) {
-    auto c = create_algo<LZ78Compressor<ASCIICoder, lz78::CedarTrie>>();
+    auto c = Algorithm::instance<LZ78Compressor<ASCIICoder, lz78::CedarTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
     c.compress(i, o);
@@ -61,7 +60,7 @@ INSTANTIATE_TEST_CASE_P(
 
 class NotCedarLzwCompress: public ::testing::TestWithParam<InputOutput> {};
 TEST_P(NotCedarLzwCompress, test) {
-    auto c = create_algo<LZWCompressor<ASCIICoder, lz78::BinaryTrie>>();
+    auto c = Algorithm::instance<LZWCompressor<ASCIICoder, lz78::BinaryTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
     c.compress(i, o);
@@ -83,7 +82,7 @@ INSTANTIATE_TEST_CASE_P(InputOutput,
 
 class CedarLzwCompress: public ::testing::TestWithParam<InputOutput> {};
 TEST_P(CedarLzwCompress, test) {
-    auto c = create_algo<LZWCompressor<ASCIICoder, lz78::CedarTrie>>();
+    auto c = Algorithm::instance<LZWCompressor<ASCIICoder, lz78::CedarTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
     c.compress(i, o);

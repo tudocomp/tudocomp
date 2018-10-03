@@ -2,7 +2,8 @@
 
 #include <tudocomp/util.hpp>
 
-namespace tdc {namespace io {
+namespace tdc {
+namespace io {
     /// Describes a set of restrictions placed on input data.
     ///
     /// Restrictions include illigal bytes in the input (called escape bytes here),
@@ -95,4 +96,8 @@ namespace tdc {namespace io {
                            const InputRestrictions& rhs) {
         return !(lhs == rhs);
     }
-}}
+}
+
+using InputRestrictions = io::InputRestrictions;
+
+}

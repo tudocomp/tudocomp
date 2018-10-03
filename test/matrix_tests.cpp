@@ -6,8 +6,6 @@
 #include <glog/logging.h>
 #include <cstdlib>
 
-#include <tudocomp/AlgorithmStringParser.hpp>
-#include <tudocomp/Env.hpp>
 #include <tudocomp_driver/Registry.hpp>
 
 #include "test/util.hpp"
@@ -29,6 +27,7 @@ const std::vector<std::string> ADDITIONAL_TESTS {
     "dividing(strategy=division(2), compressor=lzw)",
     "dividing(strategy=blocked(10), compressor=esp)",
     "dividing(strategy=division(2), compressor=esp)",
+    "long_common_string(b=1)",
 };
 
 TEST(TudocompDriver, roundtrip_matrix) {
@@ -47,9 +46,8 @@ TEST(TudocompDriver, roundtrip_matrix) {
 
     // stage 1: automatically generated list of tests
     {
-        for (const auto& x : COMPRESSOR_REGISTRY.all_algorithms_with_static("compressor")) {
-            test_cases.push_back(x.to_string());
-        }
+        tdc_algorithms::register_algorithms();
+        test_cases = Registry::of<Compressor>().signatures();
     }
     // stage 2: build-in exclude and additional
     {

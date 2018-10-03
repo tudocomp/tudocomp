@@ -26,7 +26,7 @@ using namespace lfs;
 
 
 void run_comp(std::string compression_string) {
-    auto c = create_algo<tdc::lfs::LFS2BSTCompressor<> >();
+    auto c = Algorithm::instance<tdc::lfs::LFS2BSTCompressor<> >();
 
     std::string compressed;
     // compress

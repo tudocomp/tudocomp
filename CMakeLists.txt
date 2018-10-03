@@ -40,7 +40,7 @@ include(ExternalProject)
 set(GCC_WARNINGS "-Wall -Werror=return-type")
 #set(SANITIZATION "-fsanitize=undefined -fsanitize=address -fsanitize=leak")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 ${GCC_WARNINGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=gnu++14 ${GCC_WARNINGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG ${SANITIZATION}")
 
@@ -76,12 +76,18 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmakemod
 include(cotire)
 set (COTIRE_MINIMUM_NUMBER_OF_TARGET_SOURCES 1000)
 
+# Git Submodule sources
+include(git_submodule_subdirectories)
+
 # Finders
 include(find_or_download_package)
 
 # Usage: find_or_download_package(PACKAGE_NAME, FOUND_FLAG_PREFIX, TARGET_PREFIX)
 find_or_download_package(Glog GLOG glog)
 find_or_download_package(SDSL SDSL sdsl)
+git_submodule_subdirectory(external/bit_span)
+git_submodule_subdirectory(external/compact_sparse_hash)
+git_submodule_subdirectory(external/datasets)
 
 include(FindJudy)
 
@@ -100,13 +106,16 @@ include_directories(include)
 if(DEFINED TDC_REGISTRY)
     message("[CAUTION] Using custom registry config: ${TDC_REGISTRY}")
 else()
-    set(TDC_REGISTRY ${CMAKE_SOURCE_DIR}/etc/registry_config.py)
+    set(TDC_REGISTRY ${CMAKE_SOURCE_DIR}/etc/registries/all_algorithms.py)
 endif(DEFINED TDC_REGISTRY)
 
 add_subdirectory(src)
 
 # Unit tests for everything in src
 add_subdirectory(test)
+
+# Examples
+add_subdirectory(examples)
 
 # etc
 add_subdirectory(etc)

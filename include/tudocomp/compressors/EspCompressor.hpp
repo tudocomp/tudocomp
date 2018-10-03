@@ -5,7 +5,6 @@
 #include <tudocomp_stat/StatPhase.hpp>
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
@@ -19,9 +18,9 @@ template<typename slp_coder_t, typename ipd_t = esp::StdUnorderedMapIPD>
 class EspCompressor: public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "esp", "ESP based grammar compression");
-        m.option("slp_coder").templated<slp_coder_t, esp::PlainSLPCoder>("slp_coder");
-        m.option("ipd").templated<ipd_t, esp::StdUnorderedMapIPD>("ipd");
+        Meta m(Compressor::type_desc(), "esp", "ESP based grammar compression");
+        m.param("slp_coder").strategy<slp_coder_t>(TypeDesc("slp_coder"), Meta::Default<esp::PlainSLPCoder>());
+        m.param("ipd").strategy<ipd_t>(TypeDesc("ipd"), Meta::Default<esp::StdUnorderedMapIPD>());
         return m;
     }
 
@@ -59,7 +58,7 @@ public:
             auto phase1 = StatPhase("Encode Phase");
 
             auto phase2 = StatPhase("Creating strategy");
-            const slp_coder_t strategy { this->env().env_for_option("slp_coder") };
+            const slp_coder_t strategy { this->config().sub_config("slp_coder") };
 
             phase2.split("Encode SLP");
             strategy.encode(std::move(slp), output);
@@ -70,7 +69,7 @@ public:
         auto phase0 = StatPhase("ESP Decompressor");
 
         auto phase1 = StatPhase("Creating strategy");
-        const slp_coder_t strategy { this->env().env_for_option("slp_coder") };
+        const slp_coder_t strategy { this->config().sub_config("slp_coder") };
 
         phase1.split("Decode SLP");
         auto slp = strategy.decode(input);

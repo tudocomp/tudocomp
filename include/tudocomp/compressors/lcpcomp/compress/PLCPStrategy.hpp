@@ -8,7 +8,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/ds/LCPSada.hpp>
 #include <boost/heap/pairing_heap.hpp>
 

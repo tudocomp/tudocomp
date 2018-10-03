@@ -8,7 +8,7 @@ namespace tdc {namespace esp {
     class SubSeqOptimal: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("subseq", "optimal");
+            Meta m(TypeDesc("subseq"), "optimal");
             return m;
         };
 
@@ -22,7 +22,7 @@ namespace tdc {namespace esp {
     class SubSeqGreedy: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("subseq", "greedy");
+            Meta m(TypeDesc("subseq"), "greedy");
             return m;
         };
 

@@ -2,11 +2,11 @@
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Generator.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 
 #include <tudocomp/compressors/lzss/LZSSCoding.hpp>
-#include <tudocomp/compressors/lzss/LZSSFactors.hpp>
-#include <tudocomp/compressors/lzss/LZSSLiterals.hpp>
+#include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
+#include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
 
 #include <tudocomp/compressors/lcpcomp/decompress/CompactDec.hpp>
 #include <tudocomp/compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp>
@@ -61,13 +61,13 @@ TEST(lzss, factor_buffer_sort) {
 TEST(lzss, text_literals_empty) {
     lzss::FactorBuffer empty;
     std::string tmp = "";
-    lzss::TextLiterals<std::string> literals(tmp, empty);
+    lzss::UnreplacedLiterals<std::string> literals(tmp, empty);
     ASSERT_FALSE(literals.has_next());
 }
 
 template<typename text_t>
 void lzss_text_literals_factors(
-    lzss::TextLiterals<text_t>& literals,
+    lzss::UnreplacedLiterals<text_t>& literals,
     const std::string& ref_literals,
     const len_compact_t* ref_positions) {
 
@@ -87,7 +87,7 @@ TEST(lzss, text_literals_nofactors) {
     const len_compact_t positions[] = {0,1,2,3,4,5,6,7};
 
     lzss::FactorBuffer empty;
-    lzss::TextLiterals<std::string> literals(text, empty);
+    lzss::UnreplacedLiterals<std::string> literals(text, empty);
 
     lzss_text_literals_factors(literals, text, positions);
 }
@@ -102,7 +102,7 @@ TEST(lzss, text_literals_factors_middle) {
     factors.emplace_back(4, text.length(), 4);
     factors.emplace_back(10, text.length(), 3);
 
-    lzss::TextLiterals<std::string> literals(text, factors);
+    lzss::UnreplacedLiterals<std::string> literals(text, factors);
 
     lzss_text_literals_factors(literals, ref_literals, ref_positions);
 }
@@ -117,7 +117,7 @@ TEST(lzss, text_literals_factors_begin) {
     factors.emplace_back(4, text.length(), 2);
     factors.emplace_back(8, text.length(), 2);
 
-    lzss::TextLiterals<std::string> literals(text, factors);
+    lzss::UnreplacedLiterals<std::string> literals(text, factors);
 
     lzss_text_literals_factors(literals, ref_literals, ref_positions);
 }
@@ -133,19 +133,20 @@ TEST(lzss, text_literals_factors_end) {
     factors.emplace_back(9, text.length(), 2);
     factors.emplace_back(12, text.length(), 2);
 
-    lzss::TextLiterals<std::string> literals(text, factors);
+    lzss::UnreplacedLiterals<std::string> literals(text, factors);
 
     lzss_text_literals_factors(literals, ref_literals, ref_positions);
 }
 
 TEST(lzss, decode_back_buffer) {
-    //lzss::DecodeBackBuffer buffer = create_algo<lzss::DecodeBackBuffer>("", 12);
-    lzss::DecodeBackBuffer buffer(12);
+    lzss::DecompBackBuffer buffer;
+    buffer.initialize(12);
     buffer.decode_literal('b');
     buffer.decode_literal('a');
     buffer.decode_literal('n');
     buffer.decode_factor(1, 3);
     buffer.decode_factor(0, 6);
+    buffer.process();
 
     std::stringstream ss;
     buffer.write_to(ss);
@@ -155,13 +156,14 @@ TEST(lzss, decode_back_buffer) {
 
 template<typename T>
 void test_forward_decode_buffer_chain() {
-    T buffer = create_algo<T>("", 12);
+    T buffer = Algorithm::instance<T>();
+    buffer.initialize(12);
     buffer.decode_literal('b');
     buffer.decode_factor(3, 3);
     buffer.decode_literal('n');
     buffer.decode_literal('a');
     buffer.decode_factor(0, 6);
-    buffer.decode_eagerly();
+    buffer.process();
 
     std::stringstream ss;
     buffer.write_to(ss);
@@ -171,13 +173,14 @@ void test_forward_decode_buffer_chain() {
 
 template<typename T>
 void test_forward_decode_buffer_multiref() {
-    T buffer = create_algo<T>("", 12);
+    T buffer = Algorithm::instance<T>();
+    buffer.initialize(12);
     buffer.decode_factor(6, 6);
     buffer.decode_literal('b');
     buffer.decode_factor(9, 3);
     buffer.decode_literal('n');
     buffer.decode_literal('a');
-    buffer.decode_eagerly();
+    buffer.process();
 
     std::stringstream ss;
     buffer.write_to(ss);

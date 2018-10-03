@@ -18,9 +18,10 @@ constexpr option OPTIONS[] = {
     {"force",      no_argument,       nullptr, 'f'},
     {"generator",  required_argument, nullptr, 'g'},
     {"help",       no_argument,       nullptr, OPT_HELP},
-    {"list",       no_argument,       nullptr, 'l'},
+    {"list",       optional_argument, nullptr, 'l'},
     {"output",     required_argument, nullptr, 'o'},
     {"stats",      optional_argument, nullptr, 's'},
+    {"statfile",   required_argument, nullptr, 'S'},
     {"version",    no_argument,       nullptr, 'v'},
     {"raw",        no_argument,       nullptr, OPT_RAW},
     {"usestdin",   no_argument,       nullptr, OPT_STDIN},
@@ -88,8 +89,10 @@ public:
 
         // -l, --list
         out << right << setw(W_SF) << "-l" << ", "
-            << left << setw(W_LF) << "--list"
+            << left << setw(W_LF) << "--list[=ALGORITHM]"
             << "list available (de-)compression algorithms"
+            << endl << setw(W_INDENT) << "" << "if ALGORITHM is given, print "
+            << "details about that algorithm"
             << endl;
 
         // -o, --output=FILE
@@ -102,6 +105,12 @@ public:
         out << right << setw(W_SF) << "-s" << ", "
             << left << setw(W_LF) << "--stats[=TITLE]"
             << "print (de-)compression statistics in JSON format"
+            << endl;
+
+        // -S, --statfile=FILE
+        out << right << setw(W_SF) << "-S" << ", "
+            << left << setw(W_LF) << "--statfile=FILE"
+            << "write stats to FILE."
             << endl;
 
         // --help
@@ -162,7 +171,9 @@ private:
 
     bool m_help;
     bool m_version;
+
     bool m_list;
+    std::string m_list_algorithm;
 
     std::string m_algorithm;
 
@@ -176,6 +187,7 @@ private:
 
     bool m_stats;
     std::string m_stats_title;
+    std::string m_stat_file;
 
     std::vector<std::string> m_remaining;
 
@@ -220,8 +232,8 @@ public:
 
                 case 'l': // --list
                     m_list = true;
+                    if(optarg) m_list_algorithm = std::string(optarg);
                     break;
-
 
                 case 'v': // --version
                     m_version = true;
@@ -234,6 +246,10 @@ public:
                 case 's': // --stats=[optarg]
                     m_stats = true;
                     if(optarg) m_stats_title = std::string(optarg);
+                    break;
+
+                case 'S': // --statfile=<optarg>
+                    m_stat_file = std::string(optarg);
                     break;
 
 				//logging
@@ -286,7 +302,9 @@ public:
 
     const bool& help = m_help;
     const bool& version = m_version;
+
     const bool& list = m_list;
+    const std::string& list_algorithm = m_list_algorithm;
 
     const std::string& algorithm = m_algorithm;
 
@@ -300,6 +318,7 @@ public:
     const bool& decompress = m_decompress;
 
     const bool& stats = m_stats;
+    const std::string& stat_file = m_stat_file;
     const std::string& stats_title = m_stats_title;
 
     const std::vector<std::string>& remaining = m_remaining;
@@ -307,4 +326,3 @@ public:
 
 }
 /// \endcond
-

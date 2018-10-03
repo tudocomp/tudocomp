@@ -10,10 +10,10 @@ namespace tdc {namespace esp {
     class SortedSLPCoder: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("slp_coder", "sorted");
-            m.option("d_coding").templated<d_coding_t, DMonotonSubseq<>>("d_coding");
-            m.option("dump_json").dynamic("false");
-            m.option("dump_json_file").dynamic("-");
+            Meta m(TypeDesc("slp_coder"), "sorted");
+            m.param("d_coding").strategy<d_coding_t>(TypeDesc("d_coding"), Meta::Default<DMonotonSubseq<>>());
+            m.param("dump_json").primitive(false);
+            m.param("dump_json_file").primitive("-");
             return m;
         };
 
@@ -33,9 +33,9 @@ namespace tdc {namespace esp {
             slp_dep_sort(slp); // can be implemented better, and in a way that yields
                                // temporary lists for reusal
 
-            if (env().option("dump_json").as_bool()) {
+            if (config().param("dump_json").as_bool()) {
                 phase.split("Dump JSON");
-                std::ofstream ostream(env().option("dump_json_file").as_string() + ".json");
+                std::ofstream ostream(config().param("dump_json_file").as_string() + ".json");
 
                 auto& dl = slp.dl();
                 auto& dr = slp.dr();
@@ -115,7 +115,7 @@ namespace tdc {namespace esp {
             phase.split("Encode SLP RHS");
 
             const auto dr = std::move(slp.dr());
-            d_coding_t d_coding { this->env().env_for_option("d_coding") };
+            d_coding_t d_coding { this->config().sub_config("d_coding") };
             d_coding.encode(dr, bouts, bit_width, max_val);
         }
 
@@ -161,7 +161,7 @@ namespace tdc {namespace esp {
                 }
             }
 
-            d_coding_t d_coding { this->env().env_for_option("d_coding") };
+            d_coding_t d_coding { this->config().sub_config("d_coding") };
             d_coding.decode(slp.dr(), bins, bit_width, max_val);
 
             return slp;

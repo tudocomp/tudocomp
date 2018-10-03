@@ -14,6 +14,7 @@
 #include <iomanip>
 
 #include <tudocomp/util/View.hpp>
+#include <tudocomp/util/bits.hpp>
 
 namespace tdc {
 
@@ -121,14 +122,52 @@ std::string vec_as_lossy_string(const T& s, size_t start = 0,
 }
 
 /// \brief Represent a value as a string.
-/// \tparam T the value type.
-/// \param v the value to convert.
-/// \return the string representation of the given value.
+///
+/// This is done by creating a \c std::stringstream and writing the value
+/// into it using the \c << operator.
+///
+/// \tparam T the value type
+/// \param v the value to convert
+/// \return the string representation of the given value
 template<typename T>
-inline std::string to_str(const T& v) {
+inline std::string to_string(const T& v) {
     std::stringstream ss;
     ss << v;
     return ss.str();
+}
+
+/// \brief Parses the given string into a value.
+///
+/// This is done by creating a \c std::stringstream that writes to a value
+/// of the desired type using the \c >> operator.
+///
+/// \tparam T the value type
+/// \param s the string to parse
+/// \return the parsed value
+template<typename T>
+inline T lexical_cast(const std::string& s) {
+    T val;
+    std::stringstream(s) >> val;
+    return val;
+}
+
+template<>
+inline std::string lexical_cast(const std::string& s) {
+    return std::string(s);
+}
+
+/// \brief Tests if the given string contains an expression that can be
+///        interpreted as a boolean \c true value.
+///
+/// This is the case if the string is one of \c "true", \c "1", \c "yes"
+/// or \c "on" (case-insensitive).
+///
+/// \param str the string to test
+/// \return \c true if the above description matches, \c false otherwise
+inline bool is_true(const std::string& str) {
+    std::string s(str);
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    return (s == "true" || s == "1" || s == "yes" || s == "on");
 }
 
 inline void debug_print_uint64_t(uint64_t v) {
@@ -169,30 +208,6 @@ inline bool parse_number_until_other(std::istream& inp, char& last, size_t& out)
     }
     out = n;
     return more;
-}
-
-/// \brief Computes the highest set bit in an integer variable
-inline constexpr uint_fast8_t bits_hi(uint64_t x) {
-	return x == 0 ? 0 : 64 - __builtin_clzll(x);
-}
-
-/// \brief Computes the number of bits required to store the given integer
-/// value.
-///
-/// This is equivalent to the binary logarithm rounded up to the next integer.
-///
-/// Examples:
-/// - `bits_for(0b0) == 1`
-/// - `bits_for(0b1) == 1`
-/// - `bits_for(0b10) == 2`
-/// - `bits_for(0b11) == 2`
-/// - `bits_for(0b100) == 3`
-///
-/// \param n The integer to be stored.
-/// \return The amount of bits required to store the value (guaranteed to be
-/// greater than zero).
-inline constexpr uint_fast8_t bits_for(size_t n) {
-    return n == 0 ? 1U : bits_hi(n);
 }
 
 /// \brief Performs an integer division with the result rounded up to the
@@ -547,45 +562,6 @@ public:
     }
 };
 
-/// \cond INTERNAL
-namespace portable_arithmetic_shift {
-    // Source: https://gist.github.com/palotasb/de46414a93ba90fff22bdbd2327ae393
-
-    template <typename T>
-    constexpr auto builtin_shr(T value, int amount) noexcept
-        -> decltype(value >> amount)
-    {
-        return value >> amount;
-    }
-
-    template <typename T>
-    struct uses_arithmetic_shift : std::integral_constant<bool, builtin_shr(T(-1), 1) == -1> {};
-
-    template <typename T = int>
-    constexpr T shift_by_portable(T value, int amount) noexcept
-    {
-        return value < 0 ?
-        amount < 0 ? ~(~value >> -amount) : -(-value << amount) :
-        amount < 0 ? value >> -amount : value << amount;
-    }
-
-    template <typename T = int>
-    constexpr T shift_by_arithmetic(T value, int amount) noexcept
-    {
-        // Only use with negative T values when the compiler translates right shift to arithmetic shift instructions.
-        return amount < 0 ? value >> -amount : value << amount;
-    }
-}
-/// \endcond
-
-template <typename T = int>
-constexpr T shift_by(T value, int amount) noexcept
-{
-    using namespace portable_arithmetic_shift;
-
-    return uses_arithmetic_shift<T>::value ? shift_by_arithmetic(value, amount) : shift_by_portable(value, amount);
-}
-
 inline uint64_t zero_or_next_power_of_two(uint64_t x) {
     --x;
     x |= x >> 1;
@@ -596,6 +572,18 @@ inline uint64_t zero_or_next_power_of_two(uint64_t x) {
     x |= x >> 32;
 
     return x + 1;
+}
+
+/// \brief Puts parantheses around the given string unless they are already
+///        there.
+/// \param the input string
+/// \return the string sorrounded by parantheses
+inline static std::string paranthesize(const std::string& str) {
+    if(!str.empty() && str.front() == '(' && str.back() == ')') {
+        return str;
+    } else {
+        return std::string("(") + str + std::string(")");
+    }
 }
 
 }//ns

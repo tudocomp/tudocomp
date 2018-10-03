@@ -16,14 +16,11 @@ namespace tdc {
 class ArithmeticCoder : public Algorithm {
     using ulong = unsigned long;
 
-    // TODO: Figure out how to correctly replace this with len_t or len_compact_t
-    using len_fixup_t = uint32_t;
-
 public:
     /// \brief Yields the coder's meta information.
     /// \sa Meta
     inline static Meta meta() {
-        Meta m("coder", "arithmetic", "Simple range encoding");
+        Meta m(Coder::type_desc(), "arithmetic", "Simple range encoding");
         return m;
     }
 
@@ -34,15 +31,15 @@ public:
     /// \brief Encodes data to an ASCII character stream.
     class Encoder : public tdc::Encoder {
     private:
-        std::vector<len_fixup_t> C;
+        std::vector<len_compact_t> C;
 
         ulong lower_bound=0;
         ulong upper_bound=std::numeric_limits<ulong>::max();
         uliteral_t codebook_size=0;
 
-        len_t literal_count = 0;
-        len_t literal_counter = 0;
-        ulong min_range=std::numeric_limits<len_fixup_t>::max();
+        ulong literal_count = 0;
+        ulong literal_counter = 0;
+        ulong min_range=std::numeric_limits<len_compact_t>::max();
 
         /**
          * @brief count_alphabet_literals counts how often a literal occurs in \ref input
@@ -50,15 +47,15 @@ public:
          * @return an array with count of each single literal
          */
         template<class T>
-        std::vector<len_fixup_t> count_alphabet_literals(T&& input) {
-            std::vector<len_fixup_t> C;
+        std::vector<len_compact_t> count_alphabet_literals(T&& input) {
+            std::vector<len_compact_t> C;
             C.resize(ULITERAL_MAX+1, 0);
 
             while(input.has_next()) {
                 uliteral_t c = input.next().c;
-                DCHECK_LT(static_cast<uliteral_t>(c), ULITERAL_MAX+1);
-                DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_fixup_t>::max());
-                ++C[static_cast<uliteral_t>(c)];
+                DCHECK_LT(c, ULITERAL_MAX+1);
+                DCHECK_LT(C[c], std::numeric_limits<len_compact_t>::max());
+                ++C[c];
             }
 
             return C;
@@ -69,11 +66,11 @@ public:
          * Every entry contains the difference to the entry before.
          * @param c
          */
-        void build_intervals(std::vector<len_fixup_t> &c) {
+        void build_intervals(std::vector<len_compact_t> &c) {
             if(c[0] != 0u) {
                 codebook_size++;
             }
-            len_t min=std::numeric_limits<len_fixup_t>::max();
+            len_t min=std::numeric_limits<len_compact_t>::max();
             //calculates difference to the entry before, searches min and counts entries != 0
             for(ulong i=1; i<=ULITERAL_MAX; i++) {
                 if(c[i]!=0u) {
@@ -125,7 +122,7 @@ public:
             /// code1 code2 code3 code4
 
             //write count of expected chars
-            m_out->write_int<len_fixup_t>(literal_count);
+            m_out->write_int<len_compact_t>(literal_count);
 
             //write codebook size in outstream
             m_out->write_int<uliteral_t>(codebook_size);
@@ -156,8 +153,13 @@ public:
 
     public:
         template<typename literals_t>
-        inline Encoder(Env&& env, Output& out, literals_t&& literals)
-            : tdc::Encoder(std::move(env), out, literals),
+        inline Encoder(Config&& cfg, Output& out, literals_t&& literals)
+            : Encoder(std::move(cfg), std::make_shared<BitOStream>(out), literals) {
+        }
+
+        template<typename literals_t>
+        inline Encoder(Config&& cfg, std::shared_ptr<BitOStream> out, literals_t&& literals)
+            : tdc::Encoder(std::move(cfg), out, literals),
         C(count_alphabet_literals(std::move(literals))) {
             build_intervals(C);
             writeCodebook();
@@ -174,12 +176,16 @@ public:
                 postProcessing();
             }
         }
+
+        inline void flush() {
+            throw std::runtime_error("ArithmeticCoder::flush not implemented");
+        }
     };
 
     /// \brief Decodes data from an Arithmetic character stream.
     class Decoder : public tdc::Decoder {
     private:
-        std::vector<std::pair<uliteral_t ,int>> literals;
+        std::vector<std::pair<uliteral_t ,len_compact_t>> literals;
         std::string decoded;
         uliteral_t codebook_size;
         len_t literal_count = 0;
@@ -201,7 +207,7 @@ public:
                 ulong interval_lower_bound = lower_bound;
                 //search the right interval
                 for(int i = 0; i < codebook_size ; i++) {
-                    const std::pair<uliteral_t, int>& pair=literals[i];
+                    const std::pair<uliteral_t, len_compact_t>& pair=literals[i];
                     const ulong offset = range <= interval_parts ? range*pair.second/interval_parts : range/interval_parts*pair.second;
                     upper_bound = lower_bound + offset;
                     if(code < upper_bound) {
@@ -223,15 +229,15 @@ public:
     public:
         DECODER_CTOR(env, in) {
             //read codebook size
-            literal_count = m_in->read_int<len_fixup_t>();
+            literal_count = m_in->read_int<len_compact_t>();
             codebook_size = m_in->read_int<uliteral_t>();
             literals.resize(codebook_size);
 
             //read and parse dictionary - is is already "normalized"
             for (int i =0; i<codebook_size; i++) {
                 uliteral_t c = m_in->read_int<uliteral_t>();
-                int val = m_in->read_int<int>();
-                literals[i]=std::pair<uliteral_t, int>(c, val);
+                len_compact_t val = m_in->read_int<len_compact_t>();
+                literals[i]=std::pair<uliteral_t, len_compact_t>(c, val);
             }
 
             min_range=literals[codebook_size-1].second;

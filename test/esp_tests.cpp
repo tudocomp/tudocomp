@@ -1034,7 +1034,7 @@ TEST(MonotonSubseq, esp_encoding_real1) {
 }
 
 TEST(IPD, DynamicSize) {
-    auto x = builder<esp::DynamicSizeIPD<esp::StdUnorderedMapIPD>>().instance();
+    auto x = Algorithm::instance<esp::DynamicSizeIPD<esp::StdUnorderedMapIPD>>();
 }
 
 TEST(Hashmaps, size) {

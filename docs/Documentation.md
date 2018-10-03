@@ -964,20 +964,23 @@ with the two strategies. It is then used to instantiate both versions without
 the need of fixed typing:
 
 ~~~ {.cpp caption="algorithm_impl.cpp"}
-// Create a registry for algorithms inheriting from MyAlgorithmBase
-Registry<MyAlgorithmBase> registry;
+// Create a registry
+Registry registry;
 
-// Register two implementations of the algorithm
-registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
-registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
+// Access the sub registry for algorithms of type "example"
+auto my_algo_registry = registry.of<MyAlgorithmBase>();
+
+// Register two specializations of the algorithm
+my_algo_registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
+my_algo_registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
 
 // Execute the algorithm with the square strategy
-auto algo_sqr = registry.select_algorithm("my_algorithm(number=5, strategy=sqr)");
-algo_sqr->execute(); // the result is 25
+auto algo_sqr = my_algo_registry.create_algorithm("my_algorithm(number=5, strategy=sqr)");
+ASSERT_EQ(25, algo_sqr->execute());
 
 // Execute the algorithm with the multiply strategy
-auto algo_mul = registry.select_algorithm("my_algorithm(number=5, strategy=mul(8))");
-algo_mul->execute(); // the result is 40
+auto algo_mul = my_algo_registry.create_algorithm("my_algorithm(number=5, strategy=mul(8))");
+ASSERT_EQ(40, algo_mul->execute());
 ~~~
 
 Note that for this example, the interface `MyAlgorithmBase` was introduced,

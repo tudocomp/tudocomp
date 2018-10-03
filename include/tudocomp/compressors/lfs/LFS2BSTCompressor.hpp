@@ -100,24 +100,24 @@ private:
 public:
 
     inline static Meta meta() {
-        Meta m("compressor", "lfs2bst",
-            "lfs2 with bst");
+        Meta m(Compressor::type_desc(), "lfs2bst", "lfs2 with bst");
+        m.param("min_lrf").primitive(5);
+        m.param("lfs2_lit_coder").strategy<literal_coder_t>(
+            Coder::type_desc(), Meta::Default<HuffmanCoder>());
+        m.param("lfs2_len_coder").strategy<len_coder_t>(
+            Coder::type_desc(), Meta::Default<EliasGammaCoder>());
         m.needs_sentinel_terminator();
-        m.option("min_lrf").dynamic(5);
-        m.option("lfs2_lit_coder").templated<literal_coder_t, HuffmanCoder>("lfs2_lit_coder");
-        m.option("lfs2_len_coder").templated<len_coder_t, EliasGammaCoder>("lfs2_len_coder");
-
         return m;
     }
 
 
-    inline LFS2BSTCompressor(Env&& env):
-        Compressor(std::move(env))
+    inline LFS2BSTCompressor(Config&& cfg):
+        Compressor(std::move(cfg))
     {
         DLOG(INFO) << "Compressor lfs2bst instantiated";
     }
     inline virtual void compress(Input& input, Output& output) override {
-        uint min_lrf = env().option("min_lrf").as_integer();
+        uint min_lrf = config().param("min_lrf").as_uint();
 
         auto in = input.as_view();
 
@@ -397,12 +397,12 @@ public:
 
             std::shared_ptr<BitOStream> bitout = std::make_shared<BitOStream>(output);
             typename literal_coder_t::Encoder lit_coder(
-                env().env_for_option("lfs2_lit_coder"),
+                config().sub_config("lfs2_lit_coder"),
                 bitout,
                 ViewLiterals(literals.str())
             );
             typename len_coder_t::Encoder len_coder(
-                env().env_for_option("lfs2_len_coder"),
+                config().sub_config("lfs2_len_coder"),
                 bitout,
                 NoLiterals()
             );
@@ -427,7 +427,7 @@ public:
                 //encode last length, to have zero length last
                 len_coder.encode(symbol.second,s_length_r);
             }else {
-                len_coder.encode(0,intrange);
+                len_coder.encode(0ULL,intrange);
 
             }
             Range dict_r(0, non_terminal_symbols.size());
@@ -526,11 +526,11 @@ public:
         std::shared_ptr<BitIStream> bitin = std::make_shared<BitIStream>(input);
 
         typename literal_coder_t::Decoder lit_decoder(
-            env().env_for_option("lfs2_lit_coder"),
+            config().sub_config("lfs2_lit_coder"),
             bitin
         );
         typename len_coder_t::Decoder len_decoder(
-            env().env_for_option("lfs2_len_coder"),
+            config().sub_config("lfs2_len_coder"),
             bitin
         );
         Range int_r (0,UINT_MAX);

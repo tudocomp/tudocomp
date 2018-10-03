@@ -578,7 +578,7 @@ namespace tdc {namespace esp {
         }
     };
 
-    auto extract_from_wt(const std::vector<std::vector<size_t>>& node_sizes,
+    inline auto extract_from_wt(const std::vector<std::vector<size_t>>& node_sizes,
                      const std::vector<IntVector<uint_t<1>>>& bvs,
                      size_t size) -> std::vector<size_t>
     {
@@ -654,7 +654,7 @@ namespace tdc {namespace esp {
         return ret;
     }
 
-    auto recover_Dxx(const std::vector<IntVector<uint_t<1>>>& bvs,
+    inline auto recover_Dxx(const std::vector<IntVector<uint_t<1>>>& bvs,
                     size_t size) -> std::vector<size_t>
     {
         auto wt_sizes = std::vector<std::vector<size_t>> { { size } };
