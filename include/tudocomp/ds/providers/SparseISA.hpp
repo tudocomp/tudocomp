@@ -14,11 +14,15 @@
 namespace tdc {
 
 /// Constructs the inverse suffix array using the suffix array.
-template<typename sa_t>
+template<typename sa_provider_t>
 class SparseISA : public Algorithm {
+private:
+    using sa_t = typename sa_provider_t::sa_t;
+
 public:
     inline static Meta meta() {
         Meta m(ds::provider_type(), "sparse_isa");
+        m.param("sa").strategy<sa_provider_t>(ds::provider_type());
         m.param("t").primitive(3);
         return m;
     }
@@ -93,8 +97,6 @@ public:
     };
 
 private:
-    using this_t = SparseISA<sa_t>;
-
     Data m_data;
 
 public:

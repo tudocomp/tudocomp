@@ -97,26 +97,26 @@ private:
 
     template<size_t... Is>
     inline void construct_providers(std::index_sequence<Is...>) {
-        construct_provider(std::get<Is>(m_providers)...);
+        construct_provider(0, std::get<Is>(m_providers)...);
     }
 
     template<typename Head, typename... Tail>
-    inline void construct_provider(Head& head, Tail&... tail) {
+    inline void construct_provider(size_t i, Head& head, Tail&... tail) {
         // head_t is std::shared_ptr<provider_t>
         using provider_t = typename Head::element_type;
 
         // instantiate
-        //TODO: head = std::make_shared<provider_t>(env().env_for_option("providers", i));
-        head = std::make_shared<provider_t>(provider_t::meta().config());
+        head = std::make_shared<provider_t>(
+            Config(this->config().sub_configs("providers")[i]));
 
         // register in lookup table
         set_lookup(typename provider_t::provides(), head);
 
         // recurse
-        construct_provider(tail...);
+        construct_provider(i+1, tail...);
     }
 
-    inline void construct_provider() {
+    inline void construct_provider(size_t i) {
         // construction done
     }
 
@@ -129,7 +129,7 @@ public:
     inline static Meta meta() {
         Meta m(TypeDesc("ds"), "ds");
         m.param("compress").primitive("delayed");
-        //TODO: m.option("providers").templated_array("provider")
+        m.param("providers").strategy_list<provider_ts...>(ds::provider_type());
         return m;
     }
 

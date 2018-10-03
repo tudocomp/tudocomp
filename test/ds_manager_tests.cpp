@@ -25,13 +25,13 @@ using namespace tdc;
 
 // compile-time tests for DSManager
 using dsmanager_t = DSManager<
-    DivSufSort, PhiAlgorithm, LCPFromPLCP, SparseISA<DivSufSort::sa_t>, PhiFromSA>;
+    DivSufSort, PhiAlgorithm, LCPFromPLCP, SparseISA<DivSufSort>, PhiFromSA>;
 
 static_assert(std::is_same<
         dsmanager_t::provider_type<ds::SUFFIX_ARRAY>, DivSufSort
         >::value, "Wrong provider entry for SUFFIX_ARRAY");
 static_assert(std::is_same<
-        dsmanager_t::provider_type<ds::INVERSE_SUFFIX_ARRAY>, SparseISA<DivSufSort::sa_t>
+        dsmanager_t::provider_type<ds::INVERSE_SUFFIX_ARRAY>, SparseISA<DivSufSort>
         >::value, "Wrong provider entry for INVERSE_SUFFIX_ARRAY");
 static_assert(std::is_same<
         dsmanager_t::provider_type<ds::PHI_ARRAY>, PhiFromSA
@@ -46,12 +46,11 @@ static_assert(std::is_same<
 static_assert(std::is_same<
         dsmanager_t::ds_types,
         tl::type_list<DynamicIntVector,
-                      SparseISA<DivSufSort::sa_t>::Data,
+                      SparseISA<DivSufSort>::Data,
                       DynamicIntVector,
                       DynamicIntVector,
                       DynamicIntVector>
         >::value, "Wrong data structure storage types");
-
 
 // compile-time tests for DSDependencyGraph
 using depgraph_t = DSDependencyGraph<dsmanager_t>;
@@ -90,6 +89,10 @@ static_assert(std::is_same<
 
 // runtime tests
 TEST(DS, dev) {
+    // check signature
+    ASSERT_EQ("ds(providers=[divsufsort(), phi_algorithm(), lcp(), sparse_isa(sa=divsufsort()), phi()])",
+        dsmanager_t::meta().signature()->str());
+
     // test input
     std::string input("banana\0", 7);
 
@@ -128,7 +131,7 @@ TEST(DS, dev) {
         // check return types
         static_assert(std::is_same<decltype(sa), const DynamicIntVector&>::value,
             "wrong ds type for SUFFIX_ARRAY");
-        static_assert(std::is_same<decltype(isa), const SparseISA<DivSufSort::sa_t>::Data&>::value,
+        static_assert(std::is_same<decltype(isa), const SparseISA<DivSufSort>::Data&>::value,
             "wrong ds type for INVERSE_SUFFIX_ARRAY");
         static_assert(std::is_same<decltype(phi), const DynamicIntVector&>::value,
             "wrong ds type for PHI_ARRAY");
@@ -148,7 +151,7 @@ TEST(DS, dev) {
         // check return types
         static_assert(std::is_same<decltype(sa), DynamicIntVector>::value,
             "wrong ds type for SUFFIX_ARRAY");
-        static_assert(std::is_same<decltype(isa), SparseISA<DivSufSort::sa_t>::Data>::value,
+        static_assert(std::is_same<decltype(isa), SparseISA<DivSufSort>::Data>::value,
             "wrong ds type for INVERSE_SUFFIX_ARRAY");
         static_assert(std::is_same<decltype(phi), DynamicIntVector>::value,
             "wrong ds type for PHI_ARRAY");
