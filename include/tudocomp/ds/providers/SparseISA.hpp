@@ -18,8 +18,8 @@ template<typename sa_t>
 class SparseISA : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("provider", "sparse_isa");
-        m.option("t").dynamic(3);
+        Meta m(ds::provider_type(), "sparse_isa");
+        m.param("t").primitive(3);
         return m;
     }
 
@@ -108,13 +108,13 @@ public:
     template<typename manager_t>
     inline void construct(manager_t& manager, bool compressed_space) {
         // Require Suffix Array
-        auto& sa = manager.get<ds::SUFFIX_ARRAY>();
+        auto& sa = manager.template get<ds::SUFFIX_ARRAY>();
         m_data.m_sa = &sa;
 
         const size_t n = sa.size();
         m_data.m_has_shortcut = BitVector(n);
 
-        const size_t t = this->env().option("t").as_integer();
+        const size_t t = this->config().param("t").as_uint();
 
         // Construct
         StatPhase::wrap("Construct sparse ISA", [&]{

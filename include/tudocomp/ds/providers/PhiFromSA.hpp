@@ -13,7 +13,7 @@ namespace tdc {
 class PhiFromSA : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("provider", "phi");
+        Meta m(ds::provider_type(), "phi");
         return m;
     }
 
@@ -31,7 +31,7 @@ public:
     template<typename manager_t>
     inline void construct(manager_t& manager, bool compressed_space) {
         // get suffix array
-        auto& sa = manager.get<ds::SUFFIX_ARRAY>();
+        auto& sa = manager.template get<ds::SUFFIX_ARRAY>();
 
         const size_t n = manager.input.size();
         const size_t w = bits_for(n);

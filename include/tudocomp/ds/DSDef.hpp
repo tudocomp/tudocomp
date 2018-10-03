@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <tudocomp/util/type_list.hpp>
+#include <tudocomp/meta/TypeDesc.hpp>
 
 namespace tdc {
 
@@ -10,11 +11,15 @@ using dsid_t = size_t;
 using dsid_list_t = std::vector<dsid_t>;
 
 namespace ds {
-    static constexpr dsid_t SUFFIX_ARRAY  = 0;
-    static constexpr dsid_t INVERSE_SUFFIX_ARRAY = 1;
-    static constexpr dsid_t LCP_ARRAY = 2;
-    static constexpr dsid_t PHI_ARRAY = 3;
-    static constexpr dsid_t PLCP_ARRAY = 4;
+    constexpr dsid_t SUFFIX_ARRAY  = 0;
+    constexpr dsid_t INVERSE_SUFFIX_ARRAY = 1;
+    constexpr dsid_t LCP_ARRAY = 2;
+    constexpr dsid_t PHI_ARRAY = 3;
+    constexpr dsid_t PLCP_ARRAY = 4;
+
+    constexpr TypeDesc provider_type() {
+        return TypeDesc("ds_provider");
+    }
 
     inline std::string name_for(dsid_t id) {
         switch(id) {

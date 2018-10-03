@@ -9,14 +9,11 @@
 #include <tudocomp/util/type_list.hpp>
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/Env.hpp>
 #include <tudocomp/util/View.hpp>
 
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/DSDef.hpp>
 #include <tudocomp/ds/DSDependencyGraph.hpp>
-
-#include <tudocomp/CreateAlgorithm.hpp>
 
 namespace tdc {
 
@@ -110,7 +107,7 @@ private:
 
         // instantiate
         //TODO: head = std::make_shared<provider_t>(env().env_for_option("providers", i));
-        head = std::make_shared<provider_t>(create_env(provider_t::meta()));
+        head = std::make_shared<provider_t>(provider_t::meta().config());
 
         // register in lookup table
         set_lookup(typename provider_t::provides(), head);
@@ -130,14 +127,14 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("ds", "ds");
-        m.option("compress").dynamic("delayed");
+        Meta m(TypeDesc("ds"), "ds");
+        m.param("compress").primitive("delayed");
         //TODO: m.option("providers").templated_array("provider")
         return m;
     }
 
-    inline DSManager(Env&& env, const View& input)
-        : Algorithm(std::move(env)), m_input(input) {
+    inline DSManager(Config&& cfg, const View& input)
+        : Algorithm(std::move(cfg)), m_input(input) {
 
         if(!m_input.ends_with(uint8_t(0))){
              throw std::logic_error(
@@ -150,7 +147,7 @@ public:
         construct_providers(std::make_index_sequence<
             std::tuple_size<provider_tuple_t>::value>());
 
-        auto& cm_str = this->env().option("compress").as_string();
+        auto cm_str = this->config().param("compress").as_string();
         if(cm_str == "delayed") {
             m_cm = CompressMode::delayed;
         } else if(cm_str == "compressed") {

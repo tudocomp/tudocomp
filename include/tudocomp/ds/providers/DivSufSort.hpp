@@ -14,7 +14,7 @@ namespace tdc {
 class DivSufSort : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("provider", "divsufsort");
+        Meta m(ds::provider_type(), "divsufsort");
         return m;
     }
 

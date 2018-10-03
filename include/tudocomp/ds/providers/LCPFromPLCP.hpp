@@ -13,7 +13,7 @@ namespace tdc {
 class LCPFromPLCP : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("provider", "lcp");
+        Meta m(ds::provider_type(), "lcp");
         return m;
     }
 
@@ -35,8 +35,8 @@ public:
         const size_t n = t.size();
 
         // get suffix and PLCP array
-        auto& sa   = manager.get<ds::SUFFIX_ARRAY>();
-        auto& plcp = manager.get<ds::PLCP_ARRAY>();
+        auto& sa   = manager.template get<ds::SUFFIX_ARRAY>();
+        auto& plcp = manager.template get<ds::PLCP_ARRAY>();
 
         m_max_lcp = manager.template get_provider<ds::PLCP_ARRAY>().max_lcp;
 

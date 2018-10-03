@@ -13,7 +13,7 @@ namespace tdc {
 class ISAFromSA : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("provider", "isa");
+        Meta m(ds::provider_type(), "isa");
         return m;
     }
 
@@ -31,7 +31,7 @@ public:
     template<typename manager_t>
     inline void construct(manager_t& manager, bool compressed_space) {
         // get suffix array
-        auto& sa = manager.get<ds::SUFFIX_ARRAY>();
+        auto& sa = manager.template get<ds::SUFFIX_ARRAY>();
 
         StatPhase::wrap("Construct ISA", [&]{
             // Allocate

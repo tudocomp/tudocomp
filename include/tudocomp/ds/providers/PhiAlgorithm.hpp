@@ -13,7 +13,7 @@ namespace tdc {
 class PhiAlgorithm : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("provider", "phi_algorithm");
+        Meta m(ds::provider_type(), "phi_algorithm");
         return m;
     }
 

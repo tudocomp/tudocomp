@@ -53,7 +53,7 @@ private:
     // tests if a data structure has been requested
     template<dsid_t ds>
     constexpr bool is_requested() {
-        return is::contains_idx<ds, std::index_sequence<m_construct...>>;
+        return is::contains_idx<ds, std::index_sequence<m_construct...>>();
     }
 
     // shortcut to provider type for a certain data structure

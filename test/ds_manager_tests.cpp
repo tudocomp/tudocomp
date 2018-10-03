@@ -12,8 +12,6 @@
 #include <tudocomp/ds/providers/PhiFromSA.hpp>
 #include <tudocomp/ds/providers/LCPFromPLCP.hpp>
 
-#include <tudocomp/CreateAlgorithm.hpp>
-
 #include <memory>
 #include <tuple>
 
@@ -96,7 +94,7 @@ TEST(DS, dev) {
     std::string input("banana\0", 7);
 
     // instantiate manager
-    dsmanager_t dsman(create_env(dsmanager_t::meta()), input);
+    dsmanager_t dsman(dsmanager_t::meta().config(), input);
 
     // construct ISA, LCP and SA
     dsman.construct<
@@ -113,11 +111,11 @@ TEST(DS, dev) {
     auto& plcp_provider = dsman.get_provider<ds::PLCP_ARRAY>();
 
     // make sure they are the right ones
-    ASSERT_EQ("divsufsort",    std::remove_reference<decltype(sa_provider)>::type::meta().name());
-    ASSERT_EQ("sparse_isa",    std::remove_reference<decltype(isa_provider)>::type::meta().name());
-    ASSERT_EQ("phi",           std::remove_reference<decltype(phi_provider)>::type::meta().name());
-    ASSERT_EQ("lcp",           std::remove_reference<decltype(lcp_provider)>::type::meta().name());
-    ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(plcp_provider)>::type::meta().name());
+    ASSERT_EQ("divsufsort",    std::remove_reference<decltype(sa_provider)>::type::meta().decl()->name());
+    ASSERT_EQ("sparse_isa",    std::remove_reference<decltype(isa_provider)>::type::meta().decl()->name());
+    ASSERT_EQ("phi",           std::remove_reference<decltype(phi_provider)>::type::meta().decl()->name());
+    ASSERT_EQ("lcp",           std::remove_reference<decltype(lcp_provider)>::type::meta().decl()->name());
+    ASSERT_EQ("phi_algorithm", std::remove_reference<decltype(plcp_provider)>::type::meta().decl()->name());
 
     {
         // get data structures
