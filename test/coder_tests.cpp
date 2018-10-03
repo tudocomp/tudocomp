@@ -135,7 +135,7 @@ void test_str(const std::string& options = "") {
         typename coder_t::Encoder coder(
             coder_t::meta().config(options), out, ViewLiterals(word));
 
-        for(char c : word) coder.encode(c, literal_r);
+        for(char c : word) coder.encode((unsigned char)c, literal_r);
     }
 
     // Decode
