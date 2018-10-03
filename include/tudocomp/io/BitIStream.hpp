@@ -3,7 +3,10 @@
 #include <climits>
 #include <cstdint>
 #include <iostream>
+
 #include <tudocomp/util.hpp>
+#include <tudocomp/util/int_coder.hpp>
+#include <tudocomp/io/Input.hpp>
 
 namespace tdc {
 namespace io {
@@ -148,7 +151,7 @@ public:
         if(bits < bits_left_in_current) {
             // we are reading only few bits
             // simply use the bit-by-bit method
-            return ::tdc::io::read_int<T>(bit_sink(), bits);
+            return ::tdc::read_int<T>(bit_sink(), bits);
         } else {
             // we are at least consuming the current byte
             bits -= bits_left_in_current;
@@ -209,27 +212,27 @@ public:
 
     template<typename value_t>
     inline value_t read_unary() {
-        return ::tdc::io::read_unary<value_t>(bit_sink());
+        return ::tdc::read_unary<value_t>(bit_sink());
     }
 
     template<typename value_t>
     inline value_t read_ternary() {
-        return ::tdc::io::read_ternary<value_t>(bit_sink());
+        return ::tdc::read_ternary<value_t>(bit_sink());
     }
 
     template<typename value_t>
     inline value_t read_elias_gamma() {
-        return ::tdc::io::read_elias_gamma<value_t>(bit_sink());
+        return ::tdc::read_elias_gamma<value_t>(bit_sink());
     }
 
     template<typename value_t>
     inline value_t read_elias_delta() {
-        return ::tdc::io::read_elias_delta<value_t>(bit_sink());
+        return ::tdc::read_elias_delta<value_t>(bit_sink());
     }
 
     template<typename value_t>
     inline value_t read_rice(uint8_t p) {
-        return ::tdc::io::read_rice<value_t>(bit_sink(), p);
+        return ::tdc::read_rice<value_t>(bit_sink(), p);
     }
 
     /// \brief Reads a compressed integer from the input.
@@ -244,7 +247,7 @@ public:
     /// \return The read integer value.
     template<typename T = size_t>
     inline T read_compressed_int(size_t b = 7) {
-        return ::tdc::io::read_compressed_int<T>(bit_sink(), b);
+        return ::tdc::read_compressed_int<T>(bit_sink(), b);
     }
 };
 

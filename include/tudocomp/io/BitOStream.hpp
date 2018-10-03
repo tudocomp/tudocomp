@@ -3,7 +3,9 @@
 #include <climits>
 #include <cstdint>
 #include <iostream>
+
 #include <tudocomp/util.hpp>
+#include <tudocomp/util/int_coder.hpp>
 #include <tudocomp/io/Output.hpp>
 
 namespace tdc {
@@ -129,7 +131,7 @@ public:
         if(bits < bits_left_in_next) {
             // we are writing only few bits
             // simply use the bit-by-bit method
-            ::tdc::io::write_int<T>(bit_sink(), value, bits);
+            ::tdc::write_int<T>(bit_sink(), value, bits);
         } else {
             // we are at least finishing the next byte
 
@@ -181,27 +183,27 @@ public:
 
     template<typename value_t>
     inline void write_unary(value_t v) {
-        ::tdc::io::write_unary<value_t>(bit_sink(), v);
+        ::tdc::write_unary<value_t>(bit_sink(), v);
     }
 
     template<typename value_t>
     inline void write_ternary(value_t v) {
-        ::tdc::io::write_ternary<value_t>(bit_sink(), v);
+        ::tdc::write_ternary<value_t>(bit_sink(), v);
     }
 
     template<typename value_t>
     inline void write_elias_gamma(value_t v) {
-        ::tdc::io::write_elias_gamma<value_t>(bit_sink(), v);
+        ::tdc::write_elias_gamma<value_t>(bit_sink(), v);
     }
 
     template<typename value_t>
     inline void write_elias_delta(value_t v) {
-        ::tdc::io::write_elias_delta<value_t>(bit_sink(), v);
+        ::tdc::write_elias_delta<value_t>(bit_sink(), v);
     }
 
     template<typename value_t>
     inline void write_rice(value_t v, uint8_t p) {
-        ::tdc::io::write_rice<value_t>(bit_sink(), v, p);
+        ::tdc::write_rice<value_t>(bit_sink(), v, p);
     }
 
     /// \brief Writes a compressed integer to the input.
@@ -219,7 +221,7 @@ public:
     /// \param b The block width in bits. The default is 7 bits.
     template<typename T>
     inline void write_compressed_int(T v, size_t b = 7) {
-        ::tdc::io::write_compressed_int<T>(bit_sink(), v, b);
+        ::tdc::write_compressed_int<T>(bit_sink(), v, b);
     }
 };
 
