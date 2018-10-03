@@ -135,7 +135,7 @@ public:
 
             // mask low bits of value
             size_t v = (bits < 64ULL) ?
-                (size_t(value) & ((1ULL << bits) - 1ULL)) : value;
+                (size_t(value) & ((1ULL << bits) - 1ULL)) : size_t(value);
 
             // fill it up next byte and continue with remaining bits
             bits -= bits_left_in_next;
