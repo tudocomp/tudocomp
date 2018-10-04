@@ -161,19 +161,4 @@ public:
     }
 };
 
-/// \brief Defines constructors for clases inheriting from \ref tdc::Decoder.
-///
-/// This includes a convenience constructor that automatically opens a
-/// bit input stream on an \ref tdc::Input.
-///
-/// \param env The variable name for the environment.
-/// \param in The variable name for the bit input stream.
-#define DECODER_CTOR(env, in)                                \
-        inline Decoder(Config&& cfg, Input& in)                 \
-             : Decoder(std::move(cfg),                       \
-                       std::make_shared<BitIStream>(in)) {}  \
-        inline Decoder(Config&& cfg, std::shared_ptr<BitIStream> in) \
-            : tdc::Decoder(std::move(cfg), in)
-
 }
-
