@@ -40,6 +40,13 @@ void test_arithm(const std::string& text) {
     ASSERT_EQ(input.str().size(), text.size());
 }
 
+TEST(arithm, sanity) {
+    test_arithm("a");
+    test_arithm("aa");
+    test_arithm("ab");
+    test_arithm("abab");
+}
+
 TEST(arithm, nullbyte) {
     test_arithm("hel\0lo");
     test_arithm("hello\0");
