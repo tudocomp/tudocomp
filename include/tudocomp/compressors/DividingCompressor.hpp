@@ -4,6 +4,7 @@
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
 #include <tudocomp/io.hpp>
+#include <tudocomp/util/int_coder.hpp>
 
 namespace tdc {
 
@@ -96,7 +97,7 @@ class DividingCompressor: public Compressor {
 
         template<class T>
         inline T read_int(size_t amount = sizeof(T) * CHAR_BIT) {
-            return ::tdc::io::read_int<T>(*this, amount);
+            return ::tdc::read_int<T>(*this, amount);
         }
     };
 
@@ -120,7 +121,7 @@ class DividingCompressor: public Compressor {
 
         template<typename T>
         inline void write_int(T value, size_t bits = sizeof(T) * CHAR_BIT) {
-            ::tdc::io::write_int<T>(*this, value, bits);
+            ::tdc::write_int<T>(*this, value, bits);
         }
     };
 
@@ -154,7 +155,7 @@ public:
             }
             {
                 auto os = output.as_stream();
-                io::write_int<size_t>(BitOSink { &os }, buffer.size());
+                ::tdc::write_int<size_t>(BitOSink { &os }, buffer.size());
                 os << View(buffer);
                 os.flush();
             }
@@ -182,7 +183,7 @@ public:
             {
                 auto local_input = Input(input, cursor);
                 auto is = local_input.as_stream();
-                block_size = io::read_int<size_t>(BitISink { &is });
+                block_size = ::tdc::read_int<size_t>(BitISink { &is });
             }
             cursor += sizeof(size_t);
             {
