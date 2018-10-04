@@ -104,6 +104,9 @@ include_directories(include)
 
 # TuDoComp library and implementors
 if(DEFINED TDC_REGISTRY)
+    get_filename_component(TDC_REGISTRY ${TDC_REGISTRY} ABSOLUTE
+        BASE_DIR ${CMAKE_BINARY_DIR})
+
     message("[CAUTION] Using custom registry config: ${TDC_REGISTRY}")
 else()
     set(TDC_REGISTRY ${CMAKE_SOURCE_DIR}/etc/registries/all_algorithms.py)
