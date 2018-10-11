@@ -13,7 +13,8 @@ namespace tdc {
 class SADivSufSort: public Algorithm, public ArrayDS {
 public:
     inline static Meta meta() {
-        Meta m("sa", "divsufsort");
+        Meta m(TypeDesc("sa"), "divsufsort",
+            "Constructs the suffix array using divsufsort.");
         return m;
     }
 
@@ -25,8 +26,8 @@ public:
     }
 
     template<typename textds_t>
-    inline SADivSufSort(Env&& env, const textds_t& t, CompressMode cm)
-        : Algorithm(std::move(env)) {
+    inline SADivSufSort(Config&& cfg, const textds_t& t, CompressMode cm)
+        : Algorithm(std::move(cfg)) {
 
         StatPhase::wrap("Construct SA", [&]{
             // Allocate

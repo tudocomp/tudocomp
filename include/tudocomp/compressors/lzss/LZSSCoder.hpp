@@ -5,6 +5,11 @@
 #include <tudocomp/Algorithm.hpp>
 
 namespace tdc {
+
+static inline constexpr TypeDesc lzss_coder_type() {
+    return TypeDesc("lzss_coder");
+}
+
 namespace lzss {
 
 /// \brief Base coder for LZ77-style factorizations in a
@@ -17,9 +22,9 @@ template<typename ref_coder_t, typename len_coder_t, typename lit_coder_t>
 class LZSSCoder : public Algorithm {
 public:
     static inline Meta meta(Meta tmpl) {
-        tmpl.option("ref").templated<ref_coder_t>("coder");
-        tmpl.option("len").templated<len_coder_t>("coder");
-        tmpl.option("lit").templated<lit_coder_t>("coder");
+        tmpl.param("ref").strategy<ref_coder_t>(TypeDesc("coder"));
+        tmpl.param("len").strategy<len_coder_t>(TypeDesc("coder"));
+        tmpl.param("lit").strategy<lit_coder_t>(TypeDesc("coder"));
         return tmpl;
     }
 
@@ -36,13 +41,13 @@ public:
             typename len_coder_t::Encoder,
             typename lit_coder_t::Encoder>
         (
-            this->env(),
+            this->config(),
             std::make_unique<typename ref_coder_t::Encoder>(
-                this->env().env_for_option("ref"), out, NoLiterals()),
+                this->config().sub_config("ref"), out, NoLiterals()),
             std::make_unique<typename len_coder_t::Encoder>(
-                this->env().env_for_option("len"), out, NoLiterals()),
+                this->config().sub_config("len"), out, NoLiterals()),
             std::make_unique<typename lit_coder_t::Encoder>(
-                this->env().env_for_option("lit"), out, std::move(literals))
+                this->config().sub_config("lit"), out, std::move(literals))
         );
     }
 
@@ -54,13 +59,13 @@ public:
             typename len_coder_t::Decoder,
             typename lit_coder_t::Decoder>
         (
-            this->env(),
+            this->config(),
             std::make_unique<typename ref_coder_t::Decoder>(
-                this->env().env_for_option("ref"), in),
+                this->config().sub_config("ref"), in),
             std::make_unique<typename len_coder_t::Decoder>(
-                this->env().env_for_option("len"), in),
+                this->config().sub_config("len"), in),
             std::make_unique<typename lit_coder_t::Decoder>(
-                this->env().env_for_option("lit"), in)
+                this->config().sub_config("lit"), in)
         );
     }
 };

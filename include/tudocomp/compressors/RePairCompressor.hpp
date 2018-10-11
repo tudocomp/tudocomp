@@ -85,17 +85,21 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("compressor", "repair", "Re-Pair compression");
-        m.option("coder").templated<coder_t, BitCoder>("coder");
-        m.option("max_rules").dynamic(0);
+        Meta m(Compressor::type_desc(), "repair",
+            "Grammar compression using Re-Pair.");
+        m.param("coder", "The output encoder.")
+            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BitCoder>());
+        m.param("max_rules",
+            "The maximum amount of grammar rules (0 = unlimited)."
+        ).primitive(0);
         return m;
     }
 
-    inline RePairCompressor(Env&& env) : Compressor(std::move(env)) {}
+    using Compressor::Compressor;
 
     virtual void compress(Input& input, Output& output) override {
         // options
-        size_t max_rules = env().option("max_rules").as_integer();
+        size_t max_rules = config().param("max_rules").as_uint();
         if(max_rules == 0) max_rules = SIZE_MAX;
 
         // prepare editable text
@@ -205,7 +209,7 @@ public:
         StatPhase::log("replaced", num_replaced);
 
         // instantiate encoder
-        typename coder_t::Encoder coder(env().env_for_option("coder"),
+        typename coder_t::Encoder coder(config().sub_config("coder"),
             output, Literals<sym_t*>(text, n, next, grammar));
 
         // encode amount of grammar rules
@@ -286,7 +290,7 @@ private:
 public:
     virtual void decompress(Input& input, Output& output) override {
         // instantiate decoder
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+        typename coder_t::Decoder decoder(config().sub_config("coder"), input);
 
         // lambda for decoding symbols
         auto decode_sym = [&](const Range& r) {

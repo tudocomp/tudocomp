@@ -25,10 +25,13 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("compressor", "lzss", "Lempel-Ziv-Storer-Szymanski (Sliding Window)");
-        m.option("coder").templated<lzss_coder_t>("lzss_coder");
-        m.option("threshold").dynamic(2);
-        m.option("window").dynamic(16);
+        Meta m(Compressor::type_desc(), "lzss",
+            "Computes the LZSS factorization of the input using a "
+            "sliding window.");
+        m.param("coder", "The output encoder.")
+            .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
+        m.param("window", "The sliding window size").primitive(16);
+        m.param("threshold", "The minimum factor length.").primitive(2);
         return m;
     }
 
@@ -36,16 +39,15 @@ public:
     inline LZSSSlidingWindowCompressor() = delete;
 
     /// Construct the class with an environment.
-    inline LZSSSlidingWindowCompressor(Env&& e) : Compressor(std::move(e))
-    {
-        m_threshold = this->env().option("threshold").as_integer();
-        m_window = this->env().option("window").as_integer();
+    inline LZSSSlidingWindowCompressor(Config&& c) : Compressor(std::move(c)) {
+        m_threshold = this->config().param("threshold").as_uint();
+        m_window = this->config().param("window").as_uint();
     }
 
     /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
         // initialize encoder
-        auto coder = lzss_coder_t(env().env_for_option("coder"))
+        auto coder = lzss_coder_t(config().sub_config("coder"))
             .encoder(output, NoLiterals());
 
         coder.factor_length_range(Range(m_threshold, 2 * m_window));
@@ -145,7 +147,7 @@ public:
         lzss::DecompBackBuffer decomp;
 
         {
-            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
             decoder.decode(decomp);
         }
 

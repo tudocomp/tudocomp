@@ -10,8 +10,14 @@ namespace tdc {
 
 class PhaseData {
 private:
-
     static constexpr size_t STR_BUFFER_SIZE = 64;
+
+    template<typename T>
+    static inline std::string to_string(const T& value) {
+        std::stringstream ss;
+        ss << value;
+        return ss.str();
+    }
 
     struct keyval {
         keyval* next;
@@ -82,7 +88,7 @@ public:
         keyval* kv = new keyval();
 
         strncpy(kv->key, key, STR_BUFFER_SIZE);
-        strncpy(kv->val, std::to_string(value).c_str(), STR_BUFFER_SIZE);
+        strncpy(kv->val, to_string(value).c_str(), STR_BUFFER_SIZE);
 
         if(first_stat) {
             keyval* last = first_stat;

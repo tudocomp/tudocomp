@@ -118,18 +118,6 @@ def root_cpp(kinds):
         ident = type.lower()
         const = type.upper()
 
-        # Declare and define the register function
-        r.code('''
-            void register_$IDENTs(RegistryOf<$TYPE>& r);
-        ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
-
-        ## Declare and define the registry
-        #r.code('''
-        #    RegistryOf<$TYPE> $CONST_REGISTRY = RegistryOf<$TYPE>::with_all_from(register_$IDENTs);
-        #''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
-
-        r.emptyline()
-
         # Forward-declare all template expansion calls
         for call in calls:
             r.code('''
@@ -139,7 +127,8 @@ def root_cpp(kinds):
 
         # Define the register functions
         r.code('''
-            void register_$IDENTs(RegistryOf<$TYPE>& r) {
+            void register_$IDENTs() {
+                auto& r = Registry::of<$TYPE>();
         ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
         for call in calls:
             r.code('''
@@ -150,20 +139,19 @@ def root_cpp(kinds):
         ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
         r.emptyline()
 
-    # Define a common register_all function for initializing a single `Registry`
+    # Initialization
     r.code('''
-            void register_all(Registry& r) {
-    ''', 1)
+        void register_algorithms() {
+    ''')
     for (type, calls) in kinds:
-        ident = type.lower()
         r.code('''
-                register_$IDENTs(r.of<$TYPE>());
-        ''', 2, { "$TYPE": type, "$IDENT": ident })
+            register_$IDENTs();
+        ''', 1, { "$IDENT": type.lower() })
     r.code('''
-            }
+        }
+    ''')
 
-            Registry REGISTRY = Registry::with_all_from(register_all);
-    ''', 1)
+    r.emptyline()
     r.code('''
         } // namespace
     ''')

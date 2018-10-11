@@ -6,8 +6,6 @@
 #include <tudocomp_stat/StatPhase.hpp>
 #include <tudocomp_stat/StatPhaseStxxl.hpp>
 
-#include <tudocomp/CreateAlgorithm.hpp>
-
 #include <tudocomp/coders/BitCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
 

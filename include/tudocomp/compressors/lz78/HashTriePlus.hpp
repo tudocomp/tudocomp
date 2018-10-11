@@ -16,20 +16,20 @@ class HashTriePlus : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "hash_plus", "Hash Trie+");
-        m.option("hash_function").templated<HashFunction, MixHasher>("hash_function");
-        m.option("hash_manager").templated<HashManager, SizeManagerDirect>("hash_manager");
-        m.option("load_factor").dynamic(30);
+        Meta m(lz78_trie_type(), "hash_plus", "Hash Trie+");
+        m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<MixHasher>());
+        m.param("hash_manager").strategy<HashManager>(hash_manager_type(), Meta::Default<SizeManagerDirect>());
+        m.param("load_factor").primitive(30);
         return m;
     }
 
-    inline HashTriePlus(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-        : Algorithm(std::move(env))
+    inline HashTriePlus(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+        : Algorithm(std::move(cfg))
         , LZ78Trie(n,remaining_characters)
-        , m_table(this->env(),n,remaining_characters)
-        , m_table2(this->env(),n,remaining_characters)
+        , m_table(this->config(),n,remaining_characters)
+        , m_table2(this->config(),n,remaining_characters)
     {
-        m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
+        m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         m_table2.max_load_factor(0.95);
         if(reserve > 0) {
             m_table.reserve(reserve);
@@ -41,9 +41,9 @@ public:
         inline ~HashTriePlus() {
             if (m_guard) {
                 if(m_table2.empty()) {
-                    m_table.collect_stats(env());
+                    m_table.collect_stats(config());
                 } else {
-                    m_table2.collect_stats(env());
+                    m_table2.collect_stats(config());
                 }
             }
         }

@@ -4,13 +4,14 @@
 
 namespace tdc {
 
-/// Generates the n-th Fibonacci word.
+/// Generates the k-th Fibonacci word.
 class FibonacciGenerator : public Generator {
 
 public:
     inline static Meta meta() {
-        Meta m("generator", "fib", "Generates the n-th Fibonacci word.");
-        m.option("n").dynamic();
+        Meta m(Generator::type_desc(), "fib",
+            "Generates the k-th Fibonacci word on a binary alphabet.");
+        m.param("k", "The Fibonacci word order.").primitive();
         return m;
     }
 
@@ -38,7 +39,7 @@ public:
     using Generator::Generator;
 
     inline virtual std::string generate() override {
-        return generate(env().option("n").as_integer());
+        return generate(config().param("k").as_uint());
     }
 };
 

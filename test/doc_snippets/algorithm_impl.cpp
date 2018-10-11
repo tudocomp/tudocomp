@@ -11,13 +11,10 @@
 #include <gtest/gtest.h>
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
-#include <tudocomp/RegistryOf.hpp>
-#include <tudocomp/Registry.hpp>
 
 using namespace tdc;
 
-// Base class, merely required for the RegistryOf example
+// Base class, merely required for the Registry example
 class MyAlgorithmBase : public Algorithm {
 public:
     using Algorithm::Algorithm; // inherit the default constructor
@@ -41,27 +38,26 @@ class MyAlgorithm : public MyAlgorithmBase {
 public:
     inline static Meta meta() {
         // define the algorithm's meta information
-        Meta m("example", "my_algorithm", "An example algorithm");
-        m.option("param1").dynamic("default_value");
-        m.option("number").dynamic(147);
-        m.option("strategy").templated<strategy_t>("my_strategy_t");
+        Meta m(TypeDesc("example"), "my_algorithm", "An example algorithm");
+        m.param("param1").primitive("default_value");
+        m.param("number").primitive(147);
+        m.param("strategy").strategy<strategy_t>(TypeDesc("my_strategy_t"));
         return m;
     }
 
     using MyAlgorithmBase::MyAlgorithmBase; // inherit the default constructor
 
-    inline const std::string& param1() {
+    inline std::string param1() {
         // read param1 option as a string
-        auto& param1 = env().option("param1").as_string();
-        return param1;
+        return config().param("param1").as_string();
     }
 
     inline virtual int execute() override {
         // read number option as an integer
-        auto number = env().option("number").as_integer();
+        auto number = config().param("number").as_int();
 
         // instantiate strategy with sub environment
-        strategy_t strategy(env().env_for_option("strategy"));
+        strategy_t strategy(config().sub_config("strategy"));
 
         // use strategy to determine result
         return strategy.result(number);
@@ -73,7 +69,7 @@ class SquareStrategy : public Algorithm {
 public:
     inline static Meta meta() {
         // define the algorithm's meta information
-        Meta m("my_strategy_t", "sqr", "Computes the square");
+        Meta m(TypeDesc("my_strategy_t"), "sqr", "Computes the square");
         return m;
     }
 
@@ -89,49 +85,48 @@ class MultiplyStrategy : public Algorithm {
 public:
     inline static Meta meta() {
         // define the algorithm's meta information
-        Meta m("my_strategy_t", "mul", "Computes a product");
-        m.option("factor").dynamic(); // no default
+        Meta m(TypeDesc("my_strategy_t"), "mul", "Computes a product");
+        m.param("factor").primitive(); // no default
         return m;
     }
 
     using Algorithm::Algorithm; // inherit the default constructor
 
     inline int result(int x) {
-        return x * env().option("factor").as_integer();
+        return x * config().param("factor").as_int();
     }
 };
 
 TEST(doc_algorithm_impl, algo_instantiate) {
     // Execute the algorithm with the square strategy
-    auto algo_sqr  = create_algo<MyAlgorithm<SquareStrategy>>("number=7");
+    auto algo_sqr = Algorithm::instance<MyAlgorithm<SquareStrategy>>("number=7");
     ASSERT_EQ(49, algo_sqr.execute());
 
     // Execute the algorithm with the multiply strategy
-    auto algo_mul5 = create_algo<MyAlgorithm<MultiplyStrategy>>("number=7, strategy=mul(5)");
+    auto algo_mul5 = Algorithm::instance<MyAlgorithm<MultiplyStrategy>>("number=7,strategy=mul(5)");
     ASSERT_EQ(35, algo_mul5.execute());
 
-    // param1 was not passed and should be "default_value"
+    // param1 was not passed and should be "default_value" for both
     ASSERT_EQ("default_value", algo_sqr.param1());
     ASSERT_EQ("default_value", algo_mul5.param1());
 }
 
-TEST(doc_algorithm_impl, algo_registry) {
-    // Create a registry
-    Registry registry;
+#include <tudocomp/meta/RegistryOf.hpp>
 
-    // Access the sub registry for algorithms of type "example"
-    auto my_algo_registry = registry.of<MyAlgorithmBase>();
+TEST(doc_algorithm_impl, algo_registry) {
+    // Create a registry for algorithms of type "example"
+    RegistryOf<MyAlgorithmBase> registry(TypeDesc("example"));
 
     // Register two specializations of the algorithm
-    my_algo_registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
-    my_algo_registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
+    registry.register_algorithm<MyAlgorithm<SquareStrategy>>();
+    registry.register_algorithm<MyAlgorithm<MultiplyStrategy>>();
 
     // Execute the algorithm with the square strategy
-    auto algo_sqr = my_algo_registry.create_algorithm("my_algorithm(number=5, strategy=sqr)");
+    auto algo_sqr = registry.select("my_algorithm(number=5, strategy=sqr)");
     ASSERT_EQ(25, algo_sqr->execute());
 
     // Execute the algorithm with the multiply strategy
-    auto algo_mul = my_algo_registry.create_algorithm("my_algorithm(number=5, strategy=mul(8))");
+    auto algo_mul = registry.select("my_algorithm(number=5, strategy=mul(8))");
     ASSERT_EQ(40, algo_mul->execute());
 }
 

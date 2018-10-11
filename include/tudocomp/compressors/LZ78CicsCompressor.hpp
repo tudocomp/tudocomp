@@ -58,8 +58,9 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("compressor", "lz78cics", "LZ78 compression in compressed space.");
-        m.option("coder").templated<coder_t>("coder");
+        Meta m(Compressor::type_desc(), "lz78cics", "LZ78 compression in compressed space.");
+        m.param("coder", "The output encoder.")
+            .strategy<coder_t>(TypeDesc("coder"));
         m.input_restrictions(io::InputRestrictions({0}, false));
         return m;
     }
@@ -72,7 +73,7 @@ public:
 
         // coder
         typename coder_t::Encoder coder(
-            env().env_for_option("coder"), output, ViewLiterals(text));
+            config().sub_config("coder"), output, ViewLiterals(text));
 
         // construct suffix tree
         lzcics::cst_t cst;
@@ -250,7 +251,7 @@ public:
     /// \copydoc Compressor::decompress
     inline virtual void decompress(Input& input, Output& output) override {
         auto out = output.as_stream();
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
+        typename coder_t::Decoder decoder(config().sub_config("coder"), input);
 
         lz78::Decompressor decomp;
         uint64_t factor_count = 0;

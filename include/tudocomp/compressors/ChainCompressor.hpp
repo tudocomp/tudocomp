@@ -1,21 +1,23 @@
 #pragma once
 
-#include <tudocomp/Compressor.hpp>
-#include <tudocomp/Env.hpp>
-#include <tudocomp/RegistryOf.hpp>
-#include <tudocomp/io.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
-#include <vector>
 #include <memory>
+#include <vector>
+
+#include <tudocomp/io.hpp>
+#include <tudocomp/meta/Registry.hpp>
 
 namespace tdc {
 
 class ChainCompressor: public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "chain");
-        m.option("first").dynamic<Compressor>();
-        m.option("second").dynamic<Compressor>();
+        Meta m(Compressor::type_desc(), "chain",
+            "Executes two compressors consecutively, passing the first "
+            "compressors output to the input of the second.");
+        m.param("first", "The first compressor.")
+            .unbound_strategy(Compressor::type_desc());
+        m.param("second", "The second compressor.")
+            .unbound_strategy(Compressor::type_desc());
         return m;
     }
 
@@ -23,28 +25,29 @@ public:
     inline ChainCompressor() = delete;
 
     /// Construct the class with an environment and the algorithms to chain.
-    inline ChainCompressor(Env&& env):
-        Compressor(std::move(env)) {}
+    inline ChainCompressor(Config&& cfg):
+        Compressor(std::move(cfg)) {}
 
     template<class F>
     inline void chain(Input& input, Output& output, bool reverse, F f) {
         string_ref first_algo = "first";
         string_ref second_algo = "second";
+
         if (reverse) {
             std::swap(first_algo, second_algo);
         }
 
         auto run = [&](Input& i, Output& o, string_ref option) {
-            auto& option_value = env().option(option);
+            auto option_value = config().param(option);
 
-            auto av = option_value.as_algorithm();
-            auto textds_flags = av.textds_flags();
+            //TODO: eliminate tdc_algorithms dependency
+            auto compressor = Registry::of<Compressor>().select(
+                meta::ast::convert<meta::ast::Object>(option_value.ast()));
 
-            DLOG(INFO) << "dynamic creation of " << av.name() << "\n";
+            auto is = compressor.decl()->input_restrictions();
 
-            auto compressor = env().root().select_algorithm<Compressor>(av);
-
-            f(i, o, *compressor, textds_flags);
+            DVLOG(1) << "dynamic creation of " << compressor.decl()->name();
+            f(i, o, *compressor, is);
         };
 
         std::vector<uint8_t> between_buf;
@@ -67,7 +70,7 @@ public:
         chain(input, output, false, [](Input& i,
                                        Output& o,
                                        Compressor& c,
-                                       ds::InputRestrictionsAndFlags flags) {
+                                       InputRestrictions flags) {
             bool res = flags.has_restrictions();
             if (res) {
                 auto i2 = Input(i, flags);
@@ -86,7 +89,7 @@ public:
         chain(input, output, true, [](Input& i,
                                       Output& o,
                                       Compressor& c,
-                                      ds::InputRestrictionsAndFlags flags) {
+                                      InputRestrictions flags) {
             bool res = flags.has_restrictions();
             if (res) {
                 auto o2 = Output(o, flags);

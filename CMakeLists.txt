@@ -40,7 +40,7 @@ include(ExternalProject)
 set(GCC_WARNINGS "-Wall -Werror=return-type")
 #set(SANITIZATION "-fsanitize=undefined -fsanitize=address -fsanitize=leak")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 ${GCC_WARNINGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=gnu++14 ${GCC_WARNINGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG ${SANITIZATION}")
 
@@ -117,6 +117,9 @@ include_directories(include)
 
 # TuDoComp library and implementors
 if(DEFINED TDC_REGISTRY)
+    get_filename_component(TDC_REGISTRY ${TDC_REGISTRY} ABSOLUTE
+        BASE_DIR ${CMAKE_BINARY_DIR})
+
     message("[CAUTION] Using custom registry config: ${TDC_REGISTRY}")
 else()
     set(TDC_REGISTRY ${CMAKE_SOURCE_DIR}/etc/registries/all_algorithms.py)

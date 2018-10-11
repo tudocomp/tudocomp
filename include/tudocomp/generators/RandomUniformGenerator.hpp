@@ -18,11 +18,16 @@ class RandomUniformGenerator : public Generator {
 
 public:
     inline static Meta meta() {
-        Meta m("generator", "random", "Generates random strings.");
-        m.option("length").dynamic();
-        m.option("seed").dynamic(0);
-        m.option("min").dynamic('0');
-        m.option("max").dynamic('9');
+        Meta m(Generator::type_desc(), "random",
+            "Generates a random string from a given symbol range with uniform "
+            "symbol distribution."
+        );
+        m.param("n", "The length of the generated string.").primitive();
+        m.param("seed").primitive(0);
+        m.param("min", "The ASCII code of the first symbol in the alphabet.")
+            .primitive('0');
+        m.param("max", "The ASCII code of the last symbol in the alphabet.")
+            .primitive('9');
         return m;
     }
 
@@ -47,10 +52,10 @@ public:
 
     inline virtual std::string generate() override {
         return generate(
-            env().option("length").as_integer(),
-            env().option("seed").as_integer(),
-            env().option("min").as_integer(),
-            env().option("max").as_integer());
+            config().param("n").as_uint(),
+            config().param("seed").as_uint(),
+            config().param("min").as_uint(),
+            config().param("max").as_uint());
     }
 };
 

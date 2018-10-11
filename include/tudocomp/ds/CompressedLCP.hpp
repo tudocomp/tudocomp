@@ -29,8 +29,11 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("lcp", "compressed_lcp");
-        m.option("sa").templated<sa_t>("sa");
+        Meta m(TypeDesc("lcp"), "compressed_lcp",
+            "Constructs the LCP array from the Suffix and PLCP arrays, "
+            "storing it in the \"WeeLCP\" [Fischer, 2010] manner.");
+        m.param("sa", "The suffix array implementation.")
+            .strategy<sa_t>(TypeDesc("sa"));
         return m;
     }
 
@@ -49,8 +52,8 @@ private:
 
 public:
     template<typename textds_t>
-    inline CompressedLCP(Env&& env, textds_t& tds, CompressMode cm)
-            : Algorithm(std::move(env)) {
+    inline CompressedLCP(Config&& cfg, textds_t& tds, CompressMode cm)
+            : Algorithm(std::move(cfg)) {
 
         // Suffix Array types must match
         static_assert(std::is_same<sa_t, typename textds_t::sa_type>(),

@@ -122,14 +122,52 @@ std::string vec_as_lossy_string(const T& s, size_t start = 0,
 }
 
 /// \brief Represent a value as a string.
-/// \tparam T the value type.
-/// \param v the value to convert.
-/// \return the string representation of the given value.
+///
+/// This is done by creating a \c std::stringstream and writing the value
+/// into it using the \c << operator.
+///
+/// \tparam T the value type
+/// \param v the value to convert
+/// \return the string representation of the given value
 template<typename T>
-inline std::string to_str(const T& v) {
+inline std::string to_string(const T& v) {
     std::stringstream ss;
     ss << v;
     return ss.str();
+}
+
+/// \brief Parses the given string into a value.
+///
+/// This is done by creating a \c std::stringstream that writes to a value
+/// of the desired type using the \c >> operator.
+///
+/// \tparam T the value type
+/// \param s the string to parse
+/// \return the parsed value
+template<typename T>
+inline T lexical_cast(const std::string& s) {
+    T val;
+    std::stringstream(s) >> val;
+    return val;
+}
+
+template<>
+inline std::string lexical_cast(const std::string& s) {
+    return std::string(s);
+}
+
+/// \brief Tests if the given string contains an expression that can be
+///        interpreted as a boolean \c true value.
+///
+/// This is the case if the string is one of \c "true", \c "1", \c "yes"
+/// or \c "on" (case-insensitive).
+///
+/// \param str the string to test
+/// \return \c true if the above description matches, \c false otherwise
+inline bool is_true(const std::string& str) {
+    std::string s(str);
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    return (s == "true" || s == "1" || s == "yes" || s == "on");
 }
 
 inline void debug_print_uint64_t(uint64_t v) {
@@ -534,6 +572,18 @@ inline uint64_t zero_or_next_power_of_two(uint64_t x) {
     x |= x >> 32;
 
     return x + 1;
+}
+
+/// \brief Puts parantheses around the given string unless they are already
+///        there.
+/// \param the input string
+/// \return the string sorrounded by parantheses
+inline static std::string paranthesize(const std::string& str) {
+    if(!str.empty() && str.front() == '(' && str.back() == ')') {
+        return str;
+    } else {
+        return std::string("(") + str + std::string(")");
+    }
 }
 
 }//ns

@@ -18,7 +18,7 @@ constexpr option OPTIONS[] = {
     {"force",      no_argument,       nullptr, 'f'},
     {"generator",  required_argument, nullptr, 'g'},
     {"help",       no_argument,       nullptr, OPT_HELP},
-    {"list",       no_argument,       nullptr, 'l'},
+    {"list",       optional_argument, nullptr, 'l'},
     {"output",     required_argument, nullptr, 'o'},
     {"stats",      optional_argument, nullptr, 's'},
     {"statfile",   required_argument, nullptr, 'S'},
@@ -89,8 +89,10 @@ public:
 
         // -l, --list
         out << right << setw(W_SF) << "-l" << ", "
-            << left << setw(W_LF) << "--list"
+            << left << setw(W_LF) << "--list[=ALGORITHM]"
             << "list available (de-)compression algorithms"
+            << endl << setw(W_INDENT) << "" << "if ALGORITHM is given, print "
+            << "details about that algorithm"
             << endl;
 
         // -o, --output=FILE
@@ -169,7 +171,9 @@ private:
 
     bool m_help;
     bool m_version;
+
     bool m_list;
+    std::string m_list_algorithm;
 
     std::string m_algorithm;
 
@@ -228,8 +232,8 @@ public:
 
                 case 'l': // --list
                     m_list = true;
+                    if(optarg) m_list_algorithm = std::string(optarg);
                     break;
-
 
                 case 'v': // --version
                     m_version = true;
@@ -298,7 +302,9 @@ public:
 
     const bool& help = m_help;
     const bool& version = m_version;
+
     const bool& list = m_list;
+    const std::string& list_algorithm = m_list_algorithm;
 
     const std::string& algorithm = m_algorithm;
 

@@ -12,8 +12,9 @@ template<typename lzss_coder_t>
 class LZ77CicsCompressor : public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "lz77cics", "LZ77 compression in compressed space.");
-        m.option("coder").templated<lzss_coder_t>("lzss_coder");
+        Meta m(Compressor::type_desc(), "lz77cics", "LZ77 compression in compressed space.");
+        m.param("coder", "The output encoder.")
+            .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
         m.input_restrictions(io::InputRestrictions({0}, false));
         return m;
     }
@@ -26,8 +27,8 @@ public:
         const size_t n = text.size();
 
         // initialize encoder
-        auto coder = lzss_coder_t(env().env_for_option("coder"))
-            .encoder(output, NoLiterals());
+        auto coder = lzss_coder_t(config().sub_config("coder"))
+            .encoder(output, ViewLiterals(text));
 
         coder.factor_length_range(Range(n));
         coder.encode_header();
@@ -135,9 +136,8 @@ public:
     /// \copydoc Compressor::compress
     inline virtual void decompress(Input& input, Output& output) override {
         lzss::DecompBackBuffer decomp;
-
         {
-            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
             decoder.decode(decomp);
         }
 

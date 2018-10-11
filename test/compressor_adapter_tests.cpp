@@ -32,26 +32,28 @@
 using namespace tdc;
 using namespace tdc_algorithms;
 
+auto& COMPRESSOR_REGISTRY = Registry::of<Compressor>();
+
 class NoopEscapingCompressor: public Compressor {
 public:
     inline static Meta meta() {
-        Meta m ("compressor", "noop_null", "");
+        Meta m(Compressor::type_desc(), "noop_null", "");
         m.input_restrictions(io::InputRestrictions({0}, true));
-        m.option("mode").dynamic("view");
-        m.option("debug").dynamic("false");
+        m.param("mode").primitive("view");
+        m.param("debug").primitive(false);
         return m;
     }
 
-    inline NoopEscapingCompressor(Env&& env):
-        Compressor(std::move(env)) {}
+    inline NoopEscapingCompressor(Config&& cfg):
+        Compressor(std::move(cfg)) {}
 
 
     inline virtual void compress(Input& i, Output& o) override final {
         auto os = o.as_stream();
 
-        if (env().option("mode").as_string() == "stream") {
+        if (config().param("mode").as_string() == "stream") {
             auto is = i.as_stream();
-            if (env().option("debug").as_bool()) {
+            if (config().param("debug").as_bool()) {
                 std::stringstream ss;
                 ss << is.rdbuf();
                 std::string txt = ss.str();
@@ -60,9 +62,9 @@ public:
             } else {
                 os << is.rdbuf();
             }
-        } else {
+        } else { // view
             auto iv = i.as_view();
-            if (env().option("debug").as_bool()) {
+            if (config().param("debug").as_bool()) {
                 DLOG(INFO) << vec_to_debug_string(iv);
                 os << iv;
             } else {
@@ -74,9 +76,9 @@ public:
     inline virtual void decompress(Input& i, Output& o) override final {
         auto os = o.as_stream();
 
-        if (env().option("mode").as_string() == "stream") {
+        if (config().param("mode").as_string() == "stream") {
             auto is = i.as_stream();
-            if (env().option("debug").as_bool()) {
+            if (config().param("debug").as_bool()) {
                 std::stringstream ss;
                 ss << is.rdbuf();
                 std::string txt = ss.str();
@@ -85,9 +87,9 @@ public:
             } else {
                 os << is.rdbuf();
             }
-        } else {
+        } else { // view
             auto iv = i.as_view();
-            if (env().option("debug").as_bool()) {
+            if (config().param("debug").as_bool()) {
                 DLOG(INFO) << vec_to_debug_string(iv);
                 os << iv;
             } else {
@@ -97,9 +99,12 @@ public:
     }
 };
 
-TEST(A, a) {
+TEST(Init, init) {
+    // initialization
     FLAGS_logtostderr = 0;
-    REGISTRY.of<Compressor>().register_algorithm<NoopEscapingCompressor>();
+
+    tdc_algorithms::register_algorithms();
+    COMPRESSOR_REGISTRY.register_algorithm<NoopEscapingCompressor>();
 }
 
 // TEST(Chain, test0) { // TODO: has to be adapted for the easyrle
@@ -107,7 +112,7 @@ TEST(A, a) {
 //                                      "aa14:baa14:baa14:baa14:b\0"_v,
 //                                      R"(
 //                                          ascii
-//                                     )", REGISTRY);
+//                                     )", COMPRESSOR_REGISTRY);
 // }
 
 // TEST(Chain, test1) {
@@ -116,7 +121,7 @@ TEST(A, a) {
 //                                      R"(
 //                                         noop,
 //                                         rle(ascii),
-//                                     )", REGISTRY);
+//                                     )", COMPRESSOR_REGISTRY);
 // }
 //
 // TEST(Chain, test2) {
@@ -125,7 +130,7 @@ TEST(A, a) {
 //                                      R"(
 //                                         rle(ascii),
 //                                         noop,
-//                                     )", REGISTRY);
+//                                     )", COMPRESSOR_REGISTRY);
 // }
 //
 // TEST(Chain, test3) {
@@ -134,7 +139,7 @@ TEST(A, a) {
 //                                      R"(
 //                                         rle(ascii),
 //                                         lzw(ascii),
-//                                     )", REGISTRY);
+//                                     )", COMPRESSOR_REGISTRY);
 // }
 //
 // TEST(Chain, test4) {
@@ -146,7 +151,7 @@ TEST(A, a) {
 //                                             rle(ascii),
 //                                             lzw(ascii)
 //                                         )
-//                                     )", REGISTRY);
+//                                     )", COMPRESSOR_REGISTRY);
 // }
 
 const View CHAIN_STRING = "abcd"_v;
@@ -154,37 +159,37 @@ const View CHAIN_STRING_NULL = "abcd\0"_v;
 
 TEST(ChainNull, stream_noop) {
     test::roundtrip_ex<NoopCompressor>(CHAIN_STRING, CHAIN_STRING,
-        R"('stream', true)", REGISTRY);
+        R"('stream', 'true')", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, view_noop) {
     test::roundtrip_ex<NoopCompressor>(CHAIN_STRING, CHAIN_STRING,
-        R"('view', true)", REGISTRY);
+        R"('view', 'true')", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, view_noop_null) {
     test::roundtrip_ex<NoopEscapingCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
-        R"('view', true)", REGISTRY);
+        R"('view', 'true')", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, stream_chain_noop_noop) {
     test::roundtrip_ex<ChainCompressor>(CHAIN_STRING, CHAIN_STRING,
-        R"(noop('stream', true), noop('stream', true))", REGISTRY);
+        R"(noop('stream', 'true'), noop('stream', 'true'))", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, view_chain_noop_noop) {
     test::roundtrip_ex<ChainCompressor>(CHAIN_STRING, CHAIN_STRING,
-        R"(noop('view', true), noop('view', true))", REGISTRY);
+        R"(noop('view', 'true'), noop('view', 'true'))", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, view_chain_noop_null_noop) {
     test::roundtrip_ex<ChainCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
-        R"(noop_null('view', true), noop('view', true))", REGISTRY);
+        R"(noop_null('view', 'true'), noop('view', 'true'))", COMPRESSOR_REGISTRY);
 }
 
 TEST(ChainNull, view_chain_noop_noop_null) {
     test::roundtrip_ex<ChainCompressor>(CHAIN_STRING, CHAIN_STRING_NULL,
-        R"(noop('view', true), noop_null('view', true))", REGISTRY);
+        R"(noop('view', 'true'), noop_null('view', 'true'))", COMPRESSOR_REGISTRY);
 }
 
 TEST(NoopCompressor, test) {
@@ -250,48 +255,48 @@ TEST(NoopEscapingCompressor, escaping) {
 TEST(Dividing, test_division) {
     test::roundtrip_ex<DividingCompressor<DivisionDividingStrategy>>(
         "569874523695214569874523196875"_v, ""_v,
-        R"(strategy=division(2), compressor=rle)", REGISTRY);
+        R"(strategy=division(2), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
     test::roundtrip_ex<DividingCompressor<DivisionDividingStrategy>>(
         ""_v, ""_v,
-        R"(strategy=division(2), compressor=rle)", REGISTRY);
+        R"(strategy=division(2), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
     test::roundtrip_ex<DividingCompressor<DivisionDividingStrategy>>(
         "1"_v, ""_v,
-        R"(strategy=division(2), compressor=rle)", REGISTRY);
+        R"(strategy=division(2), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
 }
 
 TEST(Dividing, test_blocked) {
     test::roundtrip_ex<DividingCompressor<BlockedDividingStrategy>>(
         "569874523695214569874523196875"_v, ""_v,
-        R"(strategy=blocked(10), compressor=rle)", REGISTRY);
+        R"(strategy=blocked(10), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
     test::roundtrip_ex<DividingCompressor<BlockedDividingStrategy>>(
         ""_v, ""_v,
-        R"(strategy=blocked(10), compressor=rle)", REGISTRY);
+        R"(strategy=blocked(10), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
     test::roundtrip_ex<DividingCompressor<BlockedDividingStrategy>>(
         "1"_v, ""_v,
-        R"(strategy=blocked(10), compressor=rle)", REGISTRY);
+        R"(strategy=blocked(10), compressor=lz78(ascii))", COMPRESSOR_REGISTRY);
 }
 
 TEST(LongCommonStringCompressor, test) {
     test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
         "abcdabcdabcd"_v, ""_v,
-        R"(b = 4)", REGISTRY);
+        R"(b = 4)", COMPRESSOR_REGISTRY);
     test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
         "abcd!abcd!abcd"_v, ""_v,
-        R"(b = 4)", REGISTRY);
+        R"(b = 4)", COMPRESSOR_REGISTRY);
     test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
         "abcdabcdabc"_v, ""_v,
-        R"(b = 4)", REGISTRY);
+        R"(b = 4)", COMPRESSOR_REGISTRY);
     test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
         "abcdabcdabcde"_v, ""_v,
-        R"(b = 4)", REGISTRY);
+        R"(b = 4)", COMPRESSOR_REGISTRY);
 
     test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
         "abcdefghijklmnopq<12345"_v, ""_v,
-        R"(b = 1)", REGISTRY);
+        R"(b = 1)", COMPRESSOR_REGISTRY);
 
     test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
         "abcdefghijabcdefghij"_v, ""_v,
-        R"(b = 1)", REGISTRY);
+        R"(b = 1)", COMPRESSOR_REGISTRY);
 
     test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
         "abcdefghijklmnopqrstuvwxijklmnopabcdefghqrstuvwx"_v, ""_v,
@@ -299,18 +304,18 @@ TEST(LongCommonStringCompressor, test) {
     //           ijklmnop     -> ijklmnop
     //   abcdefgh                     -> abcdefgh
     //                   qrstuvwx             -> qrstuvwx
-        R"(b = 1)", REGISTRY);
+        R"(b = 1)", COMPRESSOR_REGISTRY);
 
     test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
         "aaaaaaaaaaaaaaaaaaaaa"_v, ""_v,
-        R"(b = 1)", REGISTRY);
+        R"(b = 1)", COMPRESSOR_REGISTRY);
 }
 
 TEST(LongCommonStringCompressor, test_batch_1) {
     test::roundtrip_batch([](string_ref s){
         test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
             s, ""_v,
-            R"(b = 1)", REGISTRY);
+            R"(b = 1)", COMPRESSOR_REGISTRY);
     });
 }
 
@@ -318,7 +323,7 @@ TEST(LongCommonStringCompressor, test_batch_3) {
     test::roundtrip_batch([](string_ref s){
         test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
             s, ""_v,
-            R"(b = 3)", REGISTRY);
+            R"(b = 3)", COMPRESSOR_REGISTRY);
     });
 }
 
@@ -326,18 +331,18 @@ TEST(LongCommonStringCompressor, test_batch_5) {
     test::roundtrip_batch([](string_ref s){
         test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
             s, ""_v,
-            R"(b = 5)", REGISTRY);
+            R"(b = 5)", COMPRESSOR_REGISTRY);
     });
 }
 
 TEST(LongCommonStringCompressor, test_aa) {
     test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
         "aaaaaaaaa"_v, ""_v,
-        R"(b = 5)", REGISTRY);
+        R"(b = 5)", COMPRESSOR_REGISTRY);
 }
 
 TEST(LongCommonStringCompressor, test_5_single) {
     test::roundtrip_ex<LongCommonStringCompressor<EscapingSparseFactorCoder>>(
         "abcd aecfcg, chaicd chaj akalamcncoajabap aiabcqaecfcdco."_v, ""_v,
-        R"(b = 5)", REGISTRY);
+        R"(b = 5)", COMPRESSOR_REGISTRY);
 }

@@ -25,10 +25,14 @@ template<typename lzss_coder_t, typename text_t = TextDS<>>
 class LZSSLCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "lzss_lcp", "LZSS Factorization using LCP");
-        m.option("coder").templated<lzss_coder_t>("lzss_coder");
-        m.option("textds").templated<text_t, TextDS<>>("textds");
-        m.option("threshold").dynamic(3);
+        Meta m(Compressor::type_desc(), "lzss_lcp",
+            "Computes the LZSS factorization of the input using the "
+            "suffix and LCP array.");
+        m.param("coder", "The output encoder.")
+            .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
+        m.param("textds", "The text data structure provider.")
+            .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
+        m.param("threshold", "The minimum factor length.").primitive(2);
         m.uses_textds<text_t>(text_t::SA | text_t::ISA | text_t::LCP);
         return m;
     }
@@ -41,7 +45,7 @@ public:
 
         // Construct text data structures
         text_t text = StatPhase::wrap("Construct Text DS", [&]{
-            return text_t(env().env_for_option("textds"), view,
+            return text_t(config().sub_config("textds"), view,
                     text_t::SA | text_t::ISA | text_t::LCP);
         });
 
@@ -54,7 +58,7 @@ public:
         lzss::FactorBufferRAM factors;
 
         StatPhase::wrap("Factorize", [&]{
-            const len_t threshold = env().option("threshold").as_integer(); //factor threshold
+            const len_t threshold = config().param("threshold").as_uint();
 
             for(len_t i = 0; i+1 < text_length;) { // we omit T[text_length-1] since we assume that it is the \0 byte!
                 //get SA position for suffix i
@@ -115,8 +119,8 @@ public:
 
         // encode
         StatPhase::wrap("Encode", [&]{
-            auto coder = lzss_coder_t(env().env_for_option("coder")).encoder(
-                output, lzss::UnreplacedLiterals<text_t,decltype(factors)>(text, factors));
+            auto coder = lzss_coder_t(config().sub_config("coder")).encoder(
+                output, lzss::UnreplacedLiterals<text_t>(text, factors));
 
             coder.encode_text(text, factors);
         });
@@ -126,7 +130,7 @@ public:
         lzss::DecompBackBuffer decomp;
 
         {
-            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
             decoder.decode(decomp);
         }
 
@@ -136,4 +140,3 @@ public:
 };
 
 } //ns
-

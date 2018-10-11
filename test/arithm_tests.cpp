@@ -2,8 +2,6 @@
 
 #include "test/util.hpp"
 #include <tudocomp/Literal.hpp>
-#include <tudocomp/AlgorithmStringParser.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/coders/ArithmeticCoder.hpp>
 
 using namespace tdc;
@@ -15,7 +13,8 @@ void test_arithm(const std::string& text) {
 
     {//write
         tdc::io::Output out(output);
-        ArithmeticCoder::Encoder encoder(create_env(ArithmeticCoder::meta()), out, ViewLiterals(text));
+        ArithmeticCoder::Encoder encoder(
+            ArithmeticCoder::meta().config(), out, ViewLiterals(text));
 
         {//now writing
             char c;
@@ -27,7 +26,9 @@ void test_arithm(const std::string& text) {
 
     {//read
         tdc::io::Input in(output);
-        ArithmeticCoder::Decoder decoder(create_env(ArithmeticCoder::meta()), in);
+        ArithmeticCoder::Decoder decoder(
+            ArithmeticCoder::meta().config(), in);
+
         input.clear();
         input.str(std::string{});
 
@@ -37,6 +38,13 @@ void test_arithm(const std::string& text) {
     }
     ASSERT_EQ(input.str(), text);
     ASSERT_EQ(input.str().size(), text.size());
+}
+
+TEST(arithm, sanity) {
+    test_arithm("a");
+    test_arithm("aa");
+    test_arithm("ab");
+    test_arithm("abab");
 }
 
 TEST(arithm, nullbyte) {

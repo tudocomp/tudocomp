@@ -37,7 +37,7 @@ template<class comp_strat>
 void run_comp(std::string compression_string) {
     // , tdc::lfs::EncodeStrategy< tdc::ASCIICoder, tdc::ASCIICoder
     typedef tdc::lfs::EncodeStrategy< tdc::ASCIICoder, tdc::ASCIICoder >  coding_strat;
-    auto c = create_algo<tdc::lfs::LFSCompressor<comp_strat, coding_strat >  > ();
+    auto c = Algorithm::instance<tdc::lfs::LFSCompressor<comp_strat, coding_strat >  > ();
 
     std::string compressed;
     // compress

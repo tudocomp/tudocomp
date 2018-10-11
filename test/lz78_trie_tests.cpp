@@ -4,7 +4,6 @@
 #include <gtest/gtest.h>
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 
@@ -93,7 +92,7 @@ void trie_test_single(TestTrie test, bool test_values) {
     size_t is_trie_size = 1;
 
     size_t remaining = test.input.size();
-    auto trie = builder<T>().instance(remaining, remaining);
+    auto trie = Algorithm::instance<T>(remaining, remaining);
     trie.add_rootnode(0);
 
     auto is_trie_node = &is_trie;

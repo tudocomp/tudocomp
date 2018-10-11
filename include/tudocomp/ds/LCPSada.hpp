@@ -1,6 +1,8 @@
 #pragma once
+
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
+#include <tudocomp/meta/Config.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <sdsl/select_support_mcl.hpp> // for the select data structure
 
@@ -130,7 +132,9 @@ class LCPForwardIterator {
 
 	len_t next_select() {
 		DCHECK_GE(m_bv.size(), 1);
+//		DCHECK_GT(m_idx,0);
 		DCHECK_LT(m_idx+1, m_bv.size());
+		const len_t chunk_size = 1 + ((m_bv.size()-1)/64); //TODO: in constructor
 		const uint64_t*const data = m_bv.data();
 		while(m_block < m_chunk_length) {
 			if(m_blockrank+m_ones >= m_idx+1) break;

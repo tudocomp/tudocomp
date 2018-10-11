@@ -24,42 +24,50 @@ template<typename lzss_coder_t, typename strategy_t, typename dec_t, typename te
 class LCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "lcpcomp");
-        m.option("coder").templated<lzss_coder_t>("lzss_coder");
-        m.option("comp").templated<strategy_t, lcpcomp::ArraysComp>("lcpcomp_comp");
-        m.option("dec").templated<dec_t, lcpcomp::ScanDec>("lcpcomp_dec");
-        m.option("textds").templated<text_t, TextDS<>>("textds");
-        m.option("threshold").dynamic(5);
-        m.option("flatten").dynamic(1); // 0 or 1
+        Meta m(Compressor::type_desc(), "lcpcomp",
+            "Computes the lcpcomp factorization of the input.");
+        m.param("coder", "The output encoder.")
+            .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
+        m.param("comp", "The factorization strategy for compression.")
+            .strategy<strategy_t>(TypeDesc("lcpcomp_comp"),
+                Meta::Default<lcpcomp::ArraysComp>());
+        m.param("dec", "The strategy for decompression.")
+            .strategy<dec_t>(TypeDesc("lcpcomp_dec"),
+                Meta::Default<lcpcomp::ScanDec>());
+        m.param("textds", "The text data structure provider.")
+            .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
+        m.param("threshold", "The minimum factor length.").primitive(5);
+        m.param("flatten", "Flatten reference chains after factorization.")
+            .primitive(1); // 0 or 1
         m.uses_textds<text_t>(strategy_t::textds_flags());
         return m;
     }
 
-    /// Construct the class with an environment.
-    inline LCPCompressor(Env&& env) : Compressor(std::move(env)) {}
+    using Compressor::Compressor;
 
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
         DCHECK(in.ends_with(uint8_t(0)));
 
         auto text = StatPhase::wrap("Construct Text DS", [&]{
-            return text_t(env().env_for_option("textds"), in, strategy_t::textds_flags());
+            return text_t(config().sub_config("textds"),
+                in, strategy_t::textds_flags());
         });
 
         // read options
-        const len_t threshold = env().option("threshold").as_integer(); //factor threshold
-        lzss::FactorBufferRAM factors;
+        const len_t threshold = config().param("threshold").as_uint();
+        lzss::FactorBuffer<> factors;
 
         StatPhase::wrap("Factorize", [&]{
             // Factorize
-            strategy_t strategy(env().env_for_option("comp"));
+            strategy_t strategy(config().sub_config("comp"));
             strategy.factorize(text, threshold, factors);
         });
 
         // sort factors
         StatPhase::wrap("Sort Factors", [&]{ factors.sort(); });
 
-        if(env().option("flatten").as_integer()) {
+        if(config().param("flatten").as_bool()) {
             // flatten factors
             StatPhase::wrap("Flatten Factors", [&]{ factors.flatten(); });
         }
@@ -71,19 +79,18 @@ public:
         })
 
         // encode
-        StatPhase::wrap("Encode", [&]{
-            auto coder = lzss_coder_t(env().env_for_option("coder")).encoder(
-                output, lzss::UnreplacedLiterals<text_t,decltype(factors)>(text, factors));
+        StatPhase::wrap("Encode Factors", [&]{
+            auto coder = lzss_coder_t(config().sub_config("coder")).encoder(
+                output,lzss::UnreplacedLiterals<text_t, decltype(factors)>(text, factors));
 
             coder.encode_text(text, factors);
         });
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        dec_t decomp(env().env_for_option("dec"));
-
+        dec_t decomp(config().sub_config("dec"));
         {
-            auto decoder = lzss_coder_t(env().env_for_option("coder")).decoder(input);
+            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
             decoder.decode(decomp);
         }
 
@@ -95,6 +102,7 @@ public:
 /// \brief Contains factorization and decoding strategies for
 ///        the  \ref LCPCompressor.
 namespace lcpcomp {
+    // only here for Doxygen
 }
 
 }
