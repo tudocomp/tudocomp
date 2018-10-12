@@ -39,7 +39,7 @@ public:
         auto st = StatPhase::wrap("Construct ST", [&]{
             return lzcics::suffix_tree(text.data(), cst);
         });
-		DCHECK_EQ(st.cst.size(), n);
+		DCHECK_EQ(st.cst.size(), n+1);
 
         // factorize
         StatPhase::wrap("Factorize", [&]{
