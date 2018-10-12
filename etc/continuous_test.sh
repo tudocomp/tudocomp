@@ -4,13 +4,13 @@
 # change kSize to the number of generated characters
 
 ##### EDIT
-local -r kSize=1000
+local -r kSize=10000
 function check {
 #./tdc -a 'lcpcomp(ascii,comp=plcppeaks,dec=compact)' dna.random -o dna.random.tdc --force && 
 #./tdc -a 'lcpcomp(ascii,comp=heap,dec=compact)' dna.random -o dna.random.tdc --force && 
 #./tdc -a 'lcpcomp(ascii,comp=plcp,dec=compact)' dna.random -o dna.random.tdc --force && 
 #./tdc -a 'lz78(ascii,monte(hash_roller = rk))' dna.random -o dna.random.tdc --force && 
-./tdc -a 'lz78(ascii,ternary)' dna.random -o dna.random.tdc --force && 
+./tdc -a 'lz77cics(coder=stream(ascii,ascii,ascii))' dna.random -o dna.random.tdc --force && 
 #./tdc -a 'lz78(ascii,myhash)' dna.random -o dna.random.tdc --force && 
 #./tdc -a 'lz78u(streaming(ascii),ascii)' dna.random -o dna.random.tdc --force && 
 ./tdc --decompress dna.random.tdc --output dna.random.orig --force && 
@@ -31,7 +31,7 @@ function genDNA {
 	chars=acgt
 	num="$1"
 	for i in $(seq 1 "$num") ; do
-		echo -n ${chars:RANDOM%${#chars}:1}
+		echo -n ${chars[1 + $RANDOM % ${#chars[@]} ]}
 	done
 	echo
 }
@@ -46,7 +46,7 @@ it=1
 
 while [ 1 ]; do 
 make -s tudocomp_driver >/dev/null&&
-./genDNA.sh $kSize > dna.random &&
+genDNA $kSize > dna.random &&
 timeA=$(date +%s%N | cut -b1-13)
 check dna.random 
 timeB=$(date +%s%N | cut -b1-13)
