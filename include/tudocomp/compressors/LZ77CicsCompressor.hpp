@@ -15,7 +15,7 @@ public:
         Meta m(Compressor::type_desc(), "lz77cics", "LZ77 compression in compressed space.");
         m.param("coder", "The output encoder.")
             .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
-        m.input_restrictions(io::InputRestrictions({0}, false));
+        m.input_restrictions(io::InputRestrictions({0}, true));
         return m;
     }
 
@@ -25,7 +25,7 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto text = input.as_view();
         const size_t n = text.size();
-		DCHECK_EQ(strlen( (const char*)text.data()), n);
+		DCHECK_EQ(strlen( (const char*)text.data())+1, n);
 
         // initialize encoder
         auto coder = lzss_coder_t(config().sub_config("coder"))
@@ -39,7 +39,7 @@ public:
         auto st = StatPhase::wrap("Construct ST", [&]{
             return lzcics::suffix_tree(text.data(), cst);
         });
-		DCHECK_EQ(st.cst.size(), n+1);
+		DCHECK_EQ(st.cst.size(), n);
 
         // factorize
         StatPhase::wrap("Factorize", [&]{
