@@ -11,6 +11,8 @@ namespace lzcics {
 using namespace sdsl;
 
 //typedef cst_sada_light<csa_sada_light<>, bp_support_sadaM<>> cst_t;
+// typedef cst_sada<sdsl::csa_sada<sdsl::enc_vector<sdsl::coder::elias_gamma,4>>> cst_t;
+
 typedef cst_sada<> cst_t;
 
 /**
@@ -132,6 +134,8 @@ struct ST {
 	 * Returns the length of the label read from the edges on the path from the root to node
 	 */
 	cst_t::size_type str_depth(const cst_t::node_type& node)const{
+		/* return cst.depth(node); */ //  can be used with a sdsl suffix tree
+
 		DCHECK(!cst.is_leaf(node)); // we do not support leaves
 		auto la = cst.leftmost_leaf(cst.select_child(node, 1));
 		auto lb = cst.leftmost_leaf(cst.select_child(node, 2));

@@ -61,7 +61,7 @@ public:
         Meta m(Compressor::type_desc(), "lz78cics", "LZ78 compression in compressed space.");
         m.param("coder", "The output encoder.")
             .strategy<coder_t>(TypeDesc("coder"));
-        m.input_restrictions(io::InputRestrictions({0}, false));
+        m.input_restrictions(io::InputRestrictions({0}, true));
         return m;
     }
 
