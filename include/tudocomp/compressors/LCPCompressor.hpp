@@ -8,6 +8,8 @@
 #include <tudocomp/compressors/lzss/FactorizationStats.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
 
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
+
 #include <tudocomp/ds/TextDS.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
@@ -29,10 +31,10 @@ public:
         m.param("coder", "The output encoder.")
             .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
         m.param("comp", "The factorization strategy for compression.")
-            .strategy<strategy_t>(TypeDesc("lcpcomp_comp"),
+            .strategy<strategy_t>(lcpcomp::comp_strategy_type(),
                 Meta::Default<lcpcomp::ArraysComp>());
         m.param("dec", "The strategy for decompression.")
-            .strategy<dec_t>(TypeDesc("lcpcomp_dec"),
+            .strategy<dec_t>(lcpcomp::dec_strategy_type(),
                 Meta::Default<lcpcomp::ScanDec>());
         m.param("textds", "The text data structure provider.")
             .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());

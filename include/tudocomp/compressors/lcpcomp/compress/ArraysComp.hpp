@@ -5,7 +5,7 @@
 #include <tudocomp/def.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
-#include <tudocomp/compressors/lcpcomp/MaxLCPSuffixList.hpp>
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -22,7 +22,9 @@ namespace lcpcomp {
 class ArraysComp : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_comp", "arrays");
+        Meta m(comp_strategy_type(), "arrays",
+            "Uses arrays instead of maintaining a max heap");
+
         return m;
     }
 

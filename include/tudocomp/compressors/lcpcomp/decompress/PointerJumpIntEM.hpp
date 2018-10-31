@@ -22,6 +22,8 @@
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/Algorithm.hpp>
 
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
+
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
@@ -194,7 +196,7 @@ namespace tdc {
 
             public:
                 inline static Meta meta() {
-                    Meta m("lcpcomp_dec", "pjintem");
+                    Meta m(dec_strategy_type(), "pjintem");
                     return m;
                 }
 
@@ -222,8 +224,8 @@ namespace tdc {
 
                 PointerJumpIntEM(PointerJumpIntEM&& other) = default;
 
-                inline PointerJumpIntEM(Env&& env)
-                        : Algorithm(std::move(env))
+                inline PointerJumpIntEM(Config&& cfg)
+                        : Algorithm(std::move(cfg))
                         , m_cursor(0)
                 {}
 

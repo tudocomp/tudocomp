@@ -8,6 +8,8 @@
 #include <tudocomp/Algorithm.hpp>
 #include <algorithm>
 
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
+
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
@@ -21,7 +23,7 @@ namespace tdc {
         class PointerJump : public Algorithm {
         public:
             inline static Meta meta() {
-                Meta m("lcpcomp_dec", "pj");
+                Meta m(dec_strategy_type(), "pj");
                 return m;
             }
 
@@ -113,8 +115,8 @@ namespace tdc {
         public:
             PointerJump(PointerJump&& other) = default;
 
-            inline PointerJump(Env&& env)
-                    : Algorithm(std::move(env))
+            inline PointerJump(Config&& cfg)
+                    : Algorithm(std::move(cfg))
                     , m_cursor(0)
             {}
 

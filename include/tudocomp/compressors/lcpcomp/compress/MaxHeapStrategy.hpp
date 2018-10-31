@@ -5,6 +5,7 @@
 #include <tudocomp/ds/ArrayMaxHeap.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -22,7 +23,9 @@ namespace lcpcomp {
 class MaxHeapStrategy : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_comp", "heap");
+        Meta m(comp_strategy_type(), "heap",
+            "Uses a max heap to keep track of LCP values.");
+
         return m;
     }
 

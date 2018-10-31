@@ -9,6 +9,7 @@
 #include <tudocomp/ds/TextDS.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
 #include <tudocomp/ds/LCPSada.hpp>
 
 #include <stxxl/bits/containers/vector.h>
@@ -361,7 +362,7 @@ public:
     using Algorithm::Algorithm;
 
     inline static Meta meta() {
-        Meta m("lcpcomp_comp", "plcp", "compressor using PLCP array");
+        Meta m(comp_strategy_type(), "plcp", "Uses the PLCP array");
         return m;
     }
 
