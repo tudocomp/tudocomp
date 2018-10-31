@@ -134,7 +134,7 @@ class LCPForwardIterator {
 		DCHECK_GE(m_bv.size(), 1);
 //		DCHECK_GT(m_idx,0);
 		DCHECK_LT(m_idx+1, m_bv.size());
-		const len_t chunk_size = 1 + ((m_bv.size()-1)/64); //TODO: in constructor
+		//const len_t chunk_size = 1 + ((m_bv.size()-1)/64); //TODO: in constructor
 		const uint64_t*const data = m_bv.data();
 		while(m_block < m_chunk_length) {
 			if(m_blockrank+m_ones >= m_idx+1) break;
