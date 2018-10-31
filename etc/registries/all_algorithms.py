@@ -163,9 +163,9 @@ lz78u_comp = [
 # lcpcomp factorization strategies ("comp")
 lcpcomp_comp = [
     AlgorithmConfig(name="lcpcomp::MaxHeapStrategy", header="compressors/lcpcomp/compress/MaxHeapStrategy.hpp"),
-    AlgorithmConfig(name="lcpcomp::MaxHeapLeftOnlyStrategy", header="compressors/lcpcomp/compress/MaxHeapLeftOnlyStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::MaxLCPStrategy", header="compressors/lcpcomp/compress/MaxLCPStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::ArraysComp", header="compressors/lcpcomp/compress/ArraysComp.hpp"),
+    AlgorithmConfig(name="lcpcomp::PLCPStrategy", header="compressors/lcpcomp/compress/PLCPStrategy.hpp"),
 ]
 
 if config_match("^#define Boost_FOUND 1"): # if Boost is available
