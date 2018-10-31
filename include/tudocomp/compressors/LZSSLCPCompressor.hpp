@@ -120,7 +120,7 @@ public:
         // encode
         StatPhase::wrap("Encode", [&]{
             auto coder = lzss_coder_t(config().sub_config("coder")).encoder(
-                output, lzss::UnreplacedLiterals<text_t>(text, factors));
+                output, lzss::UnreplacedLiterals<text_t, decltype(factors)>(text, factors));
 
             coder.encode_text(text, factors);
         });
