@@ -25,6 +25,7 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto text = input.as_view();
         const size_t n = text.size();
+
 		DCHECK_EQ(strlen( (const char*)text.data())+1, n);
 
         // initialize encoder
@@ -33,6 +34,7 @@ public:
 
         coder.factor_length_range(Range(n));
         coder.encode_header();
+        if(n <= 1ULL) return; // nothing to do
 
         // construct suffix tree
         lzcics::cst_t cst;
