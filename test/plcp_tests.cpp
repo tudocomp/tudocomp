@@ -7,7 +7,6 @@
 
 #include <tudocomp/io.hpp>
 #include <tudocomp/ds/TextDS.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 #include "test/util.hpp"
 
 #include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
@@ -25,101 +24,110 @@ using namespace tdc::lzss;
 using io::InputView;
 
 using test_coder_t = BufferedBidirectionalCoder<ASCIICoder, ASCIICoder, ASCIICoder>;
+using uint40_t = uint_t<40>;
 
 // parameters for filemapped vector
 // these are "good" values, determined by trial and error on elbait
 constexpr size_t blocks_per_page = 4;
 constexpr size_t cache_pages = 8;
-constexpr size_t block_size = 16 * 4096 * sizeof(uint_t<40>);
+constexpr size_t block_size = 16 * 4096 * sizeof(uint40_t);
 
-using filemapped_vector_t = stxxl::VECTOR_GENERATOR<
-    uint_t<40>, blocks_per_page, cache_pages, block_size>::result;
+using uint40_pair_t = std::pair<uint40_t, uint40_t>;
+using filemapped_phi_array_t = stxxl::VECTOR_GENERATOR<
+    uint40_pair_t, blocks_per_page, cache_pages, block_size>::result;
 
 template<class text_t>
 void diskstrategy(text_t& text, size_t threshold, lzss::FactorBufferDisk& refs) {
     DVLOG(2) << "diskstrategy for text of size " << text.size();
     DCHECK_EQ(0, text[text.size()-1]);
 
-	text.require(ds::SA | ds::ISA);
+	text.require(ds::SA | ds::PHI);
 
-    char* safile { new char[TMP_MAX] };
-    char* isafile { new char[TMP_MAX] };
+    char* phifile { new char[TMP_MAX] };
     char* plcpfile { new char[TMP_MAX] };
 
-    std::tmpnam(safile);
-    std::tmpnam(isafile);
+    std::tmpnam(phifile);
     std::tmpnam(plcpfile);
 
-    {
-        DVLOG(2) << "compute SA";
-        const auto& sa = text.require_sa();
-        std::ofstream sao(safile);
-        for(auto it = sa.begin(); it != sa.end(); ++it) {
-            uint_t<40> buf { *it };
-            static_assert(sizeof(buf) == 5);
-            sao.write(reinterpret_cast<const char*>(&buf), sizeof(buf));
-        }
-    }
-    {
-        DVLOG(2) << "compute ISA";
-        const auto& isa = text.require_isa();
-        std::ofstream isao(isafile);
-        for(auto it = isa.begin(); it != isa.end(); ++it) {
-            uint_t<40> buf { *it };
-            static_assert(sizeof(buf) == 5);
-            isao.write(reinterpret_cast<const char*>(&buf), sizeof(buf));
-        }
-    }
-    {
-        DVLOG(2) << "compute PLCP";
-        std::ofstream plcpo(plcpfile);
-   		construct_plcp_bitvector(text.require_sa(), text).write_data(plcpo);
-    }
-    {
-        DVLOG(2) << "map STXXL vectors";
-        stxxl::syscall_file f_sa(safile, stxxl::file::open_mode::RDONLY);
-        filemapped_vector_t sa(&f_sa);
+    // map file for phi
+    stxxl::syscall_file f_phi(phifile,
+        stxxl::file::open_mode::CREAT | stxxl::file::open_mode::RDWR);
 
-        stxxl::syscall_file f_isa(isafile, stxxl::file::open_mode::RDONLY);
-        filemapped_vector_t isa(&f_isa);
+    {
+        filemapped_phi_array_t phi(&f_phi);
+        size_t num_irreducible = 0;
 
-        // check index ds
+        // construct index DS
         {
-            DVLOG(2) << "check index ds";
-            PLCPFileForwardIterator pplcp    (plcpfile);
-            const auto& tsa = text.require_sa();
-            const auto& tisa = text.require_isa();
-            const auto& plcp = text.require_plcp();
+            DVLOG(2) << "compute PHI";
+            const auto& tphi = text.require_phi();
 
-            for(size_t i = 0; i < sa.size(); ++i) {
-                DCHECK_EQ(sa.size(),tsa.size());
-                DCHECK_EQ(sa[i], (uint64_t)tsa[i]);
-            }
+            uint40_t prev_phi = uint40_t(tphi[0]);
+            phi.push_back(uint40_pair_t(0, prev_phi));
+            num_irreducible = 1;
 
-            DCHECK_EQ(isa.size(),tisa.size());
+            for(uint40_t i = 1; i < tphi.size(); i++) {
+                auto phi_i = uint40_t(tphi[i]);
 
-            for(size_t i = 0; i < isa.size(); ++i) {
-                DCHECK_EQ(isa[i], (uint64_t)tisa[i]);
-            }
+                if(phi_i != prev_phi+1) {
+                    // irreducible entry
+                    phi.push_back(uint40_pair_t(i, phi_i));
+                    ++num_irreducible;
+                }
 
-            for(size_t i = 0; i < plcp.size()-1; ++i) {
-                DCHECK_EQ(pplcp(),(uint64_t) plcp[i]);
-                pplcp.advance();
+                prev_phi = phi_i;
             }
         }
-
         {
-            DVLOG(2) << "factorize";
-     		PLCPFileForwardIterator pplcp(plcpfile);
-	        RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
-    	    compute_references(text.size(), refStrategy, pplcp, threshold);
-	        refStrategy.factorize(refs);
+            DVLOG(2) << "compute PLCP";
+            std::ofstream plcpo(plcpfile);
+       		construct_plcp_bitvector(text.require_sa(), text).write_data(plcpo);
+        }
+        {
+            DVLOG(2) << "map STXXL vectors";
+            // check index ds
+            {
+                DVLOG(2) << "check index ds";
+                PLCPFileForwardIterator pplcp(plcpfile);
+                const auto& tphi = text.require_phi();
+                const auto& plcp = text.require_plcp();
+
+                DCHECK_EQ(0ULL, phi[0].first);
+                uint64_t irreducible_pos = 0;
+                uint64_t irreducible_phi = phi[0].second;
+                size_t j = 1;
+
+                for(size_t i = 1; i < tphi.size(); i++) {
+                    if(j < num_irreducible && i == uint64_t(phi[j].first)) {
+                        irreducible_pos = phi[j].first;
+                        irreducible_phi = phi[j].second;
+                        ++j;
+                    }
+
+                    DCHECK_EQ(
+                        uint64_t(tphi[i]),
+                        irreducible_phi + (i - irreducible_pos));
+                }
+
+                for(size_t i = 0; i < plcp.size()-1; ++i) {
+                    DCHECK_EQ(pplcp(),(uint64_t) plcp[i]);
+                    pplcp.advance();
+                }
+            }
+
+            {
+                DVLOG(2) << "factorize";
+         		PLCPFileForwardIterator pplcp(plcpfile);
+	            RefDiskStrategy<decltype(phi)> refStrategy(phi);
+        	    compute_references(text.size(), refStrategy, pplcp, threshold);
+	            refStrategy.factorize(refs);
+            }
         }
     }
 
     DVLOG(2) << "clean up";
-    delete [] safile;
-    delete [] isafile;
+    f_phi.close_remove();
+    delete [] phifile;
     delete [] plcpfile;
 
     DVLOG(2) << "done (refs: " << refs.size() << ")";
@@ -131,7 +139,7 @@ void test_plcp(text_t& text) {
 
     lzss::FactorBufferRAM bufRAM;
     {
-        PLCPStrategy strat(create_env(PLCPStrategy::meta()));
+        PLCPStrategy strat(PLCPStrategy::meta().config());
         strat.factorize(text, 2, bufRAM);
     }
 
@@ -158,14 +166,14 @@ void test_plcp(text_t& text) {
     std::vector<uint8_t> outbufRAM;
     {
         tdc::Output outputRAM(outbufRAM);
-        auto coder = test_coder_t(tdc::create_env(test_coder_t::meta())).encoder(
+        auto coder = test_coder_t(test_coder_t::meta().config()).encoder(
             outputRAM, tdc::lzss::UnreplacedLiterals<text_t,decltype(bufRAM)>(text, bufRAM));
 
         coder.encode_text(text, bufRAM);
     }
     {
         tdc::Output outputDisk(outbufDisk);
-        auto coder = test_coder_t(tdc::create_env(test_coder_t::meta())).encoder(
+        auto coder = test_coder_t(test_coder_t::meta().config()).encoder(
             outputDisk, tdc::lzss::UnreplacedLiterals<text_t,decltype(bufDisk)>(text, bufDisk));
 
         coder.encode_text(text, bufDisk);
@@ -198,7 +206,7 @@ class TestRunner {
 		test::TestInput input = test::compress_input(str);
 		InputView in = input.as_view();
 		DCHECK_EQ(str.length()+1, in.size());
-		textds_t t = create_algo<textds_t>("", in);
+		textds_t t = Algorithm::instance<textds_t>(in);
 		DCHECK_EQ(str.length()+1, t.size());
 		m_testfunc(t);
 	}
@@ -214,7 +222,7 @@ class TestRunner {
 #define TEST_DS_STRINGCOLLECTION(func) \
 	TestRunner<TextDS<>> runner(func); \
 	test::roundtrip_batch(runner); \
-	test::on_string_generators(runner,13);
+	test::on_string_generators(runner,8);
 TEST(plcp, filecheck)          { TEST_DS_STRINGCOLLECTION(test_plcp); }
 #undef TEST_DS_STRINGCOLLECTION
 
