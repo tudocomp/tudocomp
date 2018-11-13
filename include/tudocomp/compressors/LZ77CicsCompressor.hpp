@@ -95,13 +95,19 @@ public:
         */
             sdsl::rank_support_v5<1> rankW(&bW);
             p = 0;
-            const size_t zw = rankW.rank(bW.size());
-          size_t *W = (size_t *)malloc(zw*sizeof(size_t));
-	  DCHECK(W != nullptr) << "cannot allocate W";
-	  if (W == NULL) {
-	      std::cout << "malloc error\n";
-	  }
-          ell = smallest_leaf;
+            const size_t zw = rankW.rank(bW.size()); //! number of witnesses
+
+            //! in the unlikely case that there is no witnesses (zw == 0), we output the text, since we produced only fresh factors
+            if(tdc_unlikely(zw == 0)) { 
+                coder.encode_run(text,0,n);
+                return; 
+            }
+            size_t *W = (size_t *)malloc(zw*sizeof(size_t));
+            DCHECK(W != nullptr) << "cannot allocate W";
+            if (W == NULL) {
+                std::cout << "malloc error\n";
+            }
+            ell = smallest_leaf;
             x = 0; // invariant: x == label(ell)
             do {
 #ifndef NDEBUG
