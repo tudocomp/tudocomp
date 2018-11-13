@@ -105,8 +105,6 @@ public:
 
         typename decltype(m_factors)::bufreader_type factor_reader(m_factors);
 
-        lzss::FactorBufferDisk::backing_vector_type::bufwriter_type writer(reflist.factors);
-
         len_t irreducible_pos = 0;
         len_t irreducible_phi = phi_iterator->second;
         ++phi_iterator;
@@ -115,7 +113,7 @@ public:
             auto pos = f->first;
 
             // find phi[pos]
-            while(pos >= phi_iterator->first) {
+            while(phi_iterator != phi_reader.end() && pos >= phi_iterator->first) {
                 irreducible_pos = phi_iterator->first;
                 irreducible_phi = phi_iterator->second;
                 ++phi_iterator;
@@ -123,8 +121,8 @@ public:
             DCHECK_LE(irreducible_pos, pos);
             auto phi_pos = irreducible_phi + (pos - irreducible_pos);
 
-            DLOG(INFO) << "phi[" << pos << "] = " << phi_pos;
-            writer << lzss::Factor { pos, phi_pos, f->second };
+            //DLOG(INFO) << "phi[" << pos << "] = " << phi_pos;
+            reflist.push_back(pos, phi_pos, f->second);
         }
     }
 };

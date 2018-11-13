@@ -41,7 +41,7 @@ public:
     vector_type& factors = m_factors;
 
     inline void push_back(Factor f) {
-        // FIXME: never called by PLCPStrategy - statistics aren't tracked!
+        // TODO: specialize for FactorBufferDisk by using a writer?
         m_sorted = m_sorted && (m_factors.empty() || f.pos >= m_factors.back().pos);
         m_factors.push_back(f);
 
