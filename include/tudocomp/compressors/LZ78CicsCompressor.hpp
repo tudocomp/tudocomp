@@ -270,6 +270,7 @@ public:
             factor_count++;
         }
 
+        out << '\0'; // restore sentinel for unescaping
         out.flush();
     }
 };
