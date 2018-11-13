@@ -128,8 +128,13 @@ def root_cpp(kinds):
         # Define the register functions
         r.code('''
             void register_$IDENTs() {
-                auto& r = Registry::of<$TYPE>();
         ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
+
+        if len(calls) > 0:
+            r.code('''
+                auto& r = Registry::of<$TYPE>();
+            ''', 1, { "$TYPE": type, "$IDENT": ident, "$CONST": const })
+
         for call in calls:
             r.code('''
                 register_$CALL(r);
