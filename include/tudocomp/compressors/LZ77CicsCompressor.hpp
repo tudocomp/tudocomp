@@ -31,6 +31,7 @@ public:
 
         coder.factor_length_range(Range(n));
         coder.encode_header();
+        if(n <= 1ULL) return; // nothing to do
 
         // construct suffix tree
         lzcics::cst_t cst;
