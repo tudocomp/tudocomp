@@ -31,7 +31,7 @@ public:
     using Algorithm::Algorithm;
 
     template<
-        template<typename,typename,typename> typename lzss_encoder_t,
+        template<typename,typename,typename> class lzss_encoder_t,
         typename literals_t
     >
     inline auto encoder(Output& output, literals_t&& literals) {
@@ -51,7 +51,7 @@ public:
         );
     }
 
-    template<template<typename,typename,typename> typename lzss_decoder_t>
+    template<template<typename,typename,typename> class lzss_decoder_t>
     inline auto decoder(Input& input) {
         auto in = std::make_shared<BitIStream>(input);
         return lzss_decoder_t<
