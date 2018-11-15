@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <initializer_list>
+#include <tudocomp/util/conststr.hpp>
 
 namespace tdc {
 namespace meta {
@@ -13,15 +14,13 @@ namespace ast {
 /// to a group of expected characters and can be successfully parsed.
 class Acceptor {
 private:
-    const char* m_symbols;
-    size_t      m_length;
+    conststr m_symbols;
 
 public:
     /// \brief Main constructor.
     /// \param symbols the string of characters to accept
-    inline constexpr Acceptor(const char* symbols)
-        : m_symbols(symbols),
-          m_length(strlen(symbols)) {
+    inline constexpr Acceptor(conststr symbols)
+        : m_symbols(symbols) {
     }
 
     /// \brief Tests if the given character belongs to the group of accepted
@@ -29,7 +28,7 @@ public:
     /// \param c the character in question
     /// \return \c true if accepted, \c false otherwise
     inline constexpr bool accept(const char c) const {
-        for(size_t i = 0; i < m_length; i++) {
+        for(size_t i = 0; i < m_symbols.size(); i++) {
             if(c == m_symbols[i]) return true;
         }
         return false;
