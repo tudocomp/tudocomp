@@ -28,8 +28,8 @@ constexpr Acceptor sym_digit = Acceptor("0123456789");
 constexpr Acceptor sym_name_special = Acceptor("_");
 
 /// \brief Accepts characters allowed in names.
-constexpr UnionAcceptor sym_name = UnionAcceptor({
-    sym_letter, sym_digit, sym_name_special});
+constexpr Acceptor sym_name = Acceptor(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_");
 
 /// \brief Error type for parsing related errors.
 class ParseError : public std::runtime_error {
