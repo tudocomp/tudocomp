@@ -110,8 +110,6 @@ namespace tdc {
             SourceVector m_sources;
             SourceVector m_sources_temp;
 
-            IF_STATS(len_t m_longest_chain = 0);
-
         public:
             PointerJump(PointerJump&& other) = default;
 
