@@ -4,6 +4,8 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
+
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
@@ -12,8 +14,8 @@ namespace lcpcomp {
 class MultimapBuffer : public Algorithm {
     public:
     inline static Meta meta() {
-        Meta m("lcpcomp_dec", "MultimapListBuffer");
-        m.option("lazy").dynamic(0);
+        Meta m(dec_strategy_type(), "MultimapListBuffer");
+        m.param("lazy").primitive(0ULL);
         return m;
     }
 
@@ -78,8 +80,8 @@ private:
     }
 
 public:
-    inline MultimapBuffer(Env&& env)
-        : Algorithm(std::move(env)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_lazy(this->env().option("lazy").as_integer())
+    inline MultimapBuffer(Config&& cfg)
+        : Algorithm(std::move(cfg)), m_cursor(0), m_longest_chain(0), m_current_chain(0), m_lazy(this->config().param("lazy").as_uint())
     {
 		m_fwd.max_load_factor(0.8);
     }

@@ -55,7 +55,7 @@ public:
 
         // Factorize
         const len_t text_length = text.size();
-        lzss::FactorBuffer factors;
+        lzss::FactorBufferRAM factors;
 
         StatPhase::wrap("Factorize", [&]{
             const len_t threshold = config().param("threshold").as_uint();
@@ -120,7 +120,7 @@ public:
         // encode
         StatPhase::wrap("Encode", [&]{
             auto coder = lzss_coder_t(config().sub_config("coder")).encoder(
-                output, lzss::UnreplacedLiterals<text_t>(text, factors));
+                output, lzss::UnreplacedLiterals<text_t, decltype(factors)>(text, factors));
 
             coder.encode_text(text, factors);
         });
@@ -128,6 +128,7 @@ public:
 
     inline virtual void decompress(Input& input, Output& output) override {
         lzss::DecompBackBuffer decomp;
+
         {
             auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
             decoder.decode(decomp);

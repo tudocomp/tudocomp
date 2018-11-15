@@ -45,10 +45,12 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG ${SANITIZATION}")
 
 # Set integer with for length type
-if(DEFINED LEN_BITS)
-    message(STATUS "Setting length type to ${LEN_BITS} Bits")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEN_BITS=${LEN_BITS}")
-endif(DEFINED LEN_BITS)
+if(NOT DEFINED LEN_BITS)
+    set(LEN_BITS 32)
+endif(NOT DEFINED LEN_BITS)
+
+message(STATUS "Setting length type to ${LEN_BITS} Bits")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEN_BITS=${LEN_BITS}")
 
 find_package(Boost)
 
@@ -85,11 +87,22 @@ include(find_or_download_package)
 # Usage: find_or_download_package(PACKAGE_NAME, FOUND_FLAG_PREFIX, TARGET_PREFIX)
 find_or_download_package(Glog GLOG glog)
 find_or_download_package(SDSL SDSL sdsl)
+find_or_download_package(STXXL STXXL stxxl)
+
 git_submodule_subdirectory(external/bit_span)
 git_submodule_subdirectory(external/compact_sparse_hash)
 git_submodule_subdirectory(external/datasets)
 
 include(FindJudy)
+
+# Find OpenMP
+find_package(OpenMP)
+include(FindOpenMP)
+if(OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -DENABLE_OPENMP")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif(OPENMP_FOUND)
 
 # Generate source files
 include(generate_tudocomp_sources)

@@ -13,6 +13,7 @@
 universal_coders = [
     AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
     AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
+    AlgorithmConfig(name="RiceCoder", header="coders/RiceCoder.hpp"),
     AlgorithmConfig(name="EliasGammaCoder", header="coders/EliasGammaCoder.hpp"),
     AlgorithmConfig(name="EliasDeltaCoder", header="coders/EliasDeltaCoder.hpp"),
     AlgorithmConfig(name="SLEIntCoder", header="coders/SLEIntCoder.hpp"),
@@ -162,24 +163,19 @@ lz78u_comp = [
 # lcpcomp factorization strategies ("comp")
 lcpcomp_comp = [
     AlgorithmConfig(name="lcpcomp::MaxHeapStrategy", header="compressors/lcpcomp/compress/MaxHeapStrategy.hpp"),
-    AlgorithmConfig(name="lcpcomp::MaxHeapLeftOnlyStrategy", header="compressors/lcpcomp/compress/MaxHeapLeftOnlyStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::MaxLCPStrategy", header="compressors/lcpcomp/compress/MaxLCPStrategy.hpp"),
     AlgorithmConfig(name="lcpcomp::ArraysComp", header="compressors/lcpcomp/compress/ArraysComp.hpp"),
-]
-
-if config_match("^#define Boost_FOUND 1"): # if Boost is available
-    lcpcomp_comp += [
-        AlgorithmConfig(name="lcpcomp::BoostHeap", header="compressors/lcpcomp/compress/BoostHeap.hpp"),
-        AlgorithmConfig(name="lcpcomp::PLCPStrategy", header="compressors/lcpcomp/compress/PLCPStrategy.hpp")
+    AlgorithmConfig(name="lcpcomp::PLCPStrategy", header="compressors/lcpcomp/compress/PLCPStrategy.hpp"),
 ]
 
 # lcpcomp factor decoding strategies ("dec")
 lcpcomp_dec = [
     AlgorithmConfig(name="lcpcomp::ScanDec", header="compressors/lcpcomp/decompress/ScanDec.hpp"),
+    AlgorithmConfig(name="lcpcomp::PointerJump", header="compressors/lcpcomp/decompress/PointerJump.hpp"),
+    AlgorithmConfig(name="lcpcomp::PointerJumpIntEM", header="compressors/lcpcomp/decompress/PointerJumpIntEM.hpp"),
     AlgorithmConfig(name="lcpcomp::DecodeForwardQueueListBuffer", header="compressors/lcpcomp/decompress/DecodeQueueListBuffer.hpp"),
     AlgorithmConfig(name="lcpcomp::CompactDec", header="compressors/lcpcomp/decompress/CompactDec.hpp"),
     AlgorithmConfig(name="lcpcomp::MultimapBuffer", header="compressors/lcpcomp/decompress/MultiMapBuffer.hpp"),
-    AlgorithmConfig(name="lcpcomp::LeftDec", header="compressors/lcpcomp/decompress/LeftDec.hpp"),
 ]
 
 # Allowed TextDS instances for lcpcomp (LCP array must be writable!)
@@ -241,6 +237,8 @@ len_coder = universal_coders
 coding_strat = [
 	AlgorithmConfig(name="lfs::EncodeStrategy", header="compressors/lfs/EncodeStrategy.hpp", sub=[lit_coder, len_coder]),
 ]
+
+##### Misc #####
 
 dividing_strat = [
     AlgorithmConfig(name="DivisionDividingStrategy", header="compressors/DividingCompressor.hpp"),

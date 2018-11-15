@@ -10,6 +10,7 @@ target_link_libraries(
     tudocomp_stat
     glog
     sdsl
+    stxxl
     bit_span
     compact_sparse_hash
 )

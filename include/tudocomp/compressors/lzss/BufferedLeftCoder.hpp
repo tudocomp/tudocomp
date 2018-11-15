@@ -87,10 +87,10 @@ public:
             }
         }
 
-        template<typename text_t>
+        template<typename text_t, typename factorbuffer_t>
         inline void encode_text(
             const text_t& text,
-            const FactorBuffer& factors) {
+            const factorbuffer_t& factors) {
 
             // create a new Range object to avoid type issues when decoding
             m_flen_r = MinDistributedRange(factors.factor_length_range());

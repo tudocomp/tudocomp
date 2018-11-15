@@ -5,6 +5,7 @@
 #include <tudocomp/ds/ArrayMaxHeap.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -22,7 +23,9 @@ namespace lcpcomp {
 class MaxHeapStrategy : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_comp", "heap");
+        Meta m(comp_strategy_type(), "heap",
+            "Uses a max heap to keep track of LCP values.");
+
         return m;
     }
 
@@ -32,10 +35,8 @@ public:
 
     using Algorithm::Algorithm; //import constructor
 
-    template<typename text_t>
-    inline void factorize(text_t& text,
-                   const size_t threshold,
-                   lzss::FactorBuffer& factors) {
+    template<typename text_t, typename factorbuffer_t>
+    inline void factorize(text_t& text, size_t threshold, factorbuffer_t& factors) {
 
 		// Construct SA, ISA and LCP
         StatPhase::wrap("Construct text ds", [&]{

@@ -8,11 +8,13 @@ import os
 import re
 import sys
 import statistics
+import string
 import subprocess
-import tempfile
 import time
 import pprint
 import json
+import random
+import traceback
 from collections import namedtuple
 
 # Argument parser
@@ -30,8 +32,26 @@ parser.add_argument('--format', type=str, default='stdout',
                     help='Format to output')
 parser.add_argument('--nomem', action="store_true",
                     help='Don\'t measure memory')
+parser.add_argument('--nodec', action="store_true",
+                    help='Only compress, don\'t decompress')
+parser.add_argument('--nolog', action="store_true",
+                    help='Don\'t print log when done')
+parser.add_argument('--tmp', type=str, default='/tmp',
+                    help='Directory for temporary files')
 
 args = parser.parse_args()
+
+def randstr(n):
+    return(''.join(random.choice(string.ascii_uppercase) for _ in range(n)))
+
+def mktemp():
+    while(True):
+        tmp = args.tmp + '/' + randstr(8)
+        if(not os.path.isfile(tmp)):
+            break
+	
+    return(tmp)
+
 
 class StdOutTable:
     def __init__(self):
@@ -103,11 +123,12 @@ if not args.nomem:
 StdOut = 0
 StdIn  = 0
 
-Exec = collections.namedtuple('Exec', ['args', 'outp', 'inp'])
+Exec = collections.namedtuple('Exec', ['cmd', 'outp', 'inp'])
 Exec.__new__.__defaults__ = (None, None) # args is required
 
 # Compressor Pair definition
-CompressorPair = collections.namedtuple('CompressorPair', ['name', 'compress', 'decompress'])
+CompressorPair = collections.namedtuple('CompressorPair', ['name', 'compress', 'measure', 'decompress', 'stats'])
+CompressorPair.__new__.__defaults__ = (None, None, None, None, dict())
 
 def Tudocomp(name, algorithm, tdc_binary='./tdc', cflags=[], dflags=[]):
     return CompressorPair(name,
@@ -205,21 +226,12 @@ def timesize(num, suffix='s'):
             num /= 3600
             return "%3.1f%s" % (num, 'h')
 
-def run_exec(x, infilename, outfilename):
-    args = list(x.args)
+def run_exec(x, infilename, outfilename, logging):
+    cmd = x.cmd.replace('@IN@', infilename).replace('@OUT@', outfilename);
 
     # Delete existing output file
     if os.path.exists(outfilename):
         os.remove(outfilename)
-
-    # Determine Output
-    if(x.outp == StdOut):
-        outfile = open(outfilename, "wb")
-        pipe_out = outfile
-    else:
-        outfile = None
-        pipe_out = logfile
-        args += ([x.outp, outfilename] if x.outp != None else [outfilename])
 
     # Determine input
     if(x.inp == StdIn):
@@ -228,32 +240,50 @@ def run_exec(x, infilename, outfilename):
     else:
         infile = None
         pipe_in = None
-        args += ([x.inp, infilename]   if x.inp  != None else [infilename])
+
+    # Determine Output
+    if(x.outp == StdOut):
+        outfile = open(outfilename, "wb")
+        pipe_out = outfile
+    else:
+        outfile = None
+        pipe_out = (current_logfile if logging else subprocess.DEVNULL)
 
     # Call
     t0 = time.time()
-    subprocess.check_call(args, stdin=pipe_in, stdout=pipe_out, stderr=logfile)
+    proc = subprocess.Popen(cmd,
+                            shell=True,
+                            stdin=pipe_in,
+                            stdout=pipe_out,
+                            stderr=pipe_out)
+    result = proc.wait()
 
     # Close files
     outfile.close() if outfile else None
     infile.close()  if infile  else None
+
+    # result
+    if(result != 0):
+        raise Exception('execution failed: ' + cmd);
 
     # Yield time delta
     return(time.time() - t0)
 
 def measure_time(x, infilename, outfilename):
     t=[]
+    first=True
     for _ in range(0, args.iterations):
-        t = t + [run_exec(x, infilename, outfilename)]
+        t = t + [run_exec(x, infilename, outfilename, first)]
+        first = False
 
     return(statistics.median(t))
 
 def measure_mem(x, infilename, outfilename):
-    massiffilename=tempfile.mktemp()
+    massiffilename=mktemp()
 
     run_exec(
         Exec(args=['valgrind', '-q', '--tool=massif', '--pages-as-heap=yes',  '--massif-out-file=' + massiffilename] + x.args, inp=x.inp, outp=x.outp),
-        infilename, outfilename)
+        infilename, outfilename, False)
 
     with open(massiffilename) as f:
         maxmem=0
@@ -265,21 +295,40 @@ def measure_mem(x, infilename, outfilename):
     os.remove(massiffilename)
     return(maxmem)
 
-maxnicknamelength = len(max(suite, key=lambda p: len(p.name))[0] ) + 3
+def measure_size(x, filename):
+    if not x:
+        return(os.path.getsize(filename))
+    else:
+        proc = subprocess.Popen(x.replace('@OUT@', filename), shell=True,
+                           stdout=subprocess.PIPE, 
+                           stderr=subprocess.PIPE)
+
+        out, err = proc.communicate()
+        if(proc.returncode == 0):
+            return(int(out))
+        else:
+            raise Exception('failed to measure output file size', out, err)
+
+maxnicknamelength = max(10, len(max(suite, key=lambda p: len(p.name))[0] ) + 3)
 
 sot.print("Number of iterations per file: ", args.iterations)
 
 for srcfname in args.files:
-    srchash = hashlib.sha256(open(srcfname, 'rb').read()).hexdigest()
+    if(not args.nodec):
+        srchash = hashlib.sha256(open(srcfname, 'rb').read()).hexdigest()
+    else:
+        srchash = 'dontcare'
+
     srcsize = os.path.getsize(srcfname)
 
     sot.file(srcfname, srcsize, srchash)
 
     sot.header(("Compressor", "C Time", "C Memory", "C Rate", "D Time", "D Memory", "chk"));
 
-    logfilename = tempfile.mktemp()
-    decompressedfilename = tempfile.mktemp()
-    outfilename = tempfile.mktemp()
+    log = ''
+    current_logfile = subprocess.DEVNULL # will be set for each compressor
+    decompressedfilename = mktemp()
+    outfilename = mktemp()
 
     def print_column(content, format="%11s", sep="|", f=lambda x:x):
         sot.cell(content, format, sep, f)
@@ -287,11 +336,12 @@ for srcfname in args.files:
         sot.end_row()
 
     try:
-        with open(logfilename,"wb") as logfile:
-            for c in suite:
-                # nickname
-                print_column(c.name, "%"+ str(maxnicknamelength) +"s")
+        for c in suite:
+            # nickname
+            print_column(c.name, "%"+ str(maxnicknamelength) +"s")
 
+            logfilename = mktemp()
+            with open(logfilename, 'a+') as current_logfile:
                 # compress time
                 try:
                     comp_time=measure_time(c.compress, srcfname, outfilename)
@@ -301,17 +351,27 @@ for srcfname in args.files:
                     sot.print(" " + e.strerror)
                     continue
 
-                # compress memory
-                if mem_available:
-                    comp_mem=measure_mem(c.compress, srcfname, outfilename)
-                    print_column(comp_mem,f=memsize)
-                else:
-                    print_column("(N/A)")
+                current_logfile.seek(0)
+                curlog = current_logfile.read()
 
-                # compress rate
-                outputsize=os.path.getsize(outfilename)
-                print_column(float(outputsize) / float(srcsize), format="%10.4f%%", f=lambda x: 100*x)
+            # compress memory
+            if mem_available:
+                comp_mem=measure_mem(c.compress, srcfname, outfilename)
+                print_column(comp_mem,f=memsize)
+            else:
+                print_column("(N/A)")
 
+
+            
+            log += "\n### output of " + c.name + " ###\n"
+            log += curlog
+            log += "stats:\n"
+
+            # compress rate
+            outputsize = measure_size(c.measure, outfilename)
+            print_column(float(outputsize) / float(srcsize), format="%10.4f%%", f=lambda x: 100*x)
+
+            if not args.nodec:
                 # decompress time
                 dec_time = measure_time(c.decompress, outfilename, decompressedfilename)
                 print_column(dec_time*1000,f=lambda x: timesize(x/1000))
@@ -332,15 +392,38 @@ for srcfname in args.files:
                 else:
                     print_column("OK", format="%5s")
 
-                # EOL
-                end_row()
+            else:
+                print_column("-")
+                print_column("-")
+                print_column("-", format="%5s")
+
+            num_stats = 0
+            stats = ' '
+            for name, regex in c.stats.items():
+                p = re.compile(regex)
+                m = p.search(curlog.replace('\n', ''))
+                if m:
+                    if(num_stats > 0):
+                        stats += ", "
+
+                    stats += name + " = " + m.group(1)
+                    num_stats += 1
+
+            if(num_stats > 0):
+                print_column(stats, format="%" + str(len(stats)) + "s")
+
+            # EOL
+            end_row()
     except:
         sot.print()
         sot.print("ERROR:", sys.exc_info()[0])
         sot.print(sys.exc_info()[1])
+        sot.print(traceback.print_tb(sys.exc_info()[2]))
 
-with open(logfilename, 'r') as fin: sot.print(fin.read())
-os.remove(logfilename)
+if not args.nolog:
+    sot.print()
+    sot.print("Log output (use --nolog to disable):")
+    sot.print(log);
 
 if os.path.exists(decompressedfilename):
     os.remove(decompressedfilename)
