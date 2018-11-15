@@ -14,7 +14,6 @@
 #include <stxxl/bits/io/syscall_file.h>
 
 namespace tdc { namespace lcpcomp {
-    constexpr len_t M = 1024 * 1024;
     using uint40_t = uint_t<40>;
 
     template<typename T>
