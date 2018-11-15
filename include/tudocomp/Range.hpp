@@ -109,16 +109,16 @@ namespace tdc {
     using BitRange = FixedRange<0, 1>;
 
     /// \brief Global predefined range for the `size_t`.
-    constexpr auto size_r = TypeRange<size_t>();
+    constexpr TypeRange<size_t> size_r;
 
     /// \brief Global predefined range for bits (`0` or `1`).
-    constexpr auto bit_r = BitRange();
+    constexpr BitRange bit_r;
 
     /// \brief Global predefined reange for literals.
-    constexpr auto literal_r  = LiteralRange();
-    constexpr auto uliteral_r = LiteralRange();
+    constexpr LiteralRange literal_r;
+    constexpr LiteralRange uliteral_r;
 
     /// \brief Global predefined range for `len_t`.
-    constexpr auto len_r = LengthRange();
+    constexpr LengthRange len_r;
 }
 
