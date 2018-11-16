@@ -58,7 +58,7 @@ inline std::pair<std::vector<T>, bool> intsort_impl(const Iter begin, const Iter
 #else
         {
             constexpr int tid = 0;
-            constexpr int no_thrads = 1;
+            constexpr int no_threads = 1;
 #endif
 
         // figure out workload for each thread

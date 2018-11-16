@@ -35,28 +35,4 @@ public:
     }
 };
 
-/// \brief Union to build a disjunction between multiple \ref Acceptor objects.
-class UnionAcceptor {
-private:
-    std::initializer_list<Acceptor> m_acceptors;
-
-public:
-    /// \brief Main constructor.
-    /// \param acceptors the acceptors to conjunct
-    inline constexpr UnionAcceptor(std::initializer_list<Acceptor> acceptors)
-        : m_acceptors(acceptors) {
-    }
-
-    /// \brief Tests if the given character is accepted by any acceptor part
-    ///        of this union.
-    /// \param c the character in question
-    /// \return \c true if accepted by any acceptor, \c false otherwise
-    inline constexpr bool accept(const char c) const {
-        for(auto& acc : m_acceptors) {
-            if(acc.accept(c)) return true;
-        }
-        return false;
-    }
-};
-
 }}} //ns
