@@ -21,8 +21,8 @@ set(CXX_STANDARD c++14)
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     # using Clang or AppleClang
-    if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "3.4")
-        message(FATAL_ERROR "clang version 3.4 or greater required!")
+    if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "3.8")
+        message(FATAL_ERROR "clang version 3.8 or greater required!")
     endif()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
