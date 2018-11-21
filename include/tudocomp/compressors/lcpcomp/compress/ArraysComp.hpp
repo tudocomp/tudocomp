@@ -3,6 +3,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/def.hpp>
+#include <tudocomp/util.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
@@ -69,14 +70,14 @@ public:
 
         StatPhase::wrap("Compute Factors", [&]{
             StatPhase phase(std::string{"Factors at max. LCP value "}
-                + std::to_string(lcp.max_lcp()));
+                + to_string(lcp.max_lcp()));
 
             for(size_t maxlcp = lcp.max_lcp(); maxlcp >= threshold; --maxlcp) {
                 IF_STATS({
                     const len_t maxlcpbits = bits_for(maxlcp-threshold);
                     if( ((maxlcpbits ^ (1UL<<(bits_for(maxlcpbits)-1))) == 0) && (( (maxlcp-threshold) ^ (1UL<<(maxlcpbits-1))) == 0)) { // only log at certain LCP values
                         phase.split(std::string{"Factors at max. LCP value "}
-                            + std::to_string(maxlcp));
+                            + to_string(maxlcp));
                         phase.log_stat("num factors", factors.size());
                     }
                 })

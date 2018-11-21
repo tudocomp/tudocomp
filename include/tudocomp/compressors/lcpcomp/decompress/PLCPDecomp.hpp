@@ -7,6 +7,7 @@
 #include <tudocomp/compressors/lcpcomp/PLCPTypes.hpp>
 #include <tudocomp/coders/BitCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
+#include <tudocomp/util.hpp>
 #include <stxxl/bits/containers/vector.h>
 #include <stxxl/bits/algo/sort.h>
 #include <stxxl/bits/io/iostats.h>
@@ -138,9 +139,9 @@ vector_of_char_t PLCPDecomp<bitsPerUInt>::decompress() {
     std::cout << "Decompressing. Type: " << typeid(unsigned_t).name() << std::endl;
     unsigned scanCount = 0;
     while(byCopyToV->size() > 0) {
-        tdc::StatPhase scanPhase("Scan " + std::to_string(++scanCount) + " (Factors: " + std::to_string(byCopyToV->size()) + ")");
+        tdc::StatPhase scanPhase("Scan " + to_string(++scanCount) + " (Factors: " + to_string(byCopyToV->size()) + ")");
         std::cout << std::endl;
-        std::cout << "Scan " + std::to_string(scanCount) + " (Factors: " + std::to_string(byCopyToV->size()) + ")" << std::endl;
+        std::cout << "Scan " + to_string(scanCount) + " (Factors: " + to_string(byCopyToV->size()) + ")" << std::endl;
         scan();
     }
     return textBuffer;

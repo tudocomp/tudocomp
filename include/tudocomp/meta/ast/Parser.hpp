@@ -7,6 +7,8 @@
 #include <tudocomp/meta/ast/List.hpp>
 #include <tudocomp/meta/ast/Object.hpp>
 
+#include <tudocomp/util.hpp>
+
 #include <stdexcept>
 #include <sstream>
 
@@ -38,7 +40,7 @@ public:
     /// \param err the error message
     /// \param pos the current position in the parsed string
     inline ParseError(const std::string& err, size_t pos)
-        : std::runtime_error(err + " (pos: " + std::to_string(pos+1) + ")") {
+        : std::runtime_error(err + " (pos: " + to_string(pos+1) + ")") {
     }
 };
 

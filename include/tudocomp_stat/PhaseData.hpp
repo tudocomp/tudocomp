@@ -4,6 +4,8 @@
 #include <string>
 #include <tudocomp_stat/Json.hpp>
 
+#include <unistd.h>
+
 /// \cond INTERNAL
 
 namespace tdc {
@@ -106,7 +108,7 @@ public:
         keyval* kv = new keyval();
 
         strncpy(kv->key, key, STR_BUFFER_SIZE);
-        strncpy(kv->val, std::to_string(value).c_str(), STR_BUFFER_SIZE);
+        strncpy(kv->val, to_string(value).c_str(), STR_BUFFER_SIZE);
 
         if(first_stat_stxxl) {
             keyval* last = first_stat_stxxl;

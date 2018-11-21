@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <cstdlib>
+#include <forward_list>
 #include <forward_list>
 #include <iostream>
 #include <unordered_map>
@@ -172,8 +174,8 @@ int main(int argc, char** argv) {
 		}
 	}
 
-    const size_t threshold = (argc >= 3) ? std::stoi(argv[3]) : 2;
-    const tdc::len_t mb_ram = (argc >= 4) ? std::stoi(argv[4]) : 512;
+    const size_t threshold = (argc >= 3) ? std::atoi(argv[3]) : 2;
+    const tdc::len_t mb_ram = (argc >= 4) ? std::atoi(argv[4]) : 512;
 
 	tdc::lcpcomp::factorize(infile, outfile, threshold, mb_ram);
 

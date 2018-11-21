@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <tudocomp_stat/StatPhaseStxxl.hpp>
 #include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
 #include <tudocomp/coders/BitCoder.hpp>
@@ -41,7 +43,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    const uint64_t mb_ram = (argc >= 3) ? std::stoi(argv[3]) : 512;
+    const uint64_t mb_ram = (argc >= 3) ? std::atoi(argv[3]) : 512;
 
     tdc::StatPhase root("Root");
     // generate stats instance
