@@ -10,7 +10,8 @@ namespace lzcics {
 
 using namespace sdsl;
 
-typedef cst_sada_light<csa_sada_light<>, bp_support_sadaM<>> cst_t;
+//typedef cst_sada_light<csa_sada_light<>, bp_support_sadaM<>> cst_t;
+typedef cst_sada<> cst_t;
 
 /**
  * This is a wrapper class around the sdsl-lite library to get a easier translation between
@@ -26,10 +27,22 @@ struct ST {
 	ST(const cst_t& _cst) 
 		: cst(_cst)
 		, root(cst.root())
-		, alpha(cst.csa.alpha())
+        , alpha(cst.csa.psi[0])
 		, m_bp_rank1(&cst.bp)
 		, internal_nodes(m_bp_rank1.rank(m_bp_rank1.size()) - cst.bp_rank_10.rank(m_bp_rank1.size()))
 	{
+		//traverse root children
+		bit_vector root_children(cst.bp_support.size()); // temporary bit vector
+		cst_t::size_type rc = 1;
+
+		while(rc < cst.bp_support.size() - 1) {
+			root_children[rc] = 1;
+			rc = cst.bp_support.find_close(rc) + 1;
+		}
+
+		m_rc_rrrv = rrr_vector<>(root_children);
+		m_rc_rank = rrr_vector<>::rank_1_type(&m_rc_rrrv);
+
 	}
 
 	cst_t::node_type parent(const cst_t::node_type& node)const {
@@ -44,12 +57,30 @@ struct ST {
 		DVLOG(2) << "LevelAnc of node " << node << " on depth " << depth << " is " << cst.bp_support.level_anc(node, cst.node_depth(node)-depth);
 		return cst.bp_support.level_anc(node, cst.node_depth(node)-depth);
 	}
+
+        rrr_vector<> m_rc_rrrv;
+        rrr_vector<>::rank_1_type m_rc_rank;
+
+        inline static bool is_root(cst_t::size_type v)
+        {
+            return v==0;
+        }
+
+        //Degree of root
+		cst_t::size_type root_degree() const // unused?
+        {
+            return m_rc_rank(cst.bp_support.size() - 1);
+        }
 	/**
 	 * Returns how many preceding silbings node has.
      * node must be a direct child of the root.
 	 */
     cst_t::size_type root_child_rank(const cst_t::node_type& node) const {
-        return cst.bp_support.root_child_rank(node);
+            assert(!is_root(node));
+            assert(is_root(cst.bp_support.level_anc(node, 1))); //parent must be root!
+
+            return m_rc_rank(node);
+        /* return cst.bp_support.root_child_rank(node); */
     }
 	// cst_t::node_type leaf(const cst_t::node_type& node, const cst_t::size_type number)const {
 	// 	return cst.select_leaf(number+1+cst.lb(node));

@@ -25,6 +25,7 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         auto text = input.as_view();
         const size_t n = text.size();
+		DCHECK_EQ(strlen( (const char*)text.data()), n);
 
         // initialize encoder
         auto coder = lzss_coder_t(config().sub_config("coder"))
@@ -38,6 +39,7 @@ public:
         auto st = StatPhase::wrap("Construct ST", [&]{
             return lzcics::suffix_tree(text.data(), cst);
         });
+		DCHECK_EQ(st.cst.size(), n);
 
         // factorize
         StatPhase::wrap("Factorize", [&]{
@@ -71,6 +73,7 @@ public:
 		        }
 		        ell = st.next_leaf(ell);
 		        ++x;
+				DCHECK_LE(x, n+1); // << "at leaf " << st.cst.sn(ell); // the length x must be at most the text length
 		        DVLOG(2) << "Selecting leaf " << ell;
 	        } while(ell != st.smallest_leaf());
 	        DVLOG(2) << bV;
