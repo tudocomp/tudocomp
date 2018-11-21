@@ -12,4 +12,8 @@ target_link_libraries(
     tudocomp
 )
 
+if(STXXL_FOUND)
+    target_link_libraries(tudocomp_stat ${STXXL_LIBRARIES})
+endif(STXXL_FOUND)
+
 cotire(tudocomp_stat)

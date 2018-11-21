@@ -1,5 +1,8 @@
 #pragma once
 
+#include <tudocomp/config.h>
+
+#ifdef STXXL_FOUND
 #ifndef STATS_DISABLED
 
 #include <stxxl/bits/io/iostats.h>
@@ -10,7 +13,7 @@
 namespace tdc {
 
 struct StatPhaseStxxlConfig {
-    
+
     StatPhaseStxxlConfig(bool value = true) {
         numberOfBlocks_read =
         numberOfBlocks_write =
@@ -28,7 +31,7 @@ struct StatPhaseStxxlConfig {
         waitTime_combined =
         value;
     }
-    
+
     bool numberOfBlocks_read;
     bool numberOfBlocks_write;
     bool numberOfBytes_read;
@@ -46,107 +49,107 @@ struct StatPhaseStxxlConfig {
 };
 
 class StatPhaseStxxl {
-private:    
-    static stxxl::stats* s_stxxl_stats;    
+private:
+    static stxxl::stats* s_stxxl_stats;
     static StatPhaseStxxlConfig s_config;
 
     static void onStart(PhaseData* phaseData) {
-        phaseData->stxxl_stats_begin = 
+        phaseData->stxxl_stats_begin =
             new stxxl::stats_data(*s_stxxl_stats);
     }
-    
-    static void onStop(PhaseData* phaseData) { 
+
+    static void onStop(PhaseData* phaseData) {
         delete static_cast<stxxl::stats_data*>(phaseData->stxxl_stats_begin);
     }
-    
+
     static void onRead(PhaseData* phaseData) {
-        stxxl::stats_data *stats_begin = 
+        stxxl::stats_data *stats_begin =
             static_cast<stxxl::stats_data *>(phaseData->stxxl_stats_begin);
         stxxl::stats_data stats_result =
             stxxl::stats_data(*s_stxxl_stats) - *stats_begin;
-        
+
         if(phaseData->first_stat_stxxl) {
             delete phaseData->first_stat_stxxl;
             phaseData->first_stat_stxxl = nullptr;
-        }        
+        }
 
         if(s_config.numberOfBlocks_read)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Number of reads", 
+                EM_HEADER "Number of reads",
                 stats_result.get_reads ());
-                
+
         if(s_config.avgBlockSize_read)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Average block size (read)", 
-                stats_result.get_read_volume () / 
+                EM_HEADER "Average block size (read)",
+                stats_result.get_read_volume () /
                 double(stats_result.get_reads ()));
-                
+
         if(s_config.numberOfBytes_read)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Total Bytes (read)", 
+                EM_HEADER "Total Bytes (read)",
                 stats_result.get_read_volume ());
-                
+
         if(s_config.time_read)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Time spent (read)", 
+                EM_HEADER "Time spent (read)",
                 stats_result.get_read_time ());
-                
+
         if(s_config.parallelTime_read)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Time spent (parallel read)", 
+                EM_HEADER "Time spent (parallel read)",
                 stats_result.get_pread_time ());
-                
+
         if(s_config.waitTime_read)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Wait time (read)", 
+                EM_HEADER "Wait time (read)",
                 stats_result.get_wait_read_time ());
 
 
         if(s_config.numberOfBlocks_write)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Number of writes", 
+                EM_HEADER "Number of writes",
                 stats_result.get_writes ());
-                
+
         if(s_config.avgBlockSize_write)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Average block size (write)", 
-                stats_result.get_written_volume () / 
+                EM_HEADER "Average block size (write)",
+                stats_result.get_written_volume () /
                 double(stats_result.get_writes ()));
-                
+
         if(s_config.numberOfBytes_write)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Total Bytes (write)", 
+                EM_HEADER "Total Bytes (write)",
                 stats_result.get_written_volume ());
-                
+
         if(s_config.time_write)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Time spent (write)", 
+                EM_HEADER "Time spent (write)",
                 stats_result.get_write_time ());
-                
+
         if(s_config.parallelTime_write)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Time spent (parallel write)", 
+                EM_HEADER "Time spent (parallel write)",
                 stats_result.get_pwrite_time ());
-                
+
         if(s_config.waitTime_write)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Wait time (write)", 
+                EM_HEADER "Wait time (write)",
                 stats_result.get_wait_write_time ());
-                
-                  
-                
+
+
+
         if(s_config.parallelTime_combined)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Time spent (read/write)", 
+                EM_HEADER "Time spent (read/write)",
                 stats_result.get_pio_time ());
-                
+
         if(s_config.waitTime_combined)
             phaseData->log_stat_stxxl(
-                EM_HEADER "Wait time (read/write)", 
+                EM_HEADER "Wait time (read/write)",
                 stats_result.get_io_wait_time ());
 
     }
-    
+
 public:
     inline static void enable(StatPhaseStxxlConfig config = StatPhaseStxxlConfig(true)) {
         StatPhaseStxxl::s_config = config;
@@ -154,7 +157,7 @@ public:
         PhaseData::s_stxxl_read_stats = &onRead;
         PhaseData::s_stxxl_stop = &onStop;
     }
-    
+
     inline static void disable() {
         PhaseData::s_stxxl_start = nullptr;
         PhaseData::s_stxxl_read_stats = nullptr;
@@ -177,5 +180,5 @@ public:
 
 }
 
-#endif
-
+#endif // !STATS_DISABLED
+#endif // STXXL_FOUND

@@ -1,6 +1,9 @@
 #pragma once
+
 #include <tudocomp/config.h>
 
+#include <fstream>
+#include <iostream>
 #include <vector>
 
 #include <tudocomp/ds/IntVector.hpp>
@@ -12,17 +15,14 @@
 #include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
 #include <tudocomp/ds/LCPSada.hpp>
 
-#include <stxxl/bits/containers/vector.h>
-#include <stxxl/bits/algo/ksort.h>
-
-#include <iostream>
-#include <fstream>
-
 #include <tudocomp_stat/StatPhase.hpp>
+
+#ifdef STXXL_FOUND
+#include <stxxl/bits/containers/vector.h>
+#endif
 
 namespace tdc {
 namespace lcpcomp {
-
 
 inline size_t filesize( const char*const filepath ){
     std::ifstream file(filepath, std::ios::binary | std::ios::ate | std::ios::in);
@@ -67,7 +67,7 @@ class RefRAMStrategy {
     }
 };
 
-
+#ifdef STXXL_FOUND
 
 /** Same as @RefRAMStrategy, but works with STXXL vectors
  */
@@ -126,6 +126,8 @@ public:
         }
     }
 };
+
+#endif
 
 /** Iterates over the PLCP-file
  *  this file stores all plcp values unary in the representation of Sadakane using 2n bits for storing n entries

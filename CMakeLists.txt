@@ -86,14 +86,21 @@ include(git_submodule_subdirectories)
 # Finders
 include(find_or_download_package)
 
-# Usage: find_or_download_package(PACKAGE_NAME, FOUND_FLAG_PREFIX, TARGET_PREFIX)
-find_or_download_package(Glog GLOG glog)
-find_or_download_package(SDSL SDSL sdsl)
-find_or_download_package(STXXL STXXL stxxl)
-
+# modules
 git_submodule_subdirectory(external/bit_span)
 git_submodule_subdirectory(external/compact_sparse_hash)
 git_submodule_subdirectory(external/datasets)
+
+# hard dependencies
+# Usage: find_or_download_package(PACKAGE_NAME, FOUND_FLAG_PREFIX, TARGET_PREFIX)
+find_or_download_package(Glog GLOG glog)
+find_or_download_package(SDSL SDSL sdsl)
+
+# soft dependencies
+find_package(STXXL)
+if(STXXL_FOUND)
+    include_directories(${STXXL_INCLUDE_DIRS})
+endif(STXXL_FOUND)
 
 include(FindJudy)
 
@@ -110,9 +117,6 @@ endif(OPENMP_FOUND)
 include(generate_tudocomp_sources)
 
 #### All major project targets ####
-
-#include(sdsl)
-
 
 # Add include directory to include searches
 include_directories(include)
@@ -147,6 +151,7 @@ add_subdirectory(www)
 MESSAGE( STATUS "Built Type: " ${CMAKE_BUILD_TYPE} )
 MESSAGE( STATUS "[Optional] Judy Array: " ${JUDY_H_AVAILABLE} )
 MESSAGE( STATUS "[Optional] Boost: " ${Boost_FOUND} )
+MESSAGE( STATUS "[Optional] STXXL: " ${STXXL_FOUND} )
 
 # for showing include in qtcreator
 FILE(GLOB_RECURSE LibFiles "include/*.hpp")

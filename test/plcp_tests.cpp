@@ -1,3 +1,6 @@
+#include <tudocomp/config.h>
+#ifdef STXXL_FOUND
+
 #include <string>
 #include <vector>
 
@@ -226,3 +229,4 @@ class TestRunner {
 TEST(plcp, filecheck)          { TEST_DS_STRINGCOLLECTION(test_plcp); }
 #undef TEST_DS_STRINGCOLLECTION
 
+#endif

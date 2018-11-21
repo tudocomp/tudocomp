@@ -5,7 +5,7 @@
 
 #include <vector>
 #include <algorithm>
-
+#include <numeric>
 
 #ifdef PAR_SORT
  #include <parallel/algorithm>

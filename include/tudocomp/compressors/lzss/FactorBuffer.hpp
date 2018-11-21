@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp/config.h>
+
 #include <algorithm>
 #include <functional>
 #include <vector>
@@ -12,7 +14,9 @@
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
+#ifdef STXXL_FOUND
 #include <stxxl/vector>
+#endif
 
 namespace tdc {
 namespace lzss {
@@ -174,7 +178,10 @@ public:
 };
 
 using FactorBufferRAM = FactorBuffer<std::vector<Factor>>;
+
+#ifdef STXXL_FOUND
 using FactorBufferDisk = FactorBuffer<stxxl::VECTOR_GENERATOR<Factor>::result>;
+#endif
 
 }} //ns
 
