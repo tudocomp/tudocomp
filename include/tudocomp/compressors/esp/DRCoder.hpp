@@ -166,7 +166,7 @@ namespace tdc {namespace esp {
         inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
             BitOStream& bout = *out;
 
-            auto phase1 = StatPhase("Sorting D");
+            StatPhase phase1("Sorting D");
 
             // Sort rhs and create sorted indice array O(n log n)
             const auto sis = sorted_indices(rhs);
@@ -494,7 +494,7 @@ namespace tdc {namespace esp {
 
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
-            auto phase = StatPhase("RangeFit");
+            StatPhase phase("RangeFit");
             encode_unary_diff(rhs, out, bit_width, bit_width, true, phase);
         }
         template<typename rhs_t>
@@ -534,7 +534,7 @@ namespace tdc {namespace esp {
 
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
-            auto phase = StatPhase("RangeFit");
+            StatPhase phase("RangeFit");
             const size_t size = rhs.size();
 
             const bool has_threshold = config().param("threshold").as_string() != "none";

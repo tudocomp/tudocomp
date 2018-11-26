@@ -2,6 +2,7 @@ add_library(
     tudocomp
 
     meta/Registry.cpp
+    util/STXXLStatExtension.cpp
 )
 
 target_link_libraries(

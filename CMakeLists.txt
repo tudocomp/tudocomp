@@ -88,6 +88,7 @@ include(find_or_download_package)
 
 # modules
 git_submodule_subdirectory(external/bit_span)
+git_submodule_subdirectory(external/tudostats)
 git_submodule_subdirectory(external/compact_sparse_hash)
 git_submodule_subdirectory(external/datasets)
 

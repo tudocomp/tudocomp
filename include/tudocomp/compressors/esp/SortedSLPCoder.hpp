@@ -29,7 +29,7 @@ namespace tdc {namespace esp {
             }
             */
 
-            auto phase = StatPhase("SLP sort");
+            StatPhase phase("SLP sort");
             slp_dep_sort(slp); // can be implemented better, and in a way that yields
                                // temporary lists for reusal
 

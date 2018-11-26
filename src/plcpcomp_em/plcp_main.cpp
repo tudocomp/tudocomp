@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 #include <tudocomp_stat/StatPhase.hpp>
-#include <tudocomp_stat/StatPhaseStxxl.hpp>
+#include <tudocomp/util/STXXLStatExtension.hpp>
 
 #include <tudocomp/coders/BitCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
@@ -71,7 +71,6 @@ namespace tdc { namespace lcpcomp {
                           const size_t threshold,
                           const len_t mb_ram) {
 
-        StatPhaseStxxl::enable(StatPhaseStxxlConfig()); // enable all STXXL stats
 		StatPhase phase("PLCPComp");
 
         stxxl::syscall_file phi_file(textfilename + ".phi5", stxxl::file::open_mode::RDONLY);
@@ -151,6 +150,8 @@ int main(int argc, char** argv) {
                   << " <infile> <outfile> [threshold] [mb_ram]" << std::endl;
 		return 1;
 	}
+
+    tdc::StatPhase::register_extension<tdc::STXXLStatExtension>();
 	tdc::StatPhase root("Root");
 
 	const std::string infile { argv[1] };
@@ -179,8 +180,7 @@ int main(int argc, char** argv) {
 
 	tdc::lcpcomp::factorize(infile, outfile, threshold, mb_ram);
 
-	root.to_json().str(std::cout);
-	std::cout << std::endl;
+	std::cout << root.to_json() << std::endl;
 
     return 0;
 }
