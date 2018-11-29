@@ -3,9 +3,10 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/def.hpp>
+#include <tudocomp/util.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
-#include <tudocomp/compressors/lcpcomp/MaxLCPSuffixList.hpp>
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -22,7 +23,9 @@ namespace lcpcomp {
 class ArraysComp : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_comp", "arrays");
+        Meta m(comp_strategy_type(), "arrays",
+            "Uses arrays instead of maintaining a max heap");
+
         return m;
     }
 
@@ -32,8 +35,8 @@ public:
 
     using Algorithm::Algorithm; //import constructor
 
-    template<typename text_t>
-    inline void factorize(text_t& text, size_t threshold, lzss::FactorBuffer& factors) {
+    template<typename text_t, typename factorbuffer_t>
+    inline void factorize(text_t& text, size_t threshold, factorbuffer_t& factors) {
 
 		// Construct SA, ISA and LCP
         auto lcp = StatPhase::wrap("Construct Index Data Structures", [&] {
@@ -67,14 +70,14 @@ public:
 
         StatPhase::wrap("Compute Factors", [&]{
             StatPhase phase(std::string{"Factors at max. LCP value "}
-                + std::to_string(lcp.max_lcp()));
+                + to_string(lcp.max_lcp()));
 
             for(size_t maxlcp = lcp.max_lcp(); maxlcp >= threshold; --maxlcp) {
                 IF_STATS({
                     const len_t maxlcpbits = bits_for(maxlcp-threshold);
                     if( ((maxlcpbits ^ (1UL<<(bits_for(maxlcpbits)-1))) == 0) && (( (maxlcp-threshold) ^ (1UL<<(maxlcpbits-1))) == 0)) { // only log at certain LCP values
                         phase.split(std::string{"Factors at max. LCP value "}
-                            + std::to_string(maxlcp));
+                            + to_string(maxlcp));
                         phase.log_stat("num factors", factors.size());
                     }
                 })

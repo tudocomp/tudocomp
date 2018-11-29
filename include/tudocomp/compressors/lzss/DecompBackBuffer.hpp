@@ -10,10 +10,9 @@ namespace lzss {
 class DecompBackBuffer {
 private:
     std::vector<uliteral_t> m_buffer;
-    len_t m_cursor;
 
 public:
-    inline DecompBackBuffer() : m_cursor(0) {
+    inline DecompBackBuffer() {
     }
 
     inline void initialize(size_t n) {

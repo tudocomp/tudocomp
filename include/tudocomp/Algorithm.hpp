@@ -10,7 +10,7 @@ class Algorithm {
 
 public:
     template<typename T, typename... Args>
-    static inline T instance(std::string config_str = "", Args&&... args) {
+    static inline T instance(std::string config_str, Args&&... args) {
         return T(T::meta().config(config_str),
             std::forward<Args>(args)...);
     }

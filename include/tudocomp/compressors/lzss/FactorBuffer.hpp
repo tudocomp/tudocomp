@@ -1,8 +1,11 @@
 #pragma once
 
+#include <tudocomp/config.h>
+
 #include <algorithm>
 #include <functional>
 #include <vector>
+#include <tudocomp/def.hpp>
 
 #include <tudocomp/compressors/lzss/Factor.hpp>
 
@@ -11,20 +14,27 @@
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
+#ifdef STXXL_FOUND
+#include <stxxl/vector>
+#endif
+
 namespace tdc {
 namespace lzss {
 
+template<typename vector_type = std::vector<Factor>>
 class FactorBuffer {
+public:
+    using backing_vector_type = vector_type;
+    using const_iterator = typename vector_type::const_iterator;
+
 private:
-    std::vector<Factor> m_factors;
+    vector_type m_factors;
     bool m_sorted; //! factors need to be sorted before they are output
 
     len_t m_shortest_factor;
     len_t m_longest_factor;
 
 public:
-    using const_iterator = std::vector<Factor>::const_iterator;
-
     inline FactorBuffer()
         : m_sorted(true)
         , m_shortest_factor(INDEX_MAX)
@@ -32,12 +42,24 @@ public:
     {
     }
 
-    inline void emplace_back(len_t fpos, len_t fsrc, len_t flen) {
-        m_sorted = m_sorted && (m_factors.empty() || fpos >= m_factors.back().pos);
-        m_factors.emplace_back(fpos, fsrc, flen);
+    vector_type& factors = m_factors;
 
-        m_shortest_factor = std::min(m_shortest_factor, flen);
-        m_longest_factor = std::max(m_longest_factor, flen);
+    inline void push_back(Factor f) {
+        // TODO: specialize for FactorBufferDisk by using a writer?
+        m_sorted = m_sorted && (m_factors.empty() || f.pos >= m_factors.back().pos);
+        m_factors.push_back(f);
+
+        m_shortest_factor = std::min(m_shortest_factor, len_t(f.len));
+        m_longest_factor = std::max(m_longest_factor, len_t(f.len));
+    }
+
+    inline void push_back(len_t fpos, len_t fsrc, len_t flen) {
+        push_back(Factor{fpos,fsrc,flen});
+    }
+
+    inline void emplace_back(len_t fpos, len_t fsrc, len_t flen) {
+        // FIXME: just a transitional alias
+        push_back(Factor{fpos,fsrc,flen});
     }
 
     inline const_iterator begin() const {
@@ -61,7 +83,7 @@ public:
     }
 
     inline void sort() { //TODO: use radix sort
-        if(!m_sorted) {
+        if(!m_sorted) { // TODO: exchange when using stxxl
             std::sort(m_factors.begin(), m_factors.end(),
                 [](const Factor& a, const Factor& b) -> bool { return a.pos < b.pos; });
 
@@ -154,6 +176,12 @@ public:
         return Range(m_shortest_factor, m_longest_factor);
     }
 };
+
+using FactorBufferRAM = FactorBuffer<std::vector<Factor>>;
+
+#ifdef STXXL_FOUND
+using FactorBufferDisk = FactorBuffer<stxxl::VECTOR_GENERATOR<Factor>::result>;
+#endif
 
 }} //ns
 

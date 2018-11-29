@@ -7,6 +7,8 @@
 #include <tudocomp/meta/ast/List.hpp>
 #include <tudocomp/meta/ast/Object.hpp>
 
+#include <tudocomp/util.hpp>
+
 #include <stdexcept>
 #include <sstream>
 
@@ -28,8 +30,8 @@ constexpr Acceptor sym_digit = Acceptor("0123456789");
 constexpr Acceptor sym_name_special = Acceptor("_");
 
 /// \brief Accepts characters allowed in names.
-constexpr UnionAcceptor sym_name = UnionAcceptor({
-    sym_letter, sym_digit, sym_name_special});
+constexpr Acceptor sym_name = Acceptor(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_");
 
 /// \brief Error type for parsing related errors.
 class ParseError : public std::runtime_error {
@@ -38,7 +40,7 @@ public:
     /// \param err the error message
     /// \param pos the current position in the parsed string
     inline ParseError(const std::string& err, size_t pos)
-        : std::runtime_error(err + " (pos: " + std::to_string(pos+1) + ")") {
+        : std::runtime_error(err + " (pos: " + to_string(pos+1) + ")") {
     }
 };
 

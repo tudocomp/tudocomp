@@ -44,10 +44,10 @@ public:
             while(p < q) encode_literal(text[p++]);
         }
 
-        template<typename text_t>
+        template<typename text_t, typename factorbuffer_t>
         inline void encode_text(
             const text_t& text,
-            const FactorBuffer& factors) {
+            const factorbuffer_t& factors) {
 
             factors.encode_text(text, *this);
         }

@@ -29,15 +29,15 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         using namespace esp;
 
-        auto phase0 = StatPhase("ESP Compressor");
+        StatPhase phase0("ESP Compressor");
 
         EspContext<ipd_t> context;
         SLP slp { SLP_CODING_ALPHABET_SIZE };
 
         {
-            auto phase1 = StatPhase("Compress Phase");
+            StatPhase phase1("Compress Phase");
 
-            auto phase2 = StatPhase("Creating input handler");
+            StatPhase phase2("Creating input handler");
             auto in_stream = input.as_stream();
             size_t in_size = input.size();
 
@@ -55,9 +55,9 @@ public:
         phase0.log_stat("int_size2_unique", context.ipd_stats.int_size2_unique);
 
         {
-            auto phase1 = StatPhase("Encode Phase");
+            StatPhase phase1 ("Encode Phase");
 
-            auto phase2 = StatPhase("Creating strategy");
+            StatPhase phase2("Creating strategy");
             const slp_coder_t strategy { this->config().sub_config("slp_coder") };
 
             phase2.split("Encode SLP");
@@ -66,9 +66,9 @@ public:
     }
 
     inline virtual void decompress(Input& input, Output& output) override {
-        auto phase0 = StatPhase("ESP Decompressor");
+        StatPhase phase0("ESP Decompressor");
 
-        auto phase1 = StatPhase("Creating strategy");
+        StatPhase phase1("Creating strategy");
         const slp_coder_t strategy { this->config().sub_config("slp_coder") };
 
         phase1.split("Decode SLP");

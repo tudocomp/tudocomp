@@ -5,6 +5,8 @@
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/Algorithm.hpp>
 
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -18,9 +20,8 @@ namespace lcpcomp {
 class CompactDec : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_dec", "compact");
+        Meta m(dec_strategy_type(), "compact");
         return m;
-
     }
 
 private:
@@ -61,8 +62,8 @@ public:
             delete [] m_fwd;
         }
     }
-    inline CompactDec(Env&& env)
-        : Algorithm(std::move(env)), m_cursor(0) {
+    inline CompactDec(Config&& cfg)
+        : Algorithm(std::move(cfg)), m_cursor(0) {
 
         IF_STATS(m_longest_chain = 0);
         IF_STATS(m_current_chain = 0);

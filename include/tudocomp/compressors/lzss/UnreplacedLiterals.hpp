@@ -7,13 +7,13 @@
 namespace tdc {
 namespace lzss {
 
-template<typename text_t>
+template<typename text_t, typename factorbuffer_t>
 class UnreplacedLiterals : LiteralIterator {
 private:
     const text_t* m_text;
-    const FactorBuffer* m_factors;
+    const factorbuffer_t* m_factors;
     len_t m_pos;
-    FactorBuffer::const_iterator m_next_factor;
+    typename factorbuffer_t::const_iterator m_next_factor;
 
     inline void skip_factors() {
         while(
@@ -26,7 +26,7 @@ private:
     }
 
 public:
-    inline UnreplacedLiterals(const text_t& text, const FactorBuffer& factors)
+    inline UnreplacedLiterals(const text_t& text, const factorbuffer_t& factors)
         : m_text(&text),
           m_factors(&factors),
           m_pos(0),

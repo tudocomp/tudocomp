@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdlib>
 #include <iostream>
 #include <getopt.h>
 
@@ -258,10 +259,10 @@ public:
 					FLAGS_logtostderr = 0;
                     break;
                 case 'V': // --logVerbosity
-					FLAGS_v = std::stoi(std::string(optarg));
+					FLAGS_v = std::atoi(optarg);
                     break;
                 case 'O': // --lOglevel
-					FLAGS_minloglevel = std::stoi(std::string(optarg));
+					FLAGS_minloglevel = std::atoi(optarg);
                     break;
 
                 case OPT_HELP: // --help

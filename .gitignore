@@ -7,6 +7,9 @@ Cargo.lock
 *.aux
 *.pdf
 *.log
+*.errlog
+*.stxxl
 *.out
 *.toc
 CMakeLists.txt.user
+__pycache__

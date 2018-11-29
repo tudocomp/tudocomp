@@ -98,8 +98,6 @@ class bp_support_sadaM
         size_type m_med_blocks       = 0; // number of medium sized blocks
         size_type m_med_inner_blocks = 0; // number of inner nodes in the min max tree of the medium sized blocks
 
-        rrr_vector<> m_rc_rrrv;
-        rrr_vector<>::rank_1_type m_rc_rank;
         
         
 //#define USE_CACHE
@@ -125,9 +123,6 @@ class bp_support_sadaM
             m_med_blocks       = bp_support.m_med_blocks;
             m_med_inner_blocks = bp_support.m_med_inner_blocks;
 
-            m_rc_rrrv = bp_support.m_rc_rrrv;
-            m_rc_rank = bp_support.m_rc_rank;
-            m_rc_rank.set_vector(&m_rc_rrrv);
         }
 
         inline static size_type sml_block_idx(size_type i)
@@ -447,8 +442,6 @@ class bp_support_sadaM
                 rc = find_close(rc) + 1;
             }
 
-            m_rc_rrrv = rrr_vector<>(root_children);
-            m_rc_rank = rrr_vector<>::rank_1_type(&m_rc_rrrv);
         }
 
         //! Copy constructor
@@ -481,9 +474,6 @@ class bp_support_sadaM
                 m_med_blocks       = std::move(bp_support.m_med_blocks);
                 m_med_inner_blocks = std::move(bp_support.m_med_inner_blocks);
 
-                m_rc_rrrv = bp_support.m_rc_rrrv;
-                m_rc_rank = bp_support.m_rc_rank;
-                m_rc_rank.set_vector(&m_rc_rrrv);
             }
             return *this;
         }
@@ -509,11 +499,6 @@ class bp_support_sadaM
                 std::swap(m_med_blocks, bp_support.m_med_blocks);
                 std::swap(m_med_inner_blocks, bp_support.m_med_inner_blocks);
 
-                m_rc_rrrv.swap(bp_support.m_rc_rrrv);
-
-                //m_rc_rank.swap(bp_support.m_rc_rank); //NOT IMPLEMENTED - grrrrrrr
-                m_rc_rank.set_vector(&m_rc_rrrv);
-                bp_support.m_rc_rank.set_vector(&bp_support.m_rc_rrrv);
             }
         }
 
@@ -647,20 +632,7 @@ class bp_support_sadaM
                 return bwd_ex+1;
         }
 
-        //Degree of root
-        size_type root_degree() const
-        {
-            return m_rc_rank(m_size - 1);
-        }
 
-        //Child rank of node i (which MUST be a root node)
-        size_type root_child_rank(size_type i) const
-        {
-            assert(!is_root(i));
-            assert(is_root(level_anc(i, 1))); //parent must be root!
-
-            return m_rc_rank(i);
-        }
 
         //! Calculate the index of the opening parenthesis corresponding to the closest matching parenthesis pair enclosing i.
         /*! \param i Index of an opening parenthesis.

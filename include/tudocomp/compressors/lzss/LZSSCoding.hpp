@@ -10,8 +10,8 @@
 namespace tdc {
 namespace lzss {
 
-template<typename coder_t, typename text_t, typename factor_t = FactorBuffer>
-inline void encode_text(coder_t& coder, const text_t& text, const factor_t& factors) {
+template<typename coder_t, typename text_t, typename factor_t>
+inline void encode_text(coder_t& coder, text_t& text, const factor_t& factors) {
     assert(factors.is_sorted());
 
     const auto n = text.size();

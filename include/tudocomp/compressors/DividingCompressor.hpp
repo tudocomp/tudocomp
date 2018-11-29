@@ -84,7 +84,7 @@ class DividingCompressor: public Compressor {
         inline uint8_t read_bit() {
             if (m_cursor < 0) {
                 char c;
-                bool res = m_ptr->get(c);
+                bool res = (bool)m_ptr->get(c);
                 DCHECK(res);
                 m_byte = c;
                 m_cursor = 7;

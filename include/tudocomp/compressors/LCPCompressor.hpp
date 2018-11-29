@@ -8,6 +8,8 @@
 #include <tudocomp/compressors/lzss/FactorizationStats.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
 
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
+
 #include <tudocomp/ds/TextDS.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
@@ -17,67 +19,6 @@
 #include <tudocomp/compressors/lcpcomp/compress/ArraysComp.hpp>
 
 namespace tdc {
-namespace lcpcomp {
-
-/*
-template<typename coder_t, typename decode_buffer_t>
-inline void decode_text_internal(
-    Config&& cfg, coder_t& decoder, std::ostream& outs) {
-
-    StatPhase decode_phase("Decoding");
-
-    // decode text range
-    auto text_len = decoder.template decode<len_t>(len_r);
-
-    // init decode buffer
-    decode_buffer_t  buffer(std::move(cfg), text_len);
-
-    StatPhase::wrap("Starting Decoding", [&]{
-        Range text_r(text_len);
-
-        // decode shortest and longest factor
-        auto flen_min = decoder.template decode<len_t>(text_r);
-        auto flen_max = decoder.template decode<len_t>(text_r);
-        MinDistributedRange flen_r(flen_min, flen_max);
-
-        // decode longest distance between factors
-        auto fdist_max = decoder.template decode<len_t>(text_r);
-        Range fdist_r(fdist_max);
-
-        // decode
-        while(!decoder.eof()) {
-            len_t num;
-
-            auto b = decoder.template decode<bool>(bit_r);
-            if(b) num = decoder.template decode<len_t>(fdist_r);
-            else  num = 0;
-
-            // decode characters
-            while(num--) {
-                auto c = decoder.template decode<uliteral_t>(literal_r);
-                buffer.decode_literal(c);
-            }
-
-            if(!decoder.eof()) {
-                //decode factor
-                auto src = decoder.template decode<len_t>(text_r);
-                auto len = decoder.template decode<len_t>(flen_r);
-
-                buffer.decode_factor(src, len);
-            }
-        }
-    });
-
-    StatPhase::wrap("Scan Decoding", [&]{ buffer.decode_lazy(); });
-    StatPhase::wrap("Eager Decoding", [&]{
-        buffer.decode_eagerly();
-        IF_STATS(StatPhase::log("longest_chain", buffer.longest_chain()));
-    });
-    StatPhase::wrap("Output Text", [&]{ buffer.write_to(outs); });
-}
-*/
-}//ns
-
 
 /// Factorizes the input by finding redundant phrases in a re-ordered version
 /// of the LCP table.
@@ -90,10 +31,10 @@ public:
         m.param("coder", "The output encoder.")
             .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
         m.param("comp", "The factorization strategy for compression.")
-            .strategy<strategy_t>(TypeDesc("lcpcomp_comp"),
+            .strategy<strategy_t>(lcpcomp::comp_strategy_type(),
                 Meta::Default<lcpcomp::ArraysComp>());
         m.param("dec", "The strategy for decompression.")
-            .strategy<dec_t>(TypeDesc("lcpcomp_dec"),
+            .strategy<dec_t>(lcpcomp::dec_strategy_type(),
                 Meta::Default<lcpcomp::ScanDec>());
         m.param("textds", "The text data structure provider.")
             .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
@@ -117,7 +58,7 @@ public:
 
         // read options
         const len_t threshold = config().param("threshold").as_uint();
-        lzss::FactorBuffer factors;
+        lzss::FactorBuffer<> factors;
 
         StatPhase::wrap("Factorize", [&]{
             // Factorize
@@ -142,7 +83,7 @@ public:
         // encode
         StatPhase::wrap("Encode Factors", [&]{
             auto coder = lzss_coder_t(config().sub_config("coder")).encoder(
-                output, lzss::UnreplacedLiterals<text_t>(text, factors));
+                output,lzss::UnreplacedLiterals<text_t, decltype(factors)>(text, factors));
 
             coder.encode_text(text, factors);
         });

@@ -83,10 +83,10 @@ public:
             }
         }
 
-        template<typename text_t>
+        template<typename text_t, typename factorbuffer_t>
         inline void encode_text(
             const text_t& text,
-            const FactorBuffer& factors) {
+            const factorbuffer_t& factors) {
 
             m_ref_r = Range(text.size());
 

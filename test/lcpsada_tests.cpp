@@ -22,9 +22,9 @@ void test_lcpsada(TextDS<>& t) {
 	typedef DynamicIntVector phi_t;
 	phi_t phi { construct_phi_array<phi_t,sa_t>(sa) };
 	test::assert_eq_sequence(phi, t.require_phi());
-	auto lcp = construct_lcp_sada(t.config(), sa, t);
+	auto lcp = construct_lcp_sada(sa, t);
 	test::assert_eq_sequence(lcp, t.require_lcp());
-	LCPForwardIterator plcp { construct_plcp_bitvector(t.config(), sa, t) };
+	LCPForwardIterator plcp { construct_plcp_bitvector(sa, t) };
 	auto& plcp_ds = t.require_plcp();
 	if(sa.size() > 1)
     for (size_t i = 0; i < sa.size()-1; i++) {

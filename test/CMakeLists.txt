@@ -25,6 +25,7 @@ run_test(cedar_tests    DEPS ${BASIC_DEPS})
 run_test(lz78u_tests    DEPS ${BASIC_DEPS})
 run_test(st_tests       DEPS ${BASIC_DEPS})
 run_test(maxlcp_tests   DEPS ${BASIC_DEPS})
+run_test(plcp_tests DEPS ${BASIC_DEPS})
 
 run_test(lz78_trie_tests DEPS ${BASIC_DEPS})
 
@@ -46,7 +47,7 @@ run_test(compressor_adapter_tests DEPS tudocomp_algorithms ${BASIC_DEPS})
 run_test(lfs_tests     DEPS ${BASIC_DEPS})
 run_test(lfs2_tests     DEPS ${BASIC_DEPS})
 
-
+run_test(intsort_tests DEPS ${BASIC_DEPS})
 
 set(SANDBOX_CPP ${CMAKE_CURRENT_SOURCE_DIR}/sandbox_tests.cpp)
 if(NOT EXISTS ${SANDBOX_CPP})
