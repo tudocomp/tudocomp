@@ -20,7 +20,7 @@
 #include <tudocomp_driver/Options.hpp>
 #include <tudocomp_driver/Registry.hpp>
 
-#include <tudocomp_stat/Json.hpp>
+#include <tudocomp_stat/json.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
 #include <glog/logging.h>
@@ -480,36 +480,27 @@ int main(int argc, char** argv) {
 
             size_t out_size = options.stdout ? 0 : io::read_file_size(ofile);
 
-            json::Object meta;
-            meta.set("title", options.stats_title);
-            meta.set("startTime",
+            json meta;
+            meta["title"] = options.stats_title;
+            meta["startTime"] =
                 std::chrono::duration_cast<std::chrono::seconds>(
-                    start_time.time_since_epoch()).count());
+                    start_time.time_since_epoch()).count();
+            meta["config"] = compressor ? compressor->config().str() : "<none>";
+            meta["input"] = options.stdin ? "<stdin>" :
+                (generator ? options.generator : file);
+            meta["inputSize"] = in_size;
+            meta["output"] = options.stdout ? "<stdin>" : ofile;
+            meta["outputSize"] = out_size;
+            meta["rate"] = (in_size == 0) ? 0.0 :
+                double(out_size) / double(in_size);
 
-            meta.set("config", compressor ? compressor->config().str() :
-                               "<none>");
-            meta.set("input", options.stdin ? "<stdin>" :
-                              (generator ? options.generator : file));
-            meta.set("inputSize", in_size);
-            meta.set("output", options.stdout ? "<stdin>" : ofile);
-            meta.set("outputSize", out_size);
-            meta.set("rate", (in_size == 0) ? 0.0 :
-                double(out_size) / double(in_size));
-
-            json::Object stats;
-            stats.set("meta", meta);
-            stats.set("data", algo_stats);
-
+            json stats = {{"meta", meta}, {"data", algo_stats}};
             if (options.stat_file == "") {
-                stats.str(std::cout);
-                std::cout << std::endl;
+                std::cout << stats << std::endl;
             } else {
                 std::ofstream stat_file;
                 stat_file.open(options.stat_file);
-
-                stats.str(stat_file);
-                stat_file << std::endl;
-
+                stat_file << stats << std::endl;
                 stat_file.close();
             }
         }

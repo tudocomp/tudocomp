@@ -3,7 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <tudocomp_stat/StatPhaseStxxl.hpp>
+#include <tudocomp_stat/StatPhase.hpp>
+#include <tudocomp/util/STXXLStatExtension.hpp>
 #include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
 #include <tudocomp/coders/BitCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
@@ -27,15 +28,6 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    tdc::StatPhaseStxxlConfig statsCfg(false);
-    statsCfg.parallelTime_combined = true;
-    statsCfg.waitTime_combined = true;
-    statsCfg.numberOfBytes_read = true;
-    statsCfg.numberOfBytes_write = true;
-    statsCfg = tdc::StatPhaseStxxlConfig();
-    tdc::StatPhaseStxxl::enable(statsCfg);
-
-
     const std::string infile { argv[1] };
     const std::string outfile { argv[2] };
     if(!file_exist(infile)) {
@@ -45,6 +37,7 @@ int main(int argc, char** argv) {
 
     const uint64_t mb_ram = (argc >= 3) ? std::atoi(argv[3]) : 512;
 
+    tdc::StatPhase::register_extension<tdc::STXXLStatExtension>();
     tdc::StatPhase root("Root");
     // generate stats instance
     stxxl::stats * Stats = stxxl::stats::get_instance();
@@ -73,23 +66,8 @@ int main(int argc, char** argv) {
         outputFile << character;
     outputFile.close();
 
-    tdc::json::Object meta;
-    meta.set("title", "TITLE");
-    meta.set("startTime", "STARTTIME");
-
-    meta.set("config", "NONE");
-    meta.set("input", "FILENAME");;
-    meta.set("inputSize", "INPUTSIZE");
-    meta.set("output", "NONE");
-    meta.set("outputSize", "OUTPUTSIZE");
-    meta.set("rate", "NONE");
-
-    tdc::json::Object stats;
-    stats.set("meta", meta);
-    stats.set("data", algorithm_stats);
-
     std::cout << "data for http://tudocomp.org/charter" << std::endl;
-    stats.str(std::cout);
+    std::cout << algorithm_stats;
     std::cout << std::endl;
 
     return 0;

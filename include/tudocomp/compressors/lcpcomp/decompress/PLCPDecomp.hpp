@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
-#include <tudocomp_stat/StatPhaseStxxl.hpp>
+#include <tudocomp_stat/StatPhase.hpp>
 #include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
 #include <tudocomp/compressors/lcpcomp/PLCPFlattening.hpp>
 #include <tudocomp/compressors/lcpcomp/PLCPTypes.hpp>
