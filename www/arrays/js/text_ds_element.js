@@ -40,6 +40,10 @@ DataStructureList.prototype.isString = function(dsName) {
     return this.dictionary[dsName] 
         && this.dictionary[dsName].classList.contains('qa-structure-text');
 };
+DataStructureList.prototype.isFactorization = function(dsName) {
+    return this.dictionary[dsName] 
+        && this.dictionary[dsName].classList.contains('qa-structure-factorization');
+};
 
 DataStructureList.prototype.forEachEnabled = function(func) {
     var enabledNodes = this.enParent.getElementsByClassName("qa-structure");
