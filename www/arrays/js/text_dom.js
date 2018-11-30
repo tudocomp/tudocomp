@@ -78,7 +78,7 @@ function updateWhitespaces() {
     }
 }
 
-var varText, varIndex, varSA, varISA, varPHI, varLCP, varPLCP, varPSI, varF, varBWT, varLF;
+var varText, varIndex, varSA, varISA, varPHI, varLCP, varPLCP, varPSI, varF, varBWT, varLF, varLPF, varSAIS, varLZ77, varLyndon;
 function updateArrays() {
     
     updateWhitespaces();
@@ -104,6 +104,10 @@ function updateArrays() {
         varF = firstRow(varText, varSA, varBase);
         varBWT = bwt(varText, varSA, varBase);
         varLF = lfArray(varSA, varISA, varBase);
+        varLPF = lpfArray(varText, varBase);
+        varSAIS = slArray(varText, varBase);
+        varLZ77 = LZ77Fact(varText, varBase);
+        varLyndon = lyndonFact(varText, varISA, varBase);
     }
     
     var sep = "";
@@ -117,8 +121,11 @@ function updateArrays() {
             if(options.enabled("whitespace"))
                 varDs = encodeWhitespaces(varDs);
             varDs = stringToString(varDs, sep, varBase);
-        }
-        else varDs = arrayToString(varDs, sep, varBase);
+        } else if(dataStructures.isFactorization(dsName)) {
+            if(options.enabled("facttext")) {
+            varDs = factorizationToText(options.enabled("whitespace") ? encodeWhitespaces(varText) : varText, varDs, sep, varBase);
+            } else { varDs = arrayToString(varDs, sep, varBase); }
+        } else { varDs = arrayToString(varDs, sep, varBase); }
         result += padRight(dsName + ":", ' ', 7) + varDs + "\n";
     });
     outField.value = result.substr(0, result.length - 1);
