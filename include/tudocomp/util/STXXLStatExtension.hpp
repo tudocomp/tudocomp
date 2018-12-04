@@ -45,10 +45,6 @@ public:
         data["writes"]                = stats.get_writes();
         data["written_volume"]        = stats.get_written_volume();
     }
-
-    virtual inline void propagate(const StatPhaseExtension& sub) override {
-        // nothing to do, since all stats are monotonic
-    }
 };
 
 }
