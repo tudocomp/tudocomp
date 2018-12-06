@@ -5,8 +5,24 @@
 
 #include <tudocomp/io.hpp>
 #include <tudocomp/meta/Registry.hpp>
+#include <tudocomp/Compressor.hpp>
 
 namespace tdc {
+
+class ChainSyntaxPreprocessor {
+public:
+    static inline std::string preprocess(const std::string& str) {
+        // replace substrings separated by ':' by chain invokations
+        size_t pos = str.find(':');
+        if(pos != std::string::npos) {
+            return std::string("chain(") +
+                    str.substr(0, pos) + ", " +
+                    preprocess(str.substr(pos+1)) + ")";
+        } else {
+            return str;
+        }
+    }
+};
 
 class ChainCompressor: public Compressor {
 public:

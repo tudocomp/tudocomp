@@ -9,8 +9,10 @@
 
 #include <tudocomp/util.hpp>
 
-#include <stdexcept>
+#include <functional>
 #include <sstream>
+#include <stdexcept>
+#include <vector>
 
 namespace tdc {
 namespace meta {
@@ -46,6 +48,35 @@ public:
 
 /// \brief Provides functionality to parse a string into an AST.
 class Parser {
+private:
+    using preprocessor_t = std::function<std::string(const std::string&)>;
+
+    static std::vector<preprocessor_t> s_preprocessors;
+
+public:
+    template<typename T>
+    static inline void register_preprocessor() {
+        s_preprocessors.push_back(T::preprocess);
+    }
+
+private:
+    inline static std::string preprocess(const std::string& str) {
+        std::string proc_str = str;
+        for(auto& p : s_preprocessors) {
+            proc_str = p(proc_str);
+        }
+        return proc_str;
+    }
+
+public:
+    /// \brief Parses the given string and returns the resulting AST.
+    /// \param str the input string
+    /// \return the resulting AST
+    inline static ast::NodePtr<> parse(const std::string& str) {
+        auto x = preprocess(str);
+        return Parser(x).parse_node();
+    }
+
 private:
     std::string m_str;
     size_t m_cursor;
@@ -249,30 +280,6 @@ private:
                 return obj;
             }
         }
-    }
-
-    inline static std::string preprocess(const std::string& str) {
-        // FIXME: the chain syntax should NOT be hardcoded in the AST module
-        // Make Parser a singleton and allow preprocessors to hook
-        // This requires a Parser.cpp file, which will be addressed in a future
-        // branch
-        size_t pos = str.find(':');
-        if(pos != std::string::npos) {
-            return std::string("chain(") +
-                    str.substr(0, pos) + ", " +
-                    preprocess(str.substr(pos+1)) + ")";
-        } else {
-            return str;
-        }
-    }
-
-public:
-    /// \brief Parses the given string and returns the resulting AST.
-    /// \param str the input string
-    /// \return the resulting AST
-    inline static ast::NodePtr<> parse(const std::string& str) {
-        auto x = preprocess(str);
-        return Parser(x).parse_node();
     }
 };
 
