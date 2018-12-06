@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 
 namespace tdc {
@@ -17,8 +18,6 @@ public:
     /// \return a human-readable type identifier for this node.
     virtual std::string debug_type() const = 0;
 };
-
-#include <memory>
 
 template<typename node_t = Node>
 using NodePtr = std::shared_ptr<const node_t>;
