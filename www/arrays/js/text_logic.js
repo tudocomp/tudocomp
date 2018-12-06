@@ -1,3 +1,82 @@
+/* fact[i] = 1 means that a factor ends at position i */
+function factorizationToText(string, fact, sep = " ", base = 0) {
+    var n = string.length;
+
+    var width = ("" + (n + base - 1).toString()).length
+    var result = "";
+    for(var i = 0; i < n - 1; i++) {
+        result += padLeft("" + string[i], ' ', width);
+        result += (fact[i] == 1) ? ('|'+sep.substring(1))  : sep;
+    }
+    result += padLeft("" + (string[n-1] == '\0' ? '$' : string[n-1]), (fact[n-1] == 1) ? '|' : ' ', width);
+
+    return result;
+}
+
+
+function lyndonFact(string, isa, base = 0) {
+    var n = string.length;
+    var result = new Array(n).fill(0);
+    var isaval = isa[0];
+    for(var i = 0; i+1 < n; ++i) {
+        if(isaval > isa[i+1]) {
+            result[i] = 1;
+            isaval = isa[i+1];
+        }
+    }
+    return result;
+}
+
+function lpfArray(string, base = 0) {
+    var n = string.length;
+    var result = [];
+    for(var i = 0; i < n; i++) {
+        var maxval = 0;
+        var maxarg = 0;
+        for(var j = 0; j < i; j++) {
+            var lcpval = lcp(string, i, j);
+            if(maxval < lcpval) {
+                maxval = lcpval;
+                maxarg = j;
+            }
+        }
+        result.push(maxval);
+    }
+    return result;
+}
+function LZ77Fact(string, base = 0) {
+    var n = string.length;
+    var lpfarray = lpfArray(string,base);
+    var result = new Array(n).fill(0);
+    var boundary = 1;
+    for(var i = 0; i < n; i++) {
+        if(boundary == i) {
+            result[i-1] = 1;
+            boundary += lpfarray[i] == 0 ? 1 : lpfarray[i];
+        }
+    }
+    return result;
+}
+function slArray(string, base = 0) {
+    var n = string.length;
+    var result = new Array(n);
+    var type = 'S';
+    result[n-1] = type;
+    for(var i = n-2; i >= 0; --i) {
+        if(string[i+1] > string[i]) {
+            type = 'S';
+        }
+        else if(string[i+1] < string[i]) {
+            type = 'L';
+            if(result[i+1] == 'S') { result[i+1] = 'S*'; }
+        }
+        result[i] = type;
+    }
+    return result;
+}
+
+
+
 function indexArray(n, base = 0) {
     result = [];
     for(var i = 0; i < n; i++) result.push(i + base);
