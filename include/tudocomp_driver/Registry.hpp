@@ -22,6 +22,7 @@
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/Decompressor.hpp>
 #include <tudocomp/Generator.hpp>
 
 #include <tudocomp/meta/Registry.hpp>

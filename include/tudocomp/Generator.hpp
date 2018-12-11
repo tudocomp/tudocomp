@@ -11,6 +11,7 @@ public:
     static inline constexpr TypeDesc type_desc() {
         return TypeDesc("generator");
     }
+
     virtual ~Generator() = default;
     Generator(Generator const&) = default;
     Generator(Generator&&) = default;

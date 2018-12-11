@@ -11,7 +11,7 @@
 #include <vector>
 
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/compressors/ChainCompressor.hpp>
+//TODO #include <tudocomp/compressors/ChainCompressor.hpp>
 
 #include <tudocomp/io.hpp>
 #include <tudocomp/io/IOUtil.hpp>
@@ -94,15 +94,17 @@ int main(int argc, char** argv) {
     google::InitGoogleLogging(cmd);
 
     // register chain compressor syntax in ast parser
-    meta::ast::Parser::register_preprocessor<ChainSyntaxPreprocessor>();
+    //TODO meta::ast::Parser::register_preprocessor<ChainSyntaxPreprocessor>();
 
     try {
         // load registries
         const auto& compressor_registry = Registry::of<Compressor>();
+        const auto& decompressor_registry = Registry::of<Decompressor>();
         const auto& generator_registry = Registry::of<Generator>();
 
         if (options.list) {
             auto lib = compressor_registry.library() +
+                       decompressor_registry.library() +
                        generator_registry.library();
 
             auto print_type_table = [&](const std::string& type){
@@ -139,6 +141,10 @@ int main(int argc, char** argv) {
                 std::cout << "Compressors (for the -a option):";
                 std::cout << std::endl;
                 print_type_table(Compressor::type_desc().name());
+                std::cout << std::endl;
+                std::cout << "Dompressors (for -d -a):";
+                std::cout << std::endl;
+                print_type_table(Decompressor::type_desc().name());
                 std::cout << std::endl;
                 std::cout << "String generators (for the -g option):";
                 std::cout << std::endl;
@@ -349,8 +355,13 @@ int main(int argc, char** argv) {
         }
 
         RegistryOf<Compressor>::Selection compressor;
-        if (!options.algorithm.empty()) {
+        if (!options.algorithm.empty() && !options.decompress) {
             compressor = compressor_registry.select(options.algorithm);
+        }
+
+        RegistryOf<Decompressor>::Selection decompressor;
+        if (!options.algorithm.empty() && options.decompress) {
+            decompressor = decompressor_registry.select(options.algorithm);
         }
 
         // open streams
@@ -388,11 +399,14 @@ int main(int argc, char** argv) {
             // do the due (or if you like sugar, the Dew is fine too)
             if (do_compress && compressor) {
                 if (!options.raw) {
-                    auto id_string = compressor->config().str();
-                    CHECK(id_string.find('%') == std::string::npos);
-
+                    // write header
                     auto o_stream = out.as_stream();
-                    o_stream << id_string << '%';
+
+                    // encode matching decompressor
+                    auto dec_id = compressor->decompressor()->config().str();
+                    CHECK(dec_id.find('%') == std::string::npos);
+
+                    o_stream << dec_id << '%';
                 }
 
                 if(restrictions.has_restrictions()) {
@@ -409,12 +423,11 @@ int main(int argc, char** argv) {
                 // --decompress --raw --algorithm : no header
 
                 std::string algorithm_header;
-
-                if (!options.raw) {
+                {
+                    auto i_stream = inp.as_stream();
+                    if (!options.raw)
                     {
                         // read header
-                        auto i_stream = inp.as_stream();
-
                         char c;
                         size_t sanity_size_check = 0;
                         bool err = false;
@@ -431,26 +444,28 @@ int main(int argc, char** argv) {
                             sanity_size_check++;
                             err = true;
                         }
+
                         if (err) {
                             exit("Input did not have an algorithm header!");
                         }
+
+                        // Slice off the header
+                        inp = Input(inp, algorithm_header.size() + 1);
                     }
-                    // Slice off the header
-                    inp = Input(inp, algorithm_header.size() + 1);
                 }
 
-                if (!options.raw && compressor) {
+                if (!options.raw && decompressor) {
                     DLOG(INFO) << "Ignoring header " << algorithm_header
                         << " and using manually given "
-                        << compressor->config().str();
+                        << decompressor->config().str();
                 } else if (!options.raw) {
                     DLOG(INFO) << "Using header id string " << algorithm_header;
 
-                    auto id_string = std::move(algorithm_header);
-                    compressor = compressor_registry.select(id_string);
+                    auto dec_id = std::move(algorithm_header);
+                    decompressor = decompressor_registry.select(dec_id);
                 } else {
                     DLOG(INFO) << "Using manually given "
-                               << compressor->config().str();
+                               << decompressor->config().str();
                 }
 
                 if(restrictions.has_restrictions()) {
@@ -458,7 +473,7 @@ int main(int argc, char** argv) {
                 }
 
                 setup_time = clk::now();
-                compressor->decompress(inp, out);
+                decompressor->decompress(inp, out);
                 comp_time = clk::now();
             } else {
                 setup_time = clk::now();

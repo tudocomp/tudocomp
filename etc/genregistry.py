@@ -45,11 +45,13 @@ AlgorithmConfig.__new__.__defaults__ = ('', '', [])
 
 class RegistryConfig:
     compressors = []
+    decompressors = []
     generators  = []
 
     def get_kinds(self):
         return [
             ("Compressor", self.compressors),
+            ("Decompressor", self.decompressors),
             ("Generator",  self.generators),
         ]
 
