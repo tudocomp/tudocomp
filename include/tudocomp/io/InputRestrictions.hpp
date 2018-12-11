@@ -51,6 +51,32 @@ namespace io {
         inline bool has_restrictions() const {
             return !has_no_restrictions();
         }
+
+        inline void serialize(std::ostream& out) const {
+            out.write((const char*)&m_null_terminate, sizeof(bool));
+            
+            const uint8_t num_escape_bytes = m_escape_bytes.size();
+            out.write((const char*)&num_escape_bytes, sizeof(uint8_t));
+
+            for(uint8_t c : m_escape_bytes) {
+                out.put(c);
+            }
+        }
+
+        inline size_t deserialize(std::istream& in) {
+            uint8_t num_escape_bytes = 0;
+
+            in.read((char*)&m_null_terminate, sizeof(bool));
+            in.read((char*)&num_escape_bytes, sizeof(uint8_t));
+
+            size_t x = num_escape_bytes;
+            while(x) {
+                m_escape_bytes.push_back((uint8_t)in.get());
+                --x;
+            }
+
+            return sizeof(bool) + sizeof(uint8_t) + num_escape_bytes;
+        }
     };
 
     inline std::ostream& operator<<(std::ostream& o,
