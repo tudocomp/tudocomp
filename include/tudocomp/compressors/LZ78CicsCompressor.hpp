@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp/Error.hpp>
+
 #include <tudocomp/compressors/lz78/LZ78Coding.hpp>
 #include <tudocomp/compressors/lzcics/st.hpp>
 
@@ -71,8 +73,7 @@ public:
         auto text = input.as_view();
 
         if(!text.ends_with(uint8_t(0))){
-            // FIXME: introduce custom error type
-            throw std::logic_error("Input has no sentinel!");
+            throw MissingSentinelError();
         }
 
         // coder

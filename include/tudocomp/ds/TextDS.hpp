@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tudocomp/Error.hpp>
 #include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/IntVector.hpp>
@@ -130,8 +131,7 @@ public:
           m_text(text), m_ds_requested(0) {
 
         if(!m_text.ends_with(uint8_t(0))){
-            // FIXME: introduce custom error type
-            throw std::logic_error("Input has no sentinel!");
+            throw MissingSentinelError();
         }
 
         const auto& cm_str = this->config().param("compress").as_string();

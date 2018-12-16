@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp/Error.hpp>
+
 #include <tudocomp/compressors/lzcics/st.hpp>
 #include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
 #include <tudocomp/compressors/lzss/Factor.hpp>
@@ -25,8 +27,7 @@ public:
         auto text = input.as_view();
 
         if(!text.ends_with(uint8_t(0))){
-            // FIXME: introduce custom error type
-            throw std::logic_error("Input has no sentinel!");
+            throw MissingSentinelError();
         }
 
         const size_t n = text.size();
