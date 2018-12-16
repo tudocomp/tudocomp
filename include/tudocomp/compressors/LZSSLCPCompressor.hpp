@@ -33,7 +33,6 @@ public:
         m.param("textds", "The text data structure provider.")
             .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
         m.param("threshold", "The minimum factor length.").primitive(2);
-        m.uses_textds<text_t>(text_t::SA | text_t::ISA | text_t::LCP);
         return m;
     }
 
@@ -41,7 +40,6 @@ public:
 
     inline virtual void compress(Input& input, Output& output) override {
         auto view = input.as_view();
-        DCHECK(view.ends_with(uint8_t(0)));
 
         // Construct text data structures
         text_t text = StatPhase::wrap("Construct Text DS", [&]{

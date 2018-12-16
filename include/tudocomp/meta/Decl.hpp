@@ -15,8 +15,6 @@
 
 #include <tudocomp/meta/TypeDesc.hpp>
 
-#include <tudocomp/io/InputRestrictions.hpp>
-
 namespace tdc {
 namespace meta {
 
@@ -160,8 +158,6 @@ private:
     std::string m_desc;
     std::vector<Param> m_params;
 
-    InputRestrictions m_input_restrictions; //TODO: generalize?
-
 public:
     /// \brief Main constructor.
     /// \param name the algorithm's name
@@ -203,14 +199,6 @@ public:
     inline const std::string& desc() const { return m_desc; }
     inline const std::vector<Param>& params() const {
         return m_params;
-    }
-
-    inline const InputRestrictions& input_restrictions() const {
-        return m_input_restrictions;
-    }
-
-    inline void input_restrictions(InputRestrictions r) {
-        m_input_restrictions = r;
     }
 
     /// \brief Returns a string representation of the declaration.

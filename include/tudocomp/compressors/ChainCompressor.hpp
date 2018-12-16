@@ -56,14 +56,11 @@ public:
         auto run = [&](Input& i, Output& o, string_ref option) {
             auto option_value = config().param(option);
 
-            //TODO: eliminate tdc_algorithms dependency
             auto compressor = Registry::of<Compressor>().select(
                 meta::ast::convert<meta::ast::Object>(option_value.ast()));
 
-            auto is = compressor.decl()->input_restrictions();
-
             DVLOG(1) << "dynamic creation of " << compressor.decl()->name();
-            f(i, o, *compressor, is);
+            f(i, o, *compressor);
         };
 
         std::vector<uint8_t> between_buf;
@@ -85,15 +82,8 @@ public:
     inline virtual void compress(Input& input, Output& output) override final {
         chain(input, output, false, [](Input& i,
                                        Output& o,
-                                       Compressor& c,
-                                       InputRestrictions flags) {
-            bool res = flags.has_restrictions();
-            if (res) {
-                auto i2 = Input(i, flags);
-                c.compress(i2, o);
-            } else {
-                c.compress(i, o);
-            }
+                                       Compressor& c) {
+            c.compress(i, o);
         });
     }
 
@@ -104,15 +94,8 @@ public:
     inline virtual void decompress(Input& input, Output& output) override final {
         chain(input, output, true, [](Input& i,
                                       Output& o,
-                                      Compressor& c,
-                                      InputRestrictions flags) {
-            bool res = flags.has_restrictions();
-            if (res) {
-                auto o2 = Output(o, flags);
-                c.decompress(i, o2);
-            } else {
-                c.decompress(i, o);
-            }
+                                      Compressor& c) {
+            c.decompress(i, o);
         });
     }
 };

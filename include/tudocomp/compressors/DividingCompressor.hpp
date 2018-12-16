@@ -209,12 +209,7 @@ public:
         auto entry = Registry::of<Compressor>().find(
             meta::ast::convert<meta::ast::Object>(option_value.ast()));
 
-        auto is = entry.decl()->input_restrictions();
-
-        // Make sure null termination and escaping happens
-        auto input2 = Input(input, is);
-
-        compress_for_each_block(input2, output, [&](auto& input, auto& output){
+        compress_for_each_block(input, output, [&](auto& input, auto& output){
             // TODO: If compressors ever got changed to not store runtime state,
             // then this init could happen once
             auto compressor = entry.select();
@@ -229,12 +224,7 @@ public:
         auto entry = Registry::of<Compressor>().find(
             meta::ast::convert<meta::ast::Object>(option_value.ast()));
 
-        auto is = entry.decl()->input_restrictions();
-
-        // Make sure null termination and escaping gets reverted
-        auto output2 = Output(output, is);
-
-        decompress_for_each_block(input, output2, [&](auto& input, auto& output){
+        decompress_for_each_block(input, output, [&](auto& input, auto& output){
             // TODO: If compressors ever got changed to not store runtime state,
             // then this init could happen once
             auto compressor = entry.select();

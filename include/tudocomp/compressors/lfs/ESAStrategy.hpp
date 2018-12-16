@@ -56,7 +56,6 @@ public:
     inline static Meta meta() {
         Meta m(TypeDesc("lfs_comp"), "esa");
         m.param("textds").strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
-        m.uses_textds<text_t>(text_t::SA | text_t::ISA | text_t::LCP);
         return m;
     }
 

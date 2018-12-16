@@ -18,13 +18,6 @@ public:
         return m;
     }
 
-    inline static ds::InputRestrictions restrictions() {
-        return ds::InputRestrictions {
-            { 0 },
-            true
-        };
-    }
-
     template<typename textds_t>
     inline SADivSufSort(Config&& cfg, const textds_t& t, CompressMode cm)
         : Algorithm(std::move(cfg)) {

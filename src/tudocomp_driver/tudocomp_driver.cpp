@@ -393,11 +393,6 @@ int main(int argc, char** argv) {
                     o_stream << id_string << '%';
                 }
 
-                auto is = compressor.decl()->input_restrictions();
-                if (is.has_restrictions()) {
-                    inp = Input(inp, is);
-                }
-
                 setup_time = clk::now();
                 compressor->compress(inp, out);
                 comp_time = clk::now();
@@ -450,11 +445,6 @@ int main(int argc, char** argv) {
                 } else {
                     DLOG(INFO) << "Using manually given "
                                << compressor->config().str();
-                }
-
-                auto is = compressor.decl()->input_restrictions();
-                if (is.has_restrictions()) {
-                    out = Output(out, is);
                 }
 
                 setup_time = clk::now();

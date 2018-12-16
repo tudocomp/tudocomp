@@ -343,27 +343,6 @@ public:
     inline const DeclLib& known() const {
         return m_known;
     }
-
-    inline const InputRestrictions& input_restrictions() const {
-        return m_decl->input_restrictions();
-    }
-
-    inline void input_restrictions(InputRestrictions r) {
-        m_decl->input_restrictions(r);
-    }
-
-    //TODO: rename
-    inline void needs_sentinel_terminator() {
-        input_restrictions(
-            input_restrictions() | io::InputRestrictions({ 0 }, true));
-    }
-
-    //TODO: refactor
-    template<typename text_t>
-    inline void uses_textds(uint64_t flags) {
-        input_restrictions(
-            input_restrictions() | text_t::common_restrictions(flags));
-    }
 };
 
 /// \cond INTERNAL

@@ -20,10 +20,6 @@ public:
         return m;
     }
 
-    inline static ds::InputRestrictions restrictions() {
-        return ds::InputRestrictions {};
-    }
-
     template<typename textds_t>
     inline PLCPFromPhi(Config&& cfg, textds_t& t, CompressMode cm)
             : Algorithm(std::move(cfg)) {

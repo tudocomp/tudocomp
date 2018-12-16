@@ -41,7 +41,6 @@ public:
         m.param("threshold", "The minimum factor length.").primitive(5);
         m.param("flatten", "Flatten reference chains after factorization.")
             .primitive(1); // 0 or 1
-        m.uses_textds<text_t>(strategy_t::textds_flags());
         return m;
     }
 
@@ -49,8 +48,6 @@ public:
 
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
-        DCHECK(in.ends_with(uint8_t(0)));
-
         auto text = StatPhase::wrap("Construct Text DS", [&]{
             return text_t(config().sub_config("textds"),
                 in, strategy_t::textds_flags());

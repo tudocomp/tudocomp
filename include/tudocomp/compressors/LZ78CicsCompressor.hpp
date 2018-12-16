@@ -61,7 +61,6 @@ public:
         Meta m(Compressor::type_desc(), "lz78cics", "LZ78 compression in compressed space.");
         m.param("coder", "The output encoder.")
             .strategy<coder_t>(TypeDesc("coder"));
-        m.input_restrictions(io::InputRestrictions({0}, false));
         return m;
     }
 
@@ -70,6 +69,11 @@ public:
     /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
         auto text = input.as_view();
+
+        if(!text.ends_with(uint8_t(0))){
+            // FIXME: introduce custom error type
+            throw std::logic_error("Input has no sentinel!");
+        }
 
         // coder
         typename coder_t::Encoder coder(
@@ -162,7 +166,7 @@ public:
 
 	        //std::vector<size_t> ref;
 	        //std::vector<char> cha;
-	
+
 	        do {
 		        auto v = st.root;
 		        size_t d = 0;
@@ -179,7 +183,7 @@ public:
 			        DVLOG(2) << "cha: " << cha;
 			        ell = st.next_leaf(ell);
 			        DVLOG(2) << "Selecting leaf " << ell;
-                    
+
                     size_t ref;
 			        if(cst.node_depth(v) == 1) {
 				        DVLOG(2) << "fresh factor";

@@ -15,7 +15,6 @@ public:
         Meta m(Compressor::type_desc(), "lz77cics", "LZ77 compression in compressed space.");
         m.param("coder", "The output encoder.")
             .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
-        m.input_restrictions(io::InputRestrictions({0}, false));
         return m;
     }
 
@@ -24,8 +23,13 @@ public:
     /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
         auto text = input.as_view();
+
+        if(!text.ends_with(uint8_t(0))){
+            // FIXME: introduce custom error type
+            throw std::logic_error("Input has no sentinel!");
+        }
+
         const size_t n = text.size();
-		DCHECK_EQ(strlen( (const char*)text.data()), n);
 
         // initialize encoder
         auto coder = lzss_coder_t(config().sub_config("coder"))
@@ -44,7 +48,7 @@ public:
         // factorize
         StatPhase::wrap("Factorize", [&]{
 	        sdsl::bit_vector bV(st.internal_nodes);
-	        sdsl::bit_vector bW(st.internal_nodes); 
+	        sdsl::bit_vector bW(st.internal_nodes);
 	        auto ell = st.smallest_leaf();
 	        DVLOG(2) << "Selecting leaf " << ell;
 	        size_t p = 0; // text position of the next (maybe current) factor
