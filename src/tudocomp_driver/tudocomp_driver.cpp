@@ -383,6 +383,8 @@ int main(int argc, char** argv) {
                 out = Output(io::Path(ofile), true);
             }
 
+            InputRestrictions restrictions(options.escape, options.sentinel);
+
             // do the due (or if you like sugar, the Dew is fine too)
             if (do_compress && compressor) {
                 if (!options.raw) {
@@ -391,6 +393,10 @@ int main(int argc, char** argv) {
 
                     auto o_stream = out.as_stream();
                     o_stream << id_string << '%';
+                }
+
+                if(restrictions.has_restrictions()) {
+                    inp = Input(inp, restrictions);
                 }
 
                 setup_time = clk::now();
@@ -445,6 +451,10 @@ int main(int argc, char** argv) {
                 } else {
                     DLOG(INFO) << "Using manually given "
                                << compressor->config().str();
+                }
+
+                if(restrictions.has_restrictions()) {
+                    out = Output(out, restrictions);
                 }
 
                 setup_time = clk::now();

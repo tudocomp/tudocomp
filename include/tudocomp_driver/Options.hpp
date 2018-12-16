@@ -2,6 +2,8 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <vector>
+
 #include <getopt.h>
 
 /// \cond INTERNAL
@@ -16,11 +18,13 @@ constexpr int OPT_STDOUT = 1003;
 constexpr option OPTIONS[] = {
     {"algorithm",  required_argument, nullptr, 'a'},
     {"decompress", no_argument,       nullptr, 'd'},
+    {"escape",     required_argument, nullptr, 'e'},
     {"force",      no_argument,       nullptr, 'f'},
     {"generator",  required_argument, nullptr, 'g'},
     {"help",       no_argument,       nullptr, OPT_HELP},
     {"list",       optional_argument, nullptr, 'l'},
     {"output",     required_argument, nullptr, 'o'},
+    {"sentinel",   no_argument,       nullptr, '0'},
     {"stats",      optional_argument, nullptr, 's'},
     {"statfile",   required_argument, nullptr, 'S'},
     {"version",    no_argument,       nullptr, 'v'},
@@ -73,6 +77,18 @@ public:
         out << right << setw(W_SF) << "-d" << ", "
             << left << setw(W_LF) << "--decompress"
             << "decompress the input (instead of compressing it)"
+            << endl;
+
+        // -0, --sentinel
+        out << right << setw(W_SF) << "-0" << ", "
+            << left << setw(W_LF) << "--sentinel"
+            << "append a sentinel (byte 0x00) to the input"
+            << endl;
+
+        // -e, --escape
+        out << right << setw(W_SF) << "-e" << ", "
+            << left << setw(W_LF) << "--escape=CHARACTERS"
+            << "escape given characters from input"
             << endl;
 
         // -f, --force
@@ -178,6 +194,9 @@ private:
 
     std::string m_algorithm;
 
+    std::vector<uint8_t> m_escape;
+    bool m_sentinel;
+
     std::string m_output;
     bool m_force;
     bool m_stdin, m_stdout;
@@ -203,6 +222,7 @@ public:
         m_help(false),
         m_version(false),
         m_list(false),
+        m_sentinel(false),
         m_force(false),
         m_stdin(false),
         m_stdout(false),
@@ -211,16 +231,30 @@ public:
         m_stats(false)
     {
         int c, option_index = 0;
-        while((c = getopt_long(argc, argv, "O:V:L:a:dfg:lo:s::v",
+        std::string escape;
+
+        while((c = getopt_long(argc, argv, "O:V:L:a:df0e:g:lo:s::v",
             OPTIONS, &option_index)) != -1) {
 
             switch(c) {
+                case '0': // --sentinel
+                    m_sentinel = true;
+                    m_escape.push_back(0);
+                    break;
+
                 case 'a': // --algorithm=<optarg>
                     m_algorithm = std::string(optarg);
                     break;
 
                 case 'd': // --decompress
                     m_decompress = true;
+                    break;
+
+                case 'e': // --escape=<optarg>
+                    escape = std::string(optarg);
+                    for(auto x : escape) {
+                        m_escape.push_back(x);
+                    }
                     break;
 
                 case 'f': // --force
@@ -308,6 +342,9 @@ public:
     const std::string& list_algorithm = m_list_algorithm;
 
     const std::string& algorithm = m_algorithm;
+
+    const std::vector<uint8_t>& escape = m_escape;
+    const bool& sentinel = m_sentinel;
 
     const std::string& output = m_output;
     const bool& force = m_force;
