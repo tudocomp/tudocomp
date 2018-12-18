@@ -34,5 +34,17 @@ public:
     virtual std::unique_ptr<Decompressor> decompressor() const = 0;
 };
 
+/// \brief Base for compressors also including a decompressor.
+class CompressorAndDecompressor : public Compressor {
+public:
+    using Compressor::Compressor;
+
+    /// \brief Deompress the given input to the given output.
+    ///
+    /// \param input The input.
+    /// \param output The output.
+    virtual void decompress(Input& input, Output& output) = 0;
+};
+
 }
 
