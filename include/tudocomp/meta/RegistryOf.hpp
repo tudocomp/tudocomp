@@ -111,6 +111,10 @@ public:
         inline T* operator->() {
             return m_instance.get();
         }
+
+        inline std::unique_ptr<T>&& move_instance() {
+            return std::move(m_instance);
+        }
     };
 
     class Entry {
