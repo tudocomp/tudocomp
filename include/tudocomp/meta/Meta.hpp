@@ -340,6 +340,12 @@ public:
         return m_sig;
     }
 
+    template<typename Algo>
+    inline Meta& declare() {
+        add_to_lib(m_known, Algo::meta());
+        return *this;
+    }
+
     inline const DeclLib& known() const {
         return m_known;
     }
