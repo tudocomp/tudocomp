@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
                 std::cout << std::endl;
                 print_type_table(Compressor::type_desc().name());
                 std::cout << std::endl;
-                std::cout << "Dompressors (for -d -a):";
+                std::cout << "Decompressors (for -d -a):";
                 std::cout << std::endl;
                 print_type_table(Decompressor::type_desc().name());
                 std::cout << std::endl;
