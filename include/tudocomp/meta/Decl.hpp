@@ -24,7 +24,7 @@ public:
     using std::runtime_error::runtime_error;
 };
 
-constexpr TypeDesc primitive_type("$");
+constexpr TypeDesc untyped("$");
 
 /// \brief Represents an algorithm declaration.
 class Decl {
@@ -35,6 +35,7 @@ public:
         /// \brief Enumeration of parameter kinds.
         enum Kind {
             primitive, /// a primitive value
+            complex,   /// a complex value
             bound,     /// a type-bound strategy, which appears in signatures
             unbound    /// an unbound strategy, which cannot appear in signatures
         };
@@ -72,15 +73,15 @@ public:
               m_list(list),
               m_default(defv) {
 
-            if(!is_primitive() && !type.valid()) {
-                throw DeclError("non-primitive parameters must have a type");
+            if(has_type() && !type.valid()) {
+                throw DeclError("typed parameters must have a type");
             }
 
-            if(is_primitive() && type.valid()) {
-                throw DeclError("primitive parameters must not have a type");
+            if(!has_type() && type.valid()) {
+                throw DeclError("untyped parameters must not have a type");
             }
 
-            m_type = is_primitive() ? primitive_type : type;
+            m_type = has_type() ? type : untyped;
 
             // sanity checks on default value
             if(defv) {
@@ -139,6 +140,9 @@ public:
         inline const TypeDesc& type() const { return m_type; }
 
         inline bool is_primitive() const { return m_kind == primitive; }
+        inline bool has_type() const {
+            return m_kind == bound || m_kind == unbound;
+        }
 
         inline ast::NodePtr<> default_value() const {
             return m_default;

@@ -124,6 +124,26 @@ public:
                 list));
         }
 
+        inline void complex() {
+            m_meta->m_decl->add_param(Decl::Param(
+                m_name, m_desc,
+                Decl::Param::Kind::complex,
+                false, // no list
+                no_type,
+                ast::NodePtr<>())); // no default
+        }
+
+        inline void complex_list() {
+            m_meta->m_decl->add_param(Decl::Param(
+                m_name, m_desc,
+                Decl::Param::Kind::complex,
+                true, // list
+                no_type,
+                ast::NodePtr<>())); // no default
+        }
+
+        // TODO: overloads for complex with defaults!
+
     private:
         template<typename Binding>
         inline Meta register_binding(const TypeDesc& type) {
