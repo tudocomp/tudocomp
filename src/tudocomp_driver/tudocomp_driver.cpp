@@ -11,7 +11,7 @@
 #include <vector>
 
 #include <tudocomp/Compressor.hpp>
-//TODO #include <tudocomp/compressors/ChainCompressor.hpp>
+#include <tudocomp/compressors/ChainCompressor.hpp>
 
 #include <tudocomp/io.hpp>
 #include <tudocomp/io/IOUtil.hpp>
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
     google::InitGoogleLogging(cmd);
 
     // register chain compressor syntax in ast parser
-    //TODO meta::ast::Parser::register_preprocessor<ChainSyntaxPreprocessor>();
+    meta::ast::Parser::register_preprocessor<ChainSyntaxPreprocessor>();
 
     try {
         // load registries
