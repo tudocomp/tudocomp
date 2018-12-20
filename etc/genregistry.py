@@ -139,7 +139,7 @@ for (classname, algos) in tdc.get_kinds():
     for algo in algos:
         (name, _, _) = algo
 
-        group_name = name
+        group_name = name.replace(':', '_')
         group_rank = 1
         group_count = 0
         group_headers = []
