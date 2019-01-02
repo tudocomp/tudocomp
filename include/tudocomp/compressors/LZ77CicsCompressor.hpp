@@ -5,6 +5,7 @@
 #include <tudocomp/compressors/lzcics/st.hpp>
 #include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
 #include <tudocomp/compressors/lzss/Factor.hpp>
+#include <tudocomp/decompressors/LZSSDecompressor.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -141,16 +142,8 @@ public:
         });
     }
 
-    /// \copydoc Compressor::compress
-    inline virtual void decompress(Input& input, Output& output) override {
-        lzss::DecompBackBuffer decomp;
-        {
-            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
-            decoder.decode(decomp);
-        }
-
-        auto outs = output.as_stream();
-        decomp.write_to(outs);
+    inline virtual std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::unique_instance<LZSSDecompressor<lzss_coder_t>>();
     }
 };
 

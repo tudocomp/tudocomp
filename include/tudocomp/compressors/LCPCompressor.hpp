@@ -14,15 +14,14 @@
 
 #include <tudocomp_stat/StatPhase.hpp>
 
-// For default params
-#include <tudocomp/compressors/lcpcomp/decompress/ScanDec.hpp>
 #include <tudocomp/compressors/lcpcomp/compress/ArraysComp.hpp>
+#include <tudocomp/decompressors/LCPDecompressor.hpp>
 
 namespace tdc {
 
 /// Factorizes the input by finding redundant phrases in a re-ordered version
 /// of the LCP table.
-template<typename lzss_coder_t, typename strategy_t, typename dec_t, typename text_t = TextDS<>>
+template<typename lzss_coder_t, typename strategy_t = lcpcomp::ArraysComp, typename text_t = TextDS<>>
 class LCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
@@ -33,9 +32,6 @@ public:
         m.param("comp", "The factorization strategy for compression.")
             .strategy<strategy_t>(lcpcomp::comp_strategy_type(),
                 Meta::Default<lcpcomp::ArraysComp>());
-        m.param("dec", "The strategy for decompression.")
-            .strategy<dec_t>(lcpcomp::dec_strategy_type(),
-                Meta::Default<lcpcomp::ScanDec>());
         m.param("textds", "The text data structure provider.")
             .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
         m.param("threshold", "The minimum factor length.").primitive(5);
@@ -86,15 +82,8 @@ public:
         });
     }
 
-    inline virtual void decompress(Input& input, Output& output) override {
-        dec_t decomp(config().sub_config("dec"));
-        {
-            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
-            decoder.decode(decomp);
-        }
-
-        auto outs = output.as_stream();
-        decomp.write_to(outs);
+    inline virtual std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::unique_instance<LCPDecompressor<lzss_coder_t>>();
     }
 };
 

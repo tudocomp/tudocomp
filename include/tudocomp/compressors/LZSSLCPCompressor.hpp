@@ -11,7 +11,8 @@
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lzss/FactorizationStats.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
-#include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
+
+#include <tudocomp/decompressors/LZSSDecompressor.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 
@@ -124,16 +125,8 @@ public:
         });
     }
 
-    inline virtual void decompress(Input& input, Output& output) override {
-        lzss::DecompBackBuffer decomp;
-
-        {
-            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
-            decoder.decode(decomp);
-        }
-
-        auto outs = output.as_stream();
-        decomp.write_to(outs);
+    inline virtual std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::unique_instance<LZSSDecompressor<lzss_coder_t>>();
     }
 };
 
