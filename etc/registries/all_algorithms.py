@@ -276,8 +276,10 @@ tdc.compressors = [
 
 ##### Export available decompressors #####
 tdc.decompressors = [
-    AlgorithmConfig(name="LCPDecompressor", header="decompressors/LCPDeCompressor.hpp", sub=[lzss_coders, lcpcomp_dec]),
+    AlgorithmConfig(name="ChainDecompressor", header="decompressors/ChainDecompressor.hpp", sub=[lzss_coders, lcpcomp_dec]),
+    AlgorithmConfig(name="LCPDecompressor", header="decompressors/LCPDecompressor.hpp", sub=[lzss_coders, lcpcomp_dec]),
     AlgorithmConfig(name="LZSSDecompressor", header="decompressors/LZSSDecompressor.hpp", sub=[lzss_coders]),
+    AlgorithmConfig(name="WrapDecompressor", header="decompressors/WrapDecompressor.hpp", sub=[lzss_coders]),
 ]
 
 ##### Export available string generators #####
