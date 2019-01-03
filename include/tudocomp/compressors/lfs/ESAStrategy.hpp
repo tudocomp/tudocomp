@@ -6,6 +6,8 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/Algorithm.hpp>
 
+#include <tudocomp_stat/StatPhase.hpp>
+
 #include <vector>
 #include <tuple>
 
