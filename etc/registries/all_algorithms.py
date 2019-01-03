@@ -285,6 +285,7 @@ tdc.decompressors = [
     AlgorithmConfig(name="lfs::LFS2Decompressor", header="decompressors/LFS2Decompressor.hpp", sub=[lit_coder, len_coder]),
     AlgorithmConfig(name="LZ78Decompressor", header="decompressors/LZSSDecompressor.hpp", sub=[universal_coders]),
     AlgorithmConfig(name="LZSSDecompressor", header="decompressors/LZSSDecompressor.hpp", sub=[lzss_coders]),
+    AlgorithmConfig(name="LZWDecompressor", header="decompressors/LZWDecompressor.hpp", sub=[universal_coders]),
     AlgorithmConfig(name="WrapDecompressor", header="decompressors/WrapDecompressor.hpp"),
 ]
 
