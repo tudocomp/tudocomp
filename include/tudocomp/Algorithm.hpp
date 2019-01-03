@@ -33,6 +33,11 @@ public:
             std::forward<Args>(args)...);
     }
 
+    template<typename T>
+    static inline std::unique_ptr<T> unique_instance() {
+        return unique_instance<T>(std::string());
+    }
+
     template<typename T, typename... Args>
     static inline T instance(std::string config_str, Args&&... args) {
         return T(T::meta().config(config_str),
@@ -49,6 +54,11 @@ public:
     static inline T instance(Args&&... args) {
         return instance<T>(std::string(),
             std::forward<Args>(args)...);
+    }
+
+    template<typename T>
+    static inline T instance() {
+        return instance<T>(std::string());
     }
 
     inline Algorithm() = delete;
