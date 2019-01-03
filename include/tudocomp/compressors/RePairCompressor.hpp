@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 #include <tudocomp/Range.hpp>
 #include <tudocomp/coders/BitCoder.hpp> //default
@@ -12,7 +13,7 @@
 namespace tdc {
 
 template <typename coder_t>
-class RePairCompressor : public Compressor {
+class RePairCompressor : public CompressorAndDecompressor {
 private:
     typedef uint32_t sym_t;
     typedef uint64_t digram_t;
@@ -95,7 +96,7 @@ public:
         return m;
     }
 
-    using Compressor::Compressor;
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     virtual void compress(Input& input, Output& output) override {
         // options
@@ -337,6 +338,10 @@ public:
         while(!decoder.eof()) {
             decode(decode_sym(grammar_r), grammar, ostream);
         }
+    }
+
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
     }
 };
 
