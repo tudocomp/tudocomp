@@ -1,10 +1,10 @@
 #pragma once
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/bwt.hpp>
 #include <tudocomp/ds/TextDS.hpp>
-#include <tudocomp/util.hpp>
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/decompressors/BWTDecompressor.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -42,21 +42,8 @@ public:
         }
     }
 
-    inline virtual void decompress(Input& input, Output& output) override {
-        auto in = input.as_view();
-        auto ostream = output.as_stream();
-
-		auto decoded_string = StatPhase::wrap("Decode BWT", [&]{
-            return bwt::decode_bwt(in);
-        });
-
-		if(tdc_unlikely(decoded_string.empty())) {
-			return;
-		}
-
-        StatPhase::wrap("Output Text", [&]{
-            ostream << decoded_string << '\0';
-        });
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::unique_instance<BWTDecompressor>();
     }
 };
 
