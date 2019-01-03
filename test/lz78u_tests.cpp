@@ -51,7 +51,8 @@ TEST(Lz78U, roundtrip1) {
              0 , 8,
 
              1 , 7,
-        }
+        },
+        "", InputRestrictions::sentinel()
     );
 }
 
@@ -98,19 +99,20 @@ TEST(Lz78U, roundtrip2) {
              0 , 8,
 
              6 ,10,
-        }
+        },
+        "", InputRestrictions::sentinel()
     );
 }
 
 TEST(Lz78U, roundtrip4) {
     test::roundtrip_binary<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
-        "abcabcabcabc"_v, {}
+        "abcabcabcabc"_v, {}, "", InputRestrictions::sentinel()
     );
 }
 
 TEST(Lz78U, roundtrip5) {
     test::roundtrip_binary<LZ78UCompressor<StreamingStrategy<ASCIICoder>, ASCIICoder>>(
-        " solet salutandi, salutandi "_v, {}
+        " solet salutandi, salutandi "_v, {}, "", InputRestrictions::sentinel()
     );
 }
 
@@ -177,6 +179,7 @@ TEST(Lz78U, roundtrip3) {
 
             // terminator
             0b000000111,9,
-        }
+        },
+        "", InputRestrictions::sentinel()
     );
 }

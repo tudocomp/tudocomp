@@ -14,6 +14,7 @@
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/coders/BitCoder.hpp>
 #include <tudocomp/coders/EliasDeltaCoder.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 #include "../test/util.hpp"
 
@@ -21,7 +22,7 @@ using namespace tdc;
 
 // Implement a simple compressor
 template<typename coder_t>
-class MyCompressor : public Compressor {
+class MyCompressor : public CompressorAndDecompressor {
 public:
     inline static Meta meta() {
         Meta m(Compressor::type_desc(), "my_compressor", "An example compressor");
@@ -29,7 +30,7 @@ public:
         return m;
     }
 
-    using Compressor::Compressor;
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     virtual void compress(Input& input, Output& output) override {
         // retrieve random access on the input
@@ -81,6 +82,10 @@ public:
             uliteral_t c = c_min + decoder.template decode<uliteral_t>(occ_r);
             ostream << c;
         }
+    }
+
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
     }
 };
 
