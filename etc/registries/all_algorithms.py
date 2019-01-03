@@ -256,7 +256,7 @@ tdc.compressors = [
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
     AlgorithmConfig(name="LZ78Compressor", header="compressors/LZ78Compressor.hpp", sub=[universal_coders, lz78_trie]),
     AlgorithmConfig(name="LZ78UCompressor", header="compressors/LZ78UCompressor.hpp", sub=[lz78u_comp, universal_coders]),
-    #SLOW AlgorithmConfig(name="LZ78CicsCompressor", header="compressors/LZ78CicsCompressor.hpp", sub=[universal_coders]),
+    AlgorithmConfig(name="LZ78CicsCompressor", header="compressors/LZ78CicsCompressor.hpp", sub=[universal_coders]),
     AlgorithmConfig(name="LZWCompressor", header="compressors/LZWCompressor.hpp", sub=[universal_coders, lz78_trie]),
     AlgorithmConfig(name="RePairCompressor", header="compressors/RePairCompressor.hpp", sub=[non_consuming_coders]),
     AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[lzss_coders, textds]),
@@ -283,6 +283,7 @@ tdc.decompressors = [
     AlgorithmConfig(name="LCPDecompressor", header="decompressors/LCPDecompressor.hpp", sub=[lzss_coders, lcpcomp_dec]),
     AlgorithmConfig(name="lfs::LFSDecompressor", header="decompressors/LFSDecompressor.hpp", sub=[coding_strat]),
     AlgorithmConfig(name="lfs::LFS2Decompressor", header="decompressors/LFS2Decompressor.hpp", sub=[lit_coder, len_coder]),
+    AlgorithmConfig(name="LZ78Decompressor", header="decompressors/LZSSDecompressor.hpp", sub=[universal_coders]),
     AlgorithmConfig(name="LZSSDecompressor", header="decompressors/LZSSDecompressor.hpp", sub=[lzss_coders]),
     AlgorithmConfig(name="WrapDecompressor", header="decompressors/WrapDecompressor.hpp"),
 ]
