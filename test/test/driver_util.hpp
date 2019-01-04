@@ -244,7 +244,7 @@ Error _roundtrip(std::string algo,
         current.test = in_file + " -> " + comp_file;
         std::cout << "ERR\n";
 
-        if (View(current.compress_stdout).starts_with("Error: unknown algorithm"_v)) {
+        if (View(current.compress_stdout).starts_with("Error:"_v)) {
             abort = true;
         }
 
@@ -283,7 +283,7 @@ Error _roundtrip(std::string algo,
         current.test = comp_file + " -> " + decomp_file;
         std::cout << "ERR\n";
 
-        if (View(current.decompress_stdout).starts_with("Error: unknown algorithm"_v)) {
+        if (View(current.decompress_stdout).starts_with("Error:"_v)) {
             abort = true;
         }
 
