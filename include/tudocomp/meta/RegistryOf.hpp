@@ -26,12 +26,17 @@ class RegistryOfAny {
 
 template<typename T>
 class RegistryOf : public RegistryOfAny {
+public:
+    using register_callback_t = std::function<void(const Meta&)>;    
+
 private:
     using ctor_t = std::function<std::unique_ptr<T>(Config&&)>;
 
     TypeDesc m_root_type;
     DeclLib m_lib;
     std::unordered_map<std::string, ctor_t> m_reg;
+
+    std::vector<register_callback_t> m_callback;
 
 public:
     inline RegistryOf() : m_root_type(T::type_desc()) {
@@ -62,6 +67,14 @@ public:
         } else {
             throw RegistryError(std::string("already registered: ") + sig);
         }
+
+        for(auto& f : m_callback) {
+            f(meta);
+        }
+    }
+
+    inline void add_register_callback(register_callback_t f) {
+        m_callback.push_back(f);
     }
 
     class Selection {
