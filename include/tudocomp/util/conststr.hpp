@@ -55,3 +55,16 @@ public:
         return !(*this == other);
     }
 };
+
+#include <functional>
+
+// std::hash support
+namespace std
+{
+    template<> struct hash<conststr> {
+        size_t operator()(const conststr& s) const noexcept {
+            return std::hash<const char*>{}(s.c_str());
+        }
+    };
+}
+
