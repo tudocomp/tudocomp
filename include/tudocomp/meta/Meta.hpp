@@ -2,10 +2,13 @@
 
 #include <tuple>
 #include <vector>
+#include <unordered_set>
 
 #include <tudocomp/meta/Decl.hpp>
 #include <tudocomp/meta/DeclLib.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
+
+#include <tudocomp/util/type_list.hpp>
 
 namespace tdc {
 namespace meta {
@@ -53,6 +56,8 @@ private:
     std::shared_ptr<Decl> m_decl;
     std::shared_ptr<ast::Object> m_sig; // signature of bindings
     DeclLib m_known; // library of known declarations (excluding self!)
+
+    std::unordered_set<std::string> m_tags;
 
 public:
     template<typename D>    struct Default {};
@@ -368,6 +373,35 @@ public:
 
     inline const DeclLib& known() const {
         return m_known;
+    }
+
+    inline void add_tag(const std::string& tag_name) {
+        m_tags.insert(tag_name);
+    }
+
+    inline bool has_tag(const std::string& tag_name) const {
+        return (m_tags.find(tag_name) != m_tags.end());
+    }
+
+    template<typename Algo>
+    inline void inherit_tag(const std::string& tag_name) {
+        if(Algo::meta().has_tag(tag_name)) {
+            add_tag(tag_name);
+        }
+    }
+
+    template<typename Head, typename... Tail>
+    inline void inherit_tag_from_any(
+        const std::string& tag_name, tl::type_list<Head, Tail...> tl) {
+
+        inherit_tag<Head>(tag_name);
+        inherit_tag_from_any(tag_name, tl::type_list<Tail...>());
+    }
+
+    inline void inherit_tag_from_any(
+        const std::string& tag_name, tl::type_list<> tl) {
+
+        // done
     }
 };
 

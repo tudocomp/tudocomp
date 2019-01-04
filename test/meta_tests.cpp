@@ -501,14 +501,21 @@ protected:
     // first class with type C
     class C1 : public Algorithm {
     public:
-        static inline Meta meta() { return Meta(c_type(), "c1"); }
+        static inline Meta meta() {
+            return Meta(c_type(), "c1");
+        }
         using Algorithm::Algorithm;
     };
 
     // second class with type C
     class C2 : public Algorithm {
     public:
-        static inline Meta meta() { return Meta(c_type(), "c2"); }
+        static inline Meta meta() {
+            Meta m(c_type(), "c2");
+            m.add_tag("special");
+            return m;
+        }
+
         using Algorithm::Algorithm;
     };
 
@@ -519,6 +526,7 @@ protected:
         static inline Meta meta() {
             Meta m(b_type(), "b");
             m.param("cl").strategy_list<c_t...>(c_type());
+            m.inherit_tag_from_any("special", tdc::tl::type_list<c_t...>());
             return m;
         }
 
@@ -538,6 +546,7 @@ protected:
             m.param("b1").strategy<b_t>(b_type());
             m.param("b2").unbound_strategy(
                 b_type(), Meta::Default<B<C2,C1>>());
+            m.inherit_tag<b_t>("special");
             return m;
         }
 
@@ -603,6 +612,27 @@ TEST_F(meta, default_cfg) {
         ASSERT_EQ("c2", cl2[0].decl()->name());
         ASSERT_EQ("c1", cl2[1].decl()->name());
     }
+}
+
+TEST_F(meta, tags) {
+    using B1 = B<C1>;
+    using B2 = B<C2>;
+    using B12 = B<C1,C2>;
+    using B21 = B<C2,C1>;
+    using B11 = B<C1,C1>;
+    using AB1 = A<B1>;
+    using AB2 = A<B2>;
+
+    ASSERT_FALSE(C1::meta().has_tag("special"));
+    ASSERT_TRUE(C2::meta().has_tag("special"));
+    ASSERT_FALSE(B<>::meta().has_tag("special"));
+    ASSERT_FALSE(B1::meta().has_tag("special"));
+    ASSERT_TRUE(B2::meta().has_tag("special"));
+    ASSERT_TRUE(B12::meta().has_tag("special"));
+    ASSERT_TRUE(B21::meta().has_tag("special"));
+    ASSERT_FALSE(B11::meta().has_tag("special"));
+    ASSERT_FALSE(AB1::meta().has_tag("special"));
+    ASSERT_TRUE(AB2::meta().has_tag("special"));
 }
 
 class registry : public meta {
