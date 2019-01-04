@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -207,7 +208,26 @@ void on_string_generators(F func, size_t n) {
 
 const std::string TEST_FILE_PATH = "test_files";
 
-inline std::string test_file_path(const std::string& filename) {
+inline std::string test_file_path(const std::string& _filename) {
+    // sanitize filename
+    std::string filename = _filename;
+    std::replace_if(
+        filename.begin(),
+        filename.end(),
+        [](char c){
+            switch(c) {
+            case '(':
+            case ')':
+            case '=':
+            case ',':
+                return true;
+
+            default:
+                return false;
+            }
+        },
+        '_');
+
     return TEST_FILE_PATH + "/" + filename;
 }
 
