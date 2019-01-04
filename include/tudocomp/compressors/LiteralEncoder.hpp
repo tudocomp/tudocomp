@@ -1,14 +1,14 @@
 #pragma once
 
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
+
 #include <tudocomp/Literal.hpp>
-#include <tudocomp/Range.hpp>
-#include <tudocomp/io.hpp>
 
 namespace tdc {
 
 template<typename coder_t>
-class LiteralEncoder: public Compressor {
+class LiteralEncoder: public CompressorAndDecompressor {
 
 public:
     inline static Meta meta() {
@@ -19,7 +19,7 @@ public:
         return m;
     }
 
-    using Compressor::Compressor;
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     inline virtual void compress(Input& input, Output& output) override final {
         auto iview = input.as_view();
@@ -39,6 +39,10 @@ public:
         while(!decoder.eof()) {
             ostream << decoder.template decode<uint8_t>(literal_r);
         }
+    }
+
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
     }
 };
 

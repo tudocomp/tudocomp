@@ -124,6 +124,26 @@ public:
                 list));
         }
 
+        inline void complex() {
+            m_meta->m_decl->add_param(Decl::Param(
+                m_name, m_desc,
+                Decl::Param::Kind::complex,
+                false, // no list
+                no_type,
+                ast::NodePtr<>())); // no default
+        }
+
+        inline void complex_list() {
+            m_meta->m_decl->add_param(Decl::Param(
+                m_name, m_desc,
+                Decl::Param::Kind::complex,
+                true, // list
+                no_type,
+                ast::NodePtr<>())); // no default
+        }
+
+        // TODO: overloads for complex with defaults!
+
     private:
         template<typename Binding>
         inline Meta register_binding(const TypeDesc& type) {
@@ -338,6 +358,12 @@ public:
 
     inline ast::NodePtr<ast::Object> signature() const {
         return m_sig;
+    }
+
+    template<typename Algo>
+    inline Meta& declare() {
+        add_to_lib(m_known, Algo::meta());
+        return *this;
     }
 
     inline const DeclLib& known() const {

@@ -5,16 +5,11 @@
 
 #include <tudocomp/io.hpp>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/Decompressor.hpp>
 
 namespace tdc {
 
 /// \brief Base for data compressors.
-///
-/// A \e compressor defines the two operations \e compress and \e decompress.
-/// The \e compress operation transforms an input into a different
-/// representation with the goal of reducing the required memory. The
-/// \e decompress operation restores the original input from such a
-/// representation.
 class Compressor: public Algorithm {
 public:
     static inline constexpr TypeDesc type_desc() {
@@ -27,10 +22,7 @@ public:
     Compressor& operator=(Compressor const&) = default;
     Compressor& operator=(Compressor&&) = default;
 
-    /// \brief Construct the compressor with an environment.
-    ///
-    /// \param env The algorithm's environment.
-    inline Compressor(Config&& cfg): Algorithm(std::move(cfg)) {}
+    using Algorithm::Algorithm;
 
     /// \brief Compress the given input to the given output.
     ///
@@ -38,7 +30,16 @@ public:
     /// \param output The output.
     virtual void compress(Input& input, Output& output) = 0;
 
-    /// \brief Decompress the given input to the given output.
+    /// \brief Returns a decompressor.
+    virtual std::unique_ptr<Decompressor> decompressor() const = 0;
+};
+
+/// \brief Base for compressors also including a decompressor.
+class CompressorAndDecompressor : public Compressor {
+public:
+    using Compressor::Compressor;
+
+    /// \brief Deompress the given input to the given output.
     ///
     /// \param input The input.
     /// \param output The output.

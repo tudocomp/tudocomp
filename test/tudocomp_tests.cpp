@@ -1257,13 +1257,15 @@ struct MyCompressor: public Compressor {
         Compressor(std::move(cfg)),
         custom_data(std::move(s)) {}
 
-    inline virtual void decompress(Input&, Output&) {}
-
     inline virtual void compress(Input&, Output& output) {
         A a(config().sub_config("sub"));
         auto s = output.as_stream();
         s << "ok! " << custom_data << " " << config().param("dyn").as_string();
         ASSERT_TRUE(config().param("bool_val").as_bool());
+    }
+
+    inline virtual std::unique_ptr<Decompressor> decompressor() const override {
+        throw std::runtime_error("not implemented");
     }
 };
 

@@ -1,9 +1,9 @@
 #pragma once
 
+#include <numeric>
 #include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
-#include <numeric>
-#include <tudocomp/def.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 namespace tdc {
 
@@ -67,27 +67,31 @@ void mtf_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
 	}
 }
 
-class MTFCompressor : public Compressor {
+class MTFCompressor : public CompressorAndDecompressor {
 public:
     inline static Meta meta() {
         Meta m(Compressor::type_desc(), "mtf",
             "Encodes the input in a Move-To-Front manner.");
         return m;
     }
-    inline MTFCompressor(Config&& cfg)
-		: Compressor(std::move(cfg)) {
-    }
+    
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     inline virtual void compress(Input& input, Output& output) override {
 		auto is = input.as_stream();
 		auto os = output.as_stream();
 		mtf_encode(is,os);
 	}
+
     inline virtual void decompress(Input& input, Output& output) override {
 		auto is = input.as_stream();
 		auto os = output.as_stream();
 		mtf_decode(is,os);
 	}
+
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
+    }
 };
 
 

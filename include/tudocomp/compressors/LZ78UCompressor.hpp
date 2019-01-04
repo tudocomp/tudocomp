@@ -1,6 +1,8 @@
 #pragma once
 
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
+#include <tudocomp/Error.hpp>
 
 #include <sdsl/cst_fully.hpp>
 #include <sdsl/cst_sada.hpp>
@@ -87,7 +89,7 @@ namespace lz78u {
 }
 
 template<typename strategy_t, typename ref_coder_t>
-class LZ78UCompressor: public Compressor {
+class LZ78UCompressor: public CompressorAndDecompressor {
 private:
     using node_type = lz78u::SuffixTree::node_type;
 
@@ -108,11 +110,10 @@ public:
         m.param("comp", "The factorization strategy.")
             .strategy<strategy_t>(TypeDesc("lz78u_strategy"));
         m.param("threshold", "the minimum factor length").primitive(3);
-        m.needs_sentinel_terminator();
         return m;
     }
 
-    using Compressor::Compressor;
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     virtual void compress(Input& input, Output& out) override {
         StatPhase phase1("lz78u");
@@ -121,6 +122,10 @@ public:
         phase1.log_stat("threshold", threshold);
 
         auto iview = input.as_view();
+        if(!iview.ends_with(uint8_t(0))){
+            throw MissingSentinelError();
+        }
+
         View T = iview;
 
         lz78u::SuffixTree::cst_t backing_cst;
@@ -379,6 +384,9 @@ public:
         out.flush();
     }
 
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
+    }
 };
 
 

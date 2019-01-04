@@ -371,17 +371,20 @@ public:
     std::string str;
     std::string orginal_text;
     std::string options;
+    InputRestrictions restr;
 
     CompressResult(const RegistryOf<Compressor>& registry,
                     std::vector<uint8_t>&& p_bytes,
                     std::string&& p_str,
                     std::string&& p_original,
-                    std::string&& p_options):
+                    std::string&& p_options,
+                    InputRestrictions&& p_restr):
         m_registry(registry),
         bytes(std::move(p_bytes)),
         str(std::move(p_str)),
         orginal_text(std::move(p_original)),
-        options(std::move(p_options)) {}
+        options(std::move(p_options)),
+        restr(std::move(p_restr)) {}
 
     void assert_decompress() {
         std::vector<uint8_t> decoded_buffer;
@@ -389,14 +392,12 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decoded_buffer);
 
-            auto compressor = m_registry.select<C>(options);
-
-            auto restr = C::meta().input_restrictions();
             if (restr.has_restrictions()) {
                 decoded_out = Output(decoded_out, restr);
             }
 
-            compressor->decompress(text_in, decoded_out);
+            auto decompressor = m_registry.select<C>(options)->decompressor();
+            decompressor->decompress(text_in, decoded_out);
         }
         std::string decompressed_text {
             decoded_buffer.begin(),
@@ -411,14 +412,12 @@ public:
             Input text_in = Input::from_memory(bytes);
             Output decoded_out = Output::from_memory(decompressed_bytes);
 
-            auto compressor = m_registry.select<C>(options);
-
-            auto restr = C::meta().input_restrictions();
             if (restr.has_restrictions()) {
                 decoded_out = Output(decoded_out, restr);
             }
 
-            compressor->decompress(text_in, decoded_out);
+            auto decompressor = m_registry.select<C>(options)->decompressor();
+            decompressor->decompress(text_in, decoded_out);
         }
         std::vector<uint8_t> orginal_bytes {
             orginal_text.begin(),
@@ -432,11 +431,15 @@ template<class C>
 class RoundTrip {
     std::string m_options;
     RegistryOf<Compressor> m_registry;
+    InputRestrictions m_restr;
+
 public:
     inline RoundTrip(const std::string& options = "",
-                        const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()):
+                     const RegistryOf<Compressor>& registry = RegistryOf<Compressor>(),
+                     InputRestrictions restr = InputRestrictions::none()):
         m_options(options),
-        m_registry(registry)
+        m_registry(registry),
+        m_restr(restr)
     {
     }
 
@@ -446,12 +449,11 @@ public:
             Input text_in = Input::from_memory(text);
             Output encoded_out = Output::from_memory(encoded_buffer);
 
-            auto compressor = m_registry.select<C>(m_options);
-
-            auto restr = C::meta().input_restrictions();
-            if (restr.has_restrictions()) {
-                text_in = Input(text_in, restr);
+            if (m_restr.has_restrictions()) {
+                text_in = Input(text_in, m_restr);
             }
+
+            auto compressor = m_registry.select<C>(m_options);
             compressor->compress(text_in, encoded_out);
         }
         std::string s(encoded_buffer.begin(), encoded_buffer.end());
@@ -461,6 +463,7 @@ public:
             std::move(s),
             std::string(text),
             std::string(m_options),
+            std::move(m_restr)
         };
     }
 };
@@ -468,16 +471,18 @@ public:
 template<class T>
 inline CompressResult<T> compress(string_ref text,
                                     const std::string& options = "",
+                                    InputRestrictions restr = InputRestrictions::none(),
                                     const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()) {
-    return RoundTrip<T>(options, registry).compress(text);
+    return RoundTrip<T>(options, registry, restr).compress(text);
 }
 
 template<class T>
 inline void roundtrip_ex(string_ref original_text,
                         string_ref expected_compressed_text,
                         const std::string& options = "",
+                        InputRestrictions restr = InputRestrictions::none(),
                         const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()) {
-    auto e = RoundTrip<T>(options, registry).compress(original_text);
+    auto e = RoundTrip<T>(options, registry, restr).compress(original_text);
     auto& compressed_text = e.str;
 
     if(expected_compressed_text.size() > 0) {
@@ -496,8 +501,9 @@ template<class T>
 inline void roundtrip_binary(string_ref original_text,
                             const std::vector<uint64_t>& expected_compressed_text_packed_ints = {},
                             const std::string& options = "",
+                            InputRestrictions restr = InputRestrictions::none(),
                             const RegistryOf<Compressor>& registry = RegistryOf<Compressor>()) {
-    auto e = RoundTrip<T>(options, registry).compress(original_text);
+    auto e = RoundTrip<T>(options, registry, restr).compress(original_text);
     auto& compressed_text = e.bytes;
 
     if(expected_compressed_text_packed_ints.size() > 0)

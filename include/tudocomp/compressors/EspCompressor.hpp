@@ -12,6 +12,8 @@
 #include <tudocomp/compressors/esp/PlainSLPCoder.hpp>
 #include <tudocomp/compressors/esp/StdUnorderedMapIPD.hpp>
 
+#include <tudocomp/decompressors/ESPDecompressor.hpp>
+
 namespace tdc {
 
 template<typename slp_coder_t, typename ipd_t = esp::StdUnorderedMapIPD>
@@ -65,24 +67,8 @@ public:
         }
     }
 
-    inline virtual void decompress(Input& input, Output& output) override {
-        StatPhase phase0("ESP Decompressor");
-
-        StatPhase phase1("Creating strategy");
-        const slp_coder_t strategy { this->config().sub_config("slp_coder") };
-
-        phase1.split("Decode SLP");
-        auto slp = strategy.decode(input);
-
-        phase1.split("Create output stream");
-        auto out = output.as_stream();
-
-        phase1.split("Derive text");
-        if (!slp.is_empty()) {
-            slp.derive_text(out);
-        } else {
-            out << ""_v;
-        }
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::unique_instance<ESPDecompressor<slp_coder_t>>();
     }
 };
 

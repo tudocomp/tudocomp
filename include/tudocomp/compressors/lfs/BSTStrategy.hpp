@@ -5,15 +5,13 @@
 
 #include <unordered_map>
 
-
 #include <tudocomp/util.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/BinarySuffixTree.hpp>
 
-
-
+#include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 namespace lfs {
