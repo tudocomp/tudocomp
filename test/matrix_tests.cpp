@@ -56,7 +56,11 @@ TEST(TudocompDriver, roundtrip_matrix) {
     {
         Registry::of<Compressor>().add_register_callback(
         [&](const tdc::Meta& m){
-            test_cases.push_back(TestCase{ m.signature()->str(), m });
+            // don't include compressors with lossy tag,
+            // because the matrix test will always fail for them
+            if(!m.has_tag(tags::lossy)) {
+                test_cases.push_back(TestCase{ m.signature()->str(), m });
+            }
         });
         tdc_algorithms::register_algorithms();
     }

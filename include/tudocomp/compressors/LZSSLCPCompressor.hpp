@@ -36,6 +36,7 @@ public:
             .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
         m.param("threshold", "The minimum factor length.").primitive(2);
         m.inherit_tag<text_t>(tags::require_sentinel);
+        m.inherit_tag<lzss_coder_t>(tags::lossy);
         return m;
     }
 

@@ -20,6 +20,7 @@ public:
         m.param("coder", "The output encoder.")
             .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
         m.add_tag(tags::require_sentinel);
+        m.inherit_tag<lzss_coder_t>(tags::lossy);
         return m;
     }
 

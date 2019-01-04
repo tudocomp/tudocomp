@@ -39,6 +39,7 @@ public:
         m.param("flatten", "Flatten reference chains after factorization.")
             .primitive(1); // 0 or 1
         m.inherit_tag<text_t>(tags::require_sentinel);
+        m.inherit_tag<lzss_coder_t>(tags::lossy);
         return m;
     }
 

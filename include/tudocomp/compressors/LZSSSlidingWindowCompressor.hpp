@@ -3,6 +3,7 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
+#include <tudocomp/Tags.hpp>
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/ds/RingBuffer.hpp>
@@ -32,6 +33,7 @@ public:
             .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
         m.param("window", "The sliding window size").primitive(16);
         m.param("threshold", "The minimum factor length.").primitive(2);
+        m.inherit_tag<lzss_coder_t>(tags::lossy);
         return m;
     }
 
