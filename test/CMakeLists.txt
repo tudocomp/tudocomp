@@ -37,11 +37,6 @@ run_test(ds_tests       DEPS ${BASIC_DEPS})
 run_test(lcpsada_tests  DEPS ${BASIC_DEPS})
 run_test(esp_tests      DEPS ${BASIC_DEPS})
 
-#Disabled due to breakage on this branch:
-#run_test(paper_tests    DEPS ${BASIC_DEPS})
-#run_test(compressor_adapter_tests DEPS tudocomp_algorithms ${BASIC_DEPS})
-#run_test(example_tests  DEPS ${BASIC_DEPS})
-
 run_test(lfs_tests     DEPS ${BASIC_DEPS})
 run_test(lfs2_tests     DEPS ${BASIC_DEPS})
 
