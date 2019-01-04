@@ -404,6 +404,23 @@ public:
 
         // done
     }
+
+    template<typename Algo>
+    inline void inherit_tags() {
+        for(auto& tag_name : Algo::meta().m_tags) {
+            add_tag(tag_name);
+        }
+    }
+
+    template<typename Head, typename... Tail>
+    inline void inherit_tags_from_all(tl::type_list<Head, Tail...> tl) {
+        inherit_tags<Head>();
+        inherit_tags_from_all(tl::type_list<Tail...>());
+    }
+
+    inline void inherit_tags_from_all(tl::type_list<> tl) {
+        // done
+    }
 };
 
 /// \cond INTERNAL

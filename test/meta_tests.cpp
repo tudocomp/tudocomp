@@ -519,6 +519,18 @@ protected:
         using Algorithm::Algorithm;
     };
 
+    // third class with type C
+    class C3 : public Algorithm {
+    public:
+        static inline Meta meta() {
+            Meta m(c_type(), "c3");
+            m.add_tag("other_tag");
+            return m;
+        }
+
+        using Algorithm::Algorithm;
+    };
+
     // B-type class
     template<typename... c_t>
     class B : public Algorithm {
@@ -531,6 +543,18 @@ protected:
         }
 
         using Algorithm::Algorithm;
+    };
+
+    // alternative B-type class
+    template<typename... c_t>
+    class BPrime : public Algorithm {
+    public:
+        static inline Meta meta() {
+            Meta m(b_type(), "b'");
+            m.param("cl").strategy_list<c_t...>(c_type());
+            m.inherit_tags_from_all(tdc::tl::type_list<c_t...>());
+            return m;
+        }
     };
 
     // A-type class
@@ -633,6 +657,18 @@ TEST_F(meta, tags) {
     ASSERT_FALSE(B11::meta().has_tag("special"));
     ASSERT_FALSE(AB1::meta().has_tag("special"));
     ASSERT_TRUE(AB2::meta().has_tag("special"));
+
+    ASSERT_FALSE(B12::meta().has_tag("other_tag"));
+    ASSERT_FALSE(B21::meta().has_tag("other_tag"));
+
+    using BPrime12 = BPrime<C1, C2>;
+    using BPrime123 = BPrime<C1, C2, C3>;
+    using BPrime13 = BPrime<C1, C3>;
+    ASSERT_FALSE(BPrime12::meta().has_tag("other_tag"));
+    ASSERT_TRUE(BPrime12::meta().has_tag("special"));
+    ASSERT_TRUE(BPrime123::meta().has_tag("other_tag"));
+    ASSERT_TRUE(BPrime13::meta().has_tag("other_tag"));
+    ASSERT_FALSE(BPrime13::meta().has_tag("special"));
 }
 
 class registry : public meta {
