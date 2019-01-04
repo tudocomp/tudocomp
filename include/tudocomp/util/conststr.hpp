@@ -38,6 +38,10 @@ public:
         return std::string(m_ptr, m_size);
     }
 
+    inline operator std::string() const {
+        return str();
+    }
+
     inline constexpr size_t size() const {
         return m_size;
     }
@@ -55,16 +59,4 @@ public:
         return !(*this == other);
     }
 };
-
-#include <functional>
-
-// std::hash support
-namespace std
-{
-    template<> struct hash<conststr> {
-        size_t operator()(const conststr& s) const noexcept {
-            return std::hash<const char*>{}(s.c_str());
-        }
-    };
-}
 

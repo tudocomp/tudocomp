@@ -8,7 +8,6 @@
 #include <tudocomp/meta/DeclLib.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
 
-#include <tudocomp/util/conststr.hpp>
 #include <tudocomp/util/type_list.hpp>
 
 namespace tdc {
@@ -58,7 +57,7 @@ private:
     std::shared_ptr<ast::Object> m_sig; // signature of bindings
     DeclLib m_known; // library of known declarations (excluding self!)
 
-    std::unordered_set<conststr> m_tags;
+    std::unordered_set<std::string> m_tags;
 
 public:
     template<typename D>    struct Default {};
@@ -376,16 +375,16 @@ public:
         return m_known;
     }
 
-    inline void add_tag(const conststr& tag_name) {
+    inline void add_tag(const std::string& tag_name) {
         m_tags.insert(tag_name);
     }
 
-    inline bool has_tag(const conststr& tag_name) const {
+    inline bool has_tag(const std::string& tag_name) const {
         return (m_tags.find(tag_name) != m_tags.end());
     }
 
     template<typename Algo>
-    inline void inherit_tag(const conststr& tag_name) {
+    inline void inherit_tag(const std::string& tag_name) {
         if(Algo::meta().has_tag(tag_name)) {
             add_tag(tag_name);
         }
@@ -393,14 +392,14 @@ public:
 
     template<typename Head, typename... Tail>
     inline void inherit_tag_from_any(
-        const conststr& tag_name, tl::type_list<Head, Tail...> tl) {
+        const std::string& tag_name, tl::type_list<Head, Tail...> tl) {
 
         inherit_tag<Head>(tag_name);
         inherit_tag_from_any(tag_name, tl::type_list<Tail...>());
     }
 
     inline void inherit_tag_from_any(
-        const conststr& tag_name, tl::type_list<> tl) {
+        const std::string& tag_name, tl::type_list<> tl) {
 
         // done
     }
