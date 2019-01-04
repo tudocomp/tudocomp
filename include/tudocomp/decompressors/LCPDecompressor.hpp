@@ -3,6 +3,8 @@
 #include <tudocomp/decompressors/LZSSDecompressor.hpp>
 #include <tudocomp/compressors/lcpcomp/decompress/ScanDec.hpp>
 
+#include <tudocomp/compressors/lzss/LZSSCoder.hpp>
+
 namespace tdc {
     template<typename lzss_coder_t, typename dec_t = lcpcomp::ScanDec>
     class LCPDecompressor : public LZSSDecompressor<lzss_coder_t> {
@@ -11,7 +13,7 @@ namespace tdc {
             Meta m(Decompressor::type_desc(), "lcpcomp",
                 "Decompresses an LZSS factorized text.");
             m.param("decoder", "The input decoder.")
-                .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
+                .strategy<lzss_coder_t>(lzss_bidirectional_coder_type());
             m.param("dec", "The strategy for decompression.")
                 .strategy<dec_t>(lcpcomp::dec_strategy_type(),
                     Meta::Default<lcpcomp::ScanDec>());

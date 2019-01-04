@@ -53,6 +53,12 @@ lzss_coders = lzss_streaming_coders + [
         sub=[universal_coders,universal_coders,all_coders]),
 ]
 
+lzss_bidirectional_coders = [
+    AlgorithmConfig(name="lzss::DidacticalCoder", header="compressors/lzss/DidacticalCoder.hpp"),
+    AlgorithmConfig(name="lzss::BufferedBidirectionalCoder", header="compressors/lzss/BufferedBidirectionalCoder.hpp",
+        sub=[universal_coders,universal_coders,all_coders]),
+]
+
 ##### Text data structures #####
 
 # Suffix Array

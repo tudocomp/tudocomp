@@ -15,7 +15,10 @@ namespace lzss {
 class DidacticalCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m(lzss_coder_type(), "didactic", "Didactical output of factors");
+        Meta m(
+            lzss_bidirectional_coder_type(),
+            "didactic",
+            "Didactical output of factors");
         m.add_tag(tags::lossy); // no decompression available!
         return m;
     }

@@ -18,6 +18,8 @@
 #include <tudocomp/compressors/lcpcomp/compress/ArraysComp.hpp>
 #include <tudocomp/decompressors/LCPDecompressor.hpp>
 
+#include <tudocomp/compressors/lzss/LZSSCoder.hpp>
+
 namespace tdc {
 
 /// Factorizes the input by finding redundant phrases in a re-ordered version
@@ -29,7 +31,7 @@ public:
         Meta m(Compressor::type_desc(), "lcpcomp",
             "Computes the lcpcomp factorization of the input.");
         m.param("coder", "The output encoder.")
-            .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
+            .strategy<lzss_coder_t>(lzss_bidirectional_coder_type());
         m.param("comp", "The factorization strategy for compression.")
             .strategy<strategy_t>(lcpcomp::comp_strategy_type(),
                 Meta::Default<lcpcomp::ArraysComp>());
