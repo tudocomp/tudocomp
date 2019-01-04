@@ -1,6 +1,8 @@
 #pragma once
 
 #include <tudocomp/Error.hpp>
+#include <tudocomp/Tags.hpp>
+
 #include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/IntVector.hpp>
@@ -123,6 +125,9 @@ public:
             "\"compressed\" - structures are constructed in "
             "bit-compressed space (lowest memory consumption)"
         ).primitive("delayed");
+
+        m.inherit_tags_from_all(
+            tl::type_list<sa_t, phi_t, plcp_t, lcp_t, isa_t>());
         return m;
     }
 
@@ -130,8 +135,8 @@ public:
         : Algorithm(std::move(cfg)),
           m_text(text), m_ds_requested(0) {
 
-        if(!m_text.ends_with(uint8_t(0))){
-            throw MissingSentinelError();
+        if(meta().has_tag(tags::require_sentinel)){
+            MissingSentinelError::check(m_text);
         }
 
         const auto& cm_str = this->config().param("compress").as_string();

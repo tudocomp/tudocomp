@@ -6,6 +6,7 @@
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Range.hpp>
+#include <tudocomp/Tags.hpp>
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
@@ -34,6 +35,7 @@ public:
         m.param("textds", "The text data structure provider.")
             .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
         m.param("threshold", "The minimum factor length.").primitive(2);
+        m.inherit_tag<text_t>(tags::require_sentinel);
         return m;
     }
 

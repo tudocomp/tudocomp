@@ -3,6 +3,7 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/decompressors/WrapDecompressor.hpp>
 #include <tudocomp/Error.hpp>
+#include <tudocomp/Tags.hpp>
 
 #include <sdsl/cst_fully.hpp>
 #include <sdsl/cst_sada.hpp>
@@ -110,6 +111,7 @@ public:
         m.param("comp", "The factorization strategy.")
             .strategy<strategy_t>(TypeDesc("lz78u_strategy"));
         m.param("threshold", "the minimum factor length").primitive(3);
+        m.add_tag(tags::require_sentinel);
         return m;
     }
 
@@ -122,9 +124,7 @@ public:
         phase1.log_stat("threshold", threshold);
 
         auto iview = input.as_view();
-        if(!iview.ends_with(uint8_t(0))){
-            throw MissingSentinelError();
-        }
+        MissingSentinelError::check(iview);
 
         View T = iview;
 

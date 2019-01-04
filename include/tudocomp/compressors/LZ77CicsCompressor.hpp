@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tudocomp/Error.hpp>
+#include <tudocomp/Tags.hpp>
 
 #include <tudocomp/compressors/lzcics/st.hpp>
 #include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
@@ -18,6 +19,7 @@ public:
         Meta m(Compressor::type_desc(), "lz77cics", "LZ77 compression in compressed space.");
         m.param("coder", "The output encoder.")
             .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
+        m.add_tag(tags::require_sentinel);
         return m;
     }
 
@@ -26,10 +28,7 @@ public:
     /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
         auto text = input.as_view();
-
-        if(!text.ends_with(uint8_t(0))){
-            throw MissingSentinelError();
-        }
+        MissingSentinelError::check(text);
 
         const size_t n = text.size();
 

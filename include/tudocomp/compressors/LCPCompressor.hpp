@@ -3,6 +3,7 @@
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/Tags.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lzss/FactorizationStats.hpp>
@@ -37,6 +38,7 @@ public:
         m.param("threshold", "The minimum factor length.").primitive(5);
         m.param("flatten", "Flatten reference chains after factorization.")
             .primitive(1); // 0 or 1
+        m.inherit_tag<text_t>(tags::require_sentinel);
         return m;
     }
 

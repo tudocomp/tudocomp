@@ -5,6 +5,7 @@
 #include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/decompressors/BWTDecompressor.hpp>
+#include <tudocomp/Tags.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -18,6 +19,7 @@ public:
             "Computes the Burrows-Wheeler transform of the input text.");
         m.param("textds", "The text data structure provider.")
             .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
+        m.inherit_tag<text_t>(tags::require_sentinel);
         return m;
     }
 

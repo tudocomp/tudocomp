@@ -9,6 +9,7 @@
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Error.hpp>
+#include <tudocomp/Tags.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -69,6 +70,7 @@ public:
             Coder::type_desc(), Meta::Default<HuffmanCoder>());
         m.param("lfs2_len_coder").strategy<len_coder_t>(
             Coder::type_desc(), Meta::Default<EliasGammaCoder>());
+        m.add_tag(tags::require_sentinel);
         return m;
     }
 
@@ -79,10 +81,7 @@ public:
         exact = config().param("exact").as_bool();
 
         auto in = input.as_view();
-
-        if(!in.ends_with(uint8_t(0))){
-            throw MissingSentinelError();
-        }
+        MissingSentinelError::check(in);
 
         //create vectors:
         first_layer_nts = IntVector<uint>(input.size(), 0);

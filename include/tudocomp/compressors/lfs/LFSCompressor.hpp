@@ -6,6 +6,7 @@
 #include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Error.hpp>
+#include <tudocomp/Tags.hpp>
 
 #include <tudocomp/compressors/lfs/EncodeStrategy.hpp>
 
@@ -37,6 +38,7 @@ public:
         m.param("coding_strat").strategy<coding_strat_t>(
             TypeDesc("lfs_comp_enc"),
             Meta::Default<EncodeStrategy<HuffmanCoder, EliasGammaCoder>>());
+        m.add_tag(tags::require_sentinel);
         return m;
     }
 
@@ -48,10 +50,7 @@ public:
             non_terminal_symbols nts_symbols = non_terminal_symbols();
             rules dictionary = rules();
             auto in = input.as_view();
-
-            if(!in.ends_with(uint8_t(0))){
-                throw MissingSentinelError();
-            }
+            MissingSentinelError::check(in);
 
             if(in.size()>1){
                 comp_strategy_t strategy(config().sub_config("computing_strat"));

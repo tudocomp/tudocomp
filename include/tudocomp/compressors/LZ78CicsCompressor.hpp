@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tudocomp/Error.hpp>
+#include <tudocomp/Tags.hpp>
 
 #include <tudocomp/compressors/lz78/LZ78Coding.hpp>
 #include <tudocomp/compressors/lzcics/st.hpp>
@@ -65,6 +66,7 @@ public:
         Meta m(Compressor::type_desc(), "lz78cics", "LZ78 compression in compressed space.");
         m.param("coder", "The output encoder.")
             .strategy<coder_t>(TypeDesc("coder"));
+        m.add_tag(tags::require_sentinel);
         return m;
     }
 
@@ -73,10 +75,7 @@ public:
     /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
         auto text = input.as_view();
-
-        if(!text.ends_with(uint8_t(0))){
-            throw MissingSentinelError();
-        }
+        MissingSentinelError::check(text);
 
         // coder
         typename coder_t::Encoder coder(
