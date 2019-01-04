@@ -455,16 +455,16 @@ int main(int argc, char** argv) {
                 }
 
                 if (!options.raw && decompressor) {
-                    DLOG(INFO) << "Ignoring header " << algorithm_header
+                    DVLOG(1) << "Ignoring header " << algorithm_header
                         << " and using manually given "
                         << decompressor->config().str();
                 } else if (!options.raw) {
-                    DLOG(INFO) << "Using header id string " << algorithm_header;
+                    DVLOG(1) << "Using header id string " << algorithm_header;
 
                     auto dec_id = std::move(algorithm_header);
                     decompressor = decompressor_registry.select(dec_id);
                 } else {
-                    DLOG(INFO) << "Using manually given "
+                    DVLOG(1) << "Using manually given "
                                << decompressor->config().str();
                 }
 
