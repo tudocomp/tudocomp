@@ -11,7 +11,7 @@
 
 // For default params
 #include <tudocomp/compressors/lz78/TernaryTrie.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/BinaryCoder.hpp>
 
 namespace tdc {
 
@@ -31,7 +31,7 @@ public:
         Meta m(Compressor::type_desc(), "lzw",
             "Computes the Lempel-Ziv-Welch factorization of the input.");
         m.param("coder", "The output encoder.")
-            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BitCoder>());
+            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
         m.param("lz78trie", "The trie data structure implementation.")
             .strategy<dict_t>(TypeDesc("lz78trie"),
                 Meta::Default<lz78::TernaryTrie>());

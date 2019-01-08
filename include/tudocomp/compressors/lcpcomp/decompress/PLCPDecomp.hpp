@@ -5,8 +5,6 @@
 #include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
 #include <tudocomp/compressors/lcpcomp/PLCPFlattening.hpp>
 #include <tudocomp/compressors/lcpcomp/PLCPTypes.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
-#include <tudocomp/coders/HuffmanCoder.hpp>
 #include <tudocomp/util.hpp>
 #include <stxxl/bits/containers/vector.h>
 #include <stxxl/bits/algo/sort.h>

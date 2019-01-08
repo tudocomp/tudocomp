@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Range.hpp>
 #include <tudocomp/util.hpp>
@@ -10,30 +8,17 @@
 
 #include <tudocomp/io.hpp>
 
-
 #include <tudocomp/io/BitIStream.hpp>
 #include <tudocomp/io/BitOStream.hpp>
-
-
 #include <tudocomp/ds/IntVector.hpp>
-
-
-
-
 
 #include <tudocomp/ds/TextDS.hpp>
 
 #include <tudocomp/Algorithm.hpp>
 
 #include <tudocomp/Literal.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
 #include <tudocomp/coders/EliasGammaCoder.hpp>
-
 #include <tudocomp/coders/HuffmanCoder.hpp>
-
-
-//#include <tudocomp/tudocomp.hpp>
-
 
 namespace tdc {
 namespace lfs {

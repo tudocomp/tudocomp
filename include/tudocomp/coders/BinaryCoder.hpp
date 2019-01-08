@@ -10,16 +10,16 @@ namespace tdc {
 ///
 /// All values are encoded a binary, using as many bits as necessary to store
 /// the maximum value of the respective \ref Range.
-class BitCoder : public Algorithm {
+class BinaryCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m(Coder::type_desc(), "bit",
+        Meta m(Coder::type_desc(), "binary",
             "Encodes integers in their binary representation. An integer "
             "from a range [M,N] is encoded using ceil(log(N-M)) bits.");
         return m;
     }
 
-    BitCoder() = delete;
+    BinaryCoder() = delete;
 
     /// \brief Encodes data to a binary stream.
     class Encoder : public tdc::Encoder {

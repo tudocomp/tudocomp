@@ -2,7 +2,7 @@
 
 #include <tudocomp/compressors/lz78/LZ78Coding.hpp>
 
-#include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/BinaryCoder.hpp>
 #include <tudocomp/Decompressor.hpp>
 
 namespace tdc {
@@ -17,7 +17,7 @@ public:
     inline static Meta meta() {
         Meta m(Decompressor::type_desc(), "lz78", "LZ78 decompressor.");
         m.param("coder", "The output decoder.")
-            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BitCoder>());
+            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
         return m;
     }
 

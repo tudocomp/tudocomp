@@ -12,7 +12,7 @@
 # Universal coders
 universal_coders = [
     AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
-    AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
+    AlgorithmConfig(name="BinaryCoder", header="coders/BinaryCoder.hpp"),
     AlgorithmConfig(name="RiceCoder", header="coders/RiceCoder.hpp"),
     AlgorithmConfig(name="EliasGammaCoder", header="coders/EliasGammaCoder.hpp"),
     AlgorithmConfig(name="EliasDeltaCoder", header="coders/EliasDeltaCoder.hpp"),
@@ -233,7 +233,7 @@ lfs_strat = [
 ]
 
 lit_coder = [
-    AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
+    AlgorithmConfig(name="BinaryCoder", header="coders/BinaryCoder.hpp"),
     AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
     AlgorithmConfig(name="HuffmanCoder", header="coders/HuffmanCoder.hpp"),
 ]

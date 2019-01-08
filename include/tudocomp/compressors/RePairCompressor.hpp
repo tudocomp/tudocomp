@@ -4,7 +4,7 @@
 #include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 #include <tudocomp/Range.hpp>
-#include <tudocomp/coders/BitCoder.hpp> //default
+#include <tudocomp/coders/BinaryCoder.hpp> //default
 
 #include <tudocomp/util/Counter.hpp>
 
@@ -89,7 +89,7 @@ public:
         Meta m(Compressor::type_desc(), "repair",
             "Grammar compression using Re-Pair.");
         m.param("coder", "The output encoder.")
-            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BitCoder>());
+            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
         m.param("max_rules",
             "The maximum amount of grammar rules (0 = unlimited)."
         ).primitive(0);

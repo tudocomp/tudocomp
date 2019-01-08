@@ -4,8 +4,6 @@
 #include <tudocomp_stat/StatPhase.hpp>
 #include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
 #include <tudocomp/compressors/lcpcomp/decompress/PLCPDecomp.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
-#include <tudocomp/coders/HuffmanCoder.hpp>
 #include <stxxl/bits/containers/vector.h>
 #include <stxxl/bits/algo/sort.h>
 #include <stxxl/bits/io/iostats.h>

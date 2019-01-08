@@ -8,7 +8,6 @@
 #include <tudocomp/compressors/lz78/TernaryTrie.hpp>
 #include <tudocomp/compressors/lz78/CedarTrie.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
 
 using namespace tdc;
 

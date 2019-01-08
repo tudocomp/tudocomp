@@ -3,7 +3,7 @@
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
 #include <tudocomp/compressors/lzw/LZWDecoding.hpp>
 
-#include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/BinaryCoder.hpp>
 #include <tudocomp/Decompressor.hpp>
 
 namespace tdc {
@@ -18,7 +18,7 @@ public:
     inline static Meta meta() {
         Meta m(Decompressor::type_desc(), "lzw", "LZW decompressor.");
         m.param("coder", "The input decoder.")
-            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BitCoder>());
+            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
         m.param("dict_size",
             "the maximum size of the dictionary's backing storage before it "
             "gets reset (0 = unlimited)"

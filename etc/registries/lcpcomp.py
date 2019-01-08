@@ -12,7 +12,7 @@
 # Universal coders
 universal_coders = [
     AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
-    AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
+    AlgorithmConfig(name="BinaryCoder", header="coders/BinaryCoder.hpp"),
     AlgorithmConfig(name="RiceCoder", header="coders/RiceCoder.hpp"),
 ]
 
