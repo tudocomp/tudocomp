@@ -95,67 +95,67 @@ std::vector<uint8_t> ostream_to_bytes(Lambda f) {
 /// of different strings testing common corner cases and unicode input.
 template<class F>
 void roundtrip_batch(F f) {
-    f("abcdebcdeabc"_v);
-    f("a"_v);
-    f(""_v);
+    /* 00 */ f("abcdebcdeabc"_v);
+    /* 01 */ f("a"_v);
+    /* 02 */ f(""_v);
 
-    f("aaaaaaaaa"_v); \
-    f("banana"_v); \
-    f("ananas"_v); \
-    f("abcdefgh#defgh_abcde"_v); \
+    /* 03 */ f("aaaaaaaaa"_v); \
+    /* 04 */ f("banana"_v); \
+    /* 05 */ f("ananas"_v); \
+    /* 06 */ f("abcdefgh#defgh_abcde"_v); \
 
-    f("abcdebcdeabcd"_v);
-    f("foobar"_v);
-    f("abcabcabcabc"_v);
+    /* 07 */ f("abcdebcdeabcd"_v);
+    /* 08 */ f("foobar"_v);
+    /* 09 */ f("abcabcabcabc"_v);
 
-    f("abc abc  abc"_v);
+    /* 10 */ f("abc abc  abc"_v);
 
-    f("abaaabbababb"_v);
+    /* 11 */ f("abaaabbababb"_v);
 
-    f(
+    /* 12 */ f(
         "asdfasctjkcbweasbebvtiwetwcnbwbbqnqxernqzezwuqwezuet"
         "qcrnzxbneqebwcbqwicbqcbtnqweqxcbwuexcbzqwezcqbwecqbw"
         "dassdasdfzdfgfsdfsdgfducezctzqwebctuiqwiiqcbnzcebzqc"_v);
 
-    f("ประเทศไทย中华Việt Nam"_v);
+    /* 13 */ f("ประเทศไทย中华Việt Nam"_v);
 
-    f(
+    /* 14 */ f(
         "Lorem ipsum dolor sit amet, sea ut etiam solet salut"
         "andi, sint complectitur et his, ad salutandi imperdi"
         "et gubergren per mei."_v);
 
-    f(
+    /* 15 */ f(
         "Лорэм атоморюм ут хаж, эа граэки емпыдит ёудёкабет "
         "мэль, декам дежпютатионй про ты. Нэ ёужто жэмпэр"
         " жкрибэнтур векж, незл коррюмпит."_v);
 
-    f(
+    /* 16 */ f(
         "報チ申猛あち涙境ワセ周兵いわ郵入せすをだ漏告されて話巡わッき"
         "や間紙あいきり諤止テヘエラ鳥提フ健2銀稿97傷エ映田ヒマ役請多"
         "暫械ゅにうて。関国ヘフヲオ場三をおか小都供セクヲ前俳著ゅ向深"
         "まも月10言スひす胆集ヌヱナ賀提63劇とやぽ生牟56詰ひめつそ総愛"
         "ス院攻せいまて報当アラノ日府ラのがし。"_v);
 
-    f(
+    /* 17 */ f(
         "Εαμ ανσιλλαε περισυλα συαφιθαθε εξ, δυο ιδ ρεβυμ σομ"
         "μοδο. Φυγιθ ηομερω ιυς ατ, ει αυδιρε ινθελλεγαμ νες."
         " Ρεκυε ωμνιυμ μανδαμυς κυο εα. Αδμοδυμ σωνσεκυαθ υθ "
         "φιξ, εσθ ετ πρωβατυς συαφιθαθε ραθιονιβυς, ταντας αυ"
         "διαμ ινστρυσθιορ ει σεα."_v);
 
-    f("struct Foo { uint8_t bar }"_v);
+    /* 18 */ f("struct Foo { uint8_t bar }"_v);
 
-    f("ABBCBCABA"_v);
+    /* 19 */ f("ABBCBCABA"_v);
 
-    f("abcabca"_v);
+    /* 22 */ f("abcabca"_v);
 
-    f("abbbbbbbbbbcbbbbbbbbbb"_v);
+    /* 21 */ f("abbbbbbbbbbcbbbbbbbbbb"_v);
 
-    f("0	100009425	0.1661:0.1661	#businessfor"_v);
+    /* 22 */ f("0	100009425	0.1661:0.1661	#businessfor"_v);
 
-    //f("abc\0"_v);
+    /* 23 */ //f("abc\0"_v);
 
-    std::vector<uint8_t> all_bytes {
+    /* 24 */ std::vector<uint8_t> all_bytes {
         0,   1,   2,   3,   4,   5,   6,   7,   8,   9,   10,  11,  12,  13,  14,  15,
         16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
         32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
