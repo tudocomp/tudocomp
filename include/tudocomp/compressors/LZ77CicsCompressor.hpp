@@ -40,6 +40,14 @@ public:
         coder.factor_length_range(Range(n));
         coder.encode_header();
 
+        // sanity check
+        if(n <= 1) {
+            // there is nothing to be compressed
+            // encode the single literal properly and exit
+            coder.encode_literal(text[0]);
+            return;
+        }
+
         // construct suffix tree
         lzcics::cst_t cst;
         auto st = StatPhase::wrap("Construct ST", [&]{
