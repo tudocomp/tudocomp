@@ -26,7 +26,7 @@ namespace io {
         }
 
         inline static InputRestrictions sentinel() {
-            return InputRestrictions({}, true);
+            return InputRestrictions({0}, true);
         }
 
         inline static InputRestrictions escape(const std::vector<uint8_t>& escape_bytes) {
