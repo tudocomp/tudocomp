@@ -177,6 +177,14 @@ void roundtrip_batch(F f) {
 }
 
 template<class F>
+void roundtrip_batch(F f, InputRestrictions restr) {
+    roundtrip_batch([&](const std::string& str){
+        Input in(str); in = Input(in, restr); // FIXME: ewgh
+        f(in.as_view());
+    });
+}
+
+template<class F>
 void on_string_generators(F func, size_t n) {
     VLOG(1) << "fibonacci_word ...";
     for(size_t i = 0; i < n; ++i) {
