@@ -543,12 +543,12 @@ class TestInput: public Input {
 public:
     inline TestInput(string_ref text, bool sentinel): Input(text) {
         if (sentinel) {
-            ((Input&) *this) = Input(*this, io::InputRestrictions({0}, true));
+            ((Input&) *this) = Input(*this, InputRestrictions::sentinel());
         }
     }
     inline TestInput(io::Path&& path, bool sentinel): Input(std::move(path)) {
         if (sentinel) {
-            ((Input&) *this) = Input(*this, io::InputRestrictions({0}, true));
+            ((Input&) *this) = Input(*this, InputRestrictions::sentinel());
         }
     }
 };
@@ -559,7 +559,7 @@ public:
         Output(static_cast<std::vector<uint8_t>&>(*this))
     {
         if (sentinel) {
-            ((Output&) *this) = Output(*this, io::InputRestrictions({0}, true));
+            ((Output&) *this) = Output(*this, InputRestrictions::sentinel());
         }
     }
 

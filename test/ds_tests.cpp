@@ -49,26 +49,24 @@ sdsl::int_vector<> create_plcp_naive(const lcp_t& lcp, const isa_t& isa) {
 
 
 template<class textds_t>
-void test_bwt(const std::string& str, textds_t& t) {
+void test_bwt(const View& str, textds_t& t) {
     auto& sa = t.require_sa();
+	const size_t size = t.size();
 
-	const len_t input_size = str.length()+1;
-	std::vector<char> bwt;
-	for(size_t i = 0; i < input_size; ++i) {
-		bwt.push_back(bwt::bwt(str,sa,i));
+	std::vector<uliteral_t> bwt(size);
+	for(size_t i = 0; i < size; ++i) {
+		bwt[i] = bwt::bwt(t, sa, i);
 	}
+
 	auto decoded_string = bwt::decode_bwt(bwt);
-	if(decoded_string.empty()) {
-		ASSERT_EQ(str.length(), 0u);
-		return;
-	}
-	ASSERT_EQ(decoded_string, str);
+	for(size_t i = 0; i < size; ++i) {
+    	ASSERT_EQ(uliteral_t(decoded_string[i]), t[i]);
+    }
 }
 
 
-// === THE ACTUAL TESTS ===
 template<class textds_t>
-void test_sa(const std::string& str, textds_t& t) {
+void test_sa(const View& str, textds_t& t) {
     auto& sa = t.require_sa();
 	const size_t size = t.size();
 
@@ -85,7 +83,7 @@ void test_sa(const std::string& str, textds_t& t) {
 }
 
 template<class textds_t>
-void test_isa(const std::string&, textds_t& t) {
+void test_isa(const View&, textds_t& t) {
     auto& isa = t.require_isa();
     auto& sa  = t.require_sa(); //request afterwards!
 
@@ -98,7 +96,7 @@ void test_isa(const std::string&, textds_t& t) {
 }
 
 template<class textds_t>
-void test_lcp(const std::string& str, textds_t& t) {
+void test_lcp(const View& str, textds_t& t) {
     auto& lcp = t.require_lcp();
     auto& sa  = t.require_sa(); //request afterwards!
 
@@ -111,7 +109,7 @@ void test_lcp(const std::string& str, textds_t& t) {
 }
 
 template<class textds_t>
-void test_all_ds(const std::string& str, textds_t& t) {
+void test_all_ds(const View& str, textds_t& t) {
     test_sa(str, t);
     test_bwt(str,t);
     test_lcp(str, t);
@@ -120,19 +118,17 @@ void test_all_ds(const std::string& str, textds_t& t) {
 
 template<class textds_t>
 class RunTestDS {
-	void (*m_testfunc)(const std::string&, textds_t&);
+	void (*m_testfunc)(const View&, textds_t&);
 	public:
-	RunTestDS(void (*testfunc)(const std::string&, textds_t&))
+	RunTestDS(void (*testfunc)(const View&, textds_t&))
 		: m_testfunc(testfunc) {}
 
 	void operator()(const std::string& str) {
 		VLOG(2) << "str = \"" << str << "\"" << " size: " << str.length();
 		test::TestInput input = test::compress_input(str);
 		InputView in = input.as_view();
-		DCHECK_EQ(str.length()+1, in.size());
 		textds_t t = Algorithm::instance<textds_t>("", in);
-		DCHECK_EQ(str.length()+1, t.size());
-		m_testfunc(str, t);
+		m_testfunc(in, t);
 	}
 };
 
@@ -142,7 +138,7 @@ class RunTestDS {
 	test::on_string_generators(runner,11);
 
 using textds_default_t = TextDS<>;
-TEST(ds, default_SA)  { TEST_DS_STRINGCOLLECTION(textds_default_t, test_sa); }
+TEST(ds, default_SA)          { TEST_DS_STRINGCOLLECTION(textds_default_t, test_sa); }
 TEST(ds, default_BWT)         { TEST_DS_STRINGCOLLECTION(textds_default_t, test_bwt); }
 TEST(ds, default_LCP)         { TEST_DS_STRINGCOLLECTION(textds_default_t, test_lcp); }
 TEST(ds, default_ISA)         { TEST_DS_STRINGCOLLECTION(textds_default_t, test_isa); }

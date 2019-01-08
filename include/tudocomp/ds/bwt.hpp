@@ -30,7 +30,7 @@ len_compact_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	DVLOG(2) << "Computing LF";
 	if(bwt_length == 0) return nullptr;
 	len_compact_t C[ULITERAL_MAX+1] { 0 }; // alphabet counter
-	for(auto& c : bwt) {
+	for(uliteral_t c : bwt) {
 		++C[c];
 	}
 	DVLOG(2) << "histogram: " << arr_to_debug_string(C,ULITERAL_MAX+1);
