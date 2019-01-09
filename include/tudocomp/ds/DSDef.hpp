@@ -17,6 +17,10 @@ namespace ds {
     constexpr dsid_t PHI_ARRAY = 3;
     constexpr dsid_t PLCP_ARRAY = 4;
 
+    constexpr TypeDesc type() {
+        return TypeDesc("ds");
+    }
+
     constexpr TypeDesc provider_type() {
         return TypeDesc("ds_provider");
     }

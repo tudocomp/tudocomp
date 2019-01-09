@@ -130,7 +130,7 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m(TypeDesc("ds"), "ds");
+        Meta m(ds::type(), "ds");
         m.param("compress").primitive("delayed");
         m.param("providers").strategy_list<provider_ts...>(ds::provider_type());
         m.inherit_tags_from_all(tl::type_list<provider_ts...>());
