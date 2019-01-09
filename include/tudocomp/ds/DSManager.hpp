@@ -165,6 +165,11 @@ public:
         return *std::get<dsid>(m_lookup);
     }
 
+    template<dsid_t dsid>
+    inline const provider_type<dsid>& get_provider() const {
+        return *std::get<dsid>(m_lookup);
+    }
+
 public:
     /// \cond INTERNAL
 
@@ -215,7 +220,7 @@ public:
     /// \return a read-only reference to the data structure, the type of which
     ///         is determined by the respective provider
     template<dsid_t ds>
-    inline const tl::get<ds, ds_types>& get() {
+    inline const tl::get<ds, ds_types>& get() const {
         return get_provider<ds>().template get<ds>();
     }
 

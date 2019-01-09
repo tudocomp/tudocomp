@@ -61,7 +61,7 @@ public:
     // implements concept "DSProvider"
     template<dsid_t ds> void compress();
     template<dsid_t ds> void discard();
-    template<dsid_t ds> const tl::get<ds, ds_types>& get();
+    template<dsid_t ds> const tl::get<ds, ds_types>& get() const;
     template<dsid_t ds> tl::get<ds, ds_types> relinquish();
 };
 
@@ -83,7 +83,7 @@ inline void DivSufSort::compress<ds::SUFFIX_ARRAY>() {
 }
 
 template<>
-inline const DivSufSort::sa_t& DivSufSort::get<ds::SUFFIX_ARRAY>() {
+inline const DivSufSort::sa_t& DivSufSort::get<ds::SUFFIX_ARRAY>() const {
     return m_sa;
 }
 

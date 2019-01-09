@@ -53,7 +53,7 @@ public:
     // implements concept "DSProvider"
     template<dsid_t ds> void compress();
     template<dsid_t ds> void discard();
-    template<dsid_t ds> const tl::get<ds, ds_types>& get();
+    template<dsid_t ds> const tl::get<ds, ds_types>& get() const;
     template<dsid_t ds> tl::get<ds, ds_types> relinquish();
 };
 
@@ -75,7 +75,7 @@ inline void ISAFromSA::compress<ds::INVERSE_SUFFIX_ARRAY>() {
 }
 
 template<>
-const DynamicIntVector& ISAFromSA::get<ds::INVERSE_SUFFIX_ARRAY>() {
+const DynamicIntVector& ISAFromSA::get<ds::INVERSE_SUFFIX_ARRAY>() const {
     return m_isa;
 }
 

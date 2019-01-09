@@ -183,7 +183,7 @@ public:
     }
 
     template<dsid_t ds>
-    inline const tl::get<ds, ds_types>& get() {
+    inline const tl::get<ds, ds_types>& get() const {
         static_assert(ds == ds::INVERSE_SUFFIX_ARRAY, "ds not provided");
         return m_data;
     }
