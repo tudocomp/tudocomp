@@ -117,7 +117,7 @@ public:
         // FIXME: construct AST and pass it
         std::stringstream cfg;
         cfg << "dict_size=" << to_string(m_dict_max_size);
-        return Algorithm::unique_instance<LZWDecompressor<coder_t>>(cfg.str());
+        return Algorithm::instance<LZWDecompressor<coder_t>>(cfg.str());
     }
 };
 

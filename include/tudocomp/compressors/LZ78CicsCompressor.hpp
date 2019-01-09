@@ -255,7 +255,7 @@ public:
     }
 
     inline std::unique_ptr<Decompressor> decompressor() const override {
-        return Algorithm::unique_instance<LZ78Decompressor<coder_t>>();
+        return Algorithm::instance<LZ78Decompressor<coder_t>>();
     }
 };
 

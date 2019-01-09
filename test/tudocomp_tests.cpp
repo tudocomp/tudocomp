@@ -1135,7 +1135,7 @@ TEST(Algorithm, create) {
     std::vector<uint8_t> vec;
     Output out(vec);
     Input inp("");
-    x.compress(inp, out);
+    x->compress(inp, out);
 
     auto s = vec_as_lossy_string(vec);
 
@@ -1184,7 +1184,7 @@ TEST(Test, TestInputOutputInheritance) {
     auto i = test::compress_input("asdf");
     auto o = test::compress_output();
 
-    x.compress(i, o);
+    x->compress(i, o);
 }
 
 TEST(MMapHandle, test1) {

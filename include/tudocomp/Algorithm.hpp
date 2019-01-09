@@ -12,53 +12,57 @@ class Algorithm {
 
 public:
     template<typename T, typename... Args>
-    static inline std::unique_ptr<T> unique_instance(
-        std::string config_str, Args&&... args) {
+    static inline std::unique_ptr<T> instance(
+        std::string config_str,
+        Meta meta,
+        Args&&... args) {
 
-        return std::make_unique<T>(T::meta().config(config_str),
+        return std::make_unique<T>(meta.config(config_str),
             std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>
-    static inline std::unique_ptr<T> unique_instance(
-        const char* config_str, Args&&... args) {
+    static inline std::unique_ptr<T> instance(
+        std::string config_str,
+        Args&&... args) {
 
-        return unique_instance<T>(std::string(config_str),
+        return instance<T>(config_str,
+            T::meta(),
             std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>
-    static inline std::unique_ptr<T> unique_instance(Args&&... args) {
-        return unique_instance<T>(std::string(),
-            std::forward<Args>(args)...);
-    }
+    static inline std::unique_ptr<T> instance(
+        const char* config_str,
+        Args&&... args) {
 
-    template<typename T>
-    static inline std::unique_ptr<T> unique_instance() {
-        return unique_instance<T>(std::string());
-    }
-
-    template<typename T, typename... Args>
-    static inline T instance(std::string config_str, Args&&... args) {
-        return T(T::meta().config(config_str),
-            std::forward<Args>(args)...);
-    }
-
-    template<typename T, typename... Args>
-    static inline T instance(const char* config_str, Args&&... args) {
         return instance<T>(std::string(config_str),
+            T::meta(),
             std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>
-    static inline T instance(Args&&... args) {
+    static inline std::unique_ptr<T> instance(Meta meta, Args&&... args) {
         return instance<T>(std::string(),
+            meta,
+            std::forward<Args>(args)...);
+    }
+
+    template<typename T, typename... Args>
+    static inline std::unique_ptr<T> instance(Args&&... args) {
+        return instance<T>(std::string(),
+            T::meta(),
             std::forward<Args>(args)...);
     }
 
     template<typename T>
-    static inline T instance() {
-        return instance<T>(std::string());
+    static inline std::unique_ptr<T> instance(Meta meta) {
+        return instance<T>(std::string(), meta);
+    }
+
+    template<typename T>
+    static inline std::unique_ptr<T> instance() {
+        return instance<T>(std::string(), T::meta());
     }
 
     inline Algorithm() = delete;
