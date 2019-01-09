@@ -14,6 +14,7 @@ run_doc_snippet(stats               DEPS ${BASIC_DEPS})
 
 run_test(rank_select_tests  DEPS ${BASIC_DEPS})
 run_test(ringbuffer_tests   DEPS ${BASIC_DEPS})
+run_test(bit_io_tests   DEPS ${BASIC_DEPS})
 run_test(vbyte_test     DEPS ${BASIC_DEPS})
 run_test(rle_test       DEPS ${BASIC_DEPS})
 run_test(mtf_test       DEPS ${BASIC_DEPS})

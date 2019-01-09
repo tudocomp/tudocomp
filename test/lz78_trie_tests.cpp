@@ -93,14 +93,14 @@ void trie_test_single(TestTrie test, bool test_values) {
 
     size_t remaining = test.input.size();
     auto trie = Algorithm::instance<T>(remaining, remaining);
-    trie.add_rootnode(0);
+    trie->add_rootnode(0);
 
     auto is_trie_node = &is_trie;
-    auto node = trie.get_rootnode(0);
+    auto node = trie->get_rootnode(0);
 
     for (uint8_t c : test.input) {
         remaining--;
-        auto child = trie.find_or_insert(node, c);
+        auto child = trie->find_or_insert(node, c);
 
         // std::cout << "char '" << char(c) << "'\n";
         // trie.debug_print();
@@ -120,7 +120,7 @@ void trie_test_single(TestTrie test, bool test_values) {
 
             is_trie_size++;
             is_trie_node = &is_trie;
-            node = trie.get_rootnode(0);
+            node = trie->get_rootnode(0);
         } else {
             // std::cout << " found\n";
 
@@ -138,7 +138,7 @@ void trie_test_single(TestTrie test, bool test_values) {
     }
 
     ASSERT_EQ(should_trie, is_trie);
-    ASSERT_EQ(is_trie_size, trie.size());
+    ASSERT_EQ(is_trie_size, trie->size());
 }
 
 template<typename T>

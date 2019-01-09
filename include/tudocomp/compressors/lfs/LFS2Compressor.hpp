@@ -483,7 +483,7 @@ public:
     }
 
     inline std::unique_ptr<Decompressor> decompressor() const override {
-        return Algorithm::unique_instance<
+        return Algorithm::instance<
             LFS2Decompressor<literal_coder_t, len_coder_t>>();
     }
 };

@@ -76,7 +76,7 @@ public:
         std::stringstream cfg;
         cfg << "first=" << m_second->decompressor()->config().str() << ",";
         cfg << "second=" << m_first->decompressor()->config().str();
-        return Algorithm::unique_instance<ChainDecompressor>(cfg.str());
+        return Algorithm::instance<ChainDecompressor>(cfg.str());
     }
 };
 

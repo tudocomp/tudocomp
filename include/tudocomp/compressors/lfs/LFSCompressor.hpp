@@ -77,7 +77,7 @@ public:
     }
 
     inline std::unique_ptr<Decompressor> decompressor() const override {
-        return Algorithm::unique_instance<LFSDecompressor<coding_strat_t>>();
+        return Algorithm::instance<LFSDecompressor<coding_strat_t>>();
     }
 };
 

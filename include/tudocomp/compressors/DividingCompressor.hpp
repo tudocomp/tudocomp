@@ -154,7 +154,7 @@ public:
         std::stringstream cfg;
         auto c = find_compressor().select(); // TODO: ugh
         cfg << "decompressor=" << c->decompressor()->config().str() << ",";
-        return Algorithm::unique_instance<DividingDecompressor>(cfg.str());
+        return Algorithm::instance<DividingDecompressor>(cfg.str());
     }
 };
 

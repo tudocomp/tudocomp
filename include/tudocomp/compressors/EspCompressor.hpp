@@ -68,7 +68,7 @@ public:
     }
 
     inline std::unique_ptr<Decompressor> decompressor() const override {
-        return Algorithm::unique_instance<ESPDecompressor<slp_coder_t>>();
+        return Algorithm::instance<ESPDecompressor<slp_coder_t>>();
     }
 };
 

@@ -23,6 +23,8 @@ class BitOStream {
     int8_t m_cursor;
     static constexpr int8_t MSB = 7;
 
+    size_t m_bits_written = 0;
+
     inline bool is_dirty() const {
         return m_cursor != MSB;
     }
@@ -112,6 +114,8 @@ public:
         if (m_cursor < 0) {
             write_next();
         }
+
+        ++m_bits_written;
     }
 
     /// Writes the bit representation of an integer in MSB first order to
@@ -134,6 +138,7 @@ public:
             ::tdc::write_int<T>(bit_sink(), value, bits);
         } else {
             // we are at least finishing the next byte
+            const size_t in_bits = bits;
 
             // mask low bits of value
             size_t v = (bits < 64ULL) ?
@@ -173,6 +178,8 @@ public:
                 m_cursor = MSB - int8_t(bits);
                 DCHECK_GE(m_cursor, 0);
             }
+
+            m_bits_written += in_bits;
         }
     }
 
@@ -223,6 +230,8 @@ public:
     inline void write_compressed_int(T v, size_t b = 7) {
         ::tdc::write_compressed_int<T>(bit_sink(), v, b);
     }
+
+    inline size_t bits_written() const { return m_bits_written; }
 };
 
 }}

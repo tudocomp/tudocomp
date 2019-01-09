@@ -45,7 +45,7 @@ public:
     }
 
     inline std::unique_ptr<Decompressor> decompressor() const override {
-        return Algorithm::unique_instance<BWTDecompressor>();
+        return Algorithm::instance<BWTDecompressor>();
     }
 };
 

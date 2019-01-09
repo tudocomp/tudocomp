@@ -146,7 +146,7 @@ public:
     }
 
     inline virtual std::unique_ptr<Decompressor> decompressor() const override {
-        return Algorithm::unique_instance<LZSSDecompressor<lzss_coder_t>>();
+        return Algorithm::instance<LZSSDecompressor<lzss_coder_t>>();
     }
 };
 
