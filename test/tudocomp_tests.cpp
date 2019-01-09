@@ -666,6 +666,8 @@ TEST(IO, bits_only) {
         for(size_t i = 0; i < N; i++) {
             out.write_bit(i % 2);
         }
+
+        ASSERT_EQ(N, out.bits_written());
     }
 
     auto result = ss.str();
@@ -676,6 +678,8 @@ TEST(IO, bits_only) {
         for(size_t i = 0; i < N; i++) {
             ASSERT_EQ(i%2, in.read_bit());
         }
+
+        ASSERT_EQ(N, in.bits_read());
     }
 }
 
@@ -691,6 +695,8 @@ TEST(IO, bits_and_ints) {
             out.write_bit(i % 2);
             out.write_int(~i, 64);
         }
+
+        ASSERT_EQ(N * 65, out.bits_written());
     }
 
     auto result = ss.str();
@@ -702,6 +708,8 @@ TEST(IO, bits_and_ints) {
             ASSERT_EQ(i%2, in.read_bit());
             ASSERT_EQ(~i , in.template read_int<size_t>(64)) << "i=" << i;
         }
+
+        ASSERT_EQ(N * 65, in.bits_read());
     }
 }
 
@@ -717,6 +725,8 @@ TEST(IO, bits_classic_test) {
         out.write_int(0b11010110, 4);       //0110
         out.write_compressed_int(0x27, 3); //1 111 0 100
         out.write_compressed_int(0x33);    //0 0110011
+
+        ASSERT_EQ(24, out.bits_written());
     }
     //output should contain 0111 0110 1111 0100 0011 0011 = 76 F4 33
 
@@ -729,6 +739,7 @@ TEST(IO, bits_classic_test) {
         BitIStream in(input);
 
         ASSERT_EQ(in.read_int<uint32_t>(24), 0x76F433U);
+        ASSERT_EQ(24, in.bits_read());
         ASSERT_TRUE(in.eof());
     }
 
@@ -743,6 +754,7 @@ TEST(IO, bits_classic_test) {
         ASSERT_EQ(in.read_int<size_t>(4), 6U);
         ASSERT_EQ(in.read_compressed_int<size_t>(3), 0x27U);
         ASSERT_EQ(in.read_compressed_int<size_t>(), 0x33U);
+        ASSERT_EQ(24, in.bits_read());
         ASSERT_TRUE(in.eof());
     }
 }

@@ -29,6 +29,8 @@ class BitIStream {
 
     uint8_t m_cursor = 0;
 
+    size_t m_bits_read = 0;
+
     inline void read_next_from_stream() {
         char c;
         if(m_stream.get(c)) {
@@ -130,6 +132,7 @@ public:
                 read_next();
             }
 
+            ++m_bits_read;
             return bit;
         } else {
             return 0; //EOF
@@ -154,6 +157,8 @@ public:
             return ::tdc::read_int<T>(bit_sink(), bits);
         } else {
             // we are at least consuming the current byte
+            const size_t in_bits = bits;
+
             bits -= bits_left_in_current;
             size_t v = m_current & ((1ULL << bits_left_in_current) - 1ULL);
             v <<= bits;
@@ -201,6 +206,7 @@ public:
                 m_cursor = MSB - bits;
             }
 
+            m_bits_read += in_bits;
             return v;
         }
     }
@@ -249,6 +255,8 @@ public:
     inline T read_compressed_int(size_t b = 7) {
         return ::tdc::read_compressed_int<T>(bit_sink(), b);
     }
+
+    inline size_t bits_read() const { return m_bits_read; }
 };
 
 }}
