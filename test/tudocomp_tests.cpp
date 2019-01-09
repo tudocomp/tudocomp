@@ -655,146 +655,6 @@ TEST(Output, file_not_exists_view) {
     ASSERT_TRUE(threw);
 }
 
-TEST(IO, bits_only) {
-    const size_t N = 6'500'000;
-
-    std::stringstream ss;
-    {
-        Output output(ss);
-        BitOStream out(output);
-
-        for(size_t i = 0; i < N; i++) {
-            out.write_bit(i % 2);
-        }
-    }
-
-    auto result = ss.str();
-    {
-        Input input(result);
-        BitIStream in(input);
-
-        for(size_t i = 0; i < N; i++) {
-            ASSERT_EQ(i%2, in.read_bit());
-        }
-    }
-}
-
-TEST(IO, bits_and_ints) {
-    const size_t N = 100'000;
-
-    std::stringstream ss;
-    {
-        Output output(ss);
-        BitOStream out(output);
-
-        for(size_t i = 0; i < N; i++) {
-            out.write_bit(i % 2);
-            out.write_int(~i, 64);
-        }
-    }
-
-    auto result = ss.str();
-    {
-        Input input(result);
-        BitIStream in(input);
-
-        for(size_t i = 0; i < N; i++) {
-            ASSERT_EQ(i%2, in.read_bit());
-            ASSERT_EQ(~i , in.template read_int<size_t>(64)) << "i=" << i;
-        }
-    }
-}
-
-TEST(IO, bits_classic_test) {
-    std::stringstream ss_out;
-
-    {
-        Output output(ss_out);
-        BitOStream out(output);
-        out.write_bit(0);                   //0
-        out.write_bit(1);                   //1
-        out.write_int(-1, 2);               //11
-        out.write_int(0b11010110, 4);       //0110
-        out.write_compressed_int(0x27, 3); //1 111 0 100
-        out.write_compressed_int(0x33);    //0 0110011
-    }
-    //output should contain 0111 0110 1111 0100 0011 0011 = 76 F4 33
-
-    std::string result = ss_out.str();
-    ASSERT_EQ(result.length(), 4U); //24 bits = 3 bytes + terminator byte
-
-    //basic input test
-    {
-        Input input(result);
-        BitIStream in(input);
-
-        ASSERT_EQ(in.read_int<uint32_t>(24), 0x76F433U);
-        ASSERT_TRUE(in.eof());
-    }
-
-    //advanced input test
-    {
-        Input input(result);
-        BitIStream in(input);
-
-        ASSERT_EQ(in.read_bit(), 0);
-        ASSERT_EQ(in.read_bit(), 1);
-        ASSERT_EQ(in.read_int<size_t>(2), 3U);
-        ASSERT_EQ(in.read_int<size_t>(4), 6U);
-        ASSERT_EQ(in.read_compressed_int<size_t>(3), 0x27U);
-        ASSERT_EQ(in.read_compressed_int<size_t>(), 0x33U);
-        ASSERT_TRUE(in.eof());
-    }
-}
-
-TEST(IO, bits_eof) {
-    // write i bits to a bit stream, then read the whole
-    // bit stream until EOF and ensure exactly i bits have been read
-    for(size_t i = 0; i < 100; i++) {
-        // write i bits
-        std::string result;
-        {
-            std::ostringstream ss_result;
-            Output output(ss_result);
-            {
-                BitOStream out(output);
-                for(size_t k = i; k; k--) out.write_bit(1);
-            }
-            result = ss_result.str();
-        }
-
-        // read bits until EOF
-        size_t n = 0;
-        {
-            Input input(result);
-            BitIStream in(input);
-            ASSERT_EQ(i == 0, in.eof());
-            for(; !in.eof(); n++) ASSERT_EQ(1, in.read_bit());
-        }
-
-        ASSERT_EQ(i, n);
-    }
-}
-
-TEST(IO, bits_compressed) {
-    // test border case for compressed_int
-    std::stringstream ss_out;
-    {
-        Output output(ss_out);
-        BitOStream out(output);
-        out.write_compressed_int(1ULL << 63, 3);
-    }
-
-    std::string result = ss_out.str();
-
-    //advanced input test
-    {
-        Input input(result);
-        BitIStream in(input);
-        ASSERT_EQ(in.read_compressed_int<size_t>(3), 1ULL << 63);
-    }
-}
-
 TEST(View, construction) {
     static const uint8_t DATA[3] = { 'f', 'o', 'o' };
 
@@ -1257,13 +1117,15 @@ struct MyCompressor: public Compressor {
         Compressor(std::move(cfg)),
         custom_data(std::move(s)) {}
 
-    inline virtual void decompress(Input&, Output&) {}
-
     inline virtual void compress(Input&, Output& output) {
         A a(config().sub_config("sub"));
         auto s = output.as_stream();
         s << "ok! " << custom_data << " " << config().param("dyn").as_string();
         ASSERT_TRUE(config().param("bool_val").as_bool());
+    }
+
+    inline virtual std::unique_ptr<Decompressor> decompressor() const override {
+        throw std::runtime_error("not implemented");
     }
 };
 
@@ -1273,7 +1135,7 @@ TEST(Algorithm, create) {
     std::vector<uint8_t> vec;
     Output out(vec);
     Input inp("");
-    x.compress(inp, out);
+    x->compress(inp, out);
 
     auto s = vec_as_lossy_string(vec);
 
@@ -1322,7 +1184,7 @@ TEST(Test, TestInputOutputInheritance) {
     auto i = test::compress_input("asdf");
     auto o = test::compress_output();
 
-    x.compress(i, o);
+    x->compress(i, o);
 }
 
 TEST(MMapHandle, test1) {

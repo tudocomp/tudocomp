@@ -28,16 +28,6 @@ public:
     inline DeclLib() {
     }
 
-    /// \brief Copy constructor.
-    /// \param other the object to copy
-    inline DeclLib(const DeclLib& other) : m_lib(other.m_lib) {
-    }
-
-    /// \brief Move constructor.
-    /// \param other the object to move
-    inline DeclLib(DeclLib&& other) : m_lib(std::move(other.m_lib)) {
-    }
-
 private:
     inline void insert_recursively(
         std::shared_ptr<const Decl> decl,

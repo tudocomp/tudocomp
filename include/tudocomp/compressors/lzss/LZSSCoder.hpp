@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tudocomp/io.hpp>
 #include <tudocomp/Range.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Algorithm.hpp>
@@ -8,6 +9,10 @@ namespace tdc {
 
 static inline constexpr TypeDesc lzss_coder_type() {
     return TypeDesc("lzss_coder");
+}
+
+static inline constexpr TypeDesc lzss_bidirectional_coder_type() {
+    return TypeDesc("lzss_bidirectional_coder", lzss_coder_type());
 }
 
 namespace lzss {

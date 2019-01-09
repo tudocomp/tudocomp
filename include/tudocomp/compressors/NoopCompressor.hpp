@@ -1,11 +1,11 @@
 #pragma once
 
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/io.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 namespace tdc {
 
-class NoopCompressor: public Compressor {
+class NoopCompressor: public CompressorAndDecompressor {
 public:
     inline static Meta meta() {
         Meta m(Compressor::type_desc(), "noop",
@@ -19,7 +19,7 @@ public:
         return m;
     }
 
-    using Compressor::Compressor;
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     inline virtual void compress(Input& i, Output& o) override final {
         auto os = o.as_stream();
@@ -69,6 +69,10 @@ public:
                 os << iv;
             }
         }
+    }
+
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
     }
 };
 

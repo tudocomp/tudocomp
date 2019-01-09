@@ -14,6 +14,7 @@ run_doc_snippet(stats               DEPS ${BASIC_DEPS})
 
 run_test(rank_select_tests  DEPS ${BASIC_DEPS})
 run_test(ringbuffer_tests   DEPS ${BASIC_DEPS})
+run_test(bit_io_tests   DEPS ${BASIC_DEPS})
 run_test(vbyte_test     DEPS ${BASIC_DEPS})
 run_test(variadic_tests DEPS ${BASIC_DEPS})
 run_test(rle_test       DEPS ${BASIC_DEPS})
@@ -22,7 +23,6 @@ run_test(huff_test      DEPS ${BASIC_DEPS})
 run_test(arithm_tests   DEPS ${BASIC_DEPS})
 run_test(coder_tests    DEPS ${BASIC_DEPS})
 run_test(cedar_tests    DEPS ${BASIC_DEPS})
-run_test(lz78u_tests    DEPS ${BASIC_DEPS})
 run_test(st_tests       DEPS ${BASIC_DEPS})
 run_test(maxlcp_tests   DEPS ${BASIC_DEPS})
 run_test(plcp_tests DEPS ${BASIC_DEPS})
@@ -38,14 +38,6 @@ run_test(ds_manager_tests   DEPS ${BASIC_DEPS})
 run_test(ds_tests       DEPS ${BASIC_DEPS})
 run_test(lcpsada_tests  DEPS ${BASIC_DEPS})
 run_test(esp_tests      DEPS ${BASIC_DEPS})
-
-#Disabled due to breakage on this branch:
-#run_test(paper_tests    DEPS ${BASIC_DEPS})
-run_test(compressor_adapter_tests DEPS tudocomp_algorithms ${BASIC_DEPS})
-#run_test(example_tests  DEPS ${BASIC_DEPS})
-
-run_test(lfs_tests     DEPS ${BASIC_DEPS})
-run_test(lfs2_tests     DEPS ${BASIC_DEPS})
 
 run_test(intsort_tests DEPS ${BASIC_DEPS})
 

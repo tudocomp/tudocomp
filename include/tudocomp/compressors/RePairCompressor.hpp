@@ -1,9 +1,10 @@
 #pragma once
 
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 #include <tudocomp/Range.hpp>
-#include <tudocomp/coders/BitCoder.hpp> //default
+#include <tudocomp/coders/BinaryCoder.hpp> //default
 
 #include <tudocomp/util/Counter.hpp>
 
@@ -12,7 +13,7 @@
 namespace tdc {
 
 template <typename coder_t>
-class RePairCompressor : public Compressor {
+class RePairCompressor : public CompressorAndDecompressor {
 private:
     typedef uint32_t sym_t;
     typedef uint64_t digram_t;
@@ -88,14 +89,14 @@ public:
         Meta m(Compressor::type_desc(), "repair",
             "Grammar compression using Re-Pair.");
         m.param("coder", "The output encoder.")
-            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BitCoder>());
+            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
         m.param("max_rules",
             "The maximum amount of grammar rules (0 = unlimited)."
         ).primitive(0);
         return m;
     }
 
-    using Compressor::Compressor;
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     virtual void compress(Input& input, Output& output) override {
         // options
@@ -337,6 +338,10 @@ public:
         while(!decoder.eof()) {
             decode(decode_sym(grammar_r), grammar, ostream);
         }
+    }
+
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
     }
 };
 

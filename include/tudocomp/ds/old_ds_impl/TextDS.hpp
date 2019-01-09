@@ -1,5 +1,8 @@
 #pragma once
 
+#include <tudocomp/Error.hpp>
+#include <tudocomp/Tags.hpp>
+
 #include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/IntVector.hpp>
@@ -43,18 +46,6 @@ public:
     using plcp_type = plcp_t;
     using lcp_type = lcp_t;
     using isa_type = isa_t;
-
-    inline static ds::InputRestrictions common_restrictions(dsflags_t flags) {
-        ds::InputRestrictions rest;
-
-        if (flags & SA)   rest |= sa_type::restrictions();
-        if (flags & ISA)  rest |= isa_type::restrictions();
-        if (flags & LCP)  rest |= lcp_type::restrictions();
-        if (flags & PHI)  rest |= phi_type::restrictions();
-        if (flags & PLCP) rest |= plcp_type::restrictions();
-
-        return rest;
-    };
 
 private:
     using this_t = TextDS<sa_t, phi_t, plcp_t, lcp_t, isa_t>;
@@ -134,6 +125,9 @@ public:
             "\"compressed\" - structures are constructed in "
             "bit-compressed space (lowest memory consumption)"
         ).primitive("delayed");
+
+        m.inherit_tags_from_all(
+            tl::type_list<sa_t, phi_t, plcp_t, lcp_t, isa_t>());
         return m;
     }
 
@@ -141,12 +135,8 @@ public:
         : Algorithm(std::move(cfg)),
           m_text(text), m_ds_requested(0) {
 
-        if(!m_text.ends_with(uint8_t(0))){
-             throw std::logic_error(
-                 "Input has no sentinel! Please make sure you declare "
-                 "the compressor calling this with "
-                 "`m.needs_sentinel_terminator()` in its `meta()` function."
-            );
+        if(meta().has_tag(tags::require_sentinel)){
+            MissingSentinelError::check(m_text);
         }
 
         const auto& cm_str = this->config().param("compress").as_string();

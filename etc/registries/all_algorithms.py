@@ -12,7 +12,7 @@
 # Universal coders
 universal_coders = [
     AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
-    AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
+    AlgorithmConfig(name="BinaryCoder", header="coders/BinaryCoder.hpp"),
     AlgorithmConfig(name="RiceCoder", header="coders/RiceCoder.hpp"),
     AlgorithmConfig(name="EliasGammaCoder", header="coders/EliasGammaCoder.hpp"),
     AlgorithmConfig(name="EliasDeltaCoder", header="coders/EliasDeltaCoder.hpp"),
@@ -49,6 +49,12 @@ lzss_streaming_coders = [
 lzss_coders = lzss_streaming_coders + [
     AlgorithmConfig(name="lzss::BufferedLeftCoder", header="compressors/lzss/BufferedLeftCoder.hpp",
         sub=[universal_coders,universal_coders,all_coders]),
+    AlgorithmConfig(name="lzss::BufferedBidirectionalCoder", header="compressors/lzss/BufferedBidirectionalCoder.hpp",
+        sub=[universal_coders,universal_coders,all_coders]),
+]
+
+lzss_bidirectional_coders = [
+    AlgorithmConfig(name="lzss::DidacticalCoder", header="compressors/lzss/DidacticalCoder.hpp"),
     AlgorithmConfig(name="lzss::BufferedBidirectionalCoder", header="compressors/lzss/BufferedBidirectionalCoder.hpp",
         sub=[universal_coders,universal_coders,all_coders]),
 ]
@@ -227,7 +233,7 @@ lfs_strat = [
 ]
 
 lit_coder = [
-    AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
+    AlgorithmConfig(name="BinaryCoder", header="coders/BinaryCoder.hpp"),
     AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
     AlgorithmConfig(name="HuffmanCoder", header="coders/HuffmanCoder.hpp"),
 ]
@@ -251,17 +257,17 @@ long_common_strat = [
 
 ##### Export available compressors #####
 tdc.compressors = [
-    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_coders, lcpcomp_comp, lcpcomp_dec, lcpcomp_textds]),
+    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_coders, lcpcomp_comp, lcpcomp_textds]),
     AlgorithmConfig(name="RunLengthEncoder", header="compressors/RunLengthEncoder.hpp"),
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
     AlgorithmConfig(name="LZ78Compressor", header="compressors/LZ78Compressor.hpp", sub=[universal_coders, lz78_trie]),
     AlgorithmConfig(name="LZ78UCompressor", header="compressors/LZ78UCompressor.hpp", sub=[lz78u_comp, universal_coders]),
-    #SLOW AlgorithmConfig(name="LZ78CicsCompressor", header="compressors/LZ78CicsCompressor.hpp", sub=[universal_coders]),
+    AlgorithmConfig(name="LZ78CicsCompressor", header="compressors/LZ78CicsCompressor.hpp", sub=[universal_coders]),
     AlgorithmConfig(name="LZWCompressor", header="compressors/LZWCompressor.hpp", sub=[universal_coders, lz78_trie]),
     AlgorithmConfig(name="RePairCompressor", header="compressors/RePairCompressor.hpp", sub=[non_consuming_coders]),
     AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[lzss_coders, textds]),
     AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[lzss_streaming_coders]),
-    #SLOW AlgorithmConfig(name="LZ77CicsCompressor", header="compressors/LZ77CicsCompressor.hpp", sub=[lzss_streaming_coders]),
+    AlgorithmConfig(name="LZSSCicsCompressor", header="compressors/LZSSCicsCompressor.hpp", sub=[lzss_streaming_coders]),
     AlgorithmConfig(name="MTFCompressor", header="compressors/MTFCompressor.hpp"),
     AlgorithmConfig(name="NoopCompressor", header="compressors/NoopCompressor.hpp"),
     AlgorithmConfig(name="BWTCompressor", header="compressors/BWTCompressor.hpp", sub=[textds]),
@@ -272,6 +278,21 @@ tdc.compressors = [
     AlgorithmConfig(name="lfs::LFSCompressor", header="compressors/lfs/LFSCompressor.hpp", sub=[lfs_strat, coding_strat]),
     AlgorithmConfig(name="lfs::LFS2Compressor", header="compressors/lfs/LFS2Compressor.hpp", sub=[lit_coder, len_coder]),
     AlgorithmConfig(name="lfs::LFS2BSTCompressor", header="compressors/lfs/LFS2BSTCompressor.hpp", sub=[lit_coder, len_coder]),
+]
+
+##### Export available decompressors #####
+tdc.decompressors = [
+    AlgorithmConfig(name="BWTDecompressor", header="decompressors/BWTDecompressor.hpp",),
+    AlgorithmConfig(name="ChainDecompressor", header="decompressors/ChainDecompressor.hpp",),
+    AlgorithmConfig(name="DividingDecompressor", header="decompressors/DividingDecompressor.hpp"),
+    AlgorithmConfig(name="ESPDecompressor", header="decompressors/ESPDecompressor.hpp", sub=[slp_coder]),
+    AlgorithmConfig(name="LCPDecompressor", header="decompressors/LCPDecompressor.hpp", sub=[lzss_coders, lcpcomp_dec]),
+    AlgorithmConfig(name="lfs::LFSDecompressor", header="decompressors/LFSDecompressor.hpp", sub=[coding_strat]),
+    AlgorithmConfig(name="lfs::LFS2Decompressor", header="decompressors/LFS2Decompressor.hpp", sub=[lit_coder, len_coder]),
+    AlgorithmConfig(name="LZ78Decompressor", header="decompressors/LZSSDecompressor.hpp", sub=[universal_coders]),
+    AlgorithmConfig(name="LZSSDecompressor", header="decompressors/LZSSDecompressor.hpp", sub=[lzss_coders]),
+    AlgorithmConfig(name="LZWDecompressor", header="decompressors/LZWDecompressor.hpp", sub=[universal_coders]),
+    AlgorithmConfig(name="WrapDecompressor", header="decompressors/WrapDecompressor.hpp"),
 ]
 
 ##### Export available string generators #####

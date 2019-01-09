@@ -47,10 +47,8 @@ class RunTestDS {
 		VLOG(2) << "str = \"" << str << "\"" << " size: " << str.length();
 		test::TestInput input = test::compress_input(str);
 		InputView in = input.as_view();
-		DCHECK_EQ(str.length()+1, in.size());
-		textds_t t = Algorithm::instance<textds_t>("", in);
-		DCHECK_EQ(str.length()+1, t.size());
-		m_testfunc(t);
+		auto t = Algorithm::instance<textds_t>("", in);
+		m_testfunc(*t);
 	}
 };
 

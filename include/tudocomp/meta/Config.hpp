@@ -50,6 +50,15 @@ public:
                 " '" + m_decl->name() + "'");
         }
 
+        inline ast::NodePtr<ast::Object> configure_complex(
+            ast::NodePtr<> config,
+            bool list_item = false) {
+
+            return ast::convert<ast::Object>(config,
+                "type mismatch for " + param_str(list_item) +
+                " '" + m_decl->name() + "'");
+        }
+
         inline ast::NodePtr<ast::Object> configure_object(
             ast::NodePtr<> config,
             const DeclLib& lib,
@@ -97,6 +106,10 @@ public:
                     for(auto& item : list_value->items()) {
                         configure_primitive(item, true);
                     }
+                } else if(!m_decl->has_type()) {
+                    for(auto& item : list_value->items()) {
+                        configure_complex(item, true);
+                    }
                 } else {
                     for(auto& item : list_value->items()) {
                         configure_object(item, lib, true);
@@ -104,6 +117,8 @@ public:
                 }
             } else if(m_decl->is_primitive()) {
                 configure_primitive(m_config);
+            } else if(!m_decl->has_type()) {
+                configure_complex(m_config);
             } else {
                 configure_object(m_config, lib);
             }
@@ -150,7 +165,7 @@ public:
             std::stringstream ss;
             ss << m_decl->name() << '=';
 
-            if(m_decl->is_primitive()) {
+            if(!m_decl->has_type()) {
                 ss << m_config->str();
             } else {
                 if(m_decl->is_list()) ss << '[';

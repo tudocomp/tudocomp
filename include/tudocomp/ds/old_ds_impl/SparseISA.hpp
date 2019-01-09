@@ -37,10 +37,6 @@ public:
         return m;
     }
 
-    inline static ds::InputRestrictions restrictions() {
-        return ds::InputRestrictions {};
-    }
-
     template<typename textds_t>
     inline SparseISA(Config&& cfg, textds_t& tds, CompressMode cm)
             : Algorithm(std::move(cfg)) {

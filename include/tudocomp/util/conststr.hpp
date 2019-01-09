@@ -38,6 +38,10 @@ public:
         return std::string(m_ptr, m_size);
     }
 
+    inline operator std::string() const {
+        return str();
+    }
+
     inline constexpr size_t size() const {
         return m_size;
     }
@@ -55,3 +59,4 @@ public:
         return !(*this == other);
     }
 };
+

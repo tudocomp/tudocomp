@@ -8,7 +8,9 @@
 
 // For default params
 #include <tudocomp/compressors/lz78/TernaryTrie.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/BinaryCoder.hpp>
+
+#include <tudocomp/decompressors/LZ78Decompressor.hpp>
 
 namespace tdc {
 
@@ -30,7 +32,7 @@ public:
         Meta m(Compressor::type_desc(), "lz78",
             "Computes the Lempel-Ziv 78 factorization of the input.");
         m.param("coder", "The output encoder.")
-            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BitCoder>());
+            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
         m.param("lz78trie", "The trie data structure implementation.")
             .strategy<dict_t>(TypeDesc("lz78trie"),
                 Meta::Default<lz78::TernaryTrie>());
@@ -119,23 +121,9 @@ public:
         )
     }
 
-    virtual void decompress(Input& input, Output& output) override final {
-        auto out = output.as_stream();
-        typename coder_t::Decoder decoder(config().sub_config("coder"), input);
-
-        lz78::Decompressor decomp;
-        uint64_t factor_count = 0;
-
-        while (!decoder.eof()) {
-            const lz78::factorid_t index = decoder.template decode<lz78::factorid_t>(Range(factor_count));
-            const uliteral_t chr = decoder.template decode<uliteral_t>(literal_r);
-            decomp.decompress(index, chr, out);
-            factor_count++;
-        }
-
-        out.flush();
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::instance<LZ78Decompressor<coder_t>>();
     }
-
 };
 
 

@@ -3,6 +3,8 @@
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lzss/LZSSCoder.hpp>
 
+#include <tudocomp/Tags.hpp>
+
 namespace tdc {
 namespace lzss {
 
@@ -13,8 +15,12 @@ namespace lzss {
 class DidacticalCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        return Meta(lzss_coder_type(), "didactic",
+        Meta m(
+            lzss_bidirectional_coder_type(),
+            "didactic",
             "Didactical output of factors");
+        m.add_tag(tags::lossy); // no decompression available!
+        return m;
     }
 
     using Algorithm::Algorithm;

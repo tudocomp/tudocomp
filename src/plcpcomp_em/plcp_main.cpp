@@ -5,11 +5,9 @@
 #include <iostream>
 #include <unordered_map>
 
+#include <tudocomp/io.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 #include <tudocomp/util/STXXLStatExtension.hpp>
-
-#include <tudocomp/coders/BitCoder.hpp>
-#include <tudocomp/coders/HuffmanCoder.hpp>
 
 #include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
 

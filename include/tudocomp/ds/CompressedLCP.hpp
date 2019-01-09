@@ -37,10 +37,6 @@ public:
         return m;
     }
 
-    inline static ds::InputRestrictions restrictions() {
-        return ds::InputRestrictions {};
-    }
-
 private:
     inline void encode_unary(len_t x) {
         while(x) {

@@ -1,9 +1,14 @@
 #pragma once
 
+#include <tudocomp/Error.hpp>
+#include <tudocomp/Tags.hpp>
+
 #include <tudocomp/compressors/lz78/LZ78Coding.hpp>
 #include <tudocomp/compressors/lzcics/st.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
+
+#include <tudocomp/decompressors/LZ78Decompressor.hpp>
 
 namespace tdc {
 
@@ -61,7 +66,7 @@ public:
         Meta m(Compressor::type_desc(), "lz78cics", "LZ78 compression in compressed space.");
         m.param("coder", "The output encoder.")
             .strategy<coder_t>(TypeDesc("coder"));
-        m.input_restrictions(io::InputRestrictions({0}, false));
+        m.add_tag(tags::require_sentinel);
         return m;
     }
 
@@ -70,6 +75,7 @@ public:
     /// \copydoc Compressor::compress
     inline virtual void compress(Input& input, Output& output) override {
         auto text = input.as_view();
+        MissingSentinelError::check(text);
 
         // coder
         typename coder_t::Encoder coder(
@@ -162,7 +168,7 @@ public:
 
 	        //std::vector<size_t> ref;
 	        //std::vector<char> cha;
-	
+
 	        do {
 		        auto v = st.root;
 		        size_t d = 0;
@@ -179,7 +185,7 @@ public:
 			        DVLOG(2) << "cha: " << cha;
 			        ell = st.next_leaf(ell);
 			        DVLOG(2) << "Selecting leaf " << ell;
-                    
+
                     size_t ref;
 			        if(cst.node_depth(v) == 1) {
 				        DVLOG(2) << "fresh factor";
@@ -248,29 +254,8 @@ public:
         });
     }
 
-    /// \copydoc Compressor::decompress
-    inline virtual void decompress(Input& input, Output& output) override {
-        auto out = output.as_stream();
-        typename coder_t::Decoder decoder(config().sub_config("coder"), input);
-
-        lz78::Decompressor decomp;
-        uint64_t factor_count = 0;
-
-        while (!decoder.eof()) {
-            const lz78::factorid_t index = decoder.template decode<lz78::factorid_t>(Range(factor_count));
-            const uliteral_t chr = decoder.template decode<uliteral_t>(literal_r);
-
-            if(chr == 0) {
-                // final factor
-                decomp.decompress_ref(index, out);
-            } else {
-                // normal factor
-                decomp.decompress(index, chr, out);
-            }
-            factor_count++;
-        }
-
-        out.flush();
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::instance<LZ78Decompressor<coder_t>>();
     }
 };
 

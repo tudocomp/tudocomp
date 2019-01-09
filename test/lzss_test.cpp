@@ -158,34 +158,34 @@ TEST(lzss, decode_back_buffer) {
 
 template<typename T>
 void test_forward_decode_buffer_chain() {
-    T buffer = Algorithm::instance<T>();
-    buffer.initialize(12);
-    buffer.decode_literal('b');
-    buffer.decode_factor(3, 3);
-    buffer.decode_literal('n');
-    buffer.decode_literal('a');
-    buffer.decode_factor(0, 6);
-    buffer.process();
+    auto buffer = Algorithm::instance<T>();
+    buffer->initialize(12);
+    buffer->decode_literal('b');
+    buffer->decode_factor(3, 3);
+    buffer->decode_literal('n');
+    buffer->decode_literal('a');
+    buffer->decode_factor(0, 6);
+    buffer->process();
 
     std::stringstream ss;
-    buffer.write_to(ss);
+    buffer->write_to(ss);
 
     ASSERT_EQ("bananabanana", ss.str());
 }
 
 template<typename T>
 void test_forward_decode_buffer_multiref() {
-    T buffer = Algorithm::instance<T>();
-    buffer.initialize(12);
-    buffer.decode_factor(6, 6);
-    buffer.decode_literal('b');
-    buffer.decode_factor(9, 3);
-    buffer.decode_literal('n');
-    buffer.decode_literal('a');
-    buffer.process();
+    auto buffer = Algorithm::instance<T>();
+    buffer->initialize(12);
+    buffer->decode_factor(6, 6);
+    buffer->decode_literal('b');
+    buffer->decode_factor(9, 3);
+    buffer->decode_literal('n');
+    buffer->decode_literal('a');
+    buffer->process();
 
     std::stringstream ss;
-    buffer.write_to(ss);
+    buffer->write_to(ss);
 
     ASSERT_EQ("bananabanana", ss.str());
 }

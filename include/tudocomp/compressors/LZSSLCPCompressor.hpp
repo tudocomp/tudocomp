@@ -6,12 +6,14 @@
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Range.hpp>
+#include <tudocomp/Tags.hpp>
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lzss/FactorizationStats.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
-#include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
+
+#include <tudocomp/decompressors/LZSSDecompressor.hpp>
 
 #include <tudocomp/ds/TextDS.hpp>
 
@@ -33,7 +35,8 @@ public:
         m.param("textds", "The text data structure provider.")
             .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
         m.param("threshold", "The minimum factor length.").primitive(2);
-        m.uses_textds<text_t>(text_t::SA | text_t::ISA | text_t::LCP);
+        m.inherit_tag<text_t>(tags::require_sentinel);
+        m.inherit_tag<lzss_coder_t>(tags::lossy);
         return m;
     }
 
@@ -41,7 +44,6 @@ public:
 
     inline virtual void compress(Input& input, Output& output) override {
         auto view = input.as_view();
-        DCHECK(view.ends_with(uint8_t(0)));
 
         // Construct text data structures
         text_t text = StatPhase::wrap("Construct Text DS", [&]{
@@ -126,16 +128,8 @@ public:
         });
     }
 
-    inline virtual void decompress(Input& input, Output& output) override {
-        lzss::DecompBackBuffer decomp;
-
-        {
-            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
-            decoder.decode(decomp);
-        }
-
-        auto outs = output.as_stream();
-        decomp.write_to(outs);
+    inline virtual std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::instance<LZSSDecompressor<lzss_coder_t>>();
     }
 };
 

@@ -2,10 +2,13 @@
 
 #include <tuple>
 #include <vector>
+#include <unordered_set>
 
 #include <tudocomp/meta/Decl.hpp>
 #include <tudocomp/meta/DeclLib.hpp>
 #include <tudocomp/meta/ast/Parser.hpp>
+
+#include <tudocomp/util/type_list.hpp>
 
 namespace tdc {
 namespace meta {
@@ -53,6 +56,8 @@ private:
     std::shared_ptr<Decl> m_decl;
     std::shared_ptr<ast::Object> m_sig; // signature of bindings
     DeclLib m_known; // library of known declarations (excluding self!)
+
+    std::unordered_set<std::string> m_tags;
 
 public:
     template<typename D>    struct Default {};
@@ -123,6 +128,26 @@ public:
                 no_type,
                 list));
         }
+
+        inline void complex() {
+            m_meta->m_decl->add_param(Decl::Param(
+                m_name, m_desc,
+                Decl::Param::Kind::complex,
+                false, // no list
+                no_type,
+                ast::NodePtr<>())); // no default
+        }
+
+        inline void complex_list() {
+            m_meta->m_decl->add_param(Decl::Param(
+                m_name, m_desc,
+                Decl::Param::Kind::complex,
+                true, // list
+                no_type,
+                ast::NodePtr<>())); // no default
+        }
+
+        // TODO: overloads for complex with defaults!
 
     private:
         template<typename Binding>
@@ -340,29 +365,60 @@ public:
         return m_sig;
     }
 
+    template<typename Algo>
+    inline Meta& declare() {
+        add_to_lib(m_known, Algo::meta());
+        return *this;
+    }
+
     inline const DeclLib& known() const {
         return m_known;
     }
 
-    inline const InputRestrictions& input_restrictions() const {
-        return m_decl->input_restrictions();
+    inline void add_tag(const std::string& tag_name) {
+        m_tags.insert(tag_name);
     }
 
-    inline void input_restrictions(InputRestrictions r) {
-        m_decl->input_restrictions(r);
+    inline bool has_tag(const std::string& tag_name) const {
+        return (m_tags.find(tag_name) != m_tags.end());
     }
 
-    //TODO: rename
-    inline void needs_sentinel_terminator() {
-        input_restrictions(
-            input_restrictions() | io::InputRestrictions({ 0 }, true));
+    template<typename Algo>
+    inline void inherit_tag(const std::string& tag_name) {
+        if(Algo::meta().has_tag(tag_name)) {
+            add_tag(tag_name);
+        }
     }
 
-    //TODO: refactor
-    template<typename text_t>
-    inline void uses_textds(uint64_t flags) {
-        input_restrictions(
-            input_restrictions() | text_t::common_restrictions(flags));
+    template<typename Head, typename... Tail>
+    inline void inherit_tag_from_any(
+        const std::string& tag_name, tl::type_list<Head, Tail...> tl) {
+
+        inherit_tag<Head>(tag_name);
+        inherit_tag_from_any(tag_name, tl::type_list<Tail...>());
+    }
+
+    inline void inherit_tag_from_any(
+        const std::string& tag_name, tl::type_list<> tl) {
+
+        // done
+    }
+
+    template<typename Algo>
+    inline void inherit_tags() {
+        for(auto& tag_name : Algo::meta().m_tags) {
+            add_tag(tag_name);
+        }
+    }
+
+    template<typename Head, typename... Tail>
+    inline void inherit_tags_from_all(tl::type_list<Head, Tail...> tl) {
+        inherit_tags<Head>();
+        inherit_tags_from_all(tl::type_list<Tail...>());
+    }
+
+    inline void inherit_tags_from_all(tl::type_list<> tl) {
+        // done
     }
 };
 

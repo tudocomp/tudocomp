@@ -3,12 +3,13 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
+#include <tudocomp/Tags.hpp>
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/ds/RingBuffer.hpp>
 
-#include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
 #include <tudocomp/compressors/lzss/Factor.hpp>
+#include <tudocomp/decompressors/LZSSDecompressor.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -32,6 +33,7 @@ public:
             .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
         m.param("window", "The sliding window size").primitive(16);
         m.param("threshold", "The minimum factor length.").primitive(2);
+        m.inherit_tag<lzss_coder_t>(tags::lossy);
         return m;
     }
 
@@ -143,16 +145,8 @@ public:
         }
     }
 
-    inline virtual void decompress(Input& input, Output& output) override {
-        lzss::DecompBackBuffer decomp;
-
-        {
-            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
-            decoder.decode(decomp);
-        }
-
-        auto outs = output.as_stream();
-        decomp.write_to(outs);
+    inline virtual std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::instance<LZSSDecompressor<lzss_coder_t>>();
     }
 };
 

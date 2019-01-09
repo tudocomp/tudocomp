@@ -5,39 +5,35 @@
 #include <tuple>
 
 //general includes:
-#include <tudocomp/Compressor.hpp>
 #include <tudocomp/util.hpp>
-#include <tudocomp/io.hpp>
 #include <tudocomp/ds/IntVector.hpp>
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/Error.hpp>
+#include <tudocomp/Tags.hpp>
+
 #include <tudocomp_stat/StatPhase.hpp>
 
 //sdsl include stree:
 #include <sdsl/suffix_trees.hpp>
 
-
 //includes encoding:
-#include <tudocomp/io/BitIStream.hpp>
 #include <tudocomp/io/BitOStream.hpp>
-#include <tudocomp/Literal.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
 
 #include <tudocomp/coders/EliasGammaCoder.hpp>
-#include <tudocomp/coders/ASCIICoder.hpp>
-
-
 #include <tudocomp/coders/HuffmanCoder.hpp>
 
+//decompressor:
+#include <tudocomp/decompressors/LFS2Decompressor.hpp>
 
 namespace tdc {
 namespace lfs {
 
-template<typename literal_coder_t = HuffmanCoder, typename len_coder_t = EliasGammaCoder >
+template<
+    typename literal_coder_t = HuffmanCoder,
+    typename len_coder_t = EliasGammaCoder
+>
 class LFS2Compressor : public Compressor {
 private:
-
-
-
-
     //Suffix Tree type + st
     typedef sdsl::cst_sct3< sdsl::csa_bitcompressed<> > cst_t;
     cst_t stree;
@@ -53,14 +49,11 @@ private:
     // dead pos in first layer
     BitVector second_layer_dead;
 
-
     //pair contains begin pos, length
     std::vector<std::pair<uint, uint> > non_terminal_symbols;
 
-
     //stores node_ids of corresponding factor length
     std::vector<std::vector<uint> > bins;
-
 
     //stores beginning positions corresponding to node_ids
     std::vector<std::vector<uint> > node_begins;
@@ -68,11 +61,7 @@ private:
     bool exact;
     uint size;
 
-
-
-
 public:
-
     inline static Meta meta() {
         Meta m(Compressor::type_desc(), "lfs2", "lfs2 with simst");
         m.param("min_lrf").primitive(5);
@@ -81,22 +70,18 @@ public:
             Coder::type_desc(), Meta::Default<HuffmanCoder>());
         m.param("lfs2_len_coder").strategy<len_coder_t>(
             Coder::type_desc(), Meta::Default<EliasGammaCoder>());
-        m.needs_sentinel_terminator();
+        m.add_tag(tags::require_sentinel);
         return m;
     }
 
+    using Compressor::Compressor;
 
-    inline LFS2Compressor(Config&& cfg):
-        Compressor(std::move(cfg))
-    {
-        DLOG(INFO) << "Compressor lfs2 instantiated";
-    }
     inline virtual void compress(Input& input, Output& output) override {
         uint min_lrf = config().param("min_lrf").as_uint();
         exact = config().param("exact").as_bool();
 
         auto in = input.as_view();
-
+        MissingSentinelError::check(in);
 
         //create vectors:
         first_layer_nts = IntVector<uint>(input.size(), 0);
@@ -104,12 +89,7 @@ public:
         second_layer_nts = IntVector<uint>(input.size(), 0);
         second_layer_dead = BitVector(input.size(), 0);
 
-
-
         if(in.size() >= min_lrf){
-
-
-
 
         StatPhase::wrap("Constructing ST", [&]{
             size =  in.size();
@@ -123,8 +103,6 @@ public:
             std::string in_string ((const char*) in.data(), size);
             sdsl::construct_im(stree, in_string , 1);
         });
-
-
 
         StatPhase::wrap("Computing LRF", [&]{
             bins.resize(200);
@@ -311,9 +289,7 @@ public:
                             }
                         }
                     }
-
                 }
-
             });
 
         });
@@ -333,12 +309,8 @@ public:
                     if(nts_depth[symbol_num]< cur_depth+1){
                         nts_depth[symbol_num]= cur_depth+1;
                     }
-
                 }
-
-
             }
-
         }
 
         DLOG(INFO)<<"Computing done";
@@ -361,8 +333,6 @@ public:
             }
             StatPhase::log("Max CFG Depth", max_depth);
         }
-
-
 
         //input size end
         }
@@ -470,9 +440,6 @@ public:
 
              uint literals=0;
 
-
-
-
             buf_size = long(bitout->stream().tellp()) - buf_size;
             StatPhase::log("Bytes Non-Terminal Symbol Encoding", buf_size);
 
@@ -489,22 +456,17 @@ public:
                     auto symbol = non_terminal_symbols[first_layer_nts[pos] -1];
 
                     pos += symbol.second - 1;
-
                 } else {
                     lit_coder.encode(0, bit_r);
                     lit_coder.encode(in[pos],literal_r);
                     literals++;
-
-
                 }
             }
 
             buf_size = long(bitout->stream().tellp()) - buf_size;
             StatPhase::log("Bytes Start Symbol Encoding", buf_size);
 
-
             DLOG(INFO)<<"Bytes Start Symbol Encoding: "<< buf_size;
-
 
             StatPhase::log("Literals in Dictionary", dict_literals);
 
@@ -520,118 +482,10 @@ public:
         });
     }
 
-    inline virtual void decompress(Input& input, Output& output) override {
-
-        DLOG(INFO) << "decompress lfs";
-        std::shared_ptr<BitIStream> bitin = std::make_shared<BitIStream>(input);
-
-        typename literal_coder_t::Decoder lit_decoder(
-            config().sub_config("lfs2_lit_coder"),
-            bitin
-        );
-        typename len_coder_t::Decoder len_decoder(
-            config().sub_config("lfs2_len_coder"),
-            bitin
-        );
-        Range int_r (0,UINT_MAX);
-
-        uint symbol_length = len_decoder.template decode<uint>(int_r);
-        Range slength_r (0, symbol_length);
-        std::vector<uint> dict_lengths;
-        dict_lengths.reserve(symbol_length);
-        dict_lengths.push_back(symbol_length);
-        while(symbol_length>0){
-
-            uint current_delta = len_decoder.template decode<uint>(slength_r);
-            symbol_length-=current_delta;
-            dict_lengths.push_back(symbol_length);
-        }
-        dict_lengths.pop_back();
-
-        DLOG(INFO)<<"decoded number of nts: "<< dict_lengths.size();
-
-
-
-        std::vector<std::string> dictionary;
-        uint dictionary_size = dict_lengths.size();
-
-        Range dictionary_r (0, dictionary_size);
-
-
-        dictionary.resize(dict_lengths.size());
-
-        std::stringstream ss;
-        uint symbol_number;
-        char c1;
-
-        DLOG(INFO) << "reading dictionary";
-        for(long i = dict_lengths.size() -1; i>=0 ;i--){
-
-            ss.str("");
-            ss.clear();
-            long size_cur = (long) dict_lengths[i];
-            while(size_cur > 0){
-                bool bit1 = lit_decoder.template decode<bool>(bit_r);
-
-
-                if(bit1){
-                    //bit = 1, is nts, decode nts num and copy
-                    symbol_number = lit_decoder.template decode<uint>(dictionary_r);
-
-                    symbol_number-=1;
-
-                    if(symbol_number < dictionary.size()){
-
-                        ss << dictionary.at(symbol_number);
-                        size_cur-= dict_lengths[symbol_number];
-                    } else {
-                        break;
-                    }
-
-                } else {
-                    //bit = 0, decode literal
-                    c1 = lit_decoder.template decode<char>(literal_r); // Dekodiere Literal
-                    size_cur--;
-
-                    ss << c1;
-
-                }
-
-            }
-
-            dictionary[i]=ss.str();
-
-
-        }
-
-        auto ostream = output.as_stream();
-        //reading start symbol:
-        while(!lit_decoder.eof()){
-            //decode bit
-            bool bit1 = lit_decoder.template decode<bool>(bit_r);
-            char c1;
-            uint symbol_number;
-            // if bit = 0 its a literal
-            if(!bit1){
-                c1 = lit_decoder.template decode<char>(literal_r); // Dekodiere Literal
-
-                ostream << c1;
-            } else {
-            //else its a non-terminal
-                symbol_number = lit_decoder.template decode<uint>(dictionary_r); // Dekodiere Literal
-                symbol_number-=1;
-
-                if(symbol_number < dictionary.size()){
-
-                    ostream << dictionary.at(symbol_number);
-                } else {
-                    DLOG(INFO)<< "too large symbol: " << symbol_number;
-                }
-
-            }
-        }
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::instance<
+            LFS2Decompressor<literal_coder_t, len_coder_t>>();
     }
-
 };
 
 //namespaces closing

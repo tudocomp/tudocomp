@@ -2,6 +2,7 @@ add_library(
     tudocomp
 
     meta/Registry.cpp
+    meta/ast/Parser.cpp
     util/STXXLStatExtension.cpp
 )
 

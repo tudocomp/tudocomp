@@ -12,8 +12,9 @@
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/BinaryCoder.hpp>
 #include <tudocomp/coders/EliasDeltaCoder.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 #include "../test/util.hpp"
 
@@ -21,7 +22,7 @@ using namespace tdc;
 
 // Implement a simple compressor
 template<typename coder_t>
-class MyCompressor : public Compressor {
+class MyCompressor : public CompressorAndDecompressor {
 public:
     inline static Meta meta() {
         Meta m(Compressor::type_desc(), "my_compressor", "An example compressor");
@@ -29,7 +30,7 @@ public:
         return m;
     }
 
-    using Compressor::Compressor;
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     virtual void compress(Input& input, Output& output) override {
         // retrieve random access on the input
@@ -82,6 +83,10 @@ public:
             ostream << c;
         }
     }
+
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
+    }
 };
 
 TEST(doc_compressor_impl, cycle) {
@@ -89,19 +94,19 @@ TEST(doc_compressor_impl, cycle) {
 
     // Run compression cycles using different encoders
     test::roundtrip<MyCompressor<ASCIICoder>>(example);
-    test::roundtrip<MyCompressor<BitCoder>>(example);
+    test::roundtrip<MyCompressor<BinaryCoder>>(example);
     test::roundtrip<MyCompressor<EliasDeltaCoder>>(example);
 }
 
 TEST(doc_compressor_impl, helpers) {
     // perform border case compression tests using different encoders
     test::roundtrip_batch(test::roundtrip<MyCompressor<ASCIICoder>>);
-    test::roundtrip_batch(test::roundtrip<MyCompressor<BitCoder>>);
+    test::roundtrip_batch(test::roundtrip<MyCompressor<BinaryCoder>>);
     test::roundtrip_batch(test::roundtrip<MyCompressor<EliasDeltaCoder>>);
 
     // perform compression tests on generated strings using different encoders
     test::on_string_generators(test::roundtrip<MyCompressor<EliasDeltaCoder>>, 15);
-    test::on_string_generators(test::roundtrip<MyCompressor<BitCoder>>, 15);
+    test::on_string_generators(test::roundtrip<MyCompressor<BinaryCoder>>, 15);
     test::on_string_generators(test::roundtrip<MyCompressor<ASCIICoder>>, 15);
 }
 

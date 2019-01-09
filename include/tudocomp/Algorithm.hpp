@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include <tudocomp/meta/Config.hpp>
 #include <tudocomp/meta/Meta.hpp>
 
@@ -10,21 +12,57 @@ class Algorithm {
 
 public:
     template<typename T, typename... Args>
-    static inline T instance(std::string config_str, Args&&... args) {
-        return T(T::meta().config(config_str),
+    static inline std::unique_ptr<T> instance(
+        std::string config_str,
+        Meta meta,
+        Args&&... args) {
+
+        return std::make_unique<T>(meta.config(config_str),
             std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>
-    static inline T instance(const char* config_str, Args&&... args) {
+    static inline std::unique_ptr<T> instance(
+        std::string config_str,
+        Args&&... args) {
+
+        return instance<T>(config_str,
+            T::meta(),
+            std::forward<Args>(args)...);
+    }
+
+    template<typename T, typename... Args>
+    static inline std::unique_ptr<T> instance(
+        const char* config_str,
+        Args&&... args) {
+
         return instance<T>(std::string(config_str),
+            T::meta(),
             std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>
-    static inline T instance(Args&&... args) {
+    static inline std::unique_ptr<T> instance(Meta meta, Args&&... args) {
         return instance<T>(std::string(),
+            meta,
             std::forward<Args>(args)...);
+    }
+
+    template<typename T, typename... Args>
+    static inline std::unique_ptr<T> instance(Args&&... args) {
+        return instance<T>(std::string(),
+            T::meta(),
+            std::forward<Args>(args)...);
+    }
+
+    template<typename T>
+    static inline std::unique_ptr<T> instance(Meta meta) {
+        return instance<T>(std::string(), meta);
+    }
+
+    template<typename T>
+    static inline std::unique_ptr<T> instance() {
+        return instance<T>(std::string(), T::meta());
     }
 
     inline Algorithm() = delete;

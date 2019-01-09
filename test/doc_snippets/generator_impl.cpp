@@ -38,6 +38,6 @@ public:
 
 TEST(doc_generator_impl, test) {
     auto generator = Algorithm::instance<MyGenerator>("length=7, char=64");
-    ASSERT_EQ("@@@@@@@", generator.generate());
+    ASSERT_EQ("@@@@@@@", generator->generate());
 }
 

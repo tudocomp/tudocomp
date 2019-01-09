@@ -1,14 +1,10 @@
 #pragma once
 
 #include <unordered_set>
+#include <tudocomp/util/rollinghash/rabinkarphash.hpp>
 
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/Literal.hpp>
-#include <tudocomp/Range.hpp>
-#include <tudocomp/io.hpp>
-#include <tudocomp/util/View.hpp>
-
-#include <tudocomp/util/rollinghash/rabinkarphash.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 namespace tdc {
 
@@ -75,7 +71,7 @@ public:
 };
 
 template<typename sparse_factor_coder_t>
-class LongCommonStringCompressor: public Compressor {
+class LongCommonStringCompressor: public CompressorAndDecompressor {
     using map_hash_t = size_t; // given by unordered_map API
 
     struct Offset {
@@ -133,9 +129,7 @@ public:
         return m;
     }
 
-    inline LongCommonStringCompressor(Config&& cfg)
-        : Compressor(std::move(cfg)) {
-    }
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     inline virtual void compress(Input& input, Output& output) override final {
         size_t b = config().param("b").as_uint();
@@ -341,6 +335,10 @@ public:
 
         auto o = output.as_stream();
         o << View(buffer);
+    }
+
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
     }
 };
 

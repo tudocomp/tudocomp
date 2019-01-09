@@ -1,10 +1,8 @@
 #pragma once
 
-#include <tudocomp/Compressor.hpp>
-#include <tudocomp/Literal.hpp>
-#include <tudocomp/Range.hpp>
-#include <tudocomp/io.hpp>
 #include <tudocomp/util/int_coder.hpp>
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/decompressors/DividingDecompressor.hpp>
 
 namespace tdc {
 
@@ -76,31 +74,6 @@ struct BlockedDividingStrategy: public Algorithm {
 
 template<typename dividing_t>
 class DividingCompressor: public Compressor {
-    struct BitISink {
-        std::istream* m_ptr;
-        uint8_t m_byte = 0;
-        int8_t m_cursor = -1;
-
-        inline uint8_t read_bit() {
-            if (m_cursor < 0) {
-                char c;
-                bool res = (bool)m_ptr->get(c);
-                DCHECK(res);
-                m_byte = c;
-                m_cursor = 7;
-            }
-
-            bool ret = (m_byte & (1 << m_cursor)) != 0;
-            m_cursor--;
-            return ret;
-        }
-
-        template<class T>
-        inline T read_int(size_t amount = sizeof(T) * CHAR_BIT) {
-            return ::tdc::read_int<T>(*this, amount);
-        }
-    };
-
     struct BitOSink {
         std::ostream* m_ptr;
         uint8_t m_byte = 0;
@@ -125,6 +98,12 @@ class DividingCompressor: public Compressor {
         }
     };
 
+    inline auto find_compressor() const {
+        return Registry::of<Compressor>().find(
+            meta::ast::convert<meta::ast::Object>( // TODO: shorter syntax for conversion?
+                config().param("compressor").ast()));
+    }
+
 public:
     inline static Meta meta() {
         Meta m(Compressor::type_desc(), "dividing",
@@ -137,13 +116,14 @@ public:
 
     using Compressor::Compressor;
 
-    template<typename F>
-    inline void compress_for_each_block(Input& _input, Output& output, F f) const {
+    inline virtual void compress(Input& _input, Output& output) override final {
+        auto entry = find_compressor();
+        const dividing_t strategy { config().sub_config("strategy") };
+
         // TODO: Fix the special case in file slicing that requires this extra buffer here
         auto _view = _input.as_view();
         auto input = Input::from_memory(_view);
 
-        const dividing_t strategy { config().sub_config("strategy") };
         auto offsets = strategy.split_at(input);
 
         for (size_t i = 0; i < offsets.size() - 1; i++) {
@@ -151,7 +131,7 @@ public:
             {
                 auto slice = Input(input, offsets[i], offsets[i + 1]);
                 auto tmp_o = Output(buffer);
-                f(slice, tmp_o);
+                entry.select()->compress(slice, tmp_o);
             }
             {
                 auto os = output.as_stream();
@@ -169,77 +149,12 @@ public:
         }
     }
 
-    template<typename F>
-    inline void decompress_for_each_block(Input& _input, Output& output, F f) const {
-        // TODO: Fix the special case in file slicing that requires this extra buffer here
-        auto _view = _input.as_view();
-        auto input = Input::from_memory(_view);
-
-        size_t size = input.size();
-        size_t cursor = 0;
-
-        while (cursor < size) {
-            size_t block_size;
-            {
-                auto local_input = Input(input, cursor);
-                auto is = local_input.as_stream();
-                block_size = ::tdc::read_int<size_t>(BitISink { &is });
-            }
-            cursor += sizeof(size_t);
-            {
-                auto block_slice = Input(input, cursor, cursor + block_size);
-                f(block_slice, output);
-            }
-            cursor += block_size;
-        }
-        DCHECK_EQ(cursor, size);
-
-        {
-            // This zero-length write happens just to trigger the creation of an
-            // empty output file in case of a empty input
-            auto os = output.as_stream();
-            os << ""_v;
-        }
-    }
-
-    inline virtual void compress(Input& input, Output& output) override final {
-        auto option_value = config().param("compressor");
-
-        //TODO: eliminate tdc_algorithms dependency
-        auto entry = Registry::of<Compressor>().find(
-            meta::ast::convert<meta::ast::Object>(option_value.ast()));
-
-        auto is = entry.decl()->input_restrictions();
-
-        // Make sure null termination and escaping happens
-        auto input2 = Input(input, is);
-
-        compress_for_each_block(input2, output, [&](auto& input, auto& output){
-            // TODO: If compressors ever got changed to not store runtime state,
-            // then this init could happen once
-            auto compressor = entry.select();
-            compressor->compress(input, output);
-        });
-    }
-
-    inline virtual void decompress(Input& input, Output& output) override final {
-        auto option_value = config().param("compressor");
-
-        //TODO: eliminate tdc_algorithms dependency
-        auto entry = Registry::of<Compressor>().find(
-            meta::ast::convert<meta::ast::Object>(option_value.ast()));
-
-        auto is = entry.decl()->input_restrictions();
-
-        // Make sure null termination and escaping gets reverted
-        auto output2 = Output(output, is);
-
-        decompress_for_each_block(input, output2, [&](auto& input, auto& output){
-            // TODO: If compressors ever got changed to not store runtime state,
-            // then this init could happen once
-            auto compressor = entry.select();
-            compressor->decompress(input, output);
-        });
+    inline virtual std::unique_ptr<Decompressor> decompressor() const override {
+        // FIXME: construct AST and pass it
+        std::stringstream cfg;
+        auto c = find_compressor().select(); // TODO: ugh
+        cfg << "decompressor=" << c->decompressor()->config().str() << ",";
+        return Algorithm::instance<DividingDecompressor>(cfg.str());
     }
 };
 

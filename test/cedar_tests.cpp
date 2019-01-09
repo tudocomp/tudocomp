@@ -8,7 +8,6 @@
 #include <tudocomp/compressors/lz78/TernaryTrie.hpp>
 #include <tudocomp/compressors/lz78/CedarTrie.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
 
 using namespace tdc;
 
@@ -26,7 +25,7 @@ TEST_P(NotCedarLz78Compress, test) {
     auto c = Algorithm::instance<LZ78Compressor<ASCIICoder, lz78::BinaryTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
-    c.compress(i, o);
+    c->compress(i, o);
     ASSERT_EQ(o.result(), GetParam().out);
 }
 INSTANTIATE_TEST_CASE_P(
@@ -45,7 +44,7 @@ TEST_P(CedarLz78Compress, test) {
     auto c = Algorithm::instance<LZ78Compressor<ASCIICoder, lz78::CedarTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
-    c.compress(i, o);
+    c->compress(i, o);
     ASSERT_EQ(o.result(), GetParam().out);
 }
 INSTANTIATE_TEST_CASE_P(
@@ -63,7 +62,7 @@ TEST_P(NotCedarLzwCompress, test) {
     auto c = Algorithm::instance<LZWCompressor<ASCIICoder, lz78::BinaryTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
-    c.compress(i, o);
+    c->compress(i, o);
     ASSERT_EQ(o.result(), GetParam().out);
 }
 INSTANTIATE_TEST_CASE_P(InputOutput,
@@ -85,7 +84,7 @@ TEST_P(CedarLzwCompress, test) {
     auto c = Algorithm::instance<LZWCompressor<ASCIICoder, lz78::CedarTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
-    c.compress(i, o);
+    c->compress(i, o);
     ASSERT_EQ(o.result(), GetParam().out);
 }
 INSTANTIATE_TEST_CASE_P(InputOutput,

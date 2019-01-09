@@ -21,7 +21,9 @@ private:
 public:
     inline static Meta meta() {
         return super_t::meta(Meta(
-            lzss_coder_type(), "bi", "Buffered bidirectional coding"));
+            lzss_bidirectional_coder_type(),
+            "bi",
+            "Buffered bidirectional coding"));
     }
 
     using super_t::LZSSCoder;

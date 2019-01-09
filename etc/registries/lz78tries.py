@@ -12,7 +12,7 @@
 # Universal coders
 universal_coders = [
     AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
-    AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
+    AlgorithmConfig(name="BinaryCoder", header="coders/BinaryCoder.hpp"),
     AlgorithmConfig(name="EliasGammaCoder", header="coders/EliasGammaCoder.hpp"),
     AlgorithmConfig(name="EliasDeltaCoder", header="coders/EliasDeltaCoder.hpp"),
     AlgorithmConfig(name="SLEIntCoder", header="coders/SLEIntCoder.hpp"),
@@ -98,7 +98,7 @@ if config_match("^#define JUDY_H_AVAILABLE 1"): # if the Judy trie is available
 ]
 
 lit_coder = [
-    AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
+    AlgorithmConfig(name="BinaryCoder", header="coders/BinaryCoder.hpp"),
     AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
     AlgorithmConfig(name="HuffmanCoder", header="coders/HuffmanCoder.hpp"),
 ]

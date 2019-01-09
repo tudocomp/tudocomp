@@ -1,18 +1,17 @@
 #pragma once
 
+#include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
 
-#include <tudocomp/compressors/lzw/LZWDecoding.hpp>
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
-
 #include <tudocomp/Range.hpp>
-#include <tudocomp/Coder.hpp>
+#include <tudocomp/decompressors/LZWDecompressor.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
 // For default params
 #include <tudocomp/compressors/lz78/TernaryTrie.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/BinaryCoder.hpp>
 
 namespace tdc {
 
@@ -32,7 +31,7 @@ public:
         Meta m(Compressor::type_desc(), "lzw",
             "Computes the Lempel-Ziv-Welch factorization of the input.");
         m.param("coder", "The output encoder.")
-            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BitCoder>());
+            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
         m.param("lz78trie", "The trie data structure implementation.")
             .strategy<dict_t>(TypeDesc("lz78trie"),
                 Meta::Default<lz78::TernaryTrie>());
@@ -114,31 +113,12 @@ public:
         )
     }
 
-    virtual void decompress(Input& input, Output& output) override final {
-        const size_t reserved_size = input.size();
-        //TODO C::decode(in, out, dms, reserved_size);
-        auto out = output.as_stream();
-        typename coder_t::Decoder decoder(config().sub_config("coder"), input);
-
-        size_t counter = 0;
-
-        //TODO file_corrupted not used!
-        lzw::decode_step([&](lz78::factorid_t& entry, bool reset, bool &file_corrupted) -> bool {
-            if (reset) {
-                counter = 0;
-            }
-
-            if(decoder.eof()) {
-                return false;
-            }
-
-            lzw::Factor factor(decoder.template decode<len_t>(Range(counter + ULITERAL_MAX + 1)));
-            counter++;
-            entry = factor;
-            return true;
-        }, out, m_dict_max_size == 0 ? lz78::DMS_MAX : m_dict_max_size, reserved_size);
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        // FIXME: construct AST and pass it
+        std::stringstream cfg;
+        cfg << "dict_size=" << to_string(m_dict_max_size);
+        return Algorithm::instance<LZWDecompressor<coder_t>>(cfg.str());
     }
-
 };
 
 }

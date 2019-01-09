@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp/Tags.hpp>
+
 #include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/ArrayDS.hpp>
@@ -15,14 +17,8 @@ public:
     inline static Meta meta() {
         Meta m(TypeDesc("sa"), "divsufsort",
             "Constructs the suffix array using divsufsort.");
+        m.add_tag(tags::require_sentinel);
         return m;
-    }
-
-    inline static ds::InputRestrictions restrictions() {
-        return ds::InputRestrictions {
-            { 0 },
-            true
-        };
     }
 
     template<typename textds_t>

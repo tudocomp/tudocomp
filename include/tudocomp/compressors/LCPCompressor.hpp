@@ -3,6 +3,7 @@
 #include <tudocomp/util.hpp>
 
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/Tags.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lzss/FactorizationStats.hpp>
@@ -14,34 +15,33 @@
 
 #include <tudocomp_stat/StatPhase.hpp>
 
-// For default params
-#include <tudocomp/compressors/lcpcomp/decompress/ScanDec.hpp>
 #include <tudocomp/compressors/lcpcomp/compress/ArraysComp.hpp>
+#include <tudocomp/decompressors/LCPDecompressor.hpp>
+
+#include <tudocomp/compressors/lzss/LZSSCoder.hpp>
 
 namespace tdc {
 
 /// Factorizes the input by finding redundant phrases in a re-ordered version
 /// of the LCP table.
-template<typename lzss_coder_t, typename strategy_t, typename dec_t, typename text_t = TextDS<>>
+template<typename lzss_coder_t, typename strategy_t = lcpcomp::ArraysComp, typename text_t = TextDS<>>
 class LCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m(Compressor::type_desc(), "lcpcomp",
             "Computes the lcpcomp factorization of the input.");
         m.param("coder", "The output encoder.")
-            .strategy<lzss_coder_t>(TypeDesc("lzss_coder"));
+            .strategy<lzss_coder_t>(lzss_bidirectional_coder_type());
         m.param("comp", "The factorization strategy for compression.")
             .strategy<strategy_t>(lcpcomp::comp_strategy_type(),
                 Meta::Default<lcpcomp::ArraysComp>());
-        m.param("dec", "The strategy for decompression.")
-            .strategy<dec_t>(lcpcomp::dec_strategy_type(),
-                Meta::Default<lcpcomp::ScanDec>());
         m.param("textds", "The text data structure provider.")
             .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
         m.param("threshold", "The minimum factor length.").primitive(5);
         m.param("flatten", "Flatten reference chains after factorization.")
             .primitive(1); // 0 or 1
-        m.uses_textds<text_t>(strategy_t::textds_flags());
+        m.inherit_tag<text_t>(tags::require_sentinel);
+        m.inherit_tag<lzss_coder_t>(tags::lossy);
         return m;
     }
 
@@ -49,8 +49,6 @@ public:
 
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
-        DCHECK(in.ends_with(uint8_t(0)));
-
         auto text = StatPhase::wrap("Construct Text DS", [&]{
             return text_t(config().sub_config("textds"),
                 in, strategy_t::textds_flags());
@@ -89,15 +87,8 @@ public:
         });
     }
 
-    inline virtual void decompress(Input& input, Output& output) override {
-        dec_t decomp(config().sub_config("dec"));
-        {
-            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(input);
-            decoder.decode(decomp);
-        }
-
-        auto outs = output.as_stream();
-        decomp.write_to(outs);
+    inline virtual std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::instance<LCPDecompressor<lzss_coder_t>>();
     }
 };
 
