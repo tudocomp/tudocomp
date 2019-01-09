@@ -4,8 +4,10 @@
 #include <tudocomp/ds/DSDef.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
+#include <tudocomp/Tags.hpp>
 #include <tudocomp/util/divsufsort.hpp>
 #include <tudocomp/util.hpp>
+
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
@@ -15,6 +17,7 @@ class DivSufSort : public Algorithm {
 public:
     inline static Meta meta() {
         Meta m(ds::provider_type(), "divsufsort");
+        m.add_tag(tags::require_sentinel);
         return m;
     }
 

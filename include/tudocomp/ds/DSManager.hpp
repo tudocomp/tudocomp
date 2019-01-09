@@ -11,6 +11,9 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/util/View.hpp>
 
+#include <tudocomp/Error.hpp>
+#include <tudocomp/Tags.hpp>
+
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/DSDef.hpp>
 #include <tudocomp/ds/DSDependencyGraph.hpp>
@@ -130,18 +133,15 @@ public:
         Meta m(TypeDesc("ds"), "ds");
         m.param("compress").primitive("delayed");
         m.param("providers").strategy_list<provider_ts...>(ds::provider_type());
+        m.inherit_tags_from_all(tl::type_list<provider_ts...>());
         return m;
     }
 
     inline DSManager(Config&& cfg, const View& input)
         : Algorithm(std::move(cfg)), m_input(input) {
 
-        if(!m_input.ends_with(uint8_t(0))){
-             throw std::logic_error(
-                 "Input has no sentinel! Please make sure you declare "
-                 "the compressor calling this with "
-                 "`m.needs_sentinel_terminator()` in its `meta()` function."
-            );
+        if(meta().has_tag(tags::require_sentinel)){
+            MissingSentinelError::check(m_input);
         }
 
         construct_providers(std::make_index_sequence<
