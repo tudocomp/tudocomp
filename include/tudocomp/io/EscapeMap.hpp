@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <tudocomp/ds/TextDSFlags.hpp>
 
 namespace tdc {namespace io {
     // All bytes that can be used for escaping.
