@@ -2,7 +2,8 @@
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/ds/bwt.hpp>
-#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/DSManager.hpp>
+#include <tudocomp/ds/providers/DivSufSort.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/decompressors/BWTDecompressor.hpp>
 #include <tudocomp/Tags.hpp>
@@ -11,15 +12,15 @@
 
 namespace tdc {
 
-template<typename text_t = TextDS<>>
+template<typename ds_t = DSManager<DivSufSort>>
 class BWTCompressor : public Compressor {
 public:
     inline static Meta meta() {
         Meta m(Compressor::type_desc(), "bwt",
             "Computes the Burrows-Wheeler transform of the input text.");
-        m.param("textds", "The text data structure provider.")
-            .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
-        m.inherit_tag<text_t>(tags::require_sentinel);
+        m.param("ds", "The text data structure provider.")
+            .strategy<ds_t>(ds::type(), Meta::Default<DSManager<DivSufSort>>());
+        m.inherit_tag<ds_t>(tags::require_sentinel);
         return m;
     }
 
@@ -29,18 +30,17 @@ public:
         auto ostream = output.as_stream();
         auto in = input.as_view();
 
-        text_t t(config().sub_config("textds"), in, text_t::SA);
-		DVLOG(2) << vec_to_debug_string(t);
-		const len_t input_size = t.size();
+        ds_t ds(config().sub_config("ds"), in);
+
+		const len_t input_size = in.size();
 
         StatPhase::wrap("Construct Text DS", [&]{
-            t.require(text_t::SA);
-            DVLOG(2) << vec_to_debug_string(t.require_sa());
+            ds.template construct<ds::SUFFIX_ARRAY>();
         });
 
-        const auto& sa = t.require_sa();
+        const auto& sa = ds.template get<ds::SUFFIX_ARRAY>();
         for(size_t i = 0; i < input_size; ++i) {
-            ostream << bwt::bwt(t,sa,i);
+            ostream << bwt::bwt(in, sa, i);
         }
     }
 
