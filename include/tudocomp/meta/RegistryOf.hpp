@@ -149,10 +149,6 @@ public:
             return m_decl;
         }
 
-        inline const Config& config() const {
-            return m_cfg.decl();
-        }
-
         inline Selection select() const {
             return Selection(m_decl, (*m_ctor)(Config(m_cfg)));
         }
