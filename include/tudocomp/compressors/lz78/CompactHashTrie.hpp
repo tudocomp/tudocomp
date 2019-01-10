@@ -167,7 +167,7 @@ public:
         // could also do it by the handler mechanism if this turns out to be a problem
         DCHECK_NE(newleaf_id, 0u);
 
-        auto key = create_node(parent,c);
+        auto key = create_node(parent+1,c);
         ref_t val = m_table.access_kv_width(key, key_width(key), value_width(newleaf_id));
         if (val == 0u) {
             val = newleaf_id;

@@ -70,14 +70,14 @@ public:
         auto parent = parent_w.id();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
         if(!m_table2.empty()) { // already using the second hash table
-            auto ret = m_table2.insert(std::make_pair(create_node(parent,c), newleaf_id));
+            auto ret = m_table2.insert(std::make_pair(create_node(parent+1,c), newleaf_id));
             if(ret.second) {
                 return node_t(newleaf_id, true); // added a new node
             }
             return node_t(ret.first.value(), false);
         }
         // using still the first hash table
-        auto ret = m_table.insert(std::make_pair(create_node(parent,c), newleaf_id));
+        auto ret = m_table.insert(std::make_pair(create_node(parent+1,c), newleaf_id));
         if(ret.second) {
             if(tdc_unlikely(m_table.table_size()*m_table.max_load_factor() < m_table.m_entries+1)) {
                 const size_t expected_size = (m_table.m_entries + 1 + lz78_expected_number_of_remaining_elements(m_table.entries(),m_table.m_n,m_table.m_remaining_characters))/0.95;

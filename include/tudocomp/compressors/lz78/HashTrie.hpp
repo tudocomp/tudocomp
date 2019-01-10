@@ -71,7 +71,7 @@ public:
 
         auto ret = m_table.insert(
             std::make_pair(
-                create_node(parent,c),
+                create_node(parent+1,c),
                 newleaf_id
             )
         );
