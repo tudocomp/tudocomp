@@ -131,8 +131,8 @@ private:
 public:
     inline static Meta meta() {
         Meta m(ds::type(), "ds");
-        m.param("compress").primitive("delayed");
         m.param("providers").strategy_list<provider_ts...>(ds::provider_type());
+        m.param("compress").primitive("delayed");
         m.inherit_tags_from_all(tl::type_list<provider_ts...>());
         return m;
     }
