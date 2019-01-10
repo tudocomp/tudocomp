@@ -13,12 +13,13 @@
 
 namespace tdc {
 namespace lz78 {
-namespace ch {
-using namespace compact_sparse_hashmap;
 
 constexpr TypeDesc compact_hash_strategy_type() {
     return TypeDesc("compact_hash_strategy");
 }
+
+namespace ch {
+using namespace compact_sparse_hashmap;
 
 template<typename table_t>
 class Common {
@@ -531,10 +532,7 @@ private:
 
 template<typename compact_hash_strategy_t = ch::Sparse>
 class CompactHashTrie : public Algorithm, public LZ78Trie<> {
-    using table_t = typename compact_hash_strategy_t::table_t;
-    using ref_t = typename table_t::reference_type;
-
-    table_t m_table;
+    compact_hash_strategy_t m_table;
     //std::unordered_map<uint64_t, factorid_t> m_table;
     size_t m_key_width = 0;
     size_t m_value_width = 0;
@@ -553,7 +551,7 @@ public:
         Meta m(lz78_trie_type(), "compact_sparse_hash", "Compact Sparse Hash Trie");
         m.param("load_factor").primitive(50);
         m.param("compact_hash_strategy").strategy<compact_hash_strategy_t>(
-            compact_hash_strategy_type(), Meta::Default<Sparse>());
+            compact_hash_strategy_type(), Meta::Default<ch::Sparse>());
         return m;
     }
 
