@@ -126,6 +126,13 @@ tdc.compressors = [
     AlgorithmConfig(name="LongCommonStringCompressor", header="compressors/LongCommonStringCompressor.hpp", sub=[long_common_strat]),
 ]
 
+##### Export available decompressors #####
+tdc.decompressors = [
+    AlgorithmConfig(name="LZ78Decompressor", header="decompressors/LZ78Decompressor.hpp", sub=[universal_coders]),
+    AlgorithmConfig(name="LZWDecompressor", header="decompressors/LZWDecompressor.hpp", sub=[universal_coders]),
+    AlgorithmConfig(name="WrapDecompressor", header="decompressors/WrapDecompressor.hpp"),
+]
+
 ##### Export available string generators #####
 tdc.generators = [
     AlgorithmConfig(name="FibonacciGenerator", header="generators/FibonacciGenerator.hpp"),
