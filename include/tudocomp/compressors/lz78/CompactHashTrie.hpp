@@ -203,7 +203,7 @@ class NoKVGrow {
 public:
     inline static Meta meta() {
         Meta m(compact_hash_strategy_type(), "no_k_grow", "Adapter that does not grow the bit widths of keys, but rather creates additional hash tables as needed.");
-        m.option("compact_hash_strategy")
+        m.param("compact_hash_strategy")
             .templated<compact_hash_strategy_t>("compact_hash_strategy");
         return m;
     }
@@ -359,7 +359,7 @@ class NoKGrow {
 public:
     inline static Meta meta() {
         Meta m(compact_hash_strategy_type(), "no_kv_grow", "Adapter that does not grow the bit widths of keys and values, but rather creates additional hash tables as needed.");
-        m.option("compact_hash_strategy")
+        m.param("compact_hash_strategy")
             .templated<compact_hash_strategy_t>("compact_hash_strategy");
         return m;
     }
@@ -558,9 +558,8 @@ public:
     inline CompactHashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
         , LZ78Trie(n,remaining_characters)
-        , m_table(zero_or_next_power_of_two(reserve))
+        , m_table(zero_or_next_power_of_two(reserve), this->config().param("load_factor").as_float()/100.0f)
     {
-        m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
     }
 
     IF_STATS(
