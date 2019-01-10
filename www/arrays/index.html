@@ -23,7 +23,7 @@
     <div class="qa-main">
         <div class="qa-description">Enter your text below to generate useful data structures!</div>
         <textarea class="qa-textarea" id="textSource" placeholder="MISSISSIPPI"></textarea>
-        <div class="qa-description">Choose your data structures (drag and drop or double-click):</div>
+        <div class="qa-description">Choose your array data structures and factorizations (drag and drop or double-click):</div>
         <div class="qa-structures">
             <div id="qa-structures-enabled">
                 <div class="qa-structures-header">Enabled: </div>
@@ -41,6 +41,10 @@
                 <div class="qa-structure qa-structure-text" data-ds="F">Front Row</div>
                 <div class="qa-structure qa-structure-text" data-ds="BWT">BWT</div>
                 <div class="qa-structure" data-ds="LF">LF Mapping</div>
+                <div class="qa-structure" data-ds="LPF">LPF Array</div>
+                <div class="qa-structure" data-ds="SAIS">SAIS Array</div>
+                <div class="qa-structure qa-structure-factorization" data-ds="LZ77">LZ77 Fact</div>
+                <div class="qa-structure qa-structure-factorization" data-ds="Lyndon">Lyndon Fact</div>
             </div>
         </div>
         <div class="qa-options">
@@ -49,8 +53,9 @@
             <label class="qa-option"><input class="qa-option-cbx" data-opt="space" type="checkbox" checked>Space-Separated</label>
             <label class="qa-option"><input class="qa-option-cbx" data-opt="comma" type="checkbox">Comma-Separated</label>
             <label class="qa-option"><input class="qa-option-cbx" data-opt="whitespace" type="checkbox" checked>Whitespaces as &bbrk; and &crarr;</label>
+            <label class="qa-option"><input class="qa-option-cbx" data-opt="facttext" type="checkbox" checked>Factorization as Bars</label>
         </div>
-        <div class="qa-description">We have built the following data structures for you:</div>
+        <div class="qa-description">We have built the following array data structures and factorizations for you:</div>
         <textarea class="qa-textarea" style="flex-grow:1;line-height:175%;" id="arraysDestination" readonly></textarea>
     </div>
     

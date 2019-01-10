@@ -1,100 +1,82 @@
 #pragma once
 
-#include <tudocomp/Compressor.hpp>
-#include <tudocomp/Env.hpp>
-#include <tudocomp/RegistryOf.hpp>
-#include <tudocomp/io.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
-#include <vector>
 #include <memory>
+#include <vector>
+
+#include <sstream>
+
+#include <tudocomp/io.hpp>
+#include <tudocomp/meta/Registry.hpp>
+#include <tudocomp/Compressor.hpp>
+#include <tudocomp/decompressors/ChainDecompressor.hpp>
 
 namespace tdc {
+
+class ChainSyntaxPreprocessor {
+public:
+    static inline std::string preprocess(const std::string& str) {
+        // replace substrings separated by ':' by chain invokations
+        size_t pos = str.find(':');
+        if(pos != std::string::npos) {
+            return std::string("chain(") +
+                    str.substr(0, pos) + ", " +
+                    preprocess(str.substr(pos+1)) + ")"; // FIXME: call global preprocessor!
+        } else {
+            return str;
+        }
+    }
+};
 
 class ChainCompressor: public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "chain");
-        m.option("first").dynamic<Compressor>();
-        m.option("second").dynamic<Compressor>();
+        Meta m(Compressor::type_desc(), "chain",
+            "Executes two compressors consecutively, passing the first "
+            "compressor's output to the input of the second.");
+        m.param("first", "The first compressor.")
+            .unbound_strategy(Compressor::type_desc());
+        m.param("second", "The second compressor.")
+            .unbound_strategy(Compressor::type_desc());
         return m;
     }
 
-    /// No default construction allowed
-    inline ChainCompressor() = delete;
+private:
+    std::unique_ptr<Compressor> m_first, m_second;
 
-    /// Construct the class with an environment and the algorithms to chain.
-    inline ChainCompressor(Env&& env):
-        Compressor(std::move(env)) {}
+    std::unique_ptr<Compressor> get_compressor(const std::string& option) {
+        return Registry::of<Compressor>().select(
+            meta::ast::convert<meta::ast::Object>( // TODO: shorter syntax for conversion?
+                config().param(option).ast())).move_instance();
+    }
 
-    template<class F>
-    inline void chain(Input& input, Output& output, bool reverse, F f) {
-        string_ref first_algo = "first";
-        string_ref second_algo = "second";
-        if (reverse) {
-            std::swap(first_algo, second_algo);
-        }
+public:
+    inline ChainCompressor(Config&& cfg) : Compressor(std::move(cfg)) {
+        m_first = get_compressor("first");
+        m_second = get_compressor("second");
+    }
 
-        auto run = [&](Input& i, Output& o, string_ref option) {
-            auto& option_value = env().option(option);
-
-            auto av = option_value.as_algorithm();
-            auto textds_flags = av.textds_flags();
-
-            DLOG(INFO) << "dynamic creation of " << av.name() << "\n";
-
-            auto compressor = env().root().select_algorithm<Compressor>(av);
-
-            f(i, o, *compressor, textds_flags);
-        };
-
+    inline virtual void compress(Input& input, Output& output) override final {
         std::vector<uint8_t> between_buf;
         {
             Output between(between_buf);
-            run(input, between, first_algo);
+            m_first->compress(input, between);
+            DVLOG(1) << "Buffer between chain: "
+                     << vec_to_debug_string(between_buf);
         }
-        DLOG(INFO) << "Buffer between chain: " << vec_to_debug_string(between_buf);
         {
             Input between(between_buf);
-            run(between, output, second_algo);
+            m_second->compress(between, output);
+            // FIXME: between_buf should be freed as soon as possible to avoid
+            //        wasting memory in longer chains!
         }
     }
 
-    /// Compress `inp` into `out`.
-    ///
-    /// \param input The input stream.
-    /// \param output The output stream.
-    inline virtual void compress(Input& input, Output& output) override final {
-        chain(input, output, false, [](Input& i,
-                                       Output& o,
-                                       Compressor& c,
-                                       ds::InputRestrictionsAndFlags flags) {
-            bool res = flags.has_restrictions();
-            if (res) {
-                auto i2 = Input(i, flags);
-                c.compress(i2, o);
-            } else {
-                c.compress(i, o);
-            }
-        });
-    }
-
-    /// Decompress `inp` into `out`.
-    ///
-    /// \param input The input stream.
-    /// \param output The output stream.
-    inline virtual void decompress(Input& input, Output& output) override final {
-        chain(input, output, true, [](Input& i,
-                                      Output& o,
-                                      Compressor& c,
-                                      ds::InputRestrictionsAndFlags flags) {
-            bool res = flags.has_restrictions();
-            if (res) {
-                auto o2 = Output(o, flags);
-                c.decompress(i, o2);
-            } else {
-                c.decompress(i, o);
-            }
-        });
+    inline virtual std::unique_ptr<Decompressor> decompressor() const override {
+        // FIXME: construct AST and pass it
+        std::stringstream cfg;
+        cfg << "first=" << m_second->decompressor()->config().str() << ",";
+        cfg << "second=" << m_first->decompressor()->config().str();
+        return Algorithm::instance<ChainDecompressor>(cfg.str());
     }
 };
 

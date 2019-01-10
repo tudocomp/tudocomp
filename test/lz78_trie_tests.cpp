@@ -4,7 +4,6 @@
 #include <gtest/gtest.h>
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 
@@ -84,7 +83,7 @@ struct TestTrie {
 };
 
 template<typename T>
-void trie_test_single(TestTrie test, bool test_values) {
+void trie_test_single(TestTrie test, bool test_values, bool debug_case = false) {
     auto& should_trie = test.root;
 
     // Only add single \0 root for now.
@@ -93,21 +92,31 @@ void trie_test_single(TestTrie test, bool test_values) {
     size_t is_trie_size = 1;
 
     size_t remaining = test.input.size();
-    auto trie = builder<T>().instance(remaining, remaining);
-    trie.add_rootnode(0);
+    auto trie = Algorithm::instance<T>(remaining, remaining);
+    trie->add_rootnode(0);
 
     auto is_trie_node = &is_trie;
-    auto node = trie.get_rootnode(0);
+    auto node = trie->get_rootnode(0);
+
+    if (debug_case) {
+        std::cout << "#########################################################\n";
+        std::cout << "[test] Input: '" << vec_to_debug_string(test.input) << "'\n";
+    }
 
     for (uint8_t c : test.input) {
         remaining--;
-        auto child = trie.find_or_insert(node, c);
+        auto child = trie->find_or_insert(node, c);
 
-        // std::cout << "char '" << char(c) << "'\n";
-        // trie.debug_print();
+        if (debug_case) {
+            std::cout << "[test] find_or_insert("
+                      << node.id() << (node.is_new() ? " (new)": "") << ", "
+                      << uint(c) << ")"
+                      << " -> "
+                      << child.id() << (child.is_new() ? " (new)": "")
+                      << "\n";
+        }
 
         if (child.is_new()) {
-            // std::cout << " not found\n";
             is_trie_node->add(c,is_trie_size);
 
             // Check that insert worked correctly
@@ -121,10 +130,8 @@ void trie_test_single(TestTrie test, bool test_values) {
 
             is_trie_size++;
             is_trie_node = &is_trie;
-            node = trie.get_rootnode(0);
+            node = trie->get_rootnode(0);
         } else {
-            // std::cout << " found\n";
-
             // Check that insert worked correctly, and look at value
             try  {
                 is_trie_node = &is_trie_node->find(c);
@@ -139,7 +146,13 @@ void trie_test_single(TestTrie test, bool test_values) {
     }
 
     ASSERT_EQ(should_trie, is_trie);
-    ASSERT_EQ(is_trie_size, trie.size());
+    ASSERT_EQ(is_trie_size, trie->size());
+
+    if (debug_case) {
+        std::cout << "[test] OK\n";
+        std::cout << "#########################################################\n";
+    }
+
 }
 
 template<typename T>

@@ -23,12 +23,12 @@ class BinaryTrie : public Algorithm, public LZ78Trie<> {
     )
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "binary", "Lempel-Ziv 78 Binary Trie");
+        Meta m(lz78_trie_type(), "binary", "Lempel-Ziv 78 Binary Trie");
         return m;
     }
 
-    inline BinaryTrie(Env&& env, size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-    : Algorithm(std::move(env))
+    inline BinaryTrie(Config&& cfg, size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    : Algorithm(std::move(cfg))
     , LZ78Trie(n,remaining_characters)
     {
         if(reserve > 0) {

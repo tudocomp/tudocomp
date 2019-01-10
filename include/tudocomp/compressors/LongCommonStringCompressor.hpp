@@ -1,23 +1,18 @@
 #pragma once
 
 #include <unordered_set>
+#include <tudocomp/util/rollinghash/rabinkarphash.hpp>
 
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/Env.hpp>
-#include <tudocomp/Literal.hpp>
-#include <tudocomp/Range.hpp>
-#include <tudocomp/io.hpp>
-#include <tudocomp/util/View.hpp>
-
-#include <tudocomp/util/rollinghash/rabinkarphash.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 namespace tdc {
 
-class EscapingSparseFactorCoder: public Algorithm {
+class EscapingSparseFactorCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("sparse_factor_coder", "escaping_sparse_factor_coder");
-        m.option("escape_byte").dynamic(255);
+        Meta m(TypeDesc("sparse_factor_coder"), "escaping_sparse_factor_coder");
+        m.param("escape_byte").primitive(255);
         return m;
     }
 
@@ -25,8 +20,8 @@ public:
         uint8_t m_escape_byte = 0;
         BitOStream m_stream;
     public:
-        inline Coder(Env const& env, Output& output): m_stream(output) {
-            m_escape_byte = env.option("escape_byte").as_integer();
+        inline Coder(Config const& cfg, Output& output): m_stream(output) {
+            m_escape_byte = cfg.param("escape_byte").as_uint();
         }
 
         inline void code_plain(View view) {
@@ -51,8 +46,8 @@ public:
         BitIStream m_stream;
 
     public:
-        inline Decoder(Env const& env, Input& input): m_stream(input) {
-            m_escape_byte = env.option("escape_byte").as_integer();
+        inline Decoder(Config const& cfg, Input& input): m_stream(input) {
+            m_escape_byte = cfg.param("escape_byte").as_uint();
         }
 
         template<typename ByteF, typename FactorF>
@@ -76,7 +71,7 @@ public:
 };
 
 template<typename sparse_factor_coder_t>
-class LongCommonStringCompressor: public Compressor {
+class LongCommonStringCompressor: public CompressorAndDecompressor {
     using map_hash_t = size_t; // given by unordered_map API
 
     struct Offset {
@@ -126,16 +121,18 @@ class LongCommonStringCompressor: public Compressor {
 
 public:
     inline static Meta meta() {
-        Meta m("compressor", "long_common_string");
-        m.option("sparse_factor_coder").templated<sparse_factor_coder_t, EscapingSparseFactorCoder>("sparse_factor_coder");
-        m.option("b").dynamic(20);
+        Meta m(Compressor::type_desc(), "long_common_string");
+        m.param("sparse_factor_coder").strategy<sparse_factor_coder_t>(
+            TypeDesc("sparse_factor_coder"),
+            Meta::Default<EscapingSparseFactorCoder>());
+        m.param("b").primitive(20);
         return m;
     }
 
-    inline LongCommonStringCompressor(Env&& env) : Compressor(std::move(env)) {}
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     inline virtual void compress(Input& input, Output& output) override final {
-        size_t b = env().option("b").as_integer();
+        size_t b = config().param("b").as_uint();
         CHECK_GT(b, 0);
 
         // TODO: Vary hash bit width?
@@ -147,7 +144,7 @@ public:
         auto view = input.as_view();
 
         auto coder = typename sparse_factor_coder_t::Coder {
-            env().env_for_option("sparse_factor_coder"),
+            config().sub_config("sparse_factor_coder"),
             output,
         };
 
@@ -319,7 +316,7 @@ public:
         std::vector<uint8_t> buffer;
 
         auto decoder = typename sparse_factor_coder_t::Decoder {
-            env().env_for_option("sparse_factor_coder"),
+            config().sub_config("sparse_factor_coder"),
             input,
         };
 
@@ -338,6 +335,10 @@ public:
 
         auto o = output.as_stream();
         o << View(buffer);
+    }
+
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
     }
 };
 

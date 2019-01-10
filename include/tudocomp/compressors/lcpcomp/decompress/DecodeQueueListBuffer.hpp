@@ -5,6 +5,8 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
+
 namespace tdc {
 namespace lcpcomp {
 
@@ -12,7 +14,7 @@ constexpr len_t undef_len = std::numeric_limits<len_compact_t>::max();
 class DecodeForwardQueueListBuffer : public Algorithm {
     public:
     inline static Meta meta() {
-        Meta m("lcpcomp_dec", "QueueListBuffer");
+        Meta m(dec_strategy_type(), "QueueListBuffer");
         return m;
     }
 
@@ -46,8 +48,8 @@ private:
     }
 
 public:
-    inline DecodeForwardQueueListBuffer(Env&& env)
-        : Algorithm(std::move(env)),
+    inline DecodeForwardQueueListBuffer(Config&& cfg)
+        : Algorithm(std::move(cfg)),
           m_cursor(0),
           m_longest_chain(0),
           m_current_chain(0),

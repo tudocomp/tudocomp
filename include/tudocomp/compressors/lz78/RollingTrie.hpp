@@ -11,8 +11,8 @@ namespace lz78 {
 template<
     typename HashRoller = ZBackupRollingHash,
     typename HashProber = LinearProber,
-    typename HashFunction = NoopHasher,
-    typename HashManager = SizeManagerPow2
+    typename HashManager = SizeManagerPrime,
+    typename HashFunction = NoopHasher
 >
 class RollingTrie : public Algorithm, public LZ78Trie<> {
     typedef typename HashRoller::key_type key_type;
@@ -26,19 +26,20 @@ class RollingTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "rolling", "Rolling Hash Trie");
-        m.option("hash_roller").templated<HashRoller, ZBackupRollingHash>("hash_roller");
-        m.option("hash_prober").templated<HashProber, LinearProber>("hash_prober");
-        m.option("load_factor").dynamic(30);
-        m.option("hash_function").templated<HashFunction, NoopHasher>("hash_function");
+        Meta m(lz78_trie_type(), "rolling", "Rolling Hash Trie");
+        m.param("hash_roller").strategy<HashRoller>(hash_roller_type(), Meta::Default<ZBackupRollingHash>());
+        m.param("hash_prober").strategy<HashProber>(hash_prober_type(), Meta::Default<LinearProber>());
+        m.param("hash_manager").strategy<HashManager>(hash_manager_type(), Meta::Default<SizeManagerPrime>());
+        m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<NoopHasher>());
+        m.param("load_factor").primitive(30);
         return m;
     }
-    inline RollingTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-        : Algorithm(std::move(env))
+    inline RollingTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+        : Algorithm(std::move(cfg))
         , LZ78Trie(n,remaining_characters)
-        , m_roller(this->env().env_for_option("hash_roller"))
-        , m_table(this->env(), n, remaining_characters) {
-        m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
+        , m_roller(this->config().sub_config("hash_roller"))
+        , m_table(this->config(), n, remaining_characters) {
+        m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         if(reserve > 0) {
             m_table.reserve(reserve);
         }
@@ -48,7 +49,7 @@ public:
         MoveGuard m_guard;
         inline ~RollingTrie() {
             if (m_guard) {
-                m_table.collect_stats(env());
+                m_table.collect_stats(config());
             }
         }
     )

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tudocomp/Tags.hpp>
+
 #include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/ds/CompressMode.hpp>
 #include <tudocomp/ds/ArrayDS.hpp>
@@ -13,20 +15,15 @@ namespace tdc {
 class SADivSufSort: public Algorithm, public ArrayDS {
 public:
     inline static Meta meta() {
-        Meta m("sa", "divsufsort");
+        Meta m(TypeDesc("sa"), "divsufsort",
+            "Constructs the suffix array using divsufsort.");
+        m.add_tag(tags::require_sentinel);
         return m;
     }
 
-    inline static ds::InputRestrictions restrictions() {
-        return ds::InputRestrictions {
-            { 0 },
-            true
-        };
-    }
-
     template<typename textds_t>
-    inline SADivSufSort(Env&& env, const textds_t& t, CompressMode cm)
-        : Algorithm(std::move(env)) {
+    inline SADivSufSort(Config&& cfg, const textds_t& t, CompressMode cm)
+        : Algorithm(std::move(cfg)) {
 
         StatPhase::wrap("Construct SA", [&]{
             // Allocate

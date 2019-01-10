@@ -3,7 +3,6 @@
 #include <unordered_set>
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 

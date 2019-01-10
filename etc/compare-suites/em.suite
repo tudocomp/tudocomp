@@ -1,0 +1,18 @@
+# The default comparison suite, use as a reference
+[
+    #StdCompressor(name='xz', binary='xz', cflags=['-k']),
+    CompressorPair('plcp(theta=2)',
+            compress   = Exec(cmd='/home/dinklage/dev/tudocomp/build_plcp/plcp @IN@ @OUT@ 2 512'),
+            decompress = Exec(cmd='echo'),
+            stats = {
+                'factors':r'num_factors.+?"value": "(.+?)"',
+                'replaced':r'num_replaced.+?"value": "(.+?)"'
+            }),
+    CompressorPair('em-lpf(theta=2)',
+            compress   = Exec(cmd='/home/dinklage/dev/EM-LPF/build/parse 512 @IN@ @OUT@ 2'),
+            decompress = Exec(cmd='echo'),
+            stats = {
+                'factors':r'num_factors: (.+?);',
+                'replaced':r'num_replaced: (.+?);'
+            }),
+]

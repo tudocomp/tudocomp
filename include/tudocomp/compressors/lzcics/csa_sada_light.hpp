@@ -119,7 +119,7 @@ class csa_sada_light
         static const uint32_t linear_decode_limit = 100000;
     private:
         enc_vector_type m_psi;        // psi function
-        size_type       m_alpha;      //! the \alpha-th leaf in the suffix tree has label 1
+        /* size_type       m_alpha;      //! the \alpha-th leaf in the suffix tree has label 1 */
         alphabet_type   m_alphabet;   // alphabet component
 
         mutable std::vector<uint64_t> m_psi_buf; // buffer for decoded psi values
@@ -127,7 +127,7 @@ class csa_sada_light
         void copy(const csa_sada_light& csa)
         {
             m_psi        = csa.m_psi;
-            m_alpha      = csa.m_alpha;
+            // m_alpha      = csa.m_alpha;
             m_alphabet   = csa.m_alphabet;
         };
 
@@ -251,7 +251,7 @@ class csa_sada_light
         {
             if (this != &csa) {
                 m_psi        = std::move(csa.m_psi);
-                m_alpha      = std::move(csa.m_alphabet);
+                // m_alpha      = std::move(csa.m_alphabet);
                 m_alphabet   = std::move(csa.m_alphabet);
                 m_psi_buf    = std::move(csa.m_psi_buf);
             }
@@ -274,9 +274,9 @@ class csa_sada_light
             return t_dens;
         }
         
-        size_type alpha() const {
-            return m_alpha;
-        }
+        /* size_type alpha() const { */
+        /*     return m_alpha; */
+        /* } */
 };
 
 // == template functions ==
@@ -313,7 +313,7 @@ csa_sada_light<t_enc_vec, t_dens, t_inv_dens, t_sa_sample_strat, t_isa, t_alphab
         //strictly speaking, psi[0] is not defined, but due to the
         //rotation of the string for the BWT, psi[0] is precisely alpha
         //(with SA[alpha] = 0)
-        m_alpha = psi[0];
+        /* m_alpha = psi[0]; */
 
         std::string psi_file = cache_file_name(conf::KEY_PSI, config);
         if (!store_to_cache(psi, conf::KEY_PSI, config)) {
@@ -334,7 +334,7 @@ auto csa_sada_light<t_enc_vec, t_dens, t_inv_dens, t_sa_sample_strat, t_isa, t_a
     structure_tree_node* child = structure_tree::add_child(v, name, util::class_name(*this));
     size_type written_bytes = 0;
     written_bytes += m_psi.serialize(out, child, "psi");
-    written_bytes += write_member(m_alpha, out, child, "alpha");
+    /* written_bytes += write_member(m_alpha, out, child, "alpha"); */
     written_bytes += m_alphabet.serialize(out, child, "alphabet");
     structure_tree::add_size(child, written_bytes);
     return written_bytes;
@@ -344,7 +344,7 @@ template<class t_enc_vec, uint32_t t_dens, uint32_t t_inv_dens, class t_sa_sampl
 void csa_sada_light<t_enc_vec, t_dens, t_inv_dens, t_sa_sample_strat, t_isa, t_alphabet_strat>::load(std::istream& in)
 {
     m_psi.load(in);
-    read_member(m_alpha, in);
+    // read_member(m_alpha, in);
     m_alphabet.load(in);
 }
 
@@ -353,7 +353,7 @@ void csa_sada_light<t_enc_vec, t_dens, t_inv_dens, t_sa_sample_strat, t_isa, t_a
 {
     if (this != &csa) {
         m_psi.swap(csa.m_psi);
-        std::swap(m_alpha, csa.m_alpha);
+        // std::swap(m_alpha, csa.m_alpha);
         m_alphabet.swap(csa.m_alphabet);
     }
 }

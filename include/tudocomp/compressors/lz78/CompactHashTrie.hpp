@@ -16,6 +16,10 @@ namespace lz78 {
 namespace ch {
 using namespace compact_sparse_hashmap;
 
+constexpr TypeDesc compact_hash_strategy_type() {
+    return TypeDesc("compact_hash_strategy");
+}
+
 template<typename table_t>
 class Common {
     table_t m_table;
@@ -92,7 +96,7 @@ struct Sparse:
     Common<compact_sparse_hashmap_t<dynamic_t>>
 {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "sparse_cv", "Sparse Table with CV structure");
+        Meta m(compact_hash_strategy_type(), "sparse_cv", "Sparse Table with CV structure");
         return m;
     }
 
@@ -103,7 +107,7 @@ struct Plain:
     Common<compact_hashmap_t<dynamic_t>>
 {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "plain_cv", "Plain Table with CV structure");
+        Meta m(compact_hash_strategy_type(), "plain_cv", "Plain Table with CV structure");
         return m;
     }
 
@@ -114,7 +118,7 @@ struct SparseDisplacement:
     Common<compact_sparse_displacement_hashmap_t<dynamic_t>>
 {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "sparse_disp", "Sparse Table with displacement structure");
+        Meta m(compact_hash_strategy_type(), "sparse_disp", "Sparse Table with displacement structure");
         return m;
     }
 
@@ -125,7 +129,7 @@ struct SparseEliasDisplacement:
     Common<compact_sparse_elias_displacement_hashmap_t<dynamic_t>>
 {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "sparse_elias_disp", "Sparse Table with elias gamma coded displacement structure");
+        Meta m(compact_hash_strategy_type(), "sparse_elias_disp", "Sparse Table with elias gamma coded displacement structure");
         return m;
     }
 
@@ -136,7 +140,7 @@ struct PlainDisplacement:
     Common<compact_displacement_hashmap_t<dynamic_t>>
 {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "plain_disp", "Plain Table with displacement structure");
+        Meta m(compact_hash_strategy_type(), "plain_disp", "Plain Table with displacement structure");
         return m;
     }
 
@@ -147,7 +151,7 @@ struct PlainEliasDisplacement:
     Common<compact_elias_displacement_hashmap_t<dynamic_t>>
 {
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "plain_elias_disp", "Plain Table with elias gamma coded displacement structure");
+        Meta m(compact_hash_strategy_type(), "plain_elias_disp", "Plain Table with elias gamma coded displacement structure");
         return m;
     }
 
@@ -197,7 +201,7 @@ class NoKVGrow {
 
 public:
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "no_k_grow", "Adapter that does not grow the bit widths of keys, but rather creates additional hash tables as needed.");
+        Meta m(compact_hash_strategy_type(), "no_k_grow", "Adapter that does not grow the bit widths of keys, but rather creates additional hash tables as needed.");
         m.option("compact_hash_strategy")
             .templated<compact_hash_strategy_t>("compact_hash_strategy");
         return m;
@@ -353,7 +357,7 @@ class NoKGrow {
 
 public:
     inline static Meta meta() {
-        Meta m("compact_hash_strategy", "no_kv_grow", "Adapter that does not grow the bit widths of keys and values, but rather creates additional hash tables as needed.");
+        Meta m(compact_hash_strategy_type(), "no_kv_grow", "Adapter that does not grow the bit widths of keys and values, but rather creates additional hash tables as needed.");
         m.option("compact_hash_strategy")
             .templated<compact_hash_strategy_t>("compact_hash_strategy");
         return m;
@@ -527,22 +531,38 @@ private:
 
 template<typename compact_hash_strategy_t = ch::Sparse>
 class CompactHashTrie : public Algorithm, public LZ78Trie<> {
-    compact_hash_strategy_t m_table;
+    using table_t = typename compact_hash_strategy_t::table_t;
+    using ref_t = typename table_t::reference_type;
+
+    table_t m_table;
+    //std::unordered_map<uint64_t, factorid_t> m_table;
+    size_t m_key_width = 0;
+    size_t m_value_width = 0;
+
+    inline size_t key_width(uint64_t key) {
+        m_key_width = std::max(m_key_width, size_t(bits_for(key)));
+        return m_key_width;
+    }
+    inline size_t value_width(uint64_t val) {
+        m_value_width = std::max(m_value_width, size_t(bits_for(val)));
+        return m_value_width;
+    }
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "compact_sparse_hash", "Compact Sparse Hash Trie");
-        m.option("load_factor").dynamic(50);
-        m.option("compact_hash_strategy")
-            .templated<compact_hash_strategy_t, ch::Sparse>("compact_hash_strategy");
+        Meta m(lz78_trie_type(), "compact_sparse_hash", "Compact Sparse Hash Trie");
+        m.param("load_factor").primitive(50);
+        m.param("compact_hash_strategy").strategy<compact_hash_strategy_t>(
+            compact_hash_strategy_type(), Meta::Default<Sparse>());
         return m;
     }
 
-    inline CompactHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-        : Algorithm(std::move(env))
+    inline CompactHashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+        : Algorithm(std::move(cfg))
         , LZ78Trie(n,remaining_characters)
-        , m_table(zero_or_next_power_of_two(reserve), this->env().option("load_factor").as_integer()/100.0f)
+        , m_table(zero_or_next_power_of_two(reserve))
     {
+        m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
     }
 
     IF_STATS(
@@ -600,7 +620,7 @@ public:
         // could also do it by the handler mechanism if this turns out to be a problem
         DCHECK_NE(newleaf_id, 0u);
 
-        auto key = create_node(parent,c);
+        auto key = create_node(parent+1,c);
         auto val = m_table.insert(key, newleaf_id);
         //std::cout << "find_or_insert::insert("<<key<<","<<newleaf_id<<") -> " << val << "\n";
         bool is_new = (val == newleaf_id);

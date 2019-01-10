@@ -9,26 +9,27 @@ namespace tdc {
 namespace lz78 {
 
 
-template<class HashFunction = MixHasher, class HashManager = SizeManagerNoob>
+template<class HashFunction = MixHasher, class HashManager = SizeManagerDirect>
 class HashTriePlus : public Algorithm, public LZ78Trie<> {
     HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,LinearProber,SizeManagerPow2> m_table;
     HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,LinearProber,HashManager> m_table2;
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "hash_plus", "Hash Trie+");
-        m.option("hash_function").templated<HashFunction, MixHasher>("hash_function");
-        m.option("load_factor").dynamic(30);
+        Meta m(lz78_trie_type(), "hash_plus", "Hash Trie+");
+        m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<MixHasher>());
+        m.param("hash_manager").strategy<HashManager>(hash_manager_type(), Meta::Default<SizeManagerDirect>());
+        m.param("load_factor").primitive(30);
         return m;
     }
 
-    inline HashTriePlus(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-        : Algorithm(std::move(env))
+    inline HashTriePlus(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+        : Algorithm(std::move(cfg))
         , LZ78Trie(n,remaining_characters)
-        , m_table(this->env(),n,remaining_characters)
-        , m_table2(this->env(),n,remaining_characters)
+        , m_table(this->config(),n,remaining_characters)
+        , m_table2(this->config(),n,remaining_characters)
     {
-        m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
+        m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         m_table2.max_load_factor(0.95);
         if(reserve > 0) {
             m_table.reserve(reserve);
@@ -40,9 +41,9 @@ public:
         inline ~HashTriePlus() {
             if (m_guard) {
                 if(m_table2.empty()) {
-                    m_table.collect_stats(env());
+                    m_table.collect_stats(config());
                 } else {
-                    m_table2.collect_stats(env());
+                    m_table2.collect_stats(config());
                 }
             }
         }
@@ -69,14 +70,14 @@ public:
         auto parent = parent_w.id();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
         if(!m_table2.empty()) { // already using the second hash table
-            auto ret = m_table2.insert(std::make_pair(create_node(parent,c), newleaf_id));
+            auto ret = m_table2.insert(std::make_pair(create_node(parent+1,c), newleaf_id));
             if(ret.second) {
                 return node_t(newleaf_id, true); // added a new node
             }
             return node_t(ret.first.value(), false);
         }
         // using still the first hash table
-        auto ret = m_table.insert(std::make_pair(create_node(parent,c), newleaf_id));
+        auto ret = m_table.insert(std::make_pair(create_node(parent+1,c), newleaf_id));
         if(ret.second) {
             if(tdc_unlikely(m_table.table_size()*m_table.max_load_factor() < m_table.m_entries+1)) {
                 const size_t expected_size = (m_table.m_entries + 1 + lz78_expected_number_of_remaining_elements(m_table.entries(),m_table.m_n,m_table.m_remaining_characters))/0.95;

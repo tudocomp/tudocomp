@@ -8,7 +8,9 @@
 
 // For default params
 #include <tudocomp/compressors/lz78/TernaryTrie.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/BinaryCoder.hpp>
+
+#include <tudocomp/decompressors/LZ78Decompressor.hpp>
 
 namespace tdc {
 
@@ -21,16 +23,23 @@ private:
     const lz78::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
 
 public:
-    inline LZ78Compressor(Env&& env):
-        Compressor(std::move(env)),
-        m_dict_max_size(env.option("dict_size").as_integer())
+    inline LZ78Compressor(Config&& cfg):
+        Compressor(std::move(cfg)),
+        m_dict_max_size(this->config().param("dict_size").as_uint())
     {}
 
     inline static Meta meta() {
-        Meta m("compressor", "lz78", "Lempel-Ziv 78\n\n" LZ78_DICT_SIZE_DESC);
-        m.option("coder").templated<coder_t, BitCoder>("coder");
-        m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>("lz78trie");
-        m.option("dict_size").dynamic(0);
+        Meta m(Compressor::type_desc(), "lz78",
+            "Computes the Lempel-Ziv 78 factorization of the input.");
+        m.param("coder", "The output encoder.")
+            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
+        m.param("lz78trie", "The trie data structure implementation.")
+            .strategy<dict_t>(TypeDesc("lz78trie"),
+                Meta::Default<lz78::TernaryTrie>());
+        m.param("dict_size",
+            "the maximum size of the dictionary's backing storage before it "
+            "gets reset (0 = unlimited)"
+        ).primitive(0);
         return m;
     }
 
@@ -48,7 +57,8 @@ public:
         size_t factor_count = 0;
 
         size_t remaining_characters = n; // position in the text
-        dict_t dict(env().env_for_option("lz78trie"), n, remaining_characters, reserved_size);
+        dict_t dict(config().sub_config("lz78trie"), n,
+            remaining_characters, reserved_size);
 
         auto reset_dict = [&dict] () {
             dict.clear();
@@ -58,7 +68,8 @@ public:
         };
         reset_dict();
 
-        typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
+        typename coder_t::Encoder coder(
+            config().sub_config("coder"), out, NoLiterals());
 
         // Define ranges
         node_t node = dict.get_rootnode(0);
@@ -110,23 +121,9 @@ public:
         )
     }
 
-    virtual void decompress(Input& input, Output& output) override final {
-        auto out = output.as_stream();
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
-
-        lz78::Decompressor decomp;
-        uint64_t factor_count = 0;
-
-        while (!decoder.eof()) {
-            const lz78::factorid_t index = decoder.template decode<lz78::factorid_t>(Range(factor_count));
-            const uliteral_t chr = decoder.template decode<uliteral_t>(literal_r);
-            decomp.decompress(index, chr, out);
-            factor_count++;
-        }
-
-        out.flush();
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::instance<LZ78Decompressor<coder_t>>();
     }
-
 };
 
 

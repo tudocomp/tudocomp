@@ -7,3 +7,6 @@
 [submodule "external/compact_sparse_hash"]
 	path = external/compact_sparse_hash
 	url = https://github.com/tudocomp/compact_sparse_hash.git
+[submodule "external/tudostats"]
+	path = external/tudostats
+	url = https://github.com/tudocomp/tudostats

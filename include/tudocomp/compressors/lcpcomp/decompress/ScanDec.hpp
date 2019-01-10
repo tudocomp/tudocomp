@@ -8,6 +8,8 @@
 #include <tudocomp/Algorithm.hpp>
 #include <algorithm>
 
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
+
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
@@ -23,7 +25,6 @@ namespace lcpcomp {
 	 * such that we can map from text position to positions in the array.
 	 */
 	class EagerScanDec {
-		Env& m_env;
 		IntVector<uliteral_t>& m_buffer;
 		const sdsl::bit_vector m_bv;
 		const sdsl::bit_vector::rank_1_type m_rank;
@@ -34,9 +35,8 @@ namespace lcpcomp {
 		IF_STATS(len_t m_current_chain = 0);
 
 		public:
-		EagerScanDec(Env& env, IntVector<uliteral_t>& buffer)
-			: m_env(env)
-			, m_buffer { buffer }
+		EagerScanDec(IntVector<uliteral_t>& buffer)
+			: m_buffer { buffer }
 			, m_bv ( [&buffer] () -> sdsl::bit_vector {
 				sdsl::bit_vector bv { buffer.size(),0 };
 				for(len_t i = 0; i < buffer.size(); ++i) {
@@ -146,8 +146,8 @@ namespace lcpcomp {
 class ScanDec : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("lcpcomp_dec", "scan");
-        m.option("scans").dynamic(6);
+        Meta m(dec_strategy_type(), "scan");
+        m.param("scans").primitive(6ULL);
         return m;
 
     }
@@ -162,7 +162,7 @@ public:
     }
     inline void decode_eagerly() {
         EagerScanDec* decoder = StatPhase::wrap("Initialize Bit Vector", [&]{
-            return new EagerScanDec(this->env(),m_buffer);
+            return new EagerScanDec(m_buffer);
         });
 
         decoder->decode(m_target_pos, m_source_pos, m_length);
@@ -200,9 +200,9 @@ private:
 	IF_STATS(len_t m_longest_chain = 0);
 
 public:
-    inline ScanDec(Env&& env)
-        : Algorithm(std::move(env))
-		, m_scans(this->env().option("scans").as_integer())
+    inline ScanDec(Config&& cfg)
+        : Algorithm(std::move(cfg))
+		, m_scans(this->config().param("scans").as_uint())
 		, m_cursor(0)
 	{ }
 

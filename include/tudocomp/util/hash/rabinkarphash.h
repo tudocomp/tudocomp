@@ -3,7 +3,9 @@
 
 
 #include "characterhash.h"
+
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/util/HashTypes.hpp>
 
 namespace tdc {
 
@@ -31,7 +33,7 @@ public:
 	typedef unsigned char chartype;
 	typedef hashvaluetype key_type;
     inline static Meta meta() {
-        Meta m("hash_roll", "rk", "Karp-Rabin Rolling Hash");
+        Meta m(hash_roller_type(), "rk", "Karp-Rabin Rolling Hash");
 		return m;
 	}
 	void operator+=(char c) { eat(c); }
@@ -40,7 +42,7 @@ public:
 
     // myn is the length of the sequences, e.g., 3 means that you want to hash sequences of 3 characters
     // mywordsize is the number of bits you which to receive as hash values, e.g., 19 means that the hash values are 19-bit integers
-    KarpRabinHash(Env&& env) : Algorithm(std::move(env)), hashvalue(0),n(4),
+    KarpRabinHash(Config&& cfg) : Algorithm(std::move(cfg)), hashvalue(0),n(4),
         wordsize(64),
         hasher( maskfnc<hashvaluetype>(wordsize)),
         HASHMASK(maskfnc<hashvaluetype>(wordsize)),BtoN(1) {

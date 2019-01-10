@@ -13,7 +13,7 @@
 #include <tudocomp/util/GenericView.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
+
 #include <tudocomp/io/MMapHandle.hpp>
 #include <tudocomp/ds/TextDS.hpp>
 
@@ -39,7 +39,7 @@ TEST(Test, test_file) {
     std::string err;
     try {
         test::read_test_file("not_test.txt");
-    } catch (std::runtime_error& e) {
+    } catch (std::runtime_error e) {
         err = e.what();
     }
     ASSERT_EQ("Could not open test file \"test_files/not_test.txt\"", err);
@@ -655,77 +655,6 @@ TEST(Output, file_not_exists_view) {
     ASSERT_TRUE(threw);
 }
 
-TEST(IO, bits) {
-    std::stringstream ss_out;
-
-    {
-        Output output(ss_out);
-        BitOStream out(output);
-        out.write_bit(0);                   //0
-        out.write_bit(1);                   //1
-        out.write_int(-1, 2);               //11
-        out.write_int(0b11010110, 4);       //0110
-        out.write_compressed_int(0x27, 3); //1 111 0 100
-        out.write_compressed_int(0x33);    //0 0110011
-    }
-    //output should contain 0111 0110 1111 0100 0011 0011 = 76 F4 33
-
-    std::string result = ss_out.str();
-    ASSERT_EQ(result.length(), 4U); //24 bits = 3 bytes + terminator byte
-
-    //basic input test
-    {
-        Input input(result);
-        BitIStream in(input);
-
-        ASSERT_EQ(in.read_int<uint32_t>(24), 0x76F433U);
-        ASSERT_TRUE(in.eof());
-    }
-
-    //advanced input test
-    {
-        Input input(result);
-        BitIStream in(input);
-
-        ASSERT_EQ(in.read_bit(), 0);
-        ASSERT_EQ(in.read_bit(), 1);
-        ASSERT_EQ(in.read_int<size_t>(2), 3U);
-        ASSERT_EQ(in.read_int<size_t>(4), 6U);
-        ASSERT_EQ(in.read_compressed_int<size_t>(3), 0x27U);
-        ASSERT_EQ(in.read_compressed_int<size_t>(), 0x33U);
-        ASSERT_TRUE(in.eof());
-    }
-}
-
-TEST(IO, bits_eof) {
-    // write i bits to a bit stream, then read the whole
-    // bit stream until EOF and ensure exactly i bits have been read
-    for(size_t i = 0; i < 100; i++) {
-        // write i bits
-        std::string result;
-        {
-            std::ostringstream ss_result;
-            Output output(ss_result);
-            {
-                BitOStream out(output);
-                for(size_t k = i; k; k--) out.write_bit(1);
-            }
-            result = ss_result.str();
-        }
-
-        // read bits until EOF
-        size_t n = 0;
-        {
-            Input input(result);
-            BitIStream in(input);
-            ASSERT_EQ(i == 0, in.eof());
-            for(; !in.eof(); n++) ASSERT_EQ(1, in.read_bit());
-        }
-
-        ASSERT_EQ(i, n);
-    }
-}
-
 TEST(View, construction) {
     static const uint8_t DATA[3] = { 'f', 'o', 'o' };
 
@@ -1153,21 +1082,21 @@ TEST(GenericView, template_64) {
 }
 
 struct MySubAlgo: Algorithm {
-    MySubAlgo(Env&& e): Algorithm(std::move(e)) {}
+    MySubAlgo(Config&& c): Algorithm(std::move(c)) {}
 
     inline static Meta meta() {
-        Meta y("sub_t", "sub1");
-        y.option("x").dynamic("x");
+        Meta y(TypeDesc("sub_t"), "sub1");
+        y.param("x").primitive("x");
         return y;
     }
 };
 
 struct MySubAlgo2: Algorithm {
-    MySubAlgo2(Env&& e): Algorithm(std::move(e)) {}
+    MySubAlgo2(Config&& c): Algorithm(std::move(c)) {}
 
     inline static Meta meta() {
-        Meta y("sub_t", "sub2");
-        y.option("y").dynamic("y");
+        Meta y(TypeDesc("sub_t"), "sub2");
+        y.param("y").primitive("y");
         return y;
     }
 };
@@ -1175,202 +1104,42 @@ struct MySubAlgo2: Algorithm {
 template<class A>
 struct MyCompressor: public Compressor {
     inline static Meta meta() {
-        Meta y("compressor", "my");
-        y.option("sub").templated<A, MySubAlgo2>("sub_t");
-        y.option("dyn").dynamic("foobar");
-        y.option("bool_val").dynamic("true");
+        Meta y(Compressor::type_desc(), "my");
+        y.param("sub").strategy<A>(TypeDesc("sub_t"), Meta::Default<MySubAlgo2>());
+        y.param("dyn").primitive("foobar");
+        y.param("bool_val").primitive(true);
         return y;
     }
 
     std::string custom_data;
     MyCompressor() = delete;
-    MyCompressor(Env&& env, std::string&& s):
-        Compressor(std::move(env)),
+    MyCompressor(Config&& cfg, std::string&& s):
+        Compressor(std::move(cfg)),
         custom_data(std::move(s)) {}
 
-    inline virtual void decompress(Input&, Output&) {}
-
     inline virtual void compress(Input&, Output& output) {
-        A a(env().env_for_option("sub"));
+        A a(config().sub_config("sub"));
         auto s = output.as_stream();
-        s << "ok! " << custom_data << " " << env().option("dyn").as_string();
-        ASSERT_TRUE(env().option("bool_val").as_bool());
+        s << "ok! " << custom_data << " " << config().param("dyn").as_string();
+        ASSERT_TRUE(config().param("bool_val").as_bool());
+    }
+
+    inline virtual std::unique_ptr<Decompressor> decompressor() const override {
+        throw std::runtime_error("not implemented");
     }
 };
 
 TEST(Algorithm, create) {
-
-
-    auto x = create_algo<MyCompressor<MySubAlgo>>("", "test");
+    auto x = Algorithm::instance<MyCompressor<MySubAlgo>>("", "test");
 
     std::vector<uint8_t> vec;
     Output out(vec);
     Input inp("");
-    x.compress(inp, out);
+    x->compress(inp, out);
 
     auto s = vec_as_lossy_string(vec);
 
     ASSERT_EQ(s, "ok! test foobar");
-
-
-}
-
-// std::cout << __FILE__ ":" << __LINE__ << "\n";
-
-TEST(Algorithm, meta) {
-    using Compressor = MyCompressor<MySubAlgo>;
-    using Compressor2 = MyCompressor<MySubAlgo2>;
-    {
-        auto x = Compressor::meta();
-        auto y = std::move(x).build_def();
-        ASSERT_EQ(y.to_string(),
-                  R"(my(sub: static sub_t = sub2(y = "y"), dyn: string = "foobar", bool_val: string = "true"))");
-    }
-    {
-        auto x = Compressor::meta();
-        auto y = std::move(x).build_ast_value_for_default();
-        ASSERT_EQ(y.to_string(),
-                  R"(my(sub = sub2(y = "y"), dyn = "foobar", bool_val = "true"))");
-    }
-    auto f = [](const std::string& options, std::function<void(OptionValue&)> g) {
-        auto x = Compressor::meta();
-        auto y = std::move(x).build_static_args_ast_value();;
-
-        // TODO: Test eval
-
-        eval::AlgorithmTypes types;
-        gather_types(types, {
-            Compressor::meta(),
-            Compressor2::meta()
-        });
-
-        // error case: no "" for dyn
-        ast::Parser p { options };
-
-        auto evald = eval::cl_eval(
-            p.parse_value(),
-            "compressor",
-            types,
-            std::move(y)
-        );
-
-        g(evald);
-    };
-    f("my()", [](OptionValue& options){
-        auto& my = options.as_algorithm();
-        ASSERT_EQ(my.name(), "my");
-        {
-            auto& sub = my.arguments().at("sub").as_algorithm();
-            ASSERT_EQ(sub.name(), "sub1");
-            {
-                auto& x = sub.arguments().at("x").as_string();
-                ASSERT_EQ(x, "x");
-            }
-
-            auto& dyn = my.arguments().at("dyn").as_string();
-            ASSERT_EQ(dyn, "foobar");
-        }
-    });
-    f("my(dyn = \"quxqux\")", [](OptionValue& options){
-        auto& my = options.as_algorithm();
-        ASSERT_EQ(my.name(), "my");
-        {
-            auto& sub = my.arguments().at("sub").as_algorithm();
-            ASSERT_EQ(sub.name(), "sub1");
-            {
-                auto& x = sub.arguments().at("x").as_string();
-                ASSERT_EQ(x, "x");
-            }
-
-            auto& dyn = my.arguments().at("dyn").as_string();
-            ASSERT_EQ(dyn, "quxqux");
-        }
-    });
-    f("my(sub = sub1, dyn = \"quxqux\")", [](OptionValue& options){
-        auto& my = options.as_algorithm();
-        ASSERT_EQ(my.name(), "my");
-        {
-            auto& sub = my.arguments().at("sub").as_algorithm();
-            ASSERT_EQ(sub.name(), "sub1");
-            {
-                auto& x = sub.arguments().at("x").as_string();
-                ASSERT_EQ(x, "x");
-            }
-
-            auto& dyn = my.arguments().at("dyn").as_string();
-            ASSERT_EQ(dyn, "quxqux");
-        }
-    });
-    f("my(sub = sub1(x = \"asdf\"), dyn = \"quxqux\")", [](OptionValue& options){
-        auto& my = options.as_algorithm();
-        ASSERT_EQ(my.name(), "my");
-        {
-            auto& sub = my.arguments().at("sub").as_algorithm();
-            ASSERT_EQ(sub.name(), "sub1");
-            {
-                auto& x = sub.arguments().at("x").as_string();
-                ASSERT_EQ(x, "asdf");
-            }
-
-            auto& dyn = my.arguments().at("dyn").as_string();
-            ASSERT_EQ(dyn, "quxqux");
-        }
-    });
-}
-
-struct EscapingComp: public Compressor {
-    static Meta meta() {
-        Meta m("compressor", "esc_test");
-        m.uses_textds<TextDS<>>(ds::SA);
-        return m;
-    }
-
-    using Compressor::Compressor;
-
-    virtual void compress(Input&, Output&) {}
-    virtual void decompress(Input&, Output&) {}
-};
-
-TEST(Escaping, option_value_direct) {
-    ASSERT_EQ(
-        EscapingComp::meta().textds_flags(),
-        (ds::InputRestrictionsAndFlags {
-            io::InputRestrictions({0}, true),
-            ds::SA
-        })
-    );
-}
-
-TEST(Escaping, option_value_indirect) {
-    RegistryOf<Compressor> r;
-    r.register_algorithm<EscapingComp>();
-    auto av = r.parse_algorithm_id("esc_test");
-
-    ASSERT_EQ(
-        av.textds_flags(),
-        (ds::InputRestrictionsAndFlags {
-            io::InputRestrictions({0}, true),
-            ds::SA
-        })
-    );
-}
-
-TEST(Escaping, option_value_indirect_copy) {
-    RegistryOf<Compressor> r;
-    r.register_algorithm<EscapingComp>();
-    AlgorithmValue av = r.parse_algorithm_id("esc_test");
-    AlgorithmValue av2("", {}, nullptr, (ds::InputRestrictionsAndFlags {
-            io::InputRestrictions({0}, true),
-            ds::SA
-        }));
-    av2 = std::move(av);
-    ASSERT_EQ(
-        av2.textds_flags(),
-        (ds::InputRestrictionsAndFlags {
-            io::InputRestrictions({0}, true),
-            ds::SA
-        })
-    );
 }
 
 TEST(Test, TestInputCompression) {
@@ -1410,50 +1179,12 @@ TEST(Test, TestInputDecompressionFile) {
 }
 
 TEST(Test, TestInputOutputInheritance) {
-    auto x = create_algo<MyCompressor<MySubAlgo>>("", "test");
+    auto x = Algorithm::instance<MyCompressor<MySubAlgo>>("", "test");
 
     auto i = test::compress_input("asdf");
     auto o = test::compress_output();
 
-    x.compress(i, o);
-}
-
-template<class A, class B>
-struct KeywordlessEvalOrderBug: public Compressor {
-    inline static Meta meta() {
-        Meta y("compressor", "eval_order_bug");
-        y.option("sub1").templated<A, MySubAlgo>("sub_t");
-        y.option("dyn").dynamic("foobar");
-        y.option("sub2").templated<B, MySubAlgo2>("sub_t");
-        return y;
-    }
-
-    KeywordlessEvalOrderBug(Env&& env): Compressor(std::move(env)){}
-
-    inline virtual void decompress(Input&, Output&) {
-    }
-
-    inline virtual void compress(Input&, Output&) {
-        auto a = env().option("sub1").as_algorithm();
-        auto b = env().option("dyn").as_string();
-        auto c = env().option("sub2").as_algorithm();
-    }
-};
-
-TEST(KeywordlessEvalOrder, test) {
-    auto x1 = create_algo<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
-    RegistryOf<Compressor> r;
-    r.register_algorithm<KeywordlessEvalOrderBug<MySubAlgo, MySubAlgo2>>();
-    r.parse_algorithm_id("eval_order_bug(sub1 = sub1(x = 'x'), dyn = 'foobar', sub2 = sub2(y = 'y'))");
-    r.parse_algorithm_id("eval_order_bug(sub1 = sub1, dyn = 'foobar', sub2 = sub2)");
-    r.parse_algorithm_id("eval_order_bug(sub1 = sub1, dyn = 'foobar')");
-    r.parse_algorithm_id("eval_order_bug(sub1 = sub1)");
-    r.parse_algorithm_id("eval_order_bug");
-    r.parse_algorithm_id("eval_order_bug(sub1(x = 'x'), 'foobar', sub2(y = 'y'))");
-    r.parse_algorithm_id("eval_order_bug(sub1, 'foobar', sub2)");
-    r.parse_algorithm_id("eval_order_bug(sub1, 'foobar')");
-    r.parse_algorithm_id("eval_order_bug(sub1)");
-    r.parse_algorithm_id("eval_order_bug");
+    x->compress(i, o);
 }
 
 TEST(MMapHandle, test1) {

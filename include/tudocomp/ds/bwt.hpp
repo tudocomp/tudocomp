@@ -30,24 +30,27 @@ len_compact_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 	DVLOG(2) << "Computing LF";
 	if(bwt_length == 0) return nullptr;
 	len_compact_t C[ULITERAL_MAX+1] { 0 }; // alphabet counter
-	for(auto& c : bwt) {
-		if(literal2int(c) != ULITERAL_MAX) {
-			++C[literal2int(c)+1];
-		}
+	for(uliteral_t c : bwt) {
+		++C[c];
 	}
-	for(size_t i = 1; i < ULITERAL_MAX; ++i) {
-		DCHECK_LT(static_cast<size_t>(C[i]),bwt.size()+1 -  C[i-1]);
-		C[i] += C[i-1];
+	DVLOG(2) << "histogram: " << arr_to_debug_string(C,ULITERAL_MAX+1);
+
+    len_compact_t pred = 0;
+	for(size_t i = 0; i <= ULITERAL_MAX; ++i) {
+        auto occ_i = C[i];
+        C[i] = pred;
+        pred += occ_i;
 	}
-	DVLOG(2) << "C: " << arr_to_debug_string(C,ULITERAL_MAX);
+
+	DVLOG(2) << "C: " << arr_to_debug_string(C,ULITERAL_MAX+1);
 	DCHECK_EQ(C[0],0u); // no character preceeds 0
 	DCHECK_EQ(C[1],1u); // there is exactly only one '\0' byte
+    DCHECK_EQ(pred, bwt_length); // C[sigma+1] = n
 
 	len_compact_t* LF { new len_compact_t[bwt_length] };
 	for(len_t i = 0; i < bwt_length; ++i) {
-		DCHECK_LE(literal2int(bwt[i]), ULITERAL_MAX);
-		LF[i] = C[literal2int(bwt[i])];
-		++C[literal2int(bwt[i])];
+		LF[i] = C[bwt[i]];
+		++C[bwt[i]];
 	}
 
 	DVLOG(2) << "LF: " << arr_to_debug_string(LF, bwt_length);
@@ -76,7 +79,7 @@ len_compact_t* compute_LF(const bwt_t& bwt, const size_t bwt_length) {
 template<typename bwt_t>
 std::string decode_bwt(const bwt_t& bwt) {
 	const size_t bwt_length = bwt.size();
-	VLOG(2) << "InputSize: " << bwt_length;
+	DVLOG(2) << "InputSize: " << bwt_length;
 	if(tdc_unlikely(bwt_length <= 1)) return std::string();
 
 	const len_compact_t*const LF { compute_LF(bwt, bwt_length) };

@@ -8,7 +8,7 @@ namespace tdc {namespace esp {
     class PlainSLPCoder: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("slp_coder", "plain");
+            Meta m(TypeDesc("slp_coder"), "plain");
             return m;
         };
 

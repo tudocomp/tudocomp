@@ -2,4 +2,4 @@
 
 #cmakedefine JUDY_H_AVAILABLE 1
 #cmakedefine Boost_FOUND 1
-
+#cmakedefine STXXL_FOUND 1

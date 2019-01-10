@@ -1,18 +1,17 @@
 #pragma once
 
+#include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
 
-#include <tudocomp/compressors/lzw/LZWDecoding.hpp>
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
-
 #include <tudocomp/Range.hpp>
-#include <tudocomp/Coder.hpp>
+#include <tudocomp/decompressors/LZWDecompressor.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
 // For default params
 #include <tudocomp/compressors/lz78/TernaryTrie.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/BinaryCoder.hpp>
 
 namespace tdc {
 
@@ -23,16 +22,23 @@ private:
 
     const lz78::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
 public:
-    inline LZWCompressor(Env&& env):
-        Compressor(std::move(env)),
-        m_dict_max_size(env.option("dict_size").as_integer())
+    inline LZWCompressor(Config&& cfg):
+        Compressor(std::move(cfg)),
+        m_dict_max_size(this->config().param("dict_size").as_uint())
     {}
 
     inline static Meta meta() {
-        Meta m("compressor", "lzw", "Lempel-Ziv-Welch\n\n" LZ78_DICT_SIZE_DESC);
-        m.option("coder").templated<coder_t, BitCoder>("coder");
-        m.option("lz78trie").templated<dict_t, lz78::TernaryTrie>("lz78trie");
-        m.option("dict_size").dynamic(0);
+        Meta m(Compressor::type_desc(), "lzw",
+            "Computes the Lempel-Ziv-Welch factorization of the input.");
+        m.param("coder", "The output encoder.")
+            .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
+        m.param("lz78trie", "The trie data structure implementation.")
+            .strategy<dict_t>(TypeDesc("lz78trie"),
+                Meta::Default<lz78::TernaryTrie>());
+        m.param("dict_size",
+            "the maximum size of the dictionary's backing storage before it "
+            "gets reset (0 = unlimited)"
+        ).primitive(0);
         return m;
     }
 
@@ -49,7 +55,7 @@ public:
         size_t factor_count = 0;
 
         size_t remaining_characters = n; // position in the text
-        dict_t dict(env().env_for_option("lz78trie"), n, remaining_characters, reserved_size+ULITERAL_MAX+1);
+        dict_t dict(config().sub_config("lz78trie"), n, remaining_characters, reserved_size+ULITERAL_MAX+1);
         auto reset_dict = [&dict] () {
             dict.clear();
             std::stringstream ss;
@@ -62,7 +68,7 @@ public:
         };
         reset_dict();
 
-        typename coder_t::Encoder coder(env().env_for_option("coder"), out, NoLiterals());
+        typename coder_t::Encoder coder(config().sub_config("coder"), out, NoLiterals());
 
         char c;
         if(!is.get(c)) return;
@@ -107,31 +113,12 @@ public:
         )
     }
 
-    virtual void decompress(Input& input, Output& output) override final {
-        const size_t reserved_size = input.size();
-        //TODO C::decode(in, out, dms, reserved_size);
-        auto out = output.as_stream();
-        typename coder_t::Decoder decoder(env().env_for_option("coder"), input);
-
-        size_t counter = 0;
-
-        //TODO file_corrupted not used!
-        lzw::decode_step([&](lz78::factorid_t& entry, bool reset, bool &file_corrupted) -> bool {
-            if (reset) {
-                counter = 0;
-            }
-
-            if(decoder.eof()) {
-                return false;
-            }
-
-            lzw::Factor factor(decoder.template decode<len_t>(Range(counter + ULITERAL_MAX + 1)));
-            counter++;
-            entry = factor;
-            return true;
-        }, out, m_dict_max_size == 0 ? lz78::DMS_MAX : m_dict_max_size, reserved_size);
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        // FIXME: construct AST and pass it
+        std::stringstream cfg;
+        cfg << "dict_size=" << to_string(m_dict_max_size);
+        return Algorithm::instance<LZWDecompressor<coder_t>>(cfg.str());
     }
-
 };
 
 }

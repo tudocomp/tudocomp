@@ -16,19 +16,20 @@ class HashTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "hash", "Hash Trie");
-        m.option("hash_function").templated<HashFunction, MixHasher>("hash_function");
-        m.option("hash_prober").templated<HashProber, LinearProber>("hash_prober");
-        m.option("load_factor").dynamic(30);
+        Meta m(lz78_trie_type(), "hash", "Hash Trie");
+        m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<MixHasher>());
+        m.param("hash_prober").strategy<HashProber>(hash_prober_type(), Meta::Default<LinearProber>());
+        m.param("hash_manager").strategy<HashManager>(hash_manager_type(), Meta::Default<SizeManagerPow2>());
+        m.param("load_factor").primitive(30);
         return m;
     }
 
-    inline HashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-        : Algorithm(std::move(env))
+    inline HashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+        : Algorithm(std::move(cfg))
         , LZ78Trie(n,remaining_characters)
-        , m_table(this->env(),n,remaining_characters)
+        , m_table(this->config(),n,remaining_characters)
     {
-        m_table.max_load_factor(this->env().option("load_factor").as_integer()/100.0f );
+        m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         if(reserve > 0) {
             m_table.reserve(reserve);
         }
@@ -38,7 +39,7 @@ public:
         MoveGuard m_guard;
         inline ~HashTrie() {
             if (m_guard) {
-                m_table.collect_stats(env());
+                m_table.collect_stats(config());
             }
         }
     )
@@ -70,7 +71,7 @@ public:
 
         auto ret = m_table.insert(
             std::make_pair(
-                create_node(parent,c),
+                create_node(parent+1,c),
                 newleaf_id
             )
         );

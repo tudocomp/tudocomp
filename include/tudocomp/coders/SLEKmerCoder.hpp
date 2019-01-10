@@ -34,8 +34,11 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("coder", "kmer", "Static low entropy encoding conforming [Dinklage, 2015]");
-        m.option("k").dynamic(3);
+        Meta m(Coder::type_desc(), "kmer",
+           "Static low entropy encoding, conforming [Dinklage, 2015]."
+        );
+        m.param("k", "The length of the k-mers that are candidates for "
+                        "being mapped to a single symbol.").primitive(3);
         return m;
     }
 
@@ -77,10 +80,10 @@ public:
 
     public:
         template<typename literals_t>
-        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
-            : tdc::Encoder(std::move(env), out, literals) {
+        inline Encoder(Config&& cfg, std::shared_ptr<BitOStream> out, literals_t&& literals)
+            : tdc::Encoder(std::move(cfg), out, literals) {
 
-            m_k     = this->env().option("k").as_integer();
+            m_k = this->config().param("k").as_uint();
             assert(m_k <= max_kmer);
 
             m_kmer = new uliteral_t[m_k];
@@ -166,8 +169,8 @@ public:
         }
 
         template<typename literals_t>
-        inline Encoder(Env&& env, Output& out, literals_t&& literals)
-            : Encoder(std::move(env), std::make_shared<BitOStream>(out), literals) {
+        inline Encoder(Config&& cfg, Output& out, literals_t&& literals)
+            : Encoder(std::move(cfg), std::make_shared<BitOStream>(out), literals) {
         }
 
         ~Encoder() {
@@ -300,9 +303,9 @@ public:
         }
 
     public:
-        inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
-            : tdc::Decoder(std::move(env), in) {
-            m_k = this->env().option("k").as_integer();
+        inline Decoder(Config&& cfg, std::shared_ptr<BitIStream> in)
+            : tdc::Decoder(std::move(cfg), in) {
+            m_k = this->config().param("k").as_uint();
 
             m_kmer = new uliteral_t[m_k];
             reset_kmer();
@@ -323,8 +326,8 @@ public:
             }
         }
 
-        inline Decoder(Env&& env, Input& in)
-            : Decoder(std::move(env), std::make_shared<BitIStream>(in)) {
+        inline Decoder(Config&& cfg, Input& in)
+            : Decoder(std::move(cfg), std::make_shared<BitIStream>(in)) {
         }
 
         ~Decoder() {

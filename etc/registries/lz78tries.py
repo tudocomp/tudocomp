@@ -12,7 +12,7 @@
 # Universal coders
 universal_coders = [
     AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
-    AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
+    AlgorithmConfig(name="BinaryCoder", header="coders/BinaryCoder.hpp"),
     AlgorithmConfig(name="EliasGammaCoder", header="coders/EliasGammaCoder.hpp"),
     AlgorithmConfig(name="EliasDeltaCoder", header="coders/EliasDeltaCoder.hpp"),
     AlgorithmConfig(name="SLEIntCoder", header="coders/SLEIntCoder.hpp"),
@@ -96,7 +96,7 @@ if config_match("^#define JUDY_H_AVAILABLE 1"): # if the Judy trie is available
 ]
 
 lit_coder = [
-    AlgorithmConfig(name="BitCoder", header="coders/BitCoder.hpp"),
+    AlgorithmConfig(name="BinaryCoder", header="coders/BinaryCoder.hpp"),
     AlgorithmConfig(name="ASCIICoder", header="coders/ASCIICoder.hpp"),
     AlgorithmConfig(name="HuffmanCoder", header="coders/HuffmanCoder.hpp"),
 ]
@@ -122,6 +122,13 @@ tdc.compressors = [
     AlgorithmConfig(name="ChainCompressor", header="compressors/ChainCompressor.hpp"),
     AlgorithmConfig(name="DividingCompressor", header="compressors/DividingCompressor.hpp", sub=[dividing_strat]),
     AlgorithmConfig(name="LongCommonStringCompressor", header="compressors/LongCommonStringCompressor.hpp", sub=[long_common_strat]),
+]
+
+##### Export available decompressors #####
+tdc.decompressors = [
+    AlgorithmConfig(name="LZ78Decompressor", header="decompressors/LZ78Decompressor.hpp", sub=[universal_coders]),
+    AlgorithmConfig(name="LZWDecompressor", header="decompressors/LZWDecompressor.hpp", sub=[universal_coders]),
+    AlgorithmConfig(name="WrapDecompressor", header="decompressors/WrapDecompressor.hpp"),
 ]
 
 ##### Export available string generators #####

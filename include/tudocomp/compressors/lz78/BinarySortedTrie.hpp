@@ -21,11 +21,11 @@ class BinarySortedTrie : public Algorithm, public LZ78Trie<> {
     )
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "binarysorted", "Lempel-Ziv 78 Sorted Binary Trie");
+        Meta m(lz78_trie_type(), "binarysorted", "Lempel-Ziv 78 Sorted Binary Trie");
         return m;
     }
-    inline BinarySortedTrie(Env&& env, size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-        : Algorithm(std::move(env))
+    inline BinarySortedTrie(Config&& cfg, size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+        : Algorithm(std::move(cfg))
           , LZ78Trie(n,remaining_characters)
     {
         if(reserve > 0) {

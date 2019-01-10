@@ -2,11 +2,18 @@
 
 #include <tudocomp/io.hpp>
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/Env.hpp>
+
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/Range.hpp>
 
 namespace tdc {
+
+class Coder {
+public:
+    static inline constexpr TypeDesc type_desc() {
+        return TypeDesc("coder");
+    }
+};
 
 /// \brief Base for data encoders.
 ///
@@ -27,10 +34,10 @@ public:
     /// \param literals The literal iterator.
     template<typename literals_t>
     inline Encoder(
-        Env&& env,
+        Config&& cfg,
         std::shared_ptr<BitOStream> out,
         literals_t&& literals)
-        : Algorithm(std::move(env)), m_out(out) {
+        : Algorithm(std::move(cfg)), m_out(out) {
     }
 
     /// \brief Convenience constructor.
@@ -41,9 +48,9 @@ public:
     /// \param out The output to write to.
     /// \param literals The literal iterator.
     template<typename literals_t>
-    inline Encoder(Env&& env, Output& out, literals_t&& literals)
+    inline Encoder(Config&& cfg, Output& out, literals_t&& literals)
         : Encoder(
-            std::move(env),
+            std::move(cfg),
             std::make_shared<BitOStream>(out),
             literals) {
     }
@@ -103,16 +110,16 @@ public:
     ///
     /// \param env The algorithm's environment.
     /// \param in The bit stream to read from.
-    inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
-        : Algorithm(std::move(env)), m_in(in) {
+    inline Decoder(Config&& cfg, std::shared_ptr<BitIStream> in)
+        : Algorithm(std::move(cfg)), m_in(in) {
     }
 
     /// \brief Convenience constructor.
     ///
     /// \param env The algorithm's environment.
     /// \param in The input to read from.
-    inline Decoder(Env&& env, Input& in)
-        : Decoder(std::move(env), std::make_shared<BitIStream>(in)) {
+    inline Decoder(Config&& cfg, Input& in)
+        : Decoder(std::move(cfg), std::make_shared<BitIStream>(in)) {
     }
 
     /// \brief Tests whether the end of the bit input stream has been reached.
@@ -154,19 +161,4 @@ public:
     }
 };
 
-/// \brief Defines constructors for clases inheriting from \ref tdc::Decoder.
-///
-/// This includes a convenience constructor that automatically opens a
-/// bit input stream on an \ref tdc::Input.
-///
-/// \param env The variable name for the environment.
-/// \param in The variable name for the bit input stream.
-#define DECODER_CTOR(env, in)                                \
-        inline Decoder(Env&& env, Input& in)                 \
-             : Decoder(std::move(env),                       \
-                       std::make_shared<BitIStream>(in)) {}  \
-        inline Decoder(Env&& env, std::shared_ptr<BitIStream> in) \
-            : tdc::Decoder(std::move(env), in)
-
 }
-

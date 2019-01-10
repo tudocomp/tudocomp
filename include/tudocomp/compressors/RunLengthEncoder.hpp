@@ -2,8 +2,8 @@
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/util/vbyte.hpp>
-#include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 namespace tdc {
 
@@ -49,30 +49,31 @@ void rle_decode(std::basic_istream<char_type>& is, std::basic_ostream<char_type>
 	}
 }
 
-class RunLengthEncoder : public Compressor {
+class RunLengthEncoder : public CompressorAndDecompressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "rle", "Run Length Encoding Compressor");
-        m.option("offset").dynamic(0);
+        Meta m(Compressor::type_desc(), "rle", "Run-length encoding.");
         return m;
     }
-	const size_t m_offset;
-    inline RunLengthEncoder(Env&& env)
-		: Compressor(std::move(env)), m_offset(this->env().option("offset").as_integer()) {
-    }
+
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     inline virtual void compress(Input& input, Output& output) override {
 		auto is = input.as_stream();
 		auto os = output.as_stream();
-		rle_encode(is,os,m_offset);
+		rle_encode(is, os);
 	}
+
     inline virtual void decompress(Input& input, Output& output) override {
 		auto is = input.as_stream();
 		auto os = output.as_stream();
-		rle_decode(is,os,m_offset);
-	}
-};
+		rle_decode(is, os);
+    }
 
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
+    }
+};
 
 }//ns
 

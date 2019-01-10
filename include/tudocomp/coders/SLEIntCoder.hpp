@@ -8,7 +8,9 @@ namespace tdc {
 class SLEIntCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("coder", "sle", "Static low entropy encoding conforming [Dinklage, 2015]");
+        Meta m(Coder::type_desc(), "sle",
+           "Static low entropy encoding, conforming [Dinklage, 2015]."
+        );
         return m;
     }
 

@@ -11,8 +11,11 @@ namespace tdc {
 class RiceCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("coder", "rice", "Rice coding");
-        m.option("p").dynamic(5); // b = 2^p
+        Meta m(Coder::type_desc(), "rice",
+            "Encodes integers using Rice codes (gamma code of quotient, "
+            "truncated binary code of remainder).");
+        m.param("p", "The divisor exponent (the divisor is b = 2^p)")
+            .primitive(5); // b = 2^p
         return m;
     }
 
@@ -25,14 +28,14 @@ public:
 
     public:
         template<typename literals_t>
-        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
-            : tdc::Encoder(std::move(env), out, literals),
-              m_p(this->env().option("p").as_integer()) {
+        inline Encoder(Config&& cfg, std::shared_ptr<BitOStream> out, literals_t&& literals)
+            : tdc::Encoder(std::move(cfg), out, literals),
+              m_p(this->config().param("p").as_uint()) {
         }
 
         template<typename literals_t>
-        inline Encoder(Env&& env, Output& out, literals_t&& literals)
-            : Encoder(std::move(env), std::make_shared<BitOStream>(out), literals) {
+        inline Encoder(Config&& cfg, Output& out, literals_t&& literals)
+            : Encoder(std::move(cfg), std::make_shared<BitOStream>(out), literals) {
         }
 
         using tdc::Encoder::encode;
@@ -49,13 +52,13 @@ public:
         uint8_t m_p;
 
     public:
-        inline Decoder(Env&& env, std::shared_ptr<BitIStream> in)
-            : tdc::Decoder(std::move(env), in),
-              m_p(this->env().option("p").as_integer()) {
+        inline Decoder(Config&& cfg, std::shared_ptr<BitIStream> in)
+            : tdc::Decoder(std::move(cfg), in),
+              m_p(this->config().param("p").as_uint()) {
         }
 
-        inline Decoder(Env&& env, Input& in)
-            : Decoder(std::move(env), std::make_shared<BitIStream>(in)) {
+        inline Decoder(Config&& cfg, Input& in)
+            : Decoder(std::move(cfg), std::make_shared<BitIStream>(in)) {
         }
 
         using tdc::Decoder::decode;

@@ -24,12 +24,12 @@ class ExtHashTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "exthash", "Hash Trie with external hash table");
+        Meta m(lz78_trie_type(), "exthash", "Hash Trie with external hash table");
         return m;
     }
 
-    inline ExtHashTrie(Env&& env, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-        : Algorithm(std::move(env))
+    inline ExtHashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+        : Algorithm(std::move(cfg))
         , LZ78Trie(n, remaining_characters)
         , m_n(n)
         , m_remaining_characters(remaining_characters)
@@ -76,7 +76,7 @@ public:
         auto parent = parent_w.id();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
-        auto ret = m_table.insert(std::make_pair(create_node(parent,c), newleaf_id));
+        auto ret = m_table.insert(std::make_pair(create_node(parent+1,c), newleaf_id));
 
         if(ret.second) { // added a new node
             if(tdc_unlikely(m_table.bucket_count()*m_table.max_load_factor() < m_table.size()+1)) {

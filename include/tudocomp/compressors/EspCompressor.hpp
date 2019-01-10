@@ -5,7 +5,6 @@
 #include <tudocomp_stat/StatPhase.hpp>
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/Env.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
@@ -13,15 +12,17 @@
 #include <tudocomp/compressors/esp/PlainSLPCoder.hpp>
 #include <tudocomp/compressors/esp/StdUnorderedMapIPD.hpp>
 
+#include <tudocomp/decompressors/ESPDecompressor.hpp>
+
 namespace tdc {
 
 template<typename slp_coder_t, typename ipd_t = esp::StdUnorderedMapIPD>
 class EspCompressor: public Compressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "esp", "ESP based grammar compression");
-        m.option("slp_coder").templated<slp_coder_t, esp::PlainSLPCoder>("slp_coder");
-        m.option("ipd").templated<ipd_t, esp::StdUnorderedMapIPD>("ipd");
+        Meta m(Compressor::type_desc(), "esp", "ESP based grammar compression");
+        m.param("slp_coder").strategy<slp_coder_t>(TypeDesc("slp_coder"), Meta::Default<esp::PlainSLPCoder>());
+        m.param("ipd").strategy<ipd_t>(TypeDesc("ipd"), Meta::Default<esp::StdUnorderedMapIPD>());
         return m;
     }
 
@@ -30,15 +31,15 @@ public:
     inline virtual void compress(Input& input, Output& output) override {
         using namespace esp;
 
-        auto phase0 = StatPhase("ESP Compressor");
+        StatPhase phase0("ESP Compressor");
 
         EspContext<ipd_t> context;
         SLP slp { SLP_CODING_ALPHABET_SIZE };
 
         {
-            auto phase1 = StatPhase("Compress Phase");
+            StatPhase phase1("Compress Phase");
 
-            auto phase2 = StatPhase("Creating input handler");
+            StatPhase phase2("Creating input handler");
             auto in_stream = input.as_stream();
             size_t in_size = input.size();
 
@@ -56,34 +57,18 @@ public:
         phase0.log_stat("int_size2_unique", context.ipd_stats.int_size2_unique);
 
         {
-            auto phase1 = StatPhase("Encode Phase");
+            StatPhase phase1 ("Encode Phase");
 
-            auto phase2 = StatPhase("Creating strategy");
-            const slp_coder_t strategy { this->env().env_for_option("slp_coder") };
+            StatPhase phase2("Creating strategy");
+            const slp_coder_t strategy { this->config().sub_config("slp_coder") };
 
             phase2.split("Encode SLP");
             strategy.encode(std::move(slp), output);
         }
     }
 
-    inline virtual void decompress(Input& input, Output& output) override {
-        auto phase0 = StatPhase("ESP Decompressor");
-
-        auto phase1 = StatPhase("Creating strategy");
-        const slp_coder_t strategy { this->env().env_for_option("slp_coder") };
-
-        phase1.split("Decode SLP");
-        auto slp = strategy.decode(input);
-
-        phase1.split("Create output stream");
-        auto out = output.as_stream();
-
-        phase1.split("Derive text");
-        if (!slp.is_empty()) {
-            slp.derive_text(out);
-        } else {
-            out << ""_v;
-        }
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return Algorithm::instance<ESPDecompressor<slp_coder_t>>();
     }
 };
 

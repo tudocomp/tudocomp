@@ -11,14 +11,14 @@ public:
     using Algorithm::Algorithm;
 
     inline static Meta meta() {
-        Meta m("lz78u_strategy", "buffering");
-        m.option("string_coder").templated<string_coder_t>("coder");
+        Meta m(TypeDesc("lz78u_strategy"), "buffering");
+        m.param("string_coder").strategy<string_coder_t>(TypeDesc("coder"));
         return m;
     }
 
     template<typename ref_coder_t>
     class Compression: public Algorithm {
-        Env m_ref_env;
+        Config m_ref_cfg;
         std::shared_ptr<BitOStream> m_out;
 
         // TODO Optimization: Replace with something that just stores the increment points
@@ -35,11 +35,11 @@ public:
         std::vector<uint8_t> m_stream;
 
     public:
-        inline Compression(Env&& env,
-                           Env&& ref_env,
+        inline Compression(Config&& cfg,
+                           Config&& ref_cfg,
                            std::shared_ptr<BitOStream> out):
-            Algorithm(std::move(env)),
-            m_ref_env(std::move(ref_env)),
+            Algorithm(std::move(cfg)),
+            m_ref_cfg(std::move(ref_cfg)),
             m_out(out) {}
 
         inline void encode_ref(size_t ref, Range ref_range) {
@@ -67,12 +67,12 @@ public:
 
         inline ~Compression() {
             typename ref_coder_t::Encoder ref_coder {
-                std::move(m_ref_env),
+                std::move(m_ref_cfg),
                 m_out,
                 NoLiterals()
             };
             typename string_coder_t::Encoder string_coder {
-                std::move(this->env().env_for_option("string_coder")),
+                std::move(this->config().sub_config("string_coder")),
                 m_out,
                 ViewLiterals(m_chars)
             };
@@ -121,12 +121,12 @@ public:
         std::vector<uliteral_t> m_buf;
         std::shared_ptr<BitIStream> m_in;
     public:
-        inline Decompression(Env&& env,
-                             Env&& ref_env,
+        inline Decompression(Config&& cfg,
+                             Config&& ref_cfg,
                              std::shared_ptr<BitIStream> in):
-            Algorithm(std::move(env)),
-            m_ref_coder(std::move(ref_env), in),
-            m_string_coder(std::move(this->env().env_for_option("string_coder")), in),
+            Algorithm(std::move(cfg)),
+            m_ref_coder(std::move(ref_cfg), in),
+            m_string_coder(std::move(this->config().sub_config("string_coder")), in),
             m_in(in) {}
 
         inline size_t decode_ref(Range ref_range) {

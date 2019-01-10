@@ -20,7 +20,10 @@ private:
 
 public:
     inline static Meta meta() {
-        return super_t::meta(Meta("lzss_coder", "bi", "Buffered bidirectional coding"));
+        return super_t::meta(Meta(
+            lzss_bidirectional_coder_type(),
+            "bi",
+            "Buffered bidirectional coding"));
     }
 
     using super_t::LZSSCoder;
@@ -36,7 +39,7 @@ public:
     public:
         /// \brief Constructor.
         inline Encoder(
-            const Env& env,
+            const Config& cfg,
             std::unique_ptr<refc_t>&& refc,
             std::unique_ptr<lenc_t>&& lenc,
             std::unique_ptr<litc_t>&& litc)
@@ -82,10 +85,10 @@ public:
             }
         }
 
-        template<typename text_t>
+        template<typename text_t, typename factorbuffer_t>
         inline void encode_text(
             const text_t& text,
-            const FactorBuffer& factors) {
+            const factorbuffer_t& factors) {
 
             m_ref_r = Range(text.size());
 
@@ -117,7 +120,7 @@ public:
     public:
         /// \brief Constructor.
         inline Decoder(
-            const Env& env,
+            const Config& cfg,
             std::unique_ptr<refd_t>&& refd,
             std::unique_ptr<lend_t>&& lend,
             std::unique_ptr<litd_t>&& litd)

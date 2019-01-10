@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Range.hpp>
 #include <tudocomp/util.hpp>
@@ -10,30 +8,17 @@
 
 #include <tudocomp/io.hpp>
 
-
 #include <tudocomp/io/BitIStream.hpp>
 #include <tudocomp/io/BitOStream.hpp>
-
-
 #include <tudocomp/ds/IntVector.hpp>
-
-
-
-
 
 #include <tudocomp/ds/TextDS.hpp>
 
 #include <tudocomp/Algorithm.hpp>
 
 #include <tudocomp/Literal.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
 #include <tudocomp/coders/EliasGammaCoder.hpp>
-
 #include <tudocomp/coders/HuffmanCoder.hpp>
-
-
-//#include <tudocomp/tudocomp.hpp>
-
 
 namespace tdc {
 namespace lfs {
@@ -52,9 +37,11 @@ public:
     using Algorithm::Algorithm; //import constructor
 
     inline static Meta meta() {
-        Meta m("lfs_comp_enc", "lfs_enocde_strat");
-        m.option("lfs_lit_coder").templated<literal_coder_t, HuffmanCoder>("lfs_lit_coder");
-        m.option("lfs_len_coder").templated<len_coder_t, EliasGammaCoder>("lfs_len_coder");
+        Meta m(TypeDesc("lfs_comp_enc"), "lfs_enocde_strat");
+        m.param("lfs_lit_coder").strategy<literal_coder_t>(
+            Coder::type_desc(), Meta::Default<HuffmanCoder>());
+        m.param("lfs_len_coder").strategy<len_coder_t>(
+            Coder::type_desc(), Meta::Default<EliasGammaCoder>());
         return m;
     }
 
@@ -67,12 +54,12 @@ public:
 
         std::shared_ptr<BitOStream> bitout = std::make_shared<BitOStream>(output);
         typename literal_coder_t::Encoder lit_coder(
-            env().env_for_option("lfs_lit_coder"),
+            config().sub_config("lfs_lit_coder"),
             bitout,
             ViewLiterals(in)
         );
         typename len_coder_t::Encoder len_coder(
-            env().env_for_option("lfs_len_coder"),
+            config().sub_config("lfs_len_coder"),
             bitout,
             NoLiterals()
         );
@@ -97,7 +84,7 @@ public:
             }
             len_coder.encode(symbol.second,s_length_r);
         }else {
-            len_coder.encode(0,intrange);
+            len_coder.encode(0ULL,intrange);
 
         }
 
@@ -193,11 +180,11 @@ public:
         std::shared_ptr<BitIStream> bitin = std::make_shared<BitIStream>(input);
 
         typename literal_coder_t::Decoder lit_decoder(
-            env().env_for_option("lfs_lit_coder"),
+            config().sub_config("lfs_lit_coder"),
             bitin
         );
         typename len_coder_t::Decoder len_decoder(
-            env().env_for_option("lfs_len_coder"),
+            config().sub_config("lfs_len_coder"),
             bitin
         );
         Range int_r (0,UINT_MAX);

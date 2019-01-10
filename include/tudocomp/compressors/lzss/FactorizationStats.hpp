@@ -23,7 +23,8 @@ struct FactorizationStats {
     size_t run_max, run_med, run_uq;
     float run_avg;
 
-    inline FactorizationStats(FactorBuffer& factors, const size_t n) {
+    template<typename factorbuffer_t>
+    inline FactorizationStats(const factorbuffer_t& factors, const size_t n) {
         CHECK(factors.is_sorted())
             << "factors need to be sorted before they can be analyzed";
 

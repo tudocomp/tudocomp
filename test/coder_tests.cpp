@@ -2,7 +2,6 @@
 
 #include <tudocomp/Generator.hpp>
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/CreateAlgorithm.hpp>
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/io.hpp>
 
@@ -30,14 +29,17 @@ void test_mt(const std::string& options = "") {
     std::stringstream ss;
     {
         Output out(ss);
-        typename coder_t::Encoder coder(create_env(coder_t::meta(), options), out, DUMMY_LITERALS);
+        typename coder_t::Encoder coder(
+            coder_t::meta().config(options), out, DUMMY_LITERALS);
     }
 
     // Expect nothing to be decoded
     std::string result = ss.str();
     {
         Input in(result);
-        typename coder_t::Decoder decoder(create_env(coder_t::meta(), options), in);
+        typename coder_t::Decoder decoder(
+            coder_t::meta().config(options), in);
+
         ASSERT_TRUE(decoder.eof());
     }
 }
@@ -51,7 +53,8 @@ void test_bits(const std::string& options = "") {
     std::stringstream ss;
     {
         Output out(ss);
-        typename coder_t::Encoder coder(create_env(coder_t::meta(), options), out, DUMMY_LITERALS);
+        typename coder_t::Encoder coder(
+            coder_t::meta().config(options), out, DUMMY_LITERALS);
 
         for(char c : word) coder.encode(c != '0', bit_r);
     }
@@ -60,7 +63,8 @@ void test_bits(const std::string& options = "") {
     std::string result = ss.str();
     {
         Input in(result);
-        typename coder_t::Decoder decoder(create_env(coder_t::meta(), options), in);
+        typename coder_t::Decoder decoder(
+            coder_t::meta().config(options), in);
 
         size_t i = 0;
         while(!decoder.eof()) {
@@ -79,7 +83,8 @@ void test_int(const std::string& options = "", size_t n = 93) {
     std::stringstream ss;
     {
         Output out(ss);
-        typename coder_t::Encoder coder(create_env(coder_t::meta(), options), out, DUMMY_LITERALS);
+        typename coder_t::Encoder coder(
+            coder_t::meta().config(options), out, DUMMY_LITERALS);
 
         uint64_t a = 0, b = 1, t;
         for(size_t i = 0; i < n; i++) {
@@ -96,7 +101,8 @@ void test_int(const std::string& options = "", size_t n = 93) {
     std::string result = ss.str();
     {
         Input in(result);
-        typename coder_t::Decoder decoder(create_env(coder_t::meta(), options), in);
+        typename coder_t::Decoder decoder(
+            coder_t::meta().config(options), in);
 
         size_t i = 0;
         uint64_t a = 0, b = 1, t;
@@ -126,16 +132,18 @@ void test_str(const std::string& options = "") {
     std::stringstream ss;
     {
         Output out(ss);
-        typename coder_t::Encoder coder(create_env(coder_t::meta(), options), out, ViewLiterals(word));
+        typename coder_t::Encoder coder(
+            coder_t::meta().config(options), out, ViewLiterals(word));
 
-        for(char c : word) coder.encode(c, literal_r);
+        for(char c : word) coder.encode((unsigned char)c, literal_r);
     }
 
     // Decode
     std::string result = ss.str();
     {
         Input in(result);
-        typename coder_t::Decoder decoder(create_env(coder_t::meta(), options), in);
+        typename coder_t::Decoder decoder(
+            coder_t::meta().config(options), in);
 
         size_t i = 0;
         while(!decoder.eof()) {
@@ -157,7 +165,8 @@ void test_mixed(const std::string& options = "") {
     std::stringstream ss;
     {
         Output out(ss);
-        typename coder_t::Encoder coder(create_env(coder_t::meta(), options), out, ViewLiterals(word));
+        typename coder_t::Encoder coder(
+            coder_t::meta().config(options), out, ViewLiterals(word));
 
         for(size_t i = 0; i < word.length(); i++) {
             coder.encode(word[i] == 'a', bit_r);
@@ -172,7 +181,8 @@ void test_mixed(const std::string& options = "") {
     std::string result = ss.str();
     {
         Input in(result);
-        typename coder_t::Decoder decoder(create_env(coder_t::meta(), options), in);
+        typename coder_t::Decoder decoder(
+            coder_t::meta().config(options), in);
 
         size_t i = 0;
         while(!decoder.eof()) {
@@ -243,8 +253,8 @@ TEST(coder, ternary_str) { test_str<TernaryCoder>(); }
 TEST(coder, ternary_mixed) { test_mixed<TernaryCoder>(); }
 
 constexpr size_t RICE = 32;
-TEST(coder, rice_mt) { for(size_t i = 1; i < RICE; i++) test_mt<RiceCoder>(to_str(i)); }
-TEST(coder, rice_bits) { for(size_t i = 1; i < RICE; i++) test_bits<RiceCoder>(to_str(i)); }
-TEST(coder, rice_int) { for(size_t i = 1; i < RICE; i++) test_int<RiceCoder>(to_str(i)); }
-TEST(coder, rice_str) { for(size_t i = 1; i < RICE; i++) test_str<RiceCoder>(to_str(i)); }
-TEST(coder, rice_mixed) { for(size_t i = 1; i < RICE; i++) test_mixed<RiceCoder>(to_str(i)); }
+TEST(coder, rice_mt) { for(size_t i = 1; i < RICE; i++) test_mt<RiceCoder>(to_string(i)); }
+TEST(coder, rice_bits) { for(size_t i = 1; i < RICE; i++) test_bits<RiceCoder>(to_string(i)); }
+TEST(coder, rice_int) { for(size_t i = 1; i < RICE; i++) test_int<RiceCoder>(to_string(i)); }
+TEST(coder, rice_str) { for(size_t i = 1; i < RICE; i++) test_str<RiceCoder>(to_string(i)); }
+TEST(coder, rice_mixed) { for(size_t i = 1; i < RICE; i++) test_mixed<RiceCoder>(to_string(i)); }

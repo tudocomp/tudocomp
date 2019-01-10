@@ -15,17 +15,14 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("lcp", "from_phi");
+        Meta m(TypeDesc("lcp"), "lcp_from_plcp",
+            "Constructs the LCP array using the Phi algorithm.");
         return m;
     }
 
-    inline static ds::InputRestrictions restrictions() {
-        return ds::InputRestrictions {};
-    }
-
     template<typename textds_t>
-    inline LCPFromPLCP(Env&& env, textds_t& t, CompressMode cm)
-            : Algorithm(std::move(env)) {
+    inline LCPFromPLCP(Config&& cfg, textds_t& t, CompressMode cm)
+            : Algorithm(std::move(cfg)) {
 
         // Construct Suffix Array and PLCP Array
         auto& sa = t.require_sa(cm);

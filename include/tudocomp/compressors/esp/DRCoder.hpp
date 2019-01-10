@@ -6,13 +6,14 @@
 #include <tudocomp/compressors/esp/ArithmeticCoder.hpp>
 #include <tudocomp/compressors/esp/HuffmanCoder.hpp>
 #include <tudocomp/compressors/esp/SubseqStrategy.hpp>
+#include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {namespace esp {
     //template<typename coder_t>
     class DHuffman: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "huffman");
+            Meta m(TypeDesc("d_coding"), "huffman");
             //m.option("coder").templated<coder_t, HuffmanCoder>("coder");
             return m;
         };
@@ -39,7 +40,7 @@ namespace tdc {namespace esp {
     class DArithmetic: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "arithmetic");
+            Meta m(TypeDesc("d_coding"), "arithmetic");
             //m.option("coder").templated<coder_t, HuffmanCoder>("coder");
             return m;
         };
@@ -66,7 +67,7 @@ namespace tdc {namespace esp {
     class DPlain: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "plain");
+            Meta m(TypeDesc("d_coding"), "plain");
             return m;
         };
 
@@ -96,7 +97,7 @@ namespace tdc {namespace esp {
     class DWaveletTree: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "wavelet_tree");
+            Meta m(TypeDesc("d_coding"), "wavelet_tree");
             return m;
         };
 
@@ -154,9 +155,9 @@ namespace tdc {namespace esp {
     class DMonotonSubseq: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "succinct");
-            m.option("subseq").templated<subseq_t, SubSeqOptimal>("subseq");
-            m.option("dx_coder").templated<d_coding_t, DWaveletTree>("d_coding");
+            Meta m(TypeDesc("d_coding"), "succinct");
+            m.param("subseq").strategy<subseq_t>(TypeDesc("subseq"), Meta::Default<SubSeqOptimal>());
+            m.param("dx_coder").strategy<d_coding_t>(TypeDesc("d_coding"), Meta::Default<DWaveletTree>());
             return m;
         };
 
@@ -165,7 +166,7 @@ namespace tdc {namespace esp {
         inline void encode(const rhs_t& rhs, std::shared_ptr<BitOStream>& out, size_t bit_width, size_t max_value) const {
             BitOStream& bout = *out;
 
-            auto phase1 = StatPhase("Sorting D");
+            StatPhase phase1("Sorting D");
 
             // Sort rhs and create sorted indice array O(n log n)
             const auto sis = sorted_indices(rhs);
@@ -193,7 +194,7 @@ namespace tdc {namespace esp {
             std::vector<size_t> Dpi;
             auto b = IntVector<uint_t<1>> {};
             {
-                const subseq_t subseq { this->env().env_for_option("subseq") };
+                const subseq_t subseq { this->config().sub_config("subseq") };
                 auto tmp = subseq.create_dpi_and_b_from_sorted_indices(sis);
                 Dpi = std::move(tmp.Dpi);
                 b = std::move(tmp.b);
@@ -231,7 +232,7 @@ namespace tdc {namespace esp {
 
             phase1.split("Encode Dcombined");
 
-            const d_coding_t coder { this->env().env_for_option("dx_coder") };
+            const d_coding_t coder { this->config().sub_config("dx_coder") };
 
             auto d_max_value = b_size - 1;
             auto d_bit_width = bits_for(d_max_value);
@@ -273,7 +274,7 @@ namespace tdc {namespace esp {
             Dcombined.reserve(slp_size * 2);
             Dcombined.resize(slp_size * 2);
 
-            const d_coding_t coder { this->env().env_for_option("dx_coder") };
+            const d_coding_t coder { this->config().sub_config("dx_coder") };
 
             auto d_max_value = b_size - 1;
             auto d_bit_width = bits_for(d_max_value);
@@ -485,7 +486,7 @@ namespace tdc {namespace esp {
     class DDiff: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "diff");
+            Meta m(TypeDesc("d_coding"), "diff");
             return m;
         };
 
@@ -493,7 +494,7 @@ namespace tdc {namespace esp {
 
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
-            auto phase = StatPhase("RangeFit");
+            StatPhase phase("RangeFit");
             encode_unary_diff(rhs, out, bit_width, bit_width, true, phase);
         }
         template<typename rhs_t>
@@ -522,10 +523,10 @@ namespace tdc {namespace esp {
         }
     public:
         inline static Meta meta() {
-            Meta m("d_coding", "range_fit");
-            m.option("threshold").dynamic("none"); // "none"
-            m.option("wt").dynamic(false);     // false
-            m.option("zero_min").dynamic(false);     // false
+            Meta m(TypeDesc("d_coding"), "range_fit");
+            m.param("threshold").primitive("none"); // "none"
+            m.param("wt").primitive(false);     // false
+            m.param("zero_min").primitive(false);     // false
             return m;
         };
 
@@ -533,16 +534,16 @@ namespace tdc {namespace esp {
 
         template<typename rhs_t>
         inline void encode(const rhs_t& rhs, BitOStream& out, size_t bit_width, size_t max_value) const {
-            auto phase = StatPhase("RangeFit");
+            StatPhase phase("RangeFit");
             const size_t size = rhs.size();
 
-            const bool has_threshold = env().option("threshold").as_string() != "none";
+            const bool has_threshold = config().param("threshold").as_string() != "none";
             double threshold = 0.0;
             if (has_threshold) {
-                threshold = double(env().option("threshold").as_integer()) / 100.0;
+                threshold = double(config().param("threshold").as_double()) / 100.0;
             }
-            const bool use_wt = env().option("wt").as_bool();
-            const bool use_zero_min = env().option("zero_min").as_bool();
+            const bool use_wt = config().param("wt").as_bool();
+            const bool use_zero_min = config().param("zero_min").as_bool();
 
             std::vector<size_t> mins;
             mins.reserve(size);
@@ -768,7 +769,7 @@ namespace tdc {namespace esp {
         template<typename rhs_t>
         inline void decode(rhs_t& rhs, BitIStream& in, size_t bit_width, size_t max_value) const {
             const size_t size = rhs.size();
-            const bool use_wt = env().option("wt").as_bool();
+            const bool use_wt = config().param("wt").as_bool();
 
             std::vector<size_t> mins;
             mins.reserve(size);

@@ -1,7 +1,8 @@
 #pragma once
+
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
-#include <tudocomp/Env.hpp>
+#include <tudocomp/meta/Config.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <sdsl/select_support_mcl.hpp> // for the select data structure
 
@@ -118,9 +119,14 @@ class LCPForwardIterator {
 	len_t m_idx = 0; // current select parameter
 	len_t m_block = 0; // block index
 	len_t m_blockrank = 0; //number of ones up to previous block
+	uint_fast8_t m_ones; // number of ones in the current block `m_block`
+	const len_t m_chunk_length = 1 + ((m_bv.size()-1)/64); // number of 64bit chunks in the bit vector
 
 	public:
-	LCPForwardIterator(sdsl::bit_vector&& bv) : m_bv(bv) {}
+	LCPForwardIterator(sdsl::bit_vector&& bv)
+		: m_bv(bv)
+		, m_ones(sdsl::bits::cnt(m_bv.data()[0]))
+	{ }
 
 	len_t index() const { return m_idx; }
 
@@ -128,15 +134,15 @@ class LCPForwardIterator {
 		DCHECK_GE(m_bv.size(), 1);
 //		DCHECK_GT(m_idx,0);
 		DCHECK_LT(m_idx+1, m_bv.size());
-		const len_t chunk_size = 1 + ((m_bv.size()-1)/64); //TODO: in constructor
+		//const len_t chunk_size = 1 + ((m_bv.size()-1)/64); //TODO: in constructor
 		const uint64_t*const data = m_bv.data();
-		while(m_block < chunk_size) {
-			const uint_fast8_t ones = sdsl::bits::cnt(data[m_block]); // TODO: make member variable to speed up
-			if(m_blockrank+ones >= m_idx+1) break;
-			m_blockrank += ones;
+		while(m_block < m_chunk_length) {
+			if(m_blockrank+m_ones >= m_idx+1) break;
+			m_blockrank += m_ones;
 			++m_block;
+			m_ones = sdsl::bits::cnt(data[m_block]);
 		}
-		if(m_block == chunk_size) return m_bv.size();
+		if(m_block == m_chunk_length) return m_bv.size();
 		return 64*m_block + sdsl::bits::sel(data[m_block], m_idx+1-m_blockrank);
 
 	}
@@ -171,7 +177,7 @@ inline static sdsl::bit_vector construct_plcp_bitvector(const plcp_t& plcp) {
 }
 
 template<class sa_t, class text_t, class select_t = sdsl::select_support_mcl<1,1>>
-sdsl::bit_vector construct_plcp_bitvector(Env&, const sa_t& sa, const text_t& text) {
+sdsl::bit_vector construct_plcp_bitvector(const sa_t& sa, const text_t& text) {
 	typedef DynamicIntVector phi_t;
 
     phi_t phi = StatPhase::wrap("Construct Phi Array", [&]{
@@ -190,9 +196,9 @@ sdsl::bit_vector construct_plcp_bitvector(Env&, const sa_t& sa, const text_t& te
 }
 
 template<class sa_t, class text_t, class select_t = sdsl::select_support_mcl<1,1>>
-LCPSada<sa_t,select_t> construct_lcp_sada(Env& env, const sa_t& sa, const text_t& text) {
+LCPSada<sa_t,select_t> construct_lcp_sada(const sa_t& sa, const text_t& text) {
     return StatPhase::wrap("Build Select on Bit Vector", [&]{
-        sdsl::bit_vector bv = construct_plcp_bitvector(env, sa, text);
+        sdsl::bit_vector bv = construct_plcp_bitvector(sa, text);
         return LCPSada<sa_t,select_t> { sa, std::move(bv) };
     });
 }

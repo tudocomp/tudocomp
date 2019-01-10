@@ -67,7 +67,7 @@ TEST(stats, example) {
     });
 
     // Print data in JSON representation to stdout
-    root.to_json().str(std::cout);
+    std::cout << root.to_json() << std::endl;
 }
 
 TEST(stats, pause_resume) {
@@ -91,6 +91,6 @@ TEST(stats, pause_resume) {
     delete[] mem2;
 
     // Print data in JSON representation to stdout
-    phase.to_json().str(std::cout);
+    std::cout << phase.to_json() << std::endl;
 }
 

@@ -1,8 +1,9 @@
 #pragma once
 
+#include <limits>
 #include <sstream>
+
 #include <tudocomp/Coder.hpp>
-#include <iostream>
 
 namespace tdc {
 
@@ -15,15 +16,16 @@ namespace tdc {
 /// character.
 class ArithmeticCoder : public Algorithm {
     using ulong = unsigned long;
+    using codebook_index_t = uint16_t;
 
-    // TODO: Figure out how to correctly replace this with len_t or len_compact_t
-    using len_fixup_t = uint32_t;
+    static constexpr codebook_index_t STOP = ULITERAL_MAX + 1;
+    static constexpr codebook_index_t MAX_LITERAL = STOP;
 
 public:
     /// \brief Yields the coder's meta information.
     /// \sa Meta
     inline static Meta meta() {
-        Meta m("coder", "arithmetic", "Simple range encoding");
+        Meta m(Coder::type_desc(), "arithmetic", "Simple range encoding");
         return m;
     }
 
@@ -34,34 +36,35 @@ public:
     /// \brief Encodes data to an ASCII character stream.
     class Encoder : public tdc::Encoder {
     private:
-        std::vector<len_fixup_t> C;
+        ulong m_lb, m_ub;
+        codebook_index_t m_codebook_size;
 
-        ulong lower_bound=0;
-        ulong upper_bound=std::numeric_limits<ulong>::max();
-        uliteral_t codebook_size=0;
+        std::vector<len_compact_t> m_c;
+        len_compact_t m_num_literals;
 
-        len_t literal_count = 0;
-        len_t literal_counter = 0;
-        ulong min_range=std::numeric_limits<len_fixup_t>::max();
+        inline bool code_dirty() const {
+            // test if "current code" is dirty and needs flushing
+            return (m_lb > 0 || m_ub < ULONG_MAX);
+        }
 
-        /**
-         * @brief count_alphabet_literals counts how often a literal occurs in \ref input
-         * @param input
-         * @return an array with count of each single literal
-         */
-        template<class T>
-        std::vector<len_fixup_t> count_alphabet_literals(T&& input) {
-            std::vector<len_fixup_t> C;
-            C.resize(ULITERAL_MAX+1, 0);
+        template<class literals_t>
+        inline void compute_histogram(literals_t&& literals) {
+            m_num_literals = 0;
+            m_c.resize(MAX_LITERAL+1, 0);
 
-            while(input.has_next()) {
-                uliteral_t c = input.next().c;
-                DCHECK_LT(static_cast<uliteral_t>(c), ULITERAL_MAX+1);
-                DCHECK_LT(C[static_cast<uliteral_t>(c)], std::numeric_limits<len_fixup_t>::max());
-                ++C[static_cast<uliteral_t>(c)];
+            while(literals.has_next()) {
+                uliteral_t c = literals.next().c;
+                DCHECK_LE(c, MAX_LITERAL);
+                DCHECK_LT(m_c[c], INDEX_MAX);
+                ++m_c[c];
+                ++m_num_literals;
             }
 
-            return C;
+            CHECK_GT(m_num_literals, 0U) << "input is empty";
+
+            // insert artifical STOP character
+            m_c[STOP] = 1;
+            ++m_num_literals;
         }
 
         /**
@@ -69,207 +72,200 @@ public:
          * Every entry contains the difference to the entry before.
          * @param c
          */
-        void build_intervals(std::vector<len_fixup_t> &c) {
-            if(c[0] != 0u) {
-                codebook_size++;
+        inline void build_intervals() {
+            // compute C array, and find amount of codebook entries
+            if(m_c[0] != 0U) {
+                ++m_codebook_size;
             }
-            len_t min=std::numeric_limits<len_fixup_t>::max();
-            //calculates difference to the entry before, searches min and counts entries != 0
-            for(ulong i=1; i<=ULITERAL_MAX; i++) {
-                if(c[i]!=0u) {
-                    codebook_size++;
-                    min=std::min(min, len_t(c[i]));
+
+            for(ulong i = 1; i <= MAX_LITERAL; i++) {
+                if(m_c[i] != 0U) {
+                    ++m_codebook_size;
                 }
-                c[i] = c[i] + c[i-1];
+                m_c[i] += m_c[i-1];
             }
-            literal_count = c[ULITERAL_MAX-1];
 
-            //normalize all Intervals
-            for(ulong i=0; i<=ULITERAL_MAX; i++) {
-                c[i] = c[i] / min;
-            }
-            min_range=c[ULITERAL_MAX-1];
+            DCHECK_EQ(m_c[MAX_LITERAL], m_num_literals);
         }
 
-
-        template<typename value_t>
-        inline void setNewBounds(value_t v) {
-            ulong range = upper_bound-lower_bound;
-            //check if all characters can be uniquely mapped to range
-            if(range<min_range){
-                writeCode(lower_bound);
-                lower_bound=0;
-                upper_bound=std::numeric_limits<ulong>::max();
-                range = upper_bound-lower_bound;
-            }
-            DCHECK_NE(lower_bound,upper_bound);
-
-            const ulong literal_count = C[ULITERAL_MAX];
-
-            //unsure if this is needed
-            const ulong offset_upper = range <= literal_count ? (range*C[(int) v])/literal_count : (range/literal_count)*C[(int) v];
-            upper_bound=lower_bound+offset_upper;
-            if(v != 0) { //first interval starts at zero
-                const ulong offset_lower = range <= literal_count ? (range*C[(int) v-1])/literal_count : (range/literal_count)*C[(int) v-1];
-                lower_bound=lower_bound+offset_lower;
+        inline void write_codebook() {
+            m_out->write_int(m_codebook_size);
+            if(m_c[0] != 0u) {
+                m_out->write_int(codebook_index_t(0));
+                m_out->write_int(m_c[0]);
             }
 
-        }
-
-        inline void writeCodebook() {
-            ///the written file has following format (without linebreaks):
-            /// #all literals in text
-            /// #count of entries in codebook
-            /// 'character' 'value'
-            /// 'character2' 'value2'
-            /// code1 code2 code3 code4
-
-            //write count of expected chars
-            m_out->write_int<len_fixup_t>(literal_count);
-
-            //write codebook size in outstream
-            m_out->write_int<uliteral_t>(codebook_size);
-
-            if(C[0]!=0u) {
-                m_out->write_int(uliteral_t(0));
-                m_out->write_int(C[0]);
-            }
-            for(ulong i=1; i<=ULITERAL_MAX;i++) {
-                if(C[i]!=C[i-1]) {
-                    m_out->write_int((uliteral_t) i);
-                    m_out->write_int(C[i]);
+            for(codebook_index_t c = 1; c <= MAX_LITERAL; c++) {
+                if(m_c[c] != m_c[c-1]) {
+                    m_out->write_int(c);
+                    m_out->write_int(m_c[c]);
                 }
-
             }
         }
 
-        inline void writeCode(ulong code){
-            m_out->write_int(code);
-        }
+        inline bool encode_next(codebook_index_t c) {
+            // update interval
+            const ulong range = m_ub - m_lb;
+            DCHECK_GE(range, m_num_literals);
 
-        //write last code-block
-        void postProcessing() {
-            writeCode(lower_bound);
-            //dummy codeblock - needed to read until no more code-blocks
-            m_out->write_int(std::numeric_limits<ulong>::max());
+            m_ub = m_lb + (range / m_num_literals) * m_c[c];
+            if(c > 0U) { // first interval starts at zero
+                m_lb += (range / m_num_literals) * m_c[c - 1];
+            }
+
+            DCHECK_NE(m_lb, m_ub);
+
+            if(m_ub - m_lb < m_num_literals) {
+                // write code and reset bounds
+                m_out->write_int(m_lb);
+                m_lb = 0;
+                m_ub = ULONG_MAX;
+                return true;
+            } else {
+                // code not yet "complete"
+                return false;
+            }
         }
 
     public:
         template<typename literals_t>
-        inline Encoder(Env&& env, Output& out, literals_t&& literals)
-            : Encoder(std::move(env), std::make_shared<BitOStream>(out), literals) {
+        inline Encoder(Config&& cfg, Output& out, literals_t&& literals)
+            : Encoder(std::move(cfg), std::make_shared<BitOStream>(out), literals) {
         }
 
         template<typename literals_t>
-        inline Encoder(Env&& env, std::shared_ptr<BitOStream> out, literals_t&& literals)
-            : tdc::Encoder(std::move(env), out, literals),
-        C(count_alphabet_literals(std::move(literals))) {
-            build_intervals(C);
-            writeCodebook();
+        inline Encoder(Config&& cfg, std::shared_ptr<BitOStream> out, literals_t&& literals)
+            : tdc::Encoder(std::move(cfg), out, literals),
+              m_lb(0),
+              m_ub(ULONG_MAX),
+              m_codebook_size(0) {
+
+            compute_histogram(literals);
+            build_intervals();
+            write_codebook();
+        }
+
+        inline ~Encoder() {
+            flush();
         }
 
         using tdc::Encoder::encode; // default encoding as fallback
 
         template<typename value_t>
         inline void encode(value_t v, const LiteralRange&) {
-            literal_counter++;
-            setNewBounds(v);
-
-            if(literal_counter==literal_count){
-                postProcessing();
-            }
+            encode_next(codebook_index_t(v));
         }
 
         inline void flush() {
-            throw std::runtime_error("ArithmeticCoder::flush not implemented");
+            if(code_dirty()) {
+                // fill current code with STOP signs
+                while(!encode_next(STOP));
+            }
         }
     };
 
     /// \brief Decodes data from an Arithmetic character stream.
     class Decoder : public tdc::Decoder {
     private:
-        std::vector<std::pair<uliteral_t ,int>> literals;
-        std::string decoded;
-        uliteral_t codebook_size;
-        len_t literal_count = 0;
-        len_t literal_counter = 0;
-        ulong literals_read = 0;
-        ulong min_range=std::numeric_limits<ulong>::max();
+        using codebook_entry_t = std::pair<codebook_index_t, len_compact_t>;
 
-        void decode(ulong code) {
-            ulong lower_bound = 0;
-            ulong upper_bound = std::numeric_limits<ulong>::max();
-            std::ostringstream os;
-            ulong interval_parts = literals[codebook_size -1].second;
-            //count of characters in stream
+        std::vector<codebook_entry_t> m_codebook;
+        len_compact_t m_num_literals;
 
-            ulong range = upper_bound - lower_bound;
+        std::string m_decode_buffer;
+        ulong m_decoded;
 
-            //stop decoding code-bllock when range is too small or all literals read
-            while(min_range<=range && literal_counter<literal_count) {
-                ulong interval_lower_bound = lower_bound;
-                //search the right interval
-                for(int i = 0; i < codebook_size ; i++) {
-                    const std::pair<uliteral_t, int>& pair=literals[i];
-                    const ulong offset = range <= interval_parts ? range*pair.second/interval_parts : range/interval_parts*pair.second;
-                    upper_bound = lower_bound + offset;
-                    if(code < upper_bound) {
-                        //character decoded
-                        os << pair.first;
-                        lower_bound = interval_lower_bound;
-                        break;
-                    }
-                    interval_lower_bound = upper_bound;
-                }
-                literal_counter++;
-                range = upper_bound - lower_bound;
+        inline void read_codebook() {
+            // header
+            auto codebook_size = m_in->read_int<codebook_index_t>();
+
+            // initialize intervals (already normalized)
+            m_codebook.resize(codebook_size);
+            for(codebook_index_t i =0; i < codebook_size; i++) {
+                auto c = m_in->read_int<codebook_index_t>();
+                auto v = m_in->read_int<len_compact_t>();
+
+                m_codebook[i] = codebook_entry_t(c, v);
             }
 
-            decoded = os.str();
-            literals_read = 0;
+            DCHECK_EQ(STOP, m_codebook[codebook_size - 1].first);
+            m_num_literals = m_codebook[codebook_size - 1].second;
+        }
+
+        inline void decode(ulong code) {
+            std::ostringstream buf;
+
+            ulong lb = 0;
+            ulong ub = ULONG_MAX;
+            ulong range = ub - lb;
+            while(range >= m_num_literals) {
+                // find the right interval
+                ulong next_lb = lb;
+                codebook_index_t c = STOP;
+
+                for(codebook_index_t i = 0; i < m_codebook.size() ; i++) {
+                    const codebook_entry_t& e = m_codebook[i];
+                    ub = lb + (range / m_num_literals) * e.second;
+
+                    if(code < ub) {
+                        lb = next_lb;
+                        c = e.first;
+                        break;
+                    }
+
+                    next_lb = ub;
+                }
+
+                if(c != STOP) {
+                    // decoded a valid character
+                    DCHECK_LE(c, ULITERAL_MAX);
+                    buf << uliteral_t(c);
+                    range = ub - lb;
+
+                } else {
+                    // code finished
+                    break;
+                }
+            }
+
+            m_decode_buffer = buf.str();
+            m_decoded = 0;
         }
 
     public:
-        DECODER_CTOR(env, in) {
-            //read codebook size
-            literal_count = m_in->read_int<len_fixup_t>();
-            codebook_size = m_in->read_int<uliteral_t>();
-            literals.resize(codebook_size);
+        inline Decoder(Config&& cfg, Input& in)
+             : Decoder(std::move(cfg), std::make_shared<BitIStream>(in)) {
+        }
 
-            //read and parse dictionary - is is already "normalized"
-            for (int i =0; i<codebook_size; i++) {
-                uliteral_t c = m_in->read_int<uliteral_t>();
-                int val = m_in->read_int<int>();
-                literals[i]=std::pair<uliteral_t, int>(c, val);
-            }
+        inline Decoder(Config&& cfg, std::shared_ptr<BitIStream> in)
+            : tdc::Decoder(std::move(cfg), in),
+              m_decoded(0) {
 
-            min_range=literals[codebook_size-1].second;
+            read_codebook();
         }
 
         using tdc::Decoder::decode;
 
+        inline bool eof() const {
+            if(m_decoded < m_decode_buffer.size()) {
+                // still decoding
+                return false;
+            } else {
+                // check if stream is over
+                return m_in->eof();
+            }
+        }
+
         template<typename value_t>
         inline value_t decode(const LiteralRange&) {
-            //read code if nothing buffered
-            if(!decoded.size()) {
-                ulong code = m_in->read_int<ulong>();
-                if(code!=std::numeric_limits<ulong>::max()) {
-                    //code must not be a dummy-code
-                    decode(code);
-                }
-            }
-            value_t val = decoded[literals_read++];
-
-            //if all buffered literals are read: decode the next buffer
-            if(literals_read == decoded.size()) {
-                ulong code = m_in->read_int<ulong>();
-                if(code!=std::numeric_limits<ulong>::max()) {
-                    //code must not be a dummy-code
-                    decode(code);
-                }
+            if(m_decoded >= m_decode_buffer.size()) {
+                // read and decode next code
+                auto code = m_in->read_int<ulong>();
+                decode(code);
+                DCHECK_LT(m_decoded, m_decode_buffer.size());
             }
 
-            return val;
+            return value_t(m_decode_buffer[m_decoded++]);
         }
     };
 };

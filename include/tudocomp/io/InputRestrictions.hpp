@@ -2,7 +2,8 @@
 
 #include <tudocomp/util.hpp>
 
-namespace tdc {namespace io {
+namespace tdc {
+namespace io {
     /// Describes a set of restrictions placed on input data.
     ///
     /// Restrictions include illigal bytes in the input (called escape bytes here),
@@ -20,6 +21,18 @@ namespace tdc {namespace io {
                                                   const InputRestrictions& b);
 
     public:
+        inline static InputRestrictions none() {
+            return InputRestrictions();
+        }
+
+        inline static InputRestrictions sentinel() {
+            return InputRestrictions({0}, true);
+        }
+
+        inline static InputRestrictions escape(const std::vector<uint8_t>& escape_bytes) {
+            return InputRestrictions(escape_bytes, false);
+        }
+
         inline InputRestrictions(const std::vector<uint8_t>& escape_bytes = {},
                                  bool null_terminate = false):
             m_escape_bytes(escape_bytes),
@@ -49,6 +62,32 @@ namespace tdc {namespace io {
 
         inline bool has_restrictions() const {
             return !has_no_restrictions();
+        }
+
+        inline void serialize(std::ostream& out) const {
+            out.write((const char*)&m_null_terminate, sizeof(bool));
+            
+            const uint8_t num_escape_bytes = m_escape_bytes.size();
+            out.write((const char*)&num_escape_bytes, sizeof(uint8_t));
+
+            for(uint8_t c : m_escape_bytes) {
+                out.put(c);
+            }
+        }
+
+        inline size_t deserialize(std::istream& in) {
+            uint8_t num_escape_bytes = 0;
+
+            in.read((char*)&m_null_terminate, sizeof(bool));
+            in.read((char*)&num_escape_bytes, sizeof(uint8_t));
+
+            size_t x = num_escape_bytes;
+            while(x) {
+                m_escape_bytes.push_back((uint8_t)in.get());
+                --x;
+            }
+
+            return sizeof(bool) + sizeof(uint8_t) + num_escape_bytes;
         }
     };
 
@@ -95,4 +134,8 @@ namespace tdc {namespace io {
                            const InputRestrictions& rhs) {
         return !(lhs == rhs);
     }
-}}
+}
+
+using InputRestrictions = io::InputRestrictions;
+
+}

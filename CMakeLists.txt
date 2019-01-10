@@ -21,14 +21,16 @@ set(CXX_STANDARD c++14)
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     # using Clang or AppleClang
-    if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "3.4")
-        message(FATAL_ERROR "clang version 3.4 or greater required!")
+    if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "3.8")
+        message(FATAL_ERROR "clang version 3.8 or greater required!")
     endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # using GCC
     if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "5.4")
         message(FATAL_ERROR "g++ version 5.4 or greater required!")
     endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
 else()
     message(FATAL_ERROR "Compiler ${CMAKE_CXX_COMPILER_ID} is not supported!")
 endif()
@@ -40,15 +42,17 @@ include(ExternalProject)
 set(GCC_WARNINGS "-Wall -Werror=return-type")
 #set(SANITIZATION "-fsanitize=undefined -fsanitize=address -fsanitize=leak")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 ${GCC_WARNINGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread ${GCC_WARNINGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG -march=native")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -ggdb -DDEBUG ${SANITIZATION}")
 
 # Set integer with for length type
-if(DEFINED LEN_BITS)
-    message(STATUS "Setting length type to ${LEN_BITS} Bits")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEN_BITS=${LEN_BITS}")
-endif(DEFINED LEN_BITS)
+if(NOT DEFINED LEN_BITS)
+    set(LEN_BITS 32)
+endif(NOT DEFINED LEN_BITS)
+
+message(STATUS "Setting length type to ${LEN_BITS} Bits")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEN_BITS=${LEN_BITS}")
 
 find_package(Boost)
 
@@ -82,28 +86,47 @@ include(git_submodule_subdirectories)
 # Finders
 include(find_or_download_package)
 
-# Usage: find_or_download_package(PACKAGE_NAME, FOUND_FLAG_PREFIX, TARGET_PREFIX)
-find_or_download_package(Glog GLOG glog)
-find_or_download_package(SDSL SDSL sdsl)
+# modules
 git_submodule_subdirectory(external/bit_span)
+git_submodule_subdirectory(external/tudostats)
 git_submodule_subdirectory(external/compact_sparse_hash)
 git_submodule_subdirectory(external/datasets)
 
+# hard dependencies
+# Usage: find_or_download_package(PACKAGE_NAME, FOUND_FLAG_PREFIX, TARGET_PREFIX)
+find_or_download_package(Glog GLOG glog)
+find_or_download_package(SDSL SDSL sdsl)
+
+# soft dependencies
+find_package(STXXL)
+if(STXXL_FOUND)
+    include_directories(${STXXL_INCLUDE_DIRS})
+endif(STXXL_FOUND)
+
 include(FindJudy)
+
+# Find OpenMP
+find_package(OpenMP)
+include(FindOpenMP)
+if(OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -DENABLE_OPENMP")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif(OPENMP_FOUND)
 
 # Generate source files
 include(generate_tudocomp_sources)
 
 #### All major project targets ####
 
-#include(sdsl)
-
-
 # Add include directory to include searches
 include_directories(include)
 
 # TuDoComp library and implementors
 if(DEFINED TDC_REGISTRY)
+    get_filename_component(TDC_REGISTRY ${TDC_REGISTRY} ABSOLUTE
+        BASE_DIR ${CMAKE_BINARY_DIR})
+
     message("[CAUTION] Using custom registry config: ${TDC_REGISTRY}")
 else()
     set(TDC_REGISTRY ${CMAKE_SOURCE_DIR}/etc/registries/all_algorithms.py)
@@ -129,6 +152,7 @@ add_subdirectory(www)
 MESSAGE( STATUS "Built Type: " ${CMAKE_BUILD_TYPE} )
 MESSAGE( STATUS "[Optional] Judy Array: " ${JUDY_H_AVAILABLE} )
 MESSAGE( STATUS "[Optional] Boost: " ${Boost_FOUND} )
+MESSAGE( STATUS "[Optional] STXXL: " ${STXXL_FOUND} )
 
 # for showing include in qtcreator
 FILE(GLOB_RECURSE LibFiles "include/*.hpp")

@@ -53,7 +53,7 @@ namespace tdc {namespace esp {
             // Copy the input into the level buffer for level 0,
             // and set the initial alphabet size
             {
-                auto phase = StatPhase("Prepare level 0");
+                StatPhase phase("Prepare level 0");
 
                 level_ptr = std::make_unique<Level>(Level {
                     GrammarRules<ipd_t>(initial_alphabet_size),
@@ -73,7 +73,7 @@ namespace tdc {namespace esp {
             for(size_t n = 0;; n++) {
                 std::stringstream ss;
                 ss << "Level " << n;
-                auto phase = StatPhase(ss.str());
+                StatPhase phase(ss.str());
 
                 auto& level = *level_ptr;
                 dynamic_bit_view_t level_str = level.string;

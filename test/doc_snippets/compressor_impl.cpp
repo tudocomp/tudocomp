@@ -12,8 +12,9 @@
 
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
-#include <tudocomp/coders/BitCoder.hpp>
+#include <tudocomp/coders/BinaryCoder.hpp>
 #include <tudocomp/coders/EliasDeltaCoder.hpp>
+#include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 #include "../test/util.hpp"
 
@@ -21,15 +22,15 @@ using namespace tdc;
 
 // Implement a simple compressor
 template<typename coder_t>
-class MyCompressor : public Compressor {
+class MyCompressor : public CompressorAndDecompressor {
 public:
     inline static Meta meta() {
-        Meta m("compressor", "my_compressor", "An example compressor");
-        m.option("coder").templated<coder_t>("coder");
+        Meta m(Compressor::type_desc(), "my_compressor", "An example compressor");
+        m.param("coder").strategy<coder_t>(Coder::type_desc());
         return m;
     }
 
-    using Compressor::Compressor;
+    using CompressorAndDecompressor::CompressorAndDecompressor;
 
     virtual void compress(Input& input, Output& output) override {
         // retrieve random access on the input
@@ -46,7 +47,7 @@ public:
 
         // instantiate the encoder using the whole input alphabet
         typename coder_t::Encoder coder(
-            env().env_for_option("coder"), output, ViewLiterals(view));
+            config().sub_config("coder"), output, ViewLiterals(view));
 
         // encode the smallest and largest characters
         coder.encode(c_min, uliteral_r);
@@ -67,7 +68,7 @@ public:
 
         // instantiate the decoder using the whole input alphabet
         typename coder_t::Decoder decoder(
-            env().env_for_option("coder"), input);
+            config().sub_config("coder"), input);
 
         // encode the smallest and largest characters
         auto c_min = decoder.template decode<uliteral_t>(uliteral_r);
@@ -82,6 +83,10 @@ public:
             ostream << c;
         }
     }
+
+    inline std::unique_ptr<Decompressor> decompressor() const override {
+        return std::make_unique<WrapDecompressor>(*this);
+    }
 };
 
 TEST(doc_compressor_impl, cycle) {
@@ -89,19 +94,19 @@ TEST(doc_compressor_impl, cycle) {
 
     // Run compression cycles using different encoders
     test::roundtrip<MyCompressor<ASCIICoder>>(example);
-    test::roundtrip<MyCompressor<BitCoder>>(example);
+    test::roundtrip<MyCompressor<BinaryCoder>>(example);
     test::roundtrip<MyCompressor<EliasDeltaCoder>>(example);
 }
 
 TEST(doc_compressor_impl, helpers) {
     // perform border case compression tests using different encoders
     test::roundtrip_batch(test::roundtrip<MyCompressor<ASCIICoder>>);
-    test::roundtrip_batch(test::roundtrip<MyCompressor<BitCoder>>);
+    test::roundtrip_batch(test::roundtrip<MyCompressor<BinaryCoder>>);
     test::roundtrip_batch(test::roundtrip<MyCompressor<EliasDeltaCoder>>);
 
     // perform compression tests on generated strings using different encoders
     test::on_string_generators(test::roundtrip<MyCompressor<EliasDeltaCoder>>, 15);
-    test::on_string_generators(test::roundtrip<MyCompressor<BitCoder>>, 15);
+    test::on_string_generators(test::roundtrip<MyCompressor<BinaryCoder>>, 15);
     test::on_string_generators(test::roundtrip<MyCompressor<ASCIICoder>>, 15);
 }
 

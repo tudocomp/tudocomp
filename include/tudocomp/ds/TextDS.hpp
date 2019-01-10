@@ -1,5 +1,8 @@
 #pragma once
 
+#include <tudocomp/Error.hpp>
+#include <tudocomp/Tags.hpp>
+
 #include <tudocomp/ds/TextDSFlags.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/ds/IntVector.hpp>
@@ -44,18 +47,6 @@ public:
     using lcp_type = lcp_t;
     using isa_type = isa_t;
 
-    inline static ds::InputRestrictions common_restrictions(dsflags_t flags) {
-        ds::InputRestrictions rest;
-
-        if (flags & SA)   rest |= sa_type::restrictions();
-        if (flags & ISA)  rest |= isa_type::restrictions();
-        if (flags & LCP)  rest |= lcp_type::restrictions();
-        if (flags & PHI)  rest |= phi_type::restrictions();
-        if (flags & PLCP) rest |= plcp_type::restrictions();
-
-        return rest;
-    };
-
 private:
     using this_t = TextDS<sa_t, phi_t, plcp_t, lcp_t, isa_t>;
 
@@ -73,7 +64,7 @@ private:
     template<typename ds_t>
     inline std::unique_ptr<ds_t> construct_ds(const std::string& option, CompressMode cm) {
         return std::make_unique<ds_t>(
-                    env().env_for_option(option),
+                    config().sub_config(option),
                     *this,
                     cm_select(cm, m_cm));
     }
@@ -115,29 +106,40 @@ private:
 
 public:
     inline static Meta meta() {
-        Meta m("textds", "textds");
-        m.option("sa").templated<sa_t, SADivSufSort>("sa");
-        m.option("phi").templated<phi_t, PhiFromSA>("phi");
-        m.option("plcp").templated<plcp_t, PLCPFromPhi>("plcp");
-        m.option("lcp").templated<lcp_t, LCPFromPLCP>("lcp");
-        m.option("isa").templated<isa_t, ISAFromSA>("isa");
-        m.option("compress").dynamic("delayed");
+        Meta m(TypeDesc("textds"), "textds", "Text data structure provider.");
+        m.param("sa", "The suffix array implementation.")
+            .strategy<sa_t>(TypeDesc("sa"), Meta::Default<SADivSufSort>());
+        m.param("phi", "The Phi array implementation.")
+            .strategy<phi_t>(TypeDesc("phi"), Meta::Default<PhiFromSA>());
+        m.param("plcp", "The PLCP array implementation.")
+            .strategy<plcp_t>(TypeDesc("plcp"), Meta::Default<PLCPFromPhi>());
+        m.param("lcp", "The LCP array implementation.")
+            .strategy<lcp_t>(TypeDesc("lcp"), Meta::Default<LCPFromPLCP>());
+        m.param("isa", "The inverse suffix array implementation.")
+            .strategy<isa_t>(TypeDesc("isa"), Meta::Default<ISAFromSA>());
+        m.param("compress",
+            "Compression Mode, one of:\n"
+            "\"none\" - structures remain uncompressed (fastest)\n"
+            "\"delayed\" - structures are bit-compressed after "
+            "construction (balanced)\n"
+            "\"compressed\" - structures are constructed in "
+            "bit-compressed space (lowest memory consumption)"
+        ).primitive("delayed");
+
+        m.inherit_tags_from_all(
+            tl::type_list<sa_t, phi_t, plcp_t, lcp_t, isa_t>());
         return m;
     }
 
-    inline TextDS(Env&& env, const View& text)
-        : Algorithm(std::move(env)),
+    inline TextDS(Config&& cfg, const View& text)
+        : Algorithm(std::move(cfg)),
           m_text(text), m_ds_requested(0) {
 
-        if(!m_text.ends_with(uint8_t(0))){
-             throw std::logic_error(
-                 "Input has no sentinel! Please make sure you declare "
-                 "the compressor calling this with "
-                 "`m.needs_sentinel_terminator()` in its `meta()` function."
-            );
+        if(meta().has_tag(tags::require_sentinel)){
+            MissingSentinelError::check(m_text);
         }
 
-        auto& cm_str = this->env().option("compress").as_string();
+        const auto& cm_str = this->config().param("compress").as_string();
         if(cm_str == "delayed") {
             m_cm = CompressMode::delayed;
         } else if(cm_str == "compressed") {
@@ -147,8 +149,9 @@ public:
         }
     }
 
-    inline TextDS(Env&& env, const View& text, dsflags_t flags, CompressMode cm = CompressMode::select)
-        : TextDS(std::move(env), text) {
+    inline TextDS(Config&& cfg, const View& text, dsflags_t flags,
+        CompressMode cm = CompressMode::select)
+        : TextDS(std::move(cfg), text) {
 
         require(flags, cm);
     }

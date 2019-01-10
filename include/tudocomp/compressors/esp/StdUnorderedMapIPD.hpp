@@ -1,12 +1,13 @@
 #pragma once
 
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/compressors/esp/HashArray.hpp>
 
 namespace tdc {namespace esp {
     class StdUnorderedMapIPD: public Algorithm {
     public:
         inline static Meta meta() {
-            Meta m("ipd", "std_unordered_map");
+            Meta m(TypeDesc("ipd"), "std_unordered_map");
             return m;
         };
 

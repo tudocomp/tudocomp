@@ -30,11 +30,11 @@ class JudyTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m("lz78trie", "judy", "Lempel-Ziv 78 Judy Array");
+        Meta m(lz78_trie_type(), "judy", "Lempel-Ziv 78 Judy Array");
         return m;
     }
-    inline JudyTrie(Env&& env, size_t n, const size_t& remaining_characters, factorid_t = 0)
-        : Algorithm(std::move(env))
+    inline JudyTrie(Config&& cfg, size_t n, const size_t& remaining_characters, factorid_t = 0)
+        : Algorithm(std::move(cfg))
         , LZ78Trie(n,remaining_characters)
         , m_dict(static_cast<Pvoid_t>(nullptr))
         , m_size(0)

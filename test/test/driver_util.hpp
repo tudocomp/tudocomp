@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <memory>
 
@@ -11,11 +12,8 @@
 
 #include <sys/stat.h>
 
-#include <tudocomp/Env.hpp>
-#include <tudocomp/Compressor.hpp>
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/AlgorithmStringParser.hpp>
-#include <tudocomp/RegistryOf.hpp>
+#include <tudocomp/Compressor.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/util/View.hpp>
 
@@ -186,7 +184,8 @@ Error _roundtrip(std::string algo,
                  std::string name_addition,
                  std::string text,
                  bool use_raw,
-                 bool& abort)
+                 bool& abort,
+                 bool sentinel)
 {
     Error current { false };
     current.algo = algo;
@@ -200,7 +199,7 @@ Error _roundtrip(std::string algo,
     std::string decomp_file_s = roundtrip_decomp_file_name("*", name_addition);
 
     //std::cout << "Roundtrip with\n";
-    std::cout << algo << ":    " << in_file_s << "  ->  ";
+    std::cout << algo << " " << in_file_s << "  ->  ";
     std::cout.flush();
 
     remove_test_file(in_file);
@@ -216,16 +215,21 @@ Error _roundtrip(std::string algo,
     {
         std::string in = test_file_path(in_file);
         std::string out = test_file_path(comp_file);
-        std::string cmd;
-        if (use_raw) {
-            cmd = "--raw --algorithm " + shell_escape(algo)
-                + " --output " + shell_escape(out) + " " + shell_escape(in);
-        } else {
-            cmd = "--algorithm " + shell_escape(algo)
-                + " --output " + shell_escape(out) + " " + shell_escape(in);
+        std::stringstream cmd;
+
+        if(sentinel) {
+            cmd << "--sentinel ";
         }
-        current.compress_cmd = cmd;
-        comp_out = driver(cmd);
+
+        if (use_raw) {
+            cmd << "--raw ";
+        } 
+
+        cmd << "--algorithm " << shell_escape(algo)
+            << " --output " << shell_escape(out) << " " << shell_escape(in);
+
+        current.compress_cmd = cmd.str();
+        comp_out = driver(current.compress_cmd);
     }
 
     std::cout << comp_file_s << "  ->  ";
@@ -240,7 +244,7 @@ Error _roundtrip(std::string algo,
         current.test = in_file + " -> " + comp_file;
         std::cout << "ERR\n";
 
-        if (View(current.compress_stdout).starts_with("Error: No implementation found for algorithm"_v)) {
+        if (View(current.compress_stdout).starts_with("Error:"_v)) {
             abort = true;
         }
 
@@ -251,15 +255,20 @@ Error _roundtrip(std::string algo,
     {
         std::string in = test_file_path(comp_file);
         std::string out = test_file_path(decomp_file);
-        std::string cmd;
-        if (use_raw) {
-            cmd = "--raw --decompress --algorithm " + shell_escape(algo)
-                + " --output " + shell_escape(out) + " " + shell_escape(in);
-        } else {
-            cmd = "--decompress --output " + shell_escape(out) + " " + shell_escape(in);
+        std::stringstream cmd;
+
+        if(sentinel) {
+            cmd << "--sentinel ";
         }
-        current.decompress_cmd = cmd;
-        decomp_out = driver(cmd);
+
+        if (use_raw) {
+            cmd << "--raw --algorithm " << shell_escape(algo) << " ";
+        }
+
+        cmd << "--decompress --output " << shell_escape(out) << " " << shell_escape(in);
+
+        current.decompress_cmd = cmd.str();
+        decomp_out = driver(current.decompress_cmd);
     }
 
     std::cout << decomp_file_s << " ... ";
@@ -273,6 +282,11 @@ Error _roundtrip(std::string algo,
         current.message = "decompression did not produce output";
         current.test = comp_file + " -> " + decomp_file;
         std::cout << "ERR\n";
+
+        if (View(current.decompress_stdout).starts_with("Error:"_v)) {
+            abort = true;
+        }
+
         return current;
     } else {
         std::string read_text = read_test_file(decomp_file);
@@ -301,9 +315,10 @@ Error roundtrip(std::string algo,
                 std::string text,
                 bool use_raw,
                 bool& abort,
-                bool surpress_test_error = false)
+                bool surpress_test_error = false,
+                bool sentinel = false)
 {
-    auto r = _roundtrip(algo, name_addition, text, use_raw, abort);
+    auto r = _roundtrip(algo, name_addition, text, use_raw, abort, sentinel);
 
     if (!surpress_test_error) {
         CHECK(!r.has_error);

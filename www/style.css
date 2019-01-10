@@ -161,6 +161,30 @@ a#blob-download  {
     display: none;
 }
 
+blockquote {
+    margin-left: 2em;
+
+    border-left: 4px solid #888;
+    padding-left: 8px;
+    background-color: #DDD;
+}
+
+blockquote p {
+    margin-bottom: 0;
+}
+
+blockquote p+p {
+    margin-top: 1ex;
+}
+
+blockquote p:first-child {
+    padding-top: 1ex;
+}
+
+blockquote p:last-child {
+    padding-bottom: 1ex;
+}
+
 @media only screen and (max-device-width: 800px) {
     html {
     }

@@ -1,13 +1,13 @@
 add_library(
     tudocomp
 
-    INTERFACE
+    meta/Registry.cpp
+    meta/ast/Parser.cpp
+    util/STXXLStatExtension.cpp
 )
 
 target_link_libraries(
     tudocomp
-
-    INTERFACE
 
     tudocomp_stat
     glog
@@ -16,3 +16,8 @@ target_link_libraries(
     compact_sparse_hash
 )
 
+if(STXXL_FOUND)
+    target_link_libraries(tudocomp ${STXXL_LIBRARIES})
+endif(STXXL_FOUND)
+
+cotire(tudocomp)

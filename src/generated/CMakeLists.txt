@@ -8,7 +8,6 @@ set(GENREGCOMMAND
     ${GENREGCONFIG}
     ${CMAKE_BINARY_DIR}/include/tudocomp/config.h
     ${GENERATE_DIR}
-    --group 20
 )
 
 execute_process(

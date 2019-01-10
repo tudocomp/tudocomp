@@ -11,7 +11,8 @@ namespace tdc {
 class EliasGammaCoder : public Algorithm {
 public:
     inline static Meta meta() {
-        Meta m("coder", "gamma", "Elias-gamma encoding");
+        Meta m(Coder::type_desc(), "gamma",
+            "Encodes integers using Elias-gamma codes.");
         return m;
     }
 

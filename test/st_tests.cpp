@@ -19,7 +19,7 @@ void test_strdepth(const std::string& str) {
 }
 
 TEST(SuffixTree, strdepth)     {
-	test::roundtrip_batch(test_strdepth);
+	test::roundtrip_batch(test_strdepth, InputRestrictions::escape({0}));
 
     //this never terminates. see bug #18662
 	//test::on_string_generators(test_strdepth,11);
