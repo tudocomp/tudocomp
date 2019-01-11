@@ -395,34 +395,40 @@ TEST(Trie, CompactHashTrie) {
     trie_test<CompactHashTrie<>>();
 }
 TEST(TrieStructure, CompactHashTriePlain) {
-    trie_test<CompactHashTrie<Plain>>(false);
+    trie_test<CompactHashTrie<ch::Plain>>(false);
 }
 TEST(Trie, CompactHashTriePlain) {
-    trie_test<CompactHashTrie<Plain>>();
+    trie_test<CompactHashTrie<ch::Plain>>();
 }
 TEST(TrieStructure, CompactHashTrieSparseDisplacement) {
-    trie_test<CompactHashTrie<SparseDisplacement>>(false);
+    trie_test<CompactHashTrie<ch::SparseDisplacement>>(false);
 }
 TEST(Trie, CompactHashTrieSparseDisplacement) {
-    trie_test<CompactHashTrie<SparseDisplacement>>();
+    trie_test<CompactHashTrie<ch::SparseDisplacement>>();
 }
 TEST(TrieStructure, CompactHashTriePlainDisplacement) {
-    trie_test<CompactHashTrie<PlainDisplacement>>(false);
+    trie_test<CompactHashTrie<ch::PlainDisplacement>>(false);
 }
 TEST(Trie, CompactHashTriePlainDisplacement) {
-    trie_test<CompactHashTrie<PlainDisplacement>>();
+    trie_test<CompactHashTrie<ch::PlainDisplacement>>();
 }
 TEST(TrieStructure, CompactHashTrieSparseEliasDisplacement) {
-    trie_test<CompactHashTrie<SparseEliasDisplacement>>(false);
+    trie_test<CompactHashTrie<ch::SparseEliasDisplacement>>(false);
 }
 TEST(Trie, CompactHashTrieSparseEliasDisplacement) {
-    trie_test<CompactHashTrie<SparseEliasDisplacement>>();
+    trie_test<CompactHashTrie<ch::SparseEliasDisplacement>>();
 }
 TEST(TrieStructure, CompactHashTriePlainEliasDisplacement) {
-    trie_test<CompactHashTrie<PlainEliasDisplacement>>(false);
+    trie_test<CompactHashTrie<ch::PlainEliasDisplacement>>(false);
 }
 TEST(Trie, CompactHashTriePlainEliasDisplacement) {
-    trie_test<CompactHashTrie<PlainEliasDisplacement>>();
+    trie_test<CompactHashTrie<ch::PlainEliasDisplacement>>();
+}
+TEST(TrieStructure, CompactHashTrieNoKVGrow) {
+    trie_test<CompactHashTrie<ch::NoKVGrow<ch::Sparse>>>(false);
+}
+TEST(Trie, CompactHashTrieNoKVGrow) {
+    trie_test<CompactHashTrie<ch::NoKVGrow<ch::Sparse>>>();
 }
 
 // #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>

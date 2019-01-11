@@ -79,12 +79,8 @@ struct NoopHasher : public Algorithm {
 
 //// Hash Table Size Managers
 
-struct SizeManagerPow2 : public Algorithm {
-    inline static Meta meta() {
-        Meta m(hash_manager_type(), "pow", "Pow2 Hash Table Sizes");
-		return m;
-	}
-	SizeManagerPow2(Config&& cfg) : Algorithm(std::move(cfg)) {}
+struct SizeManagerPow2 {
+	SizeManagerPow2() = default;
 	void resize(const len_t) {
 	}
 	/**
@@ -102,43 +98,10 @@ struct SizeManagerPow2 : public Algorithm {
 	}
 };
 
+struct [[deprecated]] SizeManagerDirect {};
 
-
-struct SizeManagerDirect : public Algorithm {
-    inline static Meta meta() {
-        Meta m(hash_manager_type(), "direct", "Direct Hash Table Sizes");
-		return m;
-	}
-	SizeManagerDirect(Config&& cfg) : Algorithm(std::move(cfg)) {}
-	/**
-	 * The lowest possible size larger than hint
-	 */
-	static inline len_t get_min_size(const len_t& hint) {
-		return std::max<len_t>(hint,3UL);
-	}
-	void resize(const len_t) {
-	}
-
-	/**
-	 *  Compute index % tablesize
-	 *  Since tablesize is a power of two, a bitwise-AND is equivalent and faster
-	 *  from http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/
-	 */
-	inline len_t mod_tablesize(const size_t, const len_t tablesize, const size_t key, const size_t probe) {
-		const __uint128_t v = (static_cast<uint64_t>(key + (static_cast<__uint128_t>(probe) << 64)/(tablesize))) * static_cast<__uint128_t>(tablesize);
-		const len_t ret = v >> 64;
-		DCHECK_LT(ret, tablesize);
-		return ret;
-		// return index % tablesize; // fallback
-	}
-};
-
-struct SizeManagerNoob : public Algorithm {
-    inline static Meta meta() {
-        Meta m(hash_manager_type(), "noob", "Classic Modulo Reduction");
-		return m;
-	}
-	SizeManagerNoob(Config&& cfg) : Algorithm(std::move(cfg)) {}
+struct SizeManagerNoop {
+	SizeManagerNoop() = default;
 	/**
 	 * The lowest possible size larger than hint
 	 */
@@ -153,76 +116,6 @@ struct SizeManagerNoob : public Algorithm {
 	 */
 	inline len_t mod_tablesize(const size_t index, const len_t tablesize, const size_t , const size_t ) {
 		return index % tablesize; // fallback
-	}
-};
-
-
-struct SizeManagerPrime : public Algorithm {
-    inline static Meta meta() {
-        Meta m(hash_manager_type(), "prime", "Prime Hash Table Sizes");
-		return m;
-	}
-	SizeManagerPrime(Config&& cfg) : Algorithm(std::move(cfg)) {}
-
-	static inline len_t get_min_size(const len_t& hint) {
-		return next_prime(hint);
-	}
-	void resize(const len_t) {
-	}
-	static inline len_t mod_tablesize(const size_t& index, const len_t& tablesize, const size_t& , const size_t&) {
-		//return (static_cast<uint64_t>(index)*static_cast<uint64_t>(tablesize)) >> 32;
-		return index % tablesize;
-	}
-	// From https://github.com/rockeet/nark-hashmap
-	// By rockeet
-	// GNU Affero General Public License
-	inline static size_t next_prime(size_t __n)
-	{
-		static const size_t primes[] =
-		{
-			5,11,19,37,   53ul,         97ul,         193ul,       389ul,
-			769ul,        1543ul,       3079ul,       6151ul,      12289ul,
-			24593ul,      49157ul,      98317ul,      196613ul,    393241ul,
-			786433ul,     1572869ul,    3145739ul,    6291469ul,   12582917ul,
-			25165843ul,   50331653ul,   100663319ul,  201326611ul, 402653189ul,
-			805306457ul,  1610612741ul, 3221225473ul, 4294967291ul,
-			/* 30    */ (size_t)8589934583ull,
-			/* 31    */ (size_t)17179869143ull,
-			/* 32    */ (size_t)34359738337ull,
-			/* 33    */ (size_t)68719476731ull,
-			/* 34    */ (size_t)137438953447ull,
-			/* 35    */ (size_t)274877906899ull,
-			/* 36    */ (size_t)549755813881ull,
-			/* 37    */ (size_t)1099511627689ull,
-			/* 38    */ (size_t)2199023255531ull,
-			/* 39    */ (size_t)4398046511093ull,
-			/* 40    */ (size_t)8796093022151ull,
-			/* 41    */ (size_t)17592186044399ull,
-			/* 42    */ (size_t)35184372088777ull,
-			/* 43    */ (size_t)70368744177643ull,
-			/* 44    */ (size_t)140737488355213ull,
-			/* 45    */ (size_t)281474976710597ull,
-			/* 46    */ (size_t)562949953421231ull,
-			/* 47    */ (size_t)1125899906842597ull,
-			/* 48    */ (size_t)2251799813685119ull,
-			/* 49    */ (size_t)4503599627370449ull,
-			/* 50    */ (size_t)9007199254740881ull,
-			/* 51    */ (size_t)18014398509481951ull,
-			/* 52    */ (size_t)36028797018963913ull,
-			/* 53    */ (size_t)72057594037927931ull,
-			/* 54    */ (size_t)144115188075855859ull,
-			/* 55    */ (size_t)288230376151711717ull,
-			/* 56    */ (size_t)576460752303423433ull,
-			/* 57    */ (size_t)1152921504606846883ull,
-			/* 58    */ (size_t)2305843009213693951ull,
-			/* 59    */ (size_t)4611686018427387847ull,
-			/* 60    */ (size_t)9223372036854775783ull,
-			/* 61    */ (size_t)18446744073709551557ull,
-		};
-		const size_t* __first = primes;
-		const size_t* __last = primes + sizeof(primes)/sizeof(primes[0]);
-		const size_t* pos = std::lower_bound(__first, __last, __n);
-		return pos == __last ? __last[-1] : *pos;
 	}
 };
 
@@ -417,7 +310,7 @@ class HashMap {
 	HashMap(const Config&, const size_t n, const size_t& remaining_characters)
 		: m_h(HashFcn::meta().config())
 		, m_probe(ProbeFcn::meta().config())
-		, m_sizeman(SizeManager::meta().config())
+		, m_sizeman()
 		, m_size(initial_size)
 		, m_keys((key_t*) malloc(sizeof(key_t) * initial_size))
 		, m_values((value_t*) malloc(sizeof(value_t) * initial_size))
