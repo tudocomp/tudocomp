@@ -25,8 +25,8 @@ public:
     inline HashTriePlus(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
         , LZ78Trie(hint)
-        , m_table(this->config(), hint)
-        , m_table2(this->config(), hint)
+        , m_table(this->config(), this->remaining_elements_hint())
+        , m_table2(this->config(), this->remaining_elements_hint())
     {
         m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         m_table2.max_load_factor(0.95);

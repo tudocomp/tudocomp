@@ -37,7 +37,7 @@ public:
         : Algorithm(std::move(cfg))
         , LZ78Trie(hint)
         , m_roller(this->config().sub_config("hash_roller"))
-        , m_table(this->config(), hint) {
+        , m_table(this->config(), this->remaining_elements_hint()) {
         m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         if(reserve > 0) {
             m_table.reserve(reserve);
