@@ -98,8 +98,6 @@ struct SizeManagerPow2 {
 	}
 };
 
-struct [[deprecated]] SizeManagerDirect {};
-
 struct SizeManagerNoop {
 	SizeManagerNoop() = default;
 	/**
@@ -429,13 +427,13 @@ class HashMap {
 					auto toinsert = std::make_pair(m_keys[tablepos], m_values[tablepos]);
 
 					size_t expected_size =
-					std::is_same<SizeManager,SizeManagerDirect>::value ?
+					/*std::is_same<SizeManager,SizeManagerDirect>::value*/ false ?
 					(m_entries + 3.0/2.0*lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95 :
 					(m_entries + lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95;
 					expected_size = std::max<size_t>(expected_size, table_size()*1.1);
 					if(expected_size < table_size()*2.0*0.95) {
 							max_load_factor(0.95f);
-						if(std::is_same<SizeManager,SizeManagerDirect>::value) {
+						if(/*std::is_same<SizeManager,SizeManagerDirect>::value*/ false) {
 							reserve(expected_size);
 						} else {
 							reserve(expected_size); //(m_entries + lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95);

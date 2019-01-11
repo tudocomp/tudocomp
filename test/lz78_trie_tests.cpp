@@ -430,6 +430,12 @@ TEST(TrieStructure, CompactHashTrieNoKVGrow) {
 TEST(Trie, CompactHashTrieNoKVGrow) {
     trie_test<CompactHashTrie<ch::NoKVGrow<ch::Sparse>>>();
 }
+TEST(TrieStructure, CompactHashTrieNoKGrow) {
+    trie_test<CompactHashTrie<ch::NoKGrow<ch::Sparse>>>(false);
+}
+TEST(Trie, CompactHashTrieNoKGrow) {
+    trie_test<CompactHashTrie<ch::NoKGrow<ch::Sparse>>>();
+}
 
 // #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>
 // TEST(TrieStructure, MBonsaiGammaTrie) {
