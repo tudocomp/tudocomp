@@ -19,8 +19,6 @@ class ExtHashTrie : public Algorithm, public LZ78Trie<> {
 //    typedef rigtorp::HashMap<squeeze_node_t, factorid_t,_VignaHasher> table_t;
 
     table_t m_table;
-  const size_t m_n;
-  const size_t& m_remaining_characters;
 
 public:
     inline static Meta meta() {
@@ -31,8 +29,6 @@ public:
     inline ExtHashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
         , LZ78Trie(n, remaining_characters)
-        , m_n(n)
-        , m_remaining_characters(remaining_characters)
     {
     //    m_table.max_load_factor(0.9f);
         if(reserve > 0) {
@@ -80,7 +76,7 @@ public:
 
         if(ret.second) { // added a new node
             if(tdc_unlikely(m_table.bucket_count()*m_table.max_load_factor() < m_table.size()+1)) {
-                const size_t expected_size = (m_table.size() + 1 + lz78_expected_number_of_remaining_elements(m_table.size(), m_n, m_remaining_characters))/0.95;
+                const size_t expected_size = (m_table.size() + 1 + expected_number_of_remaining_elements(m_table.size()))/0.95;
                 if(expected_size < m_table.bucket_count()*2.0*0.95) {
                     m_table.reserve(expected_size);
                 }

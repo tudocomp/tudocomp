@@ -79,7 +79,7 @@ public:
         auto ret = m_table.insert(std::make_pair(create_node(parent+1,c), newleaf_id));
         if(ret.second) {
             if(tdc_unlikely(m_table.table_size()*m_table.max_load_factor() < m_table.m_entries+1)) {
-                const size_t expected_size = (m_table.m_entries + 1 + lz78_expected_number_of_remaining_elements(m_table.entries(),m_table.m_n,m_table.m_remaining_characters))/0.95;
+                const size_t expected_size = (m_table.m_entries + 1 + m_table.lz78_expected_number_of_remaining_elements())/0.95;
                 if(expected_size < m_table.table_size()*2.0*0.95) {
                     m_table2.incorporate(m_table, expected_size);
                 }

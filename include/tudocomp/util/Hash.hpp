@@ -409,6 +409,10 @@ class HashMap {
 	inline len_t table_size() const { return m_size; }
 	inline len_t empty() const { return m_entries == 0; }
 
+	inline size_t lz78_expected_number_of_remaining_elements() const {
+        return ::lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters);
+    }
+
 	std::pair<Iterator,bool> insert(std::pair<key_t,value_t>&& value) {
 		len_t i=0;
 //		const size_t _size = table_size()-1;
@@ -428,15 +432,15 @@ class HashMap {
 
 					size_t expected_size =
 					/*std::is_same<SizeManager,SizeManagerDirect>::value*/ false ?
-					(m_entries + 3.0/2.0*lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95 :
-					(m_entries + lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95;
+					(m_entries + 3.0/2.0*lz78_expected_number_of_remaining_elements())/0.95 :
+					(m_entries + lz78_expected_number_of_remaining_elements())/0.95;
 					expected_size = std::max<size_t>(expected_size, table_size()*1.1);
 					if(expected_size < table_size()*2.0*0.95) {
 							max_load_factor(0.95f);
 						if(/*std::is_same<SizeManager,SizeManagerDirect>::value*/ false) {
 							reserve(expected_size);
 						} else {
-							reserve(expected_size); //(m_entries + lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95);
+							reserve(expected_size); //(m_entries + lz78_expected_number_of_remaining_elements())/0.95);
 						}
 
 						IF_STATS(++m_specialresizes);
