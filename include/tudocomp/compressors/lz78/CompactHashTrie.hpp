@@ -204,7 +204,7 @@ public:
     inline static Meta meta() {
         Meta m(compact_hash_strategy_type(), "no_k_grow", "Adapter that does not grow the bit widths of keys, but rather creates additional hash tables as needed.");
         m.param("compact_hash_strategy")
-            .templated<compact_hash_strategy_t>("compact_hash_strategy");
+            .strategy<compact_hash_strategy_t>(TypeDesc("compact_hash_strategy"));
         return m;
     }
 
@@ -360,7 +360,7 @@ public:
     inline static Meta meta() {
         Meta m(compact_hash_strategy_type(), "no_kv_grow", "Adapter that does not grow the bit widths of keys and values, but rather creates additional hash tables as needed.");
         m.param("compact_hash_strategy")
-            .templated<compact_hash_strategy_t>("compact_hash_strategy");
+            .strategy<compact_hash_strategy_t>(TypeDesc("compact_hash_strategy"));
         return m;
     }
 

@@ -9,7 +9,7 @@ namespace tdc {
 namespace lz78 {
 
 
-template<class HashFunction = MixHasher, class HashManager = SizeManagerDirect>
+template<class HashFunction = MixHasher, class HashManager = SizeManagerNoop>
 class HashTriePlus : public Algorithm, public LZ78Trie<> {
     HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,LinearProber,SizeManagerPow2> m_table;
     HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,LinearProber,HashManager> m_table2;
@@ -18,7 +18,6 @@ public:
     inline static Meta meta() {
         Meta m(lz78_trie_type(), "hash_plus", "Hash Trie+");
         m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<MixHasher>());
-        m.param("hash_manager").strategy<HashManager>(hash_manager_type(), Meta::Default<SizeManagerDirect>());
         m.param("load_factor").primitive(30);
         return m;
     }
