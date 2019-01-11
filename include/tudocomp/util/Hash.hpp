@@ -377,10 +377,12 @@ class HashMap {
 		else {
 			m_size = size;
 			m_sizeman.resize(m_size);
+
 			m_values = (value_t*) realloc(m_values, sizeof(value_t) * m_size);
 			//memset(m_values, 0, sizeof(value_t)*size);
 			for(size_t i = 0; i < m_size; ++i) m_values[i] = undef_id;
-			m_keys = (key_t*) realloc(m_keys, sizeof(key_t) * m_size);
+            // TODO: The realloc here is not C++-standard comform
+			m_keys = (key_t*) realloc((void*) m_keys, sizeof(key_t) * m_size);
 		}
 	}
 
