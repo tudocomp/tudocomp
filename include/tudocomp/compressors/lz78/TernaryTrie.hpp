@@ -30,10 +30,9 @@ public:
         return m;
     }
 
-    //remaining_characters is the number of remaining characters until the complete text is parsed
-    inline TernaryTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline TernaryTrie(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n, remaining_characters)
+        , LZ78Trie(hint)
     {
         if(reserve > 0) {
             first_child.reserve(reserve);

@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <tudocomp/def.hpp>
+#include <memory>
+
 namespace tdc {
 namespace lz78 {
 
@@ -15,6 +17,24 @@ constexpr factorid_t undef_id = std::numeric_limits<factorid_t>::max();
 
 /// Maximum legal dictionary size.
 constexpr size_t DMS_MAX = std::numeric_limits<factorid_t>::max();
+
+class SharedRemainingElementsHint {
+    struct Inner { size_t m_n; size_t m_remaining_characters; };
+    std::shared_ptr<Inner> m_ptr;
+public:
+    inline SharedRemainingElementsHint() = default;
+
+    inline SharedRemainingElementsHint(size_t initial_size):
+        m_ptr(std::make_shared<Inner>(Inner { initial_size, initial_size })) {}
+
+    inline size_t size() const { return m_ptr->m_n; }
+    inline size_t remaining_characters() const { return m_ptr->m_remaining_characters; }
+    inline size_t& remaining_characters() { return m_ptr->m_remaining_characters; }
+
+    inline size_t expected_number_of_remaining_elements(const size_t z) const {
+        return lz78_expected_number_of_remaining_elements(z, size(), remaining_characters());
+    }
+};
 
 // NB: Also update the Lz78 chapter in the docs in case of changes to this file
 
@@ -47,14 +67,13 @@ public:
     }
 
 private:
-    const size_t m_n;
-    const size_t& m_remaining_characters;
+    SharedRemainingElementsHint m_remaining_hint;
 protected:
-    LZ78Trie(const size_t n, const size_t& remaining_characters)
-        : m_n(n), m_remaining_characters(remaining_characters) {}
+    LZ78Trie(SharedRemainingElementsHint hint): m_remaining_hint(hint) {}
 
+    inline SharedRemainingElementsHint remaining_elements_hint() const { return m_remaining_hint; }
     inline size_t expected_number_of_remaining_elements(const size_t z) const {
-        return lz78_expected_number_of_remaining_elements(z, m_n, m_remaining_characters);
+        return m_remaining_hint.expected_number_of_remaining_elements(z);
     }
 
     /**
@@ -101,6 +120,46 @@ protected:
         CHECK(false) << "This needs to be implemented by a inheriting class";
         return 0;
     }
+
+    /// Indicate that we just consumed a byte of input and are about to
+    /// potentially insert a new element into thr trie.
+    inline void signal_character_read() {
+        DCHECK(m_remaining_hint.remaining_characters() != 0);
+        --m_remaining_hint.remaining_characters();
+    }
+
+    /*
+    template<typename Self, typename node_callback>
+    inline static node_t find_or_insert_many(Self& self, std::istream& inp, node_t& rootnode, size_t& remaining_characters) {
+        char c;
+        while(inp.get(c)) {
+            --remaining_characters;
+            node_t child = self.find_or_insert(node, static_cast<uliteral_t>(c));
+            if(child.is_new()) {
+                lz78::encode_factor(coder, node.id(), static_cast<uliteral_t>(c), factor_count);
+                factor_count++;
+                IF_STATS(stat_factor_count++);
+                parent = node = dict.get_rootnode(0); // return to the root
+                DCHECK_EQ(node.id(), 0);
+                DCHECK_EQ(parent.id(), 0);
+                DCHECK_EQ(factor_count+1, dict.size());
+                // dictionary's maximum size was reached
+                if(tdc_unlikely(dict.size() == m_dict_max_size)) { // if m_dict_max_size == 0 this will never happen
+                    DCHECK(false); // broken right now
+                    reset_dict();
+                    factor_count = 0; //coder.dictionary_reset();
+                    IF_STATS(stat_dictionary_resets++);
+                    IF_STATS(stat_dict_counter_at_last_reset = m_dict_max_size);
+                }
+            } else { // traverse further
+                parent = node;
+                node = child;
+            }
+        }
+
+        return rootnode;
+    }
+    */
 
 public:
     inline void debug_print() {}

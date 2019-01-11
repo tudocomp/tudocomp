@@ -23,10 +23,10 @@ public:
         return m;
     }
 
-    inline HashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline HashTrie(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n,remaining_characters)
-        , m_table(this->config(),n,remaining_characters)
+        , LZ78Trie(hint)
+        , m_table(this->config(), hint)
     {
         m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         if(reserve > 0) {

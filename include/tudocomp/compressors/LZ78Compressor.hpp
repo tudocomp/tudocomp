@@ -56,9 +56,8 @@ public:
         IF_STATS(size_t stat_factor_count = 0);
         size_t factor_count = 0;
 
-        size_t remaining_characters = n; // position in the text
-        dict_t dict(config().sub_config("lz78trie"), n,
-            remaining_characters, reserved_size);
+        SharedRemainingElementsHint hint(n);
+        dict_t dict(config().sub_config("lz78trie"), hint, reserved_size);
 
         auto reset_dict = [&dict] () {
             dict.clear();
@@ -79,7 +78,7 @@ public:
 
         char c;
         while(is.get(c)) {
-            --remaining_characters;
+            dict.signal_character_read();
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
             if(child.is_new()) {
                 lz78::encode_factor(coder, node.id(), static_cast<uliteral_t>(c), factor_count);
@@ -113,11 +112,11 @@ public:
         }
 
         IF_STATS(
-        phase1.log_stat("factor_count", stat_factor_count);
-        phase1.log_stat("dictionary_reset_counter",
-                       stat_dictionary_resets);
-        phase1.log_stat("max_factor_counter",
-                       stat_dict_counter_at_last_reset);
+            phase1.log_stat("factor_count", stat_factor_count);
+            phase1.log_stat("dictionary_reset_counter",
+                            stat_dictionary_resets);
+            phase1.log_stat("max_factor_counter",
+                            stat_dict_counter_at_last_reset);
         )
     }
 

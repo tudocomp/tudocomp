@@ -54,8 +54,7 @@ public:
         IF_STATS(size_t stat_factor_count = 0);
         size_t factor_count = 0;
 
-        size_t remaining_characters = n; // position in the text
-        dict_t dict(config().sub_config("lz78trie"), n, remaining_characters, reserved_size+ULITERAL_MAX+1);
+        dict_t dict(config().sub_config("lz78trie"), n, reserved_size+ULITERAL_MAX+1);
         auto reset_dict = [&dict] () {
             dict.clear();
             std::stringstream ss;
@@ -76,7 +75,7 @@ public:
         node_t node = dict.get_rootnode(static_cast<uliteral_t>(c));
 
         while(is.get(c)) {
-            --remaining_characters;
+            dict.signal_character_read();
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
             DVLOG(2) << " child " << child.id() << " #factor " << factor_count << " size " << dict.size() << " node " << node.id();
 

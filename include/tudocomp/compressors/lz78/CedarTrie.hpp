@@ -172,9 +172,9 @@ public:
         return m;
     }
 
-    CedarTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t = 0)
+    CedarTrie(Config&& cfg, SharedRemainingElementsHint hint, factorid_t = 0)
         : Algorithm(std::move(cfg))
-		, LZ78Trie(n, remaining_characters)
+		, LZ78Trie(hint)
         , m_trie(std::make_unique<cedar_t>()) {}
 
     inline node_t add_rootnode(const uliteral_t c) {

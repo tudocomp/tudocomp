@@ -33,11 +33,11 @@ public:
         m.param("load_factor").primitive(30);
         return m;
     }
-    inline RollingTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline RollingTrie(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n,remaining_characters)
+        , LZ78Trie(hint)
         , m_roller(this->config().sub_config("hash_roller"))
-        , m_table(this->config(), n, remaining_characters) {
+        , m_table(this->config(), hint) {
         m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         if(reserve > 0) {
             m_table.reserve(reserve);

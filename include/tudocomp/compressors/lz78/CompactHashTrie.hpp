@@ -665,9 +665,9 @@ public:
         return m;
     }
 
-    inline CompactHashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline CompactHashTrie(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n,remaining_characters)
+        , LZ78Trie(hint)
         , m_table(zero_or_next_power_of_two(reserve),
                   init_config(this->config().sub_config("compact_hash_strategy"),
                               this->config().param("load_factor").as_float()/100.0f))

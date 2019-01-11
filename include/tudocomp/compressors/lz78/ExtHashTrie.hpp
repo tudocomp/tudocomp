@@ -26,9 +26,9 @@ public:
         return m;
     }
 
-    inline ExtHashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline ExtHashTrie(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n, remaining_characters)
+        , LZ78Trie(hint)
     {
     //    m_table.max_load_factor(0.9f);
         if(reserve > 0) {

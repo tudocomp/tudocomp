@@ -24,9 +24,9 @@ public:
         Meta m(lz78_trie_type(), "binarysorted", "Lempel-Ziv 78 Sorted Binary Trie");
         return m;
     }
-    inline BinarySortedTrie(Config&& cfg, size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline BinarySortedTrie(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-          , LZ78Trie(n,remaining_characters)
+          , LZ78Trie(hint)
     {
         if(reserve > 0) {
             m_first_child.reserve(reserve);

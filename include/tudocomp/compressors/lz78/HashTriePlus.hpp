@@ -22,11 +22,11 @@ public:
         return m;
     }
 
-    inline HashTriePlus(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline HashTriePlus(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n,remaining_characters)
-        , m_table(this->config(),n,remaining_characters)
-        , m_table2(this->config(),n,remaining_characters)
+        , LZ78Trie(hint)
+        , m_table(this->config(), hint)
+        , m_table2(this->config(), hint)
     {
         m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         m_table2.max_load_factor(0.95);
@@ -79,7 +79,7 @@ public:
         auto ret = m_table.insert(std::make_pair(create_node(parent+1,c), newleaf_id));
         if(ret.second) {
             if(tdc_unlikely(m_table.table_size()*m_table.max_load_factor() < m_table.m_entries+1)) {
-                const size_t expected_size = (m_table.m_entries + 1 + m_table.lz78_expected_number_of_remaining_elements())/0.95;
+                const size_t expected_size = (m_table.m_entries + 1 + expected_number_of_remaining_elements(m_table.entries()))/0.95;
                 if(expected_size < m_table.table_size()*2.0*0.95) {
                     m_table2.incorporate(m_table, expected_size);
                 }

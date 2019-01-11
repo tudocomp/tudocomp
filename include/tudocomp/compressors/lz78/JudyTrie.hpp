@@ -33,9 +33,9 @@ public:
         Meta m(lz78_trie_type(), "judy", "Lempel-Ziv 78 Judy Array");
         return m;
     }
-    inline JudyTrie(Config&& cfg, size_t n, const size_t& remaining_characters, factorid_t = 0)
+    inline JudyTrie(Config&& cfg, size_t n, factorid_t = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n,remaining_characters)
+        , LZ78Trie(n)
         , m_dict(static_cast<Pvoid_t>(nullptr))
         , m_size(0)
     {
