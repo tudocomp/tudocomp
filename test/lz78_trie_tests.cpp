@@ -92,7 +92,7 @@ void trie_test_single(TestTrie test, bool test_values, bool debug_case = false) 
     size_t is_trie_size = 1;
 
     size_t remaining = test.input.size();
-    auto trie = Algorithm::instance<T>(remaining, remaining);
+    auto trie = Algorithm::instance<T>(remaining);
     trie->add_rootnode(0);
 
     auto is_trie_node = &is_trie;

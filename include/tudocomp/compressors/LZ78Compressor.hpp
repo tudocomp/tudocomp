@@ -56,8 +56,7 @@ public:
         IF_STATS(size_t stat_factor_count = 0);
         size_t factor_count = 0;
 
-        SharedRemainingElementsHint hint(n);
-        dict_t dict(config().sub_config("lz78trie"), hint, reserved_size);
+        dict_t dict(config().sub_config("lz78trie"), n, reserved_size);
 
         auto reset_dict = [&dict] () {
             dict.clear();

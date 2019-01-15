@@ -121,13 +121,6 @@ protected:
         return 0;
     }
 
-    /// Indicate that we just consumed a byte of input and are about to
-    /// potentially insert a new element into thr trie.
-    inline void signal_character_read() {
-        DCHECK(m_remaining_hint.remaining_characters() != 0);
-        --m_remaining_hint.remaining_characters();
-    }
-
     /*
     template<typename Self, typename node_callback>
     inline static node_t find_or_insert_many(Self& self, std::istream& inp, node_t& rootnode, size_t& remaining_characters) {
@@ -163,6 +156,13 @@ protected:
 
 public:
     inline void debug_print() {}
+
+    /// Indicate that we just consumed a byte of input and are about to
+    /// potentially insert a new element into thr trie.
+    inline void signal_character_read() {
+        DCHECK(m_remaining_hint.remaining_characters() != 0);
+        --m_remaining_hint.remaining_characters();
+    }
 };
 
 

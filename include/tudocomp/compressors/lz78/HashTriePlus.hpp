@@ -22,9 +22,9 @@ public:
         return m;
     }
 
-    inline HashTriePlus(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
+    inline HashTriePlus(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(hint)
+        , LZ78Trie(n)
         , m_table(this->config(), this->remaining_elements_hint())
         , m_table2(this->config(), this->remaining_elements_hint())
     {

@@ -30,9 +30,9 @@ public:
         return m;
     }
 
-    inline TernaryTrie(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
+    inline TernaryTrie(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(hint)
+        , LZ78Trie(n)
     {
         if(reserve > 0) {
             first_child.reserve(reserve);

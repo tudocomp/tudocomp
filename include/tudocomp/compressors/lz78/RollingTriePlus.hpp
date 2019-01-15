@@ -32,9 +32,9 @@ public:
         m.param("load_factor").primitive(30);
         return m;
     }
-    inline RollingTriePlus(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
+    inline RollingTriePlus(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(hint)
+        , LZ78Trie(n)
         , m_roller(this->config().sub_config("hash_roller"))
         , m_table(this->config(), this->remaining_elements_hint())
         , m_table2(this->config(), this->remaining_elements_hint())

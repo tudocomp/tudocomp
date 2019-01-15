@@ -27,9 +27,9 @@ public:
         return m;
     }
 
-    inline BinaryTrie(Config&& cfg, SharedRemainingElementsHint hint, factorid_t reserve = 0)
+    inline BinaryTrie(Config&& cfg, size_t n, factorid_t reserve = 0)
     : Algorithm(std::move(cfg))
-    , LZ78Trie(hint)
+    , LZ78Trie(n)
     {
         if(reserve > 0) {
             m_first_child.reserve(reserve);
