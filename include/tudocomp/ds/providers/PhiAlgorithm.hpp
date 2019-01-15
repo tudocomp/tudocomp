@@ -83,12 +83,12 @@ inline void PhiAlgorithm::compress<ds::PLCP_ARRAY>() {
 }
 
 template<>
-const DynamicIntVector& PhiAlgorithm::get<ds::PLCP_ARRAY>() const {
+inline const DynamicIntVector& PhiAlgorithm::get<ds::PLCP_ARRAY>() const {
     return m_plcp;
 }
 
 template<>
-DynamicIntVector PhiAlgorithm::relinquish<ds::PLCP_ARRAY>() {
+inline DynamicIntVector PhiAlgorithm::relinquish<ds::PLCP_ARRAY>() {
     return std::move(m_plcp);
 }
 

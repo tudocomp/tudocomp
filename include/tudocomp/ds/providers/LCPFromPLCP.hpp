@@ -84,12 +84,12 @@ inline void LCPFromPLCP::compress<ds::LCP_ARRAY>() {
 }
 
 template<>
-const DynamicIntVector& LCPFromPLCP::get<ds::LCP_ARRAY>() const {
+inline const DynamicIntVector& LCPFromPLCP::get<ds::LCP_ARRAY>() const {
     return m_lcp;
 }
 
 template<>
-DynamicIntVector LCPFromPLCP::relinquish<ds::LCP_ARRAY>() {
+inline DynamicIntVector LCPFromPLCP::relinquish<ds::LCP_ARRAY>() {
     return std::move(m_lcp);
 }
 

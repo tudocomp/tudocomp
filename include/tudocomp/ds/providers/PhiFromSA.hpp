@@ -76,12 +76,12 @@ inline void PhiFromSA::compress<ds::PHI_ARRAY>() {
 }
 
 template<>
-const DynamicIntVector& PhiFromSA::get<ds::PHI_ARRAY>() const {
+inline const DynamicIntVector& PhiFromSA::get<ds::PHI_ARRAY>() const {
     return m_phi;
 }
 
 template<>
-DynamicIntVector PhiFromSA::relinquish<ds::PHI_ARRAY>() {
+inline DynamicIntVector PhiFromSA::relinquish<ds::PHI_ARRAY>() {
     return std::move(m_phi);
 }
 

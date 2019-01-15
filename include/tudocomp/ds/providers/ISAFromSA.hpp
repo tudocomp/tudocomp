@@ -75,12 +75,12 @@ inline void ISAFromSA::compress<ds::INVERSE_SUFFIX_ARRAY>() {
 }
 
 template<>
-const DynamicIntVector& ISAFromSA::get<ds::INVERSE_SUFFIX_ARRAY>() const {
+inline const DynamicIntVector& ISAFromSA::get<ds::INVERSE_SUFFIX_ARRAY>() const {
     return m_isa;
 }
 
 template<>
-DynamicIntVector ISAFromSA::relinquish<ds::INVERSE_SUFFIX_ARRAY>() {
+inline DynamicIntVector ISAFromSA::relinquish<ds::INVERSE_SUFFIX_ARRAY>() {
     return std::move(m_isa);
 }
 
