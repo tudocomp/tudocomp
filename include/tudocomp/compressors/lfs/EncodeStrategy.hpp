@@ -12,13 +12,13 @@
 #include <tudocomp/io/BitOStream.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 
-#include <tudocomp/ds/TextDS.hpp>
-
 #include <tudocomp/Algorithm.hpp>
 
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/coders/EliasGammaCoder.hpp>
 #include <tudocomp/coders/HuffmanCoder.hpp>
+
+#include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
 namespace lfs {

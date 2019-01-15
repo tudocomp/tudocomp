@@ -38,7 +38,7 @@ public:
         m.param("coding_strat").strategy<coding_strat_t>(
             TypeDesc("lfs_comp_enc"),
             Meta::Default<EncodeStrategy<HuffmanCoder, EliasGammaCoder>>());
-        m.add_tag(tags::require_sentinel);
+        m.inherit_tag<comp_strategy_t>(tags::require_sentinel);
         return m;
     }
 
@@ -50,7 +50,6 @@ public:
             non_terminal_symbols nts_symbols = non_terminal_symbols();
             rules dictionary = rules();
             auto in = input.as_view();
-            MissingSentinelError::check(in);
 
             if(in.size()>1){
                 comp_strategy_t strategy(config().sub_config("computing_strat"));

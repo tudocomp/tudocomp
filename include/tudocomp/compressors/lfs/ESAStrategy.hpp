@@ -3,8 +3,13 @@
 #include <tudocomp/util.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/ds/IntVector.hpp>
-#include <tudocomp/ds/TextDS.hpp>
 #include <tudocomp/Algorithm.hpp>
+
+#include <tudocomp/ds/DSManager.hpp>
+#include <tudocomp/ds/providers/DivSufSort.hpp>
+#include <tudocomp/ds/providers/PhiAlgorithm.hpp>
+#include <tudocomp/ds/providers/PhiFromSA.hpp>
+#include <tudocomp/ds/providers/LCPFromPLCP.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -14,7 +19,7 @@
 namespace tdc {
 namespace lfs {
 
-template<typename text_t = TextDS<> , uint min_lrf = 2>
+template<typename ds_t = DSManager<DivSufSort, PhiFromSA, PhiAlgorithm, LCPFromPLCP>, uint min_lrf = 2>
 class ESAStrategy : public Algorithm {
 private:
 
@@ -57,22 +62,22 @@ public:
 
     inline static Meta meta() {
         Meta m(TypeDesc("lfs_comp"), "esa");
-        m.param("textds").strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
+        m.param("ds", "The text data structure provider.")
+            .strategy<ds_t>(ds::type(), Meta::Default<DSManager<DivSufSort, PhiFromSA, PhiAlgorithm, LCPFromPLCP>>());
+        m.inherit_tag<ds_t>(tags::require_sentinel);
         return m;
     }
 
 
     inline void compute_rules(io::InputView & input, rules & dictionary, non_terminal_symbols & nts_symbols){
-
-
-        text_t t(config().sub_config("textds"), input);
-        DLOG(INFO) << "building sa and lcp";
+        // Construct text data structures
+        ds_t ds(config().sub_config("ds"), input);
         StatPhase::wrap("computing sa and lcp", [&]{
-
-            t.require(text_t::SA | text_t::ISA | text_t::LCP);
+            ds.template construct<ds::SUFFIX_ARRAY, ds::LCP_ARRAY>();
         });
-        auto& sa_t = t.require_sa();
-        auto& lcp_t = t.require_lcp();
+
+        auto& sa_t = ds.template get<ds::SUFFIX_ARRAY>();
+        auto& lcp_t = ds.template get<ds::LCP_ARRAY>();
 
         StatPhase::wrap("computing lrf occurences", [&]{
 
@@ -141,7 +146,7 @@ public:
         StatPhase::wrap("selecting occs", [&]{
 
             // Pop PQ, Select occurences of suffix, check if contains replaced symbols
-        dead_positions = BitVector(t.size(), 0);
+        dead_positions = BitVector(input.size(), 0);
 
         nts_symbols.reserve(lcp_bins.size());
         uint non_terminal_symbol_number = 0;
