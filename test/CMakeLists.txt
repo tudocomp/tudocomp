@@ -25,7 +25,6 @@ run_test(coder_tests    DEPS ${BASIC_DEPS})
 run_test(cedar_tests    DEPS ${BASIC_DEPS})
 run_test(st_tests       DEPS ${BASIC_DEPS})
 run_test(maxlcp_tests   DEPS ${BASIC_DEPS})
-run_test(plcp_tests DEPS ${BASIC_DEPS})
 
 run_test(lz78_trie_tests DEPS ${BASIC_DEPS})
 
@@ -37,6 +36,7 @@ run_test(input_output_tests DEPS ${BASIC_DEPS})
 run_test(ds_manager_tests   DEPS ${BASIC_DEPS})
 run_test(ds_tests       DEPS ${BASIC_DEPS})
 run_test(lcpsada_tests  DEPS ${BASIC_DEPS})
+run_test(plcp_tests DEPS ${BASIC_DEPS})
 run_test(esp_tests      DEPS ${BASIC_DEPS})
 
 run_test(intsort_tests DEPS ${BASIC_DEPS})
