@@ -165,6 +165,7 @@ public:
         return *std::get<dsid>(m_lookup);
     }
 
+public:
     template<dsid_t dsid>
     inline const provider_type<dsid>& get_provider() const {
         return *std::get<dsid>(m_lookup);

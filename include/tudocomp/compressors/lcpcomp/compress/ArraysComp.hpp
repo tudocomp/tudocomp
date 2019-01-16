@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/DSDef.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
 
@@ -29,29 +29,28 @@ public:
         return m;
     }
 
-    inline static ds::dsflags_t textds_flags() {
-        return ds::SA | ds::ISA | ds::LCP;
+    template<typename ds_t>
+    inline static void construct_textds(ds_t& ds) {
+        ds.template construct<
+            ds::SUFFIX_ARRAY,
+            ds::LCP_ARRAY,
+            ds::INVERSE_SUFFIX_ARRAY>();
     }
 
     using Algorithm::Algorithm; //import constructor
 
     template<typename text_t, typename factorbuffer_t>
     inline void factorize(text_t& text, size_t threshold, factorbuffer_t& factors) {
+        // get data structures
+        auto& sa = text.template get<ds::SUFFIX_ARRAY>();
+        auto& isa = text.template get<ds::INVERSE_SUFFIX_ARRAY>();
 
-		// Construct SA, ISA and LCP
-        auto lcp = StatPhase::wrap("Construct Index Data Structures", [&] {
-            text.require(text_t::SA | text_t::ISA | text_t::LCP);
+        const size_t max_lcp = text.template get_provider<ds::LCP_ARRAY>().max_lcp;
+        StatPhase::log("maxlcp", max_lcp);
+        auto lcp = text.template relinquish<ds::LCP_ARRAY>();
 
-            auto lcp = text.release_lcp();
-            StatPhase::log("maxlcp", lcp.max_lcp());
-            return lcp;
-        });
-
-        auto& sa = text.require_sa();
-        auto& isa = text.require_isa();
-
-        if(lcp.max_lcp()+1 <= threshold) return; // nothing to factorize
-        const size_t cand_length = lcp.max_lcp()+1-threshold;
+        if(max_lcp+1 <= threshold) return; // nothing to factorize
+        const size_t cand_length = max_lcp+1-threshold;
         std::vector<len_compact_t>* cand = new std::vector<len_compact_t>[cand_length];
 
         StatPhase::wrap("Fill candidates", [&]{
@@ -70,9 +69,9 @@ public:
 
         StatPhase::wrap("Compute Factors", [&]{
             StatPhase phase(std::string{"Factors at max. LCP value "}
-                + to_string(lcp.max_lcp()));
+                + to_string(max_lcp));
 
-            for(size_t maxlcp = lcp.max_lcp(); maxlcp >= threshold; --maxlcp) {
+            for(size_t maxlcp = max_lcp; maxlcp >= threshold; --maxlcp) {
                 IF_STATS({
                     const len_t maxlcpbits = bits_for(maxlcp-threshold);
                     if( ((maxlcpbits ^ (1UL<<(bits_for(maxlcpbits)-1))) == 0) && (( (maxlcp-threshold) ^ (1UL<<(maxlcpbits-1))) == 0)) { // only log at certain LCP values

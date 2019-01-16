@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/DSDef.hpp>
 #include <tudocomp/ds/ArrayMaxHeap.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
@@ -29,23 +29,23 @@ public:
         return m;
     }
 
-    inline static ds::dsflags_t textds_flags() {
-        return ds::SA | ds::ISA | ds::LCP;
+    template<typename ds_t>
+    inline static void construct_textds(ds_t& ds) {
+        ds.template construct<
+            ds::SUFFIX_ARRAY,
+            ds::LCP_ARRAY,
+            ds::INVERSE_SUFFIX_ARRAY>();
     }
 
     using Algorithm::Algorithm; //import constructor
 
     template<typename text_t, typename factorbuffer_t>
     inline void factorize(text_t& text, size_t threshold, factorbuffer_t& factors) {
-
-		// Construct SA, ISA and LCP
-        StatPhase::wrap("Construct text ds", [&]{
-            text.require(text_t::SA | text_t::ISA | text_t::LCP);
-        });
-
-        auto& sa = text.require_sa();
-        auto& isa = text.require_isa();
-        auto lcp = text.release_lcp();
+        // get data structures
+        auto& sa = text.template get<ds::SUFFIX_ARRAY>();
+        auto& isa = text.template get<ds::INVERSE_SUFFIX_ARRAY>();
+        StatPhase::log("maxlcp", text.template get_provider<ds::LCP_ARRAY>().max_lcp);
+        auto lcp = text.template relinquish<ds::LCP_ARRAY>();
 
         auto heap = StatPhase::wrap("Construct MaxLCPHeap", [&]{
             // Count relevant LCP entries
@@ -55,7 +55,7 @@ public:
             }
 
             // Construct heap
-            ArrayMaxHeap<typename text_t::lcp_type::data_type> heap(lcp, lcp.size(), heap_size);
+            ArrayMaxHeap<decltype(lcp)> heap(lcp, lcp.size(), heap_size);
             for(size_t i = 1; i < lcp.size(); i++) {
                 if(lcp[i] >= threshold) heap.insert(i);
             }

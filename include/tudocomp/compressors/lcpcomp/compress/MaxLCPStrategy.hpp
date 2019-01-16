@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/DSDef.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
@@ -27,30 +27,28 @@ public:
         return m;
     }
 
-    inline static ds::dsflags_t textds_flags() {
-        return ds::SA | ds::ISA | ds::LCP;
+    template<typename ds_t>
+    inline static void construct_textds(ds_t& ds) {
+        ds.template construct<
+            ds::SUFFIX_ARRAY,
+            ds::LCP_ARRAY,
+            ds::INVERSE_SUFFIX_ARRAY>();
     }
 
     using Algorithm::Algorithm; //import constructor
 
     template<typename text_t, typename factorbuffer_t>
     inline void factorize(text_t& text, size_t threshold, factorbuffer_t& factors) {
+        // get data structures
+        auto& sa = text.template get<ds::SUFFIX_ARRAY>();
+        auto& isa = text.template get<ds::INVERSE_SUFFIX_ARRAY>();
 
-		// Construct SA, ISA and LCP
-        //StatPhase::wrap("Construct text ds", [&]{
-        //    text.require(text_t::SA | text_t::ISA | text_t::LCP);
-        //});
-
-        auto& sa = text.require_sa();
-        auto& isa = text.require_isa();
-
-        text.require_lcp();
-        auto lcp = text.release_lcp();
+        const size_t max_lcp = text.template get_provider<ds::LCP_ARRAY>().max_lcp;
+        StatPhase::log("maxlcp", max_lcp);
+        auto lcp = text.template relinquish<ds::LCP_ARRAY>();
 
         auto list = StatPhase::wrap("Construct MaxLCPSuffixList", [&]{
-            MaxLCPSuffixList<typename text_t::lcp_type::data_type> list(
-                lcp, threshold, lcp.max_lcp());
-
+            MaxLCPSuffixList<decltype(lcp)> list(lcp, threshold, max_lcp);
             StatPhase::log("entries", list.size());
             return list;
         });

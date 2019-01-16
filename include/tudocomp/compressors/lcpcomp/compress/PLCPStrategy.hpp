@@ -9,7 +9,7 @@
 #include <tudocomp/ds/IntVector.hpp>
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/DSDef.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
@@ -366,8 +366,11 @@ public:
         return m;
     }
 
-    inline static ds::dsflags_t textds_flags() {
-        return ds::SA | ds::ISA;
+    template<typename ds_t>
+    inline static void construct_textds(ds_t& ds) {
+        ds.template construct<
+            ds::SUFFIX_ARRAY,
+            ds::INVERSE_SUFFIX_ARRAY>();
     }
 
     /**
@@ -377,15 +380,14 @@ public:
     template<typename text_t, typename factorbuffer_t>
     inline void factorize(text_t& text, size_t threshold, factorbuffer_t& refs) {
         StatPhase phase("Load Index DS");
-        text.require(text_t::SA | text_t::ISA);
+        auto& sa = text.template get<ds::SUFFIX_ARRAY>();
+        auto& isa = text.template get<ds::INVERSE_SUFFIX_ARRAY>();
 
-        const auto& sa = text.require_sa();
-        const auto& isa = text.require_isa();
         //RefDiskStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
         RefRAMStrategy<decltype(sa),decltype(isa)> refStrategy(sa,isa);
-        LCPForwardIterator pplcp { (construct_plcp_bitvector(sa, text)) };
+        LCPForwardIterator pplcp { (construct_plcp_bitvector(sa, text.input)) };
         phase.split("Compute References");
-        compute_references(text.size(), refStrategy, pplcp, threshold);
+        compute_references(text.input.size(), refStrategy, pplcp, threshold);
         phase.split("Factorize");
         refStrategy.factorize(refs);
     }

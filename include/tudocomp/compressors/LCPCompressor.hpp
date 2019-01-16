@@ -11,7 +11,12 @@
 
 #include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
 
-#include <tudocomp/ds/TextDS.hpp>
+#include <tudocomp/ds/DSManager.hpp>
+#include <tudocomp/ds/providers/DivSufSort.hpp>
+#include <tudocomp/ds/providers/ISAFromSA.hpp>
+#include <tudocomp/ds/providers/PhiAlgorithm.hpp>
+#include <tudocomp/ds/providers/PhiFromSA.hpp>
+#include <tudocomp/ds/providers/LCPFromPLCP.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -24,7 +29,10 @@ namespace tdc {
 
 /// Factorizes the input by finding redundant phrases in a re-ordered version
 /// of the LCP table.
-template<typename lzss_coder_t, typename strategy_t = lcpcomp::ArraysComp, typename text_t = TextDS<>>
+template<
+    typename lzss_coder_t,
+    typename strategy_t = lcpcomp::ArraysComp,
+    typename ds_t = DSManager<DivSufSort, PhiFromSA, PhiAlgorithm, LCPFromPLCP, ISAFromSA>>
 class LCPCompressor : public Compressor {
 public:
     inline static Meta meta() {
@@ -35,12 +43,12 @@ public:
         m.param("comp", "The factorization strategy for compression.")
             .strategy<strategy_t>(lcpcomp::comp_strategy_type(),
                 Meta::Default<lcpcomp::ArraysComp>());
-        m.param("textds", "The text data structure provider.")
-            .strategy<text_t>(TypeDesc("textds"), Meta::Default<TextDS<>>());
+        m.param("ds", "The text data structure provider.")
+            .strategy<ds_t>(ds::type(), Meta::Default<DSManager<DivSufSort, PhiFromSA, PhiAlgorithm, LCPFromPLCP, ISAFromSA>>());
         m.param("threshold", "The minimum factor length.").primitive(5);
         m.param("flatten", "Flatten reference chains after factorization.")
             .primitive(1); // 0 or 1
-        m.inherit_tag<text_t>(tags::require_sentinel);
+        m.inherit_tag<ds_t>(tags::require_sentinel);
         m.inherit_tag<lzss_coder_t>(tags::lossy);
         return m;
     }
@@ -49,9 +57,10 @@ public:
 
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_view();
-        auto text = StatPhase::wrap("Construct Text DS", [&]{
-            return text_t(config().sub_config("textds"),
-                in, strategy_t::textds_flags());
+
+        ds_t text(config().sub_config("ds"), in);
+        StatPhase::wrap("Construct Text DS", [&]{
+            strategy_t::construct_textds(text);
         });
 
         // read options
@@ -74,16 +83,17 @@ public:
 
         // statistics
         IF_STATS({
-            lzss::FactorizationStats stats(factors, text.size());
+            lzss::FactorizationStats stats(factors, in.size());
             stats.log();
         })
 
         // encode
         StatPhase::wrap("Encode Factors", [&]{
             auto coder = lzss_coder_t(config().sub_config("coder")).encoder(
-                output,lzss::UnreplacedLiterals<text_t, decltype(factors)>(text, factors));
+                output,
+                lzss::UnreplacedLiterals<decltype(in), decltype(factors)>(in, factors));
 
-            coder.encode_text(text, factors);
+            coder.encode_text(in, factors);
         });
     }
 
