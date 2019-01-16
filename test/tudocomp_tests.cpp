@@ -15,7 +15,6 @@
 #include <tudocomp/Algorithm.hpp>
 
 #include <tudocomp/io/MMapHandle.hpp>
-#include <tudocomp/ds/TextDS.hpp>
 
 #include "test/util.hpp"
 
