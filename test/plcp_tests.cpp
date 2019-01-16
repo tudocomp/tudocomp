@@ -9,7 +9,6 @@
 #include <sdsl/int_vector.hpp>
 
 #include <tudocomp/io.hpp>
-#include <tudocomp/ds/TextDS.hpp>
 #include "test/util.hpp"
 
 #include <tudocomp/compressors/lcpcomp/compress/PLCPStrategy.hpp>
@@ -18,6 +17,12 @@
 #include <tudocomp/coders/ASCIICoder.hpp>
 #include <tudocomp/compressors/lzss/BufferedBidirectionalCoder.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
+
+#include <tudocomp/ds/DSManager.hpp>
+#include <tudocomp/ds/providers/DivSufSort.hpp>
+#include <tudocomp/ds/providers/PhiFromSA.hpp>
+#include <tudocomp/ds/providers/PhiAlgorithm.hpp>
+#include <tudocomp/ds/providers/ISAFromSA.hpp>
 
 #include <stxxl/bits/io/syscall_file.h>
 
@@ -41,10 +46,8 @@ using filemapped_phi_array_t = stxxl::VECTOR_GENERATOR<
 
 template<class text_t>
 void diskstrategy(text_t& text, size_t threshold, lzss::FactorBufferDisk& refs) {
-    DVLOG(2) << "diskstrategy for text of size " << text.size();
-    DCHECK_EQ(0, text[text.size()-1]);
-
-	text.require(ds::SA | ds::PHI);
+    DVLOG(2) << "diskstrategy for text of size " << text.input.size();
+    DCHECK_EQ(0, text.input[text.input.size()-1]);
 
     char* phifile { new char[TMP_MAX] };
     char* plcpfile { new char[TMP_MAX] };
@@ -63,7 +66,7 @@ void diskstrategy(text_t& text, size_t threshold, lzss::FactorBufferDisk& refs) 
         // construct index DS
         {
             DVLOG(2) << "compute PHI";
-            const auto& tphi = text.require_phi();
+            const auto& tphi = text.template get<ds::PHI_ARRAY>();
 
             uint40_t prev_phi = uint40_t(tphi[0]);
             phi.push_back(uint40_pair_t(0, prev_phi));
@@ -84,7 +87,9 @@ void diskstrategy(text_t& text, size_t threshold, lzss::FactorBufferDisk& refs) 
         {
             DVLOG(2) << "compute PLCP";
             std::ofstream plcpo(plcpfile);
-       		construct_plcp_bitvector(text.require_sa(), text).write_data(plcpo);
+       		construct_plcp_bitvector(
+                text.template get<ds::SUFFIX_ARRAY>(),
+                text.input).write_data(plcpo);
         }
         {
             DVLOG(2) << "map STXXL vectors";
@@ -92,8 +97,8 @@ void diskstrategy(text_t& text, size_t threshold, lzss::FactorBufferDisk& refs) 
             {
                 DVLOG(2) << "check index ds";
                 PLCPFileForwardIterator pplcp(plcpfile);
-                const auto& tphi = text.require_phi();
-                const auto& plcp = text.require_plcp();
+                const auto& tphi = text.template get<ds::PHI_ARRAY>();
+                const auto& plcp = text.template get<ds::PLCP_ARRAY>();
 
                 DCHECK_EQ(0ULL, phi[0].first);
                 uint64_t irreducible_pos = 0;
@@ -122,7 +127,7 @@ void diskstrategy(text_t& text, size_t threshold, lzss::FactorBufferDisk& refs) 
                 DVLOG(2) << "factorize";
          		PLCPFileForwardIterator pplcp(plcpfile);
 	            RefDiskStrategy<decltype(phi)> refStrategy(phi);
-        	    compute_references(text.size(), refStrategy, pplcp, threshold);
+        	    compute_references(text.input.size(), refStrategy, pplcp, threshold);
 	            refStrategy.factorize(refs);
             }
         }
@@ -139,6 +144,13 @@ void diskstrategy(text_t& text, size_t threshold, lzss::FactorBufferDisk& refs) 
 template<class text_t>
 void test_plcp(text_t& text) {
     using namespace tdc::lcpcomp;
+
+    // construct text ds
+    text.template construct<
+        ds::SUFFIX_ARRAY,
+        ds::PHI_ARRAY,
+        ds::PLCP_ARRAY,
+        ds::INVERSE_SUFFIX_ARRAY>();
 
     lzss::FactorBufferRAM bufRAM;
     {
@@ -172,14 +184,14 @@ void test_plcp(text_t& text) {
         auto coder = test_coder_t(test_coder_t::meta().config()).encoder(
             outputRAM, tdc::lzss::UnreplacedLiterals<text_t,decltype(bufRAM)>(text, bufRAM));
 
-        coder.encode_text(text, bufRAM);
+        coder.encode_text(text.input, bufRAM);
     }
     {
         tdc::Output outputDisk(outbufDisk);
         auto coder = test_coder_t(test_coder_t::meta().config()).encoder(
             outputDisk, tdc::lzss::UnreplacedLiterals<text_t,decltype(bufDisk)>(text, bufDisk));
 
-        coder.encode_text(text, bufDisk);
+        coder.encode_text(text.input, bufDisk);
     }
 
     DCHECK_EQ(outbufDisk.size(), outbufRAM.size());
@@ -215,11 +227,14 @@ class TestRunner {
 
 };
 
+using textds_t = DSManager<DivSufSort, PhiFromSA, PhiAlgorithm, ISAFromSA>;
+
 #define TEST_DS_STRINGCOLLECTION(func) \
-	TestRunner<TextDS<>> runner(func); \
+	TestRunner<textds_t> runner(func); \
 	test::roundtrip_batch(runner); \
 	test::on_string_generators(runner,8);
 TEST(plcp, filecheck)          { TEST_DS_STRINGCOLLECTION(test_plcp); }
 #undef TEST_DS_STRINGCOLLECTION
 
 #endif
+
