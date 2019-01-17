@@ -76,7 +76,7 @@ public:
         auto parent = parent_w.id();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
 
-        auto ret = m_table.insert(std::make_pair(create_node(parent,c), newleaf_id));
+        auto ret = m_table.insert(std::make_pair(create_node(parent+1,c), newleaf_id));
 
         if(ret.second) { // added a new node
             if(tdc_unlikely(m_table.bucket_count()*m_table.max_load_factor() < m_table.size()+1)) {

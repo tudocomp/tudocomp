@@ -83,7 +83,7 @@ struct TestTrie {
 };
 
 template<typename T>
-void trie_test_single(TestTrie test, bool test_values) {
+void trie_test_single(TestTrie test, bool test_values, bool debug_case = false) {
     auto& should_trie = test.root;
 
     // Only add single \0 root for now.
@@ -98,15 +98,25 @@ void trie_test_single(TestTrie test, bool test_values) {
     auto is_trie_node = &is_trie;
     auto node = trie->get_rootnode(0);
 
+    if (debug_case) {
+        std::cout << "#########################################################\n";
+        std::cout << "[test] Input: '" << vec_to_debug_string(test.input) << "'\n";
+    }
+
     for (uint8_t c : test.input) {
         remaining--;
         auto child = trie->find_or_insert(node, c);
 
-        // std::cout << "char '" << char(c) << "'\n";
-        // trie.debug_print();
+        if (debug_case) {
+            std::cout << "[test] find_or_insert("
+                      << node.id() << (node.is_new() ? " (new)": "") << ", "
+                      << uint(c) << ")"
+                      << " -> "
+                      << child.id() << (child.is_new() ? " (new)": "")
+                      << "\n";
+        }
 
         if (child.is_new()) {
-            // std::cout << " not found\n";
             is_trie_node->add(c,is_trie_size);
 
             // Check that insert worked correctly
@@ -122,8 +132,6 @@ void trie_test_single(TestTrie test, bool test_values) {
             is_trie_node = &is_trie;
             node = trie->get_rootnode(0);
         } else {
-            // std::cout << " found\n";
-
             // Check that insert worked correctly, and look at value
             try  {
                 is_trie_node = &is_trie_node->find(c);
@@ -139,6 +147,12 @@ void trie_test_single(TestTrie test, bool test_values) {
 
     ASSERT_EQ(should_trie, is_trie);
     ASSERT_EQ(is_trie_size, trie->size());
+
+    if (debug_case) {
+        std::cout << "[test] OK\n";
+        std::cout << "#########################################################\n";
+    }
+
 }
 
 template<typename T>
@@ -381,34 +395,46 @@ TEST(Trie, CompactHashTrie) {
     trie_test<CompactHashTrie<>>();
 }
 TEST(TrieStructure, CompactHashTriePlain) {
-    trie_test<CompactHashTrie<Plain>>(false);
+    trie_test<CompactHashTrie<ch::Plain>>(false);
 }
 TEST(Trie, CompactHashTriePlain) {
-    trie_test<CompactHashTrie<Plain>>();
+    trie_test<CompactHashTrie<ch::Plain>>();
 }
 TEST(TrieStructure, CompactHashTrieSparseDisplacement) {
-    trie_test<CompactHashTrie<SparseDisplacement>>(false);
+    trie_test<CompactHashTrie<ch::SparseDisplacement>>(false);
 }
 TEST(Trie, CompactHashTrieSparseDisplacement) {
-    trie_test<CompactHashTrie<SparseDisplacement>>();
+    trie_test<CompactHashTrie<ch::SparseDisplacement>>();
 }
 TEST(TrieStructure, CompactHashTriePlainDisplacement) {
-    trie_test<CompactHashTrie<PlainDisplacement>>(false);
+    trie_test<CompactHashTrie<ch::PlainDisplacement>>(false);
 }
 TEST(Trie, CompactHashTriePlainDisplacement) {
-    trie_test<CompactHashTrie<PlainDisplacement>>();
+    trie_test<CompactHashTrie<ch::PlainDisplacement>>();
 }
 TEST(TrieStructure, CompactHashTrieSparseEliasDisplacement) {
-    trie_test<CompactHashTrie<SparseEliasDisplacement>>(false);
+    trie_test<CompactHashTrie<ch::SparseEliasDisplacement>>(false);
 }
 TEST(Trie, CompactHashTrieSparseEliasDisplacement) {
-    trie_test<CompactHashTrie<SparseEliasDisplacement>>();
+    trie_test<CompactHashTrie<ch::SparseEliasDisplacement>>();
 }
 TEST(TrieStructure, CompactHashTriePlainEliasDisplacement) {
-    trie_test<CompactHashTrie<PlainEliasDisplacement>>(false);
+    trie_test<CompactHashTrie<ch::PlainEliasDisplacement>>(false);
 }
 TEST(Trie, CompactHashTriePlainEliasDisplacement) {
-    trie_test<CompactHashTrie<PlainEliasDisplacement>>();
+    trie_test<CompactHashTrie<ch::PlainEliasDisplacement>>();
+}
+TEST(TrieStructure, CompactHashTrieNoKVGrow) {
+    trie_test<CompactHashTrie<ch::NoKVGrow<ch::Sparse>>>(false);
+}
+TEST(Trie, CompactHashTrieNoKVGrow) {
+    trie_test<CompactHashTrie<ch::NoKVGrow<ch::Sparse>>>();
+}
+TEST(TrieStructure, CompactHashTrieNoKGrow) {
+    trie_test<CompactHashTrie<ch::NoKGrow<ch::Sparse>>>(false);
+}
+TEST(Trie, CompactHashTrieNoKGrow) {
+    trie_test<CompactHashTrie<ch::NoKGrow<ch::Sparse>>>();
 }
 
 // #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>

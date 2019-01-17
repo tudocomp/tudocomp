@@ -4,7 +4,7 @@
 
 namespace tdc {
 
-class MissingSentinelError : public std::logic_error {
+class MissingSentinelError : public std::runtime_error {
 public:
     template<typename str_t>
     static inline void check(const str_t& str) {
@@ -13,7 +13,7 @@ public:
         }
     }
 
-    inline MissingSentinelError() : std::logic_error(
+    inline MissingSentinelError() : std::runtime_error(
         "The input is missing a sentinel! If you are running tudocomp from "
         "the command line, pass the -0 parameter.") {
     }

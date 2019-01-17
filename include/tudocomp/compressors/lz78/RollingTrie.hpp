@@ -11,8 +11,8 @@ namespace lz78 {
 template<
     typename HashRoller = ZBackupRollingHash,
     typename HashProber = LinearProber,
-    typename HashManager = SizeManagerPrime,
-    typename HashFunction = NoopHasher
+    typename HashFunction = NoopHasher,
+    typename HashManager = SizeManagerPow2
 >
 class RollingTrie : public Algorithm, public LZ78Trie<> {
     typedef typename HashRoller::key_type key_type;
@@ -29,7 +29,6 @@ public:
         Meta m(lz78_trie_type(), "rolling", "Rolling Hash Trie");
         m.param("hash_roller").strategy<HashRoller>(hash_roller_type(), Meta::Default<ZBackupRollingHash>());
         m.param("hash_prober").strategy<HashProber>(hash_prober_type(), Meta::Default<LinearProber>());
-        m.param("hash_manager").strategy<HashManager>(hash_manager_type(), Meta::Default<SizeManagerPrime>());
         m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<NoopHasher>());
         m.param("load_factor").primitive(30);
         return m;

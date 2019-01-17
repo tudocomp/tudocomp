@@ -19,7 +19,6 @@ public:
         Meta m(lz78_trie_type(), "hash", "Hash Trie");
         m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<MixHasher>());
         m.param("hash_prober").strategy<HashProber>(hash_prober_type(), Meta::Default<LinearProber>());
-        m.param("hash_manager").strategy<HashManager>(hash_manager_type(), Meta::Default<SizeManagerPow2>());
         m.param("load_factor").primitive(30);
         return m;
     }
@@ -71,7 +70,7 @@ public:
 
         auto ret = m_table.insert(
             std::make_pair(
-                create_node(parent,c),
+                create_node(parent+1,c),
                 newleaf_id
             )
         );
