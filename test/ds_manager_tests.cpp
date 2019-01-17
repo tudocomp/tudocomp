@@ -64,7 +64,7 @@ static_assert(1 == depgraph_t::in_degree<ds::PHI_ARRAY>(),
     "Wrong in degree of PHI_ARRAY node in dependency graph");
 static_assert(1 == depgraph_t::in_degree<ds::PLCP_ARRAY>(),
     "Wrong in degree of LCP_ARRAY node in dependency graph");
-static_assert(1 == depgraph_t::in_degree<ds::LCP_ARRAY>(),
+static_assert(2 == depgraph_t::in_degree<ds::LCP_ARRAY>(),
     "Wrong in degree of LCP_ARRAY node in dependency graph");
 
 // cost
@@ -76,7 +76,7 @@ static_assert(1 == depgraph_t::cost<ds::PHI_ARRAY>(),
     "Wrong cost of PHI_ARRAY node in dependency graph");
 static_assert(2 == depgraph_t::cost<ds::PLCP_ARRAY>(),
     "Wrong cost of PLCP_ARRAY node in dependency graph");
-static_assert(3 == depgraph_t::cost<ds::LCP_ARRAY>(),
+static_assert(4 == depgraph_t::cost<ds::LCP_ARRAY>(),
     "Wrong cost of LCP_ARRAY node in dependency graph");
 
 // construction order
