@@ -99,11 +99,13 @@ TEST(DS, dev) {
     // instantiate manager
     dsmanager_t dsman(dsmanager_t::meta().config(), input);
 
-    // construct ISA, LCP and SA
+    // construct data structures
     dsman.construct<
+        ds::SUFFIX_ARRAY,
         ds::INVERSE_SUFFIX_ARRAY,
-        ds::LCP_ARRAY,
-        ds::SUFFIX_ARRAY
+        ds::PHI_ARRAY,
+        ds::PLCP_ARRAY,
+        ds::LCP_ARRAY
     >();
 
     // get providers (template version)
@@ -159,6 +161,47 @@ TEST(DS, dev) {
             "wrong ds type for PLCP_ARRAY");
         static_assert(std::is_same<decltype(lcp), DynamicIntVector>::value,
             "wrong ds type for LCP_ARRAY");
+    }
+}
+
+TEST(ds, error) {
+    // test input
+    std::string input("banana\0", 7);
+
+    // instantiate manager
+    dsmanager_t dsman(dsmanager_t::meta().config(), input);
+
+    // try to get unconstructed data structure
+    try {
+        dsman.get<ds::SUFFIX_ARRAY>();
+        FAIL();
+    } catch(DSRequestError) {
+        // all good, this is what we want!
+    }
+
+    // construct a data structure that depends on the suffix array
+    dsman.construct<ds::PHI_ARRAY>();
+    
+    // getting it should succeed
+    dsman.get<ds::PHI_ARRAY>();
+
+    // getting the suffix array should fail (byproduct!)
+    try {
+        dsman.get<ds::SUFFIX_ARRAY>();
+        FAIL();
+    } catch(DSRequestError) {
+        // all good, this is what we want!
+    }
+
+    // relinquish the phi array
+    dsman.relinquish<ds::PHI_ARRAY>();
+
+    // now, getting that should fail too!
+    try {
+        dsman.get<ds::PHI_ARRAY>();
+        FAIL();
+    } catch(DSRequestError) {
+        // all good, this is what we want!
     }
 }
 

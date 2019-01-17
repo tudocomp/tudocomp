@@ -56,6 +56,14 @@ namespace internal {
 }
 /// \endcond
 
+class DSRequestError : public std::runtime_error {
+public:
+    inline DSRequestError() : std::runtime_error(
+        "A data structure was acessed that has either not yet been constructed "
+        "or has been discarded or relinquished.") {
+    }
+};
+
 /// Manages data structures and construction algorithms.
 template<typename... provider_ts>
 class DSManager : public Algorithm {
@@ -126,7 +134,9 @@ private:
     View m_input;      // TODO: use Input instead of View?
     CompressMode m_cm; // the compression mode
 
-    std::set<dsid_t> m_protect; // used temporarily during construction
+    std::set<dsid_t> m_protect;     // used temporarily during construction
+    std::set<dsid_t> m_constructed; // marks a data structure as constructed
+    std::set<dsid_t> m_compressed;  // marks a data structure as compressed
 
 public:
     inline static Meta meta() {
@@ -166,12 +176,6 @@ public:
     }
 
 public:
-    template<dsid_t dsid>
-    inline const provider_type<dsid>& get_provider() const {
-        return *std::get<dsid>(m_lookup);
-    }
-
-public:
     /// \cond INTERNAL
 
     using ds_types = tl::multimix<typename provider_ts::ds_types...>;
@@ -187,8 +191,48 @@ public:
         if(it != m_protect.end()) m_protect.erase(it);
     }
 
-    inline bool is_protected(const dsid_t ds) {
+    inline bool is_protected(const dsid_t ds) const {
         return (m_protect.find(ds) != m_protect.end());
+    }
+
+    inline bool is_constructed(const dsid_t ds) const {
+        return (m_constructed.find(ds) != m_constructed.end());
+    }
+
+    inline bool is_compressed(const dsid_t ds) const {
+        return (m_compressed.find(ds) != m_compressed.end());
+    }
+
+    template<dsid_t ds>
+    inline void construct(bool compressed_space) {
+        if(!is_constructed(ds)) {
+            get_provider<ds>().template construct(*this, compressed_space);
+
+            m_constructed.emplace(ds);
+            if(compressed_space) {
+                m_compressed.emplace(ds);
+            }
+        } else if(compressed_space) {
+            compress<ds>();
+        }
+    }
+
+    template<dsid_t ds>
+    inline void compress() {
+        if(!is_compressed(ds)) {
+            get_provider<ds>().template compress<ds>();
+            m_compressed.emplace(ds);
+        }
+    }
+
+    template<dsid_t ds>
+    inline void discard() {
+        if(is_constructed(ds)) {
+            get_provider<ds>().template discard<ds>();
+
+            m_constructed.erase(ds);
+            m_compressed.erase(ds);
+        }
     }
     /// \endcond
 
@@ -213,6 +257,11 @@ public:
         m_protect.clear();
     }
 
+    template<dsid_t dsid>
+    inline const provider_type<dsid>& get_provider() const {
+        return *std::get<dsid>(m_lookup);
+    }
+
     /// \brief Gets the specified data structure for reading.
     ///
     /// The data structure must have been constructed beforehand.
@@ -222,7 +271,11 @@ public:
     ///         is determined by the respective provider
     template<dsid_t ds>
     inline const tl::get<ds, ds_types>& get() const {
-        return get_provider<ds>().template get<ds>();
+        if(is_constructed(ds)) {
+            return get_provider<ds>().template get<ds>();
+        } else {
+            throw DSRequestError();
+        }
     }
 
     /// \brief Relinquishes the specified data structure for modification.
@@ -235,8 +288,13 @@ public:
     ///         respective provider
     template<dsid_t ds>
     inline tl::get<ds, ds_types> relinquish() {
-
-        return get_provider<ds>().template relinquish<ds>();
+        if(is_constructed(ds)) {
+            m_constructed.erase(ds);
+            m_compressed.erase(ds);
+            return get_provider<ds>().template relinquish<ds>();
+        } else {
+            throw DSRequestError();
+        }
     }
 
     /// \brief Relinquishes the specified data structure for modification or

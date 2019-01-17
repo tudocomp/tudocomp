@@ -143,20 +143,10 @@ private:
 
     // TODO: use std::arrays of size is::max<m_construct...>() ?
     std::map<dsid_t, size_t> m_degree;
-    std::set<dsid_t> m_constructed;
-    std::set<dsid_t> m_compressed;
 
     inline size_t degree(const dsid_t ds) {
         auto it = m_degree.find(ds);
         return (it != m_degree.end()) ? it->second : 0;
-    }
-
-    inline bool is_constructed(const dsid_t ds) {
-        return (m_constructed.find(ds) != m_constructed.end());
-    }
-
-    inline bool is_compressed(const dsid_t ds) {
-        return (m_compressed.find(ds) != m_compressed.end());
     }
 
     inline void init_degree(std::index_sequence<>) {
@@ -187,16 +177,8 @@ private:
     inline void possibly_compress() {
         // if out degree of ds equals one and the ds is requested, compress
         //DLOG(INFO) << "possibly_compress<" << ds::name_for(ds) << ">";
-        if(is_requested<ds>()) {
-            if(!is_compressed(ds)) {
-                if(degree(ds) == 1) {
-                    //DLOG(INFO) << "compress: " << ds::name_for(ds);
-                    m_manager->template get_provider<ds>()
-                        .template compress<ds>();
-
-                    m_compressed.emplace(ds);
-                }
-            }
+        if(is_requested<ds>() && degree(ds) == 1) {
+            m_manager->template compress<ds>();
         }
     }
 
@@ -221,7 +203,7 @@ private:
         if(!(--it->second)) {
             // no longer needed
             //DLOG(INFO) << "discard: " << ds::name_for(Head);
-            m_manager->template get_provider<Head>().template discard<Head>();
+            m_manager->template discard<Head>();
         } else if(m_cm == CompressMode::delayed) {
             // otherwise, may be suitable for compression
             possibly_compress<Head>();
@@ -246,7 +228,7 @@ private:
         if(!degree(Head)) {
             // not in the dependency graph, ie., a byproduct
             //DLOG(INFO) << "discard byproduct: " << ds::name_for(Head);
-            m_manager->template get_provider<Head>().template discard<Head>();
+            m_manager->template discard<Head>();
         }
 
         // next
@@ -262,24 +244,19 @@ private:
         bool top_level,
         std::index_sequence<Head, Tail...>) {
 
-        if(!is_constructed(Head)) {
-            // construct dependencies
-            construct_recursive(false, dependency_order<Head>());
+        // construct dependencies
+        construct_recursive(false, dependency_order<Head>());
 
-            // construct
-            //DLOG(INFO) << "construct: " << ds::name_for(Head);
-            m_manager->template get_provider<Head>().construct(
-                *m_manager, m_cm == CompressMode::compressed);
+        // construct
+        //DLOG(INFO) << "construct: " << ds::name_for(Head);
+        m_manager->template construct<Head>(
+            m_cm == CompressMode::compressed);
 
-            // mark as constructed
-            m_constructed.emplace(Head);
+        // discard byproducts
+        discard_byproducts(typename provider_t<Head>::provides());
 
-            // discard byproducts
-            discard_byproducts(typename provider_t<Head>::provides());
-
-            // decrease degree of direct dependencies
-            decrease_degree(typename provider_t<Head>::requires());
-        }
+        // decrease degree of direct dependencies
+        decrease_degree(typename provider_t<Head>::requires());
 
         // in delayed compressed mode, at the top level, possible compress
         if(m_cm == CompressMode::delayed && top_level) {
