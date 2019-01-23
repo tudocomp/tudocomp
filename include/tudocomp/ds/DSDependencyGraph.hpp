@@ -203,7 +203,7 @@ private:
         if(!(--it->second)) {
             // no longer needed
             //DLOG(INFO) << "discard: " << ds::name_for(Head);
-            m_manager->template discard<Head>();
+            m_manager->template discard<Head>(true);
         } else if(m_cm == CompressMode::delayed) {
             // otherwise, may be suitable for compression
             possibly_compress<Head>();
@@ -228,7 +228,7 @@ private:
         if(!degree(Head)) {
             // not in the dependency graph, ie., a byproduct
             //DLOG(INFO) << "discard byproduct: " << ds::name_for(Head);
-            m_manager->template discard<Head>();
+            m_manager->template discard<Head>(true);
         }
 
         // next

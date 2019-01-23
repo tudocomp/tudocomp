@@ -205,3 +205,18 @@ TEST(ds, error) {
     }
 }
 
+TEST(ds, retain_byproduct) {
+    // instantiate manager
+    std::string input("banana\0", 7);
+    dsmanager_t dsman(dsmanager_t::meta().config(), input);
+
+    // construct suffix array
+    dsman.construct<ds::SUFFIX_ARRAY>();
+    dsman.get<ds::SUFFIX_ARRAY>();
+
+    // construct phi array - the suffix array is a byproduct
+    // however, it should NOT be discard, because it was requested before
+    dsman.construct<ds::PHI_ARRAY>();
+    dsman.get<ds::SUFFIX_ARRAY>();
+}
+

@@ -226,12 +226,14 @@ public:
     }
 
     template<dsid_t ds>
-    inline void discard() {
+    inline void discard(bool check_protected = false) {
         if(is_constructed(ds)) {
-            get_provider<ds>().template discard<ds>();
+            if(!check_protected || !is_protected(ds)) {
+                get_provider<ds>().template discard<ds>();
 
-            m_constructed.erase(ds);
-            m_compressed.erase(ds);
+                m_constructed.erase(ds);
+                m_compressed.erase(ds);
+            }
         }
     }
     /// \endcond
@@ -244,11 +246,13 @@ public:
         // build dependency graph
         using depgraph_t = DSDependencyGraph<this_t, ds...>;
 
-        // init protection (all requested data structures)
+        // init protection to all requested data structures
         m_protect = is::to_set(std::index_sequence<ds...>());
-        //for(dsid_t x : m_protect) {
-        //    DLOG(INFO) << "initially protect: " << ds::name_for(x);
-        //}
+
+        // also protect all data structures already constructed!
+        for(dsid_t retain : m_constructed) {
+            m_protect.emplace(retain);
+        }
 
         // construct
         depgraph_t(*this, m_cm);
