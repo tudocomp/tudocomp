@@ -28,6 +28,7 @@ struct OutOfBounds;
 // declarations
 // see public using declarations below for descriptions
 
+template<typename Tl> struct _size;
 template<size_t I, typename Tl> struct _get{};
 template<typename T, typename Tl> struct _prepend;
 template<size_t I, typename T> struct _set;
@@ -36,6 +37,12 @@ template<typename... Tls> struct _multimix;
 template<typename Seq, typename T> struct _set_all;
 
 /// \endcond
+
+/// \brief Gets the size of a type list.
+template<typename Tl>
+constexpr size_t size() {
+    return _size<Tl>::size();
+}
 
 /// \brief Gets the i-th type in a type list.
 ///
@@ -94,6 +101,22 @@ using set_all = typename _set_all<Seq, T>::list;
 
 /// \cond INTERNAL
 // implementations
+
+// size - recursive case:
+template<typename Head, typename... Tail>
+struct _size<type_list<Head, Tail...>> {
+    static constexpr size_t size() {
+        return 1ULL + _size<type_list<Tail...>>::size();
+    }
+};
+
+// size - trivial case (empty list):
+template<>
+struct _size<type_list<>> {
+    static constexpr size_t size() {
+        return 0ULL;
+    }
+};
 
 // get - recursive case (I > 0):
 // cut off head and continue with I - 1

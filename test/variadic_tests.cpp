@@ -57,6 +57,10 @@ struct C;
 
 using testtl1_t = tl::type_list<A, B, C>;
 
+// tl::size
+static_assert(tl::size<tl::mt>() == 0ULL, "tl::size");
+static_assert(tl::size<testtl1_t>() == 3ULL, "tl::size");
+
 // tl::get
 static_assert(std::is_same<tl::get<0, testtl1_t>, A>::value, "tl::get");
 static_assert(std::is_same<tl::get<1, testtl1_t>, B>::value, "tl::get");
