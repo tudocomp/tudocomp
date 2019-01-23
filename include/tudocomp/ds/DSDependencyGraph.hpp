@@ -2,6 +2,7 @@
 
 #include <map>
 #include <set>
+#include <type_traits>
 
 #include <tudocomp/util/integer_sequence.hpp>
 #include <tudocomp/ds/DSDef.hpp>
@@ -155,6 +156,8 @@ private:
 
     template<dsid_t Head, dsid_t... Tail>
     inline void init_degree(std::index_sequence<Head, Tail...>) {
+        m_manager->template ensure_provider<Head>();
+
         // init degree for dependencies (any order)
         init_degree(typename provider_t<Head>::requires());
 

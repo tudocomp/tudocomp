@@ -172,11 +172,30 @@ public:
 
     template<dsid_t dsid>
     inline provider_type<dsid>& get_provider() {
+        ensure_provider<dsid>();
         return *std::get<dsid>(m_lookup);
     }
 
-public:
     /// \cond INTERNAL
+
+    template<dsid_t dsid>    
+    inline void ensure_provider() const {
+        // out of range sanity check
+        static_assert(dsid < tl::size<provider_type_map_t>(),
+            "no provider for data structure");
+
+        // make sure ds has a provider
+        static_assert(!std::is_same<
+            provider_type<dsid>,
+            tl::None>::value,
+            "no provider for data structure");
+
+        // also make sure it has only one provider
+        static_assert(!std::is_same<
+            provider_type<dsid>,
+            tl::Ambiguous>::value,
+            "multiple providers for data structure");
+    }
 
     using ds_types = tl::multimix<typename provider_ts::ds_types...>;
 
@@ -205,6 +224,7 @@ public:
 
     template<dsid_t ds>
     inline void construct(bool compressed_space) {
+        ensure_provider<ds>();
         if(!is_constructed(ds)) {
             get_provider<ds>().template construct(*this, compressed_space);
 
@@ -219,6 +239,7 @@ public:
 
     template<dsid_t ds>
     inline void compress() {
+        ensure_provider<ds>();
         if(!is_compressed(ds)) {
             get_provider<ds>().template compress<ds>();
             m_compressed.emplace(ds);
@@ -227,6 +248,7 @@ public:
 
     template<dsid_t ds>
     inline void discard(bool check_protected = false) {
+        ensure_provider<ds>();
         if(is_constructed(ds)) {
             if(!check_protected || !is_protected(ds)) {
                 get_provider<ds>().template discard<ds>();
@@ -261,9 +283,10 @@ public:
         m_protect.clear();
     }
 
-    template<dsid_t dsid>
-    inline const provider_type<dsid>& get_provider() const {
-        return *std::get<dsid>(m_lookup);
+    template<dsid_t ds>
+    inline const provider_type<ds>& get_provider() const {
+        ensure_provider<ds>();
+        return *std::get<ds>(m_lookup);
     }
 
     /// \brief Gets the specified data structure for reading.
@@ -275,6 +298,7 @@ public:
     ///         is determined by the respective provider
     template<dsid_t ds>
     inline const tl::get<ds, ds_types>& get() const {
+        ensure_provider<ds>();
         if(is_constructed(ds)) {
             return get_provider<ds>().template get<ds>();
         } else {
@@ -292,6 +316,7 @@ public:
     ///         respective provider
     template<dsid_t ds>
     inline tl::get<ds, ds_types> relinquish() {
+        ensure_provider<ds>();
         if(is_constructed(ds)) {
             m_constructed.erase(ds);
             m_compressed.erase(ds);
@@ -314,6 +339,7 @@ public:
     ///         determined by the respective provider
     template<dsid_t ds>
     inline auto inplace() -> decltype(relinquish<ds>()) {
+        ensure_provider<ds>();
         if(is_protected(ds)) {
             // create a copy
             decltype(relinquish<ds>()) copy = get<ds>();
