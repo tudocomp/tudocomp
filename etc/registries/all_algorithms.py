@@ -63,38 +63,54 @@ lzss_bidirectional_coders = [
 
 # Suffix Array
 sa = [
-    AlgorithmConfig(name="SADivSufSort", header="ds/SADivSufSort.hpp"),
+    AlgorithmConfig(name="DivSufSort", header="ds/providers/DivSufSort.hpp"),
 ]
 
 # Phi Array
 phi = [
-    AlgorithmConfig(name="PhiFromSA", header="ds/PhiFromSA.hpp"),
+    AlgorithmConfig(name="PhiFromSA", header="ds/providers/PhiFromSA.hpp"),
 ]
 
 # PLCP Array
 plcp = [
-    AlgorithmConfig(name="PLCPFromPhi", header="ds/PLCPFromPhi.hpp"),
+    AlgorithmConfig(name="PhiAlgorithm", header="ds/providers/PhiAlgorithm.hpp"),
 ]
 
 # Uncompressed LCP Array
 lcp_uncompressed = [
-    AlgorithmConfig(name="LCPFromPLCP", header="ds/LCPFromPLCP.hpp"),
+    AlgorithmConfig(name="LCPFromPLCP", header="ds/providers/LCPFromPLCP.hpp"),
 ]
 
 # All LCP Arrays
 lcp = lcp_uncompressed + [
-    AlgorithmConfig(name="CompressedLCP", header="ds/CompressedLCP.hpp", sub=[sa]),
+    #AlgorithmConfig(name="CompressedLCP", header="ds/CompressedLCP.hpp", sub=[sa]),
 ]
 
 # Inverse Suffix Array
 isa = [
-    AlgorithmConfig(name="ISAFromSA", header="ds/ISAFromSA.hpp"),
-    AlgorithmConfig(name="SparseISA", header="ds/SparseISA.hpp", sub=[sa]),
+    AlgorithmConfig(name="ISAFromSA", header="ds/providers/ISAFromSA.hpp"),
+    AlgorithmConfig(name="SparseISA", header="ds/providers/SparseISA.hpp", sub=[sa]),
 ]
 
 # TextDS
 textds = [
-    AlgorithmConfig(name="TextDS", header="ds/TextDS.hpp", sub=[sa, phi, plcp, lcp, isa]),
+    AlgorithmConfig(name="DSManager", header="ds/DSManager.hpp", sub=[sa, phi, plcp, lcp, isa]),
+]
+
+textds_lfs = [
+    AlgorithmConfig(name="DSManager", header="ds/DSManager.hpp", sub=[sa, phi, plcp, lcp]),
+]
+
+textds_lcp = [
+    AlgorithmConfig(name="DSManager", header="ds/DSManager.hpp", sub=[sa, phi, plcp, lcp, isa]),
+]
+
+textds_lcpcomp = [
+    AlgorithmConfig(name="DSManager", header="ds/DSManager.hpp", sub=[sa, phi, plcp, lcp_uncompressed, isa]),
+]
+
+textds_sa = [
+    AlgorithmConfig(name="DSManager", header="ds/DSManager.hpp", sub=[sa]),
 ]
 
 ##### lz78 #####
@@ -178,11 +194,6 @@ lcpcomp_dec = [
     AlgorithmConfig(name="lcpcomp::MultimapBuffer", header="compressors/lcpcomp/decompress/MultiMapBuffer.hpp"),
 ]
 
-# Allowed TextDS instances for lcpcomp (LCP array must be writable!)
-lcpcomp_textds = [
-    AlgorithmConfig(name="TextDS", header="ds/TextDS.hpp", sub=[sa, phi, plcp, lcp_uncompressed, isa]),
-]
-
 ##### ESP grammar compressor WIP #####
 ipd = [
     AlgorithmConfig(name="esp::StdUnorderedMapIPD", header="compressors/esp/StdUnorderedMapIPD.hpp"),
@@ -220,7 +231,7 @@ slp_coder = [
 ##### lfs WIP #####
 
 lfs_strat = [
-    AlgorithmConfig(name="lfs::ESAStrategy<>", header="compressors/lfs/ESAStrategy.hpp"),
+    AlgorithmConfig(name="lfs::ESAStrategy", header="compressors/lfs/ESAStrategy.hpp", sub=[textds_lfs]),
     AlgorithmConfig(name="lfs::STStrategy", header="compressors/lfs/STStrategy.hpp"),
     AlgorithmConfig(name="lfs::BSTStrategy", header="compressors/lfs/BSTStrategy.hpp"),
     AlgorithmConfig(name="lfs::SimSTStrategy", header="compressors/lfs/SimSTStrategy.hpp"),
@@ -251,7 +262,7 @@ long_common_strat = [
 
 ##### Export available compressors #####
 tdc.compressors = [
-    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_coders, lcpcomp_comp, lcpcomp_textds]),
+    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_coders, lcpcomp_comp, textds_lcpcomp]),
     AlgorithmConfig(name="RunLengthEncoder", header="compressors/RunLengthEncoder.hpp"),
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
     AlgorithmConfig(name="LZ78Compressor", header="compressors/LZ78Compressor.hpp", sub=[universal_coders, lz78_trie]),
@@ -259,12 +270,12 @@ tdc.compressors = [
     AlgorithmConfig(name="LZ78CicsCompressor", header="compressors/LZ78CicsCompressor.hpp", sub=[universal_coders]),
     AlgorithmConfig(name="LZWCompressor", header="compressors/LZWCompressor.hpp", sub=[universal_coders, lz78_trie]),
     AlgorithmConfig(name="RePairCompressor", header="compressors/RePairCompressor.hpp", sub=[non_consuming_coders]),
-    AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[lzss_coders, textds]),
+    AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[lzss_coders, textds_lcp]),
     AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[lzss_streaming_coders]),
     AlgorithmConfig(name="LZSSCicsCompressor", header="compressors/LZSSCicsCompressor.hpp", sub=[lzss_streaming_coders]),
     AlgorithmConfig(name="MTFCompressor", header="compressors/MTFCompressor.hpp"),
     AlgorithmConfig(name="NoopCompressor", header="compressors/NoopCompressor.hpp"),
-    AlgorithmConfig(name="BWTCompressor", header="compressors/BWTCompressor.hpp", sub=[textds]),
+    AlgorithmConfig(name="BWTCompressor", header="compressors/BWTCompressor.hpp", sub=[textds_sa]),
     AlgorithmConfig(name="ChainCompressor", header="compressors/ChainCompressor.hpp"),
     AlgorithmConfig(name="DividingCompressor", header="compressors/DividingCompressor.hpp", sub=[dividing_strat]),
     AlgorithmConfig(name="LongCommonStringCompressor", header="compressors/LongCommonStringCompressor.hpp", sub=[long_common_strat]),

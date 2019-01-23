@@ -52,38 +52,46 @@ lzss_coders = lzss_streaming_coders + [
 
 # Suffix Array
 sa = [
-    AlgorithmConfig(name="SADivSufSort", header="ds/SADivSufSort.hpp"),
+    AlgorithmConfig(name="DivSufSort", header="ds/providers/DivSufSort.hpp"),
 ]
 
 # Phi Array
 phi = [
-    AlgorithmConfig(name="PhiFromSA", header="ds/PhiFromSA.hpp"),
+    AlgorithmConfig(name="PhiFromSA", header="ds/providers/PhiFromSA.hpp"),
 ]
 
 # PLCP Array
 plcp = [
-    AlgorithmConfig(name="PLCPFromPhi", header="ds/PLCPFromPhi.hpp"),
+    AlgorithmConfig(name="PhiAlgorithm", header="ds/providers/PhiAlgorithm.hpp"),
 ]
 
 # Uncompressed LCP Array
 lcp_uncompressed = [
-    AlgorithmConfig(name="LCPFromPLCP", header="ds/LCPFromPLCP.hpp"),
+    AlgorithmConfig(name="LCPFromPLCP", header="ds/providers/LCPFromPLCP.hpp"),
 ]
 
 # All LCP Arrays
 lcp = lcp_uncompressed + [
-    AlgorithmConfig(name="CompressedLCP", header="ds/CompressedLCP.hpp", sub=[sa]),
+    #AlgorithmConfig(name="CompressedLCP", header="ds/CompressedLCP.hpp", sub=[sa]),
 ]
 
 # Inverse Suffix Array
 isa = [
-    AlgorithmConfig(name="ISAFromSA", header="ds/ISAFromSA.hpp"),
-    AlgorithmConfig(name="SparseISA", header="ds/SparseISA.hpp", sub=[sa]),
+    AlgorithmConfig(name="ISAFromSA", header="ds/providers/ISAFromSA.hpp"),
+    AlgorithmConfig(name="SparseISA", header="ds/providers/SparseISA.hpp", sub=[sa]),
 ]
 
 # TextDS
 textds = [
-    AlgorithmConfig(name="TextDS", header="ds/TextDS.hpp", sub=[sa, phi, plcp, lcp, isa]),
+    AlgorithmConfig(name="DSManager", header="ds/DSManager.hpp", sub=[sa, phi, plcp, lcp, isa]),
+]
+
+textds_lcp = [
+    AlgorithmConfig(name="DSManager", header="ds/DSManager.hpp", sub=[sa, phi, plcp, lcp, isa]),
+]
+
+textds_lcpcomp = [
+    AlgorithmConfig(name="DSManager", header="ds/DSManager.hpp", sub=[sa, phi, plcp, lcp_uncompressed, isa]),
 ]
 
 ##### lcpcomp #####
@@ -106,11 +114,6 @@ lcpcomp_dec = [
     AlgorithmConfig(name="lcpcomp::MultimapBuffer", header="compressors/lcpcomp/decompress/MultiMapBuffer.hpp"),
 ]
 
-# Allowed TextDS instances for lcpcomp (LCP array must be writable!)
-lcpcomp_textds = [
-    AlgorithmConfig(name="TextDS", header="ds/TextDS.hpp", sub=[sa, phi, plcp, lcp_uncompressed, isa]),
-]
-
 ##### Misc #####
 
 dividing_strat = [
@@ -124,9 +127,9 @@ long_common_strat = [
 
 ##### Export available compressors #####
 tdc.compressors = [
-    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_coders, lcpcomp_comp, lcpcomp_dec, lcpcomp_textds]),
+    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_coders, lcpcomp_comp, textds_lcpcomp]),
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
-    AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[lzss_coders, textds]),
+    AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[lzss_coders, textds_lcp]),
     AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[lzss_streaming_coders]),
     AlgorithmConfig(name="NoopCompressor", header="compressors/NoopCompressor.hpp"),
     AlgorithmConfig(name="ChainCompressor", header="compressors/ChainCompressor.hpp"),
