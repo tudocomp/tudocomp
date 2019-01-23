@@ -193,6 +193,13 @@ struct _multimix<Tl> {
     using list = Tl;
 };
 
+// multimix - trivial case:
+// multimix of empty list is an empty list
+template<>
+struct _multimix<> {
+    using list = mt;
+};
+
 // set_all - recursive case
 // mix set with set_all using remaining indices
 template<size_t Head, size_t... Tail, typename T>
