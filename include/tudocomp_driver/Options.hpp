@@ -24,6 +24,7 @@ constexpr option OPTIONS[] = {
     {"help",       no_argument,       nullptr, OPT_HELP},
     {"list",       optional_argument, nullptr, 'l'},
     {"output",     required_argument, nullptr, 'o'},
+    {"prefix",     required_argument, nullptr, 'p'},
     {"sentinel",   no_argument,       nullptr, '0'},
     {"stats",      optional_argument, nullptr, 's'},
     {"statfile",   required_argument, nullptr, 'S'},
@@ -118,6 +119,12 @@ public:
             << "write output to FILE."
             << endl;
 
+        // -p, --prefix=BYTES
+        out << right << setw(W_SF) << "-p" << ", "
+            << left << setw(W_LF) << "--prefix=BYTES"
+            << "only process BYTES bytes of the input."
+            << endl;
+
         // -s, --stats
         out << right << setw(W_SF) << "-s" << ", "
             << left << setw(W_LF) << "--stats[=TITLE]"
@@ -201,6 +208,7 @@ private:
     bool m_force;
     bool m_stdin, m_stdout;
     std::string m_generator;
+    size_t m_prefix;
 
     bool m_raw;
     bool m_decompress;
@@ -226,6 +234,7 @@ public:
         m_force(false),
         m_stdin(false),
         m_stdout(false),
+        m_prefix(0),
         m_raw(false),
         m_decompress(false),
         m_stats(false)
@@ -233,7 +242,7 @@ public:
         int c, option_index = 0;
         std::string escape;
 
-        while((c = getopt_long(argc, argv, "O:V:L:a:df0e:g:lo:s::v",
+        while((c = getopt_long(argc, argv, "O:V:L:a:df0e:g:lo:p:s::v",
             OPTIONS, &option_index)) != -1) {
 
             switch(c) {
@@ -276,6 +285,11 @@ public:
 
                 case 'o': // --output=<optarg>
                     m_output = std::string(optarg);
+                    break;
+
+                case 'p': // --prefix=<optarg>
+                    m_prefix = size_t(std::atoi(optarg));
+                    // TODO: parse size units
                     break;
 
                 case 's': // --stats=[optarg]
@@ -351,6 +365,8 @@ public:
     const bool& stdin = m_stdin;
     const bool& stdout = m_stdout;
     const std::string& generator = m_generator;
+
+    const size_t& prefix = m_prefix;
 
     const bool& raw = m_raw;
     const bool& decompress = m_decompress;
