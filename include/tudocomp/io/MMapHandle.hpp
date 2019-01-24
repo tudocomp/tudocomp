@@ -88,6 +88,7 @@ namespace tdc {namespace io {
                 << "Offset must be page aligned, use MMap::next_valid_offset() to ensure this.";
 
             size_t file_size = read_file_size(path);
+
             bool needs_to_overallocate =
                 (offset + m_size) > file_size;
 
@@ -156,15 +157,15 @@ namespace tdc {namespace io {
                 // copy data
                 {
                     auto ptr = m_ptr;
-                    auto size = file_size - offset;
+                    auto remain = std::min(m_size, file_size) - offset;
 
-                    while (size > 0) {
-                        auto ret = read(fd, ptr, size);
+                    while (remain > 0) {
+                        auto ret = read(fd, ptr, remain);
                         if (ret == -1) {
                             perror("Reading fd into mapped memory");
                         }
                         CHECK(ret >= 0);
-                        size -= ret;
+                        remain -= ret;
                         ptr += ret;
                     }
 
