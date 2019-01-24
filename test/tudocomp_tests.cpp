@@ -1237,3 +1237,15 @@ TEST(Util, power_of_two) {
     ASSERT_EQ(zero_or_next_power_of_two(7), 8);
     ASSERT_EQ(zero_or_next_power_of_two(8), 8);
 }
+
+TEST(Util, parse_bytes) {
+    ASSERT_EQ(100, parse_bytes("100"));
+    ASSERT_EQ(322122547200ULL, parse_bytes("300Gi"));
+    ASSERT_EQ(209715200ULL, parse_bytes("200Mi"));
+    ASSERT_EQ(150528ULL, parse_bytes("147Ki"));
+    ASSERT_EQ(147ULL, parse_bytes("147Bi"));
+    ASSERT_EQ(300000000000ULL, parse_bytes("300G"));
+    ASSERT_EQ(200000000ULL, parse_bytes("200M"));
+    ASSERT_EQ(147000ULL, parse_bytes("147K"));
+    ASSERT_EQ(147ULL, parse_bytes("147B"));
+}

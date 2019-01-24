@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <getopt.h>
+#include <tudocomp/util.hpp>
 
 /// \cond INTERNAL
 namespace tdc_driver {
@@ -288,8 +289,7 @@ public:
                     break;
 
                 case 'p': // --prefix=<optarg>
-                    m_prefix = size_t(std::atoi(optarg));
-                    // TODO: parse size units
+                    m_prefix = tdc::parse_bytes(optarg);
                     break;
 
                 case 's': // --stats=[optarg]

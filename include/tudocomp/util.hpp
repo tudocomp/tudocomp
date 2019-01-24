@@ -528,6 +528,34 @@ int_t isqrt(int_t num) {
     return res;
 }
 
+static inline size_t parse_bytes(const std::string& str) {
+    struct SizeUnit {
+        const char* suffix;
+        size_t multiplier;
+    };
+
+    static SizeUnit units[] = {
+        {"Gi", 1024ULL * 1024ULL * 1024ULL},
+        {"Mi", 1024ULL * 1024ULL},
+        {"Ki", 1024ULL},
+        {"G", 1000ULL * 1000ULL * 1000ULL},
+        {"M", 1000ULL * 1000ULL},
+        {"K", 1000ULL},
+    };
+    constexpr size_t num_units = 6;
+
+    for(size_t i = 0; i < num_units; i++) {
+        const size_t x = str.find(units[i].suffix);
+        if(x != std::string::npos) {
+            // found matching unit
+            return units[i].multiplier * std::stoi(str.substr(0, x));
+        }
+    }
+
+    // assume bytes
+    return std::stoi(str);
+}
+
 static inline size_t lz78_expected_number_of_remaining_elements(const size_t z, const size_t n, const size_t remaining_characters) {
 		if(remaining_characters*2 < n ) {
 			return (z*remaining_characters) / (n - remaining_characters);

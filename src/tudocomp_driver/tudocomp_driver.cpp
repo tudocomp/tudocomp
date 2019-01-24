@@ -390,7 +390,6 @@ int main(int argc, char** argv) {
             const size_t prefix = options.prefix;
             if(prefix > 0 && (options.stdin || prefix < in_size)) {
                 // limit input to prefix
-                std::cout << "prefix=" << prefix << std::endl;
                 inp = Input(inp, 0, prefix);
                 in_size = std::min(in_size, prefix);
             }
