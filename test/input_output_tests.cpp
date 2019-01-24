@@ -10,6 +10,8 @@
 #include <tudocomp/io/Input.hpp>
 #include <tudocomp/io/Output.hpp>
 
+#include <tudocomp/io/PrefixStreamBuffer.hpp>
+
 #include "test/util.hpp"
 
 using namespace tdc;
@@ -708,3 +710,62 @@ TEST(OnputMatrix, FileTrgt_OutDriverSplit) {
 TEST(OnputMatrix, StreamTrgt_OutDriverSplit) {
     o_matrix_test<StreamTrgt, OutDriverSplit>();
 }
+
+const std::string ALPHABET("abcdefghijklmnopqrstuvwxyz");
+
+TEST(PrefixStreamBuffer, get) {
+    std::istringstream ins(ALPHABET);
+    io::PrefixStreamBuffer psbuf(*ins.rdbuf(), 10);
+    std::istream ps(&psbuf);
+
+    std::stringstream ss;
+    char c;
+    do {
+        ps.get(c);
+        if(ps.good()) ss << c;
+    } while(!ps.eof());
+    auto str = ss.str();
+
+    ASSERT_EQ(10, str.length());
+    ASSERT_EQ("abcdefghij", str);
+}
+
+TEST(PrefixStreamBuffer, read) {
+    std::istringstream ins(ALPHABET);
+    io::PrefixStreamBuffer psbuf(*ins.rdbuf(), 10);
+    std::istream ps(&psbuf);
+
+    char buf[26] = {0};
+    ps.read(buf, 26);
+
+    ASSERT_EQ("abcdefghij", std::string(buf));
+}
+
+TEST(PrefixStreamBuffer, seek_beg) {
+    std::istringstream ins(ALPHABET);
+    io::PrefixStreamBuffer psbuf(*ins.rdbuf(), 10);
+    std::istream ps(&psbuf);
+
+    ps.seekg(6);
+    char buf[26] = {0};
+    ps.read(buf, 26);
+
+    ASSERT_EQ("ghij", std::string(buf));
+}
+
+// FIXME: how to test this?
+// std::istringstream doesn't seem to support seeking from the end
+// it works fine on files...
+/*
+TEST(PrefixStreamBuffer, seek_end) {
+    std::istringstream ins(ALPHABET);
+    io::PrefixStreamBuffer psbuf(*ins.rdbuf(), 10);
+    std::istream ps(&psbuf);
+
+    ps.seekg(-4, std::ios_base::end);
+    char buf[26] = {0};
+    ps.read(buf, 26);
+
+    ASSERT_EQ("ghij", std::string(buf));
+}
+*/
