@@ -191,6 +191,20 @@ struct PlainEliasDisplacement:
     using Common::Common;
 };
 
+template<typename val_t, typename hash_t = poplar_xorshift_t>
+using plain_elias_growing_hashmap_t
+    = hashmap_t<
+        val_t, hash_t, plain_sentinel_t,
+        displacement_t<elias_gamma_displacement_table_t<
+            growing_elias_gamma_bucket_size_t>>>;
+
+template<typename val_t, typename hash_t = poplar_xorshift_t>
+using sparse_elias_growing_hashmap_t
+    = hashmap_t<
+        val_t, hash_t, buckets_bv_t,
+        displacement_t<elias_gamma_displacement_table_t<
+            growing_elias_gamma_bucket_size_t>>>;
+
 struct SparseEliasGrowingDisplacement:
     Common<sparse_elias_growing_hashmap_t<dynamic_t>>
 {
@@ -204,7 +218,7 @@ struct SparseEliasGrowingDisplacement:
     }
 
     inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
-        config.displacement_config.table_config.bucket_size_config.bucket_size
+        config.displacement_config.table_config.bucket_size_config.factor
             = tdc_config.param("elias_bucket_growth_factor").as_float();
     }
     using Common::Common;
@@ -223,7 +237,7 @@ struct PlainEliasGrowingDisplacement:
     }
 
     inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
-        config.displacement_config.table_config.bucket_size_config.bucket_size
+        config.displacement_config.table_config.bucket_size_config.factor
             = tdc_config.param("elias_bucket_growth_factor").as_float();
     }
     using Common::Common;
