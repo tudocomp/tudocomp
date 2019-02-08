@@ -111,7 +111,8 @@ public:
         }
 
         IF_STATS(
-            phase1.log_stat("factor_count", stat_factor_count);
+            phase1.log_stat("factor_count",
+                            stat_factor_count);
             phase1.log_stat("dictionary_reset_counter",
                             stat_dictionary_resets);
             phase1.log_stat("max_factor_counter",
@@ -120,7 +121,10 @@ public:
     }
 
     inline std::unique_ptr<Decompressor> decompressor() const override {
-        return Algorithm::instance<LZ78Decompressor<coder_t>>();
+        // FIXME: construct AST and pass it
+        std::stringstream cfg;
+        cfg << "dict_size=" << to_string(m_dict_max_size);
+        return Algorithm::instance<LZ78Decompressor<coder_t>>(cfg.str());
     }
 };
 

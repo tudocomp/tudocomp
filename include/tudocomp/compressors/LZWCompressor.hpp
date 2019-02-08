@@ -20,7 +20,9 @@ class LZWCompressor: public Compressor {
 private:
     using node_t = typename dict_t::node_t;
 
+    /// Max dictionary size before reset
     const lz78::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
+
 public:
     inline LZWCompressor(Config&& cfg):
         Compressor(std::move(cfg)),
@@ -69,6 +71,7 @@ public:
 
         typename coder_t::Encoder coder(config().sub_config("coder"), out, NoLiterals());
 
+        // setup initial state for the node search
         char c;
         if(!is.get(c)) return;
 
@@ -106,9 +109,12 @@ public:
         factor_count++;
 
         IF_STATS(
-        phase.log_stat("factor_count", stat_factor_count);
-        phase.log_stat("dictionary_reset_counter", stat_dictionary_resets);
-        phase.log_stat("max_factor_counter", stat_dict_counter_at_last_reset);
+            phase.log_stat("factor_count",
+                           stat_factor_count);
+            phase.log_stat("dictionary_reset_counter",
+                           stat_dictionary_resets);
+            phase.log_stat("max_factor_counter",
+                           stat_dict_counter_at_last_reset);
         )
     }
 

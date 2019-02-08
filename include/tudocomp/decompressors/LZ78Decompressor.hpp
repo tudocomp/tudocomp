@@ -18,6 +18,10 @@ public:
         Meta m(Decompressor::type_desc(), "lz78", "LZ78 decompressor.");
         m.param("coder", "The output decoder.")
             .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
+        m.param("dict_size",
+            "the maximum size of the dictionary's backing storage before it "
+            "gets reset (0 = unlimited)"
+        ).primitive(0);
         return m;
     }
 
