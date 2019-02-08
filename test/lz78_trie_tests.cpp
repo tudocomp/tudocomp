@@ -424,6 +424,12 @@ TEST(TrieStructure, CompactHashTriePlainEliasDisplacement) {
 TEST(Trie, CompactHashTriePlainEliasDisplacement) {
     trie_test<CompactHashTrie<ch::PlainEliasDisplacement>>();
 }
+TEST(TrieStructure, CompactHashTriePlainEliasGrowingDisplacement) {
+    trie_test<CompactHashTrie<ch::PlainEliasGrowingDisplacement>>(false);
+}
+TEST(Trie, CompactHashTriePlainEliasGrowingDisplacement) {
+    trie_test<CompactHashTrie<ch::PlainEliasGrowingDisplacement>>();
+}
 TEST(TrieStructure, CompactHashTrieNoKVGrow) {
     trie_test<CompactHashTrie<ch::NoKVGrow<ch::Sparse>>>(false);
 }

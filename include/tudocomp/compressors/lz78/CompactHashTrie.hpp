@@ -173,7 +173,6 @@ struct SparseEliasDisplacement:
     using Common::Common;
 };
 
-
 struct PlainEliasDisplacement:
     Common<plain_elias_hashmap_t<dynamic_t>>
 {
@@ -188,6 +187,44 @@ struct PlainEliasDisplacement:
     inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
         config.displacement_config.table_config.bucket_size_config.bucket_size
             = tdc_config.param("elias_bucket_size").as_int();
+    }
+    using Common::Common;
+};
+
+struct SparseEliasGrowingDisplacement:
+    Common<sparse_elias_growing_hashmap_t<dynamic_t>>
+{
+    inline static Meta meta() {
+        Meta m(compact_hash_strategy_type(), "sparse_elias_growing_disp", "Sparse Table with elias gamma coded displacement structure");
+        m.param("elias_bucket_growth_factor",
+            "Bucket sizes grow according to the table size via the formular "
+            "`std::pow(std::log2(table_size), F)`, where `F` is the factor `3.0/2.0` per default"
+        ).primitive(3.0/2.0);
+        return m;
+    }
+
+    inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
+        config.displacement_config.table_config.bucket_size_config.bucket_size
+            = tdc_config.param("elias_bucket_growth_factor").as_float();
+    }
+    using Common::Common;
+};
+
+struct PlainEliasGrowingDisplacement:
+    Common<plain_elias_growing_hashmap_t<dynamic_t>>
+{
+    inline static Meta meta() {
+        Meta m(compact_hash_strategy_type(), "plain_elias_growing_disp", "Plain Table with elias gamma coded displacement structure");
+        m.param("elias_bucket_growth_factor",
+            "Bucket sizes grow according to the table size via the formular "
+            "`std::pow(std::log2(table_size), F)`, where `F` is the factor `3.0/2.0` per default"
+        ).primitive(3.0/2.0);
+        return m;
+    }
+
+    inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
+        config.displacement_config.table_config.bucket_size_config.bucket_size
+            = tdc_config.param("elias_bucket_growth_factor").as_float();
     }
     using Common::Common;
 };
