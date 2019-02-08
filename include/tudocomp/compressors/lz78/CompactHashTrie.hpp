@@ -3,10 +3,7 @@
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
 #include <tudocomp/compressors/lz78/squeeze_node.hpp>
-#include <tudocomp/util/compact_sparse_hash.hpp>
-#include <tudocomp/util/compact_hash.hpp>
-#include <tudocomp/util/compact_displacement_hash.hpp>
-#include <tudocomp/util/compact_sparse_displacement_hash.hpp>
+#include <tudocomp/util/compact_hash/map/typedefs.hpp>
 #include <tudocomp/util.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
@@ -19,7 +16,8 @@ constexpr TypeDesc compact_hash_strategy_type() {
 }
 
 namespace ch {
-using namespace compact_sparse_hashmap;
+using namespace compact_hash;
+using namespace compact_hash::map;
 
 template<typename table_t>
 class Common {
@@ -36,14 +34,18 @@ class Common {
         return m_value_width;
     }
 public:
+    using config_args = typename table_t::config_args;
+    inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
+        // nothing to be done per default
+    }
+
     inline Common() = default;
     inline Common(size_t table_size,
-                  double max_load_factor,
+                  config_args config,
                   uint64_t key_width = table_t::DEFAULT_KEY_WIDTH,
                   uint64_t value_width = table_t::DEFAULT_VALUE_WIDTH):
-        m_table(table_size, key_width, value_width)
+        m_table(table_size, key_width, value_width, config)
     {
-        m_table.max_load_factor(max_load_factor);
     }
 
     inline size_t size() const {
@@ -55,7 +57,7 @@ public:
     }
 
     inline double max_load_factor() {
-        return m_table.max_load_factor();
+        return m_table.current_config().size_manager_config.load_factor;
     }
 
     inline uint64_t key_width() {
@@ -94,7 +96,7 @@ public:
 };
 
 struct Sparse:
-    Common<compact_sparse_hashmap_t<dynamic_t>>
+    Common<sparse_cv_hashmap_t<dynamic_t>>
 {
     inline static Meta meta() {
         Meta m(compact_hash_strategy_type(), "sparse_cv", "Sparse Table with CV structure");
@@ -105,7 +107,7 @@ struct Sparse:
 };
 
 struct Plain:
-    Common<compact_hashmap_t<dynamic_t>>
+    Common<plain_cv_hashmap_t<dynamic_t>>
 {
     inline static Meta meta() {
         Meta m(compact_hash_strategy_type(), "plain_cv", "Plain Table with CV structure");
@@ -116,53 +118,88 @@ struct Plain:
 };
 
 struct SparseDisplacement:
-    Common<compact_sparse_displacement_hashmap_t<dynamic_t>>
+    Common<sparse_layered_hashmap_t<dynamic_t>>
 {
     inline static Meta meta() {
         Meta m(compact_hash_strategy_type(), "sparse_disp", "Sparse Table with displacement structure");
+        m.param("layered_bit_width",
+            "The number of bits aviable per displacement entry until they get spilled"
+            " to a hashamp"
+        ).primitive(4);
         return m;
     }
 
-    using Common::Common;
-};
-
-struct SparseEliasDisplacement:
-    Common<compact_sparse_elias_displacement_hashmap_t<dynamic_t>>
-{
-    inline static Meta meta() {
-        Meta m(compact_hash_strategy_type(), "sparse_elias_disp", "Sparse Table with elias gamma coded displacement structure");
-        return m;
+    inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
+        config.displacement_config.table_config.bit_width_config.width
+            = tdc_config.param("layered_bit_width").as_int();
     }
-
     using Common::Common;
 };
 
 struct PlainDisplacement:
-    Common<compact_displacement_hashmap_t<dynamic_t>>
+    Common<plain_layered_hashmap_t<dynamic_t>>
 {
     inline static Meta meta() {
         Meta m(compact_hash_strategy_type(), "plain_disp", "Plain Table with displacement structure");
+        m.param("layered_bit_width",
+            "The number of bits aviable per displacement entry until they get spilled"
+            " to a hashamp"
+        ).primitive(4);
         return m;
     }
 
+    inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
+        config.displacement_config.table_config.bit_width_config.width
+            = tdc_config.param("layered_bit_width").as_int();
+    }
     using Common::Common;
 };
 
-struct PlainEliasDisplacement:
-    Common<compact_elias_displacement_hashmap_t<dynamic_t>>
+struct SparseEliasDisplacement:
+    Common<sparse_elias_hashmap_t<dynamic_t>>
 {
     inline static Meta meta() {
-        Meta m(compact_hash_strategy_type(), "plain_elias_disp", "Plain Table with elias gamma coded displacement structure");
+        Meta m(compact_hash_strategy_type(), "sparse_elias_disp", "Sparse Table with elias gamma coded displacement structure");
+        m.param("elias_bucket_size",
+            "Size of the buckets used to store the elias coded displacement values"
+        ).primitive(1024);
         return m;
     }
 
+    inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
+        config.displacement_config.table_config.bucket_size_config.bucket_size
+            = tdc_config.param("elias_bucket_size").as_int();
+    }
+    using Common::Common;
+};
+
+
+struct PlainEliasDisplacement:
+    Common<plain_elias_hashmap_t<dynamic_t>>
+{
+    inline static Meta meta() {
+        Meta m(compact_hash_strategy_type(), "plain_elias_disp", "Plain Table with elias gamma coded displacement structure");
+        m.param("elias_bucket_size",
+            "Size of the buckets used to store the elias coded displacement values"
+        ).primitive(1024);
+        return m;
+    }
+
+    inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
+        config.displacement_config.table_config.bucket_size_config.bucket_size
+            = tdc_config.param("elias_bucket_size").as_int();
+    }
     using Common::Common;
 };
 
 template<typename compact_hash_strategy_t>
 class NoKVGrow {
+public:
+    using config_args = typename compact_hash_strategy_t::config_args;
+private:
+
     size_t m_initial_table_size;
-    double m_max_load_factor;
+    config_args m_config;
 
     // We map (key_width, value_width) to hashmap
     static constexpr size_t MIN_BITS = 1;
@@ -201,6 +238,10 @@ class NoKVGrow {
     size_t m_overall_table_size = 0;
 
 public:
+    inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
+        compact_hash_strategy_t::set_config_from_tdc(tdc_config.sub_config("compact_hash_strategy"), config);
+    }
+
     inline static Meta meta() {
         Meta m(compact_hash_strategy_type(), "no_k_grow", "Adapter that does not grow the bit widths of keys, but rather creates additional hash tables as needed.");
         m.param("compact_hash_strategy")
@@ -208,9 +249,9 @@ public:
         return m;
     }
 
-    inline NoKVGrow(size_t table_size, double max_load_factor):
+    inline NoKVGrow(size_t table_size, config_args config):
         m_initial_table_size(table_size),
-        m_max_load_factor(max_load_factor)
+        m_config(config)
     {
     }
 
@@ -223,7 +264,7 @@ public:
     }
 
     inline double max_load_factor() {
-        return m_max_load_factor;
+        return m_config.size_manager_config.load_factor;
     }
 
     inline static uint64_t my_bits_for(uint64_t v) {
@@ -239,7 +280,7 @@ public:
         auto&& table = m_key_tables.access(key_bits, [&](uint64_t bits) {
             compact_hash_strategy_t x {
                 m_initial_table_size,
-                m_max_load_factor,
+                m_config,
                 key_bits - uint64_t(key_bits > 0 && reduce_key_range),
             };
             m_overall_size += x.size();
@@ -316,8 +357,12 @@ private:
 
 template<typename compact_hash_strategy_t>
 class NoKGrow {
+public:
+    using config_args = typename compact_hash_strategy_t::config_args;
+private:
+
     size_t m_initial_table_size;
-    double m_max_load_factor;
+    config_args m_config;
 
     // We map (key_width, value_width) to hashmap
     static constexpr size_t MIN_BITS = 1;
@@ -357,6 +402,10 @@ class NoKGrow {
     size_t m_overall_table_size = 0;
 
 public:
+    inline static void set_config_from_tdc(Config&& tdc_config, config_args& config) {
+        compact_hash_strategy_t::set_config_from_tdc(tdc_config.sub_config("compact_hash_strategy"), config);
+    }
+
     inline static Meta meta() {
         Meta m(compact_hash_strategy_type(), "no_kv_grow", "Adapter that does not grow the bit widths of keys and values, but rather creates additional hash tables as needed.");
         m.param("compact_hash_strategy")
@@ -364,9 +413,9 @@ public:
         return m;
     }
 
-    inline NoKGrow(size_t table_size, double max_load_factor):
+    inline NoKGrow(size_t table_size, config_args config):
         m_initial_table_size(table_size),
-        m_max_load_factor(max_load_factor)
+        m_config(config)
     {
     }
 
@@ -379,7 +428,7 @@ public:
     }
 
     inline double max_load_factor() {
-        return m_max_load_factor;
+        return m_config.size_manager_config.load_factor;
     }
 
     inline static uint64_t my_bits_for(uint64_t v) {
@@ -423,7 +472,7 @@ public:
         auto&& table = val_tables.access(value_bits, [&](uint64_t bits) {
             compact_hash_strategy_t x {
                 m_initial_table_size,
-                m_max_load_factor,
+                m_config,
                 key_bits - uint64_t(key_bits > 0 && reduce_key_range),
                 bits - uint64_t(bits > 0 && reduce_value_range),
             };
@@ -546,6 +595,16 @@ class CompactHashTrie : public Algorithm, public LZ78Trie<> {
         return m_value_width;
     }
 
+    inline static typename compact_hash_strategy_t::config_args init_config(
+        Config&& tdc_config,
+        float load_factor
+    ) {
+        auto r = typename compact_hash_strategy_t::config_args {};
+        r.size_manager_config.load_factor = load_factor;
+        compact_hash_strategy_t::set_config_from_tdc(std::move(tdc_config), r);
+        return r;
+    }
+
 public:
     inline static Meta meta() {
         Meta m(lz78_trie_type(), "compact_sparse_hash", "Compact Sparse Hash Trie");
@@ -558,7 +617,9 @@ public:
     inline CompactHashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
         , LZ78Trie(n,remaining_characters)
-        , m_table(zero_or_next_power_of_two(reserve), this->config().param("load_factor").as_float()/100.0f)
+        , m_table(zero_or_next_power_of_two(reserve),
+                  init_config(this->config().sub_config("compact_hash_strategy"),
+                              this->config().param("load_factor").as_float()/100.0f))
     {
     }
 
