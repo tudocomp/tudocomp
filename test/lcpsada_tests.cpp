@@ -3,8 +3,6 @@
 
 #include <gtest/gtest.h>
 
-#include <sdsl/int_vector.hpp>
-
 #include <tudocomp/io.hpp>
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/ds/bwt.hpp>

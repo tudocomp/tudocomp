@@ -6,8 +6,6 @@
 
 #include <gtest/gtest.h>
 
-#include <sdsl/int_vector.hpp>
-
 #include <tudocomp/io.hpp>
 #include "test/util.hpp"
 
