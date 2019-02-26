@@ -1,5 +1,11 @@
 #pragma once
 
+#include <tudocomp/config.h>
+
+#ifndef SDSL_FOUND
+#pragma message "SDSL required, but not available!"
+#else
+
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/meta/Config.hpp>
@@ -204,4 +210,6 @@ LCPSada<sa_t,select_t> construct_lcp_sada(const sa_t& sa, const text_t& text) {
 }
 
 }//ns
+
+#endif // SDSL
 

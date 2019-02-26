@@ -240,8 +240,12 @@ lfs_strat = [
     AlgorithmConfig(name="lfs::ESAStrategy", header="compressors/lfs/ESAStrategy.hpp", sub=[textds_lfs]),
     AlgorithmConfig(name="lfs::STStrategy", header="compressors/lfs/STStrategy.hpp"),
     AlgorithmConfig(name="lfs::BSTStrategy", header="compressors/lfs/BSTStrategy.hpp"),
-    AlgorithmConfig(name="lfs::SimSTStrategy", header="compressors/lfs/SimSTStrategy.hpp"),
 ]
+
+if config_match("^#define SDSL_FOUND 1"): # if SDSL is available
+    lfs_strat += [
+        AlgorithmConfig(name="lfs::SimSTStrategy", header="compressors/lfs/SimSTStrategy.hpp"),
+    ]
 
 lit_coder = [
     AlgorithmConfig(name="BinaryCoder", header="coders/BinaryCoder.hpp"),
@@ -273,12 +277,10 @@ tdc.compressors = [
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
     AlgorithmConfig(name="LZ78Compressor", header="compressors/LZ78Compressor.hpp", sub=[universal_coders, lz78_trie]),
     AlgorithmConfig(name="LZ78UCompressor", header="compressors/LZ78UCompressor.hpp", sub=[lz78u_comp, universal_coders]),
-    AlgorithmConfig(name="LZ78CicsCompressor", header="compressors/LZ78CicsCompressor.hpp", sub=[universal_coders]),
     AlgorithmConfig(name="LZWCompressor", header="compressors/LZWCompressor.hpp", sub=[universal_coders, lz78_trie]),
     AlgorithmConfig(name="RePairCompressor", header="compressors/RePairCompressor.hpp", sub=[non_consuming_coders]),
     AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[lzss_coders, textds_lcp]),
     AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[lzss_streaming_coders]),
-    AlgorithmConfig(name="LZSSCicsCompressor", header="compressors/LZSSCicsCompressor.hpp", sub=[lzss_streaming_coders]),
     AlgorithmConfig(name="MTFCompressor", header="compressors/MTFCompressor.hpp"),
     AlgorithmConfig(name="NoopCompressor", header="compressors/NoopCompressor.hpp"),
     AlgorithmConfig(name="BWTCompressor", header="compressors/BWTCompressor.hpp", sub=[textds_sa]),
@@ -287,9 +289,15 @@ tdc.compressors = [
     AlgorithmConfig(name="LongCommonStringCompressor", header="compressors/LongCommonStringCompressor.hpp", sub=[long_common_strat]),
     AlgorithmConfig(name="EspCompressor", header="compressors/EspCompressor.hpp", sub=[slp_coder, ipddyn]),
     AlgorithmConfig(name="lfs::LFSCompressor", header="compressors/lfs/LFSCompressor.hpp", sub=[lfs_strat, coding_strat]),
-    AlgorithmConfig(name="lfs::LFS2Compressor", header="compressors/lfs/LFS2Compressor.hpp", sub=[lit_coder, len_coder]),
     AlgorithmConfig(name="lfs::LFS2BSTCompressor", header="compressors/lfs/LFS2BSTCompressor.hpp", sub=[lit_coder, len_coder]),
 ]
+
+if config_match("^#define SDSL_FOUND 1"): # if SDSL is available
+    tdc.compressors += [
+        AlgorithmConfig(name="LZ78CicsCompressor", header="compressors/LZ78CicsCompressor.hpp", sub=[universal_coders]),
+        AlgorithmConfig(name="LZSSCicsCompressor", header="compressors/LZSSCicsCompressor.hpp", sub=[lzss_streaming_coders]),
+        AlgorithmConfig(name="lfs::LFS2Compressor", header="compressors/lfs/LFS2Compressor.hpp", sub=[lit_coder, len_coder]),
+    ]
 
 ##### Export available decompressors #####
 tdc.decompressors = [

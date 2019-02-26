@@ -1,5 +1,11 @@
 #pragma once
 
+#include <tudocomp/config.h>
+
+#ifndef SDSL_FOUND
+#pragma message "SDSL required, but not available!"
+#else
+
 #include <vector>
 #include <tuple>
 #include <array>
@@ -291,3 +297,6 @@ public:
 };
 }
 }
+
+#endif //SDSL
+

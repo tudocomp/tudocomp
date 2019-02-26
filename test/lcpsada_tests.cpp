@@ -1,3 +1,7 @@
+#include <tudocomp/config.h>
+
+#ifdef SDSL_FOUND
+
 #include <string>
 #include <vector>
 
@@ -69,4 +73,6 @@ using textds_t = DSManager<DivSufSort, PhiFromSA, PhiAlgorithm, LCPFromPLCP>;
 	test::on_string_generators(runner,14);
 TEST(ds, lcpsada)          { TEST_DS_STRINGCOLLECTION(test_lcpsada); }
 #undef TEST_DS_STRINGCOLLECTION
+
+#endif // SDSL_FOUND
 

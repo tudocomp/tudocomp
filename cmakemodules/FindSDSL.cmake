@@ -12,12 +12,13 @@
 include(FindPackageHandleStandardArgs)
 
 set(SDSL_ROOT_DIR "" CACHE PATH "Folder contains sdsl-lite")
+set(SDSL_MIGRATION_DIR "${CMAKE_BINARY_DIR}/sdsl_external-prefix")
 
 find_path(SDSL_INCLUDE_DIR sdsl/config.hpp
-    PATHS ${SDSL_ROOT_DIR})
+    PATHS ${SDSL_ROOT_DIR}/include ${SDSL_MIGRATION_DIR}/include)
 
 find_library(SDSL_LIBRARY sdsl
-    PATHS ${SDSL_ROOT_DIR})
+    PATHS ${SDSL_ROOT_DIR}/lib ${SDSL_MIGRATION_DIR}/lib)
 
 find_package_handle_standard_args(Sdsl DEFAULT_MSG
     SDSL_INCLUDE_DIR SDSL_LIBRARY)

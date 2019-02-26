@@ -8,7 +8,6 @@ target_link_libraries(
     bit_vector_example
 
     tudocomp
-    sdsl
     bit_span
 )
 

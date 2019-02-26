@@ -36,7 +36,6 @@ target_link_libraries(
     tudocomp_stat
     tudocomp
     glog
-    sdsl
 )
 
 cotire(tudocomp_algorithms)

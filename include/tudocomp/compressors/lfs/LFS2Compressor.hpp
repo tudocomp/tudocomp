@@ -1,5 +1,11 @@
 #pragma once
 
+#include <tudocomp/config.h>
+
+#ifndef SDSL_FOUND
+#pragma message "SDSL required, but not available!"
+#else
+
 //std includes:
 #include <vector>
 #include <tuple>
@@ -490,3 +496,6 @@ public:
 
 //namespaces closing
 }}
+
+#endif
+

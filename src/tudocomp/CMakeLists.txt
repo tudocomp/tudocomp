@@ -11,10 +11,13 @@ target_link_libraries(
 
     tudocomp_stat
     glog
-    sdsl
     bit_span
     compact_sparse_hash
 )
+
+if(SDSL_FOUND)
+    target_link_libraries(tudocomp ${SDSL_LIBRARIES})
+endif(SDSL_FOUND)
 
 if(STXXL_FOUND)
     target_link_libraries(tudocomp ${STXXL_LIBRARIES})

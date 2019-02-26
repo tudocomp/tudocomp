@@ -13,7 +13,6 @@ target_link_libraries(
     tudocomp
     tudocomp_algorithms
     glog
-    sdsl
     pthread
     gomp
 )
@@ -38,7 +37,6 @@ target_link_libraries(
     tudocomp
     tudocomp_algorithms
     glog
-    sdsl
     pthread
     gomp
 )

@@ -16,7 +16,6 @@ target_link_libraries(
     tudocomp
     tudocomp_algorithms
     glog
-    sdsl
     pthread
     gomp
     bit_span
