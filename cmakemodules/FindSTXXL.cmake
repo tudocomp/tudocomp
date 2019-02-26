@@ -11,11 +11,16 @@
 include(FindPackageHandleStandardArgs)
 
 set(STXXL_ROOT_DIR "" CACHE PATH "Folder contains stxxl")
+set(STXXL_MIGRATION_DIR "${CMAKE_BINARY_DIR}/stxxl_external-prefix")
 
-find_path(STXXL_INCLUDE_DIR stxxl.h PATHS ${STXXL_ROOT_DIR}/include)
-find_path(STXXL_BUILD_INCLUDE_DIR stxxl/bits/config.h PATHS ${STXXL_ROOT_DIR}/build/include)
+find_path(STXXL_INCLUDE_DIR stxxl.h
+    PATHS ${STXXL_ROOT_DIR}/include ${STXXL_MIGRATION_DIR}/include)
 
-find_library(STXXL_LIBRARY stxxl PATHS ${STXXL_ROOT_DIR}/build/lib)
+find_path(STXXL_BUILD_INCLUDE_DIR stxxl/bits/config.h
+    PATHS ${STXXL_ROOT_DIR}/build/include ${STXXL_MIGRATION_DIR}/include)
+
+find_library(STXXL_LIBRARY stxxl
+    PATHS ${STXXL_ROOT_DIR}/build/lib ${STXXL_MIGRATION_DIR}/lib)
 
 find_package_handle_standard_args(Stxxl DEFAULT_MSG
     STXXL_INCLUDE_DIR STXXL_LIBRARY)
