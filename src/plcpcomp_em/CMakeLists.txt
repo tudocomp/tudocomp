@@ -10,9 +10,10 @@ add_dependencies(
 
 target_link_libraries(
     plcp
+
+    ${TDC_DEPENDS}
     tudocomp
     tudocomp_algorithms
-    glog
     pthread
     gomp
 )
@@ -34,9 +35,10 @@ add_dependencies(
 
 target_link_libraries(
     plcp-decomp
+
+    ${TDC_DEPENDS}
     tudocomp
     tudocomp_algorithms
-    glog
     pthread
     gomp
 )

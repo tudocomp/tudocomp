@@ -13,9 +13,9 @@ add_dependencies(
 target_link_libraries(
     tudocomp_driver
 
+    ${TDC_DEPENDS}
     tudocomp
     tudocomp_algorithms
-    glog
     pthread
     gomp
     bit_span

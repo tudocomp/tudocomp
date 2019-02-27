@@ -33,9 +33,9 @@ add_library(
 target_link_libraries(
     tudocomp_algorithms
 
+    ${TDC_DEPENDS}
     tudocomp_stat
     tudocomp
-    glog
 )
 
 cotire(tudocomp_algorithms)

@@ -1,6 +1,7 @@
 include(test/testsuite.cmake)
 
-list(APPEND BASIC_DEPS tudocomp_stat tudocomp)
+include_directories(${GTEST_INCLUDE_DIRS})
+list(APPEND BASIC_DEPS ${TDC_DEPENDS} ${GTEST_LIBRARIES} tudocomp_stat tudocomp)
 
 run_doc_snippet(io                  DEPS ${BASIC_DEPS})
 run_doc_snippet(bit_io              DEPS ${BASIC_DEPS})

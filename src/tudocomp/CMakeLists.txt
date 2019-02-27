@@ -9,8 +9,8 @@ add_library(
 target_link_libraries(
     tudocomp
 
+    ${TDC_DEPENDS}
     tudocomp_stat
-    glog
     bit_span
     compact_sparse_hash
 )

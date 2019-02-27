@@ -1,5 +1,5 @@
 # Grab gtest and microbenchmark support
-find_or_download_package(GTest GTEST gtest)
+#find_or_download_package(GTest GTEST gtest)
 #find_or_download_package(Benchpress BENCHPRESS benchpress)
 
 # Custom test target to run the googletest tests
@@ -52,7 +52,6 @@ macro(generic_run_test test_target test_file
         ${test_file}
     )
     target_link_libraries(${test_target}_testrunner
-        glog
         gomp
         ${driver_dep}
         ${TEST_TARGET_DEPS}
@@ -119,7 +118,7 @@ generic_run_test(
     ${test_target}
     "${test_target}.cpp"
     "test/test_driver.cpp"
-    gtest
+    ""
     check
     build_check
     "Test"
@@ -132,7 +131,7 @@ generic_run_test(
     "doc_${snippet}"
     "doc_snippets/${snippet}.cpp"
     "test/test_driver.cpp"
-    gtest
+    ""
     check
     build_check
     "Test"

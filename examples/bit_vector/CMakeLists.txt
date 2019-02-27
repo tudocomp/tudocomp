@@ -7,6 +7,7 @@ add_executable(
 target_link_libraries(
     bit_vector_example
 
+    ${TDC_DEPENDS}
     tudocomp
     bit_span
 )
