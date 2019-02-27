@@ -1,6 +1,5 @@
 #pragma once
 
 #cmakedefine JUDY_H_AVAILABLE 1
-#cmakedefine Boost_FOUND 1
 #cmakedefine SDSL_FOUND 1
 #cmakedefine STXXL_FOUND 1

@@ -54,8 +54,6 @@ endif(NOT DEFINED LEN_BITS)
 message(STATUS "Setting length type to ${LEN_BITS} Bits")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLEN_BITS=${LEN_BITS}")
 
-find_package(Boost)
-
 # Paranoid debugging
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug" AND PARANOID )
     message("[CAUTION] Paranoid debugging is active!")
