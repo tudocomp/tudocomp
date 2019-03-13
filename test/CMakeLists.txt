@@ -1,6 +1,5 @@
 include(tdc_testsuite)
 
-include_directories(${GTEST_INCLUDE_DIRS})
 list(APPEND BASIC_DEPS ${TDC_DEPENDS} ${GTEST_LIBRARIES} tudocomp_stat tudocomp)
 
 # doc snippets
