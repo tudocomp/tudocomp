@@ -115,5 +115,3 @@ add_custom_target(headers SOURCES ${LibFiles})
 
 include(tdc_finish)
 
-
-
