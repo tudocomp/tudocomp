@@ -1,7 +1,21 @@
-include(test/testsuite.cmake)
+include(tdc_testsuite)
 
 include_directories(${GTEST_INCLUDE_DIRS})
 list(APPEND BASIC_DEPS ${TDC_DEPENDS} ${GTEST_LIBRARIES} tudocomp_stat tudocomp)
+
+# doc snippets
+macro(run_doc_snippet snippet)
+generic_run_test(
+    "doc_${snippet}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/doc_snippets/${snippet}.cpp"
+    "${TDC_TESTSUITE_DIR}/test_driver.cpp"
+    ""
+    check
+    build_check
+    "Test"
+    ${ARGN}
+)
+endmacro()
 
 run_doc_snippet(io                  DEPS ${BASIC_DEPS})
 run_doc_snippet(bit_io              DEPS ${BASIC_DEPS})
@@ -13,6 +27,7 @@ run_doc_snippet(compressor_impl     DEPS ${BASIC_DEPS})
 run_doc_snippet(generator_impl      DEPS ${BASIC_DEPS})
 run_doc_snippet(stats               DEPS ${BASIC_DEPS})
 
+# other tests
 run_test(rank_select_tests  DEPS ${BASIC_DEPS})
 run_test(ringbuffer_tests   DEPS ${BASIC_DEPS})
 run_test(bit_io_tests   DEPS ${BASIC_DEPS})
