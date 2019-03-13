@@ -1,7 +1,3 @@
-# Grab gtest and microbenchmark support
-#find_or_download_package(GTest GTEST gtest)
-#find_or_download_package(Benchpress BENCHPRESS benchpress)
-
 # Custom test target to run the googletest tests
 add_custom_target(check)
 add_custom_command(
@@ -16,22 +12,6 @@ add_custom_command(
     TARGET build_check
     POST_BUILD
     COMMENT "All test builds were successful!" VERBATIM
-)
-
-# Custom test target to run the benchpress benchmarks
-add_custom_target(bench)
-add_custom_command(
-    TARGET bench
-    POST_BUILD
-    COMMENT "All bench were successful!" VERBATIM
-)
-
-# Custom test target to just build the benchpress benchmarks
-add_custom_target(build_bench)
-add_custom_command(
-    TARGET build_bench
-    POST_BUILD
-    COMMENT "All bench builds were successful!" VERBATIM
 )
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/stamps)
@@ -139,14 +119,3 @@ generic_run_test(
 )
 endmacro()
 
-macro(run_bench test_target)
-generic_run_test(
-    ${test_target}
-    "test/bench_driver.cpp"
-    benchpress
-    bench
-    build_bench
-    "Bench"
-    ${ARGN}
-)
-endmacro()
