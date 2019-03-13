@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
 project (tudocomp)
 
-# Git Submodule sources
-set(CMAKE_MODULE_PATH
-    ${CMAKE_MODULE_PATH}
-    "${CMAKE_SOURCE_DIR}/cmakemodules"
-    "${CMAKE_SOURCE_DIR}/submodules/build_system/cmakemodules")
-
 # init build system
+execute_process(COMMAND git submodule update --init -- build_system
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/submodules)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/submodules/build_system/cmakemodules")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakemodules")
+
 include(tdc_init)
 
 # hard dependencies
