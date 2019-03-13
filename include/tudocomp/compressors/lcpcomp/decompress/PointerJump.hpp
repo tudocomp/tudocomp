@@ -1,5 +1,11 @@
 #pragma once
 
+#include <tudocomp/config.h>
+
+#ifndef SDSL_FOUND
+#pragma message "SDSL required, but not available!"
+#else
+
 #include <vector>
 #include <sdsl/int_vector.hpp>
 #include <sdsl/rank_support.hpp>
@@ -157,3 +163,4 @@ namespace tdc {
 
     }} //ns
 
+#endif //sdsl

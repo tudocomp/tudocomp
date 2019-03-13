@@ -1,12 +1,32 @@
 #pragma once
 
 #include <tudocomp/decompressors/LZSSDecompressor.hpp>
-#include <tudocomp/compressors/lcpcomp/decompress/ScanDec.hpp>
+
+#ifdef SDSL_FOUND
+
+    #include <tudocomp/compressors/lcpcomp/decompress/ScanDec.hpp>
+
+    namespace tdc {
+    namespace lcpcomp {
+        using default_dec_t = ScanDec;
+    }}
+
+#else
+
+    // SDSL not available, use CompactDec
+    #include <tudocomp/compressors/lcpcomp/decompress/CompactDec.hpp>
+
+    namespace tdc {
+    namespace lcpcomp {
+        using default_dec_t = CompactDec;
+    }}
+
+#endif
 
 #include <tudocomp/compressors/lzss/LZSSCoder.hpp>
 
 namespace tdc {
-    template<typename lzss_coder_t, typename dec_t = lcpcomp::ScanDec>
+    template<typename lzss_coder_t, typename dec_t = lcpcomp::default_dec_t>
     class LCPDecompressor : public LZSSDecompressor<lzss_coder_t> {
     public:
         inline static Meta meta() {
@@ -16,7 +36,7 @@ namespace tdc {
                 .strategy<lzss_coder_t>(lzss_bidirectional_coder_type());
             m.param("dec", "The strategy for decompression.")
                 .strategy<dec_t>(lcpcomp::dec_strategy_type(),
-                    Meta::Default<lcpcomp::ScanDec>());
+                    Meta::Default<lcpcomp::default_dec_t>());
             return m;
         }
 

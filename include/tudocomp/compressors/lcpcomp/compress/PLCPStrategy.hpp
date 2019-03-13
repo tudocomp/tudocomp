@@ -2,6 +2,10 @@
 
 #include <tudocomp/config.h>
 
+#ifndef SDSL_FOUND
+#pragma message "SDSL required, but not available!"
+#else
+
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -394,4 +398,6 @@ public:
 };
 
 }}//ns
+
+#endif
 
