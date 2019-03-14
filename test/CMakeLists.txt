@@ -1,3 +1,8 @@
+if(NOT GTEST_FOUND)
+    MESSAGE(STATUS "gtest is not available - tests disabled!")
+    return()
+endif()
+
 include(tdc_testsuite)
 
 list(APPEND BASIC_DEPS ${TDC_DEPENDS} ${GTEST_LIBRARIES} tudocomp_stat tudocomp)

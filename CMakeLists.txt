@@ -17,6 +17,12 @@ find_package(PythonInterp REQUIRED)
 # downloadable dependencies
 include(depend_glog)
 
+# quit if dependencies aren't met
+tdc_check_hard_deps()
+if(TDC_DEPS_MISSING)
+    return()
+endif()
+
 # soft dependencies
 include(softdepend_gtest)
 include(softdepend_sdsl)
@@ -112,6 +118,4 @@ MESSAGE( STATUS "[Optional] STXXL: " ${STXXL_FOUND} )
 # for showing include in qtcreator
 FILE(GLOB_RECURSE LibFiles "include/*.hpp")
 add_custom_target(headers SOURCES ${LibFiles})
-
-include(tdc_finish)
 
