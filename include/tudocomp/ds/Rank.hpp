@@ -82,7 +82,7 @@ public:
 
         DCHECK_GT(m_supblock_size, block_size)
             << "superblocks must be larger than blocks!";
-        DCHECK_EQ(0, m_supblock_size % block_size)
+        DCHECK_EQ(0U, m_supblock_size % block_size)
             << "superblock size must be a multiple of the block size!";
 
         const size_t n = m_bv->size();

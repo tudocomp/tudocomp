@@ -21,7 +21,7 @@ TEST(lzss, factor_buffer_empty) {
 
     // empty buffer
     ASSERT_TRUE(buf.empty());
-    ASSERT_EQ(0, buf.size());
+    ASSERT_EQ(0U, buf.size());
     ASSERT_TRUE(buf.is_sorted());
 }
 

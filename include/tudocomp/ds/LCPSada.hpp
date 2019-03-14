@@ -137,7 +137,7 @@ class LCPForwardIterator {
 	len_t index() const { return m_idx; }
 
 	len_t next_select() {
-		DCHECK_GE(m_bv.size(), 1);
+		DCHECK_GE(m_bv.size(), 1U);
 //		DCHECK_GT(m_idx,0);
 		DCHECK_LT(m_idx+1, m_bv.size());
 		//const len_t chunk_size = 1 + ((m_bv.size()-1)/64); //TODO: in constructor
@@ -178,7 +178,7 @@ inline static sdsl::bit_vector construct_plcp_bitvector(const plcp_t& plcp) {
 		bv[len] = 1;
 	}
 	DCHECK_EQ(len, bv.size()-1);
-	DCHECK_EQ(plcp.size(), std::accumulate(bv.begin(), bv.end(), 0));
+	DCHECK_EQ(plcp.size(), std::accumulate(bv.begin(), bv.end(), 0ULL));
 	return bv;
 }
 

@@ -39,7 +39,7 @@ TEST(doc_bit_io, bit_output) {
 
     } // end of scope, write EOF sequence and destroy bit output stream
 
-    ASSERT_EQ(7, ss.str().length());
+    ASSERT_EQ(7U, ss.str().length());
 }
 
 TEST(doc_bit_io, bit_input) {

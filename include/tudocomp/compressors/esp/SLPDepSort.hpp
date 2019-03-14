@@ -10,7 +10,7 @@ namespace tdc {namespace esp {
         size_t const bit_width = slp.width();
         size_t const slp_size = slp.size();
 
-        DCHECK_EQ(bit_width, 64);
+        DCHECK_EQ(bit_width, 64U);
 
         DynamicIntVector first_child;
         first_child.width(bit_width);

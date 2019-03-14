@@ -33,7 +33,7 @@ namespace tdc {namespace esp {
             }
             DCHECK_EQ(j, alphabet_size);
             for(size_t i = 0; i < alphabet_size; ++i) {
-                DCHECK_NE(counts[map_from_effective[i]], 0);
+                DCHECK_NE(counts[map_from_effective[i]], 0U);
             }
             return map_from_effective;
         }
@@ -91,7 +91,7 @@ namespace tdc {namespace esp {
             codelengths.reserve(alphabet_size);
             codelengths.resize(alphabet_size);
             for (size_t i = 0; i < alphabet_size; i++) {
-                DCHECK_LE(A[alphabet_size + i], 64); // the latter representation allows only codewords of length at most 64 bits
+                DCHECK_LE(A[alphabet_size + i], 64U); // the latter representation allows only codewords of length at most 64 bits
                 codelengths[i] = A[alphabet_size+i];
                 DVLOG(2)
                     << "Char " << map_from_effective[i]
@@ -106,7 +106,7 @@ namespace tdc {namespace esp {
         inline static Numl gen_numl(const OrderedCodelengths& ordered_codelengths, const size_t alphabet_size, const uint8_t longest) {
             DCHECK_EQ(longest, *std::max_element(ordered_codelengths.begin(),
                                                  ordered_codelengths.end()));
-            DCHECK_GT(longest, 0);
+            DCHECK_GT(longest, 0U);
 
             // numl : length l -> #codewords of length l
             Numl numl;
@@ -115,7 +115,7 @@ namespace tdc {namespace esp {
 
             for (size_t i = 0; i < alphabet_size; ++i) {
                 DCHECK_LE(ordered_codelengths[i], longest);
-                DCHECK_GT(ordered_codelengths[i], 0);
+                DCHECK_GT(ordered_codelengths[i], 0U);
                 ++numl[ordered_codelengths[i] - 1];
             }
 
@@ -140,7 +140,7 @@ namespace tdc {namespace esp {
                                 const uint8_t longest) {
             DCHECK_EQ(longest, *std::max_element(ordered_codelengths.begin(),
                                                  ordered_codelengths.end()));
-            DCHECK_GT(longest,0);
+            DCHECK_GT(longest,0U);
 
             auto firstcode = gen_first_codes(numl, longest);
 
@@ -149,7 +149,7 @@ namespace tdc {namespace esp {
             codewords.resize(alphabet_size);
             for(size_t i = 0; i < alphabet_size; ++i) {
                 DCHECK_LE(ordered_codelengths[i], longest);
-                DCHECK_GT(ordered_codelengths[i], 0);
+                DCHECK_GT(ordered_codelengths[i], 0U);
                 codewords[i] = firstcode[ordered_codelengths[i]-1]++;
                 DVLOG(2) << "codeword " << i << " : " << std::bitset<64>(codewords[i])
                     << ", length " << ordered_codelengths[i]
@@ -199,7 +199,7 @@ namespace tdc {namespace esp {
             OrderedCodelengths m_ordered_codelengths;
 
             inline void gen_huffmantable(Counts&& counts, size_t alphabet_size) {
-                DCHECK_GT(alphabet_size, 0);
+                DCHECK_GT(alphabet_size, 0U);
 
                 OrderedCodelengths ordered_codelengths;
                 OrderedMapFromEffective ordered_map_from_effective;

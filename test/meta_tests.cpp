@@ -78,19 +78,19 @@ TEST(ast, parse_object) {
     test_with_whitespace("obj()", [&](const std::string& input){
         auto obj = ast::convert<ast::Object>(ast::Parser::parse(input));
         ASSERT_EQ("obj", obj->name());
-        ASSERT_EQ(0, obj->params().size());
+        ASSERT_EQ(0U, obj->params().size());
         ASSERT_FALSE(obj->has_param("void"));
     });
     test_with_whitespace("obj(\t\r\n )", [&](const std::string& input){
         auto obj = ast::convert<ast::Object>(ast::Parser::parse(input));
         ASSERT_EQ("obj", obj->name());
-        ASSERT_EQ(0, obj->params().size());
+        ASSERT_EQ(0U, obj->params().size());
         ASSERT_FALSE(obj->has_param("void"));
     });
     test_with_whitespace("obj", [&](const std::string& input){
         auto obj = ast::convert<ast::Object>(ast::Parser::parse(input));
         ASSERT_EQ("obj", obj->name());
-        ASSERT_EQ(0, obj->params().size());
+        ASSERT_EQ(0U, obj->params().size());
         ASSERT_FALSE(obj->has_param("void"));
         ASSERT_FALSE(obj->has_param(""));
     });
@@ -104,7 +104,7 @@ TEST(ast, parse_object) {
         ASSERT_TRUE(obj->has_param(""));
         ASSERT_FALSE(obj->has_param("void"));
         auto& params = obj->params();
-        ASSERT_EQ(5, params.size());
+        ASSERT_EQ(5U, params.size());
         ASSERT_EQ("x", params[0].name());
         ASSERT_EQ("1", ast::convert<ast::Value>(params[0].value())->value());
         ASSERT_EQ("y", params[1].name());
@@ -116,7 +116,7 @@ TEST(ast, parse_object) {
         ASSERT_EQ("", params[4].name());
         ASSERT_EQ("unnamed_nested",
             ast::convert<ast::Object>(params[4].value())->name());
-        ASSERT_EQ(0,
+        ASSERT_EQ(0U,
             ast::convert<ast::Object>(params[4].value())->params().size());
     });
 }
@@ -124,24 +124,24 @@ TEST(ast, parse_object) {
 TEST(ast, parse_list) {
     test_with_whitespace("[]", [&](const std::string& input){
         auto list = ast::convert<ast::List>(ast::Parser::parse(input));
-        ASSERT_EQ(0, list->items().size());
+        ASSERT_EQ(0U, list->items().size());
     });
     test_with_whitespace("[\t\r\n ]", [&](const std::string& input){
         auto list = ast::convert<ast::List>(ast::Parser::parse(input));
-        ASSERT_EQ(0, list->items().size());
+        ASSERT_EQ(0U, list->items().size());
     });
     test_with_whitespace("[ 1 ,'', -1,'xyz'\n, \r\n\t obj(a=[\n]), [1,2,3]]",
     [&](const std::string& input){
         auto list = ast::convert<ast::List>(ast::Parser::parse(input));
         auto& items = list->items();
-        ASSERT_EQ(6, items.size());
+        ASSERT_EQ(6U, items.size());
         ASSERT_EQ("1", ast::convert<ast::Value>(items[0])->value());
         ASSERT_EQ("", ast::convert<ast::Value>(items[1])->value());
         ASSERT_EQ("-1", ast::convert<ast::Value>(items[2])->value());
         ASSERT_EQ("xyz", ast::convert<ast::Value>(items[3])->value());
         ASSERT_EQ("obj", ast::convert<ast::Object>(items[4])->name());
-        ASSERT_EQ(1, ast::convert<ast::Object>(items[4])->params().size());
-        ASSERT_EQ(3, ast::convert<ast::List>(items[5])->items().size());
+        ASSERT_EQ(1U, ast::convert<ast::Object>(items[4])->params().size());
+        ASSERT_EQ(3U, ast::convert<ast::List>(items[5])->items().size());
     });
 }
 
@@ -418,10 +418,10 @@ TEST_F(config, primitive_list) {
     auto cfg = a_cfg("a(l1=[],l2=[+3,-1.5,'x'],p1=0,b1=b)");
     auto l1 = cfg.param("l1");
     ASSERT_THROW(l1.as_int(), ast::TypeMismatchError);
-    ASSERT_EQ(0, l1.as_vector<int>().size());
+    ASSERT_EQ(0U, l1.as_vector<int>().size());
 
     auto l2 = cfg.param("l2");
-    ASSERT_EQ(3, l2.as_vector<int>().size());
+    ASSERT_EQ(3U, l2.as_vector<int>().size());
     {
         auto vi = l2.as_vector<int>();
         ASSERT_EQ(3, vi[0]);
@@ -453,7 +453,7 @@ TEST_F(config, sub) {
         auto b1 = cfg.sub_config("b1");
         ASSERT_EQ(b, b1.decl());
         auto& cl = b1.sub_configs("cl");
-        ASSERT_EQ(3, cl.size());
+        ASSERT_EQ(3U, cl.size());
         ASSERT_EQ(c, cl[0].decl());
         ASSERT_EQ(c, cl[1].decl());
         ASSERT_EQ(c, cl[2].decl());
@@ -462,7 +462,7 @@ TEST_F(config, sub) {
         auto b2 = cfg.sub_config("b2");
         ASSERT_EQ(b, b2.decl());
         auto& cl = b2.sub_configs("cl");
-        ASSERT_EQ(0, cl.size());
+        ASSERT_EQ(0U, cl.size());
     }
 }
 
@@ -475,7 +475,7 @@ TEST_F(config, defaults) {
     {
         auto l2 = cfg.param("l2");
         auto vi = l2.as_vector<int>();
-        ASSERT_EQ(3, vi.size());
+        ASSERT_EQ(3U, vi.size());
         ASSERT_EQ(1, vi[0]);
         ASSERT_EQ(2, vi[1]);
         ASSERT_EQ(3, vi[2]);
@@ -484,7 +484,7 @@ TEST_F(config, defaults) {
         auto b2 = cfg.sub_config("b2");
         ASSERT_EQ(b, b2.decl());
         auto& cl = b2.sub_configs("cl");
-        ASSERT_EQ(0, cl.size());
+        ASSERT_EQ(0U, cl.size());
     }
 }
 
@@ -619,8 +619,8 @@ TEST_F(meta, default_cfg) {
 
         ASSERT_EQ(777, cfg.param("p1").as_int());
         ASSERT_EQ(1, cfg.param("p2").as_int());
-        ASSERT_EQ(0, cfg.param("l1").as_vector<int>().size());
-        ASSERT_EQ(3, cfg.param("l2").as_vector<int>().size());
+        ASSERT_EQ(0U, cfg.param("l1").as_vector<int>().size());
+        ASSERT_EQ(3U, cfg.param("l2").as_vector<int>().size());
 
         auto b1 = cfg.sub_config("b1");
         ASSERT_EQ("b", b1.decl()->name());
@@ -628,11 +628,11 @@ TEST_F(meta, default_cfg) {
         ASSERT_EQ("b", b1.decl()->name());
 
         auto& cl1 = b1.sub_configs("cl");
-        ASSERT_EQ(2, cl1.size());
+        ASSERT_EQ(2U, cl1.size());
         ASSERT_EQ("c1", cl1[0].decl()->name());
         ASSERT_EQ("c2", cl1[1].decl()->name());
         auto& cl2 = b2.sub_configs("cl");
-        ASSERT_EQ(2, cl2.size());
+        ASSERT_EQ(2U, cl2.size());
         ASSERT_EQ("c2", cl2[0].decl()->name());
         ASSERT_EQ("c1", cl2[1].decl()->name());
     }

@@ -33,19 +33,19 @@ TEST(doc_bit_vector, bv_rank_select) {
     Select1 select1(bv);
 
     // Query the amount of 1-bits in the whole bit vector
-    ASSERT_EQ(64, rank.rank1(127));
+    ASSERT_EQ(64U, rank.rank1(127));
 
     // Query the amount of 0-bits in the whole bit vector
-    ASSERT_EQ(64, rank.rank0(127));
+    ASSERT_EQ(64U, rank.rank0(127));
 
     // Query the amount of 1-bits in the second half of the bit vector
-    ASSERT_EQ(32, rank.rank0(64, 127));
+    ASSERT_EQ(32U, rank.rank0(64, 127));
 
     // Find the position of the first 1-bit
-    ASSERT_EQ(1,  select1(1));
+    ASSERT_EQ(1U,  select1(1));
 
     // Find the position of the 32nd 1-bit
-    ASSERT_EQ(63, select1(32));
+    ASSERT_EQ(63U, select1(32));
 
     // Find the position of the 1000th 1-bit (which does not exist)
     ASSERT_EQ(bv.size(), select1(1000));

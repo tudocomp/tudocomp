@@ -203,7 +203,7 @@ namespace tdc {namespace esp {
             phase1.log_stat("Subsequence count", b_size);
             //TMP_b = b;
             //TMP_Dpi = Dpi;
-            DCHECK_GE(b_size, 1);
+            DCHECK_GE(b_size, 1U);
 
             //std::cout << "Dpi: " << vec_to_debug_string(Dpi) << "\n";
             //std::cout << "b:   " << vec_to_debug_string(b) << "\n";
@@ -737,7 +737,7 @@ namespace tdc {namespace esp {
                         auto bvs = esp::make_wt(cv, range);
 
                         if (range == 0) {
-                            DCHECK_EQ(bvs.size(), bits_for(range) - 1);
+                            DCHECK_EQ(bvs.size(), bits_for(range) - 1U);
                         } else {
                             DCHECK_EQ(bvs.size(), bits_for(range));
                         }

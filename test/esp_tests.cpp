@@ -710,7 +710,7 @@ TEST(MonotonSubseq, build_layers_afwd) {
     auto l = esp::L(sis);
     l.rebuild(rev);
 
-    ASSERT_EQ(l.layers_size(), 6);
+    ASSERT_EQ(l.layers_size(), 6U);
 
     auto dbg = l.to_debug_layer_points();
 
@@ -731,7 +731,7 @@ TEST(MonotonSubseq, build_layers_bbwd) {
     auto l = esp::L(sis);
     l.rebuild(rev);
 
-    ASSERT_EQ(l.layers_size(), 4);
+    ASSERT_EQ(l.layers_size(), 4U);
 
     auto dbg = l.to_debug_layer_points();
 
@@ -1041,13 +1041,13 @@ TEST(Hashmaps, size) {
     using namespace tdc;
     using namespace esp;
 
-    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<8>>, uint_t<8>>), (3 * 8) / 8);
-    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<16>>, uint_t<16>>), (3 * 16) / 8);
-    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<32>>, uint_t<32>>), (3 * 32) / 8);
-    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<40>>, uint_t<40>>), (3 * 40) / 8);
-    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<48>>, uint_t<48>>), (3 * 48) / 8);
-    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<56>>, uint_t<56>>), (3 * 56) / 8);
-    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<64>>, uint_t<64>>), (3 * 64) / 8);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<8>>, uint_t<8>>), (3U * 8U) / 8U);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<16>>, uint_t<16>>), (3U * 16U) / 8U);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<32>>, uint_t<32>>), (3U * 32U) / 8U);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<40>>, uint_t<40>>), (3U * 40U) / 8U);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<48>>, uint_t<48>>), (3U * 48U) / 8U);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<56>>, uint_t<56>>), (3U * 56U) / 8U);
+    ASSERT_EQ(sizeof(std::pair<Array<2, uint_t<64>>, uint_t<64>>), (3U * 64U) / 8U);
 }
 
 TEST(Fulltree, test) {

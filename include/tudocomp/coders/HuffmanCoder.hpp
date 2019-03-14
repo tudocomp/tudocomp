@@ -134,7 +134,7 @@ namespace huff {
 
         uint8_t* codelengths { new uint8_t[alphabet_size] };
         for (size_t i=0; i < alphabet_size; i++) {
-            DCHECK_LE(A[alphabet_size+i], 64); // the latter representation allows only codewords of length at most 64 bits
+            DCHECK_LE(A[alphabet_size+i], 64ULL); // the latter representation allows only codewords of length at most 64 bits
             codelengths[i] = A[alphabet_size+i];
             DVLOG(2) << "Char " << map_from_effective[i] << " : " << codelengths[i];
         }
@@ -154,7 +154,7 @@ namespace huff {
                 }}
             { // check Kraft's equality
                 const size_t& max_el = *std::max_element(A+alphabet_size,A+2*alphabet_size);
-                DCHECK_LT(max_el,63);
+                DCHECK_LT(max_el,63U);
                 size_t sum = 0;
                 for (size_t i = 0; i < alphabet_size; ++i)
                 {
@@ -171,7 +171,7 @@ namespace huff {
      */
     inline uliteral_t* gen_numl(const uint8_t*const ordered_codelengths, const size_t alphabet_size, const uint8_t longest) {
         DCHECK_EQ(longest, *std::max_element(ordered_codelengths, ordered_codelengths+alphabet_size));
-        DCHECK_GT(longest,0);
+        DCHECK_GT(longest,0U);
 
         // numl : length l -> #codewords of length l
         uliteral_t* numl = new uliteral_t[longest];
@@ -179,7 +179,7 @@ namespace huff {
 
         for (size_t i = 0; i < alphabet_size; ++i) {
             DCHECK_LE(ordered_codelengths[i], longest);
-            DCHECK_GT(ordered_codelengths[i], 0);
+            DCHECK_GT(ordered_codelengths[i], 0U);
             ++numl[ordered_codelengths[i]-1];
         }
         return numl;
@@ -200,7 +200,7 @@ namespace huff {
      */
     inline size_t* gen_codewords(const uint8_t*const ordered_codelengths, const size_t alphabet_size, const uliteral_t*const numl, const uint8_t longest) {
         DCHECK_EQ(longest, *std::max_element(ordered_codelengths, ordered_codelengths+alphabet_size));
-        DCHECK_GT(longest,0);
+        DCHECK_GT(longest,0U);
 
         //firstcode stores the code of the first character with the specific length. It is then incremented for the later characters of the same length
         size_t*const firstcode = gen_first_codes(numl, longest);
@@ -208,7 +208,7 @@ namespace huff {
         size_t*const codewords = new size_t[alphabet_size];
         for(size_t i = 0; i < alphabet_size; ++i) {
             DCHECK_LE(ordered_codelengths[i], longest);
-            DCHECK_GT(ordered_codelengths[i], 0);
+            DCHECK_GT(ordered_codelengths[i], 0U);
             codewords[i] = firstcode[ordered_codelengths[i]-1]++;
             DVLOG(2) << "codeword " << i << " : " << std::bitset<64>(codewords[i]) << ", length " << ordered_codelengths[i];
         }
@@ -333,7 +333,7 @@ namespace huff {
             const size_t alphabet_size,
             const size_t*const codewords
             ) {
-        DCHECK_GT(input_length, 0);
+        DCHECK_GT(input_length, 0ULL);
 
             const uint8_t*const ordered_map_to_effective { gen_ordered_map_to_effective(ordered_map_from_effective, alphabet_size) };
 
@@ -408,7 +408,7 @@ namespace huff {
             std::unique_ptr<size_t const[]> const prefix_sum_lengths { gen_prefix_sum_lengths(ordered_codelengths, alphabet_size, longest) };
 
             const size_t text_length = is.read_compressed_int<size_t>();
-            DCHECK_GT(text_length, 0);
+            DCHECK_GT(text_length, 0ULL);
             const size_t*const firstcodes = gen_first_codes(numl, longest);
             DVLOG(2) << "firstcodes : " << arr_to_debug_string(firstcodes, longest);
             size_t num_chars_read = 0;
@@ -440,7 +440,7 @@ namespace huff {
      */
     inline extended_huffmantable gen_huffmantable(const len_compact_t*const C) {
         const size_t alphabet_size = effective_alphabet_size(C);
-        DCHECK_GT(alphabet_size,0);
+        DCHECK_GT(alphabet_size,0ULL);
 
         // mapFromEffective : rank of an effective alphabet character -> input alphabet (char-range)
         const uliteral_t*const mapFromEffective = gen_effective_alphabet(C, alphabet_size);
@@ -560,7 +560,7 @@ public:
 
         template<typename value_t>
         inline void encode(value_t v, const LiteralRange&) {
-            DCHECK_NE(m_table.alphabet_size,0);
+            DCHECK_NE(m_table.alphabet_size,0U);
             if(tdc_unlikely(m_table.alphabet_size == 1))
                 m_out->write_int(static_cast<uliteral_t>(v),8*sizeof(uliteral_t));
             else

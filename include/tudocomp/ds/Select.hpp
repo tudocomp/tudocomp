@@ -205,7 +205,7 @@ public:
     ///         not contained in the bit vector, the bit vector's size is
     ///         returned.
     inline size_t select(size_t x) const {
-        DCHECK_GT(x, 0) << "order must be at least one";
+        DCHECK_GT(x, 0U) << "order must be at least one";
         if(x > m_max) return m_bv->size();
 
         size_t pos = 0;

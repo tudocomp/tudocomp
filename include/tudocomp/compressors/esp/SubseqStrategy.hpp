@@ -36,7 +36,7 @@ namespace tdc {namespace esp {
 
             size_t Dpi_counter = 0;
 
-            DCHECK_GE(sis.size(), 1);
+            DCHECK_GE(sis.size(), 1U);
             std::vector<std::pair<size_t, size_t>> free_list;
             free_list.reserve(sis.size() + 2);
             free_list.resize(sis.size() + 2);

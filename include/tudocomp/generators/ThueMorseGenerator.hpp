@@ -19,7 +19,7 @@ public:
     }
 
     inline static std::string generate(size_t n) {
-        CHECK_LT(n, 64) << "too long!";
+        CHECK_LT(n, 64ULL) << "too long!";
 
         if(n == 0) return "0";
 

@@ -726,7 +726,7 @@ TEST(PrefixStreamBuffer, get) {
     } while(!ps.eof());
     auto str = ss.str();
 
-    ASSERT_EQ(10, str.length());
+    ASSERT_EQ(10U, str.length());
     ASSERT_EQ("abcdefghij", str);
 }
 

@@ -77,7 +77,7 @@ TEST(bit_io, main) {
         out.write_compressed_int(0x27, 3); //1 111 0 100
         out.write_compressed_int(0x33);    //0 0110011
 
-        ASSERT_EQ(24, out.bits_written());
+        ASSERT_EQ(24U, out.bits_written());
     }
     //output should contain 0111 0110 1111 0100 0011 0011 = 76 F4 33
 
@@ -90,7 +90,7 @@ TEST(bit_io, main) {
         BitIStream in(input);
 
         ASSERT_EQ(in.read_int<uint32_t>(24), 0x76F433U);
-        ASSERT_EQ(24, in.bits_read());
+        ASSERT_EQ(24U, in.bits_read());
         ASSERT_TRUE(in.eof());
     }
 
@@ -105,7 +105,7 @@ TEST(bit_io, main) {
         ASSERT_EQ(in.read_int<size_t>(4), 6U);
         ASSERT_EQ(in.read_compressed_int<size_t>(3), 0x27U);
         ASSERT_EQ(in.read_compressed_int<size_t>(), 0x33U);
-        ASSERT_EQ(24, in.bits_read());
+        ASSERT_EQ(24U, in.bits_read());
         ASSERT_TRUE(in.eof());
     }
 }
@@ -113,7 +113,7 @@ TEST(bit_io, main) {
 TEST(bit_io, eof) {
     // write i bits to a bit stream, then read the whole
     // bit stream until EOF and ensure exactly i bits have been read
-    for(size_t i = 0; i < 100; i++) {
+    for(size_t i = 0; i < 100U; i++) {
         // write i bits
         std::string result;
         {

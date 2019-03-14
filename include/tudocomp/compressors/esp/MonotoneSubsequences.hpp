@@ -112,7 +112,7 @@ namespace tdc {namespace esp {
             m_free_list.reserve(sindices.size());
             m_free_list.resize(sindices.size());
 
-            DCHECK_GT(sindices.size(), 0);
+            DCHECK_GT(sindices.size(), 0U);
 
             for(size_t i = 1; i < m_linked_list.size(); i++) {
                 m_linked_list[i] = i - 1;
@@ -563,7 +563,7 @@ namespace tdc {namespace esp {
                     return m_next1->next();
                 }
             } else {
-                DCHECK_EQ(m_max_value - m_min_value, 2)
+                DCHECK_EQ(m_max_value - m_min_value, 2U)
                     << "\nmin: " << m_min_value << ", "
                     << "\nmax: " << m_max_value << ", "
                     << "\nstart: " << m_start << ", "
@@ -590,7 +590,7 @@ namespace tdc {namespace esp {
         std::vector<size_t> ret;
 
         if (count > 0) {
-            DCHECK_GT(count, 0);
+            DCHECK_GT(count, 0U);
             size_t max_value = node_sizes.back().size() * 2;
             //std::cout << "max value: " << max_value << "\n";
 

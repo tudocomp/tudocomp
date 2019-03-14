@@ -58,13 +58,13 @@ namespace tdc {namespace esp {
             auto bouts = std::make_shared<BitOStream>(output.as_stream());
             auto& bout = *bouts;
 
-            DCHECK_GE(bit_width, 1);
-            DCHECK_LE(bit_width, 63); // 64-bit sizes are
+            DCHECK_GE(bit_width, 1U);
+            DCHECK_LE(bit_width, 63U); // 64-bit sizes are
                                     // restricted to 63 or less in practice
 
             if (slp.is_empty()) {
                 bit_width = 0;
-                DCHECK_EQ(slp.root_rule(), 0);
+                DCHECK_EQ(slp.root_rule(), 0U);
             }
 
             // bit width

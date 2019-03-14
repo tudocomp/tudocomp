@@ -77,7 +77,7 @@ namespace lcpcomp {
 					if(m_buffer[source_position+i]) {
 						decode_literal_at(target_position+i, m_buffer[source_position+i]);
 					} else {
-						DCHECK_EQ(m_bv[source_position+i],1);
+						DCHECK_EQ(m_bv[source_position+i],1U);
 						len_compact_t*& bucket = m_fwd[rank(source_position+i)];
 						if(bucket == nullptr) {
 							bucket = new len_compact_t[2];

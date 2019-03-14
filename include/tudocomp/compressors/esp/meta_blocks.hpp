@@ -50,7 +50,7 @@ public:
 
     inline void eager_mb2(const level_view_t& src) {
         auto A = src;
-        DCHECK(A.size() > 0);
+        DCHECK_GT(A.size(), 0U);
         auto type_3_prefix_len = std::min(iter_log(m_alphabet_size),
                                         A.size());
 
@@ -80,7 +80,7 @@ public:
                 buf.pop_back();
             }
 
-            DCHECK_LE(calc_alphabet_size(buf), 6);
+            DCHECK_LE(calc_alphabet_size(buf), 6U);
         }
 
         // Reduce further to alphabet 3
@@ -97,7 +97,7 @@ public:
                 });
             }
 
-            DCHECK(calc_alphabet_size(buf) <= 3);
+            DCHECK_LE(calc_alphabet_size(buf), 3U);
             DCHECK(no_adjacent_identical(buf));
         }
 

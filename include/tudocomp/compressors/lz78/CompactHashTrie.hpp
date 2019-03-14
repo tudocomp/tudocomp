@@ -87,7 +87,7 @@ public:
         auto p = m_table.search(key);
         if (p != ptr_t()) {
             uint64_t v = *p;
-            DCHECK_NE(v, 0);
+            DCHECK_NE(v, 0U);
             return v;
         } else {
             return 0;

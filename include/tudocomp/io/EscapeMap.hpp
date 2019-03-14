@@ -97,7 +97,7 @@ namespace tdc {namespace io {
         bool m_null_terminate = false;
     public:
         inline FastEscapeMap() {
-            for (size_t i = 0; i < 256; i++) {
+            for (size_t i = 0; i < 256ULL; i++) {
                 m_escape_map[i] = i;
                 m_escape_map_flag[i] = 0;
             }
@@ -115,7 +115,7 @@ namespace tdc {namespace io {
         }
 
         inline uint8_t lookup_flag(size_t i) const {
-            DCHECK_LT(i, 256);
+            DCHECK_LT(i, 256ULL);
             return m_escape_map_flag[i];
         }
 
@@ -124,7 +124,7 @@ namespace tdc {namespace io {
         }
 
         inline uint8_t lookup_byte(size_t i) const {
-            DCHECK_LT(i, 256);
+            DCHECK_LT(i, 256ULL);
             return m_escape_map[i];
         }
 
@@ -162,7 +162,7 @@ namespace tdc {namespace io {
         }
 
         inline uint8_t lookup_byte(size_t i) const {
-            DCHECK_LT(i, 256);
+            DCHECK_LT(i, 256ULL);
             return m_unescape_map[i];
         }
 

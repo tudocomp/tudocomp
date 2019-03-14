@@ -184,7 +184,7 @@ namespace tdc {namespace io {
                     m_restricted_data = m_map.view().slice(m_mmap_page_offset);
                 }
             } else if (m_source.is_stream()) {
-                DCHECK_EQ(m_from, 0);
+                DCHECK_EQ(m_from, 0ULL);
                 DCHECK_EQ(m_to, npos);
 
                 // Start with a typical page size to not realloc as often

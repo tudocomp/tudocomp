@@ -120,8 +120,8 @@ namespace tdc {namespace esp {
                 // the grammar now, and we need to save memory
                 level.string = dynamic_bit_vector_t();
 
-                DCHECK_EQ(level.string.size(), 0);
-                DCHECK_EQ(level.string.capacity(), 0);
+                DCHECK_EQ(level.string.size(), 0U);
+                DCHECK_EQ(level.string.capacity(), 0U);
 
                 new_level_str.shrink_to_fit();
 

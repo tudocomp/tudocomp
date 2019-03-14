@@ -61,7 +61,7 @@ public:
 
         template<typename value_t>
         inline void encode(value_t v, const LiteralRange&) {
-            DCHECK_GE(m_rank(v), 1);
+            DCHECK_GE(m_rank(v), 1U);
             m_out->write_int(m_rank(v)-1, m_sigma_bits);
         }
     };

@@ -61,7 +61,7 @@ TEST(View, string_conv_null) {
     ASSERT_EQ(x, "xabc\0def\0"_v);
     ASSERT_NE(x, "xabc\0dez\0"_v);
 
-    ASSERT_EQ(std::string("\xff\0"_v).size(), 2);
+    ASSERT_EQ(std::string("\xff\0"_v).size(), 2U);
 }
 
 TEST(Util, bits_for) {
@@ -1227,19 +1227,19 @@ TEST(Test, decompress_output) {
 }
 
 TEST(Util, power_of_two) {
-    ASSERT_EQ(zero_or_next_power_of_two(0), 0);
-    ASSERT_EQ(zero_or_next_power_of_two(1), 1);
-    ASSERT_EQ(zero_or_next_power_of_two(2), 2);
-    ASSERT_EQ(zero_or_next_power_of_two(3), 4);
-    ASSERT_EQ(zero_or_next_power_of_two(4), 4);
-    ASSERT_EQ(zero_or_next_power_of_two(5), 8);
-    ASSERT_EQ(zero_or_next_power_of_two(6), 8);
-    ASSERT_EQ(zero_or_next_power_of_two(7), 8);
-    ASSERT_EQ(zero_or_next_power_of_two(8), 8);
+    ASSERT_EQ(zero_or_next_power_of_two(0), 0U);
+    ASSERT_EQ(zero_or_next_power_of_two(1), 1U);
+    ASSERT_EQ(zero_or_next_power_of_two(2), 2U);
+    ASSERT_EQ(zero_or_next_power_of_two(3), 4U);
+    ASSERT_EQ(zero_or_next_power_of_two(4), 4U);
+    ASSERT_EQ(zero_or_next_power_of_two(5), 8U);
+    ASSERT_EQ(zero_or_next_power_of_two(6), 8U);
+    ASSERT_EQ(zero_or_next_power_of_two(7), 8U);
+    ASSERT_EQ(zero_or_next_power_of_two(8), 8U);
 }
 
 TEST(Util, parse_bytes) {
-    ASSERT_EQ(100, parse_bytes("100"));
+    ASSERT_EQ(100ULL, parse_bytes("100"));
     ASSERT_EQ(322122547200ULL, parse_bytes("300Gi"));
     ASSERT_EQ(209715200ULL, parse_bytes("200Mi"));
     ASSERT_EQ(150528ULL, parse_bytes("147Ki"));

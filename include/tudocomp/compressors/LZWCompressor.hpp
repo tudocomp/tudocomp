@@ -88,7 +88,7 @@ public:
                 node = dict.get_rootnode(static_cast<uliteral_t>(c));
                 // dictionary's maximum size was reached
                 if(dict.size() == m_dict_max_size) {
-                    DCHECK_GT(dict.size(),0);
+                    DCHECK_GT(dict.size(),0U);
                     reset_dict();
                     factor_count = 0; //coder.dictionary_reset();
                     IF_STATS(stat_dictionary_resets++);

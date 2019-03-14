@@ -64,7 +64,7 @@ public:
             dict.clear();
             node_t node = dict.add_rootnode(0);
             DCHECK_EQ(node.id(), dict.size() - 1);
-            DCHECK_EQ(node.id(), 0);
+            DCHECK_EQ(node.id(), 0U);
         };
         reset_dict();
 
@@ -74,8 +74,8 @@ public:
         // Define ranges
         node_t node = dict.get_rootnode(0);
         node_t parent = node; // parent of node, needed for the last factor
-        DCHECK_EQ(node.id(), 0);
-        DCHECK_EQ(parent.id(), 0);
+        DCHECK_EQ(node.id(), 0U);
+        DCHECK_EQ(parent.id(), 0U);
 
         char c;
         while(is.get(c)) {
@@ -86,8 +86,8 @@ public:
                 factor_count++;
                 IF_STATS(stat_factor_count++);
                 parent = node = dict.get_rootnode(0); // return to the root
-                DCHECK_EQ(node.id(), 0);
-                DCHECK_EQ(parent.id(), 0);
+                DCHECK_EQ(node.id(), 0U);
+                DCHECK_EQ(parent.id(), 0U);
                 DCHECK_EQ(factor_count+1, dict.size());
                 // dictionary's maximum size was reached
                 if(tdc_unlikely(dict.size() == m_dict_max_size)) { // if m_dict_max_size == 0 this will never happen
