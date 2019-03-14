@@ -17,16 +17,16 @@ find_package(PythonInterp REQUIRED)
 # downloadable dependencies
 include(depend_glog)
 
+# soft dependencies
+include(softdepend_gtest)
+include(softdepend_sdsl)
+include(softdepend_stxxl)
+
 # quit if dependencies aren't met
 tdc_check_hard_deps()
 if(TDC_DEPS_MISSING)
     return()
 endif()
-
-# soft dependencies
-include(softdepend_gtest)
-include(softdepend_sdsl)
-include(softdepend_stxxl)
 
 list(APPEND TDC_DEPENDS ${GFLAGS_LIBRARIES} ${GLOG_LIBRARIES})
 
