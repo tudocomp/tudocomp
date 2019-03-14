@@ -548,7 +548,7 @@ static inline size_t parse_bytes(const std::string& str) {
         const size_t x = str.find(units[i].suffix);
         if(x != std::string::npos) {
             // found matching unit
-            return units[i].multiplier * std::stoi(str.substr(0, x));
+            return units[i].multiplier * std::stoull(str.substr(0, x));
         }
     }
 
