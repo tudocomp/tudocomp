@@ -87,7 +87,8 @@ namespace lcpcomp {
 						else
 						{ // this block implements the call of m_fwd[src]->push_back(m_cursor);
 							++bucket[0]; // increase the size of a bucket only by one!
-							bucket = (len_compact_t*) realloc(bucket, sizeof(len_compact_t)*bucket[0]);
+							// TODO: Using realloc() for new/delete allocations is UB, fix this!
+							bucket = (len_compact_t*) realloc((void*)bucket, sizeof(len_compact_t)*bucket[0]);
 							bucket[bucket[0]-1] = target_position+i;
 						}
 					}
