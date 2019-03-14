@@ -23,7 +23,7 @@ namespace huff {
         typedef typename std::make_unsigned<typename T::value_type>::type value_type;
         constexpr size_t max_literal = std::numeric_limits<value_type>::max();
         len_compact_t* C { new len_compact_t[max_literal+1] };
-        std::memset(C, 0, sizeof(len_compact_t)*(max_literal+1));
+        std::memset((void*)C, 0, sizeof(len_compact_t)*(max_literal+1));
 
         for(const auto& c : input) {
             DCHECK_LT(static_cast<value_type>(c), max_literal+1);
@@ -35,7 +35,7 @@ namespace huff {
     template<class T>
     len_compact_t* count_alphabet_literals(T&& input) {
         len_compact_t* C { new len_compact_t[ULITERAL_MAX+1] };
-        std::memset(C, 0, sizeof(len_compact_t)*(ULITERAL_MAX+1));
+        std::memset((void*)C, 0, sizeof(len_compact_t)*(ULITERAL_MAX+1));
 
         while(input.has_next()) {
             uliteral_t c = input.next().c;
