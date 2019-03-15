@@ -28,7 +28,7 @@ if(TDC_DEPS_MISSING)
     return()
 endif()
 
-list(APPEND TDC_DEPENDS ${GFLAGS_LIBRARIES} ${GLOG_LIBRARIES})
+list(APPEND TDC_DEPENDS ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES})
 
 # submodules
 include(git_submodule_subdirectories)

@@ -70,8 +70,8 @@ endif()
 run_test(sandbox_tests  DEPS ${BASIC_DEPS})
 
 run_test(tudocomp_driver_tests
-    DEPS     tudocomp_algorithms
+    DEPS     tudocomp_algorithms ${GTEST_LIBRARIES}
     BIN_DEPS tudocomp_driver)
 run_test(matrix_tests
-    DEPS     tudocomp_algorithms
+    DEPS     tudocomp_algorithms ${GTEST_LIBRARIES}
     BIN_DEPS tudocomp_driver)
