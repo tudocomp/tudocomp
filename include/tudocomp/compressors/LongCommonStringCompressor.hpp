@@ -34,7 +34,7 @@ public:
         }
 
         inline void code_factor(size_t rel_position, size_t size) {
-            DCHECK_NE(rel_position, 0);
+            DCHECK_NE(rel_position, 0U);
             m_stream.write_int(m_escape_byte);
             m_stream.write_compressed_int(rel_position);
             m_stream.write_compressed_int(size);
@@ -133,7 +133,7 @@ public:
 
     inline virtual void compress(Input& input, Output& output) override final {
         size_t b = config().param("b").as_uint();
-        CHECK_GT(b, 0);
+        CHECK_GT(b, 0U);
 
         // TODO: Vary hash bit width?
         auto rolling_hash = rollinghash::KarpRabinHash<map_hash_t, uint8_t> {
