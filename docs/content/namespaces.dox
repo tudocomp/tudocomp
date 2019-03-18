@@ -1,5 +1,3 @@
-#pragma once
-
 /// \brief Contains the text compression and encoding framework.
 ///
 /// This is the framework's central namespace in which text compression and
