@@ -1,0 +1,5 @@
+\page registry Registry
+
+# Registry
+...
+
