@@ -1,4 +1,4 @@
-\page build Building tudocomp
+@page build Building tudocomp
 
 # Building tudocomp
 [CMake](https://cmake.org/) (3.0.2 or later) and

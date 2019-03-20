@@ -10,7 +10,6 @@ if(DOXYGEN_FOUND)
         ${CMAKE_SOURCE_DIR}/submodules/bit_span/include
         ${CMAKE_SOURCE_DIR}/submodules/tudostats/include
         ${CMAKE_SOURCE_DIR}/submodules/compact_sparse_hash/include
-#        ${CMAKE_CURRENT_SOURCE_DIR}/content/init.dox
         ${CMAKE_CURRENT_SOURCE_DIR}/content
     )
 

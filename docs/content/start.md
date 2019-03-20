@@ -1,5 +1,5 @@
-\page start Getting Started
+@page start Getting Started
 
 # Getting Started
-* \subpage build
-
+* @subpage build
+* @subpage driver
