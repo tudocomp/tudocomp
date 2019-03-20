@@ -12,6 +12,7 @@ if(DOXYGEN_FOUND)
         ${CMAKE_SOURCE_DIR}/submodules/compact_sparse_hash/include
         ${CMAKE_CURRENT_SOURCE_DIR}/content/start.md # fixed order
         ${CMAKE_CURRENT_SOURCE_DIR}/content/docs.md  # fixed order
+        ${CMAKE_CURRENT_SOURCE_DIR}/content/impl.md  # fixed order
         ${CMAKE_CURRENT_SOURCE_DIR}/content
     )
 

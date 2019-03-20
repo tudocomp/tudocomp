@@ -2,4 +2,6 @@
 
 # Getting Started
 * @subpage build
-* @subpage driver
+* @subpage compress
+* @subpage library
+* @subpage dev

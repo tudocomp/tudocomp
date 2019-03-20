@@ -5,3 +5,4 @@
 * @subpage ds
 * @subpage algo
 * @subpage stats
+* @subpage bench

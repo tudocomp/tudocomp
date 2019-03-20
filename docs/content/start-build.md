@@ -79,6 +79,5 @@ configure the tudocomp build.
 ## Unit Tests
 
 If gtest is available, you can use `make check` to run all tests. Use
-`make build_check` to only compile, but not run the tests.
-
-
+`make build_check` to only compile, but not run the tests. See \subpage test
+for more information on the tests.
