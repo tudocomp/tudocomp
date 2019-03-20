@@ -1,4 +1,7 @@
 @page docs Documentation
 
 # Documentation
-* @subpage meta
+* @subpage io
+* @subpage ds
+* @subpage algo
+* @subpage stats
