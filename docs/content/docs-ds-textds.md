@@ -1,12 +1,12 @@
 @page textds Text Index Data Structures
 
 # Text Index Data Structures
-Several text index data structures are implemented in tudocomp:
-* Suffix array (@ref tdc::ds::SUFFIX_ARRAY)
-* Inverse suffix array (@ref tdc::ds::INVERSE_SUFFIX_ARRAY)
-* LCP (longest common prefix) array (@ref tdc::ds::LCP_ARRAY)
-* Permuted LCP array (@ref tdc::ds::PLCP_ARRAY)
-* Phi array (@ref tdc::ds::PHI_ARRAY)
+The following text index data structures are implemented in tudocomp:
+* Suffix arrays (@ref tdc::ds::SUFFIX_ARRAY)
+* Inverse suffix arrays (@ref tdc::ds::INVERSE_SUFFIX_ARRAY)
+* LCP (longest common prefix) arrays (@ref tdc::ds::LCP_ARRAY)
+* Permuted LCP arrays (@ref tdc::ds::PLCP_ARRAY)
+* Phi arrays (@ref tdc::ds::PHI_ARRAY)
 
 The @ref tdc::DSManager class provides access to these data structures. It
 accepts *providers* as template parameters. Each provider constructs one or
