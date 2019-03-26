@@ -2,40 +2,29 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/util/Hash.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_trie/squeeze_node.hpp>
 
 namespace tdc {
+namespace lz_trie {
 
-namespace lz78 {
 
-template<
-    typename HashRoller = ZBackupRollingHash,
-    typename HashFunction = NoopHasher,
-    typename HashManager = SizeManagerNoop
->
-class RollingTriePlus : public Algorithm, public LZ78Trie<> {
-    typedef typename HashRoller::key_type key_type;
-    mutable HashRoller m_roller;
-    HashMap<key_type, factorid_t, undef_id, NoopHasher, std::equal_to<key_type>, LinearProber, SizeManagerPow2> m_table;
-    HashMap<key_type, factorid_t, undef_id, HashFunction, std::equal_to<key_type>, LinearProber, HashManager> m_table2;
-
-    inline key_type hash_node(uliteral_t c) const {
-        m_roller += c;
-        return m_roller();
-    }
+template<class HashFunction = MixHasher, class HashManager = SizeManagerNoop>
+class HashTriePlus : public Algorithm, public LZTrie<> {
+    HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,LinearProber,SizeManagerPow2> m_table;
+    HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,LinearProber,HashManager> m_table2;
 
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "rolling_plus", "Rolling Hash Trie+");
-        m.param("hash_roller").strategy<HashRoller>(hash_roller_type(), Meta::Default<ZBackupRollingHash>());
-        m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<NoopHasher>()); // dummy parameter
+        Meta m(lz_trie_type(), "hash_plus", "Hash Trie+");
+        m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<MixHasher>());
         m.param("load_factor").primitive(30);
         return m;
     }
-    inline RollingTriePlus(Config&& cfg, size_t n, factorid_t reserve = 0)
+
+    inline HashTriePlus(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n)
-        , m_roller(this->config().sub_config("hash_roller"))
+        , LZTrie(n)
         , m_table(this->config(), this->remaining_elements_hint())
         , m_table2(this->config(), this->remaining_elements_hint())
     {
@@ -48,7 +37,7 @@ public:
 
     IF_STATS(
         MoveGuard m_guard;
-        inline ~RollingTriePlus() {
+        inline ~HashTriePlus() {
             if (m_guard) {
                 if(m_table2.empty()) {
                     m_table.collect_stats(config());
@@ -58,40 +47,36 @@ public:
             }
         }
     )
-    RollingTriePlus(RollingTriePlus&& other) = default;
-    RollingTriePlus& operator=(RollingTriePlus&& other) = default;
+    HashTriePlus(HashTriePlus&& other) = default;
+    HashTriePlus& operator=(HashTriePlus&& other) = default;
 
     inline node_t add_rootnode(uliteral_t c) {
-        m_table.insert(std::make_pair<key_type,factorid_t>(hash_node(c), size()));
-        m_roller.clear();
+        DCHECK(m_table2.empty());
+        m_table.insert(std::make_pair<squeeze_node_t,factorid_t>(create_node(0, c), size()));
         return node_t(size() - 1, true);
     }
 
     inline node_t get_rootnode(uliteral_t c) const {
-        hash_node(c);
         return node_t(c, false);
     }
 
     inline void clear() {
-//        m_table.clear();
+//        table.clear();
+
     }
 
-    inline node_t find_or_insert(const node_t&, uliteral_t c) {
+    inline node_t find_or_insert(const node_t& parent_w, uliteral_t c) {
+        auto parent = parent_w.id();
         const factorid_t newleaf_id = size(); //! if we add a new node, its index will be equal to the current size of the dictionary
-
-
-
         if(!m_table2.empty()) { // already using the second hash table
-            auto ret = m_table2.insert(std::make_pair(hash_node(c), newleaf_id));
+            auto ret = m_table2.insert(std::make_pair(create_node(parent+1,c), newleaf_id));
             if(ret.second) {
-                m_roller.clear();
                 return node_t(newleaf_id, true); // added a new node
             }
             return node_t(ret.first.value(), false);
-
         }
         // using still the first hash table
-        auto ret = m_table.insert(std::make_pair(hash_node(c), newleaf_id));
+        auto ret = m_table.insert(std::make_pair(create_node(parent+1,c), newleaf_id));
         if(ret.second) {
             if(tdc_unlikely(m_table.table_size()*m_table.max_load_factor() < m_table.m_entries+1)) {
                 const size_t expected_size = (m_table.m_entries + 1 + expected_number_of_remaining_elements(m_table.entries()))/0.95;
@@ -100,15 +85,12 @@ public:
                 }
 
             }
-            m_roller.clear();
             return node_t(newleaf_id, true); // added a new node
         }
         return node_t(ret.first.value(), false);
-
-
     }
 
-    inline factorid_t size() const {
+    inline size_t size() const {
         return m_table2.empty() ? m_table.entries() : m_table2.entries();
     }
 };

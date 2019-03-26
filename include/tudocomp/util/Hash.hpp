@@ -3,7 +3,7 @@
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
 
 #include <tudocomp/util/HashTypes.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
@@ -12,7 +12,7 @@
 
 namespace tdc {
 
-using lz78::SharedRemainingElementsHint;
+using lz_trie::SharedRemainingElementsHint;
 
 	//TODO: can operator() be made to constexpr?
 struct VignaHasher : public Algorithm { // http://xorshift.di.unimi.it/splitmix64.c

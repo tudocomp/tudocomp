@@ -5,10 +5,10 @@
 
 #include <tudocomp/util.hpp>
 
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
 
 using namespace tdc;
-using namespace lz78;
+using namespace lz_trie;
 
 struct TestTrieElement {
     uint8_t chr;
@@ -315,7 +315,7 @@ void trie_test(bool test_values = true) {
     // {,,{}},
 }
 
-#include <tudocomp/compressors/lz78/BinaryTrie.hpp>
+#include <tudocomp/compressors/lz_trie/BinaryTrie.hpp>
 TEST(TrieStructure, BinaryTrie) {
     trie_test<BinaryTrie>(false);
 }
@@ -323,7 +323,7 @@ TEST(Trie, BinaryTrie) {
     trie_test<BinaryTrie>();
 }
 
-#include <tudocomp/compressors/lz78/BinarySortedTrie.hpp>
+#include <tudocomp/compressors/lz_trie/BinarySortedTrie.hpp>
 TEST(TrieStructure, BinarySortedTrie) {
     trie_test<BinarySortedTrie>(false);
 }
@@ -331,7 +331,7 @@ TEST(Trie, BinarySortedTrie) {
     trie_test<BinarySortedTrie>();
 }
 
-#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
+#include <tudocomp/compressors/lz_trie/TernaryTrie.hpp>
 TEST(TrieStructure, TernaryTrie) {
     trie_test<TernaryTrie>(false);
 }
@@ -339,7 +339,7 @@ TEST(Trie, TernaryTrie) {
     trie_test<TernaryTrie>();
 }
 
-#include <tudocomp/compressors/lz78/CedarTrie.hpp>
+#include <tudocomp/compressors/lz_trie/CedarTrie.hpp>
 TEST(TrieStructure, CedarTrie) {
     trie_test<CedarTrie>(false);
 }
@@ -347,7 +347,7 @@ TEST(Trie, CedarTrie) {
     trie_test<CedarTrie>();
 }
 
-#include <tudocomp/compressors/lz78/HashTrie.hpp>
+#include <tudocomp/compressors/lz_trie/HashTrie.hpp>
 TEST(TrieStructure, HashTrie) {
     trie_test<HashTrie<>>(false);
 }
@@ -355,7 +355,7 @@ TEST(Trie, HashTrie) {
     trie_test<HashTrie<>>();
 }
 
-#include <tudocomp/compressors/lz78/HashTriePlus.hpp>
+#include <tudocomp/compressors/lz_trie/HashTriePlus.hpp>
 TEST(TrieStructure, HashTriePlus) {
     trie_test<HashTriePlus<>>(false);
 }
@@ -363,7 +363,7 @@ TEST(Trie, HashTriePlus) {
     trie_test<HashTriePlus<>>();
 }
 
-#include <tudocomp/compressors/lz78/RollingTrie.hpp>
+#include <tudocomp/compressors/lz_trie/RollingTrie.hpp>
 TEST(TrieStructure, RollingTrie) {
     trie_test<RollingTrie<>>(false);
 }
@@ -371,7 +371,7 @@ TEST(Trie, RollingTrie) {
     trie_test<RollingTrie<>>();
 }
 
-#include <tudocomp/compressors/lz78/RollingTriePlus.hpp>
+#include <tudocomp/compressors/lz_trie/RollingTriePlus.hpp>
 TEST(TrieStructure, RollingTriePlus) {
     trie_test<RollingTriePlus<>>(false);
 }
@@ -379,7 +379,7 @@ TEST(Trie, RollingTriePlus) {
     trie_test<RollingTriePlus<>>();
 }
 
-#include <tudocomp/compressors/lz78/ExtHashTrie.hpp>
+#include <tudocomp/compressors/lz_trie/ExtHashTrie.hpp>
 TEST(TrieStructure, ExtHashTrie) {
     trie_test<ExtHashTrie>(false);
 }
@@ -387,7 +387,7 @@ TEST(Trie, ExtHashTrie) {
     trie_test<ExtHashTrie>();
 }
 
-#include <tudocomp/compressors/lz78/CompactHashTrie.hpp>
+#include <tudocomp/compressors/lz_trie/CompactHashTrie.hpp>
 TEST(TrieStructure, CompactHashTrie) {
     trie_test<CompactHashTrie<>>(false);
 }
@@ -443,7 +443,7 @@ TEST(Trie, CompactHashTrieNoKGrow) {
     trie_test<CompactHashTrie<ch::NoKGrow<ch::Sparse>>>();
 }
 
-// #include <tudocomp/compressors/lz78/MBonsaiTrie.hpp>
+// #include <tudocomp/compressors/lz_trie/MBonsaiTrie.hpp>
 // TEST(TrieStructure, MBonsaiGammaTrie) {
 //     trie_test<MBonsaiGammaTrie>(false);
 // }

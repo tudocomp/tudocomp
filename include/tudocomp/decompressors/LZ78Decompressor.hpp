@@ -10,7 +10,7 @@ namespace tdc {
 template <typename coder_t>
 class LZ78Decompressor : public Decompressor {
 private:
-    std::vector<lz78::factorid_t> indices;
+    std::vector<lz_trie::factorid_t> indices;
     std::vector<uliteral_t> literals;
 
 public:
@@ -35,7 +35,7 @@ public:
         uint64_t factor_count = 0;
 
         while (!decoder.eof()) {
-            const lz78::factorid_t index = decoder.template decode<lz78::factorid_t>(Range(factor_count));
+            const lz_trie::factorid_t index = decoder.template decode<lz_trie::factorid_t>(Range(factor_count));
             const uliteral_t chr = decoder.template decode<uliteral_t>(literal_r);
             decomp.decompress(index, chr, out);
             factor_count++;

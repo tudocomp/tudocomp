@@ -1,17 +1,17 @@
 #pragma once
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
-#include <tudocomp/compressors/lz78/squeeze_node.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_trie/squeeze_node.hpp>
 #include <tudocomp/util/Hash.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
 #include <unordered_map>
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
-class ExtHashTrie : public Algorithm, public LZ78Trie<> {
+class ExtHashTrie : public Algorithm, public LZTrie<> {
     typedef std::unordered_map<squeeze_node_t, factorid_t, _VignaHasher> table_t;
 //    typedef rigtorp::HashMap<squeeze_node_t, factorid_t,CLhash> table_t;
 //    typedef ska::flat_hash_map<squeeze_node_t, factorid_t,CLhash> table_t; //ska::power_of_two_std_hash<size_t>> table_t;
@@ -22,13 +22,13 @@ class ExtHashTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "exthash", "Hash Trie with external hash table");
+        Meta m(lz_trie_type(), "exthash", "Hash Trie with external hash table");
         return m;
     }
 
     inline ExtHashTrie(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n)
+        , LZTrie(n)
     {
     //    m_table.max_load_factor(0.9f);
         if(reserve > 0) {

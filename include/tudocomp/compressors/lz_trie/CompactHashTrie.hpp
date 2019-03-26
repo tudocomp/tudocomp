@@ -1,15 +1,15 @@
 #pragma once
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
-#include <tudocomp/compressors/lz78/squeeze_node.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_trie/squeeze_node.hpp>
 #include <tudocomp/util/compact_hash/map/typedefs.hpp>
 #include <tudocomp/util.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
 constexpr TypeDesc compact_hash_strategy_type() {
     return TypeDesc("compact_hash_strategy");
@@ -631,7 +631,7 @@ private:
 }
 
 template<typename compact_hash_strategy_t = ch::Sparse>
-class CompactHashTrie : public Algorithm, public LZ78Trie<> {
+class CompactHashTrie : public Algorithm, public LZTrie<> {
     compact_hash_strategy_t m_table;
     //std::unordered_map<uint64_t, factorid_t> m_table;
     size_t m_key_width = 0;
@@ -658,7 +658,7 @@ class CompactHashTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "compact_sparse_hash", "Compact Sparse Hash Trie");
+        Meta m(lz_trie_type(), "compact_sparse_hash", "Compact Sparse Hash Trie");
         m.param("load_factor").primitive(50);
         m.param("compact_hash_strategy").strategy<compact_hash_strategy_t>(
             compact_hash_strategy_type(), Meta::Default<ch::Sparse>());
@@ -667,7 +667,7 @@ public:
 
     inline CompactHashTrie(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n)
+        , LZTrie(n)
         , m_table(zero_or_next_power_of_two(reserve),
                   init_config(this->config().sub_config("compact_hash_strategy"),
                               this->config().param("load_factor").as_float()/100.0f))

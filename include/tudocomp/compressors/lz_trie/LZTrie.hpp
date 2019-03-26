@@ -7,9 +7,9 @@
 #include <memory>
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
-/// Type for the factor indices, bounded by the number of LZ78 trie nodes
+/// Type for the factor indices, bounded by the number of LZ trie nodes
 using factorid_t = uint32_t;
 
 /// Id that can be used for a non-existing factor
@@ -39,14 +39,14 @@ public:
 // NB: Also update the Lz78 chapter in the docs in case of changes to this file
 
 /// Default return type of find_or_insert
-class LZ78TrieNode {
+class LZTrieNode {
     factorid_t m_id;
     bool m_is_new;
 public:
-    inline LZ78TrieNode(factorid_t id, bool is_new):
+    inline LZTrieNode(factorid_t id, bool is_new):
         m_id(id), m_is_new(is_new) {}
-    inline LZ78TrieNode():
-        LZ78TrieNode(0, false) {}
+    inline LZTrieNode():
+        LZTrieNode(0, false) {}
 
     inline bool is_new() const { return m_is_new; }
     inline factorid_t id() const { return m_id; }
@@ -57,19 +57,19 @@ public:
             "and determines the maximum size of the backing storage of\n" \
             "the dictionary before it gets reset."
 
-template<typename _node_t = LZ78TrieNode>
-class LZ78Trie {
+template<typename _node_t = LZTrieNode>
+class LZTrie {
 public:
     using node_t = _node_t;
 
-    static inline constexpr TypeDesc lz78_trie_type() {
-        return TypeDesc("lz78trie");
+    static inline constexpr TypeDesc lz_trie_type() {
+        return TypeDesc("lz_trie");
     }
 
 private:
     SharedRemainingElementsHint m_remaining_hint;
 protected:
-    LZ78Trie(SharedRemainingElementsHint hint): m_remaining_hint(hint) {}
+    LZTrie(SharedRemainingElementsHint hint): m_remaining_hint(hint) {}
 
     inline SharedRemainingElementsHint remaining_elements_hint() const { return m_remaining_hint; }
     inline size_t expected_number_of_remaining_elements(const size_t z) const {
