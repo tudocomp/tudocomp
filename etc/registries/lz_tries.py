@@ -49,7 +49,7 @@ hash_roll = [
         AlgorithmConfig(name="WordpackRollingHash", header="util/Hash.hpp"),
         # AlgorithmConfig(name="ZBackupRollingHash", header="util/Hash.hpp"),
         # AlgorithmConfig(name="CyclicHash", header="util/hash/cyclichash.h"),
-        AlgorithmConfig(name="KarpRabinHash", header="util/hash/rabinkarphash.h"),
+        AlgorithmConfig(name="rollinghash::KarpRabinHashAlgo", header="util/rollinghash/rabinkarphash.hpp"),
         # AlgorithmConfig(name="ThreeWiseHash", header="util/hash/threewisehash.h"),
         ]
 # LZ trie hash functions
