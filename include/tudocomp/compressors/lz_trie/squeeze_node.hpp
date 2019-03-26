@@ -1,10 +1,10 @@
 #pragma once
 #include <tudocomp/ds/uint_t.hpp>
 #include <tudocomp/def.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
 // typedef uint32_t squeeze_node_t; // TODO: change this to bits_for(literal_t) + bits_for(len_t)
 typedef uint_t<40> squeeze_node_t; // TODO: change this to bits_for(literal_t) + bits_for(len_t)

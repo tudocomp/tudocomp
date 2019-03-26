@@ -1,19 +1,19 @@
 #pragma once
 
 #include <vector>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
 /// \brief LZ78 Trie Implementation
 /// based on Julius Pettersson (MIT/Expat License.) and Juha Nieminen's work.
 ///
 /// \sa http://www.cplusplus.com/articles/iL18T05o/
 ///
-class TernaryTrie : public Algorithm, public LZ78Trie<> {
+class TernaryTrie : public Algorithm, public LZTrie<> {
 
     /*
      * The trie is not stored in standard form. Each node stores the pointer to its first child (first as first come first served).
@@ -26,14 +26,13 @@ class TernaryTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "ternary", "Lempel-Ziv 78 Ternary Trie");
+        Meta m(lz_trie_type(), "ternary", "Lempel-Ziv 78 Ternary Trie");
         return m;
     }
 
-    //remaining_characters is the number of remaining characters until the complete text is parsed
-    inline TernaryTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline TernaryTrie(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n, remaining_characters)
+        , LZTrie(n)
     {
         if(reserve > 0) {
             first_child.reserve(reserve);

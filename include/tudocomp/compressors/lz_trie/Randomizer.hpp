@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <iostream>
 
-namespace tdc { namespace lz78 {
+namespace tdc { namespace lz_trie {
 
 class Randomizer {
 public:

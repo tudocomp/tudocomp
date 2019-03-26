@@ -1,13 +1,15 @@
 #pragma once
 
 #include <vector>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
-class BinarySortedTrie : public Algorithm, public LZ78Trie<> {
+class BinaryTrie : public Algorithm, public LZTrie<> {
+
     /*
      * The trie is not stored in standard form. Each node stores the pointer to its first child and a pointer to its next sibling (first as first come first served)
      */
@@ -21,12 +23,13 @@ class BinarySortedTrie : public Algorithm, public LZ78Trie<> {
     )
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "binarysorted", "Lempel-Ziv 78 Sorted Binary Trie");
+        Meta m(lz_trie_type(), "binary", "Lempel-Ziv 78 Binary Trie");
         return m;
     }
-    inline BinarySortedTrie(Config&& cfg, size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
-        : Algorithm(std::move(cfg))
-          , LZ78Trie(n,remaining_characters)
+
+    inline BinaryTrie(Config&& cfg, size_t n, factorid_t reserve = 0)
+    : Algorithm(std::move(cfg))
+    , LZTrie(n)
     {
         if(reserve > 0) {
             m_first_child.reserve(reserve);
@@ -34,6 +37,20 @@ public:
             m_literal.reserve(reserve);
         }
     }
+
+    IF_STATS(
+        MoveGuard m_guard;
+        inline ~BinaryTrie() {
+            if (m_guard) {
+                StatPhase::log("resizes", m_resizes);
+                StatPhase::log("special resizes", m_specialresizes);
+                StatPhase::log("table size", m_first_child.capacity());
+                StatPhase::log("load ratio", m_first_child.size()*100/m_first_child.capacity());
+            }
+        }
+    )
+    BinaryTrie(BinaryTrie&& other) = default;
+    BinaryTrie& operator=(BinaryTrie&& other) = default;
 
     inline node_t add_rootnode(uliteral_t c) {
         DCHECK_EQ(c, size());
@@ -51,14 +68,6 @@ public:
         m_first_child.clear();
         m_next_sibling.clear();
         m_literal.clear();
-
-    }
-
-    inline node_t new_node(uliteral_t c, const factorid_t m_first_child_id, const factorid_t m_next_sibling_id) {
-        m_first_child.push_back(m_first_child_id);
-        m_next_sibling.push_back(m_next_sibling_id);
-        m_literal.push_back(c);
-        return node_t(size() - 1, true);
     }
 
     inline node_t find_or_insert(const node_t& parent_w, uliteral_t c) {
@@ -70,43 +79,36 @@ public:
 
         if(m_first_child[parent] == undef_id) {
             m_first_child[parent] = newleaf_id;
-            return new_node(c, undef_id, undef_id);
         } else {
             factorid_t node = m_first_child[parent];
-            if(m_literal[node] > c) {
-                m_first_child[parent] = newleaf_id;
-                return new_node(c, undef_id, node);
-            }
             while(true) { // search the binary tree stored in parent (following left/right siblings)
                 if(c == m_literal[node]) return node_t(node, false);
                 if(m_next_sibling[node] == undef_id) {
                     m_next_sibling[node] = newleaf_id;
-                    return new_node(c, undef_id, undef_id);
-                }
-                const factorid_t nextnode = m_next_sibling[node];
-                if(m_literal[nextnode] > c) {
-                    m_next_sibling[node] = newleaf_id;
-                    return new_node(c, undef_id, nextnode);
+                    break;
                 }
                 node = m_next_sibling[node];
-                if(m_first_child.capacity() == m_first_child.size()) {
-                    const size_t newbound =    m_first_child.size()+expected_number_of_remaining_elements(size());
-                    if(newbound < m_first_child.size()*2 ) {
-                        m_first_child.reserve   (newbound);
-                        m_next_sibling.reserve  (newbound);
-                        m_literal.reserve       (newbound);
-                        IF_STATS(++m_specialresizes);
-                    }
-                    IF_STATS(++m_resizes);
-                }
             }
         }
+        if(m_first_child.capacity() == m_first_child.size()) {
+            const size_t newbound =    m_first_child.size()+expected_number_of_remaining_elements(size());
+            if(newbound < m_first_child.size()*2 ) {
+                m_first_child.reserve   (newbound);
+                m_next_sibling.reserve  (newbound);
+                m_literal.reserve       (newbound);
+                IF_STATS(++m_specialresizes);
+            }
+            IF_STATS(++m_resizes);
+        }
+        m_first_child.push_back(undef_id);
+        m_next_sibling.push_back(undef_id);
+        m_literal.push_back(c);
+        return node_t(size() - 1, true);
     }
 
     inline size_t size() const {
         return m_first_child.size();
     }
-
 };
 
 }} //ns

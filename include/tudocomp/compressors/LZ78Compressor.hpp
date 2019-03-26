@@ -7,7 +7,7 @@
 #include <tudocomp_stat/StatPhase.hpp>
 
 // For default params
-#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
+#include <tudocomp/compressors/lz_trie/TernaryTrie.hpp>
 #include <tudocomp/coders/BinaryCoder.hpp>
 
 #include <tudocomp/decompressors/LZ78Decompressor.hpp>
@@ -20,7 +20,7 @@ private:
     using node_t = typename dict_t::node_t;
 
     /// Max dictionary size before reset
-    const lz78::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
+    const lz_trie::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
 
 public:
     inline LZ78Compressor(Config&& cfg):
@@ -33,9 +33,9 @@ public:
             "Computes the Lempel-Ziv 78 factorization of the input.");
         m.param("coder", "The output encoder.")
             .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
-        m.param("lz78trie", "The trie data structure implementation.")
-            .strategy<dict_t>(TypeDesc("lz78trie"),
-                Meta::Default<lz78::TernaryTrie>());
+        m.param("lz_trie", "The trie data structure implementation.")
+            .strategy<dict_t>(TypeDesc("lz_trie"),
+                Meta::Default<lz_trie::TernaryTrie>());
         m.param("dict_size",
             "the maximum size of the dictionary's backing storage before it "
             "gets reset (0 = unlimited)"
@@ -56,9 +56,7 @@ public:
         IF_STATS(size_t stat_factor_count = 0);
         size_t factor_count = 0;
 
-        size_t remaining_characters = n; // position in the text
-        dict_t dict(config().sub_config("lz78trie"), n,
-            remaining_characters, reserved_size);
+        dict_t dict(config().sub_config("lz_trie"), n, reserved_size);
 
         auto reset_dict = [&dict] () {
             dict.clear();
@@ -79,7 +77,7 @@ public:
 
         char c;
         while(is.get(c)) {
-            --remaining_characters;
+            dict.signal_character_read();
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
             if(child.is_new()) {
                 lz78::encode_factor(coder, node.id(), static_cast<uliteral_t>(c), factor_count);
@@ -113,16 +111,20 @@ public:
         }
 
         IF_STATS(
-        phase1.log_stat("factor_count", stat_factor_count);
-        phase1.log_stat("dictionary_reset_counter",
-                       stat_dictionary_resets);
-        phase1.log_stat("max_factor_counter",
-                       stat_dict_counter_at_last_reset);
+            phase1.log_stat("factor_count",
+                            stat_factor_count);
+            phase1.log_stat("dictionary_reset_counter",
+                            stat_dictionary_resets);
+            phase1.log_stat("max_factor_counter",
+                            stat_dict_counter_at_last_reset);
         )
     }
 
     inline std::unique_ptr<Decompressor> decompressor() const override {
-        return Algorithm::instance<LZ78Decompressor<coder_t>>();
+        // FIXME: construct AST and pass it
+        std::stringstream cfg;
+        cfg << "dict_size=" << to_string(m_dict_max_size);
+        return Algorithm::instance<LZ78Decompressor<coder_t>>(cfg.str());
     }
 };
 

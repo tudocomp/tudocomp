@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
 #include <tudocomp/Range.hpp>
 
 namespace tdc {
@@ -22,11 +22,11 @@ inline void encode_factor(
 }
 
 class Decompressor {
-    std::vector<lz78::factorid_t> indices;
+    std::vector<lz_trie::factorid_t> indices;
     std::vector<uliteral_t> literals;
 
     public:
-    inline void decompress(lz78::factorid_t index, uliteral_t literal, std::ostream& out) {
+    inline void decompress(lz_trie::factorid_t index, uliteral_t literal, std::ostream& out) {
         // enter new factor
         indices.push_back(index);
         literals.push_back(literal);
@@ -38,7 +38,7 @@ class Decompressor {
         out << literal;
     }
 
-    inline void decompress_ref(lz78::factorid_t index, std::ostream& out) {
+    inline void decompress_ref(lz_trie::factorid_t index, std::ostream& out) {
         // decompress the reference
         std::vector<uliteral_t> buffer;
         uliteral_t literal;

@@ -4,19 +4,19 @@
 #ifdef JUDY_H_AVAILABLE
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
-#include <tudocomp/compressors/lz78/squeeze_node.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_trie/squeeze_node.hpp>
 #include <Judy.h> // Judy Array
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
-/// \brief LZ78 Trie Implementation
+/// \brief LZ Trie Implementation
 /// based on Julius Pettersson (MIT/Expat License.) and Juha Nieminen's work.
 ///
 /// \sa http://www.cplusplus.com/articles/iL18T05o/
 ///
-class JudyTrie : public Algorithm, public LZ78Trie<> {
+class JudyTrie : public Algorithm, public LZTrie<> {
 
     Pvoid_t m_dict; // judy array
     size_t m_size;
@@ -33,9 +33,9 @@ public:
         Meta m(lz78_trie_type(), "judy", "Lempel-Ziv 78 Judy Array");
         return m;
     }
-    inline JudyTrie(Config&& cfg, size_t n, const size_t& remaining_characters, factorid_t = 0)
+    inline JudyTrie(Config&& cfg, size_t n, factorid_t = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n,remaining_characters)
+        , LZTrie(n)
         , m_dict(static_cast<Pvoid_t>(nullptr))
         , m_size(0)
     {
