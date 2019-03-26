@@ -74,8 +74,8 @@ compact_hashmap_strategies_norec = [
     AlgorithmConfig(name="lz_trie::ch::PlainEliasGrowingDisplacement", header="compressors/lz_trie/CompactHashTrie.hpp"),
 ]
 compact_hashmap_strategies = compact_hashmap_strategies_norec + [
-    AlgorithmConfig(name="lz_trie::ch::NoKVGrow", header="compressors/lz_trie/CompactHashTrie.hpp", sub=[compact_hashmap_strategies_norec]),
-    AlgorithmConfig(name="lz_trie::ch::NoKGrow", header="compressors/lz_trie/CompactHashTrie.hpp", sub=[compact_hashmap_strategies_norec]),
+    AlgorithmConfig(name="lz_trie::ch::SplitKeyValue", header="compressors/lz_trie/CompactHashTrie.hpp", sub=[compact_hashmap_strategies_norec]),
+    AlgorithmConfig(name="lz_trie::ch::SplitKey", header="compressors/lz_trie/CompactHashTrie.hpp", sub=[compact_hashmap_strategies_norec]),
 ]
 
 # LZ tries ("lz_trie")

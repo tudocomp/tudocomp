@@ -430,17 +430,17 @@ TEST(TrieStructure, CompactHashTriePlainEliasGrowingDisplacement) {
 TEST(Trie, CompactHashTriePlainEliasGrowingDisplacement) {
     trie_test<CompactHashTrie<ch::PlainEliasGrowingDisplacement>>();
 }
-TEST(TrieStructure, CompactHashTrieNoKVGrow) {
-    trie_test<CompactHashTrie<ch::NoKVGrow<ch::Sparse>>>(false);
+TEST(TrieStructure, CompactHashTrieSplitKey) {
+    trie_test<CompactHashTrie<ch::SplitKey<ch::Sparse>>>(false);
 }
-TEST(Trie, CompactHashTrieNoKVGrow) {
-    trie_test<CompactHashTrie<ch::NoKVGrow<ch::Sparse>>>();
+TEST(Trie, CompactHashTrieSplitKey) {
+    trie_test<CompactHashTrie<ch::SplitKey<ch::Sparse>>>();
 }
-TEST(TrieStructure, CompactHashTrieNoKGrow) {
-    trie_test<CompactHashTrie<ch::NoKGrow<ch::Sparse>>>(false);
+TEST(TrieStructure, CompactHashTrieSplitKeyValue) {
+    trie_test<CompactHashTrie<ch::SplitKeyValue<ch::Sparse>>>(false);
 }
-TEST(Trie, CompactHashTrieNoKGrow) {
-    trie_test<CompactHashTrie<ch::NoKGrow<ch::Sparse>>>();
+TEST(Trie, CompactHashTrieSplitKeyValue) {
+    trie_test<CompactHashTrie<ch::SplitKeyValue<ch::Sparse>>>();
 }
 
 // #include <tudocomp/compressors/lz_trie/MBonsaiTrie.hpp>
