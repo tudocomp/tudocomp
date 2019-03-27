@@ -4,9 +4,9 @@
 #include <tudocomp/Literal.hpp>
 #include <tudocomp/compressors/LZ78Compressor.hpp>
 #include <tudocomp/compressors/LZWCompressor.hpp>
-#include <tudocomp/compressors/lz78/BinaryTrie.hpp>
-#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
-#include <tudocomp/compressors/lz78/CedarTrie.hpp>
+#include <tudocomp/compressors/lz_trie/BinaryTrie.hpp>
+#include <tudocomp/compressors/lz_trie/TernaryTrie.hpp>
+#include <tudocomp/compressors/lz_trie/CedarTrie.hpp>
 #include <tudocomp/coders/ASCIICoder.hpp>
 
 using namespace tdc;
@@ -22,7 +22,7 @@ std::ostream& operator<<(std::ostream& os, const InputOutput& v) {
 
 class NotCedarLz78Compress: public ::testing::TestWithParam<InputOutput> {};
 TEST_P(NotCedarLz78Compress, test) {
-    auto c = Algorithm::instance<LZ78Compressor<ASCIICoder, lz78::BinaryTrie>>();
+    auto c = Algorithm::instance<LZ78Compressor<ASCIICoder, lz_trie::BinaryTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
     c->compress(i, o);
@@ -41,7 +41,7 @@ INSTANTIATE_TEST_CASE_P(
 
 class CedarLz78Compress: public ::testing::TestWithParam<InputOutput> {};
 TEST_P(CedarLz78Compress, test) {
-    auto c = Algorithm::instance<LZ78Compressor<ASCIICoder, lz78::CedarTrie>>();
+    auto c = Algorithm::instance<LZ78Compressor<ASCIICoder, lz_trie::CedarTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
     c->compress(i, o);
@@ -59,7 +59,7 @@ INSTANTIATE_TEST_CASE_P(
 
 class NotCedarLzwCompress: public ::testing::TestWithParam<InputOutput> {};
 TEST_P(NotCedarLzwCompress, test) {
-    auto c = Algorithm::instance<LZWCompressor<ASCIICoder, lz78::BinaryTrie>>();
+    auto c = Algorithm::instance<LZWCompressor<ASCIICoder, lz_trie::BinaryTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
     c->compress(i, o);
@@ -81,7 +81,7 @@ INSTANTIATE_TEST_CASE_P(InputOutput,
 
 class CedarLzwCompress: public ::testing::TestWithParam<InputOutput> {};
 TEST_P(CedarLzwCompress, test) {
-    auto c = Algorithm::instance<LZWCompressor<ASCIICoder, lz78::CedarTrie>>();
+    auto c = Algorithm::instance<LZWCompressor<ASCIICoder, lz_trie::CedarTrie>>();
     test::TestInput i(GetParam().in, false);
     test::TestOutput o(false);
     c->compress(i, o);

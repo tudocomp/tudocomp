@@ -1,17 +1,17 @@
 #pragma once
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
-#include <tudocomp/compressors/lz78/squeeze_node.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_trie/squeeze_node.hpp>
 #include <tudocomp/util/Hash.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
 #include <unordered_map>
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
-class ExtHashTrie : public Algorithm, public LZ78Trie<> {
+class ExtHashTrie : public Algorithm, public LZTrie<> {
     typedef std::unordered_map<squeeze_node_t, factorid_t, _VignaHasher> table_t;
 //    typedef rigtorp::HashMap<squeeze_node_t, factorid_t,CLhash> table_t;
 //    typedef ska::flat_hash_map<squeeze_node_t, factorid_t,CLhash> table_t; //ska::power_of_two_std_hash<size_t>> table_t;
@@ -19,20 +19,16 @@ class ExtHashTrie : public Algorithm, public LZ78Trie<> {
 //    typedef rigtorp::HashMap<squeeze_node_t, factorid_t,_VignaHasher> table_t;
 
     table_t m_table;
-  const size_t m_n;
-  const size_t& m_remaining_characters;
 
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "exthash", "Hash Trie with external hash table");
+        Meta m(lz_trie_type(), "exthash", "Hash Trie with external hash table");
         return m;
     }
 
-    inline ExtHashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline ExtHashTrie(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n, remaining_characters)
-        , m_n(n)
-        , m_remaining_characters(remaining_characters)
+        , LZTrie(n)
     {
     //    m_table.max_load_factor(0.9f);
         if(reserve > 0) {
@@ -80,7 +76,7 @@ public:
 
         if(ret.second) { // added a new node
             if(tdc_unlikely(m_table.bucket_count()*m_table.max_load_factor() < m_table.size()+1)) {
-                const size_t expected_size = (m_table.size() + 1 + lz78_expected_number_of_remaining_elements(m_table.size(), m_n, m_remaining_characters))/0.95;
+                const size_t expected_size = (m_table.size() + 1 + expected_number_of_remaining_elements(m_table.size()))/0.95;
                 if(expected_size < m_table.bucket_count()*2.0*0.95) {
                     m_table.reserve(expected_size);
                 }

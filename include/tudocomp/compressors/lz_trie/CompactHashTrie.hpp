@@ -1,15 +1,15 @@
 #pragma once
 
 #include <tudocomp/Algorithm.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
-#include <tudocomp/compressors/lz78/squeeze_node.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_trie/squeeze_node.hpp>
 #include <tudocomp/util/compact_hash/map/typedefs.hpp>
 #include <tudocomp/util.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
 constexpr TypeDesc compact_hash_strategy_type() {
     return TypeDesc("compact_hash_strategy");
@@ -244,7 +244,7 @@ struct PlainEliasGrowingDisplacement:
 };
 
 template<typename compact_hash_strategy_t>
-class NoKVGrow {
+class SplitKeyValue {
 public:
     using config_args = typename compact_hash_strategy_t::config_args;
 private:
@@ -294,13 +294,13 @@ public:
     }
 
     inline static Meta meta() {
-        Meta m(compact_hash_strategy_type(), "no_k_grow", "Adapter that does not grow the bit widths of keys, but rather creates additional hash tables as needed.");
+        Meta m(compact_hash_strategy_type(), "split_key", "Adapter that does not grow the bit widths of keys, but rather creates additional hash tables as needed.");
         m.param("compact_hash_strategy")
             .strategy<compact_hash_strategy_t>(TypeDesc("compact_hash_strategy"));
         return m;
     }
 
-    inline NoKVGrow(size_t table_size, config_args config):
+    inline SplitKeyValue(size_t table_size, config_args config):
         m_initial_table_size(table_size),
         m_config(config)
     {
@@ -364,9 +364,9 @@ public:
         return r;
     }
 /*
-    inline NoKVGrow(NoKVGrow&&) = default;
-    inline NoKVGrow& operator=(NoKVGrow&&) = default;
-    inline ~NoKVGrow() {
+    inline SplitKeyValue(SplitKeyValue&&) = default;
+    inline SplitKeyValue& operator=(SplitKeyValue&&) = default;
+    inline ~SplitKeyValue() {
         if (m_guard) {
             std::cout << "Tables:\n";
             for (size_t i = m_key_tables.min_index(); i < m_key_tables.size(); i++) {
@@ -407,7 +407,7 @@ private:
 };
 
 template<typename compact_hash_strategy_t>
-class NoKGrow {
+class SplitKey {
 public:
     using config_args = typename compact_hash_strategy_t::config_args;
 private:
@@ -458,13 +458,13 @@ public:
     }
 
     inline static Meta meta() {
-        Meta m(compact_hash_strategy_type(), "no_kv_grow", "Adapter that does not grow the bit widths of keys and values, but rather creates additional hash tables as needed.");
+        Meta m(compact_hash_strategy_type(), "split_keyvalue", "Adapter that does not grow the bit widths of keys and values, but rather creates additional hash tables as needed.");
         m.param("compact_hash_strategy")
             .strategy<compact_hash_strategy_t>(TypeDesc("compact_hash_strategy"));
         return m;
     }
 
-    inline NoKGrow(size_t table_size, config_args config):
+    inline SplitKey(size_t table_size, config_args config):
         m_initial_table_size(table_size),
         m_config(config)
     {
@@ -586,9 +586,9 @@ public:
         return unspace_value(r);
     }
 /*
-    inline NoKGrow(NoKGrow&&) = default;
-    inline NoKGrow& operator=(NoKGrow&&) = default;
-    inline ~NoKGrow() {
+    inline SplitKey(SplitKey&&) = default;
+    inline SplitKey& operator=(SplitKey&&) = default;
+    inline ~SplitKey() {
         if (m_guard) {
             std::cout << "Tables:\n";
             for (size_t i = m_key_tables.min_index(); i < m_key_tables.size(); i++) {
@@ -631,7 +631,7 @@ private:
 }
 
 template<typename compact_hash_strategy_t = ch::Sparse>
-class CompactHashTrie : public Algorithm, public LZ78Trie<> {
+class CompactHashTrie : public Algorithm, public LZTrie<> {
     compact_hash_strategy_t m_table;
     //std::unordered_map<uint64_t, factorid_t> m_table;
     size_t m_key_width = 0;
@@ -658,16 +658,16 @@ class CompactHashTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "compact_sparse_hash", "Compact Sparse Hash Trie");
+        Meta m(lz_trie_type(), "compact_sparse_hash", "Compact Sparse Hash Trie");
         m.param("load_factor").primitive(50);
         m.param("compact_hash_strategy").strategy<compact_hash_strategy_t>(
             compact_hash_strategy_type(), Meta::Default<ch::Sparse>());
         return m;
     }
 
-    inline CompactHashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline CompactHashTrie(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n,remaining_characters)
+        , LZTrie(n)
         , m_table(zero_or_next_power_of_two(reserve),
                   init_config(this->config().sub_config("compact_hash_strategy"),
                               this->config().param("load_factor").as_float()/100.0f))

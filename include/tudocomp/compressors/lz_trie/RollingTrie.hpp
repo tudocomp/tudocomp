@@ -2,11 +2,11 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/util/Hash.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
 
 namespace tdc {
 
-namespace lz78 {
+namespace lz_trie {
 
 template<
     typename HashRoller = ZBackupRollingHash,
@@ -14,7 +14,7 @@ template<
     typename HashFunction = NoopHasher,
     typename HashManager = SizeManagerPow2
 >
-class RollingTrie : public Algorithm, public LZ78Trie<> {
+class RollingTrie : public Algorithm, public LZTrie<> {
     typedef typename HashRoller::key_type key_type;
     mutable HashRoller m_roller;
     HashMap<key_type, factorid_t, undef_id, HashFunction, std::equal_to<key_type>, HashProber, HashManager> m_table;
@@ -26,18 +26,18 @@ class RollingTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "rolling", "Rolling Hash Trie");
+        Meta m(lz_trie_type(), "rolling", "Rolling Hash Trie");
         m.param("hash_roller").strategy<HashRoller>(hash_roller_type(), Meta::Default<ZBackupRollingHash>());
         m.param("hash_prober").strategy<HashProber>(hash_prober_type(), Meta::Default<LinearProber>());
         m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<NoopHasher>());
         m.param("load_factor").primitive(30);
         return m;
     }
-    inline RollingTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline RollingTrie(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n,remaining_characters)
+        , LZTrie(n)
         , m_roller(this->config().sub_config("hash_roller"))
-        , m_table(this->config(), n, remaining_characters) {
+        , m_table(this->config(), this->remaining_elements_hint()) {
         m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         if(reserve > 0) {
             m_table.reserve(reserve);

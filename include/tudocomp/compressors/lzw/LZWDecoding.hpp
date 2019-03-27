@@ -1,13 +1,13 @@
 #pragma once
 
 #include <tudocomp/util.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
 
 namespace tdc {
 namespace lzw {
 
-using CodeType = lz78::factorid_t;
+using CodeType = lz_trie::factorid_t;
 
 template<class F>
 void decode_step(F next_code_callback,

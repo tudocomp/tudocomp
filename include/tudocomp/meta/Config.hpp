@@ -336,7 +336,7 @@ public:
 
         // sanity check
         if(decl_params.size() < named_params.size() + unnamed_params.size()) {
-            throw ConfigError("too many parameters");
+            throw ConfigError("sanity check failed: too many named or unamed parameters");
         }
 
         // store parameters that have not been mapped

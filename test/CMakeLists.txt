@@ -46,7 +46,7 @@ run_test(cedar_tests    DEPS ${BASIC_DEPS})
 run_test(st_tests       DEPS ${BASIC_DEPS})
 run_test(maxlcp_tests   DEPS ${BASIC_DEPS})
 
-run_test(lz78_trie_tests DEPS ${BASIC_DEPS})
+run_test(lz_trie_tests  DEPS ${BASIC_DEPS})
 
 run_test(lzss_test      DEPS ${BASIC_DEPS})
 

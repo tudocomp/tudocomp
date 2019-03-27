@@ -10,7 +10,7 @@
 #include <tudocomp_stat/StatPhase.hpp>
 
 // For default params
-#include <tudocomp/compressors/lz78/TernaryTrie.hpp>
+#include <tudocomp/compressors/lz_trie/TernaryTrie.hpp>
 #include <tudocomp/coders/BinaryCoder.hpp>
 
 namespace tdc {
@@ -20,7 +20,9 @@ class LZWCompressor: public Compressor {
 private:
     using node_t = typename dict_t::node_t;
 
-    const lz78::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
+    /// Max dictionary size before reset
+    const lz_trie::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
+
 public:
     inline LZWCompressor(Config&& cfg):
         Compressor(std::move(cfg)),
@@ -32,9 +34,9 @@ public:
             "Computes the Lempel-Ziv-Welch factorization of the input.");
         m.param("coder", "The output encoder.")
             .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
-        m.param("lz78trie", "The trie data structure implementation.")
-            .strategy<dict_t>(TypeDesc("lz78trie"),
-                Meta::Default<lz78::TernaryTrie>());
+        m.param("lz_trie", "The trie data structure implementation.")
+            .strategy<dict_t>(TypeDesc("lz_trie"),
+                Meta::Default<lz_trie::TernaryTrie>());
         m.param("dict_size",
             "the maximum size of the dictionary's backing storage before it "
             "gets reset (0 = unlimited)"
@@ -54,8 +56,7 @@ public:
         IF_STATS(size_t stat_factor_count = 0);
         size_t factor_count = 0;
 
-        size_t remaining_characters = n; // position in the text
-        dict_t dict(config().sub_config("lz78trie"), n, remaining_characters, reserved_size+ULITERAL_MAX+1);
+        dict_t dict(config().sub_config("lz_trie"), n, reserved_size+ULITERAL_MAX+1);
         auto reset_dict = [&dict] () {
             dict.clear();
             std::stringstream ss;
@@ -70,13 +71,14 @@ public:
 
         typename coder_t::Encoder coder(config().sub_config("coder"), out, NoLiterals());
 
+        // setup initial state for the node search
         char c;
         if(!is.get(c)) return;
 
         node_t node = dict.get_rootnode(static_cast<uliteral_t>(c));
 
         while(is.get(c)) {
-            --remaining_characters;
+            dict.signal_character_read();
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
             DVLOG(2) << " child " << child.id() << " #factor " << factor_count << " size " << dict.size() << " node " << node.id();
 
@@ -101,15 +103,18 @@ public:
 
         DLOG(INFO) << "End node id of LZW parsing " << node.id();
         // take care of left-overs. We do not assume that the stream has a sentinel
-        DCHECK_NE(node.id(), lz78::undef_id);
+        DCHECK_NE(node.id(), lz_trie::undef_id);
         coder.encode(node.id(), Range(factor_count + ULITERAL_MAX + 1)); //LZW
         IF_STATS(stat_factor_count++);
         factor_count++;
 
         IF_STATS(
-        phase.log_stat("factor_count", stat_factor_count);
-        phase.log_stat("dictionary_reset_counter", stat_dictionary_resets);
-        phase.log_stat("max_factor_counter", stat_dict_counter_at_last_reset);
+            phase.log_stat("factor_count",
+                           stat_factor_count);
+            phase.log_stat("dictionary_reset_counter",
+                           stat_dictionary_resets);
+            phase.log_stat("max_factor_counter",
+                           stat_dict_counter_at_last_reset);
         )
     }
 

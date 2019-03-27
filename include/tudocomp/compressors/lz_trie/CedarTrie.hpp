@@ -1,29 +1,29 @@
 #pragma once
 
 #include <vector>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
 #include <tudocomp/Algorithm.hpp>
 
 #include "cedar.hpp"
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
 namespace cedar {
-    class CedarTrieNode: public LZ78TrieNode {
+    class CedarTrieNode: public LZTrieNode {
         size_t m_search_pos;
     public:
         inline CedarTrieNode(factorid_t id, bool is_new, size_t search_pos):
-            LZ78TrieNode(id, is_new),m_search_pos(search_pos) {}
+            LZTrieNode(id, is_new),m_search_pos(search_pos) {}
         inline CedarTrieNode():
-            LZ78TrieNode(), m_search_pos(0) {}
+            LZTrieNode(), m_search_pos(0) {}
 
         inline size_t search_pos() const { return m_search_pos; }
     };
 }
 
-class CedarTrie: public Algorithm, public LZ78Trie<cedar::CedarTrieNode> {
-    using cedar_factorid_t = lz78::factorid_t;
+class CedarTrie: public Algorithm, public LZTrie<cedar::CedarTrieNode> {
+    using cedar_factorid_t = lz_trie::factorid_t;
     // NB: this refers to different cedar namespace than defined in this file
     using cedar_t = ::cedar::da<cedar_factorid_t>;
 
@@ -168,13 +168,13 @@ class CedarTrie: public Algorithm, public LZ78Trie<cedar::CedarTrieNode> {
 
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "cedar", "Lempel-Ziv 78 Cedar Trie");
+        Meta m(lz_trie_type(), "cedar", "Lempel-Ziv 78 Cedar Trie");
         return m;
     }
 
-    CedarTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t = 0)
+    CedarTrie(Config&& cfg, size_t n, factorid_t = 0)
         : Algorithm(std::move(cfg))
-		, LZ78Trie(n, remaining_characters)
+		, LZTrie(n)
         , m_trie(std::make_unique<cedar_t>()) {}
 
     inline node_t add_rootnode(const uliteral_t c) {

@@ -11,7 +11,7 @@ namespace tdc {
 template <typename coder_t>
 class LZWDecompressor : public Decompressor {
 private:
-    std::vector<lz78::factorid_t> indices;
+    std::vector<lz_trie::factorid_t> indices;
     std::vector<uliteral_t> literals;
 
 public:
@@ -39,7 +39,7 @@ public:
         size_t counter = 0;
 
         //TODO file_corrupted not used!
-        lzw::decode_step([&](lz78::factorid_t& entry, bool reset, bool &file_corrupted) -> bool {
+        lzw::decode_step([&](lz_trie::factorid_t& entry, bool reset, bool &file_corrupted) -> bool {
             if (reset) {
                 counter = 0;
             }
@@ -52,7 +52,7 @@ public:
             counter++;
             entry = factor;
             return true;
-        }, out, dict_max_size == 0 ? lz78::DMS_MAX : dict_max_size, reserved_size);
+        }, out, dict_max_size == 0 ? lz_trie::DMS_MAX : dict_max_size, reserved_size);
     }
 };
 

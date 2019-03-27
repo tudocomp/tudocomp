@@ -3,6 +3,7 @@
 #include <tudocomp/def.hpp>
 #include <tudocomp/util.hpp>
 #include <tudocomp/Algorithm.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
 
 #include <tudocomp/util/HashTypes.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
@@ -10,6 +11,8 @@
 // #include <tudocomp/util/hash/zobrist.h>
 
 namespace tdc {
+
+using lz_trie::SharedRemainingElementsHint;
 
 	//TODO: can operator() be made to constexpr?
 struct VignaHasher : public Algorithm { // http://xorshift.di.unimi.it/splitmix64.c
@@ -283,6 +286,12 @@ class HashMap {
 		size_t m_specialresizes = 0;
 	)
 
+    SharedRemainingElementsHint m_remaining_hint;
+
+    inline size_t expected_number_of_remaining_elements() const {
+        return m_remaining_hint.expected_number_of_remaining_elements(this->entries());
+    }
+
 	public:
 	IF_STATS(
 		size_t collisions() const { return m_collisions; }
@@ -302,18 +311,15 @@ class HashMap {
 	float max_load_factor() const noexcept {
 		return m_load_factor;
 	}
-	const size_t m_n;
-	const size_t& m_remaining_characters;
 
-	HashMap(const Config&, const size_t n, const size_t& remaining_characters)
+	HashMap(const Config&, SharedRemainingElementsHint remaining_hint)
 		: m_h(HashFcn::meta().config())
 		, m_probe(ProbeFcn::meta().config())
 		, m_sizeman()
 		, m_size(initial_size)
 		, m_keys((key_t*) malloc(sizeof(key_t) * initial_size))
 		, m_values((value_t*) malloc(sizeof(value_t) * initial_size))
-		, m_n(n)
-		, m_remaining_characters(remaining_characters)
+        , m_remaining_hint(remaining_hint)
 	{
 		for(size_t i = 0; i < m_size; ++i) m_values[i] = undef_id;
 		m_sizeman.resize(m_size);
@@ -428,15 +434,15 @@ class HashMap {
 
 					size_t expected_size =
 					/*std::is_same<SizeManager,SizeManagerDirect>::value*/ false ?
-					(m_entries + 3.0/2.0*lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95 :
-					(m_entries + lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95;
+					(m_entries + 3.0/2.0*expected_number_of_remaining_elements())/0.95 :
+					(m_entries + expected_number_of_remaining_elements())/0.95;
 					expected_size = std::max<size_t>(expected_size, table_size()*1.1);
 					if(expected_size < table_size()*2.0*0.95) {
 							max_load_factor(0.95f);
 						if(/*std::is_same<SizeManager,SizeManagerDirect>::value*/ false) {
 							reserve(expected_size);
 						} else {
-							reserve(expected_size); //(m_entries + lz78_expected_number_of_remaining_elements(entries(),m_n,m_remaining_characters))/0.95);
+							reserve(expected_size); //(m_entries + expected_number_of_remaining_elements())/0.95);
 						}
 
 						IF_STATS(++m_specialresizes);

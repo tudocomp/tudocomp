@@ -2,31 +2,31 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/util/Hash.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
-#include <tudocomp/compressors/lz78/squeeze_node.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_trie/squeeze_node.hpp>
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
 
 template<class HashFunction = MixHasher, class HashManager = SizeManagerNoop>
-class HashTriePlus : public Algorithm, public LZ78Trie<> {
+class HashTriePlus : public Algorithm, public LZTrie<> {
     HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,LinearProber,SizeManagerPow2> m_table;
     HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,LinearProber,HashManager> m_table2;
 
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "hash_plus", "Hash Trie+");
+        Meta m(lz_trie_type(), "hash_plus", "Hash Trie+");
         m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<MixHasher>());
         m.param("load_factor").primitive(30);
         return m;
     }
 
-    inline HashTriePlus(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline HashTriePlus(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n,remaining_characters)
-        , m_table(this->config(),n,remaining_characters)
-        , m_table2(this->config(),n,remaining_characters)
+        , LZTrie(n)
+        , m_table(this->config(), this->remaining_elements_hint())
+        , m_table2(this->config(), this->remaining_elements_hint())
     {
         m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         m_table2.max_load_factor(0.95);
@@ -79,7 +79,7 @@ public:
         auto ret = m_table.insert(std::make_pair(create_node(parent+1,c), newleaf_id));
         if(ret.second) {
             if(tdc_unlikely(m_table.table_size()*m_table.max_load_factor() < m_table.m_entries+1)) {
-                const size_t expected_size = (m_table.m_entries + 1 + lz78_expected_number_of_remaining_elements(m_table.entries(),m_table.m_n,m_table.m_remaining_characters))/0.95;
+                const size_t expected_size = (m_table.m_entries + 1 + expected_number_of_remaining_elements(m_table.entries()))/0.95;
                 if(expected_size < m_table.table_size()*2.0*0.95) {
                     m_table2.incorporate(m_table, expected_size);
                 }

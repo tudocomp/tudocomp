@@ -1,4 +1,4 @@
-// Source: https://github.com/Kimundi/rollinghashcpp
+// Source: https://github.com/tudocomp/rollinghashcpp
 
 /**
 * High performance random generator.
@@ -81,6 +81,7 @@
 #include <time.h>
 #include <math.h>
 
+/// \cond INTERNAL
 namespace tdc{namespace rollinghash {
 
 class MTRand {
@@ -436,6 +437,8 @@ inline std::istream& operator>>( std::istream& is, MTRand& mtrand )
     mtrand.pNext = &mtrand.state[mtrand.N-mtrand.left];
     return is;
 }
+
+/// \endcond
 
 // Change log:
 //

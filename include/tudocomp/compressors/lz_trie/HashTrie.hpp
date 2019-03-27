@@ -2,31 +2,31 @@
 
 #include <tudocomp/Algorithm.hpp>
 #include <tudocomp/util/Hash.hpp>
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
-#include <tudocomp/compressors/lz78/squeeze_node.hpp>
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_trie/squeeze_node.hpp>
 #include <tudocomp_stat/StatPhase.hpp>
 
 namespace tdc {
-namespace lz78 {
+namespace lz_trie {
 
 
 template<class HashFunction = MixHasher, class HashProber = LinearProber, class HashManager = SizeManagerPow2>
-class HashTrie : public Algorithm, public LZ78Trie<> {
+class HashTrie : public Algorithm, public LZTrie<> {
     HashMap<squeeze_node_t,factorid_t,undef_id,HashFunction,std::equal_to<squeeze_node_t>,HashProber,HashManager> m_table;
 
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "hash", "Hash Trie");
+        Meta m(lz_trie_type(), "hash", "Hash Trie");
         m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<MixHasher>());
         m.param("hash_prober").strategy<HashProber>(hash_prober_type(), Meta::Default<LinearProber>());
         m.param("load_factor").primitive(30);
         return m;
     }
 
-    inline HashTrie(Config&& cfg, const size_t n, const size_t& remaining_characters, factorid_t reserve = 0)
+    inline HashTrie(Config&& cfg, size_t n, factorid_t reserve = 0)
         : Algorithm(std::move(cfg))
-        , LZ78Trie(n,remaining_characters)
-        , m_table(this->config(),n,remaining_characters)
+        , LZTrie(n)
+        , m_table(this->config(), this->remaining_elements_hint())
     {
         m_table.max_load_factor(this->config().param("load_factor").as_float()/100.0f );
         if(reserve > 0) {
