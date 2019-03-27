@@ -13,6 +13,9 @@ private:
     std::vector<lz_trie::factorid_t> indices;
     std::vector<uliteral_t> literals;
 
+    /// Max dictionary size before reset
+    const lz_trie::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
+
 public:
     inline static Meta meta() {
         Meta m(Decompressor::type_desc(), "lz78", "LZ78 decompressor.");
@@ -25,7 +28,10 @@ public:
         return m;
     }
 
-    using Decompressor::Decompressor;
+    inline LZ78Decompressor(Config&& cfg):
+        Decompressor(std::move(cfg)),
+        m_dict_max_size(this->config().param("dict_size").as_uint())
+    {}
 
     virtual void decompress(Input& input, Output& output) override final {
         auto out = output.as_stream();

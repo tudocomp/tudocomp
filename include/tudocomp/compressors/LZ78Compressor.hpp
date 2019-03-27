@@ -1,16 +1,17 @@
 #pragma once
 
+#include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
-#include <tudocomp/compressors/lz78/LZ78Coding.hpp>
 #include <tudocomp/Range.hpp>
+
+#include <tudocomp/compressors/lz78/LZ78Coding.hpp>
+#include <tudocomp/decompressors/LZ78Decompressor.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
 // For default params
 #include <tudocomp/compressors/lz_trie/TernaryTrie.hpp>
 #include <tudocomp/coders/BinaryCoder.hpp>
-
-#include <tudocomp/decompressors/LZ78Decompressor.hpp>
 
 namespace tdc {
 
@@ -49,7 +50,7 @@ public:
         auto is = input.as_stream();
 
         // Stats
-        StatPhase phase1("Lz78 compression");
+        StatPhase phase("Lz78 compression");
 
         IF_STATS(size_t stat_dictionary_resets = 0);
         IF_STATS(size_t stat_dict_counter_at_last_reset = 0);
@@ -58,7 +59,7 @@ public:
 
         dict_t dict(config().sub_config("lz_trie"), n, reserved_size);
 
-        auto reset_dict = [&dict] () {
+        auto reset_dict = [&dict] {
             dict.clear();
             node_t node = dict.add_rootnode(0);
             DCHECK_EQ(node.id(), dict.size() - 1);
@@ -66,36 +67,47 @@ public:
         };
         reset_dict();
 
-        typename coder_t::Encoder coder(
-            config().sub_config("coder"), out, NoLiterals());
+        typename coder_t::Encoder coder(config().sub_config("coder"), out, NoLiterals());
+        auto new_factor = [&](uint64_t node_id, uliteral_t c) {
+            lz78::encode_factor(coder, node_id, c, factor_count);
+            factor_count++;
+            IF_STATS(stat_factor_count++);
+        };
 
-        // Define ranges
+        // setup initial state for the node search
+        char c;
+
+        // set up initial search node
         node_t node = dict.get_rootnode(0);
         node_t parent = node; // parent of node, needed for the last factor
         DCHECK_EQ(node.id(), 0U);
         DCHECK_EQ(parent.id(), 0U);
 
-        char c;
         while(is.get(c)) {
+            // advance trie state with the next read character
             dict.signal_character_read();
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
             if(child.is_new()) {
-                lz78::encode_factor(coder, node.id(), static_cast<uliteral_t>(c), factor_count);
-                factor_count++;
-                IF_STATS(stat_factor_count++);
-                parent = node = dict.get_rootnode(0); // return to the root
+                // we found a leaf, output a factor
+                new_factor(node.id(), static_cast<uliteral_t>(c));
+
+                // reset search node
+                parent = node = dict.get_rootnode(0);
                 DCHECK_EQ(node.id(), 0U);
                 DCHECK_EQ(parent.id(), 0U);
                 DCHECK_EQ(factor_count+1, dict.size());
-                // dictionary's maximum size was reached
-                if(tdc_unlikely(dict.size() == m_dict_max_size)) { // if m_dict_max_size == 0 this will never happen
-                    DCHECK(false); // broken right now
+
+                // check if dictionary's maximum size was reached
+                // (this will never happen if m_dict_max_size == 0)
+                if(tdc_unlikely(dict.size() == m_dict_max_size)) {
+                    DCHECK_GT(dict.size(),0U);
                     reset_dict();
-                    factor_count = 0; //coder.dictionary_reset();
+                    factor_count = 0;
                     IF_STATS(stat_dictionary_resets++);
                     IF_STATS(stat_dict_counter_at_last_reset = m_dict_max_size);
                 }
-            } else { // traverse further
+            } else {
+                // traverse further
                 parent = node;
                 node = child;
             }
@@ -103,20 +115,16 @@ public:
 
         // take care of left-overs. We do not assume that the stream has a sentinel
         if(node.id() != 0) {
-            lz78::encode_factor(coder, parent.id(), c, factor_count);
-//            // TODO: this check only works if the trie is not the MonteCarloTrie !
-//            DCHECK_EQ(dict.find_or_insert(parent, static_cast<uliteral_t>(c)).id(), node.id());
-            factor_count++;
-            IF_STATS(stat_factor_count++);
+            new_factor(parent.id(), static_cast<uliteral_t>(c));
         }
 
         IF_STATS(
-            phase1.log_stat("factor_count",
-                            stat_factor_count);
-            phase1.log_stat("dictionary_reset_counter",
-                            stat_dictionary_resets);
-            phase1.log_stat("max_factor_counter",
-                            stat_dict_counter_at_last_reset);
+            phase.log_stat("factor_count",
+                           stat_factor_count);
+            phase.log_stat("dictionary_reset_counter",
+                           stat_dictionary_resets);
+            phase.log_stat("max_factor_counter",
+                           stat_dict_counter_at_last_reset);
         )
     }
 
@@ -127,7 +135,6 @@ public:
         return Algorithm::instance<LZ78Decompressor<coder_t>>(cfg.str());
     }
 };
-
 
 }//ns
 

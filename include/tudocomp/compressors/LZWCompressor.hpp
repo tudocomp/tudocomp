@@ -2,9 +2,9 @@
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
+#include <tudocomp/Range.hpp>
 
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
-#include <tudocomp/Range.hpp>
 #include <tudocomp/decompressors/LZWDecompressor.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
@@ -57,56 +57,60 @@ public:
         size_t factor_count = 0;
 
         dict_t dict(config().sub_config("lz_trie"), n, reserved_size+ULITERAL_MAX+1);
-        auto reset_dict = [&dict] () {
+        auto reset_dict = [&dict] {
             dict.clear();
-            std::stringstream ss;
             for(size_t i = 0; i < ULITERAL_MAX+1; ++i) {
                 const node_t node = dict.add_rootnode(i);
                 DCHECK_EQ(node.id(), dict.size() - 1);
                 DCHECK_EQ(node.id(), i);
-                ss << node.id() << ", ";
             }
         };
         reset_dict();
 
         typename coder_t::Encoder coder(config().sub_config("coder"), out, NoLiterals());
+        auto new_factor = [&](uint64_t node_id) {
+            coder.encode(node_id, Range(factor_count + ULITERAL_MAX + 1));
+            factor_count++;
+            IF_STATS(stat_factor_count++);
+        };
 
         // setup initial state for the node search
         char c;
-        if(!is.get(c)) return;
 
+        // try to get first char from input, set up initial search node
+        if(!is.get(c)) return;
         node_t node = dict.get_rootnode(static_cast<uliteral_t>(c));
 
         while(is.get(c)) {
+            // advance trie state with the next read character
             dict.signal_character_read();
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
-            DVLOG(2) << " child " << child.id() << " #factor " << factor_count << " size " << dict.size() << " node " << node.id();
-
             if(child.is_new()) {
-                coder.encode(node.id(), Range(factor_count + ULITERAL_MAX + 1));
-                IF_STATS(stat_factor_count++);
-                factor_count++;
-                DCHECK_EQ(factor_count+ULITERAL_MAX+1, dict.size());
+                // we found a leaf, output a factor
+                new_factor(node.id());
+
+                // reset search node
                 node = dict.get_rootnode(static_cast<uliteral_t>(c));
-                // dictionary's maximum size was reached
-                if(dict.size() == m_dict_max_size) {
+                DCHECK_EQ(factor_count+ULITERAL_MAX+1, dict.size());
+
+                // check if dictionary's maximum size was reached
+                // (this will never happen if m_dict_max_size == 0)
+                if(tdc_unlikely(dict.size() == m_dict_max_size)) {
                     DCHECK_GT(dict.size(),0U);
                     reset_dict();
-                    factor_count = 0; //coder.dictionary_reset();
+                    factor_count = 0;
                     IF_STATS(stat_dictionary_resets++);
                     IF_STATS(stat_dict_counter_at_last_reset = m_dict_max_size);
                 }
-            } else { // traverse further
+            } else {
+                // traverse further
                 node = child;
             }
         }
 
-        DLOG(INFO) << "End node id of LZW parsing " << node.id();
         // take care of left-overs. We do not assume that the stream has a sentinel
         DCHECK_NE(node.id(), lz_trie::undef_id);
-        coder.encode(node.id(), Range(factor_count + ULITERAL_MAX + 1)); //LZW
-        IF_STATS(stat_factor_count++);
-        factor_count++;
+        new_factor(node.id());
 
         IF_STATS(
             phase.log_stat("factor_count",
@@ -126,5 +130,5 @@ public:
     }
 };
 
-}
+}//ns
 
