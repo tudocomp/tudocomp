@@ -1,5 +1,8 @@
 #pragma once
 
+#include <unordered_map>
+#include <array>
+
 #include <tudocomp/util.hpp>
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Range.hpp>
@@ -20,14 +23,90 @@ class LZWPointerJumpingCompressor: public Compressor {
 private:
     using node_t = typename dict_t::node_t;
 
-    /// Max dictionary size before reset
-    const lz_trie::factorid_t m_dict_max_size {0}; //! Maximum dictionary size before reset, 0 == unlimited
+    /// Max dictionary size before reset, 0 == unlimited
+    const lz_trie::factorid_t m_dict_max_size {0};
 
+    /// Pointer Jumping jump width.
+    const size_t m_jump_width {1};
+
+    static const size_t MAX_JUMP_WIDTH = 8;
+
+    struct SmallFixedString {
+        std::array<uliteral_t, MAX_JUMP_WIDTH> m_data;
+        inline SmallFixedString(uliteral_t const* ptr, size_t size) {
+            DCHECK_LE(size, m_data.size());
+            for (size_t i = 0; i < size; i++) {
+                m_data[i] = ptr[i];
+            }
+            for (size_t i = size; i < m_data.size(); i++) {
+                m_data[i] = 0;
+            }
+        }
+        inline SmallFixedString(): SmallFixedString(nullptr, 0) {}
+    };
+    struct SmallFixedStringEq {
+        size_t m_actual_size = -1;
+
+        inline bool operator()(SmallFixedString const& a,
+                               SmallFixedString const& b) const {
+            DCHECK_LE(m_actual_size, MAX_JUMP_WIDTH);
+            DCHECK_EQ(sizeof(uint64_t) % sizeof(uliteral_t), 0);
+            size_t const elem_in_word = sizeof(uint64_t) / sizeof(uliteral_t);
+
+            // compare elements word-wise to speed things up
+            size_t i = 0;
+            while(i + elem_in_word <= m_actual_size) {
+                std::cout << "word compare at i=" << i << std::endl;
+                auto pa = (uint64_t const*) &a.m_data[i];
+                auto pb = (uint64_t const*) &b.m_data[i];
+                if (*pa != *pb) return false;
+                i += elem_in_word;
+            }
+            for(; i < m_actual_size; i++) {
+                std::cout << "single compare at i=" << i << std::endl;
+                if (a.m_data[i] != b.m_data[i]) return false;
+            }
+        }
+    };
+    struct SmallFixedStringHash {
+        size_t m_actual_size = -1;
+
+        inline size_t operator()(SmallFixedString const& a) const {
+            DCHECK_LE(m_actual_size, MAX_JUMP_WIDTH);
+            DCHECK_EQ(sizeof(uint64_t) % sizeof(uliteral_t), 0);
+            size_t const elem_in_word = sizeof(uint64_t) / sizeof(uliteral_t);
+
+            size_t seed = 0;
+            auto hash_step = [&](uint64_t v) {
+                // hash combine formular stolen from boost
+                size_t hsh = std::hash<uint64_t>(v);
+                seed ^= hsh + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+            };
+
+            // hash elements word-wise to speed things up
+            size_t i = 0;
+            while(i + elem_in_word <= m_actual_size) {
+                std::cout << "word hash at i=" << i << std::endl;
+                auto pa = (uint64_t const*) &a.m_data[i];
+                hash_step(*pa);
+                i += elem_in_word;
+            }
+            for(; i < m_actual_size; i++) {
+                std::cout << "single hash at i=" << i << std::endl;
+                hash_step(a.m_data[i]);
+            }
+            return seed;
+        }
+    };
 public:
     inline LZWPointerJumpingCompressor(Config&& cfg):
         Compressor(std::move(cfg)),
-        m_dict_max_size(this->config().param("dict_size").as_uint())
-    {}
+        m_dict_max_size(this->config().param("dict_size").as_uint()),
+        m_jump_width(this->config().param("jump_width").as_uint())
+    {
+        CHECK_GE(m_jump_width, 1);
+        CHECK_LE(m_jump_width, MAX_JUMP_WIDTH);
+    }
 
     inline static Meta meta() {
         Meta m(Compressor::type_desc(), "lzw_pj",
@@ -41,6 +120,9 @@ public:
             "the maximum size of the dictionary's backing storage before it "
             "gets reset (0 = unlimited)"
         ).primitive(0);
+        m.param("jump_width",
+            "jump width of the pointer jumping optimization"
+        ).primitive(4);
         return m;
     }
 
@@ -66,6 +148,13 @@ public:
             }
         };
         reset_dict();
+
+        std::unordered_map<
+            SmallFixedString,
+            node_t,
+            SmallFixedStringHash,
+            SmallFixedStringEq
+        > jump_pointer_map(0, SmallFixedStringHash{m_jump_width}, SmallFixedStringEq{m_jump_width});
 
         typename coder_t::Encoder coder(config().sub_config("coder"), out, NoLiterals());
         auto new_factor = [&](uint64_t node_id) {
