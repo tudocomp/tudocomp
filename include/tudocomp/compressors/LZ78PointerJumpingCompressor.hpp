@@ -93,6 +93,7 @@ public:
             lz78::encode_factor(coder, node_id, c, factor_count);
             factor_count++;
             IF_STATS(stat_factor_count++);
+            std::cout << "FACTOR (" << node_id << ", " << c << ")" << std::endl;
         };
 
         pointer_jumping_t pjm(m_jump_width);
@@ -158,21 +159,22 @@ public:
             if(child.is_new()) {
                 // we found a leaf, output a factor
                 new_factor(node.id(), static_cast<uliteral_t>(c));
-                std::cout << "new node "<<child.id()<<", parent " << node.id() << std::endl;
+                //std::cout << "new node "<<child.id()<<", parent " << node.id() << std::endl;
+                std::cout << "(" << node.id() << ") -" << c << "-> (" << child.id() << ")*" << std::endl;
 
                 // reset search node
                 parent = node = dict.get_rootnode(0);
                 DCHECK_EQ(node.id(), 0U);
                 DCHECK_EQ(parent.id(), 0U);
                 DCHECK_EQ(factor_count+1, dict.size());
-                std::cout << "reset search nodes" << std::endl;
+                //std::cout << "reset search nodes" << std::endl;
 
                 return true;
             } else {
+                std::cout << "(" << node.id() << ") -" << c << "-> (" << child.id() << ")" << std::endl;
                 // traverse further
                 parent = node;
                 node = child;
-                std::cout << "traverse to node " << node.id() << std::endl;
                 return false;
             }
         };
@@ -183,7 +185,14 @@ public:
             if (c_buf_size == m_jump_width) {
                 auto entry = pjm.find(c_buf_handle);
                 if (entry.found()) {
-                    std::cout << "found entry" << std::endl;
+                    std::cout << "(" << pjm.get_parent_node(c_buf_handle) << ") -";
+                    std::cout << "[";
+                    for(size_t i = 0; i < c_buf_size; i++) {
+                        std::cout << c_buf[i];
+                    }
+                    std::cout << "]";
+                    std::cout << "-> (" << entry.get().node.id() << ")" << std::endl;
+
                     // we can jump ahead
                     node = entry.get().node;
                     parent = entry.get().parent;
@@ -198,7 +207,13 @@ public:
                             goto continue_while;
                         }
                     }
-                    std::cout << "insert jump buffer" << std::endl;
+                    std::cout << "(" << pjm.get_parent_node(c_buf_handle) << ") -";
+                    std::cout << "[";
+                    for(size_t i = 0; i < c_buf_size; i++) {
+                        std::cout << c_buf[i];
+                    }
+                    std::cout << "]";
+                    std::cout << "-> (" << node.id() << ")*" << std::endl;
                     pjm.insert(c_buf_handle, NodePair{ parent, node });
                     reset_c_buf(node);
                 }

@@ -58,7 +58,7 @@ private:
                 i += elem_in_word;
             }
             for(; i < m_actual_size; i++) {
-                std::cout << "single compare at i=" << i << std::endl;
+                //std::cout << "single compare at i=" << i << std::endl;
                 if (a[i] != b[i]) return false;
             }
 
@@ -91,7 +91,7 @@ private:
                 i += elem_in_word;
             }
             for(; i < m_actual_size; i++) {
-                std::cout << "single hash at i=" << i << std::endl;
+                //std::cout << "single hash at i=" << i << std::endl;
                 hash_step(a[i]);
             }
 
@@ -113,6 +113,9 @@ public:
 
     inline void set_parent_node(jump_buffer_handle& handle, node_t const& node) {
         handle.node(node.id());
+    }
+    inline auto get_parent_node(jump_buffer_handle& handle) {
+        return handle.node();
     }
 
     inline uliteral_t* get_buffer(jump_buffer_handle& handle) {
