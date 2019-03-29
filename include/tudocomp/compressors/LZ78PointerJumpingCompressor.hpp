@@ -80,17 +80,9 @@ public:
         IF_STATS(size_t stat_dict_counter_at_last_reset = 0);
         IF_STATS(size_t stat_factor_count = 0);
         size_t factor_count = 0;
+        char c; // input char used by the main loop
 
-        dict_t dict(config().sub_config("lz_trie"), n, reserved_size);
-
-        auto reset_dict = [&dict] {
-            dict.clear();
-            node_t node = dict.add_rootnode(0);
-            DCHECK_EQ(node.id(), dict.size() - 1);
-            DCHECK_EQ(node.id(), 0U);
-        };
-        reset_dict();
-
+        // set up coder
         typename coder_t::Encoder coder(config().sub_config("coder"), out, NoLiterals());
         auto new_factor = [&](uint64_t node_id, uliteral_t c) {
             lz78::encode_factor(coder, node_id, c, factor_count);
@@ -99,32 +91,30 @@ public:
             std::cout << "FACTOR (" << node_id << ", " << c << ")" << std::endl;
         };
 
-        pointer_jumping_t pjm(m_jump_width);
+        // set up dictionary (the lz trie)
+        dict_t dict(config().sub_config("lz_trie"), n, reserved_size);
+        auto reset_dict = [&dict] {
+            dict.clear();
+            node_t node = dict.add_rootnode(0);
+            DCHECK_EQ(node.id(), dict.size() - 1);
+            DCHECK_EQ(node.id(), 0U);
+        };
+        reset_dict();
 
-        // setup initial state for the node search
-        char c;
-
-        // set up initial search node
+        // set up initial search nodes
         node_t node = dict.get_rootnode(0);
         node_t parent = node; // parent of node, needed for the last factor
         DCHECK_EQ(node.id(), 0U);
         DCHECK_EQ(parent.id(), 0U);
-
-        // set up jump buffer
-        pjm.reset_buffer(node.id());
-
-        auto debug_print_current_jump_buffer_mapping = [&] {
-            std::cout << "(" << pjm.jump_buffer_parent_node() << ") -";
-            std::cout << "[";
-            pjm.debug_print_buffer(std::cout);
-            std::cout << "]";
-            std::cout << "-> (" << node.id() << ")*" << std::endl;
-        };
-        auto debug_print_current_traverse_mapping = [&](auto node, auto child) {
-            std::cout << "(" << node << ") -" << c << "-> (" << child << ")" << std::endl;
-        };
-
-        auto add_char_to_trie = [&](uliteral_t c) {
+        auto add_char_to_trie = [&dict,
+                                 &new_factor,
+                                 &factor_count,
+                                 &node,
+                                 &parent](uliteral_t c)
+        {
+            auto debug_print_traverse_mapping = [](auto node, auto c, auto child, char m) {
+                std::cout << "(" << node << ") -" << c << "-> (" << child << ")" << m << std::endl;
+            };
             std::cout << "add char '" << c << "' to trie" << std::endl;
             // advance trie state with the next read character
             dict.signal_character_read();
@@ -133,52 +123,66 @@ public:
             if(child.is_new()) {
                 // we found a leaf, output a factor
                 new_factor(node.id(), static_cast<uliteral_t>(c));
-                debug_print_current_traverse_mapping(node.id(), child.id());
+                debug_print_traverse_mapping(node.id(), c, child.id(), '*');
 
                 // reset search node
                 parent = node = dict.get_rootnode(0);
                 DCHECK_EQ(node.id(), 0U);
                 DCHECK_EQ(parent.id(), 0U);
                 DCHECK_EQ(factor_count+1, dict.size());
-                //std::cout << "reset search nodes" << std::endl;
 
-                return true;
+                return child;
             } else {
-                debug_print_current_traverse_mapping(node.id(), child.id());
+                debug_print_traverse_mapping(node.id(), c, child.id(), ' ');
                 // traverse further
                 parent = node;
                 node = child;
-                return false;
+
+                return child;
             }
         };
 
+        // set up pointer jumping
+        pointer_jumping_t pjm(m_jump_width);
+        pjm.reset_buffer(node.id());
+        auto debug_print_current_jump_buffer_mapping = [&pjm, &node] (char m) {
+            std::cout << "(" << pjm.jump_buffer_parent_node() << ") -";
+            std::cout << "[";
+            pjm.debug_print_buffer(std::cout);
+            std::cout << "]";
+            std::cout << "-> (" << node.id() << ")" << m << std::endl;
+        };
+
+        // begin of main loop
         continue_while: while(is.get(c)) {
-            std::cout << std::endl;
-            pjm.insert_char(static_cast<uliteral_t>(c));
-            if (pjm.jump_buffer_full()) {
-                auto entry = pjm.find_jump_buffer();
-                if (entry.found()) {
-                    // we can jump ahead
-                    node = entry.get().node;
-                    parent = entry.get().parent;
-                    debug_print_current_jump_buffer_mapping();
+            auto action = pjm.on_insert_char(static_cast<uliteral_t>(c));
+            if (action.buffer_full_and_found()) {
+                // we can jump ahead
+                auto entry = action.entry();
+                node = entry.get().node;
+                parent = entry.get().parent;
+                debug_print_current_jump_buffer_mapping(' ');
 
-                    pjm.reset_buffer(node.id());
-                } else {
-                    std::cout << "did not found entry" << std::endl;
-                    // we need to manually add to the trie
-                    for(size_t i = 0; i < pjm.jump_buffer_size(); i++) {
-                        bool new_node = add_char_to_trie(pjm.jump_buffer(i));
-                        if (new_node) {
-                            pjm.shift_buffer(i + 1, node.id());
-                            goto continue_while;
-                        }
+                pjm.reset_buffer(node.id());
+            } else if (action.buffer_full_and_not_found()) {
+                // we need to manually add to the trie,
+                // and create a new jump entry
+                for(size_t i = 0; i < pjm.jump_buffer_size(); i++) {
+                    auto child = add_char_to_trie(pjm.jump_buffer(i));
+                    if (child.is_new()) {
+                        // we got a new trie node in the middle of the jump buffer,
+                        // restart the jump buffer search
+                        pjm.shift_buffer(i + 1, node.id());
+                        goto continue_while;
                     }
-                    pjm.insert_jump_buffer(NodePair{ parent, node });
-                    debug_print_current_jump_buffer_mapping();
-
-                    pjm.reset_buffer(node.id());
                 }
+                // auto child = add_char_to_trie(pjm.jump_buffer(pjm.jump_buffer_size() - 1));
+
+                pjm.insert_jump_buffer(NodePair{ parent, node });
+                debug_print_current_jump_buffer_mapping('*');
+                pjm.reset_buffer(node.id());
+            } else {
+                // read next char...
             }
         }
 

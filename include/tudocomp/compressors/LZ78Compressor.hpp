@@ -27,7 +27,9 @@ public:
     inline LZ78Compressor(Config&& cfg):
         Compressor(std::move(cfg)),
         m_dict_max_size(this->config().param("dict_size").as_uint())
-    {}
+    {
+        CHECK_EQ(m_dict_max_size, 0) << "dictionary resets are currently not supported";
+    }
 
     inline static Meta meta() {
         Meta m(Compressor::type_desc(), "lz78",

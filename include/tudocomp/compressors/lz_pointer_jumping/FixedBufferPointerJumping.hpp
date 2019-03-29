@@ -128,17 +128,23 @@ public:
     }
 
     struct result_t {
-        decltype(m_jump_pointer_map) const& m_map;
+        decltype(m_jump_pointer_map) const* m_map;
         typename decltype(m_jump_pointer_map)::const_iterator m_iter;
 
         inline bool found() const {
-            return m_iter != m_map.end();
+            return m_iter != m_map->end();
         }
 
         inline value_type const& get() {
             DCHECK(found());
             return m_iter->second;
         }
+
+        inline result_t() = default;
+        inline result_t(decltype(m_jump_pointer_map) const& map,
+                        typename decltype(m_jump_pointer_map)::const_iterator iter):
+            m_map(&map), m_iter(iter)
+        {}
     };
     inline result_t find(jump_buffer_handle const& key) const {
         return result_t { m_jump_pointer_map, m_jump_pointer_map.find(key) };

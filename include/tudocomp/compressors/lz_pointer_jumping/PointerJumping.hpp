@@ -36,13 +36,34 @@ public:
         return m_jump_buffer_size;
     }
 
-    inline void insert_char(uliteral_t c) {
+    struct action_t {
+        bool m_was_full;
+        typename pj_trie_t::result_t m_result;
+
+        inline bool buffer_full_and_found() const {
+            return m_was_full && m_result.found();
+        }
+        inline bool buffer_full_and_not_found() const {
+            return m_was_full && (!m_result.found());
+        }
+        inline typename pj_trie_t::result_t entry() const {
+            return m_result;
+        }
+    };
+    inline action_t on_insert_char(uliteral_t c) {
         DCHECK_LT(m_jump_buffer_size, m_jump_width);
         jump_buffer(m_jump_buffer_size) = c;
         m_jump_buffer_size++;
         std::cout << "process char '" << c << "', buffer: \"";
         debug_print_buffer(std::cout);
         std::cout << "\"" << std::endl;
+
+        if(jump_buffer_full()) {
+            auto entry = find_jump_buffer();
+            return action_t { true, entry };
+        } else {
+            return action_t { false, typename pj_trie_t::result_t() };
+        }
     }
 
     inline void reset_buffer(lz_trie::factorid_t parent_node) {
