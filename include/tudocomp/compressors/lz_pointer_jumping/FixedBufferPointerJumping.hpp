@@ -3,9 +3,11 @@
 #include <unordered_map>
 #include <array>
 
+#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+
 namespace tdc {namespace lz_pointer_jumping {
 
-template<typename node_t, typename value_type>
+template<typename value_type>
 class FixedBufferPointerJumping {
 public:
     static const size_t MAX_JUMP_WIDTH = 17;
@@ -111,19 +113,22 @@ public:
     FixedBufferPointerJumping(size_t jump_width):
         m_jump_pointer_map(0, SmallFixedStringHash{jump_width}, SmallFixedStringEq{jump_width}) {}
 
-    inline void set_parent_node(jump_buffer_handle& handle, node_t const& node) {
-        handle.node(node.id());
+    inline void set_parent_node(jump_buffer_handle& handle, lz_trie::factorid_t node) {
+        handle.node(node);
     }
-    inline auto get_parent_node(jump_buffer_handle& handle) {
+    inline lz_trie::factorid_t get_parent_node(jump_buffer_handle& handle) const {
         return handle.node();
     }
 
     inline uliteral_t* get_buffer(jump_buffer_handle& handle) {
         return &handle[0];
     }
+    inline uliteral_t const* get_buffer(jump_buffer_handle const& handle) const {
+        return &handle[0];
+    }
 
     struct result_t {
-        decltype(m_jump_pointer_map)& m_map;
+        decltype(m_jump_pointer_map) const& m_map;
         typename decltype(m_jump_pointer_map)::const_iterator m_iter;
 
         inline bool found() const {
@@ -135,7 +140,7 @@ public:
             return m_iter->second;
         }
     };
-    inline result_t find(jump_buffer_handle const& key) {
+    inline result_t find(jump_buffer_handle const& key) const {
         return result_t { m_jump_pointer_map, m_jump_pointer_map.find(key) };
     }
     inline void insert(jump_buffer_handle const& key, value_type const& val) {
