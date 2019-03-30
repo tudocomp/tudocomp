@@ -53,7 +53,7 @@ private:
             // compare elements word-wise to speed things up
             size_t i = 0;
             while(i + elem_in_word <= m_actual_size) {
-                std::cout << "word compare at i=" << i << std::endl;
+                //std::cout << "word compare at i=" << i << std::endl;
                 auto pa = (uint64_t const*) &a[i];
                 auto pb = (uint64_t const*) &b[i];
                 if (*pa != *pb) return false;
@@ -87,7 +87,7 @@ private:
             // hash elements word-wise to speed things up
             size_t i = 0;
             while(i + elem_in_word <= m_actual_size) {
-                std::cout << "word hash at i=" << i << std::endl;
+                //std::cout << "word hash at i=" << i << std::endl;
                 auto pa = (uint64_t const*) &a[i];
                 hash_step(*pa);
                 i += elem_in_word;

@@ -84,7 +84,7 @@ public:
             coder.encode(node_id, Range(factor_count + ULITERAL_MAX + 1));
             factor_count++;
             IF_STATS(stat_factor_count++);
-            std::cout << "FACTOR (" << node_id << ")" << std::endl;
+            // std::cout << "FACTOR (" << node_id << ")" << std::endl;
         };
 
         // set up dictionary (the lz trie)
@@ -107,10 +107,6 @@ public:
                                  &factor_count,
                                  &node](uliteral_t c)
         {
-            auto debug_print_traverse_mapping = [](auto node, auto c, auto child, char m) {
-                std::cout << "(" << node << ") -" << c << "-> (" << child << ")" << m << std::endl;
-            };
-            //std::cout << "add char '" << c << "' to trie" << std::endl;
             // advance trie state with the next read character
             dict.signal_character_read();
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
@@ -118,13 +114,11 @@ public:
             if(child.is_new()) {
                 // we found a leaf, output a factor
                 new_factor(node.id());
-                debug_print_traverse_mapping(node.id(), c, child.id(), '*');
 
                 // reset search node
                 node = dict.get_rootnode(static_cast<uliteral_t>(c));
                 DCHECK_EQ(factor_count+ULITERAL_MAX+1, dict.size());
             } else {
-                debug_print_traverse_mapping(node.id(), c, child.id(), ' ');
                 // traverse further
                 node = child;
             }
@@ -135,23 +129,14 @@ public:
         // set up pointer jumping
         pointer_jumping_t pjm(m_jump_width);
         pjm.reset_buffer(node.id());
-        auto debug_print_current_jump_buffer_mapping = [&pjm] (lz_trie::factorid_t to, char m) {
-            std::cout << "(" << pjm.jump_buffer_parent_node() << ") -";
-            std::cout << "[";
-            pjm.debug_print_buffer(std::cout);
-            std::cout << "]";
-            std::cout << "-> (" << to << ")" << m << std::endl;
-        };
 
         // begin of main loop
         continue_while: while(is.get(c)) {
-            std::cout << std::endl;
             auto action = pjm.on_insert_char(static_cast<uliteral_t>(c));
             if (action.buffer_full_and_found()) {
                 // we can jump ahead
                 auto entry = action.entry();
                 node = entry.get();
-                debug_print_current_jump_buffer_mapping(node.id(), ' ');
 
                 pjm.reset_buffer(node.id());
             } else if (action.buffer_full_and_not_found()) {
@@ -171,18 +156,17 @@ public:
                     // is also the target node for the new jump pointer
                     size_t i = pjm.jump_buffer_size() - 1;
                     auto child = add_char_to_trie(pjm.jump_buffer(i));
+
+                    // the next time we will skip over this through the jump pointer
                     DCHECK(child.is_new());
 
                     pjm.insert_jump_buffer(child);
-                    debug_print_current_jump_buffer_mapping(child.id(), '*');
                     pjm.reset_buffer(node.id());
                 }
             } else {
                 // read next char...
             }
         }
-
-        std::cout << "finished main loop" << std::endl;
 
         // process chars from last incomplete jump buffer
         for(size_t i = 0; i < pjm.jump_buffer_size(); i++) {

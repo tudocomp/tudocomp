@@ -54,9 +54,6 @@ public:
         DCHECK_LT(m_jump_buffer_size, m_jump_width);
         jump_buffer(m_jump_buffer_size) = c;
         m_jump_buffer_size++;
-        std::cout << "process char '" << c << "', buffer: \"";
-        debug_print_buffer(std::cout);
-        std::cout << "\"" << std::endl;
 
         if(jump_buffer_full()) {
             auto entry = find_jump_buffer();
@@ -67,27 +64,17 @@ public:
     }
 
     inline void shift_buffer(size_t elements, lz_trie::factorid_t parent_node) {
-        std::cout << "shift buffer by "<<elements<<" elements. before: \"";
-        debug_print_buffer(std::cout);
-        std::cout << "\", node: " << parent_node;
-
         size_t remaining = m_jump_width - elements;
         for(size_t i = 0; i < remaining; i++) {
             jump_buffer(i) = jump_buffer(i + elements);
         }
         m_jump_buffer_size -= elements;
         this->set_parent_node(m_jump_buffer_handle, parent_node);
-
-        std::cout << "; after: \"";
-        debug_print_buffer(std::cout);
-        std::cout << "\", node: " << parent_node;
-        std::cout << std::endl;
     }
 
     inline void reset_buffer(lz_trie::factorid_t parent_node) {
         m_jump_buffer_size = 0;
         this->set_parent_node(m_jump_buffer_handle, parent_node);
-        std::cout << "reset buffersize to 0, buffer node to " << parent_node << std::endl;
     }
 
     inline bool jump_buffer_full() const {
