@@ -84,7 +84,6 @@ public:
 
         // set up lz algorithm state
         lz_state_t lz_state { factor_count, coder, dict, stats };
-        node_t const& node = lz_state.get_current_node();
 
         // set up initial state for trie search
         lz_state.reset_dict();
@@ -95,7 +94,7 @@ public:
         char c;
         while(is.get(c)) {
             uliteral_t bc = static_cast<uliteral_t>(c);
-            bool is_new_node = lz_state.dict_find_or_insert(node, bc);
+            bool is_new_node = lz_state.dict_find_or_insert(bc);
             if (is_new_node) {
                 lz_state.reset_traverse_state(bc);
             }

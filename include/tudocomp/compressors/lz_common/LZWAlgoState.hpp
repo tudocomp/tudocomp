@@ -65,8 +65,8 @@ namespace tdc {namespace lz_common {
             DCHECK_NE(m_traverse_state.id(), lz_trie::undef_id);
             emit_factor(m_traverse_state.id(), '\0');
         }
-        inline bool dict_find_or_insert(node_t const& node, uliteral_t c) {
-            return BaseLzAlgoState<encoder_t, dict_t, stats_t>::dict_find_or_insert(*this, node, c);
+        inline bool dict_find_or_insert(uliteral_t c) {
+            return BaseLzAlgoState<encoder_t, dict_t, stats_t>::dict_find_or_insert(*this, c);
         }
     private:
         traverse_state_t m_traverse_state;

@@ -97,7 +97,6 @@ public:
 
         // set up lz algorithm state
         lz_state_t lz_state { factor_count, coder, dict, stats };
-        node_t const& node = lz_state.get_current_node();
 
         // set up initial state for trie search
         lz_state.reset_dict();
@@ -106,6 +105,7 @@ public:
 
         // set up pointer jumping
         pointer_jumping_t pjm(m_jump_width);
+        node_t const& node = lz_state.get_current_node();
         pjm.reset_buffer(node.id());
 
         // main loop
@@ -122,7 +122,7 @@ public:
                 // and create a new jump entry
                 for(size_t i = 0; i < pjm.jump_buffer_size() - 1; i++) {
                     uliteral_t const bc = pjm.jump_buffer(i);
-                    bool is_new_node = lz_state.dict_find_or_insert(node, bc);
+                    bool is_new_node = lz_state.dict_find_or_insert(bc);
                     if (is_new_node) {
                         // we got a new trie node in the middle of the
                         // jump buffer, restart the jump buffer search
@@ -136,7 +136,7 @@ public:
                     // is also the node the new jump pointer jumps to.
                     size_t i = pjm.jump_buffer_size() - 1;
                     uliteral_t const bc = pjm.jump_buffer(i);
-                    bool is_new_node = lz_state.dict_find_or_insert(node, bc);
+                    bool is_new_node = lz_state.dict_find_or_insert(bc);
 
                     // the next time we will skip over this through the jump pointer
                     DCHECK(is_new_node);
@@ -154,7 +154,7 @@ public:
         // process chars from last incomplete jump buffer
         for(size_t i = 0; i < pjm.jump_buffer_size(); i++) {
             uliteral_t const bc = pjm.jump_buffer(i);
-            bool is_new_node = lz_state.dict_find_or_insert(node, bc);
+            bool is_new_node = lz_state.dict_find_or_insert(bc);
             if (is_new_node) {
                 lz_state.reset_traverse_state(bc);
             }

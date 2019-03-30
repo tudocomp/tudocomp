@@ -23,7 +23,9 @@ namespace tdc {namespace lz_common {
         stats_t& m_stats;
 
         template<typename self_t>
-        inline bool dict_find_or_insert(self_t& self, node_t const& node, uliteral_t c) {
+        inline bool dict_find_or_insert(self_t& self, uliteral_t c) {
+            node_t const& node = self.get_current_node();
+
             // advance trie state with the next read character
             m_dict.signal_character_read();
             node_t child = m_dict.find_or_insert(node, c);
