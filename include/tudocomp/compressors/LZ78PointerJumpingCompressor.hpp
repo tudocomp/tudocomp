@@ -25,13 +25,48 @@ template <typename coder_t, typename dict_t>
 class LZ78PointerJumpingCompressor: public Compressor {
 private:
     using node_t = typename dict_t::node_t;
-    struct NodePair {
-        node_t parent;
-        node_t node;
+    using encoder_t = typename coder_t::Encoder;
+    struct stats_t {
+        IF_STATS(size_t dictionary_resets = 0);
+        IF_STATS(size_t dict_counter_at_last_reset = 0);
+        IF_STATS(size_t total_factor_count = 0);
     };
+
+    struct lz_algo_t {
+        struct step_state_t {
+            node_t parent;
+            node_t node;
+        };
+
+        size_t& m_factor_count;
+        encoder_t& m_coder;
+        dict_t& m_dict;
+        stats_t& m_stats;
+
+        inline lz_algo_t(size_t& factor_count,
+                         encoder_t& coder,
+                         dict_t& dict,
+                         stats_t& stats):
+           m_factor_count(factor_count),
+           m_coder(coder),
+           m_dict(dict),
+           m_stats(stats) {}
+        lz_algo_t(lz_algo_t const&) = delete;
+        lz_algo_t& operator=(lz_algo_t const&) = delete;
+
+        inline void emit_factor(lz_trie::factorid_t node, uliteral_t c) {
+            lz78::encode_factor(m_coder, node, c, m_factor_count);
+            m_factor_count++;
+            IF_STATS(m_stats.total_factor_count++);
+            // std::cout << "FACTOR (" << node_id << ", " << c << ")" << std::endl;
+        }
+    };
+
+    using step_state_t = typename lz_algo_t::step_state_t;
+
     using pointer_jumping_t =
-        lz_pointer_jumping::PointerJumping<NodePair,
-                                           lz_pointer_jumping::FixedBufferPointerJumping<NodePair>>;
+        lz_pointer_jumping::PointerJumping<step_state_t,
+                                           lz_pointer_jumping::FixedBufferPointerJumping<step_state_t>>;
 
     /// Max dictionary size before reset, 0 == unlimited
     const lz_trie::factorid_t m_dict_max_size {0};
@@ -75,21 +110,13 @@ public:
 
         // Stats
         StatPhase phase("Lz78 compression");
+        stats_t stats;
 
-        IF_STATS(size_t stat_dictionary_resets = 0);
-        IF_STATS(size_t stat_dict_counter_at_last_reset = 0);
-        IF_STATS(size_t stat_factor_count = 0);
         size_t factor_count = 0;
         char c; // input char used by the main loop
 
         // set up coder
-        typename coder_t::Encoder coder(config().sub_config("coder"), out, NoLiterals());
-        auto new_factor = [&](uint64_t node_id, uliteral_t c) {
-            lz78::encode_factor(coder, node_id, c, factor_count);
-            factor_count++;
-            IF_STATS(stat_factor_count++);
-            // std::cout << "FACTOR (" << node_id << ", " << c << ")" << std::endl;
-        };
+        encoder_t coder(config().sub_config("coder"), out, NoLiterals());
 
         // set up dictionary (the lz trie)
         dict_t dict(config().sub_config("lz_trie"), n, reserved_size + 1);
@@ -100,6 +127,12 @@ public:
             DCHECK_EQ(node.id(), 0U);
         };
         reset_dict();
+
+        // set up lz algorithm state
+        lz_algo_t lz_state { factor_count, coder, dict, stats };
+        auto new_factor = [&](uint64_t node_id, uliteral_t c) {
+            lz_state.emit_factor(node_id, c);
+        };
 
         // set up initial search nodes
         node_t node = dict.get_rootnode(0);
@@ -198,11 +231,11 @@ public:
 
         IF_STATS(
             phase.log_stat("factor_count",
-                           stat_factor_count);
+                           stats.total_factor_count);
             phase.log_stat("dictionary_reset_counter",
-                           stat_dictionary_resets);
+                           stats.dictionary_resets);
             phase.log_stat("max_factor_counter",
-                           stat_dict_counter_at_last_reset);
+                           stats.dict_counter_at_last_reset);
         )
     }
 
