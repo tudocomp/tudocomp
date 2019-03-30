@@ -71,6 +71,10 @@ private:
 
             return false;
         }
+        inline void reset_traverse_state(uliteral_t last_read_char) {
+            m_traverse_state = m_dict.get_rootnode(last_read_char);
+            DCHECK_EQ(m_factor_count+ULITERAL_MAX+1, m_dict.size());
+        }
         inline void traverse_to_child_node(node_t const& child) {
             m_traverse_state = child;
         }
@@ -144,7 +148,6 @@ public:
         stats_t stats;
 
         size_t factor_count = 0;
-        char c; // input char used by the main loop
 
         // set up coder
         encoder_t coder(config().sub_config("coder"), out, NoLiterals());
@@ -179,17 +182,13 @@ public:
 
             return child;
         };
-        auto reset_search_nodes = [&dict, &factor_count, &node] (uliteral_t c) {
-            // reset search node
-            node = dict.get_rootnode(static_cast<uliteral_t>(c));
-            DCHECK_EQ(factor_count+ULITERAL_MAX+1, dict.size());
-        };
 
         // set up pointer jumping
         pointer_jumping_t pjm(m_jump_width);
         pjm.reset_buffer(node.id());
 
-        // begin of main loop
+        // main loop
+        char c;
         continue_while: while(is.get(c)) {
             auto action = pjm.on_insert_char(static_cast<uliteral_t>(c));
             if (action.buffer_full_and_found()) {
@@ -207,7 +206,7 @@ public:
                     if (child.is_new()) {
                         // we got a new trie node in the middle of the jump buffer,
                         // restart the jump buffer search
-                        reset_search_nodes(bc);
+                        lz_state.reset_traverse_state(bc);
                         pjm.shift_buffer(i + 1, node.id());
                         goto continue_while;
                     }
@@ -223,7 +222,7 @@ public:
 
                     pjm.insert_jump_buffer(child);
 
-                    reset_search_nodes(bc);
+                    lz_state.reset_traverse_state(bc);
                     pjm.reset_buffer(node.id());
                 }
             } else {
@@ -236,7 +235,7 @@ public:
             uliteral_t const bc = pjm.jump_buffer(i);
             auto child = add_char_to_trie(bc);
             if (child.is_new()) {
-                reset_search_nodes(bc);
+                lz_state.reset_traverse_state(bc);
             }
         }
 
