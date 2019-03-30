@@ -6,17 +6,11 @@
 #include <tudocomp/def.hpp>
 #include <memory>
 
-namespace tdc {
-namespace lz_trie {
+#include <tudocomp/compressors/lz_common/factorid_t.hpp>
 
-/// Type for the factor indices, bounded by the number of LZ trie nodes
-using factorid_t = uint32_t;
-
-/// Id that can be used for a non-existing factor
-constexpr factorid_t undef_id = std::numeric_limits<factorid_t>::max();
-
-/// Maximum legal dictionary size.
-constexpr size_t DMS_MAX = std::numeric_limits<factorid_t>::max();
+namespace tdc {namespace lz_trie {
+using lz_common::factorid_t;
+using lz_common::undef_id;
 
 class SharedRemainingElementsHint {
     struct Inner { size_t m_n; size_t m_remaining_characters; };

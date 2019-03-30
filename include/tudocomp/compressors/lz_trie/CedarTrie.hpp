@@ -23,7 +23,7 @@ namespace cedar {
 }
 
 class CedarTrie: public Algorithm, public LZTrie<cedar::CedarTrieNode> {
-    using cedar_factorid_t = lz_trie::factorid_t;
+    using cedar_factorid_t = lz_common::factorid_t;
     // NB: this refers to different cedar namespace than defined in this file
     using cedar_t = ::cedar::da<cedar_factorid_t>;
 

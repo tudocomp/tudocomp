@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <array>
 
-#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_common/factorid_t.hpp>
 
 namespace tdc {namespace lz_pointer_jumping {
 
@@ -14,14 +14,15 @@ public:
     using lz_state_t = lz_state_type;
     using traverse_state_t = typename lz_state_t::traverse_state_t;
 private:
+    using factorid_t = lz_common::factorid_t;
 
     struct alignas(uint64_t) SmallFixedString {
         std::array<uliteral_t, MAX_JUMP_WIDTH> m_data;
-        lz_trie::factorid_t m_node;
+        factorid_t m_node;
 
         inline SmallFixedString(uliteral_t const* ptr,
                                 size_t size,
-                                lz_trie::factorid_t node) {
+                                factorid_t node) {
             DCHECK_LE(size, m_data.size());
             for (size_t i = 0; i < size; i++) {
                 m_data[i] = ptr[i];
@@ -38,8 +39,8 @@ private:
         inline uliteral_t& operator[](size_t i) {
             return m_data[i];
         }
-        inline lz_trie::factorid_t node() const { return m_node; }
-        inline void node(lz_trie::factorid_t n) { m_node = n; }
+        inline factorid_t node() const { return m_node; }
+        inline void node(factorid_t n) { m_node = n; }
     };
     struct SmallFixedStringEq {
         size_t m_actual_size = -1;
@@ -116,10 +117,10 @@ public:
     FixedBufferPointerJumping(size_t jump_width):
         m_jump_pointer_map(0, SmallFixedStringHash{jump_width}, SmallFixedStringEq{jump_width}) {}
 
-    inline void set_parent_node(jump_buffer_handle& handle, lz_trie::factorid_t node) {
+    inline void set_parent_node(jump_buffer_handle& handle, factorid_t node) {
         handle.node(node);
     }
-    inline lz_trie::factorid_t get_parent_node(jump_buffer_handle const& handle) const {
+    inline factorid_t get_parent_node(jump_buffer_handle const& handle) const {
         return handle.node();
     }
 

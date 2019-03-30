@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <array>
 
-#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_common/factorid_t.hpp>
 
 namespace tdc {namespace lz_pointer_jumping {
 
@@ -14,6 +14,8 @@ public:
     using lz_state_t = lz_state_type;
     using traverse_state_t = typename lz_state_t::traverse_state_t;
 private:
+    using factorid_t = lz_common::factorid_t;
+
     using jump_id_t = uint32_t;
     struct CustomEq {
         DynamicBufferPointerJumping* m_self = nullptr;
@@ -72,7 +74,7 @@ private:
         CustomEq
     > m_jump_pointer_map;
     std::vector<uliteral_t> m_key_strings;
-    std::vector<lz_trie::factorid_t> m_key_lz_factors;
+    std::vector<factorid_t> m_key_lz_factors;
 
     jump_id_t m_working_buffer;
 
@@ -95,10 +97,10 @@ public:
     {
     }
 
-    inline void set_parent_node(jump_buffer_handle& handle, lz_trie::factorid_t node) {
+    inline void set_parent_node(jump_buffer_handle& handle, factorid_t node) {
         m_key_lz_factors[handle] = node;
     }
-    inline lz_trie::factorid_t get_parent_node(jump_buffer_handle const& handle) const {
+    inline factorid_t get_parent_node(jump_buffer_handle const& handle) const {
         return m_key_lz_factors[handle];
     }
 

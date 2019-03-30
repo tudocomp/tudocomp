@@ -5,6 +5,7 @@
 #include <tudocomp/Range.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
+#include <tudocomp/compressors/lz_common/factorid_t.hpp>
 
 // For default params
 #include <tudocomp/compressors/lz_trie/TernaryTrie.hpp>
@@ -14,7 +15,7 @@ namespace tdc {namespace lz_common {
 
 template <typename lz_algo_t, typename coder_t, typename dict_t>
 class BaseLZCompressor: public Compressor {
-    using factorid_t = lz_trie::factorid_t;
+    using factorid_t = lz_common::factorid_t;
     using node_t = typename dict_t::node_t;
     using encoder_t = typename coder_t::Encoder;
     struct stats_t {

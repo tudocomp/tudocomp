@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <array>
 
-#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_common/factorid_t.hpp>
 
 namespace tdc {namespace lz_pointer_jumping {
 
@@ -15,7 +15,7 @@ class PointerJumping: public pj_trie_t {
 public:
     using lz_state_t = typename pj_trie_t::lz_state_t;
     using traverse_state_t = typename pj_trie_t::traverse_state_t;
-    using factorid_t = lz_trie::factorid_t;
+    using factorid_t = lz_common::factorid_t;
 
     inline PointerJumping(lz_state_t& lz_state, size_t jump_width):
         pj_trie_t(jump_width),

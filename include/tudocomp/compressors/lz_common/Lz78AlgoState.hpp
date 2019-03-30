@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_common/factorid_t.hpp>
 #include <tudocomp/compressors/lz78/LZ78Coding.hpp>
 #include <tudocomp/decompressors/LZ78Decompressor.hpp>
 #include "BaseLzAlgoState.hpp"
@@ -15,7 +15,7 @@ namespace tdc {namespace lz_common {
         using BaseLzAlgoState<encoder_t, dict_t, stats_t>::m_dict;
         using BaseLzAlgoState<encoder_t, dict_t, stats_t>::m_stats;
         using node_t = typename dict_t::node_t;
-        using factorid_t = lz_trie::factorid_t;
+        using factorid_t = lz_common::factorid_t;
 
         struct traverse_state_t {
             node_t parent;

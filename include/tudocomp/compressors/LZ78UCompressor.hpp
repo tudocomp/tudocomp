@@ -10,7 +10,7 @@
 
 #include <tudocomp/Range.hpp>
 
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_common/factorid_t.hpp>
 
 #include "lz78u/SuffixTree.hpp"
 
@@ -20,23 +20,24 @@
 
 namespace tdc {
 namespace lz78u {
+    using factorid_t = lz_common::factorid_t;
 
     // TODO: Define factorid for lz78u uniformly
 
     class Decompressor {
-        std::vector<lz78::factorid_t> indices;
+        std::vector<factorid_t> indices;
         std::vector<uliteral_t> literal_strings;
         std::vector<size_t> start_literal_strings;
 
         std::vector<uliteral_t> buffer;
 
         public:
-        inline lz78::factorid_t ref_at(lz78::factorid_t index) const {
+        inline factorid_t ref_at(factorid_t index) const {
             DCHECK_NE(index, 0);
             size_t i = index - 1;
             return indices[i];
         }
-        inline View str_at(lz78::factorid_t index) const {
+        inline View str_at(factorid_t index) const {
             DCHECK_NE(index, 0);
             size_t i = index - 1;
             View ls = literal_strings;
@@ -52,7 +53,7 @@ namespace lz78u {
             return ls.slice(start, end);
         }
 
-        inline void decompress(lz78::factorid_t index, View literals, std::ostream& out) {
+        inline void decompress(factorid_t index, View literals, std::ostream& out) {
             indices.push_back(index);
             start_literal_strings.push_back(literal_strings.size());
             for (auto c : literals) {

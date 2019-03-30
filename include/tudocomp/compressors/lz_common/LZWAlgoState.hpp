@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz_common/factorid_t.hpp>
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
 #include <tudocomp/decompressors/LZWDecompressor.hpp>
 #include "BaseLzAlgoState.hpp"
@@ -15,7 +15,7 @@ namespace tdc {namespace lz_common {
         using BaseLzAlgoState<encoder_t, dict_t, stats_t>::m_dict;
         using BaseLzAlgoState<encoder_t, dict_t, stats_t>::m_stats;
         using node_t = typename dict_t::node_t;
-        using factorid_t = lz_trie::factorid_t;
+        using factorid_t = lz_common::factorid_t;
 
         using traverse_state_t = node_t;
 
@@ -62,7 +62,7 @@ namespace tdc {namespace lz_common {
             }
         };
         inline void end_of_input(uliteral_t last_read_char) {
-            DCHECK_NE(m_traverse_state.id(), lz_trie::undef_id);
+            DCHECK_NE(m_traverse_state.id(), lz_common::undef_id);
             emit_factor(m_traverse_state.id(), '\0');
         }
         inline bool dict_find_or_insert(uliteral_t c) {
