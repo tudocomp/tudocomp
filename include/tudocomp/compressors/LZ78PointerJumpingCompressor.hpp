@@ -76,7 +76,6 @@ private:
             return false;
         }
         inline void reset_traverse_state(uliteral_t last_read_char) {
-            // reset search node
             m_traverse_state.parent = m_dict.get_rootnode(0);
             m_traverse_state.node = m_traverse_state.parent;
             DCHECK_EQ(m_traverse_state.node.id(), 0U);

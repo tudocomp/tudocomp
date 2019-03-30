@@ -200,7 +200,7 @@ public:
             if (action.buffer_full_and_found()) {
                 // we can jump ahead
                 auto entry = action.entry();
-                node = entry.get();
+                lz_state.set_traverse_state(entry.get());
 
                 pjm.reset_buffer(node.id());
             } else if (action.buffer_full_and_not_found()) {
