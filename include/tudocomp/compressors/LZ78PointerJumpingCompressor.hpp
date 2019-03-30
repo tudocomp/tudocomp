@@ -58,20 +58,20 @@ private:
         using lz_algo_common_t::m_dict;
         using lz_algo_common_t::m_stats;
 
-        struct step_state_t {
+        struct traverse_state_t {
             node_t parent;
             node_t node;
         };
 
-        step_state_t m_step_state;
+        traverse_state_t m_traverse_state;
 
-        inline bool initialize_step_state(std::istream& is) {
+        inline bool initialize_traverse_state(std::istream& is) {
             node_t node = m_dict.get_rootnode(0);
             node_t parent = node; // parent of node, needed for the last factor
             DCHECK_EQ(node.id(), 0U);
             DCHECK_EQ(parent.id(), 0U);
 
-            m_step_state = { parent, node };
+            m_traverse_state = { parent, node };
 
             return false;
         }
@@ -93,11 +93,11 @@ private:
         };
     };
 
-    using step_state_t = typename lz_algo_t::step_state_t;
+    using traverse_state_t = typename lz_algo_t::traverse_state_t;
 
     using pointer_jumping_t =
-        lz_pointer_jumping::PointerJumping<step_state_t,
-                                           lz_pointer_jumping::FixedBufferPointerJumping<step_state_t>>;
+        lz_pointer_jumping::PointerJumping<traverse_state_t,
+                                           lz_pointer_jumping::FixedBufferPointerJumping<traverse_state_t>>;
 
     /// Max dictionary size before reset, 0 == unlimited
     const factorid_t m_dict_max_size {0};
@@ -157,10 +157,10 @@ public:
 
         // set up initial search nodes
         lz_state.reset_dict();
-        bool early_exit = lz_state.initialize_step_state(is);
+        bool early_exit = lz_state.initialize_traverse_state(is);
         if (early_exit) return;
-        node_t& node = lz_state.m_step_state.node;
-        node_t& parent = lz_state.m_step_state.parent;
+        node_t& node = lz_state.m_traverse_state.node;
+        node_t& parent = lz_state.m_traverse_state.parent;
         auto add_char_to_trie = [&dict,
                                  &lz_state,
                                  &factor_count,
