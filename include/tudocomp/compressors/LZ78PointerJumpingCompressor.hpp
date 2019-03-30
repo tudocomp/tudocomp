@@ -107,6 +107,11 @@ private:
             DCHECK_EQ(node.id(), m_dict.size() - 1);
             DCHECK_EQ(node.id(), 0U);
         };
+        inline void end_of_input(uliteral_t last_read_char) {
+            if(m_traverse_state.node.id() != 0) {
+                emit_factor(m_traverse_state.parent.id(), last_read_char);
+            }
+        }
     };
 
     using traverse_state_t = typename lz_algo_t::traverse_state_t;
@@ -175,7 +180,6 @@ public:
         bool early_exit = lz_state.initialize_traverse_state(is);
         if (early_exit) return;
         node_t& node = lz_state.m_traverse_state.node;
-        node_t& parent = lz_state.m_traverse_state.parent;
         auto add_char_to_trie = [&dict,
                                  &lz_state,
                                  &factor_count,
@@ -253,9 +257,7 @@ public:
         }
 
         // take care of left-overs. We do not assume that the stream has a sentinel
-        if(node.id() != 0) {
-            lz_state.emit_factor(parent.id(), static_cast<uliteral_t>(c));
-        }
+        lz_state.end_of_input(static_cast<uliteral_t>(c));
 
         IF_STATS(
             phase.log_stat("factor_count",
