@@ -24,6 +24,7 @@ namespace tdc {
 template<typename coder_t, typename dict_t>
 class LZWPointerJumpingCompressor: public Compressor {
 private:
+    using factorid_t = lz_trie::factorid_t;
     using node_t = typename dict_t::node_t;
     using encoder_t = typename coder_t::Encoder;
     struct stats_t {
@@ -58,13 +59,24 @@ private:
         using lz_algo_common_t::m_stats;
 
         using step_state_t = node_t;
+        inline static constexpr size_t initial_dict_size() {
+            return ULITERAL_MAX+1;
+        }
 
-        inline void emit_factor(lz_trie::factorid_t node, uliteral_t c) {
+        inline void emit_factor(factorid_t node, uliteral_t c) {
             m_coder.encode(node, Range(m_factor_count + ULITERAL_MAX + 1));
             m_factor_count++;
             IF_STATS(m_stats.total_factor_count++);
             // std::cout << "FACTOR (" << node_id << ")" << std::endl;
         }
+        inline void reset_dict() {
+            m_dict.clear();
+            for(size_t i = 0; i < ULITERAL_MAX+1; ++i) {
+                node_t const node = m_dict.add_rootnode(i);
+                DCHECK_EQ(node.id(), m_dict.size() - 1);
+                DCHECK_EQ(node.id(), i);
+            }
+        };
     };
 
     using step_state_t = typename lz_algo_t::step_state_t;
@@ -74,7 +86,7 @@ private:
                                            lz_pointer_jumping::FixedBufferPointerJumping<step_state_t>>;
 
     /// Max dictionary size before reset, 0 == unlimited
-    const lz_trie::factorid_t m_dict_max_size {0};
+    const factorid_t m_dict_max_size {0};
 
     /// Pointer Jumping jump width.
     const size_t m_jump_width {1};
@@ -124,21 +136,13 @@ public:
         encoder_t coder(config().sub_config("coder"), out, NoLiterals());
 
         // set up dictionary (the lz trie)
-        dict_t dict(config().sub_config("lz_trie"), n, reserved_size+ULITERAL_MAX+1);
-        auto reset_dict = [&dict] {
-            dict.clear();
-            for(size_t i = 0; i < ULITERAL_MAX+1; ++i) {
-                node_t const node = dict.add_rootnode(i);
-                DCHECK_EQ(node.id(), dict.size() - 1);
-                DCHECK_EQ(node.id(), i);
-            }
-        };
-        reset_dict();
+        dict_t dict(config().sub_config("lz_trie"), n, reserved_size + lz_algo_t::initial_dict_size());
 
         // set up lz algorithm state
         lz_algo_t lz_state { factor_count, coder, dict, stats };
 
         // set up initial search nodes
+        lz_state.reset_dict();
         if(!is.get(c)) return;
         node_t node = dict.get_rootnode(static_cast<uliteral_t>(c));
         auto add_char_to_trie = [&dict,
