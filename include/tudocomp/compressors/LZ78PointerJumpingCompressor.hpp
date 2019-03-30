@@ -16,6 +16,7 @@
 #include <tudocomp/compressors/lz_trie/TernaryTrie.hpp>
 #include <tudocomp/coders/BinaryCoder.hpp>
 
+#include <tudocomp/compressors/lz_common/BaseLzAlgoState.hpp>
 #include <tudocomp/compressors/lz_pointer_jumping/FixedBufferPointerJumping.hpp>
 #include <tudocomp/compressors/lz_pointer_jumping/PointerJumping.hpp>
 
@@ -33,23 +34,7 @@ private:
         IF_STATS(size_t total_factor_count = 0);
     };
 
-    struct lz_algo_common_t {
-        size_t& m_factor_count;
-        encoder_t& m_coder;
-        dict_t& m_dict;
-        stats_t& m_stats;
-
-        inline lz_algo_common_t(size_t& factor_count,
-                                encoder_t& coder,
-                                dict_t& dict,
-                                stats_t& stats):
-           m_factor_count(factor_count),
-           m_coder(coder),
-           m_dict(dict),
-           m_stats(stats) {}
-        lz_algo_common_t(lz_algo_common_t const&) = delete;
-        lz_algo_common_t& operator=(lz_algo_common_t const&) = delete;
-    };
+    using lz_algo_common_t = lz_common::BaseLzAlgoState<encoder_t, dict_t, stats_t>;
 
     struct lz_algo_t: public lz_algo_common_t {
         using lz_algo_common_t::lz_algo_common_t;
