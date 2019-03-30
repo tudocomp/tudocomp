@@ -92,7 +92,7 @@ public:
         auto reset_dict = [&dict] {
             dict.clear();
             for(size_t i = 0; i < ULITERAL_MAX+1; ++i) {
-                const node_t node = dict.add_rootnode(i);
+                node_t const node = dict.add_rootnode(i);
                 DCHECK_EQ(node.id(), dict.size() - 1);
                 DCHECK_EQ(node.id(), i);
             }
@@ -114,16 +114,17 @@ public:
             if(child.is_new()) {
                 // we found a leaf, output a factor
                 new_factor(node.id());
-
-                // reset search node
-                node = dict.get_rootnode(static_cast<uliteral_t>(c));
-                DCHECK_EQ(factor_count+ULITERAL_MAX+1, dict.size());
             } else {
                 // traverse further
                 node = child;
             }
 
             return child;
+        };
+        auto reset_search_nodes = [&dict, &factor_count, &node] (uliteral_t c) {
+            // reset search node
+            node = dict.get_rootnode(static_cast<uliteral_t>(c));
+            DCHECK_EQ(factor_count+ULITERAL_MAX+1, dict.size());
         };
 
         // set up pointer jumping
@@ -143,10 +144,12 @@ public:
                 // we need to manually add to the trie,
                 // and create a new jump entry
                 for(size_t i = 0; i < pjm.jump_buffer_size() - 1; i++) {
-                    auto child = add_char_to_trie(pjm.jump_buffer(i));
+                    uliteral_t const bc = pjm.jump_buffer(i);
+                    auto child = add_char_to_trie(bc);
                     if (child.is_new()) {
                         // we got a new trie node in the middle of the jump buffer,
                         // restart the jump buffer search
+                        reset_search_nodes(bc);
                         pjm.shift_buffer(i + 1, node.id());
                         goto continue_while;
                     }
@@ -154,13 +157,15 @@ public:
                 {
                     // the child node for the last char in the buffer
                     // is also the target node for the new jump pointer
-                    size_t i = pjm.jump_buffer_size() - 1;
-                    auto child = add_char_to_trie(pjm.jump_buffer(i));
+                    uliteral_t const bc = pjm.jump_buffer(pjm.jump_buffer_size() - 1);
+                    auto child = add_char_to_trie(bc);
 
                     // the next time we will skip over this through the jump pointer
                     DCHECK(child.is_new());
 
                     pjm.insert_jump_buffer(child);
+
+                    reset_search_nodes(bc);
                     pjm.reset_buffer(node.id());
                 }
             } else {
@@ -170,7 +175,11 @@ public:
 
         // process chars from last incomplete jump buffer
         for(size_t i = 0; i < pjm.jump_buffer_size(); i++) {
-            add_char_to_trie(pjm.jump_buffer(i));
+            uliteral_t const bc = pjm.jump_buffer(i);
+            auto child = add_char_to_trie(bc);
+            if (child.is_new()) {
+                reset_search_nodes(bc);
+            }
         }
 
         // take care of left-overs. We do not assume that the stream has a sentinel
