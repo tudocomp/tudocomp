@@ -72,6 +72,9 @@ namespace tdc {namespace lz_common {
                 emit_factor(m_traverse_state.parent.id(), last_read_char);
             }
         }
+        inline bool dict_find_or_insert(node_t const& node, uliteral_t c) {
+            return BaseLzAlgoState<encoder_t, dict_t, stats_t>::dict_find_or_insert(*this, node, c);
+        }
     private:
         traverse_state_t m_traverse_state;
     };

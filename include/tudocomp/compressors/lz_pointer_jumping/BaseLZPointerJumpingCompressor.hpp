@@ -99,25 +99,10 @@ public:
         lz_state_t lz_state { factor_count, coder, dict, stats };
         node_t const& node = lz_state.get_current_node();
 
-        // set up initial search nodes
+        // set up initial state for trie search
         lz_state.reset_dict();
         bool early_exit = lz_state.initialize_traverse_state(is);
         if (early_exit) return;
-        auto find_or_insert = [&dict, &lz_state, &factor_count, &node](uliteral_t c) {
-            // advance trie state with the next read character
-            dict.signal_character_read();
-            node_t child = dict.find_or_insert(node, c);
-
-            if(child.is_new()) {
-                // we found a leaf, output a factor
-                lz_state.emit_factor(node.id(), c);
-            }
-
-            // traverse further
-            lz_state.traverse_to_child_node(child);
-
-            return child.is_new();
-        };
 
         // set up pointer jumping
         pointer_jumping_t pjm(m_jump_width);
@@ -137,7 +122,7 @@ public:
                 // and create a new jump entry
                 for(size_t i = 0; i < pjm.jump_buffer_size() - 1; i++) {
                     uliteral_t const bc = pjm.jump_buffer(i);
-                    bool is_new_node = find_or_insert(bc);
+                    bool is_new_node = lz_state.dict_find_or_insert(node, bc);
                     if (is_new_node) {
                         // we got a new trie node in the middle of the
                         // jump buffer, restart the jump buffer search
@@ -151,7 +136,7 @@ public:
                     // is also the node the new jump pointer jumps to.
                     size_t i = pjm.jump_buffer_size() - 1;
                     uliteral_t const bc = pjm.jump_buffer(i);
-                    bool is_new_node = find_or_insert(bc);
+                    bool is_new_node = lz_state.dict_find_or_insert(node, bc);
 
                     // the next time we will skip over this through the jump pointer
                     DCHECK(is_new_node);
@@ -169,7 +154,7 @@ public:
         // process chars from last incomplete jump buffer
         for(size_t i = 0; i < pjm.jump_buffer_size(); i++) {
             uliteral_t const bc = pjm.jump_buffer(i);
-            bool is_new_node = find_or_insert(bc);
+            bool is_new_node = lz_state.dict_find_or_insert(node, bc);
             if (is_new_node) {
                 lz_state.reset_traverse_state(bc);
             }

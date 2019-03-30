@@ -10,8 +10,7 @@
 #include <tudocomp/compressors/lz_trie/TernaryTrie.hpp>
 #include <tudocomp/coders/BinaryCoder.hpp>
 
-namespace tdc {
-namespace lz_common {
+namespace tdc {namespace lz_common {
 
 template <typename lz_algo_t, typename coder_t, typename dict_t>
 class BaseLZCompressor: public Compressor {
@@ -87,32 +86,18 @@ public:
         lz_state_t lz_state { factor_count, coder, dict, stats };
         node_t const& node = lz_state.get_current_node();
 
-        // set up initial search nodes
+        // set up initial state for trie search
         lz_state.reset_dict();
         bool early_exit = lz_state.initialize_traverse_state(is);
         if (early_exit) return;
-        auto find_or_insert = [&dict, &lz_state, &factor_count, &node](uliteral_t c) {
-            // advance trie state with the next read character
-            dict.signal_character_read();
-            node_t child = dict.find_or_insert(node, c);
-
-            if(child.is_new()) {
-                // we found a leaf, output a factor
-                lz_state.emit_factor(node.id(), c);
-            }
-
-            // traverse further
-            lz_state.traverse_to_child_node(child);
-
-            return child.is_new();
-        };
 
         // main loop
         char c;
         while(is.get(c)) {
-            bool is_new_node = find_or_insert(static_cast<uliteral_t>(c));
+            uliteral_t bc = static_cast<uliteral_t>(c);
+            bool is_new_node = lz_state.dict_find_or_insert(node, bc);
             if (is_new_node) {
-                lz_state.reset_traverse_state(static_cast<uliteral_t>(c));
+                lz_state.reset_traverse_state(bc);
             }
         }
 
