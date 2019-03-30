@@ -104,8 +104,7 @@ public:
 
         // set up pointer jumping
         pointer_jumping_t pjm { lz_state, m_jump_width };
-        node_t const& node = lz_state.get_current_node();
-        pjm.reset_buffer(node.id());
+        pjm.reset_buffer();
 
         // main loop
         char c;
@@ -114,7 +113,7 @@ public:
             if (action.buffer_full_and_found()) {
                 // we can jump ahead
                 lz_state.set_traverse_state(action.traverse_state());
-                pjm.reset_buffer(node.id());
+                pjm.reset_buffer();
             } else if (action.buffer_full_and_not_found()) {
                 // we need to manually add to the trie,
                 // and create a new jump entry
@@ -125,7 +124,7 @@ public:
                         // we got a new trie node in the middle of the
                         // jump buffer, restart the jump buffer search
                         lz_state.reset_traverse_state(bc);
-                        pjm.shift_buffer(i + 1, node.id());
+                        pjm.shift_buffer(i + 1);
                         goto continue_while;
                     }
                 }
@@ -142,7 +141,7 @@ public:
                     pjm.insert_jump_buffer(lz_state.get_traverse_state());
 
                     lz_state.reset_traverse_state(bc);
-                    pjm.reset_buffer(node.id());
+                    pjm.reset_buffer();
                 }
             } else {
                 // read next char...

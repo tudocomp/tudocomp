@@ -15,8 +15,8 @@ public:
     using traverse_state_t = typename pj_trie_t::traverse_state_t;
 
     inline PointerJumping(lz_state_t& lz_state, size_t jump_width):
-        m_lz_state(lz_state),
         pj_trie_t(jump_width),
+        m_lz_state(lz_state),
         m_jump_width(jump_width)
     {}
 
@@ -63,7 +63,8 @@ public:
         }
     }
 
-    inline void shift_buffer(size_t elements, lz_trie::factorid_t parent_node) {
+    inline void shift_buffer(size_t elements) {
+        lz_trie::factorid_t parent_node = m_lz_state.get_current_node().id();
         size_t remaining = m_jump_width - elements;
         for(size_t i = 0; i < remaining; i++) {
             jump_buffer(i) = jump_buffer(i + elements);
@@ -72,7 +73,8 @@ public:
         this->set_parent_node(m_jump_buffer_handle, parent_node);
     }
 
-    inline void reset_buffer(lz_trie::factorid_t parent_node) {
+    inline void reset_buffer() {
+        lz_trie::factorid_t parent_node = m_lz_state.get_current_node().id();
         m_jump_buffer_size = 0;
         this->set_parent_node(m_jump_buffer_handle, parent_node);
     }
