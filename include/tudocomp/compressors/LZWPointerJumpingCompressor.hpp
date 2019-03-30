@@ -32,24 +32,32 @@ private:
         IF_STATS(size_t total_factor_count = 0);
     };
 
-    struct lz_algo_t {
-        using step_state_t = node_t;
-
+    struct lz_algo_common_t {
         size_t& m_factor_count;
         encoder_t& m_coder;
         dict_t& m_dict;
         stats_t& m_stats;
 
-        inline lz_algo_t(size_t& factor_count,
-                         encoder_t& coder,
-                         dict_t& dict,
-                         stats_t& stats):
+        inline lz_algo_common_t(size_t& factor_count,
+                                encoder_t& coder,
+                                dict_t& dict,
+                                stats_t& stats):
            m_factor_count(factor_count),
            m_coder(coder),
            m_dict(dict),
            m_stats(stats) {}
-        lz_algo_t(lz_algo_t const&) = delete;
-        lz_algo_t& operator=(lz_algo_t const&) = delete;
+        lz_algo_common_t(lz_algo_common_t const&) = delete;
+        lz_algo_common_t& operator=(lz_algo_common_t const&) = delete;
+    };
+
+    struct lz_algo_t: public lz_algo_common_t {
+        using lz_algo_common_t::lz_algo_common_t;
+        using lz_algo_common_t::m_factor_count;
+        using lz_algo_common_t::m_coder;
+        using lz_algo_common_t::m_dict;
+        using lz_algo_common_t::m_stats;
+
+        using step_state_t = node_t;
 
         inline void emit_factor(lz_trie::factorid_t node, uliteral_t c) {
             m_coder.encode(node, Range(m_factor_count + ULITERAL_MAX + 1));
