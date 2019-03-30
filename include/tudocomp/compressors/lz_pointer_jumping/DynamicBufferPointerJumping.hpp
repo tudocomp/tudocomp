@@ -10,7 +10,7 @@ namespace tdc {namespace lz_pointer_jumping {
 template<typename lz_state_type>
 class DynamicBufferPointerJumping {
 public:
-    static const size_t MAX_JUMP_WIDTH = !0;
+    static const size_t MAX_JUMP_WIDTH = ~0ull;
     using lz_state_t = lz_state_type;
     using traverse_state_t = typename lz_state_t::traverse_state_t;
 private:
