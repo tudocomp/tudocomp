@@ -16,7 +16,7 @@
 #include <tudocomp/compressors/lz_trie/TernaryTrie.hpp>
 #include <tudocomp/coders/BinaryCoder.hpp>
 
-#include <tudocomp/compressors/lz_common/BaseLzAlgoState.hpp>
+#include <tudocomp/compressors/lz_common/Lz78AlgoState.hpp>
 #include <tudocomp/compressors/lz_pointer_jumping/FixedBufferPointerJumping.hpp>
 #include <tudocomp/compressors/lz_pointer_jumping/PointerJumping.hpp>
 
@@ -34,73 +34,7 @@ private:
         IF_STATS(size_t total_factor_count = 0);
     };
 
-    using lz_algo_common_t = lz_common::BaseLzAlgoState<encoder_t, dict_t, stats_t>;
-
-    struct lz_algo_t: public lz_algo_common_t {
-        using lz_algo_common_t::lz_algo_common_t;
-        using lz_algo_common_t::m_factor_count;
-        using lz_algo_common_t::m_coder;
-        using lz_algo_common_t::m_dict;
-        using lz_algo_common_t::m_stats;
-
-        struct traverse_state_t {
-            node_t parent;
-            node_t node;
-        };
-
-        traverse_state_t m_traverse_state;
-
-        inline bool initialize_traverse_state(std::istream& is) {
-            node_t node = m_dict.get_rootnode(0);
-            node_t parent = node; // parent of node, needed for the last factor
-            DCHECK_EQ(node.id(), 0U);
-            DCHECK_EQ(parent.id(), 0U);
-
-            m_traverse_state = { parent, node };
-
-            return false;
-        }
-        inline void reset_traverse_state(uliteral_t last_read_char) {
-            m_traverse_state.parent = m_dict.get_rootnode(0);
-            m_traverse_state.node = m_traverse_state.parent;
-            DCHECK_EQ(m_traverse_state.node.id(), 0U);
-            DCHECK_EQ(m_traverse_state.parent.id(), 0U);
-            DCHECK_EQ(m_factor_count+1, m_dict.size());
-        }
-        inline void traverse_to_child_node(node_t const& child) {
-            m_traverse_state.parent = m_traverse_state.node;
-            m_traverse_state.node = child;
-        }
-        inline node_t const& get_current_node() {
-            return m_traverse_state.node;
-        }
-        inline void set_traverse_state(traverse_state_t const& state) {
-            m_traverse_state = state;
-        }
-        inline traverse_state_t const& get_traverse_state() {
-            return m_traverse_state;
-        }
-        inline static constexpr size_t initial_dict_size() {
-            return 1;
-        }
-        inline void emit_factor(factorid_t node, uliteral_t c) {
-            lz78::encode_factor(m_coder, node, c, m_factor_count);
-            m_factor_count++;
-            IF_STATS(m_stats.total_factor_count++);
-            // std::cout << "FACTOR (" << node_id << ", " << c << ")" << std::endl;
-        }
-        inline void reset_dict() {
-            m_dict.clear();
-            node_t const node = m_dict.add_rootnode(0);
-            DCHECK_EQ(node.id(), m_dict.size() - 1);
-            DCHECK_EQ(node.id(), 0U);
-        };
-        inline void end_of_input(uliteral_t last_read_char) {
-            if(m_traverse_state.node.id() != 0) {
-                emit_factor(m_traverse_state.parent.id(), last_read_char);
-            }
-        }
-    };
+    using lz_algo_t = lz_common::Lz78AlgoState<encoder_t, dict_t, stats_t>;
 
     using traverse_state_t = typename lz_algo_t::traverse_state_t;
 
