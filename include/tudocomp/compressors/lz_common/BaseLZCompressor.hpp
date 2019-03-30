@@ -6,17 +6,15 @@
 
 #include <tudocomp_stat/StatPhase.hpp>
 
-#include <tudocomp/compressors/lz_pointer_jumping/FixedBufferPointerJumping.hpp>
-#include <tudocomp/compressors/lz_pointer_jumping/PointerJumping.hpp>
-
 // For default params
 #include <tudocomp/compressors/lz_trie/TernaryTrie.hpp>
 #include <tudocomp/coders/BinaryCoder.hpp>
 
-namespace tdc {namespace lz_pointer_jumping {
+namespace tdc {
+namespace lz_common {
 
-template<typename lz_algo_t, typename coder_t, typename dict_t>
-class BaseLZPointerJumpingCompressor: public Compressor {
+template <typename lz_algo_t, typename coder_t, typename dict_t>
+class BaseLZCompressor: public Compressor {
     using factorid_t = lz_trie::factorid_t;
     using node_t = typename dict_t::node_t;
     using encoder_t = typename coder_t::Encoder;
@@ -28,22 +26,15 @@ class BaseLZPointerJumpingCompressor: public Compressor {
 
     using lz_state_t = typename lz_algo_t::template lz_state_t<encoder_t, dict_t, stats_t>;
     using traverse_state_t = typename lz_state_t::traverse_state_t;
-    using pointer_jumping_t = PointerJumping<FixedBufferPointerJumping<traverse_state_t>>;
 
     /// Max dictionary size before reset, 0 == unlimited
     const factorid_t m_dict_max_size {0};
 
-    /// Pointer Jumping jump width.
-    const size_t m_jump_width {1};
-
 public:
-    inline BaseLZPointerJumpingCompressor(Config&& cfg):
+    inline BaseLZCompressor(Config&& cfg):
         Compressor(std::move(cfg)),
-        m_dict_max_size(this->config().param("dict_size").as_uint()),
-        m_jump_width(this->config().param("jump_width").as_uint())
+        m_dict_max_size(this->config().param("dict_size").as_uint())
     {
-        CHECK_GE(m_jump_width, 1);
-        CHECK_LE(m_jump_width, pointer_jumping_t::MAX_JUMP_WIDTH);
         CHECK_EQ(m_dict_max_size, 0) << "dictionary resets are currently not supported";
         // TODO: need to fix and include this code fragment for dictionary resets
         /*
@@ -72,9 +63,6 @@ public:
             "the maximum size of the dictionary's backing storage before it "
             "gets reset (0 = unlimited)"
         ).primitive(0);
-        m.param("jump_width",
-            "jump width of the pointer jumping optimization"
-        ).primitive(2);
         return m;
     }
 
@@ -119,59 +107,12 @@ public:
             return child.is_new();
         };
 
-        // set up pointer jumping
-        pointer_jumping_t pjm(m_jump_width);
-        pjm.reset_buffer(node.id());
-
         // main loop
         char c;
-        continue_while: while(is.get(c)) {
-            auto action = pjm.on_insert_char(static_cast<uliteral_t>(c));
-            if (action.buffer_full_and_found()) {
-                // we can jump ahead
-                lz_state.set_traverse_state(action.traverse_state());
-
-                pjm.reset_buffer(node.id());
-            } else if (action.buffer_full_and_not_found()) {
-                // we need to manually add to the trie,
-                // and create a new jump entry
-                for(size_t i = 0; i < pjm.jump_buffer_size() - 1; i++) {
-                    uliteral_t const bc = pjm.jump_buffer(i);
-                    bool is_new_node = find_or_insert(bc);
-                    if (is_new_node) {
-                        // we got a new trie node in the middle of the
-                        // jump buffer, restart the jump buffer search
-                        lz_state.reset_traverse_state(bc);
-                        pjm.shift_buffer(i + 1, node.id());
-                        goto continue_while;
-                    }
-                }
-                {
-                    // the child node for the last char in the buffer
-                    // is also the node the new jump pointer jumps to.
-                    size_t i = pjm.jump_buffer_size() - 1;
-                    uliteral_t const bc = pjm.jump_buffer(i);
-                    bool is_new_node = find_or_insert(bc);
-
-                    // the next time we will skip over this through the jump pointer
-                    DCHECK(is_new_node);
-
-                    pjm.insert_jump_buffer(lz_state.get_traverse_state());
-
-                    lz_state.reset_traverse_state(bc);
-                    pjm.reset_buffer(node.id());
-                }
-            } else {
-                // read next char...
-            }
-        }
-
-        // process chars from last incomplete jump buffer
-        for(size_t i = 0; i < pjm.jump_buffer_size(); i++) {
-            uliteral_t const bc = pjm.jump_buffer(i);
-            bool is_new_node = find_or_insert(bc);
+        while(is.get(c)) {
+            bool is_new_node = find_or_insert(static_cast<uliteral_t>(c));
             if (is_new_node) {
-                lz_state.reset_traverse_state(bc);
+                lz_state.reset_traverse_state(static_cast<uliteral_t>(c));
             }
         }
 
