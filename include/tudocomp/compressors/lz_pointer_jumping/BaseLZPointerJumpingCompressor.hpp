@@ -7,6 +7,7 @@
 #include <tudocomp_stat/StatPhase.hpp>
 
 #include <tudocomp/compressors/lz_pointer_jumping/FixedBufferPointerJumping.hpp>
+#include <tudocomp/compressors/lz_pointer_jumping/DynamicBufferPointerJumping.hpp>
 #include <tudocomp/compressors/lz_pointer_jumping/PointerJumping.hpp>
 
 // For default params
@@ -27,7 +28,7 @@ class BaseLZPointerJumpingCompressor: public Compressor {
     };
 
     using lz_state_t = typename lz_algo_t::template lz_state_t<encoder_t, dict_t, stats_t>;
-    using pointer_jumping_t = PointerJumping<FixedBufferPointerJumping<lz_state_t>>;
+    using pointer_jumping_t = PointerJumping<DynamicBufferPointerJumping<lz_state_t>>;
 
     /// Max dictionary size before reset, 0 == unlimited
     const factorid_t m_dict_max_size {0};

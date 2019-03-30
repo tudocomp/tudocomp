@@ -119,7 +119,7 @@ public:
     inline void set_parent_node(jump_buffer_handle& handle, lz_trie::factorid_t node) {
         handle.node(node);
     }
-    inline lz_trie::factorid_t get_parent_node(jump_buffer_handle& handle) const {
+    inline lz_trie::factorid_t get_parent_node(jump_buffer_handle const& handle) const {
         return handle.node();
     }
 
