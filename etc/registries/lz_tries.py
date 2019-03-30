@@ -120,6 +120,8 @@ tdc.compressors = [
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
     AlgorithmConfig(name="LZ78Compressor", header="compressors/LZ78Compressor.hpp", sub=[universal_coders, lz_trie]),
     AlgorithmConfig(name="LZWCompressor", header="compressors/LZWCompressor.hpp", sub=[universal_coders, lz_trie]),
+    AlgorithmConfig(name="LZ78PointerJumpingCompressor", header="compressors/LZ78PointerJumpingCompressor.hpp", sub=[universal_coders, lz_trie]),
+    AlgorithmConfig(name="LZWPointerJumpingCompressor", header="compressors/LZWPointerJumpingCompressor.hpp", sub=[universal_coders, lz_trie]),
     AlgorithmConfig(name="NoopCompressor", header="compressors/NoopCompressor.hpp"),
     AlgorithmConfig(name="ChainCompressor", header="compressors/ChainCompressor.hpp"),
     AlgorithmConfig(name="DividingCompressor", header="compressors/DividingCompressor.hpp", sub=[dividing_strat]),

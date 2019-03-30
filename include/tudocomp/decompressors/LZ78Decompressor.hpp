@@ -10,8 +10,11 @@ namespace tdc {
 template <typename coder_t>
 class LZ78Decompressor : public Decompressor {
 private:
-    std::vector<lz_trie::factorid_t> indices;
+    std::vector<lz_common::factorid_t> indices;
     std::vector<uliteral_t> literals;
+
+    /// Max dictionary size before reset, 0 == unlimited
+    const lz_common::factorid_t m_dict_max_size {0};
 
 public:
     inline static Meta meta() {
@@ -25,7 +28,10 @@ public:
         return m;
     }
 
-    using Decompressor::Decompressor;
+    inline LZ78Decompressor(Config&& cfg):
+        Decompressor(std::move(cfg)),
+        m_dict_max_size(this->config().param("dict_size").as_uint())
+    {}
 
     virtual void decompress(Input& input, Output& output) override final {
         auto out = output.as_stream();
@@ -35,7 +41,7 @@ public:
         uint64_t factor_count = 0;
 
         while (!decoder.eof()) {
-            const lz_trie::factorid_t index = decoder.template decode<lz_trie::factorid_t>(Range(factor_count));
+            const lz_common::factorid_t index = decoder.template decode<lz_common::factorid_t>(Range(factor_count));
             const uliteral_t chr = decoder.template decode<uliteral_t>(literal_r);
             decomp.decompress(index, chr, out);
             factor_count++;
