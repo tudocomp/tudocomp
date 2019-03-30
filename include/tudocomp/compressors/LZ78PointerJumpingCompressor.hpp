@@ -130,9 +130,6 @@ public:
 
         // set up lz algorithm state
         lz_algo_t lz_state { factor_count, coder, dict, stats };
-        auto new_factor = [&](uint64_t node_id, uliteral_t c) {
-            lz_state.emit_factor(node_id, c);
-        };
 
         // set up initial search nodes
         node_t node = dict.get_rootnode(0);
@@ -140,18 +137,18 @@ public:
         DCHECK_EQ(node.id(), 0U);
         DCHECK_EQ(parent.id(), 0U);
         auto add_char_to_trie = [&dict,
-                                 &new_factor,
+                                 &lz_state,
                                  &factor_count,
                                  &node,
                                  &parent](uliteral_t c)
         {
             // advance trie state with the next read character
             dict.signal_character_read();
-            node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
+            node_t child = dict.find_or_insert(node, c);
 
             if(child.is_new()) {
                 // we found a leaf, output a factor
-                new_factor(node.id(), static_cast<uliteral_t>(c));
+                lz_state.emit_factor(node.id(), c);
             } else {
                 // traverse further
                 parent = node;
@@ -226,7 +223,7 @@ public:
 
         // take care of left-overs. We do not assume that the stream has a sentinel
         if(node.id() != 0) {
-            new_factor(parent.id(), static_cast<uliteral_t>(c));
+            lz_state.emit_factor(parent.id(), static_cast<uliteral_t>(c));
         }
 
         IF_STATS(
