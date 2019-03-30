@@ -109,6 +109,7 @@ private:
         SmallFixedStringEq
     > m_jump_pointer_map;
 
+    SmallFixedString m_working_buffer;
 public:
     using jump_buffer_handle = SmallFixedString;
 
@@ -153,6 +154,9 @@ public:
     }
     inline void insert(jump_buffer_handle const& key, traverse_state_t const& val) {
         m_jump_pointer_map.insert({key, val});
+    }
+    inline jump_buffer_handle get_working_buffer() const {
+        return m_working_buffer;
     }
 };
 

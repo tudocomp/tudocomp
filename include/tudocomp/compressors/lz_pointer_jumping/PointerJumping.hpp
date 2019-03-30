@@ -17,7 +17,8 @@ public:
     inline PointerJumping(lz_state_t& lz_state, size_t jump_width):
         pj_trie_t(jump_width),
         m_lz_state(lz_state),
-        m_jump_width(jump_width)
+        m_jump_width(jump_width),
+        m_jump_buffer_handle(this->get_working_buffer())
     {}
 
     inline uliteral_t& jump_buffer(size_t i) {
@@ -104,8 +105,9 @@ public:
     }
 private:
     lz_state_t&        m_lz_state;
-    size_t             m_jump_width = 0;
+    size_t             m_jump_width;
     jump_buffer_handle m_jump_buffer_handle;
+
     size_t             m_jump_buffer_size = 0;
 };
 
