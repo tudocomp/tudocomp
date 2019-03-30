@@ -120,8 +120,7 @@ private:
     using traverse_state_t = typename lz_algo_t::traverse_state_t;
 
     using pointer_jumping_t =
-        lz_pointer_jumping::PointerJumping<traverse_state_t,
-                                           lz_pointer_jumping::FixedBufferPointerJumping<traverse_state_t>>;
+        lz_pointer_jumping::PointerJumping<lz_pointer_jumping::FixedBufferPointerJumping<traverse_state_t>>;
 
     /// Max dictionary size before reset, 0 == unlimited
     const factorid_t m_dict_max_size {0};
@@ -183,11 +182,7 @@ public:
         lz_state.reset_dict();
         bool early_exit = lz_state.initialize_traverse_state(is);
         if (early_exit) return;
-        auto add_char_to_trie = [&dict,
-                                 &lz_state,
-                                 &factor_count,
-                                 &node](uliteral_t c)
-        {
+        auto find_or_insert = [&dict, &lz_state, &factor_count, &node](uliteral_t c) {
             // advance trie state with the next read character
             dict.signal_character_read();
             node_t child = dict.find_or_insert(node, c);
@@ -200,7 +195,7 @@ public:
             // traverse further
             lz_state.traverse_to_child_node(child);
 
-            return child;
+            return child.is_new();
         };
 
         // set up pointer jumping
@@ -213,8 +208,7 @@ public:
             auto action = pjm.on_insert_char(static_cast<uliteral_t>(c));
             if (action.buffer_full_and_found()) {
                 // we can jump ahead
-                auto entry = action.entry();
-                lz_state.set_traverse_state(entry.get());
+                lz_state.set_traverse_state(action.traverse_state());
 
                 pjm.reset_buffer(node.id());
             } else if (action.buffer_full_and_not_found()) {
@@ -222,10 +216,10 @@ public:
                 // and create a new jump entry
                 for(size_t i = 0; i < pjm.jump_buffer_size() - 1; i++) {
                     uliteral_t const bc = pjm.jump_buffer(i);
-                    auto child = add_char_to_trie(bc);
-                    if (child.is_new()) {
-                        // we got a new trie node in the middle of the jump buffer,
-                        // restart the jump buffer search
+                    bool is_new_node = find_or_insert(bc);
+                    if (is_new_node) {
+                        // we got a new trie node in the middle of the
+                        // jump buffer, restart the jump buffer search
                         lz_state.reset_traverse_state(bc);
                         pjm.shift_buffer(i + 1, node.id());
                         goto continue_while;
@@ -233,12 +227,13 @@ public:
                 }
                 {
                     // the child node for the last char in the buffer
-                    // is also the target node for the new jump pointer
-                    uliteral_t const bc = pjm.jump_buffer(pjm.jump_buffer_size() - 1);
-                    auto child = add_char_to_trie(bc);
+                    // is also the node the new jump pointer jumps to.
+                    size_t i = pjm.jump_buffer_size() - 1;
+                    uliteral_t const bc = pjm.jump_buffer(i);
+                    bool is_new_node = find_or_insert(bc);
 
                     // the next time we will skip over this through the jump pointer
-                    DCHECK(child.is_new());
+                    DCHECK(is_new_node);
 
                     pjm.insert_jump_buffer(lz_state.get_traverse_state());
 
@@ -253,8 +248,8 @@ public:
         // process chars from last incomplete jump buffer
         for(size_t i = 0; i < pjm.jump_buffer_size(); i++) {
             uliteral_t const bc = pjm.jump_buffer(i);
-            auto child = add_char_to_trie(bc);
-            if (child.is_new()) {
+            bool is_new_node = find_or_insert(bc);
+            if (is_new_node) {
                 lz_state.reset_traverse_state(bc);
             }
         }

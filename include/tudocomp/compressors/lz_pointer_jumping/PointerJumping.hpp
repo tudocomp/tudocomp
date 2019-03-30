@@ -7,7 +7,7 @@
 
 namespace tdc {namespace lz_pointer_jumping {
 
-template<typename value_type, typename pj_trie_t>
+template<typename pj_trie_t>
 class PointerJumping: public pj_trie_t {
     using jump_buffer_handle = typename pj_trie_t::jump_buffer_handle;
 
@@ -15,6 +15,7 @@ class PointerJumping: public pj_trie_t {
     jump_buffer_handle m_jump_buffer_handle;
     size_t             m_jump_buffer_size = 0;
 public:
+    using traverse_state_t = typename pj_trie_t::traverse_state_t;
 
     inline PointerJumping(size_t jump_width):
         pj_trie_t(jump_width),
@@ -46,8 +47,9 @@ public:
         inline bool buffer_full_and_not_found() const {
             return m_was_full && (!m_result.found());
         }
-        inline typename pj_trie_t::result_t entry() const {
-            return m_result;
+        inline traverse_state_t traverse_state() const {
+            DCHECK(buffer_full_and_found());
+            return m_result.get();
         }
     };
     inline action_t on_insert_char(uliteral_t c) {
@@ -85,7 +87,7 @@ public:
         return this->find(m_jump_buffer_handle);
     }
 
-    inline void insert_jump_buffer(value_type const& val) {
+    inline void insert_jump_buffer(traverse_state_t const& val) {
         this->insert(m_jump_buffer_handle, val);
     }
 

@@ -7,10 +7,11 @@
 
 namespace tdc {namespace lz_pointer_jumping {
 
-template<typename value_type>
+template<typename traverse_state_type>
 class FixedBufferPointerJumping {
 public:
     static const size_t MAX_JUMP_WIDTH = 17;
+    using traverse_state_t = traverse_state_type;
 private:
 
     struct alignas(uint64_t) SmallFixedString {
@@ -102,7 +103,7 @@ private:
     };
     std::unordered_map<
         SmallFixedString,
-        value_type,
+        traverse_state_t,
         SmallFixedStringHash,
         SmallFixedStringEq
     > m_jump_pointer_map;
@@ -135,7 +136,7 @@ public:
             return m_iter != m_map->end();
         }
 
-        inline value_type const& get() {
+        inline traverse_state_t const& get() const {
             DCHECK(found());
             return m_iter->second;
         }
@@ -149,7 +150,7 @@ public:
     inline result_t find(jump_buffer_handle const& key) const {
         return result_t { m_jump_pointer_map, m_jump_pointer_map.find(key) };
     }
-    inline void insert(jump_buffer_handle const& key, value_type const& val) {
+    inline void insert(jump_buffer_handle const& key, traverse_state_t const& val) {
         m_jump_pointer_map.insert({key, val});
     }
 };
