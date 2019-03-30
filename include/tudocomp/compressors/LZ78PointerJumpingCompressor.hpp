@@ -87,6 +87,12 @@ private:
             m_traverse_state.parent = m_traverse_state.node;
             m_traverse_state.node = child;
         }
+        inline void set_traverse_state(traverse_state_t const& state) {
+            m_traverse_state = state;
+        }
+        inline traverse_state_t const& get_traverse_state() {
+            return m_traverse_state;
+        }
         inline static constexpr size_t initial_dict_size() {
             return 1;
         }
@@ -141,7 +147,7 @@ public:
         ).primitive(0);
         m.param("jump_width",
             "jump width of the pointer jumping optimization"
-        ).primitive(4);
+        ).primitive(2);
         return m;
     }
 
@@ -183,10 +189,10 @@ public:
             if(child.is_new()) {
                 // we found a leaf, output a factor
                 lz_state.emit_factor(node.id(), c);
-            } else {
-                // traverse further
-                lz_state.traverse_to_child_node(child);
             }
+
+            // traverse further
+            lz_state.traverse_to_child_node(child);
 
             return child;
         };
@@ -202,8 +208,7 @@ public:
             if (action.buffer_full_and_found()) {
                 // we can jump ahead
                 auto entry = action.entry();
-                node = entry.get().node;
-                parent = entry.get().parent;
+                lz_state.set_traverse_state(entry.get());
 
                 pjm.reset_buffer(node.id());
             } else if (action.buffer_full_and_not_found()) {
@@ -229,7 +234,7 @@ public:
                     // the next time we will skip over this through the jump pointer
                     DCHECK(child.is_new());
 
-                    pjm.insert_jump_buffer({node, child});
+                    pjm.insert_jump_buffer(lz_state.get_traverse_state());
 
                     lz_state.reset_traverse_state(bc);
                     pjm.reset_buffer(node.id());
