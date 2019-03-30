@@ -5,11 +5,9 @@
 
 namespace tdc {
 namespace lz_pointer_jumping {
-    using namespace lz_common;
-
     struct LZWPointerJumping {
         template<typename encoder_t, typename dict_t, typename stats_t>
-        using lz_state_t = LZWAlgoState<encoder_t, dict_t, stats_t>;
+        using lz_state_t = lz_common::LZWAlgoState<encoder_t, dict_t, stats_t>;
 
         template<typename coder_t>
         using Decompressor = LZWDecompressor<coder_t>;
@@ -27,7 +25,7 @@ namespace lz_pointer_jumping {
 }
 
 template <typename coder_t, typename dict_t>
-using LZWPointerJumpingCompressor
-    = lz_pointer_jumping::BaseLZPointerJumpingCompressor<lz_pointer_jumping::LZWPointerJumping, coder_t, dict_t>;
+using LZWPointerJumpingCompressor = lz_pointer_jumping::BaseLZPointerJumpingCompressor<
+    lz_pointer_jumping::LZWPointerJumping, coder_t, dict_t>;
 
 }//ns
