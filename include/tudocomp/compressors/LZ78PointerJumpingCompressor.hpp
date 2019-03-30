@@ -62,6 +62,20 @@ private:
             node_t parent;
             node_t node;
         };
+
+        step_state_t m_step_state;
+
+        inline bool initialize_step_state(std::istream& is) {
+            node_t node = m_dict.get_rootnode(0);
+            node_t parent = node; // parent of node, needed for the last factor
+            DCHECK_EQ(node.id(), 0U);
+            DCHECK_EQ(parent.id(), 0U);
+
+            m_step_state = { parent, node };
+
+            return false;
+        }
+
         inline static constexpr size_t initial_dict_size() {
             return 1;
         }
@@ -143,10 +157,10 @@ public:
 
         // set up initial search nodes
         lz_state.reset_dict();
-        node_t node = dict.get_rootnode(0);
-        node_t parent = node; // parent of node, needed for the last factor
-        DCHECK_EQ(node.id(), 0U);
-        DCHECK_EQ(parent.id(), 0U);
+        bool early_exit = lz_state.initialize_step_state(is);
+        if (early_exit) return;
+        node_t& node = lz_state.m_step_state.node;
+        node_t& parent = lz_state.m_step_state.parent;
         auto add_char_to_trie = [&dict,
                                  &lz_state,
                                  &factor_count,

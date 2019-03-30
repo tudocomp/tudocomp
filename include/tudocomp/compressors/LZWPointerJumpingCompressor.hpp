@@ -59,10 +59,22 @@ private:
         using lz_algo_common_t::m_stats;
 
         using step_state_t = node_t;
+
+        step_state_t m_step_state;
+
+        inline bool initialize_step_state(std::istream& is) {
+            char c;
+            if(!is.get(c)) return true;
+            node_t node = m_dict.get_rootnode(static_cast<uliteral_t>(c));
+
+            m_step_state = node;
+
+            return false;
+        }
+
         inline static constexpr size_t initial_dict_size() {
             return ULITERAL_MAX+1;
         }
-
         inline void emit_factor(factorid_t node, uliteral_t c) {
             m_coder.encode(node, Range(m_factor_count + ULITERAL_MAX + 1));
             m_factor_count++;
@@ -143,8 +155,9 @@ public:
 
         // set up initial search nodes
         lz_state.reset_dict();
-        if(!is.get(c)) return;
-        node_t node = dict.get_rootnode(static_cast<uliteral_t>(c));
+        bool early_exit = lz_state.initialize_step_state(is);
+        if (early_exit) return;
+        node_t& node = lz_state.m_step_state;
         auto add_char_to_trie = [&dict,
                                  &lz_state,
                                  &factor_count,
