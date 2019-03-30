@@ -7,12 +7,15 @@
 
 namespace tdc {namespace lz_pointer_jumping {
 
+static constexpr bool PRINT_DEBUG_TRANSITIONS = false;
+
 template<typename pj_trie_t>
 class PointerJumping: public pj_trie_t {
     using jump_buffer_handle = typename pj_trie_t::jump_buffer_handle;
 public:
     using lz_state_t = typename pj_trie_t::lz_state_t;
     using traverse_state_t = typename pj_trie_t::traverse_state_t;
+    using factorid_t = lz_trie::factorid_t;
 
     inline PointerJumping(lz_state_t& lz_state, size_t jump_width):
         pj_trie_t(jump_width),
@@ -29,7 +32,7 @@ public:
         DCHECK_LT(i, m_jump_width);
         return this->get_buffer(m_jump_buffer_handle)[i];
     }
-    inline lz_trie::factorid_t jump_buffer_parent_node() {
+    inline factorid_t jump_buffer_parent_node() const {
         return this->get_parent_node(m_jump_buffer_handle);
     }
     inline size_t jump_buffer_size() const {
@@ -58,26 +61,32 @@ public:
 
         if(jump_buffer_full()) {
             auto entry = find_jump_buffer();
+            if (entry.found()) {
+                debug_transition(std::cout, entry.get(), false);
+            }
             return action_t { true, entry };
         } else {
+            debug_open_transition(std::cout);
             return action_t { false, typename pj_trie_t::result_t() };
         }
     }
 
     inline void shift_buffer(size_t elements) {
-        lz_trie::factorid_t parent_node = m_lz_state.get_current_node().id();
+        factorid_t parent_node = current_lz_node_id();
         size_t remaining = m_jump_width - elements;
         for(size_t i = 0; i < remaining; i++) {
             jump_buffer(i) = jump_buffer(i + elements);
         }
         m_jump_buffer_size -= elements;
         this->set_parent_node(m_jump_buffer_handle, parent_node);
+        debug_open_transition(std::cout);
     }
 
     inline void reset_buffer() {
-        lz_trie::factorid_t parent_node = m_lz_state.get_current_node().id();
+        factorid_t parent_node = current_lz_node_id();
         m_jump_buffer_size = 0;
         this->set_parent_node(m_jump_buffer_handle, parent_node);
+        debug_open_transition(std::cout);
     }
 
     inline bool jump_buffer_full() const {
@@ -89,19 +98,47 @@ public:
     }
 
     inline void insert_jump_buffer(traverse_state_t const& val) {
+        debug_transition(std::cout, val, true);
         this->insert(m_jump_buffer_handle, val);
     }
 
     // DEBUG printing function
 
     inline void debug_print_buffer(std::ostream& out, jump_buffer_handle const& handle, size_t size) const {
+        if (!PRINT_DEBUG_TRANSITIONS) return;
+
         for(size_t i = 0; i < size; i++) {
             out << this->get_buffer(handle)[i];
         }
     }
 
     inline void debug_print_buffer(std::ostream& out) const {
+        if (!PRINT_DEBUG_TRANSITIONS) return;
+
         debug_print_buffer(out, m_jump_buffer_handle, m_jump_buffer_size);
+    }
+
+    inline void debug_open_transition(std::ostream& out) const {
+        if (!PRINT_DEBUG_TRANSITIONS) return;
+
+        factorid_t parent_node = jump_buffer_parent_node();
+
+        out << "(" << parent_node << ") -[";
+        debug_print_buffer(out);
+        out << "..." << std::endl;
+    }
+    inline void debug_transition(std::ostream& out, traverse_state_t const& to, bool is_new) const {
+        if (!PRINT_DEBUG_TRANSITIONS) return;
+
+        factorid_t parent_node = jump_buffer_parent_node();
+
+        out << "(" << parent_node << ") -[";
+        debug_print_buffer(out);
+        out << "]-> (" << m_lz_state.get_node(to).id() << ")" ;
+        if (is_new) {
+            out << "*";
+        }
+        out << std::endl;
     }
 private:
     lz_state_t&        m_lz_state;
@@ -109,6 +146,10 @@ private:
     jump_buffer_handle m_jump_buffer_handle;
 
     size_t             m_jump_buffer_size = 0;
+
+    inline factorid_t current_lz_node_id() const {
+        return m_lz_state.get_node(m_lz_state.get_traverse_state()).id();
+    }
 };
 
 }}

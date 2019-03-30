@@ -43,8 +43,8 @@ namespace tdc {namespace lz_common {
             m_traverse_state.parent = m_traverse_state.node;
             m_traverse_state.node = child;
         }
-        inline node_t const& get_current_node() {
-            return m_traverse_state.node;
+        inline node_t const& get_node(traverse_state_t const& state) const {
+            return state.node;
         }
         inline void set_traverse_state(traverse_state_t const& state) {
             m_traverse_state = state;
