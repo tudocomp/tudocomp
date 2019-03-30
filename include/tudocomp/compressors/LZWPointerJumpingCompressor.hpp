@@ -71,7 +71,9 @@ private:
 
             return false;
         }
-
+        inline void traverse_to_child_node(node_t const& child) {
+            m_traverse_state = child;
+        }
         inline static constexpr size_t initial_dict_size() {
             return ULITERAL_MAX+1;
         }
@@ -172,7 +174,7 @@ public:
                 lz_state.emit_factor(node.id(), c);
             } else {
                 // traverse further
-                node = child;
+                lz_state.traverse_to_child_node(child);
             }
 
             return child;

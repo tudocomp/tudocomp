@@ -75,7 +75,10 @@ private:
 
             return false;
         }
-
+        inline void traverse_to_child_node(node_t const& child) {
+            m_traverse_state.parent = m_traverse_state.node;
+            m_traverse_state.node = child;
+        }
         inline static constexpr size_t initial_dict_size() {
             return 1;
         }
@@ -164,8 +167,7 @@ public:
         auto add_char_to_trie = [&dict,
                                  &lz_state,
                                  &factor_count,
-                                 &node,
-                                 &parent](uliteral_t c)
+                                 &node](uliteral_t c)
         {
             // advance trie state with the next read character
             dict.signal_character_read();
@@ -176,8 +178,7 @@ public:
                 lz_state.emit_factor(node.id(), c);
             } else {
                 // traverse further
-                parent = node;
-                node = child;
+                lz_state.traverse_to_child_node(child);
             }
 
             return child;
