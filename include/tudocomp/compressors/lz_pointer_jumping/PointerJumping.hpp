@@ -66,12 +66,6 @@ public:
         }
     }
 
-    inline void reset_buffer(lz_trie::factorid_t parent_node) {
-        m_jump_buffer_size = 0;
-        this->set_parent_node(m_jump_buffer_handle, parent_node);
-        std::cout << "reset buffersize to 0, buffer node to " << parent_node << std::endl;
-    }
-
     inline void shift_buffer(size_t elements, lz_trie::factorid_t parent_node) {
         std::cout << "shift buffer by "<<elements<<" elements. before: \"";
         debug_print_buffer(std::cout);
@@ -88,6 +82,12 @@ public:
         debug_print_buffer(std::cout);
         std::cout << "\", node: " << parent_node;
         std::cout << std::endl;
+    }
+
+    inline void reset_buffer(lz_trie::factorid_t parent_node) {
+        m_jump_buffer_size = 0;
+        this->set_parent_node(m_jump_buffer_handle, parent_node);
+        std::cout << "reset buffersize to 0, buffer node to " << parent_node << std::endl;
     }
 
     inline bool jump_buffer_full() const {

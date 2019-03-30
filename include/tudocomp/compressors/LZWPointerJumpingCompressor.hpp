@@ -110,7 +110,7 @@ public:
             auto debug_print_traverse_mapping = [](auto node, auto c, auto child, char m) {
                 std::cout << "(" << node << ") -" << c << "-> (" << child << ")" << m << std::endl;
             };
-            std::cout << "add char '" << c << "' to trie" << std::endl;
+            //std::cout << "add char '" << c << "' to trie" << std::endl;
             // advance trie state with the next read character
             dict.signal_character_read();
             node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
@@ -135,49 +135,48 @@ public:
         // set up pointer jumping
         pointer_jumping_t pjm(m_jump_width);
         pjm.reset_buffer(node.id());
-        auto debug_print_current_jump_buffer_mapping = [&pjm, &node] (char m) {
+        auto debug_print_current_jump_buffer_mapping = [&pjm] (lz_trie::factorid_t to, char m) {
             std::cout << "(" << pjm.jump_buffer_parent_node() << ") -";
             std::cout << "[";
             pjm.debug_print_buffer(std::cout);
             std::cout << "]";
-            std::cout << "-> (" << node.id() << ")" << m << std::endl;
+            std::cout << "-> (" << to << ")" << m << std::endl;
         };
 
         // begin of main loop
         continue_while: while(is.get(c)) {
+            std::cout << std::endl;
             auto action = pjm.on_insert_char(static_cast<uliteral_t>(c));
             if (action.buffer_full_and_found()) {
                 // we can jump ahead
                 auto entry = action.entry();
                 node = entry.get();
-                debug_print_current_jump_buffer_mapping(' ');
+                debug_print_current_jump_buffer_mapping(node.id(), ' ');
 
                 pjm.reset_buffer(node.id());
             } else if (action.buffer_full_and_not_found()) {
                 // we need to manually add to the trie,
                 // and create a new jump entry
-                for(size_t i = 0; i < pjm.jump_buffer_size(); i++) {
+                for(size_t i = 0; i < pjm.jump_buffer_size() - 1; i++) {
                     auto child = add_char_to_trie(pjm.jump_buffer(i));
                     if (child.is_new()) {
-                        std::cout << "DEBUG: "
-                            <<"node=" << node.id()
-                            << ", child=" << child.id()
-                            << std::endl;
-
                         // we got a new trie node in the middle of the jump buffer,
                         // restart the jump buffer search
                         pjm.shift_buffer(i + 1, node.id());
                         goto continue_while;
                     }
                 }
-                //auto child = add_char_to_trie(pjm.jump_buffer(pjm.jump_buffer_size() - 1));
-                std::cout << "DEBUG: "
-                            <<"node=" << node.id()
-                            << std::endl;
+                {
+                    // the child node for the last char in the buffer
+                    // is also the target node for the new jump pointer
+                    size_t i = pjm.jump_buffer_size() - 1;
+                    auto child = add_char_to_trie(pjm.jump_buffer(i));
+                    DCHECK(child.is_new());
 
-                pjm.insert_jump_buffer(node);
-                debug_print_current_jump_buffer_mapping('*');
-                pjm.reset_buffer(node.id());
+                    pjm.insert_jump_buffer(child);
+                    debug_print_current_jump_buffer_mapping(child.id(), '*');
+                    pjm.reset_buffer(node.id());
+                }
             } else {
                 // read next char...
             }
