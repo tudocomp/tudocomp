@@ -1,6 +1,8 @@
 #pragma once
 
 #include <tudocomp/compressors/lz_trie/LZTrie.hpp>
+#include <tudocomp/compressors/lz78/LZ78Coding.hpp>
+#include <tudocomp/decompressors/LZ78Decompressor.hpp>
 #include "BaseLzAlgoState.hpp"
 
 namespace tdc {namespace lz_common {

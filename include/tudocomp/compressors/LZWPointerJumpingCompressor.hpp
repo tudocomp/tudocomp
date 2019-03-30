@@ -7,8 +7,7 @@
 #include <tudocomp/Compressor.hpp>
 #include <tudocomp/Range.hpp>
 
-#include <tudocomp/compressors/lzw/LZWFactor.hpp>
-#include <tudocomp/decompressors/LZWDecompressor.hpp>
+#include <tudocomp/compressors/lz_common/LZWAlgoState.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 
@@ -16,15 +15,35 @@
 #include <tudocomp/compressors/lz_trie/TernaryTrie.hpp>
 #include <tudocomp/coders/BinaryCoder.hpp>
 
-#include <tudocomp/compressors/lz_common/LZWAlgoState.hpp>
 #include <tudocomp/compressors/lz_pointer_jumping/FixedBufferPointerJumping.hpp>
 #include <tudocomp/compressors/lz_pointer_jumping/PointerJumping.hpp>
 
 namespace tdc {
+namespace lz_common {
+    struct LZWPointerJumping {
+        template<typename encoder_t, typename dict_t, typename stats_t>
+        using lz_state_t = LZWAlgoState<encoder_t, dict_t, stats_t>;
+
+        template<typename coder_t>
+        using Decompressor = LZWDecompressor<coder_t>;
+
+        inline static char const* meta_name() {
+            return "lzw_pj";
+        }
+        inline static char const* meta_desc() {
+            return "Computes the Lempel-Ziv-Welch factorization of the input.";
+        }
+        inline static char const* stat_phase_name() {
+            return "LZW Compression";
+        }
+    };
+}
 
 template<typename coder_t, typename dict_t>
 class LZWPointerJumpingCompressor: public Compressor {
 private:
+    using lz_algo_t = lz_common::LZWPointerJumping;
+
     using factorid_t = lz_trie::factorid_t;
     using node_t = typename dict_t::node_t;
     using encoder_t = typename coder_t::Encoder;
@@ -34,9 +53,9 @@ private:
         IF_STATS(size_t total_factor_count = 0);
     };
 
-    using lz_algo_t = lz_common::LZWAlgoState<encoder_t, dict_t, stats_t>;
+    using lz_state_t = typename lz_algo_t::lz_state_t<encoder_t, dict_t, stats_t>;
 
-    using traverse_state_t = typename lz_algo_t::traverse_state_t;
+    using traverse_state_t = typename lz_state_t::traverse_state_t;
 
     using pointer_jumping_t =
         lz_pointer_jumping::PointerJumping<lz_pointer_jumping::FixedBufferPointerJumping<traverse_state_t>>;
@@ -59,8 +78,9 @@ public:
     }
 
     inline static Meta meta() {
-        Meta m(Compressor::type_desc(), "lzw_pj",
-            "Computes the Lempel-Ziv-Welch factorization of the input.");
+        Meta m(Compressor::type_desc(),
+               lz_algo_t::meta_name(),
+               lz_algo_t::meta_desc());
         m.param("coder", "The output encoder.")
             .strategy<coder_t>(TypeDesc("coder"), Meta::Default<BinaryCoder>());
         m.param("lz_trie", "The trie data structure implementation.")
@@ -82,7 +102,7 @@ public:
         auto is = input.as_stream();
 
         // Stats
-        StatPhase phase("LZW Compression");
+        StatPhase phase(lz_algo_t::stat_phase_name());
         stats_t stats;
 
         size_t factor_count = 0;
@@ -91,10 +111,10 @@ public:
         encoder_t coder(config().sub_config("coder"), out, NoLiterals());
 
         // set up dictionary (the lz trie)
-        dict_t dict(config().sub_config("lz_trie"), n, reserved_size + lz_algo_t::initial_dict_size());
+        dict_t dict(config().sub_config("lz_trie"), n, reserved_size + lz_state_t::initial_dict_size());
 
         // set up lz algorithm state
-        lz_algo_t lz_state { factor_count, coder, dict, stats };
+        lz_state_t lz_state { factor_count, coder, dict, stats };
         node_t const& node = lz_state.get_current_node();
 
         // set up initial search nodes
@@ -190,7 +210,7 @@ public:
         // FIXME: construct AST and pass it
         std::stringstream cfg;
         cfg << "dict_size=" << to_string(m_dict_max_size);
-        return Algorithm::instance<LZWDecompressor<coder_t>>(cfg.str());
+        return Algorithm::instance<lz_algo_t::Decompressor<coder_t>>(cfg.str());
     }
 };
 
