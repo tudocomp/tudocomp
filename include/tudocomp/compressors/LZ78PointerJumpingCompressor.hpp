@@ -86,6 +86,9 @@ private:
             m_traverse_state.parent = m_traverse_state.node;
             m_traverse_state.node = child;
         }
+        inline node_t const& get_current_node() {
+            return m_traverse_state.node;
+        }
         inline void set_traverse_state(traverse_state_t const& state) {
             m_traverse_state = state;
         }
@@ -174,12 +177,12 @@ public:
 
         // set up lz algorithm state
         lz_algo_t lz_state { factor_count, coder, dict, stats };
+        node_t const& node = lz_state.get_current_node();
 
         // set up initial search nodes
         lz_state.reset_dict();
         bool early_exit = lz_state.initialize_traverse_state(is);
         if (early_exit) return;
-        node_t& node = lz_state.m_traverse_state.node;
         auto add_char_to_trie = [&dict,
                                  &lz_state,
                                  &factor_count,
