@@ -10,14 +10,12 @@ namespace tdc {namespace lz_pointer_jumping {
 template<typename pj_trie_t>
 class PointerJumping: public pj_trie_t {
     using jump_buffer_handle = typename pj_trie_t::jump_buffer_handle;
-
-    size_t             m_jump_width = 0;
-    jump_buffer_handle m_jump_buffer_handle;
-    size_t             m_jump_buffer_size = 0;
 public:
+    using lz_state_t = typename pj_trie_t::lz_state_t;
     using traverse_state_t = typename pj_trie_t::traverse_state_t;
 
-    inline PointerJumping(size_t jump_width):
+    inline PointerJumping(lz_state_t& lz_state, size_t jump_width):
+        m_lz_state(lz_state),
         pj_trie_t(jump_width),
         m_jump_width(jump_width)
     {}
@@ -102,6 +100,11 @@ public:
     inline void debug_print_buffer(std::ostream& out) const {
         debug_print_buffer(out, m_jump_buffer_handle, m_jump_buffer_size);
     }
+private:
+    lz_state_t&        m_lz_state;
+    size_t             m_jump_width = 0;
+    jump_buffer_handle m_jump_buffer_handle;
+    size_t             m_jump_buffer_size = 0;
 };
 
 }}

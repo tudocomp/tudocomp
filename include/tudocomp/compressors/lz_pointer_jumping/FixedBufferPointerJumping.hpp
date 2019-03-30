@@ -7,11 +7,12 @@
 
 namespace tdc {namespace lz_pointer_jumping {
 
-template<typename traverse_state_type>
+template<typename lz_state_type>
 class FixedBufferPointerJumping {
 public:
     static const size_t MAX_JUMP_WIDTH = 17;
-    using traverse_state_t = traverse_state_type;
+    using lz_state_t = lz_state_type;
+    using traverse_state_t = typename lz_state_t::traverse_state_t;
 private:
 
     struct alignas(uint64_t) SmallFixedString {

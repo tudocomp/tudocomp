@@ -27,8 +27,7 @@ class BaseLZPointerJumpingCompressor: public Compressor {
     };
 
     using lz_state_t = typename lz_algo_t::template lz_state_t<encoder_t, dict_t, stats_t>;
-    using traverse_state_t = typename lz_state_t::traverse_state_t;
-    using pointer_jumping_t = PointerJumping<FixedBufferPointerJumping<traverse_state_t>>;
+    using pointer_jumping_t = PointerJumping<FixedBufferPointerJumping<lz_state_t>>;
 
     /// Max dictionary size before reset, 0 == unlimited
     const factorid_t m_dict_max_size {0};
@@ -104,7 +103,7 @@ public:
         if (early_exit) return;
 
         // set up pointer jumping
-        pointer_jumping_t pjm(m_jump_width);
+        pointer_jumping_t pjm { lz_state, m_jump_width };
         node_t const& node = lz_state.get_current_node();
         pjm.reset_buffer(node.id());
 
@@ -115,7 +114,6 @@ public:
             if (action.buffer_full_and_found()) {
                 // we can jump ahead
                 lz_state.set_traverse_state(action.traverse_state());
-
                 pjm.reset_buffer(node.id());
             } else if (action.buffer_full_and_not_found()) {
                 // we need to manually add to the trie,
