@@ -106,6 +106,7 @@ lcpcomp_comp = [
 if config_match("^#define SDSL_FOUND 1"): # if SDSL is available
     lcpcomp_comp += [
         AlgorithmConfig(name="lcpcomp::PLCPStrategy", header="compressors/lcpcomp/compress/PLCPStrategy.hpp"),
+        AlgorithmConfig(name="lcpcomp::PLCPPeaksStrategy", header="compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp"),
     ]
 
 # lcpcomp factor decoding strategies ("dec")
@@ -135,7 +136,7 @@ long_common_strat = [
 
 ##### Export available compressors #####
 tdc.compressors = [
-    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_coders, lcpcomp_comp, textds_lcpcomp]),
+    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_bidirectional_coders, lcpcomp_comp, textds_lcpcomp]),
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
     AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[lzss_coders, textds_lcp]),
     AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[lzss_streaming_coders]),
