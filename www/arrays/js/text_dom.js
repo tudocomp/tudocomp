@@ -1,10 +1,12 @@
 var inField;
 var outField;
+var separatorField;
 var dataStructures;
 var options;
 
 var defaultStructures;
 var defaultOptions;
+var defaultSeparator;
 
 var updateRequested = true;
 var updateReady = true;
@@ -35,6 +37,10 @@ function updateHistoryInternal() {
     
     if(inText) newQuery = newQuery.set("text", inText);
     if(structsStr != defaultStructures) newQuery = newQuery.set("structures", structsStr);
+    
+    var sep = decodeWhitespaces(separatorField.value);
+    if(sep != defaultSeparator) newQuery = newQuery.set("sep", sep);
+    
     if(optsStr != defaultOptions) newQuery = newQuery.set("options", optsStr);
     
     window.history.replaceState("", "", window.location.pathname + newQuery.toString());
@@ -80,7 +86,7 @@ function updateWhitespaces() {
 
 var varText, varIndex, varSA, varISA, varPHI, varLCP, varPLCP, varPSI, varF, varBWT, varLF, varLPF, varSAIS, varLZ77, varLyndon;
 function updateArrays() {
-    
+    separatorField.value = encodeWhitespaces(separatorField.value);
     updateWhitespaces();
     if(options.enabled("whitespace"))
         varText = decodeWhitespaces(inField.value);
@@ -110,9 +116,7 @@ function updateArrays() {
         varLyndon = lyndonFact(varText, varISA, varBase);
     }
     
-    var sep = "";
-    if(options.enabled("comma")) sep += ",";
-    if(options.enabled("space")) sep += " ";
+    var sep = decodeWhitespaces(separatorField.value);
     
     var result = "";
     dataStructures.forEachEnabled(function(dsName) {
@@ -153,6 +157,7 @@ function initDragAndDrop(listEnabled, listDisabled) {
 window.onload = function () {
     inField = document.getElementById('textSource');
     outField = document.getElementById('arraysDestination');
+    separatorField = document.getElementById('separatorSource');
     structuresListEn = document.getElementById('qa-structures-enabled');
     structuresListDis = document.getElementById('qa-structures-disabled');
     
@@ -168,6 +173,9 @@ window.onload = function () {
     for(var i = 0; i < optionElements.length; i++) options.add(optionElements[i]);
     defaultOptions = options.getEnabled();
     
+    defaultSeparator = " ";
+    separatorField.value = encodeWhitespaces(defaultSeparator);
+    
     // parse configuration from GET url parameters
     var textquery = $.query.get("text").toString();
     if(textquery) inField.value = textquery;
@@ -175,10 +183,18 @@ window.onload = function () {
     if(queryStructures) dataStructures.setEnabled(queryStructures);
     var queryOptions = $.query.get("options").toString();
     if(queryOptions) options.setEnabled(queryOptions);    
-    
+    var sepfromquery = $.query.get("sep").toString();
+    if(sepfromquery) 
+        if(sepfromquery == "true") 
+            separatorField.value = ""; 
+        else 
+            separatorField.value = encodeWhitespaces(sepfromquery)
+
     // update output while typing
     inField.oninput = updateArrays;
     inField.onpropertychange = updateArrays;
+    separatorField.oninput = updateArrays;
+    separatorField.onpropertychange = updateArrays;
 
     updateArrays();
     updateHistoryInternal();
