@@ -107,6 +107,12 @@ body {
     font-size: 1em;
 }
 
+.qa-separator {
+    padding-left:.5em;
+    font-family: 'Source Code Pro', monospace;
+}
+
+
 .qa-structures {
     display: flex;
     flex-direction: column;
