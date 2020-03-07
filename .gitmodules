@@ -13,3 +13,9 @@
 [submodule "external/build_system"]
 	path = submodules/build_system
 	url = https://github.com/tudocomp/build_system
+[submodule "submodules/separate_chaining"]
+	path = submodules/separate_chaining
+	url = https://github.com/koeppl/separate_chaining
+[submodule "submodules/broadwordsearch"]
+	path = submodules/broadwordsearch
+	url = https://github.com/koeppl/broadwordsearch
