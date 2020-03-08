@@ -28,7 +28,7 @@ inline uliteral_t get_letter(squeeze_node_t data) {
 inline squeeze_node_t create_node(factorid_t id, uliteral_t c) {
 	return (static_cast<uint64_t>(id)<<ALPHABET_BITS) + static_cast<uint64_t>(c);
 }
-#undef ALPHABET_BITS
+// #undef ALPHABET_BITS
 
 }}//ns
 

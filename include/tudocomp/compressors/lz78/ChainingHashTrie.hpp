@@ -36,11 +36,11 @@ class ChainingHashTrie : public Algorithm, public LZ78Trie<> {
 	static constexpr size_t m_smalltable_key_width = 9;
 	table_t m_smalltable;
 
-	static constexpr uint_fast8_t m_rowlength = key_max_width - m_smalltable_key_width - bits_for(m_arraysize);
+	static constexpr uint_fast8_t m_rowlength = 10; 
 	table_t* m_rows[m_rowlength];
 
-	// static constexpr uint_fast8_t m_matrixlength = key_max_width - bits_for(m_arraysize);
-	// table_t** m_matrix[m_rowlength];
+	static constexpr uint_fast8_t m_matrixlength = key_max_width - m_rowlength - m_smalltable_key_width - bits_for(m_arraysize);
+	table_t** m_matrix[m_rowlength];
 
 public:
     inline static Meta meta() {
@@ -56,6 +56,7 @@ public:
         // if(reserve > 0) { m_table.reserve(reserve); }
 		std::fill(m_array, m_array+m_arraysize, -1ULL);
 		std::fill(m_rows, m_rows+m_rowlength, nullptr);
+		std::fill(m_matrix, m_matrix+m_matrixlength, nullptr);
 
     }
     IF_STATS(
@@ -63,7 +64,17 @@ public:
     )
 		inline ~ChainingHashTrie() {
     // IF_STATS(
-            if (m_guard) {
+            // if (m_guard) {
+				size_t array_filled = 0;
+				for(size_t i = 0; i < m_arraysize; ++i) {
+					if(m_array[i] == static_cast<factorid_t>(-1ULL)) { continue; }
+					++array_filled;
+				}
+				StatPhase::log("array_fill", array_filled);
+				if(m_smalltable.size() > 0) {
+					StatPhase::log("small_table_size", m_smalltable.size());
+				}
+				
 				for(size_t i = 0; i < m_rowlength; ++i) {
 					if(m_rows[i] == nullptr) { continue; }
 					uint64_t value_widths[65];
@@ -73,23 +84,33 @@ public:
 					}
 					for(size_t k = 0; k <= 64; ++k) {
 						std::stringstream s;
-						s << "key_width_" << std::setw(2) << i << "value_width_" << std::setw(2) << k;
+						s << "r[" << std::setw(2) << i << "][" << std::setw(2) <<  k << "]";
 						std::string strkey = s.str();
 						if(value_widths[k] > 0) {
 							StatPhase::log(std::move(strkey), value_widths[k]);
 						}
 					}
 				}
+				for(size_t i = 0; i < m_matrixlength; ++i) {
+					if(m_matrix[i] == nullptr) { continue; }
+					for(size_t k = 0; k < value_max_width; ++k) {
+						if(m_matrix[i][k] == nullptr) { continue; }
+						std::stringstream s;
+						s << "m[" << std::setw(2) << i << "][" << std::setw(2) <<  k << "]";
+						std::string strkey = s.str();
+						StatPhase::log(std::move(strkey), m_matrix[i][k]->size());
+					}
+				}
 			// StatPhase logPhase;
 			// m_table.print_stats(logPhase);
-            }
+            // }
     // )//STATS
 			clear();
 		}
     ChainingHashTrie(ChainingHashTrie&& other) = default;
     ChainingHashTrie& operator=(ChainingHashTrie&& other) = default;
 
-    inline node_t add_rootnode(uliteral_t c) {
+    inline node_t add_rootnode(uliteral_t c) { //TODO: optimize -> seems that we do not need to store anything in m_array!
 		DCHECK_LT(create_node(0, c), m_arraysize);
 		m_array[create_node(0, c)] = size();
 		++m_elements;
@@ -102,13 +123,23 @@ public:
     }
 
     inline void clear() {
-		for(size_t i = 0; i < m_rowlength; ++i) { 
-			if(m_rows[i] != nullptr) { 
-				m_rows[i]->clear(); 
-				delete m_rows[i];
-				m_rows[i] = nullptr;
+		for(size_t i = 0; i < m_matrixlength; ++i) { 
+			if(m_matrix[i] == nullptr) { continue; }
+			for(size_t j = 0; j < value_max_width; ++j) {
+				if(m_matrix[i][j] != nullptr) {
+					delete m_matrix[i][j];
+				}
 			}
+			delete [] m_matrix[i];
 		}
+		for(size_t i = 0; i < m_rowlength; ++i) { 
+			if(m_rows[i] == nullptr) { continue; }
+			m_rows[i]->clear();  //TODO: not needed?
+			delete m_rows[i];
+			m_rows[i] = nullptr;
+		}
+
+		std::fill(m_matrix, m_matrix+m_matrixlength, nullptr);
 		std::fill(m_rows, m_rows+m_rowlength, nullptr);
 		std::fill(m_array, m_array+m_arraysize, -1ULL);
 		m_elements = 0;
@@ -156,31 +187,65 @@ public:
 
 		// //TODO: shift large_key_width by m_smalltable_key_width
 		
-		const size_t rowindex = large_key_width - m_smalltable_key_width; //! index in m_rows for this key
-		DCHECK_LE(rowindex, m_rowlength); 
-		if(m_rows[rowindex] == nullptr) {
-			m_rows[rowindex] = new table_t(large_key_width-1, value_max_width);
+		if(large_key_width < m_smalltable_key_width + m_rowlength) {
+			const size_t rowindex = large_key_width - m_smalltable_key_width; //! index in m_rows for this key
+			DCHECK_LE(rowindex, m_rowlength); 
+			if(m_rows[rowindex] == nullptr) {
+				m_rows[rowindex] = new table_t(large_key_width-1, value_max_width);
+			}
+			const uint64_t subtract_key = 1ULL<<(large_key_width-1); //(-1ULL>>(64-large_key_width+1)); 
+			auto& table = *m_rows[rowindex];
+			DCHECK_LE(subtract_key, large_key);
+			DCHECK_LT(bits_for(large_key - subtract_key), large_key_width);
+			const squeeze_node_t remaining_key = large_key - subtract_key;
+			DCHECK_GE(table.key_width(), bits_for(remaining_key));
+
+			const size_t tablesize = table.size();
+			auto it = table[remaining_key];
+			DCHECK(tablesize == table.size() || tablesize+1 == table.size());
+
+			if(tablesize+1 == table.size()) { //! not found -> add a new node
+				++m_elements;
+				// DCHECK_LT(newleaf_id, key);
+				it = newleaf_id;
+				DCHECK_EQ(it.value(), newleaf_id);
+				return node_t(size() - 1, true); 
+			}
+
+			return node_t(it.value(), false); //! return the factor id of that node
 		}
+		DCHECK_LE(m_smalltable_key_width+m_rowlength, large_key_width);
+		const size_t rowindex = large_key_width - m_smalltable_key_width - m_rowlength; //! index in m_matrix for this key
+		DCHECK_LT(rowindex, m_matrixlength);
+		if(m_matrix[rowindex] == nullptr) {
+			m_matrix[rowindex] = new table_t*[value_max_width];
+			std::fill(m_matrix[rowindex], m_matrix[rowindex]+value_max_width, nullptr);
+		}
+		
 		const uint64_t subtract_key = 1ULL<<(large_key_width-1); //(-1ULL>>(64-large_key_width+1)); 
-		auto& table = *m_rows[rowindex];
 		DCHECK_LE(subtract_key, large_key);
 		DCHECK_LT(bits_for(large_key - subtract_key), large_key_width);
 		const squeeze_node_t remaining_key = large_key - subtract_key;
-		DCHECK_GE(table.key_width(), bits_for(remaining_key));
+		table_t**const rowtable = m_matrix[rowindex];
 
-		const size_t tablesize = table.size();
-        auto it = table[remaining_key];
-		DCHECK(tablesize == table.size() || tablesize+1 == table.size());
-
-        if(tablesize+1 == table.size()) { //! not found -> add a new node
-			++m_elements;
-			// DCHECK_LT(newleaf_id, key);
-			it = newleaf_id;
-			DCHECK_EQ(it.value(), newleaf_id);
-            return node_t(size() - 1, true); 
-        }
-
-        return node_t(it.value(), false); //! return the factor id of that node
+		for(size_t k = 0; k < value_max_width; ++k) {
+			if(rowtable[k] != nullptr) {
+				DCHECK_GE(k, rowindex+m_smalltable_key_width+m_rowlength- ALPHABET_BITS); //TODO: use for optimization
+				auto& table = *rowtable[k];
+				const auto ret = table.locate(remaining_key);
+				if(ret.second != -1ULL) { //! found node
+					return node_t(table.value_at(ret.first, ret.second), false); //! return the factor id of that node
+				}
+			}
+		}
+		const uint_fast8_t columnindex = bits_for(newleaf_id);
+		DCHECK_GE(columnindex, rowindex+m_smalltable_key_width+m_rowlength - ALPHABET_BITS); //TODO: use for optimization
+		if(rowtable[columnindex] == nullptr) {
+			rowtable[columnindex] = new table_t(large_key_width-1, columnindex);
+		}
+		rowtable[columnindex]->find_or_insert(remaining_key, newleaf_id);
+		++m_elements;
+		return node_t(size() - 1, true); 
     }
 
     inline size_t size() const {
