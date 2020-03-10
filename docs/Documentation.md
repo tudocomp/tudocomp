@@ -358,7 +358,7 @@ The following global test targets are available:
    test strings. Each test in `matix_tests` has a unique label given by the
    arguments passed to a compressor. The tests can be restricted by the global
    environment variable `MATRIX_PATTERN`. For instance,
-   `MATRIX_PATTERN='string_coder = huff' make matrix_test` only runs those
+   `MATRIX_PATTERN='string_coder = huff' make matrix_tests` only runs those
    combinations whose label contain `huff` as a `string_coder`.
 
 The `sandbox_tests` suite is ignored by the framework's repository and can be
