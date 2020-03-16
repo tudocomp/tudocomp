@@ -553,7 +553,7 @@ static inline size_t parse_bytes(const std::string& str) {
     }
 
     // assume bytes
-    return std::stoi(str);
+    return std::strtoul(str.c_str(), NULL, 10);
 }
 
 static inline size_t lz78_expected_number_of_remaining_elements(const size_t z, const size_t n, const size_t remaining_characters) {
