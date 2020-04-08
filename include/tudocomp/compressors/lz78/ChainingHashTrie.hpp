@@ -17,6 +17,11 @@ namespace tdc {
 namespace lz78 {
 
 
+/**
+ * @targ t_rowlength: gives the length of the array of hash tables in which a hash table stores a key with a specific key width
+ * setting this number to something big (like 64) disables the matrix of hash tables.
+ */
+	template<uint_fast8_t t_rowlength = 10>
 class ChainingHashTrie : public Algorithm, public LZ78Trie<> {
 	static_assert(std::numeric_limits<squeeze_node_t>::radix == 2, "needs radix to be 2");
 	static_assert(std::numeric_limits<factorid_t>::radix == 2, "needs radix to be 2");
@@ -38,7 +43,7 @@ class ChainingHashTrie : public Algorithm, public LZ78Trie<> {
 	static constexpr size_t m_smalltable_key_width = 9;
 	table_t m_smalltable;
 
-	static constexpr uint_fast8_t m_rowlength = 10; 
+	static constexpr uint_fast8_t m_rowlength = std::max<uint_fast8_t>(0, std::min<int32_t>(t_rowlength, static_cast<int32_t>(key_max_width) - m_smalltable_key_width));
 	table_t* m_rows[m_rowlength];
 
 
@@ -56,7 +61,7 @@ class ChainingHashTrie : public Algorithm, public LZ78Trie<> {
 
 public:
     inline static Meta meta() {
-        Meta m(lz78_trie_type(), "chain", "Hash Trie with separate chaining");
+        Meta m(lz78_trie_type(), std::string("chain") + std::to_string(t_rowlength), "Hash Trie with separate chaining");
         return m;
     }
 
@@ -67,9 +72,13 @@ public:
     {
         // if(reserve > 0) { m_table.reserve(reserve); }
 		std::fill(m_array, m_array+m_arraysize, -1ULL);
+		if(m_rowlength > 0) {
 		std::fill(m_rows, m_rows+m_rowlength, nullptr);
-		std::fill(m_matrix, m_matrix+m_matrixlength, nullptr);
-		std::fill(m_matrix_allocated, m_matrix_allocated+m_matrixlength, 0);
+		}
+		if(m_matrixlength > 0) {
+			std::fill(m_matrix, m_matrix+m_matrixlength, nullptr);
+			std::fill(m_matrix_allocated, m_matrix_allocated+m_matrixlength, 0);
+		}
     }
     IF_STATS(
         MoveGuard m_guard;
@@ -80,6 +89,8 @@ public:
             if (m_guard) {
 			StatPhase::log("value_max_width", value_max_width);
 			StatPhase::log("key_max_width", key_max_width);
+			StatPhase::log("m_rowlength", m_rowlength);
+			StatPhase::log("m_matrixlength", m_matrixlength);
 
 				size_t array_filled = 0;
 				for(size_t i = 0; i < m_arraysize; ++i) {
@@ -157,10 +168,14 @@ public:
 			m_rows[i] = nullptr;
 		}
 
-		std::fill(m_matrix, m_matrix+m_matrixlength, nullptr);
+		if(m_rowlength > 0) {
 		std::fill(m_rows, m_rows+m_rowlength, nullptr);
+		}
+		if(m_matrixlength > 0) {
+			std::fill(m_matrix, m_matrix+m_matrixlength, nullptr);
+			std::fill(m_matrix_allocated, m_matrix_allocated+m_matrixlength, 0);
+		}
 		std::fill(m_array, m_array+m_arraysize, -1ULL);
-		std::fill(m_matrix_allocated, m_matrix_allocated+m_matrixlength, 0);
 		m_elements = 0;
 		m_smalltable.clear();
     }
@@ -298,5 +313,8 @@ public:
     }
 };
 
+using ChainingHashTrie10 = ChainingHashTrie<10>;
+using ChainingHashTrie0 = ChainingHashTrie<0>;
+using ChainingHashTrie64 = ChainingHashTrie<20>;
 
 }} //ns
