@@ -84,7 +84,7 @@ function updateWhitespaces() {
     }
 }
 
-var varText, varIndex, varSA, varISA, varPHI, varLCP, varPLCP, varPSI, varF, varBWT, varLF, varLPF, varSAIS, varLZ77, varLyndon;
+var varText, varIndex, varSA, varISA, varPHI, varLCP, varPLCP, varPSI, varF, varBWT, varLF, varLPF, varSAIS, varLZ77, varLyndon, varRota;
 function updateArrays() {
     separatorField.value = encodeWhitespaces(separatorField.value);
     updateWhitespaces();
@@ -108,7 +108,8 @@ function updateArrays() {
         varPLCP = plcpArray(varISA, varLCP, varBase);
         varPSI = psiArray(varSA, varISA, varBase);
         varF = firstRow(varText, varSA, varBase);
-        varBWT = bwt(varText, varSA, varBase);
+        varRota = rotationArray(varText, varBase);
+        varBWT = bwt(varText, varRota, varBase);
         varLF = lfArray(varSA, varISA, varBase);
         varLPF = lpfArray(varText, varBase);
         varSAIS = slArray(varText, varBase);
@@ -130,7 +131,7 @@ function updateArrays() {
             varDs = factorizationToText(options.enabled("whitespace") ? encodeWhitespaces(varText) : varText, varDs, sep, varBase);
             } else { varDs = arrayToString(varDs, sep, varBase); }
         } else { varDs = arrayToString(varDs, sep, varBase); }
-        result += padRight(dsName + ":", ' ', 7) + varDs + "\n";
+        result += padRight(dsName + ":", ' ', 8) + varDs + "\n";
     });
     outField.value = result.substr(0, result.length - 1);
 
