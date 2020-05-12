@@ -507,7 +507,7 @@ int main(int argc, char** argv) {
 
             size_t out_size = options.stdout ? 0 : io::read_file_size(ofile);
 
-            json meta;
+			nlohmann::json meta;
             meta["title"] = options.stats_title;
             meta["startTime"] =
                 std::chrono::duration_cast<std::chrono::seconds>(
@@ -521,7 +521,7 @@ int main(int argc, char** argv) {
             meta["rate"] = (in_size == 0) ? 0.0 :
                 double(out_size) / double(in_size);
 
-            json stats = {{"meta", meta}, {"data", algo_stats}};
+			nlohmann::json stats = {{"meta", meta}, {"data", algo_stats}};
             if (options.stat_file == "") {
                 std::cout << stats << std::endl;
             } else {
