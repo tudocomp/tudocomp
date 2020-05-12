@@ -14,6 +14,7 @@
 
 namespace tdc {
 
+
 template <typename coder_t, typename dict_t>
 class LZ78PackedCompressor: public Compressor {
 private:
@@ -73,32 +74,79 @@ public:
 
         // Define ranges
         node_t node = dict.get_rootnode(0);
-        node_t parent = node; // parent of node, needed for the last factor
+        node_t parent = node; //! parent of node, needed for the last factor
+
         DCHECK_EQ(node.id(), 0U);
         DCHECK_EQ(parent.id(), 0U);
 
 			
         char c = 0;
-		uint64_t string_depth = 0;
-		std::unordered_map<uint64_t, lz78::factorid_t> mappe;
+		uint64_t string_depth = 1;
+		
+		using cache_type = std::unordered_map<uint64_t, lz78::factorid_t>;
+		cache_type cache;
+		
+		uint64_t character_ringbuffer = 0; //! stores always the last 8 characters
+
 		while(is.good()) {
 
 			uint64_t character_buffer;
 			is.read(reinterpret_cast<char*>(&character_buffer), sizeof(decltype(character_buffer)));
 			const uint_fast8_t read_chars = is.gcount();
 			
-			if(read_chars == 8 && string_depth == 0) { // word-wise character traversal
-				auto it = mappe.find(character_buffer);
-				if(it != mappe.end()) {
-					parent = node = node_t(it->second, false);
-					std::cout << "OK" << std::endl;
-					string_depth += 8;
-					continue; // skip character wise trie traversal
-				}
-			}
+			//! word-wise character jumping
+			if(is.good()  //! there is a problem with the last factor if it does not introduce a new character, for which we keep track `parent`
+				&& read_chars == 8  //! only jump if we really have 8 characters (border case at the end
+			//	&& false
+				//&& string_depth % 8 == 1
+				&& string_depth == 1
+				)
+				{
+					DCHECK(string_depth == 1 || node.id() != 0);
+					auto it = cache.find(character_buffer);
+				   
+					if(it != cache.end()) {
+						parent = dict.get_rootnode(0); //! TODO: we do not cache the parent, so no idea to what to set
+						const node_t jumped_child = node_t(it->second, false); // jump to the next jump ancestor
+#ifndef NDEBUG//checks whether the move is valid
+						{
 
+							node_t checknode = node;
+							for(uint_fast8_t buffer_offset = 0; buffer_offset != read_chars; ++buffer_offset) {
+								const char d = reinterpret_cast<const char*>(&character_buffer)[buffer_offset];
+								node_t child = dict.find_or_insert(checknode, static_cast<uliteral_t>(d));
+								DCHECK_LE(child.id(), jumped_child.id());
+								DCHECK(!child.is_new());
+								checknode = child;
+							}
+							DCHECK_EQ(jumped_child.id(), checknode.id());
+						}
+#endif //NDEBUG//checks whether the move is valid
+						string_depth += 8;
+
+						node = jumped_child;
+
+						continue; // skip character wise trie traversal
+					}
+				}
+
+			//! character-wise character traversal
 			for(uint_fast8_t buffer_offset = 0; buffer_offset != read_chars; ++buffer_offset) {
 				c = reinterpret_cast<const char*>(&character_buffer)[buffer_offset];
+				character_ringbuffer >>= 8; character_ringbuffer |= static_cast<uint64_t>(c)<<(64-8);
+
+#ifndef NDEBUG//checks whether the move is valid
+						if(string_depth <= 8 && string_depth > 1) {
+							node_t checknode = dict.get_rootnode(0);
+							for(uint_fast8_t ringbuffer_offset = 8-string_depth; ringbuffer_offset != 7; ++ringbuffer_offset) {
+								const char d = reinterpret_cast<const char*>(&character_ringbuffer)[ringbuffer_offset];
+								node_t checkchild = dict.find_or_insert(checknode, static_cast<uliteral_t>(d));
+								DCHECK(!checkchild.is_new());
+								checknode = checkchild;
+							}
+						}
+#endif //NDEBUG//checks whether the move is valid
+
 				--remaining_characters;
 
 				node_t child = dict.find_or_insert(node, static_cast<uliteral_t>(c));
@@ -118,10 +166,31 @@ public:
 						IF_STATS(stat_dictionary_resets++);
 						IF_STATS(stat_dict_counter_at_last_reset = m_dict_max_size);
 					}
-					if(string_depth == 8) {
-						mappe[character_buffer] = child.id();
+					if(string_depth == 8) { 
+					//if(string_depth % 8 == 0) { 
+
+#ifndef NDEBUG//checks whether the move is valid
+						{
+							node_t checknode = dict.get_rootnode(0);;
+							for(uint_fast8_t ringbuffer_offset = 0; ringbuffer_offset != 8; ++ringbuffer_offset) {
+								const char d = reinterpret_cast<const char*>(&character_ringbuffer)[ringbuffer_offset];
+								node_t checkchild = dict.find_or_insert(checknode, static_cast<uliteral_t>(d));
+								DCHECK_LE(checkchild.id(), child.id());
+								DCHECK(!checkchild.is_new());
+								checknode = checkchild;
+							}
+							DCHECK_EQ(child.id(), checknode.id());
+						}
+#endif //NDEBUG//checks whether the move is valid
+
+						// if(string_depth > 8) {
+						// std::cout << "d: " << string_depth <<  ", [" << character_ringbuffer "] -> " << child.id() << std::endl;
+						// }
+						DCHECK(cache.find(character_ringbuffer) == cache.end());
+						cache[character_ringbuffer] = child.id();
 					}
-					string_depth = 0;
+					string_depth = 1;
+					character_ringbuffer = 0; //!TODO: can be omitted
 				} else { // traverse further
 					parent = node;
 					node = child;

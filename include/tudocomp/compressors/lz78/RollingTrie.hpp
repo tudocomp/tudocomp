@@ -10,7 +10,7 @@ namespace tdc {
 namespace lz78 {
 
 template<
-    typename HashRoller = KarpRabinHash,
+    typename HashRoller = KarpRabinHash64,
     typename HashProber = LinearProber,
     typename HashFunction = NoopHasher,
     typename HashManager = SizeManagerPow2
@@ -28,7 +28,7 @@ class RollingTrie : public Algorithm, public LZ78Trie<> {
 public:
     inline static Meta meta() {
         Meta m(lz78_trie_type(), "rolling", "Rolling Hash Trie");
-        m.param("hash_roller").strategy<HashRoller>(hash_roller_type(), Meta::Default<KarpRabinHash>());
+        m.param("hash_roller").strategy<HashRoller>(hash_roller_type(), Meta::Default<KarpRabinHash64>());
         m.param("hash_prober").strategy<HashProber>(hash_prober_type(), Meta::Default<LinearProber>());
         m.param("hash_function").strategy<HashFunction>(hash_function_type(), Meta::Default<NoopHasher>());
         m.param("load_factor").primitive(30);

@@ -315,6 +315,8 @@ public:
 
 using ChainingHashTrie10 = ChainingHashTrie<10>;
 using ChainingHashTrie0 = ChainingHashTrie<0>;
-using ChainingHashTrie64 = ChainingHashTrie<20>;
+using ChainingHashTrie20 = ChainingHashTrie<20>;
+using ChainingHashTrie30 = ChainingHashTrie<30>;
+using ChainingHashTrie40 = ChainingHashTrie<40>;
 
 }} //ns

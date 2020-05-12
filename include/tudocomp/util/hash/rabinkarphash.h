@@ -27,13 +27,15 @@ namespace tdc {
 *           hf.update(out,c); // update hash value
 *        }
 */
+template<typename hashvaluetype>
 class KarpRabinHash  : public Algorithm {
 public:
-	typedef uint64_t hashvaluetype;
+	static constexpr size_t hashvalue_bitwidth = std::numeric_limits<hashvaluetype>::digits;
+	// typedef uint64_t hashvaluetype;
 	typedef unsigned char chartype;
 	typedef hashvaluetype key_type;
     inline static Meta meta() {
-        Meta m(hash_roller_type(), "rk", "Karp-Rabin Rolling Hash");
+        Meta m(hash_roller_type(), "rk" + std::to_string(hashvalue_bitwidth), "Karp-Rabin Rolling Hash");
 		return m;
 	}
 	void operator+=(char c) { eat(c); }
@@ -42,54 +44,41 @@ public:
 
     // myn is the length of the sequences, e.g., 3 means that you want to hash sequences of 3 characters
     // mywordsize is the number of bits you which to receive as hash values, e.g., 19 means that the hash values are 19-bit integers
-    KarpRabinHash(Config&& cfg) : Algorithm(std::move(cfg)), hashvalue(0),n(4),
-        wordsize(64),
-        hasher( maskfnc<hashvaluetype>(wordsize)),
-        HASHMASK(maskfnc<hashvaluetype>(wordsize)),BtoN(1) {
-        for (int i=0; i < n ; ++i) {
-            BtoN *= B;
-            BtoN &= HASHMASK;
-        }
+    KarpRabinHash(Config&& cfg) : Algorithm(std::move(cfg)), hashvalue(0),
+        hasher( maskfnc<hashvaluetype>(wordsize))
+	{
     }
 
-    // this is a convenience function, use eat,update and .hashvalue to use as a rolling hash function
-    template<class container>
-    hashvaluetype  hash(container & c) {
-        hashvaluetype answer(0);
-        for(uint k = 0; k<c.size(); ++k) {
-            hashvaluetype x(1);
-            for(uint j = 0; j< c.size()-1-k; ++j) {
-                x= (x * B) & HASHMASK;
-            }
-            x= (x * hasher.hashvalues[c[k]]) & HASHMASK;
-            answer=(answer+x) & HASHMASK;
-        }
-        return answer;
-    }
+    // // this is a convenience function, use eat,update and .hashvalue to use as a rolling hash function
+    // template<class container>
+    // hashvaluetype  hash(container & c) {
+    //     hashvaluetype answer(0);
+    //     for(uint k = 0; k<c.size(); ++k) {
+    //         hashvaluetype x(1);
+    //         for(uint j = 0; j< c.size()-1-k; ++j) {
+    //             x= (x * B) & HASHMASK;
+    //         }
+    //         x= (x * hasher.hashvalues[c[k]]) & HASHMASK;
+    //         answer=(answer+x) & HASHMASK;
+    //     }
+    //     return answer;
+    // }
 
     // add inchar as an input, this is used typically only at the start
     // the hash value is updated to that of a longer string (one where inchar was appended)
     void eat(chartype inchar) {
-        hashvalue = (B*hashvalue +  hasher.hashvalues[inchar] )& HASHMASK;
-    }
-
-    // add inchar as an input and remove outchar, the hashvalue is updated
-    // this function can be used to update the hash value from the hash value of [outchar]ABC to the hash value of ABC[inchar]
-    void update(chartype outchar, chartype inchar) {
-        hashvalue = (B*hashvalue +  hasher.hashvalues[inchar] - BtoN *  hasher.hashvalues[outchar]) & HASHMASK;
+        hashvalue = (B * hashvalue +  hasher.hashvalues[inchar] );
     }
 
 
     hashvaluetype hashvalue;
-    int n;
-    const int wordsize;
-    CharacterHash<hashvaluetype,chartype> hasher;
-    const hashvaluetype HASHMASK;
-    hashvaluetype BtoN;
-    static const hashvaluetype B=37;
-
-
+    static constexpr size_t wordsize = 64;
+    CharacterHash<uint64_t,chartype> hasher;
+    static constexpr hashvaluetype B=37;
 };
+	
+using KarpRabinHash64 = KarpRabinHash<uint64_t>;
+using KarpRabinHash128 = KarpRabinHash<__uint128_t>;
 
 
 }//ns
