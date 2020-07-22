@@ -2,6 +2,7 @@
 
 #include <tudocomp/util.hpp>
 #include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz78/squeeze_node.hpp>
 #include <tudocomp/compressors/lzw/LZWFactor.hpp>
 
 namespace tdc {
@@ -14,7 +15,8 @@ void decode_step(F next_code_callback,
                  std::ostream& out,
                  const CodeType dms,
                  const CodeType reserve_dms) {
-    std::vector<std::pair<CodeType, uliteral_t>> dictionary;
+    //std::vector<std::pair<CodeType, uliteral_t>> dictionary;
+    std::vector<lz78::squeeze_node_t> dictionary;
 
     // "named" lambda function, used to reset the dictionary to its initial contents
     const auto reset_dictionary = [&] {
@@ -25,7 +27,7 @@ void decode_step(F next_code_callback,
         const long int maxc = std::numeric_limits<uliteral_t>::max();
 
         for (long int c = minc; c <= maxc; ++c)
-            dictionary.push_back({dms, static_cast<uliteral_t> (c)});
+            dictionary.push_back(lz78::create_node(dms, static_cast<uliteral_t> (c)));
     };
 
     const auto rebuild_string = [&](CodeType k) -> const std::vector<uliteral_t> * {
@@ -38,8 +40,8 @@ void decode_step(F next_code_callback,
 
         while (k != dms)
         {
-            s.push_back(dictionary[k].second);
-            k = dictionary[k].first;
+            s.push_back(lz78::get_letter(dictionary[k]));
+            k = lz78::get_id(dictionary[k]);
         }
 
         std::reverse(s.begin(), s.end());
@@ -79,7 +81,7 @@ void decode_step(F next_code_callback,
 
         if (k == dictionary.size())
         {
-            dictionary.push_back({i, rebuild_string(i)->front()});
+            dictionary.push_back(lz78::create_node(i, rebuild_string(i)->front()));
             s = rebuild_string(k);
         }
         else
@@ -87,7 +89,7 @@ void decode_step(F next_code_callback,
             s = rebuild_string(k);
 
             if (i != dms)
-                dictionary.push_back({i, s->front()});
+                dictionary.push_back(lz78::create_node(i, s->front()));
         }
 
         out.write((char*) &s->front(), s->size());
