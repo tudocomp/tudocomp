@@ -9,6 +9,7 @@ function die {
 logFile=$1
 
 
+echo -n "tdctime=$(jq '.["data"]["timeRun"]' ${logFile}) "
 echo -n "mem=$(jq '.["data"]["memPeak"]' ${logFile}) "
 
 
