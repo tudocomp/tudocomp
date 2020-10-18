@@ -507,6 +507,7 @@ int main(int argc, char** argv) {
 
             size_t out_size = options.stdout ? 0 : io::read_file_size(ofile);
 
+            using json = nlohmann::json;
             json meta;
             meta["title"] = options.stats_title;
             meta["startTime"] =
