@@ -19,6 +19,9 @@ namespace lcpcomp {
  *
  * On the Approximation Ratio of Greedy Parsings
  * Gonzalo Navarro, Nicola Prezza
+ *
+ * Run with ./tdc -a 'lcpcomp(bi(binary,binary,binary), lexparse)'
+ *
  */
 class LexParseStrategy: public Algorithm {
 public:
