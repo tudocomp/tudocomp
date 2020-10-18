@@ -3,25 +3,38 @@
     and can be used to override the default style.
 */
 
-@import 'https://fonts.googleapis.com/css?family=Raleway:500|Roboto|Source+Code+Pro:500';
+@import 'https://fonts.googleapis.com/css?family=Raleway:500|Roboto:400|Source+Code+Pro:500';
 
 tt, code, kbd, samp {
     font-family: 'Source Code Pro', monospace;
-    font-size: 100%;
+    font-size: 10pt;
 }
 
 .tabs, .tabs2, .tabs3, .title, table.directory, #MSearchField, #nav-tree .label {
     font-family: 'Roboto', sans-serif;
+    font-size: 10pt;
+}
+
+.sm-dox a, .sm-dox a:focus, .sm-dox a:hover, .sm-dox a:active {
+    text-shadow: none;
+}
+
+.sm-dox a {
+    color: #242;
 }
 
 body, table, div, p, dl {
     font-family: 'Roboto', sans-serif;
-    font-size: 100%;
+    font-size: 10pt;
 }
 
 #titlearea {
     background-color: #DDD;
     padding-bottom: 0.5rem;
+}
+
+#titlearea table tbody tr {
+    height: 0;
 }
 
 #projectbrief, #projectnumber {
@@ -31,8 +44,12 @@ body, table, div, p, dl {
 
 #projectlogo img {
     width: auto;
-    height: 3.0rem;
+    height: 2.5rem;
     margin-left: 0.5rem;
+}
+
+#projectbrief {
+    font-size: 85%;
 }
 
 #projectname {

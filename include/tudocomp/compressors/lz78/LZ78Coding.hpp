@@ -1,10 +1,11 @@
 #pragma once
 
-#include <tudocomp/compressors/lz78/LZ78Trie.hpp>
+#include <tudocomp/compressors/lz_common/factorid_t.hpp>
 #include <tudocomp/Range.hpp>
 
 namespace tdc {
 namespace lz78 {
+using lz_common::factorid_t;
 
 /// \brief Encodes an LZ78 factor in an online scenario.
 /// \tparam coder_t the coder type
@@ -22,11 +23,11 @@ inline void encode_factor(
 }
 
 class Decompressor {
-    std::vector<lz78::factorid_t> indices;
+    std::vector<factorid_t> indices;
     std::vector<uliteral_t> literals;
 
     public:
-    inline void decompress(lz78::factorid_t index, uliteral_t literal, std::ostream& out) {
+    inline void decompress(factorid_t index, uliteral_t literal, std::ostream& out) {
         // enter new factor
         indices.push_back(index);
         literals.push_back(literal);
@@ -38,7 +39,7 @@ class Decompressor {
         out << literal;
     }
 
-    inline void decompress_ref(lz78::factorid_t index, std::ostream& out) {
+    inline void decompress_ref(factorid_t index, std::ostream& out) {
         // decompress the reference
         std::vector<uliteral_t> buffer;
         uliteral_t literal;

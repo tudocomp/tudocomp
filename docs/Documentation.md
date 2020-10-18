@@ -1875,7 +1875,7 @@ and lz factors containing references to the found prefixes are being output.
 
 The Algorithms are defined in terms of two abstract interfaces, implemented as C++ concepts:
 
-- `LZ78Trie`. It abstracts over a concrete dictionary data structure with a trie-like interface and search API, and is used by both Lz78 and Lzw, despite its name.
+- `LZTrie`. It abstracts over a concrete dictionary data structure with a trie-like interface and search API, and is used by both Lz78 and Lzw, despite its name.
 - `Coder`. It abstracts over the concrete encoding of a sequence of integer values, in this case the references and characters in a lz factor.
 
 The trie interface is explained in more details below. For details to the `Coder` interface, see the Tutorial section above.
@@ -1896,7 +1896,7 @@ Tudocomps registry. The full list of existing implementations can bee seen with
 To compress `input.txt` with Lz78 using the `BinaryTrie`:
 
 ```
-./tdc -a "lz78(lz78trie = binary)" input.txt
+./tdc -a "lz78(lz_trie = binary)" input.txt
 ```
 
 To compress  `input.txt` with Lzw using a limited dictionary size of 1024 entries:
@@ -1909,21 +1909,21 @@ To compress  `input.txt` with Lzw using a limited dictionary size of 1024 entrie
 
 The Lz78 and Lzw implementations can be found in `include/tudocomp/compressors/LZ78Compressor.hpp` and `include/tudocomp/compressors/LZWCompressor.hpp`, respectively.
 
-Support definitions and the Trie base class can be found in `include/tudocomp/compressors/lz78/LZ78Trie.hpp`. The same directory also contains all existing LZ78Trie implementations.
+Support definitions and the Trie base class can be found in `include/tudocomp/compressors/lz_trie/LZTrie.hpp`. The same directory also contains all existing LZTrie implementations.
 
-### The LZ78Trie interface.
+### The LZ-Trie interface.
 
-In order to fulfill the LZ78Trie interface, a class `T`{.cpp} needs to:
+In order to fulfill the LZTrie interface, a class `T`{.cpp} needs to:
 
 - Implement Tudocomps `Algorithm` concept, for which it needs to:
     - Public inherit from `Algorithm`{.cpp}.
     - Call the `Algorithm(Env&&)`{.cpp} constructor.
     - Be movable and move-assignable.
     - Implement a `inline static Meta meta();`{.cpp} describing the Algorithm.
-- Public inherit from `LZ78Trie<>`{.cpp}.
-    - _Optionally_, instead inherit from `LZ78Trie<my_node_type_t>`{.cpp} with
+- Public inherit from `LZTrie<>`{.cpp}.
+    - _Optionally_, instead inherit from `LZTrie<my_node_type_t>`{.cpp} with
       a custom node type `my_node_type_t`{.cpp} (see below).
-- Call the `LZ78Trie(const size_t n, const size_t& remaining_characters)`{.cpp} constructor.
+- Call the `LZTrie(const size_t n)`{.cpp} constructor.
 - Implement the following constructor and methods:
 
     ~~~ {.cpp}
@@ -1935,7 +1935,7 @@ In order to fulfill the LZ78Trie interface, a class `T`{.cpp} needs to:
     inline size_t size() const;
     ~~~
 
-    where `node_t`{.cpp} is a type member provided by the parent `LZ78Trie<X>`{.cpp} that describes a node in the trie, and is equal to `X`. It defaults to `LZ78TrieNode`, see below for more details.
+    where `node_t`{.cpp} is a type member provided by the parent `LZTrie<X>`{.cpp} that describes a node in the trie, and is equal to `X`. It defaults to `LZTrieNode`, see below for more details.
 
 These members should have the following semantics:
 
@@ -1956,7 +1956,7 @@ These members should have the following semantics:
 
 #### `node_t`{.cpp} and custom node types
 
-`node_t`{.cpp} is per default identical to `LZ78TrieNode`,
+`node_t`{.cpp} is per default identical to `LZTrieNode`,
 and behaves like a `(integer, bool)` tuple with the following API:
 
 ~~~ {.cpp}
@@ -1968,13 +1968,13 @@ inline bool is_new() const;
 
 `id()`{.cpp} returns the node label, and `is_new()`{.cpp} is true if this node has been freshly created by `find_or_insert()`{.cpp}.
 
-Usually, just having the node label is enough for a `LZ78Trie` implementation
+Usually, just having the node label is enough for a `LZTrie` implementation
 to locate a node in its internal data structure.
-In cases where that is not possible though, say if you need the internal address of an node, you can replace the default `node_t`{.cpp} type with a custom one by passing it to the template argument of the `LZ78Trie<...>` parent class.
+In cases where that is not possible though, say if you need the internal address of an node, you can replace the default `node_t`{.cpp} type with a custom one by passing it to the template argument of the `LZTrie<...>` parent class.
 
-Such a type needs to provide the same API as `LZ78TrieNode`, but may:
+Such a type needs to provide the same API as `LZTrieNode`, but may:
 
 - Have a custom constructor.
 - Have additional members (for example, storing an internal node address).
 
-The easiest way to do this is by inheriting from `LZ78TrieNode`. See `include/tudocomp/compressors/lz78/CedarTrie.hpp` for an example of how this is done.
+The easiest way to do this is by inheriting from `LZTrieNode`. See `include/tudocomp/compressors/lz_trie/CedarTrie.hpp` for an example of how this is done.

@@ -11,8 +11,11 @@ namespace tdc {
 template <typename coder_t>
 class LZWDecompressor : public Decompressor {
 private:
-    std::vector<lz78::factorid_t> indices;
+    std::vector<lz_common::factorid_t> indices;
     std::vector<uliteral_t> literals;
+
+    /// Max dictionary size before reset, 0 == unlimited
+    const lz_common::factorid_t m_dict_max_size {0};
 
 public:
     inline static Meta meta() {
@@ -26,7 +29,10 @@ public:
         return m;
     }
 
-    using Decompressor::Decompressor;
+    inline LZWDecompressor(Config&& cfg):
+        Decompressor(std::move(cfg)),
+        m_dict_max_size(this->config().param("dict_size").as_uint())
+    {}
 
     virtual void decompress(Input& input, Output& output) override final {
         const size_t reserved_size = input.size();
@@ -39,7 +45,7 @@ public:
         size_t counter = 0;
 
         //TODO file_corrupted not used!
-        lzw::decode_step([&](lz78::factorid_t& entry, bool reset, bool &file_corrupted) -> bool {
+        lzw::decode_step([&](lz_common::factorid_t& entry, bool reset, bool &file_corrupted) -> bool {
             if (reset) {
                 counter = 0;
             }
@@ -52,7 +58,7 @@ public:
             counter++;
             entry = factor;
             return true;
-        }, out, dict_max_size == 0 ? lz78::DMS_MAX : dict_max_size, reserved_size);
+        }, out, dict_max_size == 0 ? lz_common::DMS_MAX : dict_max_size, reserved_size);
     }
 };
 

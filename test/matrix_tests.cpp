@@ -59,7 +59,17 @@ TEST(TudocompDriver, roundtrip_matrix) {
             // don't include compressors with lossy tag,
             // because the matrix test will always fail for them
             if(!m.has_tag(tags::lossy)) {
-                test_cases.push_back(TestCase{ m.signature()->str(), m });
+                auto s = m.signature()->str();
+
+                // sanitize signature: remove interior spaces
+                std::string news = "";
+                for (char c : s) {
+                    if (c != ' ') {
+                        news.push_back(c);
+                    }
+                }
+
+                test_cases.push_back(TestCase{ news, m });
             }
         });
         tdc_algorithms::register_algorithms();

@@ -12,44 +12,43 @@ can be mixed and parameterized with the following uses in mind:
 * Easy integration of new algorithm implementations.
 
 The framework offers a solid and extensible base for new implementations. Its
-design is focused on modularity and interchangeability.
-This way, the user can combine algorithms to find the optimal compression
-strategy for a given input. The framework gives this opportunity while creating
-as little performance overhead as possible.
+design is focused on modularity and interchangeability for finding the optimal
+compression strategy for a given input while minimizing the performance
+overhead.
 
 # Dependencies
 
-*tudocomp*'s CMake build process will either find external dependencies on the
-system if they have been properly installed, or automatically download and build
-them from their official repositories in case they cannot be found. In that
-regard, a proper installation of the dependencies is not required.
+[CMake](https://cmake.org/) (3.0.2 or later) and
+[Python 3](https://www.python.org/) are required to build tudocomp. Our code
+is compatible to gcc (5.4 or later) and clang (3.4 or later).
 
-Said external dependencies are the following:
+The dependency packages of tudocomp do not require to be installed on the build
+system. Our CMake scripts provide tools to automatically download, build and
+deploy them locally or allow pointing to any existing installation. More
+information can be found in the documentation.
 
-* [SDSL](https://github.com/simongog/sdsl-lite)
-  (2.1 or later).
-* [Google Logging (glog)](https://github.com/google/glog) (0.34 or later).
+[Google Logging (glog)](https://github.com/google/glog) (0.3.5 or later) is
+required for all modules, which again requires
+[gflags](https://github.com/gflags/gflags) (2.2.2 or later). Furthermore,
+[Google Test](https://github.com/google/googletest) (1.8.1 or later)
+is needed for running the tests.
 
-Additionally, the tests require
-[Google Test](https://github.com/google/googletest) (1.7.0 or later).
+## Soft dependencies
 
-## Documentation Build Requirements
+These soft dependencies are required by some algorithm implementations, but
+tudocomp also functions without them:
+* [SDSL](https://github.com/simongog/sdsl-lite) (2.1.1 or later).
+* [STXXL](http://stxxl.org/) (`master` development branch only).
 
-For building the documentation, the following tools need to be installed:
+In case one of these dependencies cannot be resolved, the features that use
+them will be excluded from the build process.
 
-* [LaTeX](http://www.latex-project.org) (specifically the `pdflatex` component)
-* [Doxygen](http://doxygen.org) (1.8 or later).
-* [Pandoc](http://pandoc.org) (1.19 or later).
+## Windows
 
-## Windows Support
-
-While *tudocomp* has no explicit support Windows / Microsoft Visual C++, it is
-possible to use the
-[Bash on Ubuntu on Windows](https://msdn.microsoft.com/en-us/commandline/wsl/about)
-with next to no feature limitations. However, note that
-[the comparison tool](#the-comparison-tool) relies on `valgrind`, which is not
-functional in this environment until the
-[Windows 10 Creators Update](https://blogs.windows.com/windowsexperience/2017/04/11/whats-new-in-the-windows-10-creators-update).
+There is no explicit support for Windows. However, it is possible to
+deploy tudocomp in the
+[Windows Subsystem for Linux](https://msdn.microsoft.com/en-us/commandline/wsl/about)
+with little (if any) limitations.
 
 # License
 

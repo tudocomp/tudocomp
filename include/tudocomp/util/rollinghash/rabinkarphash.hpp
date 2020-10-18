@@ -1,8 +1,11 @@
 #pragma once
 
-// Source: https://github.com/Kimundi/rollinghashcpp
+// Source: https://github.com/tudocomp/rollinghashcpp
 
 #include <tudocomp/util/rollinghash/characterhash.hpp>
+
+#include <tudocomp/Algorithm.hpp>
+#include <tudocomp/util/HashTypes.hpp>
 
 namespace tdc{namespace rollinghash {
 
@@ -79,4 +82,24 @@ public:
 
 };
 
-}}
+class KarpRabinHashAlgo
+    : public Algorithm
+    , public KarpRabinHash<uint64_t, unsigned char>
+{
+public:
+    using hashvaluetype = uint64_t ;
+    using chartype = unsigned char ;
+    using key_type = hashvaluetype ;
+    inline static Meta meta() {
+        Meta m(hash_roller_type(), "rk", "Karp-Rabin Rolling Hash");
+        return m;
+    }
+    void operator+=(char c) { eat(c); }
+    hashvaluetype operator()() const { return hashvalue; }
+    void clear() { hashvalue = 0; }
+
+public:
+    KarpRabinHashAlgo(Config&& cfg) : Algorithm(std::move(cfg)), KarpRabinHash(4, 64) {}
+};
+
+}}//ns

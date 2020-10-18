@@ -1,6 +1,6 @@
 #pragma once
 
-// Source: https://github.com/Kimundi/rollinghashcpp
+// Source: https://github.com/tudocomp/rollinghashcpp
 
 #include <cassert>
 #include <iostream>
@@ -8,6 +8,7 @@
 
 #include <tudocomp/util/rollinghash/mersennetwister.hpp>
 
+/// \cond INTERNAL
 namespace tdc{namespace rollinghash {
 
 typedef unsigned long long uint64;
@@ -37,9 +38,9 @@ private:
 };
 
 template <typename hashvaluetype>
-inline hashvaluetype maskfnc(int bits) {
+inline hashvaluetype maskfnc(uint64_t bits) {
     assert(bits>0);
-    assert(size_t(bits)<=sizeof(hashvaluetype)*8);
+    assert(bits<=sizeof(hashvaluetype)*8);
     hashvaluetype x = static_cast<hashvaluetype>(1) << (bits - 1);
     return x ^ (x - 1);
 }
@@ -84,3 +85,5 @@ public:
 };
 
 }}
+
+/// \endcond

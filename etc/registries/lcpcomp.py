@@ -48,6 +48,12 @@ lzss_coders = lzss_streaming_coders + [
         sub=[universal_coders,universal_coders,all_coders]),
 ]
 
+lzss_bidirectional_coders = [
+    AlgorithmConfig(name="lzss::DidacticalCoder", header="compressors/lzss/DidacticalCoder.hpp"),
+    AlgorithmConfig(name="lzss::BufferedBidirectionalCoder", header="compressors/lzss/BufferedBidirectionalCoder.hpp",
+        sub=[universal_coders,universal_coders,all_coders]),
+]
+
 ##### Text data structures #####
 
 # Suffix Array
@@ -106,6 +112,8 @@ lcpcomp_comp = [
 if config_match("^#define SDSL_FOUND 1"): # if SDSL is available
     lcpcomp_comp += [
         AlgorithmConfig(name="lcpcomp::PLCPStrategy", header="compressors/lcpcomp/compress/PLCPStrategy.hpp"),
+        AlgorithmConfig(name="lcpcomp::PLCPPeaksStrategy", header="compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp"),
+        AlgorithmConfig(name="lcpcomp::LexParseStrategy", header="compressors/lcpcomp/compress/LexParseStrategy.hpp"),
     ]
 
 # lcpcomp factor decoding strategies ("dec")
@@ -135,7 +143,7 @@ long_common_strat = [
 
 ##### Export available compressors #####
 tdc.compressors = [
-    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_coders, lcpcomp_comp, textds_lcpcomp]),
+    AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_bidirectional_coders, lcpcomp_comp, textds_lcpcomp]),
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
     AlgorithmConfig(name="LZSSLCPCompressor", header="compressors/LZSSLCPCompressor.hpp", sub=[lzss_coders, textds_lcp]),
     AlgorithmConfig(name="LZSSSlidingWindowCompressor", header="compressors/LZSSSlidingWindowCompressor.hpp", sub=[lzss_streaming_coders]),
@@ -143,6 +151,15 @@ tdc.compressors = [
     AlgorithmConfig(name="ChainCompressor", header="compressors/ChainCompressor.hpp"),
     AlgorithmConfig(name="DividingCompressor", header="compressors/DividingCompressor.hpp", sub=[dividing_strat]),
     AlgorithmConfig(name="LongCommonStringCompressor", header="compressors/LongCommonStringCompressor.hpp", sub=[long_common_strat]),
+]
+
+##### Export available decompressors #####
+tdc.decompressors = [
+    AlgorithmConfig(name="ChainDecompressor", header="decompressors/ChainDecompressor.hpp"),
+    AlgorithmConfig(name="DividingDecompressor", header="decompressors/DividingDecompressor.hpp"),
+    AlgorithmConfig(name="LCPDecompressor", header="decompressors/LCPDecompressor.hpp", sub=[lzss_bidirectional_coders, lcpcomp_dec]),
+    AlgorithmConfig(name="LZSSDecompressor", header="decompressors/LZSSDecompressor.hpp", sub=[lzss_coders]),
+    AlgorithmConfig(name="WrapDecompressor", header="decompressors/WrapDecompressor.hpp"),
 ]
 
 ##### Export available string generators #####
