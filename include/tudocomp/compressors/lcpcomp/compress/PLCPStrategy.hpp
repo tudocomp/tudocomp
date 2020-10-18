@@ -61,7 +61,8 @@ class RefRAMStrategy {
         m_factors_unsorted.clear();
     }
     void add_factor(len_t source_position, len_t factor_length) {
-        return m_factors_unsorted.emplace_back(source_position,factor_length);
+        m_factors_unsorted.emplace_back(source_position,factor_length);
+        return;
     }
     void factorize(lzss::FactorBufferRAM& reflist) {
         for(len_t i = 0; i < m_factors.size(); ++i) {
