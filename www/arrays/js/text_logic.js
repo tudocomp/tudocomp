@@ -94,6 +94,18 @@ function suffixArray(string, base = 0) {
     });
 }
 
+function rotationArray(string, base = 0) {
+    n = string.length;
+    ln = ("" + (n + base)).length;
+    rotations = [];
+    for(var i = 0; i < n; i++)
+        rotations[i] = string.substr(i, n - i) + string.substr(0, i) + padLeft("" + (i + base), '0', ln);
+    rotations.sort();
+    return rotations.map(function(rotation) {
+        return parseInt(rotation.substr(n));
+    });
+}
+
 function inverseSuffixArray(suffixArray, base = 0) {
     result = [];
     for(var i = 0; i < suffixArray.length; i++)
@@ -151,11 +163,11 @@ function firstRow(string, suffixArray, base = 0) {
     return result;
 }
 
-function bwt(string, suffixArray, base = 0) {
+function bwt(string, rotationArray, base = 0) {
     var n = string.length;
     var result = "";
     for(var i = 0; i < n; i++)
-        result += string[(suffixArray[i] - base + n - 1) % n];
+        result += string[(rotationArray[i] - base + n - 1) % n];
     return result;
 }
 

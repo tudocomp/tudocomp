@@ -23,7 +23,8 @@
     <div class="qa-main">
         <div class="qa-description">Enter your text below to generate useful data structures!</div>
         <textarea class="qa-textarea" id="textSource" placeholder="MISSISSIPPI"></textarea>
-        <div class="qa-description">Choose your array data structures and factorizations (drag and drop or double-click):</div>
+        <div class="qa-description">Choose your data structures and factorizations (drag and drop or double-click):<br />
+        You can use drag and drop to reorder your selection!</div>
         <div class="qa-structures">
             <div id="qa-structures-enabled">
                 <div class="qa-structures-header">Enabled: </div>
@@ -38,6 +39,7 @@
                 <div class="qa-structure" data-ds="LCP">LCP Array</div>
                 <div class="qa-structure" data-ds="PLCP">PLCP Array</div>
                 <div class="qa-structure" data-ds="PSI">&Psi; Array</div>
+                <div class="qa-structure" data-ds="Rota">Sorted Rotations</div>
                 <div class="qa-structure qa-structure-text" data-ds="F">Front Row</div>
                 <div class="qa-structure qa-structure-text" data-ds="BWT">BWT</div>
                 <div class="qa-structure" data-ds="LF">LF Mapping</div>
@@ -54,8 +56,12 @@
             <label class="qa-option"><input class="qa-option-cbx" data-opt="facttext" type="checkbox" checked>Factorization as Bars</label>
             <label class="qa-option">Separator:&nbsp;&nbsp;<input id="separatorSource" type="text" class="qa-separator"></label>
         </div>
-        <div class="qa-description">We have built the following array data structures and factorizations for you:</div>
+        <div class="qa-description">QuickArrays built the following data structures and factorizations for you:</div>
         <textarea class="qa-textarea" style="flex-grow:1;line-height:175%;" id="arraysDestination" readonly></textarea>
+         <div class="qa-description">
+             The state of QuickArrays is stored in the URL.<br />
+             By creating a bookmark, you can return to the current state at any time.
+         </div>
     </div>
     
 </div>
