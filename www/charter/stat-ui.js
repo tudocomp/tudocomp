@@ -50,7 +50,7 @@ d3.select("#options button.close").on("click", function() {
 });
 
 d3.select("#options button.svg").on("click", function() {
-    var svg = d3.select("#svg-container")[0][0];
+    var svg = d3.select("#svg-container svg")[0][0];
     var serializer = new XMLSerializer();
     var blob = new Blob([serializer.serializeToString(svg)],{'type': "image/svg+xml"});
     downloadBlob(blob, "tdc-chart-export.svg");
