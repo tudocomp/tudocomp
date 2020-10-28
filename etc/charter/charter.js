@@ -36,6 +36,19 @@ function shadeColor(color, percent) {
     return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
 }
 
+// compute decimals needed for displaying x, using at most max
+function decimalsFor(x, max) {
+    var s = x.toString();
+    var dec = s.indexOf('.');
+    if(dec >= 0) {
+        var lastZero = Math.min(dec + 1 + max, s.length);
+        while(lastZero > dec && s[lastZero - 1] == '0') --lastZero;
+        return Math.min(lastZero - dec - 1, max);  
+    } else {
+        return 0; // no decimal places needed
+    }
+}
+
 /**
  * Simple XML builder.
  *
@@ -436,6 +449,7 @@ function chart(input, options) {
 
         // ticks
         var d = tickDistance(tDuration, 10, 10);
+        var decimals = decimalsFor(tScale * d, 3);
         for(var t = 0; t <= tDuration; t += d) {
             var gTick = gAxis.appendChild(new XMLNode("g", {
                 "class":   "tick",
@@ -455,7 +469,7 @@ function chart(input, options) {
                 y:  5,
                 dy: "1em",
                 style: "text-anchor: middle;"
-            })).content = (tScale * t).toString();
+            })).content = (tScale * t).toFixed(decimals);
         }
     }
 
@@ -486,6 +500,7 @@ function chart(input, options) {
 
         // ticks
         var d = tickDistance(memMaxPeak, 8, 16);
+        var decimals = decimalsFor(tScale * d, 3);
         for(var mem = 0; mem <= memMaxPeak; mem += d) {
             var gTick = gAxis.appendChild(new XMLNode("g", {
                 "class":   "tick",
@@ -505,7 +520,7 @@ function chart(input, options) {
                 y:  0,
                 dy: "0.25em",
                 style: "text-anchor: end;"
-            })).content = (memScale * mem).toString();
+            })).content = (memScale * mem).toFixed(decimals);
         }
     }
 
