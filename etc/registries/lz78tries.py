@@ -81,8 +81,9 @@ compact_hashmap_strategies = compact_hashmap_strategies_norec + [
 
 # LZ78 tries ("lz78trie")
 lz78_trie = [
-    # AlgorithmConfig(name="lz78::BinarySortedTrie", header="compressors/lz78/BinarySortedTrie.hpp"),
+    AlgorithmConfig(name="lz78::BinarySortedTrie", header="compressors/lz78/BinarySortedTrie.hpp"),
     AlgorithmConfig(name="lz78::BinaryTrie", header="compressors/lz78/BinaryTrie.hpp"),
+    AlgorithmConfig(name="lz78::BinaryMTFTrie", header="compressors/lz78/BinaryMTFTrie.hpp"),
     AlgorithmConfig(name="lz78::BinaryKTrie", header="compressors/lz78/BinaryKTrie.hpp"),
     # AlgorithmConfig(name="lz78::CedarTrie", header="compressors/lz78/CedarTrie.hpp"),
     AlgorithmConfig(name="lz78::ChainingHashTrie0", header="compressors/lz78/ChainingHashTrie.hpp"),
