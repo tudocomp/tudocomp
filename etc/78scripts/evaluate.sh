@@ -16,26 +16,27 @@ mkdir -p $datasetFolder || die "Cannot create $datasetFolder"
 
 # local -r tudocompFolder=$2
 
-infilenames=(
+local -r kInFileNames=(
 english.1
 wikipedia
-dblp.xml 
+xml
 commoncrawl 
 fibonacci
 gutenberg 
 proteins
 english
-# dna
+dna
 )
 
-downloadfiles=(
-all_vital.txt.xz
-pc/dblp.xml.xz
-pc/english.xz
-commoncrawl.ascii.xz
-pc-artificial/fib41.xz
-gutenberg-201209.24090588160.xz
-pc/proteins.xz
+local -r kDownloadFiles=(
+dna est.fa.xz
+wikipedia all_vital.txt.xz
+xml pc/dblp.xml.xz
+english pc/english.xz
+commoncrawl commoncrawl_10240.ascii.xz
+fibonacci pc-artificial/fib46.xz
+gutenberg gutenberg-201209.24090588160.xz
+proteins pc/proteins.xz
 )
 
 set -x
@@ -44,24 +45,31 @@ set -e
 oldpwd=$(pwd)
 cd "$datasetFolder"
 needDownload=0
-for filename in $infilenames; do
+for filename in $kInFileNames; do
 	if [[ ! -r $filename ]]; then
 		needDownload=1
 		break
 	fi
 done
 if [[ $needDownload -eq 1 ]]; then
-	for downloadfile in $downloadfiles; do 
-		wget http://dolomit.cs.tu-dortmund.de/tudocomp/$downloadfile
-		unxz $(basename $downloadfile)
-	done
+	((downloadCounter=-1))
+	while
+		((downloadCounter+=2))
+		[[ $downloadCounter -gt $#kDownloadFiles ]] && break
+		[[ -r "$datasetFolder/"$kDownloadFiles[$downloadCounter] ]] && continue
+		downloadfile=$kDownloadFiles[$downloadCounter+1]
+		wget --continue "http://dolomit.cs.tu-dortmund.de/tudocomp/$downloadfile"
+		unxz -k $(basename $downloadfile)
+	do :; done
 	truncate -s 1G english
 	dd if=english of=english.1 bs=1M count=1
-	ln -sv dna est.fa
-	ln -sv all_vital.txt wikipedia
-	ln -sv gutenberg-201209.24090588160 gutenberg
-	ln -sv commoncrawl.ascii commoncrawl
-	ln -sv fib41 fibonacci
+	[[ ! -e dna ]] && ln -sv est.fa dna
+	[[ ! -e wikipedia ]] && ln -sv all_vital.txt wikipedia
+	dd if=gutenberg-201209.24090588160 of=gutenberg bs=1000000000 count=1
+	[[ ! -e commoncrawl ]] && ln -sv commoncrawl.ascii commoncrawl
+	[[ ! -e fibonacci ]] && ln -sv fib46 fibonacci
+	[[ ! -e xml ]] && ln -sv dblp.xml xml 
+	# ./tdc -g 'fib(46)' --usestdout >! fib
 fi
 cd "$oldpwd"
 
@@ -160,7 +168,7 @@ timePattern='^Wall Time:\s\+\([0-9]\+\)'
 
 
 make
-for filename in $infilenames; do
+for filename in $kInFileNames; do
 	infile=$(readlink -f "$datasetFolder/$filename")
 
 	[[ -r $infile ]] || die "cannot read $infile!"
