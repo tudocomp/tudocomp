@@ -5,15 +5,14 @@ function die {
 	exit 1
 }
 
-[[ $# -eq 1 ]] || die "Usage: $0 [dataset-folder]"
+[[ $# -eq 2 ]] || die "Usage: $0 [dataset-folder] [tmp-folder]"
 
-typeset -rx scriptDir=$(dirname $(readlink -f "$0"))
+typeset -rx kScriptDir=$(dirname $(readlink -f "$0"))
+typeset -rx kDatasetFolder=$(readlink -f "$1")
+typeset -rx kTmpFolder=$(readlink -f "$2")
+mkdir -p $kDatasetFolder || die "Cannot create $kDatasetFolder"
 
 # [[ -r $tudocompFolder/CMakeLists.txt ]] || die "$tudocompFolder seems not to be the root folder of tudocomp"
-
-local -r datasetFolder=$(readlink -f "$1")
-mkdir -p $datasetFolder || die "Cannot create $datasetFolder"
-
 # local -r tudocompFolder=$2
 
 local -r kInFileNames=(
@@ -43,7 +42,7 @@ set -x
 set -e
 
 oldpwd=$(pwd)
-cd "$datasetFolder"
+cd "$kDatasetFolder"
 needDownload=0
 for filename in $kInFileNames; do
 	if [[ ! -r $filename ]]; then
@@ -56,7 +55,7 @@ if [[ $needDownload -eq 1 ]]; then
 	while
 		((downloadCounter+=2))
 		[[ $downloadCounter -gt $#kDownloadFiles ]] && break
-		[[ -r "$datasetFolder/"$kDownloadFiles[$downloadCounter] ]] && continue
+		[[ -r "$kDatasetFolder/"$kDownloadFiles[$downloadCounter] ]] && continue
 		downloadfile=$kDownloadFiles[$downloadCounter+1]
 		wget --continue "http://dolomit.cs.tu-dortmund.de/tudocomp/$downloadfile"
 		unxz -k $(basename $downloadfile)
@@ -76,7 +75,7 @@ cd "$oldpwd"
 
 useDecompression=1
 
-cd $scriptDir/../..
+cd $kScriptDir/../..
 mkdir -p build
 cd build
 cmake .. -DSTATS_DISABLED=0 -DTDC_REGISTRY=../etc/registries/lz78tries.py
@@ -169,7 +168,7 @@ timePattern='^Wall Time:\s\+\([0-9]\+\)'
 
 make
 for filename in $kInFileNames; do
-	infile=$(readlink -f "$datasetFolder/$filename")
+	infile=$(readlink -f "$kDatasetFolder/$filename")
 
 	[[ -r $infile ]] || die "cannot read $infile!"
 
@@ -181,9 +180,9 @@ for filename in $kInFileNames; do
 		echo ''
 
 		comppressedFile=/dev/null
-		[[ $useDecompression -eq 1 ]] && comppressedFile=$(mktemp  -p /scratch/tmp --suffix .${filename}.comp)  ##TODO: this is a hack
-		logCompFile=$(mktemp -p /scratch/tmp --suffix .${filename}.comp.log )
-		statsCompFile=$(mktemp -p /scratch/tmp --suffix .${filename}.comp.json )
+		[[ $useDecompression -eq 1 ]] && comppressedFile=$(mktemp  -p $kTmpFolder --suffix .${filename}.comp)  ##TODO: this is a hack
+		logCompFile=$(mktemp -p $kTmpFolder --suffix .${filename}.comp.log )
+		statsCompFile=$(mktemp -p $kTmpFolder --suffix .${filename}.comp.json )
 		prefix=$(stat --format="%s" "$infile")
 		# prefix=$(calc -p '200*1024*1024')
 		stats="file=${filename} n=${prefix} algo=${algo_id} "
@@ -193,13 +192,13 @@ for filename in $kInFileNames; do
 		echo -n "RESULT action=compression compressedsize=$(stat --format="%s" $comppressedFile) $stats "
 		t=$(grep $timePattern $logCompFile | sed "s@${timePattern}@\1@")
 		echo -n "time=$t "
-		"$scriptDir"/readlog.sh "$statsCompFile"
+		"$kScriptDir"/readlog.sh "$statsCompFile"
 		echo ''
 
 		if [[ $useDecompression -eq 1 ]]; then
-			logDecFile=$(mktemp -p /scratch/tmp --suffix .${filename}.dec.log )
-			uncompressedFile=$(mktemp -p /scratch/tmp --suffix .${filename}.dec )
-			statsDecFile=$(mktemp -p /scratch/tmp --suffix .${filename}.dec.json )
+			logDecFile=$(mktemp -p $kTmpFolder --suffix .${filename}.dec.log )
+			uncompressedFile=$(mktemp -p $kTmpFolder --suffix .${filename}.dec )
+			statsDecFile=$(mktemp -p $kTmpFolder --suffix .${filename}.dec.json )
 
 			set -x
 			/usr/bin/time --format='Wall Time: %e' ./tdc -d $comppressedFile -o ${uncompressedFile} -f --stats --statfile "$statsDecFile" > "$logDecFile"  2>&1
@@ -207,7 +206,7 @@ for filename in $kInFileNames; do
 			cmp -n ${prefix} --silent $uncompressedFile $infile; checkDecomp="$?"
 			echo -n "RESULT action=decompression check=${checkDecomp} $stats "
 			echo -n "time=$(grep $timePattern $logDecFile | sed "s@${timePattern}@\1@") "
-			"$scriptDir"/readlog.sh "${statsDecFile}"
+			"$kScriptDir"/readlog.sh "${statsDecFile}"
 			echo ''
 			if [[ $checkDecomp -ne 0 ]]; then
 				echo "files $infile and $uncompressedFile are different. Compressed file: $comppressedFile" >&2
