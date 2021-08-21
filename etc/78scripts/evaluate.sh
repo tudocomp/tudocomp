@@ -107,12 +107,12 @@ algos=(
  'wbinary' 'lzw(coder=binary,lz78trie=binary)'
  'binarysorted' 'lz78(coder=binary,lz78trie=binarysorted)'
  'wbinarysorted' 'lzw(coder=binary,lz78trie=binarysorted)'
- 'wrolling128' 'lzw(coder=binary,lz78trie=rolling(hash_roller=rk0))'
- 'wrolling128plus' 'lzw(coder=binary,lz78trie=rolling_plus(hash_roller=rk0))'
+ 'wrolling128' 'lzw(coder=binary,lz78trie=rolling(hash_roller=rk128))'
+ 'wrolling128plus' 'lzw(coder=binary,lz78trie=rolling_plus(hash_roller=rk128))'
  'wchain30' 'lzw(coder=binary,lz78trie=chain30)'
  'wexthash' 'lzw(coder=binary,lz78trie=exthash)'
- 'rolling128' 'lz78(coder=binary,lz78trie=rolling(hash_roller=rk0))'
- 'rolling128plus' 'lz78(coder=binary,lz78trie=rolling_plus(hash_roller=rk0))'
+ 'rolling128' 'lz78(coder=binary,lz78trie=rolling(hash_roller=rk128))'
+ 'rolling128plus' 'lz78(coder=binary,lz78trie=rolling_plus(hash_roller=rk128))'
  'chain30' 'lz78(coder=binary,lz78trie=chain30)'
  'exthash' 'lz78(coder=binary,lz78trie=exthash)'
  # LZ packed
@@ -131,8 +131,8 @@ algos=(
  'ternary' 'lz78(coder=binary,lz78trie=ternary)'
  'hash' 'lz78(coder=binary,lz78trie=hash)'
  'hashplus' 'lz78(coder=binary,lz78trie=hash_plus)'
- 'rolling' 'lz78(coder=binary,lz78trie=rolling)'
- 'rollingplus' 'lz78(coder=binary,lz78trie=rolling_plus)'
+ 'rolling' 'lz78(coder=binary,lz78trie=rolling(hash_roller=rk64))'
+ 'rollingplus' 'lz78(coder=binary,lz78trie=rolling_plus(hash_roller=rk64))'
  ##LZW
  #chain
  'wchain0' 'lzw(coder=binary,lz78trie=chain0)'
