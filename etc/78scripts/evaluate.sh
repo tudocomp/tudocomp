@@ -65,7 +65,7 @@ if [[ $needDownload -eq 1 ]]; then
 	[[ ! -e dna ]] && ln -sv est.fa dna
 	[[ ! -e wikipedia ]] && ln -sv all_vital.txt wikipedia
 	dd if=gutenberg-201209.24090588160 of=gutenberg bs=1000000000 count=1
-	[[ ! -e commoncrawl ]] && ln -sv commoncrawl.ascii commoncrawl
+	[[ ! -e commoncrawl ]] && ln -sv commoncrawl_10240.ascii commoncrawl
 	[[ ! -e fibonacci ]] && ln -sv fib46 fibonacci
 	[[ ! -e xml ]] && ln -sv dblp.xml xml 
 	# ./tdc -g 'fib(46)' --usestdout >! fib
@@ -79,6 +79,7 @@ cd $kScriptDir/../..
 mkdir -p build
 cd build
 cmake .. -DSTATS_DISABLED=0 -DTDC_REGISTRY=../etc/registries/lz78tries.py
+make get_deps
 sed -i 's@^CMAKE_BUILD_TYPE:STRING=.*@CMAKE_BUILD_TYPE:STRING=Release@' CMakeCache.txt
 cmake .. -DSTATS_DISABLED=0 -DTDC_REGISTRY=../etc/registries/lz78tries.py
 
