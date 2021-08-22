@@ -5,77 +5,23 @@ function die {
 	exit 1
 }
 
-[[ $# -eq 2 ]] || die "Usage: $0 [dataset-folder] [tmp-folder]"
+[[ $# -eq 3 ]] || die "Usage: $0 [dataset-folder] [tmp-folder] [DISABLE-STATS?:1|0]"
+set -x
+set -e
 
-typeset -rx kScriptDir=$(dirname $(readlink -f "$0"))
+typeset -rx kScriptFolder=$(dirname $(readlink -f "$0"))
 typeset -rx kDatasetFolder=$(readlink -f "$1")
 typeset -rx kTmpFolder=$(readlink -f "$2")
+typeset -rx kDisableStats="$3"
+[[ $kDisableStats -eq 0 ]] || [[ $kDisableStats -eq 1 ]] || die "with-stats parameter = $kDisableStats invalid!"
 mkdir -p $kDatasetFolder || die "Cannot create $kDatasetFolder"
 
 # [[ -r $tudocompFolder/CMakeLists.txt ]] || die "$tudocompFolder seems not to be the root folder of tudocomp"
 # local -r tudocompFolder=$2
 
-local -r kInFileNames=(
-english.1
-wikipedia
-xml
-commoncrawl 
-fibonacci
-gutenberg 
-proteins
-english
-dna
-)
-
-local -r kDownloadFiles=(
-dna est.fa.xz
-wikipedia all_vital.txt.xz
-xml pc/dblp.xml.xz
-english pc/english.xz
-commoncrawl commoncrawl_10240.ascii.xz
-fibonacci pc-artificial/fib46.xz
-gutenberg gutenberg-201209.24090588160.xz
-proteins pc/proteins.xz
-)
-
-set -x
-set -e
-
-oldpwd=$(pwd)
-cd "$kDatasetFolder"
-needDownload=0
-for filename in $kInFileNames; do
-	if [[ ! -r $filename ]]; then
-		needDownload=1
-		break
-	fi
-done
-if [[ $needDownload -eq 1 ]]; then
-	((downloadCounter=-1))
-	while
-		((downloadCounter+=2))
-		[[ $downloadCounter -gt $#kDownloadFiles ]] && break
-		[[ -r "$kDatasetFolder/"$kDownloadFiles[$downloadCounter] ]] && continue
-		downloadfile=$kDownloadFiles[$downloadCounter+1]
-		wget --continue "http://dolomit.cs.tu-dortmund.de/tudocomp/$downloadfile"
-		unxz -k $(basename $downloadfile)
-	do :; done
-	truncate -s 1G english
-	dd if=english of=english.1 bs=1M count=1
-	[[ ! -e dna ]] && ln -sv est.fa dna
-	[[ ! -e wikipedia ]] && ln -sv all_vital.txt wikipedia
-	dd if=gutenberg-201209.24090588160 of=gutenberg bs=1000000000 count=1
-	[[ ! -e commoncrawl ]] && ln -sv commoncrawl_10240.ascii commoncrawl
-	[[ ! -e fibonacci ]] && ln -sv fib46 fibonacci
-	[[ ! -e xml ]] && ln -sv dblp.xml xml 
-	# ./tdc -g 'fib(46)' --usestdout >! fib
-fi
-cd "$oldpwd"
-
-
 useDecompression=1
 
-cd $kScriptDir/../..
+cd $kScriptFolder/../..
 mkdir -p build
 cd build
 cmake .. -DSTATS_DISABLED=0 -DTDC_REGISTRY=../etc/registries/lz78tries.py
@@ -168,10 +114,9 @@ timePattern='^Wall Time:\s\+\([0-9]\+\)'
 
 
 make
-for filename in $kInFileNames; do
-	infile=$(readlink -f "$kDatasetFolder/$filename")
-
+for infile in "$kDatasetFolder"/*; do
 	[[ -r $infile ]] || die "cannot read $infile!"
+	filename=$(basename "$infile")
 
 	((algo_it=1))
 	while [[ $algo_it -lt $#algos ]]; do
@@ -193,7 +138,7 @@ for filename in $kInFileNames; do
 		echo -n "RESULT action=compression compressedsize=$(stat --format="%s" $comppressedFile) $stats "
 		t=$(grep $timePattern $logCompFile | sed "s@${timePattern}@\1@")
 		echo -n "time=$t "
-		"$kScriptDir"/readlog.sh "$statsCompFile"
+		"$kScriptFolder"/readlog.sh "$statsCompFile"
 		echo ''
 
 		if [[ $useDecompression -eq 1 ]]; then
@@ -207,7 +152,7 @@ for filename in $kInFileNames; do
 			cmp -n ${prefix} --silent $uncompressedFile $infile; checkDecomp="$?"
 			echo -n "RESULT action=decompression check=${checkDecomp} $stats "
 			echo -n "time=$(grep $timePattern $logDecFile | sed "s@${timePattern}@\1@") "
-			"$kScriptDir"/readlog.sh "${statsDecFile}"
+			"$kScriptFolder"/readlog.sh "${statsDecFile}"
 			echo ''
 			if [[ $checkDecomp -ne 0 ]]; then
 				echo "files $infile and $uncompressedFile are different. Compressed file: $comppressedFile" >&2
