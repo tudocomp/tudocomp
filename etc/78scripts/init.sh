@@ -87,19 +87,19 @@ mkdir -p build
 cd build
 cmake -DMALLOC_DISABLED=0 ..
 make randomcopy 
-../scripts/eval_randomcopy.sh | tee randomspace.txt
+../scripts/eval_randomcopy.sh | tee "$kLogFolder/randomspace.log"
 cmake -DMALLOC_DISABLED=1 ..
 make randomcopy 
-../scripts/eval_randomcopy.sh | tee randomtime.txt
+../scripts/eval_randomcopy.sh | tee "$kLogFolder/randomtime.log"
 
 cd "$kOldPwd"
 [[ ! -d tudocomp ]] && git clone --branch lz78 https://github.com/tudocomp/tudocompcd tudocomp 
 git submodule init
 git submodule update
 mkdir -p build
-./etc/78scripts/evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" 0 | tee $kLogFolder/tudocomp_memory.log
-./etc/78scripts/evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" 1 | tee $kLogFolder/tudocomp_time.log
-./etc/78scripts/unix_compress.sh "$kDatasetFolder/ready" "$kTempFolder" | tee $kLogFolder/unixcompress.log
+./etc/78scripts/evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" 0 | "tee $kLogFolder/tudocomp_memory.log"
+./etc/78scripts/evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" 1 | "tee $kLogFolder/tudocomp_time.log"
+./etc/78scripts/unix_compress.sh "$kDatasetFolder/ready" "$kTempFolder" | "tee $kLogFolder/unixcompress.log"
 
 
 cd "$kOldPwd"
@@ -108,5 +108,5 @@ cd Low-LZ78
 git submodule init
 git submodule update
 cd build
-./evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" | tee $kLogFolder/low.log
+./evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" | "tee $kLogFolder/low.log"
 
