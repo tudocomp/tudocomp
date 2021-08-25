@@ -90,6 +90,7 @@ lz78_trie = [
     AlgorithmConfig(name="lz78::ChainingHashTrie10", header="compressors/lz78/ChainingHashTrie.hpp"),
     AlgorithmConfig(name="lz78::ChainingHashTrie20", header="compressors/lz78/ChainingHashTrie.hpp"),
     AlgorithmConfig(name="lz78::ChainingHashTrie30", header="compressors/lz78/ChainingHashTrie.hpp"),
+    AlgorithmConfig(name="lz78::PlainChainingHashTrie", header="compressors/lz78/PlainChainingHashTrie.hpp"),
     #AlgorithmConfig(name="lz78::ChainingHashTrie40", header="compressors/lz78/ChainingHashTrie.hpp"),
     AlgorithmConfig(name="lz78::ExtHashTrie", header="compressors/lz78/ExtHashTrie.hpp"),
     AlgorithmConfig(name="lz78::HashTrie", header="compressors/lz78/HashTrie.hpp", sub=[hash_function,hash_prober]),
