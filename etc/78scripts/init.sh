@@ -104,11 +104,12 @@ mkdir -p build
 ./etc/78scripts/unix_compress.sh "$kDatasetFolder/ready" "$kTempFolder" | tee "$kLogFolder/unixcompress.log"
 
 #
-# cd "$kOldPwd"
-# [[ ! -d Low-LZ78 ]] && git clone https://github.com/koeppl/Low-LZ78
-# cd Low-LZ78 
-# git submodule init
-# git submodule update
-# cd build
-# ./evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" | tee "$kLogFolder/low.log"
-#
+cd "$kOldPwd"
+[[ ! -d Low-LZ78 ]] && git clone https://github.com/koeppl/Low-LZ78
+cd Low-LZ78 
+git submodule init
+git submodule update
+cd build
+./evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" | tee "$kLogFolder/low.log"
+./fixedrun.sh "$kDatasetFolder/ready" "$kTempFolder" | tee -a "$kLogFolder/low.log"
+
