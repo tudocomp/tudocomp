@@ -48,8 +48,8 @@ cmake .. -DSTATS_DISABLED=0 -DTDC_REGISTRY=../etc/registries/lz78tries.py
 algos=(
 'binaryMTF' 'lz78(coder=binary,lz78trie=binaryMTF)'
 'wbinaryMTF' 'lzw(coder=binary,lz78trie=binaryMTF)'
-#  'plainchain' 'lz78(coder=binary,lz78trie=plainchain)'
-#  'wplainchain' 'lzw(coder=binary,lz78trie=plainchain)'
+'plainchain' 'lz78(coder=binary,lz78trie=plainchain)'
+'wplainchain' 'lzw(coder=binary,lz78trie=plainchain)'
  'binary' 'lz78(coder=binary,lz78trie=binary)'
  'wbinary' 'lzw(coder=binary,lz78trie=binary)'
  'binarysorted' 'lz78(coder=binary,lz78trie=binarysorted)'

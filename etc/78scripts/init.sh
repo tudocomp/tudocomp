@@ -14,8 +14,8 @@ typeset -rx kTempFolder=$(readlink -f "$2")
 typeset -rx kLogFolder=$(readlink -f "$3")
 typeset -rx kOldPwd=$(pwd) 
 
-[[ -n "$CC" ]] || export CC=$(which gcc)
-[[ -n "$CXX" ]] || export CXX=$(which g++)
+[[ -n "$CC" ]]  || typeset -rx CC=$(which gcc)
+[[ -n "$CXX" ]] || typeset -rx CXX=$(which g++)
 
 
 mkdir -p "$kDatasetFolder/ready"
@@ -71,42 +71,44 @@ if [[ "$needDownload" -eq 1 ]]; then
 	[[ ! -e ready/dna ]] && ln -sv "$kDatasetFolder/est.fa" ready/dna
 	[[ ! -e ready/wikipedia ]] && ln -sv "$kDatasetFolder/all_vital.txt" ready/wikipedia
 	[[ ! -e ready/gutenberg ]] && dd if=gutenberg-201209.24090588160 of=ready/gutenberg bs=1000000000 count=1
-	[[ ! -e ready/commoncrawl ]] && ln -sv "$kDatasetFolder/commoncrawl_10240.ascii" ready/commoncrawl
+	[[ ! -e ready/commoncrawl ]] && dd if="$kDatasetFolder/commoncrawl_10240.ascii" of=ready/commoncrawl bs=10G count=1
 	[[ ! -e ready/fibonacci ]] && ln -sv "$kDatasetFolder/fib46" ready/fibonacci
 	[[ ! -e ready/xml ]] && ln -sv "$kDatasetFolder/dblp.xml" ready/xml 
+	[[ ! -e ready/proteins ]] && ln -sv "$kDatasetFolder/proteins" ready/proteins 
 	# ./tdc -g 'fib(46)' --usestdout >! fib
 fi
 cd "$oldpwd"
 
 
-[[ ! -d hashbench ]] && git clone https://github.com/koeppl/hashbench 
-cd hashbench
+# [[ ! -d hashbench ]] && git clone https://github.com/koeppl/hashbench 
+# cd hashbench
+# git submodule init
+# git submodule update
+# mkdir -p build
+# cd build
+# cmake -DWITH_GFLAGS=0 -DWITH_GTEST=0 -DMALLOC_DISABLED=0 ..
+# make randomcopy 
+# # ../scripts/eval_randomcopy.sh | tee "$kLogFolder/randomspace.log"
+# cmake -DWITH_GFLAGS=0 -DWITH_GTEST=0 -DMALLOC_DISABLED=1 ..
+# make randomcopy 
+# ../scripts/eval_randomcopy.sh | tee "$kLogFolder/randomtime.log"
+
+cd "$kOldPwd"
+[[ ! -d tudocomp ]] && git clone --branch lz78 https://github.com/tudocomp/tudocomp
+cd tudocomp 
 git submodule init
 git submodule update
 mkdir -p build
-cd build
-cmake -DMALLOC_DISABLED=0 ..
-make randomcopy 
-../scripts/eval_randomcopy.sh | tee randomspace.txt
-cmake -DMALLOC_DISABLED=1 ..
-make randomcopy 
-../scripts/eval_randomcopy.sh | tee randomtime.txt
+./etc/78scripts/evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" 0 | tee "$kLogFolder/tudocomp_memory.log"
+./etc/78scripts/evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" 1 | tee "$kLogFolder/tudocomp_time.log"
+./etc/78scripts/unix_compress.sh "$kDatasetFolder/ready" "$kTempFolder" | tee "$kLogFolder/unixcompress.log"
 
-cd "$kOldPwd"
-[[ ! -d tudocomp ]] && git clone --branch lz78 https://github.com/tudocomp/tudocompcd tudocomp 
-git submodule init
-git submodule update
-mkdir -p build
-./etc/78scripts/evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" 0 | tee $kLogFolder/tudocomp_memory.log
-./etc/78scripts/evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" 1 | tee $kLogFolder/tudocomp_time.log
-./etc/78scripts/unix_compress.sh "$kDatasetFolder/ready" "$kTempFolder" | tee $kLogFolder/unixcompress.log
-
-
-cd "$kOldPwd"
-[[ ! -d Low-LZ78 ]] && git clone https://github.com/koeppl/Low-LZ78
-cd Low-LZ78 
-git submodule init
-git submodule update
-cd build
-./evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" | tee $kLogFolder/low.log
-
+#
+# cd "$kOldPwd"
+# [[ ! -d Low-LZ78 ]] && git clone https://github.com/koeppl/Low-LZ78
+# cd Low-LZ78 
+# git submodule init
+# git submodule update
+# cd build
+# ./evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" | tee "$kLogFolder/low.log"
+#
