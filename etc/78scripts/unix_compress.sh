@@ -21,17 +21,17 @@ for infile in $kDatasetFolder/*; do
 	comppressedFile=$(mktemp  -p $kTmpFolder --suffix .${filename}.comp) 
 	uncompressedFile=$(mktemp -p $kTmpFolder --suffix .${filename}.dec )
 	prefix=$(stat --format="%s" $infile)
-	stats="file=${filename} tabletype=${tabletype} indextype=${indextype} factor=${factor} n=${prefix}"
+	stats="file=${filename} n=${prefix}"
 	set -x
 	/usr/bin/time --format='Wall Time: %e' compress -c ${infile} > ${comppressedFile}
 	set +x
-	echo -n "RESULT action=compression program=compress compressedsize=$(stat --format="%s" $comppressedFile) $stats "
+	echo "RESULT action=compression program=compress compressedsize=$(stat --format="%s" $comppressedFile) $stats "
 
 	set -x
 	/usr/bin/time --format='Wall Time: %e' uncompress -c $comppressedFile > ${uncompressedFile} 
 	set +x
 	cmp --silent $uncompressedFile $infile; checkDecomp="$?"
-	echo -n "RESULT action=decompression program=compress check=${checkDecomp} $stats "
+	echo "RESULT action=decompression program=compress check=${checkDecomp} $stats "
 	if [[ $checkDecomp -ne 0 ]]; then
 		echo "files $infile and $uncompressedFile are different. Compressed file: $comppressedFile"
 	else
