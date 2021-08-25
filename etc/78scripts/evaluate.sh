@@ -114,9 +114,10 @@ timePattern='^Wall Time:\s\+\([0-9]\+\)'
 
 
 make
-for infile in "$kDatasetFolder"/*; do
-	[[ -r $infile ]] || die "cannot read $infile!"
-	filename=$(basename "$infile")
+for _infile in "$kDatasetFolder"/*; do
+	[[ -r $_infile ]] || die "cannot read $_infile!"
+	filename=$(basename "$_infile")
+	infile=$(readlink -f "$_infile")
 
 	((algo_it=1))
 	while [[ $algo_it -lt $#algos ]]; do

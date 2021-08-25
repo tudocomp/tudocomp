@@ -16,8 +16,9 @@ typeset -rx kTmpFolder=$(readlink -f "$2")
 set -x
 set -e
 
-for infile in $kDatasetFolder/*; do
-	filename=$(basename $infile)
+for _infile in $kDatasetFolder/*; do
+	filename=$(basename $_infile)
+	infile=$(readlink -f "$_infile")
 	comppressedFile=$(mktemp  -p $kTmpFolder --suffix .${filename}.comp) 
 	uncompressedFile=$(mktemp -p $kTmpFolder --suffix .${filename}.dec )
 	prefix=$(stat --format="%s" $infile)
