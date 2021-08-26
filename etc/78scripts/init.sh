@@ -5,10 +5,11 @@ function die {
 }
 
 set -x
-set -e
+# set -e
 
 
 [[ $# -eq 3 ]] || die "Usage: $0 [dataset-folder] [tmp-folder] [log-folder]"
+typeset -rx kScriptDir=$(readlink -f "$0")
 typeset -rx kDatasetFolder=$(readlink -f "$1")
 typeset -rx kTempFolder=$(readlink -f "$2")
 typeset -rx kLogFolder=$(readlink -f "$3")
@@ -112,3 +113,6 @@ cd build
 ./evaluate.sh "$kDatasetFolder/ready" "$kTempFolder" | tee "$kLogFolder/low.log"
 ./fixedrun.sh "$kDatasetFolder/ready" "$kTempFolder" "$kLogFolder/low.log"  | tee -a "$kLogFolder/low.log"
 
+ln -sv "$kLogFolder" "$kScriptDir/eval"
+cd $kScriptDir
+./plot.sh

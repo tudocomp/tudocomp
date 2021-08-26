@@ -1,0 +1,1806 @@
+%% IMPORT-DATA tudocomp_memory log/tudocomp_memory.log
+%% IMPORT-DATA tudocomp_time log/tudocomp_time.log
+%% IMPORT-DATA low log/low.log
+%% IMPORT-DATA randomtime log/randomtime.log
+%% IMPORT-DATA randomspace log/randomspace.log
+%% IMPORT-DATA unixcompress log/unixcompress.log
+
+\documentclass[a4paper]{article}
+\usepackage{fullpage}
+
+\usepackage[group-separator={,}]{siunitx}
+\usepackage{booktabs}
+\usepackage{adjustbox}
+
+
+\newcommand*{\namelabel}[1]{{\textsc{#1}}}
+\newcommand*{\LZSeven}{{\namelabel{lz77}}}
+\newcommand*{\LZW}{{\namelabel{lzw}}}
+\newcommand*{\LZEight}{{\namelabel{lz78}}}
+\newcommand*{\LZTrie}{{\textsc{lz} trie}}
+
+\newcommand*{\instancename}[1]{\ensuremath{\mathsf{#1}}} %for instance names
+\DeclareMathAlphabet{\mathup}{OT1}{\familydefault}{m}{n}
+\RequirePackage{mathtools}
+\DeclarePairedDelimiter\bsq{\text{\lq}}{\text{\rq}}     % '.', ticks for '1'/'0'
+
+\newcommand*\xor{\ensuremath{\mathbin{\oplus}}}
+\newcommand{\lcg}[1]{\ensuremath{\instancename{lcg}_{#1}}}
+\newcommand{\sxor}[1]{\instancename{sxor}_{#1}}
+\newcommand{\id}{\instancename{id}}
+
+\newcommand{\select}[1][]{\operatorname{select}_{#1}}
+\newcommand{\rank}[1][]{\operatorname{rank}_{#1}}
+
+\newcommand*{\iBucket}{\textsf{bucket}}
+\newcommand*{\iUnordered}[1]{\ensuremath{\textsf{unordered}_{\textup{#1}}}}
+\newcommand*{\iGrp}[1]{\ensuremath{\textsf{grp}_{#1}}}
+\newcommand*{\iCleary}[1]{\ensuremath{\textsf{cleary}_{\textup{#1}}}}
+\newcommand*{\iElias}[1]{\ensuremath{\textsf{elias}_{\textup{#1}}}}
+\newcommand*{\iLayered}[1]{\ensuremath{\textsf{layered}_{\textup{#1}}}}
+
+
+\newcommand*{\JumpPointer}[1]{\ensuremath{#1^{\mathup{J}}}}
+
+\newcommand*{\iFix}[1]{\ensuremath{\textsf{fix}_{\textup{#1}}}}
+\newcommand*{\iMulti}[1]{\ensuremath{\textsf{multi}_{\textup{#1}}}}
+\newcommand*{\iGrow}[1]{\ensuremath{\textsf{grow}_{\textup{#1}}}}
+\newcommand*{\iClassic}[1]{\ensuremath{\textsf{classic}_{\textup{#1}}}}
+\newcommand*{\iBrute}[1]{\ensuremath{\textsf{brute}_{\textup{#1}}}}
+
+
+\newcommand{\iRolling}[1]{\ensuremath{\instancename{rolling_{#1}}}}
+\newcommand{\iCompact}[1]{\ensuremath{\instancename{cht}_{#1}}}
+\newcommand{\iHash}[1]{\ensuremath{\instancename{hash_{#1}}}}
+\newcommand{\iJudy}   {\instancename{judy}}
+\newcommand{\iTernary}{\instancename{ternary}}
+\newcommand{\iBinary}[1] {\ensuremath{\instancename{binary}_{\textup{#1}}}}
+
+\newcommand*{\hashfunction}[1]{{\usefont{T1}{ppl}{m}{sl}#1}}
+\newcommand*{\vFermat} {\hashfunction{fermat}}
+\newcommand*{\vIDThree}{\hashfunction{ID37}}
+
+\newcommand*{\bv}[1]{\ensuremath{B_{\mathup{#1}}}}
+\newcommand*{\bvJ}[1]{\ensuremath{B_{#1}}}
+
+\newcommand*{\setKeys}{\ensuremath{\mathcal{K}}}
+\newcommand*{\fnLookup}{\functionname{lookup}}
+\newcommand*{\fnInsert}{\functionname{insert}}
+\newcommand*{\fnDepth}{\functionname{depth}}
+\newcommand*{\fnRoot}{\functionname{root}}
+
+\newcommand*{\fnKey}{\functionname{key}}
+\newcommand*{\timeBonsai}{\ensuremath{t_{\mathup{Bonsai}}}}
+
+\newcommand*{\runningExample}{aaababaaaba}
+
+\newcommand*{\Dataset}[1]{\textsc{#1}}
+
+\usepackage{tikz}
+\usetikzlibrary{matrix,positioning,fit}
+\usetikzlibrary{arrows}
+
+
+%%%% BEGIN TIKZ PGFPLOTS
+\usepackage{tikz}
+% \usetikzlibrary{external}
+% \tikzexternalize[prefix=plot/]
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usepgfplotslibrary{colorbrewer}
+
+\pgfplotsset{%
+% initialize Dark2
+cycle list/Dark2,
+cycle multiindex* list={%
+mark list*\nextlist
+Dark2\nextlist
+},
+}
+%Dark2 has size 8
+%Mark List has size 11
+
+
+\pgfplotsset{%
+squeezedPlot/.style={%
+width=0.5\linewidth,
+height=0.5\linewidth
+},
+appendLegend/.style={%
+legend style={font=\small}},
+bitsXaxis/.style={%
+    extra x ticks={8},
+grid=minor,
+    extra tick style={tick style={draw=none},ticklabel pos=top, tick label style={color=gray,font=\tiny},grid=major, grid style={dotted, gray}},
+	%extra x tick labels={},
+	},
+	tinyX/.style={%
+		scaled x ticks=false,
+		x tick label style={%
+			/pgf/number format/.cd,
+			fixed,
+			fixed zerofill,
+			precision=3,
+			/tikz/.cd
+		},
+	},
+	tinyY/.style={%
+		scaled y ticks=false,
+		y tick label style={%
+			/pgf/number format/.cd,
+			fixed,
+			fixed zerofill,
+			precision=3,
+			/tikz/.cd
+		},
+	},
+}
+
+\newcommand{\PlotLarge}[3][]{%
+	\begin{minipage}{0.49\linewidth}
+\begin{tikzpicture}
+	\begin{axis}[title={\textsc{#2}},#1]
+		#3
+\end{axis}
+\end{tikzpicture}
+	\end{minipage}
+}
+\newcommand{\PlotSmall}[3][]{%
+	\begin{minipage}{0.24\linewidth}
+\begin{tikzpicture}
+	\begin{axis}[title={\textsc{#2}},#1]
+		#3
+\end{axis}
+\end{tikzpicture}
+	\end{minipage}
+}
+
+\begin{document}
+
+\begin{table}
+\centerline{%
+\begin{tabular}{l*{6}{r}}
+\toprule
+text & $n$ [M] & $\sigma$ & $z_{\LZEight}$ [M] & $c_{\LZEight}$ [MB] & $z_{\LZW}$ [M] & $c_{\LZW}$ [MB]
+\\\midrule
+%% TABULAR 
+%% SELECT '\Dataset{' || `78`.file || '}', 
+%% printf("%.2f", `78`.n/1e6), max(low.sigma), 
+%% printf("%.2f", `78`.`z`/1e6), 
+%% printf("%.2f", `78`.`compressedsize`/1e6), 
+%% printf("%.2f", w.z/1e6), 
+%% printf("%.2f", w.compressedsize/1e6)
+%% FROM tudocomp_memory AS `78` 
+%% JOIN low ON low.file = `78`.file 
+%% JOIN tudocomp_memory AS w ON w.file = `78`.file AND w.action = `78`.action and w.algo = `78`.algo 
+%% WHERE `78`.action='compression' and `78`.type = '78' and w.type ='w' and `78`.algo = 'binary' 
+%% AND `78`.`file` NOT IN ('english.1')
+%% GROUP BY `78`.file
+%% CONFIG file=plot/tabDatasets.tex
+\input{plot/tabDatasets.tex}
+%
+			\bottomrule
+		\end{tabular}
+	}%centerline
+\caption{Text files used in the experiments.
+	Columns marked with $\bsq{\textup{[M]}}$ are divided by $10^{-6}$;
+	$z_{\LZEight}$ and $z_{\LZW}$ are the number of factors of the \LZEight{} and \LZW{} factorization, respectively;
+	$c_{\LZEight}$ and $c_{\LZW}$ are the size of the encoding of the \LZEight{} and the \LZW{} factors.
+}
+\label{tabDatasets}
+\end{table}
+
+\begin{figure}[t]
+\pgfplotsset{squeezedPlot}
+
+\begin{tikzpicture}
+\begin{axis}[
+title={Insertion Time},
+xlabel={number of elements [$\lg$]},
+ylabel={avg.\ time per element [$\mu$s/\#]},
+appendLegend,
+legend to name={legRandomCompactEight},
+legend columns=2
+]
+
+
+%% MULTIPLOT(experiment) SELECT log(2,size) AS x, time*1000.0/size as y, MULTIPLOT FROM randomtime
+%% WHERE `group` = "insert"
+%% AND `value_width`='8'
+%% AND size between 1048576 AND 134217728
+%% AND experiment IN ('clearyS', 'clearyP', 'layeredS', 'layeredP', 'chtD', 'grp', 'eliasS', 'eliasP')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+%% CONFIG file=plot/cht_construction.tex type=tex
+\input{plot/cht_construction.tex}
+\end{axis}
+\end{tikzpicture}
+\begin{tikzpicture}
+\begin{axis}[
+title={Query Time},
+xlabel={number of elements [$\lg$]},
+ylabel={avg.\ time per element [$\mu$s/\#]}
+]
+
+%% MULTIPLOT(experiment) SELECT LOG(2,size) AS x, time*1000.0/size as y, MULTIPLOT FROM randomtime
+%% WHERE `group` = "query"
+%% AND `value_width`='8'
+%% AND size between 1048576 AND 134217728
+%% AND experiment IN ('clearyS', 'clearyP', 'layeredS', 'layeredP', 'chtD', 'grp', 'eliasS', 'eliasP')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+%% CONFIG file=plot/cht_query.tex type=tex
+\input{plot/cht_query.tex}
+\legend{}
+\end{axis}
+\end{tikzpicture}
+
+\begin{adjustbox}{valign=t}
+\begin{tikzpicture}
+\begin{axis}[
+title={Space},
+xlabel={number of elements [$\lg$]},
+ylabel={avg.\ memory per element [bytes/\#]}
+]
+
+%% MULTIPLOT(experiment)
+%% SELECT LOG(2,size) AS x, mem*1.0/size as y, MULTIPLOT FROM randomspace
+%% WHERE `group` = 'insert' 
+%% AND `value_width`='8'
+%% AND size between 1048576 AND 134217728
+%% AND experiment IN ('clearyS', 'clearyP', 'layeredS', 'layeredP', 'chtD', 'grp', 'eliasS', 'eliasP')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+%% CONFIG file=plot/cht_memory.tex type=tex
+\input{plot/cht_memory.tex}
+\legend{}
+\end{axis}
+\end{tikzpicture}
+\end{adjustbox}
+\begin{adjustbox}{valign=t}
+\begin{minipage}{0.5\linewidth}
+\begin{center}
+\ref{legRandomCompactEight}
+\end{center}
+
+\emph{Top Left}: Time for inserting $2^{10} \cdot (3/2)^n$ elements for $n \ge 0$.
+\emph{Top Right:} Time for querying all inserted elements.
+\emph{Bottom Left}: Maximum space needed during the insertions.
+\end{minipage}
+\end{adjustbox}
+\caption{%
+	Managing randomly generated 32-bit keys and 8-bit values with the compact hash tables.
+}
+\label{figRandomCompactEight}
+\end{figure}
+
+\begin{figure}[t!]
+
+%omit: 'compact_kv', 'compact_kvP',
+\pgfplotsset{squeezedPlot,
+	xlabel style={align=center,yshift=-1em},
+	xlabel={memory\\ $[$bits/$n]$},
+	xticklabel style={rotate=90, anchor=east},
+	ticklabel style={font=\small},
+	width=\linewidth,
+	height=\linewidth,
+	y tick label style={%
+		/pgf/number format/.cd,
+		fixed relative,
+		precision=2,
+		zerofill,
+		/tikz/.cd,
+	},
+}
+
+%% DEFINE 78plot(file)
+%% SELECT m.mem*8.0/m.n as x, MIN(t.time*1e6/t.n) as y, MULTIPLOT from tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.type='78' AND m.file=$file AND m.action='compression' 
+%% AND m.algo in ('binary', 'binaryMTF', 'binarysorted', 'binaryP', 'binaryk', 'binaryMTF', 'binarykP')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+\PlotSmall[ylabel={time [$\mu\text{s}/n$]},
+xlabel=,
+appendLegend,
+legend to name={legPlotSevenEightBinaryOuttakes},
+legend columns=5]{dna}{%
+
+%% MULTIPLOT(m.algo) $78plot('dna')
+%% CONFIG file=plot/78_binaryOuttake_dna.tex type=tex
+\input{plot/78_binaryOuttake_dna.tex}
+}%Plot
+%
+\PlotSmall[xlabel=]{english}{%
+%% MULTIPLOT(m.algo) $78plot('english')
+%% CONFIG file=plot/78_binaryOuttake_english.tex type=tex
+\input{plot/78_binaryOuttake_english.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[xlabel=]{proteins}{%
+%% MULTIPLOT(m.algo) $78plot('proteins')
+%% CONFIG file=plot/78_binaryOuttake_proteins.tex type=tex
+\input{plot/78_binaryOuttake_proteins.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[xlabel=]{xml}{%
+%% MULTIPLOT(m.algo) $78plot('xml')
+%% CONFIG file=plot/78_binaryOuttake_xml.tex type=tex
+\input{plot/78_binaryOuttake_xml.tex}
+\legend{}
+}%Plot
+
+\PlotSmall[bitsXaxis, ylabel={time [$\mu\text{s}/n$]}]{commoncrawl}{%
+%% MULTIPLOT(m.algo) $78plot('commoncrawl')
+%% CONFIG file=plot/78_binaryOuttake_commoncrawl.tex type=tex
+\input{plot/78_binaryOuttake_commoncrawl.tex}
+\legend{}
+}%Plot
+%
+\hspace{1em}
+\PlotSmall[tinyX,tinyY]{fibonacci}{%
+%% MULTIPLOT(m.algo) $78plot('fibonacci')
+%% CONFIG file=plot/78_binaryOuttake_fibonacci.tex type=tex
+\input{plot/78_binaryOuttake_fibonacci.tex}
+\legend{}
+}%Plot
+\hspace{-1em}
+%
+\PlotSmall{gutenberg}{%
+%% MULTIPLOT(m.algo) $78plot('gutenberg')
+%% CONFIG file=plot/78_binaryOuttake_gutenberg.tex type=tex
+\input{plot/78_binaryOuttake_gutenberg.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall{wikipedia}{%
+%% MULTIPLOT(m.algo) $78plot('wikipedia')
+%% CONFIG file=plot/78_binaryOuttake_wikipedia.tex type=tex
+\input{plot/78_binaryOuttake_wikipedia.tex}
+\legend{}
+}%Plot
+
+%% UNDEF 78plot(file)
+\ref{legPlotSevenEightBinaryOuttakes}
+
+%% DEFINE 78plot(file)
+%% SELECT m.mem*8.0/m.n as x, MIN(t.time*1e6/t.n) as y, MULTIPLOT from tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.type='78' AND m.file=$file AND m.action='compression' 
+%% AND m.algo in ('hash', 'exthash', 'chain0', 'chain0P')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+\PlotSmall[bitsXaxis,ylabel={time [$\mu\text{s}/n$]},
+xlabel=,
+appendLegend,
+legend to name={legPlotSevenEightHashOuttakes},
+legend columns=5]{dna}{%
+
+%% MULTIPLOT(m.algo) $78plot('dna')
+%% CONFIG file=plot/78_hashOuttake_dna.tex type=tex
+\input{plot/78_hashOuttake_dna.tex}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{english}{%
+%% MULTIPLOT(m.algo) $78plot('english')
+%% CONFIG file=plot/78_hashOuttake_english.tex type=tex
+\input{plot/78_hashOuttake_english.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{proteins}{%
+%% MULTIPLOT(m.algo) $78plot('proteins')
+%% CONFIG file=plot/78_hashOuttake_proteins.tex type=tex
+\input{plot/78_hashOuttake_proteins.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{xml}{%
+%% MULTIPLOT(m.algo) $78plot('xml')
+%% CONFIG file=plot/78_hashOuttake_xml.tex type=tex
+\input{plot/78_hashOuttake_xml.tex}
+\legend{}
+}%Plot
+
+\PlotSmall[bitsXaxis,ylabel={time [$\mu\text{s}/n$]}]{commoncrawl}{%
+%% MULTIPLOT(m.algo) $78plot('commoncrawl')
+%% CONFIG file=plot/78_hashOuttake_commoncrawl.tex type=tex
+\input{plot/78_hashOuttake_commoncrawl.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall{fibonacci}{%
+%% MULTIPLOT(m.algo) $78plot('fibonacci')
+%% CONFIG file=plot/78_hashOuttake_fibonacci.tex type=tex
+\input{plot/78_hashOuttake_fibonacci.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis]{gutenberg}{%
+%% MULTIPLOT(m.algo) $78plot('gutenberg')
+%% CONFIG file=plot/78_hashOuttake_gutenberg.tex type=tex
+\input{plot/78_hashOuttake_gutenberg.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis]{wikipedia}{%
+%% MULTIPLOT(m.algo) $78plot('wikipedia')
+%% CONFIG file=plot/78_hashOuttake_wikipedia.tex type=tex
+\input{plot/78_hashOuttake_wikipedia.tex}
+\legend{}
+}%Plot
+
+%% UNDEF 78plot(file)
+\ref{legPlotSevenEightHashOuttakes}
+
+\caption{Evaluation of the \LZEight{} factorization with the trie implementations,
+	namely
+	\iBinary{mtf} (\iBinary{} using MTF-encoding),
+	\iBinary{k} (\iBinary{},
+	\JumpPointer{\iBinary{k}} (\iBinary{k} combined with the jump pointer technique,
+	\iBinary{s} (\iBinary{} with sorting), 
+	\JumpPointer{\iGrp{0}} (jump pointers applied to \iGrp{0} for $\beta = 0$),
+	and
+	\iUnordered{} (\iHash{} with the C++ STL hash table), 
+	which we omit in the following evaluations.
+}
+\label{figPlotSevenEightOuttakes}
+\end{figure}
+
+\begin{figure}[t!]
+%% DEFINE 78plot(file)
+%% SELECT m.mem*8.0/m.n as x, MIN(t.time*1e6/t.n) as y, MULTIPLOT from tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.type='78' AND m.file=$file AND m.action='compression' 
+%% AND m.algo not in ('rolling128', 'rolling128plus', 'binaryk', 'binaryMTF', 'binarykP', 'binaryMTF', 'chain0P', 'compact_kvP', 'exthash', 'binarysorted')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+\pgfplotsset{bitsXaxis,
+	width=\linewidth,
+	height=0.6\linewidth,
+	ylabel={time [$\mu\text{s}/n$]},
+	xlabel={memory $[$bits/$n]$},
+	y tick label style={%
+		/pgf/number format/.cd,
+		fixed relative,
+		precision=2,
+		zerofill,
+		/tikz/.cd,
+	},
+	ymin=0,
+}
+
+
+
+\PlotLarge[xlabel=,appendLegend,
+legend to name={legPlotSevenEightAll},
+legend columns=5]{dna}{%
+
+%% MULTIPLOT(m.algo) $78plot('dna')
+%% CONFIG file=plot/78_all_dna.tex type=tex
+\input{plot/78_all_dna.tex}
+}%Plot
+\hfill
+%
+\PlotLarge[xlabel=,ylabel=]{english}{%
+%% MULTIPLOT(m.algo) $78plot('english')
+%% CONFIG file=plot/78_all_english.tex type=tex
+\input{plot/78_all_english.tex}
+\legend{}
+}%Plot
+
+\PlotLarge[xlabel=]{proteins}{%
+%% MULTIPLOT(m.algo) $78plot('proteins')
+%% CONFIG file=plot/78_all_proteins.tex type=tex
+\input{plot/78_all_proteins.tex}
+\legend{}
+}%Plot
+\hfill
+\PlotLarge[xlabel=,ylabel=]{xml}{%
+%% MULTIPLOT(m.algo) $78plot('xml')
+%% CONFIG file=plot/78_all_xml.tex type=tex
+\input{plot/78_all_xml.tex}
+\legend{}
+}%Plot
+
+\PlotLarge[xlabel=]{commoncrawl}{%
+%% MULTIPLOT(m.algo) $78plot('commoncrawl')
+%% CONFIG file=plot/78_all_commoncrawl.tex type=tex
+\input{plot/78_all_commoncrawl.tex}
+\legend{}
+}%Plot
+\hfill
+\PlotLarge[xlabel=,ylabel=]{fibonacci}{%
+%% MULTIPLOT(m.algo) $78plot('fibonacci')
+%% CONFIG file=plot/78_all_fibonacci.tex type=tex
+\input{plot/78_all_fibonacci.tex}
+\legend{}
+}%Plot
+
+\PlotLarge{gutenberg}{%
+%% MULTIPLOT(m.algo) $78plot('gutenberg')
+%% CONFIG file=plot/78_all_gutenberg.tex type=tex
+\input{plot/78_all_gutenberg.tex}
+\legend{}
+}%Plot
+\hfill
+\PlotLarge[ylabel=]{wikipedia}{%
+%% MULTIPLOT(m.algo) $78plot('wikipedia')
+%% CONFIG file=plot/78_all_wikipedia.tex type=tex
+\input{plot/78_all_wikipedia.tex}
+\legend{}
+}%Plot
+
+
+%% UNDEF 78plot(file)
+\ref{legPlotSevenEightAll}
+
+\caption{Juxtaposition of all \LZTrie{} implementations for the \LZEight{} factorization.
+}
+\label{figPlotSevenEightAll}
+\end{figure}
+
+
+
+
+\begin{figure}[t!]
+%% DEFINE 78plot(file)
+%% SELECT m.mem*8.0/m.n as x, MIN(t.time*1e6/t.n) as y, MULTIPLOT from tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.type='78' AND m.file=$file AND m.action='compression' 
+%% AND m.algo in ('hash', 'hashplus', 'rolling', 'rollingplus', 'binary', 'ternary', 'judy')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+\pgfplotsset{squeezedPlot,
+	xlabel style={align=center,yshift=-1em},
+	xlabel={memory\\ $[$bits/$n]$},
+	xticklabel style={rotate=90, anchor=east},
+	ticklabel style={font=\small},
+	width=\linewidth,
+	height=\linewidth,
+	y tick label style={%
+		/pgf/number format/.cd,
+		fixed relative,
+		precision=2,
+		zerofill,
+		/tikz/.cd,
+	},
+}
+
+
+
+\PlotSmall[ylabel={time [$\mu\text{s}/n$]},
+bitsXaxis,
+xlabel=,
+appendLegend,
+legend to name={legPlotSevenEightHighMem},
+legend columns=5]{dna}{%
+
+%% MULTIPLOT(m.algo) $78plot('dna')
+%% CONFIG file=plot/78_highmem_dna.tex type=tex
+\input{plot/78_highmem_dna.tex}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{english}{%
+%% MULTIPLOT(m.algo) $78plot('english')
+%% CONFIG file=plot/78_highmem_english.tex type=tex
+\input{plot/78_highmem_english.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{proteins}{%
+%% MULTIPLOT(m.algo) $78plot('proteins')
+%% CONFIG file=plot/78_highmem_proteins.tex type=tex
+\input{plot/78_highmem_proteins.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{xml}{%
+%% MULTIPLOT(m.algo) $78plot('xml')
+%% CONFIG file=plot/78_highmem_xml.tex type=tex
+\input{plot/78_highmem_xml.tex}
+\legend{}
+}%Plot
+
+\PlotSmall[bitsXaxis,ylabel={time [$\mu\text{s}/n$]}]{commoncrawl}{%
+%% MULTIPLOT(m.algo) $78plot('commoncrawl')
+%% CONFIG file=plot/78_highmem_commoncrawl.tex type=tex
+\input{plot/78_highmem_commoncrawl.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall{fibonacci}{%
+%% MULTIPLOT(m.algo) $78plot('fibonacci')
+%% CONFIG file=plot/78_highmem_fibonacci.tex type=tex
+\input{plot/78_highmem_fibonacci.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis]{gutenberg}{%
+%% MULTIPLOT(m.algo) $78plot('gutenberg')
+%% CONFIG file=plot/78_highmem_gutenberg.tex type=tex
+\input{plot/78_highmem_gutenberg.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis]{wikipedia}{%
+%% MULTIPLOT(m.algo) $78plot('wikipedia')
+%% CONFIG file=plot/78_highmem_wikipedia.tex type=tex
+\input{plot/78_highmem_wikipedia.tex}
+\legend{}
+}%Plot
+
+%% UNDEF 78plot(file)
+\ref{legPlotSevenEightHighMem}
+
+%% DEFINE 78plot(file)
+%% SELECT m.mem*8.0/m.n as x, MIN(t.time*1e6/t.n) as y, MULTIPLOT from tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.type='78' AND m.file=$file AND m.action='compression' 
+%% AND m.algo not in ('hash', 'hashplus', 'rolling', 'rollingplus', 'rolling128', 'rolling128plus', 'binary', 'ternary', 'judy', 'binaryk', 'binaryMTF', 'binarykP', 'chain0P', 'compact_kvP', 'binarysorted', 'exthash')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+\PlotSmall[bitsXaxis,ylabel={time [$\mu\text{s}/n$]},
+appendLegend,
+xlabel=,
+legend to name={legPlotSevenEight},
+legend columns=5]{dna}{%
+%% MULTIPLOT(m.algo) $78plot('dna')
+%% CONFIG file=plot/78_dna.tex type=tex
+\input{plot/78_dna.tex}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{english}{%
+%% MULTIPLOT(m.algo) $78plot('english')
+%% CONFIG file=plot/78_english.tex type=tex
+\input{plot/78_english.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{proteins}{%
+%% MULTIPLOT(m.algo) $78plot('proteins')
+%% CONFIG file=plot/78_proteins.tex type=tex
+\input{plot/78_proteins.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{xml}{%
+%% MULTIPLOT(m.algo) $78plot('xml')
+%% CONFIG file=plot/78_xml.tex type=tex
+\input{plot/78_xml.tex}
+\legend{}
+}%Plot
+
+\PlotSmall[bitsXaxis,ylabel={time [$\mu\text{s}/n$]}]{commoncrawl}{%
+%% MULTIPLOT(m.algo) $78plot('commoncrawl')
+%% CONFIG file=plot/78_commoncrawl.tex type=tex
+\input{plot/78_commoncrawl.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[tinyX]{fibonacci}{%
+%% MULTIPLOT(m.algo) $78plot('fibonacci')
+%% CONFIG file=plot/78_fibonacci.tex type=tex
+\input{plot/78_fibonacci.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis]{gutenberg}{%
+%% MULTIPLOT(m.algo) $78plot('gutenberg')
+%% CONFIG file=plot/78_gutenberg.tex type=tex
+\input{plot/78_gutenberg.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis]{wikipedia}{%
+%% MULTIPLOT(m.algo) $78plot('wikipedia')
+%% CONFIG file=plot/78_wikipedia.tex type=tex
+\input{plot/78_wikipedia.tex}
+\legend{}
+}%Plot
+
+\ref{legPlotSevenEight}
+
+\caption{Evaluation of our \LZTrie{} implementations for the \LZEight{} factorization.
+}
+\label{figPlotSevenEightDivided}
+\end{figure}
+
+\begin{figure}[t!]
+%% DEFINE wplot(file)
+%% SELECT m.mem*8.0/m.n as x, MIN(t.time*1e6/t.n) as y, MULTIPLOT from tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.type='w' AND m.file=$file AND m.action='compression' 
+%% AND m.algo not in ('rolling128', 'rolling128plus', 'binaryk', 'binaryMTF', 'binarykP', 'chain0P', 'compact_kvP', 'binarysorted', 'exthash')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+\pgfplotsset{bitsXaxis,
+	width=\linewidth,
+	height=0.6\linewidth,
+	ylabel={time [$\mu\text{s}/n$]},
+	xlabel={memory $[$bits/$n]$},
+	y tick label style={%
+		/pgf/number format/.cd,
+		fixed relative,
+		precision=2,
+		zerofill,
+		/tikz/.cd,
+	},
+	ymin=0,
+}
+
+
+\PlotLarge[xlabel=,appendLegend,
+legend to name={legPlotWelchAll},
+legend columns=5]{dna}{%
+
+%% MULTIPLOT(m.algo) $wplot('dna')
+%% CONFIG file=plot/w_all_dna.tex type=tex
+\input{plot/w_all_dna.tex}
+}%Plot
+\hfill
+%
+\PlotLarge[xlabel=,ylabel=]{english}{%
+%% MULTIPLOT(m.algo) $wplot('english')
+%% CONFIG file=plot/w_all_english.tex type=tex
+\input{plot/w_all_english.tex}
+\legend{}
+}%Plot
+
+\PlotLarge[xlabel=]{proteins}{%
+%% MULTIPLOT(m.algo) $wplot('proteins')
+%% CONFIG file=plot/w_all_proteins.tex type=tex
+\input{plot/w_all_proteins.tex}
+\legend{}
+}%Plot
+\hfill
+\PlotLarge[xlabel=,ylabel=]{xml}{%
+%% MULTIPLOT(m.algo) $wplot('xml')
+%% CONFIG file=plot/w_all_xml.tex type=tex
+\input{plot/w_all_xml.tex}
+\legend{}
+}%Plot
+
+\PlotLarge[xlabel=]{commoncrawl}{%
+%% MULTIPLOT(m.algo) $wplot('commoncrawl')
+%% CONFIG file=plot/w_all_commoncrawl.tex type=tex
+\input{plot/w_all_commoncrawl.tex}
+\legend{}
+}%Plot
+\hfill
+\PlotLarge[xlabel=,ylabel=]{fibonacci}{%
+%% MULTIPLOT(m.algo) $wplot('fibonacci')
+%% CONFIG file=plot/w_all_fibonacci.tex type=tex
+\input{plot/w_all_fibonacci.tex}
+\legend{}
+}%Plot
+
+\PlotLarge{gutenberg}{%
+%% MULTIPLOT(m.algo) $wplot('gutenberg')
+%% CONFIG file=plot/w_all_gutenberg.tex type=tex
+\input{plot/w_all_gutenberg.tex}
+\legend{}
+}%Plot
+\hfill
+\PlotLarge[ylabel=]{wikipedia}{%
+%% MULTIPLOT(m.algo) $wplot('wikipedia')
+%% CONFIG file=plot/w_all_wikipedia.tex type=tex
+\input{plot/w_all_wikipedia.tex}
+\legend{}
+}%Plot
+
+
+%% UNDEF wplot(file)
+\ref{legPlotWelchAll}
+
+\caption{Juxtaposition of all \LZTrie{} implementations for the \LZW{} factorization.
+}
+\label{figPlotWelchAll}
+\end{figure}
+
+\begin{figure}[t!]
+%% DEFINE wplot(file)
+%% SELECT m.mem*8.0/m.n as x, MIN(t.time*1e6/t.n) as y, MULTIPLOT from tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.type='w' AND m.file=$file AND m.action='compression' 
+%% AND m.algo in ('hash', 'hashplus', 'rolling', 'rollingplus', 'binary', 'ternary', 'judy')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+\pgfplotsset{squeezedPlot,
+	xlabel style={align=center,yshift=-1em},
+	xlabel={memory\\ $[$bits/$n]$},
+	xticklabel style={rotate=90, anchor=east},
+	ticklabel style={font=\small},
+	width=\linewidth,
+	height=\linewidth,
+	y tick label style={%
+		/pgf/number format/.cd,
+		fixed relative,
+		precision=2,
+		zerofill,
+		/tikz/.cd,
+	},
+}
+
+
+\PlotSmall[bitsXaxis,ylabel={time [$\mu\text{s}/n$]},
+xlabel=,
+appendLegend,
+legend to name={legPlotWelchHighMem},
+legend columns=5]{dna}{%
+
+%% MULTIPLOT(m.algo) $wplot('dna')
+%% CONFIG file=plot/w_highmem_dna.tex type=tex
+\input{plot/w_highmem_dna.tex}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{english}{%
+%% MULTIPLOT(m.algo) $wplot('english')
+%% CONFIG file=plot/w_highmem_english.tex type=tex
+\input{plot/w_highmem_english.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{proteins}{%
+%% MULTIPLOT(m.algo) $wplot('proteins')
+%% CONFIG file=plot/w_highmem_proteins.tex type=tex
+\input{plot/w_highmem_proteins.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{xml}{%
+%% MULTIPLOT(m.algo) $wplot('xml')
+%% CONFIG file=plot/w_highmem_xml.tex type=tex
+\input{plot/w_highmem_xml.tex}
+\legend{}
+}%Plot
+
+\PlotSmall[bitsXaxis,ylabel={time [$\mu\text{s}/n$]}]{commoncrawl}{%
+%% MULTIPLOT(m.algo) $wplot('commoncrawl')
+%% CONFIG file=plot/w_highmem_commoncrawl.tex type=tex
+\input{plot/w_highmem_commoncrawl.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall{fibonacci}{%
+%% MULTIPLOT(m.algo) $wplot('fibonacci')
+%% CONFIG file=plot/w_highmem_fibonacci.tex type=tex
+\input{plot/w_highmem_fibonacci.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis]{gutenberg}{%
+%% MULTIPLOT(m.algo) $wplot('gutenberg')
+%% CONFIG file=plot/w_highmem_gutenberg.tex type=tex
+\input{plot/w_highmem_gutenberg.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis]{wikipedia}{%
+%% MULTIPLOT(m.algo) $wplot('wikipedia')
+%% CONFIG file=plot/w_highmem_wikipedia.tex type=tex
+\input{plot/w_highmem_wikipedia.tex}
+\legend{}
+}%Plot
+
+%% UNDEF wplot(file)
+\ref{legPlotWelchHighMem}
+
+%% DEFINE wplot(file)
+%% SELECT m.mem*8.0/m.n as x, MIN(t.time*1e6/t.n) as y, MULTIPLOT from tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.type='w' AND m.file=$file AND m.action='compression' 
+%% AND m.algo not in ('hash', 'hashplus', 'rolling', 'rollingplus', 'rolling128', 'rolling128plus', 'binary', 'ternary', 'judy', 'binaryk', 'binaryMTF', 'binarykP', 'chain0P', 'compact_kvP', 'binarysorted', 'exthash')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+\PlotSmall[bitsXaxis,ylabel={time [$\mu\text{s}/n$]},
+appendLegend,
+xlabel=,
+legend to name={legPlotWelch},
+legend columns=5]{dna}{%
+%% MULTIPLOT(m.algo) $wplot('dna')
+%% CONFIG file=plot/w_dna.tex type=tex
+\input{plot/w_dna.tex}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{english}{%
+%% MULTIPLOT(m.algo) $wplot('english')
+%% CONFIG file=plot/w_english.tex type=tex
+\input{plot/w_english.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{proteins}{%
+%% MULTIPLOT(m.algo) $wplot('proteins')
+%% CONFIG file=plot/w_proteins.tex type=tex
+\input{plot/w_proteins.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis,xlabel=]{xml}{%
+%% MULTIPLOT(m.algo) $wplot('xml')
+%% CONFIG file=plot/w_xml.tex type=tex
+\input{plot/w_xml.tex}
+\legend{}
+}%Plot
+
+\PlotSmall[bitsXaxis,ylabel={time [$\mu\text{s}/n$]}]{commoncrawl}{%
+%% MULTIPLOT(m.algo) $wplot('commoncrawl')
+%% CONFIG file=plot/w_commoncrawl.tex type=tex
+\input{plot/w_commoncrawl.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[tinyX]{fibonacci}{%
+%% MULTIPLOT(m.algo) $wplot('fibonacci')
+%% CONFIG file=plot/w_fibonacci.tex type=tex
+\input{plot/w_fibonacci.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis]{gutenberg}{%
+%% MULTIPLOT(m.algo) $wplot('gutenberg')
+%% CONFIG file=plot/w_gutenberg.tex type=tex
+\input{plot/w_gutenberg.tex}
+\legend{}
+}%Plot
+%
+\PlotSmall[bitsXaxis]{wikipedia}{%
+%% MULTIPLOT(m.algo) $wplot('wikipedia')
+%% CONFIG file=plot/w_wikipedia.tex type=tex
+\input{plot/w_wikipedia.tex}
+\legend{}
+}%Plot
+
+\ref{legPlotWelch}
+
+\caption{Evaluation of our \LZTrie{} implementations for the \LZW{} factorization.
+}
+\label{figPlotWelchDivided}
+\end{figure}
+
+
+\begin{table}[t!]
+%% DEFINE subquery(file)
+%% SELECT m.algo AS algo, printf("%.2f", m.mem*8.0/m.n) AS mem, printf("%.2f", MIN(t.time*1e6/t.n)) AS time, m.type AS type
+%% FROM tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.file=$file AND m.action='compression' 
+%% AND m.algo in ('rolling', 'rollingplus', 'rolling128', 'rolling128plus')
+%% GROUP BY m.algo, m.type 
+
+%% DEFINE rolling(file)
+%% SELECT
+%% "JUSTIFY(" || eight.algo || ")", eight.time, eight.mem, w.time, w.mem
+%% FROM ($subquery($file)) AS eight
+%% INNER JOIN ($subquery($file)) as w ON eight.algo = w.algo
+%% WHERE eight.type = '78' and w.type = 'w'
+%% ORDER BY eight.algo = 'rolling' DESC, eight.algo = 'rollingplus' DESC, eight.algo = 'rolling128' DESC, eight.algo = 'rolling128plus' DESC
+
+
+		\setlength{\tabcolsep}{0.4em}
+
+		\begin{tabular}{l*{4}{r}}
+			\toprule
+			&	\multicolumn{2}{c}{\LZEight{}} & \multicolumn{2}{c}{\LZW{}}
+			\\ \cmidrule(lr){2-3} \cmidrule(lr){4-5}
+	dataset / & time & space & time & space \\
+	trie			& [$\mu \text{s}/n$] & $\frac{\text{bits}}{n}$ & [$\mu \text{s}/n$] & $\frac{\text{bits}}{n}$ \\
+\multicolumn{4}{l}{\textsc{dna}}
+\\\midrule
+%% TABULAR $rolling('dna')
+%% CONFIG file=plot/tabRollingDna.tex
+%
+%%
+\input{plot/tabRollingDna.tex}
+%
+\multicolumn{4}{l}{\textsc{english}} 
+\\\midrule
+%% TABULAR $rolling('english')
+%% CONFIG file=plot/tabRollingEnglish.tex
+%
+%%
+\input{plot/tabRollingEnglish.tex}
+%
+\multicolumn{4}{l}{\textsc{proteins}} 
+\\\midrule
+%% TABULAR $rolling('proteins')
+%% CONFIG file=plot/tabRollingProteins.tex
+%
+%%
+\input{plot/tabRollingProteins.tex}
+%
+\multicolumn{4}{l}{\textsc{xml}} 
+\\\midrule
+%% TABULAR $rolling('xml')
+%% CONFIG file=plot/tabRollingXml.tex
+%
+%%
+\input{plot/tabRollingXml.tex}
+ 			 \bottomrule
+   \end{tabular}
+		\begin{tabular}{l*{4}{r}}
+			\toprule
+			&	\multicolumn{2}{c}{\LZEight{}} & \multicolumn{2}{c}{\LZW{}}
+			\\ \cmidrule(lr){2-3} \cmidrule(lr){4-5}
+	dataset / & time & space & time & space \\
+	trie			& [$\mu \text{s}/n$] & $\frac{\text{bits}}{n}$ & [$\mu \text{s}/n$] & $\frac{\text{bits}}{n}$ \\
+%
+\multicolumn{4}{l}{\textsc{commoncrawl}} 
+\\\midrule
+%% TABULAR $rolling('commoncrawl')
+%% CONFIG file=plot/tabRollingcommoncrawl.tex
+%
+%%
+\input{plot/tabRollingcommoncrawl.tex}
+%
+\multicolumn{4}{l}{\textsc{fibonacci}} 
+\\\midrule
+%% TABULAR $rolling('fibonacci')
+%% CONFIG file=plot/tabRollingfibonacci.tex
+%
+%%
+\input{plot/tabRollingfibonacci.tex}
+%
+\multicolumn{4}{l}{\textsc{gutenberg}} 
+\\\midrule
+%% TABULAR $rolling('gutenberg')
+%% CONFIG file=plot/tabRollinggutenberg.tex
+%
+%%
+\input{plot/tabRollinggutenberg.tex}
+%
+\multicolumn{4}{l}{\textsc{wikipedia}} 
+\\\midrule
+%% TABULAR $rolling('wikipedia')
+%% CONFIG file=plot/tabRollingwikipedia.tex
+%
+%%
+\input{plot/tabRollingwikipedia.tex}
+ 			 \bottomrule
+   \end{tabular}
+   \caption{Performance comparison of 64-bit and 128-bit fingerprints of \iRolling{} with its variant \iRolling{+} when computing the \LZEight{} and \LZW{} factorization.}
+\label{tableLargeBitsRolling}
+%%UNDEF subquery
+%%UNDEF rolling
+   \end{table}
+
+\begin{figure}[t!]
+	\centering{%
+
+		\pgfplotsset{%
+			myaxisstyle/.style={%
+	ybar=8pt,
+	width=\linewidth,
+    enlarge x limits=0.1,
+	legend columns=5,
+    ylabel={compression ratio},
+	symbolic x coords={dna, english,xml,proteins,fibonacci,gutenberg,wikipedia,commoncrawl},
+    xtick=data,
+	ymin=0,
+	ymax=80,
+	y=2pt,
+	x tick label style={font=\scriptsize\scshape},
+    nodes near coords,
+	nodes near coords style={font=\normalfont,rotate=90,anchor=west},
+	bar width = 0pt,
+cycle multi list={%
+		Dark2-6\nextlist
+		dashed,solid\nextlist
+}}
+}
+
+
+\pgfplotsset{cycle list/Dark2-6}
+\begin{tikzpicture}
+\begin{axis}[myaxisstyle,
+	legend to name={legCompressionRatio},
+	x tick label style={rotate=90,anchor=east}
+	]
+%% MULTIPLOT(type) 
+%% SELECT file AS x, compressedsize*100.0/n AS y, MULTIPLOT
+%% FROM tudocomp_memory
+%% WHERE action = 'compression'
+%% AND file NOT IN ('english.1')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+%% CONFIG file=plot/compratio2.tex colorcache=none 
+
+%% MULTIPLOT(program) 
+%% SELECT file AS x, compressedsize*100.0/n AS y, MULTIPLOT
+%% FROM unixcompress 
+%% WHERE action = 'compression'
+%% AND file NOT IN ('english.1')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+%% CONFIG file=plot/compratio2.tex colorcache=none mode=a
+
+% MULTIPLOT(algo) 
+% SELECT s.file AS x, SUM(s.compressedsize)*100.0/t.n AS y, MULTIPLOT
+% FROM splitrun AS s 
+% INNER JOIN (SELECT t.file, t.n FROM tudocomp_memory AS t where t.action = 'compression' group by t.file) AS t 
+% ON t.file = s.file 
+% WHERE s.action = 'compression' 
+% AND s.file NOT IN ('english.1')
+% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+% CONFIG file=plot/compratio2.tex colorcache=none mode=a
+
+\input{plot/compratio2.tex}
+\end{axis}
+\end{tikzpicture}
+
+	}%centering
+\ref{legCompressionRatio}
+\caption{Compression ratios of the classic coding of \LZEight{} and \LZW{}
+	compared with the Unix tool \texttt{compress} with its best compression.
+% and with \texttt{split}, which is the most memory-efficient LZ78 factorization algorithm that has to discard its dictionary when its memory reaches the memory limit of the most-efficient LZ78 algorithm computing the Bonsai coding.
+% We have no data points for \texttt{split} and \textsc{fibonacci} since one of the algorithms using the classic coding use less memory than all Bonsai-coding algorithms.
+}
+	\label{figCompressionRatio}
+\end{figure}
+
+
+\begin{figure}[t!]
+\pgfplotsset{squeezedPlot,bitsXaxis,
+	xlabel={memory $[$bits/$n]$},
+	ylabel={time [$\mu\text{s}/n$]},
+	width=\linewidth,
+	height=0.6\linewidth,
+}
+
+%% DEFINE grpsubquery(file)
+%% SELECT m.mem*8.0/m.n AS x, MIN(t.time*1e6/t.n) AS y, 'chainbeta' AS name from tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.type='78' AND m.file=$file AND m.action='compression' 
+%% AND m.algo IN ('chain0', 'chain10', 'chain20', 'chain30') 
+%% GROUP BY m.algo
+
+
+%% DEFINE GrpCompMemTime(file)
+%% SELECT
+%% m.x AS x, m.y AS y, MULTIPLOT
+%% FROM ($grpsubquery($file)) AS m
+
+
+%% DEFINE lowCompMemTime(file,clause)
+%% SELECT (mem*8.0)/n AS x, MIN((time*1e6)/n) as y, MULTIPLOT FROM "low" 
+%% WHERE "action" = 'compression'
+%% AND "file" = $file AND "tabletype" in ('-1','2')
+%% AND indextype NOT IN ('6') $clause
+%% AND useEliasDisplacement='1'
+%% GROUP BY MULTIPLOT,factor ORDER BY MULTIPLOT,x
+
+%% DEFINE 78CompMemTime(file)
+%% SELECT m.mem*8.0/m.n as x, MIN(t.time*1e6/t.n) as y, MULTIPLOT from tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.type='78' AND m.file=$file AND m.action='compression' 
+%% AND m.algo IN ('binary', 'ternary')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+
+\PlotLarge[xlabel=,
+appendLegend,
+legend to name={legPlotLowCompMemTime},
+legend columns=5]
+{dna}{%
+%% MULTIPLOT(indextype) $lowCompMemTime('dna',)
+%% CONFIG file=plot/low_dna.tex
+
+%% MULTIPLOT(m.algo) $78CompMemTime('dna')
+%% CONFIG file=plot/low_dna.tex mode=a
+
+%% MULTIPLOT(name) $GrpCompMemTime('dna')
+%% CONFIG file=plot/low_dna.tex mode=a
+
+\input{plot/low_dna.tex}
+}%plot
+%
+\PlotLarge[xlabel=,ylabel=]{english}{%
+%% MULTIPLOT(indextype) $lowCompMemTime('english',)
+%% CONFIG file=plot/low_english.tex
+
+%% MULTIPLOT(m.algo) $78CompMemTime('english')
+%% CONFIG file=plot/low_english.tex mode=a
+
+%% MULTIPLOT(name) $GrpCompMemTime('english')
+%% CONFIG file=plot/low_english.tex mode=a
+
+\input{plot/low_english.tex}
+\legend{}
+}%plot
+
+\PlotLarge[xlabel=]{proteins}{%
+%% MULTIPLOT(indextype) $lowCompMemTime('proteins',)
+%% CONFIG file=plot/low_proteins.tex
+
+%% MULTIPLOT(m.algo) $78CompMemTime('proteins')
+%% CONFIG file=plot/low_proteins.tex mode=a
+
+%% MULTIPLOT(name) $GrpCompMemTime('proteins')
+%% CONFIG file=plot/low_proteins.tex mode=a
+
+\input{plot/low_proteins.tex}
+\legend{}
+}%plot
+%
+\PlotLarge[xlabel=,ylabel=]{xml}{%
+%% MULTIPLOT(indextype) $lowCompMemTime('xml',)
+%% CONFIG file=plot/low_xml.tex
+
+%% MULTIPLOT(m.algo) $78CompMemTime('xml')
+%% CONFIG file=plot/low_xml.tex mode=a
+
+%% MULTIPLOT(name) $GrpCompMemTime('xml')
+%% CONFIG file=plot/low_xml.tex mode=a
+
+\input{plot/low_xml.tex}
+\legend{}
+}%plot
+
+\PlotLarge[xlabel=]{commoncrawl}{%
+%% MULTIPLOT(indextype) $lowCompMemTime('commoncrawl',)
+%% CONFIG file=plot/low_commoncrawl.tex
+
+%% MULTIPLOT(m.algo) $78CompMemTime('commoncrawl')
+%% CONFIG file=plot/low_commoncrawl.tex mode=a
+
+%% MULTIPLOT(name) $GrpCompMemTime('commoncrawl')
+%% CONFIG file=plot/low_commoncrawl.tex mode=a
+
+\input{plot/low_commoncrawl.tex}
+\legend{}
+}%plot
+%
+\PlotLarge[xlabel=,ylabel=]{fibonacci}{%
+%% MULTIPLOT(indextype) $lowCompMemTime('fibonacci', AND indextype != '0' AND indextype != '1')
+%% CONFIG file=plot/low_fibonacci.tex
+
+%% MULTIPLOT(m.algo) $78CompMemTime('fibonacci')
+%% CONFIG file=plot/low_fibonacci.tex mode=a
+
+%% MULTIPLOT(name) $GrpCompMemTime('fibonacci')
+%% CONFIG file=plot/low_fibonacci.tex mode=a
+
+\input{plot/low_fibonacci.tex}
+\legend{}
+}%plot
+
+\PlotLarge{gutenberg}{%
+%% MULTIPLOT(indextype) $lowCompMemTime('gutenberg',)
+%% CONFIG file=plot/low_gutenberg.tex
+
+%% MULTIPLOT(m.algo) $78CompMemTime('gutenberg')
+%% CONFIG file=plot/low_gutenberg.tex mode=a
+
+%% MULTIPLOT(name) $GrpCompMemTime('gutenberg')
+%% CONFIG file=plot/low_gutenberg.tex mode=a
+
+\input{plot/low_gutenberg.tex}
+\legend{}
+}%plot
+%
+\PlotLarge[ylabel=]{wikipedia}{%
+%% MULTIPLOT(indextype) $lowCompMemTime('wikipedia',)
+%% CONFIG file=plot/low_wikipedia.tex
+
+%% MULTIPLOT(m.algo) $78CompMemTime('wikipedia')
+%% CONFIG file=plot/low_wikipedia.tex mode=a
+
+%% MULTIPLOT(name) $GrpCompMemTime('wikipedia')
+%% CONFIG file=plot/low_wikipedia.tex mode=a
+
+\input{plot/low_wikipedia.tex}
+\legend{}
+}%plot
+
+
+%% UNDEF lowCompMemTime
+%% UNDEF 78CompMemTime
+
+\ref{legPlotLowCompMemTime}
+
+\caption{Maximum RAM and time used during the \LZEight{} factorizations with the Bonsai coding variants and the space-efficient variants.}
+	\label{figPlotLowCompMemTime}
+\end{figure}
+
+
+
+\begin{figure}[t!]
+\pgfplotsset{squeezedPlot,bitsXaxis,
+	xlabel={memory $[$bits/$n]$},
+	ylabel={time [$\mu\text{s}/n$]},
+	width=\linewidth,
+	height=0.6\linewidth,
+}
+
+%% DEFINE lowDecMemTime(file,clause)
+%% SELECT (mem*8.0)/n AS x, MIN((time*1e6)/n) as y, MULTIPLOT FROM "low" 
+%% WHERE "action" = 'decompression'
+%% AND "file" = $file AND "tabletype" in ('-1','2')
+%% AND indextype NOT IN ('6') $clause
+%% AND useEliasDisplacement='1'
+%% GROUP BY MULTIPLOT,factor ORDER BY MULTIPLOT,x
+
+%% DEFINE 78DecMemTime(file)
+%% SELECT MIN(m.mem*8.0/m.n) as x, MIN(t.time*1e6/t.n) as y, MULTIPLOT from tudocomp_memory AS m 
+%% JOIN tudocomp_time AS t ON m.algo = t.algo AND t.type = m.type AND t.file = m.file AND t.action = m.action
+%% WHERE m.file=$file AND m.action='decompression' AND m.type = '78'
+%% AND m.algo NOT IN ('rolling', 'rollingplus', 'rolling128', 'rolling128plus', 'exthash', 'hash', 'hashplus', 'judy' )
+%% GROUP BY MULTIPLOT ORDER BY x
+
+\PlotLarge[xlabel=,
+appendLegend,
+legend to name={legPlotLowDecMemTime},
+legend columns=5]
+{dna}{%
+%% MULTIPLOT(indextype) $lowDecMemTime('dna',)
+%% CONFIG file=plot/low_dec_dna.tex
+
+%% MULTIPLOT(m.type) $78DecMemTime('dna')
+%% CONFIG file=plot/low_dec_dna.tex mode=a
+
+\input{plot/low_dec_dna.tex}
+}%plot
+%
+\PlotLarge[xlabel=,ylabel=]{english}{%
+%% MULTIPLOT(indextype) $lowDecMemTime('english',)
+%% CONFIG file=plot/low_dec_english.tex
+
+%% MULTIPLOT(m.type) $78DecMemTime('english')
+%% CONFIG file=plot/low_dec_english.tex mode=a
+
+\input{plot/low_dec_english.tex}
+\legend{}
+}%plot
+
+\PlotLarge[xlabel=]{proteins}{%
+%% MULTIPLOT(indextype) $lowDecMemTime('proteins',)
+%% CONFIG file=plot/low_dec_proteins.tex
+
+%% MULTIPLOT(m.type) $78DecMemTime('proteins')
+%% CONFIG file=plot/low_dec_proteins.tex mode=a
+
+\input{plot/low_dec_proteins.tex}
+\legend{}
+}%plot
+%
+\PlotLarge[xlabel=,ylabel=]{xml}{%
+%% MULTIPLOT(indextype) $lowDecMemTime('xml',)
+%% CONFIG file=plot/low_dec_xml.tex
+
+%% MULTIPLOT(m.type) $78DecMemTime('xml')
+%% CONFIG file=plot/low_dec_xml.tex mode=a
+
+\input{plot/low_dec_xml.tex}
+\legend{}
+}%plot
+%
+
+\PlotLarge[xlabel=]{commoncrawl}{%
+%% MULTIPLOT(indextype) $lowDecMemTime('commoncrawl',)
+%% CONFIG file=plot/low_dec_commoncrawl.tex
+
+%% MULTIPLOT(m.type) $78DecMemTime('commoncrawl')
+%% CONFIG file=plot/low_dec_commoncrawl.tex mode=a
+
+\input{plot/low_dec_commoncrawl.tex}
+\legend{}
+}%plot
+%
+\PlotLarge[xlabel=,ylabel=,x tick label style={%rotate=90,anchor=east,
+        /pgf/number format/.cd,
+            fixed,
+            fixed zerofill,
+            precision=2,
+        /tikz/.cd
+    }
+]{fibonacci}{%
+%% MULTIPLOT(indextype) $lowDecMemTime('fibonacci', AND indextype != '0' AND indextype != '1')
+%% CONFIG file=plot/low_dec_fibonacci.tex
+
+%% MULTIPLOT(m.type) $78DecMemTime('fibonacci')
+%% CONFIG file=plot/low_dec_fibonacci.tex mode=a
+
+\input{plot/low_dec_fibonacci.tex}
+\legend{}
+}%plot
+
+\PlotLarge{gutenberg}{%
+%% MULTIPLOT(indextype) $lowDecMemTime('gutenberg',)
+%% CONFIG file=plot/low_dec_gutenberg.tex
+
+%% MULTIPLOT(m.type) $78DecMemTime('gutenberg')
+%% CONFIG file=plot/low_dec_gutenberg.tex mode=a
+
+\input{plot/low_dec_gutenberg.tex}
+\legend{}
+}%plot
+%
+\PlotLarge[ylabel=]{wikipedia}{%
+%% MULTIPLOT(indextype) $lowDecMemTime('wikipedia',)
+%% CONFIG file=plot/low_dec_wikipedia.tex
+
+%% MULTIPLOT(m.type) $78DecMemTime('wikipedia')
+%% CONFIG file=plot/low_dec_wikipedia.tex mode=a
+
+\input{plot/low_dec_wikipedia.tex}
+\legend{}
+}%plot
+%
+
+%% UNDEF lowDecMemTime
+%% UNDEF 78DecMemTime
+
+\ref{legPlotLowDecMemTime}
+
+\caption{Maximum RAM and time used during decoding of a file stored with one of the Bonsai coding variants.
+This is compared with the decompression of the same file compressed with \LZEight{} using the classic coding. }
+\label{figPlotLowDecMemTime}
+\end{figure}
+
+\begin{figure}[t!]
+	\centering{%
+
+% SELECT low.indextype, printf("%.2f", 1+low.factor/100.0), printf("%.2f", MIN(low.compressedsize*100.0/low.n)), printf("%.2f", MIN(g.compressedsize*100.0/low.n))
+% FROM low 
+% JOIN low AS g ON g.action = low.action AND g.indextype = low.indextype AND g.file = low.file AND g.factor = low.factor AND g.useEliasDisplacement='1'
+% WHERE low.action = 'compression'
+% AND low.file = 'fibonacci'
+% GROUP BY low.factor,low.indextype,low.file order by low.file,low.indextype;
+%
+% AND low.useEliasDisplacement='0'
+% AND low."tabletype" in ('-1','2')
+% AND low.indextype NOT IN ('6','8','9')
+% AND low.indextype = '0'
+
+%% DEFINE tableCompSize(file, indextype)
+%% SELECT printf("%.2f", 1+low.factor/100.0), printf("%.2f", MIN(low.compressedsize*100.0/low.n)), printf("%.2f", MIN(g.compressedsize*100.0/low.n))
+%% FROM low 
+%% JOIN low AS g ON g.action = low.action AND g.indextype = low.indextype AND g.file = low.file AND g.factor = low.factor AND g.useEliasDisplacement='1'
+%% WHERE low.action = 'compression' AND low.useEliasDisplacement='0'
+%% AND low."tabletype" in ('-1','2')
+%% AND low.indextype NOT IN ('6','8','9')
+%% AND low.file = $file
+%% AND low.indextype = $indextype
+%% GROUP BY low.factor,low.indextype,low.file order by low.file,low.indextype
+
+
+\begin{tabular}{*{3}{r}}
+	\multicolumn{3}{c}{\Dataset{english}, \iGrow{}}\\
+\toprule
+ & \multicolumn{2}{c}{Ratio}\\
+			\cmidrule(lr){2-3}
+$\frac{1}{\alpha}$ & plain & $\gamma$
+\\\midrule
+%% TABULAR 
+%% $tableCompSize('english','4')
+%% CONFIG file=plot/tabCompSizeEnglish4.tex
+\input{plot/tabCompSizeEnglish4.tex}
+%
+\bottomrule
+		\end{tabular}
+\begin{tabular}{*{3}{r}}
+	\multicolumn{3}{c}{\Dataset{proteins}, \iFix{3}}\\
+\toprule
+ & \multicolumn{2}{c}{Ratio}\\
+			\cmidrule(lr){2-3}
+$\frac{1}{\alpha}$ & plain & $\gamma$
+\\\midrule
+%% TABULAR 
+%% $tableCompSize('proteins','1')
+%% CONFIG file=plot/tabCompSizeProteins1.tex
+\input{plot/tabCompSizeProteins1.tex}
+%
+\bottomrule
+		\end{tabular}
+\begin{tabular}{*{3}{r}}
+	\multicolumn{3}{c}{\Dataset{fibonacci}, \iFix{}}\\
+\toprule
+ & \multicolumn{2}{c}{Ratio}\\
+			\cmidrule(lr){2-3}
+$\frac{1}{\alpha}$ & plain & $\gamma$
+\\\midrule
+%% TABULAR 
+%% $tableCompSize('fibonacci','0')
+%% CONFIG file=plot/tabCompSizeFibonacci0.tex
+\input{plot/tabCompSizeFibonacci0.tex}
+%
+\bottomrule
+		\end{tabular}
+
+		\pgfplotsset{%
+			myaxisstyle/.style={%
+	y=2pt,
+	ybar=7pt,
+	width=\linewidth,
+	enlarge x limits=0.1,
+	legend columns=5
+    ylabel={compression ratio},
+	symbolic x coords={dna, english,xml,proteins,fibonacci,gutenberg,wikipedia,commoncrawl},
+    xtick=data,
+	ymin=0,
+	ymax=100,
+	x tick label style={rotate=45,anchor=east,font=\scshape},
+    nodes near coords,
+	bar width = 0pt,
+	nodes near coords style={font=\small,rotate=90,anchor=west},
+cycle multi list={%
+		Dark2-6\nextlist
+		dashed,solid\nextlist
+}}
+}
+
+\pgfplotsset{cycle list/Dark2-6}
+  \begin{tikzpicture}
+\begin{axis}[myaxisstyle,
+	legend to name={legPlotLowCompressionRatioGamma},
+	]
+
+%% MULTIPLOT(low.indextype)
+%% SELECT low.file AS x, MIN(low.compressedsize)*100.0/low.n AS y, MULTIPLOT
+%% FROM low 
+%% WHERE low.action = 'compression'
+%% AND low."tabletype" in ('-1','2')
+%% AND low.indextype IN ('0','1')
+%% AND file NOT IN ('english.1')
+%% AND useEliasDisplacement='1'
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+%% CONFIG file=plot/low_compratiogamma.tex colorcache=none
+
+%% MULTIPLOT(low.indextype)
+%% SELECT low.file AS x, MIN(low.compressedsize)*100.0/low.n AS y, MULTIPLOT
+%% FROM 
+%% (
+%% SELECT file, compressedsize, n, indextype || 'gamma' AS indextype, indextype, action, file FROM low WHERE useEliasDisplacement='1'
+%% ) AS low
+%% WHERE action = 'compression'
+%% AND "indextype" IN ('0gamma','1gamma')
+%% AND "file" NOT IN ('english.1')
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+%% CONFIG file=plot/low_compratiogamma.tex colorcache=none mode=a
+
+\input{plot/low_compratiogamma.tex}
+\end{axis}
+\end{tikzpicture}
+
+	}%centering
+\ref{legPlotLowCompressionRatioGamma}
+\caption{Top: Compression ratios of the plain Bonsai coding and of the Bonsai coding with the stored displacement values of the first layer in \iLayered{2} or \iLayered{3} encoded with Elias-$\gamma$ (labeled with $\bsq{\gamma}$).
+	Bottom: Compression ratios of \iFix{} (resp.\ \iFix{3}) with and without Elias-$\gamma$ encoding.
+	We add $\gamma$ in the subscript if we apply Elias-$\gamma$ encoding.
+	For each dataset, we selected the best compression ratios while varying the maximum load factor of the Bonsai table.
+}
+\label{figPlotLowCompressionRatioGamma}
+\end{figure}
+
+\begin{figure}[t!]
+	\centering{%
+
+		\pgfplotsset{%
+			myaxisstyle/.style={%
+	y=2pt,
+	ybar=8pt,
+	width=\linewidth,
+	enlarge x limits=0.2,
+	legend columns=5
+    ylabel={compression ratio},
+	symbolic x coords={dna, english,xml,proteins,fibonacci,gutenberg,wikipedia,commoncrawl},
+    xtick=data,
+	ymin=0,
+	ymax=100,
+	x tick label style={font=\scshape},
+    nodes near coords,
+	nodes near coords style={font=\normalsize,rotate=90,anchor=west},
+	bar width = 0pt,
+cycle multi list={%
+		solid,loosely dashed\nextlist
+		Dark2-6\nextlist
+}}
+}
+
+
+
+\pgfplotsset{cycle list/Dark2-6}
+  \begin{tikzpicture}
+\begin{axis}[myaxisstyle,
+	legend to name={legLZLowCompressionRatio},
+legend columns=8,
+	]
+%% MULTIPLOT(low.indextype)
+%% SELECT low.file AS x, MIN(low.compressedsize)*100.0/low.n AS y, MULTIPLOT
+%% FROM low 
+%% WHERE low.action = 'compression'
+%% AND low."tabletype" in ('-1','2')
+%% AND low.indextype NOT IN ('6','8','9')
+%% AND low.file IN ('xml', 'dna', 'english', 'proteins')
+%% AND useEliasDisplacement='1'
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+%% CONFIG file=plot/low_compratio.tex colorcache=none
+
+%% MULTIPLOT(type) 
+%% SELECT file AS x, compressedsize*100.0/n AS y, MULTIPLOT
+%% FROM tudocomp_memory
+%% WHERE action = 'compression'
+%% AND file IN ('xml', 'dna', 'english', 'proteins')
+%% AND type = '78'
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+%% CONFIG file=plot/low_compratio.tex colorcache=none mode=a
+
+% MULTIPLOT(program) 
+% SELECT file AS x, compressedsize*100.0/n AS y, MULTIPLOT
+% FROM unixcompress 
+% WHERE action = 'compression'
+% AND file IN ('xml', 'dna', 'english', 'proteins')
+% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+% CONFIG file=plot/low_compratio.tex colorcache=none mode=a
+
+% MULTIPLOT(algo) 
+% SELECT s.file AS x, SUM(s.compressedsize)*100.0/t.n AS y, MULTIPLOT
+% FROM splitrun AS s 
+% INNER JOIN (SELECT t.file, t.n FROM tudocomp_memory AS t where t.action = 'compression' group by t.file) AS t 
+% ON t.file = s.file 
+% WHERE s.action = 'compression' 
+% AND s.file IN ('xml', 'dna', 'english', 'proteins')
+% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+% CONFIG file=plot/low_compratio.tex colorcache=none mode=a
+
+\input{plot/low_compratio.tex}
+\end{axis}
+\end{tikzpicture}
+\begin{tikzpicture}
+\begin{axis}[myaxisstyle]
+%% MULTIPLOT(low.indextype)
+%% SELECT low.file AS x, MIN(low.compressedsize)*100.0/low.n AS y, MULTIPLOT
+%% FROM low 
+%% WHERE low.action = 'compression'
+%% AND low."tabletype" in ('-1','2')
+%% AND low.indextype NOT IN ('6','8','9')
+%% AND low.file NOT IN ('english.1', 'xml', 'dna', 'english', 'proteins')
+%% AND useEliasDisplacement='1'
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+%% CONFIG file=plot/low_compratio2.tex colorcache=none
+
+%% MULTIPLOT(type) 
+%% SELECT file AS x, compressedsize*100.0/n AS y, MULTIPLOT
+%% FROM tudocomp_memory
+%% WHERE action = 'compression'
+%% AND file NOT IN ('english.1', 'xml', 'dna', 'english', 'proteins')
+%% AND type = '78'
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+%% CONFIG file=plot/low_compratio2.tex colorcache=none mode=a
+
+% MULTIPLOT(program) 
+% SELECT file AS x, compressedsize*100.0/n AS y, MULTIPLOT
+% FROM unixcompress 
+% WHERE action = 'compression'
+% AND file NOT IN ('english.1', 'xml', 'dna', 'english', 'proteins')
+% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+% CONFIG file=plot/low_compratio2.tex colorcache=none mode=a
+
+% MULTIPLOT(algo) 
+% SELECT s.file AS x, SUM(s.compressedsize)*100.0/t.n AS y, MULTIPLOT
+% FROM splitrun AS s 
+% INNER JOIN (SELECT t.file, t.n FROM tudocomp_memory AS t where t.action = 'compression' group by t.file) AS t 
+% ON t.file = s.file 
+% WHERE s.action = 'compression' 
+% AND s.file NOT IN ('english.1', 'xml', 'dna', 'english', 'proteins')
+% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+% CONFIG file=plot/low_compratio2.tex colorcache=none mode=a
+
+\input{plot/low_compratio2.tex}
+\legend{}
+\end{axis}
+\end{tikzpicture}
+
+	}%centering
+\ref{legLZLowCompressionRatio}
+\caption{Compression ratios of our algorithms computing the Bonsai coding. 
+We omit the $\bsq{\textup{s}}$ variants of \iGrow{} and \iGrow{3} since they only make a difference in the compression speed, not in the final output. 
+We compare these ratios with those of the classic coding of \LZEight{}.
+For each dataset, we selected the best compression ratios while varying the maximum load factor of the Bonsai table.}
+
+\label{figLZLowCompressionRatio}
+\end{figure}
+
+
+\begin{figure}[t!]
+\pgfplotsset{squeezedPlot,bitsXaxis,
+	ylabel={time [$\mu\text{s}/n$]},
+	xlabel={compression overhead},
+	xticklabel={\pgfmathparse{\tick*100}\pgfmathprintnumber{\pgfmathresult}\%},
+	width=\linewidth,
+	height=0.6\linewidth,
+	xmax=1,
+}
+
+%% DEFINE lowCompTimeOutputSize(file, clause)
+%% SELECT (low.compressedsize*1.0/m.compressedsize-1) AS x, MIN(low.time*1e6/low.n) AS y, MULTIPLOT
+%% FROM low 
+%% JOIN (SELECT compressedsize, file FROM "tudocomp_memory" where action = 'compression' AND type = '78' group by file) AS m 
+%% ON m.file = low.file 
+%% WHERE low.action = 'compression' AND low.file = $file $clause
+%% AND low."tabletype" in ('-1','2')
+%% AND low.indextype NOT IN ('6')
+%% AND low.useEliasDisplacement='1'
+%% GROUP BY MULTIPLOT,x ORDER BY MULTIPLOT,x
+
+\PlotLarge[xlabel=,
+appendLegend,
+legend to name={legPlotLowCompTimeOutputSize},
+legend columns=5]{dna}{%
+%% MULTIPLOT(low.indextype) $lowCompTimeOutputSize('dna',)
+%% CONFIG file=plot/low_timeoutputsize_dna.tex
+
+\input{plot/low_timeoutputsize_dna.tex}
+}%plot
+%
+\hfill
+\PlotLarge[xlabel=,ylabel=]{english}{%
+%% MULTIPLOT(low.indextype) $lowCompTimeOutputSize('english',)
+%% CONFIG file=plot/low_timeoutputsize_english.tex
+
+\input{plot/low_timeoutputsize_english.tex}
+\legend{}
+}%plot
+
+\PlotLarge[xlabel=]{proteins}{%
+%% MULTIPLOT(low.indextype) $lowCompTimeOutputSize('proteins',)
+%% CONFIG file=plot/low_timeoutputsize_proteins.tex
+
+\input{plot/low_timeoutputsize_proteins.tex}
+\legend{}
+}%plot
+\hfill
+%
+\PlotLarge[ylabel=,xlabel=]{xml}{%
+%% MULTIPLOT(low.indextype) $lowCompTimeOutputSize('xml',)
+%% CONFIG file=plot/low_timeoutputsize_xml.tex
+
+\input{plot/low_timeoutputsize_xml.tex}
+\legend{}
+}%plot
+%
+
+\PlotLarge[xlabel=]{commoncrawl}{%
+%% MULTIPLOT(low.indextype) $lowCompTimeOutputSize('commoncrawl',)
+%% CONFIG file=plot/low_timeoutputsize_commoncrawl.tex
+
+\input{plot/low_timeoutputsize_commoncrawl.tex}
+\legend{}
+}%plot
+\hfill
+%
+\PlotLarge[xlabel=,ylabel=]{fibonacci}{%
+%% MULTIPLOT(low.indextype) $lowCompTimeOutputSize('fibonacci', AND low.indextype != '0' AND low.indextype != '1')
+%% CONFIG file=plot/low_timeoutputsize_fibonacci.tex
+
+\input{plot/low_timeoutputsize_fibonacci.tex}
+\legend{}
+}%plot
+
+\PlotLarge{gutenberg}{%
+%% MULTIPLOT(low.indextype) $lowCompTimeOutputSize('gutenberg',)
+%% CONFIG file=plot/low_timeoutputsize_gutenberg.tex
+
+\input{plot/low_timeoutputsize_gutenberg.tex}
+\legend{}
+}%plot
+\hfill
+%
+\PlotLarge[ylabel=]{wikipedia}{%
+%% MULTIPLOT(low.indextype) $lowCompTimeOutputSize('wikipedia',)
+%% CONFIG file=plot/low_timeoutputsize_wikipedia.tex
+
+\input{plot/low_timeoutputsize_wikipedia.tex}
+\legend{}
+}%plot
+%
+
+%% UNDEF lowCompTimeOutputSize
+
+\ref{legPlotLowCompTimeOutputSize}
+
+\caption{Compression time versus the compression overhead, i.e., 
+the ratio of the final compressed size over the classical \LZEight{} output size minus~1. We clipped the plots at 100\% compression overhead, where the output size is twice the classical \LZEight{} output size.}
+\label{figPlotLowCompTimeOutputSize}
+\end{figure}
+
+\end{document}
+
