@@ -22,4 +22,8 @@ cd $oldpwd
 cd $oldpwd/plot
 ./justify.py
 cd $oldpwd
-latexmk -pdf plot.tex
+if which latexmk; then 
+	latexmk -pdf plot.tex
+else
+	zip -r plot.zip plot.tex plot
+fi
