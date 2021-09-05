@@ -134,7 +134,7 @@ for _infile in "$kDatasetFolder"/*; do
 		# prefix=$(calc -p '200*1024*1024')
 		stats="file=${filename} n=${prefix} algo=${algo_id} "
 		set -x
-		/usr/bin/time --format='Wall Time: %e'  ./tdc ${infile} -p $prefix -a "${algo_cmd}" -o ${comppressedFile} -f --stats --statfile "$statsCompFile" > "$logCompFile" 2>&1
+		/usr/bin/time --format='Wall Time: %e'  ./tdc ${infile} -p $prefix -a "${algo_cmd}" -o ${comppressedFile} -f --stats --statfile "$statsCompFile" 2>&1 | tee "$logCompFile"
 		set +x
 		echo -n "RESULT action=compression compressedsize=$(stat --format="%s" $comppressedFile) $stats "
 		t=$(grep $timePattern $logCompFile | sed "s@${timePattern}@\1@")
@@ -148,7 +148,7 @@ for _infile in "$kDatasetFolder"/*; do
 			statsDecFile=$(mktemp -p $kTmpFolder --suffix .${filename}.dec.json )
 
 			set -x
-			/usr/bin/time --format='Wall Time: %e' ./tdc -d $comppressedFile -o ${uncompressedFile} -f --stats --statfile "$statsDecFile" > "$logDecFile"  2>&1
+			/usr/bin/time --format='Wall Time: %e' ./tdc -d $comppressedFile -o ${uncompressedFile} -f --stats --statfile "$statsDecFile" 2>&1 | tee  "$logDecFile" 
 			set +x
 			cmp -n ${prefix} --silent $uncompressedFile $infile; checkDecomp="$?"
 			echo -n "RESULT action=decompression check=${checkDecomp} $stats "
