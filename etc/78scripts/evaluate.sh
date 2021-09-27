@@ -6,8 +6,8 @@ function die {
 }
 
 [[ $# -eq 3 ]] || die "Usage: $0 [dataset-folder] [tmp-folder] [DISABLE-STATS?:1|0]"
-set -x
-set -e
+# set -x
+# set -e
 
 typeset -rx kScriptFolder=$(dirname $(readlink -f "$0"))
 typeset -rx kDatasetFolder=$(readlink -f "$1")
