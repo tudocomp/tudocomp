@@ -12,20 +12,20 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 # set universal compiler flags
-set(CXX_STANDARD c++14)
+set(CXX_STANDARD c++17)
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     # using Clang or AppleClang
-    if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "3.8")
-        message(FATAL_ERROR "clang version 3.8 or greater required!")
+    if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "7")
+        message(FATAL_ERROR "clang version 7 or greater required!")
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=${CXX_STANDARD}")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # using GCC
-    if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "5.4")
-        message(FATAL_ERROR "g++ version 5.4 or greater required!")
+    if(${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "7")
+        message(FATAL_ERROR "g++ version 7 or greater required!")
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
 else()
     message(FATAL_ERROR "compiler ${CMAKE_CXX_COMPILER_ID} is not supported!")
 endif()
