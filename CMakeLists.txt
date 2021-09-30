@@ -27,9 +27,6 @@ list(APPEND TDC_DEPENDS ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES})
 
 # submodules
 include(git_submodule_subdirectories)
-git_submodule_subdirectory(submodules/bit_span)
-git_submodule_subdirectory(submodules/tudostats)
-git_submodule_subdirectory(submodules/compact_sparse_hash)
 git_submodule_subdirectory(submodules/datasets)
 # git_submodule_subdirectory(submodules/broadwordsearch)
 # git_submodule_subdirectory(submodules/separate_chaining)

@@ -18,8 +18,6 @@ target_link_libraries(
     tudocomp_algorithms
     pthread
     gomp
-    bit_span
-    compact_sparse_hash
 )
 
 cotire(tudocomp_driver)

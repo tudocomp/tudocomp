@@ -19,7 +19,6 @@ target_link_libraries(
 
     ${TDC_DEPENDS}
     tudocomp
-    bit_span
 )
 
 add_dependencies(examples coder_stats_example)

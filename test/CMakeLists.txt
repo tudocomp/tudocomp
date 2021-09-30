@@ -21,6 +21,7 @@ generic_run_test(
 )
 endmacro()
 
+# core
 run_doc_snippet(io                  DEPS ${BASIC_DEPS})
 run_doc_snippet(bit_io              DEPS ${BASIC_DEPS})
 run_doc_snippet(int_vector          DEPS ${BASIC_DEPS})
@@ -30,6 +31,14 @@ run_doc_snippet(coder_impl          DEPS ${BASIC_DEPS})
 run_doc_snippet(compressor_impl     DEPS ${BASIC_DEPS})
 run_doc_snippet(generator_impl      DEPS ${BASIC_DEPS})
 run_doc_snippet(stats               DEPS ${BASIC_DEPS})
+
+# tudostats
+run_test(tudostats DEPS ${BASIC_DEPS})
+
+# bit_span
+run_test(generic_int_vector_tests DEPS ${BASIC_DEPS})
+run_test(bit_packed_layout_tests DEPS ${BASIC_DEPS})
+run_test(int_coder_tests DEPS ${BASIC_DEPS})
 
 # other tests
 run_test(rank_select_tests  DEPS ${BASIC_DEPS})
@@ -60,6 +69,22 @@ run_test(plcp_tests DEPS ${BASIC_DEPS})
 run_test(esp_tests      DEPS ${BASIC_DEPS})
 
 run_test(intsort_tests DEPS ${BASIC_DEPS})
+
+# compact_sparse_hash
+run_test(compact_sparse_hash_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_hash_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_sparse_hash_displacement_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_hash_displacement_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_sparse_hash_elias_displacement_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_hash_elias_displacement_tests DEPS ${TDC_TEST_DEPS})
+
+run_test(compact_sparse_hash_v2_tests DEPS ${TDC_TEST_DEPS})
+
+run_test(compact_sparse_hashset_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_sparse_hashset_displacement_tests DEPS ${TDC_TEST_DEPS})
+run_test(compact_sparse_hashset_elias_displacement_tests DEPS ${TDC_TEST_DEPS})
+
+run_test(compact_sparse_hashset_serialization_tests DEPS ${TDC_TEST_DEPS})
 
 set(SANDBOX_CPP ${CMAKE_CURRENT_SOURCE_DIR}/sandbox_tests.cpp)
 if(NOT EXISTS ${SANDBOX_CPP})
