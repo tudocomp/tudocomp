@@ -10,9 +10,6 @@
 [submodule "external/tudostats"]
 	path = submodules/tudostats
 	url = https://github.com/tudocomp/tudostats
-[submodule "external/build_system"]
-	path = submodules/build_system
-	url = https://github.com/tudocomp/build_system
 [submodule "submodules/separate_chaining"]
 	path = submodules/separate_chaining
 	url = https://github.com/koeppl/separate_chaining
