@@ -1,0 +1,5 @@
+# prevent old submodules to be re-commited
+bit_span/*
+build_system/*
+tudostats/*
+compact_sparse_hash/*
