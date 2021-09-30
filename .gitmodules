@@ -1,9 +1,3 @@
 [submodule "external/datasets"]
 	path = submodules/datasets
 	url = https://github.com/tudocomp/datasets.git
-[submodule "submodules/separate_chaining"]
-	path = submodules/separate_chaining
-	url = https://github.com/koeppl/separate_chaining
-[submodule "submodules/broadwordsearch"]
-	path = submodules/broadwordsearch
-	url = https://github.com/koeppl/broadwordsearch

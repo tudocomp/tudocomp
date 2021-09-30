@@ -28,8 +28,6 @@ list(APPEND TDC_DEPENDS ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES})
 # submodules
 include(git_submodule_subdirectories)
 git_submodule_subdirectory(submodules/datasets)
-# git_submodule_subdirectory(submodules/broadwordsearch)
-# git_submodule_subdirectory(submodules/separate_chaining)
 
 # judy
 include(FindJudy)
@@ -75,8 +73,6 @@ include(generate_tudocomp_sources)
 
 # Add include directory to include searches
 include_directories(include)
-include_directories(submodules/separate_chaining/include)
-include_directories(submodules/broadwordsearch/include)
 
 # TuDoComp library and implementors
 if(DEFINED TDC_REGISTRY)
