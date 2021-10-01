@@ -4,7 +4,7 @@
 ExternalProject_Add(
     get_gtest PREFIX external/gtest
     GIT_REPOSITORY https://github.com/google/googletest
-    GIT_TAG 2fe3bd994b3189899d93f1d5a881e725e046fdc2 # 1.8.1
+    GIT_TAG e2239ee6043f73722e7aa812a459f54a28552929 # 1.11.0
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
     UPDATE_COMMAND ""
     EXCLUDE_FROM_ALL 1
