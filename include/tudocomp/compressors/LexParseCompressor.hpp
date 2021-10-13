@@ -9,9 +9,7 @@
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
 #include <tudocomp/compressors/lzss/FactorizationStats.hpp>
 #include <tudocomp/compressors/lzss/UnreplacedLiterals.hpp>
-#include <tudocomp/compressors/lzss/DecompBackBuffer.hpp>
 #include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
-#include <tudocomp/compressors/lcpcomp/decompress/CompactDec.hpp>
 #include <tudocomp/compressors/lcpcomp/decompress/MultiMapBuffer.hpp>
 
 #include <tudocomp/ds/DSManager.hpp>
@@ -61,12 +59,9 @@ public:
         
         lzss::FactorBuffer<> factors;
 
-        // 
         for (size_t pos = 0; pos < in.size();) {
             size_t factor_len = lcp[isa[pos]];
             if (factor_len == 0) {
-                factor_len = 1;
-                //factors.emplace_back(pos, pos, factor_len);
                 pos++;
                 continue;
             }
@@ -82,19 +77,7 @@ public:
         coder.encode_text(in, factors);
     }
 
-    /*inline virtual void decompress(Input& i, Output& o) override final {
-        auto decomp = Algorithm::instance<tdc::lcpcomp::MultimapBuffer>();
-        {
-            auto decoder = lzss_coder_t(config().sub_config("coder")).decoder(i);
-            decoder.decode(*decomp);
-        }
-        auto outs = o.as_stream();
-        decomp->write_to(outs);
-        
-    }*/
-
     inline std::unique_ptr<Decompressor> decompressor() const override {
-        //return std::make_unique<WrapDecompressor>(*this);
         return Algorithm::instance<LCPDecompressor<lzss_coder_t>>();
     }
 };
