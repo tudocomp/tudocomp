@@ -282,6 +282,7 @@ long_common_strat = [
 ##### Export available compressors #####
 tdc.compressors = [
     AlgorithmConfig(name="LCPCompressor", header="compressors/LCPCompressor.hpp", sub=[lzss_bidirectional_coders, lcpcomp_comp, textds_lcpcomp]),
+    AlgorithmConfig(name="LexParseCompressor", header="compressors/LexParseCompressor.hpp", sub=[lzss_bidirectional_coders, textds_lcpcomp]),
     AlgorithmConfig(name="RunLengthEncoder", header="compressors/RunLengthEncoder.hpp"),
     AlgorithmConfig(name="LiteralEncoder", header="compressors/LiteralEncoder.hpp", sub=[all_coders]),
     AlgorithmConfig(name="LZ78Compressor", header="compressors/LZ78Compressor.hpp", sub=[universal_coders, lz_trie]),
