@@ -177,7 +177,7 @@ text & $n$ [M] & $\sigma$ & $z_{\LZEight}$ [M] & $c_{\LZEight}$ [MB] & $z_{\LZW}
 %% AND `78`.`file` NOT IN ('english.1')
 %% GROUP BY `78`.file
 %% CONFIG file=plot/tabDatasets.tex
-\input{plot/tabDatasets.tex}
+\csname @@input\endcsname {plot/tabDatasets.tex}
 %
 			\bottomrule
 		\end{tabular}
@@ -991,23 +991,23 @@ legend columns=5]{dna}{%
 %% CONFIG file=plot/tabRollingDna.tex
 %
 %%
-\input{plot/tabRollingDna.tex}
+\csname @@input\endcsname {plot/tabRollingDna.tex}
 %
-\multicolumn{4}{l}{\textsc{english}} 
+\multicolumn{4}{l}{\textsc{english}}%
 \\\midrule
 %% TABULAR $rolling('english')
 %% CONFIG file=plot/tabRollingEnglish.tex
 %
 %%
-\input{plot/tabRollingEnglish.tex}
+\csname @@input\endcsname {plot/tabRollingEnglish.tex}
 %
-\multicolumn{4}{l}{\textsc{proteins}} 
+\multicolumn{4}{l}{\textsc{proteins}}%
 \\\midrule
 %% TABULAR $rolling('proteins')
 %% CONFIG file=plot/tabRollingProteins.tex
 %
 %%
-\input{plot/tabRollingProteins.tex}
+\csname @@input\endcsname {plot/tabRollingProteins.tex}
 %
 \multicolumn{4}{l}{\textsc{xml}} 
 \\\midrule
@@ -1015,7 +1015,7 @@ legend columns=5]{dna}{%
 %% CONFIG file=plot/tabRollingXml.tex
 %
 %%
-\input{plot/tabRollingXml.tex}
+\csname @@input\endcsname {plot/tabRollingXml.tex}
  			 \bottomrule
    \end{tabular}
 		\begin{tabular}{l*{4}{r}}
@@ -1031,7 +1031,7 @@ legend columns=5]{dna}{%
 %% CONFIG file=plot/tabRollingcommoncrawl.tex
 %
 %%
-\input{plot/tabRollingcommoncrawl.tex}
+\csname @@input\endcsname {plot/tabRollingcommoncrawl.tex}
 %
 \multicolumn{4}{l}{\textsc{fibonacci}} 
 \\\midrule
@@ -1039,7 +1039,7 @@ legend columns=5]{dna}{%
 %% CONFIG file=plot/tabRollingfibonacci.tex
 %
 %%
-\input{plot/tabRollingfibonacci.tex}
+\csname @@input\endcsname {plot/tabRollingfibonacci.tex}
 %
 \multicolumn{4}{l}{\textsc{gutenberg}} 
 \\\midrule
@@ -1047,7 +1047,7 @@ legend columns=5]{dna}{%
 %% CONFIG file=plot/tabRollinggutenberg.tex
 %
 %%
-\input{plot/tabRollinggutenberg.tex}
+\csname @@input\endcsname {plot/tabRollinggutenberg.tex}
 %
 \multicolumn{4}{l}{\textsc{wikipedia}} 
 \\\midrule
@@ -1055,7 +1055,7 @@ legend columns=5]{dna}{%
 %% CONFIG file=plot/tabRollingwikipedia.tex
 %
 %%
-\input{plot/tabRollingwikipedia.tex}
+\csname @@input\endcsname {plot/tabRollingwikipedia.tex}
  			 \bottomrule
    \end{tabular}
    \caption{Performance comparison of 64-bit and 128-bit fingerprints of \iRolling{} with its variant \iRolling{+} when computing the \LZEight{} and \LZW{} factorization.}
@@ -1472,7 +1472,7 @@ $\frac{1}{\alpha}$ & plain & $\gamma$
 %% TABULAR 
 %% $tableCompSize('english','4')
 %% CONFIG file=plot/tabCompSizeEnglish4.tex
-\input{plot/tabCompSizeEnglish4.tex}
+\csname @@input\endcsname {plot/tabCompSizeEnglish4.tex}
 %
 \bottomrule
 		\end{tabular}
@@ -1486,7 +1486,7 @@ $\frac{1}{\alpha}$ & plain & $\gamma$
 %% TABULAR 
 %% $tableCompSize('proteins','1')
 %% CONFIG file=plot/tabCompSizeProteins1.tex
-\input{plot/tabCompSizeProteins1.tex}
+\csname @@input\endcsname {plot/tabCompSizeProteins1.tex}
 %
 \bottomrule
 		\end{tabular}
@@ -1500,7 +1500,7 @@ $\frac{1}{\alpha}$ & plain & $\gamma$
 %% TABULAR 
 %% $tableCompSize('fibonacci','0')
 %% CONFIG file=plot/tabCompSizeFibonacci0.tex
-\input{plot/tabCompSizeFibonacci0.tex}
+\csname @@input\endcsname {plot/tabCompSizeFibonacci0.tex}
 %
 \bottomrule
 		\end{tabular}
