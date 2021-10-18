@@ -45,9 +45,9 @@ public:
             //
             const size_t n = sa.size();
 
-		    len_t last_replacement_pos = 0;
+		    
 		    for(len_t i = 0; i+1 < n; ) {
-			    if( (i == last_replacement_pos || plcp[i] > plcp[i-1]) && plcp[i] > plcp[i+1] && plcp[i] >= threshold) {
+			    if(plcp[i] > plcp[i+1] && plcp[i] >= threshold) {
 				    DCHECK_NE(isa[i], 0u);
 				    const len_t& target_position = i;
 				    const len_t factor_length = plcp[target_position];
@@ -66,7 +66,6 @@ public:
 				    // 	}
 				    // }
 				    i+= factor_length;
-				    last_replacement_pos = i-1;
 			    }
 			    else {
 				    ++i;

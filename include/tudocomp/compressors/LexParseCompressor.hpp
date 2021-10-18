@@ -41,6 +41,7 @@ public:
             .strategy<lzss_coder_t>(lzss_bidirectional_coder_type());
         m.param("ds", "The text data structure provider.")
             .strategy<ds_t>(ds::type(), Meta::Default<DSManager<DivSufSort, PhiFromSA, PhiAlgorithm, LCPFromPLCP, ISAFromSA>>());
+        m.param("threshold", "The minimum factor length.").primitive(5);
         m.inherit_tag<ds_t>(tags::require_sentinel);
         m.inherit_tag<lzss_coder_t>(tags::lossy);
         return m;
@@ -56,12 +57,13 @@ public:
         auto &sa = text.template get<ds::SUFFIX_ARRAY>();
         auto &isa = text.template get<ds::INVERSE_SUFFIX_ARRAY>(); 
         auto &lcp = text.template get<ds::LCP_ARRAY>();
+        const len_t threshold = config().param("threshold").as_uint();
         
         lzss::FactorBuffer<> factors;
 
         for (size_t pos = 0; pos < in.size();) {
             size_t factor_len = lcp[isa[pos]];
-            if (factor_len == 0) {
+            if (factor_len < threshold) {
                 pos++;
                 continue;
             }
