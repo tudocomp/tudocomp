@@ -45,12 +45,12 @@ public:
             //
             const size_t n = sa.size();
 
-		    
-		    for(len_t i = 0; i+1 < n; ) {
-			    if(plcp[i] > plcp[i+1] && plcp[i] >= threshold) {
+			len_t factor_length;
+		    for(len_t i = 0; i+1 < n;) {
+			    if(plcp[i] >= threshold) {
 				    DCHECK_NE(isa[i], 0u);
 				    const len_t& target_position = i;
-				    const len_t factor_length = plcp[target_position];
+				    factor_length = plcp[target_position];
 				    DCHECK_LT(target_position+factor_length,n);
 				    const len_t source_position = sa[isa[target_position]-1];
 				    factors.emplace_back(i, source_position, factor_length);
@@ -64,11 +64,10 @@ public:
 				    // 		const len_t affected_length = target_position - affected_position;
 				    // 		plcp[affected_position] = affected_length;
 				    // 	}
-				    // }
-				    i+= factor_length;
-			    }
-			    else {
-				    ++i;
+				    // } 
+					i += factor_length;
+			    } else {
+					++i;
 			    }
 		    }
         });
