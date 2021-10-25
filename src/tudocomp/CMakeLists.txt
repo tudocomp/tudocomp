@@ -6,12 +6,16 @@ add_library(
     util/STXXLStatExtension.cpp
 )
 
+add_subdirectory(grammar)
+
 target_link_libraries(
     tudocomp
 
     ${TDC_DEPENDS}
     tudocomp_stat
+    sequitur
 )
+
 
 if(SDSL_FOUND)
     target_link_libraries(tudocomp ${SDSL_LIBRARIES})
