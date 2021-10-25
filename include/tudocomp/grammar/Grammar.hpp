@@ -44,6 +44,10 @@ public:
     std::map<size_t, symbols_t> &operator*() {
         return m_rules;
     }
+    
+    std::map<size_t, symbols_t> *operator->() {
+        return &m_rules;
+    }
 
     const size_t max_id() const {
         return m_max_id;
@@ -61,6 +65,9 @@ public:
         return m_rules.size();
     }
 
+    const bool contains_rule(int id) const {
+        return m_rules.find(id) != m_rules.end();
+    }
 };
 
 
