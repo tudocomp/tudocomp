@@ -28,6 +28,12 @@
 
 namespace tdc {
 
+
+/**
+ * @brief A Compressor implementing the lex parse as described by Navarro et al. in Definition 11 of
+ * "On the Approximation Ratio of Ordered Parsings". https://arxiv.org/abs/1803.09517
+ * This implementation uses the Suffix Array, Inverse Suffix Array and LCP Array.
+ */
 template<
     typename lzss_coder_t,
     typename ds_t = DSManager<DivSufSort, PhiFromSA, PhiAlgorithm, LCPFromPLCP, ISAFromSA>>

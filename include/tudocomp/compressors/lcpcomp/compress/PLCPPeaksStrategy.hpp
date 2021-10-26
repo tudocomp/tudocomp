@@ -15,6 +15,10 @@ namespace tdc {
 namespace lcpcomp {
 
 /// A very naive selection strategy for LCPComp.
+/// 
+/// This parsing is described by Navarro et al. in Definition 11 of
+/// "On the Approximation Ratio of Ordered Parsings". https://arxiv.org/abs/1803.09517
+/// This implementation uses the Suffix Array, Inverse Suffix Array and PLCP Array.
 ///
 /// TODO: Describe
 class PLCPPeaksStrategy : public Algorithm {
