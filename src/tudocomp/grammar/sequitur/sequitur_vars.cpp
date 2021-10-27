@@ -33,7 +33,7 @@ void reset_vars() {
     K = 1;
     memory_to_use = 1000000000;
     table_size = memory_to_use / (K * sizeof(symbols *));
-    quiet = 0;
+    quiet = 1;
     max_rule_len = 2;
     compression_initialized = false;
     occupied = 0;
