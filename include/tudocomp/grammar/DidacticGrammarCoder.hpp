@@ -18,7 +18,7 @@ public:
             "Didactic output of grammars"
         );
         return m;
-    }
+    }/* message */
 
     using Algorithm::Algorithm;
 
@@ -32,22 +32,7 @@ public:
         }
 
         inline void encode_grammar(Grammar &grammar) {
-            for (auto &&pair : *grammar)
-            {
-                const auto id = pair.first;
-                const auto symbols = pair.second;
-                (*m_out) << 'R' << id << " -> ";
-                for (auto &&symbol : symbols) {
-                    if (symbol < Grammar::RULE_OFFSET) { // in this case it's a terminal
-                        (*m_out) << (char) symbol;
-                    } else {
-                        (*m_out) << 'R' << symbol - Grammar::RULE_OFFSET;
-                    }
-                    (*m_out) << ' ';
-                }
-                (*m_out) << std::endl;
-            }
-            
+            grammar.print(*m_out);
         } 
     };
 
