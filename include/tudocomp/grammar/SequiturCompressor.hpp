@@ -91,7 +91,10 @@ public:
         }
         
         typename grammar_coder_t::Encoder coder(config().sub_config("coder"), output);
-        coder.encode_grammar(grammar);
+        grammar.print();
+        grammar.dependency_renumber();
+        grammar.print();
+        //coder.encode_grammar(grammar);
         delete s; 
     }
         
