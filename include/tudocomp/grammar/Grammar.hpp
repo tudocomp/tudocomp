@@ -29,28 +29,94 @@ private:
      * Note, that this only applies to the symbols in the vector and not to the keys of the map.  
      */
     std::map<size_t, symbols_t> m_rules;
-    size_t m_max_id;
+    size_t m_start_rule_id;
 
 public:
     
     static const size_t RULE_OFFSET = 256; 
 
-    Grammar() : m_rules{}, m_max_id{0} {}
+    Grammar() : m_rules{}, m_start_rule_id{0} {}
     
     symbols_t& operator[](const size_t id) {
         return m_rules[id];
     }
 
-    std::map<size_t, symbols_t> &operator*() {
+    void append_terminal(const size_t id, size_t symbol) {
+        m_rules[id].push_back(symbol);
+    }
+    
+    void append_nonterminal(const size_t id, size_t rule_id) {
+        append_terminal(id, rule_id + Grammar::RULE_OFFSET);
+    }
+
+    const std::map<size_t, symbols_t> &operator*() const {
         return m_rules;
     }
     
-    std::map<size_t, symbols_t> *operator->() {
+    const std::map<size_t, symbols_t> *operator->() const {
         return &m_rules;
     }
+    /**
+     * @brief Renumbers the rules in the grammar in such a way that Rules with index i only depend on rules with indices lesser than i.  
+     * 
+     */
+    void dependency_renumber() {
+        std::map<size_t, size_t> renumbering;
+        size_t count = 0;
 
-    const size_t max_id() const {
-        return m_max_id;
+        std::function<void(size_t)> renumber = [&](size_t rule_id) {
+            symbols_t &symbols = m_rules[rule_id];
+            for (auto &&symbol : symbols) {
+                if (is_terminal(symbol) || renumbering.find(symbol - RULE_OFFSET) != renumbering.end()) continue;
+                renumber(symbol - RULE_OFFSET);
+            }
+            renumbering[rule_id] = count++;
+        };
+        renumber(m_start_rule_id);
+        // make count equal to the max. id
+        count--;
+
+        std::map<size_t, symbols_t> new_rules;
+        for (auto &rule : m_rules) {
+            const auto old_id = rule.first;
+            auto &symbols = rule.second;
+            // Renumber all the nonterminals in the symbols vector
+            for (auto &&symbol : symbols) {
+                if (is_terminal(symbol)) continue;
+                symbol = (renumbering[symbol - RULE_OFFSET]) + RULE_OFFSET;
+            }
+            // Put assign the rule to its new id
+            new_rules[renumbering[old_id]] = std::move(symbols);
+        }
+
+        
+        m_rules = std::move(new_rules);
+        m_start_rule_id = count - 1;
+    }
+
+    void print(std::ostream &out = std::cout) {
+        for (auto &&pair : m_rules) {
+            const auto id = pair.first;
+            const auto symbols = pair.second;
+            out << 'R' << id << " -> ";
+            for (auto &symbol : symbols) {
+                if (Grammar::is_terminal(symbol)) { 
+                    out << (char) symbol;
+                } else {
+                    out << 'R' << symbol - Grammar::RULE_OFFSET;
+                }
+                out << ' ';
+            }
+            out << std::endl;
+        }   
+    }
+
+    const size_t start_rule_id() const {
+        return m_start_rule_id;
+    }
+    
+    void set_start_rule_id(size_t i) {
+        m_start_rule_id = i;
     }
 
     const size_t grammar_size() const {
@@ -68,6 +134,20 @@ public:
     const bool contains_rule(int id) const {
         return m_rules.find(id) != m_rules.end();
     }
+
+    const bool empty() const {
+        return rule_count() == 0;
+    }
+    
+    static const bool is_terminal(size_t symbol) {
+        return symbol < RULE_OFFSET;
+    } 
+    
+    static const bool is_non_terminal(size_t symbol) {
+        return !is_terminal(symbol);
+    }
+    
+
 };
 
 
