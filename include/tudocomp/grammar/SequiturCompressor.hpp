@@ -9,6 +9,7 @@
 #include <tudocomp/grammar/DidacticGrammarCoder.hpp>
 
 #include <deque>
+#include <unordered_set>
 
 namespace tdc {
 namespace grammar {
@@ -63,27 +64,30 @@ public:
         s->number_rules_recursive();
 
         tdc::grammar::Grammar grammar;
+        grammar.set_start_rule_id(0);
 
         std::deque<sequitur::rules*> to_be_processed;
+        std::unordered_set<size_t> seen;
+
         to_be_processed.push_back(s);
-        grammar[s->index()] = std::vector<size_t>();
         
         while (!to_be_processed.empty()) {
             sequitur::rules* current_rule = to_be_processed.at(0);
             to_be_processed.pop_front();
             const auto current_rule_id = current_rule->index();
-            for (auto current_symbol = current_rule->first(); !current_symbol->is_guard(); current_symbol = current_symbol->next()) {    
+            for (auto current_symbol = current_rule->first(); !current_symbol->is_guard(); current_symbol = current_symbol->next()) {
                 if (current_symbol->non_terminal()) {
                     const auto rule = current_symbol->rule();
-                    if (!grammar.contains_rule(rule->index())) {
-                        grammar[rule->index()] = std::vector<size_t>();
+                    if (seen.find(rule->index()) == seen.end()) {
                         to_be_processed.push_back(rule);
+                        seen.insert(rule->index());
                     }
-                    grammar[current_rule_id].push_back(rule->index() + Grammar::RULE_OFFSET);
-                } else { 
-                    grammar[current_rule_id].push_back(current_symbol->value());
+                    grammar.append_nonterminal(current_rule_id, rule->index());
+                } else {
+                    grammar.append_terminal(current_rule_id, current_symbol->value());
                 }
             } 
+            std::cout << std::endl;
         }
         
         typename grammar_coder_t::Encoder coder(config().sub_config("coder"), output);
