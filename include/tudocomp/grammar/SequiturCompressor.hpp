@@ -14,7 +14,13 @@
 namespace tdc {
 namespace grammar {
 
-template<typename grammar_coder_t=DidacticGrammarEncoder>
+/**
+ * @brief Compresses the input using the Sequitur grammar compressor.
+ * This algorithm is described by Nevill-Manning et al. in "Identifying hierarchical structure in sequences: A linear-time algorithm" (https://arxiv.org/abs/cs/9709102)
+ * 
+ * @tparam grammar_coder_t The coder to use for encoding and decoding the resulting Grammar
+ */
+template<typename grammar_coder_t>
 class SequiturCompressor : public CompressorAndDecompressor {
 
 public:
@@ -45,11 +51,13 @@ public:
             return;
         } 
 
+        // Rules will not be formed across this character
         const char delimiter = config().param("delimiter").as_uint();
 
         sequitur::delimiter = delimiter;
         sequitur::K = min_occurrences - 1;
 
+        // The starting rule
         auto s = new sequitur::rules;
         s->last()->insert_after(new sequitur::symbols(in.get()));
 
@@ -61,21 +69,33 @@ public:
             s->last()->prev()->check();           
         }
 
+        // Renumber the rules to occupy ids 0 to k, where k is the number of rules in the grammar
         s->number_rules_recursive();
 
+        // Transform the Sequitur grammar into the tdc representation
         tdc::grammar::Grammar grammar;
-        grammar.set_start_rule_id(0);
+        grammar.set_start_rule_id(s->index());
 
+        // The rules marked for processing
         std::deque<sequitur::rules*> to_be_processed;
+        // The rules which have already been processed
         std::unordered_set<size_t> seen;
 
+        // The starting rule is the first to be processed
         to_be_processed.push_back(s);
         
         while (!to_be_processed.empty()) {
+            
+            // Take the next rule to be processed out of the deque
             sequitur::rules* current_rule = to_be_processed.at(0);
             to_be_processed.pop_front();
             const auto current_rule_id = current_rule->index();
+
+            // Iterate through the symbols of the rule
             for (auto current_symbol = current_rule->first(); !current_symbol->is_guard(); current_symbol = current_symbol->next()) {
+                // If the current symbol is a non-terminal, get the corresponding rule id and check if it has been processed yet
+                // If it has not been processed yet, add it to the deque and the set
+                // In both cases, add the current non-terminal to the grammar
                 if (current_symbol->non_terminal()) {
                     const auto rule = current_symbol->rule();
                     if (seen.find(rule->index()) == seen.end()) {
@@ -84,6 +104,7 @@ public:
                     }
                     grammar.append_nonterminal(current_rule_id, rule->index());
                 } else {
+                    //If the current symbol is a terminal we can just add it to the rule in the grammar
                     grammar.append_terminal(current_rule_id, current_symbol->value());
                 }
             } 
@@ -96,9 +117,8 @@ public:
         
     virtual void decompress(Input& input, Output& output) override {
         typename grammar_coder_t::Decoder coder(config().sub_config("coder"), input);
-        auto out = output.as_stream();
         Grammar gr = coder.decode_grammar();
-        out << gr.reproduce();
+        output.as_stream() << gr.reproduce();
     }
 
     inline std::unique_ptr<Decompressor> decompressor() const override {
