@@ -64,6 +64,7 @@ public:
         std::map<size_t, size_t> renumbering;
         size_t count = 0;
 
+        // Calculate a renumbering
         std::function<void(size_t)> renumber = [&](size_t rule_id) {
             symbols_t &symbols = m_rules[rule_id];
             for (auto &&symbol : symbols) {
@@ -76,6 +77,7 @@ public:
         // make count equal to the max. id
         count--;
 
+        // renumber the rules and the nonterminals therein
         std::map<size_t, symbols_t> new_rules;
         for (auto &rule : m_rules) {
             const auto old_id = rule.first;
@@ -91,7 +93,7 @@ public:
 
         
         m_rules = std::move(new_rules);
-        m_start_rule_id = count - 1;
+        m_start_rule_id = count;
     }
 
     void print(std::ostream &out = std::cout) {
@@ -109,6 +111,30 @@ public:
             }
             out << std::endl;
         }   
+    }
+
+    std::string reproduce() {
+        dependency_renumber();
+
+        std::unordered_map<size_t, std::string> expansions;
+
+        for(const auto &[rule_id, symbols] : m_rules) {
+            std::stringstream ss;
+            for (const auto symbol : symbols) {
+                if(is_terminal(symbol)) {
+                    ss << (char) symbol;
+                } else {
+                    ss << expansions[symbol - RULE_OFFSET];
+                }
+            }
+
+            if(rule_id == start_rule_id()) {
+                return ss.str();
+            }
+
+            expansions[rule_id] = ss.str();
+        }
+        return "";
     }
 
     const size_t start_rule_id() const {
@@ -147,7 +173,6 @@ public:
         return !is_terminal(symbol);
     }
     
-
 };
 
 
