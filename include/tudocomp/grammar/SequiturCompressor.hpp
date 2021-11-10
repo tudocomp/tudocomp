@@ -87,7 +87,6 @@ public:
                     grammar.append_terminal(current_rule_id, current_symbol->value());
                 }
             } 
-            std::cout << std::endl;
         }
         
         typename grammar_coder_t::Encoder coder(config().sub_config("coder"), output);
@@ -96,7 +95,10 @@ public:
     }
         
     virtual void decompress(Input& input, Output& output) override {
-        
+        typename grammar_coder_t::Decoder coder(config().sub_config("coder"), input);
+        auto out = output.as_stream();
+        Grammar gr = coder.decode_grammar();
+        out << gr.reproduce();
     }
 
     inline std::unique_ptr<Decompressor> decompressor() const override {
