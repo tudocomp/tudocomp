@@ -45,8 +45,7 @@ public:
             m_in = std::make_unique<io::InputStream>(in.as_stream());
         }
 
-        template<typename decomp_t>
-        inline void decode(decomp_t& decomp) {
+        inline Grammar decode_grammar() {
             throw std::runtime_error("not implemented");
         }
     };
