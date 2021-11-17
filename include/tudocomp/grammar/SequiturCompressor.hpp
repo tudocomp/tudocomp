@@ -22,7 +22,7 @@ namespace grammar {
  * @tparam grammar_coder_t The coder to use for encoding and decoding the resulting Grammar
  */
 template<typename grammar_coder_t>
-class SequiturCompressor : public CompressorAndDecompressor {
+class SequiturCompressor : public Compressor {
 
 public:
     inline static Meta meta() {
@@ -40,7 +40,7 @@ public:
         return m;
     }
 
-    using CompressorAndDecompressor::CompressorAndDecompressor;
+    using Compressor::Compressor;
 
     inline virtual void compress(Input& input, Output& output) override {
         auto in = input.as_stream();
@@ -116,14 +116,8 @@ public:
         delete s; 
     }
         
-    virtual void decompress(Input& input, Output& output) override {
-        typename grammar_coder_t::Decoder coder(config().sub_config("coder"), input);
-        Grammar gr = coder.decode_grammar();
-        output.as_stream() << gr.reproduce();
-    }
-
     inline std::unique_ptr<Decompressor> decompressor() const override {
-        return std::make_unique<WrapDecompressor>(*this);
+        return Algorithm::instance<DefaultGrammarDecompressor<grammar_coder_t>>();
     }
 };
 
