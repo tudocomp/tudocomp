@@ -1,3 +1,5 @@
+#pragma once
+
 #include <tudocomp/Decompressor.hpp>
 #include <tudocomp/meta/Meta.hpp>
 #include <tudocomp/grammar/GrammarCoding.hpp>
