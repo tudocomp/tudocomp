@@ -8,7 +8,7 @@
 namespace tdc {
 namespace grammar {
 
-class DidacticGrammarEncoder : public Algorithm {
+class DidacticGrammarCoder : public Algorithm {
 
 public:
     inline static Meta meta() {

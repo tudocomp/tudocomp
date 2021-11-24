@@ -7,6 +7,7 @@
 #include <tudocomp/grammar/Grammar.hpp>
 #include <tudocomp/grammar/sequitur/sequitur_vars.hpp>
 #include <tudocomp/grammar/DidacticGrammarCoder.hpp>
+#include <tudocomp/grammar/DefaultGrammarDecompressor.hpp>
 #include <tudocomp/decompressors/WrapDecompressor.hpp>
 
 #include <deque>
