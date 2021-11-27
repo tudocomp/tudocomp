@@ -114,6 +114,7 @@ if config_match("^#define SDSL_FOUND 1"): # if SDSL is available
         AlgorithmConfig(name="lcpcomp::PLCPStrategy", header="compressors/lcpcomp/compress/PLCPStrategy.hpp"),
         AlgorithmConfig(name="lcpcomp::PLCPPeaksStrategy", header="compressors/lcpcomp/compress/PLCPPeaksStrategy.hpp"),
         AlgorithmConfig(name="lcpcomp::LexParseStrategy", header="compressors/lcpcomp/compress/LexParseStrategy.hpp"),
+        AlgorithmConfig(name="lcpcomp::LexParseMemoryStrategy", header="compressors/lcpcomp/compress/LexParseMemoryStrategy.hpp"),
     ]
 
 # lcpcomp factor decoding strategies ("dec")
