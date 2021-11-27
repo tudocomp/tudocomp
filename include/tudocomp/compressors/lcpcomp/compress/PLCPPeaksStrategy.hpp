@@ -15,6 +15,10 @@ namespace tdc {
 namespace lcpcomp {
 
 /// A very naive selection strategy for LCPComp.
+/// 
+/// This parsing is described by Navarro et al. in Definition 11 of
+/// "On the Approximation Ratio of Ordered Parsings". https://arxiv.org/abs/1803.09517
+/// This implementation uses the Suffix Array, Inverse Suffix Array and PLCP Array.
 ///
 /// TODO: Describe
 class PLCPPeaksStrategy : public Algorithm {
@@ -45,12 +49,12 @@ public:
             //
             const size_t n = sa.size();
 
-		    len_t last_replacement_pos = 0;
-		    for(len_t i = 0; i+1 < n; ) {
-			    if( (i == last_replacement_pos || plcp[i] > plcp[i-1]) && plcp[i] > plcp[i+1] && plcp[i] >= threshold) {
+			len_t factor_length;
+		    for(len_t i = 0; i+1 < n;) {
+			    if(plcp[i] >= threshold) {
 				    DCHECK_NE(isa[i], 0u);
 				    const len_t& target_position = i;
-				    const len_t factor_length = plcp[target_position];
+				    factor_length = plcp[target_position];
 				    DCHECK_LT(target_position+factor_length,n);
 				    const len_t source_position = sa[isa[target_position]-1];
 				    factors.emplace_back(i, source_position, factor_length);
@@ -64,12 +68,10 @@ public:
 				    // 		const len_t affected_length = target_position - affected_position;
 				    // 		plcp[affected_position] = affected_length;
 				    // 	}
-				    // }
-				    i+= factor_length;
-				    last_replacement_pos = i-1;
-			    }
-			    else {
-				    ++i;
+				    // } 
+					i += factor_length;
+			    } else {
+					++i;
 			    }
 		    }
         });
