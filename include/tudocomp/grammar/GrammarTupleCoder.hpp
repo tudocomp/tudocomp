@@ -3,6 +3,7 @@
 #include <tudocomp/Coder.hpp>
 #include <tudocomp/io.hpp>
 #include <tudocomp/grammar/GrammarCoding.hpp>
+#include <tudocomp/grammar/Grammar.hpp>
 
 namespace tdc {
 namespace grammar {
