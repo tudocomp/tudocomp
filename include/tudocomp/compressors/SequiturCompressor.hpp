@@ -14,7 +14,8 @@
 #include <unordered_set>
 
 namespace tdc {
-namespace grammar {
+
+using namespace grammar;
 
 /**
  * @brief Compresses the input using the Sequitur grammar compressor.
@@ -122,4 +123,4 @@ public:
     }
 };
 
-}}
+}
