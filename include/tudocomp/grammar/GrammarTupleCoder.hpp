@@ -6,7 +6,6 @@
 #include <tudocomp/grammar/Grammar.hpp>
 
 namespace tdc {
-namespace grammar {
     
 
 /**
@@ -26,7 +25,7 @@ class GrammarTupleCoder : public Algorithm {
     
 public:
     inline static Meta meta() {
-        Meta m(grammar_coder_type(), "grammar_tuple",
+        Meta m(grammar::grammar_coder_type(), "grammar_tuple",
             "Encodes grammar rules as tuples of rule length and symbols");
         m.param("len_coder", "The encoder encoding the length values.")
             .strategy<len_coder_t>(Coder::type_desc());
@@ -51,7 +50,7 @@ public:
             m_nonterminal_encoder = std::make_unique<typename nonterminal_coder_t::Encoder>(cfg.sub_config("nonterminal_coder"), m_out, NoLiterals());
         }
 
-        void encode_grammar(Grammar &grammar) {
+        void encode_grammar(grammar::Grammar &grammar) {
             if (grammar.empty()) {
                 return;
             }
@@ -81,14 +80,14 @@ public:
                 // Iterate through the rule's symbols
                 for(auto symbol : symbols){
                     // If the symbol is a terminal, write a 0 bit and then encode the symbol with the terminal encoder 
-                    if(Grammar::is_terminal(symbol)) {
+                    if(grammar::Grammar::is_terminal(symbol)) {
                         m_out->write_bit(false);
                         m_terminal_encoder->encode((char) symbol, uliteral_r);
                         continue;
                     }
                     // If the symbol is a nonterminal, write a 1 bit and then encode the rule id with the nonterminal encoder
                     m_out->write_bit(true);
-                    m_nonterminal_encoder->encode(symbol - Grammar::RULE_OFFSET, Range(0, current_rule_id));
+                    m_nonterminal_encoder->encode(symbol - grammar::Grammar::RULE_OFFSET, Range(0, current_rule_id));
                 }
             }
         }
@@ -110,8 +109,8 @@ public:
             m_nonterminal_decoder = std::make_unique<typename nonterminal_coder_t::Decoder>(cfg.sub_config("nonterminal_coder"), m_in);
         }
     
-        Grammar decode_grammar() {
-            Grammar gr;
+        grammar::Grammar decode_grammar() {
+            grammar::Grammar gr;
             // If there is nothing to read, just return the empty grammar
             if (m_in->eof()) return gr;
 
@@ -156,5 +155,4 @@ public:
     }
 };
 
-} // namespace grammar
 } // namespace tdc
