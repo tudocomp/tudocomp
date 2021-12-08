@@ -18,3 +18,4 @@ __pycache__
 .ccls-cache
 cmake-build-debug/
 .vscode
+/.idea/
