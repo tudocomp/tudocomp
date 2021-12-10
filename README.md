@@ -30,7 +30,7 @@ information can be found in the documentation.
 [Google Logging (glog)](https://github.com/google/glog) (0.3.5 or later) is
 required for all modules, which again requires
 [gflags](https://github.com/gflags/gflags) (2.2.2 or later). Furthermore,
-[Google Test](https://github.com/google/googletest) (1.8.1 or later)
+[Google Test](https://github.com/google/googletest) (1.11.0 or later)
 is needed for running the tests.
 
 ## Soft dependencies

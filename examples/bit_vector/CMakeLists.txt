@@ -9,7 +9,6 @@ target_link_libraries(
 
     ${TDC_DEPENDS}
     tudocomp
-    bit_span
 )
 
 cotire(bit_vector_example)

@@ -11,8 +11,6 @@ target_link_libraries(
 
     ${TDC_DEPENDS}
     tudocomp_stat
-    bit_span
-    compact_sparse_hash
 )
 
 if(SDSL_FOUND)

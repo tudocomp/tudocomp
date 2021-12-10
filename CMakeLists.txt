@@ -1,11 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2 FATAL_ERROR)
 project (tudocomp)
 
-# init build system
-execute_process(COMMAND git submodule update --init -- build_system
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/submodules)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/submodules/build_system/cmakemodules")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakemodules")
 
 include(tdc_init)
@@ -32,13 +27,7 @@ list(APPEND TDC_DEPENDS ${GLOG_LIBRARIES} ${GFLAGS_LIBRARIES})
 
 # submodules
 include(git_submodule_subdirectories)
-git_submodule_subdirectory(submodules/build_system)
-git_submodule_subdirectory(submodules/bit_span)
-git_submodule_subdirectory(submodules/tudostats)
-git_submodule_subdirectory(submodules/compact_sparse_hash)
 git_submodule_subdirectory(submodules/datasets)
-# git_submodule_subdirectory(submodules/broadwordsearch)
-# git_submodule_subdirectory(submodules/separate_chaining)
 
 # judy
 include(FindJudy)
@@ -84,8 +73,6 @@ include(generate_tudocomp_sources)
 
 # Add include directory to include searches
 include_directories(include)
-include_directories(submodules/separate_chaining/include)
-include_directories(submodules/broadwordsearch/include)
 
 # TuDoComp library and implementors
 if(DEFINED TDC_REGISTRY)
