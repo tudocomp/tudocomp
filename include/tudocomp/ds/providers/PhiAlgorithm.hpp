@@ -25,7 +25,7 @@ public:
     using Algorithm::Algorithm;
 
     using provides = std::index_sequence<ds::PLCP_ARRAY>;
-    using requires = std::index_sequence<ds::PHI_ARRAY>;
+    using requirements = std::index_sequence<ds::PHI_ARRAY>;
     using ds_types = tl::set<ds::PLCP_ARRAY, decltype(m_plcp)>;
 
     // implements concept "DSProvider"
