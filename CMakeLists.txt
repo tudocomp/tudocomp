@@ -16,6 +16,7 @@ include(depend_glog)
 include(softdepend_gtest)
 include(softdepend_sdsl)
 include(softdepend_stxxl)
+include(softdepend_tdc)
 
 # quit if dependencies aren't met
 tdc_check_hard_deps()
@@ -105,6 +106,7 @@ MESSAGE( STATUS "Built Type: " ${CMAKE_BUILD_TYPE} )
 MESSAGE( STATUS "[Optional] Judy Array: " ${JUDY_H_AVAILABLE} )
 MESSAGE( STATUS "[Optional] SDSL: " ${SDSL_FOUND} )
 MESSAGE( STATUS "[Optional] STXXL: " ${STXXL_FOUND} )
+MESSAGE( STATUS "[Optional] TDC: " ${TDC_FOUND} )
 
 # for showing include in qtcreator
 FILE(GLOB_RECURSE LibFiles "include/*.hpp")
