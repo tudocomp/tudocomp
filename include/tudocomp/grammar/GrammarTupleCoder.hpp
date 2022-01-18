@@ -59,11 +59,11 @@ public:
             grammar.dependency_renumber();
 
             // Determine the maximum and minimum rule length in the grammar respectively
-            size_t min_len = std::numeric_limits<size_t>().max();
-            size_t max_len = std::numeric_limits<size_t>().min();
-            for (auto rule : *grammar) {
-                min_len = std::min(min_len, rule.second.size());
-                max_len = std::max(max_len, rule.second.size());
+            size_t min_len = std::numeric_limits<size_t>::max();
+            size_t max_len = std::numeric_limits<size_t>::min();
+            for (const auto &[rule_id, symbols] : grammar) {
+                min_len = std::min(min_len, symbols.size());
+                max_len = std::max(max_len, symbols.size());
             }
             
             // Encode the minimum and maximum rule lengths
@@ -72,7 +72,7 @@ public:
             m_len_encoder->template encode<size_t>(max_len, size_r);
 
             // Iterate through the grammar
-            for (const auto &[current_rule_id, symbols] : *grammar){
+            for (const auto &[current_rule_id, symbols] : grammar){
                 // Encode the rule's length
                 auto length = symbols.size();
                 m_len_encoder->encode(length, rule_len_r);

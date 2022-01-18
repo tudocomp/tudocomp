@@ -31,7 +31,7 @@ private:
      * 
      * Note, that this only applies to the symbols in the vector and not to the keys of the map.  
      */
-    std::map<size_t, Symbols> m_rules;
+    std::unordered_map<size_t, Symbols> m_rules;
 
     /**
      * @brief The id of the start rule
@@ -92,38 +92,20 @@ public:
     void set_rule(const size_t id, Symbols &&symbols) {
         m_rules[id] = symbols;
     }
-
-    /**
-     * @brief Grants access to the underlying map
-     * 
-     * @return std::map<size_t, Symbols>& A reference to the underlying map
-     */
-    const std::map<size_t, Symbols> &operator*() const {
-        return m_rules;
-    }
-    
-    /**
-     * @brief Grants access to the underlying map
-     * 
-     * @return std::map<size_t, Symbols>& A reference to the underlying map
-     */
-    const std::map<size_t, Symbols> *operator->() const {
-        return &m_rules;
-    }
     
     /**
      * @brief Renumbers the rules in the grammar in such a way that rules with index i only depend on rules with indices lesser than i.  
      * 
      */
     void dependency_renumber() {
-        std::map<size_t, size_t> renumbering;
+        std::unordered_map<size_t, size_t> renumbering;
         size_t count = 0;
 
         // Calculate a renumbering
         std::function<void(size_t)> renumber = [&](size_t rule_id) {
             Symbols &symbols = m_rules[rule_id];
-            for (auto &&symbol : symbols) {
-                if (is_terminal(symbol) || renumbering.find(symbol - RULE_OFFSET) != renumbering.end()) continue;
+            for (auto &symbol : symbols) {
+                if (is_terminal(symbol) || renumbering.contains(symbol - RULE_OFFSET)) continue;
                 renumber(symbol - RULE_OFFSET);
             }
             renumbering[rule_id] = count++;
@@ -133,10 +115,8 @@ public:
         count--;
 
         // renumber the rules and the nonterminals therein
-        std::map<size_t, Symbols> new_rules;
-        for (auto &rule : m_rules) {
-            const auto old_id = rule.first;
-            auto &symbols = rule.second;
+        std::unordered_map<size_t, Symbols> new_rules;
+        for (auto &[old_id, symbols] : m_rules) {
             // Renumber all the nonterminals in the symbols vector
             for (auto &&symbol : symbols) {
                 if (is_terminal(symbol)) continue;
@@ -183,7 +163,11 @@ public:
 
         std::unordered_map<size_t, std::string> expansions;
 
-        for(const auto &[rule_id, symbols] : m_rules) {
+        const auto n = rule_count();
+
+        // After dependency_renumber is called, the rules occupy the ids 0 to n-1 (inclusive)
+        for(size_t rule_id = 0; rule_id < n; rule_id++) {
+            const auto symbols = m_rules[rule_id];
             std::stringstream ss;
             for (const auto symbol : symbols) {
                 if(is_terminal(symbol)) {
@@ -229,8 +213,8 @@ public:
      */
     const size_t grammar_size() const {
         auto count = 0;
-        for (auto &&pair : m_rules) {
-            count += pair.second.size();
+        for (const auto &[rule_id, symbols] : m_rules) {
+            count += symbols.size();
         }
         return count;
     }
@@ -295,7 +279,15 @@ public:
     static const bool is_non_terminal(size_t symbol) {
         return !is_terminal(symbol);
     }
-    
+
+    auto begin() const {
+        return m_rules.cbegin();
+    }
+
+    auto end() const {
+        return m_rules.cend();
+    }
+
 };
 
 

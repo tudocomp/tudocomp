@@ -3,7 +3,6 @@
 #include <cstdio>
 #include <vector>
 #include <iostream>
-#include <deque>
 #include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc::grammar::areacomp {
@@ -17,12 +16,12 @@ template<typename lcp_arr_t = const DynamicIntVector>
 class ChildArray {
 
     // Attributes
-    std::vector<size_t> cld;
-    lcp_arr_t &lcp_arr;
+    std::vector<size_t> m_cld;
+    lcp_arr_t &m_lcp_arr;
 
     
     size_t lcp(size_t i) const {
-        return i == lcp_arr.size() ? 0 : lcp_arr[i]; 
+        return i == m_lcp_arr.size() ? 0 : m_lcp_arr[i];
     }
 
     /**
@@ -41,13 +40,13 @@ class ChildArray {
                 stack.pop_back();
                 top = stack.back();
                 if (lcp(i) <= lcp(top) && lcp(top) != lcp(last_index)) {
-                    cld[top] = last_index;
+                    m_cld[top] = last_index;
                 }
             }
 
             if (lcp(i) >= lcp(top)) {
                 if (last_index != -1) {
-                    cld[i - 1] = last_index;
+                    m_cld[i - 1] = last_index;
                     last_index = -1;
                 }
                 stack.push_back(i);
@@ -70,7 +69,7 @@ class ChildArray {
             }
 
             if (lcp(i) == lcp(stack.back())) {
-                cld[stack.back()] = i;
+                m_cld[stack.back()] = i;
                 stack.pop_back();
             }
             stack.push_back(i);
@@ -91,7 +90,7 @@ public:
         }
 
         if (lcp(i - 1) > lcp(i)) {
-            return cld[i - 1];
+            return m_cld[i - 1];
         }
 
         return INVALID;
@@ -102,8 +101,8 @@ public:
             return INVALID;
         }
 
-        if (lcp(i) < lcp(cld[i])) {
-            return cld[i];
+        if (lcp(i) < lcp(m_cld[i])) {
+            return m_cld[i];
         }
 
         return INVALID;
@@ -114,8 +113,8 @@ public:
             return INVALID;
         }
 
-        if (lcp(i) == lcp(cld[i])) {
-            return cld[i];
+        if (lcp(i) == lcp(m_cld[i])) {
+            return m_cld[i];
         }
 
         return INVALID;
@@ -138,16 +137,16 @@ public:
      * @param lcp The lcp array
      * @param len The length of the lcp array
      */
-    ChildArray(lcp_arr_t &lcp, size_t len) : 
-        cld{std::vector<size_t>(len, -1)},
-        lcp_arr{lcp} {
+    ChildArray(lcp_arr_t &lcp, size_t len) :
+            m_cld{std::vector<size_t>(len, -1)},
+            m_lcp_arr{lcp} {
         
         std::vector<size_t> stack;
         calculate_up_down(len, stack);
         stack.clear();
         calculate_next_l_index(len, stack);
 
-        cld.push_back(0);
+        m_cld.push_back(0);
     }
 
     /**
@@ -157,7 +156,7 @@ public:
      * @return size_t The value of the child array at index i.
      */
     size_t operator[] (size_t i) const {
-        return cld[i];
+        return m_cld[i];
     }
 
     /**
@@ -187,7 +186,7 @@ public:
      * @return true, if there is another l_index with the same value as the one at index i. false, otherwise
      */
     bool has_next_l_index(size_t i) const {
-        return cld[i] > i && lcp(i) == lcp(cld[i]) && next_l_index(i) != INVALID;
+        return m_cld[i] > i && lcp(i) == lcp(m_cld[i]) && next_l_index(i) != INVALID;
     }
 
 private:
@@ -265,7 +264,7 @@ public:
      * @return The length of the child array -1. Which is the same as the length of the underlying lcp array.
      */
     const size_t cld_tab_len() const {
-        return cld.size();
+        return m_cld.size();
     }
 
     /**
@@ -276,15 +275,15 @@ public:
      * @return const size_t The size of the input text
      */
     const size_t input_len() const {
-        return cld.size() - 1;
+        return m_cld.size() - 1;
     }
 
     auto begin() {
-        return cld.begin();
+        return m_cld.begin();
     }
 
     auto end() {
-        return cld.end();
+        return m_cld.end();
     }
 
 };
