@@ -10,7 +10,7 @@ struct HeightFirstArea : public AreaFunction<ds_t> {
     
     inline static Meta meta() {
         Meta m(
-            AreaFunction<>::type_desc(),
+            AreaFunction<ds_t>::type_desc(),
             "height_first",
             "Always prioritizes the lcp interval with the greatest l value"
         );

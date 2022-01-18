@@ -10,7 +10,7 @@ struct WidthFirstArea : public AreaFunction<ds_t> {
 
     inline static Meta meta() {
         Meta m(
-                AreaFunction<>::type_desc(),
+                AreaFunction<ds_t>::type_desc(),
                 "width_first",
                 "Always prioritizes the lcp interval with the greatest width"
         );

@@ -16,7 +16,7 @@ namespace grammar {
 class Grammar {
 
 public:
-    using symbols_t = std::vector<size_t>;
+    using Symbols = std::vector<size_t>;
     
 private:
     /**
@@ -31,7 +31,7 @@ private:
      * 
      * Note, that this only applies to the symbols in the vector and not to the keys of the map.  
      */
-    std::map<size_t, symbols_t> m_rules;
+    std::map<size_t, Symbols> m_rules;
 
     /**
      * @brief The id of the start rule
@@ -57,9 +57,9 @@ public:
      * @brief Accesses the symbols vector for the rule of the given id
      * 
      * @param id The rule id whose symbols vector to access
-     * @return symbols_t& A reference to the rule's symbols vector
+     * @return Symbols& A reference to the rule's symbols vector
      */
-    symbols_t& operator[](const size_t id) {
+    Symbols& operator[](const size_t id) {
         return m_rules[id];
     }
 
@@ -84,20 +84,30 @@ public:
     }
 
     /**
+     * Set the right side of a rule directly. Note that this will overwrite the previous mapping
+     *
+     * @param id The id of the rule whose right side to set
+     * @param symbols The container of the right side's symbols
+     */
+    void set_rule(const size_t id, Symbols &&symbols) {
+        m_rules[id] = symbols;
+    }
+
+    /**
      * @brief Grants access to the underlying map
      * 
-     * @return std::map<size_t, symbols_t>& A reference to the underlying map
+     * @return std::map<size_t, Symbols>& A reference to the underlying map
      */
-    const std::map<size_t, symbols_t> &operator*() const {
+    const std::map<size_t, Symbols> &operator*() const {
         return m_rules;
     }
     
     /**
      * @brief Grants access to the underlying map
      * 
-     * @return std::map<size_t, symbols_t>& A reference to the underlying map
+     * @return std::map<size_t, Symbols>& A reference to the underlying map
      */
-    const std::map<size_t, symbols_t> *operator->() const {
+    const std::map<size_t, Symbols> *operator->() const {
         return &m_rules;
     }
     
@@ -111,7 +121,7 @@ public:
 
         // Calculate a renumbering
         std::function<void(size_t)> renumber = [&](size_t rule_id) {
-            symbols_t &symbols = m_rules[rule_id];
+            Symbols &symbols = m_rules[rule_id];
             for (auto &&symbol : symbols) {
                 if (is_terminal(symbol) || renumbering.find(symbol - RULE_OFFSET) != renumbering.end()) continue;
                 renumber(symbol - RULE_OFFSET);
@@ -123,7 +133,7 @@ public:
         count--;
 
         // renumber the rules and the nonterminals therein
-        std::map<size_t, symbols_t> new_rules;
+        std::map<size_t, Symbols> new_rules;
         for (auto &rule : m_rules) {
             const auto old_id = rule.first;
             auto &symbols = rule.second;
@@ -147,7 +157,7 @@ public:
      * @param out An output stream to print the grammar to
      */
     void print(std::ostream &out = std::cout) {
-        for (auto &&pair : m_rules) {
+        for (auto &pair : m_rules) {
             const auto id = pair.first;
             const auto symbols = pair.second;
             out << 'R' << id << " -> ";

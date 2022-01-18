@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <deque>
+#include <tudocomp/ds/IntVector.hpp>
 
 namespace tdc::grammar::areacomp {
 
@@ -12,142 +13,44 @@ namespace tdc::grammar::areacomp {
  *
  * @tparam lcp_arr_t The type of the lcp array
  */
-template<typename lcp_arr_t>
+template<typename lcp_arr_t = const DynamicIntVector>
 class ChildArray {
 
-    /**
-     * @brief This class implements the up operation on the child array
-     */
-    class Up {
-
-        ChildArray &cld;
-        lcp_arr_t &lcp;
-
-    public:
-        Up(ChildArray &cld, lcp_arr_t &lcp) : cld{cld}, lcp{lcp} {}
-
-        size_t operator[](size_t i) const {
-            if (i <= 0 || i > cld.len()) {
-                return INVALID;
-            }
-
-            if (lcp[i - 1] > lcp[i]) {
-                return cld[i - 1];
-            }
-
-            return INVALID;
-        }
-    };
-
-    /**
-     * @brief This class implements the down operation on the child array
-     */
-    class Down {
-
-        ChildArray &cld;
-        lcp_arr_t &lcp;
-
-    public:
-        Down(ChildArray &cld, lcp_arr_t &lcp) : cld{cld}, lcp{lcp} {}
-
-        size_t operator[](size_t i) const {
-            if (i < 0 || i > cld.len()) {
-                return INVALID;
-            }
-
-            if (lcp[i] < lcp[cld[i]]) {
-                return cld[i];
-            }
-
-            return INVALID;
-        }
-    };
-
-    /**
-     * @brief This class implements the next_l_index operation on the child array
-     */
-    class NextLIndex {
-
-        ChildArray &cld;
-        lcp_arr_t &lcp;
-
-    public:
-        NextLIndex(ChildArray &cld, lcp_arr_t &lcp) : cld{cld}, lcp{lcp} {}
-
-        size_t operator[](size_t i) const {
-            if (i < 0 || i >= cld.len()) {
-                return INVALID;
-            }
-
-            if (lcp[i] == lcp[cld[i]]) {
-                return cld[i];
-            }
-
-            return INVALID;
-        }
-    };
-
     // Attributes
+    std::vector<size_t> cld;
+    lcp_arr_t &lcp_arr;
 
-    std::vector<size_t> cld_tab;
-    lcp_arr_t &lcp;
-
-public:
-
-    /**
-     * @brief An object that when indexed with [] will return the result of the 'up' operation
-     */
-    const Up up;
     
-    /**
-     * @brief An object that when indexed with [] will return the result of the 'down' operation
-     */
-    const Down down;
-    
-    /**
-     * @brief An object that when indexed with [] will return the next l index of the same value
-     */
-    const NextLIndex next_l_index;
-
-    /**
-     * @brief This value is returned if the return value from up, down or next_l_index is undefined
-     */
-    const static size_t INVALID = -1;
-
-private:
+    size_t lcp(size_t i) const {
+        return i == lcp_arr.size() ? 0 : lcp_arr[i]; 
+    }
 
     /**
      * @brief Calculates the "up" and "down" fields of the child table with Abouelhoda et al's Algorithm
      *
-     * @param lcp_arr The lcp array for which to compute the child table
      * @param len The length of the lcp array
      * @param stack A stack used during calculation. This is expected to be empty starting out
      */
-    void calculate_up_down(lcp_arr_t &lcp_arr, size_t len, std::deque<size_t> &stack) {
-        auto lcp = [&](size_t i) -> size_t  {
-            if(i == len) return 0;
-            return lcp_arr[i] + 0; // workaround to have this lambda return a size_t
-        };
-
+    void calculate_up_down(size_t len, std::vector<size_t> &stack) {
         int last_index = -1;
-        stack.push_front(0);
+        stack.push_back(0);
         for (size_t i = 0; i <= len; i++) {
-            size_t top = stack.at(0);
+            size_t top = stack.back();
             while (lcp(i) < lcp(top)) {
-                last_index = stack.at(0);
-                stack.pop_front();
-                top = stack.at(0);
+                last_index = stack.back();
+                stack.pop_back();
+                top = stack.back();
                 if (lcp(i) <= lcp(top) && lcp(top) != lcp(last_index)) {
-                    cld_tab[top] = last_index;
+                    cld[top] = last_index;
                 }
             }
 
             if (lcp(i) >= lcp(top)) {
                 if (last_index != -1) {
-                    cld_tab[i - 1] = last_index;
+                    cld[i - 1] = last_index;
                     last_index = -1;
                 }
-                stack.push_front(i);
+                stack.push_back(i);
             }
         }
         
@@ -156,31 +59,67 @@ private:
     /**
      * @brief Calculates the "nextLIndex" fields of the child table with Abouelhoda et al's Algorithm
      *
-     * @param lcp_arr The lcp array for which to compute the child table
      * @param len The length of the lcp array
      * @param stack A stack used during calculation. This is expected to be empty starting out
      */
-    void calculate_next_l_index(lcp_arr_t &lcp_arr, size_t len, std::deque<size_t> &stack) {
-        auto lcp = [&](size_t i) -> size_t {
-            if(i == len) return 0;
-            return lcp_arr[i] + 0; // workaround to have this lambda return a size_t 
-        };
-        
-        stack.push_front(0);
+    void calculate_next_l_index(size_t len, std::vector<size_t> &stack) {
+        stack.push_back(0);
         for (size_t i = 1; i <= len; i++) {
-            while (lcp(i) < lcp(stack.at(0))) {
-                stack.pop_front();
+            while (lcp(i) < lcp(stack.back())) {
+                stack.pop_back();
             }
 
-            if (lcp(i) == lcp(stack.at(0))) {
-                cld_tab[stack.at(0)] = i;
-                stack.pop_front();
+            if (lcp(i) == lcp(stack.back())) {
+                cld[stack.back()] = i;
+                stack.pop_back();
             }
-            stack.push_front(i);
+            stack.push_back(i);
         }
     }
 
 public:
+
+    /**
+     * @brief This value is returned if the return value from up, down or next_l_index is undefined
+     */
+    const static size_t INVALID = -1;
+
+
+    size_t up(size_t i) const { 
+        if (i <= 0 || i >= cld_tab_len()) {
+            return INVALID;
+        }
+
+        if (lcp(i - 1) > lcp(i)) {
+            return cld[i - 1];
+        }
+
+        return INVALID;
+    }
+
+    size_t down(size_t i) const {
+        if (i < 0 || i >= cld_tab_len()) {
+            return INVALID;
+        }
+
+        if (lcp(i) < lcp(cld[i])) {
+            return cld[i];
+        }
+
+        return INVALID;
+    }
+
+    size_t next_l_index(size_t i) const {
+        if (i < 0 || i >= cld_tab_len() - 1) {
+            return INVALID;
+        }
+
+        if (lcp(i) == lcp(cld[i])) {
+            return cld[i];
+        }
+
+        return INVALID;
+    }
 
     struct Interval {
         const size_t start;
@@ -200,18 +139,15 @@ public:
      * @param len The length of the lcp array
      */
     ChildArray(lcp_arr_t &lcp, size_t len) : 
-        cld_tab{std::vector<size_t>(len, -1)},
-        lcp{lcp},
-        up{*this, lcp},
-        down{*this, lcp},
-        next_l_index{*this, lcp} {
+        cld{std::vector<size_t>(len, -1)},
+        lcp_arr{lcp} {
         
-        std::deque<size_t> stack;
-        calculate_up_down(lcp, len, stack);
+        std::vector<size_t> stack;
+        calculate_up_down(len, stack);
         stack.clear();
-        calculate_next_l_index(lcp, len, stack);
+        calculate_next_l_index(len, stack);
 
-        cld_tab.push_back(0);
+        cld.push_back(0);
     }
 
     /**
@@ -221,7 +157,7 @@ public:
      * @return size_t The value of the child array at index i.
      */
     size_t operator[] (size_t i) const {
-        return cld_tab[i];
+        return cld[i];
     }
 
     /**
@@ -237,10 +173,10 @@ public:
             return 0;
         }
 
-        if (low < up[high + 1] && up[high + 1] <= high) {
-            return lcp[up[high + 1]];
+        if (low < up(high + 1) && up(high + 1) <= high) {
+            return lcp(up(high + 1));
         } else {
-            return lcp[down[low]];
+            return lcp(down(low));
         }
     }
 
@@ -251,7 +187,7 @@ public:
      * @return true, if there is another l_index with the same value as the one at index i. false, otherwise
      */
     bool has_next_l_index(size_t i) const {
-        return cld_tab[i] > i && lcp[i] == lcp[cld_tab[i]] && next_l_index[i] != INVALID;
+        return cld[i] > i && lcp(i) == lcp(cld[i]) && next_l_index(i) != INVALID;
     }
 
 private:
@@ -263,16 +199,16 @@ private:
      * @param min_l_value The minimum l-value of the returned intervals
      * @param intervals The collection to add the intervals into
      */
-    void add_child_intervals(size_t low, size_t high, size_t min_l_value, std::vector<Interval> &intervals) {
+    void add_child_intervals(size_t low, size_t high, size_t min_l_value, std::vector<Interval> &intervals) const {
         if (low >= high) return;
 
         size_t current_l_index;
 
         // Get the first l index of the lcp interval
-        if (low < up[high + 1] && up[high + 1] <= high) {
-            current_l_index = up[high + 1];
+        if (low < up(high + 1) && up(high + 1) <= high) {
+            current_l_index = up(high + 1);
         } else {
-            current_l_index = down[low];
+            current_l_index = down(low);
         }
 
         if (current_l_index - 1 > low && l_value(low, current_l_index - 1) >= min_l_value) {
@@ -281,7 +217,7 @@ private:
         }
 
         while (has_next_l_index(current_l_index)) {
-            size_t next = next_l_index[current_l_index];
+            size_t next = next_l_index(current_l_index);
             if (next - 1 > current_l_index && l_value(current_l_index, next - 1) >= min_l_value) {
                 intervals.emplace_back(current_l_index, next - 1);
                 add_child_intervals(current_l_index, next - 1, min_l_value, intervals);
@@ -305,13 +241,13 @@ public:
      * @param min_l_value The minimum l value of the lcp interval to include
      * @return A vector of lcp intervals with an l-value of at least min_l_value
      */
-    std::vector<Interval> get_lcp_intervals(size_t min_l_value) {
+    std::vector<Interval> get_lcp_intervals(size_t min_l_value) const {
         std::vector<Interval> list;
 
         size_t last_l_index = 0;
-        size_t current_l_index = next_l_index[0];
+        size_t current_l_index = next_l_index(0);
 
-        if(0 >= min_l_value) list.push_back( {last_l_index, len()} );
+        if(0 >= min_l_value) list.push_back( {last_l_index, cld_tab_len()} );
 
         while (current_l_index != INVALID) {
             if (l_value(last_l_index, current_l_index - 1) >= min_l_value) {
@@ -319,25 +255,36 @@ public:
             }
             add_child_intervals(last_l_index, current_l_index - 1, min_l_value, list);
             last_l_index = current_l_index;
-            current_l_index = next_l_index[current_l_index];
+            current_l_index = next_l_index(current_l_index);
         }
 
         return list;
     }
 
     /**
-     * @return The length of the child array -1. Which is the same as the length of the lcp array.
+     * @return The length of the child array -1. Which is the same as the length of the underlying lcp array.
      */
-    const size_t len() const {
-        return cld_tab.size() - 1;
+    const size_t cld_tab_len() const {
+        return cld.size();
+    }
+
+    /**
+     * @brief The size of the text from which this child array has been created.
+     * 
+     * This is 1 less than the size of the actual child array, since the child array simulates a sentinel that is larger than all characters in the text.
+     * 
+     * @return const size_t The size of the input text
+     */
+    const size_t input_len() const {
+        return cld.size() - 1;
     }
 
     auto begin() {
-        return cld_tab.begin();
+        return cld.begin();
     }
 
     auto end() {
-        return cld_tab.end();
+        return cld.end();
     }
 
 };

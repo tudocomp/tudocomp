@@ -8,27 +8,40 @@ namespace tdc::grammar::areacomp {
     
 struct AreaData {
 
-    const size_t low;
-    const size_t high;
-    const size_t area;
-    const size_t len;
+    size_t m_low;
+    size_t m_high;
+    size_t m_area;
+    size_t m_len;
 
-    AreaData(size_t low, size_t high, size_t area, size_t len) : low{low}, high{high}, area{area}, len{len} {}
+    AreaData(size_t low, size_t high, size_t area, size_t len) : m_low{low}, m_high{high}, m_area{area}, m_len{len} {}
 
     class DataCompare {
-        static bool comp(AreaData &a, AreaData &b) {
-            return a.area < b.area;
-        }
-
-        static bool equiv(AreaData &a, AreaData &b) {
-            return a.area == b.area;
-        }
+    public:
+        bool operator() (AreaData &a, AreaData &b) {
+            return a.area() < b.area();
+        }  
     };
+
+    size_t low() const {
+        return m_low;
+    }
+
+    size_t high() const {
+        return m_high;
+    }
+
+    size_t area() const {
+        return m_area;
+    }
+
+    size_t len() const {
+        return m_len;
+    }
     
-    static std::priority_queue<AreaData, std::vector<AreaData>, DataCompare> queue() {
-        return {};
+    static auto queue() {
+        return std::priority_queue<AreaData, std::vector<AreaData>, DataCompare>{DataCompare{}};
     }
 
 };
-    
+
 }
