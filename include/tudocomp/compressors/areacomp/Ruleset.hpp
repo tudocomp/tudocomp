@@ -206,11 +206,11 @@ namespace tdc::grammar::areacomp {
             global_phase.split("Compression Loop");
 
             while (!queue.empty()) {
-                StatPhase sub_phase("Get best area");
+                //StatPhase sub_phase("Get best area");
                 // Poll the best interval
                 auto area_data = queue.top();
 
-                sub_phase.split("Get positions");
+                //sub_phase.split("Get positions");
 
                 // The positions at which the pattern can be found
                 std::vector<size_t> positions;
@@ -230,12 +230,12 @@ namespace tdc::grammar::areacomp {
                     break;
                 }
 
-                sub_phase.split("Sort positions");
+                //sub_phase.split("Sort positions");
 
                 std::sort(positions.begin(), positions.end());
 
 
-                sub_phase.split("Clean positions");
+                //sub_phase.split("Clean positions");
                 // Remove positions at which substituting is impossible
                 const size_t position_count = clean_positions(positions, len);
                 if (position_count <= 1) {
@@ -243,7 +243,7 @@ namespace tdc::grammar::areacomp {
                     continue;
                 }
 
-                sub_phase.split("Differing Occurrences");
+                //sub_phase.split("Differing Occurrences");
                 // Check, if the found occurrences are actually distinct in the current grammar
                 const bool multiple_occurrences = differing_occurrences(positions);
 
@@ -253,7 +253,7 @@ namespace tdc::grammar::areacomp {
                     continue;
                 }
 
-                sub_phase.split("Substitute");
+                //sub_phase.split("Substitute");
 
                 substitute(positions, len);
                 queue.pop();

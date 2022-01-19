@@ -25,8 +25,9 @@ template<typename grammar_coder_t,
     template<typename> class area_fun_t = grammar::areacomp::HeightFirstArea,
     //size_t sampling = 16,
     typename ds_t = DSManager<DivSufSort, PhiFromSA, PhiAlgorithm, LCPFromPLCP, ISAFromSA>>
-        requires areacomp::AreaFun<area_fun_t<ds_t>, ds_t>
+        requires grammar::areacomp::AreaFun<area_fun_t<ds_t>, ds_t>
 class AreaCompressor : public Compressor {
+
 
 public:
     inline static Meta meta() {
@@ -77,7 +78,10 @@ public:
         Grammar gr = rules.build_grammar();
 
         phase.split("Encode Grammar");
-         
+
+        phase.log_stat("grammar_size", gr.grammar_size());
+        phase.log_stat("rule_count", gr.rule_count());
+
         //Encode the grammar
         typename grammar_coder_t::Encoder coder(config().sub_config("coder"), output);
         coder.encode_grammar(gr);

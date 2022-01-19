@@ -83,17 +83,18 @@ namespace tdc::grammar::areacomp {
     template<uint8_t sampling=16>
     class RuleIntervalIndex {
 
-        using bucket_t = tdc::pred::dynamic::bucket_hybrid<size_t, sampling>;
+        using Bucket = tdc::pred::dynamic::bucket_bv<size_t, sampling>;
 
     private:
         size_t m_top_level_rule_id;
         size_t m_len;
-        tdc::pred::dynamic::DynIndex<size_t, sampling, bucket_t> m_pred;
+        tdc::pred::dynamic::DynIndex<size_t, sampling, Bucket> m_pred;
         std::unordered_map<size_t, std::shared_ptr<RuleInterval>> m_interval_map;
 
         void insert(size_t pos, std::shared_ptr<RuleInterval> interval) {
             m_interval_map[pos] = std::move(interval);
             m_pred.insert(pos);
+            
         }
 
         void insert(size_t pos, RuleInterval &&interval) {
