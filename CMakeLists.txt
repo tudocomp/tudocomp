@@ -5,6 +5,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakemodules")
 
 include(tdc_init)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
+
 # hard dependencies
 set(Python_ADDITIONAL_VERSIONS 3)
 find_package(PythonInterp REQUIRED)
@@ -107,6 +109,7 @@ MESSAGE( STATUS "[Optional] Judy Array: " ${JUDY_H_AVAILABLE} )
 MESSAGE( STATUS "[Optional] SDSL: " ${SDSL_FOUND} )
 MESSAGE( STATUS "[Optional] STXXL: " ${STXXL_FOUND} )
 MESSAGE( STATUS "[Optional] TDC: " ${TDC_FOUND} )
+
 
 # for showing include in qtcreator
 FILE(GLOB_RECURSE LibFiles "include/*.hpp")
