@@ -71,14 +71,15 @@ public:
             m_len_encoder->template encode<size_t>(min_len, size_r);
             m_len_encoder->template encode<size_t>(max_len, size_r);
 
+
+            auto sorted_rules = grammar.rules_sorted();
             // Iterate through the grammar
-            for (const auto &[current_rule_id, symbols] : grammar){
+            for (const auto &[current_rule_id, symbols] : sorted_rules){
                 // Encode the rule's length
-                auto length = symbols.size();
+                auto length = symbols->size();
                 m_len_encoder->encode(length, rule_len_r);
-                
                 // Iterate through the rule's symbols
-                for(auto symbol : symbols){
+                for(auto symbol : *symbols){
                     // If the symbol is a terminal, write a 0 bit and then encode the symbol with the terminal encoder 
                     if(grammar::Grammar::is_terminal(symbol)) {
                         m_out->write_bit(false);

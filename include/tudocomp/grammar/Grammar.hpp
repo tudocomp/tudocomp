@@ -137,13 +137,23 @@ public:
      * @param out An output stream to print the grammar to
      */
     void print(std::ostream &out = std::cout) {
-        for (auto &pair : m_rules) {
-            const auto id = pair.first;
-            const auto symbols = pair.second;
+        std::map<size_t, const Symbols*> ordered;
+        for (const auto &[id, symbols] : m_rules) {
+            ordered[id] = &symbols;
+        }
+        for (const auto &[id, symbols] : ordered) {
             out << 'R' << id << " -> ";
-            for (auto &symbol : symbols) {
+            for (auto &symbol : *symbols) {
                 if (Grammar::is_terminal(symbol)) { 
-                    out << (char) symbol;
+                    auto c = (char) symbol;
+                    switch (c) {
+                        case '\n': { out << "\\n"; break; }
+                        case '\r': { out << "\\r"; break; }
+                        case '\t': { out << "\\t"; break; }
+                        case '\0': { out << "\\0"; break; }
+                        case ' ' : { out << '_'; break;}
+                        default  : { out << c; }
+                    }
                 } else {
                     out << 'R' << symbol - Grammar::RULE_OFFSET;
                 }
@@ -286,6 +296,14 @@ public:
 
     auto end() const {
         return m_rules.cend();
+    }
+
+    std::map<size_t, Symbols*> rules_sorted() {
+        std::map<size_t, Symbols*> map;
+        for (auto &[id, symbols] : m_rules) {
+            map[id] = &symbols;
+        }
+        return map;
     }
 
 };
