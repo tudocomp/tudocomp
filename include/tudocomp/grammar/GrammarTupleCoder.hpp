@@ -72,14 +72,15 @@ public:
             m_len_encoder->template encode<size_t>(max_len, size_r);
 
 
-            auto sorted_rules = grammar.rules_sorted();
+            size_t n = grammar.rule_count();
             // Iterate through the grammar
-            for (const auto &[current_rule_id, symbols] : sorted_rules){
+            for (size_t current_rule_id = 0; current_rule_id < n; ++current_rule_id) {
+                auto symbols = grammar[current_rule_id];
                 // Encode the rule's length
-                auto length = symbols->size();
+                auto length = symbols.size();
                 m_len_encoder->encode(length, rule_len_r);
                 // Iterate through the rule's symbols
-                for(auto symbol : *symbols){
+                for(auto symbol : symbols){
                     // If the symbol is a terminal, write a 0 bit and then encode the symbol with the terminal encoder 
                     if(grammar::Grammar::is_terminal(symbol)) {
                         m_out->write_bit(false);
@@ -141,7 +142,7 @@ public:
                 }
                 current_rule_id++;
             }
-            // The rule that was read last, is the one with the most dependencies. That rule is the start rule.
+            // The rule that was read last is the one with the most dependencies. That rule is the start rule.
             gr.set_start_rule_id(current_rule_id - 1);
             return gr;
         }

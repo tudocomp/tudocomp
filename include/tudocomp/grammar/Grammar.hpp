@@ -171,27 +171,37 @@ public:
     std::string reproduce() {
         dependency_renumber();
 
-        std::unordered_map<size_t, std::string> expansions;
+        // This vector contains a mapping of a rule id (or rather, a nonterminal) to the string representation of the rule,
+        // were it fully expanded
+        std::vector<std::string> expansions;
 
         const auto n = rule_count();
 
         // After dependency_renumber is called, the rules occupy the ids 0 to n-1 (inclusive)
         for(size_t rule_id = 0; rule_id < n; rule_id++) {
             const auto symbols = m_rules[rule_id];
+
+            // The string representation of the rule currently being processed
             std::stringstream ss;
             for (const auto symbol : symbols) {
+                // If the scurrent symbol is a terminal, it can be written to this rule's string representation as is. 
+                // If it is a nonterminal, it can only be the nonterminal of a rule that has already been fully expanded,
+                // since rules which depend on the least amount of other rules are always read first.
+                // The string expansion thereof is written to the current rule's string representation 
                 if(is_terminal(symbol)) {
                     ss << (char) symbol;
                 } else {
                     ss << expansions[symbol - RULE_OFFSET];
                 }
             }
-
+            
+            // If we have arrived at the start rule there are no more rules to be read.
+            // The string expansion of this rule is obviously the original text.
             if(rule_id == start_rule_id()) {
                 return ss.str();
             }
 
-            expansions[rule_id] = ss.str();
+            expansions.push_back(ss.str());
         }
         return "";
     }
@@ -298,6 +308,11 @@ public:
         return m_rules.cend();
     }
 
+    /**
+     * @brief Creates a sorted map containing the same data as in @link m_rules, but containing pointers to the vectors instead.
+     *
+     * This is needed for some encoders.
+     */
     std::map<size_t, Symbols*> rules_sorted() {
         std::map<size_t, Symbols*> map;
         for (auto &[id, symbols] : m_rules) {

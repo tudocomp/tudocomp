@@ -10,11 +10,24 @@
 
 namespace tdc::grammar::areacomp {
 
+    /**
+     * @brief The class handling the factorization of rules in areacomp
+     *
+     * This class contains the necessary datastuctures for compressing an input with Areacomp. 
+     */
     template<size_t sampling>
     class Ruleset {
 
+        /**
+         * @brief Placeholder value for invalid positions
+         *
+         * This is used to mark positions at which a pattern may not be replaced 
+         */
         static const size_t INVALID = std::numeric_limits<size_t>::max();
 
+        /**
+         * @brief The underlying view into the text
+         */
         const io::InputView &m_underlying;
         RuleIntervalIndex<sampling> m_interval_index;
 
@@ -22,17 +35,27 @@ namespace tdc::grammar::areacomp {
 
 
     public:
+        /**
+         * @brief Construct a new ruleset for the given input view.
+         *
+         * This constructor does not automatically compress.
+         * It creates a single rule mapping to the entire input text.
+         */
         Ruleset(io::InputView &underlying) : m_underlying{underlying}, m_interval_index{0, underlying.size()},
                                              m_num_rules{1} {}
 
 
     private:
+
+        /**
+         * @brief Returns the next unused rule
+         */
         size_t next_rule_id() {
             return m_num_rules++;
         }
 
         /**
-         * Checks whether the given Interval can be substituted without violating other previous substitutions in this area.
+         * Checks whether the given interval can be substituted without violating other previous substitutions in this area.
          * In essence, this checks whether there is an already substituted interval in which a start symbol and and end symbol can be found,
          * which correspond to the indices from and to in the input String.
          *
@@ -43,7 +66,7 @@ namespace tdc::grammar::areacomp {
          *
          * This method returns true for the input [0, 3]
          * This is because the 0 index here corresponds to either the first "A" in Rule S or the first "a" in Rule A and the 3 index corresponds to the "c", both in Rule S.
-         * Here, a start- and end symbol can be found that are in the same rule interval and correspond to the indices. These being the "A" and "c" in Rule S respectively.
+         * Here, a start- and end symbol can be found that are in the right side of the same rule and correspond to the indices. These being the "A" and "c" in Rule S respectively.
          *
          * This method returns false for the input [1, 3], since the only symbol that corresponds to the index 1 is the "b" in rule A, and for index 3 it is only the "c".
          * So there is no way to find a start- and end symbol which both lie in the same substituted interval.
