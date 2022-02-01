@@ -369,8 +369,8 @@ class Ruleset {
 
         // Contains the tentative symbol list of the rule corresponding to the interval at the same
         // position in nesting_stack.
-        std::vector<std::vector<size_t>> symbol_stack;
-        Grammar                          gr(m_num_rules);
+        std::vector<std::vector<len_t>> symbol_stack;
+        Grammar                         gr(m_num_rules);
         gr.set_start_rule_id(0);
 
         for (size_t i = 0; i < m_underlying.size(); ++i) {

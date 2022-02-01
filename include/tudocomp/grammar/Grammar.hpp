@@ -18,7 +18,7 @@ namespace grammar {
 class Grammar {
 
   public:
-    using Symbols = std::vector<size_t>;
+    using Symbols = std::vector<len_t>;
 
   private:
     /**
@@ -94,8 +94,8 @@ class Grammar {
      *
      */
     void dependency_renumber() {
-        std::vector<size_t> renumbering(m_rules.size(), areacomp::INVALID);
-        size_t              count = 0;
+        std::vector<len_t> renumbering(m_rules.size(), areacomp::INVALID);
+        size_t             count = 0;
 
         // Calculate a renumbering
         std::function<void(size_t)> renumber = [&](size_t rule_id) {

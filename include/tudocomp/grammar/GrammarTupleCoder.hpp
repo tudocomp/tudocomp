@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tudocomp_stat/StatPhase.hpp"
 #include <tudocomp/Coder.hpp>
 #include <tudocomp/grammar/Grammar.hpp>
 #include <tudocomp/grammar/GrammarCoding.hpp>
@@ -59,13 +60,17 @@ class GrammarTupleCoder : public Algorithm {
                 return;
             }
 
+            StatPhase phase("Renumber Grammar");
+
             // Renumber the rules, such that the rules with and id n only depends on rules with id k < n
             grammar.dependency_renumber();
+
+            phase.split("Min/Max encoding");
 
             // Determine the maximum and minimum rule length in the grammar respectively
             size_t min_len = std::numeric_limits<size_t>::max();
             size_t max_len = std::numeric_limits<size_t>::min();
-            for (size_t rule_id = 0; rule_id < grammar.grammar_size(); rule_id++) {
+            for (size_t rule_id = 0; rule_id < grammar.rule_count(); rule_id++) {
                 auto &symbols = grammar[rule_id];
                 min_len       = std::min(min_len, symbols.size());
                 max_len       = std::max(max_len, symbols.size());
@@ -80,6 +85,8 @@ class GrammarTupleCoder : public Algorithm {
             m_len_encoder->template encode<size_t>(max_len, size_r);
 
             size_t n = grammar.rule_count();
+
+            phase.split("Encoding Grammar");
             // Iterate through the grammar
             for (size_t current_rule_id = 0; current_rule_id < n; ++current_rule_id) {
                 auto symbols = grammar[current_rule_id];
