@@ -9,12 +9,12 @@ namespace tdc {
 
 /**
  * @brief Codes a grammar's rules into tuples of their length in symbols and a list of their symbols.
- * 
+ *
  * In the encoded symbol list a 0 bit precedes a terminal and a 1 bit precedes a non-terminal.
- * The rules are encoded in an order which rules that depend on no other rule (i.e. contains only terminals) are encoded first. 
- * For a rule to be encoded at a certain point in time, all rules which this rule depends on, have to be encoded already.
- * This allows for all encoded non-terminals to be references to rules which have already be en- or decoded. 
- * 
+ * The rules are encoded in an order which rules that depend on no other rule (i.e. contains only terminals) are encoded
+ * first. For a rule to be encoded at a certain point in time, all rules which this rule depends on, have to be encoded
+ * already. This allows for all encoded non-terminals to be references to rules which have already be en- or decoded.
+ *
  * @tparam len_coder_t The coder to use for the length of the rules
  * @tparam terminal_coder_t The coder to use for terminals
  * @tparam nonterminal_coder_t The coder to use for non-terminals
@@ -24,11 +24,11 @@ class GrammarTupleCoder : public Algorithm {
 
   public:
     inline static Meta meta() {
-        Meta m(grammar::grammar_coder_type(), "grammar_tuple", "Encodes grammar rules as tuples of rule length and symbols");
-        m.param("len_coder", "The encoder encoding the length values.")
-            .strategy<len_coder_t>(Coder::type_desc());
-        m.param("terminal_coder", "The encoder encoding terminals.")
-            .strategy<terminal_coder_t>(Coder::type_desc());
+        Meta m(grammar::grammar_coder_type(),
+               "grammar_tuple",
+               "Encodes grammar rules as tuples of rule length and symbols");
+        m.param("len_coder", "The encoder encoding the length values.").strategy<len_coder_t>(Coder::type_desc());
+        m.param("terminal_coder", "The encoder encoding terminals.").strategy<terminal_coder_t>(Coder::type_desc());
         m.param("nonterminal_coder", "The encoder encoding non terminals.")
             .strategy<nonterminal_coder_t>(Coder::type_desc());
         return m;
@@ -42,10 +42,16 @@ class GrammarTupleCoder : public Algorithm {
 
       public:
         inline Encoder(const Config &cfg, Output &out) {
-            m_out                 = std::make_shared<BitOStream>(out);
-            m_len_encoder         = std::make_unique<typename len_coder_t::Encoder>(cfg.sub_config("len_coder"), m_out, NoLiterals());
-            m_terminal_encoder    = std::make_unique<typename terminal_coder_t::Encoder>(cfg.sub_config("terminal_coder"), m_out, NoLiterals());
-            m_nonterminal_encoder = std::make_unique<typename nonterminal_coder_t::Encoder>(cfg.sub_config("nonterminal_coder"), m_out, NoLiterals());
+            m_out = std::make_shared<BitOStream>(out);
+            m_len_encoder =
+                std::make_unique<typename len_coder_t::Encoder>(cfg.sub_config("len_coder"), m_out, NoLiterals());
+            m_terminal_encoder = std::make_unique<typename terminal_coder_t::Encoder>(cfg.sub_config("terminal_coder"),
+                                                                                      m_out,
+                                                                                      NoLiterals());
+            m_nonterminal_encoder =
+                std::make_unique<typename nonterminal_coder_t::Encoder>(cfg.sub_config("nonterminal_coder"),
+                                                                        m_out,
+                                                                        NoLiterals());
         }
 
         void encode_grammar(grammar::Grammar &grammar) {
@@ -59,10 +65,14 @@ class GrammarTupleCoder : public Algorithm {
             // Determine the maximum and minimum rule length in the grammar respectively
             size_t min_len = std::numeric_limits<size_t>::max();
             size_t max_len = std::numeric_limits<size_t>::min();
-            for (const auto &[rule_id, symbols] : grammar) {
-                min_len = std::min(min_len, symbols.size());
-                max_len = std::max(max_len, symbols.size());
+            for (size_t rule_id = 0; rule_id < grammar.grammar_size(); rule_id++) {
+                auto &symbols = grammar[rule_id];
+                min_len       = std::min(min_len, symbols.size());
+                max_len       = std::max(max_len, symbols.size());
             }
+
+            // Encode the rule count
+            m_len_encoder->template encode<size_t>(grammar.rule_count(), size_r);
 
             // Encode the minimum and maximum rule lengths
             Range rule_len_r = Range(min_len, max_len);
@@ -84,7 +94,8 @@ class GrammarTupleCoder : public Algorithm {
                         m_terminal_encoder->encode((char) symbol, uliteral_r);
                         continue;
                     }
-                    // If the symbol is a nonterminal, write a 1 bit and then encode the rule id with the nonterminal encoder
+                    // If the symbol is a nonterminal, write a 1 bit and then encode the rule id with the nonterminal
+                    // encoder
                     m_out->write_bit(true);
                     m_nonterminal_encoder->encode(symbol - grammar::Grammar::RULE_OFFSET, Range(0, current_rule_id));
                 }
@@ -101,18 +112,22 @@ class GrammarTupleCoder : public Algorithm {
 
       public:
         inline Decoder(const Config &cfg, Input &in) {
-            m_in                  = std::make_shared<BitIStream>(in.as_stream());
-            m_len_decoder         = std::make_unique<typename len_coder_t::Decoder>(cfg.sub_config("len_coder"), m_in);
-            m_terminal_decoder    = std::make_unique<typename terminal_coder_t::Decoder>(cfg.sub_config("terminal_coder"), m_in);
-            m_nonterminal_decoder = std::make_unique<typename nonterminal_coder_t::Decoder>(cfg.sub_config("nonterminal_coder"), m_in);
+            m_in          = std::make_shared<BitIStream>(in.as_stream());
+            m_len_decoder = std::make_unique<typename len_coder_t::Decoder>(cfg.sub_config("len_coder"), m_in);
+            m_terminal_decoder =
+                std::make_unique<typename terminal_coder_t::Decoder>(cfg.sub_config("terminal_coder"), m_in);
+            m_nonterminal_decoder =
+                std::make_unique<typename nonterminal_coder_t::Decoder>(cfg.sub_config("nonterminal_coder"), m_in);
         }
 
         grammar::Grammar decode_grammar() {
-            grammar::Grammar gr;
             // If there is nothing to read, just return the empty grammar
             if (m_in->eof())
-                return gr;
+                return grammar::Grammar(0);
 
+            size_t rule_count = m_len_decoder->template decode<size_t>(size_r);
+
+            grammar::Grammar gr(rule_count);
             // Decode the minimum and maximum rule lengths
             size_t min_len = m_len_decoder->template decode<size_t>(size_r);
             size_t max_len = m_len_decoder->template decode<size_t>(size_r);
@@ -125,9 +140,11 @@ class GrammarTupleCoder : public Algorithm {
                 size_t rule_len = m_len_decoder->template decode<size_t>(rule_len_r);
                 // Decode rule_len symbols
                 for (size_t i = 0; i < rule_len; i++) {
-                    // Read a bit from the input. If it is 1, the next symbol is a nonterminal. If it is 0, it is a terminal
+                    // Read a bit from the input. If it is 1, the next symbol is a nonterminal. If it is 0, it is a
+                    // terminal
                     bool is_nonterminal = m_in->read_bit();
-                    // If it is a terminal, use the terminal decoder to decode the next value as a character and insert it into the grammar
+                    // If it is a terminal, use the terminal decoder to decode the next value as a character and insert
+                    // it into the grammar
                     if (!is_nonterminal) {
                         char terminal = m_terminal_decoder->template decode<char>(uliteral_r);
                         gr.append_terminal(current_rule_id, terminal);
@@ -145,13 +162,9 @@ class GrammarTupleCoder : public Algorithm {
         }
     };
 
-    inline auto encoder(Output &output) {
-        return Encoder(config(), output);
-    }
+    inline auto encoder(Output &output) { return Encoder(config(), output); }
 
-    inline auto decoder(Input &input) {
-        return Decoder(config(), input);
-    }
+    inline auto decoder(Input &input) { return Decoder(config(), input); }
 };
 
 } // namespace tdc

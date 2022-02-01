@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tudocomp/compressors/areacomp/Consts.hpp"
 #include <cstdio>
 #include <map>
 #include <unordered_map>
@@ -21,18 +22,18 @@ class Grammar {
 
   private:
     /**
-     * @brief The map keeping the grammar's rules.
+     * @brief The vector keeping the grammar's rules.
      *
-     * This map maps from the rule's id to the sequence of symbols in its right side.
+     * This vector maps from the rule's id to the sequence of symbols in its right side.
      * The symbols are either the code of the character, if the symbol is a literal, or the
      * id of the rule the nonterminal belongs to offset by 256, if the symbol is a nonterminal.
      *
      * Therefore, if the value 274 is read from the symbols vector, it means that this is a nonterminal, since it is >=
      * 256. It is the nonterminal corresponding to the rule with id `274 - 256 = 18`.
      *
-     * Note, that this only applies to the symbols in the vector and not to the keys of the map.
+     * Note, that this only applies to the symbols in the innner vector and not to the indexes of the outer vector.
      */
-    std::unordered_map<size_t, Symbols> m_rules;
+    std::vector<Symbols> m_rules;
 
     /**
      * @brief The id of the start rule
@@ -48,10 +49,11 @@ class Grammar {
     static const size_t RULE_OFFSET = 256;
 
     /**
-     * @brief Construct an empty Grammar with a start rule of 0
+     * @brief Construct an empty Grammar with a start rule of 0 and with a given capacity.
      *
+     * @param capacity The number of rules the underlying vector will be setup to hold
      */
-    Grammar() : m_rules{}, m_start_rule_id{0} {}
+    Grammar(len_t capacity) : m_rules{std::vector<Symbols>(capacity, Symbols())}, m_start_rule_id{0} {}
 
     /**
      * @brief Accesses the symbols vector for the rule of the given id
@@ -92,14 +94,14 @@ class Grammar {
      *
      */
     void dependency_renumber() {
-        std::unordered_map<size_t, size_t> renumbering;
-        size_t                             count = 0;
+        std::vector<size_t> renumbering(m_rules.size(), areacomp::INVALID);
+        size_t              count = 0;
 
         // Calculate a renumbering
         std::function<void(size_t)> renumber = [&](size_t rule_id) {
             Symbols &symbols = m_rules[rule_id];
             for (auto &symbol : symbols) {
-                if (is_terminal(symbol) || renumbering.contains(symbol - RULE_OFFSET))
+                if (is_terminal(symbol) || renumbering[symbol - RULE_OFFSET] != areacomp::INVALID)
                     continue;
                 renumber(symbol - RULE_OFFSET);
             }
@@ -110,8 +112,9 @@ class Grammar {
         count--;
 
         // renumber the rules and the nonterminals therein
-        std::unordered_map<size_t, Symbols> new_rules;
-        for (auto &[old_id, symbols] : m_rules) {
+        std::vector<Symbols> new_rules(m_rules.size(), Symbols());
+        for (size_t old_id = 0; old_id < m_rules.size(); old_id++) {
+            Symbols &symbols = m_rules[old_id];
             // Renumber all the nonterminals in the symbols vector
             for (auto &&symbol : symbols) {
                 if (is_terminal(symbol))
@@ -132,13 +135,10 @@ class Grammar {
      * @param out An output stream to print the grammar to
      */
     void print(std::ostream &out = std::cout) {
-        std::map<size_t, const Symbols *> ordered;
-        for (const auto &[id, symbols] : m_rules) {
-            ordered[id] = &symbols;
-        }
-        for (const auto &[id, symbols] : ordered) {
+        for (size_t id = 0; id < m_rules.size(); id++) {
+            const Symbols &symbols = m_rules[id];
             out << 'R' << id << " -> ";
-            for (auto &symbol : *symbols) {
+            for (auto &symbol : symbols) {
                 if (Grammar::is_terminal(symbol)) {
                     auto c = (char) symbol;
                     switch (c) {
@@ -241,8 +241,8 @@ class Grammar {
      */
     const size_t grammar_size() const {
         auto count = 0;
-        for (const auto &[rule_id, symbols] : m_rules) {
-            count += symbols.size();
+        for (size_t rule_id = 0; rule_id < m_rules.size(); rule_id++) {
+            count += m_rules[rule_id].size();
         }
         return count;
     }
@@ -261,7 +261,7 @@ class Grammar {
      * @return true If the grammar contains the rule with the given id
      * @return false If the grammar does not contain the rule with the given id
      */
-    const bool contains_rule(int id) const { return m_rules.find(id) != m_rules.end(); }
+    const bool contains_rule(size_t id) const { return m_rules.size() < id && !m_rules[id].empty(); }
 
     /**
      * @brief Checks whether the grammar is empty
@@ -308,12 +308,12 @@ class Grammar {
      *
      * This is needed for some encoders.
      */
-    std::map<size_t, Symbols *> rules_sorted() {
-        std::map<size_t, Symbols *> map;
-        for (auto &[id, symbols] : m_rules) {
-            map[id] = &symbols;
+    std::vector<Symbols *> rules_sorted() {
+        std::vector<Symbols *> vec(m_rules.size());
+        for (size_t id = 0; id < m_rules.size(); id++) {
+            vec.push_back(&m_rules[id]);
         }
-        return map;
+        return vec;
     }
 };
 
