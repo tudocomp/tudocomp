@@ -12,24 +12,13 @@ include(FindPackageHandleStandardArgs)
 
 set(TDC_ROOT_DIR "" CACHE PATH "Folder contains tdc")
 set(TDC_LOCAL_DIR "${CMAKE_BINARY_DIR}/external/tdc")
-set(TDC_MIGRATION_DIR "${CMAKE_BINARY_DIR}/tdc_external-prefix")
 
-find_path(TDC_INCLUDE_DIR namespace.h
-    PATHS ${TDC_ROOT_DIR} ${TDC_LOCAL_DIR} ${TDC_MIGRATION_DIR}
-    PATH_SUFFIXES include)
+find_path(TDC_INCLUDE_DIR tdc/namespace.hpp PATHS ${TDC_ROOT_DIR} ${TDC_LOCAL_DIR} PATH_SUFFIXES include)
+find_library(TDC_PRED_LIBRARY tdc-pred PATHS ${TDC_ROOT_DIR} ${TDC_LOCAL_DIR} PATH_SUFFIXES build/src/pred)
 
-#find_path(TDC_BUILD_INCLUDE_DIR tdc/bits/config.h
-#    PATHS ${TDC_ROOT_DIR} ${TDC_LOCAL_DIR} ${TDC_MIGRATION_DIR}
-#    PATH_SUFFIXES include build/include)
-
-find_library(TDC_LIBRARY tdc
-    PATHS ${TDC_ROOT_DIR} ${TDC_LOCAL_DIR} ${TDC_MIGRATION_DIR}
-    PATH_SUFFIXES lib build/lib)
-
-find_package_handle_standard_args(TDC DEFAULT_MSG
-    TDC_INCLUDE_DIR TDC_LIBRARY)
+find_package_handle_standard_args(TDC DEFAULT_MSG TDC_INCLUDE_DIR TDC_PRED_LIBRARY)
 
 if(TDC_FOUND)
-    set(TDC_INCLUDE_DIRS ${TDC_INCLUDE_DIR} ${TDC_BUILD_INCLUDE_DIR})
-    set(TDC_LIBRARIES ${TDC_LIBRARY})
+    set(TDC_INCLUDE_DIRS ${TDC_INCLUDE_DIR})
+    set(TDC_LIBRARIES ${TDC_PRED_LIBRARY})
 endif()
