@@ -94,6 +94,9 @@ class Grammar {
      *
      */
     void dependency_renumber() {
+        if (m_rules.size() == 0) {
+            return;
+        }
         std::vector<len_t> renumbering(m_rules.size(), areacomp::INVALID);
         size_t             count = 0;
 

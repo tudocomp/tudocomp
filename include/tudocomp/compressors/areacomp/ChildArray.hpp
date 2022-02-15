@@ -1,14 +1,18 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdio>
-#include <vector>
 #include <iostream>
+#include <tudocomp/compressors/areacomp/Consts.hpp>
 #include <tudocomp/ds/IntVector.hpp>
+#include <tudocomp/util/bits.hpp>
+#include <vector>
 
 namespace tdc::grammar::areacomp {
 
 /**
- * @brief Implementation of lcp intervals and the child array according to "Optimal Exact String Matching Based on Suffix Arrays" by Abouelhoda et al. (https://link.springer.com/chapter/10.1007/3-540-45735-6_4)
+ * @brief Implementation of lcp intervals and the child array according to "Optimal Exact String Matching Based on
+ * Suffix Arrays" by Abouelhoda et al. (https://link.springer.com/chapter/10.1007/3-540-45735-6_4)
  *
  * @tparam lcp_arr_t The type of the lcp array
  */
@@ -16,13 +20,10 @@ template<typename lcp_arr_t = const DynamicIntVector>
 class ChildArray {
 
     // Attributes
-    std::vector<size_t> m_cld;
-    lcp_arr_t &m_lcp_arr;
+    DynamicIntVector m_cld;
+    lcp_arr_t       &m_lcp_arr;
 
-    
-    size_t lcp(size_t i) const {
-        return i == m_lcp_arr.size() ? 0 : m_lcp_arr[i];
-    }
+    size_t lcp(size_t i) const { return i == m_lcp_arr.size() ? 0 : m_lcp_arr[i]; }
 
     /**
      * @brief Calculates the "up" and "down" fields of the child table with Abouelhoda et al's Algorithm
@@ -47,12 +48,11 @@ class ChildArray {
             if (lcp(i) >= lcp(top)) {
                 if (last_index != -1) {
                     m_cld[i - 1] = last_index;
-                    last_index = -1;
+                    last_index   = -1;
                 }
                 stack.push_back(i);
             }
         }
-        
     }
 
     /**
@@ -76,15 +76,8 @@ class ChildArray {
         }
     }
 
-public:
-
-    /**
-     * @brief This value is returned if the return value from up, down or next_l_index is undefined
-     */
-    const static size_t INVALID = -1;
-
-
-    size_t up(size_t i) const { 
+  public:
+    size_t up(size_t i) const {
         if (i <= 0 || i >= cld_tab_len()) {
             return INVALID;
         }
@@ -126,9 +119,7 @@ public:
 
         Interval(size_t start, size_t end) : start{start}, end{end} {}
 
-        explicit operator std::string() const {
-            return "(" + std::to_string(start) + ", " + std::to_string(end) + ")";
-        }
+        explicit operator std::string() const { return "(" + std::to_string(start) + ", " + std::to_string(end) + ")"; }
     };
 
     /**
@@ -137,38 +128,40 @@ public:
      * @param lcp The lcp array
      * @param len The length of the lcp array
      */
-    ChildArray(lcp_arr_t &lcp, size_t len) :
-            m_cld{std::vector<size_t>(len, -1)},
-            m_lcp_arr{lcp} {
-        
+    ChildArray(lcp_arr_t &lcp, size_t len) : m_cld{len + 1, INVALID, bits_for(len + 1)}, m_lcp_arr{lcp} {
+
         std::vector<size_t> stack;
+        m_cld.resize(len + 1, INVALID);
         calculate_up_down(len, stack);
         stack.clear();
         calculate_next_l_index(len, stack);
 
-        m_cld.push_back(0);
+        m_cld.back() = 0;
+
+        size_t max = *std::max_element(m_cld.begin(), m_cld.end());
+        m_cld.width(bits_for(max));
+        m_cld.shrink_to_fit();
     }
 
     /**
-     * @brief Indexes the child array directly. This is not supposed to be used directly. It is advised to use the up, down and next_l_index objects instead. 
-     * 
+     * @brief Indexes the child array directly. This is not supposed to be used directly. It is advised to use the up,
+     * down and next_l_index objects instead.
+     *
      * @param i The index to be read from
      * @return size_t The value of the child array at index i.
      */
-    size_t operator[] (size_t i) const {
-        return m_cld[i];
-    }
+    size_t operator[](size_t i) const { return m_cld[i]; }
 
     /**
-     * @brief Returns the lValue of a given lcp interval. Note that this function does not work for arbitrary intervals, but only
-     * for lcp intervals as described in Abouelhoda et al's Paper
+     * @brief Returns the lValue of a given lcp interval. Note that this function does not work for arbitrary intervals,
+     * but only for lcp intervals as described in Abouelhoda et al's Paper
      *
      * @param low The lower bound of the lcp interval
      * @param high The upper bound of the lcp interval
      * @return The minimum value of the interval [low + 1, high] (inclusively) in lcp
      */
     size_t l_value(size_t low, size_t high) const {
-        if(low >= high) {
+        if (low >= high) {
             return 0;
         }
 
@@ -189,17 +182,22 @@ public:
         return m_cld[i] > i && lcp(i) == lcp(m_cld[i]) && next_l_index(i) != INVALID;
     }
 
-private:
+  private:
     /**
-     * Recursively add all the child intervals in the given lcp-interval (low, high) according to Abouelhoda et al with a minimum l-value to a collection
+     * Recursively add all the child intervals in the given lcp-interval (low, high) according to Abouelhoda et al with
+     * a minimum l-value to a collection
      *
      * @param low The lower bound of the lcp interval
      * @param high The upper bound of the lcp interval
      * @param min_l_value The minimum l-value of the returned intervals
      * @param intervals The collection to add the intervals into
      */
-    void add_child_intervals(size_t low, size_t high, size_t min_l_value, std::vector<Interval> &intervals) const {
-        if (low >= high) return;
+    void add_child_intervals(size_t                                low,
+                             size_t                                high,
+                             size_t                                min_l_value,
+                             std::vector<std::pair<len_t, len_t>> &intervals) const {
+        if (low >= high)
+            return;
 
         size_t current_l_index;
 
@@ -232,30 +230,31 @@ private:
         }
     }
 
-
-public:
+  public:
     /**
      * @brief Get all lcp intervals in this string with an l-value of at least min_l_value
      *
      * @param min_l_value The minimum l value of the lcp interval to include
      * @return A vector of lcp intervals with an l-value of at least min_l_value
      */
-    std::vector<Interval> get_lcp_intervals(size_t min_l_value) const {
-        std::vector<Interval> list;
+    std::vector<std::pair<len_t, len_t>> get_lcp_intervals(size_t min_l_value) const {
+        std::vector<std::pair<len_t, len_t>> list;
 
-        size_t last_l_index = 0;
+        size_t last_l_index    = 0;
         size_t current_l_index = next_l_index(0);
 
-        if(0 >= min_l_value) list.push_back( {last_l_index, cld_tab_len()} );
+        if (0 >= min_l_value)
+            list.push_back({last_l_index, cld_tab_len()});
 
         while (current_l_index != INVALID) {
             if (l_value(last_l_index, current_l_index - 1) >= min_l_value) {
-                list.push_back( {last_l_index, current_l_index - 1} );
+                list.push_back({last_l_index, current_l_index - 1});
             }
             add_child_intervals(last_l_index, current_l_index - 1, min_l_value, list);
-            last_l_index = current_l_index;
+            last_l_index    = current_l_index;
             current_l_index = next_l_index(current_l_index);
         }
+        list.shrink_to_fit();
 
         return list;
     }
@@ -263,30 +262,21 @@ public:
     /**
      * @return The length of the child array -1. Which is the same as the length of the underlying lcp array.
      */
-    const size_t cld_tab_len() const {
-        return m_cld.size();
-    }
+    const size_t cld_tab_len() const { return m_cld.size(); }
 
     /**
      * @brief The size of the text from which this child array has been created.
-     * 
-     * This is 1 less than the size of the actual child array, since the child array simulates a sentinel that is larger than all characters in the text.
-     * 
+     *
+     * This is 1 less than the size of the actual child array, since the child array simulates a sentinel that is larger
+     * than all characters in the text.
+     *
      * @return const size_t The size of the input text
      */
-    const size_t input_len() const {
-        return m_cld.size() - 1;
-    }
+    const size_t input_len() const { return m_cld.size() - 1; }
 
-    auto begin() {
-        return m_cld.begin();
-    }
+    auto begin() { return m_cld.begin(); }
 
-    auto end() {
-        return m_cld.end();
-    }
-
+    auto end() { return m_cld.end(); }
 };
 
-
-}
+} // namespace tdc::grammar::areacomp

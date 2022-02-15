@@ -1,6 +1,9 @@
 #pragma once
 
 #include <algorithm>
+#include <iostream>
+#include <iterator>
+#include <limits>
 #include <queue>
 #include <ranges>
 #include <string>
@@ -38,6 +41,11 @@ class Ruleset {
      */
     size_t m_num_rules;
 
+    /**
+     * @brief The minimum area value an interval has to reach to be considered.
+     */
+    size_t m_area_threshold;
+
   public:
     /**
      * @brief Construct a new ruleset for the given input view.
@@ -45,14 +53,15 @@ class Ruleset {
      * This constructor does not automatically compress.
      * It creates a single rule mapping to the entire input text.
      */
-    Ruleset(io::InputView &underlying) :
+    Ruleset(io::InputView &underlying, size_t area_threshold = 0) :
         m_underlying{underlying},
         m_interval_index{underlying.size()},
-        m_num_rules{1} {}
+        m_num_rules{1},
+        m_area_threshold{area_threshold} {}
 
   private:
     /**
-     * @brief Returns the next unused rule
+     * @brief Returns the next unused rule id
      */
     size_t next_rule_id() { return m_num_rules++; }
 
@@ -236,41 +245,48 @@ class Ruleset {
 
         global_phase.split("Priority Queue");
 
-        std::vector<AreaData> queue;
+        std::vector<std::pair<len_t, len_t>> queue;
         {
-            auto intervals = cld.get_lcp_intervals(2);
-            queue.reserve(intervals.size());
+            for (const auto &[start, end] : cld.get_lcp_intervals(2)) {
+                len_t area = fun.area(text_ds, cld, start + 1, end);
 
-            for (auto interval : intervals) {
-                AreaData data = fun.area(text_ds, cld, interval.start + 1, interval.end);
-                if (data.area() > 0) {
-                    queue.push_back(data);
+                if (area > m_area_threshold) {
+                    queue.emplace_back(start + 1, end);
                 }
             }
         }
 
-        std::sort(queue.begin(), queue.end(), AreaData::DataCompare());
+        global_phase.split("Sort Intervals");
+
+        std::sort(queue.begin(), queue.end(), [&](std::pair<len_t, len_t> a, std::pair<len_t, len_t> b) {
+            auto area_a = fun.area(text_ds, cld, a.first, a.second);
+            auto area_b = fun.area(text_ds, cld, b.first, b.second);
+            return area_a < area_b;
+        });
 
         global_phase.split("Compression Loop");
 
         while (!queue.empty()) {
             // StatPhase sub_phase("Get best area");
             //  Poll the best interval
-            auto area_data = queue.back();
+            auto [start, end] = queue.back();
 
             // sub_phase.split("Get positions");
 
             // The positions at which the pattern can be found
             std::vector<size_t> positions;
-            positions.reserve(area_data.high() - area_data.low() + 2);
-
-            for (size_t i = area_data.low() - 1; i <= area_data.high(); ++i) {
-                positions.push_back(sa[i]);
-            }
+            positions.reserve(end - start + 2);
 
             // Get the length of the longest common prefix in this range of the lcp array
             // This will be the length of the pattern that is to be replaced.
-            const size_t len = area_data.len();
+            size_t len = std::numeric_limits<size_t>::max();
+
+            for (size_t i = start - 1; i <= end; ++i) {
+                positions.push_back(sa[i]);
+                if (i > start - 1) {
+                    len = std::min(len, lcp[i] + 0);
+                }
+            }
 
             // This means there is no repeated subsequence of 2 or more characters. In this case, abort
             if (len <= 1) {
@@ -321,22 +337,23 @@ class Ruleset {
     std::string interval_index_to_string() {
         std::vector<std::string> buf;
 
-        len_t current_index = interval_index().floor_interval(interval_index().text_len() - 1);
+        len_t current_index = interval_index().floor_interval_index(interval_index().text_len() - 1);
 
         while (current_index != INVALID) {
             RuleInterval      current = interval_index().get(current_index);
             std::stringstream ss;
             ss << current.start() << ": [";
-            auto current_vertical = interval_index().get(current.first_at_start_index());
+            len_t current_vertical_index = current.first_at_start_index();
             while (true) {
-                ss << current_vertical.rule_id() << ": " << current_vertical.end();
-                if (current_vertical.next_at_start_index() == nullptr) {
+                RuleInterval current_vertical = interval_index().get(current_vertical_index);
+                ss << current_vertical.rule_id() << ": " << m_interval_index.end(current);
+                if (current_vertical.next_at_start_index() == INVALID) {
                     ss << "]";
                     buf.push_back(ss.str());
                     break;
                 } else {
                     ss << ", ";
-                    current_vertical = current_vertical->next_at_start_index();
+                    current_vertical_index = current_vertical.next_at_start_index();
                 }
             }
 
@@ -344,7 +361,7 @@ class Ruleset {
                 break;
             }
 
-            current = interval_index().floor_interval(current.start() - 1);
+            current_index = interval_index().floor_interval_index(current.start() - 1);
         }
 
         std::stringstream ss;
