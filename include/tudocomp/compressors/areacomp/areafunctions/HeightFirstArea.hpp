@@ -15,7 +15,7 @@ struct HeightFirstArea : public Algorithm {
 
     using Algorithm::Algorithm; // import constructor
 
-    len_t area(ds_t &text_ds, ChildArray<const DynamicIntVector> &cld, size_t low, size_t high) {
+    len_t area(ds_t &text_ds, const ChildArray<const DynamicIntVector> &cld, size_t low, size_t high) {
         auto lcp_len = static_cast<len_t>(cld.l_value(low - 1, high));
         return lcp_len;
     };

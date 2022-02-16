@@ -4,15 +4,19 @@
 #include <iostream>
 #include <iterator>
 #include <limits>
+#include <numeric>
 #include <queue>
 #include <ranges>
 #include <string>
+#include <tudocomp/compressors/areacomp/ChildArray.hpp>
 #include <tudocomp/compressors/areacomp/Consts.hpp>
 #include <tudocomp/compressors/areacomp/RuleIntervalIndex.hpp>
 #include <tudocomp/compressors/areacomp/areafunctions/AreaFunction.hpp>
 #include <tudocomp/ds/DSManager.hpp>
+#include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/grammar/Grammar.hpp>
 #include <tudocomp/io.hpp>
+#include <tudocomp_stat/StatPhase.hpp>
 #include <unordered_set>
 #include <vector>
 
@@ -232,45 +236,41 @@ class Ruleset {
      * @param fun The area function used to prioritise intervals in the lcp array
      * @param text_ds The data structure provider
      */
-    template<typename area_fun_t, typename ds_t>
-    requires AreaFun<area_fun_t, ds_t>
-    void compress(area_fun_t fun, ds_t text_ds) {
+    template<typename Area, typename TextDS>
+    requires AreaFun<Area, TextDS>
+    void compress(Area fun, TextDS text_ds) {
 
         const auto &sa  = text_ds.template get<ds::SUFFIX_ARRAY>();
         const auto &lcp = text_ds.template get<ds::LCP_ARRAY>();
 
         StatPhase global_phase("Build Child Array");
 
-        areacomp::ChildArray<> cld(lcp, m_underlying.size());
+        areacomp::ChildArray<const DynamicIntVector> cld(lcp, m_underlying.size());
 
-        global_phase.split("Priority Queue");
+        global_phase.split("Get LCP Intervals");
 
-        std::vector<std::pair<len_t, len_t>> queue;
-        {
-            for (const auto &[start, end] : cld.get_lcp_intervals(2)) {
-                len_t area = fun.area(text_ds, cld, start + 1, end);
+        auto  intervals  = cld.template get_lcp_intervals_with_area<Area, TextDS>(fun, text_ds, m_area_threshold, 2);
+        auto &start_list = intervals.first;
+        auto &len_list   = intervals.second;
 
-                if (area > m_area_threshold) {
-                    queue.emplace_back(start + 1, end);
-                }
-            }
-        }
+        global_phase.split("Calculate permutation");
+        std::vector<len_t> order(start_list.size(), 0);
+        std::iota(order.begin(), order.end(), 0);
 
-        global_phase.split("Sort Intervals");
-
-        std::sort(queue.begin(), queue.end(), [&](std::pair<len_t, len_t> a, std::pair<len_t, len_t> b) {
-            auto area_a = fun.area(text_ds, cld, a.first, a.second);
-            auto area_b = fun.area(text_ds, cld, b.first, b.second);
-            return area_a < area_b;
+        std::sort(order.begin(), order.end(), [&](auto a, auto b) {
+            auto area_a = fun.area(text_ds, cld, start_list[a] + 1, start_list[a] + len_list[a]);
+            auto area_b = fun.area(text_ds, cld, start_list[b] + 1, start_list[b] + len_list[b]);
+            return area_a > area_b;
         });
 
         global_phase.split("Compression Loop");
 
-        while (!queue.empty()) {
+        size_t index = 0;
+        while (index < start_list.size()) {
             // StatPhase sub_phase("Get best area");
             //  Poll the best interval
-            auto [start, end] = queue.back();
-
+            auto start = start_list[order[index]];
+            auto end   = start + len_list[order[index]];
             // sub_phase.split("Get positions");
 
             // The positions at which the pattern can be found
@@ -279,18 +279,16 @@ class Ruleset {
 
             // Get the length of the longest common prefix in this range of the lcp array
             // This will be the length of the pattern that is to be replaced.
-            size_t len = std::numeric_limits<size_t>::max();
+            size_t len = cld.l_value(start, end);
 
-            for (size_t i = start - 1; i <= end; ++i) {
+            for (size_t i = start; i <= end; ++i) {
                 positions.push_back(sa[i]);
-                if (i > start - 1) {
-                    len = std::min(len, lcp[i] + 0);
-                }
             }
 
             // This means there is no repeated subsequence of 2 or more characters. In this case, abort
             if (len <= 1) {
-                break;
+                index++;
+                continue; // TODO put this back to break
             }
 
             // sub_phase.split("Sort positions");
@@ -301,7 +299,7 @@ class Ruleset {
             //  Remove positions at which substituting is impossible
             const size_t position_count = clean_positions(positions, len);
             if (position_count <= 1) {
-                queue.pop_back();
+                index++;
                 continue;
             }
 
@@ -311,14 +309,14 @@ class Ruleset {
 
             // If there is only one occurrence left, there is no use in creating a rule in the grammar
             if (!multiple_occurrences) {
-                queue.pop_back();
+                index++;
                 continue;
             }
 
             // sub_phase.split("Substitute");
 
             substitute(positions, len);
-            queue.pop_back();
+            index++;
         }
     }
 
@@ -369,7 +367,6 @@ class Ruleset {
         std::reverse(buf.begin(), buf.end());
         for (const auto &str : buf) {
             ss << str << ", ";
-            // std::cout << str << std::endl;
         }
 
         return ss.str();

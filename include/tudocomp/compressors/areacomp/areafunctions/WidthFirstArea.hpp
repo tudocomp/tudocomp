@@ -16,7 +16,7 @@ struct WidthFirstArea : public Algorithm {
 
     using Algorithm::Algorithm; // import constructor
 
-    len_t area(ds_t &text_ds, ChildArray<const DynamicIntVector> &cld, size_t low, size_t high) {
+    len_t area(ds_t &text_ds, const ChildArray<const DynamicIntVector> &cld, size_t low, size_t high) {
         return high - low + 1;
     };
 };

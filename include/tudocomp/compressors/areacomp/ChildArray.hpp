@@ -1,9 +1,12 @@
 #pragma once
 
+#include "tudocomp/ds/DSManager.hpp"
 #include <algorithm>
 #include <cstdio>
 #include <iostream>
 #include <tudocomp/compressors/areacomp/Consts.hpp>
+#include <tudocomp/compressors/areacomp/areafunctions/AreaFunction.hpp>
+#include <tudocomp/compressors/areacomp/areafunctions/ZeroArea.hpp>
 #include <tudocomp/ds/IntVector.hpp>
 #include <tudocomp/util/bits.hpp>
 #include <vector>
@@ -16,12 +19,12 @@ namespace tdc::grammar::areacomp {
  *
  * @tparam lcp_arr_t The type of the lcp array
  */
-template<typename lcp_arr_t = const DynamicIntVector>
+template<typename LcpArray>
 class ChildArray {
 
     // Attributes
     DynamicIntVector m_cld;
-    lcp_arr_t       &m_lcp_arr;
+    LcpArray        &m_lcp_arr;
 
     size_t lcp(size_t i) const { return i == m_lcp_arr.size() ? 0 : m_lcp_arr[i]; }
 
@@ -77,6 +80,16 @@ class ChildArray {
     }
 
   public:
+    /**
+     * @brief Return the first l-index of the lcp interval that ends at i - 1.
+     *
+     * Formally this is the lowest index q (lower than i) such that lcp[q] > lcp[i] and all lcp values between q and i
+     * are at least as great as lcp[q].
+     *
+     * @param i The index after the last index of an lcp interval.
+     *
+     * @return The first l-index of the lcp interval ending at i - 1
+     */
     size_t up(size_t i) const {
         if (i <= 0 || i >= cld_tab_len()) {
             return INVALID;
@@ -89,6 +102,16 @@ class ChildArray {
         return INVALID;
     }
 
+    /**
+     * @brief Return the first l-index of the lcp interval starting at index i.
+     *
+     * Formally this is the largest index q (greater than i) such that lcp[q] > lcp[i] and all lcp values between i and
+     * q are greater than lcp[q].
+     *
+     * @param i The start index of an lcp interval.
+     *
+     * @return The first l-index of the lcp interval starting at i.
+     */
     size_t down(size_t i) const {
         if (i < 0 || i >= cld_tab_len()) {
             return INVALID;
@@ -101,6 +124,16 @@ class ChildArray {
         return INVALID;
     }
 
+    /**
+     * @brief Return the next l-index in the surrounding lcp interval.
+     *
+     * Formally this is the lowest index q (greater than i) such that lcp[q] = lcp[i] and all lcp values between q and i
+     * are greater than lcp[q].
+     *
+     * @param i An l-index of an lcp-interval.
+     *
+     * @return The next l-index in the surrounding lcp interval.
+     */
     size_t next_l_index(size_t i) const {
         if (i < 0 || i >= cld_tab_len() - 1) {
             return INVALID;
@@ -113,22 +146,13 @@ class ChildArray {
         return INVALID;
     }
 
-    struct Interval {
-        const size_t start;
-        const size_t end;
-
-        Interval(size_t start, size_t end) : start{start}, end{end} {}
-
-        explicit operator std::string() const { return "(" + std::to_string(start) + ", " + std::to_string(end) + ")"; }
-    };
-
     /**
      * @brief Creates a new child array
      *
      * @param lcp The lcp array
      * @param len The length of the lcp array
      */
-    ChildArray(lcp_arr_t &lcp, size_t len) : m_cld{len + 1, INVALID, bits_for(len + 1)}, m_lcp_arr{lcp} {
+    ChildArray(LcpArray &lcp, size_t len) : m_cld{len + 1, INVALID, bits_for(len + 1)}, m_lcp_arr{lcp} {
 
         std::vector<size_t> stack;
         m_cld.resize(len + 1, INVALID);
@@ -187,15 +211,26 @@ class ChildArray {
      * Recursively add all the child intervals in the given lcp-interval (low, high) according to Abouelhoda et al with
      * a minimum l-value to a collection
      *
+     * @param fun The area function to use
+     * @param ds The text data structure provider that provides all necessary data stuctures for the area function
      * @param low The lower bound of the lcp interval
      * @param high The upper bound of the lcp interval
      * @param min_l_value The minimum l-value of the returned intervals
-     * @param intervals The collection to add the intervals into
+     * @param min_area_value The minimum area value of the returned intervals
+     * @param start_list The collection to add the intervals' start positions into
+     * @param len_list The collection to add the intervals' length into
      */
-    void add_child_intervals(size_t                                low,
-                             size_t                                high,
-                             size_t                                min_l_value,
-                             std::vector<std::pair<len_t, len_t>> &intervals) const {
+    template<typename Area, typename TextDS>
+    requires tdc::grammar::areacomp::AreaFun<Area, TextDS, LcpArray>
+    void add_child_intervals_with_area(Area             &fun,
+                                       TextDS           &ds,
+                                       size_t            low,
+                                       size_t            high,
+                                       size_t            min_area_value,
+                                       size_t            min_l_value,
+                                       DynamicIntVector &start_list,
+                                       DynamicIntVector &len_list) const {
+
         if (low >= high)
             return;
 
@@ -208,61 +243,135 @@ class ChildArray {
             current_l_index = down(low);
         }
 
-        if (current_l_index - 1 > low && l_value(low, current_l_index - 1) >= min_l_value) {
-            intervals.emplace_back(low, current_l_index - 1);
-            add_child_intervals(low, current_l_index - 1, min_l_value, intervals);
+        if (current_l_index - 1 > low && l_value(low, current_l_index - 1) >= min_l_value &&
+            fun.area(ds, *this, low + 1, current_l_index - 1) >= min_area_value) {
+            start_list.push_back(low);
+            len_list.push_back(current_l_index - 1 - low);
         }
+        add_child_intervals_with_area(fun,
+                                      ds,
+                                      low,
+                                      current_l_index - 1,
+                                      min_area_value,
+                                      min_l_value,
+                                      start_list,
+                                      len_list);
 
         while (has_next_l_index(current_l_index)) {
             size_t next = next_l_index(current_l_index);
-            if (next - 1 > current_l_index && l_value(current_l_index, next - 1) >= min_l_value) {
-                intervals.emplace_back(current_l_index, next - 1);
-                add_child_intervals(current_l_index, next - 1, min_l_value, intervals);
+            if (next - 1 > current_l_index && l_value(current_l_index, next - 1) >= min_l_value &&
+                fun.area(ds, *this, current_l_index + 1, next - 1) >= min_area_value) {
+                start_list.push_back(current_l_index);
+                len_list.push_back(next - 1 - current_l_index);
             }
+            add_child_intervals_with_area(fun,
+                                          ds,
+                                          current_l_index,
+                                          next - 1,
+                                          min_area_value,
+                                          min_l_value,
+                                          start_list,
+                                          len_list);
             current_l_index = next;
         }
 
         size_t l_val = l_value(current_l_index, high);
 
-        if (high > current_l_index && l_val >= min_l_value) {
-            intervals.emplace_back(current_l_index, high);
-            add_child_intervals(current_l_index, high, min_l_value, intervals);
+        if (high > current_l_index && l_val >= min_l_value && fun.area(ds, *this, current_l_index + 1, high)) {
+            start_list.push_back(current_l_index);
+            len_list.push_back(high - current_l_index);
         }
+        add_child_intervals_with_area(fun,
+                                      ds,
+                                      current_l_index,
+                                      high,
+                                      min_area_value,
+                                      min_l_value,
+                                      start_list,
+                                      len_list);
     }
 
   public:
+    /**
+     * @return The length of the child array -1. Which is the same as the length of the underlying lcp array.
+     */
+    const size_t cld_tab_len() const { return m_cld.size(); }
+
     /**
      * @brief Get all lcp intervals in this string with an l-value of at least min_l_value
      *
      * @param min_l_value The minimum l value of the lcp interval to include
      * @return A vector of lcp intervals with an l-value of at least min_l_value
      */
-    std::vector<std::pair<len_t, len_t>> get_lcp_intervals(size_t min_l_value) const {
-        std::vector<std::pair<len_t, len_t>> list;
-
-        size_t last_l_index    = 0;
-        size_t current_l_index = next_l_index(0);
-
-        if (0 >= min_l_value)
-            list.push_back({last_l_index, cld_tab_len()});
-
-        while (current_l_index != INVALID) {
-            if (l_value(last_l_index, current_l_index - 1) >= min_l_value) {
-                list.push_back({last_l_index, current_l_index - 1});
-            }
-            add_child_intervals(last_l_index, current_l_index - 1, min_l_value, list);
-            last_l_index    = current_l_index;
-            current_l_index = next_l_index(current_l_index);
-        }
-        list.shrink_to_fit();
-
-        return list;
+    std::pair<DynamicIntVector, DynamicIntVector> get_lcp_intervals(size_t min_l_value) const {
+        auto area = Algorithm::instance<ZeroArea<DSManager<>(Config && cfg, const View &input)>>();
+        auto ds   = Algorithm::instance<DSManager<>>();
+        return get_lcp_intervals_with_area(*area, *ds, 0, min_l_value);
     }
 
     /**
-     * @return The length of the child array -1. Which is the same as the length of the underlying lcp array.
+     * @brief Get all lcp intervals in this string with an l-value of at least min_l_value and an area value of at
+     * least min_area_value. This method takes an area function to evaluate the area of an interval.
+     *
+     * @tparam Area The type of the area function
+     * @tparam TextDS The type of the text data structure provider
+     * @param fun The area function to use
+     * @param ds The text data structure provider that provides all necessary data stuctures for the area function
+     * @param min_l_value The minimum l-value of the returned intervals
+     * @param min_area_value The minimum area value of the returned intervals
      */
-    const size_t cld_tab_len() const { return m_cld.size(); }
+    template<typename Area, typename TextDS>
+    requires AreaFun<Area, TextDS, LcpArray> std::pair<DynamicIntVector, DynamicIntVector>
+    get_lcp_intervals_with_area(Area &fun, TextDS &ds, size_t min_area_value, size_t min_l_value)
+    const {
+
+        DynamicIntVector start_list;
+        DynamicIntVector len_list;
+
+        start_list.width(bits_for(cld_tab_len() - 1));
+        len_list.width(bits_for(cld_tab_len() - 1));
+
+        start_list.reserve(cld_tab_len());
+        len_list.reserve(cld_tab_len());
+
+        size_t last_l_index    = 1;
+        size_t current_l_index = next_l_index(1);
+
+        if (0 >= min_l_value && fun.area(ds, *this, 2, cld_tab_len() - 1) >= min_area_value) {
+            start_list.push_back(1);
+            len_list.push_back(cld_tab_len() - 1);
+        }
+
+        while (current_l_index != INVALID) {
+            if (l_value(last_l_index, current_l_index - 1) >= min_l_value &&
+                fun.area(ds, *this, last_l_index + 1, current_l_index - 1) >= min_area_value) {
+                start_list.push_back(last_l_index);
+                len_list.push_back(current_l_index - 1 - last_l_index);
+            }
+            add_child_intervals_with_area(fun,
+                                          ds,
+                                          last_l_index,
+                                          current_l_index - 1,
+                                          min_area_value,
+                                          min_l_value,
+                                          start_list,
+                                          len_list);
+            last_l_index    = current_l_index;
+            current_l_index = next_l_index(current_l_index);
+        }
+        start_list.shrink_to_fit();
+        len_list.shrink_to_fit();
+
+        size_t max_start = 0;
+        size_t max_len   = 0;
+
+        for (size_t i = 0; i < start_list.size(); i++) {
+            max_start = std::max(start_list[i] + 0, max_start);
+            max_len   = std::max(len_list[i] + 0, max_len);
+        }
+
+        return {start_list, len_list};
+    }
 
     /**
      * @brief The size of the text from which this child array has been created.
