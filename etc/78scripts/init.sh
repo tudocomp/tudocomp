@@ -72,7 +72,7 @@ if [[ "$needDownload" -eq 1 ]]; then
 	[[ ! -e ready/dna ]] && ln -sv "$kDatasetFolder/est.fa" ready/dna
 	[[ ! -e ready/wikipedia ]] && ln -sv "$kDatasetFolder/all_vital.txt" ready/wikipedia
 	[[ ! -e ready/gutenberg ]] && dd if=gutenberg-201209.24090588160 of=ready/gutenberg bs=1000000000 count=1
-	[[ ! -e ready/commoncrawl ]] && dd if="$kDatasetFolder/commoncrawl_10240.ascii" of=ready/commoncrawl bs=10G count=1
+	[[ ! -e ready/commoncrawl ]] && dd if="$kDatasetFolder/commoncrawl_10240.ascii" of=ready/commoncrawl bs=1G count=10
 	[[ ! -e ready/fibonacci ]] && ln -sv "$kDatasetFolder/fib46" ready/fibonacci
 	[[ ! -e ready/xml ]] && ln -sv "$kDatasetFolder/dblp.xml" ready/xml 
 	[[ ! -e ready/proteins ]] && ln -sv "$kDatasetFolder/proteins" ready/proteins 
