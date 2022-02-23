@@ -172,6 +172,7 @@ class RuleInterval {
     }
 };
 
+static std::ostream &operator<<(std::ostream &os, RuleInterval const &i) __attribute__((unused));
 static std::ostream &operator<<(std::ostream &os, RuleInterval const &i) {
     return os << "{ id: " << i.rule_id() << ", start: " << i.start()
               << ", parent: " << (i.has_parent() ? std::to_string(i.parent_index()) : "/")

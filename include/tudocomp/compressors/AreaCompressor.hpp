@@ -84,10 +84,7 @@ class AreaCompressor : public Compressor {
         phase.log_stat("grammar_size", gr.grammar_size());
         phase.log_stat("rule_count", gr.rule_count());
 
-        // grammar::QueryGrammar qgr(std::move(gr));
-
-        // std::cout << qgr.substring_naive(1, 4) << std::endl;
-        //  Encode the grammar
+        // Encode the grammar
         typename grammar_coder_t::Encoder coder(config().sub_config("coder"), output);
         coder.encode_grammar(gr);
     }

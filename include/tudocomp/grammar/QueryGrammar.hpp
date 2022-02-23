@@ -186,6 +186,19 @@ class QueryGrammar {
     const size_t start_rule_id() const { return m_start_rule_id; }
 
     /**
+     * @brief Returns the expanded length of the symbol at the given index in the right side of the given rule.
+     *
+     * @param rule_id The rule id.
+     * @param index The symbol's index in the right side of the rule.
+     *
+     * @return The fully expanded length of the symbol.
+     */
+    const size_t symbol_length(size_t rule_id, size_t index) const {
+        const auto symbol = m_rules[rule_id][index];
+        return Grammar::is_non_terminal(symbol) ? m_full_lengths[symbol - Grammar::RULE_OFFSET] : 1;
+    }
+
+    /**
      * @brief Calculates the size of the grammar
      *
      * The size is defined as the count of symbols in all right sides of this grammar's rules
@@ -229,6 +242,13 @@ class QueryGrammar {
     auto end() const { return m_rules.cend(); }
 
     /**
+     * @brief Returns the length of the source string.
+     *
+     * @return The length of the source string.
+     */
+    const size_t source_length() const { return m_start_rule_full_length; }
+
+    /**
      * @brief Returns the character at index i in the source string.
      *
      * This is a naive implementation. Taking O(n) time in the worst case.
@@ -257,28 +277,57 @@ class QueryGrammar {
         return (char) m_rules[current_rule][current_index];
     }
 
-    std::string substring_naive(size_t start, size_t end) const {
-        const size_t pattern_len = end - start;
+    /**
+     * @brief Gets the substring from a start to an end index in the source string.
+     *
+     * @param pattern_start The inclusive start index.
+     * @param pattern_end The exclusive end index.
+     *
+     * @return The substring in the given interval.
+     */
+    std::string substring_naive(size_t pattern_start, size_t pattern_end) const {
+        if (pattern_start >= source_length() || pattern_end >= source_length()) {
+            // TODO out of bounds error
+        }
+        if (pattern_start >= pattern_end) {
+            return "";
+        }
 
-        std::stringstream                             ss;
-        std::function<size_t(size_t, size_t, size_t)> write = [&](size_t id, size_t start, size_t len) {
+        size_t            len = pattern_end - pattern_start;
+        std::stringstream ss;
+
+        std::function<void(size_t, size_t)> write = [&](size_t id, size_t start) {
             const Symbols &symbols = m_rules[id];
-            size_t         count   = 0;
-            while (len > 0) {
-                if (Grammar::is_terminal(symbols[start + count])) {
-                    ss << (char) symbols[start + count];
-                    count++;
-                    len--;
-                } else {
-                    const size_t written_count = write(symbols[start + count] - Grammar::RULE_OFFSET, 0, len);
-                    count += written_count;
-                    len -= written_count;
+            size_t         index   = 0;
+            {
+                // Find symbol start index in this rule
+                size_t symbol_len;
+                while (start >= (symbol_len = symbol_length(id, index))) {
+                    start -= symbol_len;
+                    index++;
                 }
             }
-            return count;
+
+            // In this case, the symbol at this index is a nonterminal (otherwise we could decrement start if the
+            // symbol was a terminal), so we write the non-terminal's contents starting at the start index
+            // Also, advance the index by one, sice we handled this index already
+            if (start > 0) {
+                write(symbols[index++] - Grammar::RULE_OFFSET, start);
+            }
+            for (; len > 0 && index < symbols.size(); index++) {
+                if (Grammar::is_terminal(symbols[index])) {
+                    // This is a single terminal. We just write it out
+                    ss << (char) symbols[index];
+                    len--;
+                } else {
+                    // Since we're in the midst of writing this rule, we need to start at the first index inside the
+                    // nonterminal
+                    write(symbols[index] - Grammar::RULE_OFFSET, 0);
+                }
+            }
         };
 
-        write(start_rule_id(), start, pattern_len);
+        write(start_rule_id(), pattern_start);
         return ss.str();
     }
 };
