@@ -1,27 +1,16 @@
 #pragma once
 
-#include <cstdio>
-#include <map>
+#include "tudocomp/ds/IntVector.hpp"
+#include "tudocomp/util/bits.hpp"
+#include <functional>
+#include <iostream>
 #include <tudocomp/compressors/areacomp/Consts.hpp>
-#include <tudocomp/ds/IntVector.hpp>
-#include <unistd.h>
-#include <unordered_map>
+#include <tudocomp/def.hpp>
+#include <tudocomp/grammar/Grammar.hpp>
 #include <vector>
 
-#include <tudocomp/grammar/GrammarCoding.hpp>
-
-namespace tdc {
-namespace grammar {
-
-class QueryGrammar;
-
-/**
- * @brief A representation of a Grammar as a map, with rule ids as keys and vectors of unsiged integers as symbol
- * containers
- */
-class Grammar {
-
-    friend class QueryGrammar;
+namespace tdc::grammar {
+class QueryGrammar {
 
   public:
     using Symbols = std::vector<len_t>;
@@ -46,20 +35,52 @@ class Grammar {
      */
     size_t m_start_rule_id;
 
-  public:
-    /**
-     * @brief The value by which rule ids are offset in the symbol vectors of rules.
-     * The values 0 to 255 (extended ASCII) are used for terminals, while values starting at 256 are used for rule ids.
-     * The value 256 refers to rule 0, 257 refers to rule 1 et cetera.
-     */
-    static const size_t RULE_OFFSET = 256;
+    len_t            m_start_rule_full_length;
+    DynamicIntVector m_full_lengths;
 
+    std::pair<len_t, DynamicIntVector> calculate_full_lengths() {
+
+        DynamicIntVector full_lengths(m_rules.size(), 0, sizeof(len_t) * 8);
+
+        size_t max_len = 0;
+
+        for (size_t i = 0; i < m_rules.size(); i++) {
+            auto &symbols = m_rules[i];
+            for (auto symbol : symbols) {
+                if (Grammar::is_terminal(symbol)) {
+                    full_lengths[i]++;
+                } else {
+                    full_lengths[i] += full_lengths[symbol - Grammar::RULE_OFFSET];
+                }
+            }
+            // We do not want to include the length of the start rule, since we will save it separately
+            if (i < m_rules.size() - 1) {
+                max_len = std::max(max_len, full_lengths[i] + 0);
+            }
+        }
+        size_t start_rule_full_length = full_lengths.back();
+        full_lengths.pop_back();
+        full_lengths.width(bits_for(max_len));
+        full_lengths.shrink_to_fit();
+        return {start_rule_full_length, full_lengths};
+    }
+
+  public:
     /**
      * @brief Construct an empty Grammar with a start rule of 0 and with a given capacity.
      *
      * @param capacity The number of rules the underlying vector will be setup to hold
      */
-    Grammar(len_t capacity) : m_rules{std::vector<Symbols>(capacity, Symbols())}, m_start_rule_id{0} {}
+    QueryGrammar(Grammar &&other) {
+        Grammar gr = other;
+        other.dependency_renumber();
+        // TODO Fix copying?
+        m_rules                                     = other.m_rules;
+        m_start_rule_id                             = other.m_start_rule_id;
+        auto [start_rule_full_length, full_lengths] = calculate_full_lengths();
+        m_start_rule_full_length                    = start_rule_full_length;
+        m_full_lengths                              = full_lengths;
+    }
 
     /**
      * @brief Accesses the symbols vector for the rule of the given id
@@ -67,83 +88,14 @@ class Grammar {
      * @param id The rule id whose symbols vector to access
      * @return Symbols& A reference to the rule's symbols vector
      */
-    Symbols &operator[](const size_t id) { return m_rules[id]; }
-
-    /**
-     * @brief Appends a terminal to the given rule's symbols vector
-     *
-     * @param id The id of the rule whose symbols vector should be appended to
-     * @param symbol The terminal symbol to append to the vector. Note that this value should be lesser than RULE_OFFSET
-     */
-    void append_terminal(const size_t id, size_t symbol) { m_rules[id].push_back(symbol); }
-
-    /**
-     * @brief Appends a non terminal to the given rule's vector
-     *
-     * @param id The id of the rule whose symbols vector should be appended to
-     * @param rule_id The id of the rule, whose non terminal should be appended to the vector. Note, that the parameter
-     * should not have RULE_OFFSET added to it when passing it in.
-     */
-    void append_nonterminal(const size_t id, size_t rule_id) { append_terminal(id, rule_id + Grammar::RULE_OFFSET); }
-
-    /**
-     * Set the right side of a rule directly. Note that this will overwrite the previous mapping
-     *
-     * @param id The id of the rule whose right side to set
-     * @param symbols The container of the right side's symbols
-     */
-    void set_rule(const size_t id, Symbols &&symbols) { m_rules[id] = symbols; }
-
-    /**
-     * @brief Renumbers the rules in the grammar in such a way that rules with index i only depend on rules with indices
-     * lesser than i.
-     *
-     */
-    void dependency_renumber() {
-        if (m_rules.size() == 0) {
-            return;
-        }
-        std::vector<len_t> renumbering(m_rules.size(), areacomp::INVALID);
-        size_t             count = 0;
-
-        // Calculate a renumbering
-        std::function<void(size_t)> renumber = [&](size_t rule_id) {
-            Symbols &symbols = m_rules[rule_id];
-            for (auto symbol : symbols) {
-                if (is_terminal(symbol) || renumbering[symbol - RULE_OFFSET] != areacomp::INVALID)
-                    continue;
-                renumber(symbol - RULE_OFFSET);
-            }
-            renumbering[rule_id] = count++;
-        };
-        renumber(m_start_rule_id);
-        // make count equal to the max. id
-        count--;
-
-        // renumber the rules and the nonterminals therein
-        std::vector<Symbols> new_rules(m_rules.size(), Symbols());
-        for (size_t old_id = 0; old_id < m_rules.size(); old_id++) {
-            Symbols &symbols = m_rules[old_id];
-            // Renumber all the nonterminals in the symbols vector
-            for (auto &symbol : symbols) {
-                if (is_terminal(symbol))
-                    continue;
-                symbol = (renumbering[symbol - RULE_OFFSET]) + RULE_OFFSET;
-            }
-            // Put assign the rule to its new id
-            new_rules[renumbering[old_id]] = std::move(symbols);
-        }
-
-        m_rules         = std::move(new_rules);
-        m_start_rule_id = count;
-    }
+    const Symbols &operator[](const size_t id) const { return m_rules[id]; }
 
     /**
      * @brief Prints the grammar to an output stream.
      *
      * @param out An output stream to print the grammar to
      */
-    void print(std::ostream &out = std::cout) {
+    void print(std::ostream &out = std::cout) const {
         for (size_t id = 0; id < m_rules.size(); id++) {
             const Symbols &symbols = m_rules[id];
             out << 'R' << id << " -> ";
@@ -189,8 +141,7 @@ class Grammar {
      *
      * @return std::string The source string
      */
-    std::string reproduce() {
-        dependency_renumber();
+    std::string reproduce() const {
 
         // This vector contains a mapping of a rule id (or rather, a nonterminal) to the string representation of the
         // rule, were it fully expanded
@@ -209,10 +160,10 @@ class Grammar {
                 // If it is a nonterminal, it can only be the nonterminal of a rule that has already been fully
                 // expanded, since rules which depend on the least amount of other rules are always read first. The
                 // string expansion thereof is written to the current rule's string representation
-                if (is_terminal(symbol)) {
+                if (Grammar::is_terminal(symbol)) {
                     ss << (char) symbol;
                 } else {
-                    ss << expansions[symbol - RULE_OFFSET];
+                    ss << expansions[symbol - Grammar::RULE_OFFSET];
                 }
             }
 
@@ -233,13 +184,6 @@ class Grammar {
      * @return const size_t The id of the start rule
      */
     const size_t start_rule_id() const { return m_start_rule_id; }
-
-    /**
-     * @brief Set the start rule id
-     *
-     * @param i The id the start rule id should be set to
-     */
-    void set_start_rule_id(size_t i) { m_start_rule_id = i; }
 
     /**
      * @brief Calculates the size of the grammar
@@ -280,56 +224,63 @@ class Grammar {
      */
     const bool empty() const { return rule_count() == 0; }
 
-    /**
-     * @brief Checks whether a symbol is a terminal.
-     *
-     * A symbol is considered a terminal if its value falls into the extended ASCII range, i.e. it is between 0 and 255.
-     *
-     * @see RULE_OFFSET
-     *
-     * @param symbol The symbol to check
-     * @return true If the symbol is in the extended ASCII range
-     * @return false If the symbol is not in the extended ASCII range
-     */
-    static const bool is_terminal(size_t symbol) { return symbol < RULE_OFFSET; }
-
-    /**
-     * @brief Checks whether a symbol is a non-terminal.
-     *
-     * A symbol is considered a non-terminal if its value is outside the extended ASCII range, i.e. it is greater or
-     * equal to than 256.
-     *
-     * @see RULE_OFFSET
-     *
-     * @param symbol The symbol to check
-     * @return true If the symbol outside the extended ASCII range
-     * @return false If the symbol is in the extended ASCII range
-     */
-    static const bool is_non_terminal(size_t symbol) { return !is_terminal(symbol); }
-
     auto begin() const { return m_rules.cbegin(); }
 
     auto end() const { return m_rules.cend(); }
 
     /**
-     * @brief Creates a sorted map containing the same data as in @link m_rules, but containing pointers to the vectors
-     * instead.
+     * @brief Returns the character at index i in the source string.
      *
-     * This is needed for some encoders.
+     * This is a naive implementation. Taking O(n) time in the worst case.
+     *
+     * @param i The index
+     *
+     * @return The char at the given index in the source string.
      */
-    std::vector<Symbols *> rules_sorted() {
-        std::vector<Symbols *> vec(m_rules.size());
-        for (size_t id = 0; id < m_rules.size(); id++) {
-            vec.push_back(&m_rules[id]);
+    char char_at_naive(size_t i) const {
+        if (i >= m_start_rule_full_length) {
+            // TODO index out of bounds error
         }
-        return vec;
+        size_t current_rule  = start_rule_id();
+        size_t current_index = 0;
+        while (i > 0 || Grammar::is_non_terminal(m_rules[current_rule][current_index])) {
+            const len_t symbol     = m_rules[current_rule][current_index];
+            const len_t symbol_len = Grammar::is_terminal(symbol) ? 1 : m_full_lengths[symbol - Grammar::RULE_OFFSET];
+            if (i >= symbol_len) {
+                i -= symbol_len;
+                current_index += 1;
+            } else {
+                current_rule  = symbol - Grammar::RULE_OFFSET;
+                current_index = 0;
+            }
+        }
+        return (char) m_rules[current_rule][current_index];
     }
 
-    const Symbols &get_rule_const(size_t id) { return m_rules[id]; }
+    std::string substring_naive(size_t start, size_t end) const {
+        const size_t pattern_len = end - start;
+
+        std::stringstream                             ss;
+        std::function<size_t(size_t, size_t, size_t)> write = [&](size_t id, size_t start, size_t len) {
+            const Symbols &symbols = m_rules[id];
+            size_t         count   = 0;
+            while (len > 0) {
+                if (Grammar::is_terminal(symbols[start + count])) {
+                    ss << (char) symbols[start + count];
+                    count++;
+                    len--;
+                } else {
+                    const size_t written_count = write(symbols[start + count] - Grammar::RULE_OFFSET, 0, len);
+                    count += written_count;
+                    len -= written_count;
+                }
+            }
+            return count;
+        };
+
+        write(start_rule_id(), start, pattern_len);
+        return ss.str();
+    }
 };
 
-} // namespace grammar
-} // namespace tdc
-
-// Include this to provide the implementation of QueryGrammar
-#include <tudocomp/grammar/QueryGrammar.hpp>
+} // namespace tdc::grammar
