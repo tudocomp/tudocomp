@@ -86,6 +86,7 @@ class RuleInterval {
             new_parent.m_parent_index = this->m_parent_index;
             if (parent.m_start == new_parent.m_start) {
                 new_parent.m_first_at_start_index = parent.m_first_at_start_index;
+                parent.m_next_at_start_index = new_parent_index;
             }
         }
         this->m_parent_index = new_parent_index;
@@ -513,7 +514,7 @@ class RuleIntervalIndex {
                     // We search for the first interval which our new interval fits into. If the current interval has no
                     // parent, or the parent starts at a different index, we stop searching of course. We can arrive at
                     // this point if the new interval is the least deeply nested interval at this index.
-                    if (!current->has_parent() || par.start() != start || par.contains(interval, *this)) {
+                    if (!par.has_parent() || par.start() != start || par.contains(interval, *this)) {
                         break;
                     }
                     current_index = current->parent_index();

@@ -101,8 +101,6 @@ class Ruleset {
     bool substitution_allowed(size_t from, size_t to) {
         RuleInterval *from_interval = &m_interval_index.interval_containing(from);
 
-        //std::cout << "sub all for from: " << from << ", to: " << to << std::endl;
-
         // If the start index is the start of this interval, it might imply that this is a non-terminal in a less-deeply
         // nested rule. In that case, we iterate upwards by using the parent pointers in order to find the first
         // interval, which contains the end index also. Mind, that only intervals that start at the same index, and the
@@ -113,20 +111,15 @@ class Ruleset {
                from_interval->has_parent()) {
             from_interval = &m_interval_index.parent(*from_interval);
         }
-        //std::cout << "  from_interval: " << *from_interval << std::endl;
         // If there is no such interval, that would also contain "to", the substitution can't be allowed
         if (to > m_interval_index.end(*from_interval)) {
             return false;
         }
 
         RuleInterval *to_interval = &m_interval_index.interval_containing(to);
-        while (to_interval != from_interval  &&
-               to == m_interval_index.end(*to_interval) && to_interval->has_parent()) {
+        while (to_interval != from_interval && to == m_interval_index.end(*to_interval) && to_interval->has_parent()) {
             to_interval = &m_interval_index.parent(*to_interval);
         }
-        //std::cout << "  to_interval: " << *to_interval << std::endl;
-
-        //std::cout << "  failed?: " << (*from_interval != *to_interval) << std::endl;
         return *from_interval == *to_interval;
     }
 
@@ -177,7 +170,7 @@ class Ruleset {
                 // before, but the offset of the pattern's position inside the rule is different, then we also have
                 // found a second distinct occurrence.
                 return true;
-            } /*else if (pos + pattern_length >= m_interval_index.end(rule_interval)) {
+            } else if (pos + pattern_length >= m_interval_index.end(rule_interval)) {
                 // A special case is when the pattern exceeds the length of the current rule interval.
                 // In this case the pattern must include other symbols outside of this rule interval
                 // and the pattern may appear more than once in the grammar despite always starting
@@ -187,7 +180,8 @@ class Ruleset {
                 // S -> A B A B A B A B
                 // A -> a b
                 // B -> c d
-                // If we were to try to factorize "A B" we see that the first terminal of every occurrence is the "a" in "A"
+                // If we were to try to factorize "A B" we see
+                // that the first terminal of every occurrence is the "a" in "A"
                 // But as we see it still appears 4 times in the grammar and would be useful to factorize
                 // However, including this else if leads to another problem: e.g.
                 // S -> A A A A
@@ -195,11 +189,13 @@ class Ruleset {
                 // B -> a b
                 // Let's assume we try to factorize "B c" (which fully expanded would be "a b c")
                 // The first terminal of each occurrence is the "a" in "B"
-                // Using the same criterion as before, this method would falsely return that there *are* distinct occurrences
-                // So excluding this else-if block, the method is too parsimonious, but including the block, it's too indiscriminate
-                
+                // Using the same criterion as before,
+                // this method would falsely return that there *are* distinct occurrences
+                // So excluding this else-if block, the method is too parsimonious,
+                // but including the block, it's too indiscriminate
+
                 return true;
-            }/**/
+            } /**/
         }
         return false;
     }
