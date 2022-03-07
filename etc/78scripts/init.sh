@@ -46,7 +46,6 @@ gutenberg gutenberg-201209.24090588160.xz
 proteins pc/proteins.xz
 )
 
-oldpwd=$(pwd)
 cd "$kDatasetFolder"
 needDownload=0
 for filename in $kInFileNames; do
@@ -78,7 +77,7 @@ if [[ "$needDownload" -eq 1 ]]; then
 	[[ ! -e ready/proteins ]] && ln -sv "$kDatasetFolder/proteins" ready/proteins 
 	# ./tdc -g 'fib(46)' --usestdout >! fib
 fi
-cd "$oldpwd"
+cd "$kOldPwd"
 
 
 [[ ! -d hashbench ]] && git clone https://github.com/koeppl/hashbench 
