@@ -51,7 +51,7 @@ class AreaCompressor : public Compressor {
 
     using Compressor::Compressor;
 
-    inline void compress(Input &input, Output &output) override {
+    inline grammar::Grammar build_grammar(Input &input, StatPhase &phase) {
         using tdc::grammar::Grammar;
 
         auto in = input.as_view();
@@ -60,8 +60,6 @@ class AreaCompressor : public Compressor {
 
         // Get the area function
         area_fun_t<ds_t> area_fun(config().sub_config("area_function"));
-
-        StatPhase phase("Text data structures");
 
         // Construct text data structures
         ds_t text(config().sub_config("ds"), in);
@@ -76,8 +74,15 @@ class AreaCompressor : public Compressor {
 
         phase.split("Convert to Grammar");
 
+        return rules.build_grammar();
+    }
+
+    inline void compress(Input &input, Output &output) override {
+        using tdc::grammar::Grammar;
+
+        StatPhase phase("Text data structures");
         // Convert the ruleset to a grammar
-        Grammar gr = rules.build_grammar();
+        Grammar gr = this->build_grammar(input, phase);
 
         phase.split("Encode Grammar");
 

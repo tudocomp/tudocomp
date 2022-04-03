@@ -156,7 +156,7 @@ class Ruleset {
 
             // We determine the rule in which the pattern appears in the grammar, the corresponding id, and the offset
             // of the pattern in the rule's right side
-            RuleInterval &rule_interval = m_interval_index.interval_containing(pos);
+            RuleInterval &rule_interval = m_interval_index.interval_containing(pos, pos + pattern_length - 1);
             len_t         rule_id       = rule_interval.rule_id();
             len_t         offset        = pos - rule_interval.start();
 
@@ -170,7 +170,7 @@ class Ruleset {
                 // before, but the offset of the pattern's position inside the rule is different, then we also have
                 // found a second distinct occurrence.
                 return true;
-            } else if (pos + pattern_length >= m_interval_index.end(rule_interval)) {
+            } /*else if (pos + pattern_length >= m_interval_index.end(rule_interval)) {
                 // A special case is when the pattern exceeds the length of the current rule interval.
                 // In this case the pattern must include other symbols outside of this rule interval
                 // and the pattern may appear more than once in the grammar despite always starting
@@ -200,6 +200,27 @@ class Ruleset {
         return false;
     }
 
+    bool differing_occurrences_(std::vector<size_t> &positions, len_t pattern_length) {
+        if (positions.size() <= 1) {
+            return false;
+        }
+
+        size_t first_rule_id = INVALID;
+        size_t first_offset  = INVALID;
+
+        for (auto pos : positions) {
+            if (pos == INVALID) {
+                continue;
+            }
+
+            // We determine the rule in which the pattern appears in the grammar, the corresponding id, and the offset
+            // of the pattern in the rule's right side
+            RuleInterval &rule_interval = m_interval_index.interval_containing(pos);
+            len_t         rule_id       = rule_interval.rule_id();
+            len_t         offset        = pos - rule_interval.start();
+        }
+        return false;
+    }
     /**
      * Filters out the occurrences of the pattern with length len and at the given positions, which start in one rule
      * range and end in another. Also filters out overlapping occurrences.
@@ -340,7 +361,6 @@ class Ruleset {
             substitute(positions, len);
             index++;
         }
-        std::cout << "done" << std::endl;
     }
 
     /**
