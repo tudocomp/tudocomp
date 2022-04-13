@@ -13,15 +13,13 @@
 namespace tdc {
 namespace grammar {
 
-class QueryGrammar;
-
 /**
  * @brief A representation of a Grammar as a map, with rule ids as keys and vectors of unsiged integers as symbol
  * containers
  */
 class Grammar {
 
-    friend class QueryGrammar;
+    // friend class NaiveQueryGrammar;
 
   public:
     using Symbols = std::vector<len_t>;
@@ -307,6 +305,8 @@ class Grammar {
      */
     static const bool is_non_terminal(size_t symbol) { return !is_terminal(symbol); }
 
+    static std::vector<Symbols> &&consume(Grammar &&gr) { return std::move(gr.m_rules); }
+
     auto begin() const { return m_rules.cbegin(); }
 
     auto end() const { return m_rules.cend(); }
@@ -330,6 +330,3 @@ class Grammar {
 
 } // namespace grammar
 } // namespace tdc
-
-// Include this to provide the implementation of QueryGrammar
-#include <tudocomp/grammar/QueryGrammar.hpp>

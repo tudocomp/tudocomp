@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace tdc::grammar {
-class QueryGrammar {
+class NaiveQueryGrammar {
 
   public:
     using Symbols = std::vector<len_t>;
@@ -71,15 +71,15 @@ class QueryGrammar {
      *
      * @param capacity The number of rules the underlying vector will be setup to hold
      */
-    QueryGrammar(Grammar &&other) {
-        Grammar gr = other;
+    NaiveQueryGrammar(Grammar &&other) {
         other.dependency_renumber();
-        // TODO Fix copying?
-        m_rules                                     = other.m_rules;
-        m_start_rule_id                             = other.m_start_rule_id;
+
+        m_start_rule_id = other.start_rule_id();
+        m_rules         = Grammar::consume(std::move(other));
+
         auto [start_rule_full_length, full_lengths] = calculate_full_lengths();
         m_start_rule_full_length                    = start_rule_full_length;
-        m_full_lengths                              = full_lengths;
+        m_full_lengths                              = std::move(full_lengths);
     }
 
     /**
@@ -257,7 +257,7 @@ class QueryGrammar {
      *
      * @return The char at the given index in the source string.
      */
-    char char_at_naive(size_t i) const {
+    char char_at(size_t i) const {
         if (i >= m_start_rule_full_length) {
             // TODO index out of bounds error
         }
@@ -285,7 +285,7 @@ class QueryGrammar {
      *
      * @return The substring in the given interval.
      */
-    std::string substring_naive(size_t pattern_start, size_t pattern_end) const {
+    std::string substring(size_t pattern_start, size_t pattern_end) const {
         if (pattern_start >= source_length() || pattern_end >= source_length()) {
             // TODO out of bounds error
         }

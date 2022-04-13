@@ -170,32 +170,7 @@ class Ruleset {
                 // before, but the offset of the pattern's position inside the rule is different, then we also have
                 // found a second distinct occurrence.
                 return true;
-            } /*else if (pos + pattern_length >= m_interval_index.end(rule_interval)) {
-                // A special case is when the pattern exceeds the length of the current rule interval.
-                // In this case the pattern must include other symbols outside of this rule interval
-                // and the pattern may appear more than once in the grammar despite always starting
-                // at the same index in the same rule (the first terminal of the rule that is)
-                // This else if block would automatically return true if such a case is detected
-                // E.g.
-                // S -> A B A B A B A B
-                // A -> a b
-                // B -> c d
-                // If we were to try to factorize "A B" we see
-                // that the first terminal of every occurrence is the "a" in "A"
-                // But as we see it still appears 4 times in the grammar and would be useful to factorize
-                // However, including this else if leads to another problem: e.g.
-                // S -> A A A A
-                // A -> B c d
-                // B -> a b
-                // Let's assume we try to factorize "B c" (which fully expanded would be "a b c")
-                // The first terminal of each occurrence is the "a" in "B"
-                // Using the same criterion as before,
-                // this method would falsely return that there *are* distinct occurrences
-                // So excluding this else-if block, the method is too parsimonious,
-                // but including the block, it's too indiscriminate
-
-                return true;
-            } /**/
+            }
         }
         return false;
     }
