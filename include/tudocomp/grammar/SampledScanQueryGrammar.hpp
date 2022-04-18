@@ -2,15 +2,22 @@
 
 #include "tudocomp/ds/IntVector.hpp"
 #include "tudocomp/util/bits.hpp"
+#include <algorithm>
+#include <cstdint>
 #include <functional>
 #include <iostream>
+#include <limits>
+#include <queue>
 #include <tudocomp/compressors/areacomp/Consts.hpp>
 #include <tudocomp/def.hpp>
 #include <tudocomp/grammar/Grammar.hpp>
+#include <tuple>
 #include <vector>
 
 namespace tdc::grammar {
-class NaiveQueryGrammar {
+
+template<size_t sampling = 6400>
+class SampledScanQueryGrammar {
 
   public:
     using Symbols = std::vector<len_t>;
@@ -37,6 +44,94 @@ class NaiveQueryGrammar {
 
     len_t            m_start_rule_full_length;
     DynamicIntVector m_full_lengths;
+
+    struct QuerySample {
+
+        /**
+         * @brief The rule id of the deepest rule that contains the entire block
+         */
+        len_t lowest_interval_containing_block;
+
+        /**
+         * @brief The index of the symbol in the above rule which is the first nonterminal that lies in the block
+         */
+        uint16_t internal_index_of_first_in_block;
+
+        /**
+         * @brief The ìndex in the source string at which the expansion of the above symbol starts
+         */
+        uint16_t relative_index_in_block;
+
+        QuerySample() :
+            lowest_interval_containing_block{0},
+            internal_index_of_first_in_block{std::numeric_limits<uint16_t>().max()},
+            relative_index_in_block{std::numeric_limits<uint16_t>().max()} {}
+
+        QuerySample(len_t lowest_interval, uint16_t internal_first_index, uint16_t relative_index) :
+            lowest_interval_containing_block{lowest_interval},
+            internal_index_of_first_in_block{internal_first_index},
+            relative_index_in_block{relative_index} {}
+    };
+
+    std::vector<QuerySample> m_samples;
+
+    void calculate_samples() {
+        // Start index, rule_id
+        std::queue<std::pair<size_t, size_t>> rule_queue;
+
+        auto sample_count = (m_start_rule_full_length + sampling - 1) / sampling;
+        m_samples         = std::vector<QuerySample>(sample_count);
+
+        // Whether the sample of the corresponding index has been changed and the internal indexes need to be updated
+        std::vector<bool> dirty_samples(sample_count);
+        std::fill(dirty_samples.begin(), dirty_samples.end(), false);
+
+        rule_queue.emplace(0, m_start_rule_id);
+
+        while (!rule_queue.empty()) {
+            const auto [start_index, rule_id] = rule_queue.front();
+            rule_queue.pop();
+            const auto expanded_rule_len = rule_length(rule_id);
+
+            // The indexes of the first and last blocks that this rule fully covers
+            const auto first_full_block = (start_index + sampling - 1) / sampling;
+            const auto last_full_block  = (start_index + expanded_rule_len) / sampling;
+            // The weird term in the break condition is because of the last block most likely being smaller than the
+            // others If our rule spans an interval that ends at the last character of our source string, we need to
+            // include the last incomplete block too
+            for (size_t i = first_full_block;
+                 i < last_full_block + (start_index + expanded_rule_len == m_start_rule_full_length);
+                 i++) {
+                // Since we use a queue, this is the deepest rule we have seen so far
+                m_samples[i].lowest_interval_containing_block = rule_id;
+                // We modified the sample
+                dirty_samples[i] = true;
+            }
+
+            auto idx_in_source = start_index;
+            auto internal_idx  = 0;
+
+            Symbols &symbols = m_rules[rule_id];
+            for (auto symbol : symbols) {
+                if (Grammar::is_terminal(symbol)) {
+                    idx_in_source++;
+                } else {
+                    auto         sample_idx = idx_in_source / sampling;
+                    QuerySample &sample     = m_samples[sample_idx];
+                    // If we modified our sample before, we need to update which rule is the first that starts inside it
+                    if (dirty_samples[sample_idx]) {
+                        sample.relative_index_in_block          = idx_in_source % sampling;
+                        sample.internal_index_of_first_in_block = internal_idx;
+                        dirty_samples[sample_idx]               = false;
+                    }
+                    // Add this nonterminal to the queue to be processed later
+                    rule_queue.emplace(idx_in_source, symbol - Grammar::RULE_OFFSET);
+                    idx_in_source += rule_length(symbol - Grammar::RULE_OFFSET);
+                }
+                internal_idx++;
+            }
+        }
+    }
 
     std::pair<len_t, DynamicIntVector> calculate_full_lengths() {
 
@@ -71,7 +166,7 @@ class NaiveQueryGrammar {
      *
      * @param capacity The number of rules the underlying vector will be setup to hold
      */
-    NaiveQueryGrammar(Grammar &&other) {
+    SampledScanQueryGrammar(Grammar &&other) {
         other.dependency_renumber();
 
         m_start_rule_id = other.start_rule_id();
@@ -80,6 +175,7 @@ class NaiveQueryGrammar {
         auto [start_rule_full_length, full_lengths] = calculate_full_lengths();
         m_start_rule_full_length                    = start_rule_full_length;
         m_full_lengths                              = std::move(full_lengths);
+        calculate_samples();
     }
 
     /**
@@ -195,7 +291,21 @@ class NaiveQueryGrammar {
      */
     const size_t symbol_length(size_t rule_id, size_t index) const {
         const auto symbol = m_rules[rule_id][index];
-        return Grammar::is_non_terminal(symbol) ? m_full_lengths[symbol - Grammar::RULE_OFFSET] : 1;
+        return Grammar::is_terminal(symbol)
+                   ? 1
+                   : (symbol - Grammar::RULE_OFFSET != m_start_rule_id ? m_full_lengths[symbol - Grammar::RULE_OFFSET]
+                                                                       : m_start_rule_full_length);
+    }
+
+    /**
+     * @brief Returns the expanded length of the rule with the given id.
+     *
+     * @param rule_id The rule's id.
+     *
+     * @return The fully expanded length of the rule.
+     */
+    const size_t rule_length(size_t rule_id) const {
+        return rule_id != m_start_rule_id ? m_full_lengths[rule_id] : m_start_rule_full_length;
     }
 
     /**
@@ -242,6 +352,13 @@ class NaiveQueryGrammar {
     auto end() const { return m_rules.cend(); }
 
     /**
+     * @brief Gets the sampled queries.
+     *
+     * @return
+     */
+    const std::vector<QuerySample> &samples() const { return m_samples; }
+
+    /**
      * @brief Returns the length of the source string.
      *
      * @return The length of the source string.
@@ -261,22 +378,61 @@ class NaiveQueryGrammar {
         if (i >= m_start_rule_full_length) {
             // TODO index out of bounds error
         }
-        size_t current_rule  = start_rule_id();
-        size_t current_index = 0;
-        while (i > 0 || Grammar::is_non_terminal(m_rules[current_rule][current_index])) {
-            const len_t symbol     = m_rules[current_rule][current_index];
-            const len_t symbol_len = Grammar::is_terminal(symbol) ? 1 : m_full_lengths[symbol - Grammar::RULE_OFFSET];
-            if (i >= symbol_len) {
-                i -= symbol_len;
-                current_index += 1;
-            } else {
-                current_rule  = symbol - Grammar::RULE_OFFSET;
-                current_index = 0;
-            }
-        }
-        return (char) m_rules[current_rule][current_index];
-    }
 
+        // TODO Wenn keine Regel in nem Block anfängt dann sind halt keine vernünftigen Werte in den Samples
+        // Dann gehts kaputt
+
+        const auto         sample_idx = i / sampling;
+        const QuerySample &sample     = m_samples[sample_idx];
+
+        // std::cout << "query: i = " << i << std::endl;
+        //  forward scan from i inside the block
+        if (i >= sample_idx * i + sample.relative_index_in_block) {
+            size_t rule           = sample.lowest_interval_containing_block;
+            size_t internal_index = sample.internal_index_of_first_in_block;
+            size_t source_index   = sample_idx * sampling + sample.relative_index_in_block;
+            while (source_index < i || Grammar::is_non_terminal(m_rules[rule][internal_index])) {
+                const len_t symbol     = m_rules[rule][internal_index];
+                const len_t symbol_len = symbol_length(rule, internal_index);
+                if (source_index + symbol_len <= i) {
+                    source_index += symbol_len;
+                    internal_index += 1;
+                } else {
+                    rule           = symbol - Grammar::RULE_OFFSET;
+                    internal_index = 0;
+                }
+            }
+            return (char) m_rules[rule][internal_index];
+        } else {
+            // backwards scan from before i
+            size_t rule           = sample.lowest_interval_containing_block;
+            size_t internal_index = sample.internal_index_of_first_in_block;
+            // The inclusive end index of the current symbol in the source text
+            size_t source_index =
+                sample_idx * sampling + sample.relative_index_in_block + symbol_length(rule, internal_index) - 1;
+            // We want to scan backwards until we hit i
+            // If we hit i, we need to go deeper until we hit a non-terminal
+            while (source_index > i || Grammar::is_non_terminal(m_rules[rule][internal_index])) {
+                // If this is a terminal, we just skip it
+                if (Grammar::is_terminal(m_rules[rule][internal_index])) {
+                    internal_index--;
+                    source_index--;
+                } else {
+                    size_t symbol_len = symbol_length(rule, internal_index);
+                    if (i + symbol_len <= source_index) {
+                        // If it is a nonterminal and i is not inside it, skip it
+                        internal_index--;
+                        source_index -= symbol_len;
+                    } else {
+                        // If i is in the nonterminal, we go into the nonterminal
+                        rule           = m_rules[rule][internal_index] - Grammar::RULE_OFFSET;
+                        internal_index = m_rules[rule].size() - 1;
+                    }
+                }
+            }
+            return (char) m_rules[rule][internal_index];
+        }
+    }
     /**
      * @brief Gets the substring from a start to an end index in the source string.
      *
@@ -285,8 +441,7 @@ class NaiveQueryGrammar {
      *
      * @return The substring in the given interval.
      */
-    std::string substr(size_t pattern_start, size_t pattern_len) const {
-        auto pattern_end = pattern_start + pattern_len;
+    std::string substr(size_t pattern_start, size_t pattern_end) const {
         if (pattern_start >= source_length() || pattern_end >= source_length()) {
             // TODO out of bounds error
         }
