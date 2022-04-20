@@ -39,14 +39,14 @@ class SequiturCompressor : public Compressor {
 
     using Compressor::Compressor;
 
-    inline virtual void compress(Input &input, Output &output) override {
-        auto in = input.as_stream();
+    inline grammar::Grammar build_grammar(Input &input, StatPhase &phase = StatPhase("dummy")) {
+
         sequitur::reset_vars();
 
         const auto min_occurrences = config().param("min_occurrences").as_uint();
         if (min_occurrences < 1) {
             std::cerr << "min_occurrences must at least be 2" << std::endl;
-            return;
+            return Grammar(0);
         }
 
         // Rules will not be formed across this character
@@ -55,8 +55,7 @@ class SequiturCompressor : public Compressor {
         sequitur::delimiter = delimiter;
         sequitur::K         = min_occurrences - 1;
 
-        StatPhase seq_phase("Sequitur");
-
+        auto in = input.as_stream();
         // The starting rule
         auto s = new sequitur::rules;
         s->last()->insert_after(new sequitur::symbols(in.get()));
@@ -72,7 +71,7 @@ class SequiturCompressor : public Compressor {
         // Renumber the rules to occupy ids 0 to k, where k is the number of rules in the grammar
         size_t max_rule = s->number_rules_recursive();
 
-        seq_phase.split("Transform Grammar into tdc representation");
+        phase.split("Transform Grammar into tdc representation");
 
         // Transform the Sequitur grammar into the tdc representation
         tdc::grammar::Grammar grammar(max_rule + 1);
@@ -116,6 +115,15 @@ class SequiturCompressor : public Compressor {
             }
         }
         delete s;
+
+        return grammar;
+    }
+
+    inline virtual void compress(Input &input, Output &output) override {
+
+        StatPhase seq_phase("Sequitur");
+
+        auto grammar = build_grammar(input, seq_phase);
 
         seq_phase.split("Encode Grammar");
 
