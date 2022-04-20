@@ -113,17 +113,17 @@ class SampledScanQueryGrammar {
 
             Symbols &symbols = m_rules[rule_id];
             for (auto symbol : symbols) {
+                // If we modified our sample before, we need to update which rule is the first that starts inside it
+                auto         sample_idx = idx_in_source / sampling;
+                QuerySample &sample     = m_samples[sample_idx];
+                if (dirty_samples[sample_idx]) {
+                    sample.relative_index_in_block          = idx_in_source % sampling;
+                    sample.internal_index_of_first_in_block = internal_idx;
+                    dirty_samples[sample_idx]               = false;
+                }
                 if (Grammar::is_terminal(symbol)) {
                     idx_in_source++;
                 } else {
-                    auto         sample_idx = idx_in_source / sampling;
-                    QuerySample &sample     = m_samples[sample_idx];
-                    // If we modified our sample before, we need to update which rule is the first that starts inside it
-                    if (dirty_samples[sample_idx]) {
-                        sample.relative_index_in_block          = idx_in_source % sampling;
-                        sample.internal_index_of_first_in_block = internal_idx;
-                        dirty_samples[sample_idx]               = false;
-                    }
                     // Add this nonterminal to the queue to be processed later
                     rule_queue.emplace(idx_in_source, symbol - Grammar::RULE_OFFSET);
                     idx_in_source += rule_length(symbol - Grammar::RULE_OFFSET);
@@ -387,7 +387,7 @@ class SampledScanQueryGrammar {
 
         // std::cout << "query: i = " << i << std::endl;
         //  forward scan from i inside the block
-        if (i >= sample_idx * i + sample.relative_index_in_block) {
+        if (i >= sample_idx * sampling + sample.relative_index_in_block) {
             size_t rule           = sample.lowest_interval_containing_block;
             size_t internal_index = sample.internal_index_of_first_in_block;
             size_t source_index   = sample_idx * sampling + sample.relative_index_in_block;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdio>
 #include <map>
 #include <tudocomp/compressors/areacomp/Consts.hpp>
@@ -305,7 +306,11 @@ class Grammar {
      */
     static const bool is_non_terminal(size_t symbol) { return !is_terminal(symbol); }
 
-    static std::vector<Symbols> &&consume(Grammar &&gr) { return std::move(gr.m_rules); }
+    static std::vector<Symbols> consume(Grammar &&gr) {
+        std::vector<Symbols> new_vec(0);
+        std::swap(gr.m_rules, new_vec);
+        return new_vec;
+    }
 
     auto begin() const { return m_rules.cbegin(); }
 
