@@ -21,3 +21,4 @@ compile_commands.json
 cmake-build-debug/
 .vscode
 /.idea/
+res/

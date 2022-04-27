@@ -55,19 +55,19 @@ class SampledScanQueryGrammar {
         /**
          * @brief The index of the symbol in the above rule which is the first nonterminal that lies in the block
          */
-        uint16_t internal_index_of_first_in_block;
+        len_t internal_index_of_first_in_block;
 
         /**
          * @brief The ìndex in the source string at which the expansion of the above symbol starts
          */
-        uint16_t relative_index_in_block;
+        len_t relative_index_in_block;
 
         QuerySample() :
             lowest_interval_containing_block{0},
-            internal_index_of_first_in_block{std::numeric_limits<uint16_t>().max()},
-            relative_index_in_block{std::numeric_limits<uint16_t>().max()} {}
+            internal_index_of_first_in_block{std::numeric_limits<len_t>().max()},
+            relative_index_in_block{std::numeric_limits<len_t>().max()} {}
 
-        QuerySample(len_t lowest_interval, uint16_t internal_first_index, uint16_t relative_index) :
+        QuerySample(len_t lowest_interval, len_t internal_first_index, len_t relative_index) :
             lowest_interval_containing_block{lowest_interval},
             internal_index_of_first_in_block{internal_first_index},
             relative_index_in_block{relative_index} {}
@@ -112,6 +112,7 @@ class SampledScanQueryGrammar {
             auto internal_idx  = 0;
 
             Symbols &symbols = m_rules[rule_id];
+            // std::cout << "Getting started on rule " << rule_id << " at pos " << std::endl;
             for (auto symbol : symbols) {
                 // If we modified our sample before, we need to update which rule is the first that starts inside it
                 auto         sample_idx = idx_in_source / sampling;

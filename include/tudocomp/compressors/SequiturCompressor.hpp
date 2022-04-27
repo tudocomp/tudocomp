@@ -41,6 +41,8 @@ class SequiturCompressor : public Compressor {
 
     inline grammar::Grammar build_grammar(Input &input, StatPhase &phase = StatPhase("dummy")) {
 
+        phase.split("Initialization");
+
         sequitur::reset_vars();
 
         const auto min_occurrences = config().param("min_occurrences").as_uint();
@@ -56,6 +58,9 @@ class SequiturCompressor : public Compressor {
         sequitur::K         = min_occurrences - 1;
 
         auto in = input.as_stream();
+
+        phase.split("Sequitur");
+
         // The starting rule
         auto s = new sequitur::rules;
         s->last()->insert_after(new sequitur::symbols(in.get()));
@@ -67,6 +72,8 @@ class SequiturCompressor : public Compressor {
             s->last()->insert_after(new sequitur::symbols(c));
             s->last()->prev()->check();
         }
+
+        phase.split("Renumber Rules");
 
         // Renumber the rules to occupy ids 0 to k, where k is the number of rules in the grammar
         size_t max_rule = s->number_rules_recursive();
