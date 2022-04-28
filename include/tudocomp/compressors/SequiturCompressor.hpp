@@ -39,7 +39,12 @@ class SequiturCompressor : public Compressor {
 
     using Compressor::Compressor;
 
-    inline grammar::Grammar build_grammar(Input &input, StatPhase &phase = StatPhase("dummy")) {
+    inline grammar::Grammar build_grammar(Input &input) {
+        StatPhase dummy("dummy");
+        return build_grammar(input, dummy);
+    }
+
+    inline grammar::Grammar build_grammar(Input &input, StatPhase &phase) {
 
         phase.split("Initialization");
 
