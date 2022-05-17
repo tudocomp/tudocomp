@@ -286,10 +286,7 @@ class NaiveQueryGrammar {
      * @return The substring in the given interval.
      */
     std::string substr(size_t pattern_start, size_t pattern_len) const {
-        auto pattern_end = pattern_start + pattern_len;
-        if (pattern_start >= source_length() || pattern_end >= source_length()) {
-            // TODO out of bounds error
-        }
+        auto pattern_end = std::min(pattern_start + pattern_len, (size_t) (m_start_rule_full_length - 1));
         if (pattern_start >= pattern_end) {
             return "";
         }
