@@ -112,7 +112,6 @@ class SampledScanQueryGrammar {
             auto internal_idx  = 0;
 
             Symbols &symbols = m_rules[rule_id];
-            // std::cout << "Getting started on rule " << rule_id << " at pos " << std::endl;
             for (auto symbol : symbols) {
                 // If we modified our sample before, we need to update which rule is the first that starts inside it
                 auto         sample_idx = idx_in_source / sampling;
@@ -396,7 +395,6 @@ class SampledScanQueryGrammar {
         const auto         sample_idx = i / sampling;
         const QuerySample &sample     = m_samples[sample_idx];
 
-        // std::cout << "query: i = " << i << std::endl;
         //  forward scan from i inside the block
         if (i >= sample_idx * sampling + sample.relative_index_in_block) {
             size_t rule           = sample.lowest_interval_containing_block;
@@ -446,22 +444,23 @@ class SampledScanQueryGrammar {
     }
 
     /**
-     * @brief Get the intersection of the left part of the block in which pattern_start and pattern_end are found
-     * and the range [pattern_start, pattern_end).
+     * @brief Get the intersection of the left part of the block in which substr_start and substr_end are found
+     * and the range [substr_start, substr_end).
      *
-     * @param pattern_start
-     * @param pattern_end
-     * @return std::string
+     * @param substr_start The start of the substring to extract
+     * @param substr_end The end of the substring to extract
+     * @return std::string The intersection of the substring and the part of the block before (and not including) the
+     * sampled position
      */
-    std::string scan_left(size_t pattern_start, size_t pattern_end) const {
-        const auto         sample_idx = pattern_start / sampling;
+    std::string scan_left(size_t substr_start, size_t substr_end) const {
+        const auto         sample_idx = substr_start / sampling;
         const QuerySample &sample     = m_samples[sample_idx];
 
         size_t rule           = sample.lowest_interval_containing_block;
         size_t internal_index = sample.internal_index_of_first_in_block - 1;
         size_t source_index   = sample_idx * sampling + sample.relative_index_in_block - 1;
 
-        if (pattern_start > source_index || pattern_end <= pattern_start || sample.relative_index_in_block == 0) {
+        if (substr_start > source_index || substr_end <= substr_start || sample.relative_index_in_block == 0) {
             // Since the left part of the block is the part up to and not including the sampled position, we have
             // nothing to return if the sampled position
             return "";
@@ -469,11 +468,16 @@ class SampledScanQueryGrammar {
 
         std::ostringstream oss;
 
+        /**
+         * @brief Writes the expansion of the rule with the given id to the stringstream in reverse.
+         * This respects the range substr_start and substr_end and only writes characters inside that range
+         */
         std::function<void(size_t)> write_reverse = [&](size_t id) {
             auto &symbols = m_rules[id];
+
             for (auto symbol : std::views::reverse(symbols)) {
                 if (Grammar::is_terminal(symbol)) {
-                    if (source_index < pattern_end) {
+                    if (source_index < substr_end) {
                         oss << (char) symbol;
                     }
                     source_index--;
@@ -482,7 +486,7 @@ class SampledScanQueryGrammar {
 
                 auto rule_len          = rule_length(symbol - Grammar::RULE_OFFSET);
                 auto rule_source_index = source_index - rule_len + 1;
-                if (rule_source_index < pattern_end) {
+                if (rule_source_index < substr_end) {
                     write_reverse(symbol - Grammar::RULE_OFFSET);
                 } else {
                     source_index -= rule_len;
@@ -490,16 +494,16 @@ class SampledScanQueryGrammar {
             }
         };
 
-        while (source_index >= pattern_start) {
+        while (source_index >= substr_start) {
             auto symbol              = m_rules[rule][internal_index];
             auto symbol_len          = symbol_length(rule, internal_index);
             auto symbol_source_index = source_index - symbol_len + 1;
 
-            if (symbol_source_index >= pattern_end) {
+            if (symbol_source_index >= substr_end) {
                 // The symbol starts after the pattern. we skip it
                 source_index -= symbol_len;
                 internal_index--;
-            } else if (pattern_start <= symbol_source_index) {
+            } else if (substr_start <= symbol_source_index) {
                 // In this case the symbol starts before (or at) the start of the pattern
                 if (Grammar::is_terminal(symbol)) {
                     oss << (char) symbol;
@@ -522,22 +526,24 @@ class SampledScanQueryGrammar {
     }
 
     /**
-     * @brief Get the intersection of the right part of the block in which pattern_start and pattern_end are found
-     * and the range [pattern_start, pattern_end).
+     * @brief Get the intersection of the right part of the block in which substr_start and substr_end are found
+     * and the range [substr_start, substr_end). This method only works if the substring denoted by substr_start and
+     * substr_end lies entirely in one block
      *
-     * @param pattern_start
-     * @param pattern_end
-     * @return std::string
+     * @param substr_start The start of the substring
+     * @param substr_end The end of the substring (exclusive)
+     * @return std::string The intersection of the substring and the part of the block after the sampled position
      */
-    std::string scan_right(size_t pattern_start, size_t pattern_end) const {
-        const auto         sample_idx = pattern_start / sampling;
+    std::string scan_right(size_t substr_start, size_t substr_end) const {
+        const auto         sample_idx = substr_start / sampling;
         const QuerySample &sample     = m_samples[sample_idx];
 
+        // Get the sampled data in this block
         size_t rule           = sample.lowest_interval_containing_block;
         size_t internal_index = sample.internal_index_of_first_in_block;
         size_t source_index   = sample_idx * sampling + sample.relative_index_in_block;
 
-        if (pattern_end <= source_index || pattern_end <= pattern_start) {
+        if (substr_end <= source_index || substr_end <= substr_start) {
             // Since the right part of the block is the part up to and not including the sampled position, we have
             // nothing to return if the sampled position
             return "";
@@ -545,11 +551,16 @@ class SampledScanQueryGrammar {
 
         std::ostringstream oss;
 
+        /**
+         * @brief Writes the expansion of the rule with the given id to the string stream and modifies source_index
+         * accordingly. This also respect susbtr_start and substr_end and only writes characters that are in that range
+         */
         std::function<void(size_t)> write = [&](size_t id) {
             auto &symbols = m_rules[id];
             for (auto symbol : symbols) {
                 if (Grammar::is_terminal(symbol)) {
-                    if (source_index >= pattern_start) {
+                    // If this terminal is not inside our range we don't write it
+                    if (source_index >= substr_start) {
                         oss << (char) symbol;
                     }
                     source_index++;
@@ -557,7 +568,8 @@ class SampledScanQueryGrammar {
                 }
 
                 auto rule_len = rule_length(symbol - Grammar::RULE_OFFSET);
-                if (source_index + rule_len > pattern_start) {
+                // Does this nonterminal lie completely in our range? then write it. Otherwise just skip it
+                if (source_index + rule_len > substr_start) {
                     write(symbol - Grammar::RULE_OFFSET);
                 } else {
                     source_index += rule_len;
@@ -565,15 +577,17 @@ class SampledScanQueryGrammar {
             }
         };
 
-        while (source_index < pattern_end) {
+        while (source_index < substr_end) {
             auto symbol     = m_rules[rule][internal_index];
             auto symbol_len = symbol_length(rule, internal_index);
             auto symbol_end = source_index + symbol_len;
 
-            if (symbol_end <= pattern_start) {
+            if (symbol_end <= substr_start) {
+                // If this symbol is not in our range, skip it
                 source_index += symbol_len;
                 internal_index++;
-            } else if (symbol_end <= pattern_end) {
+            } else if (symbol_end <= substr_end) {
+                // If the symbol is entirely in our range just write it in its entirety
                 if (Grammar::is_terminal(symbol)) {
                     oss << (char) symbol;
                     source_index++;
@@ -582,7 +596,8 @@ class SampledScanQueryGrammar {
                 }
                 internal_index++;
             } else {
-                // The symbol doesn't end before pattern_end
+                // The symbol doesn't end before substr_end so we need to go into the symbol and continue searching
+                // there
                 rule           = symbol - Grammar::RULE_OFFSET;
                 internal_index = 0;
             }
@@ -594,45 +609,46 @@ class SampledScanQueryGrammar {
     /**
      * @brief Gets the substring from a start to an end index in the source string.
      *
-     * @param pattern_start The inclusive start index.
-     * @param pattern_end The length of the substring to extract.
+     * @param substr_start The inclusive start index.
+     * @param substr_len The length of the substring to extract.
      *
      * @return The substring in the given interval.
      */
-    std::string substr(size_t pattern_start, size_t pattern_len) const {
+    std::string substr(size_t substr_start, size_t substr_len) const {
 
         // Exclusive end index
-        const auto pattern_end = std::min(pattern_start + pattern_len, (size_t) m_start_rule_full_length);
+        const auto substr_end = std::min(substr_start + substr_len, (size_t) m_start_rule_full_length);
 
-        if (pattern_end == 0) {
-            // So that pattern_end - 1 doesn't break everything
+        if (substr_end == 0) {
+            // So that substr_end - 1 doesn't break everything
             return "";
         }
 
-        const auto start_sample_idx = pattern_start / sampling;
-        const auto end_sample_idx   = (pattern_end - 1) / sampling;
+        // The index of the sample in which the start index lies
+        const auto start_sample_idx = substr_start / sampling;
+        // The index of the sample in which the (inclusive) end index lies
+        const auto end_sample_idx = (substr_end - 1) / sampling;
 
         std::stringstream ss;
 
+        // Since scan_left and scan_right only work for start- and end-indices which lie in the same block, we call this
+        // method once for each block the substring spans over
         if (start_sample_idx != end_sample_idx) {
             for (size_t i = start_sample_idx; i <= end_sample_idx; i++) {
-                const auto start_idx = std::max(pattern_start, i * sampling);
-                const auto len       = std::min(sampling - (start_idx - i * sampling), pattern_end - start_idx);
+                const auto start_idx = std::max(substr_start, i * sampling);
+                // We either need to span the entire block or until the end of the substring, whichever is first
+                // For the former case, we need to be aware that if start_idx is not the start of the block, we need to
+                // subtract this offset into the block so that the length fits
+                const auto len = std::min(sampling - (start_idx - i * sampling), substr_end - start_idx);
 
-                // std::cout << "(" << pattern_start << ", " << pattern_end << ") -> (" << start_idx << ", "
-                //<< start_idx + len << ") with sampled pos "
-                //<< i * sampling + m_samples[i].relative_index_in_block << std::endl;
                 ss << substr(start_idx, len);
             }
             return ss.str();
         }
 
-        auto a = scan_left(pattern_start, pattern_end);
-        auto b = scan_right(pattern_start, pattern_end);
-
-        // std::cout << "left: " << a << ", right: " << b << std::endl;
-        ss << a;
-        ss << b;
+        // get the left and right halves and put them together
+        ss << scan_left(substr_start, substr_end);
+        ss << scan_right(substr_start, substr_end);
 
         return ss.str();
     }
