@@ -51,7 +51,7 @@ class AreaCompressor : public Compressor {
 
     using Compressor::Compressor;
 
-    inline grammar::Grammar build_grammar(Input &input, StatPhase &phase = StatPhase("dummy")) {
+    inline grammar::Grammar build_grammar(Input &input, StatPhase &phase) {
         using tdc::grammar::Grammar;
 
         auto in = input.as_view();

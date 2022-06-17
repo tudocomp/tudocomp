@@ -475,7 +475,8 @@ class SampledScanQueryGrammar {
         std::function<void(size_t)> write_reverse = [&](size_t id) {
             auto &symbols = m_rules[id];
 
-            for (auto symbol : std::views::reverse(symbols)) {
+            for (size_t i = symbols.size() - 1; i >= 0; i--) {
+                auto symbol = symbols[i];
                 if (Grammar::is_terminal(symbol)) {
                     if (source_index < substr_end) {
                         oss << (char) symbol;
