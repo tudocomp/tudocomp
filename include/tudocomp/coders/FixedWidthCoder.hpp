@@ -20,13 +20,13 @@ namespace tdc {
 
 /// \brief Codes each symbol as a binary number of the specified number of bits.
 ///
-template<size_t Width>
+template<size_t width>
 class FixedWidthCoder : public Algorithm {
 
-    static_assert(Width > 0, "Cannot be encoded with width 0");
-    static_assert(Width <= sizeof(size_t) * 8, "Encoding cannot be greater than the word width");
+    static_assert(width > 0, "Cannot be encoded with width 0");
+    static_assert(width <= sizeof(size_t) * 8, "Encoding cannot be greater than the word width");
 
-    static const size_t MASK = Width == SIZE_T_BITS ? std::numeric_limits<size_t>().max() : ~(std::numeric_limits<size_t>().max() << Width);
+    static const size_t MASK = width == SIZE_T_BITS ? std::numeric_limits<size_t>().max() : ~(std::numeric_limits<size_t>().max() << width);
   public:
 
     /// \cond DELETED
@@ -40,7 +40,7 @@ class FixedWidthCoder : public Algorithm {
 
         template<typename value_t>
         inline void encode(value_t v, const Range &r) {
-            m_out->write_int((v - r.min()) & MASK, Width);
+            m_out->write_int((v - r.min()) & MASK, width);
         }
     };
 
@@ -51,7 +51,7 @@ class FixedWidthCoder : public Algorithm {
 
         template<typename value_t>
         inline value_t decode(const Range &r) {
-            return r.min() + m_in->read_int<value_t>(Width); 
+            return r.min() + m_in->read_int<value_t>(width); 
         }
     };
 };
