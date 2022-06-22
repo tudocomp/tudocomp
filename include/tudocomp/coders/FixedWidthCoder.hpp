@@ -23,9 +23,11 @@ namespace tdc {
 template<size_t width>
 class FixedWidthCoder : public Algorithm {
 
+
+
     static_assert(width > 0, "Cannot be encoded with width 0");
     static_assert(width <= sizeof(size_t) * 8, "Encoding cannot be greater than the word width");
-
+    
     static const size_t MASK = width == SIZE_T_BITS ? std::numeric_limits<size_t>().max() : ~(std::numeric_limits<size_t>().max() << width);
   public:
 
@@ -102,5 +104,7 @@ struct U64Coder : public FixedWidthCoder<64>{
     }
 };
 #endif
+
+#undef SIZE_T_BITS
 
 } // namespace tdc
