@@ -68,6 +68,7 @@ class RangeANSCoder : public Algorithm {
   public:
     inline static Meta meta() {
         Meta m(Coder::type_desc(), "rans", "Range Asymmetric Numeral System coder");
+          m.param("range_size_exp", "The size of the range, partitioning the natural numbers. The size will be 2^range_size_exp").primitive(10);
         return m;
     }
     /// \cond DELETED
@@ -136,7 +137,8 @@ class RangeANSCoder : public Algorithm {
 
             for (int i = 1; i < 256; i++) {
                 prob_cdf[i]   = prob_cdf[i - 1] + (double) m_hist[i - 1] / (double) m_input_size;
-                m_cdf[i]      = prob_cdf[i] * RANGE_SIZE;
+                size_t unrounded_value = prob_cdf[i] * RANGE_SIZE;
+                m_cdf[i]      = unrounded_value < 1 ? ceil(unrounded_value) : unrounded_value;
                 m_hist[i - 1] = m_cdf[i] - m_cdf[i - 1];
             }
             m_hist[255] = RANGE_SIZE - m_cdf[255];
