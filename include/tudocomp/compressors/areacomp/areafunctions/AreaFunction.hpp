@@ -5,7 +5,7 @@
 
 namespace tdc::grammar::areacomp {
 
-static TypeDesc area_fun_type_desc() { return {"area_function"}; }
+static inline TypeDesc area_fun_type_desc() { return {"area_function"}; }
 template<typename lcp_arr_t = const DynamicIntVector>
 class ChildArray;
 
