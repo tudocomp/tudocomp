@@ -135,12 +135,14 @@ class RangeANSCoder : public Algorithm {
          * In addition, this populates m_cdf
          */
         void normalize_hist() {
-            srand(0);
             static std::array<double, 256> prob_cdf;
             prob_cdf[0] = 0.0;
             m_cdf[0]    = 0;
 
+      
+
             for (int i = 1; i < 256; i++) {
+                
                 // If this character was not reported, we can just directly set the values
                 if (m_hist[i - 1] == 0) {
                     prob_cdf[i]   = prob_cdf[i - 1];
@@ -151,12 +153,12 @@ class RangeANSCoder : public Algorithm {
                 prob_cdf[i]   = prob_cdf[i - 1] + (double) m_hist[i - 1] / (double) m_input_size;
                 m_cdf[i]      = prob_cdf[i] * m_range_size;
                 m_hist[i - 1] = m_cdf[i] - m_cdf[i - 1];
-                // It could be that this character takes up suck a small fraction of the input that its normalized entry
+                // It could be that this character takes up such a small fraction of the input that its normalized entry
                 // in the histogram is zero.
                 // If that is the case we will divide by zero while encoding, so we ensure that each character that
                 // appears in the text has an entry of at least one in the histogram
-                if (m_hist[i - 1] == 0) {
-                    m_cdf[i]++;
+                if (m_cdf[i - 1] >= m_cdf[i]) {
+                    m_cdf[i] = m_cdf[i - 1] + 1;
                     m_hist[i - 1] = 1;
                 }
             }
@@ -209,7 +211,7 @@ class RangeANSCoder : public Algorithm {
         template<typename literals_t>
         inline Encoder(Config &&cfg, std::shared_ptr<BitOStream> out, literals_t &&literals) :
             tdc::Encoder(std::move(cfg), out, literals),
-            m_state{1ull << 32},
+            m_state{TARGET},
             m_range_size_exp(config().param("range_size_exp").as_uint()),
             m_range_size(1 << m_range_size_exp) {
 
@@ -327,7 +329,6 @@ class RangeANSCoder : public Algorithm {
         }
 
       public:
-
         using tdc::Decoder::Decoder;
 
         /**
@@ -341,7 +342,7 @@ class RangeANSCoder : public Algorithm {
         inline Value decode(const Range &r) {
             char s  = symbol();
             m_state = m_hist[s] * (m_state >> m_range_size_exp) + (m_state & m_mask) - m_cdf[s];
-            // Renormalize by reading the next 32 bits
+            //  Renormalize by reading the next 32 bits
             if (m_state < (1ull << 32)) {
                 m_state <<= 32;
                 m_state += m_buf.back();
@@ -350,9 +351,7 @@ class RangeANSCoder : public Algorithm {
             return s;
         }
 
-        inline bool eof() const override {
-            return m_state == TARGET;
-        }
+        inline bool eof() const override { return m_state == TARGET; }
 
         /**
          * @brief Checks whether the encoding is done.
