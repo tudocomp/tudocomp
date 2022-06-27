@@ -17,6 +17,7 @@
 #include <string>
 #include <sys/types.h>
 #include <tudocomp/Coder.hpp>
+#include <tudocomp/io/Output.hpp>
 #include <unistd.h>
 #include <vector>
 
@@ -34,26 +35,9 @@ namespace tdc {
  * It is also vitally important, that the Encoder is deconstructed before starting the decoding process with the
  * decoder. (That is, before constructing the Decoder.)
  *
- * @tparam range_size_exp The exponent of the size of the range that the natural numbers will be partitioned in. So the
- * size of the range will be 2^range_size_exp. This is "n" in Duda's video.
+ * @tparam range_size_exp
  */
-template<size_t range_size_exp>
 class RangeANSCoder : public Algorithm {
-
-    static_assert(range_size_exp > 0, "Cannot be encoded with width 0");
-    static_assert(range_size_exp <= sizeof(size_t) * 8 - 1, "Encoding cannot be greater than the word width");
-
-    /**
-     * @RANGE_SIZE The size of the ranges that the natural numbers are partitioned in. The larger the range, the more
-     * accurate the probability function Note that if range_size_exp is too small for the text, then this can result in
-     * the histogram containing 0s. In that case this might lead to division-by zero errors
-     */
-    static const size_t RANGE_SIZE = 1 << range_size_exp;
-
-    /**
-     * @MASK The mask used to replace an (x % RANGE_SIZE) operation with (x & MASK) since RANGE_SIZE is a power of 2.
-     */
-    static const size_t MASK = RANGE_SIZE - 1;
 
     /**
      * @SIZE_T_BITS The number of bits in a size_t
@@ -68,7 +52,9 @@ class RangeANSCoder : public Algorithm {
   public:
     inline static Meta meta() {
         Meta m(Coder::type_desc(), "rans", "Range Asymmetric Numeral System coder");
-          m.param("range_size_exp", "The size of the range, partitioning the natural numbers. The size will be 2^range_size_exp").primitive(10);
+        m.param("range_size_exp",
+                "The size of the range, partitioning the natural numbers. The size will be 2^range_size_exp")
+            .primitive(10);
         return m;
     }
     /// \cond DELETED
@@ -102,13 +88,29 @@ class RangeANSCoder : public Algorithm {
          */
         size_t m_input_size;
 
+        /**
+         * @m_range_size_exp The exponent of the size of the range that the natural numbers will be partitioned in. So
+         * the size of the range will be 2^range_size_exp. This is "n" in Duda's video.
+         */
+        const size_t m_range_size_exp;
+
+        /**
+         * @RANGE_SIZE The size of the ranges that the natural numbers are partitioned in. The larger the range, the
+         * more accurate the probability function Note that if range_size_exp is too small for the text, then this can
+         * result in the histogram containing 0s. In that case this might lead to division-by zero errors
+         */
+        const size_t m_range_size;
+
       public:
         using tdc::Encoder::Encoder;
 
-        inline static Meta meta() {
+        /*inline static Meta meta() {
             Meta m(Coder::type_desc(), "rans_enc", "Range ANS encoding");
+            m.param("range_size_exp",
+                    "The size of the range, partitioning the natural numbers. The size will be 2^range_size_exp")
+                .primitive(10);
             return m;
-        }
+        }*/
 
       private:
         /**
@@ -117,12 +119,15 @@ class RangeANSCoder : public Algorithm {
          * @tparam Literals The type of the input text. This should be a sized_range
          * @param literals The input text
          */
-        template<std::ranges::sized_range Literals>
+        template<typename Literals>
         void histogram(Literals &literals) {
             m_hist.fill(0);
+            size_t count = 0;
             for (auto &literal : literals) {
                 m_hist[literal]++;
+                count++;
             }
+            m_input_size = count;
         }
 
         /**
@@ -136,12 +141,26 @@ class RangeANSCoder : public Algorithm {
             m_cdf[0]    = 0;
 
             for (int i = 1; i < 256; i++) {
+                // If this character was not reported, we can just directly set the values
+                if (m_hist[i - 1] == 0) {
+                    prob_cdf[i]   = prob_cdf[i - 1];
+                    m_cdf[i]      = m_cdf[i - 1];
+                    m_hist[i - 1] = 0;
+                    continue;
+                }
                 prob_cdf[i]   = prob_cdf[i - 1] + (double) m_hist[i - 1] / (double) m_input_size;
-                size_t unrounded_value = prob_cdf[i] * RANGE_SIZE;
-                m_cdf[i]      = unrounded_value < 1 ? ceil(unrounded_value) : unrounded_value;
+                m_cdf[i]      = prob_cdf[i] * m_range_size;
                 m_hist[i - 1] = m_cdf[i] - m_cdf[i - 1];
+                // It could be that this character takes up suck a small fraction of the input that its normalized entry
+                // in the histogram is zero.
+                // If that is the case we will divide by zero while encoding, so we ensure that each character that
+                // appears in the text has an entry of at least one in the histogram
+                if (m_hist[i - 1] == 0) {
+                    m_cdf[i]++;
+                    m_hist[i - 1] = 1;
+                }
             }
-            m_hist[255] = RANGE_SIZE - m_cdf[255];
+            m_hist[255] = m_range_size - m_cdf[255];
         }
 
         /**
@@ -168,12 +187,12 @@ class RangeANSCoder : public Algorithm {
         template<typename Value>
         inline void encode(Value s, const Range &r) {
             // Renormalize by writing out the lower 32 bits.
-            if (m_state >= (m_hist[s] << (64 - range_size_exp))) {
+            if (m_state >= (m_hist[s] << (64 - m_range_size_exp))) {
                 uint32_t write = 0xFFFFFFFF & m_state;
                 m_state >>= 32;
                 m_out->write_int(write, 32);
             }
-            m_state = ((m_state / m_hist[s]) << range_size_exp) + (m_state % m_hist[s]) + m_cdf[s];
+            m_state = ((m_state / m_hist[s]) << m_range_size_exp) + (m_state % m_hist[s]) + m_cdf[s];
         }
 
         /**
@@ -187,11 +206,12 @@ class RangeANSCoder : public Algorithm {
         inline Encoder(Config &&cfg, Output &out, literals_t &&literals) :
             Encoder(std::move(cfg), std::make_shared<BitOStream>(out), literals) {}
 
-        template<std::ranges::sized_range literals_t>
+        template<typename literals_t>
         inline Encoder(Config &&cfg, std::shared_ptr<BitOStream> out, literals_t &&literals) :
             tdc::Encoder(std::move(cfg), out, literals),
             m_state{1ull << 32},
-            m_input_size{std::ranges::size(literals)} {
+            m_range_size_exp(config().param("range_size_exp").as_uint()),
+            m_range_size(1 << m_range_size_exp) {
 
             // Compute the histogram
             histogram(literals);
@@ -221,14 +241,14 @@ class RangeANSCoder : public Algorithm {
          */
         uint64_t m_state;
 
-        /**
+        /*
          * @m_hist A histogram of the ASCII characters occuring in the input. This is normalized so the total sum of all
          * values is equal to RANGE_SIZE
          */
         std::array<size_t, 256> m_hist;
 
         /**
-         * @m_cdf A (not-really) cumulative distribution function over the histogram. The value at index i is the sum 
+         * @m_cdf A (not-really) cumulative distribution function over the histogram. The value at index i is the sum
          * of all values in [0..i) in m_hist
          */
         std::array<size_t, 256> m_cdf;
@@ -242,6 +262,25 @@ class RangeANSCoder : public Algorithm {
          * @m_input_size The size of the input text.
          */
         size_t m_input_size;
+
+        /**
+         * @m_range_size_exp The exponent of the size of the range that the natural numbers will be partitioned in. So
+         * the size of the range will be 2^range_size_exp. This is "n" in Duda's video.
+         */
+        const size_t m_range_size_exp;
+
+        /**
+         * @RANGE_SIZE The size of the ranges that the natural numbers are partitioned in. The larger the range, the
+         * more accurate the probability function Note that if range_size_exp is too small for the text, then this can
+         * result in the histogram containing 0s. In that case this might lead to division-by zero errors
+         */
+        const size_t m_range_size = 1 << m_range_size_exp;
+
+        /**
+         * @MASK The mask used to replace an (x % RANGE_SIZE) operation with (x & MASK) since RANGE_SIZE is a power
+         * of 2.
+         */
+        const size_t m_mask = m_range_size - 1;
 
         /**
          * @brief Reads the input size, m_hist and m_cdf from the input.
@@ -280,7 +319,7 @@ class RangeANSCoder : public Algorithm {
             // Find first element such that symbol is greater or equal than it
             // max { s: value <= element } <=>
             // min { s: value > element } - 1
-            auto val = std::ranges::upper_bound(m_cdf.cbegin(), m_cdf.cend(), m_state & MASK);
+            auto val = std::ranges::upper_bound(m_cdf.cbegin(), m_cdf.cend(), m_state & m_mask);
 
             // Find its index
             auto i = std::distance(m_cdf.cbegin(), val) - 1;
@@ -288,10 +327,6 @@ class RangeANSCoder : public Algorithm {
         }
 
       public:
-        inline static Meta meta() {
-            Meta m(Coder::type_desc(), "rans_dec", "Range ANS decoding");
-            return m;
-        }
 
         using tdc::Decoder::Decoder;
 
@@ -300,12 +335,12 @@ class RangeANSCoder : public Algorithm {
          *
          * @tparam Value The type of the return value. This will always return an 8-bit wide number.
          * @param r Unused. Using different ranges will mess up the encoding.
-         * @return The next character decoded from the state 
+         * @return The next character decoded from the state
          */
         template<typename Value>
         inline Value decode(const Range &r) {
             char s  = symbol();
-            m_state = m_hist[s] * (m_state >> range_size_exp) + (m_state & MASK) - m_cdf[s];
+            m_state = m_hist[s] * (m_state >> m_range_size_exp) + (m_state & m_mask) - m_cdf[s];
             // Renormalize by reading the next 32 bits
             if (m_state < (1ull << 32)) {
                 m_state <<= 32;
@@ -313,6 +348,10 @@ class RangeANSCoder : public Algorithm {
                 m_buf.pop_back();
             }
             return s;
+        }
+
+        inline bool eof() const override {
+            return m_state == TARGET;
         }
 
         /**
@@ -331,7 +370,12 @@ class RangeANSCoder : public Algorithm {
 
         inline Decoder(Config &&cfg, Input &in) : Decoder(std::move(cfg), std::make_shared<BitIStream>(in)) {}
 
-        inline Decoder(Config &&cfg, std::shared_ptr<BitIStream> in) : tdc::Decoder(std::move(cfg), in), m_state{0} {
+        inline Decoder(Config &&cfg, std::shared_ptr<BitIStream> in) :
+            tdc::Decoder(std::move(cfg), in),
+            m_state{0},
+            m_range_size_exp(config().param("range_size_exp").as_uint()),
+            m_range_size(1 << m_range_size_exp),
+            m_mask(m_range_size - 1) {
             read_aux_ds();
             read_data();
         }

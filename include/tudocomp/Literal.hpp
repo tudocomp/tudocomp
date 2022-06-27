@@ -65,6 +65,14 @@ public:
         auto i = m_index++;
         return Literal { uliteral_t(m_view[i]), i };
     }
+
+    inline auto begin() {
+      return m_view.begin();
+    }
+
+    inline auto end() {
+      return m_view.end();
+    }
 };
 
 }
