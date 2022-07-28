@@ -115,7 +115,7 @@ class RangeANSCoder : public Algorithm {
         /**
          * @brief Creates an unnormalized histogram of the characters in the input text.
          *
-         * @tparam Literals The type of the input text. This should be a sized_range
+         * @tparam Literals The type of the input text.
          * @param literals The input text
          */
         template<typename Literals>
@@ -180,18 +180,19 @@ class RangeANSCoder : public Algorithm {
                 return;
             }
 
-            // We want to subtract from the largest values first, so we order the indices in such a way that we get the indices
-            // that represent the elements in m_hist in decreasing order
-            std::stable_sort(decrement_priority.begin(), decrement_priority.end(), [&] (auto i1, auto i2) {
-               return m_hist[i1] > m_hist[i2];
+            // We want to subtract from the largest values first, so we order the indices in such a way that we get the
+            // indices that represent the elements in m_hist in decreasing order
+            std::stable_sort(decrement_priority.begin(), decrement_priority.end(), [&](auto i1, auto i2) {
+                return m_hist[i1] > m_hist[i2];
             });
 
             // Iterate through the order we just calculated.
-            // Otherwise we iterate through the values greater than one and always decrement them until we have the required total values
+            // Otherwise we iterate through the values greater than one and always decrement them until we have the
+            // required total values
             size_t i = 0;
             while (hist_sum > m_range_size) {
                 size_t index = decrement_priority[i++];
-                if(m_hist[index] <= 1) {
+                if (m_hist[index] <= 1) {
                     i = 0;
                     continue;
                 }
@@ -199,7 +200,6 @@ class RangeANSCoder : public Algorithm {
                 m_hist[index]--;
                 hist_sum--;
             }
-
 
             for (int i = 1; i < 256; i++) {
                 m_cdf[i] = m_cdf[i - 1] + m_hist[i - 1];
@@ -363,7 +363,7 @@ class RangeANSCoder : public Algorithm {
          *
          * @return The char that is the next symbol in the state.
          */
-        char symbol() {
+        uint8_t symbol() const {
             // Find first element such that symbol is greater or equal than it
             // max { s: value <= element } <=>
             // min { s: value > element } - 1
@@ -388,7 +388,7 @@ class RangeANSCoder : public Algorithm {
         template<typename Value>
         inline Value decode(const LiteralRange &) {
             m_decoded_count++;
-            char s  = symbol();
+            uint8_t s  = symbol();
             m_state = m_hist[s] * (m_state >> m_range_size_exp) + (m_state & m_mask) - m_cdf[s];
             //  Renormalize by reading the next 32 bits
             if (m_state < (1ull << 32)) {
