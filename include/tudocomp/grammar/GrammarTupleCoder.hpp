@@ -1,6 +1,10 @@
 #pragma once
 
+#include "tudocomp/Range.hpp"
 #include "tudocomp_stat/StatPhase.hpp"
+#include <cstdint>
+#include <iostream>
+#include <limits>
 #include <tudocomp/Coder.hpp>
 #include <tudocomp/grammar/Grammar.hpp>
 #include <tudocomp/grammar/GrammarCoding.hpp>
@@ -92,19 +96,20 @@ class GrammarTupleCoder : public Algorithm {
                 auto symbols = grammar[current_rule_id];
                 // Encode the rule's length
                 auto length = symbols.size();
-                m_len_encoder->encode(length, rule_len_r);
+                m_len_encoder->template encode<size_t>(length, rule_len_r);
                 // Iterate through the rule's symbols
                 for (auto symbol : symbols) {
                     // If the symbol is a terminal, write a 0 bit and then encode the symbol with the terminal encoder
                     if (grammar::Grammar::is_terminal(symbol)) {
                         m_out->write_bit(false);
-                        m_terminal_encoder->encode((char) symbol, uliteral_r);
+                        m_terminal_encoder->template encode<char>(symbol, uliteral_r);
                         continue;
                     }
                     // If the symbol is a nonterminal, write a 1 bit and then encode the rule id with the nonterminal
                     // encoder
                     m_out->write_bit(true);
-                    m_nonterminal_encoder->encode(symbol - grammar::Grammar::RULE_OFFSET, Range(0, current_rule_id));
+                    m_nonterminal_encoder->template encode<size_t>(symbol - grammar::Grammar::RULE_OFFSET,
+                                                                   Range(0, current_rule_id));
                 }
             }
         }
@@ -132,39 +137,42 @@ class GrammarTupleCoder : public Algorithm {
             if (m_in->eof())
                 return grammar::Grammar(0);
 
-            size_t rule_count = m_len_decoder->template decode<size_t>(size_r);
-
-            grammar::Grammar gr(rule_count);
-            // Decode the minimum and maximum rule lengths
-            size_t min_len = m_len_decoder->template decode<size_t>(size_r);
-            size_t max_len = m_len_decoder->template decode<size_t>(size_r);
+            // Decode rule count, the minimum and maximum rule lengths
+            size_t rule_count = m_len_decoder->template decode<uint32_t>(size_r);
+            size_t min_len    = m_len_decoder->template decode<uint32_t>(size_r);
+            size_t max_len    = m_len_decoder->template decode<uint32_t>(size_r);
             Range  rule_len_r(min_len, max_len);
+            Range  nonterminal_r(grammar::Grammar::RULE_OFFSET, std::numeric_limits<uint32_t>().max());
 
-            size_t current_rule_id = 0;
-            while (!m_in->eof()) {
+            std::cout << "rule_count: " << rule_count << ", min_len: " << min_len << ", max_len: " << max_len
+                      << std::endl;
 
-                // Decode the rule length
-                size_t rule_len = m_len_decoder->template decode<size_t>(rule_len_r);
-                // Decode rule_len symbols
-                for (size_t i = 0; i < rule_len; i++) {
-                    // Read a bit from the input. If it is 1, the next symbol is a nonterminal. If it is 0, it is a
-                    // terminal
-                    bool is_nonterminal = m_in->read_bit();
-                    // If it is a terminal, use the terminal decoder to decode the next value as a character and insert
-                    // it into the grammar
-                    if (!is_nonterminal) {
-                        char terminal = m_terminal_decoder->template decode<char>(uliteral_r);
-                        gr.append_terminal(current_rule_id, terminal);
-                        continue;
-                    }
-                    // If it is a nonterminal read the rule id from the grammar and insert it into the grammar
-                    size_t rule_id = m_nonterminal_decoder->template decode<size_t>(Range(0, current_rule_id));
-                    gr.append_nonterminal(current_rule_id, rule_id);
+            std::vector<std::vector<len_t>> rules;
+            rules.reserve(rule_count);
+
+            for (size_t i = 0; i < rule_count; i++) {
+                size_t                rule_len = m_len_decoder->template decode<uint32_t>(rule_len_r);
+                std::vector<uint32_t> rule;
+                rule.reserve(rule_len);
+                for (size_t j = 0; j < rule_len; j++) {
+                    bool  is_nonterminal = m_in->read_bit();
+                    len_t symbol = is_nonterminal ? m_nonterminal_decoder->template decode<uint32_t>(nonterminal_r)
+                                                  : m_terminal_decoder->template decode<uint8_t>(literal_r);
+                    rule.push_back(symbol);
                 }
-                current_rule_id++;
+                rule.shrink_to_fit();
+                for (auto s : rule) {
+                    std::cout << s;
+                }
+                std::cout << std::endl;
+                rules.emplace_back(std::move(rule));
             }
+            rules.shrink_to_fit();
+
+            const size_t     start_rule_id = rules.size() - 1;
+            grammar::Grammar gr(std::move(rules));
             // The rule that was read last is the one with the most dependencies. That rule is the start rule.
-            gr.set_start_rule_id(current_rule_id - 1);
+            gr.set_start_rule_id(start_rule_id);
             return gr;
         }
     };

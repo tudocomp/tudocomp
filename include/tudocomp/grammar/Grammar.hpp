@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <limits>
 #include <map>
 #include <tudocomp/compressors/areacomp/Consts.hpp>
 #include <tudocomp/ds/IntVector.hpp>
@@ -61,6 +62,14 @@ class Grammar {
     Grammar(len_t capacity) : m_rules{std::vector<Symbols>(capacity, Symbols())}, m_start_rule_id{0} {}
 
     /**
+     * @brief Construct a Grammar from pre-existing rules.
+     *
+     * @param symbols The symbols representing the rules of the grammar.
+     * @see m_rules
+     */
+    Grammar(std::vector<Symbols> &&symbols) : m_rules{symbols}, m_start_rule_id{m_rules.size()} {}
+
+    /**
      * @brief Accesses the symbols vector for the rule of the given id
      *
      * @param id The rule id whose symbols vector to access
@@ -93,10 +102,27 @@ class Grammar {
      */
     void set_rule(const size_t id, Symbols &&symbols) { m_rules[id] = symbols; }
 
+  private:
+    void renumber_internal(size_t rule_id, std::vector<len_t> &renumbering, size_t &count) {
+        if (rule_id == 130139) {
+            std::cout << "Renumbering rule " << rule_id << std::endl;
+        }
+        Symbols &symbols = m_rules[rule_id];
+        for (auto symbol : symbols) {
+            if (is_terminal(symbol)) {
+                continue;
+            }
+            renumber_internal(symbol - RULE_OFFSET, renumbering, count);
+        }
+        if (renumbering[rule_id] == areacomp::INVALID) {
+            renumbering[rule_id] = count++;
+        }
+    }
+
+  public:
     /**
      * @brief Renumbers the rules in the grammar in such a way that rules with index i only depend on rules with indices
      * lesser than i.
-     *
      */
     void dependency_renumber() {
         if (m_rules.size() == 0) {
@@ -105,19 +131,9 @@ class Grammar {
         std::vector<len_t> renumbering(m_rules.size(), areacomp::INVALID);
         size_t             count = 0;
 
-        // Calculate a renumbering
-        std::function<void(size_t)> renumber = [&](size_t rule_id) {
-            Symbols &symbols = m_rules[rule_id];
-            for (auto symbol : symbols) {
-                if (is_terminal(symbol) || renumbering[symbol - RULE_OFFSET] != areacomp::INVALID)
-                    continue;
-                renumber(symbol - RULE_OFFSET);
-            }
-            renumbering[rule_id] = count++;
-        };
-        renumber(m_start_rule_id);
+        renumber_internal(m_start_rule_id, renumbering, count);
         // make count equal to the max. id
-        count--;
+        size_t rule_cnt = rule_count();
 
         // renumber the rules and the nonterminals therein
         std::vector<Symbols> new_rules(m_rules.size(), Symbols());
@@ -127,14 +143,15 @@ class Grammar {
             for (auto &symbol : symbols) {
                 if (is_terminal(symbol))
                     continue;
-                symbol = (renumbering[symbol - RULE_OFFSET]) + RULE_OFFSET;
+                symbol = renumbering[symbol - RULE_OFFSET] + RULE_OFFSET;
             }
             // Put assign the rule to its new id
             new_rules[renumbering[old_id]] = std::move(symbols);
         }
 
+        m_rules.clear();
         m_rules         = std::move(new_rules);
-        m_start_rule_id = count;
+        m_start_rule_id = rule_cnt - 1;
     }
 
     /**
@@ -189,6 +206,7 @@ class Grammar {
      * @return std::string The source string
      */
     std::string reproduce() {
+        std::cout << "Start rule and rule count: " << m_start_rule_id << ", " << rule_count() << std::endl;
         dependency_renumber();
 
         // This vector contains a mapping of a rule id (or rather, a nonterminal) to the string representation of the
