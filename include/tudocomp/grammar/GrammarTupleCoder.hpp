@@ -144,8 +144,6 @@ class GrammarTupleCoder : public Algorithm {
             Range  rule_len_r(min_len, max_len);
             Range  nonterminal_r(grammar::Grammar::RULE_OFFSET, std::numeric_limits<uint32_t>().max());
 
-            std::cout << "rule_count: " << rule_count << ", min_len: " << min_len << ", max_len: " << max_len
-                      << std::endl;
 
             std::vector<std::vector<len_t>> rules;
             rules.reserve(rule_count);
@@ -161,10 +159,6 @@ class GrammarTupleCoder : public Algorithm {
                     rule.push_back(symbol);
                 }
                 rule.shrink_to_fit();
-                for (auto s : rule) {
-                    std::cout << s;
-                }
-                std::cout << std::endl;
                 rules.emplace_back(std::move(rule));
             }
             rules.shrink_to_fit();

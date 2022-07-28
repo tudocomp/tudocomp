@@ -104,9 +104,6 @@ class Grammar {
 
   private:
     void renumber_internal(size_t rule_id, std::vector<len_t> &renumbering, size_t &count) {
-        if (rule_id == 130139) {
-            std::cout << "Renumbering rule " << rule_id << std::endl;
-        }
         Symbols &symbols = m_rules[rule_id];
         for (auto symbol : symbols) {
             if (is_terminal(symbol)) {
@@ -206,7 +203,6 @@ class Grammar {
      * @return std::string The source string
      */
     std::string reproduce() {
-        std::cout << "Start rule and rule count: " << m_start_rule_id << ", " << rule_count() << std::endl;
         dependency_renumber();
 
         // This vector contains a mapping of a rule id (or rather, a nonterminal) to the string representation of the
