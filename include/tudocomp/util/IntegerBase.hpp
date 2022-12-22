@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 namespace tdc {
 
 static_assert(sizeof(int) * 8 == 32, "Make sure the logic here remains correct");

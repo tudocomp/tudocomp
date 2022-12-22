@@ -63,7 +63,7 @@ private:
 
     // in_degree = size of requirement list
     template<dsid_t ds> struct _in_degree {
-        static constexpr size_t value = provider_t<ds>::requires::size();
+        static constexpr size_t value = provider_t<ds>::requirements::size();
     };
 
 public:
@@ -84,7 +84,7 @@ private:
     template<dsid_t ds, dsid_t req_head, dsid_t... req_tail>
     struct _cost<ds, std::index_sequence<req_head, req_tail...>> {
         static constexpr size_t value =
-            _cost<req_head, typename provider_t<req_head>::requires>::value +
+            _cost<req_head, typename provider_t<req_head>::requirements>::value +
             _cost<ds, std::index_sequence<req_tail...>>::value;
     };
 
@@ -101,7 +101,7 @@ public:
     /// \tparam ds the data structure
     template<dsid_t ds>
     static constexpr size_t cost() {
-        return _cost<ds, typename provider_t<ds>::requires>::value;
+        return _cost<ds, typename provider_t<ds>::requirements>::value;
     }
 
 private:
@@ -128,7 +128,7 @@ public:
     /// \tparam ds the data structure
     template<dsid_t ds>
     using dependency_order = typename _construction_order<
-        typename provider_t<ds>::requires>::seq;
+        typename provider_t<ds>::requirements>::seq;
 
     /// \brief Computes the construction order for a set of data structure
     ///        nodes based on their costs (highest first).
@@ -159,7 +159,7 @@ private:
         m_manager->template ensure_provider<Head>();
 
         // init degree for dependencies (any order)
-        init_degree(typename provider_t<Head>::requires());
+        init_degree(typename provider_t<Head>::requirements());
 
         // increase degree
         auto it = m_degree.find(Head);
@@ -259,7 +259,7 @@ private:
         discard_byproducts(typename provider_t<Head>::provides());
 
         // decrease degree of direct dependencies
-        decrease_degree(typename provider_t<Head>::requires());
+        decrease_degree(typename provider_t<Head>::requirements());
 
         // in delayed compressed mode, at the top level, possible compress
         if(m_cm == CompressMode::delayed && top_level) {

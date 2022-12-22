@@ -30,7 +30,7 @@ public:
     using sa_t = decltype(m_sa);
 
     using provides = std::index_sequence<ds::SUFFIX_ARRAY>;
-    using requires = std::index_sequence<>;
+    using requirements = std::index_sequence<>;
     using ds_types = tl::set<ds::SUFFIX_ARRAY, sa_t>;
 
     // implements concept "DSProvider"

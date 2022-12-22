@@ -125,7 +125,7 @@ public:
     /// \brief Tests whether the end of the bit input stream has been reached.
     /// \return \e true if the end of the underlying bit stream has been
     ///         reached, \e false otherwise.
-    inline bool eof() const {
+    virtual inline bool eof() const {
         return m_in->eof();
     }
 

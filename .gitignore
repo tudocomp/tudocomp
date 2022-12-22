@@ -13,3 +13,12 @@ Cargo.lock
 *.toc
 CMakeLists.txt.user
 __pycache__
+.ccls
+.directory
+.ccls-cache
+.cache
+compile_commands.json
+cmake-build-debug/
+.vscode
+/.idea/
+res/

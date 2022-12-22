@@ -10,7 +10,7 @@ ExternalProject_Add(
 
 find_package(STXXL)
 if(STXXL_FOUND)
-    include_directories(${STXXL_INCLUDE_DIRS})
+  include_directories(SYSTEM ${STXXL_INCLUDE_DIRS})
 else()
     add_dependencies(get_alldeps get_stxxl)
     MESSAGE(STATUS

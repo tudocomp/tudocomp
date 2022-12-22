@@ -8,6 +8,7 @@
 #include <tudocomp/ds/DSDef.hpp>
 
 #include <tudocomp/compressors/lzss/FactorBuffer.hpp>
+#include <tudocomp/compressors/lcpcomp/lcpcomp.hpp>
 
 #include <tudocomp_stat/StatPhase.hpp>
 

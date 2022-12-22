@@ -103,7 +103,7 @@ public:
     using Algorithm::Algorithm;
 
     using provides = std::index_sequence<ds::INVERSE_SUFFIX_ARRAY>;
-    using requires = std::index_sequence<ds::SUFFIX_ARRAY>;
+    using requirements = std::index_sequence<ds::SUFFIX_ARRAY>;
     using ds_types = tl::set<ds::INVERSE_SUFFIX_ARRAY, Data>;
 
     // implements concept "DSProvider"
